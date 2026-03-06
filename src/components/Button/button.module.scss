@@ -1,0 +1,29 @@
+.button {
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 0.5rem 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.primary {
+  background: #111827;
+  color: #ffffff;
+}
+
+.ghost {
+  background: transparent;
+  border-color: #d1d5db;
+  color: #111827;
+}
+
+.active {
+  border-color: #2563eb;
+  color: #2563eb;
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

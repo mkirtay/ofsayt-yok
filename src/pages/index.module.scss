@@ -1,0 +1,151 @@
+.page {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.kicker {
+  text-transform: uppercase;
+  font-size: 0.65rem;
+  letter-spacing: 0.16em;
+  color: #16a34a;
+  margin-bottom: 0.35rem;
+}
+
+.title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.35rem;
+}
+
+.subtitle {
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.headerCard {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+}
+
+.headerIntro {
+  min-width: 220px;
+  flex: 1 1 220px;
+}
+
+.searchWrap {
+  max-width: 360px;
+  flex: 1 1 240px;
+}
+
+.search {
+  width: 100%;
+  padding: 0.55rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.06);
+}
+
+.filters {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.viewToggle {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.main {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  color: #6b7280;
+}
+
+.sectionHeader h2 {
+  color: #111827;
+  font-size: 1.05rem;
+}
+
+.updatedAt {
+  margin-left: 0.4rem;
+  color: #94a3b8;
+  font-size: 0.85rem;
+}
+
+.cardGrid {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.grid {
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.list {
+  display: block;
+}
+
+.leagueGroup {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.leagueHeader {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #64748b;
+  background: #eef2f7;
+  border-radius: 8px;
+  padding: 0.3rem 0.5rem;
+}
+
+.leagueGrid {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.virtualList {
+  height: 70vh;
+  min-height: 420px;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.virtualListContent {
+  padding: 0;
+}
+
+.virtualRow {
+  padding: 0.2rem 0.6rem 0.45rem;
+  box-sizing: border-box;
+}
+
+.empty {
+  color: #6b7280;
+}

@@ -1,0 +1,45 @@
+.grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.card {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1rem;
+  background: #ffffff;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.label {
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+.value {
+  font-weight: 700;
+}
+
+.players {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.number {
+  display: inline-flex;
+  width: 2rem;
+  font-weight: 700;
+  color: #2563eb;
+}
+
+.empty {
+  color: #6b7280;
+}

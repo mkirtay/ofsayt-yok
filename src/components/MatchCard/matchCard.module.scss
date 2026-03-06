@@ -1,0 +1,147 @@
+.card {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #f9fafb;
+  padding: 1rem 1.25rem;
+  transition: border-color 0.2s ease;
+  display: block;
+}
+
+.card:hover {
+  border-color: #22c55e;
+}
+
+.highlight {
+  border-color: #22c55e;
+  box-shadow: 0 10px 20px rgba(34, 197, 94, 0.12);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.row > :last-child {
+  margin-left: auto;
+}
+
+.badges {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.badge {
+  position: relative;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.live {
+  background: #16a34a;
+  color: #ffffff;
+}
+
+.muted {
+  background: #e5e7eb;
+  color: #6b7280;
+}
+
+.time {
+  background: #ecfdf3;
+  color: #15803d;
+}
+
+.teams {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.stats {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.statChip {
+  background: #eef2f7;
+  color: #374151;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.teamLink {
+  color: inherit;
+  text-decoration: none;
+}
+
+.teamLink:hover .teamName {
+  color: #15803d;
+}
+
+.teamName {
+  font-weight: 600;
+}
+
+.score {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.meta {
+  font-size: 0.85rem;
+  color: #6b7280;
+  flex-shrink: 0;
+}
+
+.metaLabel {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.7rem;
+}
+
+.detailLink {
+  color: #15803d;
+  font-weight: 600;
+}
+
+.detailLink:hover {
+  text-decoration: underline;
+}
+
+.compact {
+  padding: 0.5rem 0.75rem;
+  border-radius: 10px;
+}
+
+.compact .badge {
+  font-size: 0.6rem;
+  padding: 0.15rem 0.45rem;
+}
+
+.compact .score {
+  font-size: 0.95rem;
+}
+
+.compact .teamName {
+  font-size: 0.85rem;
+}
+
+.compact .statChip {
+  font-size: 0.65rem;
+  padding: 0.2rem 0.5rem;
+}
+
+.compact .meta {
+  font-size: 0.7rem;
+}

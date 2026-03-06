@@ -1,0 +1,31 @@
+.page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem 3rem;
+  display: grid;
+  gap: 1.5rem;
+}
+
+.back {
+  color: #2563eb;
+  font-weight: 600;
+}
+
+.section {
+  display: grid;
+  gap: 1rem;
+}
+
+.sectionTitle {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.matches {
+  display: grid;
+  gap: 1rem;
+}
+
+.empty {
+  color: #6b7280;
+}

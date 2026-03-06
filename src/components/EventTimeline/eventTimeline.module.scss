@@ -1,0 +1,35 @@
+.timeline {
+  display: grid;
+  gap: 0.75rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.item {
+  display: grid;
+  grid-template-columns: 3rem 5rem 1fr;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-radius: 10px;
+  background: #f3f4f6;
+}
+
+.minute {
+  font-weight: 700;
+}
+
+.type {
+  text-transform: capitalize;
+  font-weight: 600;
+  color: #2563eb;
+}
+
+.player {
+  color: #111827;
+}
+
+.empty {
+  color: #6b7280;
+}

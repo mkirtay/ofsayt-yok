@@ -1,0 +1,122 @@
+.page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem 3rem;
+  display: grid;
+  gap: 1.5rem;
+}
+
+.back {
+  color: #2563eb;
+  font-weight: 600;
+}
+
+.section {
+  display: grid;
+  gap: 1rem;
+}
+
+.sectionTitle {
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.summaryCard {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 1rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.summaryLabel {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #6b7280;
+}
+
+.summaryValue {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.summaryMeta {
+  color: #6b7280;
+  font-size: 0.85rem;
+}
+
+.miniTimeline {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+}
+
+.miniTimeline li {
+  display: grid;
+  grid-template-columns: 2.5rem 4rem 1fr;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.miniMinute {
+  font-weight: 700;
+}
+
+.miniType {
+  text-transform: capitalize;
+  color: #16a34a;
+  font-weight: 600;
+}
+
+.miniPlayer {
+  color: #111827;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1rem;
+}
+
+.statCard {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  padding: 1rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.statLabel {
+  color: #6b7280;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.statValues {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.statDivider {
+  color: #9ca3af;
+}
+
+.empty {
+  color: #6b7280;
+}
