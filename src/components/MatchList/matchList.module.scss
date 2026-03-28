@@ -116,3 +116,121 @@
   border-radius: $radius-sm;
   color: $color-text-secondary;
 }
+
+// Virtualized list (react-window)
+.virtualHost {
+  width: 100%;
+  height: min(72vh, 900px);
+  min-height: 320px;
+  border-radius: $radius-sm;
+}
+
+.virtualPlaceholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: $color-text-secondary;
+  font-size: 14px;
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
+}
+
+.virtualList {
+  outline: none;
+}
+
+.virtualHeaderCell {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+.virtualGroupSpacer {
+  flex: 0 0 12px;
+}
+
+.virtualHeaderBar {
+  box-sizing: border-box;
+  flex: 1 1 auto;
+  min-height: 0;
+  background-color: $color-primary;
+  padding: 0 $spacing-3;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: $color-surface;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  border: 1px solid $color-border;
+  border-bottom: none;
+  border-radius: $radius-sm $radius-sm 0 0;
+}
+
+.virtualMatchRow {
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: 50px minmax(0, 1fr) 70px minmax(0, 1fr);
+  align-items: stretch;
+  height: 100%;
+  border-left: 1px solid $color-border;
+  border-right: 1px solid $color-border;
+  border-bottom: 1px solid $color-border;
+  background-color: $color-surface;
+  transition: background-color 0.15s;
+  cursor: pointer;
+
+  &:hover {
+    background-color: $color-row-highlight;
+  }
+}
+
+.virtualMatchRowFirst {
+  border-top: none;
+}
+
+.virtualMatchRowLast {
+  border-radius: 0 0 $radius-sm $radius-sm;
+  margin-bottom: 0;
+  box-shadow: $shadow-surface;
+}
+
+.virtualCell {
+  display: flex;
+  align-items: center;
+  padding: 0 $spacing-3;
+  font-size: 13px;
+  min-width: 0;
+}
+
+.virtualTime {
+  justify-content: center;
+  color: $color-text-secondary;
+  font-weight: 500;
+  font-size: 12px;
+}
+
+.virtualHome {
+  justify-content: flex-end;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-right: $spacing-2 !important;
+}
+
+.virtualAway {
+  justify-content: flex-start;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-left: $spacing-2 !important;
+}
+
+.virtualScore {
+  justify-content: center;
+  padding: 0 !important;
+}
