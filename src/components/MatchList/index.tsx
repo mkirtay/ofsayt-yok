@@ -177,11 +177,17 @@ function VirtualRow({ index, style, items, ariaAttributes }: VirtualRowProps) {
         } ${variant === 'ht' ? styles.virtualStatusHt : ''} ${variant === 'ft' ? styles.virtualStatusFt : ''}`}
       >
         {isLive ? (
-          <span className={styles.liveBadge}>
+          <span
+            className={styles.liveBadge}
+            aria-label={`Canlı, ${liveMinute}. dakika`}
+          >
             <span className={styles.liveEmoji} aria-hidden>
               🔴
             </span>
-            <span className={styles.liveText}>{`CANLI ${liveMinute}'`}</span>
+            <span className={styles.liveText}>
+              <span className={styles.liveCanliWord}>CANLI </span>
+              {`${liveMinute}'`}
+            </span>
           </span>
         ) : (
           statusText

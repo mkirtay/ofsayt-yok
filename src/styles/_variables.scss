@@ -16,7 +16,7 @@ $color-row-highlight: #DFF5E6;
 $font-family: var(--font-sans), system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
 
 // Breakpoints (mobile-first; Tailwind-benzeri yaygın eşikler)
-$bp-sm: 640px; // büyük telefon / küçük tablet
+$bp-sm: 640px; // büyük telefon / küçük tablet; altı ~410px dar mobil
 $bp-md: 768px; // tablet
 $bp-lg: 1024px; // masaüstü
 

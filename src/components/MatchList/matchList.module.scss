@@ -156,12 +156,19 @@
   flex: 1 1 auto;
   min-height: 0;
   background: linear-gradient(180deg, #e8eef6 0%, #dfe8f2 100%);
-  padding: $spacing-2 $spacing-2;
+  padding: $spacing-2 6px;
+  gap: $spacing-2;
+  font-size: 12px;
+
+  @media (min-width: $bp-sm) {
+    padding: $spacing-2 $spacing-2;
+    gap: $spacing-3;
+    font-size: 13px;
+  }
 
   @media (min-width: $bp-lg) {
     padding: $spacing-2 $spacing-3;
   }
-  font-size: 13px;
   font-weight: 600;
   text-transform: none;
   color: #153d6b;
@@ -169,7 +176,6 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: $spacing-3;
   border: 1px solid #c5d3e3;
   border-bottom: none;
   border-radius: $radius-sm $radius-sm 0 0;
@@ -179,8 +185,12 @@
 .virtualHeaderMain {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   min-width: 0;
+
+  @media (min-width: $bp-sm) {
+    gap: 8px;
+  }
 }
 
 .virtualHeaderTitleBlock {
@@ -205,6 +215,7 @@
 }
 
 .virtualHeaderColIy {
+  display: none;
   flex: 0 0 auto;
   font-size: 11px;
   font-weight: 800;
@@ -212,6 +223,10 @@
   min-width: 2rem;
   text-align: center;
   color: #153d6b;
+
+  @media (min-width: $bp-sm) {
+    display: block;
+  }
 }
 
 .virtualHeaderFlag,
@@ -224,7 +239,8 @@
 .virtualMatchRow {
   box-sizing: border-box;
   display: grid;
-  grid-template-columns: 46px 84px minmax(0, 1fr) minmax(3.75rem, auto) minmax(0, 1fr) 2.125rem;
+  /* Mobil (<640px): İY sütunu yok — 5 sütun, dar kickoff / durum */
+  grid-template-columns: 34px 46px minmax(0, 1fr) minmax(2.65rem, auto) minmax(0, 1fr);
   align-items: center;
   height: 100%;
 
@@ -288,8 +304,8 @@
 .virtualCell {
   display: flex;
   align-items: center;
-  padding: 0 $spacing-2;
-  font-size: 12px;
+  padding: 0 3px;
+  font-size: 11px;
   min-width: 0;
 
   @media (min-width: $bp-sm) {
@@ -307,12 +323,12 @@
   justify-content: center;
   color: $color-text-secondary;
   font-weight: 600;
-  font-size: 10px;
+  font-size: 9px;
   font-variant-numeric: tabular-nums;
   text-align: center;
   line-height: 1.2;
-  padding-left: 4px;
-  padding-right: 4px;
+  padding-left: 2px;
+  padding-right: 2px;
 
   @media (min-width: $bp-sm) {
     font-size: 10px;
@@ -330,14 +346,16 @@
 .virtualStatus {
   justify-content: flex-start;
   font-weight: 700;
-  font-size: 11px;
+  font-size: 10px;
   font-variant-numeric: tabular-nums;
   color: $color-text-secondary;
-  padding-left: 4px;
-  padding-right: 6px;
+  padding-left: 2px;
+  padding-right: 3px;
 
   @media (min-width: $bp-sm) {
     font-size: 11px;
+    padding-left: 4px;
+    padding-right: 6px;
   }
 
   @media (min-width: $bp-lg) {
@@ -364,15 +382,24 @@
 .liveBadge {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
   font-weight: 800;
   letter-spacing: 0.02em;
   min-width: 0;
+
+  @media (min-width: $bp-sm) {
+    gap: 4px;
+  }
 }
 
 .liveEmoji {
   flex-shrink: 0;
   line-height: 1;
+  font-size: 0.7em;
+
+  @media (min-width: $bp-sm) {
+    font-size: inherit;
+  }
 }
 
 .liveText {
@@ -380,20 +407,39 @@
   white-space: nowrap;
 }
 
+/* Mobilde sadece dakika (+ 🔴); tablet+ "CANLI" */
+.liveCanliWord {
+  display: none;
+
+  @media (min-width: $bp-sm) {
+    display: inline;
+  }
+}
+
 .virtualHome {
   justify-content: flex-end;
-  gap: $spacing-2;
+  gap: 4px;
   font-weight: 500;
   min-width: 0;
-  padding-right: $spacing-2 !important;
+  padding-right: 4px !important;
+
+  @media (min-width: $bp-sm) {
+    gap: $spacing-2;
+    padding-right: $spacing-2 !important;
+  }
 }
 
 .virtualAway {
   justify-content: flex-start;
-  gap: $spacing-2;
+  gap: 4px;
   font-weight: 500;
   min-width: 0;
-  padding-left: $spacing-2 !important;
+  padding-left: 4px !important;
+
+  @media (min-width: $bp-sm) {
+    gap: $spacing-2;
+    padding-left: $spacing-2 !important;
+  }
 }
 
 .teamCrest {
@@ -417,11 +463,15 @@
 
 .virtualScore {
   justify-content: center;
-  padding: 0 $spacing-2 !important;
+  padding: 0 4px !important;
+
+  @media (min-width: $bp-sm) {
+    padding: 0 $spacing-2 !important;
+  }
 }
 
 .scoreText {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   line-height: 1.1;
@@ -437,12 +487,17 @@
 }
 
 .virtualHt {
+  display: none;
   justify-content: center;
   font-size: 10px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   color: $color-text-secondary;
   padding: 0 4px !important;
+
+  @media (min-width: $bp-sm) {
+    display: flex;
+  }
 
   @media (min-width: $bp-lg) {
     font-size: 11px;
