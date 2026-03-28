@@ -26,10 +26,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     query.set('key', key);
     query.set('secret', secret);
 
-    const url = `${API_BASE}/${path}.json?${query.toString()}`;
-    const upstream = await fetch(url);
-    const data = await upstream.json();
+    const isBinaryAsset = /\.(png|jpe?g|gif|webp)$/i.test(path);
+    const url = isBinaryAsset
+      ? `${API_BASE}/${path}?${query.toString()}`
+      : `${API_BASE}/${path}.json?${query.toString()}`;
 
+    const upstream = await fetch(url);
+    const contentType = upstream.headers.get('content-type') || '';
+    // Örn. countries/flag.json PNG döndürür (Content-Type: image/png)
+    const treatAsBinary = isBinaryAsset || contentType.startsWith('image/');
+
+    if (treatAsBinary) {
+      const buf = Buffer.from(await upstream.arrayBuffer());
+      const ct = contentType || 'application/octet-stream';
+      res.status(upstream.status).setHeader('Content-Type', ct);
+      res.setHeader('Cache-Control', 'public, max-age=86400');
+      return res.send(buf);
+    }
+
+    const data = await upstream.json();
     res.status(upstream.status).json(data);
   } catch (error: any) {
     res.status(500).json({ success: false, error: error?.message || 'Proxy error' });

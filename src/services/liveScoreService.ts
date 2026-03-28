@@ -50,6 +50,51 @@ export const getMatchesByDate = async (date: string): Promise<Match[]> => {
   }
 };
 
+export interface Head2HeadTeamBrief {
+  id: string;
+  name: string;
+  overall_form?: string[];
+  h2h_form?: string[];
+}
+
+/** `teams/head2head` cevabındaki `data.h2h` geçmiş maçlar */
+export interface Head2HHistoricalMatch {
+  id: string;
+  date?: string;
+  scheduled?: string;
+  home_name?: string;
+  away_name?: string;
+  score?: string;
+  ht_score?: string;
+  time?: string;
+  status?: string;
+}
+
+export interface Head2HeadData {
+  team1: Head2HeadTeamBrief;
+  team2: Head2HeadTeamBrief;
+  h2h?: Head2HHistoricalMatch[];
+}
+
+// Endpoint: GET /teams/head2head.json?team1_id=&team2_id=
+export const getTeamsHead2Head = async (
+  team1Id: string,
+  team2Id: string
+): Promise<Head2HeadData | null> => {
+  try {
+    const response = await liveScoreApi.get<ApiResponse<Head2HeadData>>(`/teams/head2head`, {
+      params: { team1_id: team1Id, team2_id: team2Id },
+    });
+    if (response.data.success && response.data.data?.team1 && response.data.data?.team2) {
+      return response.data.data;
+    }
+    return null;
+  } catch (error) {
+    console.error('Error fetching head2head', error);
+    return null;
+  }
+};
+
 // Endpoint: GET /matches/events.json?match_id=X
 // Returns both match details and events
 export const getMatchWithEvents = async (
@@ -245,8 +290,20 @@ export const getTopDisciplinary = async (competitionId: string): Promise<any> =>
 };
 
 // Group matches by league with priority sorting
-export const groupMatchesByLeague = (matches: Match[]) => {
-  const grouped: Record<string, { competition_id: number; competition_name: string; matches: Match[] }> = {};
+export type GroupedLeagueMatches = {
+  competition_id: number;
+  competition_name: string;
+  /** `match.country.id` — bayrak: `/api/livescore/countries/flag?country_id=` */
+  country_id?: number;
+  country_name?: string;
+  /** API’de yalnızca dosya adı (örn. BIH.png); görüntü URL’si değil */
+  country_flag?: string;
+  competition_logo?: string;
+  matches: Match[];
+};
+
+export const groupMatchesByLeague = (matches: Match[]): GroupedLeagueMatches[] => {
+  const grouped: Record<string, GroupedLeagueMatches> = {};
 
   matches.forEach((match) => {
     const compId = match.competition?.id || 0;
@@ -256,8 +313,20 @@ export const groupMatchesByLeague = (matches: Match[]) => {
       grouped[compId] = {
         competition_id: compId,
         competition_name: compName,
+        country_id: match.country?.id,
+        country_name: match.country?.name,
+        country_flag: match.country?.flag,
+        competition_logo: match.competition?.logo,
         matches: [],
       };
+    } else {
+      const g = grouped[compId];
+      if (g.country_id == null && match.country?.id != null) {
+        g.country_id = match.country.id;
+        g.country_name = match.country.name;
+        g.country_flag = match.country.flag;
+      }
+      if (!g.competition_logo && match.competition?.logo) g.competition_logo = match.competition.logo;
     }
     grouped[compId].matches.push(match);
   });

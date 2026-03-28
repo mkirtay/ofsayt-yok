@@ -12,7 +12,7 @@ body {
   overflow-x: hidden;
   background-color: $color-bg;
   color: $color-text;
-  font-family: $font-family;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
   font-size: 14px;
   line-height: 21px;
 }

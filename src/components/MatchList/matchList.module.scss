@@ -155,36 +155,108 @@
   box-sizing: border-box;
   flex: 1 1 auto;
   min-height: 0;
-  background-color: $color-primary;
-  padding: 0 $spacing-3;
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  color: $color-surface;
-  letter-spacing: 0.5px;
+  background: linear-gradient(180deg, #e8eef6 0%, #dfe8f2 100%);
+  padding: $spacing-2 $spacing-3;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: none;
+  color: #153d6b;
+  letter-spacing: 0.01em;
   display: flex;
   align-items: center;
-  border: 1px solid $color-border;
+  justify-content: space-between;
+  gap: $spacing-3;
+  border: 1px solid #c5d3e3;
   border-bottom: none;
   border-radius: $radius-sm $radius-sm 0 0;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 70%);
+}
+
+.virtualHeaderMain {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.virtualHeaderTitleBlock {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.virtualHeaderCountry {
+  font-weight: 800;
+}
+
+.virtualHeaderSep {
+  font-weight: 600;
+  opacity: 0.85;
+}
+
+.virtualHeaderLeagueName {
+  font-weight: 600;
+}
+
+.virtualHeaderColIy {
+  flex: 0 0 auto;
+  font-size: 11px;
+  font-weight: 800;
+  opacity: 0.88;
+  min-width: 2rem;
+  text-align: center;
+  color: #153d6b;
+}
+
+.virtualHeaderFlag,
+.virtualHeaderLogo {
+  display: block;
+  flex-shrink: 0;
+  object-fit: contain;
 }
 
 .virtualMatchRow {
   box-sizing: border-box;
   display: grid;
-  grid-template-columns: 50px minmax(0, 1fr) 70px minmax(0, 1fr);
-  align-items: stretch;
+  grid-template-columns: 76px 108px minmax(0, 1fr) minmax(5.5rem, auto) minmax(0, 1fr) 3rem;
+  align-items: center;
   height: 100%;
   border-left: 1px solid $color-border;
   border-right: 1px solid $color-border;
   border-bottom: 1px solid $color-border;
   background-color: $color-surface;
-  transition: background-color 0.15s;
+  transition:
+    background-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.12s ease;
   cursor: pointer;
+  text-decoration: none;
+  color: inherit;
 
   &:hover {
     background-color: $color-row-highlight;
+    box-shadow: inset 3px 0 0 $color-primary;
   }
+
+  &:active {
+    transform: scale(0.998);
+  }
+}
+
+.virtualMatchRowLive {
+  background-color: #fdf2f2;
+  box-shadow: inset 4px 0 0 $color-danger;
+
+  &:hover {
+    background-color: #fce8e8;
+    box-shadow: inset 4px 0 0 $color-danger;
+  }
+}
+
+.virtualMatchRowHalfTime {
+  background-color: #fef5f5;
 }
 
 .virtualMatchRowFirst {
@@ -205,32 +277,93 @@
   min-width: 0;
 }
 
-.virtualTime {
+.virtualKickoff {
   justify-content: center;
   color: $color-text-secondary;
-  font-weight: 500;
+  font-weight: 600;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.virtualStatus {
+  justify-content: flex-start;
+  font-weight: 700;
   font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: $color-text-secondary;
+}
+
+.virtualStatusLive {
+  color: $color-danger;
+}
+
+.virtualStatusHt {
+  color: $color-danger;
+  font-weight: 800;
+}
+
+.virtualStatusFt {
+  color: $color-text-secondary;
+  font-weight: 700;
+}
+
+.liveBadge {
+  display: inline-flex;
+  align-items: center;
+  font-weight: 800;
+  letter-spacing: 0.02em;
 }
 
 .virtualHome {
   justify-content: flex-end;
+  gap: $spacing-2;
   font-weight: 500;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  min-width: 0;
   padding-right: $spacing-2 !important;
 }
 
 .virtualAway {
   justify-content: flex-start;
+  gap: $spacing-2;
   font-weight: 500;
-  white-space: nowrap;
+  min-width: 0;
+  padding-left: $spacing-2 !important;
+}
+
+.teamCrest {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+
+.teamName {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
-  padding-left: $spacing-2 !important;
+  white-space: nowrap;
 }
 
 .virtualScore {
   justify-content: center;
-  padding: 0 !important;
+  padding: 0 $spacing-2 !important;
+}
+
+.scoreText {
+  font-size: 16px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+  color: $color-text;
+}
+
+.virtualHt {
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: $color-text-secondary;
+  padding: 0 $spacing-1 !important;
 }

@@ -20,18 +20,35 @@ export interface Competition {
   is_league?: boolean;
   is_cup?: boolean;
   tier?: number;
+  logo?: string;
+}
+
+export interface MatchCountry {
+  id: number;
+  name: string;
+  flag?: string;
+  fifa_code?: string;
+}
+
+export interface MatchUrls {
+  head2head?: string;
+  events?: string;
+  statistics?: string;
+  lineups?: string;
 }
 
 export interface Match {
   id: number;
   status: string;
   time: string;
+  date?: string;
   scheduled?: string;
   location?: string;
   home: Team;
   away: Team;
   scores?: MatchScore;
   score?: string; // Sometimes APIs return flat structure for history or others
+  country?: MatchCountry;
   competition?: Competition;
   competition_id?: number;
   competition_name?: string;
@@ -41,6 +58,7 @@ export interface Match {
   away_id?: number;
   fixture_id?: number;
   added?: string;
+  urls?: MatchUrls;
 }
 
 export interface ApiResponse<T> {
