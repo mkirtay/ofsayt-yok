@@ -56,8 +56,7 @@ function formatKickoffUtc(match: Match): string {
 function statusLabel(match: Match): { text: string; variant: 'live' | 'ht' | 'ft' | 'scheduled' } {
   const { status, time } = match;
   if (status === 'IN PLAY') {
-    const minute = (time || '').replace(/'$/u, '').trim();
-    return { text: `🔴 CANLI ${minute}'`, variant: 'live' };
+    return { text: '', variant: 'live' };
   }
   if (status === 'HALF TIME BREAK') {
     return { text: 'İY', variant: 'ht' };
@@ -150,6 +149,7 @@ function VirtualRow({ index, style, items, ariaAttributes }: VirtualRowProps) {
   const kickoffUtc = formatKickoffUtc(match);
   const { text: statusText, variant } = statusLabel(match);
   const isLive = variant === 'live';
+  const liveMinute = isLive ? (match.time || '').replace(/'$/u, '').trim() : '';
   const htDisplay = normalizeHt(match.scores?.ht_score);
 
   const rowClass = [
@@ -176,7 +176,16 @@ function VirtualRow({ index, style, items, ariaAttributes }: VirtualRowProps) {
           isLive ? styles.virtualStatusLive : ''
         } ${variant === 'ht' ? styles.virtualStatusHt : ''} ${variant === 'ft' ? styles.virtualStatusFt : ''}`}
       >
-        {isLive ? <span className={styles.liveBadge}>{statusText}</span> : statusText}
+        {isLive ? (
+          <span className={styles.liveBadge}>
+            <span className={styles.liveEmoji} aria-hidden>
+              🔴
+            </span>
+            <span className={styles.liveText}>{`CANLI ${liveMinute}'`}</span>
+          </span>
+        ) : (
+          statusText
+        )}
       </div>
       <div className={`${styles.virtualCell} ${styles.virtualHome}`}>
         {homeLogo ? (
@@ -184,8 +193,8 @@ function VirtualRow({ index, style, items, ariaAttributes }: VirtualRowProps) {
             src={homeLogo}
             alt=""
             className={styles.teamCrest}
-            width={20}
-            height={20}
+            width={18}
+            height={18}
             loading="lazy"
             decoding="async"
           />
@@ -201,8 +210,8 @@ function VirtualRow({ index, style, items, ariaAttributes }: VirtualRowProps) {
             src={awayLogo}
             alt=""
             className={styles.teamCrest}
-            width={20}
-            height={20}
+            width={18}
+            height={18}
             loading="lazy"
             decoding="async"
           />

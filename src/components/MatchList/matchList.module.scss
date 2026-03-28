@@ -156,7 +156,11 @@
   flex: 1 1 auto;
   min-height: 0;
   background: linear-gradient(180deg, #e8eef6 0%, #dfe8f2 100%);
-  padding: $spacing-2 $spacing-3;
+  padding: $spacing-2 $spacing-2;
+
+  @media (min-width: $bp-lg) {
+    padding: $spacing-2 $spacing-3;
+  }
   font-size: 13px;
   font-weight: 600;
   text-transform: none;
@@ -220,9 +224,21 @@
 .virtualMatchRow {
   box-sizing: border-box;
   display: grid;
-  grid-template-columns: 76px 108px minmax(0, 1fr) minmax(5.5rem, auto) minmax(0, 1fr) 3rem;
+  grid-template-columns: 46px 84px minmax(0, 1fr) minmax(3.75rem, auto) minmax(0, 1fr) 2.125rem;
   align-items: center;
   height: 100%;
+
+  @media (min-width: $bp-sm) {
+    grid-template-columns: 56px 94px minmax(0, 1fr) minmax(4.5rem, auto) minmax(0, 1fr) 2.5rem;
+  }
+
+  @media (min-width: $bp-md) {
+    grid-template-columns: 64px 100px minmax(0, 1fr) minmax(5rem, auto) minmax(0, 1fr) 2.75rem;
+  }
+
+  @media (min-width: $bp-lg) {
+    grid-template-columns: 76px 108px minmax(0, 1fr) minmax(5.5rem, auto) minmax(0, 1fr) 3rem;
+  }
   border-left: 1px solid $color-border;
   border-right: 1px solid $color-border;
   border-bottom: 1px solid $color-border;
@@ -272,27 +288,63 @@
 .virtualCell {
   display: flex;
   align-items: center;
-  padding: 0 $spacing-3;
-  font-size: 13px;
+  padding: 0 $spacing-2;
+  font-size: 12px;
   min-width: 0;
+
+  @media (min-width: $bp-sm) {
+    font-size: 12px;
+    padding: 0 10px;
+  }
+
+  @media (min-width: $bp-lg) {
+    font-size: 13px;
+    padding: 0 $spacing-3;
+  }
 }
 
 .virtualKickoff {
   justify-content: center;
   color: $color-text-secondary;
   font-weight: 600;
-  font-size: 11px;
+  font-size: 10px;
   font-variant-numeric: tabular-nums;
   text-align: center;
   line-height: 1.2;
+  padding-left: 4px;
+  padding-right: 4px;
+
+  @media (min-width: $bp-sm) {
+    font-size: 10px;
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+
+  @media (min-width: $bp-lg) {
+    font-size: 11px;
+    padding-left: 0;
+    padding-right: 0;
+  }
 }
 
 .virtualStatus {
   justify-content: flex-start;
   font-weight: 700;
-  font-size: 12px;
+  font-size: 11px;
   font-variant-numeric: tabular-nums;
   color: $color-text-secondary;
+  padding-left: 4px;
+  padding-right: 6px;
+
+  @media (min-width: $bp-sm) {
+    font-size: 11px;
+  }
+
+  @media (min-width: $bp-lg) {
+    font-size: 12px;
+    padding-left: 0;
+    padding-right: 0;
+  }
 }
 
 .virtualStatusLive {
@@ -312,8 +364,20 @@
 .liveBadge {
   display: inline-flex;
   align-items: center;
+  gap: 4px;
   font-weight: 800;
   letter-spacing: 0.02em;
+  min-width: 0;
+}
+
+.liveEmoji {
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.liveText {
+  line-height: 1.15;
+  white-space: nowrap;
 }
 
 .virtualHome {
@@ -334,9 +398,14 @@
 
 .teamCrest {
   flex-shrink: 0;
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   object-fit: contain;
+
+  @media (min-width: $bp-lg) {
+    width: 20px;
+    height: 20px;
+  }
 }
 
 .teamName {
@@ -352,18 +421,31 @@
 }
 
 .scoreText {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   line-height: 1.1;
   color: $color-text;
+
+  @media (min-width: $bp-sm) {
+    font-size: 15px;
+  }
+
+  @media (min-width: $bp-lg) {
+    font-size: 16px;
+  }
 }
 
 .virtualHt {
   justify-content: center;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   color: $color-text-secondary;
-  padding: 0 $spacing-1 !important;
+  padding: 0 4px !important;
+
+  @media (min-width: $bp-lg) {
+    font-size: 11px;
+    padding: 0 $spacing-1 !important;
+  }
 }
