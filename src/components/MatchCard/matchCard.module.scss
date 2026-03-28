@@ -183,6 +183,9 @@ $match-card-header-blue: #153d6b;
   gap: $spacing-2;
   min-width: 0;
   flex: 1;
+  @media (max-width: 768px) {
+    flex-direction: column;
+  }
 }
 
 .formSideAway {
