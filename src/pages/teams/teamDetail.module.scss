@@ -1,31 +1,266 @@
-.page {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 2.5rem 1.5rem 3rem;
-  display: grid;
-  gap: 1.5rem;
+@import '../../styles/variables';
+
+.loading {
+  text-align: center;
+  padding: $spacing-8;
+  color: $color-text-secondary;
 }
 
-.back {
-  color: #2563eb;
-  font-weight: 600;
+.teamHeader {
+  display: flex;
+  align-items: center;
+  gap: $spacing-4;
+  background-color: $color-surface;
+  padding: $spacing-4;
+  border-radius: $radius-md;
+  box-shadow: $shadow-surface;
+  margin-top: $spacing-4;
+  border: 1px solid $color-border;
 }
 
-.section {
-  display: grid;
-  gap: 1rem;
-}
-
-.sectionTitle {
-  font-size: 1.2rem;
+.logoPlaceholder {
+  width: 56px;
+  height: 56px;
+  background-color: $color-bg;
+  border-radius: $radius-sm;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
   font-weight: 700;
+  color: $color-primary;
+  border: 1px solid $color-border;
 }
 
-.matches {
-  display: grid;
-  gap: 1rem;
+.teamName {
+  font-size: 22px;
+  font-weight: 700;
+  color: $color-text;
+}
+
+.competitionBar {
+  margin-top: $spacing-3;
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+}
+
+.competitionLabel {
+  font-size: 13px;
+  color: $color-text-secondary;
+}
+
+.competitionSelect {
+  min-width: 240px;
+  height: 34px;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
+  padding: 0 10px;
+  background: $color-surface;
+  color: $color-text;
+}
+
+.tabs {
+  display: flex;
+  gap: $spacing-2;
+  margin-bottom: $spacing-3;
+}
+
+.tab {
+  background-color: $color-surface;
+  border: 1px solid $color-border;
+  padding: $spacing-2 $spacing-4;
+  border-radius: $radius-full;
+  font-weight: 600;
+  font-size: 13px;
+  color: $color-text-secondary;
+  transition: $transition-base;
+
+  &:hover {
+    background-color: $color-bg;
+  }
+}
+
+.activeTab {
+  background-color: $color-primary;
+  color: $color-surface;
+  border-color: $color-primary;
+
+  &:hover {
+    background-color: $color-primary-dark;
+  }
+}
+
+.tabContent {
+  background-color: $color-surface;
+  border-radius: $radius-md;
+  padding: $spacing-4;
+  box-shadow: $shadow-surface;
+  border: 1px solid $color-border;
+}
+
+.matchesList {
+  display: flex;
+  flex-direction: column;
+}
+
+.matchRow {
+  display: flex;
+  align-items: center;
+  padding: $spacing-2 $spacing-1;
+  border-bottom: 1px solid $color-border;
+  text-decoration: none;
+  color: inherit;
+  transition: $transition-base;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover {
+    background-color: $color-row-highlight;
+  }
+}
+
+.date {
+  width: 70px;
+  color: $color-text-secondary;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.home {
+  flex: 1;
+  text-align: right;
+  font-weight: 500;
+  font-size: 13px;
+  padding-right: $spacing-2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.away {
+  flex: 1;
+  text-align: left;
+  font-weight: 500;
+  font-size: 13px;
+  padding-left: $spacing-2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.score {
+  width: 60px;
+  text-align: center;
+  font-weight: 700;
+  color: $color-primary;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.squadList {
+  ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-1;
+  }
+}
+
+.squadPlayer {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  padding: $spacing-2;
+  background-color: $color-bg;
+  border-radius: $radius-sm;
+  font-size: 14px;
+
+  &:hover {
+    background-color: $color-muted;
+  }
+}
+
+.squadNumber {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background-color: $color-primary;
+  color: $color-surface;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
 }
 
 .empty {
-  color: #6b7280;
+  text-align: center;
+  padding: $spacing-4;
+  color: $color-text-secondary;
+}
+
+.tableContainer {
+  background-color: $color-surface;
+  border-radius: $radius-md;
+  padding: $spacing-4;
+  box-shadow: $shadow-surface;
+  border: 1px solid $color-border;
+}
+
+.tableTitle {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: $spacing-4;
+  border-bottom: 1px solid $color-border;
+  padding-bottom: $spacing-2;
+}
+
+.miniTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+
+  th {
+    text-align: left;
+    color: $color-text-secondary;
+    padding: $spacing-1 $spacing-2;
+    border-bottom: 1px solid $color-border;
+    font-size: 12px;
+  }
+
+  td {
+    padding: $spacing-2;
+    border-bottom: 1px solid $color-border;
+  }
+
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  tbody tr:hover {
+    background-color: $color-bg;
+  }
+}
+
+.highlightRow {
+  background-color: $color-row-highlight !important;
+  font-weight: 600;
+}
+
+.points {
+  font-weight: 700;
+  color: $color-primary;
+}
+
+.tableTeamLink {
+  text-decoration: none;
+  color: inherit;
+
+  &:hover {
+    color: $color-primary;
+  }
 }

@@ -1,55 +1,64 @@
-import Link from "next/link";
-
-import type { Match } from "@/models/domain";
-import styles from "./matchCard.module.scss";
+import styles from './matchCard.module.scss';
+import { Match } from '@/models/liveScore';
+import Link from 'next/link';
 
 interface MatchCardProps {
-  match: Match;
-  isHighlighted?: boolean;
-  compact?: boolean;
+  match: Match | null;
 }
 
-export default function MatchCard({
-  match,
-  isHighlighted = false,
-  compact = false,
-}: MatchCardProps) {
-  const isLive = match.status !== "FT" && match.status !== "NS";
-  const totalGoals = match.score.home + match.score.away;
-  const goalDiff = Math.abs(match.score.home - match.score.away);
+export default function MatchCard({ match }: MatchCardProps) {
+  if (!match) {
+    return <div className={styles.matchCard}>Maç bilgisi bulunamadı</div>;
+  }
+
+  const compName = match.competition?.name || '';
+  const homeName = match.home?.name || '';
+  const awayName = match.away?.name || '';
+  const homeLogo = match.home?.logo;
+  const awayLogo = match.away?.logo;
+  const score = match.scores?.score || '? - ?';
+  const htScore = match.scores?.ht_score;
+  const matchStatus = match.status || '';
+  const matchTime = match.time || '';
+  const location = match.location || '';
 
   return (
-    <article
-      className={`${styles.card} ${isHighlighted ? styles.highlight : ""} ${
-        compact ? styles.compact : ""
-      }`}
-    >
-      <div className={styles.row}>
-        <div className={styles.badges}>
-          <span className={`${styles.badge} ${isLive ? styles.live : styles.muted}`}>
-            {isLive ? "LIVE" : match.status}
-          </span>
-          <span className={`${styles.badge} ${styles.time}`}>
-            {match.elapsed}&apos;
-          </span>
-        </div>
-        <div className={styles.teams}>
-          <Link className={styles.teamLink} href={`/teams/${match.homeTeam.id}`}>
-            <span className={styles.teamName}>{match.homeTeam.name}</span>
+    <div className={styles.matchCard}>
+      <div className={styles.leagueName}>{compName}</div>
+
+      <div className={styles.teamsContainer}>
+        <div className={styles.team}>
+          <Link href={`/teams/${match.home?.id || ''}`} className={styles.teamLink}>
+            {homeLogo ? (
+              <img src={homeLogo} alt={homeName} className={styles.logo} />
+            ) : (
+              <div className={styles.logoPlaceholder}>{homeName.charAt(0)}</div>
+            )}
+            <div className={styles.teamName}>{homeName}</div>
           </Link>
-          <div className={styles.score}>
-            {match.score.home} - {match.score.away}
+        </div>
+
+        <div className={styles.scoreContainer}>
+          <div className={styles.statusBadge}>
+            {matchStatus === 'IN PLAY' ? `${matchTime}'` : matchStatus === 'FINISHED' ? 'MS' : matchStatus === 'HALF TIME BREAK' ? 'İY' : matchTime}
           </div>
-          <Link className={styles.teamLink} href={`/teams/${match.awayTeam.id}`}>
-            <span className={styles.teamName}>{match.awayTeam.name}</span>
-          </Link>
+          <div className={styles.score}>{score}</div>
+          {htScore && <div className={styles.htScore}>İY: {htScore}</div>}
         </div>
-        <div className={styles.meta}>
-          <Link className={styles.detailLink} href={`/matches/${match.id}`}>
-            Details
+
+        <div className={styles.team}>
+          <Link href={`/teams/${match.away?.id || ''}`} className={styles.teamLink}>
+            {awayLogo ? (
+              <img src={awayLogo} alt={awayName} className={styles.logo} />
+            ) : (
+              <div className={styles.logoPlaceholder}>{awayName.charAt(0)}</div>
+            )}
+            <div className={styles.teamName}>{awayName}</div>
           </Link>
         </div>
       </div>
-    </article>
+
+      {location && <div className={styles.location}>{location}</div>}
+    </div>
   );
 }

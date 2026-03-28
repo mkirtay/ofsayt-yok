@@ -1,52 +1,59 @@
-export type MatchStatus = "NS" | "1H" | "HT" | "2H" | "FT";
-
-export interface Team {
-  id: string;
-  name: string;
-  logo: string;
-}
-
-export interface MatchScore {
-  home: number;
-  away: number;
-}
-
-export interface MatchLeague {
-  country: string;
-  competition: string;
-  competitionId?: string;
-}
-
-export interface Match {
-  id: string;
-  status: MatchStatus;
-  elapsed: number;
-  league?: MatchLeague;
-  homeTeam: Team;
-  awayTeam: Team;
-  score: MatchScore;
-}
-
-export interface Event {
-  type: "goal" | "card";
-  minute: number;
-  teamId: string;
-  playerName: string;
+export interface MatchEvent {
+  id: number;
+  player: {
+    id: number;
+    name: string;
+  };
+  time: number;
+  event: string;
+  sort: number;
+  info: string | null;
+  is_home: boolean;
+  is_away: boolean;
 }
 
 export interface LineupPlayer {
+  team_id: string;
+  id: string;
   name: string;
-  number: number;
+  substitution: string; // "0" = starter, "1" = substitute
+  shirt_number: string;
+  photo?: string;
 }
 
-export interface Lineup {
-  teamId: string;
-  formation: string;
-  startXI: LineupPlayer[];
+export interface LineupTeam {
+  team: {
+    id: string;
+    name: string;
+  };
+  players: LineupPlayer[];
 }
 
-export interface MatchStat {
-  label: string;
-  home: number;
-  away: number;
+export interface MatchLineupData {
+  lineup: {
+    home: LineupTeam;
+    away: LineupTeam;
+  };
+}
+
+export interface MatchStatsData {
+  yellow_cards?: string;
+  red_cards?: string;
+  substitutions?: string | null;
+  possesion?: string;
+  free_kicks?: string | null;
+  goal_kicks?: string | null;
+  throw_ins?: string | null;
+  offsides?: string | null;
+  corners?: string | null;
+  shots_on_target?: string | null;
+  shots_off_target?: string | null;
+  attempts_on_goal?: string | null;
+  saves?: string | null;
+  fauls?: string | null;
+  treatments?: string | null;
+  penalties?: string | null;
+  shots_blocked?: string | null;
+  dangerous_attacks?: string | null;
+  attacks?: string | null;
 }

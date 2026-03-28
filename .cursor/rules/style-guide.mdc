@@ -1,0 +1,19 @@
+---
+description: Ensure UI implementations follow the project style guide
+globs: ["**/*.tsx", "**/*.scss", "**/*.css", "**/*.module.scss"]
+---
+
+# Ofsayt Yok Style Guide Enforcement
+
+When writing or editing UI components and styles, ALWAYS refer to `public/docs/style-guide.md` and use the design tokens in `src/styles/_variables.scss`.
+
+## Key Rules:
+
+- **Colors**: Use the SCSS variables from `_variables.scss` (e.g. `$color-primary-500`, `$color-bg-app`, `$color-text-primary`). Do NOT use hardcoded colors.
+- **Typography**: Follow the fonts, sizes, and weights specified. Use `Inter`.
+- **Spacing**: Use 4px-based spacing variables (e.g. `$space-1` = 4px, `$space-2` = 8px, etc.).
+- **Container**: Main layouts should be constrained to `$container-max-width` (1040px) using the `<PageContainer>` component. Match detail views use `735px + 300px` columns.
+- **Components**: 
+  - Table rows should be compact (22-24px height).
+  - Cards should have white background (`$color-bg-surface`), soft border (`$color-border-soft`), and light shadow.
+- **Responsiveness**: Design desktop-first, break to single column below 768px.

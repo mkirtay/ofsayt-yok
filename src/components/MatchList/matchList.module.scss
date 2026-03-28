@@ -1,0 +1,118 @@
+@import '../../styles/variables';
+
+.matchList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+}
+
+.group {
+  background-color: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
+  overflow: hidden;
+  box-shadow: $shadow-surface;
+}
+
+.groupHeader {
+  background-color: $color-primary;
+  padding: $spacing-2 $spacing-3;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: $color-surface;
+  letter-spacing: 0.5px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.row {
+  height: 28px;
+  border-bottom: 1px solid $color-border;
+  transition: background-color 0.15s;
+  cursor: pointer;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover {
+    background-color: $color-row-highlight;
+  }
+
+  td {
+    padding: 0 $spacing-3;
+    font-size: 13px;
+    vertical-align: middle;
+  }
+}
+
+.time {
+  width: 50px;
+  text-align: center;
+  color: $color-text-secondary;
+  font-weight: 500;
+  font-size: 12px;
+}
+
+.live {
+  color: $color-danger;
+  font-weight: 700;
+}
+
+.homeTeam {
+  text-align: right;
+  width: 38%;
+  font-weight: 500;
+  padding-right: $spacing-2 !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 0;
+}
+
+.awayTeam {
+  text-align: left;
+  width: 38%;
+  font-weight: 500;
+  padding-left: $spacing-2 !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 0;
+}
+
+.score {
+  text-align: center;
+  width: 70px;
+  padding: 0 !important;
+}
+
+.scoreLink {
+  display: inline-block;
+  background-color: $color-primary;
+  color: $color-surface;
+  padding: 2px 10px;
+  border-radius: $radius-full;
+  font-weight: 700;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  text-decoration: none;
+  min-width: 50px;
+  text-align: center;
+
+  &:hover {
+    background-color: $color-primary-dark;
+  }
+}
+
+.empty {
+  text-align: center;
+  padding: $spacing-8;
+  background: $color-surface;
+  border-radius: $radius-sm;
+  color: $color-text-secondary;
+}

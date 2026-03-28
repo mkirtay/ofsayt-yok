@@ -1,0 +1,117 @@
+@import '../../styles/variables';
+
+.container {
+  background-color: $color-surface;
+  border-radius: $radius-md;
+  padding: $spacing-4;
+  box-shadow: $shadow-surface;
+  border: 1px solid $color-border;
+}
+
+.title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: $spacing-4;
+  border-bottom: 1px solid $color-border;
+  padding-bottom: $spacing-2;
+}
+
+.empty {
+  text-align: center;
+  color: $color-text-secondary;
+  font-size: 14px;
+  padding: $spacing-3;
+}
+
+.statsList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+}
+
+.statItem {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-1;
+}
+
+.statLabels {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+}
+
+.statValue {
+  font-weight: 700;
+  color: $color-text;
+  min-width: 30px;
+
+  &:first-child {
+    text-align: left;
+  }
+
+  &:last-child {
+    text-align: right;
+  }
+}
+
+.statName {
+  color: $color-text-secondary;
+  font-size: 12px;
+}
+
+.barContainer {
+  display: flex;
+  height: 6px;
+  background-color: $color-bg;
+  border-radius: $radius-full;
+  overflow: hidden;
+}
+
+.barHome {
+  background-color: $color-primary;
+  height: 100%;
+  border-radius: $radius-full 0 0 $radius-full;
+}
+
+.barAway {
+  background-color: $color-info;
+  height: 100%;
+  border-radius: 0 $radius-full $radius-full 0;
+}
+
+.oddsContainer {
+  display: flex;
+  gap: $spacing-2;
+}
+
+.oddItem {
+  flex: 1;
+  background-color: $color-bg;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
+  padding: $spacing-2;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-1;
+  transition: $transition-base;
+
+  &:hover {
+    border-color: $color-primary;
+    background-color: $color-row-highlight;
+  }
+}
+
+.oddLabel {
+  font-size: 11px;
+  color: $color-text-secondary;
+  font-weight: 600;
+}
+
+.oddValue {
+  font-size: 15px;
+  font-weight: 700;
+  color: $color-primary;
+}

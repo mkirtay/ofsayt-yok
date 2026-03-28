@@ -1,45 +1,141 @@
-.grid {
-  display: grid;
-  gap: 1rem;
+@import '../../styles/variables';
+
+.lineupContainer {
+  background-color: $color-surface;
+  border-radius: $radius-md;
+  padding: $spacing-4;
+  box-shadow: $shadow-surface;
+  border: 1px solid $color-border;
+  margin-top: $spacing-4;
 }
 
-.card {
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 1rem;
-  background: #ffffff;
-}
-
-.header {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 0.75rem;
-}
-
-.label {
-  font-size: 0.85rem;
-  color: #6b7280;
-}
-
-.value {
-  font-weight: 700;
-}
-
-.players {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: grid;
-  gap: 0.5rem;
-}
-
-.number {
-  display: inline-flex;
-  width: 2rem;
-  font-weight: 700;
-  color: #2563eb;
+.title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: $spacing-4;
+  border-bottom: 1px solid $color-border;
+  padding-bottom: $spacing-2;
 }
 
 .empty {
-  color: #6b7280;
+  text-align: center;
+  color: $color-text-secondary;
+  padding: $spacing-4;
+}
+
+.content {
+  display: flex;
+  gap: $spacing-3;
+}
+
+.side {
+  flex: 1;
+  min-width: 0;
+}
+
+.sideTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: $color-text-secondary;
+  text-transform: uppercase;
+  margin-bottom: $spacing-3;
+  text-align: center;
+}
+
+.playerList {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-1;
+}
+
+.player {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  font-size: 13px;
+  padding: 4px $spacing-2;
+  border-radius: $radius-sm;
+  background-color: $color-bg;
+
+  &:hover {
+    background-color: $color-muted;
+  }
+}
+
+.number {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background-color: $color-primary;
+  color: $color-surface;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// CSS-only pitch representation
+.pitch {
+  flex: 0 0 180px;
+  background-color: #2d8b47;
+  border-radius: $radius-sm;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  position: relative;
+  min-height: 360px;
+}
+
+.pitchInner {
+  position: absolute;
+  inset: 0;
+}
+
+.halfLine {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background-color: rgba(255, 255, 255, 0.25);
+}
+
+.centerCircle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 50px;
+  height: 50px;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.penaltyAreaTop {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 40px;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  border-top: none;
+}
+
+.penaltyAreaBottom {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 80px;
+  height: 40px;
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  border-bottom: none;
 }

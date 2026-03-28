@@ -1,126 +1,57 @@
-export interface LiveScoreTeam {
+export interface Team {
   id: number;
   name: string;
-  logo: string;
+  logo?: string;
+  stadium?: string;
+  country_id?: number;
 }
 
-export interface LiveScoreMatch {
+export interface MatchScore {
+  score: string;
+  ht_score?: string;
+  ft_score?: string;
+  et_score?: string;
+  ps_score?: string;
+}
+
+export interface Competition {
   id: number;
-  status: "NS" | "1H" | "HT" | "2H" | "FT";
-  elapsed: number;
-  league?: {
-    country: string;
-    competition: string;
-    competitionId?: number;
-  };
-  home: LiveScoreTeam;
-  away: LiveScoreTeam;
-  score: {
-    home: number;
-    away: number;
-  };
+  name: string;
+  is_league?: boolean;
+  is_cup?: boolean;
+  tier?: number;
 }
 
-export interface LiveScoreMatchResponse {
-  matches: LiveScoreMatch[];
+export interface Match {
+  id: number;
+  status: string;
+  time: string;
+  scheduled?: string;
+  location?: string;
+  home: Team;
+  away: Team;
+  scores?: MatchScore;
+  score?: string; // Sometimes APIs return flat structure for history or others
+  competition?: Competition;
+  competition_id?: number;
+  competition_name?: string;
+  home_name?: string;
+  away_name?: string;
+  home_id?: number;
+  away_id?: number;
+  fixture_id?: number;
+  added?: string;
 }
 
-export interface LiveScoreEvent {
-  type: "goal" | "card";
-  minute: number;
-  teamId: number;
-  player: string;
-}
-
-export interface LiveScoreLineup {
-  teamId: number;
-  formation: string;
-  startXI: Array<{
-    name: string;
-    number: number;
-  }>;
-}
-
-export interface LiveScoreMatchDetailResponse {
-  matchId: number;
-  events: LiveScoreEvent[];
-  lineups: LiveScoreLineup[];
-  stats?: Array<{
-    label: string;
-    home: number;
-    away: number;
-  }>;
-}
-
-export interface LiveScoreApiLiveResponse {
+export interface ApiResponse<T> {
   success: boolean;
-  data: {
-    match: Array<{
-      country?: {
-        name: string;
-      } | null;
-      competition?: {
-        id: number;
-        name: string;
-      } | null;
-      id: number;
-      status: string;
-      time: string;
-      scores: {
-        score: string;
-      };
-      home: {
-        id: number;
-        name: string;
-        logo: string;
-      };
-      away: {
-        id: number;
-        name: string;
-        logo: string;
-      };
-    }>;
-  };
+  data: T;
 }
 
-export interface LiveScoreApiEventsResponse {
-  success: boolean;
-  data: {
-    event: Array<{
-      id: number;
-      time: number;
-      event: string;
-      is_home: boolean;
-      is_away: boolean;
-      player: {
-        id: number | null;
-        name: string | null;
-      };
-    }>;
-  };
+export interface LiveMatchData {
+  match: Match[];
 }
 
-export interface LiveScoreApiStatsResponse {
-  success: boolean;
-  data?: {
-    stats?: Array<{
-      name: string;
-      home: number | string;
-      away: number | string;
-    }>;
-  };
-}
-
-export interface LiveScoreApiLineupsResponse {
-  success: boolean;
-  data?: {
-    lineups?: Array<{
-      team_id: number;
-      formation: string;
-      players: Array<{
-        name: string;
-        number: number;
-      }>;
-    }>;
-  };
+export interface FixtureData {
+  fixtures: Match[];
 }

@@ -1,86 +1,271 @@
-import type { Match, Team } from "@/models/domain";
-import {
-  mapLiveScoreApiEvents,
-  mapLiveScoreApiLineups,
-  mapLiveScoreApiMatches,
-  mapLiveScoreApiStats,
-  mapLiveScoreMatchDetail,
-  mapLiveScoreMatches,
-  mapLiveScoreTeams,
-} from "@/services/adapters/liveScoreAdapter";
-import {
-  liveScoreMatchDetailMock,
-  liveScoreMatchesMock,
-} from "@/services/mock/liveScoreMock";
+import { liveScoreApi } from './api';
+import { ApiResponse, LiveMatchData, Match } from '../models/liveScore';
+import { MatchEvent, MatchStatsData } from '../models/domain';
+import { getLeaguePriorityGroup } from '../config/leagues';
 
-export const getLiveMatchesMock = () => mapLiveScoreMatches(liveScoreMatchesMock);
+// Endpoint: GET /matches/live.json
+export const getLiveMatches = async (): Promise<Match[]> => {
+  try {
+    const response = await liveScoreApi.get<ApiResponse<LiveMatchData>>('/matches/live');
+    if (response.data.success && response.data.data.match) {
+      return response.data.data.match;
+    }
+    return [];
+  } catch (error) {
+    console.error('Error fetching live matches', error);
+    return [];
+  }
+};
 
-export const getTeamsFromMatchesMock = () =>
-  mapLiveScoreTeams(liveScoreMatchesMock);
+// Endpoint: GET /fixtures/list.json?date=today
+export const getTodayFixtures = async (): Promise<Match[]> => {
+  try {
+    const response = await liveScoreApi.get<ApiResponse<any>>('/fixtures/list', {
+      params: { date: 'today' },
+    });
+    if (response.data.success && response.data.data.fixtures) {
+      return response.data.data.fixtures;
+    }
+    return [];
+  } catch (error) {
+    console.error('Error fetching fixtures', error);
+    return [];
+  }
+};
 
-export const getTeamsFromMatchesData = (matches: Match[]): Team[] => {
-  const teamMap = new Map<string, Team>();
-  matches.forEach((match) => {
-    teamMap.set(match.homeTeam.id, match.homeTeam);
-    teamMap.set(match.awayTeam.id, match.awayTeam);
+// Endpoint: GET /matches/history.json?from=YYYY-MM-DD&to=YYYY-MM-DD
+export const getMatchesByDate = async (date: string): Promise<Match[]> => {
+  try {
+    const response = await liveScoreApi.get(`/matches/history`, {
+      params: { from: date, to: date },
+    });
+
+    if (response.data.success && Array.isArray(response.data.data?.match)) {
+      return response.data.data.match;
+    }
+    return [];
+  } catch (error) {
+    console.error('Error fetching matches by date', error);
+    return [];
+  }
+};
+
+// Endpoint: GET /matches/events.json?match_id=X
+// Returns both match details and events
+export const getMatchWithEvents = async (
+  matchId: string
+): Promise<{ match: Match | null; events: MatchEvent[] }> => {
+  try {
+    const response = await liveScoreApi.get(`/matches/events`, {
+      params: { match_id: matchId },
+    });
+    if (response.data.success && response.data.data) {
+      const matchData = response.data.data.match || null;
+      const eventsData = response.data.data.event || [];
+      return { match: matchData, events: eventsData };
+    }
+    return { match: null, events: [] };
+  } catch (error) {
+    console.error('Error fetching match events', error);
+    return { match: null, events: [] };
+  }
+};
+
+// Endpoint: GET /matches/stats.json?match_id=X
+export const getMatchStats = async (matchId: string): Promise<MatchStatsData | null> => {
+  try {
+    const response = await liveScoreApi.get(`/matches/stats`, {
+      params: { match_id: matchId },
+    });
+    if (response.data.success && response.data.data) {
+      return response.data.data;
+    }
+    return null;
+  } catch (error) {
+    console.error('Error fetching stats', error);
+    return null;
+  }
+};
+
+// Endpoint: GET /matches/lineups.json?match_id=X
+export const getMatchLineups = async (matchId: string): Promise<any | null> => {
+  try {
+    const response = await liveScoreApi.get(`/matches/lineups`, {
+      params: { match_id: matchId },
+    });
+    if (response.data.success && response.data.data) {
+      return response.data.data;
+    }
+    return null;
+  } catch (error) {
+    console.error('Error fetching lineups', error);
+    return null;
+  }
+};
+
+// Endpoint: GET /teams/last-matches.json?team_id=X&number=10
+export const getTeamLastMatches = async (teamId: string, count = 10): Promise<Match[]> => {
+  try {
+    // `teams/last-matches.json` may be unavailable in some accounts.
+    // We fallback to history endpoint and take latest N matches.
+    const response = await liveScoreApi.get(`/matches/history`, {
+      params: { team_id: teamId, from: '2024-01-01', to: '2030-12-31' },
+    });
+    if (response.data.success && Array.isArray(response.data.data?.match)) {
+      return response.data.data.match.slice(0, count);
+    }
+    return [];
+  } catch (error) {
+    console.error('Error fetching team last matches', error);
+    return [];
+  }
+};
+
+export const getTeamCompetitions = (matches: Match[], teamId: string) => {
+  const seen = new Set<number>();
+  const list: Array<{ id: number; name: string }> = [];
+
+  matches.forEach((m) => {
+    const compId = m.competition?.id;
+    const compName = m.competition?.name;
+    const includesTeam =
+      m.home?.id?.toString() === teamId || m.away?.id?.toString() === teamId;
+
+    if (!includesTeam || !compId || !compName || seen.has(compId)) return;
+    seen.add(compId);
+    list.push({ id: compId, name: compName });
   });
-  return Array.from(teamMap.values());
+
+  return list;
 };
 
-export const getMatchDetailMock = (matchId: string) => {
-  const detail = liveScoreMatchDetailMock[Number(matchId)];
-  if (!detail) {
-    return {
-      events: [],
-      lineups: [],
-      stats: [],
-    };
-  }
-
-  return mapLiveScoreMatchDetail(detail);
-};
-
-export const getLiveMatches = async () => {
+// Endpoint: GET /competitions/squads.json?team_id=X&competition_id=Y
+export const getTeamSquads = async (teamId: string, competitionId: string): Promise<any> => {
   try {
-    const response = await fetch("/api/livescore/live");
-    if (!response.ok) {
-      throw new Error("Failed to fetch live matches");
+    const response = await liveScoreApi.get(`/competitions/squads`, {
+      params: { team_id: teamId, competition_id: competitionId },
+    });
+    if (response.data.success && response.data.data) {
+      if (Array.isArray(response.data.data) && response.data.data.length > 0) {
+        return response.data.data;
+      }
+      if (Array.isArray(response.data.data?.players)) {
+        return response.data.data.players;
+      }
     }
-    const data = await response.json();
-    if (!data.success) {
-      throw new Error(data.error ?? "API error");
+    // Fallback: rosters endpoint
+    const rosterRes = await liveScoreApi.get(`/competitions/rosters`, {
+      params: { competition_id: competitionId },
+    });
+    if (rosterRes.data.success && Array.isArray(rosterRes.data.data?.teams)) {
+      const teams = rosterRes.data.data.teams;
+      const target = teams.find((t: any) => String(t?.team?.id) === String(teamId));
+      if (Array.isArray(target?.players)) return target.players;
     }
-    return mapLiveScoreApiMatches(data);
-  } catch {
-    return getLiveMatchesMock();
+    return [];
+  } catch (error) {
+    console.error('Error fetching team squads', error);
+    return [];
   }
 };
 
-export const getTeamsFromMatches = async () => {
-  const matches = await getLiveMatches();
-  return getTeamsFromMatchesData(matches);
-};
-
-export const getMatchDetail = async (matchId: string) => {
+// Endpoint: GET /competitions/table.json?competition_id=X
+export const getLeagueTable = async (competitionId: string): Promise<any> => {
   try {
-    const [eventsResponse, lineupsResponse, statsResponse] = await Promise.all([
-      fetch(`/api/livescore/events?id=${encodeURIComponent(matchId)}`),
-      fetch(`/api/livescore/lineups?match_id=${encodeURIComponent(matchId)}`),
-      fetch(`/api/livescore/stats?match_id=${encodeURIComponent(matchId)}`),
-    ]);
+    const response = await liveScoreApi.get(`/competitions/table`, {
+      params: { competition_id: competitionId },
+    });
+    if (response.data.success && response.data.data) {
+      // Supports both old `table` shape and current `stages/groups/standings` shape
+      if (Array.isArray(response.data.data.table)) {
+        return response.data.data.table;
+      }
 
-    const [eventsData, lineupsData, statsData] = await Promise.all([
-      eventsResponse.json(),
-      lineupsResponse.json(),
-      statsResponse.json(),
-    ]);
-
-    return {
-      events: eventsData.success ? mapLiveScoreApiEvents(eventsData) : [],
-      lineups: lineupsData.success ? mapLiveScoreApiLineups(lineupsData) : [],
-      stats: statsData.success ? mapLiveScoreApiStats(statsData) : [],
-    };
-  } catch {
-    return getMatchDetailMock(matchId);
+      const stages = response.data.data.stages;
+      if (Array.isArray(stages)) {
+        const flattened = stages.flatMap((stage: any) =>
+          (stage.groups || []).flatMap((group: any) =>
+            (group.standings || []).map((standing: any) => ({
+              rank: standing.rank,
+              points: standing.points,
+              matches: standing.matches,
+              goal_diff: standing.goal_diff,
+              goals_scored: standing.goals_scored,
+              goals_conceded: standing.goals_conceded,
+              won: standing.won,
+              drawn: standing.drawn,
+              lost: standing.lost,
+              team_id: standing.team?.id,
+              name: standing.team?.name,
+              logo: standing.team?.logo,
+              group_name: group.name,
+            }))
+          )
+        );
+        return flattened;
+      }
+    }
+    return null;
+  } catch (error) {
+    console.error('Error fetching league table', error);
+    return null;
   }
+};
+
+// Endpoint: GET /competitions/topscorers.json?competition_id=X
+export const getTopScorers = async (competitionId: string): Promise<any> => {
+  try {
+    const response = await liveScoreApi.get(`/competitions/topscorers`, {
+      params: { competition_id: competitionId },
+    });
+    if (response.data.success && response.data.data) {
+      return response.data.data;
+    }
+    return [];
+  } catch (error) {
+    console.error('Error fetching top scorers', error);
+    return [];
+  }
+};
+
+// Endpoint: GET /competitions/topdisciplinary.json?competition_id=X
+export const getTopDisciplinary = async (competitionId: string): Promise<any> => {
+  try {
+    const response = await liveScoreApi.get(`/competitions/topdisciplinary`, {
+      params: { competition_id: competitionId },
+    });
+    if (response.data.success && response.data.data) {
+      return response.data.data;
+    }
+    return [];
+  } catch (error) {
+    console.error('Error fetching top disciplinary', error);
+    return [];
+  }
+};
+
+// Group matches by league with priority sorting
+export const groupMatchesByLeague = (matches: Match[]) => {
+  const grouped: Record<string, { competition_id: number; competition_name: string; matches: Match[] }> = {};
+
+  matches.forEach((match) => {
+    const compId = match.competition?.id || 0;
+    const compName = match.competition?.name || '';
+
+    if (!grouped[compId]) {
+      grouped[compId] = {
+        competition_id: compId,
+        competition_name: compName,
+        matches: [],
+      };
+    }
+    grouped[compId].matches.push(match);
+  });
+
+  return Object.values(grouped).sort((a, b) => {
+    const pA = getLeaguePriorityGroup(a.competition_id);
+    const pB = getLeaguePriorityGroup(b.competition_id);
+    if (pA !== pB) return pA - pB;
+    return (a.competition_name || '').localeCompare(b.competition_name || '');
+  });
 };

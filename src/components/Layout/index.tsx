@@ -1,29 +1,17 @@
-import type { PropsWithChildren } from "react";
+import { ReactNode } from 'react';
+import Header from '../Header';
 
-import Header from "@/components/Sidebar";
-import styles from "./layout.module.scss";
-
-interface LayoutProps extends PropsWithChildren {
-  activeNav?: "current" | "live" | "top" | "match";
-  searchValue?: string;
-  onSearchChange?: (value: string) => void;
+interface LayoutProps {
+  children: ReactNode;
 }
 
-export default function Layout({
-  children,
-  activeNav = "live",
-  searchValue,
-  onSearchChange,
-}: LayoutProps) {
+export default function Layout({ children }: LayoutProps) {
   return (
-    <div className={styles.layout}>
-      <Header
-        activeNav={activeNav}
-        searchValue={searchValue}
-        onSearchChange={onSearchChange}
-        className={styles.header}
-      />
-      <main className={styles.content}>{children}</main>
-    </div>
+    <>
+      <Header />
+      <main style={{ minHeight: 'calc(100vh - 60px)', paddingBottom: '32px' }}>
+        {children}
+      </main>
+    </>
   );
 }

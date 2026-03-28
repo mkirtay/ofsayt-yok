@@ -1,0 +1,115 @@
+@import '../../styles/variables';
+
+.loading {
+  text-align: center;
+  padding: $spacing-8;
+  color: $color-text-secondary;
+}
+
+.pageHeader {
+  margin: $spacing-4 0;
+  
+  h1 {
+    font-size: 24px;
+    font-weight: 700;
+  }
+}
+
+.tabs {
+  display: flex;
+  gap: $spacing-2;
+  margin-bottom: $spacing-4;
+}
+
+.tab {
+  background-color: $color-surface;
+  border: 1px solid $color-border;
+  padding: $spacing-2 $spacing-4;
+  border-radius: $radius-full;
+  font-weight: 600;
+  color: $color-text-secondary;
+  transition: $transition-base;
+  
+  &:hover {
+    background-color: $color-bg;
+  }
+}
+
+.activeTab {
+  background-color: $color-muted;
+  color: $color-primary-dark;
+  border-color: $color-primary;
+}
+
+.content {
+  background-color: $color-surface;
+  border-radius: $radius-md;
+  box-shadow: $shadow-surface;
+  border: 1px solid $color-border;
+  overflow-x: auto;
+}
+
+.fullTable, .statsTable {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 600px;
+  
+  th, td {
+    padding: $spacing-3;
+    text-align: center;
+    border-bottom: 1px solid $color-border;
+  }
+  
+  th {
+    background-color: $color-muted;
+    font-size: 12px;
+    text-transform: uppercase;
+    color: $color-text-secondary;
+    font-weight: 600;
+  }
+  
+  td {
+    font-size: 14px;
+  }
+
+  tbody tr {
+    transition: $transition-base;
+    &:hover {
+      background-color: $color-bg;
+    }
+  }
+
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+}
+
+.teamCol {
+  text-align: left !important;
+  width: 40%;
+}
+
+.teamLink {
+  text-decoration: none;
+  color: $color-text;
+  font-weight: 500;
+  
+  &:hover {
+    color: $color-primary;
+  }
+}
+
+.points {
+  font-weight: 700;
+  color: $color-primary;
+}
+
+.statValue {
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.empty {
+  padding: $spacing-8 !important;
+  color: $color-text-secondary;
+}
