@@ -1,0 +1,131 @@
+@import '../../styles/variables';
+
+.block {
+  margin-top: $spacing-4;
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  box-shadow: $shadow-surface;
+  overflow: hidden;
+}
+
+.title {
+  font-size: 14px;
+  font-weight: 700;
+  color: $color-text;
+  padding: $spacing-3 $spacing-3 0;
+  line-height: 1.3;
+}
+
+.season {
+  font-size: 12px;
+  color: $color-text-secondary;
+  padding: $spacing-1 $spacing-3 $spacing-2;
+  font-weight: 500;
+}
+
+.subheading {
+  font-size: 11px;
+  font-weight: 700;
+  color: $color-text-secondary;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: $spacing-2 $spacing-3 0;
+}
+
+.scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table {
+  width: 100%;
+  min-width: 280px;
+  border-collapse: collapse;
+  font-size: 11px;
+
+  th,
+  td {
+    padding: 4px 6px;
+    text-align: center;
+    border-bottom: 1px solid $color-border;
+    white-space: nowrap;
+  }
+
+  th {
+    background: $color-muted;
+    color: $color-text-secondary;
+    font-weight: 700;
+    font-size: 10px;
+  }
+
+  .colRank {
+    width: 28px;
+    padding-left: $spacing-2;
+  }
+
+  .colTeam {
+    text-align: left;
+    min-width: 100px;
+    max-width: 0;
+  }
+
+  .colPoints {
+    font-weight: 800;
+    color: $color-primary-dark;
+    padding-right: $spacing-2;
+  }
+
+  tbody tr:hover td {
+    background: $color-row-highlight;
+  }
+}
+
+.rowHighlight td {
+  background: #e8f5ec;
+
+  &:hover {
+    background: #dff3e5 !important;
+  }
+}
+
+.teamCell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.teamLogo {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.teamLink {
+  color: $color-text;
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+
+  &:hover {
+    color: $color-primary;
+  }
+}
+
+.empty {
+  padding: $spacing-4 $spacing-3;
+  text-align: center;
+  font-size: 13px;
+  color: $color-text-secondary;
+}
+
+.loading {
+  padding: $spacing-4;
+  text-align: center;
+  font-size: 13px;
+  color: $color-text-secondary;
+}

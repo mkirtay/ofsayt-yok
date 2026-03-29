@@ -68,6 +68,7 @@ export interface ApiResponse<T> {
 
 export interface LiveMatchData {
   match: Match[];
+  total_pages?: number;
 }
 
 export interface FixtureData {

@@ -1,19 +1,39 @@
 import { liveScoreApi } from './api';
 import { ApiResponse, LiveMatchData, Match } from '../models/liveScore';
 import { MatchEvent, MatchStatsData } from '../models/domain';
-import { getLeaguePriorityGroup } from '../config/leagues';
+import { compareGroupedLeagues } from '../config/leagues';
 
-// Endpoint: GET /matches/live.json
-export const getLiveMatches = async (): Promise<Match[]> => {
+export type PaginatedMatches = {
+  matches: Match[];
+  totalPages: number;
+  page: number;
+};
+
+function parseTotalPages(data: unknown): number {
+  if (data == null || typeof data !== 'object') return 1;
+  const raw = (data as { total_pages?: unknown }).total_pages;
+  const n = typeof raw === 'string' ? parseInt(raw, 10) : Number(raw);
+  return Number.isFinite(n) && n >= 1 ? n : 1;
+}
+
+// Endpoint: GET /matches/live.json?page=
+export const getLiveMatches = async (page = 1): Promise<PaginatedMatches> => {
   try {
-    const response = await liveScoreApi.get<ApiResponse<LiveMatchData>>('/matches/live');
-    if (response.data.success && response.data.data.match) {
-      return response.data.data.match;
+    const response = await liveScoreApi.get<ApiResponse<LiveMatchData>>('/matches/live', {
+      params: { page },
+    });
+    if (response.data.success && response.data.data?.match) {
+      const matches = response.data.data.match;
+      return {
+        matches,
+        totalPages: parseTotalPages(response.data.data),
+        page,
+      };
     }
-    return [];
+    return { matches: [], totalPages: 1, page };
   } catch (error) {
     console.error('Error fetching live matches', error);
-    return [];
+    return { matches: [], totalPages: 1, page };
   }
 };
 
@@ -33,20 +53,24 @@ export const getTodayFixtures = async (): Promise<Match[]> => {
   }
 };
 
-// Endpoint: GET /matches/history.json?from=YYYY-MM-DD&to=YYYY-MM-DD
-export const getMatchesByDate = async (date: string): Promise<Match[]> => {
+// Endpoint: GET /matches/history.json?from=&to=&page=
+export const getMatchesByDate = async (date: string, page = 1): Promise<PaginatedMatches> => {
   try {
     const response = await liveScoreApi.get(`/matches/history`, {
-      params: { from: date, to: date },
+      params: { from: date, to: date, page },
     });
 
     if (response.data.success && Array.isArray(response.data.data?.match)) {
-      return response.data.data.match;
+      return {
+        matches: response.data.data.match,
+        totalPages: parseTotalPages(response.data.data),
+        page,
+      };
     }
-    return [];
+    return { matches: [], totalPages: 1, page };
   } catch (error) {
     console.error('Error fetching matches by date', error);
-    return [];
+    return { matches: [], totalPages: 1, page };
   }
 };
 
@@ -214,6 +238,54 @@ export const getTeamSquads = async (teamId: string, competitionId: string): Prom
   }
 };
 
+/** `competitions/table.json` tam cevap — maç detayı puan durumu için */
+export type CompetitionTableStandingRow = {
+  rank: number;
+  points: number;
+  matches: number;
+  goal_diff: number;
+  goals_scored?: number;
+  goals_conceded?: number;
+  won: number;
+  drawn: number;
+  lost: number;
+  team?: { id: number; name: string; logo?: string };
+  team_id?: number;
+  name?: string;
+  logo?: string;
+};
+
+export type CompetitionTableData = {
+  competition?: { id: number; name: string };
+  season?: { id?: number; name?: string; start?: string; end?: string };
+  stages?: Array<{
+    stage?: { id?: number; name?: string };
+    groups?: Array<{
+      id?: number;
+      name?: string;
+      standings?: CompetitionTableStandingRow[];
+    }>;
+  }>;
+  table?: CompetitionTableStandingRow[];
+};
+
+export const getCompetitionTableFull = async (
+  competitionId: string
+): Promise<CompetitionTableData | null> => {
+  try {
+    const response = await liveScoreApi.get(`/competitions/table`, {
+      params: { competition_id: competitionId },
+    });
+    if (response.data.success && response.data.data) {
+      return response.data.data as CompetitionTableData;
+    }
+    return null;
+  } catch (error) {
+    console.error('Error fetching competition table (full)', error);
+    return null;
+  }
+};
+
 // Endpoint: GET /competitions/table.json?competition_id=X
 export const getLeagueTable = async (competitionId: string): Promise<any> => {
   try {
@@ -331,10 +403,5 @@ export const groupMatchesByLeague = (matches: Match[]): GroupedLeagueMatches[] =
     grouped[compId].matches.push(match);
   });
 
-  return Object.values(grouped).sort((a, b) => {
-    const pA = getLeaguePriorityGroup(a.competition_id);
-    const pB = getLeaguePriorityGroup(b.competition_id);
-    if (pA !== pB) return pA - pB;
-    return (a.competition_name || '').localeCompare(b.competition_name || '');
-  });
+  return Object.values(grouped).sort(compareGroupedLeagues);
 };

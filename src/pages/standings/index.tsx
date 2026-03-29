@@ -2,10 +2,12 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import Container from '@/components/Container';
 import { getLeagueTable, getTopScorers, getTopDisciplinary } from '@/services/liveScoreService';
+import { getStandingRankZone } from '@/config/standingsZones';
+import { standingsRankZoneClass } from '@/utils/standingsRankZoneUi';
 import styles from './standings.module.scss';
 
 // Default as Turkey Super Lig (id might need adjustment if different in Live Score API, using '6' for Super Lig)
-const DEFAULT_COMPETITION_ID = '6'; 
+const DEFAULT_COMPETITION_ID = '6';
 
 export default function Standings() {
   const [activeTab, setActiveTab] = useState<'table' | 'scorers' | 'cards'>('table');
@@ -84,7 +86,17 @@ export default function Standings() {
             <tbody>
               {table.length > 0 ? table.map((row: any) => (
                 <tr key={row.team_id}>
-                  <td>{row.rank}</td>
+                  <td
+                    className={`${styles.rankCell} ${standingsRankZoneClass(
+                      getStandingRankZone(
+                        Number(row.rank),
+                        table.length,
+                        Number(DEFAULT_COMPETITION_ID)
+                      )
+                    ) ?? ''}`.trim()}
+                  >
+                    {row.rank}
+                  </td>
                   <td className={styles.teamCol}>
                     <Link href={`/teams/${row.team_id}`} className={styles.teamLink}>
                       {row.name}

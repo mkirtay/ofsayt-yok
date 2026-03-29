@@ -1,25 +1,103 @@
-export const LEAGUE_PRIORITY = {
-  TURKEY: [
-    6,   // Turkey Super Lig
-    344, // Turkey 1. Lig
-  ],
-  UEFA_INTL: [
-    244, // UEFA Champions League
-    387, // UEFA EURO
-    362, // FIFA World Cup
-  ],
-  TOP_5: [
-    2, // Premier League
-    3, // La Liga
-    4, // Serie A
-    1, // Bundesliga
-    5, // Ligue 1 (assumed)
-  ],
+/**
+ * Ana sayfa lig gruplarının sırası:
+ * 1) Türkiye
+ * 2) UEFA: Şampiyonlar Ligi → Avrupa Ligi → Konferans Ligi
+ * 3) Büyük 5 (ES, EN, IT, FR, DE)
+ * 4) Diğerleri — önce ülke adı, sonra lig adı (tr sıralama)
+ */
+
+export type LeagueGroupSortInput = {
+  competition_id: number;
+  competition_name: string;
+  country_id?: number;
+  country_name?: string;
 };
 
-export const getLeaguePriorityGroup = (competitionId: number) => {
-  if (LEAGUE_PRIORITY.TURKEY.includes(competitionId)) return 1;
-  if (LEAGUE_PRIORITY.UEFA_INTL.includes(competitionId)) return 2;
-  if (LEAGUE_PRIORITY.TOP_5.includes(competitionId)) return 3;
-  return 4; // Other leagues
-};
+/** `match.country.id` — Live Score’da Türkiye çoğunlukla 17; gerekirse doğrula */
+export const TURKEY_COUNTRY_ID = 17;
+
+/** Ülke alanı yoksa yedek: bilinen Türkiye lig competition_id’leri */
+export const TURKEY_COMPETITION_IDS = [6, 344];
+
+/** Live Score `competition.id` — Postman ile doğrula */
+export const UEFA_CHAMPIONS_LEAGUE_ID = 245;
+export const UEFA_EUROPA_LEAGUE_ID = 244;
+export const UEFA_CONFERENCE_LEAGUE_ID = 446;
+
+/** Sıra: Şampiyonlar → Avrupa → Konferans */
+export const UEFA_TIER2_COMPETITION_IDS = [
+  UEFA_CHAMPIONS_LEAGUE_ID,
+  UEFA_EUROPA_LEAGUE_ID,
+  UEFA_CONFERENCE_LEAGUE_ID,
+];
+
+/**
+ * Büyük 5 — kullanıcı sırası: İspanya, İngiltere, İtalya, Fransa, Almanya
+ * La Liga, Premier League, Serie A, Ligue 1, Bundesliga
+ */
+export const BIG_FIVE_COMPETITION_ORDER = [3, 2, 4, 5, 1];
+
+function isTurkeyGroup(g: LeagueGroupSortInput): boolean {
+  if (g.country_id === TURKEY_COUNTRY_ID) return true;
+  const n = (g.country_name || '').toLowerCase();
+  if (n === 'turkey' || n === 'türkiye' || n === 'turkiye') return true;
+  return TURKEY_COMPETITION_IDS.includes(g.competition_id);
+}
+
+function turkeyLeagueOrder(competitionId: number): number {
+  const order = TURKEY_COMPETITION_IDS;
+  const i = order.indexOf(competitionId);
+  return i >= 0 ? i : 500;
+}
+
+function uefaTier2Order(competitionId: number): number {
+  const i = UEFA_TIER2_COMPETITION_IDS.indexOf(competitionId);
+  return i >= 0 ? i : 999;
+}
+
+function bigFiveOrder(competitionId: number): number {
+  const i = BIG_FIVE_COMPETITION_ORDER.indexOf(competitionId);
+  return i >= 0 ? i : 999;
+}
+
+function getTier(g: LeagueGroupSortInput): number {
+  if (isTurkeyGroup(g)) return 1;
+  if (uefaTier2Order(g.competition_id) < 999) return 2;
+  if (bigFiveOrder(g.competition_id) < 999) return 3;
+  return 4;
+}
+
+function nameCompare(a: LeagueGroupSortInput, b: LeagueGroupSortInput): number {
+  return (a.competition_name || '').localeCompare(b.competition_name || '', 'tr');
+}
+
+export function compareGroupedLeagues(a: LeagueGroupSortInput, b: LeagueGroupSortInput): number {
+  const tierA = getTier(a);
+  const tierB = getTier(b);
+  if (tierA !== tierB) return tierA - tierB;
+
+  if (tierA === 1) {
+    const oa = turkeyLeagueOrder(a.competition_id);
+    const ob = turkeyLeagueOrder(b.competition_id);
+    if (oa !== ob) return oa - ob;
+    return nameCompare(a, b);
+  }
+
+  if (tierA === 2) {
+    const oa = uefaTier2Order(a.competition_id);
+    const ob = uefaTier2Order(b.competition_id);
+    if (oa !== ob) return oa - ob;
+    return nameCompare(a, b);
+  }
+
+  if (tierA === 3) {
+    const oa = bigFiveOrder(a.competition_id);
+    const ob = bigFiveOrder(b.competition_id);
+    if (oa !== ob) return oa - ob;
+    return nameCompare(a, b);
+  }
+
+  const byCountry = (a.country_name || '').localeCompare(b.country_name || '', 'tr');
+  if (byCountry !== 0) return byCountry;
+  return nameCompare(a, b);
+}
