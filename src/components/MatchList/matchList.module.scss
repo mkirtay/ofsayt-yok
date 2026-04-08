@@ -155,7 +155,8 @@
   box-sizing: border-box;
   flex: 1 1 auto;
   min-height: 0;
-  background: linear-gradient(180deg, #e8eef6 0%, #dfe8f2 100%);
+  background: #FBFBFB;
+  border: 1px solid #ECECEC;
   padding: $spacing-2 6px;
   gap: $spacing-2;
   font-size: 12px;
@@ -171,15 +172,11 @@
   }
   font-weight: 600;
   text-transform: none;
-  color: #153d6b;
   letter-spacing: 0.01em;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border: 1px solid #c5d3e3;
-  border-bottom: none;
   border-radius: $radius-sm $radius-sm 0 0;
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 70%);
 }
 
 .virtualHeaderMain {
@@ -277,19 +274,9 @@
   }
 }
 
-.virtualMatchRowLive {
-  background-color: #fdf2f2;
-  box-shadow: inset 4px 0 0 $color-danger;
+.virtualMatchRowLive {}
 
-  &:hover {
-    background-color: #fce8e8;
-    box-shadow: inset 4px 0 0 $color-danger;
-  }
-}
-
-.virtualMatchRowHalfTime {
-  background-color: #fef5f5;
-}
+.virtualMatchRowHalfTime {}
 
 .virtualMatchRowFirst {
   border-top: none;
@@ -366,7 +353,7 @@
 }
 
 .virtualStatusLive {
-  color: $color-danger;
+  
 }
 
 .virtualStatusHt {
@@ -392,24 +379,25 @@
   }
 }
 
-.liveEmoji {
-  flex-shrink: 0;
-  line-height: 1;
-  font-size: 0.7em;
-
-  @media (min-width: $bp-sm) {
-    font-size: inherit;
-  }
-}
-
 .liveText {
+  color: #fff;
+  background-color: #00A76F;
+  padding: 10px 6px;
+  border-radius: $radius-full;
   line-height: 1.15;
   white-space: nowrap;
+  font-size: 10px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
 }
 
 /* Mobilde sadece dakika (+ 🔴); tablet+ "CANLI" */
 .liveCanliWord {
   display: none;
+  font-size: 10px;
 
   @media (min-width: $bp-sm) {
     display: inline;

@@ -5,6 +5,7 @@ import { AutoSizer } from 'react-virtualized-auto-sizer';
 import { Match } from '../../models/liveScore';
 import type { GroupedLeagueMatches } from '../../services/liveScoreService';
 import { FLAG_PROXY_PATH, countryFlagImgSrc } from '@/utils/countryFlag';
+import { utcTimeToTr } from '@/utils/dateFormat';
 import styles from './matchList.module.scss';
 
 interface MatchListProps {
@@ -33,23 +34,13 @@ const HEADER_BAR_HEIGHT = 44;
 const GROUP_GAP = 12;
 const MATCH_ROW_HEIGHT = 40;
 
-/** Tarih + planlanan saat varsa UTC olarak gösterir; aksi halde planlanan saati veya em tire. */
-function formatKickoffUtc(match: Match): string {
+function formatKickoff(match: Match): string {
   const date = match.date?.trim();
   const scheduled = match.scheduled?.trim();
   if (date && scheduled && /^\d{2}:\d{2}$/.test(scheduled)) {
-    const parsed = new Date(`${date}T${scheduled}:00Z`);
-    if (!Number.isNaN(parsed.getTime())) {
-      return (
-        parsed.toLocaleTimeString('tr-TR', {
-          hour: '2-digit',
-          minute: '2-digit',
-          timeZone: 'UTC',
-        }) + ' UTC'
-      );
-    }
+    return utcTimeToTr(scheduled, date);
   }
-  if (scheduled) return `${scheduled}`;
+  if (scheduled) return utcTimeToTr(scheduled);
   return '—';
 }
 
@@ -127,7 +118,7 @@ function VirtualRow({ index, style, items, ariaAttributes }: VirtualRowProps) {
             <span className={styles.virtualHeaderTitleBlock}>
               {item.country_name ? (
                 <>
-                  <strong className={styles.virtualHeaderCountry}>{item.country_name}</strong>
+                  <strong className={styles.virtualHeaderSep}>{item.country_name}</strong>
                   <span className={styles.virtualHeaderSep}> - </span>
                 </>
               ) : null}
@@ -146,7 +137,7 @@ function VirtualRow({ index, style, items, ariaAttributes }: VirtualRowProps) {
   const homeLogo = match.home?.logo;
   const awayLogo = match.away?.logo;
   const score = match.scores?.score || match.score || '- : -';
-  const kickoffUtc = formatKickoffUtc(match);
+  const kickoffUtc = formatKickoff(match);
   const { text: statusText, variant } = statusLabel(match);
   const isLive = variant === 'live';
   const liveMinute = isLive ? (match.time || '').replace(/'$/u, '').trim() : '';
@@ -177,18 +168,10 @@ function VirtualRow({ index, style, items, ariaAttributes }: VirtualRowProps) {
         } ${variant === 'ht' ? styles.virtualStatusHt : ''} ${variant === 'ft' ? styles.virtualStatusFt : ''}`}
       >
         {isLive ? (
-          <span
-            className={styles.liveBadge}
-            aria-label={`Canlı, ${liveMinute}. dakika`}
-          >
-            <span className={styles.liveEmoji} aria-hidden>
-              🔴
-            </span>
-            <span className={styles.liveText}>
-              <span className={styles.liveCanliWord}>CANLI </span>
-              {`${liveMinute}'`}
-            </span>
-          </span>
+          <span className={styles.liveText}>
+          <span className={styles.liveCanliWord}>CANLI </span>
+          {`${liveMinute}'`}
+        </span>
         ) : (
           statusText
         )}

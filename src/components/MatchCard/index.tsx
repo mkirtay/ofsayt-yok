@@ -3,6 +3,7 @@ import styles from './matchCard.module.scss';
 import { Match } from '@/models/liveScore';
 import Link from 'next/link';
 import { countryFlagImgSrc } from '@/utils/countryFlag';
+import { utcTimeToTr, isoDateToTr } from '@/utils/dateFormat';
 import { parseHead2HeadTeamIds, overallFormToPills, type FormPill } from '@/utils/matchForm';
 import { getTeamsHead2Head, type Head2HHistoricalMatch } from '@/services/liveScoreService';
 import StadiumIcon from '@/components/icons/StadiumIcon';
@@ -11,31 +12,26 @@ interface MatchCardProps {
   match: Match | null;
 }
 
-/** Maç detay kartı: `Tarih : 28.03.2026 22:30` (API `date` + `scheduled` / yedek `added`) */
+/** Maç detay kartı: `Tarih : 28.03.2026 01:30` (UTC+3) */
 function formatMatchCardDateTime(match: Match): string {
   const date = match.date?.trim();
   const scheduled = match.scheduled?.trim();
   if (date) {
-    const parts = date.split('-');
-    const datePart =
-      parts.length === 3 ? `${parts[2]}.${parts[1]}.${parts[0]}` : date;
+    const datePart = isoDateToTr(date);
     if (scheduled && /^\d{2}:\d{2}$/.test(scheduled)) {
-      return `Tarih : ${datePart} ${scheduled}`;
+      return `Tarih : ${datePart} ${utcTimeToTr(scheduled, date)}`;
     }
     return `Tarih : ${datePart}`;
   }
   if (scheduled) {
-    return `Tarih : ${scheduled}`;
+    return `Tarih : ${utcTimeToTr(scheduled)}`;
   }
   const added = match.added?.trim();
   if (added) {
     const [d, t] = added.split(/\s+/);
     if (d && t) {
-      const dp = d.split('-');
-      if (dp.length === 3) {
-        const hm = t.slice(0, 5);
-        return `Tarih : ${dp[2]}.${dp[1]}.${dp[0]} ${hm}`;
-      }
+      const hm = t.slice(0, 5);
+      return `Tarih : ${isoDateToTr(d)} ${utcTimeToTr(hm, d)}`;
     }
   }
   return 'Tarih : —';
@@ -299,7 +295,7 @@ export default function MatchCard({ match }: MatchCardProps) {
                 {h2hHistory.map((row) => (
                   <tr key={row.id} className={styles.h2hTr}>
                     <td>{formatTrDate(row.date)}</td>
-                    <td>{row.scheduled?.trim() || '—'}</td>
+                    <td>{row.scheduled?.trim() ? utcTimeToTr(row.scheduled.trim(), row.date) : '—'}</td>
                     <td>{h2hRowStatus(row)}</td>
                     <td className={styles.h2hTdHome}>{row.home_name || '—'}</td>
                     <td className={styles.h2hTdScore}>

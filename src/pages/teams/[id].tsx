@@ -9,6 +9,7 @@ import {
   getTeamCompetitions,
 } from '@/services/liveScoreService';
 import { Match } from '@/models/liveScore';
+import { utcTimeToTr } from '@/utils/dateFormat';
 import styles from './teamDetail.module.scss';
 
 export default function TeamDetail() {
@@ -119,7 +120,7 @@ export default function TeamDetail() {
               <div className={styles.matchesList}>
                 {lastMatches.map((match) => (
                   <Link href={`/matches/${match.id}`} key={match.id} className={styles.matchRow}>
-                    <span className={styles.date}>{match.scheduled || match.time}</span>
+                    <span className={styles.date}>{match.scheduled ? utcTimeToTr(match.scheduled, match.date) : match.time}</span>
                     <span className={styles.home}>{match.home?.name || ''}</span>
                     <span className={styles.score}>{match.scores?.score || ''}</span>
                     <span className={styles.away}>{match.away?.name || ''}</span>

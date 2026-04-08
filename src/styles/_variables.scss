@@ -1,11 +1,11 @@
-$color-primary: #18A34A;
-$color-primary-dark: #0D7A3A;
+$color-primary: #00a76f;
+$color-primary-dark: #007B55;
 $color-surface: #FFFFFF;
 $color-bg: #F4F7F4;
 $color-muted: #EDF3EE;
 $color-text: #102015;
 $color-text-secondary: #4B5F52;
-$color-border: #D8E4DA;
+$color-border: #ECECEC;
 $color-info: #0EA5E9;
 $color-warning: #F59E0B;
 $color-danger: #DC2626;
@@ -21,10 +21,10 @@ $bp-md: 768px; // tablet
 $bp-lg: 1024px; // masaüstü
 
 // Layout
-$container-width: 1040px;
-$left-col-width: 735px;
-$right-col-width: 300px;
-$gap: 5px;
+$container-width: 1240px;
+$left-col-width: 900px;
+$right-col-width: 320px;
+$gap: 20px;
 
 // Spacing
 $spacing-1: 4px;

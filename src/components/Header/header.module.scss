@@ -2,9 +2,8 @@
 
 .header {
   background-color: $color-primary;
-  color: $color-surface;
+  color: #fff;
   padding: $spacing-3 0;
-  box-shadow: $shadow-surface;
   position: sticky;
   top: 0;
   z-index: 100;
@@ -17,33 +16,21 @@
 }
 
 .logo {
-  font-size: 20px;
-  font-weight: 700;
-  
-  a {
-    color: $color-surface;
-    text-decoration: none;
-    
-    &:hover {
-      opacity: 0.9;
-    }
-  }
+  line-height: 0;
 }
 
-.nav {
-  display: flex;
-  gap: $spacing-4;
-}
-
-.navLink {
-  color: $color-surface;
+.logoLink {
+  display: inline-block;
   text-decoration: none;
-  font-weight: 500;
-  padding: $spacing-1 $spacing-2;
-  border-radius: $radius-sm;
-  transition: $transition-base;
-  
+  line-height: 0;
+
   &:hover {
-    background-color: $color-primary-dark;
+    opacity: 0.92;
   }
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
 }

@@ -1,0 +1,37 @@
+@import '../../styles/variables';
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  border-radius: $radius-sm;
+  cursor: pointer;
+  transition: $transition-base;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+
+.outline {
+  background: transparent;
+  border: 1.5px solid #fff;
+  color: #fff;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.12);
+  }
+}
+
+.filled {
+  background: #000;
+  border: 1.5px solid #000;
+  color: #fff;
+
+  &:hover {
+    background: #222;
+    border-color: #222;
+  }
+}

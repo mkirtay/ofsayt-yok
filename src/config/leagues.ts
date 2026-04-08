@@ -14,10 +14,10 @@ export type LeagueGroupSortInput = {
 };
 
 /** `match.country.id` — Live Score’da Türkiye çoğunlukla 17; gerekirse doğrula */
-export const TURKEY_COUNTRY_ID = 17;
+export const TURKEY_COUNTRY_ID = 48;
 
 /** Ülke alanı yoksa yedek: bilinen Türkiye lig competition_id’leri */
-export const TURKEY_COMPETITION_IDS = [6, 344];
+export const TURKEY_COMPETITION_IDS = [6, 344, 347];
 
 /** Live Score `competition.id` — Postman ile doğrula */
 export const UEFA_CHAMPIONS_LEAGUE_ID = 245;
@@ -32,10 +32,10 @@ export const UEFA_TIER2_COMPETITION_IDS = [
 ];
 
 /**
- * Büyük 5 — kullanıcı sırası: İspanya, İngiltere, İtalya, Fransa, Almanya
- * La Liga, Premier League, Serie A, Ligue 1, Bundesliga
+ * Büyük 5 — sıra: İngiltere, Almanya, İspanya, İtalya, Fransa
+ * Premier League, Bundesliga, La Liga, Serie A, Ligue 1
  */
-export const BIG_FIVE_COMPETITION_ORDER = [3, 2, 4, 5, 1];
+export const BIG_FIVE_COMPETITION_ORDER = [2, 1, 3, 4, 5];
 
 function isTurkeyGroup(g: LeagueGroupSortInput): boolean {
   if (g.country_id === TURKEY_COUNTRY_ID) return true;
@@ -70,6 +70,29 @@ function getTier(g: LeagueGroupSortInput): number {
 function nameCompare(a: LeagueGroupSortInput, b: LeagueGroupSortInput): number {
   return (a.competition_name || '').localeCompare(b.competition_name || '', 'tr');
 }
+
+export type SidebarLeague = {
+  id: number;
+  name: string;
+  /** country_id for flag via API proxy; null = use static logo */
+  countryId: number | null;
+  /** Static logo path (e.g. UEFA cups) */
+  logo?: string;
+};
+
+export const SIDEBAR_LEAGUES: SidebarLeague[] = [
+  { id: 6,   name: 'Trendyol Süper Lig',    countryId: 48 },
+  { id: 344, name: 'Trendyol 1. Lig',        countryId: 48 },
+  { id: 347, name: 'Türkiye Kupası',          countryId: 48 },
+  { id: 245, name: 'Şampiyonlar Ligi',        countryId: null, logo: '/images/uefa-logo.svg' },
+  { id: 244, name: 'UEFA Avrupa Ligi',        countryId: null, logo: '/images/uefa-logo.svg' },
+  { id: 446, name: 'UEFA Konferans Ligi',     countryId: null, logo: '/images/uefa-logo.svg' },
+  { id: 2,   name: 'İngiltere Premier Lig',   countryId: 19 },
+  { id: 1,   name: 'Almanya Bundesliga',      countryId: 1 },
+  { id: 3,   name: 'İspanya La Liga',         countryId: 43 },
+  { id: 4,   name: 'İtalya Serie A',          countryId: 47 },
+  { id: 5,   name: 'Fransa Ligue 1',          countryId: 21 },
+];
 
 export function compareGroupedLeagues(a: LeagueGroupSortInput, b: LeagueGroupSortInput): number {
   const tierA = getTier(a);
