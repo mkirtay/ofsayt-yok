@@ -7,15 +7,18 @@ import {
   type CompetitionTableData,
 } from '@/services/liveScoreService';
 import type { Match } from '@/models/liveScore';
+import type { NewsItem } from '@/models/domain';
 import MatchList from '@/components/MatchList';
 import MatchCompetitionStandings from '@/components/MatchCompetitionStandings';
+import NewsList from '@/components/NewsList';
 import SubHeader, { type MatchTab } from '@/components/SubHeader';
 import Container from '@/components/Container';
 import { SIDEBAR_LEAGUES } from '@/config/leagues';
 import { countryFlagImgSrc } from '@/utils/countryFlag';
+import { getNews } from '@/services/newsApi';
 import styles from './index.module.scss';
 
-type SidebarTab = 'standings' | 'leagues' | 'stats';
+type SidebarTab = 'standings' | 'leagues' | 'news';
 
 const DEFAULT_COMPETITION_ID = 6;
 
@@ -34,6 +37,9 @@ export default function Home() {
   const [selectedCompId, setSelectedCompId] = useState(DEFAULT_COMPETITION_ID);
   const [standings, setStandings] = useState<CompetitionTableData | null>(null);
   const [standingsLoading, setStandingsLoading] = useState(false);
+
+  const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
+  const [newsLoading, setNewsLoading] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -67,6 +73,19 @@ export default function Home() {
     });
     return () => { cancelled = true; };
   }, [selectedCompId]);
+
+  useEffect(() => {
+    if (sidebarTab !== 'news' || newsItems.length > 0) return;
+    let cancelled = false;
+    setNewsLoading(true);
+    getNews(15).then((items) => {
+      if (!cancelled) {
+        setNewsItems(items);
+        setNewsLoading(false);
+      }
+    });
+    return () => { cancelled = true; };
+  }, [sidebarTab, newsItems.length]);
 
   const displayMatches = useMemo(() => {
     switch (activeTab) {
@@ -129,10 +148,10 @@ export default function Home() {
                 </button>
                 <button
                   type="button"
-                  className={`${styles.sidebarTab} ${sidebarTab === 'stats' ? styles.sidebarTabActive : ''}`}
-                  onClick={() => setSidebarTab('stats')}
+                  className={`${styles.sidebarTab} ${sidebarTab === 'news' ? styles.sidebarTabActive : ''}`}
+                  onClick={() => setSidebarTab('news')}
                 >
-                  İstatistikler
+                  Haberler
                 </button>
               </nav>
 
@@ -178,10 +197,8 @@ export default function Home() {
                   </ul>
                 )}
 
-                {sidebarTab === 'stats' && (
-                  <div className={styles.empty}>
-                    İstatistikler yakın zamanda eklenecek.
-                  </div>
+                {sidebarTab === 'news' && (
+                  <NewsList items={newsItems} loading={newsLoading} />
                 )}
               </div>
             </div>

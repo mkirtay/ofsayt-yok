@@ -1,3 +1,13 @@
+export interface NewsItem {
+  id: string;
+  title: string;
+  url: string;
+  source: string;
+  publishedAt: string;
+  summary?: string;
+  image?: string;
+}
+
 export interface MatchEvent {
   id: number;
   player: {
