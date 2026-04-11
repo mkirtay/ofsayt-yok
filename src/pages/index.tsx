@@ -7,12 +7,15 @@ import {
   mergeMatchesForAllTab,
   sortGroupedMatchesForAllTab,
   getCompetitionTableFull,
+  getTopScorers,
   type CompetitionTableData,
+  type TopScorersPayload,
 } from '@/services/liveScoreService';
 import type { Match } from '@/models/liveScore';
 import type { NewsItem } from '@/models/domain';
 import MatchList from '@/components/MatchList';
 import MatchCompetitionStandings from '@/components/MatchCompetitionStandings';
+import MatchCompetitionTopScorers from '@/components/MatchCompetitionTopScorers';
 import NewsList from '@/components/NewsList';
 import SubHeader, { type MatchTab } from '@/components/SubHeader';
 import Container from '@/components/Container';
@@ -39,6 +42,8 @@ export default function Home() {
   const [selectedCompId, setSelectedCompId] = useState(DEFAULT_COMPETITION_ID);
   const [standings, setStandings] = useState<CompetitionTableData | null>(null);
   const [standingsLoading, setStandingsLoading] = useState(false);
+  const [topScorers, setTopScorers] = useState<TopScorersPayload | null>(null);
+  const [topScorersLoading, setTopScorersLoading] = useState(false);
 
   const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
   const [newsLoading, setNewsLoading] = useState(false);
@@ -71,14 +76,22 @@ export default function Home() {
 
   useEffect(() => {
     let cancelled = false;
+    const compId = String(selectedCompId);
     setStandingsLoading(true);
-    getCompetitionTableFull(String(selectedCompId)).then((data) => {
-      if (!cancelled) {
-        setStandings(data);
-        setStandingsLoading(false);
+    setTopScorersLoading(true);
+    Promise.all([getCompetitionTableFull(compId), getTopScorers(compId)]).then(
+      ([tableData, scorersData]) => {
+        if (!cancelled) {
+          setStandings(tableData);
+          setStandingsLoading(false);
+          setTopScorers(scorersData);
+          setTopScorersLoading(false);
+        }
       }
-    });
-    return () => { cancelled = true; };
+    );
+    return () => {
+      cancelled = true;
+    };
   }, [selectedCompId]);
 
   useEffect(() => {
@@ -168,11 +181,17 @@ export default function Home() {
 
               <div className={styles.sidebarContent}>
                 {sidebarTab === 'standings' && (
-                  <MatchCompetitionStandings
-                    data={standings}
-                    loading={standingsLoading}
-                    competitionName={selectedLeagueName}
-                  />
+                  <>
+                    <MatchCompetitionStandings
+                      data={standings}
+                      loading={standingsLoading}
+                      competitionName={selectedLeagueName}
+                    />
+                    <MatchCompetitionTopScorers
+                      data={topScorers}
+                      loading={topScorersLoading}
+                    />
+                  </>
                 )}
 
                 {sidebarTab === 'leagues' && (

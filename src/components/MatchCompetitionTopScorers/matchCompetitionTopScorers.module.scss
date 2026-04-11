@@ -1,0 +1,193 @@
+@import '../../styles/variables';
+
+.block {
+  margin-top: $spacing-4;
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  box-shadow: $shadow-surface;
+  overflow: hidden;
+}
+
+/* Name avoids `block` so sidebar rule does not strip this border */
+.sectionDivider {
+  border-top: 1px solid $color-border;
+  margin: 0;
+}
+
+.title {
+  font-size: 14px;
+  font-weight: 700;
+  color: $color-text;
+  line-height: 1.3;
+}
+
+.titleContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: $spacing-3;
+  border-bottom: 1px solid $color-border;
+}
+
+.season {
+  font-size: 12px;
+  color: $color-text-secondary;
+  font-weight: 500;
+}
+
+.scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table {
+  width: 100%;
+  min-width: 260px;
+  border-collapse: collapse;
+  font-size: 11px;
+
+  th,
+  td {
+    padding: 4px 6px;
+    text-align: center;
+    border-bottom: 1px solid $color-border;
+    vertical-align: middle;
+  }
+
+  th {
+    background: $color-muted;
+    color: $color-text-secondary;
+    font-weight: 700;
+    font-size: 10px;
+    white-space: nowrap;
+  }
+
+  .colRank {
+    width: 28px;
+    padding-left: $spacing-2;
+  }
+
+  .colPlayerTeam {
+    text-align: left;
+    min-width: 120px;
+    width: 100%;
+  }
+
+  .colGoals {
+    font-weight: 800;
+    color: $color-primary-dark;
+    padding-right: $spacing-2;
+  }
+
+  tbody tr:hover td {
+    background: $color-row-highlight;
+  }
+}
+
+.rankPlain {
+  font-weight: 600;
+  color: $color-text-secondary;
+}
+
+.rankBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 4px;
+  font-size: 10px;
+  font-weight: 800;
+  border-radius: 3px;
+}
+
+.rank1 {
+  background: $color-primary;
+  color: $color-surface;
+}
+
+.rank2 {
+  background: $color-warning;
+  color: $color-text;
+}
+
+.rank3 {
+  background: $color-info;
+  color: $color-surface;
+}
+
+.playerTeamCell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.nameStack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  min-width: 0;
+  flex: 1;
+}
+
+.playerPhoto {
+  width: 18px;
+  height: 18px;
+  border-radius: $radius-full;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.playerName {
+  font-weight: 600;
+  color: $color-text;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: normal;
+}
+
+.teamLogo {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  flex-shrink: 0;
+  border-radius: $radius-full;
+}
+
+.teamSubLink {
+  font-size: 10px;
+  font-weight: 600;
+  color: $color-text-secondary;
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+  line-height: normal;
+
+  &:hover {
+    color: $color-primary;
+  }
+}
+
+.teamSubText {
+  font-size: 10px;
+  font-weight: 600;
+  color: $color-text-secondary;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.empty,
+.loading {
+  padding: $spacing-4 $spacing-3;
+  text-align: center;
+  font-size: 13px;
+  color: $color-text-secondary;
+}

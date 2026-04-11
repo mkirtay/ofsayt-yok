@@ -26,7 +26,7 @@ export default function Standings() {
       ]);
       
       setTable(tableData || []);
-      setScorers(scorersData || []);
+      setScorers(scorersData?.topscorers ?? []);
       setCards(cardsData || []);
       setLoading(false);
     };

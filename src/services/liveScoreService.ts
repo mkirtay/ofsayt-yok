@@ -462,19 +462,39 @@ export const getLeagueTable = async (competitionId: string): Promise<any> => {
   }
 };
 
+/** `competitions/topscorers.json` cevabındaki `data` gövdesi */
+export type TopScorerEntry = {
+  goals: number;
+  assists?: number;
+  played?: number;
+  team?: { id?: number; name?: string; logo?: string };
+  player?: { id?: number; name?: string; photo?: string };
+};
+
+export type TopScorersPayload = {
+  competition?: { id?: number; name?: string };
+  season?: { id?: number; name?: string; start?: string; end?: string };
+  topscorers?: TopScorerEntry[];
+};
+
 // Endpoint: GET /competitions/topscorers.json?competition_id=X
-export const getTopScorers = async (competitionId: string): Promise<any> => {
+export const getTopScorers = async (
+  competitionId: string
+): Promise<TopScorersPayload | null> => {
   try {
-    const response = await liveScoreApi.get(`/competitions/topscorers`, {
-      params: { competition_id: competitionId },
-    });
+    const response = await liveScoreApi.get<{ success?: boolean; data?: TopScorersPayload }>(
+      `/competitions/topscorers`,
+      {
+        params: { competition_id: competitionId },
+      }
+    );
     if (response.data.success && response.data.data) {
       return response.data.data;
     }
-    return [];
+    return null;
   } catch (error) {
     console.error('Error fetching top scorers', error);
-    return [];
+    return null;
   }
 };
 
