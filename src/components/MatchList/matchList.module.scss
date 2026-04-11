@@ -492,3 +492,89 @@
     padding: 0 $spacing-1 !important;
   }
 }
+
+// ── World Cup (koyu tema) — yalnızca `variant="worldCup"` ile kökte `.worldCup` ==========
+
+.empty.worldCup {
+  background: #111;
+  border: 1px solid #2a2a2a;
+  color: #c4c4c4;
+}
+
+.virtualHost.worldCup {
+  border: 1px solid #2a2a2a;
+  border-radius: $radius-md;
+  background: #0a0a0a;
+  overflow: hidden;
+
+  .virtualPlaceholder {
+    background: #111;
+    border-color: #2a2a2a;
+    color: #c4c4c4;
+  }
+
+  .virtualHeaderBar {
+    background: #141414;
+    border-color: #2a2a2a;
+    color: #f0f0f0;
+  }
+
+  .virtualHeaderCountry,
+  .virtualHeaderLeagueName {
+    color: #fff;
+  }
+
+  .virtualHeaderSep {
+    color: #b0b0b0;
+    opacity: 1;
+  }
+
+  .virtualHeaderColIy {
+    color: #b0b0b0;
+  }
+
+  .virtualMatchRow {
+    background: #111;
+    border-color: #2a2a2a;
+    color: #f2f2f2;
+
+    &:hover {
+      background: #1a1a1a;
+      box-shadow: inset 3px 0 0 #fff;
+    }
+  }
+
+  .virtualMatchRowLast {
+    box-shadow: none;
+    border-bottom-color: #2a2a2a;
+  }
+
+  .virtualKickoff {
+    color: #b8b8b8;
+  }
+
+  .virtualStatus {
+    color: #c0c0c0;
+  }
+
+  .virtualStatusFt {
+    color: #d0d0d0;
+  }
+
+  .teamName {
+    color: #fff;
+  }
+
+  .scoreText {
+    color: #fff;
+  }
+
+  .virtualHt {
+    color: #b0b0b0;
+  }
+
+  .liveText {
+    background: #e11d48;
+    color: #fff;
+  }
+}

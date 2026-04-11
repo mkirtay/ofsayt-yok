@@ -8,8 +8,12 @@ import { FLAG_PROXY_PATH, countryFlagImgSrc } from '@/utils/countryFlag';
 import { utcTimeToTr } from '@/utils/dateFormat';
 import styles from './matchList.module.scss';
 
+export type MatchListVariant = 'default' | 'worldCup';
+
 interface MatchListProps {
   groupedMatches: GroupedLeagueMatches[];
+  /** `worldCup`: koyu arka plan / yüksek kontrast (World Cup sayfası) */
+  variant?: MatchListVariant;
 }
 
 type FlatItem =
@@ -226,8 +230,9 @@ function rowHeight(index: number, rowProps: { items: FlatItem[] }): number {
   return MATCH_ROW_HEIGHT;
 }
 
-export default function MatchList({ groupedMatches }: MatchListProps) {
+export default function MatchList({ groupedMatches, variant = 'default' }: MatchListProps) {
   const [mounted, setMounted] = useState(false);
+  const isWorldCup = variant === 'worldCup';
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -256,19 +261,26 @@ export default function MatchList({ groupedMatches }: MatchListProps) {
   );
 
   if (groupedMatches.length === 0) {
-    return <div className={styles.empty}>Şu an gösterilecek maç bulunmuyor.</div>;
+    return (
+      <div className={`${styles.empty} ${isWorldCup ? styles.worldCup : ''}`.trim()}>
+        Şu an gösterilecek maç bulunmuyor.
+      </div>
+    );
   }
 
   if (!mounted) {
     return (
-      <div className={styles.virtualHost} aria-busy="true">
+      <div
+        className={`${styles.virtualHost} ${isWorldCup ? styles.worldCup : ''}`.trim()}
+        aria-busy="true"
+      >
         <div className={styles.virtualPlaceholder}>Yükleniyor…</div>
       </div>
     );
   }
 
   return (
-    <div className={styles.virtualHost}>
+    <div className={`${styles.virtualHost} ${isWorldCup ? styles.worldCup : ''}`.trim()}>
       <AutoSizer
         renderProp={({ height, width }) => {
           if (height === undefined || width === undefined) {

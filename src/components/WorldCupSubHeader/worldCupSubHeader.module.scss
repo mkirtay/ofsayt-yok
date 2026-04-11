@@ -1,0 +1,45 @@
+@import '../../styles/variables';
+
+.subHeader {
+  background: #0f0f0f;
+  border-bottom: 1px solid #242424;
+}
+
+.inner {
+  display: flex;
+  align-items: center;
+  min-height: 56px;
+}
+
+.tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding: 0 $spacing-4;
+  border-radius: $radius-full;
+  border: 1px solid #303030;
+  background: #111;
+  color: #c3c3c3;
+  font-size: 13px;
+  font-weight: 600;
+  transition: $transition-base;
+
+  &:hover {
+    color: #fff;
+    border-color: #666;
+    background: #171717;
+  }
+}
+
+.tabActive {
+  border-color: #fff;
+  background: #fff;
+  color: #111;
+}
