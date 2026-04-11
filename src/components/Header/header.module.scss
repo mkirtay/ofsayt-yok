@@ -9,10 +9,21 @@
   z-index: 100;
 }
 
+.headerWorldCup {
+  background: #0a0a0a;
+  border-bottom: 1px solid #2a2a2a;
+}
+
 .headerContainer {
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+
+.left {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
 }
 
 .logo {
@@ -27,6 +38,59 @@
   &:hover {
     opacity: 0.92;
   }
+}
+
+.worldCupLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  padding: 0 $spacing-3;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: $radius-full;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  transition: $transition-base;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: #fff;
+  }
+}
+
+.headerWorldCup .worldCupLink {
+  border-color: #444;
+  color: #fff;
+
+  &:hover {
+    background: #181818;
+    border-color: #fff;
+  }
+}
+
+.worldCupMarkLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 44px;
+  border-radius: $radius-sm;
+  border: 1px solid #2d2d2d;
+  background: #101010;
+  transition: $transition-base;
+
+  &:hover {
+    border-color: #5a5a5a;
+    background: #181818;
+  }
+}
+
+.worldCupMark {
+  width: 24px;
+  height: auto;
+  object-fit: contain;
 }
 
 .actions {

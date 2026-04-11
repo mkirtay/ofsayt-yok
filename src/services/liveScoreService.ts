@@ -70,6 +70,8 @@ export function normalizeFixtureToMatch(raw: FixtureListItem): Match {
     country: raw.country,
     competition: raw.competition,
     fixture_id: raw.id,
+    group_id: raw.group_id,
+    group_name: raw.group_name,
   };
 }
 
@@ -94,6 +96,28 @@ export async function getFixturesByDate(isoDate: string): Promise<Match[]> {
 }
 
 export const getTodayFixtures = (): Promise<Match[]> => getFixturesByDate('today');
+
+// Endpoint: GET /fixtures/list.json?competition_id=362&group_id=4297
+export async function getCompetitionGroupFixtures(
+  competitionId: string,
+  groupId: number | string
+): Promise<Match[]> {
+  try {
+    const response = await liveScoreApi.get<
+      ApiResponse<{ fixtures?: FixtureListItem[] }>
+    >('/fixtures/list', {
+      params: { competition_id: competitionId, group_id: groupId },
+    });
+    const list = response.data.data?.fixtures;
+    if (response.data.success && Array.isArray(list)) {
+      return list.map((f) => normalizeFixtureToMatch(f));
+    }
+    return [];
+  } catch (error) {
+    console.error('Error fetching competition group fixtures', error);
+    return [];
+  }
+}
 
 export function isLiveMatchOnSelectedDate(m: Match, selectedDate: string): boolean {
   const d = m.date?.trim();
@@ -402,12 +426,29 @@ export type CompetitionTableData = {
   table?: CompetitionTableStandingRow[];
 };
 
+export type CompetitionGroupItem = {
+  id: number;
+  name: string;
+  stage?: string;
+};
+
+type CompetitionTableQuery = {
+  group_id?: number | string;
+};
+
 export const getCompetitionTableFull = async (
-  competitionId: string
+  competitionId: string,
+  query?: CompetitionTableQuery
 ): Promise<CompetitionTableData | null> => {
   try {
+    const params: Record<string, string | number> = {
+      competition_id: competitionId,
+    };
+    if (query?.group_id != null && query.group_id !== '') {
+      params.group_id = query.group_id;
+    }
     const response = await liveScoreApi.get(`/competitions/table`, {
-      params: { competition_id: competitionId },
+      params,
     });
     if (response.data.success && response.data.data) {
       return response.data.data as CompetitionTableData;
@@ -416,6 +457,26 @@ export const getCompetitionTableFull = async (
   } catch (error) {
     console.error('Error fetching competition table (full)', error);
     return null;
+  }
+};
+
+export const getCompetitionGroups = async (
+  competitionId: string
+): Promise<CompetitionGroupItem[]> => {
+  try {
+    const response = await liveScoreApi.get<{
+      success?: boolean;
+      data?: CompetitionGroupItem[];
+    }>(`/competitions/groups`, {
+      params: { competition_id: competitionId },
+    });
+    if (response.data.success && Array.isArray(response.data.data)) {
+      return response.data.data;
+    }
+    return [];
+  } catch (error) {
+    console.error('Error fetching competition groups', error);
+    return [];
   }
 };
 

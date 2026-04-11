@@ -1,0 +1,108 @@
+@import '../../styles/variables';
+
+.card {
+  background: #111;
+  border: 1px solid #2c2c2c;
+  border-radius: $radius-md;
+  box-shadow: none;
+  overflow: hidden;
+}
+
+.header {
+  padding: $spacing-3 $spacing-4;
+  border-bottom: 1px solid #2a2a2a;
+}
+
+.title {
+  font-size: 22px;
+  line-height: 28px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.tableWrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table {
+  width: 100%;
+  min-width: 700px;
+  border-collapse: collapse;
+  font-size: 13px;
+
+  th,
+  td {
+    height: 24px;
+    padding: 8px 6px;
+    border-bottom: 1px solid #252525;
+    text-align: center;
+    white-space: nowrap;
+    color: #f2f2f2;
+  }
+
+  thead th {
+    background: #111;
+    color: #b7b7b7;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+}
+
+.colRank {
+  width: 34px;
+}
+
+.colTeam {
+  min-width: 190px;
+  text-align: left !important;
+}
+
+.teamCell {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  min-width: 0;
+}
+
+.teamLogo {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.teamLink,
+.teamName {
+  color: #fff;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.teamLink:hover {
+  color: #d8d8d8;
+}
+
+.points {
+  font-weight: 700;
+}
+
+.colForm {
+  min-width: 76px;
+}
+
+.form {
+  color: #9c9c9c;
+  letter-spacing: 0.08em;
+}
+
+.empty {
+  text-align: center;
+  color: #b6b6b6;
+  padding: $spacing-4;
+}

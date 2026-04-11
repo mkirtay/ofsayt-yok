@@ -57,6 +57,8 @@ export interface Match {
   home_id?: number;
   away_id?: number;
   fixture_id?: number;
+  group_id?: number;
+  group_name?: string;
   added?: string;
   urls?: MatchUrls;
 }
@@ -81,6 +83,7 @@ export interface FixtureListItem {
   time?: string;
   date?: string;
   group_id?: number;
+  group_name?: string;
   competition?: Competition;
   home?: Team;
   away?: Team;
