@@ -55,6 +55,9 @@ function statusLabel(match: Match): { text: string; variant: 'live' | 'ht' | 'ft
   if (status === 'FINISHED') {
     return { text: 'MS', variant: 'ft' };
   }
+  if (status === 'NOT STARTED' || status === 'SCHEDULED') {
+    return { text: '', variant: 'scheduled' };
+  }
   return { text: time || '', variant: 'scheduled' };
 }
 
@@ -136,9 +139,11 @@ function VirtualRow({ index, style, items, ariaAttributes }: VirtualRowProps) {
   const awayName = match.away?.name || '';
   const homeLogo = match.home?.logo;
   const awayLogo = match.away?.logo;
-  const score = match.scores?.score || match.score || '- : -';
   const kickoffUtc = formatKickoff(match);
   const { text: statusText, variant } = statusLabel(match);
+  const scoreRaw = match.scores?.score || match.score;
+  const score =
+    variant === 'scheduled' && !scoreRaw?.trim() ? '—' : scoreRaw?.trim() || '- : -';
   const isLive = variant === 'live';
   const liveMinute = isLive ? (match.time || '').replace(/'$/u, '').trim() : '';
   const htDisplay = normalizeHt(match.scores?.ht_score);
@@ -277,7 +282,7 @@ export default function MatchList({ groupedMatches }: MatchListProps) {
               rowProps={rowProps}
               rowComponent={VirtualRow}
               overscanCount={10}
-              style={listStyle(height, width)}
+              style={listStyle(700, width)}
             />
           );
         }}

@@ -1,8 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  getLiveMatches,
-  getMatchesByDate,
+  getAllLiveMatches,
+  getAllMatchesByDate,
+  getFixturesByDate,
   groupMatchesByLeague,
+  mergeMatchesForAllTab,
+  sortGroupedMatchesForAllTab,
   getCompetitionTableFull,
   type CompetitionTableData,
 } from '@/services/liveScoreService';
@@ -27,11 +30,10 @@ const today = () => new Date().toISOString().slice(0, 10);
 export default function Home() {
   const [allMatches, setAllMatches] = useState<Match[]>([]);
   const [liveMatches, setLiveMatches] = useState<Match[]>([]);
+  const [fixtureMatches, setFixtureMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<string>(today);
   const [activeTab, setActiveTab] = useState<MatchTab>('all');
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
 
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>('leagues');
   const [selectedCompId, setSelectedCompId] = useState(DEFAULT_COMPETITION_ID);
@@ -43,24 +45,29 @@ export default function Home() {
 
   const fetchData = useCallback(async () => {
     setLoading(true);
-    const [dateRes, liveRes] = await Promise.all([
-      getMatchesByDate(selectedDate, page),
-      getLiveMatches(page),
+    const [historyAll, liveAll, fixtures] = await Promise.all([
+      getAllMatchesByDate(selectedDate),
+      getAllLiveMatches(),
+      getFixturesByDate(selectedDate),
     ]);
-    setAllMatches(dateRes.matches);
-    setTotalPages(dateRes.totalPages);
-    setLiveMatches(liveRes.matches);
+    setAllMatches(historyAll);
+    setLiveMatches(liveAll);
+    setFixtureMatches(fixtures);
     setLoading(false);
-  }, [selectedDate, page]);
+  }, [selectedDate]);
 
   useEffect(() => {
     fetchData();
     const interval = setInterval(async () => {
-      const liveRes = await getLiveMatches(page);
-      setLiveMatches(liveRes.matches);
+      const [liveAll, fixtures] = await Promise.all([
+        getAllLiveMatches(),
+        getFixturesByDate(selectedDate),
+      ]);
+      setLiveMatches(liveAll);
+      setFixtureMatches(fixtures);
     }, 30_000);
     return () => clearInterval(interval);
-  }, [fetchData, page]);
+  }, [fetchData, selectedDate]);
 
   useEffect(() => {
     let cancelled = false;
@@ -99,14 +106,19 @@ export default function Home() {
         return [];
       case 'all':
       default:
-        return allMatches;
+        return mergeMatchesForAllTab({
+          selectedDate,
+          historyPageMatches: allMatches,
+          liveMatches,
+          fixtures: fixtureMatches,
+        });
     }
-  }, [activeTab, allMatches, liveMatches]);
+  }, [activeTab, allMatches, liveMatches, fixtureMatches, selectedDate]);
 
-  const grouped = useMemo(() => groupMatchesByLeague(displayMatches), [displayMatches]);
-
-  const canPrev = page > 1;
-  const canNext = page < totalPages;
+  const grouped = useMemo(() => {
+    const raw = groupMatchesByLeague(displayMatches);
+    return activeTab === 'all' ? sortGroupedMatchesForAllTab(raw) : raw;
+  }, [activeTab, displayMatches]);
 
   const selectedLeagueName =
     SIDEBAR_LEAGUES.find((l) => l.id === selectedCompId)?.name ?? 'Lig';
@@ -122,7 +134,6 @@ export default function Home() {
         selectedDate={selectedDate}
         onDateChange={(d) => {
           setSelectedDate(d);
-          setPage(1);
         }}
         activeTab={activeTab}
         onTabChange={setActiveTab}
@@ -213,29 +224,6 @@ export default function Home() {
             ) : (
               <>
                 <MatchList groupedMatches={grouped} />
-                {totalPages > 1 && (
-                  <nav className={styles.pagination} aria-label="Sayfa">
-                    <button
-                      type="button"
-                      className={styles.pageBtn}
-                      disabled={!canPrev}
-                      onClick={() => setPage((p) => Math.max(1, p - 1))}
-                    >
-                      Önceki
-                    </button>
-                    <span className={styles.pageInfo}>
-                      {page} / {totalPages}
-                    </span>
-                    <button
-                      type="button"
-                      className={styles.pageBtn}
-                      disabled={!canNext}
-                      onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                    >
-                      Sonraki
-                    </button>
-                  </nav>
-                )}
               </>
             )}
           </div>

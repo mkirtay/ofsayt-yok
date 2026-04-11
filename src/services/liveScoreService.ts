@@ -1,5 +1,10 @@
 import { liveScoreApi } from './api';
-import { ApiResponse, LiveMatchData, Match } from '../models/liveScore';
+import {
+  ApiResponse,
+  FixtureListItem,
+  LiveMatchData,
+  Match,
+} from '../models/liveScore';
 import { MatchEvent, MatchStatsData } from '../models/domain';
 import { compareGroupedLeagues } from '../config/leagues';
 
@@ -37,21 +42,112 @@ export const getLiveMatches = async (page = 1): Promise<PaginatedMatches> => {
   }
 };
 
-// Endpoint: GET /fixtures/list.json?date=today
-export const getTodayFixtures = async (): Promise<Match[]> => {
+function todayIsoUtc(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+/** `fixtures/list` zamanını `utcTimeToTr` ile uyumlu "HH:MM" (UTC varsayımı) yapar */
+function fixtureTimeToScheduledHm(raw?: string): string | undefined {
+  if (!raw?.trim()) return undefined;
+  const t = raw.trim();
+  const m = /^(\d{2}):(\d{2})/.exec(t);
+  return m ? `${m[1]}:${m[2]}` : undefined;
+}
+
+export function normalizeFixtureToMatch(raw: FixtureListItem): Match {
+  const home = raw.home ?? { id: 0, name: '' };
+  const away = raw.away ?? { id: 0, name: '' };
+  const scheduled = fixtureTimeToScheduledHm(raw.time);
+  return {
+    id: raw.id,
+    status: 'NOT STARTED',
+    time: '',
+    date: raw.date,
+    scheduled,
+    location: raw.location,
+    home,
+    away,
+    country: raw.country,
+    competition: raw.competition,
+    fixture_id: raw.id,
+  };
+}
+
+// Endpoint: GET /fixtures/list.json?date=YYYY-MM-DD veya today
+export async function getFixturesByDate(isoDate: string): Promise<Match[]> {
   try {
-    const response = await liveScoreApi.get<ApiResponse<any>>('/fixtures/list', {
-      params: { date: 'today' },
+    const dateParam = isoDate === todayIsoUtc() ? 'today' : isoDate;
+    const response = await liveScoreApi.get<
+      ApiResponse<{ fixtures?: FixtureListItem[] }>
+    >('/fixtures/list', {
+      params: { date: dateParam },
     });
-    if (response.data.success && response.data.data.fixtures) {
-      return response.data.data.fixtures;
+    const list = response.data.data?.fixtures;
+    if (response.data.success && Array.isArray(list)) {
+      return list.map((f) => normalizeFixtureToMatch(f));
     }
     return [];
   } catch (error) {
     console.error('Error fetching fixtures', error);
     return [];
   }
+}
+
+export const getTodayFixtures = (): Promise<Match[]> => getFixturesByDate('today');
+
+export function isLiveMatchOnSelectedDate(m: Match, selectedDate: string): boolean {
+  const d = m.date?.trim();
+  if (d) return d === selectedDate;
+  return selectedDate === todayIsoUtc();
+}
+
+export type MergeMatchesForAllTabInput = {
+  selectedDate: string;
+  historyPageMatches: Match[];
+  liveMatches: Match[];
+  fixtures: Match[];
 };
+
+/** Aynı id: fikstür < history < live (live en güncel); çıktı id ile tekilleştirilir */
+export function mergeMatchesForAllTab(input: MergeMatchesForAllTabInput): Match[] {
+  const { selectedDate, historyPageMatches, liveMatches, fixtures } = input;
+  const liveOnDay = liveMatches.filter((m) => isLiveMatchOnSelectedDate(m, selectedDate));
+  const map = new Map<number, Match>();
+  for (const f of fixtures) {
+    const id = Number(f.id);
+    if (Number.isFinite(id)) map.set(id, f);
+  }
+  for (const h of historyPageMatches) {
+    const id = Number(h.id);
+    if (Number.isFinite(id)) map.set(id, h);
+  }
+  for (const l of liveOnDay) {
+    const id = Number(l.id);
+    if (Number.isFinite(id)) map.set(id, l);
+  }
+  return dedupeMatchesById(Array.from(map.values()));
+}
+
+function allTabStatusRank(m: Match): number {
+  if (m.status === 'IN PLAY') return 0;
+  if (m.status === 'HALF TIME BREAK') return 1;
+  if (m.status === 'NOT STARTED') return 2;
+  if (m.status === 'FINISHED') return 3;
+  return 4;
+}
+
+function kickoffSortKey(m: Match): string {
+  const s = (m.scheduled ?? m.time ?? '').trim();
+  const hm = /^\d{2}:\d{2}/.exec(s)?.[0];
+  return hm ?? '99:99';
+}
+
+function compareMatchesForAllTab(a: Match, b: Match): number {
+  const ra = allTabStatusRank(a);
+  const rb = allTabStatusRank(b);
+  if (ra !== rb) return ra - rb;
+  return kickoffSortKey(a).localeCompare(kickoffSortKey(b));
+}
 
 // Endpoint: GET /matches/history.json?from=&to=&page=
 export const getMatchesByDate = async (date: string, page = 1): Promise<PaginatedMatches> => {
@@ -73,6 +169,43 @@ export const getMatchesByDate = async (date: string, page = 1): Promise<Paginate
     return { matches: [], totalPages: 1, page };
   }
 };
+
+/** API sayfaları arasında aynı maç tekrarlanabiliyor — tekilleştir */
+export function dedupeMatchesById(matches: Match[]): Match[] {
+  const map = new Map<number, Match>();
+  for (const m of matches) {
+    const id = Number(m.id);
+    if (!Number.isFinite(id)) continue;
+    map.set(id, m);
+  }
+  return Array.from(map.values());
+}
+
+/** Seçilen günün tüm history sayfalarını çeker (Hepsi / lig grupları için) */
+export async function getAllMatchesByDate(date: string): Promise<Match[]> {
+  const first = await getMatchesByDate(date, 1);
+  const { totalPages, matches: firstMatches } = first;
+  if (totalPages <= 1) return dedupeMatchesById(firstMatches);
+
+  const rest = await Promise.all(
+    Array.from({ length: totalPages - 1 }, (_, i) => getMatchesByDate(date, i + 2))
+  );
+  const combined = [...firstMatches, ...rest.flatMap((r) => r.matches)];
+  return dedupeMatchesById(combined);
+}
+
+/** Tüm canlı sayfaları — history pagination ile aynı `page` kullanılmamalı */
+export async function getAllLiveMatches(): Promise<Match[]> {
+  const first = await getLiveMatches(1);
+  const { totalPages, matches: firstMatches } = first;
+  if (totalPages <= 1) return dedupeMatchesById(firstMatches);
+
+  const rest = await Promise.all(
+    Array.from({ length: totalPages - 1 }, (_, i) => getLiveMatches(i + 2))
+  );
+  const combined = [...firstMatches, ...rest.flatMap((r) => r.matches)];
+  return dedupeMatchesById(combined);
+}
 
 export interface Head2HeadTeamBrief {
   id: string;
@@ -405,3 +538,12 @@ export const groupMatchesByLeague = (matches: Match[]): GroupedLeagueMatches[] =
 
   return Object.values(grouped).sort(compareGroupedLeagues);
 };
+
+export function sortGroupedMatchesForAllTab(
+  groups: GroupedLeagueMatches[]
+): GroupedLeagueMatches[] {
+  return groups.map((g) => ({
+    ...g,
+    matches: [...g.matches].sort(compareMatchesForAllTab),
+  }));
+}

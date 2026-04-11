@@ -74,3 +74,17 @@ export interface LiveMatchData {
 export interface FixtureData {
   fixtures: Match[];
 }
+
+/** `fixtures/list.json` satırı — `Match` ile birebir değil */
+export interface FixtureListItem {
+  id: number;
+  time?: string;
+  date?: string;
+  group_id?: number;
+  competition?: Competition;
+  home?: Team;
+  away?: Team;
+  country?: MatchCountry;
+  location?: string;
+  round?: string;
+}
