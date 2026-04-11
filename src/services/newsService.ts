@@ -37,15 +37,20 @@ function extractImage(item: Record<string, any>): string | undefined {
 async function fetchSource(source: NewsSource): Promise<NewsItem[]> {
   try {
     const feed = await parser.parseURL(source.rssUrl);
-    return (feed.items || []).map((item) => ({
-      id: hashId(source.id, item.link || item.guid || item.title || ''),
-      title: item.title?.trim() || '',
-      url: item.link || '',
-      source: source.name,
-      publishedAt: item.isoDate || item.pubDate || new Date().toISOString(),
-      summary: stripHtml(item.contentSnippet || item.content)?.slice(0, 280),
-      image: extractImage(item),
-    }));
+    return (feed.items || []).map((item) => {
+      const rawContent = (item as any)['content:encoded'] || item.content || '';
+      const fullText = stripHtml(rawContent);
+      return {
+        id: hashId(source.id, item.link || item.guid || item.title || ''),
+        title: item.title?.trim() || '',
+        url: item.link || '',
+        source: source.name,
+        publishedAt: item.isoDate || item.pubDate || new Date().toISOString(),
+        summary: stripHtml(item.contentSnippet || item.content)?.slice(0, 280),
+        content: fullText || undefined,
+        image: extractImage(item),
+      };
+    });
   } catch {
     return [];
   }

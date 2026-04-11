@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import type { NewsItem } from '@/models/domain';
 import styles from './newsList.module.scss';
 
@@ -30,12 +31,7 @@ export default function NewsList({ items, loading }: Props) {
     <ul className={styles.list}>
       {items.map((item) => (
         <li key={item.id} className={styles.item}>
-          <a
-            href={item.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.link}
-          >
+          <Link href={`/news/${item.id}`} className={styles.link}>
             {item.image && (
               <img
                 src={item.image}
@@ -52,7 +48,7 @@ export default function NewsList({ items, loading }: Props) {
                 <time className={styles.time}>{timeAgo(item.publishedAt)}</time>
               </div>
             </div>
-          </a>
+          </Link>
         </li>
       ))}
     </ul>

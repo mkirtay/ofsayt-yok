@@ -5,6 +5,7 @@ export interface NewsItem {
   source: string;
   publishedAt: string;
   summary?: string;
+  content?: string;
   image?: string;
 }
 

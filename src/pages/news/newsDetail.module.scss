@@ -1,0 +1,157 @@
+@import '../../styles/variables';
+
+.loading {
+  text-align: center;
+  padding: $spacing-8;
+  color: $color-text-secondary;
+  font-size: 16px;
+}
+
+.notFound {
+  text-align: center;
+  padding: $spacing-8 $spacing-4;
+  color: $color-text-secondary;
+
+  h2 {
+    font-size: 20px;
+    color: $color-text;
+    margin-bottom: $spacing-2;
+  }
+
+  p {
+    font-size: 14px;
+    margin-bottom: $spacing-4;
+  }
+}
+
+.backLink {
+  display: inline-block;
+  padding: $spacing-2 $spacing-4;
+  font-size: 13px;
+  font-weight: 600;
+  color: $color-surface;
+  background: $color-primary;
+  border-radius: $radius-sm;
+  text-decoration: none;
+  transition: $transition-base;
+
+  &:hover {
+    background: $color-primary-dark;
+  }
+}
+
+// ── Article ──
+
+.article {
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  overflow: hidden;
+}
+
+.header {
+  padding: $spacing-5 $spacing-5 $spacing-3;
+}
+
+.title {
+  margin: 0 0 $spacing-3;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: $color-text;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: $spacing-1;
+  font-size: 13px;
+  color: $color-text-secondary;
+}
+
+.source {
+  font-weight: 600;
+  color: $color-primary;
+}
+
+.dot {
+  opacity: 0.5;
+}
+
+.date {
+  white-space: nowrap;
+}
+
+// ── Hero image ──
+
+.hero {
+  width: 100%;
+  max-height: 420px;
+  overflow: hidden;
+}
+
+.heroImg {
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+  display: block;
+}
+
+// ── Body ──
+
+.body {
+  padding: $spacing-5;
+  font-size: 15px;
+  line-height: 1.75;
+  color: $color-text;
+
+  p {
+    margin: 0 0 $spacing-4;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+}
+
+// ── Footer ──
+
+.footer {
+  padding: $spacing-3 $spacing-5 $spacing-5;
+  border-top: 1px solid $color-border;
+}
+
+.sourceLink {
+  display: inline-block;
+  padding: $spacing-2 $spacing-4;
+  font-size: 13px;
+  font-weight: 600;
+  color: $color-primary;
+  border: 1px solid $color-primary;
+  border-radius: $radius-sm;
+  text-decoration: none;
+  transition: $transition-base;
+
+  &:hover {
+    background: $color-primary;
+    color: $color-surface;
+  }
+}
+
+// ── Sidebar ──
+
+.sidebar {
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  overflow: hidden;
+}
+
+.sidebarTitle {
+  padding: $spacing-3 $spacing-4;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: $color-text;
+  border-bottom: 1px solid $color-border;
+}
