@@ -110,12 +110,23 @@ function StandingsTable({
   );
 }
 
+export type MatchCompetitionStandingsVariant = "default" | "worldCup";
+
 interface MatchCompetitionStandingsProps {
   data: CompetitionTableData | null;
   loading?: boolean;
   competitionName?: string;
   homeTeamId?: number;
   awayTeamId?: number;
+  /** `worldCup`: koyu arka plan (yalnızca World Cup sayfası) */
+  variant?: MatchCompetitionStandingsVariant;
+}
+
+function blockClass(variant: MatchCompetitionStandingsVariant): string {
+  if (variant === "worldCup") {
+    return `${styles.block} ${styles.blockWorldCup}`.trim();
+  }
+  return styles.block;
 }
 
 export default function MatchCompetitionStandings({
@@ -124,10 +135,11 @@ export default function MatchCompetitionStandings({
   competitionName,
   homeTeamId,
   awayTeamId,
+  variant = "default",
 }: MatchCompetitionStandingsProps) {
   if (loading) {
     return (
-      <div className={styles.block}>
+      <div className={blockClass(variant)}>
         <div className={styles.loading}>Puan durumu yükleniyor…</div>
       </div>
     );
@@ -135,7 +147,7 @@ export default function MatchCompetitionStandings({
 
   if (!data) {
     return (
-      <section className={styles.block} aria-label="Lig puan durumu">
+      <section className={blockClass(variant)} aria-label="Lig puan durumu">
         <h2 className={styles.title}>{competitionName || "Lig"}</h2>
         <p className={styles.empty}>Puan tablosu bulunamadı.</p>
       </section>
@@ -154,7 +166,7 @@ export default function MatchCompetitionStandings({
     (legacyTable?.length ?? 0) > 0 || Boolean(hasStageStandings);
 
   return (
-    <section className={styles.block} aria-label="Lig puan durumu">
+    <section className={blockClass(variant)} aria-label="Lig puan durumu">
       <div className={styles.titleContainer}>
         <h2 className={styles.title}>{compName}</h2>
         {season?.name ? (

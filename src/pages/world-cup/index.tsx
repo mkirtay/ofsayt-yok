@@ -220,6 +220,7 @@ export default function WorldCupPage() {
                 data={selectedGroupTable}
                 loading={selectedGroupLoading}
                 competitionName={`FIFA World Cup - Group ${selectedGroupName}`}
+                variant="worldCup"
               />
             ) : null}
 
