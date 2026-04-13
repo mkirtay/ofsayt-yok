@@ -276,6 +276,17 @@ export const getTeamsHead2Head = async (
   }
 };
 
+function mergeMatchRefereeFromPayload(match: Match | null): Match | null {
+  if (!match) return null;
+  if (typeof match.referee === 'string' && match.referee.trim()) return match;
+  const raw = match as unknown as Record<string, unknown>;
+  const alt =
+    (typeof raw.referee_name === 'string' && raw.referee_name.trim()) ||
+    (typeof raw.official === 'string' && raw.official.trim()) ||
+    '';
+  return alt ? { ...match, referee: alt } : match;
+}
+
 // Endpoint: GET /matches/events.json?match_id=X
 // Returns both match details and events
 export const getMatchWithEvents = async (
@@ -286,7 +297,7 @@ export const getMatchWithEvents = async (
       params: { match_id: matchId },
     });
     if (response.data.success && response.data.data) {
-      const matchData = response.data.data.match || null;
+      const matchData = mergeMatchRefereeFromPayload(response.data.data.match || null);
       const eventsData = response.data.data.event || [];
       return { match: matchData, events: eventsData };
     }

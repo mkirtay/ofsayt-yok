@@ -7,6 +7,7 @@ import { utcTimeToTr, isoDateToTr } from '@/utils/dateFormat';
 import { parseHead2HeadTeamIds, overallFormToPills, type FormPill } from '@/utils/matchForm';
 import { getTeamsHead2Head, type Head2HHistoricalMatch } from '@/services/liveScoreService';
 import StadiumIcon from '@/components/icons/StadiumIcon';
+import WhistleIcon from '@/components/icons/WhistleIcon';
 
 interface MatchCardProps {
   match: Match | null;
@@ -52,6 +53,28 @@ function h2hRowStatus(row: Head2HHistoricalMatch): string {
 function compactHt(ht: string | undefined): string {
   if (!ht?.trim()) return '—';
   return ht.replace(/\s*-\s*/g, '-').replace(/\s+/g, '');
+}
+
+function formatHtScoreDisplay(ht: string | undefined): string {
+  if (!ht?.trim()) return '';
+  return ht.trim().replace(/\s*-\s*/g, ' - ');
+}
+
+/** Skor dizgesini ev / deplasman olarak ayırır (örn. `1 - 2`, `? - ?`). */
+function parseDisplayScore(raw: string): { home: string; away: string } {
+  const s = raw.trim();
+  const m = s.match(/^(.+?)\s*[-–—]\s*(.+)$/);
+  if (m) return { home: m[1].trim(), away: m[2].trim() };
+  return { home: s || '—', away: '' };
+}
+
+/** Yeşil rozet metni; devre arasında `İY` tekrarlanmaz (yalnızca dakika veya yok). */
+function minuteBadgeLabel(status: string, time: string): string | null {
+  const t = time.trim();
+  if (status === 'IN PLAY') return t ? `${t}'` : null;
+  if (status === 'FINISHED') return 'MS';
+  if (status === 'HALF TIME BREAK') return t ? `${t}'` : null;
+  return null;
 }
 
 function FormPillBox({ pill }: { pill: FormPill }) {
@@ -133,19 +156,18 @@ export default function MatchCard({ match }: MatchCardProps) {
   const homeLogo = match.home?.logo;
   const awayLogo = match.away?.logo;
   const score = match.scores?.score || '? - ?';
+  const { home: scoreHome, away: scoreAway } = parseDisplayScore(score);
   const htScore = match.scores?.ht_score;
   const matchStatus = match.status || '';
   const matchTime = match.time || '';
   const location = match.location || '';
+  const refereeName = match.referee?.trim() || '';
 
-  const statusLabel =
-    matchStatus === 'IN PLAY'
-      ? `${matchTime}'`
-      : matchStatus === 'FINISHED'
-        ? 'MS'
-        : matchStatus === 'HALF TIME BREAK'
-          ? 'İY'
-          : matchTime;
+  const htTrimmed = htScore?.trim() ?? '';
+  const showIyBadge = Boolean(htTrimmed) || matchStatus === 'HALF TIME BREAK';
+  const minuteBadgeText = minuteBadgeLabel(matchStatus, matchTime);
+  const showScoreMeta = showIyBadge || Boolean(minuteBadgeText);
+  const showMatchFooter = Boolean(location.trim() || refereeName);
 
   const showFormRow = homeForm.length > 0 || awayForm.length > 0;
   const showH2hFormRow = homeH2hForm.length > 0 || awayH2hForm.length > 0;
@@ -192,15 +214,28 @@ export default function MatchCard({ match }: MatchCardProps) {
         </div>
 
         <div className={styles.scoreContainer}>
-          <div
-            className={`${styles.statusBadge} ${
-              matchStatus === 'IN PLAY' ? styles.statusBadgeLive : ''
-            }`}
-          >
-            {statusLabel}
+          <div className={styles.score} aria-label={score}>
+            <span className={styles.scoreHome}>{scoreHome}</span>
+            {scoreAway !== '' ? (
+              <>
+                <span className={styles.scoreSep} aria-hidden>
+                  –
+                </span>
+                <span className={styles.scoreAway}>{scoreAway}</span>
+              </>
+            ) : null}
           </div>
-          <div className={styles.score}>{score}</div>
-          {htScore ? <div className={styles.htScore}>İY: {htScore}</div> : null}
+          {showScoreMeta ? (
+            <div className={styles.scoreMeta}>
+              {showIyBadge ? <span className={styles.htBadge}>İY</span> : null}
+              {htTrimmed ? (
+                <span className={styles.htScoreInline}>{formatHtScoreDisplay(htScore)}</span>
+              ) : null}
+              {minuteBadgeText ? (
+                <span className={styles.minuteBadge}>{minuteBadgeText}</span>
+              ) : null}
+            </div>
+          ) : null}
         </div>
 
         <div className={styles.team}>
@@ -215,12 +250,18 @@ export default function MatchCard({ match }: MatchCardProps) {
         </div>
       </div>
       
-      {location ? (
-        <div className={styles.location}>
-          <span className={styles.locationInner}>
-            <StadiumIcon className={styles.stadiumIcon} />
-            <span>{location}</span>
-          </span>
+      {showMatchFooter ? (
+        <div className={styles.matchFooter}>
+          <div className={styles.matchFooterCol}>
+            <StadiumIcon className={styles.matchFooterIcon} />
+            <span className={styles.matchFooterLabel}>Stadyum</span>
+            <span className={styles.matchFooterValue}>{location.trim() || '—'}</span>
+          </div>
+          <div className={styles.matchFooterCol}>
+            <WhistleIcon className={styles.matchFooterIcon} />
+            <span className={styles.matchFooterLabel}>Hakem</span>
+            <span className={styles.matchFooterValue}>{refereeName || '—'}</span>
+          </div>
         </div>
       ) : null}
 

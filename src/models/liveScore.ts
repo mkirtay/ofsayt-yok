@@ -44,6 +44,8 @@ export interface Match {
   date?: string;
   scheduled?: string;
   location?: string;
+  /** Maç hakemi (API alanı; yoksa boş) */
+  referee?: string;
   home: Team;
   away: Team;
   scores?: MatchScore;
