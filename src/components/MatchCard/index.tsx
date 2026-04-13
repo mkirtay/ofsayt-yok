@@ -214,6 +214,9 @@ export default function MatchCard({ match }: MatchCardProps) {
         </div>
 
         <div className={styles.scoreContainer}>
+        {minuteBadgeText ? (
+                <span className={styles.minuteBadge}>{minuteBadgeText}</span>
+              ) : null}
           <div className={styles.score} aria-label={score}>
             <span className={styles.scoreHome}>{scoreHome}</span>
             {scoreAway !== '' ? (
@@ -227,13 +230,7 @@ export default function MatchCard({ match }: MatchCardProps) {
           </div>
           {showScoreMeta ? (
             <div className={styles.scoreMeta}>
-              {showIyBadge ? <span className={styles.htBadge}>İY</span> : null}
-              {htTrimmed ? (
-                <span className={styles.htScoreInline}>{formatHtScoreDisplay(htScore)}</span>
-              ) : null}
-              {minuteBadgeText ? (
-                <span className={styles.minuteBadge}>{minuteBadgeText}</span>
-              ) : null}
+              {showIyBadge ? <span className={styles.htBadge}>İY : {formatHtScoreDisplay(htScore)}</span> : null}
             </div>
           ) : null}
         </div>
