@@ -14,17 +14,29 @@ enum Role {
 }
 
 model User {
-  id            String    @id @default(cuid())
+  id            String         @id @default(cuid())
   name          String?
-  email         String    @unique
+  email         String         @unique
   emailVerified DateTime?
   password      String?
   image         String?
-  role          Role      @default(USER)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  role          Role           @default(USER)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
   accounts      Account[]
   sessions      Session[]
+  comments      MatchComment[]
+}
+
+model MatchComment {
+  id        String   @id @default(cuid())
+  matchId   String
+  body      String   @db.Text
+  createdAt DateTime @default(now())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([matchId, createdAt])
 }
 
 model Account {

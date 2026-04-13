@@ -6,6 +6,7 @@ import EventTimeline from '@/components/EventTimeline';
 import Lineup from '@/components/Lineup';
 import MatchStats from '@/components/MatchStats';
 import MatchCompetitionStandings from '@/components/MatchCompetitionStandings';
+import MatchForum from '@/components/MatchForum';
 import {
   getMatchWithEvents,
   getMatchLineups,
@@ -85,15 +86,22 @@ export default function MatchDetail() {
       <div className="layout-split">
         <div className="layout-left">
           <MatchCard match={match} />
-          <EventTimeline
-            events={events}
-            homeName={match?.home?.name}
-            awayName={match?.away?.name}
-          />
+          <div className={styles.statsEventsRow}>
+            <div className={styles.statsCol}>
+              <MatchStats stats={stats} odds={odds} />
+            </div>
+            <div className={styles.eventsCol}>
+              <EventTimeline
+                events={events}
+                homeName={match?.home?.name}
+                awayName={match?.away?.name}
+              />
+            </div>
+          </div>
           <Lineup lineups={lineups} />
         </div>
         <div className="layout-right">
-          <MatchStats stats={stats} odds={odds} />
+          <MatchForum matchId={id as string} />
           {showStandingsBlock ? (
             <MatchCompetitionStandings
               data={standings}

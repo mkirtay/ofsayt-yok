@@ -1,0 +1,179 @@
+@import '../../styles/variables';
+
+.container {
+  background-color: $color-surface;
+  border-radius: $radius-md;
+  padding: $spacing-4;
+  box-shadow: $shadow-surface;
+  border: 1px solid $color-border;
+  display: flex;
+  flex-direction: column;
+}
+
+.title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: $spacing-4;
+  border-bottom: 1px solid $color-border;
+  padding-bottom: $spacing-2;
+}
+
+.commentList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+  max-height: 420px;
+  overflow-y: auto;
+  padding-right: $spacing-1;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: $color-border;
+    border-radius: $radius-full;
+  }
+}
+
+.comment {
+  display: flex;
+  gap: $spacing-2;
+  align-items: flex-start;
+}
+
+.avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: $radius-full;
+  background-color: $color-primary;
+  color: $color-surface;
+  font-size: 12px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.commentBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.commentHeader {
+  display: flex;
+  align-items: baseline;
+  gap: $spacing-2;
+  margin-bottom: 2px;
+}
+
+.userName {
+  font-size: 12px;
+  font-weight: 600;
+  color: $color-text;
+}
+
+.time {
+  font-size: 11px;
+  color: $color-text-secondary;
+}
+
+.commentText {
+  font-size: 13px;
+  line-height: 1.4;
+  color: $color-text;
+  word-break: break-word;
+}
+
+.empty {
+  text-align: center;
+  color: $color-text-secondary;
+  font-size: 13px;
+  padding: $spacing-4 0;
+}
+
+.inputArea {
+  display: flex;
+  gap: $spacing-2;
+  margin-top: $spacing-4;
+  border-top: 1px solid $color-border;
+  padding-top: $spacing-3;
+}
+
+.textarea {
+  flex: 1;
+  min-height: 36px;
+  max-height: 80px;
+  resize: vertical;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
+  padding: $spacing-2;
+  font-size: 13px;
+  font-family: $font-family;
+  color: $color-text;
+  background-color: $color-bg;
+  transition: $transition-base;
+  outline: none;
+
+  &:focus {
+    border-color: $color-primary;
+    background-color: $color-surface;
+  }
+
+  &::placeholder {
+    color: $color-text-secondary;
+  }
+}
+
+.sendBtn {
+  align-self: flex-end;
+  padding: $spacing-2 $spacing-3;
+  background-color: $color-primary;
+  color: $color-surface;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: $radius-sm;
+  transition: $transition-base;
+  white-space: nowrap;
+
+  &:hover:not(:disabled) {
+    background-color: $color-primary-dark;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.loginPrompt {
+  text-align: center;
+  font-size: 13px;
+  color: $color-text-secondary;
+  margin-top: $spacing-4;
+  border-top: 1px solid $color-border;
+  padding-top: $spacing-3;
+
+  a {
+    color: $color-primary;
+    font-weight: 600;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+.error {
+  font-size: 12px;
+  color: $color-danger;
+  margin-top: $spacing-1;
+}

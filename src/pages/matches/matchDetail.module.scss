@@ -6,3 +6,20 @@
   color: $color-text-secondary;
   font-size: 16px;
 }
+
+.statsEventsRow {
+  display: flex;
+  gap: $gap;
+  align-items: flex-start;
+  margin-top: $spacing-4;
+
+  @media (max-width: 767px) {
+    flex-direction: column;
+  }
+}
+
+.statsCol,
+.eventsCol {
+  flex: 1;
+  min-width: 0;
+}
