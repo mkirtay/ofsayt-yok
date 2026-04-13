@@ -7,8 +7,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const pathParam = req.query.path;
     const path = Array.isArray(pathParam) ? pathParam.join('/') : String(pathParam || '');
 
-    const key = process.env.LIVESCORE_API_KEY || process.env.NEXT_PUBLIC_LIVESCORE_API_KEY;
-    const secret = process.env.LIVESCORE_API_SECRET || process.env.NEXT_PUBLIC_LIVESCORE_API_SECRET;
+    const key = process.env.LIVESCORE_API_KEY;
+    const secret = process.env.LIVESCORE_API_SECRET;
 
     if (!key || !secret) {
       return res.status(500).json({ success: false, error: 'Missing API credentials' });

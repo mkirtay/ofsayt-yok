@@ -1,4 +1,5 @@
 import type { AppProps } from 'next/app'
+import { SessionProvider } from 'next-auth/react'
 import Head from 'next/head'
 import { Inter } from 'next/font/google'
 import Layout from '@/components/Layout'
@@ -10,9 +11,9 @@ const inter = Inter({
   variable: '--font-sans',
 })
 
-export default function App({ Component, pageProps }: AppProps) {
+export default function App({ Component, pageProps: { session, ...pageProps } }: AppProps) {
   return (
-    <>
+    <SessionProvider session={session}>
       <Head>
         <title>Ofsayt Yok</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -23,6 +24,6 @@ export default function App({ Component, pageProps }: AppProps) {
           <Component {...pageProps} />
         </Layout>
       </div>
-    </>
+    </SessionProvider>
   )
 }

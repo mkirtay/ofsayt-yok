@@ -1,12 +1,14 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+import { useSession, signOut } from 'next-auth/react';
 import Container from '../Container';
 import HeaderButton from '../HeaderButton';
 import styles from './header.module.scss';
 
 export default function Header() {
   const router = useRouter();
+  const { data: session } = useSession();
   const isWorldCupRoute = router.pathname.startsWith('/world-cup');
 
   return (
@@ -42,8 +44,23 @@ export default function Header() {
           )}
         </div>
         <div className={styles.actions}>
-          <HeaderButton variant="outline">Giriş Yap</HeaderButton>
-          <HeaderButton variant="filled">Üye Ol</HeaderButton>
+          {session ? (
+            <>
+              <span className={styles.userName}>{session.user.name || session.user.email}</span>
+              <HeaderButton variant="outline" onClick={() => signOut()}>
+                Çıkış Yap
+              </HeaderButton>
+            </>
+          ) : (
+            <>
+              <HeaderButton variant="outline" onClick={() => router.push('/auth/signin')}>
+                Giriş Yap
+              </HeaderButton>
+              <HeaderButton variant="filled" onClick={() => router.push('/auth/signup')}>
+                Üye Ol
+              </HeaderButton>
+            </>
+          )}
         </div>
       </Container>
     </header>
