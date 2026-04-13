@@ -173,6 +173,11 @@ export default function MatchCard({ match }: MatchCardProps) {
   const showH2hFormRow = homeH2hForm.length > 0 || awayH2hForm.length > 0;
   const showH2hTable = h2hHistory.length > 0;
 
+  const preOdds = match.odds?.pre;
+  const showOddsStrip =
+    preOdds != null &&
+    (preOdds['1'] != null || preOdds['X'] != null || preOdds['2'] != null);
+
   return (
     <div className={styles.matchCard}>
       <header className={styles.cardHeader}>
@@ -202,49 +207,66 @@ export default function MatchCard({ match }: MatchCardProps) {
       </header>
 
       <div className={styles.teamsContainer}>
-        <div className={styles.team}>
-          <Link href={`/teams/${match.home?.id || ''}`} className={styles.teamLink}>
-            {homeLogo ? (
-              <img src={homeLogo} alt={homeName} className={styles.logo} />
-            ) : (
-              <div className={styles.logoPlaceholder}>{homeName.charAt(0)}</div>
-            )}
-            <div className={styles.teamName}>{homeName}</div>
-          </Link>
-        </div>
+        <div className={styles.teamsTopRow}>
+          <div className={styles.team}>
+            <Link href={`/teams/${match.home?.id || ''}`} className={styles.teamLink}>
+              {homeLogo ? (
+                <img src={homeLogo} alt={homeName} className={styles.logo} />
+              ) : (
+                <div className={styles.logoPlaceholder}>{homeName.charAt(0)}</div>
+              )}
+              <div className={styles.teamName}>{homeName}</div>
+            </Link>
+          </div>
 
-        <div className={styles.scoreContainer}>
-        {minuteBadgeText ? (
-                <span className={styles.minuteBadge}>{minuteBadgeText}</span>
+          <div className={styles.scoreContainer}>
+            {minuteBadgeText ? <span className={styles.minuteBadge}>{minuteBadgeText}</span> : null}
+            <div className={styles.score} aria-label={score}>
+              <span className={styles.scoreHome}>{scoreHome}</span>
+              {scoreAway !== '' ? (
+                <>
+                  <span className={styles.scoreSep} aria-hidden>
+                    –
+                  </span>
+                  <span className={styles.scoreAway}>{scoreAway}</span>
+                </>
               ) : null}
-          <div className={styles.score} aria-label={score}>
-            <span className={styles.scoreHome}>{scoreHome}</span>
-            {scoreAway !== '' ? (
-              <>
-                <span className={styles.scoreSep} aria-hidden>
-                  –
-                </span>
-                <span className={styles.scoreAway}>{scoreAway}</span>
-              </>
+            </div>
+            {showScoreMeta ? (
+              <div className={styles.scoreMeta}>
+                {showIyBadge ? <span className={styles.htBadge}>İY : {formatHtScoreDisplay(htScore)}</span> : null}
+              </div>
             ) : null}
           </div>
-          {showScoreMeta ? (
-            <div className={styles.scoreMeta}>
-              {showIyBadge ? <span className={styles.htBadge}>İY : {formatHtScoreDisplay(htScore)}</span> : null}
-            </div>
-          ) : null}
+
+          <div className={styles.team}>
+            <Link href={`/teams/${match.away?.id || ''}`} className={styles.teamLink}>
+              {awayLogo ? (
+                <img src={awayLogo} alt={awayName} className={styles.logo} />
+              ) : (
+                <div className={styles.logoPlaceholder}>{awayName.charAt(0)}</div>
+              )}
+              <div className={styles.teamName}>{awayName}</div>
+            </Link>
+          </div>
         </div>
 
-        <div className={styles.team}>
-          <Link href={`/teams/${match.away?.id || ''}`} className={styles.teamLink}>
-            {awayLogo ? (
-              <img src={awayLogo} alt={awayName} className={styles.logo} />
-            ) : (
-              <div className={styles.logoPlaceholder}>{awayName.charAt(0)}</div>
-            )}
-            <div className={styles.teamName}>{awayName}</div>
-          </Link>
-        </div>
+        {showOddsStrip && preOdds ? (
+          <div className={styles.oddsStrip} aria-label="Maç sonucu oranları">
+            <div className={styles.oddsCell}>
+              <span className={styles.oddsLabel}>1</span>
+              <span className={styles.oddsValue}>{preOdds['1'] ?? '—'}</span>
+            </div>
+            <div className={styles.oddsCell}>
+              <span className={styles.oddsLabel}>X</span>
+              <span className={styles.oddsValue}>{preOdds['X'] ?? '—'}</span>
+            </div>
+            <div className={styles.oddsCell}>
+              <span className={styles.oddsLabel}>2</span>
+              <span className={styles.oddsValue}>{preOdds['2'] ?? '—'}</span>
+            </div>
+          </div>
+        ) : null}
       </div>
       
       {showMatchFooter ? (

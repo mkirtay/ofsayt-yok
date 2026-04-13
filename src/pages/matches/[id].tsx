@@ -75,7 +75,6 @@ export default function MatchDetail() {
     );
   }
 
-  const odds = (match as any)?.odds || null;
   const homeTeamId = match?.home?.id ?? match?.home_id;
   const awayTeamId = match?.away?.id ?? match?.away_id;
   const compId = match?.competition?.id ?? match?.competition_id;
@@ -88,7 +87,7 @@ export default function MatchDetail() {
           <MatchCard match={match} />
           <div className={styles.statsEventsRow}>
             <div className={styles.statsCol}>
-              <MatchStats stats={stats} odds={odds} />
+              <MatchStats stats={stats} />
             </div>
             <div className={styles.eventsCol}>
               <EventTimeline

@@ -82,10 +82,55 @@ $match-card-header-blue: #153d6b;
 
 .teamsContainer {
   display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: $spacing-4;
+  padding: $spacing-5;
+}
+
+.teamsTopRow {
+  display: flex;
   justify-content: center;
   align-items: center;
   gap: $spacing-6;
-  padding: $spacing-5;
+  min-width: 0;
+}
+
+.oddsStrip {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: $spacing-2;
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
+  padding-top: $spacing-1;
+}
+
+.oddsCell {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-2;
+  min-width: 0;
+  padding: $spacing-2 $spacing-3;
+  background-color: $color-bg;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
+}
+
+.oddsLabel {
+  font-size: 14px;
+  font-weight: 600;
+  color: $match-card-header-blue;
+  font-variant-numeric: tabular-nums;
+}
+
+.oddsValue {
+  font-size: 14px;
+  font-weight: 600;
+  color: $color-primary;
+  font-variant-numeric: tabular-nums;
 }
 
 .team {

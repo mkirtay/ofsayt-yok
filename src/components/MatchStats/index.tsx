@@ -3,10 +3,6 @@ import { MatchStatsData } from '@/models/domain';
 
 interface MatchStatsProps {
   stats: MatchStatsData | null;
-  odds?: {
-    pre?: { '1': number; 'X': number; '2': number };
-    live?: { '1': number; 'X': number; '2': number };
-  } | null;
 }
 
 const STAT_LABELS: Record<string, string> = {
@@ -28,7 +24,7 @@ const STAT_LABELS: Record<string, string> = {
   attacks: 'Atak',
 };
 
-export default function MatchStats({ stats, odds }: MatchStatsProps) {
+export default function MatchStats({ stats }: MatchStatsProps) {
   const renderStatBar = (homeVal: number, awayVal: number) => {
     const total = homeVal + awayVal;
     if (total === 0) return null;
@@ -75,28 +71,6 @@ export default function MatchStats({ stats, odds }: MatchStatsProps) {
             </div>
           ))}
         </div>
-      )}
-
-      <h3 className={styles.title} style={{ marginTop: '24px' }}>
-        Maç Sonucu Oranları
-      </h3>
-      {odds ? (
-        <div className={styles.oddsContainer}>
-          <div className={styles.oddItem}>
-            <span className={styles.oddLabel}>MS 1</span>
-            <span className={styles.oddValue}>{odds.pre?.['1'] ?? '-'}</span>
-          </div>
-          <div className={styles.oddItem}>
-            <span className={styles.oddLabel}>MS X</span>
-            <span className={styles.oddValue}>{odds.pre?.['X'] ?? '-'}</span>
-          </div>
-          <div className={styles.oddItem}>
-            <span className={styles.oddLabel}>MS 2</span>
-            <span className={styles.oddValue}>{odds.pre?.['2'] ?? '-'}</span>
-          </div>
-        </div>
-      ) : (
-        <div className={styles.empty}>Oran bilgisi bulunamadı.</div>
       )}
     </div>
   );

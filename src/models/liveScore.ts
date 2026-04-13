@@ -37,6 +37,12 @@ export interface MatchUrls {
   lineups?: string;
 }
 
+/** Maç sonucu (1-X-2) ön / canlı oranları — API alanı */
+export interface MatchOdds {
+  pre?: { '1': number; 'X': number; '2': number };
+  live?: { '1': number; 'X': number; '2': number };
+}
+
 export interface Match {
   id: number;
   status: string;
@@ -63,6 +69,7 @@ export interface Match {
   group_name?: string;
   added?: string;
   urls?: MatchUrls;
+  odds?: MatchOdds;
 }
 
 export interface ApiResponse<T> {

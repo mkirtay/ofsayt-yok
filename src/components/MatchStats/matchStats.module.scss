@@ -80,38 +80,3 @@
   height: 100%;
   border-radius: 0 $radius-full $radius-full 0;
 }
-
-.oddsContainer {
-  display: flex;
-  gap: $spacing-2;
-}
-
-.oddItem {
-  flex: 1;
-  background-color: $color-bg;
-  border: 1px solid $color-border;
-  border-radius: $radius-sm;
-  padding: $spacing-2;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-1;
-  transition: $transition-base;
-
-  &:hover {
-    border-color: $color-primary;
-    background-color: $color-row-highlight;
-  }
-}
-
-.oddLabel {
-  font-size: 11px;
-  color: $color-text-secondary;
-  font-weight: 600;
-}
-
-.oddValue {
-  font-size: 15px;
-  font-weight: 700;
-  color: $color-primary;
-}
