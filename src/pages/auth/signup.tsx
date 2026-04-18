@@ -8,6 +8,7 @@ import styles from './auth.module.scss'
 export default function SignUpPage() {
   const router = useRouter()
   const [name, setName] = useState('')
+  const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -21,7 +22,7 @@ export default function SignUpPage() {
     const res = await fetch('/api/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, password }),
+      body: JSON.stringify({ name, username: username.trim() || undefined, email, password }),
     })
 
     const data = await res.json()
@@ -67,6 +68,19 @@ export default function SignUpPage() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               autoComplete="name"
+            />
+          </label>
+
+          <label className={styles.label}>
+            Kullanıcı adı (isteğe bağlı)
+            <input
+              className={styles.input}
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="ör. muco_1907"
+              maxLength={30}
+              autoComplete="username"
             />
           </label>
 

@@ -40,7 +40,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const cursor = req.query.cursor as string | undefined;
 
       const comments = await prisma.matchComment.findMany({
-        where: { matchId },
+        where: { matchId, deletedAt: null },
         orderBy: { createdAt: 'desc' },
         take: PAGE_SIZE + 1,
         ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),

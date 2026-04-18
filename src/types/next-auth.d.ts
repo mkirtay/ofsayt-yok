@@ -7,16 +7,21 @@ declare module 'next-auth' {
     user: {
       id: string
       role: Role
+      username?: string | null
     } & DefaultSession['user']
   }
 
   interface User extends DefaultUser {
     role: Role
+    username?: string | null
   }
 }
 
 declare module 'next-auth/jwt' {
   interface JWT extends DefaultJWT {
     role?: Role
+    username?: string | null
+    /** Throttle DB role refresh (ms since epoch) */
+    roleSyncedAt?: number
   }
 }

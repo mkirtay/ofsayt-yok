@@ -1,0 +1,144 @@
+@import '../styles/variables';
+
+.page {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: $spacing-6 $spacing-4 $spacing-8;
+}
+
+.title {
+  font-size: 22px;
+  font-weight: 700;
+  color: $color-text;
+  margin: 0 0 $spacing-2;
+}
+
+.subtitle {
+  font-size: 13px;
+  color: $color-text-secondary;
+  margin: 0 0 $spacing-6;
+}
+
+.section {
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  box-shadow: $shadow-surface;
+  padding: $spacing-5;
+  margin-bottom: $spacing-5;
+}
+
+.sectionTitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: $color-text;
+  margin: 0 0 $spacing-4;
+  padding-bottom: $spacing-2;
+  border-bottom: 1px solid $color-border;
+}
+
+.field {
+  margin-bottom: $spacing-4;
+
+  &:last-of-type {
+    margin-bottom: 0;
+  }
+}
+
+.label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: $color-text-secondary;
+  margin-bottom: $spacing-1;
+}
+
+.input,
+.textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-family: $font-family;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
+  background: $color-bg;
+  color: $color-text;
+  transition: $transition-base;
+  outline: none;
+
+  &:focus {
+    border-color: $color-primary;
+  }
+
+  &:disabled {
+    opacity: 0.75;
+    cursor: not-allowed;
+  }
+}
+
+.textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.readonly {
+  background: $color-muted;
+  color: $color-text-secondary;
+}
+
+.actions {
+  margin-top: $spacing-5;
+}
+
+.submit {
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: $font-family;
+  border: none;
+  border-radius: $radius-sm;
+  background: $color-primary;
+  color: $color-surface;
+  cursor: pointer;
+  transition: $transition-base;
+
+  &:hover:not(:disabled) {
+    background: $color-primary-dark;
+  }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+}
+
+.message {
+  font-size: 13px;
+  margin-top: $spacing-3;
+
+  &.ok {
+    color: $color-primary-dark;
+  }
+
+  &.err {
+    color: $color-danger;
+  }
+}
+
+.roleBadge {
+  display: inline-block;
+  margin-top: $spacing-2;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  border-radius: $radius-full;
+  background: $color-muted;
+  color: $color-text-secondary;
+}
+
+.roleAdmin {
+  background: rgba($color-primary, 0.15);
+  color: $color-primary-dark;
+}

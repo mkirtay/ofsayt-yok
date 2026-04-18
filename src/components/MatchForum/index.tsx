@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSession } from 'next-auth/react';
+import { Role } from '@prisma/client';
 import Link from 'next/link';
 import styles from './matchForum.module.scss';
 
@@ -29,13 +30,38 @@ function avatarLetter(name: string | null) {
   return (name ?? '?').charAt(0).toUpperCase();
 }
 
+function TrashIcon() {
+  return (
+    <svg
+      className={styles.deleteIconSvg}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d="M3 6h18" />
+      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
+      <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+      <line x1="10" y1="11" x2="10" y2="17" />
+      <line x1="14" y1="11" x2="14" y2="17" />
+    </svg>
+  );
+}
+
 export default function MatchForum({ matchId }: MatchForumProps) {
   const { data: session } = useSession();
   const [comments, setComments] = useState<Comment[]>([]);
   const [body, setBody] = useState('');
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const role = session?.user?.role;
+  const isAdmin = String(role) === Role.ADMIN;
 
   const fetchComments = useCallback(async () => {
     try {
@@ -96,6 +122,30 @@ export default function MatchForum({ matchId }: MatchForumProps) {
     }
   };
 
+  const handleDeleteComment = async (commentId: string) => {
+    if (!isAdmin || deletingId) return;
+    if (!window.confirm('Bu yorumu silmek istediğinize emin misiniz?')) return;
+
+    setDeletingId(commentId);
+    setError('');
+    try {
+      const res = await fetch(`/api/matches/${matchId}/comments/${commentId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error || 'Yorum silinemedi.');
+        return;
+      }
+      setComments((prev) => prev.filter((c) => c.id !== commentId));
+    } catch {
+      setError('Bağlantı hatası.');
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   return (
     <div className={styles.container}>
       <h3 className={styles.title}>Maç Yorumları</h3>
@@ -105,7 +155,26 @@ export default function MatchForum({ matchId }: MatchForumProps) {
           <div className={styles.empty}>Henüz yorum yok. İlk yorumu sen yap!</div>
         ) : (
           comments.map((c) => (
-            <div key={c.id} className={styles.comment}>
+            <div
+              key={c.id}
+              className={`${styles.comment} ${isAdmin ? styles.commentWithAdminActions : ''}`.trim()}
+            >
+              {isAdmin && (
+                <button
+                  type="button"
+                  className={styles.deleteIconBtn}
+                  onClick={() => handleDeleteComment(c.id)}
+                  disabled={deletingId === c.id}
+                  aria-label={deletingId === c.id ? 'Siliniyor' : 'Yorumu sil'}
+                  title="Yorumu sil"
+                >
+                  {deletingId === c.id ? (
+                    <span className={styles.deleteSpinner} aria-hidden />
+                  ) : (
+                    <TrashIcon />
+                  )}
+                </button>
+              )}
               <div className={styles.avatar}>
                 {c.user.image ? (
                   <img src={c.user.image} alt="" />

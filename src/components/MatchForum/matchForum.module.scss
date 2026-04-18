@@ -37,9 +37,14 @@
 }
 
 .comment {
+  position: relative;
   display: flex;
   gap: $spacing-2;
   align-items: flex-start;
+}
+
+.commentWithAdminActions {
+  padding-right: 36px;
 }
 
 .avatar {
@@ -72,7 +77,59 @@
   display: flex;
   align-items: baseline;
   gap: $spacing-2;
+  min-width: 0;
   margin-bottom: 2px;
+}
+
+.deleteIconBtn {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
+  background: $color-surface;
+  color: $color-text-secondary;
+  cursor: pointer;
+  transition: $transition-base;
+
+  &:hover:not(:disabled) {
+    color: $color-danger;
+    border-color: rgba($color-danger, 0.45);
+    background: rgba($color-danger, 0.06);
+  }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+}
+
+.deleteIconSvg {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+
+.deleteSpinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid $color-border;
+  border-top-color: $color-primary;
+  border-radius: $radius-full;
+  animation: forumSpin 0.65s linear infinite;
+}
+
+@keyframes forumSpin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .userName {

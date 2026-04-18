@@ -46,7 +46,12 @@ export default function Header() {
         <div className={styles.actions}>
           {session ? (
             <>
-              <span className={styles.userName}>{session.user.name || session.user.email}</span>
+              <Link href="/profile" className={styles.profileLink}>
+                Profil
+              </Link>
+              <span className={styles.userName}>
+                {session.user.username || session.user.name || session.user.email}
+              </span>
               <HeaderButton variant="outline" onClick={() => signOut()}>
                 Çıkış Yap
               </HeaderButton>

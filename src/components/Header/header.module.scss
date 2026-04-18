@@ -99,6 +99,32 @@
   gap: $spacing-2;
 }
 
+.profileLink {
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.95);
+  text-decoration: none;
+  padding: 6px 10px;
+  border-radius: $radius-sm;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  transition: $transition-base;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: #fff;
+  }
+}
+
+.headerWorldCup .profileLink {
+  border-color: #444;
+  color: #fff;
+
+  &:hover {
+    background: #181818;
+    border-color: #fff;
+  }
+}
+
 .userName {
   font-size: 13px;
   font-weight: 600;

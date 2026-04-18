@@ -14,27 +14,33 @@ enum Role {
 }
 
 model User {
-  id            String         @id @default(cuid())
+  id            String   @id @default(cuid())
   name          String?
-  email         String         @unique
+  username      String?  @unique
+  bio           String?  @db.Text
+  email         String   @unique
   emailVerified DateTime?
   password      String?
   image         String?
-  role          Role           @default(USER)
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
+  role          Role     @default(USER)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
   accounts      Account[]
   sessions      Session[]
-  comments      MatchComment[]
+  comments      MatchComment[] @relation("MatchCommentAuthor")
+  deletedComments MatchComment[] @relation("MatchCommentDeletedBy")
 }
 
 model MatchComment {
-  id        String   @id @default(cuid())
-  matchId   String
-  body      String   @db.Text
-  createdAt DateTime @default(now())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                String    @id @default(cuid())
+  matchId           String
+  body              String    @db.Text
+  createdAt         DateTime  @default(now())
+  userId            String
+  user              User      @relation("MatchCommentAuthor", fields: [userId], references: [id], onDelete: Cascade)
+  deletedAt         DateTime?
+  deletedByUserId   String?
+  deletedBy         User?     @relation("MatchCommentDeletedBy", fields: [deletedByUserId], references: [id], onDelete: SetNull)
 
   @@index([matchId, createdAt])
 }
