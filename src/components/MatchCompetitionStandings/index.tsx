@@ -2,7 +2,10 @@ import Link from "next/link";
 import type {
   CompetitionTableData,
   CompetitionTableStandingRow,
+  SeasonListItem,
 } from "@/services/liveScoreService";
+import SeasonSelect from "@/components/SeasonSelect";
+import { formatSeasonLabel } from "@/utils/seasonLabel";
 import { getStandingRankZone } from "@/config/standingsZones";
 import { standingsRankZoneClass } from "@/utils/standingsRankZoneUi";
 import styles from "./matchCompetitionStandings.module.scss";
@@ -120,6 +123,9 @@ interface MatchCompetitionStandingsProps {
   awayTeamId?: number;
   /** `worldCup`: koyu arka plan (yalnızca World Cup sayfası) */
   variant?: MatchCompetitionStandingsVariant;
+  seasons?: SeasonListItem[];
+  selectedSeasonId?: number | null;
+  onSeasonChange?: (id: number) => void;
 }
 
 function blockClass(variant: MatchCompetitionStandingsVariant): string {
@@ -136,6 +142,9 @@ export default function MatchCompetitionStandings({
   homeTeamId,
   awayTeamId,
   variant = "default",
+  seasons,
+  selectedSeasonId,
+  onSeasonChange,
 }: MatchCompetitionStandingsProps) {
   if (loading) {
     return (
@@ -157,6 +166,7 @@ export default function MatchCompetitionStandings({
   const compName = data.competition?.name || competitionName || "Lig";
   const competitionId = data.competition?.id;
   const season = data.season;
+  const showSeasonSelect = Boolean(seasons?.length && onSeasonChange);
 
   const legacyTable = Array.isArray(data.table) ? data.table : null;
   const hasStageStandings = data.stages?.some((s) =>
@@ -169,8 +179,18 @@ export default function MatchCompetitionStandings({
     <section className={blockClass(variant)} aria-label="Lig puan durumu">
       <div className={styles.titleContainer}>
         <h2 className={styles.title}>{compName}</h2>
-        {season?.name ? (
-          <p className={styles.season}>Sezon: {season.name}</p>
+        {showSeasonSelect ? (
+          <SeasonSelect
+            seasons={seasons!}
+            value={selectedSeasonId ?? null}
+            onChange={onSeasonChange!}
+            dark={variant === "worldCup"}
+            selectClassName={
+              variant === "worldCup" ? styles.seasonSelectWorldCup : styles.seasonSelect
+            }
+          />
+        ) : season?.name ? (
+          <p className={styles.season}>Sezon: {formatSeasonLabel(season.name)}</p>
         ) : null}
       </div>
 

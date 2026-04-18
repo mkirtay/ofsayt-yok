@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import MatchCompetitionStandings from '@/components/MatchCompetitionStandings';
 import MatchList from '@/components/MatchList';
 import NewsList from '@/components/NewsList';
@@ -14,6 +14,8 @@ import {
   getCompetitionGroupFixtures,
   getCompetitionGroups,
   getCompetitionTableFull,
+  getSeasonsList,
+  type SeasonListItem,
 } from '@/services/liveScoreService';
 import { getNews } from '@/services/newsApi';
 import styles from './worldCup.module.scss';
@@ -62,6 +64,50 @@ export default function WorldCupPage() {
 
   const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
 
+  const [seasons, setSeasons] = useState<SeasonListItem[]>([]);
+  const [selectedSeasonId, setSelectedSeasonId] = useState<number | null>(null);
+
+  const loadGroupCardsForSeason = useCallback(
+    async (seasonId: number, groupsData: CompetitionGroupItem[]) => {
+      const fullTableData = await getCompetitionTableFull(WORLD_CUP_ID, { season: seasonId });
+      let allGroupStandings = sortGroupStandings(extractGroupStandings(fullTableData));
+
+      if (!allGroupStandings.length && groupsData.length) {
+        const fetched = await Promise.all(
+          groupsData.map(async (group) => {
+            const data = await getCompetitionTableFull(WORLD_CUP_ID, {
+              group_id: group.id,
+              season: seasonId,
+            });
+            const firstGroup = extractGroupStandings(data)[0];
+            if (!firstGroup) return null;
+            return {
+              id: Number(group.id),
+              name: group.name,
+              standings: firstGroup.standings,
+            } as GroupStandings;
+          }),
+        );
+        allGroupStandings = sortGroupStandings(
+          fetched.filter((group): group is GroupStandings => Boolean(group)),
+        );
+      }
+      return allGroupStandings;
+    },
+    [],
+  );
+
+  const handleSeasonChange = useCallback(
+    async (seasonId: number) => {
+      setSelectedSeasonId(seasonId);
+      setGroupCardsLoading(true);
+      const cards = await loadGroupCardsForSeason(seasonId, groups);
+      setGroupCards(cards);
+      setGroupCardsLoading(false);
+    },
+    [groups, loadGroupCardsForSeason],
+  );
+
   useEffect(() => {
     document.body.classList.add('worldCupTheme');
     return () => {
@@ -75,34 +121,61 @@ export default function WorldCupPage() {
     const fetchGroupsAndCards = async () => {
       setGroupCardsLoading(true);
 
-      const groupsData = sortWorldCupGroupsByName(await getCompetitionGroups(WORLD_CUP_ID));
+      const [seasonsList, groupsRaw] = await Promise.all([
+        getSeasonsList(),
+        getCompetitionGroups(WORLD_CUP_ID),
+      ]);
       if (cancelled) return;
+      setSeasons(seasonsList);
+
+      const groupsData = sortWorldCupGroupsByName(groupsRaw);
       setGroups(groupsData);
       if (groupsData.length) {
         setSelectedGroupId((prev) => prev ?? Number(groupsData[0].id));
       }
 
-      const fullTableData = await getCompetitionTableFull(WORLD_CUP_ID);
+      const table1 = await getCompetitionTableFull(WORLD_CUP_ID);
       if (cancelled) return;
-      let allGroupStandings = sortGroupStandings(extractGroupStandings(fullTableData));
 
-      if (!allGroupStandings.length && groupsData.length) {
-        const fetched = await Promise.all(
-          groupsData.map(async (group) => {
-            const data = await getCompetitionTableFull(WORLD_CUP_ID, { group_id: group.id });
-            const firstGroup = extractGroupStandings(data)[0];
-            if (!firstGroup) return null;
-            return {
-              id: Number(group.id),
-              name: group.name,
-              standings: firstGroup.standings,
-            } as GroupStandings;
-          }),
-        );
-        if (cancelled) return;
-        allGroupStandings = sortGroupStandings(fetched.filter((group): group is GroupStandings => Boolean(group)));
+      const fromTable =
+        table1?.season?.id != null && Number.isFinite(Number(table1.season.id))
+          ? Number(table1.season.id)
+          : null;
+      let sid: number | null = fromTable;
+      if (sid != null && seasonsList.length && !seasonsList.some((s) => s.id === sid)) {
+        sid = seasonsList[0]!.id;
+      } else if (sid == null && seasonsList.length) {
+        sid = seasonsList[0]!.id;
+      }
+      setSelectedSeasonId(sid);
+
+      let allGroupStandings: GroupStandings[] = [];
+      if (sid != null) {
+        allGroupStandings = await loadGroupCardsForSeason(sid, groupsData);
+      } else {
+        allGroupStandings = sortGroupStandings(extractGroupStandings(table1));
+
+        if (!allGroupStandings.length && groupsData.length) {
+          const fetched = await Promise.all(
+            groupsData.map(async (group) => {
+              const data = await getCompetitionTableFull(WORLD_CUP_ID, { group_id: group.id });
+              const firstGroup = extractGroupStandings(data)[0];
+              if (!firstGroup) return null;
+              return {
+                id: Number(group.id),
+                name: group.name,
+                standings: firstGroup.standings,
+              } as GroupStandings;
+            }),
+          );
+          if (cancelled) return;
+          allGroupStandings = sortGroupStandings(
+            fetched.filter((group): group is GroupStandings => Boolean(group)),
+          );
+        }
       }
 
+      if (cancelled) return;
       setGroupCards(allGroupStandings);
       setGroupCardsLoading(false);
     };
@@ -112,7 +185,7 @@ export default function WorldCupPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [loadGroupCardsForSeason]);
 
   useEffect(() => {
     if (selectedGroupId == null) return;
@@ -120,7 +193,10 @@ export default function WorldCupPage() {
 
     const fetchSelectedGroupTable = async () => {
       setSelectedGroupLoading(true);
-      const data = await getCompetitionTableFull(WORLD_CUP_ID, { group_id: selectedGroupId });
+      const data = await getCompetitionTableFull(WORLD_CUP_ID, {
+        group_id: selectedGroupId,
+        ...(selectedSeasonId != null ? { season: selectedSeasonId } : {}),
+      });
       if (!cancelled) {
         setSelectedGroupTable(data);
         setSelectedGroupLoading(false);
@@ -131,7 +207,7 @@ export default function WorldCupPage() {
     return () => {
       cancelled = true;
     };
-  }, [selectedGroupId]);
+  }, [selectedGroupId, selectedSeasonId]);
 
   useEffect(() => {
     if (mainTab !== 'matches' || !groups.length) return;
@@ -221,6 +297,9 @@ export default function WorldCupPage() {
                 loading={selectedGroupLoading}
                 competitionName={`FIFA World Cup - Group ${selectedGroupName}`}
                 variant="worldCup"
+                seasons={seasons}
+                selectedSeasonId={selectedSeasonId}
+                onSeasonChange={handleSeasonChange}
               />
             ) : null}
 

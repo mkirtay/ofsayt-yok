@@ -7,8 +7,10 @@ import {
   mergeMatchesForAllTab,
   sortGroupedMatchesForAllTab,
   getCompetitionTableFull,
+  getSeasonsList,
   getTopScorers,
   type CompetitionTableData,
+  type SeasonListItem,
   type TopScorersPayload,
 } from '@/services/liveScoreService';
 import type { Match } from '@/models/liveScore';
@@ -44,6 +46,8 @@ export default function Home() {
   const [standingsLoading, setStandingsLoading] = useState(false);
   const [topScorers, setTopScorers] = useState<TopScorersPayload | null>(null);
   const [topScorersLoading, setTopScorersLoading] = useState(false);
+  const [seasons, setSeasons] = useState<SeasonListItem[]>([]);
+  const [selectedSeasonId, setSelectedSeasonId] = useState<number | null>(null);
 
   const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
   const [newsLoading, setNewsLoading] = useState(false);
@@ -74,21 +78,74 @@ export default function Home() {
     return () => clearInterval(interval);
   }, [fetchData, selectedDate]);
 
+  const handleSeasonChange = useCallback(
+    async (seasonId: number) => {
+      const compId = String(selectedCompId);
+      setSelectedSeasonId(seasonId);
+      setStandingsLoading(true);
+      setTopScorersLoading(true);
+      const [tableData, scorersData] = await Promise.all([
+        getCompetitionTableFull(compId, { season: seasonId }),
+        getTopScorers(compId, { season: seasonId }),
+      ]);
+      setStandings(tableData);
+      setTopScorers(scorersData);
+      setStandingsLoading(false);
+      setTopScorersLoading(false);
+    },
+    [selectedCompId]
+  );
+
   useEffect(() => {
     let cancelled = false;
     const compId = String(selectedCompId);
     setStandingsLoading(true);
     setTopScorersLoading(true);
-    Promise.all([getCompetitionTableFull(compId), getTopScorers(compId)]).then(
-      ([tableData, scorersData]) => {
-        if (!cancelled) {
-          setStandings(tableData);
-          setStandingsLoading(false);
-          setTopScorers(scorersData);
-          setTopScorersLoading(false);
-        }
+
+    (async () => {
+      const [seasonsList, table1] = await Promise.all([
+        getSeasonsList(),
+        getCompetitionTableFull(compId),
+      ]);
+      if (cancelled) return;
+
+      setSeasons(seasonsList);
+
+      const fromTable =
+        table1?.season?.id != null && Number.isFinite(Number(table1.season.id))
+          ? Number(table1.season.id)
+          : null;
+      let sid: number | null = fromTable;
+      if (sid != null && seasonsList.length && !seasonsList.some((s) => s.id === sid)) {
+        sid = seasonsList[0]!.id;
+      } else if (sid == null && seasonsList.length) {
+        sid = seasonsList[0]!.id;
       }
-    );
+      setSelectedSeasonId(sid);
+
+      const needTableRefetch =
+        sid != null &&
+        table1 != null &&
+        (table1.season?.id == null || Number(table1.season.id) !== sid);
+
+      let tableFinal = table1;
+      if (needTableRefetch && sid != null) {
+        tableFinal = await getCompetitionTableFull(compId, { season: sid });
+      }
+      if (cancelled) return;
+
+      const scorersData = await getTopScorers(
+        compId,
+        sid != null ? { season: sid } : undefined
+      );
+      if (cancelled) return;
+
+      setStandings(tableFinal ?? table1);
+      setTopScorers(scorersData);
+      setStandingsLoading(false);
+      setTopScorersLoading(false);
+    })();
+
     return () => {
       cancelled = true;
     };
@@ -186,10 +243,16 @@ export default function Home() {
                       data={standings}
                       loading={standingsLoading}
                       competitionName={selectedLeagueName}
+                      seasons={seasons}
+                      selectedSeasonId={selectedSeasonId}
+                      onSeasonChange={handleSeasonChange}
                     />
                     <MatchCompetitionTopScorers
                       data={topScorers}
                       loading={topScorersLoading}
+                      seasons={seasons}
+                      selectedSeasonId={selectedSeasonId}
+                      onSeasonChange={handleSeasonChange}
                     />
                   </>
                 )}

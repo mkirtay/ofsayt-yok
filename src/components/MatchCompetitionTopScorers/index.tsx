@@ -1,5 +1,11 @@
 import Link from 'next/link';
-import type { TopScorerEntry, TopScorersPayload } from '@/services/liveScoreService';
+import type {
+  SeasonListItem,
+  TopScorerEntry,
+  TopScorersPayload,
+} from '@/services/liveScoreService';
+import SeasonSelect from '@/components/SeasonSelect';
+import { formatSeasonLabel } from '@/utils/seasonLabel';
 import styles from './matchCompetitionTopScorers.module.scss';
 
 function rankCellClass(rank: number): string {
@@ -12,11 +18,17 @@ function rankCellClass(rank: number): string {
 interface MatchCompetitionTopScorersProps {
   data: TopScorersPayload | null;
   loading?: boolean;
+  seasons?: SeasonListItem[];
+  selectedSeasonId?: number | null;
+  onSeasonChange?: (id: number) => void;
 }
 
 export default function MatchCompetitionTopScorers({
   data,
   loading,
+  seasons,
+  selectedSeasonId,
+  onSeasonChange,
 }: MatchCompetitionTopScorersProps) {
   if (loading) {
     return (
@@ -29,6 +41,7 @@ export default function MatchCompetitionTopScorers({
 
   const list = data?.topscorers ?? [];
   const seasonName = data?.season?.name;
+  const showSeasonSelect = Boolean(seasons?.length && onSeasonChange);
 
   if (!list.length) {
     return (
@@ -36,7 +49,16 @@ export default function MatchCompetitionTopScorers({
         <div className={styles.sectionDivider} aria-hidden />
         <div className={styles.titleContainer}>
           <h2 className={styles.title}>Gol Krallığı</h2>
-          {seasonName ? <p className={styles.season}>Sezon: {seasonName}</p> : null}
+          {showSeasonSelect ? (
+            <SeasonSelect
+              seasons={seasons!}
+              value={selectedSeasonId ?? null}
+              onChange={onSeasonChange!}
+              selectClassName={styles.seasonSelect}
+            />
+          ) : seasonName ? (
+            <p className={styles.season}>Sezon: {formatSeasonLabel(seasonName)}</p>
+          ) : null}
         </div>
         <p className={styles.empty}>Gol krallığı verisi bulunamadı.</p>
       </section>
@@ -48,7 +70,16 @@ export default function MatchCompetitionTopScorers({
       <div className={styles.sectionDivider} aria-hidden />
       <div className={styles.titleContainer}>
         <h2 className={styles.title}>Gol Krallığı</h2>
-        {seasonName ? <p className={styles.season}>Sezon: {seasonName}</p> : null}
+        {showSeasonSelect ? (
+          <SeasonSelect
+            seasons={seasons!}
+            value={selectedSeasonId ?? null}
+            onChange={onSeasonChange!}
+            selectClassName={styles.seasonSelect}
+          />
+        ) : seasonName ? (
+          <p className={styles.season}>Sezon: {formatSeasonLabel(seasonName)}</p>
+        ) : null}
       </div>
       <div className={styles.scroll}>
         <table className={styles.table}>

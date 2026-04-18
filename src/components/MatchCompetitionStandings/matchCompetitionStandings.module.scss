@@ -30,6 +30,25 @@
   font-weight: 500;
 }
 
+.seasonSelect {
+  max-width: 140px;
+  min-width: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: $color-text;
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
+  padding: 4px 8px;
+  line-height: 1.3;
+  cursor: pointer;
+
+  &:focus {
+    outline: 2px solid $color-primary;
+    outline-offset: 1px;
+  }
+}
+
 .subheading {
   font-size: 11px;
   font-weight: 700;
@@ -156,6 +175,25 @@
 
   .season {
     color: #b7b7b7;
+  }
+
+  .seasonSelectWorldCup {
+    max-width: 140px;
+    min-width: 0;
+    font-size: 12px;
+    font-weight: 600;
+    color: #f2f2f2;
+    background: #1a1a1a;
+    border: 1px solid #3a3a3a;
+    border-radius: $radius-sm;
+    padding: 4px 8px;
+    line-height: 1.3;
+    cursor: pointer;
+
+    &:focus {
+      outline: 2px solid #4caf50;
+      outline-offset: 1px;
+    }
   }
 
   .subheading {

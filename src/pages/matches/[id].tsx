@@ -1,5 +1,5 @@
 import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Container from '@/components/Container';
 import MatchCard from '@/components/MatchCard';
 import EventTimeline from '@/components/EventTimeline';
@@ -12,7 +12,9 @@ import {
   getMatchLineups,
   getMatchStats,
   getCompetitionTableFull,
+  getSeasonsList,
   type CompetitionTableData,
+  type SeasonListItem,
 } from '@/services/liveScoreService';
 import { Match } from '@/models/liveScore';
 import { MatchEvent, MatchStatsData } from '@/models/domain';
@@ -30,6 +32,16 @@ export default function MatchDetail() {
   const [standingsLoading, setStandingsLoading] = useState(false);
   const [standingsReady, setStandingsReady] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [seasons, setSeasons] = useState<SeasonListItem[]>([]);
+  const [selectedSeasonId, setSelectedSeasonId] = useState<number | null>(null);
+
+  const handleSeasonChange = useCallback(async (seasonId: number, competitionIdStr: string) => {
+    setSelectedSeasonId(seasonId);
+    setStandingsLoading(true);
+    const table = await getCompetitionTableFull(competitionIdStr, { season: seasonId });
+    setStandings(table);
+    setStandingsLoading(false);
+  }, []);
 
   useEffect(() => {
     if (!id) return;
@@ -57,10 +69,40 @@ export default function MatchDetail() {
       const compId = m?.competition?.id ?? m?.competition_id;
       if (compId != null) {
         setStandingsLoading(true);
-        const table = await getCompetitionTableFull(String(compId));
-        setStandings(table);
+        const compIdStr = String(compId);
+        const [seasonsList, table1] = await Promise.all([
+          getSeasonsList(),
+          getCompetitionTableFull(compIdStr),
+        ]);
+        setSeasons(seasonsList);
+
+        const fromTable =
+          table1?.season?.id != null && Number.isFinite(Number(table1.season.id))
+            ? Number(table1.season.id)
+            : null;
+        let sid: number | null = fromTable;
+        if (sid != null && seasonsList.length && !seasonsList.some((s) => s.id === sid)) {
+          sid = seasonsList[0]!.id;
+        } else if (sid == null && seasonsList.length) {
+          sid = seasonsList[0]!.id;
+        }
+        setSelectedSeasonId(sid);
+
+        const needTableRefetch =
+          sid != null &&
+          table1 != null &&
+          (table1.season?.id == null || Number(table1.season.id) !== sid);
+
+        let tableFinal = table1;
+        if (needTableRefetch && sid != null) {
+          tableFinal = await getCompetitionTableFull(compIdStr, { season: sid });
+        }
+        setStandings(tableFinal ?? table1);
         setStandingsLoading(false);
         setStandingsReady(true);
+      } else {
+        setSeasons([]);
+        setSelectedSeasonId(null);
       }
     };
 
@@ -108,6 +150,13 @@ export default function MatchDetail() {
               competitionName={match?.competition?.name ?? match?.competition_name}
               homeTeamId={homeTeamId}
               awayTeamId={awayTeamId}
+              seasons={seasons}
+              selectedSeasonId={selectedSeasonId}
+              onSeasonChange={
+                compId != null
+                  ? (sid) => handleSeasonChange(sid, String(compId))
+                  : undefined
+              }
             />
           ) : null}
         </div>

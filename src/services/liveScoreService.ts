@@ -443,8 +443,116 @@ export type CompetitionGroupItem = {
   stage?: string;
 };
 
+/** Global seasons list (`seasons/list.json`); `id` normalized to number */
+export type SeasonListItem = {
+  id: number;
+  name: string;
+  start?: string;
+  end?: string;
+};
+
+function seasonSortKey(s: SeasonListItem): number {
+  const end = s.end?.trim();
+  if (end) {
+    const t = Date.parse(end);
+    if (Number.isFinite(t)) return t;
+  }
+  const start = s.start?.trim();
+  if (start) {
+    const t = Date.parse(start);
+    if (Number.isFinite(t)) return t;
+  }
+  return 0;
+}
+
+const SEASON_LIST_MIN_END = Date.parse('2000-01-01');
+
+/** "2025/2026" veya "2025 / 2026" → [2025,2026] */
+function parseSlashSeasonYears(name: string): { a: number; b: number } | null {
+  const m = /^(\d{4})\s*\/\s*(\d{4})$/.exec(name.trim());
+  if (!m) return null;
+  const a = parseInt(m[1], 10);
+  const b = parseInt(m[2], 10);
+  if (!Number.isFinite(a) || !Number.isFinite(b)) return null;
+  return { a, b };
+}
+
+/**
+ * Aynı yılı hem "YYYY" hem "YYYY/ZZZZ" olarak listeleyen API tekrarını kaldırır
+ * (ör. "2025" + "2025/2026" → yalnızca split sezon kalır).
+ */
+function dedupeCalendarYearSeasons(items: SeasonListItem[]): SeasonListItem[] {
+  const plainYear = /^\d{4}$/;
+  const dropIds = new Set<number>();
+  const slashPairs: { a: number; b: number }[] = items
+    .map((s) => parseSlashSeasonYears(s.name))
+    .filter((pair): pair is { a: number; b: number } => pair != null);
+
+  for (const t of items) {
+    const n = t.name.trim();
+    if (!plainYear.test(n)) continue;
+    const y = parseInt(n, 10);
+    for (const pair of slashPairs) {
+      if (y === pair.a || y === pair.b) {
+        dropIds.add(t.id);
+        break;
+      }
+    }
+  }
+  return items.filter((s) => !dropIds.has(s.id));
+}
+
+function filterSeasonListForUi(items: SeasonListItem[]): SeasonListItem[] {
+  return items.filter((s) => {
+    const end = s.end?.trim();
+    if (end) {
+      const t = Date.parse(end);
+      return Number.isFinite(t) && t >= SEASON_LIST_MIN_END;
+    }
+    const start = s.start?.trim();
+    if (start) {
+      const t = Date.parse(start);
+      return Number.isFinite(t) && t >= SEASON_LIST_MIN_END;
+    }
+    return true;
+  });
+}
+
+// Endpoint: GET /seasons/list.json
+export async function getSeasonsList(): Promise<SeasonListItem[]> {
+  try {
+    const response = await liveScoreApi.get<{
+      success?: boolean;
+      data?: { seasons?: unknown[] };
+    }>('/seasons/list');
+    const raw = response.data.data?.seasons;
+    if (!response.data.success || !Array.isArray(raw)) return [];
+
+    const parsed = raw
+      .map((row): SeasonListItem | null => {
+        if (row == null || typeof row !== 'object') return null;
+        const r = row as Record<string, unknown>;
+        const idRaw = r.id;
+        const id = typeof idRaw === 'string' ? parseInt(idRaw, 10) : Number(idRaw);
+        const name = typeof r.name === 'string' ? r.name : '';
+        if (!Number.isFinite(id) || !name.trim()) return null;
+        const start = typeof r.start === 'string' ? r.start : undefined;
+        const end = typeof r.end === 'string' ? r.end : undefined;
+        return { id, name: name.trim(), start, end };
+      })
+      .filter((x): x is SeasonListItem => x != null);
+
+    const filtered = dedupeCalendarYearSeasons(filterSeasonListForUi(parsed));
+    return filtered.sort((a, b) => seasonSortKey(b) - seasonSortKey(a));
+  } catch (error) {
+    console.error('Error fetching seasons list', error);
+    return [];
+  }
+}
+
 type CompetitionTableQuery = {
   group_id?: number | string;
+  season?: number;
 };
 
 export const getCompetitionTableFull = async (
@@ -457,6 +565,10 @@ export const getCompetitionTableFull = async (
     };
     if (query?.group_id != null && query.group_id !== '') {
       params.group_id = query.group_id;
+    }
+    /** Upstream: `season_id` (not `season`) — yoksa güncel sezon döner */
+    if (query?.season != null && Number.isFinite(query.season)) {
+      params.season_id = query.season;
     }
     const response = await liveScoreApi.get(`/competitions/table`, {
       params,
@@ -549,15 +661,22 @@ export type TopScorersPayload = {
   topscorers?: TopScorerEntry[];
 };
 
-// Endpoint: GET /competitions/topscorers.json?competition_id=X
+// Endpoint: GET /competitions/topscorers.json?competition_id=X (&season_id= dokümanda yok; tablo ile aynı parametre)
 export const getTopScorers = async (
-  competitionId: string
+  competitionId: string,
+  opts?: { season?: number }
 ): Promise<TopScorersPayload | null> => {
   try {
+    const params: Record<string, string | number> = {
+      competition_id: competitionId,
+    };
+    if (opts?.season != null && Number.isFinite(opts.season)) {
+      params.season_id = opts.season;
+    }
     const response = await liveScoreApi.get<{ success?: boolean; data?: TopScorersPayload }>(
       `/competitions/topscorers`,
       {
-        params: { competition_id: competitionId },
+        params,
       }
     );
     if (response.data.success && response.data.data) {
