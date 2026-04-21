@@ -11,6 +11,7 @@ export default function UefaPage() {
       sidebarLeagues={UEFA_SIDEBAR_LEAGUES}
       defaultCompetitionId={UEFA_CHAMPIONS_LEAGUE_ID}
       allowedCompetitionIds={UEFA_TIER2_COMPETITION_IDS}
+      mode="uefa"
     />
   );
 }

@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  getAllCompetitionHistoryMatches,
   getAllLiveMatches,
   getAllMatchesByDate,
+  getFixturesByCompetition,
   getFixturesByDate,
   groupMatchesByLeague,
   mergeMatchesForAllTab,
@@ -21,18 +23,27 @@ import MatchCompetitionTopScorers from '@/components/MatchCompetitionTopScorers'
 import NewsList from '@/components/NewsList';
 import SubHeader, { type MatchTab } from '@/components/SubHeader';
 import Container from '@/components/Container';
+import UefaKnockoutBracket from '@/components/UefaKnockoutBracket';
 import type { SidebarLeague } from '@/config/leagues';
 import { countryFlagImgSrc } from '@/utils/countryFlag';
 import { getNews } from '@/services/newsApi';
+import {
+  buildBracketRounds,
+  mergeUefaCompetitionMatches,
+  sortMatchesForUefaList,
+} from '@/utils/uefaBracket';
 import styles from '@/pages/index.module.scss';
 
 type SidebarTab = 'standings' | 'leagues' | 'news';
+export type MatchHubMode = 'default' | 'uefa';
 
 export type MatchHubPageProps = {
   sidebarLeagues: SidebarLeague[];
   defaultCompetitionId: number;
   /** Doluysa maç listesi yalnızca bu `competition_id` değerleriyle sınırlı */
   allowedCompetitionIds: number[] | null;
+  /** `uefa`: seçili lige göre fikstür + geçmiş + canlı + eleme braketi */
+  mode?: MatchHubMode;
 };
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -41,10 +52,15 @@ export default function MatchHubPage({
   sidebarLeagues,
   defaultCompetitionId,
   allowedCompetitionIds,
+  mode = 'default',
 }: MatchHubPageProps) {
+  const isUefaMode = mode === 'uefa';
+
   const [allMatches, setAllMatches] = useState<Match[]>([]);
   const [liveMatches, setLiveMatches] = useState<Match[]>([]);
   const [fixtureMatches, setFixtureMatches] = useState<Match[]>([]);
+  const [uefaHistory, setUefaHistory] = useState<Match[]>([]);
+  const [uefaCompFixtures, setUefaCompFixtures] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState<string>(today);
   const [activeTab, setActiveTab] = useState<MatchTab>('all');
@@ -63,29 +79,53 @@ export default function MatchHubPage({
 
   const fetchData = useCallback(async () => {
     setLoading(true);
-    const [historyAll, liveAll, fixtures] = await Promise.all([
-      getAllMatchesByDate(selectedDate),
-      getAllLiveMatches(),
-      getFixturesByDate(selectedDate),
-    ]);
-    setAllMatches(historyAll);
-    setLiveMatches(liveAll);
-    setFixtureMatches(fixtures);
+    if (isUefaMode) {
+      const compId = String(selectedCompId);
+      const [liveAll, compFixtures, compHistory] = await Promise.all([
+        getAllLiveMatches(),
+        getFixturesByCompetition(compId),
+        getAllCompetitionHistoryMatches(compId, { maxPages: 4 }),
+      ]);
+      setLiveMatches(liveAll);
+      setUefaCompFixtures(compFixtures);
+      setUefaHistory(compHistory);
+      setAllMatches([]);
+      setFixtureMatches([]);
+    } else {
+      const [historyAll, liveAll, fixtures] = await Promise.all([
+        getAllMatchesByDate(selectedDate),
+        getAllLiveMatches(),
+        getFixturesByDate(selectedDate),
+      ]);
+      setAllMatches(historyAll);
+      setLiveMatches(liveAll);
+      setFixtureMatches(fixtures);
+    }
     setLoading(false);
-  }, [selectedDate]);
+  }, [isUefaMode, selectedCompId, selectedDate]);
 
   useEffect(() => {
     fetchData();
     const interval = setInterval(async () => {
-      const [liveAll, fixtures] = await Promise.all([
-        getAllLiveMatches(),
-        getFixturesByDate(selectedDate),
-      ]);
-      setLiveMatches(liveAll);
-      setFixtureMatches(fixtures);
+      if (isUefaMode) {
+        const compId = String(selectedCompId);
+        const [liveAll, compFixtures] = await Promise.all([
+          getAllLiveMatches(),
+          getFixturesByCompetition(compId),
+        ]);
+        setLiveMatches(liveAll);
+        setUefaCompFixtures(compFixtures);
+      } else {
+        const [liveAll, fixtures] = await Promise.all([
+          getAllLiveMatches(),
+          getFixturesByDate(selectedDate),
+        ]);
+        setLiveMatches(liveAll);
+        setFixtureMatches(fixtures);
+      }
     }, 30_000);
     return () => clearInterval(interval);
-  }, [fetchData, selectedDate]);
+  }, [fetchData, isUefaMode, selectedCompId, selectedDate]);
 
   const handleSeasonChange = useCallback(
     async (seasonId: number) => {
@@ -175,7 +215,37 @@ export default function MatchHubPage({
     };
   }, [sidebarTab, newsItems.length]);
 
+  const uefaMerged = useMemo(() => {
+    if (!isUefaMode) return [] as Match[];
+    return mergeUefaCompetitionMatches({
+      competitionId: selectedCompId,
+      liveAll: liveMatches,
+      fixtures: uefaCompFixtures,
+      history: uefaHistory,
+    });
+  }, [isUefaMode, selectedCompId, liveMatches, uefaCompFixtures, uefaHistory]);
+
+  const uefaBracketRounds = useMemo(() => {
+    if (!isUefaMode) return [];
+    return buildBracketRounds(uefaMerged);
+  }, [isUefaMode, uefaMerged]);
+
   const displayMatches = useMemo(() => {
+    if (isUefaMode) {
+      switch (activeTab) {
+        case 'live':
+          return uefaMerged.filter(
+            (m) => m.status === 'IN PLAY' || m.status === 'HALF TIME BREAK'
+          );
+        case 'finished':
+          return uefaMerged.filter((m) => m.status === 'FINISHED');
+        case 'favorites':
+          return [];
+        case 'all':
+        default:
+          return sortMatchesForUefaList(uefaMerged);
+      }
+    }
     switch (activeTab) {
       case 'live':
         return liveMatches.filter(
@@ -194,7 +264,15 @@ export default function MatchHubPage({
           fixtures: fixtureMatches,
         });
     }
-  }, [activeTab, allMatches, liveMatches, fixtureMatches, selectedDate]);
+  }, [
+    isUefaMode,
+    uefaMerged,
+    activeTab,
+    allMatches,
+    liveMatches,
+    fixtureMatches,
+    selectedDate,
+  ]);
 
   const competitionFilterSet = useMemo(() => {
     if (!allowedCompetitionIds?.length) return null;
@@ -202,11 +280,14 @@ export default function MatchHubPage({
   }, [allowedCompetitionIds]);
 
   const filteredDisplayMatches = useMemo(() => {
+    if (isUefaMode) {
+      return displayMatches.filter((m) => m.competition?.id === selectedCompId);
+    }
     if (!competitionFilterSet) return displayMatches;
     return displayMatches.filter((m) =>
       competitionFilterSet.has(m.competition?.id ?? 0)
     );
-  }, [displayMatches, competitionFilterSet]);
+  }, [isUefaMode, selectedCompId, displayMatches, competitionFilterSet]);
 
   const grouped = useMemo(() => {
     const raw = groupMatchesByLeague(filteredDisplayMatches);
@@ -218,7 +299,7 @@ export default function MatchHubPage({
 
   function handleLeagueClick(competitionId: number) {
     setSelectedCompId(competitionId);
-    setSidebarTab('standings');
+    if (!isUefaMode) setSidebarTab('standings');
   }
 
   return (
@@ -327,7 +408,17 @@ export default function MatchHubPage({
                 Favori maçlarınız burada görünecek.
               </div>
             ) : (
-              <MatchList groupedMatches={grouped} />
+              <>
+                {isUefaMode && uefaBracketRounds.length > 0 ? (
+                  <div className={styles.bracketWrap}>
+                    <UefaKnockoutBracket
+                      rounds={uefaBracketRounds}
+                      competitionName={selectedLeagueName}
+                    />
+                  </div>
+                ) : null}
+                <MatchList groupedMatches={grouped} />
+              </>
             )}
           </div>
         </div>

@@ -72,6 +72,7 @@ export function normalizeFixtureToMatch(raw: FixtureListItem): Match {
     fixture_id: raw.id,
     group_id: raw.group_id,
     group_name: raw.group_name,
+    round: raw.round,
   };
 }
 
@@ -117,6 +118,27 @@ export async function getCompetitionGroupFixtures(
     return [];
   } catch (error) {
     console.error('Error fetching competition group fixtures', error);
+    return [];
+  }
+}
+
+// Endpoint: GET /fixtures/list.json?competition_id=244
+export async function getFixturesByCompetition(
+  competitionId: number | string
+): Promise<Match[]> {
+  try {
+    const response = await liveScoreApi.get<
+      ApiResponse<{ fixtures?: FixtureListItem[] }>
+    >('/fixtures/list', {
+      params: { competition_id: competitionId },
+    });
+    const list = response.data.data?.fixtures;
+    if (response.data.success && Array.isArray(list)) {
+      return list.map((f) => normalizeFixtureToMatch(f));
+    }
+    return [];
+  } catch (error) {
+    console.error('Error fetching competition fixtures', error);
     return [];
   }
 }

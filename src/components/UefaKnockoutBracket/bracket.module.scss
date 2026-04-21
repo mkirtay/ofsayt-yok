@@ -1,0 +1,140 @@
+@import '../../styles/variables';
+
+.root {
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  overflow: hidden;
+}
+
+.header {
+  padding: $spacing-3 $spacing-4;
+  border-bottom: 1px solid $color-border;
+  background: $color-muted;
+}
+
+.title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: $color-text;
+  letter-spacing: 0.01em;
+}
+
+.scroller {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+.columns {
+  display: flex;
+  gap: $spacing-4;
+  padding: $spacing-4;
+  min-width: max-content;
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  min-width: 220px;
+}
+
+.columnHeader {
+  padding: $spacing-2 $spacing-3;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: $color-text-secondary;
+  background: $color-bg;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
+  text-align: center;
+  margin-bottom: $spacing-3;
+}
+
+.columnBody {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  gap: $spacing-3;
+  flex: 1;
+}
+
+.pair {
+  display: block;
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
+  padding: $spacing-2 $spacing-3;
+  text-decoration: none;
+  color: inherit;
+  transition: $transition-base;
+
+  &:hover {
+    border-color: $color-primary;
+    box-shadow: 0 4px 12px rgba(16, 32, 21, 0.06);
+  }
+}
+
+.pairInner {
+  display: flex;
+  align-items: stretch;
+  gap: $spacing-3;
+}
+
+.teamsCol {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.team {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  padding: 4px 0;
+  font-size: 13px;
+  color: $color-text;
+  min-width: 0;
+}
+
+.teamWinner {
+  font-weight: 700;
+  color: $color-primary-dark;
+}
+
+.teamLogo {
+  flex-shrink: 0;
+  object-fit: contain;
+}
+
+.teamLogoPlaceholder {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: $color-muted;
+  border: 1px dashed $color-border;
+}
+
+.teamName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scoreCol {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 48px;
+  padding: 0 $spacing-2;
+  font-size: 14px;
+  font-weight: 700;
+  color: $color-text;
+  border-left: 1px solid $color-border;
+}

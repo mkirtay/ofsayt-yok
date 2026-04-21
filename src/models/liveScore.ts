@@ -67,7 +67,15 @@ export interface Match {
   fixture_id?: number;
   group_id?: number;
   group_name?: string;
+  /** `1/16`, `1/8`, `1/4`, `QF`, `SF`, `F` vb. — knockout tur etiketi (API alanı) */
+  round?: string;
   added?: string;
+  outcomes?: {
+    half_time?: string | null;
+    full_time?: string | null;
+    extra_time?: string | null;
+    penalty_shootout?: string | null;
+  };
   urls?: MatchUrls;
   odds?: MatchOdds;
 }
