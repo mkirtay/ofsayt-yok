@@ -417,7 +417,10 @@ export default function MatchHubPage({
                     />
                   </div>
                 ) : null}
-                <MatchList groupedMatches={grouped} />
+                <MatchList
+                  groupedMatches={grouped}
+                  showDateWhenNotToday={isUefaMode}
+                />
               </>
             )}
           </div>

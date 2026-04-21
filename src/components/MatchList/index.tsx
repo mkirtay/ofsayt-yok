@@ -14,6 +14,8 @@ interface MatchListProps {
   groupedMatches: GroupedLeagueMatches[];
   /** `worldCup`: koyu arka plan / yüksek kontrast (World Cup sayfası) */
   variant?: MatchListVariant;
+  /** Bugünden farklı tarihli maçlar için kickoff hücresine kısa tarih ekler (örn. "15 Nis") */
+  showDateWhenNotToday?: boolean;
 }
 
 type FlatItem =
@@ -46,6 +48,34 @@ function formatKickoff(match: Match): string {
   }
   if (scheduled) return utcTimeToTr(scheduled);
   return '—';
+}
+
+const SHORT_DATE_FMT = new Intl.DateTimeFormat('tr-TR', {
+  day: 'numeric',
+  month: 'short',
+  timeZone: 'Europe/Istanbul',
+});
+
+/** "2026-04-15" -> "15 Nis" (TR saat dilimine göre; parse başarısızsa gün.ay). */
+function formatShortDateTr(isoDate: string): string {
+  const d = new Date(`${isoDate}T00:00:00Z`);
+  if (!Number.isNaN(d.getTime())) {
+    return SHORT_DATE_FMT.format(d).replace(/\.$/, '');
+  }
+  const parts = isoDate.split('-');
+  if (parts.length === 3) return `${parts[2]}.${parts[1]}`;
+  return isoDate;
+}
+
+function todayIsoTr(): string {
+  const now = new Date();
+  const fmt = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Istanbul',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  });
+  return fmt.format(now);
 }
 
 function statusLabel(match: Match): { text: string; variant: 'live' | 'ht' | 'ft' | 'scheduled' } {
@@ -97,9 +127,22 @@ function buildFlatItems(groupedMatches: MatchListProps['groupedMatches']): FlatI
   return items;
 }
 
-type VirtualRowProps = RowComponentProps<{ items: FlatItem[] }>;
+type RowContext = {
+  items: FlatItem[];
+  showDateWhenNotToday: boolean;
+  todayIso: string;
+};
 
-function VirtualRow({ index, style, items, ariaAttributes }: VirtualRowProps) {
+type VirtualRowProps = RowComponentProps<RowContext>;
+
+function VirtualRow({
+  index,
+  style,
+  items,
+  showDateWhenNotToday,
+  todayIso,
+  ariaAttributes,
+}: VirtualRowProps) {
   const item = items[index];
   if (!item) return null;
 
@@ -144,6 +187,10 @@ function VirtualRow({ index, style, items, ariaAttributes }: VirtualRowProps) {
   const homeLogo = match.home?.logo;
   const awayLogo = match.away?.logo;
   const kickoffUtc = formatKickoff(match);
+  const matchDate = match.date?.trim();
+  const showShortDate =
+    showDateWhenNotToday && !!matchDate && matchDate !== todayIso;
+  const shortDate = showShortDate ? formatShortDateTr(matchDate!) : '';
   const { text: statusText, variant } = statusLabel(match);
   const scoreRaw = match.scores?.score || match.score;
   const score =
@@ -170,7 +217,16 @@ function VirtualRow({ index, style, items, ariaAttributes }: VirtualRowProps) {
       className={rowClass}
       prefetch={false}
     >
-      <div className={`${styles.virtualCell} ${styles.virtualKickoff}`}>{kickoffUtc}</div>
+      <div className={`${styles.virtualCell} ${styles.virtualKickoff}`}>
+        {showShortDate ? (
+          <span className={styles.kickoffStack}>
+            <span className={styles.kickoffDate}>{shortDate}</span>
+            <span className={styles.kickoffTime}>{kickoffUtc}</span>
+          </span>
+        ) : (
+          kickoffUtc
+        )}
+      </div>
       <div
         className={`${styles.virtualCell} ${styles.virtualStatus} ${
           isLive ? styles.virtualStatusLive : ''
@@ -221,7 +277,7 @@ function VirtualRow({ index, style, items, ariaAttributes }: VirtualRowProps) {
   );
 }
 
-function rowHeight(index: number, rowProps: { items: FlatItem[] }): number {
+function rowHeight(index: number, rowProps: RowContext): number {
   const item = rowProps.items[index];
   if (!item) return MATCH_ROW_HEIGHT;
   if (item.type === 'header') {
@@ -230,7 +286,11 @@ function rowHeight(index: number, rowProps: { items: FlatItem[] }): number {
   return MATCH_ROW_HEIGHT;
 }
 
-export default function MatchList({ groupedMatches, variant = 'default' }: MatchListProps) {
+export default function MatchList({
+  groupedMatches,
+  variant = 'default',
+  showDateWhenNotToday = false,
+}: MatchListProps) {
   const [mounted, setMounted] = useState(false);
   const isWorldCup = variant === 'worldCup';
   useEffect(() => {
@@ -239,7 +299,12 @@ export default function MatchList({ groupedMatches, variant = 'default' }: Match
 
   const items = useMemo(() => buildFlatItems(groupedMatches), [groupedMatches]);
 
-  const rowProps = useMemo(() => ({ items }), [items]);
+  const todayIso = useMemo(() => todayIsoTr(), []);
+
+  const rowProps = useMemo<RowContext>(
+    () => ({ items, showDateWhenNotToday, todayIso }),
+    [items, showDateWhenNotToday, todayIso]
+  );
 
   const listStyle = useCallback(
     (height: number, width: number): CSSProperties => ({

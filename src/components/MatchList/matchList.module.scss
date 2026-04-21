@@ -330,6 +330,41 @@
   }
 }
 
+.kickoffStack {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.1;
+}
+
+.kickoffDate {
+  font-size: 9px;
+  font-weight: 600;
+  color: $color-text-secondary;
+  opacity: 0.85;
+  text-transform: lowercase;
+  letter-spacing: 0.01em;
+
+  @media (min-width: $bp-sm) {
+    font-size: 10px;
+  }
+}
+
+.kickoffTime {
+  font-size: 10px;
+  font-weight: 700;
+  color: $color-text;
+  font-variant-numeric: tabular-nums;
+
+  @media (min-width: $bp-sm) {
+    font-size: 11px;
+  }
+
+  @media (min-width: $bp-lg) {
+    font-size: 12px;
+  }
+}
+
 .virtualStatus {
   justify-content: flex-start;
   font-weight: 700;
