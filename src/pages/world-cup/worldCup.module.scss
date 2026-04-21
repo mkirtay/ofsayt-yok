@@ -1,15 +1,23 @@
 @import '../../styles/variables';
 
+$wc-bg-dark: #121212;
+$wc-bg-hover: #1b1b1b;
+$wc-border: #2a2a2a;
+$wc-border-item: #262626;
+$wc-text: #e3e3e3;
+$wc-text-muted: #bdbdbd;
+$wc-text-empty: #c4c4c4;
+
 .sidebar {
-  background: #121212;
-  border: 1px solid #2a2a2a;
+  background: $wc-bg-dark;
+  border: 1px solid $wc-border;
   border-radius: $radius-md;
   overflow: hidden;
 }
 
 .sidebarTabs {
   display: flex;
-  border-bottom: 1px solid #2a2a2a;
+  border-bottom: 1px solid $wc-border;
 }
 
 .sidebarTab {
@@ -17,13 +25,13 @@
   padding: $spacing-3 $spacing-2;
   font-size: 13px;
   font-weight: 600;
-  color: #bdbdbd;
+  color: $wc-text-muted;
   text-align: center;
   transition: $transition-base;
   white-space: nowrap;
 
   &:hover {
-    background: #1b1b1b;
+    background: $wc-bg-hover;
     color: #fff;
   }
 }
@@ -54,20 +62,20 @@
   width: 100%;
   text-align: left;
   padding: $spacing-3 $spacing-4;
-  border-bottom: 1px solid #262626;
+  border-bottom: 1px solid $wc-border-item;
   font-size: 14px;
-  color: #e3e3e3;
+  color: $wc-text;
   transition: $transition-base;
 
   &:hover {
-    background: #1a1a1a;
+    background: $wc-bg-hover;
     color: #fff;
   }
 }
 
 .groupItemActive {
   background: #fff;
-  color: #101010;
+  color: $wc-bg-dark;
   font-weight: 600;
 }
 
@@ -83,10 +91,10 @@
 
 .loading,
 .empty {
-  background: #111;
-  border: 1px solid #282828;
+  background: $wc-bg-dark;
+  border: 1px solid $wc-border;
   border-radius: $radius-md;
   padding: $spacing-6;
   text-align: center;
-  color: #c4c4c4;
+  color: $wc-text-empty;
 }

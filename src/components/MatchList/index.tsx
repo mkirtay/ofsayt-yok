@@ -4,7 +4,7 @@ import { List, type RowComponentProps } from 'react-window';
 import { AutoSizer } from 'react-virtualized-auto-sizer';
 import { Match } from '../../models/liveScore';
 import type { GroupedLeagueMatches } from '../../services/liveScoreService';
-import { FLAG_PROXY_PATH, countryFlagImgSrc } from '@/utils/countryFlag';
+import { countryFlagImgSrc } from '@/utils/countryFlag';
 import { utcTimeToTr } from '@/utils/dateFormat';
 import styles from './matchList.module.scss';
 
@@ -236,17 +236,6 @@ export default function MatchList({ groupedMatches, variant = 'default' }: Match
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  useEffect(() => {
-    console.log('[MatchList] Gruplanmış maç verisi', groupedMatches);
-    const sample = groupedMatches[0]?.matches[0];
-    console.log('[MatchList] Örnek maç (ham)', sample);
-    console.log(
-      '[MatchList] Ülke bayrağı: `country.flag` (örn. BIH.png) yalnızca dosya adı, doğrudan CDN path’i değil. Görüntü için `country_id` ile:',
-      `${FLAG_PROXY_PATH}?country_id=<id> → upstream countries/flag.json?country_id=... (PNG). Örnek ham alan:`,
-      sample?.country
-    );
-  }, [groupedMatches]);
 
   const items = useMemo(() => buildFlatItems(groupedMatches), [groupedMatches]);
 

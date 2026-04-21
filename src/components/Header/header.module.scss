@@ -26,6 +26,13 @@
   gap: $spacing-3;
 }
 
+.headerNavPills {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  flex-wrap: wrap;
+}
+
 .logo {
   line-height: 0;
 }
@@ -40,7 +47,7 @@
   }
 }
 
-.worldCupLink {
+.headerNavPill {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -52,6 +59,7 @@
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.04em;
+  text-decoration: none;
   transition: $transition-base;
 
   &:hover {
@@ -60,7 +68,7 @@
   }
 }
 
-.headerWorldCup .worldCupLink {
+.headerWorldCup .headerNavPill {
   border-color: #444;
   color: #fff;
 

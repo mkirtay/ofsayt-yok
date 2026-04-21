@@ -20,6 +20,9 @@
 # production
 /build
 
+# tweet-bot
+/src/tweet-bot.js
+
 # misc
 .DS_Store
 *.pem

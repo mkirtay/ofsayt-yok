@@ -1,9 +1,10 @@
 /**
- * Ana sayfa lig gruplarının sırası:
+ * Ana sayfa lig gruplarının sırası (yan panel `SIDEBAR_LEAGUES`):
  * 1) Türkiye
- * 2) UEFA: Şampiyonlar Ligi → Avrupa Ligi → Konferans Ligi
- * 3) Büyük 5 (ES, EN, IT, FR, DE)
- * 4) Diğerleri — önce ülke adı, sonra lig adı (tr sıralama)
+ * 2) Büyük 5 (ES, EN, IT, FR, DE)
+ * UEFA üçlüsü ayrı: `UEFA_SIDEBAR_LEAGUES` — `/uefa` sayfası.
+ *
+ * Maç listesi gruplama sırası (`compareGroupedLeagues`): tier 2 UEFA hâlâ Ş→Avrupa→Konferans.
  */
 
 export type LeagueGroupSortInput = {
@@ -20,8 +21,8 @@ export const TURKEY_COUNTRY_ID = 48;
 export const TURKEY_COMPETITION_IDS = [6, 344, 347];
 
 /** Live Score `competition.id` — Postman ile doğrula */
-export const UEFA_CHAMPIONS_LEAGUE_ID = 245;
-export const UEFA_EUROPA_LEAGUE_ID = 244;
+export const UEFA_CHAMPIONS_LEAGUE_ID = 244;
+export const UEFA_EUROPA_LEAGUE_ID = 245;
 export const UEFA_CONFERENCE_LEAGUE_ID = 446;
 
 /** Sıra: Şampiyonlar → Avrupa → Konferans */
@@ -84,14 +85,18 @@ export const SIDEBAR_LEAGUES: SidebarLeague[] = [
   { id: 6,   name: 'Trendyol Süper Lig',    countryId: 48 },
   { id: 344, name: 'Trendyol 1. Lig',        countryId: 48 },
   { id: 347, name: 'Türkiye Kupası',          countryId: 48 },
-  { id: 244, name: 'Şampiyonlar Ligi',        countryId: null, logo: '/images/uefa-logo.svg' },
-  { id: 245, name: 'UEFA Avrupa Ligi',        countryId: null, logo: '/images/uefa-logo.svg' },
-  { id: 446, name: 'UEFA Konferans Ligi',     countryId: null, logo: '/images/uefa-logo.svg' },
   { id: 2,   name: 'İngiltere Premier Lig',   countryId: 19 },
   { id: 1,   name: 'Almanya Bundesliga',      countryId: 1 },
   { id: 3,   name: 'İspanya La Liga',         countryId: 43 },
   { id: 4,   name: 'İtalya Serie A',          countryId: 47 },
   { id: 5,   name: 'Fransa Ligue 1',          countryId: 21 },
+];
+
+/** `/uefa` yan paneli — sıra `UEFA_TIER2_COMPETITION_IDS` ile aynı */
+export const UEFA_SIDEBAR_LEAGUES: SidebarLeague[] = [
+  { id: UEFA_CHAMPIONS_LEAGUE_ID, name: 'Şampiyonlar Ligi', countryId: null, logo: '/images/uefa-logo.svg' },
+  { id: UEFA_EUROPA_LEAGUE_ID, name: 'UEFA Avrupa Ligi', countryId: null, logo: '/images/uefa-logo.svg' },
+  { id: UEFA_CONFERENCE_LEAGUE_ID, name: 'UEFA Konferans Ligi', countryId: null, logo: '/images/uefa-logo.svg' },
 ];
 
 export function compareGroupedLeagues(a: LeagueGroupSortInput, b: LeagueGroupSortInput): number {

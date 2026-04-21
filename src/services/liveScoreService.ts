@@ -25,7 +25,7 @@ function parseTotalPages(data: unknown): number {
 export const getLiveMatches = async (page = 1): Promise<PaginatedMatches> => {
   try {
     const response = await liveScoreApi.get<ApiResponse<LiveMatchData>>('/matches/live', {
-      params: { page },
+      
     });
     if (response.data.success && response.data.data?.match) {
       const matches = response.data.data.match;
@@ -75,10 +75,12 @@ export function normalizeFixtureToMatch(raw: FixtureListItem): Match {
   };
 }
 
-// Endpoint: GET /fixtures/list.json?date=YYYY-MM-DD veya today
+// Endpoint: GET /fixtures/list.json?date=YYYY-MM-DD (API `today` değerini güvenilir kabul etmiyor)
 export async function getFixturesByDate(isoDate: string): Promise<Match[]> {
   try {
-    const dateParam = isoDate === todayIsoUtc() ? 'today' : isoDate;
+    const trimmed = isoDate.trim();
+    const dateParam =
+      !trimmed || trimmed.toLowerCase() === 'today' ? todayIsoUtc() : trimmed;
     const response = await liveScoreApi.get<
       ApiResponse<{ fixtures?: FixtureListItem[] }>
     >('/fixtures/list', {
@@ -95,7 +97,7 @@ export async function getFixturesByDate(isoDate: string): Promise<Match[]> {
   }
 }
 
-export const getTodayFixtures = (): Promise<Match[]> => getFixturesByDate('today');
+export const getTodayFixtures = (): Promise<Match[]> => getFixturesByDate(todayIsoUtc());
 
 // Endpoint: GET /fixtures/list.json?competition_id=362&group_id=4297
 export async function getCompetitionGroupFixtures(
@@ -132,24 +134,120 @@ export type MergeMatchesForAllTabInput = {
   fixtures: Match[];
 };
 
-/** Aynı id: fikstür < history < live (live en güncel); çıktı id ile tekilleştirilir */
+/** Fikstür / history / canlı satırlarını ortak anahtarla eşler: önce `fixture_id`, yoksa `id`. */
+function mergeMatchMapKey(m: Match): number | null {
+  const fid = m.fixture_id != null && Number(m.fixture_id) > 0 ? Number(m.fixture_id) : null;
+  if (fid != null) return fid;
+  const id = Number(m.id);
+  return Number.isFinite(id) ? id : null;
+}
+
+function mergeMatchRow(base: Match, overlay: Match): Match {
+  return {
+    ...base,
+    ...overlay,
+    id: overlay.id,
+    fixture_id: base.fixture_id ?? overlay.fixture_id ?? base.id,
+    scheduled: overlay.scheduled ?? base.scheduled,
+    date: overlay.date ?? base.date,
+  };
+}
+
+/**
+ * Fikstür + günlük history + canlı birleşimi.
+ * Öncelik: fikstür (temel) < history < live (`fixture_id` ile eşleşirse aynı satır güncellenir).
+ */
 export function mergeMatchesForAllTab(input: MergeMatchesForAllTabInput): Match[] {
   const { selectedDate, historyPageMatches, liveMatches, fixtures } = input;
   const liveOnDay = liveMatches.filter((m) => isLiveMatchOnSelectedDate(m, selectedDate));
   const map = new Map<number, Match>();
-  for (const f of fixtures) {
-    const id = Number(f.id);
-    if (Number.isFinite(id)) map.set(id, f);
-  }
-  for (const h of historyPageMatches) {
-    const id = Number(h.id);
-    if (Number.isFinite(id)) map.set(id, h);
-  }
-  for (const l of liveOnDay) {
-    const id = Number(l.id);
-    if (Number.isFinite(id)) map.set(id, l);
-  }
+
+  const put = (m: Match) => {
+    const k = mergeMatchMapKey(m);
+    if (k == null) return;
+    const existing = map.get(k);
+    map.set(k, existing ? mergeMatchRow(existing, m) : m);
+  };
+
+  for (const f of fixtures) put(f);
+  for (const h of historyPageMatches) put(h);
+  for (const l of liveOnDay) put(l);
+
   return dedupeMatchesById(Array.from(map.values()));
+}
+
+/**
+ * `fixtures/list` fikstür satırlarını history + canlı ile `fixture_id` üzerinden birleştirir.
+ * Maç detay linki için `id` alanı canlı/bitmiş maçın `id` değerine çekilir.
+ */
+export function mergeFixturesWithHistoryAndLive(
+  fixtures: Match[],
+  history: Match[],
+  live: Match[],
+): Match[] {
+  const byFixture = new Map<number, Match>();
+  const register = (m: Match) => {
+    const fid = m.fixture_id != null && Number(m.fixture_id) > 0 ? Number(m.fixture_id) : null;
+    if (fid == null) return;
+    byFixture.set(fid, m);
+  };
+  for (const h of history) register(h);
+  for (const l of live) register(l);
+
+  return fixtures.map((f) => {
+    const fid = f.fixture_id != null && Number(f.fixture_id) > 0 ? Number(f.fixture_id) : Number(f.id);
+    const overlay = Number.isFinite(fid) ? byFixture.get(fid) : undefined;
+    if (!overlay) return f;
+    return mergeMatchRow(f, overlay);
+  });
+}
+
+/** `matches/history` — `competition_id` ile sayfalanmış tüm maçlar (sayfa başına max 30). */
+export async function getAllCompetitionHistoryMatches(
+  competitionId: string,
+  opts?: { from?: string; to?: string; maxPages?: number },
+): Promise<Match[]> {
+  const maxPages = Math.max(1, opts?.maxPages ?? 35);
+  try {
+    const first = await liveScoreApi.get<{ success?: boolean; data?: { match?: Match[] } & Record<string, unknown> }>(
+      `/matches/history`,
+      {
+        params: {
+          competition_id: competitionId,
+          page: 1,
+          ...(opts?.from ? { from: opts.from } : {}),
+          ...(opts?.to ? { to: opts.to } : {}),
+        },
+      },
+    );
+    if (!first.data.success || !Array.isArray(first.data.data?.match)) return [];
+
+    const firstMatches = first.data.data.match;
+    const totalPages = parseTotalPages(first.data.data);
+    const pagesToFetch = Math.min(totalPages, maxPages);
+    if (pagesToFetch <= 1) return dedupeMatchesById(firstMatches);
+
+    const rest = await Promise.all(
+      Array.from({ length: pagesToFetch - 1 }, (_, i) =>
+        liveScoreApi.get<{ success?: boolean; data?: { match?: Match[] } }>(`/matches/history`, {
+          params: {
+            competition_id: competitionId,
+            page: i + 2,
+            ...(opts?.from ? { from: opts.from } : {}),
+            ...(opts?.to ? { to: opts.to } : {}),
+          },
+        }),
+      ),
+    );
+    const combined = [
+      ...firstMatches,
+      ...rest.flatMap((r) => (r.data.success && Array.isArray(r.data.data?.match) ? r.data.data.match : [])),
+    ];
+    return dedupeMatchesById(combined);
+  } catch (error) {
+    console.error('Error fetching competition history matches', error);
+    return [];
+  }
 }
 
 function allTabStatusRank(m: Match): number {
@@ -220,7 +318,7 @@ export async function getAllMatchesByDate(date: string): Promise<Match[]> {
 
 /** Tüm canlı sayfaları — history pagination ile aynı `page` kullanılmamalı */
 export async function getAllLiveMatches(): Promise<Match[]> {
-  const first = await getLiveMatches(1);
+  const first = await getLiveMatches();
   const { totalPages, matches: firstMatches } = first;
   if (totalPages <= 1) return dedupeMatchesById(firstMatches);
 
@@ -518,8 +616,16 @@ function filterSeasonListForUi(items: SeasonListItem[]): SeasonListItem[] {
   });
 }
 
+export type GetSeasonsListOptions = {
+  /**
+   * `true` iken `YYYY` ile `YYYY/ZZZZ` çakışan düz yıl satırları silinmez.
+   * Dünya Kupası gibi düz yıl sezon id'lerinin (örn. "2026") dropdown'da kalması için gerekir.
+   */
+  skipCalendarYearDedupe?: boolean;
+};
+
 // Endpoint: GET /seasons/list.json
-export async function getSeasonsList(): Promise<SeasonListItem[]> {
+export async function getSeasonsList(opts?: GetSeasonsListOptions): Promise<SeasonListItem[]> {
   try {
     const response = await liveScoreApi.get<{
       success?: boolean;
@@ -542,7 +648,10 @@ export async function getSeasonsList(): Promise<SeasonListItem[]> {
       })
       .filter((x): x is SeasonListItem => x != null);
 
-    const filtered = dedupeCalendarYearSeasons(filterSeasonListForUi(parsed));
+    const uiFiltered = filterSeasonListForUi(parsed);
+    const filtered = opts?.skipCalendarYearDedupe
+      ? uiFiltered
+      : dedupeCalendarYearSeasons(uiFiltered);
     return filtered.sort((a, b) => seasonSortKey(b) - seasonSortKey(a));
   } catch (error) {
     console.error('Error fetching seasons list', error);

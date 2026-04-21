@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "tweet-bot": "dotenv -e .env.local -- node src/tweet-bot.js",
     "db:push": "dotenv -e .env.local -- prisma db push",
     "db:generate": "dotenv -e .env.local -- prisma generate",
     "db:studio": "dotenv -e .env.local -- prisma studio",
@@ -20,13 +21,15 @@
     "bcryptjs": "^3.0.3",
     "next": "16.1.6",
     "next-auth": "^4.24.13",
+    "node-cron": "^4.2.1",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-redux": "^9.2.0",
     "react-virtualized-auto-sizer": "^2.0.3",
     "react-window": "^2.2.7",
     "rss-parser": "^3.13.0",
-    "sass": "^1.97.3"
+    "sass": "^1.97.3",
+    "twitter-api-v2": "^1.29.0"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",

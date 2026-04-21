@@ -26,22 +26,27 @@ export default function Header() {
               />
             </Link>
           </div>
-          {isWorldCupRoute ? (
-            <Link href="/world-cup" className={styles.worldCupMarkLink} aria-label="FIFA World Cup">
-              <Image
-                src="/images/2026_FIFA_World_Cup_Logo.png"
-                alt="FIFA World Cup"
-                width={28}
-                height={42}
-                className={styles.worldCupMark}
-                priority
-              />
+          <div className={styles.headerNavPills}>
+            {isWorldCupRoute ? (
+              <Link href="/world-cup" className={styles.worldCupMarkLink} aria-label="FIFA World Cup">
+                <Image
+                  src="/images/2026_FIFA_World_Cup_Logo.png"
+                  alt="FIFA World Cup"
+                  width={28}
+                  height={42}
+                  className={styles.worldCupMark}
+                  priority
+                />
+              </Link>
+            ) : (
+              <Link href="/world-cup" className={styles.headerNavPill}>
+                WORLD CUP
+              </Link>
+            )}
+            <Link href="/uefa" className={styles.headerNavPill}>
+              UEFA
             </Link>
-          ) : (
-            <Link href="/world-cup" className={styles.worldCupLink}>
-              WORLD CUP
-            </Link>
-          )}
+          </div>
         </div>
         <div className={styles.actions}>
           {session ? (
