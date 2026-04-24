@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import type { GetServerSideProps, InferGetServerSidePropsType } from 'next';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import MatchCompetitionStandings from '@/components/MatchCompetitionStandings';
 import MatchList from '@/components/MatchList';
 import NewsList from '@/components/NewsList';
@@ -25,6 +26,9 @@ import {
   type SeasonListItem,
 } from '@/services/liveScoreService';
 import { getNews } from '@/services/newsApi';
+import type { WorldCupBootstrapServerPayload } from '@/server/loadWorldCupBootstrapData';
+import { loadWorldCupBootstrapData } from '@/server/loadWorldCupBootstrapData';
+import { propsJsonSafe } from '@/server/propsJsonSafe';
 import styles from './worldCup.module.scss';
 
 type WorldCupMainTab = 'groups' | 'matches';
@@ -67,20 +71,34 @@ function extractGroupStandings(data: CompetitionTableData | null): GroupStanding
   );
 }
 
-export default function WorldCupPage() {
+type WorldCupPageProps = {
+  wcBootstrap: WorldCupBootstrapServerPayload | null;
+};
+
+export default function WorldCupPage({
+  wcBootstrap,
+}: InferGetServerSidePropsType<typeof getServerSideProps>) {
   const [mainTab, setMainTab] = useState<WorldCupMainTab>('groups');
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>('groups');
 
-  const [tableData, setTableData] = useState<CompetitionTableData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [tableData, setTableData] = useState<CompetitionTableData | null>(
+    () => wcBootstrap?.tableData ?? null
+  );
+  const [loading, setLoading] = useState(() => !wcBootstrap);
   const [error, setError] = useState<string | null>(null);
 
-  const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
+  const [selectedGroupId, setSelectedGroupId] = useState<number | null>(
+    () => wcBootstrap?.selectedGroupId ?? null
+  );
   const [selectedGroupTable, setSelectedGroupTable] = useState<CompetitionTableData | null>(null);
   const [selectedGroupLoading, setSelectedGroupLoading] = useState(false);
 
-  const [seasons, setSeasons] = useState<SeasonListItem[]>([]);
-  const [selectedSeasonId, setSelectedSeasonId] = useState<number | null>(null);
+  const [seasons, setSeasons] = useState<SeasonListItem[]>(() => wcBootstrap?.seasons ?? []);
+  const [selectedSeasonId, setSelectedSeasonId] = useState<number | null>(
+    () => wcBootstrap?.selectedSeasonId ?? null
+  );
+
+  const skipWcBootstrap = useRef(!!wcBootstrap);
 
   const [groupMatches, setGroupMatches] = useState<GroupedLeagueMatches[]>([]);
   const [groupMatchesLoading, setGroupMatchesLoading] = useState(false);
@@ -106,6 +124,13 @@ export default function WorldCupPage() {
   // Bootstrap: fetch table + seasons once
   useEffect(() => {
     let cancelled = false;
+
+    if (skipWcBootstrap.current) {
+      skipWcBootstrap.current = false;
+      return () => {
+        cancelled = true;
+      };
+    }
 
     const bootstrap = async () => {
       setLoading(true);
@@ -351,3 +376,16 @@ export default function WorldCupPage() {
     />
   );
 }
+
+export const getServerSideProps: GetServerSideProps<WorldCupPageProps> = async (ctx) => {
+  ctx.res.setHeader(
+    'Cache-Control',
+    'public, s-maxage=60, stale-while-revalidate=180'
+  );
+  const raw = await loadWorldCupBootstrapData(ctx.req);
+  return {
+    props: {
+      wcBootstrap: raw == null ? null : propsJsonSafe(raw),
+    },
+  };
+};

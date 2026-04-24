@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   getAllCompetitionHistoryMatches,
   getAllLiveMatches,
@@ -33,6 +33,8 @@ import {
   sortMatchesForUefaList,
 } from '@/utils/uefaBracket';
 import styles from '@/pages/index.module.scss';
+import type { MatchHubHomeInitialServerPayload } from '@/types/matchHubHomeSsr';
+import type { UefaHubInitialServerPayload } from '@/types/uefaHubSsr';
 
 type SidebarTab = 'standings' | 'leagues' | 'news';
 export type MatchHubMode = 'default' | 'uefa';
@@ -44,6 +46,10 @@ export type MatchHubPageProps = {
   allowedCompetitionIds: number[] | null;
   /** `uefa`: seçili lige göre fikstür + geçmiş + canlı + eleme braketi */
   mode?: MatchHubMode;
+  /** `/uefa` için `getServerSideProps` ile gelen ilk paket (yalnızca `mode="uefa"`) */
+  initialUefaHubData?: UefaHubInitialServerPayload | null;
+  /** `/` için SSR ilk paket (yalnızca `mode="default"`) */
+  initialDefaultHubData?: MatchHubHomeInitialServerPayload | null;
 };
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -53,26 +59,72 @@ export default function MatchHubPage({
   defaultCompetitionId,
   allowedCompetitionIds,
   mode = 'default',
+  initialUefaHubData = null,
+  initialDefaultHubData = null,
 }: MatchHubPageProps) {
   const isUefaMode = mode === 'uefa';
+  const hasUefaSsr = Boolean(isUefaMode && initialUefaHubData);
+  const hasDefaultSsr = Boolean(!isUefaMode && initialDefaultHubData);
 
-  const [allMatches, setAllMatches] = useState<Match[]>([]);
-  const [liveMatches, setLiveMatches] = useState<Match[]>([]);
-  const [fixtureMatches, setFixtureMatches] = useState<Match[]>([]);
-  const [uefaHistory, setUefaHistory] = useState<Match[]>([]);
-  const [uefaCompFixtures, setUefaCompFixtures] = useState<Match[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedDate, setSelectedDate] = useState<string>(today);
+  const [allMatches, setAllMatches] = useState<Match[]>(() =>
+    !isUefaMode && initialDefaultHubData ? initialDefaultHubData.allMatches : []
+  );
+  const [liveMatches, setLiveMatches] = useState<Match[]>(() =>
+    isUefaMode
+      ? (initialUefaHubData?.liveMatches ?? [])
+      : (initialDefaultHubData?.liveMatches ?? [])
+  );
+  const [fixtureMatches, setFixtureMatches] = useState<Match[]>(() =>
+    !isUefaMode && initialDefaultHubData ? initialDefaultHubData.fixtureMatches : []
+  );
+  const [uefaHistory, setUefaHistory] = useState<Match[]>(
+    () => initialUefaHubData?.uefaHistory ?? []
+  );
+  const [uefaCompFixtures, setUefaCompFixtures] = useState<Match[]>(
+    () => initialUefaHubData?.uefaCompFixtures ?? []
+  );
+  const [loading, setLoading] = useState(() => !hasUefaSsr && !hasDefaultSsr);
+  const [selectedDate, setSelectedDate] = useState<string>(
+    () => initialDefaultHubData?.selectedDate ?? today()
+  );
   const [activeTab, setActiveTab] = useState<MatchTab>('all');
 
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>('leagues');
   const [selectedCompId, setSelectedCompId] = useState(defaultCompetitionId);
-  const [standings, setStandings] = useState<CompetitionTableData | null>(null);
-  const [standingsLoading, setStandingsLoading] = useState(false);
-  const [topScorers, setTopScorers] = useState<TopScorersPayload | null>(null);
-  const [topScorersLoading, setTopScorersLoading] = useState(false);
-  const [seasons, setSeasons] = useState<SeasonListItem[]>([]);
-  const [selectedSeasonId, setSelectedSeasonId] = useState<number | null>(null);
+  const [standings, setStandings] = useState<CompetitionTableData | null>(() =>
+    isUefaMode
+      ? (initialUefaHubData?.standings ?? null)
+      : (initialDefaultHubData?.standings ?? null)
+  );
+  const [standingsLoading, setStandingsLoading] = useState(
+    () => !hasUefaSsr && !hasDefaultSsr
+  );
+  const [topScorers, setTopScorers] = useState<TopScorersPayload | null>(() =>
+    isUefaMode
+      ? (initialUefaHubData?.topScorers ?? null)
+      : (initialDefaultHubData?.topScorers ?? null)
+  );
+  const [topScorersLoading, setTopScorersLoading] = useState(
+    () => !hasUefaSsr && !hasDefaultSsr
+  );
+  const [seasons, setSeasons] = useState<SeasonListItem[]>(() =>
+    isUefaMode
+      ? (initialUefaHubData?.seasons ?? [])
+      : (initialDefaultHubData?.seasons ?? [])
+  );
+  const [selectedSeasonId, setSelectedSeasonId] = useState<number | null>(() =>
+    isUefaMode
+      ? (initialUefaHubData?.selectedSeasonId ?? null)
+      : (initialDefaultHubData?.selectedSeasonId ?? null)
+  );
+
+  /** SSR sonrası ilk gereksiz client fetch’lerini atlamak */
+  const ssrSkipConsumed = useRef({
+    uefaMatches: false,
+    uefaStandings: false,
+    defaultMatches: false,
+    defaultStandings: false,
+  });
 
   const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
   const [newsLoading, setNewsLoading] = useState(false);
@@ -105,7 +157,31 @@ export default function MatchHubPage({
   }, [isUefaMode, selectedCompId, selectedDate]);
 
   useEffect(() => {
-    fetchData();
+    const uefaCompId = initialUefaHubData?.competitionId;
+    const canSkipUefaMatches =
+      isUefaMode &&
+      initialUefaHubData &&
+      uefaCompId != null &&
+      selectedCompId === uefaCompId &&
+      !ssrSkipConsumed.current.uefaMatches;
+
+    const canSkipDefaultMatches =
+      !isUefaMode &&
+      initialDefaultHubData &&
+      selectedDate === initialDefaultHubData.selectedDate &&
+      selectedCompId === initialDefaultHubData.competitionId &&
+      !ssrSkipConsumed.current.defaultMatches;
+
+    if (canSkipUefaMatches) {
+      ssrSkipConsumed.current.uefaMatches = true;
+    } else if (canSkipDefaultMatches) {
+      ssrSkipConsumed.current.defaultMatches = true;
+    } else {
+      queueMicrotask(() => {
+        void fetchData();
+      });
+    }
+
     const interval = setInterval(async () => {
       if (isUefaMode) {
         const compId = String(selectedCompId);
@@ -125,7 +201,14 @@ export default function MatchHubPage({
       }
     }, 30_000);
     return () => clearInterval(interval);
-  }, [fetchData, isUefaMode, selectedCompId, selectedDate]);
+  }, [
+    fetchData,
+    isUefaMode,
+    selectedCompId,
+    selectedDate,
+    initialUefaHubData,
+    initialDefaultHubData,
+  ]);
 
   const handleSeasonChange = useCallback(
     async (seasonId: number) => {
@@ -146,12 +229,38 @@ export default function MatchHubPage({
   );
 
   useEffect(() => {
+    const uefaCompId = initialUefaHubData?.competitionId;
+    const canSkipUefaStandings =
+      isUefaMode &&
+      initialUefaHubData &&
+      uefaCompId != null &&
+      selectedCompId === uefaCompId &&
+      !ssrSkipConsumed.current.uefaStandings;
+
+    const canSkipDefaultStandings =
+      !isUefaMode &&
+      initialDefaultHubData &&
+      selectedCompId === initialDefaultHubData.competitionId &&
+      !ssrSkipConsumed.current.defaultStandings;
+
+    if (canSkipUefaStandings) {
+      ssrSkipConsumed.current.uefaStandings = true;
+      return;
+    }
+    if (canSkipDefaultStandings) {
+      ssrSkipConsumed.current.defaultStandings = true;
+      return;
+    }
+
     let cancelled = false;
     const compId = String(selectedCompId);
-    setStandingsLoading(true);
-    setTopScorersLoading(true);
 
-    (async () => {
+    void (async () => {
+      await Promise.resolve();
+      if (cancelled) return;
+      setStandingsLoading(true);
+      setTopScorersLoading(true);
+
       const [seasonsList, table1] = await Promise.all([
         getSeasonsList(),
         getCompetitionTableFull(compId),
@@ -198,12 +307,15 @@ export default function MatchHubPage({
     return () => {
       cancelled = true;
     };
-  }, [selectedCompId]);
+  }, [selectedCompId, isUefaMode, initialUefaHubData, initialDefaultHubData]);
 
   useEffect(() => {
     if (sidebarTab !== 'news' || newsItems.length > 0) return;
     let cancelled = false;
-    setNewsLoading(true);
+    queueMicrotask(() => {
+      if (cancelled) return;
+      setNewsLoading(true);
+    });
     getNews(15).then((items) => {
       if (!cancelled) {
         setNewsItems(items);

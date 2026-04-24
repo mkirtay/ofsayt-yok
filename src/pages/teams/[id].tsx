@@ -1,5 +1,6 @@
-import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+/* eslint-disable @typescript-eslint/no-explicit-any -- Kadro / puan API gevşek şema */
+import type { GetServerSideProps, InferGetServerSidePropsType } from 'next';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Container from '@/components/Container';
 import {
@@ -8,50 +9,73 @@ import {
   getLeagueTable,
   getTeamCompetitions,
 } from '@/services/liveScoreService';
-import { Match } from '@/models/liveScore';
+import type { Match } from '@/models/liveScore';
+import type { TeamDetailPageServerPayload } from '@/server/loadTeamDetailInitialData';
+import { loadTeamDetailInitialData } from '@/server/loadTeamDetailInitialData';
+import { propsJsonSafe } from '@/server/propsJsonSafe';
 import { utcTimeToTr } from '@/utils/dateFormat';
 import styles from './teamDetail.module.scss';
 
-export default function TeamDetail() {
-  const router = useRouter();
-  const { id } = router.query;
+type TeamDetailPageProps = {
+  teamId: string;
+  initialTeamData: TeamDetailPageServerPayload;
+};
 
+export default function TeamDetail({
+  teamId,
+  initialTeamData,
+}: InferGetServerSidePropsType<typeof getServerSideProps>) {
   const [activeTab, setActiveTab] = useState<'matches' | 'squad'>('matches');
-  const [lastMatches, setLastMatches] = useState<Match[]>([]);
-  const [squad, setSquad] = useState<any[]>([]);
-  const [table, setTable] = useState<any>(null);
-  const [competitions, setCompetitions] = useState<Array<{ id: number; name: string }>>([]);
-  const [selectedCompetitionId, setSelectedCompetitionId] = useState<string>('');
-  const [loading, setLoading] = useState(true);
+  const [lastMatches, setLastMatches] = useState<Match[]>(() => initialTeamData.lastMatches);
+  const [squad, setSquad] = useState<unknown[]>(() => initialTeamData.squad);
+  const [table, setTable] = useState<unknown>(() => initialTeamData.table);
+  const [competitions, setCompetitions] = useState<Array<{ id: number; name: string }>>(
+    () => initialTeamData.competitions
+  );
+  const [selectedCompetitionId, setSelectedCompetitionId] = useState<string>(
+    () => initialTeamData.selectedCompetitionId
+  );
+  const [loading, setLoading] = useState(false);
+
+  const skipInitialMatchesFetch = useRef(!!initialTeamData);
+  const skipInitialCompFetch = useRef(!!initialTeamData);
 
   useEffect(() => {
-    if (!id) return;
+    if (!teamId) return;
+
+    if (skipInitialMatchesFetch.current) {
+      skipInitialMatchesFetch.current = false;
+      return;
+    }
 
     const fetchData = async () => {
       setLoading(true);
-      const teamIdStr = id as string;
-      const matchesData = await getTeamLastMatches(teamIdStr);
+      const matchesData = await getTeamLastMatches(teamId);
       setLastMatches(matchesData);
 
-      const comps = getTeamCompetitions(matchesData, teamIdStr);
+      const comps = getTeamCompetitions(matchesData, teamId);
       setCompetitions(comps);
       if (comps.length > 0) {
-        setSelectedCompetitionId(String(comps[0].id));
+        setSelectedCompetitionId(String(comps[0]!.id));
       }
 
       setLoading(false);
     };
 
-    fetchData();
-  }, [id]);
+    void fetchData();
+  }, [teamId]);
 
   useEffect(() => {
-    if (!id || !selectedCompetitionId) return;
+    if (!teamId || !selectedCompetitionId) return;
+
+    if (skipInitialCompFetch.current) {
+      skipInitialCompFetch.current = false;
+      return;
+    }
 
     const loadCompetitionData = async () => {
-      const teamIdStr = id as string;
       const [squadData, tableData] = await Promise.all([
-        getTeamSquads(teamIdStr, selectedCompetitionId),
+        getTeamSquads(teamId, selectedCompetitionId),
         getLeagueTable(selectedCompetitionId),
       ]);
 
@@ -59,8 +83,8 @@ export default function TeamDetail() {
       setTable(tableData);
     };
 
-    loadCompetitionData();
-  }, [id, selectedCompetitionId]);
+    void loadCompetitionData();
+  }, [teamId, selectedCompetitionId]);
 
   if (loading) {
     return (
@@ -73,7 +97,8 @@ export default function TeamDetail() {
   let teamName = 'Takım Detayı';
   if (lastMatches.length > 0) {
     const m = lastMatches[0];
-    teamName = m.home?.id?.toString() === id ? (m.home?.name || '') : (m.away?.name || '');
+    teamName =
+      m.home?.id?.toString() === teamId ? (m.home?.name || '') : (m.away?.name || '');
   }
 
   return (
@@ -83,7 +108,9 @@ export default function TeamDetail() {
         <h1 className={styles.teamName}>{teamName}</h1>
       </div>
       <div className={styles.competitionBar}>
-        <label htmlFor="competition" className={styles.competitionLabel}>Lig</label>
+        <label htmlFor="competition" className={styles.competitionLabel}>
+          Lig
+        </label>
         <select
           id="competition"
           className={styles.competitionSelect}
@@ -102,12 +129,14 @@ export default function TeamDetail() {
         <div className="layout-left">
           <div className={styles.tabs}>
             <button
+              type="button"
               className={`${styles.tab} ${activeTab === 'matches' ? styles.activeTab : ''}`}
               onClick={() => setActiveTab('matches')}
             >
               Son Maçlar
             </button>
             <button
+              type="button"
               className={`${styles.tab} ${activeTab === 'squad' ? styles.activeTab : ''}`}
               onClick={() => setActiveTab('squad')}
             >
@@ -120,7 +149,9 @@ export default function TeamDetail() {
               <div className={styles.matchesList}>
                 {lastMatches.map((match) => (
                   <Link href={`/matches/${match.id}`} key={match.id} className={styles.matchRow}>
-                    <span className={styles.date}>{match.scheduled ? utcTimeToTr(match.scheduled, match.date) : match.time}</span>
+                    <span className={styles.date}>
+                      {match.scheduled ? utcTimeToTr(match.scheduled, match.date) : match.time}
+                    </span>
                     <span className={styles.home}>{match.home?.name || ''}</span>
                     <span className={styles.score}>{match.scores?.score || ''}</span>
                     <span className={styles.away}>{match.away?.name || ''}</span>
@@ -167,7 +198,7 @@ export default function TeamDetail() {
                   {table.slice(0, 10).map((row: any) => (
                     <tr
                       key={row.team_id}
-                      className={row.team_id?.toString() === id ? styles.highlightRow : ''}
+                      className={row.team_id?.toString() === teamId ? styles.highlightRow : ''}
                     >
                       <td>{row.rank}</td>
                       <td>
@@ -190,3 +221,29 @@ export default function TeamDetail() {
     </Container>
   );
 }
+
+export const getServerSideProps: GetServerSideProps<TeamDetailPageProps> = async (ctx) => {
+  ctx.res.setHeader(
+    'Cache-Control',
+    'public, s-maxage=60, stale-while-revalidate=180'
+  );
+  const rawId = ctx.params?.id;
+  const teamId = typeof rawId === 'string' ? rawId : Array.isArray(rawId) ? rawId[0] : '';
+  if (!teamId) return { notFound: true };
+
+  const raw =
+    (await loadTeamDetailInitialData(ctx.req, teamId)) ?? {
+      lastMatches: [],
+      competitions: [],
+      selectedCompetitionId: '',
+      squad: [],
+      table: null,
+    };
+
+  return {
+    props: {
+      teamId,
+      initialTeamData: propsJsonSafe(raw),
+    },
+  };
+};

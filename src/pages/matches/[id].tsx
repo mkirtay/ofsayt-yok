@@ -1,5 +1,5 @@
-import { useRouter } from 'next/router';
-import { useCallback, useEffect, useState } from 'react';
+import type { GetServerSideProps, InferGetServerSidePropsType } from 'next';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Container from '@/components/Container';
 import MatchCard from '@/components/MatchCard';
 import EventTimeline from '@/components/EventTimeline';
@@ -8,32 +8,48 @@ import MatchStats from '@/components/MatchStats';
 import MatchCompetitionStandings from '@/components/MatchCompetitionStandings';
 import MatchForum from '@/components/MatchForum';
 import {
-  getMatchWithEvents,
+  getCompetitionTableFull,
   getMatchLineups,
   getMatchStats,
-  getCompetitionTableFull,
+  getMatchWithEvents,
   getSeasonsList,
   type CompetitionTableData,
   type SeasonListItem,
 } from '@/services/liveScoreService';
-import { Match } from '@/models/liveScore';
-import { MatchEvent, MatchStatsData } from '@/models/domain';
+import type { Match } from '@/models/liveScore';
+import type { MatchEvent, MatchStatsData } from '@/models/domain';
+import type { MatchDetailPageServerPayload } from '@/server/loadMatchDetailInitialData';
+import { loadMatchDetailInitialData } from '@/server/loadMatchDetailInitialData';
+import { propsJsonSafe } from '@/server/propsJsonSafe';
 import styles from './matchDetail.module.scss';
 
-export default function MatchDetail() {
-  const router = useRouter();
-  const { id } = router.query;
+type MatchDetailPageProps = {
+  matchId: string;
+  initialMatchData: MatchDetailPageServerPayload;
+};
 
-  const [match, setMatch] = useState<Match | null>(null);
-  const [events, setEvents] = useState<MatchEvent[]>([]);
-  const [lineups, setLineups] = useState<any>(null);
-  const [stats, setStats] = useState<MatchStatsData | null>(null);
-  const [standings, setStandings] = useState<CompetitionTableData | null>(null);
+export default function MatchDetail({
+  matchId,
+  initialMatchData,
+}: InferGetServerSidePropsType<typeof getServerSideProps>) {
+  const [match, setMatch] = useState<Match | null>(() => initialMatchData.match);
+  const [events, setEvents] = useState<MatchEvent[]>(() => initialMatchData.events);
+  const [lineups, setLineups] = useState<unknown>(() => initialMatchData.lineups);
+  const [stats, setStats] = useState<MatchStatsData | null>(() => initialMatchData.stats);
+  const [standings, setStandings] = useState<CompetitionTableData | null>(
+    () => initialMatchData.standings
+  );
   const [standingsLoading, setStandingsLoading] = useState(false);
-  const [standingsReady, setStandingsReady] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [seasons, setSeasons] = useState<SeasonListItem[]>([]);
-  const [selectedSeasonId, setSelectedSeasonId] = useState<number | null>(null);
+  const [standingsReady, setStandingsReady] = useState(
+    () => initialMatchData.standings != null
+  );
+  const [loading, setLoading] = useState(false);
+  const [seasons, setSeasons] = useState<SeasonListItem[]>(() => initialMatchData.seasons);
+  const [selectedSeasonId, setSelectedSeasonId] = useState<number | null>(
+    () => initialMatchData.selectedSeasonId
+  );
+
+  const skipHydrationFetchOnce = useRef(true);
 
   const handleSeasonChange = useCallback(async (seasonId: number, competitionIdStr: string) => {
     setSelectedSeasonId(seasonId);
@@ -44,19 +60,23 @@ export default function MatchDetail() {
   }, []);
 
   useEffect(() => {
-    if (!id) return;
+    if (!matchId) return;
+
+    if (skipHydrationFetchOnce.current) {
+      skipHydrationFetchOnce.current = false;
+      return;
+    }
 
     const fetchData = async () => {
       setLoading(true);
       setStandings(null);
       setStandingsLoading(false);
       setStandingsReady(false);
-      const matchIdStr = id as string;
 
       const [matchEventsRes, lineupsData, statsData] = await Promise.all([
-        getMatchWithEvents(matchIdStr),
-        getMatchLineups(matchIdStr),
-        getMatchStats(matchIdStr),
+        getMatchWithEvents(matchId),
+        getMatchLineups(matchId),
+        getMatchStats(matchId),
       ]);
 
       setMatch(matchEventsRes.match);
@@ -106,8 +126,8 @@ export default function MatchDetail() {
       }
     };
 
-    fetchData();
-  }, [id]);
+    void fetchData();
+  }, [matchId]);
 
   if (loading) {
     return (
@@ -142,7 +162,7 @@ export default function MatchDetail() {
           <Lineup lineups={lineups} />
         </div>
         <div className="layout-right">
-          <MatchForum matchId={id as string} />
+          <MatchForum matchId={matchId} />
           {showStandingsBlock ? (
             <MatchCompetitionStandings
               data={standings}
@@ -164,3 +184,23 @@ export default function MatchDetail() {
     </Container>
   );
 }
+
+export const getServerSideProps: GetServerSideProps<MatchDetailPageProps> = async (ctx) => {
+  ctx.res.setHeader(
+    'Cache-Control',
+    'public, s-maxage=20, stale-while-revalidate=120'
+  );
+  const rawId = ctx.params?.id;
+  const matchId = typeof rawId === 'string' ? rawId : Array.isArray(rawId) ? rawId[0] : '';
+  if (!matchId) return { notFound: true };
+
+  const raw = await loadMatchDetailInitialData(ctx.req, matchId);
+  if (!raw?.match) return { notFound: true };
+
+  return {
+    props: {
+      matchId,
+      initialMatchData: propsJsonSafe(raw),
+    },
+  };
+};

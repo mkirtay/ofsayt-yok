@@ -1,4 +1,4 @@
-import { liveScoreApi } from './api';
+import { getLiveScoreHttpClient } from './liveScoreHttpContext';
 import {
   ApiResponse,
   FixtureListItem,
@@ -24,7 +24,7 @@ function parseTotalPages(data: unknown): number {
 // Endpoint: GET /matches/live.json?page=
 export const getLiveMatches = async (page = 1): Promise<PaginatedMatches> => {
   try {
-    const response = await liveScoreApi.get<ApiResponse<LiveMatchData>>('/matches/live', {
+    const response = await getLiveScoreHttpClient().get<ApiResponse<LiveMatchData>>('/matches/live', {
       
     });
     if (response.data.success && response.data.data?.match) {
@@ -62,17 +62,17 @@ export function normalizeFixtureToMatch(raw: FixtureListItem): Match {
     id: raw.id,
     status: 'NOT STARTED',
     time: '',
-    date: raw.date,
-    scheduled,
-    location: raw.location,
     home,
     away,
-    country: raw.country,
-    competition: raw.competition,
     fixture_id: raw.id,
-    group_id: raw.group_id,
-    group_name: raw.group_name,
-    round: raw.round,
+    ...(raw.date !== undefined ? { date: raw.date } : {}),
+    ...(scheduled !== undefined ? { scheduled } : {}),
+    ...(raw.location !== undefined ? { location: raw.location } : {}),
+    ...(raw.country !== undefined ? { country: raw.country } : {}),
+    ...(raw.competition !== undefined ? { competition: raw.competition } : {}),
+    ...(raw.group_id !== undefined ? { group_id: raw.group_id } : {}),
+    ...(raw.group_name !== undefined ? { group_name: raw.group_name } : {}),
+    ...(raw.round !== undefined ? { round: raw.round } : {}),
   };
 }
 
@@ -82,7 +82,7 @@ export async function getFixturesByDate(isoDate: string): Promise<Match[]> {
     const trimmed = isoDate.trim();
     const dateParam =
       !trimmed || trimmed.toLowerCase() === 'today' ? todayIsoUtc() : trimmed;
-    const response = await liveScoreApi.get<
+    const response = await getLiveScoreHttpClient().get<
       ApiResponse<{ fixtures?: FixtureListItem[] }>
     >('/fixtures/list', {
       params: { date: dateParam },
@@ -106,7 +106,7 @@ export async function getCompetitionGroupFixtures(
   groupId: number | string
 ): Promise<Match[]> {
   try {
-    const response = await liveScoreApi.get<
+    const response = await getLiveScoreHttpClient().get<
       ApiResponse<{ fixtures?: FixtureListItem[] }>
     >('/fixtures/list', {
       params: { competition_id: competitionId, group_id: groupId },
@@ -127,7 +127,7 @@ export async function getFixturesByCompetition(
   competitionId: number | string
 ): Promise<Match[]> {
   try {
-    const response = await liveScoreApi.get<
+    const response = await getLiveScoreHttpClient().get<
       ApiResponse<{ fixtures?: FixtureListItem[] }>
     >('/fixtures/list', {
       params: { competition_id: competitionId },
@@ -231,7 +231,7 @@ export async function getAllCompetitionHistoryMatches(
 ): Promise<Match[]> {
   const maxPages = Math.max(1, opts?.maxPages ?? 35);
   try {
-    const first = await liveScoreApi.get<{ success?: boolean; data?: { match?: Match[] } & Record<string, unknown> }>(
+    const first = await getLiveScoreHttpClient().get<{ success?: boolean; data?: { match?: Match[] } & Record<string, unknown> }>(
       `/matches/history`,
       {
         params: {
@@ -251,7 +251,7 @@ export async function getAllCompetitionHistoryMatches(
 
     const rest = await Promise.all(
       Array.from({ length: pagesToFetch - 1 }, (_, i) =>
-        liveScoreApi.get<{ success?: boolean; data?: { match?: Match[] } }>(`/matches/history`, {
+        getLiveScoreHttpClient().get<{ success?: boolean; data?: { match?: Match[] } }>(`/matches/history`, {
           params: {
             competition_id: competitionId,
             page: i + 2,
@@ -296,7 +296,7 @@ function compareMatchesForAllTab(a: Match, b: Match): number {
 // Endpoint: GET /matches/history.json?from=&to=&page=
 export const getMatchesByDate = async (date: string, page = 1): Promise<PaginatedMatches> => {
   try {
-    const response = await liveScoreApi.get(`/matches/history`, {
+    const response = await getLiveScoreHttpClient().get(`/matches/history`, {
       params: { from: date, to: date, page },
     });
 
@@ -383,7 +383,7 @@ export const getTeamsHead2Head = async (
   team2Id: string
 ): Promise<Head2HeadData | null> => {
   try {
-    const response = await liveScoreApi.get<ApiResponse<Head2HeadData>>(`/teams/head2head`, {
+    const response = await getLiveScoreHttpClient().get<ApiResponse<Head2HeadData>>(`/teams/head2head`, {
       params: { team1_id: team1Id, team2_id: team2Id },
     });
     if (response.data.success && response.data.data?.team1 && response.data.data?.team2) {
@@ -413,7 +413,7 @@ export const getMatchWithEvents = async (
   matchId: string
 ): Promise<{ match: Match | null; events: MatchEvent[] }> => {
   try {
-    const response = await liveScoreApi.get(`/matches/events`, {
+    const response = await getLiveScoreHttpClient().get(`/matches/events`, {
       params: { match_id: matchId },
     });
     if (response.data.success && response.data.data) {
@@ -431,7 +431,7 @@ export const getMatchWithEvents = async (
 // Endpoint: GET /matches/stats.json?match_id=X
 export const getMatchStats = async (matchId: string): Promise<MatchStatsData | null> => {
   try {
-    const response = await liveScoreApi.get(`/matches/stats`, {
+    const response = await getLiveScoreHttpClient().get(`/matches/stats`, {
       params: { match_id: matchId },
     });
     if (response.data.success && response.data.data) {
@@ -447,7 +447,7 @@ export const getMatchStats = async (matchId: string): Promise<MatchStatsData | n
 // Endpoint: GET /matches/lineups.json?match_id=X
 export const getMatchLineups = async (matchId: string): Promise<any | null> => {
   try {
-    const response = await liveScoreApi.get(`/matches/lineups`, {
+    const response = await getLiveScoreHttpClient().get(`/matches/lineups`, {
       params: { match_id: matchId },
     });
     if (response.data.success && response.data.data) {
@@ -465,7 +465,7 @@ export const getTeamLastMatches = async (teamId: string, count = 10): Promise<Ma
   try {
     // `teams/last-matches.json` may be unavailable in some accounts.
     // We fallback to history endpoint and take latest N matches.
-    const response = await liveScoreApi.get(`/matches/history`, {
+    const response = await getLiveScoreHttpClient().get(`/matches/history`, {
       params: { team_id: teamId, from: '2024-01-01', to: '2030-12-31' },
     });
     if (response.data.success && Array.isArray(response.data.data?.match)) {
@@ -499,7 +499,7 @@ export const getTeamCompetitions = (matches: Match[], teamId: string) => {
 // Endpoint: GET /competitions/squads.json?team_id=X&competition_id=Y
 export const getTeamSquads = async (teamId: string, competitionId: string): Promise<any> => {
   try {
-    const response = await liveScoreApi.get(`/competitions/squads`, {
+    const response = await getLiveScoreHttpClient().get(`/competitions/squads`, {
       params: { team_id: teamId, competition_id: competitionId },
     });
     if (response.data.success && response.data.data) {
@@ -511,7 +511,7 @@ export const getTeamSquads = async (teamId: string, competitionId: string): Prom
       }
     }
     // Fallback: rosters endpoint
-    const rosterRes = await liveScoreApi.get(`/competitions/rosters`, {
+    const rosterRes = await getLiveScoreHttpClient().get(`/competitions/rosters`, {
       params: { competition_id: competitionId },
     });
     if (rosterRes.data.success && Array.isArray(rosterRes.data.data?.teams)) {
@@ -649,7 +649,7 @@ export type GetSeasonsListOptions = {
 // Endpoint: GET /seasons/list.json
 export async function getSeasonsList(opts?: GetSeasonsListOptions): Promise<SeasonListItem[]> {
   try {
-    const response = await liveScoreApi.get<{
+    const response = await getLiveScoreHttpClient().get<{
       success?: boolean;
       data?: { seasons?: unknown[] };
     }>('/seasons/list');
@@ -701,7 +701,7 @@ export const getCompetitionTableFull = async (
     if (query?.season != null && Number.isFinite(query.season)) {
       params.season_id = query.season;
     }
-    const response = await liveScoreApi.get(`/competitions/table`, {
+    const response = await getLiveScoreHttpClient().get(`/competitions/table`, {
       params,
     });
     if (response.data.success && response.data.data) {
@@ -718,7 +718,7 @@ export const getCompetitionGroups = async (
   competitionId: string
 ): Promise<CompetitionGroupItem[]> => {
   try {
-    const response = await liveScoreApi.get<{
+    const response = await getLiveScoreHttpClient().get<{
       success?: boolean;
       data?: CompetitionGroupItem[];
     }>(`/competitions/groups`, {
@@ -737,7 +737,7 @@ export const getCompetitionGroups = async (
 // Endpoint: GET /competitions/table.json?competition_id=X
 export const getLeagueTable = async (competitionId: string): Promise<any> => {
   try {
-    const response = await liveScoreApi.get(`/competitions/table`, {
+    const response = await getLiveScoreHttpClient().get(`/competitions/table`, {
       params: { competition_id: competitionId },
     });
     if (response.data.success && response.data.data) {
@@ -804,7 +804,7 @@ export const getTopScorers = async (
     if (opts?.season != null && Number.isFinite(opts.season)) {
       params.season_id = opts.season;
     }
-    const response = await liveScoreApi.get<{ success?: boolean; data?: TopScorersPayload }>(
+    const response = await getLiveScoreHttpClient().get<{ success?: boolean; data?: TopScorersPayload }>(
       `/competitions/topscorers`,
       {
         params,
@@ -823,7 +823,7 @@ export const getTopScorers = async (
 // Endpoint: GET /competitions/topdisciplinary.json?competition_id=X
 export const getTopDisciplinary = async (competitionId: string): Promise<any> => {
   try {
-    const response = await liveScoreApi.get(`/competitions/topdisciplinary`, {
+    const response = await getLiveScoreHttpClient().get(`/competitions/topdisciplinary`, {
       params: { competition_id: competitionId },
     });
     if (response.data.success && response.data.data) {

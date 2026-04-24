@@ -1,34 +1,36 @@
-import { useCallback, useEffect, useState } from 'react';
+import type { GetServerSideProps, InferGetServerSidePropsType } from 'next';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Head from 'next/head';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { Role } from '@prisma/client';
+import type { ProfilePageServerPayload } from '@/server/loadProfilePageData';
+import { loadProfilePageData } from '@/server/loadProfilePageData';
+import { propsJsonSafe } from '@/server/propsJsonSafe';
 import styles from './profile.module.scss';
 
-type ProfileDto = {
-  id: string;
-  email: string;
-  name: string | null;
-  username: string | null;
-  bio: string | null;
-  image: string | null;
-  role: Role;
+type ProfileDto = ProfilePageServerPayload;
+
+type ProfilePageProps = {
+  initialProfile: ProfilePageServerPayload;
 };
 
-export default function ProfilePage() {
+export default function ProfilePage({
+  initialProfile,
+}: InferGetServerSidePropsType<typeof getServerSideProps>) {
   const router = useRouter();
   const { data: session, status, update } = useSession();
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [profileMsg, setProfileMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
 
-  const [name, setName] = useState('');
-  const [username, setUsername] = useState('');
-  const [bio, setBio] = useState('');
-  const [image, setImage] = useState('');
-  const [email, setEmail] = useState('');
+  const [name, setName] = useState(() => initialProfile.name ?? '');
+  const [username, setUsername] = useState(() => initialProfile.username ?? '');
+  const [bio, setBio] = useState(() => initialProfile.bio ?? '');
+  const [image, setImage] = useState(() => initialProfile.image ?? '');
+  const [email, setEmail] = useState(() => initialProfile.email);
 
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -55,14 +57,19 @@ export default function ProfilePage() {
     }
   }, [router]);
 
+  const skipInitialProfileFetch = useRef(true);
+
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/auth/signin');
       return;
     }
-    if (status === 'authenticated') {
-      void loadProfile();
+    if (status !== 'authenticated') return;
+    if (skipInitialProfileFetch.current) {
+      skipInitialProfileFetch.current = false;
+      return;
     }
+    void loadProfile();
   }, [status, router, loadProfile]);
 
   const handleSaveProfile = async (e: React.FormEvent) => {
@@ -300,3 +307,18 @@ export default function ProfilePage() {
     </>
   );
 }
+
+export const getServerSideProps: GetServerSideProps<ProfilePageProps> = async (ctx) => {
+  ctx.res.setHeader('Cache-Control', 'private, no-store');
+  const profile = await loadProfilePageData(ctx);
+  if (!profile) {
+    return {
+      redirect: { destination: '/auth/signin', permanent: false },
+    };
+  }
+  return {
+    props: {
+      initialProfile: propsJsonSafe(profile),
+    },
+  };
+};

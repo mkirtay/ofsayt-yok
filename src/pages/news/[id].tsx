@@ -1,10 +1,9 @@
-import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
-import Link from 'next/link';
+import type { GetServerSideProps, InferGetServerSidePropsType } from 'next';
 import Container from '@/components/Container';
 import NewsList from '@/components/NewsList';
 import type { NewsItem } from '@/models/domain';
-import { getNewsById, getNews } from '@/services/newsApi';
+import { loadNewsDetailPageData } from '@/server/loadNewsDetailPageData';
+import { propsJsonSafe } from '@/server/propsJsonSafe';
 import styles from './newsDetail.module.scss';
 
 function formatDate(dateStr: string): string {
@@ -18,48 +17,17 @@ function formatDate(dateStr: string): string {
   });
 }
 
-export default function NewsDetail() {
-  const router = useRouter();
-  const { id } = router.query;
+type NewsDetailPageProps = {
+  newsDetail: {
+    article: NewsItem;
+    sidebarNews: NewsItem[];
+  };
+};
 
-  const [article, setArticle] = useState<NewsItem | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [sidebarNews, setSidebarNews] = useState<NewsItem[]>([]);
-
-  useEffect(() => {
-    if (!id || typeof id !== 'string') return;
-    let cancelled = false;
-    setLoading(true);
-
-    Promise.all([getNewsById(id), getNews(6)]).then(([item, allNews]) => {
-      if (cancelled) return;
-      setArticle(item);
-      setSidebarNews(allNews.filter((n) => n.id !== id).slice(0, 5));
-      setLoading(false);
-    });
-
-    return () => { cancelled = true; };
-  }, [id]);
-
-  if (loading) {
-    return (
-      <Container>
-        <div className={styles.loading}>Yükleniyor...</div>
-      </Container>
-    );
-  }
-
-  if (!article) {
-    return (
-      <Container>
-        <div className={styles.notFound}>
-          <h2>Haber bulunamadı</h2>
-          <p>Bu haber artık mevcut değil veya süresi dolmuş olabilir.</p>
-          <Link href="/" className={styles.backLink}>Ana sayfaya dön</Link>
-        </div>
-      </Container>
-    );
-  }
+export default function NewsDetail({
+  newsDetail,
+}: InferGetServerSidePropsType<typeof getServerSideProps>) {
+  const { article, sidebarNews } = newsDetail;
 
   return (
     <Container>
@@ -82,9 +50,9 @@ export default function NewsDetail() {
             )}
 
             <div className={styles.body}>
-              {(article.content || article.summary || '').split('\n').map((p, i) => (
+              {(article.content || article.summary || '').split('\n').map((p, i) =>
                 p.trim() ? <p key={i}>{p}</p> : null
-              ))}
+              )}
             </div>
 
             <footer className={styles.footer}>
@@ -110,3 +78,22 @@ export default function NewsDetail() {
     </Container>
   );
 }
+
+export const getServerSideProps: GetServerSideProps<NewsDetailPageProps> = async (ctx) => {
+  ctx.res.setHeader(
+    'Cache-Control',
+    'public, s-maxage=120, stale-while-revalidate=300'
+  );
+  const rawId = ctx.params?.id;
+  const id = typeof rawId === 'string' ? rawId : Array.isArray(rawId) ? rawId[0] : '';
+  if (!id) return { notFound: true };
+
+  const raw = await loadNewsDetailPageData(id);
+  if (!raw) return { notFound: true };
+
+  return {
+    props: {
+      newsDetail: propsJsonSafe(raw),
+    },
+  };
+};
