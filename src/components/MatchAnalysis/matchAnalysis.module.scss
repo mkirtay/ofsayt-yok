@@ -1,0 +1,430 @@
+@use '@/styles/variables' as *;
+
+.card {
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-lg;
+  padding: $spacing-5;
+  box-shadow: $shadow-surface;
+  position: relative;
+  overflow: hidden;
+}
+
+.headerRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-3;
+  margin-bottom: $spacing-4;
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  font-weight: 700;
+  font-size: 16px;
+  color: $color-text;
+  margin: 0;
+}
+
+.aiBadge {
+  background: linear-gradient(135deg, $color-primary, $color-primary-dark);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: $radius-full;
+  letter-spacing: 0.5px;
+}
+
+.confidenceBadge {
+  font-size: 12px;
+  color: $color-text-secondary;
+  background: $color-muted;
+  padding: 4px 10px;
+  border-radius: $radius-full;
+  font-weight: 600;
+}
+
+.section {
+  margin-top: $spacing-5;
+
+  &:first-of-type {
+    margin-top: 0;
+  }
+}
+
+.sectionTitle {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: $color-text-secondary;
+  margin: 0 0 $spacing-3;
+}
+
+.predictionBars {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: $spacing-2;
+  margin-bottom: $spacing-3;
+}
+
+.predictionBar {
+  text-align: center;
+  padding: $spacing-3 $spacing-2;
+  border-radius: $radius-md;
+  background: $color-muted;
+  position: relative;
+  overflow: hidden;
+
+  &.winner {
+    background: $color-row-highlight;
+    border: 1px solid $color-primary;
+  }
+
+  .barLabel {
+    font-size: 11px;
+    color: $color-text-secondary;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+
+  .barValue {
+    font-size: 22px;
+    font-weight: 800;
+    color: $color-text;
+  }
+
+  .barTeam {
+    font-size: 11px;
+    color: $color-text-meta;
+    margin-top: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.reasoning {
+  font-size: 13px;
+  color: $color-text-secondary;
+  line-height: 1.5;
+  margin: 0;
+  font-style: italic;
+}
+
+.teamGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: $spacing-4;
+
+  @media (min-width: $bp-md) {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.teamBlock {
+  background: $color-bg;
+  border-radius: $radius-md;
+  padding: $spacing-4;
+}
+
+.teamName {
+  font-weight: 700;
+  font-size: 14px;
+  color: $color-text;
+  margin: 0 0 $spacing-2;
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+}
+
+.formChip {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: $radius-sm;
+  background: $color-surface;
+  color: $color-text-secondary;
+  font-weight: 600;
+}
+
+.narrative {
+  font-size: 13px;
+  line-height: 1.6;
+  color: $color-text;
+  margin: 0 0 $spacing-3;
+  white-space: pre-line;
+}
+
+.metaList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+
+  li {
+    font-size: 12px;
+    color: $color-text-secondary;
+    padding: 4px 0;
+    border-top: 1px dashed $color-border;
+
+    &:first-child {
+      border-top: none;
+    }
+
+    strong {
+      color: $color-text;
+      font-weight: 600;
+    }
+  }
+}
+
+.scoreRow {
+  display: flex;
+  align-items: baseline;
+  gap: $spacing-3;
+  flex-wrap: wrap;
+}
+
+.mainScore {
+  font-size: 32px;
+  font-weight: 800;
+  color: $color-primary-dark;
+}
+
+.altScores {
+  font-size: 13px;
+  color: $color-text-secondary;
+}
+
+.goalGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: $spacing-2;
+  margin-bottom: $spacing-3;
+
+  @media (min-width: $bp-sm) {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.goalCell {
+  background: $color-muted;
+  border-radius: $radius-md;
+  padding: $spacing-3 $spacing-2;
+  text-align: center;
+
+  .goalLabel {
+    font-size: 11px;
+    color: $color-text-secondary;
+    font-weight: 600;
+  }
+
+  .goalPct {
+    font-size: 18px;
+    font-weight: 800;
+    color: $color-text;
+    margin-top: 2px;
+  }
+}
+
+.tipsList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+}
+
+.tipRow {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: $spacing-3;
+  align-items: center;
+  padding: $spacing-3;
+  background: $color-bg;
+  border-radius: $radius-md;
+  border-left: 3px solid $color-primary;
+}
+
+.tipMarket {
+  font-size: 12px;
+  color: $color-text-secondary;
+  font-weight: 600;
+}
+
+.tipPick {
+  font-size: 14px;
+  font-weight: 700;
+  color: $color-text;
+}
+
+.tipReasoning {
+  grid-column: 1 / -1;
+  font-size: 12px;
+  color: $color-text-secondary;
+  margin: 0;
+}
+
+.confidenceChip {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: $radius-full;
+  text-transform: uppercase;
+
+  &.low {
+    background: rgba($color-danger, 0.12);
+    color: $color-danger;
+  }
+
+  &.medium {
+    background: rgba($color-warning, 0.18);
+    color: #B45309;
+  }
+
+  &.high {
+    background: rgba($color-primary, 0.15);
+    color: $color-primary-dark;
+  }
+}
+
+.riskBlock {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  padding: $spacing-3;
+  border-radius: $radius-md;
+
+  &.low {
+    background: rgba($color-primary, 0.1);
+  }
+
+  &.medium {
+    background: rgba($color-warning, 0.15);
+  }
+
+  &.high {
+    background: rgba($color-danger, 0.1);
+  }
+}
+
+.riskLabel {
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+}
+
+.riskText {
+  font-size: 13px;
+  color: $color-text-secondary;
+  margin: 0;
+}
+
+.disclaimer {
+  margin-top: $spacing-5;
+  padding: $spacing-3;
+  background: $color-muted;
+  border-radius: $radius-md;
+  font-size: 11px;
+  color: $color-text-meta;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.cta {
+  margin-top: $spacing-4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $spacing-3;
+  padding: $spacing-4;
+}
+
+.ctaButton {
+  background: linear-gradient(135deg, $color-primary, $color-primary-dark);
+  color: #fff;
+  border: none;
+  padding: 12px 28px;
+  border-radius: $radius-full;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+  transition: $transition-base;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba($color-primary-dark, 0.3);
+  }
+}
+
+.lockedWrap {
+  position: relative;
+}
+
+.lockedPreview {
+  filter: blur(6px);
+  pointer-events: none;
+  user-select: none;
+  opacity: 0.6;
+}
+
+.lockedOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-3;
+  text-align: center;
+  padding: $spacing-5;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.95) 60%);
+}
+
+.lockedTitle {
+  font-size: 18px;
+  font-weight: 800;
+  color: $color-text;
+  margin: 0;
+}
+
+.lockedSubtitle {
+  font-size: 13px;
+  color: $color-text-secondary;
+  margin: 0;
+  max-width: 360px;
+}
+
+.loading,
+.errorBox {
+  text-align: center;
+  padding: $spacing-6 $spacing-4;
+  color: $color-text-secondary;
+  font-size: 13px;
+}
+
+.errorBox {
+  color: $color-danger;
+}
+
+.generateBtn {
+  background: $color-primary;
+  color: #fff;
+  border: none;
+  padding: 8px 18px;
+  border-radius: $radius-full;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: $spacing-3;
+
+  &:hover {
+    background: $color-primary-dark;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}

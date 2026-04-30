@@ -7,6 +7,7 @@ import Lineup from '@/components/Lineup';
 import MatchStats from '@/components/MatchStats';
 import MatchCompetitionStandings from '@/components/MatchCompetitionStandings';
 import MatchForum from '@/components/MatchForum';
+import MatchAnalysis from '@/components/MatchAnalysis';
 import {
   getCompetitionTableFull,
   getMatchLineups,
@@ -159,6 +160,7 @@ export default function MatchDetail({
               />
             </div>
           </div>
+          <MatchAnalysis matchId={matchId} match={match} />
           <Lineup lineups={lineups} />
         </div>
         <div className="layout-right">

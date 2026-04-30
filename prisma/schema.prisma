@@ -23,12 +23,82 @@ model User {
   password      String?
   image         String?
   role          Role     @default(USER)
+  /// Premium üyelik bitiş tarihi; null veya geçmiş tarih → premium değil.
+  premiumUntil  DateTime?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   accounts      Account[]
   sessions      Session[]
   comments      MatchComment[] @relation("MatchCommentAuthor")
   deletedComments MatchComment[] @relation("MatchCommentDeletedBy")
+}
+
+/// AI üretimli maç analizi cache'i. Aynı maç + status için tek aktif kayıt.
+model MatchAnalysis {
+  id                 String   @id @default(cuid())
+  matchId            String
+  /// "PRE" (maç öncesi) | "HT" (devre arası) | "POST" (maç sonu)
+  matchStatus        String
+  modelVersion       String
+  /// Takım kimlikleri ve adları (denormalize — analiz görüntülemede tek sorgu)
+  homeTeamId         String?
+  awayTeamId         String?
+  homeTeamName       String
+  awayTeamName       String
+  competitionId      String?
+  competitionName    String?
+  /// Hızlı erişim için takım anlatımları ayrıca tutulur
+  homeTeamNarrative  String   @db.Text
+  awayTeamNarrative  String   @db.Text
+  /// Yapılandırılmış AI çıktıları (Json)
+  matchPrediction    Json
+  scorePrediction    Json
+  goalExpectation    Json
+  bettingTips        Json
+  teamAnalyses       Json
+  /// "low" | "medium" | "high"
+  riskLevel          String
+  riskReasoning      String   @db.Text
+  /// 0-100 arası modelin kendi güven skoru
+  confidenceScore    Float
+  /// Maliyet takibi
+  tokensUsed         Int      @default(0)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @default(now()) @updatedAt
+  /// PRE fazında 30 dk TTL; HT/POST için null (kalıcı)
+  expiresAt          DateTime?
+  predictionRecord   PredictionRecord?
+
+  @@unique([matchId, matchStatus])
+  @@index([matchId])
+}
+
+/// Tahmin doğruluk takibi — maç bittiğinde MatchAnalysis ile karşılaştırılır.
+model PredictionRecord {
+  id                  String   @id @default(cuid())
+  matchAnalysisId     String   @unique
+  matchAnalysis       MatchAnalysis @relation(fields: [matchAnalysisId], references: [id], onDelete: Cascade)
+  matchId             String
+  predictedHomePct    Float
+  predictedDrawPct    Float
+  predictedAwayPct    Float
+  predictedScore      String
+  predictedOver25     Float
+  predictedBtts       Float
+  /// "HOME" | "DRAW" | "AWAY"
+  actualResult        String?
+  actualScore         String?
+  actualOver25        Boolean?
+  actualBtts          Boolean?
+  /// 1X2 isabetli mi (en yüksek olasılığa sahip outcome doğru çıktı mı)
+  result1x2Hit        Boolean?
+  scoreExactHit       Boolean?
+  modelVersion        String
+  evaluatedAt         DateTime?
+  createdAt           DateTime @default(now())
+
+  @@index([matchId])
+  @@index([modelVersion, result1x2Hit])
 }
 
 model MatchComment {

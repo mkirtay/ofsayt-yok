@@ -4,6 +4,7 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import { compare } from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
+import { isUserPremium } from '@/lib/premium';
 
 const ROLE_REFRESH_MS = 60_000;
 
@@ -32,6 +33,7 @@ export const authOptions: NextAuthOptions = {
             password: true,
             role: true,
             username: true,
+            premiumUntil: true,
           },
         });
 
@@ -47,6 +49,7 @@ export const authOptions: NextAuthOptions = {
           image: user.image,
           role: user.role,
           username: user.username,
+          premiumUntil: user.premiumUntil,
         };
       },
     }),
@@ -60,6 +63,9 @@ export const authOptions: NextAuthOptions = {
         token.email = user.email;
         token.picture = user.image ?? undefined;
         token.username = (user as { username?: string | null }).username ?? null;
+        const pu = (user as { premiumUntil?: Date | string | null }).premiumUntil ?? null;
+        token.premiumUntil =
+          pu instanceof Date ? pu.toISOString() : (pu ?? null);
         token.roleSyncedAt = Date.now();
       }
       if (!user && token.sub) {
@@ -68,13 +74,16 @@ export const authOptions: NextAuthOptions = {
         if (Date.now() - last > ROLE_REFRESH_MS) {
           const row = await prisma.user.findUnique({
             where: { id: token.sub },
-            select: { role: true, username: true, name: true, image: true },
+            select: { role: true, username: true, name: true, image: true, premiumUntil: true },
           });
           if (row) {
             token.role = row.role;
             token.username = row.username;
             token.name = row.name;
             token.picture = row.image ?? undefined;
+            token.premiumUntil = row.premiumUntil
+              ? row.premiumUntil.toISOString()
+              : null;
           }
           token.roleSyncedAt = Date.now();
         }
@@ -103,6 +112,12 @@ export const authOptions: NextAuthOptions = {
         if (token.username !== undefined) {
           session.user.username = token.username as string | null;
         }
+        const premiumUntil = (token.premiumUntil as string | null | undefined) ?? null;
+        session.user.premiumUntil = premiumUntil;
+        session.user.isPremium = isUserPremium({
+          role: token.role,
+          premiumUntil,
+        });
       }
       return session;
     },
