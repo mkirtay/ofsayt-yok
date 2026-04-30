@@ -23,7 +23,6 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         const loginId =
           (typeof credentials?.identifier === 'string' && credentials.identifier) ||
-          (typeof credentials?.email === 'string' && credentials.email) ||
           '';
 
         if (!loginId || !credentials?.password) return null;
