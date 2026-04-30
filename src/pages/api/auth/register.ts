@@ -1,6 +1,12 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { hash } from 'bcryptjs'
 import { prisma } from '@/lib/prisma'
+import { hitFixedWindowRateLimit, requestIp } from '@/lib/rateLimit'
+import { verifyTurnstileToken } from '@/lib/security'
+import { validatePassword, usernameRules } from '@/lib/validation'
+
+const REGISTER_LIMIT = 5
+const REGISTER_WINDOW_MS = 15 * 60 * 1000
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -8,22 +14,48 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
-  const { name, email, password, username } = req.body ?? {}
+  const ip = requestIp(req.headers, req.socket.remoteAddress)
+  const limitState = hitFixedWindowRateLimit(`register:${ip}`, REGISTER_LIMIT, REGISTER_WINDOW_MS)
+  if (!limitState.success) {
+    res.setHeader('Retry-After', Math.max(1, Math.ceil((limitState.resetAt - Date.now()) / 1000)).toString())
+    return res.status(429).json({ error: 'Cok fazla kayit denemesi. Lutfen daha sonra tekrar deneyin.' })
+  }
+
+  const { name, email, password, username, turnstileToken } = req.body ?? {}
+
+  if (process.env.NODE_ENV === 'production' && process.env.TURNSTILE_SECRET_KEY) {
+    if (typeof turnstileToken !== 'string' || !turnstileToken) {
+      return res.status(400).json({ error: 'Guvenlik dogrulamasi basarisiz.' })
+    }
+
+    const turnstileOk = await verifyTurnstileToken(turnstileToken, ip)
+    if (!turnstileOk) {
+      return res.status(400).json({ error: 'Guvenlik dogrulamasi basarisiz.' })
+    }
+  }
 
   if (!email || !password) {
     return res.status(400).json({ error: 'E-posta ve şifre zorunludur' })
   }
 
-  if (typeof password !== 'string' || password.length < 6) {
-    return res.status(400).json({ error: 'Şifre en az 6 karakter olmalıdır' })
+  const normalizedEmail =
+    typeof email === 'string' ? email.trim().toLowerCase() : ''
+  if (!normalizedEmail) {
+    return res.status(400).json({ error: 'E-posta ve şifre zorunludur' })
   }
 
-  const USERNAME_RE = /^[a-zA-Z0-9_]{3,30}$/
+  if (typeof password !== 'string' || !validatePassword(password).valid) {
+    return res.status(400).json({
+      error:
+        'Sifre en az 10 karakter olmali, buyuk harf, kucuk harf, rakam ve ozel karakter icermelidir.',
+    })
+  }
+
   let usernameNorm: string | null = null
   if (username !== undefined && username !== null && username !== '') {
-    if (typeof username !== 'string' || !USERNAME_RE.test(username.trim())) {
+    if (typeof username !== 'string' || !usernameRules.pattern.test(username.trim())) {
       return res.status(400).json({
-        error: 'Kullanıcı adı 3–30 karakter; yalnızca harf, rakam ve alt çizgi.',
+        error: usernameRules.message,
       })
     }
     usernameNorm = username.trim()
@@ -33,7 +65,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
   }
 
-  const existing = await prisma.user.findUnique({ where: { email } })
+  const existing = await prisma.user.findUnique({ where: { email: normalizedEmail } })
   if (existing) {
     return res.status(409).json({ error: 'Bu e-posta adresi zaten kayıtlı' })
   }
@@ -43,7 +75,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const user = await prisma.user.create({
     data: {
       name: name || null,
-      email,
+      email: normalizedEmail,
       password: hashed,
       username: usernameNorm,
     },

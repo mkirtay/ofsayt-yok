@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/prisma';
+import { sanitizePlainText } from '@/lib/security';
 
 const MAX_BODY_LENGTH = 500;
 const PAGE_SIZE = 30;
@@ -65,7 +66,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(401).json({ error: 'Giriş yapmanız gerekiyor.' });
       }
 
-      const body = commentBodyFromRequest(req);
+      const body = sanitizePlainText(commentBodyFromRequest(req));
       if (!body || body.length > MAX_BODY_LENGTH) {
         return res.status(400).json({ error: `Yorum 1–${MAX_BODY_LENGTH} karakter olmalıdır.` });
       }

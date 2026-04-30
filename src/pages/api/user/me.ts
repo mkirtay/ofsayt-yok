@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/prisma';
+import { isSafeHttpUrl, sanitizePlainText } from '@/lib/security';
 
 const USERNAME_RE = /^[a-zA-Z0-9_]{3,30}$/;
 const MAX_BIO = 2000;
@@ -68,7 +69,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         if (nameRaw === null) {
           data.name = null;
         } else if (typeof nameRaw === 'string') {
-          const t = nameRaw.trim();
+          const t = sanitizePlainText(nameRaw);
           if (t.length > MAX_NAME) {
             return res.status(400).json({ error: `İsim en fazla ${MAX_NAME} karakter olabilir.` });
           }
@@ -82,9 +83,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         if (imageRaw === null) {
           data.image = null;
         } else if (typeof imageRaw === 'string') {
-          const t = imageRaw.trim();
+          const t = sanitizePlainText(imageRaw);
           if (t.length > MAX_IMAGE_URL) {
             return res.status(400).json({ error: 'Profil görseli URL’si çok uzun.' });
+          }
+          if (t !== '' && !isSafeHttpUrl(t)) {
+            return res.status(400).json({ error: 'Profil görseli icin yalnizca http/https URL kullanabilirsiniz.' });
           }
           data.image = t === '' ? null : t;
         } else {
@@ -115,7 +119,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         if (bioRaw === null) {
           data.bio = null;
         } else if (typeof bioRaw === 'string') {
-          const t = bioRaw.trim();
+          const t = sanitizePlainText(bioRaw);
           if (t.length > MAX_BIO) {
             return res.status(400).json({ error: `Hakkımda en fazla ${MAX_BIO} karakter olabilir.` });
           }

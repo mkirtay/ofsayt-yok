@@ -5,6 +5,7 @@ import { AutoSizer } from 'react-virtualized-auto-sizer';
 import { Match } from '../../models/liveScore';
 import type { GroupedLeagueMatches } from '../../services/liveScoreService';
 import { countryFlagImgSrc } from '@/utils/countryFlag';
+import { uefaCompetitionLogoSrcById } from '@/utils/competitionLogo';
 import { utcTimeToTr } from '@/utils/dateFormat';
 import styles from './matchList.module.scss';
 
@@ -147,7 +148,8 @@ function VirtualRow({
   if (!item) return null;
 
   if (item.type === 'header') {
-    const logoUrl = item.competition_logo;
+    const logoUrl =
+      item.competition_logo || uefaCompetitionLogoSrcById(item.competition_id);
     const showCountryFlag = !logoUrl && item.country_id != null;
     return (
       <div {...ariaAttributes} style={style} className={styles.virtualHeaderCell}>
@@ -294,7 +296,8 @@ export default function MatchList({
   const [mounted, setMounted] = useState(false);
   const isWorldCup = variant === 'worldCup';
   useEffect(() => {
-    setMounted(true);
+    const frame = requestAnimationFrame(() => setMounted(true));
+    return () => cancelAnimationFrame(frame);
   }, []);
 
   const items = useMemo(() => buildFlatItems(groupedMatches), [groupedMatches]);

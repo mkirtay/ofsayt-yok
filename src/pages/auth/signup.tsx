@@ -1,9 +1,27 @@
-import { useState, FormEvent } from 'react'
+import { useEffect, useMemo, useState, FormEvent } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
 import Head from 'next/head'
+import { validatePassword } from '@/lib/validation'
 import styles from './auth.module.scss'
+
+declare global {
+  interface Window {
+    turnstile?: {
+      render: (
+        container: string | HTMLElement,
+        options: {
+          sitekey: string
+          callback: (token: string) => void
+          'expired-callback'?: () => void
+          'error-callback'?: () => void
+        },
+      ) => string
+      reset: (widgetId?: string) => void
+    }
+  }
+}
 
 export default function SignUpPage() {
   const router = useRouter()
@@ -11,18 +29,66 @@ export default function SignUpPage() {
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [turnstileToken, setTurnstileToken] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ''
+  const turnstileRequired =
+    process.env.NODE_ENV === 'production' && Boolean(turnstileSiteKey)
+
+  const pwCheck = useMemo(() => validatePassword(password), [password])
+  const pwTouched = password.length > 0
+
+  useEffect(() => {
+    if (!turnstileSiteKey) return
+
+    const scriptId = 'cf-turnstile-script'
+    if (!document.getElementById(scriptId)) {
+      const s = document.createElement('script')
+      s.id = scriptId
+      s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit'
+      s.async = true
+      s.defer = true
+      document.head.appendChild(s)
+    }
+
+    const mount = () => {
+      if (!window.turnstile) return
+      const el = document.getElementById('turnstile-container')
+      if (!el || el.childNodes.length > 0) return
+      window.turnstile.render(el, {
+        sitekey: turnstileSiteKey,
+        callback: (token) => setTurnstileToken(token),
+        'expired-callback': () => setTurnstileToken(''),
+        'error-callback': () => setTurnstileToken(''),
+      })
+    }
+
+    const timer = window.setInterval(mount, 300)
+    return () => window.clearInterval(timer)
+  }, [turnstileSiteKey])
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setError('')
+
+    if (turnstileRequired && !turnstileToken) {
+      setError('Lutfen guvenlik dogrulamasini tamamlayin.')
+      return
+    }
+
     setLoading(true)
 
     const res = await fetch('/api/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, username: username.trim() || undefined, email, password }),
+      body: JSON.stringify({
+        name,
+        username: username.trim() || undefined,
+        email,
+        password,
+        turnstileToken,
+      }),
     })
 
     const data = await res.json()
@@ -47,6 +113,9 @@ export default function SignUpPage() {
     }
 
     router.push('/')
+
+    if (window.turnstile) window.turnstile.reset()
+    setTurnstileToken('')
   }
 
   return (
@@ -104,12 +173,34 @@ export default function SignUpPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              minLength={6}
+              minLength={10}
               autoComplete="new-password"
             />
+            {pwTouched && (
+              <ul className={styles.ruleList}>
+                {pwCheck.results.map((r) => (
+                  <li
+                    key={r.key}
+                    className={r.passed ? styles.rulePassed : styles.ruleFailed}
+                  >
+                    <span className={styles.ruleIcon}>{r.passed ? '✓' : '✗'}</span>
+                    {r.label}
+                  </li>
+                ))}
+              </ul>
+            )}
           </label>
 
-          <button className={styles.submit} type="submit" disabled={loading}>
+          {turnstileRequired ? <div id="turnstile-container" /> : null}
+          {turnstileRequired && !turnstileToken ? (
+            <p className={styles.footer}>Kayit icin once guvenlik dogrulamasini tamamlayin.</p>
+          ) : null}
+
+          <button
+            className={styles.submit}
+            type="submit"
+            disabled={loading || !pwCheck.valid || (turnstileRequired && !turnstileToken)}
+          >
             {loading ? 'Kayıt yapılıyor…' : 'Üye Ol'}
           </button>
 

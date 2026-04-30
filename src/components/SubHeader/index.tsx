@@ -1,5 +1,6 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import Container from '../Container';
+import Calendar from './Calendar';
 import styles from './subHeader.module.scss';
 
 export type MatchTab = 'all' | 'live' | 'finished' | 'favorites';
@@ -40,6 +41,7 @@ export default function SubHeader({
   onTabChange,
 }: SubHeaderProps) {
   const displayDate = useMemo(() => formatTrDate(selectedDate), [selectedDate]);
+  const [calendarOpen, setCalendarOpen] = useState(false);
 
   return (
     <div className={styles.subHeader}>
@@ -53,16 +55,27 @@ export default function SubHeader({
           >
             ←
           </button>
-          <div className={styles.dateBlock}>
+          <div
+            className={styles.dateBlock}
+            onClick={() => setCalendarOpen((v) => !v)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') setCalendarOpen((v) => !v);
+            }}
+          >
             <span className={styles.dateLabel}>{displayDate}</span>
-            <input
-              type="date"
-              className={styles.datePicker}
-              value={selectedDate}
-              onChange={(e) => {
-                if (e.target.value) onDateChange(e.target.value);
-              }}
-            />
+            <span className={styles.calendarIcon}>📅</span>
+            {calendarOpen && (
+              <Calendar
+                selectedDate={selectedDate}
+                onSelect={(date) => {
+                  onDateChange(date);
+                  setCalendarOpen(false);
+                }}
+                onClose={() => setCalendarOpen(false)}
+              />
+            )}
           </div>
           <button
             type="button"

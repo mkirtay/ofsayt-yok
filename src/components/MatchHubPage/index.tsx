@@ -26,6 +26,7 @@ import Container from '@/components/Container';
 import UefaKnockoutBracket from '@/components/UefaKnockoutBracket';
 import type { SidebarLeague } from '@/config/leagues';
 import { countryFlagImgSrc } from '@/utils/countryFlag';
+import { uefaCompetitionLogoSrcById } from '@/utils/competitionLogo';
 import { getNews } from '@/services/newsApi';
 import {
   buildBracketRounds,
@@ -475,34 +476,38 @@ export default function MatchHubPage({
 
                 {sidebarTab === 'leagues' && (
                   <ul className={styles.leagueList}>
-                    {sidebarLeagues.map((league) => (
-                      <li key={league.id}>
-                        <button
-                          type="button"
-                          className={`${styles.leagueItem} ${league.id === selectedCompId ? styles.leagueItemActive : ''}`}
-                          onClick={() => handleLeagueClick(league.id)}
-                        >
-                          {league.logo ? (
-                            <img
-                              src={league.logo}
-                              alt=""
-                              className={styles.leagueFlag}
-                              width={20}
-                              height={20}
-                            />
-                          ) : league.countryId != null ? (
-                            <img
-                              src={countryFlagImgSrc(league.countryId)}
-                              alt=""
-                              className={styles.leagueFlag}
-                              width={20}
-                              height={14}
-                            />
-                          ) : null}
-                          <span>{league.name}</span>
-                        </button>
-                      </li>
-                    ))}
+                    {sidebarLeagues.map((league) => {
+                      const logoUrl =
+                        league.logo || uefaCompetitionLogoSrcById(league.id);
+                      return (
+                        <li key={league.id}>
+                          <button
+                            type="button"
+                            className={`${styles.leagueItem} ${league.id === selectedCompId ? styles.leagueItemActive : ''}`}
+                            onClick={() => handleLeagueClick(league.id)}
+                          >
+                            {logoUrl ? (
+                              <img
+                                src={logoUrl}
+                                alt=""
+                                className={styles.leagueFlag}
+                                width={20}
+                                height={20}
+                              />
+                            ) : league.countryId != null ? (
+                              <img
+                                src={countryFlagImgSrc(league.countryId)}
+                                alt=""
+                                className={styles.leagueFlag}
+                                width={20}
+                                height={14}
+                              />
+                            ) : null}
+                            <span>{league.name}</span>
+                          </button>
+                        </li>
+                      );
+                    })}
                   </ul>
                 )}
 

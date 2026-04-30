@@ -17,14 +17,26 @@ export const authOptions: NextAuthOptions = {
     CredentialsProvider({
       name: 'Credentials',
       credentials: {
-        email: { label: 'E-posta', type: 'email' },
+        identifier: { label: 'E-posta veya kullanıcı adı', type: 'text' },
         password: { label: 'Şifre', type: 'password' },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null;
+        const loginId =
+          (typeof credentials?.identifier === 'string' && credentials.identifier) ||
+          (typeof credentials?.email === 'string' && credentials.email) ||
+          '';
+
+        if (!loginId || !credentials?.password) return null;
+
+        const identifier = loginId.trim();
+        if (!identifier) return null;
+
+        const isEmailLike = identifier.includes('@');
 
         const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
+          where: isEmailLike
+            ? { email: identifier.toLowerCase() }
+            : { username: identifier },
           select: {
             id: true,
             email: true,

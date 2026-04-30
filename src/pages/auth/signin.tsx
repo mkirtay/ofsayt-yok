@@ -7,7 +7,8 @@ import styles from './auth.module.scss'
 
 export default function SignInPage() {
   const router = useRouter()
-  const [email, setEmail] = useState('')
+  const verified = router.query.verified
+  const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -19,7 +20,7 @@ export default function SignInPage() {
 
     const result = await signIn('credentials', {
       redirect: false,
-      email,
+      identifier,
       password,
     })
 
@@ -42,17 +43,27 @@ export default function SignInPage() {
         <form className={styles.card} onSubmit={handleSubmit}>
           <h1 className={styles.title}>Giriş Yap</h1>
 
+          {verified === '1' && (
+            <p className={styles.footer}>E-posta adresin dogrulandi. Simdi giris yapabilirsin.</p>
+          )}
+          {verified === '0' && (
+            <p className={styles.error}>Dogrulama baglantisi gecersiz veya suresi dolmus.</p>
+          )}
+          {verified === 'invalid' && (
+            <p className={styles.error}>Dogrulama baglantisi eksik veya bozuk.</p>
+          )}
+
           {error && <p className={styles.error}>{error}</p>}
 
           <label className={styles.label}>
-            E-posta
+            E-posta veya kullanıcı adı
             <input
               className={styles.input}
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              type="text"
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
               required
-              autoComplete="email"
+              autoComplete="username"
             />
           </label>
 
