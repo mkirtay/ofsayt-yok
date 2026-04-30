@@ -6,6 +6,8 @@
   color: $color-text-secondary;
 }
 
+/* ═══ Team Header ═══ */
+
 .teamHeader {
   display: flex;
   align-items: center;
@@ -16,6 +18,13 @@
   box-shadow: $shadow-surface;
   margin-top: $spacing-4;
   border: 1px solid $color-border;
+}
+
+.teamLogo {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  flex-shrink: 0;
 }
 
 .logoPlaceholder {
@@ -30,13 +39,31 @@
   font-weight: 700;
   color: $color-primary;
   border: 1px solid $color-border;
+  flex-shrink: 0;
+}
+
+.teamHeaderInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
 }
 
 .teamName {
   font-size: 22px;
   font-weight: 700;
   color: $color-text;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
+
+.teamMeta {
+  font-size: 13px;
+  color: $color-text-secondary;
+}
+
+/* ═══ Competition Bar ═══ */
 
 .competitionBar {
   margin-top: $spacing-3;
@@ -59,6 +86,30 @@
   background: $color-surface;
   color: $color-text;
 }
+
+/* ═══ Layout ═══ */
+
+.layoutSplit {
+  display: flex;
+  gap: $gap;
+  margin-top: $spacing-4;
+  align-items: flex-start;
+}
+
+.layoutLeft {
+  flex: 1;
+  min-width: 0;
+}
+
+.layoutRight {
+  width: $right-col-width;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+}
+
+/* ═══ Tabs ═══ */
 
 .tabs {
   display: flex;
@@ -99,6 +150,8 @@
   border: 1px solid $color-border;
 }
 
+/* ═══ Match List ═══ */
+
 .matchesList {
   display: flex;
   flex-direction: column;
@@ -112,6 +165,7 @@
   text-decoration: none;
   color: inherit;
   transition: $transition-base;
+  gap: $spacing-2;
 
   &:last-child {
     border-bottom: none;
@@ -122,43 +176,64 @@
   }
 }
 
-.date {
-  width: 70px;
+.matchTime {
+  width: 50px;
   color: $color-text-secondary;
   font-size: 12px;
   flex-shrink: 0;
+  font-weight: 500;
 }
 
-.home {
+.matchTeams {
+  display: flex;
+  align-items: center;
   flex: 1;
-  text-align: right;
-  font-weight: 500;
+  min-width: 0;
+  gap: $spacing-2;
+}
+
+.matchTeam {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.matchTeamLogo {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.matchTeamName {
   font-size: 13px;
-  padding-right: $spacing-2;
+  font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.away {
-  flex: 1;
-  text-align: left;
-  font-weight: 500;
-  font-size: 13px;
-  padding-left: $spacing-2;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.score {
-  width: 60px;
+.matchScore {
+  width: 54px;
   text-align: center;
   font-weight: 700;
   color: $color-primary;
   font-size: 13px;
   flex-shrink: 0;
 }
+
+.matchCompLabel {
+  font-size: 11px;
+  color: $color-text-secondary;
+  white-space: nowrap;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ═══ Squad ═══ */
 
 .squadList {
   ul {
@@ -197,13 +272,9 @@
   flex-shrink: 0;
 }
 
-.empty {
-  text-align: center;
-  padding: $spacing-4;
-  color: $color-text-secondary;
-}
+/* ═══ Stats Card ═══ */
 
-.tableContainer {
+.statsCard {
   background-color: $color-surface;
   border-radius: $radius-md;
   padding: $spacing-4;
@@ -211,12 +282,118 @@
   border: 1px solid $color-border;
 }
 
-.tableTitle {
+.cardTitle {
   font-size: 16px;
   font-weight: 600;
   margin-bottom: $spacing-4;
   border-bottom: 1px solid $color-border;
   padding-bottom: $spacing-2;
+  color: $color-text;
+}
+
+.statSection {
+  margin-bottom: $spacing-4;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.statLabel {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: $color-text-secondary;
+  margin-bottom: $spacing-2;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.formRow {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.formPill {
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: $radius-full;
+  font-size: 11px;
+  font-weight: 700;
+  color: $color-surface;
+}
+
+.formWin {
+  background-color: $color-primary;
+}
+
+.formDraw {
+  background-color: $color-warning;
+}
+
+.formLoss {
+  background-color: $color-danger;
+}
+
+.statGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: $spacing-2;
+}
+
+.statItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: $spacing-2;
+  background-color: $color-bg;
+  border-radius: $radius-sm;
+}
+
+.statValue {
+  font-size: 18px;
+  font-weight: 700;
+  color: $color-text;
+  font-variant-numeric: tabular-nums;
+}
+
+.statCaption {
+  font-size: 11px;
+  color: $color-text-secondary;
+  margin-top: 2px;
+}
+
+.leagueSummaryTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  text-align: center;
+
+  th {
+    color: $color-text-secondary;
+    padding: $spacing-1;
+    border-bottom: 1px solid $color-border;
+    font-weight: 600;
+  }
+
+  td {
+    padding: $spacing-2 $spacing-1;
+    font-weight: 500;
+  }
+}
+
+/* ═══ Standings Table ═══ */
+
+.tableContainer {
+  background-color: $color-surface;
+  border-radius: $radius-md;
+  padding: $spacing-4;
+  box-shadow: $shadow-surface;
+  border: 1px solid $color-border;
 }
 
 .miniTable {
@@ -256,11 +433,83 @@
   color: $color-primary;
 }
 
-.tableTeamLink {
+.tableTeamCell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   text-decoration: none;
   color: inherit;
+  min-width: 0;
 
   &:hover {
     color: $color-primary;
+  }
+
+  span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.tableTeamLogo {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+/* ═══ Empty ═══ */
+
+.empty {
+  text-align: center;
+  padding: $spacing-4;
+  color: $color-text-secondary;
+}
+
+/* ═══ Responsive ═══ */
+
+@media (max-width: $bp-md) {
+  .layoutSplit {
+    flex-direction: column;
+  }
+
+  .layoutRight {
+    width: 100%;
+  }
+
+  .teamName {
+    font-size: 18px;
+  }
+
+  .competitionSelect {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .matchCompLabel {
+    display: none;
+  }
+
+  .statGrid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+@media (max-width: $bp-sm) {
+  .teamHeader {
+    padding: $spacing-3;
+    gap: $spacing-3;
+  }
+
+  .teamLogo,
+  .logoPlaceholder {
+    width: 44px;
+    height: 44px;
+    font-size: 18px;
+  }
+
+  .statGrid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
