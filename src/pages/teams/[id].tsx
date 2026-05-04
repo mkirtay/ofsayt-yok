@@ -1,15 +1,30 @@
 /* eslint-disable @typescript-eslint/no-explicit-any -- Kadro / puan API gevşek şema */
 import type { GetServerSideProps, InferGetServerSidePropsType } from 'next';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import Container from '@/components/Container';
+import MatchCompetitionStandings from '@/components/MatchCompetitionStandings';
+import MatchCompetitionTopScorers from '@/components/MatchCompetitionTopScorers';
+import NewsList from '@/components/NewsList';
+import hubStyles from '@/pages/index.module.scss';
 import {
   getTeamLastMatches,
   getTeamSquads,
-  getLeagueTable,
+  getCompetitionTableFull,
+  getSeasonsList,
   getTeamCompetitions,
+  getTopScorers,
+  type CompetitionTableData,
+  type CompetitionTableStandingRow,
+  type SeasonListItem,
+  type TeamCompetitionRow,
+  type TopScorersPayload,
 } from '@/services/liveScoreService';
 import type { Match } from '@/models/liveScore';
+import type { NewsItem } from '@/models/domain';
+import { getNews } from '@/services/newsApi';
+import { countryFlagImgSrc } from '@/utils/countryFlag';
+import { uefaCompetitionLogoSrcById } from '@/utils/competitionLogo';
 import type { TeamDetailPageServerPayload } from '@/server/loadTeamDetailInitialData';
 import { loadTeamDetailInitialData } from '@/server/loadTeamDetailInitialData';
 import { propsJsonSafe } from '@/server/propsJsonSafe';
@@ -18,33 +33,43 @@ import styles from './teamDetail.module.scss';
 
 /* ─── Helpers ─── */
 
-type StandingRow = {
-  rank: number;
-  team_id: number;
-  name: string;
-  matches: number;
-  won: number;
-  drawn: number;
-  lost: number;
-  goals_scored: number;
-  goals_conceded: number;
-  goal_diff: number;
-  points: number;
-  logo?: string;
-};
-
 type TeamStats = {
   form: ('W' | 'D' | 'L')[];
   goalsScored: number;
   goalsConceded: number;
   matchCount: number;
-  standing: StandingRow | null;
+  standing: CompetitionTableStandingRow | null;
 };
+
+function rowTeamId(row: CompetitionTableStandingRow): string | undefined {
+  const id = row.team?.id ?? row.team_id;
+  return id != null ? String(id) : undefined;
+}
+
+function findStandingForTeam(
+  table: CompetitionTableData | null,
+  teamId: string
+): CompetitionTableStandingRow | null {
+  if (!table) return null;
+  if (Array.isArray(table.table)) {
+    const hit = table.table.find((r) => rowTeamId(r) === teamId);
+    if (hit) return hit;
+  }
+  if (Array.isArray(table.stages)) {
+    for (const stage of table.stages) {
+      for (const group of stage.groups ?? []) {
+        const hit = group.standings?.find((r) => rowTeamId(r) === teamId);
+        if (hit) return hit;
+      }
+    }
+  }
+  return null;
+}
 
 function computeTeamStats(
   matches: Match[],
   teamId: string,
-  table: unknown
+  table: CompetitionTableData | null
 ): TeamStats {
   const form: ('W' | 'D' | 'L')[] = [];
   let goalsScored = 0;
@@ -67,13 +92,13 @@ function computeTeamStats(
     else form.push('L');
   }
 
-  let standing: StandingRow | null = null;
-  if (Array.isArray(table)) {
-    standing =
-      table.find((r: any) => r.team_id?.toString() === teamId) ?? null;
-  }
-
-  return { form, goalsScored, goalsConceded, matchCount: form.length, standing };
+  return {
+    form,
+    goalsScored,
+    goalsConceded,
+    matchCount: form.length,
+    standing: findStandingForTeam(table, teamId),
+  };
 }
 
 function formLabel(f: 'W' | 'D' | 'L'): string {
@@ -105,6 +130,8 @@ type TeamDetailPageProps = {
   initialTeamData: TeamDetailPageServerPayload;
 };
 
+type SidebarTab = 'standings' | 'leagues' | 'news';
+
 export default function TeamDetail({
   teamId,
   initialTeamData,
@@ -112,8 +139,22 @@ export default function TeamDetail({
   const [activeTab, setActiveTab] = useState<'matches' | 'squad'>('matches');
   const [lastMatches, setLastMatches] = useState<Match[]>(() => initialTeamData.lastMatches);
   const [squad, setSquad] = useState<unknown[]>(() => initialTeamData.squad);
-  const [table, setTable] = useState<unknown>(() => initialTeamData.table);
-  const [competitions, setCompetitions] = useState<Array<{ id: number; name: string }>>(
+  const [table, setTable] = useState<CompetitionTableData | null>(
+    () => initialTeamData.table
+  );
+  const [seasons, setSeasons] = useState<SeasonListItem[]>(() => initialTeamData.seasons);
+  const [selectedSeasonId, setSelectedSeasonId] = useState<number | null>(
+    () => initialTeamData.selectedSeasonId
+  );
+  const [standingsLoading, setStandingsLoading] = useState(false);
+  const [topScorers, setTopScorers] = useState<TopScorersPayload | null>(
+    () => initialTeamData.topScorers
+  );
+  const [topScorersLoading, setTopScorersLoading] = useState(false);
+  const [sidebarTab, setSidebarTab] = useState<SidebarTab>('standings');
+  const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
+  const [newsLoading, setNewsLoading] = useState(false);
+  const [competitions, setCompetitions] = useState<TeamCompetitionRow[]>(
     () => initialTeamData.competitions
   );
   const [selectedCompetitionId, setSelectedCompetitionId] = useState<string>(
@@ -123,6 +164,25 @@ export default function TeamDetail({
 
   const skipInitialMatchesFetch = useRef(!!initialTeamData);
   const skipInitialCompFetch = useRef(!!initialTeamData);
+
+  const handleSeasonChange = useCallback(async (seasonId: number, competitionIdStr: string) => {
+    setSelectedSeasonId(seasonId);
+    setStandingsLoading(true);
+    setTopScorersLoading(true);
+    const [tbl, scorers] = await Promise.all([
+      getCompetitionTableFull(competitionIdStr, { season: seasonId }),
+      getTopScorers(competitionIdStr, { season: seasonId }),
+    ]);
+    setTable(tbl);
+    setTopScorers(scorers);
+    setStandingsLoading(false);
+    setTopScorersLoading(false);
+  }, []);
+
+  const handleLeagueClick = useCallback((competitionId: number) => {
+    setSelectedCompetitionId(String(competitionId));
+    setSidebarTab('standings');
+  }, []);
 
   useEffect(() => {
     if (!teamId) return;
@@ -150,6 +210,24 @@ export default function TeamDetail({
   }, [teamId]);
 
   useEffect(() => {
+    if (sidebarTab !== 'news' || newsItems.length > 0) return;
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (cancelled) return;
+      setNewsLoading(true);
+    });
+    getNews(15).then((items) => {
+      if (!cancelled) {
+        setNewsItems(items);
+        setNewsLoading(false);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [sidebarTab, newsItems.length]);
+
+  useEffect(() => {
     if (!teamId || !selectedCompetitionId) return;
 
     if (skipInitialCompFetch.current) {
@@ -158,13 +236,47 @@ export default function TeamDetail({
     }
 
     const loadCompetitionData = async () => {
-      const [squadData, tableData] = await Promise.all([
+      setStandingsLoading(true);
+      setTopScorersLoading(true);
+      const [squadData, seasonsList, table1] = await Promise.all([
         getTeamSquads(teamId, selectedCompetitionId),
-        getLeagueTable(selectedCompetitionId),
+        getSeasonsList(),
+        getCompetitionTableFull(selectedCompetitionId),
       ]);
 
       setSquad(Array.isArray(squadData) ? squadData : []);
-      setTable(tableData);
+      setSeasons(seasonsList);
+
+      const fromTable =
+        table1?.season?.id != null && Number.isFinite(Number(table1.season.id))
+          ? Number(table1.season.id)
+          : null;
+      let sid: number | null = fromTable;
+      if (sid != null && seasonsList.length && !seasonsList.some((s) => s.id === sid)) {
+        sid = seasonsList[0]!.id;
+      } else if (sid == null && seasonsList.length) {
+        sid = seasonsList[0]!.id;
+      }
+      setSelectedSeasonId(sid);
+
+      const needTableRefetch =
+        sid != null &&
+        table1 != null &&
+        (table1.season?.id == null || Number(table1.season.id) !== sid);
+
+      let tableFinal = table1;
+      if (needTableRefetch && sid != null) {
+        tableFinal = await getCompetitionTableFull(selectedCompetitionId, { season: sid });
+      }
+      setTable(tableFinal ?? table1);
+
+      const scorersData = await getTopScorers(
+        selectedCompetitionId,
+        sid != null ? { season: sid } : undefined
+      );
+      setTopScorers(scorersData);
+      setStandingsLoading(false);
+      setTopScorersLoading(false);
     };
 
     void loadCompetitionData();
@@ -221,25 +333,6 @@ export default function TeamDetail({
             </span>
           )}
         </div>
-      </div>
-
-      {/* ═══ Competition Bar ═══ */}
-      <div className={styles.competitionBar}>
-        <label htmlFor="competition" className={styles.competitionLabel}>
-          Lig
-        </label>
-        <select
-          id="competition"
-          className={styles.competitionSelect}
-          value={selectedCompetitionId}
-          onChange={(e) => setSelectedCompetitionId(e.target.value)}
-        >
-          {competitions.map((comp) => (
-            <option key={comp.id} value={comp.id}>
-              {comp.name}
-            </option>
-          ))}
-        </select>
       </div>
 
       {/* ═══ Main Layout ═══ */}
@@ -340,6 +433,109 @@ export default function TeamDetail({
 
         {/* — Right Column — */}
         <div className={styles.layoutRight}>
+          <div className={hubStyles.sidebar}>
+            <nav className={hubStyles.sidebarTabs}>
+              <button
+                type="button"
+                className={`${hubStyles.sidebarTab} ${sidebarTab === 'standings' ? hubStyles.sidebarTabActive : ''}`}
+                onClick={() => setSidebarTab('standings')}
+              >
+                Puan Durumu
+              </button>
+              <button
+                type="button"
+                className={`${hubStyles.sidebarTab} ${sidebarTab === 'leagues' ? hubStyles.sidebarTabActive : ''}`}
+                onClick={() => setSidebarTab('leagues')}
+              >
+                Ligler
+              </button>
+              <button
+                type="button"
+                className={`${hubStyles.sidebarTab} ${sidebarTab === 'news' ? hubStyles.sidebarTabActive : ''}`}
+                onClick={() => setSidebarTab('news')}
+              >
+                Haberler
+              </button>
+            </nav>
+
+            <div className={hubStyles.sidebarContent}>
+              {sidebarTab === 'standings' && (
+                <>
+                  <MatchCompetitionStandings
+                    data={table}
+                    loading={standingsLoading}
+                    competitionName={selectedCompName}
+                    homeTeamId={
+                      Number.isFinite(Number(teamId)) ? Number(teamId) : undefined
+                    }
+                    seasons={seasons}
+                    selectedSeasonId={selectedSeasonId}
+                    onSeasonChange={
+                      selectedCompetitionId
+                        ? (sid) => void handleSeasonChange(sid, selectedCompetitionId)
+                        : undefined
+                    }
+                  />
+                  <MatchCompetitionTopScorers
+                    data={topScorers}
+                    loading={topScorersLoading}
+                    seasons={seasons}
+                    selectedSeasonId={selectedSeasonId}
+                    onSeasonChange={
+                      selectedCompetitionId
+                        ? (sid) => void handleSeasonChange(sid, selectedCompetitionId)
+                        : undefined
+                    }
+                  />
+                </>
+              )}
+
+              {sidebarTab === 'leagues' &&
+                (competitions.length > 0 ? (
+                  <ul className={hubStyles.leagueList}>
+                    {competitions.map((league) => {
+                      const logoUrl =
+                        league.logo || uefaCompetitionLogoSrcById(league.id);
+                      return (
+                        <li key={league.id}>
+                          <button
+                            type="button"
+                            className={`${hubStyles.leagueItem} ${String(league.id) === selectedCompetitionId ? hubStyles.leagueItemActive : ''}`}
+                            onClick={() => handleLeagueClick(league.id)}
+                          >
+                            {logoUrl ? (
+                              <img
+                                src={logoUrl}
+                                alt=""
+                                className={hubStyles.leagueFlag}
+                                width={20}
+                                height={20}
+                              />
+                            ) : league.countryId != null ? (
+                              <img
+                                src={countryFlagImgSrc(league.countryId)}
+                                alt=""
+                                className={hubStyles.leagueFlag}
+                                width={20}
+                                height={14}
+                              />
+                            ) : null}
+                            <span>{league.name}</span>
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                ) : (
+                  <div className={styles.empty}>Bu takım için yarışma listesi bulunamadı.</div>
+                ))}
+
+              {sidebarTab === 'news' && (
+                <NewsList items={newsItems} loading={newsLoading} />
+              )}
+            </div>
+          </div>
+
           {/* Stats Summary */}
           <div className={styles.statsCard}>
             <h3 className={styles.cardTitle}>İstatistikler</h3>
@@ -418,53 +614,6 @@ export default function TeamDetail({
               </div>
             )}
           </div>
-
-          {/* Standings */}
-          <div className={styles.tableContainer}>
-            <h3 className={styles.cardTitle}>Puan Durumu</h3>
-            {table && Array.isArray(table) ? (
-              <table className={styles.miniTable}>
-                <thead>
-                  <tr>
-                    <th>S</th>
-                    <th>Takım</th>
-                    <th>O</th>
-                    <th>P</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {table.slice(0, 10).map((row: any) => (
-                    <tr
-                      key={row.team_id}
-                      className={row.team_id?.toString() === teamId ? styles.highlightRow : ''}
-                    >
-                      <td>{row.rank}</td>
-                      <td>
-                        <Link href={`/teams/${row.team_id}`} className={styles.tableTeamCell}>
-                          {(row.logo || row.team?.logo) && (
-                            <img
-                              src={row.logo || row.team?.logo}
-                              alt=""
-                              className={styles.tableTeamLogo}
-                              width={16}
-                              height={16}
-                              loading="lazy"
-                              decoding="async"
-                            />
-                          )}
-                          <span>{row.name}</span>
-                        </Link>
-                      </td>
-                      <td>{row.matches}</td>
-                      <td className={styles.points}>{row.points}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            ) : (
-              <div className={styles.empty}>Puan durumu bulunamadı.</div>
-            )}
-          </div>
         </div>
       </div>
     </Container>
@@ -487,6 +636,9 @@ export const getServerSideProps: GetServerSideProps<TeamDetailPageProps> = async
       selectedCompetitionId: '',
       squad: [],
       table: null,
+      seasons: [],
+      selectedSeasonId: null,
+      topScorers: null,
     };
 
   return {

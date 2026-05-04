@@ -28,21 +28,22 @@
 }
 
 .columns {
-  display: flex;
-  gap: $spacing-4;
-  padding: $spacing-4;
-  min-width: max-content;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(140px, 1fr);
+  gap: $spacing-3;
+  padding: $spacing-3;
 }
 
 .column {
   display: flex;
   flex-direction: column;
-  min-width: 220px;
+  min-width: 0;
 }
 
 .columnHeader {
-  padding: $spacing-2 $spacing-3;
-  font-size: 12px;
+  padding: $spacing-1 $spacing-2;
+  font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -51,7 +52,7 @@
   border: 1px solid $color-border;
   border-radius: $radius-sm;
   text-align: center;
-  margin-bottom: $spacing-3;
+  margin-bottom: $spacing-2;
 }
 
 .columnBody {
@@ -67,7 +68,7 @@
   background: $color-surface;
   border: 1px solid $color-border;
   border-radius: $radius-sm;
-  padding: $spacing-2 $spacing-3;
+  padding: $spacing-2;
   text-decoration: none;
   color: inherit;
   transition: $transition-base;
@@ -81,7 +82,7 @@
 .pairInner {
   display: flex;
   align-items: stretch;
-  gap: $spacing-3;
+  gap: $spacing-2;
 }
 
 .teamsCol {
@@ -96,8 +97,8 @@
   display: flex;
   align-items: center;
   gap: $spacing-2;
-  padding: 4px 0;
-  font-size: 13px;
+  padding: 2px 0;
+  font-size: 12px;
   color: $color-text;
   min-width: 0;
 }
@@ -113,8 +114,8 @@
 }
 
 .teamLogoPlaceholder {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
   flex-shrink: 0;
   border-radius: 50%;
   background: $color-muted;
@@ -131,9 +132,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 48px;
-  padding: 0 $spacing-2;
-  font-size: 14px;
+  min-width: 36px;
+  padding: 0 $spacing-1;
+  font-size: 13px;
   font-weight: 700;
   color: $color-text;
   border-left: 1px solid $color-border;

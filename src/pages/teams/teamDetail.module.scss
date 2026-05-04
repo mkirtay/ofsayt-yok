@@ -63,30 +63,6 @@
   color: $color-text-secondary;
 }
 
-/* ═══ Competition Bar ═══ */
-
-.competitionBar {
-  margin-top: $spacing-3;
-  display: flex;
-  align-items: center;
-  gap: $spacing-2;
-}
-
-.competitionLabel {
-  font-size: 13px;
-  color: $color-text-secondary;
-}
-
-.competitionSelect {
-  min-width: 240px;
-  height: 34px;
-  border: 1px solid $color-border;
-  border-radius: $radius-sm;
-  padding: 0 10px;
-  background: $color-surface;
-  color: $color-text;
-}
-
 /* ═══ Layout ═══ */
 
 .layoutSplit {
@@ -386,77 +362,9 @@
   }
 }
 
-/* ═══ Standings Table ═══ */
-
-.tableContainer {
-  background-color: $color-surface;
-  border-radius: $radius-md;
-  padding: $spacing-4;
-  box-shadow: $shadow-surface;
-  border: 1px solid $color-border;
-}
-
-.miniTable {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-
-  th {
-    text-align: left;
-    color: $color-text-secondary;
-    padding: $spacing-1 $spacing-2;
-    border-bottom: 1px solid $color-border;
-    font-size: 12px;
-  }
-
-  td {
-    padding: $spacing-2;
-    border-bottom: 1px solid $color-border;
-  }
-
-  tbody tr:last-child td {
-    border-bottom: none;
-  }
-
-  tbody tr:hover {
-    background-color: $color-bg;
-  }
-}
-
-.highlightRow {
-  background-color: $color-row-highlight !important;
-  font-weight: 600;
-}
-
 .points {
   font-weight: 700;
   color: $color-primary;
-}
-
-.tableTeamCell {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  text-decoration: none;
-  color: inherit;
-  min-width: 0;
-
-  &:hover {
-    color: $color-primary;
-  }
-
-  span {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-}
-
-.tableTeamLogo {
-  width: 16px;
-  height: 16px;
-  object-fit: contain;
-  flex-shrink: 0;
 }
 
 /* ═══ Empty ═══ */
@@ -480,11 +388,6 @@
 
   .teamName {
     font-size: 18px;
-  }
-
-  .competitionSelect {
-    min-width: 0;
-    flex: 1;
   }
 
   .matchCompLabel {

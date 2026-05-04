@@ -478,9 +478,16 @@ export const getTeamLastMatches = async (teamId: string, count = 10): Promise<Ma
   }
 };
 
-export const getTeamCompetitions = (matches: Match[], teamId: string) => {
+export type TeamCompetitionRow = {
+  id: number;
+  name: string;
+  logo?: string;
+  countryId?: number;
+};
+
+export const getTeamCompetitions = (matches: Match[], teamId: string): TeamCompetitionRow[] => {
   const seen = new Set<number>();
-  const list: Array<{ id: number; name: string }> = [];
+  const list: TeamCompetitionRow[] = [];
 
   matches.forEach((m) => {
     const compId = m.competition?.id;
@@ -490,7 +497,12 @@ export const getTeamCompetitions = (matches: Match[], teamId: string) => {
 
     if (!includesTeam || !compId || !compName || seen.has(compId)) return;
     seen.add(compId);
-    list.push({ id: compId, name: compName });
+    list.push({
+      id: compId,
+      name: compName,
+      logo: m.competition?.logo,
+      countryId: m.country?.id,
+    });
   });
 
   return list;

@@ -23,8 +23,8 @@ function TeamRow({
           src={team.logo}
           alt=""
           className={styles.teamLogo}
-          width={18}
-          height={18}
+          width={16}
+          height={16}
           loading="lazy"
           decoding="async"
         />
