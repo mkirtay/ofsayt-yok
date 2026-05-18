@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { countryFlagImgSrc } from '@/utils/countryFlag';
 import { utcTimeToTr, isoDateToTr } from '@/utils/dateFormat';
 import { parseHead2HeadTeamIds, overallFormToPills, type FormPill } from '@/utils/matchForm';
+import { buildMatchHref } from '@/utils/matchUrl';
 import { getTeamsHead2Head, type Head2HHistoricalMatch } from '@/services/liveScoreService';
 import StadiumIcon from '@/components/icons/StadiumIcon';
 import WhistleIcon from '@/components/icons/WhistleIcon';
@@ -359,7 +360,7 @@ export default function MatchCard({ match }: MatchCardProps) {
                     <td>{h2hRowStatus(row)}</td>
                     <td className={styles.h2hTdHome}>{row.home_name || '—'}</td>
                     <td className={styles.h2hTdScore}>
-                      <Link href={`/matches/${row.id}`} className={styles.h2hScoreLink} prefetch={false}>
+                      <Link href={buildMatchHref({ id: Number(row.id), home_name: row.home_name, away_name: row.away_name })} className={styles.h2hScoreLink} prefetch={false}>
                         {row.score?.trim() || '—'}
                       </Link>
                     </td>

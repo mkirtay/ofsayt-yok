@@ -29,6 +29,7 @@ import type { TeamDetailPageServerPayload } from '@/server/loadTeamDetailInitial
 import { loadTeamDetailInitialData } from '@/server/loadTeamDetailInitialData';
 import { propsJsonSafe } from '@/server/propsJsonSafe';
 import { utcTimeToTr } from '@/utils/dateFormat';
+import { buildMatchHref } from '@/utils/matchUrl';
 import styles from './teamDetail.module.scss';
 
 /* ─── Helpers ─── */
@@ -362,7 +363,7 @@ export default function TeamDetail({
                 {lastMatches.map((match) => {
                   const statusLabel = resolveMatchStatus(match);
                   return (
-                    <Link href={`/matches/${match.id}`} key={match.id} className={styles.matchRow}>
+                    <Link href={buildMatchHref(match)} key={match.id} className={styles.matchRow}>
                       <span className={styles.matchTime}>{statusLabel}</span>
 
                       <div className={styles.matchTeams}>

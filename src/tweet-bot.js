@@ -1,6 +1,9 @@
 const cron = require('node-cron');
 const { TwitterApi } = require('twitter-api-v2');
 const axios = require('axios');
+const fs = require('fs');
+const fsp = require('fs/promises');
+const path = require('path');
 
 const LIVE_SCORE_BASE = 'https://livescore-api.com/api-client';
 
@@ -25,26 +28,56 @@ const EVENT_TWEET_HEADLINE = {
 };
 
 /**
- * Takip edilecek takımlar — `competitionId` LiveScore lig id (src/config/leagues.ts ile uyumlu)
+ * Takip edilecek takımlar — `competitionId` LiveScore lig/kupa id (src/config/leagues.ts ile uyumlu)
+ * Türkiye için aynı takım hem lig (6) hem Türkiye Kupası (347) ayrı satırda izlenir.
  */
 const TEAMS = [
+  // Türkiye — Süper Lig
   { id: 669,  competitionId: 6, name: 'Galatasaray' },
   { id: 866,  competitionId: 6, name: 'Fenerbahçe' },
   { id: 144,  competitionId: 6, name: 'Beşiktaş' },
   { id: 1404, competitionId: 6, name: 'Trabzonspor' },
+  // Türkiye — Türkiye Kupası
+  { id: 669,  competitionId: 347, name: 'Galatasaray' },
+  { id: 866,  competitionId: 347, name: 'Fenerbahçe' },
+  { id: 144,  competitionId: 347, name: 'Beşiktaş' },
+  { id: 1404, competitionId: 347, name: 'Trabzonspor' },
+  // İngiltere — Premier League
   { id: 18,   competitionId: 2, name: 'Arsenal' },
   { id: 7,    competitionId: 2, name: 'Liverpool' },
   { id: 12,   competitionId: 2, name: 'Manchester City' },
   { id: 19,   competitionId: 2, name: 'Manchester United' },
+  // Almanya — Bundesliga
   { id: 46,   competitionId: 1, name: 'Bayern München' },
   { id: 41,   competitionId: 1, name: 'Borussia Dortmund' },
+  // İspanya — La Liga
   { id: 21,   competitionId: 3, name: 'Barcelona' },
   { id: 27,   competitionId: 3, name: 'Real Madrid' },
+  // İtalya — Serie A
   { id: 81,   competitionId: 4, name: 'Inter' },
   { id: 85,   competitionId: 4, name: 'Milan' },
   { id: 80,   competitionId: 4, name: 'Napoli' },
   { id: 79,   competitionId: 4, name: 'Juventus' },
+  // Fransa — Ligue 1
   { id: 59,   competitionId: 5, name: 'PSG' },
+  // Şampiyonlar Ligi — LiveScore `competition_id` = 244 (245 = Avrupa Ligi; bkz. src/config/leagues.ts)
+  { id: 669,  competitionId: 244, name: 'Galatasaray' },
+  { id: 866,  competitionId: 244, name: 'Fenerbahçe' },
+  { id: 144,  competitionId: 244, name: 'Beşiktaş' },
+  { id: 1404, competitionId: 244, name: 'Trabzonspor' },
+  { id: 18,   competitionId: 244, name: 'Arsenal' },
+  { id: 7,    competitionId: 244, name: 'Liverpool' },
+  { id: 12,   competitionId: 244, name: 'Manchester City' },
+  { id: 19,   competitionId: 244, name: 'Manchester United' },
+  { id: 46,   competitionId: 244, name: 'Bayern München' },
+  { id: 41,   competitionId: 244, name: 'Borussia Dortmund' },
+  { id: 21,   competitionId: 244, name: 'Barcelona' },
+  { id: 27,   competitionId: 244, name: 'Real Madrid' },
+  { id: 81,   competitionId: 244, name: 'Inter' },
+  { id: 85,   competitionId: 244, name: 'Milan' },
+  { id: 80,   competitionId: 244, name: 'Napoli' },
+  { id: 79,   competitionId: 244, name: 'Juventus' },
+  { id: 59,   competitionId: 244, name: 'PSG' },
 ];
 
 /** Tweet ikinci hashtag (lig) */
@@ -55,6 +88,8 @@ const COMPETITION_TWEET = {
   4: { tag: 'SerieA' },
   5: { tag: 'Ligue1' },
   6: { tag: 'SüperLig' },
+  244: { tag: 'ChampionsLeague' },
+  347: { tag: 'TurkiyeKupasi' },
 };
 
 /** match_id (string) → maç durumu (kickoff / FT için) */
@@ -65,6 +100,175 @@ const processedEventIds = new Map();
 const teamActiveMatchKey = new Map();
 
 const log = (msg) => console.log(`[${new Date().toISOString()}] ${msg}`);
+
+const STATE_VERSION = 3;
+const DEFAULT_STATE_PATH = path.join(process.cwd(), '.data', 'tweet-bot-state.json');
+const STATE_PATH = String(process.env.TWEET_BOT_STATE_PATH || '').trim() || DEFAULT_STATE_PATH;
+const MAX_EVENT_KEYS_PER_MATCH = Number(process.env.TWEET_BOT_MAX_EVENT_KEYS || 250) || 250;
+const MATCH_STATE_TTL_DAYS = Number(process.env.TWEET_BOT_MATCH_TTL_DAYS || 7) || 7;
+
+/** @type {{ version: number, matches: Record<string, any>, teamActiveMatchKey: Record<string, string>, teamUpcomingFixture: Record<string, string> }} */
+let persistedState = { version: STATE_VERSION, matches: {}, teamActiveMatchKey: {}, teamUpcomingFixture: {} };
+
+async function loadPersistedState() {
+  try {
+    const raw = await fsp.readFile(STATE_PATH, 'utf8');
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object') return;
+    const version = Number(parsed.version) || STATE_VERSION;
+    const matches = parsed.matches && typeof parsed.matches === 'object' ? parsed.matches : {};
+    const tak = parsed.teamActiveMatchKey && typeof parsed.teamActiveMatchKey === 'object' ? parsed.teamActiveMatchKey : {};
+    const tuf =
+      parsed.teamUpcomingFixture && typeof parsed.teamUpcomingFixture === 'object'
+        ? parsed.teamUpcomingFixture
+        : {};
+    persistedState = { version, matches, teamActiveMatchKey: tak, teamUpcomingFixture: tuf };
+  } catch (e) {
+    // Dosya yoksa ilk çalıştırma kabul edilir.
+  }
+
+  // Persist edilmiş state'i belleğe hydrate et.
+  for (const [rowKey, matchKey] of Object.entries(persistedState.teamActiveMatchKey)) {
+    if (typeof matchKey === 'string' && matchKey) teamActiveMatchKey.set(rowKey, matchKey);
+  }
+  for (const [matchKey, m] of Object.entries(persistedState.matches)) {
+    if (!m || typeof m !== 'object') continue;
+    const seenArr = Array.isArray(m.seenEventKeys) ? m.seenEventKeys : [];
+    processedEventIds.set(matchKey, new Set(seenArr.filter((x) => typeof x === 'string')));
+    if (m.lastStatus || m.lastMinute || m.lastScore) {
+      previousState.set(matchKey, {
+        status: m.lastStatus || '',
+        minute: m.lastMinute || '',
+        score: m.lastScore || '',
+      });
+    }
+  }
+}
+
+async function savePersistedState() {
+  const dir = path.dirname(STATE_PATH);
+  fs.mkdirSync(dir, { recursive: true });
+
+  // Version bump: eski dosyadan yüklense bile yeni şema ile kaydet.
+  persistedState.version = STATE_VERSION;
+
+  // Prune eski maçlar (dosya şişmesin)
+  const now = Date.now();
+  const ttlMs = MATCH_STATE_TTL_DAYS * 24 * 60 * 60 * 1000;
+  for (const [matchKey, m] of Object.entries(persistedState.matches)) {
+    const updatedAt = typeof m?.updatedAt === 'number' ? m.updatedAt : 0;
+    if (updatedAt && now - updatedAt > ttlMs) {
+      delete persistedState.matches[matchKey];
+    }
+  }
+
+  const tmp = `${STATE_PATH}.tmp`;
+  await fsp.writeFile(tmp, JSON.stringify(persistedState), 'utf8');
+  await fsp.rename(tmp, STATE_PATH);
+}
+
+function ensurePersistedMatch(matchKey) {
+  if (!persistedState.matches[matchKey]) {
+    persistedState.matches[matchKey] = {
+      kickoffTweeted: false,
+      htTweeted: false,
+      ftTweeted: false,
+      sawFixtureBeforeLive: false,
+      seenEventKeys: [],
+      lastStatus: '',
+      lastMinute: '',
+      lastScore: '',
+      updatedAt: Date.now(),
+    };
+  }
+  return persistedState.matches[matchKey];
+}
+
+function rememberEventKey(matchKey, key) {
+  if (!key) return;
+  const m = ensurePersistedMatch(matchKey);
+  if (!Array.isArray(m.seenEventKeys)) m.seenEventKeys = [];
+  m.seenEventKeys.push(key);
+  if (m.seenEventKeys.length > MAX_EVENT_KEYS_PER_MATCH) {
+    m.seenEventKeys = m.seenEventKeys.slice(-MAX_EVENT_KEYS_PER_MATCH);
+  }
+  m.updatedAt = Date.now();
+}
+
+function parseMinute(raw) {
+  if (raw == null) return null;
+  const s = String(raw).trim();
+  if (!s) return null;
+  const m = /^(\d{1,3})/.exec(s);
+  if (!m) return null;
+  const n = Number(m[1]);
+  return Number.isFinite(n) ? n : null;
+}
+
+function normalizeEventTimeKey(raw) {
+  if (raw == null) return '';
+  const s = String(raw).trim();
+  if (!s) return '';
+  const m = /^(\d{1,3})(?:\s*\+\s*(\d{1,2}))?/.exec(s);
+  if (!m) return s;
+  return m[2] ? `${m[1]}+${m[2]}` : m[1];
+}
+
+function isGoalLikeEvent(evType) {
+  return evType === 'GOAL' || evType === 'GOAL_PENALTY' || evType === 'OWN_GOAL';
+}
+
+function sleepMs(ms) {
+  return new Promise((r) => setTimeout(r, ms));
+}
+
+function todayIsoUtc() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+const fixturesCache = new Map();
+
+async function fetchFixturesByDateCompetition(isoDate, competitionId) {
+  const { key, secret } = livescoreCredentials();
+  if (!key || !secret) return [];
+  try {
+    const { data } = await axios.get(`${LIVE_SCORE_BASE}/fixtures/list.json`, {
+      params: {
+        key,
+        secret,
+        date: isoDate,
+        competition_id: competitionId,
+      },
+      timeout: 10000,
+    });
+    if (!data?.success || !data.data) return [];
+    const list = data.data.fixtures;
+    if (!Array.isArray(list)) return [];
+    return list;
+  } catch (error) {
+    logAxiosError(`fixtures/list.json (date=${isoDate} competition_id=${competitionId})`, error);
+    return [];
+  }
+}
+
+async function getFixturesForCompetitionCached(isoDate, competitionId) {
+  const key = `${isoDate}:${competitionId}`;
+  const now = Date.now();
+  const cached = fixturesCache.get(key);
+  if (cached && now - cached.at < 60_000) return cached.list;
+  const list = await fetchFixturesByDateCompetition(isoDate, competitionId);
+  fixturesCache.set(key, { at: now, list });
+  return list;
+}
+
+function findTeamFixture(fixtures, teamId) {
+  for (const f of fixtures || []) {
+    const homeId = f?.home?.id ?? f?.home_id;
+    const awayId = f?.away?.id ?? f?.away_id;
+    if (String(homeId) === String(teamId) || String(awayId) === String(teamId)) return f;
+  }
+  return null;
+}
 
 function teamRowKey(team) {
   return `${team.competitionId}:${team.id}`;
@@ -78,13 +282,33 @@ function secondHashtag(team) {
   return competitionTweetMeta(team.competitionId).tag;
 }
 
-/** Süper Lig (6): "Maçımız …"; diğer ligler: nötr "Maç …" */
+/** Süper Lig (6) ve Türkiye Kupası (347): "Maçımız …"; diğer ligler: nötr "Maç …" */
 function isTurkeySuperLig(team) {
-  return team.competitionId === 6;
+  return team.competitionId === 6 || team.competitionId === 347;
 }
 
 function tweetFooter(team) {
   return `#${teamHashtag(team)} #${secondHashtag(team)}`;
+}
+
+function uniqueHashtags(tags) {
+  const seen = new Set();
+  const out = [];
+  for (const t of tags) {
+    const raw = String(t || '').trim();
+    if (!raw) continue;
+    const key = raw.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(raw);
+  }
+  return out;
+}
+
+function matchTweetFooter(team, match) {
+  const { home, away } = getMatchTeamLabels(match);
+  const tags = uniqueHashtags([teamHashtag({ name: home }), teamHashtag({ name: away }), secondHashtag(team)]);
+  return tags.map((t) => `#${t}`).join(' ');
 }
 
 /** API route ile aynı isimler; bazı ortamlarda LIVE_SCORE_* kullanılmış olabilir */
@@ -145,6 +369,34 @@ function normalizeScoreDisplay(score) {
   return String(score).replace(/\s*[-–]\s*/g, '-').trim();
 }
 
+/** LiveScore / UI ile uyum: IN PLAY, HALF TIME BREAK, FINISHED, FT … */
+function normalizeMatchStatus(status) {
+  return String(status || '')
+    .trim()
+    .toUpperCase()
+    .replace(/\s+/g, ' ');
+}
+
+function isHalfTimeBreak(status) {
+  const s = normalizeMatchStatus(status);
+  if (!s) return false;
+  if (s === 'HALF TIME BREAK') return true;
+  if (s === 'HT') return true;
+  if (s === 'HALFTIME' || s === 'HALF TIME') return true;
+  return false;
+}
+
+/** Devre arası skoru — öncelik `ht_score` (web’deki İY skoru) */
+function getHalfTimeScoreLine(match) {
+  if (!match || typeof match !== 'object') return '?-?';
+  const ht = match.scores?.ht_score;
+  if (ht != null && String(ht).trim() !== '') {
+    return normalizeScoreDisplay(String(ht).trim());
+  }
+  return normalizeScoreDisplay(getMatchScoreLine(match));
+}
+
+
 /**
  * Liste/detay sayfalarıyla uyum: nested team adı önce (fixtures/canlı farklı şekillerde döner).
  * @see src/components/MatchList/index.tsx
@@ -186,11 +438,22 @@ function normalizeEventList(raw) {
   return Array.isArray(raw) ? raw : [raw];
 }
 
-/** API bazen id vermez; tekrarlayan tweet’i önlemek için sentetik anahtar */
-function eventDedupeKey(ev) {
+/**
+ * İstekler arası stabil kanonik anahtar:
+ * - `id` ve `sort` alanları API’de sonradan değişebildiğinden anahtara dahil edilmez
+ * - `match_id` öneki ile farklı maçlardaki aynı dakika/oyuncu çakışmaları ayrışır
+ */
+function eventDedupeKey(matchKey, ev) {
   if (ev == null || typeof ev !== 'object') return null;
-  if (ev.id != null && ev.id !== '') return `id:${ev.id}`;
-  return `syn:${ev.sort ?? ''}|${ev.time}|${ev.event}|${ev.player?.id ?? ''}|${String(ev.player?.name ?? '')}|${ev.is_home}|${ev.is_away}`;
+  const time = normalizeEventTimeKey(ev.time ?? '');
+  const type = ev.event ?? '';
+  const playerId = ev.player?.id ?? '';
+  const playerName = String(ev.player?.name ?? '').trim().toLowerCase();
+  const side = ev.is_home === true || ev.is_home === '1' ? 'H' : ev.is_away === true || ev.is_away === '1' ? 'A' : '?';
+  const who = playerId || playerName || '';
+  // side alanı API'de bazen tutarsız gelebiliyor; belirsizse anahtardan çıkar.
+  const sideKey = side === '?' ? '' : `|${side}`;
+  return `${matchKey}|${time}|${type}|${who}${sideKey}`;
 }
 
 function sortEventsChronological(list) {
@@ -285,7 +548,23 @@ function buildEventTweet(team, match, ev) {
   const oyuncu = ev.player?.name?.trim() ? ev.player.name : 'Oyuncu';
   const headline = EVENT_TWEET_HEADLINE[ev.event] || 'OLAY';
 
-  return `${headline} | ${home} ${score} ${away}, ${dk}' ${oyuncu}\n${tweetFooter(team)}`;
+  return `${headline} | ${home} ${score} ${away}, ${dk}' ${oyuncu}\n${matchTweetFooter(team, match)}`;
+}
+
+function buildEventTweetSafe(team, match, ev, options) {
+  const { home, away } = getMatchTeamLabels(match);
+  const score = normalizeScoreDisplay(getMatchScoreLine(match));
+  const dk =
+    typeof ev.time === 'number' && !Number.isNaN(ev.time)
+      ? String(ev.time)
+      : ev.time != null
+        ? String(ev.time)
+        : '?';
+  const oyuncu = ev.player?.name?.trim() ? ev.player.name : 'Oyuncu';
+  const headline = EVENT_TWEET_HEADLINE[ev.event] || 'OLAY';
+
+  const scorePart = `${home} ${score} ${away}`;
+  return `${headline} | ${scorePart}, ${dk}' ${oyuncu}\n${matchTweetFooter(team, match)}`;
 }
 
 async function sendTweet(text) {
@@ -306,6 +585,30 @@ async function sendTweet(text) {
   }
 }
 
+/**
+ * Tek sefer: devre arasına girildi (`HALF TIME BREAK` / `HT`) veya bot maçı ilk gördüğünde zaten İY'deyse.
+ */
+async function maybeTweetHalfTimeEnd(team, merged, homeName, awayName, pMatch, prevStatus) {
+  if (pMatch.htTweeted) return;
+  const cur = merged.status || '';
+  const prevS = prevStatus != null ? String(prevStatus) : '';
+  const enteredFromPlay =
+    prevS !== '' && !isHalfTimeBreak(prevS) && isHalfTimeBreak(cur);
+  const bootstrapWhileHt = prevS === '' && isHalfTimeBreak(cur);
+  if (!enteredFromPlay && !bootstrapWhileHt) return;
+
+  const htHead = 'İLK YARI BİTTİ';
+  const scoreLine = getHalfTimeScoreLine(merged);
+  const text = `${htHead} | ${homeName} ${scoreLine} ${awayName}\n${matchTweetFooter(team, merged)}`;
+
+  log(`⚽ İLK YARI BİTTİ tweet (prevStatus=${prevS || '(yok)'}, status=${cur}, skor=${scoreLine})`);
+  const ok = await sendTweet(text);
+  if (ok) {
+    pMatch.htTweeted = true;
+    pMatch.updatedAt = Date.now();
+  }
+}
+
 function ensureEventSet(matchKey) {
   if (!processedEventIds.has(matchKey)) {
     processedEventIds.set(matchKey, new Set());
@@ -315,6 +618,8 @@ function ensureEventSet(matchKey) {
 
 async function checkAllTeams() {
   log('🔄 Kontrol başladı...');
+
+  const isoToday = todayIsoUtc();
 
   for (const team of TEAMS) {
     const rowKey = teamRowKey(team);
@@ -327,6 +632,20 @@ async function checkAllTeams() {
         processedEventIds.delete(oldKey);
         teamActiveMatchKey.delete(rowKey);
       }
+      delete persistedState.teamActiveMatchKey[rowKey];
+
+      // Maç henüz başlamamış olabilir: fixtures'tan bugünkü maçı önceden yakala.
+      const fixtures = await getFixturesForCompetitionCached(isoToday, team.competitionId);
+      const fx = findTeamFixture(fixtures, team.id);
+      if (fx?.id != null) {
+        persistedState.teamUpcomingFixture[rowKey] = String(fx.id);
+        const m = ensurePersistedMatch(String(fx.id));
+        m.sawFixtureBeforeLive = true;
+        m.updatedAt = Date.now();
+      } else {
+        delete persistedState.teamUpcomingFixture[rowKey];
+      }
+
       log(`⚪ ${team.name}: Canlı maç yok`);
       continue;
     }
@@ -334,9 +653,12 @@ async function checkAllTeams() {
     const matchId = match.id;
     const matchKey = String(matchId);
     teamActiveMatchKey.set(rowKey, matchKey);
+    persistedState.teamActiveMatchKey[rowKey] = matchKey;
+    const upcoming = persistedState.teamUpcomingFixture[rowKey];
 
     const prev = previousState.get(matchKey);
     const seen = ensureEventSet(matchKey);
+    const pMatch = ensurePersistedMatch(matchKey);
 
     const { events, matchDetail } = await fetchMatchEventsBundle(matchId);
     const merged = mergeLiveMatchWithEventsDetail(match, matchDetail);
@@ -346,29 +668,59 @@ async function checkAllTeams() {
     const status = merged.status || '';
 
     /** GOL tweet’i ile aynı yapı: tek satır `BAŞLIK | …`, alt satır hashtag */
-    const kickoffHead = isTurkeySuperLig(team) ? 'MAÇIMIZ BAŞLADI' : 'MAÇ BAŞLADI';
+    const kickoffHead = 'MAÇ BAŞLADI';
     const ftHead = isTurkeySuperLig(team) ? 'MAÇIMIZ BİTTİ' : 'MAÇ BİTTİ';
 
-    // İlk kez bu maçı görüyoruz → başlangıç tweet'i; mevcut olayları tekrar etme
+    // İlk kez bu maçı görüyoruz → kickoff:
+    // - Eğer fixtures'ta önceden gördüysek (NOT_STARTED→LIVE geçişini yakaladık), dakika kaç olursa olsun 1 kez at.
+    // - Aksi halde (bot maçı ilk kez live görüyor; restart olabilir) sadece erken dakikalarda at.
     if (!prev) {
       log(`🆕 ${team.name}: Yeni maç tespit edildi (${homeName} vs ${awayName})`);
 
-      const kickoff = `${kickoffHead} | ${homeName} - ${awayName}\n${tweetFooter(team)}`;
+      const minuteNum = parseMinute(merged.time);
+      const sawFixture = Boolean(pMatch.sawFixtureBeforeLive) || (upcoming && String(upcoming) === matchKey);
+      const shouldKickoff =
+        !pMatch.kickoffTweeted &&
+        (sawFixture || (minuteNum != null && minuteNum <= 2)) &&
+        status !== 'FT' &&
+        status !== 'AET' &&
+        !isHalfTimeBreak(status);
 
-      await sendTweet(kickoff);
-
-      for (const e of events) {
-        const k = eventDedupeKey(e);
-        if (k) seen.add(k);
+      if (shouldKickoff) {
+        const kickoff = `${kickoffHead} | ${homeName} - ${awayName}\n${matchTweetFooter(team, merged)}`;
+        const ok = await sendTweet(kickoff);
+        if (ok) {
+          pMatch.kickoffTweeted = true;
+          pMatch.updatedAt = Date.now();
+          delete persistedState.teamUpcomingFixture[rowKey];
+        }
+      } else {
+        log(
+          `ℹ️ Kickoff atlanıyor: kickoffTweeted=${Boolean(pMatch.kickoffTweeted)} sawFixture=${sawFixture} minute=${minuteNum} status=${status}`
+        );
       }
 
+      for (const e of events) {
+        const k = eventDedupeKey(matchKey, e);
+        if (k) {
+          seen.add(k);
+          rememberEventKey(matchKey, k);
+        }
+      }
+
+      await maybeTweetHalfTimeEnd(team, merged, homeName, awayName, pMatch, '');
+
       previousState.set(matchKey, { status, minute, score: getMatchScoreLine(merged) });
+      pMatch.lastStatus = status;
+      pMatch.lastMinute = minute;
+      pMatch.lastScore = getMatchScoreLine(merged);
+      pMatch.updatedAt = Date.now();
       continue;
     }
 
     const newcomers = events
       .filter((e) => {
-        const k = eventDedupeKey(e);
+        const k = eventDedupeKey(matchKey, e);
         return k && !seen.has(k);
       })
       .sort(
@@ -377,31 +729,63 @@ async function checkAllTeams() {
           (Number(a.time) || 0) - (Number(b.time) || 0)
       );
 
+    const curScore = normalizeScoreDisplay(getMatchScoreLine(merged));
+    const prevScore = prev?.score ? normalizeScoreDisplay(String(prev.score)) : '';
+    const scoreChanged = curScore !== prevScore;
+
     for (const ev of newcomers) {
-      const text = buildEventTweet(team, merged, ev);
-      await sendTweet(text);
-      const k = eventDedupeKey(ev);
-      if (k) seen.add(k);
+      if (isGoalLikeEvent(ev.event) && !scoreChanged) {
+        log(`⏳ Gol event'i var ama skor henüz değişmedi (prev=${prevScore} cur=${curScore}); tweet erteleniyor: ${ev.event} ${ev.time}' ${ev.player?.name || '?'}`);
+        continue;
+      }
+
+      const text = buildEventTweetSafe(team, merged, ev, {});
+      const ok = await sendTweet(text);
+      if (ok) {
+        const k = eventDedupeKey(matchKey, ev);
+        if (k) {
+          seen.add(k);
+          rememberEventKey(matchKey, k);
+        }
+      }
     }
+
+    await maybeTweetHalfTimeEnd(team, merged, homeName, awayName, pMatch, prev.status || '');
 
     if ((status === 'FT' || status === 'AET') && prev.status !== 'FT' && prev.status !== 'AET') {
       const ft =
         `${ftHead} | ${homeName} ${normalizeScoreDisplay(getMatchScoreLine(merged))} ${awayName}\n` +
-        tweetFooter(team);
+        matchTweetFooter(team, merged);
 
-      await sendTweet(ft);
+      const ok = await sendTweet(ft);
+      if (ok) {
+        pMatch.ftTweeted = true;
+        pMatch.updatedAt = Date.now();
+      }
     }
 
     previousState.set(matchKey, { status, minute, score: getMatchScoreLine(merged) });
+    pMatch.lastStatus = status;
+    pMatch.lastMinute = minute;
+    pMatch.lastScore = getMatchScoreLine(merged);
+    pMatch.updatedAt = Date.now();
   }
 
   log('✅ Kontrol tamamlandı\n');
+
+  try {
+    await savePersistedState();
+  } catch (e) {
+    log(`⚠️ State kaydedilemedi: ${e?.message || String(e)}`);
+  }
 }
 
 async function startBot() {
   log('🤖 Ofsayt Yok Tweet Bot başlatılıyor...');
   log(`🧪 DRY_RUN modu: ${isDryRun() ? 'AÇIK (tweet gönderilmez)' : 'KAPALI (gerçek tweet)'}`);
+  log(`💾 State dosyası: ${STATE_PATH}`);
 
+  await loadPersistedState();
   await checkAllTeams();
 
   cron.schedule('*/30 * * * * *', checkAllTeams);

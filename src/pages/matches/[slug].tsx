@@ -1,4 +1,5 @@
 import type { GetServerSideProps, InferGetServerSidePropsType } from 'next';
+import Head from 'next/head';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Container from '@/components/Container';
 import MatchCard from '@/components/MatchCard';
@@ -22,15 +23,18 @@ import type { MatchEvent, MatchStatsData } from '@/models/domain';
 import type { MatchDetailPageServerPayload } from '@/server/loadMatchDetailInitialData';
 import { loadMatchDetailInitialData } from '@/server/loadMatchDetailInitialData';
 import { propsJsonSafe } from '@/server/propsJsonSafe';
+import { buildMatchSlug, parseMatchIdFromParam } from '@/utils/matchUrl';
 import styles from './matchDetail.module.scss';
 
 type MatchDetailPageProps = {
   matchId: string;
+  canonicalPath: string;
   initialMatchData: MatchDetailPageServerPayload;
 };
 
 export default function MatchDetail({
   matchId,
+  canonicalPath,
   initialMatchData,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
   const [match, setMatch] = useState<Match | null>(() => initialMatchData.match);
@@ -143,8 +147,32 @@ export default function MatchDetail({
   const compId = match?.competition?.id ?? match?.competition_id;
   const showStandingsBlock = compId != null && (standingsLoading || standingsReady);
 
+  const homeName = match?.home?.name || '';
+  const awayName = match?.away?.name || '';
+  const pageTitle = homeName && awayName
+    ? `${homeName} - ${awayName} | Ofsayt Yok`
+    : 'Maç Detayı | Ofsayt Yok';
+  const compName = match?.competition?.name || match?.competition_name || '';
+  const pageDescription = homeName && awayName
+    ? `${homeName} vs ${awayName}${compName ? ` - ${compName}` : ''} maç detayı, istatistikler ve kadro bilgileri.`
+    : 'Maç detayı, istatistikler ve kadro bilgileri.';
+  const canonicalUrl = `https://ofsaytyok.com${canonicalPath}`;
+
   return (
-    <Container>
+    <>
+      <Head>
+        <title>{pageTitle}</title>
+        <meta name="description" content={pageDescription} />
+        <link rel="canonical" href={canonicalUrl} />
+        <meta property="og:title" content={pageTitle} />
+        <meta property="og:description" content={pageDescription} />
+        <meta property="og:type" content="article" />
+        <meta property="og:url" content={canonicalUrl} />
+        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:title" content={pageTitle} />
+        <meta name="twitter:description" content={pageDescription} />
+      </Head>
+      <Container>
       <div className="layout-split">
         <div className="layout-left">
           <MatchCard match={match} />
@@ -184,24 +212,42 @@ export default function MatchDetail({
         </div>
       </div>
     </Container>
+    </>
   );
 }
 
 export const getServerSideProps: GetServerSideProps<MatchDetailPageProps> = async (ctx) => {
-  ctx.res.setHeader(
-    'Cache-Control',
-    'public, s-maxage=20, stale-while-revalidate=120'
-  );
-  const rawId = ctx.params?.id;
-  const matchId = typeof rawId === 'string' ? rawId : Array.isArray(rawId) ? rawId[0] : '';
+  const rawParam = ctx.params?.slug;
+  const param = typeof rawParam === 'string' ? rawParam : Array.isArray(rawParam) ? rawParam[0] : '';
+  if (!param) return { notFound: true };
+
+  const matchId = parseMatchIdFromParam(param);
   if (!matchId) return { notFound: true };
 
   const raw = await loadMatchDetailInitialData(ctx.req, matchId);
   if (!raw?.match) return { notFound: true };
 
+  const canonicalSlug = buildMatchSlug(raw.match);
+  const canonicalParam = canonicalSlug ? `${matchId}-${canonicalSlug}` : matchId;
+
+  if (param !== canonicalParam) {
+    return {
+      redirect: {
+        destination: `/matches/${canonicalParam}`,
+        permanent: true,
+      },
+    };
+  }
+
+  ctx.res.setHeader(
+    'Cache-Control',
+    'public, s-maxage=20, stale-while-revalidate=120'
+  );
+
   return {
     props: {
       matchId,
+      canonicalPath: `/matches/${canonicalParam}`,
       initialMatchData: propsJsonSafe(raw),
     },
   };

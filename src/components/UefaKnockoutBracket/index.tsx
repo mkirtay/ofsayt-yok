@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { BracketPair, BracketRound } from '@/utils/uefaBracket';
+import { buildMatchHref } from '@/utils/matchUrl';
 import styles from './bracket.module.scss';
 
 type Props = {
@@ -38,7 +39,7 @@ function TeamRow({
 
 function PairCard({ pair }: { pair: BracketPair }) {
   const last = pair.matches[pair.matches.length - 1];
-  const href = last ? `/matches/${last.id}` : undefined;
+  const href = last ? buildMatchHref(last) : undefined;
   const body = (
     <div className={styles.pairInner}>
       <div className={styles.teamsCol}>

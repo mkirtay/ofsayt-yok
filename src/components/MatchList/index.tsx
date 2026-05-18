@@ -7,6 +7,7 @@ import type { GroupedLeagueMatches } from '../../services/liveScoreService';
 import { countryFlagImgSrc } from '@/utils/countryFlag';
 import { uefaCompetitionLogoSrcById } from '@/utils/competitionLogo';
 import { utcTimeToTr } from '@/utils/dateFormat';
+import { buildMatchHref } from '@/utils/matchUrl';
 import styles from './matchList.module.scss';
 
 export type MatchListVariant = 'default' | 'worldCup';
@@ -214,7 +215,7 @@ function VirtualRow({
   return (
     <Link
       {...ariaAttributes}
-      href={`/matches/${match.id}`}
+      href={buildMatchHref(match)}
       style={style}
       className={rowClass}
       prefetch={false}
