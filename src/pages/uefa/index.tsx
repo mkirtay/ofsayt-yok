@@ -39,16 +39,21 @@ export default function UefaPage({
 }
 
 export const getServerSideProps: GetServerSideProps<UefaPageProps> = async (ctx) => {
-  ctx.res.setHeader(
-    'Cache-Control',
-    'public, s-maxage=30, stale-while-revalidate=120'
-  );
+  try {
+    ctx.res.setHeader(
+      'Cache-Control',
+      'public, s-maxage=30, stale-while-revalidate=120'
+    );
 
-  const raw = await loadUefaHubInitialData(ctx.req, UEFA_CHAMPIONS_LEAGUE_ID);
+    const raw = await loadUefaHubInitialData(ctx.req, UEFA_CHAMPIONS_LEAGUE_ID);
 
-  return {
-    props: {
-      initialUefaHubData: raw == null ? null : propsJsonSafe(raw),
-    },
-  };
+    return {
+      props: {
+        initialUefaHubData: raw == null ? null : propsJsonSafe(raw),
+      },
+    };
+  } catch (e) {
+    console.error('uefa getServerSideProps', e);
+    return { props: { initialUefaHubData: null } };
+  }
 };

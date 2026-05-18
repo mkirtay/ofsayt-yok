@@ -197,14 +197,19 @@ export default function Standings({
 }
 
 export const getServerSideProps: GetServerSideProps<StandingsPageProps> = async (ctx) => {
-  ctx.res.setHeader(
-    'Cache-Control',
-    'public, s-maxage=60, stale-while-revalidate=180'
-  );
-  const raw = await loadStandingsPageData(ctx.req, DEFAULT_COMPETITION_ID);
-  return {
-    props: {
-      payload: raw == null ? null : propsJsonSafe(raw),
-    },
-  };
+  try {
+    ctx.res.setHeader(
+      'Cache-Control',
+      'public, s-maxage=60, stale-while-revalidate=180'
+    );
+    const raw = await loadStandingsPageData(ctx.req, DEFAULT_COMPETITION_ID);
+    return {
+      props: {
+        payload: raw == null ? null : propsJsonSafe(raw),
+      },
+    };
+  } catch (e) {
+    console.error('standings getServerSideProps', e);
+    return { props: { payload: null } };
+  }
 };

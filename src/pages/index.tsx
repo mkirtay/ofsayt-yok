@@ -36,15 +36,20 @@ export default function Home({
 }
 
 export const getServerSideProps: GetServerSideProps<HomeProps> = async (ctx) => {
-  ctx.res.setHeader(
-    'Cache-Control',
-    'public, s-maxage=30, stale-while-revalidate=120'
-  );
-  const iso = new Date().toISOString().slice(0, 10);
-  const raw = await loadMatchHubHomeInitialData(ctx.req, DEFAULT_COMPETITION_ID, iso);
-  return {
-    props: {
-      initialDefaultHubData: raw == null ? null : propsJsonSafe(raw),
-    },
-  };
+  try {
+    ctx.res.setHeader(
+      'Cache-Control',
+      'public, s-maxage=30, stale-while-revalidate=120'
+    );
+    const iso = new Date().toISOString().slice(0, 10);
+    const raw = await loadMatchHubHomeInitialData(ctx.req, DEFAULT_COMPETITION_ID, iso);
+    return {
+      props: {
+        initialDefaultHubData: raw == null ? null : propsJsonSafe(raw),
+      },
+    };
+  } catch (e) {
+    console.error('index getServerSideProps', e);
+    return { props: { initialDefaultHubData: null } };
+  }
 };

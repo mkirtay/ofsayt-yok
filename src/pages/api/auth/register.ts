@@ -15,7 +15,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const ip = requestIp(req.headers, req.socket.remoteAddress)
-  const limitState = hitFixedWindowRateLimit(`register:${ip}`, REGISTER_LIMIT, REGISTER_WINDOW_MS)
+  const limitState = await hitFixedWindowRateLimit(`register:${ip}`, REGISTER_LIMIT, REGISTER_WINDOW_MS)
   if (!limitState.success) {
     res.setHeader('Retry-After', Math.max(1, Math.ceil((limitState.resetAt - Date.now()) / 1000)).toString())
     return res.status(429).json({ error: 'Cok fazla kayit denemesi. Lutfen daha sonra tekrar deneyin.' })

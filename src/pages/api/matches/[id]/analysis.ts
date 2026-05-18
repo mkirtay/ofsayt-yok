@@ -12,7 +12,7 @@ import { requirePremium } from '@/lib/requirePremium';
 import { runWithLiveScoreHttpClient } from '@/services/liveScoreHttpContext';
 import { livescoreAxiosFromIncomingMessage } from '@/server/livescoreInternalAxios';
 import { buildMatchAnalysisContext } from '@/server/buildMatchAnalysisContext';
-import { generateMatchAnalysis } from '@/services/aiAnalysisService';
+import { generateMatchAnalysis, AnalysisTimeoutError } from '@/services/aiAnalysisService';
 
 const PRE_TTL_MS = 30 * 60 * 1000;
 
@@ -126,9 +126,9 @@ export default async function handler(
     return res.status(result.status).json(result.body);
   } catch (err) {
     console.error('[analysis] hata:', err);
-    return res.status(500).json({
-      error: 'Analiz üretilemedi',
-      detail: err instanceof Error ? err.message : 'unknown',
-    });
+    if (err instanceof AnalysisTimeoutError) {
+      return res.status(504).json({ error: err.message });
+    }
+    return res.status(500).json({ error: 'Analiz üretilemedi. Lütfen tekrar deneyin.' });
   }
 }

@@ -391,14 +391,19 @@ export default function WorldCupPage({
 }
 
 export const getServerSideProps: GetServerSideProps<WorldCupPageProps> = async (ctx) => {
-  ctx.res.setHeader(
-    'Cache-Control',
-    'public, s-maxage=60, stale-while-revalidate=180'
-  );
-  const raw = await loadWorldCupBootstrapData(ctx.req);
-  return {
-    props: {
-      wcBootstrap: raw == null ? null : propsJsonSafe(raw),
-    },
-  };
+  try {
+    ctx.res.setHeader(
+      'Cache-Control',
+      'public, s-maxage=60, stale-while-revalidate=180'
+    );
+    const raw = await loadWorldCupBootstrapData(ctx.req);
+    return {
+      props: {
+        wcBootstrap: raw == null ? null : propsJsonSafe(raw),
+      },
+    };
+  } catch (e) {
+    console.error('world-cup getServerSideProps', e);
+    return { props: { wcBootstrap: null } };
+  }
 };

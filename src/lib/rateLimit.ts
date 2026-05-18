@@ -1,3 +1,8 @@
+import { Ratelimit } from '@upstash/ratelimit';
+import { getRedisClient } from './redis';
+
+// ── In-memory fallback ──────────────────────────────────────────────────────
+
 type Bucket = {
   count: number;
   resetAt: number;
@@ -5,24 +10,18 @@ type Bucket = {
 
 const buckets = new Map<string, Bucket>();
 
-function nowMs(): number {
-  return Date.now();
-}
-
 function cleanupExpired(current: number) {
   for (const [key, bucket] of buckets.entries()) {
-    if (bucket.resetAt <= current) {
-      buckets.delete(key);
-    }
+    if (bucket.resetAt <= current) buckets.delete(key);
   }
 }
 
-export function hitFixedWindowRateLimit(
+function hitInMemory(
   key: string,
   limit: number,
   windowMs: number,
 ): { success: boolean; remaining: number; resetAt: number } {
-  const current = nowMs();
+  const current = Date.now();
   cleanupExpired(current);
 
   const bucket = buckets.get(key);
@@ -44,6 +43,54 @@ export function hitFixedWindowRateLimit(
     remaining: Math.max(0, limit - bucket.count),
     resetAt: bucket.resetAt,
   };
+}
+
+// ── Upstash limiter cache ───────────────────────────────────────────────────
+
+const upstashLimiters = new Map<string, Ratelimit>();
+
+function getUpstashLimiter(limit: number, windowMs: number): Ratelimit | null {
+  const redis = getRedisClient();
+  if (!redis) return null;
+
+  const cacheKey = `${limit}:${windowMs}`;
+  if (!upstashLimiters.has(cacheKey)) {
+    const windowSec = Math.ceil(windowMs / 1000);
+    upstashLimiters.set(
+      cacheKey,
+      new Ratelimit({
+        redis,
+        limiter: Ratelimit.fixedWindow(limit, `${windowSec} s`),
+        prefix: 'rl',
+      }),
+    );
+  }
+  return upstashLimiters.get(cacheKey)!;
+}
+
+// ── Public API ──────────────────────────────────────────────────────────────
+
+export async function hitFixedWindowRateLimit(
+  key: string,
+  limit: number,
+  windowMs: number,
+): Promise<{ success: boolean; remaining: number; resetAt: number }> {
+  const upstash = getUpstashLimiter(limit, windowMs);
+
+  if (upstash) {
+    try {
+      const result = await upstash.limit(key);
+      return {
+        success: result.success,
+        remaining: result.remaining,
+        resetAt: result.reset,
+      };
+    } catch {
+      // Redis bağlantı hatası → in-memory fallback
+    }
+  }
+
+  return hitInMemory(key, limit, windowMs);
 }
 
 export function requestIp(

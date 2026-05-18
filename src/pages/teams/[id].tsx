@@ -633,30 +633,35 @@ export default function TeamDetail({
 }
 
 export const getServerSideProps: GetServerSideProps<TeamDetailPageProps> = async (ctx) => {
-  ctx.res.setHeader(
-    'Cache-Control',
-    'public, s-maxage=60, stale-while-revalidate=180'
-  );
-  const rawId = ctx.params?.id;
-  const teamId = typeof rawId === 'string' ? rawId : Array.isArray(rawId) ? rawId[0] : '';
-  if (!teamId) return { notFound: true };
+  try {
+    ctx.res.setHeader(
+      'Cache-Control',
+      'public, s-maxage=60, stale-while-revalidate=180'
+    );
+    const rawId = ctx.params?.id;
+    const teamId = typeof rawId === 'string' ? rawId : Array.isArray(rawId) ? rawId[0] : '';
+    if (!teamId) return { notFound: true };
 
-  const raw =
-    (await loadTeamDetailInitialData(ctx.req, teamId)) ?? {
-      lastMatches: [],
-      competitions: [],
-      selectedCompetitionId: '',
-      squad: [],
-      table: null,
-      seasons: [],
-      selectedSeasonId: null,
-      topScorers: null,
+    const raw =
+      (await loadTeamDetailInitialData(ctx.req, teamId)) ?? {
+        lastMatches: [],
+        competitions: [],
+        selectedCompetitionId: '',
+        squad: [],
+        table: null,
+        seasons: [],
+        selectedSeasonId: null,
+        topScorers: null,
+      };
+
+    return {
+      props: {
+        teamId,
+        initialTeamData: propsJsonSafe(raw),
+      },
     };
-
-  return {
-    props: {
-      teamId,
-      initialTeamData: propsJsonSafe(raw),
-    },
-  };
+  } catch (e) {
+    console.error('teams getServerSideProps', e);
+    return { notFound: true };
+  }
 };

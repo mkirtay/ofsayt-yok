@@ -23,6 +23,14 @@ import type { MatchAnalysisContext } from '@/server/buildMatchAnalysisContext';
 const CLAUDE_MODEL = process.env.ANTHROPIC_MODEL ?? 'claude-sonnet-4-5-20250929';
 const OPENAI_MODEL = process.env.OPENAI_MODEL ?? 'gpt-4.1-mini';
 const MAX_TOKENS = 3000;
+const ANALYSIS_TIMEOUT_MS = 25_000;
+
+export class AnalysisTimeoutError extends Error {
+  constructor() {
+    super('Analiz zaman aşımına uğradı. Lütfen birkaç saniye bekleyip tekrar deneyin.');
+    this.name = 'AnalysisTimeoutError';
+  }
+}
 
 type Provider = 'openai' | 'anthropic';
 
@@ -129,59 +137,81 @@ export async function generateMatchAnalysis(
   const userMessage = buildAnalysisUserMessage(ctx);
   const provider = getProvider();
 
-  if (provider === 'openai') {
-    const response = await getOpenAiClient().chat.completions.create({
-      model: OPENAI_MODEL,
-      temperature: 0.35,
-      max_completion_tokens: MAX_TOKENS,
-      messages: [
-        { role: 'system', content: ANALYSIS_SYSTEM_PROMPT },
-        { role: 'user', content: userMessage },
-      ],
-    });
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), ANALYSIS_TIMEOUT_MS);
 
-    const raw = response.choices?.[0]?.message?.content ?? '';
-    if (!raw) {
-      throw new Error('OpenAI yanitinda metin bulunamadi');
+  try {
+    if (provider === 'openai') {
+      const response = await getOpenAiClient().chat.completions.create(
+        {
+          model: OPENAI_MODEL,
+          temperature: 0.35,
+          max_completion_tokens: MAX_TOKENS,
+          messages: [
+            { role: 'system', content: ANALYSIS_SYSTEM_PROMPT },
+            { role: 'user', content: userMessage },
+          ],
+        },
+        { signal: controller.signal }
+      );
+
+      const raw = response.choices?.[0]?.message?.content ?? '';
+      if (!raw) {
+        throw new Error('OpenAI yanitinda metin bulunamadi');
+      }
+
+      const parsed = extractJson(raw);
+      const validated = validateSchema(parsed);
+
+      return {
+        analysis: validated,
+        modelVersion: `${ANALYSIS_MODEL_VERSION}-openai:${OPENAI_MODEL}`,
+        tokensUsed:
+          (response.usage?.prompt_tokens ?? 0) +
+          (response.usage?.completion_tokens ?? 0),
+        rawResponse: raw,
+        provider,
+      };
     }
 
+    const response = await getAnthropicClient().messages.create(
+      {
+        model: CLAUDE_MODEL,
+        max_tokens: MAX_TOKENS,
+        system: ANALYSIS_SYSTEM_PROMPT,
+        messages: [{ role: 'user', content: userMessage }],
+      },
+      { signal: controller.signal }
+    );
+
+    const textBlock = response.content.find(
+      (c): c is Anthropic.TextBlock => c.type === 'text'
+    );
+    if (!textBlock) {
+      throw new Error('Anthropic yanitinda metin blogu yok');
+    }
+    const raw = textBlock.text;
     const parsed = extractJson(raw);
     const validated = validateSchema(parsed);
 
     return {
       analysis: validated,
-      modelVersion: `${ANALYSIS_MODEL_VERSION}-openai:${OPENAI_MODEL}`,
+      modelVersion: `${ANALYSIS_MODEL_VERSION}-anthropic:${CLAUDE_MODEL}`,
       tokensUsed:
-        (response.usage?.prompt_tokens ?? 0) +
-        (response.usage?.completion_tokens ?? 0),
+        (response.usage?.input_tokens ?? 0) + (response.usage?.output_tokens ?? 0),
       rawResponse: raw,
       provider,
     };
+  } catch (err) {
+    if (
+      controller.signal.aborted ||
+      (err instanceof Error &&
+        (err.name === 'AbortError' || err.name === 'APIUserAbortError'))
+    ) {
+      throw new AnalysisTimeoutError();
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
   }
-
-  const response = await getAnthropicClient().messages.create({
-    model: CLAUDE_MODEL,
-    max_tokens: MAX_TOKENS,
-    system: ANALYSIS_SYSTEM_PROMPT,
-    messages: [{ role: 'user', content: userMessage }],
-  });
-
-  const textBlock = response.content.find(
-    (c): c is Anthropic.TextBlock => c.type === 'text'
-  );
-  if (!textBlock) {
-    throw new Error('Anthropic yanitinda metin blogu yok');
-  }
-  const raw = textBlock.text;
-  const parsed = extractJson(raw);
-  const validated = validateSchema(parsed);
-
-  return {
-    analysis: validated,
-    modelVersion: `${ANALYSIS_MODEL_VERSION}-anthropic:${CLAUDE_MODEL}`,
-    tokensUsed:
-      (response.usage?.input_tokens ?? 0) + (response.usage?.output_tokens ?? 0),
-    rawResponse: raw,
-    provider,
-  };
 }
