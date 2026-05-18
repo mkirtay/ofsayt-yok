@@ -4,6 +4,7 @@ import type { Match } from '@/models/liveScore';
 import { runWithLiveScoreHttpClient } from '@/services/liveScoreHttpContext';
 import {
   getCompetitionTableFull,
+  getFixturesByDate,
   getMatchLineups,
   getMatchStats,
   getMatchWithEvents,
@@ -12,6 +13,22 @@ import {
   type SeasonListItem,
 } from '@/services/liveScoreService';
 import { livescoreAxiosFromIncomingMessage } from './livescoreInternalAxios';
+
+function isoDateOffset(offsetDays: number): string {
+  const d = new Date();
+  d.setUTCDate(d.getUTCDate() + offsetDays);
+  return d.toISOString().slice(0, 10);
+}
+
+async function findFixtureById(matchId: string): Promise<Match | null> {
+  const dates = [isoDateOffset(0), isoDateOffset(1), isoDateOffset(-1)];
+  const results = await Promise.all(dates.map((d) => getFixturesByDate(d).catch(() => [])));
+  for (const fixtures of results) {
+    const found = fixtures.find((f) => String(f.id) === matchId || String(f.fixture_id) === matchId);
+    if (found) return found;
+  }
+  return null;
+}
 
 export type MatchDetailPageServerPayload = {
   match: Match | null;
@@ -36,7 +53,13 @@ export async function loadMatchDetailInitialData(
         getMatchStats(matchId),
       ]);
 
-      const m = matchEventsRes.match;
+      // Events API null döndürdüyse fixture listesinden ara (henüz başlamamış maç)
+      let m = matchEventsRes.match;
+      if (!m) {
+        m = await findFixtureById(matchId);
+      }
+      if (!m) return null;
+
       const compId = m?.competition?.id ?? m?.competition_id;
 
       if (compId == null) {

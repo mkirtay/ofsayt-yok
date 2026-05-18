@@ -1,0 +1,125 @@
+@use '../../styles/variables' as *;
+
+.picker {
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  padding: $spacing-4 $spacing-5;
+  box-shadow: $shadow-surface;
+}
+
+.pickerRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-3;
+  margin-bottom: $spacing-3;
+}
+
+.teamRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: $spacing-3;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-1;
+  flex: 1;
+  min-width: 140px;
+}
+
+.label {
+  font-size: 12px;
+  font-weight: 600;
+  color: $color-text-secondary;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.select {
+  appearance: none;
+  background-color: $color-bg;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
+  padding: $spacing-2 $spacing-3;
+  font-size: 14px;
+  color: $color-text;
+  cursor: pointer;
+  transition: border-color 0.15s;
+  width: 100%;
+
+  &:focus {
+    outline: none;
+    border-color: $color-primary;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.vsSep {
+  font-size: 14px;
+  font-weight: 800;
+  color: $color-text-secondary;
+  align-self: flex-end;
+  padding-bottom: $spacing-2;
+  flex-shrink: 0;
+}
+
+.compareBtn {
+  padding: $spacing-2 $spacing-5;
+  font-size: 14px;
+  font-weight: 700;
+  background: $color-primary;
+  color: #fff;
+  border: none;
+  border-radius: $radius-sm;
+  cursor: pointer;
+  transition: background-color 0.15s;
+  white-space: nowrap;
+  align-self: flex-end;
+
+  &:hover:not(:disabled) {
+    background: $color-primary-dark;
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
+.fixedLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: $color-text-secondary;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.fixedTeamBadge {
+  display: flex;
+  align-items: center;
+  height: 38px;
+  padding: 0 $spacing-3;
+  background: $color-muted;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
+  font-size: 14px;
+  font-weight: 600;
+  color: $color-text;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.loading,
+.empty {
+  font-size: 13px;
+  color: $color-text-secondary;
+  margin-top: $spacing-2;
+}

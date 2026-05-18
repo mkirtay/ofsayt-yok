@@ -108,62 +108,6 @@
   margin: 0;
 }
 
-.leagueRow {
-  display: flex;
-  align-items: stretch;
-  border-bottom: 1px solid $color-border;
-
-  &:last-child {
-    border-bottom: none;
-  }
-}
-
-.leagueItemBtn {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: $spacing-3;
-  padding: $spacing-3 $spacing-4;
-  font-size: 14px;
-  font-weight: 500;
-  color: $color-text;
-  text-align: left;
-  transition: $transition-base;
-  min-width: 0;
-
-  &:hover {
-    background: $color-muted;
-    color: $color-primary-dark;
-  }
-}
-
-.leagueItemBtnActive {
-  background: $color-muted;
-  color: $color-primary-dark;
-  font-weight: 600;
-}
-
-.leagueStar {
-  display: flex;
-  align-items: center;
-  padding: 0 $spacing-3;
-  font-size: 15px;
-  color: $color-text-secondary;
-  transition: $transition-base;
-  border-left: 1px solid $color-border;
-  flex-shrink: 0;
-
-  &:hover {
-    background: $color-muted;
-    color: #f59e0b;
-  }
-}
-
-.leagueStarActive {
-  color: #f59e0b;
-}
-
-// kept for backward compat (not used in current JSX)
 .leagueItem {
   display: flex;
   align-items: center;

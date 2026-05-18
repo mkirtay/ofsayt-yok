@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import Container from '@/components/Container';
+import CompareTeamPicker from '@/components/CompareTeamPicker';
 import MatchCompetitionStandings from '@/components/MatchCompetitionStandings';
 import MatchCompetitionTopScorers from '@/components/MatchCompetitionTopScorers';
 import NewsList from '@/components/NewsList';
@@ -344,6 +345,12 @@ export default function TeamDetail({
               {selectedCompName} · {stats.standing.rank}. sıra · {stats.standing.points} puan
             </span>
           )}
+          <div className={styles.compareWrap}>
+            <CompareTeamPicker
+              fixedTeamId={Number(teamId)}
+              fixedTeamName={teamInfo.name}
+            />
+          </div>
         </div>
       </div>
 

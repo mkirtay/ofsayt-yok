@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import { useMemo, useState, useEffect, useCallback, type CSSProperties } from 'react';
 import { List, type RowComponentProps } from 'react-window';
 import { AutoSizer } from 'react-virtualized-auto-sizer';
@@ -18,6 +19,8 @@ interface MatchListProps {
   variant?: MatchListVariant;
   /** Bugünden farklı tarihli maçlar için kickoff hücresine kısa tarih ekler (örn. "15 Nis") */
   showDateWhenNotToday?: boolean;
+  favoriteMatchIds?: Set<string>;
+  onToggleFavorite?: (matchId: string) => void;
 }
 
 type FlatItem =
@@ -133,6 +136,9 @@ type RowContext = {
   items: FlatItem[];
   showDateWhenNotToday: boolean;
   todayIso: string;
+  favoriteMatchIds: Set<string>;
+  onToggleFavorite: ((matchId: string) => void) | null;
+  navigateTo: (path: string) => void;
 };
 
 type VirtualRowProps = RowComponentProps<RowContext>;
@@ -143,6 +149,9 @@ function VirtualRow({
   items,
   showDateWhenNotToday,
   todayIso,
+  favoriteMatchIds,
+  onToggleFavorite,
+  navigateTo,
   ariaAttributes,
 }: VirtualRowProps) {
   const item = items[index];
@@ -212,71 +221,92 @@ function VirtualRow({
     .filter(Boolean)
     .join(' ');
 
+  const isFav = favoriteMatchIds.has(String(match.id));
+
   return (
-    <Link
-      {...ariaAttributes}
-      href={buildMatchHref(match)}
-      style={style}
-      className={rowClass}
-      prefetch={false}
-    >
-      <div className={`${styles.virtualCell} ${styles.virtualKickoff}`}>
-        {showShortDate ? (
-          <span className={styles.kickoffStack}>
-            <span className={styles.kickoffDate}>{shortDate}</span>
-            <span className={styles.kickoffTime}>{kickoffUtc}</span>
-          </span>
-        ) : (
-          kickoffUtc
-        )}
-      </div>
-      <div
-        className={`${styles.virtualCell} ${styles.virtualStatus} ${
-          isLive ? styles.virtualStatusLive : ''
-        } ${variant === 'ht' ? styles.virtualStatusHt : ''} ${variant === 'ft' ? styles.virtualStatusFt : ''}`}
+    <div {...ariaAttributes} style={style} className={rowClass}>
+      <Link
+        href={buildMatchHref(match)}
+        className={styles.matchRowLink}
+        prefetch={false}
       >
-        {isLive ? (
-          <span className={styles.liveText}>
-          <span className={styles.liveCanliWord}>CANLI </span>
-          {`${liveMinute}'`}
-        </span>
-        ) : (
-          statusText
-        )}
-      </div>
-      <div className={`${styles.virtualCell} ${styles.virtualHome}`}>
-        {homeLogo ? (
-          <img
-            src={homeLogo}
-            alt=""
-            className={styles.teamCrest}
-            width={18}
-            height={18}
-            loading="lazy"
-            decoding="async"
-          />
-        ) : null}
-        <span className={styles.teamName}>{homeName}</span>
-      </div>
-      <div className={`${styles.virtualCell} ${styles.virtualScore}`}>
-        <span className={styles.scoreText}>{score}</span>
-      </div>
-      <div className={`${styles.virtualCell} ${styles.virtualAway}`}>
-        {awayLogo ? (
-          <img
-            src={awayLogo}
-            alt=""
-            className={styles.teamCrest}
-            width={18}
-            height={18}
-            loading="lazy"
-            decoding="async"
-          />
-        ) : null}
-        <span className={styles.teamName}>{awayName}</span>
-      </div>
-      <div className={`${styles.virtualCell} ${styles.virtualHt}`}>{htDisplay}</div>
-    </Link>
+        <div className={`${styles.virtualCell} ${styles.virtualKickoff}`}>
+          {showShortDate ? (
+            <span className={styles.kickoffStack}>
+              <span className={styles.kickoffDate}>{shortDate}</span>
+              <span className={styles.kickoffTime}>{kickoffUtc}</span>
+            </span>
+          ) : (
+            kickoffUtc
+          )}
+        </div>
+        <div
+          className={`${styles.virtualCell} ${styles.virtualStatus} ${
+            isLive ? styles.virtualStatusLive : ''
+          } ${variant === 'ht' ? styles.virtualStatusHt : ''} ${variant === 'ft' ? styles.virtualStatusFt : ''}`}
+        >
+          {isLive ? (
+            <span className={styles.liveText}>
+              <span className={styles.liveCanliWord}>CANLI </span>
+              {`${liveMinute}'`}
+            </span>
+          ) : (
+            statusText
+          )}
+        </div>
+        <div
+          className={`${styles.virtualCell} ${styles.virtualHome}${match.home?.id ? ` ${styles.virtualTeamCell}` : ''}`}
+          onClick={match.home?.id ? (e) => { e.stopPropagation(); e.preventDefault(); navigateTo(`/teams/${match.home!.id}`); } : undefined}
+        >
+          {homeLogo ? (
+            <img
+              src={homeLogo}
+              alt=""
+              className={styles.teamCrest}
+              width={18}
+              height={18}
+              loading="lazy"
+              decoding="async"
+            />
+          ) : null}
+          <span className={`${styles.teamName}${match.home?.id ? ` ${styles.teamNameLink}` : ''}`}>{homeName}</span>
+        </div>
+        <div className={`${styles.virtualCell} ${styles.virtualScore}`}>
+          <span className={styles.scoreText}>{score}</span>
+        </div>
+        <div
+          className={`${styles.virtualCell} ${styles.virtualAway}${match.away?.id ? ` ${styles.virtualTeamCell}` : ''}`}
+          onClick={match.away?.id ? (e) => { e.stopPropagation(); e.preventDefault(); navigateTo(`/teams/${match.away!.id}`); } : undefined}
+        >
+          {awayLogo ? (
+            <img
+              src={awayLogo}
+              alt=""
+              className={styles.teamCrest}
+              width={18}
+              height={18}
+              loading="lazy"
+              decoding="async"
+            />
+          ) : null}
+          <span className={`${styles.teamName}${match.away?.id ? ` ${styles.teamNameLink}` : ''}`}>{awayName}</span>
+        </div>
+        <div className={`${styles.virtualCell} ${styles.virtualHt}`}>{htDisplay}</div>
+      </Link>
+      {onToggleFavorite !== null && (
+        <button
+          type="button"
+          className={`${styles.virtualMatchStar} ${isFav ? styles.virtualMatchStarActive : ''}`}
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleFavorite(String(match.id));
+          }}
+          aria-label={isFav ? 'Favorilerden çıkar' : 'Favorilere ekle'}
+        >
+          {isFav ? '★' : '☆'}
+        </button>
+      )}
+    </div>
   );
 }
 
@@ -293,7 +323,11 @@ export default function MatchList({
   groupedMatches,
   variant = 'default',
   showDateWhenNotToday = false,
+  favoriteMatchIds,
+  onToggleFavorite,
 }: MatchListProps) {
+  const router = useRouter();
+  const navigateTo = useCallback((path: string) => { void router.push(path); }, [router]);
   const [mounted, setMounted] = useState(false);
   const isWorldCup = variant === 'worldCup';
   useEffect(() => {
@@ -306,8 +340,15 @@ export default function MatchList({
   const todayIso = useMemo(() => todayIsoTr(), []);
 
   const rowProps = useMemo<RowContext>(
-    () => ({ items, showDateWhenNotToday, todayIso }),
-    [items, showDateWhenNotToday, todayIso]
+    () => ({
+      items,
+      showDateWhenNotToday,
+      todayIso,
+      favoriteMatchIds: favoriteMatchIds ?? new Set<string>(),
+      onToggleFavorite: onToggleFavorite ?? null,
+      navigateTo,
+    }),
+    [items, showDateWhenNotToday, todayIso, favoriteMatchIds, onToggleFavorite, navigateTo]
   );
 
   const listStyle = useCallback(

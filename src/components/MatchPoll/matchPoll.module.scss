@@ -1,0 +1,148 @@
+@use '../../styles/variables' as *;
+
+.poll {
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  padding: $spacing-4 $spacing-5;
+  margin-bottom: $spacing-4;
+}
+
+.title {
+  font-size: 15px;
+  font-weight: 700;
+  color: $color-text;
+  margin: 0 0 $spacing-1;
+}
+
+.subtitle {
+  font-size: 13px;
+  color: $color-text-secondary;
+  margin: 0 0 $spacing-4;
+}
+
+.closed {
+  font-size: 12px;
+  font-weight: 600;
+  color: $color-text-secondary;
+  margin: 0 0 $spacing-3;
+  background: $color-muted;
+  border-radius: $radius-sm;
+  padding: $spacing-2 $spacing-3;
+  display: inline-block;
+}
+
+.buttons {
+  display: flex;
+  gap: $spacing-3;
+  flex-wrap: wrap;
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+  }
+}
+
+.voteBtn {
+  position: relative;
+  flex: 1;
+  min-width: 90px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: $spacing-3 $spacing-2;
+  border: 2px solid $color-border;
+  border-radius: $radius-sm;
+  background: $color-surface;
+  color: $color-text;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    border-color 0.15s,
+    background-color 0.15s,
+    color 0.15s;
+  z-index: 0;
+
+  &:hover:not(:disabled) {
+    border-color: $color-primary;
+    color: $color-primary-dark;
+  }
+
+  &:disabled {
+    cursor: default;
+    opacity: 0.85;
+  }
+}
+
+.voteBtnSelected {
+  border-color: $color-primary;
+  color: $color-primary-dark;
+  background: $color-row-highlight;
+}
+
+.voteBtnClosed {
+  border-color: $color-border;
+  background: $color-muted;
+}
+
+.voteBtnLabel {
+  position: relative;
+  z-index: 1;
+}
+
+.voteBtnPct {
+  position: relative;
+  z-index: 1;
+  font-size: 18px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: $color-text;
+
+  .voteBtnSelected & {
+    color: $color-primary-dark;
+  }
+}
+
+.voteBtnBar {
+  position: absolute;
+  inset: 0 auto 0 0;
+  height: 100%;
+  background: $color-row-highlight;
+  z-index: 0;
+  transition: width 0.4s ease;
+  border-radius: inherit;
+
+  .voteBtnSelected & {
+    background: #cceeda;
+  }
+}
+
+.meta {
+  font-size: 12px;
+  color: $color-text-secondary;
+  margin: $spacing-3 0 0;
+}
+
+.loginCta {
+  font-size: 13px;
+  color: $color-text-secondary;
+  margin: $spacing-3 0 0;
+}
+
+.loginLink {
+  color: $color-primary-dark;
+  font-weight: 600;
+  text-decoration: underline;
+
+  &:hover {
+    color: $color-primary;
+  }
+}
+
+.error {
+  font-size: 13px;
+  color: $color-danger;
+  margin: $spacing-2 0 0;
+}

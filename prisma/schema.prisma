@@ -31,8 +31,9 @@ model User {
   updatedAt     DateTime @updatedAt
   accounts      Account[]
   sessions      Session[]
-  comments      MatchComment[] @relation("MatchCommentAuthor")
+  comments        MatchComment[] @relation("MatchCommentAuthor")
   deletedComments MatchComment[] @relation("MatchCommentDeletedBy")
+  userPredictions UserPrediction[]
 }
 
 /// AI üretimli maç analizi cache'i. Aynı maç + status için tek aktif kayıt.
@@ -101,6 +102,20 @@ model PredictionRecord {
 
   @@index([matchId])
   @@index([modelVersion, result1x2Hit])
+}
+
+/// Kullanıcı maç tahmini — topluluk anketi için (1X2 oyu).
+model UserPrediction {
+  id         String   @id @default(cuid())
+  matchId    String
+  userId     String
+  /// "HOME" | "DRAW" | "AWAY"
+  prediction String
+  createdAt  DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([matchId, userId])
+  @@index([matchId])
 }
 
 model MatchComment {

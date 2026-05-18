@@ -121,7 +121,7 @@ function parseScore(raw?: string | null): [number, number] | null {
   return [a, b];
 }
 
-function buildRecentMatchRow(m: Match, teamId: number): RecentMatchRow | null {
+export function buildRecentMatchRow(m: Match, teamId: number): RecentMatchRow | null {
   const homeId = m.home?.id ?? m.home_id;
   const awayId = m.away?.id ?? m.away_id;
   if (homeId == null || awayId == null) return null;
@@ -161,7 +161,7 @@ function buildRecentMatchRow(m: Match, teamId: number): RecentMatchRow | null {
   };
 }
 
-function computeMetrics(rows: RecentMatchRow[]): TeamMetrics {
+export function computeMetrics(rows: RecentMatchRow[]): TeamMetrics {
   const known = rows.filter((r) => r.result !== 'U');
   const total = known.length || 1;
   const wins = known.filter((r) => r.result === 'W').length;
@@ -260,7 +260,7 @@ async function buildTeamContext(
   };
 }
 
-function buildH2HContext(
+export function buildH2HContext(
   data: Head2HeadData | null,
   homeTeamName?: string
 ): H2HContext | null {

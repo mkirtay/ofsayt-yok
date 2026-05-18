@@ -46,6 +46,9 @@ export default function Header() {
             <Link href="/uefa" className={styles.headerNavPill}>
               UEFA
             </Link>
+            <Link href="/ai-istatistikleri" className={styles.headerNavPill}>
+              AI İsabeti
+            </Link>
           </div>
         </div>
         <div className={styles.actions}>

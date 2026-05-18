@@ -235,11 +235,31 @@
 
 .virtualMatchRow {
   box-sizing: border-box;
+  display: flex;
+  align-items: stretch;
+  height: 100%;
+  border-left: 1px solid $color-border;
+  border-right: 1px solid $color-border;
+  border-bottom: 1px solid $color-border;
+  background-color: $color-surface;
+  color: inherit;
+}
+
+.matchRowLink {
+  flex: 1;
+  min-width: 0;
   display: grid;
-  /* Mobil (<640px): İY sütunu yok — 5 sütun, dar kickoff / durum */
+  /* Mobil (<640px): İY sütunu yok — 5 sütun */
   grid-template-columns: 34px 46px minmax(0, 1fr) minmax(2.65rem, auto) minmax(0, 1fr);
   align-items: center;
   height: 100%;
+  text-decoration: none;
+  color: inherit;
+  transition:
+    background-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.12s ease;
+  cursor: pointer;
 
   @media (min-width: $bp-sm) {
     grid-template-columns: 56px 94px minmax(0, 1fr) minmax(4.5rem, auto) minmax(0, 1fr) 2.5rem;
@@ -252,17 +272,6 @@
   @media (min-width: $bp-lg) {
     grid-template-columns: 76px 108px minmax(0, 1fr) minmax(5.5rem, auto) minmax(0, 1fr) 3rem;
   }
-  border-left: 1px solid $color-border;
-  border-right: 1px solid $color-border;
-  border-bottom: 1px solid $color-border;
-  background-color: $color-surface;
-  transition:
-    background-color 0.15s ease,
-    box-shadow 0.15s ease,
-    transform 0.12s ease;
-  cursor: pointer;
-  text-decoration: none;
-  color: inherit;
 
   &:hover {
     background-color: $color-row-highlight;
@@ -272,6 +281,30 @@
   &:active {
     transform: scale(0.998);
   }
+}
+
+.virtualMatchStar {
+  flex: 0 0 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  color: $color-text-secondary;
+  background: none;
+  border: none;
+  border-left: 1px solid $color-border;
+  cursor: pointer;
+  padding: 0;
+  transition: color 0.15s, background-color 0.15s;
+
+  &:hover {
+    background-color: $color-muted;
+    color: #f59e0b;
+  }
+}
+
+.virtualMatchStarActive {
+  color: #f59e0b;
 }
 
 .virtualMatchRowLive {}
@@ -484,6 +517,19 @@
   white-space: nowrap;
 }
 
+.virtualTeamCell {
+  cursor: pointer;
+}
+
+.teamNameLink {
+  transition: color 0.12s;
+
+  .virtualTeamCell:hover & {
+    color: $color-primary;
+    text-decoration: underline;
+  }
+}
+
 .virtualScore {
   justify-content: center;
   padding: 0 4px !important;
@@ -572,7 +618,9 @@
     background: #111;
     border-color: #2a2a2a;
     color: #f2f2f2;
+  }
 
+  .matchRowLink {
     &:hover {
       background: #1a1a1a;
       box-shadow: inset 3px 0 0 #fff;

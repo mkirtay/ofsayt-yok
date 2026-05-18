@@ -92,6 +92,68 @@ export const SIDEBAR_LEAGUES: SidebarLeague[] = [
   { id: 5,   name: 'Fransa Ligue 1',          countryId: 21 },
 ];
 
+export type CountryLeagueGroup = {
+  countryName: string;
+  countryId: number | null;
+  leagues: SidebarLeague[];
+};
+
+/** Karşılaştırma seçici için ülke→lig hiyerarşisi (bilinen ve doğrulanmış ID'ler) */
+export const COMPARE_LEAGUE_GROUPS: CountryLeagueGroup[] = [
+  {
+    countryName: 'Türkiye',
+    countryId: 48,
+    leagues: [
+      { id: 6,   name: 'Trendyol Süper Lig', countryId: 48 },
+      { id: 344, name: 'Trendyol 1. Lig',    countryId: 48 },
+    ],
+  },
+  {
+    countryName: 'İngiltere',
+    countryId: 19,
+    leagues: [
+      { id: 2, name: 'Premier League', countryId: 19 },
+    ],
+  },
+  {
+    countryName: 'Almanya',
+    countryId: 1,
+    leagues: [
+      { id: 1, name: 'Bundesliga', countryId: 1 },
+    ],
+  },
+  {
+    countryName: 'İspanya',
+    countryId: 43,
+    leagues: [
+      { id: 3, name: 'La Liga', countryId: 43 },
+    ],
+  },
+  {
+    countryName: 'İtalya',
+    countryId: 47,
+    leagues: [
+      { id: 4, name: 'Serie A', countryId: 47 },
+    ],
+  },
+  {
+    countryName: 'Fransa',
+    countryId: 21,
+    leagues: [
+      { id: 5, name: 'Ligue 1', countryId: 21 },
+    ],
+  },
+  {
+    countryName: 'UEFA',
+    countryId: null,
+    leagues: [
+      { id: 244, name: 'Şampiyonlar Ligi',   countryId: null, logo: '/images/uefa-logo.svg' },
+      { id: 245, name: 'UEFA Avrupa Ligi',   countryId: null, logo: '/images/uefa-logo.svg' },
+      { id: 446, name: 'UEFA Konferans Ligi',countryId: null, logo: '/images/uefa-logo.svg' },
+    ],
+  },
+];
+
 /** `/uefa` yan paneli — sıra `UEFA_TIER2_COMPETITION_IDS` ile aynı */
 export const UEFA_SIDEBAR_LEAGUES: SidebarLeague[] = [
   { id: UEFA_CHAMPIONS_LEAGUE_ID, name: 'Şampiyonlar Ligi', countryId: null, logo: '/images/uefa-logo.svg' },
