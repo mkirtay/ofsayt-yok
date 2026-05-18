@@ -8,6 +8,7 @@ import styles from './auth.module.scss'
 export default function SignInPage() {
   const router = useRouter()
   const verified = router.query.verified
+  const reset = router.query.reset
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -44,6 +45,9 @@ export default function SignInPage() {
         <form className={styles.card} onSubmit={handleSubmit}>
           <h1 className={styles.title}>Giriş Yap</h1>
 
+          {reset === '1' && (
+            <p className={styles.footer}>Şifren başarıyla güncellendi. Artık yeni şifrenle giriş yapabilirsin.</p>
+          )}
           {verified === '1' && (
             <p className={styles.footer}>E-posta adresin dogrulandi. Simdi giris yapabilirsin.</p>
           )}
@@ -83,6 +87,12 @@ export default function SignInPage() {
           <button className={styles.submit} type="submit" disabled={loading}>
             {loading ? 'Giriş yapılıyor…' : 'Giriş Yap'}
           </button>
+
+          <p className={styles.footer}>
+            <Link href="/auth/forgot-password" className={styles.link}>
+              Şifremi unuttum
+            </Link>
+          </p>
 
           <p className={styles.footer}>
             Hesabın yok mu?{' '}

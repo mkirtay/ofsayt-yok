@@ -24,7 +24,9 @@ model User {
   image         String?
   role          Role     @default(USER)
   /// Premium üyelik bitiş tarihi; null veya geçmiş tarih → premium değil.
-  premiumUntil  DateTime?
+  premiumUntil       DateTime?
+  favoriteTeamIds    Int[]
+  favoriteLeagueIds  Int[]
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   accounts      Account[]

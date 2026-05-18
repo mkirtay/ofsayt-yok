@@ -46,10 +46,31 @@ function appBaseUrl(): string {
   );
 }
 
-async function sendViaResend(to: string, link: string): Promise<boolean> {
+function normalizeEmailFrom(raw: string | undefined): string {
+  if (!raw) return '';
+  let from = raw.trim();
+  if (
+    (from.startsWith('"') && from.endsWith('"')) ||
+    (from.startsWith("'") && from.endsWith("'"))
+  ) {
+    from = from.slice(1, -1).trim();
+  }
+  return from;
+}
+
+async function sendViaResend(to: string, subject: string, html: string): Promise<boolean> {
   const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.EMAIL_FROM;
-  if (!apiKey || !from) return false;
+  const from = normalizeEmailFrom(process.env.EMAIL_FROM);
+  if (!apiKey || !from) {
+    console.warn('[resend] RESEND_API_KEY veya EMAIL_FROM eksik');
+    return false;
+  }
+  if (!from.includes('@')) {
+    console.warn(
+      '[resend] EMAIL_FROM gecersiz (e-posta yok). Ornek: Ofsayt Yok <onboarding@resend.dev>',
+    );
+    return false;
+  }
 
   const response = await fetch('https://api.resend.com/emails', {
     method: 'POST',
@@ -57,13 +78,13 @@ async function sendViaResend(to: string, link: string): Promise<boolean> {
       Authorization: `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      from,
-      to,
-      subject: 'Ofsayt Yok - E-posta Dogrulama',
-      html: `<p>Merhaba,</p><p>Hesabinizi aktif etmek icin asagidaki baglantiya tiklayin:</p><p><a href="${link}">${link}</a></p><p>Bu baglanti 24 saat gecerlidir.</p>`,
-    }),
+    body: JSON.stringify({ from, to, subject, html }),
   });
+
+  if (!response.ok) {
+    const body = await response.text().catch(() => '');
+    console.error(`[resend] HTTP ${response.status}:`, body);
+  }
 
   return response.ok;
 }
@@ -82,7 +103,11 @@ export async function createAndSendEmailVerification(email: string): Promise<voi
   });
 
   const link = `${appBaseUrl()}/api/auth/verify-email?token=${rawToken}`;
-  const sent = await sendViaResend(email, link);
+  const sent = await sendViaResend(
+    email,
+    'Ofsayt Yok - E-posta Dogrulama',
+    `<p>Merhaba,</p><p>Hesabinizi aktif etmek icin asagidaki baglantiya tiklayin:</p><p><a href="${link}">${link}</a></p><p>Bu baglanti 24 saat gecerlidir.</p>`,
+  );
 
   if (!sent) {
     console.warn('[verify-email] Email provider not configured or failed. Link:', link);
@@ -108,6 +133,51 @@ export async function consumeEmailVerificationToken(rawToken: string): Promise<b
 
   await prisma.verificationToken.delete({ where: { token: hashedToken } });
   return true;
+}
+
+const RESET_PREFIX = 'reset:';
+
+export async function createAndSendPasswordReset(email: string): Promise<void> {
+  await prisma.verificationToken.deleteMany({
+    where: { identifier: `${RESET_PREFIX}${email}` },
+  });
+
+  const rawToken = randomBytes(32).toString('hex');
+  const hashedToken = sha256(rawToken);
+  const expires = new Date(Date.now() + 60 * 60 * 1000); // 1 saat
+
+  await prisma.verificationToken.create({
+    data: { identifier: `${RESET_PREFIX}${email}`, token: hashedToken, expires },
+  });
+
+  const link = `${appBaseUrl()}/auth/reset-password?token=${rawToken}`;
+  const sent = await sendViaResend(
+    email,
+    'Ofsayt Yok - Sifre Sifirlama',
+    `<p>Merhaba,</p><p>Sifrenizi sifirlamak icin asagidaki baglantiya tiklayin:</p><p><a href="${link}">${link}</a></p><p>Bu baglanti <strong>1 saat</strong> gecerlidir. Bu istegi siz yapmadiysa bu e-postayi yoksayabilirsiniz.</p>`,
+  );
+
+  if (!sent) {
+    console.warn('[password-reset] Email provider failed. Link:', link);
+  }
+}
+
+export async function consumePasswordResetToken(rawToken: string): Promise<string | null> {
+  const hashedToken = sha256(rawToken);
+  const tokenRow = await prisma.verificationToken.findUnique({
+    where: { token: hashedToken },
+  });
+
+  if (!tokenRow) return null;
+  if (!tokenRow.identifier.startsWith(RESET_PREFIX)) return null;
+  if (tokenRow.expires <= new Date()) {
+    await prisma.verificationToken.delete({ where: { token: hashedToken } });
+    return null;
+  }
+
+  const email = tokenRow.identifier.slice(RESET_PREFIX.length);
+  await prisma.verificationToken.delete({ where: { token: hashedToken } });
+  return email;
 }
 
 export function sanitizePlainText(input: string): string {

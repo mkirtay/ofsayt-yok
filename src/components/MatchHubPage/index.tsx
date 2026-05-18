@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useSession } from 'next-auth/react';
 import {
   getAllCompetitionHistoryMatches,
   getAllLiveMatches,
@@ -63,6 +64,7 @@ export default function MatchHubPage({
   initialUefaHubData = null,
   initialDefaultHubData = null,
 }: MatchHubPageProps) {
+  const { data: session } = useSession();
   const isUefaMode = mode === 'uefa';
   const hasUefaSsr = Boolean(isUefaMode && initialUefaHubData);
   const hasDefaultSsr = Boolean(!isUefaMode && initialDefaultHubData);
@@ -129,6 +131,8 @@ export default function MatchHubPage({
 
   const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
   const [newsLoading, setNewsLoading] = useState(false);
+
+  const [favoriteLeagueIds, setFavoriteLeagueIds] = useState<number[]>([]);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -311,6 +315,31 @@ export default function MatchHubPage({
   }, [selectedCompId, isUefaMode, initialUefaHubData, initialDefaultHubData]);
 
   useEffect(() => {
+    if (!session?.user) {
+      setFavoriteLeagueIds([]);
+      return;
+    }
+    fetch('/api/user/favorites')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: { favoriteLeagueIds?: number[] } | null) => {
+        if (data?.favoriteLeagueIds) setFavoriteLeagueIds(data.favoriteLeagueIds);
+      })
+      .catch(() => {});
+  }, [session?.user]);
+
+  const toggleFavoriteLeague = useCallback((id: number) => {
+    setFavoriteLeagueIds((prev) => {
+      const next = prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id];
+      fetch('/api/user/favorites', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ favoriteLeagueIds: next }),
+      }).catch(() => {});
+      return next;
+    });
+  }, []);
+
+  useEffect(() => {
     if (sidebarTab !== 'news' || newsItems.length > 0) return;
     let cancelled = false;
     queueMicrotask(() => {
@@ -353,7 +382,9 @@ export default function MatchHubPage({
         case 'finished':
           return uefaMerged.filter((m) => m.status === 'FINISHED');
         case 'favorites':
-          return [];
+          return uefaMerged.filter((m) =>
+            favoriteLeagueIds.includes(m.competition?.id ?? -1)
+          );
         case 'all':
         default:
           return sortMatchesForUefaList(uefaMerged);
@@ -366,8 +397,17 @@ export default function MatchHubPage({
         );
       case 'finished':
         return allMatches.filter((m) => m.status === 'FINISHED');
-      case 'favorites':
-        return [];
+      case 'favorites': {
+        const merged = mergeMatchesForAllTab({
+          selectedDate,
+          historyPageMatches: allMatches,
+          liveMatches,
+          fixtures: fixtureMatches,
+        });
+        return merged.filter((m) =>
+          favoriteLeagueIds.includes(m.competition?.id ?? -1)
+        );
+      }
       case 'all':
       default:
         return mergeMatchesForAllTab({
@@ -385,6 +425,7 @@ export default function MatchHubPage({
     liveMatches,
     fixtureMatches,
     selectedDate,
+    favoriteLeagueIds,
   ]);
 
   const competitionFilterSet = useMemo(() => {
@@ -479,11 +520,12 @@ export default function MatchHubPage({
                     {sidebarLeagues.map((league) => {
                       const logoUrl =
                         league.logo || uefaCompetitionLogoSrcById(league.id);
+                      const isFav = favoriteLeagueIds.includes(league.id);
                       return (
-                        <li key={league.id}>
+                        <li key={league.id} className={styles.leagueRow}>
                           <button
                             type="button"
-                            className={`${styles.leagueItem} ${league.id === selectedCompId ? styles.leagueItemActive : ''}`}
+                            className={`${styles.leagueItemBtn} ${league.id === selectedCompId ? styles.leagueItemBtnActive : ''}`}
                             onClick={() => handleLeagueClick(league.id)}
                           >
                             {logoUrl ? (
@@ -505,6 +547,16 @@ export default function MatchHubPage({
                             ) : null}
                             <span>{league.name}</span>
                           </button>
+                          {session?.user && (
+                            <button
+                              type="button"
+                              className={`${styles.leagueStar} ${isFav ? styles.leagueStarActive : ''}`}
+                              onClick={() => toggleFavoriteLeague(league.id)}
+                              aria-label={isFav ? 'Favorilerden çıkar' : 'Favorilere ekle'}
+                            >
+                              ★
+                            </button>
+                          )}
                         </li>
                       );
                     })}
@@ -520,9 +572,13 @@ export default function MatchHubPage({
           <div className="layout-left">
             {loading ? (
               <div className={styles.loading}>Yükleniyor...</div>
-            ) : activeTab === 'favorites' ? (
+            ) : activeTab === 'favorites' && !session?.user ? (
               <div className={styles.empty}>
-                Favori maçlarınız burada görünecek.
+                Favorilerinizi görmek için giriş yapın.
+              </div>
+            ) : activeTab === 'favorites' && favoriteLeagueIds.length === 0 ? (
+              <div className={styles.empty}>
+                Favori lig seçmek için lig listesindeki ★ butonunu kullanın.
               </div>
             ) : (
               <>
