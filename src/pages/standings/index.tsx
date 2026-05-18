@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any -- Livescore tablo / skorer satırları gevşek şema */
 import type { GetServerSideProps, InferGetServerSidePropsType } from 'next';
 import { useState } from 'react';
+import Head from 'next/head';
 import Link from 'next/link';
 import Container from '@/components/Container';
 import { getStandingRankZone } from '@/config/standingsZones';
@@ -37,6 +38,14 @@ export default function Standings({
 
   return (
     <Container>
+      <Head>
+        <title>Puan Durumu & İstatistikler | Ofsayt Yok</title>
+        <meta name="description" content="Türkiye Süper Lig puan durumu, gol krallığı ve kart istatistikleri." />
+        <meta property="og:title" content="Puan Durumu & İstatistikler | Ofsayt Yok" />
+        <meta property="og:description" content="Türkiye Süper Lig puan durumu, gol krallığı ve kart istatistikleri." />
+        <meta property="og:url" content="https://ofsaytyok.com/standings" />
+        <link rel="canonical" href="https://ofsaytyok.com/standings" />
+      </Head>
       <div className={styles.pageHeader}>
         <h1>Puan Durumu & İstatistikler</h1>
       </div>

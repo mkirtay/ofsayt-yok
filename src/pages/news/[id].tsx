@@ -1,4 +1,5 @@
 import type { GetServerSideProps, InferGetServerSidePropsType } from 'next';
+import Head from 'next/head';
 import Container from '@/components/Container';
 import NewsList from '@/components/NewsList';
 import type { NewsItem } from '@/models/domain';
@@ -29,8 +30,24 @@ export default function NewsDetail({
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
   const { article, sidebarNews } = newsDetail;
 
+  const pageTitle = `${article.title} — Ofsayt Yok`;
+  const pageDescription = (article.summary || article.content || article.title).slice(0, 160);
+
   return (
-    <Container>
+    <>
+      <Head>
+        <title>{pageTitle}</title>
+        <meta name="description" content={pageDescription} />
+        <meta property="og:title" content={article.title} />
+        <meta property="og:description" content={pageDescription} />
+        <meta property="og:type" content="article" />
+        {article.image && <meta property="og:image" content={article.image} />}
+        <meta name="twitter:card" content={article.image ? 'summary_large_image' : 'summary'} />
+        <meta name="twitter:title" content={article.title} />
+        <meta name="twitter:description" content={pageDescription} />
+        {article.image && <meta name="twitter:image" content={article.image} />}
+      </Head>
+      <Container>
       <div className="layout-split">
         <div className="layout-left">
           <article className={styles.article}>
@@ -76,6 +93,7 @@ export default function NewsDetail({
         </aside>
       </div>
     </Container>
+    </>
   );
 }
 

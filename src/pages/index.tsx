@@ -1,4 +1,5 @@
 import type { GetServerSideProps, InferGetServerSidePropsType } from 'next';
+import Head from 'next/head';
 import MatchHubPage from '@/components/MatchHubPage';
 import { SIDEBAR_LEAGUES } from '@/config/leagues';
 import { loadMatchHubHomeInitialData } from '@/server/loadMatchHubHomeInitialData';
@@ -15,12 +16,22 @@ export default function Home({
   initialDefaultHubData,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
   return (
-    <MatchHubPage
+    <>
+      <Head>
+        <title>Ofsayt Yok — Canlı Maç Sonuçları & Analiz</title>
+        <meta name="description" content="Türkiye Süper Lig, UEFA ve dünya futbolundan canlı skorlar, maç analizleri, puan durumu ve spor haberleri." />
+        <meta property="og:title" content="Ofsayt Yok — Canlı Maç Sonuçları & Analiz" />
+        <meta property="og:description" content="Türkiye Süper Lig, UEFA ve dünya futbolundan canlı skorlar, maç analizleri, puan durumu ve spor haberleri." />
+        <meta property="og:url" content="https://ofsaytyok.com" />
+        <link rel="canonical" href="https://ofsaytyok.com" />
+      </Head>
+      <MatchHubPage
       sidebarLeagues={SIDEBAR_LEAGUES}
       defaultCompetitionId={DEFAULT_COMPETITION_ID}
       allowedCompetitionIds={null}
       initialDefaultHubData={initialDefaultHubData}
     />
+    </>
   );
 }
 

@@ -158,6 +158,7 @@ export default function ProfilePage({
     <>
       <Head>
         <title>Profil — Ofsayt Yok</title>
+        <meta name="robots" content="noindex, nofollow" />
       </Head>
       <div className={styles.page}>
         <h1 className={styles.title}>Profil</h1>

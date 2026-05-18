@@ -122,6 +122,7 @@ export default function SignUpPage() {
     <>
       <Head>
         <title>Üye Ol — Ofsayt Yok</title>
+        <meta name="robots" content="noindex, nofollow" />
       </Head>
       <div className={styles.wrapper}>
         <form className={styles.card} onSubmit={handleSubmit}>

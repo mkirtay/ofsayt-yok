@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any -- Kadro / puan API gevşek şema */
 import type { GetServerSideProps, InferGetServerSidePropsType } from 'next';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import Head from 'next/head';
 import Link from 'next/link';
 import Container from '@/components/Container';
 import MatchCompetitionStandings from '@/components/MatchCompetitionStandings';
@@ -311,8 +312,18 @@ export default function TeamDetail({
     );
   }
 
+  const teamPageTitle = `${teamInfo.name} — Takım Detayı | Ofsayt Yok`;
+  const teamPageDescription = `${teamInfo.name} takımının son maçları, kadro bilgileri ve lig istatistikleri.`;
+
   return (
     <Container>
+      <Head>
+        <title>{teamPageTitle}</title>
+        <meta name="description" content={teamPageDescription} />
+        <meta property="og:title" content={teamPageTitle} />
+        <meta property="og:description" content={teamPageDescription} />
+        {teamInfo.logo && <meta property="og:image" content={teamInfo.logo} />}
+      </Head>
       {/* ═══ Team Header ═══ */}
       <div className={styles.teamHeader}>
         {teamInfo.logo ? (

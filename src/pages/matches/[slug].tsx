@@ -168,9 +168,11 @@ export default function MatchDetail({
         <meta property="og:description" content={pageDescription} />
         <meta property="og:type" content="article" />
         <meta property="og:url" content={canonicalUrl} />
+        <meta property="og:image" content={match?.home?.logo || 'https://ofsaytyok.com/images/logo.svg'} />
         <meta name="twitter:card" content="summary" />
         <meta name="twitter:title" content={pageTitle} />
         <meta name="twitter:description" content={pageDescription} />
+        <meta name="twitter:image" content={match?.home?.logo || 'https://ofsaytyok.com/images/logo.svg'} />
       </Head>
       <Container>
       <div className="layout-split">

@@ -1,5 +1,6 @@
 import type { GetServerSideProps, InferGetServerSidePropsType } from 'next';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import Head from 'next/head';
 import MatchCompetitionStandings from '@/components/MatchCompetitionStandings';
 import MatchList from '@/components/MatchList';
 import NewsList from '@/components/NewsList';
@@ -271,7 +272,18 @@ export default function WorldCupPage({
   const newsLoading = sidebarTab === 'news' && newsItems.length === 0;
 
   return (
-    <WorldCupLayout
+    <>
+      <Head>
+        <title>FIFA Dünya Kupası 2026 | Ofsayt Yok</title>
+        <meta name="description" content="FIFA Dünya Kupası 2026 grup aşaması, fikstür ve puan durumu. Tüm grupları ve maçları takip edin." />
+        <meta property="og:title" content="FIFA Dünya Kupası 2026 | Ofsayt Yok" />
+        <meta property="og:description" content="FIFA Dünya Kupası 2026 grup aşaması, fikstür ve puan durumu. Tüm grupları ve maçları takip edin." />
+        <meta property="og:url" content="https://ofsaytyok.com/world-cup" />
+        <meta property="og:image" content="https://ofsaytyok.com/images/2026_FIFA_World_Cup_Logo.png" />
+        <meta name="twitter:image" content="https://ofsaytyok.com/images/2026_FIFA_World_Cup_Logo.png" />
+        <link rel="canonical" href="https://ofsaytyok.com/world-cup" />
+      </Head>
+      <WorldCupLayout
       activeTab={mainTab}
       onTabChange={setMainTab}
       sidebar={
@@ -374,6 +386,7 @@ export default function WorldCupPage({
         </section>
       }
     />
+    </>
   );
 }
 
