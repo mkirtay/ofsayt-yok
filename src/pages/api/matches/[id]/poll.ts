@@ -3,9 +3,6 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/prisma';
 import { hitFixedWindowRateLimit, requestIp } from '@/lib/rateLimit';
-import { getMatchWithEvents } from '@/services/liveScoreService';
-import { runWithLiveScoreHttpClient } from '@/services/liveScoreHttpContext';
-import { livescoreAxiosFromIncomingMessage } from '@/server/livescoreInternalAxios';
 
 type PollResponse = {
   matchId: string;
@@ -17,10 +14,6 @@ type PollResponse = {
 };
 
 const VALID_PREDICTIONS = new Set(['HOME', 'DRAW', 'AWAY']);
-
-function isOpenStatus(status: string): boolean {
-  return status === 'NOT STARTED' || status === 'SCHEDULED';
-}
 
 export default async function handler(
   req: NextApiRequest,
@@ -82,20 +75,6 @@ export default async function handler(
     const { prediction } = req.body as { prediction?: string };
     if (!prediction || !VALID_PREDICTIONS.has(prediction)) {
       return res.status(400).json({ error: 'Geçersiz tahmin. HOME, DRAW veya AWAY olmalı.' });
-    }
-
-    // Match status check — açık olmayan maçlara oy kullanılamaz
-    try {
-      const axios = livescoreAxiosFromIncomingMessage(req);
-      const { match } = await runWithLiveScoreHttpClient(axios, () =>
-        getMatchWithEvents(matchId)
-      );
-      if (!match || !isOpenStatus(match.status)) {
-        return res.status(403).json({ error: 'Maç başladı, oylamaya kapalı.' });
-      }
-    } catch {
-      // Servis erişilemezse yine de oylamaya izin verme — güvenli taraf
-      return res.status(503).json({ error: 'Maç durumu doğrulanamadı. Lütfen tekrar deneyin.' });
     }
 
     await prisma.userPrediction.upsert({

@@ -193,7 +193,7 @@ export default function MatchDetail({
             </div>
           </div>
           {match && (
-            <MatchPoll matchId={matchId} matchStatus={match.status} />
+            <MatchPoll matchId={matchId} />
           )}
           <MatchTrivia matchId={matchId} match={match} />
           <MatchAnalysis matchId={matchId} match={match} />

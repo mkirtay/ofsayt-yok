@@ -5,7 +5,6 @@ import styles from './matchPoll.module.scss';
 
 interface MatchPollProps {
   matchId: string;
-  matchStatus: string;
 }
 
 type Prediction = 'HOME' | 'DRAW' | 'AWAY';
@@ -18,22 +17,16 @@ interface PollData {
   userPrediction: Prediction | null;
 }
 
-function isOpenStatus(status: string): boolean {
-  return status === 'NOT STARTED' || status === 'SCHEDULED';
-}
-
 function pct(votes: number, total: number): number {
   if (total === 0) return 0;
   return Math.round((votes / total) * 100);
 }
 
-export default function MatchPoll({ matchId, matchStatus }: MatchPollProps) {
+export default function MatchPoll({ matchId }: MatchPollProps) {
   const { data: session } = useSession();
   const [poll, setPoll] = useState<PollData | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
-
-  const isOpen = isOpenStatus(matchStatus);
 
   useEffect(() => {
     let cancelled = false;
@@ -46,7 +39,7 @@ export default function MatchPoll({ matchId, matchStatus }: MatchPollProps) {
 
   const vote = useCallback(
     async (prediction: Prediction) => {
-      if (submitting || !isOpen) return;
+      if (submitting) return;
       setSubmitting(true);
       setError('');
       try {
@@ -67,7 +60,7 @@ export default function MatchPoll({ matchId, matchStatus }: MatchPollProps) {
         setSubmitting(false);
       }
     },
-    [matchId, submitting, isOpen]
+    [matchId, submitting]
   );
 
   const BUTTONS: { key: Prediction; label: string }[] = [
@@ -81,10 +74,6 @@ export default function MatchPoll({ matchId, matchStatus }: MatchPollProps) {
       <h3 className={styles.title}>Topluluk Tahmini</h3>
       <p className={styles.subtitle}>Bu maçın sonucu ne olacak?</p>
 
-      {!isOpen && (
-        <p className={styles.closed}>Maç başladı, oylamaya kapalı.</p>
-      )}
-
       <div className={styles.buttons}>
         {BUTTONS.map(({ key, label }) => {
           const votes = poll ? (key === 'HOME' ? poll.home : key === 'DRAW' ? poll.draw : poll.away) : 0;
@@ -96,16 +85,16 @@ export default function MatchPoll({ matchId, matchStatus }: MatchPollProps) {
             <button
               key={key}
               type="button"
-              disabled={!isOpen || submitting || (!session && isOpen)}
-              onClick={() => vote(key)}
-              className={`${styles.voteBtn} ${isSelected ? styles.voteBtnSelected : ''} ${!isOpen ? styles.voteBtnClosed : ''}`}
+              disabled={submitting || !session}
+              onClick={() => void vote(key)}
+              className={`${styles.voteBtn} ${isSelected ? styles.voteBtnSelected : ''}`}
               aria-pressed={isSelected}
             >
               <span className={styles.voteBtnLabel}>{label}</span>
-              {(hasVoted || !isOpen) && poll && (
+              {hasVoted && poll && (
                 <span className={styles.voteBtnPct}>{percentage}%</span>
               )}
-              {(hasVoted || !isOpen) && poll && poll.total > 0 && (
+              {hasVoted && poll && poll.total > 0 && (
                 <span
                   className={styles.voteBtnBar}
                   style={{ width: `${percentage}%` }}
@@ -121,7 +110,7 @@ export default function MatchPoll({ matchId, matchStatus }: MatchPollProps) {
         <p className={styles.meta}>Toplam {poll.total} oy</p>
       )}
 
-      {!session && isOpen && (
+      {!session && (
         <p className={styles.loginCta}>
           Oy kullanmak için{' '}
           <Link href="/auth/signin" className={styles.loginLink}>

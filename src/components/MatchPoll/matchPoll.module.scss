@@ -4,7 +4,7 @@
   background: $color-surface;
   border: 1px solid $color-border;
   border-radius: $radius-md;
-  padding: $spacing-4 $spacing-5;
+  padding: $spacing-5;
   margin-bottom: $spacing-4;
 }
 
@@ -21,21 +21,11 @@
   margin: 0 0 $spacing-4;
 }
 
-.closed {
-  font-size: 12px;
-  font-weight: 600;
-  color: $color-text-secondary;
-  margin: 0 0 $spacing-3;
-  background: $color-muted;
-  border-radius: $radius-sm;
-  padding: $spacing-2 $spacing-3;
-  display: inline-block;
-}
+/* ── Butonlar ─────────────────────────────────── */
 
 .buttons {
   display: flex;
   gap: $spacing-3;
-  flex-wrap: wrap;
 
   @media (max-width: 480px) {
     flex-direction: column;
@@ -45,63 +35,75 @@
 .voteBtn {
   position: relative;
   flex: 1;
-  min-width: 90px;
+  min-width: 96px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  padding: $spacing-3 $spacing-2;
+  align-items: flex-start;
+  gap: 3px;
+  padding: 14px $spacing-4;
   border: 2px solid $color-border;
-  border-radius: $radius-sm;
+  border-radius: $radius-md;
   background: $color-surface;
   color: $color-text;
-  font-size: 13px;
-  font-weight: 600;
   cursor: pointer;
+  text-align: left;
   transition:
-    border-color 0.15s,
-    background-color 0.15s,
-    color 0.15s;
+    border-color 0.15s ease,
+    background-color 0.15s ease;
   z-index: 0;
 
   &:hover:not(:disabled) {
     border-color: $color-primary;
-    color: $color-primary-dark;
+    background: rgba(0, 167, 111, 0.04);
   }
 
   &:disabled {
     cursor: default;
-    opacity: 0.85;
+  }
+
+  @media (max-width: 480px) {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: $spacing-3 $spacing-4;
   }
 }
 
 .voteBtnSelected {
-  border-color: $color-primary;
-  color: $color-primary-dark;
-  background: $color-row-highlight;
-}
-
-.voteBtnClosed {
-  border-color: $color-border;
-  background: $color-muted;
+  border-color: $color-primary !important;
 }
 
 .voteBtnLabel {
   position: relative;
   z-index: 1;
+  font-size: 12px;
+  font-weight: 600;
+  color: $color-text-secondary;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  line-height: 1;
+
+  .voteBtnSelected & {
+    color: $color-primary-dark;
+  }
 }
 
 .voteBtnPct {
   position: relative;
   z-index: 1;
-  font-size: 18px;
+  font-size: 22px;
   font-weight: 800;
-  font-variant-numeric: tabular-nums;
   color: $color-text;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
 
   .voteBtnSelected & {
     color: $color-primary-dark;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 18px;
   }
 }
 
@@ -109,15 +111,17 @@
   position: absolute;
   inset: 0 auto 0 0;
   height: 100%;
-  background: $color-row-highlight;
+  background: rgba(0, 167, 111, 0.09);
   z-index: 0;
-  transition: width 0.4s ease;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
   border-radius: inherit;
 
   .voteBtnSelected & {
-    background: #cceeda;
+    background: rgba(0, 167, 111, 0.15);
   }
 }
+
+/* ── Meta + CTA ───────────────────────────────── */
 
 .meta {
   font-size: 12px;

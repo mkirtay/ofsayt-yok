@@ -45,10 +45,17 @@ type PageProps = {
 
 export const getServerSideProps: GetServerSideProps<PageProps> = async ({ req, res }) => {
   const session = await getServerSession(req, res, authOptions);
-  const isAdmin = session?.user?.role === 'ADMIN';
+
+  if (!session?.user?.id) {
+    return {
+      redirect: { destination: '/auth/signin?callbackUrl=/ai-istatistikleri', permanent: false },
+    };
+  }
+
+  const isAdmin = session.user.role === 'ADMIN';
   const isPremium =
     isAdmin ||
-    (session?.user?.premiumUntil != null && new Date(session.user.premiumUntil) > new Date());
+    (session.user.premiumUntil != null && new Date(session.user.premiumUntil) > new Date());
 
   const pendingCount = await prisma.predictionRecord.count({ where: { evaluatedAt: null } });
 

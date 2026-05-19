@@ -4,31 +4,14 @@ import type { Match } from '@/models/liveScore';
 import { runWithLiveScoreHttpClient } from '@/services/liveScoreHttpContext';
 import {
   getCompetitionTableFull,
-  getFixturesByDate,
   getMatchLineups,
   getMatchStats,
-  getMatchWithEvents,
+  findMatchById,
   getSeasonsList,
   type CompetitionTableData,
   type SeasonListItem,
 } from '@/services/liveScoreService';
 import { livescoreAxiosFromIncomingMessage } from './livescoreInternalAxios';
-
-function isoDateOffset(offsetDays: number): string {
-  const d = new Date();
-  d.setUTCDate(d.getUTCDate() + offsetDays);
-  return d.toISOString().slice(0, 10);
-}
-
-async function findFixtureById(matchId: string): Promise<Match | null> {
-  const dates = [isoDateOffset(0), isoDateOffset(1), isoDateOffset(-1)];
-  const results = await Promise.all(dates.map((d) => getFixturesByDate(d).catch(() => [])));
-  for (const fixtures of results) {
-    const found = fixtures.find((f) => String(f.id) === matchId || String(f.fixture_id) === matchId);
-    if (found) return found;
-  }
-  return null;
-}
 
 export type MatchDetailPageServerPayload = {
   match: Match | null;
@@ -47,25 +30,21 @@ export async function loadMatchDetailInitialData(
   try {
     const client = livescoreAxiosFromIncomingMessage(req);
     return await runWithLiveScoreHttpClient(client, async () => {
-      const [matchEventsRes, lineupsData, statsData] = await Promise.all([
-        getMatchWithEvents(matchId),
+      const [matchBundle, lineupsData, statsData] = await Promise.all([
+        findMatchById(matchId),
         getMatchLineups(matchId),
         getMatchStats(matchId),
       ]);
 
-      // Events API null döndürdüyse fixture listesinden ara (henüz başlamamış maç)
-      let m = matchEventsRes.match;
-      if (!m) {
-        m = await findFixtureById(matchId);
-      }
+      const m = matchBundle.match;
       if (!m) return null;
 
-      const compId = m?.competition?.id ?? m?.competition_id;
+      const compId = m.competition?.id ?? m.competition_id;
 
       if (compId == null) {
         return {
           match: m,
-          events: matchEventsRes.events,
+          events: matchBundle.events,
           lineups: lineupsData,
           stats: statsData,
           seasons: [],
@@ -103,7 +82,7 @@ export async function loadMatchDetailInitialData(
 
       return {
         match: m,
-        events: matchEventsRes.events,
+        events: matchBundle.events,
         lineups: lineupsData,
         stats: statsData,
         seasons: seasonsList,

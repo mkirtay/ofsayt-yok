@@ -6,7 +6,12 @@ import {
   Match,
 } from '../models/liveScore';
 import { MatchEvent, MatchStatsData } from '../models/domain';
-import { compareGroupedLeagues } from '../config/leagues';
+import {
+  compareGroupedLeagues,
+  TURKEY_COMPETITION_IDS,
+  UEFA_TIER2_COMPETITION_IDS,
+  BIG_FIVE_COMPETITION_ORDER,
+} from '../config/leagues';
 
 export type PaginatedMatches = {
   matches: Match[];
@@ -99,6 +104,56 @@ export async function getFixturesByDate(isoDate: string): Promise<Match[]> {
 }
 
 export const getTodayFixtures = (): Promise<Match[]> => getFixturesByDate(todayIsoUtc());
+
+const KNOWN_COMPETITION_IDS = [
+  ...UEFA_TIER2_COMPETITION_IDS,
+  ...TURKEY_COMPETITION_IDS,
+  ...BIG_FIVE_COMPETITION_ORDER,
+];
+
+function fixtureMatchesId(f: Match, matchId: string): boolean {
+  return String(f.id) === matchId || (f.fixture_id != null && String(f.fixture_id) === matchId);
+}
+
+/**
+ * Belirli bir matchId'ye sahip maçı bulur.
+ * 1. /matches/events (canlı / geçmiş maçlar)
+ * 2. Tarih bazlı fixture listesi — bugün ±2 gün (ilerideki maçlar)
+ * 3. Konfigüre edilmiş liglerin competition fixture listesi (UEFA vb. tarih bazlı listede görünmeyebilir)
+ */
+export async function findMatchById(
+  matchId: string
+): Promise<{ match: Match | null; events: MatchEvent[]; fromFixture: boolean }> {
+  // Adım 1: events endpoint
+  const eventsBundle = await getMatchWithEvents(matchId);
+  if (eventsBundle.match) {
+    return { match: eventsBundle.match, events: eventsBundle.events, fromFixture: false };
+  }
+
+  // Adım 2: tarih bazlı arama (bugün ±2)
+  const isoOffset = (days: number): string => {
+    const d = new Date();
+    d.setUTCDate(d.getUTCDate() + days);
+    return d.toISOString().slice(0, 10);
+  };
+  const dates = [isoOffset(0), isoOffset(1), isoOffset(-1), isoOffset(2), isoOffset(-2)];
+  const dateResults = await Promise.all(dates.map((date) => getFixturesByDate(date).catch(() => [])));
+  for (const fixtures of dateResults) {
+    const found = fixtures.find((f) => fixtureMatchesId(f, matchId));
+    if (found) return { match: found, events: [], fromFixture: true };
+  }
+
+  // Adım 3: lig bazlı fixture arama (son çare — UEFA/büyük ligler tarih bazlı listede çıkmayabilir)
+  const compResults = await Promise.all(
+    KNOWN_COMPETITION_IDS.map((id) => getFixturesByCompetition(id).catch(() => []))
+  );
+  for (const fixtures of compResults) {
+    const found = fixtures.find((f) => fixtureMatchesId(f, matchId));
+    if (found) return { match: found, events: [], fromFixture: true };
+  }
+
+  return { match: null, events: [], fromFixture: false };
+}
 
 // Endpoint: GET /fixtures/list.json?competition_id=362&group_id=4297
 export async function getCompetitionGroupFixtures(

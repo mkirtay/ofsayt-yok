@@ -11,10 +11,10 @@ import type { Match } from '@/models/liveScore';
 import {
   getCompetitionTableFull,
   getMatchStats,
-  getMatchWithEvents,
   getMatchLineups,
   getTeamLastMatches,
   getTeamsHead2Head,
+  findMatchById,
   type CompetitionTableData,
   type CompetitionTableStandingRow,
   type Head2HeadData,
@@ -341,7 +341,7 @@ function computeOddsSignal(match: Match): MatchAnalysisContext['oddsSignal'] {
 export async function buildMatchAnalysisContext(
   matchId: string
 ): Promise<MatchAnalysisContext | null> {
-  const eventsBundle = await getMatchWithEvents(matchId);
+  const eventsBundle = await findMatchById(matchId);
   const match = eventsBundle.match;
   if (!match) return null;
 
