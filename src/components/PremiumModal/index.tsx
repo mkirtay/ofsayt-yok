@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import styles from './premiumModal.module.scss';
 
-const LS_KEY = 'ofsaytyok_pm_shown';
+const SS_KEY = 'ofsaytyok_pm_shown';
 const DELAY_MS = 45_000;
 
 export default function PremiumModal() {
@@ -14,11 +14,11 @@ export default function PremiumModal() {
     if (status === 'loading') return;
     if (session?.user?.isPremium) return;
     if (typeof window === 'undefined') return;
-    if (localStorage.getItem(LS_KEY)) return;
+    if (sessionStorage.getItem(SS_KEY)) return;
 
     const timer = setTimeout(() => {
       setOpen(true);
-      localStorage.setItem(LS_KEY, '1');
+      sessionStorage.setItem(SS_KEY, '1');
     }, DELAY_MS);
 
     return () => clearTimeout(timer);
