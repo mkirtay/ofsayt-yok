@@ -49,6 +49,9 @@ export default function Header() {
             <Link href="/ai-istatistikleri" className={styles.headerNavPill}>
               AI İsabeti
             </Link>
+            <Link href="/premium" className={styles.headerNavPillPremium}>
+              ⭐ Premium
+            </Link>
           </div>
         </div>
         <div className={styles.actions}>

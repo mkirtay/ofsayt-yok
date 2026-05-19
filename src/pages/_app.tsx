@@ -3,6 +3,7 @@ import { SessionProvider } from 'next-auth/react'
 import Head from 'next/head'
 import { Inter } from 'next/font/google'
 import Layout from '@/components/Layout'
+import PremiumModal from '@/components/PremiumModal'
 import '@/styles/globals.scss'
 
 const inter = Inter({
@@ -28,6 +29,7 @@ export default function App({ Component, pageProps: { session, ...pageProps } }:
         <Layout>
           <Component {...pageProps} />
         </Layout>
+        <PremiumModal />
       </div>
     </SessionProvider>
   )

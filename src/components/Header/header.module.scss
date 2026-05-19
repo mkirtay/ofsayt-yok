@@ -68,6 +68,18 @@
   }
 }
 
+.headerNavPillPremium {
+  @extend .headerNavPill;
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  border-color: transparent;
+  color: #fff;
+
+  &:hover {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    border-color: transparent;
+  }
+}
+
 .headerWorldCup .headerNavPill {
   border-color: #444;
   color: #fff;
