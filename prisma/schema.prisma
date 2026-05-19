@@ -132,6 +132,29 @@ model MatchComment {
   @@index([matchId, createdAt])
 }
 
+/// AI üretimli maç trivia/fun-facts cache'i. Aynı maç + status için tek aktif kayıt.
+model MatchTrivia {
+  id             String    @id @default(cuid())
+  matchId        String
+  /// "PRE" | "HT" | "POST"
+  matchStatus    String
+  /// Ertem Şener tarzı absürd ama gerçek istatistikler (string[])
+  ertemFacts     Json
+  /// Transfer/kariyer bağlam anlatısı
+  contextual     String    @db.Text
+  /// Tarihi husumeti ve rekabet bağlamı
+  rivalryContext String    @db.Text
+  modelVersion   String
+  tokensUsed     Int       @default(0)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @default(now()) @updatedAt
+  /// PRE fazında 2 saat TTL; HT/POST için null (kalıcı)
+  expiresAt      DateTime?
+
+  @@unique([matchId, matchStatus])
+  @@index([matchId])
+}
+
 model Account {
   id                String  @id @default(cuid())
   userId            String

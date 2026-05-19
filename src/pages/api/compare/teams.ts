@@ -5,6 +5,7 @@
  * CompareTeamPicker dropdown'ı için kullanılır.
  */
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { hitFixedWindowRateLimit, requestIp } from '@/lib/rateLimit';
 import { runWithLiveScoreHttpClient } from '@/services/liveScoreHttpContext';
 import { livescoreAxiosFromIncomingMessage } from '@/server/livescoreInternalAxios';
 import { getCompetitionTableFull } from '@/services/liveScoreService';
@@ -22,6 +23,16 @@ export default async function handler(
   if (req.method !== 'GET') {
     res.setHeader('Allow', 'GET');
     return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  const ip = requestIp(
+    req.headers as Record<string, string | string[] | undefined>,
+    req.socket?.remoteAddress,
+  );
+  const rl = await hitFixedWindowRateLimit(`compare-teams:${ip}`, 30, 60_000);
+  if (!rl.success) {
+    res.setHeader('Retry-After', String(Math.ceil((rl.resetAt - Date.now()) / 1000)));
+    return res.status(429).json({ error: 'Too many requests' });
   }
 
   const { competitionId } = req.query;

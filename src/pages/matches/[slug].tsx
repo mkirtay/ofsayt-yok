@@ -9,6 +9,7 @@ import MatchStats from '@/components/MatchStats';
 import MatchCompetitionStandings from '@/components/MatchCompetitionStandings';
 import MatchForum from '@/components/MatchForum';
 import MatchAnalysis from '@/components/MatchAnalysis';
+import MatchTrivia from '@/components/MatchTrivia';
 import MatchPoll from '@/components/MatchPoll';
 import {
   getCompetitionTableFull,
@@ -194,6 +195,7 @@ export default function MatchDetail({
           {match && (
             <MatchPoll matchId={matchId} matchStatus={match.status} />
           )}
+          <MatchTrivia matchId={matchId} match={match} />
           <MatchAnalysis matchId={matchId} match={match} />
           <Lineup lineups={lineups} />
         </div>

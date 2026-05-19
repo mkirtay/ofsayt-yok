@@ -1,4 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
+import { hitFixedWindowRateLimit, requestIp } from '@/lib/rateLimit';
 
 const API_BASE = 'https://livescore-api.com/api-client';
 
@@ -6,6 +7,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const pathParam = req.query.path;
     const path = Array.isArray(pathParam) ? pathParam.join('/') : String(pathParam || '');
+
+    // Rate limiting — görsel istekler zaten önbelleğe alınır, asıl maliyet JSON verileri
+    const ip = requestIp(
+      req.headers as Record<string, string | string[] | undefined>,
+      req.socket?.remoteAddress,
+    );
+    const isBinaryPath = /\.(png|jpe?g|gif|webp)$/i.test(path);
+    const rlKey = `livescore:${isBinaryPath ? 'img' : 'data'}:${ip}`;
+    const rlLimit = isBinaryPath ? 300 : 100;
+    const rl = await hitFixedWindowRateLimit(rlKey, rlLimit, 60_000);
+    if (!rl.success) {
+      res.setHeader('Retry-After', String(Math.ceil((rl.resetAt - Date.now()) / 1000)));
+      return res.status(429).json({ success: false, error: 'Too many requests' });
+    }
 
     const key = process.env.LIVESCORE_API_KEY;
     const secret = process.env.LIVESCORE_API_SECRET;

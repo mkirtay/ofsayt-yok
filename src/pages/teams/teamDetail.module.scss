@@ -47,6 +47,7 @@
   flex-direction: column;
   gap: 2px;
   min-width: 0;
+  flex: 1;
 }
 
 .teamName {
@@ -399,13 +400,11 @@
   }
 }
 
-// ── Compare button ──
+// ── Compare toggle + panel ──
 
-.compareWrap {
-  margin-top: $spacing-2;
-}
-
-.compareBtn {
+.compareToggleBtn {
+  flex-shrink: 0;
+  align-self: flex-start;
   padding: $spacing-1 $spacing-3;
   font-size: 12px;
   font-weight: 700;
@@ -415,59 +414,28 @@
   color: $color-primary-dark;
   cursor: pointer;
   transition: background-color 0.15s, color 0.15s;
+  white-space: nowrap;
 
-  &:hover:not(:disabled) {
+  &:hover {
     background: $color-primary;
     color: #fff;
   }
-
-  &:disabled {
-    opacity: 0.4;
-    cursor: not-allowed;
-  }
 }
 
-.compareCancelBtn {
-  padding: $spacing-1 $spacing-3;
-  font-size: 12px;
-  font-weight: 600;
-  border: 1px solid $color-border;
-  border-radius: $radius-full;
-  background: transparent;
-  color: $color-text-secondary;
-  cursor: pointer;
-  transition: background-color 0.15s;
-
-  &:hover {
-    background: $color-muted;
-  }
+.compareToggleBtnOpen {
+  background: $color-primary;
+  color: #fff;
 }
 
-.compareForm {
-  display: flex;
-  align-items: center;
-  gap: $spacing-2;
-  flex-wrap: wrap;
-}
-
-.compareInput {
-  width: 130px;
-  padding: $spacing-1 $spacing-2;
-  font-size: 12px;
-  border: 1px solid $color-border;
-  border-radius: $radius-sm;
+.comparePanel {
   background: $color-surface;
-  color: $color-text;
-  outline: none;
-
-  &:focus {
-    border-color: $color-primary;
-  }
-
-  &::-webkit-inner-spin-button,
-  &::-webkit-outer-spin-button {
-    -webkit-appearance: none;
-  }
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  padding: $spacing-4 $spacing-5;
+  box-shadow: $shadow-surface;
+  margin-top: -$spacing-2;
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
 }
 
 @media (max-width: $bp-sm) {

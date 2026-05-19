@@ -9,6 +9,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { requirePremium } from '@/lib/requirePremium';
+import { hitFixedWindowRateLimit } from '@/lib/rateLimit';
 import { runWithLiveScoreHttpClient } from '@/services/liveScoreHttpContext';
 import { livescoreAxiosFromIncomingMessage } from '@/server/livescoreInternalAxios';
 import { buildMatchAnalysisContext } from '@/server/buildMatchAnalysisContext';
@@ -26,7 +27,14 @@ export default async function handler(
   }
 
   const guard = await requirePremium(req, res);
-  if (!guard.ok) return; // requirePremium yanıtı zaten yazdı
+  if (!guard.ok) return;
+
+  // Kullanıcı başına saatlik AI analiz limiti — her çağrı OpenAI'ya ücretli istek atar
+  const rl = await hitFixedWindowRateLimit(`analysis:user:${guard.userId}`, 30, 60 * 60_000);
+  if (!rl.success) {
+    res.setHeader('Retry-After', String(Math.ceil((rl.resetAt - Date.now()) / 1000)));
+    return res.status(429).json({ error: 'Saatlik analiz limitine (30) ulaştınız. Biraz bekleyin.' });
+  }
 
   const { id } = req.query;
   const matchId = Array.isArray(id) ? id[0] : id;

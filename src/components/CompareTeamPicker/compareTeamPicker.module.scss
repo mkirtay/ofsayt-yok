@@ -1,11 +1,7 @@
 @use '../../styles/variables' as *;
 
 .picker {
-  background: $color-surface;
-  border: 1px solid $color-border;
-  border-radius: $radius-md;
-  padding: $spacing-4 $spacing-5;
-  box-shadow: $shadow-surface;
+  // layout only; wrapping card styles come from the parent container
 }
 
 .pickerRow {

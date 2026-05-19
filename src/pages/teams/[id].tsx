@@ -140,6 +140,7 @@ export default function TeamDetail({
   initialTeamData,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
   const [activeTab, setActiveTab] = useState<'matches' | 'squad'>('matches');
+  const [compareOpen, setCompareOpen] = useState(false);
   const [lastMatches, setLastMatches] = useState<Match[]>(() => initialTeamData.lastMatches);
   const [squad, setSquad] = useState<unknown[]>(() => initialTeamData.squad);
   const [table, setTable] = useState<CompetitionTableData | null>(
@@ -345,14 +346,25 @@ export default function TeamDetail({
               {selectedCompName} · {stats.standing.rank}. sıra · {stats.standing.points} puan
             </span>
           )}
-          <div className={styles.compareWrap}>
-            <CompareTeamPicker
-              fixedTeamId={Number(teamId)}
-              fixedTeamName={teamInfo.name}
-            />
-          </div>
         </div>
+        <button
+          type="button"
+          className={`${styles.compareToggleBtn} ${compareOpen ? styles.compareToggleBtnOpen : ''}`}
+          onClick={() => setCompareOpen((o) => !o)}
+        >
+          ⇄ Karşılaştır
+        </button>
       </div>
+
+      {/* ═══ Compare Panel ═══ */}
+      {compareOpen && (
+        <div className={styles.comparePanel}>
+          <CompareTeamPicker
+            fixedTeamId={Number(teamId)}
+            fixedTeamName={teamInfo.name}
+          />
+        </div>
+      )}
 
       {/* ═══ Main Layout ═══ */}
       <div className={styles.layoutSplit}>
