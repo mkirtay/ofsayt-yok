@@ -221,7 +221,9 @@ export function buildAnalysisUserMessage(ctx: MatchAnalysisContext): string {
     ctx.matchPhase === 'PRE'
       ? 'Bu MAÇ ÖNCESİ analizi. Form, H2H ve oranlara göre tahmin yap.'
       : ctx.matchPhase === 'HT'
-        ? 'Bu DEVRE ARASI analizi. İlk yarı istatistiklerini de değerlendir; ikinci yarı için tahmin yap.'
+        ? 'Bu DEVRE ARASI analizi. Maç öncesi tahmin yüzdelerini (home/draw/away) ve skor tahminini KORUYUN — değiştirmeyin. ' +
+          'matchPrediction.reasoning alanına kısa bir ilk yarı notu yaz: ilk yarı skoru ve baskın tarafı 1-2 cümlede özetle. ' +
+          'Diğer tüm alanları (bettingTips, goalExpectation, teamAnalyses vb.) maç öncesi bağlama göre doldur.'
         : ctx.matchPhase === 'LIVE'
           ? 'Bu CANLI maç analizi. Mevcut skor ve istatistikleri değerlendir.'
           : 'Bu MAÇ SONU analizi. Sonucu değerlendir, performans yorumla.';

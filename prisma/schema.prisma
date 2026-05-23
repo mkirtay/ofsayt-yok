@@ -82,6 +82,7 @@ model PredictionRecord {
   matchAnalysisId     String   @unique
   matchAnalysis       MatchAnalysis @relation(fields: [matchAnalysisId], references: [id], onDelete: Cascade)
   matchId             String
+  matchLabel          String?
   predictedHomePct    Float
   predictedDrawPct    Float
   predictedAwayPct    Float

@@ -113,6 +113,7 @@ function PreviewSkeleton({ homeName, awayName }: { homeName?: string; awayName?:
 export default function MatchAnalysis({ matchId, match }: Props) {
   const { loading: premiumLoading, isPremium } = usePremium();
   const [analysis, setAnalysis] = useState<ApiAnalysis | null>(null);
+  const [isPostMatch, setIsPostMatch] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasFetched, setHasFetched] = useState(false);
@@ -144,8 +145,9 @@ export default function MatchAnalysis({ matchId, match }: Props) {
           const body = await res.json().catch(() => ({}));
           throw new Error(body?.error ?? `İstek başarısız (${res.status})`);
         }
-        const body = (await res.json()) as { analysis: ApiAnalysis };
+        const body = (await res.json()) as { analysis: ApiAnalysis; isPostMatch?: boolean };
         setAnalysis(body.analysis);
+        setIsPostMatch(body.isPostMatch ?? false);
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Analiz alınamadı');
       } finally {
@@ -266,10 +268,17 @@ export default function MatchAnalysis({ matchId, match }: Props) {
 
   return (
     <div className={styles.card}>
+      {analysis.matchStatus === 'HT' && (
+        <div className={styles.htBanner}>
+          <span className={styles.htBadge}>Devre Arası</span>
+          Maç öncesi tahminler korundu, ilk yarı notu eklendi.
+        </div>
+      )}
       <div className={styles.headerRow}>
         <h3 className={styles.title}>
           <span className={styles.aiBadge}>AI</span>
           Maç Analizi
+          {isPostMatch && <span className={styles.preTag}>Maç Öncesi Tahmini</span>}
         </h3>
         <span className={styles.confidenceBadge}>
           Güven: %{Math.round(analysis.confidenceScore)}

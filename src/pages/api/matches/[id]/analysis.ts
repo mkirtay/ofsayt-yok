@@ -52,6 +52,17 @@ export default async function handler(
         return { status: 404 as const, body: { error: 'Maç bulunamadı' } };
       }
 
+      // POST fazda yeni analiz üretme — PRE analizini döndür
+      if (ctx.matchPhase === 'POST') {
+        const preAnalysis = await prisma.matchAnalysis.findUnique({
+          where: { matchId_matchStatus: { matchId, matchStatus: 'PRE' } },
+        });
+        if (preAnalysis) {
+          return { status: 200 as const, body: { analysis: preAnalysis, cached: true, isPostMatch: true } };
+        }
+        return { status: 404 as const, body: { error: 'Bu maç için ön analiz mevcut değil.' } };
+      }
+
       // Cache kontrolü
       const existing = await prisma.matchAnalysis.findUnique({
         where: {
@@ -125,6 +136,28 @@ export default async function handler(
               expiresAt,
             },
           });
+
+      // PRE fazda ilk kez oluşturulduğunda tahmin kaydı oluştur
+      if (ctx.matchPhase === 'PRE' && !existing) {
+        try {
+          await prisma.predictionRecord.create({
+            data: {
+              matchAnalysisId: saved.id,
+              matchId,
+              matchLabel: `${ctx.homeTeam.teamName} - ${ctx.awayTeam.teamName}`,
+              predictedHomePct: ai.analysis.matchPrediction.home,
+              predictedDrawPct: ai.analysis.matchPrediction.draw,
+              predictedAwayPct: ai.analysis.matchPrediction.away,
+              predictedScore: ai.analysis.scorePrediction.mostLikely,
+              predictedOver25: ai.analysis.goalExpectation.over25,
+              predictedBtts: ai.analysis.goalExpectation.btts,
+              modelVersion: ai.modelVersion,
+            },
+          });
+        } catch (e) {
+          captureError('prediction-record', e);
+        }
+      }
 
       return {
         status: 200 as const,

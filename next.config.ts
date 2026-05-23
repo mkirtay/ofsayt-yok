@@ -12,9 +12,8 @@ const nextConfig: NextConfig = {
       { protocol: 'http', hostname: '**' },
     ],
     localPatterns: [
-      {
-        pathname: '/api/livescore/countries/flag',
-      },
+      { pathname: '/api/livescore/countries/flag' },
+      { pathname: '/images/**' },
     ],
   },
 };
