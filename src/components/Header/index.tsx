@@ -2,6 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useSession, signOut } from 'next-auth/react';
+import { useState, useEffect } from 'react';
 import Container from '../Container';
 import HeaderButton from '../HeaderButton';
 import styles from './header.module.scss';
@@ -10,6 +11,11 @@ export default function Header() {
   const router = useRouter();
   const { data: session } = useSession();
   const isWorldCupRoute = router.pathname.startsWith('/world-cup');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [router.pathname]);
 
   return (
     <header className={`${styles.header} ${isWorldCupRoute ? styles.headerWorldCup : ''}`.trim()}>
@@ -78,7 +84,59 @@ export default function Header() {
             </>
           )}
         </div>
+        <button
+          className={`${styles.hamburger} ${mobileMenuOpen ? styles.hamburgerOpen : ''}`}
+          onClick={() => setMobileMenuOpen((v) => !v)}
+          aria-label="Menüyü aç/kapat"
+          aria-expanded={mobileMenuOpen}
+        >
+          <span />
+          <span />
+          <span />
+        </button>
       </Container>
+
+      {mobileMenuOpen && (
+        <div className={`${styles.mobileMenu} ${isWorldCupRoute ? styles.mobileMenuWorldCup : ''}`}>
+          <nav className={styles.mobileNav}>
+            {!isWorldCupRoute && (
+              <Link href="/world-cup" className={styles.mobileNavLink}>
+                WORLD CUP
+              </Link>
+            )}
+            <Link href="/uefa" className={styles.mobileNavLink}>
+              UEFA
+            </Link>
+            <Link href="/ai-istatistikleri" className={styles.mobileNavLink}>
+              AI İsabeti
+            </Link>
+            <Link href="/premium" className={styles.mobileNavLinkPremium}>
+              ⭐ Premium
+            </Link>
+          </nav>
+          <div className={styles.mobileActions}>
+            {session ? (
+              <>
+                <Link href="/profile" className={styles.mobileNavLink}>
+                  Profil
+                </Link>
+                <button className={styles.mobileSignOut} onClick={() => signOut()}>
+                  Çıkış Yap
+                </button>
+              </>
+            ) : (
+              <>
+                <Link href="/auth/signin" className={styles.mobileAuthOutline}>
+                  Giriş Yap
+                </Link>
+                <Link href="/auth/signup" className={styles.mobileAuthFilled}>
+                  Üye Ol
+                </Link>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </header>
   );
 }

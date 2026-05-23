@@ -1,5 +1,7 @@
 import type { GetServerSideProps, InferGetServerSidePropsType } from 'next';
 import Head from 'next/head';
+import Image from 'next/image';
+import JsonLd from '@/components/JsonLd';
 import Container from '@/components/Container';
 import NewsList from '@/components/NewsList';
 import type { NewsItem } from '@/models/domain';
@@ -46,6 +48,15 @@ export default function NewsDetail({
         <meta name="twitter:title" content={article.title} />
         <meta name="twitter:description" content={pageDescription} />
         {article.image && <meta name="twitter:image" content={article.image} />}
+        <JsonLd schema={{
+          '@context': 'https://schema.org',
+          '@type': 'NewsArticle',
+          headline: article.title,
+          description: pageDescription,
+          ...(article.image ? { image: article.image } : {}),
+          datePublished: article.publishedAt,
+          publisher: { '@type': 'Organization', name: 'Ofsayt Yok', logo: `${process.env.AUTH_URL ?? 'https://ofsaytyok.app'}/images/logo.svg` },
+        }} />
       </Head>
       <Container>
       <div className="layout-split">
@@ -62,7 +73,14 @@ export default function NewsDetail({
 
             {article.image && (
               <div className={styles.hero}>
-                <img src={article.image} alt="" className={styles.heroImg} />
+                <Image
+                  src={article.image}
+                  alt=""
+                  className={styles.heroImg}
+                  width={1200}
+                  height={630}
+                  style={{ width: '100%', height: 'auto' }}
+                />
               </div>
             )}
 

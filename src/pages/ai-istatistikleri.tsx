@@ -193,10 +193,12 @@ export default function AiIstatistikleri({
     <>
       <Head>
         <title>AI Tahmin İstatistikleri — Ofsayt Yok</title>
-        <meta
-          name="description"
-          content="Ofsayt Yok yapay zeka modelinin maç tahmin isabetlilik oranları ve geçmiş tahmin kaydı."
-        />
+        <meta name="description" content="Ofsayt Yok yapay zeka modelinin maç tahmin isabetlilik oranları ve geçmiş tahmin kaydı." />
+        <link rel="canonical" href={`${process.env.AUTH_URL ?? 'https://ofsaytyok.app'}/ai-istatistikleri`} />
+        <meta property="og:title" content="AI Tahmin İstatistikleri — Ofsayt Yok" />
+        <meta property="og:description" content="Ofsayt Yok yapay zeka modelinin maç tahmin isabetlilik oranları ve geçmiş tahmin kaydı." />
+        <meta property="og:url" content={`${process.env.AUTH_URL ?? 'https://ofsaytyok.app'}/ai-istatistikleri`} />
+        <meta property="og:image" content={`${process.env.AUTH_URL ?? 'https://ofsaytyok.app'}/images/logo.svg`} />
       </Head>
 
       <Container>

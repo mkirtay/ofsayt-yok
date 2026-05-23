@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
 import { useSession } from 'next-auth/react';
 import { Role } from '@prisma/client';
 import Link from 'next/link';
@@ -177,7 +178,7 @@ export default function MatchForum({ matchId }: MatchForumProps) {
               )}
               <div className={styles.avatar}>
                 {c.user.image ? (
-                  <img src={c.user.image} alt="" />
+                  <Image src={c.user.image} alt="" width={28} height={28} style={{ borderRadius: '50%' }} />
                 ) : (
                   avatarLetter(c.user.name)
                 )}

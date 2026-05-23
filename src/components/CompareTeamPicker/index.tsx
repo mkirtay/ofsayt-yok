@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import { COMPARE_LEAGUE_GROUPS } from '@/config/leagues';
-import { countryFlagImgSrc } from '@/utils/countryFlag';
 import type { CompareTeamItem } from '@/pages/api/compare/teams';
 import styles from './compareTeamPicker.module.scss';
 

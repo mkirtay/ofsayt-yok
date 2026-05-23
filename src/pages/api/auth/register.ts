@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import { hash } from 'bcryptjs'
 import { prisma } from '@/lib/prisma'
 import { hitFixedWindowRateLimit, requestIp } from '@/lib/rateLimit'
-import { verifyTurnstileToken } from '@/lib/security'
+import { verifyTurnstileToken, createAndSendEmailVerification } from '@/lib/security'
 import { validatePassword, usernameRules } from '@/lib/validation'
 
 const REGISTER_LIMIT = 5
@@ -81,6 +81,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     },
     select: { id: true, email: true, name: true, role: true, username: true },
   })
+
+  void createAndSendEmailVerification(normalizedEmail).catch((e) =>
+    console.error('[register] email verification send failed:', e)
+  )
 
   return res.status(201).json({ user })
 }

@@ -1,0 +1,57 @@
+@use '../styles/variables' as *;
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  text-align: center;
+  padding: $spacing-8 $spacing-4;
+}
+
+.code {
+  font-size: 96px;
+  font-weight: 900;
+  line-height: 1;
+  color: $color-primary;
+  letter-spacing: -4px;
+  margin-bottom: $spacing-4;
+
+  @media (max-width: 480px) {
+    font-size: 72px;
+  }
+}
+
+.title {
+  font-size: 24px;
+  font-weight: 700;
+  color: $color-text;
+  margin: 0 0 $spacing-3;
+}
+
+.desc {
+  font-size: 15px;
+  color: $color-text-secondary;
+  max-width: 400px;
+  margin: 0 0 $spacing-8;
+  line-height: 1.6;
+}
+
+.btn {
+  display: inline-block;
+  padding: 12px 28px;
+  background: $color-primary;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: $color-primary-dark;
+  }
+}

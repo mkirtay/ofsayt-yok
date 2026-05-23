@@ -2,6 +2,7 @@ import type { AppProps } from 'next/app'
 import { SessionProvider } from 'next-auth/react'
 import Head from 'next/head'
 import { Inter } from 'next/font/google'
+import { Analytics } from '@vercel/analytics/next'
 import Layout from '@/components/Layout'
 import PremiumModal from '@/components/PremiumModal'
 import '@/styles/globals.scss'
@@ -21,7 +22,7 @@ export default function App({ Component, pageProps: { session, ...pageProps } }:
         <meta name="description" content="Ofsayt Yok — Türkiye ve dünya futbolundan canlı skorlar, maç analizleri, puan durumu ve spor haberleri." />
         <meta property="og:site_name" content="Ofsayt Yok" />
         <meta property="og:type" content="website" />
-        <meta property="og:image" content="https://ofsaytyok.com/images/logo.svg" />
+        <meta property="og:image" content={`${process.env.AUTH_URL ?? 'https://ofsaytyok.app'}/images/logo.svg`} />
         <meta name="twitter:card" content="summary" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
@@ -30,6 +31,7 @@ export default function App({ Component, pageProps: { session, ...pageProps } }:
           <Component {...pageProps} />
         </Layout>
         <PremiumModal />
+        <Analytics />
       </div>
     </SessionProvider>
   )

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import Image from 'next/image';
 import styles from './matchCard.module.scss';
 import { Match } from '@/models/liveScore';
 import Link from 'next/link';
@@ -184,9 +185,9 @@ export default function MatchCard({ match }: MatchCardProps) {
       <header className={styles.cardHeader}>
         <div className={styles.cardHeaderLeft}>
           {compLogo ? (
-            <img src={compLogo} alt="" className={styles.cardHeaderLogo} width={22} height={22} />
+            <Image src={compLogo} alt="" className={styles.cardHeaderLogo} width={22} height={22} />
           ) : showCountryFlag ? (
-            <img
+            <Image
               src={countryFlagImgSrc(country!.id)}
               alt=""
               className={styles.cardHeaderFlag}
@@ -212,7 +213,7 @@ export default function MatchCard({ match }: MatchCardProps) {
           <div className={styles.team}>
             <Link href={`/teams/${match.home?.id || ''}`} className={styles.teamLink}>
               {homeLogo ? (
-                <img src={homeLogo} alt={homeName} className={styles.logo} />
+                <Image src={homeLogo} alt={homeName} className={styles.logo} width={56} height={56} />
               ) : (
                 <div className={styles.logoPlaceholder}>{homeName.charAt(0)}</div>
               )}
@@ -243,7 +244,7 @@ export default function MatchCard({ match }: MatchCardProps) {
           <div className={styles.team}>
             <Link href={`/teams/${match.away?.id || ''}`} className={styles.teamLink}>
               {awayLogo ? (
-                <img src={awayLogo} alt={awayName} className={styles.logo} />
+                <Image src={awayLogo} alt={awayName} className={styles.logo} width={56} height={56} />
               ) : (
                 <div className={styles.logoPlaceholder}>{awayName.charAt(0)}</div>
               )}

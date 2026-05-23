@@ -5,6 +5,10 @@
   border: 1px solid $color-border;
   border-radius: $radius-md;
   overflow: hidden;
+
+  @media (max-width: $bp-md) {
+    display: none;
+  }
 }
 
 .header {

@@ -1,4 +1,8 @@
 import Head from 'next/head';
+import { useState } from 'react';
+import { useRouter } from 'next/router';
+import { useSession } from 'next-auth/react';
+import Link from 'next/link';
 import Container from '@/components/Container';
 import { usePremium } from '@/hooks/usePremium';
 import styles from './premium.module.scss';
@@ -72,15 +76,50 @@ const FAQ = [
 
 export default function PremiumPage() {
   const { isPremium, loading } = usePremium();
+  const { data: session } = useSession();
+  const router = useRouter();
+  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+  const [checkoutError, setCheckoutError] = useState('');
+
+  const paymentStatus = router.query.payment;
+
+  async function startCheckout(plan: 'monthly' | 'yearly') {
+    if (!session) {
+      void router.push(`/auth/signin?callbackUrl=/premium`);
+      return;
+    }
+    setCheckoutLoading(plan);
+    setCheckoutError('');
+    try {
+      const res = await fetch('/api/payment/create-checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan }),
+      });
+      const data = await res.json() as { url?: string; error?: string };
+      if (!res.ok || !data.url) {
+        setCheckoutError(data.error || 'Ödeme başlatılamadı.');
+        return;
+      }
+      window.location.href = data.url;
+    } catch {
+      setCheckoutError('Bağlantı hatası. Lütfen tekrar deneyin.');
+    } finally {
+      setCheckoutLoading(null);
+    }
+  }
 
   return (
     <>
       <Head>
         <title>Premium — Ofsayt Yok</title>
-        <meta
-          name="description"
-          content="AI destekli maç analizi, skor tahmini ve bahis önerileri için Ofsayt Yok Premium."
-        />
+        <meta name="description" content="AI destekli maç analizi, skor tahmini ve bahis önerileri için Ofsayt Yok Premium." />
+        <link rel="canonical" href={`${process.env.AUTH_URL ?? 'https://ofsaytyok.app'}/premium`} />
+        <meta property="og:title" content="Premium — Ofsayt Yok" />
+        <meta property="og:description" content="AI destekli maç analizi, skor tahmini ve bahis önerileri için Ofsayt Yok Premium." />
+        <meta property="og:url" content={`${process.env.AUTH_URL ?? 'https://ofsaytyok.app'}/premium`} />
+        <meta property="og:image" content={`${process.env.AUTH_URL ?? 'https://ofsaytyok.app'}/images/logo.svg`} />
+        <meta property="og:type" content="website" />
       </Head>
 
       <Container>
@@ -90,6 +129,21 @@ export default function PremiumPage() {
               <h3>⭐ Zaten Premium Üyesin!</h3>
               <p>Tüm premium içeriklere erişimin aktif. Maç sayfalarında AI analizleri ve Trivia bölümlerini kullanabilirsin.</p>
             </div>
+          )}
+
+          {paymentStatus === 'success' && (
+            <div className={styles.alreadyPremium}>
+              <h3>Ödeme Alındı!</h3>
+              <p>Premium üyeliğin aktif edildi. Teşekkürler!</p>
+            </div>
+          )}
+          {paymentStatus === 'cancelled' && (
+            <div className={styles.checkoutError}>
+              Ödeme iptal edildi. İstediğin zaman tekrar deneyebilirsin.
+            </div>
+          )}
+          {checkoutError && (
+            <div className={styles.checkoutError}>{checkoutError}</div>
           )}
 
           {/* Hero */}
@@ -166,9 +220,21 @@ export default function PremiumPage() {
                   <li>Sınırsız maç analizi</li>
                   <li>İstediğin zaman iptal</li>
                 </ul>
-                <div className={styles.buyBtn}>
-                  Satın Al <span className={styles.buyBtnSoon}>Yakında</span>
-                </div>
+                {!isPremium && (
+                  <button
+                    type="button"
+                    className={styles.buyBtn}
+                    onClick={() => void startCheckout('monthly')}
+                    disabled={checkoutLoading !== null}
+                  >
+                    {checkoutLoading === 'monthly' ? 'Yönlendiriliyor…' : 'Satın Al'}
+                  </button>
+                )}
+                {!isPremium && !session && (
+                  <p className={styles.loginNote}>
+                    <Link href="/auth/signin?callbackUrl=/premium">Giriş yap</Link> ve satın al
+                  </p>
+                )}
               </div>
 
               {/* Yıllık */}
@@ -185,9 +251,16 @@ export default function PremiumPage() {
                   <li>Öncelikli destek</li>
                   <li>Yeni özelliklere erken erişim</li>
                 </ul>
-                <div className={`${styles.buyBtn} ${styles.buyBtnFeatured}`}>
-                  Satın Al <span className={styles.buyBtnSoon}>Yakında</span>
-                </div>
+                {!isPremium && (
+                  <button
+                    type="button"
+                    className={`${styles.buyBtn} ${styles.buyBtnFeatured}`}
+                    onClick={() => void startCheckout('yearly')}
+                    disabled={checkoutLoading !== null}
+                  >
+                    {checkoutLoading === 'yearly' ? 'Yönlendiriliyor…' : 'Satın Al'}
+                  </button>
+                )}
               </div>
             </div>
           </section>

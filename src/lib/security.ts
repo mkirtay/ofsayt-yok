@@ -38,12 +38,7 @@ function sha256(input: string): string {
 }
 
 function appBaseUrl(): string {
-  return (
-    process.env.AUTH_URL ??
-    process.env.NEXT_PUBLIC_APP_URL ??
-    process.env.NEXTAUTH_URL ??
-    'http://localhost:3000'
-  );
+  return (process.env.AUTH_URL ?? 'http://localhost:3000').replace(/\/+$/, '');
 }
 
 function normalizeEmailFrom(raw: string | undefined): string {

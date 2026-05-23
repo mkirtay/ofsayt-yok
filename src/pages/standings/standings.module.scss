@@ -8,10 +8,16 @@
 
 .pageHeader {
   margin: $spacing-4 0;
-  
+
   h1 {
     font-size: 24px;
     font-weight: 700;
+  }
+
+  @media (max-width: $bp-sm) {
+    h1 {
+      font-size: 18px;
+    }
   }
 }
 
@@ -19,6 +25,10 @@
   display: flex;
   gap: $spacing-2;
   margin-bottom: $spacing-4;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  flex-wrap: nowrap;
+  padding-bottom: $spacing-1;
 }
 
 .tab {
@@ -29,7 +39,9 @@
   font-weight: 600;
   color: $color-text-secondary;
   transition: $transition-base;
-  
+  white-space: nowrap;
+  flex-shrink: 0;
+
   &:hover {
     background-color: $color-bg;
   }

@@ -43,8 +43,8 @@ export default function Standings({
         <meta name="description" content="Türkiye Süper Lig puan durumu, gol krallığı ve kart istatistikleri." />
         <meta property="og:title" content="Puan Durumu & İstatistikler | Ofsayt Yok" />
         <meta property="og:description" content="Türkiye Süper Lig puan durumu, gol krallığı ve kart istatistikleri." />
-        <meta property="og:url" content="https://ofsaytyok.com/standings" />
-        <link rel="canonical" href="https://ofsaytyok.com/standings" />
+        <meta property="og:url" content={`${process.env.AUTH_URL ?? 'https://ofsaytyok.app'}/standings`} />
+        <link rel="canonical" href={`${process.env.AUTH_URL ?? 'https://ofsaytyok.app'}/standings`} />
       </Head>
       <div className={styles.pageHeader}>
         <h1>Puan Durumu & İstatistikler</h1>

@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/prisma';
 import { sanitizePlainText } from '@/lib/security';
 import { hitFixedWindowRateLimit } from '@/lib/rateLimit';
+import { captureError } from '@/lib/logger';
 
 const MAX_BODY_LENGTH = 500;
 const PAGE_SIZE = 30;
@@ -103,7 +104,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res.setHeader('Allow', 'GET, POST');
     return res.status(405).end();
   } catch (e) {
-    console.error('[comments]', e);
+    captureError('comments', e);
     return res.status(500).json({
       error: 'Sunucu hatası.',
       ...(process.env.NODE_ENV === 'development' && e instanceof Error

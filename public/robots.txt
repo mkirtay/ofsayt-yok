@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+Disallow: /api/
+Disallow: /profile
+Disallow: /ai-istatistikleri
+Disallow: /auth/
+
+Sitemap: https://ofsaytyok.app/sitemap.xml

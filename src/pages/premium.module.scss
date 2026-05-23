@@ -398,3 +398,27 @@
     margin: 0;
   }
 }
+
+.checkoutError {
+  font-size: 14px;
+  color: $color-danger;
+  background: rgba(255, 86, 48, 0.06);
+  border: 1px solid rgba(255, 86, 48, 0.2);
+  border-radius: $radius-md;
+  padding: $spacing-4;
+  margin-bottom: $spacing-4;
+  text-align: center;
+}
+
+.loginNote {
+  font-size: 13px;
+  color: $color-text-secondary;
+  text-align: center;
+  margin-top: $spacing-2;
+
+  a {
+    color: $color-primary-dark;
+    font-weight: 600;
+    text-decoration: underline;
+  }
+}

@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useMemo, useState, useEffect, useCallback, type CSSProperties } from 'react';
@@ -167,9 +168,9 @@ function VirtualRow({
         <div className={styles.virtualHeaderBar} data-competition-id={item.competition_id}>
           <div className={styles.virtualHeaderMain}>
             {logoUrl ? (
-              <img src={logoUrl} alt="" className={styles.virtualHeaderLogo} width={22} height={22} />
+              <Image src={logoUrl} alt="" className={styles.virtualHeaderLogo} width={22} height={22} />
             ) : showCountryFlag ? (
-              <img
+              <Image
                 src={countryFlagImgSrc(item.country_id!)}
                 alt=""
                 className={styles.virtualHeaderFlag}

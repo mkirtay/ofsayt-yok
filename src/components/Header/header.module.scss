@@ -154,3 +154,198 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+// ── Hamburger ────────────────────────────────────
+
+.hamburger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  width: 36px;
+  height: 36px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: $radius-sm;
+  cursor: pointer;
+  padding: 0;
+  transition: $transition-base;
+
+  span {
+    display: block;
+    width: 18px;
+    height: 2px;
+    background: #fff;
+    border-radius: 2px;
+    transition: $transition-base;
+    transform-origin: center;
+  }
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.18);
+  }
+}
+
+.hamburgerOpen {
+  span:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+  }
+  span:nth-child(2) {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+  span:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
+  }
+}
+
+// ── Mobile menu ──────────────────────────────────
+
+.mobileMenu {
+  position: fixed;
+  top: 52px;
+  left: 0;
+  right: 0;
+  background: $color-surface;
+  border-bottom: 1px solid $color-border;
+  z-index: 95;
+  padding: $spacing-4;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+  box-shadow: 0 8px 24px rgba(16, 32, 21, 0.12);
+}
+
+.mobileMenuWorldCup {
+  background: #0f0f0f;
+  border-bottom-color: #2a2a2a;
+}
+
+.mobileNav {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-1;
+}
+
+.mobileNavLink {
+  display: block;
+  padding: $spacing-3 $spacing-3;
+  border-radius: $radius-sm;
+  font-size: 14px;
+  font-weight: 600;
+  color: $color-text;
+  text-decoration: none;
+  transition: $transition-base;
+
+  &:hover {
+    background: $color-muted;
+    color: $color-primary;
+  }
+
+  .mobileMenuWorldCup & {
+    color: #f0f0f0;
+
+    &:hover {
+      background: #1a1a1a;
+      color: #fff;
+    }
+  }
+}
+
+.mobileNavLinkPremium {
+  display: block;
+  padding: $spacing-3 $spacing-3;
+  border-radius: $radius-sm;
+  font-size: 14px;
+  font-weight: 700;
+  color: #f59e0b;
+  text-decoration: none;
+  transition: $transition-base;
+
+  &:hover {
+    background: rgba(251, 191, 36, 0.1);
+  }
+}
+
+.mobileActions {
+  display: flex;
+  gap: $spacing-2;
+  border-top: 1px solid $color-border;
+  padding-top: $spacing-3;
+
+  .mobileMenuWorldCup & {
+    border-top-color: #2a2a2a;
+  }
+}
+
+.mobileAuthOutline {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-2 $spacing-3;
+  border: 1px solid $color-primary;
+  border-radius: $radius-sm;
+  font-size: 13px;
+  font-weight: 600;
+  color: $color-primary;
+  text-decoration: none;
+  transition: $transition-base;
+
+  &:hover {
+    background: rgba(0, 167, 111, 0.06);
+  }
+}
+
+.mobileAuthFilled {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-2 $spacing-3;
+  background: $color-primary;
+  border-radius: $radius-sm;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  text-decoration: none;
+  transition: $transition-base;
+
+  &:hover {
+    background: $color-primary-dark;
+  }
+}
+
+.mobileSignOut {
+  flex: 1;
+  padding: $spacing-2 $spacing-3;
+  border: 1px solid rgba(220, 38, 38, 0.4);
+  border-radius: $radius-sm;
+  font-size: 13px;
+  font-weight: 600;
+  color: $color-danger;
+  background: none;
+  cursor: pointer;
+  transition: $transition-base;
+
+  &:hover {
+    background: rgba(220, 38, 38, 0.06);
+  }
+}
+
+// ── Responsive ───────────────────────────────────
+
+@media (max-width: $bp-md) {
+  .headerNavPills {
+    display: none;
+  }
+
+  .actions {
+    display: none;
+  }
+
+  .hamburger {
+    display: flex;
+  }
+}

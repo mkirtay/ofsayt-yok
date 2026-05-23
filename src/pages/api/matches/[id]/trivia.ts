@@ -13,6 +13,7 @@ import { runWithLiveScoreHttpClient } from '@/services/liveScoreHttpContext';
 import { livescoreAxiosFromIncomingMessage } from '@/server/livescoreInternalAxios';
 import { buildMatchAnalysisContext } from '@/server/buildMatchAnalysisContext';
 import { generateMatchTrivia, TriviaTimeoutError } from '@/services/aiTriviaService';
+import { captureError } from '@/lib/logger';
 
 const PRE_TTL_MS = 2 * 60 * 60 * 1000; // 2 saat
 
@@ -86,7 +87,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     return res.status(result.status).json(result.body);
   } catch (err) {
-    console.error('[trivia] hata:', err);
+    captureError('trivia', err);
     if (err instanceof TriviaTimeoutError) {
       return res.status(504).json({ error: err.message });
     }

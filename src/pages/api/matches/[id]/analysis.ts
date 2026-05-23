@@ -14,6 +14,7 @@ import { runWithLiveScoreHttpClient } from '@/services/liveScoreHttpContext';
 import { livescoreAxiosFromIncomingMessage } from '@/server/livescoreInternalAxios';
 import { buildMatchAnalysisContext } from '@/server/buildMatchAnalysisContext';
 import { generateMatchAnalysis, AnalysisTimeoutError } from '@/services/aiAnalysisService';
+import { captureError } from '@/lib/logger';
 
 const PRE_TTL_MS = 30 * 60 * 1000;
 
@@ -133,7 +134,7 @@ export default async function handler(
 
     return res.status(result.status).json(result.body);
   } catch (err) {
-    console.error('[analysis] hata:', err);
+    captureError('analysis', err);
     if (err instanceof AnalysisTimeoutError) {
       return res.status(504).json({ error: err.message });
     }

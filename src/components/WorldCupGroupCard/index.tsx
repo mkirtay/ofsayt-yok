@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from 'next/link';
 import { CompetitionTableStandingRow } from '@/services/liveScoreService';
 import styles from './worldCupGroupCard.module.scss';
@@ -54,7 +55,7 @@ export default function WorldCupGroupCard({ groupName, standings }: WorldCupGrou
                     <td className={styles.colRank}>{row.rank}</td>
                     <td className={styles.colTeam}>
                       <div className={styles.teamCell}>
-                        {logo ? <img src={logo} alt="" width={16} height={16} className={styles.teamLogo} /> : null}
+                        {logo ? <Image src={logo} alt="" width={16} height={16} className={styles.teamLogo} /> : null}
                         {id != null ? (
                           <Link href={`/teams/${id}`} className={styles.teamLink} prefetch={false}>
                             {teamName(row)}

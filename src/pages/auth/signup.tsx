@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState, FormEvent } from 'react'
-import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
 import Head from 'next/head'
@@ -93,29 +92,16 @@ export default function SignUpPage() {
 
     const data = await res.json()
 
-    if (!res.ok) {
-      setError(data.error || 'Kayıt başarısız')
-      setLoading(false)
-      return
-    }
-
-    const result = await signIn('credentials', {
-      redirect: false,
-      email,
-      password,
-    })
-
     setLoading(false)
 
-    if (result?.error) {
-      setError('Kayıt başarılı ama giriş yapılamadı. Lütfen giriş sayfasını deneyin.')
+    if (!res.ok) {
+      setError(data.error || 'Kayıt başarısız')
+      if (window.turnstile) window.turnstile.reset()
+      setTurnstileToken('')
       return
     }
 
-    router.push('/')
-
-    if (window.turnstile) window.turnstile.reset()
-    setTurnstileToken('')
+    void router.push(`/auth/verify-email-sent?email=${encodeURIComponent(email)}`)
   }
 
   return (

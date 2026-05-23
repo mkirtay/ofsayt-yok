@@ -11,6 +11,7 @@ import MatchForum from '@/components/MatchForum';
 import MatchAnalysis from '@/components/MatchAnalysis';
 import MatchTrivia from '@/components/MatchTrivia';
 import MatchPoll from '@/components/MatchPoll';
+import JsonLd from '@/components/JsonLd';
 import {
   getCompetitionTableFull,
   getMatchLineups,
@@ -158,7 +159,7 @@ export default function MatchDetail({
   const pageDescription = homeName && awayName
     ? `${homeName} vs ${awayName}${compName ? ` - ${compName}` : ''} maç detayı, istatistikler ve kadro bilgileri.`
     : 'Maç detayı, istatistikler ve kadro bilgileri.';
-  const canonicalUrl = `https://ofsaytyok.com${canonicalPath}`;
+  const canonicalUrl = `${process.env.AUTH_URL ?? 'https://ofsaytyok.app'}${canonicalPath}`;
 
   return (
     <>
@@ -170,11 +171,24 @@ export default function MatchDetail({
         <meta property="og:description" content={pageDescription} />
         <meta property="og:type" content="article" />
         <meta property="og:url" content={canonicalUrl} />
-        <meta property="og:image" content={match?.home?.logo || 'https://ofsaytyok.com/images/logo.svg'} />
+        <meta property="og:image" content={match?.home?.logo || 'https://ofsaytyok.app/images/logo.svg'} />
         <meta name="twitter:card" content="summary" />
         <meta name="twitter:title" content={pageTitle} />
         <meta name="twitter:description" content={pageDescription} />
-        <meta name="twitter:image" content={match?.home?.logo || 'https://ofsaytyok.com/images/logo.svg'} />
+        <meta name="twitter:image" content={match?.home?.logo || 'https://ofsaytyok.app/images/logo.svg'} />
+        {match && (
+          <JsonLd schema={{
+            '@context': 'https://schema.org',
+            '@type': 'SportsEvent',
+            name: pageTitle,
+            url: canonicalUrl,
+            sport: 'Soccer',
+            ...(match.date ? { startDate: match.date } : {}),
+            homeTeam: homeName ? { '@type': 'SportsTeam', name: homeName } : undefined,
+            awayTeam: awayName ? { '@type': 'SportsTeam', name: awayName } : undefined,
+            ...(compName ? { organizer: { '@type': 'Organization', name: compName } } : {}),
+          }} />
+        )}
       </Head>
       <Container>
       <div className="layout-split">

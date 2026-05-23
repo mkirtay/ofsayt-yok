@@ -24,8 +24,8 @@ export default function UefaPage({
         <meta name="description" content="UEFA Şampiyonlar Ligi, Avrupa Ligi ve Konferans Ligi maçları, canlı skorlar ve sonuçları." />
         <meta property="og:title" content="UEFA Maçları | Ofsayt Yok" />
         <meta property="og:description" content="UEFA Şampiyonlar Ligi, Avrupa Ligi ve Konferans Ligi maçları, canlı skorlar ve sonuçları." />
-        <meta property="og:url" content="https://ofsaytyok.com/uefa" />
-        <link rel="canonical" href="https://ofsaytyok.com/uefa" />
+        <meta property="og:url" content={`${process.env.AUTH_URL ?? 'https://ofsaytyok.app'}/uefa`} />
+        <link rel="canonical" href={`${process.env.AUTH_URL ?? 'https://ofsaytyok.app'}/uefa`} />
       </Head>
       <MatchHubPage
       sidebarLeagues={UEFA_SIDEBAR_LEAGUES}
