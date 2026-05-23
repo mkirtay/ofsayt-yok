@@ -24,7 +24,9 @@ export default function App({ Component, pageProps: { session, ...pageProps } }:
         <meta property="og:type" content="website" />
         <meta property="og:image" content={`${process.env.AUTH_URL ?? 'https://ofsaytyok.app'}/images/logo.svg`} />
         <meta name="twitter:card" content="summary" />
-        <link rel="icon" href="/favicon.ico" />
+        <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="apple-touch-icon" href="/icon.svg" />
       </Head>
       <div className={`${inter.className} ${inter.variable}`}>
         <Layout>

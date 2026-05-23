@@ -1,0 +1,5 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="32" height="32" rx="7" fill="#00a76f"/>
+  <!-- O harfi — path tabanlı, text elementi yerine -->
+  <path d="M16 7C11.03 7 7 11.03 7 16C7 20.97 11.03 25 16 25C20.97 25 25 20.97 25 16C25 11.03 20.97 7 16 7ZM16 21.5C13.01 21.5 10.5 18.99 10.5 16C10.5 13.01 13.01 10.5 16 10.5C18.99 10.5 21.5 13.01 21.5 16C21.5 18.99 18.99 21.5 16 21.5Z" fill="white"/>
+</svg>
