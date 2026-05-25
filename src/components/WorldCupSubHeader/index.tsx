@@ -1,7 +1,7 @@
 import Container from '../Container';
 import styles from './worldCupSubHeader.module.scss';
 
-export type WorldCupMainTab = 'groups' | 'matches';
+export type WorldCupMainTab = 'groups' | 'matches' | 'calendar' | 'bracket' | 'teams';
 
 type WorldCupSubHeaderProps = {
   activeTab: WorldCupMainTab;
@@ -11,6 +11,9 @@ type WorldCupSubHeaderProps = {
 const TABS: Array<{ key: WorldCupMainTab; label: string }> = [
   { key: 'groups', label: 'Gruplar' },
   { key: 'matches', label: 'Maçlar' },
+  { key: 'calendar', label: 'Takvim' },
+  { key: 'bracket', label: 'Eleme Turu' },
+  { key: 'teams', label: 'Takımlar' },
 ];
 
 export default function WorldCupSubHeader({ activeTab, onTabChange }: WorldCupSubHeaderProps) {

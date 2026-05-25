@@ -282,19 +282,19 @@ export function mergeFixturesWithHistoryAndLive(
 /** `matches/history` — `competition_id` ile sayfalanmış tüm maçlar (sayfa başına max 30). */
 export async function getAllCompetitionHistoryMatches(
   competitionId: string,
-  opts?: { from?: string; to?: string; maxPages?: number },
+  opts?: { from?: string; to?: string; maxPages?: number; season_id?: number },
 ): Promise<Match[]> {
   const maxPages = Math.max(1, opts?.maxPages ?? 35);
+  const extraParams = {
+    ...(opts?.from ? { from: opts.from } : {}),
+    ...(opts?.to ? { to: opts.to } : {}),
+    ...(opts?.season_id != null ? { season_id: opts.season_id } : {}),
+  };
   try {
     const first = await getLiveScoreHttpClient().get<{ success?: boolean; data?: { match?: Match[] } & Record<string, unknown> }>(
       `/matches/history`,
       {
-        params: {
-          competition_id: competitionId,
-          page: 1,
-          ...(opts?.from ? { from: opts.from } : {}),
-          ...(opts?.to ? { to: opts.to } : {}),
-        },
+        params: { competition_id: competitionId, page: 1, ...extraParams },
       },
     );
     if (!first.data.success || !Array.isArray(first.data.data?.match)) return [];
@@ -307,12 +307,7 @@ export async function getAllCompetitionHistoryMatches(
     const rest = await Promise.all(
       Array.from({ length: pagesToFetch - 1 }, (_, i) =>
         getLiveScoreHttpClient().get<{ success?: boolean; data?: { match?: Match[] } }>(`/matches/history`, {
-          params: {
-            competition_id: competitionId,
-            page: i + 2,
-            ...(opts?.from ? { from: opts.from } : {}),
-            ...(opts?.to ? { to: opts.to } : {}),
-          },
+          params: { competition_id: competitionId, page: i + 2, ...extraParams },
         }),
       ),
     );

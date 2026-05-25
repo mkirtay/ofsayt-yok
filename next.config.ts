@@ -3,9 +3,6 @@ import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
   reactStrictMode: false,
-  turbopack: {
-    root: process.cwd(),
-  },
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: '**' },

@@ -1,0 +1,120 @@
+@use '../../styles/variables' as *;
+
+$wc-bg-dark: #121212;
+$wc-bg-hover: #1b1b1b;
+$wc-border: #2a2a2a;
+$wc-text: #e3e3e3;
+$wc-text-muted: #9a9a9a;
+
+.root {
+  background: $wc-bg-dark;
+  border: 1px solid $wc-border;
+  border-radius: $radius-md;
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-3 $spacing-4;
+  border-bottom: 1px solid $wc-border;
+}
+
+.headerCount {
+  font-size: 13px;
+  font-weight: 700;
+  color: $wc-text;
+}
+
+.headerHint {
+  font-size: 11px;
+  color: $wc-text-muted;
+}
+
+.list {
+  overflow-y: auto;
+  max-height: 700px;
+}
+
+.groupHeader {
+  padding: $spacing-2 $spacing-4;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: $wc-text-muted;
+  background: #0d0d0d;
+  border-bottom: 1px solid $wc-border;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.teamRow {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #1e1e1e;
+  transition: background 0.15s;
+
+  &:hover {
+    background: $wc-bg-hover;
+  }
+}
+
+.teamInfo {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  padding: $spacing-3 $spacing-4;
+  text-align: left;
+  min-width: 0;
+}
+
+.teamLogo {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.teamLogoPlaceholder {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #2a2a2a;
+  flex-shrink: 0;
+}
+
+.teamName {
+  font-size: 14px;
+  color: $wc-text;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.favBtn {
+  padding: $spacing-2 $spacing-4;
+  font-size: 18px;
+  color: $wc-text-muted;
+  transition: $transition-base;
+  flex-shrink: 0;
+
+  &:hover {
+    color: #f59e0b;
+    transform: scale(1.1);
+  }
+}
+
+.favBtnActive {
+  color: #f59e0b;
+}
+
+.empty {
+  padding: $spacing-6;
+  text-align: center;
+  color: $wc-text-muted;
+  font-size: 14px;
+}
