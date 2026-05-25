@@ -1,0 +1,226 @@
+@use '../../styles/variables' as *;
+
+$wc-bg-dark: #121212;
+$wc-bg-card: #1a1a1a;
+$wc-border: #2a2a2a;
+$wc-text: #e3e3e3;
+$wc-text-muted: #9a9a9a;
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 200;
+}
+
+.drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 380px;
+  max-width: 100vw;
+  background: $wc-bg-dark;
+  border-left: 1px solid $wc-border;
+  z-index: 201;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+  overflow: hidden;
+
+  @media (max-width: $bp-sm) {
+    width: 100vw;
+  }
+}
+
+.drawerOpen {
+  transform: translateX(0);
+}
+
+.drawerHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-4 $spacing-5;
+  border-bottom: 1px solid $wc-border;
+  flex-shrink: 0;
+}
+
+.teamInfo {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+}
+
+.teamLogo {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
+.teamName {
+  font-size: 17px;
+  font-weight: 700;
+  color: $wc-text;
+}
+
+.teamGroup {
+  font-size: 12px;
+  color: $wc-text-muted;
+  margin-top: 2px;
+}
+
+.closeBtn {
+  font-size: 20px;
+  color: $wc-text-muted;
+  padding: $spacing-1;
+  transition: $transition-base;
+
+  &:hover {
+    color: $wc-text;
+  }
+}
+
+.drawerBody {
+  flex: 1;
+  overflow-y: auto;
+  padding: $spacing-5;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-6;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+}
+
+.sectionTitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: $wc-text-muted;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 0;
+  padding-bottom: $spacing-2;
+  border-bottom: 1px solid $wc-border;
+}
+
+.matchList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+}
+
+.matchItem {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  padding: $spacing-3;
+  background: $wc-bg-card;
+  border: 1px solid $wc-border;
+  border-radius: $radius-sm;
+}
+
+.matchDate {
+  font-size: 12px;
+  color: $wc-text-muted;
+  flex-shrink: 0;
+  min-width: 64px;
+}
+
+.matchTime {
+  font-weight: 700;
+  color: $wc-text;
+}
+
+.matchOpponent {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  min-width: 0;
+}
+
+.opponentLogo {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.opponentName {
+  font-size: 13px;
+  color: $wc-text;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.matchResult {
+  flex-shrink: 0;
+}
+
+.score {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  background: $color-primary-dark;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.matchLocation {
+  font-size: 11px;
+  color: $wc-text-muted;
+}
+
+// History
+.historyList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+}
+
+.historyItem {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  padding: $spacing-3;
+  background: $wc-bg-card;
+  border: 1px solid $wc-border;
+  border-radius: $radius-sm;
+}
+
+.historyYear {
+  font-size: 16px;
+  font-weight: 800;
+  color: $wc-text;
+  min-width: 48px;
+}
+
+.historyBest {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 600;
+  color: #f59e0b;
+}
+
+.historyStats {
+  font-size: 12px;
+  color: $wc-text-muted;
+}
+
+.empty {
+  font-size: 13px;
+  color: $wc-text-muted;
+  padding: $spacing-3 0;
+}
+
+.loading {
+  font-size: 13px;
+  color: $wc-text-muted;
+  padding: $spacing-3 0;
+}

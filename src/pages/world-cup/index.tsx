@@ -1,11 +1,18 @@
 import type { GetServerSideProps, InferGetServerSidePropsType } from 'next';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Head from 'next/head';
+import { useSession } from 'next-auth/react';
 import MatchCompetitionStandings from '@/components/MatchCompetitionStandings';
 import MatchList from '@/components/MatchList';
 import NewsList from '@/components/NewsList';
 import WorldCupGroupCard from '@/components/WorldCupGroupCard';
 import WorldCupLayout from '@/components/layouts/WorldCupLayout';
+import WorldCupCalendar from '@/components/WorldCupCalendar';
+import WorldCupTeamList, { extractAllTeams } from '@/components/WorldCupTeamList';
+import type { TeamEntry } from '@/components/WorldCupTeamList';
+import WorldCupTeamDrawer from '@/components/WorldCupTeamDrawer';
+import UefaKnockoutBracket from '@/components/UefaKnockoutBracket';
+import { buildWorldCupBracketRounds } from '@/utils/worldCupBracket';
 import {
   sortWorldCupGroupsByName,
   pickWorldCupSeasonsFromApi,
@@ -13,6 +20,7 @@ import {
   WORLD_CUP_DEFAULT_SEASON_ID,
 } from '@/config/worldCup';
 import type { NewsItem } from '@/models/domain';
+import type { Match } from '@/models/liveScore';
 import {
   CompetitionGroupItem,
   CompetitionTableData,
@@ -32,7 +40,7 @@ import { loadWorldCupBootstrapData } from '@/server/loadWorldCupBootstrapData';
 import { propsJsonSafe } from '@/server/propsJsonSafe';
 import styles from './worldCup.module.scss';
 
-type WorldCupMainTab = 'groups' | 'matches';
+type WorldCupMainTab = 'groups' | 'matches' | 'calendar' | 'bracket' | 'teams';
 type SidebarTab = 'standings' | 'groups' | 'news';
 
 type GroupStandings = {
@@ -42,6 +50,7 @@ type GroupStandings = {
 };
 
 const WORLD_CUP_ID = String(WORLD_CUP_COMPETITION_ID);
+const FAV_TEAMS_KEY = 'oy_wc_fav_teams';
 
 function extractGroupsFromTable(data: CompetitionTableData | null): CompetitionGroupItem[] {
   if (!data?.stages?.length) return [];
@@ -79,6 +88,7 @@ type WorldCupPageProps = {
 export default function WorldCupPage({
   wcBootstrap,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
+  const { data: session } = useSession();
   const [mainTab, setMainTab] = useState<WorldCupMainTab>('groups');
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>('groups');
 
@@ -100,11 +110,23 @@ export default function WorldCupPage({
   );
 
   const skipWcBootstrap = useRef(!!wcBootstrap);
+  const liveCheckedRef = useRef(false);
 
-  const [groupMatches, setGroupMatches] = useState<GroupedLeagueMatches[]>([]);
+  const [groupMatches, setGroupMatches] = useState<GroupedLeagueMatches[]>(
+    () => wcBootstrap?.groupMatches ?? []
+  );
+  const [allMatchesFlat, setAllMatchesFlat] = useState<Match[]>(
+    () => wcBootstrap?.groupMatches?.flatMap((g) => g.matches) ?? []
+  );
   const [groupMatchesLoading, setGroupMatchesLoading] = useState(false);
 
   const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
+
+  // Favorites
+  const [favoriteTeamIds, setFavoriteTeamIds] = useState<number[]>([]);
+
+  // Team drawer
+  const [selectedTeam, setSelectedTeam] = useState<TeamEntry | null>(null);
 
   const groups = useMemo(() => extractGroupsFromTable(tableData), [tableData]);
   const groupCards = useMemo(() => extractGroupStandings(tableData), [tableData]);
@@ -112,6 +134,12 @@ export default function WorldCupPage({
   const selectedGroupName = useMemo(
     () => groups.find((g) => g.id === selectedGroupId)?.name || '—',
     [groups, selectedGroupId],
+  );
+
+  // Bracket data
+  const bracketRounds = useMemo(
+    () => buildWorldCupBracketRounds(allMatchesFlat),
+    [allMatchesFlat]
   );
 
   // World Cup dark theme class
@@ -122,21 +150,66 @@ export default function WorldCupPage({
     };
   }, []);
 
+  // Load favorites: session → API, guest → localStorage
+  useEffect(() => {
+    if (session?.user) {
+      fetch('/api/user/favorites')
+        .then((r) => r.json())
+        .then((data) => {
+          if (Array.isArray(data?.favoriteTeamIds)) {
+            setFavoriteTeamIds(data.favoriteTeamIds);
+          }
+        })
+        .catch(() => {});
+    } else {
+      try {
+        const raw = localStorage.getItem(FAV_TEAMS_KEY);
+        if (raw) setFavoriteTeamIds(JSON.parse(raw));
+      } catch {
+        // ignore
+      }
+    }
+  }, [session]);
+
+  const handleToggleFavorite = useCallback(
+    (teamId: number) => {
+      setFavoriteTeamIds((prev) => {
+        const next = prev.includes(teamId)
+          ? prev.filter((id) => id !== teamId)
+          : [...prev, teamId];
+
+        if (session?.user) {
+          fetch('/api/user/favorites', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ favoriteTeamIds: next }),
+          }).catch(() => {});
+        } else {
+          try {
+            localStorage.setItem(FAV_TEAMS_KEY, JSON.stringify(next));
+          } catch {
+            // ignore
+          }
+        }
+
+        return next;
+      });
+    },
+    [session]
+  );
+
   // Bootstrap: fetch table + seasons once
   useEffect(() => {
     let cancelled = false;
 
     if (skipWcBootstrap.current) {
       skipWcBootstrap.current = false;
-      return () => {
-        cancelled = true;
-      };
+      return () => { cancelled = true; };
     }
 
     const bootstrap = async () => {
       setLoading(true);
       setError(null);
-
       try {
         const seasonsList = await getSeasonsList({ skipCalendarYearDedupe: true });
         if (cancelled) return;
@@ -172,16 +245,13 @@ export default function WorldCupPage({
     };
 
     bootstrap();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, []);
 
-  // Season change: re-fetch table with season_id
+  // Season change
   const handleSeasonChange = useCallback(async (seasonId: number) => {
     setSelectedSeasonId(seasonId);
     setLoading(true);
-
     try {
       const table = await getCompetitionTableFull(WORLD_CUP_ID, { season: seasonId });
       setTableData(table);
@@ -210,25 +280,37 @@ export default function WorldCupPage({
     };
 
     fetchGroupTable();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [selectedGroupId, selectedSeasonId]);
 
-  // Fetch fixtures when matches tab is active; history + canlı ile skor / MS / CANLI
+  // Merge live scores into SSR fixture data once they're fetched
   useEffect(() => {
-    if (mainTab !== 'matches' || !groups.length) return;
+    if (!['matches', 'calendar', 'bracket'].includes(mainTab) || !groups.length) return;
+    const needsClientFetch = groupMatches.length === 0;
+    // SSR data present + live check already done this session → nothing to do
+    if (!needsClientFetch && liveCheckedRef.current) return;
     let cancelled = false;
 
     const fetchFixtures = async () => {
-      setGroupMatchesLoading(true);
+      if (needsClientFetch) setGroupMatchesLoading(true);
+
       const [historyMatches, liveAll] = await Promise.all([
-        getAllCompetitionHistoryMatches(WORLD_CUP_ID, { maxPages: 35 }),
+        getAllCompetitionHistoryMatches(WORLD_CUP_ID, {
+          maxPages: 10,
+          season_id: selectedSeasonId ?? undefined,
+        }),
         getAllLiveMatches(),
       ]);
       if (cancelled) return;
+      liveCheckedRef.current = true;
 
       const liveWc = liveAll.filter((m) => m.competition?.id === WORLD_CUP_COMPETITION_ID);
+
+      // If no live WC matches and SSR data is present, skip the expensive re-merge
+      if (!needsClientFetch && liveWc.length === 0) {
+        setGroupMatchesLoading(false);
+        return;
+      }
 
       const byGroup = await Promise.all(
         groups.map(async (group) => {
@@ -245,17 +327,28 @@ export default function WorldCupPage({
           } as GroupedLeagueMatches;
         }),
       );
+
       if (!cancelled) {
-        setGroupMatches(byGroup.filter((g) => g.matches.length > 0));
+        const groupMatchesFilled = byGroup.filter((g) => g.matches.length > 0);
+        setGroupMatches(groupMatchesFilled);
+
+        const seen = new Set<number>();
+        const deduped = [
+          ...historyMatches,
+          ...groupMatchesFilled.flatMap((g) => g.matches),
+        ].filter((m) => {
+          if (seen.has(m.id)) return false;
+          seen.add(m.id);
+          return true;
+        });
+        setAllMatchesFlat(deduped);
         setGroupMatchesLoading(false);
       }
     };
 
     fetchFixtures();
-    return () => {
-      cancelled = true;
-    };
-  }, [mainTab, groups, selectedSeasonId]);
+    return () => { cancelled = true; };
+  }, [mainTab, groups, groupMatches.length, selectedSeasonId]);
 
   // Fetch news lazily
   useEffect(() => {
@@ -264,12 +357,12 @@ export default function WorldCupPage({
     getNews(15).then((items) => {
       if (!cancelled) setNewsItems(items);
     });
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [newsItems.length, sidebarTab]);
 
   const newsLoading = sidebarTab === 'news' && newsItems.length === 0;
+
+  const isMatchDataTab = mainTab === 'matches' || mainTab === 'calendar' || mainTab === 'bracket';
 
   return (
     <>
@@ -284,108 +377,160 @@ export default function WorldCupPage({
         <link rel="canonical" href={`${process.env.AUTH_URL ?? 'https://ofsaytyok.app'}/world-cup`} />
       </Head>
       <WorldCupLayout
-      activeTab={mainTab}
-      onTabChange={setMainTab}
-      sidebar={
-        <div className={styles.sidebar}>
-          <nav className={styles.sidebarTabs}>
-            <button
-              type="button"
-              className={`${styles.sidebarTab} ${sidebarTab === 'standings' ? styles.sidebarTabActive : ''}`}
-              onClick={() => setSidebarTab('standings')}
-            >
-              Puan Durumu
-            </button>
-            <button
-              type="button"
-              className={`${styles.sidebarTab} ${sidebarTab === 'groups' ? styles.sidebarTabActive : ''}`}
-              onClick={() => setSidebarTab('groups')}
-            >
-              Gruplar
-            </button>
-            <button
-              type="button"
-              className={`${styles.sidebarTab} ${sidebarTab === 'news' ? styles.sidebarTabActive : ''}`}
-              onClick={() => setSidebarTab('news')}
-            >
-              Haberler
-            </button>
-          </nav>
+        activeTab={mainTab}
+        onTabChange={setMainTab}
+        sidebar={
+          <div className={styles.sidebar}>
+            <nav className={styles.sidebarTabs}>
+              <button
+                type="button"
+                className={`${styles.sidebarTab} ${sidebarTab === 'standings' ? styles.sidebarTabActive : ''}`}
+                onClick={() => setSidebarTab('standings')}
+              >
+                Puan Durumu
+              </button>
+              <button
+                type="button"
+                className={`${styles.sidebarTab} ${sidebarTab === 'groups' ? styles.sidebarTabActive : ''}`}
+                onClick={() => setSidebarTab('groups')}
+              >
+                Gruplar
+              </button>
+              <button
+                type="button"
+                className={`${styles.sidebarTab} ${sidebarTab === 'news' ? styles.sidebarTabActive : ''}`}
+                onClick={() => setSidebarTab('news')}
+              >
+                Haberler
+              </button>
+            </nav>
 
-          <div className={styles.sidebarContent}>
-            {sidebarTab === 'standings' && (
-              <MatchCompetitionStandings
-                data={selectedGroupTable}
-                loading={selectedGroupLoading}
-                competitionName={`FIFA World Cup - Group ${selectedGroupName}`}
-                variant="worldCup"
-                seasons={seasons}
-                selectedSeasonId={selectedSeasonId}
-                onSeasonChange={handleSeasonChange}
-              />
+            <div className={styles.sidebarContent}>
+              {sidebarTab === 'standings' && (
+                <MatchCompetitionStandings
+                  data={selectedGroupTable}
+                  loading={selectedGroupLoading}
+                  competitionName={`FIFA World Cup - Group ${selectedGroupName}`}
+                  variant="worldCup"
+                  seasons={seasons}
+                  selectedSeasonId={selectedSeasonId}
+                  onSeasonChange={handleSeasonChange}
+                />
+              )}
+
+              {sidebarTab === 'groups' && (
+                groups.length ? (
+                  <ul className={styles.groupList}>
+                    {groups.map((group) => (
+                      <li key={group.id}>
+                        <button
+                          type="button"
+                          className={`${styles.groupItem} ${
+                            group.id === selectedGroupId ? styles.groupItemActive : ''
+                          }`}
+                          onClick={() => {
+                            setSelectedGroupId(group.id);
+                            setSidebarTab('standings');
+                          }}
+                        >
+                          Group {group.name}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className={styles.empty}>
+                    {loading ? 'Yükleniyor...' : 'Grup bulunamadı.'}
+                  </div>
+                )
+              )}
+
+              {sidebarTab === 'news' && <NewsList items={newsItems} loading={newsLoading} />}
+            </div>
+          </div>
+        }
+        content={
+          <section className={styles.content}>
+            {/* Gruplar */}
+            {mainTab === 'groups' && (
+              loading ? (
+                <div className={styles.loading}>Dünya kupası grupları yükleniyor...</div>
+              ) : error ? (
+                <div className={styles.empty}>{error}</div>
+              ) : groupCards.length ? (
+                <div className={styles.groupCards}>
+                  {groupCards.map((group) => (
+                    <WorldCupGroupCard
+                      key={group.id}
+                      groupName={group.name}
+                      standings={group.standings}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className={styles.empty}>Grup bulunamadı.</div>
+              )
             )}
 
-            {sidebarTab === 'groups' && (
-              groups.length ? (
-                <ul className={styles.groupList}>
-                  {groups.map((group) => (
-                    <li key={group.id}>
-                      <button
-                        type="button"
-                        className={`${styles.groupItem} ${
-                          group.id === selectedGroupId ? styles.groupItemActive : ''
-                        }`}
-                        onClick={() => {
-                          setSelectedGroupId(group.id);
-                          setSidebarTab('standings');
-                        }}
-                      >
-                        Group {group.name}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
+            {/* Maçlar */}
+            {mainTab === 'matches' && (
+              groupMatchesLoading ? (
+                <div className={styles.loading}>Grup maçları yükleniyor...</div>
+              ) : groupMatches.length ? (
+                <MatchList groupedMatches={groupMatches} variant="worldCup" showDateWhenNotToday />
+              ) : (
+                <div className={styles.empty}>Bu tarih için dünya kupası fikstürü bulunamadı.</div>
+              )
+            )}
+
+            {/* Takvim */}
+            {mainTab === 'calendar' && (
+              groupMatchesLoading ? (
+                <div className={styles.loading}>Maçlar yükleniyor...</div>
+              ) : (
+                <WorldCupCalendar matches={allMatchesFlat} />
+              )
+            )}
+
+            {/* Eleme Turu */}
+            {mainTab === 'bracket' && (
+              groupMatchesLoading ? (
+                <div className={styles.loading}>Eleme turu yükleniyor...</div>
+              ) : bracketRounds.length ? (
+                <UefaKnockoutBracket
+                  rounds={bracketRounds}
+                  competitionName="FIFA Dünya Kupası 2026"
+                />
               ) : (
                 <div className={styles.empty}>
-                  {loading ? 'Yükleniyor...' : 'Grup bulunamadı.'}
+                  Eleme turu maçları henüz başlamadı. Grup aşaması tamamlandıktan sonra burada görüntülenecek.
                 </div>
               )
             )}
 
-            {sidebarTab === 'news' && <NewsList items={newsItems} loading={newsLoading} />}
-          </div>
-        </div>
-      }
-      content={
-        <section className={styles.content}>
-          {mainTab === 'groups' ? (
-            loading ? (
-              <div className={styles.loading}>Dünya kupası grupları yükleniyor...</div>
-            ) : error ? (
-              <div className={styles.empty}>{error}</div>
-            ) : groupCards.length ? (
-              <div className={styles.groupCards}>
-                {groupCards.map((group) => (
-                  <WorldCupGroupCard
-                    key={group.id}
-                    groupName={group.name}
-                    standings={group.standings}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className={styles.empty}>Grup bulunamadı.</div>
-            )
-          ) : groupMatchesLoading ? (
-            <div className={styles.loading}>Grup maçları yükleniyor...</div>
-          ) : groupMatches.length ? (
-            <MatchList groupedMatches={groupMatches} variant="worldCup" />
-          ) : (
-            <div className={styles.empty}>Bu tarih için dünya kupası fikstürü bulunamadı.</div>
-          )}
-        </section>
-      }
-    />
+            {/* Takımlar */}
+            {mainTab === 'teams' && (
+              loading ? (
+                <div className={styles.loading}>Takımlar yükleniyor...</div>
+              ) : (
+                <WorldCupTeamList
+                  tableData={tableData}
+                  favoriteTeamIds={favoriteTeamIds}
+                  onToggleFavorite={handleToggleFavorite}
+                  onSelectTeam={setSelectedTeam}
+                />
+              )
+            )}
+          </section>
+        }
+      />
+
+      {/* Team Drawer */}
+      <WorldCupTeamDrawer
+        team={selectedTeam}
+        groupMatches={groupMatches}
+        onClose={() => setSelectedTeam(null)}
+      />
     </>
   );
 }
