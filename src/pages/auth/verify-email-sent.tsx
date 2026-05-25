@@ -1,31 +1,34 @@
+import type { GetStaticProps } from 'next';
 import Head from 'next/head';
+import { serverSideTranslations } from '@/lib/serverSideTranslations';
+import { useTranslation } from '@/lib/i18n';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import styles from './auth.module.scss';
 
 export default function VerifyEmailSentPage() {
   const router = useRouter();
+  const { t } = useTranslation('auth');
   const email = typeof router.query.email === 'string' ? router.query.email : '';
 
   return (
     <>
       <Head>
-        <title>E-postanı Doğrula — Ofsayt Yok</title>
+        <title>{t('verifyEmail.pageTitle')}</title>
         <meta name="robots" content="noindex, nofollow" />
       </Head>
       <div className={styles.wrapper}>
         <div className={styles.card}>
-          <h1 className={styles.title}>E-postanı Doğrula</h1>
+          <h1 className={styles.title}>{t('verifyEmail.title')}</h1>
           <p className={styles.footer}>
-            <strong>{email || 'E-posta adresine'}</strong> bir doğrulama bağlantısı gönderdik.
-            Gelen kutunu kontrol et ve bağlantıya tıklayarak hesabını aktif et.
+            {t('verifyEmail.sentMessage', { email: email || t('verifyEmail.fallbackEmail') })}
           </p>
           <p className={styles.footer} style={{ marginTop: 8 }}>
-            Mail gelmedi mi? Spam/gereksiz klasörünü kontrol et.
+            {t('verifyEmail.notReceived')}
           </p>
           <p className={styles.footer} style={{ marginTop: 16 }}>
             <Link href="/auth/signin" className={styles.link}>
-              Giriş Yap
+              {t('verifyEmail.signInLink')}
             </Link>
           </p>
         </div>
@@ -33,3 +36,9 @@ export default function VerifyEmailSentPage() {
     </>
   );
 }
+
+export const getStaticProps: GetStaticProps = async ({ locale }) => ({
+  props: {
+    ...(await serverSideTranslations(locale ?? 'tr', ['common', 'nav', 'auth'])),
+  },
+});

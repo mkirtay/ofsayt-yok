@@ -130,7 +130,7 @@ export default function MatchHubPage({
   const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
   const [newsLoading, setNewsLoading] = useState(false);
 
-  const [favoriteMatchIds, setFavoriteMatchIds] = useState<Set<string>>(() => new Set());
+  const [favoriteTeamIds, setFavoriteTeamIds] = useState<number[]>([]);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -312,22 +312,21 @@ export default function MatchHubPage({
     };
   }, [selectedCompId, isUefaMode, initialUefaHubData, initialDefaultHubData]);
 
-  const LS_KEY = 'oy_fav_matches';
+  const FAV_LS_KEY = 'oy_fav_club_teams';
 
   useEffect(() => {
     try {
-      const raw = localStorage.getItem(LS_KEY);
-      if (raw) setFavoriteMatchIds(new Set(JSON.parse(raw) as string[]));
+      const raw = localStorage.getItem(FAV_LS_KEY);
+      if (raw) setFavoriteTeamIds(JSON.parse(raw) as number[]);
     } catch {}
   }, []);
 
-  const toggleFavoriteMatch = useCallback((matchId: string) => {
-    setFavoriteMatchIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(matchId)) next.delete(matchId);
-      else next.add(matchId);
+  const toggleFavoriteTeam = useCallback((teamId: number) => {
+    if (!teamId) return;
+    setFavoriteTeamIds((prev) => {
+      const next = prev.includes(teamId) ? prev.filter((id) => id !== teamId) : [...prev, teamId];
       try {
-        localStorage.setItem(LS_KEY, JSON.stringify([...next]));
+        localStorage.setItem(FAV_LS_KEY, JSON.stringify(next));
       } catch {}
       return next;
     });
@@ -366,7 +365,12 @@ export default function MatchHubPage({
     return buildBracketRounds(uefaMerged);
   }, [isUefaMode, uefaMerged]);
 
+  const favoriteTeamSet = useMemo(() => new Set(favoriteTeamIds), [favoriteTeamIds]);
+
   const displayMatches = useMemo(() => {
+    const isFavMatch = (m: Match) =>
+      favoriteTeamSet.has(m.home?.id ?? -1) || favoriteTeamSet.has(m.away?.id ?? -1);
+
     if (isUefaMode) {
       switch (activeTab) {
         case 'live':
@@ -376,7 +380,7 @@ export default function MatchHubPage({
         case 'finished':
           return uefaMerged.filter((m) => m.status === 'FINISHED');
         case 'favorites':
-          return uefaMerged.filter((m) => favoriteMatchIds.has(String(m.id)));
+          return uefaMerged.filter(isFavMatch);
         case 'all':
         default:
           return sortMatchesForUefaList(uefaMerged);
@@ -396,7 +400,7 @@ export default function MatchHubPage({
           liveMatches,
           fixtures: fixtureMatches,
         });
-        return merged.filter((m) => favoriteMatchIds.has(String(m.id)));
+        return merged.filter(isFavMatch);
       }
       case 'all':
       default:
@@ -415,7 +419,7 @@ export default function MatchHubPage({
     liveMatches,
     fixtureMatches,
     selectedDate,
-    favoriteMatchIds,
+    favoriteTeamSet,
   ]);
 
   const competitionFilterSet = useMemo(() => {
@@ -551,9 +555,9 @@ export default function MatchHubPage({
           <div className="layout-left">
             {loading ? (
               <div className={styles.loading}>Yükleniyor...</div>
-            ) : activeTab === 'favorites' && favoriteMatchIds.size === 0 ? (
+            ) : activeTab === 'favorites' && favoriteTeamIds.length === 0 ? (
               <div className={styles.empty}>
-                Favori maç eklemek için maç satırındaki ☆ butonuna tıklayın.
+                Takım favorilere eklemek için maç satırındaki ☆ butonuna tıklayın.
               </div>
             ) : (
               <>
@@ -568,8 +572,8 @@ export default function MatchHubPage({
                 <MatchList
                   groupedMatches={grouped}
                   showDateWhenNotToday={isUefaMode}
-                  favoriteMatchIds={favoriteMatchIds}
-                  onToggleFavorite={toggleFavoriteMatch}
+                  favoriteTeamIds={favoriteTeamSet}
+                  onToggleFavorite={toggleFavoriteTeam}
                 />
               </>
             )}

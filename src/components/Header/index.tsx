@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useSession, signOut } from 'next-auth/react';
 import { useState, useEffect } from 'react';
+import { useTranslation, useI18n } from '@/lib/i18n';
 import Container from '../Container';
 import HeaderButton from '../HeaderButton';
 import styles from './header.module.scss';
@@ -10,12 +11,18 @@ import styles from './header.module.scss';
 export default function Header() {
   const router = useRouter();
   const { data: session } = useSession();
+  const { t } = useTranslation('nav');
+  const { locale, setLocale } = useI18n();
   const isWorldCupRoute = router.pathname.startsWith('/world-cup');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     setMobileMenuOpen(false);
   }, [router.pathname]);
+
+  function toggleLang() {
+    setLocale(locale === 'tr' ? 'en' : 'tr');
+  }
 
   return (
     <header className={`${styles.header} ${isWorldCupRoute ? styles.headerWorldCup : ''}`.trim()}>
@@ -46,17 +53,17 @@ export default function Header() {
               </Link>
             ) : (
               <Link href="/world-cup" className={styles.headerNavPill}>
-                WORLD CUP
+                {t('worldCup')}
               </Link>
             )}
             <Link href="/uefa" className={styles.headerNavPill}>
-              UEFA
+              {t('uefa')}
             </Link>
             <Link href="/ai-istatistikleri" className={styles.headerNavPill}>
-              AI İsabeti
+              {t('aiAccuracy')}
             </Link>
             <Link href="/premium" className={styles.headerNavPillPremium}>
-              ⭐ Premium
+              {t('premium')}
             </Link>
           </div>
         </div>
@@ -64,30 +71,38 @@ export default function Header() {
           {session ? (
             <>
               <Link href="/profile" className={styles.profileLink}>
-                Profil
+                {t('profile')}
               </Link>
               <span className={styles.userName}>
                 {session.user.username || session.user.name || session.user.email}
               </span>
               <HeaderButton variant="outline" onClick={() => signOut()}>
-                Çıkış Yap
+                {t('signOut')}
               </HeaderButton>
             </>
           ) : (
             <>
               <HeaderButton variant="outline" onClick={() => router.push('/auth/signin')}>
-                Giriş Yap
+                {t('signIn')}
               </HeaderButton>
               <HeaderButton variant="filled" onClick={() => router.push('/auth/signup')}>
-                Üye Ol
+                {t('signUp')}
               </HeaderButton>
             </>
           )}
+          <button
+            type="button"
+            className={styles.langToggle}
+            onClick={toggleLang}
+            aria-label={t('langSwitch')}
+          >
+            {t('langSwitch')}
+          </button>
         </div>
         <button
           className={`${styles.hamburger} ${mobileMenuOpen ? styles.hamburgerOpen : ''}`}
           onClick={() => setMobileMenuOpen((v) => !v)}
-          aria-label="Menüyü aç/kapat"
+          aria-label={t('toggleMenu')}
           aria-expanded={mobileMenuOpen}
         >
           <span />
@@ -101,39 +116,46 @@ export default function Header() {
           <nav className={styles.mobileNav}>
             {!isWorldCupRoute && (
               <Link href="/world-cup" className={styles.mobileNavLink}>
-                WORLD CUP
+                {t('worldCup')}
               </Link>
             )}
             <Link href="/uefa" className={styles.mobileNavLink}>
-              UEFA
+              {t('uefa')}
             </Link>
             <Link href="/ai-istatistikleri" className={styles.mobileNavLink}>
-              AI İsabeti
+              {t('aiAccuracy')}
             </Link>
             <Link href="/premium" className={styles.mobileNavLinkPremium}>
-              ⭐ Premium
+              {t('premium')}
             </Link>
           </nav>
           <div className={styles.mobileActions}>
             {session ? (
               <>
                 <Link href="/profile" className={styles.mobileNavLink}>
-                  Profil
+                  {t('profile')}
                 </Link>
                 <button className={styles.mobileSignOut} onClick={() => signOut()}>
-                  Çıkış Yap
+                  {t('signOut')}
                 </button>
               </>
             ) : (
               <>
                 <Link href="/auth/signin" className={styles.mobileAuthOutline}>
-                  Giriş Yap
+                  {t('signIn')}
                 </Link>
                 <Link href="/auth/signup" className={styles.mobileAuthFilled}>
-                  Üye Ol
+                  {t('signUp')}
                 </Link>
               </>
             )}
+            <button
+              type="button"
+              className={styles.mobileLangToggle}
+              onClick={toggleLang}
+            >
+              {t('langSwitch')}
+            </button>
           </div>
         </div>
       )}

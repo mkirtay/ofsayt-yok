@@ -1,4 +1,5 @@
 import type { GetServerSideProps, InferGetServerSidePropsType } from 'next';
+import { serverSideTranslations } from '@/lib/serverSideTranslations';
 import Head from 'next/head';
 import MatchHubPage from '@/components/MatchHubPage';
 import {
@@ -47,13 +48,16 @@ export const getServerSideProps: GetServerSideProps<UefaPageProps> = async (ctx)
 
     const raw = await loadUefaHubInitialData(ctx.req, UEFA_CHAMPIONS_LEAGUE_ID);
 
+    const i18nProps = await serverSideTranslations(ctx.locale ?? 'tr', ['common', 'nav', 'match', 'standings']);
     return {
       props: {
+        ...i18nProps,
         initialUefaHubData: raw == null ? null : propsJsonSafe(raw),
       },
     };
   } catch (e) {
     console.error('uefa getServerSideProps', e);
-    return { props: { initialUefaHubData: null } };
+    const i18nProps = await serverSideTranslations(ctx.locale ?? 'tr', ['common', 'nav', 'match', 'standings']);
+    return { props: { ...i18nProps, initialUefaHubData: null } };
   }
 };

@@ -1,4 +1,5 @@
 import type { GetServerSideProps, InferGetServerSidePropsType } from 'next';
+import { serverSideTranslations } from '@/lib/serverSideTranslations';
 import Head from 'next/head';
 import JsonLd from '@/components/JsonLd';
 import MatchHubPage from '@/components/MatchHubPage';
@@ -52,13 +53,16 @@ export const getServerSideProps: GetServerSideProps<HomeProps> = async (ctx) => 
     );
     const iso = new Date().toISOString().slice(0, 10);
     const raw = await loadMatchHubHomeInitialData(ctx.req, DEFAULT_COMPETITION_ID, iso);
+    const i18nProps = await serverSideTranslations(ctx.locale ?? 'tr', ['common', 'nav', 'match']);
     return {
       props: {
+        ...i18nProps,
         initialDefaultHubData: raw == null ? null : propsJsonSafe(raw),
       },
     };
   } catch (e) {
     console.error('index getServerSideProps', e);
-    return { props: { initialDefaultHubData: null } };
+    const i18nProps = await serverSideTranslations(ctx.locale ?? 'tr', ['common', 'nav', 'match']);
+    return { props: { ...i18nProps, initialDefaultHubData: null } };
   }
 };

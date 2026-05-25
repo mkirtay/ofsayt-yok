@@ -1,0 +1,15 @@
+{
+  "loading": "Loading…",
+  "error": "An error occurred.",
+  "connectionError": "Connection error. Please try again.",
+  "retry": "Try Again",
+  "close": "Close",
+  "dataNotFound": "No data found.",
+  "notFoundTitle": "Page Not Found",
+  "notFoundDesc": "The page you're looking for may have been moved, deleted, or never existed.",
+  "backToHome": "Back to Home",
+  "serverErrorTitle": "Something Went Wrong",
+  "serverErrorDesc": "An unexpected error occurred on our server. Please refresh the page.",
+  "refreshPage": "Refresh Page",
+  "premium": "⭐ Premium"
+}

@@ -1,4 +1,6 @@
 import type { GetServerSideProps, InferGetServerSidePropsType } from 'next';
+import { serverSideTranslations } from '@/lib/serverSideTranslations';
+import { useTranslation } from '@/lib/i18n';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Head from 'next/head';
 import { useSession } from 'next-auth/react';
@@ -20,6 +22,7 @@ export default function ProfilePage({
   initialProfile,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
   const router = useRouter();
+  const { t } = useTranslation('profile');
   const { data: session, status, update } = useSession();
 
   const [loading, setLoading] = useState(false);
@@ -90,7 +93,7 @@ export default function ProfilePage({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setProfileMsg({ type: 'err', text: data.error || 'Kaydedilemedi.' });
+        setProfileMsg({ type: 'err', text: data.error || t('saveError') });
         return;
       }
       const u = data as ProfileDto;
@@ -103,9 +106,9 @@ export default function ProfilePage({
         image: u.image,
         username: u.username,
       });
-      setProfileMsg({ type: 'ok', text: 'Profil güncellendi.' });
+      setProfileMsg({ type: 'ok', text: t('saved') });
     } catch {
-      setProfileMsg({ type: 'err', text: 'Bağlantı hatası.' });
+      setProfileMsg({ type: 'err', text: t('connectionError') });
     } finally {
       setSaving(false);
     }
@@ -115,7 +118,7 @@ export default function ProfilePage({
     e.preventDefault();
     setPassMsg(null);
     if (newPassword !== confirmPassword) {
-      setPassMsg({ type: 'err', text: 'Yeni şifreler eşleşmiyor.' });
+      setPassMsg({ type: 'err', text: t('passwordMismatch') });
       return;
     }
     setPassSaving(true);
@@ -128,15 +131,15 @@ export default function ProfilePage({
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setPassMsg({ type: 'err', text: data.error || 'Şifre değiştirilemedi.' });
+        setPassMsg({ type: 'err', text: data.error || t('passwordChangeError') });
         return;
       }
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
-      setPassMsg({ type: 'ok', text: 'Şifre güncellendi.' });
+      setPassMsg({ type: 'ok', text: t('passwordChanged') });
     } catch {
-      setPassMsg({ type: 'err', text: 'Bağlantı hatası.' });
+      setPassMsg({ type: 'err', text: t('connectionError') });
     } finally {
       setPassSaving(false);
     }
@@ -145,7 +148,7 @@ export default function ProfilePage({
   if (status === 'loading' || loading) {
     return (
       <div className={styles.page}>
-        <p className={styles.subtitle}>Yükleniyor…</p>
+        <p className={styles.subtitle}>{t('loading')}</p>
       </div>
     );
   }
@@ -157,28 +160,28 @@ export default function ProfilePage({
   return (
     <>
       <Head>
-        <title>Profil — Ofsayt Yok</title>
+        <title>{t('pageTitle')}</title>
         <meta name="robots" content="noindex, nofollow" />
       </Head>
       <div className={styles.page}>
-        <h1 className={styles.title}>Profil</h1>
+        <h1 className={styles.title}>{t('title')}</h1>
         <p className={styles.subtitle}>
-          <Link href="/">Ana sayfaya dön</Link>
+          <Link href="/">{t('backToHome')}</Link>
         </p>
 
         <form className={styles.section} onSubmit={handleSaveProfile}>
-          <h2 className={styles.sectionTitle}>Bilgilerim</h2>
+          <h2 className={styles.sectionTitle}>{t('myInfo')}</h2>
 
           <div className={styles.field}>
             <label className={styles.label} htmlFor="email">
-              E-posta
+              {t('email')}
             </label>
             <input id="email" className={`${styles.input} ${styles.readonly}`} value={email} disabled />
           </div>
 
           <div className={styles.field}>
             <label className={styles.label} htmlFor="name">
-              İsim
+              {t('name')}
             </label>
             <input
               id="name"
@@ -191,21 +194,21 @@ export default function ProfilePage({
 
           <div className={styles.field}>
             <label className={styles.label} htmlFor="username">
-              Kullanıcı adı
+              {t('username')}
             </label>
             <input
               id="username"
               className={styles.input}
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="3–30 karakter, harf rakam _"
+              placeholder={t('usernamePlaceholder')}
               maxLength={30}
             />
           </div>
 
           <div className={styles.field}>
             <label className={styles.label} htmlFor="bio">
-              Hakkımda
+              {t('bio')}
             </label>
             <textarea
               id="bio"
@@ -218,29 +221,29 @@ export default function ProfilePage({
 
           <div className={styles.field}>
             <label className={styles.label} htmlFor="image">
-              Profil görseli (URL)
+              {t('profileImage')}
             </label>
             <input
               id="image"
               className={styles.input}
               value={image}
               onChange={(e) => setImage(e.target.value)}
-              placeholder="https://…"
+              placeholder={t('profileImagePlaceholder')}
             />
           </div>
 
           <div className={styles.field}>
-            <span className={styles.label}>Rol</span>
+            <span className={styles.label}>{t('role')}</span>
             <span
               className={`${styles.roleBadge} ${session.user.role === Role.ADMIN ? styles.roleAdmin : ''}`.trim()}
             >
-              {session.user.role === Role.ADMIN ? 'Yönetici' : 'Üye'}
+              {session.user.role === Role.ADMIN ? t('roleAdmin') : t('roleMember')}
             </span>
           </div>
 
           <div className={styles.actions}>
             <button type="submit" className={styles.submit} disabled={saving}>
-              {saving ? 'Kaydediliyor…' : 'Kaydet'}
+              {saving ? t('saving') : t('save')}
             </button>
           </div>
           {profileMsg && (
@@ -251,11 +254,11 @@ export default function ProfilePage({
         </form>
 
         <form className={styles.section} onSubmit={handleChangePassword}>
-          <h2 className={styles.sectionTitle}>Şifre değiştir</h2>
+          <h2 className={styles.sectionTitle}>{t('changePassword')}</h2>
 
           <div className={styles.field}>
             <label className={styles.label} htmlFor="currentPassword">
-              Mevcut şifre
+              {t('currentPassword')}
             </label>
             <input
               id="currentPassword"
@@ -269,7 +272,7 @@ export default function ProfilePage({
 
           <div className={styles.field}>
             <label className={styles.label} htmlFor="newPassword">
-              Yeni şifre
+              {t('newPassword')}
             </label>
             <input
               id="newPassword"
@@ -283,7 +286,7 @@ export default function ProfilePage({
 
           <div className={styles.field}>
             <label className={styles.label} htmlFor="confirmPassword">
-              Yeni şifre (tekrar)
+              {t('confirmPassword')}
             </label>
             <input
               id="confirmPassword"
@@ -297,7 +300,7 @@ export default function ProfilePage({
 
           <div className={styles.actions}>
             <button type="submit" className={styles.submit} disabled={passSaving}>
-              {passSaving ? 'Güncelleniyor…' : 'Şifreyi güncelle'}
+              {passSaving ? t('updating') : t('updatePassword')}
             </button>
           </div>
           {passMsg && (
@@ -317,8 +320,10 @@ export const getServerSideProps: GetServerSideProps<ProfilePageProps> = async (c
       redirect: { destination: '/auth/signin', permanent: false },
     };
   }
+  const i18nProps = await serverSideTranslations(ctx.locale ?? 'tr', ['common', 'nav', 'profile']);
   return {
     props: {
+      ...i18nProps,
       initialProfile: propsJsonSafe(profile),
     },
   };

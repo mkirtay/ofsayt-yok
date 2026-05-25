@@ -1,13 +1,6 @@
-/**
- * Premium kullanıcılar için LLM tabanlı maç trivia paneli.
- *
- * - Premium değilse: blur preview + "Premium'a Geç" CTA
- * - Premium ise: GET /api/matches/[id]/trivia çağrılır,
- *   Ertem Şener tarzı istatistikler, bağlam anlatısı ve
- *   tarihi rekabet bilgisi gösterilir.
- */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useTranslation } from '@/lib/i18n';
 import { usePremium } from '@/hooks/usePremium';
 import type { Match } from '@/models/liveScore';
 import styles from './matchTrivia.module.scss';
@@ -29,11 +22,11 @@ type Props = {
   match: Match | null;
 };
 
-function PreviewSkeleton({ homeName, awayName }: { homeName?: string; awayName?: string }) {
+function PreviewSkeleton({ homeName, awayName, t }: { homeName?: string; awayName?: string; t: (key: string) => string }) {
   return (
     <div>
       <div className={styles.section}>
-        <h4 className={styles.sectionTitle}>Bilinmeyenler</h4>
+        <h4 className={styles.sectionTitle}>{t('trivia.unknowns')}</h4>
         <ul className={styles.factsList}>
           <li className={styles.factItem}>
             Bu iki takım son 10 karşılaşmasının 7&apos;sinde en az 3 gol gördü.
@@ -47,7 +40,7 @@ function PreviewSkeleton({ homeName, awayName }: { homeName?: string; awayName?:
         </ul>
       </div>
       <div className={styles.section}>
-        <h4 className={styles.sectionTitle}>Tarihi Rekabet</h4>
+        <h4 className={styles.sectionTitle}>{t('trivia.rivalry')}</h4>
         <p className={styles.narrative}>
           Bu iki takım arasındaki tarihi rekabet onlarca yıla yayılan...
         </p>
@@ -57,6 +50,7 @@ function PreviewSkeleton({ homeName, awayName }: { homeName?: string; awayName?:
 }
 
 export default function MatchTrivia({ matchId, match }: Props) {
+  const { t } = useTranslation('match');
   const { loading: premiumLoading, isPremium } = usePremium();
   const [trivia, setTrivia] = useState<ApiTrivia | null>(null);
   const [loading, setLoading] = useState(false);
@@ -79,7 +73,7 @@ export default function MatchTrivia({ matchId, match }: Props) {
         const res = await fetch(`/api/matches/${matchId}/trivia`);
         if (res.status === 401 || res.status === 403) {
           const body = await res.json().catch(() => ({}));
-          setError(body?.error ?? 'Bu özellik premium üyelere özeldir.');
+          setError(body?.error ?? t('trivia.premiumError'));
           return;
         }
         if (!res.ok) {
@@ -89,7 +83,7 @@ export default function MatchTrivia({ matchId, match }: Props) {
         const body = (await res.json()) as { trivia: ApiTrivia };
         setTrivia(body.trivia);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Trivia alınamadı');
+        setError(err instanceof Error ? err.message : t('trivia.premiumError'));
       } finally {
         lastFetchedMatchId.current = matchId;
         inFlightMatchId.current = null;
@@ -97,7 +91,7 @@ export default function MatchTrivia({ matchId, match }: Props) {
         setHasFetched(true);
       }
     },
-    [matchId]
+    [matchId, t]
   );
 
   useEffect(() => {
@@ -110,7 +104,7 @@ export default function MatchTrivia({ matchId, match }: Props) {
   if (premiumLoading) {
     return (
       <div className={styles.card}>
-        <div className={styles.loading}>Yükleniyor…</div>
+        <div className={styles.loading}>{t('common:loading')}</div>
       </div>
     );
   }
@@ -121,21 +115,18 @@ export default function MatchTrivia({ matchId, match }: Props) {
         <div className={styles.headerRow}>
           <h3 className={styles.title}>
             <span className={styles.aiBadge}>AI</span>
-            Maç Trivia & Bilinmeyenler
+            {t('trivia.title')}
           </h3>
         </div>
         <div className={styles.lockedWrap}>
           <div className={styles.lockedPreview}>
-            <PreviewSkeleton homeName={match?.home?.name} awayName={match?.away?.name} />
+            <PreviewSkeleton homeName={match?.home?.name} awayName={match?.away?.name} t={t} />
           </div>
           <div className={styles.lockedOverlay}>
-            <h4 className={styles.lockedTitle}>🔒 Premium Üyelere Özel</h4>
-            <p className={styles.lockedSubtitle}>
-              Ertem Şener tarzı istatistikler, transfer bağlamı ve tarihi rekabet bilgisi
-              için Premium üyeliğe geç.
-            </p>
+            <h4 className={styles.lockedTitle}>{t('trivia.lockedTitle')}</h4>
+            <p className={styles.lockedSubtitle}>{t('trivia.lockedDesc')}</p>
             <Link href="/premium" className={styles.ctaButton}>
-              Premium&apos;a Geç
+              {t('trivia.upgradePremium')}
             </Link>
           </div>
         </div>
@@ -149,12 +140,10 @@ export default function MatchTrivia({ matchId, match }: Props) {
         <div className={styles.headerRow}>
           <h3 className={styles.title}>
             <span className={styles.aiBadge}>AI</span>
-            Maç Trivia & Bilinmeyenler
+            {t('trivia.title')}
           </h3>
         </div>
-        <div className={styles.loading}>
-          Trivia hazırlanıyor… Bu işlem birkaç saniye sürebilir.
-        </div>
+        <div className={styles.loading}>{t('trivia.loading')}</div>
       </div>
     );
   }
@@ -165,7 +154,7 @@ export default function MatchTrivia({ matchId, match }: Props) {
         <div className={styles.headerRow}>
           <h3 className={styles.title}>
             <span className={styles.aiBadge}>AI</span>
-            Maç Trivia & Bilinmeyenler
+            {t('trivia.title')}
           </h3>
         </div>
         <div className={styles.errorBox}>
@@ -178,7 +167,7 @@ export default function MatchTrivia({ matchId, match }: Props) {
                 onClick={() => void fetchTrivia(true)}
                 disabled={loading}
               >
-                Tekrar Dene
+                {t('common:retry')}
               </button>
             </div>
           )}
@@ -196,14 +185,13 @@ export default function MatchTrivia({ matchId, match }: Props) {
       <div className={styles.headerRow}>
         <h3 className={styles.title}>
           <span className={styles.aiBadge}>AI</span>
-          Maç Trivia & Bilinmeyenler
+          {t('trivia.title')}
         </h3>
       </div>
 
-      {/* Ertem Şener Tarzı İstatistikler */}
       {facts.length > 0 && (
         <div className={styles.section}>
-          <h4 className={styles.sectionTitle}>Bilinmeyenler</h4>
+          <h4 className={styles.sectionTitle}>{t('trivia.unknowns')}</h4>
           <ul className={styles.factsList}>
             {facts.map((fact, i) => (
               <li key={i} className={styles.factItem}>
@@ -215,18 +203,16 @@ export default function MatchTrivia({ matchId, match }: Props) {
         </div>
       )}
 
-      {/* Bağlamsal Anlatı */}
       {trivia.contextual && (
         <div className={styles.section}>
-          <h4 className={styles.sectionTitle}>Sahada Bağlam</h4>
+          <h4 className={styles.sectionTitle}>{t('trivia.context')}</h4>
           <p className={styles.narrative}>{trivia.contextual}</p>
         </div>
       )}
 
-      {/* Tarihi Rekabet */}
       {trivia.rivalryContext && (
         <div className={styles.section}>
-          <h4 className={styles.sectionTitle}>Tarihi Rekabet</h4>
+          <h4 className={styles.sectionTitle}>{t('trivia.rivalry')}</h4>
           <p className={styles.narrative}>{trivia.rivalryContext}</p>
         </div>
       )}

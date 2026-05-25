@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useTranslation, useI18n } from '@/lib/i18n';
 import Container from '../Container';
 import Calendar from './Calendar';
 import styles from './subHeader.module.scss';
@@ -12,26 +13,10 @@ interface SubHeaderProps {
   onTabChange: (tab: MatchTab) => void;
 }
 
-const TABS: { key: MatchTab; label: string }[] = [
-  { key: 'all', label: 'Hepsi' },
-  { key: 'live', label: 'Canlı' },
-  { key: 'finished', label: 'Bitmiş' },
-  { key: 'favorites', label: 'Favoriler' },
-];
-
 function shiftDate(iso: string, days: number): string {
   const d = new Date(iso + 'T12:00:00');
   d.setDate(d.getDate() + days);
   return d.toISOString().slice(0, 10);
-}
-
-function formatTrDate(iso: string): string {
-  const d = new Date(iso + 'T12:00:00');
-  return d.toLocaleDateString('tr-TR', {
-    day: 'numeric',
-    month: 'long',
-    weekday: 'long',
-  });
 }
 
 export default function SubHeader({
@@ -40,8 +25,27 @@ export default function SubHeader({
   activeTab,
   onTabChange,
 }: SubHeaderProps) {
-  const displayDate = useMemo(() => formatTrDate(selectedDate), [selectedDate]);
+  const { t } = useTranslation('match');
+  const { locale } = useI18n();
+  const dateLocale = locale === 'en' ? 'en-GB' : 'tr-TR';
+
+  const displayDate = useMemo(() => {
+    const d = new Date(selectedDate + 'T12:00:00');
+    return d.toLocaleDateString(dateLocale, {
+      day: 'numeric',
+      month: 'long',
+      weekday: 'long',
+    });
+  }, [selectedDate, dateLocale]);
+
   const [calendarOpen, setCalendarOpen] = useState(false);
+
+  const tabs: { key: MatchTab; label: string }[] = [
+    { key: 'all', label: t('subHeader.all') },
+    { key: 'live', label: t('subHeader.live') },
+    { key: 'finished', label: t('subHeader.finished') },
+    { key: 'favorites', label: t('subHeader.favorites') },
+  ];
 
   return (
     <div className={styles.subHeader}>
@@ -51,7 +55,7 @@ export default function SubHeader({
             type="button"
             className={styles.arrow}
             onClick={() => onDateChange(shiftDate(selectedDate, -1))}
-            aria-label="Önceki gün"
+            aria-label={t('subHeader.prevDay')}
           >
             ←
           </button>
@@ -81,14 +85,14 @@ export default function SubHeader({
             type="button"
             className={styles.arrow}
             onClick={() => onDateChange(shiftDate(selectedDate, 1))}
-            aria-label="Sonraki gün"
+            aria-label={t('subHeader.nextDay')}
           >
             →
           </button>
         </div>
 
-        <nav className={styles.tabs} aria-label="Maç filtresi">
-          {TABS.map((tab) => (
+        <nav className={styles.tabs} aria-label={t('subHeader.matchFilter')}>
+          {tabs.map((tab) => (
             <button
               key={tab.key}
               type="button"
@@ -101,7 +105,7 @@ export default function SubHeader({
         </nav>
 
         <div className={styles.sortArea}>
-          <span className={styles.sortLabel}>Zamana Göre Sırala</span>
+          <span className={styles.sortLabel}>{t('subHeader.sortByTime')}</span>
           <span className={styles.sortIcon}>☰</span>
         </div>
       </Container>

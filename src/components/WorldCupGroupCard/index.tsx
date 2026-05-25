@@ -55,7 +55,7 @@ export default function WorldCupGroupCard({ groupName, standings }: WorldCupGrou
                     <td className={styles.colRank}>{row.rank}</td>
                     <td className={styles.colTeam}>
                       <div className={styles.teamCell}>
-                        {logo ? <Image src={logo} alt="" width={16} height={16} className={styles.teamLogo} /> : null}
+                        {logo ? <Image src={logo} alt="" width={16} height={16} className={styles.teamLogo} unoptimized /> : null}
                         {id != null ? (
                           <Link href={`/teams/${id}`} className={styles.teamLink} prefetch={false}>
                             {teamName(row)}

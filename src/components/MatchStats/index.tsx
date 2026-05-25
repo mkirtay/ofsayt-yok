@@ -1,3 +1,4 @@
+import { useTranslation } from '@/lib/i18n';
 import styles from './matchStats.module.scss';
 import { MatchStatsData } from '@/models/domain';
 
@@ -5,26 +6,9 @@ interface MatchStatsProps {
   stats: MatchStatsData | null;
 }
 
-const STAT_LABELS: Record<string, string> = {
-  possesion: 'Topa Sahip Olma',
-  shots_on_target: 'İsabetli Şut',
-  shots_off_target: 'İsabetsiz Şut',
-  attempts_on_goal: 'Toplam Şut',
-  corners: 'Korner',
-  offsides: 'Ofsayt',
-  fauls: 'Faul',
-  yellow_cards: 'Sarı Kart',
-  red_cards: 'Kırmızı Kart',
-  saves: 'Kurtarış',
-  shots_blocked: 'Blok',
-  free_kicks: 'Serbest Vuruş',
-  goal_kicks: 'Aut Atışı',
-  throw_ins: 'Taç Atışı',
-  dangerous_attacks: 'Tehlikeli Atak',
-  attacks: 'Atak',
-};
-
 export default function MatchStats({ stats }: MatchStatsProps) {
+  const { t } = useTranslation('match');
+
   const renderStatBar = (homeVal: number, awayVal: number) => {
     const total = homeVal + awayVal;
     if (total === 0) return null;
@@ -45,7 +29,7 @@ export default function MatchStats({ stats }: MatchStatsProps) {
           const parts = (val as string).split(':');
           return {
             key,
-            label: STAT_LABELS[key] || key,
+            label: t(`stats.${key}`, { defaultValue: key }),
             home: parts[0]?.trim() || '0',
             away: parts[1]?.trim() || '0',
           };
@@ -54,10 +38,10 @@ export default function MatchStats({ stats }: MatchStatsProps) {
 
   return (
     <div className={styles.container}>
-      <h3 className={styles.title}>Maç İstatistikleri</h3>
+      <h3 className={styles.title}>{t('stats.title')}</h3>
 
       {statEntries.length === 0 ? (
-        <div className={styles.empty}>İstatistik verisi bulunmuyor.</div>
+        <div className={styles.empty}>{t('stats.empty')}</div>
       ) : (
         <div className={styles.statsList}>
           {statEntries.map((stat) => (

@@ -1,4 +1,5 @@
 import type { GetServerSideProps, InferGetServerSidePropsType } from 'next';
+import { serverSideTranslations } from '@/lib/serverSideTranslations';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Head from 'next/head';
 import { useSession } from 'next-auth/react';
@@ -124,6 +125,7 @@ export default function WorldCupPage({
 
   // Favorites
   const [favoriteTeamIds, setFavoriteTeamIds] = useState<number[]>([]);
+  const [showOnlyFavorites, setShowOnlyFavorites] = useState(false);
 
   // Team drawer
   const [selectedTeam, setSelectedTeam] = useState<TeamEntry | null>(null);
@@ -364,6 +366,20 @@ export default function WorldCupPage({
 
   const isMatchDataTab = mainTab === 'matches' || mainTab === 'calendar' || mainTab === 'bracket';
 
+  const favTeamSet = useMemo(() => new Set(favoriteTeamIds), [favoriteTeamIds]);
+
+  const filteredGroupMatches = useMemo(() => {
+    if (!showOnlyFavorites || favoriteTeamIds.length === 0) return groupMatches;
+    return groupMatches
+      .map((g) => ({
+        ...g,
+        matches: g.matches.filter(
+          (m) => favTeamSet.has(m.home?.id ?? -1) || favTeamSet.has(m.away?.id ?? -1),
+        ),
+      }))
+      .filter((g) => g.matches.length > 0);
+  }, [groupMatches, showOnlyFavorites, favoriteTeamIds, favTeamSet]);
+
   return (
     <>
       <Head>
@@ -476,10 +492,35 @@ export default function WorldCupPage({
             {mainTab === 'matches' && (
               groupMatchesLoading ? (
                 <div className={styles.loading}>Grup maçları yükleniyor...</div>
-              ) : groupMatches.length ? (
-                <MatchList groupedMatches={groupMatches} variant="worldCup" showDateWhenNotToday />
               ) : (
-                <div className={styles.empty}>Bu tarih için dünya kupası fikstürü bulunamadı.</div>
+                <>
+                  {favoriteTeamIds.length > 0 && (
+                    <div className={styles.favFilterBar}>
+                      <button
+                        type="button"
+                        className={`${styles.favFilterBtn} ${showOnlyFavorites ? styles.favFilterBtnActive : ''}`}
+                        onClick={() => setShowOnlyFavorites((v) => !v)}
+                      >
+                        ★ Sadece favoriler
+                      </button>
+                    </div>
+                  )}
+                  {filteredGroupMatches.length ? (
+                    <MatchList
+                      groupedMatches={filteredGroupMatches}
+                      variant="worldCup"
+                      showDateWhenNotToday
+                      favoriteTeamIds={favTeamSet}
+                      onToggleFavorite={handleToggleFavorite}
+                    />
+                  ) : (
+                    <div className={styles.empty}>
+                      {showOnlyFavorites
+                        ? 'Favori takımlarınızın maçı bulunamadı.'
+                        : 'Bu tarih için dünya kupası fikstürü bulunamadı.'}
+                    </div>
+                  )}
+                </>
               )
             )}
 
@@ -542,13 +583,16 @@ export const getServerSideProps: GetServerSideProps<WorldCupPageProps> = async (
       'public, s-maxage=60, stale-while-revalidate=180'
     );
     const raw = await loadWorldCupBootstrapData(ctx.req);
+    const i18nProps = await serverSideTranslations(ctx.locale ?? 'tr', ['common', 'nav', 'match']);
     return {
       props: {
+        ...i18nProps,
         wcBootstrap: raw == null ? null : propsJsonSafe(raw),
       },
     };
   } catch (e) {
     console.error('world-cup getServerSideProps', e);
-    return { props: { wcBootstrap: null } };
+    const i18nProps = await serverSideTranslations(ctx.locale ?? 'tr', ['common', 'nav', 'match']);
+    return { props: { ...i18nProps, wcBootstrap: null } };
   }
 };

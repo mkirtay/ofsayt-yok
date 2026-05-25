@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { useSession } from 'next-auth/react';
+import { useTranslation } from '@/lib/i18n';
 import { Role } from '@prisma/client';
 import Link from 'next/link';
 import styles from './matchForum.module.scss';
@@ -14,17 +15,6 @@ interface Comment {
 
 interface MatchForumProps {
   matchId: string;
-}
-
-function relativeTime(date: string) {
-  const diff = Date.now() - new Date(date).getTime();
-  const mins = Math.floor(diff / 60_000);
-  if (mins < 1) return 'az önce';
-  if (mins < 60) return `${mins} dk`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours} sa`;
-  const days = Math.floor(hours / 24);
-  return `${days} gün`;
 }
 
 function avatarLetter(name: string | null) {
@@ -55,6 +45,7 @@ function TrashIcon() {
 
 export default function MatchForum({ matchId }: MatchForumProps) {
   const { data: session } = useSession();
+  const { t } = useTranslation('match');
   const [comments, setComments] = useState<Comment[]>([]);
   const [body, setBody] = useState('');
   const [sending, setSending] = useState(false);
@@ -63,6 +54,17 @@ export default function MatchForum({ matchId }: MatchForumProps) {
   const listRef = useRef<HTMLDivElement>(null);
   const role = session?.user?.role;
   const isAdmin = String(role) === Role.ADMIN;
+
+  function relativeTime(date: string) {
+    const diff = Date.now() - new Date(date).getTime();
+    const mins = Math.floor(diff / 60_000);
+    if (mins < 1) return t('forum.justNow');
+    if (mins < 60) return t('forum.minutesAgo', { count: mins });
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return t('forum.hoursAgo', { count: hours });
+    const days = Math.floor(hours / 24);
+    return t('forum.daysAgo', { count: days });
+  }
 
   const fetchComments = useCallback(async () => {
     try {
@@ -97,7 +99,7 @@ export default function MatchForum({ matchId }: MatchForumProps) {
         setError(
           data.error ||
             (typeof data.detail === 'string' ? data.detail : null) ||
-            'Bir hata oluştu.',
+            t('forum.error'),
         );
         return;
       }
@@ -110,7 +112,7 @@ export default function MatchForum({ matchId }: MatchForumProps) {
         listRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
       });
     } catch {
-      setError('Bağlantı hatası.');
+      setError(t('forum.connectionError'));
     } finally {
       setSending(false);
     }
@@ -125,7 +127,7 @@ export default function MatchForum({ matchId }: MatchForumProps) {
 
   const handleDeleteComment = async (commentId: string) => {
     if (!isAdmin || deletingId) return;
-    if (!window.confirm('Bu yorumu silmek istediğinize emin misiniz?')) return;
+    if (!window.confirm(t('forum.confirmDelete'))) return;
 
     setDeletingId(commentId);
     setError('');
@@ -136,12 +138,12 @@ export default function MatchForum({ matchId }: MatchForumProps) {
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        setError(data.error || 'Yorum silinemedi.');
+        setError(data.error || t('forum.deleteError'));
         return;
       }
       setComments((prev) => prev.filter((c) => c.id !== commentId));
     } catch {
-      setError('Bağlantı hatası.');
+      setError(t('forum.connectionError'));
     } finally {
       setDeletingId(null);
     }
@@ -149,11 +151,11 @@ export default function MatchForum({ matchId }: MatchForumProps) {
 
   return (
     <div className={styles.container}>
-      <h3 className={styles.title}>Maç Yorumları</h3>
+      <h3 className={styles.title}>{t('forum.title')}</h3>
 
       <div className={styles.commentList} ref={listRef}>
         {comments.length === 0 ? (
-          <div className={styles.empty}>Henüz yorum yok. İlk yorumu sen yap!</div>
+          <div className={styles.empty}>{t('forum.empty')}</div>
         ) : (
           comments.map((c) => (
             <div
@@ -166,8 +168,8 @@ export default function MatchForum({ matchId }: MatchForumProps) {
                   className={styles.deleteIconBtn}
                   onClick={() => handleDeleteComment(c.id)}
                   disabled={deletingId === c.id}
-                  aria-label={deletingId === c.id ? 'Siliniyor' : 'Yorumu sil'}
-                  title="Yorumu sil"
+                  aria-label={deletingId === c.id ? t('forum.deleting') : t('forum.deleteComment')}
+                  title={t('forum.deleteComment')}
                 >
                   {deletingId === c.id ? (
                     <span className={styles.deleteSpinner} aria-hidden />
@@ -178,14 +180,14 @@ export default function MatchForum({ matchId }: MatchForumProps) {
               )}
               <div className={styles.avatar}>
                 {c.user.image ? (
-                  <Image src={c.user.image} alt="" width={28} height={28} style={{ borderRadius: '50%' }} />
+                  <Image src={c.user.image} alt="" width={28} height={28} style={{ borderRadius: '50%' }} unoptimized />
                 ) : (
                   avatarLetter(c.user.name)
                 )}
               </div>
               <div className={styles.commentBody}>
                 <div className={styles.commentHeader}>
-                  <span className={styles.userName}>{c.user.name ?? 'Anonim'}</span>
+                  <span className={styles.userName}>{c.user.name ?? t('forum.anonymous')}</span>
                   <span className={styles.time}>{relativeTime(c.createdAt)}</span>
                 </div>
                 <p className={styles.commentText}>{c.body}</p>
@@ -200,7 +202,7 @@ export default function MatchForum({ matchId }: MatchForumProps) {
           <div className={styles.inputArea}>
             <textarea
               className={styles.textarea}
-              placeholder="Yorumunuzu yazın…"
+              placeholder={t('forum.placeholder')}
               value={body}
               onChange={(e) => setBody(e.target.value)}
               onKeyDown={handleKeyDown}
@@ -212,14 +214,14 @@ export default function MatchForum({ matchId }: MatchForumProps) {
               onClick={handleSubmit}
               disabled={sending || !body.trim()}
             >
-              Gönder
+              {t('forum.send')}
             </button>
           </div>
           {error && <div className={styles.error}>{error}</div>}
         </>
       ) : (
         <div className={styles.loginPrompt}>
-          <Link href="/auth/signin">Yorum yapmak için giriş yap</Link>
+          <Link href="/auth/signin">{t('forum.loginPrompt')}</Link>
         </div>
       )}
     </div>

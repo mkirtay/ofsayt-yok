@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
+import { useTranslation } from '@/lib/i18n';
 import styles from './premiumModal.module.scss';
 
 const SS_KEY = 'ofsaytyok_pm_shown';
@@ -8,6 +9,7 @@ const DELAY_MS = 45_000;
 
 export default function PremiumModal() {
   const { data: session, status } = useSession();
+  const { t } = useTranslation('premium');
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -33,52 +35,50 @@ export default function PremiumModal() {
           type="button"
           className={styles.closeBtn}
           onClick={() => setOpen(false)}
-          aria-label="Kapat"
+          aria-label={t('common:close')}
         >
           ✕
         </button>
 
-        <div className={styles.badge}>⭐ Premium</div>
-        <h2 className={styles.headline}>Analiz yapan tarafta ol</h2>
-        <p className={styles.sub}>
-          Yapay zeka destekli tahminler, detaylı istatistikler ve maça özel içerikler.
-        </p>
+        <div className={styles.badge}>{t('modal.badge')}</div>
+        <h2 className={styles.headline}>{t('modal.headline')}</h2>
+        <p className={styles.sub}>{t('modal.sub')}</p>
 
         <ul className={styles.featureList}>
           <li className={styles.featureItem}>
             <span className={styles.featureIcon}>🤖</span>
             <div>
-              <strong>AI Maç Analizi</strong>
-              <p>Skor tahmini, 1X2 olasılıkları, gol beklentisi ve bahis önerileri</p>
+              <strong>{t('modal.aiAnalysisTitle')}</strong>
+              <p>{t('modal.aiAnalysisDesc')}</p>
             </div>
           </li>
           <li className={styles.featureItem}>
             <span className={styles.featureIcon}>⚡</span>
             <div>
-              <strong>Maç Trivias</strong>
-              <p>Her maç için özel bilinmeyenler ve rekabet tarihi</p>
+              <strong>{t('modal.triviaTitle')}</strong>
+              <p>{t('modal.triviaDesc')}</p>
             </div>
           </li>
           <li className={styles.featureItem}>
             <span className={styles.featureIcon}>📊</span>
             <div>
-              <strong>AI İsabeti Takibi</strong>
-              <p>Geçmiş tahminlerin detaylı doğruluk istatistikleri</p>
+              <strong>{t('modal.aiAccuracyTitle')}</strong>
+              <p>{t('modal.aiAccuracyDesc')}</p>
             </div>
           </li>
         </ul>
 
         <div className={styles.pricingRow}>
           <div className={styles.priceCard}>
-            <div className={styles.pricePeriod}>Aylık</div>
-            <div className={styles.priceAmount}>79 ₺</div>
-            <div className={styles.priceSub}>/ ay</div>
+            <div className={styles.pricePeriod}>{t('modal.monthly')}</div>
+            <div className={styles.priceAmount}>{t('modal.monthly79')}</div>
+            <div className={styles.priceSub}>{t('modal.perMonth')}</div>
           </div>
           <div className={`${styles.priceCard} ${styles.priceCardFeatured}`}>
-            <div className={styles.popularBadge}>En Popüler</div>
-            <div className={styles.pricePeriod}>Yıllık</div>
-            <div className={styles.priceAmount}>699 ₺</div>
-            <div className={styles.priceSub}>/ yıl • ayda ~58 ₺</div>
+            <div className={styles.popularBadge}>{t('modal.mostPopular')}</div>
+            <div className={styles.pricePeriod}>{t('modal.yearly')}</div>
+            <div className={styles.priceAmount}>{t('modal.yearly699')}</div>
+            <div className={styles.priceSub}>{t('modal.perYear')}</div>
           </div>
         </div>
 
@@ -87,14 +87,14 @@ export default function PremiumModal() {
           className={styles.ctaBtn}
           onClick={() => setOpen(false)}
         >
-          Tüm Detayları Gör
+          {t('modal.seeDetails')}
         </Link>
         <button
           type="button"
           className={styles.dismissBtn}
           onClick={() => setOpen(false)}
         >
-          Belki sonra
+          {t('modal.maybeLater')}
         </button>
       </div>
     </div>

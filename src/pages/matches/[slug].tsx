@@ -1,4 +1,5 @@
 import type { GetServerSideProps, InferGetServerSidePropsType } from 'next';
+import { serverSideTranslations } from '@/lib/serverSideTranslations';
 import Head from 'next/head';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Container from '@/components/Container';
@@ -266,8 +267,10 @@ export const getServerSideProps: GetServerSideProps<MatchDetailPageProps> = asyn
     'public, s-maxage=20, stale-while-revalidate=120'
   );
 
+  const i18nProps = await serverSideTranslations(ctx.locale ?? 'tr', ['common', 'nav', 'match']);
   return {
     props: {
+      ...i18nProps,
       matchId,
       canonicalPath: `/matches/${canonicalParam}`,
       initialMatchData: propsJsonSafe(raw),

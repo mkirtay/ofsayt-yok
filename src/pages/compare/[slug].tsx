@@ -1,4 +1,5 @@
 import type { GetServerSideProps, InferGetServerSidePropsType } from 'next';
+import { serverSideTranslations } from '@/lib/serverSideTranslations';
 import Head from 'next/head';
 import Link from 'next/link';
 import Container from '@/components/Container';
@@ -11,7 +12,7 @@ import styles from './compare.module.scss';
 
 type PageProps = { data: ComparePagePayload };
 
-export const getServerSideProps: GetServerSideProps<PageProps> = async ({ req, res, params }) => {
+export const getServerSideProps: GetServerSideProps<PageProps> = async ({ req, res, params, locale }) => {
   const slug = typeof params?.slug === 'string' ? params.slug : '';
   const ids = parseCompareSlug(slug);
 
@@ -22,7 +23,8 @@ export const getServerSideProps: GetServerSideProps<PageProps> = async ({ req, r
 
   res.setHeader('Cache-Control', 'public, s-maxage=120, stale-while-revalidate=300');
 
-  return { props: { data: propsJsonSafe(data) } };
+  const i18nProps = await serverSideTranslations(locale ?? 'tr', ['common', 'nav', 'match']);
+  return { props: { ...i18nProps, data: propsJsonSafe(data) } };
 };
 
 function FormPill({ result }: { result: RecentMatchRow['result'] }) {

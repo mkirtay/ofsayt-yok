@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth-options';
 import { stripe, STRIPE_PLANS, type PlanKey } from '@/lib/stripe';
+import { hitFixedWindowRateLimit } from '@/lib/rateLimit';
 import { captureError } from '@/lib/logger';
 
 function appBaseUrl(req: NextApiRequest): string {
@@ -19,6 +20,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const session = await getServerSession(req, res, authOptions);
   if (!session?.user?.id) {
     return res.status(401).json({ error: 'Giriş yapmanız gerekiyor.' });
+  }
+
+  const rl = await hitFixedWindowRateLimit(`checkout:${session.user.id}`, 5, 60 * 60 * 1000);
+  if (!rl.success) {
+    res.setHeader('Retry-After', String(Math.ceil((rl.resetAt - Date.now()) / 1000)));
+    return res.status(429).json({ error: 'Çok fazla ödeme isteği. Lütfen bekleyin.' });
   }
 
   const { plan } = req.body as { plan?: string };

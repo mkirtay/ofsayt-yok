@@ -1,4 +1,6 @@
 import type { GetServerSideProps, InferGetServerSidePropsType } from 'next';
+import { serverSideTranslations } from '@/lib/serverSideTranslations';
+import { useTranslation } from '@/lib/i18n';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useState } from 'react';
@@ -43,7 +45,7 @@ type PageProps = {
   history: HistoryItem[];
 };
 
-export const getServerSideProps: GetServerSideProps<PageProps> = async ({ req, res }) => {
+export const getServerSideProps: GetServerSideProps<PageProps> = async ({ req, res, locale }) => {
   const session = await getServerSession(req, res, authOptions);
 
   if (!session?.user?.id) {
@@ -128,8 +130,10 @@ export const getServerSideProps: GetServerSideProps<PageProps> = async ({ req, r
 
   res.setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600');
 
+  const i18nProps = await serverSideTranslations(locale ?? 'tr', ['common', 'nav', 'ai']);
   return {
     props: {
+      ...i18nProps,
       totalEvaluated,
       result1x2HitCount,
       result1x2HitRate:
@@ -146,13 +150,6 @@ export const getServerSideProps: GetServerSideProps<PageProps> = async ({ req, r
   };
 };
 
-function resultLabel(r: string | null): string {
-  if (r === 'HOME') return 'Ev Sahibi';
-  if (r === 'DRAW') return 'Beraberlik';
-  if (r === 'AWAY') return 'Deplasman';
-  return '—';
-}
-
 export default function AiIstatistikleri({
   totalEvaluated,
   result1x2HitCount,
@@ -165,9 +162,17 @@ export default function AiIstatistikleri({
   pendingCount,
   history,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
+  const { t } = useTranslation('ai');
   const isEmpty = totalEvaluated === 0;
   const [evalLoading, setEvalLoading] = useState(false);
   const [evalResult, setEvalResult] = useState<string>('');
+
+  function resultLabel(r: string | null): string {
+    if (r === 'HOME') return t('resultHome');
+    if (r === 'DRAW') return t('resultDraw');
+    if (r === 'AWAY') return t('resultAway');
+    return t('notEvaluated');
+  }
 
   async function runEvaluation() {
     setEvalLoading(true);
@@ -176,14 +181,14 @@ export default function AiIstatistikleri({
       const res = await fetch('/api/admin/evaluate-predictions', { method: 'POST' });
       const data = await res.json();
       if (!res.ok) {
-        setEvalResult(`Hata: ${data.error || 'Bilinmeyen hata'}`);
+        setEvalResult(t('evalError', { error: data.error || 'Bilinmeyen hata' }));
       } else {
         setEvalResult(
-          `Tamamlandı: ${data.evaluated} değerlendi, ${data.skipped} atlandı, ${data.errors} hata. Sayfayı yenileyebilirsin.`
+          t('evalDone', { evaluated: data.evaluated, skipped: data.skipped, errors: data.errors })
         );
       }
     } catch {
-      setEvalResult('Bağlantı hatası.');
+      setEvalResult(t('evalConnectionError'));
     } finally {
       setEvalLoading(false);
     }
@@ -192,11 +197,11 @@ export default function AiIstatistikleri({
   return (
     <>
       <Head>
-        <title>AI Tahmin İstatistikleri — Ofsayt Yok</title>
-        <meta name="description" content="Ofsayt Yok yapay zeka modelinin maç tahmin isabetlilik oranları ve geçmiş tahmin kaydı." />
+        <title>{t('pageTitle')}</title>
+        <meta name="description" content={t('pageDesc')} />
         <link rel="canonical" href={`${process.env.AUTH_URL ?? 'https://ofsaytyok.app'}/ai-istatistikleri`} />
-        <meta property="og:title" content="AI Tahmin İstatistikleri — Ofsayt Yok" />
-        <meta property="og:description" content="Ofsayt Yok yapay zeka modelinin maç tahmin isabetlilik oranları ve geçmiş tahmin kaydı." />
+        <meta property="og:title" content={t('pageTitle')} />
+        <meta property="og:description" content={t('pageDesc')} />
         <meta property="og:url" content={`${process.env.AUTH_URL ?? 'https://ofsaytyok.app'}/ai-istatistikleri`} />
         <meta property="og:image" content={`${process.env.AUTH_URL ?? 'https://ofsaytyok.app'}/images/logo.svg`} />
       </Head>
@@ -204,18 +209,15 @@ export default function AiIstatistikleri({
       <Container>
         <div className={styles.page}>
           <div className={styles.hero}>
-            <h1 className={styles.heroTitle}>AI Tahmin İstatistikleri</h1>
-            <p className={styles.heroSub}>
-              Yapay zeka modelimizin maç sonucu tahminlerindeki isabetlilik oranları
-            </p>
+            <h1 className={styles.heroTitle}>{t('heroTitle')}</h1>
+            <p className={styles.heroSub}>{t('heroSub')}</p>
           </div>
 
-          {/* Admin panel */}
           {isAdmin && (
             <div className={styles.adminPanel}>
-              <span className={styles.adminBadge}>ADMIN</span>
+              <span className={styles.adminBadge}>{t('adminBadge')}</span>
               <span className={styles.adminInfo}>
-                Değerlendirilmeyi bekleyen tahmin: <strong>{pendingCount}</strong>
+                {t('adminPending')} <strong>{pendingCount}</strong>
               </span>
               <button
                 type="button"
@@ -223,7 +225,7 @@ export default function AiIstatistikleri({
                 onClick={runEvaluation}
                 disabled={evalLoading || pendingCount === 0}
               >
-                {evalLoading ? 'Çalışıyor…' : 'Tahminleri Değerlendir'}
+                {evalLoading ? t('adminRunning') : t('adminEvaluate')}
               </button>
               {evalResult && (
                 <span className={styles.adminFeedback}>{evalResult}</span>
@@ -233,40 +235,38 @@ export default function AiIstatistikleri({
 
           {isEmpty ? (
             <div className={styles.empty}>
-              Henüz değerlendirilen tahmin bulunmuyor.{isAdmin && pendingCount > 0 && ' Yukarıdaki butona tıklayarak değerlendirmeyi çalıştır.'}
+              {t('noData')}{isAdmin && pendingCount > 0 && ` ${t('noDataAdmin')}`}
             </div>
           ) : (
             <>
-              {/* Hero stat cards */}
               <div className={styles.statCards}>
                 <div className={styles.statCard}>
                   <span className={styles.statValue}>{totalEvaluated}</span>
-                  <span className={styles.statLabel}>Değerlendirilen Tahmin</span>
+                  <span className={styles.statLabel}>{t('totalEvaluated')}</span>
                 </div>
                 <div className={`${styles.statCard} ${styles.statCardHighlight}`}>
                   <span className={styles.statValue}>{result1x2HitRate}%</span>
-                  <span className={styles.statLabel}>1X2 İsabetlilik</span>
-                  <span className={styles.statSub}>{result1x2HitCount} / {totalEvaluated} doğru</span>
+                  <span className={styles.statLabel}>{t('result1x2')}</span>
+                  <span className={styles.statSub}>{t('result1x2Sub', { hit: result1x2HitCount, total: totalEvaluated })}</span>
                 </div>
                 <div className={styles.statCard}>
                   <span className={styles.statValue}>{scoreExactHitRate}%</span>
-                  <span className={styles.statLabel}>Tam Skor İsabetlilik</span>
-                  <span className={styles.statSub}>{scoreExactHitCount} / {totalEvaluated} doğru</span>
+                  <span className={styles.statLabel}>{t('scoreExact')}</span>
+                  <span className={styles.statSub}>{t('scoreExactSub', { hit: scoreExactHitCount, total: totalEvaluated })}</span>
                 </div>
               </div>
 
-              {/* Model version breakdown */}
               {byModelVersion.length > 1 && (
                 <div className={styles.section}>
-                  <h2 className={styles.sectionTitle}>Model Versiyonları</h2>
+                  <h2 className={styles.sectionTitle}>{t('modelVersions')}</h2>
                   <div className={styles.tableWrap}>
                     <table className={styles.table}>
                       <thead>
                         <tr>
-                          <th>Model</th>
-                          <th>Tahmin</th>
-                          <th>Doğru</th>
-                          <th>İsabet %</th>
+                          <th>{t('colModel')}</th>
+                          <th>{t('colPredictions')}</th>
+                          <th>{t('colCorrect')}</th>
+                          <th>{t('colAccuracy')}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -292,9 +292,8 @@ export default function AiIstatistikleri({
                 </div>
               )}
 
-              {/* History section */}
               <div className={styles.section}>
-                <h2 className={styles.sectionTitle}>Tahmin Geçmişi</h2>
+                <h2 className={styles.sectionTitle}>{t('historyTitle')}</h2>
 
                 {!isPremium ? (
                   <div className={styles.premiumGate}>
@@ -302,51 +301,49 @@ export default function AiIstatistikleri({
                       <table className={styles.table}>
                         <thead>
                           <tr>
-                            <th>Maç</th>
-                            <th>Tahmin</th>
-                            <th>Skor Tahmini</th>
-                            <th>Gerçek Skor</th>
-                            <th>Sonuç</th>
-                            <th>İsabet</th>
+                            <th>{t('colMatch')}</th>
+                            <th>{t('colPrediction')}</th>
+                            <th>{t('colScorePrediction')}</th>
+                            <th>{t('colActualScore')}</th>
+                            <th>{t('colResult')}</th>
+                            <th>{t('colHit')}</th>
                           </tr>
                         </thead>
                         <tbody>
                           {[1, 2, 3].map((i) => (
                             <tr key={i}>
                               <td>Takım A — Takım B</td>
-                              <td>Ev Sahibi (%55)</td>
+                              <td>{t('resultHome')} (55%)</td>
                               <td>2-1</td>
                               <td>2-0</td>
-                              <td>Ev Sahibi</td>
-                              <td>✓</td>
+                              <td>{t('resultHome')}</td>
+                              <td>{t('hitYes')}</td>
                             </tr>
                           ))}
                         </tbody>
                       </table>
                     </div>
                     <div className={styles.premiumOverlay}>
-                      <p className={styles.premiumMsg}>
-                        Tahmin geçmişini görmek için Premium üyelik gerekiyor.
-                      </p>
+                      <p className={styles.premiumMsg}>{t('historyLocked')}</p>
                       <Link href="/auth/signin" className={styles.premiumCta}>
-                        Premium Üye Ol
+                        {t('upgradePremium')}
                       </Link>
                     </div>
                   </div>
                 ) : history.length === 0 ? (
-                  <p className={styles.emptyHistory}>Henüz değerlendirilen tahmin yok.</p>
+                  <p className={styles.emptyHistory}>{t('noData')}</p>
                 ) : (
                   <div className={styles.tableWrap}>
                     <table className={styles.table}>
                       <thead>
                         <tr>
-                          <th>Maç</th>
-                          <th>1X2 Tahmin</th>
-                          <th>Skor Tahmini</th>
-                          <th>Gerçek Skor</th>
-                          <th>Gerçek Sonuç</th>
-                          <th>1X2</th>
-                          <th>Skor</th>
+                          <th>{t('colMatch')}</th>
+                          <th>{t('col1x2Prediction')}</th>
+                          <th>{t('colScorePrediction')}</th>
+                          <th>{t('colActualScore')}</th>
+                          <th>{t('colActualResult')}</th>
+                          <th>{t('col1x2')}</th>
+                          <th>{t('colScoreHit')}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -358,10 +355,10 @@ export default function AiIstatistikleri({
                           );
                           const predictedOutcome =
                             item.predictedHomePct === maxPct
-                              ? 'Ev Sahibi'
+                              ? t('resultHome')
                               : item.predictedDrawPct === maxPct
-                              ? 'Beraberlik'
-                              : 'Deplasman';
+                              ? t('resultDraw')
+                              : t('resultAway');
                           return (
                             <tr key={`${item.matchId}-${item.createdAt}`}>
                               <td className={styles.matchCell}>
@@ -376,24 +373,24 @@ export default function AiIstatistikleri({
                                 </span>
                               </td>
                               <td className={styles.mono}>{item.predictedScore}</td>
-                              <td className={styles.mono}>{item.actualScore ?? '—'}</td>
+                              <td className={styles.mono}>{item.actualScore ?? t('notEvaluated')}</td>
                               <td>{resultLabel(item.actualResult)}</td>
                               <td>
                                 {item.result1x2Hit === true ? (
-                                  <span className={styles.hit}>✓</span>
+                                  <span className={styles.hit}>{t('hitYes')}</span>
                                 ) : item.result1x2Hit === false ? (
-                                  <span className={styles.miss}>✗</span>
+                                  <span className={styles.miss}>{t('hitNo')}</span>
                                 ) : (
-                                  '—'
+                                  t('notEvaluated')
                                 )}
                               </td>
                               <td>
                                 {item.scoreExactHit === true ? (
-                                  <span className={styles.hit}>✓</span>
+                                  <span className={styles.hit}>{t('hitYes')}</span>
                                 ) : item.scoreExactHit === false ? (
-                                  <span className={styles.miss}>✗</span>
+                                  <span className={styles.miss}>{t('hitNo')}</span>
                                 ) : (
-                                  '—'
+                                  t('notEvaluated')
                                 )}
                               </td>
                             </tr>

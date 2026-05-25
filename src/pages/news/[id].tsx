@@ -1,4 +1,5 @@
 import type { GetServerSideProps, InferGetServerSidePropsType } from 'next';
+import { serverSideTranslations } from '@/lib/serverSideTranslations';
 import Head from 'next/head';
 import Image from 'next/image';
 import JsonLd from '@/components/JsonLd';
@@ -127,8 +128,10 @@ export const getServerSideProps: GetServerSideProps<NewsDetailPageProps> = async
   const raw = await loadNewsDetailPageData(id);
   if (!raw) return { notFound: true };
 
+  const i18nProps = await serverSideTranslations(ctx.locale ?? 'tr', ['common', 'nav', 'match']);
   return {
     props: {
+      ...i18nProps,
       newsDetail: propsJsonSafe(raw),
     },
   };

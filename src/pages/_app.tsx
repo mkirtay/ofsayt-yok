@@ -3,6 +3,7 @@ import { SessionProvider } from 'next-auth/react'
 import Head from 'next/head'
 import { Inter } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
+import { appWithTranslation } from '@/lib/i18n'
 import Layout from '@/components/Layout'
 import PremiumModal from '@/components/PremiumModal'
 import '@/styles/globals.scss'
@@ -13,7 +14,7 @@ const inter = Inter({
   variable: '--font-sans',
 })
 
-export default function App({ Component, pageProps: { session, ...pageProps } }: AppProps) {
+function App({ Component, pageProps: { session, ...pageProps } }: AppProps) {
   return (
     <SessionProvider session={session}>
       <Head>
@@ -38,3 +39,5 @@ export default function App({ Component, pageProps: { session, ...pageProps } }:
     </SessionProvider>
   )
 }
+
+export default appWithTranslation(App)

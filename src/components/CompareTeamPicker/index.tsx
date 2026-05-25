@@ -1,17 +1,18 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/router';
+import { useTranslation } from '@/lib/i18n';
 import { COMPARE_LEAGUE_GROUPS } from '@/config/leagues';
 import type { CompareTeamItem } from '@/pages/api/compare/teams';
 import styles from './compareTeamPicker.module.scss';
 
 interface CompareTeamPickerProps {
-  /** Karşılaştırmanın bir tarafı zaten belli ise (takım sayfasından açılınca) */
   fixedTeamId?: number;
   fixedTeamName?: string;
 }
 
 export default function CompareTeamPicker({ fixedTeamId, fixedTeamName }: CompareTeamPickerProps) {
   const router = useRouter();
+  const { t } = useTranslation('match');
 
   const [selectedCountry, setSelectedCountry] = useState('');
   const [selectedLeagueId, setSelectedLeagueId] = useState('');
@@ -23,7 +24,6 @@ export default function CompareTeamPicker({ fixedTeamId, fixedTeamName }: Compar
   const leagues =
     COMPARE_LEAGUE_GROUPS.find((g) => g.countryName === selectedCountry)?.leagues ?? [];
 
-  // League değişince takım listesini çek
   useEffect(() => {
     if (!selectedLeagueId) {
       setTeams([]);
@@ -41,7 +41,6 @@ export default function CompareTeamPicker({ fixedTeamId, fixedTeamName }: Compar
     return () => { cancelled = true; };
   }, [selectedLeagueId]);
 
-  // Ülke değişince ligi sıfırla
   const handleCountryChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedCountry(e.target.value);
     setSelectedLeagueId('');
@@ -56,8 +55,7 @@ export default function CompareTeamPicker({ fixedTeamId, fixedTeamName }: Compar
     setTeam2Id('');
   }, [fixedTeamId]);
 
-  const canCompare =
-    team1Id && team2Id && team1Id !== team2Id;
+  const canCompare = team1Id && team2Id && team1Id !== team2Id;
 
   function handleCompare() {
     if (!canCompare) return;
@@ -69,15 +67,14 @@ export default function CompareTeamPicker({ fixedTeamId, fixedTeamName }: Compar
   return (
     <div className={styles.picker}>
       <div className={styles.pickerRow}>
-        {/* Ülke */}
         <div className={styles.field}>
-          <label className={styles.label}>Ülke</label>
+          <label className={styles.label}>{t('compare.country')}</label>
           <select
             className={styles.select}
             value={selectedCountry}
             onChange={handleCountryChange}
           >
-            <option value="">— Ülke seç —</option>
+            <option value="">{t('compare.selectCountry')}</option>
             {COMPARE_LEAGUE_GROUPS.map((g) => (
               <option key={g.countryName} value={g.countryName}>
                 {g.countryName}
@@ -86,16 +83,15 @@ export default function CompareTeamPicker({ fixedTeamId, fixedTeamName }: Compar
           </select>
         </div>
 
-        {/* Lig */}
         <div className={styles.field}>
-          <label className={styles.label}>Lig</label>
+          <label className={styles.label}>{t('compare.league')}</label>
           <select
             className={styles.select}
             value={selectedLeagueId}
             onChange={handleLeagueChange}
             disabled={!selectedCountry}
           >
-            <option value="">— Lig seç —</option>
+            <option value="">{t('compare.selectLeague')}</option>
             {leagues.map((l) => (
               <option key={l.id} value={String(l.id)}>
                 {l.name}
@@ -107,13 +103,12 @@ export default function CompareTeamPicker({ fixedTeamId, fixedTeamName }: Compar
 
       {selectedLeagueId && (
         <div className={styles.teamRow}>
-          {/* Takım 1 */}
           <div className={styles.field}>
             <label className={styles.label}>
               {isFixed ? (
                 <span className={styles.fixedLabel}>{fixedTeamName}</span>
               ) : (
-                'Takım 1'
+                t('compare.team1')
               )}
             </label>
             {isFixed ? (
@@ -128,10 +123,10 @@ export default function CompareTeamPicker({ fixedTeamId, fixedTeamName }: Compar
                 }}
                 disabled={teamsLoading || teams.length === 0}
               >
-                <option value="">— Takım seç —</option>
-                {teams.map((t) => (
-                  <option key={t.id} value={String(t.id)}>
-                    {t.name}
+                <option value="">{t('compare.selectTeam')}</option>
+                {teams.map((tm) => (
+                  <option key={tm.id} value={String(tm.id)}>
+                    {tm.name}
                   </option>
                 ))}
               </select>
@@ -140,21 +135,20 @@ export default function CompareTeamPicker({ fixedTeamId, fixedTeamName }: Compar
 
           <span className={styles.vsSep}>VS</span>
 
-          {/* Takım 2 */}
           <div className={styles.field}>
-            <label className={styles.label}>Takım 2</label>
+            <label className={styles.label}>{t('compare.team2')}</label>
             <select
               className={styles.select}
               value={team2Id}
               onChange={(e) => setTeam2Id(e.target.value)}
               disabled={teamsLoading || teams.length === 0 || (!isFixed && !team1Id)}
             >
-              <option value="">— Takım seç —</option>
+              <option value="">{t('compare.selectTeam')}</option>
               {teams
-                .filter((t) => String(t.id) !== team1Id)
-                .map((t) => (
-                  <option key={t.id} value={String(t.id)}>
-                    {t.name}
+                .filter((tm) => String(tm.id) !== team1Id)
+                .map((tm) => (
+                  <option key={tm.id} value={String(tm.id)}>
+                    {tm.name}
                   </option>
                 ))}
             </select>
@@ -166,17 +160,17 @@ export default function CompareTeamPicker({ fixedTeamId, fixedTeamName }: Compar
             disabled={!canCompare}
             onClick={handleCompare}
           >
-            Karşılaştır
+            {t('compare.compare')}
           </button>
         </div>
       )}
 
       {teamsLoading && (
-        <p className={styles.loading}>Takımlar yükleniyor…</p>
+        <p className={styles.loading}>{t('compare.teamsLoading')}</p>
       )}
 
       {selectedLeagueId && !teamsLoading && teams.length === 0 && (
-        <p className={styles.empty}>Bu lig için takım verisi bulunamadı.</p>
+        <p className={styles.empty}>{t('compare.noTeams')}</p>
       )}
     </div>
   );

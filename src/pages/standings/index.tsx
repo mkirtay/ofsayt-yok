@@ -1,5 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any -- Livescore tablo / skorer satırları gevşek şema */
 import type { GetServerSideProps, InferGetServerSidePropsType } from 'next';
+import { serverSideTranslations } from '@/lib/serverSideTranslations';
+import { useTranslation } from '@/lib/i18n';
 import { useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
@@ -23,6 +25,7 @@ type StandingsPageProps = {
 export default function Standings({
   payload,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
+  const { t } = useTranslation('standings');
   const [activeTab, setActiveTab] = useState<'table' | 'scorers' | 'cards'>('table');
   const table = (payload?.table ?? []) as any[];
   const scorers = (payload?.scorers ?? []) as any[];
@@ -31,7 +34,7 @@ export default function Standings({
   if (!payload) {
     return (
       <Container>
-        <div className={styles.loading}>Veri yüklenemedi.</div>
+        <div className={styles.loading}>{t('loadError')}</div>
       </Container>
     );
   }
@@ -39,15 +42,15 @@ export default function Standings({
   return (
     <Container>
       <Head>
-        <title>Puan Durumu & İstatistikler | Ofsayt Yok</title>
-        <meta name="description" content="Türkiye Süper Lig puan durumu, gol krallığı ve kart istatistikleri." />
-        <meta property="og:title" content="Puan Durumu & İstatistikler | Ofsayt Yok" />
-        <meta property="og:description" content="Türkiye Süper Lig puan durumu, gol krallığı ve kart istatistikleri." />
+        <title>{t('pageTitle')}</title>
+        <meta name="description" content={t('pageDesc')} />
+        <meta property="og:title" content={t('pageTitle')} />
+        <meta property="og:description" content={t('pageDesc')} />
         <meta property="og:url" content={`${process.env.AUTH_URL ?? 'https://ofsaytyok.app'}/standings`} />
         <link rel="canonical" href={`${process.env.AUTH_URL ?? 'https://ofsaytyok.app'}/standings`} />
       </Head>
       <div className={styles.pageHeader}>
-        <h1>Puan Durumu & İstatistikler</h1>
+        <h1>{t('heading')}</h1>
       </div>
 
       <div className={styles.tabs}>
@@ -56,21 +59,21 @@ export default function Standings({
           className={`${styles.tab} ${activeTab === 'table' ? styles.activeTab : ''}`}
           onClick={() => setActiveTab('table')}
         >
-          Puan Durumu
+          {t('tabStandings')}
         </button>
         <button
           type="button"
           className={`${styles.tab} ${activeTab === 'scorers' ? styles.activeTab : ''}`}
           onClick={() => setActiveTab('scorers')}
         >
-          Gol Krallığı
+          {t('tabScorers')}
         </button>
         <button
           type="button"
           className={`${styles.tab} ${activeTab === 'cards' ? styles.activeTab : ''}`}
           onClick={() => setActiveTab('cards')}
         >
-          Kartlar
+          {t('tabCards')}
         </button>
       </div>
 
@@ -79,16 +82,16 @@ export default function Standings({
           <table className={styles.fullTable}>
             <thead>
               <tr>
-                <th>S</th>
-                <th className={styles.teamCol}>Takım</th>
-                <th>O</th>
-                <th>G</th>
-                <th>B</th>
-                <th>M</th>
-                <th>A</th>
-                <th>Y</th>
-                <th>Av</th>
-                <th>P</th>
+                <th>{t('colRank')}</th>
+                <th className={styles.teamCol}>{t('colTeam')}</th>
+                <th>{t('colPlayed')}</th>
+                <th>{t('colWon')}</th>
+                <th>{t('colDrawn')}</th>
+                <th>{t('colLost')}</th>
+                <th>{t('colFor')}</th>
+                <th>{t('colAgainst')}</th>
+                <th>{t('colDiff')}</th>
+                <th>{t('colPoints')}</th>
               </tr>
             </thead>
             <tbody>
@@ -124,7 +127,7 @@ export default function Standings({
               ) : (
                 <tr>
                   <td colSpan={10} className={styles.empty}>
-                    Veri bulunamadı.
+                    {t('noData')}
                   </td>
                 </tr>
               )}
@@ -136,9 +139,9 @@ export default function Standings({
           <table className={styles.statsTable}>
             <thead>
               <tr>
-                <th>Oyuncu</th>
-                <th>Takım</th>
-                <th>Gol</th>
+                <th>{t('colPlayer')}</th>
+                <th>{t('colTeam')}</th>
+                <th>{t('colGoals')}</th>
               </tr>
             </thead>
             <tbody>
@@ -153,7 +156,7 @@ export default function Standings({
               ) : (
                 <tr>
                   <td colSpan={3} className={styles.empty}>
-                    Veri bulunamadı.
+                    {t('noData')}
                   </td>
                 </tr>
               )}
@@ -165,10 +168,10 @@ export default function Standings({
           <table className={styles.statsTable}>
             <thead>
               <tr>
-                <th>Oyuncu</th>
-                <th>Takım</th>
-                <th>Sarı</th>
-                <th>Kırmızı</th>
+                <th>{t('colPlayer')}</th>
+                <th>{t('colTeam')}</th>
+                <th>{t('colYellow')}</th>
+                <th>{t('colRed')}</th>
               </tr>
             </thead>
             <tbody>
@@ -184,7 +187,7 @@ export default function Standings({
               ) : (
                 <tr>
                   <td colSpan={4} className={styles.empty}>
-                    Veri bulunamadı.
+                    {t('noData')}
                   </td>
                 </tr>
               )}
@@ -203,13 +206,16 @@ export const getServerSideProps: GetServerSideProps<StandingsPageProps> = async 
       'public, s-maxage=60, stale-while-revalidate=180'
     );
     const raw = await loadStandingsPageData(ctx.req, DEFAULT_COMPETITION_ID);
+    const i18nProps = await serverSideTranslations(ctx.locale ?? 'tr', ['common', 'nav', 'standings', 'match']);
     return {
       props: {
+        ...i18nProps,
         payload: raw == null ? null : propsJsonSafe(raw),
       },
     };
   } catch (e) {
     console.error('standings getServerSideProps', e);
-    return { props: { payload: null } };
+    const i18nProps = await serverSideTranslations(ctx.locale ?? 'tr', ['common', 'nav', 'standings', 'match']);
+    return { props: { ...i18nProps, payload: null } };
   }
 };

@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { compare, hash } from 'bcryptjs';
 import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/prisma';
+import { hitFixedWindowRateLimit } from '@/lib/rateLimit';
 
 function parseJsonBody(req: NextApiRequest): Record<string, unknown> {
   const b = req.body;
@@ -28,6 +29,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const userId = session?.user?.id;
   if (!userId) {
     return res.status(401).json({ error: 'Giriş yapmanız gerekiyor.' });
+  }
+
+  const rl = await hitFixedWindowRateLimit(`password:${userId}`, 3, 30 * 60 * 1000);
+  if (!rl.success) {
+    res.setHeader('Retry-After', String(Math.ceil((rl.resetAt - Date.now()) / 1000)));
+    return res.status(429).json({ error: 'Çok fazla şifre değiştirme isteği. Lütfen bekleyin.' });
   }
 
   const body = parseJsonBody(req);

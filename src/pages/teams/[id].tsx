@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any -- Kadro / puan API gevşek şema */
 import type { GetServerSideProps, InferGetServerSidePropsType } from 'next';
+import { serverSideTranslations } from '@/lib/serverSideTranslations';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
@@ -673,8 +674,10 @@ export const getServerSideProps: GetServerSideProps<TeamDetailPageProps> = async
         topScorers: null,
       };
 
+    const i18nProps = await serverSideTranslations(ctx.locale ?? 'tr', ['common', 'nav', 'match', 'standings']);
     return {
       props: {
+        ...i18nProps,
         teamId,
         initialTeamData: propsJsonSafe(raw),
       },

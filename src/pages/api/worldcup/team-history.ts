@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { runWithLiveScoreHttpClient, getLiveScoreHttpClient } from '@/services/liveScoreHttpContext';
+import { hitFixedWindowRateLimit, requestIp } from '@/lib/rateLimit';
 import {
   getSeasonsList,
 } from '@/services/liveScoreService';
@@ -50,6 +51,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method !== 'GET') {
     res.setHeader('Allow', 'GET');
     return res.status(405).end();
+  }
+
+  const ip = requestIp(req.headers, req.socket.remoteAddress);
+  const rl = await hitFixedWindowRateLimit(`wchistory:${ip}`, 30, 60 * 1000);
+  if (!rl.success) {
+    res.setHeader('Retry-After', String(Math.ceil((rl.resetAt - Date.now()) / 1000)));
+    return res.status(429).json({ error: 'Too many requests' });
   }
 
   const teamIdRaw = req.query.team_id;

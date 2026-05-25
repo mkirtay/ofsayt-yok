@@ -1,0 +1,15 @@
+{
+  "loading": "Yükleniyor…",
+  "error": "Bir hata oluştu.",
+  "connectionError": "Bağlantı hatası. Lütfen tekrar deneyin.",
+  "retry": "Tekrar Dene",
+  "close": "Kapat",
+  "dataNotFound": "Veri bulunamadı.",
+  "notFoundTitle": "Sayfa Bulunamadı",
+  "notFoundDesc": "Aradığın sayfa taşınmış, silinmiş ya da hiç var olmamış olabilir.",
+  "backToHome": "Anasayfaya Dön",
+  "serverErrorTitle": "Bir Şeyler Ters Gitti",
+  "serverErrorDesc": "Sunucumuzda beklenmedik bir hata oluştu. Lütfen sayfayı yenileyin.",
+  "refreshPage": "Sayfayı Yenile",
+  "premium": "⭐ Premium"
+}

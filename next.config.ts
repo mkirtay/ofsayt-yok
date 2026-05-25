@@ -4,6 +4,8 @@ import { withSentryConfig } from "@sentry/nextjs";
 const nextConfig: NextConfig = {
   reactStrictMode: false,
   images: {
+    minimumCacheTTL: 2592000,
+    deviceSizes: [640, 828, 1080, 1200, 1920],
     remotePatterns: [
       { protocol: 'https', hostname: '**' },
       { protocol: 'http', hostname: '**' },

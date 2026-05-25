@@ -1,4 +1,7 @@
+import type { GetStaticProps } from 'next';
 import Head from 'next/head';
+import { serverSideTranslations } from '@/lib/serverSideTranslations';
+import { useTranslation } from '@/lib/i18n';
 import { useState } from 'react';
 import { useRouter } from 'next/router';
 import { useSession } from 'next-auth/react';
@@ -7,74 +10,8 @@ import Container from '@/components/Container';
 import { usePremium } from '@/hooks/usePremium';
 import styles from './premium.module.scss';
 
-const FEATURES = [
-  {
-    icon: '🤖',
-    title: 'AI Maç Analizi',
-    desc: 'Her maç için yapay zeka destekli derinlemesine analiz.',
-    bullets: [
-      '1X2 sonuç olasılıkları (%)',
-      'Skor tahmini ve alternatifleri',
-      'Gol beklentisi (Üst 1.5/2.5/3.5, KG Var)',
-      'Takım form ve strateji analizi',
-      'Bahis önerileri + risk seviyesi',
-    ],
-  },
-  {
-    icon: '⚡',
-    title: 'Maç Trivias',
-    desc: 'Her maça özel ilginç istatistikler ve hikayeler.',
-    bullets: [
-      'Bilinmeyen istatistikler',
-      'Rekabet ve tarih bağlamı',
-      'Oyuncu ve kadro analizleri',
-      'Saha avantajı değerlendirmesi',
-    ],
-  },
-  {
-    icon: '📊',
-    title: 'AI İsabeti Takibi',
-    desc: 'Yapay zekanın geçmiş tahminlerinin doğruluk raporu.',
-    bullets: [
-      '1X2 tahmin isabetlilik oranı',
-      'Tam skor isabetlilik oranı',
-      'Model bazlı performans karşılaştırması',
-      'Maç bazlı detaylı geçmiş',
-    ],
-  },
-];
-
-const COMPARE_ROWS = [
-  { label: 'Canlı skorlar', free: true, premium: true },
-  { label: 'Puan durumu & istatistikler', free: true, premium: true },
-  { label: 'Takım sayfaları & H2H karşılaştırma', free: true, premium: true },
-  { label: 'Maç yorumları', free: true, premium: true },
-  { label: 'Tahmin anketi', free: true, premium: true },
-  { label: 'AI Maç Analizi', free: false, premium: true },
-  { label: 'Maç Trivias', free: false, premium: true },
-  { label: 'AI İsabeti geçmişi', free: false, premium: true },
-];
-
-const FAQ = [
-  {
-    q: 'Ödeme sistemi ne zaman aktif olacak?',
-    a: 'Stripe entegrasyonu çok yakında tamamlanacak. O zamana kadar bildirim almak için sosyal medyamızı takip edin.',
-  },
-  {
-    q: 'Premium üyeliği iptal edebilir miyim?',
-    a: 'Evet. İstediğin zaman iptal edebilirsin. Kalan süren bitmeden üyeliğin devam eder.',
-  },
-  {
-    q: 'AI analizleri ne kadar güvenilir?',
-    a: 'Analizler GPT tabanlı modellerle üretilmekte, form verileri ve H2H istatistikleri ile beslenmektedir. AI İsabeti sayfasında isabetlilik oranlarını takip edebilirsin.',
-  },
-  {
-    q: 'Yıllık planda aylık planla aynı özellikler var mı?',
-    a: 'Evet, tüm özellikler aynı. Yıllık planda 3 ay ücretsiz avantaj sunuyoruz.',
-  },
-];
-
 export default function PremiumPage() {
+  const { t } = useTranslation('premium');
   const { isPremium, loading } = usePremium();
   const { data: session } = useSession();
   const router = useRouter();
@@ -82,6 +19,37 @@ export default function PremiumPage() {
   const [checkoutError, setCheckoutError] = useState('');
 
   const paymentStatus = router.query.payment;
+
+  const FEATURES = [
+    {
+      icon: '🤖',
+      key: 'aiAnalysis',
+      bullets: ['b1', 'b2', 'b3', 'b4', 'b5'],
+    },
+    {
+      icon: '⚡',
+      key: 'trivia',
+      bullets: ['b1', 'b2', 'b3', 'b4'],
+    },
+    {
+      icon: '📊',
+      key: 'aiAccuracy',
+      bullets: ['b1', 'b2', 'b3', 'b4'],
+    },
+  ];
+
+  const COMPARE_ROWS: { key: string; free: boolean }[] = [
+    { key: 'liveScores', free: true },
+    { key: 'standings', free: true },
+    { key: 'teamPages', free: true },
+    { key: 'comments', free: true },
+    { key: 'poll', free: true },
+    { key: 'aiAnalysis', free: false },
+    { key: 'trivia', free: false },
+    { key: 'aiHistory', free: false },
+  ];
+
+  const FAQ_KEYS = ['1', '2', '3', '4'];
 
   async function startCheckout(plan: 'monthly' | 'yearly') {
     if (!session) {
@@ -98,12 +66,12 @@ export default function PremiumPage() {
       });
       const data = await res.json() as { url?: string; error?: string };
       if (!res.ok || !data.url) {
-        setCheckoutError(data.error || 'Ödeme başlatılamadı.');
+        setCheckoutError(data.error || t('paymentFailed'));
         return;
       }
       window.location.href = data.url;
     } catch {
-      setCheckoutError('Bağlantı hatası. Lütfen tekrar deneyin.');
+      setCheckoutError(t('paymentFailed'));
     } finally {
       setCheckoutLoading(null);
     }
@@ -112,11 +80,11 @@ export default function PremiumPage() {
   return (
     <>
       <Head>
-        <title>Premium — Ofsayt Yok</title>
-        <meta name="description" content="AI destekli maç analizi, skor tahmini ve bahis önerileri için Ofsayt Yok Premium." />
+        <title>{t('pageTitle')}</title>
+        <meta name="description" content={t('pageDesc')} />
         <link rel="canonical" href={`${process.env.AUTH_URL ?? 'https://ofsaytyok.app'}/premium`} />
-        <meta property="og:title" content="Premium — Ofsayt Yok" />
-        <meta property="og:description" content="AI destekli maç analizi, skor tahmini ve bahis önerileri için Ofsayt Yok Premium." />
+        <meta property="og:title" content={t('pageTitle')} />
+        <meta property="og:description" content={t('pageDesc')} />
         <meta property="og:url" content={`${process.env.AUTH_URL ?? 'https://ofsaytyok.app'}/premium`} />
         <meta property="og:image" content={`${process.env.AUTH_URL ?? 'https://ofsaytyok.app'}/images/logo.svg`} />
         <meta property="og:type" content="website" />
@@ -126,21 +94,19 @@ export default function PremiumPage() {
         <div className={styles.page}>
           {!loading && isPremium && (
             <div className={styles.alreadyPremium}>
-              <h3>⭐ Zaten Premium Üyesin!</h3>
-              <p>Tüm premium içeriklere erişimin aktif. Maç sayfalarında AI analizleri ve Trivia bölümlerini kullanabilirsin.</p>
+              <h3>{t('alreadyPremium')}</h3>
+              <p>{t('alreadyPremiumDesc')}</p>
             </div>
           )}
 
           {paymentStatus === 'success' && (
             <div className={styles.alreadyPremium}>
-              <h3>Ödeme Alındı!</h3>
-              <p>Premium üyeliğin aktif edildi. Teşekkürler!</p>
+              <h3>{t('paymentSuccess')}</h3>
+              <p>{t('paymentSuccessDesc')}</p>
             </div>
           )}
           {paymentStatus === 'cancelled' && (
-            <div className={styles.checkoutError}>
-              Ödeme iptal edildi. İstediğin zaman tekrar deneyebilirsin.
-            </div>
+            <div className={styles.checkoutError}>{t('paymentCancelled')}</div>
           )}
           {checkoutError && (
             <div className={styles.checkoutError}>{checkoutError}</div>
@@ -148,28 +114,23 @@ export default function PremiumPage() {
 
           {/* Hero */}
           <section className={styles.hero}>
-            <div className={styles.heroBadge}>⭐ Premium</div>
-            <h1 className={styles.heroTitle}>
-              Futbolu <span>analiz yapan</span> taraftan izle
-            </h1>
-            <p className={styles.heroSub}>
-              Yapay zeka destekli skor tahminleri, takım form analizleri ve maça özel
-              istatistiklerle bir adım öne geç.
-            </p>
+            <div className={styles.heroBadge}>{t('heroBadge')}</div>
+            <h1 className={styles.heroTitle}>{t('heroTitle')}</h1>
+            <p className={styles.heroSub}>{t('heroSub')}</p>
           </section>
 
-          {/* Özellikler */}
+          {/* Features */}
           <section>
-            <h2 className={styles.sectionTitle}>Premium Neler Sunar?</h2>
+            <h2 className={styles.sectionTitle}>{t('whatsPremium')}</h2>
             <div className={styles.featuresGrid}>
               {FEATURES.map((f) => (
-                <div key={f.title} className={styles.featureCard}>
+                <div key={f.key} className={styles.featureCard}>
                   <span className={styles.featureCardIcon}>{f.icon}</span>
-                  <div className={styles.featureCardTitle}>{f.title}</div>
-                  <p className={styles.featureCardDesc}>{f.desc}</p>
+                  <div className={styles.featureCardTitle}>{t(`features.${f.key}.title`)}</div>
+                  <p className={styles.featureCardDesc}>{t(`features.${f.key}.desc`)}</p>
                   <ul className={styles.featureCardBullets}>
                     {f.bullets.map((b) => (
-                      <li key={b}>{b}</li>
+                      <li key={b}>{t(`features.${f.key}.${b}`)}</li>
                     ))}
                   </ul>
                 </div>
@@ -177,14 +138,14 @@ export default function PremiumPage() {
             </div>
           </section>
 
-          {/* Karşılaştırma tablosu */}
+          {/* Compare table */}
           <section className={styles.compareWrap}>
-            <h2 className={styles.sectionTitle}>Ücretsiz vs Premium</h2>
+            <h2 className={styles.sectionTitle}>{t('freeVsPremium')}</h2>
             <table className={styles.compareTable}>
               <thead className={styles.tableHead}>
                 <tr>
-                  <th>Özellik</th>
-                  <th>Ücretsiz</th>
+                  <th>{t('compareFeature')}</th>
+                  <th>{t('compareFree')}</th>
                   <th>
                     <span className={styles.premiumHeader}>⭐ Premium</span>
                   </th>
@@ -192,8 +153,8 @@ export default function PremiumPage() {
               </thead>
               <tbody>
                 {COMPARE_ROWS.map((row) => (
-                  <tr key={row.label}>
-                    <td>{row.label}</td>
+                  <tr key={row.key}>
+                    <td>{t(`compareRows.${row.key}`)}</td>
                     <td className={row.free ? styles.hit : styles.miss}>
                       {row.free ? '✓' : '—'}
                     </td>
@@ -204,21 +165,21 @@ export default function PremiumPage() {
             </table>
           </section>
 
-          {/* Fiyatlandırma */}
+          {/* Pricing */}
           <section className={styles.pricingSection}>
-            <h2 className={styles.sectionTitle}>Fiyatlandırma</h2>
+            <h2 className={styles.sectionTitle}>{t('pricingTitle')}</h2>
             <div className={styles.pricingCards}>
-              {/* Aylık */}
+              {/* Monthly */}
               <div className={styles.pricingCard}>
-                <div className={styles.pricingPeriod}>Aylık</div>
+                <div className={styles.pricingPeriod}>{t('monthly')}</div>
                 <div className={styles.pricingAmount}>
                   <sup>₺</sup>79<sub>/ay</sub>
                 </div>
                 <div className={styles.pricingNote}>&nbsp;</div>
                 <ul className={styles.pricingFeatures}>
-                  <li>Tüm AI özellikleri</li>
-                  <li>Sınırsız maç analizi</li>
-                  <li>İstediğin zaman iptal</li>
+                  <li>{t('allAiFeatures')}</li>
+                  <li>{t('unlimitedAnalysis')}</li>
+                  <li>{t('cancelAnytime')}</li>
                 </ul>
                 {!isPremium && (
                   <button
@@ -227,29 +188,29 @@ export default function PremiumPage() {
                     onClick={() => void startCheckout('monthly')}
                     disabled={checkoutLoading !== null}
                   >
-                    {checkoutLoading === 'monthly' ? 'Yönlendiriliyor…' : 'Satın Al'}
+                    {checkoutLoading === 'monthly' ? t('redirecting') : t('buy')}
                   </button>
                 )}
                 {!isPremium && !session && (
                   <p className={styles.loginNote}>
-                    <Link href="/auth/signin?callbackUrl=/premium">Giriş yap</Link> ve satın al
+                    <Link href="/auth/signin?callbackUrl=/premium">{t('signIn')}</Link> {t('signInToBuy')}
                   </p>
                 )}
               </div>
 
-              {/* Yıllık */}
+              {/* Yearly */}
               <div className={`${styles.pricingCard} ${styles.pricingCardFeatured}`}>
-                <div className={styles.pricingPopular}>En Popüler</div>
-                <div className={styles.pricingPeriod}>Yıllık</div>
+                <div className={styles.pricingPopular}>{t('mostPopular')}</div>
+                <div className={styles.pricingPeriod}>{t('yearly')}</div>
                 <div className={styles.pricingAmount}>
                   <sup>₺</sup>699<sub>/yıl</sub>
                 </div>
-                <div className={styles.pricingNote}>Ayda ~58 ₺ • 3 ay ücretsiz</div>
+                <div className={styles.pricingNote}>{t('yearlyNote')}</div>
                 <ul className={styles.pricingFeatures}>
-                  <li>Tüm AI özellikleri</li>
-                  <li>Sınırsız maç analizi</li>
-                  <li>Öncelikli destek</li>
-                  <li>Yeni özelliklere erken erişim</li>
+                  <li>{t('allAiFeatures')}</li>
+                  <li>{t('unlimitedAnalysis')}</li>
+                  <li>{t('prioritySupport')}</li>
+                  <li>{t('earlyAccess')}</li>
                 </ul>
                 {!isPremium && (
                   <button
@@ -258,7 +219,7 @@ export default function PremiumPage() {
                     onClick={() => void startCheckout('yearly')}
                     disabled={checkoutLoading !== null}
                   >
-                    {checkoutLoading === 'yearly' ? 'Yönlendiriliyor…' : 'Satın Al'}
+                    {checkoutLoading === 'yearly' ? t('redirecting') : t('buy')}
                   </button>
                 )}
               </div>
@@ -267,11 +228,11 @@ export default function PremiumPage() {
 
           {/* FAQ */}
           <section className={styles.faqSection}>
-            <h2 className={styles.sectionTitle}>Sıkça Sorulan Sorular</h2>
-            {FAQ.map((item) => (
-              <div key={item.q} className={styles.faqItem}>
-                <div className={styles.faqQ}>{item.q}</div>
-                <p className={styles.faqA}>{item.a}</p>
+            <h2 className={styles.sectionTitle}>{t('faqTitle')}</h2>
+            {FAQ_KEYS.map((k) => (
+              <div key={k} className={styles.faqItem}>
+                <div className={styles.faqQ}>{t(`faqItems.q${k}`)}</div>
+                <p className={styles.faqA}>{t(`faqItems.a${k}`)}</p>
               </div>
             ))}
           </section>
@@ -280,3 +241,9 @@ export default function PremiumPage() {
     </>
   );
 }
+
+export const getStaticProps: GetStaticProps = async ({ locale }) => ({
+  props: {
+    ...(await serverSideTranslations(locale ?? 'tr', ['common', 'nav', 'premium'])),
+  },
+});

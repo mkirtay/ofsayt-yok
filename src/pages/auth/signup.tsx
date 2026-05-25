@@ -1,4 +1,7 @@
+import type { GetStaticProps } from 'next'
 import { useEffect, useMemo, useState, FormEvent } from 'react'
+import { serverSideTranslations } from '@/lib/serverSideTranslations'
+import { useTranslation } from '@/lib/i18n'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
 import Head from 'next/head'
@@ -24,6 +27,7 @@ declare global {
 
 export default function SignUpPage() {
   const router = useRouter()
+  const { t } = useTranslation('auth')
   const [name, setName] = useState('')
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
@@ -72,7 +76,7 @@ export default function SignUpPage() {
     setError('')
 
     if (turnstileRequired && !turnstileToken) {
-      setError('Lutfen guvenlik dogrulamasini tamamlayin.')
+      setError(t('signUp.completeVerification'))
       return
     }
 
@@ -95,7 +99,7 @@ export default function SignUpPage() {
     setLoading(false)
 
     if (!res.ok) {
-      setError(data.error || 'Kayıt başarısız')
+      setError(data.error || t('signUp.registrationFailed'))
       if (window.turnstile) window.turnstile.reset()
       setTurnstileToken('')
       return
@@ -107,17 +111,17 @@ export default function SignUpPage() {
   return (
     <>
       <Head>
-        <title>Üye Ol — Ofsayt Yok</title>
+        <title>{t('signUp.pageTitle')}</title>
         <meta name="robots" content="noindex, nofollow" />
       </Head>
       <div className={styles.wrapper}>
         <form className={styles.card} onSubmit={handleSubmit}>
-          <h1 className={styles.title}>Üye Ol</h1>
+          <h1 className={styles.title}>{t('signUp.title')}</h1>
 
           {error && <p className={styles.error}>{error}</p>}
 
           <label className={styles.label}>
-            İsim
+            {t('signUp.name')}
             <input
               className={styles.input}
               type="text"
@@ -128,20 +132,20 @@ export default function SignUpPage() {
           </label>
 
           <label className={styles.label}>
-            Kullanıcı adı (isteğe bağlı)
+            {t('signUp.username')}
             <input
               className={styles.input}
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="ör. muco_1907"
+              placeholder={t('signUp.usernamePlaceholder')}
               maxLength={30}
               autoComplete="username"
             />
           </label>
 
           <label className={styles.label}>
-            E-posta
+            {t('signUp.email')}
             <input
               className={styles.input}
               type="email"
@@ -153,7 +157,7 @@ export default function SignUpPage() {
           </label>
 
           <label className={styles.label}>
-            Şifre
+            {t('signUp.password')}
             <input
               className={styles.input}
               type="password"
@@ -171,7 +175,7 @@ export default function SignUpPage() {
                     className={r.passed ? styles.rulePassed : styles.ruleFailed}
                   >
                     <span className={styles.ruleIcon}>{r.passed ? '✓' : '✗'}</span>
-                    {r.label}
+                    {t(`password.${r.key}`)}
                   </li>
                 ))}
               </ul>
@@ -180,7 +184,7 @@ export default function SignUpPage() {
 
           {turnstileRequired ? <div id="turnstile-container" /> : null}
           {turnstileRequired && !turnstileToken ? (
-            <p className={styles.footer}>Kayit icin once guvenlik dogrulamasini tamamlayin.</p>
+            <p className={styles.footer}>{t('signUp.completeVerificationFirst')}</p>
           ) : null}
 
           <button
@@ -188,13 +192,13 @@ export default function SignUpPage() {
             type="submit"
             disabled={loading || !pwCheck.valid || (turnstileRequired && !turnstileToken)}
           >
-            {loading ? 'Kayıt yapılıyor…' : 'Üye Ol'}
+            {loading ? t('signUp.submitting') : t('signUp.submit')}
           </button>
 
           <p className={styles.footer}>
-            Zaten hesabın var mı?{' '}
+            {t('signUp.alreadyHaveAccount')}{' '}
             <Link href="/auth/signin" className={styles.link}>
-              Giriş Yap
+              {t('signUp.signInLink')}
             </Link>
           </p>
         </form>
@@ -202,3 +206,9 @@ export default function SignUpPage() {
     </>
   )
 }
+
+export const getStaticProps: GetStaticProps = async ({ locale }) => ({
+  props: {
+    ...(await serverSideTranslations(locale ?? 'tr', ['common', 'nav', 'auth'])),
+  },
+})

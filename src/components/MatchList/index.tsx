@@ -20,8 +20,8 @@ interface MatchListProps {
   variant?: MatchListVariant;
   /** Bugünden farklı tarihli maçlar için kickoff hücresine kısa tarih ekler (örn. "15 Nis") */
   showDateWhenNotToday?: boolean;
-  favoriteMatchIds?: Set<string>;
-  onToggleFavorite?: (matchId: string) => void;
+  favoriteTeamIds?: Set<number>;
+  onToggleFavorite?: (teamId: number) => void;
 }
 
 type FlatItem =
@@ -137,8 +137,8 @@ type RowContext = {
   items: FlatItem[];
   showDateWhenNotToday: boolean;
   todayIso: string;
-  favoriteMatchIds: Set<string>;
-  onToggleFavorite: ((matchId: string) => void) | null;
+  favoriteTeamIds: Set<number>;
+  onToggleFavorite: ((teamId: number) => void) | null;
   navigateTo: (path: string) => void;
 };
 
@@ -150,7 +150,7 @@ function VirtualRow({
   items,
   showDateWhenNotToday,
   todayIso,
-  favoriteMatchIds,
+  favoriteTeamIds,
   onToggleFavorite,
   navigateTo,
   ariaAttributes,
@@ -168,7 +168,7 @@ function VirtualRow({
         <div className={styles.virtualHeaderBar} data-competition-id={item.competition_id}>
           <div className={styles.virtualHeaderMain}>
             {logoUrl ? (
-              <Image src={logoUrl} alt="" className={styles.virtualHeaderLogo} width={22} height={22} />
+              <Image src={logoUrl} alt="" className={styles.virtualHeaderLogo} width={22} height={22} unoptimized />
             ) : showCountryFlag ? (
               <Image
                 src={countryFlagImgSrc(item.country_id!)}
@@ -176,6 +176,7 @@ function VirtualRow({
                 className={styles.virtualHeaderFlag}
                 width={22}
                 height={16}
+                unoptimized
               />
             ) : null}
             <span className={styles.virtualHeaderTitleBlock}>
@@ -222,7 +223,8 @@ function VirtualRow({
     .filter(Boolean)
     .join(' ');
 
-  const isFav = favoriteMatchIds.has(String(match.id));
+  const isFav =
+    favoriteTeamIds.has(match.home?.id ?? -1) || favoriteTeamIds.has(match.away?.id ?? -1);
 
   return (
     <div {...ariaAttributes} style={style} className={rowClass}>
@@ -300,7 +302,7 @@ function VirtualRow({
           className={`${styles.virtualMatchStar} ${isFav ? styles.virtualMatchStarActive : ''}`}
           onClick={(e) => {
             e.stopPropagation();
-            onToggleFavorite(String(match.id));
+            onToggleFavorite(match.home?.id ?? 0);
           }}
           aria-label={isFav ? 'Favorilerden çıkar' : 'Favorilere ekle'}
         >
@@ -324,7 +326,7 @@ export default function MatchList({
   groupedMatches,
   variant = 'default',
   showDateWhenNotToday = false,
-  favoriteMatchIds,
+  favoriteTeamIds,
   onToggleFavorite,
 }: MatchListProps) {
   const router = useRouter();
@@ -345,11 +347,11 @@ export default function MatchList({
       items,
       showDateWhenNotToday,
       todayIso,
-      favoriteMatchIds: favoriteMatchIds ?? new Set<string>(),
+      favoriteTeamIds: favoriteTeamIds ?? new Set<number>(),
       onToggleFavorite: onToggleFavorite ?? null,
       navigateTo,
     }),
-    [items, showDateWhenNotToday, todayIso, favoriteMatchIds, onToggleFavorite, navigateTo]
+    [items, showDateWhenNotToday, todayIso, favoriteTeamIds, onToggleFavorite, navigateTo]
   );
 
   const listStyle = useCallback(

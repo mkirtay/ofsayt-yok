@@ -1,4 +1,7 @@
+import type { GetStaticProps } from 'next'
 import { useState, useMemo, FormEvent } from 'react'
+import { serverSideTranslations } from '@/lib/serverSideTranslations'
+import { useTranslation } from '@/lib/i18n'
 import { useRouter } from 'next/router'
 import { signIn } from 'next-auth/react'
 import Link from 'next/link'
@@ -8,6 +11,7 @@ import styles from './auth.module.scss'
 
 export default function ResetPasswordPage() {
   const router = useRouter()
+  const { t } = useTranslation('auth')
   const token = typeof router.query.token === 'string' ? router.query.token : ''
 
   const [password, setPassword] = useState('')
@@ -27,7 +31,7 @@ export default function ResetPasswordPage() {
     setError('')
 
     if (!token) {
-      setError('Geçersiz sıfırlama bağlantısı. Lütfen tekrar şifremi unuttum adımını deneyin.')
+      setError(t('resetPassword.invalidToken'))
       return
     }
 
@@ -41,7 +45,7 @@ export default function ResetPasswordPage() {
     setLoading(false)
 
     if (!res.ok) {
-      setError(data.error || 'Bir hata oluştu. Lütfen tekrar deneyin.')
+      setError(data.error || t('resetPassword.genericError'))
       return
     }
 
@@ -64,18 +68,16 @@ export default function ResetPasswordPage() {
     return (
       <>
         <Head>
-          <title>Şifre Sıfırla — Ofsayt Yok</title>
+          <title>{t('resetPassword.pageTitle')}</title>
           <meta name="robots" content="noindex, nofollow" />
         </Head>
         <div className={styles.wrapper}>
           <div className={styles.card}>
-            <h1 className={styles.title}>Geçersiz Bağlantı</h1>
-            <p className={styles.footer}>
-              Bu sıfırlama bağlantısı geçersiz veya eksik.
-            </p>
+            <h1 className={styles.title}>{t('resetPassword.invalidLinkTitle')}</h1>
+            <p className={styles.footer}>{t('resetPassword.invalidLinkDesc')}</p>
             <p className={styles.footer}>
               <Link href="/auth/forgot-password" className={styles.link}>
-                Yeni bağlantı iste
+                {t('resetPassword.requestNewLink')}
               </Link>
             </p>
           </div>
@@ -87,23 +89,21 @@ export default function ResetPasswordPage() {
   return (
     <>
       <Head>
-        <title>Şifre Sıfırla — Ofsayt Yok</title>
+        <title>{t('resetPassword.pageTitle')}</title>
         <meta name="robots" content="noindex, nofollow" />
       </Head>
       <div className={styles.wrapper}>
         <div className={styles.card}>
-          <h1 className={styles.title}>Yeni Şifre Belirle</h1>
+          <h1 className={styles.title}>{t('resetPassword.title')}</h1>
 
           {done ? (
-            <p className={styles.footer}>
-              Şifren başarıyla güncellendi. Giriş sayfasına yönlendiriliyorsun…
-            </p>
+            <p className={styles.footer}>{t('resetPassword.done')}</p>
           ) : (
             <form onSubmit={handleSubmit} style={{ display: 'contents' }}>
               {error && <p className={styles.error}>{error}</p>}
 
               <label className={styles.label}>
-                Yeni Şifre
+                {t('resetPassword.newPassword')}
                 <input
                   className={styles.input}
                   type="password"
@@ -122,7 +122,7 @@ export default function ResetPasswordPage() {
                         className={r.passed ? styles.rulePassed : styles.ruleFailed}
                       >
                         <span className={styles.ruleIcon}>{r.passed ? '✓' : '✗'}</span>
-                        {r.label}
+                        {t(`password.${r.key}`)}
                       </li>
                     ))}
                   </ul>
@@ -130,7 +130,7 @@ export default function ResetPasswordPage() {
               </label>
 
               <label className={styles.label}>
-                Şifreyi Tekrarla
+                {t('resetPassword.confirmPassword')}
                 <input
                   className={styles.input}
                   type="password"
@@ -141,18 +141,18 @@ export default function ResetPasswordPage() {
                 />
                 {confirmMismatch && (
                   <span style={{ fontSize: 12, color: 'var(--color-danger, #e53e3e)' }}>
-                    Şifreler eşleşmiyor
+                    {t('resetPassword.passwordMismatch')}
                   </span>
                 )}
               </label>
 
               <button className={styles.submit} type="submit" disabled={loading || !canSubmit}>
-                {loading ? 'Kaydediliyor…' : 'Şifremi Güncelle'}
+                {loading ? t('resetPassword.submitting') : t('resetPassword.submit')}
               </button>
 
               <p className={styles.footer}>
                 <Link href="/auth/signin" className={styles.link}>
-                  Giriş sayfasına dön
+                  {t('resetPassword.backToSignIn')}
                 </Link>
               </p>
             </form>
@@ -162,3 +162,9 @@ export default function ResetPasswordPage() {
     </>
   )
 }
+
+export const getStaticProps: GetStaticProps = async ({ locale }) => ({
+  props: {
+    ...(await serverSideTranslations(locale ?? 'tr', ['common', 'nav', 'auth'])),
+  },
+})

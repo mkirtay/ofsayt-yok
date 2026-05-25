@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { useTranslation } from '@/lib/i18n';
 import type {
   SeasonListItem,
   TopScorerEntry,
@@ -30,11 +31,13 @@ export default function MatchCompetitionTopScorers({
   selectedSeasonId,
   onSeasonChange,
 }: MatchCompetitionTopScorersProps) {
+  const { t } = useTranslation('match');
+
   if (loading) {
     return (
-      <section className={styles.block} aria-label="Gol krallığı">
+      <section className={styles.block} aria-label={t('topScorers.ariaLabel')}>
         <div className={styles.sectionDivider} aria-hidden />
-        <div className={styles.loading}>Gol krallığı yükleniyor…</div>
+        <div className={styles.loading}>{t('topScorers.loading')}</div>
       </section>
     );
   }
@@ -45,10 +48,10 @@ export default function MatchCompetitionTopScorers({
 
   if (!list.length) {
     return (
-      <section className={styles.block} aria-label="Gol krallığı">
+      <section className={styles.block} aria-label={t('topScorers.ariaLabel')}>
         <div className={styles.sectionDivider} aria-hidden />
         <div className={styles.titleContainer}>
-          <h2 className={styles.title}>Gol Krallığı</h2>
+          <h2 className={styles.title}>{t('topScorers.title')}</h2>
           {showSeasonSelect ? (
             <SeasonSelect
               seasons={seasons!}
@@ -57,19 +60,19 @@ export default function MatchCompetitionTopScorers({
               selectClassName={styles.seasonSelect}
             />
           ) : seasonName ? (
-            <p className={styles.season}>Sezon: {formatSeasonLabel(seasonName)}</p>
+            <p className={styles.season}>{t('topScorers.season', { season: formatSeasonLabel(seasonName) })}</p>
           ) : null}
         </div>
-        <p className={styles.empty}>Gol krallığı verisi bulunamadı.</p>
+        <p className={styles.empty}>{t('topScorers.empty')}</p>
       </section>
     );
   }
 
   return (
-    <section className={styles.block} aria-label="Gol krallığı">
+    <section className={styles.block} aria-label={t('topScorers.ariaLabel')}>
       <div className={styles.sectionDivider} aria-hidden />
       <div className={styles.titleContainer}>
-        <h2 className={styles.title}>Gol Krallığı</h2>
+        <h2 className={styles.title}>{t('topScorers.title')}</h2>
         {showSeasonSelect ? (
           <SeasonSelect
             seasons={seasons!}
@@ -78,7 +81,7 @@ export default function MatchCompetitionTopScorers({
             selectClassName={styles.seasonSelect}
           />
         ) : seasonName ? (
-          <p className={styles.season}>Sezon: {formatSeasonLabel(seasonName)}</p>
+          <p className={styles.season}>{t('topScorers.season', { season: formatSeasonLabel(seasonName) })}</p>
         ) : null}
       </div>
       <div className={styles.scroll}>
@@ -86,10 +89,10 @@ export default function MatchCompetitionTopScorers({
           <thead>
             <tr>
               <th className={styles.colRank}>#</th>
-              <th className={styles.colPlayerTeam}>Oyuncu</th>
-              <th>O</th>
-              <th>A</th>
-              <th className={styles.colGoals}>G</th>
+              <th className={styles.colPlayerTeam}>{t('topScorers.player')}</th>
+              <th>{t('topScorers.played')}</th>
+              <th>{t('topScorers.assists')}</th>
+              <th className={styles.colGoals}>{t('topScorers.goals')}</th>
             </tr>
           </thead>
           <tbody>

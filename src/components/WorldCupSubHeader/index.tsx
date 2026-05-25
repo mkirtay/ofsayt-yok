@@ -1,3 +1,4 @@
+import { useTranslation } from '@/lib/i18n';
 import Container from '../Container';
 import styles from './worldCupSubHeader.module.scss';
 
@@ -8,20 +9,21 @@ type WorldCupSubHeaderProps = {
   onTabChange: (tab: WorldCupMainTab) => void;
 };
 
-const TABS: Array<{ key: WorldCupMainTab; label: string }> = [
-  { key: 'groups', label: 'Gruplar' },
-  { key: 'matches', label: 'Maçlar' },
-  { key: 'calendar', label: 'Takvim' },
-  { key: 'bracket', label: 'Eleme Turu' },
-  { key: 'teams', label: 'Takımlar' },
-];
+const TAB_KEYS: WorldCupMainTab[] = ['groups', 'matches', 'calendar', 'bracket', 'teams'];
 
 export default function WorldCupSubHeader({ activeTab, onTabChange }: WorldCupSubHeaderProps) {
+  const { t } = useTranslation('match');
+
+  const tabs = TAB_KEYS.map((key) => ({
+    key,
+    label: t(`worldCup.${key}`),
+  }));
+
   return (
     <div className={styles.subHeader}>
       <Container className={styles.inner}>
-        <nav className={styles.tabs} aria-label="Dünya kupası içerik sekmeleri">
-          {TABS.map((tab) => (
+        <nav className={styles.tabs} aria-label={t('worldCup.tabsAriaLabel')}>
+          {tabs.map((tab) => (
             <button
               key={tab.key}
               type="button"

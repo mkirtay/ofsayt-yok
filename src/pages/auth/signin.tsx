@@ -1,4 +1,7 @@
+import type { GetStaticProps } from 'next'
 import { useState, FormEvent } from 'react'
+import { serverSideTranslations } from '@/lib/serverSideTranslations'
+import { useTranslation } from '@/lib/i18n'
 import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
@@ -7,6 +10,7 @@ import styles from './auth.module.scss'
 
 export default function SignInPage() {
   const router = useRouter()
+  const { t } = useTranslation('auth')
   const verified = router.query.verified
   const reset = router.query.reset
   const [identifier, setIdentifier] = useState('')
@@ -28,7 +32,7 @@ export default function SignInPage() {
     setLoading(false)
 
     if (result?.error) {
-      setError('E-posta veya şifre hatalı')
+      setError(t('signIn.invalidCredentials'))
       return
     }
 
@@ -38,30 +42,30 @@ export default function SignInPage() {
   return (
     <>
       <Head>
-        <title>Giriş Yap — Ofsayt Yok</title>
+        <title>{t('signIn.pageTitle')}</title>
         <meta name="robots" content="noindex, nofollow" />
       </Head>
       <div className={styles.wrapper}>
         <form className={styles.card} onSubmit={handleSubmit}>
-          <h1 className={styles.title}>Giriş Yap</h1>
+          <h1 className={styles.title}>{t('signIn.title')}</h1>
 
           {reset === '1' && (
-            <p className={styles.footer}>Şifren başarıyla güncellendi. Artık yeni şifrenle giriş yapabilirsin.</p>
+            <p className={styles.footer}>{t('signIn.passwordUpdated')}</p>
           )}
           {verified === '1' && (
-            <p className={styles.footer}>E-posta adresin dogrulandi. Simdi giris yapabilirsin.</p>
+            <p className={styles.footer}>{t('signIn.emailVerified')}</p>
           )}
           {verified === '0' && (
-            <p className={styles.error}>Dogrulama baglantisi gecersiz veya suresi dolmus.</p>
+            <p className={styles.error}>{t('signIn.invalidVerification')}</p>
           )}
           {verified === 'invalid' && (
-            <p className={styles.error}>Dogrulama baglantisi eksik veya bozuk.</p>
+            <p className={styles.error}>{t('signIn.missingVerification')}</p>
           )}
 
           {error && <p className={styles.error}>{error}</p>}
 
           <label className={styles.label}>
-            E-posta veya kullanıcı adı
+            {t('signIn.emailOrUsername')}
             <input
               className={styles.input}
               type="text"
@@ -73,7 +77,7 @@ export default function SignInPage() {
           </label>
 
           <label className={styles.label}>
-            Şifre
+            {t('signIn.password')}
             <input
               className={styles.input}
               type="password"
@@ -85,19 +89,19 @@ export default function SignInPage() {
           </label>
 
           <button className={styles.submit} type="submit" disabled={loading}>
-            {loading ? 'Giriş yapılıyor…' : 'Giriş Yap'}
+            {loading ? t('signIn.submitting') : t('signIn.submit')}
           </button>
 
           <p className={styles.footer}>
             <Link href="/auth/forgot-password" className={styles.link}>
-              Şifremi unuttum
+              {t('signIn.forgotPassword')}
             </Link>
           </p>
 
           <p className={styles.footer}>
-            Hesabın yok mu?{' '}
+            {t('signIn.noAccount')}{' '}
             <Link href="/auth/signup" className={styles.link}>
-              Üye Ol
+              {t('signIn.signUpLink')}
             </Link>
           </p>
         </form>
@@ -105,3 +109,9 @@ export default function SignInPage() {
     </>
   )
 }
+
+export const getStaticProps: GetStaticProps = async ({ locale }) => ({
+  props: {
+    ...(await serverSideTranslations(locale ?? 'tr', ['common', 'nav', 'auth'])),
+  },
+})

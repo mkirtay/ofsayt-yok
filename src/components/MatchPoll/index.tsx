@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
+import { useTranslation } from '@/lib/i18n';
 import Link from 'next/link';
 import styles from './matchPoll.module.scss';
 
@@ -24,6 +25,7 @@ function pct(votes: number, total: number): number {
 
 export default function MatchPoll({ matchId }: MatchPollProps) {
   const { data: session } = useSession();
+  const { t } = useTranslation('match');
   const [poll, setPoll] = useState<PollData | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -50,32 +52,32 @@ export default function MatchPoll({ matchId }: MatchPollProps) {
         });
         const data = await res.json();
         if (!res.ok) {
-          setError(data.error || 'Bir hata oluştu.');
+          setError(data.error || t('poll.error'));
         } else {
           setPoll(data as PollData);
         }
       } catch {
-        setError('Bağlantı hatası. Lütfen tekrar deneyin.');
+        setError(t('common:connectionError'));
       } finally {
         setSubmitting(false);
       }
     },
-    [matchId, submitting]
+    [matchId, submitting, t]
   );
 
-  const BUTTONS: { key: Prediction; label: string }[] = [
-    { key: 'HOME', label: 'Ev Sahibi' },
-    { key: 'DRAW', label: 'Beraberlik' },
-    { key: 'AWAY', label: 'Deplasman' },
+  const BUTTONS: { key: Prediction; labelKey: string }[] = [
+    { key: 'HOME', labelKey: 'poll.home' },
+    { key: 'DRAW', labelKey: 'poll.draw' },
+    { key: 'AWAY', labelKey: 'poll.away' },
   ];
 
   return (
     <div className={styles.poll}>
-      <h3 className={styles.title}>Topluluk Tahmini</h3>
-      <p className={styles.subtitle}>Bu maçın sonucu ne olacak?</p>
+      <h3 className={styles.title}>{t('poll.title')}</h3>
+      <p className={styles.subtitle}>{t('poll.subtitle')}</p>
 
       <div className={styles.buttons}>
-        {BUTTONS.map(({ key, label }) => {
+        {BUTTONS.map(({ key, labelKey }) => {
           const votes = poll ? (key === 'HOME' ? poll.home : key === 'DRAW' ? poll.draw : poll.away) : 0;
           const percentage = poll ? pct(votes, poll.total) : 0;
           const isSelected = poll?.userPrediction === key;
@@ -90,7 +92,7 @@ export default function MatchPoll({ matchId }: MatchPollProps) {
               className={`${styles.voteBtn} ${isSelected ? styles.voteBtnSelected : ''}`}
               aria-pressed={isSelected}
             >
-              <span className={styles.voteBtnLabel}>{label}</span>
+              <span className={styles.voteBtnLabel}>{t(labelKey)}</span>
               {hasVoted && poll && (
                 <span className={styles.voteBtnPct}>{percentage}%</span>
               )}
@@ -107,14 +109,14 @@ export default function MatchPoll({ matchId }: MatchPollProps) {
       </div>
 
       {poll && poll.total > 0 && (
-        <p className={styles.meta}>Toplam {poll.total} oy</p>
+        <p className={styles.meta}>{t('poll.totalVotes', { count: poll.total })}</p>
       )}
 
       {!session && (
         <p className={styles.loginCta}>
-          Oy kullanmak için{' '}
+          {t('poll.loginCta')}{' '}
           <Link href="/auth/signin" className={styles.loginLink}>
-            giriş yapın
+            {t('poll.loginLink')}
           </Link>
           .
         </p>

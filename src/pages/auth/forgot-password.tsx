@@ -1,9 +1,13 @@
+import type { GetStaticProps } from 'next'
 import { useState, FormEvent } from 'react'
+import { serverSideTranslations } from '@/lib/serverSideTranslations'
+import { useTranslation } from '@/lib/i18n'
 import Link from 'next/link'
 import Head from 'next/head'
 import styles from './auth.module.scss'
 
 export default function ForgotPasswordPage() {
+  const { t } = useTranslation('auth')
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [sent, setSent] = useState(false)
@@ -24,33 +28,29 @@ export default function ForgotPasswordPage() {
 
     if (res.status === 429) {
       const data = await res.json()
-      setError(data.error || 'Cok fazla deneme. Lutfen daha sonra tekrar deneyin.')
+      setError(data.error || t('forgotPassword.tooManyAttempts'))
       return
     }
 
-    // 200 veya başka hata — her ikisinde de "gönderildi" göster (email enumeration önlemi)
     setSent(true)
   }
 
   return (
     <>
       <Head>
-        <title>Şifremi Unuttum — Ofsayt Yok</title>
+        <title>{t('forgotPassword.pageTitle')}</title>
         <meta name="robots" content="noindex, nofollow" />
       </Head>
       <div className={styles.wrapper}>
         <div className={styles.card}>
-          <h1 className={styles.title}>Şifremi Unuttum</h1>
+          <h1 className={styles.title}>{t('forgotPassword.title')}</h1>
 
           {sent ? (
             <>
-              <p className={styles.footer}>
-                E-posta adresin kayıtlıysa birkaç dakika içinde şifre sıfırlama bağlantısı
-                gönderilecek. Spam klasörünü de kontrol et.
-              </p>
+              <p className={styles.footer}>{t('forgotPassword.sentMessage')}</p>
               <p className={styles.footer}>
                 <Link href="/auth/signin" className={styles.link}>
-                  Giriş sayfasına dön
+                  {t('forgotPassword.backToSignIn')}
                 </Link>
               </p>
             </>
@@ -58,12 +58,10 @@ export default function ForgotPasswordPage() {
             <form onSubmit={handleSubmit} style={{ display: 'contents' }}>
               {error && <p className={styles.error}>{error}</p>}
 
-              <p className={styles.footer}>
-                Hesabına kayıtlı e-posta adresini gir, sana sıfırlama bağlantısı gönderelim.
-              </p>
+              <p className={styles.footer}>{t('forgotPassword.instructions')}</p>
 
               <label className={styles.label}>
-                E-posta
+                {t('forgotPassword.email')}
                 <input
                   className={styles.input}
                   type="email"
@@ -76,12 +74,12 @@ export default function ForgotPasswordPage() {
               </label>
 
               <button className={styles.submit} type="submit" disabled={loading}>
-                {loading ? 'Gönderiliyor…' : 'Sıfırlama Bağlantısı Gönder'}
+                {loading ? t('forgotPassword.submitting') : t('forgotPassword.submit')}
               </button>
 
               <p className={styles.footer}>
                 <Link href="/auth/signin" className={styles.link}>
-                  Giriş sayfasına dön
+                  {t('forgotPassword.backToSignIn')}
                 </Link>
               </p>
             </form>
@@ -91,3 +89,9 @@ export default function ForgotPasswordPage() {
     </>
   )
 }
+
+export const getStaticProps: GetStaticProps = async ({ locale }) => ({
+  props: {
+    ...(await serverSideTranslations(locale ?? 'tr', ['common', 'nav', 'auth'])),
+  },
+})
