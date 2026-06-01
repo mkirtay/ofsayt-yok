@@ -26,11 +26,24 @@ export default function PremiumModal() {
     return () => clearTimeout(timer);
   }, [status, session]);
 
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [open]);
+
   if (!open) return null;
 
   return (
     <div className={styles.overlay} onClick={() => setOpen(false)}>
-      <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+      <div
+        className={styles.modal}
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="premium-modal-headline"
+      >
         <button
           type="button"
           className={styles.closeBtn}
@@ -41,7 +54,7 @@ export default function PremiumModal() {
         </button>
 
         <div className={styles.badge}>{t('modal.badge')}</div>
-        <h2 className={styles.headline}>{t('modal.headline')}</h2>
+        <h2 id="premium-modal-headline" className={styles.headline}>{t('modal.headline')}</h2>
         <p className={styles.sub}>{t('modal.sub')}</p>
 
         <ul className={styles.featureList}>

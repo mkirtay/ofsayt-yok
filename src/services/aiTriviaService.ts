@@ -18,7 +18,7 @@ import {
 import type { MatchAnalysisContext } from '@/server/buildMatchAnalysisContext';
 
 const CLAUDE_MODEL = process.env.ANTHROPIC_MODEL ?? 'claude-sonnet-4-5-20250929';
-const OPENAI_MODEL = process.env.OPENAI_MODEL ?? 'gpt-4.1-mini';
+const OPENAI_MODEL = process.env.OPENAI_MODEL ?? 'gpt-4.1';
 const MAX_TOKENS = 2000;
 const TRIVIA_TIMEOUT_MS = 20_000;
 

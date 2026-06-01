@@ -91,6 +91,22 @@
   font-size: 15px;
 }
 
+.emptyHint {
+  margin: $spacing-2 0 0;
+  font-size: 13px;
+  opacity: 0.9;
+}
+
+.pendingBanner {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: $radius-md;
+  padding: $spacing-3 $spacing-4;
+  margin-bottom: $spacing-4;
+  font-size: 14px;
+  color: #1e40af;
+}
+
 // ── Stat cards ──
 
 .statCards {
@@ -151,6 +167,112 @@
   font-weight: 700;
   color: $color-text;
   margin: 0 0 $spacing-3;
+}
+
+.sectionHint {
+  font-size: 13px;
+  color: $color-text-secondary;
+  margin: (-$spacing-2) 0 $spacing-3;
+  line-height: 1.5;
+}
+
+.phaseGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: $spacing-4;
+}
+
+.phaseCard {
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  padding: $spacing-4;
+  box-shadow: $shadow-surface;
+}
+
+.phaseTitle {
+  font-size: 14px;
+  font-weight: 800;
+  margin: 0 0 $spacing-3;
+  color: $color-text;
+}
+
+.phaseStats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $spacing-2 $spacing-4;
+  margin: 0;
+
+  dt {
+    font-size: 11px;
+    font-weight: 600;
+    color: $color-text-secondary;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  dd {
+    margin: 2px 0 0;
+    font-size: 15px;
+    font-weight: 700;
+    color: $color-text;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.phaseSub {
+  font-size: 12px;
+  font-weight: 500;
+  color: $color-text-secondary;
+}
+
+.phaseBadge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: $radius-full;
+}
+
+.phaseBadgePre {
+  background: #e0e7ff;
+  color: #3730a3;
+}
+
+.phaseBadgeHt {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.matchLink {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: inherit;
+  text-decoration: none;
+
+  &:hover .teamName {
+    color: $color-primary-dark;
+    text-decoration: underline;
+  }
+}
+
+.rowPending {
+  td {
+    background: #fffbeb;
+  }
+}
+
+.statusPending {
+  font-size: 12px;
+  font-weight: 600;
+  color: #b45309;
+}
+
+.statusDone {
+  font-size: 12px;
+  font-weight: 600;
+  color: #166534;
 }
 
 // ── Table ──

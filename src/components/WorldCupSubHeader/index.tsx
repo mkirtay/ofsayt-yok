@@ -22,11 +22,13 @@ export default function WorldCupSubHeader({ activeTab, onTabChange }: WorldCupSu
   return (
     <div className={styles.subHeader}>
       <Container className={styles.inner}>
-        <nav className={styles.tabs} aria-label={t('worldCup.tabsAriaLabel')}>
+        <nav className={styles.tabs} role="tablist" aria-label={t('worldCup.tabsAriaLabel')}>
           {tabs.map((tab) => (
             <button
               key={tab.key}
               type="button"
+              role="tab"
+              aria-selected={activeTab === tab.key}
               className={`${styles.tab} ${activeTab === tab.key ? styles.tabActive : ''}`}
               onClick={() => onTabChange(tab.key)}
             >

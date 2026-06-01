@@ -1,0 +1,106 @@
+{
+  "team": "Arjantin",
+  "teamSlug": "arjantin",
+  "squadValue": "~€780M",
+  "avgAge": 27.2,
+  "starPlayer": {
+    "name": "Lionel Messi",
+    "value": "~€20M",
+    "age": 38,
+    "club": "Inter Miami"
+  },
+  "wcHistory": [
+    {
+      "year": 1930,
+      "finish": "İkinci"
+    },
+    {
+      "year": 1934,
+      "finish": "İlk Tur"
+    },
+    {
+      "year": 1958,
+      "finish": "Grup Aşaması"
+    },
+    {
+      "year": 1962,
+      "finish": "Grup Aşaması"
+    },
+    {
+      "year": 1966,
+      "finish": "Çeyrek Final"
+    },
+    {
+      "year": 1974,
+      "finish": "İkinci Tur"
+    },
+    {
+      "year": 1978,
+      "finish": "Şampiyon"
+    },
+    {
+      "year": 1982,
+      "finish": "İkinci Tur"
+    },
+    {
+      "year": 1986,
+      "finish": "Şampiyon"
+    },
+    {
+      "year": 1990,
+      "finish": "İkinci"
+    },
+    {
+      "year": 1994,
+      "finish": "Son 16"
+    },
+    {
+      "year": 1998,
+      "finish": "Çeyrek Final"
+    },
+    {
+      "year": 2002,
+      "finish": "Grup Aşaması"
+    },
+    {
+      "year": 2006,
+      "finish": "Çeyrek Final"
+    },
+    {
+      "year": 2010,
+      "finish": "Çeyrek Final"
+    },
+    {
+      "year": 2014,
+      "finish": "İkinci"
+    },
+    {
+      "year": 2018,
+      "finish": "Son 16"
+    },
+    {
+      "year": 2022,
+      "finish": "Şampiyon"
+    }
+  ],
+  "titles": 3,
+  "bestFinish": "Şampiyon",
+  "totalAppearances": 18,
+  "lastWcFinish": "Şampiyon",
+  "goalsPerGame": null,
+  "xgPerGame": null,
+  "possessionPct": null,
+  "sources": {
+    "transfermarkt": true,
+    "fbref": false,
+    "worldfootball": true
+  },
+  "interestingFacts": [
+    "3 kez Dünya Kupası şampiyonu oldu.",
+    "18. Dünya Kupası katılımı.",
+    "Son Dünya Kupası'nda Şampiyon oldu (2022).",
+    "Kadronun ortalama yaşı 27.2.",
+    "Toplam kadro değeri: ~€780M.",
+    "Yıldız oyuncu: Lionel Messi (38 yaşında, değer: ~€20M)."
+  ]
+}

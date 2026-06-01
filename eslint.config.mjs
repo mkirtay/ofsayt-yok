@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Versiyonlanmayan/standalone üretilen dosya (.gitignore'da)
+    "src/tweet-bot.js",
   ]),
 ]);
 

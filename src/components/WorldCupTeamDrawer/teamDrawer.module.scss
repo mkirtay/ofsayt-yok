@@ -213,6 +213,110 @@ $wc-text-muted: #9a9a9a;
   color: $wc-text-muted;
 }
 
+// Takım Künyesi
+.statGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: $spacing-2;
+}
+
+.statCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: $spacing-3;
+  background: $wc-bg-card;
+  border: 1px solid $wc-border;
+  border-radius: $radius-sm;
+  text-align: center;
+}
+
+.statValue {
+  font-size: 20px;
+  font-weight: 800;
+  color: $wc-text;
+  line-height: 1.1;
+}
+
+.statValueSmall {
+  font-size: 13px;
+  font-weight: 700;
+  color: #f59e0b;
+  line-height: 1.2;
+}
+
+.statLabel {
+  font-size: 11px;
+  color: $wc-text-muted;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.starPlayer {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  padding: $spacing-3;
+  background: $wc-bg-card;
+  border: 1px solid $wc-border;
+  border-radius: $radius-sm;
+}
+
+.starBadge {
+  font-size: 10px;
+  font-weight: 700;
+  color: $color-primary;
+  background: rgba(0, 167, 111, 0.12);
+  padding: 4px 8px;
+  border-radius: $radius-full;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+
+.starInfo {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.starName {
+  font-size: 14px;
+  font-weight: 700;
+  color: $wc-text;
+}
+
+.starMeta {
+  font-size: 12px;
+  color: $wc-text-muted;
+}
+
+.factList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.factItem {
+  position: relative;
+  font-size: 13px;
+  line-height: 1.4;
+  color: $wc-text;
+  padding-left: $spacing-4;
+
+  &::before {
+    content: '▸';
+    position: absolute;
+    left: 0;
+    color: $color-primary;
+  }
+}
+
 .empty {
   font-size: 13px;
   color: $wc-text-muted;

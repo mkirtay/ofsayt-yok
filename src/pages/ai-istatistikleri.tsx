@@ -8,19 +8,26 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/prisma';
 import Container from '@/components/Container';
+import { backfillMissingPredictionRecords, evaluatePendingPredictionRecords } from '@/lib/predictionRecords';
+import { buildMatchHref } from '@/utils/matchUrl';
 import styles from './ai-istatistikleri.module.scss';
 
-type VersionRow = {
-  version: string;
+type PhaseStats = {
+  phase: 'PRE' | 'HT';
   total: number;
-  hitCount: number;
-  hitRate: number;
+  evaluated: number;
+  pending: number;
+  result1x2HitCount: number;
+  result1x2HitRate: number;
+  scoreExactHitCount: number;
+  scoreExactHitRate: number;
 };
 
 type HistoryItem = {
   matchId: string;
   homeTeamName: string;
   awayTeamName: string;
+  phase: 'PRE' | 'HT';
   predictedHomePct: number;
   predictedDrawPct: number;
   predictedAwayPct: number;
@@ -29,21 +36,52 @@ type HistoryItem = {
   actualScore: string | null;
   result1x2Hit: boolean | null;
   scoreExactHit: boolean | null;
+  evaluatedAt: string | null;
   createdAt: string;
 };
 
 type PageProps = {
+  totalRecords: number;
   totalEvaluated: number;
+  pendingCount: number;
   result1x2HitCount: number;
   result1x2HitRate: number;
   scoreExactHitCount: number;
   scoreExactHitRate: number;
-  byModelVersion: VersionRow[];
+  byPhase: PhaseStats[];
   isPremium: boolean;
   isAdmin: boolean;
-  pendingCount: number;
   history: HistoryItem[];
 };
+
+function computePhaseStats(
+  rows: {
+    result1x2Hit: boolean | null;
+    scoreExactHit: boolean | null;
+    evaluatedAt: Date | null;
+    matchAnalysis: { matchStatus: string };
+  }[],
+  phase: 'PRE' | 'HT'
+): PhaseStats {
+  const filtered = rows.filter((r) => r.matchAnalysis.matchStatus === phase);
+  const evaluatedRows = filtered.filter((r) => r.evaluatedAt != null);
+  const evaluated = evaluatedRows.length;
+  const result1x2HitCount = evaluatedRows.filter((r) => r.result1x2Hit === true).length;
+  const scoreExactHitCount = evaluatedRows.filter((r) => r.scoreExactHit === true).length;
+
+  return {
+    phase,
+    total: filtered.length,
+    evaluated,
+    pending: filtered.length - evaluated,
+    result1x2HitCount,
+    result1x2HitRate:
+      evaluated > 0 ? Math.round((result1x2HitCount / evaluated) * 1000) / 10 : 0,
+    scoreExactHitCount,
+    scoreExactHitRate:
+      evaluated > 0 ? Math.round((scoreExactHitCount / evaluated) * 1000) / 10 : 0,
+  };
+}
 
 export const getServerSideProps: GetServerSideProps<PageProps> = async ({ req, res, locale }) => {
   const session = await getServerSession(req, res, authOptions);
@@ -59,63 +97,47 @@ export const getServerSideProps: GetServerSideProps<PageProps> = async ({ req, r
     isAdmin ||
     (session.user.premiumUntil != null && new Date(session.user.premiumUntil) > new Date());
 
-  const pendingCount = await prisma.predictionRecord.count({ where: { evaluatedAt: null } });
+  await backfillMissingPredictionRecords();
+  await evaluatePendingPredictionRecords(req);
 
-  const evaluated = await prisma.predictionRecord.findMany({
-    where: { evaluatedAt: { not: null } },
+  const allRecords = await prisma.predictionRecord.findMany({
     select: {
       result1x2Hit: true,
       scoreExactHit: true,
-      modelVersion: true,
+      evaluatedAt: true,
+      matchId: true,
+      predictedHomePct: true,
+      predictedDrawPct: true,
+      predictedAwayPct: true,
+      predictedScore: true,
+      actualResult: true,
+      actualScore: true,
+      createdAt: true,
+      matchAnalysis: { select: { matchStatus: true, homeTeamName: true, awayTeamName: true } },
     },
+    orderBy: { createdAt: 'desc' },
   });
 
+  const totalRecords = allRecords.length;
+  const evaluated = allRecords.filter((r) => r.evaluatedAt != null);
   const totalEvaluated = evaluated.length;
+  const pendingCount = totalRecords - totalEvaluated;
+
   const result1x2HitCount = evaluated.filter((r) => r.result1x2Hit === true).length;
   const scoreExactHitCount = evaluated.filter((r) => r.scoreExactHit === true).length;
 
-  const versionMap = new Map<string, { total: number; hitCount: number }>();
-  for (const r of evaluated) {
-    const v = r.modelVersion;
-    const entry = versionMap.get(v) ?? { total: 0, hitCount: 0 };
-    entry.total += 1;
-    if (r.result1x2Hit === true) entry.hitCount += 1;
-    versionMap.set(v, entry);
-  }
-
-  const byModelVersion: VersionRow[] = Array.from(versionMap.entries()).map(
-    ([version, { total, hitCount }]) => ({
-      version,
-      total,
-      hitCount,
-      hitRate: total > 0 ? Math.round((hitCount / total) * 1000) / 10 : 0,
-    })
-  );
+  const byPhase: PhaseStats[] = [
+    computePhaseStats(allRecords, 'PRE'),
+    computePhaseStats(allRecords, 'HT'),
+  ].filter((p) => p.total > 0);
 
   let history: HistoryItem[] = [];
   if (isPremium) {
-    const rows = await prisma.predictionRecord.findMany({
-      where: { evaluatedAt: { not: null } },
-      orderBy: { createdAt: 'desc' },
-      take: 100,
-      select: {
-        matchId: true,
-        predictedHomePct: true,
-        predictedDrawPct: true,
-        predictedAwayPct: true,
-        predictedScore: true,
-        actualResult: true,
-        actualScore: true,
-        result1x2Hit: true,
-        scoreExactHit: true,
-        createdAt: true,
-        matchAnalysis: { select: { homeTeamName: true, awayTeamName: true } },
-      },
-    });
-    history = rows.map((r) => ({
+    history = allRecords.slice(0, 100).map((r) => ({
       matchId: r.matchId,
       homeTeamName: r.matchAnalysis.homeTeamName,
       awayTeamName: r.matchAnalysis.awayTeamName,
+      phase: r.matchAnalysis.matchStatus === 'HT' ? 'HT' : 'PRE',
       predictedHomePct: r.predictedHomePct,
       predictedDrawPct: r.predictedDrawPct,
       predictedAwayPct: r.predictedAwayPct,
@@ -124,46 +146,50 @@ export const getServerSideProps: GetServerSideProps<PageProps> = async ({ req, r
       actualScore: r.actualScore,
       result1x2Hit: r.result1x2Hit,
       scoreExactHit: r.scoreExactHit,
+      evaluatedAt: r.evaluatedAt?.toISOString() ?? null,
       createdAt: r.createdAt.toISOString(),
     }));
   }
 
-  res.setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=600');
+  res.setHeader('Cache-Control', 'private, no-cache, no-store, must-revalidate');
 
   const i18nProps = await serverSideTranslations(locale ?? 'tr', ['common', 'nav', 'ai']);
   return {
     props: {
       ...i18nProps,
+      totalRecords,
       totalEvaluated,
+      pendingCount,
       result1x2HitCount,
       result1x2HitRate:
         totalEvaluated > 0 ? Math.round((result1x2HitCount / totalEvaluated) * 1000) / 10 : 0,
       scoreExactHitCount,
       scoreExactHitRate:
         totalEvaluated > 0 ? Math.round((scoreExactHitCount / totalEvaluated) * 1000) / 10 : 0,
-      byModelVersion,
+      byPhase,
       isPremium: isPremium ?? false,
       isAdmin: isAdmin ?? false,
-      pendingCount,
       history,
     },
   };
 };
 
 export default function AiIstatistikleri({
+  totalRecords,
   totalEvaluated,
+  pendingCount,
   result1x2HitCount,
   result1x2HitRate,
   scoreExactHitCount,
   scoreExactHitRate,
-  byModelVersion,
+  byPhase,
   isPremium,
   isAdmin,
-  pendingCount,
   history,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
   const { t } = useTranslation('ai');
-  const isEmpty = totalEvaluated === 0;
+  const isEmpty = totalRecords === 0;
+  const hasOnlyPending = totalRecords > 0 && totalEvaluated === 0;
   const [evalLoading, setEvalLoading] = useState(false);
   const [evalResult, setEvalResult] = useState<string>('');
 
@@ -172,6 +198,17 @@ export default function AiIstatistikleri({
     if (r === 'DRAW') return t('resultDraw');
     if (r === 'AWAY') return t('resultAway');
     return t('notEvaluated');
+  }
+
+  function predictedOutcome(
+    home: number,
+    draw: number,
+    away: number
+  ): { label: string; pct: number } {
+    const maxPct = Math.max(home, draw, away);
+    const label =
+      home === maxPct ? t('resultHome') : draw === maxPct ? t('resultDraw') : t('resultAway');
+    return { label, pct: maxPct };
   }
 
   async function runEvaluation() {
@@ -186,6 +223,9 @@ export default function AiIstatistikleri({
         setEvalResult(
           t('evalDone', { evaluated: data.evaluated, skipped: data.skipped, errors: data.errors })
         );
+        if (data.evaluated > 0) {
+          setTimeout(() => window.location.reload(), 1200);
+        }
       }
     } catch {
       setEvalResult(t('evalConnectionError'));
@@ -218,6 +258,8 @@ export default function AiIstatistikleri({
               <span className={styles.adminBadge}>{t('adminBadge')}</span>
               <span className={styles.adminInfo}>
                 {t('adminPending')} <strong>{pendingCount}</strong>
+                {' · '}
+                {t('adminTotalRecords')} <strong>{totalRecords}</strong>
               </span>
               <button
                 type="button"
@@ -227,67 +269,104 @@ export default function AiIstatistikleri({
               >
                 {evalLoading ? t('adminRunning') : t('adminEvaluate')}
               </button>
-              {evalResult && (
-                <span className={styles.adminFeedback}>{evalResult}</span>
-              )}
+              {evalResult && <span className={styles.adminFeedback}>{evalResult}</span>}
             </div>
           )}
 
           {isEmpty ? (
             <div className={styles.empty}>
-              {t('noData')}{isAdmin && pendingCount > 0 && ` ${t('noDataAdmin')}`}
+              <p>{t('noDataEmpty')}</p>
+              <p className={styles.emptyHint}>{t('noDataEmptyHint')}</p>
             </div>
           ) : (
             <>
+              {hasOnlyPending && (
+                <div className={styles.pendingBanner}>
+                  {t('pendingBanner', { count: pendingCount, total: totalRecords })}
+                  {isAdmin && ` ${t('noDataAdmin')}`}
+                </div>
+              )}
+
               <div className={styles.statCards}>
                 <div className={styles.statCard}>
-                  <span className={styles.statValue}>{totalEvaluated}</span>
-                  <span className={styles.statLabel}>{t('totalEvaluated')}</span>
+                  <span className={styles.statValue}>{totalRecords}</span>
+                  <span className={styles.statLabel}>{t('totalRecords')}</span>
+                  {pendingCount > 0 && (
+                    <span className={styles.statSub}>
+                      {t('pendingSub', { pending: pendingCount })}
+                    </span>
+                  )}
                 </div>
                 <div className={`${styles.statCard} ${styles.statCardHighlight}`}>
-                  <span className={styles.statValue}>{result1x2HitRate}%</span>
+                  <span className={styles.statValue}>
+                    {totalEvaluated > 0 ? `${result1x2HitRate}%` : '—'}
+                  </span>
                   <span className={styles.statLabel}>{t('result1x2')}</span>
-                  <span className={styles.statSub}>{t('result1x2Sub', { hit: result1x2HitCount, total: totalEvaluated })}</span>
+                  <span className={styles.statSub}>
+                    {totalEvaluated > 0
+                      ? t('result1x2Sub', { hit: result1x2HitCount, total: totalEvaluated })
+                      : t('awaitingEvaluation')}
+                  </span>
                 </div>
                 <div className={styles.statCard}>
-                  <span className={styles.statValue}>{scoreExactHitRate}%</span>
+                  <span className={styles.statValue}>
+                    {totalEvaluated > 0 ? `${scoreExactHitRate}%` : '—'}
+                  </span>
                   <span className={styles.statLabel}>{t('scoreExact')}</span>
-                  <span className={styles.statSub}>{t('scoreExactSub', { hit: scoreExactHitCount, total: totalEvaluated })}</span>
+                  <span className={styles.statSub}>
+                    {totalEvaluated > 0
+                      ? t('scoreExactSub', { hit: scoreExactHitCount, total: totalEvaluated })
+                      : t('awaitingEvaluation')}
+                  </span>
                 </div>
               </div>
 
-              {byModelVersion.length > 1 && (
+              {byPhase.length > 0 && (
                 <div className={styles.section}>
-                  <h2 className={styles.sectionTitle}>{t('modelVersions')}</h2>
-                  <div className={styles.tableWrap}>
-                    <table className={styles.table}>
-                      <thead>
-                        <tr>
-                          <th>{t('colModel')}</th>
-                          <th>{t('colPredictions')}</th>
-                          <th>{t('colCorrect')}</th>
-                          <th>{t('colAccuracy')}</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {byModelVersion.map((v) => (
-                          <tr key={v.version}>
-                            <td className={styles.mono}>{v.version}</td>
-                            <td>{v.total}</td>
-                            <td>{v.hitCount}</td>
-                            <td>
-                              <span
-                                className={`${styles.badge} ${
-                                  v.hitRate >= 50 ? styles.badgeGood : styles.badgeLow
-                                }`}
-                              >
-                                {v.hitRate}%
-                              </span>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                  <h2 className={styles.sectionTitle}>{t('byPhaseTitle')}</h2>
+                  <p className={styles.sectionHint}>{t('byPhaseHint')}</p>
+                  <div className={styles.phaseGrid}>
+                    {byPhase.map((p) => (
+                      <div key={p.phase} className={styles.phaseCard}>
+                        <h3 className={styles.phaseTitle}>
+                          {p.phase === 'PRE' ? t('phasePre') : t('phaseHt')}
+                        </h3>
+                        <dl className={styles.phaseStats}>
+                          <div>
+                            <dt>{t('phaseTotal')}</dt>
+                            <dd>{p.total}</dd>
+                          </div>
+                          <div>
+                            <dt>{t('phaseEvaluated')}</dt>
+                            <dd>{p.evaluated}</dd>
+                          </div>
+                          <div>
+                            <dt>{t('result1x2')}</dt>
+                            <dd>
+                              {p.evaluated > 0 ? `${p.result1x2HitRate}%` : '—'}
+                              {p.evaluated > 0 && (
+                                <span className={styles.phaseSub}>
+                                  {' '}
+                                  ({p.result1x2HitCount}/{p.evaluated})
+                                </span>
+                              )}
+                            </dd>
+                          </div>
+                          <div>
+                            <dt>{t('scoreExact')}</dt>
+                            <dd>
+                              {p.evaluated > 0 ? `${p.scoreExactHitRate}%` : '—'}
+                              {p.evaluated > 0 && (
+                                <span className={styles.phaseSub}>
+                                  {' '}
+                                  ({p.scoreExactHitCount}/{p.evaluated})
+                                </span>
+                              )}
+                            </dd>
+                          </div>
+                        </dl>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
@@ -302,22 +381,24 @@ export default function AiIstatistikleri({
                         <thead>
                           <tr>
                             <th>{t('colMatch')}</th>
-                            <th>{t('colPrediction')}</th>
+                            <th>{t('colPhase')}</th>
+                            <th>{t('col1x2Prediction')}</th>
                             <th>{t('colScorePrediction')}</th>
                             <th>{t('colActualScore')}</th>
-                            <th>{t('colResult')}</th>
-                            <th>{t('colHit')}</th>
+                            <th>{t('col1x2')}</th>
+                            <th>{t('colScoreHit')}</th>
                           </tr>
                         </thead>
                         <tbody>
                           {[1, 2, 3].map((i) => (
                             <tr key={i}>
                               <td>Takım A — Takım B</td>
+                              <td>{t('phasePre')}</td>
                               <td>{t('resultHome')} (55%)</td>
                               <td>2-1</td>
                               <td>2-0</td>
-                              <td>{t('resultHome')}</td>
                               <td>{t('hitYes')}</td>
+                              <td>{t('hitNo')}</td>
                             </tr>
                           ))}
                         </tbody>
@@ -325,58 +406,75 @@ export default function AiIstatistikleri({
                     </div>
                     <div className={styles.premiumOverlay}>
                       <p className={styles.premiumMsg}>{t('historyLocked')}</p>
-                      <Link href="/auth/signin" className={styles.premiumCta}>
+                      <Link href="/premium" className={styles.premiumCta}>
                         {t('upgradePremium')}
                       </Link>
                     </div>
                   </div>
-                ) : history.length === 0 ? (
-                  <p className={styles.emptyHistory}>{t('noData')}</p>
                 ) : (
                   <div className={styles.tableWrap}>
                     <table className={styles.table}>
                       <thead>
                         <tr>
                           <th>{t('colMatch')}</th>
+                          <th>{t('colPhase')}</th>
                           <th>{t('col1x2Prediction')}</th>
                           <th>{t('colScorePrediction')}</th>
                           <th>{t('colActualScore')}</th>
                           <th>{t('colActualResult')}</th>
                           <th>{t('col1x2')}</th>
                           <th>{t('colScoreHit')}</th>
+                          <th>{t('colStatus')}</th>
                         </tr>
                       </thead>
                       <tbody>
                         {history.map((item) => {
-                          const maxPct = Math.max(
+                          const pred = predictedOutcome(
                             item.predictedHomePct,
                             item.predictedDrawPct,
                             item.predictedAwayPct
                           );
-                          const predictedOutcome =
-                            item.predictedHomePct === maxPct
-                              ? t('resultHome')
-                              : item.predictedDrawPct === maxPct
-                              ? t('resultDraw')
-                              : t('resultAway');
+                          const matchHref = buildMatchHref({
+                            id: Number(item.matchId),
+                            home: { name: item.homeTeamName },
+                            away: { name: item.awayTeamName },
+                          });
+                          const isPending = item.evaluatedAt == null;
+
                           return (
-                            <tr key={`${item.matchId}-${item.createdAt}`}>
+                            <tr
+                              key={`${item.matchId}-${item.phase}-${item.createdAt}`}
+                              className={isPending ? styles.rowPending : undefined}
+                            >
                               <td className={styles.matchCell}>
-                                <span className={styles.teamName}>{item.homeTeamName}</span>
-                                <span className={styles.vs}>—</span>
-                                <span className={styles.teamName}>{item.awayTeamName}</span>
+                                <Link href={matchHref} className={styles.matchLink}>
+                                  <span className={styles.teamName}>{item.homeTeamName}</span>
+                                  <span className={styles.vs}>—</span>
+                                  <span className={styles.teamName}>{item.awayTeamName}</span>
+                                </Link>
                               </td>
                               <td>
-                                {predictedOutcome}{' '}
-                                <span className={styles.pct}>
-                                  ({maxPct.toFixed(0)}%)
+                                <span
+                                  className={`${styles.phaseBadge} ${
+                                    item.phase === 'HT' ? styles.phaseBadgeHt : styles.phaseBadgePre
+                                  }`}
+                                >
+                                  {item.phase === 'PRE' ? t('phasePre') : t('phaseHt')}
                                 </span>
                               </td>
-                              <td className={styles.mono}>{item.predictedScore}</td>
-                              <td className={styles.mono}>{item.actualScore ?? t('notEvaluated')}</td>
-                              <td>{resultLabel(item.actualResult)}</td>
                               <td>
-                                {item.result1x2Hit === true ? (
+                                {pred.label}{' '}
+                                <span className={styles.pct}>({pred.pct.toFixed(0)}%)</span>
+                              </td>
+                              <td className={styles.mono}>{item.predictedScore}</td>
+                              <td className={styles.mono}>
+                                {item.actualScore ?? t('notEvaluated')}
+                              </td>
+                              <td>{isPending ? t('notEvaluated') : resultLabel(item.actualResult)}</td>
+                              <td>
+                                {isPending ? (
+                                  t('statusPending')
+                                ) : item.result1x2Hit === true ? (
                                   <span className={styles.hit}>{t('hitYes')}</span>
                                 ) : item.result1x2Hit === false ? (
                                   <span className={styles.miss}>{t('hitNo')}</span>
@@ -385,12 +483,21 @@ export default function AiIstatistikleri({
                                 )}
                               </td>
                               <td>
-                                {item.scoreExactHit === true ? (
+                                {isPending ? (
+                                  t('statusPending')
+                                ) : item.scoreExactHit === true ? (
                                   <span className={styles.hit}>{t('hitYes')}</span>
                                 ) : item.scoreExactHit === false ? (
                                   <span className={styles.miss}>{t('hitNo')}</span>
                                 ) : (
                                   t('notEvaluated')
+                                )}
+                              </td>
+                              <td>
+                                {isPending ? (
+                                  <span className={styles.statusPending}>{t('statusPending')}</span>
+                                ) : (
+                                  <span className={styles.statusDone}>{t('statusDone')}</span>
                                 )}
                               </td>
                             </tr>

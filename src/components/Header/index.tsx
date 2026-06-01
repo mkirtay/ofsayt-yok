@@ -14,7 +14,23 @@ export default function Header() {
   const { t } = useTranslation('nav');
   const { locale, setLocale } = useI18n();
   const isWorldCupRoute = router.pathname.startsWith('/world-cup');
+  const [bodyHasWcHeader, setBodyHasWcHeader] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const sync = () => {
+      setBodyHasWcHeader(
+        document.body.classList.contains('worldCupHeaderOnly') ||
+          document.body.classList.contains('worldCupTheme'),
+      );
+    };
+    sync();
+    const observer = new MutationObserver(sync);
+    observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, []);
+
+  const isWorldCupTheme = isWorldCupRoute || bodyHasWcHeader;
 
   useEffect(() => {
     setMobileMenuOpen(false);
@@ -25,13 +41,13 @@ export default function Header() {
   }
 
   return (
-    <header className={`${styles.header} ${isWorldCupRoute ? styles.headerWorldCup : ''}`.trim()}>
+    <header className={`${styles.header} ${isWorldCupTheme ? styles.headerWorldCup : ''}`.trim()}>
       <Container className={styles.headerContainer}>
         <div className={styles.left}>
           <div className={styles.logo}>
             <Link href="/" className={styles.logoLink}>
               <Image
-                src={isWorldCupRoute ? '/images/logo-black.svg' : '/images/logo.svg'}
+                src={isWorldCupTheme ? '/images/logo-black.svg' : '/images/logo.svg'}
                 alt="Ofsayt Yok"
                 width={146}
                 height={28}
@@ -40,7 +56,7 @@ export default function Header() {
             </Link>
           </div>
           <div className={styles.headerNavPills}>
-            {isWorldCupRoute ? (
+            {isWorldCupTheme ? (
               <Link href="/world-cup" className={styles.worldCupMarkLink} aria-label="FIFA World Cup">
                 <Image
                   src="/images/2026_FIFA_World_Cup_Logo.png"
@@ -112,9 +128,9 @@ export default function Header() {
       </Container>
 
       {mobileMenuOpen && (
-        <div className={`${styles.mobileMenu} ${isWorldCupRoute ? styles.mobileMenuWorldCup : ''}`}>
+        <div className={`${styles.mobileMenu} ${isWorldCupTheme ? styles.mobileMenuWorldCup : ''}`}>
           <nav className={styles.mobileNav}>
-            {!isWorldCupRoute && (
+            {!isWorldCupTheme && (
               <Link href="/world-cup" className={styles.mobileNavLink}>
                 {t('worldCup')}
               </Link>

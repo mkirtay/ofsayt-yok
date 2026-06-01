@@ -1,0 +1,41 @@
+{
+  "team": "Türkiye",
+  "teamSlug": "turkiye",
+  "squadValue": "~€750M",
+  "avgAge": 26.3,
+  "starPlayer": {
+    "name": "Arda Güler",
+    "value": "~€60M",
+    "age": 20,
+    "club": "Real Madrid"
+  },
+  "wcHistory": [
+    {
+      "year": 1954,
+      "finish": "Grup Aşaması"
+    },
+    {
+      "year": 2002,
+      "finish": "Üçüncü"
+    }
+  ],
+  "titles": 0,
+  "bestFinish": "Üçüncü",
+  "totalAppearances": 2,
+  "lastWcFinish": "Üçüncü",
+  "goalsPerGame": null,
+  "xgPerGame": null,
+  "possessionPct": null,
+  "sources": {
+    "transfermarkt": true,
+    "fbref": false,
+    "worldfootball": true
+  },
+  "interestingFacts": [
+    "2. Dünya Kupası katılımı.",
+    "Son Dünya Kupası'nda Üçüncü oldu (2002).",
+    "Kadronun ortalama yaşı 26.3.",
+    "Toplam kadro değeri: ~€750M.",
+    "Yıldız oyuncu: Arda Güler (20 yaşında, değer: ~€60M)."
+  ]
+}

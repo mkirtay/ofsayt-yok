@@ -28,6 +28,8 @@ import type { MatchDetailPageServerPayload } from '@/server/loadMatchDetailIniti
 import { loadMatchDetailInitialData } from '@/server/loadMatchDetailInitialData';
 import { propsJsonSafe } from '@/server/propsJsonSafe';
 import { buildMatchSlug, parseMatchIdFromParam } from '@/utils/matchUrl';
+import { WORLD_CUP_COMPETITION_ID } from '@/config/worldCup';
+import { fetchWorldCupStandingsBundle, isWorldCupCompetition } from '@/utils/worldCupStandings';
 import styles from './matchDetail.module.scss';
 
 type MatchDetailPageProps = {
@@ -59,6 +61,16 @@ export default function MatchDetail({
   );
 
   const skipHydrationFetchOnce = useRef(true);
+
+  const compId = match?.competition?.id ?? match?.competition_id;
+  const isWorldCup = compId === WORLD_CUP_COMPETITION_ID;
+
+  useEffect(() => {
+    document.body.classList.toggle('worldCupHeaderOnly', isWorldCup);
+    return () => {
+      document.body.classList.remove('worldCupHeaderOnly');
+    };
+  }, [isWorldCup]);
 
   const handleSeasonChange = useCallback(async (seasonId: number, competitionIdStr: string) => {
     setSelectedSeasonId(seasonId);
@@ -98,35 +110,42 @@ export default function MatchDetail({
       const compId = m?.competition?.id ?? m?.competition_id;
       if (compId != null) {
         setStandingsLoading(true);
-        const compIdStr = String(compId);
-        const [seasonsList, table1] = await Promise.all([
-          getSeasonsList(),
-          getCompetitionTableFull(compIdStr),
-        ]);
-        setSeasons(seasonsList);
+        if (isWorldCupCompetition(compId)) {
+          const wc = await fetchWorldCupStandingsBundle();
+          setSeasons(wc.seasons);
+          setSelectedSeasonId(wc.selectedSeasonId);
+          setStandings(wc.standings);
+        } else {
+          const compIdStr = String(compId);
+          const [seasonsList, table1] = await Promise.all([
+            getSeasonsList(),
+            getCompetitionTableFull(compIdStr),
+          ]);
+          setSeasons(seasonsList);
 
-        const fromTable =
-          table1?.season?.id != null && Number.isFinite(Number(table1.season.id))
-            ? Number(table1.season.id)
-            : null;
-        let sid: number | null = fromTable;
-        if (sid != null && seasonsList.length && !seasonsList.some((s) => s.id === sid)) {
-          sid = seasonsList[0]!.id;
-        } else if (sid == null && seasonsList.length) {
-          sid = seasonsList[0]!.id;
+          const fromTable =
+            table1?.season?.id != null && Number.isFinite(Number(table1.season.id))
+              ? Number(table1.season.id)
+              : null;
+          let sid: number | null = fromTable;
+          if (sid != null && seasonsList.length && !seasonsList.some((s) => s.id === sid)) {
+            sid = seasonsList[0]!.id;
+          } else if (sid == null && seasonsList.length) {
+            sid = seasonsList[0]!.id;
+          }
+          setSelectedSeasonId(sid);
+
+          const needTableRefetch =
+            sid != null &&
+            table1 != null &&
+            (table1.season?.id == null || Number(table1.season.id) !== sid);
+
+          let tableFinal = table1;
+          if (needTableRefetch && sid != null) {
+            tableFinal = await getCompetitionTableFull(compIdStr, { season: sid });
+          }
+          setStandings(tableFinal ?? table1);
         }
-        setSelectedSeasonId(sid);
-
-        const needTableRefetch =
-          sid != null &&
-          table1 != null &&
-          (table1.season?.id == null || Number(table1.season.id) !== sid);
-
-        let tableFinal = table1;
-        if (needTableRefetch && sid != null) {
-          tableFinal = await getCompetitionTableFull(compIdStr, { season: sid });
-        }
-        setStandings(tableFinal ?? table1);
         setStandingsLoading(false);
         setStandingsReady(true);
       } else {
@@ -148,7 +167,6 @@ export default function MatchDetail({
 
   const homeTeamId = match?.home?.id ?? match?.home_id;
   const awayTeamId = match?.away?.id ?? match?.away_id;
-  const compId = match?.competition?.id ?? match?.competition_id;
   const showStandingsBlock = compId != null && (standingsLoading || standingsReady);
 
   const homeName = match?.home?.name || '';
@@ -250,8 +268,9 @@ export const getServerSideProps: GetServerSideProps<MatchDetailPageProps> = asyn
   const raw = await loadMatchDetailInitialData(ctx.req, matchId);
   if (!raw?.match) return { notFound: true };
 
+  const apiMatchId = String(raw.match.id);
   const canonicalSlug = buildMatchSlug(raw.match);
-  const canonicalParam = canonicalSlug ? `${matchId}-${canonicalSlug}` : matchId;
+  const canonicalParam = canonicalSlug ? `${apiMatchId}-${canonicalSlug}` : apiMatchId;
 
   if (param !== canonicalParam) {
     return {
@@ -271,7 +290,7 @@ export const getServerSideProps: GetServerSideProps<MatchDetailPageProps> = asyn
   return {
     props: {
       ...i18nProps,
-      matchId,
+      matchId: apiMatchId,
       canonicalPath: `/matches/${canonicalParam}`,
       initialMatchData: propsJsonSafe(raw),
     },

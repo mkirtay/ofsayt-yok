@@ -19,6 +19,7 @@
     "pm2List": "pm2 list",
     "pm2Save": "pm2 save",
     "grant-premium": "dotenv -e .env.local -- node scripts/grant-premium.mjs",
+    "video": "dotenv -e .env.local -- npx tsx scripts/video-pipeline/index.ts",
     "db:migrate": "dotenv -e .env.local -- prisma migrate dev",
     "db:push": "dotenv -e .env.local -- prisma db push",
     "db:generate": "dotenv -e .env.local -- prisma generate",
@@ -37,6 +38,7 @@
     "@vercel/analytics": "^2.0.1",
     "axios": "^1.13.6",
     "bcryptjs": "^3.0.3",
+    "cheerio": "^1.2.0",
     "date-fns": "^4.1.0",
     "i18next": "^26.2.0",
     "micro": "^10.0.1",
@@ -59,6 +61,7 @@
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
+    "@types/cheerio": "^0.22.35",
     "@types/micro": "^7.3.7",
     "@types/node": "^20",
     "@types/react": "^19",
@@ -69,6 +72,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "prisma": "^6.19.3",
+    "tsx": "^4.20.6",
     "typescript": "^5",
     "vercel": "^54.1.0",
     "vitest": "^4.1.7"

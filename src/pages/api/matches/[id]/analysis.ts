@@ -15,6 +15,8 @@ import { livescoreAxiosFromIncomingMessage } from '@/server/livescoreInternalAxi
 import { buildMatchAnalysisContext } from '@/server/buildMatchAnalysisContext';
 import { generateMatchAnalysis, AnalysisTimeoutError } from '@/services/aiAnalysisService';
 import { captureError } from '@/lib/logger';
+import { ensurePredictionRecordForAnalysis } from '@/lib/predictionRecords';
+import { findStoredMatchAnalysis } from '@/lib/matchAnalysisLookup';
 
 const PRE_TTL_MS = 30 * 60 * 1000;
 
@@ -54,9 +56,7 @@ export default async function handler(
 
       // POST fazda yeni analiz üretme — PRE analizini döndür
       if (ctx.matchPhase === 'POST') {
-        const preAnalysis = await prisma.matchAnalysis.findUnique({
-          where: { matchId_matchStatus: { matchId, matchStatus: 'PRE' } },
-        });
+        const preAnalysis = await findStoredMatchAnalysis(matchId, 'PRE', ctx.match);
         if (preAnalysis) {
           return { status: 200 as const, body: { analysis: preAnalysis, cached: true, isPostMatch: true } };
         }
@@ -64,19 +64,19 @@ export default async function handler(
       }
 
       // Cache kontrolü
-      const existing = await prisma.matchAnalysis.findUnique({
-        where: {
-          matchId_matchStatus: {
-            matchId,
-            matchStatus: ctx.matchPhase,
-          },
-        },
-      });
+      const existing = await findStoredMatchAnalysis(matchId, ctx.matchPhase, ctx.match);
       const now = new Date();
       if (existing) {
         const stillValid =
           existing.expiresAt == null || existing.expiresAt > now;
         if (stillValid) {
+          if (ctx.matchPhase === 'PRE' || ctx.matchPhase === 'HT') {
+            try {
+              await ensurePredictionRecordForAnalysis(existing);
+            } catch (e) {
+              captureError('prediction-record-ensure', e);
+            }
+          }
           return {
             status: 200 as const,
             body: { analysis: existing, cached: true },
@@ -111,7 +111,7 @@ export default async function handler(
           })
         : await prisma.matchAnalysis.create({
             data: {
-              matchId,
+              matchId: String(ctx.match.id),
               matchStatus: ctx.matchPhase,
               homeTeamId: String(ctx.homeTeam.teamId),
               awayTeamId: String(ctx.awayTeam.teamId),
@@ -137,23 +137,9 @@ export default async function handler(
             },
           });
 
-      // PRE fazda ilk kez oluşturulduğunda tahmin kaydı oluştur
-      if (ctx.matchPhase === 'PRE' && !existing) {
+      if (ctx.matchPhase === 'PRE' || ctx.matchPhase === 'HT') {
         try {
-          await prisma.predictionRecord.create({
-            data: {
-              matchAnalysisId: saved.id,
-              matchId,
-              matchLabel: `${ctx.homeTeam.teamName} - ${ctx.awayTeam.teamName}`,
-              predictedHomePct: ai.analysis.matchPrediction.home,
-              predictedDrawPct: ai.analysis.matchPrediction.draw,
-              predictedAwayPct: ai.analysis.matchPrediction.away,
-              predictedScore: ai.analysis.scorePrediction.mostLikely,
-              predictedOver25: ai.analysis.goalExpectation.over25,
-              predictedBtts: ai.analysis.goalExpectation.btts,
-              modelVersion: ai.modelVersion,
-            },
-          });
+          await ensurePredictionRecordForAnalysis(saved);
         } catch (e) {
           captureError('prediction-record', e);
         }

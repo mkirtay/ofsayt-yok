@@ -1,0 +1,123 @@
+{
+  "team": "Brezilya",
+  "teamSlug": "brezilya",
+  "squadValue": "~€900M",
+  "avgAge": 26,
+  "starPlayer": {
+    "name": "Vinicius Jr.",
+    "value": "~€200M",
+    "age": 24,
+    "club": "Real Madrid"
+  },
+  "wcHistory": [
+    {
+      "year": 1930,
+      "finish": "Grup Aşaması"
+    },
+    {
+      "year": 1934,
+      "finish": "İlk Tur"
+    },
+    {
+      "year": 1938,
+      "finish": "Üçüncü"
+    },
+    {
+      "year": 1950,
+      "finish": "İkinci"
+    },
+    {
+      "year": 1954,
+      "finish": "Çeyrek Final"
+    },
+    {
+      "year": 1958,
+      "finish": "Şampiyon"
+    },
+    {
+      "year": 1962,
+      "finish": "Şampiyon"
+    },
+    {
+      "year": 1966,
+      "finish": "Grup Aşaması"
+    },
+    {
+      "year": 1970,
+      "finish": "Şampiyon"
+    },
+    {
+      "year": 1974,
+      "finish": "Dördüncü"
+    },
+    {
+      "year": 1978,
+      "finish": "Üçüncü"
+    },
+    {
+      "year": 1982,
+      "finish": "Son 16"
+    },
+    {
+      "year": 1986,
+      "finish": "Çeyrek Final"
+    },
+    {
+      "year": 1990,
+      "finish": "Son 16"
+    },
+    {
+      "year": 1994,
+      "finish": "Şampiyon"
+    },
+    {
+      "year": 1998,
+      "finish": "Dördüncü"
+    },
+    {
+      "year": 2002,
+      "finish": "Şampiyon"
+    },
+    {
+      "year": 2006,
+      "finish": "Son 16"
+    },
+    {
+      "year": 2010,
+      "finish": "Çeyrek Final"
+    },
+    {
+      "year": 2014,
+      "finish": "Dördüncü"
+    },
+    {
+      "year": 2018,
+      "finish": "Çeyrek Final"
+    },
+    {
+      "year": 2022,
+      "finish": "Çeyrek Final"
+    }
+  ],
+  "titles": 5,
+  "bestFinish": "Şampiyon",
+  "totalAppearances": 22,
+  "lastWcFinish": "Çeyrek Final",
+  "goalsPerGame": null,
+  "xgPerGame": null,
+  "possessionPct": null,
+  "sources": {
+    "transfermarkt": true,
+    "fbref": false,
+    "worldfootball": true
+  },
+  "interestingFacts": [
+    "5 kez Dünya Kupası şampiyonu oldu.",
+    "22. Dünya Kupası katılımı.",
+    "Son Dünya Kupası'nda Çeyrek Final oldu (2022).",
+    "Tarihsel en iyi derece: Şampiyon.",
+    "Kadronun ortalama yaşı 26.0.",
+    "Toplam kadro değeri: ~€900M.",
+    "Yıldız oyuncu: Vinicius Jr. (24 yaşında, değer: ~€200M)."
+  ]
+}

@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+# Aynı ref için yeni push gelince eski koşuyu iptal et
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: Lint, Test & Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      # NOT: Projede önceden var olan bir lint backlog'u mevcut (no-explicit-any,
+      # React 16/19 derleyici uyarıları). Bunlar kademeli temizlenene kadar lint adımı
+      # raporlar ama CI'ı bloklamaz. Temizlik sonrası `continue-on-error` kaldırılmalı.
+      - name: Lint (non-blocking, mevcut backlog)
+        run: npm run lint
+        continue-on-error: true
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build
+        env:
+          # CI build'inin gerçek sırlara ihtiyacı yok; modüller env'i lazy okur.
+          # Aşağıdaki placeholder'lar build sırasında modül yüklemesini güvene alır.
+          DATABASE_URL: postgresql://user:pass@localhost:5432/db?schema=public
+          DIRECT_URL: postgresql://user:pass@localhost:5432/db?schema=public
+          NEXTAUTH_SECRET: ci-placeholder-secret
+          NEXTAUTH_URL: http://localhost:3000
+          NEXT_PUBLIC_SITE_URL: http://localhost:3000
+          # Sentry kaynak haritası yüklemesini CI'da devre dışı bırak
+          SENTRY_AUTH_TOKEN: ""

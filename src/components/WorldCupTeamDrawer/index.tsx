@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { GroupedLeagueMatches } from '@/services/liveScoreService';
 import type { TeamEntry } from '@/components/WorldCupTeamList';
+import { getWorldCupTeamProfile } from '@/data/worldCupTeamProfiles';
 import { utcTimeToTr } from '@/utils/dateFormat';
 import styles from './teamDrawer.module.scss';
 
@@ -116,6 +117,8 @@ export default function WorldCupTeamDrawer({ team, groupMatches, onClose }: Prop
       })
     : [];
 
+  const profile = team ? getWorldCupTeamProfile(team.name) : null;
+
   if (!team) return null;
 
   return (
@@ -136,6 +139,49 @@ export default function WorldCupTeamDrawer({ team, groupMatches, onClose }: Prop
         </div>
 
         <div className={styles.drawerBody}>
+          {/* Takım Künyesi */}
+          {profile && (
+            <section className={styles.section}>
+              <h3 className={styles.sectionTitle}>Takım Künyesi</h3>
+              <div className={styles.statGrid}>
+                <div className={styles.statCard}>
+                  <div className={styles.statValue}>{profile.titles}</div>
+                  <div className={styles.statLabel}>Şampiyonluk</div>
+                </div>
+                <div className={styles.statCard}>
+                  <div className={styles.statValue}>{profile.totalAppearances}</div>
+                  <div className={styles.statLabel}>WC Katılımı</div>
+                </div>
+                <div className={styles.statCard}>
+                  <div className={styles.statValue}>{profile.squadValue}</div>
+                  <div className={styles.statLabel}>Kadro Değeri</div>
+                </div>
+                <div className={styles.statCard}>
+                  <div className={styles.statValueSmall}>{profile.bestFinish}</div>
+                  <div className={styles.statLabel}>En İyi Derece</div>
+                </div>
+              </div>
+
+              <div className={styles.starPlayer}>
+                <span className={styles.starBadge}>Yıldız Oyuncu</span>
+                <div className={styles.starInfo}>
+                  <span className={styles.starName}>{profile.starPlayer.name}</span>
+                  <span className={styles.starMeta}>
+                    {profile.starPlayer.club} · {profile.starPlayer.value}
+                  </span>
+                </div>
+              </div>
+
+              {profile.funFacts.length > 0 && (
+                <ul className={styles.factList}>
+                  {profile.funFacts.map((fact, i) => (
+                    <li key={i} className={styles.factItem}>{fact}</li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          )}
+
           {/* Grup Maçları */}
           <section className={styles.section}>
             <h3 className={styles.sectionTitle}>Grup Maçları</h3>

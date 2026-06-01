@@ -14,12 +14,12 @@ import {
   getMatchLineups,
   getTeamLastMatches,
   getTeamsHead2Head,
-  findMatchById,
   type CompetitionTableData,
   type CompetitionTableStandingRow,
   type Head2HeadData,
 } from '@/services/liveScoreService';
 import type { MatchEvent, MatchStatsData } from '@/models/domain';
+import { resolveLiveMatch } from '@/lib/resolveLiveMatch';
 
 /** Bir takımın son N maçından çıkarılan özet performans satırı */
 export type RecentMatchRow = {
@@ -341,10 +341,10 @@ function computeOddsSignal(match: Match): MatchAnalysisContext['oddsSignal'] {
 export async function buildMatchAnalysisContext(
   matchId: string
 ): Promise<MatchAnalysisContext | null> {
-  const eventsBundle = await findMatchById(matchId);
-  const match = eventsBundle.match;
-  if (!match) return null;
+  const resolved = await resolveLiveMatch(matchId);
+  if (!resolved) return null;
 
+  const { match, events, apiMatchId } = resolved;
   const homeId = match.home?.id ?? match.home_id;
   const awayId = match.away?.id ?? match.away_id;
   if (homeId == null || awayId == null) return null;
@@ -353,8 +353,8 @@ export async function buildMatchAnalysisContext(
   const phase = STATUS_TO_PHASE[match.status] ?? 'PRE';
 
   const [stats, lineups, standings, h2h] = await Promise.all([
-    getMatchStats(matchId),
-    getMatchLineups(matchId),
+    getMatchStats(apiMatchId),
+    getMatchLineups(apiMatchId),
     compId != null ? getCompetitionTableFull(String(compId)) : Promise.resolve(null),
     getTeamsHead2Head(String(homeId), String(awayId)),
   ]);
@@ -367,7 +367,7 @@ export async function buildMatchAnalysisContext(
   return {
     match,
     matchPhase: phase,
-    events: eventsBundle.events,
+    events,
     liveStats: stats,
     lineups,
     standings,

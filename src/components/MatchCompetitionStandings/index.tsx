@@ -7,6 +7,7 @@ import type {
 import SeasonSelect from "@/components/SeasonSelect";
 import { formatSeasonLabel } from "@/utils/seasonLabel";
 import { getStandingRankZone } from "@/config/standingsZones";
+import { sortWorldCupGroupsByName } from "@/config/worldCup";
 import { standingsRankZoneClass } from "@/utils/standingsRankZoneUi";
 import styles from "./matchCompetitionStandings.module.scss";
 
@@ -208,9 +209,15 @@ export default function MatchCompetitionStandings({
           {data.stages!.length > 1 && stageBlock.stage?.name ? (
             <h3 className={styles.subheading}>{stageBlock.stage.name}</h3>
           ) : null}
-          {stageBlock.groups?.map((group, gi) => (
+          {(variant === "worldCup"
+            ? sortWorldCupGroupsByName(stageBlock.groups ?? [])
+            : stageBlock.groups ?? []
+          ).map((group, gi) => (
             <div key={group.id ?? `${si}-${gi}`}>
-              {stageBlock.groups!.length > 1 && group.name ? (
+              {(variant === "worldCup"
+                ? sortWorldCupGroupsByName(stageBlock.groups ?? [])
+                : stageBlock.groups ?? []
+              ).length > 1 && group.name ? (
                 <h3 className={styles.subheading}>Grup {group.name}</h3>
               ) : null}
               {group.standings?.length ? (

@@ -12,9 +12,19 @@
 }
 
 .tabs {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: $spacing-2;
+  // Mobilde 5 sekme taşmasın diye yatay kaydırma
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; // Firefox
+  max-width: 100%;
+
+  &::-webkit-scrollbar {
+    display: none; // Chrome/Safari
+  }
 }
 
 .tab {
@@ -29,12 +39,19 @@
   color: #c3c3c3;
   font-size: 13px;
   font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
   transition: $transition-base;
 
   &:hover {
     color: #fff;
     border-color: #666;
     background: #171717;
+  }
+
+  &:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 2px;
   }
 }
 

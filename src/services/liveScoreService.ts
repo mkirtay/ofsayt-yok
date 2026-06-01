@@ -12,6 +12,7 @@ import {
   UEFA_TIER2_COMPETITION_IDS,
   BIG_FIVE_COMPETITION_ORDER,
 } from '../config/leagues';
+import { WORLD_CUP_COMPETITION_ID } from '../config/worldCup';
 
 export type PaginatedMatches = {
   matches: Match[];
@@ -109,6 +110,7 @@ const KNOWN_COMPETITION_IDS = [
   ...UEFA_TIER2_COMPETITION_IDS,
   ...TURKEY_COMPETITION_IDS,
   ...BIG_FIVE_COMPETITION_ORDER,
+  WORLD_CUP_COMPETITION_ID,
 ];
 
 function fixtureMatchesId(f: Match, matchId: string): boolean {
@@ -153,6 +155,88 @@ export async function findMatchById(
   }
 
   return { match: null, events: [], fromFixture: false };
+}
+
+const TEAM_HISTORY_FROM = '2018-01-01';
+const TEAM_HISTORY_TO = '2030-12-31';
+
+/** GET /matches/history.json?team_id= — takımın geçmiş maçları (ilk sayfa). */
+export async function getTeamHistoryMatches(teamId: string): Promise<Match[]> {
+  try {
+    const response = await getLiveScoreHttpClient().get<{
+      success?: boolean;
+      data?: { match?: Match[] };
+    }>(`/matches/history`, {
+      params: { team_id: teamId, from: TEAM_HISTORY_FROM, to: TEAM_HISTORY_TO },
+    });
+    if (response.data.success && Array.isArray(response.data.data?.match)) {
+      return response.data.data.match;
+    }
+    return [];
+  } catch (error) {
+    console.error('Error fetching team history matches', error);
+    return [];
+  }
+}
+
+function teamsFaceEachOther(
+  m: Match,
+  homeTeamId: string,
+  awayTeamId: string
+): boolean {
+  const h = String(m.home?.id ?? '');
+  const a = String(m.away?.id ?? '');
+  const hi = String(homeTeamId);
+  const ai = String(awayTeamId);
+  return (h === hi && a === ai) || (h === ai && a === hi);
+}
+
+function pickBestHeadToHeadMatch(
+  candidates: Match[],
+  opts?: { nearDate?: Date | string }
+): Match | null {
+  if (!candidates.length) return null;
+
+  if (opts?.nearDate) {
+    const target = new Date(opts.nearDate).getTime();
+    const dated = candidates.filter((m) => m.date?.trim());
+    if (dated.length) {
+      dated.sort((x, y) => {
+        const dx = Math.abs(new Date(x.date!).getTime() - target);
+        const dy = Math.abs(new Date(y.date!).getTime() - target);
+        return dx - dy;
+      });
+      return dated[0] ?? null;
+    }
+  }
+
+  const finished = candidates.filter(
+    (m) => String(m.status ?? '').toUpperCase() === 'FINISHED'
+  );
+  const pool = finished.length ? finished : candidates;
+  pool.sort((a, b) => (b.date ?? '').localeCompare(a.date ?? ''));
+  return pool[0] ?? null;
+}
+
+/** İki takım arasındaki maçı API geçmişinde arar (eski match_id değişmişse). */
+export async function findMatchByTeamIds(
+  homeTeamId: string,
+  awayTeamId: string,
+  opts?: { nearDate?: Date | string }
+): Promise<Match | null> {
+  const [homeHist, awayHist] = await Promise.all([
+    getTeamHistoryMatches(homeTeamId),
+    getTeamHistoryMatches(awayTeamId),
+  ]);
+  const seen = new Set<string>();
+  const candidates: Match[] = [];
+  for (const m of [...homeHist, ...awayHist]) {
+    const id = String(m.id);
+    if (seen.has(id)) continue;
+    seen.add(id);
+    if (teamsFaceEachOther(m, homeTeamId, awayTeamId)) candidates.push(m);
+  }
+  return pickBestHeadToHeadMatch(candidates, opts);
 }
 
 // Endpoint: GET /fixtures/list.json?competition_id=362&group_id=4297
@@ -512,20 +596,8 @@ export const getMatchLineups = async (matchId: string): Promise<any | null> => {
 
 // Endpoint: GET /teams/last-matches.json?team_id=X&number=10
 export const getTeamLastMatches = async (teamId: string, count = 10): Promise<Match[]> => {
-  try {
-    // `teams/last-matches.json` may be unavailable in some accounts.
-    // We fallback to history endpoint and take latest N matches.
-    const response = await getLiveScoreHttpClient().get(`/matches/history`, {
-      params: { team_id: teamId, from: '2024-01-01', to: '2030-12-31' },
-    });
-    if (response.data.success && Array.isArray(response.data.data?.match)) {
-      return response.data.data.match.slice(0, count);
-    }
-    return [];
-  } catch (error) {
-    console.error('Error fetching team last matches', error);
-    return [];
-  }
+  const matches = await getTeamHistoryMatches(teamId);
+  return matches.slice(0, count);
 };
 
 export type TeamCompetitionRow = {

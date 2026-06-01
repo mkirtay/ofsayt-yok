@@ -2,15 +2,16 @@ import type { IncomingMessage } from 'http';
 import type { MatchEvent, MatchStatsData } from '@/models/domain';
 import type { Match } from '@/models/liveScore';
 import { runWithLiveScoreHttpClient } from '@/services/liveScoreHttpContext';
+import { resolveLiveMatch } from '@/lib/resolveLiveMatch';
 import {
   getCompetitionTableFull,
   getMatchLineups,
   getMatchStats,
-  findMatchById,
   getSeasonsList,
   type CompetitionTableData,
   type SeasonListItem,
 } from '@/services/liveScoreService';
+import { fetchWorldCupStandingsBundle, isWorldCupCompetition } from '@/utils/worldCupStandings';
 import { livescoreAxiosFromIncomingMessage } from './livescoreInternalAxios';
 
 export type MatchDetailPageServerPayload = {
@@ -30,21 +31,23 @@ export async function loadMatchDetailInitialData(
   try {
     const client = livescoreAxiosFromIncomingMessage(req);
     return await runWithLiveScoreHttpClient(client, async () => {
-      const [matchBundle, lineupsData, statsData] = await Promise.all([
-        findMatchById(matchId),
-        getMatchLineups(matchId),
-        getMatchStats(matchId),
+      const resolved = await resolveLiveMatch(matchId);
+      if (!resolved) return null;
+
+      const apiMatchId = resolved.apiMatchId;
+      const [lineupsData, statsData] = await Promise.all([
+        getMatchLineups(apiMatchId),
+        getMatchStats(apiMatchId),
       ]);
 
-      const m = matchBundle.match;
-      if (!m) return null;
+      const m = resolved.match;
 
       const compId = m.competition?.id ?? m.competition_id;
 
       if (compId == null) {
         return {
           match: m,
-          events: matchBundle.events,
+          events: resolved.events,
           lineups: lineupsData,
           stats: statsData,
           seasons: [],
@@ -54,6 +57,20 @@ export async function loadMatchDetailInitialData(
       }
 
       const compIdStr = String(compId);
+
+      if (isWorldCupCompetition(compId)) {
+        const wc = await fetchWorldCupStandingsBundle();
+        return {
+          match: m,
+          events: resolved.events,
+          lineups: lineupsData,
+          stats: statsData,
+          seasons: wc.seasons,
+          selectedSeasonId: wc.selectedSeasonId,
+          standings: wc.standings,
+        };
+      }
+
       const [seasonsList, table1] = await Promise.all([
         getSeasonsList(),
         getCompetitionTableFull(compIdStr),
@@ -82,7 +99,7 @@ export async function loadMatchDetailInitialData(
 
       return {
         match: m,
-        events: matchBundle.events,
+        events: resolved.events,
         lineups: lineupsData,
         stats: statsData,
         seasons: seasonsList,

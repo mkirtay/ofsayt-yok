@@ -21,7 +21,8 @@ import {
 import type { MatchAnalysisContext } from '@/server/buildMatchAnalysisContext';
 
 const CLAUDE_MODEL = process.env.ANTHROPIC_MODEL ?? 'claude-sonnet-4-5-20250929';
-const OPENAI_MODEL = process.env.OPENAI_MODEL ?? 'gpt-4.1-mini';
+/** Vercel/local: `OPENAI_MODEL` (örn. gpt-4.1). Mini varsayılan değil — düşük isabet. */
+const OPENAI_MODEL = process.env.OPENAI_MODEL ?? 'gpt-4.1';
 const MAX_TOKENS = 3000;
 const ANALYSIS_TIMEOUT_MS = 25_000;
 
