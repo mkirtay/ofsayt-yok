@@ -1,8 +1,13 @@
 import type { NextConfig } from "next";
+import path from "path";
 import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
   reactStrictMode: false,
+  // Üst dizindeki ekstra package-lock.json Turbopack'in yanlış root seçmesine yol açıyordu.
+  turbopack: {
+    root: path.resolve(__dirname),
+  },
   images: {
     minimumCacheTTL: 2592000,
     deviceSizes: [640, 828, 1080, 1200, 1920],
