@@ -1,8 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/prisma';
 import { hitFixedWindowRateLimit, requestIp } from '@/lib/rateLimit';
+import { getRequestAuth } from '@/lib/mobileAuth';
+import { isUserPremium } from '@/lib/premium';
 
 export type AiStatsByVersion = {
   version: string;
@@ -95,12 +95,9 @@ export default async function handler(
     byModelVersion,
   };
 
-  // Premium: full history
-  const session = await getServerSession(req, res, authOptions);
-  const isPremium =
-    session?.user?.role === 'ADMIN' ||
-    (session?.user?.premiumUntil != null &&
-      new Date(session.user.premiumUntil) > new Date());
+  // Premium: full history (cookie veya Bearer)
+  const auth = await getRequestAuth(req, res);
+  const isPremium = isUserPremium({ role: auth?.role, premiumUntil: auth?.premiumUntil });
 
   if (req.query.history === '1' && isPremium) {
     const history = await prisma.predictionRecord.findMany({

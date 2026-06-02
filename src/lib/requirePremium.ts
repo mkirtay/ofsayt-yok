@@ -9,10 +9,9 @@
  * ```
  */
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/prisma';
 import { isUserPremium } from '@/lib/premium';
+import { getRequestUserId } from '@/lib/mobileAuth';
 
 type PremiumGuardResult =
   | { ok: true; userId: string }
@@ -22,8 +21,7 @@ export async function requirePremium(
   req: NextApiRequest,
   res: NextApiResponse
 ): Promise<PremiumGuardResult> {
-  const session = await getServerSession(req, res, authOptions);
-  const userId = session?.user?.id;
+  const userId = await getRequestUserId(req, res);
   if (!userId) {
     res.status(401).json({ error: 'Giriş yapmanız gerekiyor.' });
     return { ok: false };
@@ -52,8 +50,7 @@ export async function requireAdmin(
   req: NextApiRequest,
   res: NextApiResponse
 ): Promise<PremiumGuardResult> {
-  const session = await getServerSession(req, res, authOptions);
-  const userId = session?.user?.id;
+  const userId = await getRequestUserId(req, res);
   if (!userId) {
     res.status(401).json({ error: 'Giriş yapmanız gerekiyor.' });
     return { ok: false };

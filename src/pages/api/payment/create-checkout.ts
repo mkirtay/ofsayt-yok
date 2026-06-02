@@ -1,9 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth-options';
 import { stripe, STRIPE_PLANS, type PlanKey } from '@/lib/stripe';
 import { hitFixedWindowRateLimit } from '@/lib/rateLimit';
 import { captureError } from '@/lib/logger';
+import { getRequestAuth } from '@/lib/mobileAuth';
 
 function appBaseUrl(req: NextApiRequest): string {
   const proto = (req.headers['x-forwarded-proto'] as string) || 'http';
@@ -17,12 +16,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const session = await getServerSession(req, res, authOptions);
-  if (!session?.user?.id) {
+  const auth = await getRequestAuth(req, res);
+  if (!auth) {
     return res.status(401).json({ error: 'Giriş yapmanız gerekiyor.' });
   }
 
-  const rl = await hitFixedWindowRateLimit(`checkout:${session.user.id}`, 5, 60 * 60 * 1000);
+  const rl = await hitFixedWindowRateLimit(`checkout:${auth.id}`, 5, 60 * 60 * 1000);
   if (!rl.success) {
     res.setHeader('Retry-After', String(Math.ceil((rl.resetAt - Date.now()) / 1000)));
     return res.status(429).json({ error: 'Çok fazla ödeme isteği. Lütfen bekleyin.' });
@@ -54,11 +53,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         },
       ],
       metadata: {
-        userId: session.user.id,
+        userId: auth.id,
         plan,
         durationDays: String(planConfig.durationDays),
       },
-      customer_email: session.user.email ?? undefined,
+      customer_email: auth.email ?? undefined,
       success_url: `${base}/premium?payment=success`,
       cancel_url: `${base}/premium?payment=cancelled`,
     });

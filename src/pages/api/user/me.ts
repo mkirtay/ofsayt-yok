@@ -1,8 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/prisma';
 import { isSafeHttpUrl, sanitizePlainText } from '@/lib/security';
+import { getRequestUserId } from '@/lib/mobileAuth';
 
 const USERNAME_RE = /^[a-zA-Z0-9_]{3,30}$/;
 const MAX_BIO = 2000;
@@ -24,8 +23,7 @@ function parseJsonBody(req: NextApiRequest): Record<string, unknown> {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const session = await getServerSession(req, res, authOptions);
-  const userId = session?.user?.id;
+  const userId = await getRequestUserId(req, res);
   if (!userId) {
     return res.status(401).json({ error: 'Giriş yapmanız gerekiyor.' });
   }

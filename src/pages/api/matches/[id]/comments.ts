@@ -1,10 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/prisma';
 import { sanitizePlainText } from '@/lib/security';
 import { hitFixedWindowRateLimit } from '@/lib/rateLimit';
 import { captureError } from '@/lib/logger';
+import { getRequestUserId } from '@/lib/mobileAuth';
 
 const MAX_BODY_LENGTH = 500;
 const PAGE_SIZE = 30;
@@ -62,8 +61,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     if (req.method === 'POST') {
-      const session = await getServerSession(req, res, authOptions);
-      const userId = session?.user?.id;
+      const userId = await getRequestUserId(req, res);
       if (!userId) {
         return res.status(401).json({ error: 'Giriş yapmanız gerekiyor.' });
       }

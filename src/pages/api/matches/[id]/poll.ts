@@ -1,8 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/prisma';
 import { hitFixedWindowRateLimit, requestIp } from '@/lib/rateLimit';
+import { getRequestUserId } from '@/lib/mobileAuth';
 
 type PollResponse = {
   matchId: string;
@@ -27,7 +26,7 @@ export default async function handler(
 
   // ── GET: aggregate votes + user's own vote ──────────────────────────────
   if (req.method === 'GET') {
-    const session = await getServerSession(req, res, authOptions);
+    const userId = await getRequestUserId(req, res);
 
     const [votes, userRow] = await Promise.all([
       prisma.userPrediction.groupBy({
@@ -35,9 +34,9 @@ export default async function handler(
         where: { matchId },
         _count: { prediction: true },
       }),
-      session?.user?.id
+      userId
         ? prisma.userPrediction.findUnique({
-            where: { matchId_userId: { matchId, userId: session.user.id } },
+            where: { matchId_userId: { matchId, userId } },
             select: { prediction: true },
           })
         : Promise.resolve(null),
@@ -61,8 +60,8 @@ export default async function handler(
 
   // ── POST: submit or update vote ─────────────────────────────────────────
   if (req.method === 'POST') {
-    const session = await getServerSession(req, res, authOptions);
-    if (!session?.user?.id) {
+    const userId = await getRequestUserId(req, res);
+    if (!userId) {
       return res.status(401).json({ error: 'Giriş yapmanız gerekiyor.' });
     }
 
@@ -78,9 +77,9 @@ export default async function handler(
     }
 
     await prisma.userPrediction.upsert({
-      where: { matchId_userId: { matchId, userId: session.user.id } },
+      where: { matchId_userId: { matchId, userId } },
       update: { prediction },
-      create: { matchId, userId: session.user.id, prediction },
+      create: { matchId, userId, prediction },
     });
 
     // Updated counts

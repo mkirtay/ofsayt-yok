@@ -1,9 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getServerSession } from 'next-auth';
 import { compare, hash } from 'bcryptjs';
-import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/prisma';
 import { hitFixedWindowRateLimit } from '@/lib/rateLimit';
+import { getRequestUserId } from '@/lib/mobileAuth';
 
 function parseJsonBody(req: NextApiRequest): Record<string, unknown> {
   const b = req.body;
@@ -25,8 +24,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).end();
   }
 
-  const session = await getServerSession(req, res, authOptions);
-  const userId = session?.user?.id;
+  const userId = await getRequestUserId(req, res);
   if (!userId) {
     return res.status(401).json({ error: 'Giriş yapmanız gerekiyor.' });
   }

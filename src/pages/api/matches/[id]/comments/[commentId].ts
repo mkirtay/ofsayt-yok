@@ -1,8 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getServerSession } from 'next-auth';
 import { Role } from '@prisma/client';
-import { authOptions } from '@/lib/auth-options';
 import { prisma } from '@/lib/prisma';
+import { getRequestAuth } from '@/lib/mobileAuth';
 
 function matchIdFromQuery(req: NextApiRequest): string | null {
   const raw = req.query.id;
@@ -29,11 +28,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const session = await getServerSession(req, res, authOptions);
-    if (!session?.user?.id) {
+    const auth = await getRequestAuth(req, res);
+    if (!auth) {
       return res.status(401).json({ error: 'Giriş yapmanız gerekiyor.' });
     }
-    if (session.user.role !== Role.ADMIN) {
+    if (auth.role !== Role.ADMIN) {
       return res.status(403).json({ error: 'Bu işlem için yetkiniz yok.' });
     }
 
@@ -48,7 +47,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       where: { id: commentId },
       data: {
         deletedAt: new Date(),
-        deletedByUserId: session.user.id,
+        deletedByUserId: auth.id,
       },
     });
 
