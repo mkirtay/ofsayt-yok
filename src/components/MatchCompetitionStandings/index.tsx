@@ -9,6 +9,7 @@ import { formatSeasonLabel } from "@/utils/seasonLabel";
 import { getStandingRankZone } from "@/config/standingsZones";
 import { sortWorldCupGroupsByName } from "@/config/worldCup";
 import { standingsRankZoneClass } from "@/utils/standingsRankZoneUi";
+import { StandingsSkeleton } from "@/components/Skeleton";
 import styles from "./matchCompetitionStandings.module.scss";
 
 function standingTeamId(s: CompetitionTableStandingRow): number | undefined {
@@ -150,7 +151,7 @@ export default function MatchCompetitionStandings({
   if (loading) {
     return (
       <div className={blockClass(variant)}>
-        <div className={styles.loading}>Puan durumu yükleniyor…</div>
+        <StandingsSkeleton variant={variant === 'worldCup' ? 'dark' : 'default'} />
       </div>
     );
   }

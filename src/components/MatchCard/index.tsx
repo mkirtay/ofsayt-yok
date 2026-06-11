@@ -11,9 +11,11 @@ import { buildMatchHref } from '@/utils/matchUrl';
 import { getTeamsHead2Head, type Head2HHistoricalMatch } from '@/services/liveScoreService';
 import StadiumIcon from '@/components/icons/StadiumIcon';
 import WhistleIcon from '@/components/icons/WhistleIcon';
+import { MatchCardSkeleton } from '@/components/Skeleton';
 
 interface MatchCardProps {
   match: Match | null;
+  loading?: boolean;
 }
 
 /** Returns the date/time portion only (no "Tarih :" prefix). */
@@ -65,7 +67,7 @@ function parseDisplayScore(raw: string): { home: string; away: string } {
   return { home: s || '—', away: '' };
 }
 
-export default function MatchCard({ match }: MatchCardProps) {
+export default function MatchCard({ match, loading }: MatchCardProps) {
   const { t } = useTranslation('match');
   const [homeForm, setHomeForm] = useState<FormPill[]>([]);
   const [awayForm, setAwayForm] = useState<FormPill[]>([]);
@@ -151,6 +153,10 @@ export default function MatchCard({ match }: MatchCardProps) {
       cancelled = true;
     };
   }, [match?.id, match?.urls?.head2head, match?.home?.id, match?.away?.id]);
+
+  if (loading) {
+    return <MatchCardSkeleton />;
+  }
 
   if (!match) {
     return <div className={styles.matchCard}>{t('noMatchInfo')}</div>;

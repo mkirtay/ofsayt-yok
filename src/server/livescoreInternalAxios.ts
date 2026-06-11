@@ -1,16 +1,16 @@
 import type { IncomingMessage } from 'http';
-import axios from 'axios';
+import { getServerLiveScoreClient } from '@/server/livescoreServerClient';
 
 /**
- * `getServerSideProps` içinden kendi `/api/livescore` proxy'mize gider;
- * `liveScoreService` ile aynı JSON dönüşümü tekrar yazılmaz.
+ * SSR loader'ları için LiveScore HTTP istemcisi.
+ * Artık self-HTTP (`${host}/api/livescore`) yerine in-process doğrudan upstream + cache kullanır.
+ * `req` parametresi geriye dönük uyumluluk için korunur (kullanılmaz).
  */
-export function livescoreAxiosFromIncomingMessage(req: IncomingMessage) {
-  const xfProto = req.headers['x-forwarded-proto'];
-  const proto = Array.isArray(xfProto) ? xfProto[0] : xfProto || 'http';
-  const host = req.headers.host || 'localhost:3000';
-  return axios.create({
-    baseURL: `${proto}://${host}/api/livescore`,
-    timeout: 25_000,
-  });
+export function livescoreAxiosFromIncomingMessage(_req?: IncomingMessage) {
+  return getServerLiveScoreClient();
+}
+
+/** Yeni kod için tercih edilen isim. */
+export function livescoreServerClient() {
+  return getServerLiveScoreClient();
 }

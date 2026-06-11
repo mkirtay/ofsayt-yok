@@ -1,23 +1,26 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import {
-  getAllCompetitionHistoryMatches,
-  getAllLiveMatches,
-  getAllMatchesByDate,
-  getFixturesByCompetition,
-  getFixturesByDate,
   groupMatchesByLeague,
   mergeMatchesForAllTab,
   sortGroupedMatchesForAllTab,
-  getCompetitionTableFull,
-  getSeasonsList,
-  getTopScorers,
-  type CompetitionTableData,
-  type SeasonListItem,
-  type TopScorersPayload,
 } from '@/services/liveScoreService';
 import type { Match } from '@/models/liveScore';
 import type { NewsItem } from '@/models/domain';
+import {
+  fetchCompetitionSidebarForSeason,
+  useCompetitionSidebar,
+} from '@/hooks/useCompetitionSidebar';
+import {
+  refreshHomeHubLiveFixtures,
+  useHomeHubMatches,
+} from '@/hooks/useHomeHubMatches';
+import {
+  refreshUefaHubLiveFixtures,
+  useUefaHubMatches,
+} from '@/hooks/useUefaHubMatches';
 import MatchList from '@/components/MatchList';
+import { MatchListSkeleton } from '@/components/Skeleton';
 import MatchCompetitionStandings from '@/components/MatchCompetitionStandings';
 import MatchCompetitionTopScorers from '@/components/MatchCompetitionTopScorers';
 import NewsList from '@/components/NewsList';
@@ -34,8 +37,6 @@ import {
   sortMatchesForUefaList,
 } from '@/utils/uefaBracket';
 import styles from '@/pages/index.module.scss';
-import type { MatchHubHomeInitialServerPayload } from '@/types/matchHubHomeSsr';
-import type { UefaHubInitialServerPayload } from '@/types/uefaHubSsr';
 
 type SidebarTab = 'standings' | 'leagues' | 'news';
 export type MatchHubMode = 'default' | 'uefa';
@@ -47,10 +48,6 @@ export type MatchHubPageProps = {
   allowedCompetitionIds: number[] | null;
   /** `uefa`: seçili lige göre fikstür + geçmiş + canlı + eleme braketi */
   mode?: MatchHubMode;
-  /** `/uefa` için `getServerSideProps` ile gelen ilk paket (yalnızca `mode="uefa"`) */
-  initialUefaHubData?: UefaHubInitialServerPayload | null;
-  /** `/` için SSR ilk paket (yalnızca `mode="default"`) */
-  initialDefaultHubData?: MatchHubHomeInitialServerPayload | null;
 };
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -60,257 +57,72 @@ export default function MatchHubPage({
   defaultCompetitionId,
   allowedCompetitionIds,
   mode = 'default',
-  initialUefaHubData = null,
-  initialDefaultHubData = null,
 }: MatchHubPageProps) {
+  const queryClient = useQueryClient();
   const isUefaMode = mode === 'uefa';
-  const hasUefaSsr = Boolean(isUefaMode && initialUefaHubData);
-  const hasDefaultSsr = Boolean(!isUefaMode && initialDefaultHubData);
-
-  const [allMatches, setAllMatches] = useState<Match[]>(() =>
-    !isUefaMode && initialDefaultHubData ? initialDefaultHubData.allMatches : []
-  );
-  const [liveMatches, setLiveMatches] = useState<Match[]>(() =>
-    isUefaMode
-      ? (initialUefaHubData?.liveMatches ?? [])
-      : (initialDefaultHubData?.liveMatches ?? [])
-  );
-  const [fixtureMatches, setFixtureMatches] = useState<Match[]>(() =>
-    !isUefaMode && initialDefaultHubData ? initialDefaultHubData.fixtureMatches : []
-  );
-  const [uefaHistory, setUefaHistory] = useState<Match[]>(
-    () => initialUefaHubData?.uefaHistory ?? []
-  );
-  const [uefaCompFixtures, setUefaCompFixtures] = useState<Match[]>(
-    () => initialUefaHubData?.uefaCompFixtures ?? []
-  );
-  const [loading, setLoading] = useState(() => !hasUefaSsr && !hasDefaultSsr);
-  const [selectedDate, setSelectedDate] = useState<string>(
-    () => initialDefaultHubData?.selectedDate ?? today()
-  );
+  const [selectedDate, setSelectedDate] = useState<string>(today);
   const [activeTab, setActiveTab] = useState<MatchTab>('all');
 
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>('leagues');
   const [selectedCompId, setSelectedCompId] = useState(defaultCompetitionId);
-  const [standings, setStandings] = useState<CompetitionTableData | null>(() =>
-    isUefaMode
-      ? (initialUefaHubData?.standings ?? null)
-      : (initialDefaultHubData?.standings ?? null)
-  );
-  const [standingsLoading, setStandingsLoading] = useState(
-    () => !hasUefaSsr && !hasDefaultSsr
-  );
-  const [topScorers, setTopScorers] = useState<TopScorersPayload | null>(() =>
-    isUefaMode
-      ? (initialUefaHubData?.topScorers ?? null)
-      : (initialDefaultHubData?.topScorers ?? null)
-  );
-  const [topScorersLoading, setTopScorersLoading] = useState(
-    () => !hasUefaSsr && !hasDefaultSsr
-  );
-  const [seasons, setSeasons] = useState<SeasonListItem[]>(() =>
-    isUefaMode
-      ? (initialUefaHubData?.seasons ?? [])
-      : (initialDefaultHubData?.seasons ?? [])
-  );
-  const [selectedSeasonId, setSelectedSeasonId] = useState<number | null>(() =>
-    isUefaMode
-      ? (initialUefaHubData?.selectedSeasonId ?? null)
-      : (initialDefaultHubData?.selectedSeasonId ?? null)
-  );
+  const homeMatchesQuery = useHomeHubMatches(selectedDate, !isUefaMode);
+  const uefaMatchesQuery = useUefaHubMatches(selectedCompId, isUefaMode);
+  const {
+    data: sidebarData,
+    isLoading: sidebarQueryLoading,
+    isFetching: sidebarQueryFetching,
+  } = useCompetitionSidebar(selectedCompId);
+  const [selectedSeasonId, setSelectedSeasonId] = useState<number | null>(null);
+  const [seasonPatch, setSeasonPatch] = useState<{
+    standings: NonNullable<typeof sidebarData>['standings'];
+    topScorers: NonNullable<typeof sidebarData>['topScorers'];
+  } | null>(null);
 
-  /** SSR sonrası ilk gereksiz client fetch’lerini atlamak */
-  const ssrSkipConsumed = useRef({
-    uefaMatches: false,
-    uefaStandings: false,
-    defaultMatches: false,
-    defaultStandings: false,
-  });
+  const seasons = sidebarData?.seasons ?? [];
+  const standings = seasonPatch?.standings ?? sidebarData?.standings ?? null;
+  const topScorers = seasonPatch?.topScorers ?? sidebarData?.topScorers ?? null;
+  const standingsLoading = sidebarQueryLoading || sidebarQueryFetching;
+  const topScorersLoading = standingsLoading;
+
+  useEffect(() => {
+    setSelectedSeasonId(null);
+    setSeasonPatch(null);
+  }, [selectedCompId]);
+
+  useEffect(() => {
+    if (sidebarData?.selectedSeasonId != null && selectedSeasonId === null) {
+      setSelectedSeasonId(sidebarData.selectedSeasonId);
+    }
+  }, [sidebarData?.selectedSeasonId, selectedSeasonId]);
 
   const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
   const [newsLoading, setNewsLoading] = useState(false);
 
   const [favoriteTeamIds, setFavoriteTeamIds] = useState<number[]>([]);
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    if (isUefaMode) {
-      const compId = String(selectedCompId);
-      const [liveAll, compFixtures, compHistory] = await Promise.all([
-        getAllLiveMatches(),
-        getFixturesByCompetition(compId),
-        getAllCompetitionHistoryMatches(compId, { maxPages: 4 }),
-      ]);
-      setLiveMatches(liveAll);
-      setUefaCompFixtures(compFixtures);
-      setUefaHistory(compHistory);
-      setAllMatches([]);
-      setFixtureMatches([]);
-    } else {
-      const [historyAll, liveAll, fixtures] = await Promise.all([
-        getAllMatchesByDate(selectedDate),
-        getAllLiveMatches(),
-        getFixturesByDate(selectedDate),
-      ]);
-      setAllMatches(historyAll);
-      setLiveMatches(liveAll);
-      setFixtureMatches(fixtures);
-    }
-    setLoading(false);
-  }, [isUefaMode, selectedCompId, selectedDate]);
-
   useEffect(() => {
-    const uefaCompId = initialUefaHubData?.competitionId;
-    const canSkipUefaMatches =
-      isUefaMode &&
-      initialUefaHubData &&
-      uefaCompId != null &&
-      selectedCompId === uefaCompId &&
-      !ssrSkipConsumed.current.uefaMatches;
+    if (isUefaMode) return;
 
-    const canSkipDefaultMatches =
-      !isUefaMode &&
-      initialDefaultHubData &&
-      selectedDate === initialDefaultHubData.selectedDate &&
-      selectedCompId === initialDefaultHubData.competitionId &&
-      !ssrSkipConsumed.current.defaultMatches;
-
-    if (canSkipUefaMatches) {
-      ssrSkipConsumed.current.uefaMatches = true;
-    } else if (canSkipDefaultMatches) {
-      ssrSkipConsumed.current.defaultMatches = true;
-    } else {
-      queueMicrotask(() => {
-        void fetchData();
-      });
-    }
-
-    const interval = setInterval(async () => {
-      if (isUefaMode) {
-        const compId = String(selectedCompId);
-        const [liveAll, compFixtures] = await Promise.all([
-          getAllLiveMatches(),
-          getFixturesByCompetition(compId),
-        ]);
-        setLiveMatches(liveAll);
-        setUefaCompFixtures(compFixtures);
-      } else {
-        const [liveAll, fixtures] = await Promise.all([
-          getAllLiveMatches(),
-          getFixturesByDate(selectedDate),
-        ]);
-        setLiveMatches(liveAll);
-        setFixtureMatches(fixtures);
-      }
+    const interval = setInterval(() => {
+      void refreshHomeHubLiveFixtures(queryClient, selectedDate);
     }, 30_000);
     return () => clearInterval(interval);
-  }, [
-    fetchData,
-    isUefaMode,
-    selectedCompId,
-    selectedDate,
-    initialUefaHubData,
-    initialDefaultHubData,
-  ]);
-
-  const handleSeasonChange = useCallback(
-    async (seasonId: number) => {
-      const compId = String(selectedCompId);
-      setSelectedSeasonId(seasonId);
-      setStandingsLoading(true);
-      setTopScorersLoading(true);
-      const [tableData, scorersData] = await Promise.all([
-        getCompetitionTableFull(compId, { season: seasonId }),
-        getTopScorers(compId, { season: seasonId }),
-      ]);
-      setStandings(tableData);
-      setTopScorers(scorersData);
-      setStandingsLoading(false);
-      setTopScorersLoading(false);
-    },
-    [selectedCompId]
-  );
+  }, [isUefaMode, queryClient, selectedDate]);
 
   useEffect(() => {
-    const uefaCompId = initialUefaHubData?.competitionId;
-    const canSkipUefaStandings =
-      isUefaMode &&
-      initialUefaHubData &&
-      uefaCompId != null &&
-      selectedCompId === uefaCompId &&
-      !ssrSkipConsumed.current.uefaStandings;
+    if (!isUefaMode) return;
 
-    const canSkipDefaultStandings =
-      !isUefaMode &&
-      initialDefaultHubData &&
-      selectedCompId === initialDefaultHubData.competitionId &&
-      !ssrSkipConsumed.current.defaultStandings;
+    const interval = setInterval(() => {
+      void refreshUefaHubLiveFixtures(queryClient, selectedCompId);
+    }, 30_000);
+    return () => clearInterval(interval);
+  }, [isUefaMode, queryClient, selectedCompId]);
 
-    if (canSkipUefaStandings) {
-      ssrSkipConsumed.current.uefaStandings = true;
-      return;
-    }
-    if (canSkipDefaultStandings) {
-      ssrSkipConsumed.current.defaultStandings = true;
-      return;
-    }
-
-    let cancelled = false;
-    const compId = String(selectedCompId);
-
-    void (async () => {
-      await Promise.resolve();
-      if (cancelled) return;
-      setStandingsLoading(true);
-      setTopScorersLoading(true);
-
-      const [seasonsList, table1] = await Promise.all([
-        getSeasonsList(),
-        getCompetitionTableFull(compId),
-      ]);
-      if (cancelled) return;
-
-      setSeasons(seasonsList);
-
-      const fromTable =
-        table1?.season?.id != null && Number.isFinite(Number(table1.season.id))
-          ? Number(table1.season.id)
-          : null;
-      let sid: number | null = fromTable;
-      if (sid != null && seasonsList.length && !seasonsList.some((s) => s.id === sid)) {
-        sid = seasonsList[0]!.id;
-      } else if (sid == null && seasonsList.length) {
-        sid = seasonsList[0]!.id;
-      }
-      setSelectedSeasonId(sid);
-
-      const needTableRefetch =
-        sid != null &&
-        table1 != null &&
-        (table1.season?.id == null || Number(table1.season.id) !== sid);
-
-      let tableFinal = table1;
-      if (needTableRefetch && sid != null) {
-        tableFinal = await getCompetitionTableFull(compId, { season: sid });
-      }
-      if (cancelled) return;
-
-      const scorersData = await getTopScorers(
-        compId,
-        sid != null ? { season: sid } : undefined
-      );
-      if (cancelled) return;
-
-      setStandings(tableFinal ?? table1);
-      setTopScorers(scorersData);
-      setStandingsLoading(false);
-      setTopScorersLoading(false);
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedCompId, isUefaMode, initialUefaHubData, initialDefaultHubData]);
+  const handleSeasonChange = useCallback(async (seasonId: number) => {
+    setSelectedSeasonId(seasonId);
+    const patch = await fetchCompetitionSidebarForSeason(selectedCompId, seasonId);
+    setSeasonPatch(patch);
+  }, [selectedCompId]);
 
   const FAV_LS_KEY = 'oy_fav_club_teams';
 
@@ -350,15 +162,23 @@ export default function MatchHubPage({
     };
   }, [sidebarTab, newsItems.length]);
 
+  const allMatches = homeMatchesQuery.data?.allMatches ?? [];
+  const liveMatches = homeMatchesQuery.data?.liveMatches ?? [];
+  const fixtureMatches = homeMatchesQuery.data?.fixtureMatches ?? [];
+  const uefaLiveMatches = uefaMatchesQuery.data?.liveMatches ?? [];
+  const uefaCompFixtures = uefaMatchesQuery.data?.uefaCompFixtures ?? [];
+  const uefaHistory = uefaMatchesQuery.data?.uefaHistory ?? [];
+  const matchesLoading = isUefaMode ? uefaMatchesQuery.isLoading : homeMatchesQuery.isLoading;
+
   const uefaMerged = useMemo(() => {
     if (!isUefaMode) return [] as Match[];
     return mergeUefaCompetitionMatches({
       competitionId: selectedCompId,
-      liveAll: liveMatches,
+      liveAll: uefaLiveMatches,
       fixtures: uefaCompFixtures,
       history: uefaHistory,
     });
-  }, [isUefaMode, selectedCompId, liveMatches, uefaCompFixtures, uefaHistory]);
+  }, [isUefaMode, selectedCompId, uefaLiveMatches, uefaCompFixtures, uefaHistory]);
 
   const uefaBracketRounds = useMemo(() => {
     if (!isUefaMode) return [];
@@ -553,8 +373,8 @@ export default function MatchHubPage({
             </div>
           </aside>
           <div className="layout-left">
-            {loading ? (
-              <div className={styles.loading}>Yükleniyor...</div>
+            {matchesLoading ? (
+              <MatchListSkeleton groups={5} />
             ) : activeTab === 'favorites' && favoriteTeamIds.length === 0 ? (
               <div className={styles.empty}>
                 Takım favorilere eklemek için maç satırındaki ☆ butonuna tıklayın.

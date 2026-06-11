@@ -1,10 +1,12 @@
 import { MatchEvent } from '@/models/domain';
+import { PanelSkeleton } from '@/components/Skeleton';
 import styles from './eventTimeline.module.scss';
 
 interface EventTimelineProps {
   events: MatchEvent[];
   homeName?: string;
   awayName?: string;
+  loading?: boolean;
 }
 
 const EVENT_ICONS: Record<string, string> = {
@@ -14,7 +16,16 @@ const EVENT_ICONS: Record<string, string> = {
   SUBSTITUTION: '🔄',
 };
 
-export default function EventTimeline({ events, homeName = 'Ev Sahibi', awayName = 'Deplasman' }: EventTimelineProps) {
+export default function EventTimeline({
+  events,
+  homeName = 'Ev Sahibi',
+  awayName = 'Deplasman',
+  loading,
+}: EventTimelineProps) {
+  if (loading) {
+    return <PanelSkeleton rows={6} />;
+  }
+
   if (!events || events.length === 0) {
     return (
       <div className={styles.timeline}>

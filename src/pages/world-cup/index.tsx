@@ -1,5 +1,3 @@
-import type { GetServerSideProps, InferGetServerSidePropsType } from 'next';
-import { serverSideTranslations } from '@/lib/serverSideTranslations';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Head from 'next/head';
 import { useSession } from 'next-auth/react';
@@ -13,113 +11,62 @@ import WorldCupTeamList, { extractAllTeams } from '@/components/WorldCupTeamList
 import type { TeamEntry } from '@/components/WorldCupTeamList';
 import WorldCupTeamDrawer from '@/components/WorldCupTeamDrawer';
 import UefaKnockoutBracket from '@/components/UefaKnockoutBracket';
+import {
+  WorldCupGroupCardsSkeleton,
+  MatchListSkeleton,
+  StandingsSkeleton,
+} from '@/components/Skeleton';
 import { buildWorldCupBracketRounds } from '@/utils/worldCupBracket';
 import {
-  sortWorldCupGroupsByName,
-  pickWorldCupSeasonsFromApi,
   WORLD_CUP_COMPETITION_ID,
-  WORLD_CUP_DEFAULT_SEASON_ID,
 } from '@/config/worldCup';
 import type { NewsItem } from '@/models/domain';
 import type { Match } from '@/models/liveScore';
 import {
-  CompetitionGroupItem,
   CompetitionTableData,
-  CompetitionTableStandingRow,
   GroupedLeagueMatches,
   getAllCompetitionHistoryMatches,
   getAllLiveMatches,
   getCompetitionGroupFixtures,
   getCompetitionTableFull,
-  getSeasonsList,
   mergeFixturesWithHistoryAndLive,
   type SeasonListItem,
 } from '@/services/liveScoreService';
 import { getNews } from '@/services/newsApi';
-import type { WorldCupBootstrapServerPayload } from '@/server/loadWorldCupBootstrapData';
-import { loadWorldCupBootstrapData } from '@/server/loadWorldCupBootstrapData';
-import { propsJsonSafe } from '@/server/propsJsonSafe';
+import { useWorldCupBootstrap } from '@/hooks/useWorldCupBootstrap';
+import { extractGroupStandings, extractGroupsFromTable } from '@/utils/worldCupTable';
 import styles from './worldCup.module.scss';
 
 type WorldCupMainTab = 'groups' | 'matches' | 'calendar' | 'bracket' | 'teams';
 type SidebarTab = 'standings' | 'groups' | 'news';
 
-type GroupStandings = {
-  id: number;
-  name: string;
-  standings: CompetitionTableStandingRow[];
-};
-
 const WORLD_CUP_ID = String(WORLD_CUP_COMPETITION_ID);
 const FAV_TEAMS_KEY = 'oy_wc_fav_teams';
 
-function extractGroupsFromTable(data: CompetitionTableData | null): CompetitionGroupItem[] {
-  if (!data?.stages?.length) return [];
-  const raw = data.stages.flatMap((stage) => stage.groups ?? []);
-  return sortWorldCupGroupsByName(
-    raw
-      .map((g): CompetitionGroupItem | null => {
-        const id = Number(g?.id);
-        const name = String(g?.name ?? '').trim();
-        if (!Number.isFinite(id) || !name) return null;
-        return { id, name };
-      })
-      .filter((g): g is CompetitionGroupItem => g != null),
-  );
-}
-
-function extractGroupStandings(data: CompetitionTableData | null): GroupStandings[] {
-  if (!data?.stages?.length) return [];
-  const groups = data.stages.flatMap((stage) =>
-    (stage.groups || []).map((group) => ({
-      id: Number(group.id),
-      name: String(group.name || ''),
-      standings: group.standings || [],
-    })),
-  );
-  return sortWorldCupGroupsByName(
-    groups.filter((g) => Number.isFinite(g.id) && g.name),
-  );
-}
-
-type WorldCupPageProps = {
-  wcBootstrap: WorldCupBootstrapServerPayload | null;
-};
-
-export default function WorldCupPage({
-  wcBootstrap,
-}: InferGetServerSidePropsType<typeof getServerSideProps>) {
+export default function WorldCupPage() {
   const { data: session } = useSession();
+  const bootstrapQuery = useWorldCupBootstrap();
   const [mainTab, setMainTab] = useState<WorldCupMainTab>('groups');
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>('groups');
 
-  const [tableData, setTableData] = useState<CompetitionTableData | null>(
-    () => wcBootstrap?.tableData ?? null
-  );
-  const [loading, setLoading] = useState(() => !wcBootstrap);
+  const [tableData, setTableData] = useState<CompetitionTableData | null>(null);
+  const [seasonLoading, setSeasonLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [selectedGroupId, setSelectedGroupId] = useState<number | null>(
-    () => wcBootstrap?.selectedGroupId ?? null
-  );
+  const [selectedGroupId, setSelectedGroupId] = useState<number | null>(null);
   const [selectedGroupTable, setSelectedGroupTable] = useState<CompetitionTableData | null>(null);
   const [selectedGroupLoading, setSelectedGroupLoading] = useState(false);
 
-  const [seasons, setSeasons] = useState<SeasonListItem[]>(() => wcBootstrap?.seasons ?? []);
-  const [selectedSeasonId, setSelectedSeasonId] = useState<number | null>(
-    () => wcBootstrap?.selectedSeasonId ?? null
-  );
+  const [seasons, setSeasons] = useState<SeasonListItem[]>([]);
+  const [selectedSeasonId, setSelectedSeasonId] = useState<number | null>(null);
 
-  const skipWcBootstrap = useRef(!!wcBootstrap);
   const liveCheckedRef = useRef(false);
 
-  const [groupMatches, setGroupMatches] = useState<GroupedLeagueMatches[]>(
-    () => wcBootstrap?.groupMatches ?? []
-  );
-  const [allMatchesFlat, setAllMatchesFlat] = useState<Match[]>(
-    () => wcBootstrap?.groupMatches?.flatMap((g) => g.matches) ?? []
-  );
+  const [groupMatches, setGroupMatches] = useState<GroupedLeagueMatches[]>([]);
+  const [allMatchesFlat, setAllMatchesFlat] = useState<Match[]>([]);
   const [groupMatchesLoading, setGroupMatchesLoading] = useState(false);
+
+  const loading = bootstrapQuery.isLoading || seasonLoading;
 
   const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
 
@@ -200,67 +147,33 @@ export default function WorldCupPage({
     [session]
   );
 
-  // Bootstrap: fetch table + seasons once
+  // Sync bootstrap query into local state (season changes override tableData locally)
   useEffect(() => {
-    let cancelled = false;
+    if (!bootstrapQuery.data) return;
+    setTableData(bootstrapQuery.data.tableData);
+    setSeasons(bootstrapQuery.data.seasons);
+    setSelectedSeasonId(bootstrapQuery.data.selectedSeasonId);
+    setSelectedGroupId((prev) => prev ?? bootstrapQuery.data!.selectedGroupId);
+    setError(null);
+  }, [bootstrapQuery.data]);
 
-    if (skipWcBootstrap.current) {
-      skipWcBootstrap.current = false;
-      return () => { cancelled = true; };
+  useEffect(() => {
+    if (bootstrapQuery.isError) {
+      setError('Grup verileri yüklenemedi.');
     }
-
-    const bootstrap = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const seasonsList = await getSeasonsList({ skipCalendarYearDedupe: true });
-        if (cancelled) return;
-
-        const wcSeasons = pickWorldCupSeasonsFromApi(seasonsList);
-        setSeasons(wcSeasons);
-
-        const defaultSeasonId =
-          wcSeasons.find((s) => s.id === WORLD_CUP_DEFAULT_SEASON_ID)?.id ??
-          wcSeasons[0]?.id ??
-          null;
-
-        const table = await getCompetitionTableFull(
-          WORLD_CUP_ID,
-          defaultSeasonId != null ? { season: defaultSeasonId } : undefined,
-        );
-        if (cancelled) return;
-
-        setTableData(table);
-        setSelectedSeasonId(defaultSeasonId);
-
-        const groupsFromTable = extractGroupsFromTable(table);
-        if (groupsFromTable.length) {
-          setSelectedGroupId((prev) => prev ?? groupsFromTable[0]!.id);
-        }
-      } catch (e) {
-        if (cancelled) return;
-        console.error('WorldCup bootstrap error', e);
-        setError('Grup verileri yüklenemedi.');
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
-
-    bootstrap();
-    return () => { cancelled = true; };
-  }, []);
+  }, [bootstrapQuery.isError]);
 
   // Season change
   const handleSeasonChange = useCallback(async (seasonId: number) => {
     setSelectedSeasonId(seasonId);
-    setLoading(true);
+    setSeasonLoading(true);
     try {
       const table = await getCompetitionTableFull(WORLD_CUP_ID, { season: seasonId });
       setTableData(table);
     } catch (e) {
       console.error('Season change error', e);
     } finally {
-      setLoading(false);
+      setSeasonLoading(false);
     }
   }, []);
 
@@ -435,7 +348,9 @@ export default function WorldCupPage({
               )}
 
               {sidebarTab === 'groups' && (
-                groups.length ? (
+                loading ? (
+                  <StandingsSkeleton variant="dark" />
+                ) : groups.length ? (
                   <ul className={styles.groupList}>
                     {groups.map((group) => (
                       <li key={group.id}>
@@ -455,9 +370,7 @@ export default function WorldCupPage({
                     ))}
                   </ul>
                 ) : (
-                  <div className={styles.empty}>
-                    {loading ? 'Yükleniyor...' : 'Grup bulunamadı.'}
-                  </div>
+                  <div className={styles.empty}>Grup bulunamadı.</div>
                 )
               )}
 
@@ -470,7 +383,9 @@ export default function WorldCupPage({
             {/* Gruplar */}
             {mainTab === 'groups' && (
               loading ? (
-                <div className={styles.loading}>Dünya kupası grupları yükleniyor...</div>
+                <div className={styles.groupCards}>
+                  <WorldCupGroupCardsSkeleton />
+                </div>
               ) : error ? (
                 <div className={styles.empty}>{error}</div>
               ) : groupCards.length ? (
@@ -491,7 +406,7 @@ export default function WorldCupPage({
             {/* Maçlar */}
             {mainTab === 'matches' && (
               groupMatchesLoading ? (
-                <div className={styles.loading}>Grup maçları yükleniyor...</div>
+                <MatchListSkeleton groups={4} variant="dark" />
               ) : (
                 <>
                   {favoriteTeamIds.length > 0 && (
@@ -527,7 +442,7 @@ export default function WorldCupPage({
             {/* Takvim */}
             {mainTab === 'calendar' && (
               groupMatchesLoading ? (
-                <div className={styles.loading}>Maçlar yükleniyor...</div>
+                <MatchListSkeleton groups={3} variant="dark" />
               ) : (
                 <WorldCupCalendar matches={allMatchesFlat} />
               )
@@ -536,7 +451,7 @@ export default function WorldCupPage({
             {/* Eleme Turu */}
             {mainTab === 'bracket' && (
               groupMatchesLoading ? (
-                <div className={styles.loading}>Eleme turu yükleniyor...</div>
+                <MatchListSkeleton groups={2} variant="dark" />
               ) : bracketRounds.length ? (
                 <UefaKnockoutBracket
                   rounds={bracketRounds}
@@ -552,7 +467,9 @@ export default function WorldCupPage({
             {/* Takımlar */}
             {mainTab === 'teams' && (
               loading ? (
-                <div className={styles.loading}>Takımlar yükleniyor...</div>
+                <div className={styles.groupCards}>
+                  <WorldCupGroupCardsSkeleton count={6} />
+                </div>
               ) : (
                 <WorldCupTeamList
                   tableData={tableData}
@@ -575,24 +492,3 @@ export default function WorldCupPage({
     </>
   );
 }
-
-export const getServerSideProps: GetServerSideProps<WorldCupPageProps> = async (ctx) => {
-  try {
-    ctx.res.setHeader(
-      'Cache-Control',
-      'public, s-maxage=60, stale-while-revalidate=180'
-    );
-    const raw = await loadWorldCupBootstrapData(ctx.req);
-    const i18nProps = await serverSideTranslations(ctx.locale ?? 'tr', ['common', 'nav', 'match']);
-    return {
-      props: {
-        ...i18nProps,
-        wcBootstrap: raw == null ? null : propsJsonSafe(raw),
-      },
-    };
-  } catch (e) {
-    console.error('world-cup getServerSideProps', e);
-    const i18nProps = await serverSideTranslations(ctx.locale ?? 'tr', ['common', 'nav', 'match']);
-    return { props: { ...i18nProps, wcBootstrap: null } };
-  }
-};

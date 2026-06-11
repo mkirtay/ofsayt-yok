@@ -2,7 +2,7 @@ import type { IncomingMessage } from 'http';
 import type { MatchAnalysis } from '@prisma/client';
 import type { Match } from '@/models/liveScore';
 import { prisma } from '@/lib/prisma';
-import { livescoreAxiosFromIncomingMessage } from '@/server/livescoreInternalAxios';
+import { livescoreServerClient } from '@/server/livescoreInternalAxios';
 import { runWithLiveScoreHttpClient } from '@/services/liveScoreHttpContext';
 import { resolveLiveMatch } from '@/lib/resolveLiveMatch';
 
@@ -199,7 +199,7 @@ export async function evaluatePendingPredictionRecords(
   const result: EvaluatePredictionsResult = { evaluated: 0, skipped: 0, errors: 0 };
   if (!pending.length) return result;
 
-  const client = livescoreAxiosFromIncomingMessage(req);
+  const client = livescoreServerClient();
   const matchCache = new Map<string, Match | null>();
 
   await runWithLiveScoreHttpClient(client, async () => {

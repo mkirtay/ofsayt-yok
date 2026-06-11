@@ -1,13 +1,19 @@
 import { useTranslation } from '@/lib/i18n';
+import { PanelSkeleton } from '@/components/Skeleton';
 import styles from './matchStats.module.scss';
 import { MatchStatsData } from '@/models/domain';
 
 interface MatchStatsProps {
   stats: MatchStatsData | null;
+  loading?: boolean;
 }
 
-export default function MatchStats({ stats }: MatchStatsProps) {
+export default function MatchStats({ stats, loading }: MatchStatsProps) {
   const { t } = useTranslation('match');
+
+  if (loading) {
+    return <PanelSkeleton rows={5} />;
+  }
 
   const renderStatBar = (homeVal: number, awayVal: number) => {
     const total = homeVal + awayVal;

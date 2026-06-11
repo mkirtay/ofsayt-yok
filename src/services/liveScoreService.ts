@@ -124,7 +124,8 @@ function fixtureMatchesId(f: Match, matchId: string): boolean {
  * 3. Konfigüre edilmiş liglerin competition fixture listesi (UEFA vb. tarih bazlı listede görünmeyebilir)
  */
 export async function findMatchById(
-  matchId: string
+  matchId: string,
+  opts?: { skipCompetitionFanout?: boolean }
 ): Promise<{ match: Match | null; events: MatchEvent[]; fromFixture: boolean }> {
   // Adım 1: events endpoint
   const eventsBundle = await getMatchWithEvents(matchId);
@@ -145,7 +146,11 @@ export async function findMatchById(
     if (found) return { match: found, events: [], fromFixture: true };
   }
 
-  // Adım 3: lig bazlı fixture arama (son çare — UEFA/büyük ligler tarih bazlı listede çıkmayabilir)
+  // Adım 3: lig bazlı fixture arama (son çare — SSR'da atlanabilir, client lazy yükler)
+  if (opts?.skipCompetitionFanout) {
+    return { match: null, events: [], fromFixture: false };
+  }
+
   const compResults = await Promise.all(
     KNOWN_COMPETITION_IDS.map((id) => getFixturesByCompetition(id).catch(() => []))
   );
@@ -459,14 +464,15 @@ export function dedupeMatchesById(matches: Match[]): Match[] {
   return Array.from(map.values());
 }
 
-/** Seçilen günün tüm history sayfalarını çeker (Hepsi / lig grupları için) */
-export async function getAllMatchesByDate(date: string): Promise<Match[]> {
+/** Seçilen günün history sayfalarını çeker (Hepsi / lig grupları için). */
+export async function getAllMatchesByDate(date: string, maxPages = 5): Promise<Match[]> {
   const first = await getMatchesByDate(date, 1);
   const { totalPages, matches: firstMatches } = first;
-  if (totalPages <= 1) return dedupeMatchesById(firstMatches);
+  const pagesToFetch = Math.min(totalPages, Math.max(1, maxPages));
+  if (pagesToFetch <= 1) return dedupeMatchesById(firstMatches);
 
   const rest = await Promise.all(
-    Array.from({ length: totalPages - 1 }, (_, i) => getMatchesByDate(date, i + 2))
+    Array.from({ length: pagesToFetch - 1 }, (_, i) => getMatchesByDate(date, i + 2))
   );
   const combined = [...firstMatches, ...rest.flatMap((r) => r.matches)];
   return dedupeMatchesById(combined);

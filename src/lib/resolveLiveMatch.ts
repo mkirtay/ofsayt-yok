@@ -16,9 +16,10 @@ export type ResolvedLiveMatch = {
 
 /** API'de güncellenmiş veya kaldırılmış maç kimlikleri için takım geçmişi + DB ipucu. */
 export async function resolveLiveMatch(
-  matchId: string
+  matchId: string,
+  opts?: { skipCompetitionFanout?: boolean }
 ): Promise<ResolvedLiveMatch | null> {
-  const direct = await findMatchById(matchId);
+  const direct = await findMatchById(matchId, opts);
   if (direct.match) {
     const apiMatchId = String(direct.match.id);
     let match = direct.match;

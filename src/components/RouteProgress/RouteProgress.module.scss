@@ -1,0 +1,16 @@
+.bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 3px;
+  width: 0;
+  background: var(--color-primary, #00a76f);
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0;
+  transition: width 0.25s ease, opacity 0.15s ease;
+}
+
+.bar.active {
+  opacity: 1;
+}

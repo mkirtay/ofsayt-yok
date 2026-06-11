@@ -1,31 +1,13 @@
-import type { GetServerSideProps, InferGetServerSidePropsType } from 'next';
-import { serverSideTranslations } from '@/lib/serverSideTranslations';
 import Head from 'next/head';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import Container from '@/components/Container';
 import CompareTeamPicker from '@/components/CompareTeamPicker';
-import { loadComparePageData, parseCompareSlug } from '@/server/loadComparePageData';
-import { propsJsonSafe } from '@/server/propsJsonSafe';
+import { PanelSkeleton } from '@/components/Skeleton';
+import { useComparePage } from '@/hooks/useComparePage';
 import type { ComparePagePayload } from '@/server/loadComparePageData';
 import type { RecentMatchRow } from '@/server/buildMatchAnalysisContext';
 import styles from './compare.module.scss';
-
-type PageProps = { data: ComparePagePayload };
-
-export const getServerSideProps: GetServerSideProps<PageProps> = async ({ req, res, params, locale }) => {
-  const slug = typeof params?.slug === 'string' ? params.slug : '';
-  const ids = parseCompareSlug(slug);
-
-  if (!ids) return { notFound: true };
-
-  const data = await loadComparePageData(req, ids.team1Id, ids.team2Id).catch(() => null);
-  if (!data) return { notFound: true };
-
-  res.setHeader('Cache-Control', 'public, s-maxage=120, stale-while-revalidate=300');
-
-  const i18nProps = await serverSideTranslations(locale ?? 'tr', ['common', 'nav', 'match']);
-  return { props: { ...i18nProps, data: propsJsonSafe(data) } };
-};
 
 function FormPill({ result }: { result: RecentMatchRow['result'] }) {
   const map: Record<RecentMatchRow['result'], { label: string; cls: string }> = {
@@ -66,9 +48,42 @@ function pct(v: number): string {
   return `${Math.round(v * 100)}%`;
 }
 
-export default function ComparePage({
-  data,
-}: InferGetServerSidePropsType<typeof getServerSideProps>) {
+export default function ComparePage() {
+  const router = useRouter();
+  const slugParam = router.query.slug;
+  const slugFromPath = router.asPath.match(/^\/compare\/([^/?#]+)/)?.[1] ?? '';
+  const slug =
+    typeof slugParam === 'string'
+      ? slugParam
+      : Array.isArray(slugParam)
+        ? slugParam[0] ?? slugFromPath
+        : slugFromPath;
+  const { data, isLoading, isError } = useComparePage(slug, router.isReady || Boolean(slugFromPath));
+
+  return (
+    <Container>
+      <div className={styles.page}>
+        <div className={styles.pickerSection}>
+          <h2 className={styles.pickerTitle}>Yeni Karşılaştırma</h2>
+          <CompareTeamPicker />
+        </div>
+        {isLoading ? (
+          <>
+            <PanelSkeleton rows={3} />
+            <PanelSkeleton rows={5} />
+            <PanelSkeleton rows={5} />
+          </>
+        ) : isError || !data ? (
+          <div className={styles.empty}>Karşılaştırma verisi bulunamadı.</div>
+        ) : (
+          <ComparePageContent data={data} />
+        )}
+      </div>
+    </Container>
+  );
+}
+
+function ComparePageContent({ data }: { data: ComparePagePayload }) {
   const { team1, team2, h2h, h2hRaw } = data;
 
   const last5Team1 = team1.recentMatches.slice(0, 5);
@@ -94,15 +109,6 @@ export default function ComparePage({
         />
       </Head>
 
-      <Container>
-        <div className={styles.page}>
-          {/* ── New comparison picker ── */}
-          <div className={styles.pickerSection}>
-            <h2 className={styles.pickerTitle}>Yeni Karşılaştırma</h2>
-            <CompareTeamPicker />
-          </div>
-
-          {/* ── Team header ── */}
           <div className={styles.teamHeader}>
             <div className={styles.teamBlock}>
               {team1.teamLogo && (
@@ -387,8 +393,6 @@ export default function ComparePage({
               </div>
             </div>
           )}
-        </div>
-      </Container>
     </>
   );
 }

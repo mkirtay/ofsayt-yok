@@ -1,11 +1,17 @@
 import { LineupPlayer } from '@/models/domain';
+import { LineupSkeleton } from '@/components/Skeleton';
 import styles from './lineup.module.scss';
 
 interface LineupProps {
   lineups: any | null;
+  loading?: boolean;
 }
 
-export default function Lineup({ lineups }: LineupProps) {
+export default function Lineup({ lineups, loading }: LineupProps) {
+  if (loading) {
+    return <LineupSkeleton />;
+  }
+
   const homeData = lineups?.lineup?.home;
   const awayData = lineups?.lineup?.away;
 

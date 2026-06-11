@@ -1,0 +1,192 @@
+@use '../../styles/variables' as *;
+
+$wc-bg: #111;
+$wc-bg-elevated: #161616;
+$wc-border: #2c2c2c;
+$wc-shimmer-base: #1a1a1a;
+$wc-shimmer-mid: #2a2a2a;
+
+.block {
+  border-radius: 6px;
+  background: linear-gradient(90deg, #ececec 0%, #f6f6f6 50%, #ececec 100%);
+  background-size: 200% 100%;
+  animation: skeletonShimmer 1.2s ease-in-out infinite;
+}
+
+.blockDark {
+  border-radius: 6px;
+  background: linear-gradient(
+    90deg,
+    $wc-shimmer-base 0%,
+    $wc-shimmer-mid 50%,
+    $wc-shimmer-base 100%
+  );
+  background-size: 200% 100%;
+  animation: skeletonShimmer 1.2s ease-in-out infinite;
+}
+
+@keyframes skeletonShimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.matchCard {
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px #10201514;
+}
+
+.matchCardDark {
+  background: $wc-bg;
+  border: 1px solid $wc-border;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.matchCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: #fbfbfb;
+  border-bottom: 1px solid $color-border;
+}
+
+.matchCardHeaderDark {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: $wc-bg-elevated;
+  border-bottom: 1px solid $wc-border;
+}
+
+.matchCardTeams {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-4;
+  padding: $spacing-6 $spacing-4;
+}
+
+.matchCardTeam {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $spacing-2;
+  flex: 1;
+}
+
+.logo {
+  border-radius: 50%;
+}
+
+.panel {
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: 8px;
+  padding: $spacing-4;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+}
+
+.panelDark {
+  background: $wc-bg;
+  border: 1px solid $wc-border;
+  border-radius: 8px;
+  padding: $spacing-4;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+}
+
+.panelRows {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+}
+
+.panelRow {
+  display: grid;
+  grid-template-columns: 28px 1fr 28px;
+  align-items: center;
+  gap: $spacing-2;
+}
+
+.panelRowBar {
+  width: 100%;
+  border-radius: 999px;
+}
+
+.lineupGrid {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr 1fr;
+  gap: $spacing-3;
+  align-items: start;
+
+  @media (max-width: 767px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.lineupCol {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+}
+
+.lineupPitch {
+  width: 100%;
+  border-radius: 8px;
+}
+
+.standingsRow {
+  width: 100%;
+}
+
+.wcGroupCard {
+  background: $wc-bg;
+  border: 1px solid $wc-border;
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.wcGroupRows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.teamHeaderSkeleton {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 16px;
+}
+
+.teamHeaderLogo {
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.teamHeaderText {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}

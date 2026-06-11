@@ -1,5 +1,9 @@
 import { liveScoreApi } from './api';
 import type { AxiosInstance } from 'axios';
+import {
+  runWithRequestStats,
+  type RequestStatsStore,
+} from '@/server/livescoreRequestStats';
 
 type Als = {
   getStore: () => AxiosInstance | undefined;
@@ -25,14 +29,19 @@ export function getLiveScoreHttpClient(): AxiosInstance {
 }
 
 /**
- * SSR / sunucu tarafında istek başına `/api/livescore` tabanlı axios kullanır.
+ * SSR / sunucu tarafında istek başına LiveScore axios client kullanır.
  * AsyncLocalStorage ile eşzamanlı isteklerde client override çakışmaz.
+ * İsteğe bağlı `stats` ile upstream/cache hit sayıları izlenir.
  */
 export function runWithLiveScoreHttpClient<T>(
   client: AxiosInstance,
-  fn: () => Promise<T>
+  fn: () => Promise<T>,
+  stats?: RequestStatsStore
 ): Promise<T> {
   const als = getAls();
   if (!als) return fn();
+  if (stats) {
+    return runWithRequestStats(stats, () => als.run(client, fn) as Promise<T>);
+  }
   return als.run(client, fn) as Promise<T>;
 }

@@ -1,26 +1,28 @@
 /* eslint-disable @typescript-eslint/no-explicit-any -- Kadro / puan API gevşek şema */
-import type { GetServerSideProps, InferGetServerSidePropsType } from 'next';
-import { serverSideTranslations } from '@/lib/serverSideTranslations';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import Container from '@/components/Container';
 import CompareTeamPicker from '@/components/CompareTeamPicker';
 import MatchCompetitionStandings from '@/components/MatchCompetitionStandings';
 import MatchCompetitionTopScorers from '@/components/MatchCompetitionTopScorers';
 import NewsList from '@/components/NewsList';
+import {
+  LineupSkeleton,
+  PanelSkeleton,
+  TeamHeaderSkeleton,
+} from '@/components/Skeleton';
+import { useTeamDetailBootstrap } from '@/hooks/useTeamDetailBootstrap';
 import hubStyles from '@/pages/index.module.scss';
 import {
-  getTeamLastMatches,
   getTeamSquads,
   getCompetitionTableFull,
   getSeasonsList,
-  getTeamCompetitions,
   getTopScorers,
   type CompetitionTableData,
   type CompetitionTableStandingRow,
   type SeasonListItem,
-  type TeamCompetitionRow,
   type TopScorersPayload,
 } from '@/services/liveScoreService';
 import type { Match } from '@/models/liveScore';
@@ -28,9 +30,6 @@ import type { NewsItem } from '@/models/domain';
 import { getNews } from '@/services/newsApi';
 import { countryFlagImgSrc } from '@/utils/countryFlag';
 import { uefaCompetitionLogoSrcById } from '@/utils/competitionLogo';
-import type { TeamDetailPageServerPayload } from '@/server/loadTeamDetailInitialData';
-import { loadTeamDetailInitialData } from '@/server/loadTeamDetailInitialData';
-import { propsJsonSafe } from '@/server/propsJsonSafe';
 import { utcTimeToTr } from '@/utils/dateFormat';
 import { buildMatchHref } from '@/utils/matchUrl';
 import styles from './teamDetail.module.scss';
@@ -129,46 +128,52 @@ function resolveMatchStatus(match: Match): string {
 
 /* ─── Component ─── */
 
-type TeamDetailPageProps = {
-  teamId: string;
-  initialTeamData: TeamDetailPageServerPayload;
-};
-
 type SidebarTab = 'standings' | 'leagues' | 'news';
 
-export default function TeamDetail({
-  teamId,
-  initialTeamData,
-}: InferGetServerSidePropsType<typeof getServerSideProps>) {
+export default function TeamDetail() {
+  const router = useRouter();
+  const idParam = router.query.id;
+  const idFromPath = router.asPath.match(/^\/teams\/([^/?#]+)/)?.[1] ?? '';
+  const teamId =
+    typeof idParam === 'string'
+      ? idParam
+      : Array.isArray(idParam)
+        ? idParam[0] ?? idFromPath
+        : idFromPath;
+
+  const bootstrapQuery = useTeamDetailBootstrap(teamId, router.isReady || Boolean(idFromPath));
+  const lastMatches = bootstrapQuery.data?.lastMatches ?? [];
+  const competitions = bootstrapQuery.data?.competitions ?? [];
+  const bootstrapLoading = bootstrapQuery.isLoading;
+
   const [activeTab, setActiveTab] = useState<'matches' | 'squad'>('matches');
   const [compareOpen, setCompareOpen] = useState(false);
-  const [lastMatches, setLastMatches] = useState<Match[]>(() => initialTeamData.lastMatches);
-  const [squad, setSquad] = useState<unknown[]>(() => initialTeamData.squad);
-  const [table, setTable] = useState<CompetitionTableData | null>(
-    () => initialTeamData.table
-  );
-  const [seasons, setSeasons] = useState<SeasonListItem[]>(() => initialTeamData.seasons);
-  const [selectedSeasonId, setSelectedSeasonId] = useState<number | null>(
-    () => initialTeamData.selectedSeasonId
-  );
+  const [squad, setSquad] = useState<unknown[]>([]);
+  const [table, setTable] = useState<CompetitionTableData | null>(null);
+  const [seasons, setSeasons] = useState<SeasonListItem[]>([]);
+  const [selectedSeasonId, setSelectedSeasonId] = useState<number | null>(null);
+  const [topScorers, setTopScorers] = useState<TopScorersPayload | null>(null);
   const [standingsLoading, setStandingsLoading] = useState(false);
-  const [topScorers, setTopScorers] = useState<TopScorersPayload | null>(
-    () => initialTeamData.topScorers
-  );
   const [topScorersLoading, setTopScorersLoading] = useState(false);
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>('standings');
   const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
   const [newsLoading, setNewsLoading] = useState(false);
-  const [competitions, setCompetitions] = useState<TeamCompetitionRow[]>(
-    () => initialTeamData.competitions
-  );
-  const [selectedCompetitionId, setSelectedCompetitionId] = useState<string>(
-    () => initialTeamData.selectedCompetitionId
-  );
-  const [loading, setLoading] = useState(false);
+  const [selectedCompetitionId, setSelectedCompetitionId] = useState('');
+  const [squadLoading, setSquadLoading] = useState(false);
 
-  const skipInitialMatchesFetch = useRef(!!initialTeamData);
-  const skipInitialCompFetch = useRef(!!initialTeamData);
+  useEffect(() => {
+    setSelectedCompetitionId('');
+    setSquad([]);
+    setTable(null);
+    setSeasons([]);
+    setSelectedSeasonId(null);
+    setTopScorers(null);
+  }, [teamId]);
+
+  useEffect(() => {
+    const sid = bootstrapQuery.data?.selectedCompetitionId;
+    if (sid) setSelectedCompetitionId(sid);
+  }, [bootstrapQuery.data?.selectedCompetitionId, teamId]);
 
   const handleSeasonChange = useCallback(async (seasonId: number, competitionIdStr: string) => {
     setSelectedSeasonId(seasonId);
@@ -190,59 +195,12 @@ export default function TeamDetail({
   }, []);
 
   useEffect(() => {
-    if (!teamId) return;
-
-    if (skipInitialMatchesFetch.current) {
-      skipInitialMatchesFetch.current = false;
-      return;
-    }
-
-    const fetchData = async () => {
-      setLoading(true);
-      const matchesData = await getTeamLastMatches(teamId);
-      setLastMatches(matchesData);
-
-      const comps = getTeamCompetitions(matchesData, teamId);
-      setCompetitions(comps);
-      if (comps.length > 0) {
-        setSelectedCompetitionId(String(comps[0]!.id));
-      }
-
-      setLoading(false);
-    };
-
-    void fetchData();
-  }, [teamId]);
-
-  useEffect(() => {
-    if (sidebarTab !== 'news' || newsItems.length > 0) return;
-    let cancelled = false;
-    queueMicrotask(() => {
-      if (cancelled) return;
-      setNewsLoading(true);
-    });
-    getNews(15).then((items) => {
-      if (!cancelled) {
-        setNewsItems(items);
-        setNewsLoading(false);
-      }
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [sidebarTab, newsItems.length]);
-
-  useEffect(() => {
     if (!teamId || !selectedCompetitionId) return;
-
-    if (skipInitialCompFetch.current) {
-      skipInitialCompFetch.current = false;
-      return;
-    }
 
     const loadCompetitionData = async () => {
       setStandingsLoading(true);
       setTopScorersLoading(true);
+      setSquadLoading(true);
       const [squadData, seasonsList, table1] = await Promise.all([
         getTeamSquads(teamId, selectedCompetitionId),
         getSeasonsList(),
@@ -250,6 +208,7 @@ export default function TeamDetail({
       ]);
 
       setSquad(Array.isArray(squadData) ? squadData : []);
+      setSquadLoading(false);
       setSeasons(seasonsList);
 
       const fromTable =
@@ -287,6 +246,24 @@ export default function TeamDetail({
     void loadCompetitionData();
   }, [teamId, selectedCompetitionId]);
 
+  useEffect(() => {
+    if (sidebarTab !== 'news' || newsItems.length > 0) return;
+    let cancelled = false;
+    queueMicrotask(() => {
+      if (cancelled) return;
+      setNewsLoading(true);
+    });
+    getNews(15).then((items) => {
+      if (!cancelled) {
+        setNewsItems(items);
+        setNewsLoading(false);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [sidebarTab, newsItems.length]);
+
   /* ─── Memoized computed data ─── */
 
   const teamInfo = useMemo(() => {
@@ -307,14 +284,6 @@ export default function TeamDetail({
     [competitions, selectedCompetitionId]
   );
 
-  if (loading) {
-    return (
-      <Container>
-        <div className={styles.loading}>Yükleniyor...</div>
-      </Container>
-    );
-  }
-
   const teamPageTitle = `${teamInfo.name} — Takım Detayı | Ofsayt Yok`;
   const teamPageDescription = `${teamInfo.name} takımının son maçları, kadro bilgileri ve lig istatistikleri.`;
 
@@ -327,8 +296,11 @@ export default function TeamDetail({
         <meta property="og:description" content={teamPageDescription} />
         {teamInfo.logo && <meta property="og:image" content={teamInfo.logo} />}
       </Head>
-      {/* ═══ Team Header ═══ */}
-      <div className={styles.teamHeader}>
+
+      {bootstrapLoading ? (
+        <TeamHeaderSkeleton />
+      ) : (
+        <div className={styles.teamHeader}>
         {teamInfo.logo ? (
           <img
             src={teamInfo.logo}
@@ -356,9 +328,10 @@ export default function TeamDetail({
           ⇄ Karşılaştır
         </button>
       </div>
+      )}
 
       {/* ═══ Compare Panel ═══ */}
-      {compareOpen && (
+      {!bootstrapLoading && compareOpen && (
         <div className={styles.comparePanel}>
           <CompareTeamPicker
             fixedTeamId={Number(teamId)}
@@ -390,6 +363,9 @@ export default function TeamDetail({
 
           <div className={styles.tabContent}>
             {activeTab === 'matches' && (
+              bootstrapLoading ? (
+                <PanelSkeleton rows={6} />
+              ) : (
               <div className={styles.matchesList}>
                 {lastMatches.map((match) => {
                   const statusLabel = resolveMatchStatus(match);
@@ -443,8 +419,12 @@ export default function TeamDetail({
                   <div className={styles.empty}>Son maç bulunamadı.</div>
                 )}
               </div>
+              )
             )}
             {activeTab === 'squad' && (
+              squadLoading ? (
+                <LineupSkeleton />
+              ) : (
               <div className={styles.squadList}>
                 {Array.isArray(squad) && squad.length > 0 ? (
                   <ul>
@@ -459,6 +439,7 @@ export default function TeamDetail({
                   <div className={styles.empty}>Kadro bilgisi bulunamadı.</div>
                 )}
               </div>
+              )
             )}
           </div>
         </div>
@@ -495,7 +476,7 @@ export default function TeamDetail({
                 <>
                   <MatchCompetitionStandings
                     data={table}
-                    loading={standingsLoading}
+                    loading={bootstrapLoading || standingsLoading}
                     competitionName={selectedCompName}
                     homeTeamId={
                       Number.isFinite(Number(teamId)) ? Number(teamId) : undefined
@@ -510,7 +491,7 @@ export default function TeamDetail({
                   />
                   <MatchCompetitionTopScorers
                     data={topScorers}
-                    loading={topScorersLoading}
+                    loading={bootstrapLoading || topScorersLoading}
                     seasons={seasons}
                     selectedSeasonId={selectedSeasonId}
                     onSeasonChange={
@@ -569,6 +550,9 @@ export default function TeamDetail({
           </div>
 
           {/* Stats Summary */}
+          {bootstrapLoading || standingsLoading ? (
+            <PanelSkeleton rows={4} />
+          ) : (
           <div className={styles.statsCard}>
             <h3 className={styles.cardTitle}>İstatistikler</h3>
 
@@ -646,44 +630,9 @@ export default function TeamDetail({
               </div>
             )}
           </div>
+          )}
         </div>
       </div>
     </Container>
   );
 }
-
-export const getServerSideProps: GetServerSideProps<TeamDetailPageProps> = async (ctx) => {
-  try {
-    ctx.res.setHeader(
-      'Cache-Control',
-      'public, s-maxage=60, stale-while-revalidate=180'
-    );
-    const rawId = ctx.params?.id;
-    const teamId = typeof rawId === 'string' ? rawId : Array.isArray(rawId) ? rawId[0] : '';
-    if (!teamId) return { notFound: true };
-
-    const raw =
-      (await loadTeamDetailInitialData(ctx.req, teamId)) ?? {
-        lastMatches: [],
-        competitions: [],
-        selectedCompetitionId: '',
-        squad: [],
-        table: null,
-        seasons: [],
-        selectedSeasonId: null,
-        topScorers: null,
-      };
-
-    const i18nProps = await serverSideTranslations(ctx.locale ?? 'tr', ['common', 'nav', 'match', 'standings']);
-    return {
-      props: {
-        ...i18nProps,
-        teamId,
-        initialTeamData: propsJsonSafe(raw),
-      },
-    };
-  } catch (e) {
-    console.error('teams getServerSideProps', e);
-    return { notFound: true };
-  }
-};

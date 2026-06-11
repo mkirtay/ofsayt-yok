@@ -430,3 +430,62 @@
   color: $color-text-secondary;
   margin: 0;
 }
+
+// ── Skeleton ──
+
+@keyframes aiStatsShimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.skeletonBlock {
+  border-radius: 6px;
+  background: linear-gradient(90deg, #ececec 0%, #f6f6f6 50%, #ececec 100%);
+  background-size: 200% 100%;
+  animation: aiStatsShimmer 1.2s ease-in-out infinite;
+}
+
+.skeletonStatCard {
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  padding: $spacing-4 $spacing-5;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+  box-shadow: $shadow-surface;
+}
+
+.skeletonPhaseCard {
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  padding: $spacing-4;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+}
+
+.skeletonTableWrap {
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  padding: $spacing-4;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+}
+
+.errorBanner {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: $radius-md;
+  padding: $spacing-4;
+  margin-bottom: $spacing-4;
+  font-size: 14px;
+  color: #991b1b;
+}

@@ -1,22 +1,11 @@
-import type { GetServerSideProps, InferGetServerSidePropsType } from 'next';
-import { serverSideTranslations } from '@/lib/serverSideTranslations';
 import Head from 'next/head';
 import JsonLd from '@/components/JsonLd';
 import MatchHubPage from '@/components/MatchHubPage';
 import { SIDEBAR_LEAGUES } from '@/config/leagues';
-import { loadMatchHubHomeInitialData } from '@/server/loadMatchHubHomeInitialData';
-import { propsJsonSafe } from '@/server/propsJsonSafe';
-import type { MatchHubHomeInitialServerPayload } from '@/types/matchHubHomeSsr';
 
 const DEFAULT_COMPETITION_ID = 6;
 
-type HomeProps = {
-  initialDefaultHubData: MatchHubHomeInitialServerPayload | null;
-};
-
-export default function Home({
-  initialDefaultHubData,
-}: InferGetServerSidePropsType<typeof getServerSideProps>) {
+export default function Home() {
   return (
     <>
       <Head>
@@ -36,33 +25,10 @@ export default function Home({
         }} />
       </Head>
       <MatchHubPage
-      sidebarLeagues={SIDEBAR_LEAGUES}
-      defaultCompetitionId={DEFAULT_COMPETITION_ID}
-      allowedCompetitionIds={null}
-      initialDefaultHubData={initialDefaultHubData}
-    />
+        sidebarLeagues={SIDEBAR_LEAGUES}
+        defaultCompetitionId={DEFAULT_COMPETITION_ID}
+        allowedCompetitionIds={null}
+      />
     </>
   );
 }
-
-export const getServerSideProps: GetServerSideProps<HomeProps> = async (ctx) => {
-  try {
-    ctx.res.setHeader(
-      'Cache-Control',
-      'public, s-maxage=30, stale-while-revalidate=120'
-    );
-    const iso = new Date().toISOString().slice(0, 10);
-    const raw = await loadMatchHubHomeInitialData(ctx.req, DEFAULT_COMPETITION_ID, iso);
-    const i18nProps = await serverSideTranslations(ctx.locale ?? 'tr', ['common', 'nav', 'match']);
-    return {
-      props: {
-        ...i18nProps,
-        initialDefaultHubData: raw == null ? null : propsJsonSafe(raw),
-      },
-    };
-  } catch (e) {
-    console.error('index getServerSideProps', e);
-    const i18nProps = await serverSideTranslations(ctx.locale ?? 'tr', ['common', 'nav', 'match']);
-    return { props: { ...i18nProps, initialDefaultHubData: null } };
-  }
-};

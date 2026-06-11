@@ -1,39 +1,30 @@
-import type { GetServerSideProps, InferGetServerSidePropsType } from 'next';
-import { serverSideTranslations } from '@/lib/serverSideTranslations';
 import { useTranslation } from '@/lib/i18n';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Head from 'next/head';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { Role } from '@prisma/client';
-import type { ProfilePageServerPayload } from '@/server/loadProfilePageData';
-import { loadProfilePageData } from '@/server/loadProfilePageData';
-import { propsJsonSafe } from '@/server/propsJsonSafe';
+import { useQueryClient } from '@tanstack/react-query';
+import { PanelSkeleton } from '@/components/Skeleton';
+import { profileQueryKey, useProfile } from '@/hooks/useProfile';
 import styles from './profile.module.scss';
 
-type ProfileDto = ProfilePageServerPayload;
-
-type ProfilePageProps = {
-  initialProfile: ProfilePageServerPayload;
-};
-
-export default function ProfilePage({
-  initialProfile,
-}: InferGetServerSidePropsType<typeof getServerSideProps>) {
+export default function ProfilePage() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { t } = useTranslation('profile');
   const { data: session, status, update } = useSession();
+  const { data: profile, isLoading: profileLoading } = useProfile(status === 'authenticated');
 
-  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [profileMsg, setProfileMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
 
-  const [name, setName] = useState(() => initialProfile.name ?? '');
-  const [username, setUsername] = useState(() => initialProfile.username ?? '');
-  const [bio, setBio] = useState(() => initialProfile.bio ?? '');
-  const [image, setImage] = useState(() => initialProfile.image ?? '');
-  const [email, setEmail] = useState(() => initialProfile.email);
+  const [name, setName] = useState('');
+  const [username, setUsername] = useState('');
+  const [bio, setBio] = useState('');
+  const [image, setImage] = useState('');
+  const [email, setEmail] = useState('');
 
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -41,39 +32,24 @@ export default function ProfilePage({
   const [passSaving, setPassSaving] = useState(false);
   const [passMsg, setPassMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
 
-  const loadProfile = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await fetch('/api/user/me', { credentials: 'include' });
-      if (!res.ok) {
-        if (res.status === 401) router.push('/auth/signin');
-        return;
-      }
-      const data = (await res.json()) as ProfileDto;
-      setEmail(data.email);
-      setName(data.name ?? '');
-      setUsername(data.username ?? '');
-      setBio(data.bio ?? '');
-      setImage(data.image ?? '');
-    } finally {
-      setLoading(false);
-    }
-  }, [router]);
-
-  const skipInitialProfileFetch = useRef(true);
-
   useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/auth/signin');
-      return;
     }
-    if (status !== 'authenticated') return;
-    if (skipInitialProfileFetch.current) {
-      skipInitialProfileFetch.current = false;
-      return;
-    }
-    void loadProfile();
-  }, [status, router, loadProfile]);
+  }, [status, router]);
+
+  useEffect(() => {
+    if (!profile) return;
+    setEmail(profile.email);
+    setName(profile.name ?? '');
+    setUsername(profile.username ?? '');
+    setBio(profile.bio ?? '');
+    setImage(profile.image ?? '');
+  }, [profile]);
+
+  const refreshProfile = useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: profileQueryKey });
+  }, [queryClient]);
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,19 +60,15 @@ export default function ProfilePage({
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({
-          name: name.trim() || null,
-          username: username.trim() || null,
-          bio: bio.trim() || null,
-          image: image.trim() || null,
-        }),
+        body: JSON.stringify({ name, username, bio, image }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         setProfileMsg({ type: 'err', text: data.error || t('saveError') });
         return;
       }
-      const u = data as ProfileDto;
+      const u = data.user ?? data;
+      setEmail(u.email);
       setName(u.name ?? '');
       setUsername(u.username ?? '');
       setBio(u.bio ?? '');
@@ -106,6 +78,7 @@ export default function ProfilePage({
         image: u.image,
         username: u.username,
       });
+      void refreshProfile();
       setProfileMsg({ type: 'ok', text: t('saved') });
     } catch {
       setProfileMsg({ type: 'err', text: t('connectionError') });
@@ -145,17 +118,28 @@ export default function ProfilePage({
     }
   };
 
-  if (status === 'loading' || loading) {
+  const loading = status === 'loading' || profileLoading;
+
+  if (loading) {
     return (
-      <div className={styles.page}>
-        <p className={styles.subtitle}>{t('loading')}</p>
-      </div>
+      <>
+        <Head>
+          <title>{t('pageTitle')}</title>
+          <meta name="robots" content="noindex, nofollow" />
+        </Head>
+        <div className={styles.page}>
+          <PanelSkeleton rows={6} />
+          <PanelSkeleton rows={4} />
+        </div>
+      </>
     );
   }
 
-  if (!session) {
+  if (!session || !profile) {
     return null;
   }
+
+  const isAdmin = profile.role === Role.ADMIN;
 
   return (
     <>
@@ -235,9 +219,9 @@ export default function ProfilePage({
           <div className={styles.field}>
             <span className={styles.label}>{t('role')}</span>
             <span
-              className={`${styles.roleBadge} ${session.user.role === Role.ADMIN ? styles.roleAdmin : ''}`.trim()}
+              className={`${styles.roleBadge} ${isAdmin ? styles.roleAdmin : ''}`.trim()}
             >
-              {session.user.role === Role.ADMIN ? t('roleAdmin') : t('roleMember')}
+              {isAdmin ? t('roleAdmin') : t('roleMember')}
             </span>
           </div>
 
@@ -304,27 +288,12 @@ export default function ProfilePage({
             </button>
           </div>
           {passMsg && (
-            <p className={`${styles.message} ${passMsg.type === 'ok' ? styles.ok : styles.err}`}>{passMsg.text}</p>
+            <p className={`${styles.message} ${passMsg.type === 'ok' ? styles.ok : styles.err}`}>
+              {passMsg.text}
+            </p>
           )}
         </form>
       </div>
     </>
   );
 }
-
-export const getServerSideProps: GetServerSideProps<ProfilePageProps> = async (ctx) => {
-  ctx.res.setHeader('Cache-Control', 'private, no-store');
-  const profile = await loadProfilePageData(ctx);
-  if (!profile) {
-    return {
-      redirect: { destination: '/auth/signin', permanent: false },
-    };
-  }
-  const i18nProps = await serverSideTranslations(ctx.locale ?? 'tr', ['common', 'nav', 'profile']);
-  return {
-    props: {
-      ...i18nProps,
-      initialProfile: propsJsonSafe(profile),
-    },
-  };
-};

@@ -1,4 +1,3 @@
-import type { IncomingMessage } from 'http';
 import {
   getTeamsHead2Head,
   getTeamLastMatches,
@@ -12,8 +11,7 @@ import {
   type RecentMatchRow,
   type TeamMetrics,
 } from '@/server/buildMatchAnalysisContext';
-import { runWithLiveScoreHttpClient } from '@/services/liveScoreHttpContext';
-import { livescoreAxiosFromIncomingMessage } from '@/server/livescoreInternalAxios';
+import { runSsrLiveScoreLoad } from './runSsrLiveScoreLoad';
 
 export type TeamCompareData = {
   teamId: number;
@@ -42,21 +40,15 @@ export function parseCompareSlug(slug: string): { team1Id: number; team2Id: numb
 }
 
 export async function loadComparePageData(
-  req: IncomingMessage,
   team1Id: number,
   team2Id: number
 ): Promise<ComparePagePayload | null> {
-  const axiosClient = livescoreAxiosFromIncomingMessage(req);
-
-  const [h2hData, team1Matches, team2Matches] = await runWithLiveScoreHttpClient(
-    axiosClient,
-    () =>
-      Promise.all([
+  return runSsrLiveScoreLoad(`compare:${team1Id}-vs-${team2Id}`, async () => {
+  const [h2hData, team1Matches, team2Matches] = await Promise.all([
         getTeamsHead2Head(String(team1Id), String(team2Id)).catch(() => null),
         getTeamLastMatches(String(team1Id), 10).catch(() => []),
         getTeamLastMatches(String(team2Id), 10).catch(() => []),
-      ])
-  );
+      ]);
 
   const team1Rows = team1Matches
     .map((m) => buildRecentMatchRow(m, team1Id))
@@ -115,4 +107,5 @@ export async function loadComparePageData(
     h2h,
     h2hRaw: h2hData,
   };
+  });
 }

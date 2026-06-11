@@ -3,9 +3,13 @@ import { SessionProvider } from 'next-auth/react'
 import Head from 'next/head'
 import { Inter } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
+import { QueryClientProvider } from '@tanstack/react-query'
+import { useState } from 'react'
 import { appWithTranslation } from '@/lib/i18n'
+import { createQueryClient } from '@/lib/queryClient'
 import Layout from '@/components/Layout'
 import PremiumModal from '@/components/PremiumModal'
+import RouteProgress from '@/components/RouteProgress'
 import '@/styles/globals.scss'
 
 const inter = Inter({
@@ -15,8 +19,11 @@ const inter = Inter({
 })
 
 function App({ Component, pageProps: { session, ...pageProps } }: AppProps) {
+  const [queryClient] = useState(() => createQueryClient())
+
   return (
     <SessionProvider session={session}>
+      <QueryClientProvider client={queryClient}>
       <Head>
         <title>Ofsayt Yok</title>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -30,12 +37,14 @@ function App({ Component, pageProps: { session, ...pageProps } }: AppProps) {
         <link rel="apple-touch-icon" href="/icon.svg" />
       </Head>
       <div className={`${inter.className} ${inter.variable}`}>
+        <RouteProgress />
         <Layout>
           <Component {...pageProps} />
         </Layout>
         <PremiumModal />
         <Analytics />
       </div>
+      </QueryClientProvider>
     </SessionProvider>
   )
 }

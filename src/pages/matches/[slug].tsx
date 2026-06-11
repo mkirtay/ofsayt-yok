@@ -1,7 +1,6 @@
-import type { GetServerSideProps, InferGetServerSidePropsType } from 'next';
-import { serverSideTranslations } from '@/lib/serverSideTranslations';
 import Head from 'next/head';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/router';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Container from '@/components/Container';
 import MatchCard from '@/components/MatchCard';
 import EventTimeline from '@/components/EventTimeline';
@@ -14,6 +13,7 @@ import MatchTrivia from '@/components/MatchTrivia';
 import MatchPoll from '@/components/MatchPoll';
 import JsonLd from '@/components/JsonLd';
 import {
+  findMatchById,
   getCompetitionTableFull,
   getMatchLineups,
   getMatchStats,
@@ -24,43 +24,93 @@ import {
 } from '@/services/liveScoreService';
 import type { Match } from '@/models/liveScore';
 import type { MatchEvent, MatchStatsData } from '@/models/domain';
-import type { MatchDetailPageServerPayload } from '@/server/loadMatchDetailInitialData';
-import { loadMatchDetailInitialData } from '@/server/loadMatchDetailInitialData';
-import { propsJsonSafe } from '@/server/propsJsonSafe';
-import { buildMatchSlug, parseMatchIdFromParam } from '@/utils/matchUrl';
+import { buildMatchHref, parseMatchIdFromParam } from '@/utils/matchUrl';
 import { WORLD_CUP_COMPETITION_ID } from '@/config/worldCup';
 import { fetchWorldCupStandingsBundle, isWorldCupCompetition } from '@/utils/worldCupStandings';
 import styles from './matchDetail.module.scss';
 
-type MatchDetailPageProps = {
-  matchId: string;
-  canonicalPath: string;
-  initialMatchData: MatchDetailPageServerPayload;
-};
+async function loadStandingsForMatch(
+  cid: number
+): Promise<{
+  seasons: SeasonListItem[];
+  selectedSeasonId: number | null;
+  standings: CompetitionTableData | null;
+}> {
+  if (isWorldCupCompetition(cid)) {
+    const wc = await fetchWorldCupStandingsBundle();
+    return {
+      seasons: wc.seasons,
+      selectedSeasonId: wc.selectedSeasonId,
+      standings: wc.standings,
+    };
+  }
 
-export default function MatchDetail({
-  matchId,
-  canonicalPath,
-  initialMatchData,
-}: InferGetServerSidePropsType<typeof getServerSideProps>) {
-  const [match, setMatch] = useState<Match | null>(() => initialMatchData.match);
-  const [events, setEvents] = useState<MatchEvent[]>(() => initialMatchData.events);
-  const [lineups, setLineups] = useState<unknown>(() => initialMatchData.lineups);
-  const [stats, setStats] = useState<MatchStatsData | null>(() => initialMatchData.stats);
-  const [standings, setStandings] = useState<CompetitionTableData | null>(
-    () => initialMatchData.standings
-  );
+  const compIdStr = String(cid);
+  const [seasonsList, table1] = await Promise.all([
+    getSeasonsList(),
+    getCompetitionTableFull(compIdStr),
+  ]);
+
+  const fromTable =
+    table1?.season?.id != null && Number.isFinite(Number(table1.season.id))
+      ? Number(table1.season.id)
+      : null;
+  let sid: number | null = fromTable;
+  if (sid != null && seasonsList.length && !seasonsList.some((s) => s.id === sid)) {
+    sid = seasonsList[0]!.id;
+  } else if (sid == null && seasonsList.length) {
+    sid = seasonsList[0]!.id;
+  }
+
+  const needTableRefetch =
+    sid != null &&
+    table1 != null &&
+    (table1.season?.id == null || Number(table1.season.id) !== sid);
+
+  let tableFinal = table1;
+  if (needTableRefetch && sid != null) {
+    tableFinal = await getCompetitionTableFull(compIdStr, { season: sid });
+  }
+
+  return {
+    seasons: seasonsList,
+    selectedSeasonId: sid,
+    standings: tableFinal ?? table1,
+  };
+}
+
+export default function MatchDetail() {
+  const router = useRouter();
+  const slugParam = router.query.slug;
+  const slugFromPath = router.asPath.match(/^\/matches\/([^/?#]+)/)?.[1] ?? '';
+  const slug =
+    typeof slugParam === 'string'
+      ? slugParam
+      : Array.isArray(slugParam)
+        ? slugParam[0] ?? slugFromPath
+        : slugFromPath;
+  const requestedMatchId = slug ? parseMatchIdFromParam(slug) : '';
+
+  const [matchId, setMatchId] = useState('');
+  const [match, setMatch] = useState<Match | null>(null);
+  const [events, setEvents] = useState<MatchEvent[]>([]);
+  const [lineups, setLineups] = useState<unknown>(null);
+  const [stats, setStats] = useState<MatchStatsData | null>(null);
+  const [standings, setStandings] = useState<CompetitionTableData | null>(null);
+  const [matchLoading, setMatchLoading] = useState(true);
+  const [eventsLoading, setEventsLoading] = useState(false);
+  const [statsLoading, setStatsLoading] = useState(false);
+  const [lineupsLoading, setLineupsLoading] = useState(false);
   const [standingsLoading, setStandingsLoading] = useState(false);
-  const [standingsReady, setStandingsReady] = useState(
-    () => initialMatchData.standings != null
-  );
-  const [loading, setLoading] = useState(false);
-  const [seasons, setSeasons] = useState<SeasonListItem[]>(() => initialMatchData.seasons);
-  const [selectedSeasonId, setSelectedSeasonId] = useState<number | null>(
-    () => initialMatchData.selectedSeasonId
-  );
+  const [seasons, setSeasons] = useState<SeasonListItem[]>([]);
+  const [selectedSeasonId, setSelectedSeasonId] = useState<number | null>(null);
+  const [notFound, setNotFound] = useState(false);
 
-  const skipHydrationFetchOnce = useRef(true);
+  const canonicalPath = useMemo(() => {
+    if (match) return buildMatchHref(match);
+    if (requestedMatchId) return `/matches/${slug || requestedMatchId}`;
+    return '/matches';
+  }, [match, requestedMatchId, slug]);
 
   const compId = match?.competition?.id ?? match?.competition_id;
   const isWorldCup = compId === WORLD_CUP_COMPETITION_ID;
@@ -72,6 +122,90 @@ export default function MatchDetail({
     };
   }, [isWorldCup]);
 
+  useEffect(() => {
+    if (!router.isReady || !requestedMatchId) return;
+
+    let cancelled = false;
+
+    void (async () => {
+      setMatchLoading(true);
+      setEventsLoading(true);
+      setStatsLoading(true);
+      setLineupsLoading(true);
+      setStandingsLoading(true);
+      setNotFound(false);
+      setMatch(null);
+      setEvents([]);
+      setLineups(null);
+      setStats(null);
+      setStandings(null);
+      setSeasons([]);
+      setSelectedSeasonId(null);
+      setMatchId('');
+
+      const found = await findMatchById(requestedMatchId);
+      if (cancelled) return;
+
+      if (!found.match) {
+        setNotFound(true);
+        setMatchLoading(false);
+        return;
+      }
+
+      const apiMatchId = String(found.match.id);
+      setMatchId(apiMatchId);
+      setMatch(found.match);
+      setEvents(found.events);
+      setMatchLoading(false);
+      setEventsLoading(found.events.length === 0);
+
+      const canonical = buildMatchHref(found.match);
+      if (slug && router.asPath !== canonical) {
+        void router.replace(canonical, undefined, { shallow: true });
+      }
+
+      if (!found.events.length) {
+        void getMatchWithEvents(apiMatchId).then((ev) => {
+          if (cancelled) return;
+          if (ev.match) setMatch(ev.match);
+          setEvents(ev.events);
+          setEventsLoading(false);
+        });
+      }
+
+      const cid = found.match.competition?.id ?? found.match.competition_id;
+      if (cid == null) {
+        setStandingsLoading(false);
+      }
+
+      void getMatchStats(apiMatchId).then((statsData) => {
+        if (cancelled) return;
+        setStats(statsData);
+        setStatsLoading(false);
+      });
+
+      void getMatchLineups(apiMatchId).then((lineupsData) => {
+        if (cancelled) return;
+        setLineups(lineupsData);
+        setLineupsLoading(false);
+      });
+
+      if (cid != null) {
+        void loadStandingsForMatch(cid).then((standingsBundle) => {
+          if (cancelled) return;
+          setSeasons(standingsBundle.seasons);
+          setSelectedSeasonId(standingsBundle.selectedSeasonId);
+          setStandings(standingsBundle.standings);
+          setStandingsLoading(false);
+        });
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [router.isReady, requestedMatchId, slug]);
+
   const handleSeasonChange = useCallback(async (seasonId: number, competitionIdStr: string) => {
     setSelectedSeasonId(seasonId);
     setStandingsLoading(true);
@@ -80,105 +214,31 @@ export default function MatchDetail({
     setStandingsLoading(false);
   }, []);
 
-  useEffect(() => {
-    if (!matchId) return;
-
-    if (skipHydrationFetchOnce.current) {
-      skipHydrationFetchOnce.current = false;
-      return;
-    }
-
-    const fetchData = async () => {
-      setLoading(true);
-      setStandings(null);
-      setStandingsLoading(false);
-      setStandingsReady(false);
-
-      const [matchEventsRes, lineupsData, statsData] = await Promise.all([
-        getMatchWithEvents(matchId),
-        getMatchLineups(matchId),
-        getMatchStats(matchId),
-      ]);
-
-      setMatch(matchEventsRes.match);
-      setEvents(matchEventsRes.events);
-      setLineups(lineupsData);
-      setStats(statsData);
-      setLoading(false);
-
-      const m = matchEventsRes.match;
-      const compId = m?.competition?.id ?? m?.competition_id;
-      if (compId != null) {
-        setStandingsLoading(true);
-        if (isWorldCupCompetition(compId)) {
-          const wc = await fetchWorldCupStandingsBundle();
-          setSeasons(wc.seasons);
-          setSelectedSeasonId(wc.selectedSeasonId);
-          setStandings(wc.standings);
-        } else {
-          const compIdStr = String(compId);
-          const [seasonsList, table1] = await Promise.all([
-            getSeasonsList(),
-            getCompetitionTableFull(compIdStr),
-          ]);
-          setSeasons(seasonsList);
-
-          const fromTable =
-            table1?.season?.id != null && Number.isFinite(Number(table1.season.id))
-              ? Number(table1.season.id)
-              : null;
-          let sid: number | null = fromTable;
-          if (sid != null && seasonsList.length && !seasonsList.some((s) => s.id === sid)) {
-            sid = seasonsList[0]!.id;
-          } else if (sid == null && seasonsList.length) {
-            sid = seasonsList[0]!.id;
-          }
-          setSelectedSeasonId(sid);
-
-          const needTableRefetch =
-            sid != null &&
-            table1 != null &&
-            (table1.season?.id == null || Number(table1.season.id) !== sid);
-
-          let tableFinal = table1;
-          if (needTableRefetch && sid != null) {
-            tableFinal = await getCompetitionTableFull(compIdStr, { season: sid });
-          }
-          setStandings(tableFinal ?? table1);
-        }
-        setStandingsLoading(false);
-        setStandingsReady(true);
-      } else {
-        setSeasons([]);
-        setSelectedSeasonId(null);
-      }
-    };
-
-    void fetchData();
-  }, [matchId]);
-
-  if (loading) {
-    return (
-      <Container>
-        <div className={styles.loading}>Yükleniyor...</div>
-      </Container>
-    );
-  }
-
-  const homeTeamId = match?.home?.id ?? match?.home_id;
-  const awayTeamId = match?.away?.id ?? match?.away_id;
-  const showStandingsBlock = compId != null && (standingsLoading || standingsReady);
+  const showNotFound = router.isReady && Boolean(requestedMatchId) && notFound;
+  const showLayout = !showNotFound;
 
   const homeName = match?.home?.name || '';
   const awayName = match?.away?.name || '';
-  const pageTitle = homeName && awayName
-    ? `${homeName} - ${awayName} | Ofsayt Yok`
-    : 'Maç Detayı | Ofsayt Yok';
+  const pageTitle =
+    homeName && awayName ? `${homeName} - ${awayName} | Ofsayt Yok` : 'Maç Detayı | Ofsayt Yok';
   const compName = match?.competition?.name || match?.competition_name || '';
-  const pageDescription = homeName && awayName
-    ? `${homeName} vs ${awayName}${compName ? ` - ${compName}` : ''} maç detayı, istatistikler ve kadro bilgileri.`
-    : 'Maç detayı, istatistikler ve kadro bilgileri.';
+  const pageDescription =
+    homeName && awayName
+      ? `${homeName} vs ${awayName}${compName ? ` - ${compName}` : ''} maç detayı, istatistikler ve kadro bilgileri.`
+      : 'Maç detayı, istatistikler ve kadro bilgileri.';
   const canonicalUrl = `${process.env.AUTH_URL ?? 'https://ofsaytyok.app'}${canonicalPath}`;
+  const effectiveMatchId = matchId || requestedMatchId;
+  const homeTeamId = match?.home?.id ?? match?.home_id;
+  const awayTeamId = match?.away?.id ?? match?.away_id;
+  const showStandingsBlock = compId != null || matchLoading;
+
+  if (showNotFound) {
+    return (
+      <Container>
+        <div className={styles.notFound}>Maç bulunamadı.</div>
+      </Container>
+    );
+  }
 
   return (
     <>
@@ -190,109 +250,74 @@ export default function MatchDetail({
         <meta property="og:description" content={pageDescription} />
         <meta property="og:type" content="article" />
         <meta property="og:url" content={canonicalUrl} />
-        <meta property="og:image" content={match?.home?.logo || 'https://ofsaytyok.app/images/logo.svg'} />
+        {match?.home?.logo ? (
+          <>
+            <meta property="og:image" content={match.home.logo} />
+            <meta name="twitter:image" content={match.home.logo} />
+          </>
+        ) : null}
         <meta name="twitter:card" content="summary" />
         <meta name="twitter:title" content={pageTitle} />
         <meta name="twitter:description" content={pageDescription} />
-        <meta name="twitter:image" content={match?.home?.logo || 'https://ofsaytyok.app/images/logo.svg'} />
-        {match && (
-          <JsonLd schema={{
-            '@context': 'https://schema.org',
-            '@type': 'SportsEvent',
-            name: pageTitle,
-            url: canonicalUrl,
-            sport: 'Soccer',
-            ...(match.date ? { startDate: match.date } : {}),
-            homeTeam: homeName ? { '@type': 'SportsTeam', name: homeName } : undefined,
-            awayTeam: awayName ? { '@type': 'SportsTeam', name: awayName } : undefined,
-            ...(compName ? { organizer: { '@type': 'Organization', name: compName } } : {}),
-          }} />
-        )}
+        {match ? (
+          <JsonLd
+            schema={{
+              '@context': 'https://schema.org',
+              '@type': 'SportsEvent',
+              name: pageTitle,
+              url: canonicalUrl,
+              sport: 'Soccer',
+              ...(match.date ? { startDate: match.date } : {}),
+              homeTeam: homeName ? { '@type': 'SportsTeam', name: homeName } : undefined,
+              awayTeam: awayName ? { '@type': 'SportsTeam', name: awayName } : undefined,
+              ...(compName ? { organizer: { '@type': 'Organization', name: compName } } : {}),
+            }}
+          />
+        ) : null}
       </Head>
       <Container>
-      <div className="layout-split">
-        <div className="layout-left">
-          <MatchCard match={match} />
-          <div className={styles.statsEventsRow}>
-            <div className={styles.statsCol}>
-              <MatchStats stats={stats} />
+        {showLayout ? (
+          <div className="layout-split">
+            <div className="layout-left">
+              <MatchCard match={match} loading={matchLoading} />
+              <div className={styles.statsEventsRow}>
+                <div className={styles.statsCol}>
+                  <MatchStats stats={stats} loading={matchLoading || statsLoading} />
+                </div>
+                <div className={styles.eventsCol}>
+                  <EventTimeline
+                    events={events}
+                    homeName={match?.home?.name}
+                    awayName={match?.away?.name}
+                    loading={matchLoading || eventsLoading}
+                  />
+                </div>
+              </div>
+              {effectiveMatchId ? <MatchPoll matchId={effectiveMatchId} /> : null}
+              <MatchTrivia matchId={effectiveMatchId} match={match} />
+              <MatchAnalysis matchId={effectiveMatchId} match={match} />
+              <Lineup lineups={lineups} loading={matchLoading || lineupsLoading} />
             </div>
-            <div className={styles.eventsCol}>
-              <EventTimeline
-                events={events}
-                homeName={match?.home?.name}
-                awayName={match?.away?.name}
-              />
+            <div className="layout-right">
+              {effectiveMatchId ? <MatchForum matchId={effectiveMatchId} /> : null}
+              {showStandingsBlock ? (
+                <MatchCompetitionStandings
+                  data={standings}
+                  loading={standingsLoading || matchLoading}
+                  competitionName={match?.competition?.name ?? match?.competition_name}
+                  homeTeamId={homeTeamId}
+                  awayTeamId={awayTeamId}
+                  seasons={seasons}
+                  selectedSeasonId={selectedSeasonId}
+                  onSeasonChange={
+                    compId != null ? (sid) => handleSeasonChange(sid, String(compId)) : undefined
+                  }
+                />
+              ) : null}
             </div>
           </div>
-          {match && (
-            <MatchPoll matchId={matchId} />
-          )}
-          <MatchTrivia matchId={matchId} match={match} />
-          <MatchAnalysis matchId={matchId} match={match} />
-          <Lineup lineups={lineups} />
-        </div>
-        <div className="layout-right">
-          <MatchForum matchId={matchId} />
-          {showStandingsBlock ? (
-            <MatchCompetitionStandings
-              data={standings}
-              loading={standingsLoading}
-              competitionName={match?.competition?.name ?? match?.competition_name}
-              homeTeamId={homeTeamId}
-              awayTeamId={awayTeamId}
-              seasons={seasons}
-              selectedSeasonId={selectedSeasonId}
-              onSeasonChange={
-                compId != null
-                  ? (sid) => handleSeasonChange(sid, String(compId))
-                  : undefined
-              }
-            />
-          ) : null}
-        </div>
-      </div>
-    </Container>
+        ) : null}
+      </Container>
     </>
   );
 }
-
-export const getServerSideProps: GetServerSideProps<MatchDetailPageProps> = async (ctx) => {
-  const rawParam = ctx.params?.slug;
-  const param = typeof rawParam === 'string' ? rawParam : Array.isArray(rawParam) ? rawParam[0] : '';
-  if (!param) return { notFound: true };
-
-  const matchId = parseMatchIdFromParam(param);
-  if (!matchId) return { notFound: true };
-
-  const raw = await loadMatchDetailInitialData(ctx.req, matchId);
-  if (!raw?.match) return { notFound: true };
-
-  const apiMatchId = String(raw.match.id);
-  const canonicalSlug = buildMatchSlug(raw.match);
-  const canonicalParam = canonicalSlug ? `${apiMatchId}-${canonicalSlug}` : apiMatchId;
-
-  if (param !== canonicalParam) {
-    return {
-      redirect: {
-        destination: `/matches/${canonicalParam}`,
-        permanent: true,
-      },
-    };
-  }
-
-  ctx.res.setHeader(
-    'Cache-Control',
-    'public, s-maxage=20, stale-while-revalidate=120'
-  );
-
-  const i18nProps = await serverSideTranslations(ctx.locale ?? 'tr', ['common', 'nav', 'match']);
-  return {
-    props: {
-      ...i18nProps,
-      matchId: apiMatchId,
-      canonicalPath: `/matches/${canonicalParam}`,
-      initialMatchData: propsJsonSafe(raw),
-    },
-  };
-};

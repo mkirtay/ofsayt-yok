@@ -23,7 +23,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(404).json({ success: false, error: 'Not found' });
     }
 
-    res.status(200).json({ success: true, item });
+    const withSidebar = req.query.sidebar === '1';
+    const payload: Record<string, unknown> = { success: true, item };
+    if (withSidebar) {
+      payload.sidebarNews = items.filter((n) => n.id !== id).slice(0, 5);
+    }
+
+    res.setHeader('Cache-Control', 'public, s-maxage=120, stale-while-revalidate=300');
+    res.status(200).json(payload);
   } catch (error: any) {
     res.status(500).json({ success: false, error: error?.message || 'News fetch failed' });
   }

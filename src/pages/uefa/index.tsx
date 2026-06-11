@@ -1,5 +1,3 @@
-import type { GetServerSideProps, InferGetServerSidePropsType } from 'next';
-import { serverSideTranslations } from '@/lib/serverSideTranslations';
 import Head from 'next/head';
 import MatchHubPage from '@/components/MatchHubPage';
 import {
@@ -7,17 +5,8 @@ import {
   UEFA_SIDEBAR_LEAGUES,
   UEFA_TIER2_COMPETITION_IDS,
 } from '@/config/leagues';
-import { loadUefaHubInitialData } from '@/server/loadUefaHubInitialData';
-import { propsJsonSafe } from '@/server/propsJsonSafe';
-import type { UefaHubInitialServerPayload } from '@/types/uefaHubSsr';
 
-type UefaPageProps = {
-  initialUefaHubData: UefaHubInitialServerPayload | null;
-};
-
-export default function UefaPage({
-  initialUefaHubData,
-}: InferGetServerSidePropsType<typeof getServerSideProps>) {
+export default function UefaPage() {
   return (
     <>
       <Head>
@@ -29,35 +18,11 @@ export default function UefaPage({
         <link rel="canonical" href={`${process.env.AUTH_URL ?? 'https://ofsaytyok.app'}/uefa`} />
       </Head>
       <MatchHubPage
-      sidebarLeagues={UEFA_SIDEBAR_LEAGUES}
-      defaultCompetitionId={UEFA_CHAMPIONS_LEAGUE_ID}
-      allowedCompetitionIds={UEFA_TIER2_COMPETITION_IDS}
-      mode="uefa"
-      initialUefaHubData={initialUefaHubData}
-    />
+        sidebarLeagues={UEFA_SIDEBAR_LEAGUES}
+        defaultCompetitionId={UEFA_CHAMPIONS_LEAGUE_ID}
+        allowedCompetitionIds={UEFA_TIER2_COMPETITION_IDS}
+        mode="uefa"
+      />
     </>
   );
 }
-
-export const getServerSideProps: GetServerSideProps<UefaPageProps> = async (ctx) => {
-  try {
-    ctx.res.setHeader(
-      'Cache-Control',
-      'public, s-maxage=30, stale-while-revalidate=120'
-    );
-
-    const raw = await loadUefaHubInitialData(ctx.req, UEFA_CHAMPIONS_LEAGUE_ID);
-
-    const i18nProps = await serverSideTranslations(ctx.locale ?? 'tr', ['common', 'nav', 'match', 'standings']);
-    return {
-      props: {
-        ...i18nProps,
-        initialUefaHubData: raw == null ? null : propsJsonSafe(raw),
-      },
-    };
-  } catch (e) {
-    console.error('uefa getServerSideProps', e);
-    const i18nProps = await serverSideTranslations(ctx.locale ?? 'tr', ['common', 'nav', 'match', 'standings']);
-    return { props: { ...i18nProps, initialUefaHubData: null } };
-  }
-};
