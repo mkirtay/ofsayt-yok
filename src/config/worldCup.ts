@@ -26,6 +26,23 @@ const WORLD_CUP_SEASON_MIN_YEAR = 1930;
  * Sezon listesinden yalnızca Dünya Kupası yıllarını seçer: 2026, 2022, 2018, … (API'de `name` tam eşleşenler).
  * Sıra: yeniden eskiye.
  */
+/** Sezon adından Dünya Kupası yılını çıkarır (`"2026"`, `"2026/2027"` → 2026). */
+export function parseSeasonYearFromName(name?: string | null): number | null {
+  if (!name?.trim()) return null;
+  const m = /^(\d{4})/.exec(name.trim());
+  const y = m ? Number(m[1]) : NaN;
+  return Number.isFinite(y) ? y : null;
+}
+
+export function resolveWorldCupSeasonYear(
+  seasons: Array<{ id: number; name: string }>,
+  selectedSeasonId: number | null,
+): number {
+  const row =
+    selectedSeasonId != null ? seasons.find((s) => s.id === selectedSeasonId) : undefined;
+  return parseSeasonYearFromName(row?.name) ?? WORLD_CUP_SEASON_START_YEAR;
+}
+
 export function pickWorldCupSeasonsFromApi<T extends { id: number; name: string }>(seasons: T[]): T[] {
   const byName = new Map<string, T>();
   for (const s of seasons) {

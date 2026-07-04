@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Head from 'next/head';
 import { useSession } from 'next-auth/react';
 import MatchCompetitionStandings from '@/components/MatchCompetitionStandings';
@@ -7,7 +7,7 @@ import NewsList from '@/components/NewsList';
 import WorldCupGroupCard from '@/components/WorldCupGroupCard';
 import WorldCupLayout from '@/components/layouts/WorldCupLayout';
 import WorldCupCalendar from '@/components/WorldCupCalendar';
-import WorldCupTeamList, { extractAllTeams } from '@/components/WorldCupTeamList';
+import WorldCupTeamList from '@/components/WorldCupTeamList';
 import type { TeamEntry } from '@/components/WorldCupTeamList';
 import WorldCupTeamDrawer from '@/components/WorldCupTeamDrawer';
 import UefaKnockoutBracket from '@/components/UefaKnockoutBracket';
@@ -16,20 +16,24 @@ import {
   MatchListSkeleton,
   StandingsSkeleton,
 } from '@/components/Skeleton';
-import { buildWorldCupBracketRounds } from '@/utils/worldCupBracket';
 import {
+  resolveWorldCupSeasonYear,
   WORLD_CUP_COMPETITION_ID,
 } from '@/config/worldCup';
+import { buildWorldCupBracketRounds, filterMatchesBySeasonYear } from '@/utils/worldCupBracket';
+import {
+  buildWorldCupGroupMatches,
+  buildWorldCupLiveFinishedList,
+  mergeWorldCupHistoryAndLive,
+} from '@/utils/worldCupMatches';
 import type { NewsItem } from '@/models/domain';
 import type { Match } from '@/models/liveScore';
 import {
-  CompetitionTableData,
-  GroupedLeagueMatches,
   getAllCompetitionHistoryMatches,
   getAllLiveMatches,
-  getCompetitionGroupFixtures,
   getCompetitionTableFull,
-  mergeFixturesWithHistoryAndLive,
+  type CompetitionTableData,
+  type GroupedLeagueMatches,
   type SeasonListItem,
 } from '@/services/liveScoreService';
 import { getNews } from '@/services/newsApi';
@@ -60,8 +64,6 @@ export default function WorldCupPage() {
   const [seasons, setSeasons] = useState<SeasonListItem[]>([]);
   const [selectedSeasonId, setSelectedSeasonId] = useState<number | null>(null);
 
-  const liveCheckedRef = useRef(false);
-
   const [groupMatches, setGroupMatches] = useState<GroupedLeagueMatches[]>([]);
   const [allMatchesFlat, setAllMatchesFlat] = useState<Match[]>([]);
   const [groupMatchesLoading, setGroupMatchesLoading] = useState(false);
@@ -85,11 +87,16 @@ export default function WorldCupPage() {
     [groups, selectedGroupId],
   );
 
-  // Bracket data
-  const bracketRounds = useMemo(
-    () => buildWorldCupBracketRounds(allMatchesFlat),
-    [allMatchesFlat]
+  const seasonYear = useMemo(
+    () => resolveWorldCupSeasonYear(seasons, selectedSeasonId),
+    [seasons, selectedSeasonId],
   );
+
+  // Bracket data — yalnızca seçili sezon yılı (API sayfalamasında eski turnuva maçları karışabiliyor)
+  const bracketRounds = useMemo(() => {
+    const seasonMatches = filterMatchesBySeasonYear(allMatchesFlat, seasonYear);
+    return buildWorldCupBracketRounds(seasonMatches);
+  }, [allMatchesFlat, seasonYear]);
 
   // World Cup dark theme class
   useEffect(() => {
@@ -198,72 +205,53 @@ export default function WorldCupPage() {
     return () => { cancelled = true; };
   }, [selectedGroupId, selectedSeasonId]);
 
-  // Merge live scores into SSR fixture data once they're fetched
+  // History + canlı maçlar (fikstür API'si eleme turunda boş dönebiliyor)
   useEffect(() => {
-    if (!['matches', 'calendar', 'bracket'].includes(mainTab) || !groups.length) return;
-    const needsClientFetch = groupMatches.length === 0;
-    // SSR data present + live check already done this session → nothing to do
-    if (!needsClientFetch && liveCheckedRef.current) return;
+    if (!['matches', 'calendar', 'bracket'].includes(mainTab)) return;
     let cancelled = false;
 
-    const fetchFixtures = async () => {
-      if (needsClientFetch) setGroupMatchesLoading(true);
+    const fetchMatchData = async (opts?: { silent?: boolean }) => {
+      if (!opts?.silent) setGroupMatchesLoading(true);
+      try {
+        const [rawHistoryMatches, liveAll] = await Promise.all([
+          getAllCompetitionHistoryMatches(WORLD_CUP_ID, {
+            maxPages: 10,
+            season_id: selectedSeasonId ?? undefined,
+          }),
+          getAllLiveMatches(),
+        ]);
+        if (cancelled) return;
 
-      const [historyMatches, liveAll] = await Promise.all([
-        getAllCompetitionHistoryMatches(WORLD_CUP_ID, {
-          maxPages: 10,
-          season_id: selectedSeasonId ?? undefined,
-        }),
-        getAllLiveMatches(),
-      ]);
-      if (cancelled) return;
-      liveCheckedRef.current = true;
+        const year = resolveWorldCupSeasonYear(seasons, selectedSeasonId);
+        const historyMatches = filterMatchesBySeasonYear(rawHistoryMatches, year);
+        const mergedFlat = mergeWorldCupHistoryAndLive(historyMatches, liveAll);
 
-      const liveWc = liveAll.filter((m) => m.competition?.id === WORLD_CUP_COMPETITION_ID);
-
-      // If no live WC matches and SSR data is present, skip the expensive re-merge
-      if (!needsClientFetch && liveWc.length === 0) {
-        setGroupMatchesLoading(false);
-        return;
-      }
-
-      const byGroup = await Promise.all(
-        groups.map(async (group) => {
-          const fixtures = await getCompetitionGroupFixtures(WORLD_CUP_ID, group.id);
-          const merged = mergeFixturesWithHistoryAndLive(fixtures, historyMatches, liveWc);
-          return {
-            competition_id: Number(group.id),
-            competition_name: `Group ${group.name}`,
-            matches: merged.sort((a, b) => {
-              const aKey = `${a.date || ''} ${a.scheduled || a.time || ''}`.trim();
-              const bKey = `${b.date || ''} ${b.scheduled || b.time || ''}`.trim();
-              return aKey.localeCompare(bKey);
-            }),
-          } as GroupedLeagueMatches;
-        }),
-      );
-
-      if (!cancelled) {
-        const groupMatchesFilled = byGroup.filter((g) => g.matches.length > 0);
-        setGroupMatches(groupMatchesFilled);
-
-        const seen = new Set<number>();
-        const deduped = [
-          ...historyMatches,
-          ...groupMatchesFilled.flatMap((g) => g.matches),
-        ].filter((m) => {
-          if (seen.has(m.id)) return false;
-          seen.add(m.id);
-          return true;
-        });
-        setAllMatchesFlat(deduped);
-        setGroupMatchesLoading(false);
+        setAllMatchesFlat(mergedFlat);
+        setGroupMatches(
+          groups.length
+            ? buildWorldCupGroupMatches(groups, historyMatches, liveAll, year)
+            : [],
+        );
+      } catch (e) {
+        console.error('World Cup match fetch error', e);
+      } finally {
+        if (!cancelled && !opts?.silent) setGroupMatchesLoading(false);
       }
     };
 
-    fetchFixtures();
-    return () => { cancelled = true; };
-  }, [mainTab, groups, groupMatches.length, selectedSeasonId]);
+    void fetchMatchData();
+    const poll =
+      mainTab === 'matches'
+        ? window.setInterval(() => {
+            void fetchMatchData({ silent: true });
+          }, 30_000)
+        : undefined;
+
+    return () => {
+      cancelled = true;
+      if (poll != null) window.clearInterval(poll);
+    };
+  }, [mainTab, groups, selectedSeasonId, seasons]);
 
   // Fetch news lazily
   useEffect(() => {
@@ -277,21 +265,24 @@ export default function WorldCupPage() {
 
   const newsLoading = sidebarTab === 'news' && newsItems.length === 0;
 
-  const isMatchDataTab = mainTab === 'matches' || mainTab === 'calendar' || mainTab === 'bracket';
-
   const favTeamSet = useMemo(() => new Set(favoriteTeamIds), [favoriteTeamIds]);
 
-  const filteredGroupMatches = useMemo(() => {
-    if (!showOnlyFavorites || favoriteTeamIds.length === 0) return groupMatches;
-    return groupMatches
-      .map((g) => ({
-        ...g,
-        matches: g.matches.filter(
-          (m) => favTeamSet.has(m.home?.id ?? -1) || favTeamSet.has(m.away?.id ?? -1),
-        ),
-      }))
-      .filter((g) => g.matches.length > 0);
-  }, [groupMatches, showOnlyFavorites, favoriteTeamIds, favTeamSet]);
+  const matchesTabList = useMemo((): GroupedLeagueMatches[] => {
+    let rows = buildWorldCupLiveFinishedList(allMatchesFlat, seasonYear);
+    if (showOnlyFavorites && favoriteTeamIds.length > 0) {
+      rows = rows.filter(
+        (m) => favTeamSet.has(m.home?.id ?? -1) || favTeamSet.has(m.away?.id ?? -1),
+      );
+    }
+    if (!rows.length) return [];
+    return [
+      {
+        competition_id: WORLD_CUP_COMPETITION_ID,
+        competition_name: `FIFA World Cup ${seasonYear}`,
+        matches: rows,
+      },
+    ];
+  }, [allMatchesFlat, seasonYear, showOnlyFavorites, favoriteTeamIds, favTeamSet]);
 
   return (
     <>
@@ -420,9 +411,9 @@ export default function WorldCupPage() {
                       </button>
                     </div>
                   )}
-                  {filteredGroupMatches.length ? (
+                  {matchesTabList.length ? (
                     <MatchList
-                      groupedMatches={filteredGroupMatches}
+                      groupedMatches={matchesTabList}
                       variant="worldCup"
                       showDateWhenNotToday
                       favoriteTeamIds={favTeamSet}
@@ -444,7 +435,7 @@ export default function WorldCupPage() {
               groupMatchesLoading ? (
                 <MatchListSkeleton groups={3} variant="dark" />
               ) : (
-                <WorldCupCalendar matches={allMatchesFlat} />
+                <WorldCupCalendar matches={filterMatchesBySeasonYear(allMatchesFlat, seasonYear)} />
               )
             )}
 
@@ -455,7 +446,7 @@ export default function WorldCupPage() {
               ) : bracketRounds.length ? (
                 <UefaKnockoutBracket
                   rounds={bracketRounds}
-                  competitionName="FIFA Dünya Kupası 2026"
+                  competitionName={`FIFA Dünya Kupası ${seasonYear}`}
                 />
               ) : (
                 <div className={styles.empty}>

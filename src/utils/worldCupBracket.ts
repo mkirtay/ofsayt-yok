@@ -1,6 +1,19 @@
 import type { Match } from '@/models/liveScore';
 import type { BracketPair, BracketRound } from '@/utils/uefaBracket';
 
+/** Maçın `date` alanından yıl okur; yoksa null. */
+export function matchSeasonYear(m: Match): number | null {
+  const d = m.date?.trim();
+  if (!d || d.length < 4) return null;
+  const y = Number(d.slice(0, 4));
+  return Number.isFinite(y) && y >= 1930 ? y : null;
+}
+
+/** LiveScore `season_id` ile sayfalarken eski turnuva maçları karışabiliyor — yıla göre süz. */
+export function filterMatchesBySeasonYear(matches: Match[], year: number): Match[] {
+  return matches.filter((m) => matchSeasonYear(m) === year);
+}
+
 export type WCRoundKey = 'R32' | 'R16' | 'QF' | 'SF' | 'F';
 
 export const WC_ROUND_ORDER: WCRoundKey[] = ['R32', 'R16', 'QF', 'SF', 'F'];
