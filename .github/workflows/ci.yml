@@ -30,8 +30,12 @@ jobs:
       - name: Pin npm (lockfile ile uyum)
         run: npm install -g npm@10.8.2
 
+      # NOT: package-lock.json bazı devDependency alt paketleriyle (ör. vercel CLI'ın
+      # iç webpack/terser/magicast ağacı) periyodik olarak senkron dışı kalabiliyor.
+      # `npm ci` bunu hata olarak reddediyor; Vercel'in build adımı da zaten `npm install`
+      # kullanıyor, o yüzden CI'ı da aynı (daha toleranslı) komuta hizaladık.
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Generate Prisma client
         run: npx prisma generate
