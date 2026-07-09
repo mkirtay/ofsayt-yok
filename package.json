@@ -18,7 +18,7 @@
     "pm2TweetBotLogs": "pm2 logs tweet-bot --lines 200",
     "pm2List": "pm2 list",
     "pm2Save": "pm2 save",
-    "grant-premium": "dotenv -e .env.local -- node scripts/grant-premium.mjs",
+    "grant-credits": "dotenv -e .env.local -- node scripts/grant-credits.mjs",
     "video": "dotenv -e .env.local -- npx tsx scripts/video-pipeline/index.ts",
     "db:migrate": "dotenv -e .env.local -- prisma migrate dev",
     "db:push": "dotenv -e .env.local -- prisma db push",

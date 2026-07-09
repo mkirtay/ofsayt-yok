@@ -1,5 +1,5 @@
 /**
- * Maç teknik analizi için Claude prompt şablonu.
+ * Maç teknik analizi için LLM prompt şablonu (v2 — 11 bölümlük kapsamlı format).
  *
  * Çıktı yapılandırılmış JSON; TÜM metin alanları Türkçe.
  * Narrative bölümleri 1-2 paragraflık akıcı anlatım ister
@@ -7,24 +7,27 @@
  */
 import type { MatchAnalysisContext } from '@/server/buildMatchAnalysisContext';
 
-export const ANALYSIS_MODEL_VERSION = 'v1-claude-sonnet-4-5-2026-04';
+export const ANALYSIS_MODEL_VERSION = 'v2-2026-07';
 
-export const ANALYSIS_SYSTEM_PROMPT = `Sen profesyonel bir futbol analisti, istatistikçi ve bahis stratejistisin.
-Sana verilen maç verilerini (takım formu, head-to-head, lig sıralaması, maç istatistikleri,
-bahis oranları) yorumlayarak teknik analiz, skor tahmini ve bahis tavsiyeleri üreteceksin.
+export const ANALYSIS_SYSTEM_PROMPT = `Sen profesyonel bir futbol veri analisti, iddia analisti ve Opta/Wyscout seviyesinde
+maç öncesi analiz uzmanısın. Sana verilen maç verilerini (takım formu, head-to-head,
+lig sıralaması, maç istatistikleri, bahis oranları) yorumlayarak kapsamlı teknik analiz,
+skor tahmini ve bahis pazarı değerlendirmesi üreteceksin.
 
 KURALLAR:
 1. Tüm çıktı metinleri TÜRKÇE olacak (takım/oyuncu adları orijinal kalabilir).
 2. Çıktı SADECE geçerli JSON formatında olacak — JSON dışında hiçbir karakter yazma,
    markdown kod bloğu kullanma.
-3. "narrative" alanları 1-2 paragraflık, akıcı, doğal Türkçe anlatım olacak.
-   "Galatasaray'ın son dönemlerdeki performansından dolayı..." gibi insan dilinde yaz.
+3. "narrative"/"comment" gibi metin alanları akıcı, doğal Türkçe anlatım olacak.
    Sadece sayı listeleme — sayıları cümle içinde gerekçeye dönüştür.
 4. Tüm yüzde değerleri 0-100 arası tam sayı (1X2 toplamı 100 olacak).
-5. Veri eksikse "data yetersiz" deme, elindeki verilerle en iyi tahmini üret ve
-   confidence değerini düşür.
-6. Spekülasyonlardan kaçın: kadro/sakatlık verisi yoksa o konuda yorum yapma.
-7. Bahis önerilerinde abartma — düşük güvenli durumlarda "Riskli" işaretle.
+5. Kesin konuşma, olasılık dili kullan ("muhtemelen", "büyük ihtimalle" gibi).
+6. Veri eksikse (kadro/sakatlık/oyuncu formu vb.) bunu açıkça belirt ve hangi
+   varsayımla tahmin yaptığını yaz — confidence değerini buna göre düşür.
+7. Spekülasyonlardan kaçın: kadro/sakatlık verisi yoksa oyuncu bazlı tahminlerde
+   bunu net şekilde ifade et (örn. "kadro verisi yok, genel form üzerinden tahmin").
+8. Bahis önerilerinde abartma — düşük güvenli durumlarda "Riskli" işaretle, value
+   bulunmuyorsa "avoid: true" işaretle.
 
 ÖNEMLİ KALİBRASYON:
 - "high" güven sadece veri açıkça tek yönü işaret ederse (örn. ev avantajı + form +
@@ -35,83 +38,156 @@ KURALLAR:
   olduğudur. Derbi/eşit takımlar/canlı oran salınımı → high risk.`;
 
 export type AnalysisJsonSchema = {
+  /** 1. Genel Maç Özeti */
+  matchSummary: {
+    tempo: string;
+    dominantSide: string;
+    balanceType: string;
+    homeAwayImpact: string;
+  };
+  /** 2. Takım Form Analizi */
+  teamAnalyses: {
+    home: TeamAnalysis;
+    away: TeamAnalysis;
+  };
+  /** 3. Taktik Analiz */
+  tacticalAnalysis: {
+    home: TacticalProfile;
+    away: TacticalProfile;
+    keyBattleZones: string;
+  };
+  /** 4. Isı Haritası ve Saha Hakimiyeti Tahmini */
+  heatmapAnalysis: {
+    homeZones: string;
+    awayZones: string;
+    narrative: string;
+  };
+  /** 7. Maç Sonucu Tahmini */
   matchPrediction: {
     home: number;
     draw: number;
     away: number;
     reasoning: string;
   };
-  teamAnalyses: {
-    home: {
-      narrative: string;
-      keyFactors: string[];
-      formSummary: string;
-      vsOpponentHistory: string;
-    };
-    away: {
-      narrative: string;
-      keyFactors: string[];
-      formSummary: string;
-      vsOpponentHistory: string;
-    };
-  };
   scorePrediction: {
     mostLikely: string;
-    alternatives: string[];
+    alternatives: Array<{ score: string; probability: number }>;
     reasoning: string;
   };
+  /** 6. Gol Tahmini */
   goalExpectation: {
     over15: number;
     over25: number;
     over35: number;
     btts: number;
+    htOver05: number;
+    htOver15: number;
+    homeToScore: number;
+    awayToScore: number;
+    bttsFirstHalf: number;
     reasoning: string;
   };
+  /** 8. Bahis / İddia Pazarı Analizi */
   bettingTips: Array<{
     market: string;
     pick: string;
     confidence: 'low' | 'medium' | 'high';
     reasoning: string;
+    valueBet: boolean;
+    avoid: boolean;
   }>;
+  /** 9. Risk Analizi */
   riskLevel: 'low' | 'medium' | 'high';
   riskReasoning: string;
+  riskFactors: string[];
+  /** 11. Analist Yorumu */
+  analystComment: string;
   /** 0-100 arası model güven skoru (tahminin genel kalitesi) */
   overallConfidence: number;
 };
 
+type TeamAnalysis = {
+  narrative: string;
+  keyFactors: string[];
+  formSummary: string;
+  vsOpponentHistory: string;
+  firstHalfNote: string;
+  secondHalfNote: string;
+};
+
+type TacticalProfile = {
+  formation: string;
+  pressLevel: string;
+  transitionStrength: string;
+  setPieceThreat: string;
+  wingUsage: string;
+  defensiveWeakness: string;
+};
+
 const OUTPUT_SCHEMA_DESCRIPTION = `{
+  "matchSummary": {
+    "tempo": "Maçın temposu nasıl olur (1-2 cümle)",
+    "dominantSide": "Hangi takım oyunu domine etmeye daha yakın",
+    "balanceType": "Dengeli mi, tek taraflı mı, kaotik mi",
+    "homeAwayImpact": "Ev/deplasman etkisi değerlendirmesi"
+  },
+  "teamAnalyses": {
+    "home": {
+      "narrative": "1-2 PARAGRAFLIK akıcı anlatım: form, kilit oyuncular, taktik, motivasyon, ev sahibi avantajı",
+      "keyFactors": ["3-5 madde, kısa cümleler"],
+      "formSummary": "Tek cümle özet (örn: 'Son 5 maçta 3G-1B-1M, 10 gol attı')",
+      "vsOpponentHistory": "Tek cümle H2H özeti",
+      "firstHalfNote": "İlk yarı performans eğilimi (1 cümle)",
+      "secondHalfNote": "İkinci yarı performans eğilimi (1 cümle)"
+    },
+    "away": { "...aynı yapı..." : "" }
+  },
+  "tacticalAnalysis": {
+    "home": {
+      "formation": "Muhtemel diziliş (örn '4-2-3-1')",
+      "pressLevel": "Pres seviyesi değerlendirmesi",
+      "transitionStrength": "Geçiş oyunu gücü",
+      "setPieceThreat": "Duran top tehdidi",
+      "wingUsage": "Kanat kullanımı",
+      "defensiveWeakness": "Savunma zaafları"
+    },
+    "away": { "...aynı yapı..." : "" },
+    "keyBattleZones": "Hangi takım hangi bölgede üstünlük kurabilir (1-2 cümle)"
+  },
+  "heatmapAnalysis": {
+    "homeZones": "Ev sahibinin en aktif olacağı bölgeler",
+    "awayZones": "Deplasmanın en aktif olacağı bölgeler",
+    "narrative": "Ceza sahası girişleri, half-space kullanımı, kanat yoğunluğu, merkez kontrolü — sözel ısı haritası tarifi"
+  },
   "matchPrediction": {
     "home": 0-100, "draw": 0-100, "away": 0-100,
     "reasoning": "1-2 cümle: neden bu yüzdeler?"
   },
-  "teamAnalyses": {
-    "home": {
-      "narrative": "1-2 PARAGRAFLIK akıcı anlatım. Form, kilit oyuncular, taktik, motivasyon, ev sahibi avantajı vb.",
-      "keyFactors": ["3-5 madde, kısa cümleler"],
-      "formSummary": "Tek cümle özet (örn: 'Son 5 maçta 3G-1B-1M, 10 gol attı')",
-      "vsOpponentHistory": "Tek cümle (örn: 'Son 3 maçta 2-0-1, rakibe karşı baskın')"
-    },
-    "away": { ... aynı yapı ... }
-  },
   "scorePrediction": {
     "mostLikely": "X-Y formatında (örn '2-1')",
-    "alternatives": ["2 alternatif skor"],
+    "alternatives": [{ "score": "1-1", "probability": 0-100 }, { "score": "2-0", "probability": 0-100 }],
     "reasoning": "1-2 cümle: neden bu skor?"
   },
   "goalExpectation": {
     "over15": 0-100, "over25": 0-100, "over35": 0-100, "btts": 0-100,
+    "htOver05": 0-100, "htOver15": 0-100,
+    "homeToScore": 0-100, "awayToScore": 0-100, "bttsFirstHalf": 0-100,
     "reasoning": "1-2 cümle: gol beklentisinin gerekçesi"
   },
   "bettingTips": [
     {
-      "market": "1X2" | "Üst/Alt 2.5" | "KG Var/Yok" | "Çifte Şans" | "Skor",
-      "pick": "Pazara göre seçim (örn '1', 'Üst', 'KG Var', '1X', '2-1')",
+      "market": "1X2" | "Çifte Şans" | "Üst/Alt 2.5" | "KG Var/Yok" | "İlk Yarı Üst" | "Korner" | "Kart" | "Skor",
+      "pick": "Pazara göre seçim",
       "confidence": "low" | "medium" | "high",
-      "reasoning": "1-2 cümle: neden bu tahmin?"
+      "reasoning": "1-2 cümle: neden bu tahmin?",
+      "valueBet": true veya false,
+      "avoid": true veya false
     }
   ],
   "riskLevel": "low" | "medium" | "high",
   "riskReasoning": "Tek cümle: maçın öngörülebilirlik durumu",
+  "riskFactors": ["Erken gol senaryosu", "Kırmızı kart senaryosu", "Rotasyon/eksik oyuncu etkisi", "Motivasyon faktörü — 3-5 madde"],
+  "analystComment": "3-4 cümlelik Opta analisti tarzı yorum: ana belirleyici faktör, en güçlü sinyal, en büyük belirsizlik, en mantıklı bahis yaklaşımı",
   "overallConfidence": 0-100
 }`;
 
@@ -219,11 +295,10 @@ export function buildAnalysisUserMessage(ctx: MatchAnalysisContext): string {
   const summary = summarizeContextForPrompt(ctx);
   const phaseHint =
     ctx.matchPhase === 'PRE'
-      ? 'Bu MAÇ ÖNCESİ analizi. Form, H2H ve oranlara göre tahmin yap.'
+      ? 'Bu MAÇ ÖNCESİ analizi. Form, H2H ve oranlara göre kapsamlı bir tahmin yap.'
       : ctx.matchPhase === 'HT'
         ? 'Bu DEVRE ARASI analizi. Maç öncesi tahmin yüzdelerini (home/draw/away) ve skor tahminini KORUYUN — değiştirmeyin. ' +
-          'matchPrediction.reasoning alanına kısa bir ilk yarı notu yaz: ilk yarı skoru ve baskın tarafı 1-2 cümlede özetle. ' +
-          'Diğer tüm alanları (bettingTips, goalExpectation, teamAnalyses vb.) maç öncesi bağlama göre doldur.'
+          'matchPrediction.reasoning alanına kısa bir ilk yarı notu ekle. Diğer tüm alanları maç öncesi bağlama göre doldur.'
         : ctx.matchPhase === 'LIVE'
           ? 'Bu CANLI maç analizi. Mevcut skor ve istatistikleri değerlendir.'
           : 'Bu MAÇ SONU analizi. Sonucu değerlendir, performans yorumla.';
@@ -233,6 +308,11 @@ export function buildAnalysisUserMessage(ctx: MatchAnalysisContext): string {
 ${summary}
 
 ---
+
+Aşağıdaki başlıkları kapsayan bir maç öncesi analiz üret: (1) Genel Maç Özeti,
+(2) Takım Form Analizi, (3) Taktik Analiz, (4) Isı Haritası ve Saha Hakimiyeti Tahmini,
+(5) Gol Tahmini, (6) Maç Sonucu Tahmini, (7) Bahis/İddia Pazarı Analizi,
+(8) Risk Analizi, (9) Analist Yorumu.
 
 Yukarıdaki verilere dayanarak aşağıdaki JSON yapısında analizini yaz. Sadece JSON yaz, başka hiçbir şey yazma.
 

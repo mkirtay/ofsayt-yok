@@ -23,7 +23,7 @@ import {
 import { buildWorldCupBracketRounds, filterMatchesBySeasonYear } from '@/utils/worldCupBracket';
 import {
   buildWorldCupGroupMatches,
-  buildWorldCupLiveFinishedList,
+  buildWorldCupMatchesTabList,
   mergeWorldCupHistoryAndLive,
 } from '@/utils/worldCupMatches';
 import type { NewsItem } from '@/models/domain';
@@ -32,6 +32,7 @@ import {
   getAllCompetitionHistoryMatches,
   getAllLiveMatches,
   getCompetitionTableFull,
+  getFixturesByCompetition,
   type CompetitionTableData,
   type GroupedLeagueMatches,
   type SeasonListItem,
@@ -205,7 +206,9 @@ export default function WorldCupPage() {
     return () => { cancelled = true; };
   }, [selectedGroupId, selectedSeasonId]);
 
-  // History + canlı maçlar (fikstür API'si eleme turunda boş dönebiliyor)
+  // History (yalnızca bitmiş maçlar) + canlı maçlar + fikstür API'si (henüz oynanmamış
+  // eleme turu maçları — history endpoint'i bunları hiç döndürmüyor, sadece gerçekleşmiş
+  // maçları döndürüyor).
   useEffect(() => {
     if (!['matches', 'calendar', 'bracket'].includes(mainTab)) return;
     let cancelled = false;
@@ -213,18 +216,27 @@ export default function WorldCupPage() {
     const fetchMatchData = async (opts?: { silent?: boolean }) => {
       if (!opts?.silent) setGroupMatchesLoading(true);
       try {
-        const [rawHistoryMatches, liveAll] = await Promise.all([
+        const [rawHistoryMatches, liveAll, upcomingFixtures] = await Promise.all([
           getAllCompetitionHistoryMatches(WORLD_CUP_ID, {
             maxPages: 10,
             season_id: selectedSeasonId ?? undefined,
           }),
           getAllLiveMatches(),
+          getFixturesByCompetition(WORLD_CUP_ID),
         ]);
         if (cancelled) return;
 
         const year = resolveWorldCupSeasonYear(seasons, selectedSeasonId);
         const historyMatches = filterMatchesBySeasonYear(rawHistoryMatches, year);
-        const mergedFlat = mergeWorldCupHistoryAndLive(historyMatches, liveAll);
+        const mergedHistoryLive = mergeWorldCupHistoryAndLive(historyMatches, liveAll);
+
+        // Fikstürdeki maçlar sadece history/live'da henüz karşılığı yoksa eklenir
+        // (henüz başlamamış maçlar) — aksi halde bitmiş/canlı veriyle çakışabilir.
+        const existingIds = new Set(mergedHistoryLive.map((m) => Number(m.id)));
+        const newFixtures = filterMatchesBySeasonYear(upcomingFixtures, year).filter(
+          (m) => !existingIds.has(Number(m.id)),
+        );
+        const mergedFlat = [...mergedHistoryLive, ...newFixtures];
 
         setAllMatchesFlat(mergedFlat);
         setGroupMatches(
@@ -268,7 +280,7 @@ export default function WorldCupPage() {
   const favTeamSet = useMemo(() => new Set(favoriteTeamIds), [favoriteTeamIds]);
 
   const matchesTabList = useMemo((): GroupedLeagueMatches[] => {
-    let rows = buildWorldCupLiveFinishedList(allMatchesFlat, seasonYear);
+    let rows = buildWorldCupMatchesTabList(allMatchesFlat, seasonYear);
     if (showOnlyFavorites && favoriteTeamIds.length > 0) {
       rows = rows.filter(
         (m) => favTeamSet.has(m.home?.id ?? -1) || favTeamSet.has(m.away?.id ?? -1),

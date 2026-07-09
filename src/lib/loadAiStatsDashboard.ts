@@ -1,5 +1,4 @@
 import { prisma } from '@/lib/prisma';
-import { isUserPremium } from '@/lib/premium';
 import type { Role } from '@prisma/client';
 
 export type PhaseStats = {
@@ -39,7 +38,6 @@ export type AiStatsDashboard = {
   scoreExactHitCount: number;
   scoreExactHitRate: number;
   byPhase: PhaseStats[];
-  isPremium: boolean;
   isAdmin: boolean;
   history: AiStatsHistoryItem[];
 };
@@ -82,10 +80,8 @@ function computePhaseStats(rows: RecordRow[], phase: 'PRE' | 'HT'): PhaseStats {
 
 export async function loadAiStatsDashboard(auth: {
   role: Role | null;
-  premiumUntil: string | null;
 }): Promise<AiStatsDashboard> {
   const isAdmin = auth.role === 'ADMIN';
-  const isPremium = isUserPremium({ role: auth.role, premiumUntil: auth.premiumUntil });
 
   const allRecords = await prisma.predictionRecord.findMany({
     select: {
@@ -118,25 +114,22 @@ export async function loadAiStatsDashboard(auth: {
     computePhaseStats(allRecords, 'HT'),
   ].filter((p) => p.total > 0);
 
-  let history: AiStatsHistoryItem[] = [];
-  if (isPremium) {
-    history = allRecords.slice(0, 100).map((r) => ({
-      matchId: r.matchId,
-      homeTeamName: r.matchAnalysis.homeTeamName,
-      awayTeamName: r.matchAnalysis.awayTeamName,
-      phase: r.matchAnalysis.matchStatus === 'HT' ? 'HT' : 'PRE',
-      predictedHomePct: r.predictedHomePct,
-      predictedDrawPct: r.predictedDrawPct,
-      predictedAwayPct: r.predictedAwayPct,
-      predictedScore: r.predictedScore,
-      actualResult: r.actualResult,
-      actualScore: r.actualScore,
-      result1x2Hit: r.result1x2Hit,
-      scoreExactHit: r.scoreExactHit,
-      evaluatedAt: r.evaluatedAt?.toISOString() ?? null,
-      createdAt: r.createdAt.toISOString(),
-    }));
-  }
+  const history: AiStatsHistoryItem[] = allRecords.slice(0, 100).map((r) => ({
+    matchId: r.matchId,
+    homeTeamName: r.matchAnalysis.homeTeamName,
+    awayTeamName: r.matchAnalysis.awayTeamName,
+    phase: r.matchAnalysis.matchStatus === 'HT' ? 'HT' : 'PRE',
+    predictedHomePct: r.predictedHomePct,
+    predictedDrawPct: r.predictedDrawPct,
+    predictedAwayPct: r.predictedAwayPct,
+    predictedScore: r.predictedScore,
+    actualResult: r.actualResult,
+    actualScore: r.actualScore,
+    result1x2Hit: r.result1x2Hit,
+    scoreExactHit: r.scoreExactHit,
+    evaluatedAt: r.evaluatedAt?.toISOString() ?? null,
+    createdAt: r.createdAt.toISOString(),
+  }));
 
   return {
     totalRecords,
@@ -149,7 +142,6 @@ export async function loadAiStatsDashboard(auth: {
     scoreExactHitRate:
       totalEvaluated > 0 ? Math.round((scoreExactHitCount / totalEvaluated) * 1000) / 10 : 0,
     byPhase,
-    isPremium,
     isAdmin,
     history,
   };

@@ -11,14 +11,17 @@ import { prefetchHomeHubMatches } from '@/hooks/useHomeHubMatches';
 import { prefetchProfile } from '@/hooks/useProfile';
 import { UEFA_CHAMPIONS_LEAGUE_ID } from '@/config/leagues';
 import { useTranslation, useI18n } from '@/lib/i18n';
+import { useCredits } from '@/hooks/useCredits';
 import Container from '../Container';
 import HeaderButton from '../HeaderButton';
+import MyAnalysesDropdown from './MyAnalysesDropdown';
 import styles from './header.module.scss';
 
 export default function Header() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { data: session } = useSession();
+  const { credits, authenticated: hasCredits } = useCredits();
   const { t } = useTranslation('nav');
   const { locale, setLocale } = useI18n();
   const isWorldCupRoute = router.pathname.startsWith('/world-cup');
@@ -132,8 +135,9 @@ export default function Header() {
             >
               {t('aiAccuracy')}
             </Link>
-            <Link href="/premium" className={styles.headerNavPillPremium}>
-              {t('premium')}
+            {session && <MyAnalysesDropdown />}
+            <Link href="/credits" className={styles.headerNavPillPremium}>
+              {hasCredits ? `${credits} ⚡` : t('credits')}
             </Link>
           </div>
         </div>
@@ -215,8 +219,9 @@ export default function Header() {
             >
               {t('aiAccuracy')}
             </Link>
-            <Link href="/premium" className={styles.mobileNavLinkPremium}>
-              {t('premium')}
+            {session && <MyAnalysesDropdown />}
+            <Link href="/credits" className={styles.mobileNavLinkPremium}>
+              {hasCredits ? `${credits} ⚡ ${t('credits')}` : t('credits')}
             </Link>
           </nav>
           <div className={styles.mobileActions}>

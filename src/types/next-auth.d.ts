@@ -8,17 +8,15 @@ declare module 'next-auth' {
       id: string
       role: Role
       username?: string | null
-      /** ISO string; null veya geçmiş tarih → premium değil */
-      premiumUntil?: string | null
-      /** Hesaplanmış kolaylık alanı: role/premiumUntil'den türetilir */
-      isPremium?: boolean
+      /** Güncel AI analiz kredisi bakiyesi */
+      credits?: number
     } & DefaultSession['user']
   }
 
   interface User extends DefaultUser {
     role: Role
     username?: string | null
-    premiumUntil?: Date | string | null
+    credits?: number
   }
 }
 
@@ -26,9 +24,9 @@ declare module 'next-auth/jwt' {
   interface JWT extends DefaultJWT {
     role?: Role
     username?: string | null
-    /** ISO string; session'a aktarılır */
-    premiumUntil?: string | null
-    /** Throttle DB role refresh (ms since epoch) */
+    /** Güncel AI analiz kredisi bakiyesi; session'a aktarılır */
+    credits?: number
+    /** Throttle DB role/credits refresh (ms since epoch) */
     roleSyncedAt?: number
   }
 }

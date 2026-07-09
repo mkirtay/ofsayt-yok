@@ -11,7 +11,7 @@ const STATIC_ROUTES: { path: string; priority: string; changefreq: string }[] = 
   { path: '/standings', priority: '0.8', changefreq: 'daily' },
   { path: '/uefa', priority: '0.8', changefreq: 'daily' },
   { path: '/compare', priority: '0.6', changefreq: 'weekly' },
-  { path: '/premium', priority: '0.7', changefreq: 'monthly' },
+  { path: '/credits', priority: '0.7', changefreq: 'monthly' },
 ];
 
 function isoDateOffset(days: number): string {

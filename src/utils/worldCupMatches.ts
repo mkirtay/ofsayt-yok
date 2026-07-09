@@ -46,9 +46,16 @@ function matchSeasonYearFromMatch(m: Match): number | null {
   return Number.isFinite(y) && y >= 1930 ? y : null;
 }
 
-export function isWorldCupLiveOrFinished(m: Match): boolean {
+/** Maçlar sekmesinde gösterilecek durumlar: canlı, planlanmış (henüz başlamamış) ve bitmiş. */
+export function isWorldCupDisplayableStatus(m: Match): boolean {
   const s = (m.status ?? '').toUpperCase();
-  return s === 'IN PLAY' || s === 'HALF TIME BREAK' || s === 'FINISHED';
+  return (
+    s === 'IN PLAY' ||
+    s === 'HALF TIME BREAK' ||
+    s === 'FINISHED' ||
+    s === 'NOT STARTED' ||
+    s === 'SCHEDULED'
+  );
 }
 
 /** History + canlı WC maçlarını tekilleştirir (canlı satır öncelikli). */
@@ -82,13 +89,13 @@ export function mergeWorldCupHistoryAndLive(history: Match[], live: Match[]): Ma
   return dedupeMatchesById(Array.from(map.values()));
 }
 
-/** Maçlar sekmesi: seçili sezon, yalnızca canlı + bitmiş, mevcuttan geçmişe. */
-export function buildWorldCupLiveFinishedList(
+/** Maçlar sekmesi: seçili sezon — canlı, planlanmış (gelecek fikstür) ve bitmiş, karışık sıralı. */
+export function buildWorldCupMatchesTabList(
   matches: Match[],
   seasonYear: number,
 ): Match[] {
   const season = filterWorldCupSeasonMatches(matches, seasonYear);
-  return sortMatchesForUefaList(season.filter(isWorldCupLiveOrFinished));
+  return sortMatchesForUefaList(season.filter(isWorldCupDisplayableStatus));
 }
 
 /** Takım drawer vb. için grup bazlı liste (fikstür API'si boş olsa da history'den). */

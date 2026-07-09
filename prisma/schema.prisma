@@ -23,8 +23,8 @@ model User {
   password      String?
   image         String?
   role          Role     @default(USER)
-  /// Premium üyelik bitiş tarihi; null veya geçmiş tarih → premium değil.
-  premiumUntil       DateTime?
+  /// AI analiz kredisi bakiyesi. Yeni kullanıcı 5 kredi ile başlar.
+  credits            Int      @default(5)
   favoriteTeamIds    Int[]
   favoriteLeagueIds  Int[]
   createdAt     DateTime @default(now())
@@ -34,6 +34,26 @@ model User {
   comments        MatchComment[] @relation("MatchCommentAuthor")
   deletedComments MatchComment[] @relation("MatchCommentDeletedBy")
   userPredictions UserPrediction[]
+  creditTransactions CreditTransaction[]
+}
+
+/// Kredi hareketleri defteri — bakiye değişikliklerinin denetim izi.
+model CreditTransaction {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// "SIGNUP_BONUS" | "PURCHASE" | "ANALYSIS_SPEND" | "ADMIN_GRANT" | "REFUND"
+  type         String
+  /// Pozitif (ekleme) veya negatif (harcama)
+  amount       Int
+  balanceAfter Int
+  /// ANALYSIS_SPEND için ilgili maç
+  matchId      String?
+  note         String?
+  createdAt    DateTime @default(now())
+
+  @@index([userId])
+  @@index([matchId])
 }
 
 /// AI üretimli maç analizi cache'i. Aynı maç + status için tek aktif kayıt.
@@ -59,6 +79,9 @@ model MatchAnalysis {
   goalExpectation    Json
   bettingTips        Json
   teamAnalyses       Json
+  /// v2 promptun geniş bölümleri (matchSummary, tacticalAnalysis, heatmapAnalysis,
+  /// playerAnalysis, riskFactors, finalVerdict, analystComment)
+  fullReport         Json?
   /// "low" | "medium" | "high"
   riskLevel          String
   riskReasoning      String   @db.Text
@@ -97,6 +120,12 @@ model PredictionRecord {
   /// 1X2 isabetli mi (en yüksek olasılığa sahip outcome doğru çıktı mı)
   result1x2Hit        Boolean?
   scoreExactHit       Boolean?
+  /// v2 pazarların tahmin değerleri (over35, htOver05, htOver15, homeToScore,
+  /// awayToScore, bttsFirstHalf)
+  extendedPredictions Json?
+  /// Maç bitince hesaplanan isabet/ıska sonuçları (over25Hit, bttsHit, over35Hit,
+  /// htOver05Hit, htOver15Hit, homeToScoreHit, awayToScoreHit, bttsFirstHalfHit)
+  extendedHits        Json?
   modelVersion        String
   evaluatedAt         DateTime?
   createdAt           DateTime @default(now())

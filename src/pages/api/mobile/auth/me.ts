@@ -1,7 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '@/lib/prisma';
 import { getRequestAuth } from '@/lib/mobileAuth';
-import { isUserPremium } from '@/lib/premium';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
@@ -14,7 +13,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(401).json({ error: 'Giriş yapmanız gerekiyor.' });
   }
 
-  // Premium/rol bilgisini DB'den taze al (token bayatlamış olabilir)
+  // Rol/kredi bilgisini DB'den taze al (token bayatlamış olabilir)
   const user = await prisma.user.findUnique({
     where: { id: auth.id },
     select: {
@@ -25,7 +24,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       bio: true,
       image: true,
       role: true,
-      premiumUntil: true,
+      credits: true,
       favoriteTeamIds: true,
       favoriteLeagueIds: true,
     },
@@ -44,8 +43,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     bio: user.bio,
     image: user.image,
     role: user.role,
-    premiumUntil: user.premiumUntil ? user.premiumUntil.toISOString() : null,
-    isPremium: isUserPremium({ role: user.role, premiumUntil: user.premiumUntil }),
+    credits: user.credits,
     favoriteTeamIds: user.favoriteTeamIds,
     favoriteLeagueIds: user.favoriteLeagueIds,
   });

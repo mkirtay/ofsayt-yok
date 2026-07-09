@@ -1,46 +1,26 @@
 /**
- * Premium-gated API route helper.
+ * Auth-gated API route helper'ları.
  *
  * Kullanım:
  * ```ts
- * const guard = await requirePremium(req, res);
+ * const guard = await requireAuth(req, res);
  * if (!guard.ok) return; // response zaten yazıldı
  * const { userId } = guard;
  * ```
  */
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '@/lib/prisma';
-import { isUserPremium } from '@/lib/premium';
 import { getRequestUserId } from '@/lib/mobileAuth';
 
-type PremiumGuardResult =
-  | { ok: true; userId: string }
-  | { ok: false };
+type AuthGuardResult = { ok: true; userId: string } | { ok: false };
 
-export async function requirePremium(
+export async function requireAuth(
   req: NextApiRequest,
   res: NextApiResponse
-): Promise<PremiumGuardResult> {
+): Promise<AuthGuardResult> {
   const userId = await getRequestUserId(req, res);
   if (!userId) {
     res.status(401).json({ error: 'Giriş yapmanız gerekiyor.' });
-    return { ok: false };
-  }
-
-  // JWT throttle nedeniyle session bayatlamış olabilir → DB'den doğrula
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { role: true, premiumUntil: true },
-  });
-  if (!user) {
-    res.status(401).json({ error: 'Oturum geçersiz.' });
-    return { ok: false };
-  }
-  if (!isUserPremium(user)) {
-    res.status(403).json({
-      error: 'Bu özellik premium üyelere özeldir.',
-      code: 'PREMIUM_REQUIRED',
-    });
     return { ok: false };
   }
   return { ok: true, userId };
@@ -49,7 +29,7 @@ export async function requirePremium(
 export async function requireAdmin(
   req: NextApiRequest,
   res: NextApiResponse
-): Promise<PremiumGuardResult> {
+): Promise<AuthGuardResult> {
   const userId = await getRequestUserId(req, res);
   if (!userId) {
     res.status(401).json({ error: 'Giriş yapmanız gerekiyor.' });

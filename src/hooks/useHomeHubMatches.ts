@@ -3,8 +3,10 @@ import type { Match } from '@/models/liveScore';
 import {
   getAllLiveMatches,
   getAllMatchesByDate,
+  getFixturesByCompetition,
   getFixturesByDate,
 } from '@/services/liveScoreService';
+import { WORLD_CUP_COMPETITION_ID } from '@/config/worldCup';
 
 export type HomeHubMatchesData = {
   allMatches: Match[];
@@ -12,11 +14,30 @@ export type HomeHubMatchesData = {
   fixtureMatches: Match[];
 };
 
+/**
+ * `/fixtures/list.json?date=X` sayfalanmış dönüyor ve sadece ilk sayfayı çekiyoruz —
+ * yoğun tarihlerde (ör. Dünya Kupası eleme turu günleri) World Cup maçları 2. sayfaya
+ * düşüp kayboluyor. Rekabet bazlı fikstür endpoint'i (`getFixturesByCompetition`)
+ * World Cup için sayfalanmadan tüm kalan maçları döndürüyor — o güne ait olanlar
+ * eklenir (aynı id zaten varsa tekrar eklenmez).
+ */
+async function fetchDateFixturesWithWorldCup(selectedDate: string): Promise<Match[]> {
+  const [dateFixtures, worldCupFixtures] = await Promise.all([
+    getFixturesByDate(selectedDate),
+    getFixturesByCompetition(WORLD_CUP_COMPETITION_ID),
+  ]);
+  const existingIds = new Set(dateFixtures.map((m) => Number(m.id)));
+  const missingWorldCup = worldCupFixtures.filter(
+    (m) => m.date === selectedDate && !existingIds.has(Number(m.id)),
+  );
+  return [...dateFixtures, ...missingWorldCup];
+}
+
 async function fetchHomeHubMatches(selectedDate: string): Promise<HomeHubMatchesData> {
   const [allMatches, liveMatches, fixtureMatches] = await Promise.all([
     getAllMatchesByDate(selectedDate, 5),
     getAllLiveMatches(),
-    getFixturesByDate(selectedDate),
+    fetchDateFixturesWithWorldCup(selectedDate),
   ]);
   return { allMatches, liveMatches, fixtureMatches };
 }
@@ -49,7 +70,7 @@ export async function refreshHomeHubLiveFixtures(
 ) {
   const [liveMatches, fixtureMatches] = await Promise.all([
     getAllLiveMatches(),
-    getFixturesByDate(selectedDate),
+    fetchDateFixturesWithWorldCup(selectedDate),
   ]);
   queryClient.setQueryData<HomeHubMatchesData>(
     homeHubMatchesQueryKey(selectedDate),

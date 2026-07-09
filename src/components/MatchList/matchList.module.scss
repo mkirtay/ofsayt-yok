@@ -123,6 +123,7 @@
   height: min(72vh, 900px);
   min-height: 320px;
   border-radius: $radius-sm;
+  overflow: hidden;
 }
 
 .virtualPlaceholder {
@@ -425,12 +426,12 @@
 }
 
 .virtualStatusHt {
-  color: $color-danger;
+  color: $color-warning;
   font-weight: 800;
 }
 
 .virtualStatusFt {
-  color: $color-text-secondary;
+  color: $color-finished;
   font-weight: 700;
 }
 
@@ -449,7 +450,7 @@
 
 .liveText {
   color: #fff;
-  background-color: #00A76F;
+  background-color: $color-live;
   padding: 10px 6px;
   border-radius: $radius-full;
   line-height: 1.15;
@@ -460,6 +461,16 @@
   align-items: center;
   justify-content: space-between;
   gap: 4px;
+
+  &::before {
+    content: '';
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #fff;
+    animation: pulse-live 1.6s infinite;
+    flex-shrink: 0;
+  }
 }
 
 /* Mobilde sadece dakika (+ 🔴); tablet+ "CANLI" */
@@ -540,6 +551,8 @@
 }
 
 .scoreText {
+  font-family: $font-family-score;
+  font-stretch: $score-font-stretch;
   font-size: 13px;
   font-weight: 800;
   font-variant-numeric: tabular-nums;

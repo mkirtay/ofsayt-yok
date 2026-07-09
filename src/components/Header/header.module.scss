@@ -1,12 +1,13 @@
 @use '../../styles/variables' as *;
 
 .header {
-  background-color: $color-primary;
-  color: #fff;
+  background: linear-gradient(180deg, $color-surface-dark 0%, $color-surface-dark-alt 100%);
+  color: $color-text-on-dark;
   padding: $spacing-3 0;
   position: sticky;
   top: 0;
   z-index: 100;
+  border-bottom: 1px solid $color-border-dark;
 }
 
 .headerWorldCup {
@@ -53,29 +54,31 @@
   justify-content: center;
   height: 32px;
   padding: 0 $spacing-3;
-  border: 1px solid rgba(255, 255, 255, 0.7);
+  border: 1px solid $color-border-dark;
   border-radius: $radius-full;
-  color: #fff;
+  color: $color-text-on-dark;
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-decoration: none;
   transition: $transition-base;
+  background: none;
+  cursor: pointer;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.12);
-    border-color: #fff;
+    background: rgba(255, 255, 255, 0.08);
+    border-color: $color-primary;
   }
 }
 
 .headerNavPillPremium {
   @extend .headerNavPill;
-  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  background: linear-gradient(135deg, $color-primary, $color-primary-dark);
   border-color: transparent;
   color: #fff;
 
   &:hover {
-    background: linear-gradient(135deg, #f59e0b, #d97706);
+    background: linear-gradient(135deg, $color-primary-dark, $color-primary);
     border-color: transparent;
   }
 }
@@ -88,6 +91,62 @@
     background: #181818;
     border-color: #fff;
   }
+}
+
+.myAnalysesWrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.myAnalysesDropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  min-width: 260px;
+  max-width: 320px;
+  max-height: 360px;
+  overflow-y: auto;
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  box-shadow: $shadow-surface;
+  z-index: 40;
+  padding: $spacing-2;
+}
+
+.myAnalysesItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-2;
+  padding: $spacing-2 $spacing-3;
+  border-radius: $radius-sm;
+  color: $color-text;
+  font-size: 12px;
+  text-decoration: none;
+
+  &:hover {
+    background: $color-muted;
+  }
+}
+
+.myAnalysesTeams {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.myAnalysesScore {
+  font-weight: 700;
+  color: $color-primary-dark;
+  flex-shrink: 0;
+}
+
+.myAnalysesEmpty {
+  padding: $spacing-3;
+  font-size: 12px;
+  color: $color-text-secondary;
+  text-align: center;
 }
 
 .worldCupMarkLink {
@@ -204,22 +263,23 @@
 
 .mobileMenu {
   position: fixed;
-  top: 52px;
+  top: 60px;
   left: 0;
   right: 0;
-  background: $color-surface;
-  border-bottom: 1px solid $color-border;
+  bottom: 0;
+  background: linear-gradient(180deg, $color-surface-dark 0%, $color-surface-dark-alt 100%);
+  border-top: 1px solid $color-border-dark;
   z-index: 95;
-  padding: $spacing-4;
+  padding: $spacing-5 $spacing-4;
   display: flex;
   flex-direction: column;
-  gap: $spacing-3;
-  box-shadow: 0 8px 24px rgba(16, 32, 21, 0.12);
+  gap: $spacing-4;
+  overflow-y: auto;
 }
 
 .mobileMenuWorldCup {
   background: #0f0f0f;
-  border-bottom-color: #2a2a2a;
+  border-top-color: #2a2a2a;
 }
 
 .mobileNav {
@@ -232,24 +292,15 @@
   display: block;
   padding: $spacing-3 $spacing-3;
   border-radius: $radius-sm;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
-  color: $color-text;
+  color: $color-text-on-dark;
   text-decoration: none;
   transition: $transition-base;
 
   &:hover {
-    background: $color-muted;
+    background: rgba(255, 255, 255, 0.08);
     color: $color-primary;
-  }
-
-  .mobileMenuWorldCup & {
-    color: #f0f0f0;
-
-    &:hover {
-      background: #1a1a1a;
-      color: #fff;
-    }
   }
 }
 
@@ -257,26 +308,25 @@
   display: block;
   padding: $spacing-3 $spacing-3;
   border-radius: $radius-sm;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
-  color: #f59e0b;
+  color: #fff;
+  background: linear-gradient(135deg, $color-primary, $color-primary-dark);
   text-decoration: none;
   transition: $transition-base;
+  text-align: center;
 
   &:hover {
-    background: rgba(251, 191, 36, 0.1);
+    background: linear-gradient(135deg, $color-primary-dark, $color-primary);
   }
 }
 
 .mobileActions {
   display: flex;
   gap: $spacing-2;
-  border-top: 1px solid $color-border;
-  padding-top: $spacing-3;
-
-  .mobileMenuWorldCup & {
-    border-top-color: #2a2a2a;
-  }
+  border-top: 1px solid $color-border-dark;
+  padding-top: $spacing-4;
+  margin-top: auto;
 }
 
 .mobileAuthOutline {
@@ -294,7 +344,7 @@
   transition: $transition-base;
 
   &:hover {
-    background: rgba(0, 167, 111, 0.06);
+    background: rgba($color-primary, 0.12);
   }
 }
 
@@ -367,12 +417,12 @@
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.06em;
-  color: $color-text;
+  color: $color-text-on-dark;
   cursor: pointer;
   transition: $transition-base;
 
   &:hover {
-    background: $color-muted;
+    background: rgba(255, 255, 255, 0.14);
   }
 }
 

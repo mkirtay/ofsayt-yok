@@ -1,0 +1,31 @@
+name: Evaluate Predictions
+
+# Vercel Hobby plan cron job'ları günde 1 kere ile sınırlı (vercel.json'daki
+# günlük fallback yeterli değil) — bitmiş maçların tahminlerini yakın zamanda
+# değerlendirmek için asıl mekanizma bu workflow.
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch: {}
+
+concurrency:
+  group: evaluate-predictions
+  cancel-in-progress: false
+
+jobs:
+  evaluate:
+    name: Trigger evaluate-predictions
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Call evaluate-predictions endpoint
+        run: |
+          status=$(curl -s -o /tmp/response.json -w "%{http_code}" \
+            -X POST "https://ofsayt-yok.vercel.app/api/admin/evaluate-predictions" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}")
+          echo "HTTP status: $status"
+          cat /tmp/response.json
+          if [ "$status" -ge 300 ]; then
+            echo "evaluate-predictions failed with status $status"
+            exit 1
+          fi

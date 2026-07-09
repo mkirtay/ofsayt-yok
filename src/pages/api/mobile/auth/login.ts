@@ -3,7 +3,6 @@ import { compare } from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
 import { hitFixedWindowRateLimit, requestIp } from '@/lib/rateLimit';
 import { issueMobileToken } from '@/lib/mobileAuth';
-import { isUserPremium } from '@/lib/premium';
 
 const LOGIN_LIMIT = 10;
 const LOGIN_WINDOW_MS = 15 * 60 * 1000;
@@ -55,7 +54,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       password: true,
       role: true,
       username: true,
-      premiumUntil: true,
+      credits: true,
     },
   });
 
@@ -64,12 +63,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(401).json({ error: 'E-posta/kullanıcı adı veya şifre hatalı.' });
   }
 
-  const premiumUntilIso = user.premiumUntil ? user.premiumUntil.toISOString() : null;
-
   const token = await issueMobileToken({
     sub: user.id,
     role: user.role,
-    premiumUntil: premiumUntilIso,
+    credits: user.credits,
     email: user.email,
     name: user.name,
     username: user.username,
@@ -84,8 +81,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       image: user.image,
       role: user.role,
       username: user.username,
-      premiumUntil: premiumUntilIso,
-      isPremium: isUserPremium({ role: user.role, premiumUntil: user.premiumUntil }),
+      credits: user.credits,
     },
   });
 }

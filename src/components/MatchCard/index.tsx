@@ -236,7 +236,19 @@ export default function MatchCard({ match, loading }: MatchCardProps) {
           </div>
 
           <div className={styles.scoreContainer}>
-            {minuteBadgeText ? <span className={styles.minuteBadge}>{minuteBadgeText}</span> : null}
+            {minuteBadgeText ? (
+              <span
+                className={`${styles.minuteBadge} ${
+                  matchStatus === 'IN PLAY'
+                    ? styles.minuteBadgeLive
+                    : matchStatus === 'FINISHED'
+                      ? styles.minuteBadgeFinished
+                      : ''
+                }`}
+              >
+                {minuteBadgeText}
+              </span>
+            ) : null}
             <div className={styles.score} aria-label={score}>
               <span className={styles.scoreHome}>{scoreHome}</span>
               {scoreAway !== '' ? (

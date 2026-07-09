@@ -23,8 +23,9 @@ import type { MatchAnalysisContext } from '@/server/buildMatchAnalysisContext';
 const CLAUDE_MODEL = process.env.ANTHROPIC_MODEL ?? 'claude-sonnet-4-5-20250929';
 /** Vercel/local: `OPENAI_MODEL` (örn. gpt-4.1). Mini varsayılan değil — düşük isabet. */
 const OPENAI_MODEL = process.env.OPENAI_MODEL ?? 'gpt-4.1';
-const MAX_TOKENS = 3000;
-const ANALYSIS_TIMEOUT_MS = 25_000;
+/** v2 promptu 11 bölüm istediği için önceki 3000'den yükseltildi. */
+const MAX_TOKENS = 5000;
+const ANALYSIS_TIMEOUT_MS = 35_000;
 
 export class AnalysisTimeoutError extends Error {
   constructor() {
@@ -107,12 +108,17 @@ function validateSchema(data: unknown): AnalysisJsonSchema {
   }
   const d = data as Record<string, unknown>;
   const required = [
+    'matchSummary',
     'matchPrediction',
     'teamAnalyses',
+    'tacticalAnalysis',
+    'heatmapAnalysis',
     'scorePrediction',
     'goalExpectation',
     'bettingTips',
     'riskLevel',
+    'riskFactors',
+    'analystComment',
     'overallConfidence',
   ];
   for (const key of required) {
@@ -128,6 +134,10 @@ function validateSchema(data: unknown): AnalysisJsonSchema {
   const awayTeam = teams.away as Record<string, unknown>;
   if (typeof homeTeam.narrative !== 'string' || typeof awayTeam.narrative !== 'string') {
     throw new Error('Takım narrative alanları eksik veya geçersiz');
+  }
+  const tactical = d.tacticalAnalysis as Record<string, unknown>;
+  if (!tactical.home || !tactical.away) {
+    throw new Error('tacticalAnalysis.home veya .away eksik');
   }
   return data as AnalysisJsonSchema;
 }

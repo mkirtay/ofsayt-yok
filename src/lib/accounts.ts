@@ -75,7 +75,17 @@ export async function createUserAccount(input: CreateAccountInput): Promise<Crea
       password: hashed,
       username: usernameNorm,
     },
-    select: { id: true, email: true, name: true, role: true, username: true },
+    select: { id: true, email: true, name: true, role: true, username: true, credits: true },
+  });
+
+  await prisma.creditTransaction.create({
+    data: {
+      userId: user.id,
+      type: 'SIGNUP_BONUS',
+      amount: user.credits,
+      balanceAfter: user.credits,
+      note: 'Kayıt hoşgeldin bonusu',
+    },
   });
 
   void createAndSendEmailVerification(normalizedEmail).catch((e) =>

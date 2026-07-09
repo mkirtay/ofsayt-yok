@@ -2,7 +2,6 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '@/lib/prisma';
 import { hitFixedWindowRateLimit, requestIp } from '@/lib/rateLimit';
 import { getRequestAuth } from '@/lib/mobileAuth';
-import { isUserPremium } from '@/lib/premium';
 
 export type AiStatsByVersion = {
   version: string;
@@ -95,11 +94,11 @@ export default async function handler(
     byModelVersion,
   };
 
-  // Premium: full history (cookie veya Bearer)
+  // Giriş yapmış herkese açık geçmiş (cookie veya Bearer)
   const auth = await getRequestAuth(req, res);
-  const isPremium = isUserPremium({ role: auth?.role, premiumUntil: auth?.premiumUntil });
+  const isAuthenticated = auth != null;
 
-  if (req.query.history === '1' && isPremium) {
+  if (req.query.history === '1' && isAuthenticated) {
     const history = await prisma.predictionRecord.findMany({
       where: { evaluatedAt: { not: null } },
       orderBy: { createdAt: 'desc' },
@@ -138,7 +137,7 @@ export default async function handler(
   }
 
   // Cache: 5 min public, private for history
-  const isHistoryReq = req.query.history === '1' && isPremium;
+  const isHistoryReq = req.query.history === '1' && isAuthenticated;
   res.setHeader(
     'Cache-Control',
     isHistoryReq ? 'private, no-cache' : 'public, s-maxage=300, stale-while-revalidate=600'

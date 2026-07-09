@@ -8,7 +8,6 @@ import { useState } from 'react'
 import { appWithTranslation } from '@/lib/i18n'
 import { createQueryClient } from '@/lib/queryClient'
 import Layout from '@/components/Layout'
-import PremiumModal from '@/components/PremiumModal'
 import RouteProgress from '@/components/RouteProgress'
 import '@/styles/globals.scss'
 
@@ -41,7 +40,6 @@ function App({ Component, pageProps: { session, ...pageProps } }: AppProps) {
         <Layout>
           <Component {...pageProps} />
         </Layout>
-        <PremiumModal />
         <Analytics />
       </div>
       </QueryClientProvider>

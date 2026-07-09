@@ -272,7 +272,6 @@ export default function AiIstatistikleri() {
                   <div className={styles.section}>
                     <h2 className={styles.sectionTitle}>{t('historyTitle')}</h2>
                     <HistorySection
-                      isPremium={data.isPremium}
                       history={data.history}
                       t={t}
                       resultLabel={resultLabel}
@@ -290,59 +289,16 @@ export default function AiIstatistikleri() {
 }
 
 function HistorySection({
-  isPremium,
   history,
   t,
   resultLabel,
   predictedOutcome,
 }: {
-  isPremium: boolean;
   history: AiStatsHistoryItem[];
   t: (key: string, opts?: Record<string, unknown>) => string;
   resultLabel: (r: string | null) => string;
   predictedOutcome: (home: number, draw: number, away: number) => { label: string; pct: number };
 }) {
-  if (!isPremium) {
-    return (
-      <div className={styles.premiumGate}>
-        <div className={styles.premiumGateBlur}>
-          <table className={styles.table}>
-            <thead>
-              <tr>
-                <th>{t('colMatch')}</th>
-                <th>{t('colPhase')}</th>
-                <th>{t('col1x2Prediction')}</th>
-                <th>{t('colScorePrediction')}</th>
-                <th>{t('colActualScore')}</th>
-                <th>{t('col1x2')}</th>
-                <th>{t('colScoreHit')}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {[1, 2, 3].map((i) => (
-                <tr key={i}>
-                  <td>Takım A — Takım B</td>
-                  <td>{t('phasePre')}</td>
-                  <td>{t('resultHome')} (55%)</td>
-                  <td>2-1</td>
-                  <td>2-0</td>
-                  <td>{t('hitYes')}</td>
-                  <td>{t('hitNo')}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <div className={styles.premiumOverlay}>
-          <p className={styles.premiumMsg}>{t('historyLocked')}</p>
-          <Link href="/premium" className={styles.premiumCta}>
-            {t('upgradePremium')}
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className={styles.tableWrap}>
       <table className={styles.table}>

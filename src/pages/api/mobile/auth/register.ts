@@ -48,16 +48,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   // Kayıt sonrası otomatik giriş: token ver (email doğrulaması girişi engellemiyor)
-  const premiumRow = await prisma.user.findUnique({
+  const creditsRow = await prisma.user.findUnique({
     where: { id: result.user.id },
-    select: { premiumUntil: true },
+    select: { credits: true },
   });
-  const premiumUntilIso = premiumRow?.premiumUntil ? premiumRow.premiumUntil.toISOString() : null;
+  const credits = creditsRow?.credits ?? 0;
 
   const token = await issueMobileToken({
     sub: result.user.id,
     role: result.user.role,
-    premiumUntil: premiumUntilIso,
+    credits,
     email: result.user.email,
     name: result.user.name,
     username: result.user.username,
@@ -71,8 +71,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       name: result.user.name,
       role: result.user.role,
       username: result.user.username,
-      premiumUntil: premiumUntilIso,
-      isPremium: false,
+      credits,
     },
   });
 }

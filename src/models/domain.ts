@@ -29,6 +29,8 @@ export interface LineupPlayer {
   name: string;
   substitution: string; // "0" = starter, "1" = substitute
   shirt_number: string;
+  /** "GK" | "DF" | "MF" | "FW" — API'den geliyor */
+  position?: string;
   photo?: string;
 }
 

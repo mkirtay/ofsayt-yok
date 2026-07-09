@@ -1,0 +1,260 @@
+@use '@/styles/variables' as *;
+
+.wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $spacing-3;
+  padding: $spacing-2 0;
+}
+
+.pitch {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  height: 92px;
+  border-radius: $radius-md;
+  overflow: hidden;
+  background: linear-gradient(135deg, $color-primary-dark 0%, $color-primary 60%, $color-primary-dark 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.15),
+    0 0 0 0 rgba($color-primary, 0.45);
+  animation: pitchPulse 2s ease-in-out infinite;
+}
+
+@keyframes pitchPulse {
+  0%, 100% { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.15), 0 0 0 0 rgba($color-primary, 0.35); }
+  50% { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.15), 0 0 12px 4px rgba($color-primary, 0.35); }
+}
+
+.stripes {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.06) 0,
+    rgba(255, 255, 255, 0.06) 24px,
+    transparent 24px,
+    transparent 48px
+  );
+}
+
+// ── Kaleler ──────────────────────────────────────────────────────────────
+
+.goal {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 56px;
+  border: 3px solid rgba(255, 255, 255, 0.9);
+}
+
+.goalLeft {
+  left: 6px;
+  border-right: none;
+  border-radius: 4px 0 0 4px;
+}
+
+.goalRight {
+  right: 6px;
+  border-left: none;
+  border-radius: 0 4px 4px 0;
+}
+
+.goalNet {
+  position: absolute;
+  inset: 2px;
+  background-image:
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.35) 0, rgba(255, 255, 255, 0.35) 1px, transparent 1px, transparent 6px),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.35) 0, rgba(255, 255, 255, 0.35) 1px, transparent 1px, transparent 6px);
+}
+
+.goalFlash {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0) 70%);
+  opacity: 0;
+}
+
+.goalFlashRight {
+  animation: goalFlashRight 4s ease-in-out infinite;
+}
+
+.goalFlashLeft {
+  animation: goalFlashLeft 4s ease-in-out infinite;
+}
+
+@keyframes goalFlashRight {
+  0%, 29%, 41%, 100% { opacity: 0; transform: scale(0.8); }
+  33% { opacity: 1; transform: scale(1.3); }
+  37% { opacity: 0; transform: scale(1); }
+}
+
+@keyframes goalFlashLeft {
+  0%, 69%, 81%, 100% { opacity: 0; transform: scale(0.8); }
+  73% { opacity: 1; transform: scale(1.3); }
+  77% { opacity: 0; transform: scale(1); }
+}
+
+// ── Oyuncular ────────────────────────────────────────────────────────────
+
+.team {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  gap: 14px;
+}
+
+.teamLeft {
+  left: 32px;
+}
+
+.teamRight {
+  right: 32px;
+}
+
+.player {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  animation: playerBob 1.1s ease-in-out infinite alternate;
+}
+
+.playerHome {
+  background: #fff;
+  box-shadow: 0 0 0 2px $color-primary-dark, 0 2px 4px rgba(0, 0, 0, 0.25);
+}
+
+.playerAway {
+  background: $color-primary-dark;
+  box-shadow: 0 0 0 2px #fff, 0 2px 4px rgba(0, 0, 0, 0.25);
+}
+
+@keyframes playerBob {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-4px); }
+}
+
+// ── Top ──────────────────────────────────────────────────────────────────
+
+.ball {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow:
+    inset -2px -2px 0 rgba(0, 0, 0, 0.12),
+    0 3px 6px rgba(0, 0, 0, 0.3);
+  animation: ballPath 4s ease-in-out infinite;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 3px;
+    border-radius: 50%;
+    background:
+      conic-gradient(
+        rgba(0, 0, 0, 0.55) 0deg 30deg,
+        transparent 30deg 150deg,
+        rgba(0, 0, 0, 0.55) 150deg 180deg,
+        transparent 180deg 300deg,
+        rgba(0, 0, 0, 0.55) 300deg 330deg,
+        transparent 330deg 360deg
+      );
+    opacity: 0.6;
+  }
+}
+
+.ballGlow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0) 72%);
+  filter: blur(1px);
+  animation: ballPath 4s ease-in-out infinite;
+}
+
+@keyframes ballPath {
+  0%   { left: 50%; top: 50%; transform: translate(-50%, -50%) rotate(0deg) scale(1); }
+  10%  { left: 50%; top: 50%; transform: translate(-50%, -50%) rotate(60deg) scale(1); }
+  22%  { left: 80%; top: 32%; transform: translate(-50%, -50%) rotate(280deg) scale(1); }
+  30%  { left: 92%; top: 50%; transform: translate(-50%, -50%) rotate(420deg) scale(1); }
+  34%  { left: 95%; top: 50%; transform: translate(-50%, -50%) rotate(460deg) scale(0.7); }
+  40%  { left: 50%; top: 50%; transform: translate(-50%, -50%) rotate(560deg) scale(1); }
+  50%  { left: 50%; top: 50%; transform: translate(-50%, -50%) rotate(620deg) scale(1); }
+  62%  { left: 20%; top: 32%; transform: translate(-50%, -50%) rotate(840deg) scale(1); }
+  70%  { left: 8%;  top: 50%; transform: translate(-50%, -50%) rotate(980deg) scale(1); }
+  74%  { left: 5%;  top: 50%; transform: translate(-50%, -50%) rotate(1020deg) scale(0.7); }
+  80%  { left: 50%; top: 50%; transform: translate(-50%, -50%) rotate(1120deg) scale(1); }
+  100% { left: 50%; top: 50%; transform: translate(-50%, -50%) rotate(1160deg) scale(1); }
+}
+
+@media (max-width: $bp-sm) {
+  .pitch {
+    height: 88px;
+  }
+
+  .teamLeft {
+    left: 24px;
+  }
+
+  .teamRight {
+    right: 24px;
+  }
+
+  .team {
+    gap: 10px;
+  }
+
+  .goal {
+    height: 46px;
+  }
+}
+
+// ── İlerleme çubuğu (belirsiz/indeterminate — sürekli kayan segment) ───────
+
+.progressTrack {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  height: 5px;
+  border-radius: $radius-full;
+  background: $color-muted;
+  overflow: hidden;
+}
+
+.progressFill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 40%;
+  border-radius: $radius-full;
+  background: linear-gradient(90deg, $color-primary, $color-primary-dark);
+  animation: progressSlide 1.4s ease-in-out infinite;
+}
+
+@keyframes progressSlide {
+  0% { left: -40%; }
+  100% { left: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pitch,
+  .ball,
+  .ballGlow,
+  .player,
+  .goalFlashRight,
+  .goalFlashLeft,
+  .progressFill {
+    animation: none;
+  }
+}

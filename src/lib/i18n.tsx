@@ -7,8 +7,8 @@ import trNav from '../../public/locales/tr/nav.json';
 import enNav from '../../public/locales/en/nav.json';
 import trAuth from '../../public/locales/tr/auth.json';
 import enAuth from '../../public/locales/en/auth.json';
-import trPremium from '../../public/locales/tr/premium.json';
-import enPremium from '../../public/locales/en/premium.json';
+import trCredits from '../../public/locales/tr/credits.json';
+import enCredits from '../../public/locales/en/credits.json';
 import trMatch from '../../public/locales/tr/match.json';
 import enMatch from '../../public/locales/en/match.json';
 import trStandings from '../../public/locales/tr/standings.json';
@@ -23,7 +23,7 @@ const TRANSLATIONS: Record<string, Record<string, Record<string, unknown>>> = {
     common: trCommon as Record<string, unknown>,
     nav: trNav as Record<string, unknown>,
     auth: trAuth as Record<string, unknown>,
-    premium: trPremium as Record<string, unknown>,
+    credits: trCredits as Record<string, unknown>,
     match: trMatch as Record<string, unknown>,
     standings: trStandings as Record<string, unknown>,
     profile: trProfile as Record<string, unknown>,
@@ -33,7 +33,7 @@ const TRANSLATIONS: Record<string, Record<string, Record<string, unknown>>> = {
     common: enCommon as Record<string, unknown>,
     nav: enNav as Record<string, unknown>,
     auth: enAuth as Record<string, unknown>,
-    premium: enPremium as Record<string, unknown>,
+    credits: enCredits as Record<string, unknown>,
     match: enMatch as Record<string, unknown>,
     standings: enStandings as Record<string, unknown>,
     profile: enProfile as Record<string, unknown>,

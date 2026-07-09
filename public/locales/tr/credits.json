@@ -1,0 +1,30 @@
+{
+  "pageTitle": "Krediler — Ofsayt Yok",
+  "pageDesc": "AI destekli maç analizi için kredi satın al. Her analiz 5 kredi.",
+  "heroBadge": "⚡ AI Kredileri",
+  "heroTitle": "Maçları AI ile analiz et",
+  "heroSub": "Her maç analizi 5 kredi karşılığında üretilir. Analiz bir kez üretildikten sonra herkes ücretsiz görüntüleyebilir.",
+  "balanceLabel": "Güncel bakiyeniz",
+  "balanceUnit": "kredi",
+  "signInNote": "Bakiyenizi görmek için giriş yapın.",
+  "packagesTitle": "Kredi Paketleri",
+  "creditsUnit": "kredi",
+  "comingSoon": "Ödeme entegrasyonu yakında eklenecek",
+  "buyDisabled": "Yakında",
+  "howItWorksTitle": "Nasıl Çalışır?",
+  "how1Title": "Maçı seç",
+  "how1Desc": "Henüz başlamamış bir maçın detay sayfasına git.",
+  "how2Title": "AI ile Analiz Et'e tıkla",
+  "how2Desc": "5 kredi karşılığında 11 başlıklı kapsamlı bir analiz üretilir.",
+  "how3Title": "Sonucu gör",
+  "how3Desc": "Maç bittikten sonra tahminlerin isabet durumunu analiz sayfasında görebilirsin.",
+  "faqTitle": "Sıkça Sorulan Sorular",
+  "faqItems": {
+    "q1": "Ödeme sistemi ne zaman aktif olacak?",
+    "a1": "Ödeme entegrasyonu üzerinde çalışıyoruz, çok yakında aktif olacak.",
+    "q2": "Aynı maç için analiz zaten üretilmişse tekrar kredi harcar mıyım?",
+    "a2": "Hayır. Bir maç için analiz bir kez üretildikten sonra herkes ücretsiz görüntüleyebilir.",
+    "q3": "Kredilerimin son kullanma tarihi var mı?",
+    "a3": "Hayır, krediler süresiz olarak hesabınızda kalır."
+  }
+}

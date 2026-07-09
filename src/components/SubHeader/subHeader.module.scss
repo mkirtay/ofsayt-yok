@@ -99,12 +99,12 @@
 }
 
 .tabActive {
-  background: $color-text;
-  color: $color-surface;
+  background: linear-gradient(135deg, $color-primary, $color-primary-dark);
+  color: #fff;
 
   &:hover {
-    background: $color-text;
-    color: $color-surface;
+    background: linear-gradient(135deg, $color-primary, $color-primary-dark);
+    color: #fff;
   }
 }
 

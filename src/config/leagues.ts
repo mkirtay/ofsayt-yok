@@ -4,8 +4,11 @@
  * 2) Büyük 5 (ES, EN, IT, FR, DE)
  * UEFA üçlüsü ayrı: `UEFA_SIDEBAR_LEAGUES` — `/uefa` sayfası.
  *
- * Maç listesi gruplama sırası (`compareGroupedLeagues`): tier 2 UEFA hâlâ Ş→Avrupa→Konferans.
+ * Maç listesi gruplama sırası (`compareGroupedLeagues`): tier 0 World Cup (güncel/gündemdeki
+ * turnuva), tier 2 UEFA hâlâ Ş→Avrupa→Konferans.
  */
+
+import { WORLD_CUP_COMPETITION_ID } from './worldCup';
 
 export type LeagueGroupSortInput = {
   competition_id: number;
@@ -61,7 +64,12 @@ function bigFiveOrder(competitionId: number): number {
   return i >= 0 ? i : 999;
 }
 
+function isWorldCupGroup(g: LeagueGroupSortInput): boolean {
+  return g.competition_id === WORLD_CUP_COMPETITION_ID;
+}
+
 function getTier(g: LeagueGroupSortInput): number {
+  if (isWorldCupGroup(g)) return 0;
   if (isTurkeyGroup(g)) return 1;
   if (uefaTier2Order(g.competition_id) < 999) return 2;
   if (bigFiveOrder(g.competition_id) < 999) return 3;
@@ -165,6 +173,8 @@ export function compareGroupedLeagues(a: LeagueGroupSortInput, b: LeagueGroupSor
   const tierA = getTier(a);
   const tierB = getTier(b);
   if (tierA !== tierB) return tierA - tierB;
+
+  if (tierA === 0) return nameCompare(a, b);
 
   if (tierA === 1) {
     const oa = turkeyLeagueOrder(a.competition_id);

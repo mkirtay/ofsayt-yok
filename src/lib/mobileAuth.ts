@@ -20,7 +20,7 @@ const MOBILE_TOKEN_MAX_AGE_SEC = 60 * 60 * 24 * 30; // 30 gün
 export type MobileTokenClaims = {
   sub: string;
   role?: Role | null;
-  premiumUntil?: string | null;
+  credits?: number | null;
   email?: string | null;
   name?: string | null;
   username?: string | null;
@@ -29,7 +29,7 @@ export type MobileTokenClaims = {
 export type RequestAuthUser = {
   id: string;
   role: Role | null;
-  premiumUntil: string | null;
+  credits: number | null;
   email: string | null;
   name: string | null;
   username: string | null;
@@ -41,7 +41,7 @@ export async function issueMobileToken(claims: MobileTokenClaims): Promise<strin
     token: {
       sub: claims.sub,
       ...(claims.role ? { role: claims.role } : {}),
-      premiumUntil: claims.premiumUntil ?? null,
+      credits: claims.credits ?? 0,
       email: claims.email ?? null,
       name: claims.name ?? null,
       username: claims.username ?? null,
@@ -74,7 +74,7 @@ export async function getRequestAuth(
         return {
           id: String(decoded.sub),
           role: ((decoded as { role?: Role }).role ?? null) as Role | null,
-          premiumUntil: ((decoded as { premiumUntil?: string | null }).premiumUntil ?? null),
+          credits: ((decoded as { credits?: number | null }).credits ?? null),
           email: (decoded.email as string | null) ?? null,
           name: (decoded.name as string | null) ?? null,
           username: ((decoded as { username?: string | null }).username ?? null),
@@ -90,7 +90,7 @@ export async function getRequestAuth(
     return {
       id: session.user.id,
       role: (session.user.role ?? null) as Role | null,
-      premiumUntil: session.user.premiumUntil ?? null,
+      credits: session.user.credits ?? null,
       email: session.user.email ?? null,
       name: session.user.name ?? null,
       username: session.user.username ?? null,

@@ -1,0 +1,30 @@
+{
+  "pageTitle": "Credits — Ofsayt Yok",
+  "pageDesc": "Buy credits for AI-powered match analysis. Each analysis costs 5 credits.",
+  "heroBadge": "⚡ AI Credits",
+  "heroTitle": "Analyze matches with AI",
+  "heroSub": "Each match analysis costs 5 credits. Once generated, anyone can view it for free.",
+  "balanceLabel": "Your current balance",
+  "balanceUnit": "credits",
+  "signInNote": "Sign in to see your balance.",
+  "packagesTitle": "Credit Packages",
+  "creditsUnit": "credits",
+  "comingSoon": "Payment integration coming soon",
+  "buyDisabled": "Coming soon",
+  "howItWorksTitle": "How It Works",
+  "how1Title": "Pick a match",
+  "how1Desc": "Go to a match detail page that hasn't started yet.",
+  "how2Title": "Click Analyze with AI",
+  "how2Desc": "A comprehensive 11-section analysis is generated for 5 credits.",
+  "how3Title": "See the results",
+  "how3Desc": "After the match ends, see which predictions hit or missed on the analysis page.",
+  "faqTitle": "Frequently Asked Questions",
+  "faqItems": {
+    "q1": "When will the payment system be active?",
+    "a1": "We're working on payment integration — it'll be live very soon.",
+    "q2": "Do I spend credits again if analysis already exists for a match?",
+    "a2": "No. Once an analysis is generated for a match, everyone can view it for free.",
+    "q3": "Do my credits expire?",
+    "a3": "No, credits stay on your account indefinitely."
+  }
+}

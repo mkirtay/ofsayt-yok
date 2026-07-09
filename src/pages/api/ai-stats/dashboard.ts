@@ -19,7 +19,6 @@ export default async function handler(
   try {
     const data = await loadAiStatsDashboard({
       role: auth.role,
-      premiumUntil: auth.premiumUntil,
     });
     res.setHeader('Cache-Control', 'private, no-cache, no-store, must-revalidate');
     return res.status(200).json(data);

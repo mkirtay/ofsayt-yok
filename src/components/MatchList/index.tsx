@@ -396,7 +396,7 @@ export default function MatchList({
               rowProps={rowProps}
               rowComponent={VirtualRow}
               overscanCount={10}
-              style={listStyle(700, width)}
+              style={listStyle(height, width)}
             />
           );
         }}

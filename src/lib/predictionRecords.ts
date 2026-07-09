@@ -8,7 +8,25 @@ import { resolveLiveMatch } from '@/lib/resolveLiveMatch';
 
 type MatchPredictionJson = { home?: number; draw?: number; away?: number };
 type ScorePredictionJson = { mostLikely?: string };
-type GoalExpectationJson = { over25?: number; btts?: number };
+type GoalExpectationJson = {
+  over25?: number;
+  over35?: number;
+  btts?: number;
+  htOver05?: number;
+  htOver15?: number;
+  homeToScore?: number;
+  awayToScore?: number;
+  bttsFirstHalf?: number;
+};
+
+type ExtendedPredictions = {
+  over35: number;
+  htOver05: number;
+  htOver15: number;
+  homeToScore: number;
+  awayToScore: number;
+  bttsFirstHalf: number;
+};
 
 function parseMatchPrediction(json: unknown): {
   home: number;
@@ -40,7 +58,20 @@ function parseGoalExpectation(json: unknown): { over25: number; btts: number } {
   };
 }
 
-/** PRE / HT analizinden tahmin kaydı oluşturur (yoksa). */
+function parseExtendedPredictions(json: unknown): ExtendedPredictions {
+  const o = (json && typeof json === 'object' ? (json as GoalExpectationJson) : {}) as GoalExpectationJson;
+  const num = (v: unknown) => (Number.isFinite(Number(v)) ? Number(v) : 0);
+  return {
+    over35: num(o.over35),
+    htOver05: num(o.htOver05),
+    htOver15: num(o.htOver15),
+    homeToScore: num(o.homeToScore),
+    awayToScore: num(o.awayToScore),
+    bttsFirstHalf: num(o.bttsFirstHalf),
+  };
+}
+
+/** PRE analizinden tahmin kaydı oluşturur (yoksa). */
 export async function ensurePredictionRecordForAnalysis(
   analysis: Pick<
     MatchAnalysis,
@@ -55,7 +86,7 @@ export async function ensurePredictionRecordForAnalysis(
     | 'modelVersion'
   >
 ): Promise<boolean> {
-  if (analysis.matchStatus !== 'PRE' && analysis.matchStatus !== 'HT') {
+  if (analysis.matchStatus !== 'PRE') {
     return false;
   }
 
@@ -69,6 +100,7 @@ export async function ensurePredictionRecordForAnalysis(
   if (!mp || !score) return false;
 
   const ge = parseGoalExpectation(analysis.goalExpectation);
+  const extended = parseExtendedPredictions(analysis.goalExpectation);
 
   await prisma.predictionRecord.create({
     data: {
@@ -81,6 +113,7 @@ export async function ensurePredictionRecordForAnalysis(
       predictedScore: score,
       predictedOver25: ge.over25,
       predictedBtts: ge.btts,
+      extendedPredictions: extended,
       modelVersion: analysis.modelVersion,
     },
   });
@@ -91,7 +124,7 @@ export async function ensurePredictionRecordForAnalysis(
 export async function backfillMissingPredictionRecords(): Promise<number> {
   const missing = await prisma.matchAnalysis.findMany({
     where: {
-      matchStatus: { in: ['PRE', 'HT'] },
+      matchStatus: 'PRE',
       predictionRecord: null,
     },
     select: {
@@ -159,6 +192,10 @@ function extractFinalScore(match: Match): string | null {
   return `${goals[0]}-${goals[1]}`;
 }
 
+function extractHtScore(match: Match): [number, number] | null {
+  return parseScoreGoals(match.scores?.ht_score);
+}
+
 function normalizePredictedScore(raw: string): string {
   return raw.trim().replace(/\s/g, '').replace(':', '-');
 }
@@ -193,6 +230,9 @@ export async function evaluatePendingPredictionRecords(
       predictedDrawPct: true,
       predictedAwayPct: true,
       predictedScore: true,
+      predictedOver25: true,
+      predictedBtts: true,
+      extendedPredictions: true,
     },
   });
 
@@ -221,7 +261,8 @@ export async function evaluatePendingPredictionRecords(
         const [homeGoals, awayGoals] = actualScore.split('-').map(Number);
         const actualResult =
           homeGoals! > awayGoals! ? 'HOME' : homeGoals! < awayGoals! ? 'AWAY' : 'DRAW';
-        const actualOver25 = homeGoals! + awayGoals! > 2;
+        const totalGoals = homeGoals! + awayGoals!;
+        const actualOver25 = totalGoals > 2;
         const actualBtts = homeGoals! > 0 && awayGoals! > 0;
 
         const predictedResult = predictedOutcomeFromPct(
@@ -232,6 +273,57 @@ export async function evaluatePendingPredictionRecords(
 
         const result1x2Hit = predictedResult === actualResult;
         const scoreExactHit = normalizePredictedScore(record.predictedScore) === actualScore;
+        const over25Hit = (record.predictedOver25 >= 50) === actualOver25;
+        const bttsHit = (record.predictedBtts >= 50) === actualBtts;
+
+        const ht = extractHtScore(match!);
+        const extendedPredictions = record.extendedPredictions as
+          | Partial<ExtendedPredictions>
+          | null;
+
+        const extendedHits: Record<string, boolean | null> = {
+          over35Hit: null,
+          htOver05Hit: null,
+          htOver15Hit: null,
+          homeToScoreHit: null,
+          awayToScoreHit: null,
+          bttsFirstHalfHit: null,
+        };
+
+        if (extendedPredictions) {
+          const actualOver35 = totalGoals > 3;
+          if (typeof extendedPredictions.over35 === 'number') {
+            extendedHits.over35Hit = (extendedPredictions.over35 >= 50) === actualOver35;
+          }
+          const actualHomeToScore = homeGoals! > 0;
+          if (typeof extendedPredictions.homeToScore === 'number') {
+            extendedHits.homeToScoreHit =
+              (extendedPredictions.homeToScore >= 50) === actualHomeToScore;
+          }
+          const actualAwayToScore = awayGoals! > 0;
+          if (typeof extendedPredictions.awayToScore === 'number') {
+            extendedHits.awayToScoreHit =
+              (extendedPredictions.awayToScore >= 50) === actualAwayToScore;
+          }
+
+          if (ht) {
+            const [htHome, htAway] = ht;
+            const htTotal = htHome + htAway;
+            const actualHtOver05 = htTotal > 0;
+            const actualHtOver15 = htTotal > 1;
+            const actualBttsFirstHalf = htHome > 0 && htAway > 0;
+            if (typeof extendedPredictions.htOver05 === 'number') {
+              extendedHits.htOver05Hit = (extendedPredictions.htOver05 >= 50) === actualHtOver05;
+            }
+            if (typeof extendedPredictions.htOver15 === 'number') {
+              extendedHits.htOver15Hit = (extendedPredictions.htOver15 >= 50) === actualHtOver15;
+            }
+            if (typeof extendedPredictions.bttsFirstHalf === 'number') {
+              extendedHits.bttsFirstHalfHit =
+                (extendedPredictions.bttsFirstHalf >= 50) === actualBttsFirstHalf;
+            }
+          }
+        }
 
         await prisma.predictionRecord.update({
           where: { id: record.id },
@@ -242,6 +334,7 @@ export async function evaluatePendingPredictionRecords(
             actualBtts,
             result1x2Hit,
             scoreExactHit,
+            extendedHits: { over25Hit, bttsHit, ...extendedHits },
             evaluatedAt: new Date(),
           },
         });

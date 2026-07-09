@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
 import { useTranslation } from '@/lib/i18n';
-import { usePremium } from '@/hooks/usePremium';
 import type { Match } from '@/models/liveScore';
 import styles from './matchTrivia.module.scss';
 
@@ -51,7 +51,9 @@ function PreviewSkeleton({ homeName, awayName, t }: { homeName?: string; awayNam
 
 export default function MatchTrivia({ matchId, match }: Props) {
   const { t } = useTranslation('match');
-  const { loading: premiumLoading, isPremium } = usePremium();
+  const { status } = useSession();
+  const sessionLoading = status === 'loading';
+  const isAuthenticated = status === 'authenticated';
   const [trivia, setTrivia] = useState<ApiTrivia | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -95,13 +97,13 @@ export default function MatchTrivia({ matchId, match }: Props) {
   );
 
   useEffect(() => {
-    if (premiumLoading || !isPremium || !matchId) return;
+    if (sessionLoading || !isAuthenticated || !matchId) return;
     if (lastFetchedMatchId.current === matchId) return;
     if (inFlightMatchId.current === matchId) return;
     void fetchTrivia();
-  }, [premiumLoading, isPremium, matchId, fetchTrivia]);
+  }, [sessionLoading, isAuthenticated, matchId, fetchTrivia]);
 
-  if (premiumLoading) {
+  if (sessionLoading) {
     return (
       <div className={styles.card}>
         <div className={styles.loading}>{t('common:loading')}</div>
@@ -109,7 +111,7 @@ export default function MatchTrivia({ matchId, match }: Props) {
     );
   }
 
-  if (!isPremium) {
+  if (!isAuthenticated) {
     return (
       <div className={styles.card}>
         <div className={styles.headerRow}>
@@ -125,7 +127,7 @@ export default function MatchTrivia({ matchId, match }: Props) {
           <div className={styles.lockedOverlay}>
             <h4 className={styles.lockedTitle}>{t('trivia.lockedTitle')}</h4>
             <p className={styles.lockedSubtitle}>{t('trivia.lockedDesc')}</p>
-            <Link href="/premium" className={styles.ctaButton}>
+            <Link href="/auth/signin" className={styles.ctaButton}>
               {t('trivia.upgradePremium')}
             </Link>
           </div>

@@ -15,8 +15,30 @@ $color-danger: #DC2626;
 
 $color-row-highlight: #DFF5E6;
 
+// ── Flashscore/Opta/FIFA26 esintili koyu yüzey + durum rozetleri ──────────
+// Skor kartları, canlı rozetler ve navbar gibi vurgulu/veri-yoğun alanlarda
+// kullanılır — tüm site koyu temaya geçmez, seçici olarak uygulanır.
+$color-surface-dark: #101512;
+$color-surface-dark-alt: #1a211d;
+$color-text-on-dark: #f4f7f4;
+$color-text-on-dark-secondary: rgba(244, 247, 244, 0.64);
+$color-border-dark: rgba(255, 255, 255, 0.1);
+
+// Maç durumu rozetleri
+$color-live: #ef4444;
+$color-live-bg: rgba(239, 68, 68, 0.12);
+$color-finished: #6b7280;
+$color-finished-bg: rgba(107, 114, 128, 0.12);
+$color-upcoming: $color-info;
+$color-upcoming-bg: rgba(14, 165, 233, 0.1);
+
 // Typography — `next/font` Inter + `--font-sans` _app sarmalayıcısında; modüllerde aynı yığın
 $font-family: var(--font-sans), system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+// Skor/istatistik rakamları için daha "condensed"/bold görünüm — yeni web font
+// yüklenmez, mevcut yığın `font-stretch` + sıkı `letter-spacing` ile daraltılır.
+$font-family-score: var(--font-sans), system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+$score-letter-spacing: -0.02em;
+$score-font-stretch: condensed;
 
 // Breakpoints (mobile-first; Tailwind-benzeri yaygın eşikler)
 $bp-sm: 640px; // büyük telefon / küçük tablet; altı ~410px dar mobil

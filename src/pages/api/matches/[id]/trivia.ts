@@ -1,14 +1,14 @@
 /**
  * GET /api/matches/[id]/trivia
  *
- * Premium kullanıcılar için LLM tabanlı maç trivia üretir.
+ * Giriş yapmış kullanıcılar için LLM tabanlı maç trivia üretir.
  * Cache: (matchId, matchStatus) bazlı. PRE fazında 2 saat TTL,
  * HT/POST için süresiz (faz değiştiğinde yeni satır oluşur).
  */
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
-import { requirePremium } from '@/lib/requirePremium';
+import { requireAuth } from '@/lib/requireAuth';
 import { hitFixedWindowRateLimit } from '@/lib/rateLimit';
 import { runWithLiveScoreHttpClient } from '@/services/liveScoreHttpContext';
 import { livescoreAxiosFromIncomingMessage } from '@/server/livescoreInternalAxios';
@@ -24,7 +24,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const guard = await requirePremium(req, res);
+  const guard = await requireAuth(req, res);
   if (!guard.ok) return;
 
   const rl = await hitFixedWindowRateLimit(`trivia:${guard.userId}`, 20, 60 * 60 * 1000);

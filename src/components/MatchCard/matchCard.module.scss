@@ -4,13 +4,13 @@ $match-card-header-blue: #153d6b;
 
 .matchCard {
   background-color: $color-surface;
-  border-radius: 8px;
+  border-radius: $radius-lg;
   padding: 0;
   text-align: center;
   overflow: hidden;
   border: 1px solid #ECECEC;
   background: #fff;
-  box-shadow: 0 10px 30px #10201514;
+  box-shadow: $shadow-surface;
 }
 
 .cardHeader {
@@ -192,8 +192,11 @@ $match-card-header-blue: #153d6b;
   align-items: center;
   justify-content: center;
   gap: $spacing-2;
-  font-size: 28px;
-  font-weight: 700;
+  font-family: $font-family-score;
+  font-stretch: $score-font-stretch;
+  letter-spacing: $score-letter-spacing;
+  font-size: 30px;
+  font-weight: 800;
   line-height: 1.1;
   font-variant-numeric: tabular-nums;
 }
@@ -246,6 +249,7 @@ $match-card-header-blue: #153d6b;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 5px;
   min-width: 28px;
   padding: 2px 8px;
   border-radius: $radius-full;
@@ -254,6 +258,23 @@ $match-card-header-blue: #153d6b;
   color: $color-surface;
   background-color: $color-primary;
   line-height: 1.2;
+}
+
+.minuteBadgeLive {
+  background-color: $color-live;
+
+  &::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: $color-surface;
+    animation: pulse-live 1.6s infinite;
+  }
+}
+
+.minuteBadgeFinished {
+  background-color: $color-finished;
 }
 
 .formRow {
@@ -314,15 +335,15 @@ $match-card-header-blue: #153d6b;
 }
 
 .formPillWin {
-  background-color: #16a34a;
+  background-color: $color-primary;
 }
 
 .formPillDraw {
-  background-color: #ca8a04;
+  background-color: $color-warning;
 }
 
 .formPillLoss {
-  background-color: #dc2626;
+  background-color: $color-danger;
 }
 
 .h2hTableWrap {

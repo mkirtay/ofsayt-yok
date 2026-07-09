@@ -23,79 +23,122 @@
   padding: $spacing-4;
 }
 
-.content {
+// ── Genel düzen: dar isim listesi | saha | dar isim listesi ────────────────
+
+.layout {
   display: flex;
+  align-items: flex-start;
   gap: $spacing-3;
 }
 
-.side {
+.pitchCol {
   flex: 1;
   min-width: 0;
 }
 
-.sideTitle {
-  font-size: 13px;
-  font-weight: 600;
-  color: $color-text-secondary;
-  text-transform: uppercase;
-  margin-bottom: $spacing-3;
-  text-align: center;
-}
-
-.playerList {
+.compactList {
+  flex: 0 0 132px;
+  width: 132px;
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: $spacing-1;
+  gap: 3px;
+  padding-top: 40px; // teamBar yüksekliğiyle hizalanır
+
+  @media (max-width: $bp-sm) {
+    display: none;
+  }
+
+  @media (min-width: $bp-lg) {
+    flex-basis: 190px;
+    width: 190px;
+  }
 }
 
-.player {
+.compactRow {
   display: flex;
   align-items: center;
-  gap: $spacing-2;
-  font-size: 13px;
-  padding: 4px $spacing-2;
+  gap: 6px;
+  padding: 4px 6px;
   border-radius: $radius-sm;
   background-color: $color-bg;
+  font-size: 12px;
 
   &:hover {
     background-color: $color-muted;
   }
 }
 
-.number {
-  width: 22px;
-  height: 22px;
+.compactNumber {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 50%;
   background-color: $color-primary;
   color: $color-surface;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
-  flex-shrink: 0;
 }
 
-.name {
-  white-space: nowrap;
+.compactName {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
+  color: $color-text;
 }
 
-// CSS-only pitch representation
+// ── Takım başlık çubuğu (isim + formasyon rozeti) ──────────────────────────
+
+.teamBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-2;
+  padding: $spacing-1 $spacing-1;
+}
+
+.teamBarName {
+  font-size: 13px;
+  font-weight: 700;
+  color: $color-text;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.formationBadge {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 700;
+  color: $color-text-secondary;
+  background: $color-muted;
+  padding: 2px 8px;
+  border-radius: $radius-full;
+  font-variant-numeric: tabular-nums;
+}
+
+// ── Saha (iki takım üst üste, kendi diziliş satırlarıyla) ─────────────────
+
 .pitch {
-  flex: 0 0 180px;
-  background-color: #2d8b47;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 560px;
+  background: linear-gradient(180deg, #1f7a3d 0%, #2d8b47 50%, #1f7a3d 100%);
   border-radius: $radius-sm;
   border: 2px solid rgba(255, 255, 255, 0.25);
-  position: relative;
-  min-height: 360px;
+  overflow: hidden;
+  padding: $spacing-4 $spacing-2;
 }
 
 .pitchInner {
   position: absolute;
   inset: 0;
+  z-index: 0;
 }
 
 .halfLine {
@@ -104,16 +147,16 @@
   left: 0;
   right: 0;
   height: 2px;
-  background-color: rgba(255, 255, 255, 0.25);
+  background-color: rgba(255, 255, 255, 0.28);
 }
 
 .centerCircle {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 50px;
-  height: 50px;
-  border: 2px solid rgba(255, 255, 255, 0.25);
+  width: 90px;
+  height: 90px;
+  border: 2px solid rgba(255, 255, 255, 0.28);
   border-radius: 50%;
   transform: translate(-50%, -50%);
 }
@@ -123,9 +166,9 @@
   top: 0;
   left: 50%;
   transform: translateX(-50%);
-  width: 80px;
-  height: 40px;
-  border: 2px solid rgba(255, 255, 255, 0.25);
+  width: 46%;
+  height: 60px;
+  border: 2px solid rgba(255, 255, 255, 0.28);
   border-top: none;
 }
 
@@ -134,20 +177,107 @@
   bottom: 0;
   left: 50%;
   transform: translateX(-50%);
-  width: 80px;
-  height: 40px;
-  border: 2px solid rgba(255, 255, 255, 0.25);
+  width: 46%;
+  height: 60px;
+  border: 2px solid rgba(255, 255, 255, 0.28);
   border-bottom: none;
 }
 
+.formationHalf {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+}
+
+.formationHalfHome,
+.formationHalfAway {
+  // Şu an ek stil gerekmiyor — sıralama bileşen tarafında (DOM sırası) belirleniyor.
+}
+
+.formationRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-evenly;
+  gap: 2px;
+}
+
+.formationPlayer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  width: 64px;
+  min-width: 0;
+}
+
+.formationDot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 800;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+.formationDotHome {
+  background: $color-primary;
+  color: #fff;
+  border: 2px solid rgba(255, 255, 255, 0.55);
+}
+
+.formationDotAway {
+  background: #fff;
+  color: $color-primary-dark;
+  border: 2px solid $color-primary;
+}
+
+.formationName {
+  font-size: 10px;
+  font-weight: 600;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
 @media (max-width: $bp-sm) {
-  .content {
-    flex-direction: column;
+  .pitch {
+    min-height: 460px;
+    padding: $spacing-3 4px;
   }
 
-  .pitch {
-    flex: 0 0 auto;
-    width: 100%;
-    min-height: 200px;
+  .formationPlayer {
+    width: 50px;
+  }
+
+  .formationDot {
+    width: 24px;
+    height: 24px;
+    font-size: 10px;
+  }
+
+  .formationName {
+    font-size: 9px;
+  }
+
+  .penaltyAreaTop,
+  .penaltyAreaBottom {
+    width: 60%;
+    height: 44px;
+  }
+
+  .centerCircle {
+    width: 64px;
+    height: 64px;
   }
 }

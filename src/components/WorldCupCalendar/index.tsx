@@ -35,6 +35,28 @@ function matchTime(m: Match): string {
   return utcTimeToTr(raw, m.date);
 }
 
+/**
+ * Varsayılan ay: bugün veya sonrasındaki ilk maçın ayı (turnuva devam ediyorsa/başlamadıysa);
+ * yoksa (turnuva bitmişse) en son oynanan maçın ayı; hiç maç yoksa gerçek "bugün".
+ */
+function pickDefaultMonth(matches: Match[]): { year: number; month: number } {
+  const now = new Date();
+  const todayIso = now.toISOString().slice(0, 10);
+  const dated = matches
+    .map((m) => (m.date ?? '').trim().slice(0, 10))
+    .filter((d) => d.length === 10)
+    .sort();
+  const upcoming = dated.find((d) => d >= todayIso);
+  const chosen = upcoming ?? dated[dated.length - 1];
+  if (chosen) {
+    const [y, mo] = chosen.split('-').map(Number);
+    if (Number.isFinite(y) && Number.isFinite(mo)) {
+      return { year: y, month: mo - 1 };
+    }
+  }
+  return { year: now.getFullYear(), month: now.getMonth() };
+}
+
 function groupByDate(matches: Match[]): Map<string, Match[]> {
   const map = new Map<string, Match[]>();
   for (const m of matches) {
@@ -362,9 +384,18 @@ type Props = {
 
 export default function WorldCupCalendar({ matches }: Props) {
   const [viewMode, setViewMode] = useState<ViewMode>('month');
-  const [year, setYear] = useState(2026);
-  const [month, setMonth] = useState(5); // June = 5
+  const [year, setYear] = useState(() => new Date().getFullYear());
+  const [month, setMonth] = useState(() => new Date().getMonth());
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
+  const autoPickedRef = useRef(false);
+
+  useEffect(() => {
+    if (autoPickedRef.current || matches.length === 0) return;
+    autoPickedRef.current = true;
+    const picked = pickDefaultMonth(matches);
+    setYear(picked.year);
+    setMonth(picked.month);
+  }, [matches]);
 
   const byDate = groupByDate(matches);
 
