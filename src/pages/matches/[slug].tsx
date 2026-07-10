@@ -1,3 +1,4 @@
+import type { GetServerSideProps } from 'next';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
@@ -27,7 +28,43 @@ import type { MatchEvent, MatchStatsData } from '@/models/domain';
 import { buildMatchHref, parseMatchIdFromParam } from '@/utils/matchUrl';
 import { WORLD_CUP_COMPETITION_ID } from '@/config/worldCup';
 import { fetchWorldCupStandingsBundle, isWorldCupCompetition } from '@/utils/worldCupStandings';
+import { resolveLiveMatch } from '@/lib/resolveLiveMatch';
+import { livescoreServerClient } from '@/server/livescoreInternalAxios';
+import { runWithLiveScoreHttpClient } from '@/services/liveScoreHttpContext';
 import styles from './matchDetail.module.scss';
+
+type MatchDetailProps = {
+  initialMatch: Match | null;
+};
+
+/**
+ * Twitter/Facebook gibi sosyal paylaşım botları sayfayı JS çalıştırmadan
+ * kırpar — bu yüzden maç verisini SSR'da da çekiyoruz. Böylece paylaşım
+ * kartında jenerik "Maç Detayı" yerine gerçek takım isimleri/skor görünür
+ * ve kullanıcı ilk açılışta da boş bir sayfa görmez.
+ */
+export const getServerSideProps: GetServerSideProps<MatchDetailProps> = async (context) => {
+  const slugParam = context.params?.slug;
+  const slug = Array.isArray(slugParam) ? slugParam[0] : slugParam;
+  const matchId = slug ? parseMatchIdFromParam(slug) : '';
+
+  if (!matchId) {
+    return { props: { initialMatch: null } };
+  }
+
+  try {
+    const client = livescoreServerClient();
+    const initialMatch = await runWithLiveScoreHttpClient(client, async () => {
+      const resolved = await resolveLiveMatch(matchId);
+      return resolved?.match ?? null;
+    });
+    return { props: { initialMatch: initialMatch ?? null } };
+  } catch {
+    // SSR sırasında bir hata olursa client-side fetch zaten devreye girecek —
+    // sayfayı 500'letmek yerine boş prop ile devam ediyoruz.
+    return { props: { initialMatch: null } };
+  }
+};
 
 async function loadStandingsForMatch(
   cid: number
@@ -79,7 +116,7 @@ async function loadStandingsForMatch(
   };
 }
 
-export default function MatchDetail() {
+export default function MatchDetail({ initialMatch }: MatchDetailProps) {
   const router = useRouter();
   const slugParam = router.query.slug;
   const slugFromPath = router.asPath.match(/^\/matches\/([^/?#]+)/)?.[1] ?? '';
@@ -92,12 +129,12 @@ export default function MatchDetail() {
   const requestedMatchId = slug ? parseMatchIdFromParam(slug) : '';
 
   const [matchId, setMatchId] = useState('');
-  const [match, setMatch] = useState<Match | null>(null);
+  const [match, setMatch] = useState<Match | null>(initialMatch ?? null);
   const [events, setEvents] = useState<MatchEvent[]>([]);
   const [lineups, setLineups] = useState<unknown>(null);
   const [stats, setStats] = useState<MatchStatsData | null>(null);
   const [standings, setStandings] = useState<CompetitionTableData | null>(null);
-  const [matchLoading, setMatchLoading] = useState(true);
+  const [matchLoading, setMatchLoading] = useState(!initialMatch);
   const [eventsLoading, setEventsLoading] = useState(false);
   const [statsLoading, setStatsLoading] = useState(false);
   const [lineupsLoading, setLineupsLoading] = useState(false);
@@ -227,6 +264,17 @@ export default function MatchDetail() {
       ? `${homeName} vs ${awayName}${compName ? ` - ${compName}` : ''} maç detayı, istatistikler ve kadro bilgileri.`
       : 'Maç detayı, istatistikler ve kadro bilgileri.';
   const canonicalUrl = `${process.env.AUTH_URL ?? 'https://ofsaytyok.app'}${canonicalPath}`;
+  const scoreLine = match?.scores?.score || match?.score || '';
+  const ogImageUrl = homeName && awayName
+    ? `${process.env.AUTH_URL ?? 'https://ofsaytyok.app'}/api/og/match?${new URLSearchParams({
+        home: homeName,
+        away: awayName,
+        ...(match?.home?.logo ? { homeLogo: match.home.logo } : {}),
+        ...(match?.away?.logo ? { awayLogo: match.away.logo } : {}),
+        ...(scoreLine ? { score: String(scoreLine) } : {}),
+        comp: compName || 'Maç Detayı',
+      }).toString()}`
+    : null;
   const effectiveMatchId = matchId || requestedMatchId;
   const homeTeamId = match?.home?.id ?? match?.home_id;
   const awayTeamId = match?.away?.id ?? match?.away_id;
@@ -250,13 +298,15 @@ export default function MatchDetail() {
         <meta property="og:description" content={pageDescription} />
         <meta property="og:type" content="article" />
         <meta property="og:url" content={canonicalUrl} />
-        {match?.home?.logo ? (
+        {ogImageUrl && (
           <>
-            <meta property="og:image" content={match.home.logo} />
-            <meta name="twitter:image" content={match.home.logo} />
+            <meta property="og:image" content={ogImageUrl} />
+            <meta property="og:image:width" content="1200" />
+            <meta property="og:image:height" content="630" />
+            <meta name="twitter:image" content={ogImageUrl} />
           </>
-        ) : null}
-        <meta name="twitter:card" content="summary" />
+        )}
+        <meta name="twitter:card" content={ogImageUrl ? 'summary_large_image' : 'summary'} />
         <meta name="twitter:title" content={pageTitle} />
         <meta name="twitter:description" content={pageDescription} />
         {match ? (
