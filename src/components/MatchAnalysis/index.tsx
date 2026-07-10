@@ -11,6 +11,18 @@ import styles from './matchAnalysis.module.scss';
 
 const ANALYSIS_COST = 5;
 
+/**
+ * heatmapAnalysis.homeZones/awayZones/narrative modelden bazen (talimata
+ * rağmen) düz sayı dizisi olarak dönebiliyor — bu durumda React diziyi
+ * ayraçsız birleştirip anlamsız bir rakam yığını gösterir (ör. "4555706050...").
+ * Sadece gerçek, dolu bir metinse render ediyoruz; değilse satırı atlıyoruz.
+ */
+function asZoneText(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
 type TacticalProfile = {
   formation: string;
   pressLevel: string;
@@ -24,9 +36,11 @@ type FullReport = {
   matchSummary: { tempo: string; dominantSide: string; balanceType: string; homeAwayImpact: string };
   tacticalAnalysis: { home: TacticalProfile; away: TacticalProfile; keyBattleZones: string };
   heatmapAnalysis: {
-    homeZones: string;
-    awayZones: string;
-    narrative: string;
+    // Model bazen (talimata rağmen) bu alanlara metin yerine sayı dizisi
+    // yazabiliyor — render'da güvenli tarafta kalmak için unknown tutuyoruz.
+    homeZones: unknown;
+    awayZones: unknown;
+    narrative: unknown;
     zoneGrid?: { home: number[]; away: number[] };
   };
   riskFactors: string[];
@@ -394,11 +408,22 @@ export default function MatchAnalysis({ matchId, match }: Props) {
               awayName={analysis.awayTeamName}
             />
           )}
-          <ul className={styles.metaList}>
-            <li><strong>{analysis.homeTeamName}:</strong> {fullReport.heatmapAnalysis.homeZones}</li>
-            <li><strong>{analysis.awayTeamName}:</strong> {fullReport.heatmapAnalysis.awayZones}</li>
-          </ul>
-          <p className={styles.narrative}>{fullReport.heatmapAnalysis.narrative}</p>
+          {(() => {
+            const homeZonesText = asZoneText(fullReport.heatmapAnalysis.homeZones);
+            const awayZonesText = asZoneText(fullReport.heatmapAnalysis.awayZones);
+            const narrativeText = asZoneText(fullReport.heatmapAnalysis.narrative);
+            return (
+              <>
+                {(homeZonesText || awayZonesText) && (
+                  <ul className={styles.metaList}>
+                    {homeZonesText && <li><strong>{analysis.homeTeamName}:</strong> {homeZonesText}</li>}
+                    {awayZonesText && <li><strong>{analysis.awayTeamName}:</strong> {awayZonesText}</li>}
+                  </ul>
+                )}
+                {narrativeText && <p className={styles.narrative}>{narrativeText}</p>}
+              </>
+            );
+          })()}
         </div>
       )}
 
