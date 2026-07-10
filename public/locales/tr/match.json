@@ -136,7 +136,10 @@
     "goal_kicks": "Aut Atışı",
     "throw_ins": "Taç Atışı",
     "dangerous_attacks": "Tehlikeli Atak",
-    "attacks": "Atak"
+    "attacks": "Atak",
+    "substitutions": "Değişiklik",
+    "treatments": "Sağlık Müdahalesi",
+    "penalties": "Penaltı"
   },
   "forum": {
     "title": "Maç Yorumları",

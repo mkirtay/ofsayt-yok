@@ -1,0 +1,73 @@
+@use '../styles/variables' as *;
+
+.page {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: $spacing-6 0 $spacing-8;
+}
+
+.backLink {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 600;
+  color: $color-text-secondary;
+  margin-bottom: $spacing-4;
+
+  &:hover {
+    color: $color-primary-dark;
+  }
+}
+
+.title {
+  font-size: 26px;
+  font-weight: 800;
+  color: $color-text;
+  margin-bottom: $spacing-3;
+}
+
+.intro {
+  font-size: 14px;
+  line-height: 1.6;
+  color: $color-text-secondary;
+  margin-bottom: $spacing-5;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-1;
+  padding: $spacing-4;
+  background: $color-muted;
+  border-radius: $radius-md;
+  margin-bottom: $spacing-4;
+}
+
+.label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: $color-text-secondary;
+}
+
+.email {
+  font-size: 16px;
+  font-weight: 700;
+  color: $color-primary-dark;
+}
+
+.note {
+  font-size: 13px;
+  color: $color-text-secondary;
+  margin-bottom: $spacing-5;
+}
+
+.draftNotice {
+  padding: $spacing-3 $spacing-4;
+  background: $color-muted;
+  border: 1px dashed $color-border;
+  border-radius: $radius-sm;
+  font-size: 12px;
+  line-height: 1.6;
+  color: $color-text-secondary;
+}

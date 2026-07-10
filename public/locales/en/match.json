@@ -136,7 +136,10 @@
     "goal_kicks": "Goal Kicks",
     "throw_ins": "Throw Ins",
     "dangerous_attacks": "Dangerous Attacks",
-    "attacks": "Attacks"
+    "attacks": "Attacks",
+    "substitutions": "Substitutions",
+    "treatments": "Injury Treatments",
+    "penalties": "Penalties"
   },
   "forum": {
     "title": "Match Comments",

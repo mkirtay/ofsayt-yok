@@ -6,6 +6,7 @@ import { useCredits } from '@/hooks/useCredits';
 import { deriveMatchPhase } from '@/utils/matchPhase';
 import type { Match } from '@/models/liveScore';
 import AiLoadingPitch from './AiLoadingPitch';
+import HeatmapPitch from './HeatmapPitch';
 import styles from './matchAnalysis.module.scss';
 
 const ANALYSIS_COST = 5;
@@ -22,7 +23,12 @@ type TacticalProfile = {
 type FullReport = {
   matchSummary: { tempo: string; dominantSide: string; balanceType: string; homeAwayImpact: string };
   tacticalAnalysis: { home: TacticalProfile; away: TacticalProfile; keyBattleZones: string };
-  heatmapAnalysis: { homeZones: string; awayZones: string; narrative: string };
+  heatmapAnalysis: {
+    homeZones: string;
+    awayZones: string;
+    narrative: string;
+    zoneGrid?: { home: number[]; away: number[] };
+  };
   riskFactors: string[];
   analystComment: string;
 };
@@ -380,6 +386,14 @@ export default function MatchAnalysis({ matchId, match }: Props) {
       {fullReport?.heatmapAnalysis && (
         <div className={styles.section}>
           <h4 className={styles.sectionTitle}>{t('analysis.heatmap')}</h4>
+          {fullReport.heatmapAnalysis.zoneGrid && (
+            <HeatmapPitch
+              homeGrid={fullReport.heatmapAnalysis.zoneGrid.home}
+              awayGrid={fullReport.heatmapAnalysis.zoneGrid.away}
+              homeName={analysis.homeTeamName}
+              awayName={analysis.awayTeamName}
+            />
+          )}
           <ul className={styles.metaList}>
             <li><strong>{analysis.homeTeamName}:</strong> {fullReport.heatmapAnalysis.homeZones}</li>
             <li><strong>{analysis.awayTeamName}:</strong> {fullReport.heatmapAnalysis.awayZones}</li>

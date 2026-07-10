@@ -17,6 +17,8 @@ import trProfile from '../../public/locales/tr/profile.json';
 import enProfile from '../../public/locales/en/profile.json';
 import trAi from '../../public/locales/tr/ai.json';
 import enAi from '../../public/locales/en/ai.json';
+import trLegal from '../../public/locales/tr/legal.json';
+import enLegal from '../../public/locales/en/legal.json';
 
 const TRANSLATIONS: Record<string, Record<string, Record<string, unknown>>> = {
   tr: {
@@ -28,6 +30,7 @@ const TRANSLATIONS: Record<string, Record<string, Record<string, unknown>>> = {
     standings: trStandings as Record<string, unknown>,
     profile: trProfile as Record<string, unknown>,
     ai: trAi as Record<string, unknown>,
+    legal: trLegal as Record<string, unknown>,
   },
   en: {
     common: enCommon as Record<string, unknown>,
@@ -38,6 +41,7 @@ const TRANSLATIONS: Record<string, Record<string, Record<string, unknown>>> = {
     standings: enStandings as Record<string, unknown>,
     profile: enProfile as Record<string, unknown>,
     ai: enAi as Record<string, unknown>,
+    legal: enLegal as Record<string, unknown>,
   },
 };
 

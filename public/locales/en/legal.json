@@ -1,0 +1,93 @@
+{
+  "lastUpdated": "Last updated",
+  "backToHome": "Back to home",
+  "privacy": {
+    "pageTitle": "Privacy Policy",
+    "pageDesc": "Ofsayt Yok privacy policy.",
+    "intro": "This Privacy Policy explains what personal data we collect through ofsaytyok.app (\"Site\", \"we\") and for what purposes, along with your rights.",
+    "sections": [
+      {
+        "heading": "1. Data Controller",
+        "body": "The data controller under applicable data protection law is [Company/Owner Name To Be Added]. You can reach us via the Contact page."
+      },
+      {
+        "heading": "2. Data We Collect",
+        "body": "When you create an account we collect your username, email address, and password (stored encrypted). While using the site we may collect your favorite teams/leagues, comments and poll activity, credit balance, and technical data such as IP address and browser information."
+      },
+      {
+        "heading": "3. How We Use Your Data",
+        "body": "We use collected data to create and manage your account, provide personalized content (favorites, AI analysis history), process credit/balance transactions, improve service quality and security, and comply with our legal obligations."
+      },
+      {
+        "heading": "4. Cookies",
+        "body": "We use cookies and similar technologies to keep you signed in, remember your language preference (TR/EN), and gather basic usage statistics. You can manage cookies from your browser settings; disabling some cookies may affect site functionality."
+      },
+      {
+        "heading": "5. Sharing With Third Parties",
+        "body": "We do not share your personal data with third parties except where legally required, or with service providers we use for hosting/infrastructure, analytics, and payment processing. These providers process your data only on our behalf and for the purposes we define."
+      },
+      {
+        "heading": "6. Data Security and Retention",
+        "body": "Your data is retained for a period proportionate to its purpose and protected with reasonable technical and administrative safeguards. When you delete your account, your personal data (aside from data we are legally required to retain) is deleted or anonymized within a reasonable time."
+      },
+      {
+        "heading": "7. Your Rights",
+        "body": "Subject to applicable data protection law, you may have the right to learn whether your data is processed, request information about processing, learn the purpose of processing, know third parties your data is shared with, request correction of inaccurate data, request deletion, and object to certain processing. You can submit requests via the Contact page."
+      },
+      {
+        "heading": "8. Changes",
+        "body": "This policy may be updated from time to time; the current version is always published on this page."
+      }
+    ],
+    "draftNotice": "This text is a generic draft. We recommend legal review and completing the company/contact details before publishing."
+  },
+  "terms": {
+    "pageTitle": "Terms of Use",
+    "pageDesc": "Ofsayt Yok terms of use.",
+    "intro": "By visiting or using ofsaytyok.app, you agree to the terms below. If you do not agree, please do not use the site.",
+    "sections": [
+      {
+        "heading": "1. Description of Service",
+        "body": "Ofsayt Yok is an informational platform providing live match scores, standings, news, and AI-generated match analysis and prediction content."
+      },
+      {
+        "heading": "2. Accounts",
+        "body": "Some features (favorites, commenting, generating AI analyses, credit balance) require an account. You are responsible for keeping your account credentials confidential and for activity under your account."
+      },
+      {
+        "heading": "3. AI Content and Disclaimer",
+        "body": "AI match analyses, score/outcome predictions, accuracy statistics, and betting-market commentary (including \"Value Bet\" labels) on this site are provided for informational and entertainment purposes only. They do not constitute investment advice, betting advice, or any guarantee; past accuracy does not guarantee future results. You are solely responsible for any decisions you make based on this content."
+      },
+      {
+        "heading": "4. Credit System",
+        "body": "Generating AI analyses requires credits. Credit packages cannot be purchased while payment integration is inactive, as noted on the relevant page. Terms governing the credit system may be updated without prior notice."
+      },
+      {
+        "heading": "5. User Conduct",
+        "body": "Posting abusive, harassing, unlawful, or spam content in comments or polls is prohibited. Content that violates these rules may be removed and the associated account may be suspended."
+      },
+      {
+        "heading": "6. Intellectual Property",
+        "body": "The site design, logo, and original content belong to Ofsayt Yok. Score and statistics data obtained from third-party providers remain subject to those providers' rights."
+      },
+      {
+        "heading": "7. Limitation of Liability",
+        "body": "The site is provided \"as is\". We do not guarantee that match data, statistics, or AI outputs will always be accurate or up to date. To the maximum extent permitted by law, Ofsayt Yok is not liable for direct or indirect damages arising from use of the site."
+      },
+      {
+        "heading": "8. Changes and Governing Law",
+        "body": "These terms may be updated from time to time. Disputes arising from these terms are governed by the laws of the Republic of Türkiye."
+      }
+    ],
+    "draftNotice": "This text is a generic draft. We recommend legal review before publishing."
+  },
+  "contact": {
+    "pageTitle": "Contact",
+    "pageDesc": "Get in touch with Ofsayt Yok.",
+    "intro": "For questions, feedback, or data protection requests, you can reach us through the channel below.",
+    "emailLabel": "Email",
+    "emailPlaceholder": "contact@ofsaytyok.app",
+    "responseNote": "We try to respond to requests as quickly as possible.",
+    "draftNotice": "The email address on this page is a placeholder and should be updated with a real support/contact address before launch."
+  }
+}

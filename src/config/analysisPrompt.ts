@@ -28,6 +28,10 @@ KURALLAR:
    bunu net şekilde ifade et (örn. "kadro verisi yok, genel form üzerinden tahmin").
 8. Bahis önerilerinde abartma — düşük güvenli durumlarda "Riskli" işaretle, value
    bulunmuyorsa "avoid: true" işaretle.
+9. heatmapAnalysis.zoneGrid.home ve .away alanlarında HER ZAMAN tam 15 sayı ver
+   (eksik/fazla eleman bırakma), değerler homeZones/awayZones metniyle tutarlı olsun.
+   homeZones/awayZones/narrative alanları SADECE doğal dil metin olmalı — sayı
+   dizisini (zoneGrid'i) YANLIŞLIKLA bu metin alanlarına YAZMA.
 
 ÖNEMLİ KALİBRASYON:
 - "high" güven sadece veri açıkça tek yönü işaret ederse (örn. ev avantajı + form +
@@ -61,6 +65,17 @@ export type AnalysisJsonSchema = {
     homeZones: string;
     awayZones: string;
     narrative: string;
+    /**
+     * Görsel ısı haritası için 15 sayılık (3 bölge x 5 kolon) yoğunluk grid'i.
+     * Sıra: index = bölge*5 + kolon.
+     * Bölge (0-2): 0 = kendi savunma bölgesi, 1 = orta saha, 2 = rakip kaleye yakın hücum bölgesi.
+     * Kolon (0-4): 0 = sol kanat, 1 = sol iç (half-space), 2 = merkez, 3 = sağ iç (half-space), 4 = sağ kanat.
+     * Değerler 0-100 arası, o takımın topla oynama/aktivite yoğunluğunu temsil eder.
+     */
+    zoneGrid?: {
+      home: number[];
+      away: number[];
+    };
   };
   /** 7. Maç Sonucu Tahmini */
   matchPrediction: {
@@ -155,9 +170,13 @@ const OUTPUT_SCHEMA_DESCRIPTION = `{
     "keyBattleZones": "Hangi takım hangi bölgede üstünlük kurabilir (1-2 cümle)"
   },
   "heatmapAnalysis": {
-    "homeZones": "Ev sahibinin en aktif olacağı bölgeler",
-    "awayZones": "Deplasmanın en aktif olacağı bölgeler",
-    "narrative": "Ceza sahası girişleri, half-space kullanımı, kanat yoğunluğu, merkez kontrolü — sözel ısı haritası tarifi"
+    "homeZones": "Ev sahibinin en aktif olacağı bölgeler — DOĞAL DİLDE 1 CÜMLE (örn. 'Sağ kanat ve merkez orta sahada yoğunlaşacak'). SAYI DİZİSİ YAZMA — bu alan metin, veri değil.",
+    "awayZones": "Deplasmanın en aktif olacağı bölgeler — DOĞAL DİLDE 1 CÜMLE. SAYI DİZİSİ YAZMA — bu alan metin, veri değil.",
+    "narrative": "Ceza sahası girişleri, half-space kullanımı, kanat yoğunluğu, merkez kontrolü — sözel ısı haritası tarifi (metin, sayı değil)",
+    "zoneGrid": {
+      "home": "[SADECE bu alan 15 sayıdan oluşur, 0-100 arası. Sıra: bölge*5+kolon — bölge 0=kendi savunma, 1=orta saha, 2=rakip kaleye yakın hücum; kolon 0=sol kanat, 1=sol iç, 2=merkez, 3=sağ iç, 4=sağ kanat. homeZones/narrative ile TUTARLI olsun (örn. sağ kanat yoğunsa kolon 4 hücreleri yüksek olmalı)]",
+      "away": "[Aynı yapı, 15 sayı — awayZones/narrative ile tutarlı]"
+    }
   },
   "matchPrediction": {
     "home": 0-100, "draw": 0-100, "away": 0-100,

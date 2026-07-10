@@ -1,0 +1,93 @@
+{
+  "lastUpdated": "Son güncelleme",
+  "backToHome": "Anasayfaya dön",
+  "privacy": {
+    "pageTitle": "Gizlilik Politikası",
+    "pageDesc": "Ofsayt Yok gizlilik politikası ve KVKK aydınlatma metni.",
+    "intro": "Bu Gizlilik Politikası, Ofsayt Yok (\"Site\", \"biz\") tarafından işletilen ofsaytyok.app üzerinden topladığımız kişisel verilerin hangi amaçlarla işlendiğini ve haklarınızı açıklar.",
+    "sections": [
+      {
+        "heading": "1. Veri Sorumlusu",
+        "body": "6698 sayılı Kişisel Verilerin Korunması Kanunu (\"KVKK\") kapsamında veri sorumlusu [Şirket/Kişi Unvanı Buraya Eklenecek] olup iletişim bilgilerimize İletişim sayfasından ulaşabilirsiniz."
+      },
+      {
+        "heading": "2. Toplanan Veriler",
+        "body": "Hesap oluşturduğunuzda ad/kullanıcı adı, e-posta adresi ve şifre (şifrelenmiş olarak); siteyi kullanırken favori takım/lig tercihleri, yorum ve oylama etkinliğiniz, kredi bakiyeniz ile IP adresi ve tarayıcı bilgileri gibi teknik veriler toplanabilir."
+      },
+      {
+        "heading": "3. Kullanım Amaçları",
+        "body": "Toplanan veriler hesabınızı oluşturmak ve yönetmek, kişiselleştirilmiş içerik (favoriler, AI analiz geçmişi) sunmak, kredi/bakiye işlemlerini yürütmek, hizmet kalitesini ve güvenliğini artırmak ile yasal yükümlülüklerimizi yerine getirmek amacıyla işlenir."
+      },
+      {
+        "heading": "4. Çerezler (Cookies)",
+        "body": "Oturum açık tutma, dil tercihi (TR/EN) ve temel kullanım istatistikleri için çerezler ve benzeri teknolojiler kullanılır. Tarayıcı ayarlarınızdan çerezleri yönetebilirsiniz; bazı çerezleri devre dışı bırakmanız hâlinde sitenin bazı bölümleri beklendiği gibi çalışmayabilir."
+      },
+      {
+        "heading": "5. Üçüncü Taraflarla Paylaşım",
+        "body": "Kişisel verileriniz, yasal zorunluluklar dışında ve barındırma/altyapı, analitik ile ödeme altyapısı sağlayıcılarımız gibi hizmet aldığımız iş ortaklarımız haricinde üçüncü kişilerle paylaşılmaz. Bu hizmet sağlayıcılar verilerinizi yalnızca bizim adımıza ve belirlediğimiz amaçlarla işler."
+      },
+      {
+        "heading": "6. Veri Güvenliği ve Saklama Süresi",
+        "body": "Verileriniz, amaçla orantılı bir süre boyunca ve makul teknik/idari güvenlik tedbirleriyle saklanır. Hesabınızı sildiğinizde, yasal saklama yükümlülükleri dışındaki kişisel verileriniz makul bir süre içinde silinir veya anonim hâle getirilir."
+      },
+      {
+        "heading": "7. KVKK Kapsamındaki Haklarınız",
+        "body": "KVKK'nın 11. maddesi uyarınca; verilerinizin işlenip işlenmediğini öğrenme, işlenmişse buna ilişkin bilgi talep etme, işlenme amacını ve amacına uygun kullanılıp kullanılmadığını öğrenme, yurt içinde/yurt dışında aktarıldığı üçüncü kişileri bilme, eksik/yanlış işlenmişse düzeltilmesini isteme, silinmesini/yok edilmesini isteme ve bu işlemlerin verilerin aktarıldığı üçüncü kişilere bildirilmesini isteme haklarına sahipsiniz. Taleplerinizi İletişim sayfasındaki kanallardan iletebilirsiniz."
+      },
+      {
+        "heading": "8. Değişiklikler",
+        "body": "Bu politika zaman zaman güncellenebilir; güncel sürüm her zaman bu sayfada yayınlanır."
+      }
+    ],
+    "draftNotice": "Bu metin genel bir taslak olarak hazırlanmıştır; yayına almadan önce bir hukuk danışmanı tarafından gözden geçirilmesi ve şirket/iletişim bilgilerinin tamamlanması önerilir."
+  },
+  "terms": {
+    "pageTitle": "Kullanım Şartları",
+    "pageDesc": "Ofsayt Yok kullanım şartları.",
+    "intro": "ofsaytyok.app adresini ziyaret ederek veya kullanarak aşağıdaki şartları kabul etmiş sayılırsınız. Şartları kabul etmiyorsanız lütfen siteyi kullanmayınız.",
+    "sections": [
+      {
+        "heading": "1. Hizmetin Tanımı",
+        "body": "Ofsayt Yok; canlı maç skorları, puan durumu, haberler ile yapay zekâ tarafından üretilen maç analizi ve tahmin içerikleri sunan bir bilgilendirme platformudur."
+      },
+      {
+        "heading": "2. Hesaplar",
+        "body": "Bazı özellikler (favoriler, yorum yapma, AI analiz üretme, kredi bakiyesi) için üyelik gereklidir. Hesap bilgilerinizin gizliliğinden ve hesabınız üzerinden gerçekleştirilen işlemlerden siz sorumlusunuz."
+      },
+      {
+        "heading": "3. Yapay Zekâ İçerikleri ve Sorumluluk Reddi",
+        "body": "Sitede yer alan AI maç analizleri, skor/sonuç tahminleri, isabet istatistikleri ve bahis pazarı değerlendirmeleri (\"Value Bet\" dahil) tamamen bilgilendirme ve eğlence amaçlıdır. Bu içerikler yatırım tavsiyesi, bahis tavsiyesi veya herhangi bir garanti niteliği taşımaz; geçmiş isabet oranı gelecekteki sonuçları garanti etmez. Bu içeriklere dayanarak alacağınız kararların sorumluluğu tamamen size aittir."
+      },
+      {
+        "heading": "4. Kredi Sistemi",
+        "body": "AI analiz üretimi kredi karşılığında sunulur. Kredi paketleri ve ödeme entegrasyonu aktif değilken satın alma yapılamaz; bu durum ilgili sayfada ayrıca belirtilir. Kredi sisteminin işleyişine ilişkin koşullar önceden haber verilmeksizin güncellenebilir."
+      },
+      {
+        "heading": "5. Kullanıcı Davranış Kuralları",
+        "body": "Yorum ve oylama alanlarında hakaret, taciz, yasa dışı içerik veya spam paylaşmak yasaktır. Kurallara aykırı içerikler kaldırılabilir ve ilgili hesap askıya alınabilir."
+      },
+      {
+        "heading": "6. Fikri Mülkiyet",
+        "body": "Site tasarımı, logo ve özgün içerikler Ofsayt Yok'a aittir. Üçüncü taraf veri sağlayıcılardan alınan skor/istatistik verileri ilgili sağlayıcıların haklarına tabidir."
+      },
+      {
+        "heading": "7. Sorumluluğun Sınırlandırılması",
+        "body": "Site \"olduğu gibi\" sunulur; maç verilerinin, istatistiklerin veya AI çıktılarının her zaman hatasız/güncel olacağı garanti edilmez. Ofsayt Yok, sitenin kullanımından doğabilecek doğrudan veya dolaylı zararlardan yasaların izin verdiği azami ölçüde sorumlu tutulamaz."
+      },
+      {
+        "heading": "8. Değişiklikler ve Uygulanacak Hukuk",
+        "body": "Bu şartlar zaman zaman güncellenebilir. Bu şartlardan doğan uyuşmazlıklarda Türkiye Cumhuriyeti kanunları uygulanır."
+      }
+    ],
+    "draftNotice": "Bu metin genel bir taslak olarak hazırlanmıştır; yayına almadan önce bir hukuk danışmanı tarafından gözden geçirilmesi önerilir."
+  },
+  "contact": {
+    "pageTitle": "İletişim",
+    "pageDesc": "Ofsayt Yok ile iletişime geçin.",
+    "intro": "Sorularınız, geri bildirimleriniz veya KVKK kapsamındaki talepleriniz için bizimle aşağıdaki kanaldan iletişime geçebilirsiniz.",
+    "emailLabel": "E-posta",
+    "emailPlaceholder": "iletisim@ofsaytyok.app",
+    "responseNote": "Taleplerinize mümkün olan en kısa sürede dönüş yapmaya çalışıyoruz.",
+    "draftNotice": "Bu sayfadaki e-posta adresi bir yer tutucudur; yayına almadan önce gerçek bir destek/iletişim adresiyle güncellenmelidir."
+  }
+}

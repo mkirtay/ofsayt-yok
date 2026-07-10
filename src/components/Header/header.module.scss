@@ -214,6 +214,23 @@
   white-space: nowrap;
 }
 
+// Oturum durumu (giriş/çıkış) client tarafında çözülene kadar gösterilen nötr
+// placeholder — "Giriş Yap" butonlarının bir an görünüp hemen "Profil"e
+// dönüşmesi gibi bir titremeyi (auth flicker) önlemek için kullanılır.
+.authPlaceholder {
+  width: 160px;
+  height: 32px;
+  border-radius: $radius-full;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.authPlaceholderMobile {
+  flex: 1;
+  height: 40px;
+  border-radius: $radius-sm;
+  background: rgba(255, 255, 255, 0.08);
+}
+
 // ── Hamburger ────────────────────────────────────
 
 .hamburger {

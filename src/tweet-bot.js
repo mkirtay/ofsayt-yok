@@ -80,6 +80,22 @@ const TEAMS = [
   { id: 59,   competitionId: 244, name: 'PSG' },
 ];
 
+/**
+ * TEST MODE — tek maça odaklı, düşük maliyetli test için.
+ * `TWEET_BOT_TEST_MODE=true` set edilirse yukarıdaki 37 satırlık tam liste yerine
+ * sadece bu (küçük) liste poll edilir → API çağrısı 37 satırdan 1'e düşer.
+ * Buraya test etmek istediğin maçın tek bir takımını eklemen yeterli; events.json
+ * o maçın TÜM olaylarını (her iki takım dahil) zaten döndürür.
+ *
+ * Örnek: 2026 Dünya Kupası, Fransa - Fas (competition_id=362, France team_id=1439).
+ */
+const TEST_TEAMS = [
+  { id: 1439, competitionId: 362, name: 'France' },
+];
+
+const TEST_MODE = String(process.env.TWEET_BOT_TEST_MODE || '').toLowerCase().trim() === 'true';
+const ACTIVE_TEAMS = TEST_MODE ? TEST_TEAMS : TEAMS;
+
 /** Tweet ikinci hashtag (lig) */
 const COMPETITION_TWEET = {
   1: { tag: 'Bundesliga' },
@@ -90,6 +106,7 @@ const COMPETITION_TWEET = {
   6: { tag: 'SüperLig' },
   244: { tag: 'ChampionsLeague' },
   347: { tag: 'TurkiyeKupasi' },
+  362: { tag: 'DünyaKupası' },
 };
 
 /** match_id (string) → maç durumu (kickoff / FT için) */
@@ -175,6 +192,8 @@ function ensurePersistedMatch(matchKey) {
       ftTweeted: false,
       sawFixtureBeforeLive: false,
       seenEventKeys: [],
+      // Gol benzeri olaylar için ikinci (zaman-bağımsız) dedup katmanı — bkz. goalSignature().
+      goalSignaturesSeen: [],
       lastStatus: '',
       lastMinute: '',
       lastScore: '',
@@ -456,6 +475,48 @@ function eventDedupeKey(matchKey, ev) {
   return `${matchKey}|${time}|${type}|${who}${sideKey}`;
 }
 
+/**
+ * DUPLICATE TWEET FIX — ikinci, zaman-bağımsız dedup katmanı.
+ *
+ * `eventDedupeKey()` dakika bilgisini (`ev.time`) anahtara dahil eder. Sorun şu:
+ * canlı skor API'si uzatma dakikalarını ("45" → "45+2" gibi) bazen olay ilk
+ * geldikten SONRA düzeltiyor. Bu düzeltme olduğunda `eventDedupeKey` farklı bir
+ * anahtar üretir ve olay `seen` set'inde bulunamadığı için "yeni olay" sanılır.
+ * Normalde bunu `scoreChanged` kontrolü engeller (skor zaten değişmiş olduğu için
+ * tekrar atlanır) — ANCAK aynı turda BAŞKA bir gol daha atılırsa (skor yine
+ * değişir), bu "hayalet" eski gol de o turda skor değişmiş göründüğü için
+ * gönderilebilir ve mükerrer (duplicate) tweet oluşur.
+ *
+ * Çözüm: gol benzeri olaylar için zamana bağlı olmayan ikinci bir imza
+ * (tip + taraf + oyuncu + o anki skor) tutulur. Bu imza daha önce görülmüşse,
+ * `eventDedupeKey` "yeni" dese bile tweet ATILMAZ.
+ */
+function goalSignature(matchKey, ev, scoreAtEvent) {
+  if (ev == null || typeof ev !== 'object') return null;
+  const type = ev.event ?? '';
+  const playerId = ev.player?.id ?? '';
+  const playerName = String(ev.player?.name ?? '').trim().toLowerCase();
+  const side = ev.is_home === true || ev.is_home === '1' ? 'H' : ev.is_away === true || ev.is_away === '1' ? 'A' : '?';
+  const who = playerId || playerName || '';
+  const score = normalizeScoreDisplay(String(scoreAtEvent ?? ''));
+  return `${matchKey}|${type}|${side}|${who}|${score}`;
+}
+
+function hasGoalSignature(pMatch, sig) {
+  if (!sig) return false;
+  return Array.isArray(pMatch.goalSignaturesSeen) && pMatch.goalSignaturesSeen.includes(sig);
+}
+
+function rememberGoalSignature(pMatch, sig) {
+  if (!sig) return;
+  if (!Array.isArray(pMatch.goalSignaturesSeen)) pMatch.goalSignaturesSeen = [];
+  pMatch.goalSignaturesSeen.push(sig);
+  if (pMatch.goalSignaturesSeen.length > MAX_EVENT_KEYS_PER_MATCH) {
+    pMatch.goalSignaturesSeen = pMatch.goalSignaturesSeen.slice(-MAX_EVENT_KEYS_PER_MATCH);
+  }
+  pMatch.updatedAt = Date.now();
+}
+
 function sortEventsChronological(list) {
   return [...list].sort(
     (a, b) =>
@@ -621,7 +682,7 @@ async function checkAllTeams() {
 
   const isoToday = todayIsoUtc();
 
-  for (const team of TEAMS) {
+  for (const team of ACTIVE_TEAMS) {
     const rowKey = teamRowKey(team);
     const match = await fetchLiveMatch(team.id, team.competitionId);
 
@@ -739,6 +800,24 @@ async function checkAllTeams() {
         continue;
       }
 
+      // DUPLICATE TWEET FIX: zaman alanı (ör. "45" → "45+2") API'de sonradan
+      // düzeltildiğinde eventDedupeKey "yeni" bir olay sanabilir. Gol benzeri
+      // olaylarda ikinci, zamana bağlı olmayan imzayı da kontrol ederek aynı golü
+      // farklı bir zaman etiketiyle tekrar tweetlemeyi engelliyoruz.
+      let sig = null;
+      if (isGoalLikeEvent(ev.event)) {
+        sig = goalSignature(matchKey, ev, curScore);
+        if (hasGoalSignature(pMatch, sig)) {
+          log(`🚫 Mükerrer gol tespit edildi (zaman alanı değişmiş olabilir), tweet atlanıyor: ${ev.event} ${ev.time}' ${ev.player?.name || '?'} skor=${curScore}`);
+          const k = eventDedupeKey(matchKey, ev);
+          if (k) {
+            seen.add(k);
+            rememberEventKey(matchKey, k);
+          }
+          continue;
+        }
+      }
+
       const text = buildEventTweetSafe(team, merged, ev, {});
       const ok = await sendTweet(text);
       if (ok) {
@@ -746,6 +825,9 @@ async function checkAllTeams() {
         if (k) {
           seen.add(k);
           rememberEventKey(matchKey, k);
+        }
+        if (sig) {
+          rememberGoalSignature(pMatch, sig);
         }
       }
     }
@@ -783,6 +865,7 @@ async function checkAllTeams() {
 async function startBot() {
   log('🤖 Ofsayt Yok Tweet Bot başlatılıyor...');
   log(`🧪 DRY_RUN modu: ${isDryRun() ? 'AÇIK (tweet gönderilmez)' : 'KAPALI (gerçek tweet)'}`);
+  log(`🎯 TEST_MODE: ${TEST_MODE ? `AÇIK — sadece ${ACTIVE_TEAMS.map((t) => t.name).join(', ')} izleniyor (${ACTIVE_TEAMS.length} satır)` : `KAPALI — tam liste izleniyor (${ACTIVE_TEAMS.length} satır)`}`);
   log(`💾 State dosyası: ${STATE_PATH}`);
 
   await loadPersistedState();

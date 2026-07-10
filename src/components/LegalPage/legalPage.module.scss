@@ -1,0 +1,72 @@
+@use '../../styles/variables' as *;
+
+.page {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: $spacing-6 0 $spacing-8;
+}
+
+.backLink {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 600;
+  color: $color-text-secondary;
+  margin-bottom: $spacing-4;
+
+  &:hover {
+    color: $color-primary-dark;
+  }
+}
+
+.title {
+  font-size: 26px;
+  font-weight: 800;
+  color: $color-text;
+  margin-bottom: $spacing-3;
+}
+
+.intro {
+  font-size: 14px;
+  line-height: 1.6;
+  color: $color-text-secondary;
+  margin-bottom: $spacing-6;
+}
+
+.sections {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-5;
+}
+
+.section {
+  padding-bottom: $spacing-4;
+  border-bottom: 1px solid $color-border;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.sectionHeading {
+  font-size: 15px;
+  font-weight: 700;
+  color: $color-text;
+  margin-bottom: $spacing-2;
+}
+
+.sectionBody {
+  font-size: 13px;
+  line-height: 1.7;
+  color: $color-text-secondary;
+}
+
+.draftNotice {
+  margin-top: $spacing-6;
+  padding: $spacing-3 $spacing-4;
+  background: $color-muted;
+  border: 1px dashed $color-border;
+  border-radius: $radius-sm;
+  font-size: 12px;
+  line-height: 1.6;
+  color: $color-text-secondary;
+}

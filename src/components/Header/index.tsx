@@ -20,7 +20,8 @@ import styles from './header.module.scss';
 export default function Header() {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { data: session } = useSession();
+  const { data: session, status: sessionStatus } = useSession();
+  const sessionLoading = sessionStatus === 'loading';
   const { credits, authenticated: hasCredits } = useCredits();
   const { t } = useTranslation('nav');
   const { locale, setLocale } = useI18n();
@@ -142,7 +143,12 @@ export default function Header() {
           </div>
         </div>
         <div className={styles.actions}>
-          {session ? (
+          {sessionLoading ? (
+            // Oturum durumu netleşene kadar "Giriş Yap/Üye Ol" ya da "Profil" gibi
+            // yanlış olabilecek bir state göstermek yerine nötr bir placeholder gösteriyoruz.
+            // Bu, sayfa her yüklendiğinde header'ın "titremesini" (auth flicker) önler.
+            <div className={styles.authPlaceholder} aria-hidden="true" />
+          ) : session ? (
             <>
               <Link
                 href="/profile"
@@ -225,7 +231,9 @@ export default function Header() {
             </Link>
           </nav>
           <div className={styles.mobileActions}>
-            {session ? (
+            {sessionLoading ? (
+              <div className={styles.authPlaceholderMobile} aria-hidden="true" />
+            ) : session ? (
               <>
                 <Link
                   href="/profile"

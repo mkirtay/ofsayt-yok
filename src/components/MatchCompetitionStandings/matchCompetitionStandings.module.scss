@@ -99,14 +99,36 @@
     font-weight: 800;
     color: $color-primary-dark;
     padding-right: $spacing-2;
+    // "P" (puan) sütunu tablonun en önemli bilgisi olduğu halde geniş
+    // tablolarda yatay scroll yapılmadan görünmüyordu; sağa sabitleyip
+    // her zaman görünür tutuyoruz. Arka planı, altındaki satırların
+    // (hover / öne çıkan satır) rengiyle eşleşecek şekilde ayrıca
+    // tanımlanıyor ki "yapışkan" sütun geçişte şeffaf görünmesin.
+    position: sticky;
+    right: 0;
+    z-index: 1;
+    background: $color-surface;
+    box-shadow: -6px 0 6px -6px rgba(0, 0, 0, 0.18);
   }
 
   tbody tr:hover td {
     background: $color-row-highlight;
   }
+
+  tbody tr:hover td.colPoints {
+    background: $color-row-highlight;
+  }
 }
 
 .rowHighlight td {
+  background: #e8f5ec;
+
+  &:hover {
+    background: #dff3e5 !important;
+  }
+}
+
+.rowHighlight td.colPoints {
   background: #e8f5ec;
 
   &:hover {
@@ -222,14 +244,28 @@
     .colPoints {
       color: #fff;
       font-weight: 700;
+      background: #111;
+      box-shadow: -6px 0 6px -6px rgba(0, 0, 0, 0.5);
     }
 
     tbody tr:hover td {
       background: #1a1a1a;
     }
 
+    tbody tr:hover td.colPoints {
+      background: #1a1a1a;
+    }
+
     tbody tr:last-child td {
       border-bottom-color: #252525;
+    }
+  }
+
+  .rowHighlight td.colPoints {
+    background: #14241a;
+
+    &:hover {
+      background: #1a3020 !important;
     }
   }
 

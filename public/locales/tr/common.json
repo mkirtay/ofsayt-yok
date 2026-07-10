@@ -11,5 +11,14 @@
   "serverErrorTitle": "Bir Şeyler Ters Gitti",
   "serverErrorDesc": "Sunucumuzda beklenmedik bir hata oluştu. Lütfen sayfayı yenileyin.",
   "refreshPage": "Sayfayı Yenile",
-  "premium": "⭐ Premium"
+  "premium": "⭐ Premium",
+  "footer": {
+    "tagline": "Canlı skorlar, maç analizleri, puan durumu ve yapay zekâ destekli tahminler.",
+    "linksHeading": "Kurumsal",
+    "privacyPolicy": "Gizlilik Politikası",
+    "termsOfUse": "Kullanım Şartları",
+    "contact": "İletişim",
+    "disclaimer": "Sitedeki yapay zekâ analizleri, tahminler ve bahis pazarı değerlendirmeleri yalnızca bilgilendirme amaçlıdır; yatırım veya bahis tavsiyesi niteliği taşımaz. İçerikler 18 yaş altı kullanıcılara yönelik değildir.",
+    "copyright": "© {{year}} Ofsayt Yok. Tüm hakları saklıdır."
+  }
 }

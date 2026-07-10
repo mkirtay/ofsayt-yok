@@ -11,5 +11,14 @@
   "serverErrorTitle": "Something Went Wrong",
   "serverErrorDesc": "An unexpected error occurred on our server. Please refresh the page.",
   "refreshPage": "Refresh Page",
-  "premium": "⭐ Premium"
+  "premium": "⭐ Premium",
+  "footer": {
+    "tagline": "Live scores, match analysis, standings, and AI-powered predictions.",
+    "linksHeading": "Company",
+    "privacyPolicy": "Privacy Policy",
+    "termsOfUse": "Terms of Use",
+    "contact": "Contact",
+    "disclaimer": "AI analyses, predictions, and betting-market commentary on this site are for informational purposes only and do not constitute investment or betting advice. This content is not intended for users under the age of 18.",
+    "copyright": "© {{year}} Ofsayt Yok. All rights reserved."
+  }
 }
