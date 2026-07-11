@@ -122,7 +122,6 @@ export default function AiIstatistikleri() {
         <meta property="og:title" content={t('pageTitle')} />
         <meta property="og:description" content={t('pageDesc')} />
         <meta property="og:url" content={`${process.env.AUTH_URL ?? 'https://ofsaytyok.app'}/ai-istatistikleri`} />
-        <meta property="og:image" content={`${process.env.AUTH_URL ?? 'https://ofsaytyok.app'}/images/logo.svg`} />
       </Head>
 
       <Container>

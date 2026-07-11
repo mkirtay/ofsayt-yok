@@ -66,9 +66,13 @@ export default function NewsDetail() {
         <meta name="description" content={pageDescription} />
         <meta property="og:title" content={article.title} />
         <meta property="og:description" content={pageDescription} />
-        <meta property="og:type" content="article" />
-        {article.image && <meta property="og:image" content={article.image} />}
-        <meta name="twitter:card" content={article.image ? 'summary_large_image' : 'summary'} />
+        <meta property="og:type" content="article" key="og:type" />
+        {article.image && (
+          <>
+            <meta property="og:image" content={article.image} key="og:image" />
+            <meta name="twitter:card" content="summary_large_image" key="twitter:card" />
+          </>
+        )}
         <meta name="twitter:title" content={article.title} />
         <meta name="twitter:description" content={pageDescription} />
         {article.image && <meta name="twitter:image" content={article.image} />}

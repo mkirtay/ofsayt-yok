@@ -28,7 +28,6 @@ export default function CreditsPage() {
         <meta property="og:title" content={t('pageTitle')} />
         <meta property="og:description" content={t('pageDesc')} />
         <meta property="og:url" content={`${process.env.AUTH_URL ?? 'https://ofsaytyok.app'}/credits`} />
-        <meta property="og:type" content="website" />
       </Head>
 
       <Container>

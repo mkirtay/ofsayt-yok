@@ -294,7 +294,12 @@ export default function TeamDetail() {
         <meta name="description" content={teamPageDescription} />
         <meta property="og:title" content={teamPageTitle} />
         <meta property="og:description" content={teamPageDescription} />
-        {teamInfo.logo && <meta property="og:image" content={teamInfo.logo} />}
+        {teamInfo.logo && (
+          <>
+            <meta property="og:image" content={teamInfo.logo} key="og:image" />
+            <meta name="twitter:image" content={teamInfo.logo} />
+          </>
+        )}
       </Head>
 
       {bootstrapLoading ? (

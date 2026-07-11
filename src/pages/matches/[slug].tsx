@@ -296,17 +296,17 @@ export default function MatchDetail({ initialMatch }: MatchDetailProps) {
         <link rel="canonical" href={canonicalUrl} />
         <meta property="og:title" content={pageTitle} />
         <meta property="og:description" content={pageDescription} />
-        <meta property="og:type" content="article" />
+        <meta property="og:type" content="article" key="og:type" />
         <meta property="og:url" content={canonicalUrl} />
         {ogImageUrl && (
           <>
-            <meta property="og:image" content={ogImageUrl} />
-            <meta property="og:image:width" content="1200" />
-            <meta property="og:image:height" content="630" />
+            <meta property="og:image" content={ogImageUrl} key="og:image" />
+            <meta property="og:image:width" content="1200" key="og:image:width" />
+            <meta property="og:image:height" content="630" key="og:image:height" />
             <meta name="twitter:image" content={ogImageUrl} />
+            <meta name="twitter:card" content="summary_large_image" key="twitter:card" />
           </>
         )}
-        <meta name="twitter:card" content={ogImageUrl ? 'summary_large_image' : 'summary'} />
         <meta name="twitter:title" content={pageTitle} />
         <meta name="twitter:description" content={pageDescription} />
         {match ? (
