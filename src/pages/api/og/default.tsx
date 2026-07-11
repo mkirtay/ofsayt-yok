@@ -1,4 +1,5 @@
 import { ImageResponse } from 'next/og';
+import type { NextRequest } from 'next/server';
 
 export const config = {
   runtime: 'edge',
@@ -7,7 +8,8 @@ export const config = {
 const GREEN = '#00A76F';
 const GREEN_DARK = '#007B55';
 
-export default function handler() {
+export default function handler(req: NextRequest) {
+  const { origin } = new URL(req.url);
   return new ImageResponse(
     (
       <div
@@ -37,11 +39,8 @@ export default function handler() {
         />
 
         <div style={{ display: 'flex', alignItems: 'center', marginBottom: 28 }}>
-          <div style={{ display: 'flex', width: 14, height: 64, background: '#fff', marginRight: 10 }} />
-          <div style={{ display: 'flex', width: 70, height: 46, background: '#fff', marginRight: 22 }} />
-          <div style={{ display: 'flex', color: '#fff', fontSize: 64, fontWeight: 800, letterSpacing: 1 }}>
-            OFSAYT YOK
-          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={`${origin}/images/logo.svg`} width={380} height={72} alt="" />
         </div>
 
         <div style={{ display: 'flex', color: '#eafff5', fontSize: 30, fontWeight: 600 }}>

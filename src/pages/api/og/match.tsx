@@ -14,7 +14,7 @@ function truncate(s: string, max: number): string {
 }
 
 export default function handler(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
+  const { searchParams, origin } = new URL(req.url);
   const home = truncate(searchParams.get('home') || 'Ev Sahibi', 20);
   const away = truncate(searchParams.get('away') || 'Deplasman', 20);
   const homeLogo = searchParams.get('homeLogo') || '';
@@ -49,13 +49,10 @@ export default function handler(req: NextRequest) {
           }}
         />
 
-        {/* Üst bar: wordmark */}
+        {/* Üst bar: gerçek marka logosu */}
         <div style={{ display: 'flex', alignItems: 'center', padding: '36px 56px 0' }}>
-          <div style={{ display: 'flex', width: 10, height: 40, background: '#fff', marginRight: 6 }} />
-          <div style={{ display: 'flex', width: 46, height: 30, background: '#fff', marginRight: 14 }} />
-          <div style={{ display: 'flex', color: '#fff', fontSize: 26, fontWeight: 700, letterSpacing: 1 }}>
-            OFSAYT YOK
-          </div>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={`${origin}/images/logo.svg`} width={190} height={36} alt="" />
         </div>
 
         {/* Lig etiketi */}
