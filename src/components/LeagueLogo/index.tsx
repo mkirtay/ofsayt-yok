@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 /**
  * Lig logosu — `src` yoksa ya da görsel yüklenemezse kırık-görsel ikonu yerine
@@ -13,8 +13,9 @@ export default function LeagueLogo({
   size?: number;
   className?: string;
 }) {
-  const [failed, setFailed] = useState(false);
-  useEffect(() => setFailed(false), [src]);
+  // Hata yalnızca ilgili `src` için geçerli: kaynak değişince yeniden denenir (effect'te setState gerekmez).
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
+  const failed = failedSrc === src;
 
   if (!src || failed) {
     return (
@@ -34,7 +35,7 @@ export default function LeagueLogo({
       width={size}
       height={size}
       loading="lazy"
-      onError={() => setFailed(true)}
+      onError={() => setFailedSrc(src)}
     />
   );
 }

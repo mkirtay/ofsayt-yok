@@ -26,43 +26,6 @@ type HistoryMatch = {
   status?: string;
 };
 
-function parseHistoryMatch(m: Record<string, unknown>, teamId: number): HistoryMatch {
-  const home = m.home as { id?: number; name?: string; logo?: string } | undefined;
-  const away = m.away as { id?: number; name?: string; logo?: string } | undefined;
-  const scores = m.scores as { ft_score?: string; score?: string } | undefined;
-  return {
-    id: Number(m.id ?? 0),
-    date: m.date as string | undefined,
-    homeId: home?.id,
-    homeName: home?.name ?? '?',
-    homeLogo: home?.logo,
-    awayId: away?.id,
-    awayName: away?.name ?? '?',
-    awayLogo: away?.logo,
-    score: scores?.ft_score || scores?.score || (m.score as string | undefined),
-    round: m.round as string | undefined,
-    status: m.status as string | undefined,
-  };
-}
-
-function getBestRound(matches: HistoryMatch[]): string {
-  const roundOrder = ['Final', 'SF', 'QF', 'R16', 'R32', 'Group Stage'];
-  const seen = new Set<string>();
-  for (const m of matches) {
-    const r = (m.round ?? '').trim().toUpperCase().replace(/\s+/g, '');
-    if (r === 'F' || r === 'FINAL') seen.add('Final');
-    else if (r === '1/2' || r === 'SF') seen.add('SF');
-    else if (r === '1/4' || r === 'QF') seen.add('QF');
-    else if (r === '1/8' || r === 'R16') seen.add('R16');
-    else if (r === '1/16' || r === 'R32') seen.add('R32');
-    else seen.add('Group Stage');
-  }
-  for (const stage of roundOrder) {
-    if (seen.has(stage)) return stage;
-  }
-  return matches.length ? 'Group Stage' : '—';
-}
-
 type Props = {
   team: TeamEntry | null;
   groupMatches: GroupedLeagueMatches[];

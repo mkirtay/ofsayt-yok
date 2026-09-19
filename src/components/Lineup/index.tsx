@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import Link from 'next/link';
-import { LineupPlayer } from '@/models/domain';
+import type { LineupPlayer, MatchLineupData } from '@/models/domain';
 import { LineupSkeleton } from '@/components/Skeleton';
 import { buildFormationLayout } from '@/utils/lineupFormation';
 import { POSITION_LABEL_TR, positionLabel } from '@/utils/positionLabel';
 import styles from './lineup.module.scss';
 
 interface LineupProps {
-  lineups: any | null;
+  lineups: MatchLineupData | null;
   loading?: boolean;
 }
 

@@ -147,7 +147,6 @@ export default function MatchAnalysis({ matchId, match }: Props) {
   const [serverPhase, setServerPhase] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
-  const [notGenerated, setNotGenerated] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const lastFetchedMatchId = useRef<string | null>(null);
@@ -159,7 +158,6 @@ export default function MatchAnalysis({ matchId, match }: Props) {
     try {
       const res = await fetch(`/api/matches/${matchId}/analysis`);
       if (res.status === 404) {
-        setNotGenerated(true);
         setAnalysis(null);
         return;
       }
@@ -175,7 +173,6 @@ export default function MatchAnalysis({ matchId, match }: Props) {
       setAnalysis(body.analysis);
       setPredictionRecord(body.predictionRecord ?? null);
       setServerPhase(body.matchPhase ?? null);
-      setNotGenerated(false);
     } catch (err) {
       setError(err instanceof Error ? err.message : t('analysis.notGenerated'));
     } finally {
@@ -202,7 +199,6 @@ export default function MatchAnalysis({ matchId, match }: Props) {
       }
       setAnalysis(body.analysis as ApiAnalysis);
       setPredictionRecord((body.predictionRecord as ApiPredictionRecord) ?? null);
-      setNotGenerated(false);
       void refreshCredits();
     } catch {
       setError(t('analysis.notGenerated'));

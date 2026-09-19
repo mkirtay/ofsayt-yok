@@ -2,7 +2,6 @@
  * Dünya Kupası tarihsel verileri için statik lookup tablosu.
  * Scraping 403 hatası verdiği için, WC tarihi değişmediğinden statik veri daha güvenilir.
  */
-import type { WorldFootballData } from '../types';
 
 const FINISH_PRIORITY = ['Şampiyon', 'İkinci', 'Üçüncü', 'Dördüncü', 'Çeyrek Final', 'Yarı Final', 'Son 16', 'Grup Aşaması'];
 

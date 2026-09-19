@@ -171,10 +171,6 @@
     "daysAgo": "{{count}} gün önce"
   },
   "compare": {
-    "country": "Ülke",
-    "selectCountry": "— Ülke seç —",
-    "league": "Lig",
-    "selectLeague": "— Lig seç —",
     "team1": "Takım 1",
     "team2": "Takım 2",
     "selectTeam": "— Takım seç —",

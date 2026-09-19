@@ -31,7 +31,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     res.setHeader('Cache-Control', 'public, s-maxage=120, stale-while-revalidate=300');
     res.status(200).json(payload);
-  } catch (error: any) {
-    res.status(500).json({ success: false, error: error?.message || 'News fetch failed' });
+  } catch (error: unknown) {
+    res.status(500).json({ success: false, error: (error instanceof Error && error.message) || 'News fetch failed' });
   }
 }

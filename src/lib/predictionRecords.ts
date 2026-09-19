@@ -217,7 +217,7 @@ async function resolveMatchForEvaluation(
 
 /** Biten maçların kayıtlı tahminlerini gerçek skorla karşılaştırır. */
 export async function evaluatePendingPredictionRecords(
-  req: IncomingMessage
+  _req: IncomingMessage
 ): Promise<EvaluatePredictionsResult> {
   await backfillMissingPredictionRecords();
 

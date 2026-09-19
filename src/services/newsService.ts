@@ -21,7 +21,16 @@ function stripHtml(html?: string): string {
   return html.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
 }
 
-function extractImage(item: Record<string, any>): string | undefined {
+/** RSS öğesinde okunan (parser tipinde olmayan) uzantı alanları. */
+type FeedItemExtras = {
+  enclosure?: { url?: string };
+  'media:content'?: { $?: { url?: string } };
+  'media:thumbnail'?: { $?: { url?: string } };
+  'content:encoded'?: string;
+  content?: string;
+};
+
+function extractImage(item: FeedItemExtras): string | undefined {
   if (item.enclosure?.url) return item.enclosure.url;
 
   const media =
@@ -38,7 +47,7 @@ async function fetchSource(source: NewsSource): Promise<NewsItem[]> {
   try {
     const feed = await parser.parseURL(source.rssUrl);
     return (feed.items || []).map((item) => {
-      const rawContent = (item as any)['content:encoded'] || item.content || '';
+      const rawContent = (item as FeedItemExtras)['content:encoded'] || item.content || '';
       const fullText = stripHtml(rawContent);
       return {
         id: hashId(source.id, item.link || item.guid || item.title || ''),

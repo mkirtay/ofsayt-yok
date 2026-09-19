@@ -170,9 +170,9 @@ describe('getMatchWithEvents / getMatchStats / getMatchLineups — Faz 3, gerçe
       // Oyuncu reytingi için lineups.details include'u şart (type_id 118).
       const url = decodeURIComponent(fetchSpy.mock.calls[0][0] as string);
       expect(url).toContain('include=lineups.player.nationality;lineups.details;participants');
-      expect(lineups.lineup.home.team.name).toBe('Celta de Vigo');
-      expect(lineups.lineup.away.team.name).toBe('Osasuna');
-      expect(lineups.lineup.home.players.some((p: { substitution: string }) => p.substitution === '0')).toBe(true);
+      expect(lineups!.lineup.home.team.name).toBe('Celta de Vigo');
+      expect(lineups!.lineup.away.team.name).toBe('Osasuna');
+      expect(lineups!.lineup.home.players.some((p: { substitution: string }) => p.substitution === '0')).toBe(true);
     });
   });
 });
@@ -262,7 +262,7 @@ describe('getCompetitionTableFull / getLeagueTable — Faz 3, /standings/seasons
 
       const table = await getLeagueTable('3');
       expect(Array.isArray(table)).toBe(true);
-      expect(table[0]).toMatchObject({ rank: 1, name: 'FC Barcelona' });
+      expect(table![0]).toMatchObject({ rank: 1, name: 'FC Barcelona' });
     });
   });
 

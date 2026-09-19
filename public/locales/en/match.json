@@ -171,10 +171,6 @@
     "daysAgo": "{{count}} days ago"
   },
   "compare": {
-    "country": "Country",
-    "selectCountry": "— Select Country —",
-    "league": "League",
-    "selectLeague": "— Select League —",
     "team1": "Team 1",
     "team2": "Team 2",
     "selectTeam": "— Select Team —",

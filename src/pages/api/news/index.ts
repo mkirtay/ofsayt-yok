@@ -6,11 +6,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const limit = Math.min(Number(req.query.limit) || 20, 50);
     const items = await getCachedNews();
     res.status(200).json({ success: true, items: items.slice(0, limit) });
-  } catch (error: any) {
+  } catch (error: unknown) {
     const stale = getCacheSnapshot();
     if (stale) {
       return res.status(200).json({ success: true, items: stale, stale: true });
     }
-    res.status(500).json({ success: false, error: error?.message || 'News fetch failed' });
+    res.status(500).json({ success: false, error: (error instanceof Error && error.message) || 'News fetch failed' });
   }
 }

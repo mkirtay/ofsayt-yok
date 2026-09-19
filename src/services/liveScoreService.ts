@@ -5,7 +5,7 @@ import {
   LiveMatchData,
   Match,
 } from '../models/liveScore';
-import { MatchEvent, MatchStatsData } from '../models/domain';
+import { MatchEvent, MatchLineupData, MatchStatsData } from '../models/domain';
 import {
   compareGroupedLeagues,
   TURKEY_COMPETITION_IDS,
@@ -24,6 +24,7 @@ import {
   extractAppearances,
   extractSquadStats,
   extractTeamTopScorers,
+  type DisciplinaryRow,
   type TeamTopScorer,
   type SquadStatLine,
   GOAL_TOPSCORER_TYPE_ID,
@@ -1141,7 +1142,7 @@ export const getMatchStats = async (matchId: string): Promise<MatchStatsData | n
 
 // Endpoint: GET /matches/lineups.json?match_id=X (flag kapalı) |
 // GET /fixtures/{id}?include=lineups.player.nationality;lineups.details;participants (flag açık — Pass 4/5)
-export const getMatchLineups = async (matchId: string): Promise<any | null> => {
+export const getMatchLineups = async (matchId: string): Promise<MatchLineupData | null> => {
   if (isSportmonksProviderEnabled()) {
     try {
       const fixture = await sportmonksFetchFixtureDetail(matchId, 'lineups.player.nationality;lineups.details;participants');
@@ -1237,7 +1238,7 @@ export const getTeamSquads = async (
   teamId: string,
   competitionId: string,
   opts?: { seasonId?: number },
-): Promise<any> => {
+): Promise<unknown[]> => {
   if (isSportmonksProviderEnabled()) {
     try {
       const path =
@@ -1269,7 +1270,7 @@ export const getTeamSquads = async (
     });
     if (rosterRes.data.success && Array.isArray(rosterRes.data.data?.teams)) {
       const teams = rosterRes.data.data.teams;
-      const target = teams.find((t: any) => String(t?.team?.id) === String(teamId));
+      const target = teams.find((t: { team?: { id?: number | string } }) => String(t?.team?.id) === String(teamId));
       if (Array.isArray(target?.players)) return target.players;
     }
     return [];
@@ -1518,10 +1519,29 @@ export const getCompetitionTableFull = async (
   }
 };
 
+/** Eski sağlayıcı `stages/groups/standings` şekli (yalnızca düzleştirme için kullanılan alanlar). */
+type LegacyTableStage = {
+  groups?: Array<{
+    name?: string;
+    standings?: Array<{
+      rank: number;
+      points: number;
+      matches: number;
+      goal_diff: number;
+      goals_scored?: number;
+      goals_conceded?: number;
+      won: number;
+      drawn: number;
+      lost: number;
+      team?: { id?: number; name?: string; logo?: string };
+    }>;
+  }>;
+};
+
 // Endpoint: GET /competitions/table.json?competition_id=X (flag kapalı) |
 // GET /standings/seasons/{season_id} (flag açık — Pass 4, aynı primitif
 // `getCompetitionTableFull` ile paylaşılıyor, sadece düz `table[]` dönülüyor)
-export const getLeagueTable = async (competitionId: string): Promise<any> => {
+export const getLeagueTable = async (competitionId: string): Promise<unknown[] | null> => {
   if (isSportmonksProviderEnabled()) {
     try {
       const data = await sportmonksFetchCompetitionTable(competitionId);
@@ -1544,9 +1564,9 @@ export const getLeagueTable = async (competitionId: string): Promise<any> => {
 
       const stages = response.data.data.stages;
       if (Array.isArray(stages)) {
-        const flattened = stages.flatMap((stage: any) =>
-          (stage.groups || []).flatMap((group: any) =>
-            (group.standings || []).map((standing: any) => ({
+        const flattened = stages.flatMap((stage: LegacyTableStage) =>
+          (stage.groups || []).flatMap((group) =>
+            (group.standings || []).map((standing) => ({
               rank: standing.rank,
               points: standing.points,
               matches: standing.matches,
@@ -1709,7 +1729,7 @@ export const getTeamTopScorers = async (seasonId: number, teamId: number, limit 
 // GET /topscorers/seasons/{id}?filters=seasonTopscorerTypes:83,84 (flag açık — Pass 4:
 // `getTopScorers` ile AYNI endpoint/primitif — `sportmonksFetchTopscorerRows` — sadece
 // filtre type_id'leri farklı; iki satır [kırmızı,sarı] oyuncu bazında tek satıra birleştiriliyor).
-export const getTopDisciplinary = async (competitionId: string): Promise<any> => {
+export const getTopDisciplinary = async (competitionId: string): Promise<DisciplinaryRow[]> => {
   if (isSportmonksProviderEnabled()) {
     try {
       const rows = await sportmonksFetchTopscorerRows(

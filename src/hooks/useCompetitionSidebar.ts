@@ -1,6 +1,5 @@
 import {
   useQuery,
-  useQueryClient,
   type QueryClient,
 } from '@tanstack/react-query';
 import {

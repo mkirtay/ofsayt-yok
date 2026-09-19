@@ -79,7 +79,6 @@ function firstWeekday(year: number, month: number) {
 
 function toIcsDt(date: string, time: string) {
   const [y, mo, d] = date.split('-');
-  const [h, mi] = time.replace(':', '').padEnd(4, '0').split('');
   const hh = (time.split(':')[0] ?? '00').padStart(2, '0');
   const mm = (time.split(':')[1] ?? '00').padStart(2, '0');
   return `${y}${mo}${d}T${hh}${mm}00Z`;

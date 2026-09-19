@@ -52,8 +52,6 @@ export default function WorldCupTeamList({ tableData, favoriteTeamIds, onToggleF
     return <div className={styles.empty}>Takım verisi yüklenemedi.</div>;
   }
 
-  let lastGroup = '';
-
   return (
     <div className={styles.root}>
       <div className={styles.header}>
@@ -61,9 +59,8 @@ export default function WorldCupTeamList({ tableData, favoriteTeamIds, onToggleF
         <span className={styles.headerHint}>Takıma tıkla → detay | ★ → favori</span>
       </div>
       <div className={styles.list}>
-        {teams.map((team) => {
-          const isNewGroup = team.groupName !== lastGroup;
-          lastGroup = team.groupName;
+        {teams.map((team, idx) => {
+          const isNewGroup = team.groupName !== (teams[idx - 1]?.groupName ?? '');
           const isFav = favSet.has(team.teamId);
 
           return (

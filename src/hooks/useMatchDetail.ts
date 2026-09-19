@@ -1,3 +1,4 @@
+import type { MatchLineupData } from '@/models/domain';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   findMatchById,
@@ -97,7 +98,7 @@ export type MatchDetailState = {
   matchId: string;
   match: Match | null;
   events: MatchEvent[];
-  lineups: unknown;
+  lineups: MatchLineupData | null;
   stats: MatchStatsData | null;
   standings: CompetitionTableData | null;
   seasons: SeasonListItem[];
@@ -129,7 +130,7 @@ export function useMatchDetail(
   const [matchId, setMatchId] = useState('');
   const [match, setMatch] = useState<Match | null>(initialMatch);
   const [events, setEvents] = useState<MatchEvent[]>([]);
-  const [lineups, setLineups] = useState<unknown>(null);
+  const [lineups, setLineups] = useState<MatchLineupData | null>(null);
   const [stats, setStats] = useState<MatchStatsData | null>(null);
   const [standings, setStandings] = useState<CompetitionTableData | null>(null);
   const [matchLoading, setMatchLoading] = useState(!initialMatch && Boolean(requestedMatchId));
