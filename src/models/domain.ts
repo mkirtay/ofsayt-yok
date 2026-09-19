@@ -32,6 +32,15 @@ export interface LineupPlayer {
   /** "GK" | "DF" | "MF" | "FW" — API'den geliyor */
   position?: string;
   photo?: string;
+  /** Uyruk bayrağı (küçük PNG URL'si) + ülke adı; veri yoksa yok. */
+  nationality?: { name?: string; flag?: string };
+  /** Kısa ayrıntılı mevki kodu (GK, RB, CM, ST …); ayrıntılı id yoksa kaba GK/DF/MF/FW. */
+  pos_code?: string;
+  /** Maç sonrası oyuncu reytingi (Sportmonks type 118, 0-10). Oynamayan yedekte / veri yoksa `undefined` — UI asla "0" göstermemeli. */
+  rating?: number;
+  /** Sportmonks `formation_field` "satır:sütun" — satır 1 = kaleci, artan satır = ileri hat. Yalnızca ilk 11'de dolu. */
+  formation_row?: number;
+  formation_col?: number;
 }
 
 export interface LineupTeam {

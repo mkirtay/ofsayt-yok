@@ -1,0 +1,42 @@
+{
+  "id": 18674352,
+  "league_id": 5,
+  "state_id": 5,
+  "name": "Zürich vs Arsenal",
+  "starting_at": "2022-09-08 16:45:00",
+  "participants": [
+    {
+      "id": 19,
+      "name": "Arsenal",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/teams/19/19.png",
+      "meta": {
+        "location": "away",
+        "winner": true,
+        "position": null
+      }
+    },
+    {
+      "id": 389,
+      "name": "Zürich",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/teams/5/389.png",
+      "meta": {
+        "location": "home",
+        "winner": false,
+        "position": null
+      }
+    }
+  ],
+  "group": {
+    "id": 247770,
+    "league_id": 5,
+    "season_id": 20090,
+    "stage_id": 77458828,
+    "name": "Group A"
+  },
+  "state": {
+    "id": 5,
+    "state": "FT",
+    "name": "Full Time",
+    "short_name": "FT"
+  }
+}

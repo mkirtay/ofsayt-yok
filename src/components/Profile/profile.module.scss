@@ -1,0 +1,444 @@
+@use '../../styles/variables' as *;
+
+.page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: $spacing-6 $spacing-4 $spacing-8;
+}
+
+.title {
+  font-size: 22px;
+  font-weight: 700;
+  color: $color-text;
+  margin: 0 0 $spacing-2;
+}
+
+.subtitle {
+  font-size: 13px;
+  color: $color-text-secondary;
+  margin: 0 0 $spacing-6;
+}
+
+.section {
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  box-shadow: $shadow-surface;
+  padding: $spacing-5;
+  margin-bottom: $spacing-5;
+}
+
+.sectionTitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: $color-text;
+  margin: 0 0 $spacing-4;
+  padding-bottom: $spacing-2;
+  border-bottom: 1px solid $color-border;
+}
+
+.field {
+  margin-bottom: $spacing-4;
+
+  &:last-of-type {
+    margin-bottom: 0;
+  }
+}
+
+.label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: $color-text-secondary;
+  margin-bottom: $spacing-1;
+}
+
+.input,
+.textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-family: $font-family;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
+  background: $color-bg;
+  color: $color-text;
+  transition: $transition-base;
+  outline: none;
+
+  &:focus {
+    border-color: $color-primary;
+  }
+
+  &:disabled {
+    opacity: 0.75;
+    cursor: not-allowed;
+  }
+}
+
+.textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.readonly {
+  background: $color-muted;
+  color: $color-text-secondary;
+}
+
+.actions {
+  margin-top: $spacing-5;
+}
+
+.submit {
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: $font-family;
+  border: none;
+  border-radius: $radius-sm;
+  background: $color-primary;
+  color: $color-surface;
+  cursor: pointer;
+  transition: $transition-base;
+
+  &:hover:not(:disabled) {
+    background: $color-primary-dark;
+  }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+}
+
+.message {
+  font-size: 13px;
+  margin-top: $spacing-3;
+
+  &.ok {
+    color: $color-primary-dark;
+  }
+
+  &.err {
+    color: $color-danger;
+  }
+}
+
+.roleBadge {
+  display: inline-block;
+  margin-top: $spacing-2;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  border-radius: $radius-full;
+  background: $color-muted;
+  color: $color-text-secondary;
+}
+
+.roleAdmin {
+  background: rgba($color-primary, 0.15);
+  color: $color-primary-dark;
+}
+
+// ── Sekmeler (Match Detay / lig filtresiyle aynı chip dili) ──────────────────
+
+.tabs {
+  display: flex;
+  gap: $spacing-2;
+  margin-bottom: $spacing-5;
+  overflow-x: auto;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.chip {
+  @include filter-chip;
+}
+
+.chipActive {
+  @include filter-chip-active;
+}
+
+.hint {
+  margin: 0 0 $spacing-3;
+  font-size: 13px;
+  line-height: 1.5;
+  color: $color-text-secondary;
+}
+
+.linkBtn {
+  margin-top: $spacing-2;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-action-text);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+// ── Avatar seçici ────────────────────────────────────────────────────────────
+
+.avatarWrap {
+  display: flex;
+  gap: $spacing-4;
+  align-items: flex-start;
+
+  @media (max-width: $bp-sm) {
+    flex-direction: column;
+  }
+}
+
+.avatarPreview {
+  flex-shrink: 0;
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: $color-muted;
+  color: $color-text-secondary;
+  font-size: 32px;
+  font-weight: 800;
+  border: 2px solid $color-border;
+}
+
+.avatarPreviewImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatarBody {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+}
+
+.avatarGrid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: $spacing-2;
+  margin-bottom: $spacing-4;
+
+  @media (max-width: $bp-sm) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.avatarBtn {
+  aspect-ratio: 1;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+  transition: $transition-base;
+
+  img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+  }
+
+  &:hover {
+    border-color: $color-border;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+    outline-offset: 2px;
+  }
+}
+
+.avatarBtnActive {
+  border-color: $color-primary;
+  box-shadow: 0 0 0 2px rgba($color-primary, 0.25);
+}
+
+// ── Favoriler ────────────────────────────────────────────────────────────────
+
+.favList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.favItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-3;
+  min-height: 44px;
+  border-bottom: 1px solid $color-border;
+
+  &:last-child {
+    border-bottom: 0;
+  }
+}
+
+.favLink {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  min-width: 0;
+  color: $color-text;
+  text-decoration: none;
+}
+
+a.favLink:hover .favName {
+  text-decoration: underline;
+}
+
+.favName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.removeBtn {
+  flex-shrink: 0;
+  padding: 6px 12px;
+  border: 1px solid $color-border;
+  border-radius: $radius-full;
+  background: transparent;
+  color: $color-text-secondary;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: $transition-base;
+
+  &:hover {
+    color: $color-danger;
+    border-color: $color-danger;
+  }
+}
+
+// ── Kredi geçmişi ────────────────────────────────────────────────────────────
+
+.histList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.histRow {
+  display: flex;
+  justify-content: space-between;
+  gap: $spacing-3;
+  padding: $spacing-3 0;
+  border-bottom: 1px solid $color-border;
+
+  &:last-child {
+    border-bottom: 0;
+  }
+}
+
+.histMain {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.histType {
+  font-size: 14px;
+  font-weight: 600;
+  color: $color-text;
+}
+
+.histMatch {
+  font-size: 12px;
+  color: var(--color-action-text);
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.histNote,
+.histDate,
+.histBalance {
+  font-size: 12px;
+  color: $color-text-secondary;
+}
+
+.histNums {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  font-variant-numeric: tabular-nums;
+}
+
+.histAmount {
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.histPlus {
+  color: var(--color-win);
+}
+
+.histMinus {
+  color: var(--color-loss);
+}
+
+.histZero {
+  color: $color-text-secondary;
+}
+
+.moreBtn {
+  display: block;
+  width: 100%;
+  margin-top: $spacing-3;
+  padding: 10px;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
+  background: transparent;
+  color: var(--color-action-text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: $color-muted;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: wait;
+  }
+}
+
+// ── Analizlerim (header'daki MyAnalysesList'i kart içinde gösterir) ──────────
+
+.listBox {
+  display: flex;
+  flex-direction: column;
+  max-height: 480px;
+  overflow-y: auto;
+}

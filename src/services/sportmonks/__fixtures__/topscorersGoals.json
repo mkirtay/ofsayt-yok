@@ -1,0 +1,59 @@
+[
+  {
+    "id": 372156638,
+    "season_id": 27965,
+    "player_id": 160258,
+    "type_id": 208,
+    "position": 1,
+    "total": 9,
+    "participant_id": 83,
+    "player": {
+      "id": 160258,
+      "display_name": "Raphinha",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/players/2/160258.png"
+    },
+    "participant": {
+      "id": 83,
+      "name": "FC Barcelona",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/teams/19/83.png"
+    }
+  },
+  {
+    "id": 375099595,
+    "season_id": 27965,
+    "player_id": 37656179,
+    "type_id": 208,
+    "position": 2,
+    "total": 7,
+    "participant_id": 83,
+    "player": {
+      "id": 37656179,
+      "display_name": "Lamine Yamal",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/players/19/37656179.png"
+    },
+    "participant": {
+      "id": 83,
+      "name": "FC Barcelona",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/teams/19/83.png"
+    }
+  },
+  {
+    "id": 372972775,
+    "season_id": 27965,
+    "player_id": 96611,
+    "type_id": 208,
+    "position": 3,
+    "total": 7,
+    "participant_id": 3468,
+    "player": {
+      "id": 96611,
+      "display_name": "Kylian Mbappé ",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/players/3/96611.png"
+    },
+    "participant": {
+      "id": 3468,
+      "name": "Real Madrid",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/teams/12/3468.png"
+    }
+  }
+]

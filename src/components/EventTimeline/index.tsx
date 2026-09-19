@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { MatchEvent } from '@/models/domain';
 import { PanelSkeleton } from '@/components/Skeleton';
 import styles from './eventTimeline.module.scss';
@@ -9,17 +10,31 @@ interface EventTimelineProps {
   loading?: boolean;
 }
 
-const EVENT_ICONS: Record<string, string> = {
-  GOAL: '⚽',
-  YELLOW_CARD: '🟨',
-  RED_CARD: '🟥',
-  SUBSTITUTION: '🔄',
-};
+/** Tek boyutlu (16×16) ikon kutusu: top / sarı / kırmızı kart / oyuncu değişikliği. */
+function EventIcon({ event }: { event: string }): ReactNode {
+  switch (event) {
+    case 'GOAL':
+      return <span className={`${styles.icon} ${styles.iconGoal}`} aria-label="Gol" role="img">⚽</span>;
+    case 'YELLOW_CARD':
+      return <span className={styles.icon} aria-label="Sarı kart" role="img"><i className={`${styles.card} ${styles.cardYellow}`} /></span>;
+    case 'RED_CARD':
+      return <span className={styles.icon} aria-label="Kırmızı kart" role="img"><i className={`${styles.card} ${styles.cardRed}`} /></span>;
+    case 'SUBSTITUTION':
+      return (
+        <span className={`${styles.icon} ${styles.iconSub}`} aria-label="Oyuncu değişikliği" role="img">
+          <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M3 5.5h9M9.5 3l2.5 2.5L9.5 8" />
+            <path d="M13 10.5H4M6.5 8L4 10.5 6.5 13" />
+          </svg>
+        </span>
+      );
+    default:
+      return <span className={styles.icon} aria-hidden="true">•</span>;
+  }
+}
 
 export default function EventTimeline({
   events,
-  homeName = 'Ev Sahibi',
-  awayName = 'Deplasman',
   loading,
 }: EventTimelineProps) {
   if (loading) {
@@ -40,34 +55,31 @@ export default function EventTimeline({
   return (
     <div className={styles.timeline}>
       <h3 className={styles.title}>Maç Olayları</h3>
-      <div className={styles.events}>
+      <ol className={styles.events}>
         {sortedEvents.map((event, index) => {
-          const isHome = event.is_home;
-          const playerName = event.player?.name || '';
-          const icon = EVENT_ICONS[event.event] || '📋';
-
+          const name = event.player?.name || '';
+          const side = (
+            <>
+              <span className={styles.player} title={name}>{name}</span>
+              <EventIcon event={event.event} />
+            </>
+          );
           return (
-            <div
-              key={`${event.id}-${index}`}
-              className={`${styles.eventRow} ${isHome ? styles.homeEvent : styles.awayEvent}`}
-            >
-              {isHome && (
-                <div className={styles.leftSide}>
-                  <span className={styles.player}>{playerName}</span>
-                  <span className={styles.icon}>{icon}</span>
-                </div>
-              )}
-              <div className={styles.minute}>{event.time}'</div>
-              {!isHome && (
-                <div className={styles.rightSide}>
-                  <span className={styles.icon}>{icon}</span>
-                  <span className={styles.player}>{playerName}</span>
-                </div>
-              )}
-            </div>
+            <li key={`${event.id}-${index}`} className={styles.eventRow}>
+              <div className={styles.homeCell}>{event.is_home ? side : null}</div>
+              <span className={styles.minute}>{event.time}&apos;</span>
+              <div className={styles.awayCell}>
+                {event.is_home ? null : (
+                  <>
+                    <EventIcon event={event.event} />
+                    <span className={styles.player} title={name}>{name}</span>
+                  </>
+                )}
+              </div>
+            </li>
           );
         })}
-      </div>
+      </ol>
     </div>
   );
 }

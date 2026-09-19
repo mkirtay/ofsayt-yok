@@ -8,6 +8,8 @@ export type CreditTransactionType =
   | 'SIGNUP_BONUS'
   | 'PURCHASE'
   | 'ANALYSIS_SPEND'
+  /** Premium kullanıcının kredisiz ürettiği analiz (miktar 0) — "AI Analizlerim" listesinde görünsün diye kaydedilir. */
+  | 'ANALYSIS_FREE'
   | 'ADMIN_GRANT'
   | 'REFUND';
 
@@ -50,6 +52,13 @@ export async function spendCredits(
       },
     });
     return balanceAfter;
+  });
+}
+
+/** Kredi düşmeyen (premium) analiz üretimini 0 tutarlı kayıtla denetim izine yazar. */
+export async function recordFreeAnalysis(userId: string, matchId: string, balance: number): Promise<void> {
+  await prisma.creditTransaction.create({
+    data: { userId, type: 'ANALYSIS_FREE', amount: 0, balanceAfter: balance, matchId, note: 'Premium: kredisiz analiz' },
   });
 }
 

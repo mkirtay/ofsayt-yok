@@ -1,6 +1,7 @@
 {
   "worldCup": "WORLD CUP",
-  "uefa": "UEFA",
+  "aiMenu": "AI",
+  "account": "Account",
   "aiAccuracy": "AI Accuracy",
   "credits": "Credits",
   "myAnalyses": "My AI Analyses",
@@ -9,5 +10,16 @@
   "signIn": "Sign In",
   "signUp": "Sign Up",
   "toggleMenu": "Toggle menu",
-  "langSwitch": "TR"
+  "langSwitch": "TR",
+  "bottomNav": {
+    "live": "Live",
+    "standings": "Standings",
+    "leagues": "Leagues",
+    "favorites": "Favorites",
+    "more": "More",
+    "label": "Bottom navigation"
+  },
+  "searchPlaceholder": "Search team or league…",
+  "themeToLight": "Switch to light theme",
+  "themeToDark": "Switch to dark theme"
 }

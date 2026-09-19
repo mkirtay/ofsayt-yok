@@ -1,0 +1,194 @@
+[
+  {
+    "id": 14674461908,
+    "player_id": 1128,
+    "team_id": 36,
+    "position_id": 25,
+    "type_id": 11,
+    "formation_field": "2:3",
+    "formation_position": 4,
+    "player_name": "Marcos Alonso",
+    "jersey_number": 3,
+    "player": {
+      "id": 1128,
+      "display_name": "Marcos Alonso",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/players/8/1128.png"
+    }
+  },
+  {
+    "id": 14674478932,
+    "player_id": 24799857,
+    "team_id": 36,
+    "position_id": 26,
+    "type_id": 11,
+    "formation_field": "3:3",
+    "formation_position": 7,
+    "player_name": "Ilaix Moriba",
+    "jersey_number": 6,
+    "player": {
+      "id": 24799857,
+      "display_name": "Ilaix Moriba",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/players/17/24799857.png"
+    }
+  },
+  {
+    "id": 14674478987,
+    "player_id": 800,
+    "team_id": 36,
+    "position_id": 27,
+    "type_id": 11,
+    "formation_field": "4:1",
+    "formation_position": 9,
+    "player_name": "Iago Aspas",
+    "jersey_number": 10,
+    "player": {
+      "id": 800,
+      "display_name": "Iago Aspas ",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/players/0/800.png"
+    }
+  },
+  {
+    "id": 14674461905,
+    "player_id": 130199,
+    "team_id": 36,
+    "position_id": 24,
+    "type_id": 11,
+    "formation_field": "1:1",
+    "formation_position": 1,
+    "player_name": "Ionuț Radu",
+    "jersey_number": 13,
+    "player": {
+      "id": 130199,
+      "display_name": "Ionuț Radu ",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/players/23/130199.png"
+    }
+  },
+  {
+    "id": 14674479136,
+    "player_id": 438751,
+    "team_id": 36,
+    "position_id": 24,
+    "type_id": 12,
+    "formation_field": null,
+    "formation_position": null,
+    "player_name": "Altay Bayındır",
+    "jersey_number": 1,
+    "player": {
+      "id": 438751,
+      "display_name": "Altay Bayındır",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/players/31/438751.png"
+    }
+  },
+  {
+    "id": 14674479138,
+    "player_id": 190919,
+    "team_id": 36,
+    "position_id": 25,
+    "type_id": 12,
+    "formation_field": null,
+    "formation_position": null,
+    "player_name": "Carl Starfelt",
+    "jersey_number": 2,
+    "player": {
+      "id": 190919,
+      "display_name": "Carl Starfelt",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/players/7/190919.png"
+    }
+  },
+  {
+    "id": 14674461916,
+    "player_id": 189296,
+    "team_id": 459,
+    "position_id": 24,
+    "type_id": 11,
+    "formation_field": "1:1",
+    "formation_position": 1,
+    "player_name": "Sergio Herrera",
+    "jersey_number": 1,
+    "player": {
+      "id": 189296,
+      "display_name": "Sergio Herrera",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/players/16/189296.png"
+    }
+  },
+  {
+    "id": 14674461919,
+    "player_id": 16476323,
+    "team_id": 459,
+    "position_id": 25,
+    "type_id": 11,
+    "formation_field": "2:2",
+    "formation_position": 5,
+    "player_name": "Jorge Herrando",
+    "jersey_number": 5,
+    "player": {
+      "id": 16476323,
+      "display_name": "Jorge Herrando",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/players/3/16476323.png"
+    }
+  },
+  {
+    "id": 14674478934,
+    "player_id": 188626,
+    "team_id": 459,
+    "position_id": 26,
+    "type_id": 11,
+    "formation_field": "3:2",
+    "formation_position": 9,
+    "player_name": "Lucas Torró",
+    "jersey_number": 6,
+    "player": {
+      "id": 188626,
+      "display_name": "Lucas Torró",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/players/18/188626.png"
+    }
+  },
+  {
+    "id": 14674478935,
+    "player_id": 35281051,
+    "team_id": 459,
+    "position_id": 27,
+    "type_id": 11,
+    "formation_field": "4:1",
+    "formation_position": 11,
+    "player_name": "Raúl García",
+    "jersey_number": 9,
+    "player": {
+      "id": 35281051,
+      "display_name": "Raúl García",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/players/27/35281051.png"
+    }
+  },
+  {
+    "id": 14674478989,
+    "player_id": 37371160,
+    "team_id": 459,
+    "position_id": 26,
+    "type_id": 12,
+    "formation_field": null,
+    "formation_position": null,
+    "player_name": "Iker Muñoz",
+    "jersey_number": 8,
+    "player": {
+      "id": 37371160,
+      "display_name": "Iker Muñoz",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/players/24/37371160.png"
+    }
+  },
+  {
+    "id": 14674461926,
+    "player_id": 36085251,
+    "team_id": 459,
+    "position_id": 26,
+    "type_id": 12,
+    "formation_field": null,
+    "formation_position": null,
+    "player_name": "Aimar Oroz",
+    "jersey_number": 10,
+    "player": {
+      "id": 36085251,
+      "display_name": "Aimar Oroz",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/players/3/36085251.png"
+    }
+  }
+]

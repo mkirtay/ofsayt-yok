@@ -1,82 +1,87 @@
 @use '../../styles/variables' as *;
 
+// "Topluluk" kartının (MatchCommunity) içindeki anket bölümü — kendi kart çerçevesi yok.
 .poll {
-  background: $color-surface;
-  border: 1px solid $color-border;
-  border-radius: $radius-md;
-  padding: $spacing-5;
   margin-bottom: $spacing-4;
 }
 
 .title {
-  font-size: 15px;
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: 600;
   color: $color-text;
-  margin: 0 0 $spacing-1;
+  margin: 0 0 2px;
 }
 
 .subtitle {
   font-size: 13px;
   color: $color-text-secondary;
-  margin: 0 0 $spacing-4;
+  margin: 0 0 $spacing-3;
 }
 
-/* ── Butonlar ─────────────────────────────────── */
+/* ── Segmented pill ───────────────────────────── */
 
 .buttons {
   display: flex;
-  gap: $spacing-3;
+  gap: 4px;
+  padding: 4px;
+  border-radius: $radius-full;
+  background: $color-muted;
+  border: 1px solid $color-border;
 
   @media (max-width: 480px) {
     flex-direction: column;
+    border-radius: $radius-md;
   }
 }
 
 .voteBtn {
   position: relative;
   flex: 1;
-  min-width: 96px;
-  overflow: hidden;
+  min-width: 0;
+  min-height: var(--touch-target, 40px);
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
+  justify-content: center;
   gap: 3px;
-  padding: 14px $spacing-4;
-  border: 2px solid $color-border;
-  border-radius: $radius-md;
-  background: $color-surface;
+  padding: 8px $spacing-3 10px;
+  border: 1.5px solid transparent;
+  border-radius: $radius-full;
+  background: transparent;
   color: $color-text;
   cursor: pointer;
-  text-align: left;
+  text-align: center;
   transition:
     border-color 0.15s ease,
     background-color 0.15s ease;
-  z-index: 0;
 
   &:hover:not(:disabled) {
-    border-color: $color-primary;
-    background: rgba(0, 167, 111, 0.04);
+    background: $color-surface;
   }
 
   &:disabled {
     cursor: default;
   }
 
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+    outline-offset: 2px;
+  }
+
   @media (max-width: 480px) {
     flex-direction: row;
-    align-items: center;
     justify-content: space-between;
-    padding: $spacing-3 $spacing-4;
+    border-radius: $radius-md;
+    padding: 8px $spacing-4 12px;
   }
 }
 
 .voteBtnSelected {
-  border-color: $color-primary !important;
+  border-color: $color-primary;
+  background: $color-surface;
 }
 
 .voteBtnLabel {
-  position: relative;
-  z-index: 1;
   font-size: 12px;
   font-weight: 600;
   color: $color-text-secondary;
@@ -85,40 +90,40 @@
   line-height: 1;
 
   .voteBtnSelected & {
-    color: $color-primary-dark;
+    color: var(--color-action-text);
   }
 }
 
 .voteBtnPct {
-  position: relative;
-  z-index: 1;
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 800;
   color: $color-text;
   line-height: 1;
   font-variant-numeric: tabular-nums;
 
   .voteBtnSelected & {
-    color: $color-primary-dark;
-  }
-
-  @media (max-width: 480px) {
-    font-size: 18px;
+    color: var(--color-action-text);
   }
 }
 
-.voteBtnBar {
+// Oy yüzdesi dolgu barı — pill'in altında ince bir anket çubuğu.
+.voteBtnTrack {
   position: absolute;
-  inset: 0 auto 0 0;
-  height: 100%;
-  background: rgba(0, 167, 111, 0.09);
-  z-index: 0;
-  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-  border-radius: inherit;
+  left: 14px;
+  right: 14px;
+  bottom: 4px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--border-subtle);
+  overflow: hidden;
+}
 
-  .voteBtnSelected & {
-    background: rgba(0, 167, 111, 0.15);
-  }
+.voteBtnBar {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: $color-primary;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* ── Meta + CTA ───────────────────────────────── */
@@ -126,7 +131,7 @@
 .meta {
   font-size: 12px;
   color: $color-text-secondary;
-  margin: $spacing-3 0 0;
+  margin: $spacing-2 0 0;
 }
 
 .loginCta {
@@ -136,7 +141,7 @@
 }
 
 .loginLink {
-  color: $color-primary-dark;
+  color: var(--color-action-text);
   font-weight: 600;
   text-decoration: underline;
 

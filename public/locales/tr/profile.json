@@ -27,5 +27,61 @@
   "passwordChanged": "Şifre güncellendi.",
   "updatePassword": "Şifreyi güncelle",
   "updating": "Güncelleniyor…",
-  "loading": "Yükleniyor…"
+  "loading": "Yükleniyor…",
+  "tabs": {
+    "info": "Bilgilerim",
+    "favorites": "Favorilerim",
+    "credits": "Kredi Geçmişi",
+    "analyses": "Analizlerim"
+  },
+  "avatar": {
+    "title": "Profil görseli",
+    "gallery": "Avatar galerisi",
+    "orUrl": "ya da kendi görselinin URL'si",
+    "remove": "Görseli kaldır",
+    "names": {
+      "ball": "Top",
+      "boot": "Krampon",
+      "whistle": "Düdük",
+      "trophy": "Kupa",
+      "gloves": "Eldiven",
+      "corner-flag": "Korner bayrağı",
+      "shirt": "Forma",
+      "yellow-card": "Sarı kart",
+      "red-card": "Kırmızı kart",
+      "stadium": "Stadyum",
+      "goal": "Kale ağı",
+      "captain": "Kaptan bandı"
+    }
+  },
+  "favorites": {
+    "teams": "Favori takımlar",
+    "leagues": "Favori ligler",
+    "emptyTeams": "Henüz favori takımın yok. Ana sayfada bir takımın yanındaki ☆ ile ekleyebilirsin.",
+    "emptyLeagues": "Henüz favori ligin yok.",
+    "remove": "Kaldır",
+    "removeAria": "{{name}} favorilerden kaldır",
+    "error": "İşlem tamamlanamadı, tekrar dene.",
+    "importTitle": "Cihazımdaki favoriler",
+    "importHint": "Ana sayfada bu cihazda ☆ ile işaretlediğin takımları hesabındaki favorilere ekler. Mevcut favorilerin silinmez.",
+    "importButton": "Cihazımdaki favorileri içeri aktar",
+    "imported": "{{count}} takım içeri aktarıldı.",
+    "importNone": "Bu cihazda içeri aktarılacak favori bulunamadı.",
+    "importNothingNew": "Cihazındaki favoriler zaten hesabında."
+  },
+  "history": {
+    "empty": "Henüz kredi hareketin yok.",
+    "more": "Daha fazla göster",
+    "error": "Kredi geçmişi yüklenemedi.",
+    "balanceAfter": "Bakiye: {{balance}}",
+    "types": {
+      "SIGNUP_BONUS": "Kayıt bonusu",
+      "ADMIN_GRANT": "Yönetici tanımladı",
+      "ANALYSIS_SPEND": "AI analiz",
+      "ANALYSIS_FREE": "AI analiz (Premium)",
+      "PURCHASE": "Satın alma",
+      "REFUND": "İade"
+    }
+  },
+  "analysesHint": "Ürettiğin AI maç analizleri ve tahminlerinin isabet durumu."
 }

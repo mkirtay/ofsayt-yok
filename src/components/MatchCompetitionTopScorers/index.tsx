@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import Link from 'next/link';
 import { useTranslation } from '@/lib/i18n';
 import type {
@@ -8,6 +9,13 @@ import type {
 import SeasonSelect from '@/components/SeasonSelect';
 import { formatSeasonLabel } from '@/utils/seasonLabel';
 import styles from './matchCompetitionTopScorers.module.scss';
+
+/** Gol Krallığı varsayılan görünür satır sayısı; kalanı "Tümünü Göster" ile açılır (veri zaten elde, ek istek yok). */
+export const TOP_SCORERS_INITIAL_LIMIT = 20;
+
+export function visibleScorers<T>(all: T[], expanded: boolean): T[] {
+  return expanded ? all : all.slice(0, TOP_SCORERS_INITIAL_LIMIT);
+}
 
 function rankCellClass(rank: number): string {
   if (rank === 1) return `${styles.rankBadge} ${styles.rank1}`;
@@ -32,6 +40,10 @@ export default function MatchCompetitionTopScorers({
   onSeasonChange,
 }: MatchCompetitionTopScorersProps) {
   const { t } = useTranslation('match');
+  // "Tümünü Göster" durumu sezona bağlı: sezon/lig değişince liste yeniden 20'ye döner.
+  const listKey = `${data?.competition?.id ?? ''}:${data?.season?.id ?? ''}`;
+  const [expandedKey, setExpandedKey] = useState<string | null>(null);
+  const expanded = expandedKey === listKey;
 
   if (loading) {
     return (
@@ -42,7 +54,9 @@ export default function MatchCompetitionTopScorers({
     );
   }
 
-  const list = data?.topscorers ?? [];
+  const fullList = data?.topscorers ?? [];
+  const list = visibleScorers(fullList, expanded);
+  const hiddenCount = fullList.length - list.length;
   const seasonName = data?.season?.name;
   const showSeasonSelect = Boolean(seasons?.length && onSeasonChange);
 
@@ -130,7 +144,13 @@ export default function MatchCompetitionTopScorers({
                         />
                       ) : null}
                       <div className={styles.nameStack}>
-                        <span className={styles.playerName}>{pname}</span>
+                        {pid != null ? (
+                          <Link href={`/players/${pid}`} className={styles.playerName} prefetch={false}>
+                            {pname}
+                          </Link>
+                        ) : (
+                          <span className={styles.playerName}>{pname}</span>
+                        )}
                         {tid != null ? (
                           <Link
                             href={`/teams/${tid}`}
@@ -154,6 +174,11 @@ export default function MatchCompetitionTopScorers({
           </tbody>
         </table>
       </div>
+      {hiddenCount > 0 ? (
+        <button type="button" className={styles.showAll} onClick={() => setExpandedKey(listKey)}>
+          {t('topScorers.showAll', { count: fullList.length })}
+        </button>
+      ) : null}
     </section>
   );
 }

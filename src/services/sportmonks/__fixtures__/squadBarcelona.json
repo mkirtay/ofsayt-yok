@@ -1,0 +1,66 @@
+[
+  {
+    "id": 1281178,
+    "player_id": 37598766,
+    "team_id": 83,
+    "position_id": 27,
+    "jersey_number": 19,
+    "captain": false,
+    "start": "2025-07-14",
+    "end": "2029-06-30",
+    "player": {
+      "id": 37598766,
+      "display_name": "Roony Bardghji",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/players/14/37598766.png",
+      "date_of_birth": "2005-11-15"
+    }
+  },
+  {
+    "id": 1039872,
+    "player_id": 805,
+    "team_id": 83,
+    "position_id": 24,
+    "jersey_number": 13,
+    "captain": false,
+    "start": "2024-10-02",
+    "end": "2027-06-30",
+    "player": {
+      "id": 805,
+      "display_name": "Wojciech Szczesny",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/players/5/805.png",
+      "date_of_birth": "1990-04-18"
+    }
+  },
+  {
+    "id": 1632274,
+    "player_id": 160956,
+    "team_id": 83,
+    "position_id": 25,
+    "jersey_number": 2,
+    "captain": false,
+    "start": "2026-08-20",
+    "end": "2029-06-30",
+    "player": {
+      "id": 160956,
+      "display_name": "João Cancelo",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/players/28/160956.png",
+      "date_of_birth": "1994-05-27"
+    }
+  },
+  {
+    "id": 362155,
+    "player_id": 337394,
+    "team_id": 83,
+    "position_id": 25,
+    "jersey_number": 23,
+    "captain": false,
+    "start": "2022-07-28",
+    "end": "2030-06-30",
+    "player": {
+      "id": 337394,
+      "display_name": "Jules Koundé",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/players/18/337394.png",
+      "date_of_birth": "1998-11-12"
+    }
+  }
+]

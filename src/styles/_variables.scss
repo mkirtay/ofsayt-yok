@@ -1,19 +1,26 @@
+// ⚠ Tema-bağımlı renkler (surface/bg/text/border/muted/row-highlight/shadow) artık
+// `_tokens.scss` içindeki CSS değişkenlerine bağlıdır — hex değeri değiştirmek için
+// oraya bakın. Marka/durum renkleri (primary, danger, live…) Sass fonksiyonlarıyla
+// (rgba()) kullanıldığı için sabit hex kalır.
 $color-primary: #00a76f;
+// Koyu zeminde okunabilir yeşil METİN rengi (color: için kullanın)
+$color-primary-text: var(--color-action-text);
+$color-premium: var(--color-premium);
 $color-primary-dark: #007B55;
-$color-surface: #FFFFFF;
-$color-bg: #F4F7F4;
-$color-muted: #EDF3EE;
-$color-text: #102015;
-$color-text-secondary: #4B5F52;
-$color-text-meta: #363636;
-$color-text-footer-label: #5D5D5D;
+$color-surface: var(--bg-surface);
+$color-bg: var(--bg-page);
+$color-muted: var(--bg-muted);
+$color-text: var(--text-primary);
+$color-text-secondary: var(--text-secondary);
+$color-text-meta: var(--text-secondary);
+$color-text-footer-label: var(--text-tertiary);
 $color-text-score-sep: #9ca3af;
-$color-border: #ECECEC;
+$color-border: var(--border-subtle);
 $color-info: #0EA5E9;
 $color-warning: #F59E0B;
 $color-danger: #DC2626;
 
-$color-row-highlight: #DFF5E6;
+$color-row-highlight: var(--bg-row-highlight);
 
 // ── Flashscore/Opta/FIFA26 esintili koyu yüzey + durum rozetleri ──────────
 // Skor kartları, canlı rozetler ve navbar gibi vurgulu/veri-yoğun alanlarda
@@ -43,7 +50,11 @@ $score-font-stretch: condensed;
 // Breakpoints (mobile-first; Tailwind-benzeri yaygın eşikler)
 $bp-sm: 640px; // büyük telefon / küçük tablet; altı ~410px dar mobil
 $bp-md: 768px; // tablet
-$bp-lg: 1024px; // masaüstü
+$bp-lg: 1024px; // masaüstü (satır sütun genişlikleri vb.)
+// ── Layout eşikleri (JS karşılığı: src/config/breakpoints.ts — birlikte güncelle) ──
+$bp-desktop: 1024px; // altı = mobil düzen (hamburger, alt nav, tek sütun); tablet dikey dahil
+$bp-split: 1200px; // split-view (liste + maç detay paneli) alt sınırı — `useSplitView` ile aynı
+$bp-widget: 1536px; // sağ widget sütunu görünür
 
 // Layout
 $container-width: 1240px;
@@ -59,6 +70,7 @@ $spacing-4: 16px;
 $spacing-5: 20px;
 $spacing-6: 24px;
 $spacing-8: 32px;
+$spacing-12: 48px;
 
 // Border Radius
 $radius-sm: 8px;
@@ -67,7 +79,89 @@ $radius-lg: 16px;
 $radius-full: 999px;
 
 // Shadow
-$shadow-surface: 0 10px 30px rgba(16, 32, 21, 0.08);
+$shadow-surface: var(--shadow-surface);
 
 // Transitions
 $transition-base: all 0.2s ease-in-out;
+
+// Mobil düzen (< $bp-desktop). Header/SubHeader/BottomNav/tokens/hub grid HEP bunu kullanır —
+// böylece 768–1023 arası "ölü bölge" oluşmaz.
+@mixin below-desktop {
+  @media (max-width: #{$bp-desktop - 1px}) {
+    @content;
+  }
+}
+
+// Filtre chip'i (Ana Sayfa lig filtresi + Maç Detay sekme chip'leri) — tek stil kaynağı.
+@mixin filter-chip {
+  flex: 0 0 auto;
+  min-height: 34px;
+  padding: 0 $spacing-3; // kompakt pill (§3: sidebar/kompakt 12px)
+  border-radius: $radius-full;
+  border: 1.5px solid var(--border-subtle);
+  background: var(--bg-surface);
+  color: $color-text-secondary;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: $transition-base;
+
+  &:hover {
+    color: $color-text;
+    background: $color-muted;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+    outline-offset: 2px;
+  }
+}
+
+// Aktif chip: Match Poll seçili pill diliyle aynı (yeşil kenarlık + action-text)
+@mixin filter-chip-active {
+  border-color: $color-primary;
+  color: var(--color-action-text);
+  background: var(--bg-surface);
+}
+
+// Form rozeti (G/B/M) — TEK stil kaynağı: MatchCard, TeamDetailView, /compare. Renkler `_tokens.scss` durum tokenlarından.
+@mixin form-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 5px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--color-on-status);
+}
+
+@mixin form-badge-win {
+  background: var(--color-win);
+}
+
+@mixin form-badge-draw {
+  background: var(--color-draw);
+}
+
+@mixin form-badge-loss {
+  background: var(--color-loss);
+}
+
+// Yatay kaydırılan tablolarda SON sütunu (Puan Durumu: P, Gol Krallığı: G) sağa sabitler.
+// Arka plan şeffaf olmamalı ki kayan içerik altından görünmesin; hover/öne çıkan satır rengi
+// `sticky-last-column-row-bg` ile sütuna da uygulanır. Tek mekanizma — iki tablo da bunu kullanır.
+@mixin sticky-last-column {
+  position: sticky;
+  right: 0;
+  z-index: 1;
+  background: $color-surface;
+  box-shadow: -6px 0 6px -6px rgba(0, 0, 0, 0.18);
+}
+
+@mixin sticky-last-column-row-bg($bg) {
+  background: $bg;
+}

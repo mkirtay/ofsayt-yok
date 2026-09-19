@@ -126,6 +126,14 @@
   overflow: hidden;
 }
 
+// Ebeveyn yüksekliğini doldurur (vh'den bağımsız). Üst sınır ebeveynden gelir; alt sınır kalır.
+// `flex: 1 1 0` → ebeveyn flex column ise kalan alanı alır (yanında başka blok varsa taşmaz).
+.virtualHostFill {
+  height: 100%;
+  min-height: 320px;
+  flex: 1 1 0;
+}
+
 .virtualPlaceholder {
   display: flex;
   align-items: center;
@@ -156,8 +164,8 @@
   box-sizing: border-box;
   flex: 1 1 auto;
   min-height: 0;
-  background: #FBFBFB;
-  border: 1px solid #ECECEC;
+  background: $color-muted;
+  border: 1px solid $color-border;
   padding: $spacing-2 6px;
   gap: $spacing-2;
   font-size: 12px;
@@ -220,7 +228,7 @@
   opacity: 0.88;
   min-width: 2rem;
   text-align: center;
-  color: #153d6b;
+  color: var(--text-secondary);
 
   @media (min-width: $bp-sm) {
     display: block;
@@ -310,7 +318,35 @@
 
 .virtualMatchRowLive {}
 
+// Split-view: detay paneli açıkken liste dar — mobil düzenine benzer sıkı sütunlar, İY yok
+.virtualHostCompact {
+  // 50px'lik durum sütununda yalnızca nokta + dakika ("CANLI" kelimesi sığmaz → takım adına biniyordu)
+  .liveCanliWord {
+    display: none;
+  }
+
+  .liveText {
+    font-size: 9px;
+    padding: 0 4px;
+    gap: 2px;
+  }
+
+  .matchRowLink {
+    grid-template-columns: 40px 50px minmax(0, 1fr) minmax(2.65rem, auto) minmax(0, 1fr);
+  }
+
+  .virtualHt {
+    display: none;
+  }
+}
+
 .virtualMatchRowHalfTime {}
+
+// Split-view: detay panelinde açık olan maç
+.virtualMatchRowSelected {
+  background-color: $color-row-highlight;
+  box-shadow: inset 3px 0 0 $color-primary;
+}
 
 .virtualMatchRowFirst {
   border-top: none;
@@ -451,16 +487,22 @@
 .liveText {
   color: #fff;
   background-color: $color-live;
-  padding: 10px 6px;
+  // Rozet durum sütunundan ASLA taşmaz (takım adı/logosuyla çakışmasın): sütun genişliğine kırpılır.
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  padding: 0 5px;
   border-radius: $radius-full;
-  line-height: 1.15;
+  line-height: 1;
   white-space: nowrap;
   font-size: 10px;
-  height: 18px;
-  display: flex;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  height: 16px;
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 4px;
+  justify-content: flex-start;
+  gap: 3px;
 
   &::before {
     content: '';

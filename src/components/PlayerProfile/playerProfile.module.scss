@@ -1,0 +1,497 @@
+@use '../../styles/variables' as *;
+
+// Ana Sayfa/Maç Detay kart dili (Design System §2-§3): surface + 1px border + radius-md, iç padding 16px (kompakt 12px).
+// Tek sütun (mobil / dar): Profil → Sezon → Detaylı → Transferler → Maç Geçmişi.
+// İki sütun: viewport değil PlayerProfile'ın kendi genişliğine göre (Maç Detay paneli 520px deseni gibi container query).
+// Sarmalayıcı `.root` container'dır; `.page` grid'i onun çocuğudur.
+.root {
+  container-type: inline-size;
+  margin: $spacing-4 0;
+  min-width: 0;
+}
+
+.page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: $spacing-4;
+  min-width: 0;
+
+  @container (min-width: 900px) {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+.main,
+.side {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+  min-width: 0;
+}
+
+.card,
+.header {
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  box-shadow: $shadow-surface;
+  padding: $spacing-4;
+  min-width: 0;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: $spacing-4;
+}
+
+.photo {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: $color-muted;
+  flex-shrink: 0;
+}
+
+.photoEmpty {
+  display: inline-block;
+}
+
+.headerInfo {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+  min-width: 0;
+}
+
+.name {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: $color-text;
+  line-height: 1.15;
+}
+
+.teamLine,
+.teamCell {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+.teamLink {
+  color: var(--color-action-text);
+  font-weight: 600;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.teamLogo {
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.teamName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-2;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px $spacing-3;
+  border: 1px solid $color-border;
+  border-radius: $radius-full;
+  background: $color-bg;
+  font-size: 12px;
+  font-weight: 600;
+  color: $color-text-secondary;
+}
+
+.flag {
+  border-radius: 2px;
+  object-fit: cover;
+}
+
+.cardHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-3;
+  flex-wrap: wrap;
+  margin-bottom: $spacing-3;
+  padding-bottom: $spacing-2;
+  border-bottom: 1px solid $color-border;
+
+  .cardTitle {
+    margin: 0;
+    padding: 0;
+    border: none;
+  }
+}
+
+.cardTitle {
+  margin: 0 0 $spacing-3;
+  padding-bottom: $spacing-2;
+  border-bottom: 1px solid $color-border;
+  font-size: var(--fs-section, 15px);
+  font-weight: var(--fw-section, 600);
+  color: $color-text;
+}
+
+.picker {
+  position: relative;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.pickerBtn {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  max-width: 100%;
+  height: 36px;
+  padding: 0 $spacing-3;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
+  background: $color-bg;
+  color: $color-text;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+    outline-offset: 1px;
+  }
+}
+
+.pickerText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.caret {
+  color: $color-text-secondary;
+  font-size: 11px;
+}
+
+.pickerList {
+  position: absolute;
+  top: calc(100% + #{$spacing-1});
+  right: 0;
+  z-index: 30;
+  width: max-content;
+  min-width: 100%;
+  max-width: min(420px, 90vw);
+  max-height: 320px;
+  overflow-y: auto;
+  margin: 0;
+  padding: $spacing-2;
+  list-style: none;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: $radius-md;
+  box-shadow: var(--shadow-surface);
+}
+
+// Aynı sezonda takım değişimi (transfer noktası): ince çizgi + küçük boşluk.
+.transferBreak {
+  margin-top: $spacing-2;
+  padding-top: $spacing-2;
+  border-top: 1px solid $color-border;
+}
+
+.pickerOption {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  width: 100%;
+  min-height: 40px;
+  padding: 0 $spacing-2;
+  border: 0;
+  border-radius: $radius-sm;
+  background: transparent;
+  color: $color-text;
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover {
+    background: $color-muted;
+  }
+}
+
+.pickerOptionActive {
+  font-weight: 700;
+}
+
+.logoPh {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--bg-muted);
+  flex-shrink: 0;
+}
+
+.seasonName {
+  font-size: 13px;
+  color: $color-text-secondary;
+}
+
+.select {
+  max-width: 100%;
+  min-height: 32px;
+  padding: 0 $spacing-2;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
+  background: $color-bg;
+  color: $color-text;
+  font-size: 13px;
+}
+
+.bioGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: $spacing-3;
+  margin: 0;
+}
+
+.bioItem {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  dt {
+    font-size: var(--fs-micro, 11px);
+    font-weight: var(--fw-micro, 500);
+    letter-spacing: var(--ls-micro, 0.06em);
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+  }
+
+  dd {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: $color-text;
+  }
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: $spacing-2;
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: $spacing-3 $spacing-2;
+  border-radius: $radius-sm;
+  background: $color-bg;
+}
+
+.tileValue {
+  font-size: 22px;
+  font-weight: 700;
+  color: $color-text;
+  font-variant-numeric: tabular-nums;
+}
+
+.tileLabel {
+  font-size: 12px;
+  color: $color-text-secondary;
+}
+
+.tileSub {
+  font-size: 10px;
+  color: var(--text-tertiary);
+}
+
+.groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: $spacing-4;
+}
+
+.groupTitle {
+  margin: 0 0 $spacing-2;
+  font-size: 13px;
+  font-weight: 700;
+  color: $color-text;
+}
+
+.statList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.statRow {
+  display: flex;
+  justify-content: space-between;
+  gap: $spacing-3;
+  padding: 6px 0;
+  border-bottom: 1px solid $color-border;
+  font-size: 13px;
+  color: $color-text-secondary;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  strong {
+    color: $color-text;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.tableScroll {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+
+  th,
+  td {
+    padding: $spacing-2 $spacing-2;
+    text-align: center;
+    border-bottom: 1px solid $color-border;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+
+  th {
+    background: $color-muted;
+    color: $color-text-secondary;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  tbody tr:hover td {
+    background: $color-row-highlight;
+  }
+
+  .left {
+    text-align: left;
+  }
+}
+
+.muted {
+  color: var(--text-tertiary);
+  font-size: 12px;
+}
+
+.pending {
+  color: $color-text-secondary;
+  font-size: 12px;
+}
+
+.compactList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.compactItem {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-1;
+  padding: $spacing-2 0;
+  font-size: 13px;
+
+  & + & {
+    border-top: 1px solid $color-border;
+  }
+}
+
+.compactMeta {
+  display: flex;
+  justify-content: space-between;
+  gap: $spacing-2;
+  font-size: 12px;
+  color: $color-text-secondary;
+}
+
+.score {
+  font-weight: 700;
+  color: $color-text;
+  font-variant-numeric: tabular-nums;
+}
+
+.transferTeams {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $spacing-2;
+}
+
+.arrow {
+  color: $color-text-secondary;
+}
+
+.matchStats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-3;
+  font-size: 12px;
+  color: $color-text-secondary;
+  font-variant-numeric: tabular-nums;
+}
+
+.showAll {
+  display: block;
+  width: 100%;
+  margin-top: $spacing-3;
+  padding: $spacing-2 $spacing-3;
+  border-top: 1px solid $color-border;
+  color: var(--color-action-text);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+@media (max-width: $bp-sm) {
+  .header {
+    align-items: flex-start;
+  }
+
+  .photo {
+    width: 72px;
+    height: 72px;
+  }
+
+  .name {
+    font-size: 20px;
+  }
+}

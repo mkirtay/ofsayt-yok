@@ -1,0 +1,99 @@
+@use '../../styles/variables' as *;
+
+.rightColumn {
+  display: flex;
+  flex-direction: column;
+  gap: var(--section-gap);
+  min-width: 0;
+  position: sticky;
+  top: calc(var(--header-height) + 64px);
+  align-self: start;
+}
+
+.widget {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: $radius-md;
+  padding: var(--card-padding-compact);
+}
+
+.widgetHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-2;
+  margin-bottom: $spacing-2;
+}
+
+.widgetTitle {
+  font-size: var(--fs-section);
+  font-weight: var(--fw-section);
+  color: var(--text-primary);
+}
+
+.widgetLink {
+  font-size: var(--fs-meta);
+  font-weight: 600;
+  color: $color-primary-text;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.widgetNote {
+  padding: $spacing-3 0;
+  font-size: var(--fs-meta);
+  color: var(--text-secondary);
+}
+
+.miniList {
+  list-style: none;
+}
+
+.miniRow {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  min-height: 32px;
+  padding: 0 $spacing-1;
+  border-radius: $radius-sm;
+  font-size: var(--fs-body);
+  color: var(--text-primary);
+
+  &:hover {
+    background: var(--bg-muted);
+  }
+}
+
+.miniRank {
+  width: 20px;
+  font-size: var(--fs-meta);
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.miniLogo {
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.miniLogoPh {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--bg-muted);
+  flex-shrink: 0;
+}
+
+.miniName {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.miniPts {
+  font-weight: 700;
+}

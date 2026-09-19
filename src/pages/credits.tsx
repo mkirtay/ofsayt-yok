@@ -1,16 +1,14 @@
 import type { GetStaticProps } from 'next';
 import Head from 'next/head';
 import { serverSideTranslations } from '@/lib/serverSideTranslations';
+import { useSession } from 'next-auth/react';
 import { useTranslation } from '@/lib/i18n';
 import Container from '@/components/Container';
 import { useCredits } from '@/hooks/useCredits';
+import { isPremiumUser } from '@/lib/premium';
+import { CREDIT_PACKAGES, PREMIUM_PACKAGE_KEY } from '@/config/creditPackages';
 import styles from './credits.module.scss';
 
-const PACKAGES = [
-  { credits: 5, key: 'starter' },
-  { credits: 50, key: 'popular', featured: true },
-  { credits: 100, key: 'pro' },
-];
 
 const STEPS = ['how1', 'how2', 'how3'];
 const FAQ_KEYS = ['1', '2', '3'];
@@ -18,6 +16,8 @@ const FAQ_KEYS = ['1', '2', '3'];
 export default function CreditsPage() {
   const { t } = useTranslation('credits');
   const { authenticated, loading, credits } = useCredits();
+  const { data: session } = useSession();
+  const premium = authenticated && isPremiumUser({ role: session?.user?.role, credits });
 
   return (
     <>
@@ -44,6 +44,7 @@ export default function CreditsPage() {
                   <span className={styles.balanceValue}>
                     {credits} <span className={styles.balanceUnit}>{t('balanceUnit')}</span>
                   </span>
+                  {premium ? <span className={styles.premiumBadge}>{t('premiumActive')}</span> : null}
                 </>
               ) : (
                 <span className={styles.signInNote}>{t('signInNote')}</span>
@@ -55,10 +56,10 @@ export default function CreditsPage() {
             <h2 className={styles.sectionTitle}>{t('packagesTitle')}</h2>
             <p className={styles.comingSoonBanner}>{t('comingSoon')}</p>
             <div className={styles.pricingCards}>
-              {PACKAGES.map((pkg) => (
+              {CREDIT_PACKAGES.map((pkg) => (
                 <div
                   key={pkg.key}
-                  className={`${styles.pricingCard} ${pkg.featured ? styles.pricingCardFeatured : ''}`}
+                  className={`${styles.pricingCard} ${pkg.featured ? styles.pricingCardFeatured : ''} ${pkg.key === PREMIUM_PACKAGE_KEY ? styles.pricingCardPremium : ''}`.trim()}
                 >
                   {pkg.featured && <div className={styles.pricingPopular}>★</div>}
                   <div className={styles.pricingAmount}>
@@ -68,6 +69,7 @@ export default function CreditsPage() {
                   <button type="button" className={styles.buyBtn} disabled>
                     {t('buyDisabled')}
                   </button>
+                  {pkg.key === PREMIUM_PACKAGE_KEY ? <p className={styles.premiumNote}>{t('premiumNote')}</p> : null}
                 </div>
               ))}
             </div>

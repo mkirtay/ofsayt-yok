@@ -73,10 +73,10 @@ export default function MatchPoll({ matchId }: MatchPollProps) {
 
   return (
     <div className={styles.poll}>
-      <h3 className={styles.title}>{t('poll.title')}</h3>
+      <h4 className={styles.title}>{t('poll.title')}</h4>
       <p className={styles.subtitle}>{t('poll.subtitle')}</p>
 
-      <div className={styles.buttons}>
+      <div className={styles.buttons} role="group" aria-label={t('poll.title')}>
         {BUTTONS.map(({ key, labelKey }) => {
           const votes = poll ? (key === 'HOME' ? poll.home : key === 'DRAW' ? poll.draw : poll.away) : 0;
           const percentage = poll ? pct(votes, poll.total) : 0;
@@ -97,11 +97,9 @@ export default function MatchPoll({ matchId }: MatchPollProps) {
                 <span className={styles.voteBtnPct}>{percentage}%</span>
               )}
               {hasVoted && poll && poll.total > 0 && (
-                <span
-                  className={styles.voteBtnBar}
-                  style={{ width: `${percentage}%` }}
-                  aria-hidden
-                />
+                <span className={styles.voteBtnTrack} aria-hidden>
+                  <span className={styles.voteBtnBar} style={{ width: `${percentage}%` }} />
+                </span>
               )}
             </button>
           );

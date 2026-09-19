@@ -60,6 +60,8 @@ export interface Match {
   competition?: Competition;
   competition_id?: number;
   competition_name?: string;
+  /** Sportmonks `season_id` (yalnızca fixture kaynaklı maçlarda). */
+  season_id?: number;
   home_name?: string;
   away_name?: string;
   home_id?: number;
@@ -69,6 +71,13 @@ export interface Match {
   group_name?: string;
   /** `1/16`, `1/8`, `1/4`, `QF`, `SF`, `F` vb. — knockout tur etiketi (API alanı) */
   round?: string;
+  /**
+   * Sportmonks `stage.name` (ör. "Quarter-finals", "Knockout Round Play-offs") —
+   * Karar 3 (docs/SPORTMONKS_MIGRATION.md Pass 3 "Soru 3"): knockout turnuvalarda
+   * `round` hep boş, asıl bilgi burada. `round` ile `stage` AYRI iki alan, ikisi
+   * aynı anda dolu olmaz. Yalnızca Sportmonks sağlayıcısında doldurulur.
+   */
+  stage?: string;
   added?: string;
   outcomes?: {
     half_time?: string | null;

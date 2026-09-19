@@ -21,7 +21,7 @@ export async function fetchWorldCupStandingsBundle(seasonId?: number): Promise<{
   selectedSeasonId: number | null;
   standings: CompetitionTableData | null;
 }> {
-  const seasonsList = await getSeasonsList({ skipCalendarYearDedupe: true });
+  const seasonsList = await getSeasonsList({ skipCalendarYearDedupe: true, competitionId: WORLD_CUP_COMPETITION_ID });
   const wcSeasons = pickWorldCupSeasonsFromApi(seasonsList);
   const selectedSeasonId =
     seasonId ??

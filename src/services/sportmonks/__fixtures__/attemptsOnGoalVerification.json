@@ -1,0 +1,258 @@
+{
+  "superLig_19746621": {
+    "fixture_id": 19746621,
+    "name": "Fenerbahçe vs Beşiktaş",
+    "participants": [
+      {
+        "id": 554,
+        "name": "Beşiktaş"
+      },
+      {
+        "id": 88,
+        "name": "Fenerbahçe"
+      }
+    ],
+    "statistics": [
+      {
+        "type_id": 41,
+        "participant_id": 554,
+        "location": "away",
+        "data": {
+          "value": 3
+        }
+      },
+      {
+        "type_id": 41,
+        "participant_id": 88,
+        "location": "home",
+        "data": {
+          "value": 4
+        }
+      },
+      {
+        "type_id": 42,
+        "participant_id": 554,
+        "location": "away",
+        "data": {
+          "value": 14
+        }
+      },
+      {
+        "type_id": 42,
+        "participant_id": 88,
+        "location": "home",
+        "data": {
+          "value": 9
+        }
+      },
+      {
+        "type_id": 49,
+        "participant_id": 554,
+        "location": "away",
+        "data": {
+          "value": 9
+        }
+      },
+      {
+        "type_id": 49,
+        "participant_id": 88,
+        "location": "home",
+        "data": {
+          "value": 3
+        }
+      },
+      {
+        "type_id": 50,
+        "participant_id": 554,
+        "location": "away",
+        "data": {
+          "value": 5
+        }
+      },
+      {
+        "type_id": 50,
+        "participant_id": 88,
+        "location": "home",
+        "data": {
+          "value": 6
+        }
+      },
+      {
+        "type_id": 54,
+        "participant_id": 554,
+        "location": "away",
+        "data": {
+          "value": 8
+        }
+      },
+      {
+        "type_id": 54,
+        "participant_id": 88,
+        "location": "home",
+        "data": {
+          "value": 6
+        }
+      },
+      {
+        "type_id": 58,
+        "participant_id": 554,
+        "location": "away",
+        "data": {
+          "value": 5
+        }
+      },
+      {
+        "type_id": 58,
+        "participant_id": 88,
+        "location": "home",
+        "data": {
+          "value": 3
+        }
+      },
+      {
+        "type_id": 86,
+        "participant_id": 554,
+        "location": "away",
+        "data": {
+          "value": 6
+        }
+      },
+      {
+        "type_id": 86,
+        "participant_id": 88,
+        "location": "home",
+        "data": {
+          "value": 2
+        }
+      }
+    ]
+  },
+  "laLiga_19732740": {
+    "fixture_id": 19732740,
+    "name": "Celta de Vigo vs Osasuna",
+    "participants": [
+      {
+        "id": 459,
+        "name": "Osasuna"
+      },
+      {
+        "id": 36,
+        "name": "Celta de Vigo"
+      }
+    ],
+    "statistics": [
+      {
+        "type_id": 41,
+        "participant_id": 459,
+        "location": "away",
+        "data": {
+          "value": 5
+        }
+      },
+      {
+        "type_id": 41,
+        "participant_id": 36,
+        "location": "home",
+        "data": {
+          "value": 1
+        }
+      },
+      {
+        "type_id": 42,
+        "participant_id": 459,
+        "location": "away",
+        "data": {
+          "value": 13
+        }
+      },
+      {
+        "type_id": 42,
+        "participant_id": 36,
+        "location": "home",
+        "data": {
+          "value": 4
+        }
+      },
+      {
+        "type_id": 49,
+        "participant_id": 459,
+        "location": "away",
+        "data": {
+          "value": 8
+        }
+      },
+      {
+        "type_id": 49,
+        "participant_id": 36,
+        "location": "home",
+        "data": {
+          "value": 1
+        }
+      },
+      {
+        "type_id": 50,
+        "participant_id": 459,
+        "location": "away",
+        "data": {
+          "value": 5
+        }
+      },
+      {
+        "type_id": 50,
+        "participant_id": 36,
+        "location": "home",
+        "data": {
+          "value": 3
+        }
+      },
+      {
+        "type_id": 54,
+        "participant_id": 459,
+        "location": "away",
+        "data": {
+          "value": 9
+        }
+      },
+      {
+        "type_id": 54,
+        "participant_id": 36,
+        "location": "home",
+        "data": {
+          "value": 3
+        }
+      },
+      {
+        "type_id": 58,
+        "participant_id": 459,
+        "location": "away",
+        "data": {
+          "value": 3
+        }
+      },
+      {
+        "type_id": 58,
+        "participant_id": 36,
+        "location": "home",
+        "data": {
+          "value": 1
+        }
+      },
+      {
+        "type_id": 86,
+        "participant_id": 459,
+        "location": "away",
+        "data": {
+          "value": 5
+        }
+      },
+      {
+        "type_id": 86,
+        "participant_id": 36,
+        "location": "home",
+        "data": {
+          "value": 2
+        }
+      }
+    ]
+  }
+}

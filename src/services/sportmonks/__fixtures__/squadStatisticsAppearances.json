@@ -1,0 +1,871 @@
+[
+ {
+  "id": 1881176636,
+  "player_id": 167842,
+  "team_id": 4192,
+  "season_id": 28203,
+  "player": {
+   "id": 167842,
+   "display_name": "Florin Ștefan",
+   "statistics": [
+    {
+     "season_id": 28203,
+     "player_id": 167842,
+     "details": [
+      {
+       "id": 52452620,
+       "player_statistic_id": 1881176636,
+       "type_id": 321,
+       "value": {
+        "total": 3
+       }
+      },
+      {
+       "id": 52452660,
+       "player_statistic_id": 1881176636,
+       "type_id": 322,
+       "value": {
+        "total": 3
+       }
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "id": 1881176646,
+  "player_id": 20355818,
+  "team_id": 4192,
+  "season_id": 28203,
+  "player": {
+   "id": 20355818,
+   "display_name": "Fuat Bavuk",
+   "statistics": [
+    {
+     "season_id": 28203,
+     "player_id": 20355818,
+     "details": [
+      {
+       "id": 52735619,
+       "player_statistic_id": 1881176646,
+       "type_id": 321,
+       "value": {
+        "total": 2
+       }
+      },
+      {
+       "id": 52917131,
+       "player_statistic_id": 1881176646,
+       "type_id": 322,
+       "value": {
+        "total": 1
+       }
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "id": 1881610038,
+  "player_id": 37728187,
+  "team_id": 4192,
+  "season_id": 28203,
+  "player": {
+   "id": 37728187,
+   "display_name": "M. Müjdeci",
+   "statistics": [
+    {
+     "season_id": 28203,
+     "player_id": 37728187,
+     "details": []
+    }
+   ]
+  }
+ },
+ {
+  "id": 1881610040,
+  "player_id": 37575391,
+  "team_id": 4192,
+  "season_id": 28203,
+  "player": {
+   "id": 37575391,
+   "display_name": "Enver Kulasin",
+   "statistics": [
+    {
+     "season_id": 28203,
+     "player_id": 37575391,
+     "details": [
+      {
+       "id": 52917849,
+       "player_statistic_id": 1881610040,
+       "type_id": 321,
+       "value": {
+        "total": 1
+       }
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "id": 1881429331,
+  "player_id": 37732860,
+  "team_id": 4192,
+  "season_id": 28203,
+  "player": {
+   "id": 37732860,
+   "display_name": "Victor Gidado",
+   "statistics": [
+    {
+     "season_id": 28203,
+     "player_id": 37732860,
+     "details": [
+      {
+       "id": 52453300,
+       "player_statistic_id": 1881429331,
+       "type_id": 321,
+       "value": {
+        "total": 5
+       }
+      },
+      {
+       "id": 52917526,
+       "player_statistic_id": 1881429331,
+       "type_id": 322,
+       "value": {
+        "total": 3
+       }
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "id": 1881495117,
+  "player_id": 23278580,
+  "team_id": 4192,
+  "season_id": 28203,
+  "player": {
+   "id": 23278580,
+   "display_name": "Sontje Hansen",
+   "statistics": [
+    {
+     "season_id": 28203,
+     "player_id": 23278580,
+     "details": [
+      {
+       "id": 52735522,
+       "player_statistic_id": 1881495117,
+       "type_id": 321,
+       "value": {
+        "total": 3
+       }
+      },
+      {
+       "id": 52917845,
+       "player_statistic_id": 1881495117,
+       "type_id": 322,
+       "value": {
+        "total": 1
+       }
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "id": 1881176638,
+  "player_id": 23277919,
+  "team_id": 4192,
+  "season_id": 28203,
+  "player": {
+   "id": 23277919,
+   "display_name": "Kerim Calhanoglu",
+   "statistics": [
+    {
+     "season_id": 28203,
+     "player_id": 23277919,
+     "details": [
+      {
+       "id": 52917184,
+       "player_statistic_id": 1881176638,
+       "type_id": 321,
+       "value": {
+        "total": 3
+       }
+      },
+      {
+       "id": 53191887,
+       "player_statistic_id": 1881176638,
+       "type_id": 322,
+       "value": {
+        "total": 2
+       }
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "id": 1881429305,
+  "player_id": 165701,
+  "team_id": 4192,
+  "season_id": 28203,
+  "player": {
+   "id": 165701,
+   "display_name": "Deian Sorescu",
+   "statistics": [
+    {
+     "season_id": 28203,
+     "player_id": 165701,
+     "details": [
+      {
+       "id": 52452468,
+       "player_statistic_id": 1881429305,
+       "type_id": 321,
+       "value": {
+        "total": 5
+       }
+      },
+      {
+       "id": 52452517,
+       "player_statistic_id": 1881429305,
+       "type_id": 322,
+       "value": {
+        "total": 5
+       }
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "id": 1880944809,
+  "player_id": 37587007,
+  "team_id": 4192,
+  "season_id": 28203,
+  "player": {
+   "id": 37587007,
+   "display_name": "Burak Enes Yıkıcı",
+   "statistics": [
+    {
+     "season_id": 28203,
+     "player_id": 37587007,
+     "details": []
+    }
+   ]
+  }
+ },
+ {
+  "id": 1881176640,
+  "player_id": 22515510,
+  "team_id": 4192,
+  "season_id": 28203,
+  "player": {
+   "id": 22515510,
+   "display_name": "Sabahattin Destici",
+   "statistics": [
+    {
+     "season_id": 28203,
+     "player_id": 22515510,
+     "details": [
+      {
+       "id": 52452569,
+       "player_statistic_id": 1881176640,
+       "type_id": 321,
+       "value": {
+        "total": 1
+       }
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "id": 1881304856,
+  "player_id": 35180,
+  "team_id": 4192,
+  "season_id": 28203,
+  "player": {
+   "id": 35180,
+   "display_name": "Serdar Dursun",
+   "statistics": [
+    {
+     "season_id": 28203,
+     "player_id": 35180,
+     "details": [
+      {
+       "id": 52453373,
+       "player_statistic_id": 1881304856,
+       "type_id": 321,
+       "value": {
+        "total": 3
+       }
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "id": 1881671552,
+  "player_id": 203344,
+  "team_id": 4192,
+  "season_id": 28203,
+  "player": {
+   "id": 203344,
+   "display_name": "Ataberk Dadakdeniz",
+   "statistics": [
+    {
+     "season_id": 28203,
+     "player_id": 203344,
+     "details": []
+    }
+   ]
+  }
+ },
+ {
+  "id": 1881671801,
+  "player_id": 37630141,
+  "team_id": 4192,
+  "season_id": 28203,
+  "player": {
+   "id": 37630141,
+   "display_name": "Abakar Sylla",
+   "statistics": [
+    {
+     "season_id": 28203,
+     "player_id": 37630141,
+     "details": [
+      {
+       "id": 53191785,
+       "player_statistic_id": 1881671801,
+       "type_id": 321,
+       "value": {
+        "total": 2
+       }
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "id": 1881429311,
+  "player_id": 3510215,
+  "team_id": 4192,
+  "season_id": 28203,
+  "player": {
+   "id": 3510215,
+   "display_name": "Arda Kızıldağ",
+   "statistics": [
+    {
+     "season_id": 28203,
+     "player_id": 3510215,
+     "details": [
+      {
+       "id": 52452579,
+       "player_statistic_id": 1881429311,
+       "type_id": 321,
+       "value": {
+        "total": 3
+       }
+      },
+      {
+       "id": 53191740,
+       "player_statistic_id": 1881429311,
+       "type_id": 322,
+       "value": {
+        "total": 2
+       }
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "id": 1881429330,
+  "player_id": 37752676,
+  "team_id": 4192,
+  "season_id": 28203,
+  "player": {
+   "id": 37752676,
+   "display_name": "Ali Osman Kalın",
+   "statistics": [
+    {
+     "season_id": 28203,
+     "player_id": 37752676,
+     "details": []
+    }
+   ]
+  }
+ },
+ {
+  "id": 1881176642,
+  "player_id": 14726292,
+  "team_id": 4192,
+  "season_id": 28203,
+  "player": {
+   "id": 14726292,
+   "display_name": "Ulrich Meleke",
+   "statistics": [
+    {
+     "season_id": 28203,
+     "player_id": 14726292,
+     "details": [
+      {
+       "id": 52453207,
+       "player_statistic_id": 1881176642,
+       "type_id": 321,
+       "value": {
+        "total": 5
+       }
+      },
+      {
+       "id": 52453242,
+       "player_statistic_id": 1881176642,
+       "type_id": 322,
+       "value": {
+        "total": 5
+       }
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "id": 1881429309,
+  "player_id": 37726211,
+  "team_id": 4192,
+  "season_id": 28203,
+  "player": {
+   "id": 37726211,
+   "display_name": "Cemilhan Aslan",
+   "statistics": [
+    {
+     "season_id": 28203,
+     "player_id": 37726211,
+     "details": []
+    }
+   ]
+  }
+ },
+ {
+  "id": 1881429326,
+  "player_id": 3157061,
+  "team_id": 4192,
+  "season_id": 28203,
+  "player": {
+   "id": 3157061,
+   "display_name": "Mirza Cihan",
+   "statistics": [
+    {
+     "season_id": 28203,
+     "player_id": 3157061,
+     "details": []
+    }
+   ]
+  }
+ },
+ {
+  "id": 1881429308,
+  "player_id": 25515,
+  "team_id": 4192,
+  "season_id": 28203,
+  "player": {
+   "id": 25515,
+   "display_name": "Juninho Bacuna",
+   "statistics": [
+    {
+     "season_id": 28203,
+     "player_id": 25515,
+     "details": [
+      {
+       "id": 52452500,
+       "player_statistic_id": 1881429308,
+       "type_id": 79,
+       "value": {
+        "total": 1
+       }
+      },
+      {
+       "id": 52452499,
+       "player_statistic_id": 1881429308,
+       "type_id": 321,
+       "value": {
+        "total": 2
+       }
+      },
+      {
+       "id": 52452529,
+       "player_statistic_id": 1881429308,
+       "type_id": 322,
+       "value": {
+        "total": 2
+       }
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "id": 1881176644,
+  "player_id": 37303949,
+  "team_id": 4192,
+  "season_id": 28203,
+  "player": {
+   "id": 37303949,
+   "display_name": "Trivante Stewart",
+   "statistics": [
+    {
+     "season_id": 28203,
+     "player_id": 37303949,
+     "details": [
+      {
+       "id": 52452597,
+       "player_statistic_id": 1881176644,
+       "type_id": 321,
+       "value": {
+        "total": 3
+       }
+      },
+      {
+       "id": 52452661,
+       "player_statistic_id": 1881176644,
+       "type_id": 322,
+       "value": {
+        "total": 2
+       }
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "id": 1881671803,
+  "player_id": 37615037,
+  "team_id": 4192,
+  "season_id": 28203,
+  "player": {
+   "id": 37615037,
+   "display_name": "Efe Sarıkaya",
+   "statistics": [
+    {
+     "season_id": 28203,
+     "player_id": 37615037,
+     "details": []
+    }
+   ]
+  }
+ },
+ {
+  "id": 1881429318,
+  "player_id": 26771,
+  "team_id": 4192,
+  "season_id": 28203,
+  "player": {
+   "id": 26771,
+   "display_name": "Myenty Abena",
+   "statistics": [
+    {
+     "season_id": 28203,
+     "player_id": 26771,
+     "details": [
+      {
+       "id": 52452860,
+       "player_statistic_id": 1881429318,
+       "type_id": 321,
+       "value": {
+        "total": 5
+       }
+      },
+      {
+       "id": 52452889,
+       "player_statistic_id": 1881429318,
+       "type_id": 322,
+       "value": {
+        "total": 5
+       }
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "id": 1881429310,
+  "player_id": 23717944,
+  "team_id": 4192,
+  "season_id": 28203,
+  "player": {
+   "id": 23717944,
+   "display_name": "Drissa Camara",
+   "statistics": [
+    {
+     "season_id": 28203,
+     "player_id": 23717944,
+     "details": [
+      {
+       "id": 52452563,
+       "player_statistic_id": 1881429310,
+       "type_id": 321,
+       "value": {
+        "total": 4
+       }
+      },
+      {
+       "id": 52452631,
+       "player_statistic_id": 1881429310,
+       "type_id": 322,
+       "value": {
+        "total": 2
+       }
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "id": 1881429306,
+  "player_id": 189707,
+  "team_id": 4192,
+  "season_id": 28203,
+  "player": {
+   "id": 189707,
+   "display_name": "Luis Pérez",
+   "statistics": [
+    {
+     "season_id": 28203,
+     "player_id": 189707,
+     "details": [
+      {
+       "id": 52452509,
+       "player_statistic_id": 1881429306,
+       "type_id": 321,
+       "value": {
+        "total": 5
+       }
+      },
+      {
+       "id": 52452554,
+       "player_statistic_id": 1881429306,
+       "type_id": 322,
+       "value": {
+        "total": 5
+       }
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "id": 1881429333,
+  "player_id": 24817079,
+  "team_id": 4192,
+  "season_id": 28203,
+  "player": {
+   "id": 24817079,
+   "display_name": "Kacper Kozłowski",
+   "statistics": [
+    {
+     "season_id": 28203,
+     "player_id": 24817079,
+     "details": [
+      {
+       "id": 52453313,
+       "player_statistic_id": 1881429333,
+       "type_id": 321,
+       "value": {
+        "total": 5
+       }
+      },
+      {
+       "id": 52453364,
+       "player_statistic_id": 1881429333,
+       "type_id": 322,
+       "value": {
+        "total": 5
+       }
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "id": 1881699103,
+  "player_id": 37684063,
+  "team_id": 4192,
+  "season_id": 28203,
+  "player": {
+   "id": 37684063,
+   "display_name": "Karamba Gassama",
+   "statistics": [
+    {
+     "season_id": 28203,
+     "player_id": 37684063,
+     "details": [
+      {
+       "id": 53191790,
+       "player_statistic_id": 1881699103,
+       "type_id": 321,
+       "value": {
+        "total": 2
+       }
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "id": 1881429312,
+  "player_id": 31822,
+  "team_id": 4192,
+  "season_id": 28203,
+  "player": {
+   "id": 31822,
+   "display_name": "Alexandru Maxim ",
+   "statistics": [
+    {
+     "season_id": 28203,
+     "player_id": 31822,
+     "details": [
+      {
+       "id": 53191819,
+       "player_statistic_id": 1881429312,
+       "type_id": 79,
+       "value": {
+        "total": 2
+       }
+      },
+      {
+       "id": 52452679,
+       "player_statistic_id": 1881429312,
+       "type_id": 321,
+       "value": {
+        "total": 5
+       }
+      },
+      {
+       "id": 52452701,
+       "player_statistic_id": 1881429312,
+       "type_id": 322,
+       "value": {
+        "total": 5
+       }
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "id": 1881520237,
+  "player_id": 37298037,
+  "team_id": 4192,
+  "season_id": 28203,
+  "player": {
+   "id": 37298037,
+   "display_name": "Ogün Özçiçek",
+   "statistics": [
+    {
+     "season_id": 28203,
+     "player_id": 37298037,
+     "details": [
+      {
+       "id": 53191839,
+       "player_statistic_id": 1881520237,
+       "type_id": 321,
+       "value": {
+        "total": 1
+       }
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "id": 1881425559,
+  "player_id": 3877087,
+  "team_id": 4192,
+  "season_id": 28203,
+  "player": {
+   "id": 3877087,
+   "display_name": "Halil Dervişoğlu",
+   "statistics": [
+    {
+     "season_id": 28203,
+     "player_id": 3877087,
+     "details": [
+      {
+       "id": 52452570,
+       "player_statistic_id": 1881425559,
+       "type_id": 321,
+       "value": {
+        "total": 3
+       }
+      },
+      {
+       "id": 53191853,
+       "player_statistic_id": 1881425559,
+       "type_id": 322,
+       "value": {
+        "total": 2
+       }
+      }
+     ]
+    }
+   ]
+  }
+ },
+ {
+  "id": 1881176634,
+  "player_id": 37544272,
+  "team_id": 4192,
+  "season_id": 28203,
+  "player": {
+   "id": 37544272,
+   "display_name": "Kacper Tobiasz",
+   "statistics": [
+    {
+     "season_id": 28203,
+     "player_id": 37544272,
+     "details": [
+      {
+       "id": 52452924,
+       "player_statistic_id": 1881176634,
+       "type_id": 321,
+       "value": {
+        "total": 5
+       }
+      },
+      {
+       "id": 52452937,
+       "player_statistic_id": 1881176634,
+       "type_id": 322,
+       "value": {
+        "total": 5
+       }
+      }
+     ]
+    }
+   ]
+  }
+ }
+]

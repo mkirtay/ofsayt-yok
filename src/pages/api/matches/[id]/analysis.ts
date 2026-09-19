@@ -2,7 +2,7 @@
  * /api/matches/[id]/analysis
  *
  * GET  — herkese açık, sadece saklı (PRE) analizi döner. Yeni üretim yapmaz.
- * POST — giriş yapmış kullanıcı, 5 kredi karşılığında PRE fazında yeni analiz üretir.
+ * POST — giriş yapmış kullanıcı, 5 kredi karşılığında PRE fazında yeni analiz üretir (premium — bakiye ≥ en büyük paket ya da ADMIN: kredisiz).
  *        Cache'te zaten varsa kredi harcamadan direkt döner. Maç başladıysa (PRE
  *        dışında) üretim reddedilir — sadece saklı PRE analizi döner.
  *
@@ -13,7 +13,8 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { requireAuth } from '@/lib/requireAuth';
-import { spendCredits, InsufficientCreditsError } from '@/lib/credits';
+import { spendCredits, recordFreeAnalysis, InsufficientCreditsError } from '@/lib/credits';
+import { isPremiumUser } from '@/lib/premium';
 import { hitFixedWindowRateLimit } from '@/lib/rateLimit';
 import { runWithLiveScoreHttpClient } from '@/services/liveScoreHttpContext';
 import { livescoreAxiosFromIncomingMessage } from '@/server/livescoreInternalAxios';
@@ -51,7 +52,11 @@ async function handleGet(req: NextApiRequest, res: NextApiResponse, matchId: str
         return { status: 404 as const, body: { error: 'Maç bulunamadı' } };
       }
 
-      const existing = await findStoredMatchAnalysis(matchId, 'PRE', ctx.match);
+      const existing = await findStoredMatchAnalysis(
+        matchId,
+        'PRE',
+        ctx.archived ? null : ctx.match,
+      );
       if (!existing) {
         return { status: 404 as const, body: { error: 'Bu maç için analiz üretilmedi.' } };
       }
@@ -65,8 +70,9 @@ async function handleGet(req: NextApiRequest, res: NextApiResponse, matchId: str
         body: {
           analysis: existing,
           predictionRecord,
-          isPostMatch: ctx.matchPhase !== 'PRE',
-          matchPhase: ctx.matchPhase,
+          isPostMatch: ctx.archived ? true : ctx.matchPhase !== 'PRE',
+          isArchived: ctx.archived,
+          matchPhase: ctx.archived ? 'ARCHIVED' : ctx.matchPhase,
         },
       };
     });
@@ -96,7 +102,11 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse, matchId: st
         return { status: 404 as const, body: { error: 'Maç bulunamadı' } };
       }
 
-      const existing = await findStoredMatchAnalysis(matchId, 'PRE', ctx.match);
+      const existing = await findStoredMatchAnalysis(
+        matchId,
+        'PRE',
+        ctx.archived ? null : ctx.match,
+      );
       if (existing) {
         const predictionRecord = await prisma.predictionRecord.findUnique({
           where: { matchAnalysisId: existing.id },
@@ -107,8 +117,16 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse, matchId: st
             analysis: existing,
             predictionRecord,
             cached: true,
-            isPostMatch: ctx.matchPhase !== 'PRE',
+            isPostMatch: ctx.archived ? true : ctx.matchPhase !== 'PRE',
+            isArchived: ctx.archived,
           },
+        };
+      }
+
+      if (ctx.archived) {
+        return {
+          status: 409 as const,
+          body: { error: 'Bu maç artık canlı veri sağlayıcısında bulunmuyor; yeni analiz üretilemez.' },
         };
       }
 
@@ -119,10 +137,16 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse, matchId: st
         };
       }
 
-      await spendCredits(guard.userId, ANALYSIS_COST_CREDITS, {
-        type: 'ANALYSIS_SPEND',
-        matchId,
-      });
+      // Premium kullanıcı kredi harcamadan üretir (bkz. lib/premium.ts). Kötüye kullanım koruması: rate limit yukarıda.
+      // Canlı bakiye kontrolü: rol + güncel `User.credits` DB'den okunur (JWT'deki bayat değer kullanılmaz).
+      const owner = await prisma.user.findUnique({ where: { id: guard.userId }, select: { role: true, credits: true } });
+      const premiumFree = isPremiumUser(owner);
+      if (!premiumFree) {
+        await spendCredits(guard.userId, ANALYSIS_COST_CREDITS, {
+          type: 'ANALYSIS_SPEND',
+          matchId,
+        });
+      }
 
       const ai = await generateMatchAnalysis(ctx);
 
@@ -158,6 +182,15 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse, matchId: st
           expiresAt: null,
         },
       });
+
+      // Premium: kredi düşmez ama analiz kaydedildikten sonra 0 tutarlı kayıt yazılır → my-analyses bu analizi de yakalar.
+      if (premiumFree) {
+        try {
+          await recordFreeAnalysis(guard.userId, matchId, owner?.credits ?? 0);
+        } catch (e) {
+          captureError('analysis-free-record', e);
+        }
+      }
 
       try {
         await ensurePredictionRecordForAnalysis(saved);

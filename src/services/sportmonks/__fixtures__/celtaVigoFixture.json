@@ -1,0 +1,363 @@
+{
+  "id": 19732740,
+  "league_id": 564,
+  "state_id": 5,
+  "name": "Celta de Vigo vs Osasuna",
+  "starting_at": "2026-08-27 18:30:00",
+  "participants": [
+    {
+      "id": 459,
+      "name": "Osasuna",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/teams/11/459.png",
+      "meta": {
+        "location": "away",
+        "winner": true,
+        "position": 11
+      }
+    },
+    {
+      "id": 36,
+      "name": "Celta de Vigo",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/teams/4/36.png",
+      "meta": {
+        "location": "home",
+        "winner": false,
+        "position": 12
+      }
+    }
+  ],
+  "events": [
+    {
+      "id": 157652971,
+      "participant_id": 36,
+      "type_id": 14,
+      "player_id": 800,
+      "player_name": "Iago Aspas ",
+      "related_player_id": 37591583,
+      "related_player_name": "Miguel Román",
+      "result": "1-0",
+      "minute": 14,
+      "extra_minute": null
+    },
+    {
+      "id": 157653930,
+      "participant_id": 459,
+      "type_id": 14,
+      "player_id": 188218,
+      "player_name": "Kike Barja ",
+      "related_player_id": 35281051,
+      "related_player_name": "Raúl García",
+      "result": "1-1",
+      "minute": 54,
+      "extra_minute": null
+    },
+    {
+      "id": 157654081,
+      "participant_id": 459,
+      "type_id": 16,
+      "player_id": 34700,
+      "player_name": "Ante Budimir",
+      "related_player_id": null,
+      "related_player_name": null,
+      "result": "1-2",
+      "minute": 64,
+      "extra_minute": null
+    },
+    {
+      "id": 157653746,
+      "participant_id": 459,
+      "type_id": 18,
+      "player_id": 37371160,
+      "player_name": "Iker Muñoz",
+      "related_player_id": 8092941,
+      "related_player_name": "Jon Moncayola",
+      "result": null,
+      "minute": 46,
+      "extra_minute": null
+    },
+    {
+      "id": 157653901,
+      "participant_id": 36,
+      "type_id": 18,
+      "player_id": 190919,
+      "player_name": "Carl Starfelt",
+      "related_player_id": 800,
+      "related_player_name": "Iago Aspas ",
+      "result": null,
+      "minute": 52,
+      "extra_minute": null
+    },
+    {
+      "id": 157653989,
+      "participant_id": 459,
+      "type_id": 18,
+      "player_id": 34700,
+      "player_name": "Ante Budimir",
+      "related_player_id": 37304119,
+      "related_player_name": "Jonathan Dubasin",
+      "result": null,
+      "minute": 58,
+      "extra_minute": null
+    },
+    {
+      "id": 157653998,
+      "participant_id": 459,
+      "type_id": 18,
+      "player_id": 186329,
+      "player_name": "Rubén García",
+      "related_player_id": 16476323,
+      "related_player_name": "Jorge Herrando",
+      "result": null,
+      "minute": 58,
+      "extra_minute": null
+    },
+    {
+      "id": 157654102,
+      "participant_id": 36,
+      "type_id": 18,
+      "player_id": 37616238,
+      "player_name": "Jones El-Abdellaoui",
+      "related_player_id": 37528864,
+      "related_player_name": "Williot Swedberg",
+      "result": null,
+      "minute": 65,
+      "extra_minute": null
+    },
+    {
+      "id": 157654103,
+      "participant_id": 36,
+      "type_id": 18,
+      "player_id": 37586671,
+      "player_name": "Hugo Álvarez",
+      "related_player_id": 37316505,
+      "related_player_name": "Javi Rueda",
+      "result": null,
+      "minute": 65,
+      "extra_minute": null
+    },
+    {
+      "id": 157654108,
+      "participant_id": 36,
+      "type_id": 18,
+      "player_id": 6006071,
+      "player_name": "Sergio Carreira",
+      "related_player_id": 190049,
+      "related_player_name": "Javi Galán",
+      "result": null,
+      "minute": 65,
+      "extra_minute": null
+    },
+    {
+      "id": 157654188,
+      "participant_id": 459,
+      "type_id": 18,
+      "player_id": 186173,
+      "player_name": "Moi Gómez",
+      "related_player_id": 188218,
+      "related_player_name": "Kike Barja ",
+      "result": null,
+      "minute": 74,
+      "extra_minute": null
+    },
+    {
+      "id": 157654236,
+      "participant_id": 36,
+      "type_id": 18,
+      "player_id": 22859283,
+      "player_name": "Ferran Jutglà",
+      "related_player_id": 37585284,
+      "related_player_name": "Pablo Durán",
+      "result": null,
+      "minute": 79,
+      "extra_minute": null
+    },
+    {
+      "id": 157654260,
+      "participant_id": 459,
+      "type_id": 18,
+      "player_id": 36085251,
+      "player_name": "Aimar Oroz",
+      "related_player_id": 35281051,
+      "related_player_name": "Raúl García",
+      "result": null,
+      "minute": 82,
+      "extra_minute": null
+    },
+    {
+      "id": 157653159,
+      "participant_id": 459,
+      "type_id": 19,
+      "player_id": 37304119,
+      "player_name": "Jonathan Dubasin",
+      "related_player_id": null,
+      "related_player_name": null,
+      "result": null,
+      "minute": 27,
+      "extra_minute": null
+    },
+    {
+      "id": 157654518,
+      "participant_id": 459,
+      "type_id": 10,
+      "player_id": 34700,
+      "player_name": "Ante Budimir",
+      "related_player_id": null,
+      "related_player_name": null,
+      "result": null,
+      "minute": 90,
+      "extra_minute": 9
+    },
+    {
+      "id": 157653868,
+      "participant_id": 36,
+      "type_id": 20,
+      "player_id": 1128,
+      "player_name": "Marcos Alonso",
+      "related_player_id": null,
+      "related_player_name": null,
+      "result": null,
+      "minute": 51,
+      "extra_minute": null
+    },
+    {
+      "id": 157653856,
+      "participant_id": 36,
+      "type_id": 1697,
+      "player_id": 1128,
+      "player_name": "Marcos Alonso",
+      "related_player_id": null,
+      "related_player_name": null,
+      "result": null,
+      "minute": 48,
+      "extra_minute": null
+    }
+  ],
+  "statistics": [
+    {
+      "id": 971918989,
+      "type_id": 34,
+      "participant_id": 459,
+      "location": "away",
+      "data": {
+        "value": 3
+      }
+    },
+    {
+      "id": 971918988,
+      "type_id": 34,
+      "participant_id": 36,
+      "location": "home",
+      "data": {
+        "value": 5
+      }
+    },
+    {
+      "id": 971863929,
+      "type_id": 45,
+      "participant_id": 459,
+      "location": "away",
+      "data": {
+        "value": 48
+      }
+    },
+    {
+      "id": 971863928,
+      "type_id": 45,
+      "participant_id": 36,
+      "location": "home",
+      "data": {
+        "value": 52
+      }
+    },
+    {
+      "id": 971886535,
+      "type_id": 56,
+      "participant_id": 459,
+      "location": "away",
+      "data": {
+        "value": 16
+      }
+    },
+    {
+      "id": 971886534,
+      "type_id": 56,
+      "participant_id": 36,
+      "location": "home",
+      "data": {
+        "value": 7
+      }
+    },
+    {
+      "id": 972102569,
+      "type_id": 83,
+      "participant_id": 459,
+      "location": "away",
+      "data": {
+        "value": 0
+      }
+    },
+    {
+      "id": 972102568,
+      "type_id": 83,
+      "participant_id": 36,
+      "location": "home",
+      "data": {
+        "value": 1
+      }
+    },
+    {
+      "id": 971971925,
+      "type_id": 84,
+      "participant_id": 459,
+      "location": "away",
+      "data": {
+        "value": 1
+      }
+    },
+    {
+      "id": 971971924,
+      "type_id": 84,
+      "participant_id": 36,
+      "location": "home",
+      "data": {
+        "value": 1
+      }
+    },
+    {
+      "id": 971924973,
+      "type_id": 86,
+      "participant_id": 459,
+      "location": "away",
+      "data": {
+        "value": 5
+      }
+    },
+    {
+      "id": 971924972,
+      "type_id": 86,
+      "participant_id": 36,
+      "location": "home",
+      "data": {
+        "value": 2
+      }
+    },
+    {
+      "id": 989889076,
+      "type_id": 27267,
+      "participant_id": 459,
+      "location": "away",
+      "data": {
+        "value": 15
+      }
+    },
+    {
+      "id": 989889077,
+      "type_id": 27267,
+      "participant_id": 36,
+      "location": "home",
+      "data": {
+        "value": 8
+      }
+    }
+  ]
+}

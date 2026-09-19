@@ -2,10 +2,12 @@
 
 .card {
   background: $color-surface;
-  border: 1px solid $color-border;
   border-radius: $radius-lg;
   padding: $spacing-5;
-  box-shadow: $shadow-surface;
+  border: 1px solid color-mix(in srgb, var(--color-premium) 45%, var(--border-subtle));
+  box-shadow:
+    $shadow-surface,
+    0 0 22px -8px color-mix(in srgb, var(--color-premium) 40%, transparent);
   position: relative;
   overflow: hidden;
 }
@@ -36,6 +38,19 @@
   padding: 2px 8px;
   border-radius: $radius-full;
   letter-spacing: 0.5px;
+}
+
+// Premium/monetizasyon ayrımı (Design System §1): amber/gold, yeşil AI rozetinden bağımsız.
+.premiumBadge {
+  background: var(--color-premium);
+  color: var(--color-on-premium);
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: $radius-full;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-left: $spacing-1;
 }
 
 .section {
@@ -112,7 +127,11 @@
   gap: $spacing-3;
   text-align: center;
   padding: $spacing-5;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.95) 60%);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--bg-surface) 40%, transparent),
+    color-mix(in srgb, var(--bg-surface) 95%, transparent) 60%
+  );
 }
 
 .lockedTitle {

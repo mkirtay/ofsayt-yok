@@ -1,0 +1,116 @@
+[
+  {
+    "id": 381449508,
+    "season_id": 27965,
+    "player_id": 37601802,
+    "type_id": 83,
+    "position": 14,
+    "total": 1,
+    "participant_id": 106,
+    "player": {
+      "id": 37601802,
+      "display_name": "Mario Martín",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/players/10/37601802.png"
+    },
+    "participant": {
+      "id": 106,
+      "name": "Getafe",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/teams/10/106.png"
+    }
+  },
+  {
+    "id": 369034155,
+    "season_id": 27965,
+    "player_id": 37601802,
+    "type_id": 84,
+    "position": 2,
+    "total": 3,
+    "participant_id": 106,
+    "player": {
+      "id": 37601802,
+      "display_name": "Mario Martín",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/players/10/37601802.png"
+    },
+    "participant": {
+      "id": 106,
+      "name": "Getafe",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/teams/10/106.png"
+    }
+  },
+  {
+    "id": 373117082,
+    "season_id": 27965,
+    "player_id": 1128,
+    "type_id": 83,
+    "position": 1,
+    "total": 1,
+    "participant_id": 36,
+    "player": {
+      "id": 1128,
+      "display_name": "Marcos Alonso",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/players/8/1128.png"
+    },
+    "participant": {
+      "id": 36,
+      "name": "Celta de Vigo",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/teams/4/36.png"
+    }
+  },
+  {
+    "id": 381151263,
+    "season_id": 27965,
+    "player_id": 4337,
+    "type_id": 83,
+    "position": 2,
+    "total": 1,
+    "participant_id": 429,
+    "player": {
+      "id": 4337,
+      "display_name": "Angeliño",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/players/17/4337.png"
+    },
+    "participant": {
+      "id": 429,
+      "name": "Deportivo A Coruña",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/teams/13/429.png"
+    }
+  },
+  {
+    "id": 369193505,
+    "season_id": 27965,
+    "player_id": 188031,
+    "type_id": 84,
+    "position": 1,
+    "total": 3,
+    "participant_id": 676,
+    "player": {
+      "id": 188031,
+      "display_name": "Jon Guridi",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/players/31/188031.png"
+    },
+    "participant": {
+      "id": 676,
+      "name": "Sevilla",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/teams/4/676.png"
+    }
+  },
+  {
+    "id": 369193513,
+    "season_id": 27965,
+    "player_id": 37297313,
+    "type_id": 84,
+    "position": 3,
+    "total": 3,
+    "participant_id": 676,
+    "player": {
+      "id": 37297313,
+      "display_name": "Isaac Romero",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/players/1/37297313.png"
+    },
+    "participant": {
+      "id": 676,
+      "name": "Sevilla",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/teams/4/676.png"
+    }
+  }
+]

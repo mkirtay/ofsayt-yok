@@ -18,8 +18,10 @@ import {
   type CompetitionTableStandingRow,
   type Head2HeadData,
 } from '@/services/liveScoreService';
+import { toStandingsCompetitionId } from '@/services/sportmonksProviderFlag';
 import type { MatchEvent, MatchStatsData } from '@/models/domain';
 import { resolveLiveMatch } from '@/lib/resolveLiveMatch';
+import { prisma } from '@/lib/prisma';
 
 /** Bir takımın son N maçından çıkarılan özet performans satırı */
 export type RecentMatchRow = {
@@ -84,6 +86,7 @@ export type H2HContext = {
 };
 
 export type MatchAnalysisContext = {
+  archived: false;
   match: Match;
   matchPhase: 'PRE' | 'LIVE' | 'HT' | 'POST';
   events: MatchEvent[];
@@ -102,6 +105,26 @@ export type MatchAnalysisContext = {
     movement: 'home' | 'draw' | 'away' | 'stable' | null;
   };
 };
+
+/**
+ * Maç canlı sağlayıcıda artık bulunamıyor (rotasyondan düşmüş/eski id) ama
+ * bu matchId için saklı MatchAnalysis veya MatchTrivia kaydı var.
+ * Canlıya bağımlı hiçbir alan (match, standings, h2h, stats...) mevcut değil.
+ */
+export type ArchivedMatchContext = { archived: true };
+
+/**
+ * `matchId` için saklı bir MatchAnalysis veya MatchTrivia kaydı olup olmadığını
+ * kontrol eder. Maç canlı sağlayıcıda bulunamadığında "gerçekten yok" ile
+ * "arşivlenmiş ama saklı verisi var" ayrımını yapmak için kullanılır.
+ */
+export async function hasStoredMatchData(matchId: string): Promise<boolean> {
+  const [analysis, trivia] = await Promise.all([
+    prisma.matchAnalysis.findFirst({ where: { matchId }, select: { id: true } }),
+    prisma.matchTrivia.findFirst({ where: { matchId }, select: { id: true } }),
+  ]);
+  return Boolean(analysis || trivia);
+}
 
 const STATUS_TO_PHASE: Record<string, MatchAnalysisContext['matchPhase']> = {
   'NOT STARTED': 'PRE',
@@ -340,16 +363,20 @@ function computeOddsSignal(match: Match): MatchAnalysisContext['oddsSignal'] {
 
 export async function buildMatchAnalysisContext(
   matchId: string
-): Promise<MatchAnalysisContext | null> {
+): Promise<MatchAnalysisContext | ArchivedMatchContext | null> {
   const resolved = await resolveLiveMatch(matchId);
-  if (!resolved) return null;
+  if (!resolved) {
+    return (await hasStoredMatchData(matchId)) ? { archived: true } : null;
+  }
 
   const { match, events, apiMatchId } = resolved;
   const homeId = match.home?.id ?? match.home_id;
   const awayId = match.away?.id ?? match.away_id;
-  if (homeId == null || awayId == null) return null;
+  if (homeId == null || awayId == null) {
+    return (await hasStoredMatchData(matchId)) ? { archived: true } : null;
+  }
 
-  const compId = match.competition?.id ?? match.competition_id;
+  const compId = toStandingsCompetitionId(match.competition?.id ?? match.competition_id);
   const phase = STATUS_TO_PHASE[match.status] ?? 'PRE';
 
   const [stats, lineups, standings, h2h] = await Promise.all([
@@ -365,6 +392,7 @@ export async function buildMatchAnalysisContext(
   ]);
 
   return {
+    archived: false,
     match,
     matchPhase: phase,
     events,

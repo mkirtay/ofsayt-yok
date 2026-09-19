@@ -1,0 +1,492 @@
+[
+  {
+    "id": 19439592,
+    "league_id": 564,
+    "state_id": 5,
+    "name": "FC Barcelona vs Real Madrid",
+    "starting_at": "2026-05-10 19:00:00",
+    "participants": [
+      {
+        "id": 3468,
+        "name": "Real Madrid",
+        "image_path": "https://cdn.sportmonks.com/images/soccer/teams/12/3468.png",
+        "meta": {
+          "location": "away",
+          "winner": false,
+          "position": 2
+        }
+      },
+      {
+        "id": 83,
+        "name": "FC Barcelona",
+        "image_path": "https://cdn.sportmonks.com/images/soccer/teams/19/83.png",
+        "meta": {
+          "location": "home",
+          "winner": true,
+          "position": 1
+        }
+      }
+    ],
+    "scores": [
+      {
+        "type_id": 1,
+        "participant_id": 83,
+        "description": "1ST_HALF",
+        "score": {
+          "goals": 2,
+          "participant": "home"
+        }
+      },
+      {
+        "type_id": 1,
+        "participant_id": 3468,
+        "description": "1ST_HALF",
+        "score": {
+          "goals": 0,
+          "participant": "away"
+        }
+      },
+      {
+        "type_id": 2,
+        "participant_id": 83,
+        "description": "2ND_HALF",
+        "score": {
+          "goals": 2,
+          "participant": "home"
+        }
+      },
+      {
+        "type_id": 2,
+        "participant_id": 3468,
+        "description": "2ND_HALF",
+        "score": {
+          "goals": 0,
+          "participant": "away"
+        }
+      },
+      {
+        "type_id": 1525,
+        "participant_id": 83,
+        "description": "CURRENT",
+        "score": {
+          "goals": 2,
+          "participant": "home"
+        }
+      },
+      {
+        "type_id": 1525,
+        "participant_id": 3468,
+        "description": "CURRENT",
+        "score": {
+          "goals": 0,
+          "participant": "away"
+        }
+      },
+      {
+        "type_id": 48996,
+        "participant_id": 83,
+        "description": "2ND_HALF_ONLY",
+        "score": {
+          "goals": 0,
+          "participant": "home"
+        }
+      },
+      {
+        "type_id": 48996,
+        "participant_id": 3468,
+        "description": "2ND_HALF_ONLY",
+        "score": {
+          "goals": 0,
+          "participant": "away"
+        }
+      }
+    ],
+    "state": {
+      "id": 5,
+      "state": "FT",
+      "name": "Full Time",
+      "short_name": "FT"
+    }
+  },
+  {
+    "id": 19439347,
+    "league_id": 564,
+    "state_id": 5,
+    "name": "Real Madrid vs FC Barcelona",
+    "starting_at": "2025-10-26 15:15:00",
+    "participants": [
+      {
+        "id": 83,
+        "name": "FC Barcelona",
+        "image_path": "https://cdn.sportmonks.com/images/soccer/teams/19/83.png",
+        "meta": {
+          "location": "away",
+          "winner": false,
+          "position": 2
+        }
+      },
+      {
+        "id": 3468,
+        "name": "Real Madrid",
+        "image_path": "https://cdn.sportmonks.com/images/soccer/teams/12/3468.png",
+        "meta": {
+          "location": "home",
+          "winner": true,
+          "position": 1
+        }
+      }
+    ],
+    "scores": [
+      {
+        "type_id": 1,
+        "participant_id": 83,
+        "description": "1ST_HALF",
+        "score": {
+          "goals": 1,
+          "participant": "away"
+        }
+      },
+      {
+        "type_id": 1,
+        "participant_id": 3468,
+        "description": "1ST_HALF",
+        "score": {
+          "goals": 2,
+          "participant": "home"
+        }
+      },
+      {
+        "type_id": 2,
+        "participant_id": 83,
+        "description": "2ND_HALF",
+        "score": {
+          "goals": 1,
+          "participant": "away"
+        }
+      },
+      {
+        "type_id": 2,
+        "participant_id": 3468,
+        "description": "2ND_HALF",
+        "score": {
+          "goals": 2,
+          "participant": "home"
+        }
+      },
+      {
+        "type_id": 1525,
+        "participant_id": 83,
+        "description": "CURRENT",
+        "score": {
+          "goals": 1,
+          "participant": "away"
+        }
+      },
+      {
+        "type_id": 1525,
+        "participant_id": 3468,
+        "description": "CURRENT",
+        "score": {
+          "goals": 2,
+          "participant": "home"
+        }
+      },
+      {
+        "type_id": 48996,
+        "participant_id": 83,
+        "description": "2ND_HALF_ONLY",
+        "score": {
+          "goals": 0,
+          "participant": "away"
+        }
+      },
+      {
+        "type_id": 48996,
+        "participant_id": 3468,
+        "description": "2ND_HALF_ONLY",
+        "score": {
+          "goals": 0,
+          "participant": "home"
+        }
+      }
+    ],
+    "state": {
+      "id": 5,
+      "state": "FT",
+      "name": "Full Time",
+      "short_name": "FT"
+    }
+  },
+  {
+    "id": 19135634,
+    "league_id": 564,
+    "state_id": 5,
+    "name": "FC Barcelona vs Real Madrid",
+    "starting_at": "2025-05-11 14:15:00",
+    "participants": [
+      {
+        "id": 3468,
+        "name": "Real Madrid",
+        "image_path": "https://cdn.sportmonks.com/images/soccer/teams/12/3468.png",
+        "meta": {
+          "location": "away",
+          "winner": false,
+          "position": 2
+        }
+      },
+      {
+        "id": 83,
+        "name": "FC Barcelona",
+        "image_path": "https://cdn.sportmonks.com/images/soccer/teams/19/83.png",
+        "meta": {
+          "location": "home",
+          "winner": true,
+          "position": 1
+        }
+      }
+    ],
+    "scores": [
+      {
+        "type_id": 1,
+        "participant_id": 83,
+        "description": "1ST_HALF",
+        "score": {
+          "goals": 4,
+          "participant": "home"
+        }
+      },
+      {
+        "type_id": 1,
+        "participant_id": 3468,
+        "description": "1ST_HALF",
+        "score": {
+          "goals": 2,
+          "participant": "away"
+        }
+      },
+      {
+        "type_id": 2,
+        "participant_id": 83,
+        "description": "2ND_HALF",
+        "score": {
+          "goals": 4,
+          "participant": "home"
+        }
+      },
+      {
+        "type_id": 2,
+        "participant_id": 3468,
+        "description": "2ND_HALF",
+        "score": {
+          "goals": 3,
+          "participant": "away"
+        }
+      },
+      {
+        "type_id": 1525,
+        "participant_id": 83,
+        "description": "CURRENT",
+        "score": {
+          "goals": 4,
+          "participant": "home"
+        }
+      },
+      {
+        "type_id": 1525,
+        "participant_id": 3468,
+        "description": "CURRENT",
+        "score": {
+          "goals": 3,
+          "participant": "away"
+        }
+      },
+      {
+        "type_id": 48996,
+        "participant_id": 83,
+        "description": "2ND_HALF_ONLY",
+        "score": {
+          "goals": 0,
+          "participant": "home"
+        }
+      },
+      {
+        "type_id": 48996,
+        "participant_id": 3468,
+        "description": "2ND_HALF_ONLY",
+        "score": {
+          "goals": 1,
+          "participant": "away"
+        }
+      }
+    ],
+    "state": {
+      "id": 5,
+      "state": "FT",
+      "name": "Full Time",
+      "short_name": "FT"
+    }
+  },
+  {
+    "id": 19409517,
+    "league_id": 570,
+    "state_id": 7,
+    "name": "FC Barcelona vs Real Madrid",
+    "starting_at": "2025-04-26 20:00:00",
+    "participants": [
+      {
+        "id": 3468,
+        "name": "Real Madrid",
+        "image_path": "https://cdn.sportmonks.com/images/soccer/teams/12/3468.png",
+        "meta": {
+          "location": "away",
+          "winner": false,
+          "position": 2
+        }
+      },
+      {
+        "id": 83,
+        "name": "FC Barcelona",
+        "image_path": "https://cdn.sportmonks.com/images/soccer/teams/19/83.png",
+        "meta": {
+          "location": "home",
+          "winner": true,
+          "position": 1
+        }
+      }
+    ],
+    "scores": [
+      {
+        "type_id": 1,
+        "participant_id": 83,
+        "description": "1ST_HALF",
+        "score": {
+          "goals": 1,
+          "participant": "home"
+        }
+      },
+      {
+        "type_id": 1,
+        "participant_id": 3468,
+        "description": "1ST_HALF",
+        "score": {
+          "goals": 0,
+          "participant": "away"
+        }
+      },
+      {
+        "type_id": 2,
+        "participant_id": 83,
+        "description": "2ND_HALF",
+        "score": {
+          "goals": 2,
+          "participant": "home"
+        }
+      },
+      {
+        "type_id": 2,
+        "participant_id": 3468,
+        "description": "2ND_HALF",
+        "score": {
+          "goals": 2,
+          "participant": "away"
+        }
+      },
+      {
+        "type_id": 3,
+        "participant_id": 83,
+        "description": "ET",
+        "score": {
+          "goals": 1,
+          "participant": "home"
+        }
+      },
+      {
+        "type_id": 3,
+        "participant_id": 3468,
+        "description": "ET",
+        "score": {
+          "goals": 0,
+          "participant": "away"
+        }
+      },
+      {
+        "type_id": 39,
+        "participant_id": 83,
+        "description": "ET_2ND_HALF",
+        "score": {
+          "goals": 1,
+          "participant": "home"
+        }
+      },
+      {
+        "type_id": 39,
+        "participant_id": 3468,
+        "description": "ET_2ND_HALF",
+        "score": {
+          "goals": 0,
+          "participant": "away"
+        }
+      },
+      {
+        "type_id": 1525,
+        "participant_id": 83,
+        "description": "CURRENT",
+        "score": {
+          "goals": 3,
+          "participant": "home"
+        }
+      },
+      {
+        "type_id": 1525,
+        "participant_id": 3468,
+        "description": "CURRENT",
+        "score": {
+          "goals": 2,
+          "participant": "away"
+        }
+      },
+      {
+        "type_id": 5314,
+        "participant_id": 83,
+        "description": "ET_1ST_HALF",
+        "score": {
+          "goals": 0,
+          "participant": "home"
+        }
+      },
+      {
+        "type_id": 5314,
+        "participant_id": 3468,
+        "description": "ET_1ST_HALF",
+        "score": {
+          "goals": 0,
+          "participant": "away"
+        }
+      },
+      {
+        "type_id": 48996,
+        "participant_id": 83,
+        "description": "2ND_HALF_ONLY",
+        "score": {
+          "goals": 1,
+          "participant": "home"
+        }
+      },
+      {
+        "type_id": 48996,
+        "participant_id": 3468,
+        "description": "2ND_HALF_ONLY",
+        "score": {
+          "goals": 2,
+          "participant": "away"
+        }
+      }
+    ],
+    "state": {
+      "id": 7,
+      "state": "AET",
+      "name": "After Extra Time",
+      "short_name": "AET"
+    }
+  }
+]

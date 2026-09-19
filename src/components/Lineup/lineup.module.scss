@@ -4,6 +4,11 @@
   background-color: $color-surface;
   border-radius: $radius-md;
   padding: $spacing-4;
+
+  // Split-view paneli gibi dar container'da kompakt kart (12px)
+  @container (max-width: 700px) {
+    padding: $spacing-3;
+  }
   box-shadow: $shadow-surface;
   border: 1px solid $color-border;
   margin-top: $spacing-4;
@@ -37,8 +42,8 @@
 }
 
 .compactList {
-  flex: 0 0 132px;
-  width: 132px;
+  flex: 0 0 176px;
+  width: 176px;
   list-style: none;
   display: flex;
   flex-direction: column;
@@ -49,17 +54,29 @@
     display: none;
   }
 
+  // Split-view paneli gibi dar bir container içinde (panel `container-type: inline-size`) yan
+  // isim listeleri sahayı boğar: saha tam genişliği alsın, oyuncu isimleri zaten sahada yazılı.
+  @container (max-width: 700px) {
+    display: none;
+  }
+
   @media (min-width: $bp-lg) {
     flex-basis: 190px;
     width: 190px;
   }
 }
 
+a.formationPlayer,
+a.compactRow {
+  color: inherit;
+  text-decoration: none;
+}
+
 .compactRow {
-  display: flex;
+  display: grid;
   align-items: center;
-  gap: 6px;
-  padding: 4px 6px;
+  column-gap: 6px;
+  padding: 3px 6px;
   border-radius: $radius-sm;
   background-color: $color-bg;
   font-size: 12px;
@@ -67,6 +84,15 @@
   &:hover {
     background-color: $color-muted;
   }
+}
+
+.compactBenchTitle {
+  margin-top: $spacing-3;
+  padding: $spacing-2 $spacing-1 $spacing-1;
+  border-top: 1px solid $color-border;
+  font-size: 12px;
+  font-weight: 700;
+  color: $color-text-secondary;
 }
 
 .compactNumber {
@@ -89,6 +115,107 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   color: $color-text;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+// Sabit sütunlu grid, iki listede de [rozet 20][foto 28][metin]: her satırda aynı x'ten başlar.
+.compactRowHome,
+.compactRowAway {
+  grid-template-columns: 20px 28px minmax(0, 1fr);
+}
+
+.compactPhoto {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: $color-muted;
+}
+
+.compactPhotoEmpty {
+  display: inline-block;
+}
+
+.compactText {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  text-align: left;
+}
+
+.compactPos {
+  font-size: 10px;
+  line-height: 1.2;
+  color: $color-text-secondary;
+  white-space: nowrap;
+}
+
+// ── Yedekler (pitch altı): iki takım yan yana; dar alan/panelde alt alta ───────
+
+// Geniş düzende yedekler yan isim listelerinde (ilk 11'in altında) gösterilir; bu alt bölüm yalnızca yan listeler
+// gizliyken (mobil / dar panel — `.compactList` ile AYNI koşullar) devreye girer.
+.bench {
+  display: none;
+  margin-top: $spacing-6;
+
+  @media (max-width: $bp-sm) {
+    display: block;
+  }
+
+  @container (max-width: 700px) {
+    display: block;
+  }
+}
+
+// "İlk 11" başlığıyla aynı stil (`.title`: 16px + altında çizgi) — ikinci bölüm başlığı olarak.
+.benchTitle {
+  margin-top: 0;
+}
+
+.benchGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: $spacing-4;
+
+  @media (min-width: $bp-sm) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: $spacing-3;
+  }
+
+  // Split-view paneli dar container: iki sütun satırı boğar → alt alta.
+  @container (max-width: 520px) {
+    grid-template-columns: minmax(0, 1fr);
+    gap: $spacing-4;
+  }
+}
+
+.benchTeam {
+  min-width: 0;
+}
+
+.benchTeamName {
+  margin-bottom: $spacing-2;
+  font-size: 12px;
+  font-weight: 700;
+  color: $color-text-secondary;
+}
+
+.benchCount {
+  font-weight: 500;
+}
+
+.benchList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
 }
 
 // ── Takım başlık çubuğu (isim + formasyon rozeti) ──────────────────────────
@@ -127,7 +254,7 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  min-height: 560px;
+  min-height: 720px; // fotoğraflı (38px) oyuncu daireleri için: 5 hat × 2 takım sığmalı
   background: linear-gradient(180deg, #1f7a3d 0%, #2d8b47 50%, #1f7a3d 100%);
   border-radius: $radius-sm;
   border: 2px solid rgba(255, 255, 255, 0.25);
@@ -226,6 +353,57 @@
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
 }
 
+.formationDot {
+  position: relative;
+}
+
+// Fotoğraf varken daire büyür; reyting rozeti SOL ÜST, uyruk bayrağı SAĞ ALT köşeye biner (FIFA kartı düzeni).
+.formationDotPhoto {
+  width: 38px;
+  height: 38px;
+  overflow: visible;
+}
+
+.formationPhoto {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  background: rgba(255, 255, 255, 0.18);
+  display: block;
+}
+
+.ratingBadge {
+  position: absolute;
+  left: -9px;
+  top: -5px;
+  z-index: 1;
+  min-width: 22px;
+  padding: 1px 4px;
+  border-radius: 8px;
+  background: var(--bg-header, #101512);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1.3;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.flagBadge {
+  position: absolute;
+  right: -4px;
+  bottom: -2px;
+  width: 16px;
+  height: 12px;
+  border-radius: 2px;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
 .formationDotHome {
   background: $color-primary;
   color: #fff;
@@ -236,6 +414,16 @@
   background: #fff;
   color: $color-primary-dark;
   border: 2px solid $color-primary;
+}
+
+.formationPos {
+  margin-top: -2px;
+  font-size: 8.5px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.78);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
+  line-height: 1;
 }
 
 .formationName {
@@ -252,7 +440,7 @@
 
 @media (max-width: $bp-sm) {
   .pitch {
-    min-height: 460px;
+    min-height: 560px;
     padding: $spacing-3 4px;
   }
 
@@ -264,6 +452,28 @@
     width: 24px;
     height: 24px;
     font-size: 10px;
+  }
+
+  .formationDotPhoto {
+    width: 32px;
+    height: 32px;
+  }
+
+  .ratingBadge {
+    left: -7px;
+    top: -4px;
+    font-size: 8px;
+    min-width: 19px;
+  }
+
+  .flagBadge {
+    width: 13px;
+    height: 10px;
+    right: -3px;
+  }
+
+  .formationPos {
+    font-size: 7.5px;
   }
 
   .formationName {

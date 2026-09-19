@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '@/lib/prisma';
+import { absoluteImageUrl } from '@/lib/siteUrl';
 import { getRequestAuth } from '@/lib/mobileAuth';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -41,7 +42,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     name: user.name,
     username: user.username,
     bio: user.bio,
-    image: user.image,
+    image: absoluteImageUrl(user.image),
     role: user.role,
     credits: user.credits,
     favoriteTeamIds: user.favoriteTeamIds,

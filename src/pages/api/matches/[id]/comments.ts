@@ -1,3 +1,4 @@
+import { withAbsoluteImage } from '@/lib/siteUrl';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '@/lib/prisma';
 import { sanitizePlainText } from '@/lib/security';
@@ -41,21 +42,52 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (req.method === 'GET') {
       const cursor = req.query.cursor as string | undefined;
 
-      const comments = await prisma.matchComment.findMany({
+      const viewerId = await getRequestUserId(req, res);
+      const baseArgs = {
         where: { matchId, deletedAt: null },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: 'desc' as const },
         take: PAGE_SIZE + 1,
         ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
-        select: {
-          id: true,
-          body: true,
-          createdAt: true,
-          user: { select: { id: true, name: true, image: true } },
-        },
-      });
+      };
+      const baseSelect = {
+        id: true,
+        body: true,
+        createdAt: true,
+        user: { select: { id: true, name: true, image: true } },
+      } as const;
+
+      let comments: Array<{
+        id: string;
+        body: string;
+        createdAt: Date;
+        user: { id: string; name: string | null; image: string | null };
+        likes: number;
+        likedByMe: boolean;
+      }>;
+      try {
+        const rows = await prisma.matchComment.findMany({
+          ...baseArgs,
+          select: {
+            ...baseSelect,
+            _count: { select: { likes: true } },
+            likes: viewerId ? { where: { userId: viewerId }, select: { id: true } } : false,
+          },
+        });
+        comments = rows.map(({ _count, likes, ...c }) => ({
+          ...c,
+          likes: _count.likes,
+          likedByMe: Array.isArray(likes) && likes.length > 0,
+        }));
+      } catch (e) {
+        // `MatchCommentLike` tablosu henüz DB'ye uygulanmadıysa (db:push bekliyor) yorumlar beğenisiz de yüklensin.
+        captureError('comments:likes-unavailable', e);
+        const rows = await prisma.matchComment.findMany({ ...baseArgs, select: baseSelect });
+        comments = rows.map((c) => ({ ...c, likes: 0, likedByMe: false }));
+      }
 
       const hasMore = comments.length > PAGE_SIZE;
-      const items = hasMore ? comments.slice(0, PAGE_SIZE) : comments;
+      // `image` her zaman tam URL (mobil istemci galeri avatarının göreli yolunu çözemez).
+      const items = (hasMore ? comments.slice(0, PAGE_SIZE) : comments).map((c) => ({ ...c, user: withAbsoluteImage(c.user) }));
 
       return res.json({ items, nextCursor: hasMore ? items[items.length - 1].id : null });
     }
@@ -96,7 +128,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         },
       });
 
-      return res.status(201).json(comment);
+      return res.status(201).json({ ...comment, user: withAbsoluteImage(comment.user), likes: 0, likedByMe: false });
     }
 
     res.setHeader('Allow', 'GET, POST');

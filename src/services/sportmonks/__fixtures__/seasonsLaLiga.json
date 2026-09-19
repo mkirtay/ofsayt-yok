@@ -1,0 +1,26 @@
+[
+  {
+    "id": 23621,
+    "name": "2024/2025",
+    "starting_at": "2024-08-15",
+    "ending_at": "2025-05-25",
+    "is_current": false,
+    "finished": true
+  },
+  {
+    "id": 25659,
+    "name": "2025/2026",
+    "starting_at": "2025-08-15",
+    "ending_at": "2026-05-24",
+    "is_current": false,
+    "finished": true
+  },
+  {
+    "id": 27965,
+    "name": "2026/2027",
+    "starting_at": "2026-08-15",
+    "ending_at": "2027-05-30",
+    "is_current": true,
+    "finished": false
+  }
+]

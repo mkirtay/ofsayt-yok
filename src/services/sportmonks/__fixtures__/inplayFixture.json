@@ -1,0 +1,13 @@
+{
+  "id": 19874789,
+  "league_id": 606,
+  "state_id": 1,
+  "name": "Orduspor 1967 vs Torul Belediye Gençlik",
+  "starting_at": "2026-09-17 16:00:00",
+  "participants": [
+    { "id": 249912, "name": "Torul Belediye Gençlik", "image_path": "https://cdn.sportmonks.com/images/soccer/team_placeholder.png", "meta": { "location": "away", "winner": null, "position": 2 } },
+    { "id": 255667, "name": "Orduspor 1967", "image_path": "https://cdn.sportmonks.com/images/soccer/teams/19/255667.png", "meta": { "location": "home", "winner": null, "position": 1 } }
+  ],
+  "state": { "id": 1, "state": "NS", "name": "Not Started", "short_name": "NS" },
+  "league": { "id": 606, "name": "Turkish Cup", "type": "league", "sub_type": "domestic_cup", "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/30/606.png" }
+}

@@ -1,12 +1,14 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useRouter } from 'next/router';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   groupMatchesByLeague,
+  mergeMatchesByIdForAllTab,
   mergeMatchesForAllTab,
   sortGroupedMatchesForAllTab,
 } from '@/services/liveScoreService';
+import { isSportmonksProviderEnabled } from '@/services/sportmonksProviderFlag';
 import type { Match } from '@/models/liveScore';
-import type { NewsItem } from '@/models/domain';
 import {
   fetchCompetitionSidebarForSeason,
   useCompetitionSidebar,
@@ -15,58 +17,73 @@ import {
   refreshHomeHubLiveFixtures,
   useHomeHubMatches,
 } from '@/hooks/useHomeHubMatches';
-import {
-  refreshUefaHubLiveFixtures,
-  useUefaHubMatches,
-} from '@/hooks/useUefaHubMatches';
 import MatchList from '@/components/MatchList';
 import { MatchListSkeleton } from '@/components/Skeleton';
 import MatchCompetitionStandings from '@/components/MatchCompetitionStandings';
 import MatchCompetitionTopScorers from '@/components/MatchCompetitionTopScorers';
-import NewsList from '@/components/NewsList';
 import SubHeader, { type MatchTab } from '@/components/SubHeader';
-import Container from '@/components/Container';
-import UefaKnockoutBracket from '@/components/UefaKnockoutBracket';
+import MatchDetailPanel from '@/components/MatchDetailPanel';
+import TeamDetailPanel from '@/components/TeamDetailPanel';
+import HubRightColumn from '@/components/HubWidgets/HubRightColumn';
+import MiniStandingsWidget from '@/components/HubWidgets/MiniStandingsWidget';
+import LeagueLogo from '@/components/LeagueLogo';
 import type { SidebarLeague } from '@/config/leagues';
-import { countryFlagImgSrc } from '@/utils/countryFlag';
-import { uefaCompetitionLogoSrcById } from '@/utils/competitionLogo';
-import { getNews } from '@/services/newsApi';
+import { resolveSportmonksLeagueId } from '@/services/sportmonksProviderFlag';
+import { resolveSidebarLeagueLogo } from '@/utils/leagueLogo';
+import { todayIsoIstanbul } from '@/utils/dateStrip';
+import { buildMatchHref } from '@/utils/matchUrl';
 import {
-  buildBracketRounds,
-  mergeUefaCompetitionMatches,
-  sortMatchesForUefaList,
-} from '@/utils/uefaBracket';
+  buildSelectionTarget,
+  readSelectedMatchId,
+  readSelectedMatchParam,
+  readSelectedTeamId,
+  buildTeamSelectionTarget,
+} from '@/utils/matchSelection';
+import {
+  MATCH_TAB_QUERY,
+  parseMatchTab,
+  parseSidebarTab,
+  SIDEBAR_PANEL_QUERY,
+} from '@/utils/bottomNav';
+import { MOBILE_LAYOUT_QUERY } from '@/config/breakpoints';
+import { prefetchMatchDetail } from '@/hooks/useMatchDetail';
+import { RIGHT_COLUMN_MIN_WIDTH, useMinWidth, useSplitView } from '@/hooks/useSplitView';
+import LeagueFilterBar from '@/components/LeagueFilterBar';
+import AdSlot from '@/components/AdSlot';
+import EmptyState from '@/components/EmptyState';
+import { useLeagueFilter } from '@/hooks/useLeagueFilter';
+import { useTopScorersWithAppearances } from '@/hooks/useTopScorerAppearances';
+import { buildLeagueCatalog, filterMatchesByLeagues } from '@/utils/leagueFilter';
 import styles from '@/pages/index.module.scss';
 
-type SidebarTab = 'standings' | 'leagues' | 'news';
-export type MatchHubMode = 'default' | 'uefa';
+type SidebarTab = 'standings' | 'leagues' | 'scorers';
 
 export type MatchHubPageProps = {
   sidebarLeagues: SidebarLeague[];
   defaultCompetitionId: number;
   /** Doluysa maç listesi yalnızca bu `competition_id` değerleriyle sınırlı */
   allowedCompetitionIds: number[] | null;
-  /** `uefa`: seçili lige göre fikstür + geçmiş + canlı + eleme braketi */
-  mode?: MatchHubMode;
 };
 
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => todayIsoIstanbul();
 
 export default function MatchHubPage({
   sidebarLeagues,
   defaultCompetitionId,
   allowedCompetitionIds,
-  mode = 'default',
 }: MatchHubPageProps) {
   const queryClient = useQueryClient();
-  const isUefaMode = mode === 'uefa';
+  const router = useRouter();
+  const splitView = useSplitView();
+  const showRightColumn = useMinWidth(RIGHT_COLUMN_MIN_WIDTH) === true;
+  const isSplit = splitView === true;
   const [selectedDate, setSelectedDate] = useState<string>(today);
   const [activeTab, setActiveTab] = useState<MatchTab>('all');
 
-  const [sidebarTab, setSidebarTab] = useState<SidebarTab>('leagues');
+  // Varsayılan sekme Puan Durumu (Puan Durumu + Gol Krallığı varsayılan görünümde)
+  const [sidebarTab, setSidebarTab] = useState<SidebarTab>('standings');
   const [selectedCompId, setSelectedCompId] = useState(defaultCompetitionId);
-  const homeMatchesQuery = useHomeHubMatches(selectedDate, !isUefaMode);
-  const uefaMatchesQuery = useUefaHubMatches(selectedCompId, isUefaMode);
+  const homeMatchesQuery = useHomeHubMatches(selectedDate);
   const {
     data: sidebarData,
     isLoading: sidebarQueryLoading,
@@ -80,7 +97,8 @@ export default function MatchHubPage({
 
   const seasons = sidebarData?.seasons ?? [];
   const standings = seasonPatch?.standings ?? sidebarData?.standings ?? null;
-  const topScorers = seasonPatch?.topScorers ?? sidebarData?.topScorers ?? null;
+  const rawTopScorers = seasonPatch?.topScorers ?? sidebarData?.topScorers ?? null;
+  const topScorers = useTopScorersWithAppearances(rawTopScorers, sidebarTab === 'scorers');
   const standingsLoading = sidebarQueryLoading || sidebarQueryFetching;
   const topScorersLoading = standingsLoading;
 
@@ -95,28 +113,14 @@ export default function MatchHubPage({
     }
   }, [sidebarData?.selectedSeasonId, selectedSeasonId]);
 
-  const [newsItems, setNewsItems] = useState<NewsItem[]>([]);
-  const [newsLoading, setNewsLoading] = useState(false);
-
   const [favoriteTeamIds, setFavoriteTeamIds] = useState<number[]>([]);
 
   useEffect(() => {
-    if (isUefaMode) return;
-
     const interval = setInterval(() => {
       void refreshHomeHubLiveFixtures(queryClient, selectedDate);
     }, 30_000);
     return () => clearInterval(interval);
-  }, [isUefaMode, queryClient, selectedDate]);
-
-  useEffect(() => {
-    if (!isUefaMode) return;
-
-    const interval = setInterval(() => {
-      void refreshUefaHubLiveFixtures(queryClient, selectedCompId);
-    }, 30_000);
-    return () => clearInterval(interval);
-  }, [isUefaMode, queryClient, selectedCompId]);
+  }, [queryClient, selectedDate]);
 
   const handleSeasonChange = useCallback(async (seasonId: number) => {
     setSelectedSeasonId(seasonId);
@@ -144,46 +148,10 @@ export default function MatchHubPage({
     });
   }, []);
 
-  useEffect(() => {
-    if (sidebarTab !== 'news' || newsItems.length > 0) return;
-    let cancelled = false;
-    queueMicrotask(() => {
-      if (cancelled) return;
-      setNewsLoading(true);
-    });
-    getNews(15).then((items) => {
-      if (!cancelled) {
-        setNewsItems(items);
-        setNewsLoading(false);
-      }
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [sidebarTab, newsItems.length]);
-
   const allMatches = homeMatchesQuery.data?.allMatches ?? [];
   const liveMatches = homeMatchesQuery.data?.liveMatches ?? [];
   const fixtureMatches = homeMatchesQuery.data?.fixtureMatches ?? [];
-  const uefaLiveMatches = uefaMatchesQuery.data?.liveMatches ?? [];
-  const uefaCompFixtures = uefaMatchesQuery.data?.uefaCompFixtures ?? [];
-  const uefaHistory = uefaMatchesQuery.data?.uefaHistory ?? [];
-  const matchesLoading = isUefaMode ? uefaMatchesQuery.isLoading : homeMatchesQuery.isLoading;
-
-  const uefaMerged = useMemo(() => {
-    if (!isUefaMode) return [] as Match[];
-    return mergeUefaCompetitionMatches({
-      competitionId: selectedCompId,
-      liveAll: uefaLiveMatches,
-      fixtures: uefaCompFixtures,
-      history: uefaHistory,
-    });
-  }, [isUefaMode, selectedCompId, uefaLiveMatches, uefaCompFixtures, uefaHistory]);
-
-  const uefaBracketRounds = useMemo(() => {
-    if (!isUefaMode) return [];
-    return buildBracketRounds(uefaMerged);
-  }, [isUefaMode, uefaMerged]);
+  const matchesLoading = homeMatchesQuery.isLoading;
 
   const favoriteTeamSet = useMemo(() => new Set(favoriteTeamIds), [favoriteTeamIds]);
 
@@ -191,21 +159,6 @@ export default function MatchHubPage({
     const isFavMatch = (m: Match) =>
       favoriteTeamSet.has(m.home?.id ?? -1) || favoriteTeamSet.has(m.away?.id ?? -1);
 
-    if (isUefaMode) {
-      switch (activeTab) {
-        case 'live':
-          return uefaMerged.filter(
-            (m) => m.status === 'IN PLAY' || m.status === 'HALF TIME BREAK'
-          );
-        case 'finished':
-          return uefaMerged.filter((m) => m.status === 'FINISHED');
-        case 'favorites':
-          return uefaMerged.filter(isFavMatch);
-        case 'all':
-        default:
-          return sortMatchesForUefaList(uefaMerged);
-      }
-    }
     switch (activeTab) {
       case 'live':
         return liveMatches.filter(
@@ -214,26 +167,38 @@ export default function MatchHubPage({
       case 'finished':
         return allMatches.filter((m) => m.status === 'FINISHED');
       case 'favorites': {
-        const merged = mergeMatchesForAllTab({
-          selectedDate,
-          historyPageMatches: allMatches,
-          liveMatches,
-          fixtures: fixtureMatches,
-        });
+        const merged = isSportmonksProviderEnabled()
+          ? mergeMatchesByIdForAllTab({
+              selectedDate,
+              historyPageMatches: allMatches,
+              liveMatches,
+              fixtures: fixtureMatches,
+            })
+          : mergeMatchesForAllTab({
+              selectedDate,
+              historyPageMatches: allMatches,
+              liveMatches,
+              fixtures: fixtureMatches,
+            });
         return merged.filter(isFavMatch);
       }
       case 'all':
       default:
-        return mergeMatchesForAllTab({
-          selectedDate,
-          historyPageMatches: allMatches,
-          liveMatches,
-          fixtures: fixtureMatches,
-        });
+        return isSportmonksProviderEnabled()
+          ? mergeMatchesByIdForAllTab({
+              selectedDate,
+              historyPageMatches: allMatches,
+              liveMatches,
+              fixtures: fixtureMatches,
+            })
+          : mergeMatchesForAllTab({
+              selectedDate,
+              historyPageMatches: allMatches,
+              liveMatches,
+              fixtures: fixtureMatches,
+            });
     }
   }, [
-    isUefaMode,
-    uefaMerged,
     activeTab,
     allMatches,
     liveMatches,
@@ -242,20 +207,25 @@ export default function MatchHubPage({
     favoriteTeamSet,
   ]);
 
+  const leagueFilter = useLeagueFilter();
+  const leagueCatalog = useMemo(
+    () => buildLeagueCatalog([...allMatches, ...liveMatches, ...fixtureMatches], leagueFilter.state.custom),
+    [allMatches, liveMatches, fixtureMatches, leagueFilter.state.custom],
+  );
+  const leagueFilterActive = leagueFilter.state.mode !== 'all';
+
   const competitionFilterSet = useMemo(() => {
     if (!allowedCompetitionIds?.length) return null;
     return new Set(allowedCompetitionIds);
   }, [allowedCompetitionIds]);
 
   const filteredDisplayMatches = useMemo(() => {
-    if (isUefaMode) {
-      return displayMatches.filter((m) => m.competition?.id === selectedCompId);
-    }
-    if (!competitionFilterSet) return displayMatches;
-    return displayMatches.filter((m) =>
-      competitionFilterSet.has(m.competition?.id ?? 0)
-    );
-  }, [isUefaMode, selectedCompId, displayMatches, competitionFilterSet]);
+    const allowed = competitionFilterSet
+      ? displayMatches.filter((m) => competitionFilterSet.has(m.competition?.id ?? 0))
+      : displayMatches;
+    // Kullanıcının lig filtresi (Tümü/Süper Lig/5 Büyük Lig/Liglerim) — üst sekmeden bağımsız hepsine uygulanır.
+    return filterMatchesByLeagues(allowed, leagueFilter.state);
+  }, [displayMatches, competitionFilterSet, leagueFilter.state]);
 
   const grouped = useMemo(() => {
     const raw = groupMatchesByLeague(filteredDisplayMatches);
@@ -265,10 +235,178 @@ export default function MatchHubPage({
   const selectedLeagueName =
     sidebarLeagues.find((l) => l.id === selectedCompId)?.name ?? 'Lig';
 
+  // Canlı fikstürdeki `league.image_path` (→ `competition.logo`) — sidebar logolarının birincil kaynağı.
+  // Fikstürde `competition.id` Sportmonks lig id'sidir; sidebar ise legacy id kullanır → eşle.
+  const apiLogoBySportmonksLeagueId = useMemo(() => {
+    const map = new Map<number, string>();
+    for (const m of [...allMatches, ...liveMatches, ...fixtureMatches]) {
+      const c = m.competition;
+      if (c?.id != null && c.logo && !map.has(c.id)) map.set(c.id, c.logo);
+    }
+    return map;
+  }, [allMatches, liveMatches, fixtureMatches]);
+
+  // ── URL query ↔ durum senkronu ─────────────────────────────────────────
+  // `tab` (maç filtresi), `panel` (yan panel sekmesi), `match` (split-view seçimi).
+  // Değişiklikler shallow `router.push/replace` ile yapılır: getServerSideProps/tam
+  // sayfa yeniden render'ı tetiklenmez, yalnızca `router.query` güncellenir.
+  const queryRef = useRef(router.query);
+  useEffect(() => {
+    queryRef.current = router.query;
+  }, [router.query]);
+
+  const replaceQuery = useCallback(
+    (patch: Record<string, string | null>) => {
+      const next: Record<string, string> = {};
+      for (const [k, v] of Object.entries(queryRef.current)) {
+        const first = Array.isArray(v) ? v[0] : v;
+        if (typeof first === 'string') next[k] = first;
+      }
+      for (const [k, v] of Object.entries(patch)) {
+        if (v == null) delete next[k];
+        else next[k] = v;
+      }
+      void router.replace({ pathname: router.pathname, query: next }, undefined, {
+        shallow: true,
+        scroll: false,
+      });
+    },
+    [router],
+  );
+
+  const handleTabChange = useCallback(
+    (tab: MatchTab) => {
+      setActiveTab(tab);
+      replaceQuery({ [MATCH_TAB_QUERY]: tab === 'all' ? null : tab });
+    },
+    [replaceQuery],
+  );
+
+  const handleSidebarTabChange = useCallback(
+    (tab: SidebarTab) => {
+      setSidebarTab(tab);
+      replaceQuery({ [SIDEBAR_PANEL_QUERY]: tab === 'standings' ? null : tab });
+    },
+    [replaceQuery],
+  );
+
+  const queryTab = router.query[MATCH_TAB_QUERY];
+  const queryPanel = router.query[SIDEBAR_PANEL_QUERY];
+  const queryLeague = router.query.league;
+  const prevNavKey = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!router.isReady) return;
+    setActiveTab(parseMatchTab(queryTab) ?? 'all');
+    setSidebarTab(parseSidebarTab(queryPanel) ?? 'standings');
+
+    // Mobil alt navigasyon: ilgili bölüme kaydır (yalnızca param DEĞİŞTİĞİNDE)
+    const navKey = `${String(queryTab ?? '')}|${String(queryPanel ?? '')}`;
+    if (prevNavKey.current !== null && prevNavKey.current !== navKey && window.matchMedia(MOBILE_LAYOUT_QUERY).matches) {
+      const targetId = queryPanel ? 'hub-sidebar' : 'hub-list';
+      document.getElementById(targetId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    prevNavKey.current = navKey;
+  }, [router.isReady, queryTab, queryPanel]);
+
+  // Header aramasından gelen `?league=<id>` — ligi seç, param'ı temizle
+  useEffect(() => {
+    if (!router.isReady || queryLeague == null) return;
+    const id = Number(Array.isArray(queryLeague) ? queryLeague[0] : queryLeague);
+    if (Number.isFinite(id) && sidebarLeagues.some((l) => l.id === id)) {
+      setSelectedCompId(id);
+      setSidebarTab('standings');
+    }
+    replaceQuery({ league: null });
+  }, [router.isReady, queryLeague, sidebarLeagues, replaceQuery]);
+
+  // ── Split-view seçili maç ───────────────────────────────────────────────
+  const selectedMatchParam = readSelectedMatchParam(router.query);
+  const selectedMatchId = readSelectedMatchId(router.query);
+  const selectedTeamId = readSelectedTeamId(router.query);
+  // Tek panel: maç YA DA takım (URL'de biri; seçim helper'ları diğerini düşürür). Layout/liste bunu birlikte kullanır.
+  const showDetailPanel = isSplit && (selectedMatchId != null || selectedTeamId != null);
+
+  const handleSelectMatch = useCallback(
+    (match: Match) => {
+      const href = buildMatchHref(match); // "/matches/{id}-{slug}"
+      const param = href.slice('/matches/'.length);
+      if (param === readSelectedMatchParam(queryRef.current)) return;
+      // Her seçim bir geçmiş kaydı: tarayıcı geri/ileri tuşu seçimi geri alır/yineler.
+      void router.push(buildSelectionTarget(router.pathname, queryRef.current, param), undefined, {
+        shallow: true,
+        scroll: false,
+      });
+    },
+    [router],
+  );
+
+  const handleSelectTeam = useCallback(
+    (teamId: number) => {
+      const id = String(teamId);
+      if (id === readSelectedTeamId(queryRef.current)) return;
+      void router.push(buildTeamSelectionTarget(router.pathname, queryRef.current, id), undefined, {
+        shallow: true,
+        scroll: false,
+      });
+    },
+    [router],
+  );
+
+  const handleCloseDetail = useCallback(() => {
+    void router.push(buildSelectionTarget(router.pathname, queryRef.current, null), undefined, {
+      shallow: true,
+      scroll: false,
+    });
+  }, [router]);
+
+  // Paylaşılan `/?team=…` linki dar ekranda (split yok) → takım tam sayfası.
+  const selectedTeamParam = readSelectedTeamId(router.query);
+  useEffect(() => {
+    if (!router.isReady || splitView !== false || !selectedTeamParam) return;
+    void router.replace(`/teams/${selectedTeamParam}`);
+  }, [router, splitView, selectedTeamParam]);
+
+  // Paylaşılan `/?match=…` linki dar ekranda (split yok) açılırsa tam sayfaya yönlendir.
+  useEffect(() => {
+    if (!router.isReady || splitView !== false || !selectedMatchParam) return;
+    void router.replace(`/matches/${selectedMatchParam}`);
+  }, [router, splitView, selectedMatchParam]);
+
   function handleLeagueClick(competitionId: number) {
     setSelectedCompId(competitionId);
-    if (!isUefaMode) setSidebarTab('standings');
+    handleSidebarTabChange('standings');
   }
+
+  const listNode = matchesLoading ? (
+    <MatchListSkeleton groups={5} />
+  ) : activeTab === 'favorites' && favoriteTeamIds.length === 0 ? (
+    <div className={styles.empty}>
+      Takım favorilere eklemek için maç satırındaki ☆ butonuna tıklayın.
+    </div>
+  ) : leagueFilterActive && grouped.length === 0 ? (
+    <EmptyState>
+      Seçili liglerde bu görünümde maç yok.{' '}
+      <button type="button" className={styles.emptyAction} onClick={() => leagueFilter.selectMode('all')}>
+        Tümünü göster
+      </button>
+    </EmptyState>
+  ) : (
+    <>
+      <MatchList
+        groupedMatches={grouped}
+        favoriteTeamIds={favoriteTeamSet}
+        onToggleFavorite={toggleFavoriteTeam}
+        // Split-view yalnızca masaüstünde; mobilde tam sayfa (push) navigasyon korunur.
+        onSelectMatch={isSplit ? handleSelectMatch : undefined}
+        onPrefetchMatch={isSplit ? prefetchMatchDetail : undefined}
+        onSelectTeam={isSplit ? handleSelectTeam : undefined}
+        selectedMatchId={showDetailPanel ? selectedMatchId : null}
+        compact={showDetailPanel}
+        fill={showDetailPanel}
+      />
+    </>
+  );
 
   return (
     <>
@@ -278,62 +416,82 @@ export default function MatchHubPage({
           setSelectedDate(d);
         }}
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={handleTabChange}
       />
-      <Container>
-        <div className="layout-split">
-          <aside className="layout-right">
+      <div className={`${styles.hubShell} ${styles.hubShellWithLeagueBar}`}>
+        <div className={styles.leagueBarRow}>
+          <LeagueFilterBar
+            state={leagueFilter.state}
+            catalog={leagueCatalog}
+            onSelectMode={leagueFilter.selectMode}
+            onApplyCustom={leagueFilter.applyCustom}
+          />
+        </div>
+        <div
+          className={[
+            styles.hubGrid,
+            showDetailPanel ? styles.hubGridWithPanel : '',
+            showRightColumn ? styles.hubGridWithRight : '',
+          ]
+            .filter(Boolean)
+            .join(' ')}
+        >
+          <aside id="hub-sidebar" className={styles.hubSidebar}>
             <div className={styles.sidebar}>
               <nav className={styles.sidebarTabs}>
                 <button
                   type="button"
                   className={`${styles.sidebarTab} ${sidebarTab === 'standings' ? styles.sidebarTabActive : ''}`}
-                  onClick={() => setSidebarTab('standings')}
+                  onClick={() => handleSidebarTabChange('standings')}
                 >
                   Puan Durumu
                 </button>
                 <button
                   type="button"
                   className={`${styles.sidebarTab} ${sidebarTab === 'leagues' ? styles.sidebarTabActive : ''}`}
-                  onClick={() => setSidebarTab('leagues')}
+                  onClick={() => handleSidebarTabChange('leagues')}
                 >
                   Ligler
                 </button>
                 <button
                   type="button"
-                  className={`${styles.sidebarTab} ${sidebarTab === 'news' ? styles.sidebarTabActive : ''}`}
-                  onClick={() => setSidebarTab('news')}
+                  className={`${styles.sidebarTab} ${sidebarTab === 'scorers' ? styles.sidebarTabActive : ''}`}
+                  onClick={() => handleSidebarTabChange('scorers')}
                 >
-                  Haberler
+                  Gol Krallığı
                 </button>
               </nav>
 
               <div className={styles.sidebarContent}>
                 {sidebarTab === 'standings' && (
-                  <>
-                    <MatchCompetitionStandings
-                      data={standings}
-                      loading={standingsLoading}
-                      competitionName={selectedLeagueName}
-                      seasons={seasons}
-                      selectedSeasonId={selectedSeasonId}
-                      onSeasonChange={handleSeasonChange}
-                    />
-                    <MatchCompetitionTopScorers
-                      data={topScorers}
-                      loading={topScorersLoading}
-                      seasons={seasons}
-                      selectedSeasonId={selectedSeasonId}
-                      onSeasonChange={handleSeasonChange}
-                    />
-                  </>
+                  <MatchCompetitionStandings
+                    data={standings}
+                    loading={standingsLoading}
+                    competitionName={selectedLeagueName}
+                    seasons={seasons}
+                    selectedSeasonId={selectedSeasonId}
+                    onSeasonChange={handleSeasonChange}
+                  />
+                )}
+
+                {sidebarTab === 'scorers' && (
+                  <MatchCompetitionTopScorers
+                    data={topScorers}
+                    loading={topScorersLoading}
+                    seasons={seasons}
+                    selectedSeasonId={selectedSeasonId}
+                    onSeasonChange={handleSeasonChange}
+                  />
                 )}
 
                 {sidebarTab === 'leagues' && (
                   <ul className={styles.leagueList}>
                     {sidebarLeagues.map((league) => {
-                      const logoUrl =
-                        league.logo || uefaCompetitionLogoSrcById(league.id);
+                      const smId = resolveSportmonksLeagueId(league.id);
+                      const logoUrl = resolveSidebarLeagueLogo(
+                        league,
+                        smId != null ? apiLogoBySportmonksLeagueId.get(smId) : undefined,
+                      );
                       return (
                         <li key={league.id}>
                           <button
@@ -341,23 +499,7 @@ export default function MatchHubPage({
                             className={`${styles.leagueItem} ${league.id === selectedCompId ? styles.leagueItemActive : ''}`}
                             onClick={() => handleLeagueClick(league.id)}
                           >
-                            {logoUrl ? (
-                              <img
-                                src={logoUrl}
-                                alt=""
-                                className={styles.leagueFlag}
-                                width={20}
-                                height={20}
-                              />
-                            ) : league.countryId != null ? (
-                              <img
-                                src={countryFlagImgSrc(league.countryId)}
-                                alt=""
-                                className={styles.leagueFlag}
-                                width={20}
-                                height={14}
-                              />
-                            ) : null}
+                            <LeagueLogo src={logoUrl} className={styles.leagueFlag} size={20} />
                             <span>{league.name}</span>
                           </button>
                         </li>
@@ -366,40 +508,34 @@ export default function MatchHubPage({
                   </ul>
                 )}
 
-                {sidebarTab === 'news' && (
-                  <NewsList items={newsItems} loading={newsLoading} />
-                )}
               </div>
             </div>
+            <AdSlot slot="hub-sidebar" format="rectangle" desktopOnly />
           </aside>
-          <div className="layout-left">
-            {matchesLoading ? (
-              <MatchListSkeleton groups={5} />
-            ) : activeTab === 'favorites' && favoriteTeamIds.length === 0 ? (
-              <div className={styles.empty}>
-                Takım favorilere eklemek için maç satırındaki ☆ butonuna tıklayın.
-              </div>
-            ) : (
-              <>
-                {isUefaMode && uefaBracketRounds.length > 0 ? (
-                  <div className={styles.bracketWrap}>
-                    <UefaKnockoutBracket
-                      rounds={uefaBracketRounds}
-                      competitionName={selectedLeagueName}
-                    />
-                  </div>
+          <div id="hub-list" className={styles.hubMain}>
+            <div className={styles.hubList}>{listNode}</div>
+            {showDetailPanel ? (
+              <div className={styles.hubDetail}>
+                {selectedTeamId ? (
+                  <TeamDetailPanel teamId={selectedTeamId} onClose={handleCloseDetail} />
+                ) : selectedMatchId ? (
+                  <MatchDetailPanel matchId={selectedMatchId} onClose={handleCloseDetail} />
                 ) : null}
-                <MatchList
-                  groupedMatches={grouped}
-                  showDateWhenNotToday={isUefaMode}
-                  favoriteTeamIds={favoriteTeamSet}
-                  onToggleFavorite={toggleFavoriteTeam}
-                />
-              </>
-            )}
+              </div>
+            ) : null}
           </div>
+          {showRightColumn ? (
+            <HubRightColumn>
+              <MiniStandingsWidget
+                data={standings}
+                loading={standingsLoading}
+                competitionName={selectedLeagueName}
+                onShowAll={() => handleSidebarTabChange('standings')}
+              />
+            </HubRightColumn>
+          ) : null}
         </div>
-      </Container>
+      </div>
     </>
   );
 }

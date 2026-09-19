@@ -1,0 +1,282 @@
+[
+ {
+  "id": 368644320,
+  "season_id": 28203,
+  "player_id": 455805,
+  "type_id": 208,
+  "position": 1,
+  "total": 6,
+  "participant_id": 34,
+  "player": {
+   "id": 455805,
+   "display_name": "Victor Osimhen",
+   "name": "Victor James Osimhen",
+   "image_path": "https://cdn.sportmonks.com/images/soccer/players/29/455805.png"
+  },
+  "participant": {
+   "id": 34,
+   "name": "Galatasaray",
+   "image_path": "https://cdn.sportmonks.com/images/soccer/teams/2/34.png"
+  }
+ },
+ {
+  "id": 375096406,
+  "season_id": 28203,
+  "player_id": 37632306,
+  "type_id": 208,
+  "position": 2,
+  "total": 6,
+  "participant_id": 3570,
+  "player": {
+   "id": 37632306,
+   "display_name": "Gift Orban",
+   "name": "Gift Emmanuel Orban",
+   "image_path": "https://cdn.sportmonks.com/images/soccer/players/18/37632306.png"
+  },
+  "participant": {
+   "id": 3570,
+   "name": "Amed SK",
+   "image_path": "https://cdn.sportmonks.com/images/soccer/teams/18/3570.png"
+  }
+ },
+ {
+  "id": 372083081,
+  "season_id": 28203,
+  "player_id": 4125,
+  "type_id": 208,
+  "position": 3,
+  "total": 4,
+  "participant_id": 688,
+  "player": {
+   "id": 4125,
+   "display_name": "Mohamed Salah",
+   "name": "Mohamed Salah Ghaly",
+   "image_path": "https://cdn.sportmonks.com/images/soccer/players/29/4125.png"
+  },
+  "participant": {
+   "id": 688,
+   "name": "Trabzonspor",
+   "image_path": "https://cdn.sportmonks.com/images/soccer/teams/16/688.png"
+  }
+ },
+ {
+  "id": 369000934,
+  "season_id": 28203,
+  "player_id": 13186483,
+  "type_id": 208,
+  "position": 4,
+  "total": 4,
+  "participant_id": 1071,
+  "player": {
+   "id": 13186483,
+   "display_name": "Adrian Benedyczak",
+   "name": "Adrian Benedyczak",
+   "image_path": "https://cdn.sportmonks.com/images/soccer/players/19/13186483.png"
+  },
+  "participant": {
+   "id": 1071,
+   "name": "Kasımpaşa",
+   "image_path": "https://cdn.sportmonks.com/images/soccer/teams/15/1071.png"
+  }
+ },
+ {
+  "id": 375093040,
+  "season_id": 28203,
+  "player_id": 177988,
+  "type_id": 208,
+  "position": 5,
+  "total": 4,
+  "participant_id": 554,
+  "player": {
+   "id": 177988,
+   "display_name": "Dušan Vlahović",
+   "name": "Dušan Vlahović",
+   "image_path": "https://cdn.sportmonks.com/images/soccer/players/4/177988.png"
+  },
+  "participant": {
+   "id": 554,
+   "name": "Beşiktaş",
+   "image_path": "https://cdn.sportmonks.com/images/soccer/teams/10/554.png"
+  }
+ },
+ {
+  "id": 373880163,
+  "season_id": 28203,
+  "player_id": 37451261,
+  "type_id": 208,
+  "position": 6,
+  "total": 4,
+  "participant_id": 3897,
+  "player": {
+   "id": 37451261,
+   "display_name": "Juan",
+   "name": "Juan Santos da Silva",
+   "image_path": "https://cdn.sportmonks.com/images/soccer/players/29/37451261.png"
+  },
+  "participant": {
+   "id": 3897,
+   "name": "Göztepe",
+   "image_path": "https://cdn.sportmonks.com/images/soccer/teams/25/3897.png"
+  }
+ },
+ {
+  "id": 369100992,
+  "season_id": 28203,
+  "player_id": 165701,
+  "type_id": 208,
+  "position": 21,
+  "total": 2,
+  "participant_id": 4192,
+  "player": {
+   "id": 165701,
+   "display_name": "Deian Sorescu",
+   "name": "Deian Cristian Sorescu",
+   "image_path": "https://cdn.sportmonks.com/images/soccer/players/5/165701.png"
+  },
+  "participant": {
+   "id": 4192,
+   "name": "Gaziantep F.K.",
+   "image_path": "https://cdn.sportmonks.com/images/soccer/teams/0/4192.png"
+  }
+ },
+ {
+  "id": 377777188,
+  "season_id": 28203,
+  "player_id": 24817079,
+  "type_id": 208,
+  "position": 22,
+  "total": 2,
+  "participant_id": 4192,
+  "player": {
+   "id": 24817079,
+   "display_name": "Kacper Kozłowski",
+   "name": "Kacper Kozłowski",
+   "image_path": "https://cdn.sportmonks.com/images/soccer/players/23/24817079.png"
+  },
+  "participant": {
+   "id": 4192,
+   "name": "Gaziantep F.K.",
+   "image_path": "https://cdn.sportmonks.com/images/soccer/teams/0/4192.png"
+  }
+ },
+ {
+  "id": 377777206,
+  "season_id": 28203,
+  "player_id": 3877087,
+  "type_id": 208,
+  "position": 44,
+  "total": 1,
+  "participant_id": 4192,
+  "player": {
+   "id": 3877087,
+   "display_name": "Halil Dervişoğlu",
+   "name": "İbrahim Halil Dervişoğlu",
+   "image_path": "https://cdn.sportmonks.com/images/soccer/players/31/3877087.png"
+  },
+  "participant": {
+   "id": 4192,
+   "name": "Gaziantep F.K.",
+   "image_path": "https://cdn.sportmonks.com/images/soccer/teams/0/4192.png"
+  }
+ },
+ {
+  "id": 377777229,
+  "season_id": 28203,
+  "player_id": 26771,
+  "type_id": 208,
+  "position": 79,
+  "total": 1,
+  "participant_id": 4192,
+  "player": {
+   "id": 26771,
+   "display_name": "Myenty Abena",
+   "name": "Myenty Abena",
+   "image_path": "https://cdn.sportmonks.com/images/soccer/players/19/26771.png"
+  },
+  "participant": {
+   "id": 4192,
+   "name": "Gaziantep F.K.",
+   "image_path": "https://cdn.sportmonks.com/images/soccer/teams/0/4192.png"
+  }
+ },
+ {
+  "id": 370962770,
+  "season_id": 28203,
+  "player_id": 455805,
+  "type_id": 209,
+  "position": 7,
+  "total": 2,
+  "participant_id": 34,
+  "player": {
+   "id": 455805,
+   "display_name": "Victor Osimhen",
+   "name": "Victor James Osimhen",
+   "image_path": "https://cdn.sportmonks.com/images/soccer/players/29/455805.png"
+  },
+  "participant": {
+   "id": 34,
+   "name": "Galatasaray",
+   "image_path": "https://cdn.sportmonks.com/images/soccer/teams/2/34.png"
+  }
+ },
+ {
+  "id": 374640540,
+  "season_id": 28203,
+  "player_id": 13186483,
+  "type_id": 209,
+  "position": 34,
+  "total": 1,
+  "participant_id": 1071,
+  "player": {
+   "id": 13186483,
+   "display_name": "Adrian Benedyczak",
+   "name": "Adrian Benedyczak",
+   "image_path": "https://cdn.sportmonks.com/images/soccer/players/19/13186483.png"
+  },
+  "participant": {
+   "id": 1071,
+   "name": "Kasımpaşa",
+   "image_path": "https://cdn.sportmonks.com/images/soccer/teams/15/1071.png"
+  }
+ },
+ {
+  "id": 369741959,
+  "season_id": 28203,
+  "player_id": 37632306,
+  "type_id": 209,
+  "position": 55,
+  "total": 1,
+  "participant_id": 3570,
+  "player": {
+   "id": 37632306,
+   "display_name": "Gift Orban",
+   "name": "Gift Emmanuel Orban",
+   "image_path": "https://cdn.sportmonks.com/images/soccer/players/18/37632306.png"
+  },
+  "participant": {
+   "id": 3570,
+   "name": "Amed SK",
+   "image_path": "https://cdn.sportmonks.com/images/soccer/teams/18/3570.png"
+  }
+ },
+ {
+  "id": 377141580,
+  "season_id": 28203,
+  "player_id": 4125,
+  "type_id": 209,
+  "position": 64,
+  "total": 1,
+  "participant_id": 688,
+  "player": {
+   "id": 4125,
+   "display_name": "Mohamed Salah",
+   "name": "Mohamed Salah Ghaly",
+   "image_path": "https://cdn.sportmonks.com/images/soccer/players/29/4125.png"
+  },
+  "participant": {
+   "id": 688,
+   "name": "Trabzonspor",
+   "image_path": "https://cdn.sportmonks.com/images/soccer/teams/16/688.png"
+  }
+ }
+]

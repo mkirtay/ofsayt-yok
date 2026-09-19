@@ -104,11 +104,7 @@
     // her zaman görünür tutuyoruz. Arka planı, altındaki satırların
     // (hover / öne çıkan satır) rengiyle eşleşecek şekilde ayrıca
     // tanımlanıyor ki "yapışkan" sütun geçişte şeffaf görünmesin.
-    position: sticky;
-    right: 0;
-    z-index: 1;
-    background: $color-surface;
-    box-shadow: -6px 0 6px -6px rgba(0, 0, 0, 0.18);
+    @include sticky-last-column;
   }
 
   tbody tr:hover td {
@@ -121,18 +117,18 @@
 }
 
 .rowHighlight td {
-  background: #e8f5ec;
+  background: var(--bg-row-highlight);
 
   &:hover {
-    background: #dff3e5 !important;
+    background: var(--bg-row-highlight) !important;
   }
 }
 
 .rowHighlight td.colPoints {
-  background: #e8f5ec;
+  background: var(--bg-row-highlight);
 
   &:hover {
-    background: #dff3e5 !important;
+    background: var(--bg-row-highlight) !important;
   }
 }
 
@@ -163,11 +159,8 @@
   }
 }
 
-.empty {
-  padding: $spacing-4 $spacing-3;
-  text-align: center;
-  font-size: 13px;
-  color: $color-text-secondary;
+.emptyState {
+  margin: $spacing-3;
 }
 
 .loading {
@@ -285,9 +278,14 @@
     }
   }
 
-  .empty,
   .loading {
     color: #b6b6b6;
     background: transparent;
+  }
+
+  .emptyState {
+    --empty-state-text: #b6b6b6;
+    --empty-state-bg: transparent;
+    --empty-state-border: #2c2c2c;
   }
 }

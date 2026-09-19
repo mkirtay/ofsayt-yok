@@ -32,6 +32,10 @@ async function resetOne(matchId: string): Promise<void> {
     console.log(`  ATLANDI: maç bulunamadı.`);
     return;
   }
+  if (ctx.archived) {
+    console.log(`  ATLANDI: maç artık canlı sağlayıcıda yok (arşivlenmiş) — yeniden üretilemez.`);
+    return;
+  }
 
   const label = `${ctx.homeTeam.teamName} - ${ctx.awayTeam.teamName}`;
 

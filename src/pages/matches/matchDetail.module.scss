@@ -7,6 +7,14 @@
   font-size: 16px;
 }
 
+.archivedNotice {
+  text-align: center;
+  padding: $spacing-4 $spacing-8;
+  margin-bottom: $spacing-4;
+  color: $color-text-secondary;
+  font-size: 14px;
+}
+
 .statsEventsRow {
   display: flex;
   gap: $gap;

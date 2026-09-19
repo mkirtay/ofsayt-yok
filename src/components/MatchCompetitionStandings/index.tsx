@@ -9,6 +9,7 @@ import { formatSeasonLabel } from "@/utils/seasonLabel";
 import { getStandingRankZone } from "@/config/standingsZones";
 import { sortWorldCupGroupsByName } from "@/config/worldCup";
 import { standingsRankZoneClass } from "@/utils/standingsRankZoneUi";
+import EmptyState from "@/components/EmptyState";
 import { StandingsSkeleton } from "@/components/Skeleton";
 import styles from "./matchCompetitionStandings.module.scss";
 
@@ -160,7 +161,7 @@ export default function MatchCompetitionStandings({
     return (
       <section className={blockClass(variant)} aria-label="Lig puan durumu">
         <h2 className={styles.title}>{competitionName || "Lig"}</h2>
-        <p className={styles.empty}>Puan tablosu bulunamadı.</p>
+        <EmptyState className={styles.emptyState}>Puan tablosu bulunamadı.</EmptyState>
       </section>
     );
   }
@@ -235,7 +236,7 @@ export default function MatchCompetitionStandings({
       ))}
 
       {!hasAnyRows ? (
-        <p className={styles.empty}>Puan tablosu bulunamadı.</p>
+        <EmptyState className={styles.emptyState}>Puan tablosu bulunamadı.</EmptyState>
       ) : null}
     </section>
   );

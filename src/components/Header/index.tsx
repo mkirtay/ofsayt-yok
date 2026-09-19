@@ -2,19 +2,24 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useSession, signOut } from 'next-auth/react';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { prefetchWorldCupBootstrap } from '@/hooks/useWorldCupBootstrap';
-import { prefetchUefaHubMatches } from '@/hooks/useUefaHubMatches';
 import { prefetchAiStatsDashboard } from '@/hooks/useAiStatsDashboard';
 import { prefetchHomeHubMatches } from '@/hooks/useHomeHubMatches';
+import { todayIsoIstanbul } from '@/utils/dateStrip';
 import { prefetchProfile } from '@/hooks/useProfile';
-import { UEFA_CHAMPIONS_LEAGUE_ID } from '@/config/leagues';
 import { useTranslation, useI18n } from '@/lib/i18n';
 import { useCredits } from '@/hooks/useCredits';
 import Container from '../Container';
 import HeaderButton from '../HeaderButton';
+import HeaderSearch from '../HeaderSearch';
+import ThemeToggle from '../ThemeToggle';
 import MyAnalysesDropdown from './MyAnalysesDropdown';
+import AiMenu from './AiMenu';
+import AccountMenu from './AccountMenu';
+import { OPEN_MENU_EVENT } from '@/utils/bottomNav';
+import { lockBodyScroll } from '@/utils/scrollLock';
+import { MOBILE_LAYOUT_QUERY } from '@/config/breakpoints';
 import styles from './header.module.scss';
 
 export default function Header() {
@@ -44,21 +49,57 @@ export default function Header() {
 
   const isWorldCupTheme = isWorldCupRoute || bodyHasWcHeader;
 
+  const menuRef = useRef<HTMLDivElement>(null);
+  const hamburgerRef = useRef<HTMLButtonElement>(null);
+
+  // Rota veya query değişince (alt nav sekmeleri aynı sayfada query değiştirir) menü kapansın
   useEffect(() => {
     setMobileMenuOpen(false);
-  }, [router.pathname]);
+  }, [router.asPath]);
+
+  // Menü açıkken arka plan scroll kilidi — kapanışta (X, dışarı tık, Esc, rota, resize) eksiksiz geri alınır
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const unlock = lockBodyScroll();
+    const close = () => setMobileMenuOpen(false);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') close();
+    };
+    const onDown = (e: MouseEvent | TouchEvent) => {
+      const t = e.target as Node;
+      if (menuRef.current?.contains(t) || hamburgerRef.current?.contains(t)) return;
+      // Alt navdaki "Diğer" kendi toggle'ını yönetir (çift tetiklenmesin)
+      if ((t as Element).closest?.('[data-menu-toggle]')) return;
+      close();
+    };
+    // Masaüstü genişliğine geçilirse menü artık anlamsız — kapat
+    const mql = window.matchMedia(MOBILE_LAYOUT_QUERY);
+    const onMql = () => {
+      if (!mql.matches) close();
+    };
+    document.addEventListener('keydown', onKey);
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('touchstart', onDown);
+    mql.addEventListener('change', onMql);
+    return () => {
+      unlock();
+      document.removeEventListener('keydown', onKey);
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('touchstart', onDown);
+      mql.removeEventListener('change', onMql);
+    };
+  }, [mobileMenuOpen]);
+
+  // Alt navigasyondaki "Diğer" sekmesi mobil menüyü açar/kapatır
+  useEffect(() => {
+    const onToggle = () => setMobileMenuOpen((v) => !v);
+    window.addEventListener(OPEN_MENU_EVENT, onToggle);
+    return () => window.removeEventListener(OPEN_MENU_EVENT, onToggle);
+  }, []);
 
   function toggleLang() {
     setLocale(locale === 'tr' ? 'en' : 'tr');
   }
-
-  const prefetchWorldCup = useCallback(() => {
-    void prefetchWorldCupBootstrap(queryClient);
-  }, [queryClient]);
-
-  const prefetchUefa = useCallback(() => {
-    void prefetchUefaHubMatches(queryClient, UEFA_CHAMPIONS_LEAGUE_ID);
-  }, [queryClient]);
 
   const prefetchAiStats = useCallback(() => {
     if (session?.user) {
@@ -67,7 +108,7 @@ export default function Header() {
   }, [queryClient, session?.user]);
 
   const prefetchHome = useCallback(() => {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = todayIsoIstanbul();
     void prefetchHomeHubMatches(queryClient, today);
   }, [queryClient]);
 
@@ -92,14 +133,15 @@ export default function Header() {
               />
             </Link>
           </div>
+        </div>
+        <HeaderSearch />
+        <div className={styles.right}>
           <div className={styles.headerNavPills}>
-            {isWorldCupTheme ? (
+            {isWorldCupTheme && (
               <Link
                 href="/world-cup"
                 className={styles.worldCupMarkLink}
                 aria-label="FIFA World Cup"
-                onMouseEnter={prefetchWorldCup}
-                onFocus={prefetchWorldCup}
               >
                 <Image
                   src="/images/2026_FIFA_World_Cup_Logo.png"
@@ -110,61 +152,22 @@ export default function Header() {
                   priority
                 />
               </Link>
-            ) : (
-              <Link
-                href="/world-cup"
-                className={styles.headerNavPill}
-                onMouseEnter={prefetchWorldCup}
-                onFocus={prefetchWorldCup}
-              >
-                {t('worldCup')}
-              </Link>
             )}
-            <Link
-              href="/uefa"
-              className={styles.headerNavPill}
-              onMouseEnter={prefetchUefa}
-              onFocus={prefetchUefa}
-            >
-              {t('uefa')}
-            </Link>
-            <Link
-              href="/ai-istatistikleri"
-              className={styles.headerNavPill}
-              onMouseEnter={prefetchAiStats}
-              onFocus={prefetchAiStats}
-            >
-              {t('aiAccuracy')}
-            </Link>
-            {session && <MyAnalysesDropdown />}
+            <AiMenu />
             <Link href="/credits" className={styles.headerNavPillPremium}>
               {hasCredits ? `${credits} ⚡` : t('credits')}
             </Link>
           </div>
         </div>
         <div className={styles.actions}>
+          <span className={styles.divider} aria-hidden="true" />
           {sessionLoading ? (
             // Oturum durumu netleşene kadar "Giriş Yap/Üye Ol" ya da "Profil" gibi
             // yanlış olabilecek bir state göstermek yerine nötr bir placeholder gösteriyoruz.
             // Bu, sayfa her yüklendiğinde header'ın "titremesini" (auth flicker) önler.
             <div className={styles.authPlaceholder} aria-hidden="true" />
           ) : session ? (
-            <>
-              <Link
-                href="/profile"
-                className={styles.profileLink}
-                onMouseEnter={prefetchProfilePage}
-                onFocus={prefetchProfilePage}
-              >
-                {t('profile')}
-              </Link>
-              <span className={styles.userName}>
-                {session.user.username || session.user.name || session.user.email}
-              </span>
-              <HeaderButton variant="outline" onClick={() => signOut()}>
-                {t('signOut')}
-              </HeaderButton>
-            </>
+            <AccountMenu />
           ) : (
             <>
               <HeaderButton variant="outline" onClick={() => router.push('/auth/signin')}>
@@ -175,6 +178,7 @@ export default function Header() {
               </HeaderButton>
             </>
           )}
+          <ThemeToggle />
           <button
             type="button"
             className={styles.langToggle}
@@ -184,7 +188,9 @@ export default function Header() {
             {t('langSwitch')}
           </button>
         </div>
+        <ThemeToggle className={styles.mobileThemeToggle} />
         <button
+          ref={hamburgerRef}
           className={`${styles.hamburger} ${mobileMenuOpen ? styles.hamburgerOpen : ''}`}
           onClick={() => setMobileMenuOpen((v) => !v)}
           aria-label={t('toggleMenu')}
@@ -197,26 +203,9 @@ export default function Header() {
       </Container>
 
       {mobileMenuOpen && (
-        <div className={`${styles.mobileMenu} ${isWorldCupTheme ? styles.mobileMenuWorldCup : ''}`}>
+        <div ref={menuRef} className={`${styles.mobileMenu} ${isWorldCupTheme ? styles.mobileMenuWorldCup : ''}`}>
+          <HeaderSearch onNavigate={() => setMobileMenuOpen(false)} />
           <nav className={styles.mobileNav}>
-            {!isWorldCupTheme && (
-              <Link
-                href="/world-cup"
-                className={styles.mobileNavLink}
-                onMouseEnter={prefetchWorldCup}
-                onFocus={prefetchWorldCup}
-              >
-                {t('worldCup')}
-              </Link>
-            )}
-            <Link
-              href="/uefa"
-              className={styles.mobileNavLink}
-              onMouseEnter={prefetchUefa}
-              onFocus={prefetchUefa}
-            >
-              {t('uefa')}
-            </Link>
             <Link
               href="/ai-istatistikleri"
               className={styles.mobileNavLink}

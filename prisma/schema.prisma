@@ -33,6 +33,7 @@ model User {
   sessions      Session[]
   comments        MatchComment[] @relation("MatchCommentAuthor")
   deletedComments MatchComment[] @relation("MatchCommentDeletedBy")
+  commentLikes    MatchCommentLike[]
   userPredictions UserPrediction[]
   creditTransactions CreditTransaction[]
 }
@@ -158,8 +159,22 @@ model MatchComment {
   deletedAt         DateTime?
   deletedByUserId   String?
   deletedBy         User?     @relation("MatchCommentDeletedBy", fields: [deletedByUserId], references: [id], onDelete: SetNull)
+  likes             MatchCommentLike[]
 
   @@index([matchId, createdAt])
+}
+
+/// Maç yorumu beğenisi — kullanıcı başına yorum başına tek kayıt (toggle).
+model MatchCommentLike {
+  id        String       @id @default(cuid())
+  commentId String
+  userId    String
+  createdAt DateTime     @default(now())
+  comment   MatchComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([commentId, userId])
+  @@index([commentId])
 }
 
 /// AI üretimli maç trivia/fun-facts cache'i. Aynı maç + status için tek aktif kayıt.

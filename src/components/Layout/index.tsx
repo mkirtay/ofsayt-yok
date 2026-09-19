@@ -1,6 +1,10 @@
 import { ReactNode } from 'react';
 import Header from '../Header';
 import Footer from '../Footer';
+import Container from '../Container';
+import SponsorSlider from '../SponsorSlider';
+import BottomNav from '../BottomNav';
+import styles from './layout.module.scss';
 
 interface LayoutProps {
   children: ReactNode;
@@ -10,10 +14,12 @@ export default function Layout({ children }: LayoutProps) {
   return (
     <>
       <Header />
-      <main style={{ minHeight: 'calc(100vh - 60px)', paddingBottom: '32px' }}>
-        {children}
-      </main>
+      <main className={styles.main}>{children}</main>
+      <Container>
+        <SponsorSlider />
+      </Container>
       <Footer />
+      <BottomNav />
     </>
   );
 }

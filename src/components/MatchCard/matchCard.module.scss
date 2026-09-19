@@ -1,6 +1,6 @@
 @use '../../styles/variables' as *;
 
-$match-card-header-blue: #153d6b;
+$match-card-header-blue: var(--text-secondary); // tema-uyumlu (eskiden sabit lacivert)
 
 .matchCard {
   background-color: $color-surface;
@@ -8,8 +8,7 @@ $match-card-header-blue: #153d6b;
   padding: 0;
   text-align: center;
   overflow: hidden;
-  border: 1px solid #ECECEC;
-  background: #fff;
+  border: 1px solid $color-border;
   box-shadow: $shadow-surface;
 }
 
@@ -19,21 +18,10 @@ $match-card-header-blue: #153d6b;
   justify-content: space-between;
   gap: $spacing-3;
   padding: 8px 16px;
-  background: #FBFBFB;
+  background: $color-muted;
   color: $match-card-header-blue;
-  border-bottom: 1px solid #ECECEC;
+  border-bottom: 1px solid $color-border;
   text-align: left;
-
-  &::after {
-    content: '';
-    display: block;
-    width: 100%;
-    height: 1px;
-    background: #ECECEC;
-    position: absolute;
-    bottom: 0;
-    left: 0;
-  }
 }
 
 .cardHeaderLeft {
@@ -51,7 +39,7 @@ $match-card-header-blue: #153d6b;
   white-space: nowrap;
   font-size: 12px;
   font-weight: 600;
-  color: #000;
+  color: $color-text;
 }
 
 .cardHeaderCountry {
@@ -71,7 +59,7 @@ $match-card-header-blue: #153d6b;
   flex-shrink: 0;
   font-size: 12px;
   font-weight: 600;
-  color: #000;
+  color: $color-text;
   font-variant-numeric: tabular-nums;
 }
 
@@ -203,7 +191,7 @@ $match-card-header-blue: #153d6b;
 
 .scoreHome,
 .scoreAway {
-  color: #000000;
+  color: $color-text;
   min-width: 0;
 }
 
@@ -321,29 +309,19 @@ $match-card-header-blue: #153d6b;
 }
 
 .formPill {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 22px;
-  height: 22px;
-  padding: 0 5px;
-  border-radius: 4px;
-  font-size: 11px;
-  font-weight: 800;
-  color: $color-surface;
-  line-height: 1;
+  @include form-badge;
 }
 
 .formPillWin {
-  background-color: $color-primary;
+  @include form-badge-win;
 }
 
 .formPillDraw {
-  background-color: $color-warning;
+  @include form-badge-draw;
 }
 
 .formPillLoss {
-  background-color: $color-danger;
+  @include form-badge-loss;
 }
 
 .h2hTableWrap {
@@ -412,8 +390,8 @@ $match-card-header-blue: #153d6b;
     color: $match-card-header-blue;
     text-align: center;
     vertical-align: middle;
-    background: linear-gradient(180deg, #e8eef6 0%, #dfe8f2 100%);
-    border-bottom: 1px solid #c5d3e3;
+    background: $color-muted;
+    border-bottom: 1px solid $color-border;
     white-space: nowrap;
   }
 
@@ -426,7 +404,7 @@ $match-card-header-blue: #153d6b;
   }
 
   tbody tr:nth-child(even) td {
-    background-color: rgb(244 247 250 / 85%);
+    background-color: color-mix(in srgb, var(--bg-muted) 55%, transparent);
   }
 
   tbody tr:hover td {
@@ -464,7 +442,7 @@ $match-card-header-blue: #153d6b;
 
   &:hover {
     text-decoration: underline;
-    color: $color-primary-dark;
+    color: var(--color-action-text);
   }
 }
 
@@ -503,6 +481,6 @@ $match-card-header-blue: #153d6b;
 .matchFooterValue {
   font-size: 13px;
   font-weight: 700;
-  color: #000000;
+  color: $color-text;
   word-break: break-word;
 }

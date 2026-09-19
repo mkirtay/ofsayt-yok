@@ -25,7 +25,7 @@ function App({ Component, pageProps: { session, ...pageProps } }: AppProps) {
       <QueryClientProvider client={queryClient}>
       <Head>
         <title>Ofsayt Yok</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
         <meta name="description" content="Ofsayt Yok — Türkiye ve dünya futbolundan canlı skorlar, maç analizleri, puan durumu ve spor haberleri." />
         <meta property="og:site_name" content="Ofsayt Yok" />
         <meta property="og:type" content="website" key="og:type" />

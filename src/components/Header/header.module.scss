@@ -3,11 +3,26 @@
 .header {
   background: linear-gradient(180deg, $color-surface-dark 0%, $color-surface-dark-alt 100%);
   color: $color-text-on-dark;
-  padding: $spacing-3 0;
+  height: var(--header-height);
+  display: flex;
+  align-items: center;
   position: sticky;
   top: 0;
   z-index: 100;
   border-bottom: 1px solid $color-border-dark;
+
+  // İnce marka vurgusu: alt kenarda yeşil gradyan çizgi
+  &::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent 0%, $color-primary 30%, $color-primary-dark 70%, transparent 100%);
+    opacity: 0.75;
+    pointer-events: none;
+  }
 }
 
 .headerWorldCup {
@@ -19,6 +34,31 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: $spacing-4;
+  width: 100%;
+}
+
+.right {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.left,
+.actions {
+  flex-shrink: 0;
+}
+
+// 1024–1279: dar masaüstü — kullanıcı adı gizlenir (Profil/Çıkış kalır), yer arama çubuğuna kalır
+@media (max-width: 1279px) {
+  .userName {
+    display: none;
+  }
+}
+
+.mobileThemeToggle {
+  display: none;
 }
 
 .left {
@@ -31,7 +71,8 @@
   display: flex;
   align-items: center;
   gap: $spacing-2;
-  flex-wrap: wrap;
+  flex-wrap: nowrap; // ≥$bp-desktop'ta hiçbir zaman alt satıra düşmez; arama çubuğu daralır
+  white-space: nowrap;
 }
 
 .logo {
@@ -52,17 +93,17 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 32px;
-  padding: 0 $spacing-3;
+  height: var(--touch-target);
+  padding: 0 $spacing-4;
   border: 1px solid $color-border-dark;
   border-radius: $radius-full;
   color: $color-text-on-dark;
+  background: rgba(255, 255, 255, 0.04);
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-decoration: none;
   transition: $transition-base;
-  background: none;
   cursor: pointer;
 
   &:hover {
@@ -73,12 +114,12 @@
 
 .headerNavPillPremium {
   @extend .headerNavPill;
-  background: linear-gradient(135deg, $color-primary, $color-primary-dark);
+  background: linear-gradient(135deg, var(--color-premium), var(--color-premium-strong));
   border-color: transparent;
-  color: #fff;
+  color: var(--color-on-premium);
 
   &:hover {
-    background: linear-gradient(135deg, $color-primary-dark, $color-primary);
+    background: linear-gradient(135deg, var(--color-premium-strong), var(--color-premium));
     border-color: transparent;
   }
 }
@@ -91,6 +132,142 @@
     background: #181818;
     border-color: #fff;
   }
+}
+
+// ── Açılır menüler (AI, Hesap) ───────────────────
+
+.menuWrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.menuTrigger {
+  gap: $spacing-2;
+}
+
+.aiSpark {
+  color: $color-primary;
+  font-size: 13px;
+}
+
+.caret {
+  font-size: 10px;
+  opacity: 0.7;
+}
+
+.menuPanel {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  min-width: 240px;
+  max-width: 320px;
+  padding: $spacing-2;
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  box-shadow: $shadow-surface;
+  color: $color-text;
+  z-index: 110;
+}
+
+.menuPanelRight {
+  left: auto;
+  right: 0;
+  min-width: 200px;
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 40px;
+  padding: 0 $spacing-3;
+  border-radius: $radius-sm;
+  color: $color-text;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  text-align: left;
+
+  &:hover {
+    background: $color-muted;
+  }
+}
+
+.menuItemButton {
+  background: transparent;
+  border: 0;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.menuHeading {
+  margin-top: $spacing-2;
+  padding: $spacing-2 $spacing-3 $spacing-1;
+  border-top: 1px solid $color-border;
+  font-size: var(--fs-micro, 11px);
+  font-weight: 700;
+  letter-spacing: var(--ls-micro, 0.06em);
+  text-transform: uppercase;
+  color: $color-text-secondary;
+}
+
+.menuList {
+  max-height: 280px;
+  overflow-y: auto;
+}
+
+.menuUser {
+  padding: $spacing-2 $spacing-3;
+  margin-bottom: $spacing-1;
+  border-bottom: 1px solid $color-border;
+  font-size: 12px;
+  font-weight: 700;
+  color: $color-text-secondary;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// Hesap avatarı: tek ikon-ağırlıklı düğme (Profil + kullanıcı adı + Çıkış yerine)
+.avatarBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--touch-target);
+  height: var(--touch-target);
+  padding: 0;
+  border: 1px solid $color-border-dark;
+  border-radius: 50%;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.08);
+  color: $color-text-on-dark;
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: $transition-base;
+
+  &:hover,
+  &[aria-expanded='true'] {
+    border-color: $color-primary;
+  }
+}
+
+.avatarImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+// Ürün grubu ile hesap kontrolleri arasında ince ayraç
+.divider {
+  width: 1px;
+  height: 22px;
+  background: $color-border-dark;
+}
+
+.headerWorldCup .avatarBtn {
+  border-color: #444;
 }
 
 .myAnalysesWrap {
@@ -280,18 +457,26 @@
 
 .mobileMenu {
   position: fixed;
-  top: 60px;
+  top: var(--header-height);
   left: 0;
   right: 0;
   bottom: 0;
   background: linear-gradient(180deg, $color-surface-dark 0%, $color-surface-dark-alt 100%);
   border-top: 1px solid $color-border-dark;
   z-index: 95;
-  padding: $spacing-5 $spacing-4;
+  padding: $spacing-6 $spacing-4 calc(var(--bottom-nav-height) + var(--safe-bottom) + #{$spacing-4});
   display: flex;
   flex-direction: column;
   gap: $spacing-4;
   overflow-y: auto;
+  overscroll-behavior: contain; // menü kendi içinde kayar, arkaya taşmaz
+
+  // Arama kutusu masaüstünde `flex: 1 1 260px` (yatay büyür); sütun düzeninde bu YÜKSEKLİK olurdu → sabit boy.
+  > [role='search'] {
+    flex: 0 0 auto;
+    max-width: none;
+    width: 100%;
+  }
 }
 
 .mobileMenuWorldCup {
@@ -327,14 +512,14 @@
   border-radius: $radius-sm;
   font-size: 15px;
   font-weight: 700;
-  color: #fff;
-  background: linear-gradient(135deg, $color-primary, $color-primary-dark);
+  color: var(--color-on-premium);
+  background: linear-gradient(135deg, var(--color-premium), var(--color-premium-strong));
   text-decoration: none;
   transition: $transition-base;
   text-align: center;
 
   &:hover {
-    background: linear-gradient(135deg, $color-primary-dark, $color-primary);
+    background: linear-gradient(135deg, var(--color-premium-strong), var(--color-premium));
   }
 }
 
@@ -407,7 +592,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 32px;
+  height: var(--touch-target);
   padding: 0 $spacing-3;
   border: 1px solid rgba(255, 255, 255, 0.55);
   border-radius: $radius-full;
@@ -445,8 +630,9 @@
 
 // ── Responsive ───────────────────────────────────
 
-@media (max-width: $bp-md) {
-  .headerNavPills {
+@include below-desktop {
+  .headerNavPills,
+  .right {
     display: none;
   }
 
@@ -456,5 +642,15 @@
 
   .hamburger {
     display: flex;
+  }
+
+  .mobileThemeToggle {
+    display: inline-flex;
+    margin-left: auto;
+  }
+
+  // Mobilde arama menünün içinde
+  .headerContainer > :nth-child(2) {
+    display: none;
   }
 }

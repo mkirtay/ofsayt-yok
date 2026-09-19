@@ -1,0 +1,54 @@
+@use '../../styles/variables' as *;
+
+// Yalnızca mobil düzen (< $bp-desktop, tablet dikey dahil). Masaüstünde hiç render edilmez (display: none).
+.nav {
+  display: none;
+}
+
+@include below-desktop {
+  .nav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 110;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    height: calc(var(--bottom-nav-height) + var(--safe-bottom));
+    padding-bottom: var(--safe-bottom);
+    background: var(--bg-surface);
+    border-top: 1px solid var(--border-subtle);
+    box-shadow: 0 -6px 20px rgba(0, 0, 0, 0.18);
+  }
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-height: var(--touch-target);
+  color: var(--text-tertiary);
+  transition: color 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+
+  &:hover {
+    color: var(--text-secondary);
+  }
+}
+
+.label {
+  font-size: 10px;
+  font-weight: var(--fw-micro);
+  line-height: 1;
+  letter-spacing: 0.02em;
+}
+
+.active {
+  color: $color-primary-text;
+
+  .label {
+    font-weight: 700;
+  }
+}

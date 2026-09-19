@@ -1,0 +1,7 @@
+@use '../../styles/variables' as *;
+
+.main {
+  min-height: calc(100vh - var(--header-height));
+  padding-bottom: $spacing-8;
+}
+

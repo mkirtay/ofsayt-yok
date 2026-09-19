@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { compare } from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
+import { absoluteImageUrl } from '@/lib/siteUrl';
 import { hitFixedWindowRateLimit, requestIp } from '@/lib/rateLimit';
 import { issueMobileToken } from '@/lib/mobileAuth';
 
@@ -78,7 +79,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       id: user.id,
       email: user.email,
       name: user.name,
-      image: user.image,
+      image: absoluteImageUrl(user.image),
       role: user.role,
       username: user.username,
       credits: user.credits,

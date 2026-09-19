@@ -1,0 +1,278 @@
+[
+  {
+    "id": 291686,
+    "participant_id": 83,
+    "league_id": 564,
+    "season_id": 27965,
+    "stage_id": 77482690,
+    "group_id": null,
+    "position": 1,
+    "points": 18,
+    "participant": {
+      "id": 83,
+      "name": "FC Barcelona",
+      "short_code": "BAR",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/teams/19/83.png"
+    },
+    "details": [
+      {
+        "id": 16717927796,
+        "type_id": 129,
+        "value": 6,
+        "type": {
+          "id": 129,
+          "name": "Overall Matches Played",
+          "developer_name": "OVERALL_MATCHES",
+          "stat_group": "overall"
+        }
+      },
+      {
+        "id": 16717927797,
+        "type_id": 130,
+        "value": 6,
+        "type": {
+          "id": 130,
+          "name": "Overall Won",
+          "developer_name": "OVERALL_WINS",
+          "stat_group": "overall"
+        }
+      },
+      {
+        "id": 16717927798,
+        "type_id": 131,
+        "value": 0,
+        "type": {
+          "id": 131,
+          "name": "Overall Draw",
+          "developer_name": "OVERALL_DRAWS",
+          "stat_group": "overall"
+        }
+      },
+      {
+        "id": 16717927799,
+        "type_id": 132,
+        "value": 0,
+        "type": {
+          "id": 132,
+          "name": "Overall Lost",
+          "developer_name": "OVERALL_LOST",
+          "stat_group": "overall"
+        }
+      },
+      {
+        "id": 16717927794,
+        "type_id": 133,
+        "value": 28,
+        "type": {
+          "id": 133,
+          "name": "Overal Goals Scored",
+          "developer_name": "OVERALL_SCORED",
+          "stat_group": "overall"
+        }
+      },
+      {
+        "id": 16717927795,
+        "type_id": 134,
+        "value": 6,
+        "type": {
+          "id": 134,
+          "name": "Overall Goals Conceded",
+          "developer_name": "OVERALL_CONCEDED",
+          "stat_group": "overall"
+        }
+      },
+      {
+        "id": 16717927800,
+        "type_id": 135,
+        "value": 3,
+        "type": {
+          "id": 135,
+          "name": "Home Matched Played",
+          "developer_name": "HOME_MATCHES",
+          "stat_group": "home"
+        }
+      },
+      {
+        "id": 16717927801,
+        "type_id": 136,
+        "value": 3,
+        "type": {
+          "id": 136,
+          "name": "Home Won",
+          "developer_name": "HOME_WINS",
+          "stat_group": "home"
+        }
+      },
+      {
+        "id": 16717927802,
+        "type_id": 137,
+        "value": 0,
+        "type": {
+          "id": 137,
+          "name": "Home Draw",
+          "developer_name": "HOME_DRAWS",
+          "stat_group": "home"
+        }
+      },
+      {
+        "id": 16717927803,
+        "type_id": 138,
+        "value": 0,
+        "type": {
+          "id": 138,
+          "name": "Home Lost",
+          "developer_name": "HOME_LOST",
+          "stat_group": "home"
+        }
+      },
+      {
+        "id": 16717927805,
+        "type_id": 139,
+        "value": 14,
+        "type": {
+          "id": 139,
+          "name": "Home Goals Scored",
+          "developer_name": "HOME_SCORED",
+          "stat_group": "home"
+        }
+      },
+      {
+        "id": 16717927806,
+        "type_id": 140,
+        "value": 4,
+        "type": {
+          "id": 140,
+          "name": "Home Goals Conceded",
+          "developer_name": "HOME_CONCEDED",
+          "stat_group": "home"
+        }
+      },
+      {
+        "id": 16717927808,
+        "type_id": 141,
+        "value": 3,
+        "type": {
+          "id": 141,
+          "name": "Away Matched Played",
+          "developer_name": "AWAY_MATCHES",
+          "stat_group": "away"
+        }
+      },
+      {
+        "id": 16717927809,
+        "type_id": 142,
+        "value": 3,
+        "type": {
+          "id": 142,
+          "name": "Away Won",
+          "developer_name": "AWAY_WINS",
+          "stat_group": "away"
+        }
+      },
+      {
+        "id": 16717927810,
+        "type_id": 143,
+        "value": 0,
+        "type": {
+          "id": 143,
+          "name": "Away Draw",
+          "developer_name": "AWAY_DRAWS",
+          "stat_group": "away"
+        }
+      },
+      {
+        "id": 16717927811,
+        "type_id": 144,
+        "value": 0,
+        "type": {
+          "id": 144,
+          "name": "Away Lost",
+          "developer_name": "AWAY_LOST",
+          "stat_group": "away"
+        }
+      },
+      {
+        "id": 16717927813,
+        "type_id": 145,
+        "value": 14,
+        "type": {
+          "id": 145,
+          "name": "Away Goals Scored",
+          "developer_name": "AWAY_SCORED",
+          "stat_group": "away"
+        }
+      },
+      {
+        "id": 16717927814,
+        "type_id": 146,
+        "value": 2,
+        "type": {
+          "id": 146,
+          "name": "Away Goals Conceded",
+          "developer_name": "AWAY_CONCEDED",
+          "stat_group": "away"
+        }
+      },
+      {
+        "id": 16717927815,
+        "type_id": 179,
+        "value": 22,
+        "type": {
+          "id": 179,
+          "name": "Goal Difference",
+          "developer_name": "OVERALL_GOAL_DIFFERENCE",
+          "stat_group": "overall"
+        }
+      },
+      {
+        "id": 16717927804,
+        "type_id": 185,
+        "value": 9,
+        "type": {
+          "id": 185,
+          "name": "Home Points",
+          "developer_name": "HOME_POINTS",
+          "stat_group": "home"
+        }
+      },
+      {
+        "id": 16717927812,
+        "type_id": 186,
+        "value": 9,
+        "type": {
+          "id": 186,
+          "name": "Away Points",
+          "developer_name": "AWAY_POINTS",
+          "stat_group": "away"
+        }
+      },
+      {
+        "id": 16717927807,
+        "type_id": 187,
+        "value": 18,
+        "type": {
+          "id": 187,
+          "name": "Overall Points",
+          "developer_name": "TOTAL_POINTS",
+          "stat_group": "overall"
+        }
+      }
+    ]
+  },
+  {
+    "id": 291700,
+    "participant_id": 3468,
+    "league_id": 564,
+    "season_id": 27965,
+    "stage_id": 77482690,
+    "group_id": null,
+    "position": 2,
+    "points": 15,
+    "participant": {
+      "id": 3468,
+      "name": "Real Madrid",
+      "short_code": "RMA",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/teams/12/3468.png"
+    }
+  }
+]

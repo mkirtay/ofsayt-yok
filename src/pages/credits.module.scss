@@ -139,6 +139,31 @@
   box-shadow: 0 8px 32px rgba(0, 167, 111, 0.12);
 }
 
+.pricingCardPremium {
+  border-color: var(--color-premium);
+  background: linear-gradient(160deg, rgba(245, 179, 1, 0.04), rgba(245, 179, 1, 0.12));
+  box-shadow: 0 8px 32px rgba(245, 179, 1, 0.14);
+}
+
+.premiumNote {
+  margin: $spacing-3 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+  color: $color-text;
+}
+
+.premiumBadge {
+  padding: 2px $spacing-3;
+  border-radius: $radius-full;
+  background: linear-gradient(135deg, var(--color-premium), var(--color-premium-strong));
+  color: var(--color-on-premium);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .pricingPopular {
   position: absolute;
   top: -13px;

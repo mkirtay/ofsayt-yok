@@ -1,21 +1,18 @@
 @use '../../styles/variables' as *;
 
+// "Topluluk" kartının (MatchCommunity) içindeki yorum bölümü — kendi kart çerçevesi yok.
 .container {
-  background-color: $color-surface;
-  border-radius: $radius-md;
-  padding: $spacing-4;
-  box-shadow: $shadow-surface;
-  border: 1px solid $color-border;
   display: flex;
   flex-direction: column;
+  border-top: 1px solid $color-border;
+  padding-top: $spacing-4;
 }
 
 .title {
-  font-size: 16px;
+  font-size: 13px;
   font-weight: 600;
-  margin-bottom: $spacing-4;
-  border-bottom: 1px solid $color-border;
-  padding-bottom: $spacing-2;
+  color: $color-text;
+  margin: 0 0 $spacing-3;
 }
 
 .commentList {
@@ -48,8 +45,8 @@
 }
 
 .avatar {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   border-radius: $radius-full;
   background-color: $color-primary;
   color: $color-surface;
@@ -150,11 +147,44 @@
   word-break: break-word;
 }
 
-.empty {
-  text-align: center;
+.likeBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  padding: 2px 8px 2px 6px;
+  border: 1px solid transparent;
+  border-radius: $radius-full;
+  background: transparent;
   color: $color-text-secondary;
-  font-size: 13px;
-  padding: $spacing-4 0;
+  font-size: 12px;
+  cursor: pointer;
+  transition: $transition-base;
+
+  &:hover:not(:disabled) {
+    background: $color-muted;
+    color: $color-text;
+  }
+
+  &:disabled {
+    cursor: default;
+  }
+}
+
+.likeBtnActive {
+  color: $color-danger;
+  border-color: rgba($color-danger, 0.3);
+  background: rgba($color-danger, 0.06);
+
+  &:hover:not(:disabled) {
+    color: $color-danger;
+    background: rgba($color-danger, 0.1);
+  }
+}
+
+.likeCount {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
 }
 
 .inputArea {

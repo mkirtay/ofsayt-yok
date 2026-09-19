@@ -1,0 +1,33 @@
+{
+  "id": 19746621,
+  "league_id": 600,
+  "state_id": 5,
+  "name": "Fenerbahçe vs Beşiktaş",
+  "starting_at": "2026-09-05 17:00:00",
+  "participants": [
+    { "id": 554, "name": "Beşiktaş", "image_path": "https://cdn.sportmonks.com/images/soccer/teams/10/554.png", "meta": { "location": "away", "winner": true, "position": 3 } },
+    { "id": 88, "name": "Fenerbahçe", "image_path": "https://cdn.sportmonks.com/images/soccer/teams/24/88.png", "meta": { "location": "home", "winner": false, "position": 4 } }
+  ],
+  "scores": [
+    { "type_id": 1, "participant_id": 88, "description": "1ST_HALF", "score": { "goals": 1, "participant": "home" } },
+    { "type_id": 1, "participant_id": 554, "description": "1ST_HALF", "score": { "goals": 1, "participant": "away" } },
+    { "type_id": 2, "participant_id": 88, "description": "2ND_HALF", "score": { "goals": 1, "participant": "home" } },
+    { "type_id": 2, "participant_id": 554, "description": "2ND_HALF", "score": { "goals": 2, "participant": "away" } },
+    { "type_id": 1525, "participant_id": 88, "description": "CURRENT", "score": { "goals": 1, "participant": "home" } },
+    { "type_id": 1525, "participant_id": 554, "description": "CURRENT", "score": { "goals": 2, "participant": "away" } }
+  ],
+  "state": { "id": 5, "state": "FT", "name": "Full Time", "short_name": "FT" },
+  "league": {
+    "id": 600,
+    "name": "Super Lig",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/24/600.png",
+    "type": "league",
+    "sub_type": "domestic",
+    "country": {
+      "id": 404,
+      "name": "Turkey",
+      "fifa_name": "TUR",
+      "image_path": "https://cdn.sportmonks.com/images/countries/png/short/tr.png"
+    }
+  }
+}

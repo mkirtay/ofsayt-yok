@@ -1,0 +1,378 @@
+{
+ "fixture_id": 19746621,
+ "name": "Fenerbahçe vs Beşiktaş",
+ "participants": [
+  {
+   "id": 554,
+   "name": "Beşiktaş",
+   "meta": {
+    "location": "away",
+    "winner": true,
+    "position": 3
+   }
+  },
+  {
+   "id": 88,
+   "name": "Fenerbahçe",
+   "meta": {
+    "location": "home",
+    "winner": false,
+    "position": 4
+   }
+  }
+ ],
+ "lineups": [
+  {
+   "id": 14674581950,
+   "player_id": 28912973,
+   "team_id": 88,
+   "position_id": 25,
+   "type_id": 11,
+   "formation_field": "2:4",
+   "formation_position": 5,
+   "player_name": "Archie Brown",
+   "jersey_number": 3,
+   "player": {
+    "id": 28912973,
+    "display_name": "Archie Brown",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/13/28912973.png"
+   }
+  },
+  {
+   "id": 14674581952,
+   "player_id": 97087,
+   "team_id": 88,
+   "position_id": 26,
+   "type_id": 11,
+   "formation_field": "3:1",
+   "formation_position": 6,
+   "player_name": "Mattéo Guendouzi",
+   "jersey_number": 6,
+   "player": {
+    "id": 97087,
+    "display_name": "Mattéo Guendouzi",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/31/97087.png"
+   }
+  },
+  {
+   "id": 14674581953,
+   "player_id": 20333643,
+   "team_id": 88,
+   "position_id": 26,
+   "type_id": 11,
+   "formation_field": "4:1",
+   "formation_position": 8,
+   "player_name": "Mason Greenwood",
+   "jersey_number": 11,
+   "player": {
+    "id": 20333643,
+    "display_name": "Mason Greenwood",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/11/20333643.png"
+   }
+  },
+  {
+   "id": 14674581954,
+   "player_id": 1869,
+   "team_id": 88,
+   "position_id": 25,
+   "type_id": 11,
+   "formation_field": "2:3",
+   "formation_position": 4,
+   "player_name": "Nathan Aké",
+   "jersey_number": 15,
+   "player": {
+    "id": 1869,
+    "display_name": "Nathan Aké",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/13/1869.png"
+   }
+  },
+  {
+   "id": 14674582574,
+   "player_id": 201444,
+   "team_id": 88,
+   "position_id": 26,
+   "type_id": 11,
+   "formation_field": "4:2",
+   "formation_position": 9,
+   "player_name": "İrfan Can Kahveci",
+   "jersey_number": 17,
+   "player": {
+    "id": 201444,
+    "display_name": "İrfan Can Kahveci",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/4/201444.png"
+   }
+  },
+  {
+   "id": 14674581955,
+   "player_id": 49353,
+   "team_id": 88,
+   "position_id": 27,
+   "type_id": 11,
+   "formation_field": "5:1",
+   "formation_position": 11,
+   "player_name": "Vedat Muriqi",
+   "jersey_number": 19,
+   "player": {
+    "id": 49353,
+    "display_name": "Vedat Muriqi",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/9/49353.png"
+   }
+  },
+  {
+   "id": 14674581956,
+   "player_id": 160110,
+   "team_id": 88,
+   "position_id": 25,
+   "type_id": 11,
+   "formation_field": "2:1",
+   "formation_position": 2,
+   "player_name": "Nélson Semedo",
+   "jersey_number": 27,
+   "player": {
+    "id": 160110,
+    "display_name": "Nélson Semedo",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/14/160110.png"
+   }
+  },
+  {
+   "id": 14674581957,
+   "player_id": 159142,
+   "team_id": 88,
+   "position_id": 24,
+   "type_id": 11,
+   "formation_field": "1:1",
+   "formation_position": 1,
+   "player_name": "Ederson",
+   "jersey_number": 31,
+   "player": {
+    "id": 159142,
+    "display_name": "Ederson",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/6/159142.png"
+   }
+  },
+  {
+   "id": 14674581958,
+   "player_id": 130142,
+   "team_id": 88,
+   "position_id": 25,
+   "type_id": 11,
+   "formation_field": "2:2",
+   "formation_position": 3,
+   "player_name": "Milan Škriniar",
+   "jersey_number": 37,
+   "player": {
+    "id": 130142,
+    "display_name": "Milan Škriniar ",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/30/130142.png"
+   }
+  },
+  {
+   "id": 14674581959,
+   "player_id": 10967396,
+   "team_id": 88,
+   "position_id": 26,
+   "type_id": 11,
+   "formation_field": "4:3",
+   "formation_position": 10,
+   "player_name": "Oğuz Aydın",
+   "jersey_number": 70,
+   "player": {
+    "id": 10967396,
+    "display_name": "Oğuz Aydın",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/4/10967396.png"
+   }
+  },
+  {
+   "id": 14674581960,
+   "player_id": 1193,
+   "team_id": 88,
+   "position_id": 26,
+   "type_id": 11,
+   "formation_field": "3:2",
+   "formation_position": 7,
+   "player_name": "N'Golo Kanté",
+   "jersey_number": 91,
+   "player": {
+    "id": 1193,
+    "display_name": "N'Golo Kanté",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/9/1193.png"
+   }
+  },
+  {
+   "id": 14674581939,
+   "player_id": 32550,
+   "team_id": 554,
+   "position_id": 24,
+   "type_id": 11,
+   "formation_field": "1:1",
+   "formation_position": 1,
+   "player_name": "Alexander Nübel",
+   "jersey_number": 1,
+   "player": {
+    "id": 32550,
+    "display_name": "Alexander Nübel",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/6/32550.png"
+   }
+  },
+  {
+   "id": 14674581940,
+   "player_id": 32622,
+   "team_id": 554,
+   "position_id": 26,
+   "type_id": 11,
+   "formation_field": "3:1",
+   "formation_position": 6,
+   "player_name": "Salih Özcan",
+   "jersey_number": 6,
+   "player": {
+    "id": 32622,
+    "display_name": "Salih Özcan",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/14/32622.png"
+   }
+  },
+  {
+   "id": 14674581941,
+   "player_id": 4545376,
+   "team_id": 554,
+   "position_id": 26,
+   "type_id": 11,
+   "formation_field": "4:2",
+   "formation_position": 9,
+   "player_name": "Orkun Kökçü",
+   "jersey_number": 10,
+   "player": {
+    "id": 4545376,
+    "display_name": "Orkun Kökçü ",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/0/4545376.png"
+   }
+  },
+  {
+   "id": 14674582948,
+   "player_id": 37261923,
+   "team_id": 554,
+   "position_id": 25,
+   "type_id": 11,
+   "formation_field": "2:3",
+   "formation_position": 3,
+   "player_name": "Emmanuel Agbadou",
+   "jersey_number": 12,
+   "player": {
+    "id": 37261923,
+    "display_name": "Emmanuel Agbadou",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/3/37261923.png"
+   }
+  },
+  {
+   "id": 14674581943,
+   "player_id": 37572227,
+   "team_id": 554,
+   "position_id": 26,
+   "type_id": 11,
+   "formation_field": "4:3",
+   "formation_position": 8,
+   "player_name": "Junior Olaitan",
+   "jersey_number": 15,
+   "player": {
+    "id": 37572227,
+    "display_name": "Junior Olaitan",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/3/37572227.png"
+   }
+  },
+  {
+   "id": 14674581944,
+   "player_id": 25709,
+   "team_id": 554,
+   "position_id": 26,
+   "type_id": 11,
+   "formation_field": "4:4",
+   "formation_position": 7,
+   "player_name": "Vaclav Cerny",
+   "jersey_number": 18,
+   "player": {
+    "id": 25709,
+    "display_name": "Vaclav Cerny",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/13/25709.png"
+   }
+  },
+  {
+   "id": 14674581945,
+   "player_id": 61780,
+   "team_id": 554,
+   "position_id": 26,
+   "type_id": 11,
+   "formation_field": "4:1",
+   "formation_position": 10,
+   "player_name": "Leandro Trossard",
+   "jersey_number": 19,
+   "player": {
+    "id": 61780,
+    "display_name": "Leandro Trossard",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/20/61780.png"
+   }
+  },
+  {
+   "id": 14674581946,
+   "player_id": 177988,
+   "team_id": 554,
+   "position_id": 27,
+   "type_id": 11,
+   "formation_field": "5:1",
+   "formation_position": 11,
+   "player_name": "Dušan Vlahović",
+   "jersey_number": 28,
+   "player": {
+    "id": 177988,
+    "display_name": "Dušan Vlahović",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/4/177988.png"
+   }
+  },
+  {
+   "id": 14674581947,
+   "player_id": 4545417,
+   "team_id": 554,
+   "position_id": 25,
+   "type_id": 11,
+   "formation_field": "2:1",
+   "formation_position": 5,
+   "player_name": "Rıdvan Yılmaz",
+   "jersey_number": 33,
+   "player": {
+    "id": 4545417,
+    "display_name": "Rıdvan Yılmaz",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/9/4545417.png"
+   }
+  },
+  {
+   "id": 14674582573,
+   "player_id": 3187864,
+   "team_id": 554,
+   "position_id": 25,
+   "type_id": 11,
+   "formation_field": "2:2",
+   "formation_position": 4,
+   "player_name": "Emirhan Topçu",
+   "jersey_number": 53,
+   "player": {
+    "id": 3187864,
+    "display_name": "Emirhan Topçu",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/24/3187864.png"
+   }
+  },
+  {
+   "id": 14674581949,
+   "player_id": 512560,
+   "team_id": 554,
+   "position_id": 25,
+   "type_id": 11,
+   "formation_field": "2:4",
+   "formation_position": 2,
+   "player_name": "Amir Murillo",
+   "jersey_number": 62,
+   "player": {
+    "id": 512560,
+    "display_name": "Amir Murillo",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/16/512560.png"
+   }
+  }
+ ]
+}

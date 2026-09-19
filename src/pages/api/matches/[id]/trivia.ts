@@ -48,6 +48,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return { status: 404 as const, body: { error: 'Maç bulunamadı' } };
       }
 
+      if (ctx.archived) {
+        // Canlı sağlayıcıda maç yok; hangi matchStatus'ta saklandığı da bilinmiyor
+        // (bu bilgi live match status'e bağlıydı) — matchId için en son kaydı al.
+        // Canlı context olmadığı için yeniden üretim mümkün değil; expiresAt
+        // tazelik kontrolü de bu yüzden uygulanmıyor, elde ne varsa o gösterilir.
+        const existing = await prisma.matchTrivia.findFirst({
+          where: { matchId },
+          orderBy: { createdAt: 'desc' },
+        });
+        if (!existing) {
+          return { status: 404 as const, body: { error: 'Bu maç için trivia üretilmedi.' } };
+        }
+        return { status: 200 as const, body: { trivia: existing, cached: true, isArchived: true } };
+      }
+
       const existing = await prisma.matchTrivia.findUnique({
         where: { matchId_matchStatus: { matchId, matchStatus: ctx.matchPhase } },
       });

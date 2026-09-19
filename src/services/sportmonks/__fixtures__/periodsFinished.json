@@ -1,0 +1,4 @@
+[
+  { "id": 7111101, "type_id": 1, "description": "1st-half", "started": null, "ended": null, "ticking": false, "sort_order": 1, "period_length": 45, "minutes": 44, "seconds": 24, "has_timer": false },
+  { "id": 7111142, "type_id": 2, "description": "2nd-half", "started": null, "ended": null, "ticking": false, "sort_order": 2, "period_length": 45, "minutes": 92, "seconds": 3, "has_timer": false }
+]

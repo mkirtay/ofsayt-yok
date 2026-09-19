@@ -1,0 +1,209 @@
+@use '../../styles/variables' as *;
+
+// Chip satırı: sabit yükseklik (`--league-bar-h`, sayfa scss'inde) — split-view sütun yüksekliği buna göre hesaplanır.
+.bar {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  height: var(--league-bar-h, 40px);
+  // Genişlik taşarsa yatay kaydır (mobil tarih şeridiyle aynı pattern)
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.chip {
+  @include filter-chip;
+  scroll-snap-align: start;
+}
+
+.chipActive {
+  @include filter-chip-active;
+}
+
+.chipAdd {
+  border-style: dashed;
+}
+
+// ── Seçim paneli (modal / bottom-sheet) ─────────────────────────────────────
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-4;
+  background: rgba(0, 0, 0, 0.55);
+
+  @include below-desktop {
+    align-items: flex-end;
+    padding: 0;
+  }
+}
+
+.dialog {
+  display: flex;
+  flex-direction: column;
+  width: min(480px, 100%);
+  max-height: min(640px, 100%);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: $radius-lg;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+
+  @include below-desktop {
+    width: 100%;
+    max-height: 85vh;
+    border-radius: $radius-lg $radius-lg 0 0;
+    // bottom-sheet: home indicator payı
+    padding-bottom: var(--safe-bottom, 0px);
+  }
+}
+
+.dialogHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-3 $spacing-4;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.dialogTitle {
+  margin: 0;
+  font-size: var(--fs-section, 15px);
+  font-weight: var(--fw-section, 600);
+  color: $color-text;
+}
+
+.close {
+  width: 32px;
+  height: 32px;
+  border-radius: $radius-full;
+  color: var(--text-secondary);
+
+  &:hover {
+    background: $color-muted;
+    color: $color-text;
+  }
+}
+
+.searchWrap {
+  padding: $spacing-3 $spacing-4;
+}
+
+.search {
+  width: 100%;
+  min-height: 40px;
+  padding: 0 $spacing-3;
+  border: 1px solid var(--border-subtle);
+  border-radius: $radius-full;
+  background: var(--bg-page);
+  color: $color-text;
+  font-size: 14px;
+  outline: none;
+
+  &:focus {
+    border-color: $color-primary;
+  }
+}
+
+.list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  list-style: none;
+  margin: 0;
+  padding: 0 $spacing-2;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  min-height: 44px;
+  padding: 0 $spacing-2;
+  border-radius: $radius-sm;
+  cursor: pointer;
+
+  &:hover {
+    background: $color-muted;
+  }
+}
+
+.checkbox {
+  width: 18px;
+  height: 18px;
+  accent-color: $color-primary;
+  flex-shrink: 0;
+}
+
+.rowLogo {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+
+.rowName {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  color: $color-text;
+}
+
+.rowSub {
+  font-size: 12px;
+  color: $color-text-secondary;
+  white-space: nowrap;
+}
+
+.noResult {
+  padding: $spacing-6 $spacing-4;
+  text-align: center;
+  font-size: 13px;
+  color: $color-text-secondary;
+}
+
+.dialogFoot {
+  display: flex;
+  gap: $spacing-3;
+  justify-content: space-between;
+  padding: $spacing-3 $spacing-4;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.clear {
+  min-height: 40px;
+  padding: 0 $spacing-4;
+  border-radius: $radius-full;
+  color: $color-text-secondary;
+  font-weight: 600;
+  font-size: 14px;
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+}
+
+.apply {
+  flex: 1;
+  min-height: 40px;
+  border-radius: $radius-full;
+  background: $color-primary;
+  color: #fff;
+  font-weight: 700;
+  font-size: 14px;
+
+  &:hover {
+    background: $color-primary-dark;
+  }
+}

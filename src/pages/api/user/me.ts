@@ -1,6 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '@/lib/prisma';
 import { isSafeHttpUrl, sanitizePlainText } from '@/lib/security';
+import { isGalleryAvatarUrl, toStoredImage } from '@/lib/avatars';
+import { siteBaseUrl, withAbsoluteImage } from '@/lib/siteUrl';
 import { getRequestUserId } from '@/lib/mobileAuth';
 
 const USERNAME_RE = /^[a-zA-Z0-9_]{3,30}$/;
@@ -45,7 +47,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (!user) {
         return res.status(404).json({ error: 'Kullanıcı bulunamadı.' });
       }
-      return res.status(200).json(user);
+      return res.status(200).json(withAbsoluteImage(user));
     }
 
     if (req.method === 'PATCH') {
@@ -81,12 +83,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         if (imageRaw === null) {
           data.image = null;
         } else if (typeof imageRaw === 'string') {
-          const t = sanitizePlainText(imageRaw);
+          // API çıktısı tam URL verdiği için gelen değer kendi galeri avatarımızsa göreli depolama formuna geri çevrilir.
+          const t = toStoredImage(sanitizePlainText(imageRaw), siteBaseUrl());
           if (t.length > MAX_IMAGE_URL) {
             return res.status(400).json({ error: 'Profil görseli URL’si çok uzun.' });
           }
-          if (t !== '' && !isSafeHttpUrl(t)) {
-            return res.status(400).json({ error: 'Profil görseli icin yalnizca http/https URL kullanabilirsiniz.' });
+          if (t !== '' && !isSafeHttpUrl(t) && !isGalleryAvatarUrl(t)) {
+            return res.status(400).json({ error: 'Profil görseli için http/https URL ya da galeriden bir avatar kullanabilirsiniz.' });
           }
           data.image = t === '' ? null : t;
         } else {
@@ -155,7 +158,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         },
       });
 
-      return res.status(200).json(user);
+      return res.status(200).json(withAbsoluteImage(user));
     }
 
     res.setHeader('Allow', 'GET, PATCH');

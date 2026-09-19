@@ -4,13 +4,6 @@
   // layout only; wrapping card styles come from the parent container
 }
 
-.pickerRow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: $spacing-3;
-  margin-bottom: $spacing-3;
-}
-
 .teamRow {
   display: flex;
   flex-wrap: wrap;
@@ -34,27 +27,128 @@
   letter-spacing: 0.04em;
 }
 
-.select {
-  appearance: none;
-  background-color: $color-bg;
-  border: 1px solid $color-border;
-  border-radius: $radius-sm;
-  padding: $spacing-2 $spacing-3;
-  font-size: 14px;
-  color: $color-text;
-  cursor: pointer;
-  transition: border-color 0.15s;
+$field-h: 40px;
+
+.searchWrap {
+  position: relative;
+}
+
+.icon {
+  position: absolute;
+  left: $spacing-3;
+  top: 50%;
+  transform: translateY(-50%);
+  color: $color-text-secondary;
+  pointer-events: none;
+}
+
+.input {
   width: 100%;
+  height: $field-h;
+  padding: 0 $spacing-3 0 36px;
+  border-radius: $radius-full;
+  border: 1px solid $color-border;
+  background: $color-bg;
+  color: $color-text;
+  font: inherit;
+  font-size: 14px;
+  transition: border-color 0.15s;
 
   &:focus {
     outline: none;
     border-color: $color-primary;
   }
+}
 
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+.selectedTeam {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  width: 100%;
+  height: $field-h;
+  padding: 0 $spacing-3;
+  border-radius: $radius-full;
+  border: 1px solid $color-primary;
+  background: $color-bg;
+  color: $color-text;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.selectedName {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.change {
+  color: $color-text-secondary;
+  font-size: 12px;
+}
+
+.panel {
+  position: absolute;
+  top: calc(100% + #{$spacing-2});
+  left: 0;
+  right: 0;
+  max-height: 280px;
+  overflow-y: auto;
+  padding: $spacing-2;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: $radius-md;
+  box-shadow: var(--shadow-surface);
+  z-index: 30;
+}
+
+.hit {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 $spacing-2;
+  border: 0;
+  border-radius: $radius-sm;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+
+  &:hover {
+    background: $color-muted;
   }
+}
+
+.hitName {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  color: $color-text;
+}
+
+.logo {
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.logoPh {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--bg-muted);
+  flex-shrink: 0;
+}
+
+.note {
+  padding: $spacing-3;
+  font-size: 13px;
+  color: $color-text-secondary;
 }
 
 .vsSep {
@@ -62,7 +156,9 @@
   font-weight: 800;
   color: $color-text-secondary;
   align-self: flex-end;
-  padding-bottom: $spacing-2;
+  height: $field-h;
+  display: flex;
+  align-items: center;
   flex-shrink: 0;
 }
 
@@ -89,18 +185,10 @@
   }
 }
 
-.fixedLabel {
-  font-size: 12px;
-  font-weight: 600;
-  color: $color-text-secondary;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
 .fixedTeamBadge {
   display: flex;
   align-items: center;
-  height: 38px;
+  height: $field-h;
   padding: 0 $spacing-3;
   background: $color-muted;
   border: 1px solid $color-border;
@@ -111,11 +199,4 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.loading,
-.empty {
-  font-size: 13px;
-  color: $color-text-secondary;
-  margin-top: $spacing-2;
 }

@@ -1,0 +1,277 @@
+{
+ "_note": "GET /v3/football/leagues?include=country (2026-09-19) — bu hesabın planında erişilebilen 34 lig. Kademe (1./2. lig) alanı YOK; category kademe göstermez.",
+ "leagues": [
+  {
+   "id": 2,
+   "name": "Champions League",
+   "country": "Europe",
+   "category": 1,
+   "sub_type": "cup_international",
+   "short_code": "UEFA CL"
+  },
+  {
+   "id": 5,
+   "name": "Europa League",
+   "country": "Europe",
+   "category": 1,
+   "sub_type": "cup_international",
+   "short_code": "UEFA EL"
+  },
+  {
+   "id": 8,
+   "name": "Premier League",
+   "country": "England",
+   "category": 1,
+   "sub_type": "domestic",
+   "short_code": "UK PL"
+  },
+  {
+   "id": 9,
+   "name": "Championship",
+   "country": "England",
+   "category": 2,
+   "sub_type": "domestic",
+   "short_code": "UK CHAMP"
+  },
+  {
+   "id": 72,
+   "name": "Eredivisie",
+   "country": "Netherlands",
+   "category": 1,
+   "sub_type": "domestic",
+   "short_code": "NLD E"
+  },
+  {
+   "id": 82,
+   "name": "Bundesliga",
+   "country": "Germany",
+   "category": 1,
+   "sub_type": "domestic",
+   "short_code": "GER BI"
+  },
+  {
+   "id": 85,
+   "name": "2. Bundesliga",
+   "country": "Germany",
+   "category": 2,
+   "sub_type": "domestic",
+   "short_code": "GER BII"
+  },
+  {
+   "id": 208,
+   "name": "Pro League",
+   "country": "Belgium",
+   "category": 1,
+   "sub_type": "domestic",
+   "short_code": "BEL FDA"
+  },
+  {
+   "id": 262,
+   "name": "Chance Liga",
+   "country": "Czech Republic",
+   "category": 2,
+   "sub_type": "domestic",
+   "short_code": null
+  },
+  {
+   "id": 271,
+   "name": "Superliga",
+   "country": "Denmark",
+   "category": 2,
+   "sub_type": "domestic",
+   "short_code": "DNK SL"
+  },
+  {
+   "id": 301,
+   "name": "Ligue 1",
+   "country": "France",
+   "category": 1,
+   "sub_type": "domestic",
+   "short_code": "FRA L1"
+  },
+  {
+   "id": 304,
+   "name": "Ligue 2",
+   "country": "France",
+   "category": 2,
+   "sub_type": "domestic",
+   "short_code": null
+  },
+  {
+   "id": 325,
+   "name": "Super League",
+   "country": "Greece",
+   "category": 2,
+   "sub_type": "domestic",
+   "short_code": "GRC SL"
+  },
+  {
+   "id": 384,
+   "name": "Serie A",
+   "country": "Italy",
+   "category": 1,
+   "sub_type": "domestic",
+   "short_code": "ITA SA"
+  },
+  {
+   "id": 387,
+   "name": "Serie B",
+   "country": "Italy",
+   "category": 2,
+   "sub_type": "domestic",
+   "short_code": "ITA SB"
+  },
+  {
+   "id": 462,
+   "name": "Liga Portugal",
+   "country": "Portugal",
+   "category": 1,
+   "sub_type": "domestic",
+   "short_code": "PRT PL"
+  },
+  {
+   "id": 501,
+   "name": "Premiership",
+   "country": "Scotland",
+   "category": 2,
+   "sub_type": "domestic",
+   "short_code": "SCO P"
+  },
+  {
+   "id": 564,
+   "name": "La Liga",
+   "country": "Spain",
+   "category": 1,
+   "sub_type": "domestic",
+   "short_code": "ESP PL"
+  },
+  {
+   "id": 567,
+   "name": "La Liga 2",
+   "country": "Spain",
+   "category": 2,
+   "sub_type": "domestic",
+   "short_code": "ESP S"
+  },
+  {
+   "id": 570,
+   "name": "Copa Del Rey",
+   "country": "Spain",
+   "category": 2,
+   "sub_type": "domestic_cup",
+   "short_code": null
+  },
+  {
+   "id": 573,
+   "name": "Allsvenskan",
+   "country": "Sweden",
+   "category": 2,
+   "sub_type": "domestic",
+   "short_code": "SWE AL"
+  },
+  {
+   "id": 591,
+   "name": "Super League",
+   "country": "Switzerland",
+   "category": 2,
+   "sub_type": "domestic",
+   "short_code": null
+  },
+  {
+   "id": 600,
+   "name": "Super Lig",
+   "country": "Turkey",
+   "category": 2,
+   "sub_type": "domestic",
+   "short_code": "TUR SL"
+  },
+  {
+   "id": 603,
+   "name": "1. Lig",
+   "country": "Turkey",
+   "category": 2,
+   "sub_type": "domestic",
+   "short_code": "TUR L1"
+  },
+  {
+   "id": 606,
+   "name": "Turkish Cup",
+   "country": "Turkey",
+   "category": 2,
+   "sub_type": "domestic_cup",
+   "short_code": "TUR Cup"
+  },
+  {
+   "id": 609,
+   "name": "Premier League",
+   "country": "Ukraine",
+   "category": 2,
+   "sub_type": "domestic",
+   "short_code": null
+  },
+  {
+   "id": 636,
+   "name": "Liga Profesional de Fútbol",
+   "country": "Argentina",
+   "category": 2,
+   "sub_type": "domestic",
+   "short_code": "ARG PD"
+  },
+  {
+   "id": 648,
+   "name": "Serie A",
+   "country": "Brazil",
+   "category": 2,
+   "sub_type": "domestic",
+   "short_code": "BRA CB"
+  },
+  {
+   "id": 779,
+   "name": "Major League Soccer",
+   "country": "United States",
+   "category": 2,
+   "sub_type": "domestic",
+   "short_code": "USA MLS"
+  },
+  {
+   "id": 944,
+   "name": "Pro League",
+   "country": "Saudi Arabia",
+   "category": 2,
+   "sub_type": "domestic",
+   "short_code": "SAU PL"
+  },
+  {
+   "id": 1282,
+   "name": "2. Lig: Beyaz",
+   "country": "Turkey",
+   "category": 4,
+   "sub_type": "domestic",
+   "short_code": null
+  },
+  {
+   "id": 1283,
+   "name": "2. Lig: Kirmizi",
+   "country": "Turkey",
+   "category": 4,
+   "sub_type": "domestic",
+   "short_code": null
+  },
+  {
+   "id": 1328,
+   "name": "UEFA Super Cup",
+   "country": "Europe",
+   "category": 2,
+   "sub_type": "cup_international",
+   "short_code": "UEFA S Cup"
+  },
+  {
+   "id": 2286,
+   "name": "Europa Conference League",
+   "country": "Europe",
+   "category": 1,
+   "sub_type": "cup_international",
+   "short_code": "UEFA ECL"
+  }
+ ]
+}

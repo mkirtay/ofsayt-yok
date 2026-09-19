@@ -8,6 +8,10 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: path.resolve(__dirname),
   },
+  async redirects() {
+    // /uefa sayfası kaldırıldı (Şampiyonlar Ligi ana sayfadaki lig listesinden/filtresinden erişilir).
+    return [{ source: '/uefa', destination: '/', permanent: true }];
+  },
   images: {
     minimumCacheTTL: 2592000,
     deviceSizes: [640, 828, 1080, 1200, 1920],

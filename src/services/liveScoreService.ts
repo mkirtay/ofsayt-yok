@@ -13,6 +13,35 @@ import {
   BIG_FIVE_COMPETITION_ORDER,
 } from '../config/leagues';
 import { WORLD_CUP_COMPETITION_ID } from '../config/worldCup';
+import { isSportmonksProviderEnabled, resolveSportmonksLeagueId } from './sportmonksProviderFlag';
+import { sportmonksClientRequest, sportmonksCollectAllPages } from './sportmonksRuntimeClient';
+import { mapSportmonksFixtureToMatch } from './sportmonksFixtureMapper';
+import {
+  mapSportmonksEvents,
+  mapSportmonksLineups,
+  mapSportmonksStatistics,
+  mapTopscorerRowsToEntries,
+  extractAppearances,
+  extractSquadStats,
+  extractTeamTopScorers,
+  type TeamTopScorer,
+  type SquadStatLine,
+  GOAL_TOPSCORER_TYPE_ID,
+  ASSIST_TOPSCORER_TYPE_ID,
+  mergeDisciplinaryRows,
+  DISCIPLINARY_TYPE_IDS,
+} from './sportmonksKatman2Mapper';
+import { checkFilteredResult } from './sportmonks/filterAssertion';
+import { resolvePositionShortCode } from './sportmonks/typeDictionaries';
+import type {
+  SportmonksFixture,
+  SportmonksSeasonRow,
+  SportmonksSquadRow,
+  SportmonksStandingRow,
+  SportmonksSquadStatsRow,
+  SportmonksTopscorerRow,
+} from './sportmonks/types';
+import { pivotStandingRow } from './sportmonks/standingsPivot';
 
 export type PaginatedMatches = {
   matches: Match[];
@@ -27,11 +56,147 @@ function parseTotalPages(data: unknown): number {
   return Number.isFinite(n) && n >= 1 ? n : 1;
 }
 
-// Endpoint: GET /matches/live.json?page=
+// ─── Sportmonks (Faz 2) — Katman-1 yardımcıları ────────────────────────────
+// docs/SPORTMONKS_MIGRATION.md Pass 1'de eşlenen 5 Katman-1 fonksiyonunun
+// (getAllLiveMatches/getLiveMatches, getFixturesByDate, getFixturesByCompetition,
+// getAllMatchesByDate, getAllCompetitionHistoryMatches) ortak Sportmonks tarafı.
+// Yalnızca `isSportmonksProviderEnabled()` true iken devrede — flag kapalıyken
+// bu bölümdeki hiçbir kod çalışmaz, aşağıdaki legacy (livescore-api.com) kod
+// yolları olduğu gibi kalır.
+
+/**
+ * Pass 1-3'te doğrulanan tüm alanları (skor, dakika, konum, hakem, tur/faz, grup)
+ * doldurmak için gereken include seti — tek bir kombine istek, ayrı ayrı çağrı yok.
+ * Bu kombinasyonun tamamı tek istekte BİRLİKTE raporda test edilmedi (her include
+ * kendi pass'inde tek başına doğrulandı) ama Sportmonks'un include sözdizimi
+ * (`;` ile ayrılmış liste) standart, birleştirmek dokümante edilmiş bir davranış.
+ */
+const SPORTMONKS_FIXTURE_INCLUDE =
+  'participants;scores;state;periods;league.country;venue;referees.referee;round;stage;group';
+
+/** Pass 5: `/fixtures/date` 50'yi kabul etti — diğer fixture endpoint'leri için de güvenli üst sınır. */
+const SPORTMONKS_FIXTURE_PER_PAGE = 50;
+
+function isoDateOffset(days: number): string {
+  const d = new Date();
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+async function sportmonksFetchAllLiveMatches(): Promise<Match[]> {
+  const rows = await sportmonksCollectAllPages<SportmonksFixture>({
+    basePath: 'football',
+    path: '/livescores/inplay',
+    perPage: SPORTMONKS_FIXTURE_PER_PAGE,
+    extraParams: { include: SPORTMONKS_FIXTURE_INCLUDE },
+  });
+  return dedupeMatchesById(rows.map(mapSportmonksFixtureToMatch));
+}
+
+async function sportmonksFetchFixturesByDate(isoDate: string): Promise<Match[]> {
+  const rows = await sportmonksCollectAllPages<SportmonksFixture>({
+    basePath: 'football',
+    path: `/fixtures/date/${isoDate}`,
+    perPage: SPORTMONKS_FIXTURE_PER_PAGE,
+    extraParams: { include: SPORTMONKS_FIXTURE_INCLUDE },
+  });
+  return dedupeMatchesById(rows.map(mapSportmonksFixtureToMatch));
+}
+
+/** Pass 3: 100 günden uzun bir `/fixtures/between` aralığı 422 veriyor — güvenli üst sınır. */
+const SPORTMONKS_MAX_RANGE_DAYS = 90;
+
+/** `from`→`to` aralığını, 100 günlük Sportmonks limitini aşmayan ardışık parçalara böler. */
+function chunkSportmonksDateRange(
+  from: string,
+  to: string,
+  maxDays = SPORTMONKS_MAX_RANGE_DAYS,
+): Array<{ from: string; to: string }> {
+  const start = new Date(`${from}T00:00:00Z`);
+  const end = new Date(`${to}T00:00:00Z`);
+  if (!Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime()) || start > end) {
+    return [{ from, to }];
+  }
+  const chunks: Array<{ from: string; to: string }> = [];
+  let cursor = start;
+  while (cursor <= end) {
+    const chunkEnd = new Date(cursor);
+    chunkEnd.setUTCDate(chunkEnd.getUTCDate() + maxDays - 1);
+    const clampedEnd = chunkEnd > end ? end : chunkEnd;
+    chunks.push({
+      from: cursor.toISOString().slice(0, 10),
+      to: clampedEnd.toISOString().slice(0, 10),
+    });
+    cursor = new Date(clampedEnd);
+    cursor.setUTCDate(cursor.getUTCDate() + 1);
+  }
+  return chunks;
+}
+
+/**
+ * `getAllMatchesByDate` + `getAllCompetitionHistoryMatches` ortak primitifi
+ * (Pass 1: "ikisi de aynı /fixtures/between primitifine düşüyor, sadece tarih
+ * aralığı farklı"). `sportmonksLeagueId` verilmezse filtresiz (tüm ligler) çeker.
+ */
+async function sportmonksFetchFixturesBetween(
+  from: string,
+  to: string,
+  sportmonksLeagueId?: number,
+  maxPages?: number,
+): Promise<Match[]> {
+  const ranges = chunkSportmonksDateRange(from, to);
+  const all: Match[] = [];
+  // Sıralı — pagination.ts'in "has_more bitene kadar sırayla" prensibiyle
+  // tutarlı, aynı zamanda Fixture kota havuzunu (Pass 1 Genel Bulgu 4)
+  // gereksiz paralel isteklerle boşaltmamak için.
+  for (const range of ranges) {
+    const rows = await sportmonksCollectAllPages<SportmonksFixture>({
+      basePath: 'football',
+      path: `/fixtures/between/${range.from}/${range.to}`,
+      perPage: SPORTMONKS_FIXTURE_PER_PAGE,
+      maxPages,
+      extraParams: {
+        include: SPORTMONKS_FIXTURE_INCLUDE,
+        ...(sportmonksLeagueId != null ? { filters: `fixtureLeagues:${sportmonksLeagueId}` } : {}),
+      },
+    });
+    if (sportmonksLeagueId != null) {
+      // Pass 5 "Risk kategorisi notu": filters=... sessizce uygulanmayabiliyor
+      // (200 OK ama filtresiz sonuç) — dönen her satırın league_id'sini doğrula.
+      const check = checkFilteredResult(rows, [sportmonksLeagueId], (r) => r.league_id ?? r.league?.id ?? '');
+      if (!check.ok) {
+        console.error(
+          `[sportmonks] filters=fixtureLeagues:${sportmonksLeagueId} sessizce uygulanmadı, bu tarih aralığı atlandı (${range.from}–${range.to}):`,
+          check.reason,
+        );
+        continue; // beklenmeyen ligden veri sızdırmaktansa o parçayı tamamen atla
+      }
+    }
+    all.push(...rows.map(mapSportmonksFixtureToMatch));
+  }
+  return dedupeMatchesById(all);
+}
+
+// ─── /Sportmonks yardımcıları ───────────────────────────────────────────────
+
+// Endpoint: GET /matches/live.json?page= (flag kapalı) | GET /livescores/inplay (flag açık — Pass 1)
 export const getLiveMatches = async (page = 1): Promise<PaginatedMatches> => {
+  if (isSportmonksProviderEnabled()) {
+    try {
+      // Sportmonks'ta "total_pages" yok (Pass 1 Genel Bulgu 1) — tüm sayfalar
+      // sportmonksCollectAllPages içinde zaten sırayla tüketiliyor, çağırana tek
+      // "sayfa" olarak dönülüyor (totalPages:1 → getAllLiveMatches'taki mevcut
+      // pagination döngüsü ek istek atmadan kısa devre yapar).
+      const matches = await sportmonksFetchAllLiveMatches();
+      return { matches, totalPages: 1, page: 1 };
+    } catch (error) {
+      console.error('Error fetching live matches (sportmonks)', error);
+      return { matches: [], totalPages: 1, page };
+    }
+  }
   try {
     const response = await getLiveScoreHttpClient().get<ApiResponse<LiveMatchData>>('/matches/live', {
-      
+
     });
     if (response.data.success && response.data.data?.match) {
       const matches = response.data.data.match;
@@ -82,12 +247,21 @@ export function normalizeFixtureToMatch(raw: FixtureListItem): Match {
   };
 }
 
-// Endpoint: GET /fixtures/list.json?date=YYYY-MM-DD (API `today` değerini güvenilir kabul etmiyor)
+// Endpoint: GET /fixtures/list.json?date=YYYY-MM-DD (flag kapalı) | GET /fixtures/date/{date} (flag açık — Pass 1)
 export async function getFixturesByDate(isoDate: string): Promise<Match[]> {
+  const trimmed = isoDate.trim();
+  const dateParam = !trimmed || trimmed.toLowerCase() === 'today' ? todayIsoUtc() : trimmed;
+
+  if (isSportmonksProviderEnabled()) {
+    try {
+      return await sportmonksFetchFixturesByDate(dateParam);
+    } catch (error) {
+      console.error('Error fetching fixtures (sportmonks)', error);
+      return [];
+    }
+  }
+
   try {
-    const trimmed = isoDate.trim();
-    const dateParam =
-      !trimmed || trimmed.toLowerCase() === 'today' ? todayIsoUtc() : trimmed;
     const response = await getLiveScoreHttpClient().get<
       ApiResponse<{ fixtures?: FixtureListItem[] }>
     >('/fixtures/list', {
@@ -162,11 +336,171 @@ export async function findMatchById(
   return { match: null, events: [], fromFixture: false };
 }
 
+// ─── Sportmonks (Faz 3) — Katman-2/3 yardımcıları ──────────────────────────
+// docs/SPORTMONKS_MIGRATION.md Pass 4-5'te eşlenen maç detayı/H2H/sıralama/
+// kadro fonksiyonlarının ortak Sportmonks tarafı. Faz 2'deki gibi yalnızca
+// `isSportmonksProviderEnabled()` true iken devrede.
+
+/** Tek bir fixture'ı (maç detayı) istenen include'larla çeker — liste değil, tekil kaynak. */
+async function sportmonksFetchFixtureDetail(
+  fixtureId: string | number,
+  include: string,
+): Promise<SportmonksFixture | null> {
+  const envelope = await sportmonksClientRequest<SportmonksFixture>('football', `/fixtures/${fixtureId}`, { include });
+  return envelope.data ?? null;
+}
+
+/** `leagues/{id}?include=seasons` — Pass 4: ayrı bir global `/seasons` endpoint'i yok. */
+async function sportmonksFetchLeagueSeasons(leagueId: number): Promise<SportmonksSeasonRow[]> {
+  const envelope = await sportmonksClientRequest<{ id: number; seasons?: SportmonksSeasonRow[] }>(
+    'football',
+    `/leagues/${leagueId}`,
+    { include: 'seasons' },
+  );
+  return envelope.data?.seasons ?? [];
+}
+
+function sportmonksPickCurrentSeasonId(seasons: SportmonksSeasonRow[]): number | null {
+  return seasons.find((s) => s.is_current)?.id ?? null;
+}
+
+/** `competitionId` (livescore-api.com) → doğrulanmış Sportmonks `league_id`, yoksa uyarıp `null`. */
+function sportmonksResolveLeagueIdOrWarn(competitionId: number | string, caller: string): number | null {
+  const leagueId = resolveSportmonksLeagueId(competitionId);
+  if (leagueId == null) {
+    console.warn(
+      `[sportmonks] ${caller}: competition_id=${competitionId} için doğrulanmış league_id eşlemesi yok ` +
+        '(bkz. sportmonksProviderFlag.ts).',
+    );
+  }
+  return leagueId;
+}
+
+/** `query.season` verilmemişse `is_current:true` sezonu çözer; hiçbiri yoksa `null`. */
+async function sportmonksResolveSeasonId(leagueId: number, explicitSeasonId?: number): Promise<number | null> {
+  if (explicitSeasonId != null) return explicitSeasonId;
+  const seasons = await sportmonksFetchLeagueSeasons(leagueId);
+  return sportmonksPickCurrentSeasonId(seasons);
+}
+
+/** Pass 4: `/fixtures/between/{start}/{end}/{team_id}` — sıra ÖNEMLİ, `{team_id}` en sonda. */
+const SPORTMONKS_TEAM_HISTORY_WINDOW_PAST_DAYS = 89;
+
+async function sportmonksFetchTeamFixtures(teamId: string): Promise<Match[]> {
+  const from = isoDateOffset(-SPORTMONKS_TEAM_HISTORY_WINDOW_PAST_DAYS);
+  const to = todayIsoUtc();
+  const rows = await sportmonksCollectAllPages<SportmonksFixture>({
+    basePath: 'football',
+    path: `/fixtures/between/${from}/${to}/${teamId}`,
+    perPage: SPORTMONKS_FIXTURE_PER_PAGE,
+    extraParams: { include: SPORTMONKS_FIXTURE_INCLUDE },
+  });
+  const matches = dedupeMatchesById(rows.map(mapSportmonksFixtureToMatch));
+  // Upstream artan tarihe göre dönüyor (Pass 4 + Faz 3'te tazelenmiş teyit) — "son maçlar" için en yeni önce.
+  return matches.sort((a, b) => (b.date ?? '').localeCompare(a.date ?? ''));
+}
+
+/**
+ * `standings/seasons/{id}` — `group_id` filtresi Sportmonks tarafında dokümante
+ * bir query param değil, dönen satırlar client-side süzülüyor.
+ */
+async function sportmonksFetchStandingsTable(
+  leagueId: number,
+  seasonId: number,
+  groupId?: number | string,
+): Promise<{ table: CompetitionTableStandingRow[]; seasonId: number } | null> {
+  const rows = await sportmonksCollectAllPages<SportmonksStandingRow>({
+    basePath: 'football',
+    path: `/standings/seasons/${seasonId}`,
+    perPage: 50,
+    extraParams: { include: 'participant;details.type' },
+  });
+  const filtered =
+    groupId != null && groupId !== '' ? rows.filter((r) => String(r.group_id ?? '') === String(groupId)) : rows;
+  const table = filtered.map((row) => {
+    const p = pivotStandingRow(row);
+    return {
+      rank: p.rank,
+      points: p.points,
+      matches: p.matches,
+      goal_diff: p.goal_diff,
+      goals_scored: p.goals_scored,
+      goals_conceded: p.goals_conceded,
+      won: p.won,
+      drawn: p.drawn,
+      lost: p.lost,
+      team: { id: p.team_id, name: p.name, ...(p.logo ? { logo: p.logo } : {}) },
+      team_id: p.team_id,
+      name: p.name,
+      ...(p.logo ? { logo: p.logo } : {}),
+    };
+  });
+  void leagueId; // ileride competition meta bilgisi zenginleştirilmek istenirse kullanılabilir
+  return { table, seasonId };
+}
+
+async function sportmonksFetchCompetitionTable(
+  competitionId: string,
+  query?: CompetitionTableQuery,
+): Promise<CompetitionTableData | null> {
+  const leagueId = sportmonksResolveLeagueIdOrWarn(competitionId, 'getCompetitionTableFull/getLeagueTable');
+  if (leagueId == null) return null;
+  const seasonId = await sportmonksResolveSeasonId(leagueId, query?.season);
+  if (seasonId == null) return null;
+  const result = await sportmonksFetchStandingsTable(leagueId, seasonId, query?.group_id);
+  if (!result) return null;
+  return {
+    competition: { id: leagueId, name: '' },
+    season: { id: result.seasonId },
+    table: result.table,
+  };
+}
+
+/** `topscorers/seasons/{id}?filters=seasonTopscorerTypes:{...}` — getTopScorers + getTopDisciplinary'nin ortak primitifi. */
+async function sportmonksFetchTopscorerRows(
+  competitionId: string,
+  explicitSeasonId: number | undefined,
+  typeIds: number[],
+  caller: string,
+): Promise<SportmonksTopscorerRow[] | null> {
+  const leagueId = sportmonksResolveLeagueIdOrWarn(competitionId, caller);
+  if (leagueId == null) return null;
+  const seasonId = await sportmonksResolveSeasonId(leagueId, explicitSeasonId);
+  if (seasonId == null) return null;
+
+  const rows = await sportmonksCollectAllPages<SportmonksTopscorerRow>({
+    basePath: 'football',
+    path: `/topscorers/seasons/${seasonId}`,
+    perPage: 50,
+    extraParams: { include: 'player;participant', filters: `seasonTopscorerTypes:${typeIds.join(',')}` },
+  });
+  // Pass 5 "Risk kategorisi notu": filters=... sessizce uygulanmayabiliyor.
+  const check = checkFilteredResult(rows, typeIds, (r) => r.type_id);
+  if (!check.ok) {
+    console.error(`[sportmonks] ${caller}: filters=seasonTopscorerTypes sessizce uygulanmadı:`, check.reason);
+    return null;
+  }
+  return rows;
+}
+
+// ─── /Sportmonks Katman-2/3 yardımcıları ───────────────────────────────────
+
 const TEAM_HISTORY_FROM = '2018-01-01';
 const TEAM_HISTORY_TO = '2030-12-31';
 
-/** GET /matches/history.json?team_id= — takımın geçmiş maçları (ilk sayfa). */
+/**
+ * GET /matches/history.json?team_id= (flag kapalı) | GET /fixtures/between/{start}/{end}/{team_id}
+ * (flag açık — Pass 4, parametre sırasına dikkat) — takımın geçmiş maçları.
+ */
 export async function getTeamHistoryMatches(teamId: string): Promise<Match[]> {
+  if (isSportmonksProviderEnabled()) {
+    try {
+      return await sportmonksFetchTeamFixtures(teamId);
+    } catch (error) {
+      console.error('Error fetching team history matches (sportmonks)', error);
+      return [];
+    }
+  }
   try {
     const response = await getLiveScoreHttpClient().get<{
       success?: boolean;
@@ -266,10 +600,39 @@ export async function getCompetitionGroupFixtures(
   }
 }
 
-// Endpoint: GET /fixtures/list.json?competition_id=244
+/**
+ * Sportmonks tarafında `competition_id`nin geçmiş+gelecek varsayılan penceresi.
+ * Pass 3: `/fixtures/between` 100 günden uzun aralıkta 422 veriyor — 14+75=89 gün
+ * tek istekte kalır (chunkSportmonksDateRange yine de >100 gün istenirse böler).
+ */
+const SPORTMONKS_COMPETITION_WINDOW_PAST_DAYS = 14;
+const SPORTMONKS_COMPETITION_WINDOW_FUTURE_DAYS = 75;
+
+// Endpoint: GET /fixtures/list.json?competition_id=244 (flag kapalı) |
+// GET /fixtures/between/{from}/{to}?filters=fixtureLeagues:{id} (flag açık — Pass 1;
+// bare `/fixtures` YANLIŞ sonuç veriyor, bkz. rapor — burada asla kullanılmıyor)
 export async function getFixturesByCompetition(
   competitionId: number | string
 ): Promise<Match[]> {
+  if (isSportmonksProviderEnabled()) {
+    try {
+      const leagueId = resolveSportmonksLeagueId(competitionId);
+      if (leagueId == null) {
+        console.warn(
+          `[sportmonks] competition_id=${competitionId} için doğrulanmış league_id eşlemesi yok ` +
+            '(bkz. sportmonksProviderFlag.ts) — boş sonuç dönülüyor.',
+        );
+        return [];
+      }
+      const from = isoDateOffset(-SPORTMONKS_COMPETITION_WINDOW_PAST_DAYS);
+      const to = isoDateOffset(SPORTMONKS_COMPETITION_WINDOW_FUTURE_DAYS);
+      return await sportmonksFetchFixturesBetween(from, to, leagueId);
+    } catch (error) {
+      console.error('Error fetching competition fixtures (sportmonks)', error);
+      return [];
+    }
+  }
+
   try {
     const response = await getLiveScoreHttpClient().get<
       ApiResponse<{ fixtures?: FixtureListItem[] }>
@@ -343,6 +706,34 @@ export function mergeMatchesForAllTab(input: MergeMatchesForAllTabInput): Match[
 }
 
 /**
+ * `mergeMatchesForAllTab`'ın Sportmonks (flag açık) karşılığı — Pass 1 Genel
+ * Bulgu 2: Sportmonks'ta `/fixtures/date`, `/fixtures/between` ve
+ * `/livescores/inplay` aynı `id`'yi kullanıyor, bu yüzden `fixture_id` tabanlı
+ * reconciliation (`mergeMatchMapKey`/`mergeMatchRow`) gereksiz — düz `id` ile
+ * eşleyip üstüne yazmak yeterli. `MatchHubPage` bu fonksiyonu yalnızca
+ * `isSportmonksProviderEnabled()` true iken çağırır, flag kapalıyken
+ * `mergeMatchesForAllTab` olduğu gibi kullanılmaya devam eder.
+ */
+export function mergeMatchesByIdForAllTab(input: MergeMatchesForAllTabInput): Match[] {
+  const { selectedDate, historyPageMatches, liveMatches, fixtures } = input;
+  const liveOnDay = liveMatches.filter((m) => isLiveMatchOnSelectedDate(m, selectedDate));
+  const map = new Map<number, Match>();
+
+  const put = (m: Match) => {
+    const id = Number(m.id);
+    if (!Number.isFinite(id)) return;
+    const existing = map.get(id);
+    map.set(id, existing ? { ...existing, ...m } : m);
+  };
+
+  for (const f of fixtures) put(f);
+  for (const h of historyPageMatches) put(h);
+  for (const l of liveOnDay) put(l);
+
+  return Array.from(map.values());
+}
+
+/**
  * `fixtures/list` fikstür satırlarını history + canlı ile `fixture_id` üzerinden birleştirir.
  * Maç detay linki için `id` alanı canlı/bitmiş maçın `id` değerine çekilir.
  */
@@ -368,11 +759,50 @@ export function mergeFixturesWithHistoryAndLive(
   });
 }
 
-/** `matches/history` — `competition_id` ile sayfalanmış tüm maçlar (sayfa başına max 30). */
+/**
+ * Sportmonks tarafında `from`/`to` verilmezse geriye dönük varsayılan pencere
+ * ("history"). 89 (→ today dahil 90 takvim günü) `SPORTMONKS_MAX_RANGE_DAYS`
+ * (90) içinde kalır — varsayılan çağrı tek istekte kalsın, gereksiz yere 2
+ * parçaya bölünmesin diye 90 değil 89 seçildi.
+ */
+const SPORTMONKS_HISTORY_WINDOW_PAST_DAYS = 89;
+
+/**
+ * `matches/history` (flag kapalı) — `competition_id` ile sayfalanmış tüm maçlar (sayfa
+ * başına max 30) | `GET /fixtures/between/{from}/{to}?filters=fixtureLeagues:{id}` (flag
+ * açık — Pass 1: aynı primitif `getAllMatchesByDate` ile, farklı tarih aralığı).
+ */
 export async function getAllCompetitionHistoryMatches(
   competitionId: string,
   opts?: { from?: string; to?: string; maxPages?: number; season_id?: number },
 ): Promise<Match[]> {
+  if (isSportmonksProviderEnabled()) {
+    try {
+      const leagueId = resolveSportmonksLeagueId(competitionId);
+      if (leagueId == null) {
+        console.warn(
+          `[sportmonks] competition_id=${competitionId} için doğrulanmış league_id eşlemesi yok ` +
+            '(bkz. sportmonksProviderFlag.ts) — boş sonuç dönülüyor.',
+        );
+        return [];
+      }
+      if (opts?.season_id != null) {
+        // Pass 1/3: /fixtures/between `season_id` desteklemiyor (yalnızca from/to +
+        // filters) — sezon→tarih aralığı çözümü getSeasonsList gerektirir
+        // (Katman-2/3, bu görevin kapsamı dışında). Parametre yok sayılıyor.
+        console.warn(
+          '[sportmonks] getAllCompetitionHistoryMatches: season_id bu sağlayıcıda desteklenmiyor, yok sayıldı.',
+        );
+      }
+      const from = opts?.from ?? isoDateOffset(-SPORTMONKS_HISTORY_WINDOW_PAST_DAYS);
+      const to = opts?.to ?? todayIsoUtc();
+      return await sportmonksFetchFixturesBetween(from, to, leagueId, opts?.maxPages);
+    } catch (error) {
+      console.error('Error fetching competition history matches (sportmonks)', error);
+      return [];
+    }
+  }
+
   const maxPages = Math.max(1, opts?.maxPages ?? 35);
   const extraParams = {
     ...(opts?.from ? { from: opts.from } : {}),
@@ -464,8 +894,21 @@ export function dedupeMatchesById(matches: Match[]): Match[] {
   return Array.from(map.values());
 }
 
-/** Seçilen günün history sayfalarını çeker (Hepsi / lig grupları için). */
+/**
+ * Seçilen günün history sayfalarını çeker (Hepsi / lig grupları için) (flag kapalı) |
+ * `GET /fixtures/between/{date}/{date}` (flag açık — Pass 1: `getFixturesByDate` ile
+ * aynı primitif, `getAllCompetitionHistoryMatches`'ın da paylaştığı ortak fonksiyon).
+ */
 export async function getAllMatchesByDate(date: string, maxPages = 5): Promise<Match[]> {
+  if (isSportmonksProviderEnabled()) {
+    try {
+      return await sportmonksFetchFixturesBetween(date, date, undefined, maxPages);
+    } catch (error) {
+      console.error('Error fetching matches by date (sportmonks)', error);
+      return [];
+    }
+  }
+
   const first = await getMatchesByDate(date, 1);
   const { totalPages, matches: firstMatches } = first;
   const pagesToFetch = Math.min(totalPages, Math.max(1, maxPages));
@@ -517,11 +960,100 @@ export interface Head2HeadData {
   h2h?: Head2HHistoricalMatch[];
 }
 
-// Endpoint: GET /teams/head2head.json?team1_id=&team2_id=
+/** Bir `Match`'in skorundan, `teamId` açısından W/D/L türetir — bitmemiş/skoru olmayan maç için `null`. */
+function deriveMatchFormLetter(match: Match, teamId: string): 'W' | 'D' | 'L' | null {
+  if (match.status !== 'FINISHED') return null;
+  const score = match.scores?.score ?? match.score;
+  if (!score) return null;
+  const m = /^(\d+)\s*-\s*(\d+)$/.exec(score.trim());
+  if (!m) return null;
+  const home = Number(m[1]);
+  const away = Number(m[2]);
+  const isHome = String(match.home?.id ?? '') === teamId;
+  const isAway = String(match.away?.id ?? '') === teamId;
+  if (!isHome && !isAway) return null;
+  if (home === away) return 'D';
+  const homeWon = home > away;
+  return (isHome && homeWon) || (isAway && !homeWon) ? 'W' : 'L';
+}
+
+/** En-yeni-önce sıralı bir `Match[]`'ten `overall_form`/`h2h_form` dizisi üretir. */
+function deriveFormFromMatches(matches: Match[], teamId: string): string[] {
+  return matches
+    .map((m) => deriveMatchFormLetter(m, teamId))
+    .filter((x): x is 'W' | 'D' | 'L' => x != null);
+}
+
+function resolveTeamNameFromMatches(matches: Match[], teamId: string): string {
+  for (const m of matches) {
+    if (String(m.home?.id ?? '') === teamId) return m.home.name;
+    if (String(m.away?.id ?? '') === teamId) return m.away.name;
+  }
+  return '';
+}
+
+function matchToH2HHistorical(m: Match): Head2HHistoricalMatch {
+  return {
+    id: String(m.id),
+    ...(m.date !== undefined ? { date: m.date } : {}),
+    ...(m.scheduled !== undefined ? { scheduled: m.scheduled } : {}),
+    ...(m.home?.name !== undefined ? { home_name: m.home.name } : {}),
+    ...(m.away?.name !== undefined ? { away_name: m.away.name } : {}),
+    ...((m.scores?.score ?? m.score) !== undefined ? { score: m.scores?.score ?? m.score } : {}),
+    ...(m.scores?.ht_score !== undefined ? { ht_score: m.scores.ht_score } : {}),
+    time: m.time,
+    status: m.status,
+  };
+}
+
+/**
+ * `Endpoint: GET /teams/head2head.json?team1_id=&team2_id=` (flag kapalı) |
+ * `GET /fixtures/head-to-head/{id1}/{id2}` (flag açık — Pass 4). Sportmonks bu
+ * endpoint'te `team1`/`team2` form ÖZETİ döndürmüyor (rapor bulgusu) —
+ * `overall_form`/`h2h_form` burada `getTeamHistoryMatches`'ten (zaten en-yeni-
+ * önce sıralı) client-side türetiliyor.
+ */
 export const getTeamsHead2Head = async (
   team1Id: string,
   team2Id: string
 ): Promise<Head2HeadData | null> => {
+  if (isSportmonksProviderEnabled()) {
+    try {
+      const envelope = await sportmonksClientRequest<SportmonksFixture[]>(
+        'football',
+        `/fixtures/head-to-head/${team1Id}/${team2Id}`,
+        { include: SPORTMONKS_FIXTURE_INCLUDE },
+      );
+      const fixtures = envelope.data ?? [];
+      if (fixtures.length === 0) return null;
+
+      const h2hMatches = fixtures.map(mapSportmonksFixtureToMatch);
+      const [team1Last, team2Last] = await Promise.all([
+        sportmonksFetchTeamFixtures(team1Id),
+        sportmonksFetchTeamFixtures(team2Id),
+      ]);
+
+      return {
+        team1: {
+          id: team1Id,
+          name: resolveTeamNameFromMatches([...h2hMatches, ...team1Last], team1Id),
+          overall_form: deriveFormFromMatches(team1Last, team1Id),
+          h2h_form: deriveFormFromMatches(h2hMatches, team1Id),
+        },
+        team2: {
+          id: team2Id,
+          name: resolveTeamNameFromMatches([...h2hMatches, ...team2Last], team2Id),
+          overall_form: deriveFormFromMatches(team2Last, team2Id),
+          h2h_form: deriveFormFromMatches(h2hMatches, team2Id),
+        },
+        h2h: h2hMatches.map(matchToH2HHistorical),
+      };
+    } catch (error) {
+      console.error('Error fetching head2head (sportmonks)', error);
+      return null;
+    }
+  }
+
   try {
     const response = await getLiveScoreHttpClient().get<ApiResponse<Head2HeadData>>(`/teams/head2head`, {
       params: { team1_id: team1Id, team2_id: team2Id },
@@ -547,11 +1079,23 @@ function mergeMatchRefereeFromPayload(match: Match | null): Match | null {
   return alt ? { ...match, referee: alt } : match;
 }
 
-// Endpoint: GET /matches/events.json?match_id=X
+// Endpoint: GET /matches/events.json?match_id=X (flag kapalı) |
+// GET /fixtures/{id}?include=events (flag açık — Pass 4/5)
 // Returns both match details and events
 export const getMatchWithEvents = async (
   matchId: string
 ): Promise<{ match: Match | null; events: MatchEvent[] }> => {
+  if (isSportmonksProviderEnabled()) {
+    try {
+      const fixture = await sportmonksFetchFixtureDetail(matchId, `${SPORTMONKS_FIXTURE_INCLUDE};events`);
+      if (!fixture) return { match: null, events: [] };
+      return { match: mapSportmonksFixtureToMatch(fixture), events: mapSportmonksEvents(fixture) };
+    } catch (error) {
+      console.error('Error fetching match events (sportmonks)', error);
+      return { match: null, events: [] };
+    }
+  }
+
   try {
     const response = await getLiveScoreHttpClient().get(`/matches/events`, {
       params: { match_id: matchId },
@@ -568,8 +1112,19 @@ export const getMatchWithEvents = async (
   }
 };
 
-// Endpoint: GET /matches/stats.json?match_id=X
+// Endpoint: GET /matches/stats.json?match_id=X (flag kapalı) |
+// GET /fixtures/{id}?include=statistics (flag açık — Pass 4/5)
 export const getMatchStats = async (matchId: string): Promise<MatchStatsData | null> => {
+  if (isSportmonksProviderEnabled()) {
+    try {
+      const fixture = await sportmonksFetchFixtureDetail(matchId, 'statistics');
+      return mapSportmonksStatistics(fixture?.statistics);
+    } catch (error) {
+      console.error('Error fetching stats (sportmonks)', error);
+      return null;
+    }
+  }
+
   try {
     const response = await getLiveScoreHttpClient().get(`/matches/stats`, {
       params: { match_id: matchId },
@@ -584,8 +1139,19 @@ export const getMatchStats = async (matchId: string): Promise<MatchStatsData | n
   }
 };
 
-// Endpoint: GET /matches/lineups.json?match_id=X
+// Endpoint: GET /matches/lineups.json?match_id=X (flag kapalı) |
+// GET /fixtures/{id}?include=lineups.player.nationality;lineups.details;participants (flag açık — Pass 4/5)
 export const getMatchLineups = async (matchId: string): Promise<any | null> => {
+  if (isSportmonksProviderEnabled()) {
+    try {
+      const fixture = await sportmonksFetchFixtureDetail(matchId, 'lineups.player.nationality;lineups.details;participants');
+      return fixture ? mapSportmonksLineups(fixture) : null;
+    } catch (error) {
+      console.error('Error fetching lineups (sportmonks)', error);
+      return null;
+    }
+  }
+
   try {
     const response = await getLiveScoreHttpClient().get(`/matches/lineups`, {
       params: { match_id: matchId },
@@ -600,7 +1166,9 @@ export const getMatchLineups = async (matchId: string): Promise<any | null> => {
   }
 };
 
-// Endpoint: GET /teams/last-matches.json?team_id=X&number=10
+// Endpoint: GET /teams/last-matches.json?team_id=X&number=10 — sağlayıcıdan
+// bağımsız: `getTeamHistoryMatches` zaten en-yeni-önce sıralı Match[] döner
+// (flag açık/kapalı ikisinde de), burada sadece `slice` yapılıyor.
 export const getTeamLastMatches = async (teamId: string, count = 10): Promise<Match[]> => {
   const matches = await getTeamHistoryMatches(teamId);
   return matches.slice(0, count);
@@ -637,7 +1205,52 @@ export const getTeamCompetitions = (matches: Match[], teamId: string): TeamCompe
 };
 
 // Endpoint: GET /competitions/squads.json?team_id=X&competition_id=Y
-export const getTeamSquads = async (teamId: string, competitionId: string): Promise<any> => {
+function mapSportmonksSquadRowToPlayer(row: SportmonksSquadRow) {
+  return {
+    id: row.player_id,
+    shirt_number: row.jersey_number,
+    name: row.player?.display_name ?? row.player?.name ?? '',
+    ...(row.player?.image_path ? { photo: row.player.image_path } : {}),
+    ...(row.position_id != null && resolvePositionShortCode(row.position_id)
+      ? { position: resolvePositionShortCode(row.position_id) }
+      : {}),
+    captain: row.captain ?? false,
+  };
+}
+
+/**
+ * `Endpoint: GET /competitions/squads.json?team_id=&competition_id=` (flag kapalı) |
+ * `GET /squads/teams/{id}?include=player` (flag açık, güncel kadro — Pass 4) |
+ * `GET /squads/seasons/{season_id}/teams/{id}?include=player` (flag açık +
+ * `opts.seasonId` verilirse, geçmiş kadro — Pass 4'ün işaret ettiği ayrı
+ * endpoint). `competitionId` Sportmonks dalında kullanılmıyor — kadro
+ * Sportmonks'ta lig-scoped değil, takım-scoped.
+ *
+ * Faz 4'te gerçek istekle doğrulandı: geçmiş kadro endpoint'i BENZER ama AYNI
+ * OLMAYAN bir şekil döndürüyor — `captain`/`start`/`end` yok (bunun yerine
+ * `has_values`, kullanılmıyor), VE ayrı bir kota havuzundan sayılıyor
+ * (`PlayerStatistic` — Pass 5 sonunda bulunan 6 havuzdan bağımsız, 7. havuz).
+ * `SportmonksSquadRow`'daki bu alanların hepsi opsiyonel olduğu için
+ * `mapSportmonksSquadRowToPlayer` her iki şekli de sorunsuz işliyor.
+ */
+export const getTeamSquads = async (
+  teamId: string,
+  competitionId: string,
+  opts?: { seasonId?: number },
+): Promise<any> => {
+  if (isSportmonksProviderEnabled()) {
+    try {
+      const path =
+        opts?.seasonId != null ? `/squads/seasons/${opts.seasonId}/teams/${teamId}` : `/squads/teams/${teamId}`;
+      const envelope = await sportmonksClientRequest<SportmonksSquadRow[]>('football', path, { include: 'player' });
+      const rows = envelope.data ?? [];
+      return rows.map(mapSportmonksSquadRowToPlayer);
+    } catch (error) {
+      console.error('Error fetching team squads (sportmonks)', error);
+      return [];
+    }
+  }
+
   try {
     const response = await getLiveScoreHttpClient().get(`/competitions/squads`, {
       params: { team_id: teamId, competition_id: competitionId },
@@ -784,10 +1397,49 @@ export type GetSeasonsListOptions = {
    * Dünya Kupası gibi düz yıl sezon id'lerinin (örn. "2026") dropdown'da kalması için gerekir.
    */
   skipCalendarYearDedupe?: boolean;
+  /**
+   * Faz 3: Sportmonks'ta sezonlar GLOBAL değil, lig-scoped (`/leagues/{id}?
+   * include=seasons`, Pass 4). livescore-api.com'un `/seasons/list.json`'ı tüm
+   * ligler için TEK bir paylaşılan sezon kimliği uzayı sunuyordu (bu yüzden
+   * mevcut fonksiyon hiç competition_id almıyordu) — Sportmonks'ta böyle bir
+   * kavram yok. Flag açıkken bu alan ZORUNLU; verilmezse (eski 0-arg çağrı
+   * şekli) boş dizi + `console.warn` döner, tahmini/yanlış bir lig sezonu
+   * asla dönmez.
+   */
+  competitionId?: number | string;
 };
 
-// Endpoint: GET /seasons/list.json
+// Endpoint: GET /seasons/list.json (flag kapalı) | GET /leagues/{id}?include=seasons (flag açık — Pass 4)
 export async function getSeasonsList(opts?: GetSeasonsListOptions): Promise<SeasonListItem[]> {
+  if (isSportmonksProviderEnabled()) {
+    try {
+      if (opts?.competitionId == null) {
+        console.warn(
+          '[sportmonks] getSeasonsList: competitionId verilmedi — Sportmonks sezonları lig-scoped, ' +
+            'global bir sezon listesi yok. Boş dizi dönülüyor.',
+        );
+        return [];
+      }
+      const leagueId = sportmonksResolveLeagueIdOrWarn(opts.competitionId, 'getSeasonsList');
+      if (leagueId == null) return [];
+
+      const seasons = await sportmonksFetchLeagueSeasons(leagueId);
+      const parsed: SeasonListItem[] = seasons.map((s) => ({
+        id: s.id,
+        name: s.name,
+        ...(s.starting_at !== undefined ? { start: s.starting_at } : {}),
+        ...(s.ending_at !== undefined ? { end: s.ending_at } : {}),
+      }));
+
+      const uiFiltered = filterSeasonListForUi(parsed);
+      const filtered = opts?.skipCalendarYearDedupe ? uiFiltered : dedupeCalendarYearSeasons(uiFiltered);
+      return filtered.sort((a, b) => seasonSortKey(b) - seasonSortKey(a));
+    } catch (error) {
+      console.error('Error fetching seasons list (sportmonks)', error);
+      return [];
+    }
+  }
+
   try {
     const response = await getLiveScoreHttpClient().get<{
       success?: boolean;
@@ -826,10 +1478,22 @@ type CompetitionTableQuery = {
   season?: number;
 };
 
+// Endpoint: GET /competitions/table.json?competition_id= (flag kapalı) |
+// GET /standings/seasons/{season_id} (flag açık — Pass 4: league_id tek başına
+// yetmiyor, önce is_current sezon çözülüyor)
 export const getCompetitionTableFull = async (
   competitionId: string,
   query?: CompetitionTableQuery
 ): Promise<CompetitionTableData | null> => {
+  if (isSportmonksProviderEnabled()) {
+    try {
+      return await sportmonksFetchCompetitionTable(competitionId, query);
+    } catch (error) {
+      console.error('Error fetching competition table (sportmonks)', error);
+      return null;
+    }
+  }
+
   try {
     const params: Record<string, string | number> = {
       competition_id: competitionId,
@@ -854,28 +1518,20 @@ export const getCompetitionTableFull = async (
   }
 };
 
-export const getCompetitionGroups = async (
-  competitionId: string
-): Promise<CompetitionGroupItem[]> => {
-  try {
-    const response = await getLiveScoreHttpClient().get<{
-      success?: boolean;
-      data?: CompetitionGroupItem[];
-    }>(`/competitions/groups`, {
-      params: { competition_id: competitionId },
-    });
-    if (response.data.success && Array.isArray(response.data.data)) {
-      return response.data.data;
-    }
-    return [];
-  } catch (error) {
-    console.error('Error fetching competition groups', error);
-    return [];
-  }
-};
-
-// Endpoint: GET /competitions/table.json?competition_id=X
+// Endpoint: GET /competitions/table.json?competition_id=X (flag kapalı) |
+// GET /standings/seasons/{season_id} (flag açık — Pass 4, aynı primitif
+// `getCompetitionTableFull` ile paylaşılıyor, sadece düz `table[]` dönülüyor)
 export const getLeagueTable = async (competitionId: string): Promise<any> => {
+  if (isSportmonksProviderEnabled()) {
+    try {
+      const data = await sportmonksFetchCompetitionTable(competitionId);
+      return data?.table ?? null;
+    } catch (error) {
+      console.error('Error fetching league table (sportmonks)', error);
+      return null;
+    }
+  }
+
   try {
     const response = await getLiveScoreHttpClient().get(`/competitions/table`, {
       params: { competition_id: competitionId },
@@ -932,11 +1588,36 @@ export type TopScorersPayload = {
   topscorers?: TopScorerEntry[];
 };
 
+
 // Endpoint: GET /competitions/topscorers.json?competition_id=X (&season_id= dokümanda yok; tablo ile aynı parametre)
+// (flag kapalı) | GET /topscorers/seasons/{id}?filters=seasonTopscorerTypes:208 (flag açık — Pass 4)
 export const getTopScorers = async (
   competitionId: string,
   opts?: { season?: number }
 ): Promise<TopScorersPayload | null> => {
+  if (isSportmonksProviderEnabled()) {
+    try {
+      // Gol (208) + asist (209) TEK sorguda: aynı endpoint/havuz, ek istek yalnızca ek sayfa (Süper Lig: 81+76 satır → 4 sayfa, 2'ydi).
+      const rows = await sportmonksFetchTopscorerRows(
+        competitionId,
+        opts?.season,
+        [GOAL_TOPSCORER_TYPE_ID, ASSIST_TOPSCORER_TYPE_ID],
+        'getTopScorers',
+      );
+      if (rows == null) return null;
+      const leagueId = resolveSportmonksLeagueId(competitionId) ?? undefined;
+      const seasonId = rows[0]?.season_id;
+      return {
+        competition: { id: leagueId, name: '' },
+        ...(seasonId != null ? { season: { id: seasonId } } : {}),
+        topscorers: mapTopscorerRowsToEntries(rows),
+      };
+    } catch (error) {
+      console.error('Error fetching top scorers (sportmonks)', error);
+      return null;
+    }
+  }
+
   try {
     const params: Record<string, string | number> = {
       competition_id: competitionId,
@@ -960,8 +1641,91 @@ export const getTopScorers = async (
   }
 };
 
-// Endpoint: GET /competitions/topdisciplinary.json?competition_id=X
+/**
+ * Gol Krallığı "O" (oynanan maç) sütunu. `topscorers` endpoint'inde oynanan maç YOK (gerçek yanıtta doğrulandı);
+ * kaynak oyuncu sezon istatistiği: `GET /squads/seasons/{sid}/teams/{tid}?include=player.statistics.details
+ * &filters=playerStatisticSeasons:{sid}` → `details[type_id 321 APPEARANCES].value.total`. TAKIM başına 1 istek
+ * (`PlayerStatistic` havuzu; Süper Lig: 18 takım = 18 istek — oyuncu başına değil). Sportmonks'un `players/multi`
+ * endpoint'i bu planda yok (404). Bir takım isteği başarısız olursa o takımın oyuncuları için `O` boş kalır.
+ * Sunucu tarafında 30 dk cache'li (`api/sportmonks/[...path]`), yalnızca Gol Krallığı sekmesi açılınca çağrılır.
+ */
+export const getTopScorerAppearances = async (seasonId: number, teamIds: number[]): Promise<Record<number, number>> => {
+  if (!isSportmonksProviderEnabled() || !Number.isFinite(seasonId)) return {};
+  const unique = [...new Set(teamIds.filter((id) => Number.isFinite(id)))];
+  const parts = await Promise.all(
+    unique.map(async (teamId) => {
+      try {
+        const envelope = await sportmonksClientRequest<SportmonksSquadStatsRow[]>(
+          'football',
+          `/squads/seasons/${seasonId}/teams/${teamId}`,
+          { include: 'player.statistics.details', filters: `playerStatisticSeasons:${seasonId}` },
+        );
+        return extractAppearances(envelope.data ?? [], seasonId);
+      } catch (error) {
+        console.error(`Error fetching appearances for team ${teamId} (sportmonks)`, error);
+        return {} as Record<number, number>;
+      }
+    }),
+  );
+  return Object.assign({}, ...parts);
+};
+
+/**
+ * Kadro mini tablosu (M/G/A/SK/KK + ayrıntılı pozisyon): TEK takım için Gol Krallığı "O" ile AYNI endpoint
+ * (`squads/seasons/{sid}/teams/{tid}?include=player.statistics.details`, 30 dk sunucu cache'li). Hata → `{}` (UI "—").
+ */
+export const getTeamSquadStats = async (seasonId: number, teamId: number): Promise<Record<number, SquadStatLine>> => {
+  if (!isSportmonksProviderEnabled() || !Number.isFinite(seasonId) || !Number.isFinite(teamId)) return {};
+  try {
+    const envelope = await sportmonksClientRequest<SportmonksSquadStatsRow[]>(
+      'football',
+      `/squads/seasons/${seasonId}/teams/${teamId}`,
+      { include: 'player.statistics.details', filters: `playerStatisticSeasons:${seasonId}` },
+    );
+    return extractSquadStats(envelope.data ?? [], seasonId, teamId);
+  } catch (error) {
+    console.error(`Error fetching squad stats for team ${teamId} (sportmonks)`, error);
+    return {};
+  }
+};
+
+/** Takımın sezonun en golcüleri (ilk 3) — `getTeamSquadStats` ile AYNI endpoint/cache (takım başına 1 istek). Hata/veri yok → `[]`. */
+export const getTeamTopScorers = async (seasonId: number, teamId: number, limit = 3): Promise<TeamTopScorer[]> => {
+  if (!isSportmonksProviderEnabled() || !Number.isFinite(seasonId) || !Number.isFinite(teamId)) return [];
+  try {
+    const envelope = await sportmonksClientRequest<SportmonksSquadStatsRow[]>(
+      'football',
+      `/squads/seasons/${seasonId}/teams/${teamId}`,
+      { include: 'player.statistics.details', filters: `playerStatisticSeasons:${seasonId}` },
+    );
+    return extractTeamTopScorers(envelope.data ?? [], seasonId, teamId, limit);
+  } catch (error) {
+    console.error(`Error fetching top scorers for team ${teamId} (sportmonks)`, error);
+    return [];
+  }
+};
+
+// Endpoint: GET /competitions/topdisciplinary.json?competition_id=X (flag kapalı) |
+// GET /topscorers/seasons/{id}?filters=seasonTopscorerTypes:83,84 (flag açık — Pass 4:
+// `getTopScorers` ile AYNI endpoint/primitif — `sportmonksFetchTopscorerRows` — sadece
+// filtre type_id'leri farklı; iki satır [kırmızı,sarı] oyuncu bazında tek satıra birleştiriliyor).
 export const getTopDisciplinary = async (competitionId: string): Promise<any> => {
+  if (isSportmonksProviderEnabled()) {
+    try {
+      const rows = await sportmonksFetchTopscorerRows(
+        competitionId,
+        undefined,
+        [DISCIPLINARY_TYPE_IDS.RED, DISCIPLINARY_TYPE_IDS.YELLOW],
+        'getTopDisciplinary',
+      );
+      if (rows == null) return [];
+      return mergeDisciplinaryRows(rows);
+    } catch (error) {
+      console.error('Error fetching top disciplinary (sportmonks)', error);
+      return [];
+    }
+  }
+
   try {
     const response = await getLiveScoreHttpClient().get(`/competitions/topdisciplinary`, {
       params: { competition_id: competitionId },

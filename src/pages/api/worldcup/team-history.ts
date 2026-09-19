@@ -73,7 +73,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const client = axios.create({ baseURL: `${proto}://${host}/api/livescore`, timeout: 25_000 });
 
     const seasons = await runWithLiveScoreHttpClient(client, async () => {
-      const all = await getSeasonsList({ skipCalendarYearDedupe: true });
+      const all = await getSeasonsList({ skipCalendarYearDedupe: true, competitionId: WORLD_CUP_COMPETITION_ID });
       return pickWorldCupSeasonsFromApi(all);
     });
 

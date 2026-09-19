@@ -1,0 +1,41 @@
+[
+  {
+    "id": 1847915675,
+    "player_id": 37696525,
+    "team_id": 83,
+    "position_id": 26,
+    "jersey_number": 41,
+    "player": {
+      "id": 37696525,
+      "display_name": "Juan Hernández",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/placeholder.png",
+      "date_of_birth": "2007-07-21"
+    }
+  },
+  {
+    "id": 1817775805,
+    "player_id": 37726091,
+    "team_id": 83,
+    "position_id": 27,
+    "jersey_number": 29,
+    "player": {
+      "id": 37726091,
+      "display_name": "Toni Fernández",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/players/11/37726091.png",
+      "date_of_birth": "2008-07-15"
+    }
+  },
+  {
+    "id": 1817775804,
+    "player_id": 37732688,
+    "team_id": 83,
+    "position_id": 26,
+    "jersey_number": 27,
+    "player": {
+      "id": 37732688,
+      "display_name": "Dro Fernández",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/players/16/37732688.png",
+      "date_of_birth": "2008-01-12"
+    }
+  }
+]

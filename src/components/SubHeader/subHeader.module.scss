@@ -4,7 +4,7 @@
   background: $color-surface;
   border-bottom: 1px solid $color-border;
   position: sticky;
-  top: 52px; // header height
+  top: var(--header-height);
   z-index: 90;
   margin-bottom: $spacing-4;
 }
@@ -15,6 +15,18 @@
   justify-content: space-between;
   height: 48px;
   gap: $spacing-4;
+}
+
+// Masaüstü: sağdaki (kaldırılan, işlevsiz "Zamana Göre Sırala") alanın yerine boş denge sütunu → sekmeler ortada kalır.
+@media (min-width: $bp-desktop) {
+  .inner::after {
+    content: '';
+    flex: 1 1 0;
+  }
+
+  .inner > :first-child {
+    flex: 1 1 0;
+  }
 }
 
 // --- Date navigation ---
@@ -65,14 +77,29 @@
 }
 
 .calendarIcon {
-  font-size: 14px;
+  position: relative;
+  display: inline-flex;
+  color: var(--text-secondary);
   line-height: 1;
-  opacity: 0.7;
   transition: $transition-base;
 
   .dateBlock:hover & {
-    opacity: 1;
+    color: var(--text-primary);
   }
+}
+
+// Takvim ikonunun içindeki gün rozeti (bugünün gerçek günü)
+.calendarBadge {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 9px;
+  text-align: center;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1;
+  color: $color-primary-text;
+  pointer-events: none;
 }
 
 // --- Tabs ---
@@ -108,31 +135,74 @@
   }
 }
 
-// --- Sort ---
+// --- Mobil tarih şeridi (bugün ±2) ---
 
-.sortArea {
+.stripWrap {
+  display: none;
+}
+
+.dateStrip {
   display: flex;
-  align-items: center;
   gap: $spacing-2;
-  flex-shrink: 0;
-  cursor: default;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  padding: 0 0 $spacing-2;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
-.sortLabel {
-  font-size: 13px;
-  font-weight: 500;
-  color: $color-text-secondary;
-  white-space: nowrap;
+.stripItem {
+  flex: 1 0 calc(20% - #{$spacing-2});
+  min-width: 56px;
+  min-height: var(--touch-target);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: $spacing-1 $spacing-2;
+  border-radius: $radius-md;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-page);
+  color: var(--text-secondary);
+  scroll-snap-align: center;
+  transition: $transition-base;
 }
 
-.sortIcon {
-  font-size: 16px;
-  color: $color-text-secondary;
+.stripWeekday {
+  font-size: var(--fs-micro);
+  font-weight: var(--fw-micro);
+  letter-spacing: var(--ls-micro);
+  text-transform: uppercase;
+}
+
+.stripDay {
+  font-size: var(--fs-section);
+  font-weight: var(--fw-section);
+  color: var(--text-primary);
+}
+
+.stripItemActive {
+  background: $color-primary;
+  border-color: $color-primary;
+  color: rgba(255, 255, 255, 0.85);
+
+  .stripDay {
+    color: #fff;
+  }
 }
 
 // --- Responsive ---
 
-@media (max-width: $bp-md) {
+@include below-desktop {
+  .stripWrap {
+    display: block;
+  }
+
   .inner {
     flex-wrap: wrap;
     height: auto;
@@ -146,10 +216,6 @@
     flex: 1 1 auto;
   }
 
-  .sortArea {
-    order: 2;
-  }
-
   .tabs {
     order: 3;
     width: 100%;
@@ -158,10 +224,6 @@
 }
 
 @media (max-width: $bp-sm) {
-  .sortLabel {
-    display: none;
-  }
-
   .tab {
     padding: 5px 12px;
     font-size: 13px;

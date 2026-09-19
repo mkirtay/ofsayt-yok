@@ -3,8 +3,10 @@ import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { useTranslation } from '@/lib/i18n';
 import { useCredits } from '@/hooks/useCredits';
+import { isPremiumUser } from '@/lib/premium';
 import { deriveMatchPhase } from '@/utils/matchPhase';
 import type { Match } from '@/models/liveScore';
+import EmptyState from '@/components/EmptyState';
 import AiLoadingPitch from './AiLoadingPitch';
 import HeatmapPitch from './HeatmapPitch';
 import styles from './matchAnalysis.module.scss';
@@ -135,9 +137,10 @@ function ResultBadge({ hit }: { hit: boolean | null | undefined }) {
 
 export default function MatchAnalysis({ matchId, match }: Props) {
   const { t } = useTranslation('match');
-  const { status: sessionStatus } = useSession();
+  const { data: session, status: sessionStatus } = useSession();
   const isAuthenticated = sessionStatus === 'authenticated';
   const { credits, refresh: refreshCredits } = useCredits();
+  const premium = isPremiumUser({ role: session?.user?.role, credits });
 
   const [analysis, setAnalysis] = useState<ApiAnalysis | null>(null);
   const [predictionRecord, setPredictionRecord] = useState<ApiPredictionRecord | null>(null);
@@ -218,6 +221,7 @@ export default function MatchAnalysis({ matchId, match }: Props) {
           <h3 className={styles.title}>
             <span className={styles.aiBadge}>AI</span>
             {t('analysis.titleShort')}
+            <span className={styles.premiumBadge}>{t('premiumBadge')}</span>
           </h3>
         </div>
         <div className={styles.loading}>{t('common:loading')}</div>
@@ -233,11 +237,12 @@ export default function MatchAnalysis({ matchId, match }: Props) {
           <h3 className={styles.title}>
             <span className={styles.aiBadge}>AI</span>
             {t('analysis.titleShort')}
+            <span className={styles.premiumBadge}>{t('premiumBadge')}</span>
           </h3>
         </div>
 
         {phase !== 'PRE' ? (
-          <div className={styles.errorBox}>{t('analysis.matchStartedNoAnalysis')}</div>
+          <EmptyState>{t('analysis.matchStartedNoAnalysis')}</EmptyState>
         ) : !isAuthenticated ? (
           <div className={styles.cta}>
             <p className={styles.reasoning}>{t('analysis.signInToGenerate')}</p>
@@ -255,14 +260,14 @@ export default function MatchAnalysis({ matchId, match }: Props) {
               className={styles.ctaButton}
               onClick={() => void generateAnalysis()}
             >
-              {t('analysis.generateButton')} {t('analysis.generateCost', { cost: ANALYSIS_COST })}
+              {t('analysis.generateButton')} {premium ? t('analysis.generateUnlimited') : t('analysis.generateCost', { cost: ANALYSIS_COST })}
             </button>
             {error?.toLowerCase().includes('kredi') && (
               <Link href="/credits" className={styles.ctaButton}>
                 {t('analysis.buyCredits')}
               </Link>
             )}
-            <p className={styles.reasoning}>{t('analysis.creditBalance', { credits })}</p>
+            {premium ? null : <p className={styles.reasoning}>{t('analysis.creditBalance', { credits })}</p>}
           </div>
         )}
       </div>
@@ -287,6 +292,7 @@ export default function MatchAnalysis({ matchId, match }: Props) {
         <h3 className={styles.title}>
           <span className={styles.aiBadge}>AI</span>
           {t('analysis.titleShort')}
+          <span className={styles.premiumBadge}>{t('premiumBadge')}</span>
           {isPostMatch && <span className={styles.preTag}>{t('analysis.preGeneratedTag')}</span>}
         </h3>
         <span className={styles.confidenceBadge}>

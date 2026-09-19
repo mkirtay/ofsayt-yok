@@ -4,6 +4,7 @@ import { useSession } from 'next-auth/react';
 import { useTranslation } from '@/lib/i18n';
 import { Role } from '@prisma/client';
 import Link from 'next/link';
+import EmptyState from '@/components/EmptyState';
 import styles from './matchForum.module.scss';
 
 interface Comment {
@@ -11,6 +12,8 @@ interface Comment {
   body: string;
   createdAt: string;
   user: { id: string; name: string | null; image: string | null };
+  likes?: number;
+  likedByMe?: boolean;
 }
 
 interface MatchForumProps {
@@ -19,6 +22,25 @@ interface MatchForumProps {
 
 function avatarLetter(name: string | null) {
   return (name ?? '?').charAt(0).toUpperCase();
+}
+
+function HeartIcon({ filled }: { filled: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="14"
+      height="14"
+      fill={filled ? 'currentColor' : 'none'}
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z" />
+    </svg>
+  );
 }
 
 function TrashIcon() {
@@ -51,6 +73,7 @@ export default function MatchForum({ matchId }: MatchForumProps) {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [likingId, setLikingId] = useState<string | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const role = session?.user?.role;
   const isAdmin = String(role) === Role.ADMIN;
@@ -125,6 +148,26 @@ export default function MatchForum({ matchId }: MatchForumProps) {
     }
   };
 
+  const handleToggleLike = async (commentId: string) => {
+    if (!session?.user || likingId) return;
+    setLikingId(commentId);
+    try {
+      const res = await fetch(`/api/matches/${matchId}/comments/${commentId}/like`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (!res.ok) return;
+      const data = (await res.json()) as { liked: boolean; likes: number };
+      setComments((prev) =>
+        prev.map((c) => (c.id === commentId ? { ...c, likes: data.likes, likedByMe: data.liked } : c)),
+      );
+    } catch {
+      /* silent — beğeni kritik değil */
+    } finally {
+      setLikingId(null);
+    }
+  };
+
   const handleDeleteComment = async (commentId: string) => {
     if (!isAdmin || deletingId) return;
     if (!window.confirm(t('forum.confirmDelete'))) return;
@@ -151,11 +194,11 @@ export default function MatchForum({ matchId }: MatchForumProps) {
 
   return (
     <div className={styles.container}>
-      <h3 className={styles.title}>{t('forum.title')}</h3>
+      <h4 className={styles.title}>{t('forum.title')}</h4>
 
       <div className={styles.commentList} ref={listRef}>
         {comments.length === 0 ? (
-          <div className={styles.empty}>{t('forum.empty')}</div>
+          <EmptyState>{t('forum.empty')}</EmptyState>
         ) : (
           comments.map((c) => (
             <div
@@ -191,6 +234,18 @@ export default function MatchForum({ matchId }: MatchForumProps) {
                   <span className={styles.time}>{relativeTime(c.createdAt)}</span>
                 </div>
                 <p className={styles.commentText}>{c.body}</p>
+                <button
+                  type="button"
+                  className={`${styles.likeBtn} ${c.likedByMe ? styles.likeBtnActive : ''}`.trim()}
+                  onClick={() => void handleToggleLike(c.id)}
+                  disabled={!session?.user || likingId === c.id}
+                  aria-pressed={Boolean(c.likedByMe)}
+                  aria-label={t('forum.like')}
+                  title={session?.user ? t('forum.like') : t('forum.loginPrompt')}
+                >
+                  <HeartIcon filled={Boolean(c.likedByMe)} />
+                  <span className={styles.likeCount}>{c.likes ?? 0}</span>
+                </button>
               </div>
             </div>
           ))

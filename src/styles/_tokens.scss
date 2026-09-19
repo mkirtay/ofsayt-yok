@@ -1,0 +1,142 @@
+@use './variables' as v;
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Ofsayt Yok — Design Tokens (TEK KAYNAK)
+// Kaynak karar kaydı: docs/OFSAYT_YOK_DESIGN_SYSTEM.md §1 (renk), §2 (tipografi),
+// §3 (spacing). Tüm componentler renkleri buradaki CSS değişkenlerinden okur;
+// `_variables.scss` içindeki `$color-*` SCSS değişkenleri de bu değişkenlere
+// (`var(--…)`) bağlıdır, yani mevcut modüller ek değişiklik olmadan temayı izler.
+//
+// Tema: <html data-theme="dark|light"> — varsayılan DARK (dark-mode-first).
+// Değerler `src/lib/theme.ts` ile senkron tutulur (varsayılan tema + storage anahtarı).
+// ═══════════════════════════════════════════════════════════════════════════
+
+// ── Tema-bağımsız tokenlar ────────────────────────────────────────────────
+:root {
+  // Spacing — 4px taban, skala: 4/8/12/16/24/32/48 (§3)
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+
+  // Kart iç padding (§3)
+  --card-padding: var(--space-4);
+  --card-padding-compact: var(--space-3);
+  --section-gap: var(--space-6); // bölümler arası min. dikey ritim
+  --touch-target: 40px; // buton/pill min. yükseklik
+
+  // Üst header yüksekliği (sticky SubHeader ve mobil menü buna göre konumlanır)
+  --header-height: 64px;
+
+  // Alt navigasyon (§3/§4)
+  --bottom-nav-height: 58px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+
+  // Tipografi merdiveni (§2) — font: Inter (`--font-sans`, _app.tsx)
+  --fs-score: 36px; // 32–40
+  --fw-score: 700;
+  --fs-section: 15px; // 15–16
+  --fw-section: 600;
+  --fs-body: 14px;
+  --fw-body: 400;
+  --fs-meta: 13px;
+  --fw-meta: 400;
+  --fs-micro: 11px;
+  --fw-micro: 500;
+  --ls-micro: 0.06em;
+
+  // Aksiyon rengi — tek yeşil (§1): aktif sekme/pill, canlı nokta, birincil CTA
+  --color-action: #00a76f;
+  --color-action-strong: #007b55;
+  --color-on-action: #ffffff;
+
+  // Form / sonuç durum renkleri (G/B/M — her yerde birebir aynı)
+  --color-win: #00a76f;
+  --color-draw: #f59e0b;
+  --color-loss: #ef4444;
+
+  // Form rozetleri (G/B/M): doygun durum rengi + koyu yazı (yeşil 6.1:1, amber 8.9:1, kırmızı 5.1:1 — beyaz yazı yeşilde 3.1:1'de kalıyordu)
+  --color-on-status: #0b0d10;
+
+  // Sıralama tablosu bölge çubukları
+  --zone-champions: #00a76f;
+  --zone-europe: #3b82f6;
+  --zone-relegation: #ef4444;
+
+  // Premium / kredi — genel yeşilden ayrı amber/gold (§1)
+  --color-premium: #f5b301;
+  --color-premium-strong: #d99a00;
+  --color-on-premium: #1a1300;
+
+  // Canlı gösterge
+  --color-live: #ef4444;
+
+  // Header her iki temada koyu kalır ("mevcut siyaha yakın ton")
+  --bg-header: #101512;
+  --bg-header-alt: #1a211d;
+  --text-on-header: #f4f7f4;
+  --text-on-header-secondary: rgba(244, 247, 244, 0.64);
+  --border-header: rgba(255, 255, 255, 0.1);
+}
+
+@include v.below-desktop {
+  :root {
+    --header-height: 60px;
+  }
+}
+
+// ── Dark (varsayılan) ─────────────────────────────────────────────────────
+:root,
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --bg-page: #0f1015;
+  --bg-surface: #1a1c24;
+  --bg-muted: #232632; // hover / seçili satır
+  --bg-row-highlight: rgba(0, 167, 111, 0.14);
+
+  --text-primary: #f2f3f5; // kırık beyaz
+  --text-secondary: #9aa0ae; // orta gri
+  --text-tertiary: #6b7280; // soluk gri (etiket/mikro)
+  --color-action-text: #2fd39b; // koyu zeminde okunur yeşil metin
+
+  // Karşılaştırma (/compare) TARAF renkleri — sol=A, sağ=B; kulüp rengi değil. Marka yeşilinin (hsl 161°) analog komşusu
+  // camgöbeği (190°) ve tamamlayıcısı magenta (322°); form G/B/M (yeşil/amber/kırmızı) ve mavi bölge çubuğundan ayrışır.
+  --compare-a: #06d0f9; // yüzeyde 9.2:1
+  --compare-b: #eb47b4; // yüzeyde 4.9:1 · A↔B 1.87:1
+  --on-compare-a: #04161b; // A üstünde 10:1
+  --on-compare-b: #04161b; // B üstünde 5.4:1
+  --compare-neutral: #6b7280; // beraberlik
+
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --shadow-surface: 0 10px 30px rgba(0, 0, 0, 0.35);
+  --skeleton-base: rgba(255, 255, 255, 0.06);
+}
+
+// ── Light (tam işlevsel) ──────────────────────────────────────────────────
+:root[data-theme='light'] {
+  color-scheme: light;
+
+  --bg-page: #f4f7f4;
+  --bg-surface: #ffffff;
+  --bg-muted: #edf3ee;
+  --bg-row-highlight: #dff5e6;
+
+  --text-primary: #102015;
+  --text-secondary: #4b5f52;
+  --text-tertiary: #7b8a80;
+  --color-action-text: #007b55;
+
+  --compare-a: #0099b8; // beyazda 3.4:1 (grafik ≥3:1)
+  --compare-b: #a30e6c; // beyazda 7.4:1 · A↔B 2.2:1
+  --on-compare-a: #04161b; // A üstünde 5.5:1
+  --on-compare-b: #ffffff; // B üstünde 7.4:1
+  --compare-neutral: #6b7280;
+
+  --border-subtle: #ececec;
+  --shadow-surface: 0 10px 30px rgba(16, 32, 21, 0.08);
+  --skeleton-base: rgba(16, 32, 21, 0.06);
+}

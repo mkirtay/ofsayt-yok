@@ -1,0 +1,569 @@
+@use '../../styles/variables' as *;
+
+// Ana sayfa/Maç Detay kart dili (Design System §2-§3): kart = surface + 1px border + radius-md; iç padding
+// ana kart 16px, kompakt (panel) 12px; kartlar arası boşluk `--tdv-gap` (sayfa 16px, panel 12px).
+.root {
+  --tdv-gap: #{$spacing-4};
+  --tdv-pad: #{$spacing-4};
+  display: flex;
+  flex-direction: column;
+  gap: var(--tdv-gap);
+  min-width: 0;
+}
+
+.pageVariant {
+  margin-top: $spacing-4;
+}
+
+.panelVariant {
+  --tdv-gap: #{$spacing-3};
+  --tdv-pad: #{$spacing-3};
+}
+
+.loading {
+  text-align: center;
+  padding: $spacing-8;
+  color: $color-text-secondary;
+}
+
+/* ═══ Team Header ═══ */
+
+.teamHeader {
+  display: flex;
+  align-items: center;
+  gap: $spacing-4;
+  background-color: $color-surface;
+  padding: var(--tdv-pad);
+  border-radius: $radius-md;
+  box-shadow: $shadow-surface;
+  border: 1px solid $color-border;
+}
+
+.teamLogo {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.logoPlaceholder {
+  width: 56px;
+  height: 56px;
+  background-color: $color-bg;
+  border-radius: $radius-sm;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  font-weight: 700;
+  color: $color-primary;
+  border: 1px solid $color-border;
+  flex-shrink: 0;
+}
+
+.teamHeaderInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.teamName {
+  font-size: 22px;
+  font-weight: 700;
+  color: $color-text;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.teamMeta {
+  font-size: 13px;
+  color: $color-text-secondary;
+}
+
+/* ═══ Layout ═══ */
+
+.layoutSplit {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tdv-gap);
+  min-width: 0;
+}
+
+// Sayfa: viewport tablet+ → iki sütun (içerik + sağ sütun).
+@media (min-width: $bp-md) {
+  .pageVariant .layoutSplit {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+
+  .pageVariant .layoutRight {
+    width: $right-col-width;
+  }
+}
+
+// Panel: her zaman tek sütun (Son Maçlar/Kadro tam genişlik); iç sidebar yok, iki sütun ayrımı yalnızca sayfada.
+
+.layoutLeft {
+  flex: 1;
+  min-width: 0;
+}
+
+.layoutRight {
+  width: 100%;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--tdv-gap);
+  min-width: 0;
+}
+
+/* ═══ Tabs ═══ */
+
+.tabs {
+  display: flex;
+  gap: $spacing-2;
+  margin-bottom: var(--tdv-gap);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  flex-wrap: nowrap;
+  padding-bottom: $spacing-1;
+}
+
+.tab {
+  background-color: $color-surface;
+  border: 1px solid $color-border;
+  padding: $spacing-2 $spacing-4;
+  border-radius: $radius-full;
+  font-weight: 600;
+  font-size: 13px;
+  color: $color-text-secondary;
+  transition: $transition-base;
+  white-space: nowrap;
+  flex-shrink: 0;
+
+  &:hover {
+    background-color: $color-bg;
+  }
+}
+
+.activeTab {
+  background-color: $color-primary;
+  color: $color-surface;
+  border-color: $color-primary;
+
+  &:hover {
+    background-color: $color-primary-dark;
+  }
+}
+
+.tabContent {
+  background-color: $color-surface;
+  border-radius: $radius-md;
+  padding: var(--tdv-pad);
+  box-shadow: $shadow-surface;
+  border: 1px solid $color-border;
+}
+
+/* ═══ Match List ═══ */
+
+.matchesList {
+  display: flex;
+  flex-direction: column;
+}
+
+.matchRow {
+  display: flex;
+  align-items: center;
+  padding: $spacing-2 $spacing-1;
+  border-bottom: 1px solid $color-border;
+  text-decoration: none;
+  color: inherit;
+  transition: $transition-base;
+  gap: $spacing-2;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover {
+    background-color: $color-row-highlight;
+  }
+}
+
+.matchTime {
+  width: 50px;
+  color: $color-text-secondary;
+  font-size: 12px;
+  flex-shrink: 0;
+  font-weight: 500;
+}
+
+.matchTeams {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  gap: $spacing-2;
+}
+
+.matchTeam {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.matchTeamLogo {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.matchTeamName {
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.matchScore {
+  width: 54px;
+  text-align: center;
+  font-weight: 700;
+  color: $color-primary;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.matchCompLabel {
+  font-size: 11px;
+  color: $color-text-secondary;
+  white-space: nowrap;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ═══ Squad ═══ */
+
+.squadGroup + .squadGroup {
+  margin-top: $spacing-4;
+}
+
+.squadGroupTitle {
+  margin: 0 0 $spacing-2;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: $color-text-secondary;
+}
+
+// Mini tablo: satır grid'i; dar container'da (panel) yalnızca Oyuncu + M/G/A, geniş sayfada Mevki + SK/KK da görünür.
+.squadList {
+  container-type: inline-size;
+
+  ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-1;
+  }
+}
+
+.squadPlayer {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  padding: $spacing-2;
+  background-color: $color-bg;
+  border-radius: $radius-sm;
+  font-size: 13px;
+  color: inherit;
+  text-decoration: none;
+
+  &:hover {
+    background-color: $color-muted;
+  }
+}
+
+.squadRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) repeat(3, 32px);
+  align-items: center;
+  column-gap: $spacing-1;
+
+  @container (min-width: 520px) {
+    grid-template-columns: minmax(0, 1fr) 130px repeat(5, 32px);
+  }
+}
+
+.squadHead {
+  padding: 0 $spacing-2 $spacing-1;
+  font-size: 11px;
+  font-weight: 700;
+  color: $color-text-secondary;
+}
+
+.squadNameCol {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  min-width: 0;
+}
+
+.squadPosCol,
+.squadCardCol {
+  display: none;
+
+  @container (min-width: 520px) {
+    display: block;
+  }
+}
+
+.squadPosCol {
+  font-size: 12px;
+  color: $color-text-secondary;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.squadStat {
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.squadNumber {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background-color: $color-primary;
+  color: $color-surface;
+  font-size: 10px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.squadPhoto {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: $color-muted;
+  flex-shrink: 0;
+}
+
+.squadPhotoEmpty {
+  display: inline-block;
+}
+
+.squadName {
+  font-weight: 600;
+  color: $color-text;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* ═══ Stats Card ═══ */
+
+.statsCard {
+  background-color: $color-surface;
+  border-radius: $radius-md;
+  padding: var(--tdv-pad);
+  box-shadow: $shadow-surface;
+  border: 1px solid $color-border;
+}
+
+.cardTitle {
+  font-size: var(--fs-section, 15px);
+  font-weight: var(--fw-section, 600);
+  margin-bottom: $spacing-3;
+  border-bottom: 1px solid $color-border;
+  padding-bottom: $spacing-2;
+  color: $color-text;
+}
+
+.statSection {
+  margin-bottom: $spacing-4;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.statLabel {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: $color-text-secondary;
+  margin-bottom: $spacing-2;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.formRow {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.formPill {
+  @include form-badge;
+}
+
+.formWin {
+  @include form-badge-win;
+}
+
+.formDraw {
+  @include form-badge-draw;
+}
+
+.formLoss {
+  @include form-badge-loss;
+}
+
+.statGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: $spacing-2;
+}
+
+.statItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: $spacing-2;
+  background-color: $color-bg;
+  border-radius: $radius-sm;
+}
+
+.statValue {
+  font-size: 18px;
+  font-weight: 700;
+  color: $color-text;
+  font-variant-numeric: tabular-nums;
+}
+
+.statCaption {
+  font-size: 11px;
+  color: $color-text-secondary;
+  margin-top: 2px;
+}
+
+.leagueSummaryTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+  text-align: center;
+
+  th {
+    color: $color-text-secondary;
+    padding: $spacing-1;
+    border-bottom: 1px solid $color-border;
+    font-weight: 600;
+  }
+
+  td {
+    padding: $spacing-2 $spacing-1;
+    font-weight: 500;
+  }
+}
+
+.points {
+  font-weight: 700;
+  color: $color-primary;
+}
+
+/* ═══ Empty ═══ */
+
+.empty {
+  text-align: center;
+  padding: $spacing-4;
+  color: $color-text-secondary;
+}
+
+/* ═══ Responsive ═══ */
+
+@media (max-width: $bp-md) {
+  .teamName {
+    font-size: 18px;
+  }
+
+  .matchCompLabel {
+    display: none;
+  }
+
+  .statGrid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+// ── Compare toggle + panel ──
+
+.compareToggleBtn {
+  flex-shrink: 0;
+  align-self: flex-start;
+  padding: $spacing-1 $spacing-3;
+  font-size: 12px;
+  font-weight: 700;
+  border: 1px solid $color-primary;
+  border-radius: $radius-full;
+  background: transparent;
+  color: var(--color-action-text);
+  cursor: pointer;
+  transition: background-color 0.15s, color 0.15s;
+  white-space: nowrap;
+
+  &:hover {
+    background: $color-primary;
+    color: #fff;
+  }
+}
+
+.compareToggleBtnOpen {
+  background: $color-primary;
+  color: #fff;
+}
+
+.comparePanel {
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  padding: var(--tdv-pad);
+  box-shadow: $shadow-surface;
+  margin-top: calc(-1 * var(--tdv-gap));
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+@media (max-width: $bp-sm) {
+  .teamHeader {
+    padding: $spacing-3;
+    gap: $spacing-3;
+  }
+
+  .teamLogo,
+  .logoPlaceholder {
+    width: 44px;
+    height: 44px;
+    font-size: 18px;
+  }
+
+  .statGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

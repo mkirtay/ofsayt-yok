@@ -118,6 +118,7 @@ export default function MatchTrivia({ matchId, match }: Props) {
           <h3 className={styles.title}>
             <span className={styles.aiBadge}>AI</span>
             {t('trivia.title')}
+            <span className={styles.premiumBadge}>{t('premiumBadge')}</span>
           </h3>
         </div>
         <div className={styles.lockedWrap}>
@@ -143,6 +144,7 @@ export default function MatchTrivia({ matchId, match }: Props) {
           <h3 className={styles.title}>
             <span className={styles.aiBadge}>AI</span>
             {t('trivia.title')}
+            <span className={styles.premiumBadge}>{t('premiumBadge')}</span>
           </h3>
         </div>
         <div className={styles.loading}>{t('trivia.loading')}</div>
@@ -157,6 +159,7 @@ export default function MatchTrivia({ matchId, match }: Props) {
           <h3 className={styles.title}>
             <span className={styles.aiBadge}>AI</span>
             {t('trivia.title')}
+            <span className={styles.premiumBadge}>{t('premiumBadge')}</span>
           </h3>
         </div>
         <div className={styles.errorBox}>
@@ -188,6 +191,7 @@ export default function MatchTrivia({ matchId, match }: Props) {
         <h3 className={styles.title}>
           <span className={styles.aiBadge}>AI</span>
           {t('trivia.title')}
+          <span className={styles.premiumBadge}>{t('premiumBadge')}</span>
         </h3>
       </div>
 

@@ -1,6 +1,6 @@
 /**
  * GET /api/credits/my-analyses
- * Kullanıcının kredi harcayarak ürettiği (ANALYSIS_SPEND) maç analizlerinin listesi.
+ * Kullanıcının ürettiği (kredili ANALYSIS_SPEND ya da premium ANALYSIS_FREE) maç analizlerinin listesi.
  */
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '@/lib/prisma';
@@ -30,7 +30,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const transactions = await prisma.creditTransaction.findMany({
-    where: { userId, type: 'ANALYSIS_SPEND', matchId: { not: null } },
+    where: { userId, type: { in: ['ANALYSIS_SPEND', 'ANALYSIS_FREE'] }, matchId: { not: null } },
     orderBy: { createdAt: 'desc' },
     take: 30,
     select: { matchId: true, createdAt: true },

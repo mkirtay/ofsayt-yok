@@ -2,10 +2,12 @@
 
 .card {
   background: $color-surface;
-  border: 1px solid $color-border;
   border-radius: $radius-lg;
   padding: $spacing-5;
-  box-shadow: $shadow-surface;
+  border: 1px solid color-mix(in srgb, var(--color-premium) 45%, var(--border-subtle));
+  box-shadow:
+    $shadow-surface,
+    0 0 22px -8px color-mix(in srgb, var(--color-premium) 40%, transparent);
   position: relative;
   overflow: hidden;
 }
@@ -45,6 +47,19 @@
   padding: 4px 10px;
   border-radius: $radius-full;
   font-weight: 600;
+}
+
+// Premium/monetizasyon ayrımı (Design System §1): amber/gold, yeşil AI rozetinden bağımsız.
+.premiumBadge {
+  background: var(--color-premium);
+  color: var(--color-on-premium);
+  font-size: 10px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: $radius-full;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-left: $spacing-1;
 }
 
 .section {

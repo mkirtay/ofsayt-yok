@@ -10,6 +10,7 @@ import { countryFlagImgSrc } from '@/utils/countryFlag';
 import { uefaCompetitionLogoSrcById } from '@/utils/competitionLogo';
 import { utcTimeToTr } from '@/utils/dateFormat';
 import { buildMatchHref } from '@/utils/matchUrl';
+import { isModifiedClick } from '@/utils/matchSelection';
 import styles from './matchList.module.scss';
 
 export type MatchListVariant = 'default' | 'worldCup';
@@ -22,6 +23,24 @@ interface MatchListProps {
   showDateWhenNotToday?: boolean;
   favoriteTeamIds?: Set<number>;
   onToggleFavorite?: (teamId: number) => void;
+  /**
+   * Split-view (masaüstü): verilirse satır tıklaması sayfa geçişi yerine bunu çağırır
+   * (cmd/ctrl-tık ve orta tuş hâlâ normal link davranışı). Verilmezse — mobil dahil —
+   * satır normal `<Link>` ile tam sayfa açar.
+   */
+  onSelectMatch?: (match: Match) => void;
+  /** Satıra hover/focus/tıklamada detay verisini önceden ısıtır */
+  onPrefetchMatch?: (matchId: string) => void;
+  /** Split-view: verilirse takım adı/logosu tıklaması takım panelini açar (yoksa `/teams/[id]` sayfasına gider). */
+  onSelectTeam?: (teamId: number) => void;
+  selectedMatchId?: string | null;
+  /** Dar liste (split-view'da detay paneli açıkken): İY sütunu gizlenir, sütunlar sıkışır */
+  compact?: boolean;
+  /**
+   * Yüksekliği vh'den bağımsız, ebeveynden al (`height:100%` / flex-fill). Ebeveyn kesin bir
+   * yüksekliğe sahipse (ana sayfa split-view sütunu) kullanılır; verilmezse eski `min(72vh, 900px)`.
+   */
+  fill?: boolean;
 }
 
 type FlatItem =
@@ -140,6 +159,10 @@ type RowContext = {
   favoriteTeamIds: Set<number>;
   onToggleFavorite: ((teamId: number) => void) | null;
   navigateTo: (path: string) => void;
+  onSelectMatch: ((match: Match) => void) | null;
+  onPrefetchMatch: ((matchId: string) => void) | null;
+  onSelectTeam: ((teamId: number) => void) | null;
+  selectedMatchId: string | null;
 };
 
 type VirtualRowProps = RowComponentProps<RowContext>;
@@ -153,6 +176,10 @@ function VirtualRow({
   favoriteTeamIds,
   onToggleFavorite,
   navigateTo,
+  onSelectMatch,
+  onPrefetchMatch,
+  onSelectTeam,
+  selectedMatchId,
   ariaAttributes,
 }: VirtualRowProps) {
   const item = items[index];
@@ -171,7 +198,7 @@ function VirtualRow({
               <Image src={logoUrl} alt="" className={styles.virtualHeaderLogo} width={22} height={22} unoptimized />
             ) : showCountryFlag ? (
               <Image
-                src={countryFlagImgSrc(item.country_id!)}
+                src={item.country_flag || countryFlagImgSrc(item.country_id!)}
                 alt=""
                 className={styles.virtualHeaderFlag}
                 width={22}
@@ -219,6 +246,7 @@ function VirtualRow({
     isLastInGroup ? styles.virtualMatchRowLast : '',
     isLive ? styles.virtualMatchRowLive : '',
     variant === 'ht' ? styles.virtualMatchRowHalfTime : '',
+    selectedMatchId != null && String(match.id) === selectedMatchId ? styles.virtualMatchRowSelected : '',
   ]
     .filter(Boolean)
     .join(' ');
@@ -232,6 +260,19 @@ function VirtualRow({
         href={buildMatchHref(match)}
         className={styles.matchRowLink}
         prefetch={false}
+        aria-current={selectedMatchId != null && String(match.id) === selectedMatchId ? 'true' : undefined}
+        onMouseEnter={onPrefetchMatch ? () => onPrefetchMatch(String(match.id)) : undefined}
+        onFocus={onPrefetchMatch ? () => onPrefetchMatch(String(match.id)) : undefined}
+        onClick={
+          onSelectMatch
+            ? (e) => {
+                if (isModifiedClick(e)) return;
+                e.preventDefault();
+                onPrefetchMatch?.(String(match.id));
+                onSelectMatch(match);
+              }
+            : undefined
+        }
       >
         <div className={`${styles.virtualCell} ${styles.virtualKickoff}`}>
           {showShortDate ? (
@@ -259,7 +300,7 @@ function VirtualRow({
         </div>
         <div
           className={`${styles.virtualCell} ${styles.virtualHome}${match.home?.id ? ` ${styles.virtualTeamCell}` : ''}`}
-          onClick={match.home?.id ? (e) => { e.stopPropagation(); e.preventDefault(); navigateTo(`/teams/${match.home!.id}`); } : undefined}
+          onClick={match.home?.id ? (e) => { e.stopPropagation(); e.preventDefault(); if (onSelectTeam) onSelectTeam(match.home!.id); else navigateTo(`/teams/${match.home!.id}`); } : undefined}
         >
           {homeLogo ? (
             <img
@@ -279,7 +320,7 @@ function VirtualRow({
         </div>
         <div
           className={`${styles.virtualCell} ${styles.virtualAway}${match.away?.id ? ` ${styles.virtualTeamCell}` : ''}`}
-          onClick={match.away?.id ? (e) => { e.stopPropagation(); e.preventDefault(); navigateTo(`/teams/${match.away!.id}`); } : undefined}
+          onClick={match.away?.id ? (e) => { e.stopPropagation(); e.preventDefault(); if (onSelectTeam) onSelectTeam(match.away!.id); else navigateTo(`/teams/${match.away!.id}`); } : undefined}
         >
           {awayLogo ? (
             <img
@@ -328,6 +369,12 @@ export default function MatchList({
   showDateWhenNotToday = false,
   favoriteTeamIds,
   onToggleFavorite,
+  onSelectMatch,
+  onPrefetchMatch,
+  onSelectTeam,
+  selectedMatchId,
+  compact = false,
+  fill = false,
 }: MatchListProps) {
   const router = useRouter();
   const navigateTo = useCallback((path: string) => { void router.push(path); }, [router]);
@@ -350,8 +397,23 @@ export default function MatchList({
       favoriteTeamIds: favoriteTeamIds ?? new Set<number>(),
       onToggleFavorite: onToggleFavorite ?? null,
       navigateTo,
+      onSelectMatch: onSelectMatch ?? null,
+      onPrefetchMatch: onPrefetchMatch ?? null,
+      onSelectTeam: onSelectTeam ?? null,
+      selectedMatchId: selectedMatchId ?? null,
     }),
-    [items, showDateWhenNotToday, todayIso, favoriteTeamIds, onToggleFavorite, navigateTo]
+    [
+      items,
+      showDateWhenNotToday,
+      todayIso,
+      favoriteTeamIds,
+      onToggleFavorite,
+      navigateTo,
+      onSelectMatch,
+      onPrefetchMatch,
+      onSelectTeam,
+      selectedMatchId,
+    ]
   );
 
   const listStyle = useCallback(
@@ -373,7 +435,7 @@ export default function MatchList({
   if (!mounted) {
     return (
       <div
-        className={`${styles.virtualHost} ${isWorldCup ? styles.worldCup : ''}`.trim()}
+        className={`${styles.virtualHost} ${fill ? styles.virtualHostFill : ''} ${isWorldCup ? styles.worldCup : ''}`.trim()}
         aria-busy="true"
       >
         <div className={styles.virtualPlaceholder}>Yükleniyor…</div>
@@ -382,7 +444,11 @@ export default function MatchList({
   }
 
   return (
-    <div className={`${styles.virtualHost} ${isWorldCup ? styles.worldCup : ''}`.trim()}>
+    <div
+      className={`${styles.virtualHost} ${fill ? styles.virtualHostFill : ''} ${isWorldCup ? styles.worldCup : ''} ${
+        compact ? styles.virtualHostCompact : ''
+      }`.trim()}
+    >
       <AutoSizer
         renderProp={({ height, width }) => {
           if (height === undefined || width === undefined) {

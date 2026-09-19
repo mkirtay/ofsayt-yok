@@ -1,0 +1,247 @@
+[
+  {
+    "id": 19732728,
+    "league_id": 564,
+    "state_id": 5,
+    "name": "Espanyol vs Real Madrid",
+    "starting_at": "2026-08-22 19:30:00",
+    "participants": [
+      {
+        "id": 3468,
+        "name": "Real Madrid",
+        "image_path": "https://cdn.sportmonks.com/images/soccer/teams/12/3468.png",
+        "meta": {
+          "location": "away",
+          "winner": true,
+          "position": 15
+        }
+      },
+      {
+        "id": 528,
+        "name": "Espanyol",
+        "image_path": "https://cdn.sportmonks.com/images/soccer/teams/16/528.png",
+        "meta": {
+          "location": "home",
+          "winner": false,
+          "position": 2
+        }
+      }
+    ],
+    "state": {
+      "id": 5,
+      "state": "FT",
+      "name": "Full Time",
+      "short_name": "FT"
+    }
+  },
+  {
+    "id": 19732735,
+    "league_id": 564,
+    "state_id": 5,
+    "name": "Real Madrid vs Real Sociedad",
+    "starting_at": "2026-08-26 19:00:00",
+    "participants": [
+      {
+        "id": 594,
+        "name": "Real Sociedad",
+        "image_path": "https://cdn.sportmonks.com/images/soccer/teams/18/594.png",
+        "meta": {
+          "location": "away",
+          "winner": false,
+          "position": 19
+        }
+      },
+      {
+        "id": 3468,
+        "name": "Real Madrid",
+        "image_path": "https://cdn.sportmonks.com/images/soccer/teams/12/3468.png",
+        "meta": {
+          "location": "home",
+          "winner": true,
+          "position": 7
+        }
+      }
+    ],
+    "state": {
+      "id": 5,
+      "state": "FT",
+      "name": "Full Time",
+      "short_name": "FT"
+    }
+  },
+  {
+    "id": 19732715,
+    "league_id": 564,
+    "state_id": 5,
+    "name": "Real Madrid vs Málaga",
+    "starting_at": "2026-08-30 15:00:00",
+    "participants": [
+      {
+        "id": 126,
+        "name": "Málaga",
+        "image_path": "https://cdn.sportmonks.com/images/soccer/teams/30/126.png",
+        "meta": {
+          "location": "away",
+          "winner": false,
+          "position": 18
+        }
+      },
+      {
+        "id": 3468,
+        "name": "Real Madrid",
+        "image_path": "https://cdn.sportmonks.com/images/soccer/teams/12/3468.png",
+        "meta": {
+          "location": "home",
+          "winner": true,
+          "position": 4
+        }
+      }
+    ],
+    "state": {
+      "id": 5,
+      "state": "FT",
+      "name": "Full Time",
+      "short_name": "FT"
+    }
+  },
+  {
+    "id": 19732710,
+    "league_id": 564,
+    "state_id": 5,
+    "name": "Real Betis vs Real Madrid",
+    "starting_at": "2026-09-04 19:00:00",
+    "participants": [
+      {
+        "id": 3468,
+        "name": "Real Madrid",
+        "image_path": "https://cdn.sportmonks.com/images/soccer/teams/12/3468.png",
+        "meta": {
+          "location": "away",
+          "winner": false,
+          "position": 2
+        }
+      },
+      {
+        "id": 485,
+        "name": "Real Betis",
+        "image_path": "https://cdn.sportmonks.com/images/soccer/teams/5/485.png",
+        "meta": {
+          "location": "home",
+          "winner": true,
+          "position": 7
+        }
+      }
+    ],
+    "state": {
+      "id": 5,
+      "state": "FT",
+      "name": "Full Time",
+      "short_name": "FT"
+    }
+  },
+  {
+    "id": 19872593,
+    "league_id": 2,
+    "state_id": 5,
+    "name": "Real Madrid vs Inter",
+    "starting_at": "2026-09-08 19:00:00",
+    "participants": [
+      {
+        "id": 2930,
+        "name": "Inter",
+        "image_path": "https://cdn.sportmonks.com/images/soccer/teams/18/2930.png",
+        "meta": {
+          "location": "away",
+          "winner": false,
+          "position": 25
+        }
+      },
+      {
+        "id": 3468,
+        "name": "Real Madrid",
+        "image_path": "https://cdn.sportmonks.com/images/soccer/teams/12/3468.png",
+        "meta": {
+          "location": "home",
+          "winner": true,
+          "position": 14
+        }
+      }
+    ],
+    "state": {
+      "id": 5,
+      "state": "FT",
+      "name": "Full Time",
+      "short_name": "FT"
+    }
+  },
+  {
+    "id": 19732696,
+    "league_id": 564,
+    "state_id": 5,
+    "name": "Real Madrid vs Rayo Vallecano",
+    "starting_at": "2026-09-12 19:00:00",
+    "participants": [
+      {
+        "id": 377,
+        "name": "Rayo Vallecano",
+        "image_path": "https://cdn.sportmonks.com/images/soccer/teams/25/377.png",
+        "meta": {
+          "location": "away",
+          "winner": false,
+          "position": 14
+        }
+      },
+      {
+        "id": 3468,
+        "name": "Real Madrid",
+        "image_path": "https://cdn.sportmonks.com/images/soccer/teams/12/3468.png",
+        "meta": {
+          "location": "home",
+          "winner": true,
+          "position": 4
+        }
+      }
+    ],
+    "state": {
+      "id": 5,
+      "state": "FT",
+      "name": "Full Time",
+      "short_name": "FT"
+    }
+  },
+  {
+    "id": 19732688,
+    "league_id": 564,
+    "state_id": 5,
+    "name": "Elche vs Real Madrid",
+    "starting_at": "2026-09-15 19:30:00",
+    "participants": [
+      {
+        "id": 3468,
+        "name": "Real Madrid",
+        "image_path": "https://cdn.sportmonks.com/images/soccer/teams/12/3468.png",
+        "meta": {
+          "location": "away",
+          "winner": true,
+          "position": 2
+        }
+      },
+      {
+        "id": 1099,
+        "name": "Elche",
+        "image_path": "https://cdn.sportmonks.com/images/soccer/teams/11/1099.png",
+        "meta": {
+          "location": "home",
+          "winner": false,
+          "position": 19
+        }
+      }
+    ],
+    "state": {
+      "id": 5,
+      "state": "FT",
+      "name": "Full Time",
+      "short_name": "FT"
+    }
+  }
+]

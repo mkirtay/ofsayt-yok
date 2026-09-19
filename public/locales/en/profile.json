@@ -27,5 +27,61 @@
   "passwordChanged": "Password updated.",
   "updatePassword": "Update password",
   "updating": "Updating…",
-  "loading": "Loading…"
+  "loading": "Loading…",
+  "tabs": {
+    "info": "My info",
+    "favorites": "My favorites",
+    "credits": "Credit history",
+    "analyses": "My analyses"
+  },
+  "avatar": {
+    "title": "Profile picture",
+    "gallery": "Avatar gallery",
+    "orUrl": "or paste your own image URL",
+    "remove": "Remove picture",
+    "names": {
+      "ball": "Ball",
+      "boot": "Boot",
+      "whistle": "Whistle",
+      "trophy": "Trophy",
+      "gloves": "Gloves",
+      "corner-flag": "Corner flag",
+      "shirt": "Shirt",
+      "yellow-card": "Yellow card",
+      "red-card": "Red card",
+      "stadium": "Stadium",
+      "goal": "Goal net",
+      "captain": "Captain's armband"
+    }
+  },
+  "favorites": {
+    "teams": "Favorite teams",
+    "leagues": "Favorite leagues",
+    "emptyTeams": "No favorite teams yet. Add one with the ☆ next to a team on the home page.",
+    "emptyLeagues": "No favorite leagues yet.",
+    "remove": "Remove",
+    "removeAria": "Remove {{name}} from favorites",
+    "error": "Could not complete, please try again.",
+    "importTitle": "Favorites on this device",
+    "importHint": "Adds the teams you starred with ☆ on this device's home page to your account favorites. Your existing favorites are kept.",
+    "importButton": "Import favorites from this device",
+    "imported": "{{count}} team(s) imported.",
+    "importNone": "No favorites found on this device to import.",
+    "importNothingNew": "Your device favorites are already in your account."
+  },
+  "history": {
+    "empty": "No credit activity yet.",
+    "more": "Show more",
+    "error": "Could not load credit history.",
+    "balanceAfter": "Balance: {{balance}}",
+    "types": {
+      "SIGNUP_BONUS": "Sign-up bonus",
+      "ADMIN_GRANT": "Granted by admin",
+      "ANALYSIS_SPEND": "AI analysis",
+      "ANALYSIS_FREE": "AI analysis (Premium)",
+      "PURCHASE": "Purchase",
+      "REFUND": "Refund"
+    }
+  },
+  "analysesHint": "The AI match analyses you generated and how their predictions turned out."
 }

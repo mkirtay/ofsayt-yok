@@ -1,8 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useTranslation } from '@/lib/i18n';
-import { COMPARE_LEAGUE_GROUPS } from '@/config/leagues';
-import type { CompareTeamItem } from '@/pages/api/compare/teams';
+import { useTeamSearch, type TeamHit } from '@/hooks/useTeamSearch';
 import styles from './compareTeamPicker.module.scss';
 
 interface CompareTeamPickerProps {
@@ -10,168 +9,132 @@ interface CompareTeamPickerProps {
   fixedTeamName?: string;
 }
 
+interface TeamFieldProps {
+  id: string;
+  label: string;
+  value: TeamHit | null;
+  onChange: (tm: TeamHit | null) => void;
+  excludeId?: number;
+}
+
+/** Header aramasıyla aynı görsel dil: yazdıkça anlık filtrelenen, logo + isim sonuçlu popover. */
+function TeamSearchField({ id, label, value, onChange, excludeId }: TeamFieldProps) {
+  const { t } = useTranslation('match');
+  const [query, setQuery] = useState('');
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  const { teams, loading, active } = useTeamSearch(query, 8);
+  const results = teams.filter((tm) => tm.id !== excludeId);
+
+  useEffect(() => {
+    function onDown(e: MouseEvent) {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') setOpen(false);
+    }
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, []);
+
+  return (
+    <div className={styles.field} ref={wrapRef}>
+      <label className={styles.label} htmlFor={id}>{label}</label>
+      {value ? (
+        <button type="button" className={styles.selectedTeam} onClick={() => onChange(null)} aria-label={`${value.name} — ${t('compare.selectTeam')}`}>
+          {value.logo ? <img src={value.logo} alt="" width={18} height={18} className={styles.logo} /> : <span className={styles.logoPh} />}
+          <span className={styles.selectedName}>{value.name}</span>
+          <span className={styles.change} aria-hidden="true">✕</span>
+        </button>
+      ) : (
+        <div className={styles.searchWrap}>
+          <svg className={styles.icon} viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="7" />
+            <path d="M20 20l-3.5-3.5" />
+          </svg>
+          <input
+            id={id}
+            type="search"
+            className={styles.input}
+            placeholder="Takım ara…"
+            value={query}
+            autoComplete="off"
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setOpen(true);
+            }}
+            onFocus={() => setOpen(true)}
+          />
+          {open && active ? (
+            <div className={styles.panel} role="listbox">
+              {results.map((tm) => (
+                <button
+                  key={tm.id}
+                  type="button"
+                  role="option"
+                  aria-selected={false}
+                  className={styles.hit}
+                  onClick={() => {
+                    onChange(tm);
+                    setQuery('');
+                    setOpen(false);
+                  }}
+                >
+                  {tm.logo ? <img src={tm.logo} alt="" width={20} height={20} className={styles.logo} /> : <span className={styles.logoPh} />}
+                  <span className={styles.hitName}>{tm.name}</span>
+                </button>
+              ))}
+              {loading && results.length === 0 && <div className={styles.note}>{t('compare.teamsLoading')}</div>}
+              {!loading && results.length === 0 && <div className={styles.note}>{t('compare.noTeams')}</div>}
+            </div>
+          ) : null}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function CompareTeamPicker({ fixedTeamId, fixedTeamName }: CompareTeamPickerProps) {
   const router = useRouter();
   const { t } = useTranslation('match');
+  const isFixed = fixedTeamId != null;
 
-  const [selectedCountry, setSelectedCountry] = useState('');
-  const [selectedLeagueId, setSelectedLeagueId] = useState('');
-  const [teams, setTeams] = useState<CompareTeamItem[]>([]);
-  const [teamsLoading, setTeamsLoading] = useState(false);
-  const [team1Id, setTeam1Id] = useState(fixedTeamId != null ? String(fixedTeamId) : '');
-  const [team2Id, setTeam2Id] = useState('');
+  const [team1, setTeam1] = useState<TeamHit | null>(null);
+  const [team2, setTeam2] = useState<TeamHit | null>(null);
 
-  const leagues =
-    COMPARE_LEAGUE_GROUPS.find((g) => g.countryName === selectedCountry)?.leagues ?? [];
-
-  useEffect(() => {
-    if (!selectedLeagueId) {
-      setTeams([]);
-      return;
-    }
-    let cancelled = false;
-    setTeamsLoading(true);
-    fetch(`/api/compare/teams?competitionId=${selectedLeagueId}`)
-      .then((r) => r.json())
-      .then((data: CompareTeamItem[]) => {
-        if (!cancelled) setTeams(data);
-      })
-      .catch(() => { if (!cancelled) setTeams([]); })
-      .finally(() => { if (!cancelled) setTeamsLoading(false); });
-    return () => { cancelled = true; };
-  }, [selectedLeagueId]);
-
-  const handleCountryChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedCountry(e.target.value);
-    setSelectedLeagueId('');
-    setTeams([]);
-    if (!fixedTeamId) setTeam1Id('');
-    setTeam2Id('');
-  }, [fixedTeamId]);
-
-  const handleLeagueChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedLeagueId(e.target.value);
-    if (!fixedTeamId) setTeam1Id('');
-    setTeam2Id('');
-  }, [fixedTeamId]);
-
-  const canCompare = team1Id && team2Id && team1Id !== team2Id;
+  const team1Id = isFixed ? fixedTeamId : team1?.id;
+  const canCompare = team1Id != null && team2 != null && team1Id !== team2.id;
 
   function handleCompare() {
-    if (!canCompare) return;
-    void router.push(`/compare/${team1Id}-vs-${team2Id}`);
+    if (!canCompare || !team2) return;
+    void router.push(`/compare/${team1Id}-vs-${team2.id}`);
   }
-
-  const isFixed = fixedTeamId != null;
 
   return (
     <div className={styles.picker}>
-      <div className={styles.pickerRow}>
-        <div className={styles.field}>
-          <label className={styles.label}>{t('compare.country')}</label>
-          <select
-            className={styles.select}
-            value={selectedCountry}
-            onChange={handleCountryChange}
-          >
-            <option value="">{t('compare.selectCountry')}</option>
-            {COMPARE_LEAGUE_GROUPS.map((g) => (
-              <option key={g.countryName} value={g.countryName}>
-                {g.countryName}
-              </option>
-            ))}
-          </select>
-        </div>
+      <div className={styles.teamRow}>
+        {isFixed ? (
+          <div className={styles.field}>
+            <span className={styles.label}>{t('compare.team1')}</span>
+            <div className={styles.fixedTeamBadge}>{fixedTeamName}</div>
+          </div>
+        ) : (
+          <TeamSearchField id="compare-team1" label={t('compare.team1')} value={team1} onChange={setTeam1} excludeId={team2?.id} />
+        )}
 
-        <div className={styles.field}>
-          <label className={styles.label}>{t('compare.league')}</label>
-          <select
-            className={styles.select}
-            value={selectedLeagueId}
-            onChange={handleLeagueChange}
-            disabled={!selectedCountry}
-          >
-            <option value="">{t('compare.selectLeague')}</option>
-            {leagues.map((l) => (
-              <option key={l.id} value={String(l.id)}>
-                {l.name}
-              </option>
-            ))}
-          </select>
-        </div>
+        <span className={styles.vsSep}>VS</span>
+
+        <TeamSearchField id="compare-team2" label={t('compare.team2')} value={team2} onChange={setTeam2} excludeId={team1Id} />
+
+        <button type="button" className={styles.compareBtn} disabled={!canCompare} onClick={handleCompare}>
+          {t('compare.compare')}
+        </button>
       </div>
-
-      {selectedLeagueId && (
-        <div className={styles.teamRow}>
-          <div className={styles.field}>
-            <label className={styles.label}>
-              {isFixed ? (
-                <span className={styles.fixedLabel}>{fixedTeamName}</span>
-              ) : (
-                t('compare.team1')
-              )}
-            </label>
-            {isFixed ? (
-              <div className={styles.fixedTeamBadge}>{fixedTeamName}</div>
-            ) : (
-              <select
-                className={styles.select}
-                value={team1Id}
-                onChange={(e) => {
-                  setTeam1Id(e.target.value);
-                  if (e.target.value === team2Id) setTeam2Id('');
-                }}
-                disabled={teamsLoading || teams.length === 0}
-              >
-                <option value="">{t('compare.selectTeam')}</option>
-                {teams.map((tm) => (
-                  <option key={tm.id} value={String(tm.id)}>
-                    {tm.name}
-                  </option>
-                ))}
-              </select>
-            )}
-          </div>
-
-          <span className={styles.vsSep}>VS</span>
-
-          <div className={styles.field}>
-            <label className={styles.label}>{t('compare.team2')}</label>
-            <select
-              className={styles.select}
-              value={team2Id}
-              onChange={(e) => setTeam2Id(e.target.value)}
-              disabled={teamsLoading || teams.length === 0 || (!isFixed && !team1Id)}
-            >
-              <option value="">{t('compare.selectTeam')}</option>
-              {teams
-                .filter((tm) => String(tm.id) !== team1Id)
-                .map((tm) => (
-                  <option key={tm.id} value={String(tm.id)}>
-                    {tm.name}
-                  </option>
-                ))}
-            </select>
-          </div>
-
-          <button
-            type="button"
-            className={styles.compareBtn}
-            disabled={!canCompare}
-            onClick={handleCompare}
-          >
-            {t('compare.compare')}
-          </button>
-        </div>
-      )}
-
-      {teamsLoading && (
-        <p className={styles.loading}>{t('compare.teamsLoading')}</p>
-      )}
-
-      {selectedLeagueId && !teamsLoading && teams.length === 0 && (
-        <p className={styles.empty}>{t('compare.noTeams')}</p>
-      )}
     </div>
   );
 }

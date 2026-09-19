@@ -1,0 +1,74 @@
+@use '../../styles/variables' as *;
+
+.statsEventsRow {
+  display: flex;
+  gap: $gap;
+  align-items: flex-start;
+  margin-top: $spacing-4;
+
+  @media (max-width: 767px) {
+    flex-direction: column;
+  }
+}
+
+// Split-view paneli: dar genişlikte alt alta (kompakt); panel yeterince genişse (içerik alanı ≥ 520px, her sütun ≈ 250px)
+// tam sayfadaki gibi yan yana. Panel sarmalayıcısı (`container-type: inline-size`) genişliği ölçer —
+// panel genişliği viewport'tan bağımsız (liste/sidebar/widget sütunlarına bağlı) olduğu için
+// viewport breakpoint'i değil container query kullanılır.
+.stacked {
+  flex-direction: column;
+  gap: $spacing-3;
+
+  @container (min-width: 520px) {
+    flex-direction: row;
+  }
+}
+
+.col {
+  flex: 1;
+  min-width: 0;
+  width: 100%;
+}
+
+// Sayfa + panel ortak sarmalayıcı: kart → chip'ler → sekme paneli dikey ritmi tek yerden (gap).
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+  min-width: 0;
+}
+
+.contentPanel {
+  gap: $spacing-3; // kompakt panel (§3: 12px)
+}
+
+// Chip satırı (lig filtresiyle aynı chip dili). Dar panelde taşarsa yatay kayar.
+.chips {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  overflow-x: auto;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.chip {
+  @include filter-chip;
+}
+
+.chipActive {
+  @include filter-chip-active;
+}
+
+// İki sekme paneli de aynı kutu: içerideki dış boşluklar (statsEventsRow/Lineup margin-top) panelin
+// ilk çocuğunda sıfırlanır → chip satırı ile içerik arası mesafe HER sekmede `.content` gap'i kadar.
+.tabPanel {
+  min-width: 0;
+
+  > :first-child {
+    margin-top: 0;
+  }
+}

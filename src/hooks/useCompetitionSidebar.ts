@@ -22,7 +22,7 @@ export type CompetitionSidebarData = {
 async function fetchCompetitionSidebar(competitionId: number): Promise<CompetitionSidebarData> {
   const compId = String(competitionId);
   const [seasonsList, table1] = await Promise.all([
-    getSeasonsList(),
+    getSeasonsList({ competitionId: compId }),
     getCompetitionTableFull(compId),
   ]);
 

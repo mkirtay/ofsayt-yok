@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { buildDateStripWithSelected, isoDayOfMonth, shiftIsoDate, todayIsoIstanbul } from '@/utils/dateStrip';
 import { useTranslation, useI18n } from '@/lib/i18n';
 import Container from '../Container';
 import Calendar from './Calendar';
@@ -11,12 +12,6 @@ interface SubHeaderProps {
   onDateChange: (date: string) => void;
   activeTab: MatchTab;
   onTabChange: (tab: MatchTab) => void;
-}
-
-function shiftDate(iso: string, days: number): string {
-  const d = new Date(iso + 'T12:00:00');
-  d.setDate(d.getDate() + days);
-  return d.toISOString().slice(0, 10);
 }
 
 export default function SubHeader({
@@ -40,6 +35,30 @@ export default function SubHeader({
 
   const [calendarOpen, setCalendarOpen] = useState(false);
 
+  // Bugünün tarihi mount'ta çözülür (statik prerender'da bayat gün / hydration uyuşmazlığı olmasın).
+  const [todayIso, setTodayIso] = useState<string | null>(null);
+  useEffect(() => {
+    setTodayIso(todayIsoIstanbul());
+    // Gece yarısını geçen açık sekmede rozet/şerit de güncellensin
+    const id = setInterval(() => setTodayIso(todayIsoIstanbul()), 60_000);
+    return () => clearInterval(id);
+  }, []);
+
+  const strip = useMemo(
+    () => (todayIso ? buildDateStripWithSelected(todayIso, selectedDate) : []),
+    [todayIso, selectedDate],
+  );
+  const stripRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    // Seçili gün şeritte ortalansın
+    const el = stripRef.current?.querySelector<HTMLElement>('[aria-current="date"]');
+    el?.scrollIntoView?.({ inline: 'center', block: 'nearest' });
+  }, [strip]);
+  const weekdayFmt = useMemo(
+    () => new Intl.DateTimeFormat(dateLocale, { weekday: 'short', timeZone: 'UTC' }),
+    [dateLocale],
+  );
+
   const tabs: { key: MatchTab; label: string }[] = [
     { key: 'all', label: t('subHeader.all') },
     { key: 'live', label: t('subHeader.live') },
@@ -54,7 +73,7 @@ export default function SubHeader({
           <button
             type="button"
             className={styles.arrow}
-            onClick={() => onDateChange(shiftDate(selectedDate, -1))}
+            onClick={() => onDateChange(shiftIsoDate(selectedDate, -1))}
             aria-label={t('subHeader.prevDay')}
           >
             ←
@@ -69,7 +88,16 @@ export default function SubHeader({
             }}
           >
             <span className={styles.dateLabel}>{displayDate}</span>
-            <span className={styles.calendarIcon}>📅</span>
+            <span className={styles.calendarIcon} aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="4.5" width="18" height="16" rx="3" />
+                <path d="M3 9.5h18M8 2.5v4M16 2.5v4" />
+              </svg>
+              {/* Gerçek güncel gün (sabit değil): mount'a kadar boş */}
+              <span className={styles.calendarBadge} data-testid="calendar-day-badge">
+                {todayIso ? isoDayOfMonth(todayIso) : ''}
+              </span>
+            </span>
             {calendarOpen && (
               <Calendar
                 selectedDate={selectedDate}
@@ -84,7 +112,7 @@ export default function SubHeader({
           <button
             type="button"
             className={styles.arrow}
-            onClick={() => onDateChange(shiftDate(selectedDate, 1))}
+            onClick={() => onDateChange(shiftIsoDate(selectedDate, 1))}
             aria-label={t('subHeader.nextDay')}
           >
             →
@@ -103,12 +131,29 @@ export default function SubHeader({
             </button>
           ))}
         </nav>
-
-        <div className={styles.sortArea}>
-          <span className={styles.sortLabel}>{t('subHeader.sortByTime')}</span>
-          <span className={styles.sortIcon}>☰</span>
-        </div>
       </Container>
+
+      {/* Mobil: yatay kaydırmalı bugün ±2 günlük şerit (ok+tarih navigasyonuna EK) */}
+      {strip.length > 0 && (
+        <Container className={styles.stripWrap}>
+          <div className={styles.dateStrip} ref={stripRef} role="tablist" aria-label={t('subHeader.dayStrip')}>
+            {strip.map((d) => (
+              <button
+                key={d.iso}
+                type="button"
+                role="tab"
+                aria-selected={d.isSelected}
+                aria-current={d.isSelected ? 'date' : undefined}
+                className={`${styles.stripItem} ${d.isSelected ? styles.stripItemActive : ''}`}
+                onClick={() => onDateChange(d.iso)}
+              >
+                <span className={styles.stripWeekday}>{d.isToday ? t('subHeader.today') : weekdayFmt.format(new Date(`${d.iso}T12:00:00Z`))}</span>
+                <span className={styles.stripDay}>{d.day}</span>
+              </button>
+            ))}
+          </div>
+        </Container>
+      )}
     </div>
   );
 }

@@ -1,0 +1,19 @@
+@use '../../styles/variables' as *;
+
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--touch-target);
+  height: var(--touch-target);
+  border-radius: $radius-full;
+  border: 1px solid var(--border-header);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-on-header);
+  transition: $transition-base;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.16);
+    border-color: $color-primary;
+  }
+}

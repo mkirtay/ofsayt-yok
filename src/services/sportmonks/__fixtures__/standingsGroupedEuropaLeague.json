@@ -1,0 +1,58 @@
+[
+  {
+    "id": 17495,
+    "participant_id": 19,
+    "league_id": 5,
+    "season_id": 20090,
+    "group_id": 247770,
+    "position": 1,
+    "points": 15,
+    "participant": {
+      "id": 19,
+      "name": "Arsenal",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/teams/19/19.png"
+    }
+  },
+  {
+    "id": 17497,
+    "participant_id": 682,
+    "league_id": 5,
+    "season_id": 20090,
+    "group_id": 247770,
+    "position": 2,
+    "points": 13,
+    "participant": {
+      "id": 682,
+      "name": "PSV",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/teams/10/682.png"
+    }
+  },
+  {
+    "id": 17513,
+    "participant_id": 485,
+    "league_id": 5,
+    "season_id": 20090,
+    "group_id": 247772,
+    "position": 1,
+    "points": 16,
+    "participant": {
+      "id": 485,
+      "name": "Real Betis",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/teams/5/485.png"
+    }
+  },
+  {
+    "id": 17514,
+    "participant_id": 37,
+    "league_id": 5,
+    "season_id": 20090,
+    "group_id": 247772,
+    "position": 2,
+    "points": 10,
+    "participant": {
+      "id": 37,
+      "name": "Roma",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/teams/5/37.png"
+    }
+  }
+]

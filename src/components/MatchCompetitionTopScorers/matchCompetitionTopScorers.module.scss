@@ -97,10 +97,16 @@
     font-weight: 800;
     color: $color-primary-dark;
     padding-right: $spacing-2;
+    // Puan Durumu'ndaki "P" sütunuyla AYNI mekanizma (ortak mixin): G sütunu yatay scroll'dan bağımsız görünür.
+    @include sticky-last-column;
   }
 
   tbody tr:hover td {
     background: $color-row-highlight;
+  }
+
+  tbody tr:hover td.colGoals {
+    @include sticky-last-column-row-bg($color-row-highlight);
   }
 }
 
@@ -161,12 +167,17 @@
 }
 
 .playerName {
+  text-decoration: none;
   font-weight: 600;
   color: $color-text;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   line-height: normal;
+}
+
+a.playerName:hover {
+  text-decoration: underline;
 }
 
 .teamLogo {
@@ -209,4 +220,22 @@
   text-align: center;
   font-size: 13px;
   color: $color-text-secondary;
+}
+
+.showAll {
+  display: block;
+  width: 100%;
+  padding: $spacing-2 $spacing-3;
+  border-top: 1px solid $color-border;
+  background: $color-surface;
+  color: var(--color-action-text);
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+
+  &:hover {
+    background: $color-muted;
+    text-decoration: underline;
+  }
 }

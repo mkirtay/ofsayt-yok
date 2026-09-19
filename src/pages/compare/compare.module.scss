@@ -48,6 +48,8 @@
   flex-direction: column;
   align-items: flex-start;
   gap: $spacing-2;
+  padding-top: $spacing-3;
+  border-top: 3px solid var(--compare-a); // sol takım vurgu çizgisi (accent-1)
 
   @media (max-width: 480px) {
     align-items: center;
@@ -56,6 +58,7 @@
 
 .teamBlockRight {
   align-items: flex-end;
+  border-top-color: var(--compare-b); // sağ takım (accent-2)
 
   @media (max-width: 480px) {
     align-items: center;
@@ -125,29 +128,19 @@
 // ── Form pills ──
 
 .pill {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-  border-radius: $radius-full;
-  font-size: 11px;
-  font-weight: 800;
+  @include form-badge;
 }
 
 .pillW {
-  background: #dcfce7;
-  color: #166534;
+  @include form-badge-win;
 }
 
 .pillD {
-  background: #fef9c3;
-  color: #854d0e;
+  @include form-badge-draw;
 }
 
 .pillL {
-  background: #fee2e2;
-  color: #991b1b;
+  @include form-badge-loss;
 }
 
 .pillU {
@@ -170,91 +163,6 @@
   font-weight: 700;
   color: $color-text;
   margin: 0 0 $spacing-4;
-}
-
-// ── H2H grid ──
-
-.h2hGrid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: $spacing-3;
-  margin-bottom: $spacing-4;
-
-  @media (max-width: 480px) {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-.h2hCard {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  padding: $spacing-3;
-  background: $color-muted;
-  border-radius: $radius-sm;
-  text-align: center;
-}
-
-.h2hBig {
-  font-size: 28px;
-  font-weight: 900;
-  color: $color-text;
-  font-variant-numeric: tabular-nums;
-  line-height: 1;
-}
-
-.h2hCardLabel {
-  font-size: 11px;
-  font-weight: 600;
-  color: $color-text-secondary;
-}
-
-// ── Dominance bar ──
-
-.dominanceWrap {
-  display: flex;
-  align-items: center;
-  gap: $spacing-2;
-  margin-bottom: $spacing-2;
-}
-
-.dominanceLabel {
-  font-size: 11px;
-  font-weight: 600;
-  color: $color-text-secondary;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 120px;
-}
-
-.dominanceBar {
-  flex: 1;
-  height: 8px;
-  background: #e5e7eb;
-  border-radius: $radius-full;
-  overflow: hidden;
-}
-
-.dominanceFill {
-  height: 100%;
-  background: $color-primary;
-  border-radius: $radius-full;
-  transition: width 0.3s ease;
-}
-
-.dominanceGoals {
-  display: flex;
-  justify-content: space-between;
-  font-size: 12px;
-  font-weight: 600;
-  color: $color-text-secondary;
-  font-variant-numeric: tabular-nums;
-}
-
-.dominanceGoalsSep {
-  color: $color-border;
 }
 
 // ── Tables ──
@@ -307,57 +215,285 @@
   text-align: center;
 }
 
-// ── Stats comparison table ──
+// ── Karşılaştırma renkleri: sol=accent-1, sağ=accent-2 (kulüp rengi değil; _tokens.scss) ──
 
-.statsTable {
-  width: 100%;
-  border-collapse: collapse;
+.fillA {
+  background: var(--compare-a);
+  color: var(--on-compare-a);
+}
 
-  th,
-  td {
-    padding: $spacing-2 $spacing-4;
-    font-size: 13px;
-    border-bottom: 1px solid $color-border;
-    vertical-align: middle;
-  }
+.fillB {
+  background: var(--compare-b);
+  color: var(--on-compare-b);
+}
 
-  th {
-    background: $color-muted;
-    font-weight: 700;
-    font-size: 12px;
-    color: $color-text-secondary;
-  }
+.fillDraw {
+  background: var(--compare-neutral);
+  color: #fff;
+}
 
-  tr:last-child td {
-    border-bottom: none;
-  }
+.dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: $radius-full;
+  flex-shrink: 0;
+}
 
-  tr:hover td {
-    background: $color-muted;
+// ── H2H ──
+
+.h2hLead {
+  margin: 0 0 $spacing-3;
+  font-size: 14px;
+  line-height: 1.5;
+  color: $color-text-secondary;
+
+  strong {
+    color: $color-text;
   }
 }
 
-.statVal {
-  font-weight: 700;
+.ratioBar {
+  display: flex;
+  height: 28px;
+  border-radius: $radius-full;
+  overflow: hidden;
+  background: $color-muted;
+}
+
+.ratioSeg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  font-size: 12px;
+  font-weight: 800;
   font-variant-numeric: tabular-nums;
-  text-align: left;
-  min-width: 60px;
-  color: $color-text;
 }
 
-.statValRight {
+.legend,
+.statLegend {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: $spacing-3;
+  margin: $spacing-2 0 $spacing-3;
+  font-size: 12px;
+  font-weight: 600;
+  color: $color-text-secondary;
+
+  span {
+    display: inline-flex;
+    align-items: center;
+    gap: $spacing-2;
+  }
+}
+
+.h2hList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.h2hRow {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr) 56px minmax(0, 1fr);
+  align-items: center;
+  gap: $spacing-2;
+  padding: $spacing-2 0;
+  border-top: 1px solid $color-border;
+  font-size: 13px;
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr 48px 1fr;
+
+    .dateCell {
+      grid-column: 1 / -1;
+    }
+  }
+}
+
+.h2hTeam {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: $color-text-secondary;
+}
+
+.h2hTeamAway {
+  justify-content: flex-end;
+}
+
+.h2hWinner {
+  color: $color-text;
+  font-weight: 700;
+}
+
+// ── En golcüler ──
+
+.scorers {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $spacing-4;
+}
+
+.scorerSide {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+  min-width: 0;
+}
+
+.scorerSideRight {
+  align-items: flex-end;
+  text-align: right;
+
+  .scorerList {
+    align-items: flex-end;
+  }
+
+  .scorerLink {
+    flex-direction: row-reverse;
+  }
+
+  .scorerText {
+    align-items: flex-end;
+  }
+}
+
+.scorerTeam {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+  font-size: 12px;
+  font-weight: 600;
+  color: $color-text-secondary;
+}
+
+.scorerList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  width: 100%;
+}
+
+.scorerLink {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+
+  &:hover .scorerName {
+    text-decoration: underline;
+  }
+}
+
+.scorerPhoto {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: $color-muted;
+  flex-shrink: 0;
+}
+
+.scorerPhotoEmpty {
+  display: inline-block;
+}
+
+.scorerText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.scorerName {
+  font-size: 14px;
+  font-weight: 700;
+  color: $color-text;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scorerGoals {
+  font-size: 12px;
+  color: $color-text-secondary;
+  font-variant-numeric: tabular-nums;
+}
+
+// ── İstatistik barları ──
+
+.statBar {
+  padding: $spacing-2 0;
+}
+
+.statBarHead {
+  display: grid;
+  grid-template-columns: 64px 1fr 64px;
+  align-items: baseline;
+  margin-bottom: 4px;
+}
+
+.statBarLabel {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 500;
+  color: $color-text-secondary;
+}
+
+.statBarVal {
+  font-size: 14px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: $color-text-secondary;
+}
+
+.statBarValRight {
   text-align: right;
 }
 
-.statValHighlight {
-  color: $color-primary-dark;
+.statBarValBest {
+  font-weight: 800;
+  color: $color-text;
 }
 
-.statLabel {
-  text-align: center;
-  font-size: 12px;
-  color: $color-text-secondary;
-  font-weight: 500;
+.statBarTrack {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  height: 10px;
+}
+
+.statBarHalf {
+  display: flex;
+  background: $color-muted;
+  overflow: hidden;
+
+  &:first-child {
+    justify-content: flex-end;
+    border-radius: $radius-full 0 0 $radius-full;
+  }
+
+  &:last-child {
+    justify-content: flex-start;
+    border-radius: 0 $radius-full $radius-full 0;
+  }
+}
+
+.statBarFill {
+  height: 100%;
+  min-width: 2px;
+  transition: width 0.3s ease;
 }
 
 // ── Split grid for form side-by-side ──

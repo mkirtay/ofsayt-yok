@@ -2,13 +2,15 @@
  * Ana sayfa lig gruplarının sırası (yan panel `SIDEBAR_LEAGUES`):
  * 1) Türkiye
  * 2) Büyük 5 (ES, EN, IT, FR, DE)
- * UEFA üçlüsü ayrı: `UEFA_SIDEBAR_LEAGUES` — `/uefa` sayfası.
+ * UEFA üçlüsü ayrı: `UEFA_SIDEBAR_LEAGUES` — lig filtresi/logolar için (ayrı /uefa sayfası kaldırıldı).
  *
  * Maç listesi gruplama sırası (`compareGroupedLeagues`): tier 0 World Cup (güncel/gündemdeki
  * turnuva), tier 2 UEFA hâlâ Ş→Avrupa→Konferans.
  */
 
 import { WORLD_CUP_COMPETITION_ID } from './worldCup';
+import { compareLeaguePriority } from './leaguePriority';
+import { isSportmonksProviderEnabled, resolveSportmonksLeagueId } from '@/services/sportmonksProviderFlag';
 
 export type LeagueGroupSortInput = {
   competition_id: number;
@@ -85,19 +87,19 @@ export type SidebarLeague = {
   name: string;
   /** country_id for flag via API proxy; null = use static logo */
   countryId: number | null;
-  /** Static logo path (e.g. UEFA cups) */
+  /** Static logo (UEFA cups: local svg; domestic leagues: Sportmonks CDN `image_path`) */
   logo?: string;
 };
 
 export const SIDEBAR_LEAGUES: SidebarLeague[] = [
-  { id: 6,   name: 'Trendyol Süper Lig',    countryId: 48 },
-  { id: 344, name: 'Trendyol 1. Lig',        countryId: 48 },
-  { id: 347, name: 'Türkiye Kupası',          countryId: 48 },
-  { id: 2,   name: 'İngiltere Premier Lig',   countryId: 19 },
-  { id: 1,   name: 'Almanya Bundesliga',      countryId: 1 },
-  { id: 3,   name: 'İspanya La Liga',         countryId: 43 },
-  { id: 4,   name: 'İtalya Serie A',          countryId: 47 },
-  { id: 5,   name: 'Fransa Ligue 1',          countryId: 21 },
+  { id: 6,   name: 'Trendyol Süper Lig',    countryId: 48, logo: 'https://cdn.sportmonks.com/images/soccer/leagues/24/600.png' },
+  { id: 344, name: 'Trendyol 1. Lig',        countryId: 48, logo: 'https://cdn.sportmonks.com/images/soccer/leagues/27/603.png' },
+  { id: 347, name: 'Türkiye Kupası',          countryId: 48, logo: 'https://cdn.sportmonks.com/images/soccer/leagues/30/606.png' },
+  { id: 2,   name: 'İngiltere Premier Lig',   countryId: 19, logo: 'https://cdn.sportmonks.com/images/soccer/leagues/8/8.png' },
+  { id: 1,   name: 'Almanya Bundesliga',      countryId: 1, logo: 'https://cdn.sportmonks.com/images/soccer/leagues/18/82.png' },
+  { id: 3,   name: 'İspanya La Liga',         countryId: 43, logo: 'https://cdn.sportmonks.com/images/soccer/leagues/20/564.png' },
+  { id: 4,   name: 'İtalya Serie A',          countryId: 47, logo: 'https://cdn.sportmonks.com/images/soccer/leagues/0/384.png' },
+  { id: 5,   name: 'Fransa Ligue 1',          countryId: 21, logo: 'https://cdn.sportmonks.com/images/soccer/leagues/13/301.png' },
 ];
 
 export type CountryLeagueGroup = {
@@ -162,14 +164,38 @@ export const COMPARE_LEAGUE_GROUPS: CountryLeagueGroup[] = [
   },
 ];
 
-/** `/uefa` yan paneli — sıra `UEFA_TIER2_COMPETITION_IDS` ile aynı */
+/** UEFA kupaları (lig filtresi kataloğu) — sıra `UEFA_TIER2_COMPETITION_IDS` ile aynı */
 export const UEFA_SIDEBAR_LEAGUES: SidebarLeague[] = [
   { id: UEFA_CHAMPIONS_LEAGUE_ID, name: 'Şampiyonlar Ligi', countryId: null, logo: '/images/uefa-logo.svg' },
   { id: UEFA_EUROPA_LEAGUE_ID, name: 'UEFA Avrupa Ligi', countryId: null, logo: '/images/uefa-logo.svg' },
   { id: UEFA_CONFERENCE_LEAGUE_ID, name: 'UEFA Konferans Ligi', countryId: null, logo: '/images/uefa-logo.svg' },
 ];
 
+/** Gruptaki `competition_id` → Sportmonks league_id (Sportmonks açıkken zaten o; kapalıyken legacy → eşleme). */
+function toSportmonksLeagueId(competitionId: number): number | null {
+  return isSportmonksProviderEnabled() ? competitionId : resolveSportmonksLeagueId(competitionId);
+}
+
 export function compareGroupedLeagues(a: LeagueGroupSortInput, b: LeagueGroupSortInput): number {
+  // World Cup (varsa) her zaman önde — yalnızca legacy id'de var.
+  const wa = isWorldCupGroup(a);
+  const wb = isWorldCupGroup(b);
+  if (wa !== wb) return wa ? -1 : 1;
+  if (wa && wb) return nameCompare(a, b);
+
+  const ia = toSportmonksLeagueId(a.competition_id);
+  const ib = toSportmonksLeagueId(b.competition_id);
+  // Kademe ayrımı yalnızca Sportmonks lig id'sinden yapılabilir (bkz. leaguePriority.ts). Eşleme yoksa eski sıralama.
+  if (ia != null && ib != null) {
+    return compareLeaguePriority(
+      { leagueId: ia, competition_name: a.competition_name, country_name: a.country_name },
+      { leagueId: ib, competition_name: b.competition_name, country_name: b.country_name },
+    );
+  }
+  return compareGroupedLeaguesLegacy(a, b);
+}
+
+function compareGroupedLeaguesLegacy(a: LeagueGroupSortInput, b: LeagueGroupSortInput): number {
   const tierA = getTier(a);
   const tierB = getTier(b);
   if (tierA !== tierB) return tierA - tierB;

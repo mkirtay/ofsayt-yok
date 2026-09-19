@@ -11,7 +11,7 @@
   text-align: center;
   padding: $spacing-8;
   color: $color-text-secondary;
-  font-size: 14px;
+  font-size: var(--fs-meta);
   background: $color-surface;
   border: 1px solid $color-border;
   border-radius: $radius-md;
@@ -145,4 +145,164 @@
 
 .bracketWrap {
   margin-bottom: $spacing-4;
+}
+
+// ── Ana sayfa grid'i (sidebar | liste [+ detay paneli] | sağ widget) ─────────
+// Mobil (< $bp-desktop): tek sütun (liste önce, sidebar sonra). ≥$bp-desktop: sidebar + liste.
+// ≥1200 ($bp-split): dar sidebar + liste; maç seçilince liste yanında detay paneli.
+// ≥1536 ($bp-widget): sağda ayrı widget sütunu (reklam alanına dönüştürülebilir).
+
+.hubShell {
+  max-width: 1680px;
+  margin: 0 auto;
+  padding: 0 $spacing-4;
+  // Lig filtresi chip satırı SABİT yükseklik ekler; split-view sütun yüksekliği `--league-bar-total`'i düşer.
+  --league-bar-h: 40px;
+  --league-bar-total: 0px;
+}
+
+.hubShellWithLeagueBar {
+  // Bar yüksekliği + chip↔grid boşluğu. (Bar yokken grid'in üst margin'i SubHeader'ın alt margin'iyle birleşiyordu; bar araya girince ayrışır → +16px, ölçülerek doğrulandı.)
+  --league-bar-total: calc(var(--league-bar-h) + #{$spacing-4});
+}
+
+.leagueBarRow {
+  height: var(--league-bar-h);
+  min-width: 0;
+}
+
+.emptyAction {
+  color: var(--color-action-text);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+.hubGrid {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+  margin-top: $spacing-4;
+}
+
+.hubMain {
+  order: 1;
+  min-width: 0;
+  display: flex;
+  gap: $spacing-4;
+  align-items: flex-start;
+}
+
+.hubList {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.hubDetail {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.hubSidebar {
+  order: 2;
+  min-width: 0;
+}
+
+@media (min-width: $bp-desktop) {
+  .hubGrid {
+    display: grid;
+    grid-template-columns: 320px minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .hubMain {
+    order: 0;
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .hubSidebar {
+    order: 0;
+    grid-column: 1;
+    grid-row: 1;
+  }
+}
+
+@media (min-width: $bp-split) {
+  .hubGrid {
+    grid-template-columns: 240px minmax(0, 1fr);
+  }
+
+  // Detay paneli açıkken: liste takım adlarını kesmeyecek kadar geniş (≥440px), panel kalanı alır
+  // (1200'de ≈ 440/456, 1280'de ≈ 440/500, 1440'ta ≈ 520/580)
+  .hubGridWithPanel .hubList {
+    flex: 0 0 clamp(440px, 46%, 520px);
+  }
+
+  // ── Üç sütun (sidebar | liste | detay paneli): MatchDetailPanel modeli ─────────────────────
+  // TEK yükseklik kaynağı ortak parent'ta (`.hubGrid`): görünür alanı doldurur. Üç sütun da bundan
+  // `height:100%` alır (grid satırı `1fr`), kendi içeriğini kendi `overflow-y:auto`'suyla kaydırır —
+  // panelin (`.panel` → `.scroll`) kullandığı model. Sütunlarda artık ayrı vh/flex hesabı YOK.
+  // Not: `100vh` yalnızca burada, bir kez; sabitler = header + SubHeader(+alt boşluk) + alt boşluk.
+  .hubGridWithPanel {
+    height: calc(100vh - var(--header-height) - 56px - 32px - var(--league-bar-total));
+    grid-template-rows: minmax(0, 1fr);
+    align-items: stretch;
+
+    .hubSidebar,
+    .hubMain {
+      height: 100%;
+      min-height: 0;
+    }
+
+    .hubMain {
+      align-items: stretch;
+    }
+
+    // Sidebar: çerçeve dolduruyor, sekmeler sabit, içerik kayar.
+    .hubSidebar {
+      display: flex;
+      flex-direction: column;
+
+      .sidebar {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .sidebarContent {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+      }
+    }
+
+    .hubList,
+    .hubDetail {
+      height: 100%;
+      min-height: 0;
+    }
+
+    // Liste: çerçeveli, dikey flex; sanallaştırılmış liste (`fill`) kalan alanı doldurur ve KENDİ içinde kayar.
+    .hubList {
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      padding: $spacing-1;
+      background: var(--bg-page);
+      border: 1px solid var(--border-subtle);
+      border-radius: $radius-md;
+    }
+  }
+}
+
+@media (min-width: $bp-widget) {
+  .hubGridWithRight {
+    grid-template-columns: 240px minmax(0, 1fr) 300px;
+
+    > aside[data-slot='hub-right'] {
+      grid-column: 3;
+      grid-row: 1;
+    }
+  }
 }

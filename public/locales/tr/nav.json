@@ -1,7 +1,8 @@
 {
   "worldCup": "WORLD CUP",
-  "uefa": "UEFA",
+  "aiMenu": "AI",
   "aiAccuracy": "AI İsabeti",
+  "account": "Hesabım",
   "credits": "Krediler",
   "myAnalyses": "AI Analizlerim",
   "profile": "Profil",
@@ -9,5 +10,16 @@
   "signIn": "Giriş Yap",
   "signUp": "Üye Ol",
   "toggleMenu": "Menüyü aç/kapat",
-  "langSwitch": "EN"
+  "langSwitch": "EN",
+  "bottomNav": {
+    "live": "Canlı",
+    "standings": "Puan Durumu",
+    "leagues": "Ligler",
+    "favorites": "Favoriler",
+    "more": "Diğer",
+    "label": "Alt gezinme"
+  },
+  "searchPlaceholder": "Takım veya lig ara…",
+  "themeToLight": "Açık temaya geç",
+  "themeToDark": "Koyu temaya geç"
 }
