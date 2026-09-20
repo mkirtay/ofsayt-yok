@@ -32,12 +32,14 @@ export default function GundemHubPage() {
   const { t } = useTranslation('gundem');
   const { status } = useSession();
   const authenticated = status === 'authenticated';
+  // Oturum çözülene kadar (`loading`) "giriş yap" istemi/sekme değişimi gösterme — yalnızca kesin oturumsuzsa (`unauthenticated`)
+  const unauthenticated = status === 'unauthenticated';
   const splitView = useSplitView();
   const isSplit = splitView === true;
 
   // Oturumsuzken "Takip" sekmesi anlamsız → Tümü'ne düşer
   const requested = readScope(router.query.scope);
-  const scope: GundemScope = requested === 'following' && !authenticated ? 'all' : requested;
+  const scope: GundemScope = requested === 'following' && unauthenticated ? 'all' : requested;
   const selectedPostId = readSelectedPostId(router.query);
   const showPanel = isSplit && selectedPostId != null;
 
@@ -106,7 +108,7 @@ export default function GundemHubPage() {
     return () => io.disconnect();
   }, [hasNextPage, isFetchingNextPage, fetchNextPage, items.length]);
 
-  const tabs: GundemScope[] = authenticated ? SCOPES : SCOPES.filter((s) => s !== 'following');
+  const tabs: GundemScope[] = unauthenticated ? SCOPES.filter((s) => s !== 'following') : SCOPES;
 
   return (
     <>
@@ -138,12 +140,14 @@ export default function GundemHubPage() {
 
         <div className={`${styles.grid} ${isSplit ? styles.gridSplit : ''}`.trim()}>
           <section className={styles.feed} aria-busy={feed.isPending}>
-            <PostComposer
-              variant="post"
-              authenticated={authenticated}
-              maxLength={POST_MAX_LENGTH}
-              onSubmit={(body) => createPost.mutateAsync({ body })}
-            />
+            {status === 'loading' ? null : (
+              <PostComposer
+                variant="post"
+                authenticated={authenticated}
+                maxLength={POST_MAX_LENGTH}
+                onSubmit={(body) => createPost.mutateAsync({ body })}
+              />
+            )}
 
             {/* isPending: oturum çözülene kadar sorgu devre dışıdır — o sürede "boş" değil "yükleniyor" gösterilir */}
             {feed.isPending ? (

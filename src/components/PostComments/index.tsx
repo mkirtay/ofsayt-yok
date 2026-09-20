@@ -1,3 +1,4 @@
+import { useSession } from 'next-auth/react';
 import Avatar from '@/components/Avatar';
 import { useConfirmDialog } from '@/components/ConfirmDialog';
 import EmptyState from '@/components/EmptyState';
@@ -18,6 +19,7 @@ type Props = {
 /** Post altı yorumlar: yazma alanı + cursor sayfalamalı liste + silme (sahip/ADMIN). Yorum beğenisi yok. */
 export default function PostComments({ postId, currentUserId, isAdmin }: Props) {
   const { t } = useTranslation('gundem');
+  const { status } = useSession();
   const comments = useGundemComments(postId);
   const create = useCreateComment(postId);
   const remove = useDeleteComment(postId);
@@ -40,12 +42,15 @@ export default function PostComments({ postId, currentUserId, isAdmin }: Props) 
     <section className={styles.section} aria-label={t('comments.title')}>
       <h2 className={styles.title}>{t('comments.title')}</h2>
 
-      <PostComposer
-        variant="comment"
-        authenticated={!!currentUserId}
-        maxLength={COMMENT_MAX_LENGTH}
-        onSubmit={(body) => create.mutateAsync(body)}
-      />
+      {/* Oturum çözülürken "giriş yap" istemi gösterme (giriş yapmış kullanıcıda titreme yaratıyordu) */}
+      {status === 'loading' ? null : (
+        <PostComposer
+          variant="comment"
+          authenticated={!!currentUserId}
+          maxLength={COMMENT_MAX_LENGTH}
+          onSubmit={(body) => create.mutateAsync(body)}
+        />
+      )}
 
       {comments.isLoading ? (
         <EmptyState>{t('comments.loading')}</EmptyState>
