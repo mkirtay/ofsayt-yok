@@ -1,0 +1,23 @@
+@use '../../styles/variables' as *;
+
+.root {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  font-size: 13px;
+  border-radius: $radius-full;
+  overflow: hidden;
+  background-color: var(--avatar-bg, #{$color-primary});
+  color: var(--avatar-fg, #{$color-surface});
+  font-weight: 700;
+  line-height: 1;
+  user-select: none;
+}
+
+.img {
+  object-fit: cover;
+}

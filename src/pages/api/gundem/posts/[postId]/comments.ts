@@ -5,7 +5,8 @@ import { hitFixedWindowRateLimit } from '@/lib/rateLimit';
 import { captureError } from '@/lib/logger';
 import { getRequestUserId } from '@/lib/mobileAuth';
 import { withAbsoluteImage } from '@/lib/siteUrl';
-import { COMMENT_MAX_LENGTH, PAGE_SIZE, queryString, readJsonBody } from '@/lib/gundem/validation';
+import { COMMENT_MAX_LENGTH } from '@/config/gundem';
+import { PAGE_SIZE, queryString, readJsonBody } from '@/lib/gundem/validation';
 import { authorSelect, paginate } from '@/lib/gundem/posts';
 import { createNotification } from '@/lib/gundem/notify';
 
@@ -49,7 +50,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
 
       const input = readJsonBody(req);
-      const body = sanitizePlainText(typeof input.body === 'string' ? input.body : '');
+      const body = sanitizePlainText(typeof input.body === 'string' ? input.body : '', { allowNewlines: true });
       if (!body || body.length > COMMENT_MAX_LENGTH) {
         return res.status(400).json({ error: `Yorum 1–${COMMENT_MAX_LENGTH} karakter olmalıdır.` });
       }

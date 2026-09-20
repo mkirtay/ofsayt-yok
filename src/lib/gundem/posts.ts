@@ -3,6 +3,18 @@ import { withAbsoluteImage } from '@/lib/siteUrl';
 
 export const authorSelect = { id: true, name: true, username: true, image: true } as const;
 
+/**
+ * Post yazarı: temel alanlar + takipçi/takip sayıları (`Follow` `_count`) + istek sahibinin bu yazarı takip edip etmediği.
+ * (`followedByMe` yalnızca oturum varsa sorgulanır; kendi postunda serileştirmede her zaman false'a çevrilir.)
+ */
+export function postAuthorSelect(viewerId: string | null) {
+  return {
+    ...authorSelect,
+    _count: { select: { followers: true, following: true } },
+    followers: viewerId ? { where: { followerId: viewerId }, select: { id: true } } : false,
+  } satisfies Prisma.UserSelect;
+}
+
 /** Beğeni/yorum sayaçları `_count` ile hesaplanır (silinmiş yorumlar sayılmaz). */
 export function postSelect(viewerId: string | null) {
   return {
@@ -12,7 +24,7 @@ export function postSelect(viewerId: string | null) {
     authorType: true,
     matchId: true,
     teamId: true,
-    author: { select: authorSelect },
+    author: { select: postAuthorSelect(viewerId) },
     _count: { select: { likes: true, comments: { where: { deletedAt: null } } } },
     likes: viewerId ? { where: { userId: viewerId }, select: { id: true } } : false,
   } satisfies Prisma.PostSelect;
@@ -20,11 +32,18 @@ export function postSelect(viewerId: string | null) {
 
 type PostRow = Prisma.PostGetPayload<{ select: ReturnType<typeof postSelect> }>;
 
-export function serializePost(row: PostRow) {
+export function serializePost(row: PostRow, viewerId: string | null = null) {
   const { _count, likes, author, ...rest } = row;
+  const { _count: authorCount, followers, ...authorBase } = author;
+  const viewerFollows = Array.isArray(followers) && followers.length > 0;
   return {
     ...rest,
-    author: withAbsoluteImage(author),
+    author: {
+      ...withAbsoluteImage(authorBase),
+      followedByMe: viewerFollows && authorBase.id !== viewerId,
+      followerCount: authorCount.followers,
+      followingCount: authorCount.following,
+    },
     likes: _count.likes,
     comments: _count.comments,
     likedByMe: Array.isArray(likes) && likes.length > 0,

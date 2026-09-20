@@ -28,7 +28,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       select: postSelect(viewerId),
     });
     const { items, nextCursor } = paginate(rows, PAGE_SIZE);
-    return res.json({ items: items.map(serializePost), nextCursor });
+    return res.json({ items: items.map((p) => serializePost(p, viewerId)), nextCursor });
   } catch (e) {
     captureError('gundem:user-posts', e);
     return res.status(500).json({ error: 'Sunucu hatası.' });

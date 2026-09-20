@@ -23,5 +23,11 @@
   },
   "themeToLight": "Switch to light theme",
   "themeToDark": "Switch to dark theme",
-  "requestFailed": "Request failed ({{status}})"
+  "requestFailed": "Request failed ({{status}})",
+  "relativeTime": {
+    "justNow": "just now",
+    "minutesAgo": "{{count}}m ago",
+    "hoursAgo": "{{count}}h ago",
+    "daysAgo": "{{count}}d ago"
+  }
 }

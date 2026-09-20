@@ -1,0 +1,78 @@
+{
+  "meta": {
+    "title": "Gündem | Ofsayt Yok",
+    "description": "Ofsayt Yok topluluğunun futbol gündemi: gönderiler, yorumlar ve resmi paylaşımlar."
+  },
+  "title": "Gündem",
+  "tabs": {
+    "label": "Akış türü",
+    "all": "Tümü",
+    "following": "Takip Ettiklerim",
+    "official": "Resmi"
+  },
+  "composer": {
+    "postPlaceholder": "Futbol gündeminde ne var?",
+    "commentPlaceholder": "Yorumunu yaz…",
+    "postSubmit": "Paylaş",
+    "commentSubmit": "Yorum yap",
+    "sending": "Gönderiliyor…",
+    "hint": "Ctrl/Cmd + Enter ile gönder",
+    "remaining": "{{count}} karakter kaldı",
+    "loginPrompt": "Paylaşmak için giriş yap",
+    "commentLoginPrompt": "Yorum yapmak için giriş yap",
+    "rateLimited": "Çok hızlı gidiyorsun. {{seconds}} sn sonra tekrar dene.",
+    "rateLimitedNoWait": "Çok hızlı gidiyorsun, biraz bekle.",
+    "error": "Gönderilemedi. Lütfen tekrar dene.",
+    "connectionError": "Bağlantı hatası. Lütfen tekrar dene."
+  },
+  "feed": {
+    "loading": "Yükleniyor…",
+    "error": "Akış yüklenemedi.",
+    "retry": "Tekrar dene",
+    "loadMore": "Daha fazla yükle",
+    "loadingMore": "Yükleniyor…",
+    "empty": {
+      "all": "Henüz gönderi yok. İlk gönderiyi sen paylaş!",
+      "following": "Takip ettiklerinin henüz gönderisi yok.",
+      "official": "Henüz resmi paylaşım yok."
+    }
+  },
+  "post": {
+    "like": "Beğen",
+    "loginToLike": "Beğenmek için giriş yap",
+    "comments": "Yorumlar",
+    "delete": "Gönderiyi sil",
+    "deleting": "Siliniyor",
+    "confirmDelete": "Bu gönderiyi silmek istediğinize emin misiniz?",
+    "deleteError": "Gönderi silinemedi.",
+    "official": "Resmi hesap",
+    "anonymous": "Anonim",
+    "open": "Gönderiyi aç",
+    "deleteTitle": "Gönderiyi sil"
+  },
+  "comments": {
+    "title": "Yorumlar",
+    "empty": "Henüz yorum yok. İlk yorumu sen yap!",
+    "loading": "Yorumlar yükleniyor…",
+    "error": "Yorumlar yüklenemedi.",
+    "loadMore": "Daha fazla yorum",
+    "delete": "Yorumu sil",
+    "confirmDelete": "Bu yorumu silmek istediğinize emin misiniz?",
+    "deleteError": "Yorum silinemedi.",
+    "deleteTitle": "Yorumu sil"
+  },
+  "detail": {
+    "panelLabel": "Gönderi detayı",
+    "barTitle": "Gönderi",
+    "fullPage": "Tam sayfa ↗",
+    "close": "Detay panelini kapat",
+    "notFound": "Gönderi bulunamadı ya da silinmiş.",
+    "back": "← Gündem'e dön",
+    "selectHint": "Yorumları görmek için bir gönderi seç."
+  },
+  "dialog": {
+    "cancel": "Vazgeç",
+    "delete": "Sil",
+    "deleting": "Siliniyor…"
+  }
+}

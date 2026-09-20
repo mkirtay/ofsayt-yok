@@ -175,10 +175,24 @@ export async function consumePasswordResetToken(rawToken: string): Promise<strin
   return email;
 }
 
-export function sanitizePlainText(input: string): string {
-  return input
-    .replace(/<[^>]*>/g, '')
-    .replace(/[\u0000-\u001F\u007F]/g, '')
+export type SanitizePlainTextOptions = {
+  /**
+   * `\n` (satır sonu) korunur: CRLF/CR → `\n`, ardışık 3+ boş satır 2'ye iner. Diğer kontrol karakterleri yine silinir.
+   * Varsayılan (kapalı): tüm kontrol karakterleri (satır sonu dahil) silinir — maç yorumları bu davranışta kalır.
+   */
+  allowNewlines?: boolean;
+};
+
+export function sanitizePlainText(input: string, options?: SanitizePlainTextOptions): string {
+  const noTags = input.replace(/<[^>]*>/g, '');
+  if (!options?.allowNewlines) {
+    return noTags.replace(/[\u0000-\u001F\u007F]/g, '').trim();
+  }
+  return noTags
+    .replace(/\r\n?/g, '\n')
+    .replace(/[\u0000-\u0009\u000B-\u001F\u007F]/g, '')
+    .replace(/ *\n */g, '\n') // satır kenarı boşlukları: "\n \n \n" da boş satır sayılır
+    .replace(/\n{3,}/g, '\n\n')
     .trim();
 }
 

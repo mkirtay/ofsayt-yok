@@ -1,7 +1,5 @@
 import type { NextApiRequest } from 'next';
 
-export const POST_MAX_LENGTH = 280;
-export const COMMENT_MAX_LENGTH = 280;
 export const PAGE_SIZE = 20;
 
 export function queryString(value: string | string[] | undefined): string | null {

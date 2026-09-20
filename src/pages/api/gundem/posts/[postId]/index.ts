@@ -18,7 +18,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         select: postSelect(viewerId),
       });
       if (!post) return res.status(404).json({ error: 'Gönderi bulunamadı.' });
-      return res.json(serializePost(post));
+      return res.json(serializePost(post, viewerId));
     }
 
     if (req.method === 'DELETE') {

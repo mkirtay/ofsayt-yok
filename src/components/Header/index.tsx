@@ -164,6 +164,13 @@ export default function Header() {
           </div>
         </div>
         <div className={styles.actions}>
+          <Link
+            href="/gundem"
+            className={`${styles.headerNavPill} ${router.pathname.startsWith('/gundem') ? styles.headerNavPillActive : ''}`.trim()}
+            aria-current={router.pathname.startsWith('/gundem') ? 'page' : undefined}
+          >
+            {t('gundem')}
+          </Link>
           <span className={styles.divider} aria-hidden="true" />
           {sessionLoading ? (
             // Oturum durumu netleşene kadar "Giriş Yap/Üye Ol" ya da "Profil" gibi
@@ -211,6 +218,9 @@ export default function Header() {
         <div ref={menuRef} className={`${styles.mobileMenu} ${isWorldCupTheme ? styles.mobileMenuWorldCup : ''}`}>
           <HeaderSearch onNavigate={() => setMobileMenuOpen(false)} />
           <nav className={styles.mobileNav}>
+            <Link href="/gundem" className={styles.mobileNavLink}>
+              {t('gundem')}
+            </Link>
             <Link
               href="/ai-istatistikleri"
               className={styles.mobileNavLink}

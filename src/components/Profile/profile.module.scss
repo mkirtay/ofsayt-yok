@@ -201,25 +201,11 @@
 }
 
 .avatarPreview {
-  flex-shrink: 0;
-  width: 88px;
-  height: 88px;
-  border-radius: 50%;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: $color-muted;
-  color: $color-text-secondary;
-  font-size: 32px;
-  font-weight: 800;
+  // Avatar bileşeni renkleri (profil önizlemesi: soluk zemin + kenarlık)
+  --avatar-bg: #{$color-muted};
+  --avatar-fg: #{$color-text-secondary};
   border: 2px solid $color-border;
-}
-
-.avatarPreviewImg {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+  font-weight: 800;
 }
 
 .avatarBody {

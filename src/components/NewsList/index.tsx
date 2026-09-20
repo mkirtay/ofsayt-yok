@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { useTranslation } from '@/lib/i18n';
 import type { NewsItem } from '@/models/domain';
+import { formatRelativeTime } from '@/utils/relativeTime';
 import styles from './newsList.module.scss';
 
 interface Props {
@@ -10,17 +11,6 @@ interface Props {
 
 export default function NewsList({ items, loading }: Props) {
   const { t } = useTranslation('match');
-
-  function timeAgo(dateStr: string): string {
-    const diff = Date.now() - new Date(dateStr).getTime();
-    const mins = Math.floor(diff / 60_000);
-    if (mins < 1) return t('news.justNow');
-    if (mins < 60) return t('news.minutesAgo', { count: mins });
-    const hours = Math.floor(mins / 60);
-    if (hours < 24) return t('news.hoursAgo', { count: hours });
-    const days = Math.floor(hours / 24);
-    return t('news.daysAgo', { count: days });
-  }
 
   if (loading) {
     return <div className={styles.loading}>{t('news.loading')}</div>;
@@ -48,7 +38,7 @@ export default function NewsList({ items, loading }: Props) {
               <div className={styles.meta}>
                 <span className={styles.source}>{item.source}</span>
                 <span className={styles.dot}>·</span>
-                <time className={styles.time}>{timeAgo(item.publishedAt)}</time>
+                <time className={styles.time}>{formatRelativeTime(item.publishedAt, t)}</time>
               </div>
             </div>
           </Link>

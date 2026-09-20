@@ -11,7 +11,8 @@ import { sanitizePlainText } from '@/lib/security';
 import { captureError } from '@/lib/logger';
 import { requireAdmin } from '@/lib/requireAuth';
 import { OFFICIAL_ACCOUNT_EMAIL } from '@/lib/gundem/official';
-import { POST_MAX_LENGTH, optionalInt, optionalString, readJsonBody } from '@/lib/gundem/validation';
+import { POST_MAX_LENGTH } from '@/config/gundem';
+import { optionalInt, optionalString, readJsonBody } from '@/lib/gundem/validation';
 import { postSelect, serializePost } from '@/lib/gundem/posts';
 
 function isValidCronRequest(req: NextApiRequest): boolean {
@@ -33,7 +34,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const input = readJsonBody(req);
-    const body = sanitizePlainText(typeof input.body === 'string' ? input.body : '');
+    const body = sanitizePlainText(typeof input.body === 'string' ? input.body : '', { allowNewlines: true });
     if (!body || body.length > POST_MAX_LENGTH) {
       return res.status(400).json({ error: `Gönderi 1–${POST_MAX_LENGTH} karakter olmalıdır.` });
     }

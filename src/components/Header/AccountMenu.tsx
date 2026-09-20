@@ -4,6 +4,7 @@ import { signOut, useSession } from 'next-auth/react';
 import { useQueryClient } from '@tanstack/react-query';
 import { prefetchProfile } from '@/hooks/useProfile';
 import { useTranslation } from '@/lib/i18n';
+import Avatar from '@/components/Avatar';
 import { useDismiss } from './useDismiss';
 import styles from './header.module.scss';
 
@@ -19,7 +20,6 @@ export default function AccountMenu() {
 
   if (!session) return null;
   const name = session.user.username || session.user.name || session.user.email || '';
-  const initial = name.trim().charAt(0).toUpperCase() || '?';
 
   return (
     <div className={styles.menuWrap} ref={wrapRef}>
@@ -33,7 +33,7 @@ export default function AccountMenu() {
         onClick={() => setOpen((o) => !o)}
         onMouseEnter={() => void prefetchProfile(queryClient)}
       >
-        {session.user.image ? <img src={session.user.image} alt="" className={styles.avatarImg} width={32} height={32} /> : initial}
+        <Avatar name={name} image={session.user.image} className={styles.avatarInner} />
       </button>
       {open ? (
         <div className={`${styles.menuPanel} ${styles.menuPanelRight}`} role="menu">

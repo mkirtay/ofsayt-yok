@@ -156,19 +156,11 @@
     "deleting": "Siliniyor",
     "confirmDelete": "Bu yorumu silmek istediğinize emin misiniz?",
     "deleteError": "Yorum silinemedi.",
-    "justNow": "az önce",
-    "minutesAgo": "{{count}} dk önce",
-    "hoursAgo": "{{count}} saat önce",
-    "daysAgo": "{{count}} gün önce",
     "like": "Beğen"
   },
   "news": {
     "loading": "Haberler yükleniyor...",
-    "empty": "Şu an güncel haber bulunamadı.",
-    "justNow": "Az önce",
-    "minutesAgo": "{{count}} dk önce",
-    "hoursAgo": "{{count}} saat önce",
-    "daysAgo": "{{count}} gün önce"
+    "empty": "Şu an güncel haber bulunamadı."
   },
   "compare": {
     "team1": "Takım 1",

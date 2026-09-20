@@ -1,0 +1,79 @@
+@use '../../styles/variables' as *;
+
+// Panel çerçevesi MatchDetailPanel ile aynı dil (üst çubuk + kayan gövde); yükseklik `.side` (sticky) sınırından gelir.
+.panel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--bg-page);
+  border: 1px solid var(--border-subtle);
+  border-radius: $radius-md;
+  overflow: hidden;
+  height: 100%;
+  min-height: 0;
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-3;
+  padding: $spacing-2 $spacing-3;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.barTitle {
+  font-size: var(--fs-micro);
+  font-weight: var(--fw-micro);
+  letter-spacing: var(--ls-micro);
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+.barActions {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+}
+
+.fullLink {
+  font-size: var(--fs-meta);
+  font-weight: 600;
+  color: $color-primary-text;
+  padding: $spacing-2;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.close {
+  width: 32px;
+  height: 32px;
+  border-radius: $radius-full;
+  color: var(--text-secondary);
+  font-size: 14px;
+  transition: $transition-base;
+
+  &:hover {
+    background: var(--bg-muted);
+    color: var(--text-primary);
+  }
+}
+
+.scroll {
+  overflow-y: auto;
+  padding: $spacing-3;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+}
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+}

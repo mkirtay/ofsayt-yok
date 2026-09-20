@@ -5,9 +5,9 @@ import { sanitizePlainText } from '@/lib/security';
 import { hitFixedWindowRateLimit } from '@/lib/rateLimit';
 import { captureError } from '@/lib/logger';
 import { getRequestUserId } from '@/lib/mobileAuth';
+import { POST_MAX_LENGTH } from '@/config/gundem';
 import {
   PAGE_SIZE,
-  POST_MAX_LENGTH,
   optionalInt,
   optionalString,
   queryString,
@@ -49,7 +49,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         select: postSelect(viewerId),
       });
       const { items, nextCursor } = paginate(rows, PAGE_SIZE);
-      return res.json({ items: items.map(serializePost), nextCursor });
+      return res.json({ items: items.map((p) => serializePost(p, viewerId)), nextCursor });
     }
 
     if (req.method === 'POST') {
@@ -63,7 +63,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
 
       const input = readJsonBody(req);
-      const body = sanitizePlainText(typeof input.body === 'string' ? input.body : '');
+      const body = sanitizePlainText(typeof input.body === 'string' ? input.body : '', { allowNewlines: true });
       if (!body || body.length > POST_MAX_LENGTH) {
         return res.status(400).json({ error: `Gönderi 1–${POST_MAX_LENGTH} karakter olmalıdır.` });
       }
@@ -82,7 +82,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         },
         select: postSelect(userId),
       });
-      return res.status(201).json(serializePost(created));
+      return res.status(201).json(serializePost(created, userId));
     }
 
     res.setHeader('Allow', 'GET, POST');

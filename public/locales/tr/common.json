@@ -23,5 +23,11 @@
   },
   "themeToLight": "Açık temaya geç",
   "themeToDark": "Koyu temaya geç",
-  "requestFailed": "İstek başarısız ({{status}})"
+  "requestFailed": "İstek başarısız ({{status}})",
+  "relativeTime": {
+    "justNow": "az önce",
+    "minutesAgo": "{{count}} dk önce",
+    "hoursAgo": "{{count}} saat önce",
+    "daysAgo": "{{count}} gün önce"
+  }
 }

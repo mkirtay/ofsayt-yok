@@ -1,0 +1,105 @@
+@use '../../styles/variables' as *;
+
+// Görsel dil LeaguePickerDialog ile aynı: masaüstünde ortada modal, mobilde alttan bottom-sheet.
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1100; // LeaguePickerDialog (1000) üstünde
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-4;
+  background: rgba(0, 0, 0, 0.55);
+
+  @include below-desktop {
+    align-items: flex-end;
+    padding: 0;
+  }
+}
+
+.dialog {
+  display: flex;
+  flex-direction: column;
+  width: min(400px, 100%);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: $radius-lg;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+
+  @include below-desktop {
+    width: 100%;
+    border-radius: $radius-lg $radius-lg 0 0;
+    padding-bottom: var(--safe-bottom, 0px);
+  }
+}
+
+.body {
+  padding: $spacing-6 $spacing-4 $spacing-4; // §3: kart iç padding 16px, başlık üstünde 24px
+}
+
+.title {
+  margin: 0 0 $spacing-2;
+  font-size: var(--fs-section, 15px);
+  font-weight: var(--fw-section, 600);
+  color: $color-text;
+}
+
+.message {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: $color-text-secondary;
+}
+
+.error {
+  margin: $spacing-3 0 0;
+  font-size: 13px;
+  color: $color-danger;
+}
+
+.foot {
+  display: flex;
+  gap: $spacing-3;
+  padding: $spacing-3 $spacing-4;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.cancel,
+.danger {
+  flex: 1;
+  min-height: 40px; // §3: dokunma hedefi ≥ 40px
+  border-radius: $radius-full;
+  font-size: 14px;
+  font-weight: 700;
+  transition: $transition-base;
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+    outline-offset: 2px;
+  }
+}
+
+.cancel {
+  border: 1.5px solid var(--border-subtle);
+  background: var(--bg-surface);
+  color: $color-text;
+
+  &:hover:not(:disabled) {
+    background: $color-muted;
+  }
+}
+
+.danger {
+  background: $color-danger;
+  color: #fff;
+
+  &:hover:not(:disabled) {
+    filter: brightness(0.92);
+  }
+}

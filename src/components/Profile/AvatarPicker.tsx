@@ -1,4 +1,5 @@
 import { AVATAR_GALLERY, avatarUrl, galleryPathOf } from '@/lib/avatars';
+import Avatar from '@/components/Avatar';
 import { useTranslation } from '@/lib/i18n';
 import styles from './profile.module.scss';
 
@@ -7,15 +8,12 @@ type Props = { value: string; onChange: (url: string) => void; name: string };
 /** Profil görseli: hazır galeri (dosya yükleme YOK) + kendi URL'ni yapıştır — yan yana. */
 export default function AvatarPicker({ value, onChange, name }: Props) {
   const { t } = useTranslation('profile');
-  const initial = name.trim().charAt(0).toUpperCase() || '?';
 
   return (
     <div className={styles.field}>
       <span className={styles.label}>{t('avatar.title')}</span>
       <div className={styles.avatarWrap}>
-        <div className={styles.avatarPreview} aria-hidden="true">
-          {value ? <img src={value} alt="" className={styles.avatarPreviewImg} /> : initial}
-        </div>
+        <Avatar name={name} image={value || null} size={88} className={styles.avatarPreview} />
         <div className={styles.avatarBody}>
           <div className={styles.avatarGrid} role="radiogroup" aria-label={t('avatar.gallery')}>
             {AVATAR_GALLERY.map((id) => {

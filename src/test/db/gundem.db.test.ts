@@ -546,4 +546,102 @@ d('DB entegrasyonu — Gündem (post, beğeni, yorum, takip, bildirim, push, bot
       expect(long.status).toBe(400);
     });
   });
+  // ── Faz B.1: author.followedByMe / sayaçlar ────────────────────────────────────────────────
+  describe('author alanı: followedByMe, followerCount, followingCount', () => {
+    it('post GET: takip eden görür true; oturumsuz ve kendi postunda false; sayaçlar Follow _count', async () => {
+      const writer = await mkUser('fb-writer');
+      const fan = await mkUser('fb-fan');
+      const third = await mkUser('fb-third');
+      const other = await mkUser('fb-other');
+      const p = await mkPost(writer.id, 'takip testi');
+      await prisma.follow.createMany({
+        data: [
+          { followerId: fan.id, followingId: writer.id },
+          { followerId: third.id, followingId: writer.id },
+          { followerId: writer.id, followingId: other.id },
+        ],
+      });
+
+      const asFan = await call(postHandler, makeReq({ method: 'GET', query: { postId: p.id }, token: fan.token }));
+      expect(asFan.body.author).toMatchObject({ id: writer.id, followedByMe: true, followerCount: 2, followingCount: 1 });
+
+      const asOther = await call(postHandler, makeReq({ method: 'GET', query: { postId: p.id }, token: other.token }));
+      expect(asOther.body.author).toMatchObject({ followedByMe: false, followerCount: 2, followingCount: 1 });
+
+      const anon = await call(postHandler, makeReq({ method: 'GET', query: { postId: p.id } }));
+      expect(anon.body.author).toMatchObject({ followedByMe: false, followerCount: 2, followingCount: 1 });
+
+      const own = await call(postHandler, makeReq({ method: 'GET', query: { postId: p.id }, token: writer.token }));
+      expect(own.body.author.followedByMe).toBe(false); // kendi postu: anlamsız ama hata değil
+    });
+
+    it('feed (scope=following) ve profil akışı (users/[id]/posts) aynı alanları taşır', async () => {
+      const writer = await mkUser('fb2-writer');
+      const fan = await mkUser('fb2-fan');
+      await prisma.follow.create({ data: { followerId: fan.id, followingId: writer.id } });
+      const p = await mkPost(writer.id, 'akış');
+
+      const feed = await call(postsHandler, makeReq({ method: 'GET', query: { scope: 'following' }, token: fan.token }));
+      const inFeed = feed.body.items.find((i: any) => i.id === p.id);
+      expect(inFeed.author).toMatchObject({ followedByMe: true, followerCount: 1, followingCount: 0 });
+
+      const profile = await call(userPostsHandler, makeReq({ method: 'GET', query: { userId: writer.id }, token: fan.token }));
+      expect(profile.body.items[0].author).toMatchObject({ followedByMe: true, followerCount: 1 });
+      const profileAnon = await call(userPostsHandler, makeReq({ method: 'GET', query: { userId: writer.id } }));
+      expect(profileAnon.body.items[0].author.followedByMe).toBe(false);
+    });
+
+    it('takip toggle sonrası alan güncellenir; yeni post yanıtında yazarın sayaçları vardır', async () => {
+      const writer = await mkUser('fb3-writer');
+      const fan = await mkUser('fb3-fan');
+      const p = await mkPost(writer.id);
+      await call(followHandler, makeReq({ method: 'POST', query: { userId: writer.id }, token: fan.token }));
+      expect((await call(postHandler, makeReq({ method: 'GET', query: { postId: p.id }, token: fan.token }))).body.author.followedByMe).toBe(true);
+      await call(followHandler, makeReq({ method: 'POST', query: { userId: writer.id }, token: fan.token }));
+      expect((await call(postHandler, makeReq({ method: 'GET', query: { postId: p.id }, token: fan.token }))).body.author).toMatchObject({ followedByMe: false, followerCount: 0 });
+
+      const created = await call(postsHandler, makeReq({ method: 'POST', token: writer.token, body: { body: 'yeni' } }));
+      expect(created.status).toBe(201);
+      expect(created.body.author).toMatchObject({ id: writer.id, followedByMe: false, followerCount: 0, followingCount: 0 });
+    });
+  });
+
+  // ── Faz B.1: satır sonu (\n) davranışı ─────────────────────────────────────────────────────
+  describe('satır sonu: Gündem gövdesi \\n korur, ardışık 3+ boş satır 2\'ye iner', () => {
+    it('post: CRLF → \\n, tab silinir, 3+ boş satır 2\'ye iner; DB\'de ve yanıtta aynı', async () => {
+      const u = await mkUser('nl-post');
+      const r = await call(postsHandler, makeReq({ method: 'POST', token: u.token, body: { body: 'satır1\r\nsatır2\n\n\n\n\nsatır\t3' } }));
+      expect(r.status).toBe(201);
+      expect(r.body.body).toBe('satır1\nsatır2\n\nsatır3');
+      expect((await prisma.post.findUnique({ where: { id: r.body.id } }))?.body).toBe('satır1\nsatır2\n\nsatır3');
+      // GET aynı metni döndürür (kart pre-wrap ile render eder)
+      expect((await call(postHandler, makeReq({ method: 'GET', query: { postId: r.body.id } }))).body.body).toBe('satır1\nsatır2\n\nsatır3');
+    });
+
+    it('yorum aynı davranışta; yalnızca satır sonu olan gövde 400', async () => {
+      const u = await mkUser('nl-comment');
+      const p = await mkPost(alice.id);
+      const ok = await call(commentsHandler, makeReq({ method: 'POST', query: { postId: p.id }, token: u.token, body: { body: 'a\n\n\nb' } }));
+      expect(ok.status).toBe(201);
+      expect(ok.body.body).toBe('a\n\nb');
+      const empty = await call(commentsHandler, makeReq({ method: 'POST', query: { postId: p.id }, token: u.token, body: { body: '\n \n\n' } }));
+      expect(empty.status).toBe(400);
+    });
+
+    it('280 sınırı satır sonlarını da sayar (280 → 201, 281 → 400)', async () => {
+      const u = await mkUser('nl-limit');
+      const at = 'a\n'.repeat(139) + 'ab'; // 139*2 + 2 = 280
+      expect(at.length).toBe(280);
+      const ok = await call(postsHandler, makeReq({ method: 'POST', token: u.token, body: { body: at } }));
+      expect(ok.status).toBe(201);
+      const over = await call(postsHandler, makeReq({ method: 'POST', token: u.token, body: { body: `${at}c` } }));
+      expect(over.status).toBe(400);
+    });
+
+    it('bot-post da satır sonlarını korur', async () => {
+      const r = await call(botHandler, makeReq({ method: 'POST', headers: { authorization: `Bearer ${process.env.CRON_SECRET}` }, body: { body: 'GOL!\nİlk yarı', externalKey: `${runId}:nl:1` } }));
+      expect(r.status).toBe(201);
+      expect(r.body.post.body).toBe('GOL!\nİlk yarı');
+    });
+  });
 });

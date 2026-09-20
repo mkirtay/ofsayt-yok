@@ -1,0 +1,78 @@
+{
+  "meta": {
+    "title": "Feed | Ofsayt Yok",
+    "description": "The Ofsayt Yok football community feed: posts, comments and official updates."
+  },
+  "title": "Feed",
+  "tabs": {
+    "label": "Feed type",
+    "all": "All",
+    "following": "Following",
+    "official": "Official"
+  },
+  "composer": {
+    "postPlaceholder": "What's happening in football?",
+    "commentPlaceholder": "Write your comment…",
+    "postSubmit": "Post",
+    "commentSubmit": "Comment",
+    "sending": "Sending…",
+    "hint": "Press Ctrl/Cmd + Enter to send",
+    "remaining": "{{count}} characters left",
+    "loginPrompt": "Sign in to post",
+    "commentLoginPrompt": "Sign in to comment",
+    "rateLimited": "You're going too fast. Try again in {{seconds}}s.",
+    "rateLimitedNoWait": "You're going too fast, please wait a moment.",
+    "error": "Could not send. Please try again.",
+    "connectionError": "Connection error. Please try again."
+  },
+  "feed": {
+    "loading": "Loading…",
+    "error": "Could not load the feed.",
+    "retry": "Try again",
+    "loadMore": "Load more",
+    "loadingMore": "Loading…",
+    "empty": {
+      "all": "No posts yet. Be the first to post!",
+      "following": "The people you follow haven't posted yet.",
+      "official": "No official updates yet."
+    }
+  },
+  "post": {
+    "like": "Like",
+    "loginToLike": "Sign in to like",
+    "comments": "Comments",
+    "delete": "Delete post",
+    "deleting": "Deleting",
+    "confirmDelete": "Are you sure you want to delete this post?",
+    "deleteError": "Could not delete the post.",
+    "official": "Official account",
+    "anonymous": "Anonymous",
+    "open": "Open post",
+    "deleteTitle": "Delete post"
+  },
+  "comments": {
+    "title": "Comments",
+    "empty": "No comments yet. Be the first!",
+    "loading": "Loading comments…",
+    "error": "Could not load comments.",
+    "loadMore": "More comments",
+    "delete": "Delete comment",
+    "confirmDelete": "Are you sure you want to delete this comment?",
+    "deleteError": "Could not delete the comment.",
+    "deleteTitle": "Delete comment"
+  },
+  "detail": {
+    "panelLabel": "Post details",
+    "barTitle": "Post",
+    "fullPage": "Full page ↗",
+    "close": "Close detail panel",
+    "notFound": "Post not found or deleted.",
+    "back": "← Back to Feed",
+    "selectHint": "Select a post to see its comments."
+  },
+  "dialog": {
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "deleting": "Deleting…"
+  }
+}

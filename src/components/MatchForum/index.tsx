@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import Image from 'next/image';
 import { useSession } from 'next-auth/react';
 import { useTranslation } from '@/lib/i18n';
 import { Role } from '@prisma/client';
 import Link from 'next/link';
+import Avatar from '@/components/Avatar';
 import EmptyState from '@/components/EmptyState';
+import LikeButton from '@/components/LikeButton';
+import TrashIcon from '@/components/icons/TrashIcon';
+import { formatRelativeTime } from '@/utils/relativeTime';
 import styles from './matchForum.module.scss';
 
 interface Comment {
@@ -20,51 +23,6 @@ interface MatchForumProps {
   matchId: string;
 }
 
-function avatarLetter(name: string | null) {
-  return (name ?? '?').charAt(0).toUpperCase();
-}
-
-function HeartIcon({ filled }: { filled: boolean }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      width="14"
-      height="14"
-      fill={filled ? 'currentColor' : 'none'}
-      stroke="currentColor"
-      strokeWidth="1.75"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      focusable="false"
-    >
-      <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z" />
-    </svg>
-  );
-}
-
-function TrashIcon() {
-  return (
-    <svg
-      className={styles.deleteIconSvg}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      focusable="false"
-    >
-      <path d="M3 6h18" />
-      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6" />
-      <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-      <line x1="10" y1="11" x2="10" y2="17" />
-      <line x1="14" y1="11" x2="14" y2="17" />
-    </svg>
-  );
-}
-
 export default function MatchForum({ matchId }: MatchForumProps) {
   const { data: session } = useSession();
   const { t } = useTranslation('match');
@@ -77,17 +35,6 @@ export default function MatchForum({ matchId }: MatchForumProps) {
   const listRef = useRef<HTMLDivElement>(null);
   const role = session?.user?.role;
   const isAdmin = String(role) === Role.ADMIN;
-
-  function relativeTime(date: string) {
-    const diff = Date.now() - new Date(date).getTime();
-    const mins = Math.floor(diff / 60_000);
-    if (mins < 1) return t('forum.justNow');
-    if (mins < 60) return t('forum.minutesAgo', { count: mins });
-    const hours = Math.floor(mins / 60);
-    if (hours < 24) return t('forum.hoursAgo', { count: hours });
-    const days = Math.floor(hours / 24);
-    return t('forum.daysAgo', { count: days });
-  }
 
   const fetchComments = useCallback(async () => {
     try {
@@ -217,35 +164,26 @@ export default function MatchForum({ matchId }: MatchForumProps) {
                   {deletingId === c.id ? (
                     <span className={styles.deleteSpinner} aria-hidden />
                   ) : (
-                    <TrashIcon />
+                    <TrashIcon className={styles.deleteIconSvg} />
                   )}
                 </button>
               )}
-              <div className={styles.avatar}>
-                {c.user.image ? (
-                  <Image src={c.user.image} alt="" width={28} height={28} style={{ borderRadius: '50%' }} unoptimized />
-                ) : (
-                  avatarLetter(c.user.name)
-                )}
-              </div>
+              <Avatar name={c.user.name} image={c.user.image} />
               <div className={styles.commentBody}>
                 <div className={styles.commentHeader}>
                   <span className={styles.userName}>{c.user.name ?? t('forum.anonymous')}</span>
-                  <span className={styles.time}>{relativeTime(c.createdAt)}</span>
+                  <span className={styles.time}>{formatRelativeTime(c.createdAt, t)}</span>
                 </div>
                 <p className={styles.commentText}>{c.body}</p>
-                <button
-                  type="button"
-                  className={`${styles.likeBtn} ${c.likedByMe ? styles.likeBtnActive : ''}`.trim()}
-                  onClick={() => void handleToggleLike(c.id)}
+                <LikeButton
+                  className={styles.likeInline}
+                  liked={Boolean(c.likedByMe)}
+                  count={c.likes ?? 0}
+                  onToggle={() => void handleToggleLike(c.id)}
                   disabled={!session?.user || likingId === c.id}
-                  aria-pressed={Boolean(c.likedByMe)}
-                  aria-label={t('forum.like')}
+                  label={t('forum.like')}
                   title={session?.user ? t('forum.like') : t('forum.loginPrompt')}
-                >
-                  <HeartIcon filled={Boolean(c.likedByMe)} />
-                  <span className={styles.likeCount}>{c.likes ?? 0}</span>
-                </button>
+                />
               </div>
             </div>
           ))

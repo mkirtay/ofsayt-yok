@@ -112,6 +112,11 @@
   }
 }
 
+.headerNavPillActive {
+  border-color: $color-primary;
+  color: $color-primary;
+}
+
 .headerNavPillPremium {
   @extend .headerNavPill;
   background: linear-gradient(135deg, var(--color-premium), var(--color-premium-strong));
@@ -253,10 +258,13 @@
   }
 }
 
-.avatarImg {
+.avatarInner {
+  // Avatar bileşeni: düğmenin kendi arka planı/yazı rengi görünsün (harf fallback'i)
+  --avatar-bg: transparent;
+  --avatar-fg: #{$color-text-on-dark};
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  font-weight: 800;
 }
 
 // Ürün grubu ile hesap kontrolleri arasında ince ayraç
