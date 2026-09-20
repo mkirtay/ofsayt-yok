@@ -29,5 +29,10 @@
     "minutesAgo": "{{count}} dk önce",
     "hoursAgo": "{{count}} saat önce",
     "daysAgo": "{{count}} gün önce"
+  },
+  "dialog": {
+    "cancel": "Vazgeç",
+    "delete": "Sil",
+    "deleting": "Siliniyor…"
   }
 }

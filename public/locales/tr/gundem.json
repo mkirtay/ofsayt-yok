@@ -69,10 +69,5 @@
     "notFound": "Gönderi bulunamadı ya da silinmiş.",
     "back": "← Gündem'e dön",
     "selectHint": "Yorumları görmek için bir gönderi seç."
-  },
-  "dialog": {
-    "cancel": "Vazgeç",
-    "delete": "Sil",
-    "deleting": "Siliniyor…"
   }
 }

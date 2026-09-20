@@ -156,7 +156,8 @@
     "deleting": "Siliniyor",
     "confirmDelete": "Bu yorumu silmek istediğinize emin misiniz?",
     "deleteError": "Yorum silinemedi.",
-    "like": "Beğen"
+    "like": "Beğen",
+    "deleteTitle": "Yorumu sil"
   },
   "news": {
     "loading": "Haberler yükleniyor...",

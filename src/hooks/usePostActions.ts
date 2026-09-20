@@ -32,8 +32,8 @@ export function usePostActions() {
       ask({
         title: t('post.deleteTitle'),
         message: t('post.confirmDelete'),
-        confirmLabel: t('dialog.delete'),
-        cancelLabel: t('dialog.cancel'),
+        confirmLabel: t('common:dialog.delete'),
+        cancelLabel: t('common:dialog.cancel'),
         errorMessage: t('post.deleteError'),
         onConfirm: async () => {
           await del.mutateAsync(postId);

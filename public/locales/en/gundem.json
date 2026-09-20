@@ -69,10 +69,5 @@
     "notFound": "Post not found or deleted.",
     "back": "← Back to Feed",
     "selectHint": "Select a post to see its comments."
-  },
-  "dialog": {
-    "cancel": "Cancel",
-    "delete": "Delete",
-    "deleting": "Deleting…"
   }
 }

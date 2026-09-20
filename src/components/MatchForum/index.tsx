@@ -4,6 +4,7 @@ import { useTranslation } from '@/lib/i18n';
 import { Role } from '@prisma/client';
 import Link from 'next/link';
 import Avatar from '@/components/Avatar';
+import { useConfirmDialog } from '@/components/ConfirmDialog';
 import EmptyState from '@/components/EmptyState';
 import LikeButton from '@/components/LikeButton';
 import TrashIcon from '@/components/icons/TrashIcon';
@@ -33,6 +34,7 @@ export default function MatchForum({ matchId }: MatchForumProps) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [likingId, setLikingId] = useState<string | null>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const { ask, dialog: confirmDialog } = useConfirmDialog();
   const role = session?.user?.role;
   const isAdmin = String(role) === Role.ADMIN;
 
@@ -115,28 +117,31 @@ export default function MatchForum({ matchId }: MatchForumProps) {
     }
   };
 
-  const handleDeleteComment = async (commentId: string) => {
+  // Onay: tarayıcının `window.confirm`'ü yerine stilize ConfirmDialog (Gündem silme akışıyla aynı bileşen).
+  // Hata olursa modal açık kalır ve `forum.deleteError` gösterir.
+  const handleDeleteComment = (commentId: string) => {
     if (!isAdmin || deletingId) return;
-    if (!window.confirm(t('forum.confirmDelete'))) return;
-
-    setDeletingId(commentId);
-    setError('');
-    try {
-      const res = await fetch(`/api/matches/${matchId}/comments/${commentId}`, {
-        method: 'DELETE',
-        credentials: 'include',
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        setError(data.error || t('forum.deleteError'));
-        return;
-      }
-      setComments((prev) => prev.filter((c) => c.id !== commentId));
-    } catch {
-      setError(t('forum.connectionError'));
-    } finally {
-      setDeletingId(null);
-    }
+    ask({
+      title: t('forum.deleteTitle'),
+      message: t('forum.confirmDelete'),
+      confirmLabel: t('common:dialog.delete'),
+      cancelLabel: t('common:dialog.cancel'),
+      errorMessage: t('forum.deleteError'),
+      onConfirm: async () => {
+        setDeletingId(commentId);
+        setError('');
+        try {
+          const res = await fetch(`/api/matches/${matchId}/comments/${commentId}`, {
+            method: 'DELETE',
+            credentials: 'include',
+          });
+          if (!res.ok) throw new Error('delete failed');
+          setComments((prev) => prev.filter((c) => c.id !== commentId));
+        } finally {
+          setDeletingId(null);
+        }
+      },
+    });
   };
 
   return (
@@ -217,6 +222,7 @@ export default function MatchForum({ matchId }: MatchForumProps) {
           <Link href="/auth/signin">{t('forum.loginPrompt')}</Link>
         </div>
       )}
+      {confirmDialog}
     </div>
   );
 }

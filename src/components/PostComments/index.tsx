@@ -29,8 +29,8 @@ export default function PostComments({ postId, currentUserId, isAdmin }: Props) 
     ask({
       title: t('comments.deleteTitle'),
       message: t('comments.confirmDelete'),
-      confirmLabel: t('dialog.delete'),
-      cancelLabel: t('dialog.cancel'),
+      confirmLabel: t('common:dialog.delete'),
+      cancelLabel: t('common:dialog.cancel'),
       errorMessage: t('comments.deleteError'),
       onConfirm: () => remove.mutateAsync(commentId),
     });
