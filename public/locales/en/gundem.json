@@ -69,5 +69,9 @@
     "notFound": "Post not found or deleted.",
     "back": "← Back to Feed",
     "selectHint": "Select a post to see its comments."
+  },
+  "follow": {
+    "follow": "Follow",
+    "following": "Following"
   }
 }

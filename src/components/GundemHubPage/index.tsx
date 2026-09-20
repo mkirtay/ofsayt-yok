@@ -9,6 +9,7 @@ import PostDetailPanel from '@/components/PostDetailPanel';
 import { POST_MAX_LENGTH } from '@/config/gundem';
 import { useCreatePost, useGundemFeed } from '@/hooks/useGundem';
 import { usePostActions } from '@/hooks/usePostActions';
+import { useInfiniteSentinel } from '@/hooks/useInfiniteSentinel';
 import { useSplitView } from '@/hooks/useSplitView';
 import { useTranslation } from '@/lib/i18n';
 import type { GundemScope } from '@/types/gundem';
@@ -93,20 +94,7 @@ export default function GundemHubPage() {
   }
 
   // Sonsuz kaydırma: alttaki gözcü görününce sonraki sayfa; "Daha fazla yükle" düğmesi yedek
-  const sentinelRef = useRef<HTMLDivElement>(null);
-  const { hasNextPage, isFetchingNextPage, fetchNextPage } = feed;
-  useEffect(() => {
-    const el = sentinelRef.current;
-    if (!el || !hasNextPage || typeof IntersectionObserver === 'undefined') return;
-    const io = new IntersectionObserver(
-      (entries) => {
-        if (entries[0]?.isIntersecting && !isFetchingNextPage) void fetchNextPage();
-      },
-      { rootMargin: '300px' },
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage, items.length]);
+  const sentinelRef = useInfiniteSentinel(feed, items.length);
 
   const tabs: GundemScope[] = unauthenticated ? SCOPES.filter((s) => s !== 'following') : SCOPES;
 

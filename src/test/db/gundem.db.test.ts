@@ -108,6 +108,7 @@ d('DB entegrasyonu — Gündem (post, beğeni, yorum, takip, bildirim, push, bot
   let commentHandler: Handler;
   let followHandler: Handler;
   let userPostsHandler: Handler;
+  let userProfileHandler: Handler;
   let notificationsHandler: Handler;
   let unreadHandler: Handler;
   let pushHandler: Handler;
@@ -134,6 +135,7 @@ d('DB entegrasyonu — Gündem (post, beğeni, yorum, takip, bildirim, push, bot
     commentHandler = (await import('@/pages/api/gundem/posts/[postId]/comments/[commentId]')).default;
     followHandler = (await import('@/pages/api/gundem/users/[userId]/follow')).default;
     userPostsHandler = (await import('@/pages/api/gundem/users/[userId]/posts')).default;
+    userProfileHandler = (await import('@/pages/api/gundem/users/[userId]/index')).default;
     notificationsHandler = (await import('@/pages/api/gundem/notifications/index')).default;
     unreadHandler = (await import('@/pages/api/gundem/notifications/unread-count')).default;
     pushHandler = (await import('@/pages/api/push/register')).default;
@@ -603,6 +605,46 @@ d('DB entegrasyonu — Gündem (post, beğeni, yorum, takip, bildirim, push, bot
       const created = await call(postsHandler, makeReq({ method: 'POST', token: writer.token, body: { body: 'yeni' } }));
       expect(created.status).toBe(201);
       expect(created.body.author).toMatchObject({ id: writer.id, followedByMe: false, followerCount: 0, followingCount: 0 });
+    });
+  });
+
+  // ── Faz B.2: profil endpoint'i (users/[userId]) ────────────────────────────────────────────
+  describe('profil: GET /api/gundem/users/[userId]', () => {
+    it('sıfır post\'lu kullanıcı: 200, postCount 0, sayaçlar; oturumsuz followedByMe false', async () => {
+      const u = await mkUser('pr-empty');
+      const r = await call(userProfileHandler, makeReq({ method: 'GET', query: { userId: u.id } }));
+      expect(r.status).toBe(200);
+      expect(r.body.user).toMatchObject({ id: u.id, followedByMe: false, followerCount: 0, followingCount: 0, postCount: 0, official: false });
+      expect(r.body.user.email).toBeUndefined(); // e-posta sızmaz
+    });
+
+    it('followedByMe: takip eden true; yabancı ve kendi profili false; sayaçlar + silinmiş post sayılmaz', async () => {
+      const target = await mkUser('pr-target');
+      const fan = await mkUser('pr-fan');
+      const stranger = await mkUser('pr-stranger');
+      await prisma.follow.create({ data: { followerId: fan.id, followingId: target.id } });
+      await prisma.follow.create({ data: { followerId: target.id, followingId: stranger.id } });
+      await mkPost(target.id, 'bir');
+      await mkPost(target.id, 'iki');
+      await mkPost(target.id, 'silinmiş', { deletedAt: new Date() });
+
+      const asFan = await call(userProfileHandler, makeReq({ method: 'GET', query: { userId: target.id }, token: fan.token }));
+      expect(asFan.body.user).toMatchObject({ followedByMe: true, followerCount: 1, followingCount: 1, postCount: 2 });
+      const asStranger = await call(userProfileHandler, makeReq({ method: 'GET', query: { userId: target.id }, token: stranger.token }));
+      expect(asStranger.body.user.followedByMe).toBe(false);
+      const own = await call(userProfileHandler, makeReq({ method: 'GET', query: { userId: target.id }, token: target.token }));
+      expect(own.body.user.followedByMe).toBe(false);
+    });
+
+    it('resmi hesap official: true (e-posta yine sızmaz)', async () => {
+      const r = await call(userProfileHandler, makeReq({ method: 'GET', query: { userId: official.id } }));
+      expect(r.body.user.official).toBe(true);
+      expect(JSON.stringify(r.body)).not.toContain('example.invalid');
+    });
+
+    it('bilinmeyen kullanıcı 404; POST 405', async () => {
+      expect((await call(userProfileHandler, makeReq({ method: 'GET', query: { userId: `${runId}-yok` } }))).status).toBe(404);
+      expect((await call(userProfileHandler, makeReq({ method: 'POST', query: { userId: alice.id }, token: alice.token }))).status).toBe(405);
     });
   });
 

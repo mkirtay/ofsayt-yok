@@ -69,5 +69,9 @@
     "notFound": "Gönderi bulunamadı ya da silinmiş.",
     "back": "← Gündem'e dön",
     "selectHint": "Yorumları görmek için bir gönderi seç."
+  },
+  "follow": {
+    "follow": "Takip Et",
+    "following": "Takip Ediliyor"
   }
 }

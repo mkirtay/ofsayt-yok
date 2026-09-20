@@ -9,6 +9,9 @@ export type GundemAuthor = {
   followingCount: number;
 };
 
+/** Profil başlığı: yazar alanları + silinmemiş post sayısı + resmi hesap bayrağı (`GET /api/gundem/users/[userId]`). */
+export type GundemUserProfile = GundemAuthor & { postCount: number; official: boolean };
+
 export type GundemPost = {
   id: string;
   body: string;

@@ -30,20 +30,26 @@ export function postSelect(viewerId: string | null) {
   } satisfies Prisma.PostSelect;
 }
 
+type AuthorRow = Prisma.UserGetPayload<{ select: ReturnType<typeof postAuthorSelect> }>;
 type PostRow = Prisma.PostGetPayload<{ select: ReturnType<typeof postSelect> }>;
+
+/** Yazar/profil serileştirmesi (post içindeki `author` ile profil endpoint'i aynısını kullanır). Kendi hesabında `followedByMe` her zaman false. */
+export function serializeAuthor(row: AuthorRow, viewerId: string | null = null) {
+  const { _count, followers, ...base } = row;
+  const viewerFollows = Array.isArray(followers) && followers.length > 0;
+  return {
+    ...withAbsoluteImage(base),
+    followedByMe: viewerFollows && base.id !== viewerId,
+    followerCount: _count.followers,
+    followingCount: _count.following,
+  };
+}
 
 export function serializePost(row: PostRow, viewerId: string | null = null) {
   const { _count, likes, author, ...rest } = row;
-  const { _count: authorCount, followers, ...authorBase } = author;
-  const viewerFollows = Array.isArray(followers) && followers.length > 0;
   return {
     ...rest,
-    author: {
-      ...withAbsoluteImage(authorBase),
-      followedByMe: viewerFollows && authorBase.id !== viewerId,
-      followerCount: authorCount.followers,
-      followingCount: authorCount.following,
-    },
+    author: serializeAuthor(author, viewerId),
     likes: _count.likes,
     comments: _count.comments,
     likedByMe: Array.isArray(likes) && likes.length > 0,
