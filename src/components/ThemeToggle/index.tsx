@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { DEFAULT_THEME, normalizeTheme, THEME_STORAGE_KEY, toggleTheme, type Theme } from '@/lib/theme';
+import { useTranslation } from '@/lib/i18n';
 import styles from './themeToggle.module.scss';
 
 function readTheme(): Theme {
@@ -8,6 +9,7 @@ function readTheme(): Theme {
 }
 
 export default function ThemeToggle({ className = '' }: { className?: string }) {
+  const { t } = useTranslation('common');
   // SSR ile aynı ilk değer (hydration uyumu); gerçek tema mount'ta okunur.
   const [theme, setTheme] = useState<Theme>(DEFAULT_THEME);
 
@@ -25,7 +27,7 @@ export default function ThemeToggle({ className = '' }: { className?: string }) 
   }, []);
 
   const isDark = theme === 'dark';
-  const label = isDark ? 'Açık temaya geç' : 'Koyu temaya geç';
+  const label = isDark ? t('themeToLight') : t('themeToDark');
 
   return (
     <button

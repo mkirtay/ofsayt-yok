@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 import { useMemo, useState, useEffect, useCallback, type CSSProperties } from 'react';
 import { List, type RowComponentProps } from 'react-window';
 import { AutoSizer } from 'react-virtualized-auto-sizer';
+import { useTranslation } from '@/lib/i18n';
 import { Match } from '../../models/liveScore';
 import type { GroupedLeagueMatches } from '../../services/liveScoreService';
 import { countryFlagImgSrc } from '@/utils/countryFlag';
@@ -103,16 +104,19 @@ function todayIsoTr(): string {
   return fmt.format(now);
 }
 
-function statusLabel(match: Match): { text: string; variant: 'live' | 'ht' | 'ft' | 'scheduled' } {
+function statusLabel(
+  match: Match,
+  t: (key: string) => string,
+): { text: string; variant: 'live' | 'ht' | 'ft' | 'scheduled' } {
   const { status, time } = match;
   if (status === 'IN PLAY') {
     return { text: '', variant: 'live' };
   }
   if (status === 'HALF TIME BREAK') {
-    return { text: 'İY', variant: 'ht' };
+    return { text: t('halfTime'), variant: 'ht' };
   }
   if (status === 'FINISHED') {
-    return { text: 'MS', variant: 'ft' };
+    return { text: t('fullTime'), variant: 'ft' };
   }
   if (status === 'NOT STARTED' || status === 'SCHEDULED') {
     return { text: '', variant: 'scheduled' };
@@ -182,6 +186,7 @@ function VirtualRow({
   selectedMatchId,
   ariaAttributes,
 }: VirtualRowProps) {
+  const { t } = useTranslation('match');
   const item = items[index];
   if (!item) return null;
 
@@ -216,7 +221,7 @@ function VirtualRow({
               <span className={styles.virtualHeaderLeagueName}>{item.competition_name}</span>
             </span>
           </div>
-          <span className={styles.virtualHeaderColIy}>İY</span>
+          <span className={styles.virtualHeaderColIy}>{t('halfTime')}</span>
         </div>
       </div>
     );
@@ -232,7 +237,7 @@ function VirtualRow({
   const showShortDate =
     showDateWhenNotToday && !!matchDate && matchDate !== todayIso;
   const shortDate = showShortDate ? formatShortDateTr(matchDate!) : '';
-  const { text: statusText, variant } = statusLabel(match);
+  const { text: statusText, variant } = statusLabel(match, t);
   const scoreRaw = match.scores?.score || match.score;
   const score =
     variant === 'scheduled' && !scoreRaw?.trim() ? '—' : scoreRaw?.trim() || '- : -';
@@ -291,7 +296,7 @@ function VirtualRow({
         >
           {isLive ? (
             <span className={styles.liveText}>
-              <span className={styles.liveCanliWord}>CANLI </span>
+              <span className={styles.liveCanliWord}>{t('list.live')} </span>
               {`${liveMinute}'`}
             </span>
           ) : (
@@ -345,7 +350,7 @@ function VirtualRow({
             e.stopPropagation();
             onToggleFavorite(match.home?.id ?? 0);
           }}
-          aria-label={isFav ? 'Favorilerden çıkar' : 'Favorilere ekle'}
+          aria-label={isFav ? t('list.removeFavorite') : t('list.addFavorite')}
         >
           {isFav ? '★' : '☆'}
         </button>
@@ -376,6 +381,7 @@ export default function MatchList({
   compact = false,
   fill = false,
 }: MatchListProps) {
+  const { t } = useTranslation('match');
   const router = useRouter();
   const navigateTo = useCallback((path: string) => { void router.push(path); }, [router]);
   const [mounted, setMounted] = useState(false);
@@ -427,7 +433,7 @@ export default function MatchList({
   if (groupedMatches.length === 0) {
     return (
       <div className={`${styles.empty} ${isWorldCup ? styles.worldCup : ''}`.trim()}>
-        Şu an gösterilecek maç bulunmuyor.
+        {t('list.empty')}
       </div>
     );
   }
@@ -438,7 +444,7 @@ export default function MatchList({
         className={`${styles.virtualHost} ${fill ? styles.virtualHostFill : ''} ${isWorldCup ? styles.worldCup : ''}`.trim()}
         aria-busy="true"
       >
-        <div className={styles.virtualPlaceholder}>Yükleniyor…</div>
+        <div className={styles.virtualPlaceholder}>{t('list.loading')}</div>
       </div>
     );
   }

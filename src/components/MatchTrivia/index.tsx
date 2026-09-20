@@ -80,7 +80,7 @@ export default function MatchTrivia({ matchId, match }: Props) {
         }
         if (!res.ok) {
           const body = await res.json().catch(() => ({}));
-          throw new Error(body?.error ?? `İstek başarısız (${res.status})`);
+          throw new Error(body?.error ?? t('common:requestFailed', { status: res.status }));
         }
         const body = (await res.json()) as { trivia: ApiTrivia };
         setTrivia(body.trivia);

@@ -1,3 +1,4 @@
+import { useTranslation } from '@/lib/i18n';
 import styles from './heatmapPitch.module.scss';
 
 type ZoneGrid = number[]; // 15 değer: index = bölge*5 + kolon
@@ -83,6 +84,7 @@ function ZoneBlobs({ grid, rowY }: { grid: number[]; rowY: number[] }) {
  * çizer (gaussian blur filtresiyle harmanlanmış daireler) — sert köşeli grid hücreleri yerine.
  */
 export default function HeatmapPitch({ homeGrid, awayGrid, homeName, awayName }: HeatmapPitchProps) {
+  const { t } = useTranslation('match');
   const home = clampGrid(homeGrid);
   const away = clampGrid(awayGrid);
 
@@ -99,7 +101,7 @@ export default function HeatmapPitch({ homeGrid, awayGrid, homeName, awayName }:
           viewBox={`0 0 ${VB_W} ${VB_H}`}
           preserveAspectRatio="none"
           role="img"
-          aria-label="Isı haritası"
+          aria-label={t('heatmapLabel')}
         >
           <defs>
             <filter id="heatBlur" x="-40%" y="-40%" width="180%" height="180%">
@@ -125,9 +127,9 @@ export default function HeatmapPitch({ homeGrid, awayGrid, homeName, awayName }:
       </div>
 
       <div className={styles.legend}>
-        <span className={styles.legendLabel}>Düşük</span>
+        <span className={styles.legendLabel}>{t('heatmapLow')}</span>
         <span className={styles.legendGradient} />
-        <span className={styles.legendLabel}>Yoğun</span>
+        <span className={styles.legendLabel}>{t('heatmapHigh')}</span>
       </div>
     </div>
   );

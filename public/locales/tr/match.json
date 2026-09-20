@@ -207,5 +207,47 @@
     "trivia": "Trivia",
     "analysis": "Analiz",
     "community": "Topluluk"
-  }
+  },
+  "leagueFilter": {
+    "group": "Lig filtresi",
+    "all": "Tümü",
+    "super": "Süper Lig",
+    "big5": "5 Büyük Lig",
+    "mine": "Liglerim ({{count}})",
+    "add": "Ligler",
+    "pickTitle": "Ligleri seç",
+    "close": "Kapat",
+    "searchPlaceholder": "Lig veya ülke ara…",
+    "searchLabel": "Lig ara",
+    "noResult": "Eşleşen lig bulunamadı.",
+    "clear": "Temizle",
+    "apply": "Uygula",
+    "applyCount": "Uygula ({{count}})"
+  },
+  "list": {
+    "empty": "Şu an gösterilecek maç bulunmuyor.",
+    "loading": "Yükleniyor…",
+    "live": "CANLI",
+    "addFavorite": "Favorilere ekle",
+    "removeFavorite": "Favorilerden çıkar"
+  },
+  "hub": {
+    "favoritesEmpty": "Takım favorilere eklemek için maç satırındaki ☆ butonuna tıklayın.",
+    "leagueFilterEmpty": "Seçili liglerde bu görünümde maç yok.",
+    "showAll": "Tümünü göster",
+    "tabStandings": "Puan Durumu",
+    "tabLeagues": "Ligler",
+    "tabScorers": "Gol Krallığı"
+  },
+  "search": {
+    "placeholder": "Takım veya lig ara…",
+    "label": "Takım veya lig ara",
+    "leagues": "Ligler",
+    "teams": "Takımlar",
+    "searching": "Aranıyor…",
+    "noResults": "Sonuç bulunamadı"
+  },
+  "heatmapLabel": "Isı haritası",
+  "heatmapLow": "Düşük",
+  "heatmapHigh": "Yoğun"
 }

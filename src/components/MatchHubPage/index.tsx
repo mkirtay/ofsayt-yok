@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
+import { useTranslation } from '@/lib/i18n';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   groupMatchesByLeague,
@@ -72,6 +73,7 @@ export default function MatchHubPage({
   defaultCompetitionId,
   allowedCompetitionIds,
 }: MatchHubPageProps) {
+  const { t } = useTranslation('match');
   const queryClient = useQueryClient();
   const router = useRouter();
   const splitView = useSplitView();
@@ -382,13 +384,13 @@ export default function MatchHubPage({
     <MatchListSkeleton groups={5} />
   ) : activeTab === 'favorites' && favoriteTeamIds.length === 0 ? (
     <div className={styles.empty}>
-      Takım favorilere eklemek için maç satırındaki ☆ butonuna tıklayın.
+      {t('hub.favoritesEmpty')}
     </div>
   ) : leagueFilterActive && grouped.length === 0 ? (
     <EmptyState>
-      Seçili liglerde bu görünümde maç yok.{' '}
+      {t('hub.leagueFilterEmpty')}{' '}
       <button type="button" className={styles.emptyAction} onClick={() => leagueFilter.selectMode('all')}>
-        Tümünü göster
+        {t('hub.showAll')}
       </button>
     </EmptyState>
   ) : (
@@ -444,21 +446,21 @@ export default function MatchHubPage({
                   className={`${styles.sidebarTab} ${sidebarTab === 'standings' ? styles.sidebarTabActive : ''}`}
                   onClick={() => handleSidebarTabChange('standings')}
                 >
-                  Puan Durumu
+                  {t('hub.tabStandings')}
                 </button>
                 <button
                   type="button"
                   className={`${styles.sidebarTab} ${sidebarTab === 'leagues' ? styles.sidebarTabActive : ''}`}
                   onClick={() => handleSidebarTabChange('leagues')}
                 >
-                  Ligler
+                  {t('hub.tabLeagues')}
                 </button>
                 <button
                   type="button"
                   className={`${styles.sidebarTab} ${sidebarTab === 'scorers' ? styles.sidebarTabActive : ''}`}
                   onClick={() => handleSidebarTabChange('scorers')}
                 >
-                  Gol Krallığı
+                  {t('hub.tabScorers')}
                 </button>
               </nav>
 

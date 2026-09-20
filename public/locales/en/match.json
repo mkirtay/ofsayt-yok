@@ -207,5 +207,47 @@
     "trivia": "Trivia",
     "analysis": "Analysis",
     "community": "Community"
-  }
+  },
+  "leagueFilter": {
+    "group": "League filter",
+    "all": "All",
+    "super": "Super Lig",
+    "big5": "Top 5 Leagues",
+    "mine": "My Leagues ({{count}})",
+    "add": "Leagues",
+    "pickTitle": "Select leagues",
+    "close": "Close",
+    "searchPlaceholder": "Search league or country…",
+    "searchLabel": "Search leagues",
+    "noResult": "No matching league found.",
+    "clear": "Clear",
+    "apply": "Apply",
+    "applyCount": "Apply ({{count}})"
+  },
+  "list": {
+    "empty": "No matches to show right now.",
+    "loading": "Loading…",
+    "live": "LIVE",
+    "addFavorite": "Add to favorites",
+    "removeFavorite": "Remove from favorites"
+  },
+  "hub": {
+    "favoritesEmpty": "Tap the ☆ button on a match row to add its team to favorites.",
+    "leagueFilterEmpty": "No matches in this view for the selected leagues.",
+    "showAll": "Show all",
+    "tabStandings": "Standings",
+    "tabLeagues": "Leagues",
+    "tabScorers": "Top Scorers"
+  },
+  "search": {
+    "placeholder": "Search team or league…",
+    "label": "Search team or league",
+    "leagues": "Leagues",
+    "teams": "Teams",
+    "searching": "Searching…",
+    "noResults": "No results found"
+  },
+  "heatmapLabel": "Heatmap",
+  "heatmapLow": "Low",
+  "heatmapHigh": "High"
 }

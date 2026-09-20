@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { LeagueFilterMode, LeagueFilterState, PickedLeague, CatalogLeague } from '@/utils/leagueFilter';
 import { searchLeagues } from '@/utils/leagueFilter';
+import { useTranslation } from '@/lib/i18n';
 import LeagueLogo from '@/components/LeagueLogo';
 import styles from './leagueFilterBar.module.scss';
 
@@ -16,18 +17,19 @@ type BarProps = {
  * "Liglerim" yalnızca kayıtlı özel seçim varken görünür. ("Favoriler" sekmesi favori MAÇLARdır — karıştırma.)
  */
 export default function LeagueFilterBar({ state, catalog, onSelectMode, onApplyCustom }: BarProps) {
+  const { t } = useTranslation('match');
   const [pickerOpen, setPickerOpen] = useState(false);
 
   const chips: { mode: LeagueFilterMode; label: string }[] = [
-    { mode: 'all', label: 'Tümü' },
-    { mode: 'super', label: 'Süper Lig' },
-    { mode: 'big5', label: '5 Büyük Lig' },
-    ...(state.custom.length ? [{ mode: 'custom' as const, label: `Liglerim (${state.custom.length})` }] : []),
+    { mode: 'all', label: t('leagueFilter.all') },
+    { mode: 'super', label: t('leagueFilter.super') },
+    { mode: 'big5', label: t('leagueFilter.big5') },
+    ...(state.custom.length ? [{ mode: 'custom' as const, label: t('leagueFilter.mine', { count: state.custom.length }) }] : []),
   ];
 
   return (
     <>
-      <div className={styles.bar} role="group" aria-label="Lig filtresi">
+      <div className={styles.bar} role="group" aria-label={t('leagueFilter.group')}>
         {chips.map((c) => (
           <button
             key={c.mode}
@@ -46,7 +48,7 @@ export default function LeagueFilterBar({ state, catalog, onSelectMode, onApplyC
           aria-expanded={pickerOpen}
           onClick={() => setPickerOpen(true)}
         >
-          <span aria-hidden="true">＋</span> Ligler
+          <span aria-hidden="true">＋</span> {t('leagueFilter.add')}
         </button>
       </div>
 
@@ -74,6 +76,7 @@ type DialogProps = {
 
 /** Modal (masaüstü) / bottom-sheet (mobil) — toolbar'a gömülü dropdown DEĞİL, ayrı overlay katmanı. */
 export function LeaguePickerDialog({ catalog, initial, onClose, onApply }: DialogProps) {
+  const { t } = useTranslation('match');
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState<Map<number, string>>(() => new Map(initial.map((p) => [p.id, p.name])));
   const searchRef = useRef<HTMLInputElement>(null);
@@ -122,9 +125,9 @@ export function LeaguePickerDialog({ catalog, initial, onClose, onApply }: Dialo
       <div ref={dialogRef} className={styles.dialog} role="dialog" aria-modal="true" aria-labelledby="league-picker-title">
         <header className={styles.dialogHead}>
           <h2 id="league-picker-title" className={styles.dialogTitle}>
-            Ligleri seç
+            {t('leagueFilter.pickTitle')}
           </h2>
-          <button type="button" className={styles.close} onClick={onClose} aria-label="Kapat">
+          <button type="button" className={styles.close} onClick={onClose} aria-label={t('leagueFilter.close')}>
             ✕
           </button>
         </header>
@@ -134,16 +137,16 @@ export function LeaguePickerDialog({ catalog, initial, onClose, onApply }: Dialo
             ref={searchRef}
             type="search"
             className={styles.search}
-            placeholder="Lig veya ülke ara…"
+            placeholder={t('leagueFilter.searchPlaceholder')}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            aria-label="Lig ara"
+            aria-label={t('leagueFilter.searchLabel')}
           />
         </div>
 
         <ul className={styles.list}>
           {visible.length === 0 ? (
-            <li className={styles.noResult}>Eşleşen lig bulunamadı.</li>
+            <li className={styles.noResult}>{t('leagueFilter.noResult')}</li>
           ) : (
             visible.map((l) => (
               <li key={l.id}>
@@ -165,14 +168,14 @@ export function LeaguePickerDialog({ catalog, initial, onClose, onApply }: Dialo
 
         <footer className={styles.dialogFoot}>
           <button type="button" className={styles.clear} onClick={() => setSelected(new Map())} disabled={selected.size === 0}>
-            Temizle
+            {t('leagueFilter.clear')}
           </button>
           <button
             type="button"
             className={styles.apply}
             onClick={() => onApply([...selected].map(([id, name]) => ({ id, name })))}
           >
-            {selected.size ? `Uygula (${selected.size})` : 'Uygula'}
+            {selected.size ? t('leagueFilter.applyCount', { count: selected.size }) : t('leagueFilter.apply')}
           </button>
         </footer>
       </div>

@@ -20,5 +20,8 @@
     "contact": "Contact",
     "disclaimer": "AI analyses, predictions, and betting-market commentary on this site are for informational purposes only and do not constitute investment or betting advice. This content is not intended for users under the age of 18.",
     "copyright": "© {{year}} Ofsayt Yok. All rights reserved."
-  }
+  },
+  "themeToLight": "Switch to light theme",
+  "themeToDark": "Switch to dark theme",
+  "requestFailed": "Request failed ({{status}})"
 }

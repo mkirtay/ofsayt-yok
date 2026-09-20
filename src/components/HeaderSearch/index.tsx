@@ -2,11 +2,13 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { SIDEBAR_LEAGUES } from '@/config/leagues';
 import { useTeamSearch } from '@/hooks/useTeamSearch';
+import { useTranslation } from '@/lib/i18n';
 import { resolveSidebarLeagueLogo } from '@/utils/leagueLogo';
 import { normalizeSearchText } from '@/utils/searchText';
 import styles from './headerSearch.module.scss';
 
 export default function HeaderSearch({ onNavigate }: { onNavigate?: () => void }) {
+  const { t } = useTranslation('match');
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -53,8 +55,8 @@ export default function HeaderSearch({ onNavigate }: { onNavigate?: () => void }
       <input
         type="search"
         className={styles.input}
-        placeholder="Takım veya lig ara…"
-        aria-label="Takım veya lig ara"
+        placeholder={t('search.placeholder')}
+        aria-label={t('search.label')}
         value={query}
         onChange={(e) => {
           setQuery(e.target.value);
@@ -67,7 +69,7 @@ export default function HeaderSearch({ onNavigate }: { onNavigate?: () => void }
         <div className={styles.panel}>
           {leagueHits.length > 0 && (
             <>
-              <div className={styles.groupLabel}>Ligler</div>
+              <div className={styles.groupLabel}>{t('search.leagues')}</div>
               {leagueHits.map((l) => {
                 const logo = resolveSidebarLeagueLogo(l);
                 return (
@@ -81,17 +83,17 @@ export default function HeaderSearch({ onNavigate }: { onNavigate?: () => void }
           )}
           {teams.length > 0 && (
             <>
-              <div className={styles.groupLabel}>Takımlar</div>
-              {teams.map((t) => (
-                <Link key={t.id} href={`/teams/${t.id}`} className={styles.hit} onClick={close}>
-                  {t.logo ? <img src={t.logo} alt="" width={18} height={18} className={styles.logo} /> : <span className={styles.logoPh} />}
-                  <span>{t.name}</span>
+              <div className={styles.groupLabel}>{t('search.teams')}</div>
+              {teams.map((team) => (
+                <Link key={team.id} href={`/teams/${team.id}`} className={styles.hit} onClick={close}>
+                  {team.logo ? <img src={team.logo} alt="" width={18} height={18} className={styles.logo} /> : <span className={styles.logoPh} />}
+                  <span>{team.name}</span>
                 </Link>
               ))}
             </>
           )}
-          {loading && teams.length === 0 && <div className={styles.note}>Aranıyor…</div>}
-          {empty && <div className={styles.note}>Sonuç bulunamadı</div>}
+          {loading && teams.length === 0 && <div className={styles.note}>{t('search.searching')}</div>}
+          {empty && <div className={styles.note}>{t('search.noResults')}</div>}
         </div>
       ) : null}
     </div>
