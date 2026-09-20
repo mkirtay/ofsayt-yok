@@ -37,7 +37,7 @@ function App({ Component, pageProps: { session, ...pageProps } }: AppProps) {
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="apple-touch-icon" href="/icon.svg" />
       </Head>
-      <div className={`${inter.className} ${inter.variable}`}>
+      <div data-app-root className={`${inter.className} ${inter.variable}`}>
         <RouteProgress />
         <Layout>
           <Component {...pageProps} />

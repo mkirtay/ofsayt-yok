@@ -68,6 +68,7 @@
 .cancel,
 .danger {
   flex: 1;
+  font-family: inherit;
   min-height: 40px; // §3: dokunma hedefi ≥ 40px
   border-radius: $radius-full;
   font-size: 14px;

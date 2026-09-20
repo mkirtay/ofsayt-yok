@@ -93,10 +93,13 @@ export function ConfirmDialogView({ title, message, confirmLabel, cancelLabel, b
   );
 }
 
-/** Portal ile `document.body`'ye basar (sticky/overflow'lu ata elemanların kırpmasından etkilenmez). */
+/**
+ * Portal ile uygulama köküne (`_app`'teki `[data-app-root]`) basar: sticky/overflow'lu ata elemanlar kırpmaz, ama
+ * `next/font` değişkeni (`--font-sans`) yalnızca bu sarmalayıcıda tanımlı — `document.body`'ye basılırsa font serif'e düşer.
+ */
 export default function ConfirmDialog(props: ConfirmDialogViewProps) {
   if (typeof document === 'undefined') return null;
-  return createPortal(<ConfirmDialogView {...props} />, document.body);
+  return createPortal(<ConfirmDialogView {...props} />, document.querySelector('[data-app-root]') ?? document.body);
 }
 
 export type AskConfirmOptions = {
