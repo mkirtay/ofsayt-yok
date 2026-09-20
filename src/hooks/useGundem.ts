@@ -7,7 +7,7 @@ import {
   type QueryClient,
 } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
-import type { GundemAuthor, GundemComment, GundemPage, GundemPost, GundemScope, GundemUserProfile } from '@/types/gundem';
+import type { GundemAuthor, GundemComment, GundemNotification, GundemPage, GundemPost, GundemScope, GundemUserProfile } from '@/types/gundem';
 
 /** API hatası: `error` Türkçe mesajı + HTTP durumu (+ 429'da `Retry-After` saniyesi). */
 export class GundemApiError extends Error {
@@ -51,6 +51,9 @@ export const gundemKeys = {
   post: (postId: string, viewer: string) => ['gundem', 'post', postId, viewer] as const,
   posts: (postId: string) => ['gundem', 'post', postId] as const,
   comments: (postId: string) => ['gundem', 'comments', postId] as const,
+  notifications: ['gundem', 'notifications'] as const,
+  unread: (viewer: string) => ['gundem', 'notifications', 'unread', viewer] as const,
+  notificationList: (viewer: string) => ['gundem', 'notifications', 'list', viewer] as const,
 };
 
 /** Yanıtlar (likedByMe, followedByMe) kullanıcıya özel → cache anahtarında oturum kimliği. `null` = oturum henüz çözülmedi. */
@@ -123,6 +126,36 @@ export function useGundemComments(postId: string) {
     initialPageParam: null as string | null,
     getNextPageParam: (last) => last.nextCursor,
     staleTime: 30_000,
+  });
+}
+
+/** Zil rozeti: okunmamış bildirim sayısı. Yalnızca oturum açıkken; 60 sn'de bir (sekme arka plandayken durur) ve odaklanınca yenilenir. */
+export function useUnreadCount() {
+  const viewer = useViewerKey();
+  const authed = viewer !== null && viewer !== 'anon';
+  return useQuery({
+    queryKey: gundemKeys.unread(viewer ?? 'anon'),
+    queryFn: () => api<{ count: number }>('/api/gundem/notifications/unread-count').then((r) => r.count),
+    enabled: authed,
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+    refetchIntervalInBackground: false,
+  });
+}
+
+/** Bildirim listesi (cursor). `enabled`: yalnızca panel açıkken çekilir; her açılışta taze veri için `staleTime: 0`. */
+export function useNotifications(enabled: boolean) {
+  const viewer = useViewerKey();
+  return useInfiniteQuery({
+    queryKey: gundemKeys.notificationList(viewer ?? 'anon'),
+    queryFn: ({ pageParam }) => {
+      const qs = pageParam ? `?cursor=${encodeURIComponent(pageParam)}` : '';
+      return api<GundemPage<GundemNotification>>(`/api/gundem/notifications${qs}`);
+    },
+    initialPageParam: null as string | null,
+    getNextPageParam: (last) => last.nextCursor,
+    enabled: enabled && viewer !== null && viewer !== 'anon',
+    staleTime: 0,
   });
 }
 
@@ -214,5 +247,25 @@ export function useDeleteComment(postId: string) {
     mutationFn: (commentId: string) =>
       api<void>(`/api/gundem/posts/${postId}/comments/${commentId}`, { method: 'DELETE' }),
     onSuccess: () => refreshCommentsAndCounts(qc, postId),
+  });
+}
+
+/**
+ * Bildirimleri okundu işaretler: `ids` verilirse yalnızca onlar, verilmezse hepsi. Başarıda liste cache'inde `readAt` yerinde
+ * doldurulur ve rozet sayısı sunucudan yeniden çekilir (kalan okunmamışlar yüklü sayfaların dışında da olabilir).
+ */
+export function useMarkNotificationsRead() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (ids?: string[]) =>
+      api<{ updated: number }>('/api/gundem/notifications', { method: 'POST', body: JSON.stringify(ids ? { ids } : {}) }),
+    onSuccess: (_data, ids) => {
+      const at = new Date().toISOString();
+      const mark = (n: GundemNotification) => (!n.readAt && (!ids || ids.includes(n.id)) ? { ...n, readAt: at } : n);
+      qc.setQueriesData<InfiniteData<GundemPage<GundemNotification>>>({ queryKey: ['gundem', 'notifications', 'list'] }, (data) =>
+        data ? { ...data, pages: data.pages.map((pg) => ({ ...pg, items: pg.items.map(mark) })) } : data,
+      );
+      return qc.invalidateQueries({ queryKey: ['gundem', 'notifications', 'unread'] });
+    },
   });
 }

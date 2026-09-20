@@ -84,5 +84,23 @@
     "empty": "No posts yet.",
     "notFound": "User not found.",
     "error": "Couldn't load the profile."
+  },
+  "notifications": {
+    "title": "Notifications",
+    "label": "Notifications",
+    "labelUnread": "Notifications ({{count}} unread)",
+    "empty": "No notifications yet.",
+    "loading": "Loading…",
+    "error": "Couldn't load notifications.",
+    "loadMore": "Load more",
+    "markAllRead": "Mark all as read",
+    "unreadDot": "Unread",
+    "postLike": "{{name}} liked your post",
+    "postComment": "{{name}} commented on your post",
+    "follow": "{{name}} started following you",
+    "officialPost": "{{name}} shared a new post",
+    "someone": "Someone",
+    "official": "Ofsayt Yok",
+    "postDeleted": "Post deleted"
   }
 }

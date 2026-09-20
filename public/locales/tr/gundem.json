@@ -84,5 +84,23 @@
     "empty": "Henüz gönderi yok.",
     "notFound": "Kullanıcı bulunamadı.",
     "error": "Profil yüklenemedi."
+  },
+  "notifications": {
+    "title": "Bildirimler",
+    "label": "Bildirimler",
+    "labelUnread": "Bildirimler ({{count}} okunmamış)",
+    "empty": "Henüz bildirimin yok.",
+    "loading": "Yükleniyor…",
+    "error": "Bildirimler yüklenemedi.",
+    "loadMore": "Daha fazla",
+    "markAllRead": "Tümünü okundu işaretle",
+    "unreadDot": "Okunmamış",
+    "postLike": "{{name}} gönderini beğendi",
+    "postComment": "{{name}} gönderine yorum yaptı",
+    "follow": "{{name}} seni takip etmeye başladı",
+    "officialPost": "{{name}} yeni bir gönderi paylaştı",
+    "someone": "Bir kullanıcı",
+    "official": "Ofsayt Yok",
+    "postDeleted": "Gönderi silindi"
   }
 }

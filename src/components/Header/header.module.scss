@@ -267,6 +267,58 @@
   font-weight: 800;
 }
 
+// Bildirim zili: avatar düğmesiyle aynı ölçü/dil; rozet sağ üst köşede
+.bellBtn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--touch-target);
+  height: var(--touch-target);
+  padding: 0;
+  border: 1px solid $color-border-dark;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.04);
+  color: $color-text-on-dark;
+  cursor: pointer;
+  transition: $transition-base;
+
+  &:hover,
+  &[aria-expanded='true'] {
+    border-color: $color-primary;
+  }
+}
+
+.bellBadge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 9px;
+  background: $color-danger;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 18px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+// Bildirim paneli: masaüstünde zilin altında 360px; gövdesi kendi içinde kayar
+.notifPanel {
+  width: 360px;
+  max-width: none;
+  max-height: min(70vh, 520px);
+  overflow-y: auto;
+}
+
+// Mobilde zil masaüstü `.actions` içinde değil; yalnızca dar ekranda görünür (aşağıdaki below-desktop bloğu)
+.mobileBell {
+  display: none;
+}
+
 // Ürün grubu ile hesap kontrolleri arasında ince ayraç
 .divider {
   width: 1px;
@@ -659,6 +711,27 @@
   .mobileThemeToggle {
     display: inline-flex;
     margin-left: auto;
+  }
+
+  // Zil varsa `margin-left: auto`'yu o alır (zil + tema birlikte sağa yaslanır); tema düğmesi zilin hemen yanında kalır
+  .mobileBell {
+    display: inline-flex;
+    margin-left: auto;
+  }
+
+  .mobileBell + .mobileThemeToggle {
+    margin-left: 0;
+  }
+
+  // Dar ekranda sheet: zil ekranın sağ kenarında olmadığından sağa hizalı 360px panel soldan taşardı
+  .notifPanel {
+    position: fixed;
+    top: calc(var(--header-height) + 4px);
+    left: 8px;
+    right: 8px;
+    width: auto;
+    // Alt gezinme çubuğunun (BottomNav) altına girip son satırları örtmesin
+    max-height: calc(100vh - var(--header-height) - var(--bottom-nav-height) - var(--safe-bottom) - 16px);
   }
 
   // Mobilde arama menünün içinde

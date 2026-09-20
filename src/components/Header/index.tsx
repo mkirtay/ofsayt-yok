@@ -18,6 +18,7 @@ import LangFlag from '../LangFlag';
 import MyAnalysesDropdown from './MyAnalysesDropdown';
 import AiMenu from './AiMenu';
 import AccountMenu from './AccountMenu';
+import NotificationBell from './NotificationBell';
 import { OPEN_MENU_EVENT } from '@/utils/bottomNav';
 import { lockBodyScroll } from '@/utils/scrollLock';
 import { MOBILE_LAYOUT_QUERY } from '@/config/breakpoints';
@@ -178,7 +179,10 @@ export default function Header() {
             // Bu, sayfa her yüklendiğinde header'ın "titremesini" (auth flicker) önler.
             <div className={styles.authPlaceholder} aria-hidden="true" />
           ) : session ? (
-            <AccountMenu />
+            <>
+              <NotificationBell />
+              <AccountMenu />
+            </>
           ) : (
             <>
               <HeaderButton variant="outline" onClick={() => router.push('/auth/signin')}>
@@ -200,6 +204,7 @@ export default function Header() {
             <LangFlag lang={targetLang} className={styles.flag} />
           </button>
         </div>
+        {session ? <NotificationBell className={styles.mobileBell} /> : null}
         <ThemeToggle className={styles.mobileThemeToggle} />
         <button
           ref={hamburgerRef}

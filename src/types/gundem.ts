@@ -38,3 +38,16 @@ export type GundemComment = {
 export type GundemPage<T> = { items: T[]; nextCursor: string | null };
 
 export type GundemScope = 'all' | 'following' | 'official';
+
+export type GundemNotificationType = 'POST_LIKE' | 'POST_COMMENT' | 'FOLLOW' | 'OFFICIAL_POST';
+
+/** `GET /api/gundem/notifications` satırı. `type` sunucuda serbest string: bilinmeyen değerler istemcide elenir. `post` silinmişse null. */
+export type GundemNotification = {
+  id: string;
+  type: string;
+  postId: string | null;
+  createdAt: string;
+  readAt: string | null;
+  actor: Pick<GundemAuthor, 'id' | 'name' | 'username' | 'image'> | null;
+  post: { id: string; body: string } | null;
+};
