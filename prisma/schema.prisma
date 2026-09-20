@@ -13,6 +13,11 @@ enum Role {
   ADMIN
 }
 
+enum PostAuthorType {
+  USER
+  OFFICIAL_BOT
+}
+
 model User {
   id            String   @id @default(cuid())
   name          String?
@@ -36,6 +41,16 @@ model User {
   commentLikes    MatchCommentLike[]
   userPredictions UserPrediction[]
   creditTransactions CreditTransaction[]
+  posts               Post[]          @relation("PostAuthor")
+  deletedPosts        Post[]          @relation("PostDeletedBy")
+  postLikes           PostLike[]      @relation("PostLikeUser")
+  postComments        PostComment[]   @relation("PostCommentAuthor")
+  deletedPostComments PostComment[]   @relation("PostCommentDeletedBy")
+  following           Follow[]        @relation("FollowFollower")
+  followers           Follow[]        @relation("FollowFollowing")
+  pushTokens          PushToken[]
+  notifications       Notification[]  @relation("NotificationRecipient")
+  notificationsAsActor Notification[] @relation("NotificationActor")
 }
 
 /// Kredi hareketleri defteri — bakiye değişikliklerinin denetim izi.
@@ -232,4 +247,103 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+/// Gündem (sosyal akış) postu. Resmi/otomatik postlar OFFICIAL_BOT; yazarı bot User kaydıdır.
+model Post {
+  id              String         @id @default(cuid())
+  authorId        String
+  author          User           @relation("PostAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  authorType      PostAuthorType @default(USER)
+  body            String         @db.Text
+  matchId         String?
+  teamId          Int?
+  /// Bot postlarının tekrar üretimini engelleyen anahtar (örn. "goal:<matchId>:<eventId>")
+  externalKey     String?        @unique
+  createdAt       DateTime       @default(now())
+  deletedAt       DateTime?
+  deletedByUserId String?
+  deletedBy       User?          @relation("PostDeletedBy", fields: [deletedByUserId], references: [id], onDelete: SetNull)
+  likes           PostLike[]
+  comments        PostComment[]
+  notifications   Notification[]
+
+  @@index([createdAt])
+  @@index([authorType, createdAt])
+  @@index([authorId, createdAt])
+  @@index([matchId, createdAt])
+}
+
+/// Post beğenisi — kullanıcı başına post başına tek kayıt (toggle).
+model PostLike {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String
+  createdAt DateTime @default(now())
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User     @relation("PostLikeUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([postId, userId])
+  @@index([postId])
+}
+
+model PostComment {
+  id              String    @id @default(cuid())
+  postId          String
+  post            Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User      @relation("PostCommentAuthor", fields: [userId], references: [id], onDelete: Cascade)
+  body            String    @db.Text
+  createdAt       DateTime  @default(now())
+  deletedAt       DateTime?
+  deletedByUserId String?
+  deletedBy       User?     @relation("PostCommentDeletedBy", fields: [deletedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([postId, createdAt])
+}
+
+/// Kullanıcı takibi. followerId, followingId'yi takip eder. Kendini takip API'de engellenir.
+model Follow {
+  id          String   @id @default(cuid())
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+  follower    User     @relation("FollowFollower", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User     @relation("FollowFollowing", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+  @@index([followingId])
+}
+
+/// Cihaz push token'ı (Expo push token; ileride web push endpoint'i de aynı tabloya).
+model PushToken {
+  id         String    @id @default(cuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token      String    @unique
+  /// "ios" | "android" | "web"
+  platform   String
+  createdAt  DateTime  @default(now())
+  lastSeenAt DateTime  @default(now())
+  /// Expo "DeviceNotRegistered" dönerse set edilir, gönderim atlanır
+  disabledAt DateTime?
+
+  @@index([userId])
+}
+
+/// Uygulama içi bildirim (zil). Push gönderimi bunun yan etkisidir.
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation("NotificationRecipient", fields: [userId], references: [id], onDelete: Cascade)
+  actorId   String?
+  actor     User?     @relation("NotificationActor", fields: [actorId], references: [id], onDelete: SetNull)
+  /// "POST_LIKE" | "POST_COMMENT" | "FOLLOW" | "OFFICIAL_POST"
+  type      String
+  postId    String?
+  post      Post?     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
+  readAt    DateTime?
+
+  @@index([userId, readAt, createdAt])
 }

@@ -1,0 +1,94 @@
+import type { NextApiRequest, NextApiResponse } from 'next';
+import type { Prisma } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
+import { sanitizePlainText } from '@/lib/security';
+import { hitFixedWindowRateLimit } from '@/lib/rateLimit';
+import { captureError } from '@/lib/logger';
+import { getRequestUserId } from '@/lib/mobileAuth';
+import {
+  PAGE_SIZE,
+  POST_MAX_LENGTH,
+  optionalInt,
+  optionalString,
+  queryString,
+  readJsonBody,
+} from '@/lib/gundem/validation';
+import { feedOrder, paginate, postSelect, serializePost } from '@/lib/gundem/posts';
+
+const SCOPES = ['all', 'following', 'official'] as const;
+type Scope = (typeof SCOPES)[number];
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  try {
+    if (req.method === 'GET') {
+      const scopeRaw = queryString(req.query.scope) ?? 'all';
+      if (!(SCOPES as readonly string[]).includes(scopeRaw)) {
+        return res.status(400).json({ error: 'Geçersiz akış türü.' });
+      }
+      const scope = scopeRaw as Scope;
+      const cursor = queryString(req.query.cursor);
+      const viewerId = await getRequestUserId(req, res);
+
+      const where: Prisma.PostWhereInput = { deletedAt: null };
+      if (scope === 'official') {
+        where.authorType = 'OFFICIAL_BOT';
+      } else if (scope === 'following') {
+        if (!viewerId) return res.status(401).json({ error: 'Giriş yapmanız gerekiyor.' });
+        const follows = await prisma.follow.findMany({
+          where: { followerId: viewerId },
+          select: { followingId: true },
+        });
+        where.authorId = { in: follows.map((f) => f.followingId) };
+      }
+
+      const rows = await prisma.post.findMany({
+        where,
+        orderBy: [...feedOrder],
+        take: PAGE_SIZE + 1,
+        ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+        select: postSelect(viewerId),
+      });
+      const { items, nextCursor } = paginate(rows, PAGE_SIZE);
+      return res.json({ items: items.map(serializePost), nextCursor });
+    }
+
+    if (req.method === 'POST') {
+      const userId = await getRequestUserId(req, res);
+      if (!userId) return res.status(401).json({ error: 'Giriş yapmanız gerekiyor.' });
+
+      const rl = await hitFixedWindowRateLimit(`gundem-post:user:${userId}`, 5, 60_000);
+      if (!rl.success) {
+        res.setHeader('Retry-After', String(Math.ceil((rl.resetAt - Date.now()) / 1000)));
+        return res.status(429).json({ error: 'Çok fazla gönderi paylaştınız. Biraz bekleyin.' });
+      }
+
+      const input = readJsonBody(req);
+      const body = sanitizePlainText(typeof input.body === 'string' ? input.body : '');
+      if (!body || body.length > POST_MAX_LENGTH) {
+        return res.status(400).json({ error: `Gönderi 1–${POST_MAX_LENGTH} karakter olmalıdır.` });
+      }
+
+      const userExists = await prisma.user.findUnique({ where: { id: userId }, select: { id: true } });
+      if (!userExists) return res.status(401).json({ error: 'Oturum geçersiz. Lütfen tekrar giriş yapın.' });
+
+      // authorType istemciden ASLA okunmaz: kullanıcı postları her zaman USER.
+      const created = await prisma.post.create({
+        data: {
+          authorId: userId,
+          authorType: 'USER',
+          body,
+          matchId: optionalString(input.matchId, 64),
+          teamId: optionalInt(input.teamId),
+        },
+        select: postSelect(userId),
+      });
+      return res.status(201).json(serializePost(created));
+    }
+
+    res.setHeader('Allow', 'GET, POST');
+    return res.status(405).end();
+  } catch (e) {
+    captureError('gundem:posts', e);
+    return res.status(500).json({ error: 'Sunucu hatası.' });
+  }
+}
