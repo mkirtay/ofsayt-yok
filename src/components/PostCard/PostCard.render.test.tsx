@@ -31,6 +31,15 @@ describe('<PostCard />', () => {
     expect(html).toContain('href="/gundem/cpost0000000000000001"');
   });
 
+  it('avatar ve isim yazar profiline bağlanır; linkAuthor=false ile düz metin kalır', () => {
+    const linked = renderToStaticMarkup(<PostCard post={post()} onToggleLike={noop} now={NOW} />);
+    expect(linked.match(/href="\/gundem\/kullanici\/u-author"/g)).toHaveLength(2); // avatar + isim
+    expect(linked).toMatch(/<a[^>]*aria-hidden="true"[^>]*tabindex="-1"|<a[^>]*tabindex="-1"[^>]*aria-hidden="true"/); // avatar bağlantısı yinelenen durak değil
+    const plain = renderToStaticMarkup(<PostCard post={post()} linkAuthor={false} onToggleLike={noop} now={NOW} />);
+    expect(plain).not.toContain('/gundem/kullanici/');
+    expect(plain).toContain('Ada');
+  });
+
   it('gövde HTML olarak yorumlanmaz (XSS): etiketler kaçırılır', () => {
     const html = renderToStaticMarkup(<PostCard post={post({ body: '<img src=x onerror=alert(1)>' })} onToggleLike={noop} now={NOW} />);
     expect(html).not.toContain('<img src=x');

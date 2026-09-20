@@ -73,5 +73,16 @@
   "follow": {
     "follow": "Follow",
     "following": "Following"
+  },
+  "profile": {
+    "metaTitle": "{{name}} | Ofsayt Yok",
+    "metaDescription": "Posts by {{name}} on the Ofsayt Yok feed.",
+    "followers": "Followers",
+    "following": "Following",
+    "posts": "Posts",
+    "edit": "Edit profile",
+    "empty": "No posts yet.",
+    "notFound": "User not found.",
+    "error": "Couldn't load the profile."
   }
 }

@@ -18,6 +18,8 @@ export type PostCardProps = {
   selected?: boolean;
   liking?: boolean;
   deleting?: boolean;
+  /** Avatar + isim yazarın profil sayfasına bağlanır (`/gundem/kullanici/[id]`). Profil sayfasının kendisinde kapatılır. */
+  linkAuthor?: boolean;
   /** Yorumlar/detay aç (split panel ya da tam sayfa) — yoksa yorum düğmesi ve zaman bağlantısı yalnızca bağlantı olur. */
   onOpen?: (postId: string) => void;
   onToggleLike: (postId: string) => void;
@@ -34,6 +36,7 @@ export default function PostCard({
   selected = false,
   liking = false,
   deleting = false,
+  linkAuthor = true,
   onOpen,
   onToggleLike,
   onDelete,
@@ -44,16 +47,34 @@ export default function PostCard({
   const displayName = post.author.name ?? post.author.username ?? t('post.anonymous');
   const canDelete = !!onDelete && !!currentUserId && (post.author.id === currentUserId || isAdmin);
   const href = `/gundem/${post.id}`;
+  const profileHref = `/gundem/kullanici/${post.author.id}`;
+  const avatar = <Avatar name={displayName} image={post.author.image} size={40} />;
+  const nameContent = (
+    <>
+      {displayName}
+      {official ? <VerifiedIcon className={styles.verified} size={15} title={t('post.official')} /> : null}
+    </>
+  );
 
   return (
     <article className={`${styles.card} ${selected ? styles.selected : ''}`.trim()} aria-current={selected || undefined}>
       <header className={styles.head}>
-        <Avatar name={displayName} image={post.author.image} size={40} />
+        {linkAuthor ? (
+          // Avatar bağlantısı klavye/ekran okuyucu için yinelenen durak olmasın: isim bağlantısı asıl bağlantıdır
+          <Link href={profileHref} className={styles.avatarLink} tabIndex={-1} aria-hidden="true">
+            {avatar}
+          </Link>
+        ) : (
+          avatar
+        )}
         <div className={styles.who}>
-          <span className={styles.name}>
-            {displayName}
-            {official ? <VerifiedIcon className={styles.verified} size={15} title={t('post.official')} /> : null}
-          </span>
+          {linkAuthor ? (
+            <Link href={profileHref} className={`${styles.name} ${styles.nameLink}`}>
+              {nameContent}
+            </Link>
+          ) : (
+            <span className={styles.name}>{nameContent}</span>
+          )}
           <span className={styles.meta}>
             {post.author.username ? <span>@{post.author.username}</span> : null}
             <Link

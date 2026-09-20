@@ -1,0 +1,98 @@
+@use '../../styles/variables' as *;
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: $spacing-4;
+  padding: $spacing-4;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: $radius-md;
+
+  @media (max-width: 519px) {
+    flex-wrap: wrap;
+  }
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.name {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  min-width: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: $color-text;
+}
+
+.nameText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.verified {
+  flex-shrink: 0;
+  color: $color-primary;
+}
+
+.username {
+  font-size: 13px;
+  color: $color-text-secondary;
+}
+
+// Sayaçlar bilgi amaçlıdır (liste sayfaları kapsam dışı) → tıklanmaz
+.stats {
+  display: flex;
+  gap: $spacing-4;
+  margin: $spacing-2 0 0;
+
+  div {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+  }
+
+  dd {
+    margin: 0;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: $color-text;
+  }
+
+  dt {
+    font-size: 13px;
+    color: $color-text-secondary;
+  }
+}
+
+.action {
+  flex-shrink: 0;
+}
+
+.editLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 $spacing-4;
+  border: 1px solid $color-border;
+  border-radius: $radius-full;
+  color: $color-text;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: $transition-base;
+
+  &:hover {
+    background: $color-muted;
+  }
+}

@@ -39,6 +39,20 @@
   white-space: nowrap;
 }
 
+.avatarLink {
+  display: inline-flex;
+  flex-shrink: 0;
+  border-radius: $radius-full;
+}
+
+.nameLink {
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
 .verified {
   flex-shrink: 0;
   color: $color-primary;
