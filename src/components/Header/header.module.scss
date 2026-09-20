@@ -598,9 +598,6 @@
   border-radius: $radius-full;
   background: rgba(255, 255, 255, 0.08);
   color: #fff;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
   cursor: pointer;
   transition: $transition-base;
 
@@ -616,16 +613,23 @@
   border: 1px solid rgba(255, 255, 255, 0.3);
   border-radius: $radius-sm;
   background: rgba(255, 255, 255, 0.06);
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  color: $color-text-on-dark;
+  display: inline-flex;
+  align-items: center;
   cursor: pointer;
   transition: $transition-base;
 
   &:hover {
     background: rgba(255, 255, 255, 0.14);
   }
+}
+
+// Bayrak: koyu/açık temada aynı zemin üzerinde kalması için ince kenarlık
+.flag {
+  display: block;
+  width: 24px;
+  height: 16px;
+  border-radius: 2px;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.25);
 }
 
 // ── Responsive ───────────────────────────────────

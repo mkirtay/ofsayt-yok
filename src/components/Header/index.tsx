@@ -14,6 +14,7 @@ import Container from '../Container';
 import HeaderButton from '../HeaderButton';
 import HeaderSearch from '../HeaderSearch';
 import ThemeToggle from '../ThemeToggle';
+import LangFlag from '../LangFlag';
 import MyAnalysesDropdown from './MyAnalysesDropdown';
 import AiMenu from './AiMenu';
 import AccountMenu from './AccountMenu';
@@ -97,8 +98,11 @@ export default function Header() {
     return () => window.removeEventListener(OPEN_MENU_EVENT, onToggle);
   }, []);
 
+  // Bayrak, tıklayınca geçilecek dili gösterir (önceki "EN/TR" metniyle aynı anlam)
+  const targetLang = locale === 'tr' ? 'en' : 'tr';
+
   function toggleLang() {
-    setLocale(locale === 'tr' ? 'en' : 'tr');
+    setLocale(targetLang);
   }
 
   const prefetchAiStats = useCallback(() => {
@@ -183,9 +187,10 @@ export default function Header() {
             type="button"
             className={styles.langToggle}
             onClick={toggleLang}
-            aria-label={t('langSwitch')}
+            aria-label={t('langSwitchLabel')}
+            title={t('langSwitchLabel')}
           >
-            {t('langSwitch')}
+            <LangFlag lang={targetLang} className={styles.flag} />
           </button>
         </div>
         <ThemeToggle className={styles.mobileThemeToggle} />
@@ -250,8 +255,9 @@ export default function Header() {
               type="button"
               className={styles.mobileLangToggle}
               onClick={toggleLang}
+              aria-label={t('langSwitchLabel')}
             >
-              {t('langSwitch')}
+              <LangFlag lang={targetLang} className={styles.flag} />
             </button>
           </div>
         </div>
