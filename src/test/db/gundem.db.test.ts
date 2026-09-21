@@ -2,7 +2,7 @@
 /**
  * GERÇEK veritabanı entegrasyon testi (DB mock'suz): Gündem — post CRUD (sahip/admin/yabancı), authorType override,
  * beğeni toggle + bildirim, yorum CRUD + cursor, takip toggle, bildirimler, push kaydı, bot-post idempotency ve rate limit.
- * Prisma, kimlik doğrulama (Bearer JWT), route handler'ları ve rate limit GERÇEK. Resmi hesap sabiti (`official.ts`) YALNIZCA
+ * Prisma, kimlik doğrulama (Bearer JWT), route handler'ları ve rate limit GERÇEK. Resmi/bot hesabı (`official.ts`, env ile) YALNIZCA
  * bu testte bir test kullanıcısına yönlendirilir; gerçek "Ofsayt Yok" hesabına yazılmaz (sonda doğrulanır).
  *
  * Çalıştırma: `npm run test:db`. Tüm kullanıcılar `itest-<runId>` e-posta önekli; test sonunda silinir
@@ -13,15 +13,11 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 
 const ENABLED = process.env.DB_INTEGRATION === '1';
 
-// runId, vi.mock fabrikası için hoisted olmak zorunda (bot hesabı sabiti test kullanıcısına yönlenir).
+// runId modül yüklenmeden önce üretilmeli: resmi/bot hesabı env'i test kullanıcısına yönlenir (official.ts env'i çağrı anında okur).
 const h = vi.hoisted(() => ({ runId: `itest-${Math.random().toString(16).slice(2, 10)}` }));
 
-vi.mock('@/lib/gundem/official', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('@/lib/gundem/official')>()),
-  OFFICIAL_ACCOUNT_EMAIL: `${h.runId}-official@example.invalid`,
-  OFFICIAL_ACCOUNT_USERNAME: `${h.runId}-official`,
-  OFFICIAL_ACCOUNT_NAME: 'ITest Resmi',
-}));
+process.env.OFFICIAL_ACCOUNT_EMAILS = `${h.runId}-official@example.invalid`;
+process.env.GUNDEM_BOT_EMAIL = `${h.runId}-official@example.invalid`;
 
 const d = ENABLED ? describe : describe.skip;
 
@@ -98,7 +94,7 @@ d('DB entegrasyonu — Gündem (post, beğeni, yorum, takip, bildirim, push, bot
   let admin: U; // DB'de ADMIN
   let fakeAdmin: U; // JWT'de ADMIN iddiası, DB'de USER
   let staleAdmin: U; // JWT'de USER, DB'de ADMIN (rol DB'den taze okunmalı)
-  let official: U; // test bot hesabı (mock'lanan resmi hesap)
+  let official: U; // test bot hesabı (env ile resmi hesap)
   let realOfficialPostsBefore = 0;
   let realOfficialId: string | null = null;
 
@@ -150,7 +146,7 @@ d('DB entegrasyonu — Gündem (post, beğeni, yorum, takip, bildirim, push, bot
     official = await mkUser('official');
 
     // Gerçek resmi hesap (varsa) — testin ona yazmadığını sonda doğrulamak için sayaç.
-    const real = await prisma.user.findUnique({ where: { email: 'official@ofsaytyok.invalid' }, select: { id: true } });
+    const real = await prisma.user.findUnique({ where: { email: 'bilgi.ofsaytyok@gmail.com' }, select: { id: true } });
     realOfficialId = real?.id ?? null;
     if (realOfficialId) realOfficialPostsBefore = await prisma.post.count({ where: { authorId: realOfficialId } });
   });

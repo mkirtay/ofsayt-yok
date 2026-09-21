@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 /**
- * Gündem için tek "Ofsayt Yok" resmi/bot hesabını oluşturur (idempotent — varsa dokunmaz).
- * password: null → credentials girişi reddedilir. Değerler src/lib/gundem/official.ts ile aynı olmalı.
+ * DEPRECATED: resmi hesap artık "ofsaytyokmedia" (bilgi.ofsaytyok@gmail.com; normal kayıtla oluşturulur) ve bu seed hesabı
+ * resmi sayılmıyor (`src/lib/gundem/official.ts`). Yalnızca eski ortamlar için tutuluyor; yeni ortamda ÇALIŞTIRMAYIN.
+ *
+ * Eski: tek "Ofsayt Yok" bot hesabını oluşturur (idempotent — varsa dokunmaz). password: null → credentials girişi reddedilir.
  *
  * Kullanım: npm run seed-official
  */
