@@ -3,13 +3,8 @@ import { useRouter } from 'next/router';
 import { useSession } from 'next-auth/react';
 import { useCallback, useEffect, useRef } from 'react';
 import EmptyState from '@/components/EmptyState';
-import PostCard from '@/components/PostCard';
-import PostComposer from '@/components/PostComposer';
+import GundemPanel from '@/components/GundemPanel';
 import PostDetailPanel from '@/components/PostDetailPanel';
-import { POST_MAX_LENGTH } from '@/config/gundem';
-import { useCreatePost, useGundemFeed } from '@/hooks/useGundem';
-import { usePostActions } from '@/hooks/usePostActions';
-import { useInfiniteSentinel } from '@/hooks/useInfiniteSentinel';
 import { useSplitView } from '@/hooks/useSplitView';
 import { useTranslation } from '@/lib/i18n';
 import type { GundemScope } from '@/types/gundem';
@@ -32,7 +27,6 @@ export default function GundemHubPage() {
   const router = useRouter();
   const { t } = useTranslation('gundem');
   const { status } = useSession();
-  const authenticated = status === 'authenticated';
   // Oturum çözülene kadar (`loading`) "giriş yap" istemi/sekme değişimi gösterme — yalnızca kesin oturumsuzsa (`unauthenticated`)
   const unauthenticated = status === 'unauthenticated';
   const splitView = useSplitView();
@@ -43,11 +37,6 @@ export default function GundemHubPage() {
   const scope: GundemScope = requested === 'following' && unauthenticated ? 'all' : requested;
   const selectedPostId = readSelectedPostId(router.query);
   const showPanel = isSplit && selectedPostId != null;
-
-  const feed = useGundemFeed(scope);
-  const createPost = useCreatePost();
-  const actions = usePostActions();
-  const items = feed.data?.pages.flatMap((p) => p.items) ?? [];
 
   const queryRef = useRef(router.query);
   useEffect(() => {
@@ -93,9 +82,6 @@ export default function GundemHubPage() {
     );
   }
 
-  // Sonsuz kaydırma: alttaki gözcü görününce sonraki sayfa; "Daha fazla yükle" düğmesi yedek
-  const sentinelRef = useInfiniteSentinel(feed, items.length);
-
   const tabs: GundemScope[] = unauthenticated ? SCOPES.filter((s) => s !== 'following') : SCOPES;
 
   return (
@@ -127,62 +113,13 @@ export default function GundemHubPage() {
         </div>
 
         <div className={`${styles.grid} ${isSplit ? styles.gridSplit : ''}`.trim()}>
-          <section className={styles.feed} aria-busy={feed.isPending}>
-            {status === 'loading' ? null : (
-              <PostComposer
-                variant="post"
-                authenticated={authenticated}
-                maxLength={POST_MAX_LENGTH}
-                onSubmit={(body) => createPost.mutateAsync({ body })}
-              />
-            )}
-
-            {/* isPending: oturum çözülene kadar sorgu devre dışıdır — o sürede "boş" değil "yükleniyor" gösterilir */}
-            {feed.isPending ? (
-              <EmptyState>{t('feed.loading')}</EmptyState>
-            ) : feed.isError ? (
-              <EmptyState>
-                {t('feed.error')}{' '}
-                <button type="button" className={styles.inlineAction} onClick={() => void feed.refetch()}>
-                  {t('feed.retry')}
-                </button>
-              </EmptyState>
-            ) : items.length === 0 ? (
-              <EmptyState>{t(`feed.empty.${scope}`)}</EmptyState>
-            ) : (
-              <ul className={styles.list}>
-                {items.map((post) => (
-                  <li key={post.id}>
-                    <PostCard
-                      post={post}
-                      currentUserId={actions.currentUserId}
-                      isAdmin={actions.isAdmin}
-                      selected={showPanel && post.id === selectedPostId}
-                      liking={actions.likingId === post.id}
-                      deleting={actions.deletingId === post.id}
-                      onOpen={handleSelect}
-                      onToggleLike={actions.toggleLike}
-                      onDelete={(id) => actions.remove(id, id === selectedPostId ? handleClose : undefined)}
-                    />
-                  </li>
-                ))}
-              </ul>
-            )}
-
-            {feed.hasNextPage ? (
-              <>
-                <div ref={sentinelRef} aria-hidden="true" />
-                <button
-                  type="button"
-                  className={styles.more}
-                  onClick={() => void feed.fetchNextPage()}
-                  disabled={feed.isFetchingNextPage}
-                >
-                  {feed.isFetchingNextPage ? t('feed.loadingMore') : t('feed.loadMore')}
-                </button>
-              </>
-            ) : null}
-          </section>
+          <GundemPanel
+            scope={scope}
+            composer="post"
+            onOpenPost={handleSelect}
+            selectedPostId={showPanel ? selectedPostId : null}
+            onSelectedPostDeleted={handleClose}
+          />
 
           {isSplit ? (
             <aside className={styles.side}>
@@ -195,7 +132,6 @@ export default function GundemHubPage() {
           ) : null}
         </div>
       </div>
-      {actions.confirmDialog}
     </>
   );
 }
