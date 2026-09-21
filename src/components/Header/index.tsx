@@ -130,10 +130,11 @@ export default function Header() {
           <div className={styles.logo}>
             <Link href="/" className={styles.logoLink} onMouseEnter={prefetchHome} onFocus={prefetchHome}>
               <Image
-                src={isWorldCupTheme ? '/images/logo-black.svg' : '/images/logo.svg'}
+                src={isWorldCupTheme ? '/images/logo-black.svg' : '/images/ofsaytyok-logo.svg'}
                 alt="Ofsayt Yok"
-                width={146}
-                height={28}
+                width={isWorldCupTheme ? 146 : 110}
+                height={isWorldCupTheme ? 28 : 34}
+                style={{ height: 'auto' }}
                 priority
               />
             </Link>
