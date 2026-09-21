@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useTranslation } from '@/lib/i18n';
 import { useQueryClient } from '@tanstack/react-query';
@@ -48,7 +49,9 @@ import {
 } from '@/utils/bottomNav';
 import { MOBILE_LAYOUT_QUERY } from '@/config/breakpoints';
 import { prefetchMatchDetail } from '@/hooks/useMatchDetail';
-import { RIGHT_COLUMN_MIN_WIDTH, useMinWidth, useSplitView } from '@/hooks/useSplitView';
+import { GUNDEM_PANEL_MIN_WIDTH, RIGHT_COLUMN_MIN_WIDTH, useMinWidth, useSplitView } from '@/hooks/useSplitView';
+import GundemPanel from '@/components/GundemPanel';
+import { resolveHubSidePanel } from '@/utils/hubSidePanel';
 import LeagueFilterBar from '@/components/LeagueFilterBar';
 import AdSlot from '@/components/AdSlot';
 import EmptyState from '@/components/EmptyState';
@@ -74,10 +77,12 @@ export default function MatchHubPage({
   allowedCompetitionIds,
 }: MatchHubPageProps) {
   const { t } = useTranslation('match');
+  const { t: tg } = useTranslation('gundem');
   const queryClient = useQueryClient();
   const router = useRouter();
   const splitView = useSplitView();
   const showRightColumn = useMinWidth(RIGHT_COLUMN_MIN_WIDTH) === true;
+  const gundemPanelWide = useMinWidth(GUNDEM_PANEL_MIN_WIDTH) === true;
   const isSplit = splitView === true;
   const [selectedDate, setSelectedDate] = useState<string>(today);
   const [activeTab, setActiveTab] = useState<MatchTab>('all');
@@ -327,7 +332,15 @@ export default function MatchHubPage({
   const selectedMatchId = readSelectedMatchId(router.query);
   const selectedTeamId = readSelectedTeamId(router.query);
   // Tek panel: maç YA DA takım (URL'de biri; seçim helper'ları diğerini düşürür). Layout/liste bunu birlikte kullanır.
-  const showDetailPanel = isSplit && (selectedMatchId != null || selectedTeamId != null);
+  const sidePanel = resolveHubSidePanel({
+    isSplit,
+    hasSelection: selectedMatchId != null || selectedTeamId != null,
+    gundemPanelWide,
+  });
+  // Detay paneli (mevcut model: hubGridWithPanel/compact/fill) YALNIZCA seçim varken; idle Gündem paneli bunu tetiklemez.
+  const showDetailPanel = sidePanel === 'detail';
+  // Idle Gündem paneli (≥ BP_GUNDEM_PANEL, seçim yok): koşul false iken GundemPanel hiç mount edilmez → akış çekilmez.
+  const showGundemPanel = sidePanel === 'gundem';
 
   const handleSelectMatch = useCallback(
     (match: Match) => {
@@ -524,6 +537,21 @@ export default function MatchHubPage({
                   <MatchDetailPanel matchId={selectedMatchId} onClose={handleCloseDetail} />
                 ) : null}
               </div>
+            ) : null}
+            {showGundemPanel ? (
+              <aside className={styles.hubGundem} aria-label={tg('title')}>
+                <div className={styles.hubGundemHeader}>
+                  <h2 className={styles.hubGundemTitle}>{tg('title')}</h2>
+                  <Link href="/gundem" className={styles.hubGundemLink}>
+                    {tg('panel.openPage')}
+                  </Link>
+                </div>
+                <GundemPanel
+                  scope="all"
+                  composer="post-inline"
+                  onOpenPost={(postId) => void router.push(`/gundem/${postId}`)}
+                />
+              </aside>
             ) : null}
           </div>
           {showRightColumn ? (

@@ -306,3 +306,46 @@
     }
   }
 }
+
+// ≥1440 ($bp-gundem-panel): maç/takım seçili DEĞİLKEN liste yanında Gündem paneli (idle). `hubGridWithPanel`
+// (sabit yükseklik + iç scroll) TETİKLENMEZ: panel sticky, liste doğal akışında kalır (idle görünümü değişmez).
+// 1536+'ta sağ widget sütunu (`hubGridWithRight`) ile birlikte: sidebar | liste | Gündem | MiniStandings.
+@media (min-width: $bp-gundem-panel) {
+  .hubGundem {
+    flex: 0 0 clamp(340px, 30%, 400px);
+    min-width: 0;
+    position: sticky;
+    top: calc(var(--header-height) + 64px); // HubRightColumn ile aynı: header + SubHeader altı
+    align-self: flex-start;
+    max-height: calc(100vh - var(--header-height) - 64px - #{$spacing-4});
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-3;
+  }
+
+  .hubGundemHeader {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: $spacing-3;
+  }
+
+  .hubGundemTitle {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+    color: $color-text;
+  }
+
+  .hubGundemLink {
+    font-size: 13px;
+    font-weight: 600;
+    color: $color-primary-text;
+    white-space: nowrap;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}

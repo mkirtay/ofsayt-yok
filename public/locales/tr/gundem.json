@@ -4,6 +4,9 @@
     "description": "Ofsayt Yok topluluğunun futbol gündemi: gönderiler, yorumlar ve resmi paylaşımlar."
   },
   "title": "Gündem",
+  "panel": {
+    "openPage": "Gündem sayfasına git →"
+  },
   "tabs": {
     "label": "Akış türü",
     "all": "Tümü",

@@ -34,4 +34,13 @@ describe('ana sayfa split-view yükseklik mimarisi (MatchDetailPanel modeli)', (
     expect(hub).toContain('grid-template-columns: 240px minmax(0, 1fr);');
     expect(hub).toContain('grid-template-columns: 240px minmax(0, 1fr) 300px');
   });
+
+  it('idle Gündem paneli: ≥$bp-gundem-panel medya sorgusunda, sticky; detay-panel modelini (100vh grid yüksekliği / hubGridWithPanel) tetiklemez', () => {
+    const idle = hub
+      .slice(hub.indexOf('@media (min-width: $bp-gundem-panel)'))
+      .replace(/\/\/.*$/gm, ''); // yorumlar hariç
+    expect(idle).toMatch(/\.hubGundem\s*\{[^}]*position:\s*sticky/);
+    expect(idle).not.toContain('hubGridWithPanel');
+    expect(idle).not.toMatch(/(?<!max-)height:\s*calc\(100vh/); // yalnızca max-height (sticky panel); sabit yükseklik yok
+  });
 });

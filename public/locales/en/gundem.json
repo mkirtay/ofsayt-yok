@@ -4,6 +4,9 @@
     "description": "The Ofsayt Yok football community feed: posts, comments and official updates."
   },
   "title": "Feed",
+  "panel": {
+    "openPage": "Go to Feed page →"
+  },
   "tabs": {
     "label": "Feed type",
     "all": "All",
