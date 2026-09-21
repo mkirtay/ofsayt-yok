@@ -223,9 +223,6 @@ export default function Header() {
         <div ref={menuRef} className={`${styles.mobileMenu} ${isWorldCupTheme ? styles.mobileMenuWorldCup : ''}`}>
           <HeaderSearch onNavigate={() => setMobileMenuOpen(false)} />
           <nav className={styles.mobileNav}>
-            <Link href="/gundem" className={styles.mobileNavLink}>
-              {t('gundem')}
-            </Link>
             <Link
               href="/ai-istatistikleri"
               className={styles.mobileNavLink}
