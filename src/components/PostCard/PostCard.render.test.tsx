@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import PostCard from './index';
-import PostComposer, { composerErrorMessage } from '@/components/PostComposer';
+import PostComposer, { composerErrorMessage, shouldCollapseOnBlur } from '@/components/PostComposer';
 import { GundemApiError } from '@/hooks/useGundem';
 import type { GundemPost } from '@/types/gundem';
 
@@ -99,6 +99,56 @@ describe('<PostComposer />', () => {
     const html = renderToStaticMarkup(<PostComposer {...props} authenticated maxLength={280} />);
     expect(html).toMatch(/<button[^>]*disabled[^>]*>Paylaş<|<button[^>]*>Paylaş<\/button>/);
     expect(html).toContain('disabled');
+  });
+});
+
+describe('<PostComposer variant="post-inline" />', () => {
+  const props = { variant: 'post-inline' as const, onSubmit: async () => {}, maxLength: 280 };
+
+  it('kapalıyken tek satır: inline placeholder, rows=1, sayaç/gönder düğmesi yok', () => {
+    const html = renderToStaticMarkup(<PostComposer {...props} authenticated />);
+    expect(html).toContain('Ne düşünüyorsun?');
+    expect(html).toContain('rows="1"');
+    expect(html).toContain('data-expanded="false"');
+    expect(html).toContain('collapsed');
+    expect(html).not.toContain('>280<');
+    expect(html).not.toContain('Paylaş');
+  });
+
+  it('autoFocus ile açık başlar: rows=3, sayaç ve gönder düğmesi görünür (mevcut composer)', () => {
+    const html = renderToStaticMarkup(<PostComposer {...props} authenticated autoFocus />);
+    expect(html).toContain('rows="3"');
+    expect(html).toContain('data-expanded="true"');
+    expect(html).toContain('>280<');
+    expect(html).toContain('Paylaş');
+    expect(html).not.toContain('collapsed');
+  });
+
+  it('oturum yokken aynı /auth/signin bağlantısı, tek satır (loginInline) görünümde', () => {
+    const html = renderToStaticMarkup(<PostComposer {...props} authenticated={false} />);
+    expect(html).toContain('href="/auth/signin"');
+    expect(html).toContain('loginInline');
+    expect(html).not.toContain('<textarea');
+  });
+
+  it("'post' varyantı değişmedi: her zaman açık (rows=3, sayaç), data-expanded yok", () => {
+    const html = renderToStaticMarkup(<PostComposer {...props} variant="post" authenticated />);
+    expect(html).toContain('rows="3"');
+    expect(html).toContain('>280<');
+    expect(html).not.toContain('data-expanded');
+  });
+});
+
+describe('shouldCollapseOnBlur', () => {
+  it('boş + odak dışarı çıktı → küçül', () => {
+    expect(shouldCollapseOnBlur('', false)).toBe(true);
+    expect(shouldCollapseOnBlur('  \n ', false)).toBe(true);
+  });
+  it('metin varsa açık kalır (yazılan kaybolmaz)', () => {
+    expect(shouldCollapseOnBlur('merhaba', false)).toBe(false);
+  });
+  it('odak composer içinde kalıyorsa (ör. Paylaş düğmesi) küçülmez', () => {
+    expect(shouldCollapseOnBlur('', true)).toBe(false);
   });
 });
 

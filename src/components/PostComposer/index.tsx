@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { useState, type KeyboardEvent } from 'react';
+import { useRef, useState, type FocusEvent, type KeyboardEvent } from 'react';
 import { COUNTER_WARN_AT } from '@/config/gundem';
 import { GundemApiError } from '@/hooks/useGundem';
 import { useTranslation } from '@/lib/i18n';
@@ -20,10 +20,21 @@ export function composerErrorMessage(err: unknown, t: TFn): string {
   return t('composer.error');
 }
 
+/** `post-inline`: kapalıyken tek satır, odakta tam composer'a genişler (X.com kalıbı); gönderi composer'ıyla aynı gönderim/hata mantığı. */
+export type PostComposerVariant = 'post' | 'post-inline' | 'comment';
+
+/**
+ * Inline varyantta odak composer'dan çıkınca küçülme kararı: yalnızca alan boşsa VE odak composer'ın içinde kalmıyorsa
+ * (ör. "Paylaş" düğmesine geçiş küçülmeye yol açmamalı). Metin varsa açık kalır — kullanıcı yazdığını kaybetmez.
+ */
+export function shouldCollapseOnBlur(value: string, focusStaysInside: boolean): boolean {
+  return !focusStaysInside && value.trim().length === 0;
+}
+
 export type PostComposerProps = {
   /** Oturum yoksa form yerine giriş bağlantısı gösterilir. */
   authenticated: boolean;
-  variant: 'post' | 'comment';
+  variant: PostComposerVariant;
   maxLength: number;
   /** Gönderir; hata fırlatırsa (GundemApiError) mesaj gösterilir, metin korunur. Başarıda alan temizlenir. */
   onSubmit: (body: string) => Promise<unknown>;
@@ -39,11 +50,18 @@ export default function PostComposer({ authenticated, variant, maxLength, onSubm
   const [value, setValue] = useState('');
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
+  const isInline = variant === 'post-inline';
+  const isPost = variant !== 'comment';
+  // Inline: `autoFocus` odak alıp açılmayı da tetikler (onFocus) — ilk render'da bile açık başlasın
+  const [expanded, setExpanded] = useState(!isInline || !!autoFocus);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  // Gönderim sonrası odağı alana geri verirken yeniden açılmayı bastırır
+  const skipExpandOnFocus = useRef(false);
 
   if (!authenticated) {
     return (
-      <div className={styles.loginPrompt}>
-        <Link href="/auth/signin">{t(variant === 'post' ? 'composer.loginPrompt' : 'composer.commentLoginPrompt')}</Link>
+      <div className={`${styles.loginPrompt} ${isInline ? styles.loginInline : ''}`.trim()}>
+        <Link href="/auth/signin">{t(isPost ? 'composer.loginPrompt' : 'composer.commentLoginPrompt')}</Link>
       </div>
     );
   }
@@ -59,6 +77,13 @@ export default function PostComposer({ authenticated, variant, maxLength, onSubm
     try {
       await onSubmit(value);
       setValue('');
+      if (isInline) {
+        // Başarılı gönderim → tek satıra dön; "Paylaş" düğmesi kaybolacağı için odak alana döner (kaybolmaz)
+        skipExpandOnFocus.current = true;
+        setExpanded(false);
+        textareaRef.current?.focus();
+        skipExpandOnFocus.current = false;
+      }
     } catch (err) {
       setError(composerErrorMessage(err, t));
     } finally {
@@ -73,37 +98,59 @@ export default function PostComposer({ authenticated, variant, maxLength, onSubm
     }
   }
 
+  function onBlur(e: FocusEvent<HTMLDivElement>) {
+    if (!isInline || sending) return;
+    if (shouldCollapseOnBlur(value, e.currentTarget.contains(e.relatedTarget as Node | null))) setExpanded(false);
+  }
+
+  const placeholderKey = isInline ? 'composer.inlinePlaceholder' : isPost ? 'composer.postPlaceholder' : 'composer.commentPlaceholder';
+  const collapsed = isInline && !expanded;
+
   return (
-    <div className={`${styles.composer} ${variant === 'comment' ? styles.compact : ''}`.trim()}>
+    <div
+      className={[styles.composer, variant === 'comment' ? styles.compact : '', isInline ? styles.inline : '', collapsed ? styles.collapsed : '']
+        .filter(Boolean)
+        .join(' ')}
+      onBlur={onBlur}
+    >
       <textarea
+        ref={textareaRef}
         className={styles.textarea}
         value={value}
         onChange={(e) => setValue(e.target.value)}
         onKeyDown={onKeyDown}
-        placeholder={t(variant === 'post' ? 'composer.postPlaceholder' : 'composer.commentPlaceholder')}
-        aria-label={t(variant === 'post' ? 'composer.postPlaceholder' : 'composer.commentPlaceholder')}
+        onFocus={() => {
+          if (isInline && !skipExpandOnFocus.current) setExpanded(true);
+        }}
+        placeholder={t(placeholderKey)}
+        aria-label={t(placeholderKey)}
+        data-expanded={isInline ? expanded : undefined}
         maxLength={maxLength}
-        rows={variant === 'post' ? 3 : 2}
+        rows={collapsed ? 1 : isPost ? 3 : 2}
         autoFocus={autoFocus}
       />
-      <div className={styles.bar}>
-        <span className={styles.hint}>{t('composer.hint')}</span>
-        <span
-          className={`${styles.counter} ${warn ? styles.counterWarn : ''}`.trim()}
-          aria-live="polite"
-          aria-label={t('composer.remaining', { count: remaining })}
-        >
-          {remaining}
-        </span>
-        <button type="button" className={styles.submit} onClick={() => void submit()} disabled={!canSend}>
-          {sending ? t('composer.sending') : t(variant === 'post' ? 'composer.postSubmit' : 'composer.commentSubmit')}
-        </button>
-      </div>
-      {error ? (
-        <div className={styles.error} role="alert">
-          {error}
-        </div>
-      ) : null}
+      {collapsed ? null : (
+        <>
+          <div className={styles.bar}>
+            <span className={styles.hint}>{t('composer.hint')}</span>
+            <span
+              className={`${styles.counter} ${warn ? styles.counterWarn : ''}`.trim()}
+              aria-live="polite"
+              aria-label={t('composer.remaining', { count: remaining })}
+            >
+              {remaining}
+            </span>
+            <button type="button" className={styles.submit} onClick={() => void submit()} disabled={!canSend}>
+              {sending ? t('composer.sending') : t(isPost ? 'composer.postSubmit' : 'composer.commentSubmit')}
+            </button>
+          </div>
+          {error ? (
+            <div className={styles.error} role="alert">
+              {error}
+            </div>
+          ) : null}
+        </>
+      )}
     </div>
   );
 }

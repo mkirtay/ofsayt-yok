@@ -13,6 +13,7 @@
   "composer": {
     "postPlaceholder": "What's happening in football?",
     "commentPlaceholder": "Write your comment…",
+    "inlinePlaceholder": "What's on your mind?",
     "postSubmit": "Post",
     "commentSubmit": "Comment",
     "sending": "Sending…",
