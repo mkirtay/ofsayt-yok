@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
-import { BP_SPLIT, BP_WIDGET } from '@/config/breakpoints';
+import { BP_GUNDEM_PANEL, BP_SPLIT, BP_WIDGET } from '@/config/breakpoints';
 
 /** Split-view alt sınırı (`$bp-split`) — merkezi kaynak: config/breakpoints.ts */
 export const SPLIT_VIEW_MIN_WIDTH = BP_SPLIT;
+/** Ana sayfa idle Gündem paneli alt sınırı (`$bp-gundem-panel`) */
+export const GUNDEM_PANEL_MIN_WIDTH = BP_GUNDEM_PANEL;
 /** Sağ widget sütunu alt sınırı (`$bp-widget`) */
 export const RIGHT_COLUMN_MIN_WIDTH = BP_WIDGET;
 

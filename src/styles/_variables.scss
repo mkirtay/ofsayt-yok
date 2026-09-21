@@ -54,6 +54,7 @@ $bp-lg: 1024px; // masaüstü (satır sütun genişlikleri vb.)
 // ── Layout eşikleri (JS karşılığı: src/config/breakpoints.ts — birlikte güncelle) ──
 $bp-desktop: 1024px; // altı = mobil düzen (hamburger, alt nav, tek sütun); tablet dikey dahil
 $bp-split: 1200px; // split-view (liste + maç detay paneli) alt sınırı — `useSplitView` ile aynı
+$bp-gundem-panel: 1440px; // ana sayfa idle Gündem paneli (maç seçili değilken) alt sınırı — $bp-split'ten ayrı ek eşik
 $bp-widget: 1536px; // sağ widget sütunu görünür
 
 // Layout

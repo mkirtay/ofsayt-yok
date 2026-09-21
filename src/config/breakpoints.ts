@@ -7,10 +7,13 @@
  *                 sidebar liste altında (tablet dikey/iPad dahil)
  *  ≥ BP_DESKTOP : masaüstü — tam header nav'ı, sidebar + liste iki sütun
  *  ≥ BP_SPLIT   : split-view (liste + maç detay paneli)
+ *  ≥ BP_GUNDEM_PANEL : ana sayfada maç/takım seçili DEĞİLKEN Gündem paneli (idle); BP_SPLIT'ten AYRI ek eşik,
+ *                 `layoutTierForWidth` katmanlarını değiştirmez
  *  ≥ BP_WIDGET  : sağ widget sütunu (HubRightColumn)
  */
 export const BP_DESKTOP = 1024;
 export const BP_SPLIT = 1200;
+export const BP_GUNDEM_PANEL = 1440;
 export const BP_WIDGET = 1536;
 
 export type LayoutTier = 'mobile' | 'desktop' | 'split' | 'wide';

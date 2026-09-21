@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { BP_DESKTOP, BP_SPLIT, BP_WIDGET, layoutTierForWidth, MOBILE_LAYOUT_QUERY } from './breakpoints';
+import { BP_DESKTOP, BP_GUNDEM_PANEL, BP_SPLIT, BP_WIDGET, layoutTierForWidth, MOBILE_LAYOUT_QUERY } from './breakpoints';
 
 const read = (rel: string) => readFileSync(path.resolve(__dirname, '../..', rel), 'utf8');
 
@@ -18,6 +18,14 @@ describe('layoutTierForWidth — sınır değerleri', () => {
     expect(layoutTierForWidth(BP_WIDGET - 1)).toBe('split');
     expect(layoutTierForWidth(BP_WIDGET)).toBe('wide');
   });
+  it('idle Gündem paneli eşiği: split ile widget arasında, katmanları değiştirmez', () => {
+    expect(BP_GUNDEM_PANEL).toBe(1440);
+    expect(BP_GUNDEM_PANEL).toBeGreaterThan(BP_SPLIT);
+    expect(BP_GUNDEM_PANEL).toBeLessThan(BP_WIDGET);
+    // 1200–1535 hâlâ 'split' (Gündem eşiği ayrı bir ek eşik, layout katmanı değil)
+    expect(layoutTierForWidth(BP_GUNDEM_PANEL - 1)).toBe('split');
+    expect(layoutTierForWidth(BP_GUNDEM_PANEL)).toBe('split');
+  });
   it('tablet genişlikleri (768/820/834/912/1000) mobil düzende', () => {
     for (const w of [375, 768, 820, 834, 912, 1000]) expect(layoutTierForWidth(w)).toBe('mobile');
   });
@@ -29,9 +37,10 @@ describe('layoutTierForWidth — sınır değerleri', () => {
 describe('SCSS ↔ TS senkronu', () => {
   const vars = read('src/styles/_variables.scss');
   const px = (name: string) => Number(new RegExp(`\\$${name}:\\s*(\\d+)px`).exec(vars)?.[1]);
-  it('$bp-desktop / $bp-split / $bp-widget TS sabitleriyle aynı', () => {
+  it('$bp-desktop / $bp-split / $bp-gundem-panel / $bp-widget TS sabitleriyle aynı', () => {
     expect(px('bp-desktop')).toBe(BP_DESKTOP);
     expect(px('bp-split')).toBe(BP_SPLIT);
+    expect(px('bp-gundem-panel')).toBe(BP_GUNDEM_PANEL);
     expect(px('bp-widget')).toBe(BP_WIDGET);
   });
   it('mobil/masaüstü geçişini yöneten dosyalar ortak eşiği kullanır (768 sabiti yok)', () => {
