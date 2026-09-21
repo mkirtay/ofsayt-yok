@@ -18,7 +18,6 @@ import LangFlag from '../LangFlag';
 import MyAnalysesDropdown from './MyAnalysesDropdown';
 import AiMenu from './AiMenu';
 import AccountMenu from './AccountMenu';
-import { OPEN_MENU_EVENT } from '@/utils/bottomNav';
 import { lockBodyScroll } from '@/utils/scrollLock';
 import { MOBILE_LAYOUT_QUERY } from '@/config/breakpoints';
 import styles from './header.module.scss';
@@ -69,8 +68,6 @@ export default function Header() {
     const onDown = (e: MouseEvent | TouchEvent) => {
       const t = e.target as Node;
       if (menuRef.current?.contains(t) || hamburgerRef.current?.contains(t)) return;
-      // Alt navdaki "Diğer" kendi toggle'ını yönetir (çift tetiklenmesin)
-      if ((t as Element).closest?.('[data-menu-toggle]')) return;
       close();
     };
     // Masaüstü genişliğine geçilirse menü artık anlamsız — kapat
@@ -90,13 +87,6 @@ export default function Header() {
       mql.removeEventListener('change', onMql);
     };
   }, [mobileMenuOpen]);
-
-  // Alt navigasyondaki "Diğer" sekmesi mobil menüyü açar/kapatır
-  useEffect(() => {
-    const onToggle = () => setMobileMenuOpen((v) => !v);
-    window.addEventListener(OPEN_MENU_EVENT, onToggle);
-    return () => window.removeEventListener(OPEN_MENU_EVENT, onToggle);
-  }, []);
 
   // Bayrak, tıklayınca geçilecek dili gösterir (önceki "EN/TR" metniyle aynı anlam)
   const targetLang = locale === 'tr' ? 'en' : 'tr';
