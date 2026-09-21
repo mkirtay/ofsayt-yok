@@ -1,7 +1,15 @@
 import type { Prisma } from '@prisma/client';
 import { withAbsoluteImage } from '@/lib/siteUrl';
+import { isOfficialUser } from '@/lib/gundem/official';
 
-export const authorSelect = { id: true, name: true, username: true, image: true } as const;
+/** `email` yalnızca `official` türetmek için okunur; `serializeUserRef`/`serializeAuthor` yanıttan çıkarır. */
+export const authorSelect = { id: true, name: true, username: true, image: true, email: true } as const;
+
+/** Yorum yazarı/bildirim aktörü: temel alanlar + `official`; e-posta sızmaz. */
+export function serializeUserRef<T extends { email: string | null; image: string | null }>(row: T) {
+  const { email, ...rest } = row;
+  return { ...withAbsoluteImage(rest), official: isOfficialUser({ email }) };
+}
 
 /**
  * Post yazarı: temel alanlar + takipçi/takip sayıları (`Follow` `_count`) + istek sahibinin bu yazarı takip edip etmediği.
@@ -35,10 +43,12 @@ type PostRow = Prisma.PostGetPayload<{ select: ReturnType<typeof postSelect> }>;
 
 /** Yazar/profil serileştirmesi (post içindeki `author` ile profil endpoint'i aynısını kullanır). Kendi hesabında `followedByMe` her zaman false. */
 export function serializeAuthor(row: AuthorRow, viewerId: string | null = null) {
-  const { _count, followers, ...base } = row;
+  const { _count, followers, ...withEmail } = row;
+  const { email, ...base } = withEmail;
   const viewerFollows = Array.isArray(followers) && followers.length > 0;
   return {
     ...withAbsoluteImage(base),
+    official: isOfficialUser({ email }),
     followedByMe: viewerFollows && base.id !== viewerId,
     followerCount: _count.followers,
     followingCount: _count.following,

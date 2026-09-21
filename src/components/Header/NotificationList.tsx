@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Avatar from '@/components/Avatar';
+import VerifiedIcon from '@/components/icons/VerifiedIcon';
 import { useMarkNotificationsRead, useNotifications, useUnreadCount } from '@/hooks/useGundem';
 import { useTranslation } from '@/lib/i18n';
 import { describeNotification } from '@/utils/notifications';
@@ -66,7 +67,10 @@ export default function NotificationList({ onNavigate }: { onNavigate: () => voi
               <>
                 <Avatar name={n.actor?.name ?? n.actor?.username} image={n.actor?.image} size={36} />
                 <span className={styles.content}>
-                  <span className={styles.text}>{view.text}</span>
+                  <span className={styles.text}>
+                    {view.text}
+                    {n.actor?.official ? <VerifiedIcon className={styles.verified} size={13} title={t('post.official')} /> : null}
+                  </span>
                   {view.snippet ? <span className={styles.snippet}>{view.snippet}</span> : null}
                   <time className={styles.time} dateTime={n.createdAt}>
                     {formatRelativeTime(n.createdAt, t)}

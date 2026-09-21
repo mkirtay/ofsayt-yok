@@ -14,6 +14,7 @@ import {
   readJsonBody,
 } from '@/lib/gundem/validation';
 import { feedOrder, paginate, postSelect, serializePost } from '@/lib/gundem/posts';
+import { getOfficialAccountEmails } from '@/lib/gundem/official';
 
 const SCOPES = ['all', 'following', 'official'] as const;
 type Scope = (typeof SCOPES)[number];
@@ -31,7 +32,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       const where: Prisma.PostWhereInput = { deletedAt: null };
       if (scope === 'official') {
-        where.authorType = 'OFFICIAL_BOT';
+        where.OR = [{ authorType: 'OFFICIAL_BOT' }, { author: { email: { in: getOfficialAccountEmails() } } }];
       } else if (scope === 'following') {
         if (!viewerId) return res.status(401).json({ error: 'Giriş yapmanız gerekiyor.' });
         const follows = await prisma.follow.findMany({

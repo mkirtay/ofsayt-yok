@@ -133,3 +133,10 @@ a.item:hover {
     color: $color-text;
   }
 }
+
+.verified {
+  flex-shrink: 0;
+  margin-left: 4px;
+  vertical-align: -2px;
+  color: $color-verified;
+}

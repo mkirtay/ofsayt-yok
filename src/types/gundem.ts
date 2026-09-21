@@ -4,13 +4,15 @@ export type GundemAuthor = {
   name: string | null;
   username: string | null;
   image: string | null;
+  /** Resmi hesap (allowlist ya da legacy bot) — doğrulanmış rozeti. Sunucuda türetilir. */
+  official: boolean;
   followedByMe: boolean;
   followerCount: number;
   followingCount: number;
 };
 
 /** Profil başlığı: yazar alanları + silinmemiş post sayısı + resmi hesap bayrağı (`GET /api/gundem/users/[userId]`). */
-export type GundemUserProfile = GundemAuthor & { postCount: number; official: boolean };
+export type GundemUserProfile = GundemAuthor & { postCount: number };
 
 export type GundemPost = {
   id: string;
@@ -25,7 +27,7 @@ export type GundemPost = {
   likedByMe: boolean;
 };
 
-export type GundemCommentUser = Pick<GundemAuthor, 'id' | 'name' | 'username' | 'image'>;
+export type GundemCommentUser = Pick<GundemAuthor, 'id' | 'name' | 'username' | 'image' | 'official'>;
 
 export type GundemComment = {
   id: string;
@@ -48,6 +50,6 @@ export type GundemNotification = {
   postId: string | null;
   createdAt: string;
   readAt: string | null;
-  actor: Pick<GundemAuthor, 'id' | 'name' | 'username' | 'image'> | null;
+  actor: Pick<GundemAuthor, 'id' | 'name' | 'username' | 'image' | 'official'> | null;
   post: { id: string; body: string } | null;
 };

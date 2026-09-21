@@ -4,10 +4,9 @@ import { sanitizePlainText } from '@/lib/security';
 import { hitFixedWindowRateLimit } from '@/lib/rateLimit';
 import { captureError } from '@/lib/logger';
 import { getRequestUserId } from '@/lib/mobileAuth';
-import { withAbsoluteImage } from '@/lib/siteUrl';
 import { COMMENT_MAX_LENGTH } from '@/config/gundem';
 import { PAGE_SIZE, queryString, readJsonBody } from '@/lib/gundem/validation';
-import { authorSelect, paginate } from '@/lib/gundem/posts';
+import { authorSelect, paginate, serializeUserRef } from '@/lib/gundem/posts';
 import { createNotification } from '@/lib/gundem/notify';
 
 const commentSelect = {
@@ -36,7 +35,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         select: commentSelect,
       });
       const { items, nextCursor } = paginate(rows, PAGE_SIZE);
-      return res.json({ items: items.map((c) => ({ ...c, user: withAbsoluteImage(c.user) })), nextCursor });
+      return res.json({ items: items.map((c) => ({ ...c, user: serializeUserRef(c.user) })), nextCursor });
     }
 
     if (req.method === 'POST') {
@@ -67,7 +66,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const comment = await prisma.postComment.create({ data: { postId, userId, body }, select: commentSelect });
       await createNotification({ userId: post.authorId, actorId: userId, type: 'POST_COMMENT', postId });
 
-      return res.status(201).json({ ...comment, user: withAbsoluteImage(comment.user) });
+      return res.status(201).json({ ...comment, user: serializeUserRef(comment.user) });
     }
 
     res.setHeader('Allow', 'GET, POST');

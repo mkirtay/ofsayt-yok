@@ -41,9 +41,17 @@
 }
 
 .name {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-size: 13px;
   font-weight: 600;
   color: $color-text;
+}
+
+.verified {
+  flex-shrink: 0;
+  color: $color-verified;
 }
 
 .time {

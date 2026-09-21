@@ -2,9 +2,8 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '@/lib/prisma';
 import { captureError } from '@/lib/logger';
 import { requireAuth } from '@/lib/requireAuth';
-import { withAbsoluteImage } from '@/lib/siteUrl';
 import { PAGE_SIZE, queryString, readJsonBody } from '@/lib/gundem/validation';
-import { authorSelect, paginate } from '@/lib/gundem/posts';
+import { authorSelect, paginate, serializeUserRef } from '@/lib/gundem/posts';
 
 /**
  * GET: bildirim listesi (cursor). POST: okundu işaretle — gövde `{ ids?: string[] }`;
@@ -37,7 +36,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.json({
         items: items.map(({ actor, post, ...n }) => ({
           ...n,
-          actor: actor ? withAbsoluteImage(actor) : null,
+          actor: actor ? serializeUserRef(actor) : null,
           post: post && !post.deletedAt ? { id: post.id, body: post.body } : null,
         })),
         nextCursor,

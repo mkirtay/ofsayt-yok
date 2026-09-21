@@ -16,7 +16,8 @@ const ENABLED = process.env.DB_INTEGRATION === '1';
 // runId, vi.mock fabrikası için hoisted olmak zorunda (bot hesabı sabiti test kullanıcısına yönlenir).
 const h = vi.hoisted(() => ({ runId: `itest-${Math.random().toString(16).slice(2, 10)}` }));
 
-vi.mock('@/lib/gundem/official', () => ({
+vi.mock('@/lib/gundem/official', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/gundem/official')>()),
   OFFICIAL_ACCOUNT_EMAIL: `${h.runId}-official@example.invalid`,
   OFFICIAL_ACCOUNT_USERNAME: `${h.runId}-official`,
   OFFICIAL_ACCOUNT_NAME: 'ITest Resmi',

@@ -11,7 +11,7 @@ const base = (over: Partial<GundemNotification> = {}): GundemNotification => ({
   postId: 'cpost0000000000000001',
   createdAt: '2026-09-20T12:00:00.000Z',
   readAt: null,
-  actor: { id: 'u-ada', name: 'Ada', username: 'ada', image: null },
+  actor: { id: 'u-ada', name: 'Ada', username: 'ada', image: null, official: false },
   post: { id: 'cpost0000000000000001', body: 'Merhaba dünya' },
   ...over,
 });
@@ -49,8 +49,8 @@ describe('describeNotification', () => {
   });
 
   it('isim yoksa kullanıcı adına, o da yoksa yedek metne düşer', () => {
-    expect(describeNotification(base({ actor: { id: 'u', name: null, username: 'kaan', image: null } }), t)?.text).toBe('notifications.postLike:kaan');
-    expect(describeNotification(base({ actor: { id: 'u', name: null, username: null, image: null } }), t)?.text).toBe('notifications.postLike:notifications.someone');
+    expect(describeNotification(base({ actor: { id: 'u', name: null, username: 'kaan', image: null, official: false } }), t)?.text).toBe('notifications.postLike:kaan');
+    expect(describeNotification(base({ actor: { id: 'u', name: null, username: null, image: null, official: false } }), t)?.text).toBe('notifications.postLike:notifications.someone');
   });
 
   it('actor === null: "Bir kullanıcı"; FOLLOW tıklanamaz; OFFICIAL_POST için "Ofsayt Yok"', () => {

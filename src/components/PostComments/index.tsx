@@ -2,6 +2,7 @@ import { useSession } from 'next-auth/react';
 import Avatar from '@/components/Avatar';
 import { useConfirmDialog } from '@/components/ConfirmDialog';
 import EmptyState from '@/components/EmptyState';
+import VerifiedIcon from '@/components/icons/VerifiedIcon';
 import PostComposer from '@/components/PostComposer';
 import TrashIcon from '@/components/icons/TrashIcon';
 import { COMMENT_MAX_LENGTH } from '@/config/gundem';
@@ -68,7 +69,10 @@ export default function PostComments({ postId, currentUserId, isAdmin }: Props) 
                 <Avatar name={name} image={c.user.image} size={32} />
                 <div className={styles.main}>
                   <div className={styles.head}>
-                    <span className={styles.name}>{name}</span>
+                    <span className={styles.name}>
+                      {name}
+                      {c.user.official ? <VerifiedIcon className={styles.verified} size={13} title={t('post.official')} /> : null}
+                    </span>
                     <time className={styles.time} dateTime={c.createdAt}>
                       {formatRelativeTime(c.createdAt, t)}
                     </time>

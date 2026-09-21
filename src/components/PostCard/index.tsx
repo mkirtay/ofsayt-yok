@@ -43,7 +43,7 @@ export default function PostCard({
   now,
 }: PostCardProps) {
   const { t } = useTranslation('gundem');
-  const official = post.authorType === 'OFFICIAL_BOT';
+  const official = post.authorType === 'OFFICIAL_BOT' || post.author.official;
   const displayName = post.author.name ?? post.author.username ?? t('post.anonymous');
   const canDelete = !!onDelete && !!currentUserId && (post.author.id === currentUserId || isAdmin);
   const href = `/gundem/${post.id}`;

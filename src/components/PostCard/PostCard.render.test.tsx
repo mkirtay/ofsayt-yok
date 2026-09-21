@@ -13,7 +13,7 @@ const post = (over: Partial<GundemPost> = {}): GundemPost => ({
   authorType: 'USER',
   matchId: null,
   teamId: null,
-  author: { id: 'u-author', name: 'Ada', username: 'ada', image: null, followedByMe: false, followerCount: 0, followingCount: 0 },
+  author: { id: 'u-author', name: 'Ada', username: 'ada', image: null, official: false, followedByMe: false, followerCount: 0, followingCount: 0 },
   likes: 3,
   comments: 2,
   likedByMe: false,
@@ -64,7 +64,11 @@ describe('<PostCard />', () => {
   it('resmi hesap için doğrulama rozeti gösterir', () => {
     const bot = renderToStaticMarkup(<PostCard post={post({ authorType: 'OFFICIAL_BOT' })} onToggleLike={noop} now={NOW} />);
     const user = renderToStaticMarkup(<PostCard post={post()} onToggleLike={noop} now={NOW} />);
+    const allowlisted = renderToStaticMarkup(
+      <PostCard post={post({ author: { ...post().author, official: true } })} onToggleLike={noop} now={NOW} />,
+    );
     expect(bot).toContain('Resmi hesap');
+    expect(allowlisted).toContain('Resmi hesap'); // USER post'u ama allowlist'teki hesap
     expect(user).not.toContain('Resmi hesap');
   });
 
