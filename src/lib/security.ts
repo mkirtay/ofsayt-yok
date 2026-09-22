@@ -62,7 +62,7 @@ async function sendViaResend(to: string, subject: string, html: string): Promise
   }
   if (!from.includes('@')) {
     console.warn(
-      '[resend] EMAIL_FROM gecersiz (e-posta yok). Ornek: Ofsayt Yok <onboarding@resend.dev>',
+      '[resend] EMAIL_FROM gecersiz (e-posta yok). Ornek: Ofsayt Yok <no-reply@contact.ofsaytyok.app>',
     );
     return false;
   }

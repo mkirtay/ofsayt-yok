@@ -23,7 +23,7 @@
 2. DNS paneline (Cloudflare vb.) verilen TXT + MX kayıtlarını ekle
 3. Doğrulandıktan sonra `.env`'i güncelle:
 ```bash
-EMAIL_FROM=Ofsayt Yok <noreply@ofsaytyok.app>
+EMAIL_FROM=Ofsayt Yok <no-reply@contact.ofsaytyok.app>
 ```
 4. Artık tüm kullanıcılara doğrulama maili gider.
 
@@ -178,7 +178,7 @@ STRIPE_WEBHOOK_SECRET=          # Vercel webhook endpoint'inden alınır (aşağ
 
 # Email
 RESEND_API_KEY=
-EMAIL_FROM=Ofsayt Yok <noreply@ofsaytyok.app>   # domain doğrulandıktan sonra
+EMAIL_FROM=Ofsayt Yok <no-reply@contact.ofsaytyok.app>   # domain doğrulandıktan sonra
 
 # Sentry
 NEXT_PUBLIC_SENTRY_DSN=
