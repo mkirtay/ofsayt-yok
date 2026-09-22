@@ -347,3 +347,37 @@ model Notification {
 
   @@index([userId, readAt, createdAt])
 }
+
+/// Gündem resmi hesap botu taslağı (onay kuyruğu). Poller üretir (PENDING), admin onaylar/reddeder; onayda VAR yeniden doğrulaması
+/// başarısızsa STALE. Yayınlanınca Post.id `postId`'ye yazılır. `externalKey` tek kez işlemeyi garanti eder.
+enum BotDraftStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  POSTED
+  STALE
+}
+
+model GundemBotDraft {
+  id          String         @id @default(cuid())
+  /// goal:<fixtureId>:<eventId> (v1 yalnızca GOAL; ht:/ft: ileride)
+  externalKey String         @unique
+  /// "GOAL" | "HT" | "FT"
+  kind        String
+  fixtureId   Int
+  eventId     Int?
+  /// Şablon çıktısı; onayda elle düzenlenebilir.
+  body        String         @db.Text
+  /// GoalFacts (denetim için).
+  facts       Json
+  warnings    String[]
+  status      BotDraftStatus @default(PENDING)
+  /// Yayınlanınca Post.id.
+  postId      String?
+  decidedById String?
+  decidedAt   DateTime?
+  createdAt   DateTime       @default(now())
+
+  @@index([status, createdAt])
+  @@index([fixtureId])
+}

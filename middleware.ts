@@ -36,6 +36,21 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
+  // ── Admin sayfaları (/admin/*): oturum yoksa girişe, ADMIN değilse 404 (varlığı gizlenir) ─────────────
+  if (pathname === '/admin' || pathname.startsWith('/admin/')) {
+    const token = await getToken({ req });
+    if (!token) {
+      const url = req.nextUrl.clone();
+      url.pathname = '/auth/signin';
+      url.searchParams.set('callbackUrl', pathname);
+      return NextResponse.redirect(url);
+    }
+    if (token.role !== 'ADMIN') {
+      return NextResponse.rewrite(new URL('/404', req.url));
+    }
+    return NextResponse.next();
+  }
+
   // ── Sayfa koruması ─────────────────────────────────────────────────────────
   const needsAuth = AUTH_PAGES.some(
     (p) => pathname === p || pathname.startsWith(p + '/'),
@@ -54,5 +69,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/profile', '/ai-istatistikleri', '/api/admin/:path*'],
+  matcher: ['/profile', '/ai-istatistikleri', '/api/admin/:path*', '/admin/:path*'],
 };

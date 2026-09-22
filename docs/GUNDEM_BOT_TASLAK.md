@@ -1,7 +1,7 @@
 # Gündem resmi hesap botu — tasarım taslağı
 
-Durum (2026-09-22): **Adım 1–2 kodlandı, Adım 3 yalnızca tasarım** (migration YOK, prod'a uygulama sahibi tarafından yapılır).
-Hiçbir şey otomatik/canlı yayınlanmıyor; taslak üretimi ve yayın ayrı, elle tetiklenen iki çağrı.
+Durum (2026-09-22): **Adım 1–3 kodlandı.** Migration dosyası hazır (`prisma/migrations/20260922120000_add_gundem_bot_draft`) ama **prod'a UYGULANMADI** —
+sahibi uygular. Hiçbir şey otomatik yayınlanmıyor: poller yalnızca PENDING taslak yazar, yayın yalnızca admin onayıyla (`/admin/gundem-kuyruk`).
 
 ## Bugünkü akış (Adım 1–2)
 ```
@@ -22,11 +22,12 @@ veri eksikse ilgili cümle YAZILMAZ (uydurma yok). Metin düz template — LLM y
    (tablo zaten maçı içerir → "before" yanlış hesaplanır).
 2. **Kendi kalesine golde `participant_id`** golü atan mı yiyen takım mı? Doğrulanmadı → skor satırı bu durumda yazılmıyor.
 3. Lig adı Sportmonks'tan İngilizce/ASCII geliyor ("Super Lig"); görüntüleme eşlemesi `bot/leagueNames.ts` (league_id anahtarlı, 11 bilinen lig; bilinmeyen lig API adında kalır). Eşleme id'leri logo yollarından/dokümandan türetildi, canlı doğrulanmadı.
-4. **Webhook:** Sportmonks v3 dokümantasyonunda webhook/push YOK (bkz. rapor); önerilen yol polling — `GET /livescores/latest`
-   (10 sn'lik sabit döngüde güncellenen fixture'lar, `include=events;participants` ile). Enterprise'a özel bir teklif olabilir, panelden/satıştan sorulmalı.
+4. **Webhook:** Sportmonks v3 dokümantasyonunda webhook/push YOK; yol polling. `livescores/latest` yalnızca SON 10 SN'de güncellenen fixture'ları
+   verir → dakikalık tetiklemede olay kaçırır. Bu yüzden poller `GET /livescores/inplay?include=participants;league;events` (TAM durum) kullanır ve
+   farkı `externalKey` ile çıkarır. Enterprise'a özel bir teklif olabilir, panelden/satıştan sorulmalı.
 
-## Adım 3 taslağı — `GundemBotDraft` + onay kuyruğu (UYGULANMADI)
-Prisma (yalnızca öneri; `schema.prisma`'ya EKLENMEDİ):
+## Adım 3 — `GundemBotDraft` + onay kuyruğu (KODLANDI; migration prod'a uygulanmadı)
+Prisma (`schema.prisma`'da; SQL: `prisma/migrations/20260922120000_add_gundem_bot_draft/migration.sql`):
 ```prisma
 enum BotDraftStatus { PENDING APPROVED REJECTED POSTED STALE }
 
@@ -49,8 +50,8 @@ model GundemBotDraft {
 }
 ```
 Akış:
-1. **Poller** (`/api/admin/gundem/bot-tick`, Bearer CRON_SECRET; tetikleyici: Vercel Pro cron / QStash / harici cron — Hobby cron günde 1):
-   `livescores/latest` → yeni gol olayları → `buildGoalDraft` → `GundemBotDraft` upsert (`externalKey` unique = tek kez işleme;
+1. **Poller** (`POST /api/admin/gundem/bot-tick`, yalnızca Bearer CRON_SECRET; tetikleyici: cron-job.org, 1 dk):
+   `livescores/inplay` (yalnızca takip edilen ligler, `src/config/gundemBot.ts`) → yeni gol olayları → `buildGoalDraft` → `GundemBotDraft` upsert (`externalKey` unique = tek kez işleme;
    `P2002` sessizce yutulur). İkinci güvence: (fixture, oyuncu, dakika, skor) imzası (eski `tweet-bot.js` `goalSignature` deseni).
 2. **Kuyruk sayfası** `/admin/gundem-kuyruk` (`getServerSideProps` + `requireAdmin`; `middleware.ts` matcher'a `/admin/:path*`):
    PENDING listesi, `warnings` görünür, metin düzenle, Onayla / Reddet.
@@ -66,3 +67,31 @@ Taslak metnindeki skor da yeniden hesaplanıp karşılaştırılır (arada başk
 ### Diğer notlar
 - `OFFICIAL_POST` bildirimi hâlâ üretilmiyor; eklenirse yalnızca takipçilere ve düşük hacimle (spam riski).
 - Kota: gol başına ≈ 1 Fixture + ~2 Topscorer isteği; sezon tablosu maç başına bir kez önbelleğe alınabilir. Havuzlar bağımsız (2500/saat).
+
+## Endpoint listesi
+| Endpoint | Yetki | Not |
+|---|---|---|
+| `GET /api/admin/gundem/bot-goal-draft?fixtureId=&eventId=` | cron/admin | salt okunur taslak |
+| `POST /api/admin/gundem/bot-post` | cron/admin | idempotent elle yayın |
+| `POST /api/admin/gundem/bot-tick` | YALNIZCA cron (Bearer) | poller; query'de sır → 400 |
+| `GET /api/admin/gundem/drafts?status=PENDING\|POSTED\|REJECTED\|STALE\|all&cursor=` | admin | kuyruk listesi (sayfa: 20) |
+| `PATCH /api/admin/gundem/drafts/[id]` `{body}` | admin | yalnızca PENDING, 280 sınırı |
+| `POST /api/admin/gundem/drafts/[id]/approve` | admin | atomik claim → VAR/olay doğrulaması → `createBotPost` → POSTED; bozuksa STALE (409) |
+| `POST /api/admin/gundem/drafts/[id]/reject` | admin | PENDING → REJECTED |
+Sayfa: `/admin/gundem-kuyruk` (yalnızca ADMIN; maç adı, dakika, uyarılar, düzenleme, "Maç sayfasını aç" = uygulamanın kendi `/matches/{fixtureId}` sayfası;
+Sportmonks'un herkese açık maç sayfası yok, API URL'leri token içerdiği için gösterilmez).
+
+## Kurulum / işletme
+1. Migration'ı sahibi uygular: `prisma migrate deploy` (yalnızca yeni tablo + enum; mevcut tablolara dokunmaz).
+2. Env: `CRON_SECRET` (zaten var), `SPORTMONKS_API_KEY`, opsiyonel `GUNDEM_BOT_EMAIL`, `GUNDEM_BOT_LEAGUE_IDS` (varsayılan: 600,606,8,82,564,384,301,2,5),
+   `GUNDEM_BOT_TOPSCORERS_INCLUDE_LIVE` (varsayılan false; bkz. varsayım 1).
+3. **cron-job.org**: URL `https://<alan-adı>/api/admin/gundem/bot-tick` (query YOK), yöntem POST, aralık 1 dk, ileri ayarlarda başlık
+   `Authorization: Bearer <CRON_SECRET>`. Sır ASLA URL'ye yazılmaz (URL'ler loglanır); uç, query'de secret/token/key/auth/password geçen istekleri 400 ile reddeder.
+   Başarısız yanıtlar için cron-job.org'da e-posta bildirimi açın.
+4. Poller maç yokken de dakikada 1 `inplay` isteği atar (Fixture havuzu, 2500/saat kotasının ~%2'si); takip edilen lig maçı yoksa DB'ye dokunmaz.
+
+## Bilinen kısıtlar
+- İlk tick'te (ya da kesintiden sonra) maç ortasında yakalanan eski goller `backlog:` uyarısıyla taslak olur; fixture başına tick başına en fazla 5.
+- VAR doğrulaması sezgisel: golden sonraki 10 dk içinde aynı takım için herhangi bir VAR (tip 10) olayı taslağı eskitir (yanlış-olumlu güvenli taraf).
+- **Kökteki `middleware.ts` `src/` dizini nedeniyle Next tarafından yüklenmiyor** (dev'de `/profile` girişsiz 200 dönüyor, `/api/admin/*` yanıtları handler'dan geliyor).
+  Bot uçları bundan bağımsız: her handler kendi yetki kontrolünü yapar.

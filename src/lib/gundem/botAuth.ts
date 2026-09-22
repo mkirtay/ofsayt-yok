@@ -8,7 +8,7 @@ export function isValidCronRequest(req: NextApiRequest): boolean {
   return req.headers.authorization === `Bearer ${secret}`;
 }
 
-/** Bot uçları: CRON_SECRET ya da ADMIN oturumu (middleware ilk katman, burası ikinci). Reddedilirse yanıt yazılmıştır → false. */
+/** Bot uçları: CRON_SECRET ya da ADMIN oturumu (handler seviyesinde zorunlu kontrol). Reddedilirse yanıt yazılmıştır → false. */
 export async function requireCronOrAdmin(req: NextApiRequest, res: NextApiResponse): Promise<boolean> {
   if (isValidCronRequest(req)) return true;
   const guard = await requireAdmin(req, res);
