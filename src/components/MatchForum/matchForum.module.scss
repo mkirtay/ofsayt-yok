@@ -1,6 +1,6 @@
 @use '../../styles/variables' as *;
 
-// "Topluluk" kartının (MatchCommunity) içindeki yorum bölümü — kendi kart çerçevesi yok.
+// "Forum" sekmesi kartının (MatchForumTab) içindeki yorum bölümü — kendi kart çerçevesi yok.
 .container {
   display: flex;
   flex-direction: column;

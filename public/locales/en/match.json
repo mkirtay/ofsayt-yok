@@ -159,6 +159,13 @@
     "like": "Like",
     "deleteTitle": "Delete comment"
   },
+  "tabs": {
+    "label": "Match sections",
+    "overview": "Overview",
+    "forum": "Forum",
+    "analysis": "AI Analysis",
+    "trivia": "Trivia"
+  },
   "news": {
     "loading": "Loading news...",
     "empty": "No current news available."
@@ -191,16 +198,7 @@
     "teams": "Teams",
     "tabsAriaLabel": "World Cup content tabs"
   },
-  "community": {
-    "title": "Community"
-  },
   "premiumBadge": "Premium",
-  "insights": {
-    "label": "Match insights",
-    "trivia": "Trivia",
-    "analysis": "Analysis",
-    "community": "Community"
-  },
   "leagueFilter": {
     "group": "League filter",
     "all": "All",

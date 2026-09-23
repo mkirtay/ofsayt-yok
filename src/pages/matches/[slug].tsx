@@ -6,7 +6,7 @@ import Container from '@/components/Container';
 import MatchDetailContent from '@/components/MatchDetailContent';
 import { toStandingsCompetitionId } from '@/services/sportmonksProviderFlag';
 import MatchCompetitionStandings from '@/components/MatchCompetitionStandings';
-import MatchInsightTabs from '@/components/MatchInsightTabs';
+import MatchArchivedTabs from '@/components/MatchArchivedTabs';
 import JsonLd from '@/components/JsonLd';
 import { useMatchDetail } from '@/hooks/useMatchDetail';
 import type { Match } from '@/models/liveScore';
@@ -159,7 +159,7 @@ export default function MatchDetail({ initialMatch }: MatchDetailProps) {
             Bu maç artık canlı veri sağlayıcısında bulunmuyor. Aşağıda bu maç için
             daha önce üretilmiş/saklanmış içerikler (varsa) gösteriliyor.
           </div>
-          {effectiveMatchId ? <MatchInsightTabs matchId={effectiveMatchId} match={null} /> : null}
+          {effectiveMatchId ? <MatchArchivedTabs matchId={effectiveMatchId} /> : null}
         </Container>
       </>
     );

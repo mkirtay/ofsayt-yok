@@ -159,6 +159,13 @@
     "like": "Beğen",
     "deleteTitle": "Yorumu sil"
   },
+  "tabs": {
+    "label": "Maç detay bölümleri",
+    "overview": "Genel Bakış",
+    "forum": "Forum",
+    "analysis": "AI Analiz",
+    "trivia": "Trivia"
+  },
   "news": {
     "loading": "Haberler yükleniyor...",
     "empty": "Şu an güncel haber bulunamadı."
@@ -191,16 +198,7 @@
     "teams": "Takımlar",
     "tabsAriaLabel": "Dünya kupası içerik sekmeleri"
   },
-  "community": {
-    "title": "Topluluk"
-  },
   "premiumBadge": "Premium",
-  "insights": {
-    "label": "Maç içgörüleri",
-    "trivia": "Trivia",
-    "analysis": "Analiz",
-    "community": "Topluluk"
-  },
   "leagueFilter": {
     "group": "Lig filtresi",
     "all": "Tümü",

@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import MatchDetailContent from '@/components/MatchDetailContent';
-import MatchInsightTabs from '@/components/MatchInsightTabs';
+import MatchArchivedTabs from '@/components/MatchArchivedTabs';
 import { useMatchDetail } from '@/hooks/useMatchDetail';
 import { buildMatchHref } from '@/utils/matchUrl';
 import styles from './matchDetailPanel.module.scss';
@@ -57,7 +57,7 @@ export default function MatchDetailPanel({ matchId, onClose }: Props) {
             <p className={styles.note}>
               Bu maç artık canlı veri sağlayıcısında bulunmuyor. Aşağıda saklanmış içerikler (varsa) gösteriliyor.
             </p>
-            <MatchInsightTabs key={matchId} matchId={matchId} match={null} />
+            <MatchArchivedTabs key={matchId} matchId={matchId} />
           </>
         ) : (
           <>

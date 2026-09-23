@@ -1,0 +1,44 @@
+@use '../../styles/variables' as *;
+
+// Chip dili (lig filtresiyle aynı) — dar panelde taşarsa yatay kayar.
+.tabList {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  overflow-x: auto;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.tab {
+  @include filter-chip;
+
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+
+.tabActive {
+  @include filter-chip-active;
+}
+
+// AI üretimi gerektiren sekmeler (Design System §1: amber premium rengi).
+.premiumDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-premium);
+}
+
+// Panel içerikleri kendi kartlarını çizer; şerit ile içerik arası mesafe sarmalayıcının gap'i kadar.
+.panel {
+  min-width: 0;
+
+  > :first-child {
+    margin-top: 0;
+  }
+}

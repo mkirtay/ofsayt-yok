@@ -1,0 +1,9 @@
+@use '../../styles/variables' as *;
+
+// Maç detay sayfasıyla aynı dikey ritim (sekme şeridi → panel).
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+  min-width: 0;
+}
