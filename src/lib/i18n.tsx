@@ -19,6 +19,8 @@ import trAi from '../../public/locales/tr/ai.json';
 import enAi from '../../public/locales/en/ai.json';
 import trLegal from '../../public/locales/tr/legal.json';
 import enLegal from '../../public/locales/en/legal.json';
+import trLeagues from '../../public/locales/tr/leagues.json';
+import enLeagues from '../../public/locales/en/leagues.json';
 import trGundem from '../../public/locales/tr/gundem.json';
 import enGundem from '../../public/locales/en/gundem.json';
 
@@ -29,6 +31,7 @@ const TRANSLATIONS: Record<string, Record<string, Record<string, unknown>>> = {
     auth: trAuth as Record<string, unknown>,
     credits: trCredits as Record<string, unknown>,
     match: trMatch as Record<string, unknown>,
+    leagues: trLeagues as Record<string, unknown>,
     standings: trStandings as Record<string, unknown>,
     profile: trProfile as Record<string, unknown>,
     ai: trAi as Record<string, unknown>,
@@ -41,6 +44,7 @@ const TRANSLATIONS: Record<string, Record<string, Record<string, unknown>>> = {
     auth: enAuth as Record<string, unknown>,
     credits: enCredits as Record<string, unknown>,
     match: enMatch as Record<string, unknown>,
+    leagues: enLeagues as Record<string, unknown>,
     standings: enStandings as Record<string, unknown>,
     profile: enProfile as Record<string, unknown>,
     ai: enAi as Record<string, unknown>,

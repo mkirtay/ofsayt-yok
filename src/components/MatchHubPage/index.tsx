@@ -35,6 +35,7 @@ import LeagueLogo from '@/components/LeagueLogo';
 import { isUefaCupCompetitionId, type SidebarLeague } from '@/config/leagues';
 import { resolveSportmonksLeagueId } from '@/services/sportmonksProviderFlag';
 import { resolveSidebarLeagueLogo } from '@/utils/leagueLogo';
+import { leagueDisplayName } from '@/utils/leagueName';
 import { todayIsoIstanbul } from '@/utils/dateStrip';
 import { buildMatchHref } from '@/utils/matchUrl';
 import {
@@ -81,6 +82,7 @@ export default function MatchHubPage({
 }: MatchHubPageProps) {
   const { t } = useTranslation('match');
   const { t: tg } = useTranslation('gundem');
+  const { t: tl } = useTranslation('leagues');
   const { locale } = useI18n();
   const queryClient = useQueryClient();
   const router = useRouter();
@@ -227,8 +229,8 @@ export default function MatchHubPage({
 
   const leagueFilter = useLeagueFilter();
   const leagueCatalog = useMemo(
-    () => buildLeagueCatalog([...allMatches, ...liveMatches, ...fixtureMatches], leagueFilter.state.custom),
-    [allMatches, liveMatches, fixtureMatches, leagueFilter.state.custom],
+    () => buildLeagueCatalog([...allMatches, ...liveMatches, ...fixtureMatches], leagueFilter.state.custom, tl),
+    [allMatches, liveMatches, fixtureMatches, leagueFilter.state.custom, tl],
   );
   const leagueFilterActive = leagueFilter.state.mode !== 'all';
 
@@ -281,8 +283,8 @@ export default function MatchHubPage({
     }));
   }, [uefaFixtureMode, uefaFixturesQuery.data, activeTab, favoriteTeamSet, locale, t]);
 
-  const selectedLeagueName =
-    sidebarLeagues.find((l) => l.id === selectedCompId)?.name ?? 'Lig';
+  const selectedLeague = sidebarLeagues.find((l) => l.id === selectedCompId);
+  const selectedLeagueName = selectedLeague ? leagueDisplayName(selectedLeague, tl) : tl('fallback');
 
   // Canlı fikstürdeki `league.image_path` (→ `competition.logo`) — sidebar logolarının birincil kaynağı.
   // Fikstürde `competition.id` Sportmonks lig id'sidir; sidebar ise legacy id kullanır → eşle.
@@ -575,7 +577,7 @@ export default function MatchHubPage({
                             onClick={() => handleLeagueClick(league.id)}
                           >
                             <LeagueLogo src={logoUrl} className={styles.leagueFlag} size={20} />
-                            <span>{league.name}</span>
+                            <span>{leagueDisplayName(league, tl)}</span>
                           </button>
                         </li>
                       );

@@ -5,6 +5,7 @@ import { useTranslation } from '@/lib/i18n';
 import LeagueLogo from '@/components/LeagueLogo';
 import { SIDEBAR_LEAGUES, UEFA_SIDEBAR_LEAGUES } from '@/config/leagues';
 import { resolveSidebarLeagueLogo } from '@/utils/leagueLogo';
+import { leagueDisplayName } from '@/utils/leagueName';
 import { sportmonksClientRequest } from '@/services/sportmonksRuntimeClient';
 import { HOME_FAVORITES_LS_KEY, mergeFavoriteIds, parseLocalFavoriteIds } from '@/utils/favoriteImport';
 import styles from './profile.module.scss';
@@ -50,9 +51,10 @@ function useTeamNames(ids: number[]): Map<number, Named | null> {
 
 /** Lig id'leri: önce yerel lig listesi (yan panel/UEFA — logo dahil), yoksa Sportmonks `/leagues/{id}`. */
 function useLeagueNames(ids: number[]): Map<number, Named | null> {
+  const { t: tl } = useTranslation('leagues');
   const local = new Map<number, Named>();
   for (const l of [...SIDEBAR_LEAGUES, ...UEFA_SIDEBAR_LEAGUES]) {
-    if (ids.includes(l.id)) local.set(l.id, { id: l.id, name: l.name, logo: resolveSidebarLeagueLogo(l) });
+    if (ids.includes(l.id)) local.set(l.id, { id: l.id, name: leagueDisplayName(l, tl), logo: resolveSidebarLeagueLogo(l) });
   }
   const remoteIds = ids.filter((id) => !local.has(id));
   const results = useQueries({

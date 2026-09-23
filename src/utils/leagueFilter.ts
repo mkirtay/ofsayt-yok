@@ -7,6 +7,7 @@ import {
 import { isSportmonksProviderEnabled, resolveSportmonksLeagueId } from '@/services/sportmonksProviderFlag';
 import { parseLeagueImagePath, sportmonksLeagueLogoUrl } from '@/utils/leagueLogo';
 import { uefaCompetitionLogoSrcById } from '@/utils/competitionLogo';
+import { leagueDisplayName, type LeagueTranslate } from '@/utils/leagueName';
 
 /**
  * Ana sayfa lig filtresi (hesapsız, `localStorage`). Aktif üst sekmeden (Hepsi/Canlı/Bitmiş/Favoriler)
@@ -131,8 +132,15 @@ type CatalogSource = WithCompetition & {
 /**
  * "Tam lig listesi": bilinen (sidebar + UEFA) ligler + yüklü maçlarda görülen ligler + daha önce
  * seçilmiş (bugün maçı olmasa da listede kalır). Bilinenler önce (sabit sıra), kalanlar alfabetik.
+ *
+ * `t` verilirse BİLİNEN liglerin adı `leagues` namespace'inden çevrilir; API'den gelenler kendi
+ * adıyla kalır (çevirileri yok). Verilmezse hepsi config'teki Türkçe adla döner.
  */
-export function buildLeagueCatalog(matches: CatalogSource[], picked: PickedLeague[] = []): CatalogLeague[] {
+export function buildLeagueCatalog(
+  matches: CatalogSource[],
+  picked: PickedLeague[] = [],
+  t?: LeagueTranslate,
+): CatalogLeague[] {
   const byId = new Map<number, CatalogLeague>();
 
   // Logo: maç listesi grup başlıklarıyla AYNI kaynak → `competition.logo` (API image_path), yoksa UEFA yerel svg;
@@ -142,7 +150,7 @@ export function buildLeagueCatalog(matches: CatalogSource[], picked: PickedLeagu
     const id = toMatchCompetitionId(l.id);
     if (id == null) continue;
     const logo = parseLeagueImagePath(l.logo) ?? uefaCompetitionLogoSrcById(l.id) ?? derivedLogo(id);
-    byId.set(id, { id, name: l.name, known: true, ...(logo ? { logo } : {}) });
+    byId.set(id, { id, name: t ? leagueDisplayName(l, t) : l.name, known: true, ...(logo ? { logo } : {}) });
   }
   for (const m of matches) {
     const id = m.competition?.id ?? m.competition_id;

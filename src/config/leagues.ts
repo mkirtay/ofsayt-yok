@@ -85,6 +85,12 @@ function nameCompare(a: LeagueGroupSortInput, b: LeagueGroupSortInput): number {
 
 export type SidebarLeague = {
   id: number;
+  /**
+   * `public/locales/{tr,en}/leagues.json` anahtarı — GÖSTERİLEN ad buradan gelir
+   * (bkz. `utils/leagueName.ts`). `name` yalnızca yedek/arama içindir.
+   */
+  nameKey: string;
+  /** Türkçe yedek ad: çeviri anahtarı bulunamazsa ve arama eşleşmesinde kullanılır. */
   name: string;
   /** country_id for flag via API proxy; null = use static logo */
   countryId: number | null;
@@ -93,14 +99,14 @@ export type SidebarLeague = {
 };
 
 export const SIDEBAR_LEAGUES: SidebarLeague[] = [
-  { id: 6,   name: 'Trendyol Süper Lig',    countryId: 48, logo: 'https://cdn.sportmonks.com/images/soccer/leagues/24/600.png' },
-  { id: 344, name: 'Trendyol 1. Lig',        countryId: 48, logo: 'https://cdn.sportmonks.com/images/soccer/leagues/27/603.png' },
-  { id: 347, name: 'Türkiye Kupası',          countryId: 48, logo: 'https://cdn.sportmonks.com/images/soccer/leagues/30/606.png' },
-  { id: 2,   name: 'İngiltere Premier Lig',   countryId: 19, logo: 'https://cdn.sportmonks.com/images/soccer/leagues/8/8.png' },
-  { id: 1,   name: 'Almanya Bundesliga',      countryId: 1, logo: 'https://cdn.sportmonks.com/images/soccer/leagues/18/82.png' },
-  { id: 3,   name: 'İspanya La Liga',         countryId: 43, logo: 'https://cdn.sportmonks.com/images/soccer/leagues/20/564.png' },
-  { id: 4,   name: 'İtalya Serie A',          countryId: 47, logo: 'https://cdn.sportmonks.com/images/soccer/leagues/0/384.png' },
-  { id: 5,   name: 'Fransa Ligue 1',          countryId: 21, logo: 'https://cdn.sportmonks.com/images/soccer/leagues/13/301.png' },
+  { id: 6,   nameKey: 'superLig',        name: 'Trendyol Süper Lig',    countryId: 48, logo: 'https://cdn.sportmonks.com/images/soccer/leagues/24/600.png' },
+  { id: 344, nameKey: 'tffFirstLeague',  name: 'Trendyol 1. Lig',        countryId: 48, logo: 'https://cdn.sportmonks.com/images/soccer/leagues/27/603.png' },
+  { id: 347, nameKey: 'turkishCup',      name: 'Türkiye Kupası',          countryId: 48, logo: 'https://cdn.sportmonks.com/images/soccer/leagues/30/606.png' },
+  { id: 2,   nameKey: 'premierLeague',   name: 'İngiltere Premier Lig',   countryId: 19, logo: 'https://cdn.sportmonks.com/images/soccer/leagues/8/8.png' },
+  { id: 1,   nameKey: 'bundesliga',      name: 'Almanya Bundesliga',      countryId: 1, logo: 'https://cdn.sportmonks.com/images/soccer/leagues/18/82.png' },
+  { id: 3,   nameKey: 'laLiga',          name: 'İspanya La Liga',         countryId: 43, logo: 'https://cdn.sportmonks.com/images/soccer/leagues/20/564.png' },
+  { id: 4,   nameKey: 'serieA',          name: 'İtalya Serie A',          countryId: 47, logo: 'https://cdn.sportmonks.com/images/soccer/leagues/0/384.png' },
+  { id: 5,   nameKey: 'ligue1',          name: 'Fransa Ligue 1',          countryId: 21, logo: 'https://cdn.sportmonks.com/images/soccer/leagues/13/301.png' },
 ];
 
 export type CountryLeagueGroup = {
@@ -115,61 +121,61 @@ export const COMPARE_LEAGUE_GROUPS: CountryLeagueGroup[] = [
     countryName: 'Türkiye',
     countryId: 48,
     leagues: [
-      { id: 6,   name: 'Trendyol Süper Lig', countryId: 48 },
-      { id: 344, name: 'Trendyol 1. Lig',    countryId: 48 },
+      { id: 6,   nameKey: 'superLig',       name: 'Trendyol Süper Lig', countryId: 48 },
+      { id: 344, nameKey: 'tffFirstLeague', name: 'Trendyol 1. Lig',    countryId: 48 },
     ],
   },
   {
     countryName: 'İngiltere',
     countryId: 19,
     leagues: [
-      { id: 2, name: 'Premier League', countryId: 19 },
+      { id: 2, nameKey: 'premierLeague', name: 'Premier League', countryId: 19 },
     ],
   },
   {
     countryName: 'Almanya',
     countryId: 1,
     leagues: [
-      { id: 1, name: 'Bundesliga', countryId: 1 },
+      { id: 1, nameKey: 'bundesliga', name: 'Bundesliga', countryId: 1 },
     ],
   },
   {
     countryName: 'İspanya',
     countryId: 43,
     leagues: [
-      { id: 3, name: 'La Liga', countryId: 43 },
+      { id: 3, nameKey: 'laLiga', name: 'La Liga', countryId: 43 },
     ],
   },
   {
     countryName: 'İtalya',
     countryId: 47,
     leagues: [
-      { id: 4, name: 'Serie A', countryId: 47 },
+      { id: 4, nameKey: 'serieA', name: 'Serie A', countryId: 47 },
     ],
   },
   {
     countryName: 'Fransa',
     countryId: 21,
     leagues: [
-      { id: 5, name: 'Ligue 1', countryId: 21 },
+      { id: 5, nameKey: 'ligue1', name: 'Ligue 1', countryId: 21 },
     ],
   },
   {
     countryName: 'UEFA',
     countryId: null,
     leagues: [
-      { id: 244, name: 'Şampiyonlar Ligi',   countryId: null, logo: '/images/uefa-logo.svg' },
-      { id: 245, name: 'UEFA Avrupa Ligi',   countryId: null, logo: '/images/uefa-logo.svg' },
-      { id: 446, name: 'UEFA Konferans Ligi',countryId: null, logo: '/images/uefa-logo.svg' },
+      { id: 244, nameKey: 'championsLeague',   name: 'Şampiyonlar Ligi',   countryId: null, logo: '/images/uefa-logo.svg' },
+      { id: 245, nameKey: 'europaLeague',      name: 'UEFA Avrupa Ligi',   countryId: null, logo: '/images/uefa-logo.svg' },
+      { id: 446, nameKey: 'conferenceLeague',  name: 'UEFA Konferans Ligi',countryId: null, logo: '/images/uefa-logo.svg' },
     ],
   },
 ];
 
 /** UEFA kupaları (lig filtresi kataloğu) — sıra `UEFA_TIER2_COMPETITION_IDS` ile aynı */
 export const UEFA_SIDEBAR_LEAGUES: SidebarLeague[] = [
-  { id: UEFA_CHAMPIONS_LEAGUE_ID, name: 'Şampiyonlar Ligi', countryId: null, logo: '/images/uefa-logo.svg' },
-  { id: UEFA_EUROPA_LEAGUE_ID, name: 'UEFA Avrupa Ligi', countryId: null, logo: '/images/uefa-logo.svg' },
-  { id: UEFA_CONFERENCE_LEAGUE_ID, name: 'UEFA Konferans Ligi', countryId: null, logo: '/images/uefa-logo.svg' },
+  { id: UEFA_CHAMPIONS_LEAGUE_ID, nameKey: 'championsLeague', name: 'Şampiyonlar Ligi', countryId: null, logo: '/images/uefa-logo.svg' },
+  { id: UEFA_EUROPA_LEAGUE_ID, nameKey: 'europaLeague', name: 'UEFA Avrupa Ligi', countryId: null, logo: '/images/uefa-logo.svg' },
+  { id: UEFA_CONFERENCE_LEAGUE_ID, nameKey: 'conferenceLeague', name: 'UEFA Konferans Ligi', countryId: null, logo: '/images/uefa-logo.svg' },
 ];
 
 /**

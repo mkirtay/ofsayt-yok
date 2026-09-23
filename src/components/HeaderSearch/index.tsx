@@ -1,14 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { SIDEBAR_LEAGUES } from '@/config/leagues';
+import { HOME_SIDEBAR_LEAGUES } from '@/config/leagues';
 import { useTeamSearch } from '@/hooks/useTeamSearch';
 import { useTranslation } from '@/lib/i18n';
 import { resolveSidebarLeagueLogo } from '@/utils/leagueLogo';
+import { leagueDisplayName, leagueSearchTerms } from '@/utils/leagueName';
 import { normalizeSearchText } from '@/utils/searchText';
 import styles from './headerSearch.module.scss';
 
 export default function HeaderSearch({ onNavigate }: { onNavigate?: () => void }) {
   const { t } = useTranslation('match');
+  const { t: tl } = useTranslation('leagues');
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -20,8 +22,10 @@ export default function HeaderSearch({ onNavigate }: { onNavigate?: () => void }
   const leagueHits = useMemo(() => {
     if (!active) return [];
     const q = normalizeSearchText(trimmed);
-    return SIDEBAR_LEAGUES.filter((l) => normalizeSearchText(l.name).includes(q)).slice(0, 4);
-  }, [active, trimmed]);
+    // Hem çevrilmiş hem Türkçe yedek ad aranır: "Premier" da "Şampiyonlar" da her iki dilde bulunsun.
+    // Katalog ana sayfanın listesiyle aynı (UEFA dahil) — sonuca tıklayınca `?league=` orada çözülüyor.
+    return HOME_SIDEBAR_LEAGUES.filter((l) => normalizeSearchText(leagueSearchTerms(l, tl)).includes(q)).slice(0, 4);
+  }, [active, trimmed, tl]);
 
   useEffect(() => {
     function onDown(e: MouseEvent) {
@@ -75,7 +79,7 @@ export default function HeaderSearch({ onNavigate }: { onNavigate?: () => void }
                 return (
                   <Link key={l.id} href={`/?league=${l.id}`} className={styles.hit} onClick={close}>
                     {logo ? <img src={logo} alt="" width={18} height={18} className={styles.logo} /> : <span className={styles.logoPh} />}
-                    <span>{l.name}</span>
+                    <span>{leagueDisplayName(l, tl)}</span>
                   </Link>
                 );
               })}
