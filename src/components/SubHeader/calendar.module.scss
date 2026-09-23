@@ -12,7 +12,11 @@
   overflow: hidden;
 
   // react-datepicker overrides
+  // Kütüphane CSS'i kök için sabit `background-color: #fff; color: #000` verir — koyu temada ay gövdesi
+  // beyaz kalıp açık renkli gün metinleri kayboluyordu. Tema token'larıyla ezilir (açık temada da aynı sonuç).
   :global(.react-datepicker) {
+    background-color: $color-surface;
+    color: $color-text;
     border: 1px solid $color-border;
     border-radius: $radius-md;
     font-family: inherit;
