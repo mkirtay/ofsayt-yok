@@ -22,6 +22,7 @@
     "sending": "Sending…",
     "hint": "Press Ctrl/Cmd + Enter to send",
     "remaining": "{{count}} characters left",
+    "remaining_one": "{{count}} character left",
     "loginPrompt": "Sign in to post",
     "commentLoginPrompt": "Sign in to comment",
     "rateLimited": "You're going too fast. Try again in {{seconds}}s.",

@@ -116,6 +116,7 @@
     "draw": "Draw",
     "away": "Away",
     "totalVotes": "{{count}} total votes",
+    "totalVotes_one": "{{count}} total vote",
     "loginCta": "to vote",
     "loginLink": "Sign in",
     "error": "An error occurred."
@@ -221,7 +222,8 @@
     "live": "LIVE",
     "addFavorite": "Add to favorites",
     "removeFavorite": "Remove from favorites",
-    "matchCount": "{{count}} matches"
+    "matchCount": "{{count}} matches",
+    "matchCount_one": "{{count}} match"
   },
   "hub": {
     "favoritesEmpty": "Tap the ☆ button on a match row to add its team to favorites.",

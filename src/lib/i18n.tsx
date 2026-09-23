@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import type { ComponentType, ReactNode } from 'react';
+import { resolvePluralKey } from './i18nPlural';
 
 import trCommon from '../../public/locales/tr/common.json';
 import enCommon from '../../public/locales/en/common.json';
@@ -125,7 +126,8 @@ export function useTranslation(ns: string) {
       }
       const dict =
         (TRANSLATIONS[locale]?.[namespace] ?? TRANSLATIONS['tr']?.[namespace] ?? {}) as Record<string, unknown>;
-      let value = resolve(dict, actualKey) ?? actualKey;
+      const lookupKey = resolvePluralKey(actualKey, opts?.count, locale, (k) => resolve(dict, k) !== undefined);
+      let value = resolve(dict, lookupKey) ?? actualKey;
       if (opts) {
         value = value.replace(/\{\{(\w+)\}\}/g, (_, k: string) => String(opts[k] ?? ''));
       }

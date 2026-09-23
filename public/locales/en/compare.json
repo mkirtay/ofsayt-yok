@@ -15,12 +15,15 @@
     "empty": "These two teams have not met before.",
     "leadPrefix": "In the last {{total}} meetings:",
     "winsCount": "{{count}} wins",
+    "winsCount_one": "{{count}} win",
     "drawsCount": "{{count}} draws",
+    "drawsCount_one": "{{count}} draw",
     "draw": "Draw"
   },
   "scorers": {
     "title": "Top Scorers of the Season",
-    "goals": "{{count}} goals"
+    "goals": "{{count}} goals",
+    "goals_one": "{{count}} goal"
   },
   "recent": {
     "title": "{{team}} — Recent Matches",

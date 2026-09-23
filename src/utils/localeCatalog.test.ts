@@ -29,9 +29,24 @@ const CATALOGS = [
   { ns: 'team', tr: flatten(trTeam as Dict), en: flatten(enTeam as Dict) },
 ];
 
+/** Dile özgü çoğul biçimler (`_one`/`_other`, bkz. lib/i18nPlural.ts) eşlik kontrolünün dışında. */
+const PLURAL_SUFFIX = /_(zero|one|two|few|many|other)$/;
+const baseKeys = (dict: Map<string, string>) => [...dict.keys()].filter((k) => !PLURAL_SUFFIX.test(k)).sort();
+
 describe.each(CATALOGS)('$ns sözlüğü', ({ tr, en }) => {
   it('tr ve en aynı anahtar kümesine sahip', () => {
-    expect([...en.keys()].sort()).toEqual([...tr.keys()].sort());
+    expect(baseKeys(en)).toEqual(baseKeys(tr));
+  });
+
+  it('her çoğul biçimin taban anahtarı iki dilde de var', () => {
+    for (const dict of [tr, en]) {
+      for (const k of dict.keys()) {
+        if (PLURAL_SUFFIX.test(k)) {
+          const base = k.replace(PLURAL_SUFFIX, '');
+          expect(tr.has(base) && en.has(base), k).toBe(true);
+        }
+      }
+    }
   });
 
   it('hiçbir değer boş değil', () => {
@@ -44,6 +59,9 @@ describe.each(CATALOGS)('$ns sözlüğü', ({ tr, en }) => {
     const vars = (s: string) => [...s.matchAll(/\{\{(\w+)\}\}/g)].map((m) => m[1]).sort();
     for (const [k, trVal] of tr) {
       expect(vars(en.get(k)!), `${k}`).toEqual(vars(trVal));
+    }
+    for (const [k, enVal] of en) {
+      if (PLURAL_SUFFIX.test(k)) expect(vars(enVal), k).toEqual(vars(tr.get(k.replace(PLURAL_SUFFIX, ''))!));
     }
   });
 });

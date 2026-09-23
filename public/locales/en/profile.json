@@ -65,7 +65,8 @@
     "importTitle": "Favorites on this device",
     "importHint": "Adds the teams you starred with ☆ on this device's home page to your account favorites. Your existing favorites are kept.",
     "importButton": "Import favorites from this device",
-    "imported": "{{count}} team(s) imported.",
+    "imported": "{{count}} teams imported.",
+    "imported_one": "{{count}} team imported.",
     "importNone": "No favorites found on this device to import.",
     "importNothingNew": "Your device favorites are already in your account."
   },
