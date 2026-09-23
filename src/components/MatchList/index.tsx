@@ -5,6 +5,7 @@ import { useMemo, useState, useEffect, useCallback, type CSSProperties } from 'r
 import { List, type RowComponentProps } from 'react-window';
 import { AutoSizer } from 'react-virtualized-auto-sizer';
 import { useTranslation } from '@/lib/i18n';
+import { leagueNameById } from '@/utils/leagueName';
 import { Match } from '../../models/liveScore';
 import type { GroupedLeagueMatches } from '../../services/liveScoreService';
 import { countryFlagImgSrc } from '@/utils/countryFlag';
@@ -230,6 +231,7 @@ function VirtualRow({
   ariaAttributes,
 }: VirtualRowProps) {
   const { t } = useTranslation('match');
+  const { t: tl } = useTranslation('leagues');
   const item = items[index];
   if (!item) return null;
 
@@ -284,7 +286,9 @@ function VirtualRow({
                   <span className={styles.virtualHeaderSep}> - </span>
                 </>
               ) : null}
-              <span className={styles.virtualHeaderLeagueName}>{item.competition_name}</span>
+              <span className={styles.virtualHeaderLeagueName}>
+                {leagueNameById(item.competition_id, item.competition_name, tl)}
+              </span>
             </span>
           </div>
           <span className={styles.virtualHeaderColIy}>{t('halfTime')}</span>

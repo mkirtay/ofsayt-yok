@@ -1,5 +1,6 @@
-import { describe, expect, it } from 'vitest';
-import { leagueDisplayName, leagueSearchTerms } from './leagueName';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { leagueDisplayName, leagueNameById, leagueSearchTerms } from './leagueName';
+import { SPORTMONKS_LEAGUE_NAME_KEYS } from '@/config/leagueNameKeys';
 import { COMPARE_LEAGUE_GROUPS, SIDEBAR_LEAGUES, UEFA_SIDEBAR_LEAGUES } from '@/config/leagues';
 import trLeagues from '../../public/locales/tr/leagues.json';
 import enLeagues from '../../public/locales/en/leagues.json';
@@ -10,8 +11,11 @@ const ALL_LEAGUES = [
   ...COMPARE_LEAGUE_GROUPS.flatMap((g) => g.leagues),
 ];
 
-/** `lib/i18n`'deki `t` davranışı: anahtar yoksa anahtarın kendisini döner. */
-const translator = (dict: Record<string, string>) => (key: string) => dict[key] ?? key;
+/** `lib/i18n`'deki `t` davranışı: noktalı anahtar iç içe çözülür; yoksa anahtarın kendisini döner. */
+const translator = (dict: Record<string, unknown>) => (key: string) => {
+  const v = key.split('.').reduce<unknown>((cur, p) => (cur && typeof cur === 'object' ? (cur as Record<string, unknown>)[p] : undefined), dict);
+  return typeof v === 'string' ? v : key;
+};
 
 describe('lig adı çeviri kataloğu', () => {
   it('her `nameKey` hem tr hem en sözlüğünde var', () => {
@@ -27,7 +31,8 @@ describe('lig adı çeviri kataloğu', () => {
 
   it('hiçbir çeviri boş değil', () => {
     for (const dict of [trLeagues, enLeagues]) {
-      for (const [k, v] of Object.entries(dict)) {
+      const { short, ...flat } = dict;
+      for (const [k, v] of [...Object.entries(flat), ...Object.entries(short).map(([sk, sv]) => [`short.${sk}`, sv])]) {
         expect(typeof v === 'string' && v.trim().length > 0, k).toBe(true);
       }
     }
@@ -62,5 +67,43 @@ describe('leagueSearchTerms', () => {
   it('çeviri config adıyla aynıysa tekrar etmez', () => {
     const superLig = SIDEBAR_LEAGUES[0];
     expect(leagueSearchTerms(superLig, translator(trLeagues))).toBe(superLig.name);
+  });
+});
+
+describe('leagueNameById (Sportmonks league_id → kısa ad)', () => {
+  beforeEach(() => vi.stubEnv('NEXT_PUBLIC_SPORTMONKS_ENABLED', 'true'));
+  afterEach(() => vi.unstubAllEnvs());
+
+  it('tr: ham API adı yerine Türkçe kısa ad', () => {
+    const t = translator(trLeagues);
+    expect(leagueNameById(600, 'Super Lig', t)).toBe('Süper Lig');
+    expect(leagueNameById(2, 'Champions League', t)).toBe('Şampiyonlar Ligi');
+    expect(leagueNameById('564', 'La Liga', t)).toBe('La Liga');
+  });
+
+  it('en: İngilizce ad', () => {
+    const t = translator(enLeagues);
+    expect(leagueNameById(600, 'Super Lig', t)).toBe('Süper Lig');
+    expect(leagueNameById(2, 'Champions League', t)).toBe('Champions League');
+    expect(leagueNameById(606, 'Turkish Cup', t)).toBe('Turkish Cup');
+  });
+
+  it('eşlemesi olmayan lig / id yok → API adı (sessiz yedek)', () => {
+    const t = translator(trLeagues);
+    expect(leagueNameById(567, 'La Liga 2', t)).toBe('La Liga 2');
+    expect(leagueNameById(undefined, ' Major League Soccer ', t)).toBe('Major League Soccer');
+    expect(leagueNameById(600, undefined, translator({}))).toBe('');
+  });
+
+  it('Sportmonks kapalıyken (legacy id: 2 = Premier Lig) eşleme yapılmaz', () => {
+    vi.stubEnv('NEXT_PUBLIC_SPORTMONKS_ENABLED', 'false');
+    expect(leagueNameById(2, 'Premier League', translator(trLeagues))).toBe('Premier League');
+  });
+
+  it('eşlemedeki her anahtarın tr ve en kısa adı var', () => {
+    for (const key of Object.values(SPORTMONKS_LEAGUE_NAME_KEYS)) {
+      expect(trLeagues.short, `tr short.${key}`).toHaveProperty(key);
+      expect(enLeagues.short, `en short.${key}`).toHaveProperty(key);
+    }
   });
 });

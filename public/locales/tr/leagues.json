@@ -10,5 +10,18 @@
   "ligue1": "Fransa Ligue 1",
   "championsLeague": "Şampiyonlar Ligi",
   "europaLeague": "UEFA Avrupa Ligi",
-  "conferenceLeague": "UEFA Konferans Ligi"
+  "conferenceLeague": "UEFA Konferans Ligi",
+  "short": {
+    "superLig": "Süper Lig",
+    "tffFirstLeague": "1. Lig",
+    "turkishCup": "Türkiye Kupası",
+    "premierLeague": "Premier League",
+    "bundesliga": "Bundesliga",
+    "laLiga": "La Liga",
+    "serieA": "Serie A",
+    "ligue1": "Ligue 1",
+    "championsLeague": "Şampiyonlar Ligi",
+    "europaLeague": "UEFA Avrupa Ligi",
+    "conferenceLeague": "UEFA Konferans Ligi"
+  }
 }

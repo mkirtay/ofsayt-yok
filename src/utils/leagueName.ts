@@ -7,6 +7,8 @@
  */
 
 import type { SidebarLeague } from '@/config/leagues';
+import { SPORTMONKS_LEAGUE_NAME_KEYS } from '@/config/leagueNameKeys';
+import { isSportmonksProviderEnabled } from '@/services/sportmonksProviderFlag';
 
 /** `useTranslation('leagues').t` ile aynı imza. */
 export type LeagueTranslate = (key: string, opts?: Record<string, unknown>) => string;
@@ -27,4 +29,25 @@ export function leagueDisplayName(league: NamedLeague, t: LeagueTranslate): stri
 export function leagueSearchTerms(league: NamedLeague, t: LeagueTranslate): string {
   const translated = leagueDisplayName(league, t);
   return translated === league.name ? league.name : `${translated} ${league.name}`;
+}
+
+/**
+ * Sportmonks `league_id` ile satır içi (kısa) lig adı: tr "Süper Lig" / "Şampiyonlar Ligi", en "Süper Lig" / "Champions League".
+ * `t` = `useTranslation('leagues').t`. Eşlemesi ya da çevirisi olmayan lig → API adı (sessiz yedek).
+ * Sportmonks kapalıyken id legacy `competition_id` olur (2 = Premier Lig, Sportmonks'ta 2 = UCL) → eşleme yapılmaz.
+ * Kullanım yerleri: takım detay başlığı + Puan Durumu başlığı + Ligler sekmesi, takım Fikstür satırı, maç detay kartı başlığı.
+ */
+export function leagueNameById(
+  leagueId: number | string | null | undefined,
+  apiName: string | null | undefined,
+  t: LeagueTranslate,
+): string {
+  const key =
+    leagueId != null && isSportmonksProviderEnabled() ? SPORTMONKS_LEAGUE_NAME_KEYS[Number(leagueId)] : undefined;
+  if (key) {
+    const k = `short.${key}`;
+    const value = t(k);
+    if (value !== k) return value;
+  }
+  return apiName?.trim() ?? '';
 }

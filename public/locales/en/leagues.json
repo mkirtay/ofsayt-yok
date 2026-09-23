@@ -10,5 +10,18 @@
   "ligue1": "Ligue 1",
   "championsLeague": "UEFA Champions League",
   "europaLeague": "UEFA Europa League",
-  "conferenceLeague": "UEFA Conference League"
+  "conferenceLeague": "UEFA Conference League",
+  "short": {
+    "superLig": "Süper Lig",
+    "tffFirstLeague": "TFF 1. Lig",
+    "turkishCup": "Turkish Cup",
+    "premierLeague": "Premier League",
+    "bundesliga": "Bundesliga",
+    "laLiga": "La Liga",
+    "serieA": "Serie A",
+    "ligue1": "Ligue 1",
+    "championsLeague": "Champions League",
+    "europaLeague": "Europa League",
+    "conferenceLeague": "Conference League"
+  }
 }

@@ -15,6 +15,7 @@ import { useTopScorersWithAppearances } from '@/hooks/useTopScorerAppearances';
 import { useTeamDetailBootstrap } from '@/hooks/useTeamDetailBootstrap';
 import { useTeamUpcomingFixtures } from '@/hooks/useTeamUpcomingFixtures';
 import { useI18n, useTranslation } from '@/lib/i18n';
+import { leagueNameById } from '@/utils/leagueName';
 import hubStyles from '@/pages/index.module.scss';
 import {
   getTeamSquads,
@@ -161,6 +162,7 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
   const bootstrapLoading = bootstrapQuery.isLoading;
   const upcomingQuery = useTeamUpcomingFixtures(teamId, Boolean(teamId));
   const { t } = useTranslation('team');
+  const { t: tl } = useTranslation('leagues');
   const { locale } = useI18n();
 
   const [activeTab, setActiveTab] = useState<'matches' | 'fixtures' | 'squad'>('matches');
@@ -316,10 +318,10 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
   const topScorersWithAppearances = useTopScorersWithAppearances(topScorers, sidebarTab === 'scorers');
   const squadStats = useTeamSquadStats(teamId, selectedSeasonId, activeTab === 'squad');
 
-  const selectedCompName = useMemo(
-    () => competitions.find((c) => String(c.id) === selectedCompetitionId)?.name || '',
-    [competitions, selectedCompetitionId]
-  );
+  const selectedCompName = useMemo(() => {
+    const comp = competitions.find((c) => String(c.id) === selectedCompetitionId);
+    return comp ? leagueNameById(comp.id, comp.name, tl) : '';
+  }, [competitions, selectedCompetitionId, tl]);
 
   const teamPageTitle = `${teamInfo.name} — Takım Detayı | Ofsayt Yok`;
   const teamPageDescription = `${teamInfo.name} takımının son maçları, kadro bilgileri ve lig istatistikleri.`;
@@ -531,7 +533,9 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
                                   unoptimized
                                 />
                               )}
-                              <span className={styles.fixtureCompName}>{match.competition.name}</span>
+                              <span className={styles.fixtureCompName}>
+                                {leagueNameById(match.competition.id, match.competition.name, tl)}
+                              </span>
                             </span>
                           )}
                         </Link>
@@ -696,7 +700,7 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
                                   height={14}
                                 />
                               ) : null}
-                              <span>{league.name}</span>
+                              <span>{leagueNameById(league.id, league.name, tl)}</span>
                             </button>
                           </li>
                         );

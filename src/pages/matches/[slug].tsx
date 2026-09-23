@@ -12,6 +12,8 @@ import { useMatchDetail } from '@/hooks/useMatchDetail';
 import type { Match } from '@/models/liveScore';
 import { buildMatchHref, parseMatchIdFromParam } from '@/utils/matchUrl';
 import { WORLD_CUP_COMPETITION_ID } from '@/config/worldCup';
+import { useTranslation } from '@/lib/i18n';
+import { leagueNameById } from '@/utils/leagueName';
 import { resolveLiveMatch } from '@/lib/resolveLiveMatch';
 import { livescoreServerClient } from '@/server/livescoreInternalAxios';
 import { runWithLiveScoreHttpClient } from '@/services/liveScoreHttpContext';
@@ -95,6 +97,7 @@ export default function MatchDetail({ initialMatch }: MatchDetailProps) {
     return '/matches';
   }, [match, requestedMatchId, slug]);
 
+  const { t: tl } = useTranslation('leagues');
   const compId = match?.competition?.id ?? match?.competition_id;
   const isWorldCup = compId === WORLD_CUP_COMPETITION_ID;
   const standingsCompId = toStandingsCompetitionId(compId);
@@ -213,7 +216,7 @@ export default function MatchDetail({ initialMatch }: MatchDetailProps) {
                 <MatchCompetitionStandings
                   data={standings}
                   loading={standingsLoading || matchLoading}
-                  competitionName={match?.competition?.name ?? match?.competition_name}
+                  competitionName={leagueNameById(compId, match?.competition?.name ?? match?.competition_name, tl)}
                   homeTeamId={homeTeamId}
                   awayTeamId={awayTeamId}
                   seasons={seasons}

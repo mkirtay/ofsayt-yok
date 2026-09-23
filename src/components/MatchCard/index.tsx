@@ -8,6 +8,7 @@ import { countryFlagImgSrc } from '@/utils/countryFlag';
 import { utcTimeToTr, isoDateToTr } from '@/utils/dateFormat';
 import { parseHead2HeadTeamIds, overallFormToPills, type FormPill } from '@/utils/matchForm';
 import { buildMatchHref } from '@/utils/matchUrl';
+import { leagueNameById } from '@/utils/leagueName';
 import { getTeamsHead2Head, type Head2HHistoricalMatch } from '@/services/liveScoreService';
 import StadiumIcon from '@/components/icons/StadiumIcon';
 import WhistleIcon from '@/components/icons/WhistleIcon';
@@ -69,6 +70,7 @@ function parseDisplayScore(raw: string): { home: string; away: string } {
 
 export default function MatchCard({ match, loading }: MatchCardProps) {
   const { t } = useTranslation('match');
+  const { t: tl } = useTranslation('leagues');
   const [homeForm, setHomeForm] = useState<FormPill[]>([]);
   const [awayForm, setAwayForm] = useState<FormPill[]>([]);
   const [homeH2hForm, setHomeH2hForm] = useState<FormPill[]>([]);
@@ -162,7 +164,7 @@ export default function MatchCard({ match, loading }: MatchCardProps) {
     return <div className={styles.matchCard}>{t('noMatchInfo')}</div>;
   }
 
-  const compName = match.competition?.name || '';
+  const compName = leagueNameById(match.competition?.id, match.competition?.name, tl);
   const compLogo = match.competition?.logo;
   const country = match.country;
   const showCountryFlag = !compLogo && country?.id != null;
