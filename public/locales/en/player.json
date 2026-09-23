@@ -1,0 +1,97 @@
+{
+  "notFound": "Player not found.",
+  "ageChip": "{{age}} yrs",
+  "bio": {
+    "title": "Profile",
+    "birthDate": "Date of birth",
+    "birthCity": "City of birth",
+    "nationality": "Nationality",
+    "height": "Height",
+    "weight": "Weight",
+    "position": "Position",
+    "detailedPosition": "Detailed position",
+    "preferredFoot": "Preferred foot"
+  },
+  "foot": {
+    "right": "Right",
+    "left": "Left",
+    "both": "Both feet"
+  },
+  "summary": {
+    "title": "Season Statistics",
+    "seasonSelect": "Select season",
+    "appearances": "Apps",
+    "lineups": "Starts",
+    "minutes": "Minutes",
+    "goals": "Goals",
+    "assists": "Assists",
+    "rating": "Rating"
+  },
+  "detailed": {
+    "title": "Detailed Statistics"
+  },
+  "transfers": {
+    "title": "Transfers",
+    "pending": "not completed",
+    "type": {
+      "Transfer": "Transfer",
+      "Loan": "Loan",
+      "End of loan": "End of loan",
+      "Free": "Free",
+      "Free Transfer": "Free"
+    },
+    "million": "M",
+    "thousand": "K"
+  },
+  "matches": {
+    "title": "Match History",
+    "empty": "No match data found.",
+    "minutesUnit": "min",
+    "benched": "Came off the bench",
+    "rating": "Rating",
+    "goalsShort": "G",
+    "assistsShort": "A",
+    "notInSquad": "Not in squad",
+    "showAll": "Show all"
+  },
+  "statGroups": {
+    "shots": "Shooting & Attack",
+    "passing": "Passing",
+    "defending": "Defending & Duels",
+    "individual": "Individual",
+    "discipline": "Discipline & Team"
+  },
+  "stats": {
+    "totalShots": "Total shots",
+    "shotsOnTarget": "Shots on target",
+    "shotsOffTarget": "Shots off target",
+    "shotsBlocked": "Shots blocked",
+    "bigChancesCreated": "Big chances created",
+    "bigChancesMissed": "Big chances missed",
+    "penalties": "Penalties (scored/total)",
+    "offsides": "Offsides",
+    "passes": "Passes",
+    "accuratePasses": "Accurate passes",
+    "passAccuracy": "Pass accuracy",
+    "keyPasses": "Key passes",
+    "crosses": "Crosses",
+    "accurateCrosses": "Accurate crosses",
+    "totalDuels": "Total duels",
+    "duelsWon": "Duels won",
+    "aerialsWon": "Aerial duels won",
+    "interceptions": "Interceptions",
+    "clearances": "Clearances",
+    "dribbledPast": "Dribbled past",
+    "crossesBlocked": "Crosses blocked",
+    "dribbleAttempts": "Dribble attempts",
+    "successfulDribbles": "Successful dribbles",
+    "dispossessed": "Dispossessed",
+    "foulsDrawn": "Fouls drawn",
+    "fouls": "Fouls",
+    "injuries": "Injuries",
+    "goalsConceded": "Goals conceded",
+    "cleanSheets": "Clean sheets",
+    "teamWins": "Team wins",
+    "teamDraws": "Team draws"
+  }
+}

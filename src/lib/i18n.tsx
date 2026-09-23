@@ -19,6 +19,10 @@ import trAi from '../../public/locales/tr/ai.json';
 import enAi from '../../public/locales/en/ai.json';
 import trLegal from '../../public/locales/tr/legal.json';
 import enLegal from '../../public/locales/en/legal.json';
+import trPlayer from '../../public/locales/tr/player.json';
+import enPlayer from '../../public/locales/en/player.json';
+import trCompare from '../../public/locales/tr/compare.json';
+import enCompare from '../../public/locales/en/compare.json';
 import trGundem from '../../public/locales/tr/gundem.json';
 import enGundem from '../../public/locales/en/gundem.json';
 
@@ -29,6 +33,8 @@ const TRANSLATIONS: Record<string, Record<string, Record<string, unknown>>> = {
     auth: trAuth as Record<string, unknown>,
     credits: trCredits as Record<string, unknown>,
     match: trMatch as Record<string, unknown>,
+    player: trPlayer as Record<string, unknown>,
+    compare: trCompare as Record<string, unknown>,
     standings: trStandings as Record<string, unknown>,
     profile: trProfile as Record<string, unknown>,
     ai: trAi as Record<string, unknown>,
@@ -41,6 +47,8 @@ const TRANSLATIONS: Record<string, Record<string, Record<string, unknown>>> = {
     auth: enAuth as Record<string, unknown>,
     credits: enCredits as Record<string, unknown>,
     match: enMatch as Record<string, unknown>,
+    player: enPlayer as Record<string, unknown>,
+    compare: enCompare as Record<string, unknown>,
     standings: enStandings as Record<string, unknown>,
     profile: enProfile as Record<string, unknown>,
     ai: enAi as Record<string, unknown>,
@@ -63,6 +71,15 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     const saved = localStorage.getItem('locale');
     if (saved === 'tr' || saved === 'en') setLocaleState(saved);
   }, []);
+
+  /**
+   * `<html lang>` aktif dile bağlanır (SSR'da `_document` "tr" basar, hidrasyondan sonra düzelir).
+   * Sadece SEO/ekran okuyucu değil GÖRSEL bir etkisi de var: `text-transform: uppercase`, dilin
+   * büyük harf kurallarını uygular — `lang="tr"` iken "Date of birth" → "DATE OF BİRTH" (noktalı İ).
+   */
+  useEffect(() => {
+    document.documentElement.lang = locale;
+  }, [locale]);
 
   const setLocale = useCallback((next: string) => {
     setLocaleState(next);

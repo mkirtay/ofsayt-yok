@@ -1,0 +1,97 @@
+{
+  "notFound": "Oyuncu bulunamadı.",
+  "ageChip": "{{age}} yaş",
+  "bio": {
+    "title": "Profil",
+    "birthDate": "Doğum tarihi",
+    "birthCity": "Doğum şehri",
+    "nationality": "Uyruk",
+    "height": "Boy",
+    "weight": "Kilo",
+    "position": "Pozisyon",
+    "detailedPosition": "Ayrıntılı pozisyon",
+    "preferredFoot": "Tercih edilen ayak"
+  },
+  "foot": {
+    "right": "Sağ",
+    "left": "Sol",
+    "both": "Her iki ayak"
+  },
+  "summary": {
+    "title": "Sezon İstatistikleri",
+    "seasonSelect": "Sezon seç",
+    "appearances": "Maç",
+    "lineups": "İlk 11",
+    "minutes": "Dakika",
+    "goals": "Gol",
+    "assists": "Asist",
+    "rating": "Rating"
+  },
+  "detailed": {
+    "title": "Detaylı İstatistikler"
+  },
+  "transfers": {
+    "title": "Transferler",
+    "pending": "tamamlanmadı",
+    "type": {
+      "Transfer": "Transfer",
+      "Loan": "Kiralık",
+      "End of loan": "Kiralık dönüşü",
+      "Free": "Serbest",
+      "Free Transfer": "Serbest"
+    },
+    "million": "Mn",
+    "thousand": "Bin"
+  },
+  "matches": {
+    "title": "Maç Geçmişi",
+    "empty": "Maç verisi bulunamadı.",
+    "minutesUnit": "dk",
+    "benched": "Yedekten girdi",
+    "rating": "Rating",
+    "goalsShort": "G",
+    "assistsShort": "A",
+    "notInSquad": "Kadroda yok",
+    "showAll": "Tümünü Göster"
+  },
+  "statGroups": {
+    "shots": "Şut & Hücum",
+    "passing": "Pas",
+    "defending": "Savunma & İkili Mücadele",
+    "individual": "Bireysel",
+    "discipline": "Disiplin & Takım"
+  },
+  "stats": {
+    "totalShots": "Toplam şut",
+    "shotsOnTarget": "İsabetli şut",
+    "shotsOffTarget": "İsabetsiz şut",
+    "shotsBlocked": "Engellenen şut",
+    "bigChancesCreated": "Büyük şans yaratma",
+    "bigChancesMissed": "Büyük şans kaçırma",
+    "penalties": "Penaltı (gol/toplam)",
+    "offsides": "Ofsayt",
+    "passes": "Pas",
+    "accuratePasses": "İsabetli pas",
+    "passAccuracy": "Pas isabeti",
+    "keyPasses": "Kilit pas",
+    "crosses": "Orta",
+    "accurateCrosses": "İsabetli orta",
+    "totalDuels": "Toplam ikili mücadele",
+    "duelsWon": "Kazanılan ikili mücadele",
+    "aerialsWon": "Kazanılan hava topu",
+    "interceptions": "Araya girme",
+    "clearances": "Uzaklaştırma",
+    "dribbledPast": "Geçilme (dribling)",
+    "crossesBlocked": "Engellenen orta",
+    "dribbleAttempts": "Dribling denemesi",
+    "successfulDribbles": "Başarılı dribling",
+    "dispossessed": "Top kaybı",
+    "foulsDrawn": "Kazanılan faul",
+    "fouls": "Faul",
+    "injuries": "Sakatlık",
+    "goalsConceded": "Yenilen gol",
+    "cleanSheets": "Gol yemeden bitirilen maç",
+    "teamWins": "Takım galibiyeti",
+    "teamDraws": "Takım beraberliği"
+  }
+}

@@ -11,7 +11,7 @@ vi.mock('@/hooks/usePlayerProfile', () => ({
   usePlayerMatchHistory: () => ({ rows: state.rows, loading: state.loading, hasMore: state.hasMore, expand: () => {}, empty: false }),
 }));
 
-import PlayerProfile, { ageFromBirth, formatTransferAmount, transferTypeLabel, formatDateTr } from './index';
+import PlayerProfile, { ageFromBirth, formatTransferAmount, transferTypeLabel, formatPlayerDate } from './index';
 
 const render = () => renderToStaticMarkup(<PlayerProfile playerId="455805" />);
 
@@ -95,10 +95,18 @@ describe('yardımcılar', () => {
     expect(formatTransferAmount(null)).toBeNull();
     expect(formatTransferAmount(0)).toBeNull();
   });
-  it('transferTypeLabel + formatDateTr', () => {
+  it('transferTypeLabel + formatPlayerDate (dil verilmezse Türkçe)', () => {
     expect(transferTypeLabel('Loan')).toBe('Kiralık');
     expect(transferTypeLabel('Other')).toBe('Other');
-    expect(formatDateTr('2025-07-31')).toContain('2025');
-    expect(formatDateTr(undefined)).toBe('—');
+    expect(formatPlayerDate('2025-07-31')).toContain('2025');
+    expect(formatPlayerDate(undefined)).toBe('—');
+  });
+
+  it('dil verilince tarih ve bedel o dile göre biçimlenir', () => {
+    expect(formatPlayerDate('2025-07-31', 'en')).toContain('Jul');
+    expect(formatPlayerDate('2025-07-31', 'tr')).toContain('Tem');
+    const en = (k: string) => ({ 'transfers.million': 'M', 'transfers.thousand': 'K' })[k] ?? k;
+    expect(formatTransferAmount(3_500_000, en, 'en')).toBe('3.5 M');
+    expect(formatTransferAmount(75_000_000, en, 'en')).toBe('75 M');
   });
 });

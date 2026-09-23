@@ -1,0 +1,46 @@
+{
+  "pickerTitle": "New Comparison",
+  "notFound": "No comparison data found.",
+  "metaTitle": "{{team1}} vs {{team2}} — Comparison",
+  "metaDesc": "Head-to-head statistics, recent form and comparison between {{team1}} and {{team2}}.",
+  "vs": "VS",
+  "form": {
+    "W": "W",
+    "D": "D",
+    "L": "L",
+    "U": "?"
+  },
+  "h2h": {
+    "title": "Head-to-Head",
+    "empty": "These two teams have not met before.",
+    "leadPrefix": "In the last {{total}} meetings:",
+    "winsCount": "{{count}} wins",
+    "drawsCount": "{{count}} draws",
+    "draw": "Draw"
+  },
+  "scorers": {
+    "title": "Top Scorers of the Season",
+    "goals": "{{count}} goals"
+  },
+  "recent": {
+    "title": "{{team}} — Recent Matches",
+    "empty": "No match data found.",
+    "colVenue": "H/A",
+    "colOpponent": "Opponent",
+    "colScore": "Score",
+    "home": "H",
+    "away": "A"
+  },
+  "stats": {
+    "title": "Statistics Comparison",
+    "goalsPerMatch": "Goals per Match",
+    "goalsAgainstPerMatch": "Conceded per Match",
+    "cleanSheetRate": "Clean Sheet %",
+    "bttsRate": "BTTS %",
+    "homeWinRate": "Home Win %",
+    "awayWinRate": "Away Win %",
+    "wins": "Wins",
+    "draws": "Draws",
+    "losses": "Losses"
+  }
+}

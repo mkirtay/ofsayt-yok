@@ -74,6 +74,8 @@ describe('formatStat', () => {
   it('rating 2 ondalık, yüzde, penaltı oranı, tam sayı; değer yoksa null', () => {
     expect(formatStat({ average: 7.5, highest: 9, lowest: 6 }, 'rating')).toBe('7.50');
     expect(formatStat({ total: 86.67 }, 'percent')).toBe('%86.7');
+    expect(formatStat({ total: 86.67 }, 'percent', 'tr')).toBe('%86.7');
+    expect(formatStat({ total: 86.67 }, 'percent', 'en')).toBe('86.7%');
     expect(formatStat({ total: 1, scored: 1 }, 'ratio')).toBe('1/1');
     expect(formatStat({ total: 14 })).toBe('14');
     expect(formatStat(undefined)).toBeNull();
