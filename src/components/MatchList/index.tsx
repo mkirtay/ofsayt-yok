@@ -16,8 +16,22 @@ import styles from './matchList.module.scss';
 
 export type MatchListVariant = 'default' | 'worldCup';
 
+/** Tarih gruplu fikstür modu: başlık lig değil GÜN (bkz. `utils/fixtureDateGroups.ts`). */
+export type MatchListDateGroup = {
+  /** `YYYY-MM-DD` (TR günü) — React anahtarı ve sıra için */
+  date: string;
+  /** Başlıkta yazan hazır metin (çağıran i18n ile üretir, örn. "Bugün · 23 Eylül Salı") */
+  label: string;
+  matches: Match[];
+};
+
 interface MatchListProps {
-  groupedMatches: GroupedLeagueMatches[];
+  groupedMatches?: GroupedLeagueMatches[];
+  /**
+   * Verilirse lig grupları yerine GÜN grupları çizilir (UEFA kupası fikstürü): her gün için bir
+   * tarih başlığı, altında o günün maçları. `groupedMatches` bu modda yok sayılır.
+   */
+  dateGroups?: MatchListDateGroup[];
   /** `worldCup`: koyu arka plan / yüksek kontrast (World Cup sayfası) */
   variant?: MatchListVariant;
   /** Bugünden farklı tarihli maçlar için kickoff hücresine kısa tarih ekler (örn. "15 Nis") */
@@ -45,6 +59,13 @@ interface MatchListProps {
 }
 
 type FlatItem =
+  | {
+      type: 'dateHeader';
+      date: string;
+      label: string;
+      count: number;
+      showGap: boolean;
+    }
   | {
       type: 'header';
       competition_id: number;
@@ -129,7 +150,29 @@ function normalizeHt(ht?: string): string {
   return ht.replace(/\s*-\s*/g, '-').replace(/\s+/g, '');
 }
 
-function buildFlatItems(groupedMatches: MatchListProps['groupedMatches']): FlatItem[] {
+function buildDateFlatItems(dateGroups: MatchListDateGroup[]): FlatItem[] {
+  const items: FlatItem[] = [];
+  for (const group of dateGroups) {
+    items.push({
+      type: 'dateHeader',
+      date: group.date,
+      label: group.label,
+      count: group.matches.length,
+      showGap: items.length > 0,
+    });
+    group.matches.forEach((match, i) => {
+      items.push({
+        type: 'match',
+        match,
+        isFirstInGroup: i === 0,
+        isLastInGroup: i === group.matches.length - 1,
+      });
+    });
+  }
+  return items;
+}
+
+function buildFlatItems(groupedMatches: GroupedLeagueMatches[]): FlatItem[] {
   const items: FlatItem[] = [];
   for (const group of groupedMatches) {
     const showGap = items.length > 0;
@@ -189,6 +232,20 @@ function VirtualRow({
   const { t } = useTranslation('match');
   const item = items[index];
   if (!item) return null;
+
+  if (item.type === 'dateHeader') {
+    return (
+      <div {...ariaAttributes} style={style} className={styles.virtualHeaderCell}>
+        {item.showGap ? <div className={styles.virtualGroupSpacer} aria-hidden /> : null}
+        <div className={`${styles.virtualHeaderBar} ${styles.virtualDateBar}`} data-fixture-date={item.date}>
+          <div className={styles.virtualHeaderMain}>
+            <span className={styles.virtualDateLabel}>{item.label}</span>
+          </div>
+          <span className={styles.virtualDateCount}>{t('list.matchCount', { count: item.count })}</span>
+        </div>
+      </div>
+    );
+  }
 
   if (item.type === 'header') {
     const logoUrl =
@@ -362,14 +419,15 @@ function VirtualRow({
 function rowHeight(index: number, rowProps: RowContext): number {
   const item = rowProps.items[index];
   if (!item) return MATCH_ROW_HEIGHT;
-  if (item.type === 'header') {
+  if (item.type === 'header' || item.type === 'dateHeader') {
     return HEADER_BAR_HEIGHT + (item.showGap ? GROUP_GAP : 0);
   }
   return MATCH_ROW_HEIGHT;
 }
 
 export default function MatchList({
-  groupedMatches,
+  groupedMatches = [],
+  dateGroups,
   variant = 'default',
   showDateWhenNotToday = false,
   favoriteTeamIds,
@@ -391,7 +449,10 @@ export default function MatchList({
     return () => cancelAnimationFrame(frame);
   }, []);
 
-  const items = useMemo(() => buildFlatItems(groupedMatches), [groupedMatches]);
+  const items = useMemo(
+    () => (dateGroups ? buildDateFlatItems(dateGroups) : buildFlatItems(groupedMatches)),
+    [dateGroups, groupedMatches],
+  );
 
   const todayIso = useMemo(() => todayIsoTr(), []);
 
@@ -430,7 +491,7 @@ export default function MatchList({
     []
   );
 
-  if (groupedMatches.length === 0) {
+  if (items.length === 0) {
     return (
       <div className={`${styles.empty} ${isWorldCup ? styles.worldCup : ''}`.trim()}>
         {t('list.empty')}

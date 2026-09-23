@@ -2,7 +2,8 @@
  * Ana sayfa lig gruplarının sırası (yan panel `SIDEBAR_LEAGUES`):
  * 1) Türkiye
  * 2) Büyük 5 (ES, EN, IT, FR, DE)
- * UEFA üçlüsü ayrı: `UEFA_SIDEBAR_LEAGUES` — lig filtresi/logolar için (ayrı /uefa sayfası kaldırıldı).
+ * 3) UEFA üçlüsü (`UEFA_SIDEBAR_LEAGUES`) — yan panelde `HOME_SIDEBAR_LEAGUES` ile en sonda listelenir;
+ *    ayrıca lig filtresi/logolar için kullanılır. Ayrı bir /uefa sayfası YOK (kaldırıldı, geri getirilmedi).
  *
  * Maç listesi gruplama sırası (`compareGroupedLeagues`): tier 0 World Cup (güncel/gündemdeki
  * turnuva), tier 2 UEFA hâlâ Ş→Avrupa→Konferans.
@@ -170,6 +171,21 @@ export const UEFA_SIDEBAR_LEAGUES: SidebarLeague[] = [
   { id: UEFA_EUROPA_LEAGUE_ID, name: 'UEFA Avrupa Ligi', countryId: null, logo: '/images/uefa-logo.svg' },
   { id: UEFA_CONFERENCE_LEAGUE_ID, name: 'UEFA Konferans Ligi', countryId: null, logo: '/images/uefa-logo.svg' },
 ];
+
+/**
+ * Ana sayfa yan panelindeki "Ligler" sekmesinin TAM listesi: önce yurt içi (Süper Lig → 5 büyük),
+ * sonra UEFA kupaları. UEFA satırına tıklanınca maç listesi o kupanın TARİH GRUPLU fikstürüne geçer
+ * (bkz. `MatchHubPage`); ayrı bir /uefa sayfası YOK — kasıtlı olarak kaldırıldı.
+ *
+ * `SIDEBAR_LEAGUES` ayrı bırakıldı: `[...SIDEBAR_LEAGUES, ...UEFA_SIDEBAR_LEAGUES]` şeklinde
+ * birleştiren yerler (lig kataloğu, favoriler sekmesi) UEFA'yı iki kez saymasın.
+ */
+export const HOME_SIDEBAR_LEAGUES: SidebarLeague[] = [...SIDEBAR_LEAGUES, ...UEFA_SIDEBAR_LEAGUES];
+
+/** Legacy `competition_id` bir UEFA kulüp kupası mı (Ş. Ligi / Avrupa Ligi / Konferans Ligi)? */
+export function isUefaCupCompetitionId(competitionId: number | null | undefined): boolean {
+  return competitionId != null && UEFA_TIER2_COMPETITION_IDS.includes(competitionId);
+}
 
 /** Gruptaki `competition_id` → Sportmonks league_id (Sportmonks açıkken zaten o; kapalıyken legacy → eşleme). */
 function toSportmonksLeagueId(competitionId: number): number | null {

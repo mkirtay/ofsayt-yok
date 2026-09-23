@@ -222,7 +222,8 @@
     "loading": "Yükleniyor…",
     "live": "CANLI",
     "addFavorite": "Favorilere ekle",
-    "removeFavorite": "Favorilerden çıkar"
+    "removeFavorite": "Favorilerden çıkar",
+    "matchCount": "{{count}} maç"
   },
   "hub": {
     "favoritesEmpty": "Takım favorilere eklemek için maç satırındaki ☆ butonuna tıklayın.",
@@ -230,7 +231,13 @@
     "showAll": "Tümünü göster",
     "tabStandings": "Puan Durumu",
     "tabLeagues": "Ligler",
-    "tabScorers": "Gol Krallığı"
+    "tabScorers": "Gol Krallığı",
+    "fixtureToday": "Bugün",
+    "fixtureTomorrow": "Yarın",
+    "fixtureModeTitle": "{{league}} fikstürü",
+    "fixtureModeHint": "Yaklaşan maçlar güne göre gruplandı",
+    "fixtureModeExit": "Günlük maçlara dön",
+    "fixtureEmpty": "Bu kupa için yaklaşan maç bulunamadı."
   },
   "search": {
     "placeholder": "Takım veya lig ara…",

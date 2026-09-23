@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { useTranslation } from '@/lib/i18n';
+import { useI18n, useTranslation } from '@/lib/i18n';
 import { useQueryClient } from '@tanstack/react-query';
 import {
   groupMatchesByLeague,
@@ -19,7 +19,10 @@ import {
   refreshHomeHubLiveFixtures,
   useHomeHubMatches,
 } from '@/hooks/useHomeHubMatches';
-import MatchList from '@/components/MatchList';
+import { useCompetitionFixtures } from '@/hooks/useCompetitionFixtures';
+import { buildFixtureDateGroups } from '@/utils/fixtureDateGroups';
+import { fixtureDateHeading } from '@/utils/fixtureDateLabel';
+import MatchList, { type MatchListDateGroup } from '@/components/MatchList';
 import { MatchListSkeleton } from '@/components/Skeleton';
 import MatchCompetitionStandings from '@/components/MatchCompetitionStandings';
 import MatchCompetitionTopScorers from '@/components/MatchCompetitionTopScorers';
@@ -29,7 +32,7 @@ import TeamDetailPanel from '@/components/TeamDetailPanel';
 import HubRightColumn from '@/components/HubWidgets/HubRightColumn';
 import MiniStandingsWidget from '@/components/HubWidgets/MiniStandingsWidget';
 import LeagueLogo from '@/components/LeagueLogo';
-import type { SidebarLeague } from '@/config/leagues';
+import { isUefaCupCompetitionId, type SidebarLeague } from '@/config/leagues';
 import { resolveSportmonksLeagueId } from '@/services/sportmonksProviderFlag';
 import { resolveSidebarLeagueLogo } from '@/utils/leagueLogo';
 import { todayIsoIstanbul } from '@/utils/dateStrip';
@@ -78,6 +81,7 @@ export default function MatchHubPage({
 }: MatchHubPageProps) {
   const { t } = useTranslation('match');
   const { t: tg } = useTranslation('gundem');
+  const { locale } = useI18n();
   const queryClient = useQueryClient();
   const router = useRouter();
   const splitView = useSplitView();
@@ -91,6 +95,13 @@ export default function MatchHubPage({
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>('standings');
   const [selectedCompId, setSelectedCompId] = useState(defaultCompetitionId);
   const homeMatchesQuery = useHomeHubMatches(selectedDate);
+  /**
+   * UEFA kupası seçiliyse maç listesi TEK GÜNE değil, o kupanın fikstürüne bakar: kupa maçları
+   * salı–perşembe gibi birkaç güne yayıldığı için tek tarihli liste maç haftasını gösteremiyordu.
+   * Yurt içi lig seçiliyken bu sorgu hiç çalışmaz (`enabled:false`) → eski davranış aynen korunur.
+   */
+  const uefaFixtureMode = isUefaCupCompetitionId(selectedCompId);
+  const uefaFixturesQuery = useCompetitionFixtures(uefaFixtureMode ? selectedCompId : null);
   const {
     data: sidebarData,
     isLoading: sidebarQueryLoading,
@@ -238,6 +249,37 @@ export default function MatchHubPage({
     const raw = groupMatchesByLeague(filteredDisplayMatches);
     return activeTab === 'all' ? sortGroupedMatchesForAllTab(raw) : raw;
   }, [activeTab, filteredDisplayMatches]);
+
+  /**
+   * UEFA fikstürü: bugünden itibaren güne göre gruplanır. Üst sekme (Canlı/Bitmiş/Favoriler) burada da
+   * geçerli; lig chip filtresi (Tümü/Süper Lig/5 Büyük) UYGULANMAZ — kullanıcı zaten bir kupa seçti,
+   * ikinci bir lig filtresi listeyi sessizce boşaltırdı.
+   */
+  const uefaDateGroups = useMemo<MatchListDateGroup[]>(() => {
+    if (!uefaFixtureMode) return [];
+    const source = uefaFixturesQuery.data ?? [];
+    const byTab = source.filter((m) => {
+      switch (activeTab) {
+        case 'live':
+          return m.status === 'IN PLAY' || m.status === 'HALF TIME BREAK';
+        case 'finished':
+          return m.status === 'FINISHED';
+        case 'favorites':
+          return favoriteTeamSet.has(m.home?.id ?? -1) || favoriteTeamSet.has(m.away?.id ?? -1);
+        default:
+          return true;
+      }
+    });
+    const todayIso = today();
+    return buildFixtureDateGroups(byTab, { todayIso }).map((g) => ({
+      date: g.date,
+      label: fixtureDateHeading(g.date, todayIso, locale, {
+        today: t('hub.fixtureToday'),
+        tomorrow: t('hub.fixtureTomorrow'),
+      }),
+      matches: g.matches,
+    }));
+  }, [uefaFixtureMode, uefaFixturesQuery.data, activeTab, favoriteTeamSet, locale, t]);
 
   const selectedLeagueName =
     sidebarLeagues.find((l) => l.id === selectedCompId)?.name ?? 'Lig';
@@ -393,7 +435,25 @@ export default function MatchHubPage({
     handleSidebarTabChange('standings');
   }
 
-  const listNode = matchesLoading ? (
+  const listNode = uefaFixtureMode ? (
+    uefaFixturesQuery.isLoading ? (
+      <MatchListSkeleton groups={5} />
+    ) : uefaDateGroups.length === 0 ? (
+      <EmptyState>{t('hub.fixtureEmpty')}</EmptyState>
+    ) : (
+      <MatchList
+        dateGroups={uefaDateGroups}
+        favoriteTeamIds={favoriteTeamSet}
+        onToggleFavorite={toggleFavoriteTeam}
+        onSelectMatch={isSplit ? handleSelectMatch : undefined}
+        onPrefetchMatch={isSplit ? prefetchMatchDetail : undefined}
+        onSelectTeam={isSplit ? handleSelectTeam : undefined}
+        selectedMatchId={showDetailPanel ? selectedMatchId : null}
+        compact={showDetailPanel}
+        fill={showDetailPanel}
+      />
+    )
+  ) : matchesLoading ? (
     <MatchListSkeleton groups={5} />
   ) : activeTab === 'favorites' && favoriteTeamIds.length === 0 ? (
     <div className={styles.empty}>
@@ -528,7 +588,26 @@ export default function MatchHubPage({
             <AdSlot slot="hub-sidebar" format="rectangle" desktopOnly />
           </aside>
           <div id="hub-list" className={styles.hubMain}>
-            <div className={styles.hubList}>{listNode}</div>
+            <div className={styles.hubList}>
+              {uefaFixtureMode ? (
+                <div className={styles.fixtureModeBar}>
+                  <span className={styles.fixtureModeText}>
+                    <strong className={styles.fixtureModeTitle}>
+                      {t('hub.fixtureModeTitle', { league: selectedLeagueName })}
+                    </strong>
+                    <span className={styles.fixtureModeHint}>{t('hub.fixtureModeHint')}</span>
+                  </span>
+                  <button
+                    type="button"
+                    className={styles.fixtureModeExit}
+                    onClick={() => setSelectedCompId(defaultCompetitionId)}
+                  >
+                    {t('hub.fixtureModeExit')}
+                  </button>
+                </div>
+              ) : null}
+              {listNode}
+            </div>
             {showDetailPanel ? (
               <div className={styles.hubDetail}>
                 {selectedTeamId ? (

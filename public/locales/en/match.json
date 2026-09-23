@@ -222,7 +222,8 @@
     "loading": "Loading…",
     "live": "LIVE",
     "addFavorite": "Add to favorites",
-    "removeFavorite": "Remove from favorites"
+    "removeFavorite": "Remove from favorites",
+    "matchCount": "{{count}} matches"
   },
   "hub": {
     "favoritesEmpty": "Tap the ☆ button on a match row to add its team to favorites.",
@@ -230,7 +231,13 @@
     "showAll": "Show all",
     "tabStandings": "Standings",
     "tabLeagues": "Leagues",
-    "tabScorers": "Top Scorers"
+    "tabScorers": "Top Scorers",
+    "fixtureToday": "Today",
+    "fixtureTomorrow": "Tomorrow",
+    "fixtureModeTitle": "{{league}} fixtures",
+    "fixtureModeHint": "Upcoming matches grouped by day",
+    "fixtureModeExit": "Back to daily matches",
+    "fixtureEmpty": "No upcoming matches found for this competition."
   },
   "search": {
     "placeholder": "Search team or league…",

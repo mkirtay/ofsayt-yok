@@ -1,7 +1,7 @@
 import Head from 'next/head';
 import JsonLd from '@/components/JsonLd';
 import MatchHubPage from '@/components/MatchHubPage';
-import { SIDEBAR_LEAGUES } from '@/config/leagues';
+import { HOME_SIDEBAR_LEAGUES } from '@/config/leagues';
 
 const DEFAULT_COMPETITION_ID = 6;
 
@@ -25,7 +25,7 @@ export default function Home() {
         }} />
       </Head>
       <MatchHubPage
-        sidebarLeagues={SIDEBAR_LEAGUES}
+        sidebarLeagues={HOME_SIDEBAR_LEAGUES}
         defaultCompetitionId={DEFAULT_COMPETITION_ID}
         allowedCompetitionIds={null}
       />
