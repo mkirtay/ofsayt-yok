@@ -5,6 +5,7 @@ import Container from '@/components/Container';
 import CompareTeamPicker from '@/components/CompareTeamPicker';
 import EmptyState from '@/components/EmptyState';
 import { PanelSkeleton } from '@/components/Skeleton';
+import { useTranslation } from '@/lib/i18n';
 import { useComparePage } from '@/hooks/useComparePage';
 import type { ComparePagePayload } from '@/server/loadComparePageData';
 import type { RecentMatchRow } from '@/server/buildMatchAnalysisContext';
@@ -12,14 +13,14 @@ import { statBarWidths, type H2HSummary, type StatBarKind } from '@/utils/compar
 import styles from './compare.module.scss';
 
 function FormPill({ result }: { result: RecentMatchRow['result'] }) {
-  const map: Record<RecentMatchRow['result'], { label: string; cls: string }> = {
-    W: { label: 'G', cls: styles.pillW },
-    D: { label: 'B', cls: styles.pillD },
-    L: { label: 'M', cls: styles.pillL },
-    U: { label: '?', cls: styles.pillU },
+  const { t } = useTranslation('compare');
+  const cls: Record<RecentMatchRow['result'], string> = {
+    W: styles.pillW,
+    D: styles.pillD,
+    L: styles.pillL,
+    U: styles.pillU,
   };
-  const { label, cls } = map[result];
-  return <span className={`${styles.pill} ${cls}`}>{label}</span>;
+  return <span className={`${styles.pill} ${cls[result]}`}>{t(`form.${result}`)}</span>;
 }
 
 /** Ortadan bölünmüş bar: sol takım sola (accent-1), sağ takım sağa (accent-2); iki değer sayı olarak da yazılı. */
@@ -71,26 +72,31 @@ function StatBar({
 }
 
 function H2HCard({ summary, t1, t2 }: { summary: H2HSummary; t1: string; t2: string }) {
+  const { t } = useTranslation('compare');
   if (summary.total === 0) {
     return (
       <div className={styles.card}>
-        <h2 className={styles.cardTitle}>Karşılıklı Maçlar</h2>
-        <EmptyState>Bu iki takım daha önce karşılaşmadı.</EmptyState>
+        <h2 className={styles.cardTitle}>{t('h2h.title')}</h2>
+        <EmptyState>{t('h2h.empty')}</EmptyState>
       </div>
     );
   }
   const seg = (n: number) => `${(n / summary.total) * 100}%`;
+  // Cümle parçalara bölündü: takım adları <strong> içinde kalsın diye tek bir çeviri dizesi kullanılamıyor.
+  const wins1 = t('h2h.winsCount', { count: summary.team1Wins });
+  const wins2 = t('h2h.winsCount', { count: summary.team2Wins });
+  const draws = t('h2h.drawsCount', { count: summary.draws });
   return (
     <div className={styles.card}>
-      <h2 className={styles.cardTitle}>Karşılıklı Maçlar</h2>
+      <h2 className={styles.cardTitle}>{t('h2h.title')}</h2>
       <p className={styles.h2hLead}>
-        Son {summary.total} karşılaşmada: <strong>{t1}</strong> {summary.team1Wins} galibiyet, {summary.draws} beraberlik,{' '}
-        <strong>{t2}</strong> {summary.team2Wins} galibiyet
+        {t('h2h.leadPrefix', { total: summary.total })} <strong>{t1}</strong> {wins1}, {draws},{' '}
+        <strong>{t2}</strong> {wins2}
       </p>
       <div
         className={styles.ratioBar}
         role="img"
-        aria-label={`${t1} ${summary.team1Wins} galibiyet, ${summary.draws} beraberlik, ${t2} ${summary.team2Wins} galibiyet`}
+        aria-label={`${t1} ${wins1}, ${draws}, ${t2} ${wins2}`}
       >
         {summary.team1Wins > 0 && (
           <div className={`${styles.ratioSeg} ${styles.fillA}`} style={{ width: seg(summary.team1Wins) }}>{summary.team1Wins}</div>
@@ -104,7 +110,7 @@ function H2HCard({ summary, t1, t2 }: { summary: H2HSummary; t1: string; t2: str
       </div>
       <div className={styles.legend}>
         <span><i className={`${styles.dot} ${styles.fillA}`} />{t1}</span>
-        <span><i className={`${styles.dot} ${styles.fillDraw}`} />Beraberlik</span>
+        <span><i className={`${styles.dot} ${styles.fillDraw}`} />{t('h2h.draw')}</span>
         <span><i className={`${styles.dot} ${styles.fillB}`} />{t2}</span>
       </div>
       <ul className={styles.h2hList}>
@@ -132,6 +138,7 @@ function H2HCard({ summary, t1, t2 }: { summary: H2HSummary; t1: string; t2: str
 }
 
 function ScorerSide({ scorers, teamName, accent }: { scorers: ComparePagePayload['team1']['topScorers']; teamName: string; accent: 'A' | 'B' }) {
+  const { t } = useTranslation('compare');
   return (
     <div className={`${styles.scorerSide} ${accent === 'B' ? styles.scorerSideRight : ''}`}>
       <span className={styles.scorerTeam}>
@@ -150,7 +157,7 @@ function ScorerSide({ scorers, teamName, accent }: { scorers: ComparePagePayload
                 )}
                 <span className={styles.scorerText}>
                   <span className={styles.scorerName}>{scorer.name}</span>
-                  <span className={styles.scorerGoals}>{scorer.goals} gol</span>
+                  <span className={styles.scorerGoals}>{t('scorers.goals', { count: scorer.goals })}</span>
                 </span>
               </Link>
             </li>
@@ -164,16 +171,17 @@ function ScorerSide({ scorers, teamName, accent }: { scorers: ComparePagePayload
 }
 
 type Metrics = ComparePagePayload['team1']['metrics'];
-const STAT_ROWS: Array<{ label: string; get: (m: Metrics) => number; kind: StatBarKind; decimals?: boolean; lowerIsBetter?: boolean; neutral?: boolean }> = [
-  { label: 'Maç Başı Gol', get: (m) => m.goalsPerMatch, kind: 'count', decimals: true },
-  { label: 'Maç Başı Yenen', get: (m) => m.goalsAgainstPerMatch, kind: 'count', decimals: true, lowerIsBetter: true },
-  { label: 'Temiz Kapı %', get: (m) => m.cleanSheetRate, kind: 'percent' },
-  { label: 'KTK (BTTS) %', get: (m) => m.bttsRate, kind: 'percent', neutral: true },
-  { label: 'Ev Galibiyet %', get: (m) => m.homeWinRate, kind: 'percent' },
-  { label: 'Deplasman Gal. %', get: (m) => m.awayWinRate, kind: 'percent' },
-  { label: 'Galibiyet', get: (m) => m.wins, kind: 'count' },
-  { label: 'Beraberlik', get: (m) => m.draws, kind: 'count', neutral: true },
-  { label: 'Mağlubiyet', get: (m) => m.losses, kind: 'count', lowerIsBetter: true },
+/** `key`: hem React anahtarı hem `compare.stats.<key>` çeviri anahtarı. */
+const STAT_ROWS: Array<{ key: string; get: (m: Metrics) => number; kind: StatBarKind; decimals?: boolean; lowerIsBetter?: boolean; neutral?: boolean }> = [
+  { key: 'goalsPerMatch', get: (m) => m.goalsPerMatch, kind: 'count', decimals: true },
+  { key: 'goalsAgainstPerMatch', get: (m) => m.goalsAgainstPerMatch, kind: 'count', decimals: true, lowerIsBetter: true },
+  { key: 'cleanSheetRate', get: (m) => m.cleanSheetRate, kind: 'percent' },
+  { key: 'bttsRate', get: (m) => m.bttsRate, kind: 'percent', neutral: true },
+  { key: 'homeWinRate', get: (m) => m.homeWinRate, kind: 'percent' },
+  { key: 'awayWinRate', get: (m) => m.awayWinRate, kind: 'percent' },
+  { key: 'wins', get: (m) => m.wins, kind: 'count' },
+  { key: 'draws', get: (m) => m.draws, kind: 'count', neutral: true },
+  { key: 'losses', get: (m) => m.losses, kind: 'count', lowerIsBetter: true },
 ];
 
 function pct(v: number): string {
@@ -181,6 +189,7 @@ function pct(v: number): string {
 }
 
 export default function ComparePage() {
+  const { t } = useTranslation('compare');
   const router = useRouter();
   const slugParam = router.query.slug;
   const slugFromPath = router.asPath.match(/^\/compare\/([^/?#]+)/)?.[1] ?? '';
@@ -196,7 +205,7 @@ export default function ComparePage() {
     <Container>
       <div className={styles.page}>
         <div className={styles.pickerSection}>
-          <h2 className={styles.pickerTitle}>Yeni Karşılaştırma</h2>
+          <h2 className={styles.pickerTitle}>{t('pickerTitle')}</h2>
           <CompareTeamPicker />
         </div>
         {isLoading ? (
@@ -206,7 +215,7 @@ export default function ComparePage() {
             <PanelSkeleton rows={5} />
           </>
         ) : isError || !data ? (
-          <div className={styles.empty}>Karşılaştırma verisi bulunamadı.</div>
+          <div className={styles.empty}>{t('notFound')}</div>
         ) : (
           <ComparePageContent data={data} />
         )}
@@ -216,12 +225,13 @@ export default function ComparePage() {
 }
 
 function ComparePageContent({ data }: { data: ComparePagePayload }) {
+  const { t } = useTranslation('compare');
   const { team1, team2 } = data;
 
   const last5Team1 = team1.recentMatches.slice(0, 5);
   const last5Team2 = team2.recentMatches.slice(0, 5);
 
-  const title = `${team1.teamName} vs ${team2.teamName} — Karşılaştırma`;
+  const title = t('metaTitle', { team1: team1.teamName, team2: team2.teamName });
 
   return (
     <>
@@ -229,7 +239,7 @@ function ComparePageContent({ data }: { data: ComparePagePayload }) {
         <title>{title} | Ofsayt Yok</title>
         <meta
           name="description"
-          content={`${team1.teamName} ile ${team2.teamName} arasındaki H2H istatistikleri, son form ve karşılaştırma.`}
+          content={t('metaDesc', { team1: team1.teamName, team2: team2.teamName })}
         />
       </Head>
 
@@ -255,7 +265,7 @@ function ComparePageContent({ data }: { data: ComparePagePayload }) {
             </div>
 
             <div className={styles.vsBlock}>
-              <span className={styles.vsText}>VS</span>
+              <span className={styles.vsText}>{t('vs')}</span>
             </div>
 
             <div className={`${styles.teamBlock} ${styles.teamBlockRight}`}>
@@ -285,7 +295,7 @@ function ComparePageContent({ data }: { data: ComparePagePayload }) {
           {/* ── Sezonun en golcüleri ── */}
           {(team1.topScorers.length > 0 || team2.topScorers.length > 0) && (
             <div className={styles.card}>
-              <h2 className={styles.cardTitle}>Sezonun En Golcüleri</h2>
+              <h2 className={styles.cardTitle}>{t('scorers.title')}</h2>
               <div className={styles.scorers}>
                 <ScorerSide scorers={team1.topScorers} teamName={team1.teamName} accent="A" />
                 <ScorerSide scorers={team2.topScorers} teamName={team2.teamName} accent="B" />
@@ -297,24 +307,24 @@ function ComparePageContent({ data }: { data: ComparePagePayload }) {
           <div className={styles.splitGrid}>
             {/* Team 1 form */}
             <div className={styles.card}>
-              <h2 className={styles.cardTitle}>{team1.teamName} — Son Maçlar</h2>
+              <h2 className={styles.cardTitle}>{t('recent.title', { team: team1.teamName })}</h2>
               {last5Team1.length === 0 ? (
-                <p className={styles.empty}>Maç verisi bulunamadı.</p>
+                <p className={styles.empty}>{t('recent.empty')}</p>
               ) : (
                 <div className={styles.tableWrap}>
                   <table className={styles.table}>
                     <thead>
                       <tr>
-                        <th>S/D</th>
-                        <th>Rakip</th>
-                        <th>Skor</th>
+                        <th>{t('recent.colVenue')}</th>
+                        <th>{t('recent.colOpponent')}</th>
+                        <th>{t('recent.colScore')}</th>
                         <th></th>
                       </tr>
                     </thead>
                     <tbody>
                       {last5Team1.map((m, i) => (
                         <tr key={i}>
-                          <td>{m.isHome ? 'S' : 'D'}</td>
+                          <td>{m.isHome ? t('recent.home') : t('recent.away')}</td>
                           <td>{m.opponent}</td>
                           <td className={styles.scoreCell}>{m.scoreText || '—'}</td>
                           <td><FormPill result={m.result} /></td>
@@ -328,24 +338,24 @@ function ComparePageContent({ data }: { data: ComparePagePayload }) {
 
             {/* Team 2 form */}
             <div className={styles.card}>
-              <h2 className={styles.cardTitle}>{team2.teamName} — Son Maçlar</h2>
+              <h2 className={styles.cardTitle}>{t('recent.title', { team: team2.teamName })}</h2>
               {last5Team2.length === 0 ? (
-                <p className={styles.empty}>Maç verisi bulunamadı.</p>
+                <p className={styles.empty}>{t('recent.empty')}</p>
               ) : (
                 <div className={styles.tableWrap}>
                   <table className={styles.table}>
                     <thead>
                       <tr>
-                        <th>S/D</th>
-                        <th>Rakip</th>
-                        <th>Skor</th>
+                        <th>{t('recent.colVenue')}</th>
+                        <th>{t('recent.colOpponent')}</th>
+                        <th>{t('recent.colScore')}</th>
                         <th></th>
                       </tr>
                     </thead>
                     <tbody>
                       {last5Team2.map((m, i) => (
                         <tr key={i}>
-                          <td>{m.isHome ? 'S' : 'D'}</td>
+                          <td>{m.isHome ? t('recent.home') : t('recent.away')}</td>
                           <td>{m.opponent}</td>
                           <td className={styles.scoreCell}>{m.scoreText || '—'}</td>
                           <td><FormPill result={m.result} /></td>
@@ -361,15 +371,15 @@ function ComparePageContent({ data }: { data: ComparePagePayload }) {
           {/* ── Stats comparison ── */}
           {(team1.metrics.matchesAnalyzed > 0 || team2.metrics.matchesAnalyzed > 0) && (
             <div className={styles.card}>
-              <h2 className={styles.cardTitle}>İstatistik Karşılaştırması</h2>
+              <h2 className={styles.cardTitle}>{t('stats.title')}</h2>
               <div className={styles.statLegend}>
                 <span><i className={`${styles.dot} ${styles.fillA}`} />{team1.teamName}</span>
                 <span>{team2.teamName}<i className={`${styles.dot} ${styles.fillB}`} /></span>
               </div>
               {STAT_ROWS.map((r) => (
                 <StatBar
-                  key={r.label}
-                  label={r.label}
+                  key={r.key}
+                  label={t(`stats.${r.key}`)}
                   v1={r.get(team1.metrics)}
                   v2={r.get(team2.metrics)}
                   t1={team1.teamName}

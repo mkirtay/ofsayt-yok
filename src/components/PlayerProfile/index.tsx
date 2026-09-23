@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import EmptyState from '@/components/EmptyState';
 import { PanelSkeleton } from '@/components/Skeleton';
+import { useI18n, useTranslation } from '@/lib/i18n';
 import { usePlayerMatchHistory, usePlayerProfile } from '@/hooks/usePlayerProfile';
 import { pickDefaultSeason, type PlayerMatchRow, type PlayerProfile as Profile, type PlayerSeasonStats, type PlayerTransfer } from '@/services/playerProfile';
 import { PLAYER_STAT_GROUPS, STAT, formatStat, statMain } from '@/services/sportmonks/playerStatTypes';
@@ -26,21 +27,41 @@ const TRANSFER_TYPE_TR: Record<string, string> = {
   Free: 'Serbest',
   'Free Transfer': 'Serbest',
 };
-export const transferTypeLabel = (t: string) => TRANSFER_TYPE_TR[t] ?? t;
 
-/** Bedel para birimi yanıtta verilmiyor → sembolsüz "75 Mn"; yoksa (kiralık vb.) `null` (UI "—"). */
-export function formatTransferAmount(amount: number | null | undefined): string | null {
+/** Sözlük anahtarı da API'nin kendi tipi (`Loan`, `End of loan`…) — bilinmeyen tip olduğu gibi gösterilir. */
+export const transferTypeLabel = (type: string, t?: Translate) => {
+  if (!TRANSFER_TYPE_TR[type]) return type; // API'de bilinmeyen tip → çeviri aranmaz
+  return t ? t(`transfers.type.${type}`) : TRANSFER_TYPE_TR[type];
+};
+
+export type Translate = (key: string, opts?: Record<string, unknown>) => string;
+
+const LOCALE_TAGS: Record<string, string> = { tr: 'tr-TR', en: 'en-GB' };
+const tag = (locale?: string) => LOCALE_TAGS[locale ?? 'tr'] ?? LOCALE_TAGS.tr;
+
+/**
+ * Bedel para birimi yanıtta verilmiyor → sembolsüz "75 Mn" / "75 M"; yoksa (kiralık vb.) `null` (UI "—").
+ * `t`/`locale` verilmezse Türkçe davranış — saf fonksiyon olarak doğrudan da çağrılabilsin diye.
+ */
+export function formatTransferAmount(
+  amount: number | null | undefined,
+  t?: Translate,
+  locale?: string,
+): string | null {
   if (typeof amount !== 'number' || !(amount > 0)) return null;
-  if (amount >= 1_000_000) return `${(amount / 1_000_000).toLocaleString('tr-TR', { maximumFractionDigits: 1 })} Mn`;
-  if (amount >= 1_000) return `${Math.round(amount / 1_000).toLocaleString('tr-TR')} Bin`;
+  const million = t ? t('transfers.million') : 'Mn';
+  const thousand = t ? t('transfers.thousand') : 'Bin';
+  if (amount >= 1_000_000) return `${(amount / 1_000_000).toLocaleString(tag(locale), { maximumFractionDigits: 1 })} ${million}`;
+  if (amount >= 1_000) return `${Math.round(amount / 1_000).toLocaleString(tag(locale))} ${thousand}`;
   return String(amount);
 }
 
-const DATE_FMT = new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
-export function formatDateTr(iso: string | undefined): string {
+/** Aktif dile göre kısa tarih ("31 Tem 2025" / "31 Jul 2025"); dil verilmezse Türkçe. */
+export function formatPlayerDate(iso: string | undefined, locale?: string): string {
   if (!iso) return '—';
   const d = new Date(`${iso.slice(0, 10)}T00:00:00Z`);
-  return Number.isNaN(d.getTime()) ? '—' : DATE_FMT.format(d);
+  if (Number.isNaN(d.getTime())) return '—';
+  return new Intl.DateTimeFormat(tag(locale), { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }).format(d);
 }
 
 const seasonLabel = (s: PlayerSeasonStats) =>
@@ -49,6 +70,7 @@ const seasonLabel = (s: PlayerSeasonStats) =>
 /* ─── Bölümler ─── */
 
 function Header({ p }: { p: Profile }) {
+  const { t } = useTranslation('player');
   const age = ageFromBirth(p.dateOfBirth);
   return (
     <section className={styles.header}>
@@ -75,35 +97,43 @@ function Header({ p }: { p: Profile }) {
               {p.nationality.name}
             </span>
           ) : null}
-          {age != null ? <span className={styles.chip}>{age} yaş</span> : null}
+          {age != null ? <span className={styles.chip}>{t('ageChip', { age })}</span> : null}
         </div>
       </div>
     </section>
   );
 }
 
+/** `preferredFoot` API'de `right|left|both`; başka bir değer gelirse olduğu gibi gösterilir. */
+function footLabel(foot: string, t: Translate): string {
+  return foot === 'right' || foot === 'left' || foot === 'both' ? t(`foot.${foot}`) : foot;
+}
+
 function Bio({ p }: { p: Profile }) {
+  const { t } = useTranslation('player');
+  const { locale } = useI18n();
   const age = ageFromBirth(p.dateOfBirth);
   // Değeri olmayan alan HİÇ gösterilmez (boş satır/placeholder yok).
+  // React anahtarı çeviri değil ALAN ADI: dil değişince liste yeniden oluşmasın.
   const items: Array<[string, string | null]> = [
-    ['Doğum tarihi', p.dateOfBirth ? `${formatDateTr(p.dateOfBirth)}${age != null ? ` (${age})` : ''}` : null],
-    ['Doğum şehri', p.birthCity ?? null],
-    ['Uyruk', p.nationality?.name ?? null],
-    ['Boy', p.heightCm ? `${p.heightCm} cm` : null],
-    ['Kilo', p.weightKg ? `${p.weightKg} kg` : null],
-    ['Pozisyon', p.position ?? null],
-    ['Ayrıntılı pozisyon', p.detailedPosition ?? null],
-    ['Tercih edilen ayak', p.preferredFoot ? (p.preferredFoot === 'right' ? 'Sağ' : p.preferredFoot === 'left' ? 'Sol' : p.preferredFoot === 'both' ? 'Her iki ayak' : p.preferredFoot) : null],
+    ['birthDate', p.dateOfBirth ? `${formatPlayerDate(p.dateOfBirth, locale)}${age != null ? ` (${age})` : ''}` : null],
+    ['birthCity', p.birthCity ?? null],
+    ['nationality', p.nationality?.name ?? null],
+    ['height', p.heightCm ? `${p.heightCm} cm` : null],
+    ['weight', p.weightKg ? `${p.weightKg} kg` : null],
+    ['position', p.position ?? null],
+    ['detailedPosition', p.detailedPosition ?? null],
+    ['preferredFoot', p.preferredFoot ? footLabel(p.preferredFoot, t) : null],
   ];
   const shown = items.filter((i): i is [string, string] => i[1] != null);
   if (shown.length === 0) return null;
   return (
     <section className={styles.card} aria-labelledby="pp-bio">
-      <h2 id="pp-bio" className={styles.cardTitle}>Profil</h2>
+      <h2 id="pp-bio" className={styles.cardTitle}>{t('bio.title')}</h2>
       <dl className={styles.bioGrid}>
         {shown.map(([k, v]) => (
           <div key={k} className={styles.bioItem}>
-            <dt>{k}</dt>
+            <dt>{t(`bio.${k}`)}</dt>
             <dd>{v}</dd>
           </div>
         ))}
@@ -118,6 +148,7 @@ function Bio({ p }: { p: Profile }) {
  * gösteremediği için özel listbox (Karşılaştır seçicisiyle aynı popover dili).
  */
 function SeasonPicker({ seasons, selected, onSelect }: { seasons: PlayerSeasonStats[]; selected: PlayerSeasonStats; onSelect: (key: string) => void }) {
+  const { t } = useTranslation('player');
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
 
@@ -140,13 +171,13 @@ function SeasonPicker({ seasons, selected, onSelect }: { seasons: PlayerSeasonSt
 
   return (
     <div className={styles.picker} ref={wrapRef}>
-      <button type="button" className={styles.pickerBtn} aria-haspopup="listbox" aria-expanded={open} aria-label="Sezon seç" onClick={() => setOpen((o) => !o)}>
+      <button type="button" className={styles.pickerBtn} aria-haspopup="listbox" aria-expanded={open} aria-label={t('summary.seasonSelect')} onClick={() => setOpen((o) => !o)}>
         {logo(selected)}
         <span className={styles.pickerText}>{seasonLabel(selected)}</span>
         <span className={styles.caret} aria-hidden="true">▾</span>
       </button>
       {open ? (
-        <ul className={styles.pickerList} role="listbox" aria-label="Sezon seç">
+        <ul className={styles.pickerList} role="listbox" aria-label={t('summary.seasonSelect')}>
           {seasons.map((x, i) => {
             const prev = seasons[i - 1];
             const transfer = prev != null && prev.seasonName === x.seasonName && prev.teamId !== x.teamId;
@@ -175,20 +206,22 @@ function SeasonPicker({ seasons, selected, onSelect }: { seasons: PlayerSeasonSt
 }
 
 function SeasonSummary({ seasons, selected, onSelect }: { seasons: PlayerSeasonStats[]; selected: PlayerSeasonStats; onSelect: (key: string) => void }) {
+  const { t } = useTranslation('player');
   const s = selected.stats;
   const rating = s[STAT.RATING] as { average?: number; highest?: number; lowest?: number } | undefined;
+  // İlk eleman React anahtarı + çeviri anahtarı (etiketin kendisi değil).
   const tiles: Array<[string, string | null, string?]> = [
-    ['Maç', formatStat(s[STAT.APPEARANCES])],
-    ['İlk 11', formatStat(s[STAT.LINEUPS])],
-    ['Dakika', formatStat(s[STAT.MINUTES])],
-    ['Gol', formatStat(s[STAT.GOALS])],
-    ['Asist', formatStat(s[STAT.ASSISTS])],
-    ['Rating', formatStat(s[STAT.RATING], 'rating'), rating?.highest != null && rating?.lowest != null ? `${rating.lowest.toFixed(1)} – ${rating.highest.toFixed(1)}` : undefined],
+    ['appearances', formatStat(s[STAT.APPEARANCES])],
+    ['lineups', formatStat(s[STAT.LINEUPS])],
+    ['minutes', formatStat(s[STAT.MINUTES])],
+    ['goals', formatStat(s[STAT.GOALS])],
+    ['assists', formatStat(s[STAT.ASSISTS])],
+    ['rating', formatStat(s[STAT.RATING], 'rating'), rating?.highest != null && rating?.lowest != null ? `${rating.lowest.toFixed(1)} – ${rating.highest.toFixed(1)}` : undefined],
   ];
   return (
     <section className={styles.card} aria-labelledby="pp-season">
       <div className={styles.cardHead}>
-        <h2 id="pp-season" className={styles.cardTitle}>Sezon İstatistikleri</h2>
+        <h2 id="pp-season" className={styles.cardTitle}>{t('summary.title')}</h2>
         {seasons.length > 1 ? (
           <SeasonPicker seasons={seasons} selected={selected} onSelect={onSelect} />
         ) : (
@@ -196,10 +229,10 @@ function SeasonSummary({ seasons, selected, onSelect }: { seasons: PlayerSeasonS
         )}
       </div>
       <div className={styles.tiles}>
-        {tiles.map(([label, value, sub]) => (
-          <div key={label} className={styles.tile}>
+        {tiles.map(([key, value, sub]) => (
+          <div key={key} className={styles.tile}>
             <span className={styles.tileValue}>{value ?? '—'}</span>
-            <span className={styles.tileLabel}>{label}</span>
+            <span className={styles.tileLabel}>{t(`summary.${key}`)}</span>
             {sub ? <span className={styles.tileSub}>{sub}</span> : null}
           </div>
         ))}
@@ -209,24 +242,26 @@ function SeasonSummary({ seasons, selected, onSelect }: { seasons: PlayerSeasonS
 }
 
 function DetailedStats({ season }: { season: PlayerSeasonStats }) {
+  const { t } = useTranslation('player');
+  const { locale } = useI18n();
   const groups = PLAYER_STAT_GROUPS.map((g) => ({
     ...g,
     rows: g.stats
-      .map((d) => ({ def: d, text: formatStat(season.stats[d.id], d.format) }))
+      .map((d) => ({ def: d, text: formatStat(season.stats[d.id], d.format, locale) }))
       .filter((r): r is { def: typeof r.def; text: string } => r.text != null),
   })).filter((g) => g.rows.length > 0);
   if (groups.length === 0) return null;
   return (
     <section className={styles.card} aria-labelledby="pp-stats">
-      <h2 id="pp-stats" className={styles.cardTitle}>Detaylı İstatistikler</h2>
+      <h2 id="pp-stats" className={styles.cardTitle}>{t('detailed.title')}</h2>
       <div className={styles.groups}>
         {groups.map((g) => (
           <div key={g.key} className={styles.group}>
-            <h3 className={styles.groupTitle}>{g.title}</h3>
+            <h3 className={styles.groupTitle}>{t(`statGroups.${g.key}`)}</h3>
             <ul className={styles.statList}>
               {g.rows.map(({ def, text }) => (
                 <li key={def.id} className={styles.statRow}>
-                  <span>{def.label}</span>
+                  <span>{t(`stats.${def.labelKey}`)}</span>
                   <strong>{text}</strong>
                 </li>
               ))}
@@ -256,26 +291,28 @@ function TeamCell({ t }: { t?: PlayerTransfer['fromTeam'] }) {
 }
 
 function Transfers({ items }: { items: PlayerTransfer[] }) {
+  const { t } = useTranslation('player');
+  const { locale } = useI18n();
   if (items.length === 0) return null;
   return (
     <section className={styles.card} aria-labelledby="pp-transfers">
-      <h2 id="pp-transfers" className={styles.cardTitle}>Transferler</h2>
+      <h2 id="pp-transfers" className={styles.cardTitle}>{t('transfers.title')}</h2>
       <ul className={styles.compactList}>
-        {items.map((t) => (
-          <li key={t.id} className={styles.compactItem}>
+        {items.map((row) => (
+          <li key={row.id} className={styles.compactItem}>
             <div className={styles.compactMeta}>
-              <span>{formatDateTr(t.date)}</span>
+              <span>{formatPlayerDate(row.date, locale)}</span>
               <span>
-                {transferTypeLabel(t.type)}
-                {!t.completed ? <span className={styles.pending}> · tamamlanmadı</span> : null}
+                {transferTypeLabel(row.type, t)}
+                {!row.completed ? <span className={styles.pending}> · {t('transfers.pending')}</span> : null}
                 {' · '}
-                {formatTransferAmount(t.amount) ?? '—'}
+                {formatTransferAmount(row.amount, t, locale) ?? '—'}
               </span>
             </div>
             <div className={styles.transferTeams}>
-              <TeamCell t={t.fromTeam} />
+              <TeamCell t={row.fromTeam} />
               <span className={styles.arrow} aria-hidden="true">→</span>
-              <TeamCell t={t.toTeam} />
+              <TeamCell t={row.toTeam} />
             </div>
           </li>
         ))}
@@ -285,21 +322,23 @@ function Transfers({ items }: { items: PlayerTransfer[] }) {
 }
 
 function MatchHistory({ playerId, teamId }: { playerId: number; teamId: number }) {
+  const { t } = useTranslation('player');
+  const { locale } = useI18n();
   const h = usePlayerMatchHistory(playerId, teamId);
   return (
     <section className={styles.card} aria-labelledby="pp-matches">
-      <h2 id="pp-matches" className={styles.cardTitle}>Maç Geçmişi</h2>
+      <h2 id="pp-matches" className={styles.cardTitle}>{t('matches.title')}</h2>
       {h.loading && h.rows.length === 0 ? (
         <PanelSkeleton rows={5} />
       ) : h.rows.length === 0 ? (
-        <EmptyState>Maç verisi bulunamadı.</EmptyState>
+        <EmptyState>{t('matches.empty')}</EmptyState>
       ) : (
         <>
           <ul className={styles.compactList}>
             {h.rows.map((r: PlayerMatchRow) => (
               <li key={r.matchId} className={styles.compactItem}>
                 <div className={styles.compactMeta}>
-                  <span>{formatDateTr(r.date)}</span>
+                  <span>{formatPlayerDate(r.date, locale)}</span>
                   <span className={styles.score}>{r.score ?? '—'}</span>
                 </div>
                 <Link href={`/matches/${r.matchId}`} className={styles.teamCell} prefetch={false}>
@@ -308,20 +347,23 @@ function MatchHistory({ playerId, teamId }: { playerId: number; teamId: number }
                 </Link>
                 {r.inSquad ? (
                   <div className={styles.matchStats}>
-                    <span>{r.minutes ?? '—'} dk{r.started === false ? <span className={styles.pending} title="Yedekten girdi"> ↑</span> : null}</span>
-                    <span>Rating {r.rating != null ? r.rating.toFixed(1) : '—'}</span>
-                    <span>G {r.goals ?? '—'}</span>
-                    <span>A {r.assists ?? '—'}</span>
+                    <span>
+                      {r.minutes ?? '—'} {t('matches.minutesUnit')}
+                      {r.started === false ? <span className={styles.pending} title={t('matches.benched')}> ↑</span> : null}
+                    </span>
+                    <span>{t('matches.rating')} {r.rating != null ? r.rating.toFixed(1) : '—'}</span>
+                    <span>{t('matches.goalsShort')} {r.goals ?? '—'}</span>
+                    <span>{t('matches.assistsShort')} {r.assists ?? '—'}</span>
                   </div>
                 ) : (
-                  <div className={styles.muted}>Kadroda yok</div>
+                  <div className={styles.muted}>{t('matches.notInSquad')}</div>
                 )}
               </li>
             ))}
           </ul>
           {h.hasMore ? (
             <button type="button" className={styles.showAll} onClick={h.expand}>
-              Tümünü Göster
+              {t('matches.showAll')}
             </button>
           ) : null}
         </>
@@ -333,6 +375,7 @@ function MatchHistory({ playerId, teamId }: { playerId: number; teamId: number }
 /* ─── Sayfa gövdesi ─── */
 
 export default function PlayerProfile({ playerId }: { playerId: string }) {
+  const { t } = useTranslation('player');
   const { data, isLoading } = usePlayerProfile(playerId);
   const [selectedSeasonKey, setSelectedSeasonKey] = useState<string | null>(null);
 
@@ -342,7 +385,7 @@ export default function PlayerProfile({ playerId }: { playerId: string }) {
   }, [data, selectedSeasonKey]);
 
   if (isLoading) return <PanelSkeleton rows={8} />;
-  if (!data) return <EmptyState>Oyuncu bulunamadı.</EmptyState>;
+  if (!data) return <EmptyState>{t('notFound')}</EmptyState>;
 
   const teamId = data.currentTeam?.id ?? season?.teamId ?? null;
   const hasStats = season != null && statMain(season.stats[STAT.APPEARANCES]) != null;

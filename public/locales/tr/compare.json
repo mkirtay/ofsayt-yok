@@ -1,0 +1,46 @@
+{
+  "pickerTitle": "Yeni Karşılaştırma",
+  "notFound": "Karşılaştırma verisi bulunamadı.",
+  "metaTitle": "{{team1}} vs {{team2}} — Karşılaştırma",
+  "metaDesc": "{{team1}} ile {{team2}} arasındaki H2H istatistikleri, son form ve karşılaştırma.",
+  "vs": "VS",
+  "form": {
+    "W": "G",
+    "D": "B",
+    "L": "M",
+    "U": "?"
+  },
+  "h2h": {
+    "title": "Karşılıklı Maçlar",
+    "empty": "Bu iki takım daha önce karşılaşmadı.",
+    "leadPrefix": "Son {{total}} karşılaşmada:",
+    "winsCount": "{{count}} galibiyet",
+    "drawsCount": "{{count}} beraberlik",
+    "draw": "Beraberlik"
+  },
+  "scorers": {
+    "title": "Sezonun En Golcüleri",
+    "goals": "{{count}} gol"
+  },
+  "recent": {
+    "title": "{{team}} — Son Maçlar",
+    "empty": "Maç verisi bulunamadı.",
+    "colVenue": "S/D",
+    "colOpponent": "Rakip",
+    "colScore": "Skor",
+    "home": "S",
+    "away": "D"
+  },
+  "stats": {
+    "title": "İstatistik Karşılaştırması",
+    "goalsPerMatch": "Maç Başı Gol",
+    "goalsAgainstPerMatch": "Maç Başı Yenen",
+    "cleanSheetRate": "Temiz Kapı %",
+    "bttsRate": "KTK (BTTS) %",
+    "homeWinRate": "Ev Galibiyet %",
+    "awayWinRate": "Deplasman Gal. %",
+    "wins": "Galibiyet",
+    "draws": "Beraberlik",
+    "losses": "Mağlubiyet"
+  }
+}
