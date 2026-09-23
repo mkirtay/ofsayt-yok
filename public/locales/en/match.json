@@ -249,5 +249,15 @@
   },
   "heatmapLabel": "Heatmap",
   "heatmapLow": "Low",
-  "heatmapHigh": "High"
+  "heatmapHigh": "High",
+  "season": {
+    "label": "Season",
+    "selectLabel": "Select season",
+    "withValue": "Season: {{season}}"
+  },
+  "standings": {
+    "ariaLabel": "League standings",
+    "fallbackName": "League",
+    "empty": "No standings table found."
+  }
 }
