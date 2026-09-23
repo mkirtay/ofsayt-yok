@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any -- Kadro / puan API gevşek şema */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Head from 'next/head';
+import Image from 'next/image';
 import Link from 'next/link';
 import CompareTeamPicker from '@/components/CompareTeamPicker';
 import MatchCompetitionStandings from '@/components/MatchCompetitionStandings';
@@ -12,6 +13,8 @@ import {
 } from '@/components/Skeleton';
 import { useTopScorersWithAppearances } from '@/hooks/useTopScorerAppearances';
 import { useTeamDetailBootstrap } from '@/hooks/useTeamDetailBootstrap';
+import { useTeamUpcomingFixtures } from '@/hooks/useTeamUpcomingFixtures';
+import { useI18n, useTranslation } from '@/lib/i18n';
 import hubStyles from '@/pages/index.module.scss';
 import {
   getTeamSquads,
@@ -32,6 +35,15 @@ import { buildMatchHref } from '@/utils/matchUrl';
 import { groupSquadByPosition } from '@/utils/squadGroups';
 import { detailedPositionLabel } from '@/utils/positionLabel';
 import { useTeamSquadStats } from '@/hooks/useTeamSquadStats';
+import { todayIsoIstanbul } from '@/utils/dateStrip';
+import { fixtureDateHeading } from '@/utils/fixtureDateLabel';
+import {
+  buildTeamFixtureGroups,
+  fixtureKickoffLabel,
+  nextFixtureWhen,
+  nextTeamFixture,
+  teamOpponent,
+} from '@/utils/teamFixtures';
 import styles from './teamDetailView.module.scss';
 
 /* ─── Helpers ─── */
@@ -147,8 +159,11 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
   const lastMatches = bootstrapQuery.data?.lastMatches ?? [];
   const competitions = bootstrapQuery.data?.competitions ?? [];
   const bootstrapLoading = bootstrapQuery.isLoading;
+  const upcomingQuery = useTeamUpcomingFixtures(teamId, Boolean(teamId));
+  const { t } = useTranslation('team');
+  const { locale } = useI18n();
 
-  const [activeTab, setActiveTab] = useState<'matches' | 'squad'>('matches');
+  const [activeTab, setActiveTab] = useState<'matches' | 'fixtures' | 'squad'>('matches');
   const [compareOpen, setCompareOpen] = useState(false);
   const [squad, setSquad] = useState<unknown[]>([]);
   const [table, setTable] = useState<CompetitionTableData | null>(null);
@@ -267,13 +282,31 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
 
   /* ─── Memoized computed data ─── */
 
+  const upcomingTeam = upcomingQuery.data?.team ?? null;
   const teamInfo = useMemo(() => {
-    if (lastMatches.length === 0) return { name: 'Takım Detayı', logo: undefined as string | undefined };
+    // Son maçı olmayan takım (ör. sezon başı): fikstür yanıtındaki takım adı/logosu yedek.
+    if (lastMatches.length === 0) {
+      return upcomingTeam?.name
+        ? { name: upcomingTeam.name, logo: upcomingTeam.logo }
+        : { name: 'Takım Detayı', logo: undefined as string | undefined };
+    }
     const m = lastMatches[0];
     const isHome = m.home?.id?.toString() === teamId;
     const team = isHome ? m.home : m.away;
     return { name: team?.name || 'Takım Detayı', logo: team?.logo };
-  }, [lastMatches, teamId]);
+  }, [lastMatches, teamId, upcomingTeam]);
+
+  const todayIso = todayIsoIstanbul();
+  const fixtureGroups = useMemo(
+    () => buildTeamFixtureGroups(upcomingQuery.data?.fixtures ?? [], todayIso),
+    [upcomingQuery.data, todayIso]
+  );
+  const dayLabels = useMemo(
+    () => ({ today: t('match:hub.fixtureToday'), tomorrow: t('match:hub.fixtureTomorrow') }),
+    [t]
+  );
+  const nextFixture = nextTeamFixture(fixtureGroups);
+  const nextOpponent = nextFixture ? teamOpponent(nextFixture, teamId)?.opponent : undefined;
 
   const stats = useMemo(
     () => computeTeamStats(lastMatches, teamId, table),
@@ -330,6 +363,14 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
               {selectedCompName} · {stats.standing.rank}. sıra · {stats.standing.points} puan
             </span>
           )}
+          {nextFixture && nextOpponent?.name && (
+            <span className={styles.teamNextMatch}>
+              {t('nextMatch', {
+                opponent: nextOpponent.name,
+                when: nextFixtureWhen(nextFixture, todayIso, locale, dayLabels),
+              })}
+            </span>
+          )}
         </div>
         <button
           type="button"
@@ -361,14 +402,21 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
               className={`${styles.tab} ${activeTab === 'matches' ? styles.activeTab : ''}`}
               onClick={() => setActiveTab('matches')}
             >
-              Son Maçlar
+              {t('tabs.recent')}
+            </button>
+            <button
+              type="button"
+              className={`${styles.tab} ${activeTab === 'fixtures' ? styles.activeTab : ''}`}
+              onClick={() => setActiveTab('fixtures')}
+            >
+              {t('tabs.fixtures')}
             </button>
             <button
               type="button"
               className={`${styles.tab} ${activeTab === 'squad' ? styles.activeTab : ''}`}
               onClick={() => setActiveTab('squad')}
             >
-              Kadro
+              {t('tabs.squad')}
             </button>
           </div>
 
@@ -429,6 +477,66 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
                 {lastMatches.length === 0 && (
                   <div className={styles.empty}>Son maç bulunamadı.</div>
                 )}
+              </div>
+              )
+            )}
+            {activeTab === 'fixtures' && (
+              upcomingQuery.isLoading ? (
+                <PanelSkeleton rows={6} />
+              ) : upcomingQuery.isError ? (
+                <div className={styles.empty}>{t('fixtures.error')}</div>
+              ) : fixtureGroups.length === 0 ? (
+                <div className={styles.empty}>{t('fixtures.empty')}</div>
+              ) : (
+              <div className={styles.fixtureGroups}>
+                {fixtureGroups.map((group) => (
+                  <section key={group.date} className={styles.fixtureGroup}>
+                    <div className={styles.fixtureDateBar} data-fixture-date={group.date}>
+                      <span className={styles.fixtureDateLabel}>
+                        {fixtureDateHeading(group.date, todayIso, locale, dayLabels)}
+                      </span>
+                      <span className={styles.fixtureDateCount}>
+                        {t('match:list.matchCount', { count: group.matches.length })}
+                      </span>
+                    </div>
+                    {group.matches.map((match) => {
+                      const opponent = teamOpponent(match, teamId)?.opponent;
+                      return (
+                        <Link href={buildMatchHref(match)} key={match.id} className={styles.matchRow}>
+                          <span className={styles.matchTime}>{fixtureKickoffLabel(match, t('fixtures.timeTbd'))}</span>
+                          <span className={styles.fixtureOpponent}>
+                            {opponent?.logo && (
+                              <Image
+                                src={opponent.logo}
+                                alt=""
+                                className={styles.matchTeamLogo}
+                                width={18}
+                                height={18}
+                                unoptimized
+                              />
+                            )}
+                            <span className={styles.matchTeamName}>{opponent?.name || ''}</span>
+                          </span>
+                          {match.competition?.name && (
+                            <span className={styles.fixtureComp}>
+                              {match.competition.logo && (
+                                <Image
+                                  src={match.competition.logo}
+                                  alt=""
+                                  className={styles.fixtureCompLogo}
+                                  width={14}
+                                  height={14}
+                                  unoptimized
+                                />
+                              )}
+                              <span className={styles.fixtureCompName}>{match.competition.name}</span>
+                            </span>
+                          )}
+                        </Link>
+                      );
+                    })}
+                  </section>
+                ))}
               </div>
               )
             )}

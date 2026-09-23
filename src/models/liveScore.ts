@@ -49,6 +49,8 @@ export interface Match {
   time: string;
   date?: string;
   scheduled?: string;
+  /** Başlama saati henüz açıklanmadı (`scheduled` yer tutucu) — yalnızca takım fikstüründe doldurulur. */
+  time_tbd?: boolean;
   location?: string;
   /** Maç hakemi (API alanı; yoksa boş) */
   referee?: string;

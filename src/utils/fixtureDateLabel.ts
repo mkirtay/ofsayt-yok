@@ -19,7 +19,7 @@ export function formatFixtureDate(isoDate: string, locale: string): string {
 }
 
 /** `YYYY-MM-DD` + gün farkı → yeni `YYYY-MM-DD` (UTC öğlen üzerinden; saat dilimi kaymasız). */
-function shift(isoDate: string, days: number): string {
+export function shiftIsoDate(isoDate: string, days: number): string {
   const d = new Date(`${isoDate}T12:00:00Z`);
   d.setUTCDate(d.getUTCDate() + days);
   return d.toISOString().slice(0, 10);
@@ -34,6 +34,6 @@ export function fixtureDateHeading(
 ): string {
   const formatted = formatFixtureDate(isoDate, locale);
   if (isoDate === todayIso) return `${labels.today} · ${formatted}`;
-  if (isoDate === shift(todayIso, 1)) return `${labels.tomorrow} · ${formatted}`;
+  if (isoDate === shiftIsoDate(todayIso, 1)) return `${labels.tomorrow} · ${formatted}`;
   return formatted;
 }

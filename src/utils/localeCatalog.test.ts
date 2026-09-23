@@ -4,6 +4,8 @@ import trPlayer from '../../public/locales/tr/player.json';
 import enPlayer from '../../public/locales/en/player.json';
 import trCompare from '../../public/locales/tr/compare.json';
 import enCompare from '../../public/locales/en/compare.json';
+import trTeam from '../../public/locales/tr/team.json';
+import enTeam from '../../public/locales/en/team.json';
 
 type Dict = Record<string, unknown>;
 
@@ -24,6 +26,7 @@ function flatten(obj: Dict, prefix = ''): Map<string, string> {
 const CATALOGS = [
   { ns: 'player', tr: flatten(trPlayer as Dict), en: flatten(enPlayer as Dict) },
   { ns: 'compare', tr: flatten(trCompare as Dict), en: flatten(enCompare as Dict) },
+  { ns: 'team', tr: flatten(trTeam as Dict), en: flatten(enTeam as Dict) },
 ];
 
 describe.each(CATALOGS)('$ns sözlüğü', ({ tr, en }) => {

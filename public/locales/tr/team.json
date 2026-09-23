@@ -1,0 +1,13 @@
+{
+  "tabs": {
+    "recent": "Son Maçlar",
+    "fixtures": "Fikstür",
+    "squad": "Kadro"
+  },
+  "fixtures": {
+    "empty": "Planlanmış maç yok",
+    "error": "Fikstür yüklenemedi.",
+    "timeTbd": "Belirsiz"
+  },
+  "nextMatch": "Sıradaki maç: {{opponent}} · {{when}}"
+}

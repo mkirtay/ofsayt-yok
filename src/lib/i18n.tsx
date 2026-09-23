@@ -27,6 +27,8 @@ import trCompare from '../../public/locales/tr/compare.json';
 import enCompare from '../../public/locales/en/compare.json';
 import trGundem from '../../public/locales/tr/gundem.json';
 import enGundem from '../../public/locales/en/gundem.json';
+import trTeam from '../../public/locales/tr/team.json';
+import enTeam from '../../public/locales/en/team.json';
 
 const TRANSLATIONS: Record<string, Record<string, Record<string, unknown>>> = {
   tr: {
@@ -43,6 +45,7 @@ const TRANSLATIONS: Record<string, Record<string, Record<string, unknown>>> = {
     ai: trAi as Record<string, unknown>,
     legal: trLegal as Record<string, unknown>,
     gundem: trGundem as Record<string, unknown>,
+    team: trTeam as Record<string, unknown>,
   },
   en: {
     common: enCommon as Record<string, unknown>,
@@ -58,6 +61,7 @@ const TRANSLATIONS: Record<string, Record<string, Record<string, unknown>>> = {
     ai: enAi as Record<string, unknown>,
     legal: enLegal as Record<string, unknown>,
     gundem: enGundem as Record<string, unknown>,
+    team: enTeam as Record<string, unknown>,
   },
 };
 

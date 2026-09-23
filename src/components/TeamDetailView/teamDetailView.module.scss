@@ -83,6 +83,13 @@
   color: $color-text-secondary;
 }
 
+.teamNextMatch {
+  font-size: 12px;
+  color: $color-text-secondary;
+  // Dar başlıkta (Karşılaştır butonu yanında) saat kesilmesin diye kırılır, ellipsis yok.
+  overflow-wrap: anywhere;
+}
+
 /* ═══ Layout ═══ */
 
 .layoutSplit {
@@ -246,6 +253,82 @@
   color: $color-text-secondary;
   white-space: nowrap;
   max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ═══ Fixtures (Fikstür) ═══ */
+// Gün başlığı UEFA fikstür görünümündeki çubukla aynı dil (MatchList `.virtualHeaderBar` + `.virtualDateBar`):
+// muted zemin + sol kenarda marka rengi şerit.
+
+.fixtureGroups {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+}
+
+.fixtureGroup {
+  display: flex;
+  flex-direction: column;
+}
+
+.fixtureDateBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-2;
+  padding: $spacing-2;
+  background: $color-muted;
+  border: 1px solid $color-border;
+  border-left: 3px solid $color-primary;
+  border-radius: $radius-sm $radius-sm 0 0;
+  font-size: 13px;
+}
+
+.fixtureDateLabel {
+  font-weight: 700;
+  color: $color-text;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fixtureDateCount {
+  flex: 0 0 auto;
+  font-size: 11px;
+  font-weight: 600;
+  color: $color-text-secondary;
+  white-space: nowrap;
+}
+
+.fixtureOpponent {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.fixtureComp {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 1 auto;
+  max-width: 45%;
+  min-width: 0;
+  font-size: 11px;
+  color: $color-text-secondary;
+}
+
+.fixtureCompLogo {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.fixtureCompName {
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }

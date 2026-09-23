@@ -1,0 +1,13 @@
+{
+  "tabs": {
+    "recent": "Recent Matches",
+    "fixtures": "Fixtures",
+    "squad": "Squad"
+  },
+  "fixtures": {
+    "empty": "No scheduled matches",
+    "error": "Couldn't load fixtures.",
+    "timeTbd": "TBD"
+  },
+  "nextMatch": "Next match: {{opponent}} · {{when}}"
+}

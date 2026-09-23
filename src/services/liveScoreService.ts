@@ -43,6 +43,12 @@ import type {
   SportmonksTopscorerRow,
 } from './sportmonks/types';
 import { pivotStandingRow } from './sportmonks/standingsPivot';
+import {
+  mapTeamUpcoming,
+  TEAM_UPCOMING_INCLUDE,
+  type SportmonksTeamWithUpcoming,
+  type TeamUpcoming,
+} from './sportmonks/teamUpcoming';
 
 export type PaginatedMatches = {
   matches: Match[];
@@ -1173,6 +1179,19 @@ export const getMatchLineups = async (matchId: string): Promise<MatchLineupData 
 export const getTeamLastMatches = async (teamId: string, count = 10): Promise<Match[]> => {
   const matches = await getTeamHistoryMatches(teamId);
   return matches.slice(0, count);
+};
+
+/**
+ * Takımın tüm turnuvalardaki oynanmamış maçları (en yakından uzağa) — `GET /teams/{id}?include=upcoming...`
+ * (endpoint gerekçesi: sportmonks/teamUpcoming.ts). Legacy sağlayıcıda karşılığı yok → boş.
+ * Hata fırlatır (react-query yeniden dener; hata "planlanmış maç yok" ile karışmasın).
+ */
+export const getTeamUpcomingFixtures = async (teamId: string): Promise<TeamUpcoming> => {
+  if (!isSportmonksProviderEnabled()) return { team: null, fixtures: [] };
+  const envelope = await sportmonksClientRequest<SportmonksTeamWithUpcoming>('football', `/teams/${teamId}`, {
+    include: TEAM_UPCOMING_INCLUDE,
+  });
+  return mapTeamUpcoming(envelope.data);
 };
 
 export type TeamCompetitionRow = {

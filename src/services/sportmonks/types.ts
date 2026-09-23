@@ -248,6 +248,8 @@ export type SportmonksFixture = {
   state_id?: number;
   name?: string;
   starting_at?: string | null;
+  /** Temel alan (include gerektirmez) — saati henüz açıklanmamış maç tespitinde kullanılır (bkz. teamUpcoming.ts). */
+  has_odds?: boolean;
   participants?: SportmonksParticipant[];
   scores?: SportmonksScoreRow[];
   state?: SportmonksState;

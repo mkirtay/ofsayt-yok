@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { buildStatsCacheKey, isStatsCacheable } from './statsCache';
+import {
+  buildStatsCacheKey,
+  isStatsCacheable,
+  STATS_CACHE_TTL_SECONDS,
+  statsCacheTtl,
+  TEAM_UPCOMING_CACHE_TTL_SECONDS,
+} from './statsCache';
 
 describe('statsCache — proxy cache kapsamı', () => {
   const q = { include: 'player.statistics.details', filters: 'playerStatisticSeasons:28203' };
@@ -26,5 +32,15 @@ describe('statsCache — proxy cache kapsamı', () => {
     expect(isStatsCacheable('football/players/455805', { include: 'nationality' })).toBe(false);
     expect(isStatsCacheable('football/players/search/Osimhen', pq)).toBe(false);
     expect(isStatsCacheable('football/players/455805/extra', pq)).toBe(false);
+  });
+
+  it('takım fikstürü (teams/{id} + upcoming include) 10 dk, istatistik çağrıları 30 dk cache\'lenir', () => {
+    const uq = { include: 'upcoming.participants;upcoming.league;upcoming.state' };
+    expect(statsCacheTtl('football/teams/34', uq)).toBe(TEAM_UPCOMING_CACHE_TTL_SECONDS);
+    expect(statsCacheTtl('football/players/455805', { include: 'statistics' })).toBe(STATS_CACHE_TTL_SECONDS);
+    // düz takım çağrısı ve alt yollar dokunulmaz
+    expect(isStatsCacheable('football/teams/34', { include: 'venue' })).toBe(false);
+    expect(isStatsCacheable('football/teams/34/extra', uq)).toBe(false);
+    expect(isStatsCacheable('football/teams/search/gala', uq)).toBe(false);
   });
 });
