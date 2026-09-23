@@ -48,3 +48,12 @@ next-env.d.ts
 
 .src/tweet-bot.js
 .env*.local
+
+# Claude Code yerel ayarları (agent tanımları, izinler, dev server config'i)
+.claude/
+
+# video pipeline çıktıları (scripts/video-pipeline her koşuda yeniden üretir)
+/output/
+
+# OBS yayın overlay'i — yerel yayın aracı, uygulamanın parçası değil
+/obs-sosyal-medya-overlay.html
