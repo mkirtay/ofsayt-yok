@@ -34,6 +34,7 @@ export default function SubHeader({
   }, [selectedDate, dateLocale]);
 
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const triggerRef = useRef<HTMLDivElement>(null);
 
   // Bugünün tarihi mount'ta çözülür (statik prerender'da bayat gün / hydration uyuşmazlığı olmasın).
   const [todayIso, setTodayIso] = useState<string | null>(null);
@@ -78,26 +79,32 @@ export default function SubHeader({
           >
             ←
           </button>
-          <div
-            className={styles.dateBlock}
-            onClick={() => setCalendarOpen((v) => !v)}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') setCalendarOpen((v) => !v);
-            }}
-          >
-            <span className={styles.dateLabel}>{displayDate}</span>
-            <span className={styles.calendarIcon} aria-hidden="true">
-              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="4.5" width="18" height="16" rx="3" />
-                <path d="M3 9.5h18M8 2.5v4M16 2.5v4" />
-              </svg>
-              {/* Gerçek güncel gün (sabit değil): mount'a kadar boş */}
-              <span className={styles.calendarBadge} data-testid="calendar-day-badge">
-                {todayIso ? isoDayOfMonth(todayIso) : ''}
+          {/* Takvim tetikleyicinin KARDEŞİ: içindeki tıklama/tuşlar tetikleyicinin toggle'ına kabarmasın
+              (ay okları takvimi kapatıyordu). Konumlandırma bu sarmalayıcıya göre. */}
+          <div className={styles.datePicker}>
+            <div
+              ref={triggerRef}
+              className={styles.dateBlock}
+              onClick={() => setCalendarOpen((v) => !v)}
+              role="button"
+              tabIndex={0}
+              aria-expanded={calendarOpen}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') setCalendarOpen((v) => !v);
+              }}
+            >
+              <span className={styles.dateLabel}>{displayDate}</span>
+              <span className={styles.calendarIcon} aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="3" y="4.5" width="18" height="16" rx="3" />
+                  <path d="M3 9.5h18M8 2.5v4M16 2.5v4" />
+                </svg>
+                {/* Gerçek güncel gün (sabit değil): mount'a kadar boş */}
+                <span className={styles.calendarBadge} data-testid="calendar-day-badge">
+                  {todayIso ? isoDayOfMonth(todayIso) : ''}
+                </span>
               </span>
-            </span>
+            </div>
             {calendarOpen && (
               <Calendar
                 selectedDate={selectedDate}
@@ -106,6 +113,7 @@ export default function SubHeader({
                   setCalendarOpen(false);
                 }}
                 onClose={() => setCalendarOpen(false)}
+                anchorRef={triggerRef}
               />
             )}
           </div>

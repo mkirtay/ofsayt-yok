@@ -54,6 +54,11 @@
   }
 }
 
+// Tetikleyici + takvim paneli sarmalayıcısı — panel (`.calendarDropdown`, absolute) buna göre konumlanır.
+.datePicker {
+  position: relative;
+}
+
 .dateBlock {
   position: relative;
   cursor: pointer;
