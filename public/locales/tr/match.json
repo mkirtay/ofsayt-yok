@@ -242,5 +242,15 @@
   },
   "heatmapLabel": "Isı haritası",
   "heatmapLow": "Düşük",
-  "heatmapHigh": "Yoğun"
+  "heatmapHigh": "Yoğun",
+  "season": {
+    "label": "Sezon",
+    "selectLabel": "Sezon seç",
+    "withValue": "Sezon: {{season}}"
+  },
+  "standings": {
+    "ariaLabel": "Lig puan durumu",
+    "fallbackName": "Lig",
+    "empty": "Puan tablosu bulunamadı."
+  }
 }

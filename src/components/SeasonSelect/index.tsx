@@ -1,4 +1,5 @@
 import type { SeasonListItem } from '@/services/liveScoreService';
+import { useTranslation } from '@/lib/i18n';
 import { formatSeasonLabel } from '@/utils/seasonLabel';
 import styles from './seasonSelect.module.scss';
 
@@ -19,6 +20,7 @@ export default function SeasonSelect({
   selectClassName,
   dark,
 }: SeasonSelectProps) {
+  const { t } = useTranslation('match');
   if (!seasons.length) return null;
 
   const resolved =
@@ -26,10 +28,10 @@ export default function SeasonSelect({
 
   return (
     <div className={`${styles.wrap} ${dark ? styles.wrapDark : ''}`.trim()}>
-      <span className={styles.label}>Sezon</span>
+      <span className={styles.label}>{t('season.label')}</span>
       <select
         className={selectClassName ?? styles.select}
-        aria-label="Sezon seç"
+        aria-label={t('season.selectLabel')}
         value={resolved}
         onChange={(e) => {
           const n = Number(e.target.value);

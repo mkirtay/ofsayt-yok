@@ -5,6 +5,7 @@ import type {
   SeasonListItem,
 } from "@/services/liveScoreService";
 import SeasonSelect from "@/components/SeasonSelect";
+import { useTranslation } from "@/lib/i18n";
 import { formatSeasonLabel } from "@/utils/seasonLabel";
 import { getStandingRankZone } from "@/config/standingsZones";
 import { sortWorldCupGroupsByName } from "@/config/worldCup";
@@ -149,6 +150,8 @@ export default function MatchCompetitionStandings({
   selectedSeasonId,
   onSeasonChange,
 }: MatchCompetitionStandingsProps) {
+  const { t } = useTranslation("match");
+
   if (loading) {
     return (
       <div className={blockClass(variant)}>
@@ -159,14 +162,14 @@ export default function MatchCompetitionStandings({
 
   if (!data) {
     return (
-      <section className={blockClass(variant)} aria-label="Lig puan durumu">
-        <h2 className={styles.title}>{competitionName || "Lig"}</h2>
-        <EmptyState className={styles.emptyState}>Puan tablosu bulunamadı.</EmptyState>
+      <section className={blockClass(variant)} aria-label={t("standings.ariaLabel")}>
+        <h2 className={styles.title}>{competitionName || t("standings.fallbackName")}</h2>
+        <EmptyState className={styles.emptyState}>{t("standings.empty")}</EmptyState>
       </section>
     );
   }
 
-  const compName = data.competition?.name || competitionName || "Lig";
+  const compName = data.competition?.name || competitionName || t("standings.fallbackName");
   const competitionId = data.competition?.id;
   const season = data.season;
   const showSeasonSelect = Boolean(seasons?.length && onSeasonChange);
@@ -179,7 +182,7 @@ export default function MatchCompetitionStandings({
     (legacyTable?.length ?? 0) > 0 || Boolean(hasStageStandings);
 
   return (
-    <section className={blockClass(variant)} aria-label="Lig puan durumu">
+    <section className={blockClass(variant)} aria-label={t("standings.ariaLabel")}>
       <div className={styles.titleContainer}>
         <h2 className={styles.title}>{compName}</h2>
         {showSeasonSelect ? (
@@ -193,7 +196,9 @@ export default function MatchCompetitionStandings({
             }
           />
         ) : season?.name ? (
-          <p className={styles.season}>Sezon: {formatSeasonLabel(season.name)}</p>
+          <p className={styles.season}>
+            {t("season.withValue", { season: formatSeasonLabel(season.name) })}
+          </p>
         ) : null}
       </div>
 
@@ -236,7 +241,7 @@ export default function MatchCompetitionStandings({
       ))}
 
       {!hasAnyRows ? (
-        <EmptyState className={styles.emptyState}>Puan tablosu bulunamadı.</EmptyState>
+        <EmptyState className={styles.emptyState}>{t("standings.empty")}</EmptyState>
       ) : null}
     </section>
   );
