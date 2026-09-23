@@ -1,4 +1,12 @@
-/** Bkz. `PlayerProfile/i18nEnglish.render.test.tsx` — aynı yaklaşım, karşılaştırma sayfası için. */
+/**
+ * Karşılaştırma sayfasının dil çıktısı. Bkz. `components/PlayerProfile/i18nEnglish.render.test.tsx`
+ * — aynı yaklaşım.
+ *
+ * NEDEN SAYFANIN YANINDA DEĞİL: `next.config.ts`'te `pageExtensions` ayarlı değil, bu yüzden Pages
+ * Router `src/pages` altındaki HER `.ts`/`.tsx` dosyasını bir route sayıp `default export` bekler
+ * (`__tests__/` alt klasörü de dahil). Test dosyasının default export'u yok → `next build` kırılır.
+ * Bu yüzden sayfa testleri `src/pages` DIŞINDA durur. Buraya geri taşımayın.
+ */
 import { describe, expect, it, vi } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import trCompare from '../../../public/locales/tr/compare.json';
@@ -73,7 +81,7 @@ vi.mock('@/hooks/useComparePage', () => ({
   useComparePage: () => ({ data: payload, isLoading: false, isError: false }),
 }));
 
-import ComparePage from './[slug]';
+import ComparePage from '@/pages/compare/[slug]';
 
 function render(lang: 'tr' | 'en'): string {
   locale.value = lang;
