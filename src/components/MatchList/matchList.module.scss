@@ -265,6 +265,10 @@
   object-fit: contain;
 }
 
+.logoBackdrop {
+  @include logo-backdrop(2px);
+}
+
 .virtualMatchRow {
   box-sizing: border-box;
   display: flex;

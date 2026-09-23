@@ -327,6 +327,10 @@
   flex-shrink: 0;
 }
 
+.logoBackdrop {
+  @include logo-backdrop(1px, 3px);
+}
+
 .fixtureCompName {
   white-space: nowrap;
   overflow: hidden;

@@ -95,6 +95,17 @@ $transition-base: all 0.2s ease-in-out;
   }
 }
 
+// Koyu şeffaf lig logosu (bkz. utils/competitionLogo.ts `competitionLogoNeedsBackdrop`) için koyu temada açık zemin.
+// Açık temada hiçbir şey yapmaz. Kutu boyutu değişmez (padding içeri doğru, border-box).
+@mixin logo-backdrop($pad: 2px, $radius: 4px) {
+  :global(:root:not([data-theme='light'])) & {
+    box-sizing: border-box;
+    padding: $pad;
+    background: var(--text-primary);
+    border-radius: $radius;
+  }
+}
+
 // Filtre chip'i (Ana Sayfa lig filtresi + Maç Detay sekme chip'leri) — tek stil kaynağı.
 @mixin filter-chip {
   flex: 0 0 auto;

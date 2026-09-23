@@ -8,7 +8,7 @@ import { useTranslation } from '@/lib/i18n';
 import { Match } from '../../models/liveScore';
 import type { GroupedLeagueMatches } from '../../services/liveScoreService';
 import { countryFlagImgSrc } from '@/utils/countryFlag';
-import { uefaCompetitionLogoSrcById } from '@/utils/competitionLogo';
+import { competitionLogoNeedsBackdrop, uefaCompetitionLogoSrcById } from '@/utils/competitionLogo';
 import { utcTimeToTr } from '@/utils/dateFormat';
 import { buildMatchHref } from '@/utils/matchUrl';
 import { isModifiedClick } from '@/utils/matchSelection';
@@ -257,7 +257,16 @@ function VirtualRow({
         <div className={styles.virtualHeaderBar} data-competition-id={item.competition_id}>
           <div className={styles.virtualHeaderMain}>
             {logoUrl ? (
-              <Image src={logoUrl} alt="" className={styles.virtualHeaderLogo} width={22} height={22} unoptimized />
+              <Image
+                src={logoUrl}
+                alt=""
+                className={`${styles.virtualHeaderLogo} ${
+                  competitionLogoNeedsBackdrop(item.competition_id) ? styles.logoBackdrop : ''
+                }`.trim()}
+                width={22}
+                height={22}
+                unoptimized
+              />
             ) : showCountryFlag ? (
               <Image
                 src={item.country_flag || countryFlagImgSrc(item.country_id!)}

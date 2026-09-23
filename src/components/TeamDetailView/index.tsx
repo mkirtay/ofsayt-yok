@@ -28,7 +28,7 @@ import {
 } from '@/services/liveScoreService';
 import type { Match } from '@/models/liveScore';
 import { countryFlagImgSrc } from '@/utils/countryFlag';
-import { uefaCompetitionLogoSrcById } from '@/utils/competitionLogo';
+import { competitionLogoNeedsBackdrop, uefaCompetitionLogoSrcById } from '@/utils/competitionLogo';
 import { toStandingsCompetitionId } from '@/services/sportmonksProviderFlag';
 import { utcTimeToTr } from '@/utils/dateFormat';
 import { buildMatchHref } from '@/utils/matchUrl';
@@ -523,7 +523,9 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
                                 <Image
                                   src={match.competition.logo}
                                   alt=""
-                                  className={styles.fixtureCompLogo}
+                                  className={`${styles.fixtureCompLogo} ${
+                                    competitionLogoNeedsBackdrop(match.competition.id) ? styles.logoBackdrop : ''
+                                  }`.trim()}
                                   width={14}
                                   height={14}
                                   unoptimized
