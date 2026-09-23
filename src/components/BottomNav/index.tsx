@@ -5,7 +5,7 @@ import { useTranslation } from '@/lib/i18n';
 import {
   activeBottomNavKey,
   bottomNavTarget,
-  OPEN_MENU_EVENT,
+  GUNDEM_PATH,
   type BottomNavKey,
 } from '@/utils/bottomNav';
 import styles from './bottomNav.module.scss';
@@ -44,20 +44,19 @@ const ICONS: Record<BottomNavKey, ReactNode> = {
       <path d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3 6.4 20.2l1.1-6.2L3 9.6l6.2-.9L12 3z" />
     </svg>
   ),
-  more: (
+  gundem: (
     <svg {...ICON_PROPS}>
-      <circle cx="5" cy="12" r="1.4" fill="currentColor" />
-      <circle cx="12" cy="12" r="1.4" fill="currentColor" />
-      <circle cx="19" cy="12" r="1.4" fill="currentColor" />
+      <path d="M4 5h16v11H9l-5 4V5z" />
+      <path d="M8 9.5h8M8 12.5h5" />
     </svg>
   ),
 };
 
-const KEYS: BottomNavKey[] = ['live', 'standings', 'leagues', 'favorites', 'more'];
+const KEYS: BottomNavKey[] = ['live', 'gundem', 'standings', 'leagues', 'favorites'];
 
 /**
  * Mobil alt navigasyon (Design System §3/§4): 56-60px, ikon+etiket dikey, yalnızca mobilde,
- * safe-area padding. Sekmeler ana sayfayı `?tab=` / `?panel=` ile açar; "Diğer" mobil menüyü açar.
+ * safe-area padding. Sekmeler ana sayfayı `?tab=` / `?panel=` ile açar; "Gündem" /gundem sayfasına gider.
  */
 export default function BottomNav() {
   const router = useRouter();
@@ -75,17 +74,17 @@ export default function BottomNav() {
             <span className={styles.label}>{label}</span>
           </>
         );
-        if (key === 'more') {
+        if (key === 'gundem') {
+          const isActive = active === 'gundem';
           return (
-            <button
+            <Link
               key={key}
-              type="button"
-              className={cls}
-              data-menu-toggle
-              onClick={() => window.dispatchEvent(new Event(OPEN_MENU_EVENT))}
+              href={GUNDEM_PATH}
+              className={`${styles.item} ${isActive ? styles.active : ''}`.trim()}
+              aria-current={isActive ? 'page' : undefined}
             >
               {inner}
-            </button>
+            </Link>
           );
         }
         return (

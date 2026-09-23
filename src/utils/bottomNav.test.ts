@@ -23,5 +23,7 @@ describe('bottomNav', () => {
     expect(activeBottomNavKey('/', { panel: 'standings' })).toBe('standings');
     expect(activeBottomNavKey('/', { panel: 'leagues', tab: 'live' })).toBe('leagues');
     expect(activeBottomNavKey('/', {})).toBeNull();
+    expect(activeBottomNavKey('/gundem', {})).toBe('gundem');
+    expect(activeBottomNavKey('/gundem/[postId]', {})).toBe('gundem');
   });
 });
