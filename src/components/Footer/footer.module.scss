@@ -7,9 +7,16 @@
   border-top: 1px solid $color-border-dark;
 }
 
-.footerContainer {
-  padding-top: $spacing-6;
-  padding-bottom: $spacing-6;
+// Global `.container` (padding: 0 16px) ile aynı özgüllükte — yükleme sırasına göre
+// dikey padding eziliyordu; `.footer` altına alıp özgüllüğü artırıyoruz.
+.footer .footerContainer {
+  padding-top: $spacing-8;
+  padding-bottom: $spacing-8;
+
+  @include below-desktop {
+    padding-top: $spacing-6;
+    padding-bottom: $spacing-6;
+  }
 }
 
 .footerTop {
@@ -27,6 +34,7 @@
 
 .footerLogo {
   display: block;
+  width: 110px;
   height: auto;
 }
 

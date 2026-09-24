@@ -14,10 +14,10 @@ export default function Footer() {
         <div className={styles.footerTop}>
           <div className={styles.footerBrand}>
             <Image
-              src="/images/logo.svg"
+              src="/images/ofsaytyok-logo.svg"
               alt="Ofsayt Yok"
-              width={120}
-              height={23}
+              width={110}
+              height={34}
               className={styles.footerLogo}
             />
             <p className={styles.footerTagline}>{t('footer.tagline')}</p>
