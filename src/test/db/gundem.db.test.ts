@@ -88,6 +88,21 @@ async function burst31(fn: () => Promise<Captured>): Promise<number[]> {
   return [];
 }
 
+/**
+ * `count` isteği EŞZAMANLI yollar (sıralı istekler uzak DB'de sabit pencere sınırına denk gelip flaky olur). `setup` her denemede
+ * taze bağlam (yeni kullanıcı = temiz rate-limit anahtarı) kurar → tekrar denemede önceki denemenin sayacı sonucu bozmaz.
+ * Pencere tam burst sırasında dönmüşse (429 yok) bir kez daha dener; yanıtların tamamını döndürür.
+ */
+async function burst(count: number, setup: () => Promise<() => Promise<Captured>>): Promise<Captured[]> {
+  let results: Captured[] = [];
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const fn = await setup();
+    results = await Promise.all(Array.from({ length: count }, fn));
+    if (results.some((r) => r.status === 429)) return results;
+  }
+  return results;
+}
+
 d('DB entegrasyonu — Gündem (post, beğeni, yorum, takip, bildirim, push, bot)', () => {
   const runId = h.runId;
 
@@ -202,15 +217,17 @@ d('DB entegrasyonu — Gündem (post, beğeni, yorum, takip, bildirim, push, bot
     });
 
     it('rate limit: dakikada 5 gönderi, 6.sı 429 + Retry-After', async () => {
-      const u = await mkUser('rl-post');
-      const statuses: number[] = [];
-      let last: Captured | undefined;
-      for (let i = 0; i < 6; i++) {
-        last = await call(postsHandler, makeReq({ method: 'POST', token: u.token, body: { body: `rl ${i}` } }));
-        statuses.push(last.status);
-      }
-      expect(statuses).toEqual([201, 201, 201, 201, 201, 429]);
-      expect(Number(last!.headers['retry-after'])).toBeGreaterThan(0);
+      let n = 0;
+      const results = await burst(6, async () => {
+        const u = await mkUser(`rl-post-${n++}`);
+        let i = 0;
+        return () => call(postsHandler, makeReq({ method: 'POST', token: u.token, body: { body: `rl ${i++}` } }));
+      });
+      const statuses = results.map((r) => r.status);
+      expect(statuses.filter((x) => x === 201)).toHaveLength(5);
+      expect(statuses.filter((x) => x === 429)).toHaveLength(1);
+      const limited = results.find((r) => r.status === 429)!;
+      expect(Number(limited.headers['retry-after'])).toBeGreaterThan(0);
     });
   });
 
@@ -297,14 +314,19 @@ d('DB entegrasyonu — Gündem (post, beğeni, yorum, takip, bildirim, push, bot
       expect(new Set(all).size).toBe(25);
     });
 
-    it('official: yalnızca OFFICIAL_BOT gönderileri', async () => {
-      const bot = await mkPost(official.id, 'resmi', { authorType: 'OFFICIAL_BOT' });
+    // Faz D: "Resmi" = OFFICIAL_BOT postları + allowlist'teki resmi hesapların (varsayılan bilgi.ofsaytyok@gmail.com + env)
+    // normal USER postları. Gerçek resmi hesabın postları da akışta olabilir → yalnızca "resmi mi" kuralı doğrulanır.
+    it('official: OFFICIAL_BOT + resmi hesapların USER postları; sıradan kullanıcı postu yok', async () => {
+      const bot = await mkPost(official.id, 'resmi bot', { authorType: 'OFFICIAL_BOT' });
+      const manual = await mkPost(official.id, 'resmi hesap elle'); // authorType varsayılan USER
       const user = await mkPost(alice.id, 'kullanıcı');
       const r = await call(postsHandler, makeReq({ method: 'GET', query: { scope: 'official' } }));
       expect(r.status).toBe(200);
-      expect(r.body.items.every((i: any) => i.authorType === 'OFFICIAL_BOT')).toBe(true);
+      expect(r.body.items.every((i: any) => i.authorType === 'OFFICIAL_BOT' || i.author.official === true)).toBe(true);
       const ids = r.body.items.map((i: any) => i.id);
       expect(ids).toContain(bot.id);
+      expect(ids).toContain(manual.id);
+      expect(r.body.items.find((i: any) => i.id === manual.id)).toMatchObject({ authorType: 'USER', author: { official: true } });
       expect(ids).not.toContain(user.id);
     });
   });
@@ -404,13 +426,16 @@ d('DB entegrasyonu — Gündem (post, beğeni, yorum, takip, bildirim, push, bot
     });
 
     it('rate limit: dakikada 5 yorum, 6.sı 429', async () => {
-      const u = await mkUser('rl-comment');
       const p = await mkPost(alice.id);
-      const statuses: number[] = [];
-      for (let i = 0; i < 6; i++) {
-        statuses.push((await call(commentsHandler, makeReq({ method: 'POST', query: { postId: p.id }, token: u.token, body: { body: `c${i}` } }))).status);
-      }
-      expect(statuses).toEqual([201, 201, 201, 201, 201, 429]);
+      let n = 0;
+      const results = await burst(6, async () => {
+        const u = await mkUser(`rl-comment-${n++}`);
+        let i = 0;
+        return () => call(commentsHandler, makeReq({ method: 'POST', query: { postId: p.id }, token: u.token, body: { body: `c${i++}` } }));
+      });
+      const statuses = results.map((r) => r.status);
+      expect(statuses.filter((x) => x === 201)).toHaveLength(5);
+      expect(statuses.filter((x) => x === 429)).toHaveLength(1);
     });
   });
 
