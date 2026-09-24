@@ -37,10 +37,17 @@ vi.mock('@/lib/i18n', () => ({
 }));
 
 const state = vi.hoisted(() => ({ rows: [] as unknown[], hasMore: false }));
-vi.mock('@/hooks/usePlayerProfile', () => ({
-  usePlayerProfile: () => ({ data: mapPlayerProfileLazy(), isLoading: false }),
-  usePlayerMatchHistory: () => ({ rows: state.rows, loading: false, hasMore: state.hasMore, expand: () => {}, empty: false }),
-}));
+vi.mock('@/hooks/usePlayerProfile', async () => {
+  const { buildRatingSeries, summarizeRatings } = await import('@/utils/ratingTrend');
+  return {
+    usePlayerProfile: () => ({ data: mapPlayerProfileLazy(), isLoading: false }),
+    usePlayerMatchHistory: () => ({ rows: state.rows, loading: false, hasMore: state.hasMore, expand: () => {}, empty: false }),
+    usePlayerRatingTrend: () => {
+      const series = buildRatingSeries(state.rows as never);
+      return { series, summary: summarizeRatings(series.points), loading: false, error: false };
+    },
+  };
+});
 
 let cached: ReturnType<typeof mapPlayerProfile> | null = null;
 function mapPlayerProfileLazy() {
@@ -80,6 +87,13 @@ describe('<PlayerProfile /> — İngilizce', () => {
     expect(html).toContain('End of loan');
     expect(html).toContain('75 M');
     expect(html).not.toContain('75 Mn');
+  });
+
+  it('rating grafiği İngilizce (tekil/çoğul dahil)', () => {
+    for (const s of ['Rating Trend', 'Last 1 match', 'No rating in 1 match', 'Average', 'Best', 'Worst', 'At least 5 matches are needed for consistency', 'Avg 6.90']) {
+      expect(html, s).toContain(s);
+    }
+    expect(html).toContain('aria-label="4 Sept 2026, A İstanbul Başakşehir, score 1-3, rating 6.9"');
   });
 
   it('maç geçmişi etiketleri İngilizce', () => {

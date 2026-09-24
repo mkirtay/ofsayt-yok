@@ -1,0 +1,254 @@
+@use '../../styles/variables' as *;
+
+// Rating grafiği — renkler yalnızca tokenlardan (nokta dolgusu `--rating-*`, inline `fill: var(...)`).
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+  min-width: 0;
+}
+
+// Özet: ortalama · en iyi · en kötü · istikrar — dar kartta 2×2, genişte tek satır
+.summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: $spacing-2;
+  margin: 0;
+
+  @container (min-width: 560px) {
+    grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr) auto;
+  }
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  padding: $spacing-2;
+  border-radius: $radius-sm;
+  background: $color-bg;
+
+  dt {
+    font-size: var(--fs-micro, 11px);
+    font-weight: var(--fw-micro, 500);
+    letter-spacing: var(--ls-micro, 0.06em);
+    text-transform: uppercase;
+    color: $color-text-secondary;
+  }
+
+  dd {
+    margin: 0;
+    min-width: 0;
+  }
+}
+
+.extreme {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-size: 12px;
+}
+
+.opponent {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  max-width: 100%;
+  color: $color-text;
+  font-weight: 600;
+}
+
+.opponentName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.logo {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.venue {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+}
+
+.muted {
+  color: var(--text-tertiary);
+  font-size: 12px;
+}
+
+.consistency {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 15px;
+  font-weight: 700;
+  color: $color-text;
+  cursor: help;
+}
+
+// İstikrar etiketi rengi reyting skalasından DEĞİL (başarı değil oynaklık) — nötr metin + sol çizgi
+.stable,
+.balanced,
+.volatile {
+  padding-left: 6px;
+  border-left: 3px solid var(--text-tertiary);
+}
+
+.stable {
+  border-left-color: var(--color-action-text);
+}
+
+.volatile {
+  border-left-color: var(--color-draw);
+}
+
+.sigma {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+.chart {
+  position: relative;
+  width: 100%;
+  min-width: 0;
+}
+
+.svg {
+  display: block;
+  overflow: visible;
+  touch-action: manipulation;
+}
+
+.grid {
+  stroke: var(--border-subtle);
+  stroke-width: 1;
+}
+
+.axisLabel {
+  fill: var(--text-tertiary);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.avgLine {
+  stroke: var(--text-secondary);
+  stroke-width: 1;
+  stroke-dasharray: 4 4;
+}
+
+.avgLabel {
+  fill: var(--text-secondary);
+  font-size: 10px;
+  font-weight: 600;
+  // Çizgi/nokta üstüne binerse okunur kalsın: yüzey renginde kontur
+  paint-order: stroke;
+  stroke: var(--bg-surface);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+
+.line {
+  fill: none;
+  stroke: var(--text-tertiary);
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+}
+
+.point {
+  cursor: pointer;
+  outline: none;
+
+  &:focus-visible .dot {
+    stroke: var(--text-primary);
+    stroke-width: 2.5;
+  }
+}
+
+.hit {
+  fill: transparent;
+}
+
+.dot {
+  // Yüzey renginde halka: nokta çizgiden ve komşusundan ayrışır (her iki temada)
+  stroke: var(--bg-surface);
+  stroke-width: 2;
+  transition: r 0.12s ease;
+}
+
+.tooltip {
+  position: absolute;
+  z-index: 2;
+  min-width: 170px;
+  max-width: 220px;
+  padding: $spacing-2 $spacing-3;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
+  background: $color-surface;
+  box-shadow: $shadow-surface;
+  font-size: 12px;
+  pointer-events: auto;
+}
+
+.tooltipDate {
+  margin-bottom: 4px;
+  color: $color-text-secondary;
+  font-size: 11px;
+}
+
+.tooltipRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-2;
+  min-width: 0;
+
+  & + & {
+    margin-top: 6px;
+  }
+}
+
+.tooltipRow > .opponent {
+  flex: 1 1 auto;
+}
+
+.tooltipScore {
+  flex-shrink: 0;
+  white-space: nowrap;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: $color-text;
+}
+
+.tooltipLink {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-action-text);
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

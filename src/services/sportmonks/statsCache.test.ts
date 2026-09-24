@@ -43,4 +43,21 @@ describe('statsCache — proxy cache kapsamı', () => {
     expect(isStatsCacheable('football/teams/34/extra', uq)).toBe(false);
     expect(isStatsCacheable('football/teams/search/gala', uq)).toBe(false);
   });
+
+  it("rating grafiği: fixtures/multi/{ids} + lineups.details 30 dk; tek maç ve include'suz multi değil", () => {
+    const rq = { include: 'participants:name,image_path;lineups:player_id,team_id,type_id;lineups.details', filters: 'lineupDetailTypes:118' };
+    expect(statsCacheTtl('football/fixtures/multi/19746609,19746612,19873242', rq)).toBe(STATS_CACHE_TTL_SECONDS);
+    expect(isStatsCacheable('football/fixtures/multi/19746609', rq)).toBe(true);
+    expect(isStatsCacheable('football/fixtures/multi/19746609,19746612', { include: 'participants' })).toBe(false);
+    expect(isStatsCacheable('football/fixtures/19746609', rq)).toBe(false);
+    expect(isStatsCacheable('football/fixtures/multi/1,2/extra', rq)).toBe(false);
+  });
+
+  it('rating grafiği maç listesi: yalnızca bitmiş maç filtreli takım between çağrısı cache\'lenir', () => {
+    const fq = { select: 'starting_at,state_id', filters: 'fixtureStates:5', order: 'desc', per_page: '20' };
+    expect(statsCacheTtl('football/fixtures/between/2025-11-29/2026-09-25/34', fq)).toBe(STATS_CACHE_TTL_SECONDS);
+    // canlı skor içerebilen normal takım fikstürü (filtresiz) ve takımsız between dokunulmaz
+    expect(isStatsCacheable('football/fixtures/between/2026-06-27/2026-09-24/34', { include: 'participants;scores;state' })).toBe(false);
+    expect(isStatsCacheable('football/fixtures/between/2026-06-27/2026-09-24', fq)).toBe(false);
+  });
 });

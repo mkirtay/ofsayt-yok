@@ -244,7 +244,7 @@ export type PlayerMatchRow = {
   assists?: number;
 };
 
-type RawFixtureForPlayer = {
+export type RawFixtureForPlayer = {
   id: number;
   starting_at?: string;
   participants?: Array<{ id: number; name?: string; image_path?: string | null; meta?: { location?: string } }>;
@@ -308,4 +308,49 @@ export async function getPlayerMatchRows(
     }),
   );
   return rows.filter((r): r is PlayerMatchRow => r != null);
+}
+
+// ── Rating grafiği (son 20 maç) ─────────────────────────────────────────────
+
+/**
+ * Takım maç listesi (`getTeamHistoryMatches`) yalnızca son 89 günü kapsıyor (sezon başında ~7 bitmiş maç) → 20 maç için
+ * yetmez. Ayrı, hafif bir istek: son 300 gün, yalnızca bitmiş (`fixtureStates:5`), en yeni önce, ilk 20, alan seçimli
+ * (~5KB, Fixture havuzu, proxy'de 30 dk cache'li). 300 gün: yaz arası dahil haftada 1 maç oynayan takımda bile ~30 maç.
+ */
+export const RATING_TREND_WINDOW_DAYS = 300;
+
+const isoDay = (d: Date) => d.toISOString().slice(0, 10);
+
+export async function getTeamRecentFinishedFixtureIds(teamId: number, limit: number, now: Date = new Date()): Promise<number[]> {
+  const from = isoDay(new Date(now.getTime() - RATING_TREND_WINDOW_DAYS * 86_400_000));
+  const env = await sportmonksClientRequest<Array<{ id: number; starting_at?: string }>>(
+    'football',
+    `/fixtures/between/${from}/${isoDay(now)}/${teamId}`,
+    { select: 'starting_at,state_id', filters: 'fixtureStates:5', order: 'desc', per_page: limit },
+  );
+  const rows = Array.isArray(env.data) ? env.data : [];
+  return [...rows]
+    .sort((a, b) => (b.starting_at ?? '').localeCompare(a.starting_at ?? ''))
+    .slice(0, limit)
+    .map((f) => f.id);
+}
+
+/**
+ * Takımın son N bitmiş maçı TEK istekte: `fixtures/multi/{ids}` + yalnızca RATING (118) detayı + alan seçimi.
+ * Maç başına ayrı istek atan maç geçmişine göre 20 istek → 1 (Fixture havuzu). Yanıt TAKIM düzeyinde (tüm oyuncuların
+ * reytingi) → aynı takımın diğer oyuncuları aynı react-query/proxy cache kaydını kullanır (ek istek yok).
+ * Boyut (2026-09-25, Galatasaray 20 maç): alan seçimsiz ~318KB → bu include ile ~232KB; proxy'de 30 dk cache'li.
+ * NOT: `lineups.details` üzerinde alan seçimi (`lineups.details:data`) detayları tamamen boşaltıyor — seçim yapılmaz.
+ */
+export const PLAYER_RATING_FIXTURES_INCLUDE =
+  'participants:name,image_path;scores:score,participant_id,description;lineups:player_id,team_id,type_id;lineups.details';
+
+export async function getFixturesForRatings(matchIds: number[]): Promise<RawFixtureForPlayer[]> {
+  if (matchIds.length === 0) return [];
+  const env = await sportmonksClientRequest<RawFixtureForPlayer[]>('football', `/fixtures/multi/${matchIds.join(',')}`, {
+    select: 'starting_at',
+    include: PLAYER_RATING_FIXTURES_INCLUDE,
+    filters: `lineupDetailTypes:${STAT.RATING}`,
+  });
+  return Array.isArray(env.data) ? env.data : [];
 }

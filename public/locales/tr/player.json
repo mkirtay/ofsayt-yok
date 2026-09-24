@@ -27,6 +27,31 @@
     "assists": "Asist",
     "rating": "Rating"
   },
+  "ratingTrend": {
+    "title": "Rating Grafiği",
+    "subtitle": "Son {{count}} maç",
+    "empty": "Son maçlarda rating verisi yok.",
+    "error": "Rating verisi şu an alınamadı.",
+    "missing": "{{count}} maçta rating yok (kadroda değil / oynamadı)",
+    "average": "Ortalama",
+    "best": "En iyi",
+    "worst": "En kötü",
+    "consistency": "İstikrar",
+    "consistencyLabel": {
+      "stable": "İstikrarlı",
+      "balanced": "Dengeli",
+      "volatile": "Dalgalı"
+    },
+    "consistencyHint": "Standart sapma σ = {{sd}} (< 0.35 İstikrarlı · 0.35–0.65 Dengeli · ≥ 0.65 Dalgalı)",
+    "consistencyTooFew": "İstikrar için en az {{min}} maç gerekir",
+    "averageLine": "Ort. {{value}}",
+    "home": "Ev",
+    "away": "Dep",
+    "goToMatch": "Maça git",
+    "pointLabel": "{{date}}, {{venue}} {{opponent}}, skor {{score}}, rating {{rating}}",
+    "srSummary": "Son {{count}} maçın rating grafiği, eskiden yeniye. Ortalama {{average}}. En iyi {{best}}: {{bestOpponent}}, {{bestDate}}. En kötü {{worst}}: {{worstOpponent}}, {{worstDate}}.",
+    "srConsistency": "İstikrar: {{label}}."
+  },
   "detailed": {
     "title": "Detaylı İstatistikler"
   },

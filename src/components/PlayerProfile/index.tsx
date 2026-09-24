@@ -3,11 +3,12 @@ import Link from 'next/link';
 import EmptyState from '@/components/EmptyState';
 import { PanelSkeleton } from '@/components/Skeleton';
 import { useI18n, useTranslation } from '@/lib/i18n';
-import { usePlayerMatchHistory, usePlayerProfile } from '@/hooks/usePlayerProfile';
+import { usePlayerMatchHistory, usePlayerProfile, usePlayerRatingTrend } from '@/hooks/usePlayerProfile';
 import { pickDefaultSeason, type PlayerMatchRow, type PlayerProfile as Profile, type PlayerSeasonStats, type PlayerTransfer } from '@/services/playerProfile';
 import { PLAYER_STAT_GROUPS, STAT, formatStat, statMain } from '@/services/sportmonks/playerStatTypes';
 import RatingBadge from '@/components/RatingBadge';
 import { formatRating } from '@/config/ratingScale';
+import RatingTrendChart from './RatingTrendChart';
 import styles from './playerProfile.module.scss';
 
 /* ─── Saf yardımcılar (test edilir) ─── */
@@ -382,6 +383,33 @@ function MatchHistory({ playerId, teamId }: { playerId: number; teamId: number }
   );
 }
 
+/** Son 20 maçın rating grafiği (takım düzeyinde tek `fixtures/multi` isteği — bkz. `usePlayerRatingTrend`). */
+function RatingTrend({ playerId, teamId }: { playerId: number; teamId: number }) {
+  const { t } = useTranslation('player');
+  const { series, summary, loading, error } = usePlayerRatingTrend(playerId, teamId);
+  const n = series?.points.length ?? 0;
+  return (
+    <section className={styles.card} aria-labelledby="pp-rating-trend" data-testid="rating-trend">
+      <div className={styles.cardHead}>
+        <h2 id="pp-rating-trend" className={styles.cardTitle}>{t('ratingTrend.title')}</h2>
+        {n > 0 ? <span className={styles.seasonName}>{t('ratingTrend.subtitle', { count: n })}</span> : null}
+      </div>
+      {loading && !series ? (
+        <PanelSkeleton rows={4} />
+      ) : error ? (
+        <EmptyState>{t('ratingTrend.error')}</EmptyState>
+      ) : !series || !summary ? (
+        <EmptyState>{t('ratingTrend.empty')}</EmptyState>
+      ) : (
+        <RatingTrendChart series={series} summary={summary} />
+      )}
+      {series && series.missing > 0 ? (
+        <p className={styles.trendNote} data-testid="rating-missing">{t('ratingTrend.missing', { count: series.missing })}</p>
+      ) : null}
+    </section>
+  );
+}
+
 /* ─── Sayfa gövdesi ─── */
 
 export default function PlayerProfile({ playerId }: { playerId: string }) {
@@ -407,6 +435,7 @@ export default function PlayerProfile({ playerId }: { playerId: string }) {
           <Header p={data} />
           <Bio p={data} />
           {season && hasStats ? <SeasonSummary seasons={data.seasons} selected={season} onSelect={setSelectedSeasonKey} /> : null}
+          {teamId != null ? <RatingTrend playerId={data.id} teamId={teamId} /> : null}
           {season && hasStats ? <DetailedStats season={season} /> : null}
         </div>
         <aside className={styles.side}>

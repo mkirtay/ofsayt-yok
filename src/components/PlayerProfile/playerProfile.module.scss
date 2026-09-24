@@ -469,6 +469,12 @@
   font-variant-numeric: tabular-nums;
 }
 
+.trendNote {
+  margin: $spacing-3 0 0;
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
 .matchRating {
   display: inline-flex;
   align-items: center;

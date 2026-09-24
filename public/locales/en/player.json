@@ -27,6 +27,33 @@
     "assists": "Assists",
     "rating": "Rating"
   },
+  "ratingTrend": {
+    "title": "Rating Trend",
+    "subtitle": "Last {{count}} matches",
+    "subtitle_one": "Last {{count}} match",
+    "empty": "No rating data in recent matches.",
+    "error": "Rating data is unavailable right now.",
+    "missing": "No rating in {{count}} matches (not in squad / did not play)",
+    "missing_one": "No rating in {{count}} match (not in squad / did not play)",
+    "average": "Average",
+    "best": "Best",
+    "worst": "Worst",
+    "consistency": "Consistency",
+    "consistencyLabel": {
+      "stable": "Consistent",
+      "balanced": "Steady",
+      "volatile": "Volatile"
+    },
+    "consistencyHint": "Standard deviation σ = {{sd}} (< 0.35 Consistent · 0.35–0.65 Steady · ≥ 0.65 Volatile)",
+    "consistencyTooFew": "At least {{min}} matches are needed for consistency",
+    "averageLine": "Avg {{value}}",
+    "home": "H",
+    "away": "A",
+    "goToMatch": "Go to match",
+    "pointLabel": "{{date}}, {{venue}} {{opponent}}, score {{score}}, rating {{rating}}",
+    "srSummary": "Rating chart for the last {{count}} matches, oldest to newest. Average {{average}}. Best {{best}}: {{bestOpponent}}, {{bestDate}}. Worst {{worst}}: {{worstOpponent}}, {{worstDate}}.",
+    "srConsistency": "Consistency: {{label}}."
+  },
   "detailed": {
     "title": "Detailed Statistics"
   },
