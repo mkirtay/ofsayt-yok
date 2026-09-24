@@ -35,7 +35,7 @@ import LeagueLogo from '@/components/LeagueLogo';
 import { isUefaCupCompetitionId, type SidebarLeague } from '@/config/leagues';
 import { resolveSportmonksLeagueId } from '@/services/sportmonksProviderFlag';
 import { resolveSidebarLeagueLogo } from '@/utils/leagueLogo';
-import { leagueDisplayName } from '@/utils/leagueName';
+import { leagueDisplayName, leagueNameById } from '@/utils/leagueName';
 import { todayIsoIstanbul } from '@/utils/dateStrip';
 import { buildMatchHref } from '@/utils/matchUrl';
 import {
@@ -284,7 +284,11 @@ export default function MatchHubPage({
   }, [uefaFixtureMode, uefaFixturesQuery.data, activeTab, favoriteTeamSet, locale, t]);
 
   const selectedLeague = sidebarLeagues.find((l) => l.id === selectedCompId);
-  const selectedLeagueName = selectedLeague ? leagueDisplayName(selectedLeague, tl) : tl('fallback');
+  // Takım sayfası / maç detayı ile aynı kısa ad ("Süper Lig"): Sportmonks id → `leagues.short.*`;
+  // eşleme yoksa (ör. Sportmonks kapalı) config'in kısa adı.
+  const selectedLeagueName = selectedLeague
+    ? leagueNameById(resolveSportmonksLeagueId(selectedLeague.id), leagueDisplayName(selectedLeague, tl), tl)
+    : tl('fallback');
 
   // Canlı fikstürdeki `league.image_path` (→ `competition.logo`) — sidebar logolarının birincil kaynağı.
   // Fikstürde `competition.id` Sportmonks lig id'sidir; sidebar ise legacy id kullanır → eşle.

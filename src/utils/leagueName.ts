@@ -16,13 +16,17 @@ export type LeagueTranslate = (key: string, opts?: Record<string, unknown>) => s
 type NamedLeague = Pick<SidebarLeague, 'nameKey' | 'name'>;
 
 /**
- * `lib/i18n`'deki `t`, anahtar bulunamazsa ANAHTARIN KENDİSİNİ döndürüyor. Bu yüzden dönen değer
- * anahtara eşitse çeviri yok demektir → config'teki Türkçe ada düşülür (boş metin gösterilmez).
+ * Küratörlü lig için görünen ad — `leagueNameById` ile AYNI kısa ad tablosu (`short.<nameKey>`):
+ * her yerde "Süper Lig" (sponsorlu uzun "Trendyol Süper Lig" değil). Kısa ad yoksa uzun çeviri, o da
+ * yoksa config adı. `lib/i18n`'deki `t`, anahtar bulunamazsa ANAHTARIN KENDİSİNİ döndürür → eşitse çeviri yok.
  */
 export function leagueDisplayName(league: NamedLeague, t: LeagueTranslate): string {
   if (!league.nameKey) return league.name;
-  const value = t(league.nameKey);
-  return value === league.nameKey ? league.name : value;
+  for (const key of [`short.${league.nameKey}`, league.nameKey]) {
+    const value = t(key);
+    if (value !== key) return value;
+  }
+  return league.name;
 }
 
 /** Aramada hem çevrilmiş hem yedek ad eşleşsin diye ikisini birden verir ("Premier" iki dilde de bulsun). */

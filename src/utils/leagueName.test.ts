@@ -40,10 +40,29 @@ describe('lig adı çeviri kataloğu', () => {
 });
 
 describe('leagueDisplayName', () => {
-  it('seçili dilin adını döner', () => {
+  it('seçili dilin KISA adını döner (leagueNameById ile aynı `short.*` tablosu)', () => {
     const cl = UEFA_SIDEBAR_LEAGUES[0];
     expect(leagueDisplayName(cl, translator(trLeagues))).toBe('Şampiyonlar Ligi');
-    expect(leagueDisplayName(cl, translator(enLeagues))).toBe('UEFA Champions League');
+    expect(leagueDisplayName(cl, translator(enLeagues))).toBe('Champions League');
+    const superLig = SIDEBAR_LEAGUES[0];
+    expect(leagueDisplayName(superLig, translator(trLeagues))).toBe('Süper Lig');
+    expect(leagueDisplayName(superLig, translator(enLeagues))).toBe('Süper Lig');
+  });
+
+  it('kısa ad yoksa uzun çeviriye düşer', () => {
+    const league = { nameKey: 'superLig', name: 'Yedek Ad' };
+    expect(leagueDisplayName(league, translator({ superLig: 'Uzun Ad' }))).toBe('Uzun Ad');
+  });
+
+  it('config ligi ile Sportmonks id\'si aynı kısa adı verir', () => {
+    vi.stubEnv('NEXT_PUBLIC_SPORTMONKS_ENABLED', 'true');
+    try {
+      for (const dict of [trLeagues, enLeagues]) {
+        expect(leagueDisplayName(SIDEBAR_LEAGUES[0], translator(dict))).toBe(leagueNameById(600, 'Super Lig', translator(dict)));
+      }
+    } finally {
+      vi.unstubAllEnvs();
+    }
   });
 
   it('anahtar sözlükte yoksa config adına düşer (anahtarı ekranda göstermez)', () => {
@@ -65,8 +84,14 @@ describe('leagueSearchTerms', () => {
   });
 
   it('çeviri config adıyla aynıysa tekrar etmez', () => {
-    const superLig = SIDEBAR_LEAGUES[0];
-    expect(leagueSearchTerms(superLig, translator(trLeagues))).toBe(superLig.name);
+    const turkishCup = { nameKey: 'turkishCup', name: 'Türkiye Kupası' };
+    expect(leagueSearchTerms(turkishCup, translator(trLeagues))).toBe('Türkiye Kupası');
+  });
+
+  it('kısa ad gösterilse de sponsorlu uzun adla da bulunur', () => {
+    const terms = leagueSearchTerms(SIDEBAR_LEAGUES[0], translator(trLeagues));
+    expect(terms).toContain('Süper Lig');
+    expect(terms).toContain('Trendyol');
   });
 });
 
