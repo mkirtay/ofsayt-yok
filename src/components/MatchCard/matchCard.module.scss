@@ -68,6 +68,10 @@ $match-card-header-blue: var(--text-secondary); // tema-uyumlu (eskiden sabit la
   flex-shrink: 0;
 }
 
+.logoBackdrop {
+  @include logo-backdrop(2px);
+}
+
 .teamsContainer {
   display: flex;
   flex-direction: column;

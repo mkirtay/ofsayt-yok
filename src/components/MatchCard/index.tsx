@@ -8,6 +8,7 @@ import { countryFlagImgSrc } from '@/utils/countryFlag';
 import { utcTimeToTr, isoDateToTr } from '@/utils/dateFormat';
 import { parseHead2HeadTeamIds, overallFormToPills, type FormPill } from '@/utils/matchForm';
 import { buildMatchHref } from '@/utils/matchUrl';
+import { competitionLogoNeedsBackdrop } from '@/utils/competitionLogo';
 import { leagueNameById } from '@/utils/leagueName';
 import { getTeamsHead2Head, type Head2HHistoricalMatch } from '@/services/liveScoreService';
 import StadiumIcon from '@/components/icons/StadiumIcon';
@@ -200,7 +201,16 @@ export default function MatchCard({ match, loading }: MatchCardProps) {
       <header className={styles.cardHeader}>
         <div className={styles.cardHeaderLeft}>
           {compLogo ? (
-            <Image src={compLogo} alt="" className={styles.cardHeaderLogo} width={22} height={22} unoptimized />
+            <Image
+              src={compLogo}
+              alt=""
+              className={`${styles.cardHeaderLogo} ${
+                competitionLogoNeedsBackdrop(match.competition?.id) ? styles.logoBackdrop : ''
+              }`.trim()}
+              width={22}
+              height={22}
+              unoptimized
+            />
           ) : showCountryFlag ? (
             <Image
               src={countryFlagImgSrc(country!.id)}
