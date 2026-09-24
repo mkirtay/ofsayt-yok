@@ -1,3 +1,8 @@
+/**
+ * @deprecated KULLANILMIYOR (2026-09-25): maç forumu artık Gündem postları (`/api/gundem/posts?scope=match&matchId=`).
+ * Web bu ucu çağırmıyor; mobil yayına çıkmadan Gündem uçlarına geçiyor. `MatchComment` tablosu salt-okunur kalır, veri
+ * taşınmadı. Mobil geçişi tamamlanınca bu uç ayrı bir işte kaldırılacak — yeni kullanım EKLEME.
+ */
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { Role } from '@prisma/client';
 import { prisma } from '@/lib/prisma';

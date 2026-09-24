@@ -24,6 +24,15 @@ export type GundemPanelProps = {
   enabled?: boolean;
   /** Akış sorgusunun `staleTime`'ı (ms); verilmezse hook varsayılanı (30 sn). */
   staleTime?: number;
+  /**
+   * Maç forumu: yalnızca bu maçın postları; composer'dan yazılan post otomatik bu `matchId`'yi alır ve kartlarda maç
+   * rozeti gösterilmez (zaten maç sayfasındayız). `scope` yok sayılır.
+   */
+  matchId?: string | null;
+  /** Composer yer tutucusu (varsayılan: Gündem metni). */
+  composerPlaceholder?: string;
+  /** Boş akış metni (varsayılan: `feed.empty.<scope>`). */
+  emptyText?: string;
 };
 
 /** Gündem akışı: (isteğe bağlı) composer + PostCard listesi + sonsuz kaydırma. Konumlandırmayı çağıran yapar. */
@@ -35,12 +44,15 @@ export default function GundemPanel({
   onSelectedPostDeleted,
   enabled = true,
   staleTime,
+  matchId = null,
+  composerPlaceholder,
+  emptyText,
 }: GundemPanelProps) {
   const { t } = useTranslation('gundem');
   const { status } = useSession();
   const authenticated = status === 'authenticated';
 
-  const feed = useGundemFeed(scope, { enabled, staleTime });
+  const feed = useGundemFeed(scope, { enabled, staleTime, matchId });
   const createPost = useCreatePost();
   const actions = usePostActions();
   const items = feed.data?.pages.flatMap((p) => p.items) ?? [];
@@ -56,7 +68,8 @@ export default function GundemPanel({
             variant={composer}
             authenticated={authenticated}
             maxLength={POST_MAX_LENGTH}
-            onSubmit={(body) => createPost.mutateAsync({ body })}
+            placeholder={composerPlaceholder}
+            onSubmit={(body) => createPost.mutateAsync(matchId ? { body, matchId } : { body })}
           />
         )}
 
@@ -71,7 +84,7 @@ export default function GundemPanel({
             </button>
           </EmptyState>
         ) : items.length === 0 ? (
-          <EmptyState>{t(`feed.empty.${scope}`)}</EmptyState>
+          <EmptyState>{emptyText ?? t(`feed.empty.${scope}`)}</EmptyState>
         ) : (
           <ul className={styles.list}>
             {items.map((post) => (
@@ -81,6 +94,7 @@ export default function GundemPanel({
                   currentUserId={actions.currentUserId}
                   isAdmin={actions.isAdmin}
                   selected={post.id === selectedPostId}
+                  showMatchBadge={!matchId}
                   liking={actions.likingId === post.id}
                   deleting={actions.deletingId === post.id}
                   onOpen={onOpenPost}

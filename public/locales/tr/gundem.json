@@ -11,7 +11,14 @@
     "label": "Akış türü",
     "all": "Tümü",
     "following": "Takip Ettiklerim",
-    "official": "Resmi"
+    "official": "Resmi",
+    "match": "Maçlar",
+    "short": {
+      "all": "Tümü",
+      "following": "Takip",
+      "official": "Resmi",
+      "match": "Maçlar"
+    }
   },
   "composer": {
     "postPlaceholder": "Futbol gündeminde ne var?",
@@ -38,7 +45,8 @@
     "empty": {
       "all": "Henüz gönderi yok. İlk gönderiyi sen paylaş!",
       "following": "Takip ettiklerinin henüz gönderisi yok.",
-      "official": "Henüz resmi paylaşım yok."
+      "official": "Henüz resmi paylaşım yok.",
+      "match": "Henüz maç gönderisi yok. Maç sayfalarının Forum sekmesinden yazabilirsin."
     }
   },
   "post": {
@@ -52,7 +60,8 @@
     "official": "Resmi hesap",
     "anonymous": "Anonim",
     "open": "Gönderiyi aç",
-    "deleteTitle": "Gönderiyi sil"
+    "deleteTitle": "Gönderiyi sil",
+    "matchBadge": "Maça git: {{match}}"
   },
   "comments": {
     "title": "Yorumlar",

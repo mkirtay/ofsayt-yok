@@ -41,6 +41,32 @@ describe('<PostCard />', () => {
     expect(plain).toContain('Ada');
   });
 
+  it('maç postu: kompakt rozet (kısa ad varsa kısa, yoksa tam ad + logolar) maç detayına bağlanır', () => {
+    const match = {
+      fixtureId: '19134567',
+      startingAt: '2026-09-27T17:00:00.000Z',
+      leagueId: 2,
+      home: { id: 34, name: 'Galatasaray', shortName: 'GAL', logo: 'https://cdn/gs.png' },
+      away: { id: 83, name: 'FC Barcelona', shortName: null, logo: null },
+    };
+    const html = renderToStaticMarkup(<PostCard post={post({ matchId: '19134567', match })} onToggleLike={noop} now={NOW} />);
+    expect(html).toContain('href="/matches/19134567-galatasaray-fc-barcelona"');
+    expect(html).toContain('>GAL<');
+    expect(html).toContain('>FC Barcelona<');
+    expect(html).not.toContain('>Galatasaray<');
+    expect(html).toContain('gs.png');
+    expect(html).toContain('Galatasaray – FC Barcelona'); // tam adlar title/aria-label'da
+    const hidden = renderToStaticMarkup(
+      <PostCard post={post({ matchId: '19134567', match })} showMatchBadge={false} onToggleLike={noop} now={NOW} />,
+    );
+    expect(hidden).not.toContain('/matches/');
+  });
+
+  it('snapshot\'ı olmayan maç postunda (match: null) rozet yok', () => {
+    const html = renderToStaticMarkup(<PostCard post={post({ matchId: '1', match: null })} onToggleLike={noop} now={NOW} />);
+    expect(html).not.toContain('/matches/');
+  });
+
   it('gövde HTML olarak yorumlanmaz (XSS): etiketler kaçırılır', () => {
     const html = renderToStaticMarkup(<PostCard post={post({ body: '<img src=x onerror=alert(1)>' })} onToggleLike={noop} now={NOW} />);
     expect(html).not.toContain('<img src=x');

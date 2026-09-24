@@ -4,19 +4,13 @@ import { useSession } from 'next-auth/react';
 import { useCallback, useEffect, useRef } from 'react';
 import EmptyState from '@/components/EmptyState';
 import GundemPanel from '@/components/GundemPanel';
+import GundemScopeTabs, { readGundemScope } from '@/components/GundemScopeTabs';
 import PostDetailPanel from '@/components/PostDetailPanel';
 import { useSplitView } from '@/hooks/useSplitView';
 import { useTranslation } from '@/lib/i18n';
 import type { GundemScope } from '@/types/gundem';
 import { buildPostSelectionTarget, readSelectedPostId } from '@/utils/postSelection';
 import styles from './gundemHubPage.module.scss';
-
-const SCOPES: GundemScope[] = ['all', 'following', 'official'];
-
-function readScope(raw: string | string[] | undefined): GundemScope {
-  const s = Array.isArray(raw) ? raw[0] : raw;
-  return SCOPES.includes(s as GundemScope) ? (s as GundemScope) : 'all';
-}
 
 /**
  * Gündem hub'ı: scope sekmeleri + composer + akış; geniş ekranda (≥ $bp-split) seçili post'un yorumları sağ panelde.
@@ -33,7 +27,7 @@ export default function GundemHubPage() {
   const isSplit = splitView === true;
 
   // Oturumsuzken "Takip" sekmesi anlamsız → Tümü'ne düşer
-  const requested = readScope(router.query.scope);
+  const requested = readGundemScope(router.query.scope);
   const scope: GundemScope = requested === 'following' && unauthenticated ? 'all' : requested;
   const selectedPostId = readSelectedPostId(router.query);
   const showPanel = isSplit && selectedPostId != null;
@@ -82,8 +76,6 @@ export default function GundemHubPage() {
     );
   }
 
-  const tabs: GundemScope[] = unauthenticated ? SCOPES.filter((s) => s !== 'following') : SCOPES;
-
   return (
     <>
       <Head>
@@ -96,20 +88,7 @@ export default function GundemHubPage() {
       <div className={styles.shell}>
         <div className={styles.top}>
           <h1 className={styles.title}>{t('title')}</h1>
-          <div className={styles.tabs} role="tablist" aria-label={t('tabs.label')}>
-            {tabs.map((s) => (
-              <button
-                key={s}
-                type="button"
-                role="tab"
-                aria-selected={scope === s}
-                className={`${styles.tab} ${scope === s ? styles.tabActive : ''}`.trim()}
-                onClick={() => selectScope(s)}
-              >
-                {t(`tabs.${s}`)}
-              </button>
-            ))}
-          </div>
+          <GundemScopeTabs value={scope} onChange={selectScope} hideFollowing={unauthenticated} />
         </div>
 
         <div className={`${styles.grid} ${isSplit ? styles.gridSplit : ''}`.trim()}>

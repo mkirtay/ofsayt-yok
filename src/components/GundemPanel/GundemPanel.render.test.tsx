@@ -37,4 +37,10 @@ describe('<GundemPanel />', () => {
     expect(html).toContain('Yükleniyor');
     expect(html).not.toContain('Henüz gönderi yok');
   });
+
+  it('maç forumu: özel yer tutucu composer\'a gider (oturumsuz → giriş istemi), boş metin prop\'u kabul edilir', () => {
+    const html = render({ scope: 'match', matchId: '19134567', composer: 'post-inline', emptyText: 'Maç boş' });
+    expect(html).toContain('href="/auth/signin"');
+    expect(html).toContain('Yükleniyor');
+  });
 });

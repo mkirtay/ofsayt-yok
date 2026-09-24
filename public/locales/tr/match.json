@@ -144,20 +144,9 @@
     "penalties": "Penaltı"
   },
   "forum": {
-    "title": "Maç Yorumları",
-    "empty": "Henüz yorum yok. İlk yorumu sen yap!",
-    "placeholder": "Yorumunuzu yazın…",
-    "send": "Gönder",
-    "loginPrompt": "Yorum yapmak için giriş yap",
-    "error": "Bir hata oluştu.",
-    "connectionError": "Bağlantı hatası.",
-    "anonymous": "Anonim",
-    "deleteComment": "Yorumu sil",
-    "deleting": "Siliniyor",
-    "confirmDelete": "Bu yorumu silmek istediğinize emin misiniz?",
-    "deleteError": "Yorum silinemedi.",
-    "like": "Beğen",
-    "deleteTitle": "Yorumu sil"
+    "title": "Maç Forumu",
+    "empty": "Bu maç hakkında henüz gönderi yok. İlk yazan sen ol!",
+    "placeholder": "Maç hakkında ne düşünüyorsun?"
   },
   "tabs": {
     "label": "Maç detay bölümleri",

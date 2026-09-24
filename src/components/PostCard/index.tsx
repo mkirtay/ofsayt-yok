@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Avatar from '@/components/Avatar';
 import LikeButton from '@/components/LikeButton';
+import PostMatchBadge from '@/components/PostMatchBadge';
 import CommentIcon from '@/components/icons/CommentIcon';
 import TrashIcon from '@/components/icons/TrashIcon';
 import VerifiedIcon from '@/components/icons/VerifiedIcon';
@@ -20,6 +21,8 @@ export type PostCardProps = {
   deleting?: boolean;
   /** Avatar + isim yazarın profil sayfasına bağlanır (`/gundem/kullanici/[id]`). Profil sayfasının kendisinde kapatılır. */
   linkAuthor?: boolean;
+  /** Maç postunda maç rozeti (varsayılan açık). Maç sayfasının forumunda gereksiz → kapatılır. */
+  showMatchBadge?: boolean;
   /** Yorumlar/detay aç (split panel ya da tam sayfa) — yoksa yorum düğmesi ve zaman bağlantısı yalnızca bağlantı olur. */
   onOpen?: (postId: string) => void;
   onToggleLike: (postId: string) => void;
@@ -37,6 +40,7 @@ export default function PostCard({
   liking = false,
   deleting = false,
   linkAuthor = true,
+  showMatchBadge = true,
   onOpen,
   onToggleLike,
   onDelete,
@@ -104,6 +108,8 @@ export default function PostCard({
           </button>
         ) : null}
       </header>
+
+      {showMatchBadge && post.match ? <PostMatchBadge match={post.match} /> : null}
 
       <p className={styles.body}>{post.body}</p>
 

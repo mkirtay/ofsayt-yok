@@ -54,7 +54,7 @@ import {
 import { MOBILE_LAYOUT_QUERY } from '@/config/breakpoints';
 import { prefetchMatchDetail } from '@/hooks/useMatchDetail';
 import { GUNDEM_PANEL_MIN_WIDTH, RIGHT_COLUMN_MIN_WIDTH, useMinWidth, useSplitView } from '@/hooks/useSplitView';
-import GundemPanel from '@/components/GundemPanel';
+import HomeGundemPanel from '@/components/HomeGundemPanel';
 import { resolveHubSidePanel } from '@/utils/hubSidePanel';
 import LeagueFilterBar from '@/components/LeagueFilterBar';
 import AdSlot from '@/components/AdSlot';
@@ -635,12 +635,7 @@ export default function MatchHubPage({
                 </div>
                 {/* Detay paneli ↔ Gündem geçişinde yeniden mount olur: 60 sn staleTime tüm yüklü sayfaların (infinite query)
                     her geçişte yeniden çekilmesini önler. Kendi post/beğeni/silme invalidation'ı staleTime'dan bağımsız. */}
-                <GundemPanel
-                  scope="all"
-                  composer="post-inline"
-                  staleTime={60_000}
-                  onOpenPost={(postId) => void router.push(`/gundem/${postId}`)}
-                />
+                <HomeGundemPanel staleTime={60_000} onOpenPost={(postId) => void router.push(`/gundem/${postId}`)} />
               </aside>
             ) : null}
           </div>

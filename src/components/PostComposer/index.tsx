@@ -39,13 +39,15 @@ export type PostComposerProps = {
   /** Gönderir; hata fırlatırsa (GundemApiError) mesaj gösterilir, metin korunur. Başarıda alan temizlenir. */
   onSubmit: (body: string) => Promise<unknown>;
   autoFocus?: boolean;
+  /** Varsayılan yer tutucunun yerine (ör. maç forumu: "Maç hakkında ne düşünüyorsun?"). */
+  placeholder?: string;
 };
 
 /**
  * Gönderi/yorum yazma alanı (paylaşımlı). Enter = yeni satır, Ctrl/Cmd+Enter = gönder.
  * Sayaç kalan karakteri gösterir; ≤ COUNTER_WARN_AT'de uyarı (amber) rengi.
  */
-export default function PostComposer({ authenticated, variant, maxLength, onSubmit, autoFocus }: PostComposerProps) {
+export default function PostComposer({ authenticated, variant, maxLength, onSubmit, autoFocus, placeholder }: PostComposerProps) {
   const { t } = useTranslation('gundem');
   const [value, setValue] = useState('');
   const [sending, setSending] = useState(false);
@@ -103,7 +105,8 @@ export default function PostComposer({ authenticated, variant, maxLength, onSubm
     if (shouldCollapseOnBlur(value, e.currentTarget.contains(e.relatedTarget as Node | null))) setExpanded(false);
   }
 
-  const placeholderKey = isInline ? 'composer.inlinePlaceholder' : isPost ? 'composer.postPlaceholder' : 'composer.commentPlaceholder';
+  const placeholderText =
+    placeholder ?? t(isInline ? 'composer.inlinePlaceholder' : isPost ? 'composer.postPlaceholder' : 'composer.commentPlaceholder');
   const collapsed = isInline && !expanded;
 
   return (
@@ -122,8 +125,8 @@ export default function PostComposer({ authenticated, variant, maxLength, onSubm
         onFocus={() => {
           if (isInline && !skipExpandOnFocus.current) setExpanded(true);
         }}
-        placeholder={t(placeholderKey)}
-        aria-label={t(placeholderKey)}
+        placeholder={placeholderText}
+        aria-label={placeholderText}
         data-expanded={isInline ? expanded : undefined}
         maxLength={maxLength}
         rows={collapsed ? 1 : isPost ? 3 : 2}

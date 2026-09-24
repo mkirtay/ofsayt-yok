@@ -1,0 +1,28 @@
+@use '../../styles/variables' as *;
+
+// flex-shrink: 0 — yüksekliği sınırlı flex-column kaplarda (ana sayfa paneli) overflow'lu satır 0 yüksekliğe büzülmesin.
+.tabs {
+  display: flex;
+  flex-shrink: 0;
+  gap: $spacing-2;
+  overflow-x: auto;
+}
+
+.tab {
+  @include filter-chip;
+  flex-shrink: 0;
+}
+
+.tabActive {
+  @include filter-chip-active;
+}
+
+.compact {
+  gap: 6px;
+
+  .tab {
+    min-height: 28px;
+    padding: 0 10px;
+    font-size: 12px;
+  }
+}

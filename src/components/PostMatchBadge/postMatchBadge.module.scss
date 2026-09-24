@@ -1,0 +1,48 @@
+@use '../../styles/variables' as *;
+
+// Kompakt tek satır "pill": başlığı büyütmez, gövdenin hemen üstünde durur.
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  margin-top: $spacing-2;
+  padding: 2px $spacing-2;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 20px;
+  color: $color-text-secondary;
+  background: var(--bg-muted);
+  border: 1px solid var(--border-subtle);
+  border-radius: $radius-full;
+  text-decoration: none;
+  overflow: hidden;
+  transition: $transition-base;
+
+  &:hover {
+    color: $color-text;
+    border-color: $color-primary;
+  }
+}
+
+.team {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.logo {
+  flex-shrink: 0;
+  object-fit: contain;
+}
+
+.name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sep {
+  flex-shrink: 0;
+}

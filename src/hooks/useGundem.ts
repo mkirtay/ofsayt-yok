@@ -44,6 +44,8 @@ async function api<T>(url: string, init?: RequestInit): Promise<T> {
 export const gundemKeys = {
   feeds: ['gundem', 'feed'] as const,
   feed: (scope: GundemScope, viewer: string) => ['gundem', 'feed', scope, viewer] as const,
+  /** Tek maçın forumu (`scope=match&matchId`): `feeds` önekinin altında → beğeni yaması/oluşturma/silme invalidation'ı kapsar. */
+  matchFeed: (matchId: string, viewer: string) => ['gundem', 'feed', 'matchForum', matchId, viewer] as const,
   /** Profil akışı: `feeds` önekinin altında → beğeni yaması ve post oluşturma/silme invalidation'ı otomatik kapsar. */
   userFeed: (userId: string, viewer: string) => ['gundem', 'feed', 'user', userId, viewer] as const,
   user: (userId: string, viewer: string) => ['gundem', 'user', userId, viewer] as const,
@@ -66,16 +68,21 @@ function useViewerKey(): string | null {
 /**
  * `enabled: false` → akış çekilmez (ör. panel görünmezken); oturum çözülene kadar zaten beklenir. Varsayılan `true`.
  * `staleTime` observer'a özel (varsayılan 30 sn): aynı anahtarı paylaşan /gundem sayfası kendi değeriyle çalışır.
+ * `matchId` → yalnızca o maçın postları (`scope` yok sayılır, `match` gönderilir).
  */
 export function useGundemFeed(
   scope: GundemScope,
-  { enabled = true, staleTime = 30_000 }: { enabled?: boolean; staleTime?: number } = {},
+  {
+    enabled = true,
+    staleTime = 30_000,
+    matchId = null,
+  }: { enabled?: boolean; staleTime?: number; matchId?: string | null } = {},
 ) {
   const viewer = useViewerKey();
   return useInfiniteQuery({
-    queryKey: gundemKeys.feed(scope, viewer ?? 'anon'),
+    queryKey: matchId ? gundemKeys.matchFeed(matchId, viewer ?? 'anon') : gundemKeys.feed(scope, viewer ?? 'anon'),
     queryFn: ({ pageParam }) => {
-      const qs = new URLSearchParams({ scope });
+      const qs = new URLSearchParams(matchId ? { scope: 'match', matchId } : { scope });
       if (pageParam) qs.set('cursor', pageParam);
       return api<GundemPage<GundemPost>>(`/api/gundem/posts?${qs}`);
     },

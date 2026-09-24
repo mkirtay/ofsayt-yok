@@ -21,20 +21,6 @@
   color: $color-text;
 }
 
-.tabs {
-  display: flex;
-  gap: $spacing-2;
-  overflow-x: auto;
-}
-
-.tab {
-  @include filter-chip;
-}
-
-.tabActive {
-  @include filter-chip-active;
-}
-
 .grid {
   display: flex;
   flex-direction: column;

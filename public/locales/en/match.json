@@ -145,20 +145,9 @@
     "penalties": "Penalties"
   },
   "forum": {
-    "title": "Match Comments",
-    "empty": "No comments yet. Be the first!",
-    "placeholder": "Write your comment…",
-    "send": "Send",
-    "loginPrompt": "Sign in to comment",
-    "error": "An error occurred.",
-    "connectionError": "Connection error.",
-    "anonymous": "Anonymous",
-    "deleteComment": "Delete comment",
-    "deleting": "Deleting",
-    "confirmDelete": "Are you sure you want to delete this comment?",
-    "deleteError": "Could not delete comment.",
-    "like": "Like",
-    "deleteTitle": "Delete comment"
+    "title": "Match Forum",
+    "empty": "No posts about this match yet. Be the first!",
+    "placeholder": "What do you think about the match?"
   },
   "tabs": {
     "label": "Match sections",

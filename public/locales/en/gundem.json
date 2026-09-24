@@ -11,7 +11,14 @@
     "label": "Feed type",
     "all": "All",
     "following": "Following",
-    "official": "Official"
+    "official": "Official",
+    "match": "Matches",
+    "short": {
+      "all": "All",
+      "following": "Following",
+      "official": "Official",
+      "match": "Matches"
+    }
   },
   "composer": {
     "postPlaceholder": "What's happening in football?",
@@ -39,7 +46,8 @@
     "empty": {
       "all": "No posts yet. Be the first to post!",
       "following": "The people you follow haven't posted yet.",
-      "official": "No official updates yet."
+      "official": "No official updates yet.",
+      "match": "No match posts yet. Write one from a match page’s Forum tab."
     }
   },
   "post": {
@@ -53,7 +61,8 @@
     "official": "Official account",
     "anonymous": "Anonymous",
     "open": "Open post",
-    "deleteTitle": "Delete post"
+    "deleteTitle": "Delete post",
+    "matchBadge": "Go to match: {{match}}"
   },
   "comments": {
     "title": "Comments",
