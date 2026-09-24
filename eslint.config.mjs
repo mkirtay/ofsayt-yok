@@ -18,6 +18,8 @@ const eslintConfig = defineConfig([
   globalIgnores([
     // Default ignores of eslint-config-next:
     ".next/**",
+    // `NEXT_DIST_DIR=.next-preview` (önizleme sunucusu) çıktısı
+    ".next-preview/**",
     "out/**",
     "build/**",
     "next-env.d.ts",
