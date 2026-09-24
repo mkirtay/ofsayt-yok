@@ -49,6 +49,8 @@
 
 .miniList {
   list-style: none;
+  // Takım adı ↔ kısaltma kararı liste genişliğine göre (StandingTeamName variant="mini")
+  container-type: inline-size;
 }
 
 .miniRow {

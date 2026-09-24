@@ -436,9 +436,10 @@ async function sportmonksFetchStandingsTable(
       won: p.won,
       drawn: p.drawn,
       lost: p.lost,
-      team: { id: p.team_id, name: p.name, ...(p.logo ? { logo: p.logo } : {}) },
+      team: { id: p.team_id, name: p.name, ...(p.short_code ? { short_code: p.short_code } : {}), ...(p.logo ? { logo: p.logo } : {}) },
       team_id: p.team_id,
       name: p.name,
+      ...(p.short_code ? { short_code: p.short_code } : {}),
       ...(p.logo ? { logo: p.logo } : {}),
     };
   });
@@ -1310,9 +1311,11 @@ export type CompetitionTableStandingRow = {
   won: number;
   drawn: number;
   lost: number;
-  team?: { id: number; name: string; logo?: string };
+  team?: { id: number; name: string; short_code?: string; logo?: string };
   team_id?: number;
   name?: string;
+  /** Sportmonks takım kısaltması ("GAL"); dar panellerde gösterilir (bkz. utils/standingsTeamLabel). */
+  short_code?: string;
   logo?: string;
 };
 

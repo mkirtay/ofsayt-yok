@@ -61,6 +61,8 @@
 .scroll {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  // Takım adı ↔ kısaltma kararı bu kutunun genişliğine göre (StandingTeamName + utils/standingsTeamLabel)
+  container-type: inline-size;
 }
 
 .table {
@@ -113,6 +115,32 @@
 
   tbody tr:hover td.colPoints {
     background: $color-row-highlight;
+  }
+}
+
+// Kompakt (kısaltmalı) kapsayıcı — eşik StandingTeamName ile aynı (400px). Takım sütunu artık "GAL" kadar yer
+// istiyor: sabit 100px alt sınır ve 280px tablo alt sınırı gevşer, dar panelde yatay kaydırma azalır.
+@container (max-width: 399.98px) {
+  .table {
+    min-width: 0;
+
+    th,
+    td {
+      padding-left: 4px;
+      padding-right: 4px;
+    }
+
+    .colTeam {
+      min-width: 64px;
+    }
+
+    .colRank {
+      padding-left: 6px;
+    }
+
+    .colPoints {
+      padding-right: 6px;
+    }
   }
 }
 

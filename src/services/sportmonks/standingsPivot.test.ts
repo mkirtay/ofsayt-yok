@@ -22,6 +22,13 @@ describe('pivotStandingRow — Faz 3, gerçek La Liga standings/seasons/27965 ö
       name: 'FC Barcelona',
     });
     expect(pivoted.logo).toContain('83.png');
+    expect(pivoted.short_code).toBe('BAR'); // participant include'unda ek istek olmadan geliyor
+  });
+
+  it('short_code null/eksikse alan hiç yazılmaz', () => {
+    const [barcelona] = standingsLaLiga as SportmonksStandingRow[];
+    const pivoted = pivotStandingRow({ ...barcelona, participant: { ...barcelona.participant!, short_code: null } });
+    expect('short_code' in pivoted).toBe(false);
   });
 
   it('yazım hatalı "Overal Goals Scored" type.name\'i developer_name (OVERALL_SCORED) üzerinden doğru pivotlar', () => {

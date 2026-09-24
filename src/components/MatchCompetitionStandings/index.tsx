@@ -10,7 +10,9 @@ import { formatSeasonLabel } from "@/utils/seasonLabel";
 import { getStandingRankZone } from "@/config/standingsZones";
 import { sortWorldCupGroupsByName } from "@/config/worldCup";
 import { standingsRankZoneClass } from "@/utils/standingsRankZoneUi";
+import { standingTeamFullName } from "@/utils/standingsTeamLabel";
 import EmptyState from "@/components/EmptyState";
+import StandingTeamName from "@/components/StandingTeamName";
 import { StandingsSkeleton } from "@/components/Skeleton";
 import styles from "./matchCompetitionStandings.module.scss";
 
@@ -19,9 +21,6 @@ function standingTeamId(s: CompetitionTableStandingRow): number | undefined {
   return id != null ? Number(id) : undefined;
 }
 
-function standingTeamName(s: CompetitionTableStandingRow): string {
-  return s.team?.name || s.name || "—";
-}
 
 function standingTeamLogo(s: CompetitionTableStandingRow): string | undefined {
   return s.team?.logo || s.logo;
@@ -92,12 +91,16 @@ function StandingsTable({
                         href={`/teams/${tid}`}
                         className={styles.teamLink}
                         prefetch={false}
+                        title={standingTeamFullName(row)}
+                        aria-label={standingTeamFullName(row)}
                       >
-                        {standingTeamName(row)}
+                        <StandingTeamName row={row} />
                       </Link>
                     </div>
                   ) : (
-                    standingTeamName(row)
+                    <span title={standingTeamFullName(row)}>
+                      <StandingTeamName row={row} />
+                    </span>
                   )}
                 </td>
                 <td>{row.matches}</td>

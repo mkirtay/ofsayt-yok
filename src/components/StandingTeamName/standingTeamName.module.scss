@@ -1,0 +1,40 @@
+// Eşikler `src/utils/standingsTeamLabel.ts` ile senkron (STANDINGS_COMPACT_MAX_WIDTH = 400,
+// MINI_STANDINGS_COMPACT_MAX_WIDTH = 220); `standingsTeamLabel.test.ts` ikisini karşılaştırır.
+// İsimsiz container query: en yakın `container-type: inline-size` atası (puan tablosu kaydırma kutusu / mini liste).
+// Kompaktta tam isim `display:none` DEĞİL görsel olarak gizlenir → ekran okuyucu bağlantısız satırda da tam ismi okur.
+
+@mixin visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.shortTable,
+.shortMini {
+  display: none;
+  letter-spacing: 0.02em;
+}
+
+@container (max-width: 399.98px) {
+  .fullTable {
+    @include visually-hidden;
+  }
+
+  .shortTable {
+    display: inline;
+  }
+}
+
+@container (max-width: 219.98px) {
+  .fullMini {
+    @include visually-hidden;
+  }
+
+  .shortMini {
+    display: inline;
+  }
+}

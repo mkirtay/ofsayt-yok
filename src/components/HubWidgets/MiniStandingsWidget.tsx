@@ -2,6 +2,8 @@ import Link from 'next/link';
 import type { CompetitionTableData } from '@/services/liveScoreService';
 import { pickMiniStandingsRows } from '@/utils/miniStandings';
 import { StandingsSkeleton } from '@/components/Skeleton';
+import StandingTeamName from '@/components/StandingTeamName';
+import { standingTeamFullName } from '@/utils/standingsTeamLabel';
 import styles from './hubWidgets.module.scss';
 
 type Props = {
@@ -34,24 +36,28 @@ export default function MiniStandingsWidget({ data, loading, competitionName, on
         <ol className={styles.miniList}>
           {rows.map((r) => {
             const id = r.team?.id ?? r.team_id;
-            const name = r.team?.name || r.name || '—';
+            const name = standingTeamFullName(r);
             const logo = r.team?.logo || r.logo;
             const body = (
               <>
                 <span className={styles.miniRank}>{r.rank}</span>
                 {logo ? <img src={logo} alt="" width={18} height={18} className={styles.miniLogo} /> : <span className={styles.miniLogoPh} />}
-                <span className={styles.miniName}>{name}</span>
+                <span className={styles.miniName}>
+                  <StandingTeamName row={r} variant="mini" />
+                </span>
                 <span className={styles.miniPts}>{r.points}</span>
               </>
             );
             return (
               <li key={`${id ?? name}-${r.rank}`}>
                 {id != null ? (
-                  <Link href={`/teams/${id}`} className={styles.miniRow}>
+                  <Link href={`/teams/${id}`} className={styles.miniRow} title={name} aria-label={`${r.rank}. ${name}, ${r.points}`}>
                     {body}
                   </Link>
                 ) : (
-                  <div className={styles.miniRow}>{body}</div>
+                  <div className={styles.miniRow} title={name}>
+                    {body}
+                  </div>
                 )}
               </li>
             );

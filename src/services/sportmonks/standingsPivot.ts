@@ -37,6 +37,8 @@ export type PivotedStandingRow = {
   goal_diff: number;
   team_id: number;
   name: string;
+  /** Takım kısaltması ("GAL") — `participant` include'unda zaten geliyor; alt liglerde çoğu zaman `null`. */
+  short_code?: string;
   logo?: string;
   group_id?: number | null;
   stage_id?: number | null;
@@ -113,6 +115,7 @@ export function pivotStandingRow(row: SportmonksStandingRow): PivotedStandingRow
     goal_diff,
     team_id: row.participant?.id ?? row.participant_id,
     name: row.participant?.name ?? '',
+    ...(row.participant?.short_code ? { short_code: row.participant.short_code } : {}),
     ...(row.participant?.image_path ? { logo: row.participant.image_path } : {}),
     group_id: row.group_id ?? null,
     stage_id: row.stage_id ?? null,

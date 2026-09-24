@@ -295,7 +295,7 @@ export type SportmonksStandingDetail = {
 export type SportmonksStandingParticipant = {
   id: number;
   name: string;
-  short_code?: string;
+  short_code?: string | null;
   image_path?: string | null;
 };
 
