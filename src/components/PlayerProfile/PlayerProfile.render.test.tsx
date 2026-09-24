@@ -52,9 +52,9 @@ describe('<PlayerProfile /> — gerçek Osimhen verisi', () => {
   it('sezon özeti: maç/ilk 11/dakika/gol/asist/rating gerçek değerlerle', () => {
     expect(html).toMatch(/>4<\/span><span[^>]*>Maç</);
     expect(html).toMatch(/>303<\/span><span[^>]*>Dakika</);
-    expect(html).toMatch(/>8\.02<\/span><span[^>]*>Rating</);
+    expect(html).toMatch(/>8\.0<\/span><span[^>]*>Rating</); // 8.02 → tek ondalığa yuvarlanır
     expect(html).toContain('6.9 – 9.0'); // en düşük – en yüksek
-    expect(html).toMatch(/data-tone="excellent"[^>]*>8\.02</); // sezon ortalaması reyting skalasıyla boyalı
+    expect(html).toMatch(/data-tone="excellent"[^>]*>8\.0</); // sezon ortalaması reyting skalasıyla boyalı
   });
 
   it('detaylı istatistik grupları var (şut/pas/savunma/bireysel)', () => {
@@ -145,8 +145,8 @@ describe('<PlayerProfile /> — rating grafiği', () => {
 
   it('özet: ortalama, en iyi/en kötü, istikrar (≥5 maç), reytingsiz maç sayısı, ekran okuyucu özeti', () => {
     const html = render();
-    expect(html).toMatch(/data-tone="good"[^>]*>7\.91</); // (7.51+7.89+9.01+8.24+6.9)/5 → 7.0–7.99 yeşil
-    expect(html).toContain('Ort. 7.91');
+    expect(html).toMatch(/data-tone="good"[^>]*>7\.9</); // (7.51+7.89+9.01+8.24+6.9)/5 = 7.91 → "7.9" yeşil
+    expect(html).toContain('Ort. 7.9');
     expect(html).toMatch(/data-testid="rating-consistency"[^>]*>Dalgalı/); // σ ≈ 0.70
     expect(html).toContain('2 maçta rating yok');
     expect(html).toContain('En iyi 9.0: Erzurumspor FK, 21 Ağu 2026');

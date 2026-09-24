@@ -9,9 +9,9 @@
  *   < 6.0      bad        kırmızı
  *   yok/null   none       nötr gri
  *
- * Eşikler HAM değere uygulanır (5.99 → bad). Ekranda tek ondalık gösterilirken değer YUVARLANMAZ, KESİLİR
- * (`formatRating`: 5.99 → "5.9", 7.96 → "7.9") — yuvarlamada 5.99 "6.0" yazıp kırmızı görünürdü; kesmede görünen sayı
- * ile renk her zaman aynı bandı söyler.
+ * Ekranda tek ondalığa YUVARLANMIŞ değer gösterilir (SofaScore/FotMob ile aynı sayılar: 7.68 → "7.7") ve renk de bu
+ * yuvarlanmış değerden hesaplanır (5.99 → "6.0" turuncu) — görünen sayı ile renk her zaman aynı bandı söyler.
+ * Ortalamalar (sezon, grafik) da aynı kural: tek ondalık, yuvarlanmış.
  */
 export type RatingTone = 'excellent' | 'good' | 'fair' | 'poor' | 'bad' | 'none';
 
@@ -29,18 +29,25 @@ export function isValidRating(rating: unknown): rating is number {
   return typeof rating === 'number' && Number.isFinite(rating) && rating > 0;
 }
 
-export function ratingTone(rating: number | null | undefined): RatingTone {
-  if (!isValidRating(rating)) return 'none';
-  return RATING_BANDS.find((b) => rating >= b.min)!.tone;
+/**
+ * Tek ondalığa yuvarlanmış sayı. Önce yüzdeliğe yuvarlanır (API iki ondalık verir; `5.95 * 10 = 59.4999…` gibi float
+ * hatası "5.9" yazmasın), sonra ondalığa.
+ */
+export function roundRating(rating: number): number {
+  return Math.round(Math.round(rating * 100) / 10) / 10;
 }
 
-/**
- * Tek ondalık, kesilmiş ("7.96" → "7.9"); geçersizse `null`. Önce yüzdeliğe yuvarlanır (API iki ondalık verir;
- * `6.3 * 10 = 62.99…` gibi float hatası "6.2" yazmasın), sonra kesilir.
- */
+/** Bant, ekranda görünen (yuvarlanmış) değerden: 5.99 → 6.0 → poor. */
+export function ratingTone(rating: number | null | undefined): RatingTone {
+  if (!isValidRating(rating)) return 'none';
+  const shown = roundRating(rating);
+  return RATING_BANDS.find((b) => shown >= b.min)!.tone;
+}
+
+/** Tek ondalık, yuvarlanmış ("7.68" → "7.7"); geçersizse `null`. */
 export function formatRating(rating: number | null | undefined): string | null {
   if (!isValidRating(rating)) return null;
-  return (Math.floor(Math.round(rating * 100) / 10) / 10).toFixed(1);
+  return roundRating(rating).toFixed(1);
 }
 
 /** CSS değişkenleri — zemin + üstündeki metin (kontrast tokenlarda belgeli). */

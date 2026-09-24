@@ -26,7 +26,7 @@ function shortName(name: string): string {
 }
 
 /**
- * Reyting rozeti metni: tek ondalık (kesilmiş — renk bandıyla tutarlı, bkz. `config/ratingScale`); geçersiz / ≤0 / eksikse
+ * Reyting rozeti metni: tek ondalık, yuvarlanmış (renk de bu değerden, bkz. `config/ratingScale`); geçersiz / ≤0 / eksikse
  * `null` (rozet hiç çizilmez — asla "0").
  */
 export const formatPlayerRating = formatRating;

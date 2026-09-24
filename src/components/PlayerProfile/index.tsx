@@ -219,7 +219,7 @@ function SeasonSummary({ seasons, selected, onSelect }: { seasons: PlayerSeasonS
     ['minutes', formatStat(s[STAT.MINUTES])],
     ['goals', formatStat(s[STAT.GOALS])],
     ['assists', formatStat(s[STAT.ASSISTS])],
-    ['rating', formatStat(s[STAT.RATING], 'rating'), rating?.highest != null && rating?.lowest != null ? `${rating.lowest.toFixed(1)} – ${rating.highest.toFixed(1)}` : undefined],
+    ['rating', formatRating(rating?.average), rating?.highest != null && rating?.lowest != null ? `${formatRating(rating.lowest)} – ${formatRating(rating.highest)}` : undefined],
   ];
   return (
     <section className={styles.card} aria-labelledby="pp-season">
@@ -235,8 +235,8 @@ function SeasonSummary({ seasons, selected, onSelect }: { seasons: PlayerSeasonS
         {tiles.map(([key, value, sub]) => (
           <div key={key} className={styles.tile}>
             {key === 'rating' && value != null ? (
-              // Sezon ortalaması iki ondalık yazılır; renk aynı skaladan (ham ortalamaya göre)
-              <RatingBadge rating={rating?.average} text={value} size="md" className={styles.tileRating} />
+              // Sezon ortalaması da tek ondalığa yuvarlanır; renk bu değerden (ratingScale)
+              <RatingBadge rating={rating?.average} size="md" className={styles.tileRating} />
             ) : (
               <span className={styles.tileValue}>{value ?? '—'}</span>
             )}

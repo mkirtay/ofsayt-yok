@@ -71,7 +71,7 @@ export default function RatingTrendChart({ series, summary }: RatingTrendChartPr
 
   const layout = ratingChartLayout(series.points, { ...BOX, width }, summary.average);
   const dot = active != null ? layout.dots[active] : null;
-  const avgText = summary.average.toFixed(2);
+  const avgText = formatRating(summary.average) ?? '—';
   const n = series.points.length;
 
   const pointLabel = (p: RatingPoint) =>
@@ -91,7 +91,7 @@ export default function RatingTrendChart({ series, summary }: RatingTrendChartPr
         <div className={styles.stat}>
           <dt>{t('ratingTrend.average')}</dt>
           <dd>
-            <RatingBadge rating={summary.average} text={avgText} size="md" />
+            <RatingBadge rating={summary.average} size="md" />
           </dd>
         </div>
         {n > 1 ? (

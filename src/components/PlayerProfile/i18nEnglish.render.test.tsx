@@ -90,7 +90,7 @@ describe('<PlayerProfile /> — İngilizce', () => {
   });
 
   it('rating grafiği İngilizce (tekil/çoğul dahil)', () => {
-    for (const s of ['Rating Trend', 'Last 1 match', 'No rating in 1 match', 'Average', 'Best', 'Worst', 'At least 5 matches are needed for consistency', 'Avg 6.90']) {
+    for (const s of ['Rating Trend', 'Last 1 match', 'No rating in 1 match', 'Average', 'Best', 'Worst', 'At least 5 matches are needed for consistency', 'Avg 6.9']) {
       expect(html, s).toContain(s);
     }
     expect(html).toContain('aria-label="4 Sept 2026, A İstanbul Başakşehir, score 1-3, rating 6.9"');
