@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { captureError } from '@/lib/logger';
 import { getRequestUserId } from '@/lib/mobileAuth';
 import { queryString } from '@/lib/gundem/validation';
-import { postSelect, serializePost } from '@/lib/gundem/posts';
+import { postSelect, serializePosts } from '@/lib/gundem/posts';
 import { isAdminUser } from '@/lib/gundem/authz';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -18,7 +18,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         select: postSelect(viewerId),
       });
       if (!post) return res.status(404).json({ error: 'Gönderi bulunamadı.' });
-      return res.json(serializePost(post, viewerId));
+      const [serialized] = await serializePosts([post], viewerId);
+      return res.json(serialized);
     }
 
     if (req.method === 'DELETE') {

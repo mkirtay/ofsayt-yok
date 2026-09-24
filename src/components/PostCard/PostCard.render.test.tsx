@@ -12,6 +12,7 @@ const post = (over: Partial<GundemPost> = {}): GundemPost => ({
   createdAt: new Date(NOW - 5 * 60_000).toISOString(),
   authorType: 'USER',
   matchId: null,
+  match: null,
   teamId: null,
   author: { id: 'u-author', name: 'Ada', username: 'ada', image: null, official: false, followedByMe: false, followerCount: 0, followingCount: 0 },
   likes: 3,

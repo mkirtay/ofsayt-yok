@@ -2,7 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { sanitizePlainText } from '@/lib/security';
 import { POST_MAX_LENGTH } from '@/config/gundem';
 import { getBotAccountEmail } from '@/lib/gundem/official';
-import { postSelect, serializePost } from '@/lib/gundem/posts';
+import { postSelect, serializePosts } from '@/lib/gundem/posts';
 import { ensureMatchSnapshot } from '@/lib/gundem/matchSnapshot';
 import { captureError } from '@/lib/logger';
 
@@ -15,7 +15,7 @@ export type CreateBotPostInput = {
 };
 
 export type CreateBotPostResult =
-  | { status: 'created' | 'exists'; post: ReturnType<typeof serializePost> }
+  | { status: 'created' | 'exists'; post: Awaited<ReturnType<typeof serializePosts>>[number] }
   | { status: 'invalid-body' }
   | { status: 'no-account'; email: string };
 
@@ -32,7 +32,7 @@ export async function createBotPost(input: CreateBotPostInput): Promise<CreateBo
   const select = postSelect(null);
   if (externalKey) {
     const existing = await prisma.post.findUnique({ where: { externalKey }, select });
-    if (existing) return { status: 'exists', post: serializePost(existing) };
+    if (existing) return { status: 'exists', post: (await serializePosts([existing]))[0] };
   }
 
   // Rozet verisi: snapshot yoksa oluşturulur. Sağlayıcı hatası bot postunu ENGELLEMEZ (rozet sonra, ilk kullanıcı postunda da oluşur).
@@ -56,12 +56,12 @@ export async function createBotPost(input: CreateBotPostInput): Promise<CreateBo
       },
       select,
     });
-    return { status: 'created', post: serializePost(created) };
+    return { status: 'created', post: (await serializePosts([created]))[0] };
   } catch (e) {
     // Yarış: aynı externalKey eşzamanlı yazıldıysa unique ihlali → mevcut kaydı döndür.
     if (externalKey && (e as { code?: string }).code === 'P2002') {
       const existing = await prisma.post.findUnique({ where: { externalKey }, select });
-      if (existing) return { status: 'exists', post: serializePost(existing) };
+      if (existing) return { status: 'exists', post: (await serializePosts([existing]))[0] };
     }
     throw e;
   }

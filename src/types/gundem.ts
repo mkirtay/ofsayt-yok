@@ -14,12 +14,24 @@ export type GundemAuthor = {
 /** Profil başlığı: yazar alanları + silinmemiş post sayısı + resmi hesap bayrağı (`GET /api/gundem/users/[userId]`). */
 export type GundemUserProfile = GundemAuthor & { postCount: number };
 
+export type GundemMatchTeam = { id: number; name: string; shortName: string | null; logo: string | null };
+
+/** Maç postu rozeti (`MatchSnapshot`). Snapshot'ı olmayan eski maç postlarında null. */
+export type GundemMatchBadge = {
+  fixtureId: string;
+  startingAt: string;
+  leagueId: number | null;
+  home: GundemMatchTeam;
+  away: GundemMatchTeam;
+};
+
 export type GundemPost = {
   id: string;
   body: string;
   createdAt: string;
   authorType: 'USER' | 'OFFICIAL_BOT';
   matchId: string | null;
+  match: GundemMatchBadge | null;
   teamId: number | null;
   author: GundemAuthor;
   likes: number;
@@ -39,7 +51,7 @@ export type GundemComment = {
 
 export type GundemPage<T> = { items: T[]; nextCursor: string | null };
 
-export type GundemScope = 'all' | 'following' | 'official';
+export type GundemScope = 'all' | 'following' | 'official' | 'match';
 
 export type GundemNotificationType = 'POST_LIKE' | 'POST_COMMENT' | 'FOLLOW' | 'OFFICIAL_POST';
 

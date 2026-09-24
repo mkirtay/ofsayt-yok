@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 vi.mock('@/lib/prisma', () => ({
   prisma: {
+    matchSnapshot: { findMany: vi.fn(async () => []) },
     user: { findUnique: vi.fn(async () => ({ id: 'bot-user' })) },
     post: {
       findUnique: vi.fn(async () => null),

@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { captureError } from '@/lib/logger';
 import { getRequestUserId } from '@/lib/mobileAuth';
 import { PAGE_SIZE, queryString } from '@/lib/gundem/validation';
-import { feedOrder, paginate, postSelect, serializePost } from '@/lib/gundem/posts';
+import { feedOrder, paginate, postSelect, serializePosts } from '@/lib/gundem/posts';
 
 /** GET: kullanıcının profil akışı (silinmemiş postları, yeniden eskiye, cursor sayfalama). */
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -28,7 +28,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       select: postSelect(viewerId),
     });
     const { items, nextCursor } = paginate(rows, PAGE_SIZE);
-    return res.json({ items: items.map((p) => serializePost(p, viewerId)), nextCursor });
+    return res.json({ items: await serializePosts(items, viewerId), nextCursor });
   } catch (e) {
     captureError('gundem:user-posts', e);
     return res.status(500).json({ error: 'Sunucu hatası.' });

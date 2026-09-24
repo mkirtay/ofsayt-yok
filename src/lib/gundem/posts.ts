@@ -1,4 +1,5 @@
-import type { Prisma } from '@prisma/client';
+import type { MatchSnapshot, Prisma } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { withAbsoluteImage } from '@/lib/siteUrl';
 import { isOfficialUser } from '@/lib/gundem/official';
 
@@ -55,15 +56,40 @@ export function serializeAuthor(row: AuthorRow, viewerId: string | null = null) 
   };
 }
 
-export function serializePost(row: PostRow, viewerId: string | null = null) {
+/** Rozet verisi (`GundemMatchBadge`). Snapshot'ı olmayan (eski) maç postlarında `match: null` — rozet gösterilmez. */
+export function serializeMatchBadge(snap: MatchSnapshot) {
+  return {
+    fixtureId: snap.fixtureId,
+    startingAt: snap.startingAt,
+    leagueId: snap.leagueId,
+    home: { id: snap.homeTeamId, name: snap.homeName, shortName: snap.homeShortName, logo: snap.homeLogo },
+    away: { id: snap.awayTeamId, name: snap.awayName, shortName: snap.awayShortName, logo: snap.awayLogo },
+  };
+}
+
+export function serializePost(row: PostRow, viewerId: string | null = null, snapshot: MatchSnapshot | null = null) {
   const { _count, likes, author, ...rest } = row;
   return {
     ...rest,
+    match: snapshot ? serializeMatchBadge(snapshot) : null,
     author: serializeAuthor(author, viewerId),
     likes: _count.likes,
     comments: _count.comments,
     likedByMe: Array.isArray(likes) && likes.length > 0,
   };
+}
+
+/**
+ * Post listesini maç rozetleriyle serileştirir. `Post.matchId` → `MatchSnapshot` FK'sız olduğundan `include` yerine sayfa
+ * başına TEK `fixtureId IN (...)` sorgusu (N+1 yok); maç postu yoksa sorgu da atılmaz.
+ */
+export async function serializePosts(rows: PostRow[], viewerId: string | null = null) {
+  const matchIds = [...new Set(rows.map((r) => r.matchId).filter((id): id is string => !!id))];
+  const snapshots = matchIds.length
+    ? await prisma.matchSnapshot.findMany({ where: { fixtureId: { in: matchIds } } })
+    : [];
+  const byId = new Map(snapshots.map((s) => [s.fixtureId, s]));
+  return rows.map((r) => serializePost(r, viewerId, r.matchId ? (byId.get(r.matchId) ?? null) : null));
 }
 
 /** Cursor sayfalama (take: N+1, cursor + skip: 1) kalıbı — `items`'ın son id'si `nextCursor`. */

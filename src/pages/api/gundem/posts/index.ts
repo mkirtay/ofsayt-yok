@@ -6,14 +6,14 @@ import { hitFixedWindowRateLimit, requestIp } from '@/lib/rateLimit';
 import { readCache, writeCache } from '@/lib/livescoreCache';
 import { captureError } from '@/lib/logger';
 import { getRequestUserId } from '@/lib/mobileAuth';
-import { POST_MAX_LENGTH } from '@/config/gundem';
+import { POST_MAX_LENGTH, matchPostsInAllFeed } from '@/config/gundem';
 import {
   PAGE_SIZE,
   optionalInt,
   queryString,
   readJsonBody,
 } from '@/lib/gundem/validation';
-import { feedOrder, paginate, postSelect, serializePost } from '@/lib/gundem/posts';
+import { feedOrder, paginate, postSelect, serializePosts } from '@/lib/gundem/posts';
 import { getOfficialAccountEmails } from '@/lib/gundem/official';
 import {
   FEED_CACHE_TTL_SECONDS,
@@ -24,7 +24,7 @@ import {
 } from '@/lib/gundem/feedCache';
 import { MatchSnapshotError, ensureMatchSnapshot, normalizeFixtureId } from '@/lib/gundem/matchSnapshot';
 
-const SCOPES = ['all', 'following', 'official'] as const;
+const SCOPES = ['all', 'following', 'official', 'match'] as const;
 type Scope = (typeof SCOPES)[number];
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -43,11 +43,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
       const scope = scopeRaw as Scope;
       const cursor = queryString(req.query.cursor);
+      // Tek maçın forumu: `scope=match&matchId=<fixtureId>`. matchId yalnızca `match` scope'unda anlamlı.
+      let matchId: string | null = null;
+      try {
+        matchId = normalizeFixtureId(queryString(req.query.matchId));
+      } catch {
+        return res.status(400).json({ error: 'Geçersiz maç.' });
+      }
+      if (matchId && scope !== 'match') return res.status(400).json({ error: 'matchId yalnızca maç akışında kullanılabilir.' });
       const viewerId = await getRequestUserId(req, res);
 
-      // Paylaşılan cache yalnızca oturumsuz + all/official (bkz. feedCache.ts); oturumlu istek her zaman DB'den.
+      // Paylaşılan cache yalnızca oturumsuz + all/official/match (bkz. feedCache.ts); oturumlu istek her zaman DB'den.
       const cacheable = isFeedCacheable(scope, viewerId);
-      const cacheKey = feedCacheKey(scope, cursor);
+      const cacheKey = feedCacheKey(scope, cursor, { matchId, matchPostsInAll: matchPostsInAllFeed() });
       if (cacheable) {
         const cached = await readCache(cacheKey);
         if (cached !== null && cached !== undefined) {
@@ -57,7 +65,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
 
       const where: Prisma.PostWhereInput = { deletedAt: null };
-      if (scope === 'official') {
+      if (scope === 'all') {
+        if (!matchPostsInAllFeed()) where.matchId = null;
+      } else if (scope === 'match') {
+        where.matchId = matchId ?? { not: null };
+      } else if (scope === 'official') {
         where.OR = [{ authorType: 'OFFICIAL_BOT' }, { author: { email: { in: getOfficialAccountEmails() } } }];
       } else if (scope === 'following') {
         if (!viewerId) return res.status(401).json({ error: 'Giriş yapmanız gerekiyor.' });
@@ -76,10 +88,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         select: postSelect(viewerId),
       });
       const { items, nextCursor } = paginate(rows, PAGE_SIZE);
-      const page = { items: items.map((p) => serializePost(p, viewerId)), nextCursor };
+      const page = { items: await serializePosts(items, viewerId), nextCursor };
       if (cacheable) {
-        // Boş cursor'lı sayfa yazılmaz: rastgele cursor'larla cache anahtarı şişirilemesin.
-        if (!cursor || items.length > 0) await writeCache(cacheKey, page, FEED_CACHE_TTL_SECONDS);
+        // Boş cursor'lı / matchId'li sayfa yazılmaz: rastgele cursor ya da matchId'lerle cache anahtarı şişirilemesin.
+        if ((!cursor && !matchId) || items.length > 0) await writeCache(cacheKey, page, FEED_CACHE_TTL_SECONDS);
         res.setHeader('X-Cache', 'MISS');
       } else {
         res.setHeader('X-Cache', 'BYPASS');
@@ -129,7 +141,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         },
         select: postSelect(userId),
       });
-      return res.status(201).json(serializePost(created, userId));
+      const [post] = await serializePosts([created], userId);
+      return res.status(201).json(post);
     }
 
     res.setHeader('Allow', 'GET, POST');
