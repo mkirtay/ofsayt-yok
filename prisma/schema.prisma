@@ -274,6 +274,26 @@ model Post {
   @@index([matchId, createdAt])
 }
 
+/// Maça bağlı Gündem postlarının rozet verisi (takım adları/logoları, başlama saati). `Post.matchId` ile
+/// ilişkisiz lookup: FK yok — mevcut matchId'li postların snapshot'ı olmayabilir ve snapshot'ın sağlayıcıdan
+/// çözülememesi bot postunu engellememeli. Akış sayfası başına tek `fixtureId IN (...)` sorgusuyla okunur.
+model MatchSnapshot {
+  /// Sportmonks fixture id — `Post.matchId` ile aynı tip (String) ve biçim.
+  fixtureId     String   @id
+  homeTeamId    Int
+  homeName      String
+  homeShortName String?
+  homeLogo      String?
+  awayTeamId    Int
+  awayName      String
+  awayShortName String?
+  awayLogo      String?
+  startingAt    DateTime
+  leagueId      Int?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
 /// Post beğenisi — kullanıcı başına post başına tek kayıt (toggle).
 model PostLike {
   id        String   @id @default(cuid())
