@@ -4,6 +4,8 @@ import type { LineupPlayer, MatchLineupData } from '@/models/domain';
 import { LineupSkeleton } from '@/components/Skeleton';
 import { buildFormationLayout } from '@/utils/lineupFormation';
 import { POSITION_LABEL_TR, positionLabel } from '@/utils/positionLabel';
+import { formatRating } from '@/config/ratingScale';
+import RatingBadge from '@/components/RatingBadge';
 import styles from './lineup.module.scss';
 
 interface LineupProps {
@@ -23,11 +25,11 @@ function shortName(name: string): string {
   return `${initials} ${last}`;
 }
 
-/** Reyting rozeti metni: tek ondalık; geçersiz / ≤0 / eksikse `null` (rozet hiç çizilmez — asla "0"). */
-export function formatPlayerRating(rating: number | null | undefined): string | null {
-  if (typeof rating !== 'number' || !Number.isFinite(rating) || rating <= 0) return null;
-  return rating.toFixed(1);
-}
+/**
+ * Reyting rozeti metni: tek ondalık (kesilmiş — renk bandıyla tutarlı, bkz. `config/ratingScale`); geçersiz / ≤0 / eksikse
+ * `null` (rozet hiç çizilmez — asla "0").
+ */
+export const formatPlayerRating = formatRating;
 
 /** Oyuncu detay sayfasına (`/players/{id}`) bağlantı; id yoksa düz kutu. */
 function Wrapper({ playerId, className, title, children }: { playerId?: string; className: string; title: string; children: React.ReactNode }) {
@@ -66,9 +68,7 @@ function PlayerToken({ player, team }: { player: LineupPlayer; team: 'home' | 'a
           player.shirt_number
         )}
         {rating ? (
-          <span className={styles.ratingBadge} data-testid="player-rating" aria-label={`Reyting ${rating}`}>
-            {rating}
-          </span>
+          <RatingBadge rating={player.rating} size="xs" className={styles.ratingBadge} data-testid="player-rating" ariaLabel={`Reyting ${rating}`} />
         ) : null}
         {player.nationality?.flag ? (
           <img
@@ -119,6 +119,7 @@ function CompactRow({ player, side, shortCode }: { player: LineupPlayer; side: '
       {pos ? <span className={styles.compactPos}>{pos}</span> : null}
     </span>
   );
+  const rating = formatPlayerRating(player.rating);
   // İki listede de aynı düzen: [no][foto][metin]. Metin bloğu sola hizalı ve her satırda aynı x'ten başlar.
   return (
     <li>
@@ -130,6 +131,7 @@ function CompactRow({ player, side, shortCode }: { player: LineupPlayer; side: '
         {number}
         {photo}
         {text}
+        {rating ? <RatingBadge rating={player.rating} size="sm" data-testid="compact-rating" ariaLabel={`Reyting ${rating}`} /> : null}
       </Wrapper>
     </li>
   );

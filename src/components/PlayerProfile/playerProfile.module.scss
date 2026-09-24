@@ -320,6 +320,11 @@
   font-variant-numeric: tabular-nums;
 }
 
+.tileRating {
+  // Rozet yüksekliği `.tileValue` satırıyla hizalı kalsın
+  margin: 1px 0 2px;
+}
+
 .tileLabel {
   font-size: 12px;
   color: $color-text-secondary;
@@ -462,6 +467,12 @@
   font-size: 12px;
   color: $color-text-secondary;
   font-variant-numeric: tabular-nums;
+}
+
+.matchRating {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .showAll {

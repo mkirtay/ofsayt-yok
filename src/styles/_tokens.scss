@@ -74,6 +74,18 @@
   // Canlı gösterge
   --color-live: #ef4444;
 
+  // Oyuncu maç reytingi skalası (eşikler: src/config/ratingScale.ts). Rozet zemini renkli, metin `--on-rating-*`.
+  // Kontrast (metin/zemin): excellent beyaz 5.3:1 · good koyu 6.3:1 · bad koyu 5.2:1 · none beyaz 4.8:1.
+  // fair/poor tema bloklarında (açık temada beyaz yüzeyde grafik noktası ≥3:1 kalsın diye koyulaşır).
+  --rating-excellent: #007b55;
+  --on-rating-excellent: #ffffff;
+  --rating-good: #00a76f;
+  --on-rating-good: #0b0d10;
+  --rating-bad: #ef4444;
+  --on-rating-bad: #0b0d10;
+  --rating-none: #6b7280;
+  --on-rating-none: #ffffff;
+
   // Header her iki temada koyu kalır ("mevcut siyaha yakın ton")
   --bg-header: #101512;
   --bg-header-alt: #1a211d;
@@ -111,6 +123,12 @@
   --on-compare-b: #04161b; // B üstünde 5.4:1
   --compare-neutral: #6b7280; // beraberlik
 
+  // Reyting sarı-yeşil / turuncu — koyu yazı 9.9:1 / 6.9:1; koyu yüzeyde 8.7:1 / 6.1:1
+  --rating-fair: #a3c635;
+  --on-rating-fair: #0b0d10;
+  --rating-poor: #f97316;
+  --on-rating-poor: #0b0d10;
+
   --border-subtle: rgba(255, 255, 255, 0.08);
   --shadow-surface: 0 10px 30px rgba(0, 0, 0, 0.35);
   --skeleton-base: rgba(255, 255, 255, 0.06);
@@ -135,6 +153,12 @@
   --on-compare-a: #04161b; // A üstünde 5.5:1
   --on-compare-b: #ffffff; // B üstünde 7.4:1
   --compare-neutral: #6b7280;
+
+  // Reyting sarı-yeşil / turuncu — beyaz yüzeyde 3.1:1 / 3.6:1 (grafik ≥3:1); koyu yazı 6.3:1 / 5.5:1
+  --rating-fair: #65a30d;
+  --on-rating-fair: #0b0d10;
+  --rating-poor: #ea580c;
+  --on-rating-poor: #0b0d10;
 
   --border-subtle: #ececec;
   --shadow-surface: 0 10px 30px rgba(16, 32, 21, 0.08);

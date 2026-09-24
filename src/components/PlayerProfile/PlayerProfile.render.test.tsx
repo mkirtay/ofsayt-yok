@@ -36,6 +36,7 @@ describe('<PlayerProfile /> — gerçek Osimhen verisi', () => {
     expect(html).toMatch(/>303<\/span><span[^>]*>Dakika</);
     expect(html).toMatch(/>8\.02<\/span><span[^>]*>Rating</);
     expect(html).toContain('6.9 – 9.0'); // en düşük – en yüksek
+    expect(html).toMatch(/data-tone="excellent"[^>]*>8\.02</); // sezon ortalaması reyting skalasıyla boyalı
   });
 
   it('detaylı istatistik grupları var (şut/pas/savunma/bireysel)', () => {
@@ -53,6 +54,7 @@ describe('<PlayerProfile /> — gerçek Osimhen verisi', () => {
   it('maç geçmişi: oynamadığı maçta "Kadroda yok", oynadığında dakika/rating; "Tümünü Göster" (kalan varsa)', () => {
     expect(html).toContain('Kadroda yok');
     expect(html).toContain('6.9');
+    expect(html).toMatch(/data-tone="fair"[^>]*>6\.9</); // maç reytingi rozeti (6.5–6.99 sarı-yeşil)
     expect(html).toContain('Tümünü Göster');
     expect(html).toContain('href="/matches/1"');
   });

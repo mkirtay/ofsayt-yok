@@ -1,0 +1,60 @@
+// Renkler yalnızca `--rating-*` tokenlarından (src/styles/_tokens.scss) — burada hex yok.
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  font-weight: 800;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.xs {
+  min-width: 22px;
+  padding: 2px 4px;
+  font-size: 9px;
+  border-radius: 8px;
+}
+
+.sm {
+  min-width: 30px;
+  padding: 3px 5px;
+  font-size: 11px;
+}
+
+.md {
+  min-width: 44px;
+  padding: 4px 8px;
+  font-size: 18px;
+}
+
+.excellent {
+  background: var(--rating-excellent);
+  color: var(--on-rating-excellent);
+}
+
+.good {
+  background: var(--rating-good);
+  color: var(--on-rating-good);
+}
+
+.fair {
+  background: var(--rating-fair);
+  color: var(--on-rating-fair);
+}
+
+.poor {
+  background: var(--rating-poor);
+  color: var(--on-rating-poor);
+}
+
+.bad {
+  background: var(--rating-bad);
+  color: var(--on-rating-bad);
+}
+
+.none {
+  background: var(--rating-none);
+  color: var(--on-rating-none);
+}

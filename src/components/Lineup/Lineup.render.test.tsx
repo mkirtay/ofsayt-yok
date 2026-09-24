@@ -24,8 +24,8 @@ describe('<Lineup /> render — formasyon satırları', () => {
 });
 
 describe('formatPlayerRating — reyting rozeti mantığı', () => {
-  it('tek ondalık basamakla yazar', () => {
-    expect(formatPlayerRating(7.68)).toBe('7.7');
+  it('tek ondalık basamakla yazar (kesilmiş — 7.68 "7.7" değil "7.6": renk bandıyla tutarlı)', () => {
+    expect(formatPlayerRating(7.68)).toBe('7.6');
     expect(formatPlayerRating(6)).toBe('6.0');
   });
   it('undefined / null / 0 / negatif / NaN için null — rozet çizilmez, ASLA "0" değil', () => {
@@ -52,8 +52,11 @@ describe('<Lineup /> render — oyuncu fotoğrafı + reyting rozeti', () => {
     }));
     const html = renderToStaticMarkup(<Lineup lineups={data} />);
     expect((html.match(/data-testid="player-rating"/g) ?? []).length).toBe(starters.length);
-    expect(html).toContain('>7.7<');
+    expect(html).toContain('>7.6<');
     expect((html.match(/<img [^>]*formationPhoto/g) ?? []).length).toBe(starters.length);
+    // 7.68 → "good" bandı (yeşil): rozet skaladan boyanır, kadro listesinde de aynı rozet var
+    expect(html).toMatch(/data-tone="good"[^>]*data-testid="player-rating"/);
+    expect((html.match(/data-testid="compact-rating"/g) ?? []).length).toBe(starters.length);
     expect(html).toContain('https://cdn.example/p/');
   });
 
@@ -80,6 +83,7 @@ describe('<Lineup /> render — oyuncu fotoğrafı + reyting rozeti', () => {
     );
     const html = renderToStaticMarkup(<Lineup lineups={data} />);
     expect((html.match(/data-testid="player-rating"/g) ?? []).length).toBe(3);
+    expect((html.match(/data-tone="fair"/g) ?? []).length).toBe(6); // saha + liste, 6.5 → sarı-yeşil
   });
 });
 

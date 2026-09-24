@@ -119,10 +119,10 @@ a.compactRow {
   line-height: 1.2;
 }
 
-// Sabit sütunlu grid, iki listede de [rozet 20][foto 28][metin]: her satırda aynı x'ten başlar.
+// Sabit sütunlu grid, iki listede de [rozet 20][foto 28][metin][reyting]: her satırda aynı x'ten başlar.
 .compactRowHome,
 .compactRowAway {
-  grid-template-columns: 20px 28px minmax(0, 1fr);
+  grid-template-columns: 20px 28px minmax(0, 1fr) auto;
 }
 
 .compactPhoto {
@@ -374,21 +374,14 @@ a.compactRow {
 }
 
 .ratingBadge {
+  // Renk/tipografi RatingBadge'den (reyting skalası); burada yalnızca saha üstündeki konum + ayırıcı çerçeve.
   position: absolute;
   left: -9px;
   top: -5px;
   z-index: 1;
-  min-width: 22px;
-  padding: 1px 4px;
-  border-radius: 8px;
-  background: var(--bg-header, #101512);
-  color: #fff;
+  padding: 2px 4px;
   border: 1px solid rgba(255, 255, 255, 0.7);
-  font-size: 9px;
-  font-weight: 800;
-  line-height: 1.3;
-  text-align: center;
-  font-variant-numeric: tabular-nums;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
 }
 
 .flagBadge {
@@ -459,7 +452,8 @@ a.compactRow {
     height: 32px;
   }
 
-  .ratingBadge {
+  // `.formationDot` ile özgüllük artırıldı: RatingBadge'in `.xs` boyutunu CSS yükleme sırasından bağımsız ezsin.
+  .formationDot .ratingBadge {
     left: -7px;
     top: -4px;
     font-size: 8px;

@@ -6,6 +6,8 @@ import { useI18n, useTranslation } from '@/lib/i18n';
 import { usePlayerMatchHistory, usePlayerProfile } from '@/hooks/usePlayerProfile';
 import { pickDefaultSeason, type PlayerMatchRow, type PlayerProfile as Profile, type PlayerSeasonStats, type PlayerTransfer } from '@/services/playerProfile';
 import { PLAYER_STAT_GROUPS, STAT, formatStat, statMain } from '@/services/sportmonks/playerStatTypes';
+import RatingBadge from '@/components/RatingBadge';
+import { formatRating } from '@/config/ratingScale';
 import styles from './playerProfile.module.scss';
 
 /* ─── Saf yardımcılar (test edilir) ─── */
@@ -231,7 +233,12 @@ function SeasonSummary({ seasons, selected, onSelect }: { seasons: PlayerSeasonS
       <div className={styles.tiles}>
         {tiles.map(([key, value, sub]) => (
           <div key={key} className={styles.tile}>
-            <span className={styles.tileValue}>{value ?? '—'}</span>
+            {key === 'rating' && value != null ? (
+              // Sezon ortalaması iki ondalık yazılır; renk aynı skaladan (ham ortalamaya göre)
+              <RatingBadge rating={rating?.average} text={value} size="md" className={styles.tileRating} />
+            ) : (
+              <span className={styles.tileValue}>{value ?? '—'}</span>
+            )}
             <span className={styles.tileLabel}>{t(`summary.${key}`)}</span>
             {sub ? <span className={styles.tileSub}>{sub}</span> : null}
           </div>
@@ -351,7 +358,10 @@ function MatchHistory({ playerId, teamId }: { playerId: number; teamId: number }
                       {r.minutes ?? '—'} {t('matches.minutesUnit')}
                       {r.started === false ? <span className={styles.pending} title={t('matches.benched')}> ↑</span> : null}
                     </span>
-                    <span>{t('matches.rating')} {r.rating != null ? r.rating.toFixed(1) : '—'}</span>
+                    <span className={styles.matchRating}>
+                      {t('matches.rating')}{' '}
+                      <RatingBadge rating={r.rating} showEmpty ariaLabel={`${t('matches.rating')} ${formatRating(r.rating) ?? '—'}`} />
+                    </span>
                     <span>{t('matches.goalsShort')} {r.goals ?? '—'}</span>
                     <span>{t('matches.assistsShort')} {r.assists ?? '—'}</span>
                   </div>
