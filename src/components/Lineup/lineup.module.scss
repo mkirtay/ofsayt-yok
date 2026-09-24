@@ -111,6 +111,9 @@ a.compactRow {
 
 .compactName {
   min-width: 0;
+  // `.compactText` flex sütunu (align-items: flex-start) nowrap metni tam genişliğine uzatıyor → ellipsis için sınır şart
+  // (reyting rozeti sütunu eklenince taşan ad rozetin altına giriyordu)
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
