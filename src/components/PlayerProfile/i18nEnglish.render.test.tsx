@@ -37,6 +37,12 @@ vi.mock('@/lib/i18n', () => ({
 }));
 
 const state = vi.hoisted(() => ({ rows: [] as unknown[], hasMore: false }));
+const vsState = vi.hoisted(() => ({ query: {} as Record<string, string>, opponents: [] as unknown[], vs: null as unknown }));
+vi.mock('next/router', () => ({ useRouter: () => ({ query: vsState.query, pathname: '/players/[id]', push: vi.fn() }) }));
+vi.mock('@/hooks/usePlayerVs', () => ({
+  usePlayerVsOpponents: () => ({ data: { playerId: 455805, opponents: vsState.opponents }, isLoading: false, isError: false }),
+  usePlayerVs: () => ({ data: vsState.vs, isLoading: false, isError: false }),
+}));
 vi.mock('@/hooks/usePlayerProfile', async () => {
   const { buildRatingSeries, summarizeRatings } = await import('@/utils/ratingTrend');
   return {
@@ -94,6 +100,10 @@ describe('<PlayerProfile /> — İngilizce', () => {
       expect(html, s).toContain(s);
     }
     expect(html).toContain('aria-label="4 Sept 2026, A İstanbul Başakşehir, score 1-3, rating 6.9"');
+  });
+
+  it('rakibe karşı bölümü İngilizce (kapsam notu dahil)', () => {
+    for (const s of ['Versus Opponent', 'No data in the covered matches.', 'International matches not included.']) expect(html, s).toContain(s);
   });
 
   it('maç geçmişi etiketleri İngilizce', () => {

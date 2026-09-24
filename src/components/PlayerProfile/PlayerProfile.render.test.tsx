@@ -6,6 +6,12 @@ import { mapPlayerProfile, type RawPlayer } from '@/services/playerProfile';
 const profile = mapPlayerProfile((profileFixture as unknown as { data: RawPlayer }).data);
 
 const state = vi.hoisted(() => ({ profile: null as unknown, rows: [] as unknown[], trendRows: [] as unknown[], hasMore: false, loading: false }));
+const vsState = vi.hoisted(() => ({ query: {} as Record<string, string>, opponents: [] as unknown[], vs: null as unknown }));
+vi.mock('next/router', () => ({ useRouter: () => ({ query: vsState.query, pathname: '/players/[id]', push: vi.fn() }) }));
+vi.mock('@/hooks/usePlayerVs', () => ({
+  usePlayerVsOpponents: () => ({ data: { playerId: 455805, opponents: vsState.opponents }, isLoading: false, isError: false }),
+  usePlayerVs: () => ({ data: vsState.vs, isLoading: false, isError: false }),
+}));
 vi.mock('@/hooks/usePlayerProfile', async () => {
   const { buildRatingSeries, summarizeRatings } = await import('@/utils/ratingTrend');
   return {
@@ -78,7 +84,8 @@ describe('<PlayerProfile /> — gerçek Osimhen verisi', () => {
   });
 
   it('KAPSAM DIŞI bölümler hiç yok: xG/xGOT, piyasa değeri, kupa, radar, topluluk oyu, sosyal', () => {
-    const t = html.toLowerCase();
+    // "Rakibe karşı" kapsam notu "lig ve kupa maçları" der — kupa/trofe LİSTESİ değil, veri kapsamı; o cümle hariç tutulur
+    const t = html.toLowerCase().replace(/2024\/25&#x27;ten itibaren[^<]*/, '');
     for (const bad of ['xg', 'piyasa', 'market', 'kupa', 'trofe', 'radar', 'haftanın oyuncu', 'en popüler', 'sosyal', 'ilişki']) {
       expect(t, bad).not.toContain(bad);
     }

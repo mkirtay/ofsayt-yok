@@ -9,6 +9,7 @@ import { PLAYER_STAT_GROUPS, STAT, formatStat, statMain } from '@/services/sport
 import RatingBadge from '@/components/RatingBadge';
 import { formatRating } from '@/config/ratingScale';
 import RatingTrendChart from './RatingTrendChart';
+import PlayerVsOpponent from './PlayerVsOpponent';
 import styles from './playerProfile.module.scss';
 
 /* ─── Saf yardımcılar (test edilir) ─── */
@@ -436,6 +437,7 @@ export default function PlayerProfile({ playerId }: { playerId: string }) {
           <Bio p={data} />
           {season && hasStats ? <SeasonSummary seasons={data.seasons} selected={season} onSelect={setSelectedSeasonKey} /> : null}
           {teamId != null ? <RatingTrend playerId={data.id} teamId={teamId} /> : null}
+          <PlayerVsOpponent playerId={data.id} />
           {season && hasStats ? <DetailedStats season={season} /> : null}
         </div>
         <aside className={styles.side}>
