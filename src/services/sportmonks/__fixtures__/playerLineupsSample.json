@@ -1,0 +1,1132 @@
+{
+ "_note": "GET /players/{id}?include=lineups.fixture.participants;lineups.fixture.scores;lineups.fixture.league:name,image_path;lineups.details&filters=lineupDetailTypes:118,119,52,79 (2026-09-25). lineups kırpıldı: rakip eşleşmeleri + 1 fixture=null satırı (+ Kerem GS dönemi 1 maç, Icardi 1 uzatma maçı); scores yalnızca CURRENT/1ST_HALF.",
+ "kerem": {
+  "id": 534383,
+  "display_name": "Kerem Aktürkoğlu",
+  "lineups": [
+   {
+    "id": 14671650470,
+    "sport_id": 1,
+    "fixture_id": 19443050,
+    "player_id": 534383,
+    "team_id": 88,
+    "position_id": 26,
+    "formation_field": "4:4",
+    "type_id": 11,
+    "formation_position": 10,
+    "player_name": "Kerem Aktürkoğlu",
+    "jersey_number": 9,
+    "fixture": {
+     "id": 19443050,
+     "sport_id": 1,
+     "league_id": 600,
+     "season_id": 25682,
+     "stage_id": 77476955,
+     "group_id": null,
+     "aggregate_id": null,
+     "round_id": 373690,
+     "state_id": 5,
+     "venue_id": 9695,
+     "name": "Fenerbahçe vs Galatasaray",
+     "starting_at": "2025-12-01 17:00:00",
+     "result_info": "Game ended in draw.",
+     "leg": "1/1",
+     "details": null,
+     "length": 90,
+     "placeholder": false,
+     "has_odds": true,
+     "has_premium_odds": true,
+     "starting_at_timestamp": 1764608400,
+     "participants": [
+      {
+       "id": 34,
+       "sport_id": 1,
+       "country_id": 404,
+       "venue_id": 9667,
+       "gender": "male",
+       "name": "Galatasaray",
+       "short_code": "GAL",
+       "image_path": "https://cdn.sportmonks.com/images/soccer/teams/2/34.png",
+       "founded": 1905,
+       "type": "domestic",
+       "placeholder": false,
+       "last_played_at": "2026-09-19 17:00:00",
+       "meta": {
+        "location": "away",
+        "winner": false,
+        "position": 1
+       }
+      },
+      {
+       "id": 88,
+       "sport_id": 1,
+       "country_id": 404,
+       "venue_id": 9695,
+       "gender": "male",
+       "name": "Fenerbahçe",
+       "short_code": "FEN",
+       "image_path": "https://cdn.sportmonks.com/images/soccer/teams/24/88.png",
+       "founded": 1907,
+       "type": "domestic",
+       "placeholder": false,
+       "last_played_at": "2026-09-20 14:00:00",
+       "meta": {
+        "location": "home",
+        "winner": false,
+        "position": 2
+       }
+      }
+     ],
+     "scores": [
+      {
+       "id": 17536873,
+       "fixture_id": 19443050,
+       "type_id": 1,
+       "participant_id": 34,
+       "score": {
+        "goals": 1,
+        "participant": "away"
+       },
+       "description": "1ST_HALF"
+      },
+      {
+       "id": 17536872,
+       "fixture_id": 19443050,
+       "type_id": 1,
+       "participant_id": 88,
+       "score": {
+        "goals": 0,
+        "participant": "home"
+       },
+       "description": "1ST_HALF"
+      },
+      {
+       "id": 17536871,
+       "fixture_id": 19443050,
+       "type_id": 1525,
+       "participant_id": 34,
+       "score": {
+        "goals": 1,
+        "participant": "away"
+       },
+       "description": "CURRENT"
+      },
+      {
+       "id": 17536870,
+       "fixture_id": 19443050,
+       "type_id": 1525,
+       "participant_id": 88,
+       "score": {
+        "goals": 1,
+        "participant": "home"
+       },
+       "description": "CURRENT"
+      }
+     ],
+     "league": {
+      "id": 600,
+      "country_id": 404,
+      "sport_id": 1,
+      "name": "Super Lig",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/24/600.png"
+     }
+    },
+    "details": [
+     {
+      "id": 1808664394,
+      "fixture_id": 19443050,
+      "player_id": 534383,
+      "team_id": 88,
+      "lineup_id": 14671650470,
+      "type_id": 119,
+      "data": {
+       "value": 63
+      }
+     },
+     {
+      "id": 1808663846,
+      "fixture_id": 19443050,
+      "player_id": 534383,
+      "team_id": 88,
+      "lineup_id": 14671650470,
+      "type_id": 118,
+      "data": {
+       "value": 6.69
+      }
+     }
+    ]
+   },
+   {
+    "id": 14673547803,
+    "sport_id": 1,
+    "fixture_id": 19443204,
+    "player_id": 534383,
+    "team_id": 88,
+    "position_id": 26,
+    "formation_field": "4:1",
+    "type_id": 11,
+    "formation_position": 10,
+    "player_name": "Kerem Aktürkoğlu",
+    "jersey_number": 9,
+    "fixture": {
+     "id": 19443204,
+     "sport_id": 1,
+     "league_id": 600,
+     "season_id": 25682,
+     "stage_id": 77476955,
+     "group_id": null,
+     "aggregate_id": null,
+     "round_id": 373707,
+     "state_id": 5,
+     "venue_id": 9667,
+     "name": "Galatasaray vs Fenerbahçe",
+     "starting_at": "2026-04-26 17:00:00",
+     "result_info": "Galatasaray won after full-time.",
+     "leg": "1/1",
+     "details": null,
+     "length": 90,
+     "placeholder": false,
+     "has_odds": true,
+     "has_premium_odds": true,
+     "starting_at_timestamp": 1777222800,
+     "participants": [
+      {
+       "id": 88,
+       "sport_id": 1,
+       "country_id": 404,
+       "venue_id": 9695,
+       "gender": "male",
+       "name": "Fenerbahçe",
+       "short_code": "FEN",
+       "image_path": "https://cdn.sportmonks.com/images/soccer/teams/24/88.png",
+       "founded": 1907,
+       "type": "domestic",
+       "placeholder": false,
+       "last_played_at": "2026-09-20 14:00:00",
+       "meta": {
+        "location": "away",
+        "winner": false,
+        "position": 2
+       }
+      },
+      {
+       "id": 34,
+       "sport_id": 1,
+       "country_id": 404,
+       "venue_id": 9667,
+       "gender": "male",
+       "name": "Galatasaray",
+       "short_code": "GAL",
+       "image_path": "https://cdn.sportmonks.com/images/soccer/teams/2/34.png",
+       "founded": 1905,
+       "type": "domestic",
+       "placeholder": false,
+       "last_played_at": "2026-09-19 17:00:00",
+       "meta": {
+        "location": "home",
+        "winner": true,
+        "position": 1
+       }
+      }
+     ],
+     "scores": [
+      {
+       "id": 20088257,
+       "fixture_id": 19443204,
+       "type_id": 1,
+       "participant_id": 34,
+       "score": {
+        "goals": 1,
+        "participant": "home"
+       },
+       "description": "1ST_HALF"
+      },
+      {
+       "id": 20088258,
+       "fixture_id": 19443204,
+       "type_id": 1,
+       "participant_id": 88,
+       "score": {
+        "goals": 0,
+        "participant": "away"
+       },
+       "description": "1ST_HALF"
+      },
+      {
+       "id": 20088255,
+       "fixture_id": 19443204,
+       "type_id": 1525,
+       "participant_id": 34,
+       "score": {
+        "goals": 3,
+        "participant": "home"
+       },
+       "description": "CURRENT"
+      },
+      {
+       "id": 20088256,
+       "fixture_id": 19443204,
+       "type_id": 1525,
+       "participant_id": 88,
+       "score": {
+        "goals": 0,
+        "participant": "away"
+       },
+       "description": "CURRENT"
+      }
+     ],
+     "league": {
+      "id": 600,
+      "country_id": 404,
+      "sport_id": 1,
+      "name": "Super Lig",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/24/600.png"
+     }
+    },
+    "details": [
+     {
+      "id": 2035983002,
+      "fixture_id": 19443204,
+      "player_id": 534383,
+      "team_id": 88,
+      "lineup_id": 14673547803,
+      "type_id": 118,
+      "data": {
+       "value": 6.13
+      }
+     },
+     {
+      "id": 2035989416,
+      "fixture_id": 19443204,
+      "player_id": 534383,
+      "team_id": 88,
+      "lineup_id": 14673547803,
+      "type_id": 119,
+      "data": {
+       "value": 66
+      }
+     }
+    ]
+   },
+   {
+    "id": 10568005393,
+    "sport_id": 1,
+    "fixture_id": 19101433,
+    "player_id": 534383,
+    "team_id": 18716,
+    "position_id": 26,
+    "formation_field": null,
+    "type_id": 11,
+    "formation_position": 10,
+    "player_name": "Kerem Aktürkoğlu",
+    "jersey_number": 7,
+    "fixture": null,
+    "details": [
+     {
+      "id": 1137824821,
+      "fixture_id": 19101433,
+      "player_id": 534383,
+      "team_id": 18716,
+      "lineup_id": 10568005393,
+      "type_id": 118,
+      "data": {
+       "value": 7.45
+      }
+     },
+     {
+      "id": 1137824193,
+      "fixture_id": 19101433,
+      "player_id": 534383,
+      "team_id": 18716,
+      "lineup_id": 10568005393,
+      "type_id": 119,
+      "data": {
+       "value": 82
+      }
+     }
+    ]
+   },
+   {
+    "id": 10164589,
+    "sport_id": 1,
+    "fixture_id": 18357411,
+    "player_id": 534383,
+    "team_id": 34,
+    "position_id": 26,
+    "formation_field": null,
+    "type_id": 11,
+    "formation_position": 6,
+    "player_name": "Kerem Aktürkoglu",
+    "jersey_number": 7,
+    "fixture": {
+     "id": 18357411,
+     "sport_id": 1,
+     "league_id": 5,
+     "season_id": 18629,
+     "stage_id": 77454500,
+     "group_id": null,
+     "aggregate_id": 27175,
+     "round_id": null,
+     "state_id": 5,
+     "venue_id": 318820,
+     "name": "Randers vs Galatasaray",
+     "starting_at": "2021-08-19 17:00:00",
+     "result_info": "Game ended in draw.",
+     "leg": "1/2",
+     "details": null,
+     "length": 90,
+     "placeholder": false,
+     "has_odds": true,
+     "has_premium_odds": false,
+     "starting_at_timestamp": 1629392400,
+     "participants": [
+      {
+       "id": 34,
+       "sport_id": 1,
+       "country_id": 404,
+       "venue_id": 9667,
+       "gender": "male",
+       "name": "Galatasaray",
+       "short_code": "GAL",
+       "image_path": "https://cdn.sportmonks.com/images/soccer/teams/2/34.png",
+       "founded": 1905,
+       "type": "domestic",
+       "placeholder": false,
+       "last_played_at": "2026-09-19 17:00:00",
+       "meta": {
+        "location": "away",
+        "winner": false,
+        "position": null
+       }
+      },
+      {
+       "id": 2356,
+       "sport_id": 1,
+       "country_id": 320,
+       "venue_id": 318820,
+       "gender": "male",
+       "name": "Randers FC",
+       "short_code": "RDF",
+       "image_path": "https://cdn.sportmonks.com/images/soccer/teams/20/2356.png",
+       "founded": 2003,
+       "type": "domestic",
+       "placeholder": false,
+       "last_played_at": "2026-09-20 12:00:00",
+       "meta": {
+        "location": "home",
+        "winner": false,
+        "position": null
+       }
+      }
+     ],
+     "scores": [
+      {
+       "id": 10538649,
+       "fixture_id": 18357411,
+       "type_id": 1,
+       "participant_id": 34,
+       "score": {
+        "goals": 1,
+        "participant": "away"
+       },
+       "description": "1ST_HALF"
+      },
+      {
+       "id": 10538648,
+       "fixture_id": 18357411,
+       "type_id": 1,
+       "participant_id": 2356,
+       "score": {
+        "goals": 0,
+        "participant": "home"
+       },
+       "description": "1ST_HALF"
+      },
+      {
+       "id": 10538653,
+       "fixture_id": 18357411,
+       "type_id": 1525,
+       "participant_id": 34,
+       "score": {
+        "goals": 1,
+        "participant": "away"
+       },
+       "description": "CURRENT"
+      },
+      {
+       "id": 10538652,
+       "fixture_id": 18357411,
+       "type_id": 1525,
+       "participant_id": 2356,
+       "score": {
+        "goals": 1,
+        "participant": "home"
+       },
+       "description": "CURRENT"
+      }
+     ],
+     "league": {
+      "id": 5,
+      "country_id": 41,
+      "sport_id": 1,
+      "name": "Europa League",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/5/5.png"
+     }
+    },
+    "details": [
+     {
+      "id": 267479383,
+      "fixture_id": 18357411,
+      "player_id": 534383,
+      "team_id": 34,
+      "lineup_id": 10164589,
+      "type_id": 52,
+      "data": {
+       "value": 1
+      }
+     },
+     {
+      "id": 233392084,
+      "fixture_id": 18357411,
+      "player_id": 534383,
+      "team_id": 34,
+      "lineup_id": 10164589,
+      "type_id": 119,
+      "data": {
+       "value": 61
+      }
+     }
+    ]
+   }
+  ]
+ },
+ "icardi": {
+  "id": 129095,
+  "display_name": "Mauro Icardi",
+  "lineups": [
+   {
+    "id": 14671650482,
+    "sport_id": 1,
+    "fixture_id": 19443050,
+    "player_id": 129095,
+    "team_id": 34,
+    "position_id": 27,
+    "formation_field": null,
+    "type_id": 12,
+    "formation_position": null,
+    "player_name": "Mauro Icardi",
+    "jersey_number": 9,
+    "fixture": {
+     "id": 19443050,
+     "sport_id": 1,
+     "league_id": 600,
+     "season_id": 25682,
+     "stage_id": 77476955,
+     "group_id": null,
+     "aggregate_id": null,
+     "round_id": 373690,
+     "state_id": 5,
+     "venue_id": 9695,
+     "name": "Fenerbahçe vs Galatasaray",
+     "starting_at": "2025-12-01 17:00:00",
+     "result_info": "Game ended in draw.",
+     "leg": "1/1",
+     "details": null,
+     "length": 90,
+     "placeholder": false,
+     "has_odds": true,
+     "has_premium_odds": true,
+     "starting_at_timestamp": 1764608400,
+     "participants": [
+      {
+       "id": 34,
+       "sport_id": 1,
+       "country_id": 404,
+       "venue_id": 9667,
+       "gender": "male",
+       "name": "Galatasaray",
+       "short_code": "GAL",
+       "image_path": "https://cdn.sportmonks.com/images/soccer/teams/2/34.png",
+       "founded": 1905,
+       "type": "domestic",
+       "placeholder": false,
+       "last_played_at": "2026-09-19 17:00:00",
+       "meta": {
+        "location": "away",
+        "winner": false,
+        "position": 1
+       }
+      },
+      {
+       "id": 88,
+       "sport_id": 1,
+       "country_id": 404,
+       "venue_id": 9695,
+       "gender": "male",
+       "name": "Fenerbahçe",
+       "short_code": "FEN",
+       "image_path": "https://cdn.sportmonks.com/images/soccer/teams/24/88.png",
+       "founded": 1907,
+       "type": "domestic",
+       "placeholder": false,
+       "last_played_at": "2026-09-20 14:00:00",
+       "meta": {
+        "location": "home",
+        "winner": false,
+        "position": 2
+       }
+      }
+     ],
+     "scores": [
+      {
+       "id": 17536873,
+       "fixture_id": 19443050,
+       "type_id": 1,
+       "participant_id": 34,
+       "score": {
+        "goals": 1,
+        "participant": "away"
+       },
+       "description": "1ST_HALF"
+      },
+      {
+       "id": 17536872,
+       "fixture_id": 19443050,
+       "type_id": 1,
+       "participant_id": 88,
+       "score": {
+        "goals": 0,
+        "participant": "home"
+       },
+       "description": "1ST_HALF"
+      },
+      {
+       "id": 17536871,
+       "fixture_id": 19443050,
+       "type_id": 1525,
+       "participant_id": 34,
+       "score": {
+        "goals": 1,
+        "participant": "away"
+       },
+       "description": "CURRENT"
+      },
+      {
+       "id": 17536870,
+       "fixture_id": 19443050,
+       "type_id": 1525,
+       "participant_id": 88,
+       "score": {
+        "goals": 1,
+        "participant": "home"
+       },
+       "description": "CURRENT"
+      }
+     ],
+     "league": {
+      "id": 600,
+      "country_id": 404,
+      "sport_id": 1,
+      "name": "Super Lig",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/24/600.png"
+     }
+    },
+    "details": [
+     {
+      "id": 1808760305,
+      "fixture_id": 19443050,
+      "player_id": 129095,
+      "team_id": 34,
+      "lineup_id": 14671650482,
+      "type_id": 119,
+      "data": {
+       "value": 1
+      }
+     }
+    ]
+   },
+   {
+    "id": 14673548199,
+    "sport_id": 1,
+    "fixture_id": 19443204,
+    "player_id": 129095,
+    "team_id": 34,
+    "position_id": 27,
+    "formation_field": null,
+    "type_id": 12,
+    "formation_position": null,
+    "player_name": "Mauro Icardi",
+    "jersey_number": 9,
+    "fixture": {
+     "id": 19443204,
+     "sport_id": 1,
+     "league_id": 600,
+     "season_id": 25682,
+     "stage_id": 77476955,
+     "group_id": null,
+     "aggregate_id": null,
+     "round_id": 373707,
+     "state_id": 5,
+     "venue_id": 9667,
+     "name": "Galatasaray vs Fenerbahçe",
+     "starting_at": "2026-04-26 17:00:00",
+     "result_info": "Galatasaray won after full-time.",
+     "leg": "1/1",
+     "details": null,
+     "length": 90,
+     "placeholder": false,
+     "has_odds": true,
+     "has_premium_odds": true,
+     "starting_at_timestamp": 1777222800,
+     "participants": [
+      {
+       "id": 88,
+       "sport_id": 1,
+       "country_id": 404,
+       "venue_id": 9695,
+       "gender": "male",
+       "name": "Fenerbahçe",
+       "short_code": "FEN",
+       "image_path": "https://cdn.sportmonks.com/images/soccer/teams/24/88.png",
+       "founded": 1907,
+       "type": "domestic",
+       "placeholder": false,
+       "last_played_at": "2026-09-20 14:00:00",
+       "meta": {
+        "location": "away",
+        "winner": false,
+        "position": 2
+       }
+      },
+      {
+       "id": 34,
+       "sport_id": 1,
+       "country_id": 404,
+       "venue_id": 9667,
+       "gender": "male",
+       "name": "Galatasaray",
+       "short_code": "GAL",
+       "image_path": "https://cdn.sportmonks.com/images/soccer/teams/2/34.png",
+       "founded": 1905,
+       "type": "domestic",
+       "placeholder": false,
+       "last_played_at": "2026-09-19 17:00:00",
+       "meta": {
+        "location": "home",
+        "winner": true,
+        "position": 1
+       }
+      }
+     ],
+     "scores": [
+      {
+       "id": 20088257,
+       "fixture_id": 19443204,
+       "type_id": 1,
+       "participant_id": 34,
+       "score": {
+        "goals": 1,
+        "participant": "home"
+       },
+       "description": "1ST_HALF"
+      },
+      {
+       "id": 20088258,
+       "fixture_id": 19443204,
+       "type_id": 1,
+       "participant_id": 88,
+       "score": {
+        "goals": 0,
+        "participant": "away"
+       },
+       "description": "1ST_HALF"
+      },
+      {
+       "id": 20088255,
+       "fixture_id": 19443204,
+       "type_id": 1525,
+       "participant_id": 34,
+       "score": {
+        "goals": 3,
+        "participant": "home"
+       },
+       "description": "CURRENT"
+      },
+      {
+       "id": 20088256,
+       "fixture_id": 19443204,
+       "type_id": 1525,
+       "participant_id": 88,
+       "score": {
+        "goals": 0,
+        "participant": "away"
+       },
+       "description": "CURRENT"
+      }
+     ],
+     "league": {
+      "id": 600,
+      "country_id": 404,
+      "sport_id": 1,
+      "name": "Super Lig",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/24/600.png"
+     }
+    },
+    "details": [
+     {
+      "id": 2036447167,
+      "fixture_id": 19443204,
+      "player_id": 129095,
+      "team_id": 34,
+      "lineup_id": 14673548199,
+      "type_id": 118,
+      "data": {
+       "value": 6.54
+      }
+     },
+     {
+      "id": 2036398140,
+      "fixture_id": 19443204,
+      "player_id": 129095,
+      "team_id": 34,
+      "lineup_id": 14673548199,
+      "type_id": 119,
+      "data": {
+       "value": 8
+      }
+     }
+    ]
+   },
+   {
+    "id": 12494120014,
+    "sport_id": 1,
+    "fixture_id": 19172058,
+    "player_id": 129095,
+    "team_id": 34,
+    "position_id": 27,
+    "formation_field": null,
+    "type_id": 12,
+    "formation_position": null,
+    "player_name": "Mauro Icardi",
+    "jersey_number": 9,
+    "fixture": {
+     "id": 19172058,
+     "sport_id": 1,
+     "league_id": 600,
+     "season_id": 23851,
+     "stage_id": 77472111,
+     "group_id": null,
+     "aggregate_id": null,
+     "round_id": 343325,
+     "state_id": 5,
+     "venue_id": 9695,
+     "name": "Fenerbahçe vs Galatasaray",
+     "starting_at": "2024-09-21 17:00:00",
+     "result_info": "Galatasaray won after full-time.",
+     "leg": "1/1",
+     "details": null,
+     "length": 90,
+     "placeholder": false,
+     "has_odds": true,
+     "has_premium_odds": true,
+     "starting_at_timestamp": 1726938000,
+     "participants": [
+      {
+       "id": 34,
+       "sport_id": 1,
+       "country_id": 404,
+       "venue_id": 9667,
+       "gender": "male",
+       "name": "Galatasaray",
+       "short_code": "GAL",
+       "image_path": "https://cdn.sportmonks.com/images/soccer/teams/2/34.png",
+       "founded": 1905,
+       "type": "domestic",
+       "placeholder": false,
+       "last_played_at": "2026-09-19 17:00:00",
+       "meta": {
+        "location": "away",
+        "winner": true,
+        "position": 1
+       }
+      },
+      {
+       "id": 88,
+       "sport_id": 1,
+       "country_id": 404,
+       "venue_id": 9695,
+       "gender": "male",
+       "name": "Fenerbahçe",
+       "short_code": "FEN",
+       "image_path": "https://cdn.sportmonks.com/images/soccer/teams/24/88.png",
+       "founded": 1907,
+       "type": "domestic",
+       "placeholder": false,
+       "last_played_at": "2026-09-20 14:00:00",
+       "meta": {
+        "location": "home",
+        "winner": false,
+        "position": 2
+       }
+      }
+     ],
+     "scores": [
+      {
+       "id": 14908785,
+       "fixture_id": 19172058,
+       "type_id": 1,
+       "participant_id": 34,
+       "score": {
+        "goals": 2,
+        "participant": "away"
+       },
+       "description": "1ST_HALF"
+      },
+      {
+       "id": 14908784,
+       "fixture_id": 19172058,
+       "type_id": 1,
+       "participant_id": 88,
+       "score": {
+        "goals": 0,
+        "participant": "home"
+       },
+       "description": "1ST_HALF"
+      },
+      {
+       "id": 14908788,
+       "fixture_id": 19172058,
+       "type_id": 1525,
+       "participant_id": 34,
+       "score": {
+        "goals": 3,
+        "participant": "away"
+       },
+       "description": "CURRENT"
+      },
+      {
+       "id": 14908789,
+       "fixture_id": 19172058,
+       "type_id": 1525,
+       "participant_id": 88,
+       "score": {
+        "goals": 1,
+        "participant": "home"
+       },
+       "description": "CURRENT"
+      }
+     ],
+     "league": {
+      "id": 600,
+      "country_id": 404,
+      "sport_id": 1,
+      "name": "Super Lig",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/24/600.png"
+     }
+    },
+    "details": []
+   },
+   {
+    "id": 5733814,
+    "sport_id": 1,
+    "fixture_id": 10420190,
+    "player_id": 129095,
+    "team_id": 2930,
+    "position_id": 27,
+    "formation_field": null,
+    "type_id": 11,
+    "formation_position": 10,
+    "player_name": "Mauro Icardi",
+    "jersey_number": 9,
+    "fixture": null,
+    "details": [
+     {
+      "id": 297646503,
+      "fixture_id": 10420190,
+      "player_id": 129095,
+      "team_id": 2930,
+      "lineup_id": 5733814,
+      "type_id": 52,
+      "data": {
+       "value": 1
+      }
+     },
+     {
+      "id": 297646597,
+      "fixture_id": 10420190,
+      "player_id": 129095,
+      "team_id": 2930,
+      "lineup_id": 5733814,
+      "type_id": 118,
+      "data": {
+       "value": 7.04
+      }
+     },
+     {
+      "id": 10373884,
+      "fixture_id": 10420190,
+      "player_id": 129095,
+      "team_id": 2930,
+      "lineup_id": 5733814,
+      "type_id": 119,
+      "data": {
+       "value": 90
+      }
+     }
+    ]
+   },
+   {
+    "id": 14672931376,
+    "sport_id": 1,
+    "fixture_id": 19662545,
+    "player_id": 129095,
+    "team_id": 34,
+    "position_id": 27,
+    "formation_field": null,
+    "type_id": 12,
+    "formation_position": null,
+    "player_name": "Mauro Icardi",
+    "jersey_number": 9,
+    "fixture": {
+     "id": 19662545,
+     "sport_id": 1,
+     "league_id": 2,
+     "season_id": 25580,
+     "stage_id": 77480367,
+     "group_id": null,
+     "aggregate_id": 60238,
+     "round_id": null,
+     "state_id": 7,
+     "venue_id": 152,
+     "name": "Juventus vs Galatasaray",
+     "starting_at": "2026-02-25 20:00:00",
+     "result_info": "Galatasaray won after extra-time.",
+     "leg": "2/2",
+     "details": null,
+     "length": 90,
+     "placeholder": false,
+     "has_odds": true,
+     "has_premium_odds": true,
+     "starting_at_timestamp": 1772049600,
+     "participants": [
+      {
+       "id": 34,
+       "sport_id": 1,
+       "country_id": 404,
+       "venue_id": 9667,
+       "gender": "male",
+       "name": "Galatasaray",
+       "short_code": "GAL",
+       "image_path": "https://cdn.sportmonks.com/images/soccer/teams/2/34.png",
+       "founded": 1905,
+       "type": "domestic",
+       "placeholder": false,
+       "last_played_at": "2026-09-19 17:00:00",
+       "meta": {
+        "location": "away",
+        "winner": false,
+        "position": 1
+       }
+      },
+      {
+       "id": 625,
+       "sport_id": 1,
+       "country_id": 251,
+       "venue_id": 152,
+       "gender": "male",
+       "name": "Juventus",
+       "short_code": "JUV",
+       "image_path": "https://cdn.sportmonks.com/images/soccer/teams/17/625.png",
+       "founded": 1897,
+       "type": "domestic",
+       "placeholder": false,
+       "last_played_at": "2026-09-20 16:00:00",
+       "meta": {
+        "location": "home",
+        "winner": true,
+        "position": 2
+       }
+      }
+     ],
+     "scores": [
+      {
+       "id": 19483688,
+       "fixture_id": 19662545,
+       "type_id": 1,
+       "participant_id": 34,
+       "score": {
+        "goals": 0,
+        "participant": "away"
+       },
+       "description": "1ST_HALF"
+      },
+      {
+       "id": 19483689,
+       "fixture_id": 19662545,
+       "type_id": 1,
+       "participant_id": 625,
+       "score": {
+        "goals": 1,
+        "participant": "home"
+       },
+       "description": "1ST_HALF"
+      },
+      {
+       "id": 19483686,
+       "fixture_id": 19662545,
+       "type_id": 1525,
+       "participant_id": 34,
+       "score": {
+        "goals": 2,
+        "participant": "away"
+       },
+       "description": "CURRENT"
+      },
+      {
+       "id": 19483687,
+       "fixture_id": 19662545,
+       "type_id": 1525,
+       "participant_id": 625,
+       "score": {
+        "goals": 3,
+        "participant": "home"
+       },
+       "description": "CURRENT"
+      }
+     ],
+     "league": {
+      "id": 2,
+      "country_id": 41,
+      "sport_id": 1,
+      "name": "Champions League",
+      "image_path": "https://cdn.sportmonks.com/images/soccer/leagues/2.png"
+     }
+    },
+    "details": [
+     {
+      "id": 1923157518,
+      "fixture_id": 19662545,
+      "player_id": 129095,
+      "team_id": 34,
+      "lineup_id": 14672931376,
+      "type_id": 119,
+      "data": {
+       "value": 33
+      }
+     },
+     {
+      "id": 1923186837,
+      "fixture_id": 19662545,
+      "player_id": 129095,
+      "team_id": 34,
+      "lineup_id": 14672931376,
+      "type_id": 118,
+      "data": {
+       "value": 6.85
+      }
+     }
+    ]
+   }
+  ]
+ }
+}
