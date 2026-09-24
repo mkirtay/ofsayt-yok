@@ -202,6 +202,15 @@
   color: var(--text-tertiary);
 }
 
+.tooltipTeam {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 6px;
+  padding-left: 6px;
+  border-left: 1px solid $color-border;
+}
+
 .tooltipShort {
   margin-bottom: 4px;
   font-size: 11px;
@@ -229,6 +238,9 @@
 }
 
 .tooltipDate {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
   margin-bottom: 4px;
   color: $color-text-secondary;
   font-size: 11px;

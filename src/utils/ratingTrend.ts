@@ -29,6 +29,9 @@ export type RatingPoint = {
   isHome: boolean;
   opponent: string;
   opponentLogo?: string;
+  /** Oyuncunun O MAÇTAKİ takımı (transfer öncesi maçlarda eski takım) */
+  teamName: string;
+  teamLogo?: string;
   /** Ev-deplasman sırasıyla skor ("2-1") */
   score?: string;
   rating: number;
@@ -63,6 +66,8 @@ export function buildRatingSeries(rows: PlayerLineupRow[], limit = RATING_TREND_
       matchId: r.fixtureId,
       isHome: r.isHome,
       opponent: r.opponentName,
+      teamName: r.teamName,
+      ...(r.teamLogo ? { teamLogo: r.teamLogo } : {}),
       rating: r.rating!,
       short: !countsForAverage(r),
       ...(r.date ? { date: r.date.slice(0, 10) } : {}),

@@ -231,7 +231,16 @@ export default function RatingTrendChart({ series, summary }: RatingTrendChartPr
             }}
             data-testid="rating-tooltip"
           >
-            <div className={styles.tooltipDate}>{shortDate(dot.date, locale, true)}</div>
+            <div className={styles.tooltipDate}>
+              {shortDate(dot.date, locale, true)}
+              <span className={styles.tooltipTeam}>
+                {dot.teamLogo ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- 14px CDN takım logosu
+                  <img src={dot.teamLogo} alt="" width={14} height={14} className={styles.logo} />
+                ) : null}
+                {dot.teamName}
+              </span>
+            </div>
             <div className={styles.tooltipRow}>
               <Opponent p={dot} t={t} />
               <span className={styles.tooltipScore}>{dot.score ?? '—'}</span>

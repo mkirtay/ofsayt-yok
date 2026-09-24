@@ -52,6 +52,7 @@ describe('buildRatingSeries — oyuncunun kendi son 20 maçı', () => {
     ];
     const s = buildRatingSeries(rows);
     expect(s.points.map((p) => p.matchId)).toEqual([1, 2, 3]);
+    expect(s.points.map((p) => p.teamName)).toEqual(['Eski Takım', 'Eski Takım', 'Yeni Takım']); // ipucunda o maçtaki takım
     expect(s.missing).toBe(0);
   });
 
