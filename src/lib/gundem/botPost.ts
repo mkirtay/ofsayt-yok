@@ -3,6 +3,8 @@ import { sanitizePlainText } from '@/lib/security';
 import { POST_MAX_LENGTH } from '@/config/gundem';
 import { getBotAccountEmail } from '@/lib/gundem/official';
 import { postSelect, serializePost } from '@/lib/gundem/posts';
+import { ensureMatchSnapshot } from '@/lib/gundem/matchSnapshot';
+import { captureError } from '@/lib/logger';
 
 export type CreateBotPostInput = {
   body: string;
@@ -31,6 +33,11 @@ export async function createBotPost(input: CreateBotPostInput): Promise<CreateBo
   if (externalKey) {
     const existing = await prisma.post.findUnique({ where: { externalKey }, select });
     if (existing) return { status: 'exists', post: serializePost(existing) };
+  }
+
+  // Rozet verisi: snapshot yoksa oluşturulur. Sağlayıcı hatası bot postunu ENGELLEMEZ (rozet sonra, ilk kullanıcı postunda da oluşur).
+  if (input.matchId) {
+    await ensureMatchSnapshot(input.matchId).catch((e) => captureError('gundem:bot-post-snapshot', e));
   }
 
   const email = getBotAccountEmail();

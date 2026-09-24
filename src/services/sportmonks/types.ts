@@ -54,6 +54,8 @@ export type SportmonksState = {
 export type SportmonksParticipant = {
   id: number;
   name: string;
+  /** Takım kısaltması ("GAL"); bazı takımlarda null. */
+  short_code?: string | null;
   image_path?: string | null;
   meta?: {
     location: 'home' | 'away';

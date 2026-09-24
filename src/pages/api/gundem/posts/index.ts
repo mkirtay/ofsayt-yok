@@ -10,7 +10,6 @@ import { POST_MAX_LENGTH } from '@/config/gundem';
 import {
   PAGE_SIZE,
   optionalInt,
-  optionalString,
   queryString,
   readJsonBody,
 } from '@/lib/gundem/validation';
@@ -23,6 +22,7 @@ import {
   feedCacheKey,
   isFeedCacheable,
 } from '@/lib/gundem/feedCache';
+import { MatchSnapshotError, ensureMatchSnapshot, normalizeFixtureId } from '@/lib/gundem/matchSnapshot';
 
 const SCOPES = ['all', 'following', 'official'] as const;
 type Scope = (typeof SCOPES)[number];
@@ -106,13 +106,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const userExists = await prisma.user.findUnique({ where: { id: userId }, select: { id: true } });
       if (!userExists) return res.status(401).json({ error: 'Oturum geçersiz. Lütfen tekrar giriş yapın.' });
 
+      // matchId verildiyse maç gerçek olmalı: rozet verisi (MatchSnapshot) burada garanti edilir.
+      let matchId: string | null = null;
+      try {
+        matchId = normalizeFixtureId(input.matchId);
+        if (matchId) await ensureMatchSnapshot(matchId);
+      } catch (e) {
+        if (e instanceof MatchSnapshotError) {
+          return res.status(e.reason === 'upstream' ? 503 : 400).json({ error: e.message });
+        }
+        throw e;
+      }
+
       // authorType istemciden ASLA okunmaz: kullanıcı postları her zaman USER.
       const created = await prisma.post.create({
         data: {
           authorId: userId,
           authorType: 'USER',
           body,
-          matchId: optionalString(input.matchId, 64),
+          matchId,
           teamId: optionalInt(input.teamId),
         },
         select: postSelect(userId),
