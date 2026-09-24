@@ -57,6 +57,11 @@ interface MatchListProps {
    * yüksekliğe sahipse (ana sayfa split-view sütunu) kullanılır; verilmezse eski `min(72vh, 900px)`.
    */
   fill?: boolean;
+  /**
+   * Dar görünüm (split-view yok): kutu içerik kadar uzar, `min(72vh, 900px)` yalnızca üst sınır.
+   * Az maçlı günde altta boş alan kalmaz. `fill` ile birlikte verilmez.
+   */
+  fitContent?: boolean;
 }
 
 type FlatItem =
@@ -451,6 +456,7 @@ export default function MatchList({
   selectedMatchId,
   compact = false,
   fill = false,
+  fitContent = false,
 }: MatchListProps) {
   const { t } = useTranslation('match');
   const router = useRouter();
@@ -496,6 +502,22 @@ export default function MatchList({
     ]
   );
 
+  const contentHeight = useMemo(
+    () => items.reduce((sum, _item, index) => sum + rowHeight(index, rowProps), 0),
+    [items, rowProps],
+  );
+
+  const hostClassName = [
+    styles.virtualHost,
+    fill ? styles.virtualHostFill : '',
+    fitContent && !fill ? styles.virtualHostFit : '',
+    isWorldCup ? styles.worldCup : '',
+    compact ? styles.virtualHostCompact : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+  const hostStyle = fitContent && !fill ? { height: contentHeight } : undefined;
+
   const listStyle = useCallback(
     (height: number, width: number): CSSProperties => ({
       height,
@@ -514,21 +536,14 @@ export default function MatchList({
 
   if (!mounted) {
     return (
-      <div
-        className={`${styles.virtualHost} ${fill ? styles.virtualHostFill : ''} ${isWorldCup ? styles.worldCup : ''}`.trim()}
-        aria-busy="true"
-      >
+      <div className={hostClassName} style={hostStyle} aria-busy="true">
         <div className={styles.virtualPlaceholder}>{t('list.loading')}</div>
       </div>
     );
   }
 
   return (
-    <div
-      className={`${styles.virtualHost} ${fill ? styles.virtualHostFill : ''} ${isWorldCup ? styles.worldCup : ''} ${
-        compact ? styles.virtualHostCompact : ''
-      }`.trim()}
-    >
+    <div className={hostClassName} style={hostStyle}>
       <AutoSizer
         renderProp={({ height, width }) => {
           if (height === undefined || width === undefined) {

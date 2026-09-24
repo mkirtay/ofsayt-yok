@@ -134,6 +134,12 @@
   flex: 1 1 0;
 }
 
+// Dar görünüm: yükseklik inline (içerik toplamı) gelir; eski sabit yükseklik yalnızca tavan.
+.virtualHostFit {
+  min-height: 0;
+  max-height: min(72vh, 900px);
+}
+
 .virtualPlaceholder {
   display: flex;
   align-items: center;

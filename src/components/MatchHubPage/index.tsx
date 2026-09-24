@@ -453,6 +453,7 @@ export default function MatchHubPage({
         selectedMatchId={showDetailPanel ? selectedMatchId : null}
         compact={showDetailPanel}
         fill={showDetailPanel}
+        fitContent={splitView === false}
       />
     )
   ) : matchesLoading ? (
@@ -481,6 +482,7 @@ export default function MatchHubPage({
         selectedMatchId={showDetailPanel ? selectedMatchId : null}
         compact={showDetailPanel}
         fill={showDetailPanel}
+        fitContent={splitView === false}
       />
     </>
   );
