@@ -2,7 +2,8 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import type { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { sanitizePlainText } from '@/lib/security';
-import { hitFixedWindowRateLimit } from '@/lib/rateLimit';
+import { hitFixedWindowRateLimit, requestIp } from '@/lib/rateLimit';
+import { readCache, writeCache } from '@/lib/livescoreCache';
 import { captureError } from '@/lib/logger';
 import { getRequestUserId } from '@/lib/mobileAuth';
 import { POST_MAX_LENGTH } from '@/config/gundem';
@@ -15,6 +16,13 @@ import {
 } from '@/lib/gundem/validation';
 import { feedOrder, paginate, postSelect, serializePost } from '@/lib/gundem/posts';
 import { getOfficialAccountEmails } from '@/lib/gundem/official';
+import {
+  FEED_CACHE_TTL_SECONDS,
+  FEED_GET_RATE_LIMIT,
+  FEED_GET_RATE_WINDOW_MS,
+  feedCacheKey,
+  isFeedCacheable,
+} from '@/lib/gundem/feedCache';
 
 const SCOPES = ['all', 'following', 'official'] as const;
 type Scope = (typeof SCOPES)[number];
@@ -22,6 +30,13 @@ type Scope = (typeof SCOPES)[number];
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     if (req.method === 'GET') {
+      const ip = requestIp(req.headers as Record<string, string | string[] | undefined>, req.socket?.remoteAddress);
+      const rl = await hitFixedWindowRateLimit(`gundem-feed:ip:${ip}`, FEED_GET_RATE_LIMIT, FEED_GET_RATE_WINDOW_MS);
+      if (!rl.success) {
+        res.setHeader('Retry-After', String(Math.ceil((rl.resetAt - Date.now()) / 1000)));
+        return res.status(429).json({ error: 'Çok fazla istek gönderdiniz. Biraz bekleyin.' });
+      }
+
       const scopeRaw = queryString(req.query.scope) ?? 'all';
       if (!(SCOPES as readonly string[]).includes(scopeRaw)) {
         return res.status(400).json({ error: 'Geçersiz akış türü.' });
@@ -29,6 +44,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const scope = scopeRaw as Scope;
       const cursor = queryString(req.query.cursor);
       const viewerId = await getRequestUserId(req, res);
+
+      // Paylaşılan cache yalnızca oturumsuz + all/official (bkz. feedCache.ts); oturumlu istek her zaman DB'den.
+      const cacheable = isFeedCacheable(scope, viewerId);
+      const cacheKey = feedCacheKey(scope, cursor);
+      if (cacheable) {
+        const cached = await readCache(cacheKey);
+        if (cached !== null && cached !== undefined) {
+          res.setHeader('X-Cache', 'HIT');
+          return res.json(cached);
+        }
+      }
 
       const where: Prisma.PostWhereInput = { deletedAt: null };
       if (scope === 'official') {
@@ -50,7 +76,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         select: postSelect(viewerId),
       });
       const { items, nextCursor } = paginate(rows, PAGE_SIZE);
-      return res.json({ items: items.map((p) => serializePost(p, viewerId)), nextCursor });
+      const page = { items: items.map((p) => serializePost(p, viewerId)), nextCursor };
+      if (cacheable) {
+        // Boş cursor'lı sayfa yazılmaz: rastgele cursor'larla cache anahtarı şişirilemesin.
+        if (!cursor || items.length > 0) await writeCache(cacheKey, page, FEED_CACHE_TTL_SECONDS);
+        res.setHeader('X-Cache', 'MISS');
+      } else {
+        res.setHeader('X-Cache', 'BYPASS');
+      }
+      return res.json(page);
     }
 
     if (req.method === 'POST') {

@@ -629,9 +629,12 @@ export default function MatchHubPage({
                     {tg('panel.openPage')}
                   </Link>
                 </div>
+                {/* Detay paneli ↔ Gündem geçişinde yeniden mount olur: 60 sn staleTime tüm yüklü sayfaların (infinite query)
+                    her geçişte yeniden çekilmesini önler. Kendi post/beğeni/silme invalidation'ı staleTime'dan bağımsız. */}
                 <GundemPanel
                   scope="all"
                   composer="post-inline"
+                  staleTime={60_000}
                   onOpenPost={(postId) => void router.push(`/gundem/${postId}`)}
                 />
               </aside>

@@ -63,8 +63,14 @@ function useViewerKey(): string | null {
   return data?.user?.id ?? 'anon';
 }
 
-/** `enabled: false` → akış çekilmez (ör. panel görünmezken); oturum çözülene kadar zaten beklenir. Varsayılan `true`. */
-export function useGundemFeed(scope: GundemScope, { enabled = true }: { enabled?: boolean } = {}) {
+/**
+ * `enabled: false` → akış çekilmez (ör. panel görünmezken); oturum çözülene kadar zaten beklenir. Varsayılan `true`.
+ * `staleTime` observer'a özel (varsayılan 30 sn): aynı anahtarı paylaşan /gundem sayfası kendi değeriyle çalışır.
+ */
+export function useGundemFeed(
+  scope: GundemScope,
+  { enabled = true, staleTime = 30_000 }: { enabled?: boolean; staleTime?: number } = {},
+) {
   const viewer = useViewerKey();
   return useInfiniteQuery({
     queryKey: gundemKeys.feed(scope, viewer ?? 'anon'),
@@ -76,7 +82,7 @@ export function useGundemFeed(scope: GundemScope, { enabled = true }: { enabled?
     initialPageParam: null as string | null,
     getNextPageParam: (last) => last.nextCursor,
     enabled: enabled && viewer !== null,
-    staleTime: 30_000,
+    staleTime,
   });
 }
 

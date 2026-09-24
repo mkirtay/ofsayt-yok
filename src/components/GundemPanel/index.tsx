@@ -22,6 +22,8 @@ export type GundemPanelProps = {
   onSelectedPostDeleted?: () => void;
   /** `false` → akış çekilmez (altyapı: ana sayfada yalnızca gerektiğinde). Varsayılan `true`. */
   enabled?: boolean;
+  /** Akış sorgusunun `staleTime`'ı (ms); verilmezse hook varsayılanı (30 sn). */
+  staleTime?: number;
 };
 
 /** Gündem akışı: (isteğe bağlı) composer + PostCard listesi + sonsuz kaydırma. Konumlandırmayı çağıran yapar. */
@@ -32,12 +34,13 @@ export default function GundemPanel({
   selectedPostId = null,
   onSelectedPostDeleted,
   enabled = true,
+  staleTime,
 }: GundemPanelProps) {
   const { t } = useTranslation('gundem');
   const { status } = useSession();
   const authenticated = status === 'authenticated';
 
-  const feed = useGundemFeed(scope, { enabled });
+  const feed = useGundemFeed(scope, { enabled, staleTime });
   const createPost = useCreatePost();
   const actions = usePostActions();
   const items = feed.data?.pages.flatMap((p) => p.items) ?? [];

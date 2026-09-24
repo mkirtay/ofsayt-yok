@@ -11,6 +11,10 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
+// Redis `null` → rate limit ve akış cache'i süreç içi fallback: anonim akış yanıtları (test resmi hesabıyla!) paylaşılan
+// (prod) Redis'e yazılmaz, prod cache'i de teste sızmaz (bkz. lib/gundem/feedCache.ts).
+vi.mock('@/lib/redis', () => ({ getRedisClient: () => null }));
+
 const ENABLED = process.env.DB_INTEGRATION === '1';
 
 // runId modül yüklenmeden önce üretilmeli: resmi/bot hesabı env'i test kullanıcısına yönlenir (official.ts env'i çağrı anında okur).
