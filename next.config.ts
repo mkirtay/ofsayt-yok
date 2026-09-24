@@ -4,6 +4,9 @@ import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
   reactStrictMode: false,
+  // Aynı klasörde ikinci bir `next dev` (ör. paralel önizleme) `.next/dev/lock` kilidine takılmasın diye
+  // build klasörü env ile değiştirilebilir; varsayılan `.next`.
+  distDir: process.env.NEXT_DIST_DIR || '.next',
   // Üst dizindeki ekstra package-lock.json Turbopack'in yanlış root seçmesine yol açıyordu.
   turbopack: {
     root: path.resolve(__dirname),
