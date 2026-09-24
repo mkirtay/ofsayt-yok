@@ -191,3 +191,22 @@ export function vsOpponent(rows: PlayerLineupRow[], opponentId: number): VsResul
   };
 }
 
+
+/** Son maçlar (grafik + Maç Geçmişi): sahaya çıkılan en fazla bu kadar maç. */
+export const RECENT_PLAYED_LIMIT = 20;
+
+/**
+ * Oyuncunun son tamamlanmış maç satırları (en yeni önce, takımdan bağımsız): `playedLimit`'inci sahaya çıkılan maça kadar
+ * olan TÜM satırlar — aradaki "kadroda, oynamadı" satırları dahil (Maç Geçmişi onları gösterir, grafik atlar).
+ */
+export function recentRows(rows: PlayerLineupRow[], playedLimit = RECENT_PLAYED_LIMIT): PlayerLineupRow[] {
+  const sorted = [...rows].sort((a, b) => b.date.localeCompare(a.date));
+  const out: PlayerLineupRow[] = [];
+  let played = 0;
+  for (const r of sorted) {
+    if (played >= playedLimit) break;
+    out.push(r);
+    if (playedIn(r)) played += 1;
+  }
+  return out;
+}

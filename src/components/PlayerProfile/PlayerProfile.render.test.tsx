@@ -11,31 +11,35 @@ vi.mock('next/router', () => ({ useRouter: () => ({ query: vsState.query, pathna
 vi.mock('@/hooks/usePlayerVs', () => ({
   usePlayerVsOpponents: () => ({ data: { playerId: 455805, opponents: vsState.opponents }, isLoading: false, isError: false }),
   usePlayerVs: () => ({ data: vsState.vs, isLoading: false, isError: false }),
+  usePlayerRecentMatches: () => ({ data: { playerId: 455805, minMinutesForAverage: 15, rows: state.trendRows }, isLoading: false, isError: false }),
 }));
-vi.mock('@/hooks/usePlayerProfile', async () => {
-  const { buildRatingSeries, summarizeRatings } = await import('@/utils/ratingTrend');
-  return {
-    usePlayerProfile: () => ({ data: state.profile, isLoading: false }),
-    usePlayerMatchHistory: () => ({ rows: state.rows, loading: state.loading, hasMore: state.hasMore, expand: () => {}, empty: false }),
-    usePlayerRatingTrend: () => {
-      const series = buildRatingSeries(state.trendRows as never);
-      return { series, summary: summarizeRatings(series.points), loading: false, error: false };
-    },
-  };
-});
+vi.mock('@/hooks/usePlayerProfile', () => ({
+  usePlayerProfile: () => ({ data: state.profile, isLoading: false }),
+  usePlayerMatchHistory: () => ({ rows: state.rows, loading: state.loading, hasMore: state.hasMore, expand: () => {}, empty: false }),
+}));
 
 import PlayerProfile, { ageFromBirth, formatTransferAmount, transferTypeLabel, formatPlayerDate } from './index';
 
 const render = () => renderToStaticMarkup(<PlayerProfile playerId="455805" />);
 
+/** PlayerLineupRow; `score` ev-dep sırasıyla verilip oyuncunun takımı açısından gol sayısına çevrilir. */
+const lr = (fixtureId: number, date: string, isHome: boolean, opponentName: string, score: string, rating?: number, extra: Record<string, unknown> = {}) => {
+  const [h, a] = score.split('-').map(Number);
+  return {
+    fixtureId, date: `${date} 17:00:00`, leagueId: 600, teamId: 34, teamName: 'Galatasaray', opponentId: 900 + fixtureId, opponentName,
+    isHome, goalsFor: isHome ? h : a, goalsAgainst: isHome ? a : h, started: true, minutes: 90,
+    ...(rating !== undefined ? { rating } : {}), ...extra,
+  };
+};
 const trendRows = [
-  { matchId: 11, date: '2026-08-14', isHome: true, opponent: 'Çorum FK', score: '2-2', rating: 7.89 },
-  { matchId: 12, date: '2026-08-21', isHome: false, opponent: 'Erzurumspor FK', opponentLogo: 'https://cdn.example/erz.png', score: '4-0', rating: 9.01 },
-  { matchId: 13, date: '2026-08-29', isHome: true, opponent: 'Göztepe', score: '3-2', rating: 8.24 },
-  { matchId: 14, date: '2026-09-04', isHome: false, opponent: 'İstanbul Başakşehir', score: '3-2', rating: 6.9 },
-  { matchId: 15, date: '2026-09-09', isHome: false, opponent: 'Sporting CP', score: '0-1' },
-  { matchId: 16, date: '2026-09-13', isHome: true, opponent: 'Kocaelispor', score: '1-0' },
-  { matchId: 10, date: '2026-05-09', isHome: true, opponent: 'Antalyaspor', score: '4-2', rating: 7.51 },
+  lr(11, '2026-08-14', true, 'Çorum FK', '2-2', 7.89),
+  lr(12, '2026-08-21', false, 'Erzurumspor FK', '0-4', 9.01, { opponentLogo: 'https://cdn.example/erz.png' }),
+  lr(13, '2026-08-29', true, 'Göztepe', '3-2', 8.24),
+  lr(14, '2026-09-04', false, 'İstanbul Başakşehir', '3-2', 6.9),
+  lr(15, '2026-09-09', false, 'Sporting CP', '0-1'), // oynadı, reyting yok
+  lr(16, '2026-09-13', true, 'Kocaelispor', '1-0', undefined, { started: false, minutes: undefined }), // kadroda, oynamadı → grafikte yok
+  lr(17, '2026-09-19', false, 'Trabzonspor', '4-0', 6.0, { started: false, minutes: 6 }), // kısa giriş
+  lr(10, '2026-05-09', true, 'Antalyaspor', '4-2', 7.51),
 ];
 
 describe('<PlayerProfile /> — gerçek Osimhen verisi', () => {
@@ -144,9 +148,10 @@ describe('<PlayerProfile /> — rating grafiği', () => {
     state.trendRows = trendRows;
     const html = render();
     expect(html).toContain('id="pp-rating-trend"');
-    expect(html).toContain('Son 5 maç');
+    expect(html).toContain('Son 7 maç'); // sahaya çıktığı 7 maç (yedekte kaldığı 16 sayılmaz)
     const points = [...html.matchAll(/<a href="\/matches\/(\d+)" aria-label="([^"]+)"[^>]*data-tone="(\w+)"/g)].map((m) => [m[1], m[3]]);
-    expect(points).toEqual([['10', 'good'], ['11', 'good'], ['12', 'excellent'], ['13', 'excellent'], ['14', 'fair']]);
+    expect(points).toEqual([['10', 'good'], ['11', 'good'], ['12', 'excellent'], ['13', 'excellent'], ['14', 'fair'], ['17', 'poor']]);
+    expect(html).not.toContain('href="/matches/16"');
     expect(html).toContain('aria-label="4 Eyl 2026, Dep İstanbul Başakşehir, skor 3-2, rating 6.9"');
   });
 
@@ -155,7 +160,11 @@ describe('<PlayerProfile /> — rating grafiği', () => {
     expect(html).toMatch(/data-tone="good"[^>]*>7\.9</); // (7.51+7.89+9.01+8.24+6.9)/5 = 7.91 → "7.9" yeşil
     expect(html).toContain('Ort. 7.9');
     expect(html).toMatch(/data-testid="rating-consistency"[^>]*>Dalgalı/); // σ ≈ 0.70
-    expect(html).toContain('2 maçta rating yok');
+    expect(html).toContain('1 maçta oynadı ama rating yok'); // yalnızca 15; yedekte kalınan 16 sayılmaz
+    // kısa giriş (6') noktada soluk, ortalamaya/istikrara girmiyor
+    expect(html).toContain('1 kısa giriş (15 dakikanın altı) soluk gösterilir');
+    expect(html).toMatch(/aria-label="19 Eyl 2026, Dep Trabzonspor, skor 4-0, rating 6.0 — 15 dakikanın altında — ortalamaya katılmaz"/);
+    expect(html).toMatch(/data-short="true"/);
     expect(html).toContain('En iyi 9.0: Erzurumspor FK, 21 Ağu 2026');
     expect(html).toContain('İstikrar: Dalgalı.');
   });
@@ -163,12 +172,13 @@ describe('<PlayerProfile /> — rating grafiği', () => {
   it('5 maçtan az reyting → istikrar etiketi yok, açıklama var; hiç yoksa boş durum', () => {
     state.trendRows = trendRows.slice(0, 3);
     let html = render();
+    expect(html).not.toContain('kısa giriş');
     expect(html).not.toContain('data-testid="rating-consistency"');
     expect(html).toContain('İstikrar için en az 5 maç gerekir');
-    state.trendRows = [trendRows[4]];
+    state.trendRows = [trendRows[4], trendRows[5]];
     html = render();
     expect(html).toContain('Son maçlarda rating verisi yok.');
-    expect(html).toContain('1 maçta rating yok');
+    expect(html).toContain('1 maçta oynadı ama rating yok');
     state.trendRows = trendRows;
   });
 });

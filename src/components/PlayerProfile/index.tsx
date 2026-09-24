@@ -3,7 +3,9 @@ import Link from 'next/link';
 import EmptyState from '@/components/EmptyState';
 import { PanelSkeleton } from '@/components/Skeleton';
 import { useI18n, useTranslation } from '@/lib/i18n';
-import { usePlayerMatchHistory, usePlayerProfile, usePlayerRatingTrend } from '@/hooks/usePlayerProfile';
+import { usePlayerMatchHistory, usePlayerProfile } from '@/hooks/usePlayerProfile';
+import { usePlayerRecentMatches } from '@/hooks/usePlayerVs';
+import { buildRatingSeries, summarizeRatings } from '@/utils/ratingTrend';
 import { pickDefaultSeason, type PlayerMatchRow, type PlayerProfile as Profile, type PlayerSeasonStats, type PlayerTransfer } from '@/services/playerProfile';
 import { PLAYER_STAT_GROUPS, STAT, formatStat, statMain } from '@/services/sportmonks/playerStatTypes';
 import RatingBadge from '@/components/RatingBadge';
@@ -384,22 +386,27 @@ function MatchHistory({ playerId, teamId }: { playerId: number; teamId: number }
   );
 }
 
-/** Son 20 maçın rating grafiği (takım düzeyinde tek `fixtures/multi` isteği — bkz. `usePlayerRatingTrend`). */
-function RatingTrend({ playerId, teamId }: { playerId: number; teamId: number }) {
+/**
+ * Oyuncunun sahaya çıktığı son 20 maçın rating grafiği — hangi takımda oynadığından bağımsız. Veri `/api/players/{id}/matches`
+ * (oyuncu başına 12 saat cache'li TEK Sportmonks isteği; Maç Geçmişi ve "Rakibe karşı" ile ortak).
+ */
+function RatingTrend({ playerId }: { playerId: number }) {
   const { t } = useTranslation('player');
-  const { series, summary, loading, error } = usePlayerRatingTrend(playerId, teamId);
-  const n = series?.points.length ?? 0;
+  const { data, isLoading, isError } = usePlayerRecentMatches(playerId);
+  const series = useMemo(() => (data ? buildRatingSeries(data.rows) : null), [data]);
+  const summary = useMemo(() => (series ? summarizeRatings(series.points) : null), [series]);
+  const n = series?.considered ?? 0;
   return (
     <section className={styles.card} aria-labelledby="pp-rating-trend" data-testid="rating-trend">
       <div className={styles.cardHead}>
         <h2 id="pp-rating-trend" className={styles.cardTitle}>{t('ratingTrend.title')}</h2>
         {n > 0 ? <span className={styles.seasonName}>{t('ratingTrend.subtitle', { count: n })}</span> : null}
       </div>
-      {loading && !series ? (
+      {isLoading ? (
         <PanelSkeleton rows={4} />
-      ) : error ? (
+      ) : isError ? (
         <EmptyState>{t('ratingTrend.error')}</EmptyState>
-      ) : !series || !summary ? (
+      ) : !series || series.points.length === 0 ? (
         <EmptyState>{t('ratingTrend.empty')}</EmptyState>
       ) : (
         <RatingTrendChart series={series} summary={summary} />
@@ -436,7 +443,7 @@ export default function PlayerProfile({ playerId }: { playerId: string }) {
           <Header p={data} />
           <Bio p={data} />
           {season && hasStats ? <SeasonSummary seasons={data.seasons} selected={season} onSelect={setSelectedSeasonKey} /> : null}
-          {teamId != null ? <RatingTrend playerId={data.id} teamId={teamId} /> : null}
+          <RatingTrend playerId={data.id} />
           <PlayerVsOpponent playerId={data.id} />
           {season && hasStats ? <DetailedStats season={season} /> : null}
         </div>

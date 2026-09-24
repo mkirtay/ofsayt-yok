@@ -37,23 +37,26 @@ vi.mock('@/lib/i18n', () => ({
 }));
 
 const state = vi.hoisted(() => ({ rows: [] as unknown[], hasMore: false }));
-const vsState = vi.hoisted(() => ({ query: {} as Record<string, string>, opponents: [] as unknown[], vs: null as unknown }));
+const vsState = vi.hoisted(() => ({
+  query: {} as Record<string, string>,
+  opponents: [] as unknown[],
+  vs: null as unknown,
+  recent: [
+    { fixtureId: 1, date: '2026-09-04 17:00:00', leagueId: 600, teamId: 34, teamName: 'Galatasaray', opponentId: 1, opponentName: 'İstanbul Başakşehir', isHome: false, goalsFor: 3, goalsAgainst: 1, started: false, minutes: 33, rating: 6.9 },
+    { fixtureId: 2, date: '2026-09-13 17:00:00', leagueId: 600, teamId: 34, teamName: 'Galatasaray', opponentId: 2, opponentName: 'Kocaelispor', isHome: true, goalsFor: 1, goalsAgainst: 0, started: true, minutes: 90 },
+    { fixtureId: 3, date: '2026-09-19 17:00:00', leagueId: 600, teamId: 34, teamName: 'Galatasaray', opponentId: 3, opponentName: 'Trabzonspor', isHome: false, goalsFor: 0, goalsAgainst: 4, started: false, minutes: 5, rating: 6.1 },
+  ] as unknown[],
+}));
 vi.mock('next/router', () => ({ useRouter: () => ({ query: vsState.query, pathname: '/players/[id]', push: vi.fn() }) }));
 vi.mock('@/hooks/usePlayerVs', () => ({
   usePlayerVsOpponents: () => ({ data: { playerId: 455805, opponents: vsState.opponents }, isLoading: false, isError: false }),
   usePlayerVs: () => ({ data: vsState.vs, isLoading: false, isError: false }),
+  usePlayerRecentMatches: () => ({ data: { playerId: 455805, minMinutesForAverage: 15, rows: vsState.recent }, isLoading: false, isError: false }),
 }));
-vi.mock('@/hooks/usePlayerProfile', async () => {
-  const { buildRatingSeries, summarizeRatings } = await import('@/utils/ratingTrend');
-  return {
-    usePlayerProfile: () => ({ data: mapPlayerProfileLazy(), isLoading: false }),
-    usePlayerMatchHistory: () => ({ rows: state.rows, loading: false, hasMore: state.hasMore, expand: () => {}, empty: false }),
-    usePlayerRatingTrend: () => {
-      const series = buildRatingSeries(state.rows as never);
-      return { series, summary: summarizeRatings(series.points), loading: false, error: false };
-    },
-  };
-});
+vi.mock('@/hooks/usePlayerProfile', () => ({
+  usePlayerProfile: () => ({ data: mapPlayerProfileLazy(), isLoading: false }),
+  usePlayerMatchHistory: () => ({ rows: state.rows, loading: false, hasMore: state.hasMore, expand: () => {}, empty: false }),
+}));
 
 let cached: ReturnType<typeof mapPlayerProfile> | null = null;
 function mapPlayerProfileLazy() {
@@ -96,7 +99,7 @@ describe('<PlayerProfile /> — İngilizce', () => {
   });
 
   it('rating grafiği İngilizce (tekil/çoğul dahil)', () => {
-    for (const s of ['Rating Trend', 'Last 1 match', 'No rating in 1 match', 'Average', 'Best', 'Worst', 'At least 5 matches are needed for consistency', 'Avg 6.9']) {
+    for (const s of ['Rating Trend', 'Played but no rating in 1 match', 'Average', 'At least 5 matches are needed for consistency', 'Avg 6.9', 'short appearance', 'under 15 minutes']) {
       expect(html, s).toContain(s);
     }
     expect(html).toContain('aria-label="4 Sept 2026, A İstanbul Başakşehir, score 1-3, rating 6.9"');

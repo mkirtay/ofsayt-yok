@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import type { PlayerMatchesResponse } from '@/pages/api/players/[id]/matches';
 import type { PlayerVsOpponentsResponse, PlayerVsResponse } from '@/pages/api/players/[id]/vs';
 
 async function getJson<T>(url: string): Promise<T> {
@@ -23,6 +24,18 @@ export function usePlayerVs(playerId: number | null, opponentId: number | null) 
     queryKey: ['player-vs', playerId, opponentId],
     queryFn: () => getJson<PlayerVsResponse>(`/api/players/${playerId}/vs?opponentId=${opponentId}`),
     enabled: playerId != null && opponentId != null,
+    staleTime: 30 * 60_000,
+  });
+}
+
+/**
+ * Oyuncunun son maçları (rating grafiği + Maç Geçmişi aynı sorguyu paylaşır; sunucuda `/vs` ile aynı 12 saatlik cache).
+ */
+export function usePlayerRecentMatches(playerId: number | null) {
+  return useQuery({
+    queryKey: ['player-recent-matches', playerId],
+    queryFn: () => getJson<PlayerMatchesResponse>(`/api/players/${playerId}/matches`),
+    enabled: playerId != null,
     staleTime: 30 * 60_000,
   });
 }

@@ -3,10 +3,11 @@
  * (react-native-svg) aynı fonksiyonları kullanır; bileşen yalnızca `ratingChartLayout` çıktısını çizer.
  */
 import { isValidRating } from '@/config/ratingScale';
+import { countsForAverage, playedIn, type PlayerLineupRow } from '@/utils/playerVs';
 
-/** Grafikte en fazla bu kadar maç (takımın son bitmiş maçları). */
+/** Grafikte en fazla bu kadar maç: oyuncunun SAHAYA ÇIKTIĞI son tamamlanmış maçlar (takımdan bağımsız). */
 export const RATING_TREND_LIMIT = 20;
-/** İstikrar etiketi için gereken en az reytingli maç. */
+/** İstikrar etiketi için gereken en az (ortalamaya katılan) reytingli maç. */
 export const CONSISTENCY_MIN_MATCHES = 5;
 
 /**
@@ -22,45 +23,62 @@ export const CONSISTENCY_THRESHOLDS = { stable: 0.35, volatile: 0.65 } as const;
 
 export type Consistency = 'stable' | 'balanced' | 'volatile';
 
-/** Grafiğin ihtiyaç duyduğu maç satırı (`PlayerMatchRow` ile uyumlu). */
-export type RatingMatchInput = {
+export type RatingPoint = {
   matchId: number;
   date?: string;
   isHome: boolean;
   opponent: string;
   opponentLogo?: string;
+  /** Ev-deplasman sırasıyla skor ("2-1") */
   score?: string;
-  rating?: number;
+  rating: number;
+  minutes?: number;
+  /** 15 dakikadan az: noktada soluk/işaretli görünür, ortalama/istikrar/en iyi-en kötü hesabına GİRMEZ */
+  short: boolean;
 };
-
-export type RatingPoint = Required<Pick<RatingMatchInput, 'matchId' | 'isHome' | 'opponent'>> &
-  Pick<RatingMatchInput, 'date' | 'opponentLogo' | 'score'> & { rating: number };
 
 export type RatingSeries = {
   /** Kronolojik (eski → yeni), yalnızca reytingi olan maçlar */
   points: RatingPoint[];
-  /** Son `limit` maç içinde reytingi OLMAYAN (kadroda yok / oynamadı / veri yok) maç sayısı */
+  /** Sahaya çıktığı ama reytingi gelmeyen maç sayısı (kadroda olup oynamadığı maçlar hiç sayılmaz) */
   missing: number;
-  /** Değerlendirilen maç sayısı (≤ limit) */
+  /** 15 dakikanın altında kalan reytingli maç sayısı */
+  shortCount: number;
+  /** Değerlendirilen (sahaya çıkılan) maç sayısı (≤ limit) */
   considered: number;
 };
 
-/** Son `limit` maçı (tarihe göre) al, reytingsizleri say ve at, kalanları eski → yeni sırala. */
-export function buildRatingSeries(rows: RatingMatchInput[], limit = RATING_TREND_LIMIT): RatingSeries {
-  const recent = [...rows].sort((a, b) => (b.date ?? '').localeCompare(a.date ?? '')).slice(0, limit);
-  const rated = recent.filter((r): r is RatingMatchInput & { rating: number } => isValidRating(r.rating));
-  const points = rated
-    .map(({ matchId, date, isHome, opponent, opponentLogo, score, rating }) => ({
-      matchId,
-      isHome,
-      opponent,
-      rating,
-      ...(date ? { date } : {}),
-      ...(opponentLogo ? { opponentLogo } : {}),
-      ...(score ? { score } : {}),
+/**
+ * Oyuncunun satırlarından (`PlayerLineupRow`, hangi takımda oynadığından bağımsız — transfer öncesi maçlar dahil):
+ * sahaya çıktığı son `limit` maç → reytingsizleri say ve at → eski → yeni sırala. Kadroda olup oynamadığı maç yok sayılır.
+ */
+export function buildRatingSeries(rows: PlayerLineupRow[], limit = RATING_TREND_LIMIT): RatingSeries {
+  const recent = rows
+    .filter(playedIn)
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .slice(0, limit);
+  const rated = recent.filter((r) => isValidRating(r.rating));
+  const points: RatingPoint[] = rated
+    .map((r) => ({
+      matchId: r.fixtureId,
+      isHome: r.isHome,
+      opponent: r.opponentName,
+      rating: r.rating!,
+      short: !countsForAverage(r),
+      ...(r.date ? { date: r.date.slice(0, 10) } : {}),
+      ...(r.opponentLogo ? { opponentLogo: r.opponentLogo } : {}),
+      ...(r.goalsFor != null && r.goalsAgainst != null
+        ? { score: r.isHome ? `${r.goalsFor}-${r.goalsAgainst}` : `${r.goalsAgainst}-${r.goalsFor}` }
+        : {}),
+      ...(r.minutes != null ? { minutes: r.minutes } : {}),
     }))
     .reverse();
-  return { points, missing: recent.length - rated.length, considered: recent.length };
+  return {
+    points,
+    missing: recent.length - rated.length,
+    shortCount: points.filter((p) => p.short).length,
+    considered: recent.length,
+  };
 }
 
 /** Popülasyon standart sapması (gösterilen maçların kendisi — örneklem değil). */
@@ -86,15 +104,19 @@ export type RatingSummary = {
   consistency: Consistency | null;
 };
 
-/** Eşit reytingte en YENİ maç en iyi/en kötü sayılır (kronolojik dizide sonraki). */
+/**
+ * Yalnızca ortalamaya katılan (15'+) noktalardan: ortalama, en iyi/en kötü (eşitlikte en YENİ maç), σ ve istikrar.
+ * Hiç katılan nokta yoksa `null` (grafik yine çizilir, özet "—").
+ */
 export function summarizeRatings(points: RatingPoint[]): RatingSummary | null {
-  if (points.length === 0) return null;
-  const values = points.map((p) => p.rating);
+  const counted = points.filter((p) => !p.short);
+  if (counted.length === 0) return null;
+  const values = counted.map((p) => p.rating);
   const average = values.reduce((s, v) => s + v, 0) / values.length;
-  const best = points.reduce((a, b) => (b.rating >= a.rating ? b : a));
-  const worst = points.reduce((a, b) => (b.rating <= a.rating ? b : a));
+  const best = counted.reduce((a, b) => (b.rating >= a.rating ? b : a));
+  const worst = counted.reduce((a, b) => (b.rating <= a.rating ? b : a));
   const stdDev = standardDeviation(values);
-  return { average, best, worst, stdDev, consistency: consistencyOf(stdDev, points.length) };
+  return { average, best, worst, stdDev, consistency: consistencyOf(stdDev, counted.length) };
 }
 
 export type ChartBox = { width: number; height: number; padTop: number; padRight: number; padBottom: number; padLeft: number };

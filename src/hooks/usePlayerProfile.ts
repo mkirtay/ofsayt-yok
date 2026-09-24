@@ -1,17 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import {
-  getFixturesForRatings,
-  getPlayerMatchRows,
-  getTeamRecentFinishedFixtureIds,
-  getPlayerProfile,
-  mapFixtureToPlayerMatchRow,
-  type PlayerMatchRow,
-  type PlayerProfile,
-} from '@/services/playerProfile';
+import { getPlayerMatchRows, getPlayerProfile, type PlayerMatchRow, type PlayerProfile } from '@/services/playerProfile';
 import { getTeamLastMatches } from '@/services/liveScoreService';
 import type { Match } from '@/models/liveScore';
-import { buildRatingSeries, RATING_TREND_LIMIT, summarizeRatings } from '@/utils/ratingTrend';
 
 /** Oyuncu profili (tek çağrı; proxy'de 30 dk cache'li) — react-query tarafında da 10 dk taze. */
 export function usePlayerProfile(playerId: string, enabled = true) {
@@ -75,40 +66,5 @@ export function usePlayerMatchHistory(playerId: number | null, teamId: number | 
     hasMore: rest.length > 0 && !expanded,
     expand: () => setExpanded(true),
     empty: enabled && !matchesQuery.isLoading && finished.length === 0,
-  };
-}
-
-/**
- * Rating grafiği — takım başına 2 istek, ikisi de TAKIM düzeyinde (aynı takımın oyuncuları react-query + proxy cache'ini
- * paylaşır): (1) son 20 bitmiş maçın id'leri (~5KB), (2) `fixtures/multi` ile o maçların reytingleri (~230KB).
- * Bu oyuncunun satırları → seri + özet; reytingsiz maçlar atlanır, sayısı `series.missing`.
- */
-export function usePlayerRatingTrend(playerId: number | null, teamId: number | null) {
-  const enabled = playerId != null && teamId != null;
-  const matchesQuery = useQuery({
-    queryKey: ['team-recent-finished-ids', teamId, RATING_TREND_LIMIT],
-    queryFn: () => getTeamRecentFinishedFixtureIds(teamId!, RATING_TREND_LIMIT),
-    enabled,
-    staleTime: 10 * 60_000,
-  });
-  const ids = matchesQuery.data ?? [];
-  const fixturesQuery = useQuery({
-    queryKey: ['team-fixtures-ratings', teamId, ids.join(',')],
-    queryFn: () => getFixturesForRatings(ids),
-    enabled: enabled && ids.length > 0,
-    staleTime: 10 * 60_000,
-    gcTime: 30 * 60_000,
-  });
-  const fixtures = fixturesQuery.data;
-  const result = useMemo(() => {
-    if (!fixtures || playerId == null || teamId == null) return null;
-    const series = buildRatingSeries(fixtures.map((fx) => mapFixtureToPlayerMatchRow(fx, playerId, teamId)));
-    return { series, summary: summarizeRatings(series.points) };
-  }, [fixtures, playerId, teamId]);
-  return {
-    series: result?.series ?? null,
-    summary: result?.summary ?? null,
-    loading: matchesQuery.isLoading || fixturesQuery.isLoading,
-    error: fixturesQuery.isError,
   };
 }

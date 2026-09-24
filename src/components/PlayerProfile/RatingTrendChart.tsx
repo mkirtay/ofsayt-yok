@@ -4,6 +4,7 @@ import Router from 'next/router';
 import RatingBadge from '@/components/RatingBadge';
 import { formatRating, RATING_TONE_VARS, ratingTone } from '@/config/ratingScale';
 import { useI18n, useTranslation } from '@/lib/i18n';
+import { MIN_MINUTES_FOR_AVERAGE } from '@/utils/playerVs';
 import { CONSISTENCY_MIN_MATCHES, ratingChartLayout, type RatingPoint, type RatingSeries, type RatingSummary } from '@/utils/ratingTrend';
 import styles from './ratingTrend.module.scss';
 
@@ -53,7 +54,8 @@ function Opponent({ p, t }: { p: RatingPoint; t: (k: string) => string }) {
 
 export type RatingTrendChartProps = {
   series: RatingSeries;
-  summary: RatingSummary;
+  /** 15'+ maç yoksa `null`: noktalar yine çizilir, özet "—" */
+  summary: RatingSummary | null;
 };
 
 /**
@@ -69,10 +71,12 @@ export default function RatingTrendChart({ series, summary }: RatingTrendChartPr
   const lastPointer = useRef<string>('mouse');
   const srId = useId();
 
-  const layout = ratingChartLayout(series.points, { ...BOX, width }, summary.average);
+  const layout = ratingChartLayout(series.points, { ...BOX, width }, summary?.average ?? null);
   const dot = active != null ? layout.dots[active] : null;
-  const avgText = formatRating(summary.average) ?? '—';
+  const avgText = formatRating(summary?.average) ?? '—';
   const n = series.points.length;
+  const counted = n - series.shortCount;
+  const shortText = t('ratingTrend.shortMatch', { min: MIN_MINUTES_FOR_AVERAGE });
 
   const pointLabel = (p: RatingPoint) =>
     t('ratingTrend.pointLabel', {
@@ -81,7 +85,7 @@ export default function RatingTrendChart({ series, summary }: RatingTrendChartPr
       opponent: p.opponent,
       score: p.score ?? '—',
       rating: formatRating(p.rating) ?? '—',
-    });
+    }) + (p.short ? ` — ${shortText}` : '');
 
   const go = (p: RatingPoint) => void Router.push(`/matches/${p.matchId}`);
 
@@ -91,10 +95,10 @@ export default function RatingTrendChart({ series, summary }: RatingTrendChartPr
         <div className={styles.stat}>
           <dt>{t('ratingTrend.average')}</dt>
           <dd>
-            <RatingBadge rating={summary.average} size="md" />
+            <RatingBadge rating={summary?.average} size="md" showEmpty />
           </dd>
         </div>
-        {n > 1 ? (
+        {summary && counted > 1 ? (
           <>
             <div className={styles.stat}>
               <dt>{t('ratingTrend.best')}</dt>
@@ -117,7 +121,7 @@ export default function RatingTrendChart({ series, summary }: RatingTrendChartPr
         <div className={styles.stat}>
           <dt>{t('ratingTrend.consistency')}</dt>
           <dd>
-            {summary.consistency ? (
+            {summary?.consistency ? (
               <span
                 className={`${styles.consistency} ${styles[summary.consistency]}`}
                 title={t('ratingTrend.consistencyHint', { sd: summary.stdDev.toFixed(2) })}
@@ -132,6 +136,11 @@ export default function RatingTrendChart({ series, summary }: RatingTrendChartPr
           </dd>
         </div>
       </dl>
+      {series.shortCount > 0 ? (
+        <p className={styles.shortNote} data-testid="rating-short-note">
+          {t('ratingTrend.shortNote', { count: series.shortCount, min: MIN_MINUTES_FOR_AVERAGE })}
+        </p>
+      ) : null}
 
       <div className={styles.chart} ref={wrapRef} onPointerLeave={() => lastPointer.current !== 'touch' && setActive(null)}>
         <svg
@@ -201,8 +210,9 @@ export default function RatingTrendChart({ series, summary }: RatingTrendChartPr
                 <circle
                   cx={d.x}
                   cy={d.y}
-                  r={active === i ? 7 : 5}
-                  className={styles.dot}
+                  r={active === i ? 7 : d.short ? 4 : 5}
+                  className={d.short ? `${styles.dot} ${styles.dotShort}` : styles.dot}
+                  data-short={d.short || undefined}
                   style={{ fill: RATING_TONE_VARS[tone].bg }}
                 />
               </a>
@@ -226,8 +236,12 @@ export default function RatingTrendChart({ series, summary }: RatingTrendChartPr
               <Opponent p={dot} t={t} />
               <span className={styles.tooltipScore}>{dot.score ?? '—'}</span>
             </div>
+            {dot.short ? <div className={styles.tooltipShort}>{shortText}</div> : null}
             <div className={styles.tooltipRow}>
-              <RatingBadge rating={dot.rating} />
+              <span className={styles.tooltipRating}>
+                <RatingBadge rating={dot.rating} />
+                {dot.minutes != null ? <span className={styles.muted}>{dot.minutes}&apos;</span> : null}
+              </span>
               <Link href={`/matches/${dot.matchId}`} className={styles.tooltipLink} prefetch={false}>
                 {t('ratingTrend.goToMatch')} →
               </Link>
@@ -237,17 +251,20 @@ export default function RatingTrendChart({ series, summary }: RatingTrendChartPr
       </div>
 
       <p id={srId} className={styles.srOnly}>
-        {t('ratingTrend.srSummary', {
-          count: n,
-          average: avgText,
-          best: formatRating(summary.best.rating),
-          bestOpponent: summary.best.opponent,
-          bestDate: shortDate(summary.best.date, locale, true),
-          worst: formatRating(summary.worst.rating),
-          worstOpponent: summary.worst.opponent,
-          worstDate: shortDate(summary.worst.date, locale, true),
-        })}
-        {summary.consistency ? ` ${t('ratingTrend.srConsistency', { label: t(`ratingTrend.consistencyLabel.${summary.consistency}`) })}` : ''}
+        {summary
+          ? t('ratingTrend.srSummary', {
+              count: n,
+              average: avgText,
+              best: formatRating(summary.best.rating),
+              bestOpponent: summary.best.opponent,
+              bestDate: shortDate(summary.best.date, locale, true),
+              worst: formatRating(summary.worst.rating),
+              worstOpponent: summary.worst.opponent,
+              worstDate: shortDate(summary.worst.date, locale, true),
+            })
+          : t('ratingTrend.srSummaryNoAverage', { count: n })}
+        {series.shortCount > 0 ? ` ${t('ratingTrend.shortNote', { count: series.shortCount, min: MIN_MINUTES_FOR_AVERAGE })}` : ''}
+        {summary?.consistency ? ` ${t('ratingTrend.srConsistency', { label: t(`ratingTrend.consistencyLabel.${summary.consistency}`) })}` : ''}
       </p>
     </div>
   );

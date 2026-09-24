@@ -157,3 +157,24 @@ describe('getPlayerLineupRows — tek istek + 12 saat oyuncu başına cache', ()
     expect(a!.length).toBeGreaterThan(0);
   });
 });
+
+describe('recentRows — grafik + Maç Geçmişi ortak kesiti', () => {
+  const r = (n: number, played: boolean): PlayerLineupRow => ({
+    fixtureId: n,
+    date: `2026-02-${String(n).padStart(2, '0')} 18:00:00`,
+    leagueId: 600,
+    teamId: 1,
+    teamName: 'Biz',
+    opponentId: 2,
+    opponentName: 'Onlar',
+    isHome: true,
+    started: played,
+  });
+
+  it('en yeni önce; sahaya çıkılan N. maça kadar, aradaki "oynamadı" satırları dahil', async () => {
+    const { recentRows } = await import('./playerLineups');
+    const rows = [r(1, true), r(2, false), r(3, true), r(4, true), r(5, false), r(6, true)];
+    expect(recentRows(rows, 3).map((x) => x.fixtureId)).toEqual([6, 5, 4, 3]);
+    expect(recentRows(rows, 20)).toHaveLength(6);
+  });
+});
