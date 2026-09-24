@@ -103,12 +103,13 @@
   "matches": {
     "title": "Maç Geçmişi",
     "empty": "Maç verisi bulunamadı.",
+    "error": "Maç verisi şu an alınamadı.",
     "minutesUnit": "dk",
     "benched": "Yedekten girdi",
     "rating": "Rating",
     "goalsShort": "G",
     "assistsShort": "A",
-    "notInSquad": "Kadroda yok",
+    "unused": "Kadroda, oynamadı",
     "showAll": "Tümünü Göster"
   },
   "statGroups": {

@@ -5,7 +5,7 @@ import { mapPlayerProfile, type RawPlayer } from '@/services/playerProfile';
 
 const profile = mapPlayerProfile((profileFixture as unknown as { data: RawPlayer }).data);
 
-const state = vi.hoisted(() => ({ profile: null as unknown, rows: [] as unknown[], trendRows: [] as unknown[], hasMore: false, loading: false }));
+const state = vi.hoisted(() => ({ profile: null as unknown, trendRows: [] as unknown[] }));
 const vsState = vi.hoisted(() => ({ query: {} as Record<string, string>, opponents: [] as unknown[], vs: null as unknown }));
 vi.mock('next/router', () => ({ useRouter: () => ({ query: vsState.query, pathname: '/players/[id]', push: vi.fn() }) }));
 vi.mock('@/hooks/usePlayerVs', () => ({
@@ -15,7 +15,6 @@ vi.mock('@/hooks/usePlayerVs', () => ({
 }));
 vi.mock('@/hooks/usePlayerProfile', () => ({
   usePlayerProfile: () => ({ data: state.profile, isLoading: false }),
-  usePlayerMatchHistory: () => ({ rows: state.rows, loading: state.loading, hasMore: state.hasMore, expand: () => {}, empty: false }),
 }));
 
 import PlayerProfile, { ageFromBirth, formatTransferAmount, transferTypeLabel, formatPlayerDate } from './index';
@@ -26,7 +25,7 @@ const render = () => renderToStaticMarkup(<PlayerProfile playerId="455805" />);
 const lr = (fixtureId: number, date: string, isHome: boolean, opponentName: string, score: string, rating?: number, extra: Record<string, unknown> = {}) => {
   const [h, a] = score.split('-').map(Number);
   return {
-    fixtureId, date: `${date} 17:00:00`, leagueId: 600, teamId: 34, teamName: 'Galatasaray', opponentId: 900 + fixtureId, opponentName,
+    fixtureId, date: `${date} 17:00:00`, leagueId: 600, teamId: 34, teamName: 'Galatasaray', teamLogo: 'https://cdn.example/gs.png', opponentId: 900 + fixtureId, opponentName,
     isHome, goalsFor: isHome ? h : a, goalsAgainst: isHome ? a : h, started: true, minutes: 90,
     ...(rating !== undefined ? { rating } : {}), ...extra,
   };
@@ -45,11 +44,6 @@ const trendRows = [
 describe('<PlayerProfile /> — gerçek Osimhen verisi', () => {
   state.profile = profile;
   state.trendRows = trendRows;
-  state.rows = [
-    { matchId: 1, date: '2026-09-04', isHome: false, opponent: 'İstanbul Başakşehir', score: '1-3', inSquad: true, started: true, minutes: 33, rating: 6.9, goals: 1 },
-    { matchId: 2, date: '2026-09-13', isHome: true, opponent: 'Kocaelispor', score: '1-0', inSquad: false },
-  ];
-  state.hasMore = true;
   const html = render();
 
   it('bölümler: profil, sezon, detaylı istatistik, transfer, maç geçmişi', () => {
@@ -79,12 +73,14 @@ describe('<PlayerProfile /> — gerçek Osimhen verisi', () => {
     expect(html).toContain('Napoli');
   });
 
-  it('maç geçmişi: oynamadığı maçta "Kadroda yok", oynadığında dakika/rating; "Tümünü Göster" (kalan varsa)', () => {
-    expect(html).toContain('Kadroda yok');
-    expect(html).toContain('6.9');
-    expect(html).toMatch(/data-tone="fair"[^>]*>6\.9</); // maç reytingi rozeti (6.5–6.99 sarı-yeşil)
-    expect(html).toContain('Tümünü Göster');
-    expect(html).toContain('href="/matches/1"');
+  it('maç geçmişi (grafikle aynı veri): en yeni önce ilk 5; oynamadığı maçta "Kadroda, oynamadı"; "Tümünü Göster"', () => {
+    const history = html.slice(html.indexOf('id="pp-matches"'));
+    const ids = [...history.matchAll(/data-testid="match-history-row"[\s\S]*?href="\/matches\/(\d+)"/g)].map((m) => m[1]);
+    expect(ids).toEqual(['17', '16', '15', '14', '13']);
+    expect(history).toContain('Kadroda, oynamadı'); // 16
+    expect(history).toMatch(/data-tone="fair"[^>]*>6\.9</); // 14: maç reytingi rozeti
+    expect(history).toContain('title="Galatasaray"'); // oyuncunun o maçtaki takımı (logo)
+    expect(history).toContain('Tümünü Göster');
   });
 
   it('KAPSAM DIŞI bölümler hiç yok: xG/xGOT, piyasa değeri, kupa, radar, topluluk oyu, sosyal', () => {
@@ -99,9 +95,10 @@ describe('<PlayerProfile /> — gerçek Osimhen verisi', () => {
     expect(html).toContain('href="/teams/34"');
   });
 
-  it('maç geçmişi tümü gösterildiğinde buton yok', () => {
-    state.hasMore = false;
+  it('maç geçmişi: 5 satır ya da azsa buton yok', () => {
+    state.trendRows = trendRows.slice(0, 5);
     expect(render()).not.toContain('Tümünü Göster');
+    state.trendRows = trendRows;
   });
 
   it('oyuncu yoksa EmptyState', () => {
@@ -151,7 +148,8 @@ describe('<PlayerProfile /> — rating grafiği', () => {
     expect(html).toContain('Son 7 maç'); // sahaya çıktığı 7 maç (yedekte kaldığı 16 sayılmaz)
     const points = [...html.matchAll(/<a href="\/matches\/(\d+)" aria-label="([^"]+)"[^>]*data-tone="(\w+)"/g)].map((m) => [m[1], m[3]]);
     expect(points).toEqual([['10', 'good'], ['11', 'good'], ['12', 'excellent'], ['13', 'excellent'], ['14', 'fair'], ['17', 'poor']]);
-    expect(html).not.toContain('href="/matches/16"');
+    const svg = html.slice(html.indexOf('data-testid="rating-trend-svg"'), html.indexOf('</svg>'));
+    expect(svg).not.toContain('href="/matches/16"'); // yedekte kalınan maç grafikte yok (Maç Geçmişi'nde var)
     expect(html).toContain('aria-label="4 Eyl 2026, Dep İstanbul Başakşehir, skor 3-2, rating 6.9"');
   });
 

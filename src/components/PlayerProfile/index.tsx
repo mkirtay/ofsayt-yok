@@ -3,10 +3,11 @@ import Link from 'next/link';
 import EmptyState from '@/components/EmptyState';
 import { PanelSkeleton } from '@/components/Skeleton';
 import { useI18n, useTranslation } from '@/lib/i18n';
-import { usePlayerMatchHistory, usePlayerProfile } from '@/hooks/usePlayerProfile';
+import { usePlayerProfile } from '@/hooks/usePlayerProfile';
 import { usePlayerRecentMatches } from '@/hooks/usePlayerVs';
 import { buildRatingSeries, summarizeRatings } from '@/utils/ratingTrend';
-import { pickDefaultSeason, type PlayerMatchRow, type PlayerProfile as Profile, type PlayerSeasonStats, type PlayerTransfer } from '@/services/playerProfile';
+import { playedIn, type PlayerLineupRow } from '@/utils/playerVs';
+import { pickDefaultSeason, type PlayerProfile as Profile, type PlayerSeasonStats, type PlayerTransfer } from '@/services/playerProfile';
 import { PLAYER_STAT_GROUPS, STAT, formatStat, statMain } from '@/services/sportmonks/playerStatTypes';
 import RatingBadge from '@/components/RatingBadge';
 import { formatRating } from '@/config/ratingScale';
@@ -332,51 +333,75 @@ function Transfers({ items }: { items: PlayerTransfer[] }) {
   );
 }
 
-function MatchHistory({ playerId, teamId }: { playerId: number; teamId: number }) {
+/** Maç Geçmişi: ilk bu kadar satır, "Tümünü Göster" ile hepsi (sahaya çıkılan son 20 maça kadar — grafikle aynı kesit). */
+export const MATCH_HISTORY_INITIAL = 5;
+
+/**
+ * Maç Geçmişi — oyuncunun kendi son maçları (hangi takımda oynadıysa; takım logosu satırda). Veri rating grafiğiyle AYNI
+ * sorgu (`/api/players/{id}/matches`, oyuncu başına 12 saat cache'li tek Sportmonks isteği) → maç başına istek yok.
+ * Kadroda olup oynamadığı maç "Kadroda, oynamadı" satırı olarak görünür.
+ */
+function MatchHistory({ playerId }: { playerId: number }) {
   const { t } = useTranslation('player');
   const { locale } = useI18n();
-  const h = usePlayerMatchHistory(playerId, teamId);
+  const { data, isLoading, isError } = usePlayerRecentMatches(playerId);
+  const [expanded, setExpanded] = useState(false);
+  // API zaten en yeni önce döner; mobil/önbellek farkına karşı burada da sıralanır
+  const all = useMemo(() => [...(data?.rows ?? [])].sort((a, b) => b.date.localeCompare(a.date)), [data]);
+  const rows = expanded ? all : all.slice(0, MATCH_HISTORY_INITIAL);
   return (
     <section className={styles.card} aria-labelledby="pp-matches">
       <h2 id="pp-matches" className={styles.cardTitle}>{t('matches.title')}</h2>
-      {h.loading && h.rows.length === 0 ? (
+      {isLoading ? (
         <PanelSkeleton rows={5} />
-      ) : h.rows.length === 0 ? (
+      ) : isError ? (
+        <EmptyState>{t('matches.error')}</EmptyState>
+      ) : all.length === 0 ? (
         <EmptyState>{t('matches.empty')}</EmptyState>
       ) : (
         <>
           <ul className={styles.compactList}>
-            {h.rows.map((r: PlayerMatchRow) => (
-              <li key={r.matchId} className={styles.compactItem}>
-                <div className={styles.compactMeta}>
-                  <span>{formatPlayerDate(r.date, locale)}</span>
-                  <span className={styles.score}>{r.score ?? '—'}</span>
-                </div>
-                <Link href={`/matches/${r.matchId}`} className={styles.teamCell} prefetch={false}>
-                  {r.opponentLogo ? <img src={r.opponentLogo} alt="" width={18} height={18} className={styles.teamLogo} loading="lazy" /> : null}
-                  <span className={styles.teamName}>{r.isHome ? '' : '@ '}{r.opponent}</span>
-                </Link>
-                {r.inSquad ? (
-                  <div className={styles.matchStats}>
-                    <span>
-                      {r.minutes ?? '—'} {t('matches.minutesUnit')}
-                      {r.started === false ? <span className={styles.pending} title={t('matches.benched')}> ↑</span> : null}
+            {rows.map((r: PlayerLineupRow) => {
+              const score =
+                r.goalsFor != null && r.goalsAgainst != null ? (r.isHome ? `${r.goalsFor}-${r.goalsAgainst}` : `${r.goalsAgainst}-${r.goalsFor}`) : '—';
+              return (
+                <li key={r.fixtureId} className={styles.compactItem} data-testid="match-history-row">
+                  <div className={styles.compactMeta}>
+                    <span>{formatPlayerDate(r.date, locale)}</span>
+                    <span className={styles.score}>
+                      {r.teamLogo ? (
+                        // eslint-disable-next-line @next/next/no-img-element -- 14px CDN takım logosu; sayfanın diğer logolarıyla aynı düz <img>
+                        <img src={r.teamLogo} alt={r.teamName} title={r.teamName} width={14} height={14} className={styles.teamLogo} loading="lazy" />
+                      ) : null}
+                      {score}
                     </span>
-                    <span className={styles.matchRating}>
-                      {t('matches.rating')}{' '}
-                      <RatingBadge rating={r.rating} showEmpty ariaLabel={`${t('matches.rating')} ${formatRating(r.rating) ?? '—'}`} />
-                    </span>
-                    <span>{t('matches.goalsShort')} {r.goals ?? '—'}</span>
-                    <span>{t('matches.assistsShort')} {r.assists ?? '—'}</span>
                   </div>
-                ) : (
-                  <div className={styles.muted}>{t('matches.notInSquad')}</div>
-                )}
-              </li>
-            ))}
+                  <Link href={`/matches/${r.fixtureId}`} className={styles.teamCell} prefetch={false}>
+                    {r.opponentLogo ? <img src={r.opponentLogo} alt="" width={18} height={18} className={styles.teamLogo} loading="lazy" /> : null}
+                    <span className={styles.teamName}>{r.isHome ? '' : '@ '}{r.opponentName}</span>
+                  </Link>
+                  {playedIn(r) ? (
+                    <div className={styles.matchStats}>
+                      <span>
+                        {r.minutes ?? '—'} {t('matches.minutesUnit')}
+                        {!r.started ? <span className={styles.pending} title={t('matches.benched')}> ↑</span> : null}
+                      </span>
+                      <span className={styles.matchRating}>
+                        {t('matches.rating')}{' '}
+                        <RatingBadge rating={r.rating} showEmpty ariaLabel={`${t('matches.rating')} ${formatRating(r.rating) ?? '—'}`} />
+                      </span>
+                      <span>{t('matches.goalsShort')} {r.goals ?? '—'}</span>
+                      <span>{t('matches.assistsShort')} {r.assists ?? '—'}</span>
+                    </div>
+                  ) : (
+                    <div className={styles.muted}>{t('matches.unused')}</div>
+                  )}
+                </li>
+              );
+            })}
           </ul>
-          {h.hasMore ? (
-            <button type="button" className={styles.showAll} onClick={h.expand}>
+          {!expanded && all.length > MATCH_HISTORY_INITIAL ? (
+            <button type="button" className={styles.showAll} onClick={() => setExpanded(true)}>
               {t('matches.showAll')}
             </button>
           ) : null}
@@ -433,7 +458,6 @@ export default function PlayerProfile({ playerId }: { playerId: string }) {
   if (isLoading) return <PanelSkeleton rows={8} />;
   if (!data) return <EmptyState>{t('notFound')}</EmptyState>;
 
-  const teamId = data.currentTeam?.id ?? season?.teamId ?? null;
   const hasStats = season != null && statMain(season.stats[STAT.APPEARANCES]) != null;
 
   return (
@@ -449,7 +473,7 @@ export default function PlayerProfile({ playerId }: { playerId: string }) {
         </div>
         <aside className={styles.side}>
           <Transfers items={data.transfers} />
-          {teamId != null ? <MatchHistory playerId={data.id} teamId={teamId} /> : null}
+          <MatchHistory playerId={data.id} />
         </aside>
       </div>
     </div>

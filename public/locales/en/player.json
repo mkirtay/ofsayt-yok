@@ -108,12 +108,13 @@
   "matches": {
     "title": "Match History",
     "empty": "No match data found.",
+    "error": "Match data is unavailable right now.",
     "minutesUnit": "min",
     "benched": "Came off the bench",
     "rating": "Rating",
     "goalsShort": "G",
     "assistsShort": "A",
-    "notInSquad": "Not in squad",
+    "unused": "In the squad, did not play",
     "showAll": "Show all"
   },
   "statGroups": {

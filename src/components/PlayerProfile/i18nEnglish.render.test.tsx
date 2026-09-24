@@ -36,7 +36,6 @@ vi.mock('@/lib/i18n', () => ({
   }),
 }));
 
-const state = vi.hoisted(() => ({ rows: [] as unknown[], hasMore: false }));
 const vsState = vi.hoisted(() => ({
   query: {} as Record<string, string>,
   opponents: [] as unknown[],
@@ -45,6 +44,8 @@ const vsState = vi.hoisted(() => ({
     { fixtureId: 1, date: '2026-09-04 17:00:00', leagueId: 600, teamId: 34, teamName: 'Galatasaray', opponentId: 1, opponentName: 'İstanbul Başakşehir', isHome: false, goalsFor: 3, goalsAgainst: 1, started: false, minutes: 33, rating: 6.9 },
     { fixtureId: 2, date: '2026-09-13 17:00:00', leagueId: 600, teamId: 34, teamName: 'Galatasaray', opponentId: 2, opponentName: 'Kocaelispor', isHome: true, goalsFor: 1, goalsAgainst: 0, started: true, minutes: 90 },
     { fixtureId: 3, date: '2026-09-19 17:00:00', leagueId: 600, teamId: 34, teamName: 'Galatasaray', opponentId: 3, opponentName: 'Trabzonspor', isHome: false, goalsFor: 0, goalsAgainst: 4, started: false, minutes: 5, rating: 6.1 },
+    // kadroda, oynamadı (grafiği etkilemez; Maç Geçmişi'nde satır + "Show all" için > 5 satır)
+    ...[4, 5, 6].map((n) => ({ fixtureId: n, date: `2026-08-0${n} 17:00:00`, leagueId: 600, teamId: 34, teamName: 'Galatasaray', opponentId: n, opponentName: `Rakip ${n}`, isHome: true, started: false })),
   ] as unknown[],
 }));
 vi.mock('next/router', () => ({ useRouter: () => ({ query: vsState.query, pathname: '/players/[id]', push: vi.fn() }) }));
@@ -55,7 +56,6 @@ vi.mock('@/hooks/usePlayerVs', () => ({
 }));
 vi.mock('@/hooks/usePlayerProfile', () => ({
   usePlayerProfile: () => ({ data: mapPlayerProfileLazy(), isLoading: false }),
-  usePlayerMatchHistory: () => ({ rows: state.rows, loading: false, hasMore: state.hasMore, expand: () => {}, empty: false }),
 }));
 
 let cached: ReturnType<typeof mapPlayerProfile> | null = null;
@@ -67,11 +67,6 @@ function mapPlayerProfileLazy() {
 import PlayerProfile from './index';
 
 describe('<PlayerProfile /> — İngilizce', () => {
-  state.rows = [
-    { matchId: 1, date: '2026-09-04', isHome: false, opponent: 'İstanbul Başakşehir', score: '1-3', inSquad: true, started: false, minutes: 33, rating: 6.9, goals: 1 },
-    { matchId: 2, date: '2026-09-13', isHome: true, opponent: 'Kocaelispor', score: '1-0', inSquad: false },
-  ];
-  state.hasMore = true;
   const html = renderToStaticMarkup(<PlayerProfile playerId="455805" />);
 
   it('bölüm başlıkları İngilizce', () => {
@@ -110,11 +105,11 @@ describe('<PlayerProfile /> — İngilizce', () => {
   });
 
   it('maç geçmişi etiketleri İngilizce', () => {
-    for (const s of ['Not in squad', 'Show all', 'min', 'Came off the bench']) expect(html, s).toContain(s);
+    for (const s of ['In the squad, did not play', 'Show all', 'min', 'Came off the bench']) expect(html, s).toContain(s);
   });
 
   it('hiçbir Türkçe kalıntı yok', () => {
-    for (const bad of ['Profil<', 'Sezon', 'Detaylı', 'Transferler', 'Maç Geçmişi', 'Kadroda yok', 'Tümünü Göster', 'Kiralık', 'Toplam şut', 'Doğum', 'yaş<']) {
+    for (const bad of ['Profil<', 'Sezon', 'Detaylı', 'Transferler', 'Maç Geçmişi', 'Kadroda', 'Tümünü Göster', 'Kiralık', 'Toplam şut', 'Doğum', 'yaş<']) {
       expect(html, bad).not.toContain(bad);
     }
   });

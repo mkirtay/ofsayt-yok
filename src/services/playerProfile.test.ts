@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import profileFixture from './sportmonks/__fixtures__/playerProfileOsimhen.json';
-import fixtureMatch from './sportmonks/__fixtures__/fixturePlayerMatchOsimhen.json';
-import { isCupCompetition, mapFixtureToPlayerMatchRow, mapPlayerProfile, pickDefaultSeason, sortSeasonRows, type RawPlayer } from './playerProfile';
+import { isCupCompetition, mapPlayerProfile, pickDefaultSeason, sortSeasonRows, type RawPlayer } from './playerProfile';
 import { formatStat, statMain, STAT, PLAYER_STAT_GROUPS } from './sportmonks/playerStatTypes';
 
 const raw = (profileFixture as unknown as { data: RawPlayer }).data;
@@ -87,24 +86,6 @@ describe('formatStat', () => {
     expect(new Set(ids).size).toBe(ids.length);
     const labels = PLAYER_STAT_GROUPS.flatMap((g) => g.stats.map((s) => s.label.toLowerCase())).join(' ');
     expect(labels).not.toMatch(/xg|piyasa|değer/);
-  });
-});
-
-describe('mapFixtureToPlayerMatchRow — gerçek fixture (19746625 Başakşehir–Galatasaray)', () => {
-  const f = fixtureMatch as unknown as { played: { data: never }; absent: { data: never } };
-
-  it('oynadığı maç: ilk 11, dakika 33, rating 6.9, 1 gol; deplasman skoru doğru yönde', () => {
-    const row = mapFixtureToPlayerMatchRow(f.played.data, 455805, 34);
-    expect(row).toMatchObject({ matchId: 19746625, date: '2026-09-04', isHome: false, opponent: 'İstanbul Başakşehir', inSquad: true, started: true, minutes: 33, rating: 6.9, goals: 1 });
-    expect(row.assists).toBeUndefined(); // 0/yok → "0" değil undefined
-    expect(row.score).toMatch(/^\d+-\d+$/);
-  });
-
-  it('kadroda olmadığı maç: inSquad=false, dakika/rating/gol yok', () => {
-    const row = mapFixtureToPlayerMatchRow(f.absent.data, 455805, 34);
-    expect(row).toMatchObject({ matchId: 19746612, inSquad: false, isHome: true, opponent: 'Kocaelispor' });
-    expect(row.minutes).toBeUndefined();
-    expect(row.rating).toBeUndefined();
   });
 });
 

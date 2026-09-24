@@ -8,8 +8,6 @@
  * xG/xGOT ve piyasa değeri Sportmonks planında YOK — modelde alanı bile yok. Kupa listesi v1 kapsamı dışı.
  */
 import { sportmonksClientRequest } from './sportmonksRuntimeClient';
-import type { Match } from '@/models/liveScore';
-import { extractLineupRating } from './sportmonksKatman2Mapper';
 import type { PlayerStatValue } from './sportmonks/playerStatTypes';
 import { STAT, statMain } from './sportmonks/playerStatTypes';
 
@@ -223,89 +221,4 @@ export async function getPlayerProfile(playerId: string | number, seasonId?: num
     console.error('Error fetching player profile (sportmonks)', error);
     return null;
   }
-}
-
-// ── Maç geçmişi ─────────────────────────────────────────────────────────────
-
-export type PlayerMatchRow = {
-  matchId: number;
-  date?: string;
-  /** Oyuncunun takımı ev sahibi mi. */
-  isHome: boolean;
-  opponent: string;
-  opponentLogo?: string;
-  score?: string;
-  /** Kadroda hiç yoksa `false` (kırmızı değil, bilgi notu: "Kadroda yok"). */
-  inSquad: boolean;
-  started?: boolean;
-  minutes?: number;
-  rating?: number;
-  goals?: number;
-  assists?: number;
-};
-
-export type RawFixtureForPlayer = {
-  id: number;
-  starting_at?: string;
-  participants?: Array<{ id: number; name?: string; image_path?: string | null; meta?: { location?: string } }>;
-  scores?: Array<{ description?: string; participant_id?: number; score?: { goals?: number; participant?: string } }>;
-  lineups?: Array<{ player_id: number; team_id: number; type_id: number; details?: Array<{ type_id: number; data?: { value?: number | string } }> }>;
-};
-
-/** `fixtures/{id}?include=participants;scores;lineups.details` → oyuncunun o maçtaki satırı. */
-export function mapFixtureToPlayerMatchRow(fx: RawFixtureForPlayer, playerId: number, teamId: number): PlayerMatchRow {
-  const me = fx.participants?.find((p) => p.id === teamId);
-  const opp = fx.participants?.find((p) => p.id !== teamId);
-  const goals = (id: number) => fx.scores?.filter((s) => s.description === 'CURRENT' && s.participant_id === id).map((s) => s.score?.goals)[0];
-  const myGoals = goals(teamId);
-  const oppGoals = opp ? goals(opp.id) : undefined;
-  const row = fx.lineups?.find((l) => l.player_id === playerId);
-  const val = (typeId: number): number | undefined => {
-    const v = row?.details?.find((d) => d.type_id === typeId)?.data?.value;
-    const n = typeof v === 'string' ? Number.parseFloat(v) : v;
-    return typeof n === 'number' && Number.isFinite(n) ? n : undefined;
-  };
-  const pos = (n: number | undefined) => (n != null && n > 0 ? n : undefined); // "0" gösterilmez
-  const isHome = me?.meta?.location === 'home';
-  return {
-    matchId: fx.id,
-    ...(fx.starting_at ? { date: fx.starting_at.slice(0, 10) } : {}),
-    isHome,
-    opponent: opp?.name ?? '',
-    ...(opp?.image_path ? { opponentLogo: opp.image_path } : {}),
-    ...(myGoals != null && oppGoals != null ? { score: isHome ? `${myGoals}-${oppGoals}` : `${oppGoals}-${myGoals}` } : {}),
-    inSquad: Boolean(row),
-    ...(row ? { started: row.type_id === 11 } : {}),
-    ...(pos(val(STAT.MINUTES)) !== undefined ? { minutes: pos(val(STAT.MINUTES)) } : {}),
-    ...(extractLineupRating(row?.details as never) !== undefined ? { rating: extractLineupRating(row?.details as never) } : {}),
-    ...(pos(val(STAT.GOALS)) !== undefined ? { goals: pos(val(STAT.GOALS)) } : {}),
-    ...(pos(val(STAT.ASSISTS)) !== undefined ? { assists: pos(val(STAT.ASSISTS)) } : {}),
-  };
-}
-
-/**
- * Oyuncunun (takımının) bitmiş son maçları için satırlar. NOT (performans): takımın maç listesi 1-2 istek
- * (`getTeamHistoryMatches`), ama oyuncunun o maçtaki dakika/rating/gol verisi HER MAÇ İÇİN ayrı bir
- * `fixtures/{id}?include=lineups.details` çağrısı gerektiriyor (Fixture havuzu) → çağıran küçük N ister
- * (varsayılan 5, "Tümünü Göster" ile kalanlar tembel). İleride: oyuncu bazlı toplu endpoint/cache ile optimize edilebilir.
- */
-export async function getPlayerMatchRows(
-  matches: Match[],
-  playerId: number,
-  teamId: number,
-): Promise<PlayerMatchRow[]> {
-  const rows = await Promise.all(
-    matches.map(async (m) => {
-      try {
-        const env = await sportmonksClientRequest<RawFixtureForPlayer>('football', `/fixtures/${m.id}`, {
-          include: 'participants;scores;lineups.details',
-        });
-        return env.data ? mapFixtureToPlayerMatchRow(env.data, playerId, teamId) : null;
-      } catch (error) {
-        console.error(`Error fetching player match ${m.id} (sportmonks)`, error);
-        return null;
-      }
-    }),
-  );
-  return rows.filter((r): r is PlayerMatchRow => r != null);
 }
