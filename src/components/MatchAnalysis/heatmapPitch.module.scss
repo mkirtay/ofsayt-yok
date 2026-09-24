@@ -2,7 +2,7 @@
 
 .wrap {
   margin: $spacing-3 auto 0;
-  max-width: 360px;
+  max-width: 560px;
   width: 100%;
 }
 
@@ -27,9 +27,8 @@
 
 .pitch {
   position: relative;
-  min-height: 320px;
-  aspect-ratio: 2 / 3;
-  background: linear-gradient(180deg, #1f7a3d 0%, #2d8b47 50%, #1f7a3d 100%);
+  aspect-ratio: 3 / 2;
+  background: linear-gradient(90deg, #1f7a3d 0%, #2d8b47 50%, #1f7a3d 100%);
   border-radius: $radius-sm;
   border: 2px solid rgba(255, 255, 255, 0.25);
   overflow: hidden;
@@ -70,10 +69,4 @@
     rgba(227, 26, 28, 0.85) 78%,
     rgba(128, 0, 38, 0.95) 100%
   );
-}
-
-@media (max-width: $bp-sm) {
-  .pitch {
-    min-height: 260px;
-  }
 }

@@ -51,8 +51,6 @@
     "teamAnalyses": "Takım Analizleri",
     "tacticalAnalysis": "Taktik Analiz",
     "heatmap": "Isı Haritası & Saha Hakimiyeti",
-    "scorePrediction": "Skor Tahmini",
-    "alternative": "Alternatif: {{scores}}",
     "goalExpectation": "Gol Beklentisi",
     "over15": "Üst 1.5",
     "over25": "Üst 2.5",
@@ -96,7 +94,22 @@
     "confidenceBadge": "Güven: %{{score}}",
     "preMatchTag": "Maç Öncesi Tahmini",
     "disclaimer": "⚠️ Bu analiz yapay zeka tarafından üretilmiştir. Bilgi amaçlıdır, yatırım veya bahis tavsiyesi değildir. Karar ve sorumluluk kullanıcıya aittir.",
-    "premiumError": "Bu özellik giriş yapmış kullanıcılara özeldir."
+    "premiumError": "Bu özellik giriş yapmış kullanıcılara özeldir.",
+    "topPicks": "En güçlü tahminler",
+    "pick": {
+      "home": "MS 1",
+      "draw": "MS X",
+      "away": "MS 2",
+      "over15": "1.5 Üst",
+      "over25": "2.5 Üst",
+      "over35": "3.5 Üst",
+      "btts": "KG Var",
+      "htOver05": "İY 0.5 Üst",
+      "htOver15": "İY 1.5 Üst",
+      "homeToScore": "Ev Gol Atar",
+      "awayToScore": "Dep. Gol Atar",
+      "bttsFirstHalf": "İY KG Var"
+    }
   },
   "trivia": {
     "title": "Maç Trivia & Bilinmeyenler",
@@ -187,7 +200,7 @@
     "teams": "Takımlar",
     "tabsAriaLabel": "Dünya kupası içerik sekmeleri"
   },
-  "premiumBadge": "Premium",
+  "premiumBadge": "PREMIUM",
   "leagueFilter": {
     "group": "Lig filtresi",
     "all": "Tümü",

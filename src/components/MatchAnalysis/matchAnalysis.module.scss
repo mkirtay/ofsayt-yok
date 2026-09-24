@@ -58,7 +58,7 @@
   padding: 2px 8px;
   border-radius: $radius-full;
   letter-spacing: 0.06em;
-  text-transform: uppercase;
+  // Metin çeviride zaten büyük harf; CSS uppercase tr dilinde "PREMİUM" üretir.
   margin-left: $spacing-1;
 }
 
@@ -150,19 +150,82 @@
   font-weight: 700;
   font-size: 14px;
   color: $color-text;
-  margin: 0 0 $spacing-2;
+  margin: 0 0 $spacing-3;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: $spacing-2;
 }
 
+// Takım form özeti — başlığın yanında pill (maç sonucu kutularıyla aynı yeşil vurgu dili).
 .formChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
   font-size: 11px;
-  padding: 2px 6px;
-  border-radius: $radius-sm;
-  background: $color-surface;
-  color: $color-text-secondary;
+  line-height: 1.35;
+  padding: 3px 10px;
+  border-radius: $radius-full;
+  background: $color-row-highlight;
+  border: 1px solid color-mix(in srgb, #{$color-primary} 45%, transparent);
+  color: $color-text;
   font-weight: 600;
+
+  &::before {
+    content: '';
+    flex: none;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: $color-primary;
+  }
+}
+
+// Genel Maç Özeti başlığı + sağında en güçlü 3 tahmin pill'i.
+.summaryHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: $spacing-2 $spacing-3;
+  margin-bottom: $spacing-3;
+
+  .sectionTitle {
+    margin: 0;
+  }
+}
+
+.topPicks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-2;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.topPick {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: $radius-full;
+  background: $color-row-highlight;
+  border: 1px solid $color-primary;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.topPickLabel {
+  font-weight: 600;
+  color: $color-text;
+}
+
+.topPickPct {
+  font-weight: 800;
+  color: $color-primary;
+  font-variant-numeric: tabular-nums;
 }
 
 .narrative {

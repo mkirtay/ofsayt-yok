@@ -1,17 +1,13 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { useSession } from 'next-auth/react';
 import { useTranslation } from '@/lib/i18n';
-import { useCredits } from '@/hooks/useCredits';
-import { isPremiumUser } from '@/lib/premium';
+import { ANALYSIS_COST, type MatchAnalysisState } from '@/hooks/useMatchAnalysis';
 import { deriveMatchPhase } from '@/utils/matchPhase';
 import type { Match } from '@/models/liveScore';
 import EmptyState from '@/components/EmptyState';
 import AiLoadingPitch from './AiLoadingPitch';
 import HeatmapPitch from './HeatmapPitch';
+import type { ApiAnalysis } from './types';
 import styles from './matchAnalysis.module.scss';
-
-const ANALYSIS_COST = 5;
 
 /**
  * heatmapAnalysis.homeZones/awayZones/narrative modelden bazen (talimata
@@ -25,103 +21,49 @@ function asZoneText(value: unknown): string | null {
   return trimmed.length > 0 ? trimmed : null;
 }
 
-type TacticalProfile = {
-  formation: string;
-  pressLevel: string;
-  transitionStrength: string;
-  setPieceThreat: string;
-  wingUsage: string;
-  defensiveWeakness: string;
-};
-
-type FullReport = {
-  matchSummary: { tempo: string; dominantSide: string; balanceType: string; homeAwayImpact: string };
-  tacticalAnalysis: { home: TacticalProfile; away: TacticalProfile; keyBattleZones: string };
-  heatmapAnalysis: {
-    // Model bazen (talimata rağmen) bu alanlara metin yerine sayı dizisi
-    // yazabiliyor — render'da güvenli tarafta kalmak için unknown tutuyoruz.
-    homeZones: unknown;
-    awayZones: unknown;
-    narrative: unknown;
-    zoneGrid?: { home: number[]; away: number[] };
-  };
-  riskFactors: string[];
-  analystComment: string;
-};
-
-type ApiAnalysis = {
-  id: string;
-  matchId: string;
-  matchStatus: string;
-  homeTeamName: string;
-  awayTeamName: string;
-  matchPrediction: { home: number; draw: number; away: number; reasoning: string };
-  scorePrediction: {
-    mostLikely: string;
-    alternatives: Array<{ score: string; probability: number } | string>;
-    reasoning: string;
-  };
-  goalExpectation: {
-    over15: number;
-    over25: number;
-    over35: number;
-    btts: number;
-    htOver05: number;
-    htOver15: number;
-    homeToScore: number;
-    awayToScore: number;
-    bttsFirstHalf: number;
-    reasoning: string;
-  };
-  bettingTips: Array<{
-    market: string;
-    pick: string;
-    confidence: 'low' | 'medium' | 'high';
-    reasoning: string;
-    valueBet?: boolean;
-    avoid?: boolean;
-  }>;
-  teamAnalyses: {
-    home: {
-      narrative: string;
-      keyFactors: string[];
-      formSummary: string;
-      vsOpponentHistory: string;
-      firstHalfNote?: string;
-      secondHalfNote?: string;
-    };
-    away: {
-      narrative: string;
-      keyFactors: string[];
-      formSummary: string;
-      vsOpponentHistory: string;
-      firstHalfNote?: string;
-      secondHalfNote?: string;
-    };
-  };
-  fullReport: FullReport | null;
-  riskLevel: 'low' | 'medium' | 'high';
-  riskReasoning: string;
-  confidenceScore: number;
-  modelVersion: string;
-  createdAt: string;
-  updatedAt: string;
-};
-
-type ApiPredictionRecord = {
-  id: string;
-  actualResult: string | null;
-  actualScore: string | null;
-  result1x2Hit: boolean | null;
-  scoreExactHit: boolean | null;
-  evaluatedAt: string | null;
-  extendedHits: Record<string, boolean | null> | null;
-};
-
 type Props = {
-  matchId: string;
   match: Match | null;
+  /** Maç detayı açıldığında üst bileşende başlatılan analiz durumu (bkz. useMatchAnalysis). */
+  state: MatchAnalysisState;
 };
+
+type PickKey =
+  | 'home'
+  | 'draw'
+  | 'away'
+  | 'over15'
+  | 'over25'
+  | 'over35'
+  | 'btts'
+  | 'htOver05'
+  | 'htOver15'
+  | 'homeToScore'
+  | 'awayToScore'
+  | 'bttsFirstHalf';
+
+/** Maç sonucu + gol pazarlarından en yüksek olasılıklı 3 tahmin (özet başlığındaki pill'ler). */
+function pickTopPredictions(analysis: ApiAnalysis): Array<{ key: PickKey; pct: number }> {
+  const { matchPrediction: mp, goalExpectation: ge } = analysis;
+  const candidates: Array<[PickKey, unknown]> = [
+    ['home', mp?.home],
+    ['draw', mp?.draw],
+    ['away', mp?.away],
+    ['over15', ge?.over15],
+    ['over25', ge?.over25],
+    ['over35', ge?.over35],
+    ['btts', ge?.btts],
+    ['htOver05', ge?.htOver05],
+    ['htOver15', ge?.htOver15],
+    ['homeToScore', ge?.homeToScore],
+    ['awayToScore', ge?.awayToScore],
+    ['bttsFirstHalf', ge?.bttsFirstHalf],
+  ];
+  return candidates
+    .map(([key, v]) => ({ key, pct: Math.round(Number(v)) }))
+    .filter((c) => Number.isFinite(c.pct) && c.pct > 0 && c.pct <= 100)
+    .sort((a, b) => b.pct - a.pct)
+    .slice(0, 3);
+}
 
 function ResultBadge({ hit }: { hit: boolean | null | undefined }) {
   const { t } = useTranslation('match');
@@ -135,77 +77,21 @@ function ResultBadge({ hit }: { hit: boolean | null | undefined }) {
   );
 }
 
-export default function MatchAnalysis({ matchId, match }: Props) {
+export default function MatchAnalysis({ match, state }: Props) {
   const { t } = useTranslation('match');
-  const { data: session, status: sessionStatus } = useSession();
-  const isAuthenticated = sessionStatus === 'authenticated';
-  const { credits, refresh: refreshCredits } = useCredits();
-  const premium = isPremiumUser({ role: session?.user?.role, credits });
-
-  const [analysis, setAnalysis] = useState<ApiAnalysis | null>(null);
-  const [predictionRecord, setPredictionRecord] = useState<ApiPredictionRecord | null>(null);
-  const [serverPhase, setServerPhase] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [generating, setGenerating] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const lastFetchedMatchId = useRef<string | null>(null);
-
-  const fetchAnalysis = useCallback(async () => {
-    if (!matchId) return;
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await fetch(`/api/matches/${matchId}/analysis`);
-      if (res.status === 404) {
-        setAnalysis(null);
-        return;
-      }
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body?.error ?? t('common:requestFailed', { status: res.status }));
-      }
-      const body = (await res.json()) as {
-        analysis: ApiAnalysis;
-        predictionRecord: ApiPredictionRecord | null;
-        matchPhase?: string;
-      };
-      setAnalysis(body.analysis);
-      setPredictionRecord(body.predictionRecord ?? null);
-      setServerPhase(body.matchPhase ?? null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : t('analysis.notGenerated'));
-    } finally {
-      setLoading(false);
-    }
-  }, [matchId, t]);
-
-  useEffect(() => {
-    if (!matchId || lastFetchedMatchId.current === matchId) return;
-    lastFetchedMatchId.current = matchId;
-    void fetchAnalysis();
-  }, [matchId, fetchAnalysis]);
-
-  const generateAnalysis = useCallback(async () => {
-    if (!matchId) return;
-    setGenerating(true);
-    setError(null);
-    try {
-      const res = await fetch(`/api/matches/${matchId}/analysis`, { method: 'POST' });
-      const body = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setError(body?.error ?? t('analysis.notGenerated'));
-        return;
-      }
-      setAnalysis(body.analysis as ApiAnalysis);
-      setPredictionRecord((body.predictionRecord as ApiPredictionRecord) ?? null);
-      void refreshCredits();
-    } catch {
-      setError(t('analysis.notGenerated'));
-    } finally {
-      setGenerating(false);
-    }
-  }, [matchId, t, refreshCredits]);
+  const {
+    analysis,
+    predictionRecord,
+    serverPhase,
+    loading,
+    generating,
+    error,
+    credits,
+    premium,
+    isAuthenticated,
+    generate: generateAnalysis,
+  } = state;
+  const insufficientCredits = !premium && credits < ANALYSIS_COST;
 
   const phase = serverPhase ?? deriveMatchPhase(match?.status);
   const isPostMatch = phase !== 'PRE';
@@ -248,6 +134,16 @@ export default function MatchAnalysis({ matchId, match }: Props) {
           </div>
         ) : generating ? (
           <AiLoadingPitch />
+        ) : insufficientCredits ? (
+          <div className={styles.cta}>
+            <div className={styles.errorBox}>{t('analysis.insufficientCredits')}</div>
+            <Link href="/credits" className={styles.ctaButton}>
+              {t('analysis.buyCredits')}
+            </Link>
+            <p className={styles.reasoning}>
+              {t('analysis.creditBalance', { credits })} · {t('analysis.generateCost', { cost: ANALYSIS_COST })}
+            </p>
+          </div>
         ) : (
           <div className={styles.cta}>
             {error && <div className={styles.errorBox}>{error}</div>}
@@ -258,11 +154,6 @@ export default function MatchAnalysis({ matchId, match }: Props) {
             >
               {t('analysis.generateButton')} {premium ? t('analysis.generateUnlimited') : t('analysis.generateCost', { cost: ANALYSIS_COST })}
             </button>
-            {error?.toLowerCase().includes('kredi') && (
-              <Link href="/credits" className={styles.ctaButton}>
-                {t('analysis.buyCredits')}
-              </Link>
-            )}
             {premium ? null : <p className={styles.reasoning}>{t('analysis.creditBalance', { credits })}</p>}
           </div>
         )}
@@ -270,7 +161,7 @@ export default function MatchAnalysis({ matchId, match }: Props) {
     );
   }
 
-  const { matchPrediction, scorePrediction, goalExpectation, bettingTips, teamAnalyses, fullReport } =
+  const { matchPrediction, goalExpectation, bettingTips, teamAnalyses, fullReport } =
     analysis;
   const winner =
     matchPrediction.home >= matchPrediction.draw && matchPrediction.home >= matchPrediction.away
@@ -279,6 +170,7 @@ export default function MatchAnalysis({ matchId, match }: Props) {
         ? 'away'
         : 'draw';
 
+  const topPicks = pickTopPredictions(analysis);
   const hits = predictionRecord?.extendedHits ?? {};
   const isEvaluated = Boolean(predictionRecord?.evaluatedAt);
 
@@ -299,7 +191,19 @@ export default function MatchAnalysis({ matchId, match }: Props) {
       {/* 1. Genel Maç Özeti */}
       {fullReport?.matchSummary && (
         <div className={styles.section}>
-          <h4 className={styles.sectionTitle}>{t('analysis.matchSummary')}</h4>
+          <div className={styles.summaryHeader}>
+            <h4 className={styles.sectionTitle}>{t('analysis.matchSummary')}</h4>
+            {topPicks.length > 0 && (
+              <ul className={styles.topPicks} aria-label={t('analysis.topPicks')}>
+                {topPicks.map((p) => (
+                  <li key={p.key} className={styles.topPick}>
+                    <span className={styles.topPickLabel}>{t(`analysis.pick.${p.key}`)}</span>
+                    <span className={styles.topPickPct}>%{p.pct}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
           <ul className={styles.metaList}>
             <li>{fullReport.matchSummary.tempo}</li>
             <li>{fullReport.matchSummary.dominantSide}</li>
@@ -428,30 +332,6 @@ export default function MatchAnalysis({ matchId, match }: Props) {
           })()}
         </div>
       )}
-
-      {/* Score Prediction */}
-      <div className={styles.section}>
-        <h4 className={styles.sectionTitle}>{t('analysis.scorePrediction')}</h4>
-        <div className={styles.scoreRow}>
-          <span className={styles.mainScore}>{scorePrediction.mostLikely}</span>
-          {scorePrediction.alternatives?.length > 0 && (
-            <span className={styles.altScores}>
-              {t('analysis.alternative', {
-                scores: scorePrediction.alternatives
-                  .map((a) => (typeof a === 'string' ? a : `${a.score} (%${a.probability})`))
-                  .join(', '),
-              })}
-            </span>
-          )}
-        </div>
-        <p className={styles.reasoning}>{scorePrediction.reasoning}</p>
-        {isEvaluated && (
-          <div className={styles.resultRow}>
-            <span>{t('analysis.market.exactScore')}</span>
-            <ResultBadge hit={predictionRecord?.scoreExactHit} />
-          </div>
-        )}
-      </div>
 
       {/* 6. Gol Tahmini */}
       <div className={styles.section}>

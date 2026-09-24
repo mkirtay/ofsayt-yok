@@ -20,6 +20,7 @@ vi.mock('@/components/EventTimeline', () => ({ default: () => <div data-testid="
 vi.mock('@/components/Lineup', () => ({ default: () => <div data-testid="lineup-content" /> }));
 vi.mock('@/components/MatchTrivia', () => ({ default: () => <div data-testid="trivia-content" /> }));
 vi.mock('@/components/MatchAnalysis', () => ({ default: () => <div data-testid="analysis-content" /> }));
+vi.mock('@/hooks/useMatchAnalysis', () => ({ useMatchAnalysis: () => ({}) }));
 vi.mock('@/components/MatchForumTab', () => ({ default: () => <div data-testid="forum-content" /> }));
 
 import MatchDetailContent, { DEFAULT_MATCH_TAB, MATCH_TAB_KEYS } from './index';

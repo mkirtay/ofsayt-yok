@@ -13,17 +13,19 @@ interface HeatmapPitchProps {
 const ZONES = 3; // 0 = kendi savunma, 1 = orta saha, 2 = rakip kaleye yakın hücum
 const COLS = 5; // 0 = sol kanat, 1 = sol iç, 2 = merkez, 3 = sağ iç, 4 = sağ kanat
 
-// viewBox koordinatları
-const VB_W = 400;
-const VB_H = 600;
-const HALF_LINE_Y = VB_H / 2;
+// viewBox koordinatları — yatay saha: ev sahibi kalesi solda, deplasman kalesi sağda.
+const VB_W = 600;
+const VB_H = 400;
+const HALF_LINE_X = VB_W / 2;
 const MARGIN = 10;
 
-const COL_X = [48, 124, 200, 276, 352];
-// Ev sahibi: bölge 0 (savunma) kendi kalesine (üst kenar) yakın, bölge 2 (hücum) orta çizgiye yakın.
-const HOME_ROW_Y = [68, 172, 262];
-// Deplasman: kendi kalesi alt kenarda — bölge 0 alt kenara yakın, bölge 2 orta çizgiye yakın.
-const AWAY_ROW_Y = [532, 428, 338];
+// Bölge (savunma → hücum) x ekseninde: ev sahibi soldan sağa, deplasman sağdan sola hücum eder.
+const HOME_ZONE_X = [68, 172, 262];
+const AWAY_ZONE_X = [532, 428, 338];
+// Kolon (sol kanat → sağ kanat) y ekseninde: sağa hücum eden ev sahibinin sol kanadı üstte,
+// sola hücum eden deplasmanın sol kanadı altta.
+const HOME_COL_Y = [48, 124, 200, 276, 352];
+const AWAY_COL_Y = [352, 276, 200, 124, 48];
 
 function clampGrid(grid: ZoneGrid | undefined): number[] {
   const arr = Array.isArray(grid) ? grid : [];
@@ -64,11 +66,11 @@ function heatFill(value: number): string {
   return `rgba(${r}, ${g}, ${b}, ${a.toFixed(2)})`;
 }
 
-function ZoneBlobs({ grid, rowY }: { grid: number[]; rowY: number[] }) {
+function ZoneBlobs({ grid, zoneX, colY }: { grid: number[]; zoneX: number[]; colY: number[] }) {
   return (
     <>
-      {rowY.map((cy, row) =>
-        COL_X.map((cx, col) => {
+      {zoneX.map((cx, row) =>
+        colY.map((cy, col) => {
           const v = grid[row * COLS + col] ?? 0;
           if (v <= 2) return null;
           const r = 42 + (v / 100) * 46;
@@ -111,17 +113,17 @@ export default function HeatmapPitch({ homeGrid, awayGrid, homeName, awayName }:
 
           {/* Yumuşak ısı blob'ları */}
           <g filter="url(#heatBlur)">
-            <ZoneBlobs grid={home} rowY={HOME_ROW_Y} />
-            <ZoneBlobs grid={away} rowY={AWAY_ROW_Y} />
+            <ZoneBlobs grid={home} zoneX={HOME_ZONE_X} colY={HOME_COL_Y} />
+            <ZoneBlobs grid={away} zoneX={AWAY_ZONE_X} colY={AWAY_COL_Y} />
           </g>
 
           {/* Saha çizgileri — blur'un üzerinde, keskin */}
           <g fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth="2">
             <rect x={MARGIN} y={MARGIN} width={VB_W - MARGIN * 2} height={VB_H - MARGIN * 2} />
-            <line x1={MARGIN} y1={HALF_LINE_Y} x2={VB_W - MARGIN} y2={HALF_LINE_Y} />
-            <circle cx={VB_W / 2} cy={HALF_LINE_Y} r="45" />
-            <rect x={VB_W / 2 - 92} y={MARGIN} width="184" height="58" />
-            <rect x={VB_W / 2 - 92} y={VB_H - MARGIN - 58} width="184" height="58" />
+            <line x1={HALF_LINE_X} y1={MARGIN} x2={HALF_LINE_X} y2={VB_H - MARGIN} />
+            <circle cx={HALF_LINE_X} cy={VB_H / 2} r="45" />
+            <rect x={MARGIN} y={VB_H / 2 - 92} width="58" height="184" />
+            <rect x={VB_W - MARGIN - 58} y={VB_H / 2 - 92} width="58" height="184" />
           </g>
         </svg>
       </div>

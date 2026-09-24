@@ -161,7 +161,7 @@
   font-size: 12px;
   font-weight: 800;
   letter-spacing: 0.04em;
-  text-transform: uppercase;
+  // Metin çeviride zaten büyük harf; CSS uppercase tr dilinde "PREMİUM" üretir.
 }
 
 .pricingPopular {

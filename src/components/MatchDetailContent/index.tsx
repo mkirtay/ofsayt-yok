@@ -9,6 +9,7 @@ import MatchTrivia from '@/components/MatchTrivia';
 import MatchAnalysis from '@/components/MatchAnalysis';
 import MatchForumTab from '@/components/MatchForumTab';
 import type { MatchDetailState } from '@/hooks/useMatchDetail';
+import { useMatchAnalysis } from '@/hooks/useMatchAnalysis';
 import styles from './matchDetailContent.module.scss';
 
 type Props = {
@@ -38,6 +39,8 @@ export default function MatchDetailContent({ detail, requestedMatchId, variant =
   const { match, matchLoading, statsLoading, eventsLoading, lineupsLoading } = detail;
   const effectiveMatchId = detail.matchId || requestedMatchId;
   const [active, setActive] = useState<MatchTabKey>(DEFAULT_MATCH_TAB);
+  // AI analiz/kredi durumu sayfa açılışında çekilir — sekmeye girince beklemeden hazır olsun.
+  const analysisState = useMatchAnalysis(effectiveMatchId);
 
   const tabs = useMemo<MatchTabItem<MatchTabKey>[]>(
     () => [
@@ -73,7 +76,7 @@ export default function MatchDetailContent({ detail, requestedMatchId, variant =
         label: t('tabs.analysis'),
         premium: true,
         render: () =>
-          effectiveMatchId ? <MatchAnalysis key={effectiveMatchId} matchId={effectiveMatchId} match={match} /> : null,
+          effectiveMatchId ? <MatchAnalysis key={effectiveMatchId} match={match} state={analysisState} /> : null,
       },
       {
         key: 'trivia',
@@ -95,6 +98,7 @@ export default function MatchDetailContent({ detail, requestedMatchId, variant =
       eventsLoading,
       lineupsLoading,
       effectiveMatchId,
+      analysisState,
     ],
   );
 

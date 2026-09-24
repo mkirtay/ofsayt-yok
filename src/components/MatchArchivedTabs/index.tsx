@@ -4,6 +4,7 @@ import MatchTabs, { type MatchTabItem } from '@/components/MatchTabs';
 import MatchTrivia from '@/components/MatchTrivia';
 import MatchAnalysis from '@/components/MatchAnalysis';
 import MatchForumTab from '@/components/MatchForumTab';
+import { useMatchAnalysis } from '@/hooks/useMatchAnalysis';
 import styles from './matchArchivedTabs.module.scss';
 
 type ArchivedTabKey = 'forum' | 'analysis' | 'trivia';
@@ -19,6 +20,8 @@ type Props = {
 export default function MatchArchivedTabs({ matchId }: Props) {
   const { t } = useTranslation('match');
   const [active, setActive] = useState<ArchivedTabKey>('forum');
+  // AI analiz/kredi durumu sayfa açılışında çekilir — sekmeye girince beklemeden hazır olsun.
+  const analysisState = useMatchAnalysis(matchId);
 
   const tabs = useMemo<MatchTabItem<ArchivedTabKey>[]>(
     () => [
@@ -27,7 +30,7 @@ export default function MatchArchivedTabs({ matchId }: Props) {
         key: 'analysis',
         label: t('tabs.analysis'),
         premium: true,
-        render: () => <MatchAnalysis matchId={matchId} match={null} />,
+        render: () => <MatchAnalysis match={null} state={analysisState} />,
       },
       {
         key: 'trivia',
@@ -36,7 +39,7 @@ export default function MatchArchivedTabs({ matchId }: Props) {
         render: () => <MatchTrivia matchId={matchId} match={null} />,
       },
     ],
-    [t, matchId],
+    [t, matchId, analysisState],
   );
 
   return (

@@ -49,7 +49,7 @@
   padding: 2px 8px;
   border-radius: $radius-full;
   letter-spacing: 0.06em;
-  text-transform: uppercase;
+  // Metin çeviride zaten büyük harf; CSS uppercase tr dilinde "PREMİUM" üretir.
   margin-left: $spacing-1;
 }
 
