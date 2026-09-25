@@ -10,6 +10,7 @@ const row = (rank: number, id: number, name: string, short_code?: string) => ({
 });
 const data: CompetitionTableData = {
   competition: { id: 600, name: 'Süper Lig' },
+  // id 34: Sportmonks short_code 'GAL', ekranda TEAM_SHORT_NAMES override'ı 'GS'
   table: [row(1, 34, 'Galatasaray', 'GAL'), row(2, 999, 'Esenler Erokspor')],
 };
 
@@ -17,8 +18,8 @@ describe('puan durumu — tam isim + kısaltma birlikte basılır, CSS kapsayıc
   const html = renderToStaticMarkup(<MatchCompetitionStandings data={data} />);
 
   it('kısaltması olan takım: iki span, bağlantıda tam isim title + aria-label', () => {
-    expect(html).toMatch(/<a [^>]*title="Galatasaray"[^>]*aria-label="Galatasaray"[^>]*>.*Galatasaray.*GAL.*<\/a>/);
-    expect(html).toMatch(/aria-hidden="true" data-testid="team-short-code">GAL</);
+    expect(html).toMatch(/<a [^>]*title="Galatasaray"[^>]*aria-label="Galatasaray"[^>]*>.*Galatasaray.*GS.*<\/a>/);
+    expect(html).toMatch(/aria-hidden="true" data-testid="team-short-code">GS</);
   });
 
   it('kısaltması olmayan takım: yalnızca tam isim (ellipsis mevcut CSS\'te)', () => {
@@ -28,7 +29,7 @@ describe('puan durumu — tam isim + kısaltma birlikte basılır, CSS kapsayıc
 
   it('mini widget de aynı bileşeni kullanır', () => {
     const mini = renderToStaticMarkup(<MiniStandingsWidget data={data} loading={false} competitionName="Süper Lig" />);
-    expect(mini).toContain('data-testid="team-short-code">GAL<');
+    expect(mini).toContain('data-testid="team-short-code">GS<');
     expect(mini).toContain('title="Galatasaray"');
   });
 });

@@ -5,7 +5,8 @@
  *  1. Karar TABLONUN KAPSAYICI GENİŞLİĞİNE göre verilir, viewport'a göre değil — aynı bileşen ana sayfa sol
  *     panelinde, takım sayfası yan panelinde, maç detayında ve mobilde farklı genişlikte duruyor.
  *     Kapsayıcı `STANDINGS_COMPACT_MAX_WIDTH` pikselden DARSA → kompakt (kısaltma); eşit/genişse → tam isim.
- *  2. Kompaktta takımın geçerli `short_code`'u varsa logo + kısaltma ("GAL"); yoksa tam isim + mevcut ellipsis.
+ *  2. Kompaktta kısaltma sırası: `config/teamShortNames` override'ı ("GS") → geçerli `short_code` ("GAL") →
+ *     yoksa tam isim + mevcut ellipsis.
  *  3. Kısaltma gösterilirken erişilebilir ad ve tooltip HER ZAMAN tam isimdir (`title` + `aria-label`).
  *  4. Mini widget (4 sütun: sıra/logo/ad/puan) ayrı eşik kullanır: `MINI_STANDINGS_COMPACT_MAX_WIDTH`.
  *
@@ -18,18 +19,27 @@
  * 148px) kapsayıcı ~390px'in altında kesilmeye başlıyor → 400px. Masaüstü ana sayfa sol paneli (~238px), takım
  * sayfası yan paneli ve telefonlar (375px → ~343px) altında; /standings tam tablosu ve geniş maç detayı üstünde.
  */
+import { TEAM_SHORT_NAMES } from '@/config/teamShortNames';
+
 export const STANDINGS_COMPACT_MAX_WIDTH = 400;
 /** Mini widget'ta sabit sütunlar ≈ 80px; ad alanı ~140px'in altına inince (kapsayıcı < 220px) kısaltma. */
 export const MINI_STANDINGS_COMPACT_MAX_WIDTH = 220;
 
 type RowLike = {
-  team?: { name?: string; short_code?: string | null };
+  team?: { id?: number | null; name?: string; short_code?: string | null };
+  team_id?: number | null;
   name?: string;
   short_code?: string | null;
 };
 
-/** Geçerli kısaltma: 2–5 harf/rakam (Sportmonks bazen boş string/null gönderiyor). Büyük harfe çevrilir. */
+/**
+ * Kısaltma: önce takım id'siyle `TEAM_SHORT_NAMES` override'ı (olduğu gibi, "İBFK"); yoksa geçerli `short_code`
+ * — 2–5 harf/rakam (Sportmonks bazen boş string/null gönderiyor), büyük harfe çevrilir.
+ */
 export function standingTeamShortCode(row: RowLike): string | undefined {
+  const id = row.team?.id ?? row.team_id;
+  const override = id != null ? TEAM_SHORT_NAMES[Number(id)] : undefined;
+  if (override) return override;
   const raw = (row.team?.short_code ?? row.short_code ?? '').trim();
   return /^[\p{L}\p{N}]{2,5}$/u.test(raw) ? raw.toLocaleUpperCase('tr-TR') : undefined;
 }

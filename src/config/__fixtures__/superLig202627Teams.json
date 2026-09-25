@@ -1,0 +1,92 @@
+[
+  {
+    "id": 3570,
+    "name": "Amed SK",
+    "short_code": "ASK"
+  },
+  {
+    "id": 34,
+    "name": "Galatasaray",
+    "short_code": "GAL"
+  },
+  {
+    "id": 554,
+    "name": "Beşiktaş",
+    "short_code": "BES"
+  },
+  {
+    "id": 13860,
+    "name": "Kocaelispor",
+    "short_code": "KOC"
+  },
+  {
+    "id": 347,
+    "name": "Alanyaspor",
+    "short_code": "ANY"
+  },
+  {
+    "id": 88,
+    "name": "Fenerbahçe",
+    "short_code": "FEN"
+  },
+  {
+    "id": 688,
+    "name": "Trabzonspor",
+    "short_code": "TRA"
+  },
+  {
+    "id": 1071,
+    "name": "Kasımpaşa",
+    "short_code": "KAS"
+  },
+  {
+    "id": 1041,
+    "name": "Rizespor",
+    "short_code": "RIZ"
+  },
+  {
+    "id": 4192,
+    "name": "Gaziantep F.K.",
+    "short_code": "GAZ"
+  },
+  {
+    "id": 13871,
+    "name": "Çorum FK",
+    "short_code": "COR"
+  },
+  {
+    "id": 3702,
+    "name": "İstanbul Başakşehir",
+    "short_code": "IBA"
+  },
+  {
+    "id": 286,
+    "name": "Gençlerbirliği",
+    "short_code": "GSK"
+  },
+  {
+    "id": 13818,
+    "name": "Erzurumspor FK",
+    "short_code": "ERZ"
+  },
+  {
+    "id": 2632,
+    "name": "Konyaspor",
+    "short_code": "KON"
+  },
+  {
+    "id": 2811,
+    "name": "Samsunspor",
+    "short_code": "SAM"
+  },
+  {
+    "id": 3897,
+    "name": "Göztepe",
+    "short_code": "GOZ"
+  },
+  {
+    "id": 3224,
+    "name": "Eyüpspor",
+    "short_code": "EYU"
+  }
+]
