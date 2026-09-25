@@ -114,7 +114,6 @@ public/               Statik dosyalar, robots.txt, görseller
 | `POST /api/payment/create-checkout` | Stripe Checkout Session oluştur |
 | `POST /api/payment/webhook` | Stripe webhook (premiumUntil güncelle) |
 | `GET /api/matches/[id]/analysis` | AI maç analizi (premium) |
-| `GET/POST /api/matches/[id]/comments` | Maç yorumları |
 | `GET /api/matches/[id]/trivia` | AI maç trivia (premium) |
 | `GET/POST /api/matches/[id]/poll` | Maç anketi |
 | `GET /api/livescore/[...path]` | LiveScore API proxy |
