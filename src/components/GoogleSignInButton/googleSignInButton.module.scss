@@ -1,0 +1,63 @@
+@use '../../styles/variables' as *;
+
+// Google marka kılavuzu: beyaz zemin, #747775 kenar, #1F1F1F metin, 18px çok renkli G. Açık varyant koyu temada da kullanılır.
+.button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 12px;
+  background: #fff;
+  border: 1px solid #747775;
+  border-radius: $radius-sm;
+  color: #1f1f1f;
+  font-family: 'Roboto', inherit;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.25px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+
+  &:hover:not(:disabled) {
+    background: #f8f9fa;
+    box-shadow: 0 1px 2px rgba(60, 64, 67, 0.3), 0 1px 3px 1px rgba(60, 64, 67, 0.15);
+  }
+
+  &:focus-visible {
+    outline: 2px solid #4285f4;
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: wait;
+  }
+}
+
+.logo {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.label {
+  white-space: nowrap;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  color: $color-text-secondary;
+  font-size: 12px;
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: $color-border;
+  }
+}

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import PostCard from './index';
-import PostComposer, { composerErrorMessage, shouldCollapseOnBlur } from '@/components/PostComposer';
+import PostComposer, { composerErrorMessage, isUsernameRequiredError, shouldCollapseOnBlur } from '@/components/PostComposer';
 import { GundemApiError } from '@/hooks/useGundem';
 import type { GundemPost } from '@/types/gundem';
 
@@ -197,5 +197,13 @@ describe('composerErrorMessage', () => {
   it('bilinmeyen hata → genel mesaj', () => {
     expect(composerErrorMessage(new Error('boom'), t)).toBe('composer.error');
     expect(composerErrorMessage(new GundemApiError('error', 500), t)).toBe('composer.error');
+  });
+});
+
+describe('isUsernameRequiredError', () => {
+  it('yalnızca sunucunun USERNAME_REQUIRED kodu kullanıcı adı adımına yönlendirir', () => {
+    expect(isUsernameRequiredError(new GundemApiError('ad gerekli', 403, null, 'USERNAME_REQUIRED'))).toBe(true);
+    expect(isUsernameRequiredError(new GundemApiError('yasak', 403))).toBe(false);
+    expect(isUsernameRequiredError(new Error('x'))).toBe(false);
   });
 });

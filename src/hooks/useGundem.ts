@@ -15,6 +15,8 @@ export class GundemApiError extends Error {
     message: string,
     readonly status: number,
     readonly retryAfter: number | null = null,
+    /** Sunucunun makine-okur hata kodu (ör. `USERNAME_REQUIRED`). */
+    readonly code: string | null = null,
   ) {
     super(message);
     this.name = 'GundemApiError';
@@ -33,9 +35,14 @@ async function api<T>(url: string, init?: RequestInit): Promise<T> {
     throw new GundemApiError('network', 0);
   }
   if (!res.ok) {
-    const body = (await res.json().catch(() => ({}))) as { error?: string };
+    const body = (await res.json().catch(() => ({}))) as { error?: string; code?: string };
     const ra = Number(res.headers.get('Retry-After'));
-    throw new GundemApiError(body.error ?? 'error', res.status, Number.isFinite(ra) && ra > 0 ? ra : null);
+    throw new GundemApiError(
+      body.error ?? 'error',
+      res.status,
+      Number.isFinite(ra) && ra > 0 ? ra : null,
+      typeof body.code === 'string' ? body.code : null,
+    );
   }
   if (res.status === 204) return undefined as T;
   return (await res.json()) as T;

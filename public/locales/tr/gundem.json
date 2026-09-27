@@ -34,7 +34,9 @@
     "rateLimited": "Çok hızlı gidiyorsun. {{seconds}} sn sonra tekrar dene.",
     "rateLimitedNoWait": "Çok hızlı gidiyorsun, biraz bekle.",
     "error": "Gönderilemedi. Lütfen tekrar dene.",
-    "connectionError": "Bağlantı hatası. Lütfen tekrar dene."
+    "connectionError": "Bağlantı hatası. Lütfen tekrar dene.",
+    "usernameRequired": "Gündem'de paylaşım yapmadan önce bir kullanıcı adı seçmelisin.",
+    "chooseUsername": "Kullanıcı adı seç"
   },
   "feed": {
     "loading": "Yükleniyor…",

@@ -6,13 +6,27 @@ import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/router'
 import Link from 'next/link'
 import Head from 'next/head'
+import GoogleSignInButton from '@/components/GoogleSignInButton'
+import { safeCallbackPath } from '@/lib/authRedirect'
+import { isGoogleAuthEnabled } from '@/lib/oauthEnv'
 import styles from './auth.module.scss'
 
-export default function SignInPage() {
+/** NextAuth'un `?error=` kodu → çeviri anahtarı (OAuth dönüşleri). CredentialsSignin burada gelmez (redirect: false). */
+function oauthErrorKey(code: unknown): string | null {
+  if (typeof code !== 'string' || !code) return null
+  if (code === 'OAuthAccountNotLinked') return 'signIn.oauthNotLinked'
+  if (code === 'GoogleEmailNotVerified') return 'signIn.googleEmailNotVerified'
+  if (code === 'CredentialsSignin') return null
+  return 'signIn.oauthError'
+}
+
+export default function SignInPage({ googleEnabled }: { googleEnabled: boolean }) {
   const router = useRouter()
   const { t } = useTranslation('auth')
   const verified = router.query.verified
   const reset = router.query.reset
+  const callbackPath = safeCallbackPath(router.query.callbackUrl)
+  const oauthError = oauthErrorKey(router.query.error)
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -36,7 +50,7 @@ export default function SignInPage() {
       return
     }
 
-    router.push((router.query.callbackUrl as string) || '/')
+    router.push(callbackPath)
   }
 
   return (
@@ -62,7 +76,14 @@ export default function SignInPage() {
             <p className={styles.error}>{t('signIn.missingVerification')}</p>
           )}
 
+          {oauthError && !error && (
+            <p className={styles.error} role="alert">
+              {t(oauthError)}
+            </p>
+          )}
           {error && <p className={styles.error}>{error}</p>}
+
+          {googleEnabled && <GoogleSignInButton callbackPath={callbackPath} />}
 
           <label className={styles.label}>
             {t('signIn.emailOrUsername')}
@@ -113,5 +134,6 @@ export default function SignInPage() {
 export const getStaticProps: GetStaticProps = async ({ locale }) => ({
   props: {
     ...(await serverSideTranslations(locale ?? 'tr', ['common', 'nav', 'auth'])),
+    googleEnabled: isGoogleAuthEnabled(),
   },
 })

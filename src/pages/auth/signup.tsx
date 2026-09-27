@@ -6,6 +6,9 @@ import { useRouter } from 'next/router'
 import Link from 'next/link'
 import Head from 'next/head'
 import { validatePassword } from '@/lib/validation'
+import GoogleSignInButton from '@/components/GoogleSignInButton'
+import { safeCallbackPath } from '@/lib/authRedirect'
+import { isGoogleAuthEnabled } from '@/lib/oauthEnv'
 import styles from './auth.module.scss'
 
 declare global {
@@ -25,7 +28,7 @@ declare global {
   }
 }
 
-export default function SignUpPage() {
+export default function SignUpPage({ googleEnabled }: { googleEnabled: boolean }) {
   const router = useRouter()
   const { t } = useTranslation('auth')
   const [name, setName] = useState('')
@@ -120,6 +123,8 @@ export default function SignUpPage() {
 
           {error && <p className={styles.error}>{error}</p>}
 
+          {googleEnabled && <GoogleSignInButton callbackPath={safeCallbackPath(router.query.callbackUrl)} />}
+
           <label className={styles.label}>
             {t('signUp.name')}
             <input
@@ -210,5 +215,6 @@ export default function SignUpPage() {
 export const getStaticProps: GetStaticProps = async ({ locale }) => ({
   props: {
     ...(await serverSideTranslations(locale ?? 'tr', ['common', 'nav', 'auth'])),
+    googleEnabled: isGoogleAuthEnabled(),
   },
 })

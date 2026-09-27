@@ -35,7 +35,9 @@
     "rateLimited": "You're going too fast. Try again in {{seconds}}s.",
     "rateLimitedNoWait": "You're going too fast, please wait a moment.",
     "error": "Could not send. Please try again.",
-    "connectionError": "Connection error. Please try again."
+    "connectionError": "Connection error. Please try again.",
+    "usernameRequired": "You need to choose a username before posting in Gündem.",
+    "chooseUsername": "Choose a username"
   },
   "feed": {
     "loading": "Loading…",
