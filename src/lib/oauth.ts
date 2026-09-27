@@ -2,8 +2,10 @@
  * OAuth (şimdilik yalnızca Google) girişinin sunucu tarafı kuralları. `auth-options.ts` bunları kullanır;
  * saf fonksiyonlar ayrı durduğu için NextAuth'u ayağa kaldırmadan test edilebilir.
  *
- * Hesap bağlama kuralı: aynı e-postayla şifreli bir hesap varsa Google hesabı ona OTOMATİK BAĞLANMAZ
- * (`allowDangerousEmailAccountLinking` kapalı) — NextAuth `OAuthAccountNotLinked` hatasıyla giriş sayfasına döner.
+ * Akış: hesabı yoksa Google profilinden oluşturulur; aynı e-postalı hesabı varsa Google hesabı e-postaya göre ona
+ * bağlanır ve o hesapla girilir (`allowDangerousEmailAccountLinking`). Güvenlik: Google e-postası doğrulanmış olmalı
+ * (`checkOAuthSignIn`), bizde doğrulanmamış hesabın şifresi bağlanırken silinir (`onOAuthAccountLinked`), açık
+ * oturumdaki BAŞKA kullanıcıya bağlanma `oauthCallbackGuard` ile engellenir.
  */
 import type { Provider } from 'next-auth/providers/index';
 import GoogleProvider, { type GoogleProfile } from 'next-auth/providers/google';
@@ -37,15 +39,17 @@ export function oauthProviders(env: Env = process.env): Provider[] {
     GoogleProvider({
       clientId: env.GOOGLE_CLIENT_ID!.trim(),
       clientSecret: env.GOOGLE_CLIENT_SECRET!.trim(),
-      allowDangerousEmailAccountLinking: false,
+      // Aynı e-postalı mevcut hesaba bağlan → o hesapla giriş (bkz. dosya başı güvenlik notları)
+      allowDangerousEmailAccountLinking: true,
       profile: googleProfileToUser,
     }),
   ];
 }
 
 /**
- * NextAuth `signIn` callback'inin OAuth kısmı. Kullanıcı oluşturulmadan ÖNCE çalışır.
- * Google e-postası doğrulanmamışsa giriş reddedilir (giriş sayfasına hata koduyla yönlendirme).
+ * NextAuth `signIn` callback'inin OAuth kısmı. Kullanıcı oluşturulmadan / hesap bağlanmadan ÖNCE çalışır.
+ * Google e-postası doğrulanmamışsa giriş reddedilir (giriş sayfasına hata koduyla yönlendirme) — e-postaya göre
+ * mevcut hesaba bağlamanın güvenliği bu doğrulamaya dayanır.
  */
 export function checkOAuthSignIn(
   provider: string | undefined,
@@ -58,12 +62,31 @@ export function checkOAuthSignIn(
 }
 
 /**
+ * NextAuth `events.linkAccount`: Google hesabı bir kullanıcıya bağlandı (yeni kullanıcı ya da e-postası eşleşen mevcut
+ * hesap). E-postası bizde doğrulanmamış mevcut hesabın şifresini, e-postanın sahibi olmayan biri koymuş olabilir
+ * (önceden hesap açıp bekleme saldırısı) → e-posta doğrulanmış işaretlenir ve o şifre silinir; gerçek sahip isterse
+ * "şifremi unuttum" ile yeni şifre alır. Doğrulanmış hesaplara dokunulmaz.
+ */
+export async function onOAuthAccountLinked(userId: string): Promise<void> {
+  await prisma.user.updateMany({
+    where: { id: userId, emailVerified: null },
+    data: { emailVerified: new Date(), password: null },
+  });
+}
+
+/**
  * NextAuth `events.createUser`: adapter yalnızca OAuth ilk girişinde kullanıcı oluşturur (şifreli kayıt
- * `createUserAccount` ile doğrudan Prisma'ya yazar), bu yüzden burası yalnız OAuth kullanıcıları için çalışır.
+ * `createUserAccount` ile doğrudan Prisma'ya yazar); e-postayla mevcut hesaba bağlamada da çağrılır, orada no-op.
  * `signIn` callback'i e-postanın Google'da doğrulandığını garanti ettiği için `emailVerified` işaretlenir;
  * başlangıç kredisi kayıtla aynı tek kaynaktan (idempotent) defterlenir.
  */
 export async function onOAuthUserCreated(userId: string): Promise<void> {
+  // NextAuth bu olayı e-postayla MEVCUT hesaba bağlarken de çağırıyor → yalnızca az önce oluşmuş, şifresiz kayıt "yeni"dir.
+  const row = await prisma.user.findUnique({ where: { id: userId }, select: { password: true, createdAt: true } });
+  if (!row || row.password || Date.now() - row.createdAt.getTime() > FRESH_USER_MS) return;
   await prisma.user.update({ where: { id: userId }, data: { emailVerified: new Date() } });
   await recordSignupBonus(userId);
 }
+
+/** OAuth ile oluşturulan kaydın "yeni" sayıldığı süre (createUser olayı oluşturmanın hemen ardından gelir). */
+const FRESH_USER_MS = 5 * 60 * 1000;

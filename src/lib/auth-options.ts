@@ -4,7 +4,7 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import { compare } from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
-import { checkOAuthSignIn, oauthProviders, onOAuthUserCreated } from '@/lib/oauth';
+import { checkOAuthSignIn, oauthProviders, onOAuthAccountLinked, onOAuthUserCreated } from '@/lib/oauth';
 
 const ROLE_REFRESH_MS = 60_000;
 
@@ -134,6 +134,9 @@ export const authOptions: NextAuthOptions = {
   events: {
     async createUser({ user }) {
       await onOAuthUserCreated(user.id);
+    },
+    async linkAccount({ user }) {
+      await onOAuthAccountLinked(user.id);
     },
   },
 

@@ -4,7 +4,7 @@ vi.mock('@/lib/prisma', () => ({ prisma: {} }));
 
 import { checkOAuthSignIn, googleProfileToUser, isGoogleAuthEnabled, oauthProviders } from '@/lib/oauth';
 import { mustChooseUsername } from '@/lib/gundem/authorGate';
-import { googleCallbackUrl, safeCallbackPath } from '@/lib/authRedirect';
+import { safeCallbackPath } from '@/lib/authRedirect';
 
 describe('Google provider env kapısı', () => {
   it('iki env de yoksa/boşsa pasif: provider yok', () => {
@@ -16,14 +16,14 @@ describe('Google provider env kapısı', () => {
     expect(oauthProviders({ GOOGLE_CLIENT_ID: 'id' })).toEqual([]);
   });
 
-  it('iki env de doluysa Google aktif ve e-posta ile otomatik bağlama KAPALI', () => {
+  it('iki env de doluysa Google aktif; aynı e-postalı mevcut hesaba bağlanır (hızlı giriş)', () => {
     const env = { GOOGLE_CLIENT_ID: 'id', GOOGLE_CLIENT_SECRET: 'secret' };
     expect(isGoogleAuthEnabled(env)).toBe(true);
     const [google, ...rest] = oauthProviders(env);
     expect(rest).toHaveLength(0);
     expect(google.id).toBe('google');
     const opts = (google as unknown as { options: { allowDangerousEmailAccountLinking?: boolean } }).options;
-    expect(opts.allowDangerousEmailAccountLinking).toBe(false);
+    expect(opts.allowDangerousEmailAccountLinking).toBe(true);
   });
 
   it('authOptions env yokken yalnızca Credentials içerir (site bugünkü gibi)', async () => {
@@ -92,11 +92,6 @@ describe('callbackUrl güvenliği', () => {
     expect(safeCallbackPath('//evil.example')).toBe('/');
     expect(safeCallbackPath('/\\evil.example')).toBe('/');
     expect(safeCallbackPath(undefined)).toBe('/');
-  });
-
-  it('Google dönüşü kullanıcı adı adımından geçer', () => {
-    expect(googleCallbackUrl('/gundem')).toBe('/auth/choose-username?callbackUrl=%2Fgundem');
-    expect(googleCallbackUrl('https://evil.example')).toBe('/auth/choose-username?callbackUrl=%2F');
   });
 });
 

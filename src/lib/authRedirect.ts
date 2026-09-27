@@ -7,8 +7,3 @@ export function safeCallbackPath(raw: unknown, fallback = '/'): string {
   if (typeof v !== 'string' || !v.startsWith('/') || v.startsWith('//') || v.startsWith('/\\')) return fallback;
   return v;
 }
-
-/** Google girişi sonrası önce kullanıcı adı adımı (adı olan kullanıcıyı sayfa hemen `target`'a geçirir). */
-export function googleCallbackUrl(target: string): string {
-  return `/auth/choose-username?callbackUrl=${encodeURIComponent(safeCallbackPath(target))}`;
-}

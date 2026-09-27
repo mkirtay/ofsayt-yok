@@ -2,7 +2,7 @@
 /**
  * GERÇEK veritabanı entegrasyon testi: Google girişi. Google'a gidilmez — OAuth dönüşünden SONRAKİ adım, NextAuth'un
  * kendi `callbackHandler`'ı + gerçek PrismaAdapter + bizim `signIn`/`events` ayarlarımızla çalıştırılır (callback route'unun
- * yaptığı sırayla). Kapsam: hesap bağlama engeli, doğrulanmamış e-posta, başlangıç kredisinin tek sefer verilmesi,
+ * * yaptığı sırayla). Kapsam: mevcut hesaba e-postayla bağlanma, doğrulanmamış e-posta, başlangıç kredisinin tek sefer verilmesi,
  * Gündem kullanıcı adı zorunluluğu, mobil şifreli girişte "Google ile oluşturuldu" hatası.
  *
  * Çalıştırma: `npm run test:db`. Tüm veriler `itest-<runId>` önekli e-postalarla oluşturulur, test sonunda silinir.
@@ -169,16 +169,39 @@ d('DB entegrasyonu — Google ile giriş', () => {
     expect(await bonusCount(r.user.id)).toBe(1);
   });
 
-  it('aynı e-postalı şifreli hesap varsa Google OTOMATİK BAĞLANMAZ (OAuthAccountNotLinked), hesap değişmez', async () => {
-    const before = await prisma.user.findUniqueOrThrow({ where: { email: email('cred') }, select: { id: true, name: true, image: true, emailVerified: true } });
-    // Büyük harfli Google e-postası da aynı hesaba denk gelir (küçük harfe çevrilir) ve yine engellenir
-    for (const e of [email('cred'), email('cred').toUpperCase()]) {
-      await expect(googleCallback(googleProfile('cred', `${runId}-sub-cred`, { email: e }))).rejects.toMatchObject({ name: 'AccountNotLinkedError' });
-    }
-    expect(await prisma.account.count({ where: { userId: before.id } })).toBe(0);
-    expect(await prisma.account.count({ where: { providerAccountId: `${runId}-sub-cred` } })).toBe(0);
-    expect(await prisma.user.findUniqueOrThrow({ where: { id: before.id }, select: { id: true, name: true, image: true, emailVerified: true } })).toEqual(before);
-    expect(await bonusCount(before.id)).toBe(1);
+  it('aynı e-postalı (doğrulanmış) hesabı varsa Google o hesaba bağlanır ve o hesapla girilir; şifre, ad, bakiye aynen kalır', async () => {
+    const r = await createUserAccount({ email: email('linkv'), password: 'Itest-Pass-123!', name: 'Mevcut Ad' });
+    if (!r.ok) throw new Error(r.error);
+    await prisma.user.update({ where: { id: r.user.id }, data: { emailVerified: new Date('2026-01-01T00:00:00Z') } });
+    const pick = { id: true, name: true, image: true, password: true, credits: true, emailVerified: true } as const;
+    const before = await prisma.user.findUniqueOrThrow({ where: { id: r.user.id }, select: pick });
+
+    // Büyük harfli Google e-postası da aynı hesaba denk gelir (küçük harfe çevrilir)
+    const first = await googleCallback(googleProfile('linkv', `${runId}-sub-linkv`, { email: email('linkv').toUpperCase() }));
+    expect(first.user.id).toBe(r.user.id);
+    expect(await prisma.account.findMany({ where: { userId: r.user.id }, select: { provider: true, providerAccountId: true } })).toEqual([
+      { provider: 'google', providerAccountId: `${runId}-sub-linkv` },
+    ]);
+    expect(await prisma.user.findUniqueOrThrow({ where: { id: r.user.id }, select: pick })).toEqual(before);
+    expect(await prisma.user.count({ where: { email: { in: [email('linkv'), email('linkv').toUpperCase()] } } })).toBe(1);
+
+    // Sonraki girişler aynı hesap; yeni bağ/bonus yok
+    const again = await googleCallback(googleProfile('linkv', `${runId}-sub-linkv`, { email: email('linkv') }));
+    expect(again.user.id).toBe(r.user.id);
+    expect(await prisma.account.count({ where: { userId: r.user.id } })).toBe(1);
+    expect(await bonusCount(r.user.id)).toBe(1);
+  });
+
+  it('aynı e-postalı hesap bizde doğrulanmamışsa da bağlanır; e-posta doğrulanır ve önceden konmuş şifre silinir', async () => {
+    const r = await createUserAccount({ email: email('linku'), password: 'Itest-Pass-123!', name: 'Doğrulanmamış' });
+    if (!r.ok) throw new Error(r.error);
+    const got = await googleCallback(googleProfile('linku', `${runId}-sub-linku`));
+    expect(got.user.id).toBe(r.user.id);
+    const after = await prisma.user.findUniqueOrThrow({ where: { id: r.user.id }, select: { password: true, emailVerified: true, credits: true } });
+    expect(after.password).toBeNull();
+    expect(after.emailVerified).toBeInstanceOf(Date);
+    expect(after.credits).toBe(5);
+    expect(await bonusCount(r.user.id)).toBe(1);
   });
 
   it("Google'da e-postası doğrulanmamış hesap giremez; kullanıcı oluşturulmaz", async () => {

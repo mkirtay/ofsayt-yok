@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useTranslation } from '@/lib/i18n';
-import { googleCallbackUrl } from '@/lib/authRedirect';
+import { safeCallbackPath } from '@/lib/authRedirect';
 import styles from './googleSignInButton.module.scss';
 
 /** Google'ın resmi çok renkli "G" logosu (Sign in with Google marka kılavuzu). */
@@ -17,7 +17,7 @@ function GoogleGLogo() {
 }
 
 type Props = {
-  /** Girişten sonra dönülecek site içi yol (kullanıcı adı adımından geçerek). */
+  /** Girişten sonra dönülecek site içi yol (yoksa ana sayfa). */
   callbackPath: string;
 };
 
@@ -34,7 +34,7 @@ export default function GoogleSignInButton({ callbackPath }: Props) {
         disabled={pending}
         onClick={() => {
           setPending(true);
-          void signIn('google', { callbackUrl: googleCallbackUrl(callbackPath) });
+          void signIn('google', { callbackUrl: safeCallbackPath(callbackPath) });
         }}
       >
         <GoogleGLogo />
