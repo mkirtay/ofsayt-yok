@@ -99,3 +99,28 @@ describe('callbackUrl güvenliği', () => {
     expect(googleCallbackUrl('https://evil.example')).toBe('/auth/choose-username?callbackUrl=%2F');
   });
 });
+
+describe('OAuth callback oturum çerezi koruması', () => {
+  it('yalnızca OAuth callback isteğinde devreye girer', async () => {
+    const { isOAuthCallback } = await import('@/lib/oauthCallbackGuard');
+    expect(isOAuthCallback(['callback', 'google'])).toBe(true);
+    expect(isOAuthCallback(['callback', 'credentials'])).toBe(false);
+    expect(isOAuthCallback(['signin', 'google'])).toBe(false);
+    expect(isOAuthCallback(['session'])).toBe(false);
+    expect(isOAuthCallback(undefined)).toBe(false);
+  });
+
+  it('oturum çerezlerini (parçalı ve __Secure dahil) düşürür, diğerlerini korur', async () => {
+    const { withoutSessionCookies } = await import('@/lib/oauthCallbackGuard');
+    expect(
+      withoutSessionCookies({
+        'next-auth.session-token': 'a',
+        'next-auth.session-token.0': 'b',
+        '__Secure-next-auth.session-token': 'c',
+        'next-auth.state': 's',
+        'next-auth.pkce.code_verifier': 'p',
+        '__Host-next-auth.csrf-token': 'x',
+      }),
+    ).toEqual({ 'next-auth.state': 's', 'next-auth.pkce.code_verifier': 'p', '__Host-next-auth.csrf-token': 'x' });
+  });
+});
