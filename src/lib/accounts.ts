@@ -6,6 +6,7 @@
 import { hash } from 'bcryptjs';
 import type { Role } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
+import { recordSignupBonus } from '@/lib/credits';
 import { createAndSendEmailVerification } from '@/lib/security';
 import { validatePassword, usernameRules } from '@/lib/validation';
 
@@ -78,15 +79,7 @@ export async function createUserAccount(input: CreateAccountInput): Promise<Crea
     select: { id: true, email: true, name: true, role: true, username: true, credits: true },
   });
 
-  await prisma.creditTransaction.create({
-    data: {
-      userId: user.id,
-      type: 'SIGNUP_BONUS',
-      amount: user.credits,
-      balanceAfter: user.credits,
-      note: 'Kayıt hoşgeldin bonusu',
-    },
-  });
+  await recordSignupBonus(user.id);
 
   void createAndSendEmailVerification(normalizedEmail).catch((e) =>
     console.error('[accounts] email verification send failed:', e)

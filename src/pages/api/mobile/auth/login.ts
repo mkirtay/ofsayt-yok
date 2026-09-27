@@ -56,8 +56,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       role: true,
       username: true,
       credits: true,
+      accounts: { select: { provider: true } },
     },
   });
+
+  // Şifresiz (yalnızca OAuth) hesap: mobil Google girişi henüz yok — anlamlı mesaj dön (şifre denemesi hiç yapılmaz)
+  if (user && !user.password && user.accounts.some((a) => a.provider === 'google')) {
+    return res.status(401).json({
+      error: 'Bu hesap Google ile oluşturuldu. Lütfen Google ile giriş yap.',
+      code: 'OAUTH_ACCOUNT_GOOGLE',
+    });
+  }
 
   // Sabit yanıt: kullanıcı yok ve şifre yanlış aynı mesajı döner (enumeration koruması)
   if (!user?.password || !(await compare(password, user.password))) {

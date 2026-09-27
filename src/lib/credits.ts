@@ -62,6 +62,35 @@ export async function recordFreeAnalysis(userId: string, matchId: string, balanc
   });
 }
 
+/**
+ * Yeni hesabın başlangıç kredisini deftere `SIGNUP_BONUS` olarak işler — hem e-posta/şifre kaydı hem OAuth (Google)
+ * ilk girişi BURAYI çağırır. Bakiye `User.credits` DB varsayılanından gelir (tekrar eklenmez); bu fonksiyon yalnızca
+ * denetim izini yazar. İdempotent: kullanıcı satırı `FOR UPDATE` ile kilitlenir, zaten SIGNUP_BONUS varsa hiçbir şey yapmaz.
+ * @returns kayıt yazıldıysa `true`
+ */
+export async function recordSignupBonus(userId: string): Promise<boolean> {
+  return prisma.$transaction(async (tx) => {
+    await tx.$queryRaw`SELECT id FROM "User" WHERE id = ${userId} FOR UPDATE`;
+    const existing = await tx.creditTransaction.findFirst({
+      where: { userId, type: 'SIGNUP_BONUS' },
+      select: { id: true },
+    });
+    if (existing) return false;
+    const user = await tx.user.findUnique({ where: { id: userId }, select: { credits: true } });
+    if (!user) return false;
+    await tx.creditTransaction.create({
+      data: {
+        userId,
+        type: 'SIGNUP_BONUS',
+        amount: user.credits,
+        balanceAfter: user.credits,
+        note: 'Kayıt hoşgeldin bonusu',
+      },
+    });
+    return true;
+  });
+}
+
 /** Kredi ekler (satın alma, admin, signup bonusu vb.). */
 export async function addCredits(
   userId: string,

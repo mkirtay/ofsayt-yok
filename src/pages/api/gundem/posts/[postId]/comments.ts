@@ -4,6 +4,7 @@ import { sanitizePlainText } from '@/lib/security';
 import { hitFixedWindowRateLimit } from '@/lib/rateLimit';
 import { captureError } from '@/lib/logger';
 import { getRequestUserId } from '@/lib/mobileAuth';
+import { checkGundemAuthor, USERNAME_REQUIRED_CODE, USERNAME_REQUIRED_MESSAGE } from '@/lib/gundem/authorGate';
 import { COMMENT_MAX_LENGTH } from '@/config/gundem';
 import { PAGE_SIZE, queryString, readJsonBody } from '@/lib/gundem/validation';
 import { authorSelect, paginate, serializeUserRef } from '@/lib/gundem/posts';
@@ -60,8 +61,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
       if (!post) return res.status(404).json({ error: 'Gönderi bulunamadı.' });
 
-      const userExists = await prisma.user.findUnique({ where: { id: userId }, select: { id: true } });
-      if (!userExists) return res.status(401).json({ error: 'Oturum geçersiz. Lütfen tekrar giriş yapın.' });
+      const author = await checkGundemAuthor(userId);
+      if (author === 'missing') return res.status(401).json({ error: 'Oturum geçersiz. Lütfen tekrar giriş yapın.' });
+      if (author === 'needsUsername') {
+        return res.status(403).json({ error: USERNAME_REQUIRED_MESSAGE, code: USERNAME_REQUIRED_CODE });
+      }
 
       const comment = await prisma.postComment.create({ data: { postId, userId, body }, select: commentSelect });
       await createNotification({ userId: post.authorId, actorId: userId, type: 'POST_COMMENT', postId });

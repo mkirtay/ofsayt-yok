@@ -4,6 +4,7 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import { compare } from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
+import { checkOAuthSignIn, oauthProviders, onOAuthUserCreated } from '@/lib/oauth';
 
 const ROLE_REFRESH_MS = 60_000;
 
@@ -63,9 +64,15 @@ export const authOptions: NextAuthOptions = {
         };
       },
     }),
+    // Google yalnızca GOOGLE_CLIENT_ID + GOOGLE_CLIENT_SECRET tanımlıysa (bkz. lib/oauth.ts)
+    ...oauthProviders(),
   ],
 
   callbacks: {
+    async signIn({ account, profile }) {
+      if (!account || account.type !== 'oauth') return true;
+      return checkOAuthSignIn(account.provider, profile as { email_verified?: unknown } | undefined);
+    },
     async jwt({ token, user, trigger, session }) {
       if (user) {
         token.role = (user as { role: Role }).role;
@@ -124,8 +131,16 @@ export const authOptions: NextAuthOptions = {
     },
   },
 
+  events: {
+    async createUser({ user }) {
+      await onOAuthUserCreated(user.id);
+    },
+  },
+
   pages: {
     signIn: '/auth/signin',
+    // OAuth hataları (AccessDenied vb.) varsayılan NextAuth sayfası yerine giriş sayfasında `?error=` ile gösterilir
+    error: '/auth/signin',
   },
 
   secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,

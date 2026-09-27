@@ -6,6 +6,7 @@ import { hitFixedWindowRateLimit, requestIp } from '@/lib/rateLimit';
 import { readCache, writeCache } from '@/lib/livescoreCache';
 import { captureError } from '@/lib/logger';
 import { getRequestUserId } from '@/lib/mobileAuth';
+import { checkGundemAuthor, USERNAME_REQUIRED_CODE, USERNAME_REQUIRED_MESSAGE } from '@/lib/gundem/authorGate';
 import { POST_MAX_LENGTH, matchPostsInAllFeed } from '@/config/gundem';
 import {
   PAGE_SIZE,
@@ -115,8 +116,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(400).json({ error: `Gönderi 1–${POST_MAX_LENGTH} karakter olmalıdır.` });
       }
 
-      const userExists = await prisma.user.findUnique({ where: { id: userId }, select: { id: true } });
-      if (!userExists) return res.status(401).json({ error: 'Oturum geçersiz. Lütfen tekrar giriş yapın.' });
+      const author = await checkGundemAuthor(userId);
+      if (author === 'missing') return res.status(401).json({ error: 'Oturum geçersiz. Lütfen tekrar giriş yapın.' });
+      if (author === 'needsUsername') {
+        return res.status(403).json({ error: USERNAME_REQUIRED_MESSAGE, code: USERNAME_REQUIRED_CODE });
+      }
 
       // matchId verildiyse maç gerçek olmalı: rozet verisi (MatchSnapshot) burada garanti edilir.
       let matchId: string | null = null;
