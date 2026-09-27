@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import MatchCompetitionStandings from '@/components/MatchCompetitionStandings';
-import MiniStandingsWidget from '@/components/HubWidgets/MiniStandingsWidget';
 import type { CompetitionTableData } from '@/services/liveScoreService';
 
 const row = (rank: number, id: number, name: string, short_code?: string) => ({
@@ -25,11 +24,5 @@ describe('puan durumu — tam isim + kısaltma birlikte basılır, CSS kapsayıc
   it('kısaltması olmayan takım: yalnızca tam isim (ellipsis mevcut CSS\'te)', () => {
     expect(html).toMatch(/aria-label="Esenler Erokspor"[^>]*>Esenler Erokspor<\/a>/);
     expect((html.match(/team-short-code/g) ?? []).length).toBe(1);
-  });
-
-  it('mini widget de aynı bileşeni kullanır', () => {
-    const mini = renderToStaticMarkup(<MiniStandingsWidget data={data} loading={false} competitionName="Süper Lig" />);
-    expect(mini).toContain('data-testid="team-short-code">GS<');
-    expect(mini).toContain('title="Galatasaray"');
   });
 });

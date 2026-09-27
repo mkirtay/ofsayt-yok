@@ -4,12 +4,14 @@ import { describe, expect, it } from 'vitest';
 
 const read = (rel: string) => readFileSync(path.resolve(__dirname, '../..', rel), 'utf8');
 const hub = read('src/pages/index.module.scss');
-const block = hub.slice(hub.indexOf('.hubGridWithPanel {'), hub.indexOf('@media (min-width: $bp-widget)'));
+const block = hub.slice(hub.indexOf('.hubGridWithPanel {'), hub.indexOf('@media (min-width: $bp-gundem-panel)'));
+const noComments = (s: string) => s.replace(/\/\/.*$/gm, '');
 
 describe('ana sayfa split-view yükseklik mimarisi (MatchDetailPanel modeli)', () => {
-  it('tek yükseklik kaynağı ortak parent: `.hubGridWithPanel { height: calc(100vh …) }`; sütunlarda ayrı vh hesabı yok', () => {
-    expect(block).toMatch(/\.hubGridWithPanel\s*\{[^}]*height:\s*calc\(100vh/);
-    expect(block.match(/100vh/g)).toHaveLength(1);
+  it('tek yükseklik kaynağı `$hub-fill-height` (100vh yalnızca orada); detay paneli grid\'i onu kullanır', () => {
+    expect(noComments(hub).match(/100vh/g)).toHaveLength(1);
+    expect(hub).toMatch(/\$hub-fill-height:\s*calc\(100vh/);
+    expect(block).toMatch(/\.hubGridWithPanel\s*\{[^}]*height:\s*\$hub-fill-height/);
     expect(hub).not.toContain('--hub-col-h');
   });
 
@@ -32,15 +34,17 @@ describe('ana sayfa split-view yükseklik mimarisi (MatchDetailPanel modeli)', (
     expect(hub).not.toContain('--hub-sidebar-w');
     expect(hub).toContain('grid-template-columns: 320px minmax(0, 1fr)');
     expect(hub).toContain('grid-template-columns: 240px minmax(0, 1fr);');
-    expect(hub).toContain('grid-template-columns: 240px minmax(0, 1fr) 300px');
+    expect(hub).not.toContain('grid-template-columns: 240px minmax(0, 1fr) 300px'); // sağ widget sütunu kaldırıldı
+    expect(hub).not.toMatch(/hubGridWithRight|bp-widget|hub-right/);
   });
 
-  it('idle Gündem paneli: ≥$bp-gundem-panel medya sorgusunda, sticky; detay-panel modelini (100vh grid yüksekliği / hubGridWithPanel) tetiklemez', () => {
-    const idle = hub
-      .slice(hub.indexOf('@media (min-width: $bp-gundem-panel)'))
-      .replace(/\/\/.*$/gm, ''); // yorumlar hariç
-    expect(idle).toMatch(/\.hubGundem\s*\{[^}]*position:\s*sticky/);
+  it('idle Gündem: ≥$bp-gundem-panel\'de liste + Gündem aynı sabit yükseklikte (hizalı), ikisi de kendi içinde kayar; sidebar/hubGridWithPanel etkilenmez', () => {
+    const idle = noComments(hub.slice(hub.indexOf('@media (min-width: $bp-gundem-panel)')));
+    expect(idle).toMatch(/\.hubGridWithGundem \.hubMain\s*\{[^}]*height:\s*\$hub-fill-height/);
+    expect(idle).toMatch(/\.hubList\s*\{[^}]*height:\s*100%[^}]*overflow-y:\s*auto/);
+    expect(idle).toMatch(/\.hubGundem\s*\{[^}]*height:\s*100%[^}]*overflow-y:\s*auto/);
+    expect(idle).not.toMatch(/position:\s*sticky/);
     expect(idle).not.toContain('hubGridWithPanel');
-    expect(idle).not.toMatch(/(?<!max-)height:\s*calc\(100vh/); // yalnızca max-height (sticky panel); sabit yükseklik yok
+    expect(idle).not.toContain('hubSidebar'); // sol panel mevcut davranışında
   });
 });

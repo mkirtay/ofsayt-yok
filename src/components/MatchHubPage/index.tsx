@@ -29,8 +29,6 @@ import MatchCompetitionTopScorers from '@/components/MatchCompetitionTopScorers'
 import SubHeader, { type MatchTab } from '@/components/SubHeader';
 import MatchDetailPanel from '@/components/MatchDetailPanel';
 import TeamDetailPanel from '@/components/TeamDetailPanel';
-import HubRightColumn from '@/components/HubWidgets/HubRightColumn';
-import MiniStandingsWidget from '@/components/HubWidgets/MiniStandingsWidget';
 import LeagueLogo from '@/components/LeagueLogo';
 import { isUefaCupCompetitionId, type SidebarLeague } from '@/config/leagues';
 import { resolveSportmonksLeagueId } from '@/services/sportmonksProviderFlag';
@@ -53,7 +51,7 @@ import {
 } from '@/utils/bottomNav';
 import { MOBILE_LAYOUT_QUERY } from '@/config/breakpoints';
 import { prefetchMatchDetail } from '@/hooks/useMatchDetail';
-import { GUNDEM_PANEL_MIN_WIDTH, RIGHT_COLUMN_MIN_WIDTH, useMinWidth, useSplitView } from '@/hooks/useSplitView';
+import { GUNDEM_PANEL_MIN_WIDTH, useMinWidth, useSplitView } from '@/hooks/useSplitView';
 import HomeGundemPanel from '@/components/HomeGundemPanel';
 import { resolveHubSidePanel } from '@/utils/hubSidePanel';
 import LeagueFilterBar from '@/components/LeagueFilterBar';
@@ -87,7 +85,6 @@ export default function MatchHubPage({
   const queryClient = useQueryClient();
   const router = useRouter();
   const splitView = useSplitView();
-  const showRightColumn = useMinWidth(RIGHT_COLUMN_MIN_WIDTH) === true;
   const gundemPanelWide = useMinWidth(GUNDEM_PANEL_MIN_WIDTH) === true;
   const isSplit = splitView === true;
   const [selectedDate, setSelectedDate] = useState<string>(today);
@@ -456,7 +453,7 @@ export default function MatchHubPage({
         onSelectTeam={isSplit ? handleSelectTeam : undefined}
         selectedMatchId={showDetailPanel ? selectedMatchId : null}
         compact={showDetailPanel}
-        fill={showDetailPanel}
+        fill={showDetailPanel || showGundemPanel}
         fitContent={splitView === false}
       />
     )
@@ -485,7 +482,7 @@ export default function MatchHubPage({
         onSelectTeam={isSplit ? handleSelectTeam : undefined}
         selectedMatchId={showDetailPanel ? selectedMatchId : null}
         compact={showDetailPanel}
-        fill={showDetailPanel}
+        fill={showDetailPanel || showGundemPanel}
         fitContent={splitView === false}
       />
     </>
@@ -514,7 +511,7 @@ export default function MatchHubPage({
           className={[
             styles.hubGrid,
             showDetailPanel ? styles.hubGridWithPanel : '',
-            showRightColumn ? styles.hubGridWithRight : '',
+            showGundemPanel ? styles.hubGridWithGundem : '',
           ]
             .filter(Boolean)
             .join(' ')}
@@ -639,16 +636,6 @@ export default function MatchHubPage({
               </aside>
             ) : null}
           </div>
-          {showRightColumn ? (
-            <HubRightColumn>
-              <MiniStandingsWidget
-                data={standings}
-                loading={standingsLoading}
-                competitionName={selectedLeagueName}
-                onShowAll={() => handleSidebarTabChange('standings')}
-              />
-            </HubRightColumn>
-          ) : null}
         </div>
       </div>
     </>

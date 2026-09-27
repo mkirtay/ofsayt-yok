@@ -147,10 +147,14 @@
   margin-bottom: $spacing-4;
 }
 
-// ── Ana sayfa grid'i (sidebar | liste [+ detay paneli] | sağ widget) ─────────
+// ── Ana sayfa grid'i (sidebar | liste [+ detay paneli / Gündem paneli]) ─────────
 // Mobil (< $bp-desktop): tek sütun (liste önce, sidebar sonra). ≥$bp-desktop: sidebar + liste.
 // ≥1200 ($bp-split): dar sidebar + liste; maç seçilince liste yanında detay paneli.
-// ≥1536 ($bp-widget): sağda ayrı widget sütunu (reklam alanına dönüştürülebilir).
+// ≥1440 ($bp-gundem-panel): seçim yokken liste yanında Gündem paneli.
+
+// Split sütunlarının TEK yükseklik kaynağı: görünür alan − header − SubHeader(+alt boşluk) − alt boşluk − lig şeridi.
+// Detay paneli (`.hubGridWithPanel`) ve idle Gündem (`.hubGridWithGundem .hubMain`) aynı değeri kullanır.
+$hub-fill-height: calc(100vh - var(--header-height) - 56px - 32px - var(--league-bar-total));
 
 .hubShell {
   max-width: 1680px;
@@ -293,7 +297,7 @@
   // panelin (`.panel` → `.scroll`) kullandığı model. Sütunlarda artık ayrı vh/flex hesabı YOK.
   // Not: `100vh` yalnızca burada, bir kez; sabitler = header + SubHeader(+alt boşluk) + alt boşluk.
   .hubGridWithPanel {
-    height: calc(100vh - var(--header-height) - 56px - 32px - var(--league-bar-total));
+    height: $hub-fill-height;
     grid-template-rows: minmax(0, 1fr);
     align-items: stretch;
 
@@ -345,28 +349,37 @@
   }
 }
 
-@media (min-width: $bp-widget) {
-  .hubGridWithRight {
-    grid-template-columns: 240px minmax(0, 1fr) 300px;
+// ≥1440 ($bp-gundem-panel): maç/takım seçili DEĞİLKEN liste yanında Gündem paneli (idle). `hubGridWithPanel`
+// TETİKLENMEZ (sidebar doğal akışında kalır); yalnızca orta alan (`.hubMain`: liste + Gündem) detay paneliyle
+// aynı sabit yüksekliği alır → iki sütunun üst/alt kenarı hizalı, ikisi de KENDİ içinde kayar.
+// Sağ widget sütunu kaldırıldı; boşalan alanı liste ile Gündem paylaşır (`.hubShell` max-width'i satırları sınırlar).
+@media (min-width: $bp-gundem-panel) {
+  .hubGridWithGundem .hubMain {
+    height: $hub-fill-height;
+    min-height: 0;
+    align-items: stretch;
 
-    > aside[data-slot='hub-right'] {
-      grid-column: 3;
-      grid-row: 1;
+    // Detay paneli modundaki liste çerçevesiyle aynı: az maçlı günde de sütunun alt kenarı görünür, Gündem'le hizalı.
+    .hubList {
+      height: 100%;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      padding: $spacing-1;
+      background: var(--bg-page);
+      border: 1px solid var(--border-subtle);
+      border-radius: $radius-md;
     }
   }
-}
 
-// ≥1440 ($bp-gundem-panel): maç/takım seçili DEĞİLKEN liste yanında Gündem paneli (idle). `hubGridWithPanel`
-// (sabit yükseklik + iç scroll) TETİKLENMEZ: panel sticky, liste doğal akışında kalır (idle görünümü değişmez).
-// 1536+'ta sağ widget sütunu (`hubGridWithRight`) ile birlikte: sidebar | liste | Gündem | MiniStandings.
-@media (min-width: $bp-gundem-panel) {
   .hubGundem {
-    flex: 0 0 clamp(340px, 30%, 400px);
+    // 1440–1535'te önceki gibi %30 (≈345–374px). Daha genişte liste ≈900px'te kalır (satırlar aşırı uzamaz),
+    // artanı Gündem alır; en fazla 480px (1680px `.hubShell` tavanında liste ≈896 / Gündem 480).
+    flex: 0 0 clamp(340px, max(30%, 100% - 900px), 480px);
     min-width: 0;
-    position: sticky;
-    top: calc(var(--header-height) + 64px); // HubRightColumn ile aynı: header + SubHeader altı
-    align-self: flex-start;
-    max-height: calc(100vh - var(--header-height) - 64px - #{$spacing-4});
+    height: 100%;
+    min-height: 0;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
