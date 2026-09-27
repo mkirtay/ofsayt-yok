@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import Image from 'next/image';
 import styles from './avatar.module.scss';
 
@@ -9,23 +10,44 @@ export type AvatarProps = {
   className?: string;
 };
 
-/** "Ada Lovelace" → "A"; boş/null → "?". Tek kaynak: MatchForum, AccountMenu, AvatarPicker ve Gündem aynısını kullanır. */
+/**
+ * Ad-soyad baş harfleri: "Ada Lovelace" → "AL", "Mucahid Ali Kirtay" → "MK", "ada" → "A"; boş/null → "?".
+ * Tek kaynak: MatchForum, AccountMenu, AvatarPicker ve Gündem aynısını kullanır.
+ */
 export function avatarInitial(name: string | null | undefined): string {
-  return (name ?? '').trim().charAt(0).toUpperCase() || '?';
+  const words = (name ?? '').trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return '?';
+  const first = words[0].charAt(0);
+  const last = words.length > 1 ? words[words.length - 1].charAt(0) : '';
+  return (first + last).toLocaleUpperCase('tr');
 }
 
 /**
- * Yuvarlak kullanıcı görseli; görsel yoksa baş harf. Renkler `--avatar-bg` / `--avatar-fg` CSS değişkenleriyle
- * (className'i veren yerde) özelleştirilir — sıra/özgüllük sorunu olmadan.
+ * Yuvarlak kullanıcı görseli; görsel yoksa ya da yüklenemezse baş harfler. Renkler `--avatar-bg` / `--avatar-fg` CSS
+ * değişkenleriyle (className'i veren yerde) özelleştirilir — sıra/özgüllük sorunu olmadan.
+ * `referrerPolicy="no-referrer"`: Google profil fotoğrafları (lh3.googleusercontent.com) Referer'lı isteği reddediyor.
  */
 export default function Avatar({ name, image, size, className }: AvatarProps) {
+  // Hangi URL'nin yüklenemediğini tutar → görsel değişince (ör. profil güncellemesi) yeniden denenir
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
+  const showImage = !!image && failedSrc !== image;
+
   return (
     <span
       className={[styles.root, className].filter(Boolean).join(' ')}
-      style={size ? { width: size, height: size, fontSize: Math.max(10, Math.round(size * 0.4)) } : undefined}
+      style={size ? { width: size, height: size, fontSize: Math.max(10, Math.round(size * 0.36)) } : undefined}
     >
-      {image ? (
-        <Image src={image} alt="" fill sizes={`${size ?? 40}px`} className={styles.img} unoptimized />
+      {showImage ? (
+        <Image
+          src={image}
+          alt=""
+          fill
+          sizes={`${size ?? 40}px`}
+          className={styles.img}
+          unoptimized
+          referrerPolicy="no-referrer"
+          onError={() => setFailedSrc(image)}
+        />
       ) : (
         <span aria-hidden="true">{avatarInitial(name)}</span>
       )}
