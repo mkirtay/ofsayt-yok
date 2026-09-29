@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import type { Role } from '@prisma/client';
+import { UNRESOLVED_ACTUAL_RESULT } from '@/lib/predictionRecords';
 
 export type PhaseStats = {
   phase: 'PRE' | 'HT';
@@ -68,7 +69,7 @@ function computePhaseStats(rows: RecordRow[], phase: 'PRE' | 'HT'): PhaseStats {
     phase,
     total: filtered.length,
     evaluated,
-    pending: filtered.length - evaluated,
+    pending: filtered.filter((r) => r.evaluatedAt == null && r.actualResult !== UNRESOLVED_ACTUAL_RESULT).length,
     result1x2HitCount,
     result1x2HitRate:
       evaluated > 0 ? Math.round((result1x2HitCount / evaluated) * 1000) / 10 : 0,
@@ -104,7 +105,10 @@ export async function loadAiStatsDashboard(auth: {
   const totalRecords = allRecords.length;
   const evaluated = allRecords.filter((r) => r.evaluatedAt != null);
   const totalEvaluated = evaluated.length;
-  const pendingCount = totalRecords - totalEvaluated;
+  // "Çözülemedi" diye kapatılanlar (evaluatedAt boş) bekleyen sayılmaz — bkz. predictionRecords.ts.
+  const pendingCount = allRecords.filter(
+    (r) => r.evaluatedAt == null && r.actualResult !== UNRESOLVED_ACTUAL_RESULT,
+  ).length;
 
   const result1x2HitCount = evaluated.filter((r) => r.result1x2Hit === true).length;
   const scoreExactHitCount = evaluated.filter((r) => r.scoreExactHit === true).length;

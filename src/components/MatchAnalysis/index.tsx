@@ -25,6 +25,8 @@ type Props = {
   match: Match | null;
   /** Maç detayı açıldığında üst bileşende başlatılan analiz durumu (bkz. useMatchAnalysis). */
   state: MatchAnalysisState;
+  /** Maç artık sağlayıcıda yok (arşiv görünümü) — yalnızca saklı analiz gösterilir. */
+  archived?: boolean;
 };
 
 type PickKey =
@@ -77,7 +79,7 @@ function ResultBadge({ hit }: { hit: boolean | null | undefined }) {
   );
 }
 
-export default function MatchAnalysis({ match, state }: Props) {
+export default function MatchAnalysis({ match, state, archived = false }: Props) {
   const { t } = useTranslation('match');
   const {
     analysis,
@@ -93,7 +95,8 @@ export default function MatchAnalysis({ match, state }: Props) {
   } = state;
   const insufficientCredits = !premium && credits < ANALYSIS_COST;
 
-  const phase = serverPhase ?? deriveMatchPhase(match?.status);
+  // Arşiv maçı (sağlayıcıda yok): üretim mümkün değil, maç sonrası gibi davran.
+  const phase = archived ? 'POST' : (serverPhase ?? deriveMatchPhase(match?.status));
   const isPostMatch = phase !== 'PRE';
 
   if (loading && !analysis) {

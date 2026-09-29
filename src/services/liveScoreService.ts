@@ -15,6 +15,7 @@ import {
 import { WORLD_CUP_COMPETITION_ID } from '../config/worldCup';
 import { isSportmonksProviderEnabled, resolveSportmonksLeagueId } from './sportmonksProviderFlag';
 import { sportmonksClientRequest, sportmonksCollectAllPages } from './sportmonksRuntimeClient';
+import { SportmonksHttpError } from './sportmonks/httpClient';
 import { mapSportmonksFixtureToMatch } from './sportmonksFixtureMapper';
 import {
   mapSportmonksEvents,
@@ -298,8 +299,46 @@ function fixtureMatchesId(f: Match, matchId: string): boolean {
   return String(f.id) === matchId || (f.fixture_id != null && String(f.fixture_id) === matchId);
 }
 
+export type SportmonksFixtureLookup =
+  | { kind: 'found'; match: Match; events: MatchEvent[] }
+  /** Eski sağlayıcı (livescore) id aralığında — sunucu tarafı hiç istek atmadı (bkz. resolveSportmonksMatch). */
+  | { kind: 'legacy' }
+  /** Sportmonks "yok / erişim yok" dedi (404/403/422 ya da boş 200) — kalıcı, negatif cache'lenebilir. */
+  | { kind: 'missing' }
+  /** Geçici hata (429/5xx/ağ) — tekrar denenebilir, cache'lenmez. */
+  | { kind: 'error' };
+
+const SPORTMONKS_MISSING_STATUSES = new Set([400, 403, 404, 422]);
+
+/**
+ * Tek maçı `fixtures/{id}` (+events) ile çeker ve sonucu kalıcı/geçici diye ayırır.
+ * Sportmonks'ta id uzayı tek: `fixtures/{id}` bulamadıysa tarih/lig listeleri de bulamaz,
+ * bu yüzden liste taraması (eski `findMatchById` adım 2-3) yapılmaz.
+ * Id aralığı burada kontrol EDİLMEZ: eski UEFA sezonlarının Sportmonks id'leri eski livescore
+ * id'leriyle aynı aralıkta (bkz. fixtureIdRange.ts) — hangisi olduğuna SSR slug'la karar verir.
+ */
+export async function lookupSportmonksFixture(matchId: string): Promise<SportmonksFixtureLookup> {
+  if (!/^\d{1,12}$/.test(matchId)) return { kind: 'missing' };
+  try {
+    const envelope = await sportmonksClientRequest<SportmonksFixture>('football', `/fixtures/${matchId}`, {
+      include: `${SPORTMONKS_FIXTURE_INCLUDE};events`,
+    });
+    const fixture = envelope.data;
+    if (!fixture || Array.isArray(fixture) || typeof fixture !== 'object') return { kind: 'missing' };
+    return { kind: 'found', match: mapSportmonksFixtureToMatch(fixture), events: mapSportmonksEvents(fixture) };
+  } catch (error) {
+    if (error instanceof SportmonksHttpError && SPORTMONKS_MISSING_STATUSES.has(error.status)) {
+      return { kind: 'missing' };
+    }
+    console.error('Error fetching fixture (sportmonks)', error);
+    return { kind: 'error' };
+  }
+}
+
 /**
  * Belirli bir matchId'ye sahip maçı bulur.
+ * Sportmonks: yalnızca `fixtures/{id}` (bkz. `lookupSportmonksFixture`); eski sağlayıcı id'sine hiç istek atılmaz.
+ * Eski sağlayıcı (flag kapalı):
  * 1. /matches/events (canlı / geçmiş maçlar)
  * 2. Tarih bazlı fixture listesi — bugün ±2 gün (ilerideki maçlar)
  * 3. Konfigüre edilmiş liglerin competition fixture listesi (UEFA vb. tarih bazlı listede görünmeyebilir)
@@ -308,6 +347,13 @@ export async function findMatchById(
   matchId: string,
   opts?: { skipCompetitionFanout?: boolean }
 ): Promise<{ match: Match | null; events: MatchEvent[]; fromFixture: boolean }> {
+  if (isSportmonksProviderEnabled()) {
+    const lookup = await lookupSportmonksFixture(matchId);
+    return lookup.kind === 'found'
+      ? { match: lookup.match, events: lookup.events, fromFixture: false }
+      : { match: null, events: [], fromFixture: false };
+  }
+
   // Adım 1: events endpoint
   const eventsBundle = await getMatchWithEvents(matchId);
   if (eventsBundle.match) {

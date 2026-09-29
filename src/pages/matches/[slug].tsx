@@ -10,17 +10,28 @@ import MatchArchivedTabs from '@/components/MatchArchivedTabs';
 import JsonLd from '@/components/JsonLd';
 import { useMatchDetail } from '@/hooks/useMatchDetail';
 import type { Match } from '@/models/liveScore';
-import { buildMatchHref, parseMatchIdFromParam } from '@/utils/matchUrl';
+import { buildMatchHref, parseMatchIdFromParam, parseMatchSlugFromParam } from '@/utils/matchUrl';
 import { WORLD_CUP_COMPETITION_ID } from '@/config/worldCup';
 import { useTranslation } from '@/lib/i18n';
 import { leagueNameById } from '@/utils/leagueName';
 import { resolveLiveMatch } from '@/lib/resolveLiveMatch';
 import { livescoreServerClient } from '@/server/livescoreInternalAxios';
 import { runWithLiveScoreHttpClient } from '@/services/liveScoreHttpContext';
+import { isSportmonksProviderEnabled } from '@/services/sportmonksProviderFlag';
+import { resolveMatchPage } from '@/server/resolveMatchPage';
+import {
+  matchPageCacheControl,
+  matchPageCacheKindForStatus,
+  type MatchPageCacheKind,
+} from '@/server/matchPageCache';
 import styles from './matchDetail.module.scss';
 
 type MatchDetailProps = {
   initialMatch: Match | null;
+  /** Ölü eski URL (ya da aynı id'li başka maçın slug'ı) → 410; istemci hiç veri çekmez. */
+  gone?: boolean;
+  /** Sağlayıcıda yok, DB'de saklı içerik var → doğrudan arşiv görünümü; istemci sağlayıcıya gitmez. */
+  archived?: boolean;
 };
 
 /**
@@ -38,6 +49,34 @@ export const getServerSideProps: GetServerSideProps<MatchDetailProps> = async (c
     return { props: { initialMatch: null } };
   }
 
+  const setCache = (kind: MatchPageCacheKind) =>
+    context.res.setHeader('Cache-Control', matchPageCacheControl(kind));
+
+  if (isSportmonksProviderEnabled()) {
+    try {
+      const page = await resolveMatchPage(matchId, parseMatchSlugFromParam(slug ?? ''));
+      switch (page.kind) {
+        case 'match':
+          setCache(matchPageCacheKindForStatus(page.match.status));
+          return { props: { initialMatch: page.match } };
+        case 'archived':
+          setCache('archived');
+          return { props: { initialMatch: null, archived: true } };
+        case 'gone':
+          context.res.statusCode = 410;
+          setCache('gone');
+          return { props: { initialMatch: null, gone: true } };
+        case 'missing':
+          setCache('missing');
+          return { props: { initialMatch: null } };
+        default:
+          return { props: { initialMatch: null } };
+      }
+    } catch {
+      return { props: { initialMatch: null } };
+    }
+  }
+
   try {
     const client = livescoreServerClient();
     const initialMatch = await runWithLiveScoreHttpClient(client, async () => {
@@ -52,7 +91,7 @@ export const getServerSideProps: GetServerSideProps<MatchDetailProps> = async (c
   }
 };
 
-export default function MatchDetail({ initialMatch }: MatchDetailProps) {
+export default function MatchDetail({ initialMatch, gone = false, archived = false }: MatchDetailProps) {
   const router = useRouter();
   const slugParam = router.query.slug;
   const slugFromPath = router.asPath.match(/^\/matches\/([^/?#]+)/)?.[1] ?? '';
@@ -62,7 +101,9 @@ export default function MatchDetail({ initialMatch }: MatchDetailProps) {
       : Array.isArray(slugParam)
         ? slugParam[0] ?? slugFromPath
         : slugFromPath;
-  const requestedMatchId = slug ? parseMatchIdFromParam(slug) : '';
+  const routeMatchId = slug ? parseMatchIdFromParam(slug) : '';
+  // 410 ve SSR'ın arşiv dediği sayfada istemci sağlayıcıya hiç gitmez (aynı id'li başka maç gelmesin).
+  const requestedMatchId = gone || archived ? '' : routeMatchId;
 
   const detail = useMatchDetail(requestedMatchId, {
     initialMatch,
@@ -93,9 +134,9 @@ export default function MatchDetail({ initialMatch }: MatchDetailProps) {
 
   const canonicalPath = useMemo(() => {
     if (match) return buildMatchHref(match);
-    if (requestedMatchId) return `/matches/${slug || requestedMatchId}`;
+    if (routeMatchId) return `/matches/${slug || routeMatchId}`;
     return '/matches';
-  }, [match, requestedMatchId, slug]);
+  }, [match, routeMatchId, slug]);
 
   const { t: tl } = useTranslation('leagues');
   const compId = match?.competition?.id ?? match?.competition_id;
@@ -110,7 +151,7 @@ export default function MatchDetail({ initialMatch }: MatchDetailProps) {
   }, [isWorldCup]);
 
   const showArchived =
-    router.isReady && Boolean(requestedMatchId) && isArchivedMatch && !match;
+    archived || (router.isReady && Boolean(requestedMatchId) && isArchivedMatch && !match);
   const showNotFound =
     router.isReady && Boolean(requestedMatchId) && notFound && !showArchived;
   const showLayout = !showNotFound && !showArchived;
@@ -136,10 +177,22 @@ export default function MatchDetail({ initialMatch }: MatchDetailProps) {
         comp: compName || 'Maç Detayı',
       }).toString()}`
     : null;
-  const effectiveMatchId = matchId || requestedMatchId;
+  const effectiveMatchId = matchId || requestedMatchId || (archived ? routeMatchId : '');
   const homeTeamId = match?.home?.id ?? match?.home_id;
   const awayTeamId = match?.away?.id ?? match?.away_id;
   const showStandingsBlock = compId != null || matchLoading;
+
+  if (gone) {
+    return (
+      <Container>
+        <Head>
+          <title>Maç bulunamadı | Ofsayt Yok</title>
+          <meta name="robots" content="noindex" />
+        </Head>
+        <div className={styles.notFound}>Bu maç artık mevcut değil.</div>
+      </Container>
+    );
+  }
 
   if (showNotFound) {
     return (

@@ -201,10 +201,12 @@ export function useMatchDetail(
       setMatch(found.match);
       setEvents(found.events);
       setMatchLoading(false);
-      setEventsLoading(found.events.length === 0);
+      // Olaylar yalnızca maç fikstür listesinden bulunduysa eksik (eski sağlayıcı); events/fixture
+      // isteğinden geldiyse boş liste gerçektir (başlamamış maç) — aynı isteği tekrar atma.
+      setEventsLoading(found.fromFixture);
       onFoundRef.current?.(found.match);
 
-      if (!found.events.length) {
+      if (found.fromFixture) {
         void getMatchWithEvents(apiMatchId).then((ev) => {
           if (cancelled) return;
           if (ev.match) setMatch(ev.match);

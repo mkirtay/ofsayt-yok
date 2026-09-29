@@ -1,7 +1,9 @@
 /**
  * /api/matches/[id]/analysis
  *
- * GET  — herkese açık, sadece saklı (PRE) analizi döner. Yeni üretim yapmaz.
+ * GET  — herkese açık, sadece saklı (PRE) analizi döner (yalnız DB; maç sağlayıcısına istek YOK —
+ *        her maç sayfası açılışında çağrılıyor, anonim ve bot trafiği de dahil). Yoksa 404.
+ *        Maç fazı istemcide maç verisinden türetilir.
  * POST — giriş yapmış kullanıcı, 5 kredi karşılığında PRE fazında yeni analiz üretir (premium — bakiye ≥ en büyük paket ya da ADMIN: kredisiz).
  *        Cache'te zaten varsa kredi harcamadan direkt döner. Maç başladıysa (PRE
  *        dışında) üretim reddedilir — sadece saklı PRE analizi döner.
@@ -43,40 +45,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   return res.status(405).json({ error: 'Method not allowed' });
 }
 
-async function handleGet(req: NextApiRequest, res: NextApiResponse, matchId: string) {
+async function handleGet(_req: NextApiRequest, res: NextApiResponse, matchId: string) {
   try {
-    const axios = livescoreAxiosFromIncomingMessage(req);
-    const result = await runWithLiveScoreHttpClient(axios, async () => {
-      const ctx = await buildMatchAnalysisContext(matchId);
-      if (!ctx) {
-        return { status: 404 as const, body: { error: 'Maç bulunamadı' } };
-      }
+    // Maç verisi olmadan yalnız id ile arama (takım çifti yedeği yok: Sportmonks id'leri kalıcı).
+    const existing = await findStoredMatchAnalysis(matchId, 'PRE');
+    if (!existing) {
+      return res.status(404).json({ error: 'Bu maç için analiz üretilmedi.' });
+    }
 
-      const existing = await findStoredMatchAnalysis(
-        matchId,
-        'PRE',
-        ctx.archived ? null : ctx.match,
-      );
-      if (!existing) {
-        return { status: 404 as const, body: { error: 'Bu maç için analiz üretilmedi.' } };
-      }
-
-      const predictionRecord = await prisma.predictionRecord.findUnique({
-        where: { matchAnalysisId: existing.id },
-      });
-
-      return {
-        status: 200 as const,
-        body: {
-          analysis: existing,
-          predictionRecord,
-          isPostMatch: ctx.archived ? true : ctx.matchPhase !== 'PRE',
-          isArchived: ctx.archived,
-          matchPhase: ctx.archived ? 'ARCHIVED' : ctx.matchPhase,
-        },
-      };
+    const predictionRecord = await prisma.predictionRecord.findUnique({
+      where: { matchAnalysisId: existing.id },
     });
-    return res.status(result.status).json(result.body);
+    return res.status(200).json({ analysis: existing, predictionRecord });
   } catch (err) {
     captureError('analysis-get', err);
     return res.status(500).json({ error: 'Analiz getirilemedi.' });

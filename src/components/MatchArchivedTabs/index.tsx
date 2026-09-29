@@ -30,7 +30,7 @@ export default function MatchArchivedTabs({ matchId }: Props) {
         key: 'analysis',
         label: t('tabs.analysis'),
         premium: true,
-        render: () => <MatchAnalysis match={null} state={analysisState} />,
+        render: () => <MatchAnalysis match={null} state={analysisState} archived />,
       },
       {
         key: 'trivia',

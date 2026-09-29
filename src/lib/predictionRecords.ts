@@ -4,7 +4,8 @@ import type { Match } from '@/models/liveScore';
 import { prisma } from '@/lib/prisma';
 import { livescoreServerClient } from '@/server/livescoreInternalAxios';
 import { runWithLiveScoreHttpClient } from '@/services/liveScoreHttpContext';
-import { resolveLiveMatch } from '@/lib/resolveLiveMatch';
+import { resolveLiveMatch, resolveSportmonksMatch } from '@/lib/resolveLiveMatch';
+import { isSportmonksProviderEnabled } from '@/services/sportmonksProviderFlag';
 
 type MatchPredictionJson = { home?: number; draw?: number; away?: number };
 type ScorePredictionJson = { mostLikely?: string };
@@ -166,8 +167,40 @@ export function predictedOutcomeFromPct(
 export type EvaluatePredictionsResult = {
   evaluated: number;
   skipped: number;
+  /** "Çözülemedi" diye kapatılan kayıtlar (bkz. `shouldMarkUnresolved`). */
+  unresolved: number;
   errors: number;
 };
+
+/**
+ * Değerlendirilemeyen kaydın kapanış işareti. `evaluatedAt` BOŞ kalır: isabet oranları yalnızca
+ * gerçekten değerlendirilmiş kayıtlardan hesaplanıyor, bu kayıtlar orada sayılmamalı.
+ * Bekleyen sorgusu `actualResult: null` ile bu kayıtları bir daha denemez.
+ */
+export const UNRESOLVED_ACTUAL_RESULT = 'UNRESOLVED';
+export const UNRESOLVED_AFTER_MS = 3 * 24 * 60 * 60_000;
+
+export type EvaluationLookup = 'found' | 'missing' | 'legacy' | 'error';
+
+/**
+ * Kayıt "çözülemedi" diye kapatılsın mı?
+ * - Geçici hata (429/5xx): asla — kota tükendiğinde kayıtlar yanlışlıkla kapanmasın.
+ * - Sportmonks'ta yok / eski sağlayıcı id'si: kayıt 3 günden eskiyse.
+ * - Maç var ama değerlendirilemiyor (ertelendi, iptal, skorsuz): maç gününün bitiminden 3 gün sonra
+ *   (tarih yoksa kayıt tarihinden) — analiz maçtan günler önce üretilmiş olabilir.
+ */
+export function shouldMarkUnresolved(
+  input: { lookup: EvaluationLookup; createdAt: Date; matchDate?: string | null },
+  now: Date = new Date(),
+): boolean {
+  if (input.lookup === 'error') return false;
+  let reference = input.createdAt.getTime();
+  if (input.lookup === 'found' && input.matchDate) {
+    const dayStart = Date.parse(`${input.matchDate}T00:00:00Z`);
+    if (Number.isFinite(dayStart)) reference = dayStart + 24 * 60 * 60_000;
+  }
+  return now.getTime() - reference > UNRESOLVED_AFTER_MS;
+}
 
 function parseScoreGoals(raw?: string | null): [number, number] | null {
   if (!raw) return null;
@@ -200,19 +233,28 @@ function normalizePredictedScore(raw: string): string {
   return raw.trim().replace(/\s/g, '').replace(':', '-');
 }
 
+type EvaluationMatch = { match: Match | null; lookup: EvaluationLookup };
+
 async function resolveMatchForEvaluation(
   matchId: string,
-  cache: Map<string, Match | null>
-): Promise<Match | null> {
-  if (cache.has(matchId)) return cache.get(matchId) ?? null;
+  cache: Map<string, EvaluationMatch>
+): Promise<EvaluationMatch> {
+  const hit = cache.get(matchId);
+  if (hit) return hit;
 
-  const resolved = await resolveLiveMatch(matchId);
-  const match = resolved?.match ?? null;
-  cache.set(matchId, match);
-  if (resolved?.apiMatchId && resolved.apiMatchId !== matchId) {
-    cache.set(resolved.apiMatchId, match);
+  let resolved: EvaluationMatch;
+  if (isSportmonksProviderEnabled()) {
+    // Yalnızca `fixtures/{id}` (liste taraması yok); eski sağlayıcı id'sine istek yok.
+    const lookup = await resolveSportmonksMatch(matchId);
+    resolved = lookup.kind === 'found' ? { match: lookup.match, lookup: 'found' } : { match: null, lookup: lookup.kind };
+  } else {
+    // Eski sağlayıcıda "yok" ile geçici hata ayırt edilemiyor → kayıt kapatılmaz.
+    const live = await resolveLiveMatch(matchId);
+    resolved = { match: live?.match ?? null, lookup: live ? 'found' : 'error' };
+    if (live?.apiMatchId && live.apiMatchId !== matchId) cache.set(live.apiMatchId, resolved);
   }
-  return match;
+  cache.set(matchId, resolved);
+  return resolved;
 }
 
 /** Biten maçların kayıtlı tahminlerini gerçek skorla karşılaştırır. */
@@ -222,10 +264,11 @@ export async function evaluatePendingPredictionRecords(
   await backfillMissingPredictionRecords();
 
   const pending = await prisma.predictionRecord.findMany({
-    where: { evaluatedAt: null },
+    where: { evaluatedAt: null, actualResult: null },
     select: {
       id: true,
       matchId: true,
+      createdAt: true,
       predictedHomePct: true,
       predictedDrawPct: true,
       predictedAwayPct: true,
@@ -236,25 +279,28 @@ export async function evaluatePendingPredictionRecords(
     },
   });
 
-  const result: EvaluatePredictionsResult = { evaluated: 0, skipped: 0, errors: 0 };
+  const result: EvaluatePredictionsResult = { evaluated: 0, skipped: 0, unresolved: 0, errors: 0 };
   if (!pending.length) return result;
 
   const client = livescoreServerClient();
-  const matchCache = new Map<string, Match | null>();
+  const matchCache = new Map<string, EvaluationMatch>();
 
   await runWithLiveScoreHttpClient(client, async () => {
     for (const record of pending) {
       try {
-        const match = await resolveMatchForEvaluation(record.matchId, matchCache);
+        const { match, lookup } = await resolveMatchForEvaluation(record.matchId, matchCache);
+        const actualScore = isMatchFinished(match) ? extractFinalScore(match!) : null;
 
-        if (!isMatchFinished(match)) {
-          result.skipped += 1;
-          continue;
-        }
-
-        const actualScore = extractFinalScore(match!);
         if (!actualScore) {
-          result.skipped += 1;
+          if (shouldMarkUnresolved({ lookup, createdAt: record.createdAt, matchDate: match?.date })) {
+            await prisma.predictionRecord.update({
+              where: { id: record.id },
+              data: { actualResult: UNRESOLVED_ACTUAL_RESULT },
+            });
+            result.unresolved += 1;
+          } else {
+            result.skipped += 1;
+          }
           continue;
         }
 
