@@ -71,7 +71,8 @@ export async function* paginateSportmonks<T>(
 export async function collectAllPages<T>(options: PaginateOptions): Promise<T[]> {
   const all: T[] = [];
   for await (const pageItems of paginateSportmonks<T>(options)) {
-    all.push(...pageItems);
+    // "Sonuç yok" cevabı `data` alanı olmadan 200 döner (ör. maçsız gün) → boş sayfa.
+    if (Array.isArray(pageItems)) all.push(...pageItems);
   }
   return all;
 }

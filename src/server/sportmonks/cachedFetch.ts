@@ -56,6 +56,54 @@ export type CachedFetchOptions = {
   now?: () => number;
 };
 
+// ─── İstek kapsamlı izleme ──────────────────────────────────────────────────
+
+export type SportmonksFetchTracking = {
+  /** En az bir cevap upstream hatası yüzünden son geçerli (eski) veriden geldi. */
+  stale: boolean;
+  /** En az bir istek upstream hatasıyla sonuçlandı ve verecek eski veri yoktu. */
+  failed: boolean;
+};
+
+type TrackingStore = {
+  run: <R>(store: SportmonksFetchTracking, fn: () => R) => R;
+  getStore: () => SportmonksFetchTracking | undefined;
+};
+let trackingStore: TrackingStore | null = null;
+
+/**
+ * Tembel `require`: bu modül `sportmonksRuntimeClient`'in dinamik import'u yüzünden istemci chunk grafiğine de
+ * giriyor; üst düzey `node:async_hooks` import'u orada derlenmez (bkz. liveScoreHttpContext.ts, aynı desen).
+ */
+function tracking(): TrackingStore {
+  if (!trackingStore) {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { AsyncLocalStorage } = require('node:async_hooks') as typeof import('node:async_hooks');
+    trackingStore = new AsyncLocalStorage<SportmonksFetchTracking>() as unknown as TrackingStore;
+  }
+  return trackingStore;
+}
+
+/**
+ * `fn` içindeki tüm Sportmonks çağrılarının (servis katmanı hataları yutsa bile) eski veri / hata
+ * durumunu toplar — normalize uç noktalar (`/api/matches/day`) bunu istemciye "veriler gecikmeli"
+ * ya da 503 olarak iletir.
+ */
+export async function trackSportmonksFetches<T>(fn: () => Promise<T>): Promise<{ value: T } & SportmonksFetchTracking> {
+  const state: SportmonksFetchTracking = { stale: false, failed: false };
+  const value = await tracking().run(state, fn);
+  return { value, ...state };
+}
+
+function noteOutcome(r: SportmonksCachedResult): SportmonksCachedResult {
+  const t = tracking().getStore();
+  if (t) {
+    if (r.stale) t.stale = true;
+    if (r.cache === 'BYPASS' && (r.status >= 500 || r.status === 429)) t.failed = true;
+  }
+  return r;
+}
+
 // ─── Anahtar ────────────────────────────────────────────────────────────────
 
 export function normalizeSportmonksPath(path: string): string {
@@ -172,7 +220,9 @@ async function callUpstream(
   let res: Response;
   let raw: unknown;
   try {
-    res = await (opts.fetchImpl ?? fetch)(`${SPORTMONKS_BASE}/${path}?${qs.toString()}`);
+    // SPORTMONKS_UPSTREAM_BASE: yalnızca yük/kabul script'i için sahte upstream (scripts/load/simulate-visitors.mjs).
+    const base = process.env.SPORTMONKS_UPSTREAM_BASE || SPORTMONKS_BASE;
+    res = await (opts.fetchImpl ?? fetch)(`${base}/${path}?${qs.toString()}`);
     raw = await res.json().catch(() => null);
   } catch {
     return { status: 'network-error' };
@@ -282,7 +332,7 @@ export async function fetchSportmonksCached(
   if (hot) return toResult(hot, 'HIT', now());
 
   const pending = inFlight.get(key);
-  if (pending) return pending;
+  if (pending) return noteOutcome(await pending);
 
   const promise = (async () => {
     const stored = await redisGet(key);
@@ -296,7 +346,7 @@ export async function fetchSportmonksCached(
 
   inFlight.set(key, promise);
   try {
-    return await promise;
+    return noteOutcome(await promise);
   } finally {
     inFlight.delete(key);
   }

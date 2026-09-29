@@ -237,7 +237,13 @@
     "fixtureModeTitle": "{{league}} fikstürü",
     "fixtureModeHint": "Yaklaşan maçlar güne göre gruplandı",
     "fixtureModeExit": "Günlük maçlara dön",
-    "fixtureEmpty": "Bu kupa için yaklaşan maç bulunamadı."
+    "fixtureEmpty": "Bu kupa için yaklaşan maç bulunamadı.",
+    "nextMatchDayAll": "Sıradaki maç günü:",
+    "nextMatchDayLeague": "{{league}} {{date}} dönüyor.",
+    "nextMatchDaysTitle": "Sıradaki maçlar:",
+    "dataDelayed": "Veriler gecikmeli — son güncelleme {{time}}.",
+    "loadFailed": "Maçlar şu an yüklenemedi.",
+    "retry": "Tekrar dene"
   },
   "search": {
     "placeholder": "Takım veya lig ara…",

@@ -1,49 +1,45 @@
-import { useQuery, type QueryClient } from '@tanstack/react-query';
+import { useQuery, type Query, type QueryClient } from '@tanstack/react-query';
 import type { Match } from '@/models/liveScore';
-import {
-  getAllLiveMatches,
-  getAllMatchesByDate,
-  getFixturesByCompetition,
-  getFixturesByDate,
-} from '@/services/liveScoreService';
-import { WORLD_CUP_COMPETITION_ID } from '@/config/worldCup';
+import type { HomeDayPayload, UpcomingLeagueDay } from '@/server/homeDay';
+import { homePollDelayMs } from '@/utils/matchActivity';
 
 export type HomeHubMatchesData = {
   allMatches: Match[];
   liveMatches: Match[];
   fixtureMatches: Match[];
+  /** Sunucu upstream hatası yüzünden son geçerli veriyi verdi ("veriler gecikmeli"). */
+  stale?: boolean;
 };
 
 /**
- * `/fixtures/list.json?date=X` sayfalanmış dönüyor ve sadece ilk sayfayı çekiyoruz —
- * yoğun tarihlerde (ör. Dünya Kupası eleme turu günleri) World Cup maçları 2. sayfaya
- * düşüp kayboluyor. Rekabet bazlı fikstür endpoint'i (`getFixturesByCompetition`)
- * World Cup için sayfalanmadan tüm kalan maçları döndürüyor — o güne ait olanlar
- * eklenir (aynı id zaten varsa tekrar eklenmez).
+ * Günün maçları normalize uç noktadan (`/api/matches/day`) — tarayıcı ham Sportmonks path'lerini
+ * çağırmaz; sunucu tarafı paylaşımlı cache'ten okur, CDN tekrarları karşılar.
  */
-async function fetchDateFixturesWithWorldCup(selectedDate: string): Promise<Match[]> {
-  const [dateFixtures, worldCupFixtures] = await Promise.all([
-    getFixturesByDate(selectedDate),
-    getFixturesByCompetition(WORLD_CUP_COMPETITION_ID),
-  ]);
-  const existingIds = new Set(dateFixtures.map((m) => Number(m.id)));
-  const missingWorldCup = worldCupFixtures.filter(
-    (m) => m.date === selectedDate && !existingIds.has(Number(m.id)),
-  );
-  return [...dateFixtures, ...missingWorldCup];
-}
-
 async function fetchHomeHubMatches(selectedDate: string): Promise<HomeHubMatchesData> {
-  const [allMatches, liveMatches, fixtureMatches] = await Promise.all([
-    getAllMatchesByDate(selectedDate, 5),
-    getAllLiveMatches(),
-    fetchDateFixturesWithWorldCup(selectedDate),
-  ]);
-  return { allMatches, liveMatches, fixtureMatches };
+  const res = await fetch(`/api/matches/day?date=${encodeURIComponent(selectedDate)}`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const body = (await res.json()) as HomeDayPayload & { stale?: boolean };
+  return {
+    // Sportmonks'ta günün geçmişi ile fikstürü aynı liste (tek istek); eski sağlayıcıda ayrı gelir.
+    allMatches: body.historyMatches ?? body.fixtureMatches,
+    liveMatches: body.liveMatches,
+    fixtureMatches: body.fixtureMatches,
+    stale: Boolean(body.stale),
+  };
 }
 
 export function homeHubMatchesQueryKey(selectedDate: string) {
   return ['home-hub-matches', selectedDate] as const;
+}
+
+/**
+ * Polling: canlı maç varken ya da bir maçın başlamasına ±15 dk kala 30 sn, diğer zamanlarda 5 dk;
+ * ardışık hatalarda üstel bekleme. Sekme gizliyken durur (`refetchIntervalInBackground: false`),
+ * sekmeye dönünce veri eskiyse bir kez tazelenir.
+ */
+export function homeHubRefetchInterval(query: Query<HomeHubMatchesData, Error, HomeHubMatchesData, readonly unknown[]>): number {
+  const data = query.state.data;
+  return homePollDelayMs([...(data?.liveMatches ?? []), ...(data?.fixtureMatches ?? [])], query.state.fetchFailureCount);
 }
 
 export function useHomeHubMatches(selectedDate: string, enabled = true) {
@@ -53,6 +49,11 @@ export function useHomeHubMatches(selectedDate: string, enabled = true) {
     enabled,
     staleTime: 30_000,
     gcTime: 5 * 60_000,
+    refetchInterval: homeHubRefetchInterval,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: true,
+    retry: 2,
+    retryDelay: (attempt) => Math.min(5_000 * 2 ** attempt, 60_000),
   });
 }
 
@@ -64,19 +65,18 @@ export function prefetchHomeHubMatches(queryClient: QueryClient, selectedDate: s
   });
 }
 
-export async function refreshHomeHubLiveFixtures(
-  queryClient: QueryClient,
-  selectedDate: string
-) {
-  const [liveMatches, fixtureMatches] = await Promise.all([
-    getAllLiveMatches(),
-    fetchDateFixturesWithWorldCup(selectedDate),
-  ]);
-  queryClient.setQueryData<HomeHubMatchesData>(
-    homeHubMatchesQueryKey(selectedDate),
-    (prev) =>
-      prev
-        ? { ...prev, liveMatches, fixtureMatches }
-        : { allMatches: [], liveMatches, fixtureMatches }
-  );
+/** Seçili günde maç yokken: takip edilen liglerin sıradaki maç günleri (`/api/matches/upcoming-days`). */
+export function useUpcomingMatchDays(from: string, enabled: boolean) {
+  return useQuery({
+    queryKey: ['upcoming-match-days', from] as const,
+    queryFn: async (): Promise<UpcomingLeagueDay[]> => {
+      const res = await fetch(`/api/matches/upcoming-days?from=${encodeURIComponent(from)}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return ((await res.json()) as { leagues: UpcomingLeagueDay[] }).leagues;
+    },
+    enabled,
+    staleTime: 15 * 60_000,
+    gcTime: 30 * 60_000,
+    retry: 1,
+  });
 }

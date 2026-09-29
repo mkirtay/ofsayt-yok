@@ -239,7 +239,13 @@
     "fixtureModeTitle": "{{league}} fixtures",
     "fixtureModeHint": "Upcoming matches grouped by day",
     "fixtureModeExit": "Back to daily matches",
-    "fixtureEmpty": "No upcoming matches found for this competition."
+    "fixtureEmpty": "No upcoming matches found for this competition.",
+    "nextMatchDayAll": "Next match day:",
+    "nextMatchDayLeague": "{{league}} returns on {{date}}.",
+    "nextMatchDaysTitle": "Next matches:",
+    "dataDelayed": "Data delayed — last updated {{time}}.",
+    "loadFailed": "Couldn't load matches right now.",
+    "retry": "Retry"
   },
   "search": {
     "placeholder": "Search team or league…",

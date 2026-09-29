@@ -2,6 +2,9 @@
  * Bot poller (`POST /api/admin/gundem/bot-tick`, dakikada bir harici cron). `livescores/inplay` TAM durumunu verir → olay kaçmaz;
  * fark `externalKey` (unique) ile çıkarılır. YALNIZCA takip edilen liglerin canlı maçları işlenir. Yayın YOK: sadece PENDING taslak yazar.
  *
+ * Takip edilen liglerde canlı ya da ±15 dk içinde başlayacak maç yoksa `inplay`'e hiç gidilmez: karar dünün + bugünün
+ * fikstür listesinden (paylaşımlı cache'te, ana sayfayla ortak) verilir — maçsız saatlerde tick upstream'e ~0 istek atar.
+ *
  * Neden `livescores/latest` değil: yalnızca son 10 sn'de güncellenen fixture'ları döndürür; 1 dk'lık tetiklemede olay kaçırır.
  */
 import type { Prisma } from '@prisma/client';
@@ -10,6 +13,9 @@ import { captureError } from '@/lib/logger';
 import { readCache, writeCache } from '@/lib/livescoreCache';
 import { prisma } from '@/lib/prisma';
 import { sportmonksCollectAllPages } from '@/services/sportmonksRuntimeClient';
+import { getFixturesByDate } from '@/services/liveScoreService';
+import { trackSportmonksFetches } from '@/server/sportmonks/cachedFetch';
+import { hasActiveMatch } from '@/utils/matchActivity';
 import type { SportmonksFixture } from '@/services/sportmonks/types';
 import { buildGoalDraft, fetchSeasonGoalScorers } from './goalDraft';
 import { goalKindOf, sortEvents, type SeasonScorer } from './goalStanding';
@@ -22,13 +28,31 @@ export type TickSummary = {
   skipped: number;
   staled: number;
   errors: number;
+  /** Takip edilen liglerde aktif maç yok → `inplay`'e gidilmedi. */
+  idle: boolean;
 };
 
 export type TickDeps = {
   fetchInplay: () => Promise<SportmonksFixture[]>;
   getScorers: (seasonId: number) => Promise<SeasonScorer[] | null>;
+  /** `false` → bu tick `inplay`'e gitmez. Verilmezse her tick gider. */
+  shouldPoll?: (now: Date) => Promise<boolean>;
   now?: () => Date;
 };
+
+/**
+ * Takip edilen liglerde canlı ya da başlama saatine ±15 dk kalmış maç var mı (dün + bugün, UTC — gece yarısını
+ * geçen maçlar için dün de). Fikstür listesi alınamazsa (upstream hatası) güvenli taraf: `true` (poll et).
+ */
+export async function hasActiveTrackedFixtures(now: Date): Promise<boolean> {
+  const leagueIds = getBotLeagueIds();
+  const today = now.toISOString().slice(0, 10);
+  const yesterday = new Date(now.getTime() - 24 * 60 * 60_000).toISOString().slice(0, 10);
+  const { value, failed } = await trackSportmonksFetches(() => Promise.all([getFixturesByDate(yesterday), getFixturesByDate(today)]));
+  if (failed) return true;
+  const tracked = value.flat().filter((m) => leagueIds.has(Number(m.competition?.id)));
+  return hasActiveMatch(tracked, now.getTime());
+}
 
 const INPLAY_INCLUDE = 'participants;league;events';
 
@@ -69,10 +93,14 @@ function sameGoalSignature(facts: unknown, minute: number, extra: number | null,
   return !!f && f.minute === minute && (f.extraMinute ?? null) === extra && f.playerName === player;
 }
 
-export async function runBotTick(deps: TickDeps = { fetchInplay: fetchInplayFixtures, getScorers: getScorersCached }): Promise<TickSummary> {
+export async function runBotTick(
+  deps: TickDeps = { fetchInplay: fetchInplayFixtures, getScorers: getScorersCached, shouldPoll: hasActiveTrackedFixtures },
+): Promise<TickSummary> {
   const now = deps.now?.() ?? new Date();
   const leagueIds = getBotLeagueIds();
-  const summary: TickSummary = { inplay: 0, tracked: 0, created: 0, duplicates: 0, skipped: 0, staled: 0, errors: 0 };
+  const summary: TickSummary = { inplay: 0, tracked: 0, created: 0, duplicates: 0, skipped: 0, staled: 0, errors: 0, idle: false };
+
+  if (deps.shouldPoll && !(await deps.shouldPoll(now))) return { ...summary, idle: true };
 
   const inplay = await deps.fetchInplay();
   summary.inplay = inplay.length;

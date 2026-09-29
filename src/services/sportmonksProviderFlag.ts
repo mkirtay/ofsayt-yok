@@ -75,6 +75,9 @@ const VERIFIED_LEGACY_TO_SPORTMONKS_LEAGUE_ID: Record<number, number> = {
   // 362 (WORLD_CUP_COMPETITION_ID): DOĞRULANAMADI — bkz. yukarıdaki not, bilinçli olarak eklenmedi.
 };
 
+/** Doğrulanmış (sitenin takip ettiği) Sportmonks lig id'leri — ör. "sıradaki maç günü" sorgusu. */
+export const VERIFIED_SPORTMONKS_LEAGUE_IDS: readonly number[] = Object.values(VERIFIED_LEGACY_TO_SPORTMONKS_LEAGUE_ID);
+
 export function resolveSportmonksLeagueId(legacyCompetitionId: number | string): number | null {
   const legacy = Number(legacyCompetitionId);
   if (!Number.isFinite(legacy)) return null;

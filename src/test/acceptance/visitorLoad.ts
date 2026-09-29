@@ -5,7 +5,8 @@
  * Her ziyaretçi: ana sayfa ilk yükleme + görünür kaldıkça polling (tarayıcı → proxy), 3. dakikada bir
  * maç detayı (SSR sunucu yolu + tarayıcı → proxy).
  *
- * İstek kalıbı `pattern` ile verilir (C adımında ana sayfa değişince burası güncellenir).
+ * İstek kalıbı `pattern` ile verilir. `football/...` istekleri Sportmonks proxy'sine, `api/...` istekleri
+ * `apiHandlers`'taki normalize uç noktalara (ör. `/api/matches/day`) gider.
  */
 import type { NextApiRequest, NextApiResponse } from 'next';
 
@@ -20,8 +21,12 @@ export type VisitorPattern = {
   matchClient: (matchId: string, today: string, from89: string) => string[];
 };
 
+type Handler = (req: NextApiRequest, res: NextApiResponse) => unknown;
+
 export type SimulationDeps = {
-  proxyHandler: (req: NextApiRequest, res: NextApiResponse) => unknown;
+  proxyHandler: Handler;
+  /** `api/matches/day` → handler (query string hariç path). */
+  apiHandlers?: Record<string, Handler>;
   serverRequest: (path: string, params: Record<string, string>) => Promise<unknown>;
   setNow: (ms: number) => void;
 };
@@ -58,10 +63,13 @@ const FIXTURE_POOL = /^football\/(fixtures|livescores)\//;
 async function proxyGet(deps: SimulationDeps, pathAndQuery: string, ip: string, seen: string[]) {
   const [path, qs = ''] = pathAndQuery.split('?');
   seen.push(path!);
-  const query: Record<string, string | string[]> = { path: path!.split('/') };
+  const api = path!.startsWith('api/');
+  const query: Record<string, string | string[]> = api ? {} : { path: path!.split('/') };
   new URLSearchParams(qs).forEach((v, k) => (query[k] = v));
   const req = { method: 'GET', query, headers: { 'x-forwarded-for': ip }, socket: {} } as unknown as NextApiRequest;
-  await deps.proxyHandler(req, fakeRes() as unknown as NextApiResponse);
+  const handler = api ? deps.apiHandlers?.[path!] : deps.proxyHandler;
+  if (!handler) throw new Error(`Simülasyonda handler yok: ${path}`);
+  await handler(req, fakeRes() as unknown as NextApiResponse);
 }
 
 const iso = (ms: number) => new Date(ms).toISOString().slice(0, 10);

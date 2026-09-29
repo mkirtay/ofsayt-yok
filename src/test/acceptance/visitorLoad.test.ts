@@ -22,8 +22,8 @@ const TODAY = '2026-09-30';
 const INC = 'participants;scores;state;periods;league.country;venue;referees.referee;round;stage;group';
 const enc = encodeURIComponent;
 
-/** Bugünkü (C öncesi) ana sayfa + maç detayı istek kalıbı — tarayıcı ağ kaydından. */
-const CURRENT_PATTERN: VisitorPattern = {
+/** C öncesi ana sayfa + maç detayı istek kalıbı (tarayıcı ağ kaydından): ham proxy, 30 sn polling, between + date. */
+const PRE_C_PATTERN: VisitorPattern = {
   homeInitial: (d) => [
     `football/fixtures/between/${d}/${d}?include=${enc(INC)}&per_page=50&page=1`,
     `football/livescores/inplay?include=${enc(INC)}&per_page=50&page=1`,
@@ -75,7 +75,28 @@ function respond(url: string): { status: number; body: unknown } {
   return list([]);
 }
 
-async function run(visitors: number): Promise<SimulationResult> {
+const SIDEBAR = (): string[] => [
+  'football/leagues/600?include=seasons',
+  'football/leagues/600?include=seasons',
+  `football/standings/seasons/28203?include=${enc('participant;details.type')}&per_page=50&page=1`,
+  ...[1, 2, 3, 4].map(
+    (p) => `football/topscorers/seasons/28203?include=${enc('player;participant')}&filters=${enc('seasonTopscorerTypes:208')}&per_page=50&page=${p}`,
+  ),
+];
+
+/**
+ * C sonrası: ana sayfa tek normalize uca gider (`/api/matches/day`, sunucuda yalnız fixtures/date + inplay),
+ * polling canlı/başlamak üzere maç varken 30 sn, yoksa 5 dk (`homePollDelayMs`).
+ */
+const postCPattern = (scenario: 'quiet' | 'live'): VisitorPattern => ({
+  homeInitial: (d) => [`api/matches/day?date=${d}`, ...SIDEBAR()],
+  homePollSeconds: scenario === 'live' ? 30 : 300,
+  homePoll: (d) => [`api/matches/day?date=${d}`],
+  matchSsr: PRE_C_PATTERN.matchSsr,
+  matchClient: PRE_C_PATTERN.matchClient,
+});
+
+async function run(visitors: number, pattern: VisitorPattern): Promise<SimulationResult> {
   vi.resetModules();
   h.clock.t = START;
   h.redis = createFakeRedis(() => h.clock.t);
@@ -88,12 +109,14 @@ async function run(visitors: number): Promise<SimulationResult> {
     return new Response(JSON.stringify(r.body), { status: r.status });
   });
   const proxyHandler = (await import('@/pages/api/sportmonks/[...path]')).default;
+  const dayHandler = (await import('@/pages/api/matches/day')).default;
   const { sportmonksClientRequest } = await import('@/services/sportmonksRuntimeClient');
   return simulateVisitors(
     visitors,
-    CURRENT_PATTERN,
+    pattern,
     {
       proxyHandler,
+      apiHandlers: { 'api/matches/day': dayHandler },
       serverRequest: (path, params) => sportmonksClientRequest('football', path, params),
       setNow: (ms) => {
         h.clock.t = ms;
@@ -105,16 +128,25 @@ async function run(visitors: number): Promise<SimulationResult> {
   );
 }
 
-function table(one: SimulationResult, many: SimulationResult): string {
-  const keys = [...new Set([...Object.keys(one.byPath), ...Object.keys(many.byPath)])].sort();
-  const rows = keys.map((k) => `  ${String(one.byPath[k] ?? 0).padStart(3)} | ${String(many.byPath[k] ?? 0).padStart(3)} | ${k}`);
-  return [' 1 z. | 20 z. | path', ...rows, `  ${one.fixturePool} | ${many.fixturePool} | Fixture havuzu toplam`, `  ${one.total} | ${many.total} | tüm havuzlar`, `  ${one.incomingFixturePool} | ${many.incomingFixturePool} | (gelen Fixture istekleri — cache olmasaydı upstream)`].join('\n');
+function table(cols: [string, SimulationResult][]): string {
+  const keys = [...new Set(cols.flatMap(([, r]) => Object.keys(r.byPath)))].sort();
+  const cell = (n: number | undefined) => String(n ?? 0).padStart(6);
+  const head = cols.map(([name]) => name.padStart(6)).join(' |') + ' | path';
+  const rows = keys.map((k) => cols.map(([, r]) => cell(r.byPath[k])).join(' |') + ` | ${k}`);
+  return [
+    head,
+    ...rows,
+    cols.map(([, r]) => cell(r.fixturePool)).join(' |') + ' | Fixture havuzu toplam',
+    cols.map(([, r]) => cell(r.total)).join(' |') + ' | tüm havuzlar',
+  ].join('\n');
 }
 
 describe('KABUL — upstream istek sayısı ziyaretçi sayısından bağımsız (10 dk)', () => {
   const ORIGINAL_TOKEN = process.env.SPORTMONKS_API_KEY;
+  const ORIGINAL_ENABLED = process.env.NEXT_PUBLIC_SPORTMONKS_ENABLED;
   beforeEach(() => {
     process.env.SPORTMONKS_API_KEY = 'test-token';
+    process.env.NEXT_PUBLIC_SPORTMONKS_ENABLED = 'true';
     vi.useFakeTimers({ toFake: ['Date'] });
   });
   afterEach(() => {
@@ -122,24 +154,41 @@ describe('KABUL — upstream istek sayısı ziyaretçi sayısından bağımsız 
     vi.restoreAllMocks();
     if (ORIGINAL_TOKEN === undefined) delete process.env.SPORTMONKS_API_KEY;
     else process.env.SPORTMONKS_API_KEY = ORIGINAL_TOKEN;
+    if (ORIGINAL_ENABLED === undefined) delete process.env.NEXT_PUBLIC_SPORTMONKS_ENABLED;
+    else process.env.NEXT_PUBLIC_SPORTMONKS_ENABLED = ORIGINAL_ENABLED;
   });
 
   for (const scenario of ['quiet', 'live'] as const) {
     it(`${scenario === 'quiet' ? 'maçsız öğleden sonra' : 'canlı maç varken'}: 1 vs 20 ziyaretçi`, async () => {
       h.scenario = scenario;
-      const one = await run(1);
-      const many = await run(20);
-      if (process.env.ACCEPTANCE_VERBOSE) console.info(`\n[${scenario}]\n${table(one, many)}`);
-
-      // Her path için upstream sayısı TTL ile sınırlı: 20 ziyaretçi, 1 ziyaretçinin en fazla ~1,5 katı
-      // (fark yalnızca 20 sn'lik canlı skor TTL'inin 30 sn'lik polling aralığından kısa olmasından).
-      for (const [path, count] of Object.entries(many.byPath)) {
-        expect(count, path).toBeLessThanOrEqual(Math.ceil((one.byPath[path] ?? 0) * 1.5) + 1);
+      const bOne = await run(1, PRE_C_PATTERN);
+      const bMany = await run(20, PRE_C_PATTERN);
+      const one = await run(1, postCPattern(scenario));
+      const many = await run(20, postCPattern(scenario));
+      if (process.env.ACCEPTANCE_VERBOSE) {
+        console.info(
+          `\n[${scenario}] B = yalnız ortak cache (eski ana sayfa kalıbı), C = + normalize uç/akıllı polling\n` +
+            table([['B·1', bOne], ['B·20', bMany], ['C·1', one], ['C·20', many]]) +
+            `\n  gelen Fixture istekleri (cache olmasaydı upstream): B·1=${bOne.incomingFixturePool} B·20=${bMany.incomingFixturePool}`,
+        );
       }
-      expect(many.fixturePool).toBeLessThanOrEqual(Math.ceil(one.fixturePool * 1.5));
+
+      // Her path için upstream sayısı ziyaretçi sayısıyla değil, TTL ile sınırlı: 20 ziyaretçi, 1 ziyaretçinin
+      // en fazla ~1,5 katı (küçük sayılarda +5 pay). Fark yalnızca 20 sn'lik canlı skor TTL'inin polling
+      // aralığından kısa olmasından: ziyaretçiler ilk dakikaya yayıldığı için birkaç TTL penceresine denk gelir.
+      for (const result of [[bOne, bMany], [one, many]] as const) {
+        const [a, b] = result;
+        for (const [path, count] of Object.entries(b.byPath)) {
+          const base = a.byPath[path] ?? 0;
+          expect(count, path).toBeLessThanOrEqual(Math.max(Math.ceil(base * 1.5) + 1, base + 5));
+        }
+        expect(b.fixturePool).toBeLessThanOrEqual(Math.ceil(a.fixturePool * 1.5));
+      }
       // Mutlak üst sınır: 10 dk'da canlı skor en fazla 600/20 + 1 kez.
-      const inplay = many.byPath['football/livescores/inplay'] ?? 0;
-      expect(inplay).toBeLessThanOrEqual(31);
+      expect(many.byPath['football/livescores/inplay'] ?? 0).toBeLessThanOrEqual(31);
+      // C ana sayfada between'i kaldırır ve maçsız saatlerde polling'i seyreltir.
+      expect(Object.keys(many.byPath).some((k) => k === `football/fixtures/between/${TODAY}/${TODAY}`)).toBe(false);
+      expect(many.fixturePool).toBeLessThanOrEqual(bMany.fixturePool);
     });
   }
 });

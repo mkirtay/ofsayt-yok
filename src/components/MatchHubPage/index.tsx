@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useI18n, useTranslation } from '@/lib/i18n';
-import { useQueryClient } from '@tanstack/react-query';
 import {
   groupMatchesByLeague,
   mergeMatchesByIdForAllTab,
@@ -15,10 +14,8 @@ import {
   fetchCompetitionSidebarForSeason,
   useCompetitionSidebar,
 } from '@/hooks/useCompetitionSidebar';
-import {
-  refreshHomeHubLiveFixtures,
-  useHomeHubMatches,
-} from '@/hooks/useHomeHubMatches';
+import { useHomeHubMatches } from '@/hooks/useHomeHubMatches';
+import NextMatchDayNotice from '@/components/NextMatchDayNotice';
 import { useCompetitionFixtures } from '@/hooks/useCompetitionFixtures';
 import { buildFixtureDateGroups } from '@/utils/fixtureDateGroups';
 import { fixtureDateHeading } from '@/utils/fixtureDateLabel';
@@ -59,7 +56,7 @@ import AdSlot from '@/components/AdSlot';
 import EmptyState from '@/components/EmptyState';
 import { useLeagueFilter } from '@/hooks/useLeagueFilter';
 import { useTopScorersWithAppearances } from '@/hooks/useTopScorerAppearances';
-import { buildLeagueCatalog, filterMatchesByLeagues } from '@/utils/leagueFilter';
+import { activeCompetitionIds, buildLeagueCatalog, filterMatchesByLeagues } from '@/utils/leagueFilter';
 import styles from '@/pages/index.module.scss';
 
 type SidebarTab = 'standings' | 'leagues' | 'scorers';
@@ -82,7 +79,6 @@ export default function MatchHubPage({
   const { t: tg } = useTranslation('gundem');
   const { t: tl } = useTranslation('leagues');
   const { locale } = useI18n();
-  const queryClient = useQueryClient();
   const router = useRouter();
   const splitView = useSplitView();
   const gundemPanelWide = useMinWidth(GUNDEM_PANEL_MIN_WIDTH) === true;
@@ -132,12 +128,8 @@ export default function MatchHubPage({
 
   const [favoriteTeamIds, setFavoriteTeamIds] = useState<number[]>([]);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      void refreshHomeHubLiveFixtures(queryClient, selectedDate);
-    }, 30_000);
-    return () => clearInterval(interval);
-  }, [queryClient, selectedDate]);
+  // Polling `useHomeHubMatches` içinde (react-query `refetchInterval`): canlı/başlamak üzere maç varken
+  // 30 sn, yoksa 5 dk; sekme gizliyken durur.
 
   const handleSeasonChange = useCallback(async (seasonId: number) => {
     setSelectedSeasonId(seasonId);
@@ -169,6 +161,10 @@ export default function MatchHubPage({
   const liveMatches = homeMatchesQuery.data?.liveMatches ?? [];
   const fixtureMatches = homeMatchesQuery.data?.fixtureMatches ?? [];
   const matchesLoading = homeMatchesQuery.isLoading;
+  // Veri hiç gelmediyse iskelet yerine hata notu; önceki veri varken hata/eski veri → küçük "gecikmeli" notu.
+  const matchesFailed = homeMatchesQuery.isError && !homeMatchesQuery.data;
+  const matchesDelayed = Boolean(homeMatchesQuery.data) && (homeMatchesQuery.isError || Boolean(homeMatchesQuery.data?.stale));
+  const matchesUpdatedAt = homeMatchesQuery.dataUpdatedAt;
 
   const favoriteTeamSet = useMemo(() => new Set(favoriteTeamIds), [favoriteTeamIds]);
 
@@ -438,6 +434,21 @@ export default function MatchHubPage({
     handleSidebarTabChange('standings');
   }
 
+  /** Seçili gün (bugün ya da ileri) tümüyle boşsa sıradaki maç günü gösterilir — yalnız "Tümü" sekmesinde. */
+  const showNextMatchDay = activeTab === 'all' && selectedDate >= today();
+
+  const delayedNote = matchesDelayed ? (
+    <div className={styles.delayedNote} role="status">
+      {t('hub.dataDelayed', {
+        time: new Date(matchesUpdatedAt).toLocaleTimeString(locale === 'en' ? 'en-GB' : 'tr-TR', {
+          hour: '2-digit',
+          minute: '2-digit',
+          timeZone: 'Europe/Istanbul',
+        }),
+      })}
+    </div>
+  ) : null;
+
   const listNode = uefaFixtureMode ? (
     uefaFixturesQuery.isLoading ? (
       <MatchListSkeleton groups={5} />
@@ -457,6 +468,13 @@ export default function MatchHubPage({
         fitContent={splitView === false}
       />
     )
+  ) : matchesFailed ? (
+    <EmptyState>
+      {t('hub.loadFailed')}{' '}
+      <button type="button" className={styles.emptyAction} onClick={() => void homeMatchesQuery.refetch()}>
+        {t('hub.retry')}
+      </button>
+    </EmptyState>
   ) : matchesLoading ? (
     <MatchListSkeleton groups={5} />
   ) : activeTab === 'favorites' && favoriteTeamIds.length === 0 ? (
@@ -469,6 +487,14 @@ export default function MatchHubPage({
       <button type="button" className={styles.emptyAction} onClick={() => leagueFilter.selectMode('all')}>
         {t('hub.showAll')}
       </button>
+      {showNextMatchDay ? (
+        <NextMatchDayNotice from={selectedDate} leagueIds={activeCompetitionIds(leagueFilter.state)} onGoToDate={setSelectedDate} />
+      ) : null}
+    </EmptyState>
+  ) : showNextMatchDay && grouped.length === 0 ? (
+    <EmptyState>
+      {t('list.empty')}
+      <NextMatchDayNotice from={selectedDate} leagueIds={null} onGoToDate={setSelectedDate} />
     </EmptyState>
   ) : (
     <>
@@ -611,6 +637,7 @@ export default function MatchHubPage({
                   </button>
                 </div>
               ) : null}
+              {delayedNote}
               {listNode}
             </div>
             {showDetailPanel ? (
