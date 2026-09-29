@@ -2,6 +2,7 @@ import type { Match } from '@/models/liveScore';
 import type { MatchEvent } from '@/models/domain';
 import { prisma } from '@/lib/prisma';
 import { readCache, writeCache } from '@/lib/livescoreCache';
+import { cacheKeyPrefix } from '@/lib/cacheNamespace';
 import { isSportmonksProviderEnabled } from '@/services/sportmonksProviderFlag';
 import { isUnambiguousSportmonksId } from '@/services/sportmonks/fixtureIdRange';
 import {
@@ -24,7 +25,7 @@ export const MISSING_FIXTURE_CACHE_TTL_SECONDS = 60 * 60;
 /** Belirsiz bölgede (eski livescore id aralığı) "yok" neredeyse her zaman ölü eski URL demek — daha uzun. */
 export const MISSING_AMBIGUOUS_FIXTURE_CACHE_TTL_SECONDS = 24 * 60 * 60;
 
-const missingKey = (matchId: string) => `sportmonks:fixture-missing:${matchId}`;
+const missingKey = (matchId: string) => `${cacheKeyPrefix()}sportmonks:fixture-missing:${matchId}`;
 
 /**
  * Sunucu tarafı Sportmonks maç çözümü; "yok" cevabı negatif cache'lenir (Redis, yoksa in-memory),

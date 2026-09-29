@@ -17,7 +17,7 @@ export function getBotLeagueIds(env: string | undefined = process.env.GUNDEM_BOT
 /** Tick başına fixture başına en fazla bu kadar yeni taslak (ilk çalıştırma / uzun kesinti selini sınırlar). */
 export const MAX_NEW_DRAFTS_PER_FIXTURE = 5;
 
-/** Sezon golcü tablosu önbelleği (saniye) — `statsCache.ts` ile aynı 30 dk. */
+/** Sezon golcü tablosu önbelleği (saniye) — topscorers yanıtının paylaşımlı cache süresiyle aynı 30 dk (bkz. cachePolicy.ts). */
 export const SCORERS_CACHE_TTL_SECONDS = 30 * 60;
 
 /** VAR yeniden doğrulaması: golden sonra bu kadar dakika içindeki aynı takım VAR olayı taslağı eskitir (sezgisel). */

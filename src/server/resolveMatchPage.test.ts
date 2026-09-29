@@ -109,7 +109,7 @@ describe('resolveMatchPage — belirsiz bölge (eski id aralığı)', () => {
     expect(await resolveMatchPage('700001', 'eski-mac')).toEqual({ kind: 'gone' });
 
     expect(h.lookup).toHaveBeenCalledTimes(1);
-    expect(h.cache.get('sportmonks:fixture-missing:700001')?.ttl).toBe(24 * 60 * 60);
+    expect(h.cache.get('dev:v2:sportmonks:fixture-missing:700001')?.ttl).toBe(24 * 60 * 60);
   });
 
   it('geçici hata → error (410 verilmez, cache\'lenmez)', async () => {
@@ -132,6 +132,6 @@ describe('resolveMatchPage — kesin Sportmonks id (≥10M)', () => {
 
     h.lookup.mockResolvedValueOnce({ kind: 'missing' });
     expect(await resolveMatchPage('19999999', '')).toEqual({ kind: 'missing' });
-    expect(h.cache.get('sportmonks:fixture-missing:19999999')?.ttl).toBe(60 * 60);
+    expect(h.cache.get('dev:v2:sportmonks:fixture-missing:19999999')?.ttl).toBe(60 * 60);
   });
 });

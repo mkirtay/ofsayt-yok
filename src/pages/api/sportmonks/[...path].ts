@@ -1,20 +1,19 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { hitFixedWindowRateLimit, requestIp } from '@/lib/rateLimit';
-import { fetchLiveScoreCached, isLiveScorePath } from '@/services/sportmonks/liveScoreCache';
-import { fetchStatsCached, isStatsCacheable } from '@/services/sportmonks/statsCache';
-import { reportSportmonksQuota } from '@/services/sportmonks/quotaMonitor';
+import { fetchSportmonksCached, sportmonksCacheControl } from '@/server/sportmonks/cachedFetch';
 
 /**
  * Tarayıcıdan gelen Sportmonks isteklerini gerçek `api.sportmonks.com`'a
- * yönlendirir — `SPORTMONKS_API_KEY` yalnızca burada, sunucu tarafında
- * okunur ve eklenir; istemciye asla gitmez (bkz. sportmonksRuntimeClient.ts).
- * `/api/livescore/[...path].ts` ile aynı proxy deseni. Cache YALNIZCA canlı skor
- * (`livescores/inplay`) için (bkz. services/sportmonks/liveScoreCache.ts);
- * gerçek upstream isteklerinin kotası burada Sentry'ye raporlanıyor
- * (bkz. quotaMonitor.ts).
+ * yönlendirir — `SPORTMONKS_API_KEY` yalnızca sunucuda eklenir; istemciye asla
+ * gitmez (bkz. sportmonksRuntimeClient.ts).
+ *
+ * Tüm GET'ler paylaşımlı cache'ten geçer (bkz. server/sportmonks/cachedFetch.ts —
+ * sunucu içi çağrılarla AYNI cache): süre endpoint'e ve maç durumuna göre, aynı
+ * anda gelen aynı istekler tek upstream isteğine iner, Sportmonks hata verirse son
+ * geçerli veri döner. `Cache-Control: s-maxage` ile Vercel edge tekrarları fonksiyona
+ * uğramadan karşılar. Yanıttan `subscription`/`rate_limit` çıkarılır; kota Sentry'ye
+ * cache katmanından raporlanır.
  */
-const SPORTMONKS_BASE = 'https://api.sportmonks.com/v3';
-
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method && req.method.toUpperCase() !== 'GET') {
     return res.status(405).json({ message: 'Method not allowed' });
@@ -35,55 +34,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(429).json({ message: 'Too many requests' });
     }
 
-    const apiToken = process.env.SPORTMONKS_API_KEY;
-    if (!apiToken) {
+    if (!process.env.SPORTMONKS_API_KEY) {
       return res.status(500).json({ message: 'Missing Sportmonks API credentials' });
     }
 
-    const query = new URLSearchParams();
-    Object.entries(req.query).forEach(([key, value]) => {
-      if (key === 'path' || key === 'api_token') return;
-      if (Array.isArray(value)) {
-        value.forEach((item) => query.append(key, item));
-      } else if (value !== undefined) {
-        query.append(key, String(value));
-      }
-    });
-    query.set('api_token', apiToken);
+    const query: Record<string, string | string[] | undefined> = { ...req.query };
+    delete query.path;
+    delete query.api_token;
 
-    // Tek gerçek upstream çağrısı — kota buradan raporlanır (tarayıcı tarafı raporlamaz).
-    const callUpstream = async () => {
-      const upstream = await fetch(`${SPORTMONKS_BASE}/${path}?${query.toString()}`);
-      const data = await upstream.json();
-      const rl = (data as { rate_limit?: { requested_entity: string; remaining: number; resets_in_seconds: number } })
-        ?.rate_limit;
-      if (rl) {
-        reportSportmonksQuota({
-          pool: rl.requested_entity,
-          remaining: rl.remaining,
-          resetsInSeconds: rl.resets_in_seconds,
-          path: `/${path}`,
-        });
-      }
-      return { status: upstream.status, data };
-    };
-
-    if (isLiveScorePath(path)) {
-      const result = await fetchLiveScoreCached(req.query, callUpstream);
-      res.setHeader('X-Cache', result.cache);
-      return res.status(result.status).json(result.data);
-    }
-
-    if (isStatsCacheable(path, req.query)) {
-      const result = await fetchStatsCached(path, req.query, callUpstream);
-      res.setHeader('X-Cache', result.cache);
-      return res.status(result.status).json(result.data);
-    }
-
-    const upstream = await callUpstream();
-    res.status(upstream.status).json(upstream.data);
+    const result = await fetchSportmonksCached(path, query, { origin: 'proxy' });
+    res.setHeader('Cache-Control', sportmonksCacheControl(result));
+    res.setHeader('X-Cache', result.cache);
+    if (result.stale) res.setHeader('X-Data-Stale', '1');
+    return res.status(result.status).json(result.body);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Proxy error';
-    res.status(500).json({ message });
+    res.setHeader('Cache-Control', 'no-store');
+    return res.status(500).json({ message });
   }
 }

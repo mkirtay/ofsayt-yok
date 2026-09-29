@@ -16,7 +16,7 @@ import type { SportmonksFixture } from './types';
 
 export const TEAM_UPCOMING_INCLUDE = 'upcoming.participants;upcoming.league;upcoming.state';
 
-/** Proxy (Redis) cache süresi ve istemci `staleTime` — bkz. statsCache.ts. */
+/** İstemci `staleTime` — paylaşımlı cache `upcoming` include'lu takım yanıtını 15 dk tutuyor (bkz. cachePolicy.ts). */
 export const TEAM_UPCOMING_CACHE_TTL_SECONDS = 10 * 60;
 
 export type SportmonksTeamWithUpcoming = {

@@ -25,6 +25,8 @@ export type QuotaObservation = {
   remaining: number;
   resetsInSeconds: number;
   path: string;
+  /** Upstream isteği neden oldu: tarayıcı proxy'si mi, sunucu (SSR/API/cron) mu. */
+  origin?: 'proxy' | 'server';
 };
 
 export type QuotaLevel = 'ok' | 'warning' | 'error';
@@ -44,7 +46,13 @@ export function reportSportmonksQuota(obs: QuotaObservation, now: number = Date.
     category: 'sportmonks.quota',
     level: level === 'ok' ? 'info' : level,
     message: `havuz=${obs.pool} kalan=${obs.remaining}`,
-    data: { pool: obs.pool, remaining: obs.remaining, resetsInSeconds: obs.resetsInSeconds, path: obs.path },
+    data: {
+      pool: obs.pool,
+      remaining: obs.remaining,
+      resetsInSeconds: obs.resetsInSeconds,
+      path: obs.path,
+      ...(obs.origin ? { origin: obs.origin } : {}),
+    },
   });
 
   if (level === 'ok') return level;
@@ -57,6 +65,7 @@ export function reportSportmonksQuota(obs: QuotaObservation, now: number = Date.
   Sentry.withScope((scope) => {
     scope.setTag('sportmonks.pool', obs.pool);
     scope.setTag('sportmonks.quota_level', level);
+    if (obs.origin) scope.setTag('sportmonks.origin', obs.origin);
     scope.setLevel(level);
     scope.setExtras({
       remaining: obs.remaining,
