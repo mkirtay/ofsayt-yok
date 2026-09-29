@@ -1,0 +1,503 @@
+[
+ {
+  "match": "Galatasaray v Trabzonspor",
+  "af": 1237986,
+  "sm": 19172147,
+  "status": {
+   "af": {
+    "long": "Match Finished",
+    "short": "FT",
+    "elapsed": 90,
+    "extra": 11
+   },
+   "sm": "FT (id 5)"
+  },
+  "score": {
+   "af": {
+    "goals": {
+     "home": 4,
+     "away": 3
+    },
+    "halftime": {
+     "home": 2,
+     "away": 1
+    },
+    "fulltime": {
+     "home": 4,
+     "away": 3
+    },
+    "extratime": {
+     "home": null,
+     "away": null
+    },
+    "penalty": {
+     "home": null,
+     "away": null
+    }
+   },
+   "sm": {
+    "1ST_HALF": "2-1",
+    "2ND_HALF": "4-3",
+    "CURRENT": "4-3",
+    "2ND_HALF_ONLY": "2-2"
+   }
+  },
+  "round": {
+   "af": "Regular Season - 16",
+   "sm": "round=16 stage=Regular Season"
+  },
+  "referee": {
+   "af": "K. Sağlam",
+   "sm": "6:K. Sağlam, 7:C. Elbil, 8:A. Usta, 9:E. Mertoğlu"
+  },
+  "venue": {
+   "af": {
+    "id": 22761,
+    "name": "RAMS Park",
+    "city": "İstanbul"
+   },
+   "sm": {
+    "id": 9667,
+    "name": "Rams Park",
+    "city": "İstanbul",
+    "capacity": 53978
+   }
+  },
+  "events": {
+   "af": "23 {\"Goal/Normal Goal\":5,\"Card/Yellow Card\":6,\"subst/Substitution 1\":2,\"Var/Penalty confirmed\":1,\"Goal/Penalty\":1,\"subst/Substitution 2\":2,\"subst/Substitution 3\":2,\"subst/Substitution 4\":2,\"subst/Substitution 5\":1,\"Goal/Own Goal\":1}",
+   "sm": "25 {\"10\":1,\"14\":5,\"15\":1,\"16\":1,\"18\":9,\"19\":8}"
+  },
+  "smSubs": [
+   "46' player=Denis Drăguș[BENCH] related=Edin Visca[XI]",
+   "59' player=Michy Batshuayi[BENCH] related=Elias Jelert[XI]",
+   "75' player=Ismail Jakobs[BENCH] related=Berkan Kutlu[XI]"
+  ],
+  "stats": {
+   "af": "Shots on Goal=11; Shots off Goal=3; Total Shots=22; Blocked Shots=8; Shots insidebox=15; Shots outsidebox=7; Fouls=13; Corner Kicks=10; Offsides=3; Ball Possession=58%; Yellow Cards=3; Red Cards=null; Goalkeeper Saves=2; Total passes=397; Passes accurate=319; Passes %=80%; expected_goals=2.55; goals_prevented=-1.46",
+   "smTypeCount": 43
+  },
+  "lineups": {
+   "af": [
+    {
+     "team": "Galatasaray",
+     "formation": "4-2-3-1",
+     "grid": 11,
+     "pos": "GDDDDMMMMMF",
+     "bench": 10
+    },
+    {
+     "team": "Trabzonspor",
+     "formation": "4-2-3-1",
+     "grid": 11,
+     "pos": "GDDDDMMMMMF",
+     "bench": 10
+    }
+   ],
+   "sm": [
+    {
+     "team": "Galatasaray",
+     "formation": "4-2-3-1",
+     "xi": 11,
+     "grid": 11,
+     "bench": 10
+    },
+    {
+     "team": "Trabzonspor",
+     "formation": "4-2-3-1",
+     "xi": 11,
+     "grid": 11,
+     "bench": 10
+    }
+   ]
+  },
+  "ratingsSample": [
+   "home#1 Fernando Muslera: AF=6.5 SM=5.92",
+   "home#4 Ismail Jakobs: AF=6.6 SM=6.37",
+   "home#7 Roland Sallai: AF=7.2 SM=6.84",
+   "home#8 Kerem Demirbay: AF=6.9 SM=6.95",
+   "home#10 Dries Mertens: AF=8.9 SM=8.52",
+   "home#11 Yunus Akgün: AF=7.9 SM=7.53",
+   "home#18 Berkan Kutlu: AF=6.3 SM=6.87",
+   "home#20 Gabriel Sara: AF=7 SM=7.22"
+  ],
+  "ratingsCount": {
+   "af": 29,
+   "sm": 31
+  },
+  "posSample": "1:1:24 4:3:154 4:2:163 4:1:156 2:4:153 3:2:153 2:2:148 2:1:154 3:1:149 2:3:148 5:1:152"
+ },
+ {
+  "match": "Paris Saint Germain v Inter",
+  "af": 1374812,
+  "sm": 19391309,
+  "status": {
+   "af": {
+    "long": "Match Finished",
+    "short": "FT",
+    "elapsed": 90,
+    "extra": 1
+   },
+   "sm": "FT (id 5)"
+  },
+  "score": {
+   "af": {
+    "goals": {
+     "home": 5,
+     "away": 0
+    },
+    "halftime": {
+     "home": 2,
+     "away": 0
+    },
+    "fulltime": {
+     "home": 5,
+     "away": 0
+    },
+    "extratime": {
+     "home": null,
+     "away": null
+    },
+    "penalty": {
+     "home": null,
+     "away": null
+    }
+   },
+   "sm": {
+    "1ST_HALF": "2-0",
+    "2ND_HALF": "5-0",
+    "CURRENT": "5-0",
+    "2ND_HALF_ONLY": "3-0"
+   }
+  },
+  "round": {
+   "af": "Final",
+   "sm": "round=null stage=Final"
+  },
+  "referee": {
+   "af": "I. Kovács",
+   "sm": "6:I. Kovacs"
+  },
+  "venue": {
+   "af": {
+    "id": 700,
+    "name": "Allianz Arena",
+    "city": "München"
+   },
+   "sm": {
+    "id": 53,
+    "name": "Allianz Arena",
+    "city": "Munich",
+    "capacity": 75024
+   }
+  },
+  "events": {
+   "af": "20 {\"Goal/Normal Goal\":5,\"subst/Substitution 1\":2,\"subst/Substitution 2\":2,\"Card/Yellow Card\":5,\"subst/Substitution 3\":2,\"subst/Substitution 4\":2,\"subst/Substitution 5\":2}",
+   "sm": "22 {\"14\":5,\"18\":10,\"19\":7}"
+  },
+  "smSubs": [
+   "54' player=Yann Bisseck[BENCH] related=Benjamin Pavard[XI]",
+   "54' player=Nicola Zalewski[BENCH] related=Federico Dimarco[XI]",
+   "62' player=Carlos Augusto[BENCH] related=Henrikh Mkhitaryan[XI]"
+  ],
+  "stats": {
+   "af": "Shots on Goal=8; Shots off Goal=12; Total Shots=23; Blocked Shots=3; Shots insidebox=20; Shots outsidebox=3; Fouls=13; Corner Kicks=4; Offsides=0; Ball Possession=59%; Yellow Cards=2; Red Cards=null; Goalkeeper Saves=2; Total passes=531; Passes accurate=466; Passes %=88%; expected_goals=3.12; goals_prevented=-2.11",
+   "smTypeCount": 40
+  },
+  "lineups": {
+   "af": [
+    {
+     "team": "Paris Saint Germain",
+     "formation": "4-3-3",
+     "grid": 11,
+     "pos": "GDDDDMMMFFF",
+     "bench": 11
+    },
+    {
+     "team": "Inter",
+     "formation": "3-5-2",
+     "grid": 11,
+     "pos": "GDDDMMMMMFF",
+     "bench": 12
+    }
+   ],
+   "sm": [
+    {
+     "team": "Paris Saint Germain",
+     "formation": "4-3-3",
+     "xi": 11,
+     "grid": 11,
+     "bench": 11
+    },
+    {
+     "team": "Inter",
+     "formation": "3-5-2",
+     "xi": 11,
+     "grid": 11,
+     "bench": 12
+    }
+   ]
+  },
+  "ratingsSample": [
+   "home#1 Gianluigi Donnarumma: AF=7.2 SM=7.06",
+   "home#2 Achraf Hakimi: AF=8 SM=7.85",
+   "home#5 Marquinhos: AF=7.7 SM=7.46",
+   "home#7 Khvicha Kvaratskhelia: AF=7.2 SM=7.42",
+   "home#8 Fabián Ruiz: AF=7.5 SM=7.35",
+   "home#9 Gonçalo Ramos: AF=- SM=6.5",
+   "home#10 Ousmane Dembélé: AF=8.2 SM=7.83",
+   "home#14 Désiré Doué: AF=9.9 SM=9.58"
+  ],
+  "ratingsCount": {
+   "af": 30,
+   "sm": 32
+  },
+  "posSample": "1:1:24 2:1:154 2:2:148 4:3:152 3:3:153 4:2:151 4:1:156 3:2:149 2:4:155 2:3:148 3:1:153"
+ },
+ {
+  "match": "Trabzonspor v Galatasaray",
+  "af": 1373028,
+  "sm": 19397484,
+  "status": {
+   "af": {
+    "long": "Match Finished",
+    "short": "FT",
+    "elapsed": 90,
+    "extra": 4
+   },
+   "sm": "FT (id 5)"
+  },
+  "score": {
+   "af": {
+    "goals": {
+     "home": 0,
+     "away": 3
+    },
+    "halftime": {
+     "home": 0,
+     "away": 1
+    },
+    "fulltime": {
+     "home": 0,
+     "away": 3
+    },
+    "extratime": {
+     "home": null,
+     "away": null
+    },
+    "penalty": {
+     "home": null,
+     "away": null
+    }
+   },
+   "sm": {
+    "1ST_HALF": "0-1",
+    "2ND_HALF": "0-3",
+    "CURRENT": "0-3",
+    "2ND_HALF_ONLY": "0-2"
+   }
+  },
+  "round": {
+   "af": "Final",
+   "sm": "round=null stage=Final"
+  },
+  "referee": {
+   "af": "C. Aydın",
+   "sm": "6:C. Aydın, 7:H. Yemişken, 8:M. Savranlar, 9:O. Ergün"
+  },
+  "venue": {
+   "af": {
+    "id": 2375,
+    "name": "Gaziantep Stadyumu",
+    "city": "Gaziantep"
+   },
+   "sm": {
+    "id": 72011,
+    "name": "Gaziantep Stadyumu",
+    "city": "Gaziantep",
+    "capacity": 33502
+   }
+  },
+  "events": {
+   "af": "19 {\"Goal/Normal Goal\":3,\"Card/Yellow Card\":5,\"subst/Substitution 1\":2,\"subst/Substitution 2\":2,\"subst/Substitution 3\":2,\"subst/Substitution 4\":2,\"Var/Goal Disallowed - offside\":1,\"subst/Substitution 5\":2}",
+   "sm": "19 {\"10\":1,\"14\":3,\"18\":10,\"19\":5}"
+  },
+  "smSubs": [
+   "45' player=John Lundstram[BENCH] related=Arseniy Batagov[XI]",
+   "60' player=Denis Drăguș[BENCH] related=Okay Yokuşlu[XI]",
+   "60' player=Edin Visca[BENCH] related=Simon Banza[XI]"
+  ],
+  "stats": {
+   "af": "(yok)",
+   "smTypeCount": 35
+  },
+  "lineups": {
+   "af": [
+    {
+     "team": "Trabzonspor",
+     "formation": null,
+     "grid": 0,
+     "pos": "-----------",
+     "bench": 10
+    },
+    {
+     "team": "Galatasaray",
+     "formation": null,
+     "grid": 0,
+     "pos": "-----------",
+     "bench": 10
+    }
+   ],
+   "sm": [
+    {
+     "team": "Trabzonspor",
+     "formation": "4-2-3-1",
+     "xi": 11,
+     "grid": 11,
+     "bench": 10
+    },
+    {
+     "team": "Galatasaray",
+     "formation": "4-2-3-1",
+     "xi": 11,
+     "grid": 11,
+     "bench": 10
+    }
+   ]
+  },
+  "ratingsSample": [
+   "away#4 Ismail Jakobs: AF=- SM=6.56",
+   "away#6 Davinson Sánchez: AF=- SM=7.39",
+   "away#7 Roland Sallai: AF=- SM=6.6",
+   "away#8 Kerem Demirbay: AF=- SM=6.56",
+   "away#10 Dries Mertens: AF=- SM=6.5",
+   "away#11 Yunus Akgün: AF=- SM=8.74",
+   "away#17 Eren Elmalı: AF=- SM=6.95",
+   "away#19 Günay Güvenç: AF=- SM=6.93"
+  ],
+  "ratingsCount": {
+   "af": 0,
+   "sm": 32
+  },
+  "posSample": "1:1:24 3:1:149 4:3:152 4:2:153 2:2:148 5:1:151 2:4:155 4:1:156 3:2:149 2:3:148 2:1:154"
+ },
+ {
+  "match": "Bursaspor v Vanspor FK",
+  "af": 1315108,
+  "sm": 19326542,
+  "status": {
+   "af": {
+    "long": "Match Finished",
+    "short": "PEN",
+    "elapsed": 120,
+    "extra": null
+   },
+   "sm": "FTP (id 8)"
+  },
+  "score": {
+   "af": {
+    "goals": {
+     "home": 2,
+     "away": 2
+    },
+    "halftime": {
+     "home": 0,
+     "away": 0
+    },
+    "fulltime": {
+     "home": 1,
+     "away": 2
+    },
+    "extratime": {
+     "home": 1,
+     "away": 0
+    },
+    "penalty": {
+     "home": 6,
+     "away": 7
+    }
+   },
+   "sm": {
+    "1ST_HALF": "0-0",
+    "2ND_HALF": "2-2",
+    "ET": "0-0",
+    "PENALTY_SHOOTOUT": "6-7",
+    "CURRENT": "2-2",
+    "2ND_HALF_ONLY": "2-2"
+   }
+  },
+  "round": {
+   "af": "4th Round",
+   "sm": "round=null stage=4th Round"
+  },
+  "referee": {
+   "af": "K. Kara",
+   "sm": "6:K. Kara, 7:E. Erbay, 8:F. Yüzbaşı, 9:Y. Çiftçi"
+  },
+  "venue": {
+   "af": {
+    "id": 20424,
+    "name": "Yüzüncü Yıl Atatürk Sütaş Stadyumu",
+    "city": "Bursa"
+   },
+   "sm": {
+    "id": 72152,
+    "name": "Atatürk Spor Kompleksi Matlı Stadyumu",
+    "city": "Bursa",
+    "capacity": 45000
+   }
+  },
+  "events": {
+   "af": "67 {\"subst/Substitution 1\":2,\"subst/Substitution 2\":2,\"subst/Substitution 3\":2,\"Goal/Normal Goal\":4,\"subst/Substitution 4\":2,\"subst/Substitution 5\":2,\"subst/Substitution 6\":1,\"Goal/Missed Penalty\":39,\"Goal/Penalty\":13}",
+   "sm": "36 {\"14\":4,\"18\":11,\"19\":5,\"22\":3,\"23\":13}"
+  },
+  "smSubs": [
+   "46' player=Bilal Güney[BENCH] related=Eren Tunali[XI]",
+   "46' player=Burak Kavlak[BENCH] related=Onur Ozcan[XI]",
+   "46' player=Mert Örnek[BENCH] related=Hasan Bilal[XI]"
+  ],
+  "stats": {
+   "af": "(yok)",
+   "smTypeCount": 11
+  },
+  "lineups": {
+   "af": [
+    {
+     "team": "Bursaspor",
+     "formation": "4-2-3-1",
+     "grid": 11,
+     "pos": "GFDDDMMMMFF",
+     "bench": 10
+    },
+    {
+     "team": "Van BB",
+     "formation": "4-2-3-1",
+     "grid": 11,
+     "pos": "GDDDDMMFMFF",
+     "bench": 10
+    }
+   ],
+   "sm": [
+    {
+     "team": "Bursaspor",
+     "formation": "4-2-3-1",
+     "xi": 11,
+     "grid": 11,
+     "bench": 10
+    },
+    {
+     "team": "Vanspor FK",
+     "formation": "4-2-3-1",
+     "xi": 11,
+     "grid": 11,
+     "bench": 10
+    }
+   ]
+  },
+  "ratingsSample": [],
+  "ratingsCount": {
+   "af": 0,
+   "sm": 0
+  },
+  "posSample": "3:1:149 2:1:154 3:2:153 4:1:150 4:2:150 5:1:151 2:4:154 2:2:148 2:3:148 4:3:152 1:1:24"
+ }
+]
