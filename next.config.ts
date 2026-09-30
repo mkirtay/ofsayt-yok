@@ -30,7 +30,8 @@ const nextConfig: NextConfig = {
 };
 
 export default withSentryConfig(nextConfig, {
-  silent: true,
+  // CI'da (Vercel build) Sentry çıktısı görünsün: kaynak haritası yüklemesi build loglarından doğrulanabilsin.
+  silent: !process.env.CI,
   org: process.env.SENTRY_ORG,
   project: process.env.SENTRY_PROJECT,
   authToken: process.env.SENTRY_AUTH_TOKEN,
