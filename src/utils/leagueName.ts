@@ -39,19 +39,23 @@ export function leagueSearchTerms(league: NamedLeague, t: LeagueTranslate): stri
  * Sportmonks `league_id` ile satır içi (kısa) lig adı: tr "Süper Lig" / "Şampiyonlar Ligi", en "Süper Lig" / "Champions League".
  * `t` = `useTranslation('leagues').t`. Eşlemesi ya da çevirisi olmayan lig → API adı (sessiz yedek).
  * Sportmonks kapalıyken id legacy `competition_id` olur (2 = Premier Lig, Sportmonks'ta 2 = UCL) → eşleme yapılmaz.
+ * `variant: 'full'` grup dahil tam ad verir ("2. Lig Kırmızı Grup") — yalnızca maç detay / puan durumu başlığı; liste ve kartlar kısa.
  * Kullanım yerleri: takım detay başlığı + Puan Durumu başlığı + Ligler sekmesi, takım Fikstür satırı, maç detay kartı başlığı.
  */
 export function leagueNameById(
   leagueId: number | string | null | undefined,
   apiName: string | null | undefined,
   t: LeagueTranslate,
+  variant: 'short' | 'full' = 'short',
 ): string {
   const key =
     leagueId != null && isSportmonksProviderEnabled() ? SPORTMONKS_LEAGUE_NAME_KEYS[Number(leagueId)] : undefined;
   if (key) {
-    const k = `short.${key}`;
-    const value = t(k);
-    if (value !== k) return value;
+    // `full` yalnızca farklı olanlarda var ("2. Lig Kırmızı Grup"); yoksa kısa ad.
+    for (const k of variant === 'full' ? [`full.${key}`, `short.${key}`] : [`short.${key}`]) {
+      const value = t(k);
+      if (value !== k) return value;
+    }
   }
   return apiName?.trim() ?? '';
 }

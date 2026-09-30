@@ -319,7 +319,7 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
 
   const selectedCompName = useMemo(() => {
     const comp = competitions.find((c) => String(c.id) === selectedCompetitionId);
-    return comp ? leagueNameById(comp.id, comp.name, tl) : '';
+    return comp ? leagueNameById(comp.id, comp.name, tl, 'full') : '';
   }, [competitions, selectedCompetitionId, tl]);
 
   const teamPageTitle = `${teamInfo.name} — Takım Detayı | Ofsayt Yok`;

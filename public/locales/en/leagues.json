@@ -22,6 +22,33 @@
     "ligue1": "Ligue 1",
     "championsLeague": "Champions League",
     "europaLeague": "Europa League",
-    "conferenceLeague": "Conference League"
+    "conferenceLeague": "Conference League",
+    "championship": "Championship",
+    "eredivisie": "Eredivisie",
+    "bundesliga2": "2. Bundesliga",
+    "belgiumProLeague": "Belgian Pro League",
+    "czechLiga": "Czech Chance Liga",
+    "denmarkSuperliga": "Danish Superliga",
+    "ligue2": "Ligue 2",
+    "greeceSuperLeague": "Greek Super League",
+    "serieB": "Serie B",
+    "ligaPortugal": "Liga Portugal",
+    "scotlandPremiership": "Scottish Premiership",
+    "laLiga2": "La Liga 2",
+    "copaDelRey": "Copa del Rey",
+    "allsvenskan": "Allsvenskan",
+    "switzerlandSuperLeague": "Swiss Super League",
+    "ukrainePremier": "Ukrainian Premier League",
+    "argentinaLiga": "Argentine Liga Profesional",
+    "brazilSerieA": "Brazilian Serie A",
+    "mls": "MLS",
+    "saudiProLeague": "Saudi Pro League",
+    "secondLeagueWhite": "2. Lig White",
+    "secondLeagueRed": "2. Lig Red",
+    "uefaSuperCup": "UEFA Super Cup"
+  },
+  "full": {
+    "secondLeagueWhite": "2. Lig White Group",
+    "secondLeagueRed": "2. Lig Red Group"
   }
 }

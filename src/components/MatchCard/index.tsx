@@ -165,7 +165,7 @@ export default function MatchCard({ match, loading }: MatchCardProps) {
     return <div className={styles.matchCard}>{t('noMatchInfo')}</div>;
   }
 
-  const compName = leagueNameById(match.competition?.id, match.competition?.name, tl);
+  const compName = leagueNameById(match.competition?.id, match.competition?.name, tl, 'full');
   const compLogo = match.competition?.logo;
   const country = match.country;
   const showCountryFlag = !compLogo && country?.id != null;

@@ -269,7 +269,7 @@ export default function MatchDetail({ initialMatch, gone = false, archived = fal
                 <MatchCompetitionStandings
                   data={standings}
                   loading={standingsLoading || matchLoading}
-                  competitionName={leagueNameById(compId, match?.competition?.name ?? match?.competition_name, tl)}
+                  competitionName={leagueNameById(compId, match?.competition?.name ?? match?.competition_name, tl, 'full')}
                   homeTeamId={homeTeamId}
                   awayTeamId={awayTeamId}
                   seasons={seasons}

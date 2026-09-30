@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { leagueDisplayName, leagueNameById, leagueSearchTerms } from './leagueName';
 import { SPORTMONKS_LEAGUE_NAME_KEYS } from '@/config/leagueNameKeys';
 import { COMPARE_LEAGUE_GROUPS, SIDEBAR_LEAGUES, UEFA_SIDEBAR_LEAGUES } from '@/config/leagues';
+import accessible from '@/config/__fixtures__/accessibleLeagues.json';
 import trLeagues from '../../public/locales/tr/leagues.json';
 import enLeagues from '../../public/locales/en/leagues.json';
 
@@ -31,8 +32,12 @@ describe('lig adı çeviri kataloğu', () => {
 
   it('hiçbir çeviri boş değil', () => {
     for (const dict of [trLeagues, enLeagues]) {
-      const { short, ...flat } = dict;
-      for (const [k, v] of [...Object.entries(flat), ...Object.entries(short).map(([sk, sv]) => [`short.${sk}`, sv])]) {
+      const { short, full, ...flat } = dict;
+      const nested = [
+        ...Object.entries(short).map(([sk, sv]) => [`short.${sk}`, sv]),
+        ...Object.entries(full).map(([fk, fv]) => [`full.${fk}`, fv]),
+      ];
+      for (const [k, v] of [...Object.entries(flat), ...nested]) {
         expect(typeof v === 'string' && v.trim().length > 0, k).toBe(true);
       }
     }
@@ -130,5 +135,40 @@ describe('leagueNameById (Sportmonks league_id → kısa ad)', () => {
       expect(trLeagues.short, `tr short.${key}`).toHaveProperty(key);
       expect(enLeagues.short, `en short.${key}`).toHaveProperty(key);
     }
+  });
+});
+
+describe('planımızdaki 34 lig (accessibleLeagues.json) — ham ad kalmaz', () => {
+  beforeEach(() => vi.stubEnv('NEXT_PUBLIC_SPORTMONKS_ENABLED', 'true'));
+  afterEach(() => vi.unstubAllEnvs());
+
+  it('her ligin anahtarı var, tr ve en kısa adı dolu', () => {
+    expect(accessible.leagues).toHaveLength(34);
+    for (const l of accessible.leagues) {
+      const key = SPORTMONKS_LEAGUE_NAME_KEYS[l.id];
+      expect(key, `${l.id} ${l.name}`).toBeTruthy();
+      expect((trLeagues.short as Record<string, string>)[key!], `tr ${key}`).toBeTruthy();
+      expect((enLeagues.short as Record<string, string>)[key!], `en ${key}`).toBeTruthy();
+    }
+  });
+
+  it('aynı ham adı taşıyan ligler (Super League, Pro League, Premier League, Serie A) birbirinden ayrışır', () => {
+    const t = translator(trLeagues);
+    const byRaw = new Map<string, string[]>();
+    for (const l of accessible.leagues) {
+      byRaw.set(l.name, [...(byRaw.get(l.name) ?? []), leagueNameById(l.id, l.name, t)]);
+    }
+    for (const names of byRaw.values()) expect(new Set(names).size).toBe(names.length);
+  });
+
+  it('2. Lig: ham "Kirmizi" yerine Türkçe — kısa "2. Lig Kırmızı", tam "2. Lig Kırmızı Grup"', () => {
+    const t = translator(trLeagues);
+    expect(leagueNameById(1283, '2. Lig: Kirmizi', t)).toBe('2. Lig Kırmızı');
+    expect(leagueNameById(1283, '2. Lig: Kirmizi', t, 'full')).toBe('2. Lig Kırmızı Grup');
+    expect(leagueNameById(1282, '2. Lig: Beyaz', t, 'full')).toBe('2. Lig Beyaz Grup');
+  });
+
+  it('tam ad yoksa kısa ada düşer', () => {
+    expect(leagueNameById(600, 'Super Lig', translator(trLeagues), 'full')).toBe('Süper Lig');
   });
 });

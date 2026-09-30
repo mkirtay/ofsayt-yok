@@ -22,6 +22,33 @@
     "ligue1": "Ligue 1",
     "championsLeague": "Şampiyonlar Ligi",
     "europaLeague": "UEFA Avrupa Ligi",
-    "conferenceLeague": "UEFA Konferans Ligi"
+    "conferenceLeague": "UEFA Konferans Ligi",
+    "championship": "Championship",
+    "eredivisie": "Eredivisie",
+    "bundesliga2": "2. Bundesliga",
+    "belgiumProLeague": "Belçika Pro Ligi",
+    "czechLiga": "Çekya Chance Liga",
+    "denmarkSuperliga": "Danimarka Superliga",
+    "ligue2": "Ligue 2",
+    "greeceSuperLeague": "Yunanistan Süper Ligi",
+    "serieB": "Serie B",
+    "ligaPortugal": "Liga Portugal",
+    "scotlandPremiership": "İskoçya Premiership",
+    "laLiga2": "La Liga 2",
+    "copaDelRey": "İspanya Kupası",
+    "allsvenskan": "Allsvenskan",
+    "switzerlandSuperLeague": "İsviçre Süper Ligi",
+    "ukrainePremier": "Ukrayna Premier Ligi",
+    "argentinaLiga": "Arjantin Liga Profesional",
+    "brazilSerieA": "Brezilya Serie A",
+    "mls": "MLS",
+    "saudiProLeague": "Suudi Pro Ligi",
+    "secondLeagueWhite": "2. Lig Beyaz",
+    "secondLeagueRed": "2. Lig Kırmızı",
+    "uefaSuperCup": "UEFA Süper Kupa"
+  },
+  "full": {
+    "secondLeagueWhite": "2. Lig Beyaz Grup",
+    "secondLeagueRed": "2. Lig Kırmızı Grup"
   }
 }
