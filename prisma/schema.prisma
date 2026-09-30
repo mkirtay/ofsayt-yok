@@ -32,6 +32,12 @@ model User {
   credits            Int      @default(5)
   favoriteTeamIds    Int[]
   favoriteLeagueIds  Int[]
+  /// Kayıt kaynağı (ilk temas): kayıt oturumunun ilk sayfasındaki utm_* değerleri ve o oturumun ilk giriş
+  /// zamanı. Tarayıcıda yalnız oturum boyunca (sessionStorage) tutulur; kayıtta bir kez yazılır.
+  signupUtmSource    String?
+  signupUtmMedium    String?
+  signupUtmCampaign  String?
+  firstTouchAt       DateTime?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   accounts      Account[]

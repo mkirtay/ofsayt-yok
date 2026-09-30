@@ -12,7 +12,7 @@
       },
       {
         "heading": "2. Toplanan Veriler",
-        "body": "Hesap oluşturduğunuzda ad/kullanıcı adı, e-posta adresi ve şifre (şifrelenmiş olarak); siteyi kullanırken favori takım/lig tercihleri, yorum ve oylama etkinliğiniz, kredi bakiyeniz ile IP adresi ve tarayıcı bilgileri gibi teknik veriler toplanabilir."
+        "body": "Hesap oluşturduğunuzda ad/kullanıcı adı, e-posta adresi ve şifre (şifrelenmiş olarak); siteyi kullanırken favori takım/lig tercihleri, yorum ve oylama etkinliğiniz, kredi bakiyeniz ile IP adresi ve tarayıcı bilgileri gibi teknik veriler toplanabilir. Hesap oluşturduğunuzda sizi siteye hangi kampanya bağlantısının getirdiği (utm kaynak/ortam/kampanya) ve bu ziyaretin başlama zamanı hesabınıza kaydedilir. Bu bilgiyi yalnızca hangi tanıtım çalışmalarımızın işe yaradığını ölçmek için kullanırız. Bu bilgi kayıt olana kadar yalnızca tarayıcı oturumunuz boyunca cihazınızda tutulur; bunun için çerez kullanılmaz ve bilgi üçüncü taraflarla paylaşılmaz."
       },
       {
         "heading": "3. Kullanım Amaçları",

@@ -9,12 +9,15 @@ import { prisma } from '@/lib/prisma';
 import { recordSignupBonus } from '@/lib/credits';
 import { createAndSendEmailVerification } from '@/lib/security';
 import { validatePassword, usernameRules } from '@/lib/validation';
+import type { SignupAttributionFields } from '@/utils/signupAttribution';
 
 export type CreateAccountInput = {
   name?: unknown;
   email?: unknown;
   password?: unknown;
   username?: unknown;
+  /** Kayıt kaynağı (ilk temas) — doğrulanmış; yoksa yazılmaz. */
+  attribution?: SignupAttributionFields | null;
 };
 
 export type CreatedAccount = {
@@ -30,7 +33,7 @@ export type CreateAccountResult =
   | { ok: false; status: number; error: string };
 
 export async function createUserAccount(input: CreateAccountInput): Promise<CreateAccountResult> {
-  const { name, email, password, username } = input;
+  const { name, email, password, username, attribution } = input;
 
   if (!email || !password) {
     return { ok: false, status: 400, error: 'E-posta ve şifre zorunludur' };
@@ -75,6 +78,7 @@ export async function createUserAccount(input: CreateAccountInput): Promise<Crea
       email: normalizedEmail,
       password: hashed,
       username: usernameNorm,
+      ...(attribution ?? {}),
     },
     select: { id: true, email: true, name: true, role: true, username: true, credits: true },
   });

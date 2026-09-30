@@ -9,6 +9,7 @@ import { validatePassword } from '@/lib/validation'
 import GoogleSignInButton from '@/components/GoogleSignInButton'
 import { safeCallbackPath } from '@/lib/authRedirect'
 import { isGoogleAuthEnabled } from '@/lib/oauthEnv'
+import { markSessionAttributionSent, readSessionAttribution } from '@/lib/signupAttributionClient'
 import styles from './auth.module.scss'
 
 declare global {
@@ -94,8 +95,11 @@ export default function SignUpPage({ googleEnabled }: { googleEnabled: boolean }
         email,
         password,
         turnstileToken,
+        // Kayıt kaynağı (ilk temas) — yalnız bu tarayıcı oturumunda tutulan utm_* (bkz. signupAttributionClient.ts)
+        attribution: readSessionAttribution() ?? undefined,
       }),
     })
+    if (res.ok) markSessionAttributionSent()
 
     const data = await res.json()
 

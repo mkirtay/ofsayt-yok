@@ -9,6 +9,7 @@ import { appWithTranslation } from '@/lib/i18n'
 import { createQueryClient } from '@/lib/queryClient'
 import Layout from '@/components/Layout'
 import RouteProgress from '@/components/RouteProgress'
+import SignupAttributionSync from '@/components/SignupAttributionSync'
 import '@/styles/globals.scss'
 
 const inter = Inter({
@@ -39,6 +40,7 @@ function App({ Component, pageProps: { session, ...pageProps } }: AppProps) {
       </Head>
       <div data-app-root className={`${inter.className} ${inter.variable}`}>
         <RouteProgress />
+        <SignupAttributionSync />
         <Layout>
           <Component {...pageProps} />
         </Layout>

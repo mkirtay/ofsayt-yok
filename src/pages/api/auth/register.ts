@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import { hitFixedWindowRateLimit, requestIp } from '@/lib/rateLimit'
 import { verifyTurnstileToken } from '@/lib/security'
 import { createUserAccount } from '@/lib/accounts'
+import { parseSignupAttribution } from '@/utils/signupAttribution'
 
 const REGISTER_LIMIT = 5
 const REGISTER_WINDOW_MS = 15 * 60 * 1000
@@ -19,7 +20,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(429).json({ error: 'Cok fazla kayit denemesi. Lutfen daha sonra tekrar deneyin.' })
   }
 
-  const { name, email, password, username, turnstileToken } = req.body ?? {}
+  const { name, email, password, username, turnstileToken, attribution } = req.body ?? {}
 
   if (process.env.NODE_ENV === 'production' && process.env.TURNSTILE_SECRET_KEY) {
     if (typeof turnstileToken !== 'string' || !turnstileToken) {
@@ -32,7 +33,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
   }
 
-  const result = await createUserAccount({ name, email, password, username })
+  // Kayıt kaynağı geçersizse kayıt yine yapılır, yalnız kaynak yazılmaz.
+  const result = await createUserAccount({ name, email, password, username, attribution: parseSignupAttribution(attribution) })
   if (!result.ok) {
     return res.status(result.status).json({ error: result.error })
   }
