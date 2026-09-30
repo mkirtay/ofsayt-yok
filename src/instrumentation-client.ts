@@ -1,9 +1,16 @@
 /**
- * Tarayıcı açılış kancası (Next 15.3+). Turbopack'te `sentry.client.config.ts` otomatik enjekte
- * edilmiyor — bu dosya olmadan istemci tarafı Sentry başlatılmıyordu (canlıda `window.__SENTRY__` yoktu).
+ * Tarayıcı açılış kancası (Next 15.3+). Sentry SDK burada İMPORT EDİLMEZ — yalnızca ilk hatada dinamik
+ * yüklenir (bkz. src/lib/lazySentry.ts); ilk açılış maliyeti ~0.
  */
-import * as Sentry from '@sentry/nextjs';
-import '../sentry.client.config';
+import { installLazySentry } from '@/lib/lazySentry';
+import { SENTRY_CLIENT_ENABLED, SENTRY_CLIENT_OPTIONS } from '../sentry.client.config';
 
-/** Sayfa geçişlerini Sentry performans izine bağlar (Sentry build eklentisi bu export'u bekliyor). */
-export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;
+installLazySentry({
+  target: window,
+  enabled: SENTRY_CLIENT_ENABLED,
+  options: SENTRY_CLIENT_OPTIONS as { dsn?: string } & Record<string, unknown>,
+  load: () => import('@sentry/nextjs'),
+});
+
+/** Sentry build eklentisi bu export'u bekliyor; tracing kapalı olduğu için sayfa geçişi izlenmiyor (no-op). */
+export const onRouterTransitionStart = () => {};

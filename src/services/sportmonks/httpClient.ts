@@ -11,9 +11,13 @@
  * Pass 1 Genel Bulgu 4 + Pass 4/5: kota en az 6 bağımsız havuzda izleniyor
  * (Fixture/League/Standing/Topscorer/PlayerTeam/Type). Her istekten sonra
  * `rate_limit.requested_entity` + `remaining` loglanır.
+ *
+ * Kota Sentry'ye BURADAN raporlanmaz: tüm gerçek upstream istekleri `server/sportmonks/cachedFetch.ts`'ten
+ * geçer ve orada bir kez raporlanır (bu istemcinin gördüğü gövdeden `rate_limit` çıkarılmış olur). Bu dosya
+ * tarayıcı bundle'ına da girdiği için Sentry'yi statik import etmemeli — ilk hatada tembel yüklenen
+ * istemci SDK'sını (src/lib/lazySentry.ts) ilk açılışa geri çekerdi.
  */
 import type { SportmonksEnvelope, SportmonksRateLimit } from './types';
-import { reportSportmonksQuota } from './quotaMonitor';
 
 export type SportmonksBasePath = 'football' | 'core';
 
@@ -119,17 +123,6 @@ export async function sportmonksRequest<T>(
       resetsInSeconds: body.rate_limit.resets_in_seconds,
       path,
     });
-    // Proxy'ye giden (baseUrlOverride) tarayıcı istekleri burada raporlanmaz —
-    // gerçek upstream çağrısını yapan proxy route'u (api/sportmonks) raporlar,
-    // aksi halde her kullanıcı tarayıcısı aynı kotayı çift sayardı.
-    if (!baseUrlOverride) {
-      reportSportmonksQuota({
-        pool: body.rate_limit.requested_entity,
-        remaining: body.rate_limit.remaining,
-        resetsInSeconds: body.rate_limit.resets_in_seconds,
-        path,
-      });
-    }
   }
 
   return body;
@@ -158,13 +151,7 @@ export async function sportmonksRequestByUrl<T>(
       pool: body.rate_limit.requested_entity,
       remaining: body.rate_limit.remaining,
       resetsInSeconds: body.rate_limit.resets_in_seconds,
-      path: url,
-    });
-    reportSportmonksQuota({
-      pool: body.rate_limit.requested_entity,
-      remaining: body.rate_limit.remaining,
-      resetsInSeconds: body.rate_limit.resets_in_seconds,
-      // Sentry'ye query string (api_token içeriyor) ASLA gönderilmez.
+      // Log'a query string (api_token içerir) yazılmaz.
       path: url.split('?')[0],
     });
   }
