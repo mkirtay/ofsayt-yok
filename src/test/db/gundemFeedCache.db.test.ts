@@ -9,7 +9,7 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
-vi.mock('@/lib/redis', () => ({ getRedisClient: () => null }));
+vi.mock('@/lib/redis', () => ({ getRedisClient: () => null, withRedis: async (_fn: unknown, fallback: unknown) => fallback }));
 
 const ENABLED = process.env.DB_INTEGRATION === '1';
 const runId = `itest-${Math.random().toString(16).slice(2, 10)}`;

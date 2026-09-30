@@ -22,7 +22,7 @@ process.env.GUNDEM_BOT_EMAIL = `${h.runId}-official@example.invalid`;
 
 // Redis `null` → rate limit ve akış cache'i süreç içi fallback: oturumsuz maç akışı (test postlarıyla!) paylaşılan (prod)
 // Redis'e yazılmaz, prod cache'i de teste sızmaz (bkz. lib/gundem/feedCache.ts).
-vi.mock('@/lib/redis', () => ({ getRedisClient: () => null }));
+vi.mock('@/lib/redis', () => ({ getRedisClient: () => null, withRedis: async (_fn: unknown, fallback: unknown) => fallback }));
 vi.mock('@/services/sportmonksRuntimeClient', () => ({ sportmonksClientRequest: vi.fn(), sportmonksCollectAllPages: vi.fn() }));
 
 const d = ENABLED ? describe : describe.skip;

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
-vi.mock('@/lib/redis', () => ({ getRedisClient: () => null }));
+vi.mock('@/lib/redis', () => ({ getRedisClient: () => null, withRedis: async (_fn: unknown, fallback: unknown) => fallback }));
 vi.mock('@/lib/rateLimit', () => ({
   hitFixedWindowRateLimit: async () => ({ success: true, remaining: 99, resetAt: 0 }),
   requestIp: () => '10.0.0.1',
@@ -70,5 +70,37 @@ describe('/api/sportmonks proxy', () => {
     const res = { statusCode: 0, status(c: number) { this.statusCode = c; return this; }, json() { return this; }, setHeader() {} };
     await handler({ method: 'POST', query: {}, headers: {} } as unknown as NextApiRequest, res as unknown as NextApiResponse);
     expect(res.statusCode).toBe(405);
+  });
+});
+
+describe('/api/sportmonks proxy — izin listesi modları', () => {
+  const ORIGINAL_MODE = process.env.SPORTMONKS_ALLOWLIST_MODE;
+  beforeEach(() => {
+    vi.resetModules();
+    process.env.SPORTMONKS_API_KEY = 'test-token';
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    vi.spyOn(global, 'fetch').mockImplementation(async () => new Response(JSON.stringify({ data: [] }), { status: 200 }));
+  });
+  afterEach(() => {
+    vi.restoreAllMocks();
+    if (ORIGINAL_MODE === undefined) delete process.env.SPORTMONKS_ALLOWLIST_MODE;
+    else process.env.SPORTMONKS_ALLOWLIST_MODE = ORIGINAL_MODE;
+  });
+
+  it('log modu (varsayılan): listede olmayan istek ENGELLENMEZ, loglanır', async () => {
+    delete process.env.SPORTMONKS_ALLOWLIST_MODE;
+    const handler = (await import('@/pages/api/sportmonks/[...path]')).default;
+    const res = await call(handler, ['football', 'odds', 'pre-match'], { include: 'bookmaker' });
+    expect(res.statusCode).toBe(200);
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+    expect(console.warn).toHaveBeenCalledWith(expect.stringContaining('sportmonks_allowlist_miss'));
+  });
+
+  it('enforce modu: 403, upstream\'e gitmez', async () => {
+    process.env.SPORTMONKS_ALLOWLIST_MODE = 'enforce';
+    const handler = (await import('@/pages/api/sportmonks/[...path]')).default;
+    const res = await call(handler, ['football', 'odds', 'pre-match']);
+    expect(res.statusCode).toBe(403);
+    expect(global.fetch).not.toHaveBeenCalled();
   });
 });

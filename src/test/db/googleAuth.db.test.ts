@@ -13,7 +13,7 @@ import { createRequire } from 'node:module';
 import path from 'node:path';
 
 // Redis `null` → rate limit süreç içi fallback (prod Redis'e yazılmaz).
-vi.mock('@/lib/redis', () => ({ getRedisClient: () => null }));
+vi.mock('@/lib/redis', () => ({ getRedisClient: () => null, withRedis: async (_fn: unknown, fallback: unknown) => fallback }));
 // Kayıt doğrulama e-postası gerçekten gönderilmesin.
 vi.mock('@/lib/security', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@/lib/security')>();

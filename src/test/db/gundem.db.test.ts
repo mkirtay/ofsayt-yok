@@ -13,7 +13,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 
 // Redis `null` → rate limit ve akış cache'i süreç içi fallback: anonim akış yanıtları (test resmi hesabıyla!) paylaşılan
 // (prod) Redis'e yazılmaz, prod cache'i de teste sızmaz (bkz. lib/gundem/feedCache.ts).
-vi.mock('@/lib/redis', () => ({ getRedisClient: () => null }));
+vi.mock('@/lib/redis', () => ({ getRedisClient: () => null, withRedis: async (_fn: unknown, fallback: unknown) => fallback }));
 
 const ENABLED = process.env.DB_INTEGRATION === '1';
 

@@ -7,7 +7,17 @@ const h = vi.hoisted(() => ({
   quota: vi.fn(),
 }));
 
-vi.mock('@/lib/redis', () => ({ getRedisClient: () => h.redis }));
+vi.mock('@/lib/redis', () => ({
+  getRedisClient: () => h.redis,
+  withRedis: async <T,>(fn: (r: FakeRedis) => Promise<T>, fallback: T) => {
+    if (!h.redis) return fallback;
+    try {
+      return await fn(h.redis);
+    } catch {
+      return fallback;
+    }
+  },
+}));
 vi.mock('@/services/sportmonks/quotaMonitor', () => ({ reportSportmonksQuota: h.quota }));
 
 type Mod = typeof import('./cachedFetch');

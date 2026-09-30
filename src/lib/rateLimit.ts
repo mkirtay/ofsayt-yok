@@ -1,5 +1,5 @@
 import { Ratelimit } from '@upstash/ratelimit';
-import { getRedisClient } from './redis';
+import { getRedisClient, REDIS_COMMAND_TIMEOUT_MS, withRedis } from './redis';
 
 // ── In-memory fallback ──────────────────────────────────────────────────────
 
@@ -62,6 +62,8 @@ function getUpstashLimiter(limit: number, windowMs: number): Ratelimit | null {
         redis,
         limiter: Ratelimit.fixedWindow(limit, `${windowSec} s`),
         prefix: 'rl',
+        // Kütüphanenin kendi zaman aşımı (varsayılan 5 sn) Redis komut sınırıyla uyumlu olsun.
+        timeout: REDIS_COMMAND_TIMEOUT_MS + 500,
       }),
     );
   }
@@ -76,21 +78,15 @@ export async function hitFixedWindowRateLimit(
   windowMs: number,
 ): Promise<{ success: boolean; remaining: number; resetAt: number }> {
   const upstash = getUpstashLimiter(limit, windowMs);
+  // Redis hiç tanımlı değil (yerel geliştirme) → instance içi sayaç.
+  if (!upstash) return hitInMemory(key, limit, windowMs);
 
-  if (upstash) {
-    try {
-      const result = await upstash.limit(key);
-      return {
-        success: result.success,
-        remaining: result.remaining,
-        resetAt: result.reset,
-      };
-    } catch {
-      // Redis bağlantı hatası → in-memory fallback
-    }
-  }
-
-  return hitInMemory(key, limit, windowMs);
+  // Redis tanımlı ama cevap vermiyor (hata / zaman aşımı / devre açık) → FAIL-OPEN: isteği engelleme.
+  // Rate limit bir koruma katmanı; Redis kesintisi siteyi kapatmamalı (instance içi sayaç da dağıtık
+  // ortamda anlamsız derecede gevşek/katı olurdu).
+  const result = await withRedis(() => upstash.limit(key), null);
+  if (!result) return { success: true, remaining: limit, resetAt: Date.now() + windowMs };
+  return { success: result.success, remaining: result.remaining, resetAt: result.reset };
 }
 
 export function requestIp(

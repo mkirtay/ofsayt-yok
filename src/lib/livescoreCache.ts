@@ -1,4 +1,4 @@
-import { getRedisClient } from '@/lib/redis';
+import { withRedis } from '@/lib/redis';
 
 /**
  * LiveScore proxy için paylaşımlı cache katmanı.
@@ -114,26 +114,13 @@ function memSet(key: string, value: unknown, ttlSeconds: number): void {
 }
 
 export async function readCache(key: string): Promise<unknown | null> {
-  const redis = getRedisClient();
-  if (redis) {
-    try {
-      const cached = await redis.get<unknown>(key);
-      if (cached !== null && cached !== undefined) return cached;
-    } catch {
-      // Redis okuma hatası → in-memory fallback
-    }
-  }
+  // Redis yok / hata / zaman aşımı / devre açık → in-memory (bkz. lib/redis.ts withRedis)
+  const cached = await withRedis((r) => r.get<unknown>(key), null);
+  if (cached !== null && cached !== undefined) return cached;
   return memGet(key);
 }
 
 export async function writeCache(key: string, value: unknown, ttlSeconds: number): Promise<void> {
   memSet(key, value, ttlSeconds);
-  const redis = getRedisClient();
-  if (redis) {
-    try {
-      await redis.set(key, value, { ex: ttlSeconds });
-    } catch {
-      // Redis yazma hatası kritik değil; in-memory snapshot geçerli
-    }
-  }
+  await withRedis((r) => r.set(key, value, { ex: ttlSeconds }), null);
 }

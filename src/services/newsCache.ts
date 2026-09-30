@@ -1,4 +1,4 @@
-import { getRedisClient } from '@/lib/redis';
+import { getRedisClient, withRedis } from '@/lib/redis';
 import { fetchAllNews } from '@/services/newsService';
 import type { NewsItem } from '@/models/domain';
 
@@ -14,13 +14,10 @@ export async function getCachedNews(): Promise<NewsItem[]> {
   const redis = getRedisClient();
 
   if (redis) {
-    try {
-      const cached = await redis.get<NewsItem[]>(REDIS_KEY);
-      if (cached) return cached;
-    } catch {
-      // Redis okuma hatası → fetch'e geç
-    }
-  } else if (memSnapshot && Date.now() - memSnapshotTs < CACHE_TTL_MS) {
+    const cached = await withRedis((r) => r.get<NewsItem[]>(REDIS_KEY), null);
+    if (cached) return cached;
+  }
+  if (memSnapshot && Date.now() - memSnapshotTs < CACHE_TTL_MS) {
     return memSnapshot;
   }
 
@@ -28,13 +25,7 @@ export async function getCachedNews(): Promise<NewsItem[]> {
   memSnapshot = items;
   memSnapshotTs = Date.now();
 
-  if (redis) {
-    try {
-      await redis.set(REDIS_KEY, items, { ex: REDIS_TTL_SEC });
-    } catch {
-      // Redis yazma hatası kritik değil; in-memory snapshot geçerli
-    }
-  }
+  if (redis) await withRedis((r) => r.set(REDIS_KEY, items, { ex: REDIS_TTL_SEC }), null);
 
   return items;
 }

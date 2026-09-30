@@ -1,8 +1,14 @@
 import * as Sentry from '@sentry/nextjs';
 
+/**
+ * Tarayıcı: yalnızca hata izleme (bkz. src/instrumentation-client.ts).
+ * - Yalnız production deploy'unda açık (preview/yerel kapalı).
+ * - Performans izleme (tracing) KAPALI: `tracesSampleRate` bilerek verilmedi.
+ * - Session Replay YOK: `replayIntegration` eklenmedi.
+ * - Kişisel veri gönderilmez (`sendDefaultPii: false`: IP, çerez, kullanıcı bilgisi eklenmez).
+ */
 Sentry.init({
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
-  tracesSampleRate: 0.2,
-  debug: process.env.NEXT_PUBLIC_SENTRY_DEBUG === 'true',
-  enabled: process.env.NODE_ENV === 'production' || process.env.NEXT_PUBLIC_SENTRY_DEBUG === 'true',
+  enabled: process.env.NEXT_PUBLIC_VERCEL_ENV === 'production',
+  sendDefaultPii: false,
 });

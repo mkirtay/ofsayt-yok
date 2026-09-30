@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { hitFixedWindowRateLimit, requestIp } from '@/lib/rateLimit';
 import { fetchSportmonksCached, sportmonksCacheControl } from '@/server/sportmonks/cachedFetch';
+import { allowlistMode, checkProxyAllowlist, logAllowlistViolation } from '@/server/sportmonks/proxyAllowlist';
 
 /**
  * Tarayıcıdan gelen Sportmonks isteklerini gerçek `api.sportmonks.com`'a
@@ -13,6 +14,9 @@ import { fetchSportmonksCached, sportmonksCacheControl } from '@/server/sportmon
  * geçerli veri döner. `Cache-Control: s-maxage` ile Vercel edge tekrarları fonksiyona
  * uğramadan karşılar. Yanıttan `subscription`/`rate_limit` çıkarılır; kota Sentry'ye
  * cache katmanından raporlanır.
+ *
+ * İzin listesi (bkz. server/sportmonks/proxyAllowlist.ts): varsayılan `log` modunda listede olmayan
+ * path/include/query ENGELLENMEZ, loglanır; `SPORTMONKS_ALLOWLIST_MODE=enforce` ile 403.
  */
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method && req.method.toUpperCase() !== 'GET') {
@@ -40,6 +44,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const query: Record<string, string | string[] | undefined> = { ...req.query };
     delete query.path;
+
+    const mode = allowlistMode();
+    if (mode !== 'off') {
+      const verdict = checkProxyAllowlist(path, query);
+      if (!verdict.allowed) {
+        const ua = req.headers['user-agent'];
+        logAllowlistViolation(verdict, { mode, userAgent: Array.isArray(ua) ? ua[0] : ua });
+        if (mode === 'enforce') {
+          res.setHeader('Cache-Control', 'no-store');
+          return res.status(403).json({ message: 'Bu istek izin listesinde değil' });
+        }
+      }
+    }
     delete query.api_token;
 
     const result = await fetchSportmonksCached(path, query, { origin: 'proxy' });

@@ -13,7 +13,7 @@
  * - `subscription`/`rate_limit`/`timezone` yanıttan çıkarılır; kota Sentry'ye BURADAN raporlanır
  *   (her gerçek upstream isteği için bir kez).
  */
-import { getRedisClient } from '@/lib/redis';
+import { getRedisClient, withRedis } from '@/lib/redis';
 import { reportSportmonksQuota } from '@/services/sportmonks/quotaMonitor';
 import { sportmonksCacheTtl } from '@/services/sportmonks/cachePolicy';
 import { cacheKeyPrefix } from '@/lib/cacheNamespace';
@@ -144,26 +144,15 @@ function l1Set(key: string, e: Entry): void {
   l1.set(key, e);
 }
 
+// Redis erişimi `withRedis` üzerinden: zaman aşımı/hata/devre açık → cache yokmuş gibi devam (bkz. lib/redis.ts).
 async function redisGet(key: string): Promise<Entry | null> {
-  const redis = getRedisClient();
-  if (!redis) return null;
-  try {
-    return (await redis.get<Entry>(key)) ?? null;
-  } catch {
-    return null;
-  }
+  return (await withRedis((r) => r.get<Entry>(key), null)) ?? null;
 }
 
 async function redisSet(key: string, e: Entry, now: number): Promise<void> {
-  const redis = getRedisClient();
-  if (!redis) return;
+  if (JSON.stringify(e.body).length > MAX_REDIS_BYTES) return;
   const ex = Math.max(1, Math.ceil((e.staleUntil - now) / 1000));
-  try {
-    if (JSON.stringify(e.body).length > MAX_REDIS_BYTES) return;
-    await redis.set(key, e, { ex });
-  } catch {
-    // Redis yazma hatası kritik değil; L1 geçerli
-  }
+  await withRedis((r) => r.set(key, e, { ex }), null);
 }
 
 /** Kilit anahtarı veri anahtarından türetilir; önek tekrarlanmaz (`prod:v2:smc-lock:<path?query>`). */
@@ -171,24 +160,14 @@ function lockKey(key: string): string {
   return `${lockPrefix()}${key.slice(keyPrefix().length)}`;
 }
 
+/** Redis yok / erişilemiyor → kilit alınmış say (fail-open; instance içi tekil uçuş yine geçerli). */
 async function tryLock(key: string): Promise<boolean> {
-  const redis = getRedisClient();
-  if (!redis) return true; // tek instance / Redis yok → kilide gerek yok
-  try {
-    return (await redis.set(lockKey(key), 1, { nx: true, px: LOCK_TTL_MS })) === 'OK';
-  } catch {
-    return true; // Redis erişilemiyor → fail-open
-  }
+  if (!getRedisClient()) return true;
+  return withRedis(async (r) => (await r.set(lockKey(key), 1, { nx: true, px: LOCK_TTL_MS })) === 'OK', true);
 }
 
 async function unlock(key: string): Promise<void> {
-  const redis = getRedisClient();
-  if (!redis) return;
-  try {
-    await redis.del(lockKey(key));
-  } catch {
-    // kilit PX ile zaten düşer
-  }
+  await withRedis((r) => r.del(lockKey(key)), 0); // hata olursa kilit PX ile zaten düşer
 }
 
 // ─── Upstream ───────────────────────────────────────────────────────────────
