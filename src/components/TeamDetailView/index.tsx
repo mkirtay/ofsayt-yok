@@ -37,6 +37,7 @@ import { groupSquadByPosition } from '@/utils/squadGroups';
 import { detailedPositionLabel } from '@/utils/positionLabel';
 import { useTeamSquadStats } from '@/hooks/useTeamSquadStats';
 import { todayIsoIstanbul } from '@/utils/dateStrip';
+import { parseScore } from '@/utils/parseScore';
 import { fixtureDateHeading } from '@/utils/fixtureDateLabel';
 import {
   buildTeamFixtureGroups,
@@ -82,7 +83,7 @@ function findStandingForTeam(
   return null;
 }
 
-function computeTeamStats(
+export function computeTeamStats(
   matches: Match[],
   teamId: string,
   table: CompetitionTableData | null
@@ -92,10 +93,9 @@ function computeTeamStats(
   let goalsConceded = 0;
 
   for (const m of matches) {
-    const ft = m.scores?.ft_score || m.scores?.score;
-    if (!ft) continue;
-    const [hg, ag] = ft.split(' - ').map(Number);
-    if (isNaN(hg) || isNaN(ag)) continue;
+    const parsed = parseScore(m.scores?.ft_score || m.scores?.score);
+    if (!parsed) continue;
+    const [hg, ag] = parsed;
 
     const isHome = m.home?.id?.toString() === teamId;
     const teamGoals = isHome ? hg : ag;
