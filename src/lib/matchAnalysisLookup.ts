@@ -1,41 +1,15 @@
-import type { MatchAnalysis, Prisma } from '@prisma/client';
-import type { Match } from '@/models/liveScore';
+import type { MatchAnalysis } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 
-function teamPairWhere(
-  homeTeamId: string | number,
-  awayTeamId: string | number
-): Prisma.MatchAnalysisWhereInput {
-  const h = String(homeTeamId);
-  const a = String(awayTeamId);
-  return {
-    OR: [
-      { homeTeamId: h, awayTeamId: a },
-      { homeTeamId: a, awayTeamId: h },
-    ],
-  };
-}
-
-/** URL/API matchId veya takım çifti ile kayıtlı analizi bulur (eski matchId için). */
-export async function findStoredMatchAnalysis(
-  matchId: string,
-  matchStatus: string,
-  match?: Match | null
-): Promise<MatchAnalysis | null> {
-  const direct = await prisma.matchAnalysis.findUnique({
+/**
+ * Kayıtlı analizi YALNIZCA maçın kendi id'siyle bulur.
+ *
+ * Eskiden id ile bulunamazsa aynı iki takımın en son analizine düşülüyordu (eski sağlayıcıda maç id'leri
+ * değişebildiği için). Sportmonks id'leri kalıcı; o yedek aynı eşleşmenin ESKİ maçının analizini yeni
+ * maça "zaten var" diye döndürüyordu (ör. geçen sezonun derbisi → bu sezonun derbisi). Kaldırıldı.
+ */
+export async function findStoredMatchAnalysis(matchId: string, matchStatus: string): Promise<MatchAnalysis | null> {
+  return prisma.matchAnalysis.findUnique({
     where: { matchId_matchStatus: { matchId, matchStatus } },
-  });
-  if (direct) return direct;
-
-  const homeId = match?.home?.id ?? match?.home_id;
-  const awayId = match?.away?.id ?? match?.away_id;
-  if (homeId == null || awayId == null) return null;
-
-  return prisma.matchAnalysis.findFirst({
-    where: {
-      matchStatus,
-      ...teamPairWhere(homeId, awayId),
-    },
-    orderBy: { createdAt: 'desc' },
   });
 }

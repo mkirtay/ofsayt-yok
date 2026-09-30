@@ -82,11 +82,8 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse, matchId: st
         return { status: 404 as const, body: { error: 'Maç bulunamadı' } };
       }
 
-      const existing = await findStoredMatchAnalysis(
-        matchId,
-        'PRE',
-        ctx.archived ? null : ctx.match,
-      );
+      // Arama ve kayıt aynı id ile (aşağıda `matchId: String(ctx.match.id)`); takım çifti yedeği yok.
+      const existing = await findStoredMatchAnalysis(ctx.archived ? matchId : String(ctx.match.id), 'PRE');
       if (existing) {
         const predictionRecord = await prisma.predictionRecord.findUnique({
           where: { matchAnalysisId: existing.id },
