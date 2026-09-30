@@ -24,7 +24,7 @@
       },
       {
         "heading": "5. Sharing With Third Parties",
-        "body": "We do not share your personal data with third parties except where legally required, or with service providers we use for hosting/infrastructure, analytics, and payment processing. These providers process your data only on our behalf and for the purposes we define."
+        "body": "We do not share your personal data with third parties except where legally required, or with service providers we use for hosting/infrastructure, analytics, and payment processing. These providers process your data only on our behalf and for the purposes we define. We use Sentry (Functional Software, Inc., USA) error monitoring to detect and fix technical errors on the site. Error reports are stored on Sentry's servers in the European Union (Germany). When an error occurs, technical details such as the error message, the page where it occurred, and your browser and operating system type are sent to Sentry. Your name, email address, and cookies are not attached to these reports. Your IP address is not stored. No session recording or performance tracking takes place."
       },
       {
         "heading": "6. Data Security and Retention",

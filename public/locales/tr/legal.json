@@ -24,7 +24,7 @@
       },
       {
         "heading": "5. Üçüncü Taraflarla Paylaşım",
-        "body": "Kişisel verileriniz, yasal zorunluluklar dışında ve barındırma/altyapı, analitik ile ödeme altyapısı sağlayıcılarımız gibi hizmet aldığımız iş ortaklarımız haricinde üçüncü kişilerle paylaşılmaz. Bu hizmet sağlayıcılar verilerinizi yalnızca bizim adımıza ve belirlediğimiz amaçlarla işler."
+        "body": "Kişisel verileriniz, yasal zorunluluklar dışında ve barındırma/altyapı, analitik ile ödeme altyapısı sağlayıcılarımız gibi hizmet aldığımız iş ortaklarımız haricinde üçüncü kişilerle paylaşılmaz. Bu hizmet sağlayıcılar verilerinizi yalnızca bizim adımıza ve belirlediğimiz amaçlarla işler. Sitedeki teknik hataları tespit edip gidermek için Sentry (Functional Software, Inc., ABD) hata izleme hizmetini kullanıyoruz. Hata kayıtları Sentry'nin Avrupa Birliği'ndeki (Almanya) sunucularında tutulur. Bir hata oluştuğunda hata mesajı, hatanın oluştuğu sayfa ile tarayıcı ve işletim sistemi türü gibi teknik bilgiler Sentry'ye iletilir. Bu kayıtlara adınız, e-posta adresiniz veya çerezleriniz eklenmez. IP adresiniz saklanmaz. Ekran kaydı ya da performans izlemesi yapılmaz."
       },
       {
         "heading": "6. Veri Güvenliği ve Saklama Süresi",
