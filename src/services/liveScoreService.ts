@@ -16,6 +16,8 @@ import { WORLD_CUP_COMPETITION_ID } from '../config/worldCup';
 import { isSportmonksProviderEnabled, resolveSportmonksLeagueId } from './sportmonksProviderFlag';
 import { sportmonksClientRequest, sportmonksCollectAllPages } from './sportmonksRuntimeClient';
 import { SportmonksHttpError } from './sportmonks/httpClient';
+import { matchIstanbulDate } from '../utils/matchActivity';
+import { todayIsoIstanbul } from '../utils/dateStrip';
 import { mapSportmonksFixtureToMatch } from './sportmonksFixtureMapper';
 import {
   mapSportmonksEvents,
@@ -704,10 +706,11 @@ export async function getFixturesByCompetition(
   }
 }
 
+/** `selectedDate` ana sayfanın Türkiye günü; maçın günü de başlama saatinden Türkiye saatine göre alınır. */
 export function isLiveMatchOnSelectedDate(m: Match, selectedDate: string): boolean {
-  const d = m.date?.trim();
+  const d = matchIstanbulDate(m);
   if (d) return d === selectedDate;
-  return selectedDate === todayIsoUtc();
+  return selectedDate === todayIsoIstanbul();
 }
 
 export type MergeMatchesForAllTabInput = {

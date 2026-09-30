@@ -26,11 +26,21 @@ describe('homeDay', () => {
     h.between.mockReset();
   });
 
-  it('Sportmonks: aynı gün için tek fikstür isteği (between çağrılmaz)', async () => {
-    h.byDate.mockResolvedValue([{ id: 1 }]);
+  it('Türkiye günü: UTC D−1 ve D listelerinden başlama saati Türkiye\'de D\'ye düşenler; between çağrılmaz', async () => {
+    // Gerçek örnek (2026-09-30): NY RB – St. Louis 30 Eylül 23:30 UTC = 1 Ekim 02:30 Türkiye.
+    const mls = { id: 19609828, status: 'NOT STARTED', date: '2026-09-30', scheduled: '23:30' };
+    const afternoon = { id: 2, status: 'NOT STARTED', date: '2026-10-01', scheduled: '15:00' };
+    const lateOct1 = { id: 3, status: 'NOT STARTED', date: '2026-10-01', scheduled: '21:15' }; // 2 Ekim 00:15 TR
+    const earlySep30 = { id: 4, status: 'FINISHED', date: '2026-09-30', scheduled: '19:00' }; // 30 Eylül TR
+    h.byDate.mockImplementation(async (d: string) => (d === '2026-09-30' ? [mls, earlySep30] : d === '2026-10-01' ? [afternoon, lateOct1] : []));
     h.live.mockResolvedValue([]);
-    const r = await loadHomeDay('2026-09-30');
-    expect(r).toEqual({ date: '2026-09-30', fixtureMatches: [{ id: 1 }], liveMatches: [] });
+
+    const oct1 = await loadHomeDay('2026-10-01');
+    expect(oct1.fixtureMatches.map((m) => Number(m.id)).sort((a, b) => a - b)).toEqual([2, 19609828]);
+    expect(h.byDate.mock.calls.map((c) => c[0]).sort()).toEqual(['2026-09-30', '2026-10-01']);
+
+    const sep30 = await loadHomeDay('2026-09-30');
+    expect(sep30.fixtureMatches.map((m) => m.id)).toEqual([4]); // MLS maçı artık 30 Eylül'de görünmez
     expect(h.between).not.toHaveBeenCalled();
   });
 

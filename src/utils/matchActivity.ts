@@ -23,6 +23,22 @@ export function matchKickoffMs(m: MatchLike): number | null {
   return Number.isFinite(t) ? t : null;
 }
 
+const istanbulDayFormat = new Intl.DateTimeFormat('en-CA', {
+  timeZone: 'Europe/Istanbul',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+});
+
+/**
+ * Maçın Türkiye günü (ana sayfanın tarih şeridiyle aynı gün). `date`/`scheduled` UTC olduğundan
+ * 21:00 UTC ve sonrası başlayan maç Türkiye'de ertesi güne düşer. Saat yoksa `date`.
+ */
+export function matchIstanbulDate(m: Pick<Match, 'date' | 'scheduled'>): string | undefined {
+  const k = matchKickoffMs(m as MatchLike);
+  return k != null ? istanbulDayFormat.format(new Date(k)) : m.date?.trim() || undefined;
+}
+
 export function isMatchLive(m: MatchLike): boolean {
   return m.status === 'IN PLAY' || m.status === 'HALF TIME BREAK';
 }

@@ -188,3 +188,12 @@ describe('liveScoreService — Sportmonks Faz 2 wiring', () => {
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 });
+
+describe('isLiveMatchOnSelectedDate — Türkiye günü', () => {
+  it('gece yarısından sonra (Türkiye) başlayan canlı maç ertesi günün listesinde', async () => {
+    const { isLiveMatchOnSelectedDate } = await import('./liveScoreService');
+    const m = { id: 1, status: 'IN PLAY', time: '10', home: { id: 1, name: 'A' }, away: { id: 2, name: 'B' }, date: '2026-09-30', scheduled: '23:30' };
+    expect(isLiveMatchOnSelectedDate(m as never, '2026-10-01')).toBe(true);
+    expect(isLiveMatchOnSelectedDate(m as never, '2026-09-30')).toBe(false);
+  });
+});

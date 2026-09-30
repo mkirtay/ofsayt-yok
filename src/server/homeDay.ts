@@ -15,7 +15,7 @@ import { sportmonksCollectAllPages } from '@/services/sportmonksRuntimeClient';
 import type { SportmonksFixture } from '@/services/sportmonks/types';
 import { WORLD_CUP_COMPETITION_ID } from '@/config/worldCup';
 import { shiftIsoDate } from '@/utils/dateStrip';
-import { matchListFreshSeconds } from '@/utils/matchActivity';
+import { matchIstanbulDate, matchListFreshSeconds } from '@/utils/matchActivity';
 
 export type HomeDayPayload = {
   date: string;
@@ -28,13 +28,24 @@ export type HomeDayPayload = {
 };
 
 /**
- * Sportmonks'ta tek fikstür isteği: eskiden aynı gün için `fixtures/between/{d}/{d}` + `fixtures/date/{d}`
- * ikisi de çekiliyordu (aynı veri, Pass 1 Genel Bulgu 2).
+ * `date` TÜRKİYE günü; Sportmonks `fixtures/date/{d}` ise UTC günü döndürür. Türkiye günü D = UTC D−1'in
+ * 21:00'ından UTC D'nin 21:00'ına kadar → iki UTC listesi alınıp başlama saati Türkiye'de D'ye düşenler
+ * tutulur (ör. 30 Eylül 23:30 UTC maçı 1 Ekim 02:30'dur). İki liste de paylaşımlı cache'te, komşu
+ * günlerle ortak. `timezone=Europe/Istanbul` parametresi kullanılmadı: saatleri de yerel döndürüyor, oysa
+ * mapper ve arayüz `starting_at`'i UTC varsayıyor. Aynı gün için `between` ayrıca çekilmiyor (aynı veri).
  */
 export async function loadHomeDay(date: string): Promise<HomeDayPayload> {
   if (isSportmonksProviderEnabled()) {
-    const [fixtureMatches, liveMatches] = await Promise.all([getFixturesByDate(date), getAllLiveMatches()]);
-    return { date, fixtureMatches, liveMatches };
+    const [previousUtcDay, sameUtcDay, liveMatches] = await Promise.all([
+      getFixturesByDate(shiftIsoDate(date, -1)),
+      getFixturesByDate(date),
+      getAllLiveMatches(),
+    ]);
+    const byId = new Map<number, Match>();
+    for (const m of [...previousUtcDay, ...sameUtcDay]) {
+      if (matchIstanbulDate(m) === date) byId.set(Number(m.id), m);
+    }
+    return { date, fixtureMatches: [...byId.values()], liveMatches };
   }
 
   // Eski sağlayıcı: `/fixtures/list` sayfalı ve Dünya Kupası 2. sayfaya düşebiliyor → rekabet fikstürüyle tamamla.

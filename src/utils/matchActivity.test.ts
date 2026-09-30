@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { hasActiveMatch, homePollDelayMs, matchListFreshSeconds, matchKickoffMs } from './matchActivity';
+import { hasActiveMatch, homePollDelayMs, matchIstanbulDate, matchListFreshSeconds, matchKickoffMs } from './matchActivity';
 
 const NOW = Date.parse('2026-09-30T13:00:00Z');
 const ns = (hhmm: string, date = '2026-09-30') => ({ status: 'NOT STARTED', date, scheduled: hhmm });
@@ -8,6 +8,13 @@ describe('matchActivity', () => {
   it('başlama saati: date + scheduled (UTC)', () => {
     expect(matchKickoffMs(ns('19:00'))).toBe(Date.parse('2026-09-30T19:00:00Z'));
     expect(matchKickoffMs({ status: 'NOT STARTED', date: '2026-09-30' })).toBeNull();
+  });
+
+  it('Türkiye günü: 21:00 UTC ve sonrası ertesi gün; saat yoksa date', () => {
+    expect(matchIstanbulDate({ date: '2026-09-30', scheduled: '23:30' })).toBe('2026-10-01');
+    expect(matchIstanbulDate({ date: '2026-09-30', scheduled: '20:59' })).toBe('2026-09-30');
+    expect(matchIstanbulDate({ date: '2026-09-30', scheduled: '21:00' })).toBe('2026-10-01');
+    expect(matchIstanbulDate({ date: '2026-09-30' })).toBe('2026-09-30');
   });
 
   it('aktif: canlı / devre arası / ±15 dk içinde başlama / başlama saati geçmiş ama hâlâ NS (≤3 sa)', () => {

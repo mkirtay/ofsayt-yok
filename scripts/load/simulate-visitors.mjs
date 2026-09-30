@@ -36,15 +36,18 @@ const sm = (d) => d.toISOString().replace('T', ' ').slice(0, 19);
 
 function respond(path, page) {
   const now = new Date();
-  const today = iso(now);
+  // Ziyaretçiler Türkiye gününü ister (ana sayfanın tarih şeridi) — sahte upstream'in "bugün"ü de o gün olmalı.
+  const today = iso(new Date(now.getTime() + 3 * 3600e3));
   const evening = { id: 19746594, league_id: 600, state_id: 1, starting_at: sm(new Date(now.getTime() + 6 * 3600e3)) };
   const live = { id: 19746001, league_id: 600, state_id: 2, starting_at: sm(new Date(now.getTime() - 30 * 60e3)) };
   const rate = { rate_limit: { resets_in_seconds: 3000, remaining: 2000, requested_entity: 'Fixture' } };
   const list = (data, hasMore = false) => ({ data, pagination: { has_more: hasMore }, ...rate });
   if (path.startsWith('football/livescores/')) return SCENARIO === 'live' ? list([live]) : { message: 'No result(s) found', ...rate };
-  if (path.startsWith('football/fixtures/date/') || path.startsWith(`football/fixtures/between/${today}`)) {
+  if (path === `football/fixtures/date/${today}` || path.startsWith(`football/fixtures/between/${today}`)) {
     return list(SCENARIO === 'live' ? [live, evening] : [evening]);
   }
+  // Diğer günler (ör. Türkiye günü için çekilen önceki UTC günü): bitmiş maçlar.
+  if (path.startsWith('football/fixtures/date/')) return list([{ id: 9, league_id: 600, state_id: 5, starting_at: '2026-01-01 18:00:00' }]);
   if (/^football\/fixtures\/\d+$/.test(path)) return { data: evening, ...rate };
   if (path.startsWith('football/fixtures/')) return list([{ id: 1, league_id: 600, state_id: 5, starting_at: '2026-08-01 17:00:00' }]);
   if (path.startsWith('football/topscorers/')) return list([], page < 4);

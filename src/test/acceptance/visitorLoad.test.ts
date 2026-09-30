@@ -10,7 +10,17 @@ import { createUpstreamCounter, simulateVisitors, type VisitorPattern, type Simu
 
 const h = vi.hoisted(() => ({ clock: { t: 0 }, redis: null as FakeRedis | null, scenario: 'quiet' as 'quiet' | 'live' }));
 
-vi.mock('@/lib/redis', () => ({ getRedisClient: () => h.redis }));
+vi.mock('@/lib/redis', () => ({
+  getRedisClient: () => h.redis,
+  withRedis: async <T,>(fn: (r: FakeRedis) => Promise<T>, fallback: T) => {
+    if (!h.redis) return fallback;
+    try {
+      return await fn(h.redis);
+    } catch {
+      return fallback;
+    }
+  },
+}));
 vi.mock('@/lib/rateLimit', () => ({
   hitFixedWindowRateLimit: async () => ({ success: true, remaining: 99, resetAt: 0 }),
   requestIp: (headers: Record<string, string>) => headers['x-forwarded-for'] ?? '0.0.0.0',
@@ -65,9 +75,11 @@ function respond(url: string): { status: number; body: unknown } {
   if (p.startsWith('football/livescores/')) {
     return h.scenario === 'live' ? list([liveMatch]) : { status: 200, body: { message: 'No result(s) found matching your request.', ...RATE } };
   }
-  if (p.startsWith(`football/fixtures/date/`) || p.startsWith(`football/fixtures/between/${TODAY}`)) {
+  if (p === `football/fixtures/date/${TODAY}` || p.startsWith(`football/fixtures/between/${TODAY}`)) {
     return list(h.scenario === 'live' ? [liveMatch, eveningMatch] : [eveningMatch]);
   }
+  // Diğer günler (ör. Türkiye günü için çekilen önceki UTC günü): bitmiş maçlar.
+  if (p.startsWith('football/fixtures/date/')) return list([{ id: 9, state_id: 5, starting_at: '2026-09-29 18:00:00' }]);
   if (/^football\/fixtures\/\d+$/.test(p)) return { status: 200, body: { data: eveningMatch, ...RATE } };
   if (p.startsWith('football/fixtures/')) return list([{ id: 1, state_id: 5, starting_at: '2026-08-01 17:00:00' }]);
   if (p.startsWith('football/topscorers/')) return list([], page < 4);
