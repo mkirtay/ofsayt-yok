@@ -9,6 +9,7 @@ import { hitFixedWindowRateLimit, requestIp } from '@/lib/rateLimit';
 import { runWithLiveScoreHttpClient } from '@/services/liveScoreHttpContext';
 import { livescoreAxiosFromIncomingMessage } from '@/server/livescoreInternalAxios';
 import { getCompetitionTableFull } from '@/services/liveScoreService';
+import { legacyToStandingsLeagueId } from '@/services/sportmonksProviderFlag';
 
 export type CompareTeamItem = {
   id: number;
@@ -40,10 +41,13 @@ export default async function handler(
     return res.status(400).json({ error: 'competitionId zorunlu' });
   }
 
+  // İstemci legacy id yollar (config/leagues.ts: Süper Lig = 6) → Sportmonks açıkken league_id'ye çevrilir.
+  const leagueId = legacyToStandingsLeagueId(competitionId);
   const axios = livescoreAxiosFromIncomingMessage(req);
-  const table = await runWithLiveScoreHttpClient(axios, () =>
-    getCompetitionTableFull(competitionId).catch(() => null)
-  );
+  const table =
+    leagueId == null
+      ? null
+      : await runWithLiveScoreHttpClient(axios, () => getCompetitionTableFull(String(leagueId)).catch(() => null));
 
   if (!table) {
     return res.status(200).json([]);

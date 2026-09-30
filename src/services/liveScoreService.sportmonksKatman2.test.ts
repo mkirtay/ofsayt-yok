@@ -214,7 +214,7 @@ describe('getSeasonsList — Faz 3, lig-scoped /leagues/{id}?include=seasons', (
       const fetchSpy = vi.spyOn(global, 'fetch').mockImplementation(envelope({ id: 564, seasons: seasonsLaLiga }));
       const { getSeasonsList } = await import('./liveScoreService');
 
-      const seasons = await getSeasonsList({ competitionId: 3, skipCalendarYearDedupe: true }); // 3 = İspanya La Liga
+      const seasons = await getSeasonsList({ competitionId: 564, skipCalendarYearDedupe: true }); // 564 = İspanya La Liga (Sportmonks league_id)
       expect(fetchSpy.mock.calls[0][0] as string).toContain('/leagues/564');
       expect(seasons.some((s) => s.id === 27965 && s.name === '2026/2027')).toBe(true);
     });
@@ -243,7 +243,7 @@ describe('getCompetitionTableFull / getLeagueTable — Faz 3, /standings/seasons
       );
       const { getCompetitionTableFull } = await import('./liveScoreService');
 
-      const result = await getCompetitionTableFull('3'); // 3 = La Liga
+      const result = await getCompetitionTableFull('564'); // 564 = La Liga (Sportmonks league_id, legacy çeviri yok)
       expect(fetchSpy).toHaveBeenCalledTimes(2);
       expect(result?.season?.id).toBe(27965);
       expect(result?.table?.[0]).toMatchObject({ rank: 1, name: 'FC Barcelona', points: 18, matches: 6 });
@@ -260,7 +260,7 @@ describe('getCompetitionTableFull / getLeagueTable — Faz 3, /standings/seasons
       );
       const { getLeagueTable } = await import('./liveScoreService');
 
-      const table = await getLeagueTable('3');
+      const table = await getLeagueTable('564');
       expect(Array.isArray(table)).toBe(true);
       expect(table![0]).toMatchObject({ rank: 1, name: 'FC Barcelona' });
     });
@@ -276,7 +276,7 @@ describe('getCompetitionTableFull / getLeagueTable — Faz 3, /standings/seasons
       );
       const { getCompetitionTableFull } = await import('./liveScoreService');
 
-      const result = await getCompetitionTableFull('245', { season: 20090, group_id: 247770 }); // 245 = UEFA Avrupa Ligi
+      const result = await getCompetitionTableFull('5', { season: 20090, group_id: 247770 }); // 5 = UEFA Avrupa Ligi (Sportmonks)
       expect(fetchSpy).toHaveBeenCalledTimes(1); // season verildi, /leagues/{id} çağrısı gerekmedi
       expect(result?.table).toHaveLength(2);
       expect(result?.table?.every((row) => ['Arsenal', 'PSV'].includes(row.name ?? ''))).toBe(true);
@@ -284,11 +284,28 @@ describe('getCompetitionTableFull / getLeagueTable — Faz 3, /standings/seasons
     });
   });
 
+  it('legacy tablosunda OLMAYAN lig (2. Lig Kırmızı 1283) doğrudan Sportmonks id\'siyle tablo döner', async () => {
+    await withSportmonksEnabled(async () => {
+      const fetchSpy = vi.spyOn(global, 'fetch').mockImplementation(
+        routedFetch([
+          { match: '/leagues/1283', data: { id: 1283, seasons: [{ id: 29113, name: '2026/2027', is_current: true }] } },
+          { match: '/standings/seasons/29113', data: standingsLaLiga },
+        ]),
+      );
+      const { getCompetitionTableFull } = await import('./liveScoreService');
+      const result = await getCompetitionTableFull('1283');
+      expect(fetchSpy.mock.calls.map((c) => String(c[0]))[0]).toContain('/leagues/1283');
+      expect(result?.competition?.id).toBe(1283);
+      expect(result?.season?.id).toBe(29113);
+      expect(result?.table?.length).toBeGreaterThan(0);
+    });
+  });
+
   it('eşlemesi olmayan bir competitionId için ağ isteği atmadan null döner', async () => {
     await withSportmonksEnabled(async () => {
       const fetchSpy = vi.spyOn(global, 'fetch').mockImplementation(envelope({}));
       const { getCompetitionTableFull } = await import('./liveScoreService');
-      const result = await getCompetitionTableFull('362'); // World Cup — eşlemesiz
+      const result = await getCompetitionTableFull('362'); // World Cup — planda yok, istek atılmaz
       expect(result).toBeNull();
       expect(fetchSpy).not.toHaveBeenCalled();
     });
@@ -306,7 +323,7 @@ describe('getTopScorers / getTopDisciplinary — Faz 3, tek primitif (sportmonks
       );
       const { getTopScorers } = await import('./liveScoreService');
 
-      const result = await getTopScorers('3');
+      const result = await getTopScorers('564');
       const calledUrl = fetchSpy.mock.calls.map((c) => String(c[0])).find((u) => u.includes('/topscorers/'));
       expect(calledUrl).toContain('seasonTopscorerTypes%3A208%2C209'); // gol + asist tek sorguda
       expect(result?.topscorers?.[0]).toMatchObject({ goals: 9, player: { name: 'Raphinha' } });
@@ -323,7 +340,7 @@ describe('getTopScorers / getTopDisciplinary — Faz 3, tek primitif (sportmonks
       );
       const { getTopScorers } = await import('./liveScoreService');
 
-      const result = await getTopScorers('6');
+      const result = await getTopScorers('600');
       expect(result?.season?.id).toBe(28203);
       const list = result!.topscorers!;
       // Liste gol sıralaması: yalnızca 208 satırları (209 satırları ayrı oyuncu girişi OLMAZ)
@@ -380,7 +397,7 @@ describe('getTopScorers / getTopDisciplinary — Faz 3, tek primitif (sportmonks
       );
       const { getTopDisciplinary } = await import('./liveScoreService');
 
-      const result = await getTopDisciplinary('3');
+      const result = await getTopDisciplinary('564');
       const calledUrl = fetchSpy.mock.calls.map((c) => String(c[0])).find((u) => u.includes('/topscorers/'));
       expect(calledUrl).toContain('seasonTopscorerTypes%3A83%2C84');
       const marioMartin = result.find((r: { player: { name: string } }) => r.player.name === 'Mario Martín');
@@ -403,7 +420,7 @@ describe('getTopScorers / getTopDisciplinary — Faz 3, tek primitif (sportmonks
       );
       const { getTopScorers } = await import('./liveScoreService');
 
-      const result = await getTopScorers('3');
+      const result = await getTopScorers('564');
       expect(result).toBeNull();
     });
   });
@@ -419,7 +436,7 @@ describe('getTopScorers / getTopDisciplinary — Faz 3, tek primitif (sportmonks
       );
       const { getTopDisciplinary } = await import('./liveScoreService');
 
-      const result = await getTopDisciplinary('3');
+      const result = await getTopDisciplinary('564');
       expect(result).toEqual([]);
     });
   });

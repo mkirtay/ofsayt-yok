@@ -419,15 +419,18 @@ function sportmonksPickCurrentSeasonId(seasons: SportmonksSeasonRow[]): number |
   return seasons.find((s) => s.is_current)?.id ?? null;
 }
 
-/** `competitionId` (livescore-api.com) → doğrulanmış Sportmonks `league_id`, yoksa uyarıp `null`. */
+/**
+ * Puan durumu / sezon / gol krallığı fonksiyonlarının `competitionId`'si Sportmonks açıkken DOĞRUDAN
+ * Sportmonks `league_id`'dir (legacy çeviri yok; legacy id kullananlar `legacyToStandingsLeagueId` ile
+ * girişte çevirir). Dünya Kupası (362) planda yok → istek atmadan `null`.
+ */
 function sportmonksResolveLeagueIdOrWarn(competitionId: number | string, caller: string): number | null {
-  const leagueId = resolveSportmonksLeagueId(competitionId);
-  if (leagueId == null) {
-    console.warn(
-      `[sportmonks] ${caller}: competition_id=${competitionId} için doğrulanmış league_id eşlemesi yok ` +
-        '(bkz. sportmonksProviderFlag.ts).',
-    );
+  const leagueId = Number(competitionId);
+  if (!Number.isFinite(leagueId) || leagueId <= 0) {
+    console.warn(`[sportmonks] ${caller}: geçersiz league_id=${competitionId}`);
+    return null;
   }
+  if (leagueId === WORLD_CUP_COMPETITION_ID) return null;
   return leagueId;
 }
 
@@ -1696,7 +1699,7 @@ export const getTopScorers = async (
         'getTopScorers',
       );
       if (rows == null) return null;
-      const leagueId = resolveSportmonksLeagueId(competitionId) ?? undefined;
+      const leagueId = Number(competitionId);
       const seasonId = rows[0]?.season_id;
       return {
         competition: { id: leagueId, name: '' },

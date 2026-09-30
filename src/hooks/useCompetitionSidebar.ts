@@ -10,6 +10,7 @@ import {
   type SeasonListItem,
   type TopScorersPayload,
 } from '@/services/liveScoreService';
+import { legacyToStandingsLeagueId } from '@/services/sportmonksProviderFlag';
 
 export type CompetitionSidebarData = {
   seasons: SeasonListItem[];
@@ -18,8 +19,17 @@ export type CompetitionSidebarData = {
   topScorers: TopScorersPayload | null;
 };
 
+const EMPTY_SIDEBAR: CompetitionSidebarData = { seasons: [], selectedSeasonId: null, standings: null, topScorers: null };
+
+/** Yan panel legacy id (config/leagues.ts) kullanır → puan durumu servisleri için Sportmonks `league_id`. */
+function sidebarStandingsLeagueId(competitionId: number): string | null {
+  const id = legacyToStandingsLeagueId(competitionId);
+  return id == null ? null : String(id);
+}
+
 async function fetchCompetitionSidebar(competitionId: number): Promise<CompetitionSidebarData> {
-  const compId = String(competitionId);
+  const compId = sidebarStandingsLeagueId(competitionId);
+  if (compId == null) return EMPTY_SIDEBAR;
   const [seasonsList, table1] = await Promise.all([
     getSeasonsList({ competitionId: compId }),
     getCompetitionTableFull(compId),
@@ -85,7 +95,8 @@ export async function fetchCompetitionSidebarForSeason(
   competitionId: number,
   seasonId: number
 ): Promise<Pick<CompetitionSidebarData, 'standings' | 'topScorers'>> {
-  const compId = String(competitionId);
+  const compId = sidebarStandingsLeagueId(competitionId);
+  if (compId == null) return { standings: null, topScorers: null };
   const [tableData, scorersData] = await Promise.all([
     getCompetitionTableFull(compId, { season: seasonId }),
     getTopScorers(compId, { season: seasonId }),

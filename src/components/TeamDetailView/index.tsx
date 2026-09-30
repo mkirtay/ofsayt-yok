@@ -220,9 +220,8 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
       setStandingsLoading(true);
       setTopScorersLoading(true);
       setSquadLoading(true);
-      // `selectedCompetitionId` takımın maçlarından gelir → Sportmonks açıkken Sportmonks league_id (Süper Lig = 600).
-      // Puan durumu/sezon/gol krallığı fonksiyonları legacy id bekler; çevrilmeden geçilirse (600 → eşleme yok)
-      // "bulunamadı" çıkar. Eşlemesi olmayan lig için tablo yok (yanlış lig yerine).
+      // `selectedCompetitionId` takımın maçlarından gelir → Sportmonks açıkken Sportmonks league_id (Süper Lig = 600,
+      // 2. Lig Kırmızı = 1283). Puan durumu/sezon/gol krallığı fonksiyonları bu id'yi doğrudan kullanır (legacy çeviri yok).
       const standingsId = toStandingsCompetitionId(selectedCompetitionId);
       if (standingsId == null) {
         const squadOnly = await getTeamSquads(teamId, selectedCompetitionId);

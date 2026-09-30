@@ -4,6 +4,7 @@ import {
   getTopDisciplinary,
   getTopScorers,
 } from '@/services/liveScoreService';
+import { legacyToStandingsLeagueId } from '@/services/sportmonksProviderFlag';
 
 export type StandingsPageData = {
   table: unknown[];
@@ -11,7 +12,10 @@ export type StandingsPageData = {
   cards: unknown[];
 };
 
-async function fetchStandingsPage(competitionId: string): Promise<StandingsPageData> {
+async function fetchStandingsPage(legacyCompetitionId: string): Promise<StandingsPageData> {
+  const leagueId = legacyToStandingsLeagueId(legacyCompetitionId);
+  if (leagueId == null) return { table: [], scorers: [], cards: [] };
+  const competitionId = String(leagueId);
   const [tableData, scorersData, cardsData] = await Promise.all([
     getLeagueTable(competitionId),
     getTopScorers(competitionId),

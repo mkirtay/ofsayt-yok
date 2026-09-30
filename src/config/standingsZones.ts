@@ -1,6 +1,7 @@
 import {
   UEFA_CHAMPIONS_LEAGUE_ID,
 } from './leagues';
+import { isSportmonksProviderEnabled, resolveLegacyCompetitionId } from '@/services/sportmonksProviderFlag';
 
 /**
  * Puan tablosu # sütunu renkleri — API bölge vermediği için lig kuralları.
@@ -101,6 +102,18 @@ function isBottomN(rank: number, totalTeams: number, n: number): boolean {
   return rank >= relStart;
 }
 
+/**
+ * Kurallar legacy id'lerle tanımlı (Süper Lig = 6, Premier = 2, ŞL = 244). Sportmonks açıkken tablonun
+ * `competition.id`'si Sportmonks `league_id`'sidir (600, 8, 2): doğrulanmış eşlemeyle legacy'ye çevrilir.
+ * Eşlemesiz lig `undefined` → varsayılan kurallar. ÖNEMLİ: çevrilmezse 600/8 kural bulamaz, Sportmonks'ta
+ * 2 (Şampiyonlar Ligi) ise yanlışlıkla Premier Lig kurallarıyla boyanırdı.
+ */
+export function zoneRuleCompetitionId(competitionId?: number): number | undefined {
+  if (competitionId == null || !Number.isFinite(competitionId)) return undefined;
+  if (!isSportmonksProviderEnabled()) return competitionId;
+  return resolveLegacyCompetitionId(competitionId) ?? undefined;
+}
+
 export function getStandingRankZone(
   rank: number,
   totalTeams: number,
@@ -110,7 +123,7 @@ export function getStandingRankZone(
   const r = Math.trunc(rank);
   if (r < 1 || r > totalTeams) return null;
 
-  const cid = competitionId;
+  const cid = zoneRuleCompetitionId(competitionId);
 
   // —— UEFA Şampiyonlar Ligi: lig aşaması 36 takım (2024+) ——
   if (cid === UEFA_CHAMPIONS_LEAGUE_ID && totalTeams === UEFA_LEAGUE_PHASE_TEAM_COUNT) {

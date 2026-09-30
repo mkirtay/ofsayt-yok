@@ -95,22 +95,31 @@ export function resolveLegacyCompetitionId(sportmonksLeagueId: number | string):
 }
 
 /**
- * Bir maçın `competition.id` değerini, `getCompetitionTableFull`/`getSeasonsList` gibi
- * legacy `competition_id` bekleyen fonksiyonlara verilecek forma çevirir.
+ * Bir maçın `competition.id` değerini puan durumu fonksiyonlarına (`getCompetitionTableFull`,
+ * `getSeasonsList`, `getTopScorers`) verilecek forma çevirir.
  *
- * Sportmonks açıkken fikstürün `competition.id`'si Sportmonks `league_id`'sidir (Süper Lig = 600),
- * legacy id ise 6 — çevrilmeden geçilirse 600 eşlemesiz kalıp "Puan tablosu bulunamadı" verir,
- * 5 gibi çakışan bir id ise sessizce YANLIŞ lige (5 = Ligue 1) gider. Eşlemesi olmayan id `null`
- * döner (yanlış tablo yerine tablo yok); Dünya Kupası (362) Sportmonks'ta doğrulanamadığı için
- * olduğu gibi geçer.
+ * Sportmonks açıkken bu fonksiyonlar DOĞRUDAN Sportmonks `league_id` alır (legacy çeviri yok) —
+ * fikstürün `competition.id`'si zaten o uzayda (Süper Lig = 600, 2. Lig Kırmızı = 1283). Bu yüzden
+ * doğrulanmış eşleme tablosunda olmayan ligler de (2. Lig, Championship…) tablo gösterebilir.
+ * Dünya Kupası (362) Sportmonks planında yok; olduğu gibi geçer ve servis katmanı `null` döner.
  */
 export function toStandingsCompetitionId(
   matchCompetitionId: number | string | null | undefined,
 ): number | null {
   if (matchCompetitionId == null) return null;
   const id = Number(matchCompetitionId);
-  if (!Number.isFinite(id)) return null;
-  if (!isSportmonksProviderEnabled()) return id;
-  if (id === WORLD_CUP_COMPETITION_ID) return id;
-  return resolveLegacyCompetitionId(id);
+  return Number.isFinite(id) ? id : null;
+}
+
+/**
+ * LEGACY id kullanan çağıranlar (`config/leagues.ts` yan panel/karşılaştırma/standings sayfası: Süper Lig = 6)
+ * için TEK çeviri noktası: Sportmonks açıkken legacy id → Sportmonks `league_id`, eşlemesi yoksa `null`
+ * (yanlış lige gitmesin — 5 legacy Ligue 1, Sportmonks'ta Avrupa Ligi). Kapalıyken id zaten legacy.
+ * Dünya Kupası (362) çevrilmeden geçer.
+ */
+export function legacyToStandingsLeagueId(legacyCompetitionId: number | string | null | undefined): number | null {
+  const id = toStandingsCompetitionId(legacyCompetitionId);
+  if (id == null) return null;
+  if (!isSportmonksProviderEnabled() || id === WORLD_CUP_COMPETITION_ID) return id;
+  return resolveSportmonksLeagueId(id);
 }

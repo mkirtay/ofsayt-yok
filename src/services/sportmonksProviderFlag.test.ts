@@ -1,6 +1,7 @@
 import { describe, it, expect, afterEach } from 'vitest';
 import {
   isSportmonksProviderEnabled,
+  legacyToStandingsLeagueId,
   resolveLegacyCompetitionId,
   resolveSportmonksLeagueId,
   toStandingsCompetitionId,
@@ -83,36 +84,43 @@ describe('resolveLegacyCompetitionId (Sportmonks league_id → legacy competitio
   });
 });
 
-describe('toStandingsCompetitionId — maç competition.id → puan durumu için legacy id (P0 "Puan tablosu bulunamadı")', () => {
+describe('toStandingsCompetitionId / legacyToStandingsLeagueId — puan durumu id uzayı', () => {
   const original = process.env.NEXT_PUBLIC_SPORTMONKS_ENABLED;
   afterEach(() => {
     if (original === undefined) delete process.env.NEXT_PUBLIC_SPORTMONKS_ENABLED;
     else process.env.NEXT_PUBLIC_SPORTMONKS_ENABLED = original;
   });
 
-  it('Sportmonks açıkken Süper Lig fikstürü (600) legacy 6\'ya çevrilir — 600 çevrilmeden geçilirse tablo hiç bulunamazdı', () => {
+  it('maç competition.id olduğu gibi geçer: Süper Lig 600, 2. Lig Kırmızı 1283 (legacy tablosunda yok) — null DÖNMEZ', () => {
     process.env.NEXT_PUBLIC_SPORTMONKS_ENABLED = 'true';
-    expect(toStandingsCompetitionId(600)).toBe(6);
-    expect(resolveSportmonksLeagueId(toStandingsCompetitionId(600)!)).toBe(600);
-  });
-
-  it('çakışan id sessizce yanlış lige gitmez: Sportmonks 5 (Avrupa Ligi) → 245, Ligue 1 (legacy 5) DEĞİL', () => {
-    process.env.NEXT_PUBLIC_SPORTMONKS_ENABLED = 'true';
-    expect(toStandingsCompetitionId(5)).toBe(245);
-    expect(resolveSportmonksLeagueId(toStandingsCompetitionId(5)!)).toBe(5);
-  });
-
-  it('eşlemesi olmayan lig null (yanlış tablo yerine tablo yok); Dünya Kupası (362) olduğu gibi geçer', () => {
-    process.env.NEXT_PUBLIC_SPORTMONKS_ENABLED = 'true';
-    expect(toStandingsCompetitionId(609)).toBeNull();
+    expect(toStandingsCompetitionId(600)).toBe(600);
+    expect(toStandingsCompetitionId('1283')).toBe(1283);
+    expect(toStandingsCompetitionId(609)).toBe(609);
     expect(toStandingsCompetitionId(362)).toBe(362);
+  });
+
+  it('geçersiz / boş id null', () => {
     expect(toStandingsCompetitionId(null)).toBeNull();
     expect(toStandingsCompetitionId(undefined)).toBeNull();
+    expect(toStandingsCompetitionId('abc')).toBeNull();
+  });
+
+  it('legacy giriş (yan panel/compare/standings sayfası): Sportmonks açıkken tek noktada çevrilir', () => {
+    process.env.NEXT_PUBLIC_SPORTMONKS_ENABLED = 'true';
+    expect(legacyToStandingsLeagueId(6)).toBe(600);
+    expect(legacyToStandingsLeagueId('244')).toBe(2);
+    expect(legacyToStandingsLeagueId(362)).toBe(362);
+  });
+
+  it('çakışan legacy id sessizce yanlış lige gitmez; eşlemesizse null', () => {
+    process.env.NEXT_PUBLIC_SPORTMONKS_ENABLED = 'true';
+    expect(legacyToStandingsLeagueId(5)).toBe(301); // legacy 5 = Ligue 1 (Sportmonks 5 = Avrupa Ligi DEĞİL)
+    expect(legacyToStandingsLeagueId(99999)).toBeNull();
   });
 
   it('Sportmonks kapalıyken id zaten legacy — değişmeden döner', () => {
     delete process.env.NEXT_PUBLIC_SPORTMONKS_ENABLED;
     expect(toStandingsCompetitionId(6)).toBe(6);
-    expect(toStandingsCompetitionId('245')).toBe(245);
+    expect(legacyToStandingsLeagueId('245')).toBe(245);
   });
 });
