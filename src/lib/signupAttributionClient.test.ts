@@ -19,11 +19,38 @@ describe('signupAttributionClient (sessionStorage)', () => {
     });
   });
 
-  it('utm\'siz ilk sayfa: kaynak null, oturumun ilk giriş zamanı yine tutulur', () => {
+  it('utm\'siz ilk sayfa: kaynak null, oturumun ilk giriş zamanı tutulur', () => {
     const s = memoryStorage();
     captureSessionAttribution('', s, new Date('2026-09-30T10:00:00Z'));
-    captureSessionAttribution('?utm_source=late', s);
-    expect(readSessionAttribution(s)).toMatchObject({ source: null, firstTouchAt: '2026-09-30T10:00:00.000Z' });
+    expect(readSessionAttribution(s)).toEqual({ source: null, medium: null, campaign: null, firstTouchAt: '2026-09-30T10:00:00.000Z' });
+  });
+
+  it('önce utm\'siz giriş, sonra kampanya linki: utm oturumdaki ilk utm\'li girişten dolar, firstTouchAt oturum başı kalır', () => {
+    const s = memoryStorage();
+    captureSessionAttribution('', s, new Date('2026-09-30T10:00:00Z'));
+    captureSessionAttribution('?utm_source=instagram&utm_campaign=derbi', s, new Date('2026-09-30T10:20:00Z'));
+    expect(readSessionAttribution(s)).toEqual({
+      source: 'instagram',
+      medium: null,
+      campaign: 'derbi',
+      firstTouchAt: '2026-09-30T10:00:00.000Z',
+    });
+  });
+
+  it('utm bir kez dolunca sonradan gelen utm (ve utm\'siz sayfalar) ezmez', () => {
+    const s = memoryStorage();
+    captureSessionAttribution('', s, new Date('2026-09-30T10:00:00Z'));
+    captureSessionAttribution('?utm_source=instagram', s, new Date('2026-09-30T10:20:00Z'));
+    captureSessionAttribution('?utm_source=google&utm_medium=cpc', s, new Date('2026-09-30T10:40:00Z'));
+    captureSessionAttribution('', s, new Date('2026-09-30T10:50:00Z'));
+    expect(readSessionAttribution(s)).toEqual({ source: 'instagram', medium: null, campaign: null, firstTouchAt: '2026-09-30T10:00:00.000Z' });
+  });
+
+  it('geçersiz utm değeri utm sayılmaz (sonraki geçerli utm doldurabilir)', () => {
+    const s = memoryStorage();
+    captureSessionAttribution('?utm_source=%3Cscript%3E', s, new Date('2026-09-30T10:00:00Z'));
+    captureSessionAttribution('?utm_source=newsletter', s, new Date('2026-09-30T10:05:00Z'));
+    expect(readSessionAttribution(s)).toMatchObject({ source: 'newsletter', firstTouchAt: '2026-09-30T10:00:00.000Z' });
   });
 
   it('oturum sonrası gönderim bir kez; e-posta kaydında gönderildiyse hiç', async () => {

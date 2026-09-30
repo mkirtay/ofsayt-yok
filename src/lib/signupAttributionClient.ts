@@ -18,22 +18,36 @@ function sessionStore(): StorageLike | null {
   }
 }
 
-/** Oturumun İLK sayfa yüklemesinde çağrılır; sonraki sayfalar ilk teması ezmez. */
+/**
+ * Her tam sayfa yüklemesinde çağrılır (bkz. SignupAttributionSync).
+ * - `firstTouchAt`: oturumun ilk girişi — bir kez yazılır, değişmez.
+ * - utm alanları: oturumdaki İLK utm'li girişten dolar (önce utm'siz girip sonra kampanya linkine
+ *   tıklayan da ölçülür); bir kez dolunca sonradan gelen utm öncekini ezmez.
+ */
 export function captureSessionAttribution(
   search: string = typeof window !== 'undefined' ? window.location.search : '',
   storage: StorageLike | null = sessionStore(),
   now: Date = new Date(),
 ): void {
   try {
-    if (!storage || storage.getItem(KEY)) return;
+    if (!storage) return;
     const p = new URLSearchParams(search);
-    const payload: SignupAttributionPayload = {
+    const utm = {
       source: cleanUtmValue(p.get('utm_source')),
       medium: cleanUtmValue(p.get('utm_medium')),
       campaign: cleanUtmValue(p.get('utm_campaign')),
-      firstTouchAt: now.toISOString(),
     };
-    storage.setItem(KEY, JSON.stringify(payload));
+    const hasUtm = Boolean(utm.source || utm.medium || utm.campaign);
+    const existing = readSessionAttribution(storage);
+
+    if (!existing) {
+      storage.setItem(KEY, JSON.stringify({ ...utm, firstTouchAt: now.toISOString() } satisfies SignupAttributionPayload));
+      return;
+    }
+    const existingHasUtm = Boolean(existing.source || existing.medium || existing.campaign);
+    if (hasUtm && !existingHasUtm) {
+      storage.setItem(KEY, JSON.stringify({ ...utm, firstTouchAt: existing.firstTouchAt } satisfies SignupAttributionPayload));
+    }
   } catch {
     // depolama dolu/engelli — ölçüm olmadan devam
   }
