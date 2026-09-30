@@ -5,6 +5,10 @@ import { useMemo, useState, useEffect, useCallback, type CSSProperties } from 'r
 import { List, type RowComponentProps } from 'react-window';
 import { AutoSizer } from 'react-virtualized-auto-sizer';
 import { useTranslation } from '@/lib/i18n';
+import TeamTierBadge from '@/components/TeamTierBadge';
+import { useTurkeyTeamTiers } from '@/hooks/useTurkeyTeamTiers';
+import { isTurkishCupMatch } from '@/utils/cupTeamTier';
+import type { TurkeyTeamTiersPayload } from '@/config/turkeyTiers';
 import { leagueNameById } from '@/utils/leagueName';
 import { Match } from '../../models/liveScore';
 import type { GroupedLeagueMatches } from '../../services/liveScoreService';
@@ -216,6 +220,8 @@ type RowContext = {
   onPrefetchMatch: ((matchId: string) => void) | null;
   onSelectTeam: ((teamId: number) => void) | null;
   selectedMatchId: string | null;
+  /** Türkiye Kupası maçlarında takım kademe rozeti için (yoksa rozet yok). */
+  cupTiers: TurkeyTeamTiersPayload | null;
 };
 
 type VirtualRowProps = RowComponentProps<RowContext>;
@@ -233,6 +239,7 @@ function VirtualRow({
   onPrefetchMatch,
   onSelectTeam,
   selectedMatchId,
+  cupTiers,
   ariaAttributes,
 }: VirtualRowProps) {
   const { t } = useTranslation('match');
@@ -394,6 +401,7 @@ function VirtualRow({
             />
           ) : null}
           <span className={`${styles.teamName}${match.home?.id ? ` ${styles.teamNameLink}` : ''}`}>{homeName}</span>
+          <TeamTierBadge match={match} teamId={match.home?.id} tiers={cupTiers} />
         </div>
         <div className={`${styles.virtualCell} ${styles.virtualScore}`}>
           <span className={styles.scoreText}>{score}</span>
@@ -414,6 +422,7 @@ function VirtualRow({
             />
           ) : null}
           <span className={`${styles.teamName}${match.away?.id ? ` ${styles.teamNameLink}` : ''}`}>{awayName}</span>
+          <TeamTierBadge match={match} teamId={match.away?.id} tiers={cupTiers} />
         </div>
         <div className={`${styles.virtualCell} ${styles.virtualHt}`}>{htDisplay}</div>
       </Link>
@@ -475,6 +484,10 @@ export default function MatchList({
 
   const todayIso = useMemo(() => todayIsoTr(), []);
 
+  // Yalnızca listede Türkiye Kupası maçı varsa (Sportmonks) takım→kademe haritası çekilir.
+  const hasCupMatch = useMemo(() => items.some((i) => i.type === 'match' && isTurkishCupMatch(i.match)), [items]);
+  const cupTiers = useTurkeyTeamTiers(hasCupMatch).data ?? null;
+
   const rowProps = useMemo<RowContext>(
     () => ({
       items,
@@ -487,6 +500,7 @@ export default function MatchList({
       onPrefetchMatch: onPrefetchMatch ?? null,
       onSelectTeam: onSelectTeam ?? null,
       selectedMatchId: selectedMatchId ?? null,
+      cupTiers,
     }),
     [
       items,
@@ -499,6 +513,7 @@ export default function MatchList({
       onPrefetchMatch,
       onSelectTeam,
       selectedMatchId,
+      cupTiers,
     ]
   );
 

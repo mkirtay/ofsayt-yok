@@ -10,6 +10,9 @@ import { parseHead2HeadTeamIds, overallFormToPills, type FormPill } from '@/util
 import { buildMatchHref } from '@/utils/matchUrl';
 import { competitionLogoNeedsBackdrop } from '@/utils/competitionLogo';
 import { leagueNameById } from '@/utils/leagueName';
+import TeamTierBadge from '@/components/TeamTierBadge';
+import { useTurkeyTeamTiers } from '@/hooks/useTurkeyTeamTiers';
+import { isTurkishCupMatch } from '@/utils/cupTeamTier';
 import { getTeamsHead2Head, type Head2HHistoricalMatch } from '@/services/liveScoreService';
 import StadiumIcon from '@/components/icons/StadiumIcon';
 import WhistleIcon from '@/components/icons/WhistleIcon';
@@ -157,6 +160,9 @@ export default function MatchCard({ match, loading }: MatchCardProps) {
     };
   }, [match?.id, match?.urls?.head2head, match?.home?.id, match?.away?.id]);
 
+  // Kupa maçında takım kademe rozeti için harita (yalnızca Türkiye Kupası maçında istenir).
+  const cupTiers = useTurkeyTeamTiers(isTurkishCupMatch(match)).data ?? null;
+
   if (loading) {
     return <MatchCardSkeleton />;
   }
@@ -244,6 +250,7 @@ export default function MatchCard({ match, loading }: MatchCardProps) {
                 <div className={styles.logoPlaceholder}>{homeName.charAt(0)}</div>
               )}
               <div className={styles.teamName}>{homeName}</div>
+              <TeamTierBadge match={match} teamId={match.home?.id} tiers={cupTiers} />
             </Link>
           </div>
 
@@ -287,6 +294,7 @@ export default function MatchCard({ match, loading }: MatchCardProps) {
                 <div className={styles.logoPlaceholder}>{awayName.charAt(0)}</div>
               )}
               <div className={styles.teamName}>{awayName}</div>
+              <TeamTierBadge match={match} teamId={match.away?.id} tiers={cupTiers} />
             </Link>
           </div>
         </div>

@@ -50,5 +50,10 @@
   "full": {
     "secondLeagueWhite": "2. Lig White Group",
     "secondLeagueRed": "2. Lig Red Group"
+  },
+  "tier": {
+    "superLig": "Süper Lig",
+    "firstLeague": "1. Lig",
+    "secondLeague": "2. Lig"
   }
 }
