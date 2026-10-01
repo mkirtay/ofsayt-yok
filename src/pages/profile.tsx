@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useSession } from 'next-auth/react';
 import { useTranslation } from '@/lib/i18n';
+import '@/lib/i18nNamespaces/profile';
 import { PanelSkeleton } from '@/components/Skeleton';
 import { useProfile } from '@/hooks/useProfile';
 import { PROFILE_TABS, resolveProfileTab } from '@/components/Profile/profileTabs';

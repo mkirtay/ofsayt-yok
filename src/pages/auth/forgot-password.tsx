@@ -2,6 +2,7 @@ import type { GetStaticProps } from 'next'
 import { useState, FormEvent } from 'react'
 import { serverSideTranslations } from '@/lib/serverSideTranslations'
 import { useTranslation } from '@/lib/i18n'
+import '@/lib/i18nNamespaces/auth';
 import Link from 'next/link'
 import Head from 'next/head'
 import styles from './auth.module.scss'

@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any -- Livescore tablo / skorer satırları gevşek şema */
 import { useTranslation } from '@/lib/i18n';
+import '@/lib/i18nNamespaces/standings';
 import { useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';

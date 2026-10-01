@@ -4,6 +4,7 @@ import Router from 'next/router';
 import RatingBadge from '@/components/RatingBadge';
 import { formatRating, RATING_TONE_VARS, ratingTone } from '@/config/ratingScale';
 import { useI18n, useTranslation } from '@/lib/i18n';
+import '@/lib/i18nNamespaces/player';
 import { MIN_MINUTES_FOR_AVERAGE } from '@/utils/playerVs';
 import { CONSISTENCY_MIN_MATCHES, ratingChartLayout, type RatingPoint, type RatingSeries, type RatingSummary } from '@/utils/ratingTrend';
 import styles from './ratingTrend.module.scss';

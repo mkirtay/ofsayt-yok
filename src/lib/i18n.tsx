@@ -2,69 +2,30 @@ import { createContext, useCallback, useContext, useEffect, useState } from 'rea
 import type { ComponentType, ReactNode } from 'react';
 import { resolvePluralKey } from './i18nPlural';
 
+import { getNamespace, registerNamespace } from './i18nRegistry';
+// Temel TR namespace'ler: her sayfada (header, alt menü, maç listesi, gündem paneli). Diğerleri sayfa chunk'ından
+// (`lib/i18nNamespaces/*`), EN dil seçilince (`lib/i18nEnglish.ts`) — bkz. lib/i18nRegistry.ts.
 import trCommon from '../../public/locales/tr/common.json';
-import enCommon from '../../public/locales/en/common.json';
 import trNav from '../../public/locales/tr/nav.json';
-import enNav from '../../public/locales/en/nav.json';
-import trAuth from '../../public/locales/tr/auth.json';
-import enAuth from '../../public/locales/en/auth.json';
-import trCredits from '../../public/locales/tr/credits.json';
-import enCredits from '../../public/locales/en/credits.json';
 import trMatch from '../../public/locales/tr/match.json';
-import enMatch from '../../public/locales/en/match.json';
-import trStandings from '../../public/locales/tr/standings.json';
-import enStandings from '../../public/locales/en/standings.json';
-import trProfile from '../../public/locales/tr/profile.json';
-import enProfile from '../../public/locales/en/profile.json';
-import trAi from '../../public/locales/tr/ai.json';
-import enAi from '../../public/locales/en/ai.json';
-import trLegal from '../../public/locales/tr/legal.json';
-import enLegal from '../../public/locales/en/legal.json';
 import trLeagues from '../../public/locales/tr/leagues.json';
-import enLeagues from '../../public/locales/en/leagues.json';
-import trPlayer from '../../public/locales/tr/player.json';
-import enPlayer from '../../public/locales/en/player.json';
-import trCompare from '../../public/locales/tr/compare.json';
-import enCompare from '../../public/locales/en/compare.json';
 import trGundem from '../../public/locales/tr/gundem.json';
-import enGundem from '../../public/locales/en/gundem.json';
-import trTeam from '../../public/locales/tr/team.json';
-import enTeam from '../../public/locales/en/team.json';
 
-const TRANSLATIONS: Record<string, Record<string, Record<string, unknown>>> = {
-  tr: {
-    common: trCommon as Record<string, unknown>,
-    nav: trNav as Record<string, unknown>,
-    auth: trAuth as Record<string, unknown>,
-    credits: trCredits as Record<string, unknown>,
-    match: trMatch as Record<string, unknown>,
-    leagues: trLeagues as Record<string, unknown>,
-    player: trPlayer as Record<string, unknown>,
-    compare: trCompare as Record<string, unknown>,
-    standings: trStandings as Record<string, unknown>,
-    profile: trProfile as Record<string, unknown>,
-    ai: trAi as Record<string, unknown>,
-    legal: trLegal as Record<string, unknown>,
-    gundem: trGundem as Record<string, unknown>,
-    team: trTeam as Record<string, unknown>,
-  },
-  en: {
-    common: enCommon as Record<string, unknown>,
-    nav: enNav as Record<string, unknown>,
-    auth: enAuth as Record<string, unknown>,
-    credits: enCredits as Record<string, unknown>,
-    match: enMatch as Record<string, unknown>,
-    leagues: enLeagues as Record<string, unknown>,
-    player: enPlayer as Record<string, unknown>,
-    compare: enCompare as Record<string, unknown>,
-    standings: enStandings as Record<string, unknown>,
-    profile: enProfile as Record<string, unknown>,
-    ai: enAi as Record<string, unknown>,
-    legal: enLegal as Record<string, unknown>,
-    gundem: enGundem as Record<string, unknown>,
-    team: enTeam as Record<string, unknown>,
-  },
-};
+registerNamespace('tr', 'common', trCommon);
+registerNamespace('tr', 'nav', trNav);
+registerNamespace('tr', 'match', trMatch);
+registerNamespace('tr', 'leagues', trLeagues);
+registerNamespace('tr', 'gundem', trGundem);
+
+let englishLoad: Promise<unknown> | null = null;
+/** EN sözlükleri tek chunk; ikinci çağrı aynı promise'i döner. Hata olursa sonraki seçimde yeniden denenir. */
+function loadEnglish(): Promise<unknown> {
+  englishLoad ??= import('./i18nEnglish').catch((error) => {
+    englishLoad = null;
+    throw error;
+  });
+  return englishLoad;
+}
 
 type I18nContextType = {
   locale: string;
@@ -78,7 +39,8 @@ export function I18nProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const saved = localStorage.getItem('locale');
-    if (saved === 'tr' || saved === 'en') setLocaleState(saved);
+    // EN sözlük yüklenmeden dil değişmez: yarı TR yarı EN ekran olmasın (TR zaten varsayılan, SSR'da da TR).
+    if (saved === 'en') void loadEnglish().then(() => setLocaleState('en'), () => {});
   }, []);
 
   /**
@@ -91,8 +53,9 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   }, [locale]);
 
   const setLocale = useCallback((next: string) => {
-    setLocaleState(next);
     localStorage.setItem('locale', next);
+    if (next === 'en') void loadEnglish().then(() => setLocaleState('en'), () => {});
+    else setLocaleState(next);
   }, []);
 
   return <I18nContext.Provider value={{ locale, setLocale }}>{children}</I18nContext.Provider>;
@@ -124,8 +87,7 @@ export function useTranslation(ns: string) {
         namespace = key.slice(0, idx);
         actualKey = key.slice(idx + 1);
       }
-      const dict =
-        (TRANSLATIONS[locale]?.[namespace] ?? TRANSLATIONS['tr']?.[namespace] ?? {}) as Record<string, unknown>;
+      const dict = getNamespace(locale, namespace) ?? getNamespace('tr', namespace) ?? {};
       const lookupKey = resolvePluralKey(actualKey, opts?.count, locale, (k) => resolve(dict, k) !== undefined);
       let value = resolve(dict, lookupKey) ?? actualKey;
       if (opts) {

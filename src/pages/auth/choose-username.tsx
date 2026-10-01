@@ -6,6 +6,7 @@ import Link from 'next/link'
 import Head from 'next/head'
 import { serverSideTranslations } from '@/lib/serverSideTranslations'
 import { useTranslation } from '@/lib/i18n'
+import '@/lib/i18nNamespaces/auth';
 import { safeCallbackPath } from '@/lib/authRedirect'
 import { usernameRules } from '@/lib/validation'
 import styles from './auth.module.scss'

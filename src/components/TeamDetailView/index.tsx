@@ -15,6 +15,7 @@ import { useTopScorersWithAppearances } from '@/hooks/useTopScorerAppearances';
 import { useTeamDetailBootstrap } from '@/hooks/useTeamDetailBootstrap';
 import { useTeamUpcomingFixtures } from '@/hooks/useTeamUpcomingFixtures';
 import { useI18n, useTranslation } from '@/lib/i18n';
+import '@/lib/i18nNamespaces/team';
 import { leagueNameById } from '@/utils/leagueName';
 import hubStyles from '@/pages/index.module.scss';
 import {

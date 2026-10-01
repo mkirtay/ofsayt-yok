@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useI18n, useTranslation } from '@/lib/i18n';
@@ -24,12 +25,10 @@ import { useCompetitionFixtures } from '@/hooks/useCompetitionFixtures';
 import { buildFixtureDateGroups } from '@/utils/fixtureDateGroups';
 import { fixtureDateHeading } from '@/utils/fixtureDateLabel';
 import MatchList, { type MatchListDateGroup } from '@/components/MatchList';
-import { MatchListSkeleton } from '@/components/Skeleton';
+import { MatchListSkeleton, PanelSkeleton } from '@/components/Skeleton';
 import MatchCompetitionStandings from '@/components/MatchCompetitionStandings';
 import MatchCompetitionTopScorers from '@/components/MatchCompetitionTopScorers';
 import SubHeader, { type MatchTab } from '@/components/SubHeader';
-import MatchDetailPanel from '@/components/MatchDetailPanel';
-import TeamDetailPanel from '@/components/TeamDetailPanel';
 import LeagueLogo from '@/components/LeagueLogo';
 import { isUefaCupCompetitionId, type SidebarLeague } from '@/config/leagues';
 import { resolveSportmonksLeagueId } from '@/services/sportmonksProviderFlag';
@@ -51,9 +50,7 @@ import {
   SIDEBAR_PANEL_QUERY,
 } from '@/utils/bottomNav';
 import { MOBILE_LAYOUT_QUERY } from '@/config/breakpoints';
-import { prefetchMatchDetail } from '@/hooks/useMatchDetail';
 import { GUNDEM_PANEL_MIN_WIDTH, useMinWidth, useSplitView } from '@/hooks/useSplitView';
-import HomeGundemPanel from '@/components/HomeGundemPanel';
 import { resolveHubSidePanel } from '@/utils/hubSidePanel';
 import LeagueFilterBar from '@/components/LeagueFilterBar';
 import AdSlot from '@/components/AdSlot';
@@ -64,6 +61,22 @@ import { activeCompetitionIds, buildLeagueCatalog, filterMatchesByLeagues } from
 import styles from '@/pages/index.module.scss';
 
 type SidebarTab = 'standings' | 'leagues' | 'scorers';
+
+/**
+ * Yalnızca geniş ekranda (split ≥ 1200 / Gündem ≥ 1440) görünen paneller ayrı chunk: mobil hiç indirmez.
+ * Sunucuda çizilmez (görünürlükleri mount'ta ölçülen genişliğe bağlı); split açılınca boşta önceden yüklenir.
+ */
+const loadMatchDetailPanel = () => import('@/components/MatchDetailPanel');
+const loadTeamDetailPanel = () => import('@/components/TeamDetailPanel');
+const panelLoading = () => <PanelSkeleton rows={6} />;
+const MatchDetailPanel = dynamic(loadMatchDetailPanel, { ssr: false, loading: panelLoading });
+const TeamDetailPanel = dynamic(loadTeamDetailPanel, { ssr: false, loading: panelLoading });
+const HomeGundemPanel = dynamic(() => import('@/components/HomeGundemPanel'), { ssr: false, loading: panelLoading });
+
+/** Satır hover/focus'unda detay verisini ısıtır — modülü de yalnız split-view'da (ilk hover'da) yükler. */
+function prefetchMatchDetailLazy(matchId: string): void {
+  void import('@/hooks/useMatchDetail').then((m) => m.prefetchMatchDetail(matchId));
+}
 
 /** Tablodaki toplam satır (düz tablo ya da aşama/grup tabloları). */
 function standingsTableRowCount(data: CompetitionTableData | null): number {
@@ -414,6 +427,21 @@ export default function MatchHubPage({
     replaceQuery({ league: null });
   }, [router.isReady, queryLeague, sidebarLeagues, replaceQuery]);
 
+  // Split açıldıysa detay panellerinin kodunu boşta önceden indir (ilk tıklamada bekleme olmasın).
+  useEffect(() => {
+    if (!isSplit) return;
+    const run = () => {
+      void loadMatchDetailPanel();
+      void loadTeamDetailPanel();
+    };
+    if (typeof window.requestIdleCallback === 'function') {
+      const id = window.requestIdleCallback(run, { timeout: 3000 });
+      return () => window.cancelIdleCallback(id);
+    }
+    const id = window.setTimeout(run, 1500);
+    return () => window.clearTimeout(id);
+  }, [isSplit]);
+
   // ── Split-view seçili maç ───────────────────────────────────────────────
   const selectedMatchParam = readSelectedMatchParam(router.query);
   const selectedMatchId = readSelectedMatchId(router.query);
@@ -509,7 +537,7 @@ export default function MatchHubPage({
         favoriteTeamIds={favoriteTeamSet}
         onToggleFavorite={toggleFavoriteTeam}
         onSelectMatch={isSplit ? handleSelectMatch : undefined}
-        onPrefetchMatch={isSplit ? prefetchMatchDetail : undefined}
+        onPrefetchMatch={isSplit ? prefetchMatchDetailLazy : undefined}
         onSelectTeam={isSplit ? handleSelectTeam : undefined}
         selectedMatchId={showDetailPanel ? selectedMatchId : null}
         compact={showDetailPanel}
@@ -557,7 +585,7 @@ export default function MatchHubPage({
         onToggleFavorite={toggleFavoriteTeam}
         // Split-view yalnızca masaüstünde; mobilde tam sayfa (push) navigasyon korunur.
         onSelectMatch={isSplit ? handleSelectMatch : undefined}
-        onPrefetchMatch={isSplit ? prefetchMatchDetail : undefined}
+        onPrefetchMatch={isSplit ? prefetchMatchDetailLazy : undefined}
         onSelectTeam={isSplit ? handleSelectTeam : undefined}
         selectedMatchId={showDetailPanel ? selectedMatchId : null}
         compact={showDetailPanel}

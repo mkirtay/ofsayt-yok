@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { useI18n, useTranslation } from '@/lib/i18n';
+import '@/lib/i18nNamespaces/profile';
 import type { CreditHistoryItem, CreditHistoryPage } from '@/pages/api/credits/history';
 import styles from './profile.module.scss';
 

@@ -3,6 +3,7 @@ import Head from 'next/head';
 import { serverSideTranslations } from '@/lib/serverSideTranslations';
 import { useSession } from 'next-auth/react';
 import { useTranslation } from '@/lib/i18n';
+import '@/lib/i18nNamespaces/credits';
 import Container from '@/components/Container';
 import { useCredits } from '@/hooks/useCredits';
 import { isPremiumUser } from '@/lib/premium';

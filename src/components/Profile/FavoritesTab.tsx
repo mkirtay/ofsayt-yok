@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from '@/lib/i18n';
+import '@/lib/i18nNamespaces/profile';
 import LeagueLogo from '@/components/LeagueLogo';
 import { SIDEBAR_LEAGUES, UEFA_SIDEBAR_LEAGUES } from '@/config/leagues';
 import { resolveSidebarLeagueLogo } from '@/utils/leagueLogo';

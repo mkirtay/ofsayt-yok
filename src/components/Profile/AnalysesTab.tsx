@@ -1,4 +1,5 @@
 import { useTranslation } from '@/lib/i18n';
+import '@/lib/i18nNamespaces/profile';
 import MyAnalysesList from '@/components/Header/MyAnalysesList';
 import styles from './profile.module.scss';
 

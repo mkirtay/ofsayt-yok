@@ -6,6 +6,7 @@ import CompareTeamPicker from '@/components/CompareTeamPicker';
 import EmptyState from '@/components/EmptyState';
 import { PanelSkeleton } from '@/components/Skeleton';
 import { useTranslation } from '@/lib/i18n';
+import '@/lib/i18nNamespaces/compare';
 import { useComparePage } from '@/hooks/useComparePage';
 import type { ComparePagePayload } from '@/server/loadComparePageData';
 import type { RecentMatchRow } from '@/server/buildMatchAnalysisContext';

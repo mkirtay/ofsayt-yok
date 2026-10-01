@@ -1,8 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { buildDateStripWithSelected, isoDayOfMonth, shiftIsoDate, todayIsoIstanbul } from '@/utils/dateStrip';
 import { useTranslation, useI18n } from '@/lib/i18n';
 import Container from '../Container';
-import Calendar from './Calendar';
+
+/**
+ * Takvim (react-datepicker + date-fns + kendi CSS'i, ~57 KB gzip JS + render-blocking CSS) yalnızca açılınca gerekir:
+ * ayrı chunk. Tetikleyiciye dokunma/üzerine gelme anında önceden indirilir; açılışta gecikme hissedilmez.
+ */
+const loadCalendar = () => import('./Calendar');
+const Calendar = dynamic(loadCalendar, { ssr: false });
 import styles from './subHeader.module.scss';
 
 export type MatchTab = 'all' | 'live' | 'finished' | 'favorites';
@@ -93,6 +100,9 @@ export default function SubHeader({
               ref={triggerRef}
               className={styles.dateBlock}
               onClick={() => setCalendarOpen((v) => !v)}
+              onPointerEnter={() => void loadCalendar()}
+              onFocus={() => void loadCalendar()}
+              onTouchStart={() => void loadCalendar()}
               role="button"
               tabIndex={0}
               aria-expanded={calendarOpen}

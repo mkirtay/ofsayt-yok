@@ -3,6 +3,7 @@ import { useSession } from 'next-auth/react';
 import { Role } from '@prisma/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from '@/lib/i18n';
+import '@/lib/i18nNamespaces/profile';
 import { profileQueryKey, type ProfileDto } from '@/hooks/useProfile';
 import AvatarPicker from './AvatarPicker';
 import { galleryPathOf } from '@/lib/avatars';

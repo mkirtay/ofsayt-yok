@@ -1,4 +1,5 @@
 import { useTranslation } from '@/lib/i18n';
+import '@/lib/i18nNamespaces/ai';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useState } from 'react';

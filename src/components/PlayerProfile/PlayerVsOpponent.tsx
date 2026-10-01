@@ -7,6 +7,7 @@ import { PanelSkeleton } from '@/components/Skeleton';
 import { formatRating } from '@/config/ratingScale';
 import { usePlayerVs, usePlayerVsOpponents } from '@/hooks/usePlayerVs';
 import { useI18n, useTranslation } from '@/lib/i18n';
+import '@/lib/i18nNamespaces/player';
 import { countsForAverage, MIN_MINUTES_FOR_AVERAGE, type PlayerLineupRow, type VsOpponent } from '@/utils/playerVs';
 import { leagueNameById } from '@/utils/leagueName';
 import styles from './playerVs.module.scss';

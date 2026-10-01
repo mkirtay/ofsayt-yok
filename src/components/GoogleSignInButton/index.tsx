@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useTranslation } from '@/lib/i18n';
+import '@/lib/i18nNamespaces/auth';
 import { safeCallbackPath } from '@/lib/authRedirect';
 import styles from './googleSignInButton.module.scss';
 

@@ -3,6 +3,7 @@ import Link from 'next/link';
 import EmptyState from '@/components/EmptyState';
 import { PanelSkeleton } from '@/components/Skeleton';
 import { useI18n, useTranslation } from '@/lib/i18n';
+import '@/lib/i18nNamespaces/player';
 import { usePlayerProfile } from '@/hooks/usePlayerProfile';
 import { usePlayerRecentMatches } from '@/hooks/usePlayerVs';
 import { buildRatingSeries, summarizeRatings } from '@/utils/ratingTrend';

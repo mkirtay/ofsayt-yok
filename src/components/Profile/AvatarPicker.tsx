@@ -1,6 +1,7 @@
 import { AVATAR_GALLERY, avatarUrl, galleryPathOf } from '@/lib/avatars';
 import Avatar from '@/components/Avatar';
 import { useTranslation } from '@/lib/i18n';
+import '@/lib/i18nNamespaces/profile';
 import styles from './profile.module.scss';
 
 type Props = { value: string; onChange: (url: string) => void; name: string };
