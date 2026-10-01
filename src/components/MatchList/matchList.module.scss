@@ -463,6 +463,14 @@
   }
 }
 
+// Ertelendi / iptal: saat yerine kısa etiket (amber, saatle aynı punto).
+.kickoffState {
+  font-size: 10px;
+  font-weight: 800;
+  color: #d97706;
+  white-space: nowrap;
+}
+
 .kickoffTime {
   font-size: 10px;
   font-weight: 700;

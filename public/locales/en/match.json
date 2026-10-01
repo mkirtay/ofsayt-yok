@@ -225,7 +225,11 @@
     "addFavorite": "Add to favorites",
     "removeFavorite": "Remove from favorites",
     "matchCount": "{{count}} matches",
-    "matchCount_one": "{{count}} match"
+    "matchCount_one": "{{count}} match",
+    "postponed": "Postponed",
+    "postponedShort": "PP",
+    "cancelled": "Cancelled",
+    "cancelledShort": "Canc."
   },
   "hub": {
     "favoritesEmpty": "Tap the ☆ button on a match row to add its team to favorites.",

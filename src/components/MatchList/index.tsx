@@ -178,6 +178,16 @@ function statusLabel(
   return { text: time || '', variant: 'scheduled' };
 }
 
+/**
+ * Ertelenen / iptal edilen maç: saat yerine kısa etiket ("Ert." / "İpt."), durum hücresi boş. Ertelenen maç eski
+ * saatiyle "başlayacak", iptal edilen "MS" görünmesin. (Ana sayfa ilk yükü: modül eklemeden doğrudan `state_code`.)
+ */
+function listSpecialState(match: Match): 'postponed' | 'cancelled' | null {
+  if (match.state_code === 'POSTPONED') return 'postponed';
+  if (match.state_code === 'CANCELLED' || match.state_code === 'DELETED') return 'cancelled';
+  return null;
+}
+
 function normalizeHt(ht?: string): string {
   if (!ht || !ht.trim()) return '—';
   return ht.replace(/\s*-\s*/g, '-').replace(/\s+/g, '');
@@ -342,7 +352,8 @@ function VirtualRow({
   const showShortDate =
     showDateWhenNotToday && !!matchDate && matchDate !== todayIso;
   const shortDate = showShortDate ? formatShortDateTr(matchDate!) : '';
-  const { text: statusText, variant } = statusLabel(match, t);
+  const special = listSpecialState(match);
+  const { text: statusText, variant } = special ? { text: '', variant: 'scheduled' as const } : statusLabel(match, t);
   const scoreRaw = match.scores?.score || match.score;
   const score =
     variant === 'scheduled' && !scoreRaw?.trim() ? '—' : scoreRaw?.trim() || '- : -';
@@ -386,7 +397,11 @@ function VirtualRow({
         }
       >
         <div className={`${styles.virtualCell} ${styles.virtualKickoff}`}>
-          {showShortDate ? (
+          {special ? (
+            <span className={styles.kickoffState} title={t(`list.${special}`)}>
+              {t(`list.${special}Short`)}
+            </span>
+          ) : showShortDate ? (
             <span className={styles.kickoffStack}>
               <span className={styles.kickoffDate}>{shortDate}</span>
               <span className={styles.kickoffTime}>{kickoffUtc}</span>

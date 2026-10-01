@@ -223,7 +223,11 @@
     "live": "CANLI",
     "addFavorite": "Favorilere ekle",
     "removeFavorite": "Favorilerden çıkar",
-    "matchCount": "{{count}} maç"
+    "matchCount": "{{count}} maç",
+    "postponed": "Ertelendi",
+    "postponedShort": "Ert.",
+    "cancelled": "İptal edildi",
+    "cancelledShort": "İpt."
   },
   "hub": {
     "favoritesEmpty": "Takım favorilere eklemek için maç satırındaki ☆ butonuna tıklayın.",
