@@ -14,6 +14,8 @@ import type { Match } from '@/models/liveScore';
 import type { MatchEvent, MatchStatsData } from '@/models/domain';
 import { toStandingsCompetitionId } from '@/services/sportmonksProviderFlag';
 import { fetchWorldCupStandingsBundle, isWorldCupCompetition } from '@/utils/worldCupStandings';
+import { useLiveMatchUpdates } from '@/hooks/useLiveMatchUpdates';
+import type { LiveMatchPayload } from '@/server/liveMatch';
 
 /**
  * Maç detayı veri yükleme — `/matches/[slug]` sayfası ve masaüstü split-view
@@ -247,6 +249,23 @@ export function useMatchDetail(
       cancelled = true;
     };
   }, [requestedMatchId]);
+
+  // Canlı güncelleme: yalnız skor/durum/dakika + olaylar + istatistik (lig/stadyum/hakem sayfa verisinde kalır).
+  const applyLiveUpdate = useCallback((payload: LiveMatchPayload) => {
+    setMatch((prev) =>
+      prev && String(prev.id) === String(payload.match.id)
+        ? {
+            ...prev,
+            status: payload.match.status,
+            time: payload.match.time,
+            ...(payload.match.scores ? { scores: payload.match.scores } : {}),
+          }
+        : prev,
+    );
+    setEvents(payload.events);
+    if (payload.stats) setStats(payload.stats);
+  }, []);
+  useLiveMatchUpdates(matchId, match, applyLiveUpdate);
 
   const handleSeasonChange = useCallback(async (seasonId: number, competitionIdStr: string) => {
     setSelectedSeasonId(seasonId);
