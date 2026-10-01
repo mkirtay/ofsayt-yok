@@ -21,7 +21,7 @@ import { isSportmonksProviderEnabled } from '@/services/sportmonksProviderFlag';
 import { resolveMatchPage } from '@/server/resolveMatchPage';
 import {
   matchPageCacheControl,
-  matchPageCacheKindForStatus,
+  matchPageCacheControlForMatch,
   type MatchPageCacheKind,
 } from '@/server/matchPageCache';
 import styles from './matchDetail.module.scss';
@@ -45,19 +45,21 @@ export const getServerSideProps: GetServerSideProps<MatchDetailProps> = async (c
   const slug = Array.isArray(slugParam) ? slugParam[0] : slugParam;
   const matchId = slug ? parseMatchIdFromParam(slug) : '';
 
-  if (!matchId) {
-    return { props: { initialMatch: null } };
-  }
-
   const setCache = (kind: MatchPageCacheKind) =>
     context.res.setHeader('Cache-Control', matchPageCacheControl(kind));
+
+  if (!matchId) {
+    // Id'siz / bozuk URL (bot taramaları): her istekte SSR olmasın.
+    setCache('missing');
+    return { props: { initialMatch: null } };
+  }
 
   if (isSportmonksProviderEnabled()) {
     try {
       const page = await resolveMatchPage(matchId, parseMatchSlugFromParam(slug ?? ''));
       switch (page.kind) {
         case 'match':
-          setCache(matchPageCacheKindForStatus(page.match.status));
+          context.res.setHeader('Cache-Control', matchPageCacheControlForMatch(page.match));
           return { props: { initialMatch: page.match } };
         case 'archived':
           setCache('archived');
