@@ -1,3 +1,4 @@
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import type {
   CompetitionTableData,
@@ -12,10 +13,14 @@ import { sortWorldCupGroupsByName } from "@/config/worldCup";
 import { standingsRankZoneClass } from "@/utils/standingsRankZoneUi";
 import { standingTeamFullName } from "@/utils/standingsTeamLabel";
 import EmptyState from "@/components/EmptyState";
+import LazyLoad from "@/components/LazyLoad";
 import StandingTeamName from "@/components/StandingTeamName";
 import { StandingsSkeleton } from "@/components/Skeleton";
 import styles from "./matchCompetitionStandings.module.scss";
 import TeamLogo from '@/components/TeamLogo';
+
+// Yalnız sezon değişirken gerekir: animasyon ve CSS'i ayrı parçada (ana sayfanın ilk yüküne girmez).
+const loadStandingsShuffle = () => import("./StandingsShuffle");
 
 function standingTeamId(s: CompetitionTableStandingRow): number | undefined {
   const id = s.team?.id ?? s.team_id;
@@ -197,7 +202,8 @@ interface MatchCompetitionStandingsProps {
   variant?: MatchCompetitionStandingsVariant;
   seasons?: SeasonListItem[];
   selectedSeasonId?: number | null;
-  onSeasonChange?: (id: number) => void;
+  /** Promise dönerse beklerken tablo kutusunun içinde 04 · Puan tablosu animasyonu (tablo yerinde kalır). */
+  onSeasonChange?: (id: number) => void | Promise<unknown>;
   /**
    * Verilirse yükleniyor görünümü gerçek tablo yapısında bu kadar satırla çizilir (kayma yok); verilmezse eski iskelet.
    */
@@ -224,6 +230,26 @@ export default function MatchCompetitionStandings({
   loadingRows,
 }: MatchCompetitionStandingsProps) {
   const { t } = useTranslation("match");
+  const [seasonChanging, setSeasonChanging] = useState(false);
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
+  const changeSeason = useCallback(
+    (id: number) => {
+      const result = onSeasonChange?.(id);
+      if (!result || typeof result.then !== "function") return;
+      setSeasonChanging(true);
+      result.then(
+        () => mounted.current && setSeasonChanging(false),
+        () => mounted.current && setSeasonChanging(false),
+      );
+    },
+    [onSeasonChange],
+  );
 
   if (loading && loadingRows) {
     return (
@@ -273,7 +299,7 @@ export default function MatchCompetitionStandings({
           <SeasonSelect
             seasons={seasons!}
             value={selectedSeasonId ?? null}
-            onChange={onSeasonChange!}
+            onChange={changeSeason}
             dark={variant === "worldCup"}
             selectClassName={
               variant === "worldCup" ? styles.seasonSelectWorldCup : styles.seasonSelect
@@ -286,47 +312,49 @@ export default function MatchCompetitionStandings({
         ) : null}
       </div>
 
-      {legacyTable?.length ? (
-        <StandingsTable
-          standings={legacyTable as CompetitionTableStandingRow[]}
-          competitionId={competitionId}
-          homeTeamId={homeTeamId}
-          awayTeamId={awayTeamId}
-        />
-      ) : null}
+      <div className={styles.tableArea} aria-busy={seasonChanging || undefined}>
+        {legacyTable?.length ? (
+          <StandingsTable
+            standings={legacyTable as CompetitionTableStandingRow[]}
+            competitionId={competitionId}
+            homeTeamId={homeTeamId}
+            awayTeamId={awayTeamId}
+          />
+        ) : null}
 
-      {data.stages?.map((stageBlock, si) => (
-        <div key={stageBlock.stage?.id ?? si}>
-          {data.stages!.length > 1 && stageBlock.stage?.name ? (
-            <h3 className={styles.subheading}>{stageBlock.stage.name}</h3>
-          ) : null}
-          {(variant === "worldCup"
-            ? sortWorldCupGroupsByName(stageBlock.groups ?? [])
-            : stageBlock.groups ?? []
-          ).map((group, gi) => (
-            <div key={group.id ?? `${si}-${gi}`}>
-              {(variant === "worldCup"
-                ? sortWorldCupGroupsByName(stageBlock.groups ?? [])
-                : stageBlock.groups ?? []
-              ).length > 1 && group.name ? (
-                <h3 className={styles.subheading}>Grup {group.name}</h3>
-              ) : null}
-              {group.standings?.length ? (
-                <StandingsTable
-                  standings={group.standings}
-                  competitionId={competitionId}
-                  homeTeamId={homeTeamId}
-                  awayTeamId={awayTeamId}
-                />
-              ) : null}
-            </div>
-          ))}
-        </div>
-      ))}
-
-      {!hasAnyRows ? (
-        <EmptyState className={styles.emptyState}>{t("standings.empty")}</EmptyState>
-      ) : null}
+        {data.stages?.map((stageBlock, si) => (
+          <div key={stageBlock.stage?.id ?? si}>
+            {data.stages!.length > 1 && stageBlock.stage?.name ? (
+              <h3 className={styles.subheading}>{stageBlock.stage.name}</h3>
+            ) : null}
+            {(variant === "worldCup"
+              ? sortWorldCupGroupsByName(stageBlock.groups ?? [])
+              : stageBlock.groups ?? []
+            ).map((group, gi) => (
+              <div key={group.id ?? `${si}-${gi}`}>
+                {(variant === "worldCup"
+                  ? sortWorldCupGroupsByName(stageBlock.groups ?? [])
+                  : stageBlock.groups ?? []
+                ).length > 1 && group.name ? (
+                  <h3 className={styles.subheading}>Grup {group.name}</h3>
+                ) : null}
+                {group.standings?.length ? (
+                  <StandingsTable
+                    standings={group.standings}
+                    competitionId={competitionId}
+                    homeTeamId={homeTeamId}
+                    awayTeamId={awayTeamId}
+                  />
+                ) : null}
+              </div>
+            ))}
+          </div>
+        ))}
+        {!hasAnyRows ? (
+          <EmptyState className={styles.emptyState}>{t("standings.empty")}</EmptyState>
+        ) : null}
+        {seasonChanging ? <LazyLoad load={loadStandingsShuffle} props={{ label: t("common:loading") }} /> : null}
+      </div>
     </section>
   );
 }

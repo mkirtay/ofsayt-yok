@@ -9,6 +9,11 @@
   overflow: hidden;
 }
 
+// Tablo bölgesi: sezon değişirken 04 katmanı bunu birebir kaplar (StandingsShuffle, position: absolute).
+.tableArea {
+  position: relative;
+}
+
 .title {
   font-size: 14px;
   font-weight: 700;

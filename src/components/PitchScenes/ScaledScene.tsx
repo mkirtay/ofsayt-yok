@@ -5,10 +5,18 @@ import styles from './scaledScene.module.scss';
 export const SCENE_WIDTH = 504;
 
 /**
- * 504×230 sahneyi bulunduğu kutunun genişliğine ölçekler (yükseklik en-boy oranından; kayma yok).
- * `className` kutuya (ör. köşe yuvarlama, en büyük genişlik).
+ * 504 px genişlikte çizilen sahneyi bulunduğu kutunun genişliğine ölçekler (yükseklik en-boy oranından; kayma yok).
+ * `height`: sahnenin çizim yüksekliği (varsayılan 230). `className` kutuya (ör. köşe yuvarlama, en büyük genişlik).
  */
-export default function ScaledScene({ children, className }: { children: ReactNode; className?: string }) {
+export default function ScaledScene({
+  children,
+  className,
+  height = 230,
+}: {
+  children: ReactNode;
+  className?: string;
+  height?: number;
+}) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const stage = ref.current;
@@ -20,7 +28,7 @@ export default function ScaledScene({ children, className }: { children: ReactNo
     return () => observer.disconnect();
   }, []);
   return (
-    <div ref={ref} className={`${styles.stage} ${className ?? ''}`}>
+    <div ref={ref} className={`${styles.stage} ${className ?? ''}`} style={{ aspectRatio: `${SCENE_WIDTH} / ${height}` }}>
       <div className={styles.scale}>{children}</div>
     </div>
   );

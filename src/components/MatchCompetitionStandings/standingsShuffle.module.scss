@@ -1,0 +1,259 @@
+@use '../../styles/variables' as *;
+@use '../../styles/motion' as *;
+
+// 04 · Puan tablosu güncelleniyor. Katman tablo alanını birebir kaplar (position: absolute; inset: 0). Renkler: açık
+// temada referansın birebir renkleri, koyu temada proje yüzey/metin renkleri (Kural Köşesi paneliyle aynı kural).
+
+.overlay {
+  @include motion-root;
+
+  --st-veil: rgba(15, 16, 21, 0.72);
+  --st-bg: var(--bg-surface);
+  --st-border: var(--border-subtle);
+  --st-head-line: var(--border-subtle);
+  --st-head: var(--text-secondary);
+  --st-rank: var(--text-primary);
+  --st-bar: rgba(255, 255, 255, 0.1);
+  --st-pts: rgba(255, 255, 255, 0.16);
+  --st-hl: rgba(0, 167, 111, 0.14);
+  --st-up: #2fd39b;
+  --st-down: #fb923c;
+
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: $spacing-4 $spacing-3;
+  background: var(--st-veil);
+}
+
+:global(:root[data-theme='light']) .overlay {
+  --st-veil: rgba(255, 255, 255, 0.72);
+  --st-bg: #ffffff;
+  --st-border: #e3ebe6;
+  --st-head-line: #eef3f0;
+  --st-head: #5f7268;
+  --st-rank: #101512;
+  --st-bar: #e2ebe6;
+  --st-pts: #cfdcd5;
+  --st-hl: rgba(0, 167, 111, 0.09);
+  --st-up: #00875a;
+  --st-down: #c2410c;
+}
+
+.waiting {
+  visibility: hidden;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.sceneWrap {
+  width: 100%;
+  max-width: 420px;
+}
+
+.stage {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+}
+
+.tbl {
+  position: relative;
+  width: 504px;
+  height: 226px;
+  border: 1px solid var(--st-border);
+  border-radius: 12px;
+  background: var(--st-bg);
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.th {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--st-head-line);
+  font-size: 11px;
+  line-height: normal;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--st-head);
+  box-sizing: border-box;
+}
+
+.rank {
+  position: absolute;
+  left: 14px;
+  width: 24px;
+  height: 24px;
+  margin-top: -12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  font-size: 13px;
+  line-height: normal;
+  font-weight: 800;
+  color: var(--st-rank);
+}
+
+.rank1 {
+  background: #00a76f;
+  color: #ffffff;
+}
+
+.row {
+  position: absolute;
+  left: 50px;
+  right: 14px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 3px;
+    bottom: 3px;
+    left: -6px;
+    right: -6px;
+    border-radius: 8px;
+    background: var(--st-hl);
+    opacity: 0;
+  }
+}
+
+.crest {
+  display: block;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.55);
+  position: relative;
+}
+
+.bar {
+  display: block;
+  height: 10px;
+  border-radius: 5px;
+  background: var(--st-bar);
+  position: relative;
+}
+
+.pts {
+  display: block;
+  width: 28px;
+  height: 10px;
+  border-radius: 5px;
+  background: var(--st-pts);
+  margin-left: auto;
+  position: relative;
+}
+
+.arrow {
+  display: block;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  opacity: 0;
+  position: relative;
+}
+
+.noarrow {
+  display: block;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.up {
+  color: var(--st-up);
+}
+
+.down {
+  color: var(--st-down);
+}
+
+.rB {
+  animation: rB 6s ease-in-out infinite both;
+}
+
+.rC {
+  animation: rC 6s ease-in-out infinite both;
+}
+
+.rD {
+  animation: rD 6s ease-in-out infinite both;
+}
+
+.rE {
+  animation: rE 6s ease-in-out infinite both;
+}
+
+@keyframes rB {
+  0%, 20% { transform: translateY(0); }
+  32%, 70% { transform: translateY(38px); }
+  82%, 100% { transform: translateY(0); }
+}
+
+@keyframes rC {
+  0%, 20% { transform: translateY(0); }
+  32%, 70% { transform: translateY(-38px); }
+  82%, 100% { transform: translateY(0); }
+}
+
+@keyframes rD {
+  0%, 42% { transform: translateY(0); }
+  54%, 70% { transform: translateY(38px); }
+  82%, 100% { transform: translateY(0); }
+}
+
+@keyframes rE {
+  0%, 42% { transform: translateY(0); }
+  54%, 70% { transform: translateY(-38px); }
+  82%, 100% { transform: translateY(0); }
+}
+
+.a1,
+.rB::before,
+.rC::before {
+  animation: a1 6s ease-in-out infinite both;
+}
+
+.a2,
+.rD::before,
+.rE::before {
+  animation: a2 6s ease-in-out infinite both;
+}
+
+@keyframes a1 {
+  0%, 22% { opacity: 0; }
+  30%, 66% { opacity: 1; }
+  74%, 100% { opacity: 0; }
+}
+
+@keyframes a2 {
+  0%, 44% { opacity: 0; }
+  52%, 66% { opacity: 1; }
+  74%, 100% { opacity: 0; }
+}
