@@ -42,7 +42,7 @@ describe('validatePassword', () => {
 
 describe('usernameRules', () => {
   it('geçerli kullanıcı adını kabul eder', () => {
-    expect(usernameRules.pattern.test('muco_1907')).toBe(true);
+    expect(usernameRules.pattern.test('golcu_10')).toBe(true);
     expect(usernameRules.pattern.test('abc')).toBe(true);
     expect(usernameRules.pattern.test('User123')).toBe(true);
   });

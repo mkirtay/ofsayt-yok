@@ -76,7 +76,7 @@ describe('Gündem kullanıcı adı zorunluluğu', () => {
   it('yalnızca OAuth hesabı olan, şifresiz ve kullanıcı adsız hesapta zorunlu', () => {
     expect(mustChooseUsername({ username: null, password: null, _count: { accounts: 1 } })).toBe(true);
     expect(mustChooseUsername({ username: '  ', password: null, _count: { accounts: 1 } })).toBe(true);
-    expect(mustChooseUsername({ username: 'ali_1907', password: null, _count: { accounts: 1 } })).toBe(false);
+    expect(mustChooseUsername({ username: 'ali_10', password: null, _count: { accounts: 1 } })).toBe(false);
     // Şifreli (e-posta) hesaplar ve OAuth kaydı olmayanlar (bot vb.) etkilenmez
     expect(mustChooseUsername({ username: null, password: 'hash', _count: { accounts: 0 } })).toBe(false);
     expect(mustChooseUsername({ username: null, password: null, _count: { accounts: 0 } })).toBe(false);
