@@ -271,7 +271,7 @@ async function refresh(
     const up = await callUpstream(path, query, opts);
     const t = now();
     if (up.status !== 'network-error' && isCacheable(up.status, up.body)) {
-      const ttl = sportmonksCacheTtl(path, up.status === 200 ? dataOf(up.body) : undefined, t);
+      const ttl = sportmonksCacheTtl(path, up.status === 200 ? dataOf(up.body) : undefined, t, query);
       const entry: Entry = {
         status: up.status,
         body: up.body,

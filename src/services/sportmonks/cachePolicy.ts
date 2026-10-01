@@ -84,8 +84,14 @@ function asList(data: unknown): FixtureLike[] {
 /**
  * @param path `football/...` ya da `core/...` (baştaki/sondaki `/` olmadan)
  * @param data Sportmonks yanıtının `data` alanı; "sonuç yok" cevabında `undefined`
+ * @param query istek parametreleri (yalnız `include` varlığına bakılır)
  */
-export function sportmonksCacheTtl(path: string, data: unknown, now: number = Date.now()): CacheTtl {
+export function sportmonksCacheTtl(
+  path: string,
+  data: unknown,
+  now: number = Date.now(),
+  query: Record<string, string | string[] | undefined> = {},
+): CacheTtl {
   const p = path.replace(/^\/+|\/+$/g, '').toLowerCase();
   const [base, ...rest] = p.split('/');
   const r = base === 'football' || base === 'core' ? rest : [base!, ...rest];
@@ -110,6 +116,9 @@ export function sportmonksCacheTtl(path: string, data: unknown, now: number = Da
         const to = r[3];
         if (to < yesterday) return withStale(DAY);
         if (from > today) return withStale(15 * MIN, DAY);
+        // include'suz aralık = yalnız takvim (lig + başlama saati; skor/durum için kullanılmaz — ör. sıradaki maç günü):
+        // canlı maç içerse de 30 sn'lik tazeleme gerekmez. Bot farklı tarih/lig deneyip kotayı yakamasın.
+        if (!query.include) return withStale(15 * MIN, DAY);
         return withStale(fixtureListFreshSeconds(asList(data), 10 * MIN, now), DAY);
       }
       if (a === 'head-to-head' || a === 'multi') {

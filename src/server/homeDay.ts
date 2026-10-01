@@ -76,10 +76,14 @@ export function homeDayFreshSeconds(payload: HomeDayPayload, todayIso: string, n
 
 export type UpcomingLeagueDay = { leagueId: number; date: string };
 
-/** Pencere: 30 gün. Sayfa sınırı: "Tümü" için ilk 50 maç (en yakın gün için yeter), lig filtresinde 3 × 50. */
+/** "Tümü": `from`'dan 30 gün, artan sırada ilk 50 maç (en yakın gün için yeter). */
 const UPCOMING_WINDOW_DAYS = 30;
-const UPCOMING_MAX_PAGES_ALL = 1;
-const UPCOMING_MAX_PAGES_FILTERED = 3;
+/** Lig başına takvim: UTC dün … +45 gün, en çok 3 × 50 maç; anahtar yalnız lig + gün (seçili günden bağımsız). */
+const LEAGUE_SCHEDULE_PAST_DAYS = 1;
+const LEAGUE_SCHEDULE_FUTURE_DAYS = 45;
+const LEAGUE_SCHEDULE_MAX_PAGES = 3;
+/** Lig başına takvim istekleri aynı anda en çok bu kadar (34 ligli filtre upstream'e yığılmasın). */
+const LEAGUE_SCHEDULE_CONCURRENCY = 4;
 const PLAN_LEAGUES = new Set(PLAN_SPORTMONKS_LEAGUE_IDS);
 
 /**
@@ -104,27 +108,10 @@ export function istanbulDateOfKickoff(startingAt: string): string | null {
   return Number.isFinite(t) ? istanbulDay.format(new Date(t)) : null;
 }
 
-/**
- * `from`'dan SONRAKİ günlerde liglerin ilk maç günü (Türkiye günü, artan tarih).
- * - `leagueIds` null ("Tümü"): planımızdaki BÜTÜN ligler (ana sayfa listesi gibi) — `fixtures/between` lig süzgeçsiz,
- *   artan sırada TEK sayfa; en yakın maç günü ilk satırlarda.
- * - `leagueIds` dolu (lig filtresi): yalnız o ligler, `filters=fixtureLeagues:…`, en çok 3 sayfa.
- * Include yok (yalnız `league_id` + `starting_at`), paylaşımlı cache'te 15 dk.
- */
-export async function loadUpcomingMatchDays(from: string, leagueIds: number[] | null = null): Promise<UpcomingLeagueDay[]> {
-  if (!isSportmonksProviderEnabled()) return [];
-  if (leagueIds && leagueIds.length === 0) return [];
-  const rows = await sportmonksCollectAllPages<Pick<SportmonksFixture, 'league_id' | 'starting_at'>>({
-    basePath: 'football',
-    // UTC `from`'dan başla: TR'de `from+1` günü UTC `from` 21:00'de başlar (ör. 30 Eylül 23:30 UTC MLS maçı TR'de
-    // 1 Ekim 02:30). TR gününe göre `> from` süzgeci aşağıda; uç yalnızca seçili gün boşken çağrıldığı için UTC
-    // `from`'un geri kalanı ilk sayfayı doldurmaz.
-    path: `/fixtures/between/${from}/${shiftIsoDate(from, UPCOMING_WINDOW_DAYS)}`,
-    perPage: 50,
-    maxPages: leagueIds ? UPCOMING_MAX_PAGES_FILTERED : UPCOMING_MAX_PAGES_ALL,
-    extraParams: leagueIds ? { filters: `fixtureLeagues:${leagueIds.join(',')}`, order: 'asc' } : { order: 'asc' },
-  });
-  const tracked = leagueIds ? new Set(leagueIds) : PLAN_LEAGUES;
+type ScheduleRow = Pick<SportmonksFixture, 'league_id' | 'starting_at'>;
+
+/** Satırlardan lig başına `from`'dan sonraki ilk Türkiye günü (artan tarih, eşitlikte lig id). */
+function firstDaysAfter(rows: ScheduleRow[], from: string, tracked: ReadonlySet<number>): UpcomingLeagueDay[] {
   const first = new Map<number, string>();
   for (const r of rows) {
     if (r.league_id == null || !tracked.has(r.league_id) || !r.starting_at) continue;
@@ -136,4 +123,64 @@ export async function loadUpcomingMatchDays(from: string, leagueIds: number[] | 
   return [...first.entries()]
     .map(([leagueId, date]) => ({ leagueId, date }))
     .sort((a, b) => a.date.localeCompare(b.date) || a.leagueId - b.leagueId);
+}
+
+/**
+ * Bir ligin yakın takvimi — anahtar yalnız lig + bugünün UTC günü: farklı lig kombinasyonları ve farklı seçili günler
+ * aynı girdileri paylaşır (bot kombinasyon deneyerek yeni Sportmonks isteği üretemez; en çok 34 lig × 3 sayfa / 15 dk).
+ * Include'suz `between` → yalnız takvim, cache 15 dk (bkz. cachePolicy).
+ */
+async function loadLeagueSchedule(leagueId: number, todayUtc: string): Promise<ScheduleRow[]> {
+  return sportmonksCollectAllPages<ScheduleRow>({
+    basePath: 'football',
+    path: `/fixtures/between/${shiftIsoDate(todayUtc, -LEAGUE_SCHEDULE_PAST_DAYS)}/${shiftIsoDate(todayUtc, LEAGUE_SCHEDULE_FUTURE_DAYS)}`,
+    perPage: 50,
+    maxPages: LEAGUE_SCHEDULE_MAX_PAGES,
+    extraParams: { filters: `fixtureLeagues:${leagueId}`, order: 'asc' },
+  });
+}
+
+async function mapWithConcurrency<T, R>(items: readonly T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
+  const out = new Array<R>(items.length);
+  let next = 0;
+  const worker = async () => {
+    while (next < items.length) {
+      const i = next++;
+      out[i] = await fn(items[i]!);
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+  return out;
+}
+
+/**
+ * `from`'dan SONRAKİ günlerde liglerin ilk maç günü (Türkiye günü, artan tarih).
+ * - `leagueIds` null ("Tümü"): planımızdaki BÜTÜN ligler (ana sayfa listesi gibi) — `fixtures/between` lig süzgeçsiz,
+ *   artan sırada TEK sayfa; en yakın maç günü ilk satırlarda.
+ * - `leagueIds` dolu (lig filtresi): her lig kendi takviminden (`loadLeagueSchedule`, lig başına cache), sonuç
+ *   birleştirilir. Pencere bugünden +45 gün; daha uzak ilk maç günü gösterilmez.
+ */
+export async function loadUpcomingMatchDays(
+  from: string,
+  leagueIds: number[] | null = null,
+  now: number = Date.now(),
+): Promise<UpcomingLeagueDay[]> {
+  if (!isSportmonksProviderEnabled()) return [];
+  if (leagueIds) {
+    if (leagueIds.length === 0) return [];
+    const todayUtc = new Date(now).toISOString().slice(0, 10);
+    const perLeague = await mapWithConcurrency(leagueIds, LEAGUE_SCHEDULE_CONCURRENCY, (id) => loadLeagueSchedule(id, todayUtc));
+    return firstDaysAfter(perLeague.flat(), from, new Set(leagueIds));
+  }
+  const rows = await sportmonksCollectAllPages<ScheduleRow>({
+    basePath: 'football',
+    // UTC `from`'dan başla: TR'de `from+1` günü UTC `from` 21:00'de başlar (ör. 30 Eylül 23:30 UTC MLS maçı TR'de
+    // 1 Ekim 02:30). TR gününe göre `> from` süzgeci `firstDaysAfter`'da; uç yalnızca seçili gün boşken çağrıldığı
+    // için UTC `from`'un geri kalanı ilk sayfayı doldurmaz.
+    path: `/fixtures/between/${from}/${shiftIsoDate(from, UPCOMING_WINDOW_DAYS)}`,
+    perPage: 50,
+    maxPages: 1,
+    extraParams: { order: 'asc' },
+  });
+  return firstDaysAfter(rows, from, PLAN_LEAGUES);
 }

@@ -1,8 +1,11 @@
 /**
  * GET /api/matches/upcoming-days?from=YYYY-MM-DD[&leagues=600,8] — liglerin `from`'dan sonraki ilk maç günü.
  * Boş gün ekranı ("Süper Lig 9 Ekim'de dönüyor") için; yalnızca seçili günde maç yokken çağrılır.
- * `leagues` yoksa planımızdaki bütün ligler ("Tümü"); varsa yalnız onlar (plan dışı id'ler atılır, sıralanır →
- * aynı seçim aynı cache anahtarı). Sportmonks: Tümü 1 istek, filtreli en çok 3 (paylaşımlı cache 15 dk) + CDN 15 dk.
+ * `leagues` yoksa planımızdaki bütün ligler ("Tümü"); varsa yalnız onlar (plan dışı id'ler atılır, sıralanır).
+ * Sportmonks (bot kombinasyon/tarih deneyerek kotayı yakamasın):
+ * - Tümü: `from` başına 1 istek; `from` en çok bugün+30 (daha uzağı Sportmonks'a gitmeden boş) → ≤ 32 anahtar.
+ * - Filtreli: lig başına takvim (anahtar lig + gün, kombinasyondan bağımsız) → ≤ 34 lig × 3 sayfa.
+ * Hepsi paylaşımlı cache'te 15 dk (include'suz takvim) + CDN 15 dk.
  */
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { hitFixedWindowRateLimit, requestIp } from '@/lib/rateLimit';
@@ -12,6 +15,8 @@ import { shiftIsoDate, todayIsoIstanbul } from '@/utils/dateStrip';
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 const LEAGUES_RE = /^\d{1,6}(,\d{1,6}){0,49}$/;
+/** Bundan uzak seçili gün için sıradaki maç günü aranmaz (Sportmonks'a gidilmez). */
+const MAX_LOOKAHEAD_FROM_DAYS = 30;
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
@@ -28,6 +33,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'Geçersiz lig listesi' });
   }
   const leagueIds = typeof leaguesParam === 'string' ? normalizeUpcomingLeagueIds(leaguesParam.split(',').map(Number)) : null;
+  if (from > shiftIsoDate(today, MAX_LOOKAHEAD_FROM_DAYS) || (leagueIds && leagueIds.length === 0)) {
+    res.setHeader('Cache-Control', 'public, s-maxage=900, stale-while-revalidate=2700');
+    return res.status(200).json({ from, leagues: [] });
+  }
 
   const ip = requestIp(req.headers as Record<string, string | string[] | undefined>, req.socket?.remoteAddress);
   const rl = await hitFixedWindowRateLimit(`matches-upcoming:${ip}`, 60, 60_000);

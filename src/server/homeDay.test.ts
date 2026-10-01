@@ -84,18 +84,36 @@ describe('homeDay', () => {
     expect(opts.maxPages).toBe(1);
   });
 
-  it('sıradaki maç günü (lig filtresi): yalnız seçili ligler, fixtureLeagues süzgeci, en çok 3 sayfa', async () => {
+  it('sıradaki maç günü (lig filtresi): lig başına ayrı takvim (anahtar lig + gün), sonuç birleştirilir', async () => {
     h.collect.mockClear();
-    h.collect.mockResolvedValue([
-      { league_id: 600, starting_at: '2026-10-09 17:00:00' },
-      { league_id: 779, starting_at: '2026-10-01 00:30:00' },
+    h.collect.mockImplementation(async (opts: { extraParams: { filters: string } }) => {
+      if (opts.extraParams.filters === 'fixtureLeagues:600') return [{ league_id: 600, starting_at: '2026-10-09 17:00:00' }];
+      if (opts.extraParams.filters === 'fixtureLeagues:8')
+        return [
+          { league_id: 8, starting_at: '2026-09-30 14:00:00' }, // seçili gün → dışarıda
+          { league_id: 8, starting_at: '2026-10-10 11:30:00' },
+        ];
+      return [];
+    });
+    const NOW = Date.parse('2026-09-30T09:00:00Z');
+    expect(await loadUpcomingMatchDays('2026-09-30', [8, 600], NOW)).toEqual([
+      { leagueId: 600, date: '2026-10-09' },
+      { leagueId: 8, date: '2026-10-10' },
     ]);
-    expect(await loadUpcomingMatchDays('2026-09-30', [8, 600])).toEqual([{ leagueId: 600, date: '2026-10-09' }]);
-    const opts = h.collect.mock.calls[0]![0];
-    expect(opts.extraParams).toEqual({ filters: 'fixtureLeagues:8,600', order: 'asc' });
-    expect(opts.maxPages).toBe(3);
+    expect(h.collect).toHaveBeenCalledTimes(2);
+    for (const [opts] of h.collect.mock.calls as Array<[{ path: string; extraParams: Record<string, string>; maxPages: number }]>) {
+      // Seçili günden bağımsız pencere: farklı `from` ve farklı lig kombinasyonları aynı girdileri paylaşır.
+      expect(opts.path).toBe('/fixtures/between/2026-09-29/2026-11-14');
+      expect(opts.extraParams.filters).toMatch(/^fixtureLeagues:\d+$/);
+      expect(opts.extraParams.include).toBeUndefined();
+      expect(opts.maxPages).toBe(3);
+    }
+    // Başka bir seçili gün, aynı lig → aynı anahtar (aynı path + filters)
     h.collect.mockClear();
-    expect(await loadUpcomingMatchDays('2026-09-30', [])).toEqual([]);
+    await loadUpcomingMatchDays('2026-10-05', [600], NOW);
+    expect((h.collect.mock.calls[0]![0] as { path: string }).path).toBe('/fixtures/between/2026-09-29/2026-11-14');
+    h.collect.mockClear();
+    expect(await loadUpcomingMatchDays('2026-09-30', [], NOW)).toEqual([]);
     expect(h.collect).not.toHaveBeenCalled();
   });
 
