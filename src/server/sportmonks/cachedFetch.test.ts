@@ -192,6 +192,12 @@ describe('fetchSportmonksCached', () => {
     expect(m.sportmonksCacheControl(r)).toBe(`public, s-maxage=${86400 - 3600}, stale-while-revalidate=${86400 * 3}`);
   });
 
+  it('CDN başlığı: canlı veri (inplay) en çok 15 + 5 sn', async () => {
+    const up = upstream(() => ({ status: 200, body: envelope([]) }));
+    const r = await m.fetchSportmonksCached('football/livescores/inplay', {}, { fetchImpl: up.impl, now });
+    expect(m.sportmonksCacheControl(r)).toBe('public, s-maxage=15, stale-while-revalidate=5');
+  });
+
   it('anahtar ve kilit ortam + şema sürümü önekli; yerel (dev) prod kaydını görmez', async () => {
     const key = m.buildSportmonksCacheKey('football/leagues/600', { include: 'seasons' });
     expect(key).toBe('dev:v2:smc:football/leagues/600?include=seasons');

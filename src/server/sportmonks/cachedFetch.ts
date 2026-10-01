@@ -15,7 +15,7 @@
  */
 import { getRedisClient, withRedis } from '@/lib/redis';
 import { reportSportmonksQuota } from '@/services/sportmonks/quotaMonitor';
-import { sportmonksCacheTtl } from '@/services/sportmonks/cachePolicy';
+import { LIVE_TTL, sportmonksCacheTtl } from '@/services/sportmonks/cachePolicy';
 import { cacheKeyPrefix } from '@/lib/cacheNamespace';
 
 const SPORTMONKS_BASE = 'https://api.sportmonks.com/v3';
@@ -30,6 +30,8 @@ const MAX_REDIS_BYTES = 900_000;
 const L1_MAX_ENTRIES = 300;
 const STRIPPED_FIELDS = ['subscription', 'rate_limit', 'timezone'] as const;
 const NOT_FOUND_STATUSES = new Set([400, 403, 404, 422]);
+const LIVE_CDN_MAX_SECONDS = 15;
+const LIVE_CDN_SWR_SECONDS = 5;
 
 export type SportmonksQuery = Record<string, string | string[] | undefined>;
 
@@ -334,11 +336,15 @@ export async function fetchSportmonksCached(
 /**
  * CDN başlığı: taze kalan süre kadar `s-maxage`, ardından 3×TTL `stale-while-revalidate`
  * (edge eski kopyayı verirken arkada tazeler). Eski veri (upstream hatası) kısa cache'lenir;
- * hata cevapları hiç cache'lenmez.
+ * hata cevapları hiç cache'lenmez. Canlı veri (TTL ≤ LIVE_TTL: inplay, canlı tekil maç) CDN'de en çok
+ * 15 + 5 sn — eski kopya 20 sn'den yaşlı verilmesin.
  */
 export function sportmonksCacheControl(r: SportmonksCachedResult): string {
   if (r.stale) return 'public, s-maxage=15, stale-while-revalidate=60';
   if (r.cache === 'BYPASS' || r.freshForSeconds <= 0) return 'no-store';
+  if (r.ttlSeconds <= LIVE_TTL) {
+    return `public, s-maxage=${Math.min(r.freshForSeconds, LIVE_CDN_MAX_SECONDS)}, stale-while-revalidate=${LIVE_CDN_SWR_SECONDS}`;
+  }
   const swr = Math.max(30, r.ttlSeconds * 3);
   return `public, s-maxage=${r.freshForSeconds}, stale-while-revalidate=${swr}`;
 }
