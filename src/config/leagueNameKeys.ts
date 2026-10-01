@@ -44,3 +44,6 @@ export const SPORTMONKS_LEAGUE_NAME_KEYS: Readonly<Record<number, string>> = {
   1283: 'secondLeagueRed',
   1328: 'uefaSuperCup',
 };
+
+/** Planımızdaki bütün ligler (Sportmonks `league_id`) — ör. "sıradaki maç günü" "Tümü" görünümü. */
+export const PLAN_SPORTMONKS_LEAGUE_IDS: readonly number[] = Object.keys(SPORTMONKS_LEAGUE_NAME_KEYS).map(Number);

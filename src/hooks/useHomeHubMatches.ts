@@ -75,20 +75,27 @@ export function prefetchHomeHubMatches(queryClient: QueryClient, selectedDate: s
   });
 }
 
-/** Seçili günde maç yokken: takip edilen liglerin sıradaki maç günleri (`/api/matches/upcoming-days`). */
-export function upcomingMatchDaysQueryKey(from: string) {
-  return ['upcoming-match-days', from] as const;
+/**
+ * Seçili günde maç yokken liglerin sıradaki maç günleri (`/api/matches/upcoming-days`). `leagueIds` null = "Tümü"
+ * (planımızdaki bütün ligler); doluysa yalnız o ligler (sıralı → aynı seçim aynı anahtar / CDN girdisi).
+ */
+export function upcomingMatchDaysQueryKey(from: string, leagueIds: ReadonlySet<number> | null = null) {
+  return ['upcoming-match-days', from, leagueIds ? [...leagueIds].sort((a, b) => a - b).join(',') : 'all'] as const;
 }
 
-export function useUpcomingMatchDays(from: string, enabled: boolean) {
+export function useUpcomingMatchDays(from: string, leagueIds: ReadonlySet<number> | null, enabled: boolean) {
+  const queryKey = upcomingMatchDaysQueryKey(from, leagueIds);
+  const leaguesParam = queryKey[2];
   return useQuery({
-    queryKey: upcomingMatchDaysQueryKey(from),
+    queryKey,
     queryFn: async (): Promise<UpcomingLeagueDay[]> => {
-      const res = await fetch(`/api/matches/upcoming-days?from=${encodeURIComponent(from)}`);
+      const qs = new URLSearchParams({ from });
+      if (leaguesParam !== 'all') qs.set('leagues', leaguesParam);
+      const res = await fetch(`/api/matches/upcoming-days?${qs.toString()}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return ((await res.json()) as { leagues: UpcomingLeagueDay[] }).leagues;
     },
-    enabled,
+    enabled: enabled && leaguesParam !== '',
     staleTime: 15 * 60_000,
     gcTime: 30 * 60_000,
     retry: 1,

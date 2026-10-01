@@ -10,7 +10,8 @@ import {
   getFixturesByCompetition,
   getFixturesByDate,
 } from '@/services/liveScoreService';
-import { isSportmonksProviderEnabled, VERIFIED_SPORTMONKS_LEAGUE_IDS } from '@/services/sportmonksProviderFlag';
+import { isSportmonksProviderEnabled } from '@/services/sportmonksProviderFlag';
+import { PLAN_SPORTMONKS_LEAGUE_IDS } from '@/config/leagueNameKeys';
 import { sportmonksCollectAllPages } from '@/services/sportmonksRuntimeClient';
 import type { SportmonksFixture } from '@/services/sportmonks/types';
 import { WORLD_CUP_COMPETITION_ID } from '@/config/worldCup';
@@ -75,9 +76,20 @@ export function homeDayFreshSeconds(payload: HomeDayPayload, todayIso: string, n
 
 export type UpcomingLeagueDay = { leagueId: number; date: string };
 
-/** Pencere ve sayfa sınırı: 30 gün, en çok 3 × 50 maç (takip edilen 11 lig için ~2 hafta yeter). */
+/** Pencere: 30 gün. Sayfa sınırı: "Tümü" için ilk 50 maç (en yakın gün için yeter), lig filtresinde 3 × 50. */
 const UPCOMING_WINDOW_DAYS = 30;
-const UPCOMING_MAX_PAGES = 3;
+const UPCOMING_MAX_PAGES_ALL = 1;
+const UPCOMING_MAX_PAGES_FILTERED = 3;
+const PLAN_LEAGUES = new Set(PLAN_SPORTMONKS_LEAGUE_IDS);
+
+/**
+ * İstemcinin lig filtresi → planımızdaki liglerle sınırlı, sıralı, tekil id listesi (cache anahtarı sabit olsun).
+ * `null` = filtre yok ("Tümü"); filtre verildi ama hiçbiri planda değilse boş dizi.
+ */
+export function normalizeUpcomingLeagueIds(ids: Iterable<number> | null | undefined): number[] | null {
+  if (ids == null) return null;
+  return [...new Set([...ids].filter((id) => PLAN_LEAGUES.has(id)))].sort((a, b) => a - b);
+}
 
 const istanbulDay = new Intl.DateTimeFormat('en-CA', {
   timeZone: 'Europe/Istanbul',
@@ -93,20 +105,26 @@ export function istanbulDateOfKickoff(startingAt: string): string | null {
 }
 
 /**
- * `from`'dan SONRAKİ günlerde her takip edilen ligin ilk maç günü (Türkiye günü, artan tarih).
- * Tek sorgu: `fixtures/between/{from+1}/{from+30}?filters=fixtureLeagues:…&order=asc`, include yok
- * (yalnız `league_id` + `starting_at` gerekli), paylaşımlı cache'te 15 dk.
+ * `from`'dan SONRAKİ günlerde liglerin ilk maç günü (Türkiye günü, artan tarih).
+ * - `leagueIds` null ("Tümü"): planımızdaki BÜTÜN ligler (ana sayfa listesi gibi) — `fixtures/between` lig süzgeçsiz,
+ *   artan sırada TEK sayfa; en yakın maç günü ilk satırlarda.
+ * - `leagueIds` dolu (lig filtresi): yalnız o ligler, `filters=fixtureLeagues:…`, en çok 3 sayfa.
+ * Include yok (yalnız `league_id` + `starting_at`), paylaşımlı cache'te 15 dk.
  */
-export async function loadUpcomingMatchDays(from: string): Promise<UpcomingLeagueDay[]> {
+export async function loadUpcomingMatchDays(from: string, leagueIds: number[] | null = null): Promise<UpcomingLeagueDay[]> {
   if (!isSportmonksProviderEnabled()) return [];
+  if (leagueIds && leagueIds.length === 0) return [];
   const rows = await sportmonksCollectAllPages<Pick<SportmonksFixture, 'league_id' | 'starting_at'>>({
     basePath: 'football',
-    path: `/fixtures/between/${shiftIsoDate(from, 1)}/${shiftIsoDate(from, UPCOMING_WINDOW_DAYS)}`,
+    // UTC `from`'dan başla: TR'de `from+1` günü UTC `from` 21:00'de başlar (ör. 30 Eylül 23:30 UTC MLS maçı TR'de
+    // 1 Ekim 02:30). TR gününe göre `> from` süzgeci aşağıda; uç yalnızca seçili gün boşken çağrıldığı için UTC
+    // `from`'un geri kalanı ilk sayfayı doldurmaz.
+    path: `/fixtures/between/${from}/${shiftIsoDate(from, UPCOMING_WINDOW_DAYS)}`,
     perPage: 50,
-    maxPages: UPCOMING_MAX_PAGES,
-    extraParams: { filters: `fixtureLeagues:${VERIFIED_SPORTMONKS_LEAGUE_IDS.join(',')}`, order: 'asc' },
+    maxPages: leagueIds ? UPCOMING_MAX_PAGES_FILTERED : UPCOMING_MAX_PAGES_ALL,
+    extraParams: leagueIds ? { filters: `fixtureLeagues:${leagueIds.join(',')}`, order: 'asc' } : { order: 'asc' },
   });
-  const tracked = new Set(VERIFIED_SPORTMONKS_LEAGUE_IDS);
+  const tracked = leagueIds ? new Set(leagueIds) : PLAN_LEAGUES;
   const first = new Map<number, string>();
   for (const r of rows) {
     if (r.league_id == null || !tracked.has(r.league_id) || !r.starting_at) continue;

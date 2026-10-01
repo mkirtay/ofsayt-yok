@@ -21,7 +21,7 @@ export default function NextMatchDayNotice({ from, leagueIds, onGoToDate }: Prop
   const { t } = useTranslation('match');
   const { t: tl } = useTranslation('leagues');
   const { locale } = useI18n();
-  const { data } = useUpcomingMatchDays(from, true);
+  const { data } = useUpcomingMatchDays(from, leagueIds, true);
   const picks = useMemo(() => pickNextMatchDays(data ?? [], leagueIds), [data, leagueIds]);
   if (picks.length === 0) return null;
 

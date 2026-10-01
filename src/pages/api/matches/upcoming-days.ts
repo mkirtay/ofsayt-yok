@@ -1,15 +1,17 @@
 /**
- * GET /api/matches/upcoming-days?from=YYYY-MM-DD — takip edilen her ligin `from`'dan sonraki ilk maç günü.
+ * GET /api/matches/upcoming-days?from=YYYY-MM-DD[&leagues=600,8] — liglerin `from`'dan sonraki ilk maç günü.
  * Boş gün ekranı ("Süper Lig 9 Ekim'de dönüyor") için; yalnızca seçili günde maç yokken çağrılır.
- * Tek Sportmonks isteği (paylaşımlı cache 15 dk) + CDN 15 dk.
+ * `leagues` yoksa planımızdaki bütün ligler ("Tümü"); varsa yalnız onlar (plan dışı id'ler atılır, sıralanır →
+ * aynı seçim aynı cache anahtarı). Sportmonks: Tümü 1 istek, filtreli en çok 3 (paylaşımlı cache 15 dk) + CDN 15 dk.
  */
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { hitFixedWindowRateLimit, requestIp } from '@/lib/rateLimit';
 import { trackSportmonksFetches } from '@/server/sportmonks/cachedFetch';
-import { loadUpcomingMatchDays } from '@/server/homeDay';
+import { loadUpcomingMatchDays, normalizeUpcomingLeagueIds } from '@/server/homeDay';
 import { shiftIsoDate, todayIsoIstanbul } from '@/utils/dateStrip';
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+const LEAGUES_RE = /^\d{1,6}(,\d{1,6}){0,49}$/;
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
@@ -21,6 +23,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!DATE_RE.test(from) || from < shiftIsoDate(today, -1) || from > shiftIsoDate(today, 60)) {
     return res.status(400).json({ error: 'Geçersiz tarih' });
   }
+  const leaguesParam = req.query.leagues;
+  if (leaguesParam !== undefined && (typeof leaguesParam !== 'string' || !LEAGUES_RE.test(leaguesParam))) {
+    return res.status(400).json({ error: 'Geçersiz lig listesi' });
+  }
+  const leagueIds = typeof leaguesParam === 'string' ? normalizeUpcomingLeagueIds(leaguesParam.split(',').map(Number)) : null;
 
   const ip = requestIp(req.headers as Record<string, string | string[] | undefined>, req.socket?.remoteAddress);
   const rl = await hitFixedWindowRateLimit(`matches-upcoming:${ip}`, 60, 60_000);
@@ -30,7 +37,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const { value, stale, failed } = await trackSportmonksFetches(() => loadUpcomingMatchDays(from));
+    const { value, stale, failed } = await trackSportmonksFetches(() => loadUpcomingMatchDays(from, leagueIds));
     if (failed && value.length === 0) {
       res.setHeader('Cache-Control', 'no-store');
       return res.status(503).json({ error: 'Fikstür şu an alınamıyor.' });

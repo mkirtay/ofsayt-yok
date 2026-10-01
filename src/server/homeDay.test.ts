@@ -14,7 +14,7 @@ vi.mock('@/services/liveScoreService', () => ({
   getFixturesByCompetition: vi.fn(async () => []),
 }));
 
-import { homeDayFreshSeconds, istanbulDateOfKickoff, loadHomeDay, loadUpcomingMatchDays } from './homeDay';
+import { homeDayFreshSeconds, istanbulDateOfKickoff, loadHomeDay, loadUpcomingMatchDays, normalizeUpcomingLeagueIds } from './homeDay';
 
 const NOW = Date.parse('2026-09-30T13:00:00Z');
 
@@ -63,21 +63,45 @@ describe('homeDay', () => {
     expect(istanbulDateOfKickoff('2026-10-09 17:00:00')).toBe('2026-10-09');
   });
 
-  it('sıradaki maç günü: lig başına ilk gün, takip edilmeyen lig ve seçili gün dışarıda; tek sorgu', async () => {
+  it('sıradaki maç günü ("Tümü"): planımızdaki BÜTÜN ligler, lig süzgeçsiz tek sayfa; plan dışı lig ve seçili gün dışarıda', async () => {
     h.collect.mockResolvedValue([
+      { league_id: 779, starting_at: '2026-09-30 23:30:00' }, // MLS — TR'de 1 Ekim 02:30
+      { league_id: 1283, starting_at: '2026-10-03 10:00:00' }, // 2. Lig Kırmızı
       { league_id: 8, starting_at: '2026-10-03 11:30:00' },
       { league_id: 8, starting_at: '2026-10-04 14:00:00' },
-      { league_id: 600, starting_at: '2026-10-09 17:00:00' },
       { league_id: 9999, starting_at: '2026-10-01 17:00:00' },
+      { league_id: 600, starting_at: '2026-09-30 17:00:00' }, // seçili gün (TR 30 Eylül) → dışarıda
     ]);
     expect(await loadUpcomingMatchDays('2026-09-30')).toEqual([
+      { leagueId: 779, date: '2026-10-01' },
       { leagueId: 8, date: '2026-10-03' },
-      { leagueId: 600, date: '2026-10-09' },
+      { leagueId: 1283, date: '2026-10-03' },
     ]);
     expect(h.collect).toHaveBeenCalledTimes(1);
     const opts = h.collect.mock.calls[0]![0];
-    expect(opts.path).toBe('/fixtures/between/2026-10-01/2026-10-30');
-    expect(opts.extraParams.order).toBe('asc');
-    expect(opts.extraParams.filters).toMatch(/^fixtureLeagues:(\d+,)+\d+$/);
+    expect(opts.path).toBe('/fixtures/between/2026-09-30/2026-10-30');
+    expect(opts.extraParams).toEqual({ order: 'asc' });
+    expect(opts.maxPages).toBe(1);
+  });
+
+  it('sıradaki maç günü (lig filtresi): yalnız seçili ligler, fixtureLeagues süzgeci, en çok 3 sayfa', async () => {
+    h.collect.mockClear();
+    h.collect.mockResolvedValue([
+      { league_id: 600, starting_at: '2026-10-09 17:00:00' },
+      { league_id: 779, starting_at: '2026-10-01 00:30:00' },
+    ]);
+    expect(await loadUpcomingMatchDays('2026-09-30', [8, 600])).toEqual([{ leagueId: 600, date: '2026-10-09' }]);
+    const opts = h.collect.mock.calls[0]![0];
+    expect(opts.extraParams).toEqual({ filters: 'fixtureLeagues:8,600', order: 'asc' });
+    expect(opts.maxPages).toBe(3);
+    h.collect.mockClear();
+    expect(await loadUpcomingMatchDays('2026-09-30', [])).toEqual([]);
+    expect(h.collect).not.toHaveBeenCalled();
+  });
+
+  it('normalizeUpcomingLeagueIds: plan dışı atılır, sıralı ve tekil', () => {
+    expect(normalizeUpcomingLeagueIds(null)).toBeNull();
+    expect(normalizeUpcomingLeagueIds([600, 8, 600, 9999])).toEqual([8, 600]);
+    expect(normalizeUpcomingLeagueIds([9999])).toEqual([]);
   });
 });
