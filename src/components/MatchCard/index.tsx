@@ -2,7 +2,12 @@ import { useEffect, useState } from 'react';
 import styles from './matchCard.module.scss';
 import { Match } from '@/models/liveScore';
 import Link from 'next/link';
-import { useTranslation } from '@/lib/i18n';
+import { useI18n, useTranslation } from '@/lib/i18n';
+import '@/lib/i18nNamespaces/matchState';
+import { useNow } from '@/hooks/useNow';
+import { matchDisplayState, specialKeepsData } from '@/utils/matchDisplayState';
+import { kickoffInfo, relativeKickoffDay } from '@/utils/kickoff';
+import { formatFixtureDate } from '@/utils/fixtureDateLabel';
 import { countryFlagImgSrc } from '@/utils/countryFlag';
 import { utcTimeToTr, isoDateToTr } from '@/utils/dateFormat';
 import { parseHead2HeadTeamIds, overallFormToPills, type FormPill } from '@/utils/matchForm';
@@ -163,6 +168,13 @@ export default function MatchCard({ match, loading }: MatchCardProps) {
   // Kupa maçında takım kademe rozeti için harita (yalnızca Türkiye Kupası maçında istenir).
   const cupTiers = useTurkeyTeamTiers(isTurkishCupMatch(match)).data ?? null;
 
+  // Maç öncesi: skor yerine başlama saati + gün. "Bugün/Yarın" saate bağlı → yalnız mount sonrası (SSR'da tarih).
+  const { t: ts } = useTranslation('matchState');
+  const { locale } = useI18n();
+  const displayState = matchDisplayState(match);
+  const kickoff = displayState.phase === 'PRE' ? kickoffInfo(match) : null;
+  const now = useNow(60_000, kickoff != null);
+
   if (loading) {
     return <MatchCardSkeleton />;
   }
@@ -189,9 +201,23 @@ export default function MatchCard({ match, loading }: MatchCardProps) {
 
   const htTrimmed = htScore?.trim() ?? '';
   const showIyBadge = Boolean(htTrimmed) || matchStatus === 'HALF TIME BREAK';
-  const minuteBadgeText = minuteBadgeLabel(matchStatus, matchTime);
+  const { phase, special } = displayState;
+  // Yarıda kaldı / durduruldu / hükmen: skor kalır, dakika rozetinin yerine durum.
+  const minuteBadgeText = special && specialKeepsData(special) ? ts(`short.${special}`) : minuteBadgeLabel(matchStatus, matchTime);
   const showScoreMeta = showIyBadge || Boolean(minuteBadgeText);
-  const showMatchFooter = Boolean(location.trim() || refereeName);
+  const isPre = phase === 'PRE';
+  // Skor yokken: ertelendi / iptal / tarih belirsiz / gecikti → kısa durum; başlamadı → saat + gün.
+  const noScore = !match.scores?.score;
+  const scoreStateLabel = noScore && special && !specialKeepsData(special) ? ts(`short.${special}`) : null;
+  const showKickoff = noScore && isPre && !scoreStateLabel && kickoff != null;
+  const relativeDay = showKickoff && now != null ? relativeKickoffDay(kickoff.dayIso, now) : null;
+  const kickoffDayText = showKickoff
+    ? relativeDay
+      ? ts(`day.${relativeDay}`)
+      : formatFixtureDate(kickoff.dayIso, locale)
+    : '';
+  const refereeText = refereeName || (isPre && !special ? ts('refereeTba') : '—');
+  const showMatchFooter = Boolean(location.trim() || refereeName) || (isPre && !special);
 
   const showFormRow = homeForm.length > 0 || awayForm.length > 0;
   const showH2hFormRow = homeH2hForm.length > 0 || awayH2hForm.length > 0;
@@ -266,17 +292,26 @@ export default function MatchCard({ match, loading }: MatchCardProps) {
                 {minuteBadgeText}
               </span>
             ) : null}
-            <div className={styles.score} aria-label={score}>
-              <span className={styles.scoreHome}>{scoreHome}</span>
-              {scoreAway !== '' ? (
-                <>
-                  <span className={styles.scoreSep} aria-hidden>
-                    –
-                  </span>
-                  <span className={styles.scoreAway}>{scoreAway}</span>
-                </>
-              ) : null}
-            </div>
+            {showKickoff ? (
+              <div className={styles.kickoff}>
+                <span className={styles.kickoffTime}>{kickoff.time}</span>
+                <span className={styles.kickoffDay}>{kickoffDayText}</span>
+              </div>
+            ) : scoreStateLabel ? (
+              <div className={styles.scoreState}>{scoreStateLabel}</div>
+            ) : (
+              <div className={styles.score} aria-label={score}>
+                <span className={styles.scoreHome}>{scoreHome}</span>
+                {scoreAway !== '' ? (
+                  <>
+                    <span className={styles.scoreSep} aria-hidden>
+                      –
+                    </span>
+                    <span className={styles.scoreAway}>{scoreAway}</span>
+                  </>
+                ) : null}
+              </div>
+            )}
             {showScoreMeta ? (
               <div className={styles.scoreMeta}>
                 {showIyBadge ? <span className={styles.htBadge}>{t('halfTime')} : {formatHtScoreDisplay(htScore)}</span> : null}
@@ -325,7 +360,7 @@ export default function MatchCard({ match, loading }: MatchCardProps) {
           <div className={styles.matchFooterCol}>
             <WhistleIcon className={styles.matchFooterIcon} />
             <span className={styles.matchFooterLabel}>{t('referee')}</span>
-            <span className={styles.matchFooterValue}>{refereeName || '—'}</span>
+            <span className={styles.matchFooterValue}>{refereeText}</span>
           </div>
         </div>
       ) : null}
