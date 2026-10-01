@@ -23,6 +23,21 @@
   }
 }
 
+// 404: 03 · VAR sahnesi (genişliğe ölçekli, en-boy oranı sabit → kayma yok).
+.scene {
+  width: 100%;
+  max-width: 420px;
+  margin-bottom: $spacing-5;
+}
+
+.eyebrow {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: $color-primary;
+  margin-bottom: $spacing-2;
+}
+
 .title {
   font-size: 24px;
   font-weight: 700;

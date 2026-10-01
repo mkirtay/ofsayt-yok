@@ -22,12 +22,12 @@ export type PanelProps = {
 /** Kapanış kayması (panel.module.scss transition ile aynı); sahne bu süre sonunda kaldırılır. */
 const CLOSE_MS = 300;
 
-function Scene({ fact, varStamp }: { fact: LocalizedFact; varStamp: string }) {
+function Scene({ fact }: { fact: LocalizedFact }) {
   switch (fact.animation) {
     case '02-dizilis':
       return <FormationScene />;
     case '03-var-ofsayt-yok':
-      return <VarScene stampLabel={varStamp} />;
+      return <VarScene />;
     case '08-mac-baslamadi':
       return <RingScene label={fact.sceneLabel} />;
     case '01-mac-oynaniyor':
@@ -160,7 +160,7 @@ export default function Panel({ open, facts, startIndex, onClose }: PanelProps) 
           </button>
         </div>
         <div ref={bodyRef} className={styles.body}>
-          <ScaledScene>{sceneOn ? <Scene key={safeIndex} fact={fact} varStamp={t('varStamp')} /> : null}</ScaledScene>
+          <ScaledScene>{sceneOn ? <Scene key={safeIndex} fact={fact} /> : null}</ScaledScene>
           <h2 className={styles.fact} aria-live="polite">
             {fact.title}
           </h2>

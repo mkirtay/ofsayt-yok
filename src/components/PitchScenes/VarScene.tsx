@@ -1,10 +1,15 @@
 import { useRef } from 'react';
+import { useI18n } from '@/lib/i18n';
 import { useMotionPause } from '@/hooks/useMotionPause';
 import turf from './turf.module.scss';
 import styles from './varScene.module.scss';
 
-/** 03 · VAR: Ofsayt yok (504×230). `stampLabel`: mühür metni (TR "OFSAYT YOK", EN "NO OFFSIDE"). */
-export default function VarScene({ stampLabel }: { stampLabel: string }) {
+// Mühür sahnenin parçası (marka göndermesi); kullanan her yerde aynı olsun diye çeviri dosyası yerine burada.
+const STAMP: Record<string, string> = { tr: 'OFSAYT YOK', en: 'NO OFFSIDE' };
+
+/** 03 · VAR: Ofsayt yok (504×230). Kural Köşesi, Trivia üretimi ve 404'te. */
+export default function VarScene() {
+  const { locale } = useI18n();
   const ref = useRef<HTMLDivElement>(null);
   useMotionPause(ref);
   return (
@@ -32,7 +37,7 @@ export default function VarScene({ stampLabel }: { stampLabel: string }) {
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
           <polyline points="20 6 9 17 4 12" />
         </svg>
-        {stampLabel}
+        {STAMP[locale] ?? STAMP.tr}
       </span>
     </div>
   );

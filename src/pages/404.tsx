@@ -4,6 +4,8 @@ import { serverSideTranslations } from '@/lib/serverSideTranslations';
 import { useTranslation } from '@/lib/i18n';
 import Link from 'next/link';
 import Container from '@/components/Container';
+import ScaledScene from '@/components/PitchScenes/ScaledScene';
+import VarScene from '@/components/PitchScenes/VarScene';
 import styles from './error.module.scss';
 
 export default function NotFound() {
@@ -17,8 +19,13 @@ export default function NotFound() {
       </Head>
       <Container>
         <div className={styles.wrapper}>
-          <div className={styles.code}>404</div>
-          <h1 className={styles.title}>{t('notFoundTitle')}</h1>
+          <div className={styles.scene} aria-hidden="true">
+            <ScaledScene>
+              <VarScene />
+            </ScaledScene>
+          </div>
+          <div className={styles.eyebrow}>404</div>
+          <h1 className={styles.title}>{t('notFoundOffside')}</h1>
           <p className={styles.desc}>{t('notFoundDesc')}</p>
           <Link href="/" className={styles.btn}>
             {t('backToHome')}

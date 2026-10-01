@@ -167,6 +167,28 @@
   }
 }
 
+// Trivia üretilirken: VAR sahnesi + durum metni.
+.generating {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: $spacing-2;
+
+  .loading {
+    padding: $spacing-3 $spacing-4 0;
+  }
+}
+
+.generatingScene {
+  width: 100%;
+  max-width: 420px;
+  aspect-ratio: 504 / 230;
+}
+
+.generatingWaiting {
+  visibility: hidden;
+}
+
 .loading,
 .errorBox {
   text-align: center;

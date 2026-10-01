@@ -4,7 +4,12 @@ import { useSession } from 'next-auth/react';
 import { useTranslation } from '@/lib/i18n';
 import type { Match } from '@/models/liveScore';
 import DailyFactCard from '@/components/KuralKosesi/DailyFactCard';
+import LazyLoad from '@/components/LazyLoad';
+import { useDelayedShow } from '@/hooks/useDelayedShow';
 import styles from './matchTrivia.module.scss';
+
+// Yalnız üretim sırasında gerekir: sahne ve CSS'i ayrı parçada. En-boy oranlı kutu burada (geç gelse de kayma yok).
+const loadVarScene = () => import('@/components/PitchScenes/VarSceneScaled');
 
 type ApiTrivia = {
   id: string;
@@ -148,7 +153,7 @@ export default function MatchTrivia({ matchId, match }: Props) {
             <span className={styles.premiumBadge}>{t('premiumBadge')}</span>
           </h3>
         </div>
-        <div className={styles.loading}>{t('trivia.loading')}</div>
+        <TriviaGenerating label={t('trivia.loading')} />
         <DailyFactCard />
       </div>
     );
@@ -224,6 +229,19 @@ export default function MatchTrivia({ matchId, match }: Props) {
           <p className={styles.narrative}>{trivia.rivalryContext}</p>
         </div>
       )}
+    </div>
+  );
+}
+
+/** Trivia üretilirken 03 · VAR sahnesi (300 ms sonra görünür, kutu baştan yer tutar) ve durum metni. */
+function TriviaGenerating({ label }: { label: string }) {
+  const shown = useDelayedShow(300);
+  return (
+    <div className={styles.generating} role="status">
+      <div className={`${styles.generatingScene} ${shown ? '' : styles.generatingWaiting}`} aria-hidden="true">
+        <LazyLoad load={loadVarScene} props={{}} />
+      </div>
+      <p className={styles.loading}>{label}</p>
     </div>
   );
 }

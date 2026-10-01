@@ -6,6 +6,7 @@
   "close": "Close",
   "dataNotFound": "No data found.",
   "notFoundTitle": "Page Not Found",
+  "notFoundOffside": "This page was caught offside",
   "notFoundDesc": "The page you're looking for may have been moved, deleted, or never existed.",
   "backToHome": "Back to Home",
   "serverErrorTitle": "Something Went Wrong",

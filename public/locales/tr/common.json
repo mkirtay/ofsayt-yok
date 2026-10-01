@@ -6,6 +6,7 @@
   "close": "Kapat",
   "dataNotFound": "Veri bulunamadı.",
   "notFoundTitle": "Sayfa Bulunamadı",
+  "notFoundOffside": "Bu sayfa ofsayta düştü",
   "notFoundDesc": "Aradığın sayfa taşınmış, silinmiş ya da hiç var olmamış olabilir.",
   "backToHome": "Anasayfaya Dön",
   "serverErrorTitle": "Bir Şeyler Ters Gitti",
