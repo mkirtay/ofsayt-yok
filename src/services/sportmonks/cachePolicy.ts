@@ -24,6 +24,9 @@ export const ACTIVE_LIST_TTL = 30;
 export const KICKOFF_WINDOW_SECONDS = 15 * MIN;
 /** Sportmonks'un "yok" dediği tekil kaynak (fixture/oyuncu/takım id'si). */
 export const NOT_FOUND_TTL = HOUR;
+/** Başlamadan bu kadar sonrasına kadar biten maç "yeni" (~2 sa maç + 3 sa): istatistik/puan düzeltmeleri gelir. */
+export const RECENTLY_FINISHED_WINDOW_MS = 5 * HOUR * 1000;
+export const RECENTLY_FINISHED_TTL = 15 * MIN;
 
 type FixtureLike = { state_id?: number | null; starting_at?: string | null; starting_at_timestamp?: number | null };
 
@@ -130,7 +133,9 @@ export function sportmonksCacheTtl(
         if (isLive(f)) return withStale(LIVE_TTL, DAY);
         if (isNotStarted(f)) return withStale(fixtureListFreshSeconds([f], 10 * MIN, now), DAY);
         const k = kickoffMs(f);
-        // Yeni bitmiş maçta skor/istatistik düzeltmeleri gelebilir → 6 sa; 1 günden eski → 24 sa.
+        // Yeni biten maç (başlamadan sonraki 5 sa ≈ bitişten sonraki 3 sa): Sportmonks istatistik ve oyuncu puanlarını
+        // güncelliyor → 15 dk; 1 güne kadar 6 sa; daha eski 24 sa.
+        if (k != null && now - k < RECENTLY_FINISHED_WINDOW_MS) return withStale(RECENTLY_FINISHED_TTL, 7 * DAY);
         return withStale(k != null && now - k > DAY_MS ? DAY : 6 * HOUR, 7 * DAY);
       }
       return withStale(5 * MIN);

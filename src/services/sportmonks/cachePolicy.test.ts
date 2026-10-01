@@ -57,9 +57,11 @@ describe('sportmonksCacheTtl — TTL tablosu', () => {
     expect(sportmonksCacheTtl('football/fixtures/between/2026-06-01/2026-08-01', [], NOW).fresh).toBe(86400);
   });
 
-  it('tekil maç: canlı 20 sn, bitmiş 6 sa → 1 günden eskiyse 24 sa, yok → 1 sa', () => {
+  it('tekil maç: canlı 20 sn, yeni biten (başlamadan sonraki 5 sa) 15 dk, sonra 6 sa → 1 günden eskiyse 24 sa, yok → 1 sa', () => {
     expect(sportmonksCacheTtl('football/fixtures/19746594', { state_id: LIVE_1ST, starting_at: at(-20) }, NOW).fresh).toBe(20);
-    expect(sportmonksCacheTtl('football/fixtures/19746594', { state_id: FT, starting_at: at(-150) }, NOW).fresh).toBe(6 * 3600);
+    expect(sportmonksCacheTtl('football/fixtures/19746594', { state_id: FT, starting_at: at(-150) }, NOW).fresh).toBe(15 * 60);
+    expect(sportmonksCacheTtl('football/fixtures/19746594', { state_id: FT, starting_at: at(-299) }, NOW).fresh).toBe(15 * 60);
+    expect(sportmonksCacheTtl('football/fixtures/19746594', { state_id: FT, starting_at: at(-301) }, NOW).fresh).toBe(6 * 3600);
     expect(sportmonksCacheTtl('football/fixtures/1058753', { state_id: FT, starting_at: '2013-04-03 18:45:00' }, NOW).fresh).toBe(86400);
     expect(sportmonksCacheTtl('football/fixtures/19999999', undefined, NOW)).toEqual({ fresh: 3600, stale: 3600 });
   });
