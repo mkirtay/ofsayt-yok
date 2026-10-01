@@ -4,6 +4,7 @@ import { ANALYSIS_COST, type MatchAnalysisState } from '@/hooks/useMatchAnalysis
 import { deriveMatchPhase } from '@/utils/matchPhase';
 import type { Match } from '@/models/liveScore';
 import EmptyState from '@/components/EmptyState';
+import DailyFactCard from '@/components/KuralKosesi/DailyFactCard';
 import AiLoadingPitch from './AiLoadingPitch';
 import HeatmapPitch from './HeatmapPitch';
 import type { ApiAnalysis } from './types';
@@ -136,7 +137,10 @@ export default function MatchAnalysis({ match, state, archived = false }: Props)
             </Link>
           </div>
         ) : generating ? (
-          <AiLoadingPitch />
+          <>
+            <AiLoadingPitch label={t('analysis.loading')} />
+            <DailyFactCard />
+          </>
         ) : insufficientCredits ? (
           <div className={styles.cta}>
             <div className={styles.errorBox}>{t('analysis.insufficientCredits')}</div>

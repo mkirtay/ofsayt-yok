@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { useTranslation } from '@/lib/i18n';
 import type { Match } from '@/models/liveScore';
+import DailyFactCard from '@/components/KuralKosesi/DailyFactCard';
 import styles from './matchTrivia.module.scss';
 
 type ApiTrivia = {
@@ -148,6 +149,7 @@ export default function MatchTrivia({ matchId, match }: Props) {
           </h3>
         </div>
         <div className={styles.loading}>{t('trivia.loading')}</div>
+        <DailyFactCard />
       </div>
     );
   }

@@ -3,6 +3,7 @@ import { useI18n, useTranslation } from '@/lib/i18n';
 import '@/lib/i18nNamespaces/kuralKosesi';
 import { useMotionPause } from '@/hooks/useMotionPause';
 import { loadFacts, localizeFact, type KuralFact } from './facts';
+import { KURAL_KOSESI_OPEN_EVENT } from './openEvent';
 import {
   PEEK_VISIBLE_MS,
   dailyIndex,
@@ -105,9 +106,9 @@ export default function Launcher() {
   }, [peekIndex]);
 
   const openPanel = useCallback(async () => {
-    setPeekIndex(null);
     try {
       const [PanelComponent, list] = await Promise.all([loadPanel(), loadFacts()]);
+      setPeekIndex(null);
       setPanel(() => PanelComponent);
       setFacts(list);
       setStartIndex(dailyIndex(Date.now(), list.length));
@@ -118,6 +119,13 @@ export default function Launcher() {
     setSeen(true);
     if (storage) writeState(storage, recordOpen(readState(storage), Date.now()));
   }, [storage]);
+
+  // Sayfanın başka bir yerinden açma isteği (bkz. openEvent.ts).
+  useEffect(() => {
+    const onOpenRequest = () => void openPanel();
+    window.addEventListener(KURAL_KOSESI_OPEN_EVENT, onOpenRequest);
+    return () => window.removeEventListener(KURAL_KOSESI_OPEN_EVENT, onOpenRequest);
+  }, [openPanel]);
 
   const closePanel = useCallback(() => {
     setOpen(false);
