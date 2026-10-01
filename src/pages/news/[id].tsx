@@ -6,6 +6,7 @@ import Container from '@/components/Container';
 import NewsList from '@/components/NewsList';
 import { PanelSkeleton } from '@/components/Skeleton';
 import { useNewsDetail } from '@/hooks/useNewsDetail';
+import { isOptimizableNewsImage } from '@/config/newsImageHosts';
 import styles from './newsDetail.module.scss';
 
 function formatDate(dateStr: string): string {
@@ -108,6 +109,7 @@ export default function NewsDetail() {
                     width={1200}
                     height={630}
                     style={{ width: '100%', height: 'auto' }}
+                    unoptimized={!isOptimizableNewsImage(article.image)}
                   />
                 </div>
               )}

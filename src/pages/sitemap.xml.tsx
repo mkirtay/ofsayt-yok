@@ -78,7 +78,9 @@ export const getServerSideProps: GetServerSideProps = async ({ req, res }) => {
   const xml = buildXml([...staticUrls, ...matchUrls]);
 
   res.setHeader('Content-Type', 'text/xml; charset=utf-8');
-  res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=7200');
+  // ±3 günlük maç listesi günde bir değişir; üretim ~750 ms CPU (7 günün fikstürü) → CDN'de 1 gün, sonra 1 gün
+  // eski kopya verilirken arka planda yenilenir (bölge başına günde en çok ~1 üretim).
+  res.setHeader('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=86400');
   res.write(xml);
   res.end();
 

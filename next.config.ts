@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 import path from "path";
 import { withSentryConfig } from "@sentry/nextjs";
+import { NEWS_IMAGE_HOSTS } from "./src/config/newsImageHosts";
 
 const nextConfig: NextConfig = {
   reactStrictMode: false,
@@ -18,10 +19,9 @@ const nextConfig: NextConfig = {
   images: {
     minimumCacheTTL: 2592000,
     deviceSizes: [640, 828, 1080, 1200, 1920],
-    remotePatterns: [
-      { protocol: 'https', hostname: '**' },
-      { protocol: 'http', hostname: '**' },
-    ],
+    // Yalnızca haber kapak görselleri optimize edilir (bkz. src/config/newsImageHosts.ts); diğer uzak görseller
+    // `unoptimized` ya da düz <img>. Joker host kota kötüye kullanımına açıktı.
+    remotePatterns: NEWS_IMAGE_HOSTS.map((hostname) => ({ protocol: 'https' as const, hostname, pathname: '/**' })),
     localPatterns: [
       { pathname: '/api/livescore/countries/flag' },
       { pathname: '/images/**' },
