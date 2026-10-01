@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Puan tablosu güncelleniyor — Ofsayt Yok animasyon referansı</title>
+<style>
+
+body { margin: 0; }
+.stripes { position: absolute; inset: 0; background: repeating-linear-gradient(90deg, rgba(255,255,255,.06) 0, rgba(255,255,255,.06) 24px, transparent 24px, transparent 48px); }
+.turf { position: relative; width: 504px; border-radius: 12px; overflow: hidden; background: linear-gradient(135deg, #007B55 0%, #00a76f 60%, #007B55 100%); box-shadow: inset 0 0 0 1px rgba(255,255,255,.15); }
+.home { background: #ffffff; box-shadow: 0 0 0 2px #007B55, 0 2px 4px rgba(0,0,0,.25); }
+.away { background: #007B55; box-shadow: 0 0 0 2px #ffffff, 0 2px 4px rgba(0,0,0,.25); }
+.ballw { position: absolute; display: block; width: 18px; height: 18px; border-radius: 50%; background: #ffffff; box-shadow: inset -2px -2px 0 rgba(0,0,0,.12), 0 3px 6px rgba(0,0,0,.3); }
+.ballw::before { content: ''; position: absolute; inset: 3px; border-radius: 50%; background: conic-gradient(rgba(0,0,0,.55) 0deg 30deg, transparent 30deg 150deg, rgba(0,0,0,.55) 150deg 180deg, transparent 180deg 300deg, rgba(0,0,0,.55) 300deg 330deg, transparent 330deg 360deg); opacity: .6; }
+.cline { position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: rgba(255,255,255,.32); }
+.ccircle { position: absolute; left: 50%; top: 50%; width: 70px; height: 70px; margin: -35px 0 0 -35px; border: 2px solid rgba(255,255,255,.32); border-radius: 50%; box-sizing: border-box; }
+.box { position: absolute; top: 50%; width: 66px; height: 132px; margin-top: -66px; border: 2px solid rgba(255,255,255,.32); box-sizing: border-box; }
+.boxL { left: 0; border-left: none; }
+.boxR { right: 0; border-right: none; }
+.gpost { position: absolute; top: 50%; width: 12px; height: 48px; margin-top: -24px; border: 3px solid rgba(255,255,255,.9); box-sizing: border-box; }
+.gpostL { left: 3px; border-right: none; border-radius: 3px 0 0 3px; }
+.gpostR { right: 3px; border-left: none; border-radius: 0 3px 3px 0; }
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; }
+}
+
+
+.tbl { position: relative; width: 504px; height: 226px; border: 1px solid #e3ebe6; border-radius: 12px; background: #ffffff; overflow: hidden; box-sizing: border-box; }
+.th { position: absolute; left: 0; right: 0; top: 0; height: 34px; display: flex; align-items: center; gap: 12px; padding: 0 16px; border-bottom: 1px solid #eef3f0; font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #5f7268; box-sizing: border-box; }
+.rank { position: absolute; left: 14px; width: 24px; height: 24px; margin-top: -12px; display: flex; align-items: center; justify-content: center; border-radius: 6px; font-size: 13px; font-weight: 800; color: #101512; }
+.rank1 { background: #00a76f; color: #ffffff; }
+.row { position: absolute; left: 50px; right: 14px; height: 38px; display: flex; align-items: center; gap: 12px; }
+.row::before { content: ''; position: absolute; top: 3px; bottom: 3px; left: -6px; right: -6px; border-radius: 8px; background: rgba(0,167,111,.09); opacity: 0; }
+.crest { display: block; width: 20px; height: 20px; border-radius: 50%; flex-shrink: 0; box-shadow: inset 0 0 0 2px rgba(255,255,255,.55); position: relative; }
+.bar { display: block; height: 10px; border-radius: 5px; background: #e2ebe6; position: relative; }
+.pts { display: block; width: 28px; height: 10px; border-radius: 5px; background: #cfdcd5; margin-left: auto; position: relative; }
+.arrow { display: block; width: 16px; height: 16px; flex-shrink: 0; opacity: 0; position: relative; }
+.noarrow { display: block; width: 16px; height: 16px; flex-shrink: 0; }
+.up { color: #00875a; }
+.down { color: #c2410c; }
+.rB { animation: rB 6s ease-in-out infinite both; }
+.rC { animation: rC 6s ease-in-out infinite both; }
+.rD { animation: rD 6s ease-in-out infinite both; }
+.rE { animation: rE 6s ease-in-out infinite both; }
+@keyframes rB {
+  0%, 20% { transform: translateY(0); }
+  32%, 70% { transform: translateY(38px); }
+  82%, 100% { transform: translateY(0); }
+}
+@keyframes rC {
+  0%, 20% { transform: translateY(0); }
+  32%, 70% { transform: translateY(-38px); }
+  82%, 100% { transform: translateY(0); }
+}
+@keyframes rD {
+  0%, 42% { transform: translateY(0); }
+  54%, 70% { transform: translateY(38px); }
+  82%, 100% { transform: translateY(0); }
+}
+@keyframes rE {
+  0%, 42% { transform: translateY(0); }
+  54%, 70% { transform: translateY(-38px); }
+  82%, 100% { transform: translateY(0); }
+}
+.a1, .rB::before, .rC::before { animation: a1 6s ease-in-out infinite both; }
+.a2, .rD::before, .rE::before { animation: a2 6s ease-in-out infinite both; }
+@keyframes a1 {
+  0%, 22% { opacity: 0; }
+  30%, 66% { opacity: 1; }
+  74%, 100% { opacity: 0; }
+}
+@keyframes a2 {
+  0%, 44% { opacity: 0; }
+  52%, 66% { opacity: 1; }
+  74%, 100% { opacity: 0; }
+}
+
+.demo { font-family: Inter, system-ui, sans-serif; color: #101512; padding: 32px; display: flex; flex-direction: column; gap: 14px; align-items: flex-start; }
+.demo h1 { margin: 0; font-size: 22px; font-weight: 800; }
+.demo p { margin: 0 0 6px; font-size: 14px; color: #44544b; }
+</style>
+</head>
+<body>
+<div class="demo">
+<h1>Puan tablosu güncelleniyor</h1>
+<p>Nerede: Puan durumunda sezon değiştirilirken (tablo kutusunun içinde).</p>
+<div class="tbl">
+<div class="th"><span style="width: 24px">#</span><span style="padding-left: 12px">Takım</span><span style="margin-left: auto; padding-right: 30px">P</span></div>
+<span class="rank rank1" style="top: 53px">1</span>
+<span class="rank" style="top: 91px">2</span>
+<span class="rank" style="top: 129px">3</span>
+<span class="rank" style="top: 167px">4</span>
+<span class="rank" style="top: 205px">5</span>
+<div class="row " style="top: 34px"><span class="crest" style="background: #1d4ed8"></span><span class="bar" style="width: 170px"></span><span class="pts"></span><span class="noarrow"></span></div>
+<div class="row rB" style="top: 72px"><span class="crest" style="background: #f59e0b"></span><span class="bar" style="width: 140px"></span><span class="pts"></span><svg class="arrow down a1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
+<div class="row rC" style="top: 110px"><span class="crest" style="background: #0d9488"></span><span class="bar" style="width: 190px"></span><span class="pts"></span><svg class="arrow up a1" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 15 12 9 18 15"></polyline></svg></div>
+<div class="row rD" style="top: 148px"><span class="crest" style="background: #7c3aed"></span><span class="bar" style="width: 120px"></span><span class="pts"></span><svg class="arrow down a2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
+<div class="row rE" style="top: 186px"><span class="crest" style="background: #dc2626"></span><span class="bar" style="width: 160px"></span><span class="pts"></span><svg class="arrow up a2" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="6 15 12 9 18 15"></polyline></svg></div>
+</div>
+</div>
+</body>
+</html>

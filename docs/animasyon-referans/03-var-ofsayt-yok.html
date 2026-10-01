@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VAR: Ofsayt yok — Ofsayt Yok animasyon referansı</title>
+<style>
+
+body { margin: 0; }
+.stripes { position: absolute; inset: 0; background: repeating-linear-gradient(90deg, rgba(255,255,255,.06) 0, rgba(255,255,255,.06) 24px, transparent 24px, transparent 48px); }
+.turf { position: relative; width: 504px; border-radius: 12px; overflow: hidden; background: linear-gradient(135deg, #007B55 0%, #00a76f 60%, #007B55 100%); box-shadow: inset 0 0 0 1px rgba(255,255,255,.15); }
+.home { background: #ffffff; box-shadow: 0 0 0 2px #007B55, 0 2px 4px rgba(0,0,0,.25); }
+.away { background: #007B55; box-shadow: 0 0 0 2px #ffffff, 0 2px 4px rgba(0,0,0,.25); }
+.ballw { position: absolute; display: block; width: 18px; height: 18px; border-radius: 50%; background: #ffffff; box-shadow: inset -2px -2px 0 rgba(0,0,0,.12), 0 3px 6px rgba(0,0,0,.3); }
+.ballw::before { content: ''; position: absolute; inset: 3px; border-radius: 50%; background: conic-gradient(rgba(0,0,0,.55) 0deg 30deg, transparent 30deg 150deg, rgba(0,0,0,.55) 150deg 180deg, transparent 180deg 300deg, rgba(0,0,0,.55) 300deg 330deg, transparent 330deg 360deg); opacity: .6; }
+.cline { position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: rgba(255,255,255,.32); }
+.ccircle { position: absolute; left: 50%; top: 50%; width: 70px; height: 70px; margin: -35px 0 0 -35px; border: 2px solid rgba(255,255,255,.32); border-radius: 50%; box-sizing: border-box; }
+.box { position: absolute; top: 50%; width: 66px; height: 132px; margin-top: -66px; border: 2px solid rgba(255,255,255,.32); box-sizing: border-box; }
+.boxL { left: 0; border-left: none; }
+.boxR { right: 0; border-right: none; }
+.gpost { position: absolute; top: 50%; width: 12px; height: 48px; margin-top: -24px; border: 3px solid rgba(255,255,255,.9); box-sizing: border-box; }
+.gpostL { left: 3px; border-right: none; border-radius: 3px 0 0 3px; }
+.gpostR { right: 3px; border-left: none; border-radius: 0 3px 3px 0; }
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; }
+}
+
+
+.opitch { height: 230px; }
+.pl { position: absolute; display: block; width: 16px; height: 16px; margin: -8px 0 0 -8px; border-radius: 50%; }
+.runA { animation: runA 6s ease-out infinite both; }
+.runD { animation: runD 6s ease-out infinite both; }
+@keyframes runA {
+  0% { transform: translateX(-16px); }
+  14%, 100% { transform: translateX(0); }
+}
+@keyframes runD {
+  0% { transform: translateX(8px); }
+  14%, 100% { transform: translateX(0); }
+}
+.oball { width: 14px; height: 14px; margin: -7px 0 0 -7px; }
+.oball::before { inset: 2px; }
+.freeze { position: absolute; inset: 0; background: #06120c; opacity: 0; animation: freeze 6s ease-in-out infinite both; }
+@keyframes freeze {
+  0%, 14% { opacity: 0; }
+  20%, 84% { opacity: .3; }
+  94%, 100% { opacity: 0; }
+}
+.var { position: absolute; left: 12px; top: 12px; display: flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 8px; background: #101512; color: #ffffff; font-size: 13px; font-weight: 800; letter-spacing: .1em; animation: varIn 6s ease-in-out infinite both; }
+@keyframes varIn {
+  0%, 14% { opacity: 0; transform: translateY(-6px); }
+  20%, 86% { opacity: 1; transform: translateY(0); }
+  94%, 100% { opacity: 0; transform: translateY(-6px); }
+}
+.vline { position: absolute; top: 0; bottom: 0; left: 0; width: 2px; margin-left: -1px; }
+.lineD { background: #7dd3fc; box-shadow: 0 0 10px 2px rgba(125,211,252,.75); transform: translateX(312px); animation: lineD 6s cubic-bezier(.4,0,.2,1) infinite both; }
+@keyframes lineD {
+  0%, 18% { opacity: 0; transform: translateX(0); }
+  21% { opacity: 1; transform: translateX(0); }
+  40%, 86% { opacity: 1; transform: translateX(312px); }
+  94%, 100% { opacity: 0; transform: translateX(312px); }
+}
+.lineA { background: #fdba74; box-shadow: 0 0 10px 2px rgba(253,186,116,.75); transform: translateX(292px); transform-origin: top; animation: lineA 6s ease-out infinite both; }
+@keyframes lineA {
+  0%, 42% { opacity: 0; transform: translateX(292px) scaleY(0); }
+  50%, 86% { opacity: 1; transform: translateX(292px) scaleY(1); }
+  94%, 100% { opacity: 0; transform: translateX(292px) scaleY(1); }
+}
+.band { position: absolute; top: 0; bottom: 0; left: 292px; width: 20px; background: rgba(52,211,153,.32); animation: band 6s ease-in-out infinite both; }
+@keyframes band {
+  0%, 50% { opacity: 0; }
+  56%, 86% { opacity: 1; }
+  94%, 100% { opacity: 0; }
+}
+.stamp { position: absolute; left: 50%; top: 76%; display: flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 999px; background: #ffffff; color: #007B55; font-size: 18px; font-weight: 800; letter-spacing: .06em; white-space: nowrap; box-shadow: 0 8px 24px rgba(0,0,0,.25); transform: translate(-50%, -50%); animation: stamp 6s cubic-bezier(.3,.7,.3,1) infinite both; }
+@keyframes stamp {
+  0%, 56% { opacity: 0; transform: translate(-50%, -50%) scale(.6); }
+  62% { opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
+  66%, 86% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  94%, 100% { opacity: 0; transform: translate(-50%, -50%) scale(.96); }
+}
+
+.demo { font-family: Inter, system-ui, sans-serif; color: #101512; padding: 32px; display: flex; flex-direction: column; gap: 14px; align-items: flex-start; }
+.demo h1 { margin: 0; font-size: 22px; font-weight: 800; }
+.demo p { margin: 0 0 6px; font-size: 14px; color: #44544b; }
+</style>
+</head>
+<body>
+<div class="demo">
+<h1>VAR: Ofsayt yok</h1>
+<p>Nerede: Trivia üretimi, Kural Köşesi 'Ofsayt nedir?' kartı, 404 sayfası.</p>
+<div class="turf opitch">
+<span class="stripes"></span>
+<span class="box boxR"></span>
+<span class="gpost gpostR"></span>
+<span class="pl home runA" style="left: 228px; top: 70px"></span>
+<span class="ballw oball runA" style="left: 246px; top: 80px"></span>
+<span class="pl home runA" style="left: 292px; top: 140px"></span>
+<span class="pl away runD" style="left: 312px; top: 84px"></span>
+<span class="pl away runD" style="left: 372px; top: 152px"></span>
+<span class="freeze"></span>
+<span class="band"></span>
+<span class="vline lineA"></span>
+<span class="vline lineD"></span>
+<span class="var"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="12" rx="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line></svg>VAR</span>
+<span class="stamp"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"></polyline></svg>OFSAYT YOK</span>
+</div>
+</div>
+</body>
+</html>

@@ -11,7 +11,8 @@
 // dikey padding eziliyordu; `.footer` altına alıp özgüllüğü artırıyoruz.
 .footer .footerContainer {
   padding-top: $spacing-8;
-  padding-bottom: $spacing-8;
+  // Masaüstünde sağ alttaki Kural Köşesi düğmesi (56 px) footer'ın son satırını örtmesin.
+  padding-bottom: calc(#{$spacing-8} + 56px);
 
   @include below-desktop {
     padding-top: $spacing-6;

@@ -18,10 +18,11 @@ body {
   line-height: 21px;
 }
 
-// Mobilde sabit alt navigasyon içeriği/footer'ı kapatmasın
+// Mobilde sabit alt navigasyon ve üstündeki Kural Köşesi düğmesi (56 px + 16 px boşluk) içeriği/footer'ı kapatmasın.
+// Statik: düğme sonradan (boşta) gelse de sayfa yüksekliği değişmez, kayma olmaz.
 @include below-desktop {
   body {
-    padding-bottom: calc(var(--bottom-nav-height) + var(--safe-bottom));
+    padding-bottom: calc(var(--bottom-nav-height) + var(--safe-bottom) + 72px);
   }
 }
 

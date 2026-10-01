@@ -6,6 +6,8 @@ import trCompare from '../../public/locales/tr/compare.json';
 import enCompare from '../../public/locales/en/compare.json';
 import trTeam from '../../public/locales/tr/team.json';
 import enTeam from '../../public/locales/en/team.json';
+import trKuralKosesi from '../../public/locales/tr/kuralKosesi.json';
+import enKuralKosesi from '../../public/locales/en/kuralKosesi.json';
 
 type Dict = Record<string, unknown>;
 
@@ -27,6 +29,7 @@ const CATALOGS = [
   { ns: 'player', tr: flatten(trPlayer as Dict), en: flatten(enPlayer as Dict) },
   { ns: 'compare', tr: flatten(trCompare as Dict), en: flatten(enCompare as Dict) },
   { ns: 'team', tr: flatten(trTeam as Dict), en: flatten(enTeam as Dict) },
+  { ns: 'kuralKosesi', tr: flatten(trKuralKosesi as Dict), en: flatten(enKuralKosesi as Dict) },
 ];
 
 /** Dile özgü çoğul biçimler (`_one`/`_other`, bkz. lib/i18nPlural.ts) eşlik kontrolünün dışında. */

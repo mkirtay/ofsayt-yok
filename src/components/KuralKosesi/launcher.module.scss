@@ -1,0 +1,137 @@
+@use '../../styles/variables' as *;
+@use '../../styles/motion' as *;
+
+// 09-kural-kosesi.html → .kk-launcher / .kk-new / .kk-peek. Mobilde alt menünün 16 px üstü (safe-area dahil),
+// masaüstünde sağdan ve alttan 24 px. z-index: içeriğin ve SubHeader'ın (90) üstü, mobil menü (95), alt menü (110)
+// ve tam ekran katmanların altı.
+
+.launcher {
+  @include motion-root;
+  position: fixed;
+  right: 16px;
+  bottom: calc(var(--bottom-nav-height) + 16px + var(--safe-bottom));
+  z-index: 92;
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: #00a76f;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 20px rgba(0, 123, 85, 0.35), 0 0 0 4px rgba(0, 167, 111, 0.15);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+
+  &:focus-visible {
+    outline: 2px solid #ffffff;
+    outline-offset: 2px;
+    border-radius: 50%;
+    box-shadow: 0 0 0 4px #00a76f, 0 8px 20px rgba(0, 123, 85, 0.35);
+  }
+
+  @media (min-width: $bp-desktop) {
+    right: 24px;
+    bottom: 24px;
+  }
+}
+
+.dot {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #f2b635;
+  box-shadow: 0 0 0 2px #ffffff;
+  animation: pulse 1.8s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.25);
+  }
+}
+
+.peek {
+  --peek-bg: var(--bg-surface);
+  --peek-label: var(--color-action-text);
+  --peek-text: var(--text-primary);
+
+  position: fixed;
+  right: 84px;
+  bottom: calc(var(--bottom-nav-height) + 22px + var(--safe-bottom));
+  z-index: 92;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-width: calc(100vw - 100px);
+  padding: 10px 14px;
+  border: none;
+  border-radius: 14px;
+  background: var(--peek-bg);
+  box-shadow: 0 8px 24px rgba(16, 21, 18, 0.16);
+  text-align: left;
+  font-family: inherit;
+  cursor: pointer;
+  animation: peekIn 0.35s ease-out both;
+
+  small {
+    font-size: 10px;
+    line-height: 14px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--peek-label);
+  }
+
+  strong {
+    font-size: 14px;
+    line-height: 18px;
+    font-weight: 800;
+    color: var(--peek-text);
+  }
+
+  @media (min-width: $bp-desktop) {
+    right: 92px;
+    bottom: 30px;
+    max-width: none;
+
+    strong {
+      white-space: nowrap;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+// Açık tema: referansın birebir renkleri. Koyu tema: proje yüzey/metin renkleri (yukarıdaki varsayılanlar).
+:global(:root[data-theme='light']) .peek {
+  --peek-bg: #ffffff;
+  --peek-label: #007b55;
+  --peek-text: #101512;
+}
+
+:global(:root[data-theme='dark']) .peek {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+@keyframes peekIn {
+  0% {
+    opacity: 0;
+    transform: translateX(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}

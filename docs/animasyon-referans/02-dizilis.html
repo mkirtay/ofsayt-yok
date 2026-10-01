@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Diziliş kuruluyor — Ofsayt Yok animasyon referansı</title>
+<style>
+
+body { margin: 0; }
+.stripes { position: absolute; inset: 0; background: repeating-linear-gradient(90deg, rgba(255,255,255,.06) 0, rgba(255,255,255,.06) 24px, transparent 24px, transparent 48px); }
+.turf { position: relative; width: 504px; border-radius: 12px; overflow: hidden; background: linear-gradient(135deg, #007B55 0%, #00a76f 60%, #007B55 100%); box-shadow: inset 0 0 0 1px rgba(255,255,255,.15); }
+.home { background: #ffffff; box-shadow: 0 0 0 2px #007B55, 0 2px 4px rgba(0,0,0,.25); }
+.away { background: #007B55; box-shadow: 0 0 0 2px #ffffff, 0 2px 4px rgba(0,0,0,.25); }
+.ballw { position: absolute; display: block; width: 18px; height: 18px; border-radius: 50%; background: #ffffff; box-shadow: inset -2px -2px 0 rgba(0,0,0,.12), 0 3px 6px rgba(0,0,0,.3); }
+.ballw::before { content: ''; position: absolute; inset: 3px; border-radius: 50%; background: conic-gradient(rgba(0,0,0,.55) 0deg 30deg, transparent 30deg 150deg, rgba(0,0,0,.55) 150deg 180deg, transparent 180deg 300deg, rgba(0,0,0,.55) 300deg 330deg, transparent 330deg 360deg); opacity: .6; }
+.cline { position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: rgba(255,255,255,.32); }
+.ccircle { position: absolute; left: 50%; top: 50%; width: 70px; height: 70px; margin: -35px 0 0 -35px; border: 2px solid rgba(255,255,255,.32); border-radius: 50%; box-sizing: border-box; }
+.box { position: absolute; top: 50%; width: 66px; height: 132px; margin-top: -66px; border: 2px solid rgba(255,255,255,.32); box-sizing: border-box; }
+.boxL { left: 0; border-left: none; }
+.boxR { right: 0; border-right: none; }
+.gpost { position: absolute; top: 50%; width: 12px; height: 48px; margin-top: -24px; border: 3px solid rgba(255,255,255,.9); box-sizing: border-box; }
+.gpostL { left: 3px; border-right: none; border-radius: 3px 0 0 3px; }
+.gpostR { right: 3px; border-left: none; border-radius: 0 3px 3px 0; }
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; }
+}
+
+
+.fpitch { height: 230px; }
+.dot { position: absolute; left: 50%; top: 50%; width: 16px; height: 16px; margin: -8px 0 0 -8px; border-radius: 50%; }
+.chip { position: absolute; top: 10px; padding: 4px 10px; border-radius: 999px; background: rgba(0,0,0,.28); color: #ffffff; font-weight: 800; font-size: 13px; letter-spacing: .04em; animation: chip 5s ease-in-out infinite both; }
+.chipL { left: 12px; }
+.chipR { right: 12px; animation-delay: .3s; }
+@keyframes chip {
+  0%, 34% { opacity: 0; transform: translateY(-4px); }
+  42%, 78% { opacity: 1; transform: translateY(0); }
+  86%, 100% { opacity: 0; transform: translateY(-4px); }
+}
+.cball { left: 50%; top: 50%; margin: -9px 0 0 -9px; animation: breathe 1.6s ease-in-out infinite alternate; }
+@keyframes breathe {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.1); }
+}
+.d0 { transform: translate(-222px, 0px); animation: k0 5s cubic-bezier(.3,.7,.3,1) 0.00s infinite both; }
+@keyframes k0 {
+  0% { transform: translate(0px, 0px) scale(.3); opacity: 0; }
+  10% { transform: translate(0px, 0px) scale(1); opacity: 1; }
+  36%, 80% { transform: translate(-222px, 0px) scale(1); opacity: 1; }
+  94% { transform: translate(0px, 0px) scale(.7); opacity: 1; }
+  100% { transform: translate(0px, 0px) scale(.3); opacity: 0; }
+}
+.d1 { transform: translate(-170px, -78px); animation: k1 5s cubic-bezier(.3,.7,.3,1) 0.04s infinite both; }
+@keyframes k1 {
+  0% { transform: translate(0px, 0px) scale(.3); opacity: 0; }
+  10% { transform: translate(0px, 0px) scale(1); opacity: 1; }
+  36%, 80% { transform: translate(-170px, -78px) scale(1); opacity: 1; }
+  94% { transform: translate(0px, 0px) scale(.7); opacity: 1; }
+  100% { transform: translate(0px, 0px) scale(.3); opacity: 0; }
+}
+.d2 { transform: translate(-170px, -28px); animation: k2 5s cubic-bezier(.3,.7,.3,1) 0.06s infinite both; }
+@keyframes k2 {
+  0% { transform: translate(0px, 0px) scale(.3); opacity: 0; }
+  10% { transform: translate(0px, 0px) scale(1); opacity: 1; }
+  36%, 80% { transform: translate(-170px, -28px) scale(1); opacity: 1; }
+  94% { transform: translate(0px, 0px) scale(.7); opacity: 1; }
+  100% { transform: translate(0px, 0px) scale(.3); opacity: 0; }
+}
+.d3 { transform: translate(-170px, 28px); animation: k3 5s cubic-bezier(.3,.7,.3,1) 0.08s infinite both; }
+@keyframes k3 {
+  0% { transform: translate(0px, 0px) scale(.3); opacity: 0; }
+  10% { transform: translate(0px, 0px) scale(1); opacity: 1; }
+  36%, 80% { transform: translate(-170px, 28px) scale(1); opacity: 1; }
+  94% { transform: translate(0px, 0px) scale(.7); opacity: 1; }
+  100% { transform: translate(0px, 0px) scale(.3); opacity: 0; }
+}
+.d4 { transform: translate(-170px, 78px); animation: k4 5s cubic-bezier(.3,.7,.3,1) 0.10s infinite both; }
+@keyframes k4 {
+  0% { transform: translate(0px, 0px) scale(.3); opacity: 0; }
+  10% { transform: translate(0px, 0px) scale(1); opacity: 1; }
+  36%, 80% { transform: translate(-170px, 78px) scale(1); opacity: 1; }
+  94% { transform: translate(0px, 0px) scale(.7); opacity: 1; }
+  100% { transform: translate(0px, 0px) scale(.3); opacity: 0; }
+}
+.d5 { transform: translate(-112px, -55px); animation: k5 5s cubic-bezier(.3,.7,.3,1) 0.14s infinite both; }
+@keyframes k5 {
+  0% { transform: translate(0px, 0px) scale(.3); opacity: 0; }
+  10% { transform: translate(0px, 0px) scale(1); opacity: 1; }
+  36%, 80% { transform: translate(-112px, -55px) scale(1); opacity: 1; }
+  94% { transform: translate(0px, 0px) scale(.7); opacity: 1; }
+  100% { transform: translate(0px, 0px) scale(.3); opacity: 0; }
+}
+.d6 { transform: translate(-112px, 0px); animation: k6 5s cubic-bezier(.3,.7,.3,1) 0.16s infinite both; }
+@keyframes k6 {
+  0% { transform: translate(0px, 0px) scale(.3); opacity: 0; }
+  10% { transform: translate(0px, 0px) scale(1); opacity: 1; }
+  36%, 80% { transform: translate(-112px, 0px) scale(1); opacity: 1; }
+  94% { transform: translate(0px, 0px) scale(.7); opacity: 1; }
+  100% { transform: translate(0px, 0px) scale(.3); opacity: 0; }
+}
+.d7 { transform: translate(-112px, 55px); animation: k7 5s cubic-bezier(.3,.7,.3,1) 0.18s infinite both; }
+@keyframes k7 {
+  0% { transform: translate(0px, 0px) scale(.3); opacity: 0; }
+  10% { transform: translate(0px, 0px) scale(1); opacity: 1; }
+  36%, 80% { transform: translate(-112px, 55px) scale(1); opacity: 1; }
+  94% { transform: translate(0px, 0px) scale(.7); opacity: 1; }
+  100% { transform: translate(0px, 0px) scale(.3); opacity: 0; }
+}
+.d8 { transform: translate(-52px, -72px); animation: k8 5s cubic-bezier(.3,.7,.3,1) 0.22s infinite both; }
+@keyframes k8 {
+  0% { transform: translate(0px, 0px) scale(.3); opacity: 0; }
+  10% { transform: translate(0px, 0px) scale(1); opacity: 1; }
+  36%, 80% { transform: translate(-52px, -72px) scale(1); opacity: 1; }
+  94% { transform: translate(0px, 0px) scale(.7); opacity: 1; }
+  100% { transform: translate(0px, 0px) scale(.3); opacity: 0; }
+}
+.d9 { transform: translate(-52px, 0px); animation: k9 5s cubic-bezier(.3,.7,.3,1) 0.24s infinite both; }
+@keyframes k9 {
+  0% { transform: translate(0px, 0px) scale(.3); opacity: 0; }
+  10% { transform: translate(0px, 0px) scale(1); opacity: 1; }
+  36%, 80% { transform: translate(-52px, 0px) scale(1); opacity: 1; }
+  94% { transform: translate(0px, 0px) scale(.7); opacity: 1; }
+  100% { transform: translate(0px, 0px) scale(.3); opacity: 0; }
+}
+.d10 { transform: translate(-52px, 72px); animation: k10 5s cubic-bezier(.3,.7,.3,1) 0.26s infinite both; }
+@keyframes k10 {
+  0% { transform: translate(0px, 0px) scale(.3); opacity: 0; }
+  10% { transform: translate(0px, 0px) scale(1); opacity: 1; }
+  36%, 80% { transform: translate(-52px, 72px) scale(1); opacity: 1; }
+  94% { transform: translate(0px, 0px) scale(.7); opacity: 1; }
+  100% { transform: translate(0px, 0px) scale(.3); opacity: 0; }
+}
+.d11 { transform: translate(222px, 0px); animation: k11 5s cubic-bezier(.3,.7,.3,1) 0.30s infinite both; }
+@keyframes k11 {
+  0% { transform: translate(0px, 0px) scale(.3); opacity: 0; }
+  10% { transform: translate(0px, 0px) scale(1); opacity: 1; }
+  36%, 80% { transform: translate(222px, 0px) scale(1); opacity: 1; }
+  94% { transform: translate(0px, 0px) scale(.7); opacity: 1; }
+  100% { transform: translate(0px, 0px) scale(.3); opacity: 0; }
+}
+.d12 { transform: translate(170px, -78px); animation: k12 5s cubic-bezier(.3,.7,.3,1) 0.34s infinite both; }
+@keyframes k12 {
+  0% { transform: translate(0px, 0px) scale(.3); opacity: 0; }
+  10% { transform: translate(0px, 0px) scale(1); opacity: 1; }
+  36%, 80% { transform: translate(170px, -78px) scale(1); opacity: 1; }
+  94% { transform: translate(0px, 0px) scale(.7); opacity: 1; }
+  100% { transform: translate(0px, 0px) scale(.3); opacity: 0; }
+}
+.d13 { transform: translate(170px, -28px); animation: k13 5s cubic-bezier(.3,.7,.3,1) 0.36s infinite both; }
+@keyframes k13 {
+  0% { transform: translate(0px, 0px) scale(.3); opacity: 0; }
+  10% { transform: translate(0px, 0px) scale(1); opacity: 1; }
+  36%, 80% { transform: translate(170px, -28px) scale(1); opacity: 1; }
+  94% { transform: translate(0px, 0px) scale(.7); opacity: 1; }
+  100% { transform: translate(0px, 0px) scale(.3); opacity: 0; }
+}
+.d14 { transform: translate(170px, 28px); animation: k14 5s cubic-bezier(.3,.7,.3,1) 0.38s infinite both; }
+@keyframes k14 {
+  0% { transform: translate(0px, 0px) scale(.3); opacity: 0; }
+  10% { transform: translate(0px, 0px) scale(1); opacity: 1; }
+  36%, 80% { transform: translate(170px, 28px) scale(1); opacity: 1; }
+  94% { transform: translate(0px, 0px) scale(.7); opacity: 1; }
+  100% { transform: translate(0px, 0px) scale(.3); opacity: 0; }
+}
+.d15 { transform: translate(170px, 78px); animation: k15 5s cubic-bezier(.3,.7,.3,1) 0.40s infinite both; }
+@keyframes k15 {
+  0% { transform: translate(0px, 0px) scale(.3); opacity: 0; }
+  10% { transform: translate(0px, 0px) scale(1); opacity: 1; }
+  36%, 80% { transform: translate(170px, 78px) scale(1); opacity: 1; }
+  94% { transform: translate(0px, 0px) scale(.7); opacity: 1; }
+  100% { transform: translate(0px, 0px) scale(.3); opacity: 0; }
+}
+.d16 { transform: translate(124px, -32px); animation: k16 5s cubic-bezier(.3,.7,.3,1) 0.44s infinite both; }
+@keyframes k16 {
+  0% { transform: translate(0px, 0px) scale(.3); opacity: 0; }
+  10% { transform: translate(0px, 0px) scale(1); opacity: 1; }
+  36%, 80% { transform: translate(124px, -32px) scale(1); opacity: 1; }
+  94% { transform: translate(0px, 0px) scale(.7); opacity: 1; }
+  100% { transform: translate(0px, 0px) scale(.3); opacity: 0; }
+}
+.d17 { transform: translate(124px, 32px); animation: k17 5s cubic-bezier(.3,.7,.3,1) 0.46s infinite both; }
+@keyframes k17 {
+  0% { transform: translate(0px, 0px) scale(.3); opacity: 0; }
+  10% { transform: translate(0px, 0px) scale(1); opacity: 1; }
+  36%, 80% { transform: translate(124px, 32px) scale(1); opacity: 1; }
+  94% { transform: translate(0px, 0px) scale(.7); opacity: 1; }
+  100% { transform: translate(0px, 0px) scale(.3); opacity: 0; }
+}
+.d18 { transform: translate(80px, -62px); animation: k18 5s cubic-bezier(.3,.7,.3,1) 0.48s infinite both; }
+@keyframes k18 {
+  0% { transform: translate(0px, 0px) scale(.3); opacity: 0; }
+  10% { transform: translate(0px, 0px) scale(1); opacity: 1; }
+  36%, 80% { transform: translate(80px, -62px) scale(1); opacity: 1; }
+  94% { transform: translate(0px, 0px) scale(.7); opacity: 1; }
+  100% { transform: translate(0px, 0px) scale(.3); opacity: 0; }
+}
+.d19 { transform: translate(80px, 0px); animation: k19 5s cubic-bezier(.3,.7,.3,1) 0.52s infinite both; }
+@keyframes k19 {
+  0% { transform: translate(0px, 0px) scale(.3); opacity: 0; }
+  10% { transform: translate(0px, 0px) scale(1); opacity: 1; }
+  36%, 80% { transform: translate(80px, 0px) scale(1); opacity: 1; }
+  94% { transform: translate(0px, 0px) scale(.7); opacity: 1; }
+  100% { transform: translate(0px, 0px) scale(.3); opacity: 0; }
+}
+.d20 { transform: translate(80px, 62px); animation: k20 5s cubic-bezier(.3,.7,.3,1) 0.54s infinite both; }
+@keyframes k20 {
+  0% { transform: translate(0px, 0px) scale(.3); opacity: 0; }
+  10% { transform: translate(0px, 0px) scale(1); opacity: 1; }
+  36%, 80% { transform: translate(80px, 62px) scale(1); opacity: 1; }
+  94% { transform: translate(0px, 0px) scale(.7); opacity: 1; }
+  100% { transform: translate(0px, 0px) scale(.3); opacity: 0; }
+}
+.d21 { transform: translate(36px, 0px); animation: k21 5s cubic-bezier(.3,.7,.3,1) 0.56s infinite both; }
+@keyframes k21 {
+  0% { transform: translate(0px, 0px) scale(.3); opacity: 0; }
+  10% { transform: translate(0px, 0px) scale(1); opacity: 1; }
+  36%, 80% { transform: translate(36px, 0px) scale(1); opacity: 1; }
+  94% { transform: translate(0px, 0px) scale(.7); opacity: 1; }
+  100% { transform: translate(0px, 0px) scale(.3); opacity: 0; }
+}
+
+.demo { font-family: Inter, system-ui, sans-serif; color: #101512; padding: 32px; display: flex; flex-direction: column; gap: 14px; align-items: flex-start; }
+.demo h1 { margin: 0; font-size: 22px; font-weight: 800; }
+.demo p { margin: 0 0 6px; font-size: 14px; color: #44544b; }
+</style>
+</head>
+<body>
+<div class="demo">
+<h1>Diziliş kuruluyor</h1>
+<p>Nerede: Takım sayfası Kadro/İlk 11 ve maç sayfası kadro alanı yüklenirken.</p>
+<div class="turf fpitch">
+<span class="stripes"></span>
+<span class="cline"></span>
+<span class="ccircle"></span>
+<span class="box boxL"></span>
+<span class="box boxR"></span>
+<span class="gpost gpostL"></span>
+<span class="gpost gpostR"></span>
+<span class="ballw cball"></span>
+<span class="dot home d0"></span>
+<span class="dot home d1"></span>
+<span class="dot home d2"></span>
+<span class="dot home d3"></span>
+<span class="dot home d4"></span>
+<span class="dot home d5"></span>
+<span class="dot home d6"></span>
+<span class="dot home d7"></span>
+<span class="dot home d8"></span>
+<span class="dot home d9"></span>
+<span class="dot home d10"></span>
+<span class="dot away d11"></span>
+<span class="dot away d12"></span>
+<span class="dot away d13"></span>
+<span class="dot away d14"></span>
+<span class="dot away d15"></span>
+<span class="dot away d16"></span>
+<span class="dot away d17"></span>
+<span class="dot away d18"></span>
+<span class="dot away d19"></span>
+<span class="dot away d20"></span>
+<span class="dot away d21"></span>
+<span class="chip chipL">4-3-3</span>
+<span class="chip chipR">4-2-3-1</span>
+</div>
+</div>
+</body>
+</html>

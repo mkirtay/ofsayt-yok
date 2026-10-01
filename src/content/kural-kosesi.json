@@ -1,0 +1,100 @@
+[
+  {
+    "id": "ofsayt",
+    "baslik": "Ofsayt nedir?",
+    "metin": "Takım arkadaşı topa oynadığı anda rakip yarı sahada olan ve hem toptan hem de sondan ikinci rakip oyuncudan rakip kale çizgisine daha yakın duran oyuncu ofsayt pozisyonundadır. Bu pozisyonda olmak tek başına ihlal değildir; oyuncu oyuna müdahale eder, rakibini engeller ya da bu konumdan avantaj sağlarsa ofsayt çalınır.",
+    "biliyorMuydun": "Rakiple aynı hizada olmak ofsayt değildir. Taç, korner ve kale vuruşundan doğrudan ofsayt olmaz. Kollar ve eller ofsayt ölçümüne katılmaz.",
+    "animasyon": "03-var-ofsayt-yok",
+    "en": {
+      "baslik": "What is offside?",
+      "metin": "A player is in an offside position if, at the moment a teammate plays the ball, they are in the opponents’ half and nearer to the opponents’ goal line than both the ball and the second-last opponent. Being in an offside position is not an offence in itself; offside is only given if the player interferes with play, interferes with an opponent or gains an advantage from that position.",
+      "biliyorMuydun": "Being level with an opponent is not offside. There is no offside directly from a throw-in, corner kick or goal kick. Arms and hands are not taken into account when judging offside."
+    }
+  },
+  {
+    "id": "var",
+    "baslik": "VAR ne zaman devreye girer?",
+    "metin": "VAR yalnızca dört durumda müdahale eder: gol, penaltı, doğrudan kırmızı kart ve kart gösterilen oyuncunun yanlış kişi olması. Bu durumlarda da hakemin açık ve net bir hata yapmış ya da ciddi bir olayı kaçırmış olması gerekir.",
+    "biliyorMuydun": "İkinci sarı karttan gelen kırmızı kart VAR incelemesine girmez.",
+    "animasyon": "03-var-ofsayt-yok",
+    "en": {
+      "baslik": "When does VAR step in?",
+      "metin": "VAR can only intervene in four situations: goals, penalties, direct red cards and mistaken identity, when a card is shown to the wrong player. Even then, the referee must have made a clear and obvious error or missed a serious incident.",
+      "biliyorMuydun": "A red card that comes from a second yellow is not reviewed by VAR."
+    }
+  },
+  {
+    "id": "uzatma",
+    "baslik": "Uzatma süresi nasıl belirlenir?",
+    "metin": "Hakem; oyuncu değişikliklerinde, sakatlık müdahalelerinde, zaman geçirmede, VAR incelemelerinde ve gol sevinçlerinde kaybedilen süreyi ekler.",
+    "biliyorMuydun": "Dördüncü hakemin tabelada gösterdiği süre en az süredir; hakem gerekirse daha fazla oynatabilir ama kısaltamaz.",
+    "animasyon": "08-mac-baslamadi",
+    "en": {
+      "baslik": "How is stoppage time decided?",
+      "metin": "The referee adds the time lost to substitutions, injury treatment, time-wasting, VAR reviews and goal celebrations.",
+      "biliyorMuydun": "The time shown on the fourth official’s board is the minimum; the referee can play longer if needed, but never shorter."
+    }
+  },
+  {
+    "id": "kaleci-8-saniye",
+    "baslik": "Kalecinin 8 saniyesi",
+    "metin": "2025-26 sezonundan itibaren kaleci topu elinde 8 saniyeden uzun tutarsa rakip takıma korner verilir. Hakem son 5 saniyeyi eliyle sayarak kaleciyi uyarır.",
+    "biliyorMuydun": "Eskiden bu süre 6 saniyeydi ve ihlalin cezası endirekt serbest vuruştu.",
+    "animasyon": "08-mac-baslamadi",
+    "sahneEtiketi": "8 SANİYE",
+    "en": {
+      "baslik": "The goalkeeper’s 8 seconds",
+      "metin": "From the 2025-26 season, if a goalkeeper holds the ball for more than 8 seconds, the opposing team is awarded a corner. The referee warns the goalkeeper by counting down the last 5 seconds with their hand.",
+      "biliyorMuydun": "The limit used to be 6 seconds, and the punishment was an indirect free kick.",
+      "sahneEtiketi": "8 SECONDS"
+    }
+  },
+  {
+    "id": "avantaj",
+    "baslik": "Avantaj kuralı",
+    "metin": "Faule uğrayan takım bundan fayda sağlayacaksa hakem oyunu durdurmaz ve avantaj verir. Beklenen fayda birkaç saniye içinde gerçekleşmezse hakem geri dönüp ilk faulü cezalandırabilir.",
+    "biliyorMuydun": "Kart gerektiren bir faulde avantaj verilse bile kart, oyun durduğunda yine gösterilir.",
+    "animasyon": "01-mac-oynaniyor",
+    "en": {
+      "baslik": "The advantage rule",
+      "metin": "If the fouled team stands to benefit, the referee lets play continue and plays advantage. If the expected advantage doesn’t come within a few seconds, the referee can go back and penalise the original foul.",
+      "biliyorMuydun": "Even when advantage is played after a foul that deserves a card, the card is still shown once play stops."
+    }
+  },
+  {
+    "id": "yedi-oyuncu",
+    "baslik": "Kaç kişi kalırsa maç biter?",
+    "metin": "Bir takım 7'den az oyuncuyla maça başlayamaz ve devam edemez. Kırmızı kartlar ya da sakatlıklar yüzünden sahadaki oyuncu sayısı 7'nin altına düşerse hakem maçı tatil eder.",
+    "biliyorMuydun": null,
+    "animasyon": "02-dizilis",
+    "en": {
+      "baslik": "How few players can a team have?",
+      "metin": "A team cannot start or continue a match with fewer than 7 players. If red cards or injuries leave fewer than 7 players on the pitch, the referee abandons the match.",
+      "biliyorMuydun": null
+    }
+  },
+  {
+    "id": "penalti-kaleci",
+    "baslik": "Penaltıda kaleci nerede durmalı?",
+    "metin": "Penaltı atılırken kaleci, top vurulana kadar direklerin arasında ve yüzü atıcıya dönük olarak kale çizgisinde kalmalıdır. Vuruş anında en az bir ayağının bir kısmı çizgiye değmeli ya da çizgiyle aynı hizada olmalıdır.",
+    "biliyorMuydun": "Kaleci erken çıkıp atışı kurtarırsa penaltı tekrarlanır.",
+    "animasyon": "06-gol-ani",
+    "en": {
+      "baslik": "Where must the goalkeeper stand for a penalty?",
+      "metin": "When a penalty is taken, the goalkeeper must stay on the goal line, between the posts and facing the kicker, until the ball is kicked. At the moment of the kick, at least part of one foot must be touching or level with the line.",
+      "biliyorMuydun": "If the goalkeeper comes off the line early and saves the shot, the penalty is retaken."
+    }
+  },
+  {
+    "id": "deplasman-golu",
+    "baslik": "Deplasman golü kuralı neden yok?",
+    "metin": "UEFA, 2021-22 sezonundan itibaren kulüp turnuvalarında deplasman golü kuralını kaldırdı. İki maçlık eşleşmede toplam skor eşitse uzatmaya, o da eşit biterse penaltılara gidilir.",
+    "biliyorMuydun": null,
+    "animasyon": "06-gol-ani",
+    "en": {
+      "baslik": "Why is there no away goals rule?",
+      "metin": "UEFA scrapped the away goals rule in its club competitions from the 2021-22 season. If the aggregate score is level after two legs, the tie goes to extra time, and then to penalties if it is still level.",
+      "biliyorMuydun": null
+    }
+  }
+]

@@ -1,0 +1,163 @@
+@use '../../styles/motion' as *;
+
+// 03 · VAR: Ofsayt yok (504×230). Hareketi azalt / temel stiller = son kare (çizgiler, bant, mühür görünür).
+.root {
+  @include motion-root;
+  height: 230px;
+}
+
+.player {
+  position: absolute;
+  display: block;
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+  border-radius: 50%;
+}
+
+.runA {
+  animation: runA 6s ease-out infinite both;
+}
+
+.runD {
+  animation: runD 6s ease-out infinite both;
+}
+
+@keyframes runA {
+  0% { transform: translateX(-16px); }
+  14%, 100% { transform: translateX(0); }
+}
+
+@keyframes runD {
+  0% { transform: translateX(8px); }
+  14%, 100% { transform: translateX(0); }
+}
+
+.ball {
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+
+  &::before {
+    inset: 2px;
+  }
+}
+
+.freeze {
+  position: absolute;
+  inset: 0;
+  background: #06120c;
+  opacity: 0;
+  animation: freeze 6s ease-in-out infinite both;
+}
+
+@keyframes freeze {
+  0%, 14% { opacity: 0; }
+  20%, 84% { opacity: 0.3; }
+  94%, 100% { opacity: 0; }
+}
+
+.var {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 8px;
+  background: #101512;
+  color: #ffffff;
+  font-size: 13px;
+  line-height: normal;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  animation: varIn 6s ease-in-out infinite both;
+}
+
+@keyframes varIn {
+  0%, 14% { opacity: 0; transform: translateY(-6px); }
+  20%, 86% { opacity: 1; transform: translateY(0); }
+  94%, 100% { opacity: 0; transform: translateY(-6px); }
+}
+
+.line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 2px;
+  margin-left: -1px;
+}
+
+.lineD {
+  background: #7dd3fc;
+  box-shadow: 0 0 10px 2px rgba(125, 211, 252, 0.75);
+  transform: translateX(312px);
+  animation: lineD 6s cubic-bezier(0.4, 0, 0.2, 1) infinite both;
+}
+
+@keyframes lineD {
+  0%, 18% { opacity: 0; transform: translateX(0); }
+  21% { opacity: 1; transform: translateX(0); }
+  40%, 86% { opacity: 1; transform: translateX(312px); }
+  94%, 100% { opacity: 0; transform: translateX(312px); }
+}
+
+.lineA {
+  background: #fdba74;
+  box-shadow: 0 0 10px 2px rgba(253, 186, 116, 0.75);
+  transform: translateX(292px);
+  transform-origin: top;
+  animation: lineA 6s ease-out infinite both;
+}
+
+@keyframes lineA {
+  0%, 42% { opacity: 0; transform: translateX(292px) scaleY(0); }
+  50%, 86% { opacity: 1; transform: translateX(292px) scaleY(1); }
+  94%, 100% { opacity: 0; transform: translateX(292px) scaleY(1); }
+}
+
+.band {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 292px;
+  width: 20px;
+  background: rgba(52, 211, 153, 0.32);
+  animation: band 6s ease-in-out infinite both;
+}
+
+@keyframes band {
+  0%, 50% { opacity: 0; }
+  56%, 86% { opacity: 1; }
+  94%, 100% { opacity: 0; }
+}
+
+.stamp {
+  position: absolute;
+  left: 50%;
+  top: 76%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #007b55;
+  font-size: 18px;
+  line-height: normal;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  transform: translate(-50%, -50%);
+  animation: stamp 6s cubic-bezier(0.3, 0.7, 0.3, 1) infinite both;
+}
+
+@keyframes stamp {
+  0%, 56% { opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
+  62% { opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
+  66%, 86% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  94%, 100% { opacity: 0; transform: translate(-50%, -50%) scale(0.96); }
+}

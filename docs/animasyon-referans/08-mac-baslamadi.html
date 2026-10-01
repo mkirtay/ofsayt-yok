@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maç henüz başlamadı — Ofsayt Yok animasyon referansı</title>
+<style>
+
+body { margin: 0; }
+.stripes { position: absolute; inset: 0; background: repeating-linear-gradient(90deg, rgba(255,255,255,.06) 0, rgba(255,255,255,.06) 24px, transparent 24px, transparent 48px); }
+.turf { position: relative; width: 504px; border-radius: 12px; overflow: hidden; background: linear-gradient(135deg, #007B55 0%, #00a76f 60%, #007B55 100%); box-shadow: inset 0 0 0 1px rgba(255,255,255,.15); }
+.home { background: #ffffff; box-shadow: 0 0 0 2px #007B55, 0 2px 4px rgba(0,0,0,.25); }
+.away { background: #007B55; box-shadow: 0 0 0 2px #ffffff, 0 2px 4px rgba(0,0,0,.25); }
+.ballw { position: absolute; display: block; width: 18px; height: 18px; border-radius: 50%; background: #ffffff; box-shadow: inset -2px -2px 0 rgba(0,0,0,.12), 0 3px 6px rgba(0,0,0,.3); }
+.ballw::before { content: ''; position: absolute; inset: 3px; border-radius: 50%; background: conic-gradient(rgba(0,0,0,.55) 0deg 30deg, transparent 30deg 150deg, rgba(0,0,0,.55) 150deg 180deg, transparent 180deg 300deg, rgba(0,0,0,.55) 300deg 330deg, transparent 330deg 360deg); opacity: .6; }
+.cline { position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: rgba(255,255,255,.32); }
+.ccircle { position: absolute; left: 50%; top: 50%; width: 70px; height: 70px; margin: -35px 0 0 -35px; border: 2px solid rgba(255,255,255,.32); border-radius: 50%; box-sizing: border-box; }
+.box { position: absolute; top: 50%; width: 66px; height: 132px; margin-top: -66px; border: 2px solid rgba(255,255,255,.32); box-sizing: border-box; }
+.boxL { left: 0; border-left: none; }
+.boxR { right: 0; border-right: none; }
+.gpost { position: absolute; top: 50%; width: 12px; height: 48px; margin-top: -24px; border: 3px solid rgba(255,255,255,.9); box-sizing: border-box; }
+.gpostL { left: 3px; border-right: none; border-radius: 3px 0 0 3px; }
+.gpostR { right: 3px; border-left: none; border-radius: 0 3px 3px 0; }
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; }
+}
+
+
+.ecard { width: 504px; box-sizing: border-box; padding: 14px 16px 16px; border: 1px solid #e3ebe6; border-radius: 12px; background: #ffffff; display: flex; flex-direction: column; gap: 10px; }
+.etitle { display: block; font-size: 15px; font-weight: 800; color: #101512; padding-bottom: 8px; border-bottom: 1px solid #eef3f0; }
+.epitch { width: 100%; height: 96px; }
+.ring { position: absolute; left: 50%; top: 50%; width: 80px; height: 80px; margin: -40px 0 0 -40px; }
+.ringFill { animation: ring 6s linear infinite both; }
+@keyframes ring {
+  0% { stroke-dashoffset: 214; }
+  100% { stroke-dashoffset: 0; }
+}
+.eball { left: 50%; top: 50%; margin: -9px 0 0 -9px; animation: breathe 1.6s ease-in-out infinite alternate; }
+@keyframes breathe {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.1); }
+}
+.emsg { display: flex; flex-direction: column; gap: 4px; align-items: center; text-align: center; }
+.emsg strong { font-size: 15px; font-weight: 800; color: #101512; }
+.emsg .sub { font-size: 13px; line-height: 1.45; color: #44544b; }
+.emsg .kick { display: flex; align-items: center; gap: 6px; margin-top: 2px; padding: 4px 10px; border-radius: 999px; background: #eef7f2; color: #007B55; font-size: 12px; font-weight: 700; }
+
+.demo { font-family: Inter, system-ui, sans-serif; color: #101512; padding: 32px; display: flex; flex-direction: column; gap: 14px; align-items: flex-start; }
+.demo h1 { margin: 0; font-size: 22px; font-weight: 800; }
+.demo p { margin: 0 0 6px; font-size: 14px; color: #44544b; }
+</style>
+</head>
+<body>
+<div class="demo">
+<h1>Maç henüz başlamadı</h1>
+<p>Nerede: Başlamamış maçta istatistik ve olay kartlarının boş durumu.</p>
+<div class="ecard">
+<span class="etitle">Maç İstatistikleri</span>
+<div class="turf epitch">
+<span class="stripes"></span>
+<span class="cline"></span>
+<svg class="ring" viewBox="0 0 80 80" aria-hidden="true"><circle cx="40" cy="40" r="34" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="3"></circle><circle class="ringFill" cx="40" cy="40" r="34" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-dasharray="214" stroke-dashoffset="0" transform="rotate(-90 40 40)"></circle></svg>
+<span class="ballw eball"></span>
+</div>
+<div class="emsg">
+<strong>Maç henüz başlamadı</strong>
+<span class="sub">İstatistikler ilk düdükle birlikte burada canlı güncellenecek.</span>
+<span class="kick"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><polyline points="12 7 12 12 15 14"></polyline></svg>İlk düdük: 2 Ekim, 21:30</span>
+</div>
+</div>
+</div>
+</body>
+</html>

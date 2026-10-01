@@ -4,6 +4,7 @@ import Footer from '../Footer';
 import Container from '../Container';
 import SponsorSlider from '../SponsorSlider';
 import BottomNav from '../BottomNav';
+import KuralKosesiMount from '../KuralKosesi/Mount';
 import styles from './layout.module.scss';
 
 interface LayoutProps {
@@ -20,6 +21,7 @@ export default function Layout({ children }: LayoutProps) {
       </Container>
       <Footer />
       <BottomNav />
+      <KuralKosesiMount />
     </>
   );
 }

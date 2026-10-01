@@ -1,0 +1,19 @@
+// Animasyon kökleri için ortak kurallar (docs/animasyon-referans/README.md "Performans kuralları").
+// Yalnız mixin: kullanılmadıkça CSS üretmez, ilk yüke bir şey eklemez.
+
+// Kök elemana uygulanır:
+// - `data-motion-paused` (bkz. hooks/useMotionPause): ekran dışında / sekme arka planda → tüm alt animasyonlar durur.
+// - "Hareketi azalt": animasyon kapanır; sahnelerin temel (animasyonsuz) stilleri anlamlı tek kareyi verir.
+@mixin motion-root {
+  &[data-motion-paused],
+  &[data-motion-paused] * {
+    animation-play-state: paused !important;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &,
+    & * {
+      animation: none !important;
+    }
+  }
+}

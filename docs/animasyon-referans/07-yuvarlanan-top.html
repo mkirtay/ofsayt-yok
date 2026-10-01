@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Yuvarlanan top — Ofsayt Yok animasyon referansı</title>
+<style>
+
+body { margin: 0; }
+.stripes { position: absolute; inset: 0; background: repeating-linear-gradient(90deg, rgba(255,255,255,.06) 0, rgba(255,255,255,.06) 24px, transparent 24px, transparent 48px); }
+.turf { position: relative; width: 504px; border-radius: 12px; overflow: hidden; background: linear-gradient(135deg, #007B55 0%, #00a76f 60%, #007B55 100%); box-shadow: inset 0 0 0 1px rgba(255,255,255,.15); }
+.home { background: #ffffff; box-shadow: 0 0 0 2px #007B55, 0 2px 4px rgba(0,0,0,.25); }
+.away { background: #007B55; box-shadow: 0 0 0 2px #ffffff, 0 2px 4px rgba(0,0,0,.25); }
+.ballw { position: absolute; display: block; width: 18px; height: 18px; border-radius: 50%; background: #ffffff; box-shadow: inset -2px -2px 0 rgba(0,0,0,.12), 0 3px 6px rgba(0,0,0,.3); }
+.ballw::before { content: ''; position: absolute; inset: 3px; border-radius: 50%; background: conic-gradient(rgba(0,0,0,.55) 0deg 30deg, transparent 30deg 150deg, rgba(0,0,0,.55) 150deg 180deg, transparent 180deg 300deg, rgba(0,0,0,.55) 300deg 330deg, transparent 330deg 360deg); opacity: .6; }
+.cline { position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: rgba(255,255,255,.32); }
+.ccircle { position: absolute; left: 50%; top: 50%; width: 70px; height: 70px; margin: -35px 0 0 -35px; border: 2px solid rgba(255,255,255,.32); border-radius: 50%; box-sizing: border-box; }
+.box { position: absolute; top: 50%; width: 66px; height: 132px; margin-top: -66px; border: 2px solid rgba(255,255,255,.32); box-sizing: border-box; }
+.boxL { left: 0; border-left: none; }
+.boxR { right: 0; border-right: none; }
+.gpost { position: absolute; top: 50%; width: 12px; height: 48px; margin-top: -24px; border: 3px solid rgba(255,255,255,.9); box-sizing: border-box; }
+.gpostL { left: 3px; border-right: none; border-radius: 3px 0 0 3px; }
+.gpostR { right: 3px; border-left: none; border-radius: 0 3px 3px 0; }
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; }
+}
+
+
+.browser { position: relative; width: 504px; height: 226px; border: 1px solid #e3ebe6; border-radius: 12px; overflow: hidden; background: #ffffff; box-sizing: border-box; }
+.hdr { position: relative; height: 46px; background: #101512; display: flex; align-items: center; justify-content: space-between; padding: 0 14px; }
+.logo { color: #ffffff; font-size: 15px; font-weight: 800; font-style: italic; letter-spacing: .02em; }
+.hpills { display: flex; gap: 8px; }
+.hpill { display: block; width: 44px; height: 18px; border-radius: 999px; background: #222c26; }
+.hpillY { background: #F2B635; }
+.prog { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; }
+.pfill { position: absolute; left: 0; top: 0; bottom: 0; width: 100%; background: #00a76f; transform-origin: left; transform: scaleX(1); animation: pfill 3s ease-out infinite both; }
+@keyframes pfill {
+  0% { transform: scaleX(0); opacity: 1; }
+  70% { transform: scaleX(.85); opacity: 1; }
+  82%, 90% { transform: scaleX(1); opacity: 1; }
+  100% { transform: scaleX(1); opacity: 0; }
+}
+.pball { width: 12px; height: 12px; top: -5px; left: 0; margin-left: -6px; animation: pball 3s ease-out infinite both; }
+.pball::before { inset: 2px; }
+@keyframes pball {
+  0% { transform: translateX(0) rotate(0deg); opacity: 1; }
+  70% { transform: translateX(428px) rotate(720deg); opacity: 1; }
+  82%, 90% { transform: translateX(502px) rotate(860deg); opacity: 1; }
+  100% { transform: translateX(502px) rotate(860deg); opacity: 0; }
+}
+.body { padding: 16px; display: flex; flex-direction: column; gap: 12px; animation: bodyIn 3s ease-out infinite both; }
+@keyframes bodyIn {
+  0%, 80% { opacity: .35; }
+  90%, 100% { opacity: 1; }
+}
+.sk { display: block; height: 12px; border-radius: 6px; background: #e2ebe6; }
+.skrow { display: flex; align-items: center; gap: 10px; }
+.skc { display: block; width: 22px; height: 22px; border-radius: 50%; background: #d5e2db; flex-shrink: 0; }
+
+.demo { font-family: Inter, system-ui, sans-serif; color: #101512; padding: 32px; display: flex; flex-direction: column; gap: 14px; align-items: flex-start; }
+.demo h1 { margin: 0; font-size: 22px; font-weight: 800; }
+.demo p { margin: 0 0 6px; font-size: 14px; color: #44544b; }
+</style>
+</head>
+<body>
+<div class="demo">
+<h1>Yuvarlanan top</h1>
+<p>Nerede: Sayfa geçişi: bugünkü RouteProgress çubuğunun yerine.</p>
+<div class="browser">
+<div class="hdr">
+<span class="logo">Ofsayt Yok</span>
+<span class="hpills"><span class="hpill"></span><span class="hpill hpillY"></span><span class="hpill"></span></span>
+<div class="prog"><span class="pfill"></span><span class="ballw pball"></span></div>
+</div>
+<div class="body">
+<span class="sk" style="width: 46%"></span>
+<div class="skrow"><span class="skc"></span><span class="sk" style="width: 38%"></span><span class="sk" style="width: 12%; margin-left: auto"></span></div>
+<div class="skrow"><span class="skc"></span><span class="sk" style="width: 30%"></span><span class="sk" style="width: 12%; margin-left: auto"></span></div>
+<div class="skrow"><span class="skc"></span><span class="sk" style="width: 42%"></span><span class="sk" style="width: 12%; margin-left: auto"></span></div>
+<div class="skrow"><span class="skc"></span><span class="sk" style="width: 34%"></span><span class="sk" style="width: 12%; margin-left: auto"></span></div>
+</div>
+</div>
+</div>
+</body>
+</html>

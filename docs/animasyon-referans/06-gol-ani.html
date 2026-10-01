@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gol anı — Ofsayt Yok animasyon referansı</title>
+<style>
+
+body { margin: 0; }
+.stripes { position: absolute; inset: 0; background: repeating-linear-gradient(90deg, rgba(255,255,255,.06) 0, rgba(255,255,255,.06) 24px, transparent 24px, transparent 48px); }
+.turf { position: relative; width: 504px; border-radius: 12px; overflow: hidden; background: linear-gradient(135deg, #007B55 0%, #00a76f 60%, #007B55 100%); box-shadow: inset 0 0 0 1px rgba(255,255,255,.15); }
+.home { background: #ffffff; box-shadow: 0 0 0 2px #007B55, 0 2px 4px rgba(0,0,0,.25); }
+.away { background: #007B55; box-shadow: 0 0 0 2px #ffffff, 0 2px 4px rgba(0,0,0,.25); }
+.ballw { position: absolute; display: block; width: 18px; height: 18px; border-radius: 50%; background: #ffffff; box-shadow: inset -2px -2px 0 rgba(0,0,0,.12), 0 3px 6px rgba(0,0,0,.3); }
+.ballw::before { content: ''; position: absolute; inset: 3px; border-radius: 50%; background: conic-gradient(rgba(0,0,0,.55) 0deg 30deg, transparent 30deg 150deg, rgba(0,0,0,.55) 150deg 180deg, transparent 180deg 300deg, rgba(0,0,0,.55) 300deg 330deg, transparent 330deg 360deg); opacity: .6; }
+.cline { position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: rgba(255,255,255,.32); }
+.ccircle { position: absolute; left: 50%; top: 50%; width: 70px; height: 70px; margin: -35px 0 0 -35px; border: 2px solid rgba(255,255,255,.32); border-radius: 50%; box-sizing: border-box; }
+.box { position: absolute; top: 50%; width: 66px; height: 132px; margin-top: -66px; border: 2px solid rgba(255,255,255,.32); box-sizing: border-box; }
+.boxL { left: 0; border-left: none; }
+.boxR { right: 0; border-right: none; }
+.gpost { position: absolute; top: 50%; width: 12px; height: 48px; margin-top: -24px; border: 3px solid rgba(255,255,255,.9); box-sizing: border-box; }
+.gpostL { left: 3px; border-right: none; border-radius: 3px 0 0 3px; }
+.gpostR { right: 3px; border-left: none; border-radius: 0 3px 3px 0; }
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; }
+}
+
+
+.gwrap { position: relative; width: 504px; display: flex; flex-direction: column; gap: 12px; padding-top: 14px; }
+.mrow { position: relative; height: 64px; display: flex; align-items: center; gap: 12px; padding: 0 14px; border: 1px solid #e3ebe6; border-radius: 12px; background: #ffffff; box-sizing: border-box; }
+.rowflash { position: absolute; inset: 0; border-radius: 12px; background: rgba(0,167,111,.16); opacity: 0; animation: rflash 5s ease-out infinite both; }
+@keyframes rflash {
+  0%, 36% { opacity: 0; }
+  40% { opacity: 1; }
+  56%, 100% { opacity: 0; }
+}
+.live { position: relative; display: flex; align-items: center; gap: 6px; width: 46px; flex-shrink: 0; font-size: 13px; font-weight: 800; color: #c81e1e; }
+.ldot { display: block; width: 8px; height: 8px; border-radius: 50%; background: #dc2626; animation: lpulse 1.2s ease-in-out infinite; }
+@keyframes lpulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: .35; transform: scale(.8); }
+}
+.side { position: relative; flex: 1 1 0; display: flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 700; color: #101512; min-width: 0; }
+.sideH { justify-content: flex-end; }
+.gcrest { display: block; width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0; box-shadow: inset 0 0 0 2px rgba(255,255,255,.55); }
+.score { position: relative; display: flex; align-items: center; justify-content: center; gap: 6px; width: 76px; height: 36px; flex-shrink: 0; border-radius: 8px; background: #101512; color: #ffffff; font-size: 18px; font-weight: 800; }
+.digit { display: block; height: 24px; overflow: hidden; line-height: 24px; }
+.dcol { display: flex; flex-direction: column; animation: flip 5s cubic-bezier(.3,.7,.3,1) infinite both; }
+.dcol span { display: block; height: 24px; text-align: center; }
+@keyframes flip {
+  0%, 36% { transform: translateY(0); }
+  42%, 90% { transform: translateY(-24px); }
+  96%, 100% { transform: translateY(0); }
+}
+.sep { color: #9ca3af; }
+.fly { top: 50%; width: 12px; height: 12px; margin-top: -6px; opacity: 0; animation: fly 5s ease-in infinite both; }
+.fly::before { inset: 2px; }
+@keyframes fly {
+  0%, 26% { opacity: 0; transform: translate(0, 0); }
+  27% { opacity: 1; transform: translate(0, 0); }
+  32% { opacity: 1; transform: translate(28px, -14px); }
+  36% { opacity: 1; transform: translate(56px, 0); }
+  37%, 100% { opacity: 0; transform: translate(56px, 0); }
+}
+.gol { position: absolute; top: -12px; padding: 3px 10px; border-radius: 999px; background: #00a76f; color: #ffffff; font-size: 12px; font-weight: 800; letter-spacing: .08em; box-shadow: 0 4px 12px rgba(0,167,111,.35); animation: gol 5s cubic-bezier(.3,.7,.3,1) infinite both; }
+@keyframes gol {
+  0%, 38% { opacity: 0; transform: scale(.5); }
+  44% { opacity: 1; transform: scale(1.12); }
+  48%, 80% { opacity: 1; transform: scale(1); }
+  86%, 100% { opacity: 0; transform: scale(.9); }
+}
+.ghost { opacity: .6; }
+.gbar { display: block; height: 10px; border-radius: 5px; background: #e2ebe6; }
+
+.demo { font-family: Inter, system-ui, sans-serif; color: #101512; padding: 32px; display: flex; flex-direction: column; gap: 14px; align-items: flex-start; }
+.demo h1 { margin: 0; font-size: 22px; font-weight: 800; }
+.demo p { margin: 0 0 6px; font-size: 14px; color: #44544b; }
+</style>
+</head>
+<body>
+<div class="demo">
+<h1>Gol anı</h1>
+<p>Nerede: Canlı maç satırında skor değiştiğinde bir kez oynar (döngü değil).</p>
+<div class="gwrap">
+<div class="mrow">
+<span class="rowflash"></span>
+<span class="live"><span class="ldot"></span>67'</span>
+<span class="side sideH">Ev Sahibi<span class="gcrest" style="background: #1d4ed8"></span></span>
+<span class="score"><span class="digit"><span class="dcol"><span>1</span><span>2</span></span></span><span class="sep">–</span><span>0</span></span>
+<span class="side"><span class="gcrest" style="background: #f59e0b"></span>Deplasman</span>
+<span class="ballw fly" style="left: 206px"></span>
+<span class="gol" style="left: 132px">GOL!</span>
+</div>
+<div class="mrow ghost">
+<span class="live" style="color: #5f7268">MS</span>
+<span class="side sideH"><span class="gbar" style="width: 90px"></span><span class="gcrest" style="background: #0d9488"></span></span>
+<span class="score" style="background: #eef3f0; color: #44544b">2<span class="sep">–</span>2</span>
+<span class="side"><span class="gcrest" style="background: #7c3aed"></span><span class="gbar" style="width: 110px"></span></span>
+</div>
+</div>
+</div>
+</body>
+</html>

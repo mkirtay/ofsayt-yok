@@ -1,0 +1,283 @@
+@use '../../styles/variables' as *;
+
+// 09-kural-kosesi.html → .kk-backdrop / .kk-drawer ve içi. Renkler panel değişkenlerinden: koyu tema (varsayılan)
+// proje yüzey/metin renkleri, açık tema referansın birebir renkleri (dosya sonu). Saha sahnesi ve yeşil vurgular
+// iki temada aynı.
+//
+// z-index — mobil: karartma 130 / panel 131 (Header 100, BottomNav 110, arama 120 üstü). Masaüstü: 105, header'ın
+// altında başlar; header açılır menüleri (110/120) panelin üstünde kalır.
+
+.drawer {
+  --kk-bg: var(--bg-surface);
+  --kk-text: var(--text-primary);
+  --kk-body: var(--text-primary);
+  --kk-muted: var(--text-secondary);
+  --kk-close: var(--text-secondary);
+  --kk-note-bg: rgba(0, 167, 111, 0.12);
+  --kk-note-label: var(--color-action-text);
+  --kk-note-text: var(--text-primary);
+  --kk-line: var(--border-subtle);
+  --kk-btn-bg: transparent;
+  --kk-btn-border: rgba(255, 255, 255, 0.14);
+  --kk-btn-text: var(--text-primary);
+  --kk-pip: rgba(255, 255, 255, 0.18);
+  --kk-shadow: -12px 0 32px rgba(0, 0, 0, 0.45);
+
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 131;
+  width: min(88vw, 360px);
+  background: var(--kk-bg);
+  color: var(--kk-text);
+  border-radius: 20px 0 0 20px;
+  box-shadow: var(--kk-shadow);
+  transform: translateX(105%);
+  visibility: hidden;
+  transition:
+    transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+    visibility 0s linear 0.3s;
+  display: flex;
+  flex-direction: column;
+
+  @media (min-width: $bp-desktop) {
+    top: var(--header-height);
+    z-index: 105;
+    width: 380px;
+    border-radius: 16px 0 0 16px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+:global(:root[data-theme='light']) .drawer {
+  --kk-bg: #ffffff;
+  --kk-text: #101512;
+  --kk-body: #2b3a32;
+  --kk-muted: #5f7268;
+  --kk-close: #2b3a32;
+  --kk-note-bg: #eef7f2;
+  --kk-note-label: #007b55;
+  --kk-note-text: #1f3a2d;
+  --kk-line: #eef3f0;
+  --kk-btn-bg: #ffffff;
+  --kk-btn-border: #d5e2db;
+  --kk-btn-text: #101512;
+  --kk-pip: #cfdcd5;
+  --kk-shadow: -12px 0 32px rgba(16, 21, 18, 0.22);
+}
+
+.drawerOpen {
+  transform: translateX(0);
+  visibility: visible;
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 130;
+  background: rgba(16, 21, 18, 0.45);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+
+  @media (min-width: $bp-desktop) {
+    display: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+.backdropOpen {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 10px 8px 16px;
+}
+
+.badge {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #00a76f;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.titles {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+
+  strong {
+    font-size: 16px;
+    line-height: 20px;
+    font-weight: 800;
+  }
+
+  span {
+    font-size: 12px;
+    line-height: 16px;
+    color: var(--kk-muted);
+  }
+}
+
+.close {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: none;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--kk-close);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.body {
+  flex-grow: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 6px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 504 / 230;
+  border-radius: 12px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.scale {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 504px;
+  transform-origin: top left;
+  transform: scale(var(--s, 0.619));
+}
+
+.fact {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.2;
+  font-weight: 800;
+  color: var(--kk-text);
+}
+
+.text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--kk-body);
+}
+
+.note {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--kk-note-bg);
+
+  small {
+    font-size: 10px;
+    line-height: 14px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--kk-note-label);
+  }
+
+  span {
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--kk-note-text);
+  }
+}
+
+.foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 16px calc(20px + var(--safe-bottom));
+  border-top: 1px solid var(--kk-line);
+}
+
+.btn {
+  height: 44px;
+  // Referansta 16 px; içerik 8 kayda çıkınca (8 nokta) 375 px'te taşıyordu.
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid var(--kk-btn-border);
+  background: var(--kk-btn-bg);
+  color: var(--kk-btn-text);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.btnPrimary {
+  background: #00a76f;
+  border-color: #00a76f;
+  color: #ffffff;
+}
+
+.dots {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+
+  // Çok dar telefonlarda (panel < ~316 px) noktalar sığmıyor; sayaç ("3 / 8") zaten başlıkta.
+  @media (max-width: 359px) {
+    display: none;
+  }
+}
+
+.pip {
+  display: block;
+  width: 6px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--kk-pip);
+  flex-shrink: 0;
+}
+
+.pipOn {
+  width: 18px;
+  background: #00a76f;
+}

@@ -1,0 +1,123 @@
+// Saha sahnelerinin ortak zemini — docs/animasyon-referans/0x-*.html ortak bloğunun birebir karşılığı.
+// Sahneler 504 px genişlikte çizilir; kullanan yer ölçekler (ör. Kural Köşesi paneli).
+
+.turf {
+  position: relative;
+  width: 504px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #007b55 0%, #00a76f 60%, #007b55 100%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.15);
+}
+
+.stripes {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.06) 0,
+    rgba(255, 255, 255, 0.06) 24px,
+    transparent 24px,
+    transparent 48px
+  );
+}
+
+.home {
+  background: #ffffff;
+  box-shadow: 0 0 0 2px #007b55, 0 2px 4px rgba(0, 0, 0, 0.25);
+}
+
+.away {
+  background: #007b55;
+  box-shadow: 0 0 0 2px #ffffff, 0 2px 4px rgba(0, 0, 0, 0.25);
+}
+
+.ball {
+  position: absolute;
+  display: block;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: inset -2px -2px 0 rgba(0, 0, 0, 0.12), 0 3px 6px rgba(0, 0, 0, 0.3);
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 3px;
+    border-radius: 50%;
+    background: conic-gradient(
+      rgba(0, 0, 0, 0.55) 0deg 30deg,
+      transparent 30deg 150deg,
+      rgba(0, 0, 0, 0.55) 150deg 180deg,
+      transparent 180deg 300deg,
+      rgba(0, 0, 0, 0.55) 300deg 330deg,
+      transparent 330deg 360deg
+    );
+    opacity: 0.6;
+  }
+}
+
+.centerLine {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  margin-left: -1px;
+  background: rgba(255, 255, 255, 0.32);
+}
+
+.centerCircle {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 70px;
+  height: 70px;
+  margin: -35px 0 0 -35px;
+  border: 2px solid rgba(255, 255, 255, 0.32);
+  border-radius: 50%;
+  box-sizing: border-box;
+}
+
+.box {
+  position: absolute;
+  top: 50%;
+  width: 66px;
+  height: 132px;
+  margin-top: -66px;
+  border: 2px solid rgba(255, 255, 255, 0.32);
+  box-sizing: border-box;
+}
+
+.boxL {
+  left: 0;
+  border-left: none;
+}
+
+.boxR {
+  right: 0;
+  border-right: none;
+}
+
+.post {
+  position: absolute;
+  top: 50%;
+  width: 12px;
+  height: 48px;
+  margin-top: -24px;
+  border: 3px solid rgba(255, 255, 255, 0.9);
+  box-sizing: border-box;
+}
+
+.postL {
+  left: 3px;
+  border-right: none;
+  border-radius: 3px 0 0 3px;
+}
+
+.postR {
+  right: 3px;
+  border-left: none;
+  border-radius: 0 3px 3px 0;
+}

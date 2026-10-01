@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tribün dalgası — Ofsayt Yok animasyon referansı</title>
+<style>
+
+body { margin: 0; }
+.stripes { position: absolute; inset: 0; background: repeating-linear-gradient(90deg, rgba(255,255,255,.06) 0, rgba(255,255,255,.06) 24px, transparent 24px, transparent 48px); }
+.turf { position: relative; width: 504px; border-radius: 12px; overflow: hidden; background: linear-gradient(135deg, #007B55 0%, #00a76f 60%, #007B55 100%); box-shadow: inset 0 0 0 1px rgba(255,255,255,.15); }
+.home { background: #ffffff; box-shadow: 0 0 0 2px #007B55, 0 2px 4px rgba(0,0,0,.25); }
+.away { background: #007B55; box-shadow: 0 0 0 2px #ffffff, 0 2px 4px rgba(0,0,0,.25); }
+.ballw { position: absolute; display: block; width: 18px; height: 18px; border-radius: 50%; background: #ffffff; box-shadow: inset -2px -2px 0 rgba(0,0,0,.12), 0 3px 6px rgba(0,0,0,.3); }
+.ballw::before { content: ''; position: absolute; inset: 3px; border-radius: 50%; background: conic-gradient(rgba(0,0,0,.55) 0deg 30deg, transparent 30deg 150deg, rgba(0,0,0,.55) 150deg 180deg, transparent 180deg 300deg, rgba(0,0,0,.55) 300deg 330deg, transparent 330deg 360deg); opacity: .6; }
+.cline { position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: rgba(255,255,255,.32); }
+.ccircle { position: absolute; left: 50%; top: 50%; width: 70px; height: 70px; margin: -35px 0 0 -35px; border: 2px solid rgba(255,255,255,.32); border-radius: 50%; box-sizing: border-box; }
+.box { position: absolute; top: 50%; width: 66px; height: 132px; margin-top: -66px; border: 2px solid rgba(255,255,255,.32); box-sizing: border-box; }
+.boxL { left: 0; border-left: none; }
+.boxR { right: 0; border-right: none; }
+.gpost { position: absolute; top: 50%; width: 12px; height: 48px; margin-top: -24px; border: 3px solid rgba(255,255,255,.9); box-sizing: border-box; }
+.gpostL { left: 3px; border-right: none; border-radius: 3px 0 0 3px; }
+.gpostR { right: 3px; border-left: none; border-radius: 0 3px 3px 0; }
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; }
+}
+
+
+.stand { position: relative; width: 504px; height: 226px; border-radius: 12px; overflow: hidden; background: #eef3f0; box-shadow: inset 0 0 0 1px #e3ebe6; display: flex; flex-direction: column; }
+.seats { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; gap: 12px; }
+.srow { display: flex; justify-content: center; gap: 8px; }
+.seat { display: block; width: 16px; height: 14px; border-radius: 5px 5px 3px 3px; background: #c6d6cd; animation: wave 2.6s ease-in-out infinite both; }
+@keyframes wave {
+  0%, 40%, 100% { transform: translateY(0); background: #c6d6cd; }
+  12% { transform: translateY(-10px); background: #00a76f; }
+  22% { transform: translateY(-3px); background: #7fd3b4; }
+}
+.wturf { width: 100%; height: 52px; flex-shrink: 0; border-radius: 0; }
+
+.demo { font-family: Inter, system-ui, sans-serif; color: #101512; padding: 32px; display: flex; flex-direction: column; gap: 14px; align-items: flex-start; }
+.demo h1 { margin: 0; font-size: 22px; font-weight: 800; }
+.demo p { margin: 0 0 6px; font-size: 14px; color: #44544b; }
+</style>
+</head>
+<body>
+<div class="demo">
+<h1>Tribün dalgası</h1>
+<p>Nerede: Gündem akışı ve maç forumu ilk yüklenirken.</p>
+<div class="stand">
+<div class="seats">
+<div class="srow"><span class="seat" style="animation-delay: 0.00s"></span><span class="seat" style="animation-delay: 0.06s"></span><span class="seat" style="animation-delay: 0.12s"></span><span class="seat" style="animation-delay: 0.18s"></span><span class="seat" style="animation-delay: 0.24s"></span><span class="seat" style="animation-delay: 0.30s"></span><span class="seat" style="animation-delay: 0.36s"></span><span class="seat" style="animation-delay: 0.42s"></span><span class="seat" style="animation-delay: 0.48s"></span><span class="seat" style="animation-delay: 0.54s"></span><span class="seat" style="animation-delay: 0.60s"></span><span class="seat" style="animation-delay: 0.66s"></span><span class="seat" style="animation-delay: 0.72s"></span><span class="seat" style="animation-delay: 0.78s"></span><span class="seat" style="animation-delay: 0.84s"></span><span class="seat" style="animation-delay: 0.90s"></span><span class="seat" style="animation-delay: 0.96s"></span><span class="seat" style="animation-delay: 1.02s"></span><span class="seat" style="animation-delay: 1.08s"></span><span class="seat" style="animation-delay: 1.14s"></span><span class="seat" style="animation-delay: 1.20s"></span></div>
+<div class="srow"><span class="seat" style="animation-delay: 0.04s"></span><span class="seat" style="animation-delay: 0.10s"></span><span class="seat" style="animation-delay: 0.15s"></span><span class="seat" style="animation-delay: 0.21s"></span><span class="seat" style="animation-delay: 0.28s"></span><span class="seat" style="animation-delay: 0.33s"></span><span class="seat" style="animation-delay: 0.40s"></span><span class="seat" style="animation-delay: 0.45s"></span><span class="seat" style="animation-delay: 0.52s"></span><span class="seat" style="animation-delay: 0.58s"></span><span class="seat" style="animation-delay: 0.64s"></span><span class="seat" style="animation-delay: 0.69s"></span><span class="seat" style="animation-delay: 0.76s"></span><span class="seat" style="animation-delay: 0.82s"></span><span class="seat" style="animation-delay: 0.88s"></span><span class="seat" style="animation-delay: 0.93s"></span><span class="seat" style="animation-delay: 0.99s"></span><span class="seat" style="animation-delay: 1.05s"></span><span class="seat" style="animation-delay: 1.11s"></span><span class="seat" style="animation-delay: 1.17s"></span><span class="seat" style="animation-delay: 1.23s"></span></div>
+<div class="srow"><span class="seat" style="animation-delay: 0.07s"></span><span class="seat" style="animation-delay: 0.13s"></span><span class="seat" style="animation-delay: 0.19s"></span><span class="seat" style="animation-delay: 0.25s"></span><span class="seat" style="animation-delay: 0.31s"></span><span class="seat" style="animation-delay: 0.37s"></span><span class="seat" style="animation-delay: 0.43s"></span><span class="seat" style="animation-delay: 0.49s"></span><span class="seat" style="animation-delay: 0.55s"></span><span class="seat" style="animation-delay: 0.61s"></span><span class="seat" style="animation-delay: 0.67s"></span><span class="seat" style="animation-delay: 0.73s"></span><span class="seat" style="animation-delay: 0.79s"></span><span class="seat" style="animation-delay: 0.85s"></span><span class="seat" style="animation-delay: 0.91s"></span><span class="seat" style="animation-delay: 0.97s"></span><span class="seat" style="animation-delay: 1.03s"></span><span class="seat" style="animation-delay: 1.09s"></span><span class="seat" style="animation-delay: 1.15s"></span><span class="seat" style="animation-delay: 1.21s"></span><span class="seat" style="animation-delay: 1.27s"></span></div>
+<div class="srow"><span class="seat" style="animation-delay: 0.11s"></span><span class="seat" style="animation-delay: 0.17s"></span><span class="seat" style="animation-delay: 0.23s"></span><span class="seat" style="animation-delay: 0.29s"></span><span class="seat" style="animation-delay: 0.34s"></span><span class="seat" style="animation-delay: 0.41s"></span><span class="seat" style="animation-delay: 0.46s"></span><span class="seat" style="animation-delay: 0.53s"></span><span class="seat" style="animation-delay: 0.58s"></span><span class="seat" style="animation-delay: 0.65s"></span><span class="seat" style="animation-delay: 0.70s"></span><span class="seat" style="animation-delay: 0.76s"></span><span class="seat" style="animation-delay: 0.82s"></span><span class="seat" style="animation-delay: 0.89s"></span><span class="seat" style="animation-delay: 0.94s"></span><span class="seat" style="animation-delay: 1.00s"></span><span class="seat" style="animation-delay: 1.06s"></span><span class="seat" style="animation-delay: 1.12s"></span><span class="seat" style="animation-delay: 1.19s"></span><span class="seat" style="animation-delay: 1.24s"></span><span class="seat" style="animation-delay: 1.30s"></span></div>
+</div>
+<div class="turf wturf"><span class="stripes"></span></div>
+</div>
+</div>
+</body>
+</html>
