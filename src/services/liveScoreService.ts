@@ -52,6 +52,7 @@ import {
   type SportmonksTeamWithUpcoming,
   type TeamUpcoming,
 } from './sportmonks/teamUpcoming';
+import { normalizeDisplayName } from '@/utils/displayName';
 
 export type PaginatedMatches = {
   matches: Match[];
@@ -1321,7 +1322,7 @@ function mapSportmonksSquadRowToPlayer(row: SportmonksSquadRow) {
   return {
     id: row.player_id,
     shirt_number: row.jersey_number,
-    name: row.player?.display_name ?? row.player?.name ?? '',
+    name: normalizeDisplayName(row.player?.display_name ?? row.player?.name ?? ''),
     ...(row.player?.image_path ? { photo: row.player.image_path } : {}),
     ...(row.position_id != null && resolvePositionShortCode(row.position_id)
       ? { position: resolvePositionShortCode(row.position_id) }

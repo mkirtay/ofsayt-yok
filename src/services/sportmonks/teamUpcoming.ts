@@ -13,6 +13,7 @@
 import type { Match } from '@/models/liveScore';
 import { mapSportmonksFixtureToMatch } from '../sportmonksFixtureMapper';
 import type { SportmonksFixture } from './types';
+import { normalizeTeamName } from '@/utils/displayName';
 
 export const TEAM_UPCOMING_INCLUDE = 'upcoming.participants;upcoming.league;upcoming.state';
 
@@ -65,7 +66,7 @@ export function mapTeamUpcoming(team: SportmonksTeamWithUpcoming | null | undefi
   return {
     team: {
       id: team.id,
-      name: team.name ?? '',
+      name: normalizeTeamName(team.name ?? ''),
       ...(team.image_path ? { logo: team.image_path } : {}),
     },
     fixtures: mapTeamUpcomingFixtures(team.upcoming),

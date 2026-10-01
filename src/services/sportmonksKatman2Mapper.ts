@@ -22,6 +22,7 @@ import { resolveEventLabel } from './sportmonks/typeDictionaries';
 import { detailedPositionCode } from '@/utils/positionLabel';
 import { resolveParticipantLocation } from './sportmonks/participantLocation';
 import { resolvePositionShortCode } from './sportmonks/typeDictionaries';
+import { normalizeDisplayName, normalizeTeamName } from '@/utils/displayName';
 
 // ── getMatchWithEvents ──────────────────────────────────────────────────────
 
@@ -32,7 +33,7 @@ export function mapSportmonksEventToMatchEvent(
   const location = resolveParticipantLocation(event.participant_id, participants);
   return {
     id: event.id,
-    player: { id: event.player_id ?? 0, name: event.player_name ?? '' },
+    player: { id: event.player_id ?? 0, name: normalizeDisplayName(event.player_name ?? '') },
     time: event.minute,
     event: resolveEventLabel(event.type_id),
     sort: event.sort_order ?? event.minute,
@@ -145,7 +146,7 @@ function mapLineupRowToPlayer(row: SportmonksLineupRow): LineupPlayer {
   return {
     team_id: String(row.team_id),
     id: String(row.player_id),
-    name: row.player?.display_name ?? row.player?.name ?? row.player_name,
+    name: normalizeDisplayName(row.player?.display_name ?? row.player?.name ?? row.player_name),
     substitution: row.type_id === BENCH_LINEUP_TYPE_ID ? '1' : '0',
     shirt_number: row.jersey_number != null ? String(row.jersey_number) : '',
     ...(resolvePositionShortCode(row.position_id) ? { position: resolvePositionShortCode(row.position_id)! } : {}),
@@ -175,7 +176,7 @@ function buildLineupTeam(
 ): LineupTeam {
   const players = participant ? rows.filter((r) => r.team_id === participant.id).map(mapLineupRowToPlayer) : [];
   return {
-    team: { id: String(participant?.id ?? ''), name: participant?.name ?? '' },
+    team: { id: String(participant?.id ?? ''), name: normalizeTeamName(participant?.name ?? '') },
     players,
   };
 }
@@ -216,13 +217,13 @@ export function mapTopscorerRowToEntry(row: SportmonksTopscorerRow): TopScorerEn
   return {
     goals: row.total,
     ...(row.participant
-      ? { team: { id: row.participant.id, name: row.participant.name, logo: row.participant.image_path ?? undefined } }
+      ? { team: { id: row.participant.id, name: normalizeTeamName(row.participant.name), logo: row.participant.image_path ?? undefined } }
       : {}),
     ...(row.player
       ? {
           player: {
             id: row.player.id,
-            name: row.player.display_name ?? row.player.name ?? '',
+            name: normalizeDisplayName(row.player.display_name ?? row.player.name ?? ''),
             photo: row.player.image_path ?? undefined,
           },
         }
@@ -329,7 +330,7 @@ export function extractTeamTopScorers(
     if (!line?.goals || line.goals <= 0) continue;
     list.push({
       playerId: row.player_id,
-      name: (row.player?.display_name ?? row.player?.name ?? '').trim(),
+      name: normalizeDisplayName((row.player?.display_name ?? row.player?.name ?? '').trim()),
       ...(row.player?.image_path ? { photo: row.player.image_path } : {}),
       goals: line.goals,
       apps: line.appearances ?? Number.POSITIVE_INFINITY,
@@ -365,8 +366,8 @@ export function mergeDisciplinaryRows(rows: SportmonksTopscorerRow[]): Disciplin
   const byPlayer = new Map<number, DisciplinaryRow>();
   for (const row of rows) {
     const existing = byPlayer.get(row.player_id) ?? {
-      player: { id: row.player_id, name: row.player?.display_name ?? row.player?.name ?? '' },
-      team: { id: row.participant_id, name: row.participant?.name ?? '' },
+      player: { id: row.player_id, name: normalizeDisplayName(row.player?.display_name ?? row.player?.name ?? '') },
+      team: { id: row.participant_id, name: normalizeTeamName(row.participant?.name ?? '') },
       yellow_cards: 0,
       red_cards: 0,
     };

@@ -4,7 +4,7 @@ import type { Match } from '@/models/liveScore';
  * Türkçe karakterleri ASCII karşılıklarına dönüştürüp URL-safe slug üretir.
  * Örn: "Trabzonspor" → "trabzonspor", "Başakşehir FK" → "basaksehir-fk"
  */
-function slugify(text: string): string {
+export function slugify(text: string): string {
   return text
     .toLowerCase()
     .replace(/ğ/g, 'g')

@@ -24,6 +24,7 @@
  * hiç gelmeyen bir satırda (örn. eski bir API sürümü) devreye girer.
  */
 import type { SportmonksStandingDetail, SportmonksStandingRow } from './types';
+import { normalizeTeamName } from '@/utils/displayName';
 
 export type PivotedStandingRow = {
   rank: number;
@@ -114,7 +115,7 @@ export function pivotStandingRow(row: SportmonksStandingRow): PivotedStandingRow
     goals_conceded,
     goal_diff,
     team_id: row.participant?.id ?? row.participant_id,
-    name: row.participant?.name ?? '',
+    name: normalizeTeamName(row.participant?.name ?? ''),
     ...(row.participant?.short_code ? { short_code: row.participant.short_code } : {}),
     ...(row.participant?.image_path ? { logo: row.participant.image_path } : {}),
     group_id: row.group_id ?? null,

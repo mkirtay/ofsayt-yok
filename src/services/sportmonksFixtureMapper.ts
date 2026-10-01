@@ -16,6 +16,7 @@ import { formatLiveMinuteLabel } from './sportmonks/minuteDerivation';
 import { resolveRoundAndStage } from './sportmonks/roundStage';
 import { formatVenueLocation } from './sportmonks/venueFormatter';
 import { formatMainReferee } from './sportmonks/refereeFormatter';
+import { normalizeTeamName } from '@/utils/displayName';
 
 /** `"2026-09-17 16:00:00"` → `{date:"2026-09-17", scheduled:"16:00"}` */
 function splitStartingAt(startingAt: string | null | undefined): { date?: string; scheduled?: string } {
@@ -43,7 +44,7 @@ function deriveCompetitionFlags(subType: string | undefined): { is_league?: bool
 function mapParticipantToTeam(participant: SportmonksParticipant | undefined): Team {
   return {
     id: participant?.id ?? 0,
-    name: participant?.name ?? '',
+    name: normalizeTeamName(participant?.name ?? ''),
     ...(participant?.image_path ? { logo: participant.image_path } : {}),
   };
 }

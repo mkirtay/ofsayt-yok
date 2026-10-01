@@ -10,6 +10,7 @@
 import { sportmonksClientRequest } from './sportmonksRuntimeClient';
 import type { PlayerStatValue } from './sportmonks/playerStatTypes';
 import { STAT, statMain } from './sportmonks/playerStatTypes';
+import { normalizeDisplayName, normalizeTeamName } from '@/utils/displayName';
 
 export const PLAYER_PROFILE_INCLUDE =
   'nationality;city;position;detailedPosition;metadata.type;teams.team;transfers.type;transfers.fromTeam;transfers.toTeam;' +
@@ -176,7 +177,7 @@ export function mapPlayerProfile(raw: RawPlayer): PlayerProfile {
         seasonName: s.season?.name ?? String(s.season_id),
         ...(s.season?.league?.name ? { leagueName: s.season.league.name } : {}),
         ...(s.team_id != null ? { teamId: s.team_id } : {}),
-        ...(s.team?.name ? { teamName: s.team.name } : {}),
+        ...(s.team?.name ? { teamName: normalizeTeamName(s.team.name) } : {}),
         ...(s.team?.image_path ? { teamLogo: s.team.image_path } : {}),
         ...(s.season?.starting_at ? { startingAt: s.season.starting_at } : {}),
         ...(s.season?.ending_at ? { endingAt: s.season.ending_at } : {}),
@@ -193,7 +194,7 @@ export function mapPlayerProfile(raw: RawPlayer): PlayerProfile {
 
   return {
     id: raw.id,
-    name: raw.display_name ?? raw.name ?? raw.common_name ?? '',
+    name: normalizeDisplayName(raw.display_name ?? raw.name ?? raw.common_name ?? ''),
     ...(raw.image_path ? { photo: raw.image_path } : {}),
     ...(raw.date_of_birth ? { dateOfBirth: raw.date_of_birth } : {}),
     ...(raw.height ? { heightCm: raw.height } : {}),
