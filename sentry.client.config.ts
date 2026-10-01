@@ -13,6 +13,7 @@ export const SENTRY_CLIENT_ENABLED = process.env.NEXT_PUBLIC_VERCEL_ENV === 'pro
 
 export const SENTRY_CLIENT_OPTIONS: BrowserOptions = {
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
+  environment: process.env.NEXT_PUBLIC_VERCEL_ENV ?? 'development',
   enabled: SENTRY_CLIENT_ENABLED,
   sendDefaultPii: false,
   integrations: (defaults) => defaults.filter((i) => i.name !== 'BrowserTracing'),
