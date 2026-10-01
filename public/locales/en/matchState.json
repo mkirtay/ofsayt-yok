@@ -1,0 +1,58 @@
+{
+  "pre": {
+    "statsTitle": "Match hasn't started yet.",
+    "statsSub": "Stats will update live here from the first whistle.",
+    "kickoff": "Kick-off: {{when}}",
+    "events": "Goals, cards and substitutions will appear here once the match kicks off."
+  },
+  "countdown": {
+    "startsIn": "Starts in {{left}}",
+    "soon": "Kicking off soon",
+    "awaiting": "Awaiting kick-off",
+    "days": "{{n}} d",
+    "hours": "{{n}} h",
+    "minutes": "{{n}} min"
+  },
+  "live": {
+    "stats": "Stats will appear here as the match goes on.",
+    "events": "No key events yet."
+  },
+  "post": {
+    "stats": "Statistics aren't available for this match.",
+    "events": "Match events aren't available for this match.",
+    "lineups": "Line-ups aren't available for this match."
+  },
+  "special": {
+    "postponed": "This match has been postponed. The new date will appear here once announced.",
+    "cancelled": "This match has been cancelled.",
+    "abandoned": "This match was abandoned.",
+    "tba": "Date and time to be announced.",
+    "delayed": "Kick-off has been delayed.",
+    "suspended": "Play is currently suspended.",
+    "awarded": "The result was awarded."
+  },
+  "short": {
+    "postponed": "Postponed",
+    "cancelled": "Cancelled",
+    "abandoned": "Abandoned",
+    "tba": "Date TBA",
+    "delayed": "Delayed",
+    "suspended": "Suspended",
+    "awarded": "Awarded"
+  },
+  "day": {
+    "today": "Today",
+    "tomorrow": "Tomorrow"
+  },
+  "refereeTba": "To be announced",
+  "lineup": {
+    "starting": "Starting XI",
+    "probable": "Probable XI",
+    "probableNote": "Official line-ups are announced about an hour before kick-off.",
+    "bench": "Substitutes",
+    "benchCount": "Substitutes ({{count}})",
+    "notAnnounced": "Line-ups haven't been announced yet.",
+    "home": "Home",
+    "away": "Away"
+  }
+}

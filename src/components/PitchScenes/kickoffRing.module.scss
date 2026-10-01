@@ -1,0 +1,39 @@
+@use '../../styles/motion' as *;
+
+.root {
+  @include motion-root;
+  // turf.turf 504 px sabit genişlik verir; bu sahne kutu genişliğinde (CSS modül sırasından bağımsız).
+  width: 100% !important;
+  height: 96px;
+}
+
+.ring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 80px;
+  height: 80px;
+  margin: -40px 0 0 -40px;
+}
+
+// Referanstaki gibi halka 6 sn'de dolar (SVG çizgi; Kural Köşesi halka sahnesiyle aynı kabul edilen istisna).
+.ringFill {
+  animation: ring 6s linear infinite both;
+}
+
+@keyframes ring {
+  0% { stroke-dashoffset: 214; }
+  100% { stroke-dashoffset: 0; }
+}
+
+.ball {
+  left: 50%;
+  top: 50%;
+  margin: -9px 0 0 -9px;
+  animation: breathe 1.6s ease-in-out infinite alternate;
+}
+
+@keyframes breathe {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.1); }
+}

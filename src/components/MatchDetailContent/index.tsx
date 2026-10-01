@@ -51,7 +51,7 @@ export default function MatchDetailContent({ detail, requestedMatchId, variant =
           <>
             <div className={`${styles.statsEventsRow} ${variant === 'panel' ? styles.stacked : ''}`.trim()}>
               <div className={styles.col}>
-                <MatchStats stats={detail.stats} loading={matchLoading || statsLoading} />
+                <MatchStats stats={detail.stats} loading={matchLoading || statsLoading} match={match} />
               </div>
               <div className={styles.col}>
                 <EventTimeline
@@ -59,6 +59,7 @@ export default function MatchDetailContent({ detail, requestedMatchId, variant =
                   homeName={match?.home?.name}
                   awayName={match?.away?.name}
                   loading={matchLoading || eventsLoading}
+                  match={match}
                 />
               </div>
             </div>

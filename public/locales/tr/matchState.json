@@ -1,0 +1,58 @@
+{
+  "pre": {
+    "statsTitle": "Maç henüz başlamadı.",
+    "statsSub": "İstatistikler ilk düdükle birlikte burada canlı güncellenecek.",
+    "kickoff": "İlk düdük: {{when}}",
+    "events": "Goller, kartlar ve oyuncu değişiklikleri maç başladığında burada görünecek."
+  },
+  "countdown": {
+    "startsIn": "Başlamasına {{left}}",
+    "soon": "Az sonra başlıyor",
+    "awaiting": "Başlaması bekleniyor",
+    "days": "{{n}} gün",
+    "hours": "{{n}} sa",
+    "minutes": "{{n}} dk"
+  },
+  "live": {
+    "stats": "İstatistikler maç ilerledikçe burada görünecek.",
+    "events": "Henüz önemli bir olay yok."
+  },
+  "post": {
+    "stats": "Bu maç için istatistik verisi sağlanmıyor.",
+    "events": "Bu maç için olay verisi sağlanmıyor.",
+    "lineups": "Bu maç için kadro verisi sağlanmıyor."
+  },
+  "special": {
+    "postponed": "Maç ertelendi. Yeni tarih açıklandığında burada görünecek.",
+    "cancelled": "Maç iptal edildi.",
+    "abandoned": "Maç yarıda kaldı.",
+    "tba": "Maçın tarihi ve saati henüz belli değil.",
+    "delayed": "Maçın başlaması gecikti.",
+    "suspended": "Maç şu an durduruldu.",
+    "awarded": "Maç hükmen sonuçlandı."
+  },
+  "short": {
+    "postponed": "Ertelendi",
+    "cancelled": "İptal",
+    "abandoned": "Yarıda kaldı",
+    "tba": "Tarih belli değil",
+    "delayed": "Gecikti",
+    "suspended": "Durduruldu",
+    "awarded": "Hükmen"
+  },
+  "day": {
+    "today": "Bugün",
+    "tomorrow": "Yarın"
+  },
+  "refereeTba": "Açıklanmadı",
+  "lineup": {
+    "starting": "İlk 11",
+    "probable": "Muhtemel 11",
+    "probableNote": "Resmî ilk 11'ler maçtan yaklaşık 1 saat önce açıklanır.",
+    "bench": "Yedekler",
+    "benchCount": "Yedekler ({{count}})",
+    "notAnnounced": "Kadrolar henüz açıklanmadı.",
+    "home": "Ev Sahibi",
+    "away": "Deplasman"
+  }
+}

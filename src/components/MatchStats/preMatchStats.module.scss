@@ -1,0 +1,82 @@
+@use '../../styles/variables' as *;
+
+// 08 · Maç henüz başlamadı — referans ecard. Kart çerçevesi MatchStats ile aynı.
+.card {
+  --pm-chip-bg: rgba(0, 167, 111, 0.14);
+  --pm-chip-text: var(--color-action-text);
+
+  background-color: $color-surface;
+  border-radius: $radius-md;
+  padding: $spacing-3 $spacing-4;
+  box-shadow: $shadow-surface;
+  border: 1px solid $color-border;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+
+  @container (max-width: 700px) {
+    padding: $spacing-3;
+  }
+}
+
+:global(:root[data-theme='light']) .card {
+  --pm-chip-bg: #eef7f2;
+  --pm-chip-text: #007b55;
+}
+
+.title {
+  font-size: 15px;
+  font-weight: 600;
+  border-bottom: 1px solid $color-border;
+  padding-bottom: $spacing-2;
+}
+
+// Sahne gelene kadar aynı boyutta düz yeşil (kayma yok).
+.pitch {
+  height: 96px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #007b55 0%, #00a76f 60%, #007b55 100%);
+}
+
+.message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+
+  strong {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--text-primary);
+  }
+}
+
+.sub {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+
+.kick {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--pm-chip-bg);
+  color: var(--pm-chip-text);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.countdown {
+  min-height: 18px;
+  font-size: 12px;
+  line-height: 18px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}

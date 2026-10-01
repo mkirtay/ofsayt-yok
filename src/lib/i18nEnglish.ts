@@ -17,7 +17,8 @@ import ai from '../../public/locales/en/ai.json';
 import gundem from '../../public/locales/en/gundem.json';
 import team from '../../public/locales/en/team.json';
 import kuralKosesi from '../../public/locales/en/kuralKosesi.json';
+import matchState from '../../public/locales/en/matchState.json';
 
-const EN = { common, nav, auth, credits, match, leagues, player, compare, standings, profile, ai, gundem, team, kuralKosesi };
+const EN = { common, nav, auth, credits, match, leagues, player, compare, standings, profile, ai, gundem, team, kuralKosesi, matchState };
 
 for (const [ns, dict] of Object.entries(EN)) registerNamespace('en', ns, dict);

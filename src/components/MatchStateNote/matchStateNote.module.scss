@@ -1,0 +1,21 @@
+@use '../../styles/variables' as *;
+
+.message {
+  text-align: center;
+  color: $color-text-secondary;
+  font-size: 14px;
+  line-height: 1.45;
+  padding: $spacing-3;
+}
+
+// Verinin üstünde: amber durum satırı (form "B" rengiyle aynı ton).
+.banner {
+  margin-bottom: $spacing-2;
+  padding: 6px 10px;
+  border-radius: $radius-sm;
+  background: rgba(245, 158, 11, 0.14);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+}

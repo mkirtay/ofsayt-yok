@@ -1,15 +1,39 @@
 import { useTranslation } from '@/lib/i18n';
+import '@/lib/i18nNamespaces/matchState';
 import { PanelSkeleton } from '@/components/Skeleton';
+import MatchStateNote from '@/components/MatchStateNote';
 import styles from './matchStats.module.scss';
 import { MatchStatsData } from '@/models/domain';
+import type { Match } from '@/models/liveScore';
+import { matchDisplayState, specialKeepsData } from '@/utils/matchDisplayState';
+import PreMatchStats from './PreMatchStats';
 
 interface MatchStatsProps {
   stats: MatchStatsData | null;
   loading?: boolean;
+  /** Verilirse boş/bekleme metinleri maçın evresine göre (başlamadı, canlı, bitti, ertelendi…). */
+  match?: Match | null;
 }
 
-export default function MatchStats({ stats, loading }: MatchStatsProps) {
+export default function MatchStats({ stats, loading, match }: MatchStatsProps) {
   const { t } = useTranslation('match');
+  const { t: ts } = useTranslation('matchState');
+  const state = match ? matchDisplayState(match) : null;
+
+  // Ertelendi / iptal / tarih belirsiz / gecikti: istatistik olamaz → tek mesaj (veri beklenmez).
+  if (state?.special && !specialKeepsData(state.special)) {
+    return (
+      <div className={styles.container}>
+        <h3 className={styles.title}>{t('stats.title')}</h3>
+        <MatchStateNote special={state.special} variant="message" />
+      </div>
+    );
+  }
+
+  // Başlamamış maç: SSR'daki maç bilgisiyle hemen (istatistik isteği beklenmez, kayma yok).
+  if (match && state?.phase === 'PRE') {
+    return <PreMatchStats match={match} title={t('stats.title')} />;
+  }
 
   if (loading) {
     return <PanelSkeleton rows={5} />;
@@ -46,8 +70,16 @@ export default function MatchStats({ stats, loading }: MatchStatsProps) {
     <div className={styles.container}>
       <h3 className={styles.title}>{t('stats.title')}</h3>
 
+      {state?.special && statEntries.length > 0 ? <MatchStateNote special={state.special} variant="banner" /> : null}
+
       {statEntries.length === 0 ? (
-        <div className={styles.empty}>{t('stats.empty')}</div>
+        state?.special ? (
+          <MatchStateNote special={state.special} variant="message" />
+        ) : (
+          <div className={styles.empty}>
+            {!state ? t('stats.empty') : state.phase === 'POST' ? ts('post.stats') : ts('live.stats')}
+          </div>
+        )
       ) : (
         <div className={styles.statsList}>
           {statEntries.map((stat) => (

@@ -2,6 +2,10 @@ import type { ReactNode } from 'react';
 import { MatchEvent } from '@/models/domain';
 import { PanelSkeleton } from '@/components/Skeleton';
 import { useTranslation } from '@/lib/i18n';
+import '@/lib/i18nNamespaces/matchState';
+import MatchStateNote from '@/components/MatchStateNote';
+import type { Match } from '@/models/liveScore';
+import { matchDisplayState, specialKeepsData } from '@/utils/matchDisplayState';
 import styles from './eventTimeline.module.scss';
 
 interface EventTimelineProps {
@@ -9,6 +13,8 @@ interface EventTimelineProps {
   homeName?: string;
   awayName?: string;
   loading?: boolean;
+  /** Verilirse boş metin maçın evresine göre (başlamadı, canlı, bitti, ertelendi…). */
+  match?: Match | null;
 }
 
 type T = (key: string, opts?: Record<string, unknown>) => string;
@@ -123,20 +129,48 @@ function varDetail(event: MatchEvent, t: T): string | null {
 export default function EventTimeline({
   events,
   loading,
+  match,
 }: EventTimelineProps) {
   const { t } = useTranslation('match');
+  const { t: ts } = useTranslation('matchState');
+  const state = match ? matchDisplayState(match) : null;
+  const visibleEvents = (events ?? []).filter((e) => !HIDDEN_EVENTS.has(e.event));
+
+  // Ertelendi / iptal / tarih belirsiz / gecikti → tek mesaj; başlamamış maç → bekleme metni. İkisi de SSR'daki maç
+  // bilgisiyle hemen (olay isteği beklenmez).
+  const blockingSpecial = state?.special && !specialKeepsData(state.special) ? state.special : null;
+  if (blockingSpecial) {
+    return (
+      <div className={styles.timeline}>
+        <h3 className={styles.title}>{t('events.title')}</h3>
+        <MatchStateNote special={blockingSpecial} variant="message" />
+      </div>
+    );
+  }
+  if (state?.phase === 'PRE' && visibleEvents.length === 0) {
+    return (
+      <div className={styles.timeline}>
+        <h3 className={styles.title}>{t('events.title')}</h3>
+        <div className={styles.empty}>{ts('pre.events')}</div>
+      </div>
+    );
+  }
 
   if (loading) {
     return <PanelSkeleton rows={6} />;
   }
 
-  const visibleEvents = (events ?? []).filter((e) => !HIDDEN_EVENTS.has(e.event));
-
   if (visibleEvents.length === 0) {
     return (
       <div className={styles.timeline}>
         <h3 className={styles.title}>{t('events.title')}</h3>
-        <div className={styles.empty}>{t('events.empty')}</div>
+        {state?.special ? (
+          <MatchStateNote special={state.special} variant="message" />
+        ) : (
+          <div className={styles.empty}>
+            {!state ? t('events.empty') : state.phase === 'POST' ? ts('post.events') : ts('live.events')}
+          </div>
+        )}
       </div>
     );
   }
@@ -146,6 +180,7 @@ export default function EventTimeline({
   return (
     <div className={styles.timeline}>
       <h3 className={styles.title}>{t('events.title')}</h3>
+      {state?.special ? <MatchStateNote special={state.special} variant="banner" /> : null}
       <ol className={styles.events}>
         {sortedEvents.map((event, index) => {
           const name = event.player?.name || '';
