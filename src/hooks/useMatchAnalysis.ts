@@ -54,7 +54,8 @@ export function useMatchAnalysis(matchId: string | null | undefined): MatchAnaly
       setPredictionRecord(null);
       setServerPhase(null);
       try {
-        const res = await fetch(`/api/matches/${id}/analysis`);
+        // `optional=1`: analiz yoksa 200 + `analysis: null` (404 tarayıcı konsolunda hata olarak görünüyordu).
+        const res = await fetch(`/api/matches/${id}/analysis?optional=1`);
         if (res.status === 404) {
           setNotFound(true);
           return;
@@ -64,10 +65,14 @@ export function useMatchAnalysis(matchId: string | null | undefined): MatchAnaly
           throw new Error(body?.error ?? t('common:requestFailed', { status: res.status }));
         }
         const body = (await res.json()) as {
-          analysis: ApiAnalysis;
+          analysis: ApiAnalysis | null;
           predictionRecord: ApiPredictionRecord | null;
           matchPhase?: string;
         };
+        if (!body.analysis) {
+          setNotFound(true);
+          return;
+        }
         setAnalysis(body.analysis);
         setPredictionRecord(body.predictionRecord ?? null);
         setServerPhase(body.matchPhase ?? null);

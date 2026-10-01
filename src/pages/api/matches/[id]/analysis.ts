@@ -2,7 +2,8 @@
  * /api/matches/[id]/analysis
  *
  * GET  — herkese açık, sadece saklı (PRE) analizi döner (yalnız DB; maç sağlayıcısına istek YOK —
- *        her maç sayfası açılışında çağrılıyor, anonim ve bot trafiği de dahil). Yoksa 404.
+ *        her maç sayfası açılışında çağrılıyor, anonim ve bot trafiği de dahil). Yoksa 404 — mobil uygulama buna
+ *        güveniyor; web `?optional=1` gönderir → 200 `{ analysis: null }` (konsolda "Failed to load resource" kalmasın).
  *        Maç fazı istemcide maç verisinden türetilir.
  * POST — giriş yapmış kullanıcı, 5 kredi karşılığında PRE fazında yeni analiz üretir (premium — bakiye ≥ en büyük paket ya da ADMIN: kredisiz).
  *        Cache'te zaten varsa kredi harcamadan direkt döner. Maç başladıysa (PRE
@@ -45,11 +46,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   return res.status(405).json({ error: 'Method not allowed' });
 }
 
-async function handleGet(_req: NextApiRequest, res: NextApiResponse, matchId: string) {
+async function handleGet(req: NextApiRequest, res: NextApiResponse, matchId: string) {
   try {
     // Maç verisi olmadan yalnız id ile arama (takım çifti yedeği yok: Sportmonks id'leri kalıcı).
     const existing = await findStoredMatchAnalysis(matchId, 'PRE');
     if (!existing) {
+      if (req.query.optional === '1') return res.status(200).json({ analysis: null, predictionRecord: null });
       return res.status(404).json({ error: 'Bu maç için analiz üretilmedi.' });
     }
 

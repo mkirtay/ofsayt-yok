@@ -29,7 +29,7 @@ vi.mock('@/lib/logger', () => ({ captureError: vi.fn() }));
 
 import handler from '@/pages/api/matches/[id]/analysis';
 
-function call(id: string) {
+function call(id: string, extraQuery: Record<string, string> = {}) {
   const res = {
     statusCode: 200,
     body: undefined as unknown,
@@ -43,7 +43,7 @@ function call(id: string) {
     },
     setHeader() {},
   };
-  const req = { method: 'GET', query: { id }, headers: {} } as unknown as NextApiRequest;
+  const req = { method: 'GET', query: { id, ...extraQuery }, headers: {} } as unknown as NextApiRequest;
   return Promise.resolve(handler(req, res as unknown as NextApiResponse)).then(() => res);
 }
 
@@ -56,6 +56,13 @@ describe('GET /api/matches/[id]/analysis', () => {
   it('kayıtlı analiz yoksa 404 döner, maç sağlayıcısına gitmez', async () => {
     const res = await call('19000001');
     expect(res.statusCode).toBe(404);
+    expect(db.buildCalls).toBe(0);
+  });
+
+  it('web (optional=1): kayıtlı analiz yoksa 200 + analysis null (mobil parametresiz 404 almaya devam eder)', async () => {
+    const res = await call('19000001', { optional: '1' });
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toEqual({ analysis: null, predictionRecord: null });
     expect(db.buildCalls).toBe(0);
   });
 
