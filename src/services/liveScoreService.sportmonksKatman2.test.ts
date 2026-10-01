@@ -318,14 +318,17 @@ describe('getTopScorers / getTopDisciplinary — Faz 3, tek primitif (sportmonks
       const fetchSpy = vi.spyOn(global, 'fetch').mockImplementation(
         routedFetch([
           { match: '/leagues/564', data: { id: 564, seasons: seasonsLaLiga } },
-          { match: '/topscorers/seasons/27965', data: topscorersGoals },
+          { match: 'seasonTopscorerTypes%3A208&', data: topscorersGoals },
+          { match: 'seasonTopscorerTypes%3A209&', data: [] },
         ]),
       );
       const { getTopScorers } = await import('./liveScoreService');
 
       const result = await getTopScorers('564');
-      const calledUrl = fetchSpy.mock.calls.map((c) => String(c[0])).find((u) => u.includes('/topscorers/'));
-      expect(calledUrl).toContain('seasonTopscorerTypes%3A208%2C209'); // gol + asist tek sorguda
+      const urls = fetchSpy.mock.calls.map((c) => String(c[0])).filter((u) => u.includes('/topscorers/'));
+      // Gol ve asist ayrı sorgu (birleşik sorguda gol satırları önce geldiği için sayfa sınırı asistleri keserdi)
+      expect(urls.some((u) => u.includes('seasonTopscorerTypes%3A208&'))).toBe(true);
+      expect(urls.some((u) => u.includes('seasonTopscorerTypes%3A209&'))).toBe(true);
       expect(result?.topscorers?.[0]).toMatchObject({ goals: 9, player: { name: 'Raphinha' } });
     });
   });
@@ -335,7 +338,14 @@ describe('getTopScorers / getTopDisciplinary — Faz 3, tek primitif (sportmonks
       vi.spyOn(global, 'fetch').mockImplementation(
         routedFetch([
           { match: '/leagues/600', data: { id: 600, seasons: [{ id: 28203, name: '2026/2027', is_current: true }] } },
-          { match: '/topscorers/seasons/28203', data: topscorersGoalsAssistsSuperLig },
+          {
+            match: 'seasonTopscorerTypes%3A208&',
+            data: (topscorersGoalsAssistsSuperLig as Array<{ type_id: number }>).filter((r) => r.type_id === 208),
+          },
+          {
+            match: 'seasonTopscorerTypes%3A209&',
+            data: (topscorersGoalsAssistsSuperLig as Array<{ type_id: number }>).filter((r) => r.type_id === 209),
+          },
         ]),
       );
       const { getTopScorers } = await import('./liveScoreService');

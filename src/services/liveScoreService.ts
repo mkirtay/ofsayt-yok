@@ -549,6 +549,7 @@ async function sportmonksFetchTopscorerRows(
   explicitSeasonId: number | undefined,
   typeIds: number[],
   caller: string,
+  maxPages?: number,
 ): Promise<SportmonksTopscorerRow[] | null> {
   const leagueId = sportmonksResolveLeagueIdOrWarn(competitionId, caller);
   if (leagueId == null) return null;
@@ -559,6 +560,7 @@ async function sportmonksFetchTopscorerRows(
     basePath: 'football',
     path: `/topscorers/seasons/${seasonId}`,
     perPage: 50,
+    maxPages,
     extraParams: { include: 'player;participant', filters: `seasonTopscorerTypes:${typeIds.join(',')}` },
   });
   // Pass 5 "Risk kategorisi notu": filters=... sessizce uygulanmayabiliyor.
@@ -1711,6 +1713,9 @@ export type TopScorersPayload = {
 };
 
 
+/** Gol krallığı: tür başına en çok bu kadar sayfa (50'şer → ilk 100 oyuncu). */
+const TOPSCORER_MAX_PAGES = 2;
+
 // Endpoint: GET /competitions/topscorers.json?competition_id=X (&season_id= dokümanda yok; tablo ile aynı parametre)
 // (flag kapalı) | GET /topscorers/seasons/{id}?filters=seasonTopscorerTypes:208 (flag açık — Pass 4)
 export const getTopScorers = async (
@@ -1719,14 +1724,18 @@ export const getTopScorers = async (
 ): Promise<TopScorersPayload | null> => {
   if (isSportmonksProviderEnabled()) {
     try {
-      // Gol (208) + asist (209) TEK sorguda: aynı endpoint/havuz, ek istek yalnızca ek sayfa (Süper Lig: 81+76 satır → 4 sayfa, 2'ydi).
-      const rows = await sportmonksFetchTopscorerRows(
-        competitionId,
-        opts?.season,
-        [GOAL_TOPSCORER_TYPE_ID, ASSIST_TOPSCORER_TYPE_ID],
-        'getTopScorers',
-      );
-      if (rows == null) return null;
+      // Gol (208) ve asist (209) AYRI sorgu, her biri en çok TOPSCORER_MAX_PAGES sayfa. Sportmonks satırları
+      // (type_id, position) sırasıyla döndürüyor: birleşik sorguda önce bütün gol satırları gelir, büyük ligde
+      // (MLS: ~700 satır, 15 sayfa) sayfa sınırı asistleri tamamen keserdi. Ayrı sorgu + sınır: ilk 100 golcü ve
+      // ilk 100 asistçi; Süper Lig yine 4 istek, MLS 15 → 4 (proxy izin listesi en çok 10. sayfa).
+      const [goalRows, assistRows] = await Promise.all([
+        sportmonksFetchTopscorerRows(competitionId, opts?.season, [GOAL_TOPSCORER_TYPE_ID], 'getTopScorers', TOPSCORER_MAX_PAGES),
+        sportmonksFetchTopscorerRows(competitionId, opts?.season, [ASSIST_TOPSCORER_TYPE_ID], 'getTopScorers/assists', TOPSCORER_MAX_PAGES).catch(
+          () => null,
+        ),
+      ]);
+      if (goalRows == null) return null;
+      const rows = [...goalRows, ...(assistRows ?? [])];
       const leagueId = Number(competitionId);
       const seasonId = rows[0]?.season_id;
       return {
