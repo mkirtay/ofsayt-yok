@@ -198,7 +198,16 @@ export function mapSportmonksLineups(fixture: SportmonksFixture): MatchLineupDat
       home: buildLineupTeam(home, rows),
       away: buildLineupTeam(away, rows),
     },
+    confirmed: lineupConfirmed(fixture),
   };
+}
+
+/** Kadro resmî mi: metadata type 572 → `values.confirmed`. Metadata istenmediyse/yoksa null. */
+export const LINEUP_CONFIRMED_METADATA_TYPE_ID = 572;
+export function lineupConfirmed(fixture: SportmonksFixture): boolean | null {
+  const row = fixture.metadata?.find((m) => m.type_id === LINEUP_CONFIRMED_METADATA_TYPE_ID);
+  const value = (row?.values as { confirmed?: unknown } | undefined)?.confirmed;
+  return typeof value === 'boolean' ? value : null;
 }
 
 // ── getTopScorers ─────────────────────────────────────────────────────────────

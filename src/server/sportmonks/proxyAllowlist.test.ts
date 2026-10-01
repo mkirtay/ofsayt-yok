@@ -28,6 +28,10 @@ const WEB_REQUESTS: [string, Record<string, string>][] = [
   ['football/fixtures/between/2026-07-03/2026-09-30/34', { include: FIXTURE_INCLUDE, per_page: '50', page: '1' }],
   ['football/fixtures/19746594', { include: `${FIXTURE_INCLUDE};events` }],
   ['football/fixtures/19746594', { include: 'statistics' }],
+  [
+    'football/fixtures/19745050',
+    { include: 'lineups.player.nationality;lineups.details;participants;metadata', filters: 'metadataTypes:572' },
+  ],
   ['football/fixtures/19746594', { include: 'lineups.player.nationality;lineups.details;participants' }],
   ['football/fixtures/head-to-head/34/88', { include: FIXTURE_INCLUDE }],
   ['football/leagues/600', { include: 'seasons' }],

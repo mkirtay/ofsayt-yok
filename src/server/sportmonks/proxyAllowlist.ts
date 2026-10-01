@@ -39,6 +39,8 @@ const INCLUDE_TOKENS = new Set([
   // maç (SPORTMONKS_FIXTURE_INCLUDE + detay)
   'participants', 'scores', 'state', 'periods', 'league', 'league.country', 'venue', 'referees.referee', 'round', 'stage',
   'group', 'events', 'statistics', 'lineups.player.nationality', 'lineups.details',
+  // kadro resmî mi (metadata type 572 `confirmed`) — yalnız `metadataTypes:572` filtresiyle
+  'metadata',
   // lig / puan / krallık / kadro
   'seasons', 'participant', 'details.type', 'player', 'player.statistics.details',
   // takım fikstürü
@@ -49,7 +51,14 @@ const INCLUDE_TOKENS = new Set([
   'lineups.fixture.participants', 'lineups.fixture.scores', 'lineups.fixture.league',
 ]);
 
-const FILTER_PREFIXES = new Set(['fixtureLeagues', 'seasonTopscorerTypes', 'playerStatisticSeasons', 'lineupDetailTypes', 'fixtureStates']);
+const FILTER_PREFIXES = new Set([
+  'fixtureLeagues',
+  'seasonTopscorerTypes',
+  'playerStatisticSeasons',
+  'lineupDetailTypes',
+  'fixtureStates',
+  'metadataTypes',
+]);
 const KNOWN_PARAMS = new Set(['include', 'filters', 'per_page', 'page', 'order', 'api_token']);
 const MAX_PER_PAGE = 50;
 const MAX_PAGE = 10;

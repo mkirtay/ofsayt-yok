@@ -128,6 +128,15 @@ describe('mapSportmonksLineups — aynı fixture, gerçek lineups[] (include=lin
     lineups: celtaVigoLineups as SportmonksLineupRow[],
   };
 
+  it('kadro resmî mi: metadata 572 → confirmed; metadata yoksa null', () => {
+    expect(mapSportmonksLineups(fixture)?.confirmed).toBeNull();
+    // Gerçek yanıt biçimi (Eldense – Oviedo 19745050, maça 1 gün varken): { type_id: 572, values: { confirmed: false } }
+    const probable = { ...fixture, metadata: [{ type_id: 572, values: { confirmed: false } }] };
+    expect(mapSportmonksLineups(probable)?.confirmed).toBe(false);
+    const official = { ...fixture, metadata: [{ type_id: 159, values: { home: '4-3-3' } }, { type_id: 572, values: { confirmed: true } }] };
+    expect(mapSportmonksLineups(official)?.confirmed).toBe(true);
+  });
+
   it('home/away takımlarını participants[].meta.location üzerinden doğru ayırır', () => {
     const data = mapSportmonksLineups(fixture);
     expect(data?.lineup.home.team.name).toBe('Celta de Vigo');

@@ -400,8 +400,12 @@ export async function findMatchById(
 async function sportmonksFetchFixtureDetail(
   fixtureId: string | number,
   include: string,
+  filters?: string,
 ): Promise<SportmonksFixture | null> {
-  const envelope = await sportmonksClientRequest<SportmonksFixture>('football', `/fixtures/${fixtureId}`, { include });
+  const envelope = await sportmonksClientRequest<SportmonksFixture>('football', `/fixtures/${fixtureId}`, {
+    include,
+    ...(filters ? { filters } : {}),
+  });
   return envelope.data ?? null;
 }
 
@@ -1234,7 +1238,12 @@ export const getMatchStats = async (matchId: string): Promise<MatchStatsData | n
 export const getMatchLineups = async (matchId: string): Promise<MatchLineupData | null> => {
   if (isSportmonksProviderEnabled()) {
     try {
-      const fixture = await sportmonksFetchFixtureDetail(matchId, 'lineups.player.nationality;lineups.details;participants');
+      // metadata 572 = kadro resmî mi (Muhtemel 11 / İlk 11); filtre yalnız o satırı getirir.
+      const fixture = await sportmonksFetchFixtureDetail(
+        matchId,
+        'lineups.player.nationality;lineups.details;participants;metadata',
+        'metadataTypes:572',
+      );
       return fixture ? mapSportmonksLineups(fixture) : null;
     } catch (error) {
       console.error('Error fetching lineups (sportmonks)', error);

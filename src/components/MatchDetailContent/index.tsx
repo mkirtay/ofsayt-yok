@@ -63,7 +63,7 @@ export default function MatchDetailContent({ detail, requestedMatchId, variant =
                 />
               </div>
             </div>
-            <Lineup lineups={detail.lineups} loading={matchLoading || lineupsLoading} />
+            <Lineup lineups={detail.lineups} loading={matchLoading || lineupsLoading} match={match} />
           </>
         ),
       },

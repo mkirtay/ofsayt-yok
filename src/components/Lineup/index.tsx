@@ -2,7 +2,11 @@ import { useState } from 'react';
 import Link from 'next/link';
 import type { LineupPlayer, MatchLineupData } from '@/models/domain';
 import { useTranslation } from '@/lib/i18n';
+import '@/lib/i18nNamespaces/matchState';
 import LazyLoad from '@/components/LazyLoad';
+import type { Match } from '@/models/liveScore';
+import { matchDisplayState, specialKeepsData } from '@/utils/matchDisplayState';
+import { isProbableLineup } from '@/utils/lineupStatus';
 import { buildFormationLayout } from '@/utils/lineupFormation';
 import { POSITION_LABEL_TR, positionLabel } from '@/utils/positionLabel';
 import { formatRating } from '@/config/ratingScale';
@@ -19,6 +23,19 @@ const FORMATION_PHOTO_PX = 40;
 interface LineupProps {
   lineups: MatchLineupData | null;
   loading?: boolean;
+  /** Verilirse başlık (İlk 11 / Muhtemel 11) ve boş metin maçın evresine göre. */
+  match?: Match | null;
+}
+
+/** Başlık + tahmini kadroda alt not ("Resmî ilk 11'ler maçtan yaklaşık 1 saat önce açıklanır."). */
+function LineupTitle({ probable }: { probable: boolean }) {
+  const { t } = useTranslation('matchState');
+  return (
+    <div className={styles.titleBlock}>
+      <h3 className={styles.title}>{probable ? t('lineup.probable') : t('lineup.starting')}</h3>
+      {probable ? <p className={styles.titleNote}>{t('lineup.probableNote')}</p> : null}
+    </div>
+  );
 }
 
 /** "Rodrigo De Paul" -> "R. D. Paul" (saha üzerinde kompakt gösterim). */
@@ -138,6 +155,7 @@ function CompactRow({ player, side, shortCode }: { player: LineupPlayer; side: '
 
 /** `side`: sol liste (ev sahibi) sahaya yakın SAĞ kenara, sağ liste (deplasman) SOL kenara yaslanır. */
 function CompactList({ players, bench = [], side }: { players: LineupPlayer[]; bench?: LineupPlayer[]; side: 'home' | 'away' }) {
+  const { t } = useTranslation('matchState');
   return (
     <ul className={styles.compactList}>
       {players.map((p) => (
@@ -145,7 +163,7 @@ function CompactList({ players, bench = [], side }: { players: LineupPlayer[]; b
       ))}
       {bench.length > 0 ? (
         <>
-          <li className={styles.compactBenchTitle} aria-hidden="true">Yedekler ({bench.length})</li>
+          <li className={styles.compactBenchTitle} aria-hidden="true">{t('lineup.benchCount', { count: bench.length })}</li>
           {sortBench(bench).map((p) => (
             <CompactRow key={p.id} player={p} side={side} shortCode />
           ))}
@@ -194,11 +212,11 @@ function FormationRows({ rows, team }: { rows: LineupPlayer[][]; team: 'home' | 
  * Yüklenirken 02 · Diziliş animasyonu, gerçek kadro alanıyla AYNI kutuda: başlık + takım çubuğu + saha kutusu
  * (aynı min-height/kenarlık/padding) + takım çubuğu → içerik gelince yükseklik değişmez.
  */
-function LineupLoading() {
+function LineupLoading({ probable }: { probable: boolean }) {
   const { t } = useTranslation('common');
   return (
     <div className={styles.lineupContainer}>
-      <h3 className={styles.title}>İlk 11</h3>
+      <LineupTitle probable={probable} />
       <div className={styles.layout}>
         <div className={styles.pitchCol}>
           <div className={`${styles.teamBar} ${styles.teamBarPlaceholder}`} aria-hidden="true">
@@ -218,17 +236,36 @@ function LineupLoading() {
   );
 }
 
-export default function Lineup({ lineups, loading }: LineupProps) {
+export default function Lineup({ lineups, loading, match }: LineupProps) {
+  const { t } = useTranslation('matchState');
+  const state = match ? matchDisplayState(match) : null;
+  const phase = state?.phase ?? 'POST';
+
   if (loading) {
-    return <LineupLoading />;
+    // Başlamamış maçta kadro çoğunlukla tahmini: başlık + not baştan (gelince kutu büyümesin).
+    return <LineupLoading probable={phase === 'PRE'} />;
   }
 
   const homeData = lineups?.lineup?.home;
   const awayData = lineups?.lineup?.away;
 
   if (!homeData && !awayData) {
-    return <div className={styles.empty}>Kadrolar henüz açıklanmadı.</div>;
+    // Ertelendi / iptal / tarih belirsiz / gecikti: istatistik ve olay kartları durumu zaten söylüyor → tekrar etme.
+    if (state?.special && !specialKeepsData(state.special)) return null;
+    return (
+      <div className={styles.empty}>
+        {!state
+          ? t('lineup.notAnnounced')
+          : phase === 'PRE'
+            ? `${t('lineup.notAnnounced')} ${t('lineup.probableNote')}`
+            : phase === 'POST'
+              ? t('post.lineups')
+              : t('lineup.notAnnounced')}
+      </div>
+    );
   }
+
+  const probable = lineups ? isProbableLineup(lineups, phase) : false;
 
   const homePlayers: LineupPlayer[] = homeData?.players || [];
   const awayPlayers: LineupPlayer[] = awayData?.players || [];
@@ -242,8 +279,8 @@ export default function Lineup({ lineups, loading }: LineupProps) {
   const homeLayout = buildFormationLayout(homeStarters);
   const awayLayout = buildFormationLayout(awayStarters);
 
-  const homeTeamName = homeData?.team?.name || 'Ev Sahibi';
-  const awayTeamName = awayData?.team?.name || 'Deplasman';
+  const homeTeamName = homeData?.team?.name || t('lineup.home');
+  const awayTeamName = awayData?.team?.name || t('lineup.away');
   const homeFormation = homeLayout.label;
   const awayFormation = awayLayout.label;
   // Deplasman takımı sahanın diğer ucundan dizilir: hatlar (ileri→geri) ve
@@ -252,7 +289,7 @@ export default function Lineup({ lineups, loading }: LineupProps) {
 
   return (
     <div className={styles.lineupContainer}>
-      <h3 className={styles.title}>İlk 11</h3>
+      <LineupTitle probable={probable} />
 
       <div className={styles.layout}>
         <CompactList players={flattenRows(homeLayout.rows)} bench={homeBench} side="home" />
@@ -286,7 +323,7 @@ export default function Lineup({ lineups, loading }: LineupProps) {
 
       {homeBench.length + awayBench.length > 0 ? (
         <section className={styles.bench} aria-labelledby="lineup-bench-title" data-testid="bench-bottom">
-          <h3 id="lineup-bench-title" className={`${styles.title} ${styles.benchTitle}`}>Yedekler</h3>
+          <h3 id="lineup-bench-title" className={`${styles.title} ${styles.benchTitle}`}>{t('lineup.bench')}</h3>
           <div className={styles.benchGrid}>
             <BenchList teamName={homeTeamName} players={homeBench} side="home" />
             <BenchList teamName={awayTeamName} players={awayBench} side="away" />

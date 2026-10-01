@@ -58,6 +58,11 @@ export interface MatchLineupData {
     home: LineupTeam;
     away: LineupTeam;
   };
+  /**
+   * Sportmonks metadata type 572 (`lineup confirmed`): false → kulüplerin açıklamadığı, tahmini kadro ("Muhtemel 11");
+   * true → resmî. Bilinmiyorsa null (eski sağlayıcı / alan gelmedi).
+   */
+  confirmed?: boolean | null;
 }
 
 export interface MatchStatsData {

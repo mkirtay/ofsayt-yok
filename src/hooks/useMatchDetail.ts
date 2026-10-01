@@ -15,6 +15,9 @@ import type { MatchEvent, MatchStatsData } from '@/models/domain';
 import { toStandingsCompetitionId } from '@/services/sportmonksProviderFlag';
 import { fetchWorldCupStandingsBundle, isWorldCupCompetition } from '@/utils/worldCupStandings';
 import { useLiveMatchUpdates } from '@/hooks/useLiveMatchUpdates';
+import { deriveMatchPhase } from '@/utils/matchPhase';
+import { matchKickoffMs } from '@/utils/matchActivity';
+import { isProbableLineup } from '@/utils/lineupStatus';
 import type { LiveMatchPayload } from '@/server/liveMatch';
 
 /**
@@ -25,6 +28,9 @@ import type { LiveMatchPayload } from '@/server/liveMatch';
 type FindResult = Awaited<ReturnType<typeof findMatchById>>;
 
 const PREFETCH_TTL_MS = 60_000;
+/** Tahmini kadro yenileme: maçtan önceki bu pencerede, bu aralıkla. */
+const LINEUP_REFRESH_WINDOW_MS = 2 * 60 * 60_000;
+const LINEUP_REFRESH_MS = 5 * 60_000;
 const findCache = new Map<string, { at: number; promise: Promise<FindResult> }>();
 
 /** Aynı maç için kısa süreli tekilleştirilmiş `findMatchById` — hover prefetch ile panel açılışı paylaşır. */
@@ -283,6 +289,43 @@ export function useMatchDetail(
     if (payload.stats) setStats(payload.stats);
   }, []);
   useLiveMatchUpdates(matchId, match, applyLiveUpdate);
+
+  // Tahmini kadro ("Muhtemel 11") sayfa açıkken resmîleşebilir: maçtan önceki 2 saatte 5 dk'da bir, maç başlayınca
+  // (evre PRE'den çıkınca) bir kez yeniden çekilir. Resmî kadro gelince durur. Sunucu önbelleği bu istekleri zaten
+  // 30 sn–10 dk tutuyor (cachePolicy).
+  const phase = deriveMatchPhase(match?.status);
+  const kickoffMs = match ? matchKickoffMs(match) : null;
+  const lineupProbable = lineups != null && isProbableLineup(lineups, phase);
+  useEffect(() => {
+    if (!matchId || !lineupProbable) return;
+    let cancelled = false;
+    const refresh = () => {
+      void getMatchLineups(matchId).then((data) => {
+        if (!cancelled && data) setLineups(data);
+      });
+    };
+    if (phase !== 'PRE') {
+      refresh();
+      return () => {
+        cancelled = true;
+      };
+    }
+    if (kickoffMs == null) return;
+    let intervalId: number | undefined;
+    const startPolling = () => {
+      refresh();
+      intervalId = window.setInterval(refresh, LINEUP_REFRESH_MS);
+    };
+    const untilWindow = kickoffMs - LINEUP_REFRESH_WINDOW_MS - Date.now();
+    let timeoutId: number | undefined;
+    if (untilWindow <= 0) startPolling();
+    else if (untilWindow < 24 * 60 * 60_000) timeoutId = window.setTimeout(startPolling, untilWindow);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeoutId);
+      window.clearInterval(intervalId);
+    };
+  }, [matchId, lineupProbable, phase, kickoffMs]);
 
   const handleSeasonChange = useCallback(async (seasonId: number, competitionIdStr: string) => {
     setSelectedSeasonId(seasonId);

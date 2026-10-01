@@ -268,6 +268,8 @@ export type SportmonksFixture = {
   statistics?: SportmonksStatisticRow[];
   /** Faz 3 — `include=lineups.player` (getMatchLineups). */
   lineups?: SportmonksLineupRow[];
+  /** `include=metadata` (+ `filters=metadataTypes:572`): type 572 → `{ confirmed: boolean }` kadro resmî mi. */
+  metadata?: { type_id: number; values?: unknown }[];
 };
 
 // ─── Faz 3 — Katman-2/3 (maç detay, H2H, sıralama, kadro) ──────────────────
