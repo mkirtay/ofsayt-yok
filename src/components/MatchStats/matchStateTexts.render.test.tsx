@@ -85,9 +85,19 @@ describe('maç kartı skor alanı', () => {
     expect(html).toContain('Açıklanmadı');
   });
 
-  it('ertelendi: skor yerinde durum', () => {
+  it('ertelendi: skor yerinde durum; üst satırda "Ertelendi" + üstü çizili eski tarih', () => {
     const html = card(match('NOT STARTED', { state_code: 'POSTPONED' }));
     expect(html).toContain('Ertelendi');
     expect(html).not.toContain('2 Ekim Cuma');
+    expect(html).toMatch(/headerDateState[^>]*>Ertelendi<\/span> <s[^>]*>02\.10\.2026 21:30<\/s>/);
+  });
+
+  it('iptal / tarih belirsiz: üst satırda durum, eski tarih üstü çizili', () => {
+    expect(card(match('FINISHED', { state_code: 'CANCELLED' }))).toMatch(/>İptal edildi<\/span> <s[^>]*>02\.10\.2026 21:30</);
+    expect(card(match('NOT STARTED', { state_code: 'TBA' }))).toMatch(/>Tarih belirsiz<\/span> <s[^>]*>02\.10\.2026 21:30</);
+  });
+
+  it('normal maçta üst satır değişmez', () => {
+    expect(card(match('NOT STARTED'))).not.toContain('<s ');
   });
 });

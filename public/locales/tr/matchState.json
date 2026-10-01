@@ -54,5 +54,10 @@
     "notAnnounced": "Kadrolar henüz açıklanmadı.",
     "home": "Ev Sahibi",
     "away": "Deplasman"
+  },
+  "headerDate": {
+    "postponed": "Ertelendi",
+    "cancelled": "İptal edildi",
+    "tba": "Tarih belirsiz"
   }
 }

@@ -208,6 +208,16 @@ $match-card-header-blue: var(--text-secondary); // tema-uyumlu (eskiden sabit la
   padding: 0 $spacing-1;
 }
 
+// Üst satır: ertelendi / iptal / tarih belirsiz → durum, yanında soluk ve üstü çizili eski tarih.
+.headerDateState {
+  font-weight: 700;
+  color: #d97706;
+}
+
+.headerDateOld {
+  opacity: 0.55;
+}
+
 // Maç öncesi: skor yerine başlama saati (skorla aynı punto) + gün.
 .kickoff {
   display: flex;

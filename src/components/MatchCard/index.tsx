@@ -216,6 +216,8 @@ export default function MatchCard({ match, loading }: MatchCardProps) {
       ? ts(`day.${relativeDay}`)
       : formatFixtureDate(kickoff.dayIso, locale)
     : '';
+  // Ertelendi / iptal / tarih belirsiz: üst satırda eski tarih geçerli gibi görünmesin → durum + soluk, üstü çizili tarih.
+  const headerDateState = special === 'postponed' || special === 'cancelled' || special === 'tba' ? special : null;
   const refereeText = refereeName || (isPre && !special ? ts('refereeTba') : '—');
   const showMatchFooter = Boolean(location.trim() || refereeName) || (isPre && !special);
 
@@ -261,7 +263,17 @@ export default function MatchCard({ match, loading }: MatchCardProps) {
             <span className={styles.cardHeaderLeague}>{compName}</span>
           </span>
         </div>
-        <div className={styles.cardHeaderRight}>{t('date')} : {getMatchCardDateTimeText(match)}</div>
+        <div className={styles.cardHeaderRight}>
+          {t('date')} :{' '}
+          {headerDateState ? (
+            <>
+              <span className={styles.headerDateState}>{ts(`headerDate.${headerDateState}`)}</span>{' '}
+              <s className={styles.headerDateOld}>{getMatchCardDateTimeText(match)}</s>
+            </>
+          ) : (
+            getMatchCardDateTimeText(match)
+          )}
+        </div>
       </header>
 
       <div className={styles.teamsContainer}>

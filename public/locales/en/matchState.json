@@ -54,5 +54,10 @@
     "notAnnounced": "Line-ups haven't been announced yet.",
     "home": "Home",
     "away": "Away"
+  },
+  "headerDate": {
+    "postponed": "Postponed",
+    "cancelled": "Cancelled",
+    "tba": "Date TBA"
   }
 }
