@@ -11,10 +11,13 @@ import {
 import { isSportmonksProviderEnabled } from '@/services/sportmonksProviderFlag';
 import type { Match } from '@/models/liveScore';
 import {
-  fetchCompetitionSidebarForSeason,
+  fetchCompetitionStandingsForSeason,
   useCompetitionSidebar,
+  useCompetitionTopScorers,
 } from '@/hooks/useCompetitionSidebar';
 import { useHomeHubMatches } from '@/hooks/useHomeHubMatches';
+import { SEEDED_STALE_UPDATED_AT, useHomeInitialSeed } from '@/hooks/useHomeInitialSeed';
+import type { HomeInitialData } from '@/utils/homeInitialData';
 import NextMatchDayNotice from '@/components/NextMatchDayNotice';
 import { useCompetitionFixtures } from '@/hooks/useCompetitionFixtures';
 import { buildFixtureDateGroups } from '@/utils/fixtureDateGroups';
@@ -66,6 +69,10 @@ export type MatchHubPageProps = {
   defaultCompetitionId: number;
   /** Doluysa maç listesi yalnızca bu `competition_id` değerleriyle sınırlı */
   allowedCompetitionIds: number[] | null;
+  /** ISR'ın üretildiği TR günü: ilk render (sunucu = istemci) bu günle başlar, mount'ta gerçek gün farklıysa geçilir. */
+  initialDate?: string;
+  /** ISR ilk ekran verisi (bkz. server/homeInitialData.ts); yoksa veri tarayıcıda çekilir. */
+  initialData?: HomeInitialData | null;
 };
 
 const today = () => todayIsoIstanbul();
@@ -74,7 +81,11 @@ export default function MatchHubPage({
   sidebarLeagues,
   defaultCompetitionId,
   allowedCompetitionIds,
+  initialDate,
+  initialData,
 }: MatchHubPageProps) {
+  // Çocuk sorgular abone olmadan önce: ISR verisi react-query'ye aynı anahtarlarla yazılır.
+  useHomeInitialSeed(initialData);
   const { t } = useTranslation('match');
   const { t: tg } = useTranslation('gundem');
   const { t: tl } = useTranslation('leagues');
@@ -83,7 +94,20 @@ export default function MatchHubPage({
   const splitView = useSplitView();
   const gundemPanelWide = useMinWidth(GUNDEM_PANEL_MIN_WIDTH) === true;
   const isSplit = splitView === true;
-  const [selectedDate, setSelectedDate] = useState<string>(today);
+  // Render'da `today()` çağrılmaz: sunucu (üretim günü) ile istemcinin ilk render'ı aynı olmalı (hydration).
+  const [todayIso, setTodayIso] = useState<string>(() => initialDate ?? today());
+  const [selectedDate, setSelectedDate] = useState<string>(() => initialDate ?? today());
+  useEffect(() => {
+    const real = today();
+    if (real === todayIso) return;
+    // Bayat HTML (ör. gece yarısından önce üretilmiş): "bugün" gerçek güne geçer; kullanıcı başka gün seçtiyse dokunma.
+    // Saat sunucuda farklı olabildiği için render'da değil mount'ta okunur (hydration) — nadir, tek seferlik düzeltme.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setTodayIso(real);
+    setSelectedDate((prev) => (prev === todayIso ? real : prev));
+    // Yalnızca mount'ta.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [activeTab, setActiveTab] = useState<MatchTab>('all');
 
   // Varsayılan sekme Puan Durumu (Puan Durumu + Gol Krallığı varsayılan görünümde)
@@ -97,23 +121,26 @@ export default function MatchHubPage({
    */
   const uefaFixtureMode = isUefaCupCompetitionId(selectedCompId);
   const uefaFixturesQuery = useCompetitionFixtures(uefaFixtureMode ? selectedCompId : null);
-  const {
-    data: sidebarData,
-    isLoading: sidebarQueryLoading,
-    isFetching: sidebarQueryFetching,
-  } = useCompetitionSidebar(selectedCompId);
+  const { data: sidebarData, isLoading: sidebarQueryLoading } = useCompetitionSidebar(selectedCompId);
   const [selectedSeasonId, setSelectedSeasonId] = useState<number | null>(null);
   const [seasonPatch, setSeasonPatch] = useState<{
+    seasonId: number;
     standings: NonNullable<typeof sidebarData>['standings'];
-    topScorers: NonNullable<typeof sidebarData>['topScorers'];
   } | null>(null);
 
   const seasons = sidebarData?.seasons ?? [];
-  const standings = seasonPatch?.standings ?? sidebarData?.standings ?? null;
-  const rawTopScorers = seasonPatch?.topScorers ?? sidebarData?.topScorers ?? null;
-  const topScorers = useTopScorersWithAppearances(rawTopScorers, sidebarTab === 'scorers');
-  const standingsLoading = sidebarQueryLoading || sidebarQueryFetching;
-  const topScorersLoading = standingsLoading;
+  const effectiveSeasonId = selectedSeasonId ?? sidebarData?.selectedSeasonId ?? null;
+  const standings =
+    (seasonPatch && seasonPatch.seasonId === effectiveSeasonId ? seasonPatch.standings : null) ??
+    sidebarData?.standings ??
+    null;
+  // Gol krallığı yalnızca sekme açıkken (ayrı sorgu): gizli sekme için her açılışta 4 sayfa çekilmesin.
+  const scorersOpen = sidebarTab === 'scorers';
+  const topScorersQuery = useCompetitionTopScorers(selectedCompId, effectiveSeasonId, scorersOpen && !sidebarQueryLoading);
+  const topScorers = useTopScorersWithAppearances(topScorersQuery.data ?? null, scorersOpen);
+  // Yalnızca ilk yükleme iskelet gösterir; arka plandaki tazeleme mevcut tabloyu yerinde bırakır (kayma yok).
+  const standingsLoading = sidebarQueryLoading;
+  const topScorersLoading = sidebarQueryLoading || topScorersQuery.isLoading;
 
   useEffect(() => {
     setSelectedSeasonId(null);
@@ -133,8 +160,8 @@ export default function MatchHubPage({
 
   const handleSeasonChange = useCallback(async (seasonId: number) => {
     setSelectedSeasonId(seasonId);
-    const patch = await fetchCompetitionSidebarForSeason(selectedCompId, seasonId);
-    setSeasonPatch(patch);
+    const table = await fetchCompetitionStandingsForSeason(selectedCompId, seasonId);
+    setSeasonPatch({ seasonId, standings: table });
   }, [selectedCompId]);
 
   const FAV_LS_KEY = 'oy_fav_club_teams';
@@ -265,7 +292,6 @@ export default function MatchHubPage({
           return true;
       }
     });
-    const todayIso = today();
     return buildFixtureDateGroups(byTab, { todayIso }).map((g) => ({
       date: g.date,
       label: fixtureDateHeading(g.date, todayIso, locale, {
@@ -274,7 +300,7 @@ export default function MatchHubPage({
       }),
       matches: g.matches,
     }));
-  }, [uefaFixtureMode, uefaFixturesQuery.data, activeTab, favoriteTeamSet, locale, t]);
+  }, [uefaFixtureMode, uefaFixturesQuery.data, activeTab, favoriteTeamSet, locale, t, todayIso]);
 
   const selectedLeague = sidebarLeagues.find((l) => l.id === selectedCompId);
   // Takım sayfası / maç detayı ile aynı kısa ad ("Süper Lig"): Sportmonks id → `leagues.short.*`;
@@ -435,17 +461,20 @@ export default function MatchHubPage({
   }
 
   /** Seçili gün (bugün ya da ileri) tümüyle boşsa sıradaki maç günü gösterilir — yalnız "Tümü" sekmesinde. */
-  const showNextMatchDay = activeTab === 'all' && selectedDate >= today();
+  const showNextMatchDay = activeTab === 'all' && selectedDate >= todayIso;
 
   const delayedNote = matchesDelayed ? (
     <div className={styles.delayedNote} role="status">
-      {t('hub.dataDelayed', {
-        time: new Date(matchesUpdatedAt).toLocaleTimeString(locale === 'en' ? 'en-GB' : 'tr-TR', {
-          hour: '2-digit',
-          minute: '2-digit',
-          timeZone: 'Europe/Istanbul',
-        }),
-      })}
+      {matchesUpdatedAt <= SEEDED_STALE_UPDATED_AT
+        ? // Sayfayla gelen (ISR) veri tazelenemedi: verinin saati bilinmiyor.
+          t('hub.dataDelayedNoTime')
+        : t('hub.dataDelayed', {
+            time: new Date(matchesUpdatedAt).toLocaleTimeString(locale === 'en' ? 'en-GB' : 'tr-TR', {
+              hour: '2-digit',
+              minute: '2-digit',
+              timeZone: 'Europe/Istanbul',
+            }),
+          })}
     </div>
   ) : null;
 
@@ -465,7 +494,8 @@ export default function MatchHubPage({
         selectedMatchId={showDetailPanel ? selectedMatchId : null}
         compact={showDetailPanel}
         fill={showDetailPanel || showGundemPanel}
-        fitContent={splitView === false}
+        // Dar görünümde içerik kadar; ≥ split CSS'le sabit yüksekliğe döner (JS ölçümü beklenmez → SSR = istemci).
+        fitContent="belowSplit"
       />
     )
   ) : matchesFailed ? (
@@ -509,7 +539,8 @@ export default function MatchHubPage({
         selectedMatchId={showDetailPanel ? selectedMatchId : null}
         compact={showDetailPanel}
         fill={showDetailPanel || showGundemPanel}
-        fitContent={splitView === false}
+        // Dar görünümde içerik kadar; ≥ split CSS'le sabit yüksekliğe döner (JS ölçümü beklenmez → SSR = istemci).
+        fitContent="belowSplit"
       />
     </>
   );
@@ -517,6 +548,7 @@ export default function MatchHubPage({
   return (
     <>
       <SubHeader
+        initialTodayIso={initialDate}
         selectedDate={selectedDate}
         onDateChange={(d) => {
           setSelectedDate(d);
@@ -575,7 +607,7 @@ export default function MatchHubPage({
                     loading={standingsLoading}
                     competitionName={selectedLeagueName}
                     seasons={seasons}
-                    selectedSeasonId={selectedSeasonId}
+                    selectedSeasonId={effectiveSeasonId}
                     onSeasonChange={handleSeasonChange}
                   />
                 )}
@@ -585,7 +617,7 @@ export default function MatchHubPage({
                     data={topScorers}
                     loading={topScorersLoading}
                     seasons={seasons}
-                    selectedSeasonId={selectedSeasonId}
+                    selectedSeasonId={effectiveSeasonId}
                     onSeasonChange={handleSeasonChange}
                   />
                 )}

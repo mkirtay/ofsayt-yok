@@ -12,14 +12,18 @@ import {
 } from '@/services/liveScoreService';
 import { legacyToStandingsLeagueId } from '@/services/sportmonksProviderFlag';
 
+/**
+ * Yan panelin varsayılan görünümü (Puan Durumu): sezon listesi + seçili sezon + tablo. Gol krallığı bu sorguda
+ * YOK — gizli sekme olduğu halde her açılışta 4 sayfa çekiliyordu; artık sekme açılınca `useCompetitionTopScorers`.
+ * Sunucu (ana sayfa ISR'ı, `server/homeInitialData.ts`) ve tarayıcı aynı `loadCompetitionSidebar`'ı kullanır.
+ */
 export type CompetitionSidebarData = {
   seasons: SeasonListItem[];
   selectedSeasonId: number | null;
   standings: CompetitionTableData | null;
-  topScorers: TopScorersPayload | null;
 };
 
-const EMPTY_SIDEBAR: CompetitionSidebarData = { seasons: [], selectedSeasonId: null, standings: null, topScorers: null };
+const EMPTY_SIDEBAR: CompetitionSidebarData = { seasons: [], selectedSeasonId: null, standings: null };
 
 /** Yan panel legacy id (config/leagues.ts) kullanır → puan durumu servisleri için Sportmonks `league_id`. */
 function sidebarStandingsLeagueId(competitionId: number): string | null {
@@ -27,7 +31,7 @@ function sidebarStandingsLeagueId(competitionId: number): string | null {
   return id == null ? null : String(id);
 }
 
-async function fetchCompetitionSidebar(competitionId: number): Promise<CompetitionSidebarData> {
+export async function loadCompetitionSidebar(competitionId: number): Promise<CompetitionSidebarData> {
   const compId = sidebarStandingsLeagueId(competitionId);
   if (compId == null) return EMPTY_SIDEBAR;
   const [seasonsList, table1] = await Promise.all([
@@ -56,15 +60,14 @@ async function fetchCompetitionSidebar(competitionId: number): Promise<Competiti
     tableFinal = await getCompetitionTableFull(compId, { season: sid });
   }
 
-  const scorersData = await getTopScorers(compId, sid != null ? { season: sid } : undefined);
-
   return {
     seasons: seasonsList,
     selectedSeasonId: sid,
     standings: tableFinal ?? table1,
-    topScorers: scorersData,
   };
 }
+
+export const COMPETITION_SIDEBAR_STALE_MS = 5 * 60_000;
 
 export function competitionSidebarQueryKey(competitionId: number) {
   return ['competition-sidebar', competitionId] as const;
@@ -73,9 +76,9 @@ export function competitionSidebarQueryKey(competitionId: number) {
 export function useCompetitionSidebar(competitionId: number, enabled = true) {
   return useQuery({
     queryKey: competitionSidebarQueryKey(competitionId),
-    queryFn: () => fetchCompetitionSidebar(competitionId),
+    queryFn: () => loadCompetitionSidebar(competitionId),
     enabled: enabled && competitionId > 0,
-    staleTime: 5 * 60_000,
+    staleTime: COMPETITION_SIDEBAR_STALE_MS,
     gcTime: 15 * 60_000,
   });
 }
@@ -86,20 +89,34 @@ export async function prefetchCompetitionSidebar(
 ) {
   await queryClient.prefetchQuery({
     queryKey: competitionSidebarQueryKey(competitionId),
-    queryFn: () => fetchCompetitionSidebar(competitionId),
-    staleTime: 5 * 60_000,
+    queryFn: () => loadCompetitionSidebar(competitionId),
+    staleTime: COMPETITION_SIDEBAR_STALE_MS,
   });
 }
 
-export async function fetchCompetitionSidebarForSeason(
+/** Sezon seçicisi: seçilen sezonun puan durumu (gol krallığı sezon id'si değişince kendi sorgusuyla gelir). */
+export async function fetchCompetitionStandingsForSeason(
   competitionId: number,
   seasonId: number
-): Promise<Pick<CompetitionSidebarData, 'standings' | 'topScorers'>> {
+): Promise<CompetitionTableData | null> {
   const compId = sidebarStandingsLeagueId(competitionId);
-  if (compId == null) return { standings: null, topScorers: null };
-  const [tableData, scorersData] = await Promise.all([
-    getCompetitionTableFull(compId, { season: seasonId }),
-    getTopScorers(compId, { season: seasonId }),
-  ]);
-  return { standings: tableData, topScorers: scorersData };
+  if (compId == null) return null;
+  return getCompetitionTableFull(compId, { season: seasonId });
+}
+
+/**
+ * Gol Krallığı sekmesi: yalnızca sekme açıkken (`enabled`) çekilir. `seasonId` null → güncel sezon.
+ */
+export function useCompetitionTopScorers(competitionId: number, seasonId: number | null, enabled: boolean) {
+  return useQuery({
+    queryKey: ['competition-topscorers', competitionId, seasonId ?? 'current'] as const,
+    queryFn: async (): Promise<TopScorersPayload | null> => {
+      const compId = sidebarStandingsLeagueId(competitionId);
+      if (compId == null) return null;
+      return getTopScorers(compId, seasonId != null ? { season: seasonId } : undefined);
+    },
+    enabled: enabled && competitionId > 0,
+    staleTime: COMPETITION_SIDEBAR_STALE_MS,
+    gcTime: 15 * 60_000,
+  });
 }

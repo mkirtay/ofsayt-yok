@@ -29,7 +29,7 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withSentryConfig(nextConfig, {
+const sentryConfig = withSentryConfig(nextConfig, {
   // CI'da (Vercel build) Sentry çıktısı görünsün: kaynak haritası yüklemesi build loglarından doğrulanabilsin.
   silent: !process.env.CI,
   org: process.env.SENTRY_ORG,
@@ -38,3 +38,14 @@ export default withSentryConfig(nextConfig, {
   disableLogger: true,
   automaticVercelMonitors: false,
 });
+
+/**
+ * Sentry, sayfa yüklemesi tracing'i için `experimental.clientTraceMetadata` (sentry-trace + baggage) açıyor → Next her
+ * render'da HTML'e RASTGELE trace id'li <meta> basıyor. Tracing kullanılmıyor (`tracesSampleRate` yok; bkz.
+ * sentry.server.config.ts) ama bu etiketler her ISR yeniden üretimini "içerik değişti" yapıyordu (ana sayfa: veri aynı
+ * olsa da ISR yazımı + CDN tazelemesi). Hata izleme etkilenmez.
+ */
+export default {
+  ...sentryConfig,
+  experimental: { ...sentryConfig.experimental, clientTraceMetadata: [] },
+} satisfies NextConfig;

@@ -406,13 +406,41 @@ async function sportmonksFetchFixtureDetail(
 }
 
 /** `leagues/{id}?include=seasons` — Pass 4: ayrı bir global `/seasons` endpoint'i yok. */
-async function sportmonksFetchLeagueSeasons(leagueId: number): Promise<SportmonksSeasonRow[]> {
+/**
+ * Tarayıcıda lig başına TEK kayıt (`league-seasons:{id}`): sezon listesi (`getSeasonsList`) ve güncel sezon
+ * çözümü (puan durumu / gol krallığı) aynı `leagues/{id}?include=seasons` cevabını paralel istiyordu → ana sayfa
+ * her açılışta aynı isteği 3 kez atıyordu. Uçuştaki istek paylaşılır, sonuç 5 dk tutulur (yan panel staleTime'ı).
+ * Sunucuda gerek yok: `cachedFetch` zaten tekil uçuş + paylaşımlı cache.
+ */
+const LEAGUE_SEASONS_TTL_MS = 5 * 60_000;
+const leagueSeasonsMemo = new Map<number, { at: number; promise: Promise<SportmonksSeasonRow[]> }>();
+
+async function sportmonksFetchLeagueSeasonsUncached(leagueId: number): Promise<SportmonksSeasonRow[]> {
   const envelope = await sportmonksClientRequest<{ id: number; seasons?: SportmonksSeasonRow[] }>(
     'football',
     `/leagues/${leagueId}`,
     { include: 'seasons' },
   );
   return envelope.data?.seasons ?? [];
+}
+
+function sportmonksFetchLeagueSeasons(leagueId: number): Promise<SportmonksSeasonRow[]> {
+  if (typeof window === 'undefined') return sportmonksFetchLeagueSeasonsUncached(leagueId);
+  const now = Date.now();
+  const hit = leagueSeasonsMemo.get(leagueId);
+  if (hit && now - hit.at < LEAGUE_SEASONS_TTL_MS) return hit.promise;
+  const promise = sportmonksFetchLeagueSeasonsUncached(leagueId);
+  leagueSeasonsMemo.set(leagueId, { at: now, promise });
+  // Hata cache'lenmez: sonraki çağrı yeniden dener.
+  promise.catch(() => {
+    if (leagueSeasonsMemo.get(leagueId)?.promise === promise) leagueSeasonsMemo.delete(leagueId);
+  });
+  return promise;
+}
+
+/** Yalnız testler için. */
+export function __resetLeagueSeasonsMemoForTests(): void {
+  leagueSeasonsMemo.clear();
 }
 
 function sportmonksPickCurrentSeasonId(seasons: SportmonksSeasonRow[]): number | null {

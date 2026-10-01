@@ -242,6 +242,7 @@
     "nextMatchDayLeague": "{{league}} {{date}} dönüyor.",
     "nextMatchDaysTitle": "Sıradaki maçlar:",
     "dataDelayed": "Veriler gecikmeli — son güncelleme {{time}}.",
+    "dataDelayedNoTime": "Veriler gecikmeli — şu an güncellenemiyor.",
     "loadFailed": "Maçlar şu an yüklenemedi.",
     "retry": "Tekrar dene"
   },

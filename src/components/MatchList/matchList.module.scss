@@ -136,8 +136,18 @@
 
 // Dar görünüm: yükseklik inline (içerik toplamı) gelir; eski sabit yükseklik yalnızca tavan.
 .virtualHostFit {
+  height: var(--list-content-h);
   min-height: 0;
   max-height: min(72vh, 900px);
+}
+
+// `fitContent="belowSplit"`: split-view genişliğinde (liste sütunu) eski sabit yükseklik — JS yerine CSS karar verir.
+@media (min-width: $bp-split) {
+  .virtualHostFitBelowSplit {
+    height: min(72vh, 900px);
+    min-height: 320px;
+    max-height: none;
+  }
 }
 
 .virtualPlaceholder {

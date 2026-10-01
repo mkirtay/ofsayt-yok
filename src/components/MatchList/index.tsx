@@ -1,9 +1,8 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { useMemo, useState, useEffect, useCallback, type CSSProperties } from 'react';
+import { useMemo, useCallback, type CSSProperties } from 'react';
 import { List, type RowComponentProps } from 'react-window';
-import { AutoSizer } from 'react-virtualized-auto-sizer';
 import { useTranslation } from '@/lib/i18n';
 import TeamTierBadge from '@/components/TeamTierBadge';
 import { useTurkeyTeamTiers } from '@/hooks/useTurkeyTeamTiers';
@@ -64,8 +63,10 @@ interface MatchListProps {
   /**
    * Dar görünüm (split-view yok): kutu içerik kadar uzar, `min(72vh, 900px)` yalnızca üst sınır.
    * Az maçlı günde altta boş alan kalmaz. `fill` ile birlikte verilmez.
+   * `'belowSplit'`: aynı davranış yalnızca `$bp-split` altında, üstünde sabit yükseklik — karar CSS'te, JS ölçümü
+   * (`useSplitView`) beklenmez → sunucuda çizilen kutu istemcidekiyle aynı yükseklikte (kayma yok).
    */
-  fitContent?: boolean;
+  fitContent?: boolean | 'belowSplit';
 }
 
 type FlatItem =
@@ -96,6 +97,8 @@ type FlatItem =
 const HEADER_BAR_HEIGHT = 44;
 const GROUP_GAP = 12;
 const MATCH_ROW_HEIGHT = 40;
+/** Kutunun en büyük yüksekliği (`min(72vh, 900px)`) — ölçümden önceki (SSR) ilk render bu kadar satırı çizer. */
+const MAX_HOST_HEIGHT = 900;
 
 function formatKickoff(match: Match): string {
   const date = match.date?.trim();
@@ -443,6 +446,8 @@ function VirtualRow({
   );
 }
 
+const LIST_STYLE: CSSProperties = { height: '100%', width: '100%' };
+
 function rowHeight(index: number, rowProps: RowContext): number {
   const item = rowProps.items[index];
   if (!item) return MATCH_ROW_HEIGHT;
@@ -470,12 +475,7 @@ export default function MatchList({
   const { t } = useTranslation('match');
   const router = useRouter();
   const navigateTo = useCallback((path: string) => { void router.push(path); }, [router]);
-  const [mounted, setMounted] = useState(false);
   const isWorldCup = variant === 'worldCup';
-  useEffect(() => {
-    const frame = requestAnimationFrame(() => setMounted(true));
-    return () => cancelAnimationFrame(frame);
-  }, []);
 
   const items = useMemo(
     () => (dateGroups ? buildDateFlatItems(dateGroups) : buildFlatItems(groupedMatches)),
@@ -522,24 +522,19 @@ export default function MatchList({
     [items, rowProps],
   );
 
+  const fit = Boolean(fitContent) && !fill;
   const hostClassName = [
     styles.virtualHost,
     fill ? styles.virtualHostFill : '',
-    fitContent && !fill ? styles.virtualHostFit : '',
+    fit ? styles.virtualHostFit : '',
+    fit && fitContent === 'belowSplit' ? styles.virtualHostFitBelowSplit : '',
     isWorldCup ? styles.worldCup : '',
     compact ? styles.virtualHostCompact : '',
   ]
     .filter(Boolean)
     .join(' ');
-  const hostStyle = fitContent && !fill ? { height: contentHeight } : undefined;
-
-  const listStyle = useCallback(
-    (height: number, width: number): CSSProperties => ({
-      height,
-      width,
-    }),
-    []
-  );
+  // Yükseklik CSS değişkeniyle: `belowSplit` modunda geniş ekranda CSS bunu yok sayabilsin (inline height ezilemezdi).
+  const hostStyle = fit ? ({ '--list-content-h': `${contentHeight}px` } as CSSProperties) : undefined;
 
   if (items.length === 0) {
     return (
@@ -549,33 +544,19 @@ export default function MatchList({
     );
   }
 
-  if (!mounted) {
-    return (
-      <div className={hostClassName} style={hostStyle} aria-busy="true">
-        <div className={styles.virtualPlaceholder}>{t('list.loading')}</div>
-      </div>
-    );
-  }
-
+  // Sunucuda da çizilir: List ölçüm yapana kadar `defaultHeight` kadar satır verir (SSR = istemcinin ilk render'ı),
+  // sonra kutunun gerçek yüksekliğini ölçüp görünür aralığı günceller — satır konumları değişmez, kayma yok.
   return (
     <div className={hostClassName} style={hostStyle}>
-      <AutoSizer
-        renderProp={({ height, width }) => {
-          if (height === undefined || width === undefined) {
-            return null;
-          }
-          return (
-            <List
-              className={styles.virtualList}
-              rowCount={items.length}
-              rowHeight={rowHeight}
-              rowProps={rowProps}
-              rowComponent={VirtualRow}
-              overscanCount={10}
-              style={listStyle(height, width)}
-            />
-          );
-        }}
+      <List
+        className={styles.virtualList}
+        rowCount={items.length}
+        rowHeight={rowHeight}
+        rowProps={rowProps}
+        rowComponent={VirtualRow}
+        overscanCount={10}
+        defaultHeight={Math.min(contentHeight, MAX_HOST_HEIGHT)}
+        style={LIST_STYLE}
       />
     </div>
   );

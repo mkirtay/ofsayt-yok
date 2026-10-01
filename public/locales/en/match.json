@@ -244,6 +244,7 @@
     "nextMatchDayLeague": "{{league}} returns on {{date}}.",
     "nextMatchDaysTitle": "Next matches:",
     "dataDelayed": "Data delayed — last updated {{time}}.",
+    "dataDelayedNoTime": "Data delayed — cannot refresh right now.",
     "loadFailed": "Couldn't load matches right now.",
     "retry": "Retry"
   },

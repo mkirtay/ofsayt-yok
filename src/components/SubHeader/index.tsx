@@ -8,6 +8,11 @@ import styles from './subHeader.module.scss';
 export type MatchTab = 'all' | 'live' | 'finished' | 'favorites';
 
 interface SubHeaderProps {
+  /**
+   * Sayfa sunucuda bir günle üretildiyse (ana sayfa ISR) şerit ve takvim rozeti ilk render'da bu günle çizilir —
+   * mount'ı beklemek şeridi sonradan ekleyip altındaki her şeyi ~53 px itiyordu (CLS). Mount'ta gerçek gün alınır.
+   */
+  initialTodayIso?: string;
   selectedDate: string;
   onDateChange: (date: string) => void;
   activeTab: MatchTab;
@@ -15,6 +20,7 @@ interface SubHeaderProps {
 }
 
 export default function SubHeader({
+  initialTodayIso,
   selectedDate,
   onDateChange,
   activeTab,
@@ -36,8 +42,9 @@ export default function SubHeader({
   const [calendarOpen, setCalendarOpen] = useState(false);
   const triggerRef = useRef<HTMLDivElement>(null);
 
-  // Bugünün tarihi mount'ta çözülür (statik prerender'da bayat gün / hydration uyuşmazlığı olmasın).
-  const [todayIso, setTodayIso] = useState<string | null>(null);
+  // Bugünün tarihi mount'ta çözülür (statik prerender'da bayat gün / hydration uyuşmazlığı olmasın); sunucunun
+  // ürettiği gün verildiyse ilk render onunla (sunucu = istemci).
+  const [todayIso, setTodayIso] = useState<string | null>(initialTodayIso ?? null);
   useEffect(() => {
     setTodayIso(todayIsoIstanbul());
     // Gece yarısını geçen açık sekmede rozet/şerit de güncellensin

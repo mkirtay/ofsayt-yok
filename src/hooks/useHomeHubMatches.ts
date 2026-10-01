@@ -66,9 +66,13 @@ export function prefetchHomeHubMatches(queryClient: QueryClient, selectedDate: s
 }
 
 /** Seçili günde maç yokken: takip edilen liglerin sıradaki maç günleri (`/api/matches/upcoming-days`). */
+export function upcomingMatchDaysQueryKey(from: string) {
+  return ['upcoming-match-days', from] as const;
+}
+
 export function useUpcomingMatchDays(from: string, enabled: boolean) {
   return useQuery({
-    queryKey: ['upcoming-match-days', from] as const,
+    queryKey: upcomingMatchDaysQueryKey(from),
     queryFn: async (): Promise<UpcomingLeagueDay[]> => {
       const res = await fetch(`/api/matches/upcoming-days?from=${encodeURIComponent(from)}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
