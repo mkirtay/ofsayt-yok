@@ -4,8 +4,9 @@ import { isUnambiguousSportmonksId } from '@/services/sportmonks/fixtureIdRange'
 
 describe('matchPageCache', () => {
   it('maç durumuna göre s-maxage', () => {
-    expect(matchPageCacheControl(matchPageCacheKindForStatus('IN PLAY'))).toContain('s-maxage=30,');
-    expect(matchPageCacheControl(matchPageCacheKindForStatus('HALF TIME BREAK'))).toContain('s-maxage=30,');
+    // Canlı: s-maxage + swr toplamı en çok 30 sn.
+    expect(matchPageCacheControl(matchPageCacheKindForStatus('IN PLAY'))).toBe('public, s-maxage=20, stale-while-revalidate=10');
+    expect(matchPageCacheControl(matchPageCacheKindForStatus('HALF TIME BREAK'))).toBe('public, s-maxage=20, stale-while-revalidate=10');
     expect(matchPageCacheControl(matchPageCacheKindForStatus('NOT STARTED'))).toContain('s-maxage=300,');
     expect(matchPageCacheControl(matchPageCacheKindForStatus('FINISHED'))).toContain('s-maxage=86400,');
     expect(matchPageCacheControl('gone')).toContain('s-maxage=86400,');
@@ -16,12 +17,23 @@ describe('matchPageCache', () => {
     const m = (scheduled: string, status = 'NOT STARTED') => ({ status, date: '2026-10-04', scheduled });
     expect(matchPageCacheControlForMatch(m('18:00'), now)).toContain('s-maxage=300,');
     // 12:20 başlama → aktif pencere 12:05 → 300 sn (tam sınır)
-    expect(matchPageCacheControlForMatch(m('12:19'), now)).toContain('s-maxage=240,');
-    expect(matchPageCacheControlForMatch(m('12:10'), now)).toContain('s-maxage=30,');
+    expect(matchPageCacheControlForMatch(m('12:19'), now)).toBe('public, s-maxage=240, stale-while-revalidate=30');
+    // Başlamaya 10 dk: 30 sn + en çok 30 sn bayat
+    expect(matchPageCacheControlForMatch(m('12:10'), now)).toBe('public, s-maxage=30, stale-while-revalidate=30');
     // Saati geçmiş ama durum güncellenmemiş
-    expect(matchPageCacheControlForMatch(m('11:30'), now)).toContain('s-maxage=30,');
-    expect(matchPageCacheControlForMatch(m('11:30', 'FINISHED'), now)).toContain('s-maxage=86400,');
-    expect(matchPageCacheControlForMatch(m('11:30', 'IN PLAY'), now)).toContain('s-maxage=30,');
+    expect(matchPageCacheControlForMatch(m('11:30'), now)).toBe('public, s-maxage=30, stale-while-revalidate=30');
+    expect(matchPageCacheControlForMatch(m('11:30', 'IN PLAY'), now)).toBe('public, s-maxage=20, stale-while-revalidate=10');
+  });
+
+  it('biten maç: başlamadan sonraki 5 sa (≈ bitişten sonraki 3 sa) 10 dk, sonra 1 gün', () => {
+    const now = Date.parse('2026-10-04T12:00:00Z');
+    const f = (date: string, scheduled: string) => ({ status: 'FINISHED', date, scheduled });
+    expect(matchPageCacheControlForMatch(f('2026-10-04', '09:00'), now)).toBe('public, s-maxage=600, stale-while-revalidate=600');
+    expect(matchPageCacheControlForMatch(f('2026-10-04', '07:01'), now)).toContain('s-maxage=600,');
+    expect(matchPageCacheControlForMatch(f('2026-10-04', '06:59'), now)).toContain('s-maxage=86400,');
+    expect(matchPageCacheControlForMatch(f('2026-10-01', '18:00'), now)).toContain('s-maxage=86400,');
+    // Başlama saati bilinmiyorsa eski sayılır
+    expect(matchPageCacheControlForMatch({ status: 'FINISHED', date: '2026-10-04', scheduled: '' }, now)).toContain('s-maxage=86400,');
   });
 });
 
