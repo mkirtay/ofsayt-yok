@@ -6,7 +6,6 @@ import CompareTeamPicker from '@/components/CompareTeamPicker';
 import MatchCompetitionStandings from '@/components/MatchCompetitionStandings';
 import MatchCompetitionTopScorers from '@/components/MatchCompetitionTopScorers';
 import {
-  LineupSkeleton,
   PanelSkeleton,
   TeamHeaderSkeleton,
 } from '@/components/Skeleton';
@@ -36,6 +35,7 @@ import { buildMatchHref } from '@/utils/matchUrl';
 import { groupSquadByPosition } from '@/utils/squadGroups';
 import { detailedPositionLabel } from '@/utils/positionLabel';
 import { useTeamSquadStats } from '@/hooks/useTeamSquadStats';
+import LazyLoad from '@/components/LazyLoad';
 import { todayIsoIstanbul } from '@/utils/dateStrip';
 import { parseScore } from '@/utils/parseScore';
 import { fixtureDateHeading } from '@/utils/fixtureDateLabel';
@@ -48,6 +48,10 @@ import {
 } from '@/utils/teamFixtures';
 import styles from './teamDetailView.module.scss';
 import TeamLogo from '@/components/TeamLogo';
+
+// Kadro sekmesi yüklenirken (tıklamadan sonra): sahne ve CSS'i ayrı parçada. Kutu (yükseklik) burada.
+const loadFormationLoading = () => import('@/components/PitchScenes/FormationLoading');
+
 
 /* ─── Helpers ─── */
 
@@ -542,7 +546,9 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
             )}
             {activeTab === 'squad' && (
               squadLoading ? (
-                <LineupSkeleton />
+                <div className={styles.squadLoading}>
+                  <LazyLoad load={loadFormationLoading} props={{ label: t('common:loading') }} />
+                </div>
               ) : (
               <div className={styles.squadList}>
                 {Array.isArray(squad) && squad.length > 0 ? (

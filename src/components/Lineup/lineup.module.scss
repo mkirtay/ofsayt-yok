@@ -265,6 +265,27 @@ a.compactRow {
   padding: $spacing-4 $spacing-2;
 }
 
+// Yükleme: takım çubuğu gerçeğiyle aynı yükseklikte (rozet dahil) ama boş görünür.
+.teamBarPlaceholder {
+  visibility: hidden;
+}
+
+// Yükleme kutusu: `.pitch` ile aynı kutu modeli (min-height + 2px kenarlık + padding), nötr zemin. 4+4 hatlı
+// dizilişlerde gerçek sahayla birebir; 5+5 hatlıda gerçek saha oyuncu satırlarıyla uzar (diziliş önceden bilinmez).
+.loadingPitch {
+  display: flex;
+  min-height: 720px;
+  border: 2px solid transparent;
+  border-radius: $radius-sm;
+  padding: $spacing-4 $spacing-2;
+  background: $color-muted;
+
+  @media (max-width: $bp-sm) {
+    min-height: 560px;
+    padding: $spacing-3 4px;
+  }
+}
+
 .pitchInner {
   position: absolute;
   inset: 0;

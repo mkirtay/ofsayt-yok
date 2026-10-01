@@ -1,12 +1,16 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import type { LineupPlayer, MatchLineupData } from '@/models/domain';
-import { LineupSkeleton } from '@/components/Skeleton';
+import { useTranslation } from '@/lib/i18n';
+import LazyLoad from '@/components/LazyLoad';
 import { buildFormationLayout } from '@/utils/lineupFormation';
 import { POSITION_LABEL_TR, positionLabel } from '@/utils/positionLabel';
 import { formatRating } from '@/config/ratingScale';
 import RatingBadge from '@/components/RatingBadge';
 import styles from './lineup.module.scss';
+
+// Ekranın altında: sahne ve CSS'i ayrı parçada (ana sayfanın maç paneliyle ilk yüke girmesin). Kutu burada.
+const loadFormationLoading = () => import('@/components/PitchScenes/FormationLoading');
 import TeamLogo from '@/components/TeamLogo';
 
 /** Sahadaki oyuncu dairesi (fotoğraf CSS ile daireyi doldurur) — istenen küçük sürümün boyutu. */
@@ -186,9 +190,37 @@ function FormationRows({ rows, team }: { rows: LineupPlayer[][]; team: 'home' | 
   );
 }
 
+/**
+ * Yüklenirken 02 · Diziliş animasyonu, gerçek kadro alanıyla AYNI kutuda: başlık + takım çubuğu + saha kutusu
+ * (aynı min-height/kenarlık/padding) + takım çubuğu → içerik gelince yükseklik değişmez.
+ */
+function LineupLoading() {
+  const { t } = useTranslation('common');
+  return (
+    <div className={styles.lineupContainer}>
+      <h3 className={styles.title}>İlk 11</h3>
+      <div className={styles.layout}>
+        <div className={styles.pitchCol}>
+          <div className={`${styles.teamBar} ${styles.teamBarPlaceholder}`} aria-hidden="true">
+            <span className={styles.teamBarName}>&nbsp;</span>
+            <span className={styles.formationBadge}>4-4-2</span>
+          </div>
+          <div className={styles.loadingPitch}>
+            <LazyLoad load={loadFormationLoading} props={{ label: t('loading') }} />
+          </div>
+          <div className={`${styles.teamBar} ${styles.teamBarPlaceholder}`} aria-hidden="true">
+            <span className={styles.teamBarName}>&nbsp;</span>
+            <span className={styles.formationBadge}>4-4-2</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Lineup({ lineups, loading }: LineupProps) {
   if (loading) {
-    return <LineupSkeleton />;
+    return <LineupLoading />;
   }
 
   const homeData = lineups?.lineup?.home;

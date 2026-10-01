@@ -352,6 +352,21 @@
   color: $color-text-secondary;
 }
 
+// Kadro yüklenirken 02 · Diziliş: liste yüksekliği oyuncu sayısına bağlı olduğundan birebir eşitlenemez; maç
+// sayfası kadro sahasıyla aynı kutu (720 / 560 px) — eski iskeletten (~400 px) gerçek listeye çok daha yakın.
+.squadLoading {
+  display: flex;
+  min-height: 720px;
+  border-radius: $radius-md;
+  background: $color-muted;
+  padding: $spacing-4;
+
+  @media (max-width: $bp-sm) {
+    min-height: 560px;
+    padding: $spacing-3;
+  }
+}
+
 // Mini tablo: satır grid'i; dar container'da (panel) yalnızca Oyuncu + M/G/A, geniş sayfada Mevki + SK/KK da görünür.
 .squadList {
   container-type: inline-size;

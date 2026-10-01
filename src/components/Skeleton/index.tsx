@@ -77,27 +77,6 @@ export function PanelSkeleton({
   );
 }
 
-export function LineupSkeleton({ variant = 'default' }: { variant?: SkeletonVariant }) {
-  return (
-    <div className={panelClass(variant)}>
-      <SkeletonBlock variant={variant} width="30%" height={18} />
-      <div className={styles.lineupGrid}>
-        <div className={styles.lineupCol}>
-          {Array.from({ length: 6 }, (_, i) => (
-            <SkeletonBlock key={i} variant={variant} height={14} />
-          ))}
-        </div>
-        <SkeletonBlock variant={variant} className={styles.lineupPitch} height={180} />
-        <div className={styles.lineupCol}>
-          {Array.from({ length: 6 }, (_, i) => (
-            <SkeletonBlock key={i} variant={variant} height={14} />
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export function StandingsSkeleton({
   variant = 'default',
   rows = 8,

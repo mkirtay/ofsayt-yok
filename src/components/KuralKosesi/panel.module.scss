@@ -167,24 +167,6 @@
   gap: 12px;
 }
 
-.stage {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 504 / 230;
-  border-radius: 12px;
-  overflow: hidden;
-  flex-shrink: 0;
-}
-
-.scale {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 504px;
-  transform-origin: top left;
-  transform: scale(var(--s, 0.619));
-}
-
 .fact {
   margin: 0;
   font-size: 20px;

@@ -125,28 +125,6 @@ $wc-shimmer-mid: #2a2a2a;
   border-radius: 999px;
 }
 
-.lineupGrid {
-  display: grid;
-  grid-template-columns: 1fr 1.2fr 1fr;
-  gap: $spacing-3;
-  align-items: start;
-
-  @media (max-width: 767px) {
-    grid-template-columns: 1fr;
-  }
-}
-
-.lineupCol {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-2;
-}
-
-.lineupPitch {
-  width: 100%;
-  border-radius: 8px;
-}
-
 .standingsRow {
   width: 100%;
 }

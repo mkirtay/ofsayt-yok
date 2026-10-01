@@ -5,6 +5,7 @@ import { MOBILE_LAYOUT_QUERY } from '@/config/breakpoints';
 import FormationScene from '@/components/PitchScenes/FormationScene';
 import MatchScene from '@/components/PitchScenes/MatchScene';
 import RingScene from '@/components/PitchScenes/RingScene';
+import ScaledScene from '@/components/PitchScenes/ScaledScene';
 import VarScene from '@/components/PitchScenes/VarScene';
 import { localizeFact, type KuralFact, type LocalizedFact } from './facts';
 import WhistleIcon from './WhistleIcon';
@@ -18,8 +19,6 @@ export type PanelProps = {
   onClose: () => void;
 };
 
-/** Sahneler 504 px genişlikte çizilir; sahne kutusu panel genişliğine göre ölçekler. */
-const SCENE_WIDTH = 504;
 /** Kapanış kayması (panel.module.scss transition ile aynı); sahne bu süre sonunda kaldırılır. */
 const CLOSE_MS = 300;
 
@@ -62,7 +61,6 @@ export default function Panel({ open, facts, startIndex, onClose }: PanelProps) 
   const titleId = useId();
   const drawerRef = useRef<HTMLElement>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
-  const stageRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
 
   const [index, setIndex] = useState(startIndex);
@@ -106,17 +104,6 @@ export default function Panel({ open, facts, startIndex, onClose }: PanelProps) 
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
   }, [open, onClose]);
-
-  // Sahneyi panel genişliğine ölçekle.
-  useEffect(() => {
-    const stage = stageRef.current;
-    if (!stage || typeof ResizeObserver !== 'function') return;
-    const fit = () => stage.style.setProperty('--s', String(stage.clientWidth / SCENE_WIDTH));
-    const observer = new ResizeObserver(fit);
-    observer.observe(stage);
-    fit();
-    return () => observer.disconnect();
-  }, []);
 
   useEffect(() => {
     bodyRef.current?.scrollTo({ top: 0 });
@@ -173,11 +160,7 @@ export default function Panel({ open, facts, startIndex, onClose }: PanelProps) 
           </button>
         </div>
         <div ref={bodyRef} className={styles.body}>
-          <div ref={stageRef} className={styles.stage}>
-            <div className={styles.scale}>
-              {sceneOn ? <Scene key={safeIndex} fact={fact} varStamp={t('varStamp')} /> : null}
-            </div>
-          </div>
+          <ScaledScene>{sceneOn ? <Scene key={safeIndex} fact={fact} varStamp={t('varStamp')} /> : null}</ScaledScene>
           <h2 className={styles.fact} aria-live="polite">
             {fact.title}
           </h2>
