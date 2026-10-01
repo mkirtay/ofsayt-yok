@@ -1,6 +1,17 @@
 @use './variables' as *;
 @use './tokens';
 
+// Inter yüklenene kadar (display: swap) metni aynı ölçülerde çizen yedek — değerler eski next/font/google
+// Inter çıktısıyla birebir (CLS 0). _app.tsx'teki `fallback: ['Inter Fallback']` bu yüzü kullanır.
+@font-face {
+  font-family: 'Inter Fallback';
+  src: local('Arial');
+  ascent-override: 90.44%;
+  descent-override: 22.52%;
+  line-gap-override: 0%;
+  size-adjust: 107.12%;
+}
+
 * {
   box-sizing: border-box;
   padding: 0;
