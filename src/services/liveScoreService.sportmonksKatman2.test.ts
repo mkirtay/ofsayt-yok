@@ -469,6 +469,9 @@ describe('Faz 3 fonksiyonları — flag KAPALIYKEN Sportmonks fetch hiç çağr�
     await getMatchStats('1').catch(() => {});
     await getSeasonsList().catch(() => {});
 
-    expect(fetchSpy).not.toHaveBeenCalled();
+    // Legacy istemci de fetch kullanır (axios değil) — yalnız eski proxy'ye gider, Sportmonks'a hiç gitmez.
+    const urls = fetchSpy.mock.calls.map(([u]) => String(u));
+    expect(urls.length).toBeGreaterThan(0);
+    expect(urls.every((u) => u.startsWith('/api/livescore/'))).toBe(true);
   });
 });

@@ -185,7 +185,10 @@ describe('liveScoreService — Sportmonks Faz 2 wiring', () => {
     await getFixturesByDate('2026-09-17').catch(() => {});
     await getAllLiveMatches().catch(() => {});
 
-    expect(fetchSpy).not.toHaveBeenCalled();
+    // Legacy istemci de fetch kullanır (axios değil) — yalnız eski proxy'ye gider, Sportmonks'a hiç gitmez.
+    const urls = fetchSpy.mock.calls.map(([u]) => String(u));
+    expect(urls.length).toBeGreaterThan(0);
+    expect(urls.every((u) => u.startsWith('/api/livescore/'))).toBe(true);
   });
 });
 
