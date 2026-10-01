@@ -136,10 +136,12 @@ export function useMatchDetail(
   const [stats, setStats] = useState<MatchStatsData | null>(null);
   const [standings, setStandings] = useState<CompetitionTableData | null>(null);
   const [matchLoading, setMatchLoading] = useState(!initialMatch && Boolean(requestedMatchId));
-  const [eventsLoading, setEventsLoading] = useState(false);
-  const [statsLoading, setStatsLoading] = useState(false);
-  const [lineupsLoading, setLineupsLoading] = useState(false);
-  const [standingsLoading, setStandingsLoading] = useState(false);
+  // Olay/istatistik/kadro/puan durumu yalnız istemcide çekilir: maç istendiyse baştan "yükleniyor". Yoksa SSR HTML'i
+  // (ve istemci istekleri başlayana kadar ekran) her maç için "kadrolar açıklanmadı / veri yok" yazıyordu.
+  const [eventsLoading, setEventsLoading] = useState(Boolean(requestedMatchId));
+  const [statsLoading, setStatsLoading] = useState(Boolean(requestedMatchId));
+  const [lineupsLoading, setLineupsLoading] = useState(Boolean(requestedMatchId));
+  const [standingsLoading, setStandingsLoading] = useState(Boolean(requestedMatchId));
   const [seasons, setSeasons] = useState<SeasonListItem[]>([]);
   const [selectedSeasonId, setSelectedSeasonId] = useState<number | null>(null);
   const [notFound, setNotFound] = useState(false);
