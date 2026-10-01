@@ -8,10 +8,10 @@ import {
   PEEK_VISIBLE_MS,
   dailyIndex,
   getStorage,
-  isSeenToday,
-  nextPeekAt,
+  isDotHidden,
+  markOpened,
+  planPeek,
   readState,
-  recordOpen,
   recordPeek,
   visitStartedAt,
   writeState,
@@ -48,7 +48,7 @@ export default function Launcher() {
   // Bileşen yalnız istemcide (ssr:false) çizilir; ilk değerler doğrudan tarayıcıdan okunabilir.
   const [storage] = useState(getStorage);
   const [visitStart] = useState(() => visitStartedAt(Date.now()));
-  const [seen, setSeen] = useState(() => !storage || isSeenToday(readState(storage), Date.now()));
+  const [seen, setSeen] = useState(() => isDotHidden(storage, Date.now()));
   const [facts, setFacts] = useState<KuralFact[] | null>(null);
   const [peekIndex, setPeekIndex] = useState<number | null>(null);
   const [Panel, setPanel] = useState<ComponentType<PanelProps> | null>(null);
@@ -59,13 +59,13 @@ export default function Launcher() {
   // Baloncuğu kurallara göre zamanla (depolama yoksa hiç). Panel açıkken ya da baloncuk görünürken bekler.
   useEffect(() => {
     if (!storage || open || peekIndex !== null) return;
-    const at = nextPeekAt(readState(storage), Date.now(), visitStart);
+    const at = planPeek(storage, Date.now(), visitStart);
     if (at === null) return;
     let cancelled = false;
     let removeVisibilityListener: (() => void) | null = null;
     const id = window.setTimeout(async () => {
       // Başka sekme bu arada göstermiş/paneli açmış olabilir: durumu yeniden oku.
-      const due = nextPeekAt(readState(storage), Date.now(), visitStart);
+      const due = planPeek(storage, Date.now(), visitStart);
       if (due === null) return;
       if (due > Date.now()) {
         setRecheck((n) => n + 1);
@@ -117,7 +117,7 @@ export default function Launcher() {
     }
     setOpen(true);
     setSeen(true);
-    if (storage) writeState(storage, recordOpen(readState(storage), Date.now()));
+    markOpened(storage, Date.now());
   }, [storage]);
 
   // Sayfanın başka bir yerinden açma isteği (bkz. openEvent.ts).

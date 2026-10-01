@@ -106,6 +106,23 @@ export function writeState(storage: Storage, state: KuralKosesiState): void {
   }
 }
 
+// ── Bileşenin depolamaya bağlı kararları (depolama null → baloncuk ve sarı nokta yok, panel yine açılır) ──
+
+/** Sarı nokta gizli mi: depolama yoksa hiç gösterilmez; varsa günün bilgisi görüldüyse gizli. */
+export function isDotHidden(storage: Storage | null, now: number): boolean {
+  return !storage || isSeenToday(readState(storage), now);
+}
+
+/** Baloncuğun bir sonraki zamanı; depolama yoksa hiç (null). */
+export function planPeek(storage: Storage | null, now: number, visitStart: number): number | null {
+  return storage ? nextPeekAt(readState(storage), now, visitStart) : null;
+}
+
+/** Panel açıldı kaydı; depolama yoksa yazılmaz (panel yine açılır). */
+export function markOpened(storage: Storage | null, now: number): void {
+  if (storage) writeState(storage, recordOpen(readState(storage), now));
+}
+
 /** Ziyaretin başladığı an: sekme oturumu boyunca sabit (sayfa geçişi/yenileme 15 sn'yi sıfırlamaz). */
 export function visitStartedAt(now: number): number {
   try {
