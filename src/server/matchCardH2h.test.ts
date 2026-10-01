@@ -6,7 +6,7 @@ vi.mock('@/services/liveScoreService', () => ({
 }));
 
 import type { Match } from '@/models/liveScore';
-import { loadMatchCardH2h } from './matchCardH2h';
+import { loadMatchCardH2h, MATCH_CARD_H2H_BUDGET_MS } from './matchCardH2h';
 
 const match = { id: 1, status: 'NOT STARTED', time: '', home: { id: 1888, name: 'Eldense' }, away: { id: 93, name: 'Real Oviedo' } } as Match;
 const DATA = { team1: { id: '1888', overall_form: ['W'] }, team2: { id: '93', overall_form: ['L'] }, h2h: [] };
@@ -32,10 +32,11 @@ describe('loadMatchCardH2h', () => {
   });
 
   it('bütçe aşılırsa undefined (sayfa beklemez, istemci çeker)', async () => {
+    expect(MATCH_CARD_H2H_BUDGET_MS).toBe(400);
     vi.useFakeTimers();
     h2h.impl = () => new Promise((resolve) => setTimeout(() => resolve(DATA), 5000));
-    const pending = loadMatchCardH2h(match, 700);
-    await vi.advanceTimersByTimeAsync(701);
+    const pending = loadMatchCardH2h(match);
+    await vi.advanceTimersByTimeAsync(MATCH_CARD_H2H_BUDGET_MS + 1);
     expect(await pending).toBeUndefined();
   });
 

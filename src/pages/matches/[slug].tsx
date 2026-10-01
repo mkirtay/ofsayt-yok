@@ -31,7 +31,7 @@ import styles from './matchDetail.module.scss';
 type MatchDetailProps = {
   initialMatch: Match | null;
   /**
-   * Maç kartı formu + karşılaşma geçmişi (SSR, 700 ms bütçe): null = veri yok; alan yoksa bütçe aşıldı → istemci
+   * Maç kartı formu + karşılaşma geçmişi (SSR, 400 ms bütçe): null = veri yok; alan yoksa bütçe aşıldı → istemci
    * çeker. Kart sonradan uzamasın diye (CLS).
    */
   initialH2h?: Head2HeadData | null;

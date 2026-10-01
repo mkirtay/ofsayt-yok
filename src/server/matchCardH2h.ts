@@ -3,7 +3,7 @@ import { getTeamsHead2Head, type Head2HeadData } from '@/services/liveScoreServi
 import { h2hTeamKey } from '@/utils/matchForm';
 
 /** Maç kartı formu + karşılaşma geçmişi için SSR bütçesi: aşılırsa sayfa beklemez, istemci çeker. */
-export const MATCH_CARD_H2H_BUDGET_MS = 700;
+export const MATCH_CARD_H2H_BUDGET_MS = 400;
 
 /**
  * Maç kartının "Son 5 maç / Karşılıklı son 5 / Karşılaşma geçmişi" verisi SSR'da (kart sonradan uzamasın, CLS).
