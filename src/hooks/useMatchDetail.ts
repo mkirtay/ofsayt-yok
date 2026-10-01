@@ -149,21 +149,30 @@ export function useMatchDetail(
   useEffect(() => {
     onFoundRef.current = onMatchFound;
   }, [onMatchFound]);
+  // SSR'ın çözdüğü maç (yalnız sayfa; panelde yok). Aynı maç istendiyse yükleme effect'i onu SİLMEZ: kart
+  // hydration sonrası iskelete dönmesin (CLS/LCP), istemci araması arka planda tazeler.
+  const initialMatchRef = useRef(initialMatch);
+  useEffect(() => {
+    initialMatchRef.current = initialMatch;
+  }, [initialMatch]);
 
   useEffect(() => {
     if (!requestedMatchId) return;
 
     let cancelled = false;
 
+    const seeded =
+      initialMatchRef.current && String(initialMatchRef.current.id) === requestedMatchId ? initialMatchRef.current : null;
+
     void (async () => {
-      setMatchLoading(true);
+      setMatchLoading(!seeded);
       setEventsLoading(true);
       setStatsLoading(true);
       setLineupsLoading(true);
       setStandingsLoading(true);
       setNotFound(false);
       setIsArchivedMatch(false);
-      setMatch(null);
+      setMatch(seeded);
       setEvents([]);
       setLineups(null);
       setStats(null);
@@ -174,8 +183,10 @@ export function useMatchDetail(
 
       const found = await findMatchByIdCached(requestedMatchId);
       if (cancelled) return;
+      // İstemci araması boş döndüyse (geçici sağlayıcı hatası) SSR'ın çözdüğü maçla devam: sayfa 404'e düşmesin.
+      const resolved = found.match ?? seeded;
 
-      if (!found.match) {
+      if (!resolved) {
         // Canlı sağlayıcıda bulunamadı — arşivlenmiş (saklı analiz/trivia'sı olan
         // eski/kaldırılmış) bir maç mı diye kontrol et, doğrudan 404'e düşme.
         try {
@@ -198,17 +209,19 @@ export function useMatchDetail(
         return;
       }
 
-      const apiMatchId = String(found.match.id);
+      const apiMatchId = String(resolved.id);
+      // SSR maçıyla devam ediliyorsa olaylar ayrıca çekilir (fikstürden bulunmuş gibi).
+      const fromFixture = found.match ? found.fromFixture : true;
       setMatchId(apiMatchId);
-      setMatch(found.match);
-      setEvents(found.events);
+      setMatch(resolved);
+      setEvents(found.match ? found.events : []);
       setMatchLoading(false);
       // Olaylar yalnızca maç fikstür listesinden bulunduysa eksik (eski sağlayıcı); events/fixture
       // isteğinden geldiyse boş liste gerçektir (başlamamış maç) — aynı isteği tekrar atma.
-      setEventsLoading(found.fromFixture);
-      onFoundRef.current?.(found.match);
+      setEventsLoading(fromFixture);
+      onFoundRef.current?.(resolved);
 
-      if (found.fromFixture) {
+      if (fromFixture) {
         void getMatchWithEvents(apiMatchId).then((ev) => {
           if (cancelled) return;
           if (ev.match) setMatch(ev.match);
@@ -217,7 +230,7 @@ export function useMatchDetail(
         });
       }
 
-      const cid = toStandingsCompetitionId(found.match.competition?.id ?? found.match.competition_id);
+      const cid = toStandingsCompetitionId(resolved.competition?.id ?? resolved.competition_id);
       if (cid == null) {
         setStandingsLoading(false);
       }
