@@ -10,6 +10,7 @@ import {
 } from '@/services/liveScoreService';
 import { isSportmonksProviderEnabled } from '@/services/sportmonksProviderFlag';
 import type { Match } from '@/models/liveScore';
+import type { CompetitionTableData } from '@/services/liveScoreService';
 import {
   fetchCompetitionStandingsForSeason,
   useCompetitionSidebar,
@@ -63,6 +64,16 @@ import { activeCompetitionIds, buildLeagueCatalog, filterMatchesByLeagues } from
 import styles from '@/pages/index.module.scss';
 
 type SidebarTab = 'standings' | 'leagues' | 'scorers';
+
+/** Tablodaki toplam satır (düz tablo ya da aşama/grup tabloları). */
+function standingsTableRowCount(data: CompetitionTableData | null): number {
+  if (!data) return 0;
+  if (Array.isArray(data.table) && data.table.length) return data.table.length;
+  return (data.stages ?? []).reduce(
+    (sum, st) => sum + (st.groups ?? []).reduce((g, gr) => g + (gr.standings?.length ?? 0), 0),
+    0,
+  );
+}
 
 export type MatchHubPageProps = {
   sidebarLeagues: SidebarLeague[];
@@ -140,6 +151,15 @@ export default function MatchHubPage({
   const topScorers = useTopScorersWithAppearances(topScorersQuery.data ?? null, scorersOpen);
   // Yalnızca ilk yükleme iskelet gösterir; arka plandaki tazeleme mevcut tabloyu yerinde bırakır (kayma yok).
   const standingsLoading = sidebarQueryLoading;
+  // Yükleniyor görünümünün satır sayısı: bu ligin son görülen tablosu; yoksa lig tipine göre (yerli 18, UEFA lig aşaması 36).
+  // (React'in "önceki render'dan bilgi saklama" kalıbı: render sırasında koşullu setState.)
+  const [standingsRowsSeen, setStandingsRowsSeen] = useState<Record<number, number>>({});
+  const standingsRowCount = standingsTableRowCount(standings);
+  if (standingsRowCount > 0 && standingsRowsSeen[selectedCompId] !== standingsRowCount) {
+    setStandingsRowsSeen({ ...standingsRowsSeen, [selectedCompId]: standingsRowCount });
+  }
+  const standingsLoadingRows =
+    standingsRowsSeen[selectedCompId] ?? (isUefaCupCompetitionId(selectedCompId) ? 36 : 18);
   const topScorersLoading = sidebarQueryLoading || topScorersQuery.isLoading;
 
   useEffect(() => {
@@ -506,13 +526,16 @@ export default function MatchHubPage({
       </button>
     </EmptyState>
   ) : matchesLoading ? (
-    <MatchListSkeleton groups={5} />
+    // Liste kutusunun tavanıyla aynı yükseklik: dolu günde iskelet → liste geçişi kaymasız.
+    <div className={styles.listSkeleton}>
+      <MatchListSkeleton groups={5} />
+    </div>
   ) : activeTab === 'favorites' && favoriteTeamIds.length === 0 ? (
     <div className={styles.empty}>
       {t('hub.favoritesEmpty')}
     </div>
   ) : leagueFilterActive && grouped.length === 0 ? (
-    <EmptyState>
+    <EmptyState minLines={showNextMatchDay ? 3 : undefined}>
       {t('hub.leagueFilterEmpty')}{' '}
       <button type="button" className={styles.emptyAction} onClick={() => leagueFilter.selectMode('all')}>
         {t('hub.showAll')}
@@ -522,7 +545,7 @@ export default function MatchHubPage({
       ) : null}
     </EmptyState>
   ) : showNextMatchDay && grouped.length === 0 ? (
-    <EmptyState>
+    <EmptyState minLines={2}>
       {t('list.empty')}
       <NextMatchDayNotice from={selectedDate} leagueIds={null} onGoToDate={setSelectedDate} />
     </EmptyState>
@@ -609,6 +632,7 @@ export default function MatchHubPage({
                     seasons={seasons}
                     selectedSeasonId={effectiveSeasonId}
                     onSeasonChange={handleSeasonChange}
+                    loadingRows={standingsLoadingRows}
                   />
                 )}
 

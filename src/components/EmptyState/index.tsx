@@ -7,6 +7,11 @@ export type EmptyStateProps = {
   /** Varsayılan: bilgi ikonu. */
   icon?: ReactNode;
   className?: string;
+  /**
+   * Metin için baştan ayrılan satır sayısı: içerik sonradan uzayacaksa (ör. "sıradaki maç günü" ayrı istekle gelir)
+   * kutu büyüyüp altındakileri itmesin.
+   */
+  minLines?: number;
 };
 
 function InfoIcon() {
@@ -23,11 +28,13 @@ function InfoIcon() {
  * Boş / bilgi durumları için tek kalıp (Design System §2, §5): ikon + ikincil gri 13px metin, kart çerçevesi.
  * Kırmızı/hata rengi KULLANMAZ — veri yokluğu hata değildir.
  */
-export default function EmptyState({ children, icon, className }: EmptyStateProps) {
+export default function EmptyState({ children, icon, className, minLines }: EmptyStateProps) {
   return (
     <div className={[styles.root, className].filter(Boolean).join(' ')} role="status">
       <span className={styles.icon}>{icon ?? <InfoIcon />}</span>
-      <p className={styles.text}>{children}</p>
+      <p className={styles.text} style={minLines ? { minHeight: `${minLines * 1.4}em` } : undefined}>
+        {children}
+      </p>
     </div>
   );
 }

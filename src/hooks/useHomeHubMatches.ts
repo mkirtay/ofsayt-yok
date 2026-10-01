@@ -1,7 +1,9 @@
-import { useQuery, type Query, type QueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient, type Query, type QueryClient } from '@tanstack/react-query';
 import type { Match } from '@/models/liveScore';
 import type { HomeDayPayload, UpcomingLeagueDay } from '@/server/homeDay';
 import { homePollDelayMs } from '@/utils/matchActivity';
+import { isTurkishCupMatch } from '@/utils/cupTeamTier';
+import { fetchTurkeyTeamTiers, TURKEY_TEAM_TIERS_QUERY_KEY, TURKEY_TEAM_TIERS_STALE_MS } from '@/hooks/useTurkeyTeamTiers';
 
 export type HomeHubMatchesData = {
   allMatches: Match[];
@@ -15,10 +17,17 @@ export type HomeHubMatchesData = {
  * Günün maçları normalize uç noktadan (`/api/matches/day`) — tarayıcı ham Sportmonks path'lerini
  * çağırmaz; sunucu tarafı paylaşımlı cache'ten okur, CDN tekrarları karşılar.
  */
-async function fetchHomeHubMatches(selectedDate: string): Promise<HomeHubMatchesData> {
+async function fetchHomeHubMatches(selectedDate: string, queryClient?: QueryClient): Promise<HomeHubMatchesData> {
   const res = await fetch(`/api/matches/day?date=${encodeURIComponent(selectedDate)}`);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const body = (await res.json()) as HomeDayPayload & { stale?: boolean };
+  // Kupa maçı varsa kademe haritası listeyle BİRLİKTE gelsin: rozet sonradan eklenince sağa yaslı ev sahibi hücresinde
+  // logo/adı sola itiyordu (yatay kayma). Harita 24 sa cache'li; hata listeyi bekletmez/düşürmez.
+  if (queryClient && [...body.fixtureMatches, ...body.liveMatches].some((m) => isTurkishCupMatch(m))) {
+    await queryClient
+      .ensureQueryData({ queryKey: TURKEY_TEAM_TIERS_QUERY_KEY, queryFn: fetchTurkeyTeamTiers, staleTime: TURKEY_TEAM_TIERS_STALE_MS })
+      .catch(() => null);
+  }
   return {
     // Sportmonks'ta günün geçmişi ile fikstürü aynı liste (tek istek); eski sağlayıcıda ayrı gelir.
     allMatches: body.historyMatches ?? body.fixtureMatches,
@@ -43,9 +52,10 @@ export function homeHubRefetchInterval(query: Query<HomeHubMatchesData, Error, H
 }
 
 export function useHomeHubMatches(selectedDate: string, enabled = true) {
+  const queryClient = useQueryClient();
   return useQuery({
     queryKey: homeHubMatchesQueryKey(selectedDate),
-    queryFn: () => fetchHomeHubMatches(selectedDate),
+    queryFn: () => fetchHomeHubMatches(selectedDate, queryClient),
     enabled,
     staleTime: 30_000,
     gcTime: 5 * 60_000,
@@ -60,7 +70,7 @@ export function useHomeHubMatches(selectedDate: string, enabled = true) {
 export function prefetchHomeHubMatches(queryClient: QueryClient, selectedDate: string) {
   return queryClient.prefetchQuery({
     queryKey: homeHubMatchesQueryKey(selectedDate),
-    queryFn: () => fetchHomeHubMatches(selectedDate),
+    queryFn: () => fetchHomeHubMatches(selectedDate, queryClient),
     staleTime: 30_000,
   });
 }

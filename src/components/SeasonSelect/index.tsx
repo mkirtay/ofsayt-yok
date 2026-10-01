@@ -11,6 +11,8 @@ export type SeasonSelectProps = {
   selectClassName?: string;
   /** Dark sidebar (World Cup) */
   dark?: boolean;
+  /** Yükleniyor yer tutucusu: aynı ölçü, seçilemez. */
+  disabled?: boolean;
 };
 
 export default function SeasonSelect({
@@ -19,6 +21,7 @@ export default function SeasonSelect({
   onChange,
   selectClassName,
   dark,
+  disabled,
 }: SeasonSelectProps) {
   const { t } = useTranslation('match');
   if (!seasons.length) return null;
@@ -33,6 +36,7 @@ export default function SeasonSelect({
         className={selectClassName ?? styles.select}
         aria-label={t('season.selectLabel')}
         value={resolved}
+        disabled={disabled}
         onChange={(e) => {
           const n = Number(e.target.value);
           if (Number.isFinite(n)) onChange(n);

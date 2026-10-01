@@ -317,3 +317,17 @@
     --empty-state-border: #2c2c2c;
   }
 }
+
+// Yükleniyor görünümü (StandingsLoading): gerçek hücrelerle aynı ölçü, içerik yerine sönük blok.
+.placeholder {
+  display: inline-block;
+  border-radius: 50%;
+  background: var(--bg-muted);
+}
+
+.placeholderText {
+  display: inline-block;
+  width: 60%;
+  border-radius: 4px;
+  background: var(--bg-muted);
+}

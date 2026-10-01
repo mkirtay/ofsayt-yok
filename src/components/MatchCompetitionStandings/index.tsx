@@ -26,6 +26,83 @@ function standingTeamLogo(s: CompetitionTableStandingRow): string | undefined {
   return s.team?.logo || s.logo;
 }
 
+const STANDINGS_HEAD = ["#", "Takım", "O", "G", "B", "M", "A", "Y", "Av", "P"] as const;
+
+function StandingsHead() {
+  return (
+    <thead>
+      <tr>
+        {STANDINGS_HEAD.map((h, i) => (
+          <th
+            key={h}
+            className={i === 0 ? styles.colRank : i === 1 ? styles.colTeam : i === STANDINGS_HEAD.length - 1 ? styles.colPoints : undefined}
+          >
+            {h}
+          </th>
+        ))}
+      </tr>
+    </thead>
+  );
+}
+
+/**
+ * Yükleniyor görünümü — gerçek tabloyla AYNI yapı (başlık + sezon seçici + thead + satır başına aynı hücreler), yalnız
+ * içerik yer tutucu: veri gelince yükseklik değişmez (lig değiştirince altındaki öğeler kaymaz). `rows` beklenen
+ * satır sayısı (çağıran bilir: o ligin son tablosu ya da lig tipine göre varsayılan).
+ */
+function StandingsLoading({
+  variant,
+  competitionName,
+  rows,
+  withSeasonSelect,
+}: {
+  variant: MatchCompetitionStandingsVariant;
+  competitionName: string;
+  rows: number;
+  withSeasonSelect: boolean;
+}) {
+  return (
+    <section className={blockClass(variant)} aria-busy="true">
+      <div className={styles.titleContainer}>
+        <h2 className={styles.title}>{competitionName}</h2>
+        {withSeasonSelect ? (
+          <SeasonSelect
+            seasons={[{ id: 0, name: "\u00a0" }]}
+            value={0}
+            onChange={() => {}}
+            disabled
+            dark={variant === "worldCup"}
+            selectClassName={variant === "worldCup" ? styles.seasonSelectWorldCup : styles.seasonSelect}
+          />
+        ) : null}
+      </div>
+      <div className={styles.scroll}>
+        <table className={styles.table}>
+          <StandingsHead />
+          <tbody>
+            {Array.from({ length: rows }, (_, i) => (
+              <tr key={i} aria-hidden>
+                <td className={styles.colRank}>{"\u00a0"}</td>
+                <td className={styles.colTeam}>
+                  <div className={styles.teamCell}>
+                    <span className={`${styles.teamLogo} ${styles.placeholder}`} />
+                    <span className={`${styles.teamLink} ${styles.placeholderText}`}>{"\u00a0"}</span>
+                  </div>
+                </td>
+                {STANDINGS_HEAD.slice(2).map((h) => (
+                  <td key={h} className={h === "P" ? styles.colPoints : undefined}>
+                    {"\u00a0"}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
 function StandingsTable({
   standings,
   competitionId,
@@ -44,20 +121,7 @@ function StandingsTable({
   return (
     <div className={styles.scroll}>
       <table className={styles.table}>
-        <thead>
-          <tr>
-            <th className={styles.colRank}>#</th>
-            <th className={styles.colTeam}>Takım</th>
-            <th>O</th>
-            <th>G</th>
-            <th>B</th>
-            <th>M</th>
-            <th>A</th>
-            <th>Y</th>
-            <th>Av</th>
-            <th className={styles.colPoints}>P</th>
-          </tr>
-        </thead>
+        <StandingsHead />
         <tbody>
           {standings.map((row, i) => {
             const tid = standingTeamId(row);
@@ -133,6 +197,10 @@ interface MatchCompetitionStandingsProps {
   seasons?: SeasonListItem[];
   selectedSeasonId?: number | null;
   onSeasonChange?: (id: number) => void;
+  /**
+   * Verilirse yükleniyor görünümü gerçek tablo yapısında bu kadar satırla çizilir (kayma yok); verilmezse eski iskelet.
+   */
+  loadingRows?: number;
 }
 
 function blockClass(variant: MatchCompetitionStandingsVariant): string {
@@ -152,8 +220,20 @@ export default function MatchCompetitionStandings({
   seasons,
   selectedSeasonId,
   onSeasonChange,
+  loadingRows,
 }: MatchCompetitionStandingsProps) {
   const { t } = useTranslation("match");
+
+  if (loading && loadingRows) {
+    return (
+      <StandingsLoading
+        variant={variant}
+        competitionName={competitionName || t("standings.fallbackName")}
+        rows={loadingRows}
+        withSeasonSelect={Boolean(onSeasonChange)}
+      />
+    );
+  }
 
   if (loading) {
     return (

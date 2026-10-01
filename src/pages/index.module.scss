@@ -201,6 +201,12 @@ $hub-fill-height: calc(100vh - var(--header-height) - 56px - 32px - var(--league
   min-width: 0;
 }
 
+// Maç listesi yüklenirken: MatchList kutusunun tavanı (`min(72vh, 900px)`) kadar yer — iskelet → liste kaymasın.
+.listSkeleton {
+  height: min(72vh, 900px);
+  overflow: hidden;
+}
+
 // ── UEFA fikstür modu şeridi ─────────────────────────────────────────────────
 // Liste artık seçili GÜNÜN değil seçili KUPANIN fikstürünü gösteriyor; bu şerit bunu söyler ve
 // tek tıkla geri dönüş verir. `.hubList` flex-column, `MatchList` (`fill`) kalan alanı alır.
