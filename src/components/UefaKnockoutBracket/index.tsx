@@ -2,6 +2,7 @@ import Link from 'next/link';
 import type { BracketPair, BracketRound } from '@/utils/uefaBracket';
 import { buildMatchHref } from '@/utils/matchUrl';
 import styles from './bracket.module.scss';
+import TeamLogo from '@/components/TeamLogo';
 
 type Props = {
   rounds: BracketRound[];
@@ -20,14 +21,12 @@ function TeamRow({
       className={`${styles.team} ${highlighted ? styles.teamWinner : ''}`.trim()}
     >
       {team?.logo ? (
-        <img
+        <TeamLogo
           src={team.logo}
           alt=""
           className={styles.teamLogo}
           width={16}
           height={16}
-          loading="lazy"
-          decoding="async"
         />
       ) : (
         <span className={styles.teamLogoPlaceholder} aria-hidden />

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { Match } from '@/models/liveScore';
 import { utcTimeToTr } from '@/utils/dateFormat';
 import styles from './calendar.module.scss';
+import TeamLogo from '@/components/TeamLogo';
 
 type ViewMode = 'month' | 'list';
 
@@ -178,14 +179,14 @@ function MatchModal({ match, onClose }: { match: Match; onClose: () => void }) {
         <div className={styles.modalTeams}>
           <div className={styles.modalTeam}>
             {match.home?.logo && (
-              <img src={match.home.logo} alt="" width={32} height={32} className={styles.modalTeamLogo} />
+              <TeamLogo src={match.home.logo} alt="" width={32} height={32} className={styles.modalTeamLogo} />
             )}
             <span className={styles.modalTeamName}>{match.home?.name ?? '?'}</span>
           </div>
           <span className={styles.modalVs}>vs</span>
           <div className={styles.modalTeam}>
             {match.away?.logo && (
-              <img src={match.away.logo} alt="" width={32} height={32} className={styles.modalTeamLogo} />
+              <TeamLogo src={match.away.logo} alt="" width={32} height={32} className={styles.modalTeamLogo} />
             )}
             <span className={styles.modalTeamName}>{match.away?.name ?? '?'}</span>
           </div>

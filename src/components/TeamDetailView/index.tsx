@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any -- Kadro / puan API gevşek şema */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Head from 'next/head';
-import Image from 'next/image';
 import Link from 'next/link';
 import CompareTeamPicker from '@/components/CompareTeamPicker';
 import MatchCompetitionStandings from '@/components/MatchCompetitionStandings';
@@ -48,6 +47,7 @@ import {
   teamOpponent,
 } from '@/utils/teamFixtures';
 import styles from './teamDetailView.module.scss';
+import TeamLogo from '@/components/TeamLogo';
 
 /* ─── Helpers ─── */
 
@@ -348,7 +348,7 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
       ) : (
         <div className={styles.teamHeader}>
         {teamInfo.logo ? (
-          <img
+          <TeamLogo
             src={teamInfo.logo}
             alt={teamInfo.name}
             className={styles.teamLogo}
@@ -437,14 +437,12 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
                       <div className={styles.matchTeams}>
                         <span className={styles.matchTeam}>
                           {match.home?.logo && (
-                            <img
+                            <TeamLogo
                               src={match.home.logo}
                               alt=""
                               className={styles.matchTeamLogo}
                               width={18}
                               height={18}
-                              loading="lazy"
-                              decoding="async"
                             />
                           )}
                           <span className={styles.matchTeamName}>{match.home?.name || ''}</span>
@@ -456,14 +454,12 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
 
                         <span className={styles.matchTeam}>
                           {match.away?.logo && (
-                            <img
+                            <TeamLogo
                               src={match.away.logo}
                               alt=""
                               className={styles.matchTeamLogo}
                               width={18}
                               height={18}
-                              loading="lazy"
-                              decoding="async"
                             />
                           )}
                           <span className={styles.matchTeamName}>{match.away?.name || ''}</span>
@@ -508,13 +504,12 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
                           <span className={styles.matchTime}>{fixtureKickoffLabel(match, t('fixtures.timeTbd'))}</span>
                           <span className={styles.fixtureOpponent}>
                             {opponent?.logo && (
-                              <Image
+                              <TeamLogo
                                 src={opponent.logo}
                                 alt=""
                                 className={styles.matchTeamLogo}
                                 width={18}
                                 height={18}
-                                unoptimized
                               />
                             )}
                             <span className={styles.matchTeamName}>{opponent?.name || ''}</span>
@@ -522,7 +517,7 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
                           {match.competition?.name && (
                             <span className={styles.fixtureComp}>
                               {match.competition.logo && (
-                                <Image
+                                <TeamLogo
                                   src={match.competition.logo}
                                   alt=""
                                   className={`${styles.fixtureCompLogo} ${
@@ -530,7 +525,6 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
                                   }`.trim()}
                                   width={14}
                                   height={14}
-                                  unoptimized
                                 />
                               )}
                               <span className={styles.fixtureCompName}>
@@ -576,7 +570,7 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
                               <span className={styles.squadNameCol}>
                                 <span className={styles.squadNumber}>{p.shirt_number || '-'}</span>
                                 {p.photo ? (
-                                  <img src={p.photo} alt="" className={styles.squadPhoto} width={28} height={28} loading="lazy" />
+                                  <TeamLogo src={p.photo} alt="" className={styles.squadPhoto} width={28} height={28} />
                                 ) : (
                                   <span className={`${styles.squadPhoto} ${styles.squadPhotoEmpty}`} aria-hidden="true" />
                                 )}
@@ -684,7 +678,7 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
                               onClick={() => handleLeagueClick(league.id)}
                             >
                               {logoUrl ? (
-                                <img
+                                <TeamLogo
                                   src={logoUrl}
                                   alt=""
                                   className={hubStyles.leagueFlag}
@@ -692,7 +686,7 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
                                   height={20}
                                 />
                               ) : league.countryId != null ? (
-                                <img
+                                <TeamLogo
                                   src={countryFlagImgSrc(league.countryId)}
                                   alt=""
                                   className={hubStyles.leagueFlag}

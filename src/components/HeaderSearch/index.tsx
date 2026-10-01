@@ -7,6 +7,7 @@ import { resolveSidebarLeagueLogo } from '@/utils/leagueLogo';
 import { leagueDisplayName, leagueSearchTerms } from '@/utils/leagueName';
 import { normalizeSearchText } from '@/utils/searchText';
 import styles from './headerSearch.module.scss';
+import TeamLogo from '@/components/TeamLogo';
 
 export default function HeaderSearch({ onNavigate }: { onNavigate?: () => void }) {
   const { t } = useTranslation('match');
@@ -78,7 +79,7 @@ export default function HeaderSearch({ onNavigate }: { onNavigate?: () => void }
                 const logo = resolveSidebarLeagueLogo(l);
                 return (
                   <Link key={l.id} href={`/?league=${l.id}`} className={styles.hit} onClick={close}>
-                    {logo ? <img src={logo} alt="" width={18} height={18} className={styles.logo} /> : <span className={styles.logoPh} />}
+                    {logo ? <TeamLogo src={logo} alt="" width={18} height={18} className={styles.logo} /> : <span className={styles.logoPh} />}
                     <span>{leagueDisplayName(l, tl)}</span>
                   </Link>
                 );
@@ -90,7 +91,7 @@ export default function HeaderSearch({ onNavigate }: { onNavigate?: () => void }
               <div className={styles.groupLabel}>{t('search.teams')}</div>
               {teams.map((team) => (
                 <Link key={team.id} href={`/teams/${team.id}`} className={styles.hit} onClick={close}>
-                  {team.logo ? <img src={team.logo} alt="" width={18} height={18} className={styles.logo} /> : <span className={styles.logoPh} />}
+                  {team.logo ? <TeamLogo src={team.logo} alt="" width={18} height={18} className={styles.logo} /> : <span className={styles.logoPh} />}
                   <span>{team.name}</span>
                 </Link>
               ))}

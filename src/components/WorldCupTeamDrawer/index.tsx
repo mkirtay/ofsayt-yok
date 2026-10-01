@@ -4,6 +4,7 @@ import type { TeamEntry } from '@/components/WorldCupTeamList';
 import { getWorldCupTeamProfile } from '@/data/worldCupTeamProfiles';
 import { utcTimeToTr } from '@/utils/dateFormat';
 import styles from './teamDrawer.module.scss';
+import TeamLogo from '@/components/TeamLogo';
 
 type SeasonHistory = {
   year: string;
@@ -91,7 +92,7 @@ export default function WorldCupTeamDrawer({ team, groupMatches, onClose }: Prop
         <div className={styles.drawerHeader}>
           <div className={styles.teamInfo}>
             {team.logo && (
-              <img src={team.logo} alt="" width={40} height={40} className={styles.teamLogo} />
+              <TeamLogo src={team.logo} alt="" width={40} height={40} className={styles.teamLogo} />
             )}
             <div>
               <div className={styles.teamName}>{team.name}</div>
@@ -165,7 +166,7 @@ export default function WorldCupTeamDrawer({ team, groupMatches, onClose }: Prop
                       </div>
                       <div className={styles.matchOpponent}>
                         {opponent?.logo && (
-                          <img src={opponent.logo} alt="" width={20} height={20} className={styles.opponentLogo} />
+                          <TeamLogo src={opponent.logo} alt="" width={20} height={20} className={styles.opponentLogo} />
                         )}
                         <span className={styles.opponentName}>{isHome ? 'vs ' : '@ '}{opponent?.name ?? '?'}</span>
                       </div>

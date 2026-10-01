@@ -8,6 +8,7 @@ import '@/lib/i18nNamespaces/player';
 import { MIN_MINUTES_FOR_AVERAGE } from '@/utils/playerVs';
 import { CONSISTENCY_MIN_MATCHES, ratingChartLayout, type RatingPoint, type RatingSeries, type RatingSummary } from '@/utils/ratingTrend';
 import styles from './ratingTrend.module.scss';
+import TeamLogo from '@/components/TeamLogo';
 
 const LOCALE_TAGS: Record<string, string> = { tr: 'tr-TR', en: 'en-GB' };
 const HEIGHT = 200;
@@ -45,8 +46,7 @@ function useWidth<T extends HTMLElement>() {
 function Opponent({ p, t }: { p: RatingPoint; t: (k: string) => string }) {
   return (
     <span className={styles.opponent}>
-      {/* eslint-disable-next-line @next/next/no-img-element -- 16px CDN takım logosu; sayfanın diğer logolarıyla aynı düz <img> */}
-      {p.opponentLogo ? <img src={p.opponentLogo} alt="" width={16} height={16} className={styles.logo} loading="lazy" /> : null}
+      {p.opponentLogo ? <TeamLogo src={p.opponentLogo} alt="" width={16} height={16} className={styles.logo} /> : null}
       <span className={styles.opponentName}>{p.opponent}</span>
       <span className={styles.venue}>{p.isHome ? t('ratingTrend.home') : t('ratingTrend.away')}</span>
     </span>
@@ -236,8 +236,7 @@ export default function RatingTrendChart({ series, summary }: RatingTrendChartPr
               {shortDate(dot.date, locale, true)}
               <span className={styles.tooltipTeam}>
                 {dot.teamLogo ? (
-                  // eslint-disable-next-line @next/next/no-img-element -- 14px CDN takım logosu
-                  <img src={dot.teamLogo} alt="" width={14} height={14} className={styles.logo} />
+                  <TeamLogo src={dot.teamLogo} alt="" width={14} height={14} className={styles.logo} />
                 ) : null}
                 {dot.teamName}
               </span>

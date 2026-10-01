@@ -9,6 +9,7 @@ import type {
 import SeasonSelect from '@/components/SeasonSelect';
 import { formatSeasonLabel } from '@/utils/seasonLabel';
 import styles from './matchCompetitionTopScorers.module.scss';
+import TeamLogo from '@/components/TeamLogo';
 
 /** Gol Krallığı varsayılan görünür satır sayısı; kalanı "Tümünü Göster" ile açılır (veri zaten elde, ek istek yok). */
 export const TOP_SCORERS_INITIAL_LIMIT = 20;
@@ -126,7 +127,7 @@ export default function MatchCompetitionTopScorers({
                   <td className={styles.colPlayerTeam}>
                     <div className={styles.playerTeamCell}>
                       {photo ? (
-                        <img
+                        <TeamLogo
                           src={photo}
                           alt=""
                           className={styles.playerPhoto}
@@ -135,7 +136,7 @@ export default function MatchCompetitionTopScorers({
                         />
                       ) : null}
                       {logo ? (
-                        <img
+                        <TeamLogo
                           src={logo}
                           alt=""
                           className={styles.teamLogo}

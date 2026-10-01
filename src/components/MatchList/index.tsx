@@ -1,10 +1,10 @@
-import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useMemo, useCallback, type CSSProperties } from 'react';
 import { List, type RowComponentProps } from 'react-window';
 import { useTranslation } from '@/lib/i18n';
 import TeamTierBadge from '@/components/TeamTierBadge';
+import TeamLogo from '@/components/TeamLogo';
 import { useTurkeyTeamTiers } from '@/hooks/useTurkeyTeamTiers';
 import { isTurkishCupMatch } from '@/utils/cupTeamTier';
 import type { TurkeyTeamTiersPayload } from '@/config/turkeyTiers';
@@ -99,6 +99,8 @@ const GROUP_GAP = 12;
 const MATCH_ROW_HEIGHT = 40;
 /** Kutunun en büyük yüksekliği (`min(72vh, 900px)`) — ölçümden önceki (SSR) ilk render bu kadar satırı çizer. */
 const MAX_HOST_HEIGHT = 900;
+/** İlk ekrandaki satırların logoları hemen (eager), kalanı tembel. */
+const EAGER_LOGO_ROWS = 14;
 
 function formatKickoff(match: Match): string {
   const date = match.date?.trim();
@@ -274,24 +276,21 @@ function VirtualRow({
         <div className={styles.virtualHeaderBar} data-competition-id={item.competition_id}>
           <div className={styles.virtualHeaderMain}>
             {logoUrl ? (
-              <Image
+              <TeamLogo
                 src={logoUrl}
-                alt=""
                 className={`${styles.virtualHeaderLogo} ${
                   competitionLogoNeedsBackdrop(item.competition_id) ? styles.logoBackdrop : ''
                 }`.trim()}
                 width={22}
-                height={22}
-                unoptimized
+                priority={index < EAGER_LOGO_ROWS}
               />
             ) : showCountryFlag ? (
-              <Image
+              <TeamLogo
                 src={item.country_flag || countryFlagImgSrc(item.country_id!)}
-                alt=""
                 className={styles.virtualHeaderFlag}
                 width={22}
                 height={16}
-                unoptimized
+                priority={index < EAGER_LOGO_ROWS}
               />
             ) : null}
             <span className={styles.virtualHeaderTitleBlock}>
@@ -392,17 +391,7 @@ function VirtualRow({
           className={`${styles.virtualCell} ${styles.virtualHome}${match.home?.id ? ` ${styles.virtualTeamCell}` : ''}`}
           onClick={match.home?.id ? (e) => { e.stopPropagation(); e.preventDefault(); if (onSelectTeam) onSelectTeam(match.home!.id); else navigateTo(`/teams/${match.home!.id}`); } : undefined}
         >
-          {homeLogo ? (
-            <img
-              src={homeLogo}
-              alt=""
-              className={styles.teamCrest}
-              width={18}
-              height={18}
-              loading="lazy"
-              decoding="async"
-            />
-          ) : null}
+          <TeamLogo src={homeLogo} className={styles.teamCrest} width={18} priority={index < EAGER_LOGO_ROWS} />
           <span className={`${styles.teamName}${match.home?.id ? ` ${styles.teamNameLink}` : ''}`}>{homeName}</span>
           <TeamTierBadge match={match} teamId={match.home?.id} tiers={cupTiers} />
         </div>
@@ -413,17 +402,7 @@ function VirtualRow({
           className={`${styles.virtualCell} ${styles.virtualAway}${match.away?.id ? ` ${styles.virtualTeamCell}` : ''}`}
           onClick={match.away?.id ? (e) => { e.stopPropagation(); e.preventDefault(); if (onSelectTeam) onSelectTeam(match.away!.id); else navigateTo(`/teams/${match.away!.id}`); } : undefined}
         >
-          {awayLogo ? (
-            <img
-              src={awayLogo}
-              alt=""
-              className={styles.teamCrest}
-              width={18}
-              height={18}
-              loading="lazy"
-              decoding="async"
-            />
-          ) : null}
+          <TeamLogo src={awayLogo} className={styles.teamCrest} width={18} priority={index < EAGER_LOGO_ROWS} />
           <span className={`${styles.teamName}${match.away?.id ? ` ${styles.teamNameLink}` : ''}`}>{awayName}</span>
           <TeamTierBadge match={match} teamId={match.away?.id} tiers={cupTiers} />
         </div>

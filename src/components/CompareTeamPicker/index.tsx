@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import { useTranslation } from '@/lib/i18n';
 import { useTeamSearch, type TeamHit } from '@/hooks/useTeamSearch';
 import styles from './compareTeamPicker.module.scss';
+import TeamLogo from '@/components/TeamLogo';
 
 interface CompareTeamPickerProps {
   fixedTeamId?: number;
@@ -47,7 +48,7 @@ function TeamSearchField({ id, label, value, onChange, excludeId }: TeamFieldPro
       <label className={styles.label} htmlFor={id}>{label}</label>
       {value ? (
         <button type="button" className={styles.selectedTeam} onClick={() => onChange(null)} aria-label={`${value.name} — ${t('compare.selectTeam')}`}>
-          {value.logo ? <img src={value.logo} alt="" width={18} height={18} className={styles.logo} /> : <span className={styles.logoPh} />}
+          {value.logo ? <TeamLogo src={value.logo} alt="" width={18} height={18} className={styles.logo} /> : <span className={styles.logoPh} />}
           <span className={styles.selectedName}>{value.name}</span>
           <span className={styles.change} aria-hidden="true">✕</span>
         </button>
@@ -85,7 +86,7 @@ function TeamSearchField({ id, label, value, onChange, excludeId }: TeamFieldPro
                     setOpen(false);
                   }}
                 >
-                  {tm.logo ? <img src={tm.logo} alt="" width={20} height={20} className={styles.logo} /> : <span className={styles.logoPh} />}
+                  {tm.logo ? <TeamLogo src={tm.logo} alt="" width={20} height={20} className={styles.logo} /> : <span className={styles.logoPh} />}
                   <span className={styles.hitName}>{tm.name}</span>
                 </button>
               ))}

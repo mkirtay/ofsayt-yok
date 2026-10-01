@@ -11,6 +11,7 @@ import '@/lib/i18nNamespaces/player';
 import { countsForAverage, MIN_MINUTES_FOR_AVERAGE, type PlayerLineupRow, type VsOpponent } from '@/utils/playerVs';
 import { leagueNameById } from '@/utils/leagueName';
 import styles from './playerVs.module.scss';
+import TeamLogo from '@/components/TeamLogo';
 
 const LOCALE_TAGS: Record<string, string> = { tr: 'tr-TR', en: 'en-GB' };
 
@@ -30,8 +31,7 @@ const fold = (s: string) =>
 
 function Logo({ src, size = 18 }: { src?: string; size?: number }) {
   return src ? (
-    // eslint-disable-next-line @next/next/no-img-element -- CDN takım logosu; sayfanın diğer logolarıyla aynı düz <img>
-    <img src={src} alt="" width={size} height={size} className={styles.logo} loading="lazy" />
+    <TeamLogo src={src} alt="" width={size} height={size} className={styles.logo} />
   ) : (
     <span className={styles.logoPh} style={{ width: size, height: size }} aria-hidden="true" />
   );

@@ -15,6 +15,7 @@ import EmptyState from "@/components/EmptyState";
 import StandingTeamName from "@/components/StandingTeamName";
 import { StandingsSkeleton } from "@/components/Skeleton";
 import styles from "./matchCompetitionStandings.module.scss";
+import TeamLogo from '@/components/TeamLogo';
 
 function standingTeamId(s: CompetitionTableStandingRow): number | undefined {
   const id = s.team?.id ?? s.team_id;
@@ -143,7 +144,7 @@ function StandingsTable({
                   {tid != null ? (
                     <div className={styles.teamCell}>
                       {logo ? (
-                        <img
+                        <TeamLogo
                           src={logo}
                           alt=""
                           className={styles.teamLogo}

@@ -1,5 +1,6 @@
 import type { CompetitionTableData } from '@/services/liveScoreService';
 import styles from './teamList.module.scss';
+import TeamLogo from '@/components/TeamLogo';
 
 export type TeamEntry = {
   teamId: number;
@@ -75,13 +76,12 @@ export default function WorldCupTeamList({ tableData, favoriteTeamIds, onToggleF
                   title={`${team.name} detaylarını gör`}
                 >
                   {team.logo ? (
-                    <img
+                    <TeamLogo
                       src={team.logo}
                       alt=""
                       width={24}
                       height={24}
                       className={styles.teamLogo}
-                      loading="lazy"
                     />
                   ) : (
                     <span className={styles.teamLogoPlaceholder} />

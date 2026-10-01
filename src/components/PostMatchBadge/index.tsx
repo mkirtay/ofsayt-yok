@@ -1,9 +1,9 @@
-import Image from 'next/image';
 import Link from 'next/link';
 import { useTranslation } from '@/lib/i18n';
 import { buildMatchHref } from '@/utils/matchUrl';
 import type { GundemMatchBadge, GundemMatchTeam } from '@/types/gundem';
 import styles from './postMatchBadge.module.scss';
+import TeamLogo from '@/components/TeamLogo';
 
 /** Rozette gösterilen ad: kısa kod varsa o ("GAL"), yoksa tam ad. Tam adlar `title`/erişilebilir adda kalır. */
 export function badgeTeamLabel(team: GundemMatchTeam): string {
@@ -17,7 +17,7 @@ export function matchBadgeHref(match: GundemMatchBadge): string {
 function Team({ team }: { team: GundemMatchTeam }) {
   return (
     <span className={styles.team}>
-      {team.logo ? <Image src={team.logo} alt="" width={14} height={14} className={styles.logo} unoptimized /> : null}
+      {team.logo ? <TeamLogo src={team.logo} alt="" width={14} height={14} className={styles.logo} /> : null}
       <span className={styles.name}>{badgeTeamLabel(team)}</span>
     </span>
   );

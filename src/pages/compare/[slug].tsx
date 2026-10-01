@@ -12,6 +12,7 @@ import type { ComparePagePayload } from '@/server/loadComparePageData';
 import type { RecentMatchRow } from '@/server/buildMatchAnalysisContext';
 import { statBarWidths, type H2HSummary, type StatBarKind } from '@/utils/compareData';
 import styles from './compare.module.scss';
+import TeamLogo from '@/components/TeamLogo';
 
 function FormPill({ result }: { result: RecentMatchRow['result'] }) {
   const { t } = useTranslation('compare');
@@ -152,7 +153,7 @@ function ScorerSide({ scorers, teamName, accent }: { scorers: ComparePagePayload
             <li key={scorer.playerId}>
               <Link href={`/players/${scorer.playerId}`} className={styles.scorerLink} prefetch={false}>
                 {scorer.photo ? (
-                  <img src={scorer.photo} alt="" className={styles.scorerPhoto} width={40} height={40} loading="lazy" />
+                  <TeamLogo src={scorer.photo} alt="" className={styles.scorerPhoto} width={40} height={40} />
                 ) : (
                   <span className={`${styles.scorerPhoto} ${styles.scorerPhotoEmpty}`} aria-hidden="true" />
                 )}
@@ -247,7 +248,7 @@ function ComparePageContent({ data }: { data: ComparePagePayload }) {
           <div className={styles.teamHeader}>
             <div className={styles.teamBlock}>
               {team1.teamLogo && (
-                <img
+                <TeamLogo
                   src={team1.teamLogo}
                   alt=""
                   className={styles.teamLogo}
@@ -271,7 +272,7 @@ function ComparePageContent({ data }: { data: ComparePagePayload }) {
 
             <div className={`${styles.teamBlock} ${styles.teamBlockRight}`}>
               {team2.teamLogo && (
-                <img
+                <TeamLogo
                   src={team2.teamLogo}
                   alt=""
                   className={styles.teamLogo}

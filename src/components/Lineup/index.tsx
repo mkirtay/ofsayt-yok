@@ -7,6 +7,10 @@ import { POSITION_LABEL_TR, positionLabel } from '@/utils/positionLabel';
 import { formatRating } from '@/config/ratingScale';
 import RatingBadge from '@/components/RatingBadge';
 import styles from './lineup.module.scss';
+import TeamLogo from '@/components/TeamLogo';
+
+/** Sahadaki oyuncu dairesi (fotoğraf CSS ile daireyi doldurur) — istenen küçük sürümün boyutu. */
+const FORMATION_PHOTO_PX = 40;
 
 interface LineupProps {
   lineups: MatchLineupData | null;
@@ -57,12 +61,11 @@ function PlayerToken({ player, team }: { player: LineupPlayer; team: 'home' | 'a
         }`.trim()}
       >
         {showPhoto ? (
-          <img
+          <TeamLogo
             src={player.photo}
-            alt=""
             className={styles.formationPhoto}
-            loading="lazy"
-            onError={() => setPhotoFailed(true)}
+            width={FORMATION_PHOTO_PX}
+            onFail={() => setPhotoFailed(true)}
           />
         ) : (
           player.shirt_number
@@ -71,13 +74,13 @@ function PlayerToken({ player, team }: { player: LineupPlayer; team: 'home' | 'a
           <RatingBadge rating={player.rating} size="xs" className={styles.ratingBadge} data-testid="player-rating" ariaLabel={`Reyting ${rating}`} />
         ) : null}
         {player.nationality?.flag ? (
-          <img
+          <TeamLogo
             src={player.nationality.flag}
-            alt=""
             title={player.nationality.name}
             className={styles.flagBadge}
             data-testid="player-flag"
-            loading="lazy"
+            width={16}
+            height={12}
           />
         ) : null}
       </span>
@@ -101,15 +104,7 @@ function CompactRow({ player, side, shortCode }: { player: LineupPlayer; side: '
   const number = <span className={styles.compactNumber}>{player.shirt_number}</span>;
   const photo =
     player.photo && !photoFailed ? (
-      <img
-        src={player.photo}
-        alt=""
-        className={styles.compactPhoto}
-        width={28}
-        height={28}
-        loading="lazy"
-        onError={() => setPhotoFailed(true)}
-      />
+      <TeamLogo src={player.photo} className={styles.compactPhoto} width={28} height={28} onFail={() => setPhotoFailed(true)} />
     ) : (
       <span className={`${styles.compactPhoto} ${styles.compactPhotoEmpty}`} aria-hidden="true" />
     );

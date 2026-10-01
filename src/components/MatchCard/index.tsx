@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import Image from 'next/image';
 import styles from './matchCard.module.scss';
 import { Match } from '@/models/liveScore';
 import Link from 'next/link';
@@ -17,6 +16,7 @@ import { getTeamsHead2Head, type Head2HHistoricalMatch } from '@/services/liveSc
 import StadiumIcon from '@/components/icons/StadiumIcon';
 import WhistleIcon from '@/components/icons/WhistleIcon';
 import { MatchCardSkeleton } from '@/components/Skeleton';
+import TeamLogo from '@/components/TeamLogo';
 
 interface MatchCardProps {
   match: Match | null;
@@ -207,7 +207,7 @@ export default function MatchCard({ match, loading }: MatchCardProps) {
       <header className={styles.cardHeader}>
         <div className={styles.cardHeaderLeft}>
           {compLogo ? (
-            <Image
+            <TeamLogo
               src={compLogo}
               alt=""
               className={`${styles.cardHeaderLogo} ${
@@ -215,16 +215,14 @@ export default function MatchCard({ match, loading }: MatchCardProps) {
               }`.trim()}
               width={22}
               height={22}
-              unoptimized
             />
           ) : showCountryFlag ? (
-            <Image
+            <TeamLogo
               src={countryFlagImgSrc(country!.id)}
               alt=""
               className={styles.cardHeaderFlag}
               width={22}
               height={16}
-              unoptimized
             />
           ) : null}
           <span className={styles.cardHeaderTitle}>
@@ -245,7 +243,7 @@ export default function MatchCard({ match, loading }: MatchCardProps) {
           <div className={styles.team}>
             <Link href={`/teams/${match.home?.id || ''}`} className={styles.teamLink}>
               {homeLogo ? (
-                <Image src={homeLogo} alt={homeName} className={styles.logo} width={56} height={56} unoptimized />
+                <TeamLogo src={homeLogo} alt={homeName} className={styles.logo} width={56} height={56} />
               ) : (
                 <div className={styles.logoPlaceholder}>{homeName.charAt(0)}</div>
               )}
@@ -289,7 +287,7 @@ export default function MatchCard({ match, loading }: MatchCardProps) {
           <div className={styles.team}>
             <Link href={`/teams/${match.away?.id || ''}`} className={styles.teamLink}>
               {awayLogo ? (
-                <Image src={awayLogo} alt={awayName} className={styles.logo} width={56} height={56} unoptimized />
+                <TeamLogo src={awayLogo} alt={awayName} className={styles.logo} width={56} height={56} />
               ) : (
                 <div className={styles.logoPlaceholder}>{awayName.charAt(0)}</div>
               )}

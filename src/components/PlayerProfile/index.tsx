@@ -15,6 +15,7 @@ import { formatRating } from '@/config/ratingScale';
 import RatingTrendChart from './RatingTrendChart';
 import PlayerVsOpponent from './PlayerVsOpponent';
 import styles from './playerProfile.module.scss';
+import TeamLogo from '@/components/TeamLogo';
 
 /* ─── Saf yardımcılar (test edilir) ─── */
 
@@ -82,12 +83,12 @@ function Header({ p }: { p: Profile }) {
   const age = ageFromBirth(p.dateOfBirth);
   return (
     <section className={styles.header}>
-      {p.photo ? <img src={p.photo} alt={p.name} className={styles.photo} width={96} height={96} /> : <div className={`${styles.photo} ${styles.photoEmpty}`} aria-hidden="true" />}
+      {p.photo ? <TeamLogo src={p.photo} alt={p.name} className={styles.photo} width={96} height={96} /> : <div className={`${styles.photo} ${styles.photoEmpty}`} aria-hidden="true" />}
       <div className={styles.headerInfo}>
         <h1 className={styles.name}>{p.name}</h1>
         {p.currentTeam ? (
           <div className={styles.teamLine}>
-            {p.currentTeam.logo ? <img src={p.currentTeam.logo} alt="" width={18} height={18} className={styles.teamLogo} /> : null}
+            {p.currentTeam.logo ? <TeamLogo src={p.currentTeam.logo} alt="" width={18} height={18} className={styles.teamLogo} /> : null}
             {p.currentTeam.id != null ? (
               <Link href={`/teams/${p.currentTeam.id}`} className={styles.teamLink}>
                 {p.currentTeam.name}
@@ -101,7 +102,7 @@ function Header({ p }: { p: Profile }) {
           {p.position ? <span className={styles.chip}>{p.detailedPosition ?? p.position}</span> : null}
           {p.nationality ? (
             <span className={styles.chip}>
-              {p.nationality.flag ? <img src={p.nationality.flag} alt="" width={16} height={12} className={styles.flag} /> : null}
+              {p.nationality.flag ? <TeamLogo src={p.nationality.flag} alt="" width={16} height={12} className={styles.flag} /> : null}
               {p.nationality.name}
             </span>
           ) : null}
@@ -175,7 +176,7 @@ function SeasonPicker({ seasons, selected, onSelect }: { seasons: PlayerSeasonSt
   }, [open]);
 
   const logo = (x: PlayerSeasonStats) =>
-    x.teamLogo ? <img src={x.teamLogo} alt="" width={18} height={18} className={styles.teamLogo} /> : <span className={styles.logoPh} aria-hidden="true" />;
+    x.teamLogo ? <TeamLogo src={x.teamLogo} alt="" width={18} height={18} className={styles.teamLogo} /> : <span className={styles.logoPh} aria-hidden="true" />;
 
   return (
     <div className={styles.picker} ref={wrapRef}>
@@ -290,7 +291,7 @@ function TeamCell({ t }: { t?: PlayerTransfer['fromTeam'] }) {
   if (!t) return <span className={styles.muted}>—</span>;
   const inner = (
     <>
-      {t.logo ? <img src={t.logo} alt="" width={18} height={18} className={styles.teamLogo} loading="lazy" /> : null}
+      {t.logo ? <TeamLogo src={t.logo} alt="" width={18} height={18} className={styles.teamLogo} /> : null}
       <span className={styles.teamName}>{t.name}</span>
     </>
   );
@@ -371,14 +372,13 @@ function MatchHistory({ playerId }: { playerId: number }) {
                     <span>{formatPlayerDate(r.date, locale)}</span>
                     <span className={styles.score}>
                       {r.teamLogo ? (
-                        // eslint-disable-next-line @next/next/no-img-element -- 14px CDN takım logosu; sayfanın diğer logolarıyla aynı düz <img>
-                        <img src={r.teamLogo} alt={r.teamName} title={r.teamName} width={14} height={14} className={styles.teamLogo} loading="lazy" />
+                        <TeamLogo src={r.teamLogo} alt={r.teamName} title={r.teamName} width={14} height={14} className={styles.teamLogo} />
                       ) : null}
                       {score}
                     </span>
                   </div>
                   <Link href={`/matches/${r.fixtureId}`} className={styles.teamCell} prefetch={false}>
-                    {r.opponentLogo ? <img src={r.opponentLogo} alt="" width={18} height={18} className={styles.teamLogo} loading="lazy" /> : null}
+                    {r.opponentLogo ? <TeamLogo src={r.opponentLogo} alt="" width={18} height={18} className={styles.teamLogo} /> : null}
                     <span className={styles.teamName}>{r.isHome ? '' : '@ '}{r.opponentName}</span>
                   </Link>
                   {playedIn(r) ? (
