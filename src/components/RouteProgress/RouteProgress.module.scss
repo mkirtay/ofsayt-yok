@@ -1,16 +1,126 @@
-.bar {
+// 07 · Yuvarlanan top. Kök 12 px yüksek şerit: 3 px çubuk header'ın alt çizgisine oturur, top (12 px) çubuğun ucunda.
+// Durumlar (data-state): idle (görünmez) → running (dolgu %85'e ilerler, top yuvarlanır) → done (sona varır, söner).
+// Yalnız transform + opacity; top izi (track) şerit genişliğinde, translateX(%) şeride göre.
+
+$fill: #00a76f;
+
+.root {
   position: fixed;
-  top: 0;
+  top: calc(var(--header-height) - 7.5px);
   left: 0;
-  height: 3px;
-  width: 0;
-  background: var(--color-primary, #00a76f);
+  right: 0;
+  height: 12px;
   z-index: 9999;
   pointer-events: none;
+  overflow: hidden;
   opacity: 0;
-  transition: width 0.25s ease, opacity 0.15s ease;
+  transition: opacity 0.2s ease 0.25s;
+
+  &[data-state='running'],
+  &[data-state='done'] {
+    opacity: 1;
+    transition: none;
+  }
+
+  &[data-state='done'] {
+    opacity: 0;
+    transition: opacity 0.2s ease 0.25s;
+  }
 }
 
-.bar.active {
-  opacity: 1;
+.fill {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 4.5px;
+  height: 3px;
+  background: $fill;
+  transform-origin: left;
+  transform: scaleX(0);
+}
+
+.track {
+  position: absolute;
+  inset: 0;
+  transform: translateX(0);
+}
+
+.ball {
+  position: absolute;
+  top: 0;
+  left: -6px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: inset -2px -2px 0 rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.3);
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 2px;
+    border-radius: 50%;
+    background: conic-gradient(
+      rgba(0, 0, 0, 0.55) 0deg 30deg,
+      transparent 30deg 150deg,
+      rgba(0, 0, 0, 0.55) 150deg 180deg,
+      transparent 180deg 300deg,
+      rgba(0, 0, 0, 0.55) 300deg 330deg,
+      transparent 330deg 360deg
+    );
+    opacity: 0.6;
+  }
+}
+
+// Çalışırken: referanstaki ilk %70'lik bölüm (2,1 sn'de %85), sonra orada bekler. Hareketi azalt'ta animasyon yok →
+// doğrudan son kare (%85, top ucunda).
+.root[data-state='running'] {
+  .fill {
+    transform: scaleX(0.85);
+    animation: fillRun 2.1s ease-out both;
+  }
+
+  .track {
+    transform: translateX(85%);
+    animation: trackRun 2.1s ease-out both;
+  }
+
+  .ball {
+    animation: ballRoll 2.1s ease-out both;
+  }
+}
+
+// Bitti: sona varır (geçişle), sonra kök söner.
+.root[data-state='done'] {
+  .fill {
+    transform: scaleX(1);
+    transition: transform 0.25s ease-out;
+  }
+
+  .track {
+    transform: translateX(100%);
+    transition: transform 0.25s ease-out;
+  }
+}
+
+@keyframes fillRun {
+  0% { transform: scaleX(0); }
+  100% { transform: scaleX(0.85); }
+}
+
+@keyframes trackRun {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(85%); }
+}
+
+@keyframes ballRoll {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(720deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .root * {
+    animation: none !important;
+    transition: none !important;
+  }
 }
