@@ -17,6 +17,8 @@ describe('EventTimeline ikonları', () => {
   it.each([
     ['PENALTY', 'Penaltı golü'],
     ['MISSED_PENALTY', 'Kaçan penaltı'],
+    ['PENALTY_SHOOTOUT_GOAL', 'Seri penaltıda gol'],
+    ['PENALTY_SHOOTOUT_MISS', 'Seri penaltıda kaçtı'],
     ['OWN_GOAL', 'Kendi kalesine'],
     ['YELLOW_RED_CARD', 'İkinci sarıdan kırmızı'],
     ['VAR', 'VAR incelemesi'],
@@ -31,6 +33,7 @@ describe('EventTimeline ikonları', () => {
 
   it('penaltı golünde P, kendi kalesinde KK rozeti', () => {
     expect(render([ev({ event: 'PENALTY' })])).toMatch(/>P</);
+    expect(render([ev({ event: 'PENALTY_SHOOTOUT_GOAL' })])).toMatch(/>P</);
     expect(render([ev({ event: 'OWN_GOAL' })])).toMatch(/>KK</);
   });
 });

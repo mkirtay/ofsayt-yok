@@ -76,6 +76,10 @@ function EventIcon({ event, t }: { event: string; t: T }): ReactNode {
       return wrap(t('events.types.penalty'), <GoalFrameSvg />, '', t('events.badges.penalty'));
     case 'MISSED_PENALTY':
       return wrap(t('events.types.missedPenalty'), <GoalFrameSvg crossed />, styles.muted);
+    case 'PENALTY_SHOOTOUT_GOAL':
+      return wrap(t('events.types.shootoutGoal'), <GoalFrameSvg />, '', t('events.badges.penalty'));
+    case 'PENALTY_SHOOTOUT_MISS':
+      return wrap(t('events.types.shootoutMiss'), <GoalFrameSvg crossed />, styles.muted);
     case 'OWN_GOAL':
       return wrap(t('events.types.ownGoal'), <BallSvg />, styles.ownGoal, t('events.badges.ownGoal'));
     case 'YELLOW_CARD':

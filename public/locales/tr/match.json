@@ -274,6 +274,8 @@
       "goal": "Gol",
       "penalty": "Penaltı golü",
       "missedPenalty": "Kaçan penaltı",
+      "shootoutGoal": "Seri penaltıda gol",
+      "shootoutMiss": "Seri penaltıda kaçtı",
       "ownGoal": "Kendi kalesine",
       "yellowCard": "Sarı kart",
       "redCard": "Kırmızı kart",

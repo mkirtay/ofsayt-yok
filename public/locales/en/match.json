@@ -276,6 +276,8 @@
       "goal": "Goal",
       "penalty": "Penalty goal",
       "missedPenalty": "Missed penalty",
+      "shootoutGoal": "Shootout penalty scored",
+      "shootoutMiss": "Shootout penalty missed",
       "ownGoal": "Own goal",
       "yellowCard": "Yellow card",
       "redCard": "Red card",
