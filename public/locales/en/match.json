@@ -268,5 +268,46 @@
     "ariaLabel": "League standings",
     "fallbackName": "League",
     "empty": "No standings table found."
+  },
+  "events": {
+    "title": "Match Events",
+    "empty": "No match events.",
+    "types": {
+      "goal": "Goal",
+      "penalty": "Penalty goal",
+      "missedPenalty": "Missed penalty",
+      "ownGoal": "Own goal",
+      "yellowCard": "Yellow card",
+      "redCard": "Red card",
+      "yellowRedCard": "Second yellow, red card",
+      "substitution": "Substitution",
+      "var": "VAR review"
+    },
+    "badges": {
+      "penalty": "P",
+      "ownGoal": "OG",
+      "var": "VAR"
+    },
+    "varDetail": "VAR: {{decision}}",
+    "varDecisions": {
+      "penalty_awarded": "Penalty awarded",
+      "penalty_cancelled": "Penalty cancelled",
+      "penalty_confirmed": "Penalty confirmed",
+      "no_penalty": "No penalty",
+      "penalty_not_awarded": "No penalty",
+      "goal_disallowed": "Goal disallowed",
+      "goal_cancelled": "Goal cancelled",
+      "goal_confirmed": "Goal confirmed",
+      "goal_awarded": "Goal awarded",
+      "card_adjusted": "Card adjusted",
+      "card_upgrade": "Card upgraded",
+      "card_downgrade": "Card downgraded",
+      "card_cancelled": "Card cancelled",
+      "card_reviewed": "Card reviewed",
+      "red_card": "Red card",
+      "red_card_cancelled": "Red card cancelled",
+      "mistaken_identity": "Mistaken identity corrected",
+      "offside": "Offside"
+    }
   }
 }

@@ -37,6 +37,7 @@ export function mapSportmonksEventToMatchEvent(
     event: resolveEventLabel(event.type_id),
     sort: event.sort_order ?? event.minute,
     info: event.info ?? null,
+    addition: event.addition ?? null,
     is_home: location === 'home',
     is_away: location === 'away',
   };

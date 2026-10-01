@@ -266,5 +266,46 @@
     "ariaLabel": "Lig puan durumu",
     "fallbackName": "Lig",
     "empty": "Puan tablosu bulunamadı."
+  },
+  "events": {
+    "title": "Maç Olayları",
+    "empty": "Maç olayı bulunmuyor.",
+    "types": {
+      "goal": "Gol",
+      "penalty": "Penaltı golü",
+      "missedPenalty": "Kaçan penaltı",
+      "ownGoal": "Kendi kalesine",
+      "yellowCard": "Sarı kart",
+      "redCard": "Kırmızı kart",
+      "yellowRedCard": "İkinci sarıdan kırmızı",
+      "substitution": "Oyuncu değişikliği",
+      "var": "VAR incelemesi"
+    },
+    "badges": {
+      "penalty": "P",
+      "ownGoal": "KK",
+      "var": "VAR"
+    },
+    "varDetail": "VAR: {{decision}}",
+    "varDecisions": {
+      "penalty_awarded": "Penaltı verildi",
+      "penalty_cancelled": "Penaltı iptal",
+      "penalty_confirmed": "Penaltı onaylandı",
+      "no_penalty": "Penaltı yok",
+      "penalty_not_awarded": "Penaltı yok",
+      "goal_disallowed": "Gol iptal",
+      "goal_cancelled": "Gol iptal",
+      "goal_confirmed": "Gol onaylandı",
+      "goal_awarded": "Gol verildi",
+      "card_adjusted": "Kart değiştirildi",
+      "card_upgrade": "Kart yükseltildi",
+      "card_downgrade": "Kart düşürüldü",
+      "card_cancelled": "Kart iptal",
+      "card_reviewed": "Kart incelendi",
+      "red_card": "Kırmızı kart",
+      "red_card_cancelled": "Kırmızı kart iptal",
+      "mistaken_identity": "Yanlış oyuncu düzeltildi",
+      "offside": "Ofsayt"
+    }
   }
 }

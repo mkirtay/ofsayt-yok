@@ -19,6 +19,8 @@ export interface MatchEvent {
   event: string;
   sort: number;
   info: string | null;
+  /** Sportmonks `addition` — VAR kararı ("Penalty awarded", "Goal disallowed"…) burada gelir, `info`'da değil. */
+  addition?: string | null;
   is_home: boolean;
   is_away: boolean;
 }
