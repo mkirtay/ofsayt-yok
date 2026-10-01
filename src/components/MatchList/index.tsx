@@ -1,10 +1,12 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { useMemo, useCallback, type CSSProperties } from 'react';
+import { useMemo, useCallback, useEffect, useState, type CSSProperties } from 'react';
 import { List, type RowComponentProps } from 'react-window';
 import { useTranslation } from '@/lib/i18n';
 import TeamTierBadge from '@/components/TeamTierBadge';
 import TeamLogo from '@/components/TeamLogo';
+import LazyLoad from '@/components/LazyLoad';
+import { detectGoals, type GoalEvent } from '@/utils/goalDetection';
 import { useTurkeyTeamTiers } from '@/hooks/useTurkeyTeamTiers';
 import { isTurkishCupMatch } from '@/utils/cupTeamTier';
 import type { TurkeyTeamTiersPayload } from '@/config/turkeyTiers';
@@ -17,6 +19,22 @@ import { utcTimeToTr } from '@/utils/dateFormat';
 import { buildMatchHref } from '@/utils/matchUrl';
 import { isModifiedClick } from '@/utils/matchSelection';
 import styles from './matchList.module.scss';
+
+// 06 · Gol anı: yalnız bir gol olunca yüklenir (ana sayfa ilk yüküne JS/CSS eklemez); bu kadar sonra kaldırılır.
+const loadGoalMoment = () => import('./GoalMoment');
+const GOAL_MOMENT_MS = 3200;
+const NO_GOALS: ReadonlyMap<string, GoalEvent> = new Map();
+
+/** Skoru okunabilen maçların id → skor haritası (gol karşılaştırması için). */
+function scoresById(items: FlatItem[]): Map<string, string> {
+  const map = new Map<string, string>();
+  for (const item of items) {
+    if (item.type !== 'match') continue;
+    const raw = item.match.scores?.score || item.match.score;
+    if (raw) map.set(String(item.match.id), raw);
+  }
+  return map;
+}
 
 export type MatchListVariant = 'default' | 'worldCup';
 
@@ -227,6 +245,8 @@ type RowContext = {
   selectedMatchId: string | null;
   /** Türkiye Kupası maçlarında takım kademe rozeti için (yoksa rozet yok). */
   cupTiers: TurkeyTeamTiersPayload | null;
+  /** Son yenilemede skoru artan maçlar (06 · Gol anı; canlı satırda bir kez oynar). */
+  goals: ReadonlyMap<string, GoalEvent>;
 };
 
 type VirtualRowProps = RowComponentProps<RowContext>;
@@ -245,6 +265,7 @@ function VirtualRow({
   onSelectTeam,
   selectedMatchId,
   cupTiers,
+  goals,
   ariaAttributes,
 }: VirtualRowProps) {
   const { t } = useTranslation('match');
@@ -342,6 +363,7 @@ function VirtualRow({
 
   const isFav =
     favoriteTeamIds.has(match.home?.id ?? -1) || favoriteTeamIds.has(match.away?.id ?? -1);
+  const goal = isLive ? goals.get(String(match.id)) : undefined;
 
   return (
     <div {...ariaAttributes} style={style} className={rowClass}>
@@ -395,7 +417,7 @@ function VirtualRow({
           <span className={`${styles.teamName}${match.home?.id ? ` ${styles.teamNameLink}` : ''}`}>{homeName}</span>
           <TeamTierBadge match={match} teamId={match.home?.id} tiers={cupTiers} />
         </div>
-        <div className={`${styles.virtualCell} ${styles.virtualScore}`}>
+        <div className={`${styles.virtualCell} ${styles.virtualScore}`} data-goal-anchor>
           <span className={styles.scoreText}>{score}</span>
         </div>
         <div
@@ -421,6 +443,7 @@ function VirtualRow({
           {isFav ? '★' : '☆'}
         </button>
       )}
+      {goal ? <LazyLoad key={goal.key} load={loadGoalMoment} props={{ side: goal.side }} /> : null}
     </div>
   );
 }
@@ -467,6 +490,24 @@ export default function MatchList({
   const hasCupMatch = useMemo(() => items.some((i) => i.type === 'match' && isTurkishCupMatch(i.match)), [items]);
   const cupTiers = useTurkeyTeamTiers(hasCupMatch).data ?? null;
 
+  // 06 · Gol anı: iki yenileme arasında skoru artan maçlar. İlk çizimde karşılaştırılacak önceki skor yok → oynamaz.
+  // (Önceki render'ın bilgisini saklama kalıbı: liste değişince render sırasında karşılaştırılır.)
+  const [scoreTrack, setScoreTrack] = useState<{ items: FlatItem[]; scores: Map<string, string> } | null>(null);
+  const [goals, setGoals] = useState<ReadonlyMap<string, GoalEvent>>(NO_GOALS);
+  if (scoreTrack?.items !== items) {
+    const scores = scoresById(items);
+    if (scoreTrack) {
+      const fresh = detectGoals(scoreTrack.scores, scores);
+      if (fresh.size > 0) setGoals(new Map([...goals, ...fresh]));
+    }
+    setScoreTrack({ items, scores });
+  }
+  useEffect(() => {
+    if (goals.size === 0) return;
+    const id = window.setTimeout(() => setGoals(NO_GOALS), GOAL_MOMENT_MS);
+    return () => window.clearTimeout(id);
+  }, [goals]);
+
   const rowProps = useMemo<RowContext>(
     () => ({
       items,
@@ -480,6 +521,7 @@ export default function MatchList({
       onSelectTeam: onSelectTeam ?? null,
       selectedMatchId: selectedMatchId ?? null,
       cupTiers,
+      goals,
     }),
     [
       items,
@@ -493,6 +535,7 @@ export default function MatchList({
       onSelectTeam,
       selectedMatchId,
       cupTiers,
+      goals,
     ]
   );
 
