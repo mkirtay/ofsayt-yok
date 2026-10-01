@@ -1,0 +1,127 @@
+@use '../../styles/motion' as *;
+
+// 05 · Tribün dalgası. Açık temada referansın birebir renkleri, koyu temada proje token'ları; çim iki temada aynı.
+.root {
+  @include motion-root;
+
+  --stand-bg: var(--bg-muted);
+  --stand-line: var(--border-subtle);
+  --seat: rgba(255, 255, 255, 0.14);
+  --seat-mid: #3f9f7c;
+
+  width: 100%;
+}
+
+:global(:root[data-theme='light']) .root {
+  --stand-bg: #eef3f0;
+  --stand-line: #e3ebe6;
+  --seat: #c6d6cd;
+  --seat-mid: #7fd3b4;
+}
+
+.waiting {
+  visibility: hidden;
+}
+
+.stand {
+  position: relative;
+  width: 504px;
+  height: 226px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--stand-bg);
+  box-shadow: inset 0 0 0 1px var(--stand-line);
+  display: flex;
+  flex-direction: column;
+}
+
+.seats {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 12px;
+}
+
+.row {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.seat {
+  position: relative;
+  display: block;
+  width: 16px;
+  height: 14px;
+  border-radius: 5px 5px 3px 3px;
+  background: var(--seat);
+  animation: wave 2.6s ease-in-out var(--d, 0s) infinite both;
+
+  // Referanstaki renk geçişi (gri → yeşil → açık yeşil → gri) background yerine iki katmanın opacity'siyle:
+  // yalnız transform + opacity canlanır.
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    opacity: 0;
+    animation: 2.6s ease-in-out var(--d, 0s) infinite both;
+  }
+
+  &::before {
+    background: var(--seat-mid);
+    animation-name: seatMid;
+  }
+
+  &::after {
+    background: #00a76f;
+    animation-name: seatHot;
+  }
+}
+
+@keyframes wave {
+  0%,
+  40%,
+  100% {
+    transform: translateY(0);
+  }
+  12% {
+    transform: translateY(-10px);
+  }
+  22% {
+    transform: translateY(-3px);
+  }
+}
+
+@keyframes seatHot {
+  0%,
+  22%,
+  40%,
+  100% {
+    opacity: 0;
+  }
+  12% {
+    opacity: 1;
+  }
+}
+
+@keyframes seatMid {
+  0%,
+  12%,
+  40%,
+  100% {
+    opacity: 0;
+  }
+  22% {
+    opacity: 1;
+  }
+}
+
+.pitch {
+  width: 100%;
+  height: 52px;
+  flex-shrink: 0;
+  border-radius: 0;
+}

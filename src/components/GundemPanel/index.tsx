@@ -1,5 +1,6 @@
 import { useSession } from 'next-auth/react';
 import EmptyState from '@/components/EmptyState';
+import GundemLoading from './GundemLoading';
 import PostCard from '@/components/PostCard';
 import PostComposer from '@/components/PostComposer';
 import { POST_MAX_LENGTH } from '@/config/gundem';
@@ -75,7 +76,7 @@ export default function GundemPanel({
 
         {/* isPending: oturum çözülene kadar sorgu devre dışıdır — o sürede "boş" değil "yükleniyor" gösterilir */}
         {feed.isPending ? (
-          <EmptyState>{t('feed.loading')}</EmptyState>
+          <GundemLoading label={t('feed.loading')} />
         ) : feed.isError ? (
           <EmptyState>
             {t('feed.error')}{' '}
