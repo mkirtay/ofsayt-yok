@@ -32,3 +32,18 @@ export function overallFormToPills(form: string[] | undefined, count = 5): FormP
     return { letter: '?', variant: 'draw' as const };
   });
 }
+
+/**
+ * Maç kartının form/karşılaşma verisi için takım çifti (SSR ve istemci aynı çifti kullansın). Eski sağlayıcının
+ * head2head URL'si varsa ondan, yoksa ev/deplasman id'leri. Takımlar bilinmiyorsa null.
+ */
+export function h2hTeamKey(
+  match: { home?: { id?: number }; away?: { id?: number }; urls?: { head2head?: string } } | null | undefined,
+): { team1Id: string; team2Id: string; key: string } | null {
+  if (!match?.home?.id || !match?.away?.id) return null;
+  const parsed = parseHead2HeadTeamIds(match.urls?.head2head);
+  const team1Id = parsed?.team1Id ?? String(match.home.id);
+  const team2Id = parsed?.team2Id ?? String(match.away.id);
+  return { team1Id, team2Id, key: `${team1Id}:${team2Id}` };
+}
+

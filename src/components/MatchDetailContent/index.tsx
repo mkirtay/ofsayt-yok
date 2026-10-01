@@ -3,6 +3,7 @@ import { useTranslation } from '@/lib/i18n';
 import MatchCard from '@/components/MatchCard';
 import EventTimeline from '@/components/EventTimeline';
 import Lineup from '@/components/Lineup';
+import type { Head2HeadData } from '@/services/liveScoreService';
 import MatchStats from '@/components/MatchStats';
 import MatchTabs, { type MatchTabItem } from '@/components/MatchTabs';
 import MatchTrivia from '@/components/MatchTrivia';
@@ -18,6 +19,8 @@ type Props = {
   requestedMatchId: string;
   /** `panel`: split-view; istatistik/olaylar her zaman alt alta */
   variant?: 'page' | 'panel';
+  /** SSR'da çözülmüş maç kartı formu + karşılaşma geçmişi (yalnız sayfa); bkz. MatchCard `initialH2h`. */
+  initialH2h?: Head2HeadData | null;
 };
 
 /** Maç detayının DÜZ sekmeleri — sıra = görünüm sırası, alt sekme yok. */
@@ -34,7 +37,7 @@ export const DEFAULT_MATCH_TAB: MatchTabKey = 'overview';
  * `/matches/[slug]` sayfası ile split-view paneli aynı bileşeni kullanır; yükleme
  * durumlarında alt bileşenler kendi iskeletlerini (skeleton) gösterir.
  */
-export default function MatchDetailContent({ detail, requestedMatchId, variant = 'page' }: Props) {
+export default function MatchDetailContent({ detail, requestedMatchId, variant = 'page', initialH2h }: Props) {
   const { t } = useTranslation('match');
   const { match, matchLoading, statsLoading, eventsLoading, lineupsLoading } = detail;
   const effectiveMatchId = detail.matchId || requestedMatchId;
@@ -105,7 +108,7 @@ export default function MatchDetailContent({ detail, requestedMatchId, variant =
 
   return (
     <div className={`${styles.content} ${variant === 'panel' ? styles.contentPanel : ''}`.trim()}>
-      <MatchCard match={match} loading={matchLoading} />
+      <MatchCard match={match} loading={matchLoading} initialH2h={initialH2h} />
       <MatchTabs tabs={tabs} active={active} onChange={setActive} ariaLabel={t('tabs.label')} />
     </div>
   );

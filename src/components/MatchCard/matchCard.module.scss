@@ -364,6 +364,36 @@ $match-card-header-blue: var(--text-secondary); // tema-uyumlu (eskiden sabit la
   @include form-badge;
 }
 
+// Form/karşılaşma verisi istemcide gelirken yer tutucu (SSR bütçesi aşıldıysa).
+.formPillSkeleton {
+  background: var(--skeleton-base);
+  color: transparent;
+}
+
+.skeletonText {
+  display: inline-block;
+  min-width: 72px;
+  border-radius: 4px;
+  background: var(--skeleton-base);
+}
+
+.h2hSkeletonRows {
+  display: flex;
+  flex-direction: column;
+}
+
+// thead (22 px) + 3 satır (24 px) ≈ tablo; satır çizgisiyle.
+.h2hSkeletonRow {
+  display: block;
+  height: 24px;
+  border-bottom: 1px solid $color-border;
+  background: linear-gradient(90deg, var(--skeleton-base), transparent 70%);
+
+  &:first-child {
+    height: 22px;
+  }
+}
+
 .formPillWin {
   @include form-badge-win;
 }

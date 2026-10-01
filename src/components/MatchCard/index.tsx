@@ -10,14 +10,14 @@ import { kickoffInfo, relativeKickoffDay } from '@/utils/kickoff';
 import { formatFixtureDate } from '@/utils/fixtureDateLabel';
 import { countryFlagImgSrc } from '@/utils/countryFlag';
 import { utcTimeToTr, isoDateToTr } from '@/utils/dateFormat';
-import { parseHead2HeadTeamIds, overallFormToPills, type FormPill } from '@/utils/matchForm';
+import { h2hTeamKey, overallFormToPills, type FormPill } from '@/utils/matchForm';
 import { buildMatchHref } from '@/utils/matchUrl';
 import { competitionLogoNeedsBackdrop } from '@/utils/competitionLogo';
 import { leagueNameById } from '@/utils/leagueName';
 import TeamTierBadge from '@/components/TeamTierBadge';
 import { useTurkeyTeamTiers } from '@/hooks/useTurkeyTeamTiers';
 import { isTurkishCupMatch } from '@/utils/cupTeamTier';
-import { getTeamsHead2Head, type Head2HHistoricalMatch } from '@/services/liveScoreService';
+import { getTeamsHead2Head, type Head2HeadData, type Head2HHistoricalMatch } from '@/services/liveScoreService';
 import StadiumIcon from '@/components/icons/StadiumIcon';
 import WhistleIcon from '@/components/icons/WhistleIcon';
 import { MatchCardSkeleton } from '@/components/Skeleton';
@@ -26,6 +26,11 @@ import TeamLogo from '@/components/TeamLogo';
 interface MatchCardProps {
   match: Match | null;
   loading?: boolean;
+  /**
+   * SSR'da çözülmüş form + karşılaşma geçmişi (kart sonradan uzamasın). `null`: veri yok; verilmezse (undefined)
+   * istemci çeker ve yer iskeletle ayrılır.
+   */
+  initialH2h?: Head2HeadData | null;
 }
 
 /** Returns the date/time portion only (no "Tarih :" prefix). */
@@ -77,14 +82,14 @@ function parseDisplayScore(raw: string): { home: string; away: string } {
   return { home: s || '—', away: '' };
 }
 
-export default function MatchCard({ match, loading }: MatchCardProps) {
+export default function MatchCard({ match, loading, initialH2h }: MatchCardProps) {
   const { t } = useTranslation('match');
   const { t: tl } = useTranslation('leagues');
-  const [homeForm, setHomeForm] = useState<FormPill[]>([]);
-  const [awayForm, setAwayForm] = useState<FormPill[]>([]);
-  const [homeH2hForm, setHomeH2hForm] = useState<FormPill[]>([]);
-  const [awayH2hForm, setAwayH2hForm] = useState<FormPill[]>([]);
-  const [h2hHistory, setH2hHistory] = useState<Head2HHistoricalMatch[]>([]);
+  // Form + karşılaşma geçmişi tek state'te, takım çiftine bağlı. SSR verdiyse onunla başlar (istek yok, kart uzamaz).
+  const teamKey = h2hTeamKey(match);
+  const [h2h, setH2h] = useState<{ key: string; data: Head2HeadData | null } | null>(() =>
+    teamKey && initialH2h !== undefined ? { key: teamKey.key, data: initialH2h } : null,
+  );
 
   function h2hRowStatus(row: Head2HHistoricalMatch): string {
     if (row.status === 'FINISHED') return t('fullTime');
@@ -121,49 +126,33 @@ export default function MatchCard({ match, loading }: MatchCardProps) {
   }
 
   useEffect(() => {
-    if (!match?.home?.id || !match?.away?.id) {
-      setHomeForm([]);
-      setAwayForm([]);
-      setHomeH2hForm([]);
-      setAwayH2hForm([]);
-      setH2hHistory([]);
-      return;
-    }
-
-    const parsed = parseHead2HeadTeamIds(match.urls?.head2head);
-    const team1Id = parsed?.team1Id ?? String(match.home.id);
-    const team2Id = parsed?.team2Id ?? String(match.away.id);
-
+    if (!teamKey || h2h?.key === teamKey.key) return;
     let cancelled = false;
-    (async () => {
-      const data = await getTeamsHead2Head(team1Id, team2Id);
-      if (cancelled || !data) {
-        if (!cancelled) {
-          setHomeForm([]);
-          setAwayForm([]);
-          setHomeH2hForm([]);
-          setAwayH2hForm([]);
-          setH2hHistory([]);
-        }
-        return;
-      }
-      const homeId = match.home!.id;
-      const team1IsHome = Number(data.team1.id) === homeId;
-      const homeOverall = team1IsHome ? data.team1.overall_form : data.team2.overall_form;
-      const awayOverall = team1IsHome ? data.team2.overall_form : data.team1.overall_form;
-      const homeH2h = team1IsHome ? data.team1.h2h_form : data.team2.h2h_form;
-      const awayH2h = team1IsHome ? data.team2.h2h_form : data.team1.h2h_form;
-      setHomeForm(overallFormToPills(homeOverall, 5));
-      setAwayForm(overallFormToPills(awayOverall, 5));
-      setHomeH2hForm(overallFormToPills(homeH2h, 5));
-      setAwayH2hForm(overallFormToPills(awayH2h, 5));
-      setH2hHistory(Array.isArray(data.h2h) ? data.h2h : []);
-    })();
-
+    const { key, team1Id, team2Id } = teamKey;
+    getTeamsHead2Head(team1Id, team2Id).then(
+      (data) => {
+        if (!cancelled) setH2h({ key, data });
+      },
+      () => {
+        if (!cancelled) setH2h({ key, data: null });
+      },
+    );
     return () => {
       cancelled = true;
     };
-  }, [match?.id, match?.urls?.head2head, match?.home?.id, match?.away?.id]);
+    // teamKey her render'da yeni nesne; anahtar dizesi yeterli.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [teamKey?.key, h2h?.key]);
+
+  // undefined = bu takım çifti için henüz gelmedi (iskelet), null = veri yok.
+  const h2hData = teamKey && h2h?.key === teamKey.key ? h2h.data : teamKey ? undefined : null;
+  const h2hPending = h2hData === undefined;
+  const team1IsHome = h2hData ? Number(h2hData.team1.id) === match?.home?.id : true;
+  const homeForm: FormPill[] = h2hData ? overallFormToPills((team1IsHome ? h2hData.team1 : h2hData.team2).overall_form, 5) : [];
+  const awayForm: FormPill[] = h2hData ? overallFormToPills((team1IsHome ? h2hData.team2 : h2hData.team1).overall_form, 5) : [];
+  const homeH2hForm: FormPill[] = h2hData ? overallFormToPills((team1IsHome ? h2hData.team1 : h2hData.team2).h2h_form, 5) : [];
+  const awayH2hForm: FormPill[] = h2hData ? overallFormToPills((team1IsHome ? h2hData.team2 : h2hData.team1).h2h_form, 5) : [];
+  const h2hHistory: Head2HHistoricalMatch[] = h2hData && Array.isArray(h2hData.h2h) ? h2hData.h2h : [];
 
   // Kupa maçında takım kademe rozeti için harita (yalnızca Türkiye Kupası maçında istenir).
   const cupTiers = useTurkeyTeamTiers(isTurkishCupMatch(match)).data ?? null;
@@ -373,6 +362,34 @@ export default function MatchCard({ match, loading }: MatchCardProps) {
             <WhistleIcon className={styles.matchFooterIcon} />
             <span className={styles.matchFooterLabel}>{t('referee')}</span>
             <span className={styles.matchFooterValue}>{refereeText}</span>
+          </div>
+        </div>
+      ) : null}
+
+      {h2hPending ? (
+        // SSR vermediyse (bütçe aşıldı / panel): gelecek bölümün yeri baştan ayrılır — kart sonradan az uzar.
+        <div aria-hidden="true">
+          {[styles.formRow, `${styles.formRow} ${styles.formRowH2h}`].map((rowClass) => (
+            <div key={rowClass} className={rowClass}>
+              {[styles.formSide, `${styles.formSide} ${styles.formSideAway}`].map((sideClass) => (
+                <div key={sideClass} className={sideClass}>
+                  <span className={`${styles.formLabel} ${styles.skeletonText}`}>&nbsp;</span>
+                  <div className={styles.formPills}>
+                    {[0, 1, 2, 3, 4].map((i) => (
+                      <span key={i} className={`${styles.formPill} ${styles.formPillSkeleton}`} />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ))}
+          <div className={styles.h2hTableWrap}>
+            <div className={`${styles.h2hTableTitle} ${styles.skeletonText}`}>&nbsp;</div>
+            <div className={styles.h2hSkeletonRows}>
+              {[0, 1, 2, 3].map((i) => (
+                <span key={i} className={styles.h2hSkeletonRow} />
+              ))}
+            </div>
           </div>
         </div>
       ) : null}

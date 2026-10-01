@@ -19,6 +19,8 @@ import { livescoreServerClient } from '@/server/livescoreInternalAxios';
 import { runWithLiveScoreHttpClient } from '@/services/liveScoreHttpContext';
 import { isSportmonksProviderEnabled } from '@/services/sportmonksProviderFlag';
 import { resolveMatchPage } from '@/server/resolveMatchPage';
+import { loadMatchCardH2h } from '@/server/matchCardH2h';
+import type { Head2HeadData } from '@/services/liveScoreService';
 import {
   matchPageCacheControl,
   matchPageCacheControlForMatch,
@@ -28,6 +30,11 @@ import styles from './matchDetail.module.scss';
 
 type MatchDetailProps = {
   initialMatch: Match | null;
+  /**
+   * Maç kartı formu + karşılaşma geçmişi (SSR, 700 ms bütçe): null = veri yok; alan yoksa bütçe aşıldı → istemci
+   * çeker. Kart sonradan uzamasın diye (CLS).
+   */
+  initialH2h?: Head2HeadData | null;
   /** Ölü eski URL (ya da aynı id'li başka maçın slug'ı) → 410; istemci hiç veri çekmez. */
   gone?: boolean;
   /** Sağlayıcıda yok, DB'de saklı içerik var → doğrudan arşiv görünümü; istemci sağlayıcıya gitmez. */
@@ -58,9 +65,11 @@ export const getServerSideProps: GetServerSideProps<MatchDetailProps> = async (c
     try {
       const page = await resolveMatchPage(matchId, parseMatchSlugFromParam(slug ?? ''));
       switch (page.kind) {
-        case 'match':
+        case 'match': {
           context.res.setHeader('Cache-Control', matchPageCacheControlForMatch(page.match));
-          return { props: { initialMatch: page.match } };
+          const h2h = await loadMatchCardH2h(page.match);
+          return { props: { initialMatch: page.match, ...(h2h !== undefined ? { initialH2h: h2h } : {}) } };
+        }
         case 'archived':
           setCache('archived');
           return { props: { initialMatch: null, archived: true } };
@@ -93,7 +102,7 @@ export const getServerSideProps: GetServerSideProps<MatchDetailProps> = async (c
   }
 };
 
-export default function MatchDetail({ initialMatch, gone = false, archived = false }: MatchDetailProps) {
+export default function MatchDetail({ initialMatch, initialH2h, gone = false, archived = false }: MatchDetailProps) {
   const router = useRouter();
   const slugParam = router.query.slug;
   const slugFromPath = router.asPath.match(/^\/matches\/([^/?#]+)/)?.[1] ?? '';
@@ -264,7 +273,12 @@ export default function MatchDetail({ initialMatch, gone = false, archived = fal
         {showLayout ? (
           <div className="layout-split">
             <div className="layout-left">
-              <MatchDetailContent key={requestedMatchId} detail={detail} requestedMatchId={requestedMatchId} />
+              <MatchDetailContent
+                key={requestedMatchId}
+                detail={detail}
+                requestedMatchId={requestedMatchId}
+                initialH2h={initialH2h}
+              />
             </div>
             <div className="layout-right">
               {showStandingsBlock ? (
