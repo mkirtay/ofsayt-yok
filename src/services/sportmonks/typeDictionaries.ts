@@ -65,6 +65,7 @@ const EVENT_LABELS: Record<number, string> = {
   21: 'YELLOW_RED_CARD',
   22: 'PENALTY_SHOOTOUT_MISS',
   23: 'PENALTY_SHOOTOUT_GOAL',
+  13: 'SIDELINED', // maç olayı değil (lineup işareti) — EventTimeline göstermez
   10: 'VAR',
   1697: 'VAR_CARD',
 };

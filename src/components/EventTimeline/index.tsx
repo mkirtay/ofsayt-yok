@@ -14,6 +14,8 @@ interface EventTimelineProps {
 type T = (key: string, opts?: Record<string, unknown>) => string;
 
 const VAR_EVENTS = new Set(['VAR', 'VAR_CARD']);
+/** Maç olayı olmayan işaretler (Sidelined = kadro dışı/sakat bilgisi) — zaman çizelgesinde hiç gösterilmez. */
+const HIDDEN_EVENTS = new Set(['SIDELINED']);
 
 /** Top: daire + ortada dolu beşgen + kenara uzanan dikişler. Renk `currentColor`'dan (açık/koyu tema). */
 function BallSvg() {
@@ -128,7 +130,9 @@ export default function EventTimeline({
     return <PanelSkeleton rows={6} />;
   }
 
-  if (!events || events.length === 0) {
+  const visibleEvents = (events ?? []).filter((e) => !HIDDEN_EVENTS.has(e.event));
+
+  if (visibleEvents.length === 0) {
     return (
       <div className={styles.timeline}>
         <h3 className={styles.title}>{t('events.title')}</h3>
@@ -137,7 +141,7 @@ export default function EventTimeline({
     );
   }
 
-  const sortedEvents = [...events].sort((a, b) => a.time - b.time);
+  const sortedEvents = [...visibleEvents].sort((a, b) => a.time - b.time);
 
   return (
     <div className={styles.timeline}>

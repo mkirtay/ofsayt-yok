@@ -54,6 +54,7 @@ describe('resolveEventLabel — EventTimeline (EVENT_ICONS) ile uyumlu kanonik e
   it('Faz 3 ekindeki VAR/VAR_CARD için de bir etiket üretir', () => {
     expect(resolveEventLabel(10)).toBe('VAR');
     expect(resolveEventLabel(1697)).toBe('VAR_CARD');
+    expect(resolveEventLabel(13)).toBe('SIDELINED');
   });
 
   it('bilinmeyen bir type_id için güvenli varsayılana düşer', () => {

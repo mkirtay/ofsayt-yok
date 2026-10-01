@@ -58,3 +58,12 @@ describe('EventTimeline VAR karar satırı', () => {
     expect(render([ev({ event: 'PENALTY', info: 'Penalty', addition: '1st Penalty' })])).not.toContain('1st Penalty');
   });
 });
+
+describe('EventTimeline gizli olaylar', () => {
+  it('Sidelined (13) zaman çizelgesinde gösterilmez; yalnız o varsa boş durum', () => {
+    const html = render([ev({ event: 'SIDELINED', player: { id: 2, name: 'Sakat Oyuncu' } }), ev({ id: 3 })]);
+    expect(html).not.toContain('Sakat Oyuncu');
+    expect(html).toContain('Oyuncu');
+    expect(render([ev({ event: 'SIDELINED' })])).toContain('Maç olayı bulunmuyor.');
+  });
+});
