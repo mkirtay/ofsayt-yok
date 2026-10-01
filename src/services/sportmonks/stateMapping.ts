@@ -12,6 +12,7 @@
  * `short_name` string'i üzerinden DEĞİL, `state_id` (sayısal) üzerinden
  * yapılıyor — string anahtarlı bir sözlük bu ikisini birbirine ezerdi.
  */
+import type { MatchStateCode } from '@/models/liveScore';
 import type { SportmonksState } from './types';
 
 export type MatchPhaseBucket = 'NOT STARTED' | 'IN PLAY' | 'HALF TIME BREAK' | 'FINISHED';
@@ -21,6 +22,8 @@ type StateBucketEntry = {
   bucket: MatchPhaseBucket;
   /** Eşlemenin gerekçesi — raporda net olmayan/yorum gerektiren durumlar için. */
   note?: string;
+  /** Kovanın yuttuğu özel durum (ekranda ayrı anlatılır) — `Match.state_code`. */
+  code?: MatchStateCode;
 };
 
 /**
@@ -39,22 +42,22 @@ export const SPORTMONKS_STATE_BUCKETS: Record<number, StateBucketEntry> = {
   7: { shortName: 'AET', bucket: 'FINISHED' },
   8: { shortName: 'FTP', bucket: 'FINISHED' },
   9: { shortName: 'PEN', bucket: 'IN PLAY', note: 'Canlı penaltı atışları (id 26 ile short_name çakışıyor, id ile ayrıştırıldı).' },
-  10: { shortName: 'POST', bucket: 'NOT STARTED', note: 'Ertelendi — henüz oynanmadı.' },
-  11: { shortName: 'SUSP', bucket: 'HALF TIME BREAK', note: 'Maç ortasında askıya alınmış = duraklama.' },
-  12: { shortName: 'CANC', bucket: 'FINISHED', note: 'İptal — bir daha oynanmayacak, "bitti" kovasına en yakın.' },
-  13: { shortName: 'TBA', bucket: 'NOT STARTED' },
-  14: { shortName: 'WO', bucket: 'FINISHED', note: 'Hükmen sonuç — nihai.' },
-  15: { shortName: 'ABAN', bucket: 'FINISHED', note: 'Terk edildi — nihai.' },
-  16: { shortName: 'DELA', bucket: 'NOT STARTED', note: 'Başlangıcı gecikti, henüz başlamadı.' },
-  17: { shortName: 'AWAR', bucket: 'FINISHED', note: 'Hükmen verildi — nihai.' },
-  18: { shortName: 'INT', bucket: 'HALF TIME BREAK', note: 'Kesintiye uğradı = duraklama.' },
+  10: { shortName: 'POST', bucket: 'NOT STARTED', code: 'POSTPONED', note: 'Ertelendi — henüz oynanmadı.' },
+  11: { shortName: 'SUSP', bucket: 'HALF TIME BREAK', code: 'SUSPENDED', note: 'Maç ortasında askıya alınmış = duraklama.' },
+  12: { shortName: 'CANC', bucket: 'FINISHED', code: 'CANCELLED', note: 'İptal — bir daha oynanmayacak, "bitti" kovasına en yakın.' },
+  13: { shortName: 'TBA', bucket: 'NOT STARTED', code: 'TBA' },
+  14: { shortName: 'WO', bucket: 'FINISHED', code: 'WALKOVER', note: 'Hükmen sonuç — nihai.' },
+  15: { shortName: 'ABAN', bucket: 'FINISHED', code: 'ABANDONED', note: 'Terk edildi — nihai.' },
+  16: { shortName: 'DELA', bucket: 'NOT STARTED', code: 'DELAYED', note: 'Başlangıcı gecikti, henüz başlamadı.' },
+  17: { shortName: 'AWAR', bucket: 'FINISHED', code: 'AWARDED', note: 'Hükmen verildi — nihai.' },
+  18: { shortName: 'INT', bucket: 'HALF TIME BREAK', code: 'INTERRUPTED', note: 'Kesintiye uğradı = duraklama.' },
   19: { shortName: 'AU', bucket: 'IN PLAY', note: 'Veri güncellemesi bekleniyor ama maç muhtemelen sürüyor — tartışmalı, IN PLAY seçildi.' },
-  20: { shortName: 'DEL', bucket: 'FINISHED', note: 'Silinmiş fixture — canlı akışta gösterilmeyecek, en yakın "bitti".' },
+  20: { shortName: 'DEL', bucket: 'FINISHED', code: 'DELETED', note: 'Silinmiş fixture — canlı akışta gösterilmeyecek, en yakın "bitti".' },
   21: { shortName: 'ETB', bucket: 'HALF TIME BREAK', note: 'Uzatma arası = duraklama.' },
   22: { shortName: '2nd', bucket: 'IN PLAY' },
   23: { shortName: '2et', bucket: 'IN PLAY', note: 'Uzatmanın 2. yarısı, hâlâ canlı.' },
   25: { shortName: 'PENB', bucket: 'HALF TIME BREAK', note: 'Penaltılar arası = duraklama.' },
-  26: { shortName: 'PEN', bucket: 'NOT STARTED', note: 'Pending — id 9 ile short_name çakışıyor, id ile ayrıştırıldı.' },
+  26: { shortName: 'PEN', bucket: 'NOT STARTED', code: 'PENDING', note: 'Pending — id 9 ile short_name çakışıyor, id ile ayrıştırıldı.' },
 };
 
 /**
@@ -69,4 +72,9 @@ export function mapSportmonksStateToPhase(stateId: number): MatchPhaseBucket {
 /** `SportmonksState` objesinden (id + short_name birlikte) kova türetir — id önceliklidir. */
 export function mapSportmonksStateObjectToPhase(state: Pick<SportmonksState, 'id'>): MatchPhaseBucket {
   return mapSportmonksStateToPhase(state.id);
+}
+
+/** Kovanın yuttuğu özel durum kodu (ertelendi, iptal…); normal durumlarda `undefined`. */
+export function mapSportmonksStateCode(stateId: number): MatchStateCode | undefined {
+  return SPORTMONKS_STATE_BUCKETS[stateId]?.code;
 }

@@ -257,6 +257,8 @@ export function useMatchDetail(
         ? {
             ...prev,
             status: payload.match.status,
+            // Özel durum (ertelendi, durduruldu…) kalkınca alan da kalkmalı → yoksa undefined yazılır.
+            state_code: payload.match.state_code,
             time: payload.match.time,
             ...(payload.match.scores ? { scores: payload.match.scores } : {}),
           }

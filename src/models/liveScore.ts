@@ -43,9 +43,29 @@ export interface MatchOdds {
   live?: { '1': number; 'X': number; '2': number };
 }
 
+/**
+ * `status`'un 4 kovası (NOT STARTED / IN PLAY / HALF TIME BREAK / FINISHED) özel durumları yutar: ertelenen maç
+ * "NOT STARTED", iptal "FINISHED" görünür. Ekranın bunları ayırabilmesi için yalnız özel durumlarda dolu kod
+ * (Sportmonks `state_id`'den, bkz. services/sportmonks/stateMapping.ts). Normal maçta alan YOK.
+ */
+export type MatchStateCode =
+  | 'POSTPONED'
+  | 'CANCELLED'
+  | 'DELETED'
+  | 'ABANDONED'
+  | 'TBA'
+  | 'DELAYED'
+  | 'SUSPENDED'
+  | 'INTERRUPTED'
+  | 'AWARDED'
+  | 'WALKOVER'
+  | 'PENDING';
+
 export interface Match {
   id: number;
   status: string;
+  /** Yalnız özel durumlarda (ertelendi, iptal, yarıda kaldı…); bkz. `MatchStateCode`. */
+  state_code?: MatchStateCode;
   time: string;
   date?: string;
   scheduled?: string;

@@ -10,7 +10,7 @@
  */
 import type { Competition, Match, MatchCountry, Team } from '@/models/liveScore';
 import type { SportmonksFixture, SportmonksParticipant } from './sportmonks/types';
-import { mapSportmonksStateToPhase } from './sportmonks/stateMapping';
+import { mapSportmonksStateCode, mapSportmonksStateToPhase } from './sportmonks/stateMapping';
 import { deriveMatchScore } from './sportmonks/scoreDerivation';
 import { formatLiveMinuteLabel } from './sportmonks/minuteDerivation';
 import { resolveRoundAndStage } from './sportmonks/roundStage';
@@ -83,6 +83,7 @@ export function mapSportmonksFixtureToMatch(fixture: SportmonksFixture): Match {
   const away = fixture.participants?.find((p) => p.meta?.location === 'away');
   const stateId = fixture.state?.id ?? fixture.state_id;
   const status = stateId != null ? mapSportmonksStateToPhase(stateId) : 'NOT STARTED';
+  const stateCode = stateId != null ? mapSportmonksStateCode(stateId) : undefined;
   const minuteLabel = formatLiveMinuteLabel(fixture.periods);
   const matchScore = deriveMatchScore(fixture.scores);
   const { date, scheduled } = splitStartingAt(fixture.starting_at);
@@ -95,6 +96,7 @@ export function mapSportmonksFixtureToMatch(fixture: SportmonksFixture): Match {
   return {
     id: fixture.id,
     status,
+    ...(stateCode ? { state_code: stateCode } : {}),
     time: minuteLabel ?? '',
     home: mapParticipantToTeam(home),
     away: mapParticipantToTeam(away),

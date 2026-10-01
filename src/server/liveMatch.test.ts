@@ -72,6 +72,11 @@ describe('loadLiveMatch', () => {
     expect(onMissing).toHaveBeenCalledWith(String(ID), 'HALF TIME BREAK');
   });
 
+  it('özel durum (durduruldu) yamada state_code olarak gelir', async () => {
+    const r = await loadLiveMatch(String(ID), deps({ loadInplay: async () => [inplayRow(18)] }));
+    expect(r).toMatchObject({ live: true, match: { status: 'HALF TIME BREAK', state_code: 'INTERRUPTED' } });
+  });
+
   it('bitti → canlı değil, son durum döner (istemci yazıp durur)', async () => {
     const ft = { id: ID, status: 'FINISHED', time: '', scores: { score: '2-1' } } as unknown as Match;
     const r = await loadLiveMatch(String(ID), deps({ loadFixture: async () => ({ match: ft, events: [] }) }));
