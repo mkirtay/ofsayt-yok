@@ -48,7 +48,7 @@ export default function SeasonSummaryCard({ cardRef, loading, error, tabs, selec
   const empty = !loading && !error && (!stats || stats.total.played === 0);
 
   return (
-    <section ref={cardRef} className={`${styles.statsCard} ${styles.summaryCard}`} aria-busy={loading || undefined}>
+    <section ref={cardRef} className={styles.statsCard} aria-busy={loading || undefined}>
       <div className={styles.cardHead}>
         <h3 className={styles.cardTitle}>{t('summary.title')}</h3>
         {headerRight}

@@ -25,7 +25,7 @@ export default function TeamScorersCard({ cardRef, loading, error, players, scop
   const ranked = rankTeamScorers(players, mode, SCORERS_LIMIT);
 
   return (
-    <section ref={cardRef} className={`${styles.statsCard} ${styles.scorersCard}`} aria-busy={loading || undefined}>
+    <section ref={cardRef} className={styles.statsCard} aria-busy={loading || undefined}>
       <div className={styles.cardHead}>
         <h3 className={styles.cardTitle}>{t('scorers.title')}</h3>
         <div className={styles.segmented} role="tablist" aria-label={t('scorers.modeAria')}>

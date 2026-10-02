@@ -176,6 +176,8 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
   const [seasons, setSeasons] = useState<SeasonListItem[]>([]);
   const [selectedSeasonId, setSelectedSeasonId] = useState<number | null>(null);
   const [standingsLoading, setStandingsLoading] = useState(false);
+  // Puan durumu ilk kez yerleşti mi (sağ kolondaki kartlar ondan sonra çizilir; iskelet → tablo büyümesi onları kaydırmasın).
+  const [standingsSettled, setStandingsSettled] = useState(false);
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>('standings');
   // Kullanıcının seçtiği turnuva; seçmediyse varsayılan (son 10 maçta en çok oynanan). Takım değişince bileşen
   // yeniden kurulur (sayfa `key={teamId}`, panel `key={teamId}`) → ayrıca sıfırlama efekti yok.
@@ -209,6 +211,7 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
         setSelectedSeasonId(null);
         setTable(null);
         setStandingsLoading(false);
+        setStandingsSettled(true);
         return;
       }
       setStandingsLoading(true);
@@ -244,6 +247,7 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
       if (cancelled) return;
       setTable(tableFinal ?? table1);
       setStandingsLoading(false);
+      setStandingsSettled(true);
     };
 
     void loadCompetitionData();
@@ -387,6 +391,11 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
   const scorersError = scorerSeasonIdx.length > 0 && scorerSeasonIdx.every((i) => scorerQueries[i]?.isError);
   const scorerPlayers = scorersLoading ? [] : mergeTeamScorers(scorerSeasonIdx.map((i) => scorerQueries[i]?.data ?? []));
   const scorersScope = tournamentTabs.find((tab) => tab.key === activeTournament)?.fullLabel ?? t('summary.allFull');
+
+  // Sayfada sağ kolon: puan durumu (değişken yükseklik) en üstte → altındaki kartlar o yerleşince eklenir.
+  // Turnuva yoksa (ör. puan durumu olmayan takım) takım isteği gelince.
+  const rightCardsReady =
+    variant === 'panel' || (!overviewLoading && (standingsSettled || (!selectedCompetitionId && defaultCompId == null)));
 
   const coach = overviewQuery.data?.coach;
   const venue = overviewQuery.data?.venue;
@@ -736,13 +745,15 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
             </div>
           )}
 
-          <TeamScorersCard
-            cardRef={scorersRef}
-            loading={scorersLoading && !scorersError}
-            error={scorersError}
-            players={scorerPlayers}
-            scope={scorersScope}
-          />
+          {rightCardsReady ? (
+            <TeamScorersCard
+              cardRef={scorersRef}
+              loading={scorersLoading && !scorersError}
+              error={scorersError}
+              players={scorerPlayers}
+              scope={scorersScope}
+            />
+          ) : null}
         </div>
       </div>
     </div>
