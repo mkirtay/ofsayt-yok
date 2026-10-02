@@ -156,8 +156,9 @@
 // Detay paneli (`.hubGridWithPanel`) ve idle Gündem (`.hubGridWithGundem .hubMain`) aynı değeri kullanır.
 $hub-fill-height: calc(100vh - var(--header-height) - 56px - 32px - var(--league-bar-total));
 
+// Tavan 1440 px: daha geniş ekranda düzen 1440'taki ile aynı kalır, ortalanır (satırlar ve Gündem yayılmaz).
 .hubShell {
-  max-width: 1680px;
+  max-width: 1440px;
   margin: 0 auto;
   padding: 0 $spacing-4;
   // Lig filtresi chip satırı SABİT yükseklik ekler; split-view sütun yüksekliği `--league-bar-total`'i düşer.
@@ -406,7 +407,7 @@ $hub-fill-height: calc(100vh - var(--header-height) - 56px - 32px - var(--league
 // ≥1440 ($bp-gundem-panel): maç/takım seçili DEĞİLKEN liste yanında Gündem paneli (idle). `hubGridWithPanel`
 // TETİKLENMEZ (sidebar doğal akışında kalır); yalnızca orta alan (`.hubMain`: liste + Gündem) detay paneliyle
 // aynı sabit yüksekliği alır → iki sütunun üst/alt kenarı hizalı, ikisi de KENDİ içinde kayar.
-// Sağ widget sütunu kaldırıldı; boşalan alanı liste ile Gündem paylaşır (`.hubShell` max-width'i satırları sınırlar).
+// Sağ widget sütunu kaldırıldı; boşalan alanı liste alır (`.hubShell` max-width'i satırları sınırlar).
 @media (min-width: $bp-gundem-panel) {
   .hubGridWithGundem .hubMain {
     height: $hub-fill-height;
@@ -428,9 +429,8 @@ $hub-fill-height: calc(100vh - var(--header-height) - 56px - 32px - var(--league
   }
 
   .hubGundem {
-    // 1440–1535'te önceki gibi %30 (≈345–374px). Daha genişte liste ≈900px'te kalır (satırlar aşırı uzamaz),
-    // artanı Gündem alır; en fazla 480px (1680px `.hubShell` tavanında liste ≈896 / Gündem 480).
-    flex: 0 0 clamp(340px, max(30%, 100% - 900px), 480px);
+    // Sabit 360 px; liste kalanı alır (1440 px `.hubShell` tavanında ≈776 px — her genişlikte aynı).
+    flex: 0 0 360px;
     min-width: 0;
     height: 100%;
     min-height: 0;

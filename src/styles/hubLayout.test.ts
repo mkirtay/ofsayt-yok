@@ -47,4 +47,13 @@ describe('ana sayfa split-view yükseklik mimarisi (MatchDetailPanel modeli)', (
     expect(idle).not.toContain('hubGridWithPanel');
     expect(idle).not.toContain('hubSidebar'); // sol panel mevcut davranışında
   });
+
+  it('geniş ekran: kap en fazla 1440 px ve ortalı (daha genişte düzen 1440\'taki gibi); Gündem sabit 360 px', () => {
+    expect(hub).toMatch(/\.hubShell\s*\{[^}]*max-width:\s*1440px;[^}]*margin:\s*0 auto/);
+    expect(hub).not.toContain('1680px');
+    const idle = noComments(hub.slice(hub.indexOf('@media (min-width: $bp-gundem-panel)')));
+    expect(idle).toMatch(/\.hubGundem\s*\{[^}]*flex:\s*0 0 360px;/);
+    // 1440 altı kurallar (sidebar 240/320, detay paneli listesi) aynı
+    expect(hub).toContain('flex: 0 0 clamp(440px, 46%, 520px);');
+  });
 });
