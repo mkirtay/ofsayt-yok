@@ -324,16 +324,18 @@
   border-left: 3px solid $color-primary;
 }
 
+// Olasılık senaryosu: olay (istatistik dili) | yüzde | güven düzeyi.
 .tipMarket {
-  font-size: 12px;
-  color: $color-text-secondary;
-  font-weight: 600;
+  font-size: 13px;
+  color: $color-text;
+  font-weight: 700;
 }
 
 .tipPick {
   font-size: 14px;
-  font-weight: 700;
-  color: $color-text;
+  font-weight: 800;
+  color: $color-primary;
+  font-variant-numeric: tabular-nums;
 }
 
 .tipReasoning {
@@ -591,24 +593,6 @@
   font-size: 12px;
   color: $color-text-secondary;
   margin: 4px 0 0;
-}
-
-.valueTag {
-  font-size: 10px;
-  font-weight: 700;
-  color: $color-primary-dark;
-  background: rgba($color-primary, 0.12);
-  padding: 2px 7px;
-  border-radius: $radius-sm;
-}
-
-.avoidTag {
-  font-size: 10px;
-  font-weight: 700;
-  color: $color-danger;
-  background: rgba($color-danger, 0.1);
-  padding: 2px 7px;
-  border-radius: $radius-sm;
 }
 
 .generateBtn {

@@ -168,8 +168,9 @@ export default function MatchAnalysis({ match, state, archived = false }: Props)
     );
   }
 
-  const { matchPrediction, goalExpectation, bettingTips, teamAnalyses, fullReport } =
-    analysis;
+  const { matchPrediction, goalExpectation, teamAnalyses, fullReport } = analysis;
+  // Eski kayıtların bahis maddeleri API'de zaten boş döner (scenarios yalnız yeni biçim).
+  const scenarios = analysis.scenarios ?? [];
   const winner =
     matchPrediction.home >= matchPrediction.draw && matchPrediction.home >= matchPrediction.away
       ? 'home'
@@ -220,22 +221,22 @@ export default function MatchAnalysis({ match, state, archived = false }: Props)
         </div>
       )}
 
-      {/* 7. Maç Sonucu Tahmini (1X2) */}
+      {/* 7. Maç Sonucu Tahmini */}
       <div className={styles.section}>
         <h4 className={styles.sectionTitle}>{t('analysis.resultPrediction')}</h4>
         <div className={styles.predictionBars}>
           <div className={`${styles.predictionBar} ${winner === 'home' ? styles.winner : ''}`}>
-            <div className={styles.barLabel}>1</div>
+            <div className={styles.barLabel}>{t('analysis.pick.home')}</div>
             <div className={styles.barValue}>%{matchPrediction.home}</div>
             <div className={styles.barTeam}>{analysis.homeTeamName}</div>
           </div>
           <div className={`${styles.predictionBar} ${winner === 'draw' ? styles.winner : ''}`}>
-            <div className={styles.barLabel}>X</div>
+            <div className={styles.barLabel}>{t('analysis.pick.draw')}</div>
             <div className={styles.barValue}>%{matchPrediction.draw}</div>
-            <div className={styles.barTeam}>{t('analysis.draw')}</div>
+            <div className={styles.barTeam} aria-hidden="true">&nbsp;</div>
           </div>
           <div className={`${styles.predictionBar} ${winner === 'away' ? styles.winner : ''}`}>
-            <div className={styles.barLabel}>2</div>
+            <div className={styles.barLabel}>{t('analysis.pick.away')}</div>
             <div className={styles.barValue}>%{matchPrediction.away}</div>
             <div className={styles.barTeam}>{analysis.awayTeamName}</div>
           </div>
@@ -416,21 +417,19 @@ export default function MatchAnalysis({ match, state, archived = false }: Props)
         )}
       </div>
 
-      {/* 8. Bahis / İddia Pazarı Analizi */}
-      {bettingTips?.length > 0 && (
+      {/* 8. Olasılık Senaryoları */}
+      {scenarios.length > 0 && (
         <div className={styles.section}>
-          <h4 className={styles.sectionTitle}>{t('analysis.bettingTips')}</h4>
+          <h4 className={styles.sectionTitle}>{t('analysis.scenarios')}</h4>
           <div className={styles.tipsList}>
-            {bettingTips.map((tip, i) => (
+            {scenarios.map((sc, i) => (
               <div key={i} className={styles.tipRow}>
-                <span className={styles.tipMarket}>{tip.market}</span>
-                <span className={styles.tipPick}>{tip.pick}</span>
-                <span className={`${styles.confidenceChip} ${styles[tip.confidence]}`}>
-                  {t(`analysis.confidence.${tip.confidence}`)}
+                <span className={styles.tipMarket}>{sc.metric}</span>
+                <span className={styles.tipPick}>%{sc.probability}</span>
+                <span className={`${styles.confidenceChip} ${styles[sc.confidence]}`}>
+                  {t(`analysis.confidence.${sc.confidence}`)}
                 </span>
-                {tip.valueBet && <span className={styles.valueTag}>{t('analysis.valueBet')}</span>}
-                {tip.avoid && <span className={styles.avoidTag}>{t('analysis.avoidBet')}</span>}
-                <p className={styles.tipReasoning}>{tip.reasoning}</p>
+                <p className={styles.tipReasoning}>{sc.reasoning}</p>
               </div>
             ))}
           </div>

@@ -39,7 +39,7 @@
     "goalsPerMatch": "Goals per Match",
     "goalsAgainstPerMatch": "Conceded per Match",
     "cleanSheetRate": "Clean Sheet %",
-    "bttsRate": "BTTS %",
+    "bttsRate": "Both teams scored %",
     "homeWinRate": "Home Win %",
     "awayWinRate": "Away Win %",
     "wins": "Wins",

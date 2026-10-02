@@ -1,4 +1,5 @@
 // AI analiz API yanıt tipleri — hook (useMatchAnalysis) ve bileşen ortak kullanır.
+import type { AnalysisScenario } from '@/utils/analysisScenarios';
 
 export type TacticalProfile = {
   formation: string;
@@ -48,14 +49,10 @@ export type ApiAnalysis = {
     bttsFirstHalf: number;
     reasoning: string;
   };
-  bettingTips: Array<{
-    market: string;
-    pick: string;
-    confidence: 'low' | 'medium' | 'high';
-    reasoning: string;
-    valueBet?: boolean;
-    avoid?: boolean;
-  }>;
+  /** Eski bahis maddeleri: API her zaman boş döner (bkz. utils/analysisScenarios.ts). */
+  bettingTips?: never[];
+  /** Olasılık senaryoları — yalnız yeni biçimdeki kayıtlarda dolu. */
+  scenarios?: AnalysisScenario[];
   teamAnalyses: {
     home: {
       narrative: string;
