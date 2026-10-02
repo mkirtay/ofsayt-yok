@@ -1,0 +1,608 @@
+@use '../../styles/variables' as *;
+
+// Takım üst kartı. Bütün satır yükseklikleri SABİT; iskelet aynı satırları kullanır → veri hangi sırayla gelirse
+// gelsin kart boyu değişmez (CLS 0). Düzen kartın kendi genişliğine göre (container query): sayfa masaüstünde
+// "geniş" (sıradaki maç sağda), mobil ve ana sayfa panelinde "dar" (sıradaki maç altta tam genişlik).
+
+$label-color: var(--text-tertiary);
+
+.card {
+  container-type: inline-size;
+  position: relative;
+  background-color: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  box-shadow: $shadow-surface;
+  padding: 14px 16px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.layout {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.main {
+  position: relative;
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  grid-template-areas:
+    'logo name'
+    'form form'
+    'facts facts';
+  column-gap: 12px;
+  row-gap: 6px;
+  min-width: 0;
+}
+
+.logoWrap {
+  grid-area: logo;
+  align-self: center;
+  position: relative;
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+}
+
+.logo {
+  display: block;
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  border-radius: $radius-sm;
+}
+
+.logoPlaceholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 700;
+  color: $color-primary;
+  background: $color-bg;
+  border: 1px solid $color-border;
+}
+
+// Satırlar doğrudan .main ızgarasına yerleşir (dar kartta form ve bilgi blokları tam genişlik).
+.info {
+  display: contents;
+}
+
+%row {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+// Dar kart: ad (30) + rozetler (24) iki satır, toplam sabit 60 px.
+.nameRow {
+  grid-area: name;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  align-items: center;
+  row-gap: 6px;
+  height: 60px;
+  min-width: 0;
+  overflow: hidden;
+  padding-right: 40px; // karşılaştır düğmesi
+}
+
+.name {
+  flex: 0 0 100%;
+  height: 30px;
+  white-space: nowrap;
+  margin: 0;
+  font-size: 22px;
+  line-height: 30px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: $color-text;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ─── Lig rozetleri ─── */
+
+.badgeRow {
+  @extend %row;
+  flex: 0 0 100%;
+  height: 24px;
+  gap: 6px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  height: 22px;
+  padding: 0 8px;
+  border: 1px solid $color-border;
+  border-radius: $radius-full;
+  background: $color-muted;
+  color: $color-text;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+
+  &:first-child {
+    flex-shrink: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.badgeLogo {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.logoBackdrop {
+  background: #fff;
+  border-radius: 3px;
+  padding: 1px;
+}
+
+.rank {
+  background: $color-primary;
+  border-color: $color-primary;
+  color: #fff;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.points {
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── Form ─── */
+
+.formBlock {
+  grid-area: form;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.formRow {
+  @extend %row;
+  height: 24px;
+  gap: 8px;
+}
+
+.label {
+  flex-shrink: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: $label-color;
+  line-height: 12px;
+}
+
+.pills {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0;
+  padding: 0 0 0 2px;
+  list-style: none;
+}
+
+.pill {
+  @include form-badge;
+  min-width: 20px;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  font-size: 10px;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+    outline-offset: 2px;
+  }
+}
+
+.win {
+  @include form-badge-win;
+}
+
+.draw {
+  @include form-badge-draw;
+}
+
+.loss {
+  @include form-badge-loss;
+}
+
+// En son maç: ince halka (yüzey rengi boşluk + soluk halka).
+.latest {
+  box-shadow:
+    0 0 0 2px $color-surface,
+    0 0 0 3px var(--text-secondary);
+}
+
+.note {
+  @extend %row;
+  height: 16px;
+  font-size: 11px;
+  line-height: 16px;
+  color: var(--text-secondary);
+  text-overflow: ellipsis;
+}
+
+/* ─── Teknik direktör / stadyum ─── */
+
+.facts {
+  grid-area: facts;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 12px;
+  min-width: 0;
+}
+
+.fact {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  min-width: 0;
+}
+
+.factIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: $radius-sm;
+  background: $color-muted;
+  color: var(--text-secondary);
+}
+
+.factText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.factValue {
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 16px;
+  color: $color-text;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+// Dar kartta yalnız stadyum adı ("Rams Park"); şehir geniş kartta görünür (title / aria-label'da hep var).
+.venueCity {
+  display: none;
+}
+
+/* ─── Karşılaştır ─── */
+
+.compare {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid $color-primary;
+  border-radius: $radius-full;
+  background: transparent;
+  color: var(--color-action-text);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+
+  &:hover {
+    background: $color-primary;
+    color: #fff;
+  }
+}
+
+.compareOpen {
+  background: $color-primary;
+  color: #fff;
+}
+
+.compareText {
+  display: none;
+}
+
+/* ─── Sıradaki maç kutusu ─── */
+
+.next {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'label count'
+    'opp opp'
+    'meta meta';
+  align-content: center;
+  row-gap: 4px;
+  height: 84px;
+  padding: 10px 12px;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  background: $color-bg;
+  color: inherit;
+  text-decoration: none;
+  min-width: 0;
+  transition: border-color 0.15s;
+}
+
+a.next:hover {
+  border-color: $color-primary;
+}
+
+.nextLabel {
+  grid-area: label;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 14px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: $label-color;
+}
+
+.countdown {
+  grid-area: count;
+  height: 14px;
+  font-size: 12px;
+  line-height: 14px;
+  font-weight: 700;
+  color: var(--color-action-text);
+  white-space: nowrap;
+}
+
+.nextOpponent {
+  grid-area: opp;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 24px;
+  min-width: 0;
+}
+
+.nextLogo {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.nextName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 15px;
+  font-weight: 800;
+  color: $color-text;
+}
+
+.nextVenueTag {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.nextMeta {
+  grid-area: meta;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 16px;
+  min-width: 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.nextMetaText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nextEmpty {
+  grid-template-areas:
+    'label label'
+    'meta meta';
+}
+
+/* Canlı */
+
+.nextLive {
+  border-color: rgba(239, 68, 68, 0.45);
+  background: $color-live-bg;
+
+  .nextLabel {
+    color: $color-live;
+  }
+}
+
+.liveDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: $color-live;
+  animation: livePulse 1.4s ease-in-out infinite;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+@keyframes livePulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.liveScore {
+  grid-area: opp;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  height: 24px;
+  min-width: 0;
+}
+
+.liveTeam {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.liveTeamAway {
+  justify-content: flex-end;
+}
+
+.liveName {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.liveNumbers {
+  font-size: 18px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: $score-letter-spacing;
+  color: $color-text;
+}
+
+/* ─── Dar kart: teknik direktör / stadyum sığmazsa alt alta ─── */
+
+@container (max-width: 299px) {
+  .facts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ─── Geniş kart (sayfa masaüstü): rozetler adın yanında, sıradaki maç sağda ─── */
+
+@container (min-width: 720px) {
+  .card {
+    padding: 18px 20px;
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 280px;
+    gap: 20px;
+  }
+
+  .main {
+    grid-template-columns: 72px auto minmax(0, 1fr);
+    grid-template-areas:
+      'logo name name'
+      'logo form form'
+      'logo facts facts';
+    column-gap: 12px;
+    row-gap: 10px;
+  }
+
+  .logoWrap {
+    align-self: start;
+    margin-right: 6px;
+  }
+
+  .logoWrap,
+  .logo {
+    width: 72px;
+    height: 72px;
+  }
+
+  .nameRow {
+    flex-wrap: nowrap;
+    column-gap: 12px;
+    height: 36px;
+    padding-right: 120px; // karşılaştır düğmesi
+  }
+
+  .name {
+    flex: 0 1 auto;
+    height: 36px;
+    font-size: 28px;
+    line-height: 36px;
+  }
+
+  .badgeRow {
+    flex: 0 0 auto;
+    height: 36px;
+  }
+
+  .facts {
+    grid-template-columns: repeat(2, minmax(0, max-content));
+    column-gap: 28px;
+  }
+
+  .fact {
+    height: 40px;
+  }
+
+  .compareText {
+    display: inline;
+  }
+
+  .venueCity {
+    display: inline;
+  }
+
+  .compare {
+    padding: 0 12px;
+  }
+
+  .next {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'label'
+      'opp'
+      'meta'
+      'count';
+    align-content: space-between;
+    height: 100%;
+    min-height: 132px;
+    padding: 14px 16px;
+  }
+
+  .nextEmpty {
+    grid-template-areas:
+      'label'
+      'meta';
+  }
+}

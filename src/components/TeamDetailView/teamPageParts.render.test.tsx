@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import type { TeamMatch } from '@/services/sportmonks/teamOverview';
 import RecentMatches from './RecentMatches';
-import TeamHeader from './TeamHeader';
+import TeamHeaderCard, { type TeamHeaderCardProps } from './TeamHeaderCard';
 
 function match(i: number, over: Partial<TeamMatch> = {}): TeamMatch {
   return {
@@ -44,40 +44,97 @@ describe('<RecentMatches />', () => {
   });
 });
 
-describe('<TeamHeader />', () => {
-  const lines = (html: string) => html.match(/_headerLine\w+?_/g);
-  const props = {
+describe('<TeamHeaderCard />', () => {
+  const base: TeamHeaderCardProps = {
+    loading: false,
     name: 'Galatasaray',
-    standingText: 'Süper Lig · 2. sıra · 13 puan',
+    logo: 'gs.png',
+    standing: { competition: 'Süper Lig', competitionLogo: 'sl.png', rank: 2, points: 13 },
     standingLoading: false,
-    nextMatch: { opponent: 'Kasımpaşa', when: '9 Ekim Cuma 20:00' },
+    next: {
+      href: '/matches/19746594-galatasaray-kasimpasa',
+      opponent: 'Kasımpaşa',
+      day: '9 Ekim Cuma',
+      time: '20:00',
+      competition: 'Süper Lig',
+      countdown: 'Bugün 20:00',
+      isHome: true,
+    },
+    live: null,
+    form: [
+      { result: 'L', match: match(0) },
+      { result: 'W', match: match(1) },
+      { result: 'D', match: match(2) },
+    ],
+    coach: 'Okan Buruk',
+    venue: { name: 'Rams Park', city: 'İstanbul' },
     compareOpen: false,
     onToggleCompare: () => {},
   };
+  // Sabit yükseklikli satırlar (iskelet ile dolu kart aynı kapları kullanmalı).
+  const rows = (html: string) => html.match(/_(nameRow|formRow|note|facts|next)_/g);
 
-  it('iskelet ile dolu başlık aynı sabit yükseklikli satırları kullanır', () => {
-    const loading = renderToStaticMarkup(<TeamHeader {...props} loading form={[]} />);
-    const loaded = renderToStaticMarkup(
-      <TeamHeader {...props} loading={false} form={[{ result: 'L', match: match(0) }, { result: 'W', match: match(1) }]} />,
-    );
-    expect(lines(loading)).toEqual(lines(loaded));
-    expect(lines(loaded)).toEqual(['_headerLineName_', '_headerLineMeta_', '_headerLineNext_', '_headerLineForm_']);
+  it('iskelet ile dolu kart aynı sabit satırları ve sıradaki maç kutusunu kullanır', () => {
+    const loading = renderToStaticMarkup(<TeamHeaderCard {...base} loading form={[]} next={null} />);
+    const loaded = renderToStaticMarkup(<TeamHeaderCard {...base} />);
+    expect(rows(loading)).toEqual(rows(loaded));
+    expect(loaded).toContain('<h1');
+    expect(loading).not.toContain('_badgeRow_'); // ad gelmeden rozet çizilmez (yatay kayma olmasın)
   });
 
-  it('teknik direktör / stadyum satırı iskelette de aynı yerde', () => {
-    const loading = renderToStaticMarkup(<TeamHeader {...props} loading form={[]} extraLine={<span>…</span>} />);
-    const loaded = renderToStaticMarkup(<TeamHeader {...props} loading={false} form={[]} extraLine={<span>Teknik direktör: Okan Buruk</span>} />);
-    expect(lines(loading)).toEqual(lines(loaded));
-    expect(lines(loaded)).toContain('_headerLineExtra_');
+  it('ad yanında lig rozeti, sıra hapı ve puan; eski metin satırı yok', () => {
+    const html = renderToStaticMarkup(<TeamHeaderCard {...base} />);
+    expect(html).toContain('Süper Lig');
+    expect(html).toMatch(/_rank_\w+"[^>]*>2\.</);
+    expect(html).toContain('>13 P<');
+    expect(html).not.toContain('2. sıra · 13 puan');
   });
 
-  it('form en yeni solda, G/B/M harfleri ve kapsam etiketi', () => {
+  it('sıradaki maç: maç sayfasına link, "Bugün 20:00", rakip ve iç saha', () => {
+    const html = renderToStaticMarkup(<TeamHeaderCard {...base} />);
+    expect(html).toContain('href="/matches/19746594-galatasaray-kasimpasa"');
+    expect(html).toContain('Bugün 20:00');
+    expect(html).toContain('Kasımpaşa');
+    expect(html).toContain('İç saha');
+    expect(html).toContain('9 Ekim Cuma · 20:00');
+  });
+
+  it('canlı maç: kırmızı tonlu kutu, "Canlı · 67\'", skor ve canlı maçın linki', () => {
     const html = renderToStaticMarkup(
-      <TeamHeader {...props} loading={false} form={[{ result: 'L', match: match(0) }, { result: 'W', match: match(1) }, { result: 'D', match: match(2) }]} />,
+      <TeamHeaderCard
+        {...base}
+        live={{
+          href: '/matches/19746594-galatasaray-kasimpasa',
+          minute: "67'",
+          home: { name: 'Galatasaray' },
+          away: { name: 'Kasımpaşa' },
+          score: '2-1',
+        }}
+      />,
     );
-    expect(html.match(/_formPill_\w+ _form(Win|Draw|Loss)_\w+"[^>]*>([GBM])</g)?.map((m) => m.slice(-2, -1))).toEqual(['M', 'G', 'B']);
-    expect(html).toContain('Tüm turnuvalar');
-    expect(html).toContain('aria-label="Son 3 maçın sonucu, tüm turnuvalar: Mağlubiyet, Galibiyet, Beraberlik"');
+    expect(html).toMatch(/class="_next_\w+ _nextLive_\w+"/);
+    expect(html).toContain('_liveDot_');
+    expect(html).toMatch(/_nextLabel_\w+"><span class="_liveDot_\w+" aria-hidden="true"><\/span>Canlı · 67&#x27;</);
+    expect(html).toMatch(/_liveNumbers_\w+">2-1</);
+    expect(html).toContain('href="/matches/19746594-galatasaray-kasimpasa"');
+    expect(html).not.toContain('Bugün 20:00'); // canlıyken sıradaki maç gösterilmez
+  });
+
+  it('form: en yeni solda, en son maç halkalı; harfler ve erişilebilir etiket', () => {
+    const html = renderToStaticMarkup(<TeamHeaderCard {...base} />);
+    const pills = html.match(/<button[^>]*_pill_[^>]*>[GBM]<\/button>/g) ?? [];
+    expect(pills.map((p) => p.slice(-10, -9))).toEqual(['M', 'G', 'B']);
+    expect(pills[0]).toContain('_latest_');
+    expect(pills[1]).not.toContain('_latest_');
+    expect(pills[0]).toMatch(/aria-label="En son maç\. Mağlubiyet: Galatasaray 2-1 Rakip 0, 28\.09\.2026"/);
+    expect(html).toContain('Son 3 maç · tüm turnuvalar');
+  });
+
+  it('ikonlar aria-hidden; stadyumun şehri title ve aria-label\'da', () => {
+    const html = renderToStaticMarkup(<TeamHeaderCard {...base} />);
+    expect((html.match(/<svg[^>]*aria-hidden="true"/g) ?? []).length).toBe(2);
+    expect(html).toContain('aria-label="Stadyum: Rams Park, İstanbul"');
+    expect(html).toContain('title="Rams Park, İstanbul"');
   });
 });
 

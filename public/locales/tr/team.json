@@ -16,7 +16,13 @@
     "coach": "Teknik direktör: {{name}}",
     "venue": "{{name}}",
     "venueWithCity": "{{name}}, {{city}}",
-    "venueCapacity": "{{capacity}} kişilik"
+    "venueCapacity": "{{capacity}} kişilik",
+    "rankShort": "{{rank}}.",
+    "rankTitle": "{{rank}}. sıra",
+    "pointsShort": "{{points}} P",
+    "pointsTitle": "{{points}} puan",
+    "coachLabel": "Teknik direktör",
+    "venueLabel": "Stadyum"
   },
   "form": {
     "label": "Son {{count}}",
@@ -28,7 +34,11 @@
     "L": "M",
     "Wlong": "Galibiyet",
     "Dlong": "Beraberlik",
-    "Llong": "Mağlubiyet"
+    "Llong": "Mağlubiyet",
+    "title": "Form",
+    "listAria": "Son {{count}} maçın sonucu, tüm turnuvalar, en yeni başta",
+    "latest": "En son maç",
+    "scopeNote": "Son {{count}} maç · tüm turnuvalar"
   },
   "recent": {
     "more": "Daha fazla",
@@ -128,5 +138,19 @@
       "YELLOW_RED_CARD_SUSPENSION": "İkinci sarıdan ceza",
       "SUSPENSION": "Ceza"
     }
+  },
+  "nextBox": {
+    "label": "Sıradaki maç",
+    "home": "İç saha",
+    "away": "Deplasman",
+    "aria": "Sıradaki maç: {{opponent}}, {{day}} {{time}}, {{competition}}",
+    "live": "Canlı",
+    "liveAria": "Canlı maç: {{home}} {{score}} {{away}}, {{minute}}",
+    "liveCta": "Maç sayfasına git →",
+    "today": "Bugün {{time}}",
+    "todayNoTime": "Bugün",
+    "tomorrow": "Yarın {{time}}",
+    "tomorrowNoTime": "Yarın",
+    "days": "{{count}} gün kaldı"
   }
 }

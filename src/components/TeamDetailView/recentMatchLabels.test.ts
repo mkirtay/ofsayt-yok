@@ -29,3 +29,37 @@ describe('recentMatchLabels', () => {
     expect(recentMatchStatus(base({ status: 'FINISHED', state_code: 'CANCELLED' }))).toMatchObject({ key: 'cancelledShort' });
   });
 });
+
+describe('nextMatchCountdown', () => {
+  const m = (date: string, scheduled = '17:00') => base({ status: 'NOT STARTED', date, scheduled });
+  it('bugün / yarın / N gün (TR günü)', async () => {
+    const { nextMatchCountdown } = await import('./recentMatchLabels');
+    expect(nextMatchCountdown(m('2026-10-02'), '2026-10-02')).toEqual({ kind: 'today', days: 0 });
+    expect(nextMatchCountdown(m('2026-10-03'), '2026-10-02')).toEqual({ kind: 'tomorrow', days: 1 });
+    expect(nextMatchCountdown(m('2026-10-09'), '2026-10-02')).toEqual({ kind: 'days', days: 7 });
+    // UTC 22:30 = TR ertesi gün
+    expect(nextMatchCountdown(m('2026-10-02', '22:30'), '2026-10-02')).toEqual({ kind: 'tomorrow', days: 1 });
+    expect(nextMatchCountdown(m('2026-09-30'), '2026-10-02')).toBeNull();
+  });
+});
+
+describe('countdownLabel (TR sözlüğüyle)', async () => {
+  const tr = (await import('../../../public/locales/tr/team.json')).default as Record<string, unknown>;
+  const { countdownLabel } = await import('./recentMatchLabels');
+  const t = (key: string, opts: Record<string, unknown> = {}) => {
+    const raw = key.split('.').reduce<unknown>((o, k) => (o as Record<string, unknown>)?.[k], tr) as string;
+    return raw.replace(/\{\{(\w+)\}\}/g, (_, k: string) => String(opts[k]));
+  };
+
+  it('maç günü "Bugün 20:00", ertesi gün "Yarın 20:00", sonrası "N gün kaldı"', () => {
+    expect(countdownLabel({ kind: 'today', days: 0 }, '20:00', t)).toBe('Bugün 20:00');
+    expect(countdownLabel({ kind: 'tomorrow', days: 1 }, '19:45', t)).toBe('Yarın 19:45');
+    expect(countdownLabel({ kind: 'days', days: 7 }, '20:00', t)).toBe('7 gün kaldı');
+  });
+
+  it('saati açıklanmamış maçta yalnız gün; geri sayım yoksa boş', () => {
+    expect(countdownLabel({ kind: 'today', days: 0 }, null, t)).toBe('Bugün');
+    expect(countdownLabel({ kind: 'tomorrow', days: 1 }, null, t)).toBe('Yarın');
+    expect(countdownLabel(null, '20:00', t)).toBe('');
+  });
+});

@@ -16,7 +16,13 @@
     "coach": "Manager: {{name}}",
     "venue": "{{name}}",
     "venueWithCity": "{{name}}, {{city}}",
-    "venueCapacity": "Capacity {{capacity}}"
+    "venueCapacity": "Capacity {{capacity}}",
+    "rankShort": "#{{rank}}",
+    "rankTitle": "Rank {{rank}}",
+    "pointsShort": "{{points}} pts",
+    "pointsTitle": "{{points}} points",
+    "coachLabel": "Manager",
+    "venueLabel": "Stadium"
   },
   "form": {
     "label": "Last {{count}}",
@@ -28,7 +34,11 @@
     "L": "L",
     "Wlong": "Win",
     "Dlong": "Draw",
-    "Llong": "Loss"
+    "Llong": "Loss",
+    "title": "Form",
+    "listAria": "Results of the last {{count}} matches, all competitions, newest first",
+    "latest": "Latest match",
+    "scopeNote": "Last {{count}} matches · all competitions"
   },
   "recent": {
     "more": "Show more",
@@ -128,5 +138,19 @@
       "INJURY": "Injury",
       "SUSPENSION": "Suspension"
     }
+  },
+  "nextBox": {
+    "label": "Next match",
+    "home": "Home",
+    "away": "Away",
+    "aria": "Next match: {{opponent}}, {{day}} {{time}}, {{competition}}",
+    "live": "Live",
+    "liveAria": "Live match: {{home}} {{score}} {{away}}, {{minute}}",
+    "liveCta": "Go to match →",
+    "today": "Today {{time}}",
+    "todayNoTime": "Today",
+    "tomorrow": "Tomorrow {{time}}",
+    "tomorrowNoTime": "Tomorrow",
+    "days": "In {{count}} days"
   }
 }
