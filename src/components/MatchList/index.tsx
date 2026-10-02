@@ -187,6 +187,16 @@ function listSpecialState(match: Match): 'postponed' | 'cancelled' | null {
   return null;
 }
 
+/**
+ * Satırda durum (canlı dakika / İY / MS) var mı? Dar mobilde (< 640 px) saat ve durum aynı kolonu paylaşır: durum
+ * varsa saat yerine durum görünür. Ertelenen / iptal maçta saat kolonunda kısa etiket kalır (durum yok).
+ */
+export function matchRowShowsStatus(match: Match, t: (key: string) => string): boolean {
+  if (listSpecialState(match)) return false;
+  const { text, variant } = statusLabel(match, t);
+  return variant === 'live' || Boolean(text);
+}
+
 function normalizeHt(ht?: string): string {
   if (!ht || !ht.trim()) return '—';
   return ht.replace(/\s*-\s*/g, '-').replace(/\s+/g, '');
@@ -381,6 +391,8 @@ function VirtualRow({
       <Link
         href={buildMatchHref(match)}
         className={styles.matchRowLink}
+        // Mobilde (< 640 px) saat ve durum aynı kolonda: durum (canlı dakika / İY / MS) varsa saat yerine o görünür.
+        data-has-status={matchRowShowsStatus(match, t) ? '' : undefined}
         prefetch={false}
         aria-current={selectedMatchId != null && String(match.id) === selectedMatchId ? 'true' : undefined}
         onMouseEnter={onPrefetchMatch ? () => onPrefetchMatch(String(match.id)) : undefined}

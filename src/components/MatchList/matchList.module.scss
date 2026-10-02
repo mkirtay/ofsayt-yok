@@ -680,6 +680,92 @@
   }
 }
 
+// ── Mobil / tablet satır hizası (< 1024 px) ─────────────────────────────────────────────
+// Skor satırın görsel merkezinde: sol blok (saat [+ durum]) ile sağ blok ([İY +] yıldız) eşit genişlikte, ev ve
+// deplasman eşit (minmax(0, 1fr)), skor sabit. Önce solda 80 px / sağda 28 px vardı → skor 26 px (tablette 49 px)
+// sağa kayıyordu. Masaüstü (≥ 1024) kuralları değişmedi.
+$row-side-mobile: 44px; // < 640: saat|durum kolonu = yıldız dokunma alanı
+$row-score-mobile: 40px;
+$row-kickoff-tablet: 44px;
+$row-status-tablet: 48px;
+$row-ht-tablet: 48px;
+$row-score-tablet: 56px;
+
+@include below-desktop {
+  .matchRowLink {
+    grid-template-columns: $row-side-mobile minmax(0, 1fr) $row-score-mobile minmax(0, 1fr);
+
+    @media (min-width: $bp-sm) {
+      // sol: 44 + 48 = 92 · sağ: İY 48 + yıldız 44 = 92
+      grid-template-columns:
+        $row-kickoff-tablet $row-status-tablet minmax(0, 1fr) $row-score-tablet minmax(0, 1fr)
+        $row-ht-tablet;
+    }
+  }
+
+  // < 640: saat ve durum aynı kolon — durum varsa (canlı dakika / İY / MS) saat yerine durum.
+  @media (max-width: #{$bp-sm - 1px}) {
+    .virtualStatus {
+      display: none;
+      grid-column: 1;
+      grid-row: 1;
+      justify-content: center;
+      padding: 0 2px;
+    }
+
+    .matchRowLink[data-has-status] {
+      .virtualKickoff {
+        display: none;
+      }
+
+      .virtualStatus {
+        display: flex;
+      }
+    }
+
+    .virtualHome {
+      grid-column: 2;
+    }
+
+    .virtualScore {
+      grid-column: 3;
+    }
+
+    .virtualAway {
+      grid-column: 4;
+    }
+  }
+
+  .virtualStatus {
+    justify-content: center;
+  }
+
+  // Dar kolonda "CANLI" kelimesi sığmaz: yalnız nokta + dakika (masaüstünde kelime görünür).
+  .liveCanliWord {
+    display: none;
+  }
+
+  .liveText {
+    padding: 0 4px;
+  }
+
+  // Grup başlığındaki "İY" etiketi İY kolonunun üstünde (yıldızın değil): kolon genişliği kadar, sağdan yıldız
+  // payı eksi başlık çubuğunun sağ dolgusu (8 px) ve çerçevesi (1 px) kadar içeride.
+  @media (min-width: $bp-sm) {
+    .virtualHeaderColIy {
+      min-width: $row-ht-tablet;
+      margin-right: calc(#{$row-side-mobile} - #{$spacing-2} - 1px);
+    }
+  }
+
+  // Yıldız: çerçevesiz, küçük ikon; dokunma alanı 44 px genişlik × satır yüksekliği.
+  .virtualMatchStar {
+    flex: 0 0 $row-side-mobile;
+    border-left: none;
+    font-size: 12px;
+  }
+}
+
 // ── World Cup (koyu tema) — yalnızca `variant="worldCup"` ile kökte `.worldCup` ==========
 
 .empty.worldCup {
