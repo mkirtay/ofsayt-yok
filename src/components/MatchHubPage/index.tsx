@@ -53,6 +53,7 @@ import { MOBILE_LAYOUT_QUERY } from '@/config/breakpoints';
 import { GUNDEM_PANEL_MIN_WIDTH, useMinWidth, useSplitView } from '@/hooks/useSplitView';
 import { resolveHubSidePanel } from '@/utils/hubSidePanel';
 import LeagueFilterBar from '@/components/LeagueFilterBar';
+import { hubSectionToScroll } from '@/utils/hubNavScroll';
 import AdSlot from '@/components/AdSlot';
 import EmptyState from '@/components/EmptyState';
 import { useLeagueFilter } from '@/hooks/useLeagueFilter';
@@ -401,18 +402,25 @@ export default function MatchHubPage({
   const queryPanel = router.query[SIDEBAR_PANEL_QUERY];
   const queryLeague = router.query.league;
   const prevNavKey = useRef<string | null>(null);
+  /** Sayfa içi durum çipinden gelen `?tab` değişikliği: mobilde listeye kaydırma yapılmaz (yalnız alt menü). */
+  const tabFromChipRef = useRef(false);
 
   useEffect(() => {
     if (!router.isReady) return;
     setActiveTab(parseMatchTab(queryTab) ?? 'all');
     setSidebarTab(parseSidebarTab(queryPanel) ?? 'standings');
 
-    // Mobil alt navigasyon: ilgili bölüme kaydır (yalnızca param DEĞİŞTİĞİNDE)
+    // Mobil alt navigasyon: ilgili bölüme kaydır (yalnızca param DEĞİŞTİĞİNDE; durum çiplerinden değil)
     const navKey = `${String(queryTab ?? '')}|${String(queryPanel ?? '')}`;
-    if (prevNavKey.current !== null && prevNavKey.current !== navKey && window.matchMedia(MOBILE_LAYOUT_QUERY).matches) {
-      const targetId = queryPanel ? 'hub-sidebar' : 'hub-list';
-      document.getElementById(targetId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+    const targetId = hubSectionToScroll({
+      prevKey: prevNavKey.current,
+      nextKey: navKey,
+      isMobile: window.matchMedia(MOBILE_LAYOUT_QUERY).matches,
+      fromInPageControl: tabFromChipRef.current,
+      hasPanel: Boolean(queryPanel),
+    });
+    if (targetId) document.getElementById(targetId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    tabFromChipRef.current = false;
     prevNavKey.current = navKey;
   }, [router.isReady, queryTab, queryPanel]);
 
@@ -618,7 +626,10 @@ export default function MatchHubPage({
               <MatchStatusChips
                 activeTab={activeTab}
                 liveCount={liveMatches.length}
-                onToggle={(tab) => handleTabChange(activeTab === tab ? 'all' : tab)}
+                onToggle={(tab) => {
+                  tabFromChipRef.current = true;
+                  handleTabChange(activeTab === tab ? 'all' : tab);
+                }}
               />
             }
           />
