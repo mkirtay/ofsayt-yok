@@ -2,7 +2,8 @@
  * POST /api/admin/evaluate-predictions
  *
  * Biten maçların PredictionRecord'larını actualResult, result1x2Hit vb. ile günceller.
- * Her çağrıda `evaluatedAt IS NULL` olan kayıtları işler.
+ * Her çağrıda `evaluatedAt IS NULL` olan kayıtları işler. Ayrıca yarım kalmış (10 dk'dan eski PENDING) kredi
+ * harcamalarını iade eder (bkz. lib/credits.ts → refundStalePendingSpends).
  *
  * İki şekilde çağrılabilir:
  * - Admin oturumuyla, POST (manuel tetikleme)
@@ -16,6 +17,8 @@ import {
   evaluatePendingPredictionRecords,
   type EvaluatePredictionsResult,
 } from '@/lib/predictionRecords';
+import { refundStalePendingSpends } from '@/lib/credits';
+import { captureError } from '@/lib/logger';
 
 function isValidCronRequest(req: NextApiRequest): boolean {
   const secret = process.env.CRON_SECRET;
@@ -26,7 +29,7 @@ function isValidCronRequest(req: NextApiRequest): boolean {
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse<EvaluatePredictionsResult | { error: string }>
+  res: NextApiResponse<(EvaluatePredictionsResult & { staleCreditRefunds: number | null }) | { error: string }>
 ) {
   const isCron = isValidCronRequest(req);
 
@@ -40,6 +43,13 @@ export default async function handler(
     if (!guard.ok) return;
   }
 
+  let staleCreditRefunds: number | null = null;
+  try {
+    staleCreditRefunds = await refundStalePendingSpends();
+  } catch (e) {
+    captureError('stale-credit-refunds', e);
+  }
+
   const result = await evaluatePendingPredictionRecords(req);
-  return res.status(200).json(result);
+  return res.status(200).json({ ...result, staleCreditRefunds });
 }

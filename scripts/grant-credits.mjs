@@ -31,19 +31,34 @@ async function main() {
     process.exit(2);
   }
 
-  const balanceAfter = user.credits + amount;
-  await prisma.$transaction([
-    prisma.user.update({ where: { id: user.id }, data: { credits: balanceAfter } }),
-    prisma.creditTransaction.create({
+  // Atomik: bakiye tek UPDATE ile değişir (eşzamanlı harcamayla yarışta kayıp olmaz); düşüm eksiye indiremez.
+  const balanceAfter = await prisma.$transaction(async (tx) => {
+    let credits;
+    if (amount >= 0) {
+      ({ credits } = await tx.user.update({
+        where: { id: user.id },
+        data: { credits: { increment: amount } },
+        select: { credits: true },
+      }));
+    } else {
+      const { count } = await tx.user.updateMany({
+        where: { id: user.id, credits: { gte: -amount } },
+        data: { credits: { decrement: -amount } },
+      });
+      if (count === 0) throw new Error(`Yetersiz bakiye: ${email} (${user.credits} kredi), düşülmek istenen ${-amount}`);
+      ({ credits } = await tx.user.findUnique({ where: { id: user.id }, select: { credits: true } }));
+    }
+    await tx.creditTransaction.create({
       data: {
         userId: user.id,
         type: 'ADMIN_GRANT',
         amount,
-        balanceAfter,
+        balanceAfter: credits,
         note: 'CLI ile manuel kredi tanımlama',
       },
-    }),
-  ]);
+    });
+    return credits;
+  });
 
   console.log(`OK  ${email} icin yeni bakiye: ${balanceAfter} kredi`);
 }

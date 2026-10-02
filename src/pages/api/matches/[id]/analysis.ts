@@ -11,12 +11,28 @@
  *
  * Analiz maç-bazlı paylaşılan bir cache'dir: bir kullanıcı ürettikten sonra
  * herkes ücretsiz görüntüleyebilir.
+ *
+ * Kredi (bkz. lib/credits.ts): düşüm Sportmonks bağlamından SONRA, atomik ve tekrar anahtarlı
+ * (`analysis:{matchId}:PRE`) — aynı kullanıcı aynı maç için en fazla bir kez öder (çift tık, iki sekme, tekrar
+ * deneme). AI ya da kayıt hatasında aynı istekte iade; yarışı başka üretim kazandıysa iade + o analiz döner.
+ * Sportmonks geçici hatası (zaman aşımı, 5xx) → 503, kredi düşülmez.
  */
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { Prisma } from '@prisma/client';
+import { Prisma, type MatchAnalysis } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { requireAuth } from '@/lib/requireAuth';
-import { spendCredits, recordFreeAnalysis, InsufficientCreditsError } from '@/lib/credits';
+import {
+  DuplicateSpendError,
+  InsufficientCreditsError,
+  analysisIdempotencyKey,
+  isUniqueViolation,
+  recordFreeAnalysis,
+  refundCredits,
+  refundStalePendingSpends,
+  reserveCredits,
+  settleCredits,
+  type CreditReservation,
+} from '@/lib/credits';
 import { isPremiumUser } from '@/lib/premium';
 import { hitFixedWindowRateLimit } from '@/lib/rateLimit';
 import { buildMatchAnalysisContext } from '@/server/buildMatchAnalysisContext';
@@ -24,6 +40,7 @@ import { generateMatchAnalysis, AnalysisTimeoutError } from '@/services/aiAnalys
 import { captureError } from '@/lib/logger';
 import { ensurePredictionRecordForAnalysis } from '@/lib/predictionRecords';
 import { findStoredMatchAnalysis } from '@/lib/matchAnalysisLookup';
+import { trackSportmonksFetches } from '@/server/sportmonks/cachedFetch';
 
 const ANALYSIS_COST_CREDITS = 5;
 
@@ -76,28 +93,37 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse, matchId: st
   try {
 
     const result = await (async () => {
-      const ctx = await buildMatchAnalysisContext(matchId);
+      const tracked = await trackSportmonksFetches(() => buildMatchAnalysisContext(matchId));
+      const ctx = tracked.value;
+      // Sportmonks geçici hatası (zaman aşımı / 5xx / 429): "maç yok" ya da "arşiv" sanılmasın → 503.
+      if (tracked.failed && (!ctx || ctx.archived)) {
+        return {
+          status: 503 as const,
+          body: { error: 'Maç verisi şu an alınamıyor. Lütfen biraz sonra tekrar deneyin.', code: 'UPSTREAM_UNAVAILABLE' },
+        };
+      }
       if (!ctx) {
         return { status: 404 as const, body: { error: 'Maç bulunamadı' } };
       }
 
       // Arama ve kayıt aynı id ile (aşağıda `matchId: String(ctx.match.id)`); takım çifti yedeği yok.
       const existing = await findStoredMatchAnalysis(ctx.archived ? matchId : String(ctx.match.id), 'PRE');
-      if (existing) {
+      const cachedResponse = async (analysis: MatchAnalysis) => {
         const predictionRecord = await prisma.predictionRecord.findUnique({
-          where: { matchAnalysisId: existing.id },
+          where: { matchAnalysisId: analysis.id },
         });
         return {
           status: 200 as const,
           body: {
-            analysis: existing,
+            analysis,
             predictionRecord,
             cached: true,
             isPostMatch: ctx.archived ? true : ctx.matchPhase !== 'PRE',
             isArchived: ctx.archived,
           },
         };
-      }
+      };
+      if (existing) return cachedResponse(existing);
 
       if (ctx.archived) {
         return {
@@ -117,47 +143,99 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse, matchId: st
       // Canlı bakiye kontrolü: rol + güncel `User.credits` DB'den okunur (JWT'deki bayat değer kullanılmaz).
       const owner = await prisma.user.findUnique({ where: { id: guard.userId }, select: { role: true, credits: true } });
       const premiumFree = isPremiumUser(owner);
+      let reservation: CreditReservation | null = null;
       if (!premiumFree) {
-        await spendCredits(guard.userId, ANALYSIS_COST_CREDITS, {
-          type: 'ANALYSIS_SPEND',
-          matchId,
-        });
+        // Bu kullanıcının yarım kalmış eski harcaması varsa önce iade (aynı maçın tekrar anahtarını da serbest bırakır).
+        try {
+          await refundStalePendingSpends({ userId: guard.userId });
+        } catch (e) {
+          captureError('analysis-stale-refund', e);
+        }
+        try {
+          reservation = await reserveCredits(guard.userId, ANALYSIS_COST_CREDITS, {
+            type: 'ANALYSIS_SPEND',
+            matchId,
+            idempotencyKey: analysisIdempotencyKey(matchId),
+          });
+        } catch (e) {
+          if (!(e instanceof DuplicateSpendError)) throw e;
+          // Aynı kullanıcı aynı maç için zaten ödedi: tamamlandıysa analiz ücretsiz döner, sürüyorsa bekletilir.
+          const done = await findStoredMatchAnalysis(String(ctx.match.id), 'PRE');
+          if (done) return cachedResponse(done);
+          return {
+            status: 409 as const,
+            body: { error: 'Bu maçın analizi şu an üretiliyor. Birazdan hazır olacak.', code: 'ANALYSIS_IN_PROGRESS' },
+          };
+        }
       }
 
-      const ai = await generateMatchAnalysis(ctx);
+      const refund = async (reason: string) => {
+        if (!reservation) return;
+        try {
+          await refundCredits(reservation.id, reason);
+        } catch (e) {
+          // İade yazılamadı (DB): harcama PENDING kalır → eşik sonrası otomatik iade.
+          captureError('analysis-refund', e);
+        }
+      };
 
-      const saved = await prisma.matchAnalysis.create({
-        data: {
-          matchId: String(ctx.match.id),
-          matchStatus: 'PRE',
-          homeTeamId: String(ctx.homeTeam.teamId),
-          awayTeamId: String(ctx.awayTeam.teamId),
-          homeTeamName: ctx.homeTeam.teamName,
-          awayTeamName: ctx.awayTeam.teamName,
-          competitionId: ctx.match.competition?.id ? String(ctx.match.competition.id) : null,
-          competitionName: ctx.match.competition?.name ?? null,
-          homeTeamNarrative: ai.analysis.teamAnalyses.home.narrative,
-          awayTeamNarrative: ai.analysis.teamAnalyses.away.narrative,
-          matchPrediction: ai.analysis.matchPrediction as unknown as Prisma.InputJsonValue,
-          scorePrediction: ai.analysis.scorePrediction as unknown as Prisma.InputJsonValue,
-          goalExpectation: ai.analysis.goalExpectation as unknown as Prisma.InputJsonValue,
-          bettingTips: ai.analysis.bettingTips as unknown as Prisma.InputJsonValue,
-          teamAnalyses: ai.analysis.teamAnalyses as unknown as Prisma.InputJsonValue,
-          fullReport: {
-            matchSummary: ai.analysis.matchSummary,
-            tacticalAnalysis: ai.analysis.tacticalAnalysis,
-            heatmapAnalysis: ai.analysis.heatmapAnalysis,
-            riskFactors: ai.analysis.riskFactors,
-            analystComment: ai.analysis.analystComment,
-          } as unknown as Prisma.InputJsonValue,
-          riskLevel: ai.analysis.riskLevel,
-          riskReasoning: ai.analysis.riskReasoning,
-          confidenceScore: ai.analysis.overallConfidence,
-          modelVersion: ai.modelVersion,
-          tokensUsed: ai.tokensUsed,
-          expiresAt: null,
-        },
-      });
+      let saved;
+      try {
+        const ai = await generateMatchAnalysis(ctx);
+        saved = await prisma.matchAnalysis.create({
+          data: {
+            matchId: String(ctx.match.id),
+            matchStatus: 'PRE',
+            homeTeamId: String(ctx.homeTeam.teamId),
+            awayTeamId: String(ctx.awayTeam.teamId),
+            homeTeamName: ctx.homeTeam.teamName,
+            awayTeamName: ctx.awayTeam.teamName,
+            competitionId: ctx.match.competition?.id ? String(ctx.match.competition.id) : null,
+            competitionName: ctx.match.competition?.name ?? null,
+            homeTeamNarrative: ai.analysis.teamAnalyses.home.narrative,
+            awayTeamNarrative: ai.analysis.teamAnalyses.away.narrative,
+            matchPrediction: ai.analysis.matchPrediction as unknown as Prisma.InputJsonValue,
+            scorePrediction: ai.analysis.scorePrediction as unknown as Prisma.InputJsonValue,
+            goalExpectation: ai.analysis.goalExpectation as unknown as Prisma.InputJsonValue,
+            bettingTips: ai.analysis.bettingTips as unknown as Prisma.InputJsonValue,
+            teamAnalyses: ai.analysis.teamAnalyses as unknown as Prisma.InputJsonValue,
+            fullReport: {
+              matchSummary: ai.analysis.matchSummary,
+              tacticalAnalysis: ai.analysis.tacticalAnalysis,
+              heatmapAnalysis: ai.analysis.heatmapAnalysis,
+              riskFactors: ai.analysis.riskFactors,
+              analystComment: ai.analysis.analystComment,
+            } as unknown as Prisma.InputJsonValue,
+            riskLevel: ai.analysis.riskLevel,
+            riskReasoning: ai.analysis.riskReasoning,
+            confidenceScore: ai.analysis.overallConfidence,
+            modelVersion: ai.modelVersion,
+            tokensUsed: ai.tokensUsed,
+            expiresAt: null,
+          },
+        });
+      } catch (err) {
+        if (isUniqueViolation(err)) {
+          // Aynı maçı başka bir istek (başka kullanıcı) aynı anda üretti ve önce kaydetti: iade + o analiz.
+          await refund('Aynı maçın analizi eşzamanlı üretildi');
+          const winner = await findStoredMatchAnalysis(String(ctx.match.id), 'PRE');
+          if (winner) return cachedResponse(winner);
+        } else {
+          await refund(err instanceof AnalysisTimeoutError ? 'AI analizi zaman aşımı' : 'AI analizi üretilemedi');
+        }
+        throw err;
+      }
+
+      if (reservation) {
+        try {
+          if (!(await settleCredits(reservation.id))) {
+            // Eşik sonrası otomatik iade bu isteği beklemeden yapılmış: analiz kullanıcıya ücretsiz kaldı.
+            captureError('analysis-settle-after-refund', new Error(`harcama ${reservation.id} zaten iade edilmiş`));
+          }
+        } catch (e) {
+          captureError('analysis-settle', e);
+        }
+      }
 
       // Premium: kredi düşmez ama analiz kaydedildikten sonra 0 tutarlı kayıt yazılır → my-analyses bu analizi de yakalar.
       if (premiumFree) {

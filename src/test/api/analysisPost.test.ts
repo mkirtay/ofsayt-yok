@@ -34,11 +34,21 @@ vi.mock('@/lib/requireAuth', () => ({ requireAuth: async () => ({ ok: true, user
 vi.mock('@/lib/rateLimit', () => ({ hitFixedWindowRateLimit: async () => ({ success: true, remaining: 9, resetAt: 0 }) }));
 vi.mock('@/lib/premium', () => ({ isPremiumUser: () => false }));
 vi.mock('@/lib/credits', () => ({
-  spendCredits: vi.fn(async () => {
+  reserveCredits: vi.fn(async () => {
     h.spent += 1;
+    return { id: 'r1', amount: 5, balanceAfter: 45 };
   }),
+  settleCredits: vi.fn(async () => true),
+  refundCredits: vi.fn(),
+  refundStalePendingSpends: vi.fn(async () => 0),
+  analysisIdempotencyKey: (id: string) => `analysis:${id}:PRE`,
+  isUniqueViolation: () => false,
   recordFreeAnalysis: vi.fn(),
   InsufficientCreditsError: class extends Error {},
+  DuplicateSpendError: class extends Error {},
+}));
+vi.mock('@/server/sportmonks/cachedFetch', () => ({
+  trackSportmonksFetches: async <T,>(fn: () => Promise<T>) => ({ value: await fn(), stale: false, failed: false }),
 }));
 vi.mock('@/lib/logger', () => ({ captureError: vi.fn() }));
 vi.mock('@/lib/predictionRecords', () => ({ ensurePredictionRecordForAnalysis: vi.fn() }));

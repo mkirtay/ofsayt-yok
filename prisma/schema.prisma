@@ -64,7 +64,7 @@ model CreditTransaction {
   id           String   @id @default(cuid())
   userId       String
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  /// "SIGNUP_BONUS" | "PURCHASE" | "ANALYSIS_SPEND" | "ADMIN_GRANT" | "REFUND"
+  /// "SIGNUP_BONUS" | "PURCHASE" | "ANALYSIS_SPEND" | "ANALYSIS_FREE" | "ADMIN_GRANT" | "REFUND"
   type         String
   /// Pozitif (ekleme) veya negatif (harcama)
   amount       Int
@@ -72,10 +72,19 @@ model CreditTransaction {
   /// ANALYSIS_SPEND için ilgili maç
   matchId      String?
   note         String?
+  /// Harcamanın tekrar anahtarı (kullanıcı başına tekil): aynı iş için en fazla bir düşüm. Analiz:
+  /// `analysis:{matchId}:PRE`. İade edilince anahtar `…:refunded:{id}` olur (yeniden denenebilsin). Eski satırlarda null.
+  idempotencyKey String?
+  /// Harcama durumu: "PENDING" (üretim sürüyor) | "SETTLED" | "REFUNDED". Diğer tiplerde ve eski satırlarda null.
+  status       String?
+  /// REFUND satırı → iade ettiği harcama (tekil: bir harcama en fazla bir kez iade edilir).
+  refundOfId   String?  @unique
   createdAt    DateTime @default(now())
 
+  @@unique([userId, idempotencyKey])
   @@index([userId])
   @@index([matchId])
+  @@index([status, createdAt])
 }
 
 /// AI üretimli maç analizi cache'i. Aynı maç + status için tek aktif kayıt.

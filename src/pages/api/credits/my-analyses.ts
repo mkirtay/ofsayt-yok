@@ -30,7 +30,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const transactions = await prisma.creditTransaction.findMany({
-    where: { userId, type: { in: ['ANALYSIS_SPEND', 'ANALYSIS_FREE'] }, matchId: { not: null } },
+    where: {
+      userId,
+      type: { in: ['ANALYSIS_SPEND', 'ANALYSIS_FREE'] },
+      matchId: { not: null },
+      // İade edilen harcama (AI hatası, yarışı başka üretim kazandı) "benim analizim" değil. Eski satırlarda status
+      // null — `not` NULL'u da dışarıda bıraktığı için ayrıca.
+      OR: [{ status: null }, { status: { not: 'REFUNDED' } }],
+    },
     orderBy: { createdAt: 'desc' },
     take: 30,
     select: { matchId: true, createdAt: true },
