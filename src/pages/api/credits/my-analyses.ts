@@ -1,6 +1,6 @@
 /**
  * GET /api/credits/my-analyses
- * Kullanıcının ürettiği (kredili ANALYSIS_SPEND ya da premium ANALYSIS_FREE) maç analizlerinin listesi.
+ * Kullanıcının ürettiği (kredili ANALYSIS_SPEND ya da kredisiz — yönetici — ANALYSIS_FREE) maç analizlerinin listesi.
  */
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '@/lib/prisma';

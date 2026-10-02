@@ -5,7 +5,7 @@
  *        her maç sayfası açılışında çağrılıyor, anonim ve bot trafiği de dahil). Yoksa 404 — mobil uygulama buna
  *        güveniyor; web `?optional=1` gönderir → 200 `{ analysis: null }` (konsolda "Failed to load resource" kalmasın).
  *        Maç fazı istemcide maç verisinden türetilir.
- * POST — giriş yapmış kullanıcı, 5 kredi karşılığında PRE fazında yeni analiz üretir (premium — bakiye ≥ en büyük paket ya da ADMIN: kredisiz).
+ * POST — giriş yapmış kullanıcı, 5 kredi karşılığında PRE fazında yeni analiz üretir (yönetici — ADMIN — kredisiz; bkz. lib/premium.ts).
  *        Cache'te zaten varsa kredi harcamadan direkt döner. Maç başladıysa (PRE
  *        dışında) üretim reddedilir — sadece saklı PRE analizi döner.
  *
@@ -33,7 +33,7 @@ import {
   settleCredits,
   type CreditReservation,
 } from '@/lib/credits';
-import { isPremiumUser } from '@/lib/premium';
+import { analysisIsFree } from '@/lib/premium';
 import { hitFixedWindowRateLimit } from '@/lib/rateLimit';
 import { buildMatchAnalysisContext } from '@/server/buildMatchAnalysisContext';
 import { generateMatchAnalysis, AnalysisTimeoutError } from '@/services/aiAnalysisService';
@@ -139,12 +139,12 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse, matchId: st
         };
       }
 
-      // Premium kullanıcı kredi harcamadan üretir (bkz. lib/premium.ts). Kötüye kullanım koruması: rate limit yukarıda.
-      // Canlı bakiye kontrolü: rol + güncel `User.credits` DB'den okunur (JWT'deki bayat değer kullanılmaz).
+      // Yönetici (ve ileride premium) kredi harcamadan üretir (bkz. lib/premium.ts). Kötüye kullanım koruması: rate
+      // limit yukarıda. Rol ve güncel `User.credits` DB'den okunur (JWT'deki bayat değer kullanılmaz).
       const owner = await prisma.user.findUnique({ where: { id: guard.userId }, select: { role: true, credits: true } });
-      const premiumFree = isPremiumUser(owner);
+      const creditFree = analysisIsFree(owner);
       let reservation: CreditReservation | null = null;
-      if (!premiumFree) {
+      if (!creditFree) {
         // Bu kullanıcının yarım kalmış eski harcaması varsa önce iade (aynı maçın tekrar anahtarını da serbest bırakır).
         try {
           await refundStalePendingSpends({ userId: guard.userId });
@@ -237,8 +237,8 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse, matchId: st
         }
       }
 
-      // Premium: kredi düşmez ama analiz kaydedildikten sonra 0 tutarlı kayıt yazılır → my-analyses bu analizi de yakalar.
-      if (premiumFree) {
+      // Kredisiz üretim: kredi düşmez ama analiz kaydedildikten sonra 0 tutarlı kayıt yazılır → my-analyses bu analizi de yakalar.
+      if (creditFree) {
         try {
           await recordFreeAnalysis(guard.userId, matchId, owner?.credits ?? 0);
         } catch (e) {

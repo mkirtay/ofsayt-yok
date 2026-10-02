@@ -32,7 +32,7 @@ vi.mock('@/lib/prisma', () => ({
 }));
 vi.mock('@/lib/requireAuth', () => ({ requireAuth: async () => ({ ok: true, userId: 'u1' }) }));
 vi.mock('@/lib/rateLimit', () => ({ hitFixedWindowRateLimit: async () => ({ success: true, remaining: 9, resetAt: 0 }) }));
-vi.mock('@/lib/premium', () => ({ isPremiumUser: () => false }));
+vi.mock('@/lib/premium', () => ({ analysisIsFree: () => false }));
 vi.mock('@/lib/credits', () => ({
   reserveCredits: vi.fn(async () => {
     h.spent += 1;

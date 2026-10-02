@@ -90,11 +90,11 @@ export default function MatchAnalysis({ match, state, archived = false }: Props)
     generating,
     error,
     credits,
-    premium,
+    unlimited,
     isAuthenticated,
     generate: generateAnalysis,
   } = state;
-  const insufficientCredits = !premium && credits < ANALYSIS_COST;
+  const insufficientCredits = !unlimited && credits < ANALYSIS_COST;
 
   // Arşiv maçı (sağlayıcıda yok): üretim mümkün değil, maç sonrası gibi davran.
   const phase = archived ? 'POST' : (serverPhase ?? deriveMatchPhase(match?.status));
@@ -159,9 +159,9 @@ export default function MatchAnalysis({ match, state, archived = false }: Props)
               className={styles.ctaButton}
               onClick={() => void generateAnalysis()}
             >
-              {t('analysis.generateButton')} {premium ? t('analysis.generateUnlimited') : t('analysis.generateCost', { cost: ANALYSIS_COST })}
+              {t('analysis.generateButton')} {unlimited ? t('analysis.generateUnlimited') : t('analysis.generateCost', { cost: ANALYSIS_COST })}
             </button>
-            {premium ? null : <p className={styles.reasoning}>{t('analysis.creditBalance', { credits })}</p>}
+            {unlimited ? null : <p className={styles.reasoning}>{t('analysis.creditBalance', { credits })}</p>}
           </div>
         )}
       </div>

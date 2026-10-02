@@ -13,8 +13,7 @@ vi.mock('next-auth/react', () => ({
 
 import AdSlot from './index';
 import SponsorSlider from '@/components/SponsorSlider';
-import { isPremiumUser } from '@/lib/premium';
-import { CREDIT_PACKAGES, PREMIUM_CREDIT_THRESHOLD } from '@/config/creditPackages';
+import { analysisIsFree, isAdminUser, isPremiumUser } from '@/lib/premium';
 
 beforeEach(() => {
   state.enabled = true;
@@ -38,11 +37,11 @@ describe('AdSlot / SponsorSlider — bayrak ve premium kapısı', () => {
     expect(renderToStaticMarkup(<SponsorSlider />)).toContain('Sponsorlar');
   });
 
-  it('premium (ADMIN) kullanıcıda reklam ve sponsor alanı HİÇ render edilmez', () => {
+  it('yönetici premium değil: reklam ve sponsor alanı görünür (reklam gizleme yalnızca premium\'a bağlı)', () => {
     state.status = 'authenticated';
     state.role = 'ADMIN';
-    expect(renderToStaticMarkup(<AdSlot slot="x" />)).toBe('');
-    expect(renderToStaticMarkup(<SponsorSlider />)).toBe('');
+    expect(renderToStaticMarkup(<AdSlot slot="x" />)).toContain('Reklam');
+    expect(renderToStaticMarkup(<SponsorSlider />)).toContain('Sponsorlar');
   });
 
   it('oturum yüklenirken render edilmez (premium kullanıcıda titreme olmasın)', () => {
@@ -50,22 +49,21 @@ describe('AdSlot / SponsorSlider — bayrak ve premium kapısı', () => {
     expect(renderToStaticMarkup(<AdSlot slot="x" />)).toBe('');
   });
 
-  it('bakiye ≥ en büyük paket → premium: reklam/sponsor yok; bir eksik → reklam var', () => {
+  it('bakiye premium yapmaz: 100+ kredili kullanıcı da reklam görür', () => {
     state.status = 'authenticated';
     state.role = 'USER';
-    state.credits = PREMIUM_CREDIT_THRESHOLD;
-    expect(renderToStaticMarkup(<AdSlot slot="x" />)).toBe('');
-    state.credits = PREMIUM_CREDIT_THRESHOLD - 1;
+    state.credits = 500;
     expect(renderToStaticMarkup(<AdSlot slot="x" />)).toContain('Reklam');
   });
 
-  it('isPremiumUser: ADMIN her zaman; USER yalnızca eşikte ve üstünde; eşik = en büyük paket', () => {
-    expect(isPremiumUser({ role: 'ADMIN', credits: 0 })).toBe(true);
-    expect(isPremiumUser({ role: 'USER', credits: PREMIUM_CREDIT_THRESHOLD })).toBe(true);
-    expect(isPremiumUser({ role: 'USER', credits: PREMIUM_CREDIT_THRESHOLD - 1 })).toBe(false);
-    expect(isPremiumUser({ role: 'USER', credits: 5 })).toBe(false);
-    expect(isPremiumUser({ role: undefined })).toBe(false);
-    expect(isPremiumUser(null)).toBe(false);
-    expect(PREMIUM_CREDIT_THRESHOLD).toBe(Math.max(...CREDIT_PACKAGES.map((p) => p.credits)));
+  it('ödeme entegrasyonuna kadar kimse premium değil; yönetici ayrı, analizi kredisiz', () => {
+    for (const u of [{ role: 'ADMIN', credits: 0 }, { role: 'USER', credits: 100 }, { role: 'USER', credits: 1000 }, { role: 'USER', credits: 5 }, null]) {
+      expect(isPremiumUser(u)).toBe(false);
+    }
+    expect(isAdminUser({ role: 'ADMIN' })).toBe(true);
+    expect(isAdminUser({ role: 'USER', credits: 1000 })).toBe(false);
+    expect(analysisIsFree({ role: 'ADMIN', credits: 0 })).toBe(true);
+    expect(analysisIsFree({ role: 'USER', credits: 1000 })).toBe(false);
+    expect(analysisIsFree(null)).toBe(false);
   });
 });

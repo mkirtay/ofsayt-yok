@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useTranslation } from '@/lib/i18n';
 import { useCredits } from '@/hooks/useCredits';
-import { isPremiumUser } from '@/lib/premium';
+import { analysisIsFree } from '@/lib/premium';
 import type { ApiAnalysis, ApiPredictionRecord } from '@/components/MatchAnalysis/types';
 
 export const ANALYSIS_COST = 5;
@@ -14,9 +14,9 @@ export type MatchAnalysisState = {
   loading: boolean;
   generating: boolean;
   error: string | null;
-  /** Kredi bakiyesi ve premium durumu — "Kredi Satın Al" CTA'sı üretime basmadan görünsün diye. */
+  /** Kredi bakiyesi ve kredisiz üretim (yönetici/premium) — "Kredi Satın Al" CTA'sı üretime basmadan görünsün diye. */
   credits: number;
-  premium: boolean;
+  unlimited: boolean;
   isAuthenticated: boolean;
   generate: () => Promise<void>;
 };
@@ -32,7 +32,7 @@ export function useMatchAnalysis(matchId: string | null | undefined): MatchAnaly
   const { data: session, status: sessionStatus } = useSession();
   const isAuthenticated = sessionStatus === 'authenticated';
   const { credits, refresh: refreshCredits } = useCredits();
-  const premium = isPremiumUser({ role: session?.user?.role, credits });
+  const unlimited = analysisIsFree({ role: session?.user?.role, credits });
 
   const [analysis, setAnalysis] = useState<ApiAnalysis | null>(null);
   const [predictionRecord, setPredictionRecord] = useState<ApiPredictionRecord | null>(null);
@@ -131,10 +131,10 @@ export function useMatchAnalysis(matchId: string | null | undefined): MatchAnaly
       generating,
       error,
       credits,
-      premium,
+      unlimited,
       isAuthenticated,
       generate,
     }),
-    [analysis, predictionRecord, serverPhase, loading, generating, error, credits, premium, isAuthenticated, generate]
+    [analysis, predictionRecord, serverPhase, loading, generating, error, credits, unlimited, isAuthenticated, generate]
   );
 }

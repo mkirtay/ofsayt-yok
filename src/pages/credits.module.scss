@@ -164,6 +164,18 @@
   // Metin çeviride zaten büyük harf; CSS uppercase tr dilinde "PREMİUM" üretir.
 }
 
+// Yönetici rozeti: premium (amber) ile karışmasın diye nötr.
+.adminBadge {
+  padding: 2px $spacing-3;
+  border: 1px solid var(--border-subtle);
+  border-radius: $radius-full;
+  background: $color-muted;
+  color: $color-text;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
 .pricingPopular {
   position: absolute;
   top: -13px;

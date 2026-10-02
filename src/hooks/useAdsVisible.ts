@@ -9,5 +9,5 @@ import { isPremiumUser } from '@/lib/premium';
 export function useAdsVisible(): boolean {
   const { data: session, status } = useSession();
   if (!ADS_ENABLED || status === 'loading') return false;
-  return !isPremiumUser({ role: session?.user?.role, credits: session?.user?.credits });
+  return !isPremiumUser({ role: session?.user?.role, credits: session?.user?.credits }); // yönetici de reklam görür
 }

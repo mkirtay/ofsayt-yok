@@ -309,17 +309,17 @@ describe('kredi güvenliği — POST /api/matches/[id]/analysis', () => {
     ]);
   });
 
-  it('Premium (≥ 100 kredi) ve ADMIN: krediden düşülmez, ANALYSIS_FREE kaydı yazılır', async () => {
-    db.addUser('p', 150);
+  it('100+ kredili USER premium değil: 5 kredi düşülür; ADMIN krediden düşülmez, ANALYSIS_FREE kaydı yazılır', async () => {
+    db.addUser('rich', 150);
     db.addUser('admin', 0, 'ADMIN');
-    expect((await post('p', '19000001')).statusCode).toBe(200);
+    expect((await post('rich', '19000001')).statusCode).toBe(200);
     expect((await post('admin', '19000002')).statusCode).toBe(200);
 
-    expect(db.balance('p')).toBe(150);
+    expect(db.balance('rich')).toBe(145);
     expect(db.balance('admin')).toBe(0);
-    expect(db.ledger.map((t) => [t.userId, t.type, t.amount])).toEqual([
-      ['p', 'ANALYSIS_FREE', 0],
-      ['admin', 'ANALYSIS_FREE', 0],
+    expect(db.ledger.map((t) => [t.userId, t.type, t.amount, t.status])).toEqual([
+      ['rich', 'ANALYSIS_SPEND', -5, 'SETTLED'],
+      ['admin', 'ANALYSIS_FREE', 0, null],
     ]);
   });
 

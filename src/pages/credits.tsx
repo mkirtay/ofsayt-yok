@@ -6,7 +6,7 @@ import { useTranslation } from '@/lib/i18n';
 import '@/lib/i18nNamespaces/credits';
 import Container from '@/components/Container';
 import { useCredits } from '@/hooks/useCredits';
-import { isPremiumUser } from '@/lib/premium';
+import { isAdminUser, isPremiumUser } from '@/lib/premium';
 import { CREDIT_PACKAGES, PREMIUM_PACKAGE_KEY } from '@/config/creditPackages';
 import styles from './credits.module.scss';
 
@@ -19,6 +19,7 @@ export default function CreditsPage() {
   const { authenticated, loading, credits } = useCredits();
   const { data: session } = useSession();
   const premium = authenticated && isPremiumUser({ role: session?.user?.role, credits });
+  const admin = authenticated && isAdminUser(session?.user);
 
   return (
     <>
@@ -46,6 +47,7 @@ export default function CreditsPage() {
                     {credits} <span className={styles.balanceUnit}>{t('balanceUnit')}</span>
                   </span>
                   {premium ? <span className={styles.premiumBadge}>{t('premiumActive')}</span> : null}
+                  {admin ? <span className={styles.adminBadge}>{t('adminActive')}</span> : null}
                 </>
               ) : (
                 <span className={styles.signInNote}>{t('signInNote')}</span>
