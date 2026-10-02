@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { buildDateStripWindow, isoDayOfMonth, shiftIsoDate, stripHasToday, todayIsoIstanbul } from '@/utils/dateStrip';
 import { useTranslation, useI18n } from '@/lib/i18n';
+import { useHideOnScroll } from '@/hooks/useHideOnScroll';
 import Container from '../Container';
 
 /**
@@ -35,6 +36,8 @@ export default function SubHeader({
 }: SubHeaderProps) {
   const { t } = useTranslation('match');
   const { locale } = useI18n();
+  // Mobil: aşağı kaydırınca logo bandı gizlenir, gün şeridi yapışık kalır (yalnız transform).
+  useHideOnScroll();
   const dateLocale = locale === 'en' ? 'en-GB' : 'tr-TR';
 
   const displayDate = useMemo(() => {

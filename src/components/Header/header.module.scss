@@ -739,3 +739,21 @@
     display: none;
   }
 }
+
+// Mobil ana sayfa: aşağı kaydırınca logo bandı yukarı kayar (useHideOnScroll, kökte `data-chrome-hidden`), yukarı
+// kaydırınca geri gelir. Yalnız transform — akıştaki yeri değişmez (layout kayması yok).
+@include below-desktop {
+  .header {
+    transition: transform 0.2s ease;
+  }
+
+  :global(html[data-chrome-hidden]) .header {
+    transform: translateY(-100%);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .header {
+      transition: none;
+    }
+  }
+}

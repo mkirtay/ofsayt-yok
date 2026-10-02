@@ -237,6 +237,8 @@ $hub-fill-height: calc(100vh - var(--header-height) - 56px - 32px - var(--league
 .hubMain {
   order: 1;
   min-width: 0;
+  // Mobilde `?tab` / alt menüyle listeye kaydırınca liste yapışık gün şeridinin (53 px) altında başlasın.
+  scroll-margin-top: calc(var(--sticky-top-extra, 0px) + #{$spacing-2});
   display: flex;
   gap: $spacing-4;
   align-items: flex-start;

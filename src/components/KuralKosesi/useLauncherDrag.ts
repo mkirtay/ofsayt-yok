@@ -7,6 +7,7 @@ import {
   type PointerEvent,
   type RefObject,
 } from 'react';
+import Router from 'next/router';
 import {
   TOP_GAP_PX,
   isDragMovement,
@@ -27,12 +28,18 @@ type DragSession = {
   frame: number;
 };
 
-/** Düğmenin transform'suz yeri (fixed → offsetTop görünüm alanına göre, transform'u saymaz) ve sınırlar. */
+/**
+ * Düğmenin transform'suz yeri (fixed → offsetTop görünüm alanına göre, transform'u saymaz) ve sınırlar. Üst sınır:
+ * header + sayfanın yapışık üst alanı (`--sticky-top-extra`, ör. ana sayfada gün şeridi) + boşluk — logo bandı
+ * kaydırmayla gizlense de düğme şeridin üstüne binmez.
+ */
 function measure(el: HTMLElement): LauncherBounds {
-  const header = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--header-height'));
+  const rootStyle = getComputedStyle(document.documentElement);
+  const header = parseFloat(rootStyle.getPropertyValue('--header-height'));
+  const extra = parseFloat(rootStyle.getPropertyValue('--sticky-top-extra'));
   return {
     defaultTop: el.offsetTop,
-    minTop: (Number.isFinite(header) ? header : 64) + TOP_GAP_PX,
+    minTop: (Number.isFinite(header) ? header : 64) + (Number.isFinite(extra) ? extra : 0) + TOP_GAP_PX,
     viewportHeight: window.innerHeight,
   };
 }
@@ -84,10 +91,13 @@ export function useLauncherDrag(ref: RefObject<HTMLButtonElement | null>, storag
     const frame = requestAnimationFrame(() => setReady(true));
     window.addEventListener('resize', apply);
     window.addEventListener('orientationchange', apply);
+    // Sayfa geçişinde yapışık üst alan (gün şeridi) gelip gidebilir → üst sınır yeniden.
+    Router.events.on('routeChangeComplete', apply);
     return () => {
       cancelAnimationFrame(frame);
       window.removeEventListener('resize', apply);
       window.removeEventListener('orientationchange', apply);
+      Router.events.off('routeChangeComplete', apply);
     };
   }, [ref, storage]);
 
