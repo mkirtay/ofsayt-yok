@@ -458,20 +458,3 @@ describe('getCompetitionGroups — Faz 3 madde 1: ölü kod kaldırıldı', () =
     expect((mod as Record<string, unknown>).getCompetitionGroups).toBeUndefined();
   });
 });
-
-describe('Faz 3 fonksiyonları — flag KAPALIYKEN Sportmonks fetch hiç çağrılmaz', () => {
-  it('legacy kod yolu korunuyor', async () => {
-    process.env.NEXT_PUBLIC_SPORTMONKS_ENABLED = 'false';
-    const fetchSpy = vi.spyOn(global, 'fetch').mockImplementation(envelope({}));
-    const { getTeamHistoryMatches, getMatchStats, getSeasonsList } = await import('./liveScoreService');
-
-    await getTeamHistoryMatches('83').catch(() => {});
-    await getMatchStats('1').catch(() => {});
-    await getSeasonsList().catch(() => {});
-
-    // Legacy istemci de fetch kullanır (axios değil) — yalnız eski proxy'ye gider, Sportmonks'a hiç gitmez.
-    const urls = fetchSpy.mock.calls.map(([u]) => String(u));
-    expect(urls.length).toBeGreaterThan(0);
-    expect(urls.every((u) => u.startsWith('/api/livescore/'))).toBe(true);
-  });
-});

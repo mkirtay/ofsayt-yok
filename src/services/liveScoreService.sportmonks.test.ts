@@ -176,20 +176,6 @@ describe('liveScoreService — Sportmonks Faz 2 wiring', () => {
 
     expect(matches).toEqual([]);
   });
-
-  it('flag KAPALIYKEN Sportmonks fetch hiç çağrılmaz — legacy (livescore-api.com) kod yolu korunur', async () => {
-    process.env.NEXT_PUBLIC_SPORTMONKS_ENABLED = 'false';
-    const fetchSpy = vi.spyOn(global, 'fetch').mockImplementation(mockEnvelopeResponse([inplayFixture]));
-    const { getFixturesByDate, getAllLiveMatches } = await import('./liveScoreService');
-
-    await getFixturesByDate('2026-09-17').catch(() => {});
-    await getAllLiveMatches().catch(() => {});
-
-    // Legacy istemci de fetch kullanır (axios değil) — yalnız eski proxy'ye gider, Sportmonks'a hiç gitmez.
-    const urls = fetchSpy.mock.calls.map(([u]) => String(u));
-    expect(urls.length).toBeGreaterThan(0);
-    expect(urls.every((u) => u.startsWith('/api/livescore/'))).toBe(true);
-  });
 });
 
 describe('isLiveMatchOnSelectedDate — Türkiye günü', () => {
