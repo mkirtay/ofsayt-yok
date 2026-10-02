@@ -51,7 +51,8 @@ export default function TeamHeader({
   return (
     <div className={styles.teamHeader} aria-busy={loading || undefined}>
       {loading ? (
-        <SkeletonBlock className={styles.teamLogo} width={56} height={56} />
+        // Boyut CSS'ten (.teamLogo: 56 px, dar ekranda 44 px) — satır içi genişlik verilirse logo gelince kayar.
+        <SkeletonBlock className={styles.teamLogo} />
       ) : logo ? (
         <TeamLogo src={logo} alt={name} className={styles.teamLogo} width={56} height={56} />
       ) : (
