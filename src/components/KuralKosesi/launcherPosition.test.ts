@@ -7,8 +7,15 @@ import {
   keyStep,
   offsetForTop,
   offsetFromRatio,
+  readSavedPosition,
   readSavedRatio,
-  saveRatio,
+  savePosition,
+  clampOffsetX,
+  keySide,
+  offsetXForSide,
+  releaseVelocityX,
+  sideMargin,
+  snapSide,
   type LauncherBounds,
 } from './launcherPosition';
 
@@ -62,8 +69,8 @@ describe('sınırlar', () => {
 describe('kayıtlı konum (oran)', () => {
   it('kaydet → oku → aynı oran; ekran yüksekliği değişse de oran korunur', () => {
     const storage = memoryStorage();
-    saveRatio(storage, 406, 812); // ekranın tam ortası
-    expect(storage.getItem(POSITION_KEY)).toBe('0.5000');
+    savePosition(storage, 'right', 406, 812); // ekranın tam ortası
+    expect(JSON.parse(storage.getItem(POSITION_KEY)!)).toEqual({ side: 'right', y: 0.5 });
     const ratio = readSavedRatio(storage);
     expect(ratio).toBe(0.5);
     expect(offsetFromRatio(ratio, MOBILE)).toBe(406 - 682);
@@ -72,13 +79,13 @@ describe('kayıtlı konum (oran)', () => {
 
   it('döndürme: dikeyde kaydedilen alt konum yatayda sınıra kenetlenir', () => {
     const storage = memoryStorage();
-    saveRatio(storage, 682, 812); // dikeyde varsayılan yer
+    savePosition(storage, 'right', 682, 812); // dikeyde varsayılan yer
     const landscape: LauncherBounds = { defaultTop: 227, minTop: 68, viewportHeight: 375 };
     const offset = offsetFromRatio(readSavedRatio(storage), landscape);
     expect(landscape.defaultTop + offset).toBeLessThanOrEqual(landscape.defaultTop);
     expect(landscape.defaultTop + offset).toBeGreaterThanOrEqual(landscape.minTop);
     // Üstte kaydedilen konum yatayda da sınır içinde
-    saveRatio(storage, 68, 812);
+    savePosition(storage, 'right', 68, 812);
     const top = landscape.defaultTop + offsetFromRatio(readSavedRatio(storage), landscape);
     expect(top).toBeGreaterThanOrEqual(landscape.minTop);
   });
@@ -101,8 +108,8 @@ describe('kayıtlı konum (oran)', () => {
       },
     } as Storage;
     expect(readSavedRatio(throwing)).toBeNull();
-    expect(() => saveRatio(throwing, 100, 812)).not.toThrow();
-    expect(() => saveRatio(null, 100, 812)).not.toThrow();
+    expect(() => savePosition(throwing, 'left', 100, 812)).not.toThrow();
+    expect(() => savePosition(null, 'left', 100, 812)).not.toThrow();
   });
 });
 
@@ -134,5 +141,106 @@ describe('baloncuk', () => {
     expect(bubblePosition(68, 56, 812)).toEqual({ top: 74 });
     const pos = bubblePosition(0, 56, 812);
     expect(pos.top).toBeGreaterThanOrEqual(0);
+  });
+});
+
+/** Yataylı sınırlar: 375 px mobil (sağ boşluk 16) ve 1440 px masaüstü (sağ boşluk 24). */
+const MOBILE_2D: LauncherBounds = { ...MOBILE, defaultLeft: 375 - 16 - 56, viewportWidth: 375, size: 56 };
+const DESKTOP_2D: LauncherBounds = { ...DESKTOP, defaultLeft: 1440 - 24 - 56, viewportWidth: 1440, size: 56 };
+
+describe('kenar seçimi (sol / sağ)', () => {
+  it('kenar boşlukları simetrik: sol kenar = CSS\'teki sağ boşluk kadar içeride', () => {
+    expect(sideMargin(MOBILE_2D)).toBe(16);
+    expect(sideMargin(DESKTOP_2D)).toBe(24);
+    expect(offsetXForSide('right', MOBILE_2D)).toBe(0);
+    expect(MOBILE_2D.defaultLeft! + offsetXForSide('left', MOBILE_2D)).toBe(16);
+    expect(DESKTOP_2D.defaultLeft! + offsetXForSide('left', DESKTOP_2D)).toBe(24);
+  });
+
+  it('bırakınca en yakın kenar: ekranın sol yarısı → sol, sağ yarısı → sağ', () => {
+    expect(snapSide(100, 375)).toBe('left');
+    expect(snapSide(187, 375)).toBe('left');
+    expect(snapSide(188, 375)).toBe('right');
+    expect(snapSide(1000, 1440)).toBe('right');
+  });
+
+  it('hızlı yatay fırlatmada fırlatma yönü kazanır; yavaşta konum belirler', () => {
+    expect(snapSide(300, 375, -0.8)).toBe('left'); // sağ yarıda bırakıldı ama sola fırlatıldı
+    expect(snapSide(50, 375, 0.6)).toBe('right');
+    expect(snapSide(300, 375, -0.2)).toBe('right'); // yavaş → konum
+  });
+
+  it('fırlatma hızı son ~80 ms\'lik hareketten', () => {
+    expect(releaseVelocityX([])).toBe(0);
+    expect(releaseVelocityX([{ t: 0, x: 300 }])).toBe(0);
+    // 200 ms yavaş, son 80 ms'de 80 px sola → -1 px/ms
+    const samples = [
+      { t: 0, x: 300 },
+      { t: 200, x: 290 },
+      { t: 240, x: 250 },
+      { t: 280, x: 210 },
+    ];
+    expect(releaseVelocityX(samples)).toBeCloseTo(-1, 5);
+  });
+
+  it('sürüklerken yatayda ekrandan taşmaz', () => {
+    expect(clampOffsetX(-10_000, MOBILE_2D)).toBe(offsetXForSide('left', MOBILE_2D));
+    expect(clampOffsetX(500, MOBILE_2D)).toBe(0);
+    expect(clampOffsetX(-100, MOBILE_2D)).toBe(-100);
+    // Yatay ölçü yoksa (eski çağıran) yatay kayma yok
+    expect(clampOffsetX(-100, MOBILE)).toBe(0);
+  });
+
+  it('dokunuş eşiği iki eksende: 6 px altı dokunuş', () => {
+    expect(isDragMovement(3, 4)).toBe(false); // hypot = 5
+    expect(isDragMovement(0, 6)).toBe(true);
+    expect(isDragMovement(4, 5)).toBe(true);
+  });
+
+  it('klavye: ← sol, → sağ', () => {
+    expect(keySide('ArrowLeft')).toBe('left');
+    expect(keySide('ArrowRight')).toBe('right');
+    expect(keySide('ArrowUp')).toBeNull();
+  });
+});
+
+describe('kayıtlı konum { side, y } ve geriye uyumluluk', () => {
+  it('yeni biçim: taraf ve oran birlikte', () => {
+    const storage = memoryStorage();
+    savePosition(storage, 'left', 300, 812);
+    expect(JSON.parse(storage.getItem(POSITION_KEY)!)).toEqual({ side: 'left', y: 0.3695 });
+    expect(readSavedPosition(storage)).toEqual({ side: 'left', ratio: 0.3695 });
+  });
+
+  it('eski kayıt (düz oran) bozulmaz: y aynen, taraf "right"', () => {
+    const storage = memoryStorage();
+    storage.setItem(POSITION_KEY, '0.4581');
+    expect(readSavedPosition(storage)).toEqual({ side: 'right', ratio: 0.4581 });
+    expect(readSavedRatio(storage)).toBe(0.4581);
+  });
+
+  it('taraf alanı yok / tanımsızsa "right"; bozuk y → kayıt yok (varsayılan sağ alt)', () => {
+    const storage = memoryStorage();
+    storage.setItem(POSITION_KEY, JSON.stringify({ y: 0.2 }));
+    expect(readSavedPosition(storage)).toEqual({ side: 'right', ratio: 0.2 });
+    storage.setItem(POSITION_KEY, JSON.stringify({ side: 'up', y: 0.2 }));
+    expect(readSavedPosition(storage)?.side).toBe('right');
+    storage.setItem(POSITION_KEY, JSON.stringify({ side: 'left', y: 3 }));
+    expect(readSavedPosition(storage)).toBeNull();
+    storage.setItem(POSITION_KEY, '{bozuk');
+    expect(readSavedPosition(storage)).toBeNull();
+    expect(readSavedPosition(null)).toBeNull();
+  });
+
+  it('döndürme: taraf korunur, y yeni ekranda sınır içinde', () => {
+    const storage = memoryStorage();
+    savePosition(storage, 'left', 600, 812);
+    const saved = readSavedPosition(storage)!;
+    const landscape: LauncherBounds = { defaultTop: 227, minTop: 68, viewportHeight: 375, defaultLeft: 812 - 16 - 56, viewportWidth: 812, size: 56 };
+    expect(saved.side).toBe('left');
+    const top = landscape.defaultTop + offsetFromRatio(saved.ratio, landscape);
+    expect(top).toBeGreaterThanOrEqual(landscape.minTop);
+    expect(top).toBeLessThanOrEqual(landscape.defaultTop);
+    expect(landscape.defaultLeft! + offsetXForSide(saved.side, landscape)).toBe(16);
   });
 });

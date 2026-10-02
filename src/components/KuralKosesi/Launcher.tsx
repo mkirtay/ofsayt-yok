@@ -149,6 +149,7 @@ export default function Launcher() {
         <button
           type="button"
           className={styles.peek}
+          data-side={drag.side}
           style={peekPosition ? { top: peekPosition.top ?? 'auto', bottom: peekPosition.bottom ?? 'auto' } : undefined}
           onClick={openPanel}
         >
@@ -160,10 +161,11 @@ export default function Launcher() {
         ref={launcherRef}
         type="button"
         className={styles.launcher}
-        style={{ transform: `translateY(${drag.offset}px)` }}
+        style={{ transform: `translate(${drag.offsetX}px, ${drag.offset}px)` }}
+        data-side={drag.side}
         data-dragging={drag.dragging || undefined}
         data-ready={drag.ready || undefined}
-        aria-label={`${t('open')}. ${t('moveHint')}`}
+        aria-label={`${t('open')}. ${t(drag.side === 'left' ? 'sideLeft' : 'sideRight')}. ${t('moveHint')}`}
         aria-haspopup="dialog"
         aria-expanded={open}
         onClick={() => {
@@ -179,7 +181,7 @@ export default function Launcher() {
         {seen ? null : <span className={styles.dot} />}
       </button>
       {Panel && facts ? (
-        <Panel open={open} facts={facts} startIndex={startIndex} onClose={closePanel} />
+        <Panel open={open} side={drag.side} facts={facts} startIndex={startIndex} onClose={closePanel} />
       ) : null}
     </>
   );

@@ -145,6 +145,29 @@
   }
 }
 
+// Düğme sol kenardayken baloncuk aynalanır: düğmenin sağında, aynı boşlukla; giriş animasyonu ters yönden.
+.peek[data-side='left'] {
+  right: auto;
+  left: 84px;
+  animation-name: peekInLeft;
+
+  @media (min-width: $bp-desktop) {
+    right: auto;
+    left: 92px;
+  }
+}
+
+@keyframes peekInLeft {
+  0% {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 // Açık tema: referansın birebir renkleri. Koyu tema: proje yüzey/metin renkleri (yukarıdaki varsayılanlar).
 :global(:root[data-theme='light']) .peek {
   --peek-bg: #ffffff;

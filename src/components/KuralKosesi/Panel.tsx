@@ -13,6 +13,8 @@ import styles from './panel.module.scss';
 
 export type PanelProps = {
   open: boolean;
+  /** Düğmenin bulunduğu kenar: panel o taraftan kayarak açılır. */
+  side?: 'left' | 'right';
   facts: KuralFact[];
   /** Panel her açılışta bu bilgiyle (günün bilgisi) başlar. */
   startIndex: number;
@@ -54,7 +56,7 @@ const FOCUSABLE = 'button:not([disabled]), [href], [tabindex]:not([tabindex="-1"
  * Kural Köşesi paneli (09-kural-kosesi.html). Sağdan kayar; mobilde karartmalı ve modal (odak içeride),
  * masaüstünde header'ın altında, karartmasız ve modal değil. Sahne yalnız panel açıkken çizilir.
  */
-export default function Panel({ open, facts, startIndex, onClose }: PanelProps) {
+export default function Panel({ open, side = 'right', facts, startIndex, onClose }: PanelProps) {
   const { t } = useTranslation('kuralKosesi');
   const { locale } = useI18n();
   const isMobile = useIsMobileLayout();
@@ -138,7 +140,7 @@ export default function Panel({ open, facts, startIndex, onClose }: PanelProps) 
       <div className={`${styles.backdrop} ${shown ? styles.backdropOpen : ''}`} onClick={onClose} aria-hidden="true" />
       <aside
         ref={drawerRef}
-        className={`${styles.drawer} ${shown ? styles.drawerOpen : ''}`}
+        className={`${styles.drawer} ${side === 'left' ? styles.drawerLeft : ''} ${shown ? styles.drawerOpen : ''}`}
         role="dialog"
         aria-modal={isMobile ? true : undefined}
         aria-labelledby={titleId}

@@ -21,7 +21,9 @@
   --kk-btn-border: rgba(255, 255, 255, 0.14);
   --kk-btn-text: var(--text-primary);
   --kk-pip: rgba(255, 255, 255, 0.18);
-  --kk-shadow: -12px 0 32px rgba(0, 0, 0, 0.45);
+  // Gölge panelin açık kenarından: sağdaki panelde sola (-1), soldakinde sağa (1) — bkz. .drawerLeft.
+  --kk-dir: -1;
+  --kk-shadow: calc(var(--kk-dir) * 12px) 0 32px rgba(0, 0, 0, 0.45);
 
   position: fixed;
   top: 0;
@@ -67,7 +69,20 @@
   --kk-btn-border: #d5e2db;
   --kk-btn-text: #101512;
   --kk-pip: #cfdcd5;
-  --kk-shadow: -12px 0 32px rgba(16, 21, 18, 0.22);
+  --kk-shadow: calc(var(--kk-dir) * 12px) 0 32px rgba(16, 21, 18, 0.22);
+}
+
+// Kural Köşesi düğmesi sol kenardaysa panel soldan kayarak açılır (aynalı köşe yuvarlaması ve gölge).
+.drawerLeft {
+  --kk-dir: 1;
+  right: auto;
+  left: 0;
+  border-radius: 0 20px 20px 0;
+  transform: translateX(-105%);
+
+  @media (min-width: $bp-desktop) {
+    border-radius: 0 16px 16px 0;
+  }
 }
 
 .drawerOpen {

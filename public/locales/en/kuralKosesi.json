@@ -1,6 +1,8 @@
 {
   "open": "Open the Rules Corner",
-  "moveHint": "Use the up and down arrow keys to move it.",
+  "sideLeft": "On the left edge",
+  "sideRight": "On the right edge",
+  "moveHint": "Use the up and down arrow keys to move it, left and right to switch sides.",
   "title": "Rules Corner",
   "didYouKnow": "Did you know?",
   "counter": "Laws of the game · {{current}} / {{total}}",

@@ -1,6 +1,8 @@
 {
   "open": "Kural Köşesi'ni aç",
-  "moveHint": "Yerini değiştirmek için yukarı ve aşağı ok tuşlarını kullan.",
+  "sideLeft": "Sol kenarda",
+  "sideRight": "Sağ kenarda",
+  "moveHint": "Yukarı ve aşağı ok tuşlarıyla yerini, sol ve sağ ok tuşlarıyla kenarını değiştir.",
   "title": "Kural Köşesi",
   "didYouKnow": "Biliyor muydun?",
   "counter": "Futbolun kuralları · {{current}} / {{total}}",

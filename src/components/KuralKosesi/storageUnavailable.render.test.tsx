@@ -58,11 +58,12 @@ describe.each(['methods-throw', 'access-throws'] as const)('localStorage erişil
     stubWindow(variant);
     const html = renderToStaticMarkup(<Launcher />);
     const launcher = html.match(
-      /<button[^>]*aria-label="Kural Köşesi&#x27;ni aç\. Yerini değiştirmek için yukarı ve aşağı ok tuşlarını kullan\."[^>]*>([\s\S]*?)<\/button>/,
+      /<button[^>]*aria-label="Kural Köşesi&#x27;ni aç\. Sağ kenarda\. Yukarı ve aşağı ok tuşlarıyla yerini, sol ve sağ ok tuşlarıyla kenarını değiştir\."[^>]*>([\s\S]*?)<\/button>/,
     );
     expect(launcher).not.toBeNull();
-    // Kayıtlı konum okunamıyor → varsayılan yer.
-    expect(launcher![0]).toContain('transform:translateY(0px)');
+    // Kayıtlı konum okunamıyor → varsayılan yer (sağ alt).
+    expect(launcher![0]).toContain('transform:translate(0px, 0px)');
+    expect(launcher![0]).toContain('data-side="right"');
     // Düğmenin içinde yalnız düdük SVG'si; nokta bir <span>dı.
     expect(launcher![1]).toContain('<svg');
     expect(launcher![1]).not.toContain('<span');

@@ -10,28 +10,41 @@ import {
 import Router from 'next/router';
 import {
   TOP_GAP_PX,
+  clampOffsetX,
   isDragMovement,
+  keySide,
   keyStep,
   offsetForTop,
   offsetFromRatio,
-  readSavedRatio,
-  saveRatio,
+  offsetXForSide,
+  readSavedPosition,
+  releaseVelocityX,
+  savePosition,
+  snapSide,
   type LauncherBounds,
+  type LauncherSide,
+  type PointerSample,
 } from './launcherPosition';
 
 type DragSession = {
   pointerId: number;
+  startX: number;
   startY: number;
-  startOffset: number;
+  startOffsetX: number;
+  startOffsetY: number;
   moved: boolean;
-  latest: number;
+  latestX: number;
+  latestY: number;
+  samples: PointerSample[];
   frame: number;
 };
 
+const translate = (x: number, y: number) => `translate(${x}px, ${y}px)`;
+
 /**
- * Düğmenin transform'suz yeri (fixed → offsetTop görünüm alanına göre, transform'u saymaz) ve sınırlar. Üst sınır:
- * header + sayfanın yapışık üst alanı (`--sticky-top-extra`, ör. ana sayfada gün şeridi) + boşluk — logo bandı
- * kaydırmayla gizlense de düğme şeridin üstüne binmez.
+ * Düğmenin transform'suz yeri (fixed → offsetTop / offsetLeft görünüm alanına göre, transform'u saymaz) ve sınırlar.
+ * Üst sınır: header + sayfanın yapışık üst alanı (`--sticky-top-extra`, ör. ana sayfada gün şeridi) + boşluk.
+ * Genişlik `clientWidth` (kaydırma çubuğu hariç — fixed `right` da ona göre).
  */
 function measure(el: HTMLElement): LauncherBounds {
   const rootStyle = getComputedStyle(document.documentElement);
@@ -41,39 +54,48 @@ function measure(el: HTMLElement): LauncherBounds {
     defaultTop: el.offsetTop,
     minTop: (Number.isFinite(header) ? header : 64) + (Number.isFinite(extra) ? extra : 0) + TOP_GAP_PX,
     viewportHeight: window.innerHeight,
+    defaultLeft: el.offsetLeft,
+    viewportWidth: document.documentElement.clientWidth,
+    size: el.offsetWidth,
   };
 }
 
 /**
- * Kural Köşesi düğmesini yalnız dikey eksende sürükler (Pointer Events: fare + dokunma). Sürükleme sırasında
- * React çizimi yok: konum rAF'te doğrudan `transform`a yazılır, bırakınca state'e ve depolamaya geçer.
- * Bkz. launcherPosition.ts (sınırlar, eşik, oran).
+ * Kural Köşesi düğmesini sürükler (Pointer Events: fare + dokunma). Sürüklerken iki eksende serbest; bırakınca x en
+ * yakın kenara (fırlatmada fırlatma yönüne) yapışır, y sınır içinde kalır. Sürükleme sırasında React çizimi yok:
+ * konum rAF'te doğrudan `transform`a yazılır; bırakınca state'e ve depolamaya geçer (yerleşme CSS geçişiyle).
+ * Bkz. launcherPosition.ts.
  */
 export function useLauncherDrag(ref: RefObject<HTMLButtonElement | null>, storage: Storage | null) {
   const [offset, setOffset] = useState(0);
+  const [side, setSide] = useState<LauncherSide>('right');
   const [bounds, setBounds] = useState<LauncherBounds | null>(null);
   const [dragging, setDragging] = useState(false);
   const [ready, setReady] = useState(false);
   const offsetRef = useRef(0);
+  const sideRef = useRef<LauncherSide>('right');
   const boundsRef = useRef<LauncherBounds | null>(null);
   const session = useRef<DragSession | null>(null);
   const suppressClick = useRef(false);
-  /** Depolama yoksa bu ziyaretteki oran (döndürmede korunur). */
-  const ratioRef = useRef<number | null>(null);
+  /** Depolama yoksa bu ziyaretteki konum (döndürmede korunur). */
+  const memoryRef = useRef<{ side: LauncherSide; ratio: number } | null>(null);
 
   const commit = useCallback(
-    (next: number) => {
+    (nextSide: LauncherSide, nextOffset: number) => {
       const b = boundsRef.current;
-      offsetRef.current = next;
-      setOffset(next);
+      offsetRef.current = nextOffset;
+      sideRef.current = nextSide;
+      setOffset(nextOffset);
+      setSide(nextSide);
       if (!b) return;
-      ratioRef.current = (b.defaultTop + next) / b.viewportHeight;
-      saveRatio(storage, b.defaultTop + next, b.viewportHeight);
+      memoryRef.current = { side: nextSide, ratio: (b.defaultTop + nextOffset) / b.viewportHeight };
+      savePosition(storage, nextSide, b.defaultTop + nextOffset, b.viewportHeight);
     },
     [storage],
   );
 
-  // İlk yer (kayıtlı oran) boyamadan önce; yeniden boyutlandırma / döndürmede sınırlar yeniden hesaplanır.
+  // İlk yer (kayıtlı konum) boyamadan önce; yeniden boyutlandırma / döndürmede sınırlar yeniden hesaplanır, taraf
+  // korunur.
   useLayoutEffect(() => {
     const el = ref.current;
     if (!el) return;
@@ -81,10 +103,14 @@ export function useLauncherDrag(ref: RefObject<HTMLButtonElement | null>, storag
       if (session.current) return;
       const b = measure(el);
       boundsRef.current = b;
-      const next = offsetFromRatio(readSavedRatio(storage) ?? ratioRef.current, b);
-      offsetRef.current = next;
+      const saved = readSavedPosition(storage) ?? memoryRef.current;
+      const nextOffset = offsetFromRatio(saved?.ratio ?? null, b);
+      const nextSide = saved?.side ?? 'right';
+      offsetRef.current = nextOffset;
+      sideRef.current = nextSide;
       setBounds(b);
-      setOffset(next);
+      setOffset(nextOffset);
+      setSide(nextSide);
     };
     apply();
     // Geçişler ilk yerleşmeden sonra açılır (kayıtlı yere kayarak gelmesin).
@@ -103,13 +129,19 @@ export function useLauncherDrag(ref: RefObject<HTMLButtonElement | null>, storag
 
   const onPointerDown = useCallback((event: PointerEvent<HTMLButtonElement>) => {
     if (event.pointerType === 'mouse' && event.button !== 0) return;
+    const b = boundsRef.current;
     suppressClick.current = false;
+    const startOffsetX = b ? offsetXForSide(sideRef.current, b) : 0;
     session.current = {
       pointerId: event.pointerId,
+      startX: event.clientX,
       startY: event.clientY,
-      startOffset: offsetRef.current,
+      startOffsetX,
+      startOffsetY: offsetRef.current,
       moved: false,
-      latest: offsetRef.current,
+      latestX: startOffsetX,
+      latestY: offsetRef.current,
+      samples: [{ t: event.timeStamp, x: event.clientX }],
       frame: 0,
     };
     try {
@@ -123,18 +155,22 @@ export function useLauncherDrag(ref: RefObject<HTMLButtonElement | null>, storag
     const s = session.current;
     const b = boundsRef.current;
     if (!s || !b || event.pointerId !== s.pointerId) return;
+    const dx = event.clientX - s.startX;
     const dy = event.clientY - s.startY;
     if (!s.moved) {
-      if (!isDragMovement(dy)) return;
+      if (!isDragMovement(dy, dx)) return;
       s.moved = true;
       setDragging(true);
     }
-    s.latest = offsetForTop(b.defaultTop + s.startOffset + dy, b);
+    s.samples.push({ t: event.timeStamp, x: event.clientX });
+    if (s.samples.length > 12) s.samples.shift();
+    s.latestX = clampOffsetX(s.startOffsetX + dx, b);
+    s.latestY = offsetForTop(b.defaultTop + s.startOffsetY + dy, b);
     if (!s.frame) {
       const el = event.currentTarget;
       s.frame = requestAnimationFrame(() => {
         s.frame = 0;
-        el.style.transform = `translateY(${s.latest}px)`;
+        el.style.transform = translate(s.latestX, s.latestY);
       });
     }
   }, []);
@@ -142,25 +178,38 @@ export function useLauncherDrag(ref: RefObject<HTMLButtonElement | null>, storag
   const endDrag = useCallback(
     (event: PointerEvent<HTMLButtonElement>) => {
       const s = session.current;
+      const b = boundsRef.current;
       if (!s || event.pointerId !== s.pointerId) return;
       session.current = null;
       if (s.frame) cancelAnimationFrame(s.frame);
-      if (!s.moved) return; // dokunuş → click paneli açar
+      if (!s.moved || !b) return; // dokunuş → click paneli açar
       suppressClick.current = true;
-      event.currentTarget.style.transform = `translateY(${s.latest}px)`;
+      const size = b.size ?? 0;
+      const centerX = (b.defaultLeft ?? 0) + s.latestX + size / 2;
+      const velocity = event.type === 'pointercancel' ? 0 : releaseVelocityX(s.samples);
+      const nextSide = snapSide(centerX, b.viewportWidth ?? 0, velocity);
+      // Kenara yapışma: önce sürükleme işareti kalkar (geçiş yeniden açılır), stil uygulanır, sonra hedef yazılır →
+      // transform geçişi bırakılan yerden kenara kaydırır (Hareketi azalt'ta anında). React aynı değeri yazar.
+      const el = event.currentTarget;
+      el.removeAttribute('data-dragging');
+      void el.offsetWidth;
+      el.style.transform = translate(offsetXForSide(nextSide, b), s.latestY);
       setDragging(false);
-      commit(s.latest);
+      commit(nextSide, s.latestY);
     },
     [commit],
   );
 
   const onKeyDown = useCallback(
     (event: KeyboardEvent<HTMLButtonElement>) => {
-      const step = keyStep(event.key);
       const b = boundsRef.current;
-      if (step === null || !b) return;
+      if (!b) return;
+      const step = keyStep(event.key);
+      const nextSide = keySide(event.key);
+      if (step === null && nextSide === null) return;
       event.preventDefault();
-      commit(offsetForTop(b.defaultTop + offsetRef.current + step, b));
+      if (nextSide) commit(nextSide, offsetRef.current);
+      else commit(sideRef.current, offsetForTop(b.defaultTop + offsetRef.current + (step ?? 0), b));
     },
     [commit],
   );
@@ -174,6 +223,9 @@ export function useLauncherDrag(ref: RefObject<HTMLButtonElement | null>, storag
 
   return {
     offset,
+    side,
+    /** Yataydaki kayma (sağ: 0); ölçülmeden önce 0. */
+    offsetX: bounds ? offsetXForSide(side, bounds) : 0,
     /** Düğmenin şu anki üst kenarı (baloncuk için); ölçülmeden önce null. */
     top: bounds ? bounds.defaultTop + offset : null,
     viewportHeight: bounds?.viewportHeight ?? null,
