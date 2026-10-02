@@ -2,7 +2,6 @@ import type { MatchLineupData } from '@/models/domain';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   findMatchById,
-  getCompetitionTableFull,
   getMatchLineups,
   getMatchStats,
   getMatchWithEvents,
@@ -19,6 +18,7 @@ import { deriveMatchPhase } from '@/utils/matchPhase';
 import { matchKickoffMs } from '@/utils/matchActivity';
 import { isProbableLineup } from '@/utils/lineupStatus';
 import type { LiveMatchPayload } from '@/server/liveMatch';
+import { getCompetitionStandings } from '@/services/competitionStandings';
 
 /**
  * Maç detayı veri yükleme — `/matches/[slug]` sayfası ve masaüstü split-view
@@ -71,7 +71,7 @@ export async function loadStandingsForMatch(cid: number): Promise<{
   const compIdStr = String(cid);
   const [seasonsList, table1] = await Promise.all([
     getSeasonsList({ competitionId: compIdStr }),
-    getCompetitionTableFull(compIdStr),
+    getCompetitionStandings(compIdStr),
   ]);
 
   const fromTable =
@@ -92,7 +92,7 @@ export async function loadStandingsForMatch(cid: number): Promise<{
 
   let tableFinal = table1;
   if (needTableRefetch && sid != null) {
-    tableFinal = await getCompetitionTableFull(compIdStr, { season: sid });
+    tableFinal = await getCompetitionStandings(compIdStr, { season: sid });
   }
 
   return {
@@ -330,7 +330,7 @@ export function useMatchDetail(
   const handleSeasonChange = useCallback(async (seasonId: number, competitionIdStr: string) => {
     setSelectedSeasonId(seasonId);
     setStandingsLoading(true);
-    const table = await getCompetitionTableFull(competitionIdStr, { season: seasonId });
+    const table = await getCompetitionStandings(competitionIdStr, { season: seasonId });
     setStandings(table);
     setStandingsLoading(false);
   }, []);

@@ -17,7 +17,6 @@ import hubStyles from '@/pages/index.module.scss';
 import {
   getTeamCompetitions,
   getTeamSquads,
-  getCompetitionTableFull,
   getSeasonsList,
   type CompetitionTableData,
   type CompetitionTableStandingRow,
@@ -60,6 +59,7 @@ import { useInViewOnce } from '@/hooks/useInViewOnce';
 import { getTeamSeasonMatches, getTeamSeasonScorers, getTeamSeasonStats } from '@/services/teamPage';
 import { combineSeasonStats } from '@/services/sportmonks/teamSeasonStats';
 import { mergeTeamScorers } from '@/services/sportmonks/teamScorers';
+import { getCompetitionStandings } from '@/services/competitionStandings';
 
 // Kadro sekmesi yüklenirken (tıklamadan sonra): sahne ve CSS'i ayrı parçada. Kutu (yükseklik) burada.
 const loadFormationLoading = () => import('@/components/PitchScenes/FormationLoading');
@@ -196,7 +196,7 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
   const handleSeasonChange = useCallback(async (seasonId: number, competitionIdStr: string) => {
     setSelectedSeasonId(seasonId);
     setStandingsLoading(true);
-    const tbl = await getCompetitionTableFull(competitionIdStr, { season: seasonId });
+    const tbl = await getCompetitionStandings(competitionIdStr, { season: seasonId });
     setTable(tbl);
     setStandingsLoading(false);
   }, []);
@@ -225,7 +225,7 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
       const standingsIdStr = String(standingsId);
       const [seasonsList, table1] = await Promise.all([
         getSeasonsList({ competitionId: standingsIdStr }),
-        getCompetitionTableFull(standingsIdStr),
+        getCompetitionStandings(standingsIdStr),
       ]);
       if (cancelled) return;
       setSeasons(seasonsList);
@@ -249,7 +249,7 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
 
       let tableFinal = table1;
       if (needTableRefetch && sid != null) {
-        tableFinal = await getCompetitionTableFull(standingsIdStr, { season: sid });
+        tableFinal = await getCompetitionStandings(standingsIdStr, { season: sid });
       }
       if (cancelled) return;
       setTable(tableFinal ?? table1);

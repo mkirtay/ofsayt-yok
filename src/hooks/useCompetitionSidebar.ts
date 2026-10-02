@@ -3,13 +3,13 @@ import {
   type QueryClient,
 } from '@tanstack/react-query';
 import {
-  getCompetitionTableFull,
   getSeasonsList,
   type CompetitionTableData,
   type SeasonListItem,
   type TopScorersPayload,
 } from '@/services/liveScoreService';
 import { legacyToStandingsLeagueId } from '@/services/sportmonksProviderFlag';
+import { getCompetitionStandings } from '@/services/competitionStandings';
 
 /**
  * Yan panelin varsayılan görünümü (Puan Durumu): sezon listesi + seçili sezon + tablo. Gol krallığı bu sorguda
@@ -35,7 +35,7 @@ export async function loadCompetitionSidebar(competitionId: number): Promise<Com
   if (compId == null) return EMPTY_SIDEBAR;
   const [seasonsList, table1] = await Promise.all([
     getSeasonsList({ competitionId: compId }),
-    getCompetitionTableFull(compId),
+    getCompetitionStandings(compId),
   ]);
 
   const fromTable =
@@ -56,7 +56,7 @@ export async function loadCompetitionSidebar(competitionId: number): Promise<Com
 
   let tableFinal = table1;
   if (needTableRefetch && sid != null) {
-    tableFinal = await getCompetitionTableFull(compId, { season: sid });
+    tableFinal = await getCompetitionStandings(compId, { season: sid });
   }
 
   return {
@@ -100,7 +100,7 @@ export async function fetchCompetitionStandingsForSeason(
 ): Promise<CompetitionTableData | null> {
   const compId = sidebarStandingsLeagueId(competitionId);
   if (compId == null) return null;
-  return getCompetitionTableFull(compId, { season: seasonId });
+  return getCompetitionStandings(compId, { season: seasonId });
 }
 
 /**

@@ -273,7 +273,10 @@
   "standings": {
     "ariaLabel": "League standings",
     "fallbackName": "League",
-    "empty": "No standings table found."
+    "empty": "No standings table found.",
+    "groupHeading": "Group {{name}}",
+    "conferenceWest": "Western Conference",
+    "conferenceEast": "Eastern Conference"
   },
   "events": {
     "title": "Match Events",

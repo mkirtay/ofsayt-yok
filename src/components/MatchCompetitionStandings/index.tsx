@@ -6,6 +6,7 @@ import type {
   SeasonListItem,
 } from "@/services/liveScoreService";
 import SeasonSelect from "@/components/SeasonSelect";
+import { standingsGroupHeading } from "./groupHeading";
 import { useTranslation } from "@/lib/i18n";
 import { formatSeasonLabel } from "@/utils/seasonLabel";
 import { getStandingRankZone } from "@/config/standingsZones";
@@ -336,7 +337,7 @@ export default function MatchCompetitionStandings({
                   ? sortWorldCupGroupsByName(stageBlock.groups ?? [])
                   : stageBlock.groups ?? []
                 ).length > 1 && group.name ? (
-                  <h3 className={styles.subheading}>Grup {group.name}</h3>
+                  <h3 className={styles.subheading}>{standingsGroupHeading(group.name, t)}</h3>
                 ) : null}
                 {group.standings?.length ? (
                   <StandingsTable

@@ -271,7 +271,10 @@
   "standings": {
     "ariaLabel": "Lig puan durumu",
     "fallbackName": "Lig",
-    "empty": "Puan tablosu bulunamadı."
+    "empty": "Puan tablosu bulunamadı.",
+    "groupHeading": "Grup {{name}}",
+    "conferenceWest": "Batı Konferansı",
+    "conferenceEast": "Doğu Konferansı"
   },
   "events": {
     "title": "Maç Olayları",

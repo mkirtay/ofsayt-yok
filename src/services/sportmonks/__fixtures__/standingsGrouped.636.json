@@ -1,0 +1,1466 @@
+[
+ {
+  "id": 280503,
+  "participant_id": 9335,
+  "league_id": 636,
+  "season_id": 26808,
+  "position": 1,
+  "points": 31,
+  "group_id": 253454,
+  "stage_id": 77479709,
+  "participant": {
+   "id": 9335,
+   "name": "Estudiantes",
+   "short_code": "EST",
+   "image_path": "https://cdn.sportmonks.com/images/soccer/teams/23/9335.png"
+  },
+  "group": {
+   "id": 253454,
+   "name": "Group A"
+  },
+  "stage": {
+   "id": 77479709,
+   "name": "Apertura",
+   "is_current": false,
+   "finished": true,
+   "starting_at": "2026-01-22"
+  },
+  "details": [
+   {
+    "type_id": 129,
+    "value": 16,
+    "type": {
+     "developer_name": "OVERALL_MATCHES"
+    }
+   },
+   {
+    "type_id": 130,
+    "value": 9,
+    "type": {
+     "developer_name": "OVERALL_WINS"
+    }
+   },
+   {
+    "type_id": 131,
+    "value": 4,
+    "type": {
+     "developer_name": "OVERALL_DRAWS"
+    }
+   },
+   {
+    "type_id": 132,
+    "value": 3,
+    "type": {
+     "developer_name": "OVERALL_LOST"
+    }
+   },
+   {
+    "type_id": 133,
+    "value": 19,
+    "type": {
+     "developer_name": "OVERALL_SCORED"
+    }
+   },
+   {
+    "type_id": 134,
+    "value": 7,
+    "type": {
+     "developer_name": "OVERALL_CONCEDED"
+    }
+   },
+   {
+    "type_id": 135,
+    "value": 8,
+    "type": {
+     "developer_name": "HOME_MATCHES"
+    }
+   },
+   {
+    "type_id": 136,
+    "value": 5,
+    "type": {
+     "developer_name": "HOME_WINS"
+    }
+   },
+   {
+    "type_id": 137,
+    "value": 1,
+    "type": {
+     "developer_name": "HOME_DRAWS"
+    }
+   },
+   {
+    "type_id": 138,
+    "value": 2,
+    "type": {
+     "developer_name": "HOME_LOST"
+    }
+   },
+   {
+    "type_id": 139,
+    "value": 11,
+    "type": {
+     "developer_name": "HOME_SCORED"
+    }
+   },
+   {
+    "type_id": 140,
+    "value": 4,
+    "type": {
+     "developer_name": "HOME_CONCEDED"
+    }
+   },
+   {
+    "type_id": 141,
+    "value": 8,
+    "type": {
+     "developer_name": "AWAY_MATCHES"
+    }
+   },
+   {
+    "type_id": 142,
+    "value": 4,
+    "type": {
+     "developer_name": "AWAY_WINS"
+    }
+   },
+   {
+    "type_id": 143,
+    "value": 3,
+    "type": {
+     "developer_name": "AWAY_DRAWS"
+    }
+   },
+   {
+    "type_id": 144,
+    "value": 1,
+    "type": {
+     "developer_name": "AWAY_LOST"
+    }
+   },
+   {
+    "type_id": 145,
+    "value": 8,
+    "type": {
+     "developer_name": "AWAY_SCORED"
+    }
+   },
+   {
+    "type_id": 146,
+    "value": 3,
+    "type": {
+     "developer_name": "AWAY_CONCEDED"
+    }
+   },
+   {
+    "type_id": 179,
+    "value": 12,
+    "type": {
+     "developer_name": "OVERALL_GOAL_DIFFERENCE"
+    }
+   },
+   {
+    "type_id": 185,
+    "value": 16,
+    "type": {
+     "developer_name": "HOME_POINTS"
+    }
+   },
+   {
+    "type_id": 186,
+    "value": 15,
+    "type": {
+     "developer_name": "AWAY_POINTS"
+    }
+   },
+   {
+    "type_id": 187,
+    "value": 31,
+    "type": {
+     "developer_name": "TOTAL_POINTS"
+    }
+   }
+  ]
+ },
+ {
+  "id": 280493,
+  "participant_id": 587,
+  "league_id": 636,
+  "season_id": 26808,
+  "position": 2,
+  "points": 30,
+  "group_id": 253454,
+  "stage_id": 77479709,
+  "participant": {
+   "id": 587,
+   "name": "Boca Juniors",
+   "short_code": "BOC",
+   "image_path": "https://cdn.sportmonks.com/images/soccer/teams/11/587.png"
+  },
+  "group": {
+   "id": 253454,
+   "name": "Group A"
+  },
+  "stage": {
+   "id": 77479709,
+   "name": "Apertura",
+   "is_current": false,
+   "finished": true,
+   "starting_at": "2026-01-22"
+  },
+  "details": [
+   {
+    "type_id": 129,
+    "value": 16,
+    "type": {
+     "developer_name": "OVERALL_MATCHES"
+    }
+   },
+   {
+    "type_id": 130,
+    "value": 8,
+    "type": {
+     "developer_name": "OVERALL_WINS"
+    }
+   },
+   {
+    "type_id": 131,
+    "value": 6,
+    "type": {
+     "developer_name": "OVERALL_DRAWS"
+    }
+   },
+   {
+    "type_id": 132,
+    "value": 2,
+    "type": {
+     "developer_name": "OVERALL_LOST"
+    }
+   },
+   {
+    "type_id": 133,
+    "value": 22,
+    "type": {
+     "developer_name": "OVERALL_SCORED"
+    }
+   },
+   {
+    "type_id": 134,
+    "value": 9,
+    "type": {
+     "developer_name": "OVERALL_CONCEDED"
+    }
+   },
+   {
+    "type_id": 135,
+    "value": 8,
+    "type": {
+     "developer_name": "HOME_MATCHES"
+    }
+   },
+   {
+    "type_id": 136,
+    "value": 3,
+    "type": {
+     "developer_name": "HOME_WINS"
+    }
+   },
+   {
+    "type_id": 137,
+    "value": 5,
+    "type": {
+     "developer_name": "HOME_DRAWS"
+    }
+   },
+   {
+    "type_id": 138,
+    "value": 0,
+    "type": {
+     "developer_name": "HOME_LOST"
+    }
+   },
+   {
+    "type_id": 139,
+    "value": 8,
+    "type": {
+     "developer_name": "HOME_SCORED"
+    }
+   },
+   {
+    "type_id": 140,
+    "value": 3,
+    "type": {
+     "developer_name": "HOME_CONCEDED"
+    }
+   },
+   {
+    "type_id": 141,
+    "value": 8,
+    "type": {
+     "developer_name": "AWAY_MATCHES"
+    }
+   },
+   {
+    "type_id": 142,
+    "value": 5,
+    "type": {
+     "developer_name": "AWAY_WINS"
+    }
+   },
+   {
+    "type_id": 143,
+    "value": 1,
+    "type": {
+     "developer_name": "AWAY_DRAWS"
+    }
+   },
+   {
+    "type_id": 144,
+    "value": 2,
+    "type": {
+     "developer_name": "AWAY_LOST"
+    }
+   },
+   {
+    "type_id": 145,
+    "value": 14,
+    "type": {
+     "developer_name": "AWAY_SCORED"
+    }
+   },
+   {
+    "type_id": 146,
+    "value": 6,
+    "type": {
+     "developer_name": "AWAY_CONCEDED"
+    }
+   },
+   {
+    "type_id": 179,
+    "value": 13,
+    "type": {
+     "developer_name": "OVERALL_GOAL_DIFFERENCE"
+    }
+   },
+   {
+    "type_id": 185,
+    "value": 14,
+    "type": {
+     "developer_name": "HOME_POINTS"
+    }
+   },
+   {
+    "type_id": 186,
+    "value": 16,
+    "type": {
+     "developer_name": "AWAY_POINTS"
+    }
+   },
+   {
+    "type_id": 187,
+    "value": 30,
+    "type": {
+     "developer_name": "TOTAL_POINTS"
+    }
+   }
+  ]
+ },
+ {
+  "id": 280494,
+  "participant_id": 812,
+  "league_id": 636,
+  "season_id": 26808,
+  "position": 1,
+  "points": 34,
+  "group_id": 253455,
+  "stage_id": 77479709,
+  "participant": {
+   "id": 812,
+   "name": "Independiente Rivadavia",
+   "short_code": "INR",
+   "image_path": "https://cdn.sportmonks.com/images/soccer/teams/12/812.png"
+  },
+  "group": {
+   "id": 253455,
+   "name": "Group B"
+  },
+  "stage": {
+   "id": 77479709,
+   "name": "Apertura",
+   "is_current": false,
+   "finished": true,
+   "starting_at": "2026-01-22"
+  },
+  "details": [
+   {
+    "type_id": 129,
+    "value": 16,
+    "type": {
+     "developer_name": "OVERALL_MATCHES"
+    }
+   },
+   {
+    "type_id": 130,
+    "value": 10,
+    "type": {
+     "developer_name": "OVERALL_WINS"
+    }
+   },
+   {
+    "type_id": 131,
+    "value": 4,
+    "type": {
+     "developer_name": "OVERALL_DRAWS"
+    }
+   },
+   {
+    "type_id": 132,
+    "value": 2,
+    "type": {
+     "developer_name": "OVERALL_LOST"
+    }
+   },
+   {
+    "type_id": 133,
+    "value": 29,
+    "type": {
+     "developer_name": "OVERALL_SCORED"
+    }
+   },
+   {
+    "type_id": 134,
+    "value": 15,
+    "type": {
+     "developer_name": "OVERALL_CONCEDED"
+    }
+   },
+   {
+    "type_id": 135,
+    "value": 9,
+    "type": {
+     "developer_name": "HOME_MATCHES"
+    }
+   },
+   {
+    "type_id": 136,
+    "value": 6,
+    "type": {
+     "developer_name": "HOME_WINS"
+    }
+   },
+   {
+    "type_id": 137,
+    "value": 1,
+    "type": {
+     "developer_name": "HOME_DRAWS"
+    }
+   },
+   {
+    "type_id": 138,
+    "value": 2,
+    "type": {
+     "developer_name": "HOME_LOST"
+    }
+   },
+   {
+    "type_id": 139,
+    "value": 19,
+    "type": {
+     "developer_name": "HOME_SCORED"
+    }
+   },
+   {
+    "type_id": 140,
+    "value": 10,
+    "type": {
+     "developer_name": "HOME_CONCEDED"
+    }
+   },
+   {
+    "type_id": 141,
+    "value": 7,
+    "type": {
+     "developer_name": "AWAY_MATCHES"
+    }
+   },
+   {
+    "type_id": 142,
+    "value": 4,
+    "type": {
+     "developer_name": "AWAY_WINS"
+    }
+   },
+   {
+    "type_id": 143,
+    "value": 3,
+    "type": {
+     "developer_name": "AWAY_DRAWS"
+    }
+   },
+   {
+    "type_id": 144,
+    "value": 0,
+    "type": {
+     "developer_name": "AWAY_LOST"
+    }
+   },
+   {
+    "type_id": 145,
+    "value": 10,
+    "type": {
+     "developer_name": "AWAY_SCORED"
+    }
+   },
+   {
+    "type_id": 146,
+    "value": 5,
+    "type": {
+     "developer_name": "AWAY_CONCEDED"
+    }
+   },
+   {
+    "type_id": 179,
+    "value": 14,
+    "type": {
+     "developer_name": "OVERALL_GOAL_DIFFERENCE"
+    }
+   },
+   {
+    "type_id": 185,
+    "value": 19,
+    "type": {
+     "developer_name": "HOME_POINTS"
+    }
+   },
+   {
+    "type_id": 186,
+    "value": 15,
+    "type": {
+     "developer_name": "AWAY_POINTS"
+    }
+   },
+   {
+    "type_id": 187,
+    "value": 34,
+    "type": {
+     "developer_name": "TOTAL_POINTS"
+    }
+   }
+  ]
+ },
+ {
+  "id": 280513,
+  "participant_id": 10002,
+  "league_id": 636,
+  "season_id": 26808,
+  "position": 2,
+  "points": 29,
+  "group_id": 253455,
+  "stage_id": 77479709,
+  "participant": {
+   "id": 10002,
+   "name": "River Plate",
+   "short_code": "RIV",
+   "image_path": "https://cdn.sportmonks.com/images/soccer/teams/18/10002.png"
+  },
+  "group": {
+   "id": 253455,
+   "name": "Group B"
+  },
+  "stage": {
+   "id": 77479709,
+   "name": "Apertura",
+   "is_current": false,
+   "finished": true,
+   "starting_at": "2026-01-22"
+  },
+  "details": [
+   {
+    "type_id": 129,
+    "value": 16,
+    "type": {
+     "developer_name": "OVERALL_MATCHES"
+    }
+   },
+   {
+    "type_id": 130,
+    "value": 9,
+    "type": {
+     "developer_name": "OVERALL_WINS"
+    }
+   },
+   {
+    "type_id": 131,
+    "value": 2,
+    "type": {
+     "developer_name": "OVERALL_DRAWS"
+    }
+   },
+   {
+    "type_id": 132,
+    "value": 5,
+    "type": {
+     "developer_name": "OVERALL_LOST"
+    }
+   },
+   {
+    "type_id": 133,
+    "value": 22,
+    "type": {
+     "developer_name": "OVERALL_SCORED"
+    }
+   },
+   {
+    "type_id": 134,
+    "value": 12,
+    "type": {
+     "developer_name": "OVERALL_CONCEDED"
+    }
+   },
+   {
+    "type_id": 135,
+    "value": 8,
+    "type": {
+     "developer_name": "HOME_MATCHES"
+    }
+   },
+   {
+    "type_id": 136,
+    "value": 5,
+    "type": {
+     "developer_name": "HOME_WINS"
+    }
+   },
+   {
+    "type_id": 137,
+    "value": 0,
+    "type": {
+     "developer_name": "HOME_DRAWS"
+    }
+   },
+   {
+    "type_id": 138,
+    "value": 3,
+    "type": {
+     "developer_name": "HOME_LOST"
+    }
+   },
+   {
+    "type_id": 139,
+    "value": 14,
+    "type": {
+     "developer_name": "HOME_SCORED"
+    }
+   },
+   {
+    "type_id": 140,
+    "value": 8,
+    "type": {
+     "developer_name": "HOME_CONCEDED"
+    }
+   },
+   {
+    "type_id": 141,
+    "value": 8,
+    "type": {
+     "developer_name": "AWAY_MATCHES"
+    }
+   },
+   {
+    "type_id": 142,
+    "value": 4,
+    "type": {
+     "developer_name": "AWAY_WINS"
+    }
+   },
+   {
+    "type_id": 143,
+    "value": 2,
+    "type": {
+     "developer_name": "AWAY_DRAWS"
+    }
+   },
+   {
+    "type_id": 144,
+    "value": 2,
+    "type": {
+     "developer_name": "AWAY_LOST"
+    }
+   },
+   {
+    "type_id": 145,
+    "value": 8,
+    "type": {
+     "developer_name": "AWAY_SCORED"
+    }
+   },
+   {
+    "type_id": 146,
+    "value": 4,
+    "type": {
+     "developer_name": "AWAY_CONCEDED"
+    }
+   },
+   {
+    "type_id": 179,
+    "value": 10,
+    "type": {
+     "developer_name": "OVERALL_GOAL_DIFFERENCE"
+    }
+   },
+   {
+    "type_id": 185,
+    "value": 15,
+    "type": {
+     "developer_name": "HOME_POINTS"
+    }
+   },
+   {
+    "type_id": 186,
+    "value": 14,
+    "type": {
+     "developer_name": "AWAY_POINTS"
+    }
+   },
+   {
+    "type_id": 187,
+    "value": 29,
+    "type": {
+     "developer_name": "TOTAL_POINTS"
+    }
+   }
+  ]
+ },
+ {
+  "id": 302262,
+  "participant_id": 9941,
+  "league_id": 636,
+  "season_id": 26808,
+  "position": 1,
+  "points": 22,
+  "group_id": 254834,
+  "stage_id": 77479710,
+  "participant": {
+   "id": 9941,
+   "name": "Instituto",
+   "short_code": "IACC",
+   "image_path": "https://cdn.sportmonks.com/images/soccer/teams/21/9941.png"
+  },
+  "group": {
+   "id": 254834,
+   "name": "Group A"
+  },
+  "stage": {
+   "id": 77479710,
+   "name": "Clausura",
+   "is_current": true,
+   "finished": false,
+   "starting_at": "2026-07-23"
+  },
+  "details": [
+   {
+    "type_id": 129,
+    "value": 10,
+    "type": {
+     "developer_name": "OVERALL_MATCHES"
+    }
+   },
+   {
+    "type_id": 130,
+    "value": 7,
+    "type": {
+     "developer_name": "OVERALL_WINS"
+    }
+   },
+   {
+    "type_id": 131,
+    "value": 1,
+    "type": {
+     "developer_name": "OVERALL_DRAWS"
+    }
+   },
+   {
+    "type_id": 132,
+    "value": 2,
+    "type": {
+     "developer_name": "OVERALL_LOST"
+    }
+   },
+   {
+    "type_id": 133,
+    "value": 13,
+    "type": {
+     "developer_name": "OVERALL_SCORED"
+    }
+   },
+   {
+    "type_id": 134,
+    "value": 7,
+    "type": {
+     "developer_name": "OVERALL_CONCEDED"
+    }
+   },
+   {
+    "type_id": 135,
+    "value": 5,
+    "type": {
+     "developer_name": "HOME_MATCHES"
+    }
+   },
+   {
+    "type_id": 136,
+    "value": 5,
+    "type": {
+     "developer_name": "HOME_WINS"
+    }
+   },
+   {
+    "type_id": 137,
+    "value": 0,
+    "type": {
+     "developer_name": "HOME_DRAWS"
+    }
+   },
+   {
+    "type_id": 138,
+    "value": 0,
+    "type": {
+     "developer_name": "HOME_LOST"
+    }
+   },
+   {
+    "type_id": 139,
+    "value": 9,
+    "type": {
+     "developer_name": "HOME_SCORED"
+    }
+   },
+   {
+    "type_id": 140,
+    "value": 3,
+    "type": {
+     "developer_name": "HOME_CONCEDED"
+    }
+   },
+   {
+    "type_id": 141,
+    "value": 5,
+    "type": {
+     "developer_name": "AWAY_MATCHES"
+    }
+   },
+   {
+    "type_id": 142,
+    "value": 2,
+    "type": {
+     "developer_name": "AWAY_WINS"
+    }
+   },
+   {
+    "type_id": 143,
+    "value": 1,
+    "type": {
+     "developer_name": "AWAY_DRAWS"
+    }
+   },
+   {
+    "type_id": 144,
+    "value": 2,
+    "type": {
+     "developer_name": "AWAY_LOST"
+    }
+   },
+   {
+    "type_id": 145,
+    "value": 4,
+    "type": {
+     "developer_name": "AWAY_SCORED"
+    }
+   },
+   {
+    "type_id": 146,
+    "value": 4,
+    "type": {
+     "developer_name": "AWAY_CONCEDED"
+    }
+   },
+   {
+    "type_id": 179,
+    "value": 6,
+    "type": {
+     "developer_name": "OVERALL_GOAL_DIFFERENCE"
+    }
+   },
+   {
+    "type_id": 185,
+    "value": 15,
+    "type": {
+     "developer_name": "HOME_POINTS"
+    }
+   },
+   {
+    "type_id": 186,
+    "value": 7,
+    "type": {
+     "developer_name": "AWAY_POINTS"
+    }
+   },
+   {
+    "type_id": 187,
+    "value": 22,
+    "type": {
+     "developer_name": "TOTAL_POINTS"
+    }
+   }
+  ]
+ },
+ {
+  "id": 302255,
+  "participant_id": 9904,
+  "league_id": 636,
+  "season_id": 26808,
+  "position": 2,
+  "points": 20,
+  "group_id": 254834,
+  "stage_id": 77479710,
+  "participant": {
+   "id": 9904,
+   "name": "Vélez Sarsfield",
+   "short_code": "VEL",
+   "image_path": "https://cdn.sportmonks.com/images/soccer/teams/16/9904.png"
+  },
+  "group": {
+   "id": 254834,
+   "name": "Group A"
+  },
+  "stage": {
+   "id": 77479710,
+   "name": "Clausura",
+   "is_current": true,
+   "finished": false,
+   "starting_at": "2026-07-23"
+  },
+  "details": [
+   {
+    "type_id": 129,
+    "value": 10,
+    "type": {
+     "developer_name": "OVERALL_MATCHES"
+    }
+   },
+   {
+    "type_id": 130,
+    "value": 5,
+    "type": {
+     "developer_name": "OVERALL_WINS"
+    }
+   },
+   {
+    "type_id": 131,
+    "value": 5,
+    "type": {
+     "developer_name": "OVERALL_DRAWS"
+    }
+   },
+   {
+    "type_id": 132,
+    "value": 0,
+    "type": {
+     "developer_name": "OVERALL_LOST"
+    }
+   },
+   {
+    "type_id": 133,
+    "value": 15,
+    "type": {
+     "developer_name": "OVERALL_SCORED"
+    }
+   },
+   {
+    "type_id": 134,
+    "value": 9,
+    "type": {
+     "developer_name": "OVERALL_CONCEDED"
+    }
+   },
+   {
+    "type_id": 135,
+    "value": 5,
+    "type": {
+     "developer_name": "HOME_MATCHES"
+    }
+   },
+   {
+    "type_id": 136,
+    "value": 4,
+    "type": {
+     "developer_name": "HOME_WINS"
+    }
+   },
+   {
+    "type_id": 137,
+    "value": 1,
+    "type": {
+     "developer_name": "HOME_DRAWS"
+    }
+   },
+   {
+    "type_id": 138,
+    "value": 0,
+    "type": {
+     "developer_name": "HOME_LOST"
+    }
+   },
+   {
+    "type_id": 139,
+    "value": 7,
+    "type": {
+     "developer_name": "HOME_SCORED"
+    }
+   },
+   {
+    "type_id": 140,
+    "value": 3,
+    "type": {
+     "developer_name": "HOME_CONCEDED"
+    }
+   },
+   {
+    "type_id": 141,
+    "value": 5,
+    "type": {
+     "developer_name": "AWAY_MATCHES"
+    }
+   },
+   {
+    "type_id": 142,
+    "value": 1,
+    "type": {
+     "developer_name": "AWAY_WINS"
+    }
+   },
+   {
+    "type_id": 143,
+    "value": 4,
+    "type": {
+     "developer_name": "AWAY_DRAWS"
+    }
+   },
+   {
+    "type_id": 144,
+    "value": 0,
+    "type": {
+     "developer_name": "AWAY_LOST"
+    }
+   },
+   {
+    "type_id": 145,
+    "value": 8,
+    "type": {
+     "developer_name": "AWAY_SCORED"
+    }
+   },
+   {
+    "type_id": 146,
+    "value": 6,
+    "type": {
+     "developer_name": "AWAY_CONCEDED"
+    }
+   },
+   {
+    "type_id": 179,
+    "value": 6,
+    "type": {
+     "developer_name": "OVERALL_GOAL_DIFFERENCE"
+    }
+   },
+   {
+    "type_id": 185,
+    "value": 13,
+    "type": {
+     "developer_name": "HOME_POINTS"
+    }
+   },
+   {
+    "type_id": 186,
+    "value": 7,
+    "type": {
+     "developer_name": "AWAY_POINTS"
+    }
+   },
+   {
+    "type_id": 187,
+    "value": 20,
+    "type": {
+     "developer_name": "TOTAL_POINTS"
+    }
+   }
+  ]
+ },
+ {
+  "id": 302376,
+  "participant_id": 3393,
+  "league_id": 636,
+  "season_id": 26808,
+  "position": 1,
+  "points": 18,
+  "group_id": 254835,
+  "stage_id": 77479710,
+  "participant": {
+   "id": 3393,
+   "name": "Argentinos Juniors",
+   "short_code": "ARJ",
+   "image_path": "https://cdn.sportmonks.com/images/soccer/teams/1/3393.png"
+  },
+  "group": {
+   "id": 254835,
+   "name": "Group B"
+  },
+  "stage": {
+   "id": 77479710,
+   "name": "Clausura",
+   "is_current": true,
+   "finished": false,
+   "starting_at": "2026-07-23"
+  },
+  "details": [
+   {
+    "type_id": 129,
+    "value": 10,
+    "type": {
+     "developer_name": "OVERALL_MATCHES"
+    }
+   },
+   {
+    "type_id": 130,
+    "value": 5,
+    "type": {
+     "developer_name": "OVERALL_WINS"
+    }
+   },
+   {
+    "type_id": 131,
+    "value": 3,
+    "type": {
+     "developer_name": "OVERALL_DRAWS"
+    }
+   },
+   {
+    "type_id": 132,
+    "value": 2,
+    "type": {
+     "developer_name": "OVERALL_LOST"
+    }
+   },
+   {
+    "type_id": 133,
+    "value": 13,
+    "type": {
+     "developer_name": "OVERALL_SCORED"
+    }
+   },
+   {
+    "type_id": 134,
+    "value": 9,
+    "type": {
+     "developer_name": "OVERALL_CONCEDED"
+    }
+   },
+   {
+    "type_id": 135,
+    "value": 4,
+    "type": {
+     "developer_name": "HOME_MATCHES"
+    }
+   },
+   {
+    "type_id": 136,
+    "value": 3,
+    "type": {
+     "developer_name": "HOME_WINS"
+    }
+   },
+   {
+    "type_id": 137,
+    "value": 1,
+    "type": {
+     "developer_name": "HOME_DRAWS"
+    }
+   },
+   {
+    "type_id": 138,
+    "value": 0,
+    "type": {
+     "developer_name": "HOME_LOST"
+    }
+   },
+   {
+    "type_id": 139,
+    "value": 8,
+    "type": {
+     "developer_name": "HOME_SCORED"
+    }
+   },
+   {
+    "type_id": 140,
+    "value": 3,
+    "type": {
+     "developer_name": "HOME_CONCEDED"
+    }
+   },
+   {
+    "type_id": 141,
+    "value": 6,
+    "type": {
+     "developer_name": "AWAY_MATCHES"
+    }
+   },
+   {
+    "type_id": 142,
+    "value": 2,
+    "type": {
+     "developer_name": "AWAY_WINS"
+    }
+   },
+   {
+    "type_id": 143,
+    "value": 2,
+    "type": {
+     "developer_name": "AWAY_DRAWS"
+    }
+   },
+   {
+    "type_id": 144,
+    "value": 2,
+    "type": {
+     "developer_name": "AWAY_LOST"
+    }
+   },
+   {
+    "type_id": 145,
+    "value": 5,
+    "type": {
+     "developer_name": "AWAY_SCORED"
+    }
+   },
+   {
+    "type_id": 146,
+    "value": 6,
+    "type": {
+     "developer_name": "AWAY_CONCEDED"
+    }
+   },
+   {
+    "type_id": 179,
+    "value": 4,
+    "type": {
+     "developer_name": "OVERALL_GOAL_DIFFERENCE"
+    }
+   },
+   {
+    "type_id": 185,
+    "value": 10,
+    "type": {
+     "developer_name": "HOME_POINTS"
+    }
+   },
+   {
+    "type_id": 186,
+    "value": 8,
+    "type": {
+     "developer_name": "AWAY_POINTS"
+    }
+   },
+   {
+    "type_id": 187,
+    "value": 18,
+    "type": {
+     "developer_name": "TOTAL_POINTS"
+    }
+   }
+  ]
+ },
+ {
+  "id": 302381,
+  "participant_id": 3365,
+  "league_id": 636,
+  "season_id": 26808,
+  "position": 2,
+  "points": 18,
+  "group_id": 254835,
+  "stage_id": 77479710,
+  "participant": {
+   "id": 3365,
+   "name": "Rosario Central",
+   "short_code": "ROS",
+   "image_path": "https://cdn.sportmonks.com/images/soccer/teams/5/3365.png"
+  },
+  "group": {
+   "id": 254835,
+   "name": "Group B"
+  },
+  "stage": {
+   "id": 77479710,
+   "name": "Clausura",
+   "is_current": true,
+   "finished": false,
+   "starting_at": "2026-07-23"
+  },
+  "details": [
+   {
+    "type_id": 129,
+    "value": 10,
+    "type": {
+     "developer_name": "OVERALL_MATCHES"
+    }
+   },
+   {
+    "type_id": 130,
+    "value": 5,
+    "type": {
+     "developer_name": "OVERALL_WINS"
+    }
+   },
+   {
+    "type_id": 131,
+    "value": 3,
+    "type": {
+     "developer_name": "OVERALL_DRAWS"
+    }
+   },
+   {
+    "type_id": 132,
+    "value": 2,
+    "type": {
+     "developer_name": "OVERALL_LOST"
+    }
+   },
+   {
+    "type_id": 133,
+    "value": 11,
+    "type": {
+     "developer_name": "OVERALL_SCORED"
+    }
+   },
+   {
+    "type_id": 134,
+    "value": 8,
+    "type": {
+     "developer_name": "OVERALL_CONCEDED"
+    }
+   },
+   {
+    "type_id": 135,
+    "value": 5,
+    "type": {
+     "developer_name": "HOME_MATCHES"
+    }
+   },
+   {
+    "type_id": 136,
+    "value": 2,
+    "type": {
+     "developer_name": "HOME_WINS"
+    }
+   },
+   {
+    "type_id": 137,
+    "value": 2,
+    "type": {
+     "developer_name": "HOME_DRAWS"
+    }
+   },
+   {
+    "type_id": 138,
+    "value": 1,
+    "type": {
+     "developer_name": "HOME_LOST"
+    }
+   },
+   {
+    "type_id": 139,
+    "value": 5,
+    "type": {
+     "developer_name": "HOME_SCORED"
+    }
+   },
+   {
+    "type_id": 140,
+    "value": 4,
+    "type": {
+     "developer_name": "HOME_CONCEDED"
+    }
+   },
+   {
+    "type_id": 141,
+    "value": 5,
+    "type": {
+     "developer_name": "AWAY_MATCHES"
+    }
+   },
+   {
+    "type_id": 142,
+    "value": 3,
+    "type": {
+     "developer_name": "AWAY_WINS"
+    }
+   },
+   {
+    "type_id": 143,
+    "value": 1,
+    "type": {
+     "developer_name": "AWAY_DRAWS"
+    }
+   },
+   {
+    "type_id": 144,
+    "value": 1,
+    "type": {
+     "developer_name": "AWAY_LOST"
+    }
+   },
+   {
+    "type_id": 145,
+    "value": 6,
+    "type": {
+     "developer_name": "AWAY_SCORED"
+    }
+   },
+   {
+    "type_id": 146,
+    "value": 4,
+    "type": {
+     "developer_name": "AWAY_CONCEDED"
+    }
+   },
+   {
+    "type_id": 179,
+    "value": 3,
+    "type": {
+     "developer_name": "OVERALL_GOAL_DIFFERENCE"
+    }
+   },
+   {
+    "type_id": 185,
+    "value": 8,
+    "type": {
+     "developer_name": "HOME_POINTS"
+    }
+   },
+   {
+    "type_id": 186,
+    "value": 10,
+    "type": {
+     "developer_name": "AWAY_POINTS"
+    }
+   },
+   {
+    "type_id": 187,
+    "value": 18,
+    "type": {
+     "developer_name": "TOTAL_POINTS"
+    }
+   }
+  ]
+ }
+]
