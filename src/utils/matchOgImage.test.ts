@@ -9,7 +9,9 @@ describe('matchOgVersion / matchOgImagePath', () => {
     expect(matchOgVersion(m('IN PLAY', { time: "67'", scores: { score: '1 - 0' } }))).toBe('L67_1-0');
     expect(matchOgVersion(m('HALF TIME BREAK', { scores: { score: '2-2' } }))).toBe('H_2-2');
     expect(matchOgVersion(m('FINISHED', { score: '3 - 1' }))).toBe('F_3-1');
-    expect(matchOgVersion(m('POSTPONED'))).toBe('X');
+    expect(matchOgVersion(m('NOT STARTED', { state_code: 'POSTPONED' }))).toBe('XPOSTPONED');
+    expect(matchOgVersion(m('FINISHED', { state_code: 'CANCELLED', score: '0-0' }))).toBe('XCANCELLED');
+    expect(matchOgVersion(m('UNKNOWN'))).toBe('X');
     expect(matchOgVersion(m('IN PLAY'))).toBe('L0_0-0');
   });
 

@@ -10,7 +10,8 @@ describe('matchOgCacheControl', () => {
     expect(OG_CACHE.finished).toContain('immutable');
     expect(matchOgCacheControl({ status: 'IN PLAY' }, NOW)).toBe(OG_CACHE.live);
     expect(matchOgCacheControl({ status: 'HALF TIME BREAK' }, NOW)).toBe(OG_CACHE.live);
-    expect(matchOgCacheControl({ status: 'POSTPONED' }, NOW)).toBe(OG_CACHE.other);
+    expect(matchOgCacheControl({ status: 'NOT STARTED', state_code: 'POSTPONED' }, NOW)).toBe(OG_CACHE.other);
+    expect(matchOgCacheControl({ status: 'FINISHED', state_code: 'CANCELLED' }, NOW)).toBe(OG_CACHE.other);
   });
 
   it('başlamamış: başlama saatine kadar, en çok 6 sa, en az 1 dk', () => {

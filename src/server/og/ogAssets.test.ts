@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { fetchLogoDataUri, ogFonts, teamInitials } from './ogAssets';
+import sharp from 'sharp';
+import { fetchLogoDataUri, ogFonts, teamInitials, toSatoriImage } from './ogAssets';
 
 const png = () => new Response(new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]), { headers: { 'content-type': 'image/png' } });
 
@@ -57,5 +58,18 @@ describe('ogAssets', () => {
     expect(teamInitials('istanbulspor')).toBe('İ');
     expect(teamInitials("Hapoel Be'er Sheva")).toBe('HB');
     expect(teamInitials('')).toBe('?');
+  });
+
+  it('içerikten tür: başlık image/png diyen WebP (Sportmonks GS logosu) → PNG\'ye çevrilir; PNG / SVG aynen', async () => {
+    const webp = await sharp({ create: { width: 300, height: 300, channels: 4, background: '#c00' } }).webp().toBuffer();
+    const fromWebp = await toSatoriImage(webp);
+    expect(fromWebp).toMatch(/^data:image\/png;base64,/);
+    const meta = await sharp(Buffer.from(fromWebp!.split(',')[1]!, 'base64')).metadata();
+    expect([meta.format, meta.width]).toEqual(['png', 256]);
+
+    const png = await sharp({ create: { width: 10, height: 10, channels: 4, background: '#0c0' } }).png().toBuffer();
+    expect(await toSatoriImage(png)).toBe(`data:image/png;base64,${png.toString('base64')}`);
+    expect(await toSatoriImage(Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"/>'))).toMatch(/^data:image\/svg\+xml/);
+    expect(await toSatoriImage(Buffer.from('not an image'))).toBeNull();
   });
 });

@@ -47,14 +47,36 @@ export async function fetchLogoDataUri(
   try {
     const res = await (opts.fetchImpl ?? fetch)(parsed.toString(), { signal: controller.signal });
     const type = res.headers.get('content-type') ?? '';
-    if (!res.ok || !/^image\/(png|jpe?g|webp|svg\+xml)/.test(type)) return null;
+    if (!res.ok || !type.startsWith('image/')) return null;
     const buf = Buffer.from(await res.arrayBuffer());
     if (buf.length === 0 || buf.length > MAX_LOGO_BYTES) return null;
-    return `data:${type.split(';')[0]};base64,${buf.toString('base64')}`;
+    return await toSatoriImage(buf);
   } catch {
     return null;
   } finally {
     clearTimeout(timer);
+  }
+}
+
+/**
+ * next/og (satori) yalnız PNG / JPEG / SVG çizer. Tür, başlığa değil içeriğe bakılarak belirlenir: Sportmonks bazı
+ * logoları `image/png` başlığıyla WebP olarak veriyor (ör. Galatasaray). Diğer biçimler sharp ile 256 px PNG'ye çevrilir.
+ */
+export async function toSatoriImage(buf: Buffer): Promise<string | null> {
+  if (buf.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))) {
+    return `data:image/png;base64,${buf.toString('base64')}`;
+  }
+  if (buf[0] === 0xff && buf[1] === 0xd8) return `data:image/jpeg;base64,${buf.toString('base64')}`;
+  const head = buf.subarray(0, 256).toString('utf8').trimStart();
+  if (head.startsWith('<svg') || (head.startsWith('<?xml') && head.includes('<svg'))) {
+    return `data:image/svg+xml;base64,${buf.toString('base64')}`;
+  }
+  try {
+    const { default: sharp } = await import('sharp');
+    const png = await sharp(buf, { limitInputPixels: 25_000_000, animated: false }).resize(256, 256, { fit: 'inside', withoutEnlargement: true }).png().toBuffer();
+    return `data:image/png;base64,${png.toString('base64')}`;
+  } catch {
+    return null;
   }
 }
 

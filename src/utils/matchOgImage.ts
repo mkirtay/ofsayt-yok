@@ -7,11 +7,11 @@
  * - `L{dk}_{skor}` canlı (ör. `L67_1-0`)
  * - `H_{skor}`     devre arası
  * - `F_{skor}`     bitti
- * - `X`            diğer (ertelendi, iptal …)
+ * - `X{kod}`       özel durum (ertelendi, iptal, yarıda kaldı … — `state_code`)
  */
 import type { Match } from '@/models/liveScore';
 
-type OgMatch = Pick<Match, 'id' | 'status' | 'time' | 'scores' | 'score'>;
+type OgMatch = Pick<Match, 'id' | 'status' | 'time' | 'scores' | 'score' | 'state_code'>;
 
 function scoreKey(m: OgMatch): string {
   const raw = m.scores?.score || m.score || '';
@@ -20,6 +20,7 @@ function scoreKey(m: OgMatch): string {
 }
 
 export function matchOgVersion(m: OgMatch): string {
+  if (m.state_code) return `X${m.state_code}`;
   switch (m.status) {
     case 'NOT STARTED':
       return 'S';

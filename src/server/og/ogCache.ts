@@ -23,7 +23,12 @@ export const OG_CACHE = {
   team: 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=3600',
 } as const;
 
-export function matchOgCacheControl(m: Pick<Match, 'status' | 'date' | 'scheduled'>, now: number = Date.now()): string {
+export function matchOgCacheControl(
+  m: Pick<Match, 'status' | 'date' | 'scheduled' | 'state_code'>,
+  now: number = Date.now(),
+): string {
+  // Ertelendi / iptal / yarıda kaldı …: durum yeniden değişebilir (yeni tarih, düzeltme) → kısa.
+  if (m.state_code) return OG_CACHE.other;
   switch (m.status) {
     case 'FINISHED':
       return OG_CACHE.finished;

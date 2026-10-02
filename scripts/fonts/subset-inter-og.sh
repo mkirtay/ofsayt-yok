@@ -21,7 +21,6 @@ for w in 600 800; do
 done
 
 {
-  echo "/* eslint-disable */"
   echo "// ÜRETİLDİ: scripts/fonts/subset-inter-og.sh — elle düzenleme. Inter v4.001 (OFL), opsz 14, Latin alt kümesi."
   for w in 600 800; do
     echo "export const INTER_OG_${w}_BASE64 = '$(base64 < "$TMP/inter-og-$w.ttf" | tr -d '\n')';"
