@@ -67,6 +67,23 @@ describe('findMatchById / lookupSportmonksFixture (Sportmonks)', () => {
     expect((await lookupSportmonksFixture('19999999')).kind).toBe('error');
   });
 
+  it('zaman aşımı (sayfa bütçesi) geçici hata: kind=error — 410 / negatif cache yok', async () => {
+    const fetchSpy = vi.spyOn(global, 'fetch').mockImplementation(
+      (_input, init) =>
+        new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener('abort', () => reject(new DOMException('aborted', 'AbortError')));
+        }),
+    );
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { lookupSportmonksFixture } = await import('./liveScoreService');
+    const { withSportmonksTimeout } = await import('@/server/sportmonks/cachedFetch');
+
+    const r = await withSportmonksTimeout(30, () => lookupSportmonksFixture('19999998'));
+
+    expect(r.kind).toBe('error');
+    expect(fetchSpy.mock.calls[0]![1]?.signal?.aborted).toBe(true);
+  });
+
   it('id aralığına bakmaz (eski UEFA fixture\'ları 1M civarında) — sayısal olmayan id\'ye istek atmaz', async () => {
     const fetchSpy = vi.spyOn(global, 'fetch').mockImplementation(json({ data: { ...superLigFixture, id: 1058753 } }));
     const { lookupSportmonksFixture } = await import('./liveScoreService');

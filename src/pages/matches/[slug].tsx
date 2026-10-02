@@ -16,6 +16,7 @@ import { useTranslation } from '@/lib/i18n';
 import { leagueNameById } from '@/utils/leagueName';
 import { resolveMatchPage } from '@/server/resolveMatchPage';
 import { loadMatchCardH2h } from '@/server/matchCardH2h';
+import { SPORTMONKS_TIMEOUT_MS, withSportmonksTimeout } from '@/server/sportmonks/cachedFetch';
 import type { Head2HeadData } from '@/services/liveScoreService';
 import {
   matchPageCacheControl,
@@ -57,11 +58,13 @@ export const getServerSideProps: GetServerSideProps<MatchDetailProps> = async (c
     return { props: { initialMatch: null } };
   }
 
+  // Sportmonks bütçesi sayfa render'ı için kısa (zaman aşımı → 'error' → istemci çeker; bkz. cachedFetch).
+  const withPageTimeout = <T,>(fn: () => Promise<T>) => withSportmonksTimeout(SPORTMONKS_TIMEOUT_MS.page, fn);
   try {
-    const page = await resolveMatchPage(matchId, parseMatchSlugFromParam(slug ?? ''));
+    const page = await withPageTimeout(() => resolveMatchPage(matchId, parseMatchSlugFromParam(slug ?? '')));
     switch (page.kind) {
       case 'match': {
-        const h2h = await loadMatchCardH2h(page.match);
+        const h2h = await withPageTimeout(() => loadMatchCardH2h(page.match));
         // Bütçe aşıldıysa (undefined) bölüm iskeletle gider → CDN bu kopyayı kısa tutar.
         context.res.setHeader('Cache-Control', matchPageCacheControlForPage(page.match, h2h !== undefined));
         return { props: { initialMatch: page.match, ...(h2h !== undefined ? { initialH2h: h2h } : {}) } };

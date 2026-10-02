@@ -43,6 +43,22 @@ const envelope = (data: unknown) => ({
   timezone: 'UTC',
 });
 
+/** Cevap vermeyen upstream: yalnız iptal sinyaliyle (AbortController) düşer. */
+function hangingUpstream() {
+  const signals: AbortSignal[] = [];
+  const impl = vi.fn(
+    (_input: RequestInfo | URL, init?: RequestInit) =>
+      new Promise<Response>((_resolve, reject) => {
+        const signal = init?.signal;
+        if (signal) {
+          signals.push(signal);
+          signal.addEventListener('abort', () => reject(new DOMException('The operation was aborted.', 'AbortError')));
+        }
+      }),
+  ) as unknown as typeof fetch;
+  return { impl, signals };
+}
+
 async function freshModule(): Promise<Mod> {
   vi.resetModules();
   return import('./cachedFetch');
@@ -237,5 +253,85 @@ describe('fetchSportmonksCached', () => {
     expect(m.buildSportmonksCacheKey('football/x', { b: '2', a: '1', api_token: 't' })).toBe(
       m.buildSportmonksCacheKey('/football/x/', { a: '1', b: '2' }),
     );
+  });
+
+  describe('zaman aşımı', () => {
+    it('bütçeler: sayfa render\'ı 3 sn, API / cron 5 sn', () => {
+      expect(m.SPORTMONKS_TIMEOUT_MS).toEqual({ page: 3_000, api: 5_000 });
+    });
+
+    it('cevap gelmezse istek iptal edilir → 504, cache\'lenmez, istek "başarısız" sayılır', async () => {
+      const up = hangingUpstream();
+      const tracked = await m.trackSportmonksFetches(() =>
+        m.fetchSportmonksCached('football/fixtures/19745050', {}, { fetchImpl: up.impl, now, timeoutMs: 30 }),
+      );
+      const r = tracked.value;
+      expect(up.signals).toHaveLength(1);
+      expect(up.signals[0]!.aborted).toBe(true);
+      expect(r.status).toBe(504);
+      expect(r.cache).toBe('BYPASS');
+      expect(m.sportmonksCacheControl(r)).toBe('no-store');
+      expect(tracked.failed).toBe(true);
+
+      // Negatif cache'e girmedi: sonraki istek yine upstream'e gider.
+      const ok = upstream(() => ({ status: 200, body: envelope({ id: 19745050 }) }));
+      const again = await m.fetchSportmonksCached('football/fixtures/19745050', {}, { fetchImpl: ok.impl, now });
+      expect(again.status).toBe(200);
+      expect(ok.calls).toHaveLength(1);
+    });
+
+    it('zaman aşımında son geçerli veri varsa o verilir (stale)', async () => {
+      const ok = upstream(() => ({ status: 200, body: envelope([{ id: 7 }]) }));
+      await m.fetchSportmonksCached('football/standings/seasons/1', {}, { fetchImpl: ok.impl, now });
+
+      const other = await freshModule(); // Redis'te eski kayıt var
+      h.clock.t += 11 * 60_000; // taze süre doldu
+      const up = hangingUpstream();
+      const r = await other.fetchSportmonksCached('football/standings/seasons/1', {}, { fetchImpl: up.impl, now, timeoutMs: 30 });
+
+      expect(up.signals[0]!.aborted).toBe(true);
+      expect(r.stale).toBe(true);
+      expect(r.status).toBe(200);
+      expect(r.body).toEqual({ data: [{ id: 7 }] });
+    });
+
+    it('withSportmonksTimeout kapsamı içindeki tüm çağrılara uygulanır; dışında varsayılan (api) bütçe', async () => {
+      const slow = (ms: number) =>
+        vi.fn(
+          (_input: RequestInfo | URL, init?: RequestInit) =>
+            new Promise<Response>((resolve, reject) => {
+              const timer = setTimeout(() => resolve(new Response(JSON.stringify(envelope([{ id: 1 }])), { status: 200 })), ms);
+              init?.signal?.addEventListener('abort', () => {
+                clearTimeout(timer);
+                reject(new DOMException('The operation was aborted.', 'AbortError'));
+              });
+            }),
+        ) as unknown as typeof fetch;
+
+      const scoped = await m.withSportmonksTimeout(20, () =>
+        m.fetchSportmonksCached('football/leagues/600', {}, { fetchImpl: slow(150), now }),
+      );
+      expect(scoped.status).toBe(504);
+
+      const unscoped = await m.fetchSportmonksCached('football/leagues/601', {}, { fetchImpl: slow(150), now });
+      expect(unscoped.status).toBe(200);
+    });
+
+    it('kilit beklemesi de bütçeden düşer: bütçe biterse upstream\'e hiç gidilmez', async () => {
+      const up = hangingUpstream();
+      const other = await freshModule();
+      // A kilidi alır ve cevapsız kalır.
+      const pa = m.fetchSportmonksCached('football/standings/seasons/3', {}, { fetchImpl: up.impl, now, timeoutMs: 400 });
+      await new Promise((r) => setTimeout(r, 20));
+
+      const upB = upstream(() => ({ status: 200, body: envelope([{ id: 3 }]) }));
+      const started = Date.now();
+      const rb = await other.fetchSportmonksCached('football/standings/seasons/3', {}, { fetchImpl: upB.impl, now: Date.now, timeoutMs: 60 });
+      expect(Date.now() - started).toBeLessThan(300);
+      expect(rb.status).toBe(504);
+      expect(upB.calls).toHaveLength(0);
+
+      expect((await pa).status).toBe(504);
+    });
   });
 });

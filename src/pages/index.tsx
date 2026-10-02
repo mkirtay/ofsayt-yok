@@ -23,9 +23,13 @@ type HomeProps = {
  */
 export const getStaticProps: GetStaticProps<HomeProps> = async () => {
   const { loadHomeInitialData, HOME_REVALIDATE_FAILED } = await import('@/server/homeInitialData');
+  const { SPORTMONKS_TIMEOUT_MS, withSportmonksTimeout } = await import('@/server/sportmonks/cachedFetch');
   const initialDate = todayIsoIstanbul();
   try {
-    const { data, revalidate } = await loadHomeInitialData(initialDate, DEFAULT_COMPETITION_ID);
+    // Sportmonks bütçesi sayfa render'ı için kısa (zaman aşımı → hata → son başarılı sayfa kalır).
+    const { data, revalidate } = await withSportmonksTimeout(SPORTMONKS_TIMEOUT_MS.page, () =>
+      loadHomeInitialData(initialDate, DEFAULT_COMPETITION_ID),
+    );
     return { props: { initialDate, initialData: data }, revalidate };
   } catch (error) {
     if (process.env.NEXT_PHASE !== 'phase-production-build') throw error;

@@ -9,7 +9,11 @@
  * - Katmanlar: instance içi bellek (L1, yalnız taze kayıt) → Redis (taze + eski).
  * - Tekil uçuş: aynı instance'ta aynı anahtar için tek upstream isteği; instance'lar arasında Redis
  *   `SET NX PX` kilidi — kilidi alamayan eski veri varsa onu verir, yoksa kısa süre cache'i yoklar.
- * - Sportmonks 429/5xx/ağ hatası → son geçerli veri (`stale: true`).
+ * - Sportmonks 429/5xx/ağ hatası/zaman aşımı → son geçerli veri (`stale: true`).
+ * - Zaman aşımı (AbortController): varsayılan `SPORTMONKS_TIMEOUT_MS.api` (API route'ları, cron, bot); sayfa
+ *   render'ı `withSportmonksTimeout(SPORTMONKS_TIMEOUT_MS.page, …)` ile daha kısa bütçe verir. Bütçe çağrı
+ *   başınadır ve kilit beklemesini de kapsar. Aynı instance'ta uçuştaki isteğe katılan çağrı o isteğin
+ *   bütçesini paylaşır (en çok `api`).
  * - `subscription`/`rate_limit`/`timezone` yanıttan çıkarılır; kota Sentry'ye BURADAN raporlanır
  *   (her gerçek upstream isteği için bir kez).
  */
@@ -32,6 +36,13 @@ const STRIPPED_FIELDS = ['subscription', 'rate_limit', 'timezone'] as const;
 const NOT_FOUND_STATUSES = new Set([400, 403, 404, 422]);
 const LIVE_CDN_MAX_SECONDS = 15;
 const LIVE_CDN_SWR_SECONDS = 5;
+
+/**
+ * Upstream zaman aşımı (ms). Sayfa: SSR/ISR render'ı — Sportmonks'un olağan cevabı < 1 sn; 3 sn'de eski veri ya da
+ * iskelet göstermek boş beklemekten iyi (Vercel fonksiyonu da CPU değil duvar saati sayar). API: tarayıcı proxy'si,
+ * normalize uç noktalar, AI analiz bağlamı, cron/bot — istemci zaten yükleniyor gösteriyor, biraz daha sabır.
+ */
+export const SPORTMONKS_TIMEOUT_MS = { page: 3_000, api: 5_000 } as const;
 
 export type SportmonksQuery = Record<string, string | string[] | undefined>;
 
@@ -56,6 +67,8 @@ export type CachedFetchOptions = {
   origin?: 'proxy' | 'server';
   fetchImpl?: typeof fetch;
   now?: () => number;
+  /** Bu çağrının bütçesi; verilmezse kapsam (`withSportmonksTimeout`) ya da `SPORTMONKS_TIMEOUT_MS.api`. */
+  timeoutMs?: number;
 };
 
 // ─── İstek kapsamlı izleme ──────────────────────────────────────────────────
@@ -95,6 +108,32 @@ export async function trackSportmonksFetches<T>(fn: () => Promise<T>): Promise<{
   const state: SportmonksFetchTracking = { stale: false, failed: false };
   const value = await tracking().run(state, fn);
   return { value, ...state };
+}
+
+// ─── Zaman aşımı kapsamı ───────────────────────────────────────────────────
+
+type TimeoutStore = {
+  run: <R>(store: number, fn: () => R) => R;
+  getStore: () => number | undefined;
+};
+let timeoutStore: TimeoutStore | null = null;
+
+function timeoutScope(): TimeoutStore {
+  if (!timeoutStore) {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { AsyncLocalStorage } = require('node:async_hooks') as typeof import('node:async_hooks');
+    timeoutStore = new AsyncLocalStorage<number>() as unknown as TimeoutStore;
+  }
+  return timeoutStore;
+}
+
+/** `fn` içindeki tüm Sportmonks çağrılarına `timeoutMs` bütçesi verir (ör. sayfa render'ı → `SPORTMONKS_TIMEOUT_MS.page`). */
+export function withSportmonksTimeout<T>(timeoutMs: number, fn: () => Promise<T>): Promise<T> {
+  return timeoutScope().run(timeoutMs, fn);
+}
+
+function resolveTimeoutMs(opts: CachedFetchOptions): number {
+  return opts.timeoutMs ?? timeoutScope().getStore() ?? SPORTMONKS_TIMEOUT_MS.api;
 }
 
 function noteOutcome(r: SportmonksCachedResult): SportmonksCachedResult {
@@ -181,12 +220,13 @@ export function stripSportmonksMeta(body: unknown): unknown {
   return out;
 }
 
-type UpstreamResult = { status: number; body: unknown } | { status: 'network-error' };
+type UpstreamResult = { status: number; body: unknown } | { status: 'network-error' } | { status: 'timeout' };
 
 async function callUpstream(
   path: string,
   query: SportmonksQuery,
   opts: CachedFetchOptions,
+  timeoutMs: number,
 ): Promise<UpstreamResult> {
   const apiToken = process.env.SPORTMONKS_API_KEY;
   if (!apiToken) throw new Error('Missing SPORTMONKS_API_KEY (sunucu ortam değişkeni tanımlı değil)');
@@ -200,14 +240,20 @@ async function callUpstream(
 
   let res: Response;
   let raw: unknown;
+  // Zaman aşımı gövde okumayı da kapsar (sinyal yanıt akışını da keser).
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
     // SPORTMONKS_UPSTREAM_BASE: yalnızca yük/kabul script'i için sahte upstream (scripts/load/simulate-visitors.mjs).
     const base = process.env.SPORTMONKS_UPSTREAM_BASE || SPORTMONKS_BASE;
-    res = await (opts.fetchImpl ?? fetch)(`${base}/${path}?${qs.toString()}`);
+    res = await (opts.fetchImpl ?? fetch)(`${base}/${path}?${qs.toString()}`, { signal: controller.signal });
     raw = await res.json().catch(() => null);
   } catch {
-    return { status: 'network-error' };
+    return { status: controller.signal.aborted ? 'timeout' : 'network-error' };
+  } finally {
+    clearTimeout(timer);
   }
+  if (controller.signal.aborted) return { status: 'timeout' };
 
   const rl = (raw as { rate_limit?: { requested_entity: string; remaining: number; resets_in_seconds: number } } | null)
     ?.rate_limit;
@@ -250,14 +296,16 @@ async function refresh(
   query: SportmonksQuery,
   previous: Entry | null,
   opts: CachedFetchOptions,
+  timeoutMs: number,
 ): Promise<SportmonksCachedResult> {
   const now = opts.now ?? Date.now;
+  const startedAt = now();
 
   const locked = await tryLock(key);
   if (!locked) {
-    // Başka bir instance tazeliyor: eski veri varsa hemen onu ver, yoksa yazmasını bekle.
+    // Başka bir instance tazeliyor: eski veri varsa hemen onu ver, yoksa yazmasını bekle (bütçe içinde).
     if (previous) return toResult(previous, 'STALE', now(), true);
-    const deadline = now() + LOCK_WAIT_MS;
+    const deadline = now() + Math.min(LOCK_WAIT_MS, timeoutMs);
     while (now() < deadline) {
       await new Promise((r) => setTimeout(r, LOCK_POLL_MS));
       const e = await redisGet(key);
@@ -266,13 +314,14 @@ async function refresh(
         return toResult(e, 'HIT', now());
       }
     }
-    // Kilit sahibi yazamadı (hata/timeout) → kendimiz dene (fail-open).
+    // Kilit sahibi yazamadı (hata/timeout) → kalan bütçeyle kendimiz dene (fail-open).
   }
 
   try {
-    const up = await callUpstream(path, query, opts);
+    const remainingMs = timeoutMs - (now() - startedAt);
+    const up: UpstreamResult = remainingMs > 0 ? await callUpstream(path, query, opts, remainingMs) : { status: 'timeout' };
     const t = now();
-    if (up.status !== 'network-error' && isCacheable(up.status, up.body)) {
+    if (typeof up.status === 'number' && 'body' in up && isCacheable(up.status, up.body)) {
       const ttl = sportmonksCacheTtl(path, up.status === 200 ? dataOf(up.body) : undefined, t, query);
       const entry: Entry = {
         status: up.status,
@@ -285,10 +334,13 @@ async function refresh(
       await redisSet(key, entry, t);
       return toResult(entry, 'MISS', t);
     }
-    // 429 / 5xx / ağ hatası → son geçerli veri
+    // 429 / 5xx / ağ hatası / zaman aşımı → son geçerli veri
     if (previous && previous.staleUntil > t) return toResult(previous, 'STALE', t, true);
     if (up.status === 'network-error') {
       return { status: 502, body: { message: 'Sportmonks erişilemiyor' }, cache: 'BYPASS', freshForSeconds: 0, ttlSeconds: 0, stale: false };
+    }
+    if (up.status === 'timeout') {
+      return { status: 504, body: { message: 'Sportmonks zaman aşımı' }, cache: 'BYPASS', freshForSeconds: 0, ttlSeconds: 0, stale: false };
     }
     return { status: up.status, body: up.body, cache: 'BYPASS', freshForSeconds: 0, ttlSeconds: 0, stale: false };
   } finally {
@@ -308,6 +360,7 @@ export async function fetchSportmonksCached(
   const now = opts.now ?? Date.now;
   const normPath = normalizeSportmonksPath(path);
   const key = buildSportmonksCacheKey(normPath, query);
+  const timeoutMs = resolveTimeoutMs(opts);
 
   const hot = l1Get(key, now());
   if (hot) return toResult(hot, 'HIT', now());
@@ -322,7 +375,7 @@ export async function fetchSportmonksCached(
       l1Set(key, stored);
       return toResult(stored, 'HIT', t);
     }
-    return refresh(key, normPath, query, stored && stored.staleUntil > t ? stored : null, opts);
+    return refresh(key, normPath, query, stored && stored.staleUntil > t ? stored : null, opts, timeoutMs);
   })();
 
   inFlight.set(key, promise);
