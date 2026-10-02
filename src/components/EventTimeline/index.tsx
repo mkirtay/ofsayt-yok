@@ -1,12 +1,16 @@
 import type { ReactNode } from 'react';
 import { MatchEvent } from '@/models/domain';
 import { PanelSkeleton } from '@/components/Skeleton';
+import LazyLoad from '@/components/LazyLoad';
 import { useTranslation } from '@/lib/i18n';
 import '@/lib/i18nNamespaces/matchState';
 import MatchStateNote from '@/components/MatchStateNote';
 import type { Match } from '@/models/liveScore';
 import { matchDisplayState, specialKeepsData } from '@/utils/matchDisplayState';
 import styles from './eventTimeline.module.scss';
+
+// 10 sahnesi ayrı parçada, yalnız başlamamış maçta istenir; kutu (96 px) baştan yer tutar.
+const loadPreMatchTimeline = () => import('./PreMatchTimeline');
 
 interface EventTimelineProps {
   events: MatchEvent[];
@@ -149,9 +153,15 @@ export default function EventTimeline({
   }
   if (state?.phase === 'PRE' && visibleEvents.length === 0) {
     return (
-      <div className={styles.timeline}>
+      <div className={`${styles.timeline} ${styles.pre}`}>
         <h3 className={styles.title}>{t('events.title')}</h3>
-        <div className={styles.empty}>{ts('pre.events')}</div>
+        <div className={styles.preTrack}>
+          <LazyLoad load={loadPreMatchTimeline} props={{}} />
+        </div>
+        <div className={styles.preMessage} role="status">
+          <strong>{ts('pre.statsTitle')}</strong>
+          <span>{ts('pre.events')}</span>
+        </div>
       </div>
     );
   }

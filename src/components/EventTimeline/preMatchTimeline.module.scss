@@ -1,0 +1,130 @@
+@use '../../styles/motion' as *;
+
+// 10 · Maç Olayları zaman çizelgesi. Yüzde konumlar: kutu genişliğine uyar (ölçek yok). Renkler kutudan (`--tl-*`).
+.root {
+  @include motion-root;
+  position: absolute;
+  inset: 0;
+}
+
+.track {
+  position: absolute;
+  left: 7%;
+  right: 7%;
+  top: 44px;
+  height: 2px;
+  margin-top: -1px;
+  border-radius: 1px;
+  background: var(--tl-line);
+}
+
+.half {
+  position: absolute;
+  left: 50%;
+  top: 30px;
+  width: 0;
+  height: 28px;
+  margin-left: -1px;
+  border-left: 2px dashed var(--tl-line);
+}
+
+.tick {
+  position: absolute;
+  top: 70px;
+  font-size: 11px;
+  line-height: normal;
+  font-weight: 700;
+  color: var(--tl-text);
+  font-variant-numeric: tabular-nums;
+  transform: translateX(-50%);
+}
+
+.t0 { left: 7%; }
+.t45 { left: 50%; }
+.t90 { left: 93%; }
+
+// 0': dolu nokta sabit, halka büyüyüp söner.
+.now,
+.pulse {
+  position: absolute;
+  left: 7%;
+  top: 44px;
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
+  border-radius: 50%;
+  background: #00a76f;
+}
+
+.now {
+  box-shadow: 0 0 0 3px var(--tl-bg);
+}
+
+.pulse {
+  opacity: 0;
+  animation: pulse 1.6s ease-out infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.55; transform: scale(1); }
+  100% { opacity: 0; transform: scale(3.2); }
+}
+
+// Olay ikonları (yukarıda ev sahibi, aşağıda deplasman). Temel stil = Hareketi azalt karesi (hepsi soluk görünür).
+.event {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  margin-left: -11px;
+  opacity: 0.55;
+  color: var(--tl-icon);
+  animation: event 8s ease-in-out infinite both;
+
+  &::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    width: 2px;
+    height: 6px;
+    margin-left: -1px;
+    background: var(--tl-line);
+  }
+}
+
+.up {
+  top: 12px;
+
+  &::after {
+    top: 24px;
+  }
+}
+
+.down {
+  top: 54px;
+
+  &::after {
+    bottom: 24px;
+  }
+}
+
+@keyframes event {
+  0%, 4% { opacity: 0; transform: translateY(var(--dy)) scale(0.7); }
+  10%, 30% { opacity: 0.75; transform: translateY(0) scale(1); }
+  38%, 100% { opacity: 0; transform: translateY(0) scale(1); }
+}
+
+.e1 { left: 22%; --dy: 4px; animation-delay: 0s; }
+.e2 { left: 38%; --dy: -4px; animation-delay: 1.6s; }
+.e3 { left: 62%; --dy: 4px; animation-delay: 3.2s; }
+.e4 { left: 80%; --dy: -4px; animation-delay: 4.8s; }
+
+.yellow {
+  width: 11px;
+  height: 15px;
+  border-radius: 2px;
+  background: #eab308;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08);
+}

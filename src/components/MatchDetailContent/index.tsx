@@ -11,6 +11,7 @@ import MatchAnalysis from '@/components/MatchAnalysis';
 import MatchForumTab from '@/components/MatchForumTab';
 import type { MatchDetailState } from '@/hooks/useMatchDetail';
 import { useMatchAnalysis } from '@/hooks/useMatchAnalysis';
+import { matchDisplayState } from '@/utils/matchDisplayState';
 import styles from './matchDetailContent.module.scss';
 
 type Props = {
@@ -52,7 +53,15 @@ export default function MatchDetailContent({ detail, requestedMatchId, variant =
         label: t('tabs.overview'),
         render: () => (
           <>
-            <div className={`${styles.statsEventsRow} ${variant === 'panel' ? styles.stacked : ''}`.trim()}>
+            <div
+              className={[
+                styles.statsEventsRow,
+                variant === 'panel' ? styles.stacked : '',
+                match && matchDisplayState(match).phase === 'PRE' ? styles.preMatch : '',
+              ]
+                .filter(Boolean)
+                .join(' ')}
+            >
               <div className={styles.col}>
                 <MatchStats stats={detail.stats} loading={matchLoading || statsLoading} match={match} />
               </div>

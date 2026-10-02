@@ -30,6 +30,16 @@
   width: 100%;
 }
 
+// Başlamamış maç: istatistik ve olay kartları yan yanayken aynı yükseklikte (alt alta iken etkisiz).
+.preMatch {
+  align-items: stretch;
+
+  .col > * {
+    height: 100%;
+    box-sizing: border-box;
+  }
+}
+
 // Sayfa + panel ortak sarmalayıcı: kart → sekme şeridi → sekme paneli dikey ritmi tek yerden (gap).
 .content {
   display: flex;

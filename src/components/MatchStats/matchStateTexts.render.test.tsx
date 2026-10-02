@@ -31,9 +31,11 @@ describe('maç evresine göre kart metinleri', () => {
     expect(html).toContain('Maç henüz başlamadı.');
     expect(html).toContain('İlk düdük: 2 Ekim Cuma, 21:30');
     expect(html).not.toContain('Başlamasına');
-    expect(renderToStaticMarkup(<EventTimeline events={[]} loading match={match('NOT STARTED')} />)).toContain(
-      'Goller, kartlar ve oyuncu değişiklikleri maç başladığında burada görünecek.',
-    );
+    const pre = renderToStaticMarkup(<EventTimeline events={[]} loading match={match('NOT STARTED')} />);
+    expect(pre).toContain('Goller, kartlar ve oyuncu değişiklikleri maç başladığında burada görünecek.');
+    // 10 kartı: başlık aynı, saat hapı / geri sayım yalnız istatistik kartında.
+    expect(pre).toContain('Maç henüz başlamadı.');
+    expect(pre).not.toContain('İlk düdük');
   });
 
   it('canlı, veri yok', () => {
