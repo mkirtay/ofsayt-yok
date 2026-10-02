@@ -86,8 +86,7 @@
     "pageDesc": "Ofsayt Yok ile iletişime geçin.",
     "intro": "Sorularınız, geri bildirimleriniz veya KVKK kapsamındaki talepleriniz için bizimle aşağıdaki kanaldan iletişime geçebilirsiniz.",
     "emailLabel": "E-posta",
-    "emailPlaceholder": "iletisim@ofsaytyok.app",
-    "responseNote": "Taleplerinize mümkün olan en kısa sürede dönüş yapmaya çalışıyoruz.",
-    "draftNotice": "Bu sayfadaki e-posta adresi bir yer tutucudur; yayına almadan önce gerçek bir destek/iletişim adresiyle güncellenmelidir."
+    "email": "iletisim@ofsaytyok.app",
+    "responseNote": "Taleplerinize mümkün olan en kısa sürede dönüş yapmaya çalışıyoruz."
   }
 }

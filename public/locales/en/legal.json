@@ -86,8 +86,7 @@
     "pageDesc": "Get in touch with Ofsayt Yok.",
     "intro": "For questions, feedback, or data protection requests, you can reach us through the channel below.",
     "emailLabel": "Email",
-    "emailPlaceholder": "contact@ofsaytyok.app",
-    "responseNote": "We try to respond to requests as quickly as possible.",
-    "draftNotice": "The email address on this page is a placeholder and should be updated with a real support/contact address before launch."
+    "email": "iletisim@ofsaytyok.app",
+    "responseNote": "We try to respond to requests as quickly as possible."
   }
 }

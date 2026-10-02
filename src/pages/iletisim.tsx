@@ -28,13 +28,12 @@ export default function IletisimPage() {
 
           <div className={styles.card}>
             <span className={styles.label}>{data.emailLabel}</span>
-            <a href={`mailto:${data.emailPlaceholder}`} className={styles.email}>
-              {data.emailPlaceholder}
+            <a href={`mailto:${data.email}`} className={styles.email}>
+              {data.email}
             </a>
           </div>
 
           <p className={styles.note}>{data.responseNote}</p>
-          <p className={styles.draftNotice}>{data.draftNotice}</p>
         </div>
       </Container>
     </>
