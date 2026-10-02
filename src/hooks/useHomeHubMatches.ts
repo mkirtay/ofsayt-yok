@@ -9,6 +9,8 @@ export type HomeHubMatchesData = {
   allMatches: Match[];
   liveMatches: Match[];
   fixtureMatches: Match[];
+  /** Gece maçları: ertesi Türkiye gününün 00:00–06:00'ında başlayanlar (sunucu seçer, bkz. utils/nightMatches.ts). */
+  nightMatches: Match[];
   /** Sunucu upstream hatası yüzünden son geçerli veriyi verdi ("veriler gecikmeli"). */
   stale?: boolean;
 };
@@ -33,6 +35,7 @@ async function fetchHomeHubMatches(selectedDate: string, queryClient?: QueryClie
     allMatches: body.historyMatches ?? body.fixtureMatches,
     liveMatches: body.liveMatches,
     fixtureMatches: body.fixtureMatches,
+    nightMatches: body.nightMatches ?? [],
     stale: Boolean(body.stale),
   };
 }
@@ -48,7 +51,10 @@ export function homeHubMatchesQueryKey(selectedDate: string) {
  */
 export function homeHubRefetchInterval(query: Query<HomeHubMatchesData, Error, HomeHubMatchesData, readonly unknown[]>): number {
   const data = query.state.data;
-  return homePollDelayMs([...(data?.liveMatches ?? []), ...(data?.fixtureMatches ?? [])], query.state.fetchFailureCount);
+  return homePollDelayMs(
+    [...(data?.liveMatches ?? []), ...(data?.fixtureMatches ?? []), ...(data?.nightMatches ?? [])],
+    query.state.fetchFailureCount,
+  );
 }
 
 export function useHomeHubMatches(selectedDate: string, enabled = true) {

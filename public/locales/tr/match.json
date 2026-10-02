@@ -240,6 +240,7 @@
     "tabScorers": "Gol Krallığı",
     "fixtureToday": "Bugün",
     "fixtureTomorrow": "Yarın",
+    "nightSection": "Gece maçları · {{date}}",
     "fixtureModeTitle": "{{league}} fikstürü",
     "fixtureModeHint": "Yaklaşan maçlar güne göre gruplandı",
     "fixtureModeExit": "Günlük maçlara dön",

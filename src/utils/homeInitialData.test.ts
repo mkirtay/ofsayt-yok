@@ -72,6 +72,17 @@ describe('packHomeMatches / unpackHomeMatches', () => {
     expect(unpackHomeMatches(packed).allMatches.map((m) => m.id)).toEqual([9]);
   });
 
+  it('gece maçları ayrı alanda taşınır; yoksa alan hiç yazılmaz (ISR props aynı kalır)', () => {
+    const night = match(5, { date: '2026-10-04', scheduled: '23:00', competition: { id: 648, name: 'Serie A', logo: 'b' } });
+    const packed = packHomeMatches({ fixtureMatches: [match(1)], liveMatches: [], nightMatches: [night] });
+    expect(packed.night).toHaveLength(1);
+    expect(unpackHomeMatches(JSON.parse(JSON.stringify(packed))).nightMatches).toEqual([trimListMatch(night)]);
+
+    const none = packHomeMatches({ fixtureMatches: [match(1)], liveMatches: [], nightMatches: [] });
+    expect(none).not.toHaveProperty('night');
+    expect(unpackHomeMatches(none).nightMatches).toEqual([]);
+  });
+
   it('115 maçlık gün < 60 KB (kırpılmış)', () => {
     const fixtures = Array.from({ length: 115 }, (_, i) => match(19_600_000 + i, { scores: { score: '2-1', ht_score: '1-0', ft_score: '2-1' } }));
     const size = JSON.stringify(packHomeMatches({ fixtureMatches: fixtures, liveMatches: fixtures.slice(0, 20) })).length;

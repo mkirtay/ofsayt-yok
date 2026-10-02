@@ -37,11 +37,41 @@ describe('homeDay', () => {
 
     const oct1 = await loadHomeDay('2026-10-01');
     expect(oct1.fixtureMatches.map((m) => Number(m.id)).sort((a, b) => a - b)).toEqual([2, 19609828]);
-    expect(h.byDate.mock.calls.map((c) => c[0]).sort()).toEqual(['2026-09-30', '2026-10-01']);
+    // UTC D+1: yalnız gece maçları için (anahtarı ertesi günün listesiyle ortak).
+    expect(h.byDate.mock.calls.map((c) => c[0]).sort()).toEqual(['2026-09-30', '2026-10-01', '2026-10-02']);
 
     const sep30 = await loadHomeDay('2026-09-30');
     expect(sep30.fixtureMatches.map((m) => m.id)).toEqual([4]); // MLS maçı artık 30 Eylül'de görünmez
     expect(h.between).not.toHaveBeenCalled();
+  });
+
+  it('gece maçları: ertesi TR günü 00:00–06:00 (UTC D 21:00 – UTC D+1 03:00), iki UTC listesinden; ertesi günün listesinde de kalır', async () => {
+    // Gerçek örnek (2026-10-02): São Paulo – Santos 2 Ekim 23:00 UTC = 3 Ekim 02:00 TR; Boca – Unión 3 Ekim 00:30 UTC = 03:30 TR.
+    const mls = { id: 1, status: 'NOT STARTED', date: '2026-10-02', scheduled: '01:30' }; // 2 Ekim 04:30 TR → günün listesi
+    const laLiga2 = { id: 2, status: 'NOT STARTED', date: '2026-10-02', scheduled: '18:30' };
+    const saoPaulo = { id: 19621877, status: 'NOT STARTED', date: '2026-10-02', scheduled: '23:00' };
+    const boca = { id: 19636615, status: 'NOT STARTED', date: '2026-10-03', scheduled: '00:30' };
+    const lastNight = { id: 5, status: 'NOT STARTED', date: '2026-10-03', scheduled: '02:59' }; // 05:59 TR → gece
+    const morning = { id: 6, status: 'NOT STARTED', date: '2026-10-03', scheduled: '03:00' }; // 06:00 TR → gece değil
+    const afternoon = { id: 7, status: 'NOT STARTED', date: '2026-10-03', scheduled: '14:00' };
+    h.byDate.mockImplementation(async (d: string) =>
+      d === '2026-10-02' ? [mls, laLiga2, saoPaulo] : d === '2026-10-03' ? [boca, lastNight, morning, afternoon] : [],
+    );
+    h.live.mockResolvedValue([]);
+
+    const oct2 = await loadHomeDay('2026-10-02');
+    expect(oct2.fixtureMatches.map((m) => Number(m.id)).sort((a, b) => a - b)).toEqual([1, 2]);
+    expect(oct2.nightMatches!.map((m) => Number(m.id))).toEqual([19621877, 19636615, 5]);
+
+    const oct3 = await loadHomeDay('2026-10-03');
+    expect(oct3.fixtureMatches.map((m) => Number(m.id)).sort((a, b) => a - b)).toEqual([5, 6, 7, 19621877, 19636615]);
+    expect(oct3.nightMatches).toEqual([]);
+  });
+
+  it('CDN süresi: gece maçı başlamak üzereyse liste de kısa süreli', () => {
+    const base = { date: '2026-09-30', fixtureMatches: [], liveMatches: [] };
+    const night = { status: 'NOT STARTED', date: '2026-09-30', scheduled: '13:10' } as never;
+    expect(homeDayFreshSeconds({ ...base, nightMatches: [night] }, '2026-09-30', NOW)).toBe(30);
   });
 
   it('CDN süresi: canlı maç 20 sn, maçsız gün 5 dk, sıradaki başlamaya kadar; geçmiş gün 1 sa', () => {

@@ -93,5 +93,8 @@ export async function loadHomeInitialData(date: string, sidebarCompetitionId: nu
     // Eksik harita (bir lig okunamadı) gömülmez: istemcide 24 sa taze sayılırdı; istemci API'den çeksin (CDN 5 dk).
     cupTiers: tiers?.complete ? (stripUndefined(tiers.payload) as TurkeyTeamTiersPayload) : null,
   };
-  return { data, revalidate: homeRevalidateSeconds([...day.fixtureMatches, ...day.liveMatches], Date.now()) };
+  return {
+    data,
+    revalidate: homeRevalidateSeconds([...day.fixtureMatches, ...(day.nightMatches ?? []), ...day.liveMatches], Date.now()),
+  };
 }

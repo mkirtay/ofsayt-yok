@@ -242,6 +242,7 @@
     "tabScorers": "Top Scorers",
     "fixtureToday": "Today",
     "fixtureTomorrow": "Tomorrow",
+    "nightSection": "Overnight matches · {{date}}",
     "fixtureModeTitle": "{{league}} fixtures",
     "fixtureModeHint": "Upcoming matches grouped by day",
     "fixtureModeExit": "Back to daily matches",

@@ -24,7 +24,7 @@ import NextMatchDayNotice from '@/components/NextMatchDayNotice';
 import { useCompetitionFixtures } from '@/hooks/useCompetitionFixtures';
 import { buildFixtureDateGroups } from '@/utils/fixtureDateGroups';
 import { fixtureDateHeading } from '@/utils/fixtureDateLabel';
-import MatchList, { type MatchListDateGroup } from '@/components/MatchList';
+import MatchList, { type MatchListDateGroup, type MatchListTrailingSection } from '@/components/MatchList';
 import { MatchListSkeleton, PanelSkeleton } from '@/components/Skeleton';
 import MatchCompetitionStandings from '@/components/MatchCompetitionStandings';
 import MatchCompetitionTopScorers from '@/components/MatchCompetitionTopScorers';
@@ -59,6 +59,8 @@ import EmptyState from '@/components/EmptyState';
 import { useLeagueFilter } from '@/hooks/useLeagueFilter';
 import { useTopScorersWithAppearances } from '@/hooks/useTopScorerAppearances';
 import { activeCompetitionIds, buildLeagueCatalog, filterMatchesByLeagues } from '@/utils/leagueFilter';
+import { nightDateOf } from '@/utils/nightMatches';
+import { buildNightGroups } from './nightSection';
 import styles from '@/pages/index.module.scss';
 
 type SidebarTab = 'standings' | 'leagues' | 'scorers';
@@ -101,6 +103,14 @@ export type MatchHubPageProps = {
 };
 
 const today = () => todayIsoIstanbul();
+const EMPTY_MATCHES: Match[] = [];
+
+/** "2026-10-03" → "3 Ekim" / "3 October" (gün takvim günü; saat dilimi kaydırması yok). */
+function formatDayMonth(iso: string, locale: string): string {
+  return new Intl.DateTimeFormat(locale === 'en' ? 'en-GB' : 'tr-TR', { day: 'numeric', month: 'long', timeZone: 'UTC' }).format(
+    new Date(`${iso}T12:00:00Z`),
+  );
+}
 
 export default function MatchHubPage({
   sidebarLeagues,
@@ -221,6 +231,7 @@ export default function MatchHubPage({
   const allMatches = homeMatchesQuery.data?.allMatches ?? [];
   const liveMatches = homeMatchesQuery.data?.liveMatches ?? [];
   const fixtureMatches = homeMatchesQuery.data?.fixtureMatches ?? [];
+  const nightMatches = homeMatchesQuery.data?.nightMatches ?? EMPTY_MATCHES;
   const matchesLoading = homeMatchesQuery.isLoading;
   // Veri hiç gelmediyse iskelet yerine hata notu; önceki veri varken hata/eski veri → küçük "gecikmeli" notu.
   const matchesFailed = homeMatchesQuery.isError && !homeMatchesQuery.data;
@@ -305,6 +316,36 @@ export default function MatchHubPage({
     const raw = groupMatchesByLeague(filteredDisplayMatches);
     return activeTab === 'all' ? sortGroupedMatchesForAllTab(raw) : raw;
   }, [activeTab, filteredDisplayMatches]);
+
+  // Gece maçları (ertesi TR günü 00:00–06:00) — filtre/canlı birleştirme kuralları `buildNightGroups`'ta.
+  const nightDate = nightDateOf(selectedDate);
+  const nightGrouped = useMemo(
+    () =>
+      buildNightGroups({
+        selectedDate,
+        nightMatches,
+        liveMatches,
+        activeTab,
+        favoriteTeamIds: favoriteTeamSet,
+        shownIds: new Set(filteredDisplayMatches.map((m) => Number(m.id))),
+        competitionFilter: competitionFilterSet,
+        leagueFilter: leagueFilter.state,
+      }),
+    [selectedDate, nightMatches, liveMatches, activeTab, favoriteTeamSet, filteredDisplayMatches, competitionFilterSet, leagueFilter.state],
+  );
+
+  const nightSection = useMemo<MatchListTrailingSection | null>(
+    () =>
+      nightGrouped.length === 0
+        ? null
+        : {
+            date: nightDate,
+            label: t('hub.nightSection', { date: formatDayMonth(nightDate, locale) }),
+            groupedMatches: nightGrouped,
+          },
+    [nightGrouped, nightDate, t, locale],
+  );
+  const listEmpty = grouped.length === 0 && nightGrouped.length === 0;
 
   /**
    * UEFA fikstürü: bugünden itibaren güne göre gruplanır. Üst sekme (Canlı/Bitmiş/Favoriler) burada da
@@ -570,7 +611,7 @@ export default function MatchHubPage({
     <div className={styles.empty}>
       {t('hub.favoritesEmpty')}
     </div>
-  ) : leagueFilterActive && grouped.length === 0 ? (
+  ) : leagueFilterActive && listEmpty ? (
     <EmptyState minLines={showNextMatchDay ? 3 : undefined}>
       {t('hub.leagueFilterEmpty')}{' '}
       <button type="button" className={styles.emptyAction} onClick={() => leagueFilter.selectMode('all')}>
@@ -580,7 +621,7 @@ export default function MatchHubPage({
         <NextMatchDayNotice from={selectedDate} leagueIds={activeCompetitionIds(leagueFilter.state)} onGoToDate={setSelectedDate} />
       ) : null}
     </EmptyState>
-  ) : showNextMatchDay && grouped.length === 0 ? (
+  ) : showNextMatchDay && listEmpty ? (
     <EmptyState minLines={2}>
       {t('list.empty')}
       <NextMatchDayNotice from={selectedDate} leagueIds={null} onGoToDate={setSelectedDate} />
@@ -589,6 +630,7 @@ export default function MatchHubPage({
     <>
       <MatchList
         groupedMatches={grouped}
+        trailingSection={nightSection}
         favoriteTeamIds={favoriteTeamSet}
         onToggleFavorite={toggleFavoriteTeam}
         // Split-view yalnızca masaüstünde; mobilde tam sayfa (push) navigasyon korunur.

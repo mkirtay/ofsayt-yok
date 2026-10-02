@@ -697,10 +697,16 @@ function allTabStatusRank(m: Match): number {
   return 4;
 }
 
+/**
+ * Başlama sırası anahtarı: UTC `date` + `HH:MM`. Tarih de anahtarda — Türkiye günü iki UTC gününe yayılır
+ * (ör. 2 Ekim 22:15 UTC = 3 Ekim 01:15 TR, 3 Ekim 00:30 UTC = 03:30 TR); yalnız saatle 00:30, 22:15'in önüne geçiyordu.
+ */
 function kickoffSortKey(m: Match): string {
   const s = (m.scheduled ?? m.time ?? '').trim();
   const hm = /^\d{2}:\d{2}/.exec(s)?.[0];
-  return hm ?? '99:99';
+  if (!hm) return '9999-99-99 99:99';
+  const date = /^\d{4}-\d{2}-\d{2}$/.test(m.date?.trim() ?? '') ? m.date!.trim() : '0000-00-00';
+  return `${date} ${hm}`;
 }
 
 function compareMatchesForAllTab(a: Match, b: Match): number {

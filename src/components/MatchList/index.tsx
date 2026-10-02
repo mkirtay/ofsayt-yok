@@ -47,8 +47,21 @@ export type MatchListDateGroup = {
   matches: Match[];
 };
 
+/**
+ * Lig gruplu listenin ALTINA eklenen ayrı bölüm (ör. gece maçları): gün başlığıyla aynı sabit yükseklikte bir başlık,
+ * altında kendi lig grupları. Aynı sanal listede çizilir → yükseklik baştan hesaplı, kayma yok.
+ */
+export type MatchListTrailingSection = {
+  /** `YYYY-MM-DD` (bölümün TR günü) — başlığın `data-fixture-date`'i */
+  date: string;
+  label: string;
+  groupedMatches: GroupedLeagueMatches[];
+};
+
 interface MatchListProps {
   groupedMatches?: GroupedLeagueMatches[];
+  /** Yalnız lig gruplu modda: listenin altına eklenen bölüm (boşsa çizilmez). */
+  trailingSection?: MatchListTrailingSection | null;
   /**
    * Verilirse lig grupları yerine GÜN grupları çizilir (UEFA kupası fikstürü): her gün için bir
    * tarih başlığı, altında o günün maçları. `groupedMatches` bu modda yok sayılır.
@@ -225,10 +238,11 @@ function buildDateFlatItems(dateGroups: MatchListDateGroup[]): FlatItem[] {
   return items;
 }
 
-function buildFlatItems(groupedMatches: GroupedLeagueMatches[]): FlatItem[] {
-  const items: FlatItem[] = [];
+/** `items`'ın sonuna ekler; bir bölüm başlığının hemen altındaki ilk lig başlığında boşluk yok. */
+function buildFlatItems(groupedMatches: GroupedLeagueMatches[], items: FlatItem[] = []): FlatItem[] {
   for (const group of groupedMatches) {
-    const showGap = items.length > 0;
+    const prev = items[items.length - 1];
+    const showGap = prev != null && prev.type !== 'dateHeader';
     items.push({
       type: 'header',
       competition_id: group.competition_id,
@@ -495,8 +509,25 @@ function rowHeight(index: number, rowProps: RowContext): number {
   return MATCH_ROW_HEIGHT;
 }
 
+function buildItemsWithTrailingSection(
+  groupedMatches: GroupedLeagueMatches[],
+  section: MatchListTrailingSection | null | undefined,
+): FlatItem[] {
+  const items = buildFlatItems(groupedMatches);
+  if (!section || section.groupedMatches.length === 0) return items;
+  items.push({
+    type: 'dateHeader',
+    date: section.date,
+    label: section.label,
+    count: section.groupedMatches.reduce((n, g) => n + g.matches.length, 0),
+    showGap: items.length > 0,
+  });
+  return buildFlatItems(section.groupedMatches, items);
+}
+
 export default function MatchList({
   groupedMatches = [],
+  trailingSection,
   dateGroups,
   variant = 'default',
   showDateWhenNotToday = false,
@@ -516,8 +547,8 @@ export default function MatchList({
   const isWorldCup = variant === 'worldCup';
 
   const items = useMemo(
-    () => (dateGroups ? buildDateFlatItems(dateGroups) : buildFlatItems(groupedMatches)),
-    [dateGroups, groupedMatches],
+    () => (dateGroups ? buildDateFlatItems(dateGroups) : buildItemsWithTrailingSection(groupedMatches, trailingSection)),
+    [dateGroups, groupedMatches, trailingSection],
   );
 
   const todayIso = useMemo(() => todayIsoTr(), []);

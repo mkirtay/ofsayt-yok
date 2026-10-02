@@ -10,6 +10,7 @@ import { sportmonksCollectAllPages } from '@/services/sportmonksRuntimeClient';
 import type { SportmonksFixture } from '@/services/sportmonks/types';
 import { shiftIsoDate } from '@/utils/dateStrip';
 import { matchIstanbulDate, matchListFreshSeconds } from '@/utils/matchActivity';
+import { selectNightMatches } from '@/utils/nightMatches';
 
 export type HomeDayPayload = {
   date: string;
@@ -19,6 +20,8 @@ export type HomeDayPayload = {
   liveMatches: Match[];
   /** Yalnız eski sağlayıcıda: günün geçmiş sayfaları. Sportmonks'ta fikstür listesiyle aynı veri → yok. */
   historyMatches?: Match[];
+  /** Gece maçları: ertesi Türkiye gününün 00:00–06:00'ında başlayanlar (bkz. utils/nightMatches.ts). */
+  nightMatches?: Match[];
 };
 
 /**
@@ -27,18 +30,23 @@ export type HomeDayPayload = {
  * tutulur (ör. 30 Eylül 23:30 UTC maçı 1 Ekim 02:30'dur). İki liste de paylaşımlı cache'te, komşu
  * günlerle ortak. `timezone=Europe/Istanbul` parametresi kullanılmadı: saatleri de yerel döndürüyor, oysa
  * mapper ve arayüz `starting_at`'i UTC varsayıyor. Aynı gün için `between` ayrıca çekilmiyor (aynı veri).
+ *
+ * Gece maçları (D+1 00:00–06:00 TSİ = UTC D 21:00 – UTC D+1 03:00): ilk yarısı zaten UTC D listesinde, ikinci yarısı
+ * için UTC D+1 listesi de okunur — anahtarı ertesi günün (D+1) listesiyle ortak, yeni bir istek türü değil.
  */
 export async function loadHomeDay(date: string): Promise<HomeDayPayload> {
-  const [previousUtcDay, sameUtcDay, liveMatches] = await Promise.all([
+  const [previousUtcDay, sameUtcDay, nextUtcDay, liveMatches] = await Promise.all([
     getFixturesByDate(shiftIsoDate(date, -1)),
     getFixturesByDate(date),
+    getFixturesByDate(shiftIsoDate(date, 1)),
     getAllLiveMatches(),
   ]);
   const byId = new Map<number, Match>();
   for (const m of [...previousUtcDay, ...sameUtcDay]) {
     if (matchIstanbulDate(m) === date) byId.set(Number(m.id), m);
   }
-  return { date, fixtureMatches: [...byId.values()], liveMatches };
+  const nightMatches = selectNightMatches([...sameUtcDay, ...nextUtcDay], date);
+  return { date, fixtureMatches: [...byId.values()], liveMatches, nightMatches };
 }
 
 /**
@@ -48,7 +56,7 @@ export async function loadHomeDay(date: string): Promise<HomeDayPayload> {
 export function homeDayFreshSeconds(payload: HomeDayPayload, todayIso: string, now: number = Date.now()): number {
   const { date } = payload;
   const max = date < shiftIsoDate(todayIso, -1) ? 3600 : date > shiftIsoDate(todayIso, 1) ? 900 : 300;
-  const fresh = matchListFreshSeconds([...payload.fixtureMatches, ...payload.liveMatches], max, now);
+  const fresh = matchListFreshSeconds([...payload.fixtureMatches, ...(payload.nightMatches ?? []), ...payload.liveMatches], max, now);
   return payload.liveMatches.length > 0 ? Math.min(fresh, 20) : fresh;
 }
 

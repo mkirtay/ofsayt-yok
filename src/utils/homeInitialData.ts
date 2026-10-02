@@ -19,6 +19,8 @@ export type HomeInitialMatches = {
   live: Array<number | PackedMatch>;
   /** Yalnız eski sağlayıcı (Sportmonks'ta fikstürle aynı liste → yok). */
   history?: PackedMatch[];
+  /** Gece maçları (ertesi gün 00:00–06:00 TSİ); yoksa alan yok. */
+  night?: PackedMatch[];
 };
 
 export type HomeInitialData = {
@@ -61,7 +63,12 @@ export function stripUndefined(value: unknown): unknown {
   return value;
 }
 
-export function packHomeMatches(day: { fixtureMatches: Match[]; liveMatches: Match[]; historyMatches?: Match[] }): HomeInitialMatches {
+export function packHomeMatches(day: {
+  fixtureMatches: Match[];
+  liveMatches: Match[];
+  historyMatches?: Match[];
+  nightMatches?: Match[];
+}): HomeInitialMatches {
   const leagues: PackedLeague[] = [];
   const leagueIndex = new Map<string, number>();
   const pack = (m: Match): PackedMatch => {
@@ -92,6 +99,7 @@ export function packHomeMatches(day: { fixtureMatches: Match[]; liveMatches: Mat
     fixtures,
     live,
     ...(day.historyMatches ? { history: day.historyMatches.map(pack) } : {}),
+    ...(day.nightMatches?.length ? { night: day.nightMatches.map(pack) } : {}),
   };
 }
 
@@ -101,10 +109,16 @@ function unpackMatch(m: PackedMatch, leagues: PackedLeague[]): Match {
 }
 
 /** `useHomeHubMatches` verisinin şekli (bkz. hooks/useHomeHubMatches.ts `fetchHomeHubMatches`). */
-export function unpackHomeMatches(packed: HomeInitialMatches): { allMatches: Match[]; liveMatches: Match[]; fixtureMatches: Match[] } {
+export function unpackHomeMatches(packed: HomeInitialMatches): {
+  allMatches: Match[];
+  liveMatches: Match[];
+  fixtureMatches: Match[];
+  nightMatches: Match[];
+} {
   const fixtureMatches = packed.fixtures.map((m) => unpackMatch(m, packed.leagues));
   const liveMatches = packed.live.map((x) => (typeof x === 'number' ? fixtureMatches[x]! : unpackMatch(x, packed.leagues)));
   const history = packed.history?.map((m) => unpackMatch(m, packed.leagues));
-  return { allMatches: history ?? fixtureMatches, liveMatches, fixtureMatches };
+  const nightMatches = (packed.night ?? []).map((m) => unpackMatch(m, packed.leagues));
+  return { allMatches: history ?? fixtureMatches, liveMatches, fixtureMatches, nightMatches };
 }
 
