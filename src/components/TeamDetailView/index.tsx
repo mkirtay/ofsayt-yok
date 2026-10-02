@@ -526,6 +526,7 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
     };
   }, [nextFixture, teamId, todayIso, locale, t, tl]);
 
+  const teamInfoLoaded = teamInfo.name !== 'Takım Detayı';
   const teamPageTitle = `${teamInfo.name} — Takım Detayı | Ofsayt Yok`;
   const teamPageDescription = `${teamInfo.name} takımının son maçları, kadro bilgileri ve lig istatistikleri.`;
 
@@ -533,16 +534,16 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
     <div className={`${styles.root} ${variant === 'panel' ? styles.panelVariant : styles.pageVariant}`}>
       {variant === 'page' ? (
       <Head>
-        <title>{teamPageTitle}</title>
-        <meta name="description" content={teamPageDescription} />
-        <meta property="og:title" content={teamPageTitle} />
-        <meta property="og:description" content={teamPageDescription} />
-        {teamInfo.logo && (
+        {/* Paylaşım etiketleri (og:image dahil) sayfa kabuğunda (pages/teams/[id].tsx, sunucuda). Burada yalnız veri
+            gelince başlık / açıklama güncellenir; yedek ad ("Takım Detayı") sunucudaki gerçek adı ezmesin. */}
+        {teamInfoLoaded ? (
           <>
-            <meta property="og:image" content={teamInfo.logo} key="og:image" />
-            <meta name="twitter:image" content={teamInfo.logo} />
+            <title>{teamPageTitle}</title>
+            <meta name="description" content={teamPageDescription} key="description" />
+            <meta property="og:title" content={teamPageTitle} key="og:title" />
+            <meta property="og:description" content={teamPageDescription} key="og:description" />
           </>
-        )}
+        ) : null}
       </Head>
       ) : null}
 
