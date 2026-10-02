@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 type IdleWindow = Window & {
   requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
@@ -10,14 +10,14 @@ type IdleWindow = Window & {
  * ilk yüke eklememek için). Görünür olduktan sonra tarayıcı boşa çıkınca (en geç `idleTimeout` ms) açılır: kart
  * ilk ekranın kenarındaysa bile isteği sayfanın kritik yolundan (LCP) sonraya bırakır. IntersectionObserver
  * yoksa doğrudan boşta açılır.
+ *
+ * Dönen `ref` bir callback ref: eleman sonradan çizilse (ör. koşullu kart) de gözlem o an başlar.
  */
 export function useInViewOnce<T extends Element>(rootMargin = '200px', idleTimeout = 1500) {
-  const ref = useRef<T>(null);
+  const [el, setEl] = useState<T | null>(null);
   const [inView, setInView] = useState(false);
   useEffect(() => {
-    if (inView) return;
-    const el = ref.current;
-    if (!el) return;
+    if (inView || !el) return;
     const w = window as IdleWindow;
     let idleId: number | undefined;
     let timer: ReturnType<typeof setTimeout> | undefined;
@@ -45,6 +45,6 @@ export function useInViewOnce<T extends Element>(rootMargin = '200px', idleTimeo
       if (idleId !== undefined) w.cancelIdleCallback?.(idleId);
       if (timer !== undefined) clearTimeout(timer);
     };
-  }, [inView, rootMargin, idleTimeout]);
-  return [ref, inView] as const;
+  }, [el, inView, rootMargin, idleTimeout]);
+  return [setEl, inView] as const;
 }
