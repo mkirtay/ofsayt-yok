@@ -466,13 +466,32 @@ $hub-fill-height: calc(100vh - var(--header-height) - 56px - 32px - var(--league
   }
 }
 
-/* Upstream gecikmesi: veri eski ama gösteriliyor — hata değil bilgi tonu (Design System §5). */
+/*
+ * Upstream gecikmesi: veri eski ama gösteriliyor — hata değil bilgi tonu (Design System §5).
+ * Akış DIŞI (alt ortada sabit balon): sonradan çıkınca listeyi / kenar çubuğunu itmesin (CLS 0,041 veriyordu).
+ * Katman: Kural Köşesi düğmesinin (92) üstü, alt menünün (110) altı. Genişlik, sağ alttaki düğmeye binmeyecek kadar.
+ */
 .delayedNote {
-  margin-bottom: $spacing-2;
+  position: fixed;
+  left: 50%;
+  bottom: $spacing-4;
+  z-index: 93;
+  transform: translateX(-50%);
+  box-sizing: border-box;
+  width: max-content;
+  max-width: min(420px, calc(100vw - 160px));
   padding: $spacing-2 $spacing-3;
   font-size: var(--fs-meta);
+  line-height: 1.35;
+  text-align: center;
   color: $color-text-secondary;
   background: $color-surface;
   border: 1px solid $color-border;
   border-radius: $radius-md;
+  box-shadow: $shadow-surface;
+  pointer-events: none;
+
+  @include below-desktop {
+    bottom: calc(var(--bottom-nav-height) + var(--safe-bottom) + #{$spacing-3});
+  }
 }
