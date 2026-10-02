@@ -146,10 +146,9 @@ $label-color: var(--text-tertiary);
   flex-shrink: 0;
 }
 
+// Koyu temada kaybolan lig logoları (competitionLogoNeedsBackdrop) — yalnız koyu temada açık zemin.
 .logoBackdrop {
-  background: #fff;
-  border-radius: 3px;
-  padding: 1px;
+  @include logo-backdrop(1px, 3px);
 }
 
 .rank {
