@@ -16,7 +16,7 @@
     "baslik": "VAR ne zaman devreye girer?",
     "metin": "VAR yalnızca dört durumda müdahale eder: gol, penaltı, doğrudan kırmızı kart ve kart gösterilen oyuncunun yanlış kişi olması. Bu durumlarda da hakemin açık ve net bir hata yapmış ya da ciddi bir olayı kaçırmış olması gerekir.",
     "biliyorMuydun": "İkinci sarı karttan gelen kırmızı kart VAR incelemesine girmez.",
-    "animasyon": "03-var-ofsayt-yok",
+    "animasyon": "11-var-penalti",
     "en": {
       "baslik": "When does VAR step in?",
       "metin": "VAR can only intervene in four situations: goals, penalties, direct red cards and mistaken identity, when a card is shown to the wrong player. Even then, the referee must have made a clear and obvious error or missed a serious incident.",
@@ -28,7 +28,7 @@
     "baslik": "Uzatma süresi nasıl belirlenir?",
     "metin": "Hakem; oyuncu değişikliklerinde, sakatlık müdahalelerinde, zaman geçirmede, VAR incelemelerinde ve gol sevinçlerinde kaybedilen süreyi ekler.",
     "biliyorMuydun": "Dördüncü hakemin tabelada gösterdiği süre en az süredir; hakem gerekirse daha fazla oynatabilir ama kısaltamaz.",
-    "animasyon": "08-mac-baslamadi",
+    "animasyon": "12-uzatma-tabelasi",
     "en": {
       "baslik": "How is stoppage time decided?",
       "metin": "The referee adds the time lost to substitutions, injury treatment, time-wasting, VAR reviews and goal celebrations.",
@@ -40,13 +40,11 @@
     "baslik": "Kalecinin 8 saniyesi",
     "metin": "2025-26 sezonundan itibaren kaleci topu elinde 8 saniyeden uzun tutarsa rakip takıma korner verilir. Hakem son 5 saniyeyi eliyle sayarak kaleciyi uyarır.",
     "biliyorMuydun": "Eskiden bu süre 6 saniyeydi ve ihlalin cezası endirekt serbest vuruştu.",
-    "animasyon": "08-mac-baslamadi",
-    "sahneEtiketi": "8 SANİYE",
+    "animasyon": "13-kaleci-8-saniye",
     "en": {
       "baslik": "The goalkeeper’s 8 seconds",
       "metin": "From the 2025-26 season, if a goalkeeper holds the ball for more than 8 seconds, the opposing team is awarded a corner. The referee warns the goalkeeper by counting down the last 5 seconds with their hand.",
-      "biliyorMuydun": "The limit used to be 6 seconds, and the punishment was an indirect free kick.",
-      "sahneEtiketi": "8 SECONDS"
+      "biliyorMuydun": "The limit used to be 6 seconds, and the punishment was an indirect free kick."
     }
   },
   {
@@ -78,7 +76,7 @@
     "baslik": "Penaltıda kaleci nerede durmalı?",
     "metin": "Penaltı atılırken kaleci, top vurulana kadar direklerin arasında ve yüzü atıcıya dönük olarak kale çizgisinde kalmalıdır. Vuruş anında en az bir ayağının bir kısmı çizgiye değmeli ya da çizgiyle aynı hizada olmalıdır.",
     "biliyorMuydun": "Kaleci erken çıkıp atışı kurtarırsa penaltı tekrarlanır.",
-    "animasyon": "06-gol-ani",
+    "animasyon": "14-penalti-kaleci",
     "en": {
       "baslik": "Where must the goalkeeper stand for a penalty?",
       "metin": "When a penalty is taken, the goalkeeper must stay on the goal line, between the posts and facing the kicker, until the ball is kicked. At the moment of the kick, at least part of one foot must be touching or level with the line.",
@@ -90,7 +88,7 @@
     "baslik": "Deplasman golü kuralı neden yok?",
     "metin": "UEFA, 2021-22 sezonundan itibaren kulüp turnuvalarında deplasman golü kuralını kaldırdı. İki maçlık eşleşmede toplam skor eşitse uzatmaya, o da eşit biterse penaltılara gidilir.",
     "biliyorMuydun": null,
-    "animasyon": "06-gol-ani",
+    "animasyon": "15-toplam-skor-bandi",
     "en": {
       "baslik": "Why is there no away goals rule?",
       "metin": "UEFA scrapped the away goals rule in its club competitions from the 2021-22 season. If the aggregate score is level after two legs, the tie goes to extra time, and then to penalties if it is still level.",

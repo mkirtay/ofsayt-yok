@@ -2,10 +2,14 @@ import { useCallback, useEffect, useId, useRef, useState, type KeyboardEvent } f
 import { useI18n, useTranslation } from '@/lib/i18n';
 import '@/lib/i18nNamespaces/kuralKosesi';
 import { MOBILE_LAYOUT_QUERY } from '@/config/breakpoints';
+import AggregateScene from '@/components/PitchScenes/AggregateScene';
 import FormationScene from '@/components/PitchScenes/FormationScene';
+import KeeperCountdownScene from '@/components/PitchScenes/KeeperCountdownScene';
 import MatchScene from '@/components/PitchScenes/MatchScene';
-import RingScene from '@/components/PitchScenes/RingScene';
+import PenaltyKeeperScene from '@/components/PitchScenes/PenaltyKeeperScene';
 import ScaledScene from '@/components/PitchScenes/ScaledScene';
+import StoppageBoardScene from '@/components/PitchScenes/StoppageBoardScene';
+import VarPenaltyScene from '@/components/PitchScenes/VarPenaltyScene';
 import VarScene from '@/components/PitchScenes/VarScene';
 import { localizeFact, type KuralFact, type LocalizedFact } from './facts';
 import WhistleIcon from './WhistleIcon';
@@ -30,10 +34,17 @@ function Scene({ fact }: { fact: LocalizedFact }) {
       return <FormationScene />;
     case '03-var-ofsayt-yok':
       return <VarScene />;
-    case '08-mac-baslamadi':
-      return <RingScene label={fact.sceneLabel} />;
+    case '11-var-penalti':
+      return <VarPenaltyScene />;
+    case '12-uzatma-tabelasi':
+      return <StoppageBoardScene />;
+    case '13-kaleci-8-saniye':
+      return <KeeperCountdownScene />;
+    case '14-penalti-kaleci':
+      return <PenaltyKeeperScene />;
+    case '15-toplam-skor-bandi':
+      return <AggregateScene />;
     case '01-mac-oynaniyor':
-    case '06-gol-ani':
     default:
       return <MatchScene />;
   }

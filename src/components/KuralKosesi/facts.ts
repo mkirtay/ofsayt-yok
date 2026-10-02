@@ -1,7 +1,7 @@
 /**
  * Kural Köşesi içeriği — kaynak `src/content/kural-kosesi.json` (ilk sürüm: docs/animasyon-referans/kural-kosesi.json).
- * Yeni bilgi = JSON'a tek kayıt: `animasyon` aşağıdaki anahtarlardan biri, `en` İngilizcesi; `sahneEtiketi`
- * isteğe bağlı (yalnız halka sahnesinde, sol üst etiket). Sayaç, noktalar ve günün bilgisi kendiliğinden güncellenir.
+ * Yeni bilgi = JSON'a tek kayıt: `animasyon` aşağıdaki anahtarlardan biri (docs/animasyon-referans/ dosya adı),
+ * `en` İngilizcesi. Sayaç, noktalar ve günün bilgisi kendiliğinden güncellenir.
  *
  * JSON yalnız gerektiğinde dinamik import edilir (baloncuk gösterilirken / panel açılırken); ilk yüke girmez.
  */
@@ -9,8 +9,11 @@ export const FACT_ANIMATIONS = [
   '01-mac-oynaniyor',
   '02-dizilis',
   '03-var-ofsayt-yok',
-  '06-gol-ani',
-  '08-mac-baslamadi',
+  '11-var-penalti',
+  '12-uzatma-tabelasi',
+  '13-kaleci-8-saniye',
+  '14-penalti-kaleci',
+  '15-toplam-skor-bandi',
 ] as const;
 export type FactAnimation = (typeof FACT_ANIMATIONS)[number];
 
@@ -18,7 +21,6 @@ type FactText = {
   baslik: string;
   metin: string;
   biliyorMuydun: string | null;
-  sahneEtiketi?: string;
 };
 
 export type KuralFact = FactText & {
@@ -33,7 +35,6 @@ export type LocalizedFact = {
   title: string;
   body: string;
   note: string | null;
-  sceneLabel: string | null;
   animation: FactAnimation;
 };
 
@@ -44,7 +45,6 @@ export function localizeFact(fact: KuralFact, locale: string): LocalizedFact {
     title: text.baslik,
     body: text.metin,
     note: text.biliyorMuydun || null,
-    sceneLabel: text.sahneEtiketi || null,
     animation: fact.animasyon,
   };
 }

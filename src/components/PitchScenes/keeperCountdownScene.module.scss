@@ -1,0 +1,217 @@
+@use '../../styles/motion' as *;
+
+// 13 · Kalecinin 8 saniyesi (docs/animasyon-referans/13-kaleci-8-saniye.html). 10 sn döngü: 0–8 sn geri sayım,
+// 8–10 sn KORNER. Temel stiller = Hareketi azalt karesi: dolu halka, "8", KORNER hapı ("8 saniye → korner").
+$cycle: 10s;
+
+.root {
+  @include motion-root;
+  height: 230px;
+}
+
+.marks {
+  position: absolute;
+  inset: 0;
+}
+
+.keeper {
+  position: absolute;
+  left: 82px;
+  top: 115px;
+  width: 22px;
+  height: 22px;
+  margin: -11px 0 0 -11px;
+  border-radius: 50%;
+  background: #fde047;
+  box-shadow: 0 0 0 3px #101512, 0 3px 6px rgba(0, 0, 0, 0.3);
+}
+
+.ball {
+  left: 92px;
+  top: 106px;
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+  animation: hold 1.4s ease-in-out infinite alternate;
+
+  &::before {
+    inset: 2px;
+  }
+}
+
+@keyframes hold {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-2px); }
+}
+
+.ring {
+  position: absolute;
+  left: 230px;
+  top: 45px;
+  width: 140px;
+  height: 140px;
+}
+
+.track {
+  stroke: rgba(255, 255, 255, 0.18);
+}
+
+// Dilim i, (i+1). saniyede söner; son 5 dilim sarı.
+.seg {
+  stroke: #ffffff;
+}
+
+@for $i from 0 through 7 {
+  .s#{$i} {
+    animation: seg#{$i} $cycle linear infinite both;
+    @if $i >= 3 {
+      stroke: #fbbf24;
+    }
+  }
+
+  @keyframes seg#{$i} {
+    0%, #{($i + 1) * 10 - 1}% { opacity: 1; }
+    #{($i + 1) * 10}%, 100% { opacity: 0.14; }
+  }
+}
+
+// Rakam n, (8-n). saniyede görünür: negatif gecikme döngü içindeki fazı verir. 0, son 2 sn görünür.
+.digit {
+  position: absolute;
+  left: 300px;
+  top: 115px;
+  width: 80px;
+  margin: -36px 0 0 -40px;
+  text-align: center;
+  font-size: 60px;
+  line-height: 72px;
+  font-weight: 900;
+  color: #ffffff;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  font-variant-numeric: tabular-nums;
+  opacity: 0;
+  animation: digit $cycle linear infinite both;
+}
+
+@for $n from 1 through 8 {
+  .d#{$n} {
+    animation-delay: -#{$n + 2}s;
+    @if $n <= 5 {
+      color: #fde047;
+    }
+  }
+}
+
+.d8 {
+  opacity: 1;
+}
+
+.d0 {
+  animation-name: digitLast;
+  animation-delay: -2s;
+}
+
+@keyframes digit {
+  0% { opacity: 1; transform: scale(1.2); }
+  3%, 9.6% { opacity: 1; transform: scale(1); }
+  10%, 100% { opacity: 0; transform: scale(1); }
+}
+
+@keyframes digitLast {
+  0% { opacity: 1; transform: scale(1.2); }
+  3%, 19.6% { opacity: 1; transform: scale(1); }
+  20%, 100% { opacity: 0; transform: scale(1); }
+}
+
+// Hakemin eli: 3. sn'de (kalan 5) belirir; parmak j, (9-j). saniyede iner.
+.hand {
+  position: absolute;
+  left: 420px;
+  top: 120px;
+  width: 50px;
+  height: 70px;
+  margin: -35px 0 0 -25px;
+  opacity: 0;
+  animation: hand $cycle ease-out infinite both;
+}
+
+@keyframes hand {
+  0%, 29% { opacity: 0; transform: translateY(10px); }
+  32%, 82% { opacity: 1; transform: translateY(0); }
+  86%, 100% { opacity: 0; transform: translateY(0); }
+}
+
+.palm {
+  position: absolute;
+  left: 9px;
+  bottom: 0;
+  width: 34px;
+  height: 32px;
+  border-radius: 8px 8px 12px 12px;
+  background: #ffffff;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.25);
+}
+
+.finger {
+  position: absolute;
+  bottom: 28px;
+  width: 8px;
+  border-radius: 4px;
+  background: #ffffff;
+  transform-origin: bottom;
+}
+
+.thumb {
+  position: absolute;
+  left: 8px;
+  bottom: 6px;
+  width: 8px;
+  height: 20px;
+  transform: rotate(-42deg);
+  transform-origin: bottom center;
+}
+
+.f1 { left: 0; bottom: 0; height: 20px; }
+.f2 { left: 10px; height: 26px; }
+.f3 { left: 19px; height: 30px; }
+.f4 { left: 28px; height: 27px; }
+.f5 { left: 37px; height: 21px; }
+
+@for $j from 1 through 5 {
+  .f#{$j} {
+    animation: finger#{$j} $cycle ease-in infinite both;
+  }
+
+  @keyframes finger#{$j} {
+    0%, #{(9 - $j) * 10 - 1}% { opacity: 1; transform: scaleY(1); }
+    #{(9 - $j) * 10}%, 100% { opacity: 0; transform: scaleY(0.2); }
+  }
+}
+
+.stamp {
+  position: absolute;
+  left: 300px;
+  top: 206px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 20px;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #101512;
+  font-size: 20px;
+  line-height: normal;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  transform: translate(-50%, -50%);
+  animation: stamp $cycle cubic-bezier(0.3, 0.7, 0.3, 1) infinite both;
+}
+
+@keyframes stamp {
+  0%, 80% { opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
+  84% { opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
+  87%, 95% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  99%, 100% { opacity: 0; transform: translate(-50%, -50%) scale(0.96); }
+}

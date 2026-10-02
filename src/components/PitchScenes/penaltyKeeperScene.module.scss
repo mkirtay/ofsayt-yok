@@ -1,0 +1,159 @@
+@use '../../styles/motion' as *;
+
+// 14 · Penaltıda kaleci (docs/animasyon-referans/14-penalti-kaleci.html). Kale çizgisi x=480; vuruş anı %34.
+// Temel stiller = Hareketi azalt karesi: atıcı topun başında, çizgi + halka + hap görünür.
+.root {
+  @include motion-root;
+  height: 230px;
+}
+
+.marks {
+  position: absolute;
+  inset: 0;
+}
+
+.keeper {
+  position: absolute;
+  left: 480px;
+  top: 115px;
+  width: 22px;
+  height: 22px;
+  margin: -11px 0 0 -11px;
+  border-radius: 50%;
+  background: #fde047;
+  box-shadow: 0 0 0 3px #101512, 0 3px 6px rgba(0, 0, 0, 0.3);
+  animation: sway 7s ease-in-out infinite both;
+}
+
+// Kaleci çizgi üzerinde yana kayar (serbest); vuruşta ortada ve çizgide.
+@keyframes sway {
+  0%, 6% { transform: translateY(0); }
+  14% { transform: translateY(-12px); }
+  22% { transform: translateY(10px); }
+  30%, 100% { transform: translateY(0); }
+}
+
+.kicker {
+  position: absolute;
+  left: 376px;
+  top: 124px;
+  width: 20px;
+  height: 20px;
+  margin: -10px 0 0 -10px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+  animation: runup 7s cubic-bezier(0.5, 0, 0.6, 1) infinite both;
+}
+
+@keyframes runup {
+  0%, 6% { transform: translate(-92px, 58px); }
+  34%, 100% { transform: translate(0, 0); }
+}
+
+.ball {
+  left: 392px;
+  top: 115px;
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+
+  &::before {
+    inset: 2px;
+  }
+}
+
+.flash {
+  position: absolute;
+  inset: 0;
+  background: #ffffff;
+  opacity: 0;
+  animation: flash 7s ease-out infinite both;
+}
+
+@keyframes flash {
+  0%, 33.5% { opacity: 0; }
+  34.5% { opacity: 0.45; }
+  40%, 100% { opacity: 0; }
+}
+
+.freeze {
+  position: absolute;
+  inset: 0;
+  background: #06120c;
+  opacity: 0.32;
+  animation: freeze 7s ease-in-out infinite both;
+}
+
+@keyframes freeze {
+  0%, 34% { opacity: 0; }
+  38%, 86% { opacity: 0.32; }
+  94%, 100% { opacity: 0; }
+}
+
+// Kale çizgisi vurgusu (direkler arası).
+.goalLine {
+  position: absolute;
+  left: 480px;
+  top: 84px;
+  width: 4px;
+  height: 62px;
+  margin-left: -2px;
+  border-radius: 2px;
+  background: #fde047;
+  box-shadow: 0 0 12px 3px rgba(253, 224, 71, 0.7);
+  animation: goalLine 7s ease-out infinite both;
+}
+
+@keyframes goalLine {
+  0%, 35% { opacity: 0; transform: scaleY(0); }
+  42%, 86% { opacity: 1; transform: scaleY(1); }
+  94%, 100% { opacity: 0; transform: scaleY(1); }
+}
+
+.halo {
+  position: absolute;
+  left: 480px;
+  top: 115px;
+  width: 44px;
+  height: 44px;
+  margin: -22px 0 0 -22px;
+  border-radius: 50%;
+  border: 2px dashed rgba(255, 255, 255, 0.95);
+  box-sizing: border-box;
+  animation: halo 7s ease-out infinite both;
+}
+
+@keyframes halo {
+  0%, 38% { opacity: 0; transform: scale(1.7); }
+  45%, 86% { opacity: 1; transform: scale(1); }
+  94%, 100% { opacity: 0; transform: scale(1); }
+}
+
+.stamp {
+  position: absolute;
+  left: 210px;
+  top: 182px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #007b55;
+  font-size: 22px;
+  line-height: normal;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  transform: translate(-50%, -50%);
+  animation: stamp 7s cubic-bezier(0.3, 0.7, 0.3, 1) infinite both;
+}
+
+@keyframes stamp {
+  0%, 50% { opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
+  56% { opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
+  60%, 86% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  94%, 100% { opacity: 0; transform: translate(-50%, -50%) scale(0.96); }
+}

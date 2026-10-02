@@ -11,21 +11,21 @@
     "baslik": "VAR ne zaman devreye girer?",
     "metin": "VAR yalnızca dört durumda müdahale eder: gol, penaltı, doğrudan kırmızı kart ve kart gösterilen oyuncunun yanlış kişi olması. Bu durumlarda da hakemin açık ve net bir hata yapmış ya da ciddi bir olayı kaçırmış olması gerekir.",
     "biliyorMuydun": "İkinci sarı karttan gelen kırmızı kart VAR incelemesine girmez.",
-    "animasyon": "03-var-ofsayt-yok"
+    "animasyon": "11-var-penalti"
   },
   {
     "id": "uzatma",
     "baslik": "Uzatma süresi nasıl belirlenir?",
     "metin": "Hakem; oyuncu değişikliklerinde, sakatlık müdahalelerinde, zaman geçirmede, VAR incelemelerinde ve gol sevinçlerinde kaybedilen süreyi ekler.",
     "biliyorMuydun": "Dördüncü hakemin tabelada gösterdiği süre en az süredir; hakem gerekirse daha fazla oynatabilir ama kısaltamaz.",
-    "animasyon": "08-mac-baslamadi"
+    "animasyon": "12-uzatma-tabelasi"
   },
   {
     "id": "kaleci-8-saniye",
     "baslik": "Kalecinin 8 saniyesi",
     "metin": "2025-26 sezonundan itibaren kaleci topu elinde 8 saniyeden uzun tutarsa rakip takıma korner verilir. Hakem son 5 saniyeyi eliyle sayarak kaleciyi uyarır.",
     "biliyorMuydun": "Eskiden bu süre 6 saniyeydi ve ihlalin cezası endirekt serbest vuruştu.",
-    "animasyon": "08-mac-baslamadi"
+    "animasyon": "13-kaleci-8-saniye"
   },
   {
     "id": "avantaj",
@@ -46,13 +46,13 @@
     "baslik": "Penaltıda kaleci nerede durmalı?",
     "metin": "Penaltı atılırken kaleci, top vurulana kadar direklerin arasında ve yüzü atıcıya dönük olarak kale çizgisinde kalmalıdır. Vuruş anında en az bir ayağının bir kısmı çizgiye değmeli ya da çizgiyle aynı hizada olmalıdır.",
     "biliyorMuydun": "Kaleci erken çıkıp atışı kurtarırsa penaltı tekrarlanır.",
-    "animasyon": "06-gol-ani"
+    "animasyon": "14-penalti-kaleci"
   },
   {
     "id": "deplasman-golu",
     "baslik": "Deplasman golü kuralı neden yok?",
     "metin": "UEFA, 2021-22 sezonundan itibaren kulüp turnuvalarında deplasman golü kuralını kaldırdı. İki maçlık eşleşmede toplam skor eşitse uzatmaya, o da eşit biterse penaltılara gidilir.",
     "biliyorMuydun": null,
-    "animasyon": "06-gol-ani"
+    "animasyon": "15-toplam-skor-bandi"
   }
 ]

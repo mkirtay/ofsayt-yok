@@ -1,0 +1,158 @@
+@use '../../styles/motion' as *;
+
+// 12 · Uzatma tabelası (docs/animasyon-referans/12-uzatma-tabelasi.html). Temel stiller = son kare (Hareketi azalt):
+// hakem ortada, tabela yanık, etiket görünür.
+.root {
+  @include motion-root;
+  height: 230px;
+}
+
+.halfLine {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  height: 160px;
+  width: 2px;
+  margin-left: -1px;
+  background: rgba(255, 255, 255, 0.32);
+}
+
+.halfCircle {
+  position: absolute;
+  left: 50%;
+  top: 160px;
+  width: 110px;
+  height: 110px;
+  margin: -55px 0 0 -55px;
+  border: 2px solid rgba(255, 255, 255, 0.32);
+  border-radius: 50%;
+  box-sizing: border-box;
+  clip-path: inset(0 0 50% 0);
+}
+
+.touch {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 160px;
+  height: 2px;
+  margin-top: -1px;
+  background: rgba(255, 255, 255, 0.75);
+}
+
+.side {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 161px;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.fourth {
+  position: absolute;
+  left: 252px;
+  top: 194px;
+  width: 22px;
+  height: 22px;
+  margin: -11px 0 0 -11px;
+  border-radius: 50%;
+  background: #101512;
+  box-shadow: 0 0 0 3px #fde047, 0 3px 6px rgba(0, 0, 0, 0.35);
+  animation: walk 7s cubic-bezier(0.4, 0, 0.2, 1) infinite both;
+}
+
+@keyframes walk {
+  0% { opacity: 1; transform: translateX(-290px); }
+  26%, 90% { opacity: 1; transform: translateX(0); }
+  96%, 100% { opacity: 0; transform: translateX(0); }
+}
+
+.board {
+  position: absolute;
+  left: 252px;
+  top: 96px;
+  width: 156px;
+  height: 84px;
+  margin-left: -78px;
+  animation: board 7s cubic-bezier(0.3, 0.7, 0.3, 1) infinite both;
+}
+
+@keyframes board {
+  0%, 28% { opacity: 0; transform: translateY(26px); }
+  36%, 88% { opacity: 1; transform: translateY(0); }
+  95%, 100% { opacity: 0; transform: translateY(26px); }
+}
+
+.pole {
+  position: absolute;
+  left: 50%;
+  top: 84px;
+  width: 4px;
+  height: 12px;
+  margin-left: -2px;
+  background: #2b2f2d;
+}
+
+.panel {
+  position: absolute;
+  inset: 0;
+  border-radius: 8px;
+  background: #0d0f0e;
+  box-shadow: 0 0 0 3px #2b2f2d, 0 10px 24px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+}
+
+.digits {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 64px;
+  line-height: normal;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  color: #ff4d3a;
+  text-shadow: 0 0 10px rgba(255, 77, 58, 0.85), 0 0 22px rgba(255, 77, 58, 0.45);
+  font-variant-numeric: tabular-nums;
+  animation: led 7s steps(1, end) infinite both;
+}
+
+@keyframes led {
+  0%, 38% { opacity: 0; }
+  40% { opacity: 1; }
+  42% { opacity: 0.25; }
+  44%, 100% { opacity: 1; }
+}
+
+// Nokta matrisi (statik).
+.dots {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, transparent 1.5px, #0d0f0e 2px) 0 0 / 4px 4px;
+  opacity: 0.5;
+}
+
+.label {
+  position: absolute;
+  left: 252px;
+  top: 30px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: rgba(6, 18, 12, 0.55);
+  color: #ffffff;
+  font-size: 18px;
+  line-height: normal;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  transform: translateX(-50%);
+  animation: label 7s ease-in-out infinite both;
+}
+
+@keyframes label {
+  0%, 44% { opacity: 0; transform: translateX(-50%) translateY(-6px); }
+  50%, 88% { opacity: 1; transform: translateX(-50%) translateY(0); }
+  95%, 100% { opacity: 0; transform: translateX(-50%) translateY(-6px); }
+}

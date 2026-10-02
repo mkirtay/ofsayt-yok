@@ -17,9 +17,8 @@ describe('kural-kosesi.json', () => {
         expect(text.baslik.trim(), f.id).not.toBe('');
         expect(text.metin.trim(), f.id).not.toBe('');
       }
-      // Not ve sahne etiketi iki dilde birlikte var ya da birlikte yok.
+      // Not iki dilde birlikte var ya da birlikte yok.
       expect(Boolean(f.en.biliyorMuydun), f.id).toBe(Boolean(f.biliyorMuydun));
-      expect(Boolean(f.en.sahneEtiketi), f.id).toBe(Boolean(f.sahneEtiketi));
     }
   });
 
@@ -33,7 +32,7 @@ describe('kural-kosesi.json', () => {
 
   it('localizeFact dile göre seçer', () => {
     const kaleci = all.find((f) => f.id === 'kaleci-8-saniye')!;
-    expect(localizeFact(kaleci, 'tr').sceneLabel).toBe('8 SANİYE');
+    expect(localizeFact(kaleci, 'tr').animation).toBe('13-kaleci-8-saniye');
     expect(localizeFact(kaleci, 'en').title).toBe(kaleci.en.baslik);
     const yedi = all.find((f) => f.id === 'yedi-oyuncu')!;
     expect(localizeFact(yedi, 'tr').note).toBeNull();

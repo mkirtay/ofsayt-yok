@@ -1,0 +1,190 @@
+@use '../../styles/motion' as *;
+
+// 15 · Toplam skor bandı (docs/animasyon-referans/15-toplam-skor-bandi.html). Temel stiller = Hareketi azalt karesi:
+// bant, toplam şeridi ve UZATMA görünür.
+.root {
+  @include motion-root;
+  height: 230px;
+}
+
+.circle {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 110px;
+  height: 110px;
+  margin: -55px 0 0 -55px;
+  border: 2px solid rgba(255, 255, 255, 0.32);
+  border-radius: 50%;
+  box-sizing: border-box;
+}
+
+.dim {
+  position: absolute;
+  inset: 0;
+  background: rgba(6, 18, 12, 0.38);
+}
+
+.bug {
+  position: absolute;
+  left: 252px;
+  top: 50px;
+  display: flex;
+  align-items: stretch;
+  height: 46px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35);
+  line-height: normal;
+  white-space: nowrap;
+  transform: translateX(-50%);
+  animation: bugIn 7s cubic-bezier(0.2, 0.8, 0.2, 1) infinite both;
+}
+
+@keyframes bugIn {
+  0% { opacity: 0; transform: translateX(-50%) translateX(-36px); }
+  8%, 90% { opacity: 1; transform: translateX(-50%); }
+  97%, 100% { opacity: 0; transform: translateX(-50%); }
+}
+
+.leg {
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  background: #00a76f;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
+.team {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  background: #101512;
+  color: #ffffff;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.kit {
+  width: 5px;
+  height: 24px;
+  border-radius: 2px;
+}
+
+.kitHome {
+  background: #ffffff;
+}
+
+.kitAway {
+  background: #38bdf8;
+}
+
+.score {
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  background: #f4f6f5;
+  color: #101512;
+  font-size: 24px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+
+  span {
+    display: inline-block;
+    animation: pop 7s cubic-bezier(0.3, 0.7, 0.3, 1) infinite both;
+  }
+}
+
+@keyframes pop {
+  0%, 9% { opacity: 0; transform: scale(0.6); }
+  14%, 100% { opacity: 1; transform: scale(1); }
+}
+
+.clock {
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  background: #1d2621;
+  color: #e5ece8;
+  font-size: 18px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+// Toplam şeridi bandın altından aşağı kayar (kırpma kutusu sabit).
+.aggClip {
+  position: absolute;
+  left: 252px;
+  top: 96px;
+  height: 36px;
+  overflow: hidden;
+  transform: translateX(-50%);
+}
+
+.agg {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 0 0 8px 8px;
+  background: rgba(16, 21, 18, 0.92);
+  color: #ffffff;
+  font-size: 18px;
+  line-height: normal;
+  font-weight: 700;
+  white-space: nowrap;
+  animation: agg 7s cubic-bezier(0.2, 0.8, 0.2, 1) infinite both;
+
+  b {
+    font-weight: 900;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@keyframes agg {
+  0%, 24% { transform: translateY(-100%); }
+  32%, 100% { transform: translateY(0); }
+}
+
+.level {
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.12);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
+.extra {
+  position: absolute;
+  left: 252px;
+  top: 178px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 22px;
+  border-radius: 999px;
+  background: #fde047;
+  color: #101512;
+  font-size: 22px;
+  line-height: normal;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  white-space: nowrap;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  transform: translate(-50%, -50%);
+  animation: extra 7s cubic-bezier(0.3, 0.7, 0.3, 1) infinite both;
+}
+
+@keyframes extra {
+  0%, 44% { opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
+  50% { opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
+  54%, 88% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  96%, 100% { opacity: 0; transform: translate(-50%, -50%) scale(0.96); }
+}

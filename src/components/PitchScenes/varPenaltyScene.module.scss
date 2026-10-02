@@ -1,0 +1,195 @@
+@use '../../styles/motion' as *;
+
+// 11 · VAR: Penaltı (docs/animasyon-referans/11-var-penalti.html). Temel konumlar = son kare (Hareketi azalt):
+// oyuncular çakışık, VAR etiketi ve PENALTI hapı görünür.
+.root {
+  @include motion-root;
+  height: 230px;
+}
+
+.marks {
+  position: absolute;
+  inset: 0;
+}
+
+.player {
+  position: absolute;
+  display: block;
+  width: 20px;
+  height: 20px;
+  margin: -10px 0 0 -10px;
+  border-radius: 50%;
+  box-sizing: border-box;
+}
+
+.atk {
+  left: 434px;
+  top: 128px;
+  background: #ffffff;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+  animation: atk 7s cubic-bezier(0.45, 0.05, 0.55, 1) infinite both;
+}
+
+@keyframes atk {
+  0%, 4% { transform: translate(-252px, 22px); }
+  30% { transform: translate(-4px, 0); }
+  34%, 100% { transform: translate(0, 0); }
+}
+
+.def {
+  left: 446px;
+  top: 118px;
+  background: transparent;
+  border: 3px solid #ffffff;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25), inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+  animation: def 7s ease-in-out infinite both;
+}
+
+@keyframes def {
+  0%, 12% { transform: translate(30px, -64px); }
+  31%, 100% { transform: translate(0, 0); }
+}
+
+.ball {
+  left: 466px;
+  top: 152px;
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  animation: ball 7s cubic-bezier(0.45, 0.05, 0.55, 1) infinite both;
+
+  &::before {
+    inset: 2px;
+  }
+}
+
+@keyframes ball {
+  0%, 4% { transform: translate(-268px, 0); }
+  30% { transform: translate(-18px, -20px); }
+  44%, 100% { transform: translate(0, 0); }
+}
+
+.hit {
+  position: absolute;
+  left: 440px;
+  top: 123px;
+  width: 34px;
+  height: 34px;
+  margin: -17px 0 0 -17px;
+  border-radius: 50%;
+  border: 3px solid #fde047;
+  box-sizing: border-box;
+  opacity: 0;
+  animation: hit 7s ease-out infinite both;
+}
+
+@keyframes hit {
+  0%, 30% { opacity: 0; transform: scale(0.4); }
+  31% { opacity: 1; transform: scale(0.6); }
+  40%, 100% { opacity: 0; transform: scale(1.9); }
+}
+
+.freeze {
+  position: absolute;
+  inset: 0;
+  background: #06120c;
+  opacity: 0.3;
+  animation: freeze 7s ease-in-out infinite both;
+}
+
+@keyframes freeze {
+  0%, 36% { opacity: 0; }
+  42%, 86% { opacity: 0.3; }
+  94%, 100% { opacity: 0; }
+}
+
+.focus {
+  position: absolute;
+  left: 440px;
+  top: 124px;
+  width: 64px;
+  height: 64px;
+  margin: -32px 0 0 -32px;
+  border-radius: 50%;
+  border: 2px dashed rgba(255, 255, 255, 0.9);
+  box-sizing: border-box;
+  animation: focus 7s ease-out infinite both;
+}
+
+@keyframes focus {
+  0%, 40% { opacity: 0; transform: scale(1.5); }
+  46%, 86% { opacity: 1; transform: scale(1); }
+  94%, 100% { opacity: 0; transform: scale(1); }
+}
+
+.var {
+  position: absolute;
+  left: 14px;
+  top: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  border-radius: 8px;
+  background: #101512;
+  color: #ffffff;
+  font-size: 18px;
+  line-height: normal;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  animation: varIn 7s ease-in-out infinite both;
+}
+
+@keyframes varIn {
+  0%, 38% { opacity: 0; transform: translateY(-8px); }
+  44%, 86% { opacity: 1; transform: translateY(0); }
+  94%, 100% { opacity: 0; transform: translateY(-8px); }
+}
+
+.rec {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #ef4444;
+  animation: rec 1s steps(2, jump-none) infinite;
+}
+
+@keyframes rec {
+  0% { opacity: 1; }
+  100% { opacity: 0.2; }
+}
+
+.stamp {
+  position: absolute;
+  left: 200px;
+  top: 182px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 22px;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #101512;
+  font-size: 22px;
+  line-height: normal;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  white-space: nowrap;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  transform: translate(-50%, -50%);
+  animation: stamp 7s cubic-bezier(0.3, 0.7, 0.3, 1) infinite both;
+}
+
+.spot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ef4444;
+}
+
+@keyframes stamp {
+  0%, 58% { opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
+  64% { opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
+  68%, 86% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  94%, 100% { opacity: 0; transform: translate(-50%, -50%) scale(0.96); }
+}
