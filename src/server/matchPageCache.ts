@@ -75,7 +75,8 @@ function sMaxAge(cacheControl: string): number | null {
 
 /**
  * Maç sayfası yanıtı: tam veride maçın kendi süresi (`matchPageCacheControlForMatch`) aynen; form / karşılaşma
- * geçmişi bütçeye yetişmediyse (`h2hComplete: false`) CDN o iskeletli kopyayı en çok 30 sn (+30 sn swr) tutar —
+ * geçmişi ya da Genel Bakış verisi (istatistik, kadro) bütçeye yetişmediyse (`h2hComplete: false`) CDN o iskeletli
+ * kopyayı en çok 30 sn (+30 sn swr) tutar —
  * soğuk önbellekte çizilen kopya bitmiş maçta bir gün kalmasın. Maçın süresi zaten daha kısaysa (canlı) o kalır.
  */
 export function matchPageCacheControlForPage(

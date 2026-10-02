@@ -17,8 +17,10 @@ import { useTranslation } from '@/lib/i18n';
 import { leagueNameById } from '@/utils/leagueName';
 import { resolveMatchPage } from '@/server/resolveMatchPage';
 import { loadMatchCardH2h } from '@/server/matchCardH2h';
+import { loadMatchDetailSeed } from '@/server/matchDetailSeed';
 import { SPORTMONKS_TIMEOUT_MS, withSportmonksTimeout } from '@/server/sportmonks/cachedFetch';
 import type { Head2HeadData } from '@/services/liveScoreService';
+import type { MatchEvent, MatchLineupData, MatchStatsData } from '@/models/domain';
 import {
   matchPageCacheControl,
   matchPageCacheControlForPage,
@@ -33,6 +35,14 @@ type MatchDetailProps = {
    * çeker. Kart sonradan uzamasın diye (CLS).
    */
   initialH2h?: Head2HeadData | null;
+  /**
+   * Genel Bakış verisi (SSR): olaylar maçı çözen istekte gelir; istatistik 400 ms bütçeyle; kadro yalnız "yok" (null)
+   * ise. Alan yoksa istemci çeker. Kartlar ilk boyamada gerçek boyunda → altlarındaki kadro kutusu sonradan
+   * itilmez (CLS).
+   */
+  initialEvents?: MatchEvent[];
+  initialStats?: MatchStatsData | null;
+  initialLineups?: MatchLineupData | null;
   /** Ölü eski URL (ya da aynı id'li başka maçın slug'ı) → 410; istemci hiç veri çekmez. */
   gone?: boolean;
   /** Sağlayıcıda yok, DB'de saklı içerik var → doğrudan arşiv görünümü; istemci sağlayıcıya gitmez. */
@@ -65,10 +75,26 @@ export const getServerSideProps: GetServerSideProps<MatchDetailProps> = async (c
     const page = await withPageTimeout(() => resolveMatchPage(matchId, parseMatchSlugFromParam(slug ?? '')));
     switch (page.kind) {
       case 'match': {
-        const h2h = await withPageTimeout(() => loadMatchCardH2h(page.match));
+        const apiMatchId = String(page.match.id);
+        const [h2h, seed] = await Promise.all([
+          withPageTimeout(() => loadMatchCardH2h(page.match)),
+          withPageTimeout(() => loadMatchDetailSeed(apiMatchId)),
+        ]);
+        const complete = h2h !== undefined && seed.stats !== undefined && seed.lineups !== undefined;
         // Bütçe aşıldıysa (undefined) bölüm iskeletle gider → CDN bu kopyayı kısa tutar.
-        context.res.setHeader('Cache-Control', matchPageCacheControlForPage(page.match, h2h !== undefined));
-        return { props: { initialMatch: page.match, ...(h2h !== undefined ? { initialH2h: h2h } : {}) } };
+        context.res.setHeader('Cache-Control', matchPageCacheControlForPage(page.match, complete));
+        return {
+          props: {
+            initialMatch: page.match,
+            initialEvents: page.events,
+            ...(h2h !== undefined ? { initialH2h: h2h } : {}),
+            ...(seed.stats !== undefined ? { initialStats: seed.stats } : {}),
+            // Kadro yalnız "yok" ise taşınır (boş durum baştan çizilir, kutu sonradan çökmez). Varsa istemci çeker:
+            // Genel Bakış'ın en altında, büyümesi yalnız ekran dışındaki footer'ı iter; kadro HTML'i (~90 KB, gzip ~5,5 KB; büyük
+            // DOM) mobilde FCP/LCP'yi ~130/370 ms geciktiriyordu.
+            ...(seed.lineups === null ? { initialLineups: null } : {}),
+          },
+        };
       }
       case 'archived':
         setCache('archived');
@@ -88,7 +114,15 @@ export const getServerSideProps: GetServerSideProps<MatchDetailProps> = async (c
   }
 };
 
-export default function MatchDetail({ initialMatch, initialH2h, gone = false, archived = false }: MatchDetailProps) {
+export default function MatchDetail({
+  initialMatch,
+  initialH2h,
+  initialEvents,
+  initialStats,
+  initialLineups,
+  gone = false,
+  archived = false,
+}: MatchDetailProps) {
   const router = useRouter();
   const slugParam = router.query.slug;
   const slugFromPath = router.asPath.match(/^\/matches\/([^/?#]+)/)?.[1] ?? '';
@@ -102,8 +136,13 @@ export default function MatchDetail({ initialMatch, initialH2h, gone = false, ar
   // 410 ve SSR'ın arşiv dediği sayfada istemci sağlayıcıya hiç gitmez (aynı id'li başka maç gelmesin).
   const requestedMatchId = gone || archived ? '' : routeMatchId;
 
+  const initialDetail = useMemo(
+    () => ({ events: initialEvents, stats: initialStats, lineups: initialLineups }),
+    [initialEvents, initialStats, initialLineups],
+  );
   const detail = useMatchDetail(requestedMatchId, {
     initialMatch,
+    initialDetail,
     // Slug canonical değilse (yalnızca id / eski slug) adres çubuğunu düzelt
     onMatchFound: useCallback(
       (found: Match) => {

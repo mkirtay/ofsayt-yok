@@ -51,7 +51,7 @@ describe('resolveMatchPage — belirsiz bölge (eski id aralığı)', () => {
   it('1058753 doğru slug ile → gerçek maç sayfası', async () => {
     h.lookup.mockResolvedValue({ kind: 'found', match: gsReal, events: [] });
     const r = await resolveMatchPage(GS_REAL_2013, 'real-madrid-galatasaray');
-    expect(r).toEqual({ kind: 'match', match: gsReal });
+    expect(r).toEqual({ kind: 'match', match: gsReal, events: [] });
   });
 
   it('slug karşılaştırması büyük/küçük harf ve Türkçe karakter/yüzde-kodu normalize eder', async () => {
@@ -79,7 +79,7 @@ describe('resolveMatchPage — belirsiz bölge (eski id aralığı)', () => {
 
   it('slug\'sız URL → gerçek maç', async () => {
     h.lookup.mockResolvedValue({ kind: 'found', match: gsReal, events: [] });
-    expect(await resolveMatchPage(GS_REAL_2013, '')).toEqual({ kind: 'match', match: gsReal });
+    expect(await resolveMatchPage(GS_REAL_2013, '')).toEqual({ kind: 'match', match: gsReal, events: [] });
   });
 
   it('DB içeriği olan eski id (slug takımlarla uyuşuyor) → arşiv, Sportmonks\'a gitmez', async () => {
@@ -98,7 +98,7 @@ describe('resolveMatchPage — belirsiz bölge (eski id aralığı)', () => {
   it('eski analiz aynı id\'li H2H linkini ele geçirmez: slug uyuşmazsa Sportmonks maçı açılır', async () => {
     h.stored.set(GS_REAL_2013, { homeTeamName: 'Kasimpasa', awayTeamName: 'Rizespor' });
     h.lookup.mockResolvedValue({ kind: 'found', match: gsReal, events: [] });
-    expect(await resolveMatchPage(GS_REAL_2013, 'real-madrid-galatasaray')).toEqual({ kind: 'match', match: gsReal });
+    expect(await resolveMatchPage(GS_REAL_2013, 'real-madrid-galatasaray')).toEqual({ kind: 'match', match: gsReal, events: [] });
     expect(await resolveMatchPage(GS_REAL_2013, 'kasimpasa-rizespor')).toEqual({ kind: 'archived' });
   });
 

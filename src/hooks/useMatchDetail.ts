@@ -121,9 +121,20 @@ export type MatchDetailState = {
   handleSeasonChange: (seasonId: number, competitionIdStr: string) => Promise<void>;
 };
 
+export type MatchDetailSeed = {
+  events?: MatchEvent[];
+  stats?: MatchStatsData | null;
+  lineups?: MatchLineupData | null;
+};
+
 export type UseMatchDetailOptions = {
   /** SSR'da çözülmüş maç — SEO/OG etiketleri ilk render'da dolu kalsın diye başlangıç state'i */
   initialMatch?: Match | null;
+  /**
+   * SSR'da gelen olay / istatistik / kadro (yalnız `initialMatch` ile aynı maç için geçerli). Alan yoksa (bütçe
+   * aşıldı) istemci çeker; varsa ilk boyamada gerçek içerik çizilir, istek atılmaz → kartlar sonradan uzamaz (CLS).
+   */
+  initialDetail?: MatchDetailSeed;
   /** Maç çözüldüğünde (ör. canonical URL düzeltmesi için) çağrılır */
   onMatchFound?: (match: Match) => void;
 };
@@ -133,20 +144,22 @@ export type UseMatchDetailOptions = {
  */
 export function useMatchDetail(
   requestedMatchId: string,
-  { initialMatch = null, onMatchFound }: UseMatchDetailOptions = {},
+  { initialMatch = null, initialDetail, onMatchFound }: UseMatchDetailOptions = {},
 ): MatchDetailState {
+  const seed: MatchDetailSeed =
+    initialDetail && initialMatch && String(initialMatch.id) === requestedMatchId ? initialDetail : {};
   const [matchId, setMatchId] = useState('');
   const [match, setMatch] = useState<Match | null>(initialMatch);
-  const [events, setEvents] = useState<MatchEvent[]>([]);
-  const [lineups, setLineups] = useState<MatchLineupData | null>(null);
-  const [stats, setStats] = useState<MatchStatsData | null>(null);
+  const [events, setEvents] = useState<MatchEvent[]>(seed.events ?? []);
+  const [lineups, setLineups] = useState<MatchLineupData | null>(seed.lineups ?? null);
+  const [stats, setStats] = useState<MatchStatsData | null>(seed.stats ?? null);
   const [standings, setStandings] = useState<CompetitionTableData | null>(null);
   const [matchLoading, setMatchLoading] = useState(!initialMatch && Boolean(requestedMatchId));
-  // Olay/istatistik/kadro/puan durumu yalnız istemcide çekilir: maç istendiyse baştan "yükleniyor". Yoksa SSR HTML'i
-  // (ve istemci istekleri başlayana kadar ekran) her maç için "kadrolar açıklanmadı / veri yok" yazıyordu.
-  const [eventsLoading, setEventsLoading] = useState(Boolean(requestedMatchId));
-  const [statsLoading, setStatsLoading] = useState(Boolean(requestedMatchId));
-  const [lineupsLoading, setLineupsLoading] = useState(Boolean(requestedMatchId));
+  // SSR'dan gelmeyen olay/istatistik/kadro ve puan durumu istemcide çekilir: maç istendiyse baştan "yükleniyor". Yoksa
+  // SSR HTML'i (ve istemci istekleri başlayana kadar ekran) her maç için "kadrolar açıklanmadı / veri yok" yazıyordu.
+  const [eventsLoading, setEventsLoading] = useState(Boolean(requestedMatchId) && seed.events === undefined);
+  const [statsLoading, setStatsLoading] = useState(Boolean(requestedMatchId) && seed.stats === undefined);
+  const [lineupsLoading, setLineupsLoading] = useState(Boolean(requestedMatchId) && seed.lineups === undefined);
   const [standingsLoading, setStandingsLoading] = useState(Boolean(requestedMatchId));
   const [seasons, setSeasons] = useState<SeasonListItem[]>([]);
   const [selectedSeasonId, setSelectedSeasonId] = useState<number | null>(null);
@@ -160,9 +173,11 @@ export function useMatchDetail(
   // SSR'ın çözdüğü maç (yalnız sayfa; panelde yok). Aynı maç istendiyse yükleme effect'i onu SİLMEZ: kart
   // hydration sonrası iskelete dönmesin (CLS/LCP), istemci araması arka planda tazeler.
   const initialMatchRef = useRef(initialMatch);
+  const initialDetailRef = useRef(initialDetail);
   useEffect(() => {
     initialMatchRef.current = initialMatch;
-  }, [initialMatch]);
+    initialDetailRef.current = initialDetail;
+  }, [initialMatch, initialDetail]);
 
   useEffect(() => {
     if (!requestedMatchId) return;
@@ -171,19 +186,24 @@ export function useMatchDetail(
 
     const seeded =
       initialMatchRef.current && String(initialMatchRef.current.id) === requestedMatchId ? initialMatchRef.current : null;
+    // SSR'ın verdiği olay / istatistik / kadro: state'te kalır, ilgili istek atılmaz.
+    const detailSeed: MatchDetailSeed = (seeded && initialDetailRef.current) || {};
+    const seededEvents = detailSeed.events !== undefined;
+    const seededStats = detailSeed.stats !== undefined;
+    const seededLineups = detailSeed.lineups !== undefined;
 
     void (async () => {
       setMatchLoading(!seeded);
-      setEventsLoading(true);
-      setStatsLoading(true);
-      setLineupsLoading(true);
+      setEventsLoading(!seededEvents);
+      setStatsLoading(!seededStats);
+      setLineupsLoading(!seededLineups);
       setStandingsLoading(true);
       setNotFound(false);
       setIsArchivedMatch(false);
       setMatch(seeded);
-      setEvents([]);
-      setLineups(null);
-      setStats(null);
+      setEvents(detailSeed.events ?? []);
+      setLineups(detailSeed.lineups ?? null);
+      setStats(detailSeed.stats ?? null);
       setStandings(null);
       setSeasons([]);
       setSelectedSeasonId(null);
@@ -222,14 +242,16 @@ export function useMatchDetail(
       const fromFixture = found.match ? found.fromFixture : true;
       setMatchId(apiMatchId);
       setMatch(resolved);
-      setEvents(found.match ? found.events : []);
+      // SSR olayları geldiyse yalnız istemci araması olaylı döndüyse tazelenir (boş listeyle ezilip yeniden dolmasın).
+      if (!seededEvents) setEvents(found.match ? found.events : []);
+      else if (found.match && !found.fromFixture) setEvents(found.events);
       setMatchLoading(false);
       // Olaylar yalnızca maç fikstür listesinden bulunduysa eksik (eski sağlayıcı); events/fixture
       // isteğinden geldiyse boş liste gerçektir (başlamamış maç) — aynı isteği tekrar atma.
-      setEventsLoading(fromFixture);
+      setEventsLoading(fromFixture && !seededEvents);
       onFoundRef.current?.(resolved);
 
-      if (fromFixture) {
+      if (fromFixture && !seededEvents) {
         void getMatchWithEvents(apiMatchId).then((ev) => {
           if (cancelled) return;
           if (ev.match) setMatch(ev.match);
@@ -243,17 +265,21 @@ export function useMatchDetail(
         setStandingsLoading(false);
       }
 
-      void getMatchStats(apiMatchId).then((statsData) => {
-        if (cancelled) return;
-        setStats(statsData);
-        setStatsLoading(false);
-      });
+      if (!seededStats) {
+        void getMatchStats(apiMatchId).then((statsData) => {
+          if (cancelled) return;
+          setStats(statsData);
+          setStatsLoading(false);
+        });
+      }
 
-      void getMatchLineups(apiMatchId).then((lineupsData) => {
-        if (cancelled) return;
-        setLineups(lineupsData);
-        setLineupsLoading(false);
-      });
+      if (!seededLineups) {
+        void getMatchLineups(apiMatchId).then((lineupsData) => {
+          if (cancelled) return;
+          setLineups(lineupsData);
+          setLineupsLoading(false);
+        });
+      }
 
       if (cid != null) {
         void loadStandingsForMatch(cid).then((standingsBundle) => {

@@ -1,4 +1,5 @@
 import type { Match } from '@/models/liveScore';
+import type { MatchEvent } from '@/models/domain';
 import type { SportmonksFixtureLookup } from '@/services/liveScoreService';
 import { isUnambiguousSportmonksId } from '@/services/sportmonks/fixtureIdRange';
 import { matchSlugMatches } from '@/utils/matchUrl';
@@ -14,7 +15,7 @@ import { findStoredMatchInfo, type StoredMatchInfo } from '@/server/storedMatch'
  * - `error`: geçici hata → cache'lenmez, istemci tekrar dener.
  */
 export type MatchPageResolution =
-  | { kind: 'match'; match: Match }
+  | { kind: 'match'; match: Match; events: MatchEvent[] }
   | { kind: 'archived' }
   | { kind: 'gone' }
   | { kind: 'missing' }
@@ -45,7 +46,7 @@ export async function resolveMatchPage(
 ): Promise<MatchPageResolution> {
   if (isUnambiguousSportmonksId(matchId)) {
     const lookup = await deps.resolve(matchId, {});
-    if (lookup.kind === 'found') return { kind: 'match', match: lookup.match };
+    if (lookup.kind === 'found') return { kind: 'match', match: lookup.match, events: lookup.events };
     return lookup.kind === 'error' ? { kind: 'error' } : { kind: 'missing' };
   }
 
@@ -64,6 +65,6 @@ export async function resolveMatchPage(
   const lookup = await deps.resolve(matchId, { lookupAmbiguous: true });
   if (lookup.kind === 'error') return { kind: 'error' };
   if (lookup.kind !== 'found') return { kind: 'gone' };
-  if (!urlSlug || matchSlugMatches(urlSlug, lookup.match)) return { kind: 'match', match: lookup.match };
+  if (!urlSlug || matchSlugMatches(urlSlug, lookup.match)) return { kind: 'match', match: lookup.match, events: lookup.events };
   return { kind: 'gone' };
 }
