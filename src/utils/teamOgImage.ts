@@ -15,8 +15,9 @@ export function teamOgImagePath(teamId: string | number, now: number = Date.now(
 }
 
 /**
- * Kabul edilen sürümler: bugün ve dün. Takım sayfası HTML'i günde bir yenilenir (ISR); gece yarısından önce üretilmiş
- * sayfanın adresi ertesi gün de yönlendirmesiz çalışsın.
+ * Kabul edilen sürümler: bugün ve dün (gece yarısından hemen önce üretilmiş adres ertesi gün de doğrudan çalışsın).
+ * Takım sayfası kabuğu 7 günde bir yenilendiği için HTML'deki `v` daha eski olabilir → route çizmeden güncel adrese
+ * 307 ile yönlendirir.
  */
 export function isAcceptedTeamOgVersion(v: unknown, now: number = Date.now()): boolean {
   return v === teamOgVersion(now) || v === teamOgVersion(now - DAY_MS);

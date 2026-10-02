@@ -16,12 +16,12 @@ describe('/teams/[id] getStaticPaths / getStaticProps', () => {
     expect(await getStaticPaths({} as never)).toEqual({ paths: [], fallback: 'blocking' });
   });
 
-  it('bulundu: ad + görsel adresi, 1 gün; tek istek', async () => {
+  it('bulundu: ad + görsel adresi, 7 gün; tek istek', async () => {
     h.overview.mockResolvedValue({ team: { id: 34, name: 'Galatasaray' }, recent: [], fixtures: [], campaigns: [] });
     const r = (await props('34')) as { props: { teamName: string; ogImagePath: string }; revalidate: number };
     expect(r.props.teamName).toBe('Galatasaray');
     expect(r.props.ogImagePath).toMatch(/^\/api\/og\/team\/34\?v=\d{8}$/);
-    expect(r.revalidate).toBe(86_400);
+    expect(r.revalidate).toBe(7 * 86_400);
     expect(h.overview).toHaveBeenCalledTimes(1);
     expect(h.overview).toHaveBeenCalledWith('34');
   });

@@ -13,10 +13,15 @@ type TeamPageProps = {
 
 const SITE_URL = process.env.AUTH_URL ?? 'https://ofsaytyok.app';
 const DAY_SECONDS = 86_400;
+/**
+ * Kabukta yalnız takım adı var (değişmez) → 7 gün. Görsel adresindeki `v` (gün) bu sürede eskir; görsel route'u eski
+ * `v`'yi çizmeden güncel adrese 307 ile yönlendirir (bkz. api/og/team/[id].ts), görsel yine güncel.
+ */
+const SHELL_REVALIDATE_SECONDS = 7 * DAY_SECONDS;
 
 /**
  * ISR kabuğu: yalnız paylaşım etiketleri (og / twitter) için takım adı sunucuda; sayfanın tüm verisi eskisi gibi
- * istemcide (TeamDetailView). Önceden sayfa üretilmez (`paths: []`), ilk ziyarette üretilip 1 gün önbellekte kalır.
+ * istemcide (TeamDetailView). Önceden sayfa üretilmez (`paths: []`), ilk ziyarette üretilip 7 gün önbellekte kalır (takım yoksa 404, 1 gün).
  */
 export const getStaticPaths: GetStaticPaths = async () => ({ paths: [], fallback: 'blocking' });
 
@@ -28,7 +33,7 @@ export const getStaticProps: GetStaticProps<TeamPageProps> = async ({ params }) 
   return {
     props: { teamName: shell.kind === 'found' ? shell.name : null, ogImagePath: teamOgImagePath(id) },
     // Geçici hata: etiketsiz kabuk kısa süre kalsın.
-    revalidate: shell.kind === 'found' ? DAY_SECONDS : 60,
+    revalidate: shell.kind === 'found' ? SHELL_REVALIDATE_SECONDS : 60,
   };
 };
 

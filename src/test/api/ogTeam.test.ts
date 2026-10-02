@@ -13,7 +13,7 @@ vi.mock('@/server/og/teamOgImage', () => ({
 }));
 
 import handler from '@/pages/api/og/team/[id]';
-import { teamOgVersion } from '@/utils/teamOgImage';
+import { teamOgImagePath, teamOgVersion } from '@/utils/teamOgImage';
 
 type Res = { statusCode: number; headers: Record<string, string> };
 async function get(query: Record<string, string>): Promise<Res> {
@@ -56,6 +56,19 @@ describe('GET /api/og/team/[id]', () => {
     }
     expect(h.load).not.toHaveBeenCalled();
     expect(h.rendered).toBe(0);
+  });
+
+  it('7 günlük kabuktaki eski v (sayfa 7 gün önce üretildi) → güncel adrese 307; dünkü v doğrudan çizilir', async () => {
+    h.load.mockResolvedValue(data);
+    const DAY = 86_400_000;
+    for (const age of [2, 7, 8]) {
+      const oldPath = teamOgImagePath(34, Date.now() - age * DAY); // kabuğun HTML'e yazdığı adres
+      const r = await get({ id: '34', v: oldPath.split('v=')[1]! });
+      expect([r.statusCode, r.headers.location]).toEqual([307, `/api/og/team/34?v=${teamOgVersion()}`]);
+    }
+    expect(h.rendered).toBe(0);
+    const yesterday = await get({ id: '34', v: teamOgImagePath(34, Date.now() - DAY).split('v=')[1]! });
+    expect(yesterday.statusCode).toBe(200);
   });
 
   it('geçersiz kimlik, takım yok, hata → varsayılan görsel (kısa önbellek)', async () => {
