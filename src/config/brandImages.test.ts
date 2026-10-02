@@ -22,7 +22,7 @@ describe('marka görselleri', () => {
     expect(app).toContain('href="/apple-touch-icon.png"');
     expect(app).not.toContain('/api/og/default');
     expect(src('pages/index.tsx')).toContain(`'https://ofsaytyok.app'}${BRAND_LOGO_PNG}`);
-    for (const f of ['pages/_app.tsx', 'pages/index.tsx', 'pages/news/[id].tsx', 'pages/api/og/match.tsx']) {
+    for (const f of ['pages/_app.tsx', 'pages/index.tsx', 'pages/news/[id].tsx', 'server/og/matchOgImage.tsx']) {
       expect(src(f)).not.toContain('/images/logo.svg');
     }
   });
