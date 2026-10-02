@@ -1,5 +1,8 @@
 # Sportmonks Migration Karşılaştırma Raporu
 
+> **Durum (2026-10-02):** Geçiş tamamlandı; eski livescore-api.com yolu (`/api/livescore` proxy'si, axios/ALS istemcileri,
+> `liveScoreService` içindeki flag-kapalı dallar) koddan kaldırıldı. Aşağısı geçiş dönemine ait tarihî kayıttır.
+
 **Amaç:** `livescore-api.com`'dan Sportmonks'a olası bir geçişi değerlendirmek için, mevcut
 `src/services/liveScoreService.ts` Katman-1 fonksiyonlarının Sportmonks v3 Football API'sindeki
 karşılıklarını gerçek API çağrılarıyla tespit etmek.

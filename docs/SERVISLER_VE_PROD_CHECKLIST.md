@@ -168,9 +168,8 @@ UPSTASH_REDIS_REST_TOKEN=
 # AI
 ANTHROPIC_API_KEY=
 
-# LiveScore API
-LIVESCORE_API_KEY=
-LIVESCORE_API_HOST=
+# Sportmonks (tek veri sağlayıcı; eski LIVESCORE_API_* değişkenleri 2026-10-02'den beri okunmuyor, Vercel'den silinebilir)
+SPORTMONKS_API_KEY=
 
 # Stripe (test → live geçişte güncelle)
 STRIPE_SECRET_KEY=sk_test_...   # önce test, sonra sk_live_...

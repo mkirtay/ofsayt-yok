@@ -78,7 +78,7 @@ src/
 ├── lib/              Yardımcı kütüphaneler (auth, stripe, redis, logger, security, validation)
 ├── models/           Veri modelleri
 ├── pages/
-│   ├── api/          22 API endpoint (auth, payment, matches, user, livescore, ...)
+│   ├── api/          API endpoint'leri (auth, payment, matches, user, sportmonks, ...)
 │   ├── auth/         Signin, signup, şifre sıfırlama sayfaları
 │   ├── matches/      Maç detay sayfası ([slug].tsx)
 │   ├── news/         Haber detay sayfası
@@ -116,7 +116,7 @@ public/               Statik dosyalar, robots.txt, görseller
 | `GET /api/matches/[id]/analysis` | AI maç analizi (premium) |
 | `GET /api/matches/[id]/trivia` | AI maç trivia (premium) |
 | `GET/POST /api/matches/[id]/poll` | Maç anketi |
-| `GET /api/livescore/[...path]` | LiveScore API proxy |
+| `GET /api/sportmonks/[...path]` | Sportmonks proxy (izin listesi + paylaşımlı cache; eski `/api/livescore` 2026-10-02'de kaldırıldı) |
 | `GET /api/news` | Haber listesi |
 | `GET /api/news/[id]` | Haber detayı |
 | `GET /api/compare/teams` | Takım karşılaştırma |
@@ -161,8 +161,7 @@ DATABASE_URL=         # PostgreSQL (Supabase pooler)
 DIRECT_URL=           # PostgreSQL (Supabase direct, migration için)
 KV_REST_API_URL=      # Upstash Redis
 KV_REST_API_TOKEN=    # Upstash Redis
-LIVESCORE_API_KEY=    # LiveScore API key
-LIVESCORE_API_SECRET= # LiveScore API secret
+SPORTMONKS_API_KEY=   # Sportmonks (tek veri sağlayıcı; LIVESCORE_API_* artık okunmuyor)
 OPENAI_API_KEY=       # AI analiz (Anthropic opsiyonel alternatif)
 RESEND_API_KEY=       # Email servisi
 EMAIL_FROM=           # Gönderici adresi (domain doğrulandıktan sonra noreply@contact.ofsaytyok.app)

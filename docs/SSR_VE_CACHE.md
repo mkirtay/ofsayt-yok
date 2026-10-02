@@ -13,37 +13,36 @@ Böylece hem **ilk boya (FCP)** iyileşir hem de **dinamik veri** davranışı b
 sequenceDiagram
   participant Browser
   participant Next as NextServer
-  participant Proxy as ApiLivescoreProxy
-  participant Upstream as LivescoreAPI
+  participant Cache as SportmonksCache (L1 bellek + Redis)
+  participant Proxy as /api/sportmonks
+  participant Upstream as Sportmonks
 
-  Browser->>Next: GET /uefa
+  Browser->>Next: GET /matches/[slug]
   Next->>Next: getServerSideProps
-  Next->>Proxy: sunucu içi HTTP /api/livescore
-  Proxy->>Upstream: key+secret
-  Upstream-->>Proxy: JSON
-  Proxy-->>Next: JSON
+  Next->>Cache: sportmonksClientRequest (sunucu içi, HTTP hop yok)
+  Cache->>Upstream: ıskada api_token ile
+  Upstream-->>Cache: JSON
+  Cache-->>Next: JSON
   Next-->>Browser: HTML + propsJsonSafe(props)
   Note over Browser: Hidrasyon
-  Browser->>Proxy: periyodik XHR (polling)
+  Browser->>Proxy: periyodik istek (polling)
+  Proxy->>Cache: aynı paylaşımlı cache
 ```
 
-## Sunucuda Livescore nasıl çağrılıyor?
+## Sunucuda maç verisi nasıl çağrılıyor?
 
-Tarayıcıda `liveScoreService` varsayılan olarak **`/api/livescore`** tabanlı axios kullanır (relative URL).
+Tek veri sağlayıcı **Sportmonks** (eski livescore-api.com yolu, `/api/livescore` proxy'si ve ona bağlı axios /
+`AsyncLocalStorage` istemcileri 2026-10-02'de kaldırıldı). `liveScoreService` fonksiyonları sunucuda ve tarayıcıda
+aynıdır; yönlendirmeyi [`sportmonksRuntimeClient.ts`](src/services/sportmonksRuntimeClient.ts) yapar:
 
-Sunucuda `getServerSideProps` içinde relative URL güvenilir olmadığı için:
+- **Sunucuda** (SSR, API route, cron, bot): istek doğrudan paylaşımlı cache'ten geçer
+  ([`server/sportmonks/cachedFetch.ts`](src/server/sportmonks/cachedFetch.ts) — L1 bellek + Redis L2, TTL'ler
+  [`cachePolicy.ts`](src/services/sportmonks/cachePolicy.ts)). Kendi origin'ine HTTP isteği atılmaz, sarmalayıcı gerekmez.
+- **Tarayıcıda**: [`/api/sportmonks/[...path]`](src/pages/api/sportmonks/[...path].ts) proxy'si (izin listesi:
+  [`proxyAllowlist.ts`](src/server/sportmonks/proxyAllowlist.ts)); token yalnız sunucuda, aynı cache'i kullanır.
 
-- **`livescoreInternalAxios`** — İstek başına `x-forwarded-proto` ve `Host` ile `https://siteniz/api/livescore` tabanlı bir axios örneği oluşturur.
-- **`liveScoreHttpContext`** — `runWithLiveScoreHttpClient(axiosInstance, fn)` ile bu axios’u **yalnızca o SSR isteği süresince** `liveScoreService`’e bağlar. Tarayıcıda `AsyncLocalStorage` kullanılmaz; çakışma riski olmaz.
-
-Loader dosyaları (`src/server/load*.ts`) genelde şu kalıbı izler:
-
-```ts
-const client = livescoreAxiosFromIncomingMessage(req);
-return await runWithLiveScoreHttpClient(client, async () => {
-  // getAllLiveMatches(), getCompetitionTableFull(), …
-});
-```
+Loader'lar (`src/server/*.ts`) `liveScoreService` fonksiyonlarını doğrudan çağırır; süre logu için `timedSsrLoad`
+([`ssrTiming.ts`](src/server/ssrTiming.ts)).
 
 Haber tarafında bazı sayfalar doğrudan **`getCachedNews()`** (RSS önbelleği) kullanır; ekstra HTTP atmadan API route ile aynı veriyi alır.
 
@@ -57,7 +56,7 @@ Next.js, `getServerSideProps` dönüşünü **JSON** ile serileştirir. Obje iç
 propsJsonSafe(payload); // JSON.parse(JSON.stringify(payload))
 ```
 
-Böylece iç içe `undefined` anahtarlar temizlenir. Ek olarak, örneğin fikstür normalleştirmesinde isteğe bağlı alanlar mümkünse hiç eklenmez (`normalizeFixtureToMatch`).
+Böylece iç içe `undefined` anahtarlar temizlenir. Ek olarak mapper'lar isteğe bağlı alanları mümkünse hiç eklemez (`sportmonksFixtureMapper`).
 
 ## Hangi sayfalarda SSR var?
 
@@ -69,7 +68,7 @@ Böylece iç içe `undefined` anahtarlar temizlenir. Ek olarak, örneğin fikst�
 | `/matches/[id]` | Maç + olaylar + kadrolar + istatistik + lig tablosu (varsa) |
 | `/teams/[id]` | Son maçlar, ilk lig kadrosu + mini puan tablosu |
 | `/news/[id]` | Makale + yan haber listesi (`getCachedNews`) |
-| `/world-cup` | Bootstrap: sezonlar, ana tablo, varsayılan grup seçimi (Maçlar sekmesi ağır veri hâlâ client) |
+| `/world-cup` | Şimdilik kapalı: ana sayfaya 302 (`WORLD_CUP_PAGE_ENABLED`, Dünya Kupası Sportmonks planında yok) |
 | `/profile` | Oturum varsa Prisma’dan profil alanı (oturum yoksa redirect) |
 
 Auth formları (`/auth/signin`, `/auth/signup`) bilinçli olarak SSR veri paketi olmadan bırakılmıştır.
@@ -99,23 +98,26 @@ Periyodik **30 sn interval** (maç hub) ve diğer client effect’ler aynen koru
 
 `stale-while-revalidate`: süresi dolmuş önbellek yanıtı verilirken arka planda yeni içerik çekilir; kullanıcı bekletilmez (TTL seçimine bağlı tazelik).
 
-### 2. Upstream API (`/api/livescore`)
+### 2. Sağlayıcı verisi (Sportmonks cache)
 
-Proxy dosyası ([`src/pages/api/livescore/[...path].ts`](src/pages/api/livescore/[...path].ts)) kendi içinde ek `Cache-Control` set etmiyorsa, tarayıcı önbelleği varsayılan davranışla kalır. İleride **tablo** vs **canlı** endpoint’leri için farklı `Cache-Control` eklemek mümkündür (canlı: kısa veya `no-store`).
+Sunucu ve `/api/sportmonks` proxy'si aynı cache'i kullanır; süreler uç noktaya ve maçın durumuna göre
+[`cachePolicy.ts`](src/services/sportmonks/cachePolicy.ts)'te. Maç sayfası HTML'inin CDN süresi
+[`matchPageCache.ts`](src/server/matchPageCache.ts)'te (canlı 20 sn … bitmiş 1 gün; form / karşılaşma geçmişi SSR
+bütçesini aşarsa 30 sn).
 
 ## Geliştirme notları
 
-- **Sunucu–sunucu self-fetch:** SSR loader’ları kendi origin’inize (`/api/livescore`) gider; kimlik bilgileri yine proxy’de env ile kalır.
+- **Self-fetch yok:** SSR loader'ları Sportmonks'a paylaşımlı cache üzerinden süreç içinde gider; `SPORTMONKS_API_KEY` yalnız sunucuda.
 - **Hata durumu:** Loader `null` dönerse sayfalar mümkün olduğunca eski client-only davranışa yakın fallback kullanır (ör. boş tablo, client bootstrap).
-- **Dünya Kupası:** İlk boyayı hafifletmek için yalnızca bootstrap SSR’da; **Maçlar** sekmesindeki çoklu grup istekleri bilinçli olarak istemcide bırakılmıştır (TTFB ve kota).
+- **Dünya Kupası:** Sayfa şimdilik kapalı (302); kodu duruyor (`src/pages/world-cup`).
 
 ## İlgili dosyalar (hızlı referans)
 
 | Dosya | Rol |
 |-------|-----|
 | [`src/server/propsJsonSafe.ts`](src/server/propsJsonSafe.ts) | Props JSON güvenliği |
-| [`src/server/livescoreInternalAxios.ts`](src/server/livescoreInternalAxios.ts) | SSR axios tabanı |
-| [`src/services/liveScoreHttpContext.ts`](src/services/liveScoreHttpContext.ts) | İstek kapsamlı HTTP client |
+| [`src/services/sportmonksRuntimeClient.ts`](src/services/sportmonksRuntimeClient.ts) | Sunucu (cache) / tarayıcı (proxy) yönlendirmesi |
+| [`src/server/sportmonks/cachedFetch.ts`](src/server/sportmonks/cachedFetch.ts) | Paylaşımlı Sportmonks cache'i (L1 + Redis) |
 | [`src/server/load*.ts`](src/server/) | Sayfa başına veri toplama |
 | [`src/components/MatchHubPage/index.tsx`](src/components/MatchHubPage/index.tsx) | Hub hidrasyon + skip ref’leri |
 | Sayfa dosyaları `src/pages/**` | `getServerSideProps` + `Cache-Control` |
