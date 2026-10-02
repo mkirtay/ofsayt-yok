@@ -36,4 +36,10 @@ describe('marka görselleri', () => {
     expect(ico.readUInt16LE(4)).toBe(3);
     expect(statSync(pub(BRAND_LOGO_SVG)).size).toBeGreaterThan(0);
   });
+
+  it('sekme ikonu (icon.svg) yalnız logonun işareti: yeşil kare + işaret kırpımı', () => {
+    const svg = readFileSync(pub('icon.svg'), 'utf8');
+    expect(svg).toContain('fill="#00A76F"');
+    expect(svg).toContain('viewBox="0 0 36 42"');
+  });
 });

@@ -1,14 +1,15 @@
 #!/usr/bin/env node
 /**
- * Marka görsellerini güncel logodan (public/images/ofsaytyok-logo.svg, public/icon.svg) yeniden üretir:
+ * Marka görsellerini güncel logodan (public/images/ofsaytyok-logo.svg; kare tam logo: scripts/brand/icon-square-logo.svg)
+ * yeniden üretir:
  *
  * - public/images/og-default-v2.png  1200×630 varsayılan paylaşım görseli (og:image / twitter:image). Kompozisyon eski
  *   `/api/og/default` ile aynı (marka yeşili zemin, sağda koyu yeşil eğik şerit, ortada logo, altında alt yazı) ve
  *   aynı çizim motoruyla (next/og → satori) çizilir; yalnız logo yeni.
- * - public/apple-touch-icon.png      180×180 (iOS SVG kabul etmiyor) — icon.svg'den.
- * - public/icon-512.png              512×512 — yapılandırılmış veri (JSON-LD Organization / publisher) logosu; icon.svg'den.
- * - public/favicon.ico               16/32/48 — logonun yalnız işareti (sol kısım) yeşil kare üstünde: tam logo 16–48 px'te
- *   okunmuyor.
+ * - public/apple-touch-icon.png      180×180 (iOS SVG kabul etmiyor) — kare tam logodan.
+ * - public/icon-512.png              512×512 — yapılandırılmış veri (JSON-LD Organization / publisher) logosu; kare tam logodan.
+ * - public/favicon.ico               16/32/48 ve public/icon.svg (sekme ikonu) — logonun yalnız işareti (sol kısım) yeşil
+ *   kare üstünde: tam logo 16–48 px'te okunmuyor.
  *
  * Kullanım: `node scripts/generate-brand-images.mjs`. Dosya adı değişirse (önbellek kırma: -v3 …) referansları da güncelle:
  * src/config/brandImages.ts.
@@ -119,7 +120,7 @@ function ico(pngs) {
 
 async function main() {
   const logoSvg = await readFile(pub('images', 'ofsaytyok-logo.svg'), 'utf8');
-  const iconSvg = await readFile(pub('icon.svg'));
+  const iconSvg = await readFile(path.join(root, 'scripts', 'brand', 'icon-square-logo.svg'));
 
   const og = await ogDefault(logoSvg);
   await writeFile(pub('images', 'og-default-v2.png'), og);
@@ -142,12 +143,15 @@ async function main() {
   }
   const favicon = ico(favPngs);
   await writeFile(pub('favicon.ico'), favicon);
+  const markSvg = `${markIconSvg(logoSvg, 64)}\n`;
+  await writeFile(pub('icon.svg'), markSvg);
 
   for (const [name, buf] of [
     ['images/og-default-v2.png', og],
     ['apple-touch-icon.png', touch],
     ['icon-512.png', icon512],
     ['favicon.ico', favicon],
+    ['icon.svg', Buffer.from(markSvg)],
   ]) {
     console.log(`${name.padEnd(28)} ${(buf.length / 1024).toFixed(1)} KB`);
   }
