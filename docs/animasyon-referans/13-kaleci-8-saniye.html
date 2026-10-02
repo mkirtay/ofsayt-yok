@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kalecinin 8 saniyesi — Ofsayt Yok animasyon referansı</title>
+<style>
+
+body { margin: 0; }
+.stripes { position: absolute; inset: 0; background: repeating-linear-gradient(90deg, rgba(255,255,255,.06) 0, rgba(255,255,255,.06) 24px, transparent 24px, transparent 48px); }
+.turf { position: relative; width: 504px; border-radius: 12px; overflow: hidden; background: linear-gradient(135deg, #007B55 0%, #00a76f 60%, #007B55 100%); box-shadow: inset 0 0 0 1px rgba(255,255,255,.15); }
+.ballw { position: absolute; display: block; width: 18px; height: 18px; border-radius: 50%; background: #ffffff; box-shadow: inset -2px -2px 0 rgba(0,0,0,.12), 0 3px 6px rgba(0,0,0,.3); }
+.ballw::before { content: ''; position: absolute; inset: 3px; border-radius: 50%; background: conic-gradient(rgba(0,0,0,.55) 0deg 30deg, transparent 30deg 150deg, rgba(0,0,0,.55) 150deg 180deg, transparent 180deg 300deg, rgba(0,0,0,.55) 300deg 330deg, transparent 330deg 360deg); opacity: .6; }
+.marks { position: absolute; inset: 0; }
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; }
+}
+.rm * { animation: none !important; }
+
+/* 10 sn döngü: 0–8 sn geri sayım (son 5 sn sarı + hakemin eli), 8–10 sn "KORNER".
+   Temel stiller = "Hareketi azalt" karesi: dolu halka, "8", KORNER hapı ("8 saniye → korner"). */
+.kpitch { height: 230px; }
+.gk { position: absolute; left: 82px; top: 115px; width: 22px; height: 22px; margin: -11px 0 0 -11px; border-radius: 50%; background: #fde047; box-shadow: 0 0 0 3px #101512, 0 3px 6px rgba(0,0,0,.3); }
+.gball { left: 92px; top: 106px; width: 16px; height: 16px; margin: -8px 0 0 -8px; animation: hold 1.4s ease-in-out infinite alternate; }
+.gball::before { inset: 2px; }
+@keyframes hold {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-2px); }
+}
+
+/* Halka: 8 dilim, her saniye biri söner (yalnız opacity). Son 5 dilim sarı. */
+.ring { position: absolute; left: 230px; top: 45px; width: 140px; height: 140px; }
+.track { stroke: rgba(255,255,255,.18); }
+.seg { stroke: #ffffff; animation: none 10s linear infinite both; }
+.seg.amb { stroke: #fbbf24; }
+@keyframes s0 { 0%, 9% { opacity: 1; } 10%, 100% { opacity: .14; } }
+@keyframes s1 { 0%, 19% { opacity: 1; } 20%, 100% { opacity: .14; } }
+@keyframes s2 { 0%, 29% { opacity: 1; } 30%, 100% { opacity: .14; } }
+@keyframes s3 { 0%, 39% { opacity: 1; } 40%, 100% { opacity: .14; } }
+@keyframes s4 { 0%, 49% { opacity: 1; } 50%, 100% { opacity: .14; } }
+@keyframes s5 { 0%, 59% { opacity: 1; } 60%, 100% { opacity: .14; } }
+@keyframes s6 { 0%, 69% { opacity: 1; } 70%, 100% { opacity: .14; } }
+@keyframes s7 { 0%, 79% { opacity: 1; } 80%, 100% { opacity: .14; } }
+
+/* Rakamlar: üst üste 9 span; her biri kendi saniyesinde görünür (negatif gecikme = döngü içi faz). */
+.d { position: absolute; left: 300px; top: 115px; width: 80px; margin: -36px 0 0 -40px; text-align: center; font-size: 60px; line-height: 72px; font-weight: 900; color: #ffffff; text-shadow: 0 2px 8px rgba(0,0,0,.25); font-variant-numeric: tabular-nums; opacity: 0; animation: none 10s linear infinite both; }
+.d.amb { color: #fde047; }
+.d8 { opacity: 1; }
+@keyframes dg {
+  0% { opacity: 1; transform: scale(1.2); }
+  3%, 9.6% { opacity: 1; transform: scale(1); }
+  10%, 100% { opacity: 0; transform: scale(1); }
+}
+@keyframes dg0 {
+  0% { opacity: 1; transform: scale(1.2); }
+  3%, 19.6% { opacity: 1; transform: scale(1); }
+  20%, 100% { opacity: 0; transform: scale(1); }
+}
+
+/* Hakemin eli: 3. sn'de (kalan 5) belirir, her saniye bir parmak iner. */
+.hand { position: absolute; left: 420px; top: 120px; width: 50px; height: 70px; margin: -35px 0 0 -25px; opacity: 0; animation: hand 10s ease-out infinite both; }
+@keyframes hand {
+  0%, 29% { opacity: 0; transform: translateY(10px); }
+  32%, 82% { opacity: 1; transform: translateY(0); }
+  86%, 100% { opacity: 0; transform: translateY(0); }
+}
+.palm { position: absolute; left: 9px; bottom: 0; width: 34px; height: 32px; border-radius: 8px 8px 12px 12px; background: #ffffff; box-shadow: 0 3px 6px rgba(0,0,0,.25); }
+.fg { position: absolute; bottom: 28px; width: 8px; border-radius: 4px; background: #ffffff; transform-origin: bottom; animation: none 10s ease-in infinite both; }
+.f2 { left: 10px; height: 26px; animation-name: f2; }
+.f3 { left: 19px; height: 30px; animation-name: f3; }
+.f4 { left: 28px; height: 27px; animation-name: f4; }
+.f5 { left: 37px; height: 21px; animation-name: f5; }
+.thumbw { position: absolute; left: 8px; bottom: 6px; width: 8px; height: 20px; transform: rotate(-42deg); transform-origin: bottom center; }
+.f1 { left: 0; bottom: 0; height: 20px; animation-name: f1; }
+@keyframes f1 { 0%, 79% { opacity: 1; transform: scaleY(1); } 80%, 100% { opacity: 0; transform: scaleY(.2); } }
+@keyframes f2 { 0%, 69% { opacity: 1; transform: scaleY(1); } 70%, 100% { opacity: 0; transform: scaleY(.2); } }
+@keyframes f3 { 0%, 59% { opacity: 1; transform: scaleY(1); } 60%, 100% { opacity: 0; transform: scaleY(.2); } }
+@keyframes f4 { 0%, 49% { opacity: 1; transform: scaleY(1); } 50%, 100% { opacity: 0; transform: scaleY(.2); } }
+@keyframes f5 { 0%, 39% { opacity: 1; transform: scaleY(1); } 40%, 100% { opacity: 0; transform: scaleY(.2); } }
+
+.stamp { position: absolute; left: 300px; top: 206px; display: flex; align-items: center; gap: 10px; padding: 8px 20px; border-radius: 999px; background: #ffffff; color: #101512; font-size: 20px; font-weight: 800; letter-spacing: .08em; white-space: nowrap; box-shadow: 0 8px 24px rgba(0,0,0,.25); transform: translate(-50%, -50%); animation: stamp 10s cubic-bezier(.3,.7,.3,1) infinite both; }
+@keyframes stamp {
+  0%, 80% { opacity: 0; transform: translate(-50%, -50%) scale(.6); }
+  84% { opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
+  87%, 95% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  99%, 100% { opacity: 0; transform: translate(-50%, -50%) scale(.96); }
+}
+
+.stage { position: relative; width: 100%; max-width: 504px; aspect-ratio: 504 / 230; border-radius: 12px; overflow: hidden; }
+.scale { position: absolute; left: 0; top: 0; width: 504px; transform-origin: top left; transform: scale(var(--s, 1)); }
+.demo { font-family: Inter, system-ui, sans-serif; color: #101512; padding: 32px; display: flex; flex-direction: column; gap: 14px; align-items: flex-start; }
+.demo h1 { margin: 0; font-size: 22px; font-weight: 800; }
+.demo p { margin: 0 0 6px; font-size: 14px; color: #44544b; }
+@media (max-width: 480px) { .demo { padding: 16px; } }
+</style>
+</head>
+<body>
+<div class="demo">
+<h1>Kalecinin 8 saniyesi</h1>
+<p>Nerede: Kural Köşesi "Kalecinin 8 saniyesi" kartı (08 halkasının yerine). URL'ye #rm ekleyince "Hareketi azalt" karesi.</p>
+<div class="stage"><div class="scale">
+<div class="turf kpitch" aria-hidden="true">
+<span class="stripes"></span>
+<svg class="marks" width="504" height="230" viewBox="0 0 504 230" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2">
+<rect x="-2" y="25" width="132" height="180"></rect>
+<rect x="-2" y="73" width="48" height="84"></rect>
+<rect x="-4" y="90" width="12" height="50" stroke="rgba(255,255,255,.9)" stroke-width="3"></rect>
+</svg>
+<span class="gk"></span>
+<span class="ballw gball"></span>
+<svg class="ring" viewBox="0 0 140 140" fill="none" stroke-width="7" stroke-linecap="round">
+<circle class="track" cx="70" cy="70" r="56"></circle>
+<circle class="seg" style="animation-name: s0" cx="70" cy="70" r="56" stroke-dasharray="38 313.86" transform="rotate(-86.93 70 70)"></circle>
+<circle class="seg" style="animation-name: s1" cx="70" cy="70" r="56" stroke-dasharray="38 313.86" transform="rotate(-41.93 70 70)"></circle>
+<circle class="seg" style="animation-name: s2" cx="70" cy="70" r="56" stroke-dasharray="38 313.86" transform="rotate(3.07 70 70)"></circle>
+<circle class="seg amb" style="animation-name: s3" cx="70" cy="70" r="56" stroke-dasharray="38 313.86" transform="rotate(48.07 70 70)"></circle>
+<circle class="seg amb" style="animation-name: s4" cx="70" cy="70" r="56" stroke-dasharray="38 313.86" transform="rotate(93.07 70 70)"></circle>
+<circle class="seg amb" style="animation-name: s5" cx="70" cy="70" r="56" stroke-dasharray="38 313.86" transform="rotate(138.07 70 70)"></circle>
+<circle class="seg amb" style="animation-name: s6" cx="70" cy="70" r="56" stroke-dasharray="38 313.86" transform="rotate(183.07 70 70)"></circle>
+<circle class="seg amb" style="animation-name: s7" cx="70" cy="70" r="56" stroke-dasharray="38 313.86" transform="rotate(228.07 70 70)"></circle>
+</svg>
+<span class="d d8" style="animation-name: dg; animation-delay: -10s">8</span>
+<span class="d" style="animation-name: dg; animation-delay: -9s">7</span>
+<span class="d" style="animation-name: dg; animation-delay: -8s">6</span>
+<span class="d amb" style="animation-name: dg; animation-delay: -7s">5</span>
+<span class="d amb" style="animation-name: dg; animation-delay: -6s">4</span>
+<span class="d amb" style="animation-name: dg; animation-delay: -5s">3</span>
+<span class="d amb" style="animation-name: dg; animation-delay: -4s">2</span>
+<span class="d amb" style="animation-name: dg; animation-delay: -3s">1</span>
+<span class="d" style="animation-name: dg0; animation-delay: -2s">0</span>
+<span class="hand"><span class="thumbw"><span class="fg f1"></span></span><span class="fg f2"></span><span class="fg f3"></span><span class="fg f4"></span><span class="fg f5"></span><span class="palm"></span></span>
+<span class="stamp"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="22" x2="5" y2="3"></line><path d="M5 3 L18 7 L5 11" fill="#ef4444" stroke="#ef4444"></path></svg>KORNER</span>
+</div>
+</div></div>
+<span role="status" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Kaleci topu 8 saniyeden uzun tutarsa korner</span>
+</div>
+<script>
+// Yalnız referans: ScaledScene eşleniği ve #rm → "Hareketi azalt" karesi.
+document.querySelectorAll('.stage').forEach(function (s) { var f = function () { s.style.setProperty('--s', s.clientWidth / 504); }; new ResizeObserver(f).observe(s); f(); });
+if (location.hash === '#rm') document.documentElement.classList.add('rm');
+</script>
+</body>
+</html>

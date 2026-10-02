@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Uzatma tabelası — Ofsayt Yok animasyon referansı</title>
+<style>
+
+body { margin: 0; }
+.stripes { position: absolute; inset: 0; background: repeating-linear-gradient(90deg, rgba(255,255,255,.06) 0, rgba(255,255,255,.06) 24px, transparent 24px, transparent 48px); }
+.turf { position: relative; width: 504px; border-radius: 12px; overflow: hidden; background: linear-gradient(135deg, #007B55 0%, #00a76f 60%, #007B55 100%); box-shadow: inset 0 0 0 1px rgba(255,255,255,.15); }
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; }
+}
+.rm * { animation: none !important; }
+
+/* Temel konumlar = son kare (hakem ortada, tabela yanık). */
+.upitch { height: 230px; }
+.cline { position: absolute; left: 50%; top: 0; height: 160px; width: 2px; margin-left: -1px; background: rgba(255,255,255,.32); }
+.ccircle { position: absolute; left: 50%; top: 160px; width: 110px; height: 110px; margin: -55px 0 0 -55px; border: 2px solid rgba(255,255,255,.32); border-radius: 50%; box-sizing: border-box; clip-path: inset(0 0 50% 0); }
+.touch { position: absolute; left: 0; right: 0; top: 160px; height: 2px; margin-top: -1px; background: rgba(255,255,255,.75); }
+.side { position: absolute; left: 0; right: 0; top: 161px; bottom: 0; background: rgba(0,0,0,.2); }
+
+/* Dördüncü hakem: kenar çizgisi boyunca soldan gelir. */
+.fourth { position: absolute; left: 252px; top: 194px; width: 22px; height: 22px; margin: -11px 0 0 -11px; border-radius: 50%; background: #101512; box-shadow: 0 0 0 3px #fde047, 0 3px 6px rgba(0,0,0,.35); animation: walk 7s cubic-bezier(.4,0,.2,1) infinite both; }
+@keyframes walk {
+  0% { opacity: 1; transform: translateX(-290px); }
+  26%, 90% { opacity: 1; transform: translateX(0); }
+  96%, 100% { opacity: 0; transform: translateX(0); }
+}
+
+/* LED tabela: hakemin üstünde yükselir, rakamlar kısa titreşimle yanar. */
+.board { position: absolute; left: 252px; top: 96px; width: 156px; height: 84px; margin-left: -78px; animation: board 7s cubic-bezier(.3,.7,.3,1) infinite both; }
+@keyframes board {
+  0%, 28% { opacity: 0; transform: translateY(26px); }
+  36%, 88% { opacity: 1; transform: translateY(0); }
+  95%, 100% { opacity: 0; transform: translateY(26px); }
+}
+.pole { position: absolute; left: 50%; top: 84px; width: 4px; height: 12px; margin-left: -2px; background: #2b2f2d; }
+.panel { position: absolute; inset: 0; border-radius: 8px; background: #0d0f0e; box-shadow: 0 0 0 3px #2b2f2d, 0 10px 24px rgba(0,0,0,.35); overflow: hidden; }
+.digits { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 64px; font-weight: 900; letter-spacing: .02em; color: #ff4d3a; text-shadow: 0 0 10px rgba(255,77,58,.85), 0 0 22px rgba(255,77,58,.45); font-variant-numeric: tabular-nums; animation: led 7s steps(1, end) infinite both; }
+@keyframes led {
+  0%, 38% { opacity: 0; }
+  40% { opacity: 1; }
+  42% { opacity: .25; }
+  44%, 100% { opacity: 1; }
+}
+/* Nokta matrisi: rakamların üstünde ince ızgara (statik). */
+.dots { position: absolute; inset: 0; background: radial-gradient(circle, transparent 1.5px, #0d0f0e 2px) 0 0 / 4px 4px; opacity: .5; }
+.lbl { position: absolute; left: 252px; top: 30px; transform: translateX(-50%); padding: 5px 12px; border-radius: 999px; background: rgba(6,18,12,.55); color: #ffffff; font-size: 18px; font-weight: 800; letter-spacing: .08em; white-space: nowrap; animation: lbl 7s ease-in-out infinite both; }
+@keyframes lbl {
+  0%, 44% { opacity: 0; transform: translateX(-50%) translateY(-6px); }
+  50%, 88% { opacity: 1; transform: translateX(-50%) translateY(0); }
+  95%, 100% { opacity: 0; transform: translateX(-50%) translateY(-6px); }
+}
+
+.stage { position: relative; width: 100%; max-width: 504px; aspect-ratio: 504 / 230; border-radius: 12px; overflow: hidden; }
+.scale { position: absolute; left: 0; top: 0; width: 504px; transform-origin: top left; transform: scale(var(--s, 1)); }
+.demo { font-family: Inter, system-ui, sans-serif; color: #101512; padding: 32px; display: flex; flex-direction: column; gap: 14px; align-items: flex-start; }
+.demo h1 { margin: 0; font-size: 22px; font-weight: 800; }
+.demo p { margin: 0 0 6px; font-size: 14px; color: #44544b; }
+@media (max-width: 480px) { .demo { padding: 16px; } }
+</style>
+</head>
+<body>
+<div class="demo">
+<h1>Uzatma tabelası</h1>
+<p>Nerede: Kural Köşesi "Uzatma süresi nasıl belirlenir?" kartı (08 halkasının yerine). URL'ye #rm ekleyince "Hareketi azalt" karesi.</p>
+<div class="stage"><div class="scale">
+<div class="turf upitch" aria-hidden="true">
+<span class="stripes"></span>
+<span class="cline"></span>
+<span class="ccircle"></span>
+<span class="side"></span>
+<span class="touch"></span>
+<span class="lbl">EN AZ 4 DAKİKA</span>
+<span class="board"><span class="pole"></span><span class="panel"><span class="digits">+4</span><span class="dots"></span></span></span>
+<span class="fourth"></span>
+</div>
+</div></div>
+<span role="status" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Dördüncü hakem tabelası: en az 4 dakika uzatma</span>
+</div>
+<script>
+// Yalnız referans: ScaledScene eşleniği ve #rm → "Hareketi azalt" karesi.
+document.querySelectorAll('.stage').forEach(function (s) { var f = function () { s.style.setProperty('--s', s.clientWidth / 504); }; new ResizeObserver(f).observe(s); f(); });
+if (location.hash === '#rm') document.documentElement.classList.add('rm');
+</script>
+</body>
+</html>

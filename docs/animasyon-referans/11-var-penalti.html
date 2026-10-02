@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VAR: Penaltı — Ofsayt Yok animasyon referansı</title>
+<style>
+
+body { margin: 0; }
+.stripes { position: absolute; inset: 0; background: repeating-linear-gradient(90deg, rgba(255,255,255,.06) 0, rgba(255,255,255,.06) 24px, transparent 24px, transparent 48px); }
+.turf { position: relative; width: 504px; border-radius: 12px; overflow: hidden; background: linear-gradient(135deg, #007B55 0%, #00a76f 60%, #007B55 100%); box-shadow: inset 0 0 0 1px rgba(255,255,255,.15); }
+.ballw { position: absolute; display: block; width: 18px; height: 18px; border-radius: 50%; background: #ffffff; box-shadow: inset -2px -2px 0 rgba(0,0,0,.12), 0 3px 6px rgba(0,0,0,.3); }
+.ballw::before { content: ''; position: absolute; inset: 3px; border-radius: 50%; background: conic-gradient(rgba(0,0,0,.55) 0deg 30deg, transparent 30deg 150deg, rgba(0,0,0,.55) 150deg 180deg, transparent 180deg 300deg, rgba(0,0,0,.55) 300deg 330deg, transparent 330deg 360deg); opacity: .6; }
+.marks { position: absolute; inset: 0; }
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; }
+}
+.rm * { animation: none !important; }
+
+/* Sahne 504×230 çizilir, kutuya ölçeklenir (ScaledScene). Yazılar ölçekte (~0,62) okunsun diye ≥18 px.
+   Temel konumlar = son kare ("Hareketi azalt"); animasyon başlangıç ofsetlerinden 0'a gelir. */
+.vpitch { height: 230px; }
+.pl { position: absolute; display: block; width: 20px; height: 20px; margin: -10px 0 0 -10px; border-radius: 50%; box-sizing: border-box; }
+.atk { background: #ffffff; box-shadow: 0 2px 5px rgba(0,0,0,.3); }
+.def { background: transparent; border: 3px solid #ffffff; box-shadow: 0 2px 5px rgba(0,0,0,.25), inset 0 0 0 1px rgba(0,0,0,.08); }
+.vball { width: 14px; height: 14px; margin: -7px 0 0 -7px; }
+.vball::before { inset: 2px; }
+
+.atk { left: 434px; top: 128px; animation: atk 7s cubic-bezier(.45,.05,.55,1) infinite both; }
+@keyframes atk {
+  0%, 4% { transform: translate(-252px, 22px); }
+  30% { transform: translate(-4px, 0); }
+  34%, 100% { transform: translate(0, 0); }
+}
+.def { left: 446px; top: 118px; animation: def 7s ease-in-out infinite both; }
+@keyframes def {
+  0%, 12% { transform: translate(30px, -64px); }
+  31%, 100% { transform: translate(0, 0); }
+}
+.vball { left: 466px; top: 152px; animation: vball 7s cubic-bezier(.45,.05,.55,1) infinite both; }
+@keyframes vball {
+  0%, 4% { transform: translate(-268px, 0); }
+  30% { transform: translate(-18px, -20px); }
+  44%, 100% { transform: translate(0, 0); }
+}
+/* Çarpışma anı: kısa parlama. */
+.hit { position: absolute; left: 440px; top: 123px; width: 34px; height: 34px; margin: -17px 0 0 -17px; border-radius: 50%; border: 3px solid #fde047; box-sizing: border-box; opacity: 0; animation: hit 7s ease-out infinite both; }
+@keyframes hit {
+  0%, 30% { opacity: 0; transform: scale(.4); }
+  31% { opacity: 1; transform: scale(.6); }
+  40%, 100% { opacity: 0; transform: scale(1.9); }
+}
+.freeze { position: absolute; inset: 0; background: #06120c; opacity: .3; animation: freeze 7s ease-in-out infinite both; }
+@keyframes freeze {
+  0%, 36% { opacity: 0; }
+  42%, 86% { opacity: .3; }
+  94%, 100% { opacity: 0; }
+}
+/* İnceleme halkası: temas noktasını çevreler. */
+.focus { position: absolute; left: 440px; top: 124px; width: 64px; height: 64px; margin: -32px 0 0 -32px; border-radius: 50%; border: 2px dashed rgba(255,255,255,.9); box-sizing: border-box; animation: focus 7s ease-out infinite both; }
+@keyframes focus {
+  0%, 40% { opacity: 0; transform: scale(1.5); }
+  46%, 86% { opacity: 1; transform: scale(1); }
+  94%, 100% { opacity: 0; transform: scale(1); }
+}
+.var { position: absolute; left: 14px; top: 14px; display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: #101512; color: #ffffff; font-size: 18px; font-weight: 800; letter-spacing: .08em; animation: varIn 7s ease-in-out infinite both; }
+@keyframes varIn {
+  0%, 38% { opacity: 0; transform: translateY(-8px); }
+  44%, 86% { opacity: 1; transform: translateY(0); }
+  94%, 100% { opacity: 0; transform: translateY(-8px); }
+}
+.rec { width: 9px; height: 9px; border-radius: 50%; background: #ef4444; animation: rec 1s steps(2, jump-none) infinite; }
+@keyframes rec {
+  0% { opacity: 1; }
+  100% { opacity: .2; }
+}
+.stamp { position: absolute; left: 200px; top: 182px; display: flex; align-items: center; gap: 10px; padding: 11px 22px; border-radius: 999px; background: #ffffff; color: #101512; font-size: 22px; font-weight: 800; letter-spacing: .08em; white-space: nowrap; box-shadow: 0 8px 24px rgba(0,0,0,.25); transform: translate(-50%, -50%); animation: stamp 7s cubic-bezier(.3,.7,.3,1) infinite both; }
+.stamp .spot { width: 12px; height: 12px; border-radius: 50%; background: #ef4444; }
+@keyframes stamp {
+  0%, 58% { opacity: 0; transform: translate(-50%, -50%) scale(.6); }
+  64% { opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
+  68%, 86% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  94%, 100% { opacity: 0; transform: translate(-50%, -50%) scale(.96); }
+}
+
+.stage { position: relative; width: 100%; max-width: 504px; aspect-ratio: 504 / 230; border-radius: 12px; overflow: hidden; }
+.scale { position: absolute; left: 0; top: 0; width: 504px; transform-origin: top left; transform: scale(var(--s, 1)); }
+.demo { font-family: Inter, system-ui, sans-serif; color: #101512; padding: 32px; display: flex; flex-direction: column; gap: 14px; align-items: flex-start; }
+.demo h1 { margin: 0; font-size: 22px; font-weight: 800; }
+.demo p { margin: 0 0 6px; font-size: 14px; color: #44544b; }
+@media (max-width: 480px) { .demo { padding: 16px; } }
+</style>
+</head>
+<body>
+<div class="demo">
+<h1>VAR: Penaltı</h1>
+<p>Nerede: Kural Köşesi "VAR ne zaman devreye girer?" kartı (03'ün yerine). Hücumcu dolu, rakip boş yuvarlak. URL'ye #rm ekleyince "Hareketi azalt" karesi.</p>
+<div class="stage"><div class="scale">
+<div class="turf vpitch" aria-hidden="true">
+<span class="stripes"></span>
+<svg class="marks" width="504" height="230" viewBox="0 0 504 230" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2">
+<rect x="374" y="25" width="132" height="180"></rect>
+<rect x="458" y="73" width="48" height="84"></rect>
+<path d="M374 85 A 56 56 0 0 0 374 145"></path>
+<circle cx="416" cy="115" r="2.5" fill="rgba(255,255,255,.6)" stroke="none"></circle>
+<rect x="496" y="90" width="12" height="50" stroke="rgba(255,255,255,.9)" stroke-width="3"></rect>
+</svg>
+<span class="freeze"></span>
+<span class="pl def"></span>
+<span class="pl atk"></span>
+<span class="ballw vball"></span>
+<span class="hit"></span>
+<span class="focus"></span>
+<span class="var"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="12" rx="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line></svg>VAR İNCELEMESİ<span class="rec"></span></span>
+<span class="stamp"><span class="spot"></span>PENALTI</span>
+</div>
+</div></div>
+<span role="status" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">VAR incelemesi: penaltı</span>
+</div>
+<script>
+// Yalnız referans: ScaledScene eşleniği (sahne 504 px çizilir, kutuya ölçeklenir) ve #rm → "Hareketi azalt" karesi.
+document.querySelectorAll('.stage').forEach(function (s) { var f = function () { s.style.setProperty('--s', s.clientWidth / 504); }; new ResizeObserver(f).observe(s); f(); });
+if (location.hash === '#rm') document.documentElement.classList.add('rm');
+</script>
+</body>
+</html>

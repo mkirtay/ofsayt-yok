@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Toplam skor bandı — Ofsayt Yok animasyon referansı</title>
+<style>
+
+body { margin: 0; }
+.stripes { position: absolute; inset: 0; background: repeating-linear-gradient(90deg, rgba(255,255,255,.06) 0, rgba(255,255,255,.06) 24px, transparent 24px, transparent 48px); }
+.turf { position: relative; width: 504px; border-radius: 12px; overflow: hidden; background: linear-gradient(135deg, #007B55 0%, #00a76f 60%, #007B55 100%); box-shadow: inset 0 0 0 1px rgba(255,255,255,.15); }
+.cline { position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: rgba(255,255,255,.32); }
+.ccircle { position: absolute; left: 50%; top: 50%; width: 110px; height: 110px; margin: -55px 0 0 -55px; border: 2px solid rgba(255,255,255,.32); border-radius: 50%; box-sizing: border-box; }
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; }
+}
+.rm * { animation: none !important; }
+
+/* Genel bir skor bandı (belirli bir yayıncının grafiği değil): koyu gövde, marka yeşili şerit, takım renk çubukları.
+   Temel stiller = "Hareketi azalt" karesi: bant, toplam ve UZATMA görünür. */
+.spitch { height: 230px; }
+.dim { position: absolute; inset: 0; background: rgba(6,18,12,.38); }
+.bug { position: absolute; left: 252px; top: 50px; display: flex; align-items: stretch; height: 46px; transform: translateX(-50%); border-radius: 8px; overflow: hidden; box-shadow: 0 10px 24px rgba(0,0,0,.35); animation: bugIn 7s cubic-bezier(.2,.8,.2,1) infinite both; }
+@keyframes bugIn {
+  0% { opacity: 0; transform: translateX(-50%) translateX(-36px); }
+  8%, 90% { opacity: 1; transform: translateX(-50%); }
+  97%, 100% { opacity: 0; transform: translateX(-50%); }
+}
+.leg { display: flex; white-space: nowrap; align-items: center; padding: 0 10px; background: #00a76f; color: #ffffff; font-size: 14px; font-weight: 800; letter-spacing: .06em; }
+.team { display: flex; align-items: center; gap: 8px; padding: 0 12px; background: #101512; color: #ffffff; font-size: 20px; font-weight: 800; letter-spacing: .08em; }
+.kit { width: 5px; height: 24px; border-radius: 2px; }
+.kitH { background: #ffffff; }
+.kitA { background: #38bdf8; }
+.score { display: flex; white-space: nowrap; align-items: center; padding: 0 14px; background: #f4f6f5; color: #101512; font-size: 24px; font-weight: 900; font-variant-numeric: tabular-nums; }
+.score span { display: inline-block; animation: pop 7s cubic-bezier(.3,.7,.3,1) infinite both; }
+@keyframes pop {
+  0%, 9% { opacity: 0; transform: scale(.6); }
+  14%, 100% { opacity: 1; transform: scale(1); }
+}
+.clock { display: flex; align-items: center; padding: 0 12px; background: #1d2621; color: #e5ece8; font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+/* Toplam şeridi: bandın altından aşağı kayar (kırpma kutusu sabit). */
+.aggClip { position: absolute; left: 252px; top: 96px; height: 36px; overflow: hidden; transform: translateX(-50%); }
+.agg { display: flex; align-items: center; gap: 10px; height: 36px; padding: 0 16px; border-radius: 0 0 8px 8px; background: rgba(16,21,18,.92); color: #ffffff; font-size: 18px; font-weight: 700; white-space: nowrap; animation: agg 7s cubic-bezier(.2,.8,.2,1) infinite both; }
+.agg b { font-weight: 900; font-variant-numeric: tabular-nums; }
+.agg .eq { padding: 2px 8px; border-radius: 6px; background: rgba(255,255,255,.12); font-size: 14px; font-weight: 800; letter-spacing: .06em; }
+@keyframes agg {
+  0%, 24% { transform: translateY(-100%); }
+  32%, 100% { transform: translateY(0); }
+}
+.extra { position: absolute; left: 252px; top: 178px; display: flex; align-items: center; gap: 10px; padding: 10px 22px; border-radius: 999px; background: #fde047; color: #101512; font-size: 22px; font-weight: 900; letter-spacing: .1em; white-space: nowrap; box-shadow: 0 8px 24px rgba(0,0,0,.25); transform: translate(-50%, -50%); animation: extra 7s cubic-bezier(.3,.7,.3,1) infinite both; }
+@keyframes extra {
+  0%, 44% { opacity: 0; transform: translate(-50%, -50%) scale(.6); }
+  50% { opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
+  54%, 88% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  96%, 100% { opacity: 0; transform: translate(-50%, -50%) scale(.96); }
+}
+
+.stage { position: relative; width: 100%; max-width: 504px; aspect-ratio: 504 / 230; border-radius: 12px; overflow: hidden; }
+.scale { position: absolute; left: 0; top: 0; width: 504px; transform-origin: top left; transform: scale(var(--s, 1)); }
+.demo { font-family: Inter, system-ui, sans-serif; color: #101512; padding: 32px; display: flex; flex-direction: column; gap: 14px; align-items: flex-start; }
+.demo h1 { margin: 0; font-size: 22px; font-weight: 800; }
+.demo p { margin: 0 0 6px; font-size: 14px; color: #44544b; }
+@media (max-width: 480px) { .demo { padding: 16px; } }
+</style>
+</head>
+<body>
+<div class="demo">
+<h1>Toplam skor bandı</h1>
+<p>Nerede: Kural Köşesi "Deplasman golü kuralı neden yok?" kartı (06 maç sahnesinin yerine). URL'ye #rm ekleyince "Hareketi azalt" karesi.</p>
+<div class="stage"><div class="scale">
+<div class="turf spitch" aria-hidden="true">
+<span class="stripes"></span>
+<span class="cline"></span>
+<span class="ccircle"></span>
+<span class="dim"></span>
+<div class="bug">
+<span class="leg">2. MAÇ</span>
+<span class="team"><span class="kit kitH"></span>EV</span>
+<span class="score"><span>1–1</span></span>
+<span class="team">DEP<span class="kit kitA"></span></span>
+<span class="clock">90'</span>
+</div>
+<div class="aggClip"><div class="agg">Toplam <b>2–2</b><span class="eq">EŞİT</span></div></div>
+<span class="extra">UZATMA</span>
+</div>
+</div></div>
+<span role="status" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Toplam skor 2–2 eşit: uzatmaya gidilir</span>
+</div>
+<script>
+// Yalnız referans: ScaledScene eşleniği ve #rm → "Hareketi azalt" karesi.
+document.querySelectorAll('.stage').forEach(function (s) { var f = function () { s.style.setProperty('--s', s.clientWidth / 504); }; new ResizeObserver(f).observe(s); f(); });
+if (location.hash === '#rm') document.documentElement.classList.add('rm');
+</script>
+</body>
+</html>

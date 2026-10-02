@@ -15,7 +15,15 @@ Bu klasör tasarım tuvalindeki 8 animasyonun birebir kopyasıdır: saf CSS ve s
 | 07-yuvarlanan-top.html | Yuvarlanan top | Sayfa geçişi (RouteProgress yerine) |
 | 08-mac-baslamadi.html | Maç henüz başlamadı | Başlamamış maçta istatistik ve olay kartlarının boş durumu |
 | 09-kural-kosesi.html | Kural Köşesi (düğme, baloncuk, panel) | Tüm sayfalarda sağ alt; çalışan referans, dar pencerede mobil, geniş pencerede masaüstü |
-| 09-kural-kosesi.html | Kural Köşesi (düğme, baloncuk, panel) | Tüm sayfalarda sağ alt; çalışan referans, dar pencerede mobil, geniş pencerede masaüstü |
+| 10-mac-olaylari-baslamadi.html | Maç Olayları: henüz başlamadı | Başlamamış maçta Maç Olayları kartı (0'–45'–90' zaman çizelgesi; istatistik kartıyla aynı yükseklik) |
+| 11-var-penalti.html | VAR: Penaltı | Kural Köşesi "VAR ne zaman devreye girer?" |
+| 12-uzatma-tabelasi.html | Uzatma tabelası | Kural Köşesi "Uzatma süresi nasıl belirlenir?" |
+| 13-kaleci-8-saniye.html | Kalecinin 8 saniyesi | Kural Köşesi "Kalecinin 8 saniyesi" |
+| 14-penalti-kaleci.html | Penaltıda kaleci | Kural Köşesi "Penaltıda kaleci nerede durmalı?" |
+| 15-toplam-skor-bandi.html | Toplam skor bandı | Kural Köşesi "Deplasman golü kuralı neden yok?" |
+| 16-iletisim-bandi.html | İletişim bandı (paslaşma → zarf kale) | /iletisim üst bandı, "Topu bize at." başlığının üstünde (mobil 120 px, ≥1024 px 160 px, yükseklik sabit) |
+
+10–16 tek başına açılır; 11–15 sahnesi 504×230 çizilip kutuya ölçeklenir (ScaledScene eşleniği küçük bir betikle, yalnız referansta). URL'ye `#rm` eklenince "Hareketi azalt" karesi görünür. Temel (animasyonsuz) stiller bu karedir.
 
 kural-kosesi.json: Kural Köşesi için ilk 8 içerik (Oyun Kuralları'na göre yazıldı). Her kayıt hangi animasyonla gösterileceğini söyler.
 

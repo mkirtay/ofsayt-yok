@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Penaltıda kaleci — Ofsayt Yok animasyon referansı</title>
+<style>
+
+body { margin: 0; }
+.stripes { position: absolute; inset: 0; background: repeating-linear-gradient(90deg, rgba(255,255,255,.06) 0, rgba(255,255,255,.06) 24px, transparent 24px, transparent 48px); }
+.turf { position: relative; width: 504px; border-radius: 12px; overflow: hidden; background: linear-gradient(135deg, #007B55 0%, #00a76f 60%, #007B55 100%); box-shadow: inset 0 0 0 1px rgba(255,255,255,.15); }
+.ballw { position: absolute; display: block; width: 18px; height: 18px; border-radius: 50%; background: #ffffff; box-shadow: inset -2px -2px 0 rgba(0,0,0,.12), 0 3px 6px rgba(0,0,0,.3); }
+.ballw::before { content: ''; position: absolute; inset: 3px; border-radius: 50%; background: conic-gradient(rgba(0,0,0,.55) 0deg 30deg, transparent 30deg 150deg, rgba(0,0,0,.55) 150deg 180deg, transparent 180deg 300deg, rgba(0,0,0,.55) 300deg 330deg, transparent 330deg 360deg); opacity: .6; }
+.marks { position: absolute; inset: 0; }
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; }
+}
+.rm * { animation: none !important; }
+
+/* Kale çizgisi x=480. Vuruş anı %34: sahne donar, kale çizgisi ve kaleci vurgulanır, ardından "✓ Çizgide".
+   Temel stiller = "Hareketi azalt" karesi: atıcı topun başında, çizgi + halka + hap görünür. */
+.ppitch { height: 230px; }
+.gk { position: absolute; left: 480px; top: 115px; width: 22px; height: 22px; margin: -11px 0 0 -11px; border-radius: 50%; background: #fde047; box-shadow: 0 0 0 3px #101512, 0 3px 6px rgba(0,0,0,.3); animation: sway 7s ease-in-out infinite both; }
+/* Kaleci çizgi üzerinde yana kayar (serbest), vuruşta ortada ve çizgide. */
+@keyframes sway {
+  0%, 6% { transform: translateY(0); }
+  14% { transform: translateY(-12px); }
+  22% { transform: translateY(10px); }
+  30%, 100% { transform: translateY(0); }
+}
+.kick { position: absolute; left: 376px; top: 124px; width: 20px; height: 20px; margin: -10px 0 0 -10px; border-radius: 50%; background: #ffffff; box-shadow: 0 2px 5px rgba(0,0,0,.3); animation: runup 7s cubic-bezier(.5,0,.6,1) infinite both; }
+@keyframes runup {
+  0%, 6% { transform: translate(-92px, 58px); }
+  34%, 100% { transform: translate(0, 0); }
+}
+.pball { left: 392px; top: 115px; width: 14px; height: 14px; margin: -7px 0 0 -7px; }
+.pball::before { inset: 2px; }
+.flash { position: absolute; inset: 0; background: #ffffff; opacity: 0; animation: flash 7s ease-out infinite both; }
+@keyframes flash {
+  0%, 33.5% { opacity: 0; }
+  34.5% { opacity: .45; }
+  40%, 100% { opacity: 0; }
+}
+.freeze { position: absolute; inset: 0; background: #06120c; opacity: .32; animation: freeze 7s ease-in-out infinite both; }
+@keyframes freeze {
+  0%, 34% { opacity: 0; }
+  38%, 86% { opacity: .32; }
+  94%, 100% { opacity: 0; }
+}
+/* Kale çizgisi vurgusu (direkler arası): aşağıdan yukarı uzar. */
+.gline { position: absolute; left: 480px; top: 84px; width: 4px; height: 62px; margin-left: -2px; border-radius: 2px; background: #fde047; box-shadow: 0 0 12px 3px rgba(253,224,71,.7); transform-origin: center; animation: gline 7s ease-out infinite both; }
+@keyframes gline {
+  0%, 35% { opacity: 0; transform: scaleY(0); }
+  42%, 86% { opacity: 1; transform: scaleY(1); }
+  94%, 100% { opacity: 0; transform: scaleY(1); }
+}
+.halo { position: absolute; left: 480px; top: 115px; width: 44px; height: 44px; margin: -22px 0 0 -22px; border-radius: 50%; border: 2px dashed rgba(255,255,255,.95); box-sizing: border-box; animation: halo 7s ease-out infinite both; }
+@keyframes halo {
+  0%, 38% { opacity: 0; transform: scale(1.7); }
+  45%, 86% { opacity: 1; transform: scale(1); }
+  94%, 100% { opacity: 0; transform: scale(1); }
+}
+.stamp { position: absolute; left: 210px; top: 182px; display: flex; align-items: center; gap: 8px; padding: 10px 20px; border-radius: 999px; background: #ffffff; color: #007B55; font-size: 22px; font-weight: 800; letter-spacing: .04em; white-space: nowrap; box-shadow: 0 8px 24px rgba(0,0,0,.25); transform: translate(-50%, -50%); animation: stamp 7s cubic-bezier(.3,.7,.3,1) infinite both; }
+@keyframes stamp {
+  0%, 50% { opacity: 0; transform: translate(-50%, -50%) scale(.6); }
+  56% { opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
+  60%, 86% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  94%, 100% { opacity: 0; transform: translate(-50%, -50%) scale(.96); }
+}
+
+.stage { position: relative; width: 100%; max-width: 504px; aspect-ratio: 504 / 230; border-radius: 12px; overflow: hidden; }
+.scale { position: absolute; left: 0; top: 0; width: 504px; transform-origin: top left; transform: scale(var(--s, 1)); }
+.demo { font-family: Inter, system-ui, sans-serif; color: #101512; padding: 32px; display: flex; flex-direction: column; gap: 14px; align-items: flex-start; }
+.demo h1 { margin: 0; font-size: 22px; font-weight: 800; }
+.demo p { margin: 0 0 6px; font-size: 14px; color: #44544b; }
+@media (max-width: 480px) { .demo { padding: 16px; } }
+</style>
+</head>
+<body>
+<div class="demo">
+<h1>Penaltıda kaleci</h1>
+<p>Nerede: Kural Köşesi "Penaltıda kaleci nerede durmalı?" kartı (06 maç sahnesinin yerine). URL'ye #rm ekleyince "Hareketi azalt" karesi.</p>
+<div class="stage"><div class="scale">
+<div class="turf ppitch" aria-hidden="true">
+<span class="stripes"></span>
+<svg class="marks" width="504" height="230" viewBox="0 0 504 230" fill="none" stroke="rgba(255,255,255,.4)" stroke-width="2">
+<line x1="480" y1="0" x2="480" y2="230" stroke="rgba(255,255,255,.6)"></line>
+<rect x="348" y="25" width="132" height="180"></rect>
+<rect x="432" y="73" width="48" height="84"></rect>
+<path d="M348 85 A 56 56 0 0 0 348 145"></path>
+<rect x="480" y="90" width="14" height="50" stroke="rgba(255,255,255,.9)" stroke-width="3"></rect>
+</svg>
+<span class="ballw pball"></span>
+<span class="kick"></span>
+<span class="flash"></span>
+<span class="freeze"></span>
+<span class="gline"></span>
+<span class="gk"></span>
+<span class="halo"></span>
+<span class="stamp"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>Çizgide</span>
+</div>
+</div></div>
+<span role="status" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Penaltı: kaleci vuruş anında kale çizgisinde</span>
+</div>
+<script>
+// Yalnız referans: ScaledScene eşleniği ve #rm → "Hareketi azalt" karesi.
+document.querySelectorAll('.stage').forEach(function (s) { var f = function () { s.style.setProperty('--s', s.clientWidth / 504); }; new ResizeObserver(f).observe(s); f(); });
+if (location.hash === '#rm') document.documentElement.classList.add('rm');
+</script>
+</body>
+</html>

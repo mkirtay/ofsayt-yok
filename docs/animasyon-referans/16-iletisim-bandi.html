@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>İletişim bandı — Ofsayt Yok animasyon referansı</title>
+<style>
+
+body { margin: 0; }
+.stripes { position: absolute; inset: 0; background: repeating-linear-gradient(90deg, rgba(255,255,255,.06) 0, rgba(255,255,255,.06) 24px, transparent 24px, transparent 48px); }
+.ballw { position: absolute; display: block; width: 18px; height: 18px; border-radius: 50%; background: #ffffff; box-shadow: inset -2px -2px 0 rgba(0,0,0,.12), 0 3px 6px rgba(0,0,0,.3); }
+.ballw::before { content: ''; position: absolute; inset: 3px; border-radius: 50%; background: conic-gradient(rgba(0,0,0,.55) 0deg 30deg, transparent 30deg 150deg, rgba(0,0,0,.55) 150deg 180deg, transparent 180deg 300deg, rgba(0,0,0,.55) 300deg 330deg, transparent 330deg 360deg); opacity: .6; }
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; }
+}
+.rm * { animation: none !important; }
+
+/* Bant: yüksekliği baştan sabit (mobil 120, masaüstü 160) → kayma yok. Sahne 360×120 çizilir, ortalanır;
+   masaüstünde sabit scale(1.333) (animasyonlu değil). Temel stiller = "Hareketi azalt" karesi: top zarfa giderken. */
+.band { position: relative; height: 120px; overflow: hidden; background: linear-gradient(135deg, #007B55 0%, #00a76f 60%, #007B55 100%); }
+@media (min-width: 1024px) { .band { height: 160px; } }
+.scene { position: absolute; left: 50%; top: 0; width: 360px; height: 120px; margin-left: -180px; transform-origin: top center; }
+@media (min-width: 1024px) { .scene { transform: scale(1.3333); } }
+.cline { position: absolute; left: 0; right: 0; top: 50%; height: 2px; background: rgba(255,255,255,.18); }
+
+.pl { position: absolute; width: 22px; height: 22px; margin: -11px 0 0 -11px; border-radius: 50%; background: #0b3b2a; box-shadow: 0 0 0 3px #ffffff, 0 2px 5px rgba(0,0,0,.3); }
+.pA { left: 70px; top: 78px; animation: pA 6s ease-in-out infinite both; }
+.pB { left: 160px; top: 42px; animation: pB 6s ease-in-out infinite both; }
+/* Pas verirken hafif öne adım. */
+@keyframes pA {
+  0%, 4%, 14%, 30%, 40%, 100% { transform: translate(0, 0); }
+  8%, 34% { transform: translate(4px, -2px); }
+}
+@keyframes pB {
+  0%, 18%, 28%, 46%, 60%, 100% { transform: translate(0, 0); }
+  22%, 52% { transform: translate(-3px, 3px); }
+}
+
+.cball { left: 238px; top: 58px; width: 14px; height: 14px; margin: -7px 0 0 -7px; animation: pass 6s cubic-bezier(.4,0,.3,1) infinite both; }
+.cball::before { inset: 2px; }
+@keyframes pass {
+  0% { opacity: 0; transform: translate(-156px, 18px) scale(1); }
+  3%, 8% { opacity: 1; transform: translate(-156px, 18px) scale(1); }
+  18%, 22% { opacity: 1; transform: translate(-66px, -12px) scale(1); }
+  32%, 36% { opacity: 1; transform: translate(-156px, 18px) scale(1); }
+  46%, 52% { opacity: 1; transform: translate(-66px, -12px) scale(1); }
+  64% { opacity: 1; transform: translate(52px, 4px) scale(.7); }
+  67%, 100% { opacity: 0; transform: translate(52px, 4px) scale(.55); }
+}
+
+/* Zarf = küçük kale: gövde + V çizgisi; kapak üstte, top girince kapanır. */
+.env { position: absolute; left: 258px; top: 40px; width: 64px; height: 44px; animation: envPop 6s ease-out infinite both; }
+@keyframes envPop {
+  0%, 64% { transform: scale(1); }
+  68% { transform: scale(1.07); }
+  73%, 100% { transform: scale(1); }
+}
+.envBody { position: absolute; inset: 0; }
+.flap { position: absolute; left: 0; top: 0; width: 64px; height: 26px; transform-origin: top center; transform: scaleY(-1); animation: flap 6s cubic-bezier(.3,.7,.3,1) infinite both; }
+@keyframes flap {
+  0%, 64% { transform: scaleY(-1); }
+  74%, 90% { transform: scaleY(1); }
+  98%, 100% { transform: scaleY(-1); }
+}
+
+.demo { font-family: Inter, system-ui, sans-serif; color: #101512; display: flex; flex-direction: column; }
+.head { padding: 20px 16px 8px; }
+.head h1 { margin: 0; font-size: 26px; font-weight: 800; }
+.head p { margin: 6px 0 0; font-size: 14px; color: #44544b; }
+.note { padding: 0 16px 16px; font-size: 13px; color: #6b7a72; }
+</style>
+</head>
+<body>
+<div class="demo">
+<div class="band" aria-hidden="true">
+<span class="stripes"></span>
+<span class="cline"></span>
+<div class="scene">
+<span class="env">
+<svg class="envBody" width="64" height="44" viewBox="0 0 64 44" fill="none" stroke-linejoin="round"><rect x="1.5" y="1.5" width="61" height="41" rx="4" fill="#ffffff" stroke="#ffffff" stroke-width="3"></rect><path d="M4 40 L26 22 M60 40 L38 22" stroke="#cfe3d9" stroke-width="2"></path><path d="M3 4 L32 26 L61 4" stroke="#007B55" stroke-width="2.5"></path></svg>
+<svg class="flap" width="64" height="26" viewBox="0 0 64 26"><path d="M2 1 L32 24 L62 1 Z" fill="#eef7f2" stroke="#007B55" stroke-width="2.5" stroke-linejoin="round"></path></svg>
+</span>
+<span class="pl pA"></span>
+<span class="pl pB"></span>
+<span class="ballw cball"></span>
+</div>
+</div>
+<div class="head">
+<h1>Topu bize at.</h1>
+<p>Öneri, hata bildirimi ya da iş birliği: formu doldur, en kısa sürede dönelim.</p>
+</div>
+<p class="note">Referans: /iletisim üst bandı (mobil 120 px, ≥1024 px'te 160 px; yükseklik sabit). URL'ye #rm ekleyince "Hareketi azalt" karesi.</p>
+</div>
+<script>
+// Yalnız referans: #rm → "Hareketi azalt" karesi.
+if (location.hash === '#rm') document.documentElement.classList.add('rm');
+</script>
+</body>
+</html>

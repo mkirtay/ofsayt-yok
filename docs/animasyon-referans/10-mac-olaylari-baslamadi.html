@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maç Olayları: henüz başlamadı — Ofsayt Yok animasyon referansı</title>
+<style>
+
+body { margin: 0; background: #f4f6f5; }
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; }
+}
+.rm * { animation: none !important; }
+
+/* Kart çerçevesi 08 (PreMatchStats) ile aynı: başlık, 96 px sahne bandı, mesaj bloğu (başlık, alt metin, saat hapı,
+   geri sayım satırı). Aynı iskelet → iki kart aynı yükseklikte; satırda align-items: stretch ile kesinleşir. */
+.ecard { box-sizing: border-box; padding: 12px 16px; border: 1px solid #e3ebe6; border-radius: 12px; background: #ffffff; display: flex; flex-direction: column; gap: 12px; }
+.etitle { display: block; margin: 0; font-size: 15px; font-weight: 600; color: #101512; padding-bottom: 8px; border-bottom: 1px solid #e3ebe6; }
+.emsg { display: flex; flex-direction: column; gap: 4px; align-items: center; text-align: center; }
+.emsg strong { font-size: 15px; font-weight: 800; color: #101512; }
+.emsg .sub { font-size: 13px; line-height: 1.45; color: #44544b; }
+.emsg .kick { display: inline-flex; align-items: center; gap: 6px; margin-top: 2px; padding: 4px 10px; border-radius: 999px; background: #eef7f2; color: #007B55; font-size: 12px; font-weight: 700; }
+.emsg .cd { min-height: 18px; font-size: 12px; line-height: 18px; font-weight: 600; color: #44544b; }
+
+/* Yalnız karşılaştırma için: 08'in sahne bandı (düz, animasyonsuz). */
+.statPitch { height: 96px; border-radius: 12px; background: linear-gradient(135deg, #007B55 0%, #00a76f 60%, #007B55 100%); }
+
+/* ——— 10 · Zaman çizelgesi ——— (yüzde konumlar: kart genişliğine uyar, ölçek gerekmez) */
+.tl { position: relative; height: 96px; border-radius: 12px; background: #f3f7f5; box-shadow: inset 0 0 0 1px #e3ebe6; overflow: hidden; }
+.track { position: absolute; left: 7%; right: 7%; top: 44px; height: 2px; margin-top: -1px; background: #cfdcd5; border-radius: 1px; }
+.half { position: absolute; left: 50%; top: 30px; width: 0; height: 28px; border-left: 2px dashed #cfdcd5; margin-left: -1px; }
+.tick { position: absolute; top: 70px; font-size: 11px; font-weight: 700; color: #6b7a72; transform: translateX(-50%); font-variant-numeric: tabular-nums; }
+.t0 { left: 7%; } .t45 { left: 50%; } .t90 { left: 93%; }
+
+/* 0' — nabız: dolu nokta sabit, halka büyüyüp söner. */
+.now { position: absolute; left: 7%; top: 44px; width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%; background: #00a76f; box-shadow: 0 0 0 3px #ffffff; }
+.pulse { position: absolute; left: 7%; top: 44px; width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%; background: #00a76f; opacity: 0; animation: pulse 1.6s ease-out infinite; }
+@keyframes pulse {
+  0% { opacity: .55; transform: scale(1); }
+  100% { opacity: 0; transform: scale(3.2); }
+}
+
+/* Soluk olay ikonları: sırayla belirir ve söner (yukarıda ev sahibi, aşağıda deplasman). Temel stil = Hareketi azalt karesi. */
+.ev { position: absolute; display: flex; align-items: center; justify-content: center; width: 22px; height: 22px; margin-left: -11px; opacity: .55; color: #44544b; animation: ev 8s ease-in-out infinite both; }
+.up { top: 12px; }
+.dn { top: 54px; }
+.ev::after { content: ''; position: absolute; left: 50%; width: 2px; height: 6px; margin-left: -1px; background: #cfdcd5; }
+.up::after { top: 24px; }
+.dn::after { bottom: 24px; }
+@keyframes ev {
+  0%, 4% { opacity: 0; transform: translateY(var(--dy)) scale(.7); }
+  10%, 30% { opacity: .75; transform: translateY(0) scale(1); }
+  38%, 100% { opacity: 0; transform: translateY(0) scale(1); }
+}
+.e1 { left: 22%; --dy: 4px; animation-delay: 0s; }
+.e2 { left: 38%; --dy: -4px; animation-delay: 1.6s; }
+.e3 { left: 62%; --dy: 4px; animation-delay: 3.2s; }
+.e4 { left: 80%; --dy: -4px; animation-delay: 4.8s; }
+.ycard { width: 11px; height: 15px; border-radius: 2px; background: #eab308; box-shadow: 0 0 0 1px rgba(0,0,0,.08); }
+
+.row { display: flex; gap: 16px; align-items: stretch; width: 100%; max-width: 1040px; }
+.row > * { flex: 1 1 0; min-width: 0; }
+@media (max-width: 767px) { .row { flex-direction: column; } }
+
+.demo { font-family: Inter, system-ui, sans-serif; color: #101512; padding: 32px; display: flex; flex-direction: column; gap: 14px; align-items: flex-start; }
+.demo h1 { margin: 0; font-size: 22px; font-weight: 800; }
+.demo p { margin: 0 0 6px; font-size: 14px; color: #44544b; }
+@media (max-width: 480px) { .demo { padding: 16px; } }
+</style>
+</head>
+<body>
+<div class="demo">
+<h1>Maç Olayları: henüz başlamadı</h1>
+<p>Nerede: Başlamamış maçta Maç Olayları kartının boş durumu (yalnız PRE evresi, LazyLoad). Yanındaki istatistik kartıyla aynı iskelet ve yükseklik. URL'ye #rm ekleyince "Hareketi azalt" karesi.</p>
+<div class="row">
+<div class="ecard">
+<h3 class="etitle">Maç İstatistikleri</h3>
+<div class="statPitch"></div>
+<div class="emsg">
+<strong>Maç henüz başlamadı.</strong>
+<span class="sub">İstatistikler ilk düdükle birlikte burada canlı güncellenecek.</span>
+<span class="kick"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><polyline points="12 7 12 12 15 14"></polyline></svg>İlk düdük: 2 Ekim, 21:30</span>
+<span class="cd">Başlamasına 3 sa 12 dk</span>
+</div>
+</div>
+<div class="ecard">
+<h3 class="etitle">Maç Olayları</h3>
+<div class="tl" aria-hidden="true">
+<span class="track"></span>
+<span class="half"></span>
+<span class="tick t0">0'</span>
+<span class="tick t45">45'</span>
+<span class="tick t90">90'</span>
+<span class="ev up e1"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><polygon points="12 8 15.5 10.5 14.2 14.5 9.8 14.5 8.5 10.5" fill="currentColor" stroke="none"></polygon></svg></span>
+<span class="ev dn e2"><span class="ycard"></span></span>
+<span class="ev up e3"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="7 4 7 15"></polyline><polyline points="3.5 11.5 7 15 10.5 11.5"></polyline><polyline points="17 20 17 9"></polyline><polyline points="13.5 12.5 17 9 20.5 12.5"></polyline></svg></span>
+<span class="ev dn e4"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><polygon points="12 8 15.5 10.5 14.2 14.5 9.8 14.5 8.5 10.5" fill="currentColor" stroke="none"></polygon></svg></span>
+<span class="pulse"></span>
+<span class="now"></span>
+</div>
+<div class="emsg" role="status">
+<strong>Maç henüz başlamadı.</strong>
+<span class="sub">Goller, kartlar ve oyuncu değişiklikleri maç başladığında burada görünecek.</span>
+<span class="kick"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><polyline points="12 7 12 12 15 14"></polyline></svg>İlk düdük: 2 Ekim, 21:30</span>
+<span class="cd">Başlamasına 3 sa 12 dk</span>
+</div>
+</div>
+</div>
+</div>
+<script>
+// Yalnız referans: #rm → "Hareketi azalt" karesi.
+if (location.hash === '#rm') document.documentElement.classList.add('rm');
+</script>
+</body>
+</html>
