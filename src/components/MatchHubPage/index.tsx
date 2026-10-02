@@ -228,9 +228,10 @@ export default function MatchHubPage({
     });
   }, []);
 
-  const allMatches = homeMatchesQuery.data?.allMatches ?? [];
-  const liveMatches = homeMatchesQuery.data?.liveMatches ?? [];
-  const fixtureMatches = homeMatchesQuery.data?.fixtureMatches ?? [];
+  // Veri yokken sabit boş dizi: `?? []` her render'da yeni dizi verip memo'ları boşa yeniden hesaplatıyordu.
+  const allMatches = homeMatchesQuery.data?.allMatches ?? EMPTY_MATCHES;
+  const liveMatches = homeMatchesQuery.data?.liveMatches ?? EMPTY_MATCHES;
+  const fixtureMatches = homeMatchesQuery.data?.fixtureMatches ?? EMPTY_MATCHES;
   const nightMatches = homeMatchesQuery.data?.nightMatches ?? EMPTY_MATCHES;
   const matchesLoading = homeMatchesQuery.isLoading;
   // Veri hiç gelmediyse iskelet yerine hata notu; önceki veri varken hata/eski veri → küçük "gecikmeli" notu.
