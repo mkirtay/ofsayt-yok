@@ -1,7 +1,32 @@
 @use '../../styles/variables' as *;
 
+// Statik sayfalar (bkz. staticPageLayout.ts): sütun en az görünür ekran boyu, `main` kalan boşluğu doldurur →
+// içerik kısaysa footer ekranın altına oturur. Mobilde body'nin alt boşluğu (alt navigasyon + Kural Köşesi,
+// globals.scss) düşülür ki footer'ın sonu alt navigasyonun üstünde görünsün. `svh`: adres çubuğu açıkken de sığar,
+// kaydırırken boy değişmez (dvh'nin aksine kayma yok).
+.shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100svh;
+
+  @include below-desktop {
+    min-height: calc(100vh - var(--bottom-nav-height) - var(--safe-bottom) - 72px);
+    min-height: calc(100svh - var(--bottom-nav-height) - var(--safe-bottom) - 72px);
+  }
+}
+
 .main {
-  min-height: calc(100vh - var(--header-height));
+  flex: 1 0 auto;
   padding-bottom: $spacing-8;
 }
 
+// Veri yüklenen sayfalar: footer ilk boyamada ekranın dışında kalsın (içerik uzadıkça görünür alanda kaymasın).
+.mainFill {
+  min-height: calc(100vh - var(--header-height));
+}
+
+// Sütun düzeninde `margin: 0 auto`'lu .container içeriğe göre daralmasın.
+.sponsor {
+  width: 100%;
+}

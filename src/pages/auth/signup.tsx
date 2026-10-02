@@ -192,7 +192,7 @@ export default function SignUpPage({ googleEnabled }: { googleEnabled: boolean }
             )}
           </label>
 
-          {turnstileRequired ? <div id="turnstile-container" /> : null}
+          {turnstileRequired ? <div id="turnstile-container" className={styles.turnstile} /> : null}
           {turnstileRequired && !turnstileToken ? (
             <p className={styles.footer}>{t('signUp.completeVerificationFirst')}</p>
           ) : null}
