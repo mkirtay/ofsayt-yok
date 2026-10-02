@@ -151,6 +151,8 @@ export function sportmonksCacheTtl(
       const team = data != null && typeof data === 'object' && !Array.isArray(data) ? (data as Record<string, unknown>) : null;
       // `latest`/`upcoming` include'u maç listesi taşıyor (takım sayfası, mobil fikstür): canlı maç ya da başlamaya
       // ±15 dk → 30 sn; yoksa sıradaki başlamaya (−15 dk) kadar, en fazla 15 dk.
+      // Takım sezon istatistikleri (takım sayfası Sezon Özeti): maçtan sonra Sportmonks yeniden hesaplar → 1 sa.
+      if (team && 'statistics' in team) return withStale(HOUR, DAY);
       if (team && ('latest' in team || 'upcoming' in team)) {
         return withStale(fixtureListFreshSeconds([...asList(team.latest), ...asList(team.upcoming)], 15 * MIN, now), DAY);
       }

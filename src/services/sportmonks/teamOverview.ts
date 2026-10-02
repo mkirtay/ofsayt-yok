@@ -15,8 +15,8 @@
 import type { Match } from '@/models/liveScore';
 import { mapSportmonksFixtureToMatch } from '../sportmonksFixtureMapper';
 import { isKickoffTimeTbd, type SportmonksTeamWithUpcoming } from './teamUpcoming';
-import type { SportmonksFixture } from './types';
-import { normalizeTeamName } from '@/utils/displayName';
+import type { SportmonksFixture, SportmonksVenue } from './types';
+import { normalizeDisplayName, normalizeTeamName } from '@/utils/displayName';
 import { parseScore } from '@/utils/parseScore';
 
 export const TEAM_OVERVIEW_INCLUDE = [
@@ -27,11 +27,53 @@ export const TEAM_OVERVIEW_INCLUDE = [
   'upcoming.participants',
   'upcoming.league',
   'upcoming.state',
+  // Faz 2: başlıktaki teknik direktör / stadyum + takımın turnuva-sezonları (güncel sezonun istatistik isteği,
+  // geçmiş sezon seçicisi)
+  'coaches.coach',
+  'venue',
+  'seasons.league',
 ].join(';');
+
+type SportmonksTeamCoachRow = {
+  coach_id?: number;
+  active?: boolean | null;
+  start?: string | null;
+  end?: string | null;
+  coach?: { id: number; display_name?: string | null; name?: string | null; common_name?: string | null; image_path?: string | null } | null;
+};
+
+export type SportmonksTeamSeason = {
+  id: number;
+  name?: string | null;
+  league_id?: number | null;
+  is_current?: boolean | null;
+  finished?: boolean | null;
+  starting_at?: string | null;
+  ending_at?: string | null;
+  league?: { id: number; name?: string | null; image_path?: string | null; sub_type?: string | null } | null;
+};
 
 export type SportmonksTeamOverview = SportmonksTeamWithUpcoming & {
   latest?: SportmonksFixture[] | null;
+  coaches?: SportmonksTeamCoachRow[] | null;
+  venue?: SportmonksVenue | null;
+  seasons?: SportmonksTeamSeason[] | null;
 };
+
+/** Takımın bir turnuvadaki bir sezonu (ör. Süper Lig 2026/2027 = 28203). */
+export type TeamSeasonRef = {
+  id: number;
+  name: string;
+  leagueId: number;
+  leagueName?: string;
+  leagueLogo?: string;
+  isCurrent: boolean;
+  finished: boolean;
+  startingAt?: string;
+};
+
+/** Aynı adlı sezonlar (ör. "2026/2027": Süper Lig + Şampiyonlar Ligi) = takımın o sezonki tüm turnuvaları. */
+export type TeamCampaign = { name: string; seasons: TeamSeasonRef[] };
 
 /** `Match` + ham Sportmonks durum id'si (penaltıyla biten maçı ayırmak için). */
 export type TeamMatch = Match & { state_id?: number; kickoff_ts?: number };
@@ -42,7 +84,59 @@ export type TeamOverview = {
   recent: TeamMatch[];
   /** Oynanmamış maçlar, en yakından uzağa (Fikstür sekmesi + "Sıradaki maç"). */
   fixtures: TeamMatch[];
+  /** Görevdeki teknik direktör (`coaches` içinde `active=true`). */
+  coach?: { id: number; name: string; photo?: string };
+  venue?: { name: string; city?: string; capacity?: number };
+  /** Sezonlar en yeniden eskiye; [0] güncel sezon. */
+  campaigns: TeamCampaign[];
 };
+
+function mapCoach(rows: SportmonksTeamCoachRow[] | null | undefined): TeamOverview['coach'] {
+  const active = (rows ?? []).filter((r) => r.active === true && r.coach);
+  // Birden fazla aktif kayıt (geçici + kalıcı) varsa en son başlayan.
+  active.sort((a, b) => (b.start ?? '').localeCompare(a.start ?? ''));
+  const c = active[0]?.coach;
+  if (!c) return undefined;
+  const name = normalizeDisplayName((c.display_name || c.common_name || c.name || '').trim());
+  if (!name) return undefined;
+  return { id: c.id, name, ...(c.image_path ? { photo: c.image_path } : {}) };
+}
+
+function mapVenue(v: SportmonksVenue | null | undefined): TeamOverview['venue'] {
+  const name = v?.name?.trim();
+  if (!name) return undefined;
+  return {
+    name,
+    ...(v?.city_name?.trim() ? { city: v.city_name.trim() } : {}),
+    ...(typeof v?.capacity === 'number' && v.capacity > 0 ? { capacity: v.capacity } : {}),
+  };
+}
+
+/** Takımın sezonları ada göre gruplanır, en yeniden eskiye. */
+export function mapTeamCampaigns(seasons: SportmonksTeamSeason[] | null | undefined): TeamCampaign[] {
+  const byName = new Map<string, TeamSeasonRef[]>();
+  for (const s of seasons ?? []) {
+    const name = s.name?.trim();
+    const leagueId = s.league_id ?? s.league?.id;
+    if (!s.id || !name || !leagueId) continue;
+    const list = byName.get(name) ?? [];
+    list.push({
+      id: s.id,
+      name,
+      leagueId,
+      ...(s.league?.name ? { leagueName: s.league.name } : {}),
+      ...(s.league?.image_path ? { leagueLogo: s.league.image_path } : {}),
+      isCurrent: s.is_current === true,
+      finished: s.finished === true,
+      ...(s.starting_at ? { startingAt: s.starting_at } : {}),
+    });
+    byName.set(name, list);
+  }
+  const latestStart = (c: TeamCampaign) => c.seasons.reduce((m, s) => (s.startingAt && s.startingAt > m ? s.startingAt : m), '');
+  return [...byName.entries()]
+    .map(([name, list]) => ({ name, seasons: list.sort((a, b) => (a.startingAt ?? '').localeCompare(b.startingAt ?? '')) }))
+    .sort((a, b) => latestStart(b).localeCompare(latestStart(a)) || b.name.localeCompare(a.name));
+}
 
 /** Sportmonks `FTP` (penaltılarla bitti). */
 const STATE_FT_PENALTIES = 8;
@@ -84,7 +178,7 @@ function sortKey(m: TeamMatch): number {
  * kalmadığına karar verir (tarihi çoktan geçmiş ertelenmiş maç fikstürde değil son maçlarda görünür).
  */
 export function mapTeamOverview(team: SportmonksTeamOverview | null | undefined, nowMs: number = Date.now()): TeamOverview {
-  if (!team) return { team: null, recent: [], fixtures: [] };
+  if (!team) return { team: null, recent: [], fixtures: [], campaigns: [] };
 
   const byId = new Map<number, TeamMatch>();
   const tbd = new Set<number>();
@@ -109,6 +203,8 @@ export function mapTeamOverview(team: SportmonksTeamOverview | null | undefined,
   }
 
   recent.sort((a, b) => sortKey(b) - sortKey(a));
+  const coach = mapCoach(team.coaches);
+  const venue = mapVenue(team.venue);
   fixtures.sort((a, b) => sortKey(a) - sortKey(b));
 
   return {
@@ -119,6 +215,9 @@ export function mapTeamOverview(team: SportmonksTeamOverview | null | undefined,
     },
     recent,
     fixtures,
+    ...(coach ? { coach } : {}),
+    ...(venue ? { venue } : {}),
+    campaigns: mapTeamCampaigns(team.seasons),
   };
 }
 

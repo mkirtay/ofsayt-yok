@@ -1,0 +1,385 @@
+{
+ "id": 34,
+ "statistics": [
+  {
+   "season_id": 28155,
+   "has_values": true,
+   "season": {
+    "id": 28155,
+    "league_id": 2,
+    "finished": false,
+    "name": "2026/2027"
+   },
+   "details": [
+    {
+     "type_id": 52,
+     "value": {
+      "all": {
+       "count": 1,
+       "average": 1,
+       "first_goal": 5
+      },
+      "home": {
+       "count": 0,
+       "percentage": 0,
+       "average": 0,
+       "first_goal": null
+      },
+      "away": {
+       "count": 1,
+       "percentage": 100,
+       "average": 1,
+       "first_goal": 5
+      }
+     }
+    },
+    {
+     "type_id": 88,
+     "value": {
+      "all": {
+       "count": 3,
+       "average": 3,
+       "first": 27
+      },
+      "home": {
+       "count": 0,
+       "percentage": 0,
+       "average": 0,
+       "first": 27
+      },
+      "away": {
+       "count": 3,
+       "percentage": 100,
+       "average": 3,
+       "first": null
+      }
+     }
+    },
+    {
+     "type_id": 194,
+     "value": {
+      "all": {
+       "count": 0,
+       "percentage": 0
+      },
+      "home": {
+       "count": 0,
+       "percentage": 0
+      },
+      "away": {
+       "count": 0,
+       "percentage": 0
+      }
+     }
+    },
+    {
+     "type_id": 196,
+     "value": {
+      "0-15": {
+       "count": 1,
+       "percentage": 100
+      },
+      "15-30": {
+       "count": 0,
+       "percentage": 0
+      },
+      "30-45": {
+       "count": 0,
+       "percentage": 0
+      },
+      "45-60": {
+       "count": 0,
+       "percentage": 0
+      },
+      "60-75": {
+       "count": 0,
+       "percentage": 0
+      },
+      "75-90": {
+       "count": 0,
+       "percentage": 0
+      }
+     }
+    },
+    {
+     "type_id": 213,
+     "value": {
+      "0-15": {
+       "count": 0,
+       "percentage": 0
+      },
+      "15-30": {
+       "count": 1,
+       "percentage": 33.33
+      },
+      "30-45": {
+       "count": 0,
+       "percentage": 0
+      },
+      "45-60": {
+       "count": 1,
+       "percentage": 33.33
+      },
+      "60-75": {
+       "count": 1,
+       "percentage": 33.33
+      },
+      "75-90": {
+       "count": 0,
+       "percentage": 0
+      }
+     }
+    },
+    {
+     "type_id": 214,
+     "value": {
+      "all": {
+       "count": 0,
+       "percentage": 0
+      },
+      "home": {
+       "count": 0,
+       "percentage": 0
+      },
+      "away": {
+       "count": 0,
+       "percentage": 0
+      }
+     }
+    },
+    {
+     "type_id": 215,
+     "value": {
+      "all": {
+       "count": 0,
+       "percentage": 0
+      },
+      "home": {
+       "count": 0,
+       "percentage": 0
+      },
+      "away": {
+       "count": 0,
+       "percentage": 0
+      }
+     }
+    },
+    {
+     "type_id": 216,
+     "value": {
+      "all": {
+       "count": 1,
+       "percentage": 100
+      },
+      "home": {
+       "count": 0,
+       "percentage": 0
+      },
+      "away": {
+       "count": 1,
+       "percentage": 100
+      }
+     }
+    },
+    {
+     "type_id": 27263,
+     "value": {
+      "total": 1,
+      "home": 0,
+      "away": 1
+     }
+    }
+   ]
+  },
+  {
+   "season_id": 28203,
+   "has_values": true,
+   "season": {
+    "id": 28203,
+    "league_id": 600,
+    "finished": false,
+    "name": "2026/2027"
+   },
+   "details": [
+    {
+     "type_id": 52,
+     "value": {
+      "all": {
+       "count": 13,
+       "average": 2.17,
+       "first_goal": 12
+      },
+      "home": {
+       "count": 6,
+       "percentage": 46.15,
+       "average": 2,
+       "first_goal": 33
+      },
+      "away": {
+       "count": 7,
+       "percentage": 53.85,
+       "average": 2.33,
+       "first_goal": 12
+      }
+     }
+    },
+    {
+     "type_id": 88,
+     "value": {
+      "all": {
+       "count": 10,
+       "average": 1.67,
+       "first": 4
+      },
+      "home": {
+       "count": 4,
+       "percentage": 40,
+       "average": 1.33,
+       "first": 4
+      },
+      "away": {
+       "count": 6,
+       "percentage": 60,
+       "average": 2,
+       "first": 16
+      }
+     }
+    },
+    {
+     "type_id": 194,
+     "value": {
+      "all": {
+       "count": 2,
+       "percentage": 33.33
+      },
+      "home": {
+       "count": 1,
+       "percentage": 50
+      },
+      "away": {
+       "count": 1,
+       "percentage": 50
+      }
+     }
+    },
+    {
+     "type_id": 196,
+     "value": {
+      "0-15": {
+       "count": 1,
+       "percentage": 7.69
+      },
+      "15-30": {
+       "count": 2,
+       "percentage": 15.38
+      },
+      "30-45": {
+       "count": 2,
+       "percentage": 15.38
+      },
+      "45-60": {
+       "count": 2,
+       "percentage": 15.38
+      },
+      "60-75": {
+       "count": 3,
+       "percentage": 23.08
+      },
+      "75-90": {
+       "count": 3,
+       "percentage": 23.08
+      }
+     }
+    },
+    {
+     "type_id": 213,
+     "value": {
+      "0-15": {
+       "count": 1,
+       "percentage": 10
+      },
+      "15-30": {
+       "count": 1,
+       "percentage": 10
+      },
+      "30-45": {
+       "count": 2,
+       "percentage": 20
+      },
+      "45-60": {
+       "count": 1,
+       "percentage": 10
+      },
+      "60-75": {
+       "count": 3,
+       "percentage": 30
+      },
+      "75-90": {
+       "count": 2,
+       "percentage": 20
+      }
+     }
+    },
+    {
+     "type_id": 214,
+     "value": {
+      "all": {
+       "count": 4,
+       "percentage": 66.67
+      },
+      "home": {
+       "count": 2,
+       "percentage": 50
+      },
+      "away": {
+       "count": 2,
+       "percentage": 50
+      }
+     }
+    },
+    {
+     "type_id": 215,
+     "value": {
+      "all": {
+       "count": 1,
+       "percentage": 16.67
+      },
+      "home": {
+       "count": 1,
+       "percentage": 100
+      },
+      "away": {
+       "count": 0,
+       "percentage": 0
+      }
+     }
+    },
+    {
+     "type_id": 216,
+     "value": {
+      "all": {
+       "count": 1,
+       "percentage": 16.67
+      },
+      "home": {
+       "count": 0,
+       "percentage": 0
+      },
+      "away": {
+       "count": 1,
+       "percentage": 100
+      }
+     }
+    },
+    {
+     "type_id": 27263,
+     "value": {
+      "total": 6,
+      "home": 3,
+      "away": 3
+     }
+    }
+   ]
+  }
+ ]
+}

@@ -98,6 +98,11 @@ describe('sportmonksCacheTtl — TTL tablosu', () => {
     expect(sportmonksCacheTtl('football/teams/34', { id: 34 }, NOW).fresh).toBe(6 * 3600);
   });
 
+  it('takım sezon istatistikleri 1 sa', () => {
+    expect(sportmonksCacheTtl('football/teams/34', { id: 34, statistics: [{ season_id: 28203, season: { finished: false } }] }, NOW).fresh).toBe(3600);
+    expect(sportmonksCacheTtl('football/teams/34', { id: 34, statistics: [] }, NOW).fresh).toBe(3600);
+  });
+
   it('stale (Redis tutma) süresi taze süreden uzun', () => {
     const t = sportmonksCacheTtl('football/fixtures/date/2026-09-30', [], NOW);
     expect(t.stale).toBeGreaterThan(t.fresh);

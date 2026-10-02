@@ -46,6 +46,9 @@ const INCLUDE_TOKENS = new Set([
   // takım fikstürü (mobil) + takım sayfası tek isteği (services/sportmonks/teamOverview.ts)
   'upcoming.participants', 'upcoming.league', 'upcoming.state',
   'latest.participants', 'latest.scores', 'latest.league', 'latest.state',
+  'coaches.coach', 'seasons.league',
+  // takım sezon istatistikleri (services/sportmonks/teamSeasonStats.ts)
+  'statistics.details', 'statistics.season',
   // oyuncu profili + maç satırları
   'nationality', 'city', 'position', 'detailedPosition', 'metadata.type', 'teams.team', 'transfers.type',
   'transfers.fromTeam', 'transfers.toTeam', 'statistics.details.type', 'statistics.season.league', 'statistics.team',
@@ -59,6 +62,7 @@ const FILTER_PREFIXES = new Set([
   'lineupDetailTypes',
   'fixtureStates',
   'metadataTypes',
+  'teamStatisticSeasons',
 ]);
 const KNOWN_PARAMS = new Set(['include', 'filters', 'per_page', 'page', 'order', 'api_token']);
 const MAX_PER_PAGE = 50;

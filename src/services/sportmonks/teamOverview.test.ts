@@ -90,7 +90,7 @@ describe('mapTeamOverview', () => {
   });
 
   it('takım yoksa boş', () => {
-    expect(mapTeamOverview(null, NOW)).toEqual({ team: null, recent: [], fixtures: [] });
+    expect(mapTeamOverview(null, NOW)).toEqual({ team: null, recent: [], fixtures: [], campaigns: [] });
   });
 });
 
@@ -151,5 +151,38 @@ describe('defaultCompetitionId', () => {
   it('son maç yoksa fikstürün ilk turnuvası; hiçbiri yoksa null', () => {
     expect(defaultCompetitionId([], [m(1, 606)])).toBe(606);
     expect(defaultCompetitionId([], [])).toBeNull();
+  });
+});
+
+describe('mapTeamOverview — teknik direktör, stadyum, sezonlar', () => {
+  const out = mapTeamOverview(
+    {
+      id: 34,
+      coaches: [
+        { coach_id: 1, active: false, start: '2022-01-14', coach: { id: 1, display_name: 'Domènec Torrent' } },
+        { coach_id: 2, active: true, start: '2022-07-01', coach: { id: 2, display_name: 'Okan Buruk', image_path: 'ob.png' } },
+      ],
+      venue: { id: 9, name: 'Rams Park', city_name: 'İstanbul', capacity: 53978 },
+      seasons: [
+        { id: 25682, name: '2025/2026', league_id: 600, finished: true, starting_at: '2025-08-08', league: { id: 600, name: 'Super Lig' } },
+        { id: 28155, name: '2026/2027', league_id: 2, is_current: true, starting_at: '2026-07-07', league: { id: 2, name: 'Champions League', image_path: 'ucl.png' } },
+        { id: 28203, name: '2026/2027', league_id: 600, is_current: true, starting_at: '2026-08-14', league: { id: 600, name: 'Super Lig' } },
+        { id: 25580, name: '2025/2026', league_id: 2, finished: true, starting_at: '2025-07-08' },
+      ],
+    } as Parameters<typeof mapTeamOverview>[0],
+    NOW,
+  );
+
+  it('görevdeki (active) teknik direktör ve stadyum', () => {
+    expect(out.coach).toEqual({ id: 2, name: 'Okan Buruk', photo: 'ob.png' });
+    expect(out.venue).toEqual({ name: 'Rams Park', city: 'İstanbul', capacity: 53978 });
+  });
+
+  it('sezonlar ada göre gruplanır, en yeni başta; grup içinde başlangıca göre', () => {
+    expect(out.campaigns.map((c) => [c.name, c.seasons.map((s) => s.id)])).toEqual([
+      ['2026/2027', [28155, 28203]],
+      ['2025/2026', [25580, 25682]],
+    ]);
+    expect(out.campaigns[0]!.seasons[0]).toMatchObject({ leagueId: 2, leagueName: 'Champions League', leagueLogo: 'ucl.png', isCurrent: true });
   });
 });

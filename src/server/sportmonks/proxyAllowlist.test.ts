@@ -18,6 +18,7 @@ import { PLAYER_PROFILE_INCLUDE } from '@/services/playerProfile';
 import { PLAYER_LINEUPS_FILTERS, PLAYER_LINEUPS_INCLUDE } from '@/services/playerLineups';
 import { TEAM_UPCOMING_INCLUDE } from '@/services/sportmonks/teamUpcoming';
 import { TEAM_OVERVIEW_INCLUDE } from '@/services/sportmonks/teamOverview';
+import { TEAM_STATS_INCLUDE, teamStatsFilters } from '@/services/sportmonks/teamSeasonStats';
 
 const FIXTURE_INCLUDE = 'participants;scores;state;periods;league.country;venue;referees.referee;round;stage;group';
 
@@ -43,6 +44,7 @@ const WEB_REQUESTS: [string, Record<string, string>][] = [
   ['football/squads/seasons/28203/teams/34', { include: 'player.statistics.details', filters: 'playerStatisticSeasons:28203' }],
   ['football/teams/34', { include: TEAM_UPCOMING_INCLUDE }],
   ['football/teams/34', { include: TEAM_OVERVIEW_INCLUDE }],
+  ['football/teams/34', { include: TEAM_STATS_INCLUDE, filters: teamStatsFilters([28203, 28155]) }],
   ['football/teams/34', {}],
   ['football/teams/search/Galatasaray', {}],
   ['football/players/455805', { include: PLAYER_PROFILE_INCLUDE }],
