@@ -19,7 +19,6 @@ import {
   getTeamSquads,
   getCompetitionTableFull,
   getSeasonsList,
-  getTopScorers,
   type CompetitionTableData,
   type CompetitionTableStandingRow,
   type SeasonListItem,
@@ -59,6 +58,7 @@ import SidelinedCard from './SidelinedCard';
 import { mapTeamSidelined } from '@/services/sportmonks/teamSidelined';
 import { useInViewOnce } from '@/hooks/useInViewOnce';
 import { getTeamSeasonMatches, getTeamSeasonScorers, getTeamSeasonStats } from '@/services/teamPage';
+import { getTopScorersWithAppearances } from '@/services/competitionTopScorers';
 import { combineSeasonStats } from '@/services/sportmonks/teamSeasonStats';
 import { mergeTeamScorers } from '@/services/sportmonks/teamScorers';
 
@@ -278,7 +278,7 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
   const topScorersQuery = useQuery({
     queryKey: ['team-page-topscorers', standingsCompetitionId, selectedSeasonId] as const,
     queryFn: () =>
-      getTopScorers(standingsCompetitionId, selectedSeasonId != null ? { season: selectedSeasonId } : undefined),
+      getTopScorersWithAppearances(standingsCompetitionId, selectedSeasonId != null ? { season: selectedSeasonId } : undefined),
     enabled: variant === 'page' && sidebarTab === 'scorers' && Boolean(standingsCompetitionId) && !standingsLoading,
     staleTime: 10 * 60_000,
   });

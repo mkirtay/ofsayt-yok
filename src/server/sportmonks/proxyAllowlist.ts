@@ -66,6 +66,8 @@ const FILTER_PREFIXES = new Set([
   'fixtureStates',
   'metadataTypes',
   'teamStatisticSeasons',
+  // Gol Krallığı O (oynanan maç) topscorers yanıtına gömülü (services/competitionTopScorers.ts)
+  'playerStatisticDetailTypes',
 ]);
 const KNOWN_PARAMS = new Set(['include', 'filters', 'per_page', 'page', 'order', 'api_token']);
 const MAX_PER_PAGE = 50;

@@ -5,12 +5,12 @@ import {
 import {
   getCompetitionTableFull,
   getSeasonsList,
-  getTopScorers,
   type CompetitionTableData,
   type SeasonListItem,
   type TopScorersPayload,
 } from '@/services/liveScoreService';
 import { legacyToStandingsLeagueId } from '@/services/sportmonksProviderFlag';
+import { getTopScorersWithAppearances } from '@/services/competitionTopScorers';
 
 /**
  * Yan panelin varsayılan görünümü (Puan Durumu): sezon listesi + seçili sezon + tablo. Gol krallığı bu sorguda
@@ -113,7 +113,8 @@ export function useCompetitionTopScorers(competitionId: number, seasonId: number
     queryFn: async (): Promise<TopScorersPayload | null> => {
       const compId = sidebarStandingsLeagueId(competitionId);
       if (compId == null) return null;
-      return getTopScorers(compId, seasonId != null ? { season: seasonId } : undefined);
+      // O (oynanan maç) yanıta gömülü: takım başına kadro isteği yok (bkz. competitionTopScorers.ts).
+      return getTopScorersWithAppearances(compId, seasonId != null ? { season: seasonId } : undefined);
     },
     enabled: enabled && competitionId > 0,
     staleTime: COMPETITION_SIDEBAR_STALE_MS,

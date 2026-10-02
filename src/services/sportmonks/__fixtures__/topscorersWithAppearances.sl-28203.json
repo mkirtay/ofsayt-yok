@@ -1,0 +1,110 @@
+[
+ {
+  "id": 375096406,
+  "season_id": 28203,
+  "player_id": 37632306,
+  "type_id": 208,
+  "position": 1,
+  "total": 7,
+  "participant_id": 3570,
+  "player": {
+   "id": 37632306,
+   "display_name": "Gift Orban",
+   "image_path": "https://cdn.sportmonks.com/images/soccer/players/18/37632306.png",
+   "statistics": [
+    {
+     "season_id": 28203,
+     "team_id": 3570,
+     "player_id": 37632306,
+     "details": [
+      {
+       "id": 52509719,
+       "player_statistic_id": 1881176458,
+       "type_id": 321,
+       "value": {
+        "total": 6
+       }
+      }
+     ]
+    }
+   ]
+  },
+  "participant": {
+   "id": 3570,
+   "name": "Amed SK",
+   "image_path": "https://cdn.sportmonks.com/images/soccer/teams/18/3570.png"
+  }
+ },
+ {
+  "id": 372083081,
+  "season_id": 28203,
+  "player_id": 4125,
+  "type_id": 208,
+  "position": 2,
+  "total": 7,
+  "participant_id": 688,
+  "player": {
+   "id": 4125,
+   "display_name": "Mohamed Salah",
+   "image_path": "https://cdn.sportmonks.com/images/soccer/players/29/4125.png",
+   "statistics": [
+    {
+     "season_id": 28203,
+     "team_id": 688,
+     "player_id": 4125,
+     "details": [
+      {
+       "id": 52433917,
+       "player_statistic_id": 1881305009,
+       "type_id": 321,
+       "value": {
+        "total": 6
+       }
+      }
+     ]
+    }
+   ]
+  },
+  "participant": {
+   "id": 688,
+   "name": "Trabzonspor",
+   "image_path": "https://cdn.sportmonks.com/images/soccer/teams/16/688.png"
+  }
+ },
+ {
+  "id": 368644320,
+  "season_id": 28203,
+  "player_id": 455805,
+  "type_id": 208,
+  "position": 3,
+  "total": 6,
+  "participant_id": 34,
+  "player": {
+   "id": 455805,
+   "display_name": "Victor Osimhen ",
+   "image_path": "https://cdn.sportmonks.com/images/soccer/players/29/455805.png",
+   "statistics": [
+    {
+     "season_id": 28203,
+     "team_id": 34,
+     "player_id": 455805,
+     "details": [
+      {
+       "id": 52354676,
+       "player_statistic_id": 1881426482,
+       "type_id": 321,
+       "value": {
+        "total": 4
+       }
+      }
+     ]
+    }
+   ]
+  },
+  "participant": {
+   "id": 34,
+   "name": "Galatasaray",
+   "image_path": "https://cdn.sportmonks.com/images/soccer/teams/2/34.png"
+  }
+ }
+]

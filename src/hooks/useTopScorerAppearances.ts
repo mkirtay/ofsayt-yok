@@ -19,11 +19,16 @@ export function mergeAppearances(data: TopScorersPayload, appearances: Record<nu
 }
 
 /**
+ * Yedek yol: yanıtta O yoksa (eski `getTopScorers` çağıranlar). `getTopScorersWithAppearances` ile gelen veride
+ * (`appearancesIncluded`) hiçbir istek atmaz, veriyi aynen döndürür.
+ *
  * Gol Krallığı "O" (oynanan maç) — asıl liste (gol + asist) hemen gelir; oynanan maç ayrı kaynaktan (takım başına
  * kadro istatistiği, bkz. `getTopScorerAppearances`) yalnızca sekme AÇIKKEN yüklenir, sonra listeye birleştirilir.
  * Veri gelmezse / oyuncuda yoksa `played` undefined kalır → tabloda "—" (asla "0").
  */
 export function useTopScorersWithAppearances(data: TopScorersPayload | null, enabled: boolean): TopScorersPayload | null {
+  // O yanıta zaten gömülüyse (services/competitionTopScorers.ts) takım başına kadro isteği atılmaz.
+  const embedded = Boolean(data && (data as { appearancesIncluded?: boolean }).appearancesIncluded);
   const seasonId = data?.season?.id;
   const teamIds = useMemo(
     () => [...new Set((data?.topscorers ?? []).map((s) => s.team?.id).filter((x): x is number => typeof x === 'number'))].sort((a, b) => a - b),
@@ -32,9 +37,12 @@ export function useTopScorersWithAppearances(data: TopScorersPayload | null, ena
   const { data: appearances } = useQuery({
     queryKey: ['topscorer-appearances', seasonId, teamIds.join(',')],
     queryFn: () => getTopScorerAppearances(seasonId as number, teamIds),
-    enabled: enabled && typeof seasonId === 'number' && teamIds.length > 0,
+    enabled: enabled && !embedded && typeof seasonId === 'number' && teamIds.length > 0,
     staleTime: 30 * 60_000,
     gcTime: 60 * 60_000,
   });
-  return useMemo(() => (data && appearances ? mergeAppearances(data, appearances) : data), [data, appearances]);
+  return useMemo(
+    () => (data && appearances && !embedded ? mergeAppearances(data, appearances) : data),
+    [data, appearances, embedded],
+  );
 }
