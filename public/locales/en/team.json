@@ -35,7 +35,8 @@
     "more": "Show more",
     "moreAria": "Show {{count}} more matches",
     "empty": "No recent matches found.",
-    "error": "Couldn't load recent matches."
+    "error": "Couldn't load recent matches.",
+    "seasonDivider": "{{season}} season"
   },
   "summary": {
     "title": "Season Summary",

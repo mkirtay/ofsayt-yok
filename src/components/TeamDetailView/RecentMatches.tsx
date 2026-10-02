@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { SkeletonBlock } from '@/components/Skeleton';
 import TeamLogo from '@/components/TeamLogo';
@@ -9,6 +9,8 @@ import { competitionLogoNeedsBackdrop } from '@/utils/competitionLogo';
 import { leagueNameById } from '@/utils/leagueName';
 import { buildMatchHref } from '@/utils/matchUrl';
 import { fullMatchDate, recentMatchStatus } from './recentMatchLabels';
+import { buildRecentItems, initialRecentCount, visibleRecentItems } from './recentSeasonItems';
+import { formatSeasonLabel } from '@/utils/seasonLabel';
 import styles from './teamDetailView.module.scss';
 
 export const RECENT_PAGE_SIZE = 10;
@@ -19,17 +21,24 @@ type Props = {
   error?: boolean;
   /** Liste değişince (takım/sezon) "Daha fazla" sayacını sıfırlamak için çağıran `key` verir. */
   pageSize?: number;
+  /** Maçın sezonu ("2025/2026"); verilirse sezon değiştiği yerde ayraç satırı çizilir. */
+  seasonOf?: (m: TeamMatch) => string | null | undefined;
+  /** Seçili (güncel) sezon — ilk maç bundan farklıysa en başta da ayraç. */
+  currentSeason?: string | null;
 };
 
 /**
  * Son Maçlar. İlk 10 satır; "Daha fazla" her tıklamada 10 satır daha açar (veri zaten elde, istek yok).
  * Kutu 10 satır + alt satır yüksekliğini her durumda (yükleniyor / az maç / boş) korur → CLS 0.
  */
-export default function RecentMatches({ matches, loading, error, pageSize = RECENT_PAGE_SIZE }: Props) {
+export default function RecentMatches({ matches, loading, error, pageSize = RECENT_PAGE_SIZE, seasonOf, currentSeason }: Props) {
   const { t } = useTranslation('team');
   const { t: tl } = useTranslation('leagues');
   const { t: tm } = useTranslation('match');
-  const [visible, setVisible] = useState(pageSize);
+  const items = useMemo(() => buildRecentItems(matches, seasonOf, currentSeason), [matches, seasonOf, currentSeason]);
+  // Ek sayfa (kullanıcı tıklaması) sayısı; ilk sayfa ayraç yüksekliğine göre 10 satır bütçesini aşmaz.
+  const [extraPages, setExtraPages] = useState(0);
+  const visible = initialRecentCount(items, pageSize) + extraPages * pageSize;
 
   if (loading) {
     return (
@@ -52,12 +61,22 @@ export default function RecentMatches({ matches, loading, error, pageSize = RECE
     );
   }
 
-  const shown = matches.slice(0, visible);
-  const remaining = matches.length - shown.length;
+  const shownItems = visibleRecentItems(items, visible);
+  const shownCount = shownItems.filter((it) => it.kind === 'match').length;
+  const remaining = matches.length - shownCount;
 
   return (
     <div className={styles.recentList}>
-      {shown.map((match) => {
+      {shownItems.map((item) => {
+        if (item.kind === 'divider') {
+          const label = t('recent.seasonDivider', { season: formatSeasonLabel(item.season) });
+          return (
+            <div key={`season-${item.season}`} className={styles.recentSeasonDivider} role="separator" aria-label={label}>
+              <span>{label}</span>
+            </div>
+          );
+        }
+        const match = item.match;
         const status = recentMatchStatus(match);
         const comp = match.competition;
         const compName = comp?.id ? leagueNameById(comp.id, comp.name, tl) : '';
@@ -121,7 +140,7 @@ export default function RecentMatches({ matches, loading, error, pageSize = RECE
           <button
             type="button"
             className={styles.recentMoreBtn}
-            onClick={() => setVisible((v) => v + pageSize)}
+            onClick={() => setExtraPages((p) => p + 1)}
             aria-label={t('recent.moreAria', { count: Math.min(pageSize, remaining) })}
           >
             {t('recent.more')}

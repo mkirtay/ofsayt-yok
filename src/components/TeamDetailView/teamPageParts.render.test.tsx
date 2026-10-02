@@ -49,6 +49,24 @@ describe('<RecentMatches />', () => {
     expect(rows[2]).toMatch(/_recentComp_\w+" aria-hidden="true"><\/span>/); // etiketsiz satırda da kolon var
   });
 
+  it('sezon ayracı: geçen sezona geçilen yerde "2025-2026 sezonu", ilk sayfa 9 maç + ayraç', () => {
+    const cur = Array.from({ length: 7 }, (_, i) => match(i, { season_id: 28203 }));
+    const prev = Array.from({ length: 10 }, (_, i) => match(10 + i, { season_id: 25682, date: '2026-05-17' }));
+    const html = renderToStaticMarkup(
+      <RecentMatches
+        matches={[...cur, ...prev]}
+        loading={false}
+        seasonOf={(m) => (m.season_id === 28203 ? '2026/2027' : '2025/2026')}
+        currentSeason="2026/2027"
+      />,
+    );
+    const order = [...html.matchAll(/(href="\/matches\/(\d+)|role="separator")/g)].map((m) => (m[2] ? m[2] : 'AYRAÇ'));
+    expect(order.slice(6, 9)).toEqual(['1006', 'AYRAÇ', '1010']);
+    expect(order.filter((x) => x !== 'AYRAÇ')).toHaveLength(9);
+    expect(html).toContain('aria-label="2025-2026 sezonu"');
+    expect(html).toContain('Daha fazla');
+  });
+
   it('10 ya da daha az maçta düğme yok', () => {
     const html = renderToStaticMarkup(<RecentMatches matches={Array.from({ length: 7 }, (_, i) => match(i))} loading={false} />);
     expect(count(html, /href="\/matches\//g)).toBe(7);

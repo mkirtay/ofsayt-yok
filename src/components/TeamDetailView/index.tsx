@@ -356,6 +356,17 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
       <SeasonSelect seasons={seasonSelectItems} value={campaignIdx} onChange={changeCampaign} />
     ) : null;
 
+  // Son Maçlar sezon ayracı: maçın season_id'si → takımın sezon adı ("2025/2026").
+  const seasonNameById = useMemo(() => {
+    const map = new Map<number, string>();
+    for (const c of overviewQuery.data?.campaigns ?? []) for (const s of c.seasons) map.set(s.id, c.name);
+    return map;
+  }, [overviewQuery.data]);
+  const seasonNameOf = useCallback(
+    (m: { season_id?: number }) => (m.season_id != null ? seasonNameById.get(m.season_id) : undefined),
+    [seasonNameById],
+  );
+
   // Geçmiş sezon: turnuva-sezon başına bir program isteği, yalnız seçilince (ilk yüke girmez).
   const pastMatchesQuery = useQuery({
     queryKey: ['team-season-matches', teamId, campaign?.name ?? ''] as const,
@@ -601,6 +612,8 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
                   matches={listMatches}
                   loading={listLoading}
                   error={listError}
+                  seasonOf={isCurrentCampaign ? seasonNameOf : undefined}
+                  currentSeason={isCurrentCampaign ? (campaign?.name ?? null) : null}
                 />
               </>
             )}

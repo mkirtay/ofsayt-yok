@@ -237,6 +237,28 @@ $recent-comp-w: 160px;
   font-weight: 700;
 }
 
+// Sezon ayracı: sabit 24 px (recentSeasonItems.ts SEASON_DIVIDER_PX ile aynı), ince çizgi + küçük etiket.
+.recentSeasonDivider {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  height: 24px;
+  flex-shrink: 0;
+  padding: 0 $spacing-1;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: $color-border;
+  }
+}
+
 .recentSkeletonBody {
   grid-column: 2 / -1;
   width: 100%;

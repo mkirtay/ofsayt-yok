@@ -35,7 +35,8 @@
     "more": "Daha fazla",
     "moreAria": "{{count}} maç daha göster",
     "empty": "Son maç bulunamadı.",
-    "error": "Son maçlar yüklenemedi."
+    "error": "Son maçlar yüklenemedi.",
+    "seasonDivider": "{{season}} sezonu"
   },
   "summary": {
     "title": "Sezon Özeti",
