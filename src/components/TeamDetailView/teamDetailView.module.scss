@@ -139,13 +139,6 @@
   font-weight: 500;
 }
 
-.matchTeams {
-  display: flex;
-  align-items: center;
-  flex: 1;
-  min-width: 0;
-  gap: $spacing-2;
-}
 
 .matchTeam {
   display: flex;
@@ -211,12 +204,27 @@ $recent-footer-h: 44px;
   min-height: calc(#{$recent-row-h} * 10 + #{$recent-footer-h});
 }
 
+// Satır ızgarası: tarih | ev | skor | deplasman | turnuva. Turnuva kolonu sabit (uzun etiket ellipsis, tam ad
+// title'da) → skor kolonu bütün satırlarda aynı x konumunda.
+$recent-comp-w: 160px;
+
 .recentRow {
   box-sizing: border-box;
+  display: grid;
+  grid-template-columns: 50px minmax(0, 1fr) 54px minmax(0, 1fr) $recent-comp-w;
+  column-gap: $spacing-2;
   height: $recent-row-h;
   padding-top: 0;
   padding-bottom: 0;
   flex-shrink: 0;
+
+  .matchTime {
+    width: auto;
+  }
+
+  .matchScore {
+    width: auto;
+  }
 
   // Son satırın alt çizgisi `.matchRow:last-child` ile kalkıyordu; altında alt satır olduğu için çizgi kalsın.
   &:last-child {
@@ -229,12 +237,15 @@ $recent-footer-h: 44px;
   font-weight: 700;
 }
 
+.recentSkeletonBody {
+  grid-column: 2 / -1;
+  width: 100%;
+}
+
 .recentComp {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  flex: 0 1 auto;
-  max-width: 120px;
   min-width: 0;
   font-size: 11px;
   color: $color-text-secondary;
@@ -276,24 +287,9 @@ $recent-footer-h: 44px;
     display: none;
   }
 
-  .recentComp {
-    flex: 0 0 auto;
-  }
-
   .recentRow {
-    gap: 6px;
-
-    .matchTime {
-      width: 36px;
-    }
-
-    .matchTeams {
-      gap: 6px;
-    }
-
-    .matchScore {
-      width: 34px;
-    }
+    grid-template-columns: 36px minmax(0, 1fr) 34px minmax(0, 1fr) 14px;
+    column-gap: 6px;
 
     .matchTeam {
       gap: 4px;
@@ -352,15 +348,36 @@ $recent-footer-h: 44px;
   min-width: 0;
 }
 
+// Fikstür satırı: saat | rakip | turnuva — Son Maçlar ile aynı sabit turnuva kolonu (logolar alt alta hizalı).
+.fixtureRow {
+  display: grid;
+  grid-template-columns: 50px minmax(0, 1fr) $recent-comp-w;
+  column-gap: $spacing-2;
+
+  .matchTime {
+    width: auto;
+  }
+}
+
 .fixtureComp {
   display: flex;
   align-items: center;
   gap: 4px;
-  flex: 0 1 auto;
-  max-width: 45%;
   min-width: 0;
   font-size: 11px;
   color: $color-text-secondary;
+}
+
+@media (max-width: #{$bp-sm - 1px}) {
+  // Dar ekranda Son Maçlar gibi yalnız logo (tam ad title'da).
+  .fixtureRow {
+    grid-template-columns: 36px minmax(0, 1fr) 14px;
+    column-gap: 6px;
+  }
+
+  .fixtureCompName {
+    display: none;
+  }
 }
 
 .fixtureCompLogo {

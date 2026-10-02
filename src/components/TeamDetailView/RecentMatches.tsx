@@ -37,7 +37,7 @@ export default function RecentMatches({ matches, loading, error, pageSize = RECE
         {Array.from({ length: pageSize }, (_, i) => (
           <div key={i} className={`${styles.matchRow} ${styles.recentRow}`} aria-hidden="true">
             <SkeletonBlock className={styles.matchTime} width={34} height={12} />
-            <SkeletonBlock width="100%" height={14} />
+            <SkeletonBlock className={styles.recentSkeletonBody} height={14} />
           </div>
         ))}
       </div>
@@ -79,21 +79,20 @@ export default function RecentMatches({ matches, loading, error, pageSize = RECE
               </span>
             )}
 
-            <div className={styles.matchTeams}>
-              <span className={styles.matchTeam}>
-                {match.home?.logo && (
-                  <TeamLogo src={match.home.logo} alt="" className={styles.matchTeamLogo} width={18} height={18} />
-                )}
-                <span className={styles.matchTeamName}>{match.home?.name || ''}</span>
-              </span>
-              <span className={styles.matchScore}>{match.scores?.score || match.scores?.ft_score || '-'}</span>
-              <span className={styles.matchTeam}>
-                {match.away?.logo && (
-                  <TeamLogo src={match.away.logo} alt="" className={styles.matchTeamLogo} width={18} height={18} />
-                )}
-                <span className={styles.matchTeamName}>{match.away?.name || ''}</span>
-              </span>
-            </div>
+            {/* Izgara hücreleri: tarih | ev | skor | deplasman | turnuva — kolon genişlikleri her satırda aynı. */}
+            <span className={styles.matchTeam}>
+              {match.home?.logo && (
+                <TeamLogo src={match.home.logo} alt="" className={styles.matchTeamLogo} width={18} height={18} />
+              )}
+              <span className={styles.matchTeamName}>{match.home?.name || ''}</span>
+            </span>
+            <span className={styles.matchScore}>{match.scores?.score || match.scores?.ft_score || '-'}</span>
+            <span className={styles.matchTeam}>
+              {match.away?.logo && (
+                <TeamLogo src={match.away.logo} alt="" className={styles.matchTeamLogo} width={18} height={18} />
+              )}
+              <span className={styles.matchTeamName}>{match.away?.name || ''}</span>
+            </span>
 
             {compName ? (
               <span className={styles.recentComp} role="img" aria-label={compFull} title={compFull}>
@@ -110,7 +109,9 @@ export default function RecentMatches({ matches, loading, error, pageSize = RECE
                   {compName}
                 </span>
               </span>
-            ) : null}
+            ) : (
+              <span className={styles.recentComp} aria-hidden="true" />
+            )}
           </Link>
         );
       })}

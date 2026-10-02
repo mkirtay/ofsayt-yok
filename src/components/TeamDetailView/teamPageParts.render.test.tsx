@@ -31,6 +31,24 @@ describe('<RecentMatches />', () => {
     expect(html).toMatch(/role="img" aria-label="Champions League" title="Champions League"/);
   });
 
+  it('hizalama: her satır aynı 5 ızgara hücresi (tarih | ev | skor | deplasman | turnuva); uzun etiket ve etiketsiz satırda da', () => {
+    const html = renderToStaticMarkup(
+      <RecentMatches
+        matches={[match(0), match(2), match(3, { competition: undefined })]}
+        loading={false}
+      />,
+    );
+    const rows = html.match(/<a class="_matchRow_\w+ _recentRow_\w+"[\s\S]*?<\/a>/g) ?? [];
+    expect(rows).toHaveLength(3);
+    for (const row of rows) {
+      // Satırın ızgara hücreleri sırasıyla (iç içe matchTeamName / matchTeamLogo sayılmaz).
+      const cells = [...row.matchAll(/class="_(matchTime|matchTeam|matchScore|recentComp)_[0-9a-f]+["\s]/g)].map((m) => m[1]);
+      expect(cells).toEqual(['matchTime', 'matchTeam', 'matchScore', 'matchTeam', 'recentComp']);
+    }
+    expect(rows[1]).toMatch(/_recentComp_\w+" role="img" aria-label="Champions League" title="Champions League"/);
+    expect(rows[2]).toMatch(/_recentComp_\w+" aria-hidden="true"><\/span>/); // etiketsiz satırda da kolon var
+  });
+
   it('10 ya da daha az maçta düğme yok', () => {
     const html = renderToStaticMarkup(<RecentMatches matches={Array.from({ length: 7 }, (_, i) => match(i))} loading={false} />);
     expect(count(html, /href="\/matches\//g)).toBe(7);

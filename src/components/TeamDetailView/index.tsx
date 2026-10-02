@@ -626,7 +626,7 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
                     {group.matches.map((match) => {
                       const opponent = teamOpponent(match, teamId)?.opponent;
                       return (
-                        <Link href={buildMatchHref(match)} key={match.id} className={styles.matchRow}>
+                        <Link href={buildMatchHref(match)} key={match.id} className={`${styles.matchRow} ${styles.fixtureRow}`}>
                           <span className={styles.matchTime}>{fixtureKickoffLabel(match, t('fixtures.timeTbd'))}</span>
                           <span className={styles.fixtureOpponent}>
                             {opponent?.logo && (
@@ -640,8 +640,11 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
                             )}
                             <span className={styles.matchTeamName}>{opponent?.name || ''}</span>
                           </span>
-                          {match.competition?.name && (
-                            <span className={styles.fixtureComp}>
+                          {match.competition?.name ? (
+                            <span
+                              className={styles.fixtureComp}
+                              title={leagueNameById(match.competition.id, match.competition.name, tl, 'full')}
+                            >
                               {match.competition.logo && (
                                 <TeamLogo
                                   src={match.competition.logo}
@@ -657,6 +660,8 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
                                 {leagueNameById(match.competition.id, match.competition.name, tl)}
                               </span>
                             </span>
+                          ) : (
+                            <span className={styles.fixtureComp} aria-hidden="true" />
                           )}
                         </Link>
                       );
