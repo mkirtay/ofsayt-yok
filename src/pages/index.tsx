@@ -53,7 +53,8 @@ export default function Home({ initialDate, initialData }: HomeProps) {
           '@type': 'Organization',
           name: 'Ofsayt Yok',
           url: process.env.AUTH_URL ?? 'https://ofsaytyok.app',
-          logo: `${process.env.AUTH_URL ?? 'https://ofsaytyok.app'}/images/logo.svg`,
+          // = BRAND_LOGO_PNG (config/brandImages.ts); ana sayfa ilk yük parçalarına yeni modül eklememek için düz yazıldı.
+          logo: `${process.env.AUTH_URL ?? 'https://ofsaytyok.app'}/icon-512.png`,
           description: 'Türkiye ve dünya futbolundan canlı skorlar, maç analizleri, puan durumu ve spor haberleri.',
         }} />
       </Head>

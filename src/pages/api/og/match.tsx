@@ -1,5 +1,6 @@
 import { ImageResponse } from 'next/og';
 import type { NextRequest } from 'next/server';
+import { BRAND_LOGO_SVG } from '@/config/brandImages';
 
 export const config = {
   runtime: 'edge',
@@ -52,7 +53,7 @@ export default function handler(req: NextRequest) {
         {/* Üst bar: gerçek marka logosu */}
         <div style={{ display: 'flex', alignItems: 'center', padding: '36px 56px 0' }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={`${origin}/images/logo.svg`} width={190} height={36} alt="" />
+          <img src={`${origin}${BRAND_LOGO_SVG}`} width={158} height={48} alt="" />
         </div>
 
         {/* Lig etiketi */}

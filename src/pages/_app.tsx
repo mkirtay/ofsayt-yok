@@ -69,13 +69,18 @@ function App({ Component, pageProps: { session, ...pageProps } }: AppProps) {
         <meta name="description" content="Ofsayt Yok — Türkiye ve dünya futbolundan canlı skorlar, maç analizleri, puan durumu ve spor haberleri." />
         <meta property="og:site_name" content="Ofsayt Yok" />
         <meta property="og:type" content="website" key="og:type" />
-        <meta property="og:image" content={`${process.env.AUTH_URL ?? 'https://ofsaytyok.app'}/api/og/default`} key="og:image" />
+        {/* Varsayılan paylaşım görseli = OG_DEFAULT_IMAGE (config/brandImages.ts) — ilk yük parçalarına yeni modül eklememek
+            için değerler düz yazıldı; görsel değişirse ikisini birlikte güncelle. */}
+        <meta property="og:image" content={`${process.env.AUTH_URL ?? 'https://ofsaytyok.app'}/images/og-default-v2.png`} key="og:image" />
         <meta property="og:image:width" content="1200" key="og:image:width" />
         <meta property="og:image:height" content="630" key="og:image:height" />
+        <meta property="og:image:alt" content="Ofsayt Yok — Canlı Skorlar · Maç Analizi · Puan Durumu" key="og:image:alt" />
         <meta name="twitter:card" content="summary_large_image" key="twitter:card" />
+        <meta name="twitter:image" content={`${process.env.AUTH_URL ?? 'https://ofsaytyok.app'}/images/og-default-v2.png`} key="twitter:image" />
+        <meta name="twitter:image:alt" content="Ofsayt Yok — Canlı Skorlar · Maç Analizi · Puan Durumu" key="twitter:image:alt" />
         <link rel="icon" href="/icon.svg" type="image/svg+xml" />
         <link rel="icon" href="/favicon.ico" sizes="any" />
-        <link rel="apple-touch-icon" href="/icon.svg" />
+        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
       </Head>
       <div data-app-root className={`${inter.className} ${inter.variable} ${interExt.variable}`}>
         <RouteProgress />

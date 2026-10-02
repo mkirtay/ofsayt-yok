@@ -7,6 +7,7 @@ import NewsList from '@/components/NewsList';
 import { PanelSkeleton } from '@/components/Skeleton';
 import { useNewsDetail } from '@/hooks/useNewsDetail';
 import { isOptimizableNewsImage } from '@/config/newsImageHosts';
+import { BRAND_LOGO_PNG } from '@/config/brandImages';
 import styles from './newsDetail.module.scss';
 
 function formatDate(dateStr: string): string {
@@ -71,12 +72,14 @@ export default function NewsDetail() {
         {article.image && (
           <>
             <meta property="og:image" content={article.image} key="og:image" />
+            <meta property="og:image:alt" content={article.title} key="og:image:alt" />
             <meta name="twitter:card" content="summary_large_image" key="twitter:card" />
           </>
         )}
         <meta name="twitter:title" content={article.title} />
         <meta name="twitter:description" content={pageDescription} />
-        {article.image && <meta name="twitter:image" content={article.image} />}
+        {article.image && <meta name="twitter:image" content={article.image} key="twitter:image" />}
+        {article.image && <meta name="twitter:image:alt" content={article.title} key="twitter:image:alt" />}
         <JsonLd schema={{
           '@context': 'https://schema.org',
           '@type': 'NewsArticle',
@@ -84,7 +87,7 @@ export default function NewsDetail() {
           description: pageDescription,
           ...(article.image ? { image: article.image } : {}),
           datePublished: article.publishedAt,
-          publisher: { '@type': 'Organization', name: 'Ofsayt Yok', logo: `${process.env.AUTH_URL ?? 'https://ofsaytyok.app'}/images/logo.svg` },
+          publisher: { '@type': 'Organization', name: 'Ofsayt Yok', logo: `${process.env.AUTH_URL ?? 'https://ofsaytyok.app'}${BRAND_LOGO_PNG}` },
         }} />
       </Head>
       <Container>

@@ -232,7 +232,9 @@ export default function MatchDetail({ initialMatch, initialH2h, gone = false, ar
             <meta property="og:image" content={ogImageUrl} key="og:image" />
             <meta property="og:image:width" content="1200" key="og:image:width" />
             <meta property="og:image:height" content="630" key="og:image:height" />
-            <meta name="twitter:image" content={ogImageUrl} />
+            <meta property="og:image:alt" content={`${homeName} – ${awayName}${compName ? ` · ${compName}` : ''}`} key="og:image:alt" />
+            <meta name="twitter:image" content={ogImageUrl} key="twitter:image" />
+            <meta name="twitter:image:alt" content={`${homeName} – ${awayName}${compName ? ` · ${compName}` : ''}`} key="twitter:image:alt" />
             <meta name="twitter:card" content="summary_large_image" key="twitter:card" />
           </>
         )}
