@@ -18,7 +18,12 @@
   "formWin": "Galibiyet",
   "formLoss": "Mağlubiyet",
   "formDraw": "Beraberlik",
-  "oddsLabel": "Maç sonucu oranları",
+  "marketExpectation": {
+    "label": "Piyasa beklentisi",
+    "home": "Ev %{{p}}",
+    "draw": "Beraberlik %{{p}}",
+    "away": "Dep. %{{p}}"
+  },
   "subHeader": {
     "all": "Hepsi",
     "live": "Canlı",

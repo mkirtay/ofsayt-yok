@@ -89,40 +89,30 @@ $match-card-header-blue: var(--text-secondary); // tema-uyumlu (eskiden sabit la
 }
 
 .oddsStrip {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: $spacing-2;
+  // Piyasa beklentisi (oranlardan türetilmiş yüzde) — tek satır metin; dar ekranda sarar.
   width: 100%;
-  max-width: 420px;
+  max-width: 480px;
   margin: 0 auto;
-  padding-top: $spacing-1;
-}
-
-.oddsCell {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  gap: $spacing-2;
-  min-width: 0;
-  padding: $spacing-2 $spacing-3;
-  background-color: $color-bg;
-  border: 1px solid $color-border;
-  border-radius: $radius-sm;
-}
-
-.oddsLabel {
-  font-size: 14px;
-  font-weight: 600;
-  color: $match-card-header-blue;
+  padding-top: $spacing-2;
+  font-size: 13px;
+  line-height: 18px;
+  text-align: center;
+  color: $color-text-secondary;
   font-variant-numeric: tabular-nums;
+}
+
+.oddsTitle {
+  font-weight: 600;
 }
 
 .oddsValue {
-  font-size: 14px;
-  font-weight: 600;
-  color: $color-primary;
-  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: $color-text;
+  white-space: nowrap;
+}
+
+.oddsSep {
+  color: var(--text-tertiary);
 }
 
 .team {

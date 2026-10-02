@@ -18,7 +18,12 @@
   "formWin": "Win",
   "formLoss": "Loss",
   "formDraw": "Draw",
-  "oddsLabel": "Match result odds",
+  "marketExpectation": {
+    "label": "Market expectation",
+    "home": "Home {{p}}%",
+    "draw": "Draw {{p}}%",
+    "away": "Away {{p}}%"
+  },
   "subHeader": {
     "all": "All",
     "live": "Live",

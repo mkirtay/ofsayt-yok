@@ -21,6 +21,7 @@ import StadiumIcon from '@/components/icons/StadiumIcon';
 import WhistleIcon from '@/components/icons/WhistleIcon';
 import { MatchCardSkeleton } from '@/components/Skeleton';
 import TeamLogo from '@/components/TeamLogo';
+import { impliedProbabilities } from '@/utils/impliedProbability';
 
 interface MatchCardProps {
   match: Match | null;
@@ -214,10 +215,8 @@ export default function MatchCard({ match, loading, initialH2h }: MatchCardProps
   const showH2hFormRow = homeH2hForm.length > 0 || awayH2hForm.length > 0;
   const showH2hTable = h2hHistory.length > 0;
 
-  const preOdds = match.odds?.pre;
-  const showOddsStrip =
-    preOdds != null &&
-    (preOdds['1'] != null || preOdds['X'] != null || preOdds['2'] != null);
+  // Oran sayıları gösterilmez (AdSense kumar politikası): yalnız oranlardan türetilen piyasa beklentisi (yüzde).
+  const expectation = impliedProbabilities(match.odds?.pre);
 
   return (
     <div className={styles.matchCard}>
@@ -333,21 +332,15 @@ export default function MatchCard({ match, loading, initialH2h }: MatchCardProps
           </div>
         </div>
 
-        {showOddsStrip && preOdds ? (
-          <div className={styles.oddsStrip} aria-label={t('oddsLabel')}>
-            <div className={styles.oddsCell}>
-              <span className={styles.oddsLabel}>1</span>
-              <span className={styles.oddsValue}>{preOdds['1'] ?? '—'}</span>
-            </div>
-            <div className={styles.oddsCell}>
-              <span className={styles.oddsLabel}>X</span>
-              <span className={styles.oddsValue}>{preOdds['X'] ?? '—'}</span>
-            </div>
-            <div className={styles.oddsCell}>
-              <span className={styles.oddsLabel}>2</span>
-              <span className={styles.oddsValue}>{preOdds['2'] ?? '—'}</span>
-            </div>
-          </div>
+        {expectation ? (
+          <p className={styles.oddsStrip}>
+            <span className={styles.oddsTitle}>{t('marketExpectation.label')}:</span>{' '}
+            <span className={styles.oddsValue}>{t('marketExpectation.home', { p: expectation.home })}</span>
+            <span className={styles.oddsSep} aria-hidden="true"> · </span>
+            <span className={styles.oddsValue}>{t('marketExpectation.draw', { p: expectation.draw })}</span>
+            <span className={styles.oddsSep} aria-hidden="true"> · </span>
+            <span className={styles.oddsValue}>{t('marketExpectation.away', { p: expectation.away })}</span>
+          </p>
         ) : null}
       </div>
 
