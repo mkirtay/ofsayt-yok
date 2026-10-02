@@ -2,6 +2,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useI18n } from '@/lib/i18n';
 import Container from '@/components/Container';
+import ContactBand from '@/components/ContactBand';
 import trLegal from '../../public/locales/tr/legal.json';
 import enLegal from '../../public/locales/en/legal.json';
 import styles from './iletisim.module.scss';
@@ -19,6 +20,7 @@ export default function IletisimPage() {
         <link rel="canonical" href={`${canonicalBase}/iletisim`} />
       </Head>
       <Container>
+        <ContactBand />
         <div className={styles.page}>
           <Link href="/" className={styles.backLink}>
             {locale === 'en' ? '← Back to home' : '← Anasayfaya dön'}

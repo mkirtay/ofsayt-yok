@@ -1,0 +1,47 @@
+@use '../../styles/variables' as *;
+
+// Bant kutusu: yükseklik baştan sabit (mobil 120, masaüstü 160) — sahne sonradan gelse de kayma yok.
+.wrap {
+  margin-top: $spacing-4;
+}
+
+.band {
+  position: relative;
+  height: 120px;
+  border-radius: $radius-md;
+  overflow: hidden;
+  background: linear-gradient(135deg, #007b55 0%, #00a76f 60%, #007b55 100%);
+
+  @media (min-width: $bp-desktop) {
+    height: 160px;
+  }
+}
+
+.stripes {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.06) 0,
+    rgba(255, 255, 255, 0.06) 24px,
+    transparent 24px,
+    transparent 48px
+  );
+}
+
+.line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.tagline {
+  margin: $spacing-4 0 0;
+  text-align: center;
+  font-size: 22px;
+  font-weight: 800;
+  color: $color-text;
+}
