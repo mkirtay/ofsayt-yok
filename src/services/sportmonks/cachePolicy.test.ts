@@ -77,6 +77,27 @@ describe('sportmonksCacheTtl — TTL tablosu', () => {
     expect(sportmonksCacheTtl('core/types', [], NOW).fresh).toBe(86400);
   });
 
+  it('takım latest/upcoming: canlı ya da başlamaya ±15 dk → 30 sn; yoksa sıradaki maça kadar, en çok 15 dk', () => {
+    const team = (latest: object[], upcoming: object[]) => ({ id: 34, latest, upcoming });
+    const finished = { state_id: FT, starting_at: at(-3 * 24 * 60) };
+    // canlı maç latest'te
+    expect(sportmonksCacheTtl('football/teams/34', team([{ state_id: LIVE_1ST, starting_at: at(-30) }, finished], []), NOW).fresh).toBe(30);
+    // canlı maç upcoming'de
+    expect(sportmonksCacheTtl('football/teams/34', team([finished], [{ state_id: HT, starting_at: at(-50) }]), NOW).fresh).toBe(30);
+    // başlamaya 10 dk / başlama saati 5 dk geçmiş ama hâlâ NS
+    expect(sportmonksCacheTtl('football/teams/34', team([finished], [{ state_id: NS, starting_at: at(10) }]), NOW).fresh).toBe(30);
+    expect(sportmonksCacheTtl('football/teams/34', team([finished], [{ state_id: NS, starting_at: at(-5) }]), NOW).fresh).toBe(30);
+    // sıradaki maç 20 dk sonra → 5 dk (başlamadan 15 dk önceye kadar)
+    expect(sportmonksCacheTtl('football/teams/34', team([finished], [{ state_id: NS, starting_at: at(20) }]), NOW).fresh).toBe(300);
+    // sıradaki maç günler sonra / hiç yok → 15 dk
+    expect(sportmonksCacheTtl('football/teams/34', team([finished], [{ state_id: NS, starting_at: at(3 * 24 * 60) }]), NOW).fresh).toBe(900);
+    expect(sportmonksCacheTtl('football/teams/34', team([finished], []), NOW).fresh).toBe(900);
+    // yalnız latest (upcoming anahtarı yok) da maç listesi sayılır
+    expect(sportmonksCacheTtl('football/teams/34', { id: 34, latest: [finished] }, NOW).fresh).toBe(900);
+    // include'suz takım yanıtı eskisi gibi 6 sa
+    expect(sportmonksCacheTtl('football/teams/34', { id: 34 }, NOW).fresh).toBe(6 * 3600);
+  });
+
   it('stale (Redis tutma) süresi taze süreden uzun', () => {
     const t = sportmonksCacheTtl('football/fixtures/date/2026-09-30', [], NOW);
     expect(t.stale).toBeGreaterThan(t.fresh);

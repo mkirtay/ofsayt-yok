@@ -146,10 +146,16 @@ export function sportmonksCacheTtl(
     case 'topscorers':
       return withStale(30 * MIN, DAY);
 
-    case 'teams':
+    case 'teams': {
       if (a === 'search') return withStale(DAY);
-      // `upcoming` include'u yaklaşan fikstür taşıyor (saat değişiklikleri) → fikstür gibi 15 dk.
-      return withStale(data != null && typeof data === 'object' && 'upcoming' in (data as object) ? 15 * MIN : 6 * HOUR, DAY);
+      const team = data != null && typeof data === 'object' && !Array.isArray(data) ? (data as Record<string, unknown>) : null;
+      // `latest`/`upcoming` include'u maç listesi taşıyor (takım sayfası, mobil fikstür): canlı maç ya da başlamaya
+      // ±15 dk → 30 sn; yoksa sıradaki başlamaya (−15 dk) kadar, en fazla 15 dk.
+      if (team && ('latest' in team || 'upcoming' in team)) {
+        return withStale(fixtureListFreshSeconds([...asList(team.latest), ...asList(team.upcoming)], 15 * MIN, now), DAY);
+      }
+      return withStale(6 * HOUR, DAY);
+    }
     case 'squads':
     case 'players':
     case 'coaches':
