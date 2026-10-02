@@ -18,7 +18,7 @@ export default function TeamDetail() {
 
   return (
     <Container>
-      <TeamDetailView teamId={teamId} variant="page" />
+      <TeamDetailView key={teamId} teamId={teamId} variant="page" />
     </Container>
   );
 }

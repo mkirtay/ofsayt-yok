@@ -2,21 +2,19 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import { useQuery } from '@tanstack/react-query';
 import CompareTeamPicker from '@/components/CompareTeamPicker';
 import MatchCompetitionStandings from '@/components/MatchCompetitionStandings';
 import MatchCompetitionTopScorers from '@/components/MatchCompetitionTopScorers';
-import {
-  PanelSkeleton,
-  TeamHeaderSkeleton,
-} from '@/components/Skeleton';
+import { PanelSkeleton } from '@/components/Skeleton';
 import { useTopScorersWithAppearances } from '@/hooks/useTopScorerAppearances';
-import { useTeamDetailBootstrap } from '@/hooks/useTeamDetailBootstrap';
-import { useTeamUpcomingFixtures } from '@/hooks/useTeamUpcomingFixtures';
+import { useTeamOverview } from '@/hooks/useTeamOverview';
 import { useI18n, useTranslation } from '@/lib/i18n';
 import '@/lib/i18nNamespaces/team';
 import { leagueNameById } from '@/utils/leagueName';
 import hubStyles from '@/pages/index.module.scss';
 import {
+  getTeamCompetitions,
   getTeamSquads,
   getCompetitionTableFull,
   getSeasonsList,
@@ -24,11 +22,11 @@ import {
   type CompetitionTableData,
   type CompetitionTableStandingRow,
   type SeasonListItem,
-  type TopScorersPayload,
 } from '@/services/liveScoreService';
 import type { Match } from '@/models/liveScore';
 import { competitionLogoNeedsBackdrop, uefaCompetitionLogoSrcById } from '@/utils/competitionLogo';
 import { toStandingsCompetitionId } from '@/services/sportmonksProviderFlag';
+import { defaultCompetitionId, teamForm } from '@/services/sportmonks/teamOverview';
 import { utcTimeToTr } from '@/utils/dateFormat';
 import { buildMatchHref } from '@/utils/matchUrl';
 import { groupSquadByPosition } from '@/utils/squadGroups';
@@ -47,6 +45,8 @@ import {
 } from '@/utils/teamFixtures';
 import styles from './teamDetailView.module.scss';
 import TeamLogo from '@/components/TeamLogo';
+import TeamHeader from './TeamHeader';
+import RecentMatches from './RecentMatches';
 
 // Kadro sekmesi yüklenirken (tıklamadan sonra): sahne ve CSS'i ayrı parçada. Kutu (yükseklik) burada.
 const loadFormationLoading = () => import('@/components/PitchScenes/FormationLoading');
@@ -97,7 +97,8 @@ export function computeTeamStats(
   let goalsConceded = 0;
 
   for (const m of matches) {
-    const parsed = parseScore(m.scores?.ft_score || m.scores?.score);
+    if (String(m.status ?? '').toUpperCase() !== 'FINISHED') continue;
+    const parsed = parseScore(m.scores?.score || m.scores?.ft_score);
     if (!parsed) continue;
     const [hg, ag] = parsed;
 
@@ -160,56 +161,41 @@ export type TeamDetailViewProps = {
 };
 
 export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailViewProps) {
-  const bootstrapQuery = useTeamDetailBootstrap(teamId, Boolean(teamId));
-  const lastMatches = bootstrapQuery.data?.lastMatches ?? [];
-  const competitions = bootstrapQuery.data?.competitions ?? [];
-  const bootstrapLoading = bootstrapQuery.isLoading;
-  const upcomingQuery = useTeamUpcomingFixtures(teamId, Boolean(teamId));
+  const overviewQuery = useTeamOverview(teamId, Boolean(teamId));
+  // Veri yoksa ve hata da yoksa yükleniyor (statik HTML'de `teamId` henüz boşken de iskelet; "maç yok" görünmez).
+  const overviewLoading = !overviewQuery.data && !overviewQuery.isError;
+  const recentMatches = useMemo(() => overviewQuery.data?.recent ?? [], [overviewQuery.data]);
+  const upcomingFixtures = useMemo(() => overviewQuery.data?.fixtures ?? [], [overviewQuery.data]);
+  // Sidebar "Ligler": son 10 maç + fikstür (geçen sezonun kupası gibi bitmiş turnuvalar listeye girmez).
+  const competitions = useMemo(
+    () => getTeamCompetitions([...recentMatches.slice(0, 10), ...upcomingFixtures] as Match[], teamId),
+    [recentMatches, upcomingFixtures, teamId],
+  );
+  const defaultCompId = useMemo(() => defaultCompetitionId(recentMatches, upcomingFixtures), [recentMatches, upcomingFixtures]);
   const { t } = useTranslation('team');
   const { t: tl } = useTranslation('leagues');
   const { locale } = useI18n();
 
   const [activeTab, setActiveTab] = useState<'matches' | 'fixtures' | 'squad'>('matches');
   const [compareOpen, setCompareOpen] = useState(false);
-  const [squad, setSquad] = useState<unknown[]>([]);
   const [table, setTable] = useState<CompetitionTableData | null>(null);
   const [seasons, setSeasons] = useState<SeasonListItem[]>([]);
   const [selectedSeasonId, setSelectedSeasonId] = useState<number | null>(null);
-  const [topScorers, setTopScorers] = useState<TopScorersPayload | null>(null);
   const [standingsLoading, setStandingsLoading] = useState(false);
-  const [topScorersLoading, setTopScorersLoading] = useState(false);
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>('standings');
-  const [selectedCompetitionId, setSelectedCompetitionId] = useState('');
-  const [squadLoading, setSquadLoading] = useState(false);
+  // Kullanıcının seçtiği turnuva; seçmediyse varsayılan (son 10 maçta en çok oynanan). Takım değişince bileşen
+  // yeniden kurulur (sayfa `key={teamId}`, panel `key={teamId}`) → ayrıca sıfırlama efekti yok.
+  const [pickedCompetitionId, setSelectedCompetitionId] = useState('');
+  const selectedCompetitionId = pickedCompetitionId || (defaultCompId != null ? String(defaultCompId) : '');
   const standingsCompetitionIdNum = selectedCompetitionId ? toStandingsCompetitionId(selectedCompetitionId) : null;
   const standingsCompetitionId = standingsCompetitionIdNum != null ? String(standingsCompetitionIdNum) : '';
-
-  useEffect(() => {
-    setSelectedCompetitionId('');
-    setSquad([]);
-    setTable(null);
-    setSeasons([]);
-    setSelectedSeasonId(null);
-    setTopScorers(null);
-  }, [teamId]);
-
-  useEffect(() => {
-    const sid = bootstrapQuery.data?.selectedCompetitionId;
-    if (sid) setSelectedCompetitionId(sid);
-  }, [bootstrapQuery.data?.selectedCompetitionId, teamId]);
 
   const handleSeasonChange = useCallback(async (seasonId: number, competitionIdStr: string) => {
     setSelectedSeasonId(seasonId);
     setStandingsLoading(true);
-    setTopScorersLoading(true);
-    const [tbl, scorers] = await Promise.all([
-      getCompetitionTableFull(competitionIdStr, { season: seasonId }),
-      getTopScorers(competitionIdStr, { season: seasonId }),
-    ]);
+    const tbl = await getCompetitionTableFull(competitionIdStr, { season: seasonId });
     setTable(tbl);
-    setTopScorers(scorers);
     setStandingsLoading(false);
-    setTopScorersLoading(false);
   }, []);
 
   const handleLeagueClick = useCallback((competitionId: number) => {
@@ -217,37 +203,27 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
     setSidebarTab('standings');
   }, []);
 
+  // Turnuva seçilince yalnız puan durumu + sezon listesi. Kadro ve gol krallığı sekme açılınca (aşağıdaki sorgular).
   useEffect(() => {
     if (!teamId || !selectedCompetitionId) return;
+    let cancelled = false;
 
     const loadCompetitionData = async () => {
-      setStandingsLoading(true);
-      setTopScorersLoading(true);
-      setSquadLoading(true);
-      // `selectedCompetitionId` takımın maçlarından gelir → Sportmonks açıkken Sportmonks league_id (Süper Lig = 600,
-      // 2. Lig Kırmızı = 1283). Puan durumu/sezon/gol krallığı fonksiyonları bu id'yi doğrudan kullanır (legacy çeviri yok).
       const standingsId = toStandingsCompetitionId(selectedCompetitionId);
       if (standingsId == null) {
-        const squadOnly = await getTeamSquads(teamId, selectedCompetitionId);
-        setSquad(Array.isArray(squadOnly) ? squadOnly : []);
-        setSquadLoading(false);
         setSeasons([]);
         setSelectedSeasonId(null);
         setTable(null);
-        setTopScorers(null);
         setStandingsLoading(false);
-        setTopScorersLoading(false);
         return;
       }
+      setStandingsLoading(true);
       const standingsIdStr = String(standingsId);
-      const [squadData, seasonsList, table1] = await Promise.all([
-        getTeamSquads(teamId, selectedCompetitionId),
+      const [seasonsList, table1] = await Promise.all([
         getSeasonsList({ competitionId: standingsIdStr }),
         getCompetitionTableFull(standingsIdStr),
       ]);
-
-      setSquad(Array.isArray(squadData) ? squadData : []);
-      setSquadLoading(false);
+      if (cancelled) return;
       setSeasons(seasonsList);
 
       const fromTable =
@@ -271,52 +247,61 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
       if (needTableRefetch && sid != null) {
         tableFinal = await getCompetitionTableFull(standingsIdStr, { season: sid });
       }
+      if (cancelled) return;
       setTable(tableFinal ?? table1);
-
-      const scorersData = await getTopScorers(
-        standingsIdStr,
-        sid != null ? { season: sid } : undefined
-      );
-      setTopScorers(scorersData);
       setStandingsLoading(false);
-      setTopScorersLoading(false);
     };
 
     void loadCompetitionData();
+    return () => {
+      cancelled = true;
+    };
   }, [teamId, selectedCompetitionId]);
+
+  // Kadro: takım kapsamlı (Sportmonks'ta lig değil) → yalnız Kadro sekmesi açılınca.
+  const squadQuery = useQuery({
+    queryKey: ['team-squad', teamId] as const,
+    queryFn: () => getTeamSquads(teamId, selectedCompetitionId),
+    enabled: activeTab === 'squad' && Boolean(teamId),
+    staleTime: 30 * 60_000,
+  });
+  const squad = squadQuery.data ?? [];
+  const squadLoading = activeTab === 'squad' && (squadQuery.isLoading || (!squadQuery.data && squadQuery.isFetching));
+
+  // Gol krallığı: yalnız sayfa varyantının kenar panelinde "Gol Krallığı" sekmesi açılınca.
+  const topScorersQuery = useQuery({
+    queryKey: ['team-page-topscorers', standingsCompetitionId, selectedSeasonId] as const,
+    queryFn: () =>
+      getTopScorers(standingsCompetitionId, selectedSeasonId != null ? { season: selectedSeasonId } : undefined),
+    enabled: variant === 'page' && sidebarTab === 'scorers' && Boolean(standingsCompetitionId) && !standingsLoading,
+    staleTime: 10 * 60_000,
+  });
+  const topScorers = topScorersQuery.data ?? null;
+  const topScorersLoading = sidebarTab === 'scorers' && (standingsLoading || topScorersQuery.isLoading);
 
   /* ─── Memoized computed data ─── */
 
-  const upcomingTeam = upcomingQuery.data?.team ?? null;
   const teamInfo = useMemo(() => {
-    // Son maçı olmayan takım (ör. sezon başı): fikstür yanıtındaki takım adı/logosu yedek.
-    if (lastMatches.length === 0) {
-      return upcomingTeam?.name
-        ? { name: upcomingTeam.name, logo: upcomingTeam.logo }
-        : { name: 'Takım Detayı', logo: undefined as string | undefined };
-    }
-    const m = lastMatches[0];
-    const isHome = m.home?.id?.toString() === teamId;
-    const team = isHome ? m.home : m.away;
-    return { name: team?.name || 'Takım Detayı', logo: team?.logo };
-  }, [lastMatches, teamId, upcomingTeam]);
+    const team = overviewQuery.data?.team;
+    if (team?.name) return { name: team.name, logo: team.logo };
+    // Yedek: takım adı gelmezse ilk maçtaki taraf.
+    const m = recentMatches[0] ?? upcomingFixtures[0];
+    const side = m ? (String(m.home?.id) === teamId ? m.home : m.away) : undefined;
+    return { name: side?.name || 'Takım Detayı', logo: side?.logo };
+  }, [overviewQuery.data, recentMatches, upcomingFixtures, teamId]);
 
   const todayIso = todayIsoIstanbul();
-  const fixtureGroups = useMemo(
-    () => buildTeamFixtureGroups(upcomingQuery.data?.fixtures ?? [], todayIso),
-    [upcomingQuery.data, todayIso]
-  );
+  const fixtureGroups = useMemo(() => buildTeamFixtureGroups(upcomingFixtures, todayIso), [upcomingFixtures, todayIso]);
   const dayLabels = useMemo(
     () => ({ today: t('match:hub.fixtureToday'), tomorrow: t('match:hub.fixtureTomorrow') }),
     [t]
   );
   const nextFixture = nextTeamFixture(fixtureGroups);
   const nextOpponent = nextFixture ? teamOpponent(nextFixture, teamId)?.opponent : undefined;
+  const headerForm = useMemo(() => teamForm(recentMatches, teamId, 5), [recentMatches, teamId]);
 
-  const stats = useMemo(
-    () => computeTeamStats(lastMatches, teamId, table),
-    [lastMatches, teamId, table]
-  );
+  const last10 = useMemo(() => recentMatches.slice(0, 10), [recentMatches]);
+  const stats = useMemo(() => computeTeamStats(last10, teamId, table), [last10, teamId, table]);
 
   const topScorersWithAppearances = useTopScorersWithAppearances(topScorers, sidebarTab === 'scorers');
   const squadStats = useTeamSquadStats(teamId, selectedSeasonId, activeTab === 'squad');
@@ -325,6 +310,15 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
     const comp = competitions.find((c) => String(c.id) === selectedCompetitionId);
     return comp ? leagueNameById(comp.id, comp.name, tl, 'full') : '';
   }, [competitions, selectedCompetitionId, tl]);
+
+  const selectedCompShort = useMemo(() => {
+    const comp = competitions.find((c) => String(c.id) === selectedCompetitionId);
+    return comp ? leagueNameById(comp.id, comp.name, tl) : '';
+  }, [competitions, selectedCompetitionId, tl]);
+  const standingText =
+    stats.standing && selectedCompShort
+      ? t('header.standing', { competition: selectedCompShort, rank: stats.standing.rank, points: stats.standing.points })
+      : null;
 
   const teamPageTitle = `${teamInfo.name} — Takım Detayı | Ofsayt Yok`;
   const teamPageDescription = `${teamInfo.name} takımının son maçları, kadro bilgileri ve lig istatistikleri.`;
@@ -346,49 +340,24 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
       </Head>
       ) : null}
 
-      {bootstrapLoading ? (
-        <TeamHeaderSkeleton />
-      ) : (
-        <div className={styles.teamHeader}>
-        {teamInfo.logo ? (
-          <TeamLogo
-            src={teamInfo.logo}
-            alt={teamInfo.name}
-            className={styles.teamLogo}
-            width={56}
-            height={56}
-          />
-        ) : (
-          <div className={styles.logoPlaceholder}>{teamInfo.name.charAt(0) || '?'}</div>
-        )}
-        <div className={styles.teamHeaderInfo}>
-          <h1 className={styles.teamName}>{teamInfo.name}</h1>
-          {stats.standing && (
-            <span className={styles.teamMeta}>
-              {selectedCompName} · {stats.standing.rank}. sıra · {stats.standing.points} puan
-            </span>
-          )}
-          {nextFixture && nextOpponent?.name && (
-            <span className={styles.teamNextMatch}>
-              {t('nextMatch', {
-                opponent: nextOpponent.name,
-                when: nextFixtureWhen(nextFixture, todayIso, locale, dayLabels),
-              })}
-            </span>
-          )}
-        </div>
-        <button
-          type="button"
-          className={`${styles.compareToggleBtn} ${compareOpen ? styles.compareToggleBtnOpen : ''}`}
-          onClick={() => setCompareOpen((o) => !o)}
-        >
-          ⇄ Karşılaştır
-        </button>
-      </div>
-      )}
+      <TeamHeader
+        loading={overviewLoading}
+        name={teamInfo.name}
+        logo={teamInfo.logo}
+        standingText={standingText}
+        standingLoading={standingsLoading || (Boolean(selectedCompetitionId) && !table && standingsCompetitionIdNum != null)}
+        nextMatch={
+          nextFixture && nextOpponent?.name
+            ? { opponent: nextOpponent.name, when: nextFixtureWhen(nextFixture, todayIso, locale, dayLabels) }
+            : null
+        }
+        form={headerForm}
+        compareOpen={compareOpen}
+        onToggleCompare={() => setCompareOpen((o) => !o)}
+      />
 
       {/* ═══ Compare Panel ═══ */}
-      {!bootstrapLoading && compareOpen && (
+      {!overviewLoading && compareOpen && (
         <div className={styles.comparePanel}>
           <CompareTeamPicker
             fixedTeamId={Number(teamId)}
@@ -427,64 +396,17 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
 
           <div className={styles.tabContent}>
             {activeTab === 'matches' && (
-              bootstrapLoading ? (
-                <PanelSkeleton rows={6} />
-              ) : (
-              <div className={styles.matchesList}>
-                {lastMatches.map((match) => {
-                  const statusLabel = resolveMatchStatus(match);
-                  return (
-                    <Link href={buildMatchHref(match)} key={match.id} className={styles.matchRow}>
-                      <span className={styles.matchTime}>{statusLabel}</span>
-
-                      <div className={styles.matchTeams}>
-                        <span className={styles.matchTeam}>
-                          {match.home?.logo && (
-                            <TeamLogo
-                              src={match.home.logo}
-                              alt=""
-                              className={styles.matchTeamLogo}
-                              width={18}
-                              height={18}
-                            />
-                          )}
-                          <span className={styles.matchTeamName}>{match.home?.name || ''}</span>
-                        </span>
-
-                        <span className={styles.matchScore}>
-                          {match.scores?.ft_score || match.scores?.score || '-'}
-                        </span>
-
-                        <span className={styles.matchTeam}>
-                          {match.away?.logo && (
-                            <TeamLogo
-                              src={match.away.logo}
-                              alt=""
-                              className={styles.matchTeamLogo}
-                              width={18}
-                              height={18}
-                            />
-                          )}
-                          <span className={styles.matchTeamName}>{match.away?.name || ''}</span>
-                        </span>
-                      </div>
-
-                      {match.competition_name && (
-                        <span className={styles.matchCompLabel}>{match.competition_name}</span>
-                      )}
-                    </Link>
-                  );
-                })}
-                {lastMatches.length === 0 && (
-                  <div className={styles.empty}>Son maç bulunamadı.</div>
-                )}
-              </div>
-              )
+              <RecentMatches
+                key={teamId}
+                matches={recentMatches}
+                loading={overviewLoading}
+                error={overviewQuery.isError}
+              />
             )}
             {activeTab === 'fixtures' && (
-              upcomingQuery.isLoading ? (
+              overviewLoading ? (
                 <PanelSkeleton rows={6} />
-              ) : upcomingQuery.isError ? (
+              ) : overviewQuery.isError ? (
                 <div className={styles.empty}>{t('fixtures.error')}</div>
               ) : fixtureGroups.length === 0 ? (
                 <div className={styles.empty}>{t('fixtures.empty')}</div>
@@ -646,7 +568,7 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
                 {sidebarTab === 'standings' && (
                   <MatchCompetitionStandings
                     data={table}
-                    loading={bootstrapLoading || standingsLoading}
+                    loading={overviewLoading || standingsLoading}
                     competitionName={selectedCompName}
                     homeTeamId={Number.isFinite(Number(teamId)) ? Number(teamId) : undefined}
                     seasons={seasons}
@@ -660,7 +582,7 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
                 {sidebarTab === 'scorers' && (
                   <MatchCompetitionTopScorers
                     data={topScorersWithAppearances}
-                    loading={bootstrapLoading || topScorersLoading}
+                    loading={overviewLoading || topScorersLoading}
                     seasons={seasons}
                     selectedSeasonId={selectedSeasonId}
                     onSeasonChange={
@@ -714,16 +636,16 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
           )}
 
           {/* Stats Summary */}
-          {bootstrapLoading || standingsLoading ? (
+          {overviewLoading || standingsLoading ? (
             <PanelSkeleton rows={4} />
           ) : (
           <div className={styles.statsCard}>
-            <h3 className={styles.cardTitle}>İstatistikler</h3>
+            <h3 className={styles.cardTitle}>{t('stats.title')}</h3>
 
             {/* Form */}
             {stats.form.length > 0 && (
               <div className={styles.statSection}>
-                <span className={styles.statLabel}>Form (Son {Math.min(stats.form.length, 10)})</span>
+                <span className={styles.statLabel}>{t('stats.formLast', { count: Math.min(stats.form.length, 10) })}</span>
                 <div className={styles.formRow}>
                   {stats.form.slice(0, 10).map((f, i) => (
                     <span key={i} className={`${styles.formPill} ${formVariant(f)}`}>
@@ -737,27 +659,27 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
             {/* Goal Summary */}
             {stats.matchCount > 0 && (
               <div className={styles.statSection}>
-                <span className={styles.statLabel}>Gol Özeti</span>
+                <span className={styles.statLabel}>{t('stats.goalsLast', { count: stats.matchCount })}</span>
                 <div className={styles.statGrid}>
                   <div className={styles.statItem}>
                     <span className={styles.statValue}>{stats.goalsScored}</span>
-                    <span className={styles.statCaption}>Attığı</span>
+                    <span className={styles.statCaption}>{t('stats.scored')}</span>
                   </div>
                   <div className={styles.statItem}>
                     <span className={styles.statValue}>{stats.goalsConceded}</span>
-                    <span className={styles.statCaption}>Yediği</span>
+                    <span className={styles.statCaption}>{t('stats.conceded')}</span>
                   </div>
                   <div className={styles.statItem}>
                     <span className={styles.statValue}>
                       {(stats.goalsScored / stats.matchCount).toFixed(1)}
                     </span>
-                    <span className={styles.statCaption}>Ort. Atılan</span>
+                    <span className={styles.statCaption}>{t('stats.avgScored')}</span>
                   </div>
                   <div className={styles.statItem}>
                     <span className={styles.statValue}>
                       {(stats.goalsConceded / stats.matchCount).toFixed(1)}
                     </span>
-                    <span className={styles.statCaption}>Ort. Yenilen</span>
+                    <span className={styles.statCaption}>{t('stats.avgConceded')}</span>
                   </div>
                 </div>
               </div>
@@ -766,7 +688,10 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
             {/* League Summary */}
             {stats.standing && (
               <div className={styles.statSection}>
-                <span className={styles.statLabel}>Lig Özeti</span>
+                <span className={styles.statLabel}>{t('stats.leagueSummary')}</span>
+                {selectedCompName ? (
+                  <span className={styles.statScope}>{t('stats.leagueOnly', { competition: selectedCompName })}</span>
+                ) : null}
                 <table className={styles.leagueSummaryTable}>
                   <thead>
                     <tr>

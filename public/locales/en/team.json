@@ -9,5 +9,39 @@
     "error": "Couldn't load fixtures.",
     "timeTbd": "TBD"
   },
-  "nextMatch": "Next match: {{opponent}} · {{when}}"
+  "nextMatch": "Next match: {{opponent}} · {{when}}",
+  "nextMatchLabel": "Next match:",
+  "compare": "Compare",
+  "header": {
+    "standing": "{{competition}} · Rank {{rank}} · {{points}} pts"
+  },
+  "form": {
+    "label": "Last {{count}}",
+    "scope": "All competitions",
+    "aria": "Results of the last {{count}} matches, all competitions: {{results}}",
+    "empty": "No matches played yet",
+    "W": "W",
+    "D": "D",
+    "L": "L",
+    "Wlong": "Win",
+    "Dlong": "Draw",
+    "Llong": "Loss"
+  },
+  "recent": {
+    "more": "Show more",
+    "moreAria": "Show {{count}} more matches",
+    "empty": "No recent matches found.",
+    "error": "Couldn't load recent matches."
+  },
+  "stats": {
+    "title": "Statistics",
+    "formLast": "Form (last {{count}} · all competitions)",
+    "goalsLast": "Goals (last {{count}} matches · all competitions)",
+    "scored": "Scored",
+    "conceded": "Conceded",
+    "avgScored": "Avg. scored",
+    "avgConceded": "Avg. conceded",
+    "leagueSummary": "League summary",
+    "leagueOnly": "{{competition}} matches only"
+  }
 }

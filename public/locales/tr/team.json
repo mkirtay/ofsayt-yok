@@ -9,5 +9,39 @@
     "error": "Fikstür yüklenemedi.",
     "timeTbd": "Belirsiz"
   },
-  "nextMatch": "Sıradaki maç: {{opponent}} · {{when}}"
+  "nextMatch": "Sıradaki maç: {{opponent}} · {{when}}",
+  "nextMatchLabel": "Sıradaki maç:",
+  "compare": "Karşılaştır",
+  "header": {
+    "standing": "{{competition}} · {{rank}}. sıra · {{points}} puan"
+  },
+  "form": {
+    "label": "Son {{count}}",
+    "scope": "Tüm turnuvalar",
+    "aria": "Son {{count}} maçın sonucu, tüm turnuvalar: {{results}}",
+    "empty": "Henüz oynanmış maç yok",
+    "W": "G",
+    "D": "B",
+    "L": "M",
+    "Wlong": "Galibiyet",
+    "Dlong": "Beraberlik",
+    "Llong": "Mağlubiyet"
+  },
+  "recent": {
+    "more": "Daha fazla",
+    "moreAria": "{{count}} maç daha göster",
+    "empty": "Son maç bulunamadı.",
+    "error": "Son maçlar yüklenemedi."
+  },
+  "stats": {
+    "title": "İstatistikler",
+    "formLast": "Form (son {{count}} · tüm turnuvalar)",
+    "goalsLast": "Gol özeti (son {{count}} maç · tüm turnuvalar)",
+    "scored": "Attığı",
+    "conceded": "Yediği",
+    "avgScored": "Ort. Atılan",
+    "avgConceded": "Ort. Yenilen",
+    "leagueSummary": "Lig Özeti",
+    "leagueOnly": "Yalnızca {{competition}} maçları"
+  }
 }

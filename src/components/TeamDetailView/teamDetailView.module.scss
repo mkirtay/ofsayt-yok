@@ -27,6 +27,8 @@
 }
 
 /* ═══ Team Header ═══ */
+// Satır yükseklikleri SABİT: veriler (takım isteği, puan durumu) farklı anlarda gelir; iskelet aynı satırları
+// kullanır (TeamHeader.tsx) → başlık hiç büyümez/küçülmez (CLS 0).
 
 .teamHeader {
   display: flex;
@@ -37,6 +39,7 @@
   border-radius: $radius-md;
   box-shadow: $shadow-surface;
   border: 1px solid $color-border;
+  min-width: 0;
 }
 
 .teamLogo {
@@ -69,25 +72,99 @@
   flex: 1;
 }
 
+%header-line {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.headerLineName {
+  @extend %header-line;
+  height: 28px;
+}
+
+.headerLineMeta {
+  @extend %header-line;
+  height: 18px;
+}
+
+.headerLineNext {
+  @extend %header-line;
+  height: 16px;
+}
+
+.headerLineForm {
+  @extend %header-line;
+  height: 22px;
+  margin-top: 2px;
+  gap: $spacing-2;
+}
+
+.headerLineExtra {
+  @extend %header-line;
+  height: 16px;
+}
+
 .teamName {
   font-size: 22px;
+  line-height: 28px;
   font-weight: 700;
   color: $color-text;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .teamMeta {
   font-size: 13px;
+  line-height: 18px;
+  color: $color-text-secondary;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+// "Sıradaki maç: <rakip> · <gün saat>" — tek satır; dar başlıkta rakip adı kısalır, saat hiç kesilmez.
+.teamNextMatch {
+  display: flex;
+  min-width: 0;
+  gap: 4px;
+  font-size: 12px;
+  line-height: 16px;
   color: $color-text-secondary;
 }
 
-.teamNextMatch {
-  font-size: 12px;
+.teamNextLabel {
+  flex-shrink: 0;
+}
+
+.teamNextOpponent {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 600;
+  color: $color-text;
+}
+
+.teamNextWhen {
+  flex-shrink: 0;
+}
+
+.headerFormRow {
+  display: inline-flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.headerFormScope {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 11px;
   color: $color-text-secondary;
-  // Dar başlıkta (Karşılaştır butonu yanında) saat kesilmesin diye kırılır, ellipsis yok.
-  overflow-wrap: anywhere;
 }
 
 /* ═══ Layout ═══ */
@@ -248,13 +325,86 @@
   flex-shrink: 0;
 }
 
-.matchCompLabel {
+
+/* ═══ Son Maçlar (RecentMatches) ═══ */
+// 10 satır × 40px + alt satır (Daha fazla) 44px: yükleniyor / az maç / boş hep aynı yükseklik.
+$recent-row-h: 40px;
+$recent-footer-h: 44px;
+
+.recentList {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(#{$recent-row-h} * 10 + #{$recent-footer-h});
+}
+
+.recentRow {
+  box-sizing: border-box;
+  height: $recent-row-h;
+  padding-top: 0;
+  padding-bottom: 0;
+  flex-shrink: 0;
+
+  // Son satırın alt çizgisi `.matchRow:last-child` ile kalkıyordu; altında alt satır olduğu için çizgi kalsın.
+  &:last-child {
+    border-bottom: 1px solid $color-border;
+  }
+}
+
+.matchTimeLive {
+  color: var(--color-live, #{$color-primary});
+  font-weight: 700;
+}
+
+.recentComp {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 1 auto;
+  max-width: 120px;
+  min-width: 0;
   font-size: 11px;
   color: $color-text-secondary;
-  white-space: nowrap;
-  max-width: 100px;
+}
+
+.recentCompName {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recentFooter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: $recent-footer-h;
+  flex-shrink: 0;
+}
+
+.recentMoreBtn {
+  padding: $spacing-1 $spacing-4;
+  font-size: 12px;
+  font-weight: 700;
+  border: 1px solid $color-border;
+  border-radius: $radius-full;
+  background: $color-surface;
+  color: var(--color-action-text);
+  cursor: pointer;
+
+  &:hover {
+    background: $color-bg;
+  }
+}
+
+@media (max-width: #{$bp-sm - 1px}) {
+  // Dar ekranda turnuva yalnız logo (ad aria-label + title'da).
+  .recentCompName {
+    display: none;
+  }
+
+  .recentComp {
+    flex: 0 0 auto;
+  }
 }
 
 /* ═══ Fixtures (Fikstür) ═══ */
@@ -590,6 +740,13 @@
   color: $color-primary;
 }
 
+.statScope {
+  display: block;
+  margin: -2px 0 $spacing-1;
+  font-size: 11px;
+  color: $color-text-secondary;
+}
+
 /* ═══ Empty ═══ */
 
 .empty {
@@ -603,10 +760,6 @@
 @media (max-width: $bp-md) {
   .teamName {
     font-size: 18px;
-  }
-
-  .matchCompLabel {
-    display: none;
   }
 
   .statGrid {
@@ -633,6 +786,20 @@
   &:hover {
     background: $color-primary;
     color: #fff;
+  }
+}
+
+.compareToggleText {
+  margin-left: 4px;
+}
+
+@media (max-width: #{$bp-sm - 1px}) {
+  .compareToggleBtn {
+    padding: $spacing-1 $spacing-2;
+  }
+
+  .compareToggleText {
+    display: none;
   }
 }
 
