@@ -32,11 +32,12 @@ describe('lig adı çeviri kataloğu', () => {
 
   it('hiçbir çeviri boş değil', () => {
     for (const dict of [trLeagues, enLeagues]) {
-      const { short, full, tier, ...flat } = dict;
+      const { short, full, tier, groups, ...flat } = dict;
       const nested = [
         ...Object.entries(short).map(([sk, sv]) => [`short.${sk}`, sv]),
         ...Object.entries(full).map(([fk, fv]) => [`full.${fk}`, fv]),
         ...Object.entries(tier).map(([tk, tv]) => [`tier.${tk}`, tv]),
+        ...Object.entries(groups).map(([gk, gv]) => [`groups.${gk}`, gv]),
       ];
       for (const [k, v] of [...Object.entries(flat), ...nested]) {
         expect(typeof v === 'string' && v.trim().length > 0, k).toBe(true);
