@@ -45,6 +45,11 @@ const WEB_REQUESTS: [string, Record<string, string>][] = [
   ['football/teams/34', { include: TEAM_UPCOMING_INCLUDE }],
   ['football/teams/34', { include: TEAM_OVERVIEW_INCLUDE }],
   ['football/teams/34', { include: TEAM_STATS_INCLUDE, filters: teamStatsFilters([28203, 28155]) }],
+  ['football/schedules/seasons/25682/teams/34', {}],
+  [
+    'football/squads/seasons/25682/teams/34',
+    { include: 'player.statistics.details;player.statistics.season', filters: 'playerStatisticSeasons:25682' },
+  ],
   ['football/teams/34', {}],
   ['football/teams/search/Galatasaray', {}],
   ['football/players/455805', { include: PLAYER_PROFILE_INCLUDE }],

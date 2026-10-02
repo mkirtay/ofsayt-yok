@@ -9,6 +9,11 @@ import type { SportmonksSquadStatsRow } from './types';
 import { normalizeDisplayName } from '@/utils/displayName';
 
 export const SQUAD_SEASON_STATS_INCLUDE = 'player.statistics.details';
+/**
+ * Bitmiş sezon için aynı istek + `player.statistics.season`: sezonun `finished` bayrağı gelir, cachePolicy yanıtı
+ * 30 gün tutar. (Sürmekte olan sezon Kadro sekmesiyle birebir aynı isteği kullanır — önbellek paylaşılır.)
+ */
+export const SQUAD_SEASON_STATS_FINISHED_INCLUDE = 'player.statistics.details;player.statistics.season';
 export const squadSeasonStatsFilters = (seasonId: number) => `playerStatisticSeasons:${seasonId}`;
 
 export type TeamScorer = { playerId: number; name: string; photo?: string; goals: number; assists: number; apps: number };

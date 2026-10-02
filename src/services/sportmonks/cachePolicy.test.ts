@@ -103,6 +103,26 @@ describe('sportmonksCacheTtl — TTL tablosu', () => {
     expect(sportmonksCacheTtl('football/teams/34', { id: 34, statistics: [] }, NOW).fresh).toBe(3600);
   });
 
+  it('bitmiş sezon (program, takım istatistiği, oyuncu istatistiği) CDN + Redis 30 gün; sürmekte olan sezon eski kural', () => {
+    const MONTH = 30 * 86400;
+    const done = { finished: true };
+    const live = { finished: false };
+    // sezon programı
+    expect(sportmonksCacheTtl('football/schedules/seasons/25682/teams/34', [done, done], NOW)).toEqual({ fresh: MONTH, stale: MONTH });
+    expect(sportmonksCacheTtl('football/schedules/seasons/28203/teams/34', [done, live], NOW).fresh).toBe(300);
+    expect(sportmonksCacheTtl('football/schedules/seasons/28203/teams/34', [], NOW).fresh).toBe(300);
+    // takım istatistikleri: bütün sezonlar bitmişse
+    const stats = (...seasons: object[]) => ({ id: 34, statistics: seasons.map((season, i) => ({ season_id: i, season })) });
+    expect(sportmonksCacheTtl('football/teams/34', stats(done, done, done), NOW)).toEqual({ fresh: MONTH, stale: MONTH });
+    expect(sportmonksCacheTtl('football/teams/34', stats(done, live), NOW).fresh).toBe(3600);
+    // oyuncu sezon istatistikleri (player.statistics.season ile)
+    const squad = (season?: object) => [{ player_id: 1, player: { statistics: [{ season_id: 1, ...(season ? { season } : {}) }] } }];
+    expect(sportmonksCacheTtl('football/squads/seasons/25682/teams/34', squad(done), NOW)).toEqual({ fresh: MONTH, stale: MONTH });
+    expect(sportmonksCacheTtl('football/squads/seasons/28203/teams/34', squad(live), NOW).fresh).toBe(6 * 3600);
+    // Kadro sekmesinin isteği (season include'u yok) eskisi gibi 6 sa
+    expect(sportmonksCacheTtl('football/squads/seasons/25682/teams/34', squad(), NOW).fresh).toBe(6 * 3600);
+  });
+
   it('stale (Redis tutma) süresi taze süreden uzun', () => {
     const t = sportmonksCacheTtl('football/fixtures/date/2026-09-30', [], NOW);
     expect(t.stale).toBeGreaterThan(t.fresh);

@@ -150,7 +150,7 @@ function kickoffMs(fx: Pick<SportmonksFixture, 'starting_at'> & { starting_at_ti
   return Number.isFinite(t) ? t : null;
 }
 
-function toTeamMatch(fx: SportmonksFixture): TeamMatch {
+export function toTeamMatch(fx: SportmonksFixture): TeamMatch {
   const match = mapSportmonksFixtureToMatch(fx);
   const stateId = fx.state?.id ?? fx.state_id;
   const ts = kickoffMs(fx as SportmonksFixture & { starting_at_timestamp?: number | null });
@@ -272,4 +272,24 @@ export function defaultCompetitionId(recent: TeamMatch[], fixtures: TeamMatch[] 
     if (!best || c.n > best.n || (c.n === best.n && c.firstIndex < best.firstIndex)) best = { id, ...c };
   }
   return best?.id ?? fixtures.find((m) => m.competition?.id)?.competition?.id ?? null;
+}
+
+/** URL'deki sezon değeri: "2025/2026" → "2025-2026". */
+export function campaignSlug(name: string): string {
+  return name.trim().replace(/\//g, '-');
+}
+
+/**
+ * Sezon seçicide gösterilecek sezonlar (en yeniden, en çok `max`): yalnız takımın ana liginin (varsayılan
+ * turnuva) verisi olan sezonlar. Plan yerel liglerde son 3 sezonu veriyor (Süper Lig 2024/25'ten beri) ama UEFA
+ * turnuvalarını çok geriye kadar — ana lig şartı olmasa seçicide yalnız Avrupa maçlarından oluşan eksik sezonlar
+ * çıkardı. Ana lig bilinmiyorsa ya da hiçbir sezonda yoksa yalnız güncel sezon.
+ */
+export function selectableCampaigns(campaigns: TeamCampaign[], primaryLeagueId: number | null, max = 5): TeamCampaign[] {
+  if (campaigns.length === 0) return [];
+  const withLeague = primaryLeagueId != null ? campaigns.filter((c) => c.seasons.some((s) => s.leagueId === primaryLeagueId)) : [];
+  if (withLeague.length === 0) return campaigns.slice(0, 1);
+  // Güncel sezon ana ligi henüz içermese de (ör. lig başlamadan) seçicinin başında durur.
+  const list = withLeague[0] === campaigns[0] ? withLeague : [campaigns[0]!, ...withLeague];
+  return list.slice(0, max);
 }

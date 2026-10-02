@@ -29,6 +29,7 @@ const PATH_PATTERNS: { name: string; re: RegExp }[] = [
   { name: 'topscorers/seasons/{id}', re: new RegExp(`^football/topscorers/seasons/${ID}$`) },
   { name: 'squads/teams/{id}', re: new RegExp(`^football/squads/teams/${ID}$`) },
   { name: 'squads/seasons/{id}/teams/{id}', re: new RegExp(`^football/squads/seasons/${ID}/teams/${ID}$`) },
+  { name: 'schedules/seasons/{id}/teams/{id}', re: new RegExp(`^football/schedules/seasons/${ID}/teams/${ID}$`) },
   { name: 'teams/{id}', re: new RegExp(`^football/teams/${ID}$`) },
   { name: 'teams/search/{q}', re: /^football\/teams\/search\/[^/]{1,60}$/ },
   { name: 'players/{id}', re: new RegExp(`^football/players/${ID}$`) },
@@ -49,6 +50,8 @@ const INCLUDE_TOKENS = new Set([
   'coaches.coach', 'seasons.league',
   // takım sezon istatistikleri (services/sportmonks/teamSeasonStats.ts)
   'statistics.details', 'statistics.season',
+  // bitmiş sezonun oyuncu istatistiği (sezon `finished` bayrağı → 30 gün önbellek)
+  'player.statistics.season',
   // oyuncu profili + maç satırları
   'nationality', 'city', 'position', 'detailedPosition', 'metadata.type', 'teams.team', 'transfers.type',
   'transfers.fromTeam', 'transfers.toTeam', 'statistics.details.type', 'statistics.season.league', 'statistics.team',

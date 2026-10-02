@@ -19,6 +19,8 @@ const DAY = 24 * HOUR;
 const DAY_MS = DAY * 1000;
 
 export const LIVE_TTL = 20;
+/** Bitmiş sezonun verisi (program, takım/oyuncu sezon istatistikleri) değişmez: CDN ve Redis'te 30 gün. */
+export const FINISHED_SEASON_TTL = 30 * DAY;
 export const ACTIVE_LIST_TTL = 30;
 /** Başlama saatine bu kadar kala / geçe liste "aktif" sayılır. */
 export const KICKOFF_WINDOW_SECONDS = 15 * MIN;
@@ -76,6 +78,31 @@ function utcDay(now: number, offsetDays = 0): string {
 /** fresh'e göre Redis'te tutma (stale) süresi: en az 10 dk, en çok 7 gün. */
 function withStale(fresh: number, stale?: number): CacheTtl {
   return { fresh, stale: stale ?? Math.min(7 * DAY, Math.max(10 * MIN, fresh * 20)) };
+}
+
+const finishedSeason = (season: unknown) => !!season && typeof season === 'object' && (season as { finished?: unknown }).finished === true;
+
+/** `teams/{id}?include=statistics.season` → istenen bütün sezonlar bitmiş mi. */
+function allTeamStatisticSeasonsFinished(stats: unknown): boolean {
+  return Array.isArray(stats) && stats.length > 0 && stats.every((st) => finishedSeason((st as { season?: unknown })?.season));
+}
+
+/** `squads/seasons/{s}/teams/{id}?include=player.statistics.details;player.statistics.season` → sezon bitmiş mi. */
+function squadSeasonFinished(rows: unknown): boolean {
+  if (!Array.isArray(rows) || rows.length === 0) return false;
+  let seen = false;
+  for (const row of rows) {
+    for (const st of (row as { player?: { statistics?: { season?: unknown }[] } })?.player?.statistics ?? []) {
+      if (!finishedSeason(st?.season)) return false;
+      seen = true;
+    }
+  }
+  return seen;
+}
+
+/** `schedules/seasons/{s}/teams/{id}` → bütün aşamalar bitmiş mi. */
+function scheduleFinished(stages: unknown): boolean {
+  return Array.isArray(stages) && stages.length > 0 && stages.every((st) => finishedSeason(st));
 }
 
 function asList(data: unknown): FixtureLike[] {
@@ -152,13 +179,21 @@ export function sportmonksCacheTtl(
       // `latest`/`upcoming` include'u maç listesi taşıyor (takım sayfası, mobil fikstür): canlı maç ya da başlamaya
       // ±15 dk → 30 sn; yoksa sıradaki başlamaya (−15 dk) kadar, en fazla 15 dk.
       // Takım sezon istatistikleri (takım sayfası Sezon Özeti): maçtan sonra Sportmonks yeniden hesaplar → 1 sa.
-      if (team && 'statistics' in team) return withStale(HOUR, DAY);
+      if (team && 'statistics' in team) {
+        return allTeamStatisticSeasonsFinished(team.statistics) ? withStale(FINISHED_SEASON_TTL, FINISHED_SEASON_TTL) : withStale(HOUR, DAY);
+      }
       if (team && ('latest' in team || 'upcoming' in team)) {
         return withStale(fixtureListFreshSeconds([...asList(team.latest), ...asList(team.upcoming)], 15 * MIN, now), DAY);
       }
       return withStale(6 * HOUR, DAY);
     }
+    case 'schedules':
+      // Geçmiş sezonun maç programı (takım sayfası sezon seçicisi); sürmekte olan sezon varsayılan kuralda kalır.
+      return scheduleFinished(data) ? withStale(FINISHED_SEASON_TTL, FINISHED_SEASON_TTL) : withStale(5 * MIN);
+
     case 'squads':
+      if (squadSeasonFinished(data)) return withStale(FINISHED_SEASON_TTL, FINISHED_SEASON_TTL);
+      return data == null ? withStale(NOT_FOUND_TTL, NOT_FOUND_TTL) : withStale(6 * HOUR, DAY);
     case 'players':
     case 'coaches':
     case 'referees':
