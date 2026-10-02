@@ -63,3 +63,28 @@ export function matchPageCacheControlForMatch(match: Pick<Match, 'status' | 'dat
     ? matchPageCacheControl('scheduled')
     : `public, s-maxage=${fresh}, stale-while-revalidate=${Math.min(fresh, ACTIVE_SWR_SECONDS)}`;
 }
+
+/** Maç kartı formu / karşılaşma geçmişi SSR bütçesini aştı (bölüm iskeletle gitti): kopya kısa yaşasın. */
+export const PARTIAL_MATCH_PAGE_CACHE = 'public, s-maxage=30, stale-while-revalidate=30';
+const PARTIAL_MAX_SECONDS = 30;
+
+function sMaxAge(cacheControl: string): number | null {
+  const m = /s-maxage=(\d+)/.exec(cacheControl);
+  return m ? Number(m[1]) : null;
+}
+
+/**
+ * Maç sayfası yanıtı: tam veride maçın kendi süresi (`matchPageCacheControlForMatch`) aynen; form / karşılaşma
+ * geçmişi bütçeye yetişmediyse (`h2hComplete: false`) CDN o iskeletli kopyayı en çok 30 sn (+30 sn swr) tutar —
+ * soğuk önbellekte çizilen kopya bitmiş maçta bir gün kalmasın. Maçın süresi zaten daha kısaysa (canlı) o kalır.
+ */
+export function matchPageCacheControlForPage(
+  match: Pick<Match, 'status' | 'date' | 'scheduled'>,
+  h2hComplete: boolean,
+  now: number = Date.now(),
+): string {
+  const full = matchPageCacheControlForMatch(match, now);
+  if (h2hComplete) return full;
+  const fullMaxAge = sMaxAge(full);
+  return fullMaxAge !== null && fullMaxAge <= PARTIAL_MAX_SECONDS ? full : PARTIAL_MATCH_PAGE_CACHE;
+}

@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { matchPageCacheControl, matchPageCacheControlForMatch, matchPageCacheKindForStatus } from './matchPageCache';
+import {
+  PARTIAL_MATCH_PAGE_CACHE,
+  matchPageCacheControl,
+  matchPageCacheControlForMatch,
+  matchPageCacheControlForPage,
+  matchPageCacheKindForStatus,
+} from './matchPageCache';
 import { isUnambiguousSportmonksId } from '@/services/sportmonks/fixtureIdRange';
 
 describe('matchPageCache', () => {
@@ -34,6 +40,33 @@ describe('matchPageCache', () => {
     expect(matchPageCacheControlForMatch(f('2026-10-01', '18:00'), now)).toContain('s-maxage=86400,');
     // Başlama saati bilinmiyorsa eski sayılır
     expect(matchPageCacheControlForMatch({ status: 'FINISHED', date: '2026-10-04', scheduled: '' }, now)).toContain('s-maxage=86400,');
+  });
+});
+
+describe('matchPageCacheControlForPage — form / karşılaşma geçmişi bütçesi', () => {
+  const now = Date.parse('2026-10-04T12:00:00Z');
+  const scheduled = { status: 'NOT STARTED', date: '2026-10-04', scheduled: '18:00' };
+  const oldFinished = { status: 'FINISHED', date: '2026-10-01', scheduled: '18:00' };
+  const recentFinished = { status: 'FINISHED', date: '2026-10-04', scheduled: '09:00' };
+  const live = { status: 'IN PLAY', date: '2026-10-04', scheduled: '11:30' };
+
+  it('tam veri: mevcut süreler aynen', () => {
+    for (const m of [scheduled, oldFinished, recentFinished, live]) {
+      expect(matchPageCacheControlForPage(m, true, now)).toBe(matchPageCacheControlForMatch(m, now));
+    }
+  });
+
+  it('bütçe aşıldı (iskelet): s-maxage=30, stale-while-revalidate=30', () => {
+    expect(PARTIAL_MATCH_PAGE_CACHE).toBe('public, s-maxage=30, stale-while-revalidate=30');
+    expect(matchPageCacheControlForPage(scheduled, false, now)).toBe(PARTIAL_MATCH_PAGE_CACHE);
+    expect(matchPageCacheControlForPage(oldFinished, false, now)).toBe(PARTIAL_MATCH_PAGE_CACHE);
+    expect(matchPageCacheControlForPage(recentFinished, false, now)).toBe(PARTIAL_MATCH_PAGE_CACHE);
+  });
+
+  it('maçın kendi süresi zaten kısaysa (canlı, başlamak üzere) o kalır', () => {
+    expect(matchPageCacheControlForPage(live, false, now)).toBe('public, s-maxage=20, stale-while-revalidate=10');
+    const soon = { status: 'NOT STARTED', date: '2026-10-04', scheduled: '12:10' };
+    expect(matchPageCacheControlForPage(soon, false, now)).toBe('public, s-maxage=30, stale-while-revalidate=30');
   });
 });
 

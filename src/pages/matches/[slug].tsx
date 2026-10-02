@@ -23,7 +23,7 @@ import { loadMatchCardH2h } from '@/server/matchCardH2h';
 import type { Head2HeadData } from '@/services/liveScoreService';
 import {
   matchPageCacheControl,
-  matchPageCacheControlForMatch,
+  matchPageCacheControlForPage,
   type MatchPageCacheKind,
 } from '@/server/matchPageCache';
 import styles from './matchDetail.module.scss';
@@ -66,8 +66,9 @@ export const getServerSideProps: GetServerSideProps<MatchDetailProps> = async (c
       const page = await resolveMatchPage(matchId, parseMatchSlugFromParam(slug ?? ''));
       switch (page.kind) {
         case 'match': {
-          context.res.setHeader('Cache-Control', matchPageCacheControlForMatch(page.match));
           const h2h = await loadMatchCardH2h(page.match);
+          // Bütçe aşıldıysa (undefined) bölüm iskeletle gider → CDN bu kopyayı kısa tutar.
+          context.res.setHeader('Cache-Control', matchPageCacheControlForPage(page.match, h2h !== undefined));
           return { props: { initialMatch: page.match, ...(h2h !== undefined ? { initialH2h: h2h } : {}) } };
         }
         case 'archived':
