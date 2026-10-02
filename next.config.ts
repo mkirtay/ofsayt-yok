@@ -12,6 +12,16 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: path.resolve(__dirname),
   },
+  // Prisma (engineType "library", binaryTargets yok, driver adapter yok) yalnız native motoru + runtime/library.js
+  // yükler. Trace ise @prisma/client/runtime altındaki 5 veritabanının WASM motor/derleyicilerini (js + mjs) ve
+  // .prisma/client/*.wasm'ı da DB kullanan her fonksiyona koyuyordu: fonksiyon başına ~57 MB (Vercel Functions Storage).
+  outputFileTracingExcludes: {
+    '*': [
+      'node_modules/@prisma/client/runtime/*wasm-base64*',
+      'node_modules/@prisma/client/runtime/binary.*',
+      'node_modules/.prisma/client/*.wasm',
+    ],
+  },
   async redirects() {
     // /uefa sayfası kaldırıldı (Şampiyonlar Ligi ana sayfadaki lig listesinden/filtresinden erişilir).
     return [{ source: '/uefa', destination: '/', permanent: true }];
