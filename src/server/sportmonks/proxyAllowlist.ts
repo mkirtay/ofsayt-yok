@@ -49,7 +49,7 @@ const INCLUDE_TOKENS = new Set([
   'latest.participants', 'latest.scores', 'latest.league', 'latest.state',
   'coaches.coach', 'seasons.league',
   // takım sezon istatistikleri (services/sportmonks/teamSeasonStats.ts)
-  'statistics.details', 'statistics.season',
+  'statistics.details', 'statistics.season', 'sidelined.player', 'sidelined.type',
   // bitmiş sezonun oyuncu istatistiği (sezon `finished` bayrağı → 30 gün önbellek)
   'player.statistics.season',
   // oyuncu profili + maç satırları

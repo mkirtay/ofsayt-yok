@@ -10,7 +10,10 @@
  * `statistics.season` sezonun `finished` bayrağını taşır (bitmiş sezonun uzun önbelleği, bkz. cachePolicy).
  */
 
-export const TEAM_STATS_INCLUDE = ['statistics.details', 'statistics.season'].join(';');
+import type { SportmonksSidelinedRow } from './teamSidelined';
+
+/** Faz 3: sakat/cezalı oyuncular aynı isteğe eklendi (bkz. teamSidelined.ts) — ayrı istek yok. */
+export const TEAM_STATS_INCLUDE = ['statistics.details', 'statistics.season', 'sidelined.player', 'sidelined.type'].join(';');
 
 /** Sezon id'leri sıralı → aynı sezon kümesi hep aynı önbellek anahtarı. */
 export function teamStatsFilters(seasonIds: number[]): string {
@@ -26,7 +29,11 @@ export type SportmonksTeamStatistic = {
   details?: SportmonksTeamStatisticDetail[] | null;
   season?: { id: number; league_id?: number | null; finished?: boolean | null; name?: string | null } | null;
 };
-export type SportmonksTeamWithStatistics = { id: number; statistics?: SportmonksTeamStatistic[] | null };
+export type SportmonksTeamWithStatistics = {
+  id: number;
+  statistics?: SportmonksTeamStatistic[] | null;
+  sidelined?: SportmonksSidelinedRow[] | null;
+};
 
 export type SummaryLine = {
   played: number;

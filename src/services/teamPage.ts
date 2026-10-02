@@ -27,6 +27,7 @@ import {
   type TeamScorer,
 } from './sportmonks/teamScorers';
 import type { SportmonksSquadStatsRow } from './sportmonks/types';
+import type { SportmonksSidelinedRow } from './sportmonks/teamSidelined';
 
 /** Son Maçlar + Fikstür + başlık (form, sıradaki maç) — tek `teams/{id}` isteği. Hata fırlatır (react-query yeniden dener). */
 export async function getTeamOverview(teamId: string): Promise<TeamOverview> {
@@ -36,13 +37,22 @@ export async function getTeamOverview(teamId: string): Promise<TeamOverview> {
   return mapTeamOverview(envelope.data);
 }
 
-/** Turnuva-sezon istatistikleri (Sezon Özeti; Faz 3: dakika grafiği) — tek `teams/{id}` isteği, sezonlar filtrede. */
-export async function getTeamSeasonStats(teamId: string, seasonIds: number[]): Promise<TeamSeasonStats[]> {
+export type TeamSeasonStatsResult = {
+  stats: TeamSeasonStats[];
+  /** Ham sakat/cezalı kayıtları (sezondan bağımsız, takımın bugünkü durumu); süzme `mapTeamSidelined` ile. */
+  sidelined: SportmonksSidelinedRow[];
+};
+
+/**
+ * Turnuva-sezon istatistikleri (Sezon Özeti, dakika grafiği) + sakat/cezalılar — tek `teams/{id}` isteği,
+ * sezonlar filtrede.
+ */
+export async function getTeamSeasonStats(teamId: string, seasonIds: number[]): Promise<TeamSeasonStatsResult> {
   const envelope = await sportmonksClientRequest<SportmonksTeamWithStatistics>('football', `/teams/${teamId}`, {
     include: TEAM_STATS_INCLUDE,
     filters: teamStatsFilters(seasonIds),
   });
-  return mapTeamSeasonStats(envelope.data);
+  return { stats: mapTeamSeasonStats(envelope.data), sidelined: envelope.data?.sidelined ?? [] };
 }
 
 /**

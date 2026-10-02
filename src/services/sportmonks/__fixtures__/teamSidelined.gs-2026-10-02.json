@@ -1,0 +1,247 @@
+{
+ "id": 34,
+ "sidelined": [
+  {
+   "id": 811080,
+   "player_id": 37308096,
+   "type_id": 1612,
+   "category": "suspended",
+   "start_date": "2026-09-03",
+   "end_date": "2027-01-28",
+   "games_missed": 4,
+   "completed": false,
+   "player": {
+    "id": 37308096,
+    "display_name": "Kazımcan Karataş",
+    "name": "Kazımcan Karataş",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/0/37308096.png"
+   },
+   "type": {
+    "id": 1612,
+    "name": "No Eligibility",
+    "code": "no-eligibility",
+    "developer_name": "NO_ELIGIBILITY"
+   }
+  },
+  {
+   "id": 811338,
+   "player_id": 37652764,
+   "type_id": 1612,
+   "category": "suspended",
+   "start_date": "2026-09-03",
+   "end_date": "2027-01-28",
+   "games_missed": 4,
+   "completed": false,
+   "player": {
+    "id": 37652764,
+    "display_name": "Arda Ünyay",
+    "name": "Arda Ünyay",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/28/37652764.png"
+   },
+   "type": {
+    "id": 1612,
+    "name": "No Eligibility",
+    "code": "no-eligibility",
+    "developer_name": "NO_ELIGIBILITY"
+   }
+  },
+  {
+   "id": 811362,
+   "player_id": 37706078,
+   "type_id": 1612,
+   "category": "suspended",
+   "start_date": "2026-09-03",
+   "end_date": "2027-01-28",
+   "games_missed": 4,
+   "completed": false,
+   "player": {
+    "id": 37706078,
+    "display_name": "Armando Güner",
+    "name": "Can Armando Güner",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/placeholder.png"
+   },
+   "type": {
+    "id": 1612,
+    "name": "No Eligibility",
+    "code": "no-eligibility",
+    "developer_name": "NO_ELIGIBILITY"
+   }
+  },
+  {
+   "id": 811574,
+   "player_id": 31640130,
+   "type_id": 554,
+   "category": "injury",
+   "start_date": "2026-09-03",
+   "end_date": "2026-10-14",
+   "games_missed": 4,
+   "completed": false,
+   "player": {
+    "id": 31640130,
+    "display_name": "Wilfried Singo ",
+    "name": "Wilfried Stephane Singo",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/2/31640130.png"
+   },
+   "type": {
+    "id": 554,
+    "name": "Muscle Injury",
+    "code": "muscle-injury",
+    "developer_name": "MUSCLE_INJURY"
+   }
+  },
+  {
+   "id": 823719,
+   "player_id": 31878,
+   "type_id": 603,
+   "category": "injury",
+   "start_date": "2026-09-18",
+   "end_date": null,
+   "games_missed": 1,
+   "completed": false,
+   "player": {
+    "id": 31878,
+    "display_name": "Kaan Ayhan  ",
+    "name": "Kaan Ayhan",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/6/31878.png"
+   },
+   "type": {
+    "id": 603,
+    "name": "Achilles tendon problems",
+    "code": "achilles-tendon-problems",
+    "developer_name": "ACHILLES_TENDON_PROBLEMS"
+   }
+  },
+  {
+   "id": 824915,
+   "player_id": 114021,
+   "type_id": 1939,
+   "category": "injury",
+   "start_date": "2026-09-19",
+   "end_date": "2026-10-18",
+   "games_missed": 1,
+   "completed": false,
+   "player": {
+    "id": 114021,
+    "display_name": "Roland Sallai",
+    "name": "Roland Sallai",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/5/114021.png"
+   },
+   "type": {
+    "id": 1939,
+    "name": "Torn Thigh Muscle",
+    "code": "torn-thigh-muscle",
+    "developer_name": "TORN_THIGH_MUSCLE"
+   }
+  },
+  {
+   "id": 826322,
+   "player_id": 37423141,
+   "type_id": 1608,
+   "category": "suspended",
+   "start_date": "2026-09-20",
+   "end_date": "2026-10-18",
+   "games_missed": 0,
+   "completed": false,
+   "player": {
+    "id": 37423141,
+    "display_name": "Lesley Ugochukwu",
+    "name": "Chimuanya Ugochukwu",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/5/37423141.png"
+   },
+   "type": {
+    "id": 1608,
+    "name": "Red Card Suspension",
+    "code": "red-card-suspension",
+    "developer_name": "RED_CARD_SUSPENSION"
+   }
+  },
+  {
+   "id": 811431,
+   "player_id": 37576776,
+   "type_id": 1612,
+   "category": "suspended",
+   "start_date": "2026-09-03",
+   "end_date": "2027-01-28",
+   "games_missed": 4,
+   "completed": false,
+   "player": {
+    "id": 37576776,
+    "display_name": "Eyüp Aydın",
+    "name": "Eyüp Aydin",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/8/37576776.png"
+   },
+   "type": {
+    "id": 1612,
+    "name": "No Eligibility",
+    "code": "no-eligibility",
+    "developer_name": "NO_ELIGIBILITY"
+   }
+  },
+  {
+   "id": 811413,
+   "player_id": 31878,
+   "type_id": 1612,
+   "category": "suspended",
+   "start_date": "2026-09-03",
+   "end_date": "2027-01-28",
+   "games_missed": 4,
+   "completed": false,
+   "player": {
+    "id": 31878,
+    "display_name": "Kaan Ayhan  ",
+    "name": "Kaan Ayhan",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/6/31878.png"
+   },
+   "type": {
+    "id": 1612,
+    "name": "No Eligibility",
+    "code": "no-eligibility",
+    "developer_name": "NO_ELIGIBILITY"
+   }
+  },
+  {
+   "id": 811178,
+   "player_id": 37716465,
+   "type_id": 1612,
+   "category": "suspended",
+   "start_date": "2026-09-03",
+   "end_date": "2027-01-28",
+   "games_missed": 4,
+   "completed": false,
+   "player": {
+    "id": 37716465,
+    "display_name": "Arda Yılmaz",
+    "name": "Arda Yılmaz",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/placeholder.png"
+   },
+   "type": {
+    "id": 1612,
+    "name": "No Eligibility",
+    "code": "no-eligibility",
+    "developer_name": "NO_ELIGIBILITY"
+   }
+  },
+  {
+   "id": 823588,
+   "player_id": 37706078,
+   "type_id": 1612,
+   "category": "suspended",
+   "start_date": "2026-09-05",
+   "end_date": "2027-01-01",
+   "games_missed": 3,
+   "completed": false,
+   "player": {
+    "id": 37706078,
+    "display_name": "Armando Güner",
+    "name": "Can Armando Güner",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/placeholder.png"
+   },
+   "type": {
+    "id": 1612,
+    "name": "No Eligibility",
+    "code": "no-eligibility",
+    "developer_name": "NO_ELIGIBILITY"
+   }
+  }
+ ]
+}
