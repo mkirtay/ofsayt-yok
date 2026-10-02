@@ -55,5 +55,13 @@
     "superLig": "Süper Lig",
     "firstLeague": "1. Lig",
     "secondLeague": "2. Lig"
+  },
+  "groups": {
+    "turkey": "Türkiye",
+    "europeCups": "Avrupa Kupaları",
+    "bigFive": "5 Büyük Lig",
+    "otherEurope": "Diğer Avrupa",
+    "americas": "Amerika",
+    "other": "Diğer"
   }
 }

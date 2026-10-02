@@ -29,10 +29,10 @@ import { MatchListSkeleton, PanelSkeleton } from '@/components/Skeleton';
 import MatchCompetitionStandings from '@/components/MatchCompetitionStandings';
 import MatchCompetitionTopScorers from '@/components/MatchCompetitionTopScorers';
 import SubHeader, { type MatchTab } from '@/components/SubHeader';
-import LeagueLogo from '@/components/LeagueLogo';
+import HubLeagueList from '@/components/HubLeagueList';
 import { isUefaCupCompetitionId, type SidebarLeague } from '@/config/leagues';
 import { resolveSportmonksLeagueId } from '@/services/sportmonksProviderFlag';
-import { resolveSidebarLeagueLogo } from '@/utils/leagueLogo';
+import { sportmonksLeagueIdOfHubSelection } from '@/utils/hubLeagueSelection';
 import { leagueDisplayName, leagueNameById } from '@/utils/leagueName';
 import { todayIsoIstanbul } from '@/utils/dateStrip';
 import { buildMatchHref } from '@/utils/matchUrl';
@@ -379,10 +379,12 @@ export default function MatchHubPage({
 
   const selectedLeague = sidebarLeagues.find((l) => l.id === selectedCompId);
   // Takım sayfası / maç detayı ile aynı kısa ad ("Süper Lig"): Sportmonks id → `leagues.short.*`;
-  // eşleme yoksa (ör. Sportmonks kapalı) config'in kısa adı.
+  // eşleme yoksa (ör. Sportmonks kapalı) config'in kısa adı. Negatif id = legacy eşlemesi olmayan plan ligi.
   const selectedLeagueName = selectedLeague
     ? leagueNameById(resolveSportmonksLeagueId(selectedLeague.id), leagueDisplayName(selectedLeague, tl), tl)
-    : tl('fallback');
+    : selectedCompId < 0
+      ? leagueNameById(sportmonksLeagueIdOfHubSelection(selectedCompId), tl('fallback'), tl)
+      : tl('fallback');
 
   // Canlı fikstürdeki `league.image_path` (→ `competition.logo`) — sidebar logolarının birincil kaynağı.
   // Fikstürde `competition.id` Sportmonks lig id'sidir; sidebar ise legacy id kullanır → eşle.
@@ -394,6 +396,20 @@ export default function MatchHubPage({
     }
     return map;
   }, [allMatches, liveMatches, fixtureMatches]);
+
+  // Ligler sekmesi rozeti: ekrandaki günün maç sayısı (Sportmonks league_id → sayı), mevcut veriden.
+  const matchCountByLeague = useMemo(() => {
+    const ids = new Set<number>();
+    const counts = new Map<number, number>();
+    for (const m of fixtureMatches) {
+      const id = Number(m.id);
+      const league = m.competition?.id;
+      if (league == null || ids.has(id)) continue;
+      ids.add(id);
+      counts.set(league, (counts.get(league) ?? 0) + 1);
+    }
+    return counts;
+  }, [fixtureMatches]);
 
   // ── URL query ↔ durum senkronu ─────────────────────────────────────────
   // `tab` (maç filtresi), `panel` (yan panel sekmesi), `match` (split-view seçimi).
@@ -735,27 +751,12 @@ export default function MatchHubPage({
                 )}
 
                 {sidebarTab === 'leagues' && (
-                  <ul className={styles.leagueList}>
-                    {sidebarLeagues.map((league) => {
-                      const smId = resolveSportmonksLeagueId(league.id);
-                      const logoUrl = resolveSidebarLeagueLogo(
-                        league,
-                        smId != null ? apiLogoBySportmonksLeagueId.get(smId) : undefined,
-                      );
-                      return (
-                        <li key={league.id}>
-                          <button
-                            type="button"
-                            className={`${styles.leagueItem} ${league.id === selectedCompId ? styles.leagueItemActive : ''}`}
-                            onClick={() => handleLeagueClick(league.id)}
-                          >
-                            <LeagueLogo src={logoUrl} className={styles.leagueFlag} size={20} />
-                            <span>{leagueDisplayName(league, tl)}</span>
-                          </button>
-                        </li>
-                      );
-                    })}
-                  </ul>
+                  <HubLeagueList
+                    selectedId={selectedCompId}
+                    onSelect={handleLeagueClick}
+                    matchCountByLeague={matchCountByLeague}
+                    apiLogoByLeague={apiLogoBySportmonksLeagueId}
+                  />
                 )}
 
               </div>

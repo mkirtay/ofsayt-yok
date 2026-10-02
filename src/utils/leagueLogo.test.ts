@@ -22,6 +22,11 @@ describe('sportmonksLeagueLogoUrl', () => {
     expect(sportmonksLeagueLogoUrl(600)).toBe('https://cdn.sportmonks.com/images/soccer/leagues/24/600.png');
     expect(sportmonksLeagueLogoUrl(8)).toBe('https://cdn.sportmonks.com/images/soccer/leagues/8/8.png');
     expect(sportmonksLeagueLogoUrl(384)).toBe('https://cdn.sportmonks.com/images/soccer/leagues/0/384.png');
+    // Kökte duranlar (API image_path, 2026-10-02): `{id % 32}/` yolu 404
+    expect(sportmonksLeagueLogoUrl(2)).toBe('https://cdn.sportmonks.com/images/soccer/leagues/2.png');
+    expect(sportmonksLeagueLogoUrl(72)).toBe('https://cdn.sportmonks.com/images/soccer/leagues/72.png');
+    expect(sportmonksLeagueLogoUrl(271)).toBe('https://cdn.sportmonks.com/images/soccer/leagues/271.png');
+    expect(sportmonksLeagueLogoUrl(501)).toBe('https://cdn.sportmonks.com/images/soccer/leagues/501.png');
   });
   it('geçersiz id null', () => {
     expect(sportmonksLeagueLogoUrl(0)).toBeNull();

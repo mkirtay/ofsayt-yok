@@ -237,6 +237,8 @@
     "showAll": "Tümünü göster",
     "tabStandings": "Puan Durumu",
     "tabLeagues": "Ligler",
+    "leagueSearchPlaceholder": "Lig veya ülke ara",
+    "leagueSearchEmpty": "Eşleşen lig yok.",
     "tabScorers": "Gol Krallığı",
     "fixtureToday": "Bugün",
     "fixtureTomorrow": "Yarın",

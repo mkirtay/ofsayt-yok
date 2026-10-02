@@ -8,7 +8,7 @@ import {
   type SeasonListItem,
   type TopScorersPayload,
 } from '@/services/liveScoreService';
-import { legacyToStandingsLeagueId } from '@/services/sportmonksProviderFlag';
+import { isSportmonksProviderEnabled, legacyToStandingsLeagueId } from '@/services/sportmonksProviderFlag';
 import { getCompetitionStandings } from '@/services/competitionStandings';
 
 /**
@@ -24,8 +24,12 @@ export type CompetitionSidebarData = {
 
 const EMPTY_SIDEBAR: CompetitionSidebarData = { seasons: [], selectedSeasonId: null, standings: null };
 
-/** Yan panel legacy id (config/leagues.ts) kullanır → puan durumu servisleri için Sportmonks `league_id`. */
+/**
+ * Yan panel legacy id (config/leagues.ts) kullanır → puan durumu servisleri için Sportmonks `league_id`.
+ * Negatif id = legacy eşlemesi olmayan plan ligi, doğrudan Sportmonks id'si (bkz. utils/hubLeagueSelection.ts).
+ */
 function sidebarStandingsLeagueId(competitionId: number): string | null {
+  if (competitionId < 0) return isSportmonksProviderEnabled() ? String(-competitionId) : null;
   const id = legacyToStandingsLeagueId(competitionId);
   return id == null ? null : String(id);
 }
@@ -76,7 +80,7 @@ export function useCompetitionSidebar(competitionId: number, enabled = true) {
   return useQuery({
     queryKey: competitionSidebarQueryKey(competitionId),
     queryFn: () => loadCompetitionSidebar(competitionId),
-    enabled: enabled && competitionId > 0,
+    enabled: enabled && competitionId !== 0,
     staleTime: COMPETITION_SIDEBAR_STALE_MS,
     gcTime: 15 * 60_000,
   });
@@ -117,7 +121,7 @@ export function useCompetitionTopScorers(competitionId: number, seasonId: number
       const { getTopScorersWithAppearances } = await import('@/services/competitionTopScorers');
       return getTopScorersWithAppearances(compId, seasonId != null ? { season: seasonId } : undefined);
     },
-    enabled: enabled && competitionId > 0,
+    enabled: enabled && competitionId !== 0,
     staleTime: COMPETITION_SIDEBAR_STALE_MS,
     gcTime: 15 * 60_000,
   });

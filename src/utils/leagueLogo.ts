@@ -24,12 +24,19 @@ export function parseLeagueImagePath(raw: unknown): string | null {
 }
 
 /**
- * Sportmonks CDN'i lig görselini `leagues/{id % 32}/{id}.png` altında sunar
- * (ör. 600 → leagues/24/600.png, 8 → leagues/8/8.png). API yanıtı elde
+ * Planımızda görseli klasörsüz (`leagues/{id}.png`) duran ligler — 2026-10-02 `GET /leagues?select=id,image_path`:
+ * 2 Şampiyonlar Ligi, 72 Eredivisie, 271 Danimarka Superliga, 501 İskoçya Premiership (`{id % 32}/` yolu 404).
+ */
+const ROOT_PATH_LEAGUE_IDS = new Set([2, 72, 271, 501]);
+
+/**
+ * Sportmonks CDN'i lig görselini çoğunlukla `leagues/{id % 32}/{id}.png` altında sunar
+ * (ör. 600 → leagues/24/600.png, 8 → leagues/8/8.png); bazıları kökte (`ROOT_PATH_LEAGUE_IDS`). API yanıtı elde
  * yokken deterministik yedek olarak kullanılır.
  */
 export function sportmonksLeagueLogoUrl(sportmonksLeagueId: number): string | null {
   if (!Number.isInteger(sportmonksLeagueId) || sportmonksLeagueId <= 0) return null;
+  if (ROOT_PATH_LEAGUE_IDS.has(sportmonksLeagueId)) return `${SPORTMONKS_LEAGUE_CDN}/${sportmonksLeagueId}.png`;
   return `${SPORTMONKS_LEAGUE_CDN}/${sportmonksLeagueId % 32}/${sportmonksLeagueId}.png`;
 }
 
