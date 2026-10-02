@@ -138,8 +138,11 @@ export function sportmonksCacheTtl(
       const yesterday = utcDay(now, -1);
       if (a === 'date' && b) {
         if (b < yesterday) return withStale(DAY);
-        if (b > utcDay(now, 1)) return withStale(15 * MIN, DAY);
-        return withStale(fixtureListFreshSeconds(asList(data), 5 * MIN, now), DAY);
+        const tomorrow = utcDay(now, 1);
+        if (b > tomorrow) return withStale(15 * MIN, DAY);
+        // UTC yarın: ana sayfanın "gece maçları" için her gün listesiyle birlikte okunur (bkz. server/homeDay.ts). İçeriğe
+        // bakar (başlamaya 15 dk kala / canlıyken 30 sn) ama tavan 15 dk — durum değişikliği yalnız başlama saatinde.
+        return withStale(fixtureListFreshSeconds(asList(data), b === tomorrow ? 15 * MIN : 5 * MIN, now), DAY);
       }
       if (a === 'between' && b && r[3]) {
         const from = b;

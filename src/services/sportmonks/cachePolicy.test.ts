@@ -28,6 +28,12 @@ describe('sportmonksCacheTtl — TTL tablosu', () => {
     expect(sportmonksCacheTtl('football/fixtures/date/2026-09-30', [{ state_id: NS, starting_at: at(240) }], NOW).fresh).toBe(300);
   });
 
+  it('UTC yarın (gece maçları için her gün okunur): içeriğe bakar, tavan 15 dk', () => {
+    expect(sportmonksCacheTtl('football/fixtures/date/2026-10-01', [], NOW).fresh).toBe(900);
+    expect(sportmonksCacheTtl('football/fixtures/date/2026-10-01', [{ state_id: NS, starting_at: at(25) }], NOW).fresh).toBe(600);
+    expect(sportmonksCacheTtl('football/fixtures/date/2026-10-01', [{ state_id: NS, starting_at: at(5) }], NOW).fresh).toBe(30);
+  });
+
   it('sıradaki başlamaya (−15 dk) kadar: 18 dk sonra başlayacak maç → 3 dk', () => {
     expect(fixtureListFreshSeconds([{ state_id: NS, starting_at: at(18) }], 300, NOW)).toBe(180);
   });

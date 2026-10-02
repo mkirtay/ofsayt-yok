@@ -200,7 +200,11 @@ describe('KABUL — upstream istek sayısı ziyaretçi sayısından bağımsız 
       expect(many.byPath['football/livescores/inplay'] ?? 0).toBeLessThanOrEqual(31);
       // C ana sayfada between'i kaldırır ve maçsız saatlerde polling'i seyreltir.
       expect(Object.keys(many.byPath).some((k) => k === `football/fixtures/between/${TODAY}/${TODAY}`)).toBe(false);
-      expect(many.fixturePool).toBeLessThanOrEqual(bMany.fixturePool);
+      // Tek ek: "gece maçları" için UTC yarın listesi (bkz. server/homeDay.ts) — ziyaretçiden bağımsız, 10 dk'da en çok 1
+      // (tavan 15 dk, bkz. cachePolicy). Onun dışında C, B'den fazla istek atmaz.
+      const nightList = many.byPath['football/fixtures/date/2026-10-01'] ?? 0;
+      expect(nightList).toBeLessThanOrEqual(1);
+      expect(many.fixturePool - nightList).toBeLessThanOrEqual(bMany.fixturePool);
     });
   }
 });
