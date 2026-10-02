@@ -397,13 +397,33 @@ $recent-footer-h: 44px;
 }
 
 @media (max-width: #{$bp-sm - 1px}) {
-  // Dar ekranda turnuva yalnız logo (ad aria-label + title'da).
+  // Dar ekranda turnuva yalnız logo (ad aria-label + title'da); tarih ve skor sütunu daralır, takım adlarına yer kalır.
   .recentCompName {
     display: none;
   }
 
   .recentComp {
     flex: 0 0 auto;
+  }
+
+  .recentRow {
+    gap: 6px;
+
+    .matchTime {
+      width: 36px;
+    }
+
+    .matchTeams {
+      gap: 6px;
+    }
+
+    .matchScore {
+      width: 34px;
+    }
+
+    .matchTeam {
+      gap: 4px;
+    }
   }
 }
 
