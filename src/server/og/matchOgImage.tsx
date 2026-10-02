@@ -1,10 +1,9 @@
+/**
+ * Maç paylaşım görseli (1200×630) — `/api/og/match/[id]` çizer. Veri sunucudaki maç kaydından gelir.
+ */
 import { ImageResponse } from 'next/og';
-import type { NextRequest } from 'next/server';
+import type { Match } from '@/models/liveScore';
 import { BRAND_LOGO_SVG } from '@/config/brandImages';
-
-export const config = {
-  runtime: 'edge',
-};
 
 const GREEN = '#00A76F';
 const GREEN_DARK = '#007B55';
@@ -14,14 +13,13 @@ function truncate(s: string, max: number): string {
   return `${s.slice(0, max - 1)}…`;
 }
 
-export default function handler(req: NextRequest) {
-  const { searchParams, origin } = new URL(req.url);
-  const home = truncate(searchParams.get('home') || 'Ev Sahibi', 20);
-  const away = truncate(searchParams.get('away') || 'Deplasman', 20);
-  const homeLogo = searchParams.get('homeLogo') || '';
-  const awayLogo = searchParams.get('awayLogo') || '';
-  const score = searchParams.get('score') || '';
-  const comp = truncate(searchParams.get('comp') || 'Maç Detayı', 40);
+export function renderMatchOgImage(match: Match, origin: string): ImageResponse {
+  const home = truncate(match.home?.name || 'Ev Sahibi', 20);
+  const away = truncate(match.away?.name || 'Deplasman', 20);
+  const homeLogo = match.home?.logo || '';
+  const awayLogo = match.away?.logo || '';
+  const score = match.status === 'NOT STARTED' ? '' : match.scores?.score || match.score || '';
+  const comp = truncate(match.competition?.name || 'Maç Detayı', 40);
 
   return new ImageResponse(
     (

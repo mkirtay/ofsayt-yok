@@ -11,6 +11,7 @@ import JsonLd from '@/components/JsonLd';
 import { useMatchDetail } from '@/hooks/useMatchDetail';
 import type { Match } from '@/models/liveScore';
 import { buildMatchHref, parseMatchIdFromParam, parseMatchSlugFromParam } from '@/utils/matchUrl';
+import { matchOgImagePath } from '@/utils/matchOgImage';
 import { WORLD_CUP_COMPETITION_ID } from '@/config/worldCup';
 import { useTranslation } from '@/lib/i18n';
 import { leagueNameById } from '@/utils/leagueName';
@@ -162,16 +163,9 @@ export default function MatchDetail({ initialMatch, initialH2h, gone = false, ar
       ? `${homeName} vs ${awayName}${compName ? ` - ${compName}` : ''} maç detayı, istatistikler ve kadro bilgileri.`
       : 'Maç detayı, istatistikler ve kadro bilgileri.';
   const canonicalUrl = `${process.env.AUTH_URL ?? 'https://ofsaytyok.app'}${canonicalPath}`;
-  const scoreLine = match?.scores?.score || match?.score || '';
-  const ogImageUrl = homeName && awayName
-    ? `${process.env.AUTH_URL ?? 'https://ofsaytyok.app'}/api/og/match?${new URLSearchParams({
-        home: homeName,
-        away: awayName,
-        ...(match?.home?.logo ? { homeLogo: match.home.logo } : {}),
-        ...(match?.away?.logo ? { awayLogo: match.away.logo } : {}),
-        ...(scoreLine ? { score: String(scoreLine) } : {}),
-        comp: compName || 'Maç Detayı',
-      }).toString()}`
+  // Kimlik tabanlı paylaşım görseli: içerik sunucudaki maç verisinden, `v` yalnız önbellek anahtarı (bkz. utils/matchOgImage.ts).
+  const ogImageUrl = match && homeName && awayName
+    ? `${process.env.AUTH_URL ?? 'https://ofsaytyok.app'}${matchOgImagePath(match)}`
     : null;
   const effectiveMatchId = matchId || requestedMatchId || (archived ? routeMatchId : '');
   const homeTeamId = match?.home?.id ?? match?.home_id;
