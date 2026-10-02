@@ -69,3 +69,32 @@ export function buildDateStripWithSelected(todayIso: string, selectedIso: string
   };
   return offset < 0 ? [extra, ...strip] : [...strip, extra];
 }
+
+/**
+ * Mobil şerit penceresi: seçili gün bugün ±radius içindeyse bugünü merkez alan pencere (değişmez); dışındaysa
+ * (takvimden uzak gün) pencere o günün ±radius'una KAYAR — şerit hep seçili günü ortada gösterir. Bugün bu
+ * durumda pencerede olmayabilir (bkz. `stripHasToday`, "Bugün" kısayolu).
+ */
+export function buildDateStripWindow(todayIso: string, selectedIso: string, radius = 2): DateStripItem[] {
+  const fromToday = Math.round(
+    (new Date(`${selectedIso}T12:00:00Z`).getTime() - new Date(`${todayIso}T12:00:00Z`).getTime()) / 86_400_000,
+  );
+  const center = Math.abs(fromToday) <= radius ? 0 : fromToday;
+  const items: DateStripItem[] = [];
+  for (let offset = center - radius; offset <= center + radius; offset++) {
+    const iso = shiftIsoDate(todayIso, offset);
+    items.push({
+      iso,
+      day: isoDayOfMonth(iso),
+      weekday: new Date(`${iso}T12:00:00Z`).getUTCDay(),
+      offset,
+      isToday: offset === 0,
+      isSelected: iso === selectedIso,
+    });
+  }
+  return items;
+}
+
+export function stripHasToday(strip: DateStripItem[]): boolean {
+  return strip.some((item) => item.isToday);
+}

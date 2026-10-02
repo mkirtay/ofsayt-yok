@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildDateStrip, buildDateStripWithSelected, isoDayOfMonth, shiftIsoDate, todayIsoIstanbul } from './dateStrip';
+import { buildDateStrip, buildDateStripWindow, buildDateStripWithSelected, isoDayOfMonth, shiftIsoDate, stripHasToday, todayIsoIstanbul } from './dateStrip';
 
 describe('shiftIsoDate', () => {
   it('ay/yıl sınırlarını doğru geçer', () => {
@@ -54,5 +54,30 @@ describe('buildDateStripWithSelected', () => {
     const future = buildDateStripWithSelected('2026-09-19', '2026-10-01');
     expect(future).toHaveLength(6);
     expect(future[5]).toMatchObject({ iso: '2026-10-01', isSelected: true });
+  });
+});
+
+describe('buildDateStripWindow — şerit seçili güne kayar', () => {
+  it('seçili gün bugün ±2 içindeyse pencere bugünü merkez alır (değişmez)', () => {
+    const s = buildDateStripWindow('2026-10-02', '2026-10-04');
+    expect(s.map((i) => i.iso)).toEqual(['2026-09-30', '2026-10-01', '2026-10-02', '2026-10-03', '2026-10-04']);
+    expect(s.find((i) => i.isSelected)?.iso).toBe('2026-10-04');
+    expect(stripHasToday(s)).toBe(true);
+  });
+
+  it('takvimden uzak gün: pencere o günün ±2\'sine kayar, seçili gün ortada; bugün pencerede yok', () => {
+    const s = buildDateStripWindow('2026-10-02', '2026-10-20');
+    expect(s.map((i) => i.iso)).toEqual(['2026-10-18', '2026-10-19', '2026-10-20', '2026-10-21', '2026-10-22']);
+    expect(s[2].isSelected).toBe(true);
+    expect(stripHasToday(s)).toBe(false);
+    const past = buildDateStripWindow('2026-10-02', '2026-09-01');
+    expect(past[2].iso).toBe('2026-09-01');
+    expect(past.every((i) => !i.isToday)).toBe(true);
+  });
+
+  it('sınır: bugünden 3 gün ötesi kayar, 2 gün ötesi kaymaz; ay geçişi', () => {
+    expect(stripHasToday(buildDateStripWindow('2026-10-02', '2026-10-05'))).toBe(false);
+    expect(stripHasToday(buildDateStripWindow('2026-10-02', '2026-09-30'))).toBe(true);
+    expect(buildDateStripWindow('2026-10-30', '2026-11-05').map((i) => i.day)).toEqual([3, 4, 5, 6, 7]);
   });
 });
