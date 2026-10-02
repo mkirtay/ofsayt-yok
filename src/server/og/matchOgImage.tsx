@@ -1,25 +1,53 @@
 /**
  * Maç paylaşım görseli (1200×630) — `/api/og/match/[id]` çizer. Veri sunucudaki maç kaydından gelir.
+ * Font (Inter) ve marka logosu gömülü; takım logoları 1,5 sn zaman aşımıyla çekilir, olmazsa baş harfler.
  */
 import { ImageResponse } from 'next/og';
 import type { Match } from '@/models/liveScore';
-import { BRAND_LOGO_SVG } from '@/config/brandImages';
+import { BRAND_LOGO_ASPECT, BRAND_LOGO_DATA_URI, fetchLogoDataUri, ogFonts, teamInitials } from './ogAssets';
 
 const GREEN = '#00A76F';
 const GREEN_DARK = '#007B55';
 
 function truncate(s: string, max: number): string {
-  if (s.length <= max) return s;
-  return `${s.slice(0, max - 1)}…`;
+  const chars = [...s];
+  if (chars.length <= max) return s;
+  return `${chars.slice(0, max - 1).join('')}…`;
 }
 
-export function renderMatchOgImage(match: Match, origin: string): ImageResponse {
-  const home = truncate(match.home?.name || 'Ev Sahibi', 20);
-  const away = truncate(match.away?.name || 'Deplasman', 20);
-  const homeLogo = match.home?.logo || '';
-  const awayLogo = match.away?.logo || '';
+function TeamBadge({ logo, name, size }: { logo: string | null; name: string; size: number }) {
+  if (logo) {
+    // eslint-disable-next-line @next/next/no-img-element
+    return <img src={logo} width={size} height={size} style={{ objectFit: 'contain' }} alt="" />;
+  }
+  return (
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: size,
+        height: size,
+        borderRadius: size / 2,
+        background: 'rgba(255,255,255,0.16)',
+        color: '#fff',
+        fontSize: Math.round(size * 0.38),
+        fontWeight: 800,
+      }}
+    >
+      {teamInitials(name)}
+    </div>
+  );
+}
+
+export async function renderMatchOgImage(match: Match): Promise<ImageResponse> {
+  const homeName = match.home?.name || 'Ev Sahibi';
+  const awayName = match.away?.name || 'Deplasman';
+  const home = truncate(homeName, 20);
+  const away = truncate(awayName, 20);
   const score = match.status === 'NOT STARTED' ? '' : match.scores?.score || match.score || '';
   const comp = truncate(match.competition?.name || 'Maç Detayı', 40);
+  const [homeLogo, awayLogo] = await Promise.all([fetchLogoDataUri(match.home?.logo), fetchLogoDataUri(match.away?.logo)]);
 
   return new ImageResponse(
     (
@@ -30,7 +58,7 @@ export function renderMatchOgImage(match: Match, origin: string): ImageResponse 
           display: 'flex',
           flexDirection: 'column',
           background: GREEN,
-          fontFamily: 'sans-serif',
+          fontFamily: 'Inter',
           position: 'relative',
         }}
       >
@@ -48,10 +76,10 @@ export function renderMatchOgImage(match: Match, origin: string): ImageResponse 
           }}
         />
 
-        {/* Üst bar: gerçek marka logosu */}
+        {/* Üst bar: marka logosu */}
         <div style={{ display: 'flex', alignItems: 'center', padding: '36px 56px 0' }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={`${origin}${BRAND_LOGO_SVG}`} width={158} height={48} alt="" />
+          <img src={BRAND_LOGO_DATA_URI} width={Math.round(48 * BRAND_LOGO_ASPECT)} height={48} alt="" />
         </div>
 
         {/* Lig etiketi */}
@@ -72,34 +100,10 @@ export function renderMatchOgImage(match: Match, origin: string): ImageResponse 
         </div>
 
         {/* Orta: takım isimleri + skor */}
-        <div
-          style={{
-            display: 'flex',
-            flex: 1,
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '0 56px',
-          }}
-        >
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 380 }}>
-            {homeLogo ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={homeLogo} width={88} height={88} style={{ marginBottom: 16 }} alt="" />
-            ) : (
-              <div
-                style={{
-                  display: 'flex',
-                  width: 88,
-                  height: 88,
-                  borderRadius: 44,
-                  background: 'rgba(255,255,255,0.16)',
-                  marginBottom: 16,
-                }}
-              />
-            )}
-            <div style={{ display: 'flex', color: '#fff', fontSize: 36, fontWeight: 700, textAlign: 'center' }}>
-              {home}
-            </div>
+        <div style={{ display: 'flex', flex: 1, alignItems: 'center', justifyContent: 'center', padding: '0 56px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 380, gap: 16 }}>
+            <TeamBadge logo={homeLogo} name={homeName} size={88} />
+            <div style={{ display: 'flex', color: '#fff', fontSize: 36, fontWeight: 800, textAlign: 'center' }}>{home}</div>
           </div>
 
           <div
@@ -116,25 +120,9 @@ export function renderMatchOgImage(match: Match, origin: string): ImageResponse 
             {score || 'VS'}
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 380 }}>
-            {awayLogo ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={awayLogo} width={88} height={88} style={{ marginBottom: 16 }} alt="" />
-            ) : (
-              <div
-                style={{
-                  display: 'flex',
-                  width: 88,
-                  height: 88,
-                  borderRadius: 44,
-                  background: 'rgba(255,255,255,0.16)',
-                  marginBottom: 16,
-                }}
-              />
-            )}
-            <div style={{ display: 'flex', color: '#fff', fontSize: 36, fontWeight: 700, textAlign: 'center' }}>
-              {away}
-            </div>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 380, gap: 16 }}>
+            <TeamBadge logo={awayLogo} name={awayName} size={88} />
+            <div style={{ display: 'flex', color: '#fff', fontSize: 36, fontWeight: 800, textAlign: 'center' }}>{away}</div>
           </div>
         </div>
 
@@ -154,9 +142,6 @@ export function renderMatchOgImage(match: Match, origin: string): ImageResponse 
         </div>
       </div>
     ),
-    {
-      width: 1200,
-      height: 630,
-    }
+    { width: 1200, height: 630, fonts: ogFonts() },
   );
 }

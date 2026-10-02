@@ -35,9 +35,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (req.query.v !== matchOgVersion(match)) {
       return redirect(res, matchOgImagePath(match), OG_CACHE.versionRedirect);
     }
-    const proto = (req.headers['x-forwarded-proto'] as string | undefined)?.split(',')[0] ?? 'http';
-    const origin = `${proto}://${req.headers.host}`;
-    return await sendImageResponse(res, renderMatchOgImage(match, origin), matchOgCacheControl(match));
+    return await sendImageResponse(res, await renderMatchOgImage(match), matchOgCacheControl(match));
   } catch (err) {
     captureError('og-match', err);
     return redirect(res, OG_DEFAULT_IMAGE.path, OG_CACHE.fallback);

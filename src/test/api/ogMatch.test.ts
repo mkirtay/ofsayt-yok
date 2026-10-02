@@ -11,7 +11,7 @@ const h = vi.hoisted(() => ({
 vi.mock('@/lib/resolveLiveMatch', () => ({ resolveSportmonksMatch: h.lookup }));
 vi.mock('@/lib/logger', () => ({ captureError: vi.fn() }));
 vi.mock('@/server/og/matchOgImage', () => ({
-  renderMatchOgImage: (match: { id: number }) => {
+  renderMatchOgImage: async (match: { id: number }) => {
     h.rendered.push(match);
     return { arrayBuffer: async () => new Uint8Array([137, 80, 78, 71]).buffer };
   },

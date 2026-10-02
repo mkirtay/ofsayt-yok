@@ -8,6 +8,7 @@
  *   aynı çizim motoruyla (next/og → satori) çizilir; yalnız logo yeni.
  * - public/apple-touch-icon.png      180×180 (iOS SVG kabul etmiyor) — kare tam logodan.
  * - public/icon-512.png              512×512 — yapılandırılmış veri (JSON-LD Organization / publisher) logosu; kare tam logodan.
+ * - src/server/og/brandLogo.generated.ts  yeni logo (SVG, base64) — dinamik paylaşım görsellerine gömülü (ağdan okunmaz).
  * - public/favicon.ico               16/32/48 ve public/icon.svg (sekme ikonu) — logonun yalnız işareti (sol kısım) yeşil
  *   kare üstünde: tam logo 16–48 px'te okunmuyor.
  *
@@ -121,6 +122,13 @@ function ico(pngs) {
 async function main() {
   const logoSvg = await readFile(pub('images', 'ofsaytyok-logo.svg'), 'utf8');
   const iconSvg = await readFile(path.join(root, 'scripts', 'brand', 'icon-square-logo.svg'));
+
+  await writeFile(
+    path.join(root, 'src', 'server', 'og', 'brandLogo.generated.ts'),
+    `// ÜRETİLDİ: scripts/generate-brand-images.mjs — elle düzenleme. Kaynak: public/images/ofsaytyok-logo.svg (${LOGO_VIEWBOX.w}×${LOGO_VIEWBOX.h}).\n` +
+      `export const BRAND_LOGO_DATA_URI = 'data:image/svg+xml;base64,${Buffer.from(logoSvg).toString('base64')}';\n` +
+      `export const BRAND_LOGO_ASPECT = ${LOGO_VIEWBOX.w / LOGO_VIEWBOX.h};\n`,
+  );
 
   const og = await ogDefault(logoSvg);
   await writeFile(pub('images', 'og-default-v2.png'), og);
