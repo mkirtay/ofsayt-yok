@@ -2,7 +2,8 @@
 @use '../../styles/motion' as *;
 
 // 09-kural-kosesi.html → .kk-launcher / .kk-new / .kk-peek. Mobilde alt menünün 16 px üstü (safe-area dahil),
-// masaüstünde sağdan ve alttan 24 px. z-index: içeriğin ve SubHeader'ın (90) üstü, mobil menü (95), alt menü (110)
+// masaüstünde sağdan ve alttan 24 px — bu varsayılan yer sürüklemenin alt sınırıdır; baloncuğun top/bottom'ı
+// sürüklenince inline gelir (launcherPosition.ts). z-index: içeriğin ve SubHeader'ın (90) üstü, mobil menü (95), alt menü (110)
 // ve tam ekran katmanların altı.
 
 .launcher {
@@ -24,6 +25,36 @@
   box-shadow: 0 8px 20px rgba(0, 123, 85, 0.35), 0 0 0 4px rgba(0, 167, 111, 0.15);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
+  // Dikey sürükleme (useLauncherDrag): sayfa kaymasın, metin seçilmesin. Konum inline `transform: translateY`.
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  scale: 1;
+
+  // İlk yerleşmeden sonra: ok tuşu / döndürme / bırakma yumuşak.
+  &[data-ready] {
+    transition:
+      transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1),
+      scale 0.18s ease-out,
+      box-shadow 0.18s ease-out;
+  }
+
+  // Sürüklerken parmağı birebir izler (transform geçişsiz); hafif büyür, gölge derinleşir.
+  &[data-dragging] {
+    cursor: grabbing;
+    scale: 1.08;
+    box-shadow: 0 14px 30px rgba(0, 123, 85, 0.45), 0 0 0 6px rgba(0, 167, 111, 0.18);
+    transition:
+      scale 0.18s ease-out,
+      box-shadow 0.18s ease-out;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &[data-ready],
+    &[data-dragging] {
+      transition: none;
+    }
+  }
 
   &:focus-visible {
     outline: 2px solid #ffffff;

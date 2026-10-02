@@ -57,8 +57,12 @@ describe.each(['methods-throw', 'access-throws'] as const)('localStorage erişil
   it('düğme çizilir: aria-label var, sarı nokta ve baloncuk yok', () => {
     stubWindow(variant);
     const html = renderToStaticMarkup(<Launcher />);
-    const launcher = html.match(/<button[^>]*aria-label="Kural Köşesi&#x27;ni aç"[^>]*>([\s\S]*?)<\/button>/);
+    const launcher = html.match(
+      /<button[^>]*aria-label="Kural Köşesi&#x27;ni aç\. Yerini değiştirmek için yukarı ve aşağı ok tuşlarını kullan\."[^>]*>([\s\S]*?)<\/button>/,
+    );
     expect(launcher).not.toBeNull();
+    // Kayıtlı konum okunamıyor → varsayılan yer.
+    expect(launcher![0]).toContain('transform:translateY(0px)');
     // Düğmenin içinde yalnız düdük SVG'si; nokta bir <span>dı.
     expect(launcher![1]).toContain('<svg');
     expect(launcher![1]).not.toContain('<span');

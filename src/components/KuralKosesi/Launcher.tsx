@@ -18,6 +18,8 @@ import {
 } from './schedule';
 import type { PanelProps } from './Panel';
 import WhistleIcon from './WhistleIcon';
+import { LAUNCHER_SIZE_PX, bubblePosition } from './launcherPosition';
+import { useLauncherDrag } from './useLauncherDrag';
 import styles from './launcher.module.scss';
 
 let panelLoad: Promise<ComponentType<PanelProps>> | null = null;
@@ -38,7 +40,10 @@ function preload() {
   void loadFacts().catch(() => {});
 }
 
-/** Sağ alttaki düdük düğmesi, sarı "yeni" noktası ve "Biliyor muydun?" baloncuğu; paneli açar. */
+/**
+ * Sağ alttaki düdük düğmesi, sarı "yeni" noktası ve "Biliyor muydun?" baloncuğu; paneli açar. Düğme dikeyde
+ * sürüklenebilir (ok tuşlarıyla da); baloncuk onunla birlikte hareket eder (bkz. useLauncherDrag).
+ */
 export default function Launcher() {
   const { t } = useTranslation('kuralKosesi');
   const { locale } = useI18n();
@@ -55,6 +60,7 @@ export default function Launcher() {
   const [open, setOpen] = useState(false);
   const [startIndex, setStartIndex] = useState(0);
   const [recheck, setRecheck] = useState(0);
+  const drag = useLauncherDrag(launcherRef, storage);
 
   // Baloncuğu kurallara göre zamanla (depolama yoksa hiç). Panel açıkken ya da baloncuk görünürken bekler.
   useEffect(() => {
@@ -133,11 +139,19 @@ export default function Launcher() {
   }, []);
 
   const peekFact = peekIndex !== null && facts?.[peekIndex] ? localizeFact(facts[peekIndex], locale) : null;
+  // Baloncuk düğmeyle birlikte konumlanır (üst yarıda aşağı, alt yarıda yukarı açılır); sürüklerken gizli.
+  const peekPosition =
+    drag.top !== null && drag.viewportHeight !== null ? bubblePosition(drag.top, LAUNCHER_SIZE_PX, drag.viewportHeight) : null;
 
   return (
     <>
-      {peekFact ? (
-        <button type="button" className={styles.peek} onClick={openPanel}>
+      {peekFact && !drag.dragging ? (
+        <button
+          type="button"
+          className={styles.peek}
+          style={peekPosition ? { top: peekPosition.top ?? 'auto', bottom: peekPosition.bottom ?? 'auto' } : undefined}
+          onClick={openPanel}
+        >
           <small>{t('didYouKnow')}</small>
           <strong>{peekFact.title}</strong>
         </button>
@@ -146,10 +160,17 @@ export default function Launcher() {
         ref={launcherRef}
         type="button"
         className={styles.launcher}
-        aria-label={t('open')}
+        style={{ transform: `translateY(${drag.offset}px)` }}
+        data-dragging={drag.dragging || undefined}
+        data-ready={drag.ready || undefined}
+        aria-label={`${t('open')}. ${t('moveHint')}`}
         aria-haspopup="dialog"
         aria-expanded={open}
-        onClick={openPanel}
+        onClick={() => {
+          if (drag.consumeDragClick()) return;
+          void openPanel();
+        }}
+        {...drag.handlers}
         onPointerEnter={preload}
         onTouchStart={preload}
         onFocus={preload}

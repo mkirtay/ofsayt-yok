@@ -1,5 +1,6 @@
 {
   "open": "Open the Rules Corner",
+  "moveHint": "Use the up and down arrow keys to move it.",
   "title": "Rules Corner",
   "didYouKnow": "Did you know?",
   "counter": "Laws of the game · {{current}} / {{total}}",
