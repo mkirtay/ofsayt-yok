@@ -6,13 +6,16 @@
  * (sadece sayı listelemez — neden/nasıl açıklar).
  */
 import type { MatchAnalysisContext } from '@/server/buildMatchAnalysisContext';
+import type { AnalysisScenario } from '@/utils/analysisScenarios';
+import { impliedProbabilities } from '@/utils/impliedProbability';
 
-export const ANALYSIS_MODEL_VERSION = 'v2-2026-07';
+// v3: bahis dili yasak, "Bahis / İddia Pazarı" → olasılık senaryoları (AdSense kumar politikası).
+export const ANALYSIS_MODEL_VERSION = 'v3-2026-10';
 
-export const ANALYSIS_SYSTEM_PROMPT = `Sen profesyonel bir futbol veri analisti, iddia analisti ve Opta/Wyscout seviyesinde
-maç öncesi analiz uzmanısın. Sana verilen maç verilerini (takım formu, head-to-head,
-lig sıralaması, maç istatistikleri, bahis oranları) yorumlayarak kapsamlı teknik analiz,
-skor tahmini ve bahis pazarı değerlendirmesi üreteceksin.
+export const ANALYSIS_SYSTEM_PROMPT = `Sen profesyonel bir futbol veri analisti ve Opta/Wyscout seviyesinde maç öncesi
+analiz uzmanısın. Sana verilen maç verilerini (takım formu, head-to-head, lig sıralaması,
+maç istatistikleri, dış kaynaklı sonuç beklentisi) yorumlayarak kapsamlı teknik analiz,
+skor tahmini ve istatistiksel olasılık senaryoları üreteceksin.
 
 KURALLAR:
 1. Tüm çıktı metinleri TÜRKÇE olacak (takım/oyuncu adları orijinal kalabilir).
@@ -26,8 +29,12 @@ KURALLAR:
    varsayımla tahmin yaptığını yaz — confidence değerini buna göre düşür.
 7. Spekülasyonlardan kaçın: kadro/sakatlık verisi yoksa oyuncu bazlı tahminlerde
    bunu net şekilde ifade et (örn. "kadro verisi yok, genel form üzerinden tahmin").
-8. Bahis önerilerinde abartma — düşük güvenli durumlarda "Riskli" işaretle, value
-   bulunmuyorsa "avoid: true" işaretle.
+8. DİL YASAĞI — çıktının HİÇBİR alanında bahis dili kullanma. Yasak: "bahis", "iddaa",
+   "iddia pazarı", "kupon", "banko", "value", "oran" (her anlamda; yerine "yüzde" ya da
+   "olasılık"), "piyasa", "para akışı", "üst/alt", "KG var/yok", "MS 1/X/2", "1X2".
+   Olayları istatistik diliyle yaz ("2+ gol", "iki takım da gol atar", "ilk yarıda gol",
+   "ev sahibi kazanır") ve olasılığı yüzde ver ("%58"). Senaryolarda abartma — veri zayıfsa
+   confidence "low".
 9. heatmapAnalysis.zoneGrid.home ve .away alanlarında HER ZAMAN tam 15 sayı ver
    (eksik/fazla eleman bırakma), değerler homeZones/awayZones metniyle tutarlı olsun.
    homeZones/awayZones/narrative alanları SADECE doğal dil metin olmalı — sayı
@@ -39,7 +46,7 @@ KURALLAR:
 - "medium" çoğu durumda varsayılan.
 - "low" iki taraf da güçlü/zayıf olduğunda veya veri çelişkili olduğunda.
 - riskLevel: tahminin kendine olan güveni değil, BU MAÇIN ne kadar öngörülebilir
-  olduğudur. Derbi/eşit takımlar/canlı oran salınımı → high risk.`;
+  olduğudur. Derbi/eşit takımlar/dış beklentide ani değişim → high risk.`;
 
 export type AnalysisJsonSchema = {
   /** 1. Genel Maç Özeti */
@@ -102,15 +109,8 @@ export type AnalysisJsonSchema = {
     bttsFirstHalf: number;
     reasoning: string;
   };
-  /** 8. Bahis / İddia Pazarı Analizi */
-  bettingTips: Array<{
-    market: string;
-    pick: string;
-    confidence: 'low' | 'medium' | 'high';
-    reasoning: string;
-    valueBet: boolean;
-    avoid: boolean;
-  }>;
+  /** 8. Olasılık Senaryoları (DB'de `bettingTips` sütununda saklanır, bkz. utils/analysisScenarios.ts) */
+  scenarios: AnalysisScenario[];
   /** 9. Risk Analizi */
   riskLevel: 'low' | 'medium' | 'high';
   riskReasoning: string;
@@ -193,20 +193,18 @@ const OUTPUT_SCHEMA_DESCRIPTION = `{
     "homeToScore": 0-100, "awayToScore": 0-100, "bttsFirstHalf": 0-100,
     "reasoning": "1-2 cümle: gol beklentisinin gerekçesi"
   },
-  "bettingTips": [
+  "scenarios": [
     {
-      "market": "1X2" | "Çifte Şans" | "Üst/Alt 2.5" | "KG Var/Yok" | "İlk Yarı Üst" | "Korner" | "Kart" | "Skor",
-      "pick": "Pazara göre seçim",
+      "metric": "İstatistik dilinde olay — örn. '2+ gol', '3+ gol', 'İki takım da gol atar', 'İlk yarıda gol', 'Ev sahibi kazanır', 'Beraberlik', '9+ korner', '4+ sarı kart'",
+      "probability": 0-100,
       "confidence": "low" | "medium" | "high",
-      "reasoning": "1-2 cümle: neden bu tahmin?",
-      "valueBet": true veya false,
-      "avoid": true veya false
+      "reasoning": "1-2 cümle: veriye dayalı gerekçe"
     }
   ],
   "riskLevel": "low" | "medium" | "high",
   "riskReasoning": "Tek cümle: maçın öngörülebilirlik durumu",
   "riskFactors": ["Erken gol senaryosu", "Kırmızı kart senaryosu", "Rotasyon/eksik oyuncu etkisi", "Motivasyon faktörü — 3-5 madde"],
-  "analystComment": "3-4 cümlelik Opta analisti tarzı yorum: ana belirleyici faktör, en güçlü sinyal, en büyük belirsizlik, en mantıklı bahis yaklaşımı",
+  "analystComment": "3-4 cümlelik Opta analisti tarzı yorum: ana belirleyici faktör, en güçlü sinyal, en büyük belirsizlik, en olası senaryo",
   "overallConfidence": 0-100
 }`;
 
@@ -237,8 +235,8 @@ function summarizeContextForPrompt(ctx: MatchAnalysisContext): string {
   const h = ctx.homeTeam;
   lines.push(`Son ${h.metrics.matchesAnalyzed} maç: ${h.metrics.wins}G-${h.metrics.draws}B-${h.metrics.losses}M`);
   lines.push(`Maç başına: ${h.metrics.goalsPerMatch} gol attı, ${h.metrics.goalsAgainstPerMatch} yedi`);
-  lines.push(`Temiz kale oranı: %${Math.round(h.metrics.cleanSheetRate * 100)} | KG var: %${Math.round(h.metrics.bttsRate * 100)}`);
-  lines.push(`Ev galibiyet oranı: %${Math.round(h.metrics.homeWinRate * 100)} | Deplasman: %${Math.round(h.metrics.awayWinRate * 100)}`);
+  lines.push(`Gol yemediği maç: %${Math.round(h.metrics.cleanSheetRate * 100)} | İki takımın da gol attığı maç: %${Math.round(h.metrics.bttsRate * 100)}`);
+  lines.push(`Evde kazandığı maç: %${Math.round(h.metrics.homeWinRate * 100)} | Deplasmanda: %${Math.round(h.metrics.awayWinRate * 100)}`);
   lines.push(`Form trendi: ${h.metrics.formTrend === 'rising' ? 'YÜKSELEN ↑' : h.metrics.formTrend === 'falling' ? 'DÜŞEN ↓' : 'STABİL →'}`);
   if (h.standingRow) {
     lines.push(`Lig sırası: ${h.standingRow.rank}. (${h.standingRow.points} puan, averaj ${h.standingRow.goal_diff})`);
@@ -253,8 +251,8 @@ function summarizeContextForPrompt(ctx: MatchAnalysisContext): string {
   const a = ctx.awayTeam;
   lines.push(`Son ${a.metrics.matchesAnalyzed} maç: ${a.metrics.wins}G-${a.metrics.draws}B-${a.metrics.losses}M`);
   lines.push(`Maç başına: ${a.metrics.goalsPerMatch} gol attı, ${a.metrics.goalsAgainstPerMatch} yedi`);
-  lines.push(`Temiz kale oranı: %${Math.round(a.metrics.cleanSheetRate * 100)} | KG var: %${Math.round(a.metrics.bttsRate * 100)}`);
-  lines.push(`Ev galibiyet oranı: %${Math.round(a.metrics.homeWinRate * 100)} | Deplasman: %${Math.round(a.metrics.awayWinRate * 100)}`);
+  lines.push(`Gol yemediği maç: %${Math.round(a.metrics.cleanSheetRate * 100)} | İki takımın da gol attığı maç: %${Math.round(a.metrics.bttsRate * 100)}`);
+  lines.push(`Evde kazandığı maç: %${Math.round(a.metrics.homeWinRate * 100)} | Deplasmanda: %${Math.round(a.metrics.awayWinRate * 100)}`);
   lines.push(`Form trendi: ${a.metrics.formTrend === 'rising' ? 'YÜKSELEN ↑' : a.metrics.formTrend === 'falling' ? 'DÜŞEN ↓' : 'STABİL →'}`);
   if (a.standingRow) {
     lines.push(`Lig sırası: ${a.standingRow.rank}. (${a.standingRow.points} puan, averaj ${a.standingRow.goal_diff})`);
@@ -280,15 +278,17 @@ function summarizeContextForPrompt(ctx: MatchAnalysisContext): string {
     lines.push(`\n## Head-to-Head: Veri yok veya yetersiz`);
   }
 
-  // Bahis oranları sinyali
-  if (ctx.oddsSignal.pre) {
-    lines.push(`\n## Bahis Oranları`);
-    lines.push(`Açılış (Pre): 1=${ctx.oddsSignal.pre['1'] ?? '-'} | X=${ctx.oddsSignal.pre.X ?? '-'} | 2=${ctx.oddsSignal.pre['2'] ?? '-'}`);
-    if (ctx.oddsSignal.live) {
-      lines.push(`Güncel (Live): 1=${ctx.oddsSignal.live['1'] ?? '-'} | X=${ctx.oddsSignal.live.X ?? '-'} | 2=${ctx.oddsSignal.live['2'] ?? '-'}`);
+  // Dış kaynaklı sonuç beklentisi: oran sayıları yerine yüzde (model çıktıya bahis dilini taşımasın).
+  const pre = impliedProbabilities(ctx.oddsSignal.pre);
+  if (pre) {
+    lines.push(`\n## Dış Kaynaklı Sonuç Beklentisi`);
+    lines.push(`Maç öncesi: Ev sahibi %${pre.home} | Beraberlik %${pre.draw} | Deplasman %${pre.away}`);
+    const live = impliedProbabilities(ctx.oddsSignal.live);
+    if (live) {
+      lines.push(`Güncel: Ev sahibi %${live.home} | Beraberlik %${live.draw} | Deplasman %${live.away}`);
       if (ctx.oddsSignal.movement && ctx.oddsSignal.movement !== 'stable') {
-        const labelMap = { home: 'Ev sahibi', draw: 'Beraberlik', away: 'Deplasman' };
-        lines.push(`Piyasa hareketi: ${labelMap[ctx.oddsSignal.movement]} yönünde para akışı (oran düşüyor)`);
+        const labelMap = { home: 'ev sahibi', draw: 'beraberlik', away: 'deplasman' };
+        lines.push(`Beklenti maç yaklaştıkça ${labelMap[ctx.oddsSignal.movement]} lehine kaydı`);
       }
     }
   }
@@ -314,7 +314,7 @@ export function buildAnalysisUserMessage(ctx: MatchAnalysisContext): string {
   const summary = summarizeContextForPrompt(ctx);
   const phaseHint =
     ctx.matchPhase === 'PRE'
-      ? 'Bu MAÇ ÖNCESİ analizi. Form, H2H ve oranlara göre kapsamlı bir tahmin yap.'
+      ? 'Bu MAÇ ÖNCESİ analizi. Form, H2H ve dış beklentiye göre kapsamlı bir tahmin yap.'
       : ctx.matchPhase === 'HT'
         ? 'Bu DEVRE ARASI analizi. Maç öncesi tahmin yüzdelerini (home/draw/away) ve skor tahminini KORUYUN — değiştirmeyin. ' +
           'matchPrediction.reasoning alanına kısa bir ilk yarı notu ekle. Diğer tüm alanları maç öncesi bağlama göre doldur.'
@@ -330,7 +330,7 @@ ${summary}
 
 Aşağıdaki başlıkları kapsayan bir maç öncesi analiz üret: (1) Genel Maç Özeti,
 (2) Takım Form Analizi, (3) Taktik Analiz, (4) Isı Haritası ve Saha Hakimiyeti Tahmini,
-(5) Gol Tahmini, (6) Maç Sonucu Tahmini, (7) Bahis/İddia Pazarı Analizi,
+(5) Gol Tahmini, (6) Maç Sonucu Tahmini, (7) Olasılık Senaryoları (3-5 senaryo),
 (8) Risk Analizi, (9) Analist Yorumu.
 
 Yukarıdaki verilere dayanarak aşağıdaki JSON yapısında analizini yaz. Sadece JSON yaz, başka hiçbir şey yazma.

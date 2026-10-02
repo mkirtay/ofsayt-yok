@@ -1,5 +1,3 @@
-import type { MatchOdds } from '@/models/liveScore';
-
 export type ResultProbabilities = { home: number; draw: number; away: number };
 
 /**
@@ -7,7 +5,9 @@ export type ResultProbabilities = { home: number; draw: number; away: number };
  * politikası); yalnız olasılık. 1/oran payı normalize edilir (bahis şirketi marjı düşer), yuvarlama en büyük kalanla
  * → toplam her zaman 100. Üç oranın biri eksik / geçersizse (≤ 1) null: şerit çizilmez.
  */
-export function impliedProbabilities(odds: MatchOdds['pre'] | null | undefined): ResultProbabilities | null {
+export type ResultOdds = { '1'?: number | null; X?: number | null; '2'?: number | null };
+
+export function impliedProbabilities(odds: ResultOdds | null | undefined): ResultProbabilities | null {
   if (!odds) return null;
   const raw = [odds['1'], odds['X'], odds['2']].map(Number);
   if (raw.some((o) => !Number.isFinite(o) || o <= 1)) return null;

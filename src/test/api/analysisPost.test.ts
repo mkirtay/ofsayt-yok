@@ -6,7 +6,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
  * başka (eski) maçına ait analiz yeni maça verilmez: yeni analiz üretilir (26 Ekim derbisi senaryosu).
  */
 const h = vi.hoisted(() => ({
-  analyses: new Map<string, { id: string; matchId: string; homeTeamId: string; awayTeamId: string }>(),
+  analyses: new Map<string, { id: string; matchId: string; homeTeamId: string; awayTeamId: string; bettingTips?: unknown }>(),
   spent: 0,
   generated: 0,
   created: [] as Array<Record<string, unknown>>,
@@ -63,7 +63,7 @@ vi.mock('@/services/aiAnalysisService', () => ({
         matchPrediction: {},
         scorePrediction: {},
         goalExpectation: {},
-        bettingTips: [],
+        scenarios: [{ metric: '2+ gol', probability: 58, confidence: 'medium', reasoning: 'r' }],
         matchSummary: '',
         tacticalAnalysis: '',
         heatmapAnalysis: '',
@@ -140,5 +140,25 @@ describe('POST /api/matches/[id]/analysis — takım çifti yedeği yok', () => 
     expect((res.body.analysis as { id: string }).id).toBe('same');
     expect(h.generated).toBe(0);
     expect(h.spent).toBe(0);
+  });
+
+  it('yeni analiz: olasılık senaryoları eski sütuna yazılır, yanıtta `scenarios`; `bettingTips` boş', async () => {
+    const res = await post('19889999');
+    const scenario = { metric: '2+ gol', probability: 58, confidence: 'medium', reasoning: 'r' };
+    expect(h.created[0]!.bettingTips).toEqual([scenario]);
+    expect(res.body.analysis).toMatchObject({ scenarios: [scenario], bettingTips: [] });
+  });
+
+  it('eski kayıt (bahis maddeleri) bozulmadan döner: bahis bölümü gizli (scenarios boş, maddeler yanıtta yok)', async () => {
+    h.analyses.set('19889999', {
+      id: 'old-format',
+      matchId: '19889999',
+      homeTeamId: '34',
+      awayTeamId: '88',
+      bettingTips: [{ market: 'Üst/Alt 2.5', pick: '2.5 Üst', confidence: 'high', reasoning: 'r', valueBet: true, avoid: false }],
+    });
+    const res = await post('19889999');
+    expect(res.body.analysis).toMatchObject({ id: 'old-format', scenarios: [], bettingTips: [] });
+    expect(JSON.stringify(res.body)).not.toMatch(/valueBet|2\.5 Üst/);
   });
 });

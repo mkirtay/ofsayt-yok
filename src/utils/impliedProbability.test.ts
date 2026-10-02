@@ -14,7 +14,7 @@ describe('impliedProbabilities', () => {
 
   it('eksik ya da geçersiz oran → null (şerit çizilmez)', () => {
     expect(impliedProbabilities(undefined)).toBeNull();
-    expect(impliedProbabilities({ '1': 1.9, X: 3.4 } as never)).toBeNull();
+    expect(impliedProbabilities({ '1': 1.9, X: 3.4 })).toBeNull();
     expect(impliedProbabilities({ '1': 1, X: 3.4, '2': 4 })).toBeNull();
     expect(impliedProbabilities({ '1': Number.NaN, X: 3.4, '2': 4 })).toBeNull();
   });

@@ -49,7 +49,7 @@ vi.mock('@/services/aiAnalysisService', () => {
         matchPrediction: {},
         scorePrediction: {},
         goalExpectation: {},
-        bettingTips: [],
+        scenarios: [{ metric: '2+ gol', probability: 58, confidence: 'medium', reasoning: 'r' }],
         matchSummary: '',
         tacticalAnalysis: '',
         heatmapAnalysis: '',

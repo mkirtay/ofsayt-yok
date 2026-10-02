@@ -19,6 +19,9 @@ import {
   type AnalysisJsonSchema,
 } from '@/config/analysisPrompt';
 import type { MatchAnalysisContext } from '@/server/buildMatchAnalysisContext';
+import { isAnalysisScenario } from '@/utils/analysisScenarios';
+import { findGamblingTerms } from '@/utils/gamblingTerms';
+import { captureError } from '@/lib/logger';
 
 const CLAUDE_MODEL = process.env.ANTHROPIC_MODEL ?? 'claude-sonnet-4-5-20250929';
 /** Vercel/local: `OPENAI_MODEL` (örn. gpt-4.1). Mini varsayılan değil — düşük isabet. */
@@ -102,7 +105,7 @@ function extractJson(text: string): unknown {
   }
 }
 
-function validateSchema(data: unknown): AnalysisJsonSchema {
+export function validateSchema(data: unknown): AnalysisJsonSchema {
   if (!data || typeof data !== 'object') {
     throw new Error('Analiz çıktısı obje değil');
   }
@@ -115,7 +118,7 @@ function validateSchema(data: unknown): AnalysisJsonSchema {
     'heatmapAnalysis',
     'scorePrediction',
     'goalExpectation',
-    'bettingTips',
+    'scenarios',
     'riskLevel',
     'riskFactors',
     'analystComment',
@@ -139,6 +142,11 @@ function validateSchema(data: unknown): AnalysisJsonSchema {
   if (!tactical.home || !tactical.away) {
     throw new Error('tacticalAnalysis.home veya .away eksik');
   }
+  // Tek bozuk senaryo bütün analizi (ve krediyi) yakmasın: geçersiz maddeler atılır.
+  d.scenarios = Array.isArray(d.scenarios) ? d.scenarios.filter(isAnalysisScenario) : [];
+  // Bahis dili yasak (prompt kural 8); yine de geçerse kayda düşer — analiz engellenmez.
+  const terms = findGamblingTerms(JSON.stringify(data));
+  if (terms.length > 0) captureError('analysis-gambling-terms', new Error(`AI çıktısında bahis dili: ${terms.join(', ')}`));
   return data as AnalysisJsonSchema;
 }
 

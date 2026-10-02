@@ -34,6 +34,7 @@ import {
   type CreditReservation,
 } from '@/lib/credits';
 import { analysisIsFree } from '@/lib/premium';
+import { toPublicAnalysis } from '@/utils/analysisScenarios';
 import { hitFixedWindowRateLimit } from '@/lib/rateLimit';
 import { buildMatchAnalysisContext } from '@/server/buildMatchAnalysisContext';
 import { generateMatchAnalysis, AnalysisTimeoutError } from '@/services/aiAnalysisService';
@@ -73,7 +74,7 @@ async function handleGet(req: NextApiRequest, res: NextApiResponse, matchId: str
     const predictionRecord = await prisma.predictionRecord.findUnique({
       where: { matchAnalysisId: existing.id },
     });
-    return res.status(200).json({ analysis: existing, predictionRecord });
+    return res.status(200).json({ analysis: toPublicAnalysis(existing), predictionRecord });
   } catch (err) {
     captureError('analysis-get', err);
     return res.status(500).json({ error: 'Analiz getirilemedi.' });
@@ -115,7 +116,7 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse, matchId: st
         return {
           status: 200 as const,
           body: {
-            analysis,
+            analysis: toPublicAnalysis(analysis),
             predictionRecord,
             cached: true,
             isPostMatch: ctx.archived ? true : ctx.matchPhase !== 'PRE',
@@ -197,7 +198,8 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse, matchId: st
             matchPrediction: ai.analysis.matchPrediction as unknown as Prisma.InputJsonValue,
             scorePrediction: ai.analysis.scorePrediction as unknown as Prisma.InputJsonValue,
             goalExpectation: ai.analysis.goalExpectation as unknown as Prisma.InputJsonValue,
-            bettingTips: ai.analysis.bettingTips as unknown as Prisma.InputJsonValue,
+            // Olasılık senaryoları eski `bettingTips` sütununda (migration yok; bkz. utils/analysisScenarios.ts).
+            bettingTips: ai.analysis.scenarios as unknown as Prisma.InputJsonValue,
             teamAnalyses: ai.analysis.teamAnalyses as unknown as Prisma.InputJsonValue,
             fullReport: {
               matchSummary: ai.analysis.matchSummary,
@@ -252,7 +254,7 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse, matchId: st
         captureError('prediction-record', e);
       }
 
-      return { status: 200 as const, body: { analysis: saved, cached: false, isPostMatch: false } };
+      return { status: 200 as const, body: { analysis: toPublicAnalysis(saved), cached: false, isPostMatch: false } };
     })();
 
     return res.status(result.status).json(result.body);

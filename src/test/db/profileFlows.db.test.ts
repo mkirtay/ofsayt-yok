@@ -41,7 +41,7 @@ vi.mock('@/services/aiAnalysisService', async (importOriginal) => {
         matchPrediction: { home: 50, draw: 25, away: 25 },
         scorePrediction: { home: 1, away: 0 },
         goalExpectation: { over25: 50, btts: 50 },
-        bettingTips: [],
+        scenarios: [],
       },
     }),
   };

@@ -65,7 +65,7 @@ async function resetOne(matchId: string): Promise<void> {
       matchPrediction: ai.analysis.matchPrediction as unknown as Prisma.InputJsonValue,
       scorePrediction: ai.analysis.scorePrediction as unknown as Prisma.InputJsonValue,
       goalExpectation: ai.analysis.goalExpectation as unknown as Prisma.InputJsonValue,
-      bettingTips: ai.analysis.bettingTips as unknown as Prisma.InputJsonValue,
+      bettingTips: ai.analysis.scenarios as unknown as Prisma.InputJsonValue, // olasılık senaryoları (eski sütun adı)
       teamAnalyses: ai.analysis.teamAnalyses as unknown as Prisma.InputJsonValue,
       fullReport: {
         matchSummary: ai.analysis.matchSummary,
