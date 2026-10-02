@@ -177,42 +177,6 @@ $wc-text-muted: #9a9a9a;
   color: $wc-text-muted;
 }
 
-// History
-.historyList {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-2;
-}
-
-.historyItem {
-  display: flex;
-  align-items: center;
-  gap: $spacing-3;
-  padding: $spacing-3;
-  background: $wc-bg-card;
-  border: 1px solid $wc-border;
-  border-radius: $radius-sm;
-}
-
-.historyYear {
-  font-size: 16px;
-  font-weight: 800;
-  color: $wc-text;
-  min-width: 48px;
-}
-
-.historyBest {
-  flex: 1;
-  font-size: 13px;
-  font-weight: 600;
-  color: #f59e0b;
-}
-
-.historyStats {
-  font-size: 12px;
-  color: $wc-text-muted;
-}
-
 // Takım Künyesi
 .statGrid {
   display: grid;
@@ -318,12 +282,6 @@ $wc-text-muted: #9a9a9a;
 }
 
 .empty {
-  font-size: 13px;
-  color: $wc-text-muted;
-  padding: $spacing-3 0;
-}
-
-.loading {
   font-size: 13px;
   color: $wc-text-muted;
   padding: $spacing-3 0;

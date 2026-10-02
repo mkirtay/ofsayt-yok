@@ -1,31 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import type { GroupedLeagueMatches } from '@/services/liveScoreService';
 import type { TeamEntry } from '@/components/WorldCupTeamList';
 import { getWorldCupTeamProfile } from '@/data/worldCupTeamProfiles';
 import { utcTimeToTr } from '@/utils/dateFormat';
 import styles from './teamDrawer.module.scss';
 import TeamLogo from '@/components/TeamLogo';
-
-type SeasonHistory = {
-  year: string;
-  seasonId: number;
-  matches: HistoryMatch[];
-  bestRound: string;
-};
-
-type HistoryMatch = {
-  id: number;
-  date?: string;
-  homeId?: number;
-  homeName: string;
-  homeLogo?: string;
-  awayId?: number;
-  awayName: string;
-  awayLogo?: string;
-  score?: string;
-  round?: string;
-  status?: string;
-};
 
 type Props = {
   team: TeamEntry | null;
@@ -34,9 +13,6 @@ type Props = {
 };
 
 export default function WorldCupTeamDrawer({ team, groupMatches, onClose }: Props) {
-  const [history, setHistory] = useState<SeasonHistory[]>([]);
-  const [historyLoading, setHistoryLoading] = useState(false);
-
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     document.addEventListener('keydown', onKey);
@@ -48,25 +24,6 @@ export default function WorldCupTeamDrawer({ team, groupMatches, onClose }: Prop
     document.body.style.overflow = team ? 'hidden' : '';
     return () => { document.body.style.overflow = ''; };
   }, [team]);
-
-  // Fetch WC history when team changes
-  useEffect(() => {
-    if (!team) { setHistory([]); return; }
-    let cancelled = false;
-    setHistoryLoading(true);
-    setHistory([]);
-
-    fetch(`/api/worldcup/team-history?team_id=${team.teamId}`)
-      .then((r) => r.json())
-      .then((data) => {
-        if (cancelled) return;
-        setHistory(Array.isArray(data?.seasons) ? data.seasons : []);
-      })
-      .catch(() => { if (!cancelled) setHistory([]); })
-      .finally(() => { if (!cancelled) setHistoryLoading(false); });
-
-    return () => { cancelled = true; };
-  }, [team?.teamId]);
 
   // Filter this team's group matches from allGroupMatches
   const teamGroupMatches = team
@@ -184,27 +141,6 @@ export default function WorldCupTeamDrawer({ team, groupMatches, onClose }: Prop
             )}
           </section>
 
-          {/* Dünya Kupası Tarihi */}
-          <section className={styles.section}>
-            <h3 className={styles.sectionTitle}>Dünya Kupası Tarihi</h3>
-            {historyLoading ? (
-              <p className={styles.loading}>Yükleniyor...</p>
-            ) : history.length === 0 ? (
-              <p className={styles.empty}>Geçmiş veri bulunamadı.</p>
-            ) : (
-              <div className={styles.historyList}>
-                {history.map((season) => (
-                  <div key={season.seasonId} className={styles.historyItem}>
-                    <div className={styles.historyYear}>{season.year}</div>
-                    <div className={styles.historyBest}>{season.bestRound}</div>
-                    <div className={styles.historyStats}>
-                      {season.matches.length} maç
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
         </div>
       </div>
     </>
