@@ -7,8 +7,6 @@
  */
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { hitFixedWindowRateLimit, requestIp } from '@/lib/rateLimit';
-import { runWithLiveScoreHttpClient } from '@/services/liveScoreHttpContext';
-import { livescoreServerClient } from '@/server/livescoreInternalAxios';
 import { trackSportmonksFetches } from '@/server/sportmonks/cachedFetch';
 import { homeDayFreshSeconds, loadHomeDay } from '@/server/homeDay';
 import { shiftIsoDate, todayIsoIstanbul } from '@/utils/dateStrip';
@@ -36,9 +34,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const { value, stale, failed } = await trackSportmonksFetches(() =>
-      runWithLiveScoreHttpClient(livescoreServerClient(), () => loadHomeDay(date)),
-    );
+    const { value, stale, failed } = await trackSportmonksFetches(() => loadHomeDay(date));
     const empty = value.fixtureMatches.length + value.liveMatches.length + (value.historyMatches?.length ?? 0) === 0;
     if (failed && empty) {
       res.setHeader('Cache-Control', 'no-store');

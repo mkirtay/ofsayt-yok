@@ -2,10 +2,7 @@ import type { IncomingMessage } from 'http';
 import type { MatchAnalysis } from '@prisma/client';
 import type { Match } from '@/models/liveScore';
 import { prisma } from '@/lib/prisma';
-import { livescoreServerClient } from '@/server/livescoreInternalAxios';
-import { runWithLiveScoreHttpClient } from '@/services/liveScoreHttpContext';
-import { resolveLiveMatch, resolveSportmonksMatch } from '@/lib/resolveLiveMatch';
-import { isSportmonksProviderEnabled } from '@/services/sportmonksProviderFlag';
+import { resolveSportmonksMatch } from '@/lib/resolveLiveMatch';
 
 type MatchPredictionJson = { home?: number; draw?: number; away?: number };
 type ScorePredictionJson = { mostLikely?: string };
@@ -242,17 +239,10 @@ async function resolveMatchForEvaluation(
   const hit = cache.get(matchId);
   if (hit) return hit;
 
-  let resolved: EvaluationMatch;
-  if (isSportmonksProviderEnabled()) {
-    // Yalnızca `fixtures/{id}` (liste taraması yok); eski sağlayıcı id'sine istek yok.
-    const lookup = await resolveSportmonksMatch(matchId);
-    resolved = lookup.kind === 'found' ? { match: lookup.match, lookup: 'found' } : { match: null, lookup: lookup.kind };
-  } else {
-    // Eski sağlayıcıda "yok" ile geçici hata ayırt edilemiyor → kayıt kapatılmaz.
-    const live = await resolveLiveMatch(matchId);
-    resolved = { match: live?.match ?? null, lookup: live ? 'found' : 'error' };
-    if (live?.apiMatchId && live.apiMatchId !== matchId) cache.set(live.apiMatchId, resolved);
-  }
+  // Yalnızca `fixtures/{id}` (liste taraması yok); eski sağlayıcı id'sine istek yok.
+  const lookup = await resolveSportmonksMatch(matchId);
+  const resolved: EvaluationMatch =
+    lookup.kind === 'found' ? { match: lookup.match, lookup: 'found' } : { match: null, lookup: lookup.kind };
   cache.set(matchId, resolved);
   return resolved;
 }
@@ -282,116 +272,113 @@ export async function evaluatePendingPredictionRecords(
   const result: EvaluatePredictionsResult = { evaluated: 0, skipped: 0, unresolved: 0, errors: 0 };
   if (!pending.length) return result;
 
-  const client = livescoreServerClient();
   const matchCache = new Map<string, EvaluationMatch>();
 
-  await runWithLiveScoreHttpClient(client, async () => {
-    for (const record of pending) {
-      try {
-        const { match, lookup } = await resolveMatchForEvaluation(record.matchId, matchCache);
-        const actualScore = isMatchFinished(match) ? extractFinalScore(match!) : null;
+  for (const record of pending) {
+    try {
+      const { match, lookup } = await resolveMatchForEvaluation(record.matchId, matchCache);
+      const actualScore = isMatchFinished(match) ? extractFinalScore(match!) : null;
 
-        if (!actualScore) {
-          if (shouldMarkUnresolved({ lookup, createdAt: record.createdAt, matchDate: match?.date })) {
-            await prisma.predictionRecord.update({
-              where: { id: record.id },
-              data: { actualResult: UNRESOLVED_ACTUAL_RESULT },
-            });
-            result.unresolved += 1;
-          } else {
-            result.skipped += 1;
-          }
-          continue;
+      if (!actualScore) {
+        if (shouldMarkUnresolved({ lookup, createdAt: record.createdAt, matchDate: match?.date })) {
+          await prisma.predictionRecord.update({
+            where: { id: record.id },
+            data: { actualResult: UNRESOLVED_ACTUAL_RESULT },
+          });
+          result.unresolved += 1;
+        } else {
+          result.skipped += 1;
         }
-
-        const [homeGoals, awayGoals] = actualScore.split('-').map(Number);
-        const actualResult =
-          homeGoals! > awayGoals! ? 'HOME' : homeGoals! < awayGoals! ? 'AWAY' : 'DRAW';
-        const totalGoals = homeGoals! + awayGoals!;
-        const actualOver25 = totalGoals > 2;
-        const actualBtts = homeGoals! > 0 && awayGoals! > 0;
-
-        const predictedResult = predictedOutcomeFromPct(
-          record.predictedHomePct,
-          record.predictedDrawPct,
-          record.predictedAwayPct
-        );
-
-        const result1x2Hit = predictedResult === actualResult;
-        const scoreExactHit = normalizePredictedScore(record.predictedScore) === actualScore;
-        const over25Hit = (record.predictedOver25 >= 50) === actualOver25;
-        const bttsHit = (record.predictedBtts >= 50) === actualBtts;
-
-        const ht = extractHtScore(match!);
-        const extendedPredictions = record.extendedPredictions as
-          | Partial<ExtendedPredictions>
-          | null;
-
-        const extendedHits: Record<string, boolean | null> = {
-          over35Hit: null,
-          htOver05Hit: null,
-          htOver15Hit: null,
-          homeToScoreHit: null,
-          awayToScoreHit: null,
-          bttsFirstHalfHit: null,
-        };
-
-        if (extendedPredictions) {
-          const actualOver35 = totalGoals > 3;
-          if (typeof extendedPredictions.over35 === 'number') {
-            extendedHits.over35Hit = (extendedPredictions.over35 >= 50) === actualOver35;
-          }
-          const actualHomeToScore = homeGoals! > 0;
-          if (typeof extendedPredictions.homeToScore === 'number') {
-            extendedHits.homeToScoreHit =
-              (extendedPredictions.homeToScore >= 50) === actualHomeToScore;
-          }
-          const actualAwayToScore = awayGoals! > 0;
-          if (typeof extendedPredictions.awayToScore === 'number') {
-            extendedHits.awayToScoreHit =
-              (extendedPredictions.awayToScore >= 50) === actualAwayToScore;
-          }
-
-          if (ht) {
-            const [htHome, htAway] = ht;
-            const htTotal = htHome + htAway;
-            const actualHtOver05 = htTotal > 0;
-            const actualHtOver15 = htTotal > 1;
-            const actualBttsFirstHalf = htHome > 0 && htAway > 0;
-            if (typeof extendedPredictions.htOver05 === 'number') {
-              extendedHits.htOver05Hit = (extendedPredictions.htOver05 >= 50) === actualHtOver05;
-            }
-            if (typeof extendedPredictions.htOver15 === 'number') {
-              extendedHits.htOver15Hit = (extendedPredictions.htOver15 >= 50) === actualHtOver15;
-            }
-            if (typeof extendedPredictions.bttsFirstHalf === 'number') {
-              extendedHits.bttsFirstHalfHit =
-                (extendedPredictions.bttsFirstHalf >= 50) === actualBttsFirstHalf;
-            }
-          }
-        }
-
-        await prisma.predictionRecord.update({
-          where: { id: record.id },
-          data: {
-            actualResult,
-            actualScore,
-            actualOver25,
-            actualBtts,
-            result1x2Hit,
-            scoreExactHit,
-            extendedHits: { over25Hit, bttsHit, ...extendedHits },
-            evaluatedAt: new Date(),
-          },
-        });
-
-        result.evaluated += 1;
-      } catch (e) {
-        console.error('evaluatePendingPredictionRecords', record.matchId, e);
-        result.errors += 1;
+        continue;
       }
+
+      const [homeGoals, awayGoals] = actualScore.split('-').map(Number);
+      const actualResult =
+        homeGoals! > awayGoals! ? 'HOME' : homeGoals! < awayGoals! ? 'AWAY' : 'DRAW';
+      const totalGoals = homeGoals! + awayGoals!;
+      const actualOver25 = totalGoals > 2;
+      const actualBtts = homeGoals! > 0 && awayGoals! > 0;
+
+      const predictedResult = predictedOutcomeFromPct(
+        record.predictedHomePct,
+        record.predictedDrawPct,
+        record.predictedAwayPct
+      );
+
+      const result1x2Hit = predictedResult === actualResult;
+      const scoreExactHit = normalizePredictedScore(record.predictedScore) === actualScore;
+      const over25Hit = (record.predictedOver25 >= 50) === actualOver25;
+      const bttsHit = (record.predictedBtts >= 50) === actualBtts;
+
+      const ht = extractHtScore(match!);
+      const extendedPredictions = record.extendedPredictions as
+        | Partial<ExtendedPredictions>
+        | null;
+
+      const extendedHits: Record<string, boolean | null> = {
+        over35Hit: null,
+        htOver05Hit: null,
+        htOver15Hit: null,
+        homeToScoreHit: null,
+        awayToScoreHit: null,
+        bttsFirstHalfHit: null,
+      };
+
+      if (extendedPredictions) {
+        const actualOver35 = totalGoals > 3;
+        if (typeof extendedPredictions.over35 === 'number') {
+          extendedHits.over35Hit = (extendedPredictions.over35 >= 50) === actualOver35;
+        }
+        const actualHomeToScore = homeGoals! > 0;
+        if (typeof extendedPredictions.homeToScore === 'number') {
+          extendedHits.homeToScoreHit =
+            (extendedPredictions.homeToScore >= 50) === actualHomeToScore;
+        }
+        const actualAwayToScore = awayGoals! > 0;
+        if (typeof extendedPredictions.awayToScore === 'number') {
+          extendedHits.awayToScoreHit =
+            (extendedPredictions.awayToScore >= 50) === actualAwayToScore;
+        }
+
+        if (ht) {
+          const [htHome, htAway] = ht;
+          const htTotal = htHome + htAway;
+          const actualHtOver05 = htTotal > 0;
+          const actualHtOver15 = htTotal > 1;
+          const actualBttsFirstHalf = htHome > 0 && htAway > 0;
+          if (typeof extendedPredictions.htOver05 === 'number') {
+            extendedHits.htOver05Hit = (extendedPredictions.htOver05 >= 50) === actualHtOver05;
+          }
+          if (typeof extendedPredictions.htOver15 === 'number') {
+            extendedHits.htOver15Hit = (extendedPredictions.htOver15 >= 50) === actualHtOver15;
+          }
+          if (typeof extendedPredictions.bttsFirstHalf === 'number') {
+            extendedHits.bttsFirstHalfHit =
+              (extendedPredictions.bttsFirstHalf >= 50) === actualBttsFirstHalf;
+          }
+        }
+      }
+
+      await prisma.predictionRecord.update({
+        where: { id: record.id },
+        data: {
+          actualResult,
+          actualScore,
+          actualOver25,
+          actualBtts,
+          result1x2Hit,
+          scoreExactHit,
+          extendedHits: { over25Hit, bttsHit, ...extendedHits },
+          evaluatedAt: new Date(),
+        },
+      });
+
+      result.evaluated += 1;
+    } catch (e) {
+      console.error('evaluatePendingPredictionRecords', record.matchId, e);
+      result.errors += 1;
     }
-  });
+  }
 
   return result;
 }

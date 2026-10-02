@@ -10,8 +10,7 @@
  *   geçer (`server/sportmonks/cachedFetch.ts` — `fetchImpl` olarak bağlanır). SSR, API
  *   route'ları, cron ve bot çağrıları da böylece ziyaretçi sayısından bağımsız kalır.
  * - Tarayıcıda: `/api/sportmonks/[...path]` proxy route'una gider (bkz. o dosya) —
- *   token proxy içinde enjekte edilir, istemciye hiç gitmez (`liveScoreHttpContext.ts`/
- *   `/api/livescore/[...path].ts` ile aynı desen).
+ *   token proxy içinde enjekte edilir, istemciye hiç gitmez.
  */
 import {
   sportmonksRequest,

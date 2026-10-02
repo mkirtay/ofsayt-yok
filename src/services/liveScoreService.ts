@@ -242,11 +242,9 @@ export async function lookupSportmonksFixture(matchId: string): Promise<Sportmon
 /**
  * Belirli bir matchId'ye sahip maçı bulur.
  * Sportmonks: yalnızca `fixtures/{id}` (bkz. `lookupSportmonksFixture`); eski sağlayıcı id'sine hiç istek atılmaz.
- * `opts` eski çağıranlarla imza uyumu için duruyor (Sportmonks yolunda yayılım yok).
  */
 export async function findMatchById(
   matchId: string,
-  _opts?: { skipCompetitionFanout?: boolean }
 ): Promise<{ match: Match | null; events: MatchEvent[]; fromFixture: boolean }> {
   const lookup = await lookupSportmonksFixture(matchId);
   return lookup.kind === 'found'

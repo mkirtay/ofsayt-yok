@@ -39,8 +39,6 @@ vi.mock('@/hooks/useCompetitionSidebar', () => ({
 vi.mock('@/server/sportmonks/cachedFetch', () => ({
   trackSportmonksFetches: vi.fn(async (fn: () => Promise<unknown>) => ({ value: await fn(), stale: false, failed: state.failed })),
 }));
-vi.mock('@/server/livescoreInternalAxios', () => ({ livescoreServerClient: () => ({}) }));
-vi.mock('@/services/liveScoreHttpContext', () => ({ runWithLiveScoreHttpClient: (_c: unknown, fn: () => Promise<unknown>) => fn() }));
 vi.mock('@/utils/cupTeamTier', () => ({
   isTurkishCupMatch: (m: Match) => Number(m.competition?.id) === 606,
 }));

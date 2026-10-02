@@ -75,7 +75,7 @@ let trackingStore: TrackingStore | null = null;
 
 /**
  * Tembel `require`: bu modül `sportmonksRuntimeClient`'in dinamik import'u yüzünden istemci chunk grafiğine de
- * giriyor; üst düzey `node:async_hooks` import'u orada derlenmez (bkz. liveScoreHttpContext.ts, aynı desen).
+ * giriyor; üst düzey `node:async_hooks` import'u orada derlenmez.
  */
 function tracking(): TrackingStore {
   if (!trackingStore) {

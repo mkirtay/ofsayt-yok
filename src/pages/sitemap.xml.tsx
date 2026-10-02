@@ -1,8 +1,6 @@
 import type { GetServerSideProps } from 'next';
-import { runWithLiveScoreHttpClient } from '@/services/liveScoreHttpContext';
 import { getFixturesByDate } from '@/services/liveScoreService';
 import { buildMatchSlug } from '@/utils/matchUrl';
-import { livescoreAxiosFromIncomingMessage } from '@/server/livescoreInternalAxios';
 
 const BASE_URL = process.env.AUTH_URL ?? 'https://ofsaytyok.app';
 
@@ -42,17 +40,14 @@ export default function SitemapXml() {
   return null;
 }
 
-export const getServerSideProps: GetServerSideProps = async ({ req, res }) => {
+export const getServerSideProps: GetServerSideProps = async ({ res }) => {
   const offsets = [-3, -2, -1, 0, 1, 2, 3];
   const dates = offsets.map(isoDateOffset);
 
   const matchUrls: { loc: string; priority: string; changefreq: string }[] = [];
 
   try {
-    const client = livescoreAxiosFromIncomingMessage(req);
-    const fixtureResults = await runWithLiveScoreHttpClient(client, () =>
-      Promise.all(dates.map((d) => getFixturesByDate(d).catch(() => [])))
-    );
+    const fixtureResults = await Promise.all(dates.map((d) => getFixturesByDate(d).catch(() => [])));
 
     const seen = new Set<string>();
     for (const fixtures of fixtureResults) {

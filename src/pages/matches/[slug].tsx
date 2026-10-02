@@ -14,10 +14,6 @@ import { buildMatchHref, parseMatchIdFromParam, parseMatchSlugFromParam } from '
 import { WORLD_CUP_COMPETITION_ID } from '@/config/worldCup';
 import { useTranslation } from '@/lib/i18n';
 import { leagueNameById } from '@/utils/leagueName';
-import { resolveLiveMatch } from '@/lib/resolveLiveMatch';
-import { livescoreServerClient } from '@/server/livescoreInternalAxios';
-import { runWithLiveScoreHttpClient } from '@/services/liveScoreHttpContext';
-import { isSportmonksProviderEnabled } from '@/services/sportmonksProviderFlag';
 import { resolveMatchPage } from '@/server/resolveMatchPage';
 import { loadMatchCardH2h } from '@/server/matchCardH2h';
 import type { Head2HeadData } from '@/services/liveScoreService';
@@ -61,44 +57,29 @@ export const getServerSideProps: GetServerSideProps<MatchDetailProps> = async (c
     return { props: { initialMatch: null } };
   }
 
-  if (isSportmonksProviderEnabled()) {
-    try {
-      const page = await resolveMatchPage(matchId, parseMatchSlugFromParam(slug ?? ''));
-      switch (page.kind) {
-        case 'match': {
-          const h2h = await loadMatchCardH2h(page.match);
-          // Bütçe aşıldıysa (undefined) bölüm iskeletle gider → CDN bu kopyayı kısa tutar.
-          context.res.setHeader('Cache-Control', matchPageCacheControlForPage(page.match, h2h !== undefined));
-          return { props: { initialMatch: page.match, ...(h2h !== undefined ? { initialH2h: h2h } : {}) } };
-        }
-        case 'archived':
-          setCache('archived');
-          return { props: { initialMatch: null, archived: true } };
-        case 'gone':
-          context.res.statusCode = 410;
-          setCache('gone');
-          return { props: { initialMatch: null, gone: true } };
-        case 'missing':
-          setCache('missing');
-          return { props: { initialMatch: null } };
-        default:
-          return { props: { initialMatch: null } };
-      }
-    } catch {
-      return { props: { initialMatch: null } };
-    }
-  }
-
   try {
-    const client = livescoreServerClient();
-    const initialMatch = await runWithLiveScoreHttpClient(client, async () => {
-      const resolved = await resolveLiveMatch(matchId);
-      return resolved?.match ?? null;
-    });
-    return { props: { initialMatch: initialMatch ?? null } };
+    const page = await resolveMatchPage(matchId, parseMatchSlugFromParam(slug ?? ''));
+    switch (page.kind) {
+      case 'match': {
+        const h2h = await loadMatchCardH2h(page.match);
+        // Bütçe aşıldıysa (undefined) bölüm iskeletle gider → CDN bu kopyayı kısa tutar.
+        context.res.setHeader('Cache-Control', matchPageCacheControlForPage(page.match, h2h !== undefined));
+        return { props: { initialMatch: page.match, ...(h2h !== undefined ? { initialH2h: h2h } : {}) } };
+      }
+      case 'archived':
+        setCache('archived');
+        return { props: { initialMatch: null, archived: true } };
+      case 'gone':
+        context.res.statusCode = 410;
+        setCache('gone');
+        return { props: { initialMatch: null, gone: true } };
+      case 'missing':
+        setCache('missing');
+        return { props: { initialMatch: null } };
+      default:
+        return { props: { initialMatch: null } };
+    }
   } catch {
-    // SSR sırasında bir hata olursa client-side fetch zaten devreye girecek —
-    // sayfayı 500'letmek yerine boş prop ile devam ediyoruz.
     return { props: { initialMatch: null } };
   }
 };

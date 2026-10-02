@@ -6,8 +6,6 @@
  */
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { hitFixedWindowRateLimit, requestIp } from '@/lib/rateLimit';
-import { runWithLiveScoreHttpClient } from '@/services/liveScoreHttpContext';
-import { livescoreAxiosFromIncomingMessage } from '@/server/livescoreInternalAxios';
 import { getCompetitionTableFull } from '@/services/liveScoreService';
 import { legacyToStandingsLeagueId } from '@/services/sportmonksProviderFlag';
 
@@ -43,11 +41,10 @@ export default async function handler(
 
   // İstemci legacy id yollar (config/leagues.ts: Süper Lig = 6) → Sportmonks açıkken league_id'ye çevrilir.
   const leagueId = legacyToStandingsLeagueId(competitionId);
-  const axios = livescoreAxiosFromIncomingMessage(req);
   const table =
     leagueId == null
       ? null
-      : await runWithLiveScoreHttpClient(axios, () => getCompetitionTableFull(String(leagueId)).catch(() => null));
+      : await getCompetitionTableFull(String(leagueId)).catch(() => null);
 
   if (!table) {
     return res.status(200).json([]);

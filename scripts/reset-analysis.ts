@@ -16,8 +16,6 @@
 import { prisma } from '@/lib/prisma';
 import { buildMatchAnalysisContext } from '@/server/buildMatchAnalysisContext';
 import { generateMatchAnalysis } from '@/services/aiAnalysisService';
-import { livescoreServerClient } from '@/server/livescoreInternalAxios';
-import { runWithLiveScoreHttpClient } from '@/services/liveScoreHttpContext';
 import { ensurePredictionRecordForAnalysis } from '@/lib/predictionRecords';
 import type { Prisma } from '@prisma/client';
 
@@ -102,16 +100,13 @@ async function main() {
   console.log(`Ofsayt Yok — Analiz Sıfırlama`);
   console.log(`Hedef maçlar: ${matchIds.join(', ')}`);
 
-  const client = livescoreServerClient();
-  await runWithLiveScoreHttpClient(client, async () => {
-    for (const matchId of matchIds) {
-      try {
-        await resetOne(matchId);
-      } catch (err) {
-        console.error(`  HATA (${matchId}):`, err instanceof Error ? err.message : err);
-      }
+  for (const matchId of matchIds) {
+    try {
+      await resetOne(matchId);
+    } catch (err) {
+      console.error(`  HATA (${matchId}):`, err instanceof Error ? err.message : err);
     }
-  });
+  }
 
   console.log(`\nBitti.`);
 }

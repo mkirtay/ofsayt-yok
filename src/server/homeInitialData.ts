@@ -13,9 +13,7 @@ import type { Match } from '@/models/liveScore';
 import type { TurkeyTeamTiersPayload } from '@/config/turkeyTiers';
 import { loadHomeDay, loadUpcomingMatchDays } from '@/server/homeDay';
 import { loadTurkeyTeamTiers } from '@/server/turkeyTeamTiers';
-import { livescoreServerClient } from '@/server/livescoreInternalAxios';
 import { trackSportmonksFetches } from '@/server/sportmonks/cachedFetch';
-import { runWithLiveScoreHttpClient } from '@/services/liveScoreHttpContext';
 import { loadCompetitionSidebar, type CompetitionSidebarData } from '@/hooks/useCompetitionSidebar';
 import { packHomeMatches, stripUndefined, type HomeInitialData } from '@/utils/homeInitialData';
 import { isTurkishCupMatch } from '@/utils/cupTeamTier';
@@ -69,18 +67,16 @@ function isListDayEmpty(day: { fixtureMatches: Match[]; historyMatches?: Match[]
  * build sırasında boş kabuğa düşer, çalışma anındaki yeniden üretimde ise Next son başarılı sayfayı korur.
  */
 export async function loadHomeInitialData(date: string, sidebarCompetitionId: number): Promise<{ data: HomeInitialData; revalidate: number }> {
-  const { value, failed } = await trackSportmonksFetches(() =>
-    runWithLiveScoreHttpClient(livescoreServerClient(), async () => {
-      const [day, sidebar] = await Promise.all([loadHomeDay(date), loadCompetitionSidebar(sidebarCompetitionId)]);
-      const empty = isListDayEmpty(day);
-      const hasCup = [...day.fixtureMatches, ...day.liveMatches].some((m) => isTurkishCupMatch(m));
-      const [upcoming, tiers] = await Promise.all([
-        empty ? loadUpcomingMatchDays(date) : Promise.resolve(null),
-        hasCup ? loadTurkeyTeamTiers() : Promise.resolve(null),
-      ]);
-      return { day, sidebar, upcoming, tiers };
-    }),
-  );
+  const { value, failed } = await trackSportmonksFetches(async () => {
+    const [day, sidebar] = await Promise.all([loadHomeDay(date), loadCompetitionSidebar(sidebarCompetitionId)]);
+    const empty = isListDayEmpty(day);
+    const hasCup = [...day.fixtureMatches, ...day.liveMatches].some((m) => isTurkishCupMatch(m));
+    const [upcoming, tiers] = await Promise.all([
+      empty ? loadUpcomingMatchDays(date) : Promise.resolve(null),
+      hasCup ? loadTurkeyTeamTiers() : Promise.resolve(null),
+    ]);
+    return { day, sidebar, upcoming, tiers };
+  });
 
   const { day, sidebar, upcoming, tiers } = value;
   const dayEmpty = day.fixtureMatches.length + day.liveMatches.length + (day.historyMatches?.length ?? 0) === 0;

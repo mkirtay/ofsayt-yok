@@ -4,17 +4,10 @@
  * servis katmanı değişir; cevaplar zaten domain `Match`'e eşlenmiş ve küçük.
  */
 import type { Match } from '@/models/liveScore';
-import {
-  getAllLiveMatches,
-  getAllMatchesByDate,
-  getFixturesByCompetition,
-  getFixturesByDate,
-} from '@/services/liveScoreService';
-import { isSportmonksProviderEnabled } from '@/services/sportmonksProviderFlag';
+import { getAllLiveMatches, getFixturesByDate } from '@/services/liveScoreService';
 import { PLAN_SPORTMONKS_LEAGUE_IDS } from '@/config/leagueNameKeys';
 import { sportmonksCollectAllPages } from '@/services/sportmonksRuntimeClient';
 import type { SportmonksFixture } from '@/services/sportmonks/types';
-import { WORLD_CUP_COMPETITION_ID } from '@/config/worldCup';
 import { shiftIsoDate } from '@/utils/dateStrip';
 import { matchIstanbulDate, matchListFreshSeconds } from '@/utils/matchActivity';
 
@@ -36,29 +29,16 @@ export type HomeDayPayload = {
  * mapper ve arayüz `starting_at`'i UTC varsayıyor. Aynı gün için `between` ayrıca çekilmiyor (aynı veri).
  */
 export async function loadHomeDay(date: string): Promise<HomeDayPayload> {
-  if (isSportmonksProviderEnabled()) {
-    const [previousUtcDay, sameUtcDay, liveMatches] = await Promise.all([
-      getFixturesByDate(shiftIsoDate(date, -1)),
-      getFixturesByDate(date),
-      getAllLiveMatches(),
-    ]);
-    const byId = new Map<number, Match>();
-    for (const m of [...previousUtcDay, ...sameUtcDay]) {
-      if (matchIstanbulDate(m) === date) byId.set(Number(m.id), m);
-    }
-    return { date, fixtureMatches: [...byId.values()], liveMatches };
-  }
-
-  // Eski sağlayıcı: `/fixtures/list` sayfalı ve Dünya Kupası 2. sayfaya düşebiliyor → rekabet fikstürüyle tamamla.
-  const [historyMatches, liveMatches, dateFixtures, worldCup] = await Promise.all([
-    getAllMatchesByDate(date, 5),
-    getAllLiveMatches(),
+  const [previousUtcDay, sameUtcDay, liveMatches] = await Promise.all([
+    getFixturesByDate(shiftIsoDate(date, -1)),
     getFixturesByDate(date),
-    getFixturesByCompetition(WORLD_CUP_COMPETITION_ID),
+    getAllLiveMatches(),
   ]);
-  const ids = new Set(dateFixtures.map((m) => Number(m.id)));
-  const fixtureMatches = [...dateFixtures, ...worldCup.filter((m) => m.date === date && !ids.has(Number(m.id)))];
-  return { date, fixtureMatches, liveMatches, historyMatches };
+  const byId = new Map<number, Match>();
+  for (const m of [...previousUtcDay, ...sameUtcDay]) {
+    if (matchIstanbulDate(m) === date) byId.set(Number(m.id), m);
+  }
+  return { date, fixtureMatches: [...byId.values()], liveMatches };
 }
 
 /**
@@ -165,7 +145,6 @@ export async function loadUpcomingMatchDays(
   leagueIds: number[] | null = null,
   now: number = Date.now(),
 ): Promise<UpcomingLeagueDay[]> {
-  if (!isSportmonksProviderEnabled()) return [];
   if (leagueIds) {
     if (leagueIds.length === 0) return [];
     const todayUtc = new Date(now).toISOString().slice(0, 10);

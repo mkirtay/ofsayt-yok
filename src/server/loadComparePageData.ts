@@ -14,7 +14,7 @@ import {
 } from '@/server/buildMatchAnalysisContext';
 import { pickCurrentSeasonId, summarizeH2H, type H2HSummary } from '@/utils/compareData';
 import type { TeamTopScorer } from '@/services/sportmonksKatman2Mapper';
-import { runSsrLiveScoreLoad } from './runSsrLiveScoreLoad';
+import { timedSsrLoad } from './ssrTiming';
 
 export type TeamCompareData = {
   teamId: number;
@@ -50,7 +50,7 @@ export async function loadComparePageData(
   team1Id: number,
   team2Id: number
 ): Promise<ComparePagePayload | null> {
-  return runSsrLiveScoreLoad(`compare:${team1Id}-vs-${team2Id}`, async () => {
+  return timedSsrLoad(`compare:${team1Id}-vs-${team2Id}`, async () => {
   const [h2hData, team1Matches, team2Matches] = await Promise.all([
         getTeamsHead2Head(String(team1Id), String(team2Id)).catch(() => null),
         getTeamLastMatches(String(team1Id), 10).catch(() => []),

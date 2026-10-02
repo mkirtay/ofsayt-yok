@@ -10,8 +10,6 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { requireAuth } from '@/lib/requireAuth';
 import { hitFixedWindowRateLimit } from '@/lib/rateLimit';
-import { runWithLiveScoreHttpClient } from '@/services/liveScoreHttpContext';
-import { livescoreAxiosFromIncomingMessage } from '@/server/livescoreInternalAxios';
 import { buildMatchAnalysisContext } from '@/server/buildMatchAnalysisContext';
 import { generateMatchTrivia, TriviaTimeoutError } from '@/services/aiTriviaService';
 import { captureError } from '@/lib/logger';
@@ -40,9 +38,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const axios = livescoreAxiosFromIncomingMessage(req);
 
-    const result = await runWithLiveScoreHttpClient(axios, async () => {
+    const result = await (async () => {
       const ctx = await buildMatchAnalysisContext(matchId);
       if (!ctx) {
         return { status: 404 as const, body: { error: 'Maç bulunamadı' } };
@@ -105,7 +102,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           });
 
       return { status: 200 as const, body: { trivia: saved, cached: false } };
-    });
+    })();
 
     return res.status(result.status).json(result.body);
   } catch (err) {

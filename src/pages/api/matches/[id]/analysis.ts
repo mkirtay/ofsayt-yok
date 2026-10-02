@@ -19,8 +19,6 @@ import { requireAuth } from '@/lib/requireAuth';
 import { spendCredits, recordFreeAnalysis, InsufficientCreditsError } from '@/lib/credits';
 import { isPremiumUser } from '@/lib/premium';
 import { hitFixedWindowRateLimit } from '@/lib/rateLimit';
-import { runWithLiveScoreHttpClient } from '@/services/liveScoreHttpContext';
-import { livescoreAxiosFromIncomingMessage } from '@/server/livescoreInternalAxios';
 import { buildMatchAnalysisContext } from '@/server/buildMatchAnalysisContext';
 import { generateMatchAnalysis, AnalysisTimeoutError } from '@/services/aiAnalysisService';
 import { captureError } from '@/lib/logger';
@@ -76,9 +74,8 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse, matchId: st
   }
 
   try {
-    const axios = livescoreAxiosFromIncomingMessage(req);
 
-    const result = await runWithLiveScoreHttpClient(axios, async () => {
+    const result = await (async () => {
       const ctx = await buildMatchAnalysisContext(matchId);
       if (!ctx) {
         return { status: 404 as const, body: { error: 'Maç bulunamadı' } };
@@ -178,7 +175,7 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse, matchId: st
       }
 
       return { status: 200 as const, body: { analysis: saved, cached: false, isPostMatch: false } };
-    });
+    })();
 
     return res.status(result.status).json(result.body);
   } catch (err) {

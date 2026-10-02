@@ -1,17 +1,9 @@
 import type { Match } from '@/models/liveScore';
 import type { MatchEvent } from '@/models/domain';
-import { prisma } from '@/lib/prisma';
 import { readCache, writeCache } from '@/lib/livescoreCache';
 import { cacheKeyPrefix } from '@/lib/cacheNamespace';
-import { isSportmonksProviderEnabled } from '@/services/sportmonksProviderFlag';
 import { isUnambiguousSportmonksId } from '@/services/sportmonks/fixtureIdRange';
-import {
-  findMatchById,
-  findMatchByTeamIds,
-  getMatchWithEvents,
-  lookupSportmonksFixture,
-  type SportmonksFixtureLookup,
-} from '@/services/liveScoreService';
+import { lookupSportmonksFixture, type SportmonksFixtureLookup } from '@/services/liveScoreService';
 
 export type ResolvedLiveMatch = {
   match: Match;
@@ -54,51 +46,12 @@ export async function resolveSportmonksMatch(
   return lookup;
 }
 
-/** API'de güncellenmiş veya kaldırılmış maç kimlikleri için takım geçmişi + DB ipucu. */
-export async function resolveLiveMatch(
-  matchId: string,
-  opts?: { skipCompetitionFanout?: boolean }
-): Promise<ResolvedLiveMatch | null> {
-  if (isSportmonksProviderEnabled()) {
-    // Sportmonks id'leri kalıcı: `fixtures/{id}` bulamadıysa takım geçmişi taraması da (2× between) bulamaz.
-    const lookup = await resolveSportmonksMatch(matchId);
-    if (lookup.kind !== 'found') return null;
-    return { match: lookup.match, events: lookup.events, requestedMatchId: matchId, apiMatchId: String(lookup.match.id) };
-  }
-
-  const direct = await findMatchById(matchId, opts);
-  if (direct.match) {
-    const apiMatchId = String(direct.match.id);
-    let match = direct.match;
-    let events = direct.events;
-    // Olaylar yalnızca maç fixture listesinden bulunduysa eksik; events endpoint'inden geldiyse boş liste gerçek.
-    if (direct.fromFixture) {
-      const ev = await getMatchWithEvents(apiMatchId);
-      events = ev.events;
-      if (ev.match) match = ev.match;
-    }
-    return { match, events, requestedMatchId: matchId, apiMatchId };
-  }
-
-  const analysis = await prisma.matchAnalysis.findFirst({
-    where: { matchId },
-    select: { homeTeamId: true, awayTeamId: true, createdAt: true },
-    orderBy: { createdAt: 'desc' },
-  });
-  if (!analysis?.homeTeamId || !analysis?.awayTeamId) return null;
-
-  const found = await findMatchByTeamIds(analysis.homeTeamId, analysis.awayTeamId, {
-    nearDate: analysis.createdAt,
-  });
-  if (!found) return null;
-
-  const apiMatchId = String(found.id);
-  const eventsBundle = await getMatchWithEvents(apiMatchId);
-  const match = eventsBundle.match ?? found;
-  return {
-    match,
-    events: eventsBundle.events,
-    requestedMatchId: matchId,
-    apiMatchId,
-  };
+/**
+ * Maçı Sportmonks `fixtures/{id}` ile çözer. Sportmonks id'leri kalıcı: bulunamadıysa takım geçmişi taraması da
+ * bulamaz → null.
+ */
+export async function resolveLiveMatch(matchId: string): Promise<ResolvedLiveMatch | null> {
+  const lookup = await resolveSportmonksMatch(matchId);
+  if (lookup.kind !== 'found') return null;
+  return { match: lookup.match, events: lookup.events, requestedMatchId: matchId, apiMatchId: String(lookup.match.id) };
 }
