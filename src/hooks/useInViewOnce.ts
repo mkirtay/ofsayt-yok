@@ -1,31 +1,50 @@
 import { useEffect, useRef, useState } from 'react';
 
+type IdleWindow = Window & {
+  requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+  cancelIdleCallback?: (id: number) => void;
+};
+
 /**
  * Eleman görünür alana `rootMargin` kadar yaklaşınca bir kez `true` olur (ekranın altındaki kartların verisini
- * ilk yüke eklememek için). IntersectionObserver yoksa hemen `true`.
+ * ilk yüke eklememek için). Görünür olduktan sonra tarayıcı boşa çıkınca (en geç `idleTimeout` ms) açılır: kart
+ * ilk ekranın kenarındaysa bile isteği sayfanın kritik yolundan (LCP) sonraya bırakır. IntersectionObserver
+ * yoksa doğrudan boşta açılır.
  */
-export function useInViewOnce<T extends Element>(rootMargin = '300px') {
+export function useInViewOnce<T extends Element>(rootMargin = '200px', idleTimeout = 1500) {
   const ref = useRef<T>(null);
   const [inView, setInView] = useState(false);
   useEffect(() => {
     if (inView) return;
     const el = ref.current;
     if (!el) return;
+    const w = window as IdleWindow;
+    let idleId: number | undefined;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const open = () => {
+      if (w.requestIdleCallback) idleId = w.requestIdleCallback(() => setInView(true), { timeout: idleTimeout });
+      else timer = setTimeout(() => setInView(true), 200);
+    };
+    let io: IntersectionObserver | undefined;
     if (typeof IntersectionObserver === 'undefined') {
-      const id = setTimeout(() => setInView(true), 0);
-      return () => clearTimeout(id);
+      open();
+    } else {
+      io = new IntersectionObserver(
+        (entries) => {
+          if (entries.some((e) => e.isIntersecting)) {
+            io?.disconnect();
+            open();
+          }
+        },
+        { rootMargin },
+      );
+      io.observe(el);
     }
-    const io = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((e) => e.isIntersecting)) {
-          setInView(true);
-          io.disconnect();
-        }
-      },
-      { rootMargin },
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, [inView, rootMargin]);
+    return () => {
+      io?.disconnect();
+      if (idleId !== undefined) w.cancelIdleCallback?.(idleId);
+      if (timer !== undefined) clearTimeout(timer);
+    };
+  }, [inView, rootMargin, idleTimeout]);
   return [ref, inView] as const;
 }
