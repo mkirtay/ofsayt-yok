@@ -45,7 +45,7 @@ const INCLUDE_TOKENS = new Set([
   // lig / puan / krallık / kadro
   'seasons', 'participant', 'details.type', 'player', 'player.statistics.details',
   // takım fikstürü (mobil) + takım sayfası tek isteği (services/sportmonks/teamOverview.ts)
-  'upcoming.participants', 'upcoming.league', 'upcoming.state',
+  'upcoming.participants', 'upcoming.league', 'upcoming.state', 'upcoming.scores', 'upcoming.periods',
   'latest.participants', 'latest.scores', 'latest.league', 'latest.state',
   'coaches.coach', 'seasons.league',
   // takım sezon istatistikleri (services/sportmonks/teamSeasonStats.ts)

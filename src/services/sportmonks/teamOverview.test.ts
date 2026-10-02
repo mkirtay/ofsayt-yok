@@ -65,6 +65,18 @@ describe('mapTeamOverview', () => {
     expect(out.fixtures.map((m) => m.id)).toEqual([3]);
   });
 
+  it('canlı maç upcoming\'de skor ve dakikasıyla (upcoming.scores/periods) son maçların başında', () => {
+    const live = fx(9, '2026-10-02 10:30:00', 22, [1, 0], {
+      periods: [
+        { description: '1st-half', minutes: 45, ticking: false },
+        { description: '2nd-half', minutes: 59, ticking: true },
+      ],
+    } as Partial<SportmonksFixture>);
+    const out = mapTeamOverview({ id: 34, latest: [fx(1, '2026-09-19 17:00:00', 5, [2, 2])], upcoming: [live] }, NOW);
+    expect(out.recent[0]).toMatchObject({ id: 9, status: 'IN PLAY', scores: { score: '1-0' } });
+    expect(out.recent[0]!.time).toMatch(/59/);
+  });
+
   it('canlı maç yalnız upcoming\'de gelse de son maçlara geçer', () => {
     const out = mapTeamOverview({ id: 34, latest: [], upcoming: [fx(9, '2026-10-02 11:30:00', 3, [0, 0])] }, NOW);
     expect(out.recent.map((m) => m.id)).toEqual([9]);

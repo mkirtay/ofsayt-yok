@@ -27,6 +27,10 @@ export const TEAM_OVERVIEW_INCLUDE = [
   'upcoming.participants',
   'upcoming.league',
   'upcoming.state',
+  // Canlı maç `upcoming`'de gelir (2026-10-02, Sporting KC–Seattle 2. yarı: latest'te yok) → skor ve dakika için.
+  // Oynanmamış maçlarda boş (GS yanıtı +94 bayt gz).
+  'upcoming.scores',
+  'upcoming.periods',
   // Faz 2: başlıktaki teknik direktör / stadyum + takımın turnuva-sezonları (güncel sezonun istatistik isteği,
   // geçmiş sezon seçicisi)
   'coaches.coach',
