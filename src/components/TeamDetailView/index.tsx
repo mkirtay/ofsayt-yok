@@ -52,6 +52,9 @@ import TeamHeader from './TeamHeader';
 import RecentMatches from './RecentMatches';
 import SeasonSummaryCard, { type TournamentTab } from './SeasonSummaryCard';
 import TeamScorersCard from './TeamScorersCard';
+import ScoringMinutesCard from './ScoringMinutesCard';
+import SidelinedCard from './SidelinedCard';
+import { mapTeamSidelined } from '@/services/sportmonks/teamSidelined';
 import { useInViewOnce } from '@/hooks/useInViewOnce';
 import { getTeamSeasonMatches, getTeamSeasonScorers, getTeamSeasonStats } from '@/services/teamPage';
 import { combineSeasonStats } from '@/services/sportmonks/teamSeasonStats';
@@ -383,7 +386,7 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
 
   const { tournamentTabs, playedStats } = useMemo(() => {
     const refs = new Map((campaign?.seasons ?? []).map((s) => [s.id, s]));
-    const played = (statsQuery.data ?? []).filter((s) => s.total.played > 0);
+    const played = (statsQuery.data?.stats ?? []).filter((s) => s.total.played > 0);
     // Varsayılan turnuva (genelde yerel lig) önce, sonra sezon başlangıcına göre.
     const order = (id: number) => {
       const ref = refs.get(id);
@@ -447,6 +450,21 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
   // Turnuva yoksa (ör. puan durumu olmayan takım) takım isteği gelince.
   const rightCardsReady =
     variant === 'panel' || (!overviewLoading && (standingsSettled || (!selectedCompetitionId && defaultCompId == null)));
+
+  // Sakat/cezalılar: takımın bugünkü durumu → hep GÜNCEL sezonun istatistik isteğinden (aynı sorgu anahtarı:
+  // güncel sezon seçiliyken Sezon Özeti ile tek istek; eski sezon seçiliyken güncel isteğin önbelleği).
+  const currentSeasonIds = useMemo(() => seasonOptions[0]?.seasons.map((x) => x.id) ?? [], [seasonOptions]);
+  const [sidelinedRef, sidelinedInView] = useInViewOnce<HTMLElement>();
+  const sidelinedQuery = useQuery({
+    queryKey: ['team-season-stats', teamId, currentSeasonIds.join(',')] as const,
+    queryFn: () => getTeamSeasonStats(teamId, currentSeasonIds),
+    enabled: (sidelinedInView || (summaryInView && isCurrentCampaign)) && currentSeasonIds.length > 0,
+    staleTime: 10 * 60_000,
+  });
+  const sidelined = useMemo(
+    () => (sidelinedQuery.data ? mapTeamSidelined(sidelinedQuery.data.sidelined, todayIso) : null),
+    [sidelinedQuery.data, todayIso],
+  );
 
   const coach = overviewQuery.data?.coach;
   const venue = overviewQuery.data?.venue;
@@ -701,6 +719,14 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
             footer={summaryFooter}
             headerRight={seasonPicker}
           />
+
+          <ScoringMinutesCard
+            loading={!statsQuery.data && !statsQuery.isError}
+            error={statsQuery.isError}
+            scored={selectedSeasonStats?.scoredByMinute ?? []}
+            conceded={selectedSeasonStats?.concededByMinute ?? []}
+            scope={`${formatSeasonLabel(campaign?.name ?? '')} · ${scorersScope}`}
+          />
         </div>
 
         {/* — Right Column — */}
@@ -810,6 +836,14 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
               error={scorersError}
               players={scorerPlayers}
               scope={scorersScope}
+            />
+          ) : null}
+          {rightCardsReady ? (
+            <SidelinedCard
+              cardRef={sidelinedRef}
+              loading={!sidelinedQuery.data && !sidelinedQuery.isError}
+              error={sidelinedQuery.isError}
+              data={sidelined}
             />
           ) : null}
         </div>

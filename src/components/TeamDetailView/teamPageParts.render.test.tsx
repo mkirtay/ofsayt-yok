@@ -111,3 +111,41 @@ describe('<SeasonSummaryCard /> ve <TeamScorersCard />', async () => {
     expect((loading.match(/_scorerRow_/g) ?? []).length).toBe(5);
   });
 });
+
+describe('<ScoringMinutesCard /> ve <SidelinedCard />', async () => {
+  const { default: ScoringMinutesCard } = await import('./ScoringMinutesCard');
+  const { default: SidelinedCard } = await import('./SidelinedCard');
+
+  it('dakika grafiği: 6 dilim, yalnız CSS çubuklar; iskelette aynı 6 dilim', () => {
+    const html = renderToStaticMarkup(
+      <ScoringMinutesCard loading={false} error={false} scored={[1, 2, 2, 2, 3, 3]} conceded={[1, 1, 2, 1, 3, 2]} scope="Süper Lig" />,
+    );
+    expect((html.match(/_minutesGroup_/g) ?? []).length).toBe(6);
+    expect(html).toContain('height:100%'); // en yüksek dilim
+    expect(html).not.toMatch(/<svg|<canvas/);
+    const loading = renderToStaticMarkup(<ScoringMinutesCard loading error={false} scored={[]} conceded={[]} scope="" />);
+    expect((loading.match(/_minutesGroup_/g) ?? []).length).toBe(6);
+  });
+
+  it('sakat/cezalı: 5 sabit satır, UEFA notu ayrı; 5\'ten fazlasında "Tümü"', () => {
+    const p = (id: number, cat: 'injury' | 'suspended') => ({
+      playerId: id,
+      name: `Oyuncu ${id}`,
+      reasons: [{ category: cat, code: cat === 'injury' ? 'MUSCLE_INJURY' : 'RED_CARD_SUSPENSION', name: 'x' }],
+      until: '2026-10-14',
+    });
+    const html = renderToStaticMarkup(
+      <SidelinedCard loading={false} error={false} data={{ players: [p(1, 'injury'), p(2, 'suspended')], notInUefaSquad: 6 }} />,
+    );
+    expect((html.match(/_scorerRow_/g) ?? []).length).toBe(5);
+    expect(html).toContain('UEFA kadrosunda değil: 6 oyuncu');
+    expect(html).toContain('Kas sakatlığı');
+    expect(html).toContain('14.10');
+    expect(html).not.toContain('Tümü (');
+    const many = renderToStaticMarkup(
+      <SidelinedCard loading={false} error={false} data={{ players: [1, 2, 3, 4, 5, 6, 7].map((i) => p(i, 'injury')), notInUefaSquad: 0 }} />,
+    );
+    expect(many).toContain('Tümü (7)');
+    expect((many.match(/href="\/players\//g) ?? []).length).toBe(5);
+  });
+});

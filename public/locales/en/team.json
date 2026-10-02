@@ -79,5 +79,54 @@
     "recentScope": "Recent matches · all competitions",
     "pastScope": "{{season}} · all competitions · {{count}} matches",
     "pastLoading": "{{season}} · all competitions"
+  },
+  "minutes": {
+    "title": "Goal Times",
+    "aria": "Goals by 15-minute period, {{scope}}",
+    "scored": "Scored",
+    "conceded": "Conceded",
+    "note": "Stoppage time in the last periods",
+    "empty": "No goals in this scope yet."
+  },
+  "sidelined": {
+    "title": "Injuries & Suspensions",
+    "all": "All ({{count}})",
+    "less": "Less",
+    "empty": "No injured or suspended players.",
+    "error": "Couldn't load injuries and suspensions.",
+    "until": "Back: {{date}}",
+    "untilUnknown": "Return date unknown",
+    "notInUefaSquad": "Not in UEFA squad: {{count}} players",
+    "uefaHint": "Players not registered in the squad list for UEFA competitions; they are not injured or suspended.",
+    "category": {
+      "injury": "Injured",
+      "suspended": "Suspended",
+      "other": "Out"
+    },
+    "reasons": {
+      "RED_CARD_SUSPENSION": "Red card suspension",
+      "YELLOW_CARD_SUSPENSION": "Yellow card suspension",
+      "YELLOW_RED_CARD_SUSPENSION": "Second yellow suspension",
+      "MUSCLE_INJURY": "Muscle injury",
+      "TORN_THIGH_MUSCLE": "Torn thigh muscle",
+      "THIGH_MUSCLE_STRAIN": "Thigh muscle strain",
+      "ACHILLES_TENDON_PROBLEMS": "Achilles tendon problems",
+      "HAMSTRING_INJURY": "Hamstring injury",
+      "KNEE_INJURY": "Knee injury",
+      "ANKLE_INJURY": "Ankle injury",
+      "FOOT_INJURY": "Foot injury",
+      "GROIN_INJURY": "Groin injury",
+      "CALF_INJURY": "Calf injury",
+      "BACK_INJURY": "Back injury",
+      "SHOULDER_INJURY": "Shoulder injury",
+      "CRUCIATE_LIGAMENT_TEAR": "Cruciate ligament tear",
+      "LIGAMENT_INJURY": "Ligament injury",
+      "MENISCUS_INJURY": "Meniscus injury",
+      "FRACTURE": "Fracture",
+      "ILLNESS": "Illness",
+      "KNOCK": "Knock",
+      "INJURY": "Injury",
+      "SUSPENSION": "Suspension"
+    }
   }
 }

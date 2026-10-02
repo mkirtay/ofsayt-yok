@@ -1078,6 +1078,178 @@ $recent-footer-h: 44px;
   font-variant-numeric: tabular-nums;
 }
 
+.cardScope {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  color: $color-text-secondary;
+}
+
+.cardHeadBtn {
+  flex-shrink: 0;
+  height: 24px;
+  padding: 0 $spacing-3;
+  border: 1px solid $color-border;
+  border-radius: $radius-full;
+  background: transparent;
+  color: var(--color-action-text);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* ═══ Gol Dakikaları (yalnız CSS çubuklar) ═══ */
+// Çubuk alanı sabit 120 px; değerler çubuğun üstünde, dilim adı altta.
+
+.minutesChart {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: $spacing-2;
+  height: 150px;
+}
+
+.minutesGroup {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-width: 0;
+}
+
+.minutesBars {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 3px;
+  height: 130px;
+  border-bottom: 1px solid $color-border;
+}
+
+.minutesBarCol {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  width: 40%;
+  max-width: 22px;
+  height: 100%;
+  padding-top: 14px;
+  position: relative;
+}
+
+.minutesValue {
+  font-size: 11px;
+  font-weight: 700;
+  color: $color-text;
+  line-height: 14px;
+  height: 14px;
+  font-variant-numeric: tabular-nums;
+}
+
+.minutesBar {
+  display: block;
+  width: 100%;
+  min-height: 2px;
+  border-radius: 3px 3px 0 0;
+  transition: height 0.3s ease;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+.minutesBarScored {
+  background: var(--color-win);
+}
+
+.minutesBarConceded {
+  background: var(--color-loss);
+}
+
+.minutesLabel {
+  height: 20px;
+  line-height: 20px;
+  text-align: center;
+  font-size: 11px;
+  color: $color-text-secondary;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.minutesLegend {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.minutesSwatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  margin-left: 6px;
+
+  &:first-child {
+    margin-left: 0;
+  }
+}
+
+.minutesNote {
+  margin-left: $spacing-2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ═══ Sakat ve Cezalılar ═══ */
+
+.sidelinedText {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  line-height: 1.2;
+}
+
+.sidelinedReason {
+  font-size: 11px;
+  color: $color-text-secondary;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidelinedBadge {
+  flex-shrink: 0;
+  padding: 1px 6px;
+  border-radius: $radius-full;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--color-on-status);
+}
+
+.sidelinedBadgeInjury {
+  background: var(--color-loss);
+}
+
+.sidelinedBadgeSuspended {
+  background: var(--color-draw);
+}
+
+.sidelinedUntil {
+  flex-shrink: 0;
+  width: 36px;
+  text-align: right;
+  font-size: 11px;
+  color: $color-text-secondary;
+  font-variant-numeric: tabular-nums;
+}
+
+.sidelinedEmpty {
+  font-size: 12px;
+  color: $color-text-secondary;
+}
+
 /* ═══ Mobil sıra ═══ */
 // Tek sütunda: header → Son Maçlar → Sezon Özeti → (dakika grafiği) → takım krallığı → (sakat/cezalı) → puan durumu.
 // Puan durumu sağ sütunun ilk öğesi (masaüstünde en üstte); tek sütunda en sona alınır.

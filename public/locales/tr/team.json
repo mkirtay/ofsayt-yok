@@ -79,5 +79,54 @@
     "recentScope": "Son maçlar · tüm turnuvalar",
     "pastScope": "{{season}} · tüm turnuvalar · {{count}} maç",
     "pastLoading": "{{season}} · tüm turnuvalar"
+  },
+  "minutes": {
+    "title": "Gol Dakikaları",
+    "aria": "Gollerin 15 dakikalık dilimlere dağılımı, {{scope}}",
+    "scored": "Attığı",
+    "conceded": "Yediği",
+    "note": "Uzatma dakikaları son dilimlerde",
+    "empty": "Bu kapsamda henüz gol yok."
+  },
+  "sidelined": {
+    "title": "Sakat ve Cezalılar",
+    "all": "Tümü ({{count}})",
+    "less": "Daralt",
+    "empty": "Sakat ya da cezalı oyuncu yok.",
+    "error": "Sakat/cezalı listesi yüklenemedi.",
+    "until": "Dönüş: {{date}}",
+    "untilUnknown": "Dönüş tarihi belirsiz",
+    "notInUefaSquad": "UEFA kadrosunda değil: {{count}} oyuncu",
+    "uefaHint": "UEFA turnuvaları için kadro listesine yazılmamış oyuncular; sakat ya da cezalı değiller.",
+    "category": {
+      "injury": "Sakat",
+      "suspended": "Cezalı",
+      "other": "Yok"
+    },
+    "reasons": {
+      "MUSCLE_INJURY": "Kas sakatlığı",
+      "TORN_THIGH_MUSCLE": "Uyluk kası yırtığı",
+      "THIGH_MUSCLE_STRAIN": "Uyluk kası zorlanması",
+      "ACHILLES_TENDON_PROBLEMS": "Aşil tendonu sorunu",
+      "HAMSTRING_INJURY": "Arka adale sakatlığı",
+      "KNEE_INJURY": "Diz sakatlığı",
+      "ANKLE_INJURY": "Ayak bileği sakatlığı",
+      "FOOT_INJURY": "Ayak sakatlığı",
+      "GROIN_INJURY": "Kasık sakatlığı",
+      "CALF_INJURY": "Baldır sakatlığı",
+      "BACK_INJURY": "Sırt sakatlığı",
+      "SHOULDER_INJURY": "Omuz sakatlığı",
+      "CRUCIATE_LIGAMENT_TEAR": "Çapraz bağ yırtığı",
+      "LIGAMENT_INJURY": "Bağ sakatlığı",
+      "MENISCUS_INJURY": "Menisküs sakatlığı",
+      "FRACTURE": "Kırık",
+      "ILLNESS": "Hastalık",
+      "KNOCK": "Darbe",
+      "INJURY": "Sakatlık",
+      "RED_CARD_SUSPENSION": "Kırmızı kart cezası",
+      "YELLOW_CARD_SUSPENSION": "Sarı kart cezası",
+      "YELLOW_RED_CARD_SUSPENSION": "İkinci sarıdan ceza",
+      "SUSPENSION": "Ceza"
+    }
   }
 }
