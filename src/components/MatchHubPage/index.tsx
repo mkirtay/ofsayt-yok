@@ -29,7 +29,6 @@ import { MatchListSkeleton, PanelSkeleton } from '@/components/Skeleton';
 import MatchCompetitionStandings from '@/components/MatchCompetitionStandings';
 import MatchCompetitionTopScorers from '@/components/MatchCompetitionTopScorers';
 import SubHeader, { type MatchTab } from '@/components/SubHeader';
-import HubLeagueList from '@/components/HubLeagueList';
 import { isUefaCupCompetitionId, type SidebarLeague } from '@/config/leagues';
 import { resolveSportmonksLeagueId } from '@/services/sportmonksProviderFlag';
 import { sportmonksLeagueIdOfHubSelection } from '@/utils/hubLeagueSelection';
@@ -75,6 +74,8 @@ const panelLoading = () => <PanelSkeleton rows={6} />;
 const MatchDetailPanel = dynamic(loadMatchDetailPanel, { ssr: false, loading: panelLoading });
 const TeamDetailPanel = dynamic(loadTeamDetailPanel, { ssr: false, loading: panelLoading });
 const HomeGundemPanel = dynamic(() => import('@/components/HomeGundemPanel'), { ssr: false, loading: panelLoading });
+/** Ligler sekmesi (34 lig + arama) yalnız sekme açılınca gerekir → ilk yük parçalarına girmez. */
+const HubLeagueList = dynamic(() => import('@/components/HubLeagueList'), { ssr: false, loading: panelLoading });
 
 /** Satır hover/focus'unda detay verisini ısıtır — modülü de yalnız split-view'da (ilk hover'da) yükler. */
 function prefetchMatchDetailLazy(matchId: string): void {
