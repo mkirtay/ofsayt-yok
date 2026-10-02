@@ -9,11 +9,14 @@
     "error": "Couldn't load fixtures.",
     "timeTbd": "TBD"
   },
-  "nextMatch": "Next match: {{opponent}} · {{when}}",
   "nextMatchLabel": "Next match:",
   "compare": "Compare",
   "header": {
-    "standing": "{{competition}} · Rank {{rank}} · {{points}} pts"
+    "standing": "{{competition}} · Rank {{rank}} · {{points}} pts",
+    "coach": "Manager: {{name}}",
+    "venue": "{{name}}",
+    "venueWithCity": "{{name}}, {{city}}",
+    "venueCapacity": "Capacity {{capacity}}"
   },
   "form": {
     "label": "Last {{count}}",
@@ -33,15 +36,42 @@
     "empty": "No recent matches found.",
     "error": "Couldn't load recent matches."
   },
-  "stats": {
-    "title": "Statistics",
-    "formLast": "Form (last {{count}} · all competitions)",
-    "goalsLast": "Goals (last {{count}} matches · all competitions)",
-    "scored": "Scored",
-    "conceded": "Conceded",
-    "avgScored": "Avg. scored",
-    "avgConceded": "Avg. conceded",
-    "leagueSummary": "League summary",
-    "leagueOnly": "{{competition}} matches only"
+  "summary": {
+    "title": "Season Summary",
+    "tabsAria": "Competition",
+    "all": "All",
+    "allFull": "All competitions",
+    "rowHeader": "Scope",
+    "total": "Total",
+    "home": "Home",
+    "away": "Away",
+    "colPlayed": "P",
+    "colPlayedTitle": "Played",
+    "colWon": "W",
+    "colWonTitle": "Won",
+    "colDrawn": "D",
+    "colDrawnTitle": "Drawn",
+    "colLost": "L",
+    "colLostTitle": "Lost",
+    "colFor": "GF",
+    "colForTitle": "Goals for",
+    "colAgainst": "GA",
+    "colAgainstTitle": "Goals against",
+    "colClean": "CS",
+    "colCleanTitle": "Clean sheets",
+    "empty": "No matches played this season yet.",
+    "error": "Couldn't load season statistics.",
+    "standing": "{{competition}}: rank {{rank}} · {{points}} pts · GD {{gd}}"
+  },
+  "scorers": {
+    "title": "Top Scorers",
+    "modeAria": "Ranking",
+    "goals": "Goals",
+    "assists": "Assists",
+    "goalsShort": "{{count}} G",
+    "assistsShort": "{{count}} A",
+    "emptyGoals": "No goalscorers yet.",
+    "emptyAssists": "No assists yet.",
+    "error": "Couldn't load player statistics."
   }
 }

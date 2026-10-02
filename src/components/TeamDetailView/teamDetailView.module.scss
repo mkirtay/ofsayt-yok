@@ -193,6 +193,13 @@
 .layoutLeft {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--tdv-gap);
+}
+
+.tabsBlock {
+  min-width: 0;
 }
 
 .layoutRight {
@@ -659,6 +666,24 @@ $recent-footer-h: 44px;
   border: 1px solid $color-border;
 }
 
+.cardHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-2;
+  height: 36px;
+  margin-bottom: $spacing-3;
+  border-bottom: 1px solid $color-border;
+  min-width: 0;
+
+  .cardTitle {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    white-space: nowrap;
+  }
+}
+
 .cardTitle {
   font-size: var(--fs-section, 15px);
   font-weight: var(--fw-section, 600);
@@ -666,30 +691,6 @@ $recent-footer-h: 44px;
   border-bottom: 1px solid $color-border;
   padding-bottom: $spacing-2;
   color: $color-text;
-}
-
-.statSection {
-  margin-bottom: $spacing-4;
-
-  &:last-child {
-    margin-bottom: 0;
-  }
-}
-
-.statLabel {
-  display: block;
-  font-size: 12px;
-  font-weight: 600;
-  color: $color-text-secondary;
-  margin-bottom: $spacing-2;
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-}
-
-.formRow {
-  display: flex;
-  gap: 4px;
-  flex-wrap: wrap;
 }
 
 .formPill {
@@ -708,65 +709,6 @@ $recent-footer-h: 44px;
   @include form-badge-loss;
 }
 
-.statGrid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: $spacing-2;
-}
-
-.statItem {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: $spacing-2;
-  background-color: $color-bg;
-  border-radius: $radius-sm;
-}
-
-.statValue {
-  font-size: 18px;
-  font-weight: 700;
-  color: $color-text;
-  font-variant-numeric: tabular-nums;
-}
-
-.statCaption {
-  font-size: 11px;
-  color: $color-text-secondary;
-  margin-top: 2px;
-}
-
-.leagueSummaryTable {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 12px;
-  text-align: center;
-
-  th {
-    color: $color-text-secondary;
-    padding: $spacing-1;
-    border-bottom: 1px solid $color-border;
-    font-weight: 600;
-  }
-
-  td {
-    padding: $spacing-2 $spacing-1;
-    font-weight: 500;
-  }
-}
-
-.points {
-  font-weight: 700;
-  color: $color-primary;
-}
-
-.statScope {
-  display: block;
-  margin: -2px 0 $spacing-1;
-  font-size: 11px;
-  color: $color-text-secondary;
-}
-
 /* ═══ Empty ═══ */
 
 .empty {
@@ -782,9 +724,6 @@ $recent-footer-h: 44px;
     font-size: 18px;
   }
 
-  .statGrid {
-    grid-template-columns: repeat(4, 1fr);
-  }
 }
 
 // ── Compare toggle + panel ──
@@ -852,7 +791,277 @@ $recent-footer-h: 44px;
     font-size: 18px;
   }
 
-  .statGrid {
-    grid-template-columns: repeat(2, 1fr);
+}
+
+/* ═══ Başlık: teknik direktör / stadyum ═══ */
+
+.teamExtra {
+  display: flex;
+  gap: 4px;
+  min-width: 0;
+  font-size: 12px;
+  line-height: 16px;
+  color: $color-text-secondary;
+}
+
+.teamExtraItem {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  // Teknik direktör adı tam kalır; dar başlıkta stadyum adı kısalır.
+  &:first-child {
+    flex-shrink: 0;
+  }
+}
+
+/* ═══ Sezon Özeti ═══ */
+// Sabit yükseklik: başlık 36 + sekmeler 32 + tablo (başlık 26 + 3 × 32) + alt satır 20 → yükleniyor / boş / dolu aynı.
+
+.summaryTabs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 32px;
+  margin-bottom: $spacing-2;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.summaryTab {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  height: 26px;
+  padding: 0 $spacing-3;
+  border: 1px solid $color-border;
+  border-radius: $radius-full;
+  background: $color-surface;
+  color: $color-text-secondary;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+
+  &:hover {
+    background: $color-bg;
+  }
+}
+
+.summaryTabActive {
+  background: $color-primary;
+  border-color: $color-primary;
+  color: $color-surface;
+
+  &:hover {
+    background: $color-primary-dark;
+  }
+}
+
+.summaryTable {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+
+  thead th {
+    height: 26px;
+    font-size: 11px;
+    font-weight: 600;
+    color: $color-text-secondary;
+    text-align: center;
+    border-bottom: 1px solid $color-border;
+
+    abbr {
+      text-decoration: none;
+    }
+  }
+
+  th:first-child {
+    width: 28%;
+    text-align: left;
+  }
+
+  tbody th,
+  tbody td {
+    height: 32px;
+    border-bottom: 1px solid $color-border;
+  }
+
+  tbody tr:last-child th,
+  tbody tr:last-child td {
+    border-bottom: 0;
+  }
+
+  tbody th {
+    font-size: 12px;
+    font-weight: 600;
+    color: $color-text-secondary;
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  tbody td {
+    text-align: center;
+    font-weight: 600;
+    color: $color-text;
+  }
+
+  tbody tr:first-child td {
+    font-weight: 700;
+  }
+}
+
+.summaryCellSkeleton {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.summaryFoot {
+  display: flex;
+  align-items: center;
+  height: 20px;
+  margin-top: $spacing-2;
+  font-size: 11px;
+  color: $color-text-secondary;
+  min-width: 0;
+
+  span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ═══ Takım Krallığı ═══ */
+
+.segmented {
+  display: inline-flex;
+  flex-shrink: 0;
+  border: 1px solid $color-border;
+  border-radius: $radius-full;
+  overflow: hidden;
+}
+
+.segment {
+  height: 24px;
+  padding: 0 $spacing-3;
+  border: 0;
+  background: transparent;
+  color: $color-text-secondary;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.segmentActive {
+  background: $color-primary;
+  color: $color-surface;
+}
+
+.scorersList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.scorerRow {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  height: 36px;
+  border-bottom: 1px solid $color-border;
+
+  &:last-child {
+    border-bottom: 0;
+  }
+}
+
+.scorerRowEmpty {
+  border-bottom-color: transparent;
+}
+
+.scorerLink {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  color: inherit;
+  text-decoration: none;
+
+  &:hover .scorerName {
+    color: $color-primary;
+  }
+}
+
+.scorerRank {
+  width: 14px;
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: $color-text-secondary;
+  text-align: right;
+}
+
+.scorerPhoto {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: $color-bg;
+}
+
+.scorerName {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.scorerOther {
+  flex-shrink: 0;
+  font-size: 11px;
+  color: $color-text-secondary;
+}
+
+.scorerValue {
+  width: 24px;
+  flex-shrink: 0;
+  text-align: right;
+  font-size: 14px;
+  font-weight: 800;
+  color: $color-primary;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ═══ Mobil sıra ═══ */
+// Tek sütunda: header → Son Maçlar → Sezon Özeti → (dakika grafiği) → takım krallığı → (sakat/cezalı) → puan durumu.
+// Puan durumu sağ sütunun ilk öğesi (masaüstünde en üstte); tek sütunda en sona alınır.
+@media (max-width: #{$bp-md - 1px}) {
+  .sidebarSlot {
+    order: 10;
   }
 }

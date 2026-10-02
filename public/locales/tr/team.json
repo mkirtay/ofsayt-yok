@@ -9,11 +9,14 @@
     "error": "Fikstür yüklenemedi.",
     "timeTbd": "Belirsiz"
   },
-  "nextMatch": "Sıradaki maç: {{opponent}} · {{when}}",
   "nextMatchLabel": "Sıradaki maç:",
   "compare": "Karşılaştır",
   "header": {
-    "standing": "{{competition}} · {{rank}}. sıra · {{points}} puan"
+    "standing": "{{competition}} · {{rank}}. sıra · {{points}} puan",
+    "coach": "Teknik direktör: {{name}}",
+    "venue": "{{name}}",
+    "venueWithCity": "{{name}}, {{city}}",
+    "venueCapacity": "{{capacity}} kişilik"
   },
   "form": {
     "label": "Son {{count}}",
@@ -33,15 +36,42 @@
     "empty": "Son maç bulunamadı.",
     "error": "Son maçlar yüklenemedi."
   },
-  "stats": {
-    "title": "İstatistikler",
-    "formLast": "Form (son {{count}} · tüm turnuvalar)",
-    "goalsLast": "Gol özeti (son {{count}} maç · tüm turnuvalar)",
-    "scored": "Attığı",
-    "conceded": "Yediği",
-    "avgScored": "Ort. Atılan",
-    "avgConceded": "Ort. Yenilen",
-    "leagueSummary": "Lig Özeti",
-    "leagueOnly": "Yalnızca {{competition}} maçları"
+  "summary": {
+    "title": "Sezon Özeti",
+    "tabsAria": "Turnuva",
+    "all": "Tümü",
+    "allFull": "Tüm turnuvalar",
+    "rowHeader": "Kapsam",
+    "total": "Toplam",
+    "home": "İç saha",
+    "away": "Deplasman",
+    "colPlayed": "O",
+    "colPlayedTitle": "Oynanan",
+    "colWon": "G",
+    "colWonTitle": "Galibiyet",
+    "colDrawn": "B",
+    "colDrawnTitle": "Beraberlik",
+    "colLost": "M",
+    "colLostTitle": "Mağlubiyet",
+    "colFor": "A",
+    "colForTitle": "Attığı gol",
+    "colAgainst": "Y",
+    "colAgainstTitle": "Yediği gol",
+    "colClean": "GY",
+    "colCleanTitle": "Gol yemeden biten maç",
+    "empty": "Bu sezon henüz maç oynanmadı.",
+    "error": "Sezon istatistikleri yüklenemedi.",
+    "standing": "{{competition}}: {{rank}}. sıra · {{points}} puan · averaj {{gd}}"
+  },
+  "scorers": {
+    "title": "Takım Krallığı",
+    "modeAria": "Sıralama",
+    "goals": "Gol",
+    "assists": "Asist",
+    "goalsShort": "{{count}} G",
+    "assistsShort": "{{count}} A",
+    "emptyGoals": "Henüz golü olan oyuncu yok.",
+    "emptyAssists": "Henüz asisti olan oyuncu yok.",
+    "error": "Oyuncu istatistikleri yüklenemedi."
   }
 }

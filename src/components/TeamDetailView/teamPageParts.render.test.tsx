@@ -64,6 +64,13 @@ describe('<TeamHeader />', () => {
     expect(lines(loaded)).toEqual(['_headerLineName_', '_headerLineMeta_', '_headerLineNext_', '_headerLineForm_']);
   });
 
+  it('teknik direktör / stadyum satırı iskelette de aynı yerde', () => {
+    const loading = renderToStaticMarkup(<TeamHeader {...props} loading form={[]} extraLine={<span>…</span>} />);
+    const loaded = renderToStaticMarkup(<TeamHeader {...props} loading={false} form={[]} extraLine={<span>Teknik direktör: Okan Buruk</span>} />);
+    expect(lines(loading)).toEqual(lines(loaded));
+    expect(lines(loaded)).toContain('_headerLineExtra_');
+  });
+
   it('form en yeni solda, G/B/M harfleri ve kapsam etiketi', () => {
     const html = renderToStaticMarkup(
       <TeamHeader {...props} loading={false} form={[{ result: 'L', match: match(0) }, { result: 'W', match: match(1) }, { result: 'D', match: match(2) }]} />,
@@ -71,5 +78,36 @@ describe('<TeamHeader />', () => {
     expect(html.match(/_formPill_\w+ _form(Win|Draw|Loss)_\w+"[^>]*>([GBM])</g)?.map((m) => m.slice(-2, -1))).toEqual(['M', 'G', 'B']);
     expect(html).toContain('Tüm turnuvalar');
     expect(html).toContain('aria-label="Son 3 maçın sonucu, tüm turnuvalar: Mağlubiyet, Galibiyet, Beraberlik"');
+  });
+});
+
+describe('<SeasonSummaryCard /> ve <TeamScorersCard />', async () => {
+  const { default: SeasonSummaryCard } = await import('./SeasonSummaryCard');
+  const { default: TeamScorersCard } = await import('./TeamScorersCard');
+  const line = { played: 6, won: 4, drawn: 1, lost: 1, goalsFor: 13, goalsAgainst: 10, cleanSheets: 2 };
+  const stats = { seasonId: 1, finished: false, total: line, home: line, away: line, scoredByMinute: [], concededByMinute: [] };
+  const tabs = [{ key: 'all', label: 'Tümü' }, { key: '28203', label: 'Süper Lig' }];
+  const rows = (html: string) => (html.match(/<tr>/g) ?? []).length;
+
+  it('Sezon Özeti: iskelet ve dolu kart aynı satır sayısı ve alt satır', () => {
+    const loading = renderToStaticMarkup(<SeasonSummaryCard loading error={false} tabs={tabs} selected="all" onSelect={() => {}} stats={null} />);
+    const loaded = renderToStaticMarkup(
+      <SeasonSummaryCard loading={false} error={false} tabs={tabs} selected="all" onSelect={() => {}} stats={stats} footer="Süper Lig: 2. sıra" />,
+    );
+    expect(rows(loading)).toBe(4);
+    expect(rows(loaded)).toBe(4);
+    expect(loaded).toContain('>13<');
+    expect(loaded).toContain('Süper Lig: 2. sıra');
+    expect(loading).toMatch(/_summaryFoot_/);
+  });
+
+  it('Takım Krallığı: hep 5 satır (boşlar yer tutar)', () => {
+    const html = renderToStaticMarkup(
+      <TeamScorersCard loading={false} error={false} scope="Tüm turnuvalar" players={[{ playerId: 1, name: 'Osimhen', goals: 6, assists: 2, apps: 6 }]} />,
+    );
+    expect((html.match(/_scorerRow_/g) ?? []).length).toBe(5);
+    expect(html).toContain('href="/players/1"');
+    const loading = renderToStaticMarkup(<TeamScorersCard loading error={false} scope="" players={[]} />);
+    expect((loading.match(/_scorerRow_/g) ?? []).length).toBe(5);
   });
 });

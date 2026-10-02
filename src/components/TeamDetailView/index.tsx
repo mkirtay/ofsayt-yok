@@ -2,11 +2,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import { useQuery } from '@tanstack/react-query';
+import { useQueries, useQuery } from '@tanstack/react-query';
 import CompareTeamPicker from '@/components/CompareTeamPicker';
 import MatchCompetitionStandings from '@/components/MatchCompetitionStandings';
 import MatchCompetitionTopScorers from '@/components/MatchCompetitionTopScorers';
-import { PanelSkeleton } from '@/components/Skeleton';
+import { PanelSkeleton, SkeletonBlock } from '@/components/Skeleton';
 import { useTopScorersWithAppearances } from '@/hooks/useTopScorerAppearances';
 import { useTeamOverview } from '@/hooks/useTeamOverview';
 import { useI18n, useTranslation } from '@/lib/i18n';
@@ -47,6 +47,12 @@ import styles from './teamDetailView.module.scss';
 import TeamLogo from '@/components/TeamLogo';
 import TeamHeader from './TeamHeader';
 import RecentMatches from './RecentMatches';
+import SeasonSummaryCard, { type TournamentTab } from './SeasonSummaryCard';
+import TeamScorersCard from './TeamScorersCard';
+import { useInViewOnce } from '@/hooks/useInViewOnce';
+import { getTeamSeasonScorers, getTeamSeasonStats } from '@/services/teamPage';
+import { combineSeasonStats } from '@/services/sportmonks/teamSeasonStats';
+import { mergeTeamScorers } from '@/services/sportmonks/teamScorers';
 
 // Kadro sekmesi yüklenirken (tıklamadan sonra): sahne ve CSS'i ayrı parçada. Kutu (yükseklik) burada.
 const loadFormationLoading = () => import('@/components/PitchScenes/FormationLoading');
@@ -120,18 +126,6 @@ export function computeTeamStats(
     matchCount: form.length,
     standing: findStandingForTeam(table, teamId),
   };
-}
-
-function formLabel(f: 'W' | 'D' | 'L'): string {
-  if (f === 'W') return 'G';
-  if (f === 'D') return 'B';
-  return 'M';
-}
-
-function formVariant(f: 'W' | 'D' | 'L'): string {
-  if (f === 'W') return styles.formWin;
-  if (f === 'D') return styles.formDraw;
-  return styles.formLoss;
 }
 
 export function resolveMatchStatus(match: Match): string {
@@ -320,6 +314,99 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
       ? t('header.standing', { competition: selectedCompShort, rank: stats.standing.rank, points: stats.standing.points })
       : null;
 
+  /* ─── Sezon Özeti + Takım Krallığı (ekranın altında: görünür alana yaklaşınca yüklenir) ─── */
+  const campaign = overviewQuery.data?.campaigns[0] ?? null;
+  const campaignSeasonIds = useMemo(() => campaign?.seasons.map((s) => s.id) ?? [], [campaign]);
+  const [summaryRef, summaryInView] = useInViewOnce<HTMLElement>();
+  const statsQuery = useQuery({
+    queryKey: ['team-season-stats', teamId, campaignSeasonIds.join(',')] as const,
+    queryFn: () => getTeamSeasonStats(teamId, campaignSeasonIds),
+    enabled: summaryInView && campaignSeasonIds.length > 0,
+    staleTime: 10 * 60_000,
+  });
+  const [tournament, setTournament] = useState('all');
+
+  const { tournamentTabs, playedStats } = useMemo(() => {
+    const refs = new Map((campaign?.seasons ?? []).map((s) => [s.id, s]));
+    const played = (statsQuery.data ?? []).filter((s) => s.total.played > 0);
+    // Varsayılan turnuva (genelde yerel lig) önce, sonra sezon başlangıcına göre.
+    const order = (id: number) => {
+      const ref = refs.get(id);
+      return (ref?.leagueId === defaultCompId ? '0' : '1') + (ref?.startingAt ?? '');
+    };
+    played.sort((a, b) => order(a.seasonId).localeCompare(order(b.seasonId)));
+    const tabs: TournamentTab[] = [{ key: 'all', label: t('summary.all'), fullLabel: t('summary.allFull') }];
+    for (const st of played) {
+      const ref = refs.get(st.seasonId);
+      const leagueId = st.leagueId ?? ref?.leagueId;
+      const logo = ref?.leagueLogo ?? (leagueId ? uefaCompetitionLogoSrcById(leagueId) : undefined);
+      tabs.push({
+        key: String(st.seasonId),
+        label: leagueNameById(leagueId, ref?.leagueName, tl),
+        fullLabel: leagueNameById(leagueId, ref?.leagueName, tl, 'full'),
+        ...(logo ? { logo } : {}),
+        logoBackdrop: leagueId != null && competitionLogoNeedsBackdrop(leagueId),
+      });
+    }
+    return { tournamentTabs: tabs, playedStats: played };
+  }, [campaign, statsQuery.data, defaultCompId, t, tl]);
+
+  const activeTournament = tournamentTabs.some((tab) => tab.key === tournament) ? tournament : 'all';
+  const selectedSeasonStats =
+    activeTournament === 'all'
+      ? playedStats.length > 0
+        ? combineSeasonStats(playedStats)
+        : null
+      : (playedStats.find((st) => String(st.seasonId) === activeTournament) ?? null);
+  const selectedTournamentLeagueId =
+    activeTournament === 'all' ? null : (playedStats.find((st) => String(st.seasonId) === activeTournament)?.leagueId ?? null);
+  const summaryFooter =
+    stats.standing && selectedCompShort && (activeTournament === 'all' || String(selectedTournamentLeagueId) === selectedCompetitionId)
+      ? t('summary.standing', {
+          competition: selectedCompShort,
+          rank: stats.standing.rank,
+          points: stats.standing.points,
+          gd: Number(stats.standing.goal_diff) > 0 ? `+${stats.standing.goal_diff}` : String(stats.standing.goal_diff ?? 0),
+        })
+      : null;
+
+  const [scorersRef, scorersInView] = useInViewOnce<HTMLElement>();
+  const scorerQueries = useQueries({
+    queries: campaignSeasonIds.map((sid) => ({
+      queryKey: ['team-season-scorers', teamId, sid] as const,
+      queryFn: () => getTeamSeasonScorers(teamId, sid),
+      enabled: scorersInView,
+      staleTime: 30 * 60_000,
+    })),
+  });
+  const scorerSeasonIdx = campaignSeasonIds
+    .map((sid, i) => (activeTournament === 'all' || String(sid) === activeTournament ? i : -1))
+    .filter((i) => i >= 0);
+  const scorersLoading =
+    campaignSeasonIds.length === 0 || scorerSeasonIdx.some((i) => !scorerQueries[i]?.data && !scorerQueries[i]?.isError);
+  const scorersError = scorerSeasonIdx.length > 0 && scorerSeasonIdx.every((i) => scorerQueries[i]?.isError);
+  const scorerPlayers = scorersLoading ? [] : mergeTeamScorers(scorerSeasonIdx.map((i) => scorerQueries[i]?.data ?? []));
+  const scorersScope = tournamentTabs.find((tab) => tab.key === activeTournament)?.fullLabel ?? t('summary.allFull');
+
+  const coach = overviewQuery.data?.coach;
+  const venue = overviewQuery.data?.venue;
+  const headerExtra = overviewLoading ? (
+    <SkeletonBlock width="65%" height={11} />
+  ) : coach || venue ? (
+    <span className={styles.teamExtra}>
+      {coach ? <span className={styles.teamExtraItem}>{t('header.coach', { name: coach.name })}</span> : null}
+      {coach && venue ? <span aria-hidden="true">·</span> : null}
+      {venue ? (
+        <span
+          className={styles.teamExtraItem}
+          title={venue.capacity ? t('header.venueCapacity', { capacity: venue.capacity.toLocaleString('tr-TR') }) : undefined}
+        >
+          {venue.city ? t('header.venueWithCity', { name: venue.name, city: venue.city }) : venue.name}
+        </span>
+      ) : null}
+    </span>
+  ) : null;
+
   const teamPageTitle = `${teamInfo.name} — Takım Detayı | Ofsayt Yok`;
   const teamPageDescription = `${teamInfo.name} takımının son maçları, kadro bilgileri ve lig istatistikleri.`;
 
@@ -354,6 +441,7 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
         form={headerForm}
         compareOpen={compareOpen}
         onToggleCompare={() => setCompareOpen((o) => !o)}
+        extraLine={headerExtra}
       />
 
       {/* ═══ Compare Panel ═══ */}
@@ -370,6 +458,7 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
       <div className={styles.layoutSplit}>
         {/* — Left Column — */}
         <div className={styles.layoutLeft}>
+          <div className={styles.tabsBlock}>
           <div className={styles.tabs}>
             <button
               type="button"
@@ -533,13 +622,25 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
               )
             )}
           </div>
+          </div>
+
+          <SeasonSummaryCard
+            cardRef={summaryRef}
+            loading={!statsQuery.data && !statsQuery.isError}
+            error={statsQuery.isError}
+            tabs={tournamentTabs}
+            selected={activeTournament}
+            onSelect={setTournament}
+            stats={selectedSeasonStats}
+            footer={summaryFooter}
+          />
         </div>
 
         {/* — Right Column — */}
         <div className={styles.layoutRight}>
           {/* Panelde (ana sayfa) global sidebar aynı Puan Durumu/Ligler/Gol Krallığı'nı zaten gösterir → yalnızca sayfa varyantında. */}
           {variant === 'page' && (
-            <div className={hubStyles.sidebar}>
+            <div className={`${hubStyles.sidebar} ${styles.sidebarSlot}`}>
               <nav className={hubStyles.sidebarTabs}>
                 <button
                   type="button"
@@ -635,91 +736,13 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
             </div>
           )}
 
-          {/* Stats Summary */}
-          {overviewLoading || standingsLoading ? (
-            <PanelSkeleton rows={4} />
-          ) : (
-          <div className={styles.statsCard}>
-            <h3 className={styles.cardTitle}>{t('stats.title')}</h3>
-
-            {/* Form */}
-            {stats.form.length > 0 && (
-              <div className={styles.statSection}>
-                <span className={styles.statLabel}>{t('stats.formLast', { count: Math.min(stats.form.length, 10) })}</span>
-                <div className={styles.formRow}>
-                  {stats.form.slice(0, 10).map((f, i) => (
-                    <span key={i} className={`${styles.formPill} ${formVariant(f)}`}>
-                      {formLabel(f)}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Goal Summary */}
-            {stats.matchCount > 0 && (
-              <div className={styles.statSection}>
-                <span className={styles.statLabel}>{t('stats.goalsLast', { count: stats.matchCount })}</span>
-                <div className={styles.statGrid}>
-                  <div className={styles.statItem}>
-                    <span className={styles.statValue}>{stats.goalsScored}</span>
-                    <span className={styles.statCaption}>{t('stats.scored')}</span>
-                  </div>
-                  <div className={styles.statItem}>
-                    <span className={styles.statValue}>{stats.goalsConceded}</span>
-                    <span className={styles.statCaption}>{t('stats.conceded')}</span>
-                  </div>
-                  <div className={styles.statItem}>
-                    <span className={styles.statValue}>
-                      {(stats.goalsScored / stats.matchCount).toFixed(1)}
-                    </span>
-                    <span className={styles.statCaption}>{t('stats.avgScored')}</span>
-                  </div>
-                  <div className={styles.statItem}>
-                    <span className={styles.statValue}>
-                      {(stats.goalsConceded / stats.matchCount).toFixed(1)}
-                    </span>
-                    <span className={styles.statCaption}>{t('stats.avgConceded')}</span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* League Summary */}
-            {stats.standing && (
-              <div className={styles.statSection}>
-                <span className={styles.statLabel}>{t('stats.leagueSummary')}</span>
-                {selectedCompName ? (
-                  <span className={styles.statScope}>{t('stats.leagueOnly', { competition: selectedCompName })}</span>
-                ) : null}
-                <table className={styles.leagueSummaryTable}>
-                  <thead>
-                    <tr>
-                      <th>S</th>
-                      <th>O</th>
-                      <th>G</th>
-                      <th>B</th>
-                      <th>M</th>
-                      <th>AV</th>
-                      <th>P</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>{stats.standing.rank}</td>
-                      <td>{stats.standing.matches}</td>
-                      <td>{stats.standing.won}</td>
-                      <td>{stats.standing.drawn}</td>
-                      <td>{stats.standing.lost}</td>
-                      <td>{stats.standing.goal_diff}</td>
-                      <td className={styles.points}>{stats.standing.points}</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-          )}
+          <TeamScorersCard
+            cardRef={scorersRef}
+            loading={scorersLoading && !scorersError}
+            error={scorersError}
+            players={scorerPlayers}
+            scope={scorersScope}
+          />
         </div>
       </div>
     </div>
