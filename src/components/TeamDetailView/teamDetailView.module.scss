@@ -334,6 +334,27 @@
 
 
 /* ═══ Son Maçlar (RecentMatches) ═══ */
+// Araç satırı (kapsam + sezon seçici): her durumda aynı yükseklik (seçici yokken de).
+.recentToolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-2;
+  height: 36px;
+  padding: 0 $spacing-1 $spacing-2;
+  border-bottom: 1px solid $color-border;
+  min-width: 0;
+}
+
+.recentScope {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  color: $color-text-secondary;
+}
+
 // 10 satır × 40px + alt satır (Daha fazla) 44px: yükleniyor / az maç / boş hep aynı yükseklik.
 $recent-row-h: 40px;
 $recent-footer-h: 44px;

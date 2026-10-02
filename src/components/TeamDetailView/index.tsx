@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import { useQueries, useQuery } from '@tanstack/react-query';
 import CompareTeamPicker from '@/components/CompareTeamPicker';
 import MatchCompetitionStandings from '@/components/MatchCompetitionStandings';
@@ -26,7 +27,9 @@ import {
 import type { Match } from '@/models/liveScore';
 import { competitionLogoNeedsBackdrop, uefaCompetitionLogoSrcById } from '@/utils/competitionLogo';
 import { toStandingsCompetitionId } from '@/services/sportmonksProviderFlag';
-import { defaultCompetitionId, teamForm } from '@/services/sportmonks/teamOverview';
+import { campaignSlug, defaultCompetitionId, selectableCampaigns, teamForm } from '@/services/sportmonks/teamOverview';
+import SeasonSelect from '@/components/SeasonSelect';
+import { formatSeasonLabel } from '@/utils/seasonLabel';
 import { utcTimeToTr } from '@/utils/dateFormat';
 import { buildMatchHref } from '@/utils/matchUrl';
 import { groupSquadByPosition } from '@/utils/squadGroups';
@@ -50,7 +53,7 @@ import RecentMatches from './RecentMatches';
 import SeasonSummaryCard, { type TournamentTab } from './SeasonSummaryCard';
 import TeamScorersCard from './TeamScorersCard';
 import { useInViewOnce } from '@/hooks/useInViewOnce';
-import { getTeamSeasonScorers, getTeamSeasonStats } from '@/services/teamPage';
+import { getTeamSeasonMatches, getTeamSeasonScorers, getTeamSeasonStats } from '@/services/teamPage';
 import { combineSeasonStats } from '@/services/sportmonks/teamSeasonStats';
 import { mergeTeamScorers } from '@/services/sportmonks/teamScorers';
 
@@ -318,8 +321,56 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
       ? t('header.standing', { competition: selectedCompShort, rank: stats.standing.rank, points: stats.standing.points })
       : null;
 
+  /* ─── Sezon seçici (Son Maçlar + Sezon Özeti + Takım Krallığı ortak) ─── */
+  // Sayfada seçili sezon URL'de (`?sezon=2025-2026`, güncel sezonda yok); ana sayfa panelinde yerel durum.
+  const router = useRouter();
+  const seasonOptions = useMemo(
+    () => selectableCampaigns(overviewQuery.data?.campaigns ?? [], defaultCompId),
+    [overviewQuery.data, defaultCompId],
+  );
+  const [panelSeasonSlug, setPanelSeasonSlug] = useState<string | null>(null);
+  const urlSeasonSlug = typeof router.query.sezon === 'string' ? router.query.sezon : null;
+  const seasonSlug = variant === 'page' ? urlSeasonSlug : panelSeasonSlug;
+  const campaignIdx = Math.max(0, seasonOptions.findIndex((c) => campaignSlug(c.name) === seasonSlug));
+  const campaign = seasonOptions[campaignIdx] ?? overviewQuery.data?.campaigns[0] ?? null;
+  const isCurrentCampaign = campaignIdx === 0;
+  const seasonSelectItems = useMemo(() => seasonOptions.map((c, i) => ({ id: i, name: c.name })), [seasonOptions]);
+  const changeCampaign = useCallback(
+    (idx: number) => {
+      const slug = idx > 0 && seasonOptions[idx] ? campaignSlug(seasonOptions[idx]!.name) : null;
+      if (variant !== 'page') {
+        setPanelSeasonSlug(slug);
+        return;
+      }
+      const query = { ...router.query };
+      if (slug) query.sezon = slug;
+      else delete query.sezon;
+      void router.replace({ pathname: router.pathname, query }, undefined, { shallow: true, scroll: false });
+    },
+    [router, seasonOptions, variant],
+  );
+  const seasonPicker =
+    seasonSelectItems.length > 1 ? (
+      <SeasonSelect seasons={seasonSelectItems} value={campaignIdx} onChange={changeCampaign} />
+    ) : null;
+
+  // Geçmiş sezon: turnuva-sezon başına bir program isteği, yalnız seçilince (ilk yüke girmez).
+  const pastMatchesQuery = useQuery({
+    queryKey: ['team-season-matches', teamId, campaign?.name ?? ''] as const,
+    queryFn: () => getTeamSeasonMatches(teamId, campaign?.seasons ?? []),
+    enabled: !isCurrentCampaign && Boolean(campaign?.seasons.length),
+    staleTime: 30 * 60_000,
+  });
+  const listMatches = isCurrentCampaign ? recentMatches : (pastMatchesQuery.data ?? []);
+  const listLoading = isCurrentCampaign ? overviewLoading : !pastMatchesQuery.data && !pastMatchesQuery.isError;
+  const listError = isCurrentCampaign ? overviewQuery.isError : pastMatchesQuery.isError;
+  const listScope = isCurrentCampaign
+    ? t('season.recentScope')
+    : pastMatchesQuery.data
+      ? t('season.pastScope', { season: formatSeasonLabel(campaign?.name ?? ''), count: pastMatchesQuery.data.length })
+      : t('season.pastLoading', { season: formatSeasonLabel(campaign?.name ?? '') });
+
   /* ─── Sezon Özeti + Takım Krallığı (ekranın altında: görünür alana yaklaşınca yüklenir) ─── */
-  const campaign = overviewQuery.data?.campaigns[0] ?? null;
   const campaignSeasonIds = useMemo(() => campaign?.seasons.map((s) => s.id) ?? [], [campaign]);
   const [summaryRef, summaryInView] = useInViewOnce<HTMLElement>();
   const statsQuery = useQuery({
@@ -365,7 +416,7 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
   const selectedTournamentLeagueId =
     activeTournament === 'all' ? null : (playedStats.find((st) => String(st.seasonId) === activeTournament)?.leagueId ?? null);
   const summaryFooter =
-    stats.standing && selectedCompShort && (activeTournament === 'all' || String(selectedTournamentLeagueId) === selectedCompetitionId)
+    isCurrentCampaign && stats.standing && selectedCompShort && (activeTournament === 'all' || String(selectedTournamentLeagueId) === selectedCompetitionId)
       ? t('summary.standing', {
           competition: selectedCompShort,
           rank: stats.standing.rank,
@@ -378,7 +429,7 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
   const scorerQueries = useQueries({
     queries: campaignSeasonIds.map((sid) => ({
       queryKey: ['team-season-scorers', teamId, sid] as const,
-      queryFn: () => getTeamSeasonScorers(teamId, sid),
+      queryFn: () => getTeamSeasonScorers(teamId, sid, campaign?.seasons.find((x) => x.id === sid)?.finished === true),
       enabled: scorersInView,
       staleTime: 30 * 60_000,
     })),
@@ -494,12 +545,18 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
 
           <div className={styles.tabContent}>
             {activeTab === 'matches' && (
-              <RecentMatches
-                key={teamId}
-                matches={recentMatches}
-                loading={overviewLoading}
-                error={overviewQuery.isError}
-              />
+              <>
+                <div className={styles.recentToolbar}>
+                  <span className={styles.recentScope}>{listScope}</span>
+                  {seasonPicker}
+                </div>
+                <RecentMatches
+                  key={`${teamId}:${campaign?.name ?? ''}`}
+                  matches={listMatches}
+                  loading={listLoading}
+                  error={listError}
+                />
+              </>
             )}
             {activeTab === 'fixtures' && (
               overviewLoading ? (
@@ -642,6 +699,7 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
             onSelect={setTournament}
             stats={selectedSeasonStats}
             footer={summaryFooter}
+            headerRight={seasonPicker}
           />
         </div>
 

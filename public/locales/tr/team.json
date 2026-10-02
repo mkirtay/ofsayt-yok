@@ -73,5 +73,11 @@
     "emptyGoals": "Henüz golü olan oyuncu yok.",
     "emptyAssists": "Henüz asisti olan oyuncu yok.",
     "error": "Oyuncu istatistikleri yüklenemedi."
+  },
+  "season": {
+    "label": "Sezon",
+    "recentScope": "Son maçlar · tüm turnuvalar",
+    "pastScope": "{{season}} · tüm turnuvalar · {{count}} maç",
+    "pastLoading": "{{season}} · tüm turnuvalar"
   }
 }

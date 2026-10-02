@@ -73,5 +73,11 @@
     "emptyGoals": "No goalscorers yet.",
     "emptyAssists": "No assists yet.",
     "error": "Couldn't load player statistics."
+  },
+  "season": {
+    "label": "Season",
+    "recentScope": "Recent matches · all competitions",
+    "pastScope": "{{season}} · all competitions · {{count}} matches",
+    "pastLoading": "{{season}} · all competitions"
   }
 }
