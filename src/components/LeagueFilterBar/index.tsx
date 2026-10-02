@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { LeagueFilterMode, LeagueFilterState, PickedLeague, CatalogLeague } from '@/utils/leagueFilter';
 import { searchLeagues } from '@/utils/leagueFilter';
 import { useTranslation } from '@/lib/i18n';
@@ -10,13 +10,15 @@ type BarProps = {
   catalog: CatalogLeague[];
   onSelectMode: (mode: LeagueFilterMode) => void;
   onApplyCustom: (picked: PickedLeague[]) => void;
+  /** Aynı kaydırmalı satırın başına eklenen içerik (mobilde maç durumu çipleri, bkz. MatchHubPage). */
+  leading?: ReactNode;
 };
 
 /**
  * Kalıcı lig filtresi chip satırı: Tümü | Süper Lig | 5 Büyük Lig | Liglerim (n) | + Ligler.
  * "Liglerim" yalnızca kayıtlı özel seçim varken görünür. ("Favoriler" sekmesi favori MAÇLARdır — karıştırma.)
  */
-export default function LeagueFilterBar({ state, catalog, onSelectMode, onApplyCustom }: BarProps) {
+export default function LeagueFilterBar({ state, catalog, onSelectMode, onApplyCustom, leading }: BarProps) {
   const { t } = useTranslation('match');
   const [pickerOpen, setPickerOpen] = useState(false);
 
@@ -30,6 +32,7 @@ export default function LeagueFilterBar({ state, catalog, onSelectMode, onApplyC
   return (
     <>
       <div className={styles.bar} role="group" aria-label={t('leagueFilter.group')}>
+        {leading}
         {chips.map((c) => (
           <button
             key={c.mode}

@@ -175,6 +175,52 @@ $hub-fill-height: calc(100vh - var(--header-height) - 56px - 32px - var(--league
   min-width: 0;
 }
 
+// Mobil: maç durumu çipleri lig çipleri satırının başında (MatchStatusChips). Masaüstünde yok (SubHeader sekmeleri).
+.statusChips {
+  display: contents;
+
+  @media (min-width: $bp-desktop) {
+    display: none;
+  }
+}
+
+.statusChip {
+  @include filter-chip;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  scroll-snap-align: start;
+}
+
+.statusChipActive {
+  @include filter-chip-active;
+}
+
+// Canlı sayısı rozeti: yer hep ayrılı (2 haneye kadar) — sayı 0'ken boş ve görünmez, genişlik değişmez.
+.statusCount {
+  min-width: 20px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: $radius-full;
+  background: var(--color-live);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+
+  &[data-empty] {
+    visibility: hidden;
+  }
+}
+
+.statusDivider {
+  flex: none;
+  width: 1px;
+  height: 20px;
+  background: var(--border-subtle);
+}
+
 .emptyAction {
   color: var(--color-action-text);
   font-weight: 600;

@@ -239,14 +239,9 @@ $strip-cell-h: 44px;
 // --- Responsive ---
 
 @include below-desktop {
-  // Mobilde tarih satırı yok (gün şeridi + son hücredeki takvim yeterli); durum sekmeleri ortada.
+  // Mobil üst alan tek satır: tarih satırı ve durum sekmeleri gizli — gün şeridi + son hücredeki takvim yeterli;
+  // durum çipleri lig çipleri satırında (MatchHubPage › MatchStatusChips).
   .inner {
-    height: auto;
-    justify-content: center;
-    padding-top: $spacing-1;
-  }
-
-  .dateNav {
     display: none;
   }
 

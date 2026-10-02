@@ -614,6 +614,13 @@ export default function MatchHubPage({
             catalog={leagueCatalog}
             onSelectMode={leagueFilter.selectMode}
             onApplyCustom={leagueFilter.applyCustom}
+            leading={
+              <MatchStatusChips
+                activeTab={activeTab}
+                liveCount={liveMatches.length}
+                onToggle={(tab) => handleTabChange(activeTab === tab ? 'all' : tab)}
+              />
+            }
           />
         </div>
         <div
@@ -750,5 +757,50 @@ export default function MatchHubPage({
         </div>
       </div>
     </>
+  );
+}
+
+const STATUS_CHIPS: { tab: Exclude<MatchTab, 'all'>; labelKey: string }[] = [
+  { tab: 'live', labelKey: 'subHeader.live' },
+  { tab: 'favorites', labelKey: 'subHeader.favorites' },
+  { tab: 'finished', labelKey: 'subHeader.finished' },
+];
+
+/**
+ * Mobil (< 1024 px): maç durumu çipleri lig çipleriyle aynı kaydırmalı satırda — Canlı (sayıyla) · Favoriler ·
+ * Bitmiş · ayraç. Tek seçimli aç/kapa: seçili çipe tekrar dokununca "Hepsi" (`?tab=` davranışı aynı). Canlı sayısı
+ * rozetinin yeri hep ayrılı (sayı sonradan gelse ya da 0 olsa da çip genişliği zıplamaz). Masaüstünde gizli
+ * (orada SubHeader sekmeleri).
+ */
+function MatchStatusChips({
+  activeTab,
+  liveCount,
+  onToggle,
+}: {
+  activeTab: MatchTab;
+  liveCount: number;
+  onToggle: (tab: Exclude<MatchTab, 'all'>) => void;
+}) {
+  const { t } = useTranslation('match');
+  return (
+    <span className={styles.statusChips} role="group" aria-label={t('subHeader.matchFilter')}>
+      {STATUS_CHIPS.map(({ tab, labelKey }) => (
+        <button
+          key={tab}
+          type="button"
+          className={`${styles.statusChip} ${activeTab === tab ? styles.statusChipActive : ''}`.trim()}
+          aria-pressed={activeTab === tab}
+          onClick={() => onToggle(tab)}
+        >
+          {t(labelKey)}
+          {tab === 'live' ? (
+            <span className={styles.statusCount} aria-hidden={liveCount === 0} data-empty={liveCount === 0 || undefined}>
+              {liveCount > 0 ? liveCount : ''}
+            </span>
+          ) : null}
+        </button>
+      ))}
+      <span className={styles.statusDivider} aria-hidden="true" />
+    </span>
   );
 }
