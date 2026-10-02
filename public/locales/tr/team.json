@@ -9,14 +9,8 @@
     "error": "Fikstür yüklenemedi.",
     "timeTbd": "Belirsiz"
   },
-  "nextMatchLabel": "Sıradaki maç:",
   "compare": "Karşılaştır",
   "header": {
-    "standing": "{{competition}} · {{rank}}. sıra · {{points}} puan",
-    "coach": "Teknik direktör: {{name}}",
-    "venue": "{{name}}",
-    "venueWithCity": "{{name}}, {{city}}",
-    "venueCapacity": "{{capacity}} kişilik",
     "rankShort": "{{rank}}.",
     "rankTitle": "{{rank}}. sıra",
     "pointsShort": "{{points}} P",
@@ -25,9 +19,6 @@
     "venueLabel": "Stadyum"
   },
   "form": {
-    "label": "Son {{count}}",
-    "scope": "Tüm turnuvalar",
-    "aria": "Son {{count}} maçın sonucu, tüm turnuvalar: {{results}}",
     "empty": "Henüz oynanmış maç yok",
     "W": "G",
     "D": "B",

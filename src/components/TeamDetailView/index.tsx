@@ -7,7 +7,7 @@ import { useQueries, useQuery } from '@tanstack/react-query';
 import CompareTeamPicker from '@/components/CompareTeamPicker';
 import MatchCompetitionStandings from '@/components/MatchCompetitionStandings';
 import MatchCompetitionTopScorers from '@/components/MatchCompetitionTopScorers';
-import { PanelSkeleton, SkeletonBlock } from '@/components/Skeleton';
+import { PanelSkeleton } from '@/components/Skeleton';
 import { useTopScorersWithAppearances } from '@/hooks/useTopScorerAppearances';
 import { useTeamOverview } from '@/hooks/useTeamOverview';
 import { useI18n, useTranslation } from '@/lib/i18n';
@@ -42,13 +42,15 @@ import { fixtureDateHeading } from '@/utils/fixtureDateLabel';
 import {
   buildTeamFixtureGroups,
   fixtureKickoffLabel,
-  nextFixtureWhen,
   nextTeamFixture,
   teamOpponent,
 } from '@/utils/teamFixtures';
 import styles from './teamDetailView.module.scss';
 import TeamLogo from '@/components/TeamLogo';
-import TeamHeader from './TeamHeader';
+import TeamHeaderCard, { type HeaderLiveMatch, type HeaderNextMatch, type HeaderStanding } from './TeamHeaderCard';
+import { countdownLabel, nextMatchCountdown, recentMatchStatus } from './recentMatchLabels';
+import { istanbulMatchDate } from '@/utils/fixtureDateGroups';
+import { formatFixtureDate } from '@/utils/fixtureDateLabel';
 import RecentMatches from './RecentMatches';
 import SeasonSummaryCard, { type TournamentTab } from './SeasonSummaryCard';
 import TeamScorersCard from './TeamScorersCard';
@@ -301,7 +303,6 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
     [t]
   );
   const nextFixture = nextTeamFixture(fixtureGroups);
-  const nextOpponent = nextFixture ? teamOpponent(nextFixture, teamId)?.opponent : undefined;
   const headerForm = useMemo(() => teamForm(recentMatches, teamId, 5), [recentMatches, teamId]);
 
   const last10 = useMemo(() => recentMatches.slice(0, 10), [recentMatches]);
@@ -319,10 +320,6 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
     const comp = competitions.find((c) => String(c.id) === selectedCompetitionId);
     return comp ? leagueNameById(comp.id, comp.name, tl) : '';
   }, [competitions, selectedCompetitionId, tl]);
-  const standingText =
-    stats.standing && selectedCompShort
-      ? t('header.standing', { competition: selectedCompShort, rank: stats.standing.rank, points: stats.standing.points })
-      : null;
 
   /* ─── Sezon seçici (Son Maçlar + Sezon Özeti + Takım Krallığı ortak) ─── */
   // Sayfada seçili sezon URL'de (`?sezon=2025-2026`, güncel sezonda yok); ana sayfa panelinde yerel durum.
@@ -466,24 +463,55 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
     [sidelinedQuery.data, todayIso],
   );
 
-  const coach = overviewQuery.data?.coach;
-  const venue = overviewQuery.data?.venue;
-  const headerExtra = overviewLoading ? (
-    <SkeletonBlock width="65%" height={11} />
-  ) : coach || venue ? (
-    <span className={styles.teamExtra}>
-      {coach ? <span className={styles.teamExtraItem}>{t('header.coach', { name: coach.name })}</span> : null}
-      {coach && venue ? <span aria-hidden="true">·</span> : null}
-      {venue ? (
-        <span
-          className={styles.teamExtraItem}
-          title={venue.capacity ? t('header.venueCapacity', { capacity: venue.capacity.toLocaleString('tr-TR') }) : undefined}
-        >
-          {venue.city ? t('header.venueWithCity', { name: venue.name, city: venue.city }) : venue.name}
-        </span>
-      ) : null}
-    </span>
-  ) : null;
+
+  /* ─── Üst kart (TeamHeaderCard) verisi ─── */
+  const headerStanding: HeaderStanding | null = useMemo(() => {
+    if (!stats.standing || !selectedCompShort) return null;
+    const comp = competitions.find((c) => String(c.id) === selectedCompetitionId);
+    const logo = comp?.logo ?? (comp ? uefaCompetitionLogoSrcById(comp.id) : undefined);
+    return {
+      competition: selectedCompShort,
+      ...(logo ? { competitionLogo: logo } : {}),
+      logoBackdrop: comp ? competitionLogoNeedsBackdrop(comp.id) : false,
+      rank: Number(stats.standing.rank),
+      points: Number(stats.standing.points),
+    };
+  }, [stats.standing, selectedCompShort, competitions, selectedCompetitionId]);
+
+  const headerLive: HeaderLiveMatch | null = useMemo(() => {
+    const m = recentMatches.find((x) => x.status === 'IN PLAY' || (x.status === 'HALF TIME BREAK' && !x.state_code));
+    if (!m) return null;
+    const st = recentMatchStatus(m);
+    return {
+      href: buildMatchHref(m),
+      minute: st.kind === 'special' ? '' : st.text,
+      home: { name: m.home?.name ?? '', ...(m.home?.logo ? { logo: m.home.logo } : {}) },
+      away: { name: m.away?.name ?? '', ...(m.away?.logo ? { logo: m.away.logo } : {}) },
+      score: m.scores?.score ?? '0-0',
+    };
+  }, [recentMatches]);
+
+  const headerNext: HeaderNextMatch | null = useMemo(() => {
+    if (!nextFixture) return null;
+    const side = teamOpponent(nextFixture, teamId);
+    if (!side) return null;
+    const time = nextFixture.time_tbd || !nextFixture.scheduled ? null : utcTimeToTr(nextFixture.scheduled, nextFixture.date);
+    const countdown = countdownLabel(nextMatchCountdown(nextFixture, todayIso), time, t);
+    const comp = nextFixture.competition;
+    const compLogo = comp?.logo ?? (comp?.id ? uefaCompetitionLogoSrcById(comp.id) : undefined);
+    return {
+      href: buildMatchHref(nextFixture),
+      opponent: side.opponent.name,
+      ...(side.opponent.logo ? { opponentLogo: side.opponent.logo } : {}),
+      day: formatFixtureDate(istanbulMatchDate(nextFixture), locale),
+      time,
+      competition: comp?.id ? leagueNameById(comp.id, comp.name, tl) : '',
+      ...(compLogo ? { competitionLogo: compLogo } : {}),
+      logoBackdrop: comp?.id ? competitionLogoNeedsBackdrop(comp.id) : false,
+      countdown,
+      isHome: side.isHome,
+    };
+  }, [nextFixture, teamId, todayIso, locale, t, tl]);
 
   const teamPageTitle = `${teamInfo.name} — Takım Detayı | Ofsayt Yok`;
   const teamPageDescription = `${teamInfo.name} takımının son maçları, kadro bilgileri ve lig istatistikleri.`;
@@ -505,21 +533,19 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
       </Head>
       ) : null}
 
-      <TeamHeader
+      <TeamHeaderCard
         loading={overviewLoading}
         name={teamInfo.name}
         logo={teamInfo.logo}
-        standingText={standingText}
+        standing={headerStanding}
         standingLoading={standingsLoading || (Boolean(selectedCompetitionId) && !table && standingsCompetitionIdNum != null)}
-        nextMatch={
-          nextFixture && nextOpponent?.name
-            ? { opponent: nextOpponent.name, when: nextFixtureWhen(nextFixture, todayIso, locale, dayLabels) }
-            : null
-        }
+        next={headerNext}
+        live={headerLive}
         form={headerForm}
+        coach={overviewQuery.data?.coach?.name}
+        venue={overviewQuery.data?.venue}
         compareOpen={compareOpen}
         onToggleCompare={() => setCompareOpen((o) => !o)}
-        extraLine={headerExtra}
       />
 
       {/* ═══ Compare Panel ═══ */}

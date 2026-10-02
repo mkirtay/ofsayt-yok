@@ -20,153 +20,6 @@
   --tdv-pad: #{$spacing-3};
 }
 
-.loading {
-  text-align: center;
-  padding: $spacing-8;
-  color: $color-text-secondary;
-}
-
-/* ═══ Team Header ═══ */
-// Satır yükseklikleri SABİT: veriler (takım isteği, puan durumu) farklı anlarda gelir; iskelet aynı satırları
-// kullanır (TeamHeader.tsx) → başlık hiç büyümez/küçülmez (CLS 0).
-
-.teamHeader {
-  display: flex;
-  align-items: center;
-  gap: $spacing-4;
-  background-color: $color-surface;
-  padding: var(--tdv-pad);
-  border-radius: $radius-md;
-  box-shadow: $shadow-surface;
-  border: 1px solid $color-border;
-  min-width: 0;
-}
-
-.teamLogo {
-  width: 56px;
-  height: 56px;
-  object-fit: contain;
-  flex-shrink: 0;
-}
-
-.logoPlaceholder {
-  width: 56px;
-  height: 56px;
-  background-color: $color-bg;
-  border-radius: $radius-sm;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 22px;
-  font-weight: 700;
-  color: $color-primary;
-  border: 1px solid $color-border;
-  flex-shrink: 0;
-}
-
-.teamHeaderInfo {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-  flex: 1;
-}
-
-%header-line {
-  display: flex;
-  align-items: center;
-  min-width: 0;
-  overflow: hidden;
-  white-space: nowrap;
-}
-
-.headerLineName {
-  @extend %header-line;
-  height: 28px;
-}
-
-.headerLineMeta {
-  @extend %header-line;
-  height: 18px;
-}
-
-.headerLineNext {
-  @extend %header-line;
-  height: 16px;
-}
-
-.headerLineForm {
-  @extend %header-line;
-  height: 22px;
-  margin-top: 2px;
-  gap: $spacing-2;
-}
-
-.headerLineExtra {
-  @extend %header-line;
-  height: 16px;
-}
-
-.teamName {
-  font-size: 22px;
-  line-height: 28px;
-  font-weight: 700;
-  color: $color-text;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  min-width: 0;
-}
-
-.teamMeta {
-  font-size: 13px;
-  line-height: 18px;
-  color: $color-text-secondary;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  min-width: 0;
-}
-
-// "Sıradaki maç: <rakip> · <gün saat>" — tek satır; dar başlıkta rakip adı kısalır, saat hiç kesilmez.
-.teamNextMatch {
-  display: flex;
-  min-width: 0;
-  gap: 4px;
-  font-size: 12px;
-  line-height: 16px;
-  color: $color-text-secondary;
-}
-
-.teamNextLabel {
-  flex-shrink: 0;
-}
-
-.teamNextOpponent {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-weight: 600;
-  color: $color-text;
-}
-
-.teamNextWhen {
-  flex-shrink: 0;
-}
-
-.headerFormRow {
-  display: inline-flex;
-  gap: 4px;
-  flex-shrink: 0;
-}
-
-.headerFormScope {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-size: 11px;
-  color: $color-text-secondary;
-}
-
 /* ═══ Layout ═══ */
 
 .layoutSplit {
@@ -212,7 +65,6 @@
 }
 
 /* ═══ Tabs ═══ */
-
 .tabs {
   display: flex;
   gap: $spacing-2;
@@ -259,11 +111,6 @@
 }
 
 /* ═══ Match List ═══ */
-
-.matchesList {
-  display: flex;
-  flex-direction: column;
-}
 
 .matchRow {
   display: flex;
@@ -331,7 +178,6 @@
   font-size: 13px;
   flex-shrink: 0;
 }
-
 
 /* ═══ Son Maçlar (RecentMatches) ═══ */
 // Araç satırı (kapsam + sezon seçici): her durumda aynı yükseklik (seçici yokken de).
@@ -458,7 +304,6 @@ $recent-footer-h: 44px;
 /* ═══ Fixtures (Fikstür) ═══ */
 // Gün başlığı UEFA fikstür görünümündeki çubukla aynı dil (MatchList `.virtualHeaderBar` + `.virtualDateBar`):
 // muted zemin + sol kenarda marka rengi şerit.
-
 .fixtureGroups {
   display: flex;
   flex-direction: column;
@@ -536,7 +381,6 @@ $recent-footer-h: 44px;
 }
 
 /* ═══ Squad ═══ */
-
 .squadGroup + .squadGroup {
   margin-top: $spacing-4;
 }
@@ -678,7 +522,6 @@ $recent-footer-h: 44px;
 }
 
 /* ═══ Stats Card ═══ */
-
 .statsCard {
   background-color: $color-surface;
   border-radius: $radius-md;
@@ -714,79 +557,14 @@ $recent-footer-h: 44px;
   color: $color-text;
 }
 
-.formPill {
-  @include form-badge;
-}
-
-.formWin {
-  @include form-badge-win;
-}
-
-.formDraw {
-  @include form-badge-draw;
-}
-
-.formLoss {
-  @include form-badge-loss;
-}
-
 /* ═══ Empty ═══ */
-
 .empty {
   text-align: center;
   padding: $spacing-4;
   color: $color-text-secondary;
 }
 
-/* ═══ Responsive ═══ */
-
-@media (max-width: $bp-md) {
-  .teamName {
-    font-size: 18px;
-  }
-
-}
-
-// ── Compare toggle + panel ──
-
-.compareToggleBtn {
-  flex-shrink: 0;
-  align-self: flex-start;
-  padding: $spacing-1 $spacing-3;
-  font-size: 12px;
-  font-weight: 700;
-  border: 1px solid $color-primary;
-  border-radius: $radius-full;
-  background: transparent;
-  color: var(--color-action-text);
-  cursor: pointer;
-  transition: background-color 0.15s, color 0.15s;
-  white-space: nowrap;
-
-  &:hover {
-    background: $color-primary;
-    color: #fff;
-  }
-}
-
-.compareToggleText {
-  margin-left: 4px;
-}
-
-@media (max-width: #{$bp-sm - 1px}) {
-  .compareToggleBtn {
-    padding: $spacing-1 $spacing-2;
-  }
-
-  .compareToggleText {
-    display: none;
-  }
-}
-
-.compareToggleBtnOpen {
-  background: $color-primary;
-  color: #fff;
-}
+// ── Karşılaştırma paneli ──
 
 .comparePanel {
   background: $color-surface;
@@ -799,47 +577,8 @@ $recent-footer-h: 44px;
   border-top-right-radius: 0;
 }
 
-@media (max-width: $bp-sm) {
-  .teamHeader {
-    padding: $spacing-3;
-    gap: $spacing-3;
-  }
-
-  .teamLogo,
-  .logoPlaceholder {
-    width: 44px;
-    height: 44px;
-    font-size: 18px;
-  }
-
-}
-
-/* ═══ Başlık: teknik direktör / stadyum ═══ */
-
-.teamExtra {
-  display: flex;
-  gap: 4px;
-  min-width: 0;
-  font-size: 12px;
-  line-height: 16px;
-  color: $color-text-secondary;
-}
-
-.teamExtraItem {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-
-  // Teknik direktör adı tam kalır; dar başlıkta stadyum adı kısalır.
-  &:first-child {
-    flex-shrink: 0;
-  }
-}
-
 /* ═══ Sezon Özeti ═══ */
 // Sabit yükseklik: başlık 36 + sekmeler 32 + tablo (başlık 26 + 3 × 32) + alt satır 20 → yükleniyor / boş / dolu aynı.
-
 .summaryTabs {
   display: flex;
   align-items: center;
@@ -972,7 +711,6 @@ $recent-footer-h: 44px;
 }
 
 /* ═══ Takım Krallığı ═══ */
-
 .segmented {
   display: inline-flex;
   flex-shrink: 0;
@@ -1202,7 +940,6 @@ $recent-footer-h: 44px;
 }
 
 /* ═══ Sakat ve Cezalılar ═══ */
-
 .sidelinedText {
   display: flex;
   flex-direction: column;

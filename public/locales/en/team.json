@@ -9,14 +9,8 @@
     "error": "Couldn't load fixtures.",
     "timeTbd": "TBD"
   },
-  "nextMatchLabel": "Next match:",
   "compare": "Compare",
   "header": {
-    "standing": "{{competition}} · Rank {{rank}} · {{points}} pts",
-    "coach": "Manager: {{name}}",
-    "venue": "{{name}}",
-    "venueWithCity": "{{name}}, {{city}}",
-    "venueCapacity": "Capacity {{capacity}}",
     "rankShort": "#{{rank}}",
     "rankTitle": "Rank {{rank}}",
     "pointsShort": "{{points}} pts",
@@ -25,9 +19,6 @@
     "venueLabel": "Stadium"
   },
   "form": {
-    "label": "Last {{count}}",
-    "scope": "All competitions",
-    "aria": "Results of the last {{count}} matches, all competitions: {{results}}",
     "empty": "No matches played yet",
     "W": "W",
     "D": "D",
