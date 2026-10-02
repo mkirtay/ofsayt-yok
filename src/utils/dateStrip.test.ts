@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildDateStrip, buildDateStripWindow, buildDateStripWithSelected, isoDayOfMonth, shiftIsoDate, stripHasToday, todayIsoIstanbul } from './dateStrip';
+import { buildDateStrip, buildDateStripWindow, isoDayOfMonth, shiftIsoDate, stripHasToday, todayIsoIstanbul } from './dateStrip';
 
 describe('shiftIsoDate', () => {
   it('ay/yıl sınırlarını doğru geçer', () => {
@@ -40,20 +40,6 @@ describe('todayIsoIstanbul / rozet', () => {
   it('rozet günü sabit değil, verilen tarihten türetilir', () => {
     expect(isoDayOfMonth(todayIsoIstanbul(new Date('2026-09-19T10:00:00Z')))).toBe(19);
     expect(isoDayOfMonth(todayIsoIstanbul(new Date('2026-03-04T10:00:00Z')))).toBe(4);
-  });
-});
-
-describe('buildDateStripWithSelected', () => {
-  it('seçili gün şerit içindeyse aynen döner', () => {
-    expect(buildDateStripWithSelected('2026-09-19', '2026-09-20')).toHaveLength(5);
-  });
-  it('dışarıdaki geçmiş gün başa, gelecek gün sona eklenir', () => {
-    const past = buildDateStripWithSelected('2026-09-19', '2026-09-01');
-    expect(past).toHaveLength(6);
-    expect(past[0]).toMatchObject({ iso: '2026-09-01', isSelected: true });
-    const future = buildDateStripWithSelected('2026-09-19', '2026-10-01');
-    expect(future).toHaveLength(6);
-    expect(future[5]).toMatchObject({ iso: '2026-10-01', isSelected: true });
   });
 });
 

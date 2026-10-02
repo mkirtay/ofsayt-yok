@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { buildDateStripWithSelected, isoDayOfMonth, shiftIsoDate, todayIsoIstanbul } from '@/utils/dateStrip';
+import { buildDateStripWindow, isoDayOfMonth, shiftIsoDate, stripHasToday, todayIsoIstanbul } from '@/utils/dateStrip';
 import { useTranslation, useI18n } from '@/lib/i18n';
 import Container from '../Container';
 
@@ -46,8 +46,16 @@ export default function SubHeader({
     });
   }, [selectedDate, dateLocale]);
 
-  const [calendarOpen, setCalendarOpen] = useState(false);
+  // Takvim iki yerden açılır: masaüstünde tarih satırı, mobilde şeridin son hücresi (hangisiyse panel onun yanında).
+  const [calendarFrom, setCalendarFrom] = useState<'nav' | 'strip' | null>(null);
+  const calendarOpen = calendarFrom === 'nav';
   const triggerRef = useRef<HTMLDivElement>(null);
+  const stripCalendarRef = useRef<HTMLButtonElement>(null);
+  const toggleCalendar = (from: 'nav' | 'strip') => setCalendarFrom((v) => (v === from ? null : from));
+  const selectFromCalendar = (date: string) => {
+    onDateChange(date);
+    setCalendarFrom(null);
+  };
 
   // Bugünün tarihi mount'ta çözülür (statik prerender'da bayat gün / hydration uyuşmazlığı olmasın); sunucunun
   // ürettiği gün verildiyse ilk render onunla (sunucu = istemci).
@@ -59,15 +67,19 @@ export default function SubHeader({
     return () => clearInterval(id);
   }, []);
 
+  // Seçili gün bugün ±2 dışındaysa (takvimden) pencere o güne kayar; bugün yoksa "Bugün" kısayolu çıkar.
   const strip = useMemo(
-    () => (todayIso ? buildDateStripWithSelected(todayIso, selectedDate) : []),
+    () => (todayIso ? buildDateStripWindow(todayIso, selectedDate) : []),
     [todayIso, selectedDate],
   );
+  const showTodayShortcut = strip.length > 0 && !stripHasToday(strip);
   const stripRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    // Seçili gün şeritte ortalansın
-    const el = stripRef.current?.querySelector<HTMLElement>('[aria-current="date"]');
-    el?.scrollIntoView?.({ inline: 'center', block: 'nearest' });
+    // Seçili gün şeritte ortalansın — yalnız yatay kaydırma (scrollIntoView sayfayı dikeyde de oynatabiliyordu).
+    const box = stripRef.current;
+    const el = box?.querySelector<HTMLElement>('[aria-current="date"]');
+    if (!box || !el || box.scrollWidth <= box.clientWidth) return;
+    box.scrollTo?.({ left: el.offsetLeft - (box.clientWidth - el.clientWidth) / 2 });
   }, [strip]);
   const weekdayFmt = useMemo(
     () => new Intl.DateTimeFormat(dateLocale, { weekday: 'short', timeZone: 'UTC' }),
@@ -99,7 +111,7 @@ export default function SubHeader({
             <div
               ref={triggerRef}
               className={styles.dateBlock}
-              onClick={() => setCalendarOpen((v) => !v)}
+              onClick={() => toggleCalendar('nav')}
               onPointerEnter={() => void loadCalendar()}
               onFocus={() => void loadCalendar()}
               onTouchStart={() => void loadCalendar()}
@@ -107,29 +119,17 @@ export default function SubHeader({
               tabIndex={0}
               aria-expanded={calendarOpen}
               onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') setCalendarOpen((v) => !v);
+                if (e.key === 'Enter' || e.key === ' ') toggleCalendar('nav');
               }}
             >
               <span className={styles.dateLabel}>{displayDate}</span>
-              <span className={styles.calendarIcon} aria-hidden="true">
-                <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="4.5" width="18" height="16" rx="3" />
-                  <path d="M3 9.5h18M8 2.5v4M16 2.5v4" />
-                </svg>
-                {/* Gerçek güncel gün (sabit değil): mount'a kadar boş */}
-                <span className={styles.calendarBadge} data-testid="calendar-day-badge">
-                  {todayIso ? isoDayOfMonth(todayIso) : ''}
-                </span>
-              </span>
+              <CalendarIcon todayIso={todayIso} testId="calendar-day-badge" />
             </div>
             {calendarOpen && (
               <Calendar
                 selectedDate={selectedDate}
-                onSelect={(date) => {
-                  onDateChange(date);
-                  setCalendarOpen(false);
-                }}
-                onClose={() => setCalendarOpen(false)}
+                onSelect={selectFromCalendar}
+                onClose={() => setCalendarFrom(null)}
                 anchorRef={triggerRef}
               />
             )}
@@ -158,9 +158,20 @@ export default function SubHeader({
         </nav>
       </Container>
 
-      {/* Mobil: yatay kaydırmalı bugün ±2 günlük şerit (ok+tarih navigasyonuna EK) */}
+      {/* Mobil (< 1024): tek satır — [Bugün kısayolu] gün şeridi [takvim]. Tarih satırı ve sekmeler mobilde gizli
+          (durum çipleri lig çipleriyle aynı satırda, bkz. MatchHubPage). */}
       {strip.length > 0 && (
         <Container className={styles.stripWrap}>
+          {showTodayShortcut ? (
+            <button
+              type="button"
+              className={styles.stripToday}
+              onClick={() => todayIso && onDateChange(todayIso)}
+              aria-label={t('subHeader.backToToday')}
+            >
+              {t('subHeader.today')}
+            </button>
+          ) : null}
           <div className={styles.dateStrip} ref={stripRef} role="tablist" aria-label={t('subHeader.dayStrip')}>
             {strip.map((d) => (
               <button
@@ -177,8 +188,47 @@ export default function SubHeader({
               </button>
             ))}
           </div>
+          <div className={styles.stripCalendarWrap}>
+            <button
+              ref={stripCalendarRef}
+              type="button"
+              className={styles.stripCalendar}
+              aria-label={t('subHeader.openCalendar')}
+              aria-haspopup="dialog"
+              aria-expanded={calendarFrom === 'strip'}
+              onClick={() => toggleCalendar('strip')}
+              onPointerEnter={() => void loadCalendar()}
+              onFocus={() => void loadCalendar()}
+              onTouchStart={() => void loadCalendar()}
+            >
+              <CalendarIcon todayIso={todayIso} />
+            </button>
+            {calendarFrom === 'strip' && (
+              <Calendar
+                selectedDate={selectedDate}
+                onSelect={selectFromCalendar}
+                onClose={() => setCalendarFrom(null)}
+                anchorRef={stripCalendarRef}
+              />
+            )}
+          </div>
         </Container>
       )}
     </div>
+  );
+}
+
+/** Takvim ikonu + içinde bugünün günü (mount'a kadar boş — statik prerender'da bayat gün olmasın). */
+function CalendarIcon({ todayIso, testId }: { todayIso: string | null; testId?: string }) {
+  return (
+    <span className={styles.calendarIcon} aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="4.5" width="18" height="16" rx="3" />
+        <path d="M3 9.5h18M8 2.5v4M16 2.5v4" />
+      </svg>
+      <span className={styles.calendarBadge} data-testid={testId}>
+        {todayIso ? isoDayOfMonth(todayIso) : ''}
+      </span>
+    </span>
   );
 }

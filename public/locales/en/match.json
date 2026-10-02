@@ -28,7 +28,9 @@
     "nextDay": "Next day",
     "matchFilter": "Match filter",
     "today": "Today",
-    "dayStrip": "Select day"
+    "dayStrip": "Select day",
+    "backToToday": "Back to today",
+    "openCalendar": "Open calendar"
   },
   "analysis": {
     "title": "Match Analysis & Prediction",

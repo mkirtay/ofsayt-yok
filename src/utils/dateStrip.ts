@@ -50,27 +50,6 @@ export function buildDateStrip(todayIso: string, selectedIso: string, radius = 2
 }
 
 /**
- * `buildDateStrip` + seçili gün şeridin dışındaysa (takvimden uzak bir gün seçilmişse)
- * onu doğru yöne ekler — kullanıcı hangi günde olduğunu şeritte hep görür.
- */
-export function buildDateStripWithSelected(todayIso: string, selectedIso: string, radius = 2): DateStripItem[] {
-  const strip = buildDateStrip(todayIso, selectedIso, radius);
-  if (strip.some((i) => i.isSelected)) return strip;
-  const offset = Math.round(
-    (new Date(`${selectedIso}T12:00:00Z`).getTime() - new Date(`${todayIso}T12:00:00Z`).getTime()) / 86_400_000,
-  );
-  const extra: DateStripItem = {
-    iso: selectedIso,
-    day: isoDayOfMonth(selectedIso),
-    weekday: new Date(`${selectedIso}T12:00:00Z`).getUTCDay(),
-    offset,
-    isToday: false,
-    isSelected: true,
-  };
-  return offset < 0 ? [extra, ...strip] : [...strip, extra];
-}
-
-/**
  * Mobil şerit penceresi: seçili gün bugün ±radius içindeyse bugünü merkez alan pencere (değişmez); dışındaysa
  * (takvimden uzak gün) pencere o günün ±radius'una KAYAR — şerit hep seçili günü ortada gösterir. Bugün bu
  * durumda pencerede olmayabilir (bkz. `stripHasToday`, "Bugün" kısayolu).

@@ -28,7 +28,9 @@
     "nextDay": "Sonraki gün",
     "matchFilter": "Maç filtresi",
     "today": "Bugün",
-    "dayStrip": "Gün seçimi"
+    "dayStrip": "Gün seçimi",
+    "backToToday": "Bugüne dön",
+    "openCalendar": "Takvimi aç"
   },
   "analysis": {
     "title": "Maç Analizi & Tahmin",

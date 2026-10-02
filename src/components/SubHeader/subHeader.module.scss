@@ -201,40 +201,92 @@
   }
 }
 
+// Mobil şeridin "Bugün" kısayolu ve son hücredeki takvim (masaüstünde şerit yok → görünmez).
+// Dokunma alanı en az 44 px (mobil şerit satırının yüksekliği de bu).
+$strip-cell-h: 44px;
+
+.stripToday,
+.stripCalendar {
+  flex: none;
+  min-height: $strip-cell-h;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: $radius-md;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-page);
+  transition: $transition-base;
+}
+
+.stripToday {
+  padding: 0 $spacing-3;
+  font-size: var(--fs-micro);
+  font-weight: 700;
+  color: var(--color-action-text);
+}
+
+.stripCalendar {
+  width: $strip-cell-h;
+  color: var(--text-secondary);
+}
+
+// Takvim paneli (absolute) hücreye değil tüm şerit satırına göre konumlanır → ekranda ortalı, taşmaz.
+.stripCalendarWrap {
+  flex: none;
+  display: flex;
+}
+
 // --- Responsive ---
 
 @include below-desktop {
-  .stripWrap {
-    display: block;
-  }
-
+  // Mobilde tarih satırı yok (gün şeridi + son hücredeki takvim yeterli); durum sekmeleri ortada.
   .inner {
-    flex-wrap: wrap;
     height: auto;
-    padding-top: $spacing-2;
-    padding-bottom: $spacing-2;
-    gap: $spacing-2;
+    justify-content: center;
+    padding-top: $spacing-1;
   }
 
   .dateNav {
-    order: 1;
+    display: none;
+  }
+
+  // Satır: 4 + 44 + 4 px (dolgu dış kapta — `Container` kendi dolgusunu yazıyor).
+  .subHeader {
+    margin-bottom: $spacing-2;
+    padding: $spacing-1 0;
+  }
+
+  .stripWrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: $spacing-1;
+  }
+
+  .dateStrip {
     flex: 1 1 auto;
+    min-width: 0;
+    gap: $spacing-1;
+    padding: 0;
   }
 
-  .tabs {
-    order: 3;
-    width: 100%;
-    justify-content: center;
-  }
-}
-
-@media (max-width: $bp-sm) {
-  .tab {
-    padding: 5px 12px;
-    font-size: 13px;
+  // Tek satır hücre: "Çar 30" — yükseklik dokunma alanı kadar (44 px).
+  .stripItem {
+    flex: 1 0 auto;
+    flex-direction: row;
+    gap: 4px;
+    min-width: 0;
+    min-height: $strip-cell-h;
+    padding: 0 6px;
   }
 
-  .dateLabel {
-    font-size: 13px;
+  .stripWeekday {
+    font-size: var(--fs-meta);
+    text-transform: none;
+    letter-spacing: 0;
+  }
+
+  .stripDay {
+    font-size: var(--fs-meta);
   }
 }
