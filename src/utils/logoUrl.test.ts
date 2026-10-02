@@ -52,7 +52,6 @@ describe('logoSrc', () => {
   it('off: orijinal; Sportmonks dışı kaynak ve boş değer aynen', () => {
     expect(logoSrc(TEAM, 16, 'off')).toBe(TEAM);
     expect(logoSrc('/images/uefa.svg', 20, 'self')).toBe('/images/uefa.svg');
-    expect(logoSrc('/api/livescore/countries/flag?country_id=1', 22, 'self')).toBe('/api/livescore/countries/flag?country_id=1');
     expect(logoSrc(null, 16)).toBeNull();
     expect(logoSrc('', 16)).toBeNull();
   });
