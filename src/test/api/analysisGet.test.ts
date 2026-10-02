@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 const db = vi.hoisted(() => ({
-  analysis: new Map<string, { id: string; matchId: string }>(),
+  analysis: new Map<string, { id: string; matchId: string; bettingTips?: unknown }>(),
   buildCalls: 0,
 }));
 
@@ -70,7 +70,18 @@ describe('GET /api/matches/[id]/analysis', () => {
     db.analysis.set('19000002', { id: 'a1', matchId: '19000002' });
     const res = await call('19000002');
     expect(res.statusCode).toBe(200);
-    expect(res.body).toEqual({ analysis: { id: 'a1', matchId: '19000002' }, predictionRecord: null });
+    expect(res.body).toEqual({
+      analysis: { id: 'a1', matchId: '19000002', bettingTips: [], scenarios: [] },
+      predictionRecord: null,
+    });
     expect(db.buildCalls).toBe(0);
+  });
+
+  it('eski kayıt: bahis maddeleri yanıtta yok, senaryolar ayrı alanda', async () => {
+    const scenario = { metric: '3+ gol', probability: 55, confidence: 'medium', reasoning: 'r' };
+    const oldTip = { market: '1X2', pick: 'MS 1', confidence: 'high', reasoning: 'r', valueBet: true, avoid: false };
+    db.analysis.set('19000003', { id: 'a2', matchId: '19000003', bettingTips: [oldTip, scenario] });
+    const res = await call('19000003');
+    expect(res.body.analysis).toEqual({ id: 'a2', matchId: '19000003', bettingTips: [], scenarios: [scenario] });
   });
 });
