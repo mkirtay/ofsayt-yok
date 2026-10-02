@@ -21,6 +21,7 @@ import AccountMenu from './AccountMenu';
 import NotificationBell from './NotificationBell';
 import { lockBodyScroll } from '@/utils/scrollLock';
 import { MOBILE_LAYOUT_QUERY } from '@/config/breakpoints';
+import { WORLD_CUP_PAGE_ENABLED } from '@/config/worldCup';
 import styles from './header.module.scss';
 
 export default function Header() {
@@ -133,7 +134,8 @@ export default function Header() {
         <HeaderSearch />
         <div className={styles.right}>
           <div className={styles.headerNavPills}>
-            {isWorldCupTheme && (
+            {/* /world-cup kapalıyken bağlantı yok (config/worldCup.ts › WORLD_CUP_PAGE_ENABLED). */}
+            {WORLD_CUP_PAGE_ENABLED && isWorldCupTheme && (
               <Link
                 href="/world-cup"
                 className={styles.worldCupMarkLink}

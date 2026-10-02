@@ -1,3 +1,4 @@
+import type { GetServerSideProps } from 'next';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Head from 'next/head';
 import { useSession } from 'next-auth/react';
@@ -19,6 +20,7 @@ import {
 import {
   resolveWorldCupSeasonYear,
   WORLD_CUP_COMPETITION_ID,
+  WORLD_CUP_PAGE_ENABLED,
 } from '@/config/worldCup';
 import { buildWorldCupBracketRounds, filterMatchesBySeasonYear } from '@/utils/worldCupBracket';
 import {
@@ -47,6 +49,13 @@ type SidebarTab = 'standings' | 'groups' | 'news';
 
 const WORLD_CUP_ID = String(WORLD_CUP_COMPETITION_ID);
 const FAV_TEAMS_KEY = 'oy_wc_fav_teams';
+
+/** Sayfa kapalıyken (bkz. `WORLD_CUP_PAGE_ENABLED`) ana sayfaya geçici (302) yönlendirme; CDN 1 saat tutar. */
+export const getServerSideProps: GetServerSideProps = async ({ res }) => {
+  if (WORLD_CUP_PAGE_ENABLED) return { props: {} };
+  res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
+  return { redirect: { destination: '/', statusCode: 302 } };
+};
 
 export default function WorldCupPage() {
   const { data: session } = useSession();

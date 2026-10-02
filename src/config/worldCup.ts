@@ -1,5 +1,11 @@
 export const WORLD_CUP_COMPETITION_ID = 362;
 
+/**
+ * /world-cup sayfası şimdilik kapalı: Dünya Kupası Sportmonks planımızda yok, sayfa boş geliyordu. Kapalıyken sayfa
+ * ana sayfaya 302 ile yönlenir ve header'daki FIFA bağlantısı çizilmez (kod duruyor; plana eklenince `true`).
+ */
+export const WORLD_CUP_PAGE_ENABLED = false;
+
 /** `seasons/list` içinde "2026" satırının `id` değeri (varsayılan sezon). */
 export const WORLD_CUP_DEFAULT_SEASON_ID = 52;
 
