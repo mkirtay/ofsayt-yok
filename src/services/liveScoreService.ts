@@ -1292,6 +1292,8 @@ export type TeamCompetitionRow = {
   name: string;
   logo?: string;
   countryId?: number;
+  /** Sportmonks `league.country.image_path` — lig logosu yoksa bayrak yedeği. */
+  countryFlag?: string;
 };
 
 export const getTeamCompetitions = (matches: Match[], teamId: string): TeamCompetitionRow[] => {
@@ -1311,6 +1313,7 @@ export const getTeamCompetitions = (matches: Match[], teamId: string): TeamCompe
       name: compName,
       logo: m.competition?.logo,
       countryId: m.country?.id,
+      ...(m.country?.flag ? { countryFlag: m.country.flag } : {}),
     });
   });
 

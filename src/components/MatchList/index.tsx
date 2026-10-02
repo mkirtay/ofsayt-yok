@@ -13,7 +13,6 @@ import type { TurkeyTeamTiersPayload } from '@/config/turkeyTiers';
 import { leagueNameById } from '@/utils/leagueName';
 import { Match } from '../../models/liveScore';
 import type { GroupedLeagueMatches } from '../../services/liveScoreService';
-import { countryFlagImgSrc } from '@/utils/countryFlag';
 import { competitionLogoNeedsBackdrop, uefaCompetitionLogoSrcById } from '@/utils/competitionLogo';
 import { utcTimeToTr } from '@/utils/dateFormat';
 import { buildMatchHref } from '@/utils/matchUrl';
@@ -300,7 +299,8 @@ function VirtualRow({
   if (item.type === 'header') {
     const logoUrl =
       item.competition_logo || uefaCompetitionLogoSrcById(item.competition_id);
-    const showCountryFlag = !logoUrl && item.country_id != null;
+    // Lig logosu yoksa Sportmonks ülke bayrağı; o da yoksa görsel yok (kırık görsel değil).
+    const countryFlag = logoUrl ? null : item.country_flag || null;
     return (
       <div {...ariaAttributes} style={style} className={styles.virtualHeaderCell}>
         {item.showGap ? <div className={styles.virtualGroupSpacer} aria-hidden /> : null}
@@ -315,9 +315,9 @@ function VirtualRow({
                 width={22}
                 priority={index < EAGER_LOGO_ROWS}
               />
-            ) : showCountryFlag ? (
+            ) : countryFlag ? (
               <TeamLogo
-                src={item.country_flag || countryFlagImgSrc(item.country_id!)}
+                src={countryFlag}
                 className={styles.virtualHeaderFlag}
                 width={22}
                 height={16}

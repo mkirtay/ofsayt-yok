@@ -8,7 +8,6 @@ import { useNow } from '@/hooks/useNow';
 import { matchDisplayState, specialKeepsData } from '@/utils/matchDisplayState';
 import { kickoffInfo, relativeKickoffDay } from '@/utils/kickoff';
 import { formatFixtureDate } from '@/utils/fixtureDateLabel';
-import { countryFlagImgSrc } from '@/utils/countryFlag';
 import { utcTimeToTr, isoDateToTr } from '@/utils/dateFormat';
 import { h2hTeamKey, overallFormToPills, type FormPill } from '@/utils/matchForm';
 import { buildMatchHref } from '@/utils/matchUrl';
@@ -175,7 +174,8 @@ export default function MatchCard({ match, loading, initialH2h }: MatchCardProps
   const compName = leagueNameById(match.competition?.id, match.competition?.name, tl, 'full');
   const compLogo = match.competition?.logo;
   const country = match.country;
-  const showCountryFlag = !compLogo && country?.id != null;
+  // Lig logosu yoksa Sportmonks ülke bayrağı (`league.country.image_path`); o da yoksa görsel yok.
+  const countryFlag = compLogo ? null : country?.flag || null;
   const homeName = match.home?.name || '';
   const awayName = match.away?.name || '';
   const homeLogo = match.home?.logo;
@@ -233,9 +233,9 @@ export default function MatchCard({ match, loading, initialH2h }: MatchCardProps
               width={22}
               height={22}
             />
-          ) : showCountryFlag ? (
+          ) : countryFlag ? (
             <TeamLogo
-              src={countryFlagImgSrc(country!.id)}
+              src={countryFlag}
               alt=""
               className={styles.cardHeaderFlag}
               width={22}

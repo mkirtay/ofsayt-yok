@@ -27,7 +27,6 @@ import {
   type TopScorersPayload,
 } from '@/services/liveScoreService';
 import type { Match } from '@/models/liveScore';
-import { countryFlagImgSrc } from '@/utils/countryFlag';
 import { competitionLogoNeedsBackdrop, uefaCompetitionLogoSrcById } from '@/utils/competitionLogo';
 import { toStandingsCompetitionId } from '@/services/sportmonksProviderFlag';
 import { utcTimeToTr } from '@/utils/dateFormat';
@@ -691,9 +690,9 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
                                   width={20}
                                   height={20}
                                 />
-                              ) : league.countryId != null ? (
+                              ) : league.countryFlag ? (
                                 <TeamLogo
-                                  src={countryFlagImgSrc(league.countryId)}
+                                  src={league.countryFlag}
                                   alt=""
                                   className={hubStyles.leagueFlag}
                                   width={20}
