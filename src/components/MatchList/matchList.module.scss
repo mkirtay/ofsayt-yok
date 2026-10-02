@@ -621,6 +621,28 @@
   white-space: nowrap;
 }
 
+// Sözlükte kısa adı olan uzun adlar (TeamNameLabel): ≥ 640 px tam ad; < 640 px kısa ad, tam ad yalnız ekran
+// okuyucuya (görsel olarak gizli). Karar yalnız CSS'te — JS ölçümü yok.
+.teamNameShort {
+  display: none;
+}
+
+@media (max-width: #{$bp-sm - 1px}) {
+  .teamNameFull {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .teamNameShort {
+    display: inline;
+  }
+}
+
 .virtualTeamCell {
   cursor: pointer;
 }

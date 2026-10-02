@@ -16,6 +16,7 @@ import type { GroupedLeagueMatches } from '../../services/liveScoreService';
 import { competitionLogoNeedsBackdrop, uefaCompetitionLogoSrcById } from '@/utils/competitionLogo';
 import { utcTimeToTr } from '@/utils/dateFormat';
 import { buildMatchHref } from '@/utils/matchUrl';
+import TeamNameLabel from './TeamNameLabel';
 import { isModifiedClick } from '@/utils/matchSelection';
 import styles from './matchList.module.scss';
 
@@ -441,7 +442,11 @@ function VirtualRow({
           onClick={match.home?.id ? (e) => { e.stopPropagation(); e.preventDefault(); if (onSelectTeam) onSelectTeam(match.home!.id); else navigateTo(`/teams/${match.home!.id}`); } : undefined}
         >
           <TeamLogo src={homeLogo} className={styles.teamCrest} width={18} priority={index < EAGER_LOGO_ROWS} />
-          <span className={`${styles.teamName}${match.home?.id ? ` ${styles.teamNameLink}` : ''}`}>{homeName}</span>
+          <TeamNameLabel
+            teamId={match.home?.id}
+            name={homeName}
+            className={`${styles.teamName}${match.home?.id ? ` ${styles.teamNameLink}` : ''}`}
+          />
           <TeamTierBadge match={match} teamId={match.home?.id} tiers={cupTiers} />
         </div>
         <div className={`${styles.virtualCell} ${styles.virtualScore}`} data-goal-anchor>
@@ -452,7 +457,11 @@ function VirtualRow({
           onClick={match.away?.id ? (e) => { e.stopPropagation(); e.preventDefault(); if (onSelectTeam) onSelectTeam(match.away!.id); else navigateTo(`/teams/${match.away!.id}`); } : undefined}
         >
           <TeamLogo src={awayLogo} className={styles.teamCrest} width={18} priority={index < EAGER_LOGO_ROWS} />
-          <span className={`${styles.teamName}${match.away?.id ? ` ${styles.teamNameLink}` : ''}`}>{awayName}</span>
+          <TeamNameLabel
+            teamId={match.away?.id}
+            name={awayName}
+            className={`${styles.teamName}${match.away?.id ? ` ${styles.teamNameLink}` : ''}`}
+          />
           <TeamTierBadge match={match} teamId={match.away?.id} tiers={cupTiers} />
         </div>
         <div className={`${styles.virtualCell} ${styles.virtualHt}`}>{htDisplay}</div>
