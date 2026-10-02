@@ -8,7 +8,7 @@
  * - orta: iki takım logosu (beyaz daire) + ad · skor ya da başlama saati (TSİ)
  * Font (Inter) ve marka logosu gömülü; takım / turnuva logoları 1,5 sn zaman aşımıyla çekilir, olmazsa baş harfler.
  */
-import { ImageResponse } from 'next/og';
+import { ImageResponse } from './imageResponse';
 import type { Match, MatchStateCode } from '@/models/liveScore';
 import { TEAM_NAMES } from '@/content/teamNames';
 import { matchKickoffMs } from '@/utils/matchActivity';

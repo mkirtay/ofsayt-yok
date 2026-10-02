@@ -1,5 +1,5 @@
 import type { NextApiResponse } from 'next';
-import type { ImageResponse } from 'next/og';
+import type { ImageResponse } from './imageResponse';
 
 /** `next/og` yanıtını (Web `Response`) Pages API (Node) yanıtına aktarır. */
 export async function sendImageResponse(res: NextApiResponse, image: ImageResponse, cacheControl: string): Promise<void> {
