@@ -18,8 +18,15 @@ export type CreditTransactionType =
   | 'ANALYSIS_SPEND'
   /** Kredi düşmeyen (yönetici; ileride premium) analiz (miktar 0) — "AI Analizlerim" listesinde görünsün diye kaydedilir. */
   | 'ANALYSIS_FREE'
+  /** Premium kullanıcının analiz açması (miktar 0; premium bitince de açık kalır — bkz. lib/analysisUnlock.ts). */
+  | 'ANALYSIS_PREMIUM'
+  /** Haftalık ücretsiz açma hakkı (miktar 0; anahtar `weekly-free:{ISO hafta}` → haftada bir). */
+  | 'ANALYSIS_WEEKLY_FREE'
   | 'ADMIN_GRANT'
-  | 'REFUND';
+  | 'REFUND'
+  /** Arkadaş daveti ödülü — yalnız davet edilenin ilk satın alımında (ödeme entegrasyonunda bağlanacak). */
+  | 'REFERRAL_BONUS';
+// Karar 8: hiçbir tür maç sonucuna / tahmine bağlı değil (kredi yatırıp kazanma yok) — bkz. creditPolicy.test.ts.
 
 export type SpendStatus = 'PENDING' | 'SETTLED' | 'REFUNDED';
 

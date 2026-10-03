@@ -11,7 +11,24 @@
  */
 import { Prisma } from '@prisma/client';
 
-export type FakeUser = { id: string; role: string; credits: number; updatedAt: Date };
+export type FakeUser = {
+  id: string;
+  role: string;
+  credits: number;
+  updatedAt: Date;
+  emailVerified: Date | null;
+  createdAt: Date;
+  premiumUntil: Date | null;
+};
+export type FakeUnlock = {
+  id: string;
+  userId: string;
+  matchAnalysisId: string;
+  matchId: string;
+  source: string;
+  creditTransactionId: string | null;
+  createdAt: Date;
+};
 export type FakeCreditTx = {
   id: string;
   userId: string;
@@ -71,6 +88,7 @@ export function createFakeCreditDb(opts: { now?: () => number } = {}) {
   const users = new Map<string, FakeUser>();
   const ledger: FakeCreditTx[] = [];
   const analyses: FakeAnalysis[] = [];
+  const unlocks: FakeUnlock[] = [];
   let seq = 0;
   const nextId = (p: string) => `${p}${++seq}`;
 
@@ -133,12 +151,19 @@ export function createFakeCreditDb(opts: { now?: () => number } = {}) {
           applyCredits(ctx, u, creditDelta(u, data));
           return { count: 1 };
         },
-        async update({ where, data }: { where: { id: string }; data: CreditsData }) {
+        async update({ where, data }: { where: { id: string }; data: CreditsData & Partial<Omit<FakeUser, 'credits'>> }) {
           await tick();
           await lock(ctx, `User:${where.id}`);
           const u = users.get(where.id);
           if (!u) throw notFoundError();
-          applyCredits(ctx, u, creditDelta(u, data));
+          if (data.credits !== undefined) applyCredits(ctx, u, creditDelta(u, data));
+          const { credits: _c, ...rest } = data;
+          void _c;
+          if (Object.keys(rest).length) {
+            const before = { ...u };
+            Object.assign(u, rest);
+            ctx.undo.push(() => Object.assign(u, before));
+          }
           return { ...u };
         },
       },
@@ -189,9 +214,10 @@ export function createFakeCreditDb(opts: { now?: () => number } = {}) {
         },
       },
       matchAnalysis: {
-        async findUnique({ where }: { where: { matchId_matchStatus: { matchId: string; matchStatus: string } } }) {
+        async findUnique({ where }: { where: { id?: string; matchId_matchStatus?: { matchId: string; matchStatus: string } } }) {
           await tick();
           const k = where.matchId_matchStatus;
+          if (!k) return analyses.find((a) => a.id === where.id) ?? null;
           return analyses.find((a) => a.matchId === k.matchId && a.matchStatus === k.matchStatus) ?? null;
         },
         async findMany({ where }: { where?: Where }) {
@@ -206,6 +232,38 @@ export function createFakeCreditDb(opts: { now?: () => number } = {}) {
           const row = { id: nextId('ma'), ...data } as FakeAnalysis;
           analyses.push(row);
           ctx.undo.push(() => analyses.splice(analyses.indexOf(row), 1));
+          return { ...row };
+        },
+      },
+      analysisUnlock: {
+        async findUnique({ where }: { where: { id?: string; userId_matchAnalysisId?: { userId: string; matchAnalysisId: string } } }) {
+          await tick();
+          const k = where.userId_matchAnalysisId;
+          const row = k
+            ? unlocks.find((u) => u.userId === k.userId && u.matchAnalysisId === k.matchAnalysisId)
+            : unlocks.find((u) => u.id === where.id);
+          return row ? { ...row } : null;
+        },
+        async findMany({ where, take }: { where?: Where; take?: number }) {
+          await tick();
+          const rows = unlocks.filter((u) => matches(u as unknown as Record<string, unknown>, where)).map((u) => ({ ...u }));
+          return take ? rows.slice(0, take) : rows;
+        },
+        async count({ where }: { where?: Where } = {}) {
+          await tick();
+          return unlocks.filter((u) => matches(u as unknown as Record<string, unknown>, where)).length;
+        },
+        async create({ data }: { data: Omit<FakeUnlock, 'id' | 'createdAt' | 'creditTransactionId'> & { creditTransactionId?: string | null } }) {
+          await tick();
+          if (unlocks.some((u) => u.userId === data.userId && u.matchAnalysisId === data.matchAnalysisId)) {
+            throw uniqueError(['userId', 'matchAnalysisId']);
+          }
+          if (data.creditTransactionId && unlocks.some((u) => u.creditTransactionId === data.creditTransactionId)) {
+            throw uniqueError(['creditTransactionId']);
+          }
+          const row: FakeUnlock = { id: nextId('ul'), createdAt: new Date(now()), creditTransactionId: null, ...data };
+          unlocks.push(row);
+          ctx.undo.push(() => unlocks.splice(unlocks.indexOf(row), 1));
           return { ...row };
         },
       },
@@ -248,6 +306,7 @@ export function createFakeCreditDb(opts: { now?: () => number } = {}) {
     user: auto.user,
     creditTransaction: auto.creditTransaction,
     matchAnalysis: auto.matchAnalysis,
+    analysisUnlock: auto.analysisUnlock,
     predictionRecord: auto.predictionRecord,
     async $transaction<T>(fn: (tx: ReturnType<typeof client>) => Promise<T>): Promise<T> {
       const ctx: Ctx = { id: Symbol('tx'), undo: [], held: new Set() };
@@ -267,8 +326,20 @@ export function createFakeCreditDb(opts: { now?: () => number } = {}) {
     users,
     ledger,
     analyses,
-    addUser(id: string, credits: number, role = 'USER') {
-      users.set(id, { id, role, credits, updatedAt: new Date(now()) });
+    unlocks,
+    addUser(
+      id: string,
+      credits: number,
+      role = 'USER',
+      opts: Partial<Pick<FakeUser, 'emailVerified' | 'createdAt' | 'premiumUntil'>> = {},
+    ) {
+      const t = new Date(now());
+      users.set(id, { id, role, credits, updatedAt: t, emailVerified: null, createdAt: t, premiumUntil: null, ...opts });
+    },
+    addAnalysis(matchId: string, extra: Record<string, unknown> = {}) {
+      const row = { id: nextId('ma'), matchId, matchStatus: 'PRE', ...extra } as FakeAnalysis;
+      analyses.push(row);
+      return row;
     },
     balance(id: string) {
       return users.get(id)!.credits;
