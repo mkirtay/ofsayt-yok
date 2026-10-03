@@ -457,8 +457,8 @@ export default function MatchCard({ match, loading, initialH2h }: MatchCardProps
               <tbody>
                 {h2hHistory.map((row) => (
                   <tr key={row.id} className={styles.h2hTr}>
-                    <td>{formatTrDate(row.date)}</td>
-                    <td>{row.scheduled?.trim() ? utcTimeToTr(row.scheduled.trim(), row.date) : '—'}</td>
+                    <td className={styles.h2hTdDate}>{formatTrDate(row.date)}</td>
+                    <td className={styles.h2hTdTime}>{row.scheduled?.trim() ? utcTimeToTr(row.scheduled.trim(), row.date) : '—'}</td>
                     <td>{h2hRowStatus(row)}</td>
                     <td className={styles.h2hTdHome}>{row.home_name || '—'}</td>
                     <td className={styles.h2hTdScore}>

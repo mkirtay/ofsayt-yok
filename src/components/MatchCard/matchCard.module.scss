@@ -426,32 +426,34 @@ $match-card-header-blue: var(--text-secondary); // tema-uyumlu (eskiden sabit la
   line-height: 1.25;
   color: $color-text;
 
+  // Oranlar en dar tabloya (min-width 520 px, mobil) göre: "19.09.2026" 11 px'te ≈ 63 px → tarih %15 (78 − 10 px
+  // dolgu), saat %9. Eskiden %11 / %8'di; mobilde tarih saat kolonuna taşıp "19.07.202403:00" görünüyordu.
   col.h2hColDate {
-    width: 11%;
+    width: 15%;
   }
 
   col.h2hColTime {
-    width: 8%;
+    width: 9%;
   }
 
   col.h2hColStatus {
-    width: 8%;
+    width: 7%;
   }
 
   col.h2hColHome {
-    width: 28%;
+    width: 25.5%;
   }
 
   col.h2hColScore {
-    width: 12%;
+    width: 11%;
   }
 
   col.h2hColAway {
-    width: 28%;
+    width: 25.5%;
   }
 
   col.h2hColHt {
-    width: 5%;
+    width: 7%;
   }
 
   thead th {
@@ -482,6 +484,12 @@ $match-card-header-blue: var(--text-secondary); // tema-uyumlu (eskiden sabit la
   tbody tr:hover td {
     background-color: $color-row-highlight;
   }
+}
+
+// Tarih ve saat tek satır: satır yüksekliği sabit 24 px kalır (iskelet satırlarıyla aynı, CLS).
+.h2hTdDate,
+.h2hTdTime {
+  white-space: nowrap;
 }
 
 .h2hThHome,
