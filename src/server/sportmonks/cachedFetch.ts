@@ -9,7 +9,8 @@
  * - Katmanlar: instance içi bellek (L1, yalnız taze kayıt) → Redis (taze + eski).
  * - Tekil uçuş: aynı instance'ta aynı anahtar için tek upstream isteği; instance'lar arasında Redis
  *   `SET NX PX` kilidi — kilidi alamayan eski veri varsa onu verir, yoksa kısa süre cache'i yoklar.
- * - Sportmonks 429/5xx/ağ hatası/zaman aşımı → son geçerli veri (`stale: true`).
+ * - Sportmonks 429/5xx/ağ hatası/zaman aşımı → son geçerli veri (`stale: true`). Başka instance tazelerken kilide takılan
+ *   istek de eski kaydı alır (`stale: true` + `concurrentRefresh`); istek izleme bunu "gecikmeli" saymaz.
  * - Zaman aşımı (AbortController): varsayılan `SPORTMONKS_TIMEOUT_MS.api` (API route'ları, cron, bot); sayfa
  *   render'ı `withSportmonksTimeout(SPORTMONKS_TIMEOUT_MS.page, …)` ile daha kısa bütçe verir. Bütçe çağrı
  *   başınadır ve kilit beklemesini de kapsar. Aynı instance'ta uçuştaki isteğe katılan çağrı o isteğin
@@ -60,6 +61,11 @@ export type SportmonksCachedResult = {
   ttlSeconds: number;
   /** Upstream hata verdi, son geçerli veri döndü. */
   stale: boolean;
+  /**
+   * Eski kayıt upstream hatası yüzünden DEĞİL, başka bir instance aynı anahtarı tazelerken (Redis kilidi) verildi.
+   * CDN / proxy için `stale` ile aynı (kısa cache); yalnız istek izleme bunu "gecikmeli" saymaz.
+   */
+  concurrentRefresh?: true;
 };
 
 export type CachedFetchOptions = {
@@ -139,7 +145,8 @@ function resolveTimeoutMs(opts: CachedFetchOptions): number {
 function noteOutcome(r: SportmonksCachedResult): SportmonksCachedResult {
   const t = tracking().getStore();
   if (t) {
-    if (r.stale) t.stale = true;
+    // Eşzamanlı tazelemeye takılan istek normal işleyiştir: "veriler gecikmeli" yalnızca gerçek upstream hatasında.
+    if (r.stale && !r.concurrentRefresh) t.stale = true;
     if (r.cache === 'BYPASS' && (r.status >= 500 || r.status === 429)) t.failed = true;
   }
   return r;
@@ -304,7 +311,7 @@ async function refresh(
   const locked = await tryLock(key);
   if (!locked) {
     // Başka bir instance tazeliyor: eski veri varsa hemen onu ver, yoksa yazmasını bekle (bütçe içinde).
-    if (previous) return toResult(previous, 'STALE', now(), true);
+    if (previous) return { ...toResult(previous, 'STALE', now(), true), concurrentRefresh: true };
     const deadline = now() + Math.min(LOCK_WAIT_MS, timeoutMs);
     while (now() < deadline) {
       await new Promise((r) => setTimeout(r, LOCK_POLL_MS));

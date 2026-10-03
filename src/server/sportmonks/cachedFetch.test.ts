@@ -167,6 +167,94 @@ describe('fetchSportmonksCached', () => {
     expect(other.sportmonksCacheControl(r)).toBe('public, s-maxage=15, stale-while-revalidate=60');
   });
 
+  describe('"veriler gecikmeli" yalnız gerçek upstream hatasında (istek izleme)', () => {
+    /** Redis'te süresi dolmuş (ama eski-veri penceresinde) kayıt bırakır. */
+    async function seedExpired(path: string) {
+      const up = upstream(() => ({ status: 200, body: envelope([{ id: 1 }]) }));
+      await m.fetchSportmonksCached(path, {}, { fetchImpl: up.impl, now });
+      h.clock.t += 21_000; // canlı skor 20 sn'lik taze süre doldu
+    }
+
+    it('eşzamanlı tazeleme: kilide takılan 5 instance eski kaydı alır, istek "gecikmeli" sayılmaz; CDN/proxy davranışı aynı', async () => {
+      const path = 'football/livescores/inplay';
+      await seedExpired(path);
+      let release!: () => void;
+      const gate = new Promise<void>((r) => (release = r));
+      const owner = upstream(async () => {
+        await gate;
+        return { status: 200, body: envelope([{ id: 2 }]) };
+      });
+      const others = upstream(() => ({ status: 200, body: envelope([{ id: 3 }]) }));
+
+      const ownerInstance = await freshModule();
+      const pOwner = ownerInstance.trackSportmonksFetches(() => ownerInstance.fetchSportmonksCached(path, {}, { fetchImpl: owner.impl, now }));
+      await new Promise((r) => setTimeout(r, 20)); // sahibi kilidi alsın
+      const waiting = await Promise.all(
+        Array.from({ length: 5 }, async () => {
+          const inst = await freshModule(); // ayrı L1 / in-flight, aynı Redis (canlıdaki ayrı Vercel instance'ları)
+          return inst.trackSportmonksFetches(() => inst.fetchSportmonksCached(path, {}, { fetchImpl: others.impl, now }));
+        }),
+      );
+      release();
+      const ownerResult = await pOwner;
+
+      expect(others.calls).toHaveLength(0); // upstream'e yalnız kilit sahibi gitti
+      for (const w of waiting) {
+        expect(w.stale).toBe(false);
+        expect(w.failed).toBe(false);
+        // Sonucun kendisi değişmedi: eski kayıt, kısa CDN süresi (proxy `X-Data-Stale` da aynı)
+        expect(w.value.stale).toBe(true);
+        expect(w.value.concurrentRefresh).toBe(true);
+        expect(w.value.body).toEqual({ data: [{ id: 1 }] });
+        expect(m.sportmonksCacheControl(w.value)).toBe('public, s-maxage=15, stale-while-revalidate=60');
+      }
+      expect(ownerResult.stale).toBe(false);
+      expect(ownerResult.value.body).toEqual({ data: [{ id: 2 }] });
+    });
+
+    for (const [label, respond] of [
+      ['429', () => ({ status: 429, body: { message: 'Too Many Attempts.' } })],
+      ['5xx', () => ({ status: 503, body: { message: 'Service Unavailable' } })],
+    ] as const) {
+      it(`gerçek hata (${label}) + eski kayıt → "gecikmeli"`, async () => {
+        const path = 'football/livescores/inplay';
+        await seedExpired(path);
+        const other = await freshModule();
+        const up = upstream(respond);
+        const r = await other.trackSportmonksFetches(() => other.fetchSportmonksCached(path, {}, { fetchImpl: up.impl, now }));
+        expect(up.calls).toHaveLength(1);
+        expect(r.stale).toBe(true);
+        expect(r.value.stale).toBe(true);
+        expect(r.value.concurrentRefresh).toBeUndefined();
+      });
+    }
+
+    it('ağ hatası + eski kayıt → "gecikmeli"', async () => {
+      const path = 'football/livescores/inplay';
+      await seedExpired(path);
+      const other = await freshModule();
+      const impl = vi.fn(async () => {
+        throw new TypeError('fetch failed');
+      }) as unknown as typeof fetch;
+      const r = await other.trackSportmonksFetches(() => other.fetchSportmonksCached(path, {}, { fetchImpl: impl, now }));
+      expect(r.stale).toBe(true);
+      expect(r.value.concurrentRefresh).toBeUndefined();
+    });
+
+    it('zaman aşımı + eski kayıt → "gecikmeli"', async () => {
+      const path = 'football/livescores/inplay';
+      await seedExpired(path);
+      const other = await freshModule();
+      const up = hangingUpstream();
+      const r = await other.trackSportmonksFetches(() =>
+        other.fetchSportmonksCached(path, {}, { fetchImpl: up.impl, now, timeoutMs: 50 }),
+      );
+      expect(up.signals[0]?.aborted).toBe(true);
+      expect(r.stale).toBe(true);
+      expect(r.value.concurrentRefresh).toBeUndefined();
+    });
+  });
+
   it('eski veri yoksa hata iletilir ve cache\'lenmez (no-store)', async () => {
     const up = upstream(() => ({ status: 503, body: { message: 'down' } }));
     const opts = { fetchImpl: up.impl, now };
