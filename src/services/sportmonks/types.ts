@@ -270,6 +270,23 @@ export type SportmonksFixture = {
   lineups?: SportmonksLineupRow[];
   /** `include=metadata` (+ `filters=metadataTypes:572`): type 572 → `{ confirmed: boolean }` kadro resmî mi. */
   metadata?: { type_id: number; values?: unknown }[];
+  /** Temel alan: iki ayaklı eşleşmede "1/2" / "2/2", tek maçta "1/1". */
+  leg?: string | null;
+  aggregate_id?: number | null;
+  /**
+   * `include=aggregate` (2026-10-02 canlı doğrulandı): `result` 1. MAÇIN ev sahibine göre ("7-5"), uzatma dahil,
+   * penaltı hariç. 2. ayak oynanmadan (ve canlıyken) aggregate yok → toplam diğer ayaktan hesaplanır.
+   */
+  aggregate?: SportmonksAggregate | null;
+};
+
+export type SportmonksAggregate = {
+  id?: number;
+  name?: string;
+  fixture_ids?: number[];
+  result?: string | null;
+  detail?: string | null;
+  winner_participant_id?: number | null;
 };
 
 // ─── Faz 3 — Katman-2/3 (maç detay, H2H, sıralama, kadro) ──────────────────

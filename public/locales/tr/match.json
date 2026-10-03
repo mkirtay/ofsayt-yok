@@ -18,6 +18,15 @@
   "formWin": "Galibiyet",
   "formLoss": "Mağlubiyet",
   "formDraw": "Beraberlik",
+  "aggregate": {
+    "short": "Top. {{home}}–{{away}}",
+    "compact": "({{home}}–{{away}})",
+    "pens": "PEN {{home}}–{{away}}",
+    "pensCompact": "P {{home}}–{{away}}",
+    "total": "Toplam {{home}}–{{away}}",
+    "advanced": "{{team}} turu geçti",
+    "ariaPens": "penaltılar {{home}}–{{away}}"
+  },
   "marketExpectation": {
     "label": "Piyasa beklentisi",
     "home": "Ev %{{p}}",

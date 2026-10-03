@@ -18,6 +18,15 @@
   "formWin": "Win",
   "formLoss": "Loss",
   "formDraw": "Draw",
+  "aggregate": {
+    "short": "Agg. {{home}}–{{away}}",
+    "compact": "({{home}}–{{away}})",
+    "pens": "PEN {{home}}–{{away}}",
+    "pensCompact": "P {{home}}–{{away}}",
+    "total": "Aggregate {{home}}–{{away}}",
+    "advanced": "{{team}} advance",
+    "ariaPens": "penalties {{home}}–{{away}}"
+  },
   "marketExpectation": {
     "label": "Market expectation",
     "home": "Home {{p}}%",

@@ -22,6 +22,8 @@ import WhistleIcon from '@/components/icons/WhistleIcon';
 import { MatchCardSkeleton } from '@/components/Skeleton';
 import TeamLogo from '@/components/TeamLogo';
 import { impliedProbabilities } from '@/utils/impliedProbability';
+import { isSecondLeg } from '@/utils/aggregateScore';
+import TiePill from './TiePill';
 
 interface MatchCardProps {
   match: Match | null;
@@ -466,6 +468,8 @@ export default function MatchCard({ match, loading, initialH2h }: MatchCardProps
             </Link>
           </div>
         </div>
+
+        {isSecondLeg(match) ? <TiePill match={match} /> : null}
 
         {expectation ? (
           <p className={styles.oddsStrip}>

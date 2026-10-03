@@ -381,6 +381,15 @@
   .virtualHt {
     display: none;
   }
+
+  // Dar skor kolonu (2,65 rem): toplam kısa biçimde — kolon genişleyip satır hizası bozulmasın.
+  .tieWide {
+    display: none;
+  }
+
+  .tieCompact {
+    display: inline;
+  }
 }
 
 .virtualMatchRowHalfTime {}
@@ -662,6 +671,42 @@
 
   @media (min-width: $bp-sm) {
     padding: 0 $spacing-2 !important;
+  }
+}
+
+// İki ayaklı eşleşmenin 2. maçı: skor + altında toplam (satır yüksekliği aynı 40 px — iki satır sığar, kayma yok).
+.virtualScoreTie {
+  flex-direction: column;
+  justify-content: center;
+  gap: 1px;
+}
+
+.tieLine {
+  display: block;
+  height: 11px;
+  font-size: 9px;
+  line-height: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: $color-text-secondary;
+  white-space: nowrap;
+
+  @media (min-width: $bp-sm) {
+    font-size: 10px;
+  }
+}
+
+.tieWide {
+  display: none;
+
+  @media (min-width: $bp-sm) {
+    display: inline;
+  }
+}
+
+.tieCompact {
+  @media (min-width: $bp-sm) {
+    display: none;
   }
 }
 

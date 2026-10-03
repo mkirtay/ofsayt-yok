@@ -74,6 +74,24 @@ function mapCountry(fixture: SportmonksFixture): MatchCountry | undefined {
 }
 
 /**
+ * Toplam skor BU maçın ev sahibine göre: Sportmonks `result`'ı 1. maçın ev sahibine göre verir → 2. ayakta ("2/2")
+ * çevrilir. Okunamayan sonuç → yok.
+ */
+export function mapAggregate(fixture: Pick<SportmonksFixture, 'leg' | 'aggregate'>): Match['aggregate'] {
+  const m = /^\s*(\d+)\s*-\s*(\d+)\s*$/.exec(fixture.aggregate?.result ?? '');
+  if (!m) return undefined;
+  const first = Number(m[1]);
+  const second = Number(m[2]);
+  const swap = (fixture.leg ?? '').startsWith('2/');
+  const winner = fixture.aggregate?.winner_participant_id;
+  return {
+    home: swap ? second : first,
+    away: swap ? first : second,
+    ...(winner != null ? { winner_id: winner } : {}),
+  };
+}
+
+/**
  * Not: `fixture_id` bilinçli olarak set EDİLMİYOR — Pass 1 Genel Bulgu 2'ye göre
  * Sportmonks'ta tüm endpoint'ler zaten aynı `id`'yi kullanıyor, eski
  * fikstür/history/canlı reconciliation katmanı (`fixture_id` eşleştirmesi)
@@ -93,6 +111,8 @@ export function mapSportmonksFixtureToMatch(fixture: SportmonksFixture): Match {
   const referee = formatMainReferee(fixture.referees);
   const competition = mapCompetition(fixture);
   const country = mapCountry(fixture);
+  const leg = fixture.leg?.trim();
+  const aggregate = mapAggregate(fixture);
 
   return {
     id: fixture.id,
@@ -113,5 +133,8 @@ export function mapSportmonksFixtureToMatch(fixture: SportmonksFixture): Match {
     ...(fixture.group?.id != null ? { group_id: fixture.group.id } : {}),
     ...(roundStage.round !== null ? { round: roundStage.round } : {}),
     ...(roundStage.stage !== null ? { stage: roundStage.stage } : {}),
+    // Tek maçlık eşleşme ("1/1") alan taşımaz.
+    ...(leg && leg !== '1/1' ? { leg } : {}),
+    ...(aggregate ? { aggregate } : {}),
   };
 }

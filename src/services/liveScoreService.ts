@@ -61,8 +61,8 @@ export type PaginatedMatches = {
  * kendi pass'inde tek başına doğrulandı) ama Sportmonks'un include sözdizimi
  * (`;` ile ayrılmış liste) standart, birleştirmek dokümante edilmiş bir davranış.
  */
-const SPORTMONKS_FIXTURE_INCLUDE =
-  'participants;scores;state;periods;league.country;venue;referees.referee;round;stage;group';
+export const SPORTMONKS_FIXTURE_INCLUDE =
+  'participants;scores;state;periods;league.country;venue;referees.referee;round;stage;group;aggregate';
 
 /** Pass 5: `/fixtures/date` 50'yi kabul etti — diğer fixture endpoint'leri için de güvenli üst sınır. */
 const SPORTMONKS_FIXTURE_PER_PAGE = 50;

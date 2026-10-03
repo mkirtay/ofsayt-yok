@@ -52,6 +52,9 @@ export function deriveMatchScore(scores: SportmonksScoreRow[] | undefined | null
   const current = grouped.get('CURRENT');
   const firstHalf = grouped.get('1ST_HALF');
   const secondHalf = grouped.get('2ND_HALF');
+  // Sportmonks: CURRENT = son skor (normal süre ya da uzatma), penaltılar HARİÇ; atışlar ayrı `PENALTIES` satırı.
+  const penalties = grouped.get('PENALTIES');
+  const ps_score = penalties ? formatScore(sumByLocation(penalties)) : undefined;
 
   const score = current ? formatScore(sumByLocation(current)) : undefined;
   const ht_score = firstHalf ? formatScore(sumByLocation(firstHalf)) : undefined;
@@ -70,5 +73,6 @@ export function deriveMatchScore(scores: SportmonksScoreRow[] | undefined | null
     score: resolvedScore,
     ...(ht_score !== undefined ? { ht_score } : {}),
     ...(ft_score !== undefined ? { ft_score } : {}),
+    ...(ps_score !== undefined ? { ps_score } : {}),
   };
 }

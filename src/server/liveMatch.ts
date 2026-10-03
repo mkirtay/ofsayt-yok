@@ -20,7 +20,8 @@ import { mapSportmonksEvents, mapSportmonksStatistics } from '@/services/sportmo
 import { getMatchStats, getMatchWithEvents } from '@/services/liveScoreService';
 import { isMatchLive } from '@/utils/matchActivity';
 
-const LIVE_INCLUDE = 'participants;scores;state;periods;events;statistics';
+// `aggregate`: iki ayaklı eşleşmede toplam skor canlı güncellemede de kaybolmasın (bkz. utils/aggregateScore.ts).
+const LIVE_INCLUDE = 'participants;scores;state;periods;events;statistics;aggregate';
 /** Sayfa = cache anahtarı: 25 maçlık sayfa Redis boyut sınırının (900 KB) altında kalır (maç başına ~15–25 KB). */
 const LIVE_PER_PAGE = 25;
 const LIVE_MAX_PAGES = 4;

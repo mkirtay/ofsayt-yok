@@ -40,6 +40,8 @@ const INCLUDE_TOKENS = new Set([
   // maç (SPORTMONKS_FIXTURE_INCLUDE + detay)
   'participants', 'scores', 'state', 'periods', 'league', 'league.country', 'venue', 'referees.referee', 'round', 'stage',
   'group', 'events', 'statistics', 'lineups.player.nationality', 'lineups.details',
+  // iki ayaklı eşleşme toplam skoru (SPORTMONKS_FIXTURE_INCLUDE)
+  'aggregate',
   // kadro resmî mi (metadata type 572 `confirmed`) — yalnız `metadataTypes:572` filtresiyle
   'metadata',
   // lig / puan / krallık / kadro

@@ -109,6 +109,20 @@ export interface Match {
   };
   urls?: MatchUrls;
   odds?: MatchOdds;
+  /** İki ayaklı eşleşmede "1/2" / "2/2" (Sportmonks `leg`); tek maçta yok. */
+  leg?: string;
+  /**
+   * İki ayaklı eşleşmenin toplamı — BU maçın ev sahibine göre sıralı (Sportmonks 1. maçın ev sahibine göre verir;
+   * 2. ayakta çevrilir). Uzatma dahil, penaltı hariç. Yalnız eşleşme bitince gelir (bkz. utils/aggregateScore.ts).
+   */
+  aggregate?: MatchAggregate;
+}
+
+export interface MatchAggregate {
+  home: number;
+  away: number;
+  /** Turu geçen takımın id'si (Sportmonks `winner_participant_id`). */
+  winner_id?: number;
 }
 
 export interface ApiResponse<T> {

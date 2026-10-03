@@ -17,6 +17,8 @@ import { competitionLogoNeedsBackdrop, uefaCompetitionLogoSrcById } from '@/util
 import { utcTimeToTr } from '@/utils/dateFormat';
 import { buildMatchHref } from '@/utils/matchUrl';
 import TeamNameLabel from './TeamNameLabel';
+import TieLine from './TieLine';
+import { isSecondLeg } from '@/utils/aggregateScore';
 import { isModifiedClick } from '@/utils/matchSelection';
 import styles from './matchList.module.scss';
 
@@ -385,6 +387,7 @@ function VirtualRow({
   const isLive = variant === 'live';
   const liveMinute = isLive ? (match.time || '').replace(/'$/u, '').trim() : '';
   const htDisplay = normalizeHt(match.scores?.ht_score);
+  const secondLeg = isSecondLeg(match);
 
   const rowClass = [
     styles.virtualMatchRow,
@@ -463,8 +466,9 @@ function VirtualRow({
           />
           <TeamTierBadge match={match} teamId={match.home?.id} tiers={cupTiers} />
         </div>
-        <div className={`${styles.virtualCell} ${styles.virtualScore}`} data-goal-anchor>
+        <div className={`${styles.virtualCell} ${styles.virtualScore}${secondLeg ? ` ${styles.virtualScoreTie}` : ''}`} data-goal-anchor>
           <span className={styles.scoreText}>{score}</span>
+          {secondLeg ? <TieLine match={match} /> : null}
         </div>
         <div
           className={`${styles.virtualCell} ${styles.virtualAway}${match.away?.id ? ` ${styles.virtualTeamCell}` : ''}`}
