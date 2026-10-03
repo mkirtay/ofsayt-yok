@@ -2,8 +2,9 @@
  * GET /api/matches/[id]/trivia
  *
  * Giriş yapmış kullanıcılar için LLM tabanlı maç trivia üretir.
- * Cache: (matchId, matchStatus) bazlı. PRE fazında 2 saat TTL,
- * HT/POST için süresiz (faz değiştiğinde yeni satır oluşur).
+ * v2 (2026-10): maç başına TEK üretim — yalnız bağlamdaki veriye dayandığı için fazla (PRE/HT/POST) yenilenmez.
+ * Kayıtlı v2 trivia varsa maç bağlamı hiç kurulmadan döner. Eski (v1, genel bilgiye dayanan) kayıt varsa bir kez
+ * v2 ile değiştirilir.
  */
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { Prisma } from '@prisma/client';
@@ -12,9 +13,11 @@ import { requireAuth } from '@/lib/requireAuth';
 import { hitFixedWindowRateLimit } from '@/lib/rateLimit';
 import { buildMatchAnalysisContext } from '@/server/buildMatchAnalysisContext';
 import { generateMatchTrivia, TriviaTimeoutError } from '@/services/aiTriviaService';
+import { TRIVIA_MODEL_VERSION } from '@/config/triviaPrompt';
 import { captureError } from '@/lib/logger';
 
-const PRE_TTL_MS = 2 * 60 * 60 * 1000; // 2 saat
+/** Bu sürümle (ya da sonrasıyla aynı önekle) üretilmiş kayıt yeniden üretilmez. */
+const isCurrentTrivia = (modelVersion: string) => modelVersion.startsWith(TRIVIA_MODEL_VERSION);
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
@@ -40,6 +43,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
 
     const result = await (async () => {
+      // Tek üretim: bu maç için güncel sürüm trivia varsa (hangi fazda üretilmiş olursa olsun) bağlam kurulmaz.
+      const latest = await prisma.matchTrivia.findFirst({ where: { matchId }, orderBy: { createdAt: 'desc' } });
+      if (latest && isCurrentTrivia(latest.modelVersion)) {
+        return { status: 200 as const, body: { trivia: latest, cached: true } };
+      }
+
       const ctx = await buildMatchAnalysisContext(matchId);
       if (!ctx) {
         return { status: 404 as const, body: { error: 'Maç bulunamadı' } };
@@ -60,20 +69,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return { status: 200 as const, body: { trivia: existing, cached: true, isArchived: true } };
       }
 
-      const existing = await prisma.matchTrivia.findUnique({
-        where: { matchId_matchStatus: { matchId, matchStatus: ctx.matchPhase } },
-      });
+      // Eski sürüm kayıt (varsa) yerinde güncellenir; yoksa yeni satır. v2 kayıtların süresi dolmaz.
+      const existing = latest;
       const now = new Date();
-      if (existing) {
-        const stillValid = existing.expiresAt == null || existing.expiresAt > now;
-        if (stillValid) {
-          return { status: 200 as const, body: { trivia: existing, cached: true } };
-        }
-      }
-
       const ai = await generateMatchTrivia(ctx);
-      const expiresAt =
-        ctx.matchPhase === 'PRE' ? new Date(now.getTime() + PRE_TTL_MS) : null;
+      const expiresAt = null;
 
       const saved = existing
         ? await prisma.matchTrivia.update({

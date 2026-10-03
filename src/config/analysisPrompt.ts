@@ -316,6 +316,14 @@ function teamLines(t: MatchAnalysisContext['homeTeam'], side: 'Ev Sahibi' | 'Dep
   return lines;
 }
 
+/**
+ * Maç verisi özeti (form, son maçlar, sezon, golcüler, eksikler, kadro, H2H) — analiz ve trivia aynı veriyi
+ * görür (trivia yalnız buna dayanır).
+ */
+export function buildMatchDataSummary(ctx: MatchAnalysisContext): string {
+  return summarizeContextForPrompt(ctx);
+}
+
 function summarizeContextForPrompt(ctx: MatchAnalysisContext): string {
   const m = ctx.match;
   const homeName = m.home?.name ?? 'Ev sahibi';

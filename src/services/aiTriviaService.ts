@@ -12,14 +12,21 @@ import OpenAI from 'openai';
 import {
   TRIVIA_MODEL_VERSION,
   TRIVIA_SYSTEM_PROMPT,
+  TRIVIA_RESPONSE_FORMAT,
   buildTriviaUserMessage,
   type TriviaJsonSchema,
 } from '@/config/triviaPrompt';
 import type { MatchAnalysisContext } from '@/server/buildMatchAnalysisContext';
+import { openAiNoReasoningParams } from '@/services/aiAnalysisService';
 
 const CLAUDE_MODEL = process.env.ANTHROPIC_MODEL ?? 'claude-sonnet-4-5-20250929';
-const OPENAI_MODEL = process.env.OPENAI_MODEL ?? 'gpt-4.1';
-const MAX_TOKENS = 2000;
+/**
+ * Trivia modeli kodda sabit (2026-10-03): gpt-6-luna, reasoning `none`. `OPENAI_MODEL` trivia'yı ETKİLEMEZ
+ * (yalnız video betiği); acil geri dönüş için `OPENAI_TRIVIA_MODEL`.
+ */
+export const TRIVIA_OPENAI_MODEL = process.env.OPENAI_TRIVIA_MODEL || 'gpt-6-luna';
+/** v2 şeması kısa (3-5 madde + iki kısa paragraf). */
+const MAX_TOKENS = 1200;
 const TRIVIA_TIMEOUT_MS = 20_000;
 
 export class TriviaTimeoutError extends Error {
@@ -80,20 +87,21 @@ function extractJson(text: string): unknown {
   }
 }
 
-function validateSchema(data: unknown): TriviaJsonSchema {
+/** v2: kadro/H2H verisi yoksa `contextual` / `rivalryContext` boş string olabilir (arayüz boşsa bölümü gizler). */
+export function validateTriviaSchema(data: unknown): TriviaJsonSchema {
   if (!data || typeof data !== 'object') throw new Error('Trivia çıktısı obje değil');
   const d = data as Record<string, unknown>;
 
-  if (!Array.isArray(d.ertemFacts) || d.ertemFacts.length === 0) {
+  if (!Array.isArray(d.ertemFacts) || d.ertemFacts.filter((f) => typeof f === 'string' && f.trim()).length === 0) {
     throw new Error('ertemFacts dizisi eksik veya boş');
   }
-  if (typeof d.contextual !== 'string' || d.contextual.trim().length === 0) {
-    throw new Error('contextual alanı eksik veya boş');
-  }
-  if (typeof d.rivalryContext !== 'string' || d.rivalryContext.trim().length === 0) {
-    throw new Error('rivalryContext alanı eksik veya boş');
-  }
-  return data as TriviaJsonSchema;
+  if (typeof d.contextual !== 'string') throw new Error('contextual alanı eksik');
+  if (typeof d.rivalryContext !== 'string') throw new Error('rivalryContext alanı eksik');
+  return {
+    ertemFacts: (d.ertemFacts as unknown[]).filter((f): f is string => typeof f === 'string' && f.trim().length > 0).slice(0, 5),
+    contextual: d.contextual.trim(),
+    rivalryContext: d.rivalryContext.trim(),
+  };
 }
 
 export async function generateMatchTrivia(
@@ -109,9 +117,10 @@ export async function generateMatchTrivia(
     if (provider === 'openai') {
       const response = await getOpenAiClient().chat.completions.create(
         {
-          model: OPENAI_MODEL,
-          temperature: 0.75,
+          model: TRIVIA_OPENAI_MODEL,
+          ...openAiNoReasoningParams(TRIVIA_OPENAI_MODEL, 0.5),
           max_completion_tokens: MAX_TOKENS,
+          response_format: TRIVIA_RESPONSE_FORMAT,
           messages: [
             { role: 'system', content: TRIVIA_SYSTEM_PROMPT },
             { role: 'user', content: userMessage },
@@ -123,10 +132,10 @@ export async function generateMatchTrivia(
       const raw = response.choices?.[0]?.message?.content ?? '';
       if (!raw) throw new Error('OpenAI yanıtında metin bulunamadı');
 
-      const validated = validateSchema(extractJson(raw));
+      const validated = validateTriviaSchema(extractJson(raw));
       return {
         trivia: validated,
-        modelVersion: `${TRIVIA_MODEL_VERSION}-openai:${OPENAI_MODEL}`,
+        modelVersion: `${TRIVIA_MODEL_VERSION}-openai:${TRIVIA_OPENAI_MODEL}`,
         tokensUsed:
           (response.usage?.prompt_tokens ?? 0) + (response.usage?.completion_tokens ?? 0),
         provider,
@@ -148,7 +157,7 @@ export async function generateMatchTrivia(
     );
     if (!textBlock) throw new Error('Anthropic yanıtında metin bloğu yok');
 
-    const validated = validateSchema(extractJson(textBlock.text));
+    const validated = validateTriviaSchema(extractJson(textBlock.text));
     return {
       trivia: validated,
       modelVersion: `${TRIVIA_MODEL_VERSION}-anthropic:${CLAUDE_MODEL}`,

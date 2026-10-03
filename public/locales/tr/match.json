@@ -120,11 +120,11 @@
     "title": "Maç Trivia & Bilinmeyenler",
     "loading": "Trivia hazırlanıyor… Bu işlem birkaç saniye sürebilir.",
     "lockedTitle": "🔒 Premium Üyelere Özel",
-    "lockedDesc": "Ertem Şener tarzı istatistikler, transfer bağlamı ve tarihi rekabet bilgisi için Premium üyeliğe geç.",
+    "lockedDesc": "Maç verisinden ilginç istatistikler, kadro bağlamı ve karşılaşma geçmişi için Premium üyeliğe geç.",
     "upgradePremium": "Premium'a Geç",
     "unknowns": "Bilinmeyenler",
     "context": "Sahada Bağlam",
-    "rivalry": "Tarihi Rekabet",
+    "rivalry": "Karşılaşma Geçmişi",
     "premiumError": "Bu özellik premium üyelere özeldir."
   },
   "poll": {

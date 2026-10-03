@@ -36,8 +36,11 @@ const MAX_TOKENS = 3000;
 
 /** `reasoning_effort: 'none'` yalnız destekleyen modellere gider (gpt-4.1 reasoning modeli değil, Sol `none`'ı reddeder). */
 const NO_REASONING_MODELS = /^gpt-(6|5\.6)-luna\b/;
+export function openAiNoReasoningParams(model: string, temperature: number): { temperature: number; reasoning_effort?: 'none' } {
+  return NO_REASONING_MODELS.test(model) ? { temperature, reasoning_effort: 'none' } : { temperature };
+}
 export function openAiAnalysisParams(model: string): { temperature: number; reasoning_effort?: 'none' } {
-  return NO_REASONING_MODELS.test(model) ? { temperature: 0.35, reasoning_effort: 'none' } : { temperature: 0.35 };
+  return openAiNoReasoningParams(model, 0.35);
 }
 const ANALYSIS_TIMEOUT_MS = 35_000;
 

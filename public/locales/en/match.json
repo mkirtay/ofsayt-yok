@@ -120,11 +120,11 @@
     "title": "Match Trivia & Fun Facts",
     "loading": "Preparing trivia… This may take a few seconds.",
     "lockedTitle": "🔒 Premium Members Only",
-    "lockedDesc": "Upgrade to Premium for in-depth statistics, transfer context, and historical rivalry info.",
+    "lockedDesc": "Upgrade to Premium for data-driven fun facts, squad context, and head-to-head history.",
     "upgradePremium": "Upgrade to Premium",
     "unknowns": "Fun Facts",
     "context": "On-Pitch Context",
-    "rivalry": "Historical Rivalry",
+    "rivalry": "Head-to-Head",
     "premiumError": "This feature is for premium members only."
   },
   "poll": {
