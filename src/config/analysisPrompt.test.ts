@@ -53,4 +53,25 @@ describe('analiz prompt\'u — bahis dili yok, olasılık senaryoları', () => {
     expect(msg).toContain('Beklenti maç yaklaştıkça ev sahibi lehine kaydı');
     expect(msg).not.toMatch(/1\.95|3\.4\b|3\.8\b|4\.4\b/);
   });
+
+  it('sakat/cezalılar: varsa mevki, dönüş ve katkıyla; boşsa "yok"; veri alınamadıysa bölüm hiç yok', () => {
+    const withAbs = {
+      ...ctx,
+      homeTeam: {
+        ...ctx.homeTeam,
+        absences: [
+          { name: 'Yedek Bek', kind: 'injury', reason: 'Hamstring', apps: 1, goals: 0, assists: 0 },
+          { name: 'Golcü', position: 'Santrfor', kind: 'suspended', reason: 'Red Card Suspension', until: '2026-10-12', apps: 6, goals: 5, assists: 1 },
+        ],
+      },
+      awayTeam: { ...ctx.awayTeam, absences: [] },
+    } as unknown as MatchAnalysisContext;
+    const msg = buildAnalysisUserMessage(withAbs);
+    expect(msg).toContain('Eksikler (maç günü itibarıyla sakat/cezalı; katkı = ligde bu sezon):');
+    // Önce daha çok oynayan (önem sırası).
+    expect(msg.indexOf('Golcü (Santrfor) — cezalı: Red Card Suspension, dönüş tahmini 2026-10-12 · 6 maç, 5 gol, 1 asist'))
+      .toBeLessThan(msg.indexOf('Yedek Bek — sakat: Hamstring · 1 maç, 0 gol, 0 asist'));
+    expect(msg).toContain('Eksikler: bilinen sakat/cezalı oyuncu yok');
+    expect(buildAnalysisUserMessage(ctx)).not.toContain('Eksikler');
+  });
 });

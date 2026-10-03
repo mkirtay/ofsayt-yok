@@ -22,6 +22,8 @@ import { toStandingsCompetitionId } from '@/services/sportmonksProviderFlag';
 import type { MatchEvent, MatchStatsData } from '@/models/domain';
 import { resolveLiveMatch } from '@/lib/resolveLiveMatch';
 import { prisma } from '@/lib/prisma';
+import { getTeamAbsences, type AnalysisAbsence } from '@/server/analysisTeamAbsences';
+import { todayIsoIstanbul } from '@/utils/dateStrip';
 
 /** Bir takımın son N maçından çıkarılan özet performans satırı */
 export type RecentMatchRow = {
@@ -64,6 +66,11 @@ export type TeamContext = {
   metrics: TeamMetrics;
   /** Lig sıralamasında bu takımın satırı (varsa) */
   standingRow: CompetitionTableStandingRow | null;
+  /**
+   * Maç gününde hâlâ sakat/cezalı oyuncular (takım sayfasıyla aynı önbellekli istekler). `null`: veri alınamadı —
+   * prompt bu bölümü atlar; `[]`: eksik yok.
+   */
+  absences?: AnalysisAbsence[] | null;
 };
 
 export type H2HContext = {
@@ -267,9 +274,13 @@ function findStandingRow(
 async function buildTeamContext(
   teamId: number,
   teamName: string,
-  standings: CompetitionTableData | null
+  standings: CompetitionTableData | null,
+  matchDayIso: string
 ): Promise<TeamContext> {
-  const lastMatches = await getTeamLastMatches(String(teamId), 10);
+  const [lastMatches, absences] = await Promise.all([
+    getTeamLastMatches(String(teamId), 10),
+    getTeamAbsences(teamId, matchDayIso),
+  ]);
   const rows = lastMatches
     .map((m) => buildRecentMatchRow(m, teamId))
     .filter((r): r is RecentMatchRow => r != null);
@@ -280,6 +291,7 @@ async function buildTeamContext(
     recentMatches: rows,
     metrics: computeMetrics(rows),
     standingRow: findStandingRow(standings, teamId),
+    absences: absences?.players ?? null,
   };
 }
 
@@ -386,9 +398,13 @@ export async function buildMatchAnalysisContext(
     getTeamsHead2Head(String(homeId), String(awayId)),
   ]);
 
+  // Sakat/ceza kaydı maç gününe göre süzülür (maçtan önce dönecek oyuncu eksik sayılmaz); tarih yoksa bugün.
+  const today = todayIsoIstanbul();
+  const day = /^\d{4}-\d{2}-\d{2}/.test(match.date ?? '') ? match.date!.slice(0, 10) : today;
+  const matchDayIso = day < today ? today : day;
   const [homeCtx, awayCtx] = await Promise.all([
-    buildTeamContext(homeId, match.home?.name ?? '', standings),
-    buildTeamContext(awayId, match.away?.name ?? '', standings),
+    buildTeamContext(homeId, match.home?.name ?? '', standings, matchDayIso),
+    buildTeamContext(awayId, match.away?.name ?? '', standings, matchDayIso),
   ]);
 
   return {

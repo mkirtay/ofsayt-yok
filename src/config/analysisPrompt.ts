@@ -208,6 +208,28 @@ const OUTPUT_SCHEMA_DESCRIPTION = `{
   "overallConfidence": 0-100
 }`;
 
+const ABSENCE_KIND_TR: Record<string, string> = { injury: 'sakat', suspended: 'cezalı', other: 'forma giyemiyor' };
+const MAX_ABSENCES = 10;
+
+/** Takımın maç günündeki sakat/cezalıları; veri alınamadıysa (`null`) hiç satır yok — model eksikliği bilmez. */
+function absenceLines(team: MatchAnalysisContext['homeTeam']): string[] {
+  const list = team.absences;
+  if (list == null) return [];
+  if (list.length === 0) return ['Eksikler: bilinen sakat/cezalı oyuncu yok'];
+  const sorted = [...list].sort(
+    (a, b) => (b.apps ?? 0) - (a.apps ?? 0) || (b.goals ?? 0) + (b.assists ?? 0) - ((a.goals ?? 0) + (a.assists ?? 0)),
+  );
+  const lines = ['Eksikler (maç günü itibarıyla sakat/cezalı; katkı = ligde bu sezon):'];
+  for (const p of sorted.slice(0, MAX_ABSENCES)) {
+    const who = p.position ? `${p.name} (${p.position})` : p.name;
+    const until = p.until ? `, dönüş tahmini ${p.until}` : '';
+    const contrib = p.apps ? ` · ${p.apps} maç, ${p.goals ?? 0} gol, ${p.assists ?? 0} asist` : ' · bu sezon ligde forma giymedi';
+    lines.push(`  - ${who} — ${ABSENCE_KIND_TR[p.kind] ?? p.kind}: ${p.reason}${until}${contrib}`);
+  }
+  if (sorted.length > MAX_ABSENCES) lines.push(`  - (+${sorted.length - MAX_ABSENCES} oyuncu daha)`);
+  return lines;
+}
+
 function summarizeContextForPrompt(ctx: MatchAnalysisContext): string {
   const m = ctx.match;
   const homeName = m.home?.name ?? 'Ev sahibi';
@@ -245,6 +267,7 @@ function summarizeContextForPrompt(ctx: MatchAnalysisContext): string {
   for (const r of h.recentMatches.slice(0, 8)) {
     lines.push(`  - ${r.date} ${r.isHome ? 'EV' : 'DEP'} vs ${r.opponent}: ${r.scoreText} (${r.result})`);
   }
+  lines.push(...absenceLines(h));
 
   // Deplasman takım
   lines.push(`\n## ${awayName} (Deplasman)`);
@@ -261,6 +284,7 @@ function summarizeContextForPrompt(ctx: MatchAnalysisContext): string {
   for (const r of a.recentMatches.slice(0, 8)) {
     lines.push(`  - ${r.date} ${r.isHome ? 'EV' : 'DEP'} vs ${r.opponent}: ${r.scoreText} (${r.result})`);
   }
+  lines.push(...absenceLines(a));
 
   // H2H
   if (ctx.h2h && ctx.h2h.totalMatches > 0) {
