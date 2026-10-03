@@ -10,6 +10,8 @@ declare module 'next-auth' {
       username?: string | null
       /** Güncel AI analiz kredisi bakiyesi */
       credits?: number
+      /** Premium bitişi (ISO) ya da null — bkz. lib/premium.ts */
+      premiumUntil?: string | null
     } & DefaultSession['user']
   }
 
@@ -17,6 +19,7 @@ declare module 'next-auth' {
     role: Role
     username?: string | null
     credits?: number
+    premiumUntil?: Date | string | null
   }
 }
 
@@ -26,6 +29,8 @@ declare module 'next-auth/jwt' {
     username?: string | null
     /** Güncel AI analiz kredisi bakiyesi; session'a aktarılır */
     credits?: number
+    /** Premium bitişi (ISO) ya da null */
+    premiumUntil?: string | null
     /** Throttle DB role/credits refresh (ms since epoch) */
     roleSyncedAt?: number
   }

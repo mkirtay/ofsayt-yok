@@ -13,11 +13,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(401).json({ error: 'Giriş yapmanız gerekiyor.' });
   }
 
-  const user = await prisma.user.findUnique({ where: { id: userId }, select: { credits: true } });
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { credits: true, premiumUntil: true } });
   if (!user) {
     return res.status(401).json({ error: 'Oturum geçersiz.' });
   }
 
   res.setHeader('Cache-Control', 'private, no-cache, no-store, must-revalidate');
-  return res.status(200).json({ credits: user.credits });
+  return res.status(200).json({ credits: user.credits, premiumUntil: user.premiumUntil?.toISOString() ?? null });
 }

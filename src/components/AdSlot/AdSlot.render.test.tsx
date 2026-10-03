@@ -1,14 +1,20 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 
-const state = vi.hoisted(() => ({ enabled: false, status: 'unauthenticated' as string, role: undefined as string | undefined, credits: 0 }));
+const state = vi.hoisted(() => ({
+  enabled: false,
+  status: 'unauthenticated' as string,
+  role: undefined as string | undefined,
+  credits: 0,
+  premiumUntil: null as string | null,
+}));
 vi.mock('@/config/ads', () => ({
   get ADS_ENABLED() {
     return state.enabled;
   },
 }));
 vi.mock('next-auth/react', () => ({
-  useSession: () => ({ status: state.status, data: state.status === 'authenticated' ? { user: { role: state.role, credits: state.credits } } : null }),
+  useSession: () => ({ status: state.status, data: state.status === 'authenticated' ? { user: { role: state.role, credits: state.credits, premiumUntil: state.premiumUntil } } : null }),
 }));
 
 import AdSlot from './index';
@@ -20,6 +26,7 @@ beforeEach(() => {
   state.status = 'unauthenticated';
   state.role = undefined;
   state.credits = 0;
+  state.premiumUntil = null;
 });
 
 describe('AdSlot / SponsorSlider — bayrak ve premium kapısı', () => {
@@ -56,14 +63,28 @@ describe('AdSlot / SponsorSlider — bayrak ve premium kapısı', () => {
     expect(renderToStaticMarkup(<AdSlot slot="x" />)).toContain('Reklam');
   });
 
-  it('ödeme entegrasyonuna kadar kimse premium değil; yönetici ayrı, analizi kredisiz', () => {
-    for (const u of [{ role: 'ADMIN', credits: 0 }, { role: 'USER', credits: 100 }, { role: 'USER', credits: 1000 }, { role: 'USER', credits: 5 }, null]) {
-      expect(isPremiumUser(u)).toBe(false);
+  it('premium = premiumUntil gelecekte: reklam ve sponsor gizlenir; süresi geçmiş premium reklam görür', () => {
+    state.status = 'authenticated';
+    state.role = 'USER';
+    state.premiumUntil = new Date(Date.now() + 86_400_000).toISOString();
+    expect(renderToStaticMarkup(<AdSlot slot="x" />)).toBe('');
+    expect(renderToStaticMarkup(<SponsorSlider />)).toBe('');
+    state.premiumUntil = new Date(Date.now() - 1_000).toISOString();
+    expect(renderToStaticMarkup(<AdSlot slot="x" />)).toContain('Reklam');
+  });
+
+  it('isPremiumUser / isAdminUser / analysisIsFree (kredi modeli v2)', () => {
+    const now = Date.parse('2026-10-03T12:00:00Z');
+    expect(isPremiumUser({ premiumUntil: '2026-10-04T00:00:00Z' }, now)).toBe(true);
+    expect(isPremiumUser({ premiumUntil: new Date('2026-10-03T11:59:59Z') }, now)).toBe(false);
+    for (const u of [{ role: 'ADMIN' }, { role: 'USER', premiumUntil: null }, { premiumUntil: 'bozuk' }, null]) {
+      expect(isPremiumUser(u, now)).toBe(false);
     }
     expect(isAdminUser({ role: 'ADMIN' })).toBe(true);
-    expect(isAdminUser({ role: 'USER', credits: 1000 })).toBe(false);
-    expect(analysisIsFree({ role: 'ADMIN', credits: 0 })).toBe(true);
-    expect(analysisIsFree({ role: 'USER', credits: 1000 })).toBe(false);
+    expect(isAdminUser({ role: 'USER', premiumUntil: '2027-01-01' })).toBe(false);
+    expect(analysisIsFree({ role: 'ADMIN' }, now)).toBe(true);
+    expect(analysisIsFree({ role: 'USER', premiumUntil: '2026-11-01' }, now)).toBe(true);
+    expect(analysisIsFree({ role: 'USER' }, now)).toBe(false);
     expect(analysisIsFree(null)).toBe(false);
   });
 });

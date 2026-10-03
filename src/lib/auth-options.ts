@@ -8,6 +8,13 @@ import { checkOAuthSignIn, oauthProviders, onOAuthAccountLinked, onOAuthUserCrea
 
 const ROLE_REFRESH_MS = 60_000;
 
+/** JWT'ye yazılabilir premium bitişi (Date nesnesi JWT'de string'e döner; tek biçim ISO). */
+function toIso(v: Date | string | null | undefined): string | null {
+  if (v == null) return null;
+  const d = v instanceof Date ? v : new Date(v);
+  return Number.isFinite(d.getTime()) ? d.toISOString() : null;
+}
+
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
 
@@ -45,6 +52,7 @@ export const authOptions: NextAuthOptions = {
             role: true,
             username: true,
             credits: true,
+            premiumUntil: true,
           },
         });
 
@@ -61,6 +69,7 @@ export const authOptions: NextAuthOptions = {
           role: user.role,
           username: user.username,
           credits: user.credits,
+          premiumUntil: user.premiumUntil,
         };
       },
     }),
@@ -81,6 +90,7 @@ export const authOptions: NextAuthOptions = {
         token.picture = user.image ?? undefined;
         token.username = (user as { username?: string | null }).username ?? null;
         token.credits = (user as { credits?: number }).credits ?? 0;
+        token.premiumUntil = toIso((user as { premiumUntil?: Date | string | null }).premiumUntil);
         token.roleSyncedAt = Date.now();
       }
       if (!user && token.sub) {
@@ -89,7 +99,7 @@ export const authOptions: NextAuthOptions = {
         if (Date.now() - last > ROLE_REFRESH_MS) {
           const row = await prisma.user.findUnique({
             where: { id: token.sub },
-            select: { role: true, username: true, name: true, image: true, credits: true },
+            select: { role: true, username: true, name: true, image: true, credits: true, premiumUntil: true },
           });
           if (row) {
             token.role = row.role;
@@ -97,6 +107,7 @@ export const authOptions: NextAuthOptions = {
             token.name = row.name;
             token.picture = row.image ?? undefined;
             token.credits = row.credits;
+            token.premiumUntil = toIso(row.premiumUntil);
           }
           token.roleSyncedAt = Date.now();
         }
@@ -126,6 +137,7 @@ export const authOptions: NextAuthOptions = {
           session.user.username = token.username as string | null;
         }
         session.user.credits = (token.credits as number | undefined) ?? 0;
+        session.user.premiumUntil = token.premiumUntil ?? null;
       }
       return session;
     },

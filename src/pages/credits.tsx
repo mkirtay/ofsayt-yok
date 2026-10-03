@@ -18,7 +18,7 @@ export default function CreditsPage() {
   const { t } = useTranslation('credits');
   const { authenticated, loading, credits } = useCredits();
   const { data: session } = useSession();
-  const premium = authenticated && isPremiumUser({ role: session?.user?.role, credits });
+  const premium = authenticated && isPremiumUser({ premiumUntil: session?.user?.premiumUntil });
   const admin = authenticated && isAdminUser(session?.user);
 
   return (

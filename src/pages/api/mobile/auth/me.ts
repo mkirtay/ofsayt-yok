@@ -26,6 +26,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       image: true,
       role: true,
       credits: true,
+      premiumUntil: true,
       favoriteTeamIds: true,
       favoriteLeagueIds: true,
     },
@@ -45,6 +46,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     image: absoluteImageUrl(user.image),
     role: user.role,
     credits: user.credits,
+    // Ek alan (eski istemci yok sayar): premium bitişi ISO ya da null.
+    premiumUntil: user.premiumUntil?.toISOString() ?? null,
     favoriteTeamIds: user.favoriteTeamIds,
     favoriteLeagueIds: user.favoriteLeagueIds,
   });

@@ -32,7 +32,7 @@ export function useMatchAnalysis(matchId: string | null | undefined): MatchAnaly
   const { data: session, status: sessionStatus } = useSession();
   const isAuthenticated = sessionStatus === 'authenticated';
   const { credits, refresh: refreshCredits } = useCredits();
-  const unlimited = analysisIsFree({ role: session?.user?.role, credits });
+  const unlimited = analysisIsFree({ role: session?.user?.role, premiumUntil: session?.user?.premiumUntil });
 
   const [analysis, setAnalysis] = useState<ApiAnalysis | null>(null);
   const [predictionRecord, setPredictionRecord] = useState<ApiPredictionRecord | null>(null);
