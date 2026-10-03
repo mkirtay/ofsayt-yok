@@ -19,7 +19,7 @@ import {
   type Head2HeadData,
 } from '@/services/liveScoreService';
 import { toStandingsCompetitionId } from '@/services/sportmonksProviderFlag';
-import type { MatchEvent, MatchStatsData } from '@/models/domain';
+import type { MatchEvent, MatchLineupData, MatchStatsData } from '@/models/domain';
 import { resolveLiveMatch } from '@/lib/resolveLiveMatch';
 import { prisma } from '@/lib/prisma';
 import { getTeamAbsences, type AnalysisAbsence } from '@/server/analysisTeamAbsences';
@@ -98,7 +98,8 @@ export type MatchAnalysisContext = {
   matchPhase: 'PRE' | 'LIVE' | 'HT' | 'POST';
   events: MatchEvent[];
   liveStats: MatchStatsData | null;
-  lineups: unknown;
+  /** Muhtemel 11 (`confirmed=false`) ya da resmî ilk 11; maça günler varken genelde boş. */
+  lineups: MatchLineupData | null;
   /** Lig veya turnuva sıralaması (varsa) */
   standings: CompetitionTableData | null;
   homeTeam: TeamContext;

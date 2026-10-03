@@ -6,6 +6,7 @@
  * (sadece sayı listelemez — neden/nasıl açıklar).
  */
 import type { MatchAnalysisContext } from '@/server/buildMatchAnalysisContext';
+import type { LineupPlayer } from '@/models/domain';
 import type { AnalysisScenario } from '@/utils/analysisScenarios';
 import { impliedProbabilities } from '@/utils/impliedProbability';
 
@@ -230,6 +231,33 @@ function absenceLines(team: MatchAnalysisContext['homeTeam']): string[] {
   return lines;
 }
 
+/** İlk 11'deki dizilim satırlarından diziliş ("4-2-3-1"); satır bilgisi yoksa null. */
+function formationOf(starters: LineupPlayer[]): string | null {
+  const rows = new Map<number, number>();
+  for (const p of starters) if (p.formation_row != null && p.formation_row > 1) rows.set(p.formation_row, (rows.get(p.formation_row) ?? 0) + 1);
+  if (rows.size < 2) return null;
+  const counts = [...rows.entries()].sort((a, b) => a[0] - b[0]).map(([, n]) => n);
+  return counts.reduce((a, b) => a + b, 0) === 10 ? counts.join('-') : null;
+}
+
+/** Muhtemel/resmî ilk 11; kadro yoksa hiç satır yok. */
+function lineupLines(ctx: MatchAnalysisContext): string[] {
+  const lu = ctx.lineups?.lineup;
+  if (!lu) return [];
+  const teams = [lu.home, lu.away].map((t) => ({ name: t?.team?.name ?? '', starters: (t?.players ?? []).filter((p) => p.substitution === '0') }));
+  if (teams.every((t) => t.starters.length === 0)) return [];
+  const label =
+    ctx.lineups?.confirmed === true ? 'İlk 11 (resmî)' : ctx.lineups?.confirmed === false ? 'Muhtemel 11 (resmî değil, tahmini)' : 'İlk 11';
+  const lines = [`\n## ${label}`];
+  for (const t of teams) {
+    if (t.starters.length === 0) continue;
+    const f = formationOf(t.starters);
+    const players = t.starters.map((p) => (p.pos_code || p.position ? `${p.name} (${p.pos_code || p.position})` : p.name));
+    lines.push(`${t.name}${f ? ` (${f})` : ''}: ${players.join(', ')}`);
+  }
+  return lines;
+}
+
 function summarizeContextForPrompt(ctx: MatchAnalysisContext): string {
   const m = ctx.match;
   const homeName = m.home?.name ?? 'Ev sahibi';
@@ -285,6 +313,8 @@ function summarizeContextForPrompt(ctx: MatchAnalysisContext): string {
     lines.push(`  - ${r.date} ${r.isHome ? 'EV' : 'DEP'} vs ${r.opponent}: ${r.scoreText} (${r.result})`);
   }
   lines.push(...absenceLines(a));
+
+  lines.push(...lineupLines(ctx));
 
   // H2H
   if (ctx.h2h && ctx.h2h.totalMatches > 0) {

@@ -74,4 +74,20 @@ describe('analiz prompt\'u — bahis dili yok, olasılık senaryoları', () => {
     expect(msg).toContain('Eksikler: bilinen sakat/cezalı oyuncu yok');
     expect(buildAnalysisUserMessage(ctx)).not.toContain('Eksikler');
   });
+
+  it('kadro: muhtemel 11 dizilişle; resmî ise etiket değişir; oyuncu yoksa bölüm yok', () => {
+    const rows = [1, 2, 2, 2, 2, 3, 3, 4, 4, 4, 5];
+    const xi = (team: string) =>
+      rows.map((row, i) => ({ team_id: team, id: `${team}${i}`, name: `${team} O${i}`, substitution: '0', shirt_number: String(i + 1), pos_code: i === 0 ? 'GK' : 'X', formation_row: row }));
+    const bench = { team_id: 'g', id: 'b1', name: 'Yedek', substitution: '1', shirt_number: '20' };
+    const lineups = { lineup: { home: { team: { id: '1', name: 'Galatasaray' }, players: [...xi('g'), bench] }, away: { team: { id: '2', name: 'Fenerbahçe' }, players: xi('f') } }, confirmed: false };
+    const msg = buildAnalysisUserMessage({ ...ctx, lineups } as unknown as MatchAnalysisContext);
+    expect(msg).toContain('## Muhtemel 11 (resmî değil, tahmini)');
+    expect(msg).toContain('Galatasaray (4-2-3-1): g O0 (GK), g O1 (X)');
+    expect(msg).not.toContain('Yedek');
+    const official = buildAnalysisUserMessage({ ...ctx, lineups: { ...lineups, confirmed: true } } as unknown as MatchAnalysisContext);
+    expect(official).toContain('## İlk 11 (resmî)');
+    const empty = { lineup: { home: { team: { id: '1', name: 'G' }, players: [] }, away: { team: { id: '2', name: 'F' }, players: [] } }, confirmed: null };
+    expect(buildAnalysisUserMessage({ ...ctx, lineups: empty } as unknown as MatchAnalysisContext)).not.toMatch(/İlk 11|Muhtemel 11/);
+  });
 });
