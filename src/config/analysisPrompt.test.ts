@@ -35,7 +35,7 @@ describe('analiz prompt\'u — bahis dili yok, olasılık senaryoları', () => {
   it('sistem prompt\'u: yasak kuralı var, kuralın dışında bahis terimi yok', () => {
     expect(ANALYSIS_SYSTEM_PROMPT).toContain('DİL YASAĞI');
     expect(findGamblingTerms(withoutBanRule(ANALYSIS_SYSTEM_PROMPT))).toEqual([]);
-    expect(ANALYSIS_MODEL_VERSION).toBe('v4-2026-10');
+    expect(ANALYSIS_MODEL_VERSION).toBe('v5-2026-10');
   });
 
   it('kullanıcı mesajı: şema `scenarios` (metric / probability / confidence / reasoning), bettingTips yok', () => {
@@ -126,5 +126,19 @@ describe('analiz prompt\'u — bahis dili yok, olasılık senaryoları', () => {
     expect(msg).toContain('Ligde gol katkısı: Golcü 6 gol 2 asist (4 maç), Yardımcı 0 gol 3 asist (5 maç)');
     // Deplasman takımında bu veriler yok → satırlar da yok.
     expect(msg.split('## Fenerbahçe')[1]).not.toContain('Ligde bu sezon');
+  });
+
+  it('v5 şeması: metin alanlarında kelime sınırı, gösterilmeyen alanlar yok, girintisiz JSON istenir', () => {
+    const msg = buildAnalysisUserMessage(ctx);
+    expect(msg).not.toMatch(/vsOpponentHistory|"alternatives"/);
+    expect(msg).toContain('"scorePrediction": { "mostLikely"');
+    expect(msg).toContain('scenarios: TAM 3 madde');
+    expect(msg).toContain('girintisiz');
+    expect(msg).not.toContain('Dominans');
+    expect(msg).not.toContain('Aşağıdaki başlıkları kapsayan');
+    // Her serbest metin alanı tanımında bir üst sınır var.
+    for (const k of ['tempo', 'narrative', 'keyBattleZones', 'analystComment', 'riskReasoning']) {
+      expect(msg).toMatch(new RegExp(`"${k}": "[^"]*en fazla \\d+ kelime`));
+    }
   });
 });

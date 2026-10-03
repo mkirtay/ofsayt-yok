@@ -34,8 +34,9 @@ export type ApiAnalysis = {
   matchPrediction: { home: number; draw: number; away: number; reasoning: string };
   scorePrediction: {
     mostLikely: string;
-    alternatives: Array<{ score: string; probability: number } | string>;
-    reasoning: string;
+    /** Prompt v5'ten itibaren üretilmiyor; eski kayıtlarda olabilir. */
+    alternatives?: Array<{ score: string; probability: number } | string>;
+    reasoning?: string;
   };
   goalExpectation: {
     over15: number;
@@ -58,7 +59,8 @@ export type ApiAnalysis = {
       narrative: string;
       keyFactors: string[];
       formSummary: string;
-      vsOpponentHistory: string;
+      /** Prompt v5'ten itibaren üretilmiyor. */
+      vsOpponentHistory?: string;
       firstHalfNote?: string;
       secondHalfNote?: string;
     };
@@ -66,7 +68,8 @@ export type ApiAnalysis = {
       narrative: string;
       keyFactors: string[];
       formSummary: string;
-      vsOpponentHistory: string;
+      /** Prompt v5'ten itibaren üretilmiyor. */
+      vsOpponentHistory?: string;
       firstHalfNote?: string;
       secondHalfNote?: string;
     };
