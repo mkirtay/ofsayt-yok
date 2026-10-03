@@ -24,10 +24,20 @@ import { findGamblingTerms } from '@/utils/gamblingTerms';
 import { captureError } from '@/lib/logger';
 
 const CLAUDE_MODEL = process.env.ANTHROPIC_MODEL ?? 'claude-sonnet-4-5-20250929';
-/** Vercel/local: `OPENAI_MODEL` (örn. gpt-4.1). Mini varsayılan değil — düşük isabet. */
-const OPENAI_MODEL = process.env.OPENAI_MODEL ?? 'gpt-4.1';
-/** v2 promptu 11 bölüm istediği için önceki 3000'den yükseltildi. */
-const MAX_TOKENS = 5000;
+/**
+ * Analiz modeli kodda sabit (2026-10-03 kararı, kör test + süre ölçümü): gpt-6-luna, reasoning `none`.
+ * `OPENAI_MODEL` analizi ETKİLEMEZ (trivia ve video betiği onu kullanmaya devam eder); yalnız acil geri dönüş
+ * için `OPENAI_ANALYSIS_MODEL` (ör. `gpt-4.1`).
+ */
+export const ANALYSIS_OPENAI_MODEL = process.env.OPENAI_ANALYSIS_MODEL || 'gpt-6-luna';
+/** v5 şeması kısa: ölçülen çıktı ~1.500-2.000 token; kesilmeye karşı pay bırakıldı (eski 5000). */
+const MAX_TOKENS = 3000;
+
+/** `reasoning_effort: 'none'` yalnız destekleyen modellere gider (gpt-4.1 reasoning modeli değil, Sol `none`'ı reddeder). */
+const NO_REASONING_MODELS = /^gpt-(6|5\.6)-luna\b/;
+export function openAiAnalysisParams(model: string): { temperature: number; reasoning_effort?: 'none' } {
+  return NO_REASONING_MODELS.test(model) ? { temperature: 0.35, reasoning_effort: 'none' } : { temperature: 0.35 };
+}
 const ANALYSIS_TIMEOUT_MS = 35_000;
 
 export class AnalysisTimeoutError extends Error {
@@ -163,9 +173,10 @@ export async function generateMatchAnalysis(
     if (provider === 'openai') {
       const response = await getOpenAiClient().chat.completions.create(
         {
-          model: OPENAI_MODEL,
-          temperature: 0.35,
+          model: ANALYSIS_OPENAI_MODEL,
+          ...openAiAnalysisParams(ANALYSIS_OPENAI_MODEL),
           max_completion_tokens: MAX_TOKENS,
+          response_format: { type: 'json_object' },
           messages: [
             { role: 'system', content: ANALYSIS_SYSTEM_PROMPT },
             { role: 'user', content: userMessage },
@@ -184,7 +195,7 @@ export async function generateMatchAnalysis(
 
       return {
         analysis: validated,
-        modelVersion: `${ANALYSIS_MODEL_VERSION}-openai:${OPENAI_MODEL}`,
+        modelVersion: `${ANALYSIS_MODEL_VERSION}-openai:${ANALYSIS_OPENAI_MODEL}`,
         tokensUsed:
           (response.usage?.prompt_tokens ?? 0) +
           (response.usage?.completion_tokens ?? 0),
