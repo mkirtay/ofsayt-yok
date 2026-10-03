@@ -237,7 +237,9 @@ export async function addCredits(
   userId: string,
   amount: number,
   type: CreditTransactionType,
-  note?: string
+  note?: string,
+  /** Yönetici işlemlerinde işlemi yapan yönetici (denetim izi, `CreditTransaction.actorId`). */
+  actorId?: string,
 ): Promise<number> {
   return prisma.$transaction(async (tx) => {
     let balanceAfter: number;
@@ -260,7 +262,7 @@ export async function addCredits(
       balanceAfter = user?.credits ?? 0;
     }
     await tx.creditTransaction.create({
-      data: { userId, type, amount, balanceAfter, note },
+      data: { userId, type, amount, balanceAfter, note, ...(actorId ? { actorId } : {}) },
     });
     return balanceAfter;
   });

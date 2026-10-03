@@ -1,0 +1,177 @@
+@use '../../styles/variables' as *;
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: $spacing-4;
+}
+
+.title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: $color-text;
+}
+
+.lead {
+  margin: 0;
+  font-size: 14px;
+  color: $color-text-secondary;
+}
+
+.searchRow {
+  display: flex;
+  gap: $spacing-2;
+}
+
+.input,
+.select {
+  flex: 1;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid $color-border;
+  border-radius: 10px;
+  background: $color-surface;
+  color: $color-text;
+  font: inherit;
+}
+
+.button {
+  padding: 10px 16px;
+  border: 0;
+  border-radius: 10px;
+  background: $color-primary;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+}
+
+.buttonDanger {
+  background: $color-danger;
+}
+
+.results {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.resultItem {
+  display: flex;
+  justify-content: space-between;
+  gap: $spacing-2;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid $color-border;
+  border-radius: 10px;
+  background: $color-surface;
+  color: $color-text;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.resultActive {
+  border-color: $color-primary;
+}
+
+.meta {
+  font-size: 13px;
+  color: $color-text-secondary;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+  padding: $spacing-4;
+  border: 1px solid $color-border;
+  border-radius: 14px;
+  background: $color-surface;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: $spacing-2;
+  margin: 0;
+
+  dt {
+    font-size: 12px;
+    color: $color-text-secondary;
+  }
+
+  dd {
+    margin: 2px 0 0;
+    font-weight: 600;
+    color: $color-text;
+  }
+}
+
+.formRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-2;
+}
+
+.sectionTitle {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: $color-text;
+}
+
+.error {
+  margin: 0;
+  color: $color-danger;
+  font-size: 14px;
+}
+
+.ok {
+  margin: 0;
+  color: $color-primary-text;
+  font-size: 14px;
+}
+
+.tableWrap {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+
+  th,
+  td {
+    padding: 6px 8px;
+    border-bottom: 1px solid $color-border;
+    text-align: left;
+    white-space: nowrap;
+    color: $color-text;
+  }
+
+  th {
+    color: $color-text-secondary;
+    font-weight: 600;
+  }
+}
+
+.plus {
+  color: $color-primary-text;
+}
+
+.minus {
+  color: $color-danger;
+}

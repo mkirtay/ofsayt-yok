@@ -43,6 +43,7 @@ export type FakeCreditTx = {
   idempotencyKey: string | null;
   status: string | null;
   refundOfId: string | null;
+  actorId?: string | null;
   createdAt: Date;
 };
 export type FakeAnalysis = { id: string; matchId: string; matchStatus: string; [k: string]: unknown };
@@ -94,6 +95,7 @@ export function createFakeCreditDb(opts: { now?: () => number } = {}) {
   const analyses: FakeAnalysis[] = [];
   const unlocks: FakeUnlock[] = [];
   const referrals: FakeReferral[] = [];
+  const premiumGrants: Array<{ id: string; userId: string; until: Date | null; source: string; actorId: string | null; note: string | null; createdAt: Date }> = [];
   let seq = 0;
   const nextId = (p: string) => `${p}${++seq}`;
 
@@ -289,6 +291,15 @@ export function createFakeCreditDb(opts: { now?: () => number } = {}) {
           return { ...row };
         },
       },
+      premiumGrant: {
+        async create({ data }: { data: { userId: string; until: Date | null; source: string; actorId?: string | null; note?: string | null } }) {
+          await tick();
+          const row = { id: nextId('pg'), createdAt: new Date(now()), actorId: null, note: null, ...data };
+          premiumGrants.push(row);
+          ctx.undo.push(() => premiumGrants.splice(premiumGrants.indexOf(row), 1));
+          return { ...row };
+        },
+      },
       referral: {
         async create({ data }: { data: { referrerId: string; refereeId: string } }) {
           await tick();
@@ -359,6 +370,7 @@ export function createFakeCreditDb(opts: { now?: () => number } = {}) {
     matchAnalysis: auto.matchAnalysis,
     analysisUnlock: auto.analysisUnlock,
     referral: auto.referral,
+    premiumGrant: auto.premiumGrant,
     predictionRecord: auto.predictionRecord,
     async $transaction<T>(fn: (tx: ReturnType<typeof client>) => Promise<T>): Promise<T> {
       const ctx: Ctx = { id: Symbol('tx'), undo: [], held: new Set() };
@@ -380,6 +392,7 @@ export function createFakeCreditDb(opts: { now?: () => number } = {}) {
     analyses,
     unlocks,
     referrals,
+    premiumGrants,
     addUser(
       id: string,
       credits: number,

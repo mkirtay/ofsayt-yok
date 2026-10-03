@@ -37,7 +37,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     user.id,
     parsedAmount,
     'ADMIN_GRANT',
-    typeof note === 'string' ? note : undefined
+    typeof note === 'string' ? note : undefined,
+    guard.userId,
   );
 
   return res.status(200).json({ ok: true, email: user.email, credits: balanceAfter });
