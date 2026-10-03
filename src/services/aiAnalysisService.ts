@@ -19,6 +19,7 @@ import {
   type AnalysisJsonSchema,
 } from '@/config/analysisPrompt';
 import type { MatchAnalysisContext } from '@/server/buildMatchAnalysisContext';
+import { ANALYSIS_RESPONSE_FORMAT } from '@/config/analysisJsonSchema';
 import { isAnalysisScenario } from '@/utils/analysisScenarios';
 import { findGamblingTerms } from '@/utils/gamblingTerms';
 import { captureError } from '@/lib/logger';
@@ -176,7 +177,7 @@ export async function generateMatchAnalysis(
           model: ANALYSIS_OPENAI_MODEL,
           ...openAiAnalysisParams(ANALYSIS_OPENAI_MODEL),
           max_completion_tokens: MAX_TOKENS,
-          response_format: { type: 'json_object' },
+          response_format: ANALYSIS_RESPONSE_FORMAT,
           messages: [
             { role: 'system', content: ANALYSIS_SYSTEM_PROMPT },
             { role: 'user', content: userMessage },
