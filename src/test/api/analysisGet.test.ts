@@ -82,6 +82,6 @@ describe('GET /api/matches/[id]/analysis', () => {
     const oldTip = { market: '1X2', pick: 'MS 1', confidence: 'high', reasoning: 'r', valueBet: true, avoid: false };
     db.analysis.set('19000003', { id: 'a2', matchId: '19000003', bettingTips: [oldTip, scenario] });
     const res = await call('19000003');
-    expect(res.body.analysis).toEqual({ id: 'a2', matchId: '19000003', bettingTips: [], scenarios: [scenario] });
+    expect((res.body as { analysis: unknown }).analysis).toEqual({ id: 'a2', matchId: '19000003', bettingTips: [], scenarios: [scenario] });
   });
 });
