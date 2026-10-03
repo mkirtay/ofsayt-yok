@@ -202,7 +202,8 @@ const OUTPUT_SCHEMA_DESCRIPTION = `{
   "overallConfidence": 0-100
 }
 
-scenarios: TAM 3 madde. Sınırlar üst sınırdır — tekrar etme, aynı bilgiyi iki alana yazma.`;
+scenarios: TAM 3 madde. Sınırlar üst sınırdır — tekrar etme, aynı bilgiyi iki alana yazma.
+Taktik alanlarına (pres, geçiş, duran top, kanat) doğrudan veri yoksa form, gol dağılımı ve dizilişten kısa bir tahmin yaz — 'veri yok' YAZMA.`;
 
 const ABSENCE_KIND_TR: Record<string, string> = { injury: 'sakat', suspended: 'cezalı', other: 'forma giyemiyor' };
 const MAX_ABSENCES = 10;

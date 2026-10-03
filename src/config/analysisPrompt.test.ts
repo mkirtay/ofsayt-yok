@@ -141,4 +141,8 @@ describe('analiz prompt\'u — bahis dili yok, olasılık senaryoları', () => {
       expect(msg).toMatch(new RegExp(`"${k}": "[^"]*en fazla \\d+ kelime`));
     }
   });
+
+  it('taktik kısa alanları için "veri yok" yazma yönlendirmesi', () => {
+    expect(buildAnalysisUserMessage(ctx)).toContain("'veri yok' YAZMA");
+  });
 });
