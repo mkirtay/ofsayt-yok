@@ -19,30 +19,27 @@ beforeEach(() => {
   h.db = db;
 });
 
-describe('AI Analizlerim — REFUNDED süzgeci', () => {
-  it('REFUNDED harcama çıkar; status null (eski), SETTLED ve ANALYSIS_FREE kalır', async () => {
+describe('AI Analizlerim — açma kayıtlarından (kredi modeli v2)', () => {
+  it('kullanıcının açtıkları (LEGACY / CREDIT / WEEKLY_FREE) listede; iade edilen (açma yok) ve başkasınınki yok', async () => {
     db.addUser('u1', 10);
-    const row = (matchId: string, type: string, status: string | null, amount = -5) =>
-      db.ledger.push({
-        id: `t-${matchId}`,
-        userId: 'u1',
-        type,
-        amount,
-        balanceAfter: 0,
-        matchId,
-        note: null,
-        idempotencyKey: null,
-        status,
-        refundOfId: null,
-        createdAt: new Date('2026-10-02T12:00:00Z'),
-      });
-    row('1', 'ANALYSIS_SPEND', null);
-    row('2', 'ANALYSIS_SPEND', 'SETTLED');
-    row('3', 'ANALYSIS_SPEND', 'REFUNDED');
-    row('4', 'ANALYSIS_FREE', null, 0);
-    for (const id of ['1', '2', '3', '4']) {
+    for (const id of ['1', '2', '3', '4', '5']) {
       db.analyses.push({ id: `a${id}`, matchId: id, matchStatus: 'PRE', homeTeamName: 'H', awayTeamName: 'A' });
     }
+    const unlock = (userId: string, n: string, source: string) =>
+      db.unlocks.push({
+        id: `ul-${userId}-${n}`,
+        userId,
+        matchAnalysisId: `a${n}`,
+        matchId: n,
+        source,
+        creditTransactionId: null,
+        createdAt: new Date(`2026-10-0${n}T12:00:00Z`),
+      });
+    unlock('u1', '1', 'LEGACY');
+    unlock('u1', '2', 'CREDIT');
+    unlock('u1', '4', 'WEEKLY_FREE');
+    unlock('someone', '5', 'CREDIT');
+    // a3: harcama iade edildi → açma kaydı hiç yazılmadı
 
     const res = { statusCode: 0, body: {} as { items: Array<{ matchId: string }> }, headers: {} as Record<string, string> };
     const r = {
@@ -61,6 +58,10 @@ describe('AI Analizlerim — REFUNDED süzgeci', () => {
     await handler({ method: 'GET', query: {}, headers: {} } as unknown as NextApiRequest, r as unknown as NextApiResponse);
 
     expect(res.statusCode).toBe(200);
-    expect(res.body.items.map((i) => i.matchId).sort()).toEqual(['1', '2', '4']);
+    expect(res.body.items.map((i) => [i.matchId, (i as unknown as { source: string }).source]).sort()).toEqual([
+      ['1', 'LEGACY'],
+      ['2', 'CREDIT'],
+      ['4', 'WEEKLY_FREE'],
+    ]);
   });
 });

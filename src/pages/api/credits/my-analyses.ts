@@ -16,6 +16,8 @@ export type MyAnalysisItem = {
   scoreExactHit: boolean | null;
   hitCount: number;
   totalMarketsEvaluated: number;
+  /** Nasıl açıldı: CREDIT | WEEKLY_FREE | PREMIUM | ADMIN | LEGACY */
+  source: string;
 };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -29,35 +31,27 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(401).json({ error: 'Giriş yapmanız gerekiyor.' });
   }
 
-  const transactions = await prisma.creditTransaction.findMany({
-    where: {
-      userId,
-      type: { in: ['ANALYSIS_SPEND', 'ANALYSIS_FREE'] },
-      matchId: { not: null },
-      // İade edilen harcama (AI hatası, yarışı başka üretim kazandı) "benim analizim" değil. Eski satırlarda status
-      // null — `not` NULL'u da dışarıda bıraktığı için ayrıca.
-      OR: [{ status: null }, { status: { not: 'REFUNDED' } }],
-    },
+  // Kredi modeli v2: kullanıcının açtığı analizler (kredi, haftalık ücretsiz, premium, yönetici, 2026-10 öncesi üretim).
+  const unlocks = await prisma.analysisUnlock.findMany({
+    where: { userId },
     orderBy: { createdAt: 'desc' },
     take: 30,
-    select: { matchId: true, createdAt: true },
+    select: { matchAnalysisId: true, source: true, createdAt: true },
   });
-
-  const matchIds = [...new Set(transactions.map((t) => t.matchId as string))];
-  if (matchIds.length === 0) {
+  if (unlocks.length === 0) {
     res.setHeader('Cache-Control', 'private, no-cache');
     return res.status(200).json({ items: [] as MyAnalysisItem[] });
   }
 
   const analyses = await prisma.matchAnalysis.findMany({
-    where: { matchId: { in: matchIds }, matchStatus: 'PRE' },
+    where: { id: { in: unlocks.map((u) => u.matchAnalysisId) } },
     include: { predictionRecord: true },
   });
-  const byMatchId = new Map(analyses.map((a) => [a.matchId, a]));
+  const byId = new Map(analyses.map((a) => [a.id, a]));
 
-  const items: MyAnalysisItem[] = transactions
+  const items: MyAnalysisItem[] = unlocks
     .map((t) => {
-      const analysis = byMatchId.get(t.matchId as string);
+      const analysis = byId.get(t.matchAnalysisId);
       if (!analysis) return null;
       const pr = analysis.predictionRecord;
       const extendedHits = (pr?.extendedHits as Record<string, boolean | null> | null) ?? {};
@@ -69,6 +63,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         homeTeamName: analysis.homeTeamName,
         awayTeamName: analysis.awayTeamName,
         createdAt: t.createdAt.toISOString(),
+        source: t.source,
         evaluatedAt: pr?.evaluatedAt?.toISOString() ?? null,
         result1x2Hit: pr?.result1x2Hit ?? null,
         scoreExactHit: pr?.scoreExactHit ?? null,
