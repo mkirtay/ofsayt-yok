@@ -276,14 +276,8 @@ $strip-cell-h: 44px;
     }
   }
 
-  // `overflow-x: hidden` (globals) html/body'yi kaydırma kabı yapıp sticky'yi bozuyordu (header ve şerit hiç
-  // yapışmıyordu). Bu sayfada `clip`: taşmayı yine keser, kaydırma kabı oluşturmaz. Yapışık şeridin yüksekliği
-  // Kural Köşesi düğmesinin üst sınırına eklenir (`--sticky-top-extra`, useLauncherDrag).
-  :global(html):has(.subHeader),
-  :global(body):has(.subHeader) {
-    overflow-x: clip;
-  }
-
+  // Yapışık şeridin yüksekliği Kural Köşesi düğmesinin üst sınırına ve kaydırma hedeflerine (globals
+  // `scroll-padding-top`) eklenir (`--sticky-top-extra`, useLauncherDrag). `overflow-x: clip` artık globals'ta.
   :global(html):has(.subHeader) {
     --sticky-top-extra: 53px;
   }

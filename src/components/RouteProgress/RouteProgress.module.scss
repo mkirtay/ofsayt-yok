@@ -28,6 +28,12 @@ $fill: #00a76f;
   }
 }
 
+// Header yapışık: şerit her kaydırma konumunda header'ın alt kenarında. Mobil ana sayfada aşağı kaydırınca header
+// gizlenir (`data-chrome-hidden`, useHideOnScroll) → şerit ekranın üst kenarına çıkar (çubuk tam kenarda).
+:global(html[data-chrome-hidden]) .root {
+  top: -4.5px;
+}
+
 .fill {
   position: absolute;
   left: 0;
