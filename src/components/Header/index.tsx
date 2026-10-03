@@ -12,6 +12,7 @@ import { useTranslation, useI18n } from '@/lib/i18n';
 import { useCredits } from '@/hooks/useCredits';
 import Container from '../Container';
 import HeaderButton from '../HeaderButton';
+import { AUTH_HINT_SCRIPT, writeAuthHint } from '@/utils/authHint';
 import HeaderSearch from '../HeaderSearch';
 import ThemeToggle from '../ThemeToggle';
 import LangFlag from '../LangFlag';
@@ -114,159 +115,169 @@ export default function Header() {
     }
   }, [queryClient, session?.user]);
 
+  useEffect(() => {
+    writeAuthHint(sessionStatus, window.localStorage, document.documentElement);
+  }, [sessionStatus]);
+
   return (
-    <header className={`${styles.header} ${isWorldCupTheme ? styles.headerWorldCup : ''}`.trim()}>
-      <Container className={styles.headerContainer}>
-        <div className={styles.left}>
-          <div className={styles.logo}>
-            <Link href="/" className={styles.logoLink} onMouseEnter={prefetchHome} onFocus={prefetchHome}>
-              <Image
-                src={isWorldCupTheme ? '/images/logo-black.svg' : '/images/ofsaytyok-logo.svg'}
-                alt="Ofsayt Yok"
-                width={isWorldCupTheme ? 146 : 110}
-                height={isWorldCupTheme ? 28 : 34}
-                style={{ height: 'auto' }}
-                priority
-              />
-            </Link>
-          </div>
-        </div>
-        <HeaderSearch />
-        <div className={styles.right}>
-          <div className={styles.headerNavPills}>
-            {/* /world-cup kapalıyken bağlantı yok (config/worldCup.ts › WORLD_CUP_PAGE_ENABLED). */}
-            {WORLD_CUP_PAGE_ENABLED && isWorldCupTheme && (
-              <Link
-                href="/world-cup"
-                className={styles.worldCupMarkLink}
-                aria-label="FIFA World Cup"
-              >
+    <>
+      <script dangerouslySetInnerHTML={{ __html: AUTH_HINT_SCRIPT }} />
+      <header className={`${styles.header} ${isWorldCupTheme ? styles.headerWorldCup : ''}`.trim()}>
+        <Container className={styles.headerContainer}>
+          <div className={styles.left}>
+            <div className={styles.logo}>
+              <Link href="/" className={styles.logoLink} onMouseEnter={prefetchHome} onFocus={prefetchHome}>
                 <Image
-                  src="/images/2026_FIFA_World_Cup_Logo.png"
-                  alt="FIFA World Cup"
-                  width={28}
-                  height={42}
-                  className={styles.worldCupMark}
+                  src={isWorldCupTheme ? '/images/logo-black.svg' : '/images/ofsaytyok-logo.svg'}
+                  alt="Ofsayt Yok"
+                  width={isWorldCupTheme ? 146 : 110}
+                  height={isWorldCupTheme ? 28 : 34}
+                  style={{ height: 'auto' }}
                   priority
                 />
               </Link>
-            )}
-            <AiMenu />
-            <Link href="/credits" className={styles.headerNavPillPremium}>
-              {hasCredits ? `${credits} ⚡` : t('credits')}
-            </Link>
+            </div>
           </div>
-        </div>
-        <div className={styles.actions}>
-          <Link
-            href="/gundem"
-            className={`${styles.headerNavPill} ${router.pathname.startsWith('/gundem') ? styles.headerNavPillActive : ''}`.trim()}
-            aria-current={router.pathname.startsWith('/gundem') ? 'page' : undefined}
-          >
-            {t('gundem')}
-          </Link>
-          <span className={styles.divider} aria-hidden="true" />
-          {sessionLoading ? (
-            // Oturum durumu netleşene kadar "Giriş Yap/Üye Ol" ya da "Profil" gibi
-            // yanlış olabilecek bir state göstermek yerine nötr bir placeholder gösteriyoruz.
-            // Bu, sayfa her yüklendiğinde header'ın "titremesini" (auth flicker) önler.
-            <div className={styles.authPlaceholder} aria-hidden="true" />
-          ) : session ? (
-            <>
-              <NotificationBell />
-              <AccountMenu />
-            </>
-          ) : (
-            <>
-              <HeaderButton variant="outline" onClick={() => router.push('/auth/signin')}>
-                {t('signIn')}
-              </HeaderButton>
-              <HeaderButton variant="filled" onClick={() => router.push('/auth/signup')}>
-                {t('signUp')}
-              </HeaderButton>
-            </>
-          )}
-          <ThemeToggle />
-          <button
-            type="button"
-            className={styles.langToggle}
-            onClick={toggleLang}
-            aria-label={t('langSwitchLabel')}
-            title={t('langSwitchLabel')}
-          >
-            <LangFlag lang={targetLang} className={styles.flag} />
-          </button>
-        </div>
-        {session ? <NotificationBell className={styles.mobileBell} /> : null}
-        <ThemeToggle className={styles.mobileThemeToggle} />
-        <button
-          ref={hamburgerRef}
-          className={`${styles.hamburger} ${mobileMenuOpen ? styles.hamburgerOpen : ''}`}
-          onClick={() => setMobileMenuOpen((v) => !v)}
-          aria-label={t('toggleMenu')}
-          aria-expanded={mobileMenuOpen}
-        >
-          <span />
-          <span />
-          <span />
-        </button>
-      </Container>
-
-      {mobileMenuOpen && (
-        <div ref={menuRef} className={`${styles.mobileMenu} ${isWorldCupTheme ? styles.mobileMenuWorldCup : ''}`}>
-          <HeaderSearch onNavigate={() => setMobileMenuOpen(false)} />
-          <nav className={styles.mobileNav}>
-            <Link
-              href="/ai-istatistikleri"
-              className={styles.mobileNavLink}
-              onMouseEnter={prefetchAiStats}
-              onFocus={prefetchAiStats}
-            >
-              {t('aiAccuracy')}
-            </Link>
-            {session && <MyAnalysesDropdown />}
-            <Link href="/credits" className={styles.mobileNavLinkPremium}>
-              {hasCredits ? `${credits} ⚡ ${t('credits')}` : t('credits')}
-            </Link>
-          </nav>
-          <div className={styles.mobileActions}>
-            {sessionLoading ? (
-              <div className={styles.authPlaceholderMobile} aria-hidden="true" />
-            ) : session ? (
-              <>
+          <HeaderSearch />
+          <div className={styles.right}>
+            <div className={styles.headerNavPills}>
+              {/* /world-cup kapalıyken bağlantı yok (config/worldCup.ts › WORLD_CUP_PAGE_ENABLED). */}
+              {WORLD_CUP_PAGE_ENABLED && isWorldCupTheme && (
                 <Link
-                  href="/profile"
-                  className={styles.mobileNavLink}
-                  onMouseEnter={prefetchProfilePage}
-                  onFocus={prefetchProfilePage}
+                  href="/world-cup"
+                  className={styles.worldCupMarkLink}
+                  aria-label="FIFA World Cup"
                 >
-                  {t('profile')}
+                  <Image
+                    src="/images/2026_FIFA_World_Cup_Logo.png"
+                    alt="FIFA World Cup"
+                    width={28}
+                    height={42}
+                    className={styles.worldCupMark}
+                    priority
+                  />
                 </Link>
-                <button className={styles.mobileSignOut} onClick={() => signOut()}>
-                  {t('signOut')}
-                </button>
-              </>
-            ) : (
-              <>
-                <Link href="/auth/signin" className={styles.mobileAuthOutline}>
-                  {t('signIn')}
-                </Link>
-                <Link href="/auth/signup" className={styles.mobileAuthFilled}>
-                  {t('signUp')}
-                </Link>
-              </>
-            )}
+              )}
+              <AiMenu />
+              <Link href="/credits" className={styles.headerNavPillPremium}>
+                {hasCredits ? `${credits} ⚡` : t('credits')}
+              </Link>
+            </div>
+          </div>
+          <div className={styles.actions}>
+            <Link
+              href="/gundem"
+              className={`${styles.headerNavPill} ${router.pathname.startsWith('/gundem') ? styles.headerNavPillActive : ''}`.trim()}
+              aria-current={router.pathname.startsWith('/gundem') ? 'page' : undefined}
+            >
+              {t('gundem')}
+            </Link>
+            <span className={styles.divider} aria-hidden="true" />
+            {/* Yer oturum bilgisi gelmeden ayrılı (ziyaretçi / ipucuyla oturum açık genişliği, bkz. utils/authHint.ts). */}
+            <div className={styles.authSlot}>
+              {sessionLoading ? (
+                // Oturum durumu netleşene kadar "Giriş Yap/Üye Ol" ya da "Profil" gibi
+                // yanlış olabilecek bir state göstermek yerine nötr bir placeholder gösteriyoruz.
+                // Bu, sayfa her yüklendiğinde header'ın "titremesini" (auth flicker) önler.
+                <div className={styles.authPlaceholder} aria-hidden="true" />
+              ) : session ? (
+                <>
+                  <NotificationBell />
+                  <AccountMenu />
+                </>
+              ) : (
+                <>
+                  <HeaderButton variant="outline" onClick={() => router.push('/auth/signin')}>
+                    {t('signIn')}
+                  </HeaderButton>
+                  <HeaderButton variant="filled" onClick={() => router.push('/auth/signup')}>
+                    {t('signUp')}
+                  </HeaderButton>
+                </>
+              )}
+            </div>
+            <ThemeToggle />
             <button
               type="button"
-              className={styles.mobileLangToggle}
+              className={styles.langToggle}
               onClick={toggleLang}
               aria-label={t('langSwitchLabel')}
+              title={t('langSwitchLabel')}
             >
               <LangFlag lang={targetLang} className={styles.flag} />
             </button>
           </div>
-        </div>
-      )}
-    </header>
+          {session ? <NotificationBell className={styles.mobileBell} /> : null}
+          <ThemeToggle className={styles.mobileThemeToggle} />
+          <button
+            ref={hamburgerRef}
+            className={`${styles.hamburger} ${mobileMenuOpen ? styles.hamburgerOpen : ''}`}
+            onClick={() => setMobileMenuOpen((v) => !v)}
+            aria-label={t('toggleMenu')}
+            aria-expanded={mobileMenuOpen}
+          >
+            <span />
+            <span />
+            <span />
+          </button>
+        </Container>
+
+        {mobileMenuOpen && (
+          <div ref={menuRef} className={`${styles.mobileMenu} ${isWorldCupTheme ? styles.mobileMenuWorldCup : ''}`}>
+            <HeaderSearch onNavigate={() => setMobileMenuOpen(false)} />
+            <nav className={styles.mobileNav}>
+              <Link
+                href="/ai-istatistikleri"
+                className={styles.mobileNavLink}
+                onMouseEnter={prefetchAiStats}
+                onFocus={prefetchAiStats}
+              >
+                {t('aiAccuracy')}
+              </Link>
+              {session && <MyAnalysesDropdown />}
+              <Link href="/credits" className={styles.mobileNavLinkPremium}>
+                {hasCredits ? `${credits} ⚡ ${t('credits')}` : t('credits')}
+              </Link>
+            </nav>
+            <div className={styles.mobileActions}>
+              {sessionLoading ? (
+                <div className={styles.authPlaceholderMobile} aria-hidden="true" />
+              ) : session ? (
+                <>
+                  <Link
+                    href="/profile"
+                    className={styles.mobileNavLink}
+                    onMouseEnter={prefetchProfilePage}
+                    onFocus={prefetchProfilePage}
+                  >
+                    {t('profile')}
+                  </Link>
+                  <button className={styles.mobileSignOut} onClick={() => signOut()}>
+                    {t('signOut')}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link href="/auth/signin" className={styles.mobileAuthOutline}>
+                    {t('signIn')}
+                  </Link>
+                  <Link href="/auth/signup" className={styles.mobileAuthFilled}>
+                    {t('signUp')}
+                  </Link>
+                </>
+              )}
+              <button
+                type="button"
+                className={styles.mobileLangToggle}
+                onClick={toggleLang}
+                aria-label={t('langSwitchLabel')}
+              >
+                <LangFlag lang={targetLang} className={styles.flag} />
+              </button>
+            </div>
+          </div>
+        )}
+      </header>
+    </>
   );
 }

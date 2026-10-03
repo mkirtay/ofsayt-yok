@@ -119,6 +119,8 @@
 
 .headerNavPillPremium {
   @extend .headerNavPill;
+  // Oturum gelince "Krediler" (84 px) → "55 ⚡" (69 px) değişir; 4 haneli bakiyeye (83 px) kadar genişlik sabit.
+  min-width: 85px;
   background: linear-gradient(135deg, var(--color-premium), var(--color-premium-strong));
   border-color: transparent;
   color: var(--color-on-premium);
@@ -454,8 +456,22 @@
 // Oturum durumu (giriş/çıkış) client tarafında çözülene kadar gösterilen nötr
 // placeholder — "Giriş Yap" butonlarının bir an görünüp hemen "Profil"e
 // dönüşmesi gibi bir titremeyi (auth flicker) önlemek için kullanılır.
+// Oturum düğmeleri alanı: yer oturum bilgisi gelmeden ayrılır (bkz. utils/authHint.ts). Ziyaretçi "Giriş Yap" +
+// "Üye Ol" = 102 + 8 + 87 px; oturum açık zil + avatar = 40 + 8 + 40 px. İçerik sağa yaslı.
+.authSlot {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: $spacing-2;
+  min-width: 197px;
+}
+
+:global(html[data-auth-hint='in']) .authSlot {
+  min-width: 88px;
+}
+
 .authPlaceholder {
-  width: 160px;
+  width: 100%;
   height: 32px;
   border-radius: $radius-full;
   background: rgba(255, 255, 255, 0.08);
