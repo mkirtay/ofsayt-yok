@@ -15,7 +15,17 @@ async function fetchPage(cursor: string | null): Promise<CreditHistoryPage> {
   return res.json() as Promise<CreditHistoryPage>;
 }
 
-const KNOWN_TYPES = ['SIGNUP_BONUS', 'ADMIN_GRANT', 'ANALYSIS_SPEND', 'ANALYSIS_FREE', 'PURCHASE', 'REFUND'];
+const KNOWN_TYPES = [
+  'SIGNUP_BONUS',
+  'ADMIN_GRANT',
+  'ANALYSIS_SPEND',
+  'ANALYSIS_FREE',
+  'ANALYSIS_PREMIUM',
+  'ANALYSIS_WEEKLY_FREE',
+  'REFERRAL_BONUS',
+  'PURCHASE',
+  'REFUND',
+];
 
 function Row({ item, locale }: { item: CreditHistoryItem; locale: string }) {
   const { t } = useTranslation('profile');

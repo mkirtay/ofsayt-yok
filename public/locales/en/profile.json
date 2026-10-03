@@ -77,12 +77,15 @@
     "balanceAfter": "Balance: {{balance}}",
     "types": {
       "SIGNUP_BONUS": "Sign-up bonus",
-      "ADMIN_GRANT": "Granted by admin",
+      "ADMIN_GRANT": "Admin adjustment",
       "ANALYSIS_SPEND": "AI analysis",
-      "ANALYSIS_FREE": "AI analysis (Premium)",
+      "ANALYSIS_FREE": "AI analysis (admin)",
       "PURCHASE": "Purchase",
-      "REFUND": "Refund"
+      "REFUND": "Refund",
+      "ANALYSIS_PREMIUM": "AI analysis (Premium)",
+      "ANALYSIS_WEEKLY_FREE": "AI analysis (weekly free)",
+      "REFERRAL_BONUS": "Referral reward"
     }
   },
-  "analysesHint": "The AI match analyses you generated and how their predictions turned out."
+  "analysesHint": "The AI match analyses you unlocked and how their predictions turned out."
 }

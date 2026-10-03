@@ -76,12 +76,15 @@
     "balanceAfter": "Bakiye: {{balance}}",
     "types": {
       "SIGNUP_BONUS": "Kayıt bonusu",
-      "ADMIN_GRANT": "Yönetici tanımladı",
+      "ADMIN_GRANT": "Yönetici düzeltmesi",
       "ANALYSIS_SPEND": "AI analiz",
-      "ANALYSIS_FREE": "AI analiz (Premium)",
+      "ANALYSIS_FREE": "AI analiz (yönetici)",
       "PURCHASE": "Satın alma",
-      "REFUND": "İade"
+      "REFUND": "İade",
+      "ANALYSIS_PREMIUM": "AI analiz (Premium)",
+      "ANALYSIS_WEEKLY_FREE": "AI analiz (haftalık ücretsiz)",
+      "REFERRAL_BONUS": "Davet ödülü"
     }
   },
-  "analysesHint": "Ürettiğin AI maç analizleri ve tahminlerinin isabet durumu."
+  "analysesHint": "Açtığın AI maç analizleri ve tahminlerinin isabet durumu."
 }
