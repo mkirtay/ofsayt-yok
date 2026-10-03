@@ -7,12 +7,13 @@ import '@/lib/i18nNamespaces/credits';
 import Container from '@/components/Container';
 import { useCredits } from '@/hooks/useCredits';
 import { isAdminUser, isPremiumUser } from '@/lib/premium';
-import { CREDIT_PACKAGES, PREMIUM_PACKAGE_KEY } from '@/config/creditPackages';
+import { CREDIT_PACKAGES, PREMIUM_PLANS, formatTry, perCreditKurus, yearlyFreeMonths } from '@/config/creditPackages';
 import styles from './credits.module.scss';
 
 
 const STEPS = ['how1', 'how2', 'how3'];
-const FAQ_KEYS = ['1', '2', '3'];
+const FAQ_KEYS = ['1', '2', '3', '4'];
+const FREE_KEYS = ['free1', 'free2', 'free3'];
 
 export default function CreditsPage() {
   const { t } = useTranslation('credits');
@@ -60,22 +61,50 @@ export default function CreditsPage() {
             <p className={styles.comingSoonBanner}>{t('comingSoon')}</p>
             <div className={styles.pricingCards}>
               {CREDIT_PACKAGES.map((pkg) => (
-                <div
-                  key={pkg.key}
-                  className={`${styles.pricingCard} ${pkg.featured ? styles.pricingCardFeatured : ''} ${pkg.key === PREMIUM_PACKAGE_KEY ? styles.pricingCardPremium : ''}`.trim()}
-                >
-                  {pkg.featured && <div className={styles.pricingPopular}>★</div>}
+                <div key={pkg.key} className={`${styles.pricingCard} ${pkg.featured ? styles.pricingCardFeatured : ''}`.trim()}>
+                  {pkg.featured && <div className={styles.pricingPopular}>{t('popularBadge')}</div>}
                   <div className={styles.pricingAmount}>
                     {pkg.credits}
                     <span className={styles.pricingUnit}>{t('creditsUnit')}</span>
                   </div>
+                  <div className={styles.pricingPrice}>{formatTry(pkg.priceKurus)}</div>
+                  <div className={styles.pricingPer}>{t('perCredit', { price: formatTry(perCreditKurus(pkg)) })}</div>
                   <button type="button" className={styles.buyBtn} disabled>
                     {t('buyDisabled')}
                   </button>
-                  {pkg.key === PREMIUM_PACKAGE_KEY ? <p className={styles.premiumNote}>{t('premiumNote')}</p> : null}
                 </div>
               ))}
             </div>
+          </section>
+
+          <section className={styles.pricingSection}>
+            <h2 className={styles.sectionTitle}>{t('premiumTitle')}</h2>
+            <p className={styles.premiumSub}>{t('premiumSub')}</p>
+            <div className={styles.pricingCards}>
+              {PREMIUM_PLANS.map((plan) => (
+                <div key={plan.key} className={`${styles.pricingCard} ${styles.pricingCardPremium}`}>
+                  {plan.key === 'yearly' ? <div className={styles.pricingPopular}>{t('yearlyFree', { months: yearlyFreeMonths() })}</div> : null}
+                  <div className={styles.pricingPlan}>{t(plan.key === 'monthly' ? 'premiumMonthly' : 'premiumYearly')}</div>
+                  <div className={styles.pricingPrice}>
+                    {formatTry(plan.priceKurus)} <span className={styles.pricingPer}>{t(plan.key === 'monthly' ? 'perMonth' : 'perYear')}</span>
+                  </div>
+                  <p className={styles.premiumNote}>{t('premiumNote')}</p>
+                  <button type="button" className={styles.buyBtn} disabled>
+                    {t('buyDisabled')}
+                  </button>
+                </div>
+              ))}
+            </div>
+            <p className={styles.vatNote}>{t('vatIncluded')}</p>
+          </section>
+
+          <section className={styles.howSection}>
+            <h2 className={styles.sectionTitle}>{t('freeTitle')}</h2>
+            <ul className={styles.freeList}>
+              {FREE_KEYS.map((k) => (
+                <li key={k}>{t(k)}</li>
+              ))}
+            </ul>
           </section>
 
           <section className={styles.howSection}>
