@@ -10,6 +10,7 @@ import Head from 'next/head'
 import GoogleSignInButton from '@/components/GoogleSignInButton'
 import { safeCallbackPath } from '@/lib/authRedirect'
 import { isGoogleAuthEnabled } from '@/lib/oauthEnv'
+import AuthBackdrop from '@/components/AuthBackdrop'
 import styles from './auth.module.scss'
 
 /** NextAuth'un `?error=` kodu → çeviri anahtarı (OAuth dönüşleri). CredentialsSignin burada gelmez (redirect: false). */
@@ -60,7 +61,8 @@ export default function SignInPage({ googleEnabled }: { googleEnabled: boolean }
         <title>{t('signIn.pageTitle')}</title>
         <meta name="robots" content="noindex, nofollow" />
       </Head>
-      <div className={styles.wrapper}>
+      <div className={`${styles.wrapper} ${styles.wrapperPitch}`}>
+        <AuthBackdrop />
         <form className={styles.card} onSubmit={handleSubmit}>
           <h1 className={styles.title}>{t('signIn.title')}</h1>
 

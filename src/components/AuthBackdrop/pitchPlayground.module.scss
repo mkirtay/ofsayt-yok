@@ -1,0 +1,110 @@
+@use '../../styles/motion' as *;
+
+// Silik saha: marka yeşili çizgiler (iki temada da), kart arkada okunur kalsın diye düşük opaklık.
+.root {
+  --pp-line: rgba(0, 167, 111, 0.22);
+  --pp-goal-fill: rgba(0, 167, 111, 0.06);
+  @include motion-root;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+:global(html[data-theme='light']) .root {
+  --pp-line: rgba(0, 123, 85, 0.2);
+}
+
+.lines {
+  position: absolute;
+  inset: 0;
+  fill: none;
+  stroke: var(--pp-line);
+  stroke-width: 1.5;
+}
+
+.goalNet {
+  fill: var(--pp-goal-fill);
+}
+
+.spot {
+  fill: var(--pp-line);
+  stroke: none;
+}
+
+// Top: turf topuyla aynı dil (beyaz, beşgen deseni), yalnız transform ile hareket eder.
+.ball {
+  position: absolute;
+  left: 0;
+  top: 0;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: inset -2px -2px 0 rgba(0, 0, 0, 0.12), 0 3px 8px rgba(0, 0, 0, 0.28), 0 0 0 1px rgba(0, 123, 85, 0.35);
+  pointer-events: auto;
+  touch-action: none;
+  cursor: grab;
+  will-change: transform;
+  transition: opacity 200ms ease;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 22%;
+    border-radius: 50%;
+    background: conic-gradient(
+      rgba(0, 0, 0, 0.55) 0deg 30deg,
+      transparent 30deg 150deg,
+      rgba(0, 0, 0, 0.55) 150deg 180deg,
+      transparent 180deg 300deg,
+      rgba(0, 0, 0, 0.55) 300deg 330deg,
+      transparent 330deg 360deg
+    );
+    opacity: 0.6;
+  }
+
+  &[data-dragging] {
+    cursor: grabbing;
+  }
+
+  &[data-scored] {
+    opacity: 0;
+  }
+}
+
+.root[data-reduced] .ball {
+  pointer-events: none;
+  cursor: default;
+}
+
+// "GOL!": kısa, tek seferlik; yalnız transform + opacity.
+.goal {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  font-size: clamp(40px, 9vw, 96px);
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  color: #00a76f;
+  text-shadow: 0 4px 24px rgba(0, 167, 111, 0.35);
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.6);
+  animation: goal 1.3s cubic-bezier(0.2, 0.8, 0.2, 1) 1 both;
+}
+
+@keyframes goal {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.6);
+  }
+  25% {
+    opacity: 0.9;
+    transform: translate(-50%, -50%) scale(1.08);
+  }
+  70% {
+    opacity: 0.9;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.04);
+  }
+}

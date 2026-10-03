@@ -7,6 +7,19 @@
   padding: $spacing-8 $spacing-4;
 }
 
+// Giriş / kayıt: arka planda saha + fırlatılabilir top (components/AuthBackdrop). Kap ekranı doldurur (top için alan);
+// yükseklik sunucu CSS'inde sabit → kayma yok. Kart arka planın üstünde.
+.wrapperPitch {
+  position: relative;
+  min-height: calc(100svh - var(--header-height, 64px));
+  overflow: hidden;
+
+  > .card {
+    position: relative;
+    z-index: 1;
+  }
+}
+
 // Cloudflare Turnstile kutusu (300×65, satır içi iframe → 70 px) betik yüklenince çiziliyor: yeri baştan ayrılır,
 // altındaki düğme ve footer kaymaz (CLS 0).
 .turnstile {
