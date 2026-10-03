@@ -97,6 +97,16 @@ describe('fetchSportmonksCached', () => {
     expect(h.quota.mock.calls[0]![0]).toMatchObject({ pool: 'Fixture', remaining: 2400, path: '/football/livescores/inplay', origin: 'proxy' });
   });
 
+  it('istek izleme: kapsamdaki çağrı ve upstream sayısı (kota raporu)', async () => {
+    const up = upstream(() => ({ status: 200, body: envelope([]) }));
+    const r = await m.trackSportmonksFetches(async () => {
+      await m.fetchSportmonksCached('football/fixtures/1', {}, { fetchImpl: up.impl, now });
+      await m.fetchSportmonksCached('football/fixtures/1', {}, { fetchImpl: up.impl, now });
+      await m.fetchSportmonksCached('football/fixtures/2', {}, { fetchImpl: up.impl, now });
+    });
+    expect(r).toMatchObject({ calls: 3, upstream: 2, stale: false, failed: false });
+  });
+
   it('süre dolunca yeniden upstream (canlı skor 20 sn)', async () => {
     const up = upstream(() => ({ status: 200, body: envelope([]) }));
     const opts = { fetchImpl: up.impl, now };

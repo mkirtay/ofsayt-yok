@@ -84,6 +84,10 @@ export type SportmonksFetchTracking = {
   stale: boolean;
   /** En az bir istek upstream hatasıyla sonuçlandı ve verecek eski veri yoktu. */
   failed: boolean;
+  /** Kapsamdaki Sportmonks çağrıları (önbellek isabetleri dahil). */
+  calls: number;
+  /** Bunlardan Sportmonks'a gerçekten giden (MISS / BYPASS / hata sonrası eski veri) — kota raporu için. */
+  upstream: number;
 };
 
 type TrackingStore = {
@@ -111,7 +115,7 @@ function tracking(): TrackingStore {
  * ya da 503 olarak iletir.
  */
 export async function trackSportmonksFetches<T>(fn: () => Promise<T>): Promise<{ value: T } & SportmonksFetchTracking> {
-  const state: SportmonksFetchTracking = { stale: false, failed: false };
+  const state: SportmonksFetchTracking = { stale: false, failed: false, calls: 0, upstream: 0 };
   const value = await tracking().run(state, fn);
   return { value, ...state };
 }
@@ -148,6 +152,8 @@ function noteOutcome(r: SportmonksCachedResult): SportmonksCachedResult {
     // Eşzamanlı tazelemeye takılan istek normal işleyiştir: "veriler gecikmeli" yalnızca gerçek upstream hatasında.
     if (r.stale && !r.concurrentRefresh) t.stale = true;
     if (r.cache === 'BYPASS' && (r.status >= 500 || r.status === 429)) t.failed = true;
+    t.calls += 1;
+    if (r.cache === 'MISS' || r.cache === 'BYPASS' || (r.stale && !r.concurrentRefresh)) t.upstream += 1;
   }
   return r;
 }
@@ -370,7 +376,7 @@ export async function fetchSportmonksCached(
   const timeoutMs = resolveTimeoutMs(opts);
 
   const hot = l1Get(key, now());
-  if (hot) return toResult(hot, 'HIT', now());
+  if (hot) return noteOutcome(toResult(hot, 'HIT', now()));
 
   const pending = inFlight.get(key);
   if (pending) return noteOutcome(await pending);
@@ -380,7 +386,7 @@ export async function fetchSportmonksCached(
     const t = now();
     if (stored && stored.freshUntil > t) {
       l1Set(key, stored);
-      return toResult(stored, 'HIT', t);
+      return noteOutcome(toResult(stored, 'HIT', t));
     }
     return refresh(key, normPath, query, stored && stored.staleUntil > t ? stored : null, opts, timeoutMs);
   })();
