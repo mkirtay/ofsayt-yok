@@ -35,7 +35,7 @@ describe('analiz prompt\'u — bahis dili yok, olasılık senaryoları', () => {
   it('sistem prompt\'u: yasak kuralı var, kuralın dışında bahis terimi yok', () => {
     expect(ANALYSIS_SYSTEM_PROMPT).toContain('DİL YASAĞI');
     expect(findGamblingTerms(withoutBanRule(ANALYSIS_SYSTEM_PROMPT))).toEqual([]);
-    expect(ANALYSIS_MODEL_VERSION).toBe('v3-2026-10');
+    expect(ANALYSIS_MODEL_VERSION).toBe('v4-2026-10');
   });
 
   it('kullanıcı mesajı: şema `scenarios` (metric / probability / confidence / reasoning), bettingTips yok', () => {
@@ -89,5 +89,12 @@ describe('analiz prompt\'u — bahis dili yok, olasılık senaryoları', () => {
     expect(official).toContain('## İlk 11 (resmî)');
     const empty = { lineup: { home: { team: { id: '1', name: 'G' }, players: [] }, away: { team: { id: '2', name: 'F' }, players: [] } }, confirmed: null };
     expect(buildAnalysisUserMessage({ ...ctx, lineups: empty } as unknown as MatchAnalysisContext)).not.toMatch(/İlk 11|Muhtemel 11/);
+  });
+
+  it('kural: eksik veriden söz etmez, varsa sakat/kadroyu değerlendirir', () => {
+    expect(ANALYSIS_SYSTEM_PROMPT).toContain('Bağlamda OLMAYAN bir veri hakkında yorum yapma');
+    expect(ANALYSIS_SYSTEM_PROMPT).toContain('"Eksikler" ya da "İlk 11 / Muhtemel 11"');
+    // Eski kural modelden "kadro verisi yok" demesini istiyordu.
+    expect(ANALYSIS_SYSTEM_PROMPT).not.toMatch(/bunu açıkça belirt|bunu net şekilde ifade et/);
   });
 });
