@@ -1,8 +1,0 @@
-// Kap: sayfa akışını etkilemez (mutlak), tıklamaları geçirir. İçerik (saha + top) boşta yüklenir.
-.backdrop {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  overflow: hidden;
-  pointer-events: none;
-}

@@ -7,16 +7,46 @@
   padding: $spacing-8 $spacing-4;
 }
 
-// Giriş / kayıt: arka planda saha + fırlatılabilir top (components/AuthBackdrop). Kap ekranı doldurur (top için alan);
-// yükseklik sunucu CSS'inde sabit → kayma yok. Kart arka planın üstünde.
-.wrapperPitch {
-  position: relative;
-  min-height: calc(100svh - var(--header-height, 64px));
-  overflow: hidden;
+// Giriş / kayıt sahne düzeni (components/AuthStage):
+// - Masaüstü: büyük, koyu, yuvarlak köşeli panel; 3D sahne solda (geniş), form kartı sağda.
+// - Mobil: formun üstünde 220 px sahne bandı.
+// Boyutlar sunucu CSS'inde sabit → sahne sonradan yüklense de kayma yok.
+.stage {
+  width: 100%;
+  max-width: 440px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $spacing-4;
 
   > .card {
     position: relative;
-    z-index: 1;
+  }
+
+  @media (min-width: $bp-desktop) {
+    max-width: 1200px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 400px;
+    align-items: center;
+    gap: $spacing-8;
+    padding: $spacing-6;
+    border-radius: 28px;
+    background: linear-gradient(160deg, #0e1729 0%, #080c16 55%, #05070c 100%);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow: 0 32px 80px -36px rgba(0, 0, 0, 0.65);
+  }
+}
+
+.stageScene {
+  width: 100%;
+  height: 220px;
+  border-radius: 18px;
+
+  @media (min-width: $bp-desktop) {
+    height: auto;
+    min-height: 560px;
+    align-self: stretch;
+    border-radius: 20px;
   }
 }
 

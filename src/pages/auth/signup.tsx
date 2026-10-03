@@ -11,7 +11,7 @@ import GoogleSignInButton from '@/components/GoogleSignInButton'
 import { safeCallbackPath } from '@/lib/authRedirect'
 import { isGoogleAuthEnabled } from '@/lib/oauthEnv'
 import { markSessionAttributionSent, readSessionAttribution } from '@/lib/signupAttributionClient'
-import AuthBackdrop from '@/components/AuthBackdrop'
+import AuthStage from '@/components/AuthStage'
 import styles from './auth.module.scss'
 
 declare global {
@@ -123,97 +123,99 @@ export default function SignUpPage({ googleEnabled }: { googleEnabled: boolean }
         <title>{t('signUp.pageTitle')}</title>
         <meta name="robots" content="noindex, nofollow" />
       </Head>
-      <div className={`${styles.wrapper} ${styles.wrapperPitch}`} data-pitch-host>
-        <AuthBackdrop />
-        <form className={styles.card} onSubmit={handleSubmit} data-pitch-avoid>
-          <h1 className={styles.title}>{t('signUp.title')}</h1>
+      <div className={styles.wrapper}>
+        <div className={styles.stage}>
+          <AuthStage className={styles.stageScene} />
+          <form className={styles.card} onSubmit={handleSubmit}>
+            <h1 className={styles.title}>{t('signUp.title')}</h1>
 
-          {error && <p className={styles.error}>{error}</p>}
+            {error && <p className={styles.error}>{error}</p>}
 
-          {googleEnabled && <GoogleSignInButton callbackPath={safeCallbackPath(router.query.callbackUrl)} />}
+            {googleEnabled && <GoogleSignInButton callbackPath={safeCallbackPath(router.query.callbackUrl)} />}
 
-          <label className={styles.label}>
-            {t('signUp.name')}
-            <input
-              className={styles.input}
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              autoComplete="name"
-            />
-          </label>
+            <label className={styles.label}>
+              {t('signUp.name')}
+              <input
+                className={styles.input}
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                autoComplete="name"
+              />
+            </label>
 
-          <label className={styles.label}>
-            {t('signUp.username')}
-            <input
-              className={styles.input}
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder={t('signUp.usernamePlaceholder')}
-              maxLength={30}
-              autoComplete="username"
-            />
-          </label>
+            <label className={styles.label}>
+              {t('signUp.username')}
+              <input
+                className={styles.input}
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                placeholder={t('signUp.usernamePlaceholder')}
+                maxLength={30}
+                autoComplete="username"
+              />
+            </label>
 
-          <label className={styles.label}>
-            {t('signUp.email')}
-            <input
-              className={styles.input}
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              autoComplete="email"
-            />
-          </label>
+            <label className={styles.label}>
+              {t('signUp.email')}
+              <input
+                className={styles.input}
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                autoComplete="email"
+              />
+            </label>
 
-          <label className={styles.label}>
-            {t('signUp.password')}
-            <input
-              className={styles.input}
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={10}
-              autoComplete="new-password"
-            />
-            {pwTouched && (
-              <ul className={styles.ruleList}>
-                {pwCheck.results.map((r) => (
-                  <li
-                    key={r.key}
-                    className={r.passed ? styles.rulePassed : styles.ruleFailed}
-                  >
-                    <span className={styles.ruleIcon}>{r.passed ? '✓' : '✗'}</span>
-                    {t(`password.${r.key}`)}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </label>
+            <label className={styles.label}>
+              {t('signUp.password')}
+              <input
+                className={styles.input}
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={10}
+                autoComplete="new-password"
+              />
+              {pwTouched && (
+                <ul className={styles.ruleList}>
+                  {pwCheck.results.map((r) => (
+                    <li
+                      key={r.key}
+                      className={r.passed ? styles.rulePassed : styles.ruleFailed}
+                    >
+                      <span className={styles.ruleIcon}>{r.passed ? '✓' : '✗'}</span>
+                      {t(`password.${r.key}`)}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </label>
 
-          {turnstileRequired ? <div id="turnstile-container" className={styles.turnstile} /> : null}
-          {turnstileRequired && !turnstileToken ? (
-            <p className={styles.footer}>{t('signUp.completeVerificationFirst')}</p>
-          ) : null}
+            {turnstileRequired ? <div id="turnstile-container" className={styles.turnstile} /> : null}
+            {turnstileRequired && !turnstileToken ? (
+              <p className={styles.footer}>{t('signUp.completeVerificationFirst')}</p>
+            ) : null}
 
-          <button
-            className={styles.submit}
-            type="submit"
-            disabled={loading || !pwCheck.valid || (turnstileRequired && !turnstileToken)}
-          >
-            {loading ? t('signUp.submitting') : t('signUp.submit')}
-          </button>
+            <button
+              className={styles.submit}
+              type="submit"
+              disabled={loading || !pwCheck.valid || (turnstileRequired && !turnstileToken)}
+            >
+              {loading ? t('signUp.submitting') : t('signUp.submit')}
+            </button>
 
-          <p className={styles.footer}>
-            {t('signUp.alreadyHaveAccount')}{' '}
-            <Link href="/auth/signin" className={styles.link}>
-              {t('signUp.signInLink')}
-            </Link>
-          </p>
-        </form>
+            <p className={styles.footer}>
+              {t('signUp.alreadyHaveAccount')}{' '}
+              <Link href="/auth/signin" className={styles.link}>
+                {t('signUp.signInLink')}
+              </Link>
+            </p>
+          </form>
+        </div>
       </div>
     </>
   )

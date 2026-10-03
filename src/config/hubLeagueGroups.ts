@@ -152,5 +152,5 @@ export function filterHubLeagueGroups(groups: HubLeagueGroup[], query: string): 
     .filter((g) => g.leagues.length > 0);
 }
 
-/** Testler için: tanımlı bütün lig id'leri (sırasız). */
+/** Tanımlı bütün lig id'leri (sırasız) — testler ve giriş sahnesindeki top logoları (AuthStage). */
 export const HUB_LEAGUE_IDS: readonly number[] = HUB_LEAGUE_DEFS.map((d) => d.id);

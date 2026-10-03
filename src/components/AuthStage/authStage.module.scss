@@ -1,0 +1,47 @@
+// Sahne kutusu: boyutu çağıran verir. Gradyan hem WebGL'in zemini hem de WebGL yokken / yüklenene kadar görünen
+// statik kare (gece gökyüzü + iki silik huzme + yeşil zemin parıltısı). Tuval yalnız opaklıkla belirir (kayma yok).
+.scene {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  background:
+    radial-gradient(60% 45% at 50% 58%, rgba(0, 167, 111, 0.16), transparent 70%),
+    linear-gradient(200deg, rgba(200, 220, 255, 0.07) 0%, transparent 38%),
+    linear-gradient(160deg, rgba(190, 245, 222, 0.05) 0%, transparent 34%),
+    linear-gradient(180deg, #0c1527 0%, #070b15 62%, #04060b 100%);
+  color-scheme: dark;
+}
+
+.canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  opacity: 0;
+  transition: opacity 0.9s ease;
+
+  &[data-ready] {
+    opacity: 1;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+// Topun üstünü izleyen görünmez tutamak: yalnız top tutulur (dokunmada sayfa kaydırması sahnenin geri kalanında
+// çalışır). Konumu her karede transform ile yazılır.
+.handle {
+  position: absolute;
+  left: 0;
+  top: 0;
+  border-radius: 50%;
+  touch-action: none;
+  cursor: grab;
+  -webkit-tap-highlight-color: transparent;
+
+  &[data-dragging] {
+    cursor: grabbing;
+  }
+}

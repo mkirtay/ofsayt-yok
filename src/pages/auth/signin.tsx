@@ -10,7 +10,7 @@ import Head from 'next/head'
 import GoogleSignInButton from '@/components/GoogleSignInButton'
 import { safeCallbackPath } from '@/lib/authRedirect'
 import { isGoogleAuthEnabled } from '@/lib/oauthEnv'
-import AuthBackdrop from '@/components/AuthBackdrop'
+import AuthStage from '@/components/AuthStage'
 import styles from './auth.module.scss'
 
 /** NextAuth'un `?error=` kodu → çeviri anahtarı (OAuth dönüşleri). CredentialsSignin burada gelmez (redirect: false). */
@@ -61,74 +61,76 @@ export default function SignInPage({ googleEnabled }: { googleEnabled: boolean }
         <title>{t('signIn.pageTitle')}</title>
         <meta name="robots" content="noindex, nofollow" />
       </Head>
-      <div className={`${styles.wrapper} ${styles.wrapperPitch}`} data-pitch-host>
-        <AuthBackdrop />
-        <form className={styles.card} onSubmit={handleSubmit} data-pitch-avoid>
-          <h1 className={styles.title}>{t('signIn.title')}</h1>
+      <div className={styles.wrapper}>
+        <div className={styles.stage}>
+          <AuthStage className={styles.stageScene} />
+          <form className={styles.card} onSubmit={handleSubmit}>
+            <h1 className={styles.title}>{t('signIn.title')}</h1>
 
-          {reset === '1' && (
-            <p className={styles.footer}>{t('signIn.passwordUpdated')}</p>
-          )}
-          {verified === '1' && (
-            <p className={styles.footer}>{t('signIn.emailVerified')}</p>
-          )}
-          {verified === '0' && (
-            <p className={styles.error}>{t('signIn.invalidVerification')}</p>
-          )}
-          {verified === 'invalid' && (
-            <p className={styles.error}>{t('signIn.missingVerification')}</p>
-          )}
+            {reset === '1' && (
+              <p className={styles.footer}>{t('signIn.passwordUpdated')}</p>
+            )}
+            {verified === '1' && (
+              <p className={styles.footer}>{t('signIn.emailVerified')}</p>
+            )}
+            {verified === '0' && (
+              <p className={styles.error}>{t('signIn.invalidVerification')}</p>
+            )}
+            {verified === 'invalid' && (
+              <p className={styles.error}>{t('signIn.missingVerification')}</p>
+            )}
 
-          {oauthError && !error && (
-            <p className={styles.error} role="alert">
-              {t(oauthError)}
+            {oauthError && !error && (
+              <p className={styles.error} role="alert">
+                {t(oauthError)}
+              </p>
+            )}
+            {error && <p className={styles.error}>{error}</p>}
+
+            {googleEnabled && <GoogleSignInButton callbackPath={callbackPath} />}
+
+            <label className={styles.label}>
+              {t('signIn.emailOrUsername')}
+              <input
+                className={styles.input}
+                type="text"
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
+                required
+                autoComplete="username"
+              />
+            </label>
+
+            <label className={styles.label}>
+              {t('signIn.password')}
+              <input
+                className={styles.input}
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                autoComplete="current-password"
+              />
+            </label>
+
+            <button className={styles.submit} type="submit" disabled={loading}>
+              {loading ? t('signIn.submitting') : t('signIn.submit')}
+            </button>
+
+            <p className={styles.footer}>
+              <Link href="/auth/forgot-password" className={styles.link}>
+                {t('signIn.forgotPassword')}
+              </Link>
             </p>
-          )}
-          {error && <p className={styles.error}>{error}</p>}
 
-          {googleEnabled && <GoogleSignInButton callbackPath={callbackPath} />}
-
-          <label className={styles.label}>
-            {t('signIn.emailOrUsername')}
-            <input
-              className={styles.input}
-              type="text"
-              value={identifier}
-              onChange={(e) => setIdentifier(e.target.value)}
-              required
-              autoComplete="username"
-            />
-          </label>
-
-          <label className={styles.label}>
-            {t('signIn.password')}
-            <input
-              className={styles.input}
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              autoComplete="current-password"
-            />
-          </label>
-
-          <button className={styles.submit} type="submit" disabled={loading}>
-            {loading ? t('signIn.submitting') : t('signIn.submit')}
-          </button>
-
-          <p className={styles.footer}>
-            <Link href="/auth/forgot-password" className={styles.link}>
-              {t('signIn.forgotPassword')}
-            </Link>
-          </p>
-
-          <p className={styles.footer}>
-            {t('signIn.noAccount')}{' '}
-            <Link href="/auth/signup" className={styles.link}>
-              {t('signIn.signUpLink')}
-            </Link>
-          </p>
-        </form>
+            <p className={styles.footer}>
+              {t('signIn.noAccount')}{' '}
+              <Link href="/auth/signup" className={styles.link}>
+                {t('signIn.signUpLink')}
+              </Link>
+            </p>
+          </form>
+        </div>
       </div>
     </>
   )
