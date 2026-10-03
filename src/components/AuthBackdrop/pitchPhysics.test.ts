@@ -111,3 +111,24 @@ describe('bırakma hızı ve boşta itiş', () => {
     }
   });
 });
+
+import { kickoffSpot } from './pitchPhysics';
+
+describe('başlama noktası (form kartı ortayı örtüyorsa)', () => {
+  it('yatay: kartın dışındaki geniş yan şeridin ortası; kart yoksa / ortayı örtmüyorsa orta', () => {
+    const g = pitchGeometry(1440, 836);
+    expect(kickoffSpot(g, null)).toEqual(pitchCenter(g));
+    expect(kickoffSpot(g, { x: 0, y: 0, w: 100, h: 100 })).toEqual(pitchCenter(g));
+    const card = { x: 520, y: 40, w: 400, h: 600 };
+    const s = kickoffSpot(g, card);
+    expect(s.y).toBe(pitchCenter(g).y);
+    expect(s.x < card.x || s.x > card.x + card.w).toBe(true);
+  });
+
+  it('dikey: kartın altı daha genişse altında', () => {
+    const g = pitchGeometry(375, 800);
+    const s = kickoffSpot(g, { x: 16, y: 32, w: 343, h: 420 });
+    expect(s.y).toBeGreaterThan(32 + 420);
+    expect(s.x).toBe(pitchCenter(g).x);
+  });
+});

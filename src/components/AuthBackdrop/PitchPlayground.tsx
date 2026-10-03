@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import {
   clampToPitch,
   idleNudge,
-  pitchCenter,
+  kickoffSpot,
   pitchGeometry,
   pitchShapes,
   releaseVelocity,
@@ -23,7 +23,8 @@ const IDLE_AFTER_MS = 4000;
 /**
  * Giriş / kayıt arka planı: silik saha çizgileri (SVG) + fırlatılabilir top. Fizik pitchPhysics.ts (kütüphane yok);
  * top yalnız `transform` ile, rAF'te doğrudan çizilir (React yeniden çizimi yok). Sekme arka plandayken döngü durur.
- * Hareketi azalt: top ortada sabit, tutulamaz, kendi kendine hareket etmez.
+ * Top kartın arkasında başlamasın diye başlama noktası kartın dışındaki boş alanda (kickoffSpot); gol sonrası oraya döner.
+ * Hareketi azalt: top bu noktada sabit, tutulamaz, kendi kendine hareket etmez.
  */
 export default function PitchPlayground() {
   const { locale } = useRouter();
@@ -37,6 +38,8 @@ export default function PitchPlayground() {
   const ball = useRef<Ball | null>(null);
   const drag = useRef<{ id: number; dx: number; dy: number; samples: PointerSample[] } | null>(null);
   const goalUntil = useRef(0);
+  /** Başlama / gol sonrası dönüş noktası (form kartının dışında). */
+  const spot = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const restSince = useRef(0);
 
   const paint = useCallback(() => {
@@ -65,8 +68,13 @@ export default function PitchPlayground() {
     const measure = () => {
       const g = pitchGeometry(el.clientWidth, el.clientHeight);
       geoRef.current = g;
+      // Kartın yeri: kapsayıcıdaki `[data-pitch-avoid]` (form kartı), bu kaba göre.
+      const card = el.closest('[data-pitch-host]')?.querySelector('[data-pitch-avoid]');
+      const own = el.getBoundingClientRect();
+      const cr = card?.getBoundingClientRect();
+      spot.current = kickoffSpot(g, cr ? { x: cr.left - own.left, y: cr.top - own.top, w: cr.width, h: cr.height } : null);
       if (!ball.current) {
-        const c = pitchCenter(g);
+        const c = spot.current;
         ball.current = { x: c.x, y: c.y, vx: 0, vy: 0 };
       } else {
         const p = clampToPitch(ball.current.x, ball.current.y, g);
@@ -83,9 +91,8 @@ export default function PitchPlayground() {
 
   useEffect(() => {
     if (reduced) {
-      const g = geoRef.current;
-      if (g) {
-        const c = pitchCenter(g);
+      if (geoRef.current) {
+        const c = spot.current;
         ball.current = { x: c.x, y: c.y, vx: 0, vy: 0 };
         paint();
       }
@@ -103,7 +110,7 @@ export default function PitchPlayground() {
       if (goalUntil.current) {
         if (ts < goalUntil.current) return;
         goalUntil.current = 0;
-        const c = pitchCenter(g);
+        const c = spot.current;
         ball.current = { x: c.x, y: c.y, vx: 0, vy: 0 };
         restSince.current = ts;
         ballRef.current?.removeAttribute('data-scored');

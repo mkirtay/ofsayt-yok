@@ -68,6 +68,30 @@ export function pitchCenter(g: PitchGeometry): { x: number; y: number } {
   return { x: (g.x0 + g.x1) / 2, y: (g.y0 + g.y1) / 2 };
 }
 
+export type Rect = { x: number; y: number; w: number; h: number };
+
+/**
+ * Topun başlama / gol sonrası dönüş noktası: saha ortası form kartının arkasında kalıyorsa kartın dışındaki en geniş
+ * boş şeridin ortası (yatayda sol / sağ, dikeyde üst / alt). Kart yoksa ya da ortayı örtmüyorsa saha ortası.
+ */
+export function kickoffSpot(g: PitchGeometry, avoid: Rect | null): { x: number; y: number } {
+  const c = pitchCenter(g);
+  if (!avoid) return c;
+  const covers = c.x >= avoid.x && c.x <= avoid.x + avoid.w && c.y >= avoid.y && c.y <= avoid.y + avoid.h;
+  if (!covers) return c;
+  const r = g.ballRadius;
+  if (g.orientation === 'landscape') {
+    const left = avoid.x - g.x0;
+    const right = g.x1 - (avoid.x + avoid.w);
+    const x = left >= right ? g.x0 + left / 2 : avoid.x + avoid.w + right / 2;
+    return clampToPitch(x, c.y, g);
+  }
+  const above = avoid.y - g.y0;
+  const below = g.y1 - (avoid.y + avoid.h);
+  const y = below >= above ? avoid.y + avoid.h + Math.max(r, below / 2) : g.y0 + Math.max(r, above / 2);
+  return clampToPitch(c.x, y, g);
+}
+
 /** Kale ağzı içinde mi (en ekseninde, topun tamamı geçebilecek kadar). */
 function inMouth(across: number, center: number, g: PitchGeometry): boolean {
   return Math.abs(across - center) <= g.goalHalf - g.ballRadius * 0.4;

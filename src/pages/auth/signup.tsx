@@ -123,9 +123,9 @@ export default function SignUpPage({ googleEnabled }: { googleEnabled: boolean }
         <title>{t('signUp.pageTitle')}</title>
         <meta name="robots" content="noindex, nofollow" />
       </Head>
-      <div className={`${styles.wrapper} ${styles.wrapperPitch}`}>
+      <div className={`${styles.wrapper} ${styles.wrapperPitch}`} data-pitch-host>
         <AuthBackdrop />
-        <form className={styles.card} onSubmit={handleSubmit}>
+        <form className={styles.card} onSubmit={handleSubmit} data-pitch-avoid>
           <h1 className={styles.title}>{t('signUp.title')}</h1>
 
           {error && <p className={styles.error}>{error}</p>}

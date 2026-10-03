@@ -61,9 +61,9 @@ export default function SignInPage({ googleEnabled }: { googleEnabled: boolean }
         <title>{t('signIn.pageTitle')}</title>
         <meta name="robots" content="noindex, nofollow" />
       </Head>
-      <div className={`${styles.wrapper} ${styles.wrapperPitch}`}>
+      <div className={`${styles.wrapper} ${styles.wrapperPitch}`} data-pitch-host>
         <AuthBackdrop />
-        <form className={styles.card} onSubmit={handleSubmit}>
+        <form className={styles.card} onSubmit={handleSubmit} data-pitch-avoid>
           <h1 className={styles.title}>{t('signIn.title')}</h1>
 
           {reset === '1' && (
