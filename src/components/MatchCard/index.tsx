@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import styles from './matchCard.module.scss';
 import { Match } from '@/models/liveScore';
 import Link from 'next/link';
@@ -82,6 +82,36 @@ function parseDisplayScore(raw: string): { home: string; away: string } {
   return { home: s || '—', away: '' };
 }
 
+/** Form + karşılaşma geçmişi iskeleti (thead + 3 satır). `className`: ayrılmış kutuda görünmez ölçü olarak. */
+function H2hSkeleton({ className }: { className?: string }) {
+  return (
+    <div aria-hidden="true" className={className}>
+      {[styles.formRow, `${styles.formRow} ${styles.formRowH2h}`].map((rowClass) => (
+        <div key={rowClass} className={rowClass}>
+          {[styles.formSide, `${styles.formSide} ${styles.formSideAway}`].map((sideClass) => (
+            <div key={sideClass} className={sideClass}>
+              <span className={`${styles.formLabel} ${styles.skeletonText}`}>&nbsp;</span>
+              <div className={styles.formPills}>
+                {[0, 1, 2, 3, 4].map((i) => (
+                  <span key={i} className={`${styles.formPill} ${styles.formPillSkeleton}`} />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      ))}
+      <div className={styles.h2hTableWrap}>
+        <div className={`${styles.h2hTableTitle} ${styles.skeletonText}`}>&nbsp;</div>
+        <div className={styles.h2hSkeletonRows}>
+          {[0, 1, 2, 3].map((i) => (
+            <span key={i} className={styles.h2hSkeletonRow} />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function MatchCard({ match, loading, initialH2h }: MatchCardProps) {
   const { t } = useTranslation('match');
   const { t: tl } = useTranslation('leagues');
@@ -90,6 +120,12 @@ export default function MatchCard({ match, loading, initialH2h }: MatchCardProps
   const [h2h, setH2h] = useState<{ key: string; data: Head2HeadData | null } | null>(() =>
     teamKey && initialH2h !== undefined ? { key: teamKey.key, data: initialH2h } : null,
   );
+  // SSR vermediyse (bütçe aşıldı / panel) bölüm iskelet yüksekliğinde kalır: veri gelince kart uzamaz ya da kısalmaz
+  // (CLS). Satır sayısı 0–5 arası değişir; taşan içerik "Tümünü göster" ile açılır (kullanıcı girdisi → CLS sayılmaz).
+  const [reserveH2h] = useState(() => initialH2h === undefined);
+  const [h2hExpanded, setH2hExpanded] = useState(false);
+  const [h2hClipped, setH2hClipped] = useState(false);
+  const reservedRef = useRef<HTMLDivElement>(null);
 
   function h2hRowStatus(row: Head2HHistoricalMatch): string {
     if (row.status === 'FINISHED') return t('fullTime');
@@ -147,6 +183,11 @@ export default function MatchCard({ match, loading, initialH2h }: MatchCardProps
   // undefined = bu takım çifti için henüz gelmedi (iskelet), null = veri yok.
   const h2hData = teamKey && h2h?.key === teamKey.key ? h2h.data : teamKey ? undefined : null;
   const h2hPending = h2hData === undefined;
+  const h2hReserved = reserveH2h && !h2hExpanded && teamKey != null && !h2hPending;
+  useEffect(() => {
+    const el = reservedRef.current;
+    setH2hClipped(el ? el.scrollHeight > el.clientHeight + 1 : false);
+  }, [h2hReserved, h2hData]);
   const team1IsHome = h2hData ? Number(h2hData.team1.id) === match?.home?.id : true;
   const homeForm: FormPill[] = h2hData ? overallFormToPills((team1IsHome ? h2hData.team1 : h2hData.team2).overall_form, 5) : [];
   const awayForm: FormPill[] = h2hData ? overallFormToPills((team1IsHome ? h2hData.team2 : h2hData.team1).overall_form, 5) : [];
@@ -201,11 +242,9 @@ export default function MatchCard({ match, loading, initialH2h }: MatchCardProps
   const scoreStateLabel = noScore && special && !specialKeepsData(special) ? ts(`short.${special}`) : null;
   const showKickoff = noScore && isPre && !scoreStateLabel && kickoff != null;
   const relativeDay = showKickoff && now != null ? relativeKickoffDay(kickoff.dayIso, now) : null;
-  const kickoffDayText = showKickoff
-    ? relativeDay
-      ? ts(`day.${relativeDay}`)
-      : formatFixtureDate(kickoff.dayIso, locale)
-    : '';
+  // Tarih her zaman çizilir; "Bugün/Yarın" üstüne biner (tarih görünmez kalır) → kutunun genişliği SSR ile aynı.
+  const kickoffDateText = showKickoff ? formatFixtureDate(kickoff.dayIso, locale) : '';
+  const kickoffRelativeText = relativeDay ? ts(`day.${relativeDay}`) : null;
   // Ertelendi / iptal / tarih belirsiz: üst satırda eski tarih geçerli gibi görünmesin → durum + soluk, üstü çizili tarih.
   const headerDateState = special === 'postponed' || special === 'cancelled' || special === 'tba' ? special : null;
   const refereeText = refereeName || (isPre && !special ? ts('refereeTba') : '—');
@@ -215,178 +254,8 @@ export default function MatchCard({ match, loading, initialH2h }: MatchCardProps
   const showH2hFormRow = homeH2hForm.length > 0 || awayH2hForm.length > 0;
   const showH2hTable = h2hHistory.length > 0;
 
-  // Oran sayıları gösterilmez (AdSense kumar politikası): yalnız oranlardan türetilen piyasa beklentisi (yüzde).
-  const expectation = impliedProbabilities(match.odds?.pre);
-
-  return (
-    <div className={styles.matchCard}>
-      <header className={styles.cardHeader}>
-        <div className={styles.cardHeaderLeft}>
-          {compLogo ? (
-            <TeamLogo
-              src={compLogo}
-              alt=""
-              className={`${styles.cardHeaderLogo} ${
-                competitionLogoNeedsBackdrop(match.competition?.id) ? styles.logoBackdrop : ''
-              }`.trim()}
-              width={22}
-              height={22}
-            />
-          ) : countryFlag ? (
-            <TeamLogo
-              src={countryFlag}
-              alt=""
-              className={styles.cardHeaderFlag}
-              width={22}
-              height={16}
-            />
-          ) : null}
-          <span className={styles.cardHeaderTitle}>
-            {country?.name ? (
-              <>
-                <strong className={styles.cardHeaderCountry}>{country.name}</strong>
-                <span className={styles.cardHeaderSep}> - </span>
-              </>
-            ) : null}
-            <span className={styles.cardHeaderLeague}>{compName}</span>
-          </span>
-        </div>
-        <div className={styles.cardHeaderRight}>
-          {t('date')} :{' '}
-          {headerDateState ? (
-            <>
-              <span className={styles.headerDateState}>{ts(`headerDate.${headerDateState}`)}</span>{' '}
-              <s className={styles.headerDateOld}>{getMatchCardDateTimeText(match)}</s>
-            </>
-          ) : (
-            getMatchCardDateTimeText(match)
-          )}
-        </div>
-      </header>
-
-      <div className={styles.teamsContainer}>
-        <div className={styles.teamsTopRow}>
-          <div className={styles.team}>
-            <Link href={`/teams/${match.home?.id || ''}`} className={styles.teamLink}>
-              {homeLogo ? (
-                <TeamLogo src={homeLogo} alt={homeName} className={styles.logo} width={56} height={56} />
-              ) : (
-                <div className={styles.logoPlaceholder}>{homeName.charAt(0)}</div>
-              )}
-              <div className={styles.teamName}>{homeName}</div>
-              <TeamTierBadge match={match} teamId={match.home?.id} tiers={cupTiers} />
-            </Link>
-          </div>
-
-          <div className={styles.scoreContainer}>
-            {minuteBadgeText ? (
-              <span
-                className={`${styles.minuteBadge} ${
-                  matchStatus === 'IN PLAY'
-                    ? styles.minuteBadgeLive
-                    : matchStatus === 'FINISHED'
-                      ? styles.minuteBadgeFinished
-                      : ''
-                }`}
-              >
-                {minuteBadgeText}
-              </span>
-            ) : null}
-            {showKickoff ? (
-              <div className={styles.kickoff}>
-                <span className={styles.kickoffTime}>{kickoff.time}</span>
-                <span className={styles.kickoffDay}>{kickoffDayText}</span>
-              </div>
-            ) : scoreStateLabel ? (
-              <div className={styles.scoreState}>{scoreStateLabel}</div>
-            ) : (
-              <div className={styles.score} aria-label={score}>
-                <span className={styles.scoreHome}>{scoreHome}</span>
-                {scoreAway !== '' ? (
-                  <>
-                    <span className={styles.scoreSep} aria-hidden>
-                      –
-                    </span>
-                    <span className={styles.scoreAway}>{scoreAway}</span>
-                  </>
-                ) : null}
-              </div>
-            )}
-            {showScoreMeta ? (
-              <div className={styles.scoreMeta}>
-                {showIyBadge ? <span className={styles.htBadge}>{t('halfTime')} : {formatHtScoreDisplay(htScore)}</span> : null}
-              </div>
-            ) : null}
-          </div>
-
-          <div className={styles.team}>
-            <Link href={`/teams/${match.away?.id || ''}`} className={styles.teamLink}>
-              {awayLogo ? (
-                <TeamLogo src={awayLogo} alt={awayName} className={styles.logo} width={56} height={56} />
-              ) : (
-                <div className={styles.logoPlaceholder}>{awayName.charAt(0)}</div>
-              )}
-              <div className={styles.teamName}>{awayName}</div>
-              <TeamTierBadge match={match} teamId={match.away?.id} tiers={cupTiers} />
-            </Link>
-          </div>
-        </div>
-
-        {expectation ? (
-          <p className={styles.oddsStrip}>
-            <span className={styles.oddsTitle}>{t('marketExpectation.label')}:</span>{' '}
-            <span className={styles.oddsValue}>{t('marketExpectation.home', { p: expectation.home })}</span>
-            <span className={styles.oddsSep} aria-hidden="true"> · </span>
-            <span className={styles.oddsValue}>{t('marketExpectation.draw', { p: expectation.draw })}</span>
-            <span className={styles.oddsSep} aria-hidden="true"> · </span>
-            <span className={styles.oddsValue}>{t('marketExpectation.away', { p: expectation.away })}</span>
-          </p>
-        ) : null}
-      </div>
-
-      {showMatchFooter ? (
-        <div className={styles.matchFooter}>
-          <div className={styles.matchFooterCol}>
-            <StadiumIcon className={styles.matchFooterIcon} />
-            <span className={styles.matchFooterLabel}>{t('stadium')}</span>
-            <span className={styles.matchFooterValue}>{location.trim() || '—'}</span>
-          </div>
-          <div className={styles.matchFooterCol}>
-            <WhistleIcon className={styles.matchFooterIcon} />
-            <span className={styles.matchFooterLabel}>{t('referee')}</span>
-            <span className={styles.matchFooterValue}>{refereeText}</span>
-          </div>
-        </div>
-      ) : null}
-
-      {h2hPending ? (
-        // SSR vermediyse (bütçe aşıldı / panel): gelecek bölümün yeri baştan ayrılır — kart sonradan az uzar.
-        <div aria-hidden="true">
-          {[styles.formRow, `${styles.formRow} ${styles.formRowH2h}`].map((rowClass) => (
-            <div key={rowClass} className={rowClass}>
-              {[styles.formSide, `${styles.formSide} ${styles.formSideAway}`].map((sideClass) => (
-                <div key={sideClass} className={sideClass}>
-                  <span className={`${styles.formLabel} ${styles.skeletonText}`}>&nbsp;</span>
-                  <div className={styles.formPills}>
-                    {[0, 1, 2, 3, 4].map((i) => (
-                      <span key={i} className={`${styles.formPill} ${styles.formPillSkeleton}`} />
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ))}
-          <div className={styles.h2hTableWrap}>
-            <div className={`${styles.h2hTableTitle} ${styles.skeletonText}`}>&nbsp;</div>
-            <div className={styles.h2hSkeletonRows}>
-              {[0, 1, 2, 3].map((i) => (
-                <span key={i} className={styles.h2hSkeletonRow} />
-              ))}
-            </div>
-          </div>
-        </div>
-      ) : null}
-
+  const h2hSections = (
+    <>
       {showFormRow ? (
         <div className={styles.formRow}>
           <div className={styles.formSide}>
@@ -475,6 +344,173 @@ export default function MatchCard({ match, loading, initialH2h }: MatchCardProps
           </div>
         </div>
       ) : null}
+    </>
+  );
+
+  // Oran sayıları gösterilmez (AdSense kumar politikası): yalnız oranlardan türetilen piyasa beklentisi (yüzde).
+  const expectation = impliedProbabilities(match.odds?.pre);
+
+  return (
+    <div className={styles.matchCard}>
+      <header className={styles.cardHeader}>
+        <div className={styles.cardHeaderLeft}>
+          {compLogo ? (
+            <TeamLogo
+              src={compLogo}
+              alt=""
+              className={`${styles.cardHeaderLogo} ${
+                competitionLogoNeedsBackdrop(match.competition?.id) ? styles.logoBackdrop : ''
+              }`.trim()}
+              width={22}
+              height={22}
+            />
+          ) : countryFlag ? (
+            <TeamLogo
+              src={countryFlag}
+              alt=""
+              className={styles.cardHeaderFlag}
+              width={22}
+              height={16}
+            />
+          ) : null}
+          <span className={styles.cardHeaderTitle}>
+            {country?.name ? (
+              <>
+                <strong className={styles.cardHeaderCountry}>{country.name}</strong>
+                <span className={styles.cardHeaderSep}> - </span>
+              </>
+            ) : null}
+            <span className={styles.cardHeaderLeague}>{compName}</span>
+          </span>
+        </div>
+        <div className={styles.cardHeaderRight}>
+          {t('date')} :{' '}
+          {headerDateState ? (
+            <>
+              <span className={styles.headerDateState}>{ts(`headerDate.${headerDateState}`)}</span>{' '}
+              <s className={styles.headerDateOld}>{getMatchCardDateTimeText(match)}</s>
+            </>
+          ) : (
+            getMatchCardDateTimeText(match)
+          )}
+        </div>
+      </header>
+
+      <div className={styles.teamsContainer}>
+        <div className={styles.teamsTopRow}>
+          <div className={styles.team}>
+            <Link href={`/teams/${match.home?.id || ''}`} className={styles.teamLink}>
+              {homeLogo ? (
+                <TeamLogo src={homeLogo} alt={homeName} className={styles.logo} width={56} height={56} />
+              ) : (
+                <div className={styles.logoPlaceholder}>{homeName.charAt(0)}</div>
+              )}
+              <div className={styles.teamName}>{homeName}</div>
+              <TeamTierBadge match={match} teamId={match.home?.id} tiers={cupTiers} />
+            </Link>
+          </div>
+
+          <div className={styles.scoreContainer}>
+            {minuteBadgeText ? (
+              <span
+                className={`${styles.minuteBadge} ${
+                  matchStatus === 'IN PLAY'
+                    ? styles.minuteBadgeLive
+                    : matchStatus === 'FINISHED'
+                      ? styles.minuteBadgeFinished
+                      : ''
+                }`}
+              >
+                {minuteBadgeText}
+              </span>
+            ) : null}
+            {showKickoff ? (
+              <div className={styles.kickoff}>
+                <span className={styles.kickoffTime}>{kickoff.time}</span>
+                <span className={styles.kickoffDay}>
+                  <span className={kickoffRelativeText ? styles.kickoffDayHidden : undefined}>{kickoffDateText}</span>
+                  {kickoffRelativeText ? <span>{kickoffRelativeText}</span> : null}
+                </span>
+              </div>
+            ) : scoreStateLabel ? (
+              <div className={styles.scoreState}>{scoreStateLabel}</div>
+            ) : (
+              <div className={styles.score} aria-label={score}>
+                <span className={styles.scoreHome}>{scoreHome}</span>
+                {scoreAway !== '' ? (
+                  <>
+                    <span className={styles.scoreSep} aria-hidden>
+                      –
+                    </span>
+                    <span className={styles.scoreAway}>{scoreAway}</span>
+                  </>
+                ) : null}
+              </div>
+            )}
+            {showScoreMeta ? (
+              <div className={styles.scoreMeta}>
+                {showIyBadge ? <span className={styles.htBadge}>{t('halfTime')} : {formatHtScoreDisplay(htScore)}</span> : null}
+              </div>
+            ) : null}
+          </div>
+
+          <div className={styles.team}>
+            <Link href={`/teams/${match.away?.id || ''}`} className={styles.teamLink}>
+              {awayLogo ? (
+                <TeamLogo src={awayLogo} alt={awayName} className={styles.logo} width={56} height={56} />
+              ) : (
+                <div className={styles.logoPlaceholder}>{awayName.charAt(0)}</div>
+              )}
+              <div className={styles.teamName}>{awayName}</div>
+              <TeamTierBadge match={match} teamId={match.away?.id} tiers={cupTiers} />
+            </Link>
+          </div>
+        </div>
+
+        {expectation ? (
+          <p className={styles.oddsStrip}>
+            <span className={styles.oddsTitle}>{t('marketExpectation.label')}:</span>{' '}
+            <span className={styles.oddsValue}>{t('marketExpectation.home', { p: expectation.home })}</span>
+            <span className={styles.oddsSep} aria-hidden="true"> · </span>
+            <span className={styles.oddsValue}>{t('marketExpectation.draw', { p: expectation.draw })}</span>
+            <span className={styles.oddsSep} aria-hidden="true"> · </span>
+            <span className={styles.oddsValue}>{t('marketExpectation.away', { p: expectation.away })}</span>
+          </p>
+        ) : null}
+      </div>
+
+      {showMatchFooter ? (
+        <div className={styles.matchFooter}>
+          <div className={styles.matchFooterCol}>
+            <StadiumIcon className={styles.matchFooterIcon} />
+            <span className={styles.matchFooterLabel}>{t('stadium')}</span>
+            <span className={styles.matchFooterValue}>{location.trim() || '—'}</span>
+          </div>
+          <div className={styles.matchFooterCol}>
+            <WhistleIcon className={styles.matchFooterIcon} />
+            <span className={styles.matchFooterLabel}>{t('referee')}</span>
+            <span className={styles.matchFooterValue}>{refereeText}</span>
+          </div>
+        </div>
+      ) : null}
+
+      {h2hPending ? (
+        <H2hSkeleton />
+      ) : h2hReserved ? (
+        <div className={styles.h2hReserved}>
+          <H2hSkeleton className={styles.h2hReservedSizer} />
+          <div ref={reservedRef} className={styles.h2hReservedContent}>
+            {showFormRow || showH2hFormRow || showH2hTable ? h2hSections : <p className={styles.h2hNone}>{ts('h2h.none')}</p>}
+          </div>
+          {h2hClipped ? (
+            <button type="button" className={styles.h2hShowAll} onClick={() => setH2hExpanded(true)}>
+              {ts('h2h.showAll')}
+            </button>
+          ) : null}
+        </div>
+      ) : (
+        h2hSections
+      )}
     </div>
   );
 }

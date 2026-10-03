@@ -228,11 +228,22 @@ $match-card-header-blue: var(--text-secondary); // tema-uyumlu (eskiden sabit la
 }
 
 .kickoffDay {
+  display: grid;
+  justify-items: center;
   font-size: 12px;
   font-weight: 600;
   line-height: 1.3;
   color: $color-text-secondary;
   white-space: nowrap;
+
+  // Tarih ve "Bugün/Yarın" aynı hücrede üst üste: kutu genişliği hep tarihinki (SSR → mount kayması yok).
+  > * {
+    grid-area: 1 / 1;
+  }
+}
+
+.kickoffDayHidden {
+  visibility: hidden;
 }
 
 // Ertelendi / iptal / tarih belirsiz / gecikti: skor yerinde kısa durum.
@@ -367,6 +378,46 @@ $match-card-header-blue: var(--text-secondary); // tema-uyumlu (eskiden sabit la
   background: var(--skeleton-base);
 }
 
+// SSR'da form/karşılaşma geçmişi yoksa: kutu iskelet yüksekliğinde sabit, içerik üstüne biner (kısa → boşluk,
+// uzun → kırpılır + "Tümünü göster").
+.h2hReserved {
+  position: relative;
+}
+
+.h2hReservedSizer {
+  visibility: hidden;
+}
+
+.h2hReservedContent {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.h2hNone {
+  border-top: 1px solid $color-border;
+  padding: $spacing-4;
+  text-align: center;
+  font-size: 13px;
+  color: $color-text-secondary;
+}
+
+.h2hShowAll {
+  position: absolute;
+  left: 50%;
+  bottom: $spacing-2;
+  transform: translateX(-50%);
+  padding: 6px 14px;
+  border: 1px solid $color-border;
+  border-radius: 999px;
+  background: $color-surface;
+  box-shadow: $shadow-surface;
+  color: var(--color-action-text);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 .h2hSkeletonRows {
   display: flex;
   flex-direction: column;
@@ -469,9 +520,12 @@ $match-card-header-blue: var(--text-secondary); // tema-uyumlu (eskiden sabit la
     white-space: nowrap;
   }
 
+  // Hiçbir hücre kırılmaz ("0-2" dar İY kolonunda kısa çizgiden bölünüp satırı 34 px yapıyordu): satır sabit 24 px,
+  // iskelet satırlarıyla aynı.
   tbody td {
     padding: 3px 5px;
     height: 24px;
+    white-space: nowrap;
     vertical-align: middle;
     border-bottom: 1px solid $color-border;
     font-variant-numeric: tabular-nums;
@@ -484,12 +538,6 @@ $match-card-header-blue: var(--text-secondary); // tema-uyumlu (eskiden sabit la
   tbody tr:hover td {
     background-color: $color-row-highlight;
   }
-}
-
-// Tarih ve saat tek satır: satır yüksekliği sabit 24 px kalır (iskelet satırlarıyla aynı, CLS).
-.h2hTdDate,
-.h2hTdTime {
-  white-space: nowrap;
 }
 
 .h2hThHome,

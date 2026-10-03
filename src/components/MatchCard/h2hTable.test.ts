@@ -18,8 +18,8 @@ describe('karşılaşma geçmişi tablosu — mobilde tarih ve saat birleşmez',
     expect(inner(col('Time'))).toBeGreaterThanOrEqual(33);
   });
 
-  it('tarih ve saat hücreleri tek satır (satır yüksekliği sabit 24 px)', () => {
-    expect(scss).toMatch(/\.h2hTdDate,\s*\.h2hTdTime \{\s*white-space: nowrap;/);
+  it('hiçbir hücre kırılmaz (satır yüksekliği sabit 24 px; "0-2" dar İY kolonunda bölünüyordu)', () => {
+    expect(scss).toMatch(/tbody td \{[^}]*height: 24px;[^}]*white-space: nowrap;/);
     expect(tsx).toContain('<td className={styles.h2hTdDate}>');
     expect(tsx).toContain('<td className={styles.h2hTdTime}>');
   });

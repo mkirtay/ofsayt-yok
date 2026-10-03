@@ -59,5 +59,9 @@
     "postponed": "Ertelendi",
     "cancelled": "İptal edildi",
     "tba": "Tarih belirsiz"
+  },
+  "h2h": {
+    "showAll": "Tümünü göster",
+    "none": "Bu iki takımın karşılaşma geçmişi yok."
   }
 }
