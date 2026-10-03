@@ -153,7 +153,7 @@ d('DB entegrasyonu — yönetici kredisiz analiz, kredi geçmişi, favoriler, av
     expect({ left, leftTx }).toEqual({ left: 0, leftTx: 0 }); // temizlik doğrulaması
   });
 
-  it('(a) yönetici analiz üretir: kredi düşmez, ANALYSIS_FREE (0) kaydı yazılır', async () => {
+  it('(a) yönetici analiz üretir: kredi düşmez, ANALYSIS_FREE (0) + ADMIN açma kaydı (kredi modeli v2)', async () => {
     const r = await call(analysisHandler, makeReq({ method: 'POST', query: { id: matchAdmin }, token: adminUser.token }));
     expect(r.status).toBe(200);
     expect(r.body.cached).toBe(false);
@@ -162,6 +162,7 @@ d('DB entegrasyonu — yönetici kredisiz analiz, kredi geçmişi, favoriler, av
     expect(tx).toHaveLength(1);
     expect(tx[0]).toMatchObject({ type: 'ANALYSIS_FREE', amount: 0, balanceAfter: adminStart });
     expect((await prisma.user.findUniqueOrThrow({ where: { id: adminUser.id } })).credits).toBe(adminStart);
+    expect(await prisma.analysisUnlock.findMany({ where: { userId: adminUser.id }, select: { source: true } })).toEqual([{ source: 'ADMIN' }]);
 
     // Önbellekten gelen ikinci istek yeni kayıt YAZMAZ
     const again = await call(analysisHandler, makeReq({ method: 'POST', query: { id: matchAdmin }, token: adminUser.token }));
@@ -169,16 +170,17 @@ d('DB entegrasyonu — yönetici kredisiz analiz, kredi geçmişi, favoriler, av
     expect(await prisma.creditTransaction.count({ where: { userId: adminUser.id, matchId: matchAdmin } })).toBe(1);
   });
 
-  it('(a2) kontrol: normal kullanıcıdan 5 kredi düşer (ANALYSIS_SPEND −5)', async () => {
+  it('(a2) kontrol: normal kullanıcıdan 1 kredi düşer (ANALYSIS_SPEND −1, SETTLED) ve analiz ona açılır', async () => {
     const r = await call(analysisHandler, makeReq({ method: 'POST', query: { id: matchNormal }, token: normalUser.token }));
     expect(r.status).toBe(200);
     const tx = await prisma.creditTransaction.findMany({ where: { userId: normalUser.id, matchId: matchNormal } });
     expect(tx).toHaveLength(1);
-    expect(tx[0]).toMatchObject({ type: 'ANALYSIS_SPEND', amount: -5, balanceAfter: 0 });
-    expect((await prisma.user.findUniqueOrThrow({ where: { id: normalUser.id } })).credits).toBe(0);
+    expect(tx[0]).toMatchObject({ type: 'ANALYSIS_SPEND', amount: -1, balanceAfter: 4, status: 'SETTLED' });
+    expect((await prisma.user.findUniqueOrThrow({ where: { id: normalUser.id } })).credits).toBe(4);
+    expect(await prisma.analysisUnlock.count({ where: { userId: normalUser.id, source: 'CREDIT' } })).toBe(1);
   });
 
-  it('(a3) my-analyses kredisiz (ANALYSIS_FREE) analizi de listeler', async () => {
+  it('(a3) my-analyses açma kayıtlarından: yöneticinin kredisiz açtığı analiz de listede', async () => {
     const r = await call(myAnalysesHandler, makeReq({ method: 'GET', token: adminUser.token }));
     expect(r.status).toBe(200);
     expect(r.body.items.map((i: { matchId: string }) => i.matchId)).toContain(matchAdmin);
