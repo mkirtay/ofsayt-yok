@@ -3,7 +3,8 @@
  * Testler (arayüz metinleri, prompt), AI servisi (üretilen analizde geçerse kayda düşer) ve eski kayıt taraması
  * (docs SQL'i aynı listeyi yansıtır) bu listeyi kullanır.
  *
- * "oran" tek başına yasak değil: "galibiyet oranı" / "isabet oranı" istatistik. Yalnız bahis anlamındaki kalıplar.
+ * "oran" tek başına yasak değil: "galibiyet oranı" / "isabet oranı" istatistik. Yalnız bahis anlamındaki kalıplar
+ * (gerçek veride "Deplasmanda galibiyet oranları düşük" cümlesi yanlışlıkla siliniyordu).
  * "iddia" da tek başına Türkçe ("iddia etmek"); yalnız "iddia pazarı / iddia analisti". `[iİ]`: JS /i büyük İ'yi eşlemez.
  */
 export const GAMBLING_TERM_PATTERNS: ReadonlyArray<{ term: string; re: RegExp }> = [
@@ -14,7 +15,12 @@ export const GAMBLING_TERM_PATTERNS: ReadonlyArray<{ term: string; re: RegExp }>
   { term: 'kupon', re: /kupon/i },
   { term: 'banko', re: /\bbanko\b/i },
   { term: 'value', re: /\bvalue\b/i },
-  { term: 'oran (bahis)', re: /\b(bahis |maç sonucu |açılış |güncel )?oranlar(ı|ın)?\b|oran(ı|lar)? (düş|yüksel)|\boranı? \d/i },
+  // Bahis oranı kalıpları: nitelikli ("maç sonucu oranları"), hareket fiili ("oranlar düşüyor"), sayı ("oranı 1.85").
+  // "galibiyet oranları düşük" (istatistik, sıfat) yakalanmaz.
+  {
+    term: 'oran (bahis)',
+    re: /(maç sonucu|açılış|güncel|kapanış) oran|oran(ı|lar|ları)? (düşüyor|düştü|düşecek|yükseliyor|yükseldi|yükselecek)|\boranı? \d/i,
+  },
   { term: 'piyasa', re: /piyasa/i },
   { term: 'para akışı', re: /para akış/i },
   { term: 'bet (en)', re: /\bbet(s|ting)?\b|bookmaker|\bodds\b|\bstake\b/i },

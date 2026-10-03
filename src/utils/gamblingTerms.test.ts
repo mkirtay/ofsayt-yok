@@ -26,6 +26,8 @@ describe('findGamblingTerms', () => {
 
   it('istatistik dilini yakalamaz ("galibiyet oranı", "iddia etmek")', () => {
     expect(findGamblingTerms('Temiz kale oranı %40, ev galibiyet oranı yüksek')).toEqual([]);
+    expect(findGamblingTerms('Deplasmanda galibiyet oranları düşük ve son 10 maçta hiç temiz kaleleri yok.')).toEqual([]);
+    expect(findGamblingTerms('Açılış oranı ev sahibini gösteriyor, oranlar yükseldi')).toEqual(['oran (bahis)']);
     expect(findGamblingTerms('Bunu iddia etmek zor; 2+ gol olasılığı %58')).toEqual([]);
     expect(findGamblingTerms('İki takım da gol atar · Doğru / Yanlış')).toEqual([]);
   });
