@@ -2,7 +2,7 @@ import { useSession } from 'next-auth/react';
 import EmptyState from '@/components/EmptyState';
 import GundemLoading from './GundemLoading';
 import PostCard from '@/components/PostCard';
-import PostComposer from '@/components/PostComposer';
+import PostComposer, { PostComposerPlaceholder } from '@/components/PostComposer';
 import { POST_MAX_LENGTH } from '@/config/gundem';
 import { useCreatePost, useGundemFeed } from '@/hooks/useGundem';
 import { useInfiniteSentinel } from '@/hooks/useInfiniteSentinel';
@@ -64,7 +64,9 @@ export default function GundemPanel({
   return (
     <>
       <section className={styles.feed} aria-busy={feed.isPending}>
-        {composer === 'none' || status === 'loading' ? null : (
+        {composer === 'none' ? null : status === 'loading' ? (
+          <PostComposerPlaceholder variant={composer} />
+        ) : (
           <PostComposer
             variant={composer}
             authenticated={authenticated}

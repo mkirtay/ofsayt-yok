@@ -131,3 +131,13 @@
   padding: $spacing-2 $spacing-3;
   text-align: left;
 }
+
+// Oturum yüklenirken yer tutucu (PostComposerPlaceholder): giriş çubuğunun ölçüsünde, görünmez.
+.placeholder {
+  visibility: hidden;
+}
+
+// Son oturum açıksa daraltılmış satır içi composer: 2 × 8 px dolgu + 1 satırlık textarea (21 + 2 × 8 + 2) + 2 kenarlık.
+:global(html[data-auth-hint='in']) .placeholderInline {
+  min-height: 57px;
+}

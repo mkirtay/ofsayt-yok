@@ -52,6 +52,25 @@ export type PostComposerProps = {
  * Gönderi/yorum yazma alanı (paylaşımlı). Enter = yeni satır, Ctrl/Cmd+Enter = gönder.
  * Sayaç kalan karakteri gösterir; ≤ COUNTER_WARN_AT'de uyarı (amber) rengi.
  */
+/**
+ * Oturum durumu yüklenirken composer'ın yeri: ziyaretçi giriş çubuğuyla aynı sınıflar (görünmez) → yükseklik birebir;
+ * son oturum açıksa (`html[data-auth-hint='in']`, bkz. utils/authHint.ts) daraltılmış satır içi composer yüksekliği.
+ * Oturum gelince altındaki akış (yükleniyor yer tutucusu / kartlar) itilmez (CLS).
+ */
+export function PostComposerPlaceholder({ variant }: { variant: PostComposerVariant }) {
+  const isInline = variant === 'post-inline';
+  return (
+    <div
+      className={[styles.loginPrompt, isInline ? styles.loginInline : '', styles.placeholder, isInline ? styles.placeholderInline : '']
+        .filter(Boolean)
+        .join(' ')}
+      aria-hidden="true"
+    >
+      &nbsp;
+    </div>
+  );
+}
+
 export default function PostComposer({ authenticated, variant, maxLength, onSubmit, autoFocus, placeholder }: PostComposerProps) {
   const { t } = useTranslation('gundem');
   const [value, setValue] = useState('');
