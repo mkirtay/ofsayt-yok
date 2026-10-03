@@ -28,8 +28,14 @@ model User {
   password      String?
   image         String?
   role          Role     @default(USER)
-  /// AI analiz kredisi bakiyesi. Yeni kullanıcı 5 kredi ile başlar.
-  credits            Int      @default(5)
+  /// AI analiz kredisi bakiyesi (süresiz). Yeni kullanıcı 0 ile başlar; e-posta doğrulanınca 2 kredi kayıt bonusu
+  /// (lib/credits.ts → grantVerifiedSignupBonus). 2026-10 öncesi kayıtlar 5 ile başlamıştı (bakiyeleri aynen kalır).
+  credits            Int      @default(0)
+  /// Premium bitişi: > şimdi ⇒ premium (sınırsız analiz açma, reklamsız). Yönetici panelinden elle; ileride ödemeden.
+  premiumUntil       DateTime?
+  /// Davet kodu (ilk istekte üretilir) ve kaydı getiren davet edenin kimliği (ödül ödeme entegrasyonunda).
+  referralCode       String?  @unique
+  referredById       String?
   favoriteTeamIds    Int[]
   favoriteLeagueIds  Int[]
   /// Kayıt kaynağı (ilk temas): kayıt oturumunun ilk sayfasındaki utm_* değerleri ve o oturumun ilk giriş
@@ -47,6 +53,8 @@ model User {
   commentLikes    MatchCommentLike[]
   userPredictions UserPrediction[]
   creditTransactions CreditTransaction[]
+  analysisUnlocks    AnalysisUnlock[]
+  premiumGrants      PremiumGrant[]
   posts               Post[]          @relation("PostAuthor")
   deletedPosts        Post[]          @relation("PostDeletedBy")
   postLikes           PostLike[]      @relation("PostLikeUser")
@@ -64,7 +72,8 @@ model CreditTransaction {
   id           String   @id @default(cuid())
   userId       String
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  /// "SIGNUP_BONUS" | "PURCHASE" | "ANALYSIS_SPEND" | "ANALYSIS_FREE" | "ADMIN_GRANT" | "REFUND"
+  /// "SIGNUP_BONUS" | "PURCHASE" | "ANALYSIS_SPEND" | "ANALYSIS_FREE" | "ANALYSIS_PREMIUM" | "ANALYSIS_WEEKLY_FREE"
+  /// | "ADMIN_GRANT" | "REFUND" | "REFERRAL_BONUS". Hiçbir tür maç sonucuna / tahmine bağlı DEĞİL.
   type         String
   /// Pozitif (ekleme) veya negatif (harcama)
   amount       Int
@@ -79,12 +88,58 @@ model CreditTransaction {
   status       String?
   /// REFUND satırı → iade ettiği harcama (tekil: bir harcama en fazla bir kez iade edilir).
   refundOfId   String?  @unique
+  /// Yönetici işlemlerinde (ADMIN_GRANT) işlemi yapan yöneticinin kimliği — denetim izi.
+  actorId      String?
   createdAt    DateTime @default(now())
 
   @@unique([userId, idempotencyKey])
   @@index([userId])
   @@index([matchId])
   @@index([status, createdAt])
+}
+
+/// Kullanıcının açtığı (PRE) analiz — erişimin tek kaydı; açılan analiz kalıcı açık kalır.
+/// source: "CREDIT" | "WEEKLY_FREE" | "PREMIUM" | "ADMIN" | "LEGACY" (2026-10 öncesi üretenler)
+model AnalysisUnlock {
+  id                  String        @id @default(cuid())
+  userId              String
+  user                User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  matchAnalysisId     String
+  matchAnalysis       MatchAnalysis @relation(fields: [matchAnalysisId], references: [id], onDelete: Cascade)
+  matchId             String
+  source              String
+  /// Açmayı ödeyen / kaydeden defter satırı (kredi, haftalık hak, premium 0 tutarlı)
+  creditTransactionId String?       @unique
+  createdAt           DateTime      @default(now())
+
+  @@unique([userId, matchAnalysisId])
+  @@index([matchAnalysisId])
+  @@index([userId, createdAt])
+}
+
+/// Premium değişikliklerinin denetim izi. source: "ADMIN" | "PURCHASE"; until null = kaldırıldı.
+model PremiumGrant {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  until     DateTime?
+  source    String
+  actorId   String?
+  note      String?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, createdAt])
+}
+
+/// Arkadaş daveti. Ödül (iki tarafa 2 kredi) davet edilenin İLK SATIN ALIMINDA — ödeme entegrasyonunda bağlanacak.
+model Referral {
+  id         String    @id @default(cuid())
+  referrerId String
+  refereeId  String    @unique
+  createdAt  DateTime  @default(now())
+  rewardedAt DateTime?
+
+  @@index([referrerId, createdAt])
 }
 
 /// AI üretimli maç analizi cache'i. Aynı maç + status için tek aktif kayıt.
@@ -125,6 +180,7 @@ model MatchAnalysis {
   /// PRE fazında 30 dk TTL; HT/POST için null (kalıcı)
   expiresAt          DateTime?
   predictionRecord   PredictionRecord?
+  unlocks            AnalysisUnlock[]
 
   @@unique([matchId, matchStatus])
   @@index([matchId])
