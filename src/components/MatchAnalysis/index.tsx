@@ -68,6 +68,23 @@ function pickTopPredictions(analysis: ApiAnalysis): Array<{ key: PickKey; pct: n
     .slice(0, 3);
 }
 
+/** Okuma anında temizlenen eski analiz metinleri boş gelebilir (bkz. utils/analysisSanitize.ts): boşsa çizilmez. */
+function hasText(value: unknown): value is string {
+  return typeof value === 'string' && value.trim() !== '';
+}
+
+function TextList({ items }: { items: unknown[] }) {
+  const lines = items.filter(hasText);
+  if (lines.length === 0) return null;
+  return (
+    <ul className={styles.metaList}>
+      {lines.map((line, i) => (
+        <li key={i}>{line}</li>
+      ))}
+    </ul>
+  );
+}
+
 function ResultBadge({ hit }: { hit: boolean | null | undefined }) {
   const { t } = useTranslation('match');
   if (hit === null || hit === undefined) {
@@ -212,12 +229,14 @@ export default function MatchAnalysis({ match, state, archived = false }: Props)
               </ul>
             )}
           </div>
-          <ul className={styles.metaList}>
-            <li>{fullReport.matchSummary.tempo}</li>
-            <li>{fullReport.matchSummary.dominantSide}</li>
-            <li>{fullReport.matchSummary.balanceType}</li>
-            <li>{fullReport.matchSummary.homeAwayImpact}</li>
-          </ul>
+          <TextList
+            items={[
+              fullReport.matchSummary.tempo,
+              fullReport.matchSummary.dominantSide,
+              fullReport.matchSummary.balanceType,
+              fullReport.matchSummary.homeAwayImpact,
+            ]}
+          />
         </div>
       )}
 
@@ -241,7 +260,7 @@ export default function MatchAnalysis({ match, state, archived = false }: Props)
             <div className={styles.barTeam}>{analysis.awayTeamName}</div>
           </div>
         </div>
-        <p className={styles.reasoning}>{matchPrediction.reasoning}</p>
+        {hasText(matchPrediction.reasoning) && <p className={styles.reasoning}>{matchPrediction.reasoning}</p>}
         {isEvaluated && (
           <div className={styles.resultRow}>
             <span>{t('analysis.market.result1x2')}</span>
@@ -261,9 +280,9 @@ export default function MatchAnalysis({ match, state, archived = false }: Props)
               <div key={side} className={styles.teamBlock}>
                 <div className={styles.teamName}>
                   {name}
-                  <span className={styles.formChip}>{team.formSummary}</span>
+                  {hasText(team.formSummary) && <span className={styles.formChip}>{team.formSummary}</span>}
                 </div>
-                <p className={styles.narrative}>{team.narrative}</p>
+                {hasText(team.narrative) && <p className={styles.narrative}>{team.narrative}</p>}
                 {team.keyFactors?.length > 0 && (
                   <ul className={styles.metaList}>
                     {team.keyFactors.map((f, i) => (
@@ -295,18 +314,20 @@ export default function MatchAnalysis({ match, state, archived = false }: Props)
                 <div key={side} className={styles.teamBlock}>
                   <div className={styles.teamName}>{name}</div>
                   <ul className={styles.metaList}>
-                    <li><strong>{tac.formation}</strong></li>
-                    <li>{tac.pressLevel}</li>
-                    <li>{tac.transitionStrength}</li>
-                    <li>{tac.setPieceThreat}</li>
-                    <li>{tac.wingUsage}</li>
-                    <li>{tac.defensiveWeakness}</li>
+                    {hasText(tac.formation) && <li><strong>{tac.formation}</strong></li>}
+                    {[tac.pressLevel, tac.transitionStrength, tac.setPieceThreat, tac.wingUsage, tac.defensiveWeakness]
+                      .filter(hasText)
+                      .map((line, i) => (
+                        <li key={i}>{line}</li>
+                      ))}
                   </ul>
                 </div>
               );
             })}
           </div>
-          <p className={styles.reasoning}>{fullReport.tacticalAnalysis.keyBattleZones}</p>
+          {hasText(fullReport.tacticalAnalysis.keyBattleZones) && (
+            <p className={styles.reasoning}>{fullReport.tacticalAnalysis.keyBattleZones}</p>
+          )}
         </div>
       )}
 
@@ -378,7 +399,7 @@ export default function MatchAnalysis({ match, state, archived = false }: Props)
             <div className={styles.goalPct}>%{goalExpectation.awayToScore}</div>
           </div>
         </div>
-        <p className={styles.reasoning}>{goalExpectation.reasoning}</p>
+        {hasText(goalExpectation.reasoning) && <p className={styles.reasoning}>{goalExpectation.reasoning}</p>}
         {isEvaluated && (
           <div className={styles.resultGrid}>
             <div className={styles.resultRow}>
@@ -440,7 +461,7 @@ export default function MatchAnalysis({ match, state, archived = false }: Props)
       <div className={styles.section}>
         <div className={`${styles.riskBlock} ${styles[analysis.riskLevel]}`}>
           <span className={styles.riskLabel}>{t(`analysis.risk.${analysis.riskLevel}`)}</span>
-          <p className={styles.riskText}>{analysis.riskReasoning}</p>
+          {hasText(analysis.riskReasoning) && <p className={styles.riskText}>{analysis.riskReasoning}</p>}
         </div>
         {fullReport?.riskFactors && fullReport.riskFactors.length > 0 && (
           <ul className={styles.metaList}>

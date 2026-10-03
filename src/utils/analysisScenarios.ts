@@ -5,6 +5,8 @@
  * Depolama: DB'de aynı `MatchAnalysis.bettingTips` Json sütunu (migration yok). Yeni kayıtlar senaryo biçiminde
  * (`metric` + `probability`), eskiler bahis biçiminde — biçimden ayırt edilir; eski maddeler hiç gösterilmez/dönmez.
  */
+import { sanitizeLegacyAnalysis } from './analysisSanitize';
+
 export type ScenarioConfidence = 'low' | 'medium' | 'high';
 
 export type AnalysisScenario = {
@@ -41,10 +43,11 @@ export function scenariosFromStored(stored: unknown): AnalysisScenario[] {
 
 /**
  * API yanıtı: satır + `scenarios`; `bettingTips` her zaman boş dizi (eski istemciler alanı bekliyorsa kırılmasın,
- * bahis maddeleri dışarı çıkmasın).
+ * bahis maddeleri dışarı çıkmasın). Eski sürüm analizlerin serbest metinlerinde bahis dili geçen cümleler çıkarılır
+ * (bkz. analysisSanitize.ts; DB'ye yazılmaz).
  */
-export function toPublicAnalysis<T extends { bettingTips?: unknown }>(
+export function toPublicAnalysis<T extends { bettingTips?: unknown; modelVersion?: string | null }>(
   row: T,
 ): Omit<T, 'bettingTips'> & { bettingTips: never[]; scenarios: AnalysisScenario[] } {
-  return { ...row, bettingTips: [], scenarios: scenariosFromStored(row.bettingTips) };
+  return { ...sanitizeLegacyAnalysis(row), bettingTips: [], scenarios: scenariosFromStored(row.bettingTips) };
 }

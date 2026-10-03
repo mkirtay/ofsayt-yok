@@ -12,6 +12,18 @@ describe('findGamblingTerms', () => {
     expect(findGamblingTerms('Match result odds')).toEqual(['bet (en)']);
   });
 
+  it('Türkçe çekim ve pazar jargonu', () => {
+    expect(findGamblingTerms('2.5 üst bahsi mantıklı')).toEqual(['bahis', 'pazar jargonu']);
+    expect(findGamblingTerms('Bu bahse girmem')).toEqual(['bahis']);
+    expect(findGamblingTerms('KG Var olasılığı yüksek')).toEqual(['pazar jargonu']);
+    expect(findGamblingTerms('MS 1 ve 1X2 tercihi')).toEqual(['pazar jargonu']);
+    expect(findGamblingTerms('Alt 2,5 gol')).toEqual(['pazar jargonu']);
+  });
+
+  it('"bahsetmek", skor ve gol sayıları yakalanmaz', () => {
+    expect(findGamblingTerms('Analistin bahsettiği gibi skor 2-1, maç başına 2.5 gol, 3 MS oynadı')).toEqual([]);
+  });
+
   it('istatistik dilini yakalamaz ("galibiyet oranı", "iddia etmek")', () => {
     expect(findGamblingTerms('Temiz kale oranı %40, ev galibiyet oranı yüksek')).toEqual([]);
     expect(findGamblingTerms('Bunu iddia etmek zor; 2+ gol olasılığı %58')).toEqual([]);

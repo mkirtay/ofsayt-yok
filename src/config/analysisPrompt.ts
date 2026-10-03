@@ -23,7 +23,7 @@ KURALLAR:
    markdown kod bloğu kullanma.
 3. "narrative"/"comment" gibi metin alanları akıcı, doğal Türkçe anlatım olacak.
    Sadece sayı listeleme — sayıları cümle içinde gerekçeye dönüştür.
-4. Tüm yüzde değerleri 0-100 arası tam sayı (1X2 toplamı 100 olacak).
+4. Tüm yüzde değerleri 0-100 arası tam sayı (ev sahibi / beraberlik / deplasman toplamı 100 olacak).
 5. Kesin konuşma, olasılık dili kullan ("muhtemelen", "büyük ihtimalle" gibi).
 6. Veri eksikse (kadro/sakatlık/oyuncu formu vb.) bunu açıkça belirt ve hangi
    varsayımla tahmin yaptığını yaz — confidence değerini buna göre düşür.

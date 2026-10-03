@@ -7,7 +7,8 @@
  * "iddia" da tek başına Türkçe ("iddia etmek"); yalnız "iddia pazarı / iddia analisti". `[iİ]`: JS /i büyük İ'yi eşlemez.
  */
 export const GAMBLING_TERM_PATTERNS: ReadonlyArray<{ term: string; re: RegExp }> = [
-  { term: 'bahis', re: /bahis/i },
+  // "bahis" ses düşmesiyle çekimlenir (bahsi, bahse, bahsin…); "bahsetmek" (söz etmek) yakalanmasın diye çekimler açık.
+  { term: 'bahis', re: /bahis|\bbahs(i|e|in|ini|ine|inde|ten)\b/i },
   { term: 'iddaa', re: /[iİ]ddaa/i },
   { term: 'iddia pazarı', re: /[iİ]ddia (pazar|analist)/i },
   { term: 'kupon', re: /kupon/i },
@@ -17,6 +18,11 @@ export const GAMBLING_TERM_PATTERNS: ReadonlyArray<{ term: string; re: RegExp }>
   { term: 'piyasa', re: /piyasa/i },
   { term: 'para akışı', re: /para akış/i },
   { term: 'bet (en)', re: /\bbet(s|ting)?\b|bookmaker|\bodds\b|\bstake\b/i },
+  // Pazar jargonu ("2.5 üst", "KG var", "1X2", "MS 1"). \b Türkçe harflerde çalışmadığı için harf sınırı \p{L} ile.
+  {
+    term: 'pazar jargonu',
+    re: /(^|[^\p{L}\p{N}])(kg (var|yok)|(üst|alt) ?\d[.,]5|\d[.,]5 (üst|alt)|1x2|ms ?[12x]|çifte şans)(?![\p{L}\p{N}])/iu,
+  },
 ];
 
 /** Metinde geçen bahis terimleri (boşsa temiz). */

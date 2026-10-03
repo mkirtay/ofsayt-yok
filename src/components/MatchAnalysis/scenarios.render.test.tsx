@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import type { MatchAnalysisState } from '@/hooks/useMatchAnalysis';
 import type { ApiAnalysis, ApiPredictionRecord } from './types';
 import { findGamblingTerms } from '@/utils/gamblingTerms';
+import { toPublicAnalysis } from '@/utils/analysisScenarios';
 import trMatch from '../../../public/locales/tr/match.json';
 import enMatch from '../../../public/locales/en/match.json';
 import trAi from '../../../public/locales/tr/ai.json';
@@ -75,6 +76,33 @@ describe('AI analizi — olasılık senaryoları ve istatistik etiketleri', () =
       expect(t).toContain(label);
     }
     expect(t).not.toMatch(/MS [12X]|1X2|Üst [0-9]|[0-9] Üst|KG Var|Tuttu|Tutmadı|Ev Gol Atar/);
+    expect(findGamblingTerms(t)).toEqual([]);
+  });
+});
+
+describe('eski analiz (v2) — okuma anında temizlenmiş metinler', () => {
+  it('bahis cümlesi çıkar; boş kalan analist yorumu ve risk metni hiç çizilmez', () => {
+    const legacy = toPublicAnalysis({
+      ...analysis(),
+      modelVersion: 'v2-2026-07-anthropic:claude',
+      bettingTips: [{ market: '1X2', pick: '2', confidence: 'medium', reasoning: 'r', valueBet: true, avoid: false }],
+      riskReasoning: 'Oranlar düşüyor, para akışı deplasmandan yana.',
+      matchPrediction: { home: 30, draw: 25, away: 45, reasoning: 'Deplasman formda, ligde lider ve deplasmanda istikrarlı. Bahislerde deplasman galibiyeti makul.' },
+      fullReport: {
+        matchSummary: { tempo: 'Tempo yüksek olacak gibi görünüyor, iki takım da hücumcu.', dominantSide: 'Banko kupon maçı.', balanceType: '', homeAwayImpact: '' },
+        tacticalAnalysis: undefined,
+        heatmapAnalysis: undefined,
+        riskFactors: ['Erken gol senaryosu', 'İddia pazarında value var.'],
+        analystComment: 'Bahislerde deplasman galibiyeti ve üst gol seçenekleri makul görünüyor.',
+      },
+    } as never) as unknown as ApiAnalysis;
+    const html = render(legacy);
+    const t = text(html);
+    expect(t).toContain('Deplasman formda, ligde lider ve deplasmanda istikrarlı.');
+    expect(t).toContain('Tempo yüksek olacak gibi görünüyor');
+    expect(t).toContain('Erken gol senaryosu');
+    expect(t).not.toContain('Analist Yorumu');
+    expect(html).not.toMatch(/<li><\/li>|<p class="[^"]*"><\/p>/);
     expect(findGamblingTerms(t)).toEqual([]);
   });
 });
