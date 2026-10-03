@@ -279,6 +279,52 @@ function lineupLines(ctx: MatchAnalysisContext): string[] {
   return lines;
 }
 
+const RESULT_TR: Record<string, string> = { W: 'G', D: 'B', L: 'M', U: '?' };
+const MINUTE_BUCKETS = '0-15/16-30/31-45/46-60/61-75/76-90+';
+
+/** "2026-09-19" → "19.09"; başka biçimde aynen. */
+function shortDate(d: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(d);
+  return m ? `${m[3]}.${m[2]}` : d;
+}
+
+const wdl = (l: { won: number; drawn: number; lost: number }) => `${l.won}G-${l.drawn}B-${l.lost}M`;
+
+/** Takım bölümü: form, son maçlar (skor TAKIMIN gözünden), ligde sezon özeti, gol dakikaları, golcüler, eksikler. */
+function teamLines(t: MatchAnalysisContext['homeTeam'], side: 'Ev Sahibi' | 'Deplasman'): string[] {
+  const mt = t.metrics;
+  const st = t.standingRow;
+  const lines = [`\n## ${t.teamName} (${side})${st ? ` — lig sırası ${st.rank}., ${st.points} puan, averaj ${st.goal_diff}` : ''}`];
+  lines.push(
+    `Son ${mt.matchesAnalyzed} maç: ${mt.wins}G-${mt.draws}B-${mt.losses}M · maç başı ${mt.goalsPerMatch} attı, ${mt.goalsAgainstPerMatch} yedi · ` +
+      `gol yemediği %${Math.round(mt.cleanSheetRate * 100)} · iki takımın da gol attığı %${Math.round(mt.bttsRate * 100)} · ` +
+      `form ${mt.formTrend === 'rising' ? 'yükselişte' : mt.formTrend === 'falling' ? 'düşüşte' : 'stabil'}`,
+  );
+  if (t.recentMatches.length) {
+    lines.push('Son maçlar (yeni → eski; skor bu takımın gözünden, önce attığı):');
+    for (const r of t.recentMatches.slice(0, 6)) {
+      const score = r.result === 'U' ? r.scoreText || '?' : `${r.goalsFor}-${r.goalsAgainst}`;
+      lines.push(`  - ${shortDate(r.date)} ${r.isHome ? 'EV' : 'DEP'} ${r.opponent} ${score} ${RESULT_TR[r.result] ?? '?'}${r.competition ? ` (${r.competition})` : ''}`);
+    }
+  }
+  const ls = t.leagueStats;
+  if (ls) {
+    lines.push(
+      `Ligde bu sezon (${ls.total.played} maç): evde ${wdl(ls.home)}, gol ${ls.home.goalsFor}-${ls.home.goalsAgainst} · ` +
+        `deplasmanda ${wdl(ls.away)}, gol ${ls.away.goalsFor}-${ls.away.goalsAgainst} · gol yemediği ${ls.total.cleanSheets} maç`,
+    );
+    if (ls.scoredByMinute.some((n) => n > 0) || ls.concededByMinute.some((n) => n > 0)) {
+      lines.push(`Gol dakikaları (${MINUTE_BUCKETS}): attığı ${ls.scoredByMinute.join('-')} · yediği ${ls.concededByMinute.join('-')}`);
+    }
+  }
+  const top = [...(t.scorers ?? [])].sort((a, b) => b.goals + b.assists - (a.goals + a.assists) || b.goals - a.goals).slice(0, 4);
+  if (top.length) {
+    lines.push(`Ligde gol katkısı: ${top.map((p) => `${p.name} ${p.goals} gol ${p.assists} asist (${p.apps} maç)`).join(', ')}`);
+  }
+  lines.push(...absenceLines(t));
+  return lines;
+}
+
 function summarizeContextForPrompt(ctx: MatchAnalysisContext): string {
   const m = ctx.match;
   const homeName = m.home?.name ?? 'Ev sahibi';
@@ -301,39 +347,8 @@ function summarizeContextForPrompt(ctx: MatchAnalysisContext): string {
   if (m.referee) lines.push(`Hakem: ${m.referee}`);
   if (m.location) lines.push(`Stadyum: ${m.location}`);
 
-  // Ev sahibi takım
-  lines.push(`\n## ${homeName} (Ev Sahibi)`);
-  const h = ctx.homeTeam;
-  lines.push(`Son ${h.metrics.matchesAnalyzed} maç: ${h.metrics.wins}G-${h.metrics.draws}B-${h.metrics.losses}M`);
-  lines.push(`Maç başına: ${h.metrics.goalsPerMatch} gol attı, ${h.metrics.goalsAgainstPerMatch} yedi`);
-  lines.push(`Gol yemediği maç: %${Math.round(h.metrics.cleanSheetRate * 100)} | İki takımın da gol attığı maç: %${Math.round(h.metrics.bttsRate * 100)}`);
-  lines.push(`Evde kazandığı maç: %${Math.round(h.metrics.homeWinRate * 100)} | Deplasmanda: %${Math.round(h.metrics.awayWinRate * 100)}`);
-  lines.push(`Form trendi: ${h.metrics.formTrend === 'rising' ? 'YÜKSELEN ↑' : h.metrics.formTrend === 'falling' ? 'DÜŞEN ↓' : 'STABİL →'}`);
-  if (h.standingRow) {
-    lines.push(`Lig sırası: ${h.standingRow.rank}. (${h.standingRow.points} puan, averaj ${h.standingRow.goal_diff})`);
-  }
-  lines.push(`Son maçlar (yeni → eski):`);
-  for (const r of h.recentMatches.slice(0, 8)) {
-    lines.push(`  - ${r.date} ${r.isHome ? 'EV' : 'DEP'} vs ${r.opponent}: ${r.scoreText} (${r.result})`);
-  }
-  lines.push(...absenceLines(h));
-
-  // Deplasman takım
-  lines.push(`\n## ${awayName} (Deplasman)`);
-  const a = ctx.awayTeam;
-  lines.push(`Son ${a.metrics.matchesAnalyzed} maç: ${a.metrics.wins}G-${a.metrics.draws}B-${a.metrics.losses}M`);
-  lines.push(`Maç başına: ${a.metrics.goalsPerMatch} gol attı, ${a.metrics.goalsAgainstPerMatch} yedi`);
-  lines.push(`Gol yemediği maç: %${Math.round(a.metrics.cleanSheetRate * 100)} | İki takımın da gol attığı maç: %${Math.round(a.metrics.bttsRate * 100)}`);
-  lines.push(`Evde kazandığı maç: %${Math.round(a.metrics.homeWinRate * 100)} | Deplasmanda: %${Math.round(a.metrics.awayWinRate * 100)}`);
-  lines.push(`Form trendi: ${a.metrics.formTrend === 'rising' ? 'YÜKSELEN ↑' : a.metrics.formTrend === 'falling' ? 'DÜŞEN ↓' : 'STABİL →'}`);
-  if (a.standingRow) {
-    lines.push(`Lig sırası: ${a.standingRow.rank}. (${a.standingRow.points} puan, averaj ${a.standingRow.goal_diff})`);
-  }
-  lines.push(`Son maçlar (yeni → eski):`);
-  for (const r of a.recentMatches.slice(0, 8)) {
-    lines.push(`  - ${r.date} ${r.isHome ? 'EV' : 'DEP'} vs ${r.opponent}: ${r.scoreText} (${r.result})`);
-  }
-  lines.push(...absenceLines(a));
+  lines.push(...teamLines(ctx.homeTeam, 'Ev Sahibi'));
+  lines.push(...teamLines(ctx.awayTeam, 'Deplasman'));
 
   lines.push(...lineupLines(ctx));
 

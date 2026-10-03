@@ -11,7 +11,7 @@ const team = (name: string) => ({
     cleanSheetRate: 0.4, bttsRate: 0.6, homeWinRate: 0.7, awayWinRate: 0.3, formTrend: 'rising',
   },
   standingRow: null,
-  recentMatches: [{ date: '2026-09-20', isHome: true, opponent: 'X', scoreText: '2-1', result: 'G' }],
+  recentMatches: [{ date: '2026-09-20', isHome: false, opponent: 'X', scoreText: '0-4', goalsFor: 4, goalsAgainst: 0, result: 'W', competition: 'Süper Lig' }],
 });
 
 const ctx = {
@@ -110,5 +110,21 @@ describe('analiz prompt\'u — bahis dili yok, olasılık senaryoları', () => {
     const msg = buildAnalysisUserMessage({ ...ctx, homeTeam, lineups } as unknown as MatchAnalysisContext);
     expect(msg).toContain('Sakat Bek (RB) [Eksikler listesinde]');
     expect(msg).toContain('muhtemelen oynamayacak');
+  });
+
+  it('son maçlar takımın gözünden; ligde sezon özeti, gol dakikaları ve golcüler (varsa)', () => {
+    const line = { played: 3, won: 2, drawn: 1, lost: 0, goalsFor: 6, goalsAgainst: 2, cleanSheets: 1 };
+    const homeTeam = {
+      ...ctx.homeTeam,
+      leagueStats: { seasonId: 1, finished: false, total: { ...line, played: 6 }, home: line, away: { ...line, won: 1, drawn: 0, lost: 2 }, scoredByMinute: [1, 2, 0, 3, 1, 2], concededByMinute: [0, 1, 1, 2, 0, 1] },
+      scorers: [{ name: 'Yardımcı', goals: 0, assists: 3, apps: 5 }, { name: 'Golcü', goals: 6, assists: 2, apps: 4 }],
+    };
+    const msg = buildAnalysisUserMessage({ ...ctx, homeTeam } as unknown as MatchAnalysisContext);
+    expect(msg).toContain('  - 20.09 DEP X 4-0 G (Süper Lig)');
+    expect(msg).toContain('Ligde bu sezon (6 maç): evde 2G-1B-0M, gol 6-2 · deplasmanda 1G-0B-2M, gol 6-2 · gol yemediği 1 maç');
+    expect(msg).toContain('attığı 1-2-0-3-1-2 · yediği 0-1-1-2-0-1');
+    expect(msg).toContain('Ligde gol katkısı: Golcü 6 gol 2 asist (4 maç), Yardımcı 0 gol 3 asist (5 maç)');
+    // Deplasman takımında bu veriler yok → satırlar da yok.
+    expect(msg.split('## Fenerbahçe')[1]).not.toContain('Ligde bu sezon');
   });
 });

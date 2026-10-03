@@ -22,7 +22,8 @@ import { toStandingsCompetitionId } from '@/services/sportmonksProviderFlag';
 import type { MatchEvent, MatchLineupData, MatchStatsData } from '@/models/domain';
 import { resolveLiveMatch } from '@/lib/resolveLiveMatch';
 import { prisma } from '@/lib/prisma';
-import { getTeamAbsences, type AnalysisAbsence } from '@/server/analysisTeamAbsences';
+import { getTeamAbsences, type AnalysisAbsence, type TeamSquadScorer } from '@/server/analysisTeamAbsences';
+import type { TeamSeasonStats } from '@/services/sportmonks/teamSeasonStats';
 import { todayIsoIstanbul } from '@/utils/dateStrip';
 
 /** Bir takımın son N maçından çıkarılan özet performans satırı */
@@ -34,7 +35,10 @@ export type RecentMatchRow = {
   goalsAgainst: number;
   /** "W" | "D" | "L" */
   result: 'W' | 'D' | 'L' | 'U';
+  /** Maç skoru ev sahibi önce (ham). Prompt takım bakış açısını `goalsFor-goalsAgainst` ile yazar. */
   scoreText: string;
+  /** Turnuva adı (varsa). */
+  competition?: string;
 };
 
 export type TeamMetrics = {
@@ -71,6 +75,10 @@ export type TeamContext = {
    * prompt bu bölümü atlar; `[]`: eksik yok.
    */
   absences?: AnalysisAbsence[] | null;
+  /** Ana lig sezon özeti (sakat/ceza isteğiyle aynı yanıttan). */
+  leagueStats?: TeamSeasonStats | null;
+  /** Ana ligde gol/asist katkısı olanlar. */
+  scorers?: TeamSquadScorer[];
 };
 
 export type H2HContext = {
@@ -162,6 +170,7 @@ export function buildRecentMatchRow(m: Match, teamId: number): RecentMatchRow | 
   const scoreSource = m.scores?.ft_score || m.scores?.score || m.score;
   const score = parseScore(scoreSource);
   const opponent = isHome ? (m.away?.name ?? '?') : (m.home?.name ?? '?');
+  const competition = m.competition?.name ?? m.competition_name;
 
   if (!score) {
     return {
@@ -172,6 +181,7 @@ export function buildRecentMatchRow(m: Match, teamId: number): RecentMatchRow | 
       goalsAgainst: 0,
       result: 'U',
       scoreText: scoreSource ?? '',
+      ...(competition ? { competition } : {}),
     };
   }
   const [hg, ag] = score;
@@ -189,6 +199,7 @@ export function buildRecentMatchRow(m: Match, teamId: number): RecentMatchRow | 
     goalsAgainst: ga,
     result,
     scoreText: `${hg}-${ag}`,
+    ...(competition ? { competition } : {}),
   };
 }
 
@@ -293,6 +304,8 @@ async function buildTeamContext(
     metrics: computeMetrics(rows),
     standingRow: findStandingRow(standings, teamId),
     absences: absences?.players ?? null,
+    leagueStats: absences?.leagueStats ?? null,
+    scorers: absences?.scorers ?? [],
   };
 }
 
