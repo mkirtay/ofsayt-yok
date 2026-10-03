@@ -1,5 +1,6 @@
 import { createHash, randomBytes } from 'crypto';
 import { prisma } from '@/lib/prisma';
+import { grantVerifiedSignupBonus } from '@/lib/credits';
 
 const TURNSTILE_VERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
 
@@ -121,12 +122,15 @@ export async function consumeEmailVerificationToken(rawToken: string): Promise<b
     return false;
   }
 
-  await prisma.user.update({
+  const user = await prisma.user.update({
     where: { email: tokenRow.identifier },
     data: { emailVerified: new Date() },
+    select: { id: true },
   });
 
   await prisma.verificationToken.delete({ where: { token: hashedToken } });
+  // Kredi modeli v2: kayıt bonusu yalnız doğrulanmış e-postaya (bir kez; tekrar doğrulamada no-op).
+  await grantVerifiedSignupBonus(user.id);
   return true;
 }
 

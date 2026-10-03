@@ -6,7 +6,7 @@
 import { hash } from 'bcryptjs';
 import type { Role } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
-import { recordSignupBonus } from '@/lib/credits';
+import { isDisposableEmail } from '@/lib/disposableEmail';
 import { createAndSendEmailVerification } from '@/lib/security';
 import { validatePassword, usernameRules } from '@/lib/validation';
 import type { SignupAttributionFields } from '@/utils/signupAttribution';
@@ -44,6 +44,11 @@ export async function createUserAccount(input: CreateAccountInput): Promise<Crea
     return { ok: false, status: 400, error: 'E-posta ve şifre zorunludur' };
   }
 
+  // Kredi modeli v2: kayıt bonusu / haftalık ücretsiz açma suistimaline karşı geçici e-posta ile kayıt yok.
+  if (isDisposableEmail(normalizedEmail)) {
+    return { ok: false, status: 400, error: 'Geçici (tek kullanımlık) e-posta adresleriyle kayıt olunamıyor.' };
+  }
+
   if (typeof password !== 'string' || !validatePassword(password).valid) {
     return {
       ok: false,
@@ -78,12 +83,13 @@ export async function createUserAccount(input: CreateAccountInput): Promise<Crea
       email: normalizedEmail,
       password: hashed,
       username: usernameNorm,
+      // Kredi modeli v2: 0 ile başlar; e-posta doğrulanınca +2 (lib/credits.ts → grantVerifiedSignupBonus). Açıkça
+      // yazılır: DB varsayılanı migration B'ye kadar 5.
+      credits: 0,
       ...(attribution ?? {}),
     },
     select: { id: true, email: true, name: true, role: true, username: true, credits: true },
   });
-
-  await recordSignupBonus(user.id);
 
   void createAndSendEmailVerification(normalizedEmail).catch((e) =>
     console.error('[accounts] email verification send failed:', e)

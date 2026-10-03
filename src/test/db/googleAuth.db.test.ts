@@ -75,7 +75,7 @@ d('DB entegrasyonu — Google ile giriş', () => {
   let callbackHandler: (params: any) => Promise<{ user: any; isNewUser?: boolean }>;
   let issueMobileToken: typeof import('@/lib/mobileAuth').issueMobileToken;
   let createUserAccount: typeof import('@/lib/accounts').createUserAccount;
-  let recordSignupBonus: typeof import('@/lib/credits').recordSignupBonus;
+  let grantVerifiedSignupBonus: typeof import('@/lib/credits').grantVerifiedSignupBonus;
   let postsHandler: Handler;
   let commentsHandler: Handler;
   let meHandler: Handler;
@@ -123,7 +123,7 @@ d('DB entegrasyonu — Google ile giriş', () => {
     callbackHandler = createRequire(import.meta.url)(path.resolve('node_modules/next-auth/core/lib/callback-handler.js')).default;
     ({ issueMobileToken } = await import('@/lib/mobileAuth'));
     ({ createUserAccount } = await import('@/lib/accounts'));
-    ({ recordSignupBonus } = await import('@/lib/credits'));
+    ({ grantVerifiedSignupBonus } = await import('@/lib/credits'));
     postsHandler = (await import('@/pages/api/gundem/posts/index')).default;
     commentsHandler = (await import('@/pages/api/gundem/posts/[postId]/comments')).default;
     meHandler = (await import('@/pages/api/user/me')).default;
@@ -138,14 +138,14 @@ d('DB entegrasyonu — Google ile giriş', () => {
     expect(left).toBe(0);
   });
 
-  it('yeni doğrulanmış Google kullanıcısı: hesap + Account, ad/foto profilden, e-posta doğrulanmış, başlangıç kredisi TEK sefer', async () => {
+  it('yeni doğrulanmış Google kullanıcısı: hesap + Account, ad/foto profilden, e-posta doğrulanmış, kayıt bonusu (2) TEK sefer', async () => {
     const first = await googleCallback(googleProfile('new', `${runId}-sub-new`));
     expect(first.isNewUser).toBe(true);
     const row = await prisma.user.findUniqueOrThrow({
       where: { email: email('new') },
       select: { id: true, name: true, image: true, username: true, password: true, role: true, credits: true, emailVerified: true, accounts: { select: { provider: true, providerAccountId: true } } },
     });
-    expect(row).toMatchObject({ name: 'ITest new', image: 'https://lh3.googleusercontent.com/a/itest', username: null, password: null, role: 'USER', credits: 5 });
+    expect(row).toMatchObject({ name: 'ITest new', image: 'https://lh3.googleusercontent.com/a/itest', username: null, password: null, role: 'USER', credits: 2 });
     expect(row.emailVerified).toBeInstanceOf(Date);
     expect(row.accounts).toEqual([{ provider: 'google', providerAccountId: `${runId}-sub-new` }]);
     expect(await bonusCount(row.id)).toBe(1);
@@ -154,19 +154,22 @@ d('DB entegrasyonu — Google ile giriş', () => {
     const second = await googleCallback(googleProfile('new', `${runId}-sub-new`));
     expect(second.user.id).toBe(row.id);
     expect(second.isNewUser).toBe(false);
-    expect(await recordSignupBonus(row.id)).toBe(false);
-    expect(await Promise.all([recordSignupBonus(row.id), recordSignupBonus(row.id)])).toEqual([false, false]);
+    expect(await grantVerifiedSignupBonus(row.id)).toBe(false);
+    expect(await Promise.all([grantVerifiedSignupBonus(row.id), grantVerifiedSignupBonus(row.id)])).toEqual([false, false]);
     expect(await bonusCount(row.id)).toBe(1);
-    expect((await prisma.user.findUniqueOrThrow({ where: { id: row.id }, select: { credits: true } })).credits).toBe(5);
+    expect((await prisma.user.findUniqueOrThrow({ where: { id: row.id }, select: { credits: true } })).credits).toBe(2);
   });
 
-  it('e-posta/şifre kaydı da başlangıç kredisini aynı kaynaktan bir kez alır', async () => {
+  it('e-posta/şifre kaydı 0 krediyle başlar; bonus (2) e-posta doğrulanınca bir kez', async () => {
     const r = await createUserAccount({ email: email('cred'), password: 'Itest-Pass-123!', name: 'Cred' });
     expect(r.ok).toBe(true);
     if (!r.ok) return;
+    expect((await prisma.user.findUniqueOrThrow({ where: { id: r.user.id }, select: { credits: true } })).credits).toBe(0);
+    expect(await bonusCount(r.user.id)).toBe(0);
+    expect(await grantVerifiedSignupBonus(r.user.id)).toBe(true);
+    expect(await grantVerifiedSignupBonus(r.user.id)).toBe(false);
     expect(await bonusCount(r.user.id)).toBe(1);
-    expect(await recordSignupBonus(r.user.id)).toBe(false);
-    expect(await bonusCount(r.user.id)).toBe(1);
+    expect((await prisma.user.findUniqueOrThrow({ where: { id: r.user.id }, select: { credits: true } })).credits).toBe(2);
   });
 
   it('aynı e-postalı (doğrulanmış) hesabı varsa Google o hesaba bağlanır ve o hesapla girilir; şifre, ad, bakiye aynen kalır', async () => {
@@ -189,7 +192,8 @@ d('DB entegrasyonu — Google ile giriş', () => {
     const again = await googleCallback(googleProfile('linkv', `${runId}-sub-linkv`, { email: email('linkv') }));
     expect(again.user.id).toBe(r.user.id);
     expect(await prisma.account.count({ where: { userId: r.user.id } })).toBe(1);
-    expect(await bonusCount(r.user.id)).toBe(1);
+    // Hesap testte elle doğrulanmış (bonus yolundan geçmedi); zaten doğrulanmış hesaba bağlama bonus vermez.
+    expect(await bonusCount(r.user.id)).toBe(0);
   });
 
   it('aynı e-postalı hesap bizde doğrulanmamışsa da bağlanır; e-posta doğrulanır ve önceden konmuş şifre silinir', async () => {
@@ -200,7 +204,8 @@ d('DB entegrasyonu — Google ile giriş', () => {
     const after = await prisma.user.findUniqueOrThrow({ where: { id: r.user.id }, select: { password: true, emailVerified: true, credits: true } });
     expect(after.password).toBeNull();
     expect(after.emailVerified).toBeInstanceOf(Date);
-    expect(after.credits).toBe(5);
+    // E-posta bu bağlamayla doğrulandı → kayıt bonusu (2)
+    expect(after.credits).toBe(2);
     expect(await bonusCount(r.user.id)).toBe(1);
   });
 

@@ -187,33 +187,46 @@ export async function recordFreeAnalysis(userId: string, matchId: string, balanc
   });
 }
 
+/** Kayıt bonusu (kredi modeli v2): e-posta doğrulanınca bir kez. 2026-10 öncesi kayıtlar 5 krediyle başlamıştı. */
+export const SIGNUP_BONUS_CREDITS = 2;
+
 /**
- * Yeni hesabın başlangıç kredisini deftere `SIGNUP_BONUS` olarak işler — hem e-posta/şifre kaydı hem OAuth (Google)
- * ilk girişi BURAYI çağırır. Bakiye `User.credits` DB varsayılanından gelir (tekrar eklenmez); bu fonksiyon yalnızca
- * denetim izini yazar. İdempotent: kullanıcı satırı `FOR UPDATE` ile kilitlenir, zaten SIGNUP_BONUS varsa hiçbir şey yapmaz.
- * @returns kayıt yazıldıysa `true`
+ * E-posta doğrulanınca kayıt bonusu: +2 kredi, `SIGNUP_BONUS` defter satırı (anahtar `signup-bonus`, kullanıcı başına
+ * tekil). Çağıranlar: e-posta doğrulama, Google ilk girişi (doğrulanmış sayılır), Google'la mevcut hesabı bağlama.
+ * Bir kez: tutarı > 0 olan eski `SIGNUP_BONUS` satırı varsa (5 kredi almış eski kullanıcı) hiçbir şey yapmaz;
+ * eşzamanlı ikinci çağrı tekil anahtarda düşer ve işlemi (artırma dahil) geri alınır.
+ * @returns bonus verildiyse `true`
  */
-export async function recordSignupBonus(userId: string): Promise<boolean> {
-  return prisma.$transaction(async (tx) => {
-    await tx.$queryRaw`SELECT id FROM "User" WHERE id = ${userId} FOR UPDATE`;
-    const existing = await tx.creditTransaction.findFirst({
-      where: { userId, type: 'SIGNUP_BONUS' },
-      select: { id: true },
+export async function grantVerifiedSignupBonus(userId: string): Promise<boolean> {
+  try {
+    return await prisma.$transaction(async (tx) => {
+      const earlier = await tx.creditTransaction.findFirst({
+        where: { userId, type: 'SIGNUP_BONUS', amount: { gt: 0 } },
+        select: { id: true },
+      });
+      if (earlier) return false;
+      const user = await tx.user.update({
+        where: { id: userId },
+        data: { credits: { increment: SIGNUP_BONUS_CREDITS } },
+        select: { credits: true },
+      });
+      await tx.creditTransaction.create({
+        data: {
+          userId,
+          type: 'SIGNUP_BONUS',
+          amount: SIGNUP_BONUS_CREDITS,
+          balanceAfter: user.credits,
+          idempotencyKey: 'signup-bonus',
+          note: 'Kayıt bonusu (e-posta doğrulandı)',
+        },
+      });
+      return true;
     });
-    if (existing) return false;
-    const user = await tx.user.findUnique({ where: { id: userId }, select: { credits: true } });
-    if (!user) return false;
-    await tx.creditTransaction.create({
-      data: {
-        userId,
-        type: 'SIGNUP_BONUS',
-        amount: user.credits,
-        balanceAfter: user.credits,
-        note: 'Kayıt hoşgeldin bonusu',
-      },
-    });
-    return true;
-  });
+  } catch (err) {
+    if (isUniqueViolation(err)) return false;
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2025') return false; // kullanıcı yok
+    throw err;
+  }
 }
 
 /**

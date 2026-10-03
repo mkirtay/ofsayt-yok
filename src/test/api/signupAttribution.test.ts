@@ -7,7 +7,7 @@ vi.mock('@/lib/prisma', () => ({
   prisma: { user: { updateMany: h.updateMany, create: h.create, findUnique: vi.fn(async () => null) } },
 }));
 vi.mock('@/lib/requireAuth', () => ({ requireAuth: async () => ({ ok: true, userId: 'u1' }) }));
-vi.mock('@/lib/credits', () => ({ recordSignupBonus: vi.fn() }));
+vi.mock('@/lib/credits', () => ({ grantVerifiedSignupBonus: vi.fn() }));
 vi.mock('@/lib/security', () => ({ createAndSendEmailVerification: vi.fn(async () => undefined) }));
 
 import attributionHandler from '@/pages/api/user/attribution';

@@ -68,12 +68,13 @@ function matches(row: Record<string, unknown>, where: Where | undefined): boolea
     }
     const v = row[key];
     if (cond !== null && typeof cond === 'object' && !(cond instanceof Date)) {
-      const c = cond as { in?: unknown[]; not?: unknown; lt?: Date | number; gte?: number };
+      const c = cond as { in?: unknown[]; not?: unknown; lt?: Date | number; gte?: number; gt?: number };
       if ('in' in c && !c.in!.includes(v)) return false;
       // SQL: `x <> 'A'` NULL için doğru değil (UNKNOWN) — Prisma `not` da NULL satırı dışarıda bırakır.
       if ('not' in c && (v === null || v === undefined || v === c.not)) return false;
       if ('lt' in c && !((v as number | Date) < c.lt!)) return false;
       if ('gte' in c && !((v as number) >= c.gte!)) return false;
+      if ('gt' in c && !((v as number) > c.gt!)) return false;
       continue;
     }
     if (cond === null ? v !== null && v !== undefined : v !== cond) return false;
@@ -195,6 +196,11 @@ export function createFakeCreditDb(opts: { now?: () => number } = {}) {
           const row = k
             ? ledger.find((t) => t.userId === k.userId && t.idempotencyKey === k.idempotencyKey)
             : ledger.find((t) => t.id === where.id);
+          return row ? { ...row } : null;
+        },
+        async findFirst({ where }: { where?: Where }) {
+          await tick();
+          const row = ledger.find((t) => matches(t as unknown as Record<string, unknown>, where));
           return row ? { ...row } : null;
         },
         async findMany({ where, take }: { where?: Where; take?: number }) {

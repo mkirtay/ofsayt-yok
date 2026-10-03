@@ -10,7 +10,7 @@
 import type { Provider } from 'next-auth/providers/index';
 import GoogleProvider, { type GoogleProfile } from 'next-auth/providers/google';
 import { prisma } from '@/lib/prisma';
-import { recordSignupBonus } from '@/lib/credits';
+import { grantVerifiedSignupBonus } from '@/lib/credits';
 import { isGoogleAuthEnabled } from '@/lib/oauthEnv';
 
 export { isGoogleAuthEnabled };
@@ -68,24 +68,27 @@ export function checkOAuthSignIn(
  * "şifremi unuttum" ile yeni şifre alır. Doğrulanmış hesaplara dokunulmaz.
  */
 export async function onOAuthAccountLinked(userId: string): Promise<void> {
-  await prisma.user.updateMany({
+  const { count } = await prisma.user.updateMany({
     where: { id: userId, emailVerified: null },
     data: { emailVerified: new Date(), password: null },
   });
+  // E-posta bu bağlamayla doğrulandı → kayıt bonusu (bir kez; 5 kredi almış eski hesaplara yok).
+  if (count > 0) await grantVerifiedSignupBonus(userId);
 }
 
 /**
  * NextAuth `events.createUser`: adapter yalnızca OAuth ilk girişinde kullanıcı oluşturur (şifreli kayıt
  * `createUserAccount` ile doğrudan Prisma'ya yazar); e-postayla mevcut hesaba bağlamada da çağrılır, orada no-op.
  * `signIn` callback'i e-postanın Google'da doğrulandığını garanti ettiği için `emailVerified` işaretlenir;
- * başlangıç kredisi kayıtla aynı tek kaynaktan (idempotent) defterlenir.
+ * kayıt bonusu (kredi modeli v2: 2 kredi, bir kez) doğrulanmış e-postaya verilir.
  */
 export async function onOAuthUserCreated(userId: string): Promise<void> {
   // NextAuth bu olayı e-postayla MEVCUT hesaba bağlarken de çağırıyor → yalnızca az önce oluşmuş, şifresiz kayıt "yeni"dir.
   const row = await prisma.user.findUnique({ where: { id: userId }, select: { password: true, createdAt: true } });
   if (!row || row.password || Date.now() - row.createdAt.getTime() > FRESH_USER_MS) return;
-  await prisma.user.update({ where: { id: userId }, data: { emailVerified: new Date() } });
-  await recordSignupBonus(userId);
+  // Adapter kullanıcıyı DB varsayılanıyla oluşturur (migration B'ye kadar 5) → v2'de 0'dan başlar, bonus 2.
+  await prisma.user.update({ where: { id: userId }, data: { emailVerified: new Date(), credits: 0 } });
+  await grantVerifiedSignupBonus(userId);
 }
 
 /** OAuth ile oluşturulan kaydın "yeni" sayıldığı süre (createUser olayı oluşturmanın hemen ardından gelir). */
