@@ -7,6 +7,7 @@ import { hash } from 'bcryptjs';
 import type { Role } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { isDisposableEmail } from '@/lib/disposableEmail';
+import { recordReferral } from '@/lib/referral';
 import { createAndSendEmailVerification } from '@/lib/security';
 import { validatePassword, usernameRules } from '@/lib/validation';
 import type { SignupAttributionFields } from '@/utils/signupAttribution';
@@ -18,6 +19,8 @@ export type CreateAccountInput = {
   username?: unknown;
   /** Kayıt kaynağı (ilk temas) — doğrulanmış; yoksa yazılmaz. */
   attribution?: SignupAttributionFields | null;
+  /** Davet kodu (isteğe bağlı) — geçersizse yok sayılır; ödül ilk satın almada (lib/referral.ts). */
+  referralCode?: unknown;
 };
 
 export type CreatedAccount = {
@@ -33,7 +36,7 @@ export type CreateAccountResult =
   | { ok: false; status: number; error: string };
 
 export async function createUserAccount(input: CreateAccountInput): Promise<CreateAccountResult> {
-  const { name, email, password, username, attribution } = input;
+  const { name, email, password, username, attribution, referralCode } = input;
 
   if (!email || !password) {
     return { ok: false, status: 400, error: 'E-posta ve şifre zorunludur' };
@@ -90,6 +93,11 @@ export async function createUserAccount(input: CreateAccountInput): Promise<Crea
     },
     select: { id: true, email: true, name: true, role: true, username: true, credits: true },
   });
+
+  if (referralCode != null) {
+    // En iyi çaba: davet kaydı yazılamazsa kayıt yine başarılı.
+    await recordReferral(user.id, referralCode).catch((e) => console.error('[accounts] referral record failed:', e));
+  }
 
   void createAndSendEmailVerification(normalizedEmail).catch((e) =>
     console.error('[accounts] email verification send failed:', e)

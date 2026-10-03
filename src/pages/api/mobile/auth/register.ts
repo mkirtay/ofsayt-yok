@@ -41,6 +41,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     email: body.email,
     password: body.password,
     username: body.username,
+    referralCode: body.referralCode,
   });
 
   if (!result.ok) {

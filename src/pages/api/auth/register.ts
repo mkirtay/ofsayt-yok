@@ -20,7 +20,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(429).json({ error: 'Cok fazla kayit denemesi. Lutfen daha sonra tekrar deneyin.' })
   }
 
-  const { name, email, password, username, turnstileToken, attribution } = req.body ?? {}
+  const { name, email, password, username, turnstileToken, attribution, referralCode } = req.body ?? {}
 
   if (process.env.NODE_ENV === 'production' && process.env.TURNSTILE_SECRET_KEY) {
     if (typeof turnstileToken !== 'string' || !turnstileToken) {
@@ -34,7 +34,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   // Kayıt kaynağı geçersizse kayıt yine yapılır, yalnız kaynak yazılmaz.
-  const result = await createUserAccount({ name, email, password, username, attribution: parseSignupAttribution(attribution) })
+  const result = await createUserAccount({ name, email, password, username, attribution: parseSignupAttribution(attribution), referralCode })
   if (!result.ok) {
     return res.status(result.status).json({ error: result.error })
   }

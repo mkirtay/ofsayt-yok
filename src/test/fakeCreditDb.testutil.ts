@@ -19,7 +19,10 @@ export type FakeUser = {
   emailVerified: Date | null;
   createdAt: Date;
   premiumUntil: Date | null;
+  referralCode?: string | null;
+  referredById?: string | null;
 };
+export type FakeReferral = { id: string; referrerId: string; refereeId: string; createdAt: Date; rewardedAt: Date | null };
 export type FakeUnlock = {
   id: string;
   userId: string;
@@ -90,6 +93,7 @@ export function createFakeCreditDb(opts: { now?: () => number } = {}) {
   const ledger: FakeCreditTx[] = [];
   const analyses: FakeAnalysis[] = [];
   const unlocks: FakeUnlock[] = [];
+  const referrals: FakeReferral[] = [];
   let seq = 0;
   const nextId = (p: string) => `${p}${++seq}`;
 
@@ -139,17 +143,29 @@ export function createFakeCreditDb(opts: { now?: () => number } = {}) {
   function client(ctx: Ctx) {
     return {
       user: {
-        async findUnique({ where }: { where: { id: string } }) {
+        async findUnique({ where }: { where: { id?: string; referralCode?: string } }) {
           await tick();
-          const u = users.get(where.id);
+          const u = where.referralCode !== undefined
+            ? [...users.values()].find((x) => x.referralCode === where.referralCode)
+            : users.get(where.id!);
           return u ? { ...u } : null;
         },
-        async updateMany({ where, data }: { where: Where & { id: string }; data: CreditsData }) {
+        async updateMany({ where, data }: { where: Where & { id: string }; data: CreditsData & Partial<Omit<FakeUser, 'credits'>> }) {
           await tick();
           await lock(ctx, `User:${where.id}`);
           const u = users.get(where.id);
           if (!u || !matches(u as unknown as Record<string, unknown>, where)) return { count: 0 };
-          applyCredits(ctx, u, creditDelta(u, data));
+          if (data.credits !== undefined) applyCredits(ctx, u, creditDelta(u, data));
+          const { credits: _c, ...rest } = data;
+          void _c;
+          if (rest.referralCode && [...users.values()].some((x) => x !== u && x.referralCode === rest.referralCode)) {
+            throw uniqueError(['referralCode']);
+          }
+          if (Object.keys(rest).length) {
+            const before = { ...u };
+            Object.assign(u, rest);
+            ctx.undo.push(() => Object.assign(u, before));
+          }
           return { count: 1 };
         },
         async update({ where, data }: { where: { id: string }; data: CreditsData & Partial<Omit<FakeUser, 'credits'>> }) {
@@ -273,6 +289,35 @@ export function createFakeCreditDb(opts: { now?: () => number } = {}) {
           return { ...row };
         },
       },
+      referral: {
+        async create({ data }: { data: { referrerId: string; refereeId: string } }) {
+          await tick();
+          if (referrals.some((r) => r.refereeId === data.refereeId)) throw uniqueError(['refereeId']);
+          const row: FakeReferral = { id: nextId('rf'), createdAt: new Date(now()), rewardedAt: null, ...data };
+          referrals.push(row);
+          ctx.undo.push(() => referrals.splice(referrals.indexOf(row), 1));
+          return { ...row };
+        },
+        async findUnique({ where }: { where: { refereeId: string } }) {
+          await tick();
+          const r = referrals.find((x) => x.refereeId === where.refereeId);
+          return r ? { ...r } : null;
+        },
+        async updateMany({ where, data }: { where: Where & { id: string }; data: Partial<FakeReferral> }) {
+          await tick();
+          await lock(ctx, `Referral:${where.id}`);
+          const r = referrals.find((x) => x.id === where.id);
+          if (!r || !matches(r as unknown as Record<string, unknown>, where)) return { count: 0 };
+          const before = { ...r };
+          Object.assign(r, data);
+          ctx.undo.push(() => Object.assign(r, before));
+          return { count: 1 };
+        },
+        async count({ where }: { where?: Where } = {}) {
+          await tick();
+          return referrals.filter((r) => matches(r as unknown as Record<string, unknown>, where)).length;
+        },
+      },
       predictionRecord: {
         async findUnique() {
           return null;
@@ -313,6 +358,7 @@ export function createFakeCreditDb(opts: { now?: () => number } = {}) {
     creditTransaction: auto.creditTransaction,
     matchAnalysis: auto.matchAnalysis,
     analysisUnlock: auto.analysisUnlock,
+    referral: auto.referral,
     predictionRecord: auto.predictionRecord,
     async $transaction<T>(fn: (tx: ReturnType<typeof client>) => Promise<T>): Promise<T> {
       const ctx: Ctx = { id: Symbol('tx'), undo: [], held: new Set() };
@@ -333,6 +379,7 @@ export function createFakeCreditDb(opts: { now?: () => number } = {}) {
     ledger,
     analyses,
     unlocks,
+    referrals,
     addUser(
       id: string,
       credits: number,
