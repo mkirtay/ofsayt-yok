@@ -94,6 +94,24 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse, matchId: st
   try {
 
     const result = await (async () => {
+      // Önbellekten açılış: analiz bu id ile saklıysa maç bağlamı (≈14 Sportmonks okuması) hiç kurulmaz.
+      // Bulunamazsa aşağıdaki akış maçı çözüp kanonik id ile yeniden arar.
+      const stored = await findStoredMatchAnalysis(matchId, 'PRE');
+      if (stored) {
+        const predictionRecord = await prisma.predictionRecord.findUnique({ where: { matchAnalysisId: stored.id } });
+        return {
+          status: 200 as const,
+          body: {
+            analysis: toPublicAnalysis(stored),
+            predictionRecord,
+            cached: true,
+            // Bağlam kurulmadığı için faz bilinmiyor; değerlendirilmiş tahmin = maç bitti (istemciler bu alanı kullanmıyor).
+            isPostMatch: predictionRecord?.evaluatedAt != null,
+            isArchived: false,
+          },
+        };
+      }
+
       const tracked = await trackSportmonksFetches(() => buildMatchAnalysisContext(matchId));
       const ctx = tracked.value;
       // Sportmonks geçici hatası (zaman aşımı / 5xx / 429): "maç yok" ya da "arşiv" sanılmasın → 503.

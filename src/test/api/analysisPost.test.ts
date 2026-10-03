@@ -89,6 +89,7 @@ vi.mock('@/server/buildMatchAnalysisContext', () => ({
 }));
 
 import handler from '@/pages/api/matches/[id]/analysis';
+import { buildMatchAnalysisContext } from '@/server/buildMatchAnalysisContext';
 
 function post(id: string) {
   const res = {
@@ -114,6 +115,7 @@ describe('POST /api/matches/[id]/analysis — takım çifti yedeği yok', () => 
     h.created.length = 0;
     h.spent = 0;
     h.generated = 0;
+    vi.mocked(buildMatchAnalysisContext).mockClear();
   });
 
   it('aynı eşleşmenin ESKİ maçına ait analiz yeni maça dönmez: yeni analiz üretilir, kredi harcanır', async () => {
@@ -140,6 +142,8 @@ describe('POST /api/matches/[id]/analysis — takım çifti yedeği yok', () => 
     expect((res.body.analysis as { id: string }).id).toBe('same');
     expect(h.generated).toBe(0);
     expect(h.spent).toBe(0);
+    // Önbellekten açılışta maç bağlamı (Sportmonks) hiç kurulmaz.
+    expect(buildMatchAnalysisContext).not.toHaveBeenCalled();
   });
 
   it('yeni analiz: olasılık senaryoları eski sütuna yazılır, yanıtta `scenarios`; `bettingTips` boş', async () => {
