@@ -105,6 +105,7 @@ export default function MatchAnalysis({ match, state, archived = false }: Props)
     serverPhase,
     loading,
     generating,
+    inProgress = false,
     error,
     credits,
     unlimited,
@@ -153,9 +154,10 @@ export default function MatchAnalysis({ match, state, archived = false }: Props)
               {t('analysis.signIn')}
             </Link>
           </div>
-        ) : generating ? (
+        ) : generating || inProgress ? (
           <>
-            <AiLoadingPitch label={t('analysis.loading')} />
+            {/* inProgress: başka bir istek (kullanıcı / maç öncesi üretim) bu maçı üretiyor — hata değil, bekleme. */}
+            <AiLoadingPitch label={inProgress ? t('analysis.inProgress') : t('analysis.loading')} />
             <DailyFactCard />
           </>
         ) : insufficientCredits ? (

@@ -252,7 +252,12 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse, matchId: st
           captureError('prediction-record', e);
         }
 
-        return { status: 200 as const, body: { analysis: toPublicAnalysis(saved), cached: false, isPostMatch: false } };
+        // Güncel bakiye: istemci header'daki rozeti ek istek atmadan günceller (kredisiz üretimde değişmez).
+        const balance = reservation ? reservation.balanceAfter : (owner?.credits ?? null);
+        return {
+          status: 200 as const,
+          body: { analysis: toPublicAnalysis(saved), cached: false, isPostMatch: false, ...(balance != null ? { credits: balance } : {}) },
+        };
       } finally {
         await releaseAnalysisLock(lock);
       }

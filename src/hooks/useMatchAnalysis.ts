@@ -4,6 +4,7 @@ import { useTranslation } from '@/lib/i18n';
 import { useCredits } from '@/hooks/useCredits';
 import { analysisIsFree } from '@/lib/premium';
 import type { ApiAnalysis, ApiPredictionRecord } from '@/components/MatchAnalysis/types';
+import { pollUntilReady } from '@/hooks/analysisInProgressPoll';
 
 export const ANALYSIS_COST = 5;
 
@@ -13,6 +14,8 @@ export type MatchAnalysisState = {
   serverPhase: string | null;
   loading: boolean;
   generating: boolean;
+  /** Analiz başka bir istekte üretiliyor (POST 409): "birkaç saniye içinde hazır" + arka planda yoklama. */
+  inProgress?: boolean;
   error: string | null;
   /** Kredi bakiyesi ve kredisiz üretim (yönetici/premium) — "Kredi Satın Al" CTA'sı üretime basmadan görünsün diye. */
   credits: number;
@@ -31,7 +34,7 @@ export function useMatchAnalysis(matchId: string | null | undefined): MatchAnaly
   const { t } = useTranslation('match');
   const { data: session, status: sessionStatus } = useSession();
   const isAuthenticated = sessionStatus === 'authenticated';
-  const { credits, refresh: refreshCredits } = useCredits();
+  const { credits, refresh: refreshCredits, apply: applyCredits } = useCredits();
   const unlimited = analysisIsFree({ role: session?.user?.role, premiumUntil: session?.user?.premiumUntil });
 
   const [analysis, setAnalysis] = useState<ApiAnalysis | null>(null);
@@ -39,10 +42,16 @@ export function useMatchAnalysis(matchId: string | null | undefined): MatchAnaly
   const [serverPhase, setServerPhase] = useState<string | null>(null);
   const [loading, setLoading] = useState(Boolean(matchId));
   const [generating, setGenerating] = useState(false);
+  const [inProgress, setInProgress] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notFound, setNotFound] = useState(false);
 
   const lastFetchedMatchId = useRef<string | null>(null);
+  /** Aktif yoklamanın maçı; maç değişince / bileşen kalkınca yoklama durur. */
+  const pollingFor = useRef<string | null>(null);
+  useEffect(() => () => {
+    pollingFor.current = null;
+  }, []);
   const creditsRefreshedFor = useRef<string | null>(null);
 
   const fetchAnalysis = useCallback(
@@ -88,6 +97,9 @@ export function useMatchAnalysis(matchId: string | null | undefined): MatchAnaly
   useEffect(() => {
     if (!matchId || lastFetchedMatchId.current === matchId) return;
     lastFetchedMatchId.current = matchId;
+    // Başka maçın yoklaması sürüyorsa durur (sonucu bu maça yazılmaz).
+    pollingFor.current = null;
+    setInProgress(false);
     void fetchAnalysis(matchId);
   }, [matchId, fetchAnalysis]);
 
@@ -99,6 +111,35 @@ export function useMatchAnalysis(matchId: string | null | undefined): MatchAnaly
     void refreshCredits();
   }, [matchId, notFound, isAuthenticated, refreshCredits]);
 
+  const waitForOtherGeneration = useCallback(
+    async (id: string) => {
+      pollingFor.current = id;
+      setInProgress(true);
+      const outcome = await pollUntilReady(
+        async () => {
+          const res = await fetch(`/api/matches/${id}/analysis?optional=1`);
+          if (!res.ok) return null;
+          const body = (await res.json()) as { analysis: ApiAnalysis | null; predictionRecord: ApiPredictionRecord | null };
+          return body.analysis ? body : null;
+        },
+        { isCancelled: () => pollingFor.current !== id },
+      );
+      if (outcome.status === 'cancelled') return;
+      pollingFor.current = null;
+      setInProgress(false);
+      if (outcome.status === 'ready') {
+        setAnalysis(outcome.value.analysis);
+        setPredictionRecord(outcome.value.predictionRecord ?? null);
+        setNotFound(false);
+      } else {
+        setError(t('analysis.inProgressSlow'));
+      }
+      // Kendi isteği kredi düşmedi (409); yine de bakiye ekranla aynı kalsın.
+      void refreshCredits();
+    },
+    [t, refreshCredits]
+  );
+
   const generate = useCallback(async () => {
     if (!matchId) return;
     setGenerating(true);
@@ -106,21 +147,30 @@ export function useMatchAnalysis(matchId: string | null | undefined): MatchAnaly
     try {
       const res = await fetch(`/api/matches/${matchId}/analysis`, { method: 'POST' });
       const body = await res.json().catch(() => ({}));
+      if (res.status === 409 && body?.code === 'ANALYSIS_IN_PROGRESS') {
+        setGenerating(false);
+        void waitForOtherGeneration(matchId);
+        return;
+      }
       if (!res.ok) {
         setError(body?.error ?? t('analysis.notGenerated'));
-        if (res.status === 402) void refreshCredits();
+        // 402 (yetersiz), 5xx (iade edildi) — bakiye sunucudakiyle eşitlensin.
+        void refreshCredits();
         return;
       }
       setAnalysis(body.analysis as ApiAnalysis);
       setPredictionRecord((body.predictionRecord as ApiPredictionRecord) ?? null);
       setNotFound(false);
-      void refreshCredits();
+      // Sunucu güncel bakiyeyi döndürdüyse ek istek yok; header dahil bütün rozetler anında güncellenir.
+      if (typeof body.credits === 'number') applyCredits(body.credits);
+      else void refreshCredits();
     } catch {
       setError(t('analysis.notGenerated'));
+      void refreshCredits();
     } finally {
       setGenerating(false);
     }
-  }, [matchId, t, refreshCredits]);
+  }, [matchId, t, refreshCredits, applyCredits, waitForOtherGeneration]);
 
   return useMemo(
     () => ({
@@ -129,12 +179,13 @@ export function useMatchAnalysis(matchId: string | null | undefined): MatchAnaly
       serverPhase,
       loading,
       generating,
+      inProgress,
       error,
       credits,
       unlimited,
       isAuthenticated,
       generate,
     }),
-    [analysis, predictionRecord, serverPhase, loading, generating, error, credits, unlimited, isAuthenticated, generate]
+    [analysis, predictionRecord, serverPhase, loading, generating, inProgress, error, credits, unlimited, isAuthenticated, generate]
   );
 }

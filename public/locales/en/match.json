@@ -41,6 +41,8 @@
     "title": "Match Analysis & Prediction",
     "titleShort": "Match Analysis",
     "loading": "Preparing AI analysis… This may take a few seconds.",
+    "inProgress": "This match's analysis is being generated right now — it will be ready in a few seconds.",
+    "inProgressSlow": "The analysis is still being prepared. Try again shortly; no credits were spent.",
     "generateButton": "Analyze with AI",
     "generateCost": "({{cost}} credits)",
     "generateUnlimited": "(unlimited)",

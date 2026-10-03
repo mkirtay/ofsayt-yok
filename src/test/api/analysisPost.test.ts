@@ -190,4 +190,9 @@ describe('POST /api/matches/[id]/analysis — takım çifti yedeği yok', () => 
     expect(h.generated).toBe(1);
     expect(h.released).toBe(1);
   });
+
+  it('başarılı üretimde yanıt güncel bakiyeyi taşır (header ek istek atmadan güncellenir)', async () => {
+    const res = await post('19889999');
+    expect(res.body.credits).toBe(45);
+  });
 });
