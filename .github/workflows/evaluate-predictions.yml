@@ -8,8 +8,11 @@ on:
     - cron: '*/15 * * * *'
   workflow_dispatch: {}
 
+# Grup adı 2026-10-03'te değişti: eski `evaluate-predictions` grubunun kilidi GitHub tarafında takılı kaldı —
+# 2026-09-10'dan beri hiçbir zamanlanmış çalışma oluşmadı, elle tetiklenen çalışma "henüz kuyruğa alınmamış"
+# durumda bekledi (0 job; iptal/zorla iptal reddedildi). Yeni ad temiz bir kilitle başlar.
 concurrency:
-  group: evaluate-predictions
+  group: evaluate-predictions-cron
   cancel-in-progress: false
 
 jobs:
