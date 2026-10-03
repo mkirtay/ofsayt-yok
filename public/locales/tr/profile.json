@@ -86,5 +86,23 @@
       "REFERRAL_BONUS": "Davet ödülü"
     }
   },
-  "analysesHint": "Açtığın AI maç analizleri ve tahminlerinin isabet durumu."
+  "analysesHint": "Açtığın AI maç analizleri ve tahminlerinin isabet durumu.",
+  "header": {
+    "memberSince": "Üyelik: {{date}}",
+    "editProfile": "Profili düzenle",
+    "credits": "{{count}} ⚡",
+    "premium": "PREMIUM",
+    "premiumUntil": "{{date}} tarihine kadar",
+    "admin": "YÖNETİCİ",
+    "buyCredits": "Kredi al",
+    "creditBalance": "Kredi bakiyesi"
+  },
+  "stats": {
+    "label": "Profil istatistikleri",
+    "analyses": "Açılan analiz",
+    "favoriteTeams": "Favori takım",
+    "favoriteLeagues": "Favori lig",
+    "posts": "Gündem gönderisi"
+  },
+  "avatarToggle": "Avatarı değiştir"
 }

@@ -87,5 +87,23 @@
       "REFERRAL_BONUS": "Referral reward"
     }
   },
-  "analysesHint": "The AI match analyses you unlocked and how their predictions turned out."
+  "analysesHint": "The AI match analyses you unlocked and how their predictions turned out.",
+  "header": {
+    "memberSince": "Member since {{date}}",
+    "editProfile": "Edit profile",
+    "credits": "{{count}} ⚡",
+    "premium": "PREMIUM",
+    "premiumUntil": "Until {{date}}",
+    "admin": "ADMIN",
+    "buyCredits": "Buy credits",
+    "creditBalance": "Credit balance"
+  },
+  "stats": {
+    "label": "Profile stats",
+    "analyses": "Unlocked analyses",
+    "favoriteTeams": "Favourite teams",
+    "favoriteLeagues": "Favourite leagues",
+    "posts": "Posts"
+  },
+  "avatarToggle": "Change avatar"
 }

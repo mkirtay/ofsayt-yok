@@ -156,7 +156,11 @@ export default function InfoTab({ profile }: { profile: ProfileDto }) {
             />
           </div>
 
-          <AvatarPicker value={image} onChange={setImage} name={name || username || email} />
+          {/* Avatar seçici katlanır: form kısa kalır, başlık kartında güncel avatar zaten görünüyor. */}
+          <details className={styles.avatarDetails}>
+            <summary>{t('avatarToggle')}</summary>
+            <AvatarPicker value={image} onChange={setImage} name={name || username || email} />
+          </details>
 
           <div className={styles.field}>
             <span className={styles.label}>{t('role')}</span>

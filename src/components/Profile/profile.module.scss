@@ -1,9 +1,217 @@
 @use '../../styles/variables' as *;
 
 .page {
-  max-width: 720px;
+  max-width: 1100px;
   margin: 0 auto;
   padding: $spacing-6 $spacing-4 $spacing-8;
+}
+
+// ── Düzen: mobilde tek sütun (başlık kartı + sekme çipleri üstte); ≥ 1024 solda 320 px yapışkan kolon ──────────
+.layout {
+  display: grid;
+  gap: $spacing-4;
+  min-width: 0;
+
+  @media (min-width: $bp-desktop) {
+    grid-template-columns: 320px minmax(0, 1fr);
+    gap: $spacing-5;
+    align-items: start;
+  }
+}
+
+.aside {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+  min-width: 0;
+
+  @media (min-width: $bp-desktop) {
+    position: sticky;
+    top: calc(var(--header-height) + #{$spacing-4});
+  }
+}
+
+.main {
+  min-width: 0;
+}
+
+// ── Başlık kartı (takım sayfası üst kartıyla aynı dil). Satır yükseklikleri SABİT → özet sonradan gelse de ve
+// iskelet → içerik geçişinde kart boyu değişmez (CLS 0): 16 + 72 + 16 + 32 + 16 + 120 + 16 + 2 kenarlık = 290.
+$profile-card-h: 290px;
+
+.headerCard {
+  box-sizing: border-box;
+  display: grid;
+  grid-template-rows: 72px 32px 120px;
+  gap: $spacing-4;
+  height: $profile-card-h;
+  padding: $spacing-4;
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  box-shadow: $shadow-surface;
+  min-width: 0;
+}
+
+.headerCardSkeleton {
+  background: linear-gradient(90deg, var(--skeleton-base), transparent 80%), $color-surface;
+}
+
+.headerTop {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  min-width: 0;
+}
+
+.headerAvatar {
+  flex-shrink: 0;
+}
+
+.headerText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.headerName {
+  margin: 0;
+  height: 28px;
+  font-size: 22px;
+  line-height: 28px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: $color-text;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.headerHandle,
+.headerSince {
+  margin: 0;
+  height: 20px;
+  font-size: 13px;
+  line-height: 20px;
+  color: $color-text-secondary;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.headerSince {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.headerBadges {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  min-width: 0;
+  overflow: hidden;
+}
+
+%profile-badge {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: $radius-full;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.badgeCredits {
+  @extend %profile-badge;
+  background: linear-gradient(135deg, var(--color-premium), var(--color-premium-strong));
+  color: var(--color-on-premium);
+  text-decoration: none;
+}
+
+.badgePremium {
+  @extend %profile-badge;
+  border: 1px solid var(--color-premium);
+  color: var(--color-premium-strong);
+}
+
+.badgeAdmin {
+  @extend %profile-badge;
+  border: 1px solid $color-border;
+  background: $color-muted;
+  color: $color-text;
+}
+
+.editBtn {
+  margin-left: auto;
+  flex-shrink: 0;
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid $color-primary;
+  border-radius: $radius-full;
+  background: transparent;
+  color: var(--color-action-text);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+
+  &:hover {
+    background: $color-primary;
+    color: #fff;
+  }
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: 56px 56px;
+  gap: $spacing-2;
+  margin: 0;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  min-width: 0;
+  padding: 0 $spacing-3;
+  border-radius: $radius-sm;
+  background: $color-muted;
+}
+
+.statLabel {
+  font-size: 11px;
+  font-weight: 600;
+  color: $color-text-secondary;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.statValue {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 24px;
+  font-variant-numeric: tabular-nums;
+  color: $color-text;
+}
+
+// Avatar seçici: Bilgilerim'de katlanır bölüm (form kısa kalır).
+.avatarDetails {
+  margin-bottom: $spacing-4;
+
+  > summary {
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-action-text);
+    margin-bottom: $spacing-2;
+  }
 }
 
 .title {
@@ -148,12 +356,34 @@
 .tabs {
   display: flex;
   gap: $spacing-2;
-  margin-bottom: $spacing-5;
   overflow-x: auto;
   scrollbar-width: none;
 
   &::-webkit-scrollbar {
     display: none;
+  }
+
+  // Masaüstü: sol kolonda dikey menü.
+  @media (min-width: $bp-desktop) {
+    flex-direction: column;
+    gap: 2px;
+    padding: $spacing-2;
+    background: $color-surface;
+    border: 1px solid $color-border;
+    border-radius: $radius-md;
+    overflow: visible;
+
+    .chip {
+      width: 100%;
+      text-align: left;
+      border-color: transparent;
+      background: transparent;
+    }
+
+    .chipActive {
+      border-color: $color-primary;
+      background: $color-muted;
+    }
   }
 }
 
