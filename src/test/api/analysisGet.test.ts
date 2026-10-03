@@ -4,6 +4,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 const db = vi.hoisted(() => ({
   analysis: new Map<string, { id: string; matchId: string; bettingTips?: unknown }>(),
   buildCalls: 0,
+  finished: true,
 }));
 
 vi.mock('@/lib/prisma', () => ({
@@ -26,6 +27,15 @@ vi.mock('@/server/buildMatchAnalysisContext', () => ({
   }),
 }));
 vi.mock('@/lib/logger', () => ({ captureError: vi.fn() }));
+// Kredi modeli v2: girişsiz istek; "maç bitti mi" maç sayfasıyla aynı önbellekli fixture isteğinden.
+vi.mock('@/lib/mobileAuth', () => ({ getRequestAuth: async () => null }));
+vi.mock('@/lib/resolveLiveMatch', () => ({
+  resolveSportmonksMatch: async () => ({ kind: 'found', match: { status: db.finished ? 'FINISHED' : 'NOT STARTED' } }),
+}));
+vi.mock('@/server/sportmonks/cachedFetch', () => ({
+  SPORTMONKS_TIMEOUT_MS: { page: 3000, api: 5000 },
+  withSportmonksTimeout: async <T,>(_ms: number, fn: () => Promise<T>) => fn(),
+}));
 
 import handler from '@/pages/api/matches/[id]/analysis';
 
@@ -51,6 +61,7 @@ describe('GET /api/matches/[id]/analysis', () => {
   beforeEach(() => {
     db.analysis.clear();
     db.buildCalls = 0;
+    db.finished = true;
   });
 
   it('kayıtlı analiz yoksa 404 döner, maç sağlayıcısına gitmez', async () => {
@@ -66,7 +77,16 @@ describe('GET /api/matches/[id]/analysis', () => {
     expect(db.buildCalls).toBe(0);
   });
 
-  it('kayıtlı analizi yalnızca DB\'den döner', async () => {
+  it('kilitli analiz (maç bitmedi, açma yok): eski istemciye 404, maç bağlamı kurulmaz', async () => {
+    db.finished = false;
+    db.analysis.set('19000002', { id: 'a1', matchId: '19000002' });
+    const res = await call('19000002');
+    expect(res.statusCode).toBe(404);
+    expect((res.body as { code?: string }).code).toBe('ANALYSIS_LOCKED');
+    expect(db.buildCalls).toBe(0);
+  });
+
+  it('maç bitince kayıtlı analizi herkese yalnızca DB\'den döner', async () => {
     db.analysis.set('19000002', { id: 'a1', matchId: '19000002' });
     const res = await call('19000002');
     expect(res.statusCode).toBe(200);

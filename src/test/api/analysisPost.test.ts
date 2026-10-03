@@ -6,6 +6,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
  * başka (eski) maçına ait analiz yeni maça verilmez: yeni analiz üretilir (26 Ekim derbisi senaryosu).
  */
 const h = vi.hoisted(() => ({
+  unlocked: 0,
   analyses: new Map<string, { id: string; matchId: string; homeTeamId: string; awayTeamId: string; bettingTips?: unknown }>(),
   spent: 0,
   generated: 0,
@@ -34,7 +35,27 @@ vi.mock('@/lib/prisma', () => ({
 }));
 vi.mock('@/lib/requireAuth', () => ({ requireAuth: async () => ({ ok: true, userId: 'u1' }) }));
 vi.mock('@/lib/rateLimit', () => ({ hitFixedWindowRateLimit: async () => ({ success: true, remaining: 9, resetAt: 0 }) }));
-vi.mock('@/lib/premium', () => ({ analysisIsFree: () => false }));
+vi.mock('@/lib/premium', () => ({ isAdminUser: () => false, isPremiumUser: () => false }));
+// Kredi modeli v2: hazır analizi açma (1 kredi) ve üretim sonrası açma kaydı — burada sayaçla izlenir.
+vi.mock('@/lib/analysisUnlock', () => ({
+  ANALYSIS_UNLOCK_COST: 1,
+  WeeklyFreeNotEligibleError: class extends Error {},
+  WeeklyFreeUsedError: class extends Error {},
+  findUnlock: async () => null,
+  unlockWithCredit: vi.fn(async () => {
+    h.unlocked += 1;
+    return { unlockId: 'ul', source: 'CREDIT', charged: true, created: true, balanceAfter: 49 };
+  }),
+  unlockWithWeeklyFree: vi.fn(),
+  unlockAsPrivileged: vi.fn(),
+  recordGenerationUnlock: vi.fn(async () => ({ unlockId: 'ul', source: 'CREDIT', charged: true, created: true, balanceAfter: null })),
+  weeklyFreeIneligibility: () => null,
+}));
+vi.mock('@/server/analysisAccess', () => ({
+  loadViewer: async (id: string) => ({ id, role: 'USER', credits: 50, premiumUntil: null, emailVerified: null, createdAt: new Date() }),
+  isAnalysisMatchFinished: async () => false,
+  buildOffer: async () => ({}),
+}));
 vi.mock('@/lib/credits', () => ({
   reserveCredits: vi.fn(async () => {
     h.spent += 1;
@@ -123,6 +144,7 @@ describe('POST /api/matches/[id]/analysis — takım çifti yedeği yok', () => 
     h.created.length = 0;
     h.spent = 0;
     h.generated = 0;
+    h.unlocked = 0;
     h.lockHeld = false;
     h.released = 0;
     vi.mocked(buildMatchAnalysisContext).mockClear();
@@ -142,7 +164,7 @@ describe('POST /api/matches/[id]/analysis — takım çifti yedeği yok', () => 
     expect(h.created[0]!.matchId).toBe('19889999');
   });
 
-  it('aynı maçın analizi varsa kredi harcamadan döner (cached)', async () => {
+  it('aynı maçın analizi varsa üretmeden açar (kredi modeli v2: kullanıcı kendisi için 1 krediyle açar)', async () => {
     h.analyses.set('19889999', { id: 'same', matchId: '19889999', homeTeamId: '34', awayTeamId: '88' });
 
     const res = await post('19889999');
@@ -151,7 +173,8 @@ describe('POST /api/matches/[id]/analysis — takım çifti yedeği yok', () => 
     expect(res.body.cached).toBe(true);
     expect((res.body.analysis as { id: string }).id).toBe('same');
     expect(h.generated).toBe(0);
-    expect(h.spent).toBe(0);
+    expect(h.spent).toBe(0); // üretim rezervasyonu yok
+    expect(h.unlocked).toBe(1); // hazır analiz açma
     // Önbellekten açılışta maç bağlamı (Sportmonks) hiç kurulmaz.
     expect(buildMatchAnalysisContext).not.toHaveBeenCalled();
   });

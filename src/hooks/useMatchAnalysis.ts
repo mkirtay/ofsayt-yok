@@ -6,7 +6,7 @@ import { analysisIsFree } from '@/lib/premium';
 import type { ApiAnalysis, ApiPredictionRecord } from '@/components/MatchAnalysis/types';
 import { pollUntilReady } from '@/hooks/analysisInProgressPoll';
 
-export const ANALYSIS_COST = 5;
+export const ANALYSIS_COST = 1; // = ANALYSIS_UNLOCK_COST (lib/analysisUnlock.ts; istemci paketine sunucu modülü girmesin)
 
 export type MatchAnalysisState = {
   analysis: ApiAnalysis | null;
