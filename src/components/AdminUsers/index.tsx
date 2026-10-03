@@ -30,6 +30,8 @@ type Tx = {
 type Grant = { id: string; until: string | null; source: string; actorId: string | null; note: string | null; createdAt: string };
 type Detail = { user: AdminUser; transactions: Tx[]; premiumGrants: Grant[]; unlockCount: number };
 
+const PAGE = 50;
+
 const fmt = (iso: string | null) => (iso ? new Date(iso).toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul' }) : '—');
 const isPremium = (u: AdminUser) => u.premiumUntil != null && Date.parse(u.premiumUntil) > Date.now();
 
@@ -53,6 +55,7 @@ export default function AdminUsers() {
   const [error, setError] = useState<string | null>(null);
   const [ok, setOk] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [hasOlder, setHasOlder] = useState(false);
   const [amount, setAmount] = useState('');
   const [creditNote, setCreditNote] = useState('');
   const [premiumChoice, setPremiumChoice] = useState('1');
@@ -73,11 +76,28 @@ export default function AdminUsers() {
     setError(null);
     setOk(null);
     try {
-      setDetail(await api<Detail>(`/api/admin/users/${encodeURIComponent(id)}`));
+      const d = await api<Detail>(`/api/admin/users/${encodeURIComponent(id)}`);
+      setDetail(d);
+      setHasOlder(d.transactions.length === PAGE);
     } catch (e) {
       setError((e as Error).message);
     }
   }, []);
+
+  const loadOlder = async () => {
+    if (!detail || detail.transactions.length === 0) return;
+    const last = detail.transactions[detail.transactions.length - 1]!;
+    setBusy(true);
+    try {
+      const d = await api<Detail>(`/api/admin/users/${detail.user.id}?before=${encodeURIComponent(last.createdAt)}`);
+      setDetail({ ...detail, transactions: [...detail.transactions, ...d.transactions] });
+      setHasOlder(d.transactions.length === PAGE);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const adjustCredits = async (sign: 1 | -1) => {
     if (!detail) return;
@@ -201,7 +221,7 @@ export default function AdminUsers() {
             </button>
           </div>
 
-          <h2 className={styles.sectionTitle}>Kredi hareketleri (son 50)</h2>
+          <h2 className={styles.sectionTitle}>Kredi hareketleri</h2>
           <div className={styles.tableWrap}>
             <table className={styles.table}>
               <thead>
@@ -222,6 +242,11 @@ export default function AdminUsers() {
               </tbody>
             </table>
           </div>
+          {hasOlder ? (
+            <button className={styles.button} type="button" disabled={busy} onClick={() => void loadOlder()}>
+              Daha eski hareketler
+            </button>
+          ) : null}
 
           {detail.premiumGrants.length > 0 ? (
             <>
