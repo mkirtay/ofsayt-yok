@@ -92,3 +92,98 @@ describe('sahne topu hareketi', () => {
     expect(pickLogoIds(pool, 20, [])).toHaveLength(6);
   });
 });
+
+import { GOAL_RESET_SEC, goalLayout, mix, mixColor, stepInNet, stepPlay, type GoalSpec, type PlayEvent } from './stageMotion';
+
+describe('kaleler', () => {
+  const b = { halfW: 3, halfH: 2.3 };
+  const r = 0.6;
+  const [left, right] = goalLayout(b, r, [-1, 1]) as [GoalSpec, GoalSpec];
+  const play = (m: BallMotion, seconds: number) => {
+    let s = m;
+    const events: PlayEvent[] = [];
+    for (let t = 0; t < seconds; t += 1 / 60) {
+      const out = stepPlay(s, 1 / 60, b, r, [left, right]);
+      s = out.motion;
+      if (out.event) events.push(out.event);
+      if (out.event?.type === 'goal') break;
+    }
+    return { m: s, events };
+  };
+
+  it('yerleşim: zeminde, kenarda, ağız merkeze dönük; top üst direğin altından rahat geçer', () => {
+    expect(right.side).toBe(1);
+    expect(left.lineX).toBeCloseTo(-right.lineX, 9);
+    expect(right.backX).toBeGreaterThan(right.lineX);
+    expect(right.backX).toBeLessThanOrEqual(b.halfW);
+    expect(right.floorY).toBe(-b.halfH);
+    expect(right.crossY - right.floorY).toBeGreaterThanOrEqual(2 * r * 1.2);
+    expect(right.backX - right.lineX).toBeGreaterThan(r);
+    expect(goalLayout(b, r, [1])).toHaveLength(1);
+  });
+
+  it('alçak ve hızlı atış kaleye girer (gol, doğru taraf)', () => {
+    const start: BallMotion = { pos: { x: 0, y: -b.halfH + r + 0.05 }, vel: { x: 13, y: 0 }, spin: { x: 0, y: 0 } };
+    const { events } = play(start, 2);
+    expect(events.at(-1)).toEqual({ type: 'goal', side: 1 });
+    const toLeft = play({ ...start, vel: { x: -13, y: 0 } }, 2);
+    expect(toLeft.events.at(-1)).toEqual({ type: 'goal', side: -1 });
+  });
+
+  it('üst direğe çarpan top seker (gol yok, geri döner)', () => {
+    const start: BallMotion = { pos: { x: 0, y: right.crossY }, vel: { x: 12, y: 0 }, spin: { x: 0, y: 0 } };
+    let s = start;
+    let bar = false;
+    let goal = false;
+    for (let i = 0; i < 60; i++) {
+      const out = stepPlay(s, 1 / 60, b, r, [right]);
+      s = out.motion;
+      if (out.event?.type === 'bar') bar = true;
+      if (out.event?.type === 'goal') goal = true;
+    }
+    expect(bar).toBe(true);
+    expect(goal).toBe(false);
+    expect(s.pos.x).toBeLessThan(right.lineX);
+  });
+
+  it('kale üstünden geçen top kenardan seker (gol yok); file çatısına düşen seker', () => {
+    const high: BallMotion = { pos: { x: 0, y: b.halfH - r }, vel: { x: 13, y: 0 }, spin: { x: 0, y: 0 } };
+    const { events, m } = play(high, 0.8);
+    expect(events.some((e) => e.type === 'goal')).toBe(false);
+    expect(m.vel.x).toBeLessThan(0.01);
+    // Çatının üstüne düşen top (file topun çapından derin olsun diye geniş sahne; dar sahnede çatı = üst direk)
+    const wide = { halfW: 6, halfH: 2.3 };
+    const [g] = goalLayout(wide, r, [1]) as [GoalSpec];
+    const x = g.lineX + 0.55;
+    const out = stepPlay({ pos: { x, y: g.crossY + r + 0.01 }, vel: { x: 0, y: -6 }, spin: { x: 0, y: 0 } }, 1 / 60, wide, r, [g]);
+    expect(out.event).toBeNull();
+    expect(out.motion.pos.y).toBeCloseTo(g.crossY + r, 6);
+    expect(out.motion.vel.y).toBeGreaterThan(0);
+  });
+
+  it('filede: dışarı çıkmaz, arkaya çarpınca az seker (dalga için çarpma hızı), sönümlenir', () => {
+    let s: BallMotion = { pos: { x: right.lineX + 0.1, y: -1.5 }, vel: { x: 8, y: 0 }, spin: { x: 0, y: 3 } };
+    let hit = 0;
+    for (let t = 0; t < GOAL_RESET_SEC; t += 1 / 60) {
+      const out = stepInNet(s, 1 / 60, right, r);
+      s = out.motion;
+      hit = Math.max(hit, out.netHit);
+      expect(s.pos.x).toBeLessThanOrEqual(right.backX - r + 1e-9);
+      expect(s.pos.x).toBeGreaterThanOrEqual(right.lineX - 1e-9);
+      expect(s.pos.y).toBeLessThanOrEqual(right.crossY - r + 1e-9);
+    }
+    expect(hit).toBeGreaterThan(1);
+    expect(Math.hypot(s.vel.x, s.vel.y)).toBeLessThan(1);
+  });
+});
+
+describe('tema renk geçişi', () => {
+  it('uçlarda kendi rengi, ortada kanal kanal ara değer; sınır dışı kırpılır', () => {
+    expect(mixColor(0x000000, 0xffffff, 0)).toBe(0x000000);
+    expect(mixColor(0x000000, 0xffffff, 1)).toBe(0xffffff);
+    expect(mixColor(0x000000, 0xff8040, 0.5)).toBe(0x804020);
+    expect(mixColor(0x102030, 0x405060, 2)).toBe(0x405060);
+    expect(mix(1, 3, 0.25)).toBe(1.5);
+    expect(mix(1, 3, -1)).toBe(1);
+  });
+});

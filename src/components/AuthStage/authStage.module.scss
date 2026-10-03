@@ -1,15 +1,36 @@
 // Sahne kutusu: boyutu çağıran verir. Gradyan hem WebGL'in zemini hem de WebGL yokken / yüklenene kadar görünen
-// statik kare (gece gökyüzü + iki silik huzme + yeşil zemin parıltısı). Tuval yalnız opaklıkla belirir (kayma yok).
+// statik kare. Koyu tema: gece (lacivert-siyah gökyüzü + iki silik huzme + yeşil zemin parıltısı); açık tema: gündüz
+// (açık gökyüzü → çim yeşili, sağ üstte güneş). Gündüz katmanı opaklıkla geçer (gradyanlar geçiş yapamaz); tuval
+// üstte ve yalnız opaklıkla belirir (kayma yok).
 .scene {
   position: relative;
   overflow: hidden;
   isolation: isolate;
+  container-type: inline-size;
   background:
     radial-gradient(60% 45% at 50% 58%, rgba(0, 167, 111, 0.16), transparent 70%),
     linear-gradient(200deg, rgba(200, 220, 255, 0.07) 0%, transparent 38%),
     linear-gradient(160deg, rgba(190, 245, 222, 0.05) 0%, transparent 34%),
     linear-gradient(180deg, #0c1527 0%, #070b15 62%, #04060b 100%);
-  color-scheme: dark;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.8s ease;
+    background:
+      radial-gradient(30% 34% at 82% 14%, rgba(255, 246, 214, 0.95), rgba(255, 236, 180, 0.35) 45%, transparent 70%),
+      linear-gradient(180deg, #9fd4f2 0%, #cbe8f7 46%, #e4f3f1 66%, #a8dcb8 82%, #6cbf8c 100%);
+
+    :global(:root[data-theme='light']) & {
+      opacity: 1;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      transition: none;
+    }
+  }
 }
 
 .canvas {
@@ -43,5 +64,57 @@
 
   &[data-dragging] {
     cursor: grabbing;
+  }
+}
+
+// "GOL!": sahnenin ortasında büyük, marka renklerinde; kısa vuruş + dağılma animasyonu (1,5 sn). Boyut sahne
+// genişliğine göre (cqw; grid'de esneyen yükseklik cqh'a 0 geçiyor); hareketi azalt'ta öğe hiç eklenmez.
+.goal {
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  z-index: 2;
+  pointer-events: none;
+  font-size: 64px;
+  font-size: clamp(40px, 17cqw, 132px);
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  white-space: nowrap;
+  color: #fff;
+  -webkit-text-stroke: 2px #00a76f;
+  text-shadow:
+    0 4px 0 #007b55,
+    0 0 28px rgba(0, 167, 111, 0.75),
+    0 0 60px rgba(255, 200, 61, 0.35);
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.3) rotate(-8deg);
+
+  &[data-show] {
+    animation: goal-pop 1.5s cubic-bezier(0.2, 0.9, 0.25, 1) both;
+  }
+}
+
+@keyframes goal-pop {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.3) rotate(-8deg);
+  }
+  18% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.18) rotate(-4deg);
+  }
+  30% {
+    transform: translate(-50%, -50%) scale(0.96) rotate(-5deg);
+  }
+  40%,
+  78% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1) rotate(-5deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -62%) scale(1.08) rotate(-5deg);
   }
 }

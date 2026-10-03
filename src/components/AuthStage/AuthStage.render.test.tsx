@@ -6,7 +6,7 @@ import AuthStage, { webglAvailable } from './index';
 
 describe('AuthStage', () => {
   it("sunucu HTML'i: yalnız boş, aria-hidden, sabit boyutlu kutu (sahne istemcide sonradan → ilk yük ve kayma yok)", () => {
-    const html = renderToStaticMarkup(<AuthStage className="x" />);
+    const html = renderToStaticMarkup(<AuthStage className="x" goalLabel="GOL!" />);
     expect(html).toMatch(/^<div class="[^"]* x" aria-hidden="true"><\/div>$/);
   });
 

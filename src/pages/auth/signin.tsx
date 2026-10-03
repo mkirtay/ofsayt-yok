@@ -11,6 +11,7 @@ import GoogleSignInButton from '@/components/GoogleSignInButton'
 import { safeCallbackPath } from '@/lib/authRedirect'
 import { isGoogleAuthEnabled } from '@/lib/oauthEnv'
 import AuthStage from '@/components/AuthStage'
+import { useRedirectIfSignedIn } from '@/hooks/useRedirectIfSignedIn'
 import styles from './auth.module.scss'
 
 /** NextAuth'un `?error=` kodu → çeviri anahtarı (OAuth dönüşleri). CredentialsSignin burada gelmez (redirect: false). */
@@ -25,6 +26,7 @@ function oauthErrorKey(code: unknown): string | null {
 export default function SignInPage({ googleEnabled }: { googleEnabled: boolean }) {
   const router = useRouter()
   const { t } = useTranslation('auth')
+  useRedirectIfSignedIn()
   const verified = router.query.verified
   const reset = router.query.reset
   const callbackPath = safeCallbackPath(router.query.callbackUrl)
@@ -63,7 +65,7 @@ export default function SignInPage({ googleEnabled }: { googleEnabled: boolean }
       </Head>
       <div className={styles.wrapper}>
         <div className={styles.stage}>
-          <AuthStage className={styles.stageScene} />
+          <AuthStage className={styles.stageScene} goalLabel={t('stage.goal')} />
           <form className={styles.card} onSubmit={handleSubmit}>
             <h1 className={styles.title}>{t('signIn.title')}</h1>
 

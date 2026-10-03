@@ -20,9 +20,10 @@ export function webglAvailable(): boolean {
 /**
  * Giriş / kayıt sahnesi (gece maçı + 3D top). Sunucu HTML'inde yalnız sabit boyutlu, gradyanlı kutu (kayma yok);
  * WebGL yoksa ya da yükleme başarısızsa bu gradyan kalır, hata fırlatılmaz. aria-hidden; odaklanabilir öğe yok.
+ * Gündüz / gece: açık temada CSS katmanı (gündüz gradyanı) opaklıkla geçer; 3D sahne de temayı izler.
  * Boyutu çağıran verir (`className`).
  */
-export default function AuthStage({ className }: { className?: string }) {
+export default function AuthStage({ className, goalLabel }: { className?: string; goalLabel: string }) {
   const hostRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -41,7 +42,14 @@ export default function AuthStage({ className }: { className?: string }) {
         (mod) => {
           if (cancelled) return;
           try {
-            stage = mod.mountStage(host, { reduced, lite, canvasClassName: styles.canvas!, handleClassName: styles.handle! });
+            stage = mod.mountStage(host, {
+              reduced,
+              lite,
+              canvasClassName: styles.canvas!,
+              handleClassName: styles.handle!,
+              goalClassName: styles.goal!,
+              goalLabel,
+            });
           } catch {
             stage = null; // WebGL başlatılamadı: gradyan kalır
           }
@@ -63,6 +71,8 @@ export default function AuthStage({ className }: { className?: string }) {
       if (timer) window.clearTimeout(timer);
       stage?.dispose();
     };
+    // Etiket yalnız ilk kurulumda okunur (dil değişince sayfa zaten yeniden çizilir).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return <div ref={hostRef} className={className ? `${styles.scene} ${className}` : styles.scene} aria-hidden="true" />;

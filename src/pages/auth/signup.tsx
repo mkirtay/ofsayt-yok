@@ -12,6 +12,7 @@ import { safeCallbackPath } from '@/lib/authRedirect'
 import { isGoogleAuthEnabled } from '@/lib/oauthEnv'
 import { markSessionAttributionSent, readSessionAttribution } from '@/lib/signupAttributionClient'
 import AuthStage from '@/components/AuthStage'
+import { useRedirectIfSignedIn } from '@/hooks/useRedirectIfSignedIn'
 import styles from './auth.module.scss'
 
 declare global {
@@ -34,6 +35,7 @@ declare global {
 export default function SignUpPage({ googleEnabled }: { googleEnabled: boolean }) {
   const router = useRouter()
   const { t } = useTranslation('auth')
+  useRedirectIfSignedIn()
   const [name, setName] = useState('')
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
@@ -125,7 +127,7 @@ export default function SignUpPage({ googleEnabled }: { googleEnabled: boolean }
       </Head>
       <div className={styles.wrapper}>
         <div className={styles.stage}>
-          <AuthStage className={styles.stageScene} />
+          <AuthStage className={styles.stageScene} goalLabel={t('stage.goal')} />
           <form className={styles.card} onSubmit={handleSubmit}>
             <h1 className={styles.title}>{t('signUp.title')}</h1>
 

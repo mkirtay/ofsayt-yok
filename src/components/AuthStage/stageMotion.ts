@@ -134,3 +134,137 @@ export function pickLogoIds(pool: readonly number[], count: number, pinned: read
   }
   return [...out, ...rest].slice(0, Math.max(0, count));
 }
+
+// ── Kaleler ───────────────────────────────────────────────────────────────────────────────────────────
+// Yandan görünüm: kaleler zeminde (sahnenin alt kenarı), sol / sağ kenarda, ağızları merkeze dönük. Top z = 0
+// düzleminde direklerin arasından geçer; düzlemde çarpılabilen yalnız üst direk (daire) ve file çatısı (üstten).
+
+export type GoalSpec = {
+  /** -1 sol, 1 sağ */
+  side: -1 | 1;
+  /** Kale çizgisi (direklerin x'i) ve file arkası. */
+  lineX: number;
+  backX: number;
+  /** Zemin ve üst direğin yüksekliği. */
+  floorY: number;
+  crossY: number;
+  barR: number;
+};
+
+export type PlayEvent = { type: 'goal'; side: -1 | 1 } | { type: 'bar'; side: -1 | 1 };
+
+/** Gol sonrası top bu süre filede kalır, sonra ortaya döner (sn). */
+export const GOAL_RESET_SEC = 1.5;
+const NET_RESTITUTION = 0.25;
+const NET_DAMPING = 4;
+
+/** Kale ölçüleri: üst direk topun ~2,4 katı yüksekte (top rahat girsin), file derinliği topun ~1,3 katı. */
+export function goalLayout(bounds: Bounds, ballRadius: number, sides: readonly (-1 | 1)[]): GoalSpec[] {
+  const height = Math.max(ballRadius * 2.4, bounds.halfH * 0.75);
+  const depth = Math.max(ballRadius * 1.3, bounds.halfW * 0.2);
+  const edge = bounds.halfW - 0.05;
+  return sides.map((side) => ({
+    side,
+    lineX: side * (edge - depth),
+    backX: side * edge,
+    floorY: -bounds.halfH,
+    crossY: -bounds.halfH + height,
+    barR: Math.max(0.035, ballRadius * 0.07),
+  }));
+}
+
+/**
+ * Oyun adımı: `stepMotion` + kaleler. Kale çizgisini üst direğin altından geçen top gol; üst direğe çarpan ve file
+ * çatısına üstten düşen top seker. Kale dışındaki kenar / zemin sekmeleri `stepMotion`'daki gibi.
+ */
+export function stepPlay(
+  m: BallMotion,
+  dtSec: number,
+  bounds: Bounds,
+  ballRadius: number,
+  goals: readonly GoalSpec[],
+): { motion: BallMotion; event: PlayEvent | null } {
+  const next = stepMotion(m, dtSec, bounds, ballRadius);
+  let { x, y } = next.pos;
+  let { x: vx, y: vy } = next.vel;
+  let event: PlayEvent | null = null;
+  for (const g of goals) {
+    // Üst direk
+    const dx = x - g.lineX;
+    const dy = y - g.crossY;
+    const d = Math.hypot(dx, dy);
+    const min = ballRadius + g.barR;
+    if (d < min && d > 1e-9) {
+      const nx = dx / d;
+      const ny = dy / d;
+      const vn = vx * nx + vy * ny;
+      if (vn < 0) {
+        vx -= (1 + RESTITUTION) * vn * nx;
+        vy -= (1 + RESTITUTION) * vn * ny;
+      }
+      x = g.lineX + nx * min;
+      y = g.crossY + ny * min;
+      event = { type: 'bar', side: g.side };
+      continue;
+    }
+    const before = (m.pos.x - g.lineX) * g.side;
+    const after = (x - g.lineX) * g.side;
+    // File çatısı: kale çizgisi ile file arkası arasında, üstten gelen top seker.
+    if (after > 0 && m.pos.y - ballRadius >= g.crossY - 1e-9 && y - ballRadius < g.crossY) {
+      y = g.crossY + ballRadius;
+      vy = Math.abs(vy) * RESTITUTION;
+      continue;
+    }
+    // Gol: merkez kale çizgisini üst direğin altından geçti.
+    if (before <= 0 && after > 0 && y < g.crossY) {
+      return { motion: { ...next, pos: { x, y }, vel: { x: vx, y: vy } }, event: { type: 'goal', side: g.side } };
+    }
+  }
+  return { motion: { ...next, pos: { x, y }, vel: { x: vx, y: vy } }, event };
+}
+
+/** Gol sonrası filede: güçlü sönüm, file arkasından az seker (`netHit` = çarpma hızı, file dalgası için), dışarı çıkmaz. */
+export function stepInNet(
+  m: BallMotion,
+  dtSec: number,
+  g: GoalSpec,
+  ballRadius: number,
+): { motion: BallMotion; netHit: number } {
+  const dt = clamp(dtSec, 0, MAX_DT);
+  const k = Math.exp(-NET_DAMPING * dt);
+  let vx = m.vel.x * k;
+  let vy = m.vel.y * k;
+  let x = m.pos.x + vx * dt;
+  let y = m.pos.y + vy * dt;
+  let netHit = 0;
+  const depth = Math.abs(g.backX - g.lineX);
+  const out = (x - g.lineX) * g.side;
+  const maxOut = Math.max(0, depth - ballRadius);
+  if (out > maxOut) {
+    const vOut = vx * g.side;
+    if (vOut > 0) netHit = vOut;
+    x = g.lineX + g.side * maxOut;
+    vx = -g.side * Math.abs(vOut) * NET_RESTITUTION;
+  } else if (out < 0) {
+    x = g.lineX;
+    vx = g.side * Math.abs(vx) * NET_RESTITUTION;
+  }
+  const lo = g.floorY + ballRadius;
+  const hi = Math.max(lo, g.crossY - ballRadius);
+  if (y < lo) [y, vy] = [lo, Math.abs(vy) * NET_RESTITUTION];
+  if (y > hi) [y, vy] = [hi, -Math.abs(vy) * NET_RESTITUTION];
+  const s = 1 - Math.exp(-SPIN_DAMPING * dt);
+  return { motion: { pos: { x, y }, vel: { x: vx, y: vy }, spin: { x: m.spin.x * (1 - s), y: m.spin.y + (IDLE_SPIN - m.spin.y) * s } }, netHit };
+}
+
+/** Tema geçişi: 0 gece (koyu tema) … 1 gündüz (açık tema). */
+export function mixColor(a: number, b: number, t: number): number {
+  const u = clamp(t, 0, 1);
+  const ch = (c: number, sh: number) => (c >> sh) & 0xff;
+  const m = (sh: number) => Math.round(ch(a, sh) + (ch(b, sh) - ch(a, sh)) * u);
+  return (m(16) << 16) | (m(8) << 8) | m(0);
+}
+
+export function mix(a: number, b: number, t: number): number {
+  return a + (b - a) * clamp(t, 0, 1);
+}

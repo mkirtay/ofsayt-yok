@@ -24,6 +24,8 @@
   }
 
   @media (min-width: $bp-desktop) {
+    position: relative;
+    isolation: isolate;
     max-width: 1200px;
     display: grid;
     grid-template-columns: minmax(0, 1fr) 400px;
@@ -34,6 +36,38 @@
     background: linear-gradient(160deg, #0e1729 0%, #080c16 55%, #05070c 100%);
     border: 1px solid rgba(255, 255, 255, 0.06);
     box-shadow: 0 32px 80px -36px rgba(0, 0, 0, 0.65);
+    transition:
+      border-color 0.8s ease,
+      box-shadow 0.8s ease;
+
+    // Açık tema: gündüz paneli (açık gökyüzü → yeşil). Gradyanlar geçiş yapamadığı için ayrı katman, opaklıkla.
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      border-radius: inherit;
+      opacity: 0;
+      transition: opacity 0.8s ease;
+      background: linear-gradient(160deg, #eef8fd 0%, #e2f2f4 50%, #d5eedf 100%);
+    }
+
+    :global(:root[data-theme='light']) & {
+      border-color: rgba(15, 60, 40, 0.08);
+      box-shadow: 0 28px 70px -40px rgba(20, 70, 50, 0.35);
+
+      &::before {
+        opacity: 1;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      transition: none;
+
+      &::before {
+        transition: none;
+      }
+    }
   }
 }
 
