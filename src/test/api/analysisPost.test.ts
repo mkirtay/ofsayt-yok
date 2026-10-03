@@ -10,6 +10,8 @@ const h = vi.hoisted(() => ({
   spent: 0,
   generated: 0,
   created: [] as Array<Record<string, unknown>>,
+  lockHeld: false,
+  released: 0,
 }));
 
 vi.mock('@/lib/prisma', () => ({
@@ -51,6 +53,12 @@ vi.mock('@/server/sportmonks/cachedFetch', () => ({
   trackSportmonksFetches: async <T,>(fn: () => Promise<T>) => ({ value: await fn(), stale: false, failed: false }),
 }));
 vi.mock('@/lib/logger', () => ({ captureError: vi.fn() }));
+vi.mock('@/lib/analysisGenerationLock', () => ({
+  acquireAnalysisLock: vi.fn(async (matchId: string) => (h.lockHeld ? null : { key: `lock:${matchId}`, token: 't' })),
+  releaseAnalysisLock: vi.fn(async (lock: unknown) => {
+    if (lock) h.released += 1;
+  }),
+}));
 vi.mock('@/lib/predictionRecords', () => ({ ensurePredictionRecordForAnalysis: vi.fn() }));
 vi.mock('@/services/aiAnalysisService', () => ({
   AnalysisTimeoutError: class extends Error {},
@@ -115,6 +123,8 @@ describe('POST /api/matches/[id]/analysis — takım çifti yedeği yok', () => 
     h.created.length = 0;
     h.spent = 0;
     h.generated = 0;
+    h.lockHeld = false;
+    h.released = 0;
     vi.mocked(buildMatchAnalysisContext).mockClear();
   });
 
@@ -164,5 +174,20 @@ describe('POST /api/matches/[id]/analysis — takım çifti yedeği yok', () => 
     const res = await post('19889999');
     expect(res.body.analysis).toMatchObject({ id: 'old-format', scenarios: [], bettingTips: [] });
     expect(JSON.stringify(res.body)).not.toMatch(/valueBet|2\.5 Üst/);
+  });
+
+  it('üretim kilidi başkasındaysa (kullanıcı ya da cron) kredi rezerve edilmeden 409 ANALYSIS_IN_PROGRESS', async () => {
+    h.lockHeld = true;
+    const res = await post('19889999');
+    expect(res.statusCode).toBe(409);
+    expect(res.body.code).toBe('ANALYSIS_IN_PROGRESS');
+    expect(h.spent).toBe(0);
+    expect(h.generated).toBe(0);
+  });
+
+  it('üretimden sonra kilit bırakılır', async () => {
+    await post('19889999');
+    expect(h.generated).toBe(1);
+    expect(h.released).toBe(1);
   });
 });
