@@ -118,7 +118,10 @@ export async function loadAiStatsDashboard(auth: {
     computePhaseStats(allRecords, 'HT'),
   ].filter((p) => p.total > 0);
 
-  const history: AiStatsHistoryItem[] = allRecords.slice(0, 100).map((r) => ({
+  // Kredi modeli v2: oynanmamış maçın tahmini (olasılıklar, skor tahmini) kilitli analiz içeriği → herkese açık geçmişte
+  // yalnız değerlendirilmiş (bitmiş) maçlar; bekleyenler yalnız sayı olarak (pendingCount). Yönetici hepsini görür.
+  const historySource = isAdmin ? allRecords : evaluated;
+  const history: AiStatsHistoryItem[] = historySource.slice(0, 100).map((r) => ({
     matchId: r.matchId,
     homeTeamName: r.matchAnalysis.homeTeamName,
     awayTeamName: r.matchAnalysis.awayTeamName,
