@@ -197,6 +197,13 @@ $hub-fill-height: calc(100vh - var(--header-height) - 56px - 32px - var(--league
   @include filter-chip-active;
 }
 
+// `?tab=` ön-boyama (bkz. utils/hubTabBoot.ts): hydration'dan önce doğru çip seçili görünür.
+@each $tab in live, finished, favorites {
+  :global(html[data-hub-tab='#{$tab}']) .statusChip[data-tab='#{$tab}'] {
+    @include filter-chip-active;
+  }
+}
+
 // Canlı sayısı rozeti: yer hep ayrılı (2 haneye kadar) — sayı 0'ken boş ve görünmez, genişlik değişmez.
 .statusCount {
   min-width: 20px;
@@ -248,6 +255,19 @@ $hub-fill-height: calc(100vh - var(--header-height) - 56px - 32px - var(--league
 .hubList {
   flex: 1 1 0;
   min-width: 0;
+}
+
+// `?tab=` ön-boyama: sunucu HTML'indeki "Hepsi" listesi hydration sekmeyi uygulayana kadar gösterilmez (yeri korunur,
+// kayma yok). JS hiç çalışmazsa 5 sn sonra yine görünür.
+:global(html[data-hub-tab]) .hubList {
+  visibility: hidden;
+  animation: hubTabBootReveal 0s linear 5s forwards;
+}
+
+@keyframes hubTabBootReveal {
+  to {
+    visibility: visible;
+  }
 }
 
 // Maç listesi yüklenirken: MatchList kutusunun tavanı (`min(72vh, 900px)`) kadar yer — iskelet → liste kaymasın.

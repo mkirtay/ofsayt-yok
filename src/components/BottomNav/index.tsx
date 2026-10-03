@@ -94,6 +94,7 @@ export default function BottomNav() {
             shallow={router.pathname === '/'}
             scroll={false}
             className={cls}
+            data-nav-key={key}
             aria-current={active === key ? 'page' : undefined}
           >
             {inner}

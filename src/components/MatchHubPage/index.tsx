@@ -61,6 +61,7 @@ import { activeCompetitionIds, buildLeagueCatalog, filterMatchesByLeagues } from
 import { nightDateOf } from '@/utils/nightMatches';
 import { buildNightGroups } from './nightSection';
 import styles from '@/pages/index.module.scss';
+import { HUB_TAB_BOOT_SCRIPT, clearHubTabBoot } from '@/utils/hubTabBoot';
 
 type SidebarTab = 'standings' | 'leagues' | 'scorers';
 
@@ -464,6 +465,11 @@ export default function MatchHubPage({
   /** Sayfa içi durum çipinden gelen `?tab` değişikliği: mobilde listeye kaydırma yapılmaz (yalnız alt menü). */
   const tabFromChipRef = useRef(false);
 
+  // Hydration `?tab`'ı uyguladı → ön-boyama özniteliği kalkar (CSS'in seçili gösterdiği sekme artık React'te).
+  useEffect(() => {
+    clearHubTabBoot(activeTab, document.documentElement);
+  }, [activeTab]);
+
   useEffect(() => {
     if (!router.isReady) return;
     setActiveTab(parseMatchTab(queryTab) ?? 'all');
@@ -666,6 +672,8 @@ export default function MatchHubPage({
 
   return (
     <>
+      {/* `?tab=` sunucuda bilinmez (ISR): boyamadan önce <html data-hub-tab> (bkz. utils/hubTabBoot.ts). */}
+      <script dangerouslySetInnerHTML={{ __html: HUB_TAB_BOOT_SCRIPT }} />
       <SubHeader
         initialTodayIso={initialDate}
         selectedDate={selectedDate}
@@ -845,6 +853,7 @@ function MatchStatusChips({
           key={tab}
           type="button"
           className={`${styles.statusChip} ${activeTab === tab ? styles.statusChipActive : ''}`.trim()}
+          data-tab={tab}
           aria-pressed={activeTab === tab}
           onClick={() => onToggle(tab)}
         >

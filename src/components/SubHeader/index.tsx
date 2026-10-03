@@ -153,6 +153,7 @@ export default function SubHeader({
               key={tab.key}
               type="button"
               className={`${styles.tab} ${activeTab === tab.key ? styles.tabActive : ''}`}
+              data-tab={tab.key}
               onClick={() => onTabChange(tab.key)}
             >
               {tab.label}

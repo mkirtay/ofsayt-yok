@@ -64,3 +64,14 @@
     font-weight: 700;
   }
 }
+
+// `?tab=` ön-boyama (bkz. utils/hubTabBoot.ts): hydration'dan önce Canlı / Favoriler seçili görünür.
+@each $key in live, favorites {
+  :global(html[data-hub-tab='#{$key}']) .item[data-nav-key='#{$key}'] {
+    color: $color-primary-text;
+
+    .label {
+      font-weight: 700;
+    }
+  }
+}

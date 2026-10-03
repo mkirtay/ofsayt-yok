@@ -140,6 +140,19 @@
   }
 }
 
+// `?tab=` ön-boyama (bkz. utils/hubTabBoot.ts): sunucu HTML'i "Hepsi" seçili gelir; hydration'dan önce doğru sekme.
+:global(html[data-hub-tab]) .tab[data-tab='all'] {
+  background: none;
+  color: $color-text-secondary;
+}
+
+@each $tab in live, finished, favorites {
+  :global(html[data-hub-tab='#{$tab}']) .tab[data-tab='#{$tab}'] {
+    background: linear-gradient(135deg, $color-primary, $color-primary-dark);
+    color: #fff;
+  }
+}
+
 // --- Mobil tarih şeridi (bugün ±2) ---
 
 .stripWrap {
