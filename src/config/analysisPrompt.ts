@@ -249,7 +249,14 @@ function formationOf(starters: LineupPlayer[]): string | null {
 function lineupLines(ctx: MatchAnalysisContext): string[] {
   const lu = ctx.lineups?.lineup;
   if (!lu) return [];
-  const teams = [lu.home, lu.away].map((t) => ({ name: t?.team?.name ?? '', starters: (t?.players ?? []).filter((p) => p.substitution === '0') }));
+  const teams = [
+    { side: lu.home, absences: ctx.homeTeam.absences },
+    { side: lu.away, absences: ctx.awayTeam.absences },
+  ].map(({ side, absences }) => ({
+    name: side?.team?.name ?? '',
+    starters: (side?.players ?? []).filter((p) => p.substitution === '0'),
+    out: new Set((absences ?? []).map((a) => String(a.playerId))),
+  }));
   if (teams.every((t) => t.starters.length === 0)) return [];
   const label =
     ctx.lineups?.confirmed === true ? 'İlk 11 (resmî)' : ctx.lineups?.confirmed === false ? 'Muhtemel 11 (resmî değil, tahmini)' : 'İlk 11';
@@ -257,8 +264,17 @@ function lineupLines(ctx: MatchAnalysisContext): string[] {
   for (const t of teams) {
     if (t.starters.length === 0) continue;
     const f = formationOf(t.starters);
-    const players = t.starters.map((p) => (p.pos_code || p.position ? `${p.name} (${p.pos_code || p.position})` : p.name));
+    let flagged = 0;
+    const players = t.starters.map((p) => {
+      const base = p.pos_code || p.position ? `${p.name} (${p.pos_code || p.position})` : p.name;
+      if (!t.out.has(p.id)) return base;
+      flagged++;
+      return `${base} [Eksikler listesinde]`;
+    });
     lines.push(`${t.name}${f ? ` (${f})` : ''}: ${players.join(', ')}`);
+    if (flagged > 0 && ctx.lineups?.confirmed !== true) {
+      lines.push(`  Not: [Eksikler listesinde] işaretli oyuncu tahmini kadroda görünse de sakat/cezalı kaydı sürüyor — muhtemelen oynamayacak.`);
+    }
   }
   return lines;
 }

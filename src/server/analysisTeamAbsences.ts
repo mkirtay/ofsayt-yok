@@ -18,6 +18,7 @@ import type { SportmonksSquadStatsRow } from '@/services/sportmonks/types';
 import { detailedPositionLabel } from '@/utils/positionLabel';
 
 export type AnalysisAbsence = {
+  playerId: number;
   name: string;
   /** Türkçe mevki etiketi (ör. "Stoper"); kadro verisinde yoksa yok. */
   position?: string;
@@ -52,6 +53,7 @@ export function buildAbsences(
     const position = detailedPositionLabel(line?.detailedPositionId);
     const main = p.reasons[0]!;
     return {
+      playerId: p.playerId,
       name: p.name,
       ...(position ? { position } : {}),
       kind: main.category,

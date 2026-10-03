@@ -97,4 +97,18 @@ describe('analiz prompt\'u — bahis dili yok, olasılık senaryoları', () => {
     // Eski kural modelden "kadro verisi yok" demesini istiyordu.
     expect(ANALYSIS_SYSTEM_PROMPT).not.toMatch(/bunu açıkça belirt|bunu net şekilde ifade et/);
   });
+
+  it('kadro: tahmini 11\'deki sakat/cezalı oyuncu işaretlenir', () => {
+    const lineups = {
+      lineup: {
+        home: { team: { id: '1', name: 'Galatasaray' }, players: [{ team_id: '1', id: '77', name: 'Sakat Bek', substitution: '0', shirt_number: '2', pos_code: 'RB' }] },
+        away: { team: { id: '2', name: 'Fenerbahçe' }, players: [] },
+      },
+      confirmed: false,
+    };
+    const homeTeam = { ...ctx.homeTeam, absences: [{ playerId: 77, name: 'Sakat Bek', kind: 'injury', reason: 'Muscle', until: '2026-10-18' }] };
+    const msg = buildAnalysisUserMessage({ ...ctx, homeTeam, lineups } as unknown as MatchAnalysisContext);
+    expect(msg).toContain('Sakat Bek (RB) [Eksikler listesinde]');
+    expect(msg).toContain('muhtemelen oynamayacak');
+  });
 });

@@ -31,7 +31,7 @@ describe('analiz bağlamı — sakat/cezalı oyuncular', () => {
     expect(list.map((p) => p.name)).toEqual(['Forvet Oyuncu', 'Açık Uçlu', 'Cezalı Stoper']);
     expect(list[0]).toMatchObject({ kind: 'injury', reason: 'KNEE_INJURY', until: '2026-10-20', apps: 6, goals: 4, assists: 1 });
     expect(list[0]!.position).toBeTruthy();
-    expect(list[1]).toEqual({ name: 'Açık Uçlu', kind: 'injury', reason: 'ACL_INJURY' });
+    expect(list[1]).toEqual({ playerId: 5, name: 'Açık Uçlu', kind: 'injury', reason: 'ACL_INJURY' });
     expect(list[2]).toMatchObject({ kind: 'suspended', until: '2026-10-12', apps: 5, goals: 0, assists: 0 });
     expect(list[2]!.position).toBeUndefined();
   });
