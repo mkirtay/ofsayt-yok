@@ -23,6 +23,7 @@ import { MatchCardSkeleton } from '@/components/Skeleton';
 import TeamLogo from '@/components/TeamLogo';
 import { impliedProbabilities } from '@/utils/impliedProbability';
 import { isSecondLeg } from '@/utils/aggregateScore';
+import { finishedLabelKey } from '@/utils/finishLabel';
 import TiePill from './TiePill';
 
 interface MatchCardProps {
@@ -138,7 +139,7 @@ export default function MatchCard({ match, loading, initialH2h }: MatchCardProps
   function minuteBadgeLabel(status: string, time: string): string | null {
     const tm = time.trim();
     if (status === 'IN PLAY') return tm ? `${tm}'` : null;
-    if (status === 'FINISHED') return t('fullTime');
+    if (status === 'FINISHED') return t(match ? finishedLabelKey(match) : 'fullTime');
     if (status === 'HALF TIME BREAK') return tm ? `${tm}'` : null;
     return null;
   }

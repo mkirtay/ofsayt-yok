@@ -111,12 +111,16 @@ export interface Match {
   odds?: MatchOdds;
   /** İki ayaklı eşleşmede "1/2" / "2/2" (Sportmonks `leg`); tek maçta yok. */
   leg?: string;
+  /** Normal süre dışında biten maç: uzatmalar sonucu ("UZS") ya da penaltılar ("PEN"); normal bitişte yok. */
+  finish?: MatchFinish;
   /**
    * İki ayaklı eşleşmenin toplamı — BU maçın ev sahibine göre sıralı (Sportmonks 1. maçın ev sahibine göre verir;
    * 2. ayakta çevrilir). Uzatma dahil, penaltı hariç. Yalnız eşleşme bitince gelir (bkz. utils/aggregateScore.ts).
    */
   aggregate?: MatchAggregate;
 }
+
+export type MatchFinish = 'AET' | 'PEN';
 
 export interface MatchAggregate {
   home: number;

@@ -12,7 +12,7 @@
  * `short_name` string'i üzerinden DEĞİL, `state_id` (sayısal) üzerinden
  * yapılıyor — string anahtarlı bir sözlük bu ikisini birbirine ezerdi.
  */
-import type { MatchStateCode } from '@/models/liveScore';
+import type { MatchFinish, MatchStateCode } from '@/models/liveScore';
 import type { SportmonksState } from './types';
 
 export type MatchPhaseBucket = 'NOT STARTED' | 'IN PLAY' | 'HALF TIME BREAK' | 'FINISHED';
@@ -75,6 +75,13 @@ export function mapSportmonksStateObjectToPhase(state: Pick<SportmonksState, 'id
 }
 
 /** Kovanın yuttuğu özel durum kodu (ertelendi, iptal…); normal durumlarda `undefined`. */
+/** Sportmonks 7 = AET (uzatmalar sonucu), 8 = FTP (penaltılarla bitti); penaltı skoru varsa da PEN. */
+export function mapSportmonksFinish(stateId: number | undefined, hasPenalties: boolean): MatchFinish | undefined {
+  if (stateId === 8 || (hasPenalties && (stateId === 5 || stateId === 7))) return 'PEN';
+  if (stateId === 7) return 'AET';
+  return undefined;
+}
+
 export function mapSportmonksStateCode(stateId: number): MatchStateCode | undefined {
   return SPORTMONKS_STATE_BUCKETS[stateId]?.code;
 }

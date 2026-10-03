@@ -3,6 +3,8 @@
   "date": "Date",
   "fullTime": "FT",
   "halfTime": "HT",
+  "afterExtraTime": "AET",
+  "afterPenalties": "PEN",
   "stadium": "Stadium",
   "referee": "Referee",
   "last5": "Last 5 :",

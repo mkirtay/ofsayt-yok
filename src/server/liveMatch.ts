@@ -27,7 +27,7 @@ const LIVE_PER_PAGE = 25;
 const LIVE_MAX_PAGES = 4;
 
 /** İstemcinin canlı maçta güncellediği alanlar (lig/stadyum/hakem vb. sayfa yüklenirken gelmişti). */
-export type LiveMatchPatch = Pick<Match, 'id' | 'status' | 'state_code' | 'time' | 'scores'>;
+export type LiveMatchPatch = Pick<Match, 'id' | 'status' | 'state_code' | 'time' | 'scores' | 'finish'>;
 
 export type LiveMatchPayload = {
   /** Maç hâlâ canlı mı (devre arası / uzatma arası dahil). `false` → istemci son durumu yazıp durur. */
@@ -75,6 +75,7 @@ function toPatch(m: Match): LiveMatchPatch {
     id: m.id,
     status: m.status,
     ...(m.state_code ? { state_code: m.state_code } : {}),
+    ...(m.finish ? { finish: m.finish } : {}),
     time: m.time,
     ...(m.scores ? { scores: m.scores } : {}),
   };

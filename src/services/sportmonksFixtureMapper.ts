@@ -10,7 +10,7 @@
  */
 import type { Competition, Match, MatchCountry, Team } from '@/models/liveScore';
 import type { SportmonksFixture, SportmonksParticipant } from './sportmonks/types';
-import { mapSportmonksStateCode, mapSportmonksStateToPhase } from './sportmonks/stateMapping';
+import { mapSportmonksFinish, mapSportmonksStateCode, mapSportmonksStateToPhase } from './sportmonks/stateMapping';
 import { deriveMatchScore } from './sportmonks/scoreDerivation';
 import { formatLiveMinuteLabel } from './sportmonks/minuteDerivation';
 import { resolveRoundAndStage } from './sportmonks/roundStage';
@@ -113,6 +113,7 @@ export function mapSportmonksFixtureToMatch(fixture: SportmonksFixture): Match {
   const country = mapCountry(fixture);
   const leg = fixture.leg?.trim();
   const aggregate = mapAggregate(fixture);
+  const finish = mapSportmonksFinish(stateId ?? undefined, Boolean(matchScore?.ps_score));
 
   return {
     id: fixture.id,
@@ -136,5 +137,6 @@ export function mapSportmonksFixtureToMatch(fixture: SportmonksFixture): Match {
     // Tek maçlık eşleşme ("1/1") alan taşımaz.
     ...(leg && leg !== '1/1' ? { leg } : {}),
     ...(aggregate ? { aggregate } : {}),
+    ...(finish ? { finish } : {}),
   };
 }

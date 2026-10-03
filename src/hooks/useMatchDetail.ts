@@ -306,6 +306,8 @@ export function useMatchDetail(
             status: payload.match.status,
             // Özel durum (ertelendi, durduruldu…) kalkınca alan da kalkmalı → yoksa undefined yazılır.
             state_code: payload.match.state_code,
+            // Uzatma / penaltıyla bitiş canlıda da etikete yansısın ("UZS" / "PEN").
+            finish: payload.match.finish,
             time: payload.match.time,
             ...(payload.match.scores ? { scores: payload.match.scores } : {}),
           }

@@ -19,6 +19,7 @@ import { buildMatchHref } from '@/utils/matchUrl';
 import TeamNameLabel from './TeamNameLabel';
 import TieLine from './TieLine';
 import { isSecondLeg } from '@/utils/aggregateScore';
+import { finishedLabelKey } from '@/utils/finishLabel';
 import { isModifiedClick } from '@/utils/matchSelection';
 import styles from './matchList.module.scss';
 
@@ -185,7 +186,7 @@ function statusLabel(
     return { text: t('halfTime'), variant: 'ht' };
   }
   if (status === 'FINISHED') {
-    return { text: t('fullTime'), variant: 'ft' };
+    return { text: t(finishedLabelKey(match)), variant: 'ft' };
   }
   if (status === 'NOT STARTED' || status === 'SCHEDULED') {
     return { text: '', variant: 'scheduled' };

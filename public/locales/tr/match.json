@@ -3,6 +3,8 @@
   "date": "Tarih",
   "fullTime": "MS",
   "halfTime": "İY",
+  "afterExtraTime": "UZS",
+  "afterPenalties": "PEN",
   "stadium": "Stadyum",
   "referee": "Hakem",
   "last5": "Son 5 Maç :",
