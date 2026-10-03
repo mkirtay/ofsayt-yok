@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { useTranslation } from '@/lib/i18n';
 import { ANALYSIS_COST, type MatchAnalysisState } from '@/hooks/useMatchAnalysis';
+import LockedPreview from './LockedPreview';
 import { deriveMatchPhase } from '@/utils/matchPhase';
 import type { Match } from '@/models/liveScore';
 import EmptyState from '@/components/EmptyState';
@@ -101,6 +102,8 @@ export default function MatchAnalysis({ match, state, archived = false }: Props)
   const { t } = useTranslation('match');
   const {
     analysis,
+    preview,
+    offer,
     predictionRecord,
     serverPhase,
     loading,
@@ -117,6 +120,21 @@ export default function MatchAnalysis({ match, state, archived = false }: Props)
   // Arşiv maçı (sağlayıcıda yok): üretim mümkün değil, maç sonrası gibi davran.
   const phase = archived ? 'POST' : (serverPhase ?? deriveMatchPhase(match?.status));
   const isPostMatch = phase !== 'PRE';
+
+  // Kredi modeli v2: analiz var ama bu kullanıcıya kilitli (ya da SSR'dan gelen önizleme, istemci durumu yüklenirken).
+  if (!analysis && preview) {
+    return (
+      <LockedPreview
+        preview={preview}
+        offer={offer}
+        loading={loading}
+        busy={generating}
+        error={error}
+        isAuthenticated={isAuthenticated}
+        onUnlock={(method) => void generateAnalysis(method)}
+      />
+    );
+  }
 
   if (loading && !analysis) {
     return (

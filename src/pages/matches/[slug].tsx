@@ -17,6 +17,9 @@ import { useTranslation } from '@/lib/i18n';
 import { leagueNameById } from '@/utils/leagueName';
 import { resolveMatchPage } from '@/server/resolveMatchPage';
 import { loadMatchCardH2h } from '@/server/matchCardH2h';
+import { loadAnalysisPreviewForPage } from '@/server/analysisPreviewForPage';
+import type { AnalysisPreview } from '@/utils/analysisPreview';
+import { analysisPaywallJsonLd } from '@/utils/analysisPaywall';
 import { loadMatchDetailSeed } from '@/server/matchDetailSeed';
 import { SPORTMONKS_TIMEOUT_MS, withSportmonksTimeout } from '@/server/sportmonks/cachedFetch';
 import type { Head2HeadData } from '@/services/liveScoreService';
@@ -47,6 +50,8 @@ type MatchDetailProps = {
   gone?: boolean;
   /** Sağlayıcıda yok, DB'de saklı içerik var → doğrudan arşiv görünümü; istemci sağlayıcıya gitmez. */
   archived?: boolean;
+  /** AI analizi ücretsiz önizlemesi (kredi modeli v2; analiz yoksa alan yok) — SEO için HTML'de. */
+  initialAnalysisPreview?: AnalysisPreview;
 };
 
 /**
@@ -76,9 +81,11 @@ export const getServerSideProps: GetServerSideProps<MatchDetailProps> = async (c
     switch (page.kind) {
       case 'match': {
         const apiMatchId = String(page.match.id);
-        const [h2h, seed] = await Promise.all([
+        const [h2h, seed, analysisPreview] = await Promise.all([
           withPageTimeout(() => loadMatchCardH2h(page.match)),
           withPageTimeout(() => loadMatchDetailSeed(apiMatchId)),
+          // Kredi modeli v2: AI analizi ücretsiz önizlemesi (tek DB sorgusu; hata → null, sayfa yine çizilir).
+          loadAnalysisPreviewForPage(apiMatchId),
         ]);
         const complete = h2h !== undefined && seed.stats !== undefined && seed.lineups !== undefined;
         // Bütçe aşıldıysa (undefined) bölüm iskeletle gider → CDN bu kopyayı kısa tutar.
@@ -93,6 +100,7 @@ export const getServerSideProps: GetServerSideProps<MatchDetailProps> = async (c
             // Genel Bakış'ın en altında, büyümesi yalnız ekran dışındaki footer'ı iter; kadro HTML'i (~90 KB, gzip ~5,5 KB; büyük
             // DOM) mobilde FCP/LCP'yi ~130/370 ms geciktiriyordu.
             ...(seed.lineups === null ? { initialLineups: null } : {}),
+            ...(analysisPreview ? { initialAnalysisPreview: analysisPreview } : {}),
           },
         };
       }
@@ -122,6 +130,7 @@ export default function MatchDetail({
   initialLineups,
   gone = false,
   archived = false,
+  initialAnalysisPreview,
 }: MatchDetailProps) {
   const router = useRouter();
   const slugParam = router.query.slug;
@@ -288,6 +297,17 @@ export default function MatchDetail({
             }}
           />
         ) : null}
+        {initialAnalysisPreview && match && match.status !== 'FINISHED' ? (
+          // Kredi modeli v2: AI analizinin tamamı kilitli → Google'ın ücretli içerik işaretlemesi. Kilitli bölüm HTML'de
+          // yalnız başlıklarla (`.ai-analysis-locked`); Googlebot kullanıcıyla aynı içeriği görür (cloaking değil).
+          <JsonLd
+            schema={analysisPaywallJsonLd({
+              homeTeamName: initialAnalysisPreview.homeTeamName,
+              awayTeamName: initialAnalysisPreview.awayTeamName,
+              url: canonicalUrl,
+            })}
+          />
+        ) : null}
       </Head>
       <Container>
         {showLayout ? (
@@ -298,6 +318,7 @@ export default function MatchDetail({
                 detail={detail}
                 requestedMatchId={requestedMatchId}
                 initialH2h={initialH2h}
+                initialAnalysisPreview={initialAnalysisPreview ?? null}
               />
             </div>
             <div className="layout-right">

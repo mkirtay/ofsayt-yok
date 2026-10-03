@@ -615,3 +615,117 @@
     cursor: not-allowed;
   }
 }
+
+// ── Kredi modeli v2: kilitli analiz önizlemesi (LockedPreview) ─────────────────────────────────────
+.previewTag {
+  font-size: 11px;
+  font-weight: 700;
+  color: $color-primary-text;
+  background: rgba($color-primary, 0.12);
+  padding: 2px 8px;
+  border-radius: $radius-full;
+  white-space: nowrap;
+}
+
+.previewSummary {
+  margin: $spacing-3 0 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: $color-text;
+}
+
+.previewTop {
+  margin-top: $spacing-4;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px $spacing-2;
+  align-items: baseline;
+}
+
+.previewTopLabel {
+  font-size: 15px;
+  font-weight: 700;
+  color: $color-text;
+}
+
+.previewTopPct {
+  font-size: 18px;
+  font-weight: 800;
+  color: $color-primary-text;
+}
+
+.previewTopBar {
+  grid-column: 1 / -1;
+  height: 8px;
+  border-radius: $radius-full;
+  background: $color-muted;
+  overflow: hidden;
+
+  span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, $color-primary, $color-primary-dark);
+  }
+}
+
+.lockedSection {
+  margin-top: $spacing-5;
+  padding: $spacing-4;
+  border: 1px dashed $color-border;
+  border-radius: 12px;
+  background: $color-muted;
+}
+
+.lockedTitle {
+  margin: 0 0 $spacing-3;
+  font-size: 14px;
+  font-weight: 700;
+  color: $color-text;
+}
+
+.lockedList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+}
+
+.lockedItem {
+  display: grid;
+  grid-template-columns: minmax(120px, auto) 1fr;
+  align-items: center;
+  gap: $spacing-3;
+  font-size: 13px;
+  font-weight: 600;
+  color: $color-text-secondary;
+}
+
+// İçerik değil, iskelet: kilitli metin HTML'de yok (bulanık sahte metin de yok).
+.lockedBlur {
+  height: 10px;
+  border-radius: $radius-full;
+  background: linear-gradient(90deg, $color-border, transparent);
+}
+
+.ctaButtonSecondary {
+  background: transparent;
+  color: $color-primary-text;
+  border: 1px solid $color-primary;
+  padding: 11px 26px;
+  border-radius: $radius-full;
+  font-weight: 700;
+  font-size: 14px;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+}

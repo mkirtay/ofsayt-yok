@@ -16,6 +16,11 @@ type Props<K extends string> = {
   onChange: (key: K) => void;
   /** `role="tablist"` için erişilebilir ad. */
   ariaLabel: string;
+  /**
+   * Açılmamış olsa da ilk HTML'de (gizli) çizilecek sekmeler — ör. AI analizi ücretsiz önizlemesi arama motorları
+   * için sunucu HTML'inde olsun (kredi modeli v2). Panel `hidden`; görünür düzen değişmez.
+   */
+  prerender?: readonly K[];
 };
 
 /**
@@ -25,9 +30,9 @@ type Props<K extends string> = {
  * hiç açılmamış sekme ise mount edilmez (gereksiz analiz/trivia isteği yok).
  * Paneller kendi kart çerçevelerini korur — şerit sadece başlıkları çizer.
  */
-export default function MatchTabs<K extends string>({ tabs, active, onChange, ariaLabel }: Props<K>) {
+export default function MatchTabs<K extends string>({ tabs, active, onChange, ariaLabel, prerender = [] }: Props<K>) {
   const uid = useId();
-  const [visited, setVisited] = useState<readonly K[]>([active]);
+  const [visited, setVisited] = useState<readonly K[]>(() => [active, ...prerender.filter((k) => k !== active)]);
 
   const select = (key: K) => {
     setVisited((prev) => (prev.includes(key) ? prev : [...prev, key]));

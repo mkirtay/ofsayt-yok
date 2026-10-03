@@ -116,6 +116,29 @@
       "homeToScore": "Home team scores",
       "awayToScore": "Away team scores",
       "bttsFirstHalf": "Both score in first half"
+    },
+    "previewLabel": "Free preview",
+    "topOutcomeHome": "{{team}} to win",
+    "topOutcomeDraw": "Draw",
+    "topOutcomeAway": "{{team}} to win",
+    "lockedTitle": "The full analysis is locked",
+    "lockedSections": {
+      "scenarios": "Probability scenarios",
+      "score": "Score prediction",
+      "teams": "Team analyses",
+      "absences": "Missing players",
+      "analyst": "Analyst comment"
+    },
+    "unlockCredit": "Unlock for 1 credit",
+    "unlockWeekly": "Use this week's free unlock",
+    "unlockPremium": "Unlock with Premium",
+    "unlockAdmin": "Unlock as admin",
+    "signInToUnlock": "Sign in to see the full analysis.",
+    "unlockPermanent": "Analyses you unlock stay unlocked for you.",
+    "weeklyReason": {
+      "USED": "You've used this week's free unlock.",
+      "EMAIL_NOT_VERIFIED": "Verify your email to use the weekly free unlock.",
+      "ACCOUNT_TOO_NEW": "The weekly free unlock is available 1 day after sign-up."
     }
   },
   "trivia": {

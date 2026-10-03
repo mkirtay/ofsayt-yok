@@ -116,6 +116,29 @@
       "homeToScore": "Ev sahibi gol bulur",
       "awayToScore": "Deplasman gol bulur",
       "bttsFirstHalf": "İlk yarıda iki takım da gol"
+    },
+    "previewLabel": "Ücretsiz önizleme",
+    "topOutcomeHome": "{{team}} kazanır",
+    "topOutcomeDraw": "Beraberlik",
+    "topOutcomeAway": "{{team}} kazanır",
+    "lockedTitle": "Analizin tamamı kilitli",
+    "lockedSections": {
+      "scenarios": "Olasılık senaryoları",
+      "score": "Skor tahmini",
+      "teams": "Takım analizleri",
+      "absences": "Eksik oyuncu yorumu",
+      "analyst": "Analist yorumu"
+    },
+    "unlockCredit": "1 krediyle aç",
+    "unlockWeekly": "Bu haftaki ücretsiz açma hakkını kullan",
+    "unlockPremium": "Premium ile aç",
+    "unlockAdmin": "Yönetici olarak aç",
+    "signInToUnlock": "Analizin tamamını görmek için giriş yap.",
+    "unlockPermanent": "Açtığın analiz sana hep açık kalır.",
+    "weeklyReason": {
+      "USED": "Bu haftaki ücretsiz açma hakkını kullandın.",
+      "EMAIL_NOT_VERIFIED": "Haftalık ücretsiz açma için e-postanı doğrula.",
+      "ACCOUNT_TOO_NEW": "Haftalık ücretsiz açma, hesap açıldıktan 1 gün sonra kullanılabilir."
     }
   },
   "trivia": {

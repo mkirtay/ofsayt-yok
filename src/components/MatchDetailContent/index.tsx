@@ -4,6 +4,7 @@ import MatchCard from '@/components/MatchCard';
 import EventTimeline from '@/components/EventTimeline';
 import Lineup from '@/components/Lineup';
 import type { Head2HeadData } from '@/services/liveScoreService';
+import type { AnalysisPreview } from '@/utils/analysisPreview';
 import MatchStats from '@/components/MatchStats';
 import MatchTabs, { type MatchTabItem } from '@/components/MatchTabs';
 import MatchTrivia from '@/components/MatchTrivia';
@@ -22,12 +23,16 @@ type Props = {
   variant?: 'page' | 'panel';
   /** SSR'da çözülmüş maç kartı formu + karşılaşma geçmişi (yalnız sayfa); bkz. MatchCard `initialH2h`. */
   initialH2h?: Head2HeadData | null;
+  /** SSR'da hazırlanan AI analizi ücretsiz önizlemesi (yalnız sayfa) — AI sekmesi ilk HTML'de gizli çizilir. */
+  initialAnalysisPreview?: AnalysisPreview | null;
 };
 
 /** Maç detayının DÜZ sekmeleri — sıra = görünüm sırası, alt sekme yok. */
 export type MatchTabKey = 'overview' | 'forum' | 'analysis' | 'trivia';
 
 export const MATCH_TAB_KEYS: readonly MatchTabKey[] = ['overview', 'forum', 'analysis', 'trivia'];
+
+const PRERENDER_ANALYSIS: readonly MatchTabKey[] = ['analysis'];
 
 /** Varsayılan sekme: Genel Bakış (veri hazır, AI kredisi harcamaz). */
 export const DEFAULT_MATCH_TAB: MatchTabKey = 'overview';
@@ -38,13 +43,13 @@ export const DEFAULT_MATCH_TAB: MatchTabKey = 'overview';
  * `/matches/[slug]` sayfası ile split-view paneli aynı bileşeni kullanır; yükleme
  * durumlarında alt bileşenler kendi iskeletlerini (skeleton) gösterir.
  */
-export default function MatchDetailContent({ detail, requestedMatchId, variant = 'page', initialH2h }: Props) {
+export default function MatchDetailContent({ detail, requestedMatchId, variant = 'page', initialH2h, initialAnalysisPreview = null }: Props) {
   const { t } = useTranslation('match');
   const { match, matchLoading, statsLoading, eventsLoading, lineupsLoading } = detail;
   const effectiveMatchId = detail.matchId || requestedMatchId;
   const [active, setActive] = useState<MatchTabKey>(DEFAULT_MATCH_TAB);
   // AI analiz/kredi durumu sayfa açılışında çekilir — sekmeye girince beklemeden hazır olsun.
-  const analysisState = useMatchAnalysis(effectiveMatchId);
+  const analysisState = useMatchAnalysis(effectiveMatchId, initialAnalysisPreview);
 
   const tabs = useMemo<MatchTabItem<MatchTabKey>[]>(
     () => [
@@ -118,7 +123,13 @@ export default function MatchDetailContent({ detail, requestedMatchId, variant =
   return (
     <div className={`${styles.content} ${variant === 'panel' ? styles.contentPanel : ''}`.trim()}>
       <MatchCard match={match} loading={matchLoading} initialH2h={initialH2h} />
-      <MatchTabs tabs={tabs} active={active} onChange={setActive} ariaLabel={t('tabs.label')} />
+      <MatchTabs
+        tabs={tabs}
+        active={active}
+        onChange={setActive}
+        ariaLabel={t('tabs.label')}
+        prerender={initialAnalysisPreview ? PRERENDER_ANALYSIS : undefined}
+      />
     </div>
   );
 }
