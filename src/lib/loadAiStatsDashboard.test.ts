@@ -38,4 +38,10 @@ describe('loadAiStatsDashboard — bekleyen tahmin sızıntısı', () => {
     const d = await loadAiStatsDashboard({ role: 'ADMIN' });
     expect(d.history.map((h) => h.matchId).sort()).toEqual(['done-1', 'pending-1']);
   });
+
+  it('yanıtta skor öngörüsü yok (tahmini skor, gerçek skor, tam skor isabeti) — DB alanları seçilmez bile', async () => {
+    const d = await loadAiStatsDashboard({ role: 'ADMIN' });
+    expect(JSON.stringify(d)).not.toMatch(/predictedScore|actualScore|scoreExact|2-1|1-0/);
+    expect(d.history.find((h) => h.matchId === 'done-1')).toMatchObject({ predictedHomePct: 58, actualResult: 'HOME', result1x2Hit: true });
+  });
 });

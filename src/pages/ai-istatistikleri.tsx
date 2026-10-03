@@ -23,7 +23,7 @@ function AiStatsPageSkeleton() {
   return (
     <>
       <div className={styles.statCards}>
-        {Array.from({ length: 3 }, (_, i) => (
+        {Array.from({ length: 2 }, (_, i) => (
           <div key={i} className={styles.skeletonStatCard}>
             <SkeletonBar width="40%" height={32} />
             <SkeletonBar width="60%" height={14} />
@@ -64,9 +64,9 @@ export default function AiIstatistikleri() {
   const [evalResult, setEvalResult] = useState('');
 
   function resultLabel(r: string | null): string {
-    if (r === 'HOME') return t('resultHome');
-    if (r === 'DRAW') return t('resultDraw');
-    if (r === 'AWAY') return t('resultAway');
+    if (r === 'HOME') return t('actualHome');
+    if (r === 'DRAW') return t('actualDraw');
+    if (r === 'AWAY') return t('actualAway');
     return t('notEvaluated');
   }
 
@@ -203,20 +203,6 @@ export default function AiIstatistikleri() {
                           : t('awaitingEvaluation')}
                       </span>
                     </div>
-                    <div className={styles.statCard}>
-                      <span className={styles.statValue}>
-                        {totalEvaluated > 0 ? `${data.scoreExactHitRate}%` : '—'}
-                      </span>
-                      <span className={styles.statLabel}>{t('scoreExact')}</span>
-                      <span className={styles.statSub}>
-                        {totalEvaluated > 0
-                          ? t('scoreExactSub', {
-                              hit: data.scoreExactHitCount,
-                              total: totalEvaluated,
-                            })
-                          : t('awaitingEvaluation')}
-                      </span>
-                    </div>
                   </div>
 
                   {data.byPhase.length > 0 && (
@@ -246,18 +232,6 @@ export default function AiIstatistikleri() {
                                     <span className={styles.phaseSub}>
                                       {' '}
                                       ({p.result1x2HitCount}/{p.evaluated})
-                                    </span>
-                                  )}
-                                </dd>
-                              </div>
-                              <div>
-                                <dt>{t('scoreExact')}</dt>
-                                <dd>
-                                  {p.evaluated > 0 ? `${p.scoreExactHitRate}%` : '—'}
-                                  {p.evaluated > 0 && (
-                                    <span className={styles.phaseSub}>
-                                      {' '}
-                                      ({p.scoreExactHitCount}/{p.evaluated})
                                     </span>
                                   )}
                                 </dd>
@@ -307,11 +281,8 @@ function HistorySection({
             <th>{t('colMatch')}</th>
             <th>{t('colPhase')}</th>
             <th>{t('col1x2Prediction')}</th>
-            <th>{t('colScorePrediction')}</th>
-            <th>{t('colActualScore')}</th>
             <th>{t('colActualResult')}</th>
             <th>{t('col1x2')}</th>
-            <th>{t('colScoreHit')}</th>
             <th>{t('colStatus')}</th>
           </tr>
         </thead>
@@ -354,8 +325,6 @@ function HistorySection({
                   {pred.label}{' '}
                   <span className={styles.pct}>({pred.pct.toFixed(0)}%)</span>
                 </td>
-                <td className={styles.mono}>{item.predictedScore}</td>
-                <td className={styles.mono}>{item.actualScore ?? t('notEvaluated')}</td>
                 <td>{isPending ? t('notEvaluated') : resultLabel(item.actualResult)}</td>
                 <td>
                   {isPending ? (
@@ -363,17 +332,6 @@ function HistorySection({
                   ) : item.result1x2Hit === true ? (
                     <span className={styles.hit}>{t('hitYes')}</span>
                   ) : item.result1x2Hit === false ? (
-                    <span className={styles.miss}>{t('hitNo')}</span>
-                  ) : (
-                    t('notEvaluated')
-                  )}
-                </td>
-                <td>
-                  {isPending ? (
-                    t('statusPending')
-                  ) : item.scoreExactHit === true ? (
-                    <span className={styles.hit}>{t('hitYes')}</span>
-                  ) : item.scoreExactHit === false ? (
                     <span className={styles.miss}>{t('hitNo')}</span>
                   ) : (
                     t('notEvaluated')

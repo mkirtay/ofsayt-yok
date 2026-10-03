@@ -9,10 +9,13 @@ export type PhaseStats = {
   pending: number;
   result1x2HitCount: number;
   result1x2HitRate: number;
-  scoreExactHitCount: number;
-  scoreExactHitRate: number;
 };
 
+/**
+ * Herkese açık geçmiş satırı. Skor öngörüsü (tahmini skor, gerçek skor, tam skor isabeti) 2026-10-03'ten beri
+ * yanıtta YOK — sayfa yalnız maç sonucu olasılığını gösterir (ana analizin dil kurallarıyla uyumlu); kayıtlı veri
+ * DB'de durur.
+ */
 export type AiStatsHistoryItem = {
   matchId: string;
   homeTeamName: string;
@@ -21,11 +24,8 @@ export type AiStatsHistoryItem = {
   predictedHomePct: number;
   predictedDrawPct: number;
   predictedAwayPct: number;
-  predictedScore: string;
   actualResult: string | null;
-  actualScore: string | null;
   result1x2Hit: boolean | null;
-  scoreExactHit: boolean | null;
   evaluatedAt: string | null;
   createdAt: string;
 };
@@ -36,8 +36,6 @@ export type AiStatsDashboard = {
   pendingCount: number;
   result1x2HitCount: number;
   result1x2HitRate: number;
-  scoreExactHitCount: number;
-  scoreExactHitRate: number;
   byPhase: PhaseStats[];
   isAdmin: boolean;
   history: AiStatsHistoryItem[];
@@ -45,15 +43,12 @@ export type AiStatsDashboard = {
 
 type RecordRow = {
   result1x2Hit: boolean | null;
-  scoreExactHit: boolean | null;
   evaluatedAt: Date | null;
   matchId: string;
   predictedHomePct: number;
   predictedDrawPct: number;
   predictedAwayPct: number;
-  predictedScore: string;
   actualResult: string | null;
-  actualScore: string | null;
   createdAt: Date;
   matchAnalysis: { matchStatus: string; homeTeamName: string; awayTeamName: string };
 };
@@ -63,7 +58,6 @@ function computePhaseStats(rows: RecordRow[], phase: 'PRE' | 'HT'): PhaseStats {
   const evaluatedRows = filtered.filter((r) => r.evaluatedAt != null);
   const evaluated = evaluatedRows.length;
   const result1x2HitCount = evaluatedRows.filter((r) => r.result1x2Hit === true).length;
-  const scoreExactHitCount = evaluatedRows.filter((r) => r.scoreExactHit === true).length;
 
   return {
     phase,
@@ -73,9 +67,6 @@ function computePhaseStats(rows: RecordRow[], phase: 'PRE' | 'HT'): PhaseStats {
     result1x2HitCount,
     result1x2HitRate:
       evaluated > 0 ? Math.round((result1x2HitCount / evaluated) * 1000) / 10 : 0,
-    scoreExactHitCount,
-    scoreExactHitRate:
-      evaluated > 0 ? Math.round((scoreExactHitCount / evaluated) * 1000) / 10 : 0,
   };
 }
 
@@ -87,15 +78,12 @@ export async function loadAiStatsDashboard(auth: {
   const allRecords = await prisma.predictionRecord.findMany({
     select: {
       result1x2Hit: true,
-      scoreExactHit: true,
       evaluatedAt: true,
       matchId: true,
       predictedHomePct: true,
       predictedDrawPct: true,
       predictedAwayPct: true,
-      predictedScore: true,
       actualResult: true,
-      actualScore: true,
       createdAt: true,
       matchAnalysis: { select: { matchStatus: true, homeTeamName: true, awayTeamName: true } },
     },
@@ -111,14 +99,13 @@ export async function loadAiStatsDashboard(auth: {
   ).length;
 
   const result1x2HitCount = evaluated.filter((r) => r.result1x2Hit === true).length;
-  const scoreExactHitCount = evaluated.filter((r) => r.scoreExactHit === true).length;
 
   const byPhase: PhaseStats[] = [
     computePhaseStats(allRecords, 'PRE'),
     computePhaseStats(allRecords, 'HT'),
   ].filter((p) => p.total > 0);
 
-  // Kredi modeli v2: oynanmamış maçın tahmini (olasılıklar, skor tahmini) kilitli analiz içeriği → herkese açık geçmişte
+  // Kredi modeli v2: oynanmamış maçın tahmini (olasılıklar) kilitli analiz içeriği → herkese açık geçmişte
   // yalnız değerlendirilmiş (bitmiş) maçlar; bekleyenler yalnız sayı olarak (pendingCount). Yönetici hepsini görür.
   const historySource = isAdmin ? allRecords : evaluated;
   const history: AiStatsHistoryItem[] = historySource.slice(0, 100).map((r) => ({
@@ -129,11 +116,8 @@ export async function loadAiStatsDashboard(auth: {
     predictedHomePct: r.predictedHomePct,
     predictedDrawPct: r.predictedDrawPct,
     predictedAwayPct: r.predictedAwayPct,
-    predictedScore: r.predictedScore,
     actualResult: r.actualResult,
-    actualScore: r.actualScore,
     result1x2Hit: r.result1x2Hit,
-    scoreExactHit: r.scoreExactHit,
     evaluatedAt: r.evaluatedAt?.toISOString() ?? null,
     createdAt: r.createdAt.toISOString(),
   }));
@@ -145,9 +129,6 @@ export async function loadAiStatsDashboard(auth: {
     result1x2HitCount,
     result1x2HitRate:
       totalEvaluated > 0 ? Math.round((result1x2HitCount / totalEvaluated) * 1000) / 10 : 0,
-    scoreExactHitCount,
-    scoreExactHitRate:
-      totalEvaluated > 0 ? Math.round((scoreExactHitCount / totalEvaluated) * 1000) / 10 : 0,
     byPhase,
     isAdmin,
     history,
