@@ -29,3 +29,22 @@ jobs:
             echo "evaluate-predictions failed with status $status"
             exit 1
           fi
+
+  # Popüler maçların AI analizi maçtan ~3 saat önce (bkz. src/server/analysisPregen.ts). Ayrı iş: biri
+  # başarısız olursa diğeri etkilenmez. Çağrı başına en fazla 3 üretim (~15 sn/maç), uç 120 sn ile sınırlı.
+  analysis-pregenerate:
+    name: Pre-generate match analyses
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Call analysis-pregenerate endpoint
+        run: |
+          status=$(curl -s -o /tmp/response.json -w "%{http_code}" --max-time 150 \
+            -X POST "https://ofsayt-yok.vercel.app/api/admin/analysis-pregenerate" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}")
+          echo "HTTP status: $status"
+          cat /tmp/response.json
+          if [ "$status" -ge 300 ]; then
+            echo "analysis-pregenerate failed with status $status"
+            exit 1
+          fi
