@@ -72,7 +72,9 @@
   font-weight: 700;
 }
 
+// Metin mount sonrası gelir: satır baştan tam genişlik (ortalanmış dar span'in kutusu yana kayıyordu, CLS).
 .countdown {
+  align-self: stretch;
   min-height: 18px;
   font-size: 12px;
   line-height: 18px;
