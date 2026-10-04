@@ -6,7 +6,7 @@ import AuthStage, { webglAvailable } from './index';
 
 describe('AuthStage', () => {
   it("sunucu HTML'i: yalnız boş, aria-hidden, sabit boyutlu kutu (sahne istemcide sonradan → ilk yük ve kayma yok)", () => {
-    const html = renderToStaticMarkup(<AuthStage className="x" goalLabel="GOL!" />);
+    const html = renderToStaticMarkup(<AuthStage className="x" goalLabel="GOL!" hintLabel="ipucu" />);
     expect(html).toMatch(/^<div class="[^"]* x" aria-hidden="true"><\/div>$/);
   });
 
@@ -38,7 +38,8 @@ describe('AuthStage', () => {
     const read = (p: string) => readFileSync(join(root, p), 'utf8');
     const index = read('src/components/AuthStage/index.tsx');
     expect(index).not.toMatch(/from ['"]three/);
-    expect(index).not.toMatch(/from ['"]\.\/stageScene/);
+    // Yalnız tip içe aktarımı (derlemede silinir) serbest
+    expect(index).not.toMatch(/^import (?!type )[^;]*from ['"]\.\/stageScene/m);
     expect(index).toMatch(/import\(['"]\.\/stageScene['"]\)/);
     for (const page of ['src/pages/auth/signin.tsx', 'src/pages/auth/signup.tsx']) {
       expect(read(page)).not.toMatch(/['"]three/);

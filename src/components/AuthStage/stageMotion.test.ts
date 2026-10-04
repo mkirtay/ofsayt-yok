@@ -2,33 +2,36 @@ import { describe, expect, it } from 'vitest';
 import {
   BALL_RADIUS as R,
   DEFAULT_GOAL,
+  CEILING,
   GOAL_RESET_SEC,
-  MAX_LOFT,
-  MAX_THROW_SPEED,
+  MAX_PULL,
+  SHOT_SPEED,
   approach,
+  arenaFor,
+  canShoot,
   goalSpecs,
   mix,
   mixColor,
-  offscreenTime,
   parallaxTarget,
   pickLogoIds,
   restingBall,
   rollingSpin,
   shadowFor,
+  shotFromPull,
   stepBall,
-  throwVelocity,
   type Ball,
   type GoalSpec,
   type StepEvent,
+  type Walls,
 } from './stageMotion';
 
 const DT = 1 / 60;
-const simulate = (b: Ball, seconds: number, goals: GoalSpec[] = []) => {
+const simulate = (b: Ball, seconds: number, goals: GoalSpec[] = [], walls: Walls | null = null) => {
   let s = b;
   const events: StepEvent[] = [];
   const heights: number[] = [];
   for (let t = 0; t < seconds; t += DT) {
-    const out = stepBall(s, DT, goals);
+    const out = stepBall(s, DT, goals, R, walls);
     s = out.ball;
     events.push(...out.events);
     heights.push(s.pos.y);
@@ -77,14 +80,16 @@ describe('kaleler ve gol', () => {
     expect(left.lineX).toBe(-right.lineX);
     expect(right.backX).toBeGreaterThan(right.lineX);
     expect(left.backX).toBeLessThan(left.lineX);
-    expect((2 * right.halfW) / (2 * R)).toBeGreaterThanOrEqual(6);
-    expect(right.height / (2 * R)).toBeGreaterThanOrEqual(2.2);
+    expect((2 * right.halfW) / (2 * R)).toBeGreaterThanOrEqual(3.5);
+    expect(right.height / (2 * R)).toBeGreaterThanOrEqual(1.5);
+    // File topun çapından derin: top çizgiyi tamamen geçip içeride kalabilsin
+    expect(right.backX - right.lineX).toBeGreaterThan(2 * R);
     expect(goalSpecs([1])).toHaveLength(1);
   });
 
   it('normal bir fırlatma kaleye ulaşır: direklerin arası, üst direğin altı → gol; top filede kalır', () => {
-    // Güçlü, havadan atış: file arkasına çarpar, sekip dışarı yuvarlanmaz
-    const hard = simulate({ ...throwFrom(0.4, 0.5, { x: 15, y: 3.9, z: -1 }), pos: { x: 0.4, y: R + 0.4, z: 0.5 } }, GOAL_RESET_SEC + 0.3, [left, right]);
+    // Güçlü şut (%80): file arkasına çarpar, sekip dışarı yuvarlanmaz
+    const hard = simulate({ ...restingBall(0, 0), vel: shotFromPull(-MAX_PULL * 0.8, 0.3)!.vel }, GOAL_RESET_SEC + 0.3, [left, right]);
     expect(hard.events.some((e) => e.type === 'goal')).toBe(true);
     expect(hard.ball.pos.x).toBeGreaterThan(right.lineX + R);
     const { events, ball } = simulate(throwFrom(0, 0, { x: 9, y: 3, z: 0.4 }), GOAL_RESET_SEC + 1, [left, right]);
@@ -128,33 +133,63 @@ describe('kaleler ve gol', () => {
   });
 });
 
-describe('fırlatma ve yardımcılar', () => {
-  it('yön ve güç sürükleme hareketinden; hızlıda yay, yavaşta bırakma; hız sınırlı', () => {
-    const slow = throwVelocity([
-      { t: 0, x: 0, z: 0 },
-      { t: 100, x: 0.05, z: 0 },
-    ]);
-    expect(slow).toEqual({ x: 0, y: 0, z: 0 });
-    const v = throwVelocity([
-      { t: 0, x: 0, z: 0 },
-      { t: 500, x: 0, z: 0 },
-      { t: 550, x: 0.3, z: -0.1 },
-      { t: 600, x: 0.6, z: -0.2 },
-    ]);
-    expect(v.x).toBeCloseTo(6, 6);
-    expect(v.z).toBeCloseTo(-2, 6);
-    expect(v.y).toBeGreaterThan(0);
-    const huge = throwVelocity([
-      { t: 0, x: 0, z: 0 },
-      { t: 10, x: 50, z: 0 },
-    ]);
-    expect(Math.hypot(huge.x, huge.z)).toBeCloseTo(MAX_THROW_SPEED, 6);
-    expect(huge.y).toBeLessThanOrEqual(MAX_LOFT);
+describe('panolar (görünmez duvar)', () => {
+  const desk = arenaFor(false);
+  const mobile = arenaFor(true);
+
+  it('arena: masaüstünde iki kale panoların içinde; mobilde tek kale, sol pano orta çizginin gerisinde', () => {
+    expect(desk.goals.map((g) => g.side)).toEqual([-1, 1]);
+    for (const g of desk.goals) expect(Math.abs(g.backX)).toBeLessThan(desk.walls.maxX);
+    expect(mobile.goals.map((g) => g.side)).toEqual([1]);
+    expect(mobile.walls.minX).toBeLessThan(0);
+    expect(mobile.walls.minX).toBeGreaterThan(-4);
   });
 
-  it('ekran dışı süresi: görünürken sıfır, değilken birikir', () => {
-    expect(offscreenTime(3, true, 1)).toBe(0);
-    expect(offscreenTime(3, false, 0.5)).toBe(3.5);
+  it('hangi yöne ne güçte şutlanırsa şutlansın top panoların içinde ve tavanın altında kalır, seker', () => {
+    const w = desk.walls;
+    for (let a = 0; a < 16; a++) {
+      const ang = (a / 16) * Math.PI * 2;
+      let s: Ball = { ...restingBall(0, 0), vel: { x: Math.cos(ang) * 16, y: 9, z: Math.sin(ang) * 16 } };
+      for (let i = 0; i < 240; i++) {
+        s = stepBall(s, DT, desk.goals, R, w).ball;
+        expect(s.pos.x - R).toBeGreaterThanOrEqual(w.minX - 1e-6);
+        expect(s.pos.x + R).toBeLessThanOrEqual(w.maxX + 1e-6);
+        expect(s.pos.z - R).toBeGreaterThanOrEqual(w.minZ - 1e-6);
+        expect(s.pos.z + R).toBeLessThanOrEqual(w.maxZ + 1e-6);
+        expect(s.pos.y + R).toBeLessThanOrEqual(CEILING + 1e-6);
+      }
+    }
+    // Panoya doğru yuvarlanan top geri seker
+    const { ball } = simulate({ ...restingBall(0, 0), vel: { x: 0, y: 0, z: 9 } }, 0.8, [], w);
+    expect(ball.vel.z).toBeLessThan(0);
+  });
+});
+
+describe('şut ve yardımcılar', () => {
+  it('geri çek → ters yöne şut; güç çekme mesafesiyle (üst sınırlı); çok kısa çekme iptal', () => {
+    expect(shotFromPull(0.05, 0)).toBeNull();
+    const half = shotFromPull(-MAX_PULL / 2, 0)!;
+    expect(half.dirX).toBeCloseTo(1, 9);
+    expect(half.power).toBeCloseTo(0.5, 9);
+    expect(half.vel.x).toBeCloseTo((SHOT_SPEED.min + SHOT_SPEED.max) / 2, 9);
+    expect(half.vel.y).toBeGreaterThan(0);
+    const full = shotFromPull(0, MAX_PULL * 3)!;
+    expect(full.power).toBe(1);
+    expect(full.dirZ).toBeCloseTo(-1, 9);
+    expect(full.vel.z).toBeCloseTo(-SHOT_SPEED.max, 9);
+  });
+
+  it('orta noktadan orta güçte şut kaleye ulaşır (gol)', () => {
+    const shot = shotFromPull(-MAX_PULL * 0.6, 0)!;
+    const { events } = simulate({ ...restingBall(0, 0), vel: shot.vel }, 2, arenaFor(false).goals, arenaFor(false).walls);
+    expect(events.find((e) => e.type === 'goal')).toEqual({ type: 'goal', side: 1 });
+  });
+
+  it('yalnız yerde duran / çok yavaş top şutlanır', () => {
+    expect(canShoot(restingBall(0, 0))).toBe(true);
+    expect(canShoot({ ...restingBall(0, 0), vel: { x: 0.3, y: 0, z: 0 } })).toBe(true);
+    expect(canShoot({ ...restingBall(0, 0), vel: { x: 3, y: 0, z: 0 } })).toBe(false);
+    expect(canShoot({ ...restingBall(0, 0), pos: { x: 0, y: 1.5, z: 0 } })).toBe(false);
   });
 
   it('paralaks, yaklaşma, logo seçimi, renk karışımı', () => {

@@ -65,7 +65,7 @@ export default function SignInPage({ googleEnabled }: { googleEnabled: boolean }
       </Head>
       <div className={styles.wrapper}>
         <div className={styles.stage}>
-          <AuthStage className={styles.stageScene} goalLabel={t('stage.goal')} />
+          <AuthStage className={styles.stageScene} goalLabel={t('stage.goal')} hintLabel={t('stage.hint')} />
           <form className={styles.card} onSubmit={handleSubmit}>
             <h1 className={styles.title}>{t('signIn.title')}</h1>
 

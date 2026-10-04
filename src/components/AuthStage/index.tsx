@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import type { StageHandle } from './stageScene';
 import styles from './authStage.module.scss';
 
 /** three.js sahnesi ayrı parça: sayfa yüklenip tarayıcı boşa düşünce gelir (ilk yüke ve diğer sayfalara girmez). */
@@ -23,14 +24,24 @@ export function webglAvailable(): boolean {
  * Gündüz / gece: açık temada CSS katmanı (gündüz gradyanı) opaklıkla geçer; 3D sahne de temayı izler.
  * Boyutu çağıran verir (`className`).
  */
-export default function AuthStage({ className, goalLabel }: { className?: string; goalLabel: string }) {
+export default function AuthStage({
+  className,
+  goalLabel,
+  hintLabel,
+}: {
+  className?: string;
+  goalLabel: string;
+  hintLabel: string;
+}) {
   const hostRef = useRef<HTMLDivElement>(null);
+  const stageRef = useRef<StageHandle | null>(null);
+  /** Son etiketler: sahne sonradan yüklenince güncel dil kullanılsın (aşağıdaki effect günceller). */
+  const labelsRef = useRef({ goalLabel, hintLabel });
 
   useEffect(() => {
     const host = hostRef.current;
     if (!host) return;
     let cancelled = false;
-    let stage: { dispose: () => void } | null = null;
     let idleId = 0;
     let timer = 0;
 
@@ -42,16 +53,17 @@ export default function AuthStage({ className, goalLabel }: { className?: string
         (mod) => {
           if (cancelled) return;
           try {
-            stage = mod.mountStage(host, {
+            stageRef.current = mod.mountStage(host, {
               reduced,
               lite,
               canvasClassName: styles.canvas!,
               handleClassName: styles.handle!,
               goalClassName: styles.goal!,
-              goalLabel,
+              hintClassName: styles.hint!,
+              ...labelsRef.current,
             });
           } catch {
-            stage = null; // WebGL başlatılamadı: gradyan kalır
+            stageRef.current = null; // WebGL başlatılamadı: gradyan kalır
           }
         },
         () => {},
@@ -69,11 +81,16 @@ export default function AuthStage({ className, goalLabel }: { className?: string
       window.removeEventListener('load', schedule);
       if (idleId) window.cancelIdleCallback(idleId);
       if (timer) window.clearTimeout(timer);
-      stage?.dispose();
+      stageRef.current?.dispose();
+      stageRef.current = null;
     };
-    // Etiket yalnız ilk kurulumda okunur (dil değişince sayfa zaten yeniden çizilir).
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Dil sonradan değişirse (istemcide seçiliyor) sahne yeniden kurulmadan yazılar güncellenir.
+  useEffect(() => {
+    labelsRef.current = { goalLabel, hintLabel };
+    stageRef.current?.setLabels(goalLabel, hintLabel);
+  }, [goalLabel, hintLabel]);
 
   return <div ref={hostRef} className={className ? `${styles.scene} ${className}` : styles.scene} aria-hidden="true" />;
 }

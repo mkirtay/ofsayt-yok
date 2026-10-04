@@ -6,9 +6,10 @@
  * ucunda derin fileli kaleler (mobilde tek); uzak çim gökyüzüne doğru silinir. Top çimin üstünde durur, altında
  * yüksekliğe göre değişen yumuşak gölge. Tema: koyu temada gece (projektör huzmeleri, sis, ışık partikülleri), açık
  * temada gündüz (güneş, yumuşak huzmeler, bulutlar); değişince renkler yeniden kurulmadan yumuşakça geçer.
- * Etkileşim (stageMotion.ts): topu tut-sürükle-bırak → yön ve güç işaretçi hareketinden; top yay çizer, sekip
- * yuvarlanır, durduğu yerde kalır. Gol: file dalgası + "GOL!" + konfeti, 1,5 sn sonra top başlama noktasına; 10 sn
- * görünür alan dışında kalan top da döner. Fareyle hafif paralaks.
+ * Sahanın çevresinde marka renklerinde "Ofsayt Yok" reklam panoları (görünmez duvar: top seker, kadrajdan çıkmaz).
+ * Etkileşim (stageMotion.ts): nişan al ve şut çek — topa bas, geri çek (önünde yön + güç oku), bırak; yalnız duran /
+ * çok yavaş top şutlanır. Top yay çizer, sekip yuvarlanır, durduğu yerde kalır. Gol: file dalgası + "GOL!" + konfeti,
+ * 1,5 sn sonra top orta noktaya. İlk şuta kadar topun yanında ipucu. Fareyle hafif paralaks.
  *
  * Hareketi azalt: tek kare çizilir, döngü ve etkileşim yok. Sekme gizliyken / sahne ekran dışındayken döngü durur.
  * `dispose()` bütün GPU kaynaklarını bırakır ve eklediği öğeleri kaldırır.
@@ -39,6 +40,9 @@ import {
   PerspectiveCamera,
   Plane,
   PlaneGeometry,
+  Shape,
+  ShapeGeometry,
+  BoxGeometry,
   PMREMGenerator,
   Points,
   PointsMaterial,
@@ -65,25 +69,27 @@ import { logoSrc } from '@/utils/logoUrl';
 import { panelMesh, pickSpreadHexagons, truncatedIcosahedron, type PanelMesh } from './ballGeometry';
 import {
   BALL_RADIUS,
+  CEILING,
   DEFAULT_GOAL,
   GOAL_RESET_SEC,
-  OFFSCREEN_RESET_SEC,
+  TOUCH_Z,
   approach,
-  goalSpecs,
+  arenaFor,
+  canShoot,
   mix,
   mixColor,
-  offscreenTime,
   parallaxTarget,
   pickLogoIds,
   restingBall,
   rollingSpin,
   shadowFor,
+  shotFromPull,
   stepBall,
-  throwVelocity,
   type Ball,
-  type DragSample,
   type GoalSpec,
+  type Shot,
   type V3,
+  type Walls,
 } from './stageMotion';
 
 export type StageOptions = {
@@ -95,27 +101,30 @@ export type StageOptions = {
   canvasClassName: string;
   handleClassName: string;
   goalClassName: string;
+  hintClassName: string;
   /** Gol yazısı (dile göre: "GOL!" / "GOAL!"). */
   goalLabel: string;
+  /** İlk şuta kadar gösterilen ipucu. */
+  hintLabel: string;
 };
 
-export type StageHandle = { dispose: () => void };
+export type StageHandle = { dispose: () => void; setLabels: (goalLabel: string, hintLabel: string) => void };
 
 /** Süper Lig her zaman topta; kalan logolar 34 ligden karışık. */
 const PINNED_LEAGUE_IDS = [600];
 const FOV = 35;
 /** Kameranın yere bakış açısı (derece) ve baktığı yükseklik. */
-const TILT_DEG = 30;
+const TILT_DEG = 42;
 const TARGET_Y = 0.35;
 const POP_SEC = 0.35;
 const CONFETTI_SEC = 1.6;
-/** Tutulan top bu kadar havaya kalkar (bırakınca düşüp seker). */
-const LIFT = 0.4;
+/** Reklam panoları: yükseklik ve kalınlık. */
+const BOARD_H = 0.42;
+const BOARD_T = 0.08;
 /** Çim düzlemi: yakın kenar z, uzak kenar z (uzakta gökyüzüne silinir). */
 const GROUND_NEAR_Z = 14;
 const GROUND_FAR_Z = -16;
 /** Saha çizgileri: kale çizgileri ±lineX, kenar çizgileri ±TOUCH_Z. */
-const TOUCH_Z = 4.6;
 const LINES_HALF_X = DEFAULT_GOAL.lineX + 0.7;
 const LINES_HALF_Z = TOUCH_Z + 0.6;
 
@@ -317,13 +326,21 @@ function grassTexture(size: number): CanvasTexture {
   return tex;
 }
 
-/** Saha çizgileri (saydam zemin üstüne beyaz): kale / kenar / orta çizgi, orta yuvarlak, ceza ve kale alanları. */
-function pitchLinesTexture(size: number): CanvasTexture {
+/**
+ * Saha çizgileri (saydam zemin üstüne beyaz): kale / kenar / orta çizgi, orta yuvarlak, ceza ve kale alanları.
+ * `clipMinX`: bu x'in solu çizilmez (mobilde sol pano orta çizginin gerisinde; dışarıda çizgi kalmasın).
+ */
+function pitchLinesTexture(size: number, clipMinX: number | null): CanvasTexture {
   return canvasTexture(size, (ctx, s) => {
     const k = s / (2 * LINES_HALF_X); // px / birim (kare doku: z ekseni de aynı ölçek, aşağıda sıkıştırılır)
     const kz = s / (2 * LINES_HALF_Z);
     const X = (x: number) => (x + LINES_HALF_X) * k;
     const Z = (z: number) => (z + LINES_HALF_Z) * kz;
+    if (clipMinX != null) {
+      ctx.beginPath();
+      ctx.rect(X(clipMinX), 0, s, s);
+      ctx.clip();
+    }
     ctx.strokeStyle = 'rgba(255,255,255,0.9)';
     ctx.lineWidth = Math.max(2, 0.055 * k);
     const L = DEFAULT_GOAL.lineX;
@@ -338,7 +355,7 @@ function pitchLinesTexture(size: number): CanvasTexture {
       ctx.ellipse(X(cx), Z(cz), r * k, r * kz, 0, a0, a1);
       ctx.stroke();
     };
-    ellipse(0, 0, 1.3);
+    ellipse(0, 0, 1.1);
     const dot = (x: number, z: number) => {
       ctx.beginPath();
       ctx.ellipse(X(x), Z(z), 0.07 * k, 0.07 * kz, 0, 0, Math.PI * 2);
@@ -348,13 +365,13 @@ function pitchLinesTexture(size: number): CanvasTexture {
     dot(0, 0);
     for (const side of [-1, 1]) {
       const gx = side * L;
-      rect(Math.min(gx, gx - side * 1.9), -3.9, Math.max(gx, gx - side * 1.9), 3.9);
-      rect(Math.min(gx, gx - side * 0.7), -2.9, Math.max(gx, gx - side * 0.7), 2.9);
-      dot(gx - side * 1.35, 0);
+      rect(Math.min(gx, gx - side * 1.45), -3.9, Math.max(gx, gx - side * 1.45), 3.9);
+      rect(Math.min(gx, gx - side * 0.6), -2.95, Math.max(gx, gx - side * 0.6), 2.95);
+      dot(gx - side * 1.1, 0);
       // Ceza yayı: ceza alanının dışında kalan kısım
-      const a = Math.acos(0.55 / 1.1);
+      const a = Math.acos(0.45 / 0.85);
       const start = side > 0 ? Math.PI - a : -a;
-      ellipse(gx - side * 1.35, 0, 1.1, start, start + 2 * a);
+      ellipse(gx - side * 1.1, 0, 0.85, start, start + 2 * a);
     }
   });
 }
@@ -383,6 +400,69 @@ function shadowTexture(): CanvasTexture {
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, s, s);
   });
+}
+
+/** Reklam panosu: marka yeşili zemin, "OFSAYT YOK" yazısı, sarı vurgu şeridi (yatayda tekrar eder). */
+function boardTexture(): CanvasTexture {
+  const canvas = document.createElement('canvas');
+  canvas.width = 1024;
+  canvas.height = 128;
+  const ctx = canvas.getContext('2d');
+  if (ctx) {
+    const g = ctx.createLinearGradient(0, 0, 0, 128);
+    g.addColorStop(0, '#00b578');
+    g.addColorStop(1, '#00704c');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, 1024, 128);
+    ctx.fillStyle = '#ffc83d';
+    ctx.fillRect(0, 112, 1024, 16);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'italic 900 64px Inter, system-ui, sans-serif';
+    ctx.textBaseline = 'middle';
+    ctx.textAlign = 'center';
+    ctx.fillText('OFSAYT YOK', 256, 58);
+    ctx.fillText('OFSAYT YOK', 768, 58);
+    ctx.fillStyle = 'rgba(255,255,255,0.55)';
+    for (const x of [0, 512, 1024]) ctx.fillRect(x - 3, 30, 6, 56);
+  }
+  const tex = new CanvasTexture(canvas);
+  tex.colorSpace = SRGBColorSpace;
+  tex.wrapS = RepeatWrapping;
+  return tex;
+}
+
+/** Nişan oku (zemin düzleminde, +x yönünde): gövde boyu `setLength` ile değişir, uç sabit boyutta. */
+function makeArrow(mat: Material) {
+  const width = 0.22;
+  const headLen = 0.5;
+  const headW = 0.62;
+  const shaftGeo = new PlaneGeometry(1, width);
+  shaftGeo.translate(0.5, 0, 0);
+  const head = new Shape();
+  head.moveTo(0, -headW / 2);
+  head.lineTo(headLen, 0);
+  head.lineTo(0, headW / 2);
+  head.closePath();
+  const headGeo = new ShapeGeometry(head);
+  const flat = new Group();
+  flat.rotation.x = -Math.PI / 2;
+  const shaft = new Mesh(shaftGeo, mat);
+  const tip = new Mesh(headGeo, mat);
+  flat.add(shaft, tip);
+  const group = new Group();
+  group.add(flat);
+  group.visible = false;
+  for (const m of [shaft, tip]) m.renderOrder = 3;
+  return {
+    group,
+    geometries: [shaftGeo, headGeo],
+    /** start: topun merkezinden uzaklık; len: gövde boyu */
+    set(start: number, len: number) {
+      shaft.position.x = start;
+      shaft.scale.x = Math.max(0.01, len);
+      tip.position.x = start + len;
+    },
+  };
 }
 
 type GoalView = {
@@ -495,7 +575,10 @@ export function mountStage(host: HTMLElement, opts: StageOptions): StageHandle {
   const goalText = document.createElement('div');
   goalText.className = opts.goalClassName;
   goalText.textContent = opts.goalLabel;
-  if (!reduced) host.append(handle, goalText);
+  const hint = document.createElement('div');
+  hint.className = opts.hintClassName;
+  hint.textContent = opts.hintLabel;
+  if (!reduced) host.append(handle, goalText, hint);
 
   const scene = new Scene();
   const fog = new Fog(NIGHT_FOG, 20, 46);
@@ -535,7 +618,7 @@ export function mountStage(host: HTMLElement, opts: StageOptions): StageHandle {
   ground.position.z = (GROUND_NEAR_Z + GROUND_FAR_Z) / 2;
   ground.renderOrder = -1;
   scene.add(ground);
-  const linesTex = track(pitchLinesTexture(lite ? 1024 : 2048));
+  const linesTex = track(pitchLinesTexture(lite ? 1024 : 2048, lite ? arenaFor(true).walls.minX : null));
   linesTex.anisotropy = maxAniso;
   const linesMat = track(
     new MeshStandardMaterial({ map: linesTex, transparent: true, depthWrite: false, roughness: 0.9, polygonOffset: true, polygonOffsetFactor: -2 }),
@@ -680,11 +763,43 @@ export function mountStage(host: HTMLElement, opts: StageOptions): StageHandle {
   // ── Kaleler ve konfeti ─────────────────────────────────────────────────────────────────────────────
   const postMat = track(new MeshStandardMaterial({ color: 0xf6f8fa, roughness: 0.35, metalness: 0.1, emissive: 0x1a222b, envMap: envTex }));
   const netMat = track(new LineBasicMaterial({ color: 0xdfe8f0, transparent: true, opacity: 0.55, depthWrite: false }));
-  // Mobil bantta yer dar: tek kale (sağ), kamera daha yakın.
-  const goals = goalSpecs(lite ? [1] : [-1, 1]).map((spec) => buildGoal(spec, postMat, netMat));
+  // Mobil bantta yer dar: tek kale (sağ), sol pano orta çizginin gerisinde; kamera daha yakın.
+  const arena = arenaFor(lite);
+  const walls: Walls = arena.walls;
+  const goals = arena.goals.map((spec) => buildGoal(spec, postMat, netMat));
   for (const g of goals) scene.add(g.group);
   const goalSpecList = goals.map((g) => g.spec);
-  const start: V3 = { x: lite ? 0.8 : 0, y: R, z: 0.6 };
+  /** Başlama ve gol sonrası dönüş: orta nokta. */
+  const start: V3 = { x: 0, y: R, z: 0 };
+
+  // ── Reklam panoları (iç yüzleri duvar çizgisinde) ─────────────────────────────────────────────────────
+  const boardTex = track(boardTexture());
+  const boardMat = track(new MeshStandardMaterial({ map: boardTex, emissiveMap: boardTex, emissive: 0xffffff, emissiveIntensity: 0.8, roughness: 0.6 }));
+  const lenX = walls.maxX - walls.minX + 2 * BOARD_T;
+  const lenZ = walls.maxZ - walls.minZ;
+  boardTex.repeat.set(Math.max(1, Math.round(lenX / 4)), 1);
+  const boardGeoX = track(new BoxGeometry(lenX, BOARD_H, BOARD_T));
+  const boardGeoZ = track(new BoxGeometry(lenZ, BOARD_H, BOARD_T));
+  const midX = (walls.minX + walls.maxX) / 2;
+  const midZ = (walls.minZ + walls.maxZ) / 2;
+  const boards: [BoxGeometry, number, number, number][] = [
+    [boardGeoX, midX, walls.minZ - BOARD_T / 2, 0],
+    [boardGeoX, midX, walls.maxZ + BOARD_T / 2, 0],
+    [boardGeoZ, walls.minX - BOARD_T / 2, midZ, Math.PI / 2],
+    [boardGeoZ, walls.maxX + BOARD_T / 2, midZ, -Math.PI / 2],
+  ];
+  for (const [geo, x, z, ry] of boards) {
+    const b = new Mesh(geo, boardMat);
+    b.position.set(x, BOARD_H / 2, z);
+    b.rotation.y = ry;
+    scene.add(b);
+  }
+
+  // ── Nişan oku ──────────────────────────────────────────────────────────────────────────────────────
+  const arrowMat = track(new MeshBasicMaterial({ color: BRAND_GREEN, transparent: true, opacity: 0.92, depthWrite: false, side: DoubleSide, toneMapped: false, fog: false }));
+  const arrow = makeArrow(arrowMat);
+  for (const g of arrow.geometries) track(g);
+  scene.add(arrow.group);
 
   const cCount = lite ? 60 : 110;
   const cPos = new Float32Array(cCount * 3);
@@ -768,6 +883,8 @@ export function mountStage(host: HTMLElement, opts: StageOptions): StageHandle {
     netMat.opacity = mix(0.5, 0.7, d);
     postMat.emissive.setHex(mixColor(0x1a222b, 0x000000, d));
     postMat.envMapIntensity = mix(0.3, 0.8, d);
+    // Panolar gece LED gibi parlar
+    boardMat.emissiveIntensity = mix(0.85, 0.2, d);
     shadowFactor = mix(0.75, 1, d);
   };
   let shadowFactor = 1;
@@ -779,11 +896,16 @@ export function mountStage(host: HTMLElement, opts: StageOptions): StageHandle {
   let camTarget = new Vector3(0, TARGET_Y, 0);
   let camBase = new Vector3();
   const camDir = new Vector3(0, Math.sin((TILT_DEG * Math.PI) / 180), Math.cos((TILT_DEG * Math.PI) / 180));
+  // Kadraja sığacaklar: panoların dış köşeleri (alt / üst), kaleler ve uzak taraftaki tavan (havalanan top da
+  // görünür kalsın). Saha panel genişliğini doldurur, gökyüzü azalır.
   const fitPoints: Vector3[] = [];
+  for (const x of [walls.minX - BOARD_T, walls.maxX + BOARD_T]) {
+    for (const z of [walls.minZ - BOARD_T, walls.maxZ + BOARD_T]) for (const y of [0, BOARD_H]) fitPoints.push(new Vector3(x, y, z));
+    fitPoints.push(new Vector3(x, CEILING, walls.minZ));
+  }
   for (const g of goalSpecList) {
     for (const x of [g.lineX, g.backX]) for (const y of [0, g.height]) for (const z of [-g.halfW, g.halfW]) fitPoints.push(new Vector3(x, y, z));
   }
-  if (lite) fitPoints.push(new Vector3(-2.2, 0, 1.6), new Vector3(-2.2, 0, -1.6));
   const placeCamera = (dist: number) => {
     camBase = camTarget.clone().addScaledVector(camDir, dist);
     camera.position.copy(camBase);
@@ -794,13 +916,11 @@ export function mountStage(host: HTMLElement, opts: StageOptions): StageHandle {
     const v = new Vector3();
     return fitPoints.every((p) => {
       v.copy(p).project(camera);
-      return Math.abs(v.x) <= 0.93 && v.y >= -0.93 && v.y <= 0.75;
+      return Math.abs(v.x) <= 0.97 && Math.abs(v.y) <= 0.96;
     });
   };
-  const fitCamera = () => {
-    const xs = fitPoints.map((p) => p.x);
-    camTarget = new Vector3((Math.min(...xs) + Math.max(...xs)) / 2, TARGET_Y, -0.2);
-    let lo = 4;
+  const searchDistance = () => {
+    let lo = 3;
     let hi = 60;
     for (let i = 0; i < 24; i++) {
       const mid = (lo + hi) / 2;
@@ -809,6 +929,27 @@ export function mountStage(host: HTMLElement, opts: StageOptions): StageHandle {
       else lo = mid;
     }
     placeCamera(hi);
+    return hi;
+  };
+  const fitCamera = () => {
+    camTarget = new Vector3(midX, TARGET_Y, midZ);
+    // Dikeyde boşluk dengelensin: kadraj sığdıktan sonra noktaların ekrandaki üst / alt taşmasını eşitleyecek kadar
+    // hedefi ekranın "yukarı" yönünde kaydır, yeniden sığdır (birkaç tur yeter).
+    const v = new Vector3();
+    const up = new Vector3(0, Math.cos((TILT_DEG * Math.PI) / 180), -Math.sin((TILT_DEG * Math.PI) / 180));
+    for (let iter = 0; iter < 4; iter++) {
+      const dist = searchDistance();
+      let lo = Infinity;
+      let hi = -Infinity;
+      for (const p of fitPoints) {
+        v.copy(p).project(camera);
+        lo = Math.min(lo, v.y);
+        hi = Math.max(hi, v.y);
+      }
+      const off = (hi + lo) / 2;
+      if (Math.abs(off) < 0.01) break;
+      camTarget.addScaledVector(up, off * dist * Math.tan((FOV * Math.PI) / 360));
+    }
   };
 
   let firstFrame = true;
@@ -865,14 +1006,11 @@ export function mountStage(host: HTMLElement, opts: StageOptions): StageHandle {
     const y = (-projected.y * 0.5 + 0.5) * height;
     // Ekrandaki yarıçap (kameraya uzaklıkla) — dokunmada en az 22 px.
     const dist = camera.position.distanceTo(ballGroup.position);
-    const rPx = Math.max(22, ((R * 1.25) / (dist * Math.tan((FOV * Math.PI) / 360))) * (height / 2));
+    const rPx = Math.max(22, ((R * 1.15) / (dist * Math.tan((FOV * Math.PI) / 360))) * (height / 2));
     handle.style.width = `${rPx * 2}px`;
     handle.style.height = `${rPx * 2}px`;
     handle.style.transform = `translate(${x - rPx}px, ${y - rPx}px)`;
-  };
-  const ballVisible = () => {
-    projected.copy(ballGroup.position).project(camera);
-    return projected.z < 1 && Math.abs(projected.x) <= 1.05 && Math.abs(projected.y) <= 1.05;
+    if (!hintDone) hint.style.transform = `translate(${x}px, ${y - rPx - 6}px) translate(-50%, -100%)`;
   };
 
   const resize = () => {
@@ -886,12 +1024,12 @@ export function mountStage(host: HTMLElement, opts: StageOptions): StageHandle {
     render();
   };
 
-  /** offset: tutma anında top ile işaretçinin taşıma düzlemindeki izdüşümü arasındaki fark (top "sıçramasın"). */
-  let dragging: { id: number; samples: DragSample[]; offset: { x: number; z: number } } | null = null;
+  /** Nişan: basılı tutulurken işaretçinin zemindeki noktasından hesaplanan şut (null = iptal / güç yetersiz). */
+  let aiming: { id: number; shot: Shot | null } | null = null;
+  let hintDone = false;
   let pointer: { nx: number; ny: number } | null = null;
-  /** Gol anı: süre dolunca top başlama noktasına döner. */
+  /** Gol anı: süre dolunca top orta noktaya döner. */
   let scored: { side: -1 | 1; t: number } | null = null;
-  let offscreen = 0;
   const qTmp = new Quaternion();
   const axis = new Vector3();
   const rotate = (spin: V3, dt: number) => {
@@ -903,7 +1041,6 @@ export function mountStage(host: HTMLElement, opts: StageOptions): StageHandle {
   const resetBall = () => {
     ball = restingBall(start.x, start.z);
     pop = 0;
-    offscreen = 0;
   };
   const onGoal = (side: -1 | 1) => {
     scored = { side, t: 0 };
@@ -922,8 +1059,8 @@ export function mountStage(host: HTMLElement, opts: StageOptions): StageHandle {
       day = Math.abs(dayTarget - day) < 0.003 ? dayTarget : approach(day, dayTarget, 3.5, dt);
       applyDay(day);
     }
-    if (!dragging) {
-      const out = stepBall(ball, dt, goalSpecList, R);
+    {
+      const out = stepBall(ball, dt, goalSpecList, R, walls);
       ball = out.ball;
       for (const e of out.events) {
         if (e.type === 'goal' && !scored) onGoal(e.side);
@@ -943,10 +1080,9 @@ export function mountStage(host: HTMLElement, opts: StageOptions): StageHandle {
         scored = null;
         resetBall();
       }
-    } else {
-      offscreen = offscreenTime(offscreen, dragging != null || ballVisible(), dt);
-      if (offscreen >= OFFSCREEN_RESET_SEC) resetBall();
     }
+    if (aiming && !canShoot(ball, R)) cancelAim();
+    updateArrow();
     if (pop < 1) pop = Math.min(1, pop + dt / POP_SEC);
     for (const g of goals) rippleNet(g, dt);
     stepConfetti(dt);
@@ -1013,20 +1149,38 @@ export function mountStage(host: HTMLElement, opts: StageOptions): StageHandle {
     }
   });
 
-  // ── Etkileşim: tut → top işaretçinin altında (biraz havada) taşınır; bırak → yön ve güç harekette ─────────
+  // ── Etkileşim: nişan al ve şut çek — topa bas, geri çek (ok: yön + güç), bırak ────────────────────────────
   const raycaster = new Raycaster();
   const ndc = new Vector2();
-  const dragPlane = new Plane(new Vector3(0, 1, 0), -(R + LIFT));
+  const groundPlane = new Plane(new Vector3(0, 1, 0), -R);
   const hit = new Vector3();
   const local = (e: PointerEvent) => {
     const r = host.getBoundingClientRect();
     return { x: e.clientX - r.left, y: e.clientY - r.top, w: r.width, h: r.height };
   };
-  const rayOnPlane = (e: PointerEvent): { x: number; z: number } | null => {
+  /** İşaretçinin top merkezi yüksekliğindeki zemin noktası (ufkun üstündeyse null). */
+  const pointOnField = (e: PointerEvent): { x: number; z: number } | null => {
     const p = local(e);
     ndc.set((p.x / p.w) * 2 - 1, -(p.y / p.h) * 2 + 1);
     raycaster.setFromCamera(ndc, camera);
-    return raycaster.ray.intersectPlane(dragPlane, hit) ? { x: hit.x, z: hit.z } : null;
+    return raycaster.ray.intersectPlane(groundPlane, hit) ? { x: hit.x, z: hit.z } : null;
+  };
+  const arrowColor = new Color();
+  const updateArrow = () => {
+    const shot = aiming?.shot;
+    arrow.group.visible = Boolean(shot);
+    if (!shot) return;
+    arrow.group.position.set(ball.pos.x, 0.03, ball.pos.z);
+    arrow.group.rotation.y = Math.atan2(-shot.dirZ, shot.dirX);
+    arrow.set(R * 1.15, 0.35 + shot.power * 2.1);
+    // Güç arttıkça yeşilden sarıya
+    arrowColor.setHex(mixColor(BRAND_GREEN, 0xffc83d, shot.power));
+    arrowMat.color.copy(arrowColor);
+  };
+  const cancelAim = () => {
+    aiming = null;
+    handle.removeAttribute('data-dragging');
+    arrow.group.visible = false;
   };
   const onHover = (e: PointerEvent) => {
     if (e.pointerType !== 'mouse') return;
@@ -1037,12 +1191,9 @@ export function mountStage(host: HTMLElement, opts: StageOptions): StageHandle {
     pointer = null;
   };
   const onDown = (e: PointerEvent) => {
-    if (scored || pop < 1) return;
+    if (scored || pop < 1 || !canShoot(ball, R)) return;
     e.preventDefault();
-    const at = rayOnPlane(e);
-    const offset = at ? { x: ball.pos.x - at.x, z: ball.pos.z - at.z } : { x: 0, z: 0 };
-    dragging = { id: e.pointerId, samples: [{ t: e.timeStamp, x: ball.pos.x, z: ball.pos.z }], offset };
-    ball = { pos: { ...ball.pos, y: R + LIFT }, vel: { x: 0, y: 0, z: 0 }, spin: { x: 0, y: 0, z: 0 } };
+    aiming = { id: e.pointerId, shot: null };
     try {
       handle.setPointerCapture(e.pointerId);
     } catch {
@@ -1051,27 +1202,25 @@ export function mountStage(host: HTMLElement, opts: StageOptions): StageHandle {
     handle.setAttribute('data-dragging', '');
   };
   const onMove = (e: PointerEvent) => {
-    if (!dragging || e.pointerId !== dragging.id) return;
-    const at = rayOnPlane(e);
+    if (!aiming || e.pointerId !== aiming.id) return;
+    const at = pointOnField(e);
+    // İşaretçi ufkun üstündeyse zeminde karşılığı yok: son nişan korunur.
     if (!at) return;
-    // Sahadan çok uzağa taşınmasın
-    const p = { x: Math.max(-9, Math.min(9, at.x + dragging.offset.x)), z: Math.max(-9, Math.min(7, at.z + dragging.offset.z)) };
-    const prev = dragging.samples[dragging.samples.length - 1]!;
-    const dt = Math.max(1e-3, (e.timeStamp - prev.t) / 1000);
-    ball = { ...ball, pos: { x: p.x, y: R + LIFT, z: p.z } };
-    // Taşırken hareket yönünde döner (görsel)
-    rotate(rollingSpin((p.x - prev.x) / dt, (p.z - prev.z) / dt, R), Math.min(dt, 1 / 30));
-    dragging.samples.push({ t: e.timeStamp, x: p.x, z: p.z });
-    if (dragging.samples.length > 12) dragging.samples.shift();
+    aiming.shot = shotFromPull(at.x - ball.pos.x, at.z - ball.pos.z);
+    updateArrow();
   };
   const onUp = (e: PointerEvent) => {
-    if (!dragging || e.pointerId !== dragging.id) return;
-    // İptal (kaydırma vb.): fırlatma yok, olduğu yere düşer.
-    const v = e.type === 'pointercancel' ? { x: 0, y: 0, z: 0 } : throwVelocity(dragging.samples);
-    dragging = null;
-    handle.removeAttribute('data-dragging');
-    const roll = rollingSpin(v.x, v.z, R);
-    ball = { ...ball, vel: v, spin: { x: roll.x * 0.6, y: 0, z: roll.z * 0.6 } };
+    if (!aiming || e.pointerId !== aiming.id) return;
+    // İptal (kaydırma vb.) ya da yetersiz güç: şut yok.
+    const shot = e.type === 'pointercancel' ? null : aiming.shot;
+    cancelAim();
+    if (!shot) return;
+    const roll = rollingSpin(shot.vel.x, shot.vel.z, R);
+    ball = { ...ball, vel: shot.vel, spin: { x: roll.x * 0.6, y: 0, z: roll.z * 0.6 } };
+    if (!hintDone) {
+      hintDone = true;
+      hint.setAttribute('data-hidden', '');
+    }
   };
   // GPU bağlamı kaybolursa (sürücü sıfırlama vb.) tuval gizlenir, düz gradyan kalır.
   const onContextLost = (e: Event) => {
@@ -1099,6 +1248,10 @@ export function mountStage(host: HTMLElement, opts: StageOptions): StageHandle {
   sync();
 
   return {
+    setLabels(goalLabel: string, hintLabel: string) {
+      goalText.textContent = goalLabel;
+      hint.textContent = hintLabel;
+    },
     dispose() {
       disposed = true;
       sync();
@@ -1129,6 +1282,7 @@ export function mountStage(host: HTMLElement, opts: StageOptions): StageHandle {
       canvas.remove();
       handle.remove();
       goalText.remove();
+      hint.remove();
     },
   };
 }

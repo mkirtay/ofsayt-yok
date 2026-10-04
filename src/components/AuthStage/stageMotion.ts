@@ -2,9 +2,11 @@
  * Sahne topunun 3B fiziği — DOM / three.js'ten bağımsız (birim testli). Kütüphane yok.
  *
  * Dünya: zemin (çim) y = 0 düzlemi; saha x ekseninde (kaleler x = ±lineX'te, ağızları merkeze dönük), z derinlik.
- * - Yer çekimi: fırlatılan top yay çizer, çime düşüp azalan sekmelerle zıplar, sonra yuvarlanıp sürtünmeyle durur;
- *   yuvarlanırken hızına uygun döner (ω = v / r). Top durduğu yerde kalır (merkeze dönüş yalnız gol sonrası ya da
- *   uzun süre görünür alan dışında kalınca — o karar sahnede).
+ * - Şut: topa basılı tut, geri çek, bırak — çekme vektörünün tersi yön, uzunluğu güç (üst sınırlı); yalnız duran /
+ *   çok yavaş top şutlanır.
+ * - Yer çekimi: şutlanan top yay çizer, çime düşüp azalan sekmelerle zıplar, sonra yuvarlanıp sürtünmeyle durur;
+ *   yuvarlanırken hızına uygun döner (ω = v / r). Top durduğu yerde kalır (merkeze dönüş yalnız gol sonrası).
+ * - Sınır: sahanın çevresindeki reklam panoları görünmez duvardır (üstünden de geçilmez, tavan var); top seker.
  * - Kaleler: direk ve üst direkten gerçekçi sekme; file duvarları (yanlar, arka, çatı) topu yumuşakça tutar / iter.
  *   Gol: top kale çizgisini direklerin arasından ve üst direğin altından TAMAMEN geçince.
  * Birimler: dünya birimi (top yarıçapı `BALL_RADIUS`), saniye.
@@ -14,7 +16,8 @@ export type V3 = { x: number; y: number; z: number };
 /** spin: açısal hız vektörü (eksen × rad/sn). */
 export type Ball = { pos: V3; vel: V3; spin: V3 };
 
-export const BALL_RADIUS = 0.36;
+/** Arcade ölçek: top sahaya göre biraz büyük (masaüstünde ~65 px görünsün, logolar seçilsin). */
+export const BALL_RADIUS = 0.62;
 export const GRAVITY = 16;
 /** Çimden sekmede dikey hızın korunan oranı ve yatay hızın korunan oranı. */
 export const GROUND_RESTITUTION = 0.58;
@@ -31,15 +34,19 @@ export const NET_RESTITUTION = 0.08;
 const NET_DAMP = 0.5;
 /** Kale içindeki topa file sürtünmesi (1/sn): sekip dışarı yuvarlanmasın. */
 const NET_DRAG = 5;
-export const MAX_THROW_SPEED = 15;
-/** Fırlatmada yatay hız başına yukarı hız (yay) ve üst sınırı; bu hızın altı "bırakma" (yay yok). */
-export const LOFT = 0.26;
-export const MAX_LOFT = 4.5;
-export const DROP_SPEED = 1.5;
-export const RELEASE_WINDOW_MS = 90;
-/** Gol sonrası top filede bu kadar kalır; görünür alan dışında bu kadar kalan top ortaya döner (sn). */
+/** Panolardan / tavandan sekmede hızın korunan oranı. */
+export const BOARD_RESTITUTION = 0.6;
+/** Görünmez tavan: havalanan top kadrajdan çıkmasın. */
+export const CEILING = 2.6;
+/** Şut: tam güç için çekme mesafesi (birim); bunun altındaki güç iptal sayılır; yatay hız ve yay aralığı. */
+export const MAX_PULL = 2.6;
+export const MIN_SHOT_POWER = 0.08;
+export const SHOT_SPEED = { min: 4, max: 16 };
+export const SHOT_LIFT = { min: 1.2, max: 4.2 };
+/** Bu hızın altındaki (ve yerdeki) top şutlanabilir. */
+export const SHOOTABLE_SPEED = 0.8;
+/** Gol sonrası top filede bu kadar kalır, sonra orta noktaya döner (sn). */
 export const GOAL_RESET_SEC = 1.5;
-export const OFFSCREEN_RESET_SEC = 10;
 const MAX_DT = 1 / 30;
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
@@ -70,8 +77,25 @@ export type GoalSpec = {
 
 export type GoalSize = { lineX: number; halfW: number; height: number; depth: number; postR: number };
 
-/** Oyun için geniş kale: ağız ~6 top çapı, yükseklik ~2,4 top çapı (normal bir fırlatmayla ulaşılır). */
-export const DEFAULT_GOAL: GoalSize = { lineX: 4.9, halfW: 2.2, height: 1.7, depth: 1.1, postR: 0.06 };
+/** Arcade kale: ağız ~3,7 top çapı, yükseklik ~1,5 top çapı (orta noktadan orta güçte bir şutla ulaşılır). */
+export const DEFAULT_GOAL: GoalSize = { lineX: 3.6, halfW: 2.3, height: 1.9, depth: 1.45, postR: 0.08 };
+
+/** Panoların iç yüzleri (görünmez duvar): top bu dikdörtgenin içinde kalır. */
+export type Walls = { minX: number; maxX: number; minZ: number; maxZ: number };
+/** Kenar çizgileri (saha çizimi ve panolar). */
+export const TOUCH_Z = 5.8;
+
+export type Arena = { goals: GoalSpec[]; walls: Walls };
+
+/**
+ * Masaüstü: iki kale, panolar kalelerin arkasında ve kenar çizgilerinin dışında. Mobil (dar bant): tek kale (sağ),
+ * sol pano orta çizginin gerisinde — oynanan alanın tamamı kadrajda kalır.
+ */
+export function arenaFor(lite: boolean, size: GoalSize = DEFAULT_GOAL): Arena {
+  const goals = goalSpecs(lite ? [1] : [-1, 1], size);
+  const back = size.lineX + size.depth + 0.3;
+  return { goals, walls: { minX: lite ? -2.8 : -back, maxX: back, minZ: -(TOUCH_Z + 0.45), maxZ: TOUCH_Z + 0.45 } };
+}
 
 export function goalSpecs(sides: readonly (-1 | 1)[], size: GoalSize = DEFAULT_GOAL): GoalSpec[] {
   return sides.map((side) => ({
@@ -191,7 +215,22 @@ function collideGoal(prev: V3, pos: V3, vel: V3, g: GoalSpec, r: number, events:
  * Bir fizik adımı. Hızlı topta tünelleme olmasın diye adım alt adımlara bölünür.
  * @returns yeni top ve bu adımdaki olaylar (gol / direk / file)
  */
-export function stepBall(b: Ball, dtSec: number, goals: readonly GoalSpec[], r = BALL_RADIUS): { ball: Ball; events: StepEvent[] } {
+/** Pano duvarları ve tavan: içeri doğru seker. */
+function collideWalls(pos: V3, vel: V3, w: Walls, r: number) {
+  if (pos.x - r < w.minX) [pos.x, vel.x] = [w.minX + r, Math.abs(vel.x) * BOARD_RESTITUTION];
+  if (pos.x + r > w.maxX) [pos.x, vel.x] = [w.maxX - r, -Math.abs(vel.x) * BOARD_RESTITUTION];
+  if (pos.z - r < w.minZ) [pos.z, vel.z] = [w.minZ + r, Math.abs(vel.z) * BOARD_RESTITUTION];
+  if (pos.z + r > w.maxZ) [pos.z, vel.z] = [w.maxZ - r, -Math.abs(vel.z) * BOARD_RESTITUTION];
+  if (pos.y + r > CEILING) [pos.y, vel.y] = [CEILING - r, -Math.abs(vel.y) * BOARD_RESTITUTION];
+}
+
+export function stepBall(
+  b: Ball,
+  dtSec: number,
+  goals: readonly GoalSpec[],
+  r = BALL_RADIUS,
+  walls: Walls | null = null,
+): { ball: Ball; events: StepEvent[] } {
   const dt = clamp(dtSec, 0, MAX_DT);
   const events: StepEvent[] = [];
   const pos = { ...b.pos };
@@ -232,6 +271,7 @@ export function stepBall(b: Ball, dtSec: number, goals: readonly GoalSpec[], r =
         vel.y = 0;
       }
     }
+    if (walls) collideWalls(pos, vel, walls, r);
     for (const g of goals) {
       collideGoal(prev, pos, vel, g, r, events);
       if ((pos.x - g.lineX) * g.side > 0 && Math.abs(pos.z) < g.halfW && pos.y < g.height) {
@@ -240,6 +280,8 @@ export function stepBall(b: Ball, dtSec: number, goals: readonly GoalSpec[], r =
         vel.z *= k;
       }
     }
+    // Direk / file sekmesi topu duvarın ya da tavanın ötesine itmesin.
+    if (walls) collideWalls(pos, vel, walls, r);
     // Dönüş: yerdeyken tam yuvarlanma; havada yavaşça söner; sekmede yuvarlanmaya yaklaşır.
     const roll = rollingSpin(vel.x, vel.z, r);
     if (pos.y <= r + 1e-6 && vel.y === 0) spin = roll;
@@ -252,36 +294,29 @@ export function stepBall(b: Ball, dtSec: number, goals: readonly GoalSpec[], r =
   return { ball: { pos, vel, spin }, events };
 }
 
-// ── Fırlatma ──────────────────────────────────────────────────────────────────────────────────────────
+// ── Şut ───────────────────────────────────────────────────────────────────────────────────────────────
 
-/** Sürüklerken topun zemindeki (x, z) konum örnekleri. */
-export type DragSample = { t: number; x: number; z: number };
-
-/**
- * Bırakma hızı: son `RELEASE_WINDOW_MS` içindeki hareketten (yön + güç). Hızlı bırakılan top yay çizer (yukarı hız
- * yatay hızla orantılı); yavaşı olduğu yere bırakılır.
- */
-export function throwVelocity(samples: readonly DragSample[]): V3 {
-  if (samples.length < 2) return { x: 0, y: 0, z: 0 };
-  const last = samples[samples.length - 1]!;
-  let first = samples[0]!;
-  for (let i = samples.length - 2; i >= 0; i--) {
-    first = samples[i]!;
-    if (last.t - first.t >= RELEASE_WINDOW_MS) break;
-  }
-  const dt = (last.t - first.t) / 1000;
-  if (dt <= 0) return { x: 0, y: 0, z: 0 };
-  let vx = (last.x - first.x) / dt;
-  let vz = (last.z - first.z) / dt;
-  const s = Math.hypot(vx, vz);
-  if (s < DROP_SPEED) return { x: 0, y: 0, z: 0 };
-  if (s > MAX_THROW_SPEED) [vx, vz] = [(vx / s) * MAX_THROW_SPEED, (vz / s) * MAX_THROW_SPEED];
-  return { x: vx, y: Math.min(MAX_LOFT, LOFT * Math.min(s, MAX_THROW_SPEED)), z: vz };
+/** Yerde ve (neredeyse) duran top şutlanabilir. */
+export function canShoot(b: Ball, r = BALL_RADIUS): boolean {
+  return b.pos.y <= r + 0.05 && Math.hypot(b.vel.x, b.vel.y, b.vel.z) < SHOOTABLE_SPEED;
 }
 
-/** Görünür alan dışında geçen süre: görünürse sıfırlanır. */
-export function offscreenTime(prev: number, visible: boolean, dtSec: number): number {
-  return visible ? 0 : prev + Math.max(0, dtSec);
+export type Shot = { dirX: number; dirZ: number; power: number; vel: V3 };
+
+/**
+ * Geri çekme → şut: yön çekmenin tersi, güç = çekme mesafesi / MAX_PULL (en çok 1). Güç `MIN_SHOT_POWER`'ın altındaysa
+ * null (iptal). Güçlü şut daha hızlı ve biraz daha havadan gider.
+ * @param pullX, pullZ işaretçinin zemindeki noktası − topun konumu
+ */
+export function shotFromPull(pullX: number, pullZ: number): Shot | null {
+  const d = Math.hypot(pullX, pullZ);
+  const power = Math.min(1, d / MAX_PULL);
+  if (power < MIN_SHOT_POWER || d < 1e-9) return null;
+  const dirX = -pullX / d;
+  const dirZ = -pullZ / d;
+  const speed = SHOT_SPEED.min + (SHOT_SPEED.max - SHOT_SPEED.min) * power;
+  const lift = SHOT_LIFT.min + (SHOT_LIFT.max - SHOT_LIFT.min) * power;
+  return { dirX, dirZ, power, vel: { x: dirX * speed, y: lift, z: dirZ * speed } };
 }
 
 /** Yükseklikle gölge: yükseldikçe büyür ve silikleşir. h = topun zeminden yüksekliği (alt noktası). */
