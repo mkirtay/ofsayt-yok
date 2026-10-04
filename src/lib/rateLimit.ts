@@ -72,20 +72,32 @@ function getUpstashLimiter(limit: number, windowMs: number): Ratelimit | null {
 
 // ── Public API ──────────────────────────────────────────────────────────────
 
+export type RateLimitOptions = {
+  /**
+   * Redis cevap vermezse isteği REDDET (fail-closed). Kimlik uçları (giriş, kayıt, şifre sıfırlama/değiştirme) için:
+   * Redis kesintisi kaba kuvvet denemelerine kapı açmasın. Varsayılan fail-open (içerik uçları siteyi kapatmasın).
+   */
+  failClosed?: boolean;
+};
+
 export async function hitFixedWindowRateLimit(
   key: string,
   limit: number,
   windowMs: number,
+  opts: RateLimitOptions = {},
 ): Promise<{ success: boolean; remaining: number; resetAt: number }> {
   const upstash = getUpstashLimiter(limit, windowMs);
   // Redis hiç tanımlı değil (yerel geliştirme) → instance içi sayaç.
   if (!upstash) return hitInMemory(key, limit, windowMs);
 
-  // Redis tanımlı ama cevap vermiyor (hata / zaman aşımı / devre açık) → FAIL-OPEN: isteği engelleme.
+  // Redis tanımlı ama cevap vermiyor (hata / zaman aşımı / devre açık) → varsayılan FAIL-OPEN: isteği engelleme.
   // Rate limit bir koruma katmanı; Redis kesintisi siteyi kapatmamalı (instance içi sayaç da dağıtık
-  // ortamda anlamsız derecede gevşek/katı olurdu).
+  // ortamda anlamsız derecede gevşek/katı olurdu). Kimlik uçları `failClosed` ile reddeder (kısa Retry-After).
   const result = await withRedis(() => upstash.limit(key), null);
-  if (!result) return { success: true, remaining: limit, resetAt: Date.now() + windowMs };
+  if (!result) {
+    if (opts.failClosed) return { success: false, remaining: 0, resetAt: Date.now() + 60_000 };
+    return { success: true, remaining: limit, resetAt: Date.now() + windowMs };
+  }
   return { success: result.success, remaining: result.remaining, resetAt: result.reset };
 }
 

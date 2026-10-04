@@ -29,7 +29,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(401).json({ error: 'Giriş yapmanız gerekiyor.' });
   }
 
-  const rl = await hitFixedWindowRateLimit(`password:${userId}`, 3, 30 * 60 * 1000);
+  const rl = await hitFixedWindowRateLimit(`password:${userId}`, 3, 30 * 60 * 1000, { failClosed: true });
   if (!rl.success) {
     res.setHeader('Retry-After', String(Math.ceil((rl.resetAt - Date.now()) / 1000)));
     return res.status(429).json({ error: 'Çok fazla şifre değiştirme isteği. Lütfen bekleyin.' });

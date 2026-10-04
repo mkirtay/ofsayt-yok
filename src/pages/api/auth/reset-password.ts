@@ -15,7 +15,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const ip = requestIp(req.headers, req.socket.remoteAddress);
-  const limitState = await hitFixedWindowRateLimit(`reset-pw:${ip}`, LIMIT, WINDOW_MS);
+  const limitState = await hitFixedWindowRateLimit(`reset-pw:${ip}`, LIMIT, WINDOW_MS, { failClosed: true });
   if (!limitState.success) {
     res.setHeader('Retry-After', Math.max(1, Math.ceil((limitState.resetAt - Date.now()) / 1000)).toString());
     return res.status(429).json({ error: 'Cok fazla deneme. Lutfen daha sonra tekrar deneyin.' });

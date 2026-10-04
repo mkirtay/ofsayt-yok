@@ -50,7 +50,7 @@ export default function SignInPage({ googleEnabled }: { googleEnabled: boolean }
     setLoading(false)
 
     if (result?.error) {
-      setError(t('signIn.invalidCredentials'))
+      setError(t(result.error === 'RateLimited' ? 'signIn.tooManyAttempts' : 'signIn.invalidCredentials'))
       return
     }
 

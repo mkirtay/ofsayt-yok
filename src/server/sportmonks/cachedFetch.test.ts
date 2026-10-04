@@ -353,6 +353,42 @@ describe('fetchSportmonksCached', () => {
     );
   });
 
+  it('anahtar: dizi parametre ile virgüllü değer çakışmaz; değerdeki & = % kaçışlı (zehirleme yok)', () => {
+    const k = (q: Record<string, string | string[]>) => m.buildSportmonksCacheKey('football/x', q);
+    expect(k({ include: ['a', 'b'] })).not.toBe(k({ include: 'a,b' }));
+    expect(k({ include: ['b', 'a'] })).not.toBe(k({ include: ['a', 'b'] }));
+    expect(k({ include: 'a&include=b' })).not.toBe(k({ include: ['a', 'b'] }));
+    // kaçış gerektirmeyen değerlerde biçim eskisiyle aynı (canlı önbellek korunur)
+    expect(k({ include: 'participants;scores', filters: 'fixtureLeagues:2' })).toMatch(
+      /football\/x\?filters=fixtureLeagues:2&include=participants;scores$/,
+    );
+  });
+
+  it('upstream sorgusu anahtarla aynı sırada ve aynı çiftlerle gider', async () => {
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    await m.fetchSportmonksCached('football/teams/34', { page: '1', include: ['b', 'a'], api_token: 'x' }, { fetchImpl });
+    const url = new URL(String((fetchImpl.mock.calls[0] as unknown[])[0]));
+    expect([...url.searchParams.entries()].filter(([k2]) => k2 !== 'api_token')).toEqual([
+      ['include', 'b'],
+      ['include', 'a'],
+      ['page', '1'],
+    ]);
+  });
+
+  it.each(['football/teams/search/x?include=odds', 'football/../odds', 'football/teams/search/x#y', 'football/%2e%2e/odds', 'a\\b'])(
+    'güvensiz yol upstream\'e gitmez: %s',
+    async (p) => {
+      const fetchImpl = vi.fn();
+      await expect(m.fetchSportmonksCached(p, {}, { fetchImpl })).rejects.toThrow('Geçersiz Sportmonks yolu');
+      expect(fetchImpl).not.toHaveBeenCalled();
+    },
+  );
+
+  it('sunucu içi yüzde-kodlu arama yolu geçerli', () => {
+    expect(m.isSafeSportmonksPath('football/teams/search/fenerbah%C3%A7e%20spor')).toBe(true);
+    expect(m.isSafeSportmonksPath('football/fixtures/multi/1,2,3')).toBe(true);
+  });
+
   describe('zaman aşımı', () => {
     it('bütçeler: sayfa render\'ı 3 sn, API / cron 5 sn', () => {
       expect(m.SPORTMONKS_TIMEOUT_MS).toEqual({ page: 3_000, api: 5_000 });

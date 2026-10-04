@@ -74,7 +74,7 @@ describe('proxy izin listesi', () => {
     expect(r.allowed).toBe(true);
   });
 
-  it('bilinmeyen path / include / param / aşırı sayfa yakalanır', () => {
+  it('bilinmeyen path / include / filtre / aşırı sayfa yakalanır; bilinmeyen param atılır', () => {
     const r = checkProxyAllowlist('football/odds/pre-match/fixtures/19746594', {
       include: 'participants;odds.bookmaker',
       per_page: '1000',
@@ -89,10 +89,75 @@ describe('proxy izin listesi', () => {
         'include:odds.bookmaker',
         'per_page:1000',
         'page:99',
-        'param:foo',
         'filter:bookmakers',
       ]),
     );
+    expect(r.query).not.toHaveProperty('foo');
+    expect(r.unsafe).toBe(false);
+  });
+
+  it('api_token ve bilinmeyen parametreler upstream sorgusuna girmez', () => {
+    const r = checkProxyAllowlist('football/teams/34', { api_token: '', locale: 'tr', include: 'seasons' });
+    expect(r.allowed).toBe(true);
+    expect(r.query).toEqual({ include: 'seasons' });
+  });
+
+  describe('güvenlik denetimi (2026-10-04)', () => {
+    it.each([
+      ['sorgu enjeksiyonu (?)', ['football', 'teams', 'search', 'x?include=odds&per_page=500']],
+      ['parça (#)', ['football', 'teams', 'search', 'x#y']],
+      ['yüzde', ['football', 'teams', 'search', 'x%2F..']],
+      ['üst dizin', ['football', '..', 'odds']],
+      ['nokta', ['football', '.', 'teams', '34']],
+      ['segment içinde eğik çizgi', ['football', 'teams/34']],
+      ['ters eğik çizgi', ['football', 'teams', 'search', 'a\\b']],
+      ['kontrol karakteri', ['football', 'teams', 'search', 'a\tb']],
+      ['boş segment', ['football', '', 'teams', '34']],
+    ])('güvensiz yol moddan bağımsız reddedilir: %s', (_n, segments) => {
+      const r = checkProxyAllowlist(segments, {});
+      expect(r.allowed).toBe(false);
+      expect(r.unsafe).toBe(true);
+    });
+
+    it('metin yolda da arama sorgu enjeksiyonu yakalanır (enforce atlatma)', () => {
+      const r = checkProxyAllowlist('football/teams/search/x?include=odds&per_page=500', { page: '1' });
+      expect(r.allowed).toBe(false);
+      expect(r.unsafe).toBe(true);
+    });
+
+    it("arama terimi: harf, rakam, boşluk, . ' - kabul", () => {
+      for (const q of ['fenerbahçe spor', "Borussia M'gladbach", 'St. Pauli', 'Paris Saint-Germain', 'İstanbul 1907']) {
+        expect(checkProxyAllowlist(['football', 'teams', 'search', q], {}).violations).toEqual([]);
+      }
+      for (const q of ['a;b', 'a&b', 'a=b', 'a<b>', 'x'.repeat(61)]) {
+        expect(checkProxyAllowlist(['football', 'teams', 'search', q], {}).allowed).toBe(false);
+      }
+    });
+
+    it('dizi (tekrarlanan) parametre reddedilir — önbellek zehirlemesi yok', () => {
+      const r = checkProxyAllowlist('football/teams/34', { include: ['seasons', 'odds'] });
+      expect(r.unsafe).toBe(true);
+    });
+
+    it('include alan seçimi ve filtre değerleri doğrulanır', () => {
+      expect(checkProxyAllowlist('football/fixtures/1', { include: 'coaches:common_name,display_name' }).allowed).toBe(true);
+      expect(checkProxyAllowlist('football/fixtures/1', { include: 'coaches:name&x' }).violations).toEqual([
+        'include-alan:coaches',
+      ]);
+      expect(checkProxyAllowlist('football/fixtures/1', { include: 'coaches:a:b' }).allowed).toBe(false);
+      expect(checkProxyAllowlist('football/fixtures/1', { filters: 'metadataTypes:572,613' }).allowed).toBe(true);
+      expect(checkProxyAllowlist('football/fixtures/1', { filters: 'metadataTypes:abc' }).violations).toEqual([
+        'filter-deger:metadataTypes',
+      ]);
+      expect(checkProxyAllowlist('football/fixtures/1', { filters: 'metadataTypes' }).allowed).toBe(false);
+    });
+
+    it('per_page / page tam sayı ve sınır içinde', () => {
+      expect(checkProxyAllowlist('football/livescores/inplay', { per_page: '50', page: '10' }).allowed).toBe(true);
+      for (const q of [{ per_page: '0' }, { per_page: '1e1' }, { page: '-1' }, { page: '' }, { per_page: '51' }]) {
+        expect(checkProxyAllowlist('football/livescores/inplay', q).allowed).toBe(false);
+      }
+    });
   });
 
   it('genel path imzası id/tarih/aramayı gizler', () => {
@@ -101,11 +166,11 @@ describe('proxy izin listesi', () => {
     expect(genericSportmonksPath('football/fixtures/multi/1,2,3')).toBe('football/fixtures/multi/{ids}');
   });
 
-  it('mod: varsayılan log; enforce/off açıkça seçilir', () => {
-    expect(allowlistMode(undefined)).toBe('log');
-    expect(allowlistMode('enforce')).toBe('enforce');
+  it('mod: varsayılan enforce; log/off açıkça seçilir', () => {
+    expect(allowlistMode(undefined)).toBe('enforce');
+    expect(allowlistMode('log')).toBe('log');
     expect(allowlistMode('off')).toBe('off');
-    expect(allowlistMode('yanlis')).toBe('log');
+    expect(allowlistMode('yanlis')).toBe('enforce');
   });
 
   it('aynı imza için Sentry olayı 10 dk\'da bir (log satırı her seferinde)', () => {

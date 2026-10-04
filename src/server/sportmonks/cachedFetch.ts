@@ -3,7 +3,8 @@
  * sunucu içi çağrılar (SSR, API route'ları, cron/bot) buradan geçer. Amaç: upstream istek sayısı
  * ziyaretçi sayısından bağımsız olsun.
  *
- * - Anahtar: `api_token` hariç normalize path + sıralı query.
+ * - Anahtar: `api_token` hariç normalize path + upstream'e giden sorgunun AYNISI (`canonicalQueryEntries`: sıralı
+ *   anahtar, dizi değerleri sırasıyla tekrar; `%&=` kaçışlı) — `include=a&include=b` ile `include=a,b` çakışmaz.
  * - Süre: `sportmonksCacheTtl` (içeriğe/maç durumuna göre). "Yok" cevapları da (404/403/422, boş 200)
  *   cache'lenir (negatif cache).
  * - Katmanlar: instance içi bellek (L1, yalnız taze kayıt) → Redis (taze + eski).
@@ -165,15 +166,36 @@ export function normalizeSportmonksPath(path: string): string {
   return path.replace(/^\/+|\/+$/g, '').replace(/\/{2,}/g, '/');
 }
 
+/**
+ * Upstream'e giden sorgu çiftleri — önbellek anahtarı ve upstream URL'i AYNI listeden kurulur (zehirleme yok):
+ * `path`/`api_token`/`undefined` hariç, anahtara göre sıralı, dizi değerleri gönderildiği sırayla ayrı çift.
+ */
+export function canonicalQueryEntries(query: SportmonksQuery): [string, string][] {
+  const out: [string, string][] = [];
+  for (const k of Object.keys(query).sort()) {
+    const v = query[k];
+    if (k === 'path' || k === 'api_token' || v === undefined) continue;
+    for (const item of Array.isArray(v) ? v : [v]) out.push([k, item]);
+  }
+  return out;
+}
+
+/** Anahtar biçimini bozan karakterler kaçışlanır; bunlar olmayan değerlerde anahtar eskisiyle aynı (önbellek korunur). */
+const keyPart = (v: string) => v.replace(/[%&=]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`);
+
 export function buildSportmonksCacheKey(path: string, query: SportmonksQuery): string {
-  const parts = Object.keys(query)
-    .filter((k) => k !== 'path' && k !== 'api_token' && query[k] !== undefined)
-    .sort()
-    .map((k) => {
-      const v = query[k]!;
-      return `${k}=${Array.isArray(v) ? [...v].sort().join(',') : v}`;
-    });
+  const parts = canonicalQueryEntries(query).map(([k, v]) => `${keyPart(k)}=${keyPart(v)}`);
   return `${keyPrefix()}${normalizeSportmonksPath(path)}?${parts.join('&')}`;
+}
+
+/**
+ * Upstream yolu güvenli mi: `?`/`#`/`\\` yok (sorgu enjeksiyonu), `.`/`..` segmenti yok (`/v3` dışına çıkma).
+ * Sunucu içi çağrılar yüzde-kodlu yol verebilir (`teams/search/fenerbah%C3%A7e`); `%2e`/`%2f` gibi kodlu nokta/eğik
+ * çizgi de reddedilir.
+ */
+export function isSafeSportmonksPath(path: string): boolean {
+  if (!path || /[?#\\\u0000-\u001f\u007f]/.test(path) || /%(2e|2f|5c)/i.test(path)) return false;
+  return path.split('/').every((seg) => seg !== '.' && seg !== '..');
 }
 
 // ─── Katmanlar ──────────────────────────────────────────────────────────────
@@ -244,12 +266,7 @@ async function callUpstream(
 ): Promise<UpstreamResult> {
   const apiToken = process.env.SPORTMONKS_API_KEY;
   if (!apiToken) throw new Error('Missing SPORTMONKS_API_KEY (sunucu ortam değişkeni tanımlı değil)');
-  const qs = new URLSearchParams();
-  for (const [k, v] of Object.entries(query)) {
-    if (k === 'path' || k === 'api_token' || v === undefined) continue;
-    if (Array.isArray(v)) v.forEach((item) => qs.append(k, item));
-    else qs.append(k, v);
-  }
+  const qs = new URLSearchParams(canonicalQueryEntries(query));
   qs.set('api_token', apiToken);
 
   let res: Response;
@@ -260,7 +277,9 @@ async function callUpstream(
   try {
     // SPORTMONKS_UPSTREAM_BASE: yalnızca yük/kabul script'i için sahte upstream (scripts/load/simulate-visitors.mjs).
     const base = process.env.SPORTMONKS_UPSTREAM_BASE || SPORTMONKS_BASE;
-    res = await (opts.fetchImpl ?? fetch)(`${base}/${path}?${qs.toString()}`, { signal: controller.signal });
+    const url = new URL(`${base}/${path}?${qs.toString()}`);
+    if (!url.href.startsWith(`${base}/`)) throw new Error('Sportmonks yolu tabanın dışına çıkıyor');
+    res = await (opts.fetchImpl ?? fetch)(url.toString(), { signal: controller.signal });
     raw = await res.json().catch(() => null);
   } catch {
     return { status: controller.signal.aborted ? 'timeout' : 'network-error' };
@@ -374,6 +393,7 @@ export async function fetchSportmonksCached(
 ): Promise<SportmonksCachedResult> {
   const now = opts.now ?? Date.now;
   const normPath = normalizeSportmonksPath(path);
+  if (!isSafeSportmonksPath(normPath)) throw new Error('Geçersiz Sportmonks yolu');
   const key = buildSportmonksCacheKey(normPath, query);
   const timeoutMs = resolveTimeoutMs(opts);
 

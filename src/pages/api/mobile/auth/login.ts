@@ -29,7 +29,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const ip = requestIp(req.headers, req.socket.remoteAddress);
-  const rl = await hitFixedWindowRateLimit(`mobile-login:${ip}`, LOGIN_LIMIT, LOGIN_WINDOW_MS);
+  const rl = await hitFixedWindowRateLimit(`mobile-login:${ip}`, LOGIN_LIMIT, LOGIN_WINDOW_MS, { failClosed: true });
   if (!rl.success) {
     res.setHeader('Retry-After', String(Math.ceil((rl.resetAt - Date.now()) / 1000)));
     return res.status(429).json({ error: 'Çok fazla giriş denemesi. Lütfen bekleyin.' });

@@ -28,7 +28,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const ip = requestIp(req.headers, req.socket.remoteAddress);
-  const rl = await hitFixedWindowRateLimit(`mobile-register:${ip}`, REGISTER_LIMIT, REGISTER_WINDOW_MS);
+  const rl = await hitFixedWindowRateLimit(`mobile-register:${ip}`, REGISTER_LIMIT, REGISTER_WINDOW_MS, { failClosed: true });
   if (!rl.success) {
     res.setHeader('Retry-After', String(Math.ceil((rl.resetAt - Date.now()) / 1000)));
     return res.status(429).json({ error: 'Çok fazla kayıt denemesi. Lütfen daha sonra tekrar deneyin.' });

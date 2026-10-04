@@ -78,8 +78,9 @@ async function sendViaResend(to: string, subject: string, html: string): Promise
   });
 
   if (!response.ok) {
+    // Gövde loglanır ama kısaltılır (Resend hata gövdesi gönderilen içeriği yansıtmaz; yine de sınırla).
     const body = await response.text().catch(() => '');
-    console.error(`[resend] HTTP ${response.status}:`, body);
+    console.error(`[resend] HTTP ${response.status}:`, body.slice(0, 300));
   }
 
   return response.ok;
@@ -106,7 +107,8 @@ export async function createAndSendEmailVerification(email: string): Promise<voi
   );
 
   if (!sent) {
-    console.warn('[verify-email] Email provider not configured or failed. Link:', link);
+    // Bağlantı (tek kullanımlık belirteç) loglanmaz: log erişimi hesap ele geçirmeye dönüşmesin.
+    console.warn('[verify-email] Doğrulama e-postası gönderilemedi (sağlayıcı yapılandırılmamış ya da hata).');
   }
 }
 
@@ -157,7 +159,8 @@ export async function createAndSendPasswordReset(email: string): Promise<void> {
   );
 
   if (!sent) {
-    console.warn('[password-reset] Email provider failed. Link:', link);
+    // Bağlantı (tek kullanımlık belirteç) loglanmaz: log erişimi hesap ele geçirmeye dönüşmesin.
+    console.warn('[password-reset] Sıfırlama e-postası gönderilemedi (sağlayıcı yapılandırılmamış ya da hata).');
   }
 }
 

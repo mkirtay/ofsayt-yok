@@ -15,8 +15,9 @@ import { allowlistMode, checkProxyAllowlist, logAllowlistViolation } from '@/ser
  * uğramadan karşılar. Yanıttan `subscription`/`rate_limit` çıkarılır; kota Sentry'ye
  * cache katmanından raporlanır.
  *
- * İzin listesi (bkz. server/sportmonks/proxyAllowlist.ts): varsayılan `log` modunda listede olmayan
- * path/include/query ENGELLENMEZ, loglanır; `SPORTMONKS_ALLOWLIST_MODE=enforce` ile 403.
+ * İzin listesi (bkz. server/sportmonks/proxyAllowlist.ts): varsayılan `enforce` — listede olmayan path/include/filtre
+ * 403 (`SPORTMONKS_ALLOWLIST_MODE=log` yalnız loglar). Güvensiz yol segmenti / dizi parametre moddan bağımsız 400.
+ * Upstream'e yalnız temizlenmiş sorgu (bilinen parametreler) gider; önbellek anahtarı da ondan kurulur.
  */
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method && req.method.toUpperCase() !== 'GET') {
@@ -26,7 +27,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     const pathParam = req.query.path;
     const segments = Array.isArray(pathParam) ? pathParam : [String(pathParam ?? '')];
-    const path = segments.join('/');
 
     const ip = requestIp(
       req.headers as Record<string, string | string[] | undefined>,
@@ -46,20 +46,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     delete query.path;
 
     const mode = allowlistMode();
-    if (mode !== 'off') {
-      const verdict = checkProxyAllowlist(path, query);
-      if (!verdict.allowed) {
-        const ua = req.headers['user-agent'];
+    const verdict = checkProxyAllowlist(segments, query);
+    if (!verdict.allowed) {
+      const ua = req.headers['user-agent'];
+      if (verdict.unsafe || mode !== 'off') {
         logAllowlistViolation(verdict, { mode, userAgent: Array.isArray(ua) ? ua[0] : ua });
-        if (mode === 'enforce') {
-          res.setHeader('Cache-Control', 'no-store');
-          return res.status(403).json({ message: 'Bu istek izin listesinde değil' });
-        }
+      }
+      if (verdict.unsafe) {
+        res.setHeader('Cache-Control', 'no-store');
+        return res.status(400).json({ message: 'Geçersiz istek' });
+      }
+      if (mode === 'enforce') {
+        res.setHeader('Cache-Control', 'no-store');
+        return res.status(403).json({ message: 'Bu istek izin listesinde değil' });
       }
     }
-    delete query.api_token;
 
-    const result = await fetchSportmonksCached(path, query, { origin: 'proxy' });
+    const result = await fetchSportmonksCached(verdict.path, verdict.query, { origin: 'proxy' });
     res.setHeader('Cache-Control', sportmonksCacheControl(result));
     res.setHeader('X-Cache', result.cache);
     if (result.stale) res.setHeader('X-Data-Stale', '1');
