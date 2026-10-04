@@ -61,6 +61,7 @@ model User {
   creditTransactions CreditTransaction[]
   analysisUnlocks    AnalysisUnlock[]
   premiumGrants      PremiumGrant[]
+  paymentOrders      PaymentOrder[]
   posts               Post[]          @relation("PostAuthor")
   deletedPosts        Post[]          @relation("PostDeletedBy")
   postLikes           PostLike[]      @relation("PostLikeUser")
@@ -135,6 +136,41 @@ model PremiumGrant {
   createdAt DateTime  @default(now())
 
   @@index([userId, createdAt])
+}
+
+enum PaymentOrderStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+/// Hikie ödemesi (Checkout Link). Kredi / premium kararı YALNIZ imzalı callback ya da webhook'tan verilir; tarayıcı
+/// yönlendirmesi hiçbir şey vermez (bkz. server/payments). merchantOrderId bizim ürettiğimiz, linke eklenen kimlik;
+/// hikieOrderId Hikie'nin invoiceId'si (ödeme sonuçlanınca, tekil → aynı ödeme iki kez işlenmez).
+model PaymentOrder {
+  id              String             @id @default(cuid())
+  merchantOrderId String             @unique
+  userId          String
+  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// config/paymentPackages.ts anahtarı (credits_10, premium_30d, test_1tl …)
+  packageKey      String
+  amountTRY       Decimal            @db.Decimal(10, 2)
+  status          PaymentOrderStatus @default(PENDING)
+  hikieOrderId    String?            @unique
+  createdAt       DateTime           @default(now())
+  paidAt          DateTime?
+  refundedAt      DateTime?
+
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
+}
+
+/// İşlenmiş Hikie webhook'ları (Hikie-Webhook-Id) — aynı teslimat ikinci kez işlenmez.
+model PaymentWebhookEvent {
+  id         String   @id
+  event      String
+  receivedAt DateTime @default(now())
 }
 
 /// Arkadaş daveti. Ödül (iki tarafa 2 kredi) davet edilenin İLK SATIN ALIMINDA — ödeme entegrasyonunda bağlanacak.
