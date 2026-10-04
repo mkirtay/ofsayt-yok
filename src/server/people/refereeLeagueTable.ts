@@ -3,19 +3,22 @@
  * - Hakem listesi `referees/seasons/{seasonId}` (sezonda görev alanlar; 24 sa cache, sitemap ile ortak),
  * - her hakemin o sezonki satırı mevcut hakem istatistik cache'inden (hakem kartı / sayfası ile ortak anahtar, 12 sa),
  *   eşzamanlı en çok 8 istek. Sezon satırı olmayan (yardımcı hakem / dördüncü hakem) listeye girmez.
- * Hesaplanan tablo Redis'te 12 sa.
+ * Hesaplanan tablo Redis'te stale-while-revalidate (taze 12 sa, saklama 7 gün): süresi dolunca eski tablo hemen,
+ * yenisi arka planda (bkz. server/swrCache.ts). Hiç tablo yokken ilk üretim eşzamanlı (soğukta ~4–7 sn).
  */
 import { getSeasonsList } from '@/services/liveScoreService';
 import { sportmonksCollectAllPages } from '@/services/sportmonksRuntimeClient';
 import { seasonLine, type RefereeSeasonLine } from '@/services/sportmonks/refereeStats';
 import { loadRefereeStatsRaw } from '@/server/refereeSummary';
 import { personSlug } from '@/utils/personUrl';
-import { withRedis } from '@/lib/redis';
 import { cacheKeyPrefix } from '@/lib/cacheNamespace';
+import { loadWithSwr } from '@/server/swrCache';
 import { REFEREE_TABLE_LEAGUES, seasonSlugOf, type RefereeTableLeague } from '@/config/refereeTableLeagues';
 
 const STATS_CONCURRENCY = 8;
-const TABLE_TTL_SECONDS = 12 * 60 * 60;
+const TABLE_FRESH_SECONDS = 12 * 60 * 60;
+/** İstatistik isteklerinin bu oranından fazlası başarısızsa tablo yazılmaz (geçici hata eski tabloyu ezmesin). */
+const MAX_FAILED_RATIO = 0.25;
 const SEASON_OPTIONS = 3;
 
 export type RefereeTableRow = RefereeSeasonLine & { refereeId: number; name: string; slug: string };
@@ -52,14 +55,15 @@ export async function loadRefereeLeagueTable(leagueSlug: string, seasonSlug: str
   const season = seasonSlug ? seasons.find((s) => s.slug === seasonSlug) : seasons[0];
   if (!season) return 'missing';
 
-  const key = `${cacheKeyPrefix()}people:ref-table:v1:${season.id}`;
-  let rows = await withRedis((r) => r.get<RefereeTableRow[]>(key), null);
-  if (!rows) {
+  const key = `${cacheKeyPrefix()}people:ref-table:v2:${season.id}`;
+  const cached = await loadWithSwr<RefereeTableRow[]>(key, { freshSeconds: TABLE_FRESH_SECONDS }, async () => {
     const referees = await sportmonksCollectAllPages<RawPerson>({ basePath: 'football', path: `/referees/seasons/${season.id}`, perPage: 50, maxPages: 5 }).catch(() => null);
     if (!referees) return null;
     const unique = [...new Map(referees.filter((r) => r?.id).map((r) => [r.id, r])).values()];
+    let failed = 0;
     const lines = await mapWithConcurrency(unique, STATS_CONCURRENCY, async (r) => {
       const raw = await loadRefereeStatsRaw(r.id);
+      if (!raw) failed += 1;
       const stat = raw?.statistics?.find((s) => (s.season_id ?? s.season?.id) === season.id);
       if (!stat) return null;
       const line = seasonLine(stat, season.id, season.name);
@@ -67,9 +71,11 @@ export async function loadRefereeLeagueTable(leagueSlug: string, seasonSlug: str
       const name = r.display_name ?? r.common_name ?? r.name ?? '';
       return { ...line, refereeId: r.id, name, slug: personSlug(name, r.id) } satisfies RefereeTableRow;
     });
-    rows = sortByMatches(lines.filter((x): x is RefereeTableRow => x != null));
-    if (rows.length) await withRedis((r) => r.set(key, rows, { ex: TABLE_TTL_SECONDS }), null);
-  }
+    if (unique.length && failed / unique.length > MAX_FAILED_RATIO) return null;
+    return sortByMatches(lines.filter((x): x is RefereeTableRow => x != null));
+  });
+  if (!cached) return null;
+  const rows = cached.value;
 
   return {
     league,

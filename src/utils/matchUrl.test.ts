@@ -51,3 +51,34 @@ describe('parseMatchIdFromParam', () => {
     expect(parseMatchIdFromParam('abc-def')).toBe('abc-def');
   });
 });
+
+describe('slugify — Türkçe harfler + aksanlar (2026-10-04)', async () => {
+  const { slugify, legacySlugify, buildMatchSlug, matchSlugMatches } = await import('./matchUrl');
+  it('istenen örnekler', () => {
+    expect(slugify('São Paulo')).toBe('sao-paulo');
+    expect(slugify('Unión Santa Fe')).toBe('union-santa-fe');
+    expect(slugify('Gençlerbirliği')).toBe('genclerbirligi');
+    expect(slugify('Beşiktaş')).toBe('besiktas');
+    expect(slugify('İstanbul Başakşehir')).toBe('istanbul-basaksehir');
+  });
+  it('diğer aksanlar ve ayrışmayan Latin harfleri', () => {
+    expect(slugify('Atlético Tucumán')).toBe('atletico-tucuman');
+    expect(slugify('Vélez Sarsfield')).toBe('velez-sarsfield');
+    expect(slugify('Bodø/Glimt')).toBe('bodo-glimt');
+    expect(slugify('Mönchengladbach')).toBe('monchengladbach');
+    expect(slugify('ÇAYKUR RİZESPOR')).toBe('caykur-rizespor');
+    expect(slugify('Kasımpaşa')).toBe('kasimpasa');
+  });
+  it('idempotent; eski kural yalnız eski adresleri tanımak için', () => {
+    expect(slugify(slugify('São Paulo'))).toBe('sao-paulo');
+    expect(legacySlugify('São Paulo')).toBe('s-o-paulo');
+    expect(buildMatchSlug({ home_name: 'São Paulo', away_name: 'Santos' })).toBe('sao-paulo-santos');
+  });
+  it("eski id aralığında birebir karşılaştırma: yeni slug ve eski kuralın slug'ı kabul, başka maç değil", () => {
+    const m = { home_name: 'São Paulo', away_name: 'Santos' };
+    expect(matchSlugMatches('sao-paulo-santos', m)).toBe(true);
+    expect(matchSlugMatches('s-o-paulo-santos', m)).toBe(true);
+    expect(matchSlugMatches('S%C3%A3o-Paulo-Santos', m)).toBe(true);
+    expect(matchSlugMatches('flamengo-santos', m)).toBe(false);
+  });
+});

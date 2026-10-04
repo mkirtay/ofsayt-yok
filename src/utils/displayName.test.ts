@@ -45,11 +45,12 @@ describe('slug değişmez', () => {
     }
   });
 
-  it('normalize slug\'ı değiştirecekse takım adı ham kalır (mevcut URL korunur)', () => {
-    // "Emi̇r" slug'ı ham hâlde "emi-r"; normalize edilse "emir" olurdu → ad değişmez
-    expect(normalizeTeamName(`Emi${DOT}rspor`)).toBe(`Emi${DOT}rspor`);
-    // Ayrık é: ham slug "cafe-fc", NFC "Café" → "caf-fc" olurdu → ad değişmez
-    expect(normalizeTeamName('Café FC')).toBe('Café FC');
+  it("slug fonksiyonu aksanları ayırdığı için (2026-10-04) normalize edilen adın slug'ı değişmez → ad normalize edilir", () => {
+    // Önceden ham "Emi̇r" slug'ı "emi-r" idi ve ad ham kalıyordu; artık ikisi de "emirspor"
+    expect(normalizeTeamName(`Emi${DOT}rspor`)).toBe('Emirspor');
+    expect(slugOf(`Emi${DOT}rspor`, 'Galatasaray')).toBe('emirspor-galatasaray');
+    // Ayrık é → NFC "Café"; slug ikisinde de "cafe-fc"
+    expect(normalizeTeamName('Cafe\u0301 FC')).toBe('Café FC');
   });
 
   it('Sportmonks fixture mapper: görünen ad normalize, URL birebir aynı', () => {

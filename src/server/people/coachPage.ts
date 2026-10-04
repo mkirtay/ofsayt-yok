@@ -10,6 +10,8 @@ import { loadMulti, isFinished, byKickoffDesc, toRecentMatch } from '@/server/pe
 import { mapSportmonksStateToPhase } from '@/services/sportmonks/stateMapping';
 import { coachSeasonTable, ageOn, type CoachSeasonRow, type RawCoach } from '@/services/sportmonks/coachStats';
 import { todayIsoIstanbul } from '@/utils/dateStrip';
+import { cacheKeyPrefix } from '@/lib/cacheNamespace';
+import { loadWithSwr } from '@/server/swrCache';
 import type { PersonRecentMatch } from '@/server/people/refereePage';
 
 type RawCoachFixtures = { fixtures?: { id: number; starting_at?: string | null; state_id?: number | null }[] | null };
@@ -95,7 +97,22 @@ async function loadRecent(id: number): Promise<PersonRecentMatch[]> {
   }
 }
 
+/**
+ * Sayfa verisi Redis'te stale-while-revalidate (taze 1 sa, saklama 7 gün): süresi dolunca eski veri hemen, yenisi
+ * arka planda (bkz. server/swrCache.ts); "yok" (404) cache'lenmez. Hiç veri yokken ilk üretim eşzamanlı.
+ */
 export async function loadCoachPage(id: number): Promise<CoachPageData | 'missing' | null> {
+  let missing = false;
+  const res = await loadWithSwr<CoachPageData>(`${cacheKeyPrefix()}people:coach-page:v1:${id}`, { freshSeconds: 60 * 60 }, async () => {
+    const r = await computeCoachPage(id);
+    if (r === 'missing') missing = true;
+    return r === 'missing' ? null : r;
+  });
+  if (res) return res.value;
+  return missing ? 'missing' : null;
+}
+
+async function computeCoachPage(id: number): Promise<CoachPageData | 'missing' | null> {
   const today = todayIsoIstanbul();
   const [profile, stats, recent] = await Promise.all([loadProfile(id), loadStats(id), loadRecent(id)]);
   if (profile === 'missing') return 'missing';

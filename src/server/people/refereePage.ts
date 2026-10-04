@@ -17,6 +17,7 @@ import { refereeTeamBreakdown, type BreakdownFixture, type TeamBreakdownRow } fr
 import { loadRefereeStatsRaw } from '@/server/refereeSummary';
 import { withRedis } from '@/lib/redis';
 import { cacheKeyPrefix } from '@/lib/cacheNamespace';
+import { loadWithSwr } from '@/server/swrCache';
 
 const MULTI_SIZE = 20;
 const MAX_SEASON_CHUNKS = 3;
@@ -106,7 +107,22 @@ async function breakdownFromCache(key: string): Promise<RefereeTeamBreakdown | n
 }
 
 /** `missing` = böyle bir hakem yok (404); `null` = geçici hata. */
+/**
+ * Sayfa verisi Redis'te stale-while-revalidate (taze 1 sa, saklama 7 gün): süresi dolunca eski veri hemen, yenisi
+ * arka planda (bkz. server/swrCache.ts); "yok" (404) cache'lenmez. Hiç veri yokken ilk üretim eşzamanlı.
+ */
 export async function loadRefereePage(id: number): Promise<RefereePageData | 'missing' | null> {
+  let missing = false;
+  const res = await loadWithSwr<RefereePageData>(`${cacheKeyPrefix()}people:referee-page:v1:${id}`, { freshSeconds: 60 * 60 }, async () => {
+    const r = await computeRefereePage(id);
+    if (r === 'missing') missing = true;
+    return r === 'missing' ? null : r;
+  });
+  if (res) return res.value;
+  return missing ? 'missing' : null;
+}
+
+async function computeRefereePage(id: number): Promise<RefereePageData | 'missing' | null> {
   const [profile, statsRaw, mainIds] = await Promise.all([loadProfile(id), loadRefereeStatsRaw(id), loadMainRefereeFixtureIds(id)]);
   if (profile === 'missing') return 'missing';
   if (!profile) return null;

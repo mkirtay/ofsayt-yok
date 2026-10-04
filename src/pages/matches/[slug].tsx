@@ -10,7 +10,7 @@ import MatchArchivedTabs from '@/components/MatchArchivedTabs';
 import JsonLd from '@/components/JsonLd';
 import { useMatchDetail } from '@/hooks/useMatchDetail';
 import type { Match } from '@/models/liveScore';
-import { buildMatchHref, parseMatchIdFromParam, parseMatchSlugFromParam } from '@/utils/matchUrl';
+import { buildMatchHref, buildMatchSlug, parseMatchIdFromParam, parseMatchSlugFromParam } from '@/utils/matchUrl';
 import { matchOgImagePath } from '@/utils/matchOgImage';
 import { WORLD_CUP_COMPETITION_ID } from '@/config/worldCup';
 import { useTranslation } from '@/lib/i18n';
@@ -27,6 +27,7 @@ import type { MatchEvent, MatchLineupData, MatchStatsData } from '@/models/domai
 import {
   matchPageCacheControl,
   matchPageCacheControlForPage,
+  matchPageCacheKindForStatus,
   type MatchPageCacheKind,
 } from '@/server/matchPageCache';
 import styles from './matchDetail.module.scss';
@@ -60,6 +61,14 @@ type MatchDetailProps = {
  * kartında jenerik "Maç Detayı" yerine gerçek takım isimleri/skor görünür
  * ve kullanıcı ilk açılışta da boş bir sayfa görmez.
  */
+function decodeSafe(s: string): string {
+  try {
+    return decodeURIComponent(s);
+  } catch {
+    return s;
+  }
+}
+
 export const getServerSideProps: GetServerSideProps<MatchDetailProps> = async (context) => {
   const slugParam = context.params?.slug;
   const slug = Array.isArray(slugParam) ? slugParam[0] : slugParam;
@@ -80,6 +89,16 @@ export const getServerSideProps: GetServerSideProps<MatchDetailProps> = async (c
     const page = await withPageTimeout(() => resolveMatchPage(matchId, parseMatchSlugFromParam(slug ?? '')));
     switch (page.kind) {
       case 'match': {
+        // Slug kanonik değilse (yalnız id, eski slug kuralı "s-o-paulo-santos", ad değişikliği) sunucuda 301; sorgu korunur.
+        // Site slug üretemiyorsa (takım adı yok) yönlendirme yok.
+        const canonical = buildMatchHref(page.match);
+        const requested = `/matches/${decodeSafe(slug ?? '')}`;
+        if (buildMatchSlug(page.match) && requested !== canonical) {
+          setCache(matchPageCacheKindForStatus(page.match.status));
+          const resolved = context.resolvedUrl ?? '';
+          const qIdx = resolved.indexOf('?');
+          return { redirect: { destination: qIdx >= 0 ? canonical + resolved.slice(qIdx) : canonical, statusCode: 301 } };
+        }
         const apiMatchId = String(page.match.id);
         const [h2h, seed, analysisPreview] = await Promise.all([
           withPageTimeout(() => loadMatchCardH2h(page.match)),

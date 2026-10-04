@@ -1,10 +1,38 @@
 import type { Match } from '@/models/liveScore';
 
 /**
- * Türkçe karakterleri ASCII karşılıklarına dönüştürüp URL-safe slug üretir.
- * Örn: "Trabzonspor" → "trabzonspor", "Başakşehir FK" → "basaksehir-fk"
+ * URL-safe slug: önce Türkçe harfler (ç ğ ı İ ö ş ü), sonra NFD ile aksanlar ayrılıp atılır (ã → a, ó → o), ayrışmayan
+ * birkaç Latin harfi (ø, æ, ß, ł, đ…) elle; kalan her şey tire. Örn: "São Paulo" → "sao-paulo", "İstanbul Başakşehir"
+ * → "istanbul-basaksehir". Maç, hakem, teknik direktör ve hakem tablosu adresleri bunu kullanır.
  */
 export function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/ç/g, 'c')
+    .replace(/ğ/g, 'g')
+    .replace(/ı/g, 'i')
+    .replace(/ö/g, 'o')
+    .replace(/ş/g, 's')
+    .replace(/ü/g, 'u')
+    .normalize('NFD')
+    // "İ".toLowerCase() = "i" + U+0307; diğer aksanlar da burada düşer
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/ø/g, 'o')
+    .replace(/æ/g, 'ae')
+    .replace(/œ/g, 'oe')
+    .replace(/ß/g, 'ss')
+    .replace(/ł/g, 'l')
+    .replace(/[đð]/g, 'd')
+    .replace(/þ/g, 'th')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+/**
+ * 2026-10-04 öncesi slug kuralı: aksanlı harfler silinip tireye dönüyordu ("São Paulo" → "s-o-paulo"). Yalnız eski
+ * adreslerin tanınması için (bkz. `matchSlugMatches`); yeni adres üretmez.
+ */
+export function legacySlugify(text: string): string {
   return text
     .toLowerCase()
     .replace(/ğ/g, 'g')
@@ -90,7 +118,8 @@ export function normalizeMatchSlug(raw: string): string {
 }
 
 /**
- * URL'deki slug, maçın takımlarından sitenin ürettiği slug ile birebir aynı mı (bulanık eşleştirme yok).
+ * URL'deki slug, maçın takımlarından sitenin ürettiği slug ile birebir aynı mı (bulanık eşleştirme yok; eski slug
+ * kuralının çıktısı da kabul).
  * Maçın takım adı hiç yoksa site slug'sız URL üretir → karşılaştırılacak bir şey yok, `true`.
  */
 export function matchSlugMatches(
@@ -99,5 +128,10 @@ export function matchSlugMatches(
 ): boolean {
   const expected = normalizeMatchSlug(buildMatchSlug(match));
   if (!expected) return true;
-  return normalizeMatchSlug(urlSlug) === expected;
+  const got = normalizeMatchSlug(urlSlug);
+  if (got === expected) return true;
+  // Eski kuralla üretilmiş adres de aynı maçın (ör. "s-o-paulo-santos"); sayfa onu yeni slug'a 301'ler.
+  const home = match.home?.name || match.home_name || '';
+  const away = match.away?.name || match.away_name || '';
+  return got === `${legacySlugify(home)}-${legacySlugify(away)}`;
 }
