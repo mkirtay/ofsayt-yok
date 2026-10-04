@@ -3,6 +3,21 @@ import path from "path";
 import { withSentryConfig } from "@sentry/nextjs";
 import { NEWS_IMAGE_HOSTS } from "./src/config/newsImageHosts";
 
+/**
+ * Güvenlik başlıkları (tüm yanıtlar). Tam CSP ayrı iş (satır içi betikler için nonce/hash gerekir); şimdilik CSP yalnız
+ * `frame-ancestors` — tıklama tuzağı (giriş / kredi / ödeme sayfaları başka sitede çerçeveye alınamaz). Turnstile kendi
+ * iframe'ini bizim sayfamıza gömer; bu başlıklar onu etkilemez.
+ */
+export const SECURITY_HEADERS: { key: string; value: string }[] = [
+  { key: 'X-Frame-Options', value: 'DENY' },
+  { key: 'Content-Security-Policy', value: "frame-ancestors 'none'" },
+  { key: 'X-Content-Type-Options', value: 'nosniff' },
+  // .app üst alan adı zaten HSTS önyüklü; başlık yine de açık (önizleme / özel alan adları).
+  { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' },
+  { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+  { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), usb=()' },
+];
+
 const nextConfig: NextConfig = {
   reactStrictMode: false,
   // Aynı klasörde ikinci bir `next dev` (ör. paralel önizleme) `.next/dev/lock` kilidine takılmasın diye
@@ -21,6 +36,9 @@ const nextConfig: NextConfig = {
       'node_modules/@prisma/client/runtime/binary.*',
       'node_modules/.prisma/client/*.wasm',
     ],
+  },
+  async headers() {
+    return [{ source: '/:path*', headers: SECURITY_HEADERS }];
   },
   async redirects() {
     // /uefa sayfası kaldırıldı (Şampiyonlar Ligi ana sayfadaki lig listesinden/filtresinden erişilir).

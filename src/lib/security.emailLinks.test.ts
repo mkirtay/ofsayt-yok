@@ -25,3 +25,30 @@ describe('e-posta gönderilemezse doğrulama / sıfırlama bağlantısı loglanm
     expect(logged).not.toMatch(/token=|https?:\/\/|[0-9a-f]{64}/);
   });
 });
+
+describe('checkSignupTurnstile — kayıt bot kapısı (web + mobil)', () => {
+  it('geliştirmede atlanır', async () => {
+    const { checkSignupTurnstile } = await import('./security');
+    expect(await checkSignupTurnstile(undefined, '1.1.1.1', { NODE_ENV: 'development' })).toEqual({ ok: true });
+  });
+
+  it('üretimde anahtar yoksa kayıt reddedilir (sessizce atlanmaz)', async () => {
+    const { checkSignupTurnstile } = await import('./security');
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const r = await checkSignupTurnstile('tok', '1.1.1.1', { NODE_ENV: 'production' });
+    expect(r).toMatchObject({ ok: false, status: 503 });
+  });
+
+  it('üretimde belirteç yoksa / doğrulanmazsa 400, doğrulanırsa geçer', async () => {
+    const { checkSignupTurnstile } = await import('./security');
+    const env = { NODE_ENV: 'production', TURNSTILE_SECRET_KEY: 's' };
+    process.env.TURNSTILE_SECRET_KEY = 's';
+    expect(await checkSignupTurnstile('', '1.1.1.1', env)).toMatchObject({ ok: false, status: 400 });
+    const fetchSpy = vi.spyOn(globalThis, 'fetch');
+    fetchSpy.mockResolvedValueOnce(new Response(JSON.stringify({ success: false })));
+    expect(await checkSignupTurnstile('kotu', '1.1.1.1', env)).toMatchObject({ ok: false, status: 400 });
+    fetchSpy.mockResolvedValueOnce(new Response(JSON.stringify({ success: true })));
+    expect(await checkSignupTurnstile('iyi', '1.1.1.1', env)).toEqual({ ok: true });
+    delete process.env.TURNSTILE_SECRET_KEY;
+  });
+});

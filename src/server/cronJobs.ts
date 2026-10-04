@@ -12,6 +12,7 @@ import { randomUUID } from 'node:crypto';
 import * as Sentry from '@sentry/nextjs';
 import { withRedis } from '@/lib/redis';
 import { cacheKeyPrefix } from '@/lib/cacheNamespace';
+import { isCronAuthorization } from '@/lib/cronSecret';
 
 export type CronJobName = 'evaluate-predictions' | 'analysis-pregenerate';
 export const CRON_JOBS: readonly CronJobName[] = ['evaluate-predictions', 'analysis-pregenerate'];
@@ -116,8 +117,7 @@ export async function runCronJob<T>(
   }
 }
 
-/** Bearer CRON_SECRET kontrolü (değer hiçbir yere yazılmaz). */
+/** Bearer CRON_SECRET kontrolü (değer hiçbir yere yazılmaz; sabit zamanlı — lib/cronSecret.ts). */
 export function isCronRequest(authorization: string | undefined): boolean {
-  const secret = process.env.CRON_SECRET;
-  return Boolean(secret) && authorization === `Bearer ${secret}`;
+  return isCronAuthorization(authorization);
 }

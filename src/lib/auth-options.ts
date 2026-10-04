@@ -4,9 +4,27 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import { compare } from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
-import { checkOAuthSignIn, oauthProviders, onOAuthAccountLinked, onOAuthUserCreated } from '@/lib/oauth';
+import {
+  checkOAuthSignIn,
+  EMAIL_ALREADY_REGISTERED,
+  isDuplicateMailboxOAuthSignup,
+  oauthProviders,
+  onOAuthAccountLinked,
+  onOAuthUserCreated,
+} from '@/lib/oauth';
 
-const ROLE_REFRESH_MS = 60_000;
+/** Oturum sürümü eşleşmedi (şifre değişti / sıfırlandı) ya da kullanıcı silindi → NextAuth oturum çerezini temizler. */
+export class SessionRevokedError extends Error {
+  constructor() {
+    super('SESSION_REVOKED');
+    this.name = 'SessionRevokedError';
+  }
+}
+
+/** Belirteçteki oturum sürümü (bu alan eklenmeden önce verilmiş belirteçler 0 sayılır — toplu çıkış olmaz). */
+export function tokenVersionOf(token: { tokenVersion?: unknown }): number {
+  return typeof token.tokenVersion === 'number' ? token.tokenVersion : 0;
+}
 
 /** JWT'ye yazılabilir premium bitişi (Date nesnesi JWT'de string'e döner; tek biçim ISO). */
 function toIso(v: Date | string | null | undefined): string | null {
@@ -53,6 +71,7 @@ export const authOptions: NextAuthOptions = {
             username: true,
             credits: true,
             premiumUntil: true,
+            tokenVersion: true,
           },
         });
 
@@ -70,6 +89,7 @@ export const authOptions: NextAuthOptions = {
           username: user.username,
           credits: user.credits,
           premiumUntil: user.premiumUntil,
+          tokenVersion: user.tokenVersion,
         };
       },
     }),
@@ -78,9 +98,14 @@ export const authOptions: NextAuthOptions = {
   ],
 
   callbacks: {
-    async signIn({ account, profile }) {
+    async signIn({ account, profile, user }) {
       if (!account || account.type !== 'oauth') return true;
-      return checkOAuthSignIn(account.provider, profile as { email_verified?: unknown } | undefined);
+      const verdict = checkOAuthSignIn(account.provider, profile as { email_verified?: unknown } | undefined);
+      if (verdict !== true) return verdict;
+      if (await isDuplicateMailboxOAuthSignup(account.provider, account.providerAccountId, user.email)) {
+        return `/auth/signin?error=${EMAIL_ALREADY_REGISTERED}`;
+      }
+      return true;
     },
     async jwt({ token, user, trigger, session }) {
       if (user) {
@@ -91,26 +116,31 @@ export const authOptions: NextAuthOptions = {
         token.username = (user as { username?: string | null }).username ?? null;
         token.credits = (user as { credits?: number }).credits ?? 0;
         token.premiumUntil = toIso((user as { premiumUntil?: Date | string | null }).premiumUntil);
-        token.roleSyncedAt = Date.now();
+        // Credentials `authorize` ve OAuth adapter kullanıcısı (tam satır) tokenVersion taşır.
+        token.tokenVersion = (user as { tokenVersion?: number }).tokenVersion ?? 0;
       }
       if (!user && token.sub) {
-        const last =
-          typeof token.roleSyncedAt === 'number' ? token.roleSyncedAt : 0;
-        if (Date.now() - last > ROLE_REFRESH_MS) {
-          const row = await prisma.user.findUnique({
-            where: { id: token.sub },
-            select: { role: true, username: true, name: true, image: true, credits: true, premiumUntil: true },
-          });
-          if (row) {
-            token.role = row.role;
-            token.username = row.username;
-            token.name = row.name;
-            token.picture = row.image ?? undefined;
-            token.credits = row.credits;
-            token.premiumUntil = toIso(row.premiumUntil);
-          }
-          token.roleSyncedAt = Date.now();
-        }
+        // Her oturum kontrolünde: sürüm DB ile eşleşmeli (şifre değişince / sıfırlanınca eski oturumlar düşer); rol,
+        // kredi, premium da aynı sorguyla güncellenir (önceden 60 sn'de bir).
+        const row = await prisma.user.findUnique({
+          where: { id: token.sub },
+          select: {
+            role: true,
+            username: true,
+            name: true,
+            image: true,
+            credits: true,
+            premiumUntil: true,
+            tokenVersion: true,
+          },
+        });
+        if (!row || row.tokenVersion !== tokenVersionOf(token)) throw new SessionRevokedError();
+        token.role = row.role;
+        token.username = row.username;
+        token.name = row.name;
+        token.picture = row.image ?? undefined;
+        token.credits = row.credits;
+        token.premiumUntil = toIso(row.premiumUntil);
       }
       if (trigger === 'update' && session && typeof session === 'object') {
         const s = session as Record<string, unknown>;

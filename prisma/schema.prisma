@@ -24,8 +24,14 @@ model User {
   username      String?  @unique
   bio           String?  @db.Text
   email         String   @unique
+  /// Kanonik e-posta (gmail/googlemail: `+etiket` ve noktalar atılır, alan gmail.com) — aynı kutuya ikinci hesap ve
+  /// ikinci kayıt bonusu engellenir (lib/emailNormalize.ts). 2026-10-04'ten önceki kayıtlarda boş (geri doldurulmadı).
+  emailNormalized String? @unique
   emailVerified DateTime?
   password      String?
+  /// Oturum sürümü: şifre değişince / sıfırlanınca artar; web oturumu ve mobil belirteç bu değeri taşır, her
+  /// kimlik kontrolünde karşılaştırılır (eşleşmeyen oturum geçersiz).
+  tokenVersion  Int      @default(0)
   image         String?
   role          Role     @default(USER)
   /// AI analiz kredisi bakiyesi (süresiz). Yeni kullanıcı 0 ile başlar; e-posta doğrulanınca 2 kredi kayıt bonusu

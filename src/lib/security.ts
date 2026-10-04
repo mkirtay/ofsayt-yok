@@ -34,6 +34,29 @@ export async function verifyTurnstileToken(
   return data.success === true;
 }
 
+export type SignupTurnstileResult = { ok: true } | { ok: false; status: number; error: string };
+
+/**
+ * Kayıt uçlarının (web + mobil) Turnstile kapısı. Üretimde zorunlu: `TURNSTILE_SECRET_KEY` yoksa kayıt REDDEDİLİR
+ * (önceden sessizce atlanıyordu — ortam değişkeni düşerse bot kaydı açık kalırdı). Geliştirme / testte atlanır.
+ */
+export async function checkSignupTurnstile(
+  token: unknown,
+  remoteIp: string | undefined,
+  env: { NODE_ENV?: string; TURNSTILE_SECRET_KEY?: string } = process.env,
+): Promise<SignupTurnstileResult> {
+  if (env.NODE_ENV !== 'production') return { ok: true };
+  if (!env.TURNSTILE_SECRET_KEY) {
+    console.error('[turnstile] TURNSTILE_SECRET_KEY tanımlı değil — kayıt reddedildi.');
+    return { ok: false, status: 503, error: 'Kayıt şu anda yapılamıyor. Lütfen daha sonra tekrar deneyin.' };
+  }
+  if (typeof token !== 'string' || !token) {
+    return { ok: false, status: 400, error: 'Guvenlik dogrulamasi basarisiz.' };
+  }
+  const ok = await verifyTurnstileToken(token, remoteIp).catch(() => false);
+  return ok ? { ok: true } : { ok: false, status: 400, error: 'Guvenlik dogrulamasi basarisiz.' };
+}
+
 function sha256(input: string): string {
   return createHash('sha256').update(input).digest('hex');
 }

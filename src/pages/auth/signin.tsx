@@ -19,6 +19,7 @@ function oauthErrorKey(code: unknown): string | null {
   if (typeof code !== 'string' || !code) return null
   if (code === 'OAuthAccountNotLinked') return 'signIn.oauthNotLinked'
   if (code === 'GoogleEmailNotVerified') return 'signIn.googleEmailNotVerified'
+  if (code === 'EmailAlreadyRegistered') return 'signIn.emailAlreadyRegistered'
   if (code === 'CredentialsSignin') return null
   return 'signIn.oauthError'
 }

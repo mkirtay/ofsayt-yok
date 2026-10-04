@@ -87,7 +87,6 @@ const MAX_INCLUDE_TOKENS = 25;
 const FIELD_SELECTION = /^[a-z_]{1,40}(,[a-z_]{1,40}){0,19}$/;
 /** Filtre değeri: id listesi. */
 const FILTER_VALUE = /^\d{1,12}(,\d{1,12}){0,49}$/;
-// eslint-disable-next-line no-control-regex
 const UNSAFE_SEGMENT = /[%?#\\/\u0000-\u001f\u007f]/;
 
 export type AllowlistResult = {

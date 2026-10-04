@@ -1,10 +1,19 @@
+const CHECK_ORIGIN = 'https://ofsaytyok.invalid';
+
 /**
- * Giriş sonrası dönüş adresi: yalnızca site içi göreli yol kabul edilir (`/` ile başlar, `//` ve `/\` değil).
- * Dış adreslere yönlendirmeyi (open redirect) engeller; geçersizse `fallback`.
+ * Giriş sonrası dönüş adresi: yalnızca site içi göreli yol kabul edilir (open redirect yok); geçersizse `fallback`.
+ * - `/` ile başlamalı; kontrol karakteri (tab, satır sonu…) ve `\` içeremez — tarayıcılar bunları atar ya da `/`
+ *   sayar (`/\t/evil.com` → `//evil.com`).
+ * - Sabit bir kökene göre çözülünce köken değişmemeli (`//evil.com`, `/\\evil.com` vb. her biçim yakalanır).
  */
 export function safeCallbackPath(raw: unknown, fallback = '/'): string {
   const v = Array.isArray(raw) ? raw[0] : raw;
-  if (typeof v !== 'string' || !v.startsWith('/') || v.startsWith('//') || v.startsWith('/\\')) return fallback;
+  if (typeof v !== 'string' || !v.startsWith('/') || /[\u0000-\u001f\u007f\\]/.test(v)) return fallback;
+  try {
+    if (new URL(v, CHECK_ORIGIN).origin !== CHECK_ORIGIN) return fallback;
+  } catch {
+    return fallback;
+  }
   return v;
 }
 

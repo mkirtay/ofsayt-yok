@@ -1,11 +1,10 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { requireAdmin } from '@/lib/requireAuth';
+import { isCronAuthorization } from '@/lib/cronSecret';
 
 /** `Authorization: Bearer $CRON_SECRET` (cron/CI/elle tetikleme) — `CRON_SECRET` tanımsızsa her zaman false. */
 export function isValidCronRequest(req: NextApiRequest): boolean {
-  const secret = process.env.CRON_SECRET;
-  if (!secret) return false;
-  return req.headers.authorization === `Bearer ${secret}`;
+  return isCronAuthorization(req.headers.authorization);
 }
 
 /** Bot uçları: CRON_SECRET ya da ADMIN oturumu (handler seviyesinde zorunlu kontrol). Reddedilirse yanıt yazılmıştır → false. */

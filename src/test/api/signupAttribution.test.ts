@@ -4,7 +4,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 const h = vi.hoisted(() => ({ updateMany: vi.fn(), create: vi.fn() }));
 
 vi.mock('@/lib/prisma', () => ({
-  prisma: { user: { updateMany: h.updateMany, create: h.create, findUnique: vi.fn(async () => null) } },
+  prisma: { user: { updateMany: h.updateMany, create: h.create, findUnique: vi.fn(async () => null), findFirst: vi.fn(async () => null) } },
 }));
 vi.mock('@/lib/requireAuth', () => ({ requireAuth: async () => ({ ok: true, userId: 'u1' }) }));
 vi.mock('@/lib/credits', () => ({ grantVerifiedSignupBonus: vi.fn() }));

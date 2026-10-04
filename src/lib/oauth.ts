@@ -11,6 +11,7 @@ import type { Provider } from 'next-auth/providers/index';
 import GoogleProvider, { type GoogleProfile } from 'next-auth/providers/google';
 import { prisma } from '@/lib/prisma';
 import { grantVerifiedSignupBonus } from '@/lib/credits';
+import { canonicalEmail } from '@/lib/emailNormalize';
 import { isGoogleAuthEnabled } from '@/lib/oauthEnv';
 
 export { isGoogleAuthEnabled };
@@ -84,11 +85,52 @@ export async function onOAuthAccountLinked(userId: string): Promise<void> {
  */
 export async function onOAuthUserCreated(userId: string): Promise<void> {
   // NextAuth bu olayı e-postayla MEVCUT hesaba bağlarken de çağırıyor → yalnızca az önce oluşmuş, şifresiz kayıt "yeni"dir.
-  const row = await prisma.user.findUnique({ where: { id: userId }, select: { password: true, createdAt: true } });
+  const row = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { password: true, createdAt: true, email: true },
+  });
   if (!row || row.password || Date.now() - row.createdAt.getTime() > FRESH_USER_MS) return;
   // Adapter kullanıcıyı DB varsayılanıyla oluşturur (migration B'ye kadar 5) → v2'de 0'dan başlar, bonus 2.
-  await prisma.user.update({ where: { id: userId }, data: { emailVerified: new Date(), credits: 0 } });
+  const data = { emailVerified: new Date(), credits: 0 };
+  try {
+    await prisma.user.update({ where: { id: userId }, data: { ...data, emailNormalized: canonicalEmail(row.email) } });
+  } catch (err) {
+    if ((err as { code?: string } | null)?.code !== 'P2002') throw err;
+    // Aynı posta kutusunda başka hesap var (eşzamanlı kayıt; `isDuplicateMailboxOAuthSignup`'tan kaçan) → bonus yok.
+    await prisma.user.update({ where: { id: userId }, data });
+    return;
+  }
   await grantVerifiedSignupBonus(userId);
+}
+
+/** Giriş sayfasına özel hata kodu: bu posta kutusuyla (gmail `+` / nokta varyantı) başka bir hesap kayıtlı. */
+export const EMAIL_ALREADY_REGISTERED = 'EmailAlreadyRegistered';
+
+/**
+ * OAuth girişi YENİ bir kullanıcı oluşturacak ve aynı posta kutusunda (kanonik e-posta) başka hesap varsa true —
+ * ikinci hesap / ikinci kayıt bonusu engellenir. Bağlı OAuth hesabı ya da tam e-posta eşleşmesi (NextAuth'un normal
+ * bağlama / giriş yolu) etkilenmez.
+ */
+export async function isDuplicateMailboxOAuthSignup(
+  provider: string,
+  providerAccountId: string,
+  email: string | null | undefined,
+): Promise<boolean> {
+  if (!email) return false;
+  const linked = await prisma.account.findUnique({
+    where: { provider_providerAccountId: { provider, providerAccountId } },
+    select: { userId: true },
+  });
+  if (linked) return false;
+  const lower = email.trim().toLowerCase();
+  const exact = await prisma.user.findUnique({ where: { email: lower }, select: { id: true } });
+  if (exact) return false;
+  const canonical = canonicalEmail(lower);
+  const dup = await prisma.user.findFirst({
+    where: { OR: [{ emailNormalized: canonical }, { email: canonical }] },
+    select: { id: true },
+  });
+  return dup !== null;
 }
 
 /** OAuth ile oluşturulan kaydın "yeni" sayıldığı süre (createUser olayı oluşturmanın hemen ardından gelir). */

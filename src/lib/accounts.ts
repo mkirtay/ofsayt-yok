@@ -7,6 +7,7 @@ import { hash } from 'bcryptjs';
 import type { Role } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { isDisposableEmail } from '@/lib/disposableEmail';
+import { canonicalEmail } from '@/lib/emailNormalize';
 import { recordReferral } from '@/lib/referral';
 import { createAndSendEmailVerification } from '@/lib/security';
 import { validatePassword, usernameRules } from '@/lib/validation';
@@ -73,26 +74,42 @@ export async function createUserAccount(input: CreateAccountInput): Promise<Crea
     }
   }
 
-  const existing = await prisma.user.findUnique({ where: { email: normalizedEmail } });
+  // Aynı posta kutusu (gmail `+etiket` / nokta varyantları) → ikinci hesap (ve ikinci kayıt bonusu) yok. Eski kayıtlarda
+  // `emailNormalized` boş: kanonik biçimiyle kayıtlı e-posta da yakalanır.
+  const emailNormalized = canonicalEmail(normalizedEmail);
+  const existing = await prisma.user.findFirst({
+    where: { OR: [{ email: normalizedEmail }, { email: emailNormalized }, { emailNormalized }] },
+    select: { id: true },
+  });
   if (existing) {
     return { ok: false, status: 409, error: 'Bu e-posta adresi zaten kayıtlı' };
   }
 
   const hashed = await hash(password, 12);
 
-  const user = await prisma.user.create({
-    data: {
-      name: typeof name === 'string' && name ? name : null,
-      email: normalizedEmail,
-      password: hashed,
-      username: usernameNorm,
-      // Kredi modeli v2: 0 ile başlar; e-posta doğrulanınca +2 (lib/credits.ts → grantVerifiedSignupBonus). Açıkça
-      // yazılır: DB varsayılanı migration B'ye kadar 5.
-      credits: 0,
-      ...(attribution ?? {}),
-    },
-    select: { id: true, email: true, name: true, role: true, username: true, credits: true },
-  });
+  let user: CreatedAccount;
+  try {
+    user = await prisma.user.create({
+      data: {
+        name: typeof name === 'string' && name ? name : null,
+        email: normalizedEmail,
+        emailNormalized,
+        password: hashed,
+        username: usernameNorm,
+        // Kredi modeli v2: 0 ile başlar; e-posta doğrulanınca +2 (lib/credits.ts → grantVerifiedSignupBonus). Açıkça
+        // yazılır: DB varsayılanı migration B'ye kadar 5.
+        credits: 0,
+        ...(attribution ?? {}),
+      },
+      select: { id: true, email: true, name: true, role: true, username: true, credits: true },
+    });
+  } catch (err) {
+    // Eşzamanlı ikinci kayıt: `email` / `emailNormalized` benzersiz indeksi
+    if ((err as { code?: string } | null)?.code === 'P2002') {
+      return { ok: false, status: 409, error: 'Bu e-posta adresi zaten kayıtlı' };
+    }
+    throw err;
+  }
 
   if (referralCode != null) {
     // En iyi çaba: davet kaydı yazılamazsa kayıt yine başarılı.

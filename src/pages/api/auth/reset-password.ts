@@ -39,9 +39,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const hashed = await hash(password, 12);
+  // tokenVersion artar → açık oturumlar ve mobil belirteçler geçersiz (hesabı ele geçiren varsa atılır).
   await prisma.user.update({
     where: { email },
-    data: { password: hashed },
+    data: { password: hashed, tokenVersion: { increment: 1 } },
   });
 
   return res.status(200).json({ ok: true, email });

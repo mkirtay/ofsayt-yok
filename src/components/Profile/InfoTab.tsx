@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { useSession } from 'next-auth/react';
+import { signIn, useSession } from 'next-auth/react';
 import { Role } from '@prisma/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from '@/lib/i18n';
@@ -89,6 +89,12 @@ export default function InfoTab({ profile }: { profile: ProfileDto }) {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         setPassMsg({ type: 'err', text: data.error || t('passwordChangeError') });
+        return;
+      }
+      // Şifre değişince tüm oturumlar (bu dahil) geçersiz → yeni şifreyle hemen yeniden giriş; olmazsa giriş sayfası.
+      const relogin = await signIn('credentials', { redirect: false, identifier: email, password: newPassword });
+      if (!relogin?.ok || relogin.error) {
+        window.location.href = `/auth/signin?callbackUrl=${encodeURIComponent('/profile')}`;
         return;
       }
       setCurrentPassword('');

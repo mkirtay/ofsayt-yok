@@ -56,6 +56,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       role: true,
       username: true,
       credits: true,
+      tokenVersion: true,
       accounts: { select: { provider: true } },
     },
   });
@@ -80,6 +81,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     email: user.email,
     name: user.name,
     username: user.username,
+    tokenVersion: user.tokenVersion,
   });
 
   return res.status(200).json({

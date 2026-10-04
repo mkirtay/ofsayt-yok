@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { hitFixedWindowRateLimit, requestIp } from '@/lib/rateLimit';
 import { createUserAccount } from '@/lib/accounts';
 import { issueMobileToken } from '@/lib/mobileAuth';
+import { checkSignupTurnstile } from '@/lib/security';
 
 const REGISTER_LIMIT = 5;
 const REGISTER_WINDOW_MS = 15 * 60 * 1000;
@@ -35,6 +36,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const body = parseBody(req);
+
+  // Web kaydıyla aynı bot koruması: uygulama Turnstile belirtecini `turnstileToken` alanında gönderir.
+  const turnstile = await checkSignupTurnstile(body.turnstileToken, ip);
+  if (!turnstile.ok) {
+    return res.status(turnstile.status).json({ error: turnstile.error });
+  }
 
   const result = await createUserAccount({
     name: body.name,

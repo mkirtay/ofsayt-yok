@@ -87,13 +87,40 @@ describe('/api/sportmonks proxy — izin listesi modları', () => {
     else process.env.SPORTMONKS_ALLOWLIST_MODE = ORIGINAL_MODE;
   });
 
-  it('log modu (varsayılan): listede olmayan istek ENGELLENMEZ, loglanır', async () => {
+  it('varsayılan mod enforce (2026-10-04): listede olmayan istek 403, upstream\'e gitmez, loglanır', async () => {
     delete process.env.SPORTMONKS_ALLOWLIST_MODE;
+    const handler = (await import('@/pages/api/sportmonks/[...path]')).default;
+    const res = await call(handler, ['football', 'odds', 'pre-match'], { include: 'bookmaker' });
+    expect(res.statusCode).toBe(403);
+    expect(global.fetch).not.toHaveBeenCalled();
+    expect(console.warn).toHaveBeenCalledWith(expect.stringContaining('sportmonks_allowlist_miss'));
+  });
+
+  it('log modu (açıkça): listede olmayan istek ENGELLENMEZ, loglanır', async () => {
+    process.env.SPORTMONKS_ALLOWLIST_MODE = 'log';
     const handler = (await import('@/pages/api/sportmonks/[...path]')).default;
     const res = await call(handler, ['football', 'odds', 'pre-match'], { include: 'bookmaker' });
     expect(res.statusCode).toBe(200);
     expect(global.fetch).toHaveBeenCalledTimes(1);
     expect(console.warn).toHaveBeenCalledWith(expect.stringContaining('sportmonks_allowlist_miss'));
+  });
+
+  it.each(['log', 'off'])('güvensiz yol / dizi parametre her modda 400 (%s)', async (mode) => {
+    process.env.SPORTMONKS_ALLOWLIST_MODE = mode;
+    const handler = (await import('@/pages/api/sportmonks/[...path]')).default;
+    const inject = await call(handler, ['football', 'teams', 'search', 'x?include=odds&per_page=500']);
+    expect(inject.statusCode).toBe(400);
+    const res = { ...(await call(handler, ['football', 'teams', '34'])) };
+    expect(res.statusCode).toBe(200);
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('upstream\'e yalnız bilinen parametreler gider (api_token / bilinmeyenler atılır)', async () => {
+    const handler = (await import('@/pages/api/sportmonks/[...path]')).default;
+    await call(handler, ['football', 'teams', '34'], { include: 'seasons', junk: 'x' });
+    const url = new URL(String(vi.mocked(global.fetch).mock.calls[0]![0]));
+    expect([...url.searchParams.keys()].sort()).toEqual(['api_token', 'include']);
+    expect(url.searchParams.get('api_token')).toBe('test-token');
   });
 
   it('enforce modu: 403, upstream\'e gitmez', async () => {

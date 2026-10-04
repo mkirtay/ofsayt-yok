@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getToken } from 'next-auth/jwt';
+import { constantTimeEqual } from '@/lib/constantTimeEqual';
 
 const AUTH_PAGES = ['/profile', '/ai-istatistikleri'];
 
@@ -14,7 +15,7 @@ function isValidCronRequest(req: NextRequest): boolean {
   const secret = process.env.CRON_SECRET;
   if (!secret) return false;
   const auth = req.headers.get('authorization');
-  return auth === `Bearer ${secret}`;
+  return auth !== null && constantTimeEqual(auth, `Bearer ${secret}`);
 }
 
 export async function middleware(req: NextRequest) {

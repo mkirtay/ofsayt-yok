@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { hitFixedWindowRateLimit, requestIp } from '@/lib/rateLimit'
-import { verifyTurnstileToken } from '@/lib/security'
+import { checkSignupTurnstile } from '@/lib/security'
 import { createUserAccount } from '@/lib/accounts'
 import { parseSignupAttribution } from '@/utils/signupAttribution'
 
@@ -22,15 +22,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const { name, email, password, username, turnstileToken, attribution, referralCode } = req.body ?? {}
 
-  if (process.env.NODE_ENV === 'production' && process.env.TURNSTILE_SECRET_KEY) {
-    if (typeof turnstileToken !== 'string' || !turnstileToken) {
-      return res.status(400).json({ error: 'Guvenlik dogrulamasi basarisiz.' })
-    }
-
-    const turnstileOk = await verifyTurnstileToken(turnstileToken, ip)
-    if (!turnstileOk) {
-      return res.status(400).json({ error: 'Guvenlik dogrulamasi basarisiz.' })
-    }
+  // Üretimde zorunlu; anahtar yoksa kayıt reddedilir (bkz. lib/security.ts → checkSignupTurnstile)
+  const turnstile = await checkSignupTurnstile(turnstileToken, ip)
+  if (!turnstile.ok) {
+    return res.status(turnstile.status).json({ error: turnstile.error })
   }
 
   // Kayıt kaynağı geçersizse kayıt yine yapılır, yalnız kaynak yazılmaz.

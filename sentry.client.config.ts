@@ -1,4 +1,5 @@
 import type { BrowserOptions } from '@sentry/nextjs';
+import { scrubSentryEvent } from './src/lib/sentryScrub';
 
 /**
  * Tarayıcı Sentry ayarları — yalnızca hata izleme. SDK ilk açılışta YÜKLENMEZ: ilk hatada dinamik
@@ -16,5 +17,7 @@ export const SENTRY_CLIENT_OPTIONS: BrowserOptions = {
   environment: process.env.NEXT_PUBLIC_VERCEL_ENV ?? 'development',
   enabled: SENTRY_CLIENT_ENABLED,
   sendDefaultPii: false,
+  // URL / sorgu / mesajdaki token, code, api_token gönderilmez (ör. /auth/reset-password?token=…).
+  beforeSend: scrubSentryEvent,
   integrations: (defaults) => defaults.filter((i) => i.name !== 'BrowserTracing'),
 };

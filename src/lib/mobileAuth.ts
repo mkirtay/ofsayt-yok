@@ -12,7 +12,8 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth/next';
 import { encode, decode } from 'next-auth/jwt';
 import type { Role } from '@prisma/client';
-import { authOptions } from '@/lib/auth-options';
+import { authOptions, tokenVersionOf } from '@/lib/auth-options';
+import { prisma } from '@/lib/prisma';
 
 const SECRET = process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET ?? '';
 const MOBILE_TOKEN_MAX_AGE_SEC = 60 * 60 * 24 * 30; // 30 gün
@@ -24,6 +25,8 @@ export type MobileTokenClaims = {
   email?: string | null;
   name?: string | null;
   username?: string | null;
+  /** User.tokenVersion — şifre değişince artar; eşleşmeyen belirteç reddedilir. */
+  tokenVersion?: number | null;
 };
 
 export type RequestAuthUser = {
@@ -45,6 +48,7 @@ export async function issueMobileToken(claims: MobileTokenClaims): Promise<strin
       email: claims.email ?? null,
       name: claims.name ?? null,
       username: claims.username ?? null,
+      tokenVersion: claims.tokenVersion ?? 0,
     },
     secret: SECRET,
     maxAge: MOBILE_TOKEN_MAX_AGE_SEC,
@@ -58,6 +62,11 @@ function bearerToken(req: NextApiRequest): string | null {
   return match ? match[1].trim() : null;
 }
 
+/** İstek mobil Bearer belirteci taşıyor mu (yanıtta yeni belirteç dönülecek mi). */
+export function hasBearerToken(req: NextApiRequest): boolean {
+  return bearerToken(req) !== null;
+}
+
 /**
  * İsteğin sahibi kullanıcıyı döndürür. Önce Bearer token (mobil), yoksa NextAuth
  * cookie session (web) denenir. Kimlik yoksa `null`.
@@ -68,20 +77,28 @@ export async function getRequestAuth(
 ): Promise<RequestAuthUser | null> {
   const token = bearerToken(req);
   if (token) {
+    let decoded: Awaited<ReturnType<typeof decode>> = null;
     try {
-      const decoded = await decode({ token, secret: SECRET });
-      if (decoded?.sub) {
-        return {
-          id: String(decoded.sub),
-          role: ((decoded as { role?: Role }).role ?? null) as Role | null,
-          credits: ((decoded as { credits?: number | null }).credits ?? null),
-          email: (decoded.email as string | null) ?? null,
-          name: (decoded.name as string | null) ?? null,
-          username: ((decoded as { username?: string | null }).username ?? null),
-        };
-      }
+      decoded = await decode({ token, secret: SECRET });
     } catch {
       // Geçersiz/expired token → cookie session'a düş
+    }
+    if (decoded?.sub) {
+      // Her istekte DB: sürüm eşleşmeli (şifre değişince / sıfırlanınca eski belirteçler düşer); rol ve diğer alanlar
+      // belirteçten değil DB'den (30 günlük belirteçte eski rol kalmasın). Eşleşmezse cookie'ye de düşülmez.
+      const row = await prisma.user.findUnique({
+        where: { id: String(decoded.sub) },
+        select: { id: true, role: true, credits: true, email: true, name: true, username: true, tokenVersion: true },
+      });
+      if (!row || row.tokenVersion !== tokenVersionOf(decoded)) return null;
+      return {
+        id: row.id,
+        role: row.role,
+        credits: row.credits,
+        email: row.email,
+        name: row.name,
+        username: row.username,
+      };
     }
   }
 
