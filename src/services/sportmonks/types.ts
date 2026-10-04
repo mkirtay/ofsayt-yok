@@ -270,6 +270,12 @@ export type SportmonksFixture = {
   lineups?: SportmonksLineupRow[];
   /** `include=metadata` (+ `filters=metadataTypes:572`): type 572 → `{ confirmed: boolean }` kadro resmî mi. */
   metadata?: { type_id: number; values?: unknown }[];
+  /** Maç detayı `include=tvStations.tvStation:name` — tüm ülkelerin yayıncıları (`country_id`; ülke filtresi API'de yok). */
+  tvstations?: SportmonksTvStationRow[];
+  /** Maç detayı `include=coaches:common_name` — takımı `meta.participant_id`. */
+  coaches?: SportmonksFixtureCoach[];
+  /** Maç detayı `include=weatherReport` — bitmiş maçta gerçekleşen, yaklaşan maçta tahmin; erken dönemde `null`. */
+  weatherreport?: SportmonksWeatherReport | null;
   /** Temel alan: iki ayaklı eşleşmede "1/2" / "2/2", tek maçta "1/1". */
   leg?: string | null;
   aggregate_id?: number | null;
@@ -278,6 +284,26 @@ export type SportmonksFixture = {
    * penaltı hariç. 2. ayak oynanmadan (ve canlıyken) aggregate yok → toplam diğer ayaktan hesaplanır.
    */
   aggregate?: SportmonksAggregate | null;
+};
+
+export type SportmonksTvStationRow = {
+  tvstation_id: number;
+  country_id?: number | null;
+  tvstation?: { id?: number; name?: string } | null;
+};
+
+export type SportmonksFixtureCoach = {
+  id: number;
+  common_name?: string;
+  meta?: { participant_id?: number; coach_id?: number } | null;
+};
+
+export type SportmonksWeatherReport = {
+  temperature?: { current?: number; day?: number } | null;
+  description?: string | null;
+  /** OpenWeather ikon URL'si, ör. `…/weather/04n.png` — durum kodu buradan. */
+  icon?: string | null;
+  type?: string | null;
 };
 
 export type SportmonksAggregate = {

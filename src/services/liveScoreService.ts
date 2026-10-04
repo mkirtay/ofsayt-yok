@@ -7,6 +7,7 @@ import { sportmonksClientRequest, sportmonksCollectAllPages } from './sportmonks
 import { SportmonksHttpError } from './sportmonks/httpClient';
 import { matchIstanbulDate } from '../utils/matchActivity';
 import { todayIsoIstanbul } from '../utils/dateStrip';
+import { FIXTURE_DETAIL_EXTRA_FILTERS, FIXTURE_DETAIL_EXTRA_INCLUDE } from '@/services/sportmonks/matchExtras';
 import { mapSportmonksFixtureToMatch } from './sportmonksFixtureMapper';
 import {
   mapSportmonksEvents,
@@ -224,8 +225,10 @@ const SPORTMONKS_MISSING_STATUSES = new Set([400, 403, 404, 422]);
 export async function lookupSportmonksFixture(matchId: string): Promise<SportmonksFixtureLookup> {
   if (!/^\d{1,12}$/.test(matchId)) return { kind: 'missing' };
   try {
+    // Detay: + Türkiye yayıncıları, teknik direktörler, hava, hashtag (bkz. sportmonks/matchExtras.ts) — aynı istek.
     const envelope = await sportmonksClientRequest<SportmonksFixture>('football', `/fixtures/${matchId}`, {
-      include: `${SPORTMONKS_FIXTURE_INCLUDE};events`,
+      include: `${SPORTMONKS_FIXTURE_INCLUDE};events;${FIXTURE_DETAIL_EXTRA_INCLUDE}`,
+      filters: FIXTURE_DETAIL_EXTRA_FILTERS,
     });
     const fixture = envelope.data;
     if (!fixture || Array.isArray(fixture) || typeof fixture !== 'object') return { kind: 'missing' };

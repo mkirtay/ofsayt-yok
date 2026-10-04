@@ -25,6 +25,8 @@ import { prisma } from '@/lib/prisma';
 import { getTeamAbsences, type AnalysisAbsence, type TeamSquadScorer } from '@/server/analysisTeamAbsences';
 import type { TeamSeasonStats } from '@/services/sportmonks/teamSeasonStats';
 import { todayIsoIstanbul } from '@/utils/dateStrip';
+import { loadRefereeSummary } from '@/server/refereeSummary';
+import type { RefereeSummary } from '@/services/sportmonks/refereeStats';
 
 /** Bir takımın son N maçından çıkarılan özet performans satırı */
 export type RecentMatchRow = {
@@ -113,6 +115,8 @@ export type MatchAnalysisContext = {
   homeTeam: TeamContext;
   awayTeam: TeamContext;
   h2h: H2HContext | null;
+  /** Orta hakemin bu sezon (+ az maçlıysa geçen sezon) istatistikleri; yalnız sayılar. */
+  referee?: RefereeSummary | null;
   /** Pre/live oran karşılaştırması — para akışı sinyali */
   oddsSignal: {
     pre: { '1'?: number; X?: number; '2'?: number } | null;
@@ -405,11 +409,14 @@ export async function buildMatchAnalysisContext(
   const compId = toStandingsCompetitionId(match.competition?.id ?? match.competition_id);
   const phase = STATUS_TO_PHASE[match.status] ?? 'PRE';
 
-  const [stats, lineups, standings, h2h] = await Promise.all([
+  const [stats, lineups, standings, h2h, referee] = await Promise.all([
     getMatchStats(apiMatchId),
     getMatchLineups(apiMatchId),
     compId != null ? getCompetitionTableFull(String(compId)) : Promise.resolve(null),
     getTeamsHead2Head(String(homeId), String(awayId)),
+    match.referee_id != null && match.season_id != null
+      ? loadRefereeSummary(match.referee_id, match.season_id, match.competition?.id ?? null)
+      : Promise.resolve(null),
   ]);
 
   // Sakat/ceza kaydı maç gününe göre süzülür (maçtan önce dönecek oyuncu eksik sayılmaz); tarih yoksa bugün.
@@ -432,6 +439,7 @@ export async function buildMatchAnalysisContext(
     homeTeam: homeCtx,
     awayTeam: awayCtx,
     h2h: buildH2HContext(h2h, match.home?.name),
+    referee,
     oddsSignal: computeOddsSignal(match),
   };
 }

@@ -134,3 +134,12 @@ describe('sportmonksCacheTtl — TTL tablosu', () => {
     expect(t.stale).toBeGreaterThan(t.fresh);
   });
 });
+
+describe('maç bilgi kartı ekleri', () => {
+  it('hakem istatistikleri 12 sa; takım rakip listesi 24 sa; bulunamayan hakem 1 sa', () => {
+    expect(sportmonksCacheTtl('football/referees/62331', { id: 62331, statistics: [] }, NOW).fresh).toBe(12 * 3600);
+    expect(sportmonksCacheTtl('football/referees/62331', undefined, NOW).fresh).toBe(3600);
+    expect(sportmonksCacheTtl('football/teams/34', { id: 34, rivals: [{ id: 88 }] }, NOW).fresh).toBe(86400);
+    expect(sportmonksCacheTtl('football/teams/1071', { id: 1071, rivals: [] }, NOW).fresh).toBe(86400);
+  });
+});

@@ -42,8 +42,10 @@ const INCLUDE_TOKENS = new Set([
   'group', 'events', 'statistics', 'lineups.player.nationality', 'lineups.details',
   // iki ayaklı eşleşme toplam skoru (SPORTMONKS_FIXTURE_INCLUDE)
   'aggregate',
-  // kadro resmî mi (metadata type 572 `confirmed`) — yalnız `metadataTypes:572` filtresiyle
+  // kadro resmî mi (metadata type 572 `confirmed`) / maç hashtag'i (613) — `metadataTypes` filtresiyle
   'metadata',
+  // maç detayı ekleri: Türkiye yayıncıları, teknik direktörler, hava (services/sportmonks/matchExtras.ts)
+  'tvStations.tvStation', 'coaches', 'weatherReport',
   // lig / puan / krallık / kadro
   'seasons', 'participant', 'details.type', 'player', 'player.statistics.details',
   // takım fikstürü (mobil) + takım sayfası tek isteği (services/sportmonks/teamOverview.ts)

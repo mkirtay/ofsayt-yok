@@ -37,7 +37,22 @@ export type HomeInitialData = {
 // ─── Kırpma ─────────────────────────────────────────────────────────────────
 
 /** Liste / birleştirme / lig filtresi / maç linki tarafından okunmayan alanlar (yalnız maç detayı kullanır). */
-const DROPPED_MATCH_FIELDS = ['location', 'referee', 'season_id', 'round', 'stage', 'added', 'outcomes', 'urls', 'odds'] as const;
+const DROPPED_MATCH_FIELDS = [
+  'location',
+  'referee',
+  'referee_id',
+  'season_id',
+  'round',
+  'stage',
+  'added',
+  'outcomes',
+  'urls',
+  'odds',
+  'tv_stations',
+  'coaches',
+  'weather',
+  'hashtag',
+] as const;
 
 export function trimListMatch(m: Match): Match {
   const out: Record<string, unknown> = { ...m };

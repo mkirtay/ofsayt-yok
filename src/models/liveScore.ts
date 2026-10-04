@@ -118,6 +118,24 @@ export interface Match {
    * 2. ayakta çevrilir). Uzatma dahil, penaltı hariç. Yalnız eşleşme bitince gelir (bkz. utils/aggregateScore.ts).
    */
   aggregate?: MatchAggregate;
+  /** Yalnız maç detayı: Türkiye yayıncıları (tekil, Sportmonks sırasıyla); yoksa alan yok. */
+  tv_stations?: string[];
+  /** Yalnız maç detayı: teknik direktörler (kısa ad). */
+  coaches?: { home?: string; away?: string };
+  /** Yalnız maç detayı: hava (bitmiş maçta gerçekleşen, yaklaşan maçta tahmin). */
+  weather?: MatchWeather;
+  /** Yalnız maç detayı: maçın resmî hashtag'i (Sportmonks metadata), ör. "#GALKAS". */
+  hashtag?: string;
+  /** Yalnız maç detayı: orta hakemin Sportmonks id'si (hakem istatistik kartı). */
+  referee_id?: number;
+}
+
+export type MatchWeatherCondition = 'clear' | 'partlyCloudy' | 'cloudy' | 'rain' | 'storm' | 'snow' | 'fog';
+
+export interface MatchWeather {
+  /** °C, tam sayıya yuvarlı */
+  tempC: number;
+  condition?: MatchWeatherCondition;
 }
 
 export type MatchFinish = 'AET' | 'PEN';

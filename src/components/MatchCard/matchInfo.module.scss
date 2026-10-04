@@ -1,0 +1,125 @@
+@use '../../styles/variables' as *;
+
+// ── Ek bilgi satırları (nerede izlenir / teknik direktörler / hava) ──
+.infoRows {
+  margin: 0;
+  padding: $spacing-3 $spacing-5;
+  border-top: 1px solid $color-border;
+  display: grid;
+  gap: $spacing-2;
+}
+
+.infoRow {
+  display: grid;
+  grid-template-columns: minmax(96px, max-content) 1fr;
+  gap: $spacing-3;
+  align-items: baseline;
+  font-size: 13px;
+  text-align: left;
+
+  dt {
+    font-size: 11px;
+    font-weight: 600;
+    color: $color-text-footer-label;
+  }
+
+  dd {
+    margin: 0;
+    font-weight: 700;
+    color: $color-text;
+    min-width: 0;
+    word-break: break-word;
+  }
+}
+
+// ── Hakem adı düğmesi + istatistik kartı ──
+.refToggle {
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  color: $color-text;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+
+  &:hover,
+  &[aria-expanded='true'] {
+    color: $color-primary-text;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+}
+
+.refCard {
+  border-top: 1px solid $color-border;
+  padding: $spacing-3 $spacing-5 $spacing-4;
+  display: grid;
+  gap: $spacing-3;
+}
+
+.refSeason {
+  display: grid;
+  gap: $spacing-2;
+}
+
+.refHeading {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: $color-text;
+}
+
+.refMuted {
+  margin: 0;
+  font-size: 12px;
+  color: $color-text-secondary;
+}
+
+.refGrid {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: $spacing-2;
+}
+
+.refCell {
+  padding: $spacing-2;
+  background: $color-muted;
+  border-radius: $radius-sm;
+
+  dt {
+    font-size: 11px;
+    color: $color-text-secondary;
+  }
+
+  dd {
+    margin: 2px 0 0;
+    font-size: 15px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: $color-text;
+  }
+}
+
+// ── Derbi rozeti (başlık satırının sonunda; satır yüksekliğini değiştirmez) ──
+.derbyBadge {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 7px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #fff;
+  background: $color-live;
+  border-radius: $radius-full;
+}

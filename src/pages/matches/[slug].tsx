@@ -210,6 +210,8 @@ export default function MatchDetail({
     homeName && awayName
       ? `${homeName} vs ${awayName}${compName ? ` - ${compName}` : ''} maç detayı, istatistikler ve kadro bilgileri.`
       : 'Maç detayı, istatistikler ve kadro bilgileri.';
+  // Paylaşım metni (og / twitter): maçın resmî hashtag'i varsa sonuna (Sportmonks metadata, ör. "#GALKAS").
+  const shareDescription = match?.hashtag ? `${pageDescription} ${match.hashtag}` : pageDescription;
   const canonicalUrl = `${process.env.AUTH_URL ?? 'https://ofsaytyok.app'}${canonicalPath}`;
   // Kimlik tabanlı paylaşım görseli: içerik sunucudaki maç verisinden, `v` yalnız önbellek anahtarı (bkz. utils/matchOgImage.ts).
   const ogImageUrl = match && homeName && awayName
@@ -266,7 +268,7 @@ export default function MatchDetail({
         <meta name="description" content={pageDescription} />
         <link rel="canonical" href={canonicalUrl} />
         <meta property="og:title" content={pageTitle} />
-        <meta property="og:description" content={pageDescription} />
+        <meta property="og:description" content={shareDescription} />
         <meta property="og:type" content="article" key="og:type" />
         <meta property="og:url" content={canonicalUrl} />
         {ogImageUrl && (
@@ -281,7 +283,7 @@ export default function MatchDetail({
           </>
         )}
         <meta name="twitter:title" content={pageTitle} />
-        <meta name="twitter:description" content={pageDescription} />
+        <meta name="twitter:description" content={shareDescription} />
         {match ? (
           <JsonLd
             schema={{

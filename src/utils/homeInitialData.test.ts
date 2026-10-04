@@ -27,6 +27,9 @@ describe('trimListMatch', () => {
   it('liste dışı alanları ve undefined değerleri atar, listeninkileri korur', () => {
     const t = trimListMatch(match(1)) as unknown as Record<string, unknown>;
     for (const k of ['location', 'referee', 'season_id', 'stage', 'round']) expect(t).not.toHaveProperty(k);
+    // Maç detayı ekleri liste props'una girmez
+    const extra = trimListMatch({ ...match(2), referee_id: 9, tv_stations: ['TOD'], coaches: { home: 'A' }, weather: { tempC: 20 }, hashtag: '#AB' } as Match) as unknown as Record<string, unknown>;
+    for (const k of ['referee_id', 'tv_stations', 'coaches', 'weather', 'hashtag']) expect(extra).not.toHaveProperty(k);
     expect(t.country).toEqual({ id: 404, name: 'Türkiye', flag: 'https://cdn.sportmonks.com/x.png' });
     expect((t.away as Record<string, unknown>)).not.toHaveProperty('logo');
     expect(t).toMatchObject({ id: 1, status: 'NOT STARTED', date: '2026-10-04', scheduled: '16:00', home: { id: 10, name: 'Ev 1' } });

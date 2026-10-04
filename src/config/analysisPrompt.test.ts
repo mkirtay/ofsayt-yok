@@ -146,3 +146,19 @@ describe('analiz prompt\'u — bahis dili yok, olasılık senaryoları', () => {
     expect(buildAnalysisUserMessage(ctx)).toContain("'veri yok' YAZMA");
   });
 });
+
+describe('analiz prompt\'u — hakem istatistikleri', () => {
+  it('hakem özeti varsa veri bölümüne yalnız sayılarla girer', () => {
+    const referee = {
+      refereeId: 62331,
+      name: 'B. Kolak',
+      current: { seasonId: 28203, seasonName: '2026/2027', matches: 3, yellowPerMatch: 4, redPerMatch: 0, penaltiesPerMatch: 0.33, foulsPerMatch: 24.67, varPerMatch: null },
+      previous: null,
+    };
+    const msg = buildAnalysisUserMessage({ ...ctx, referee } as MatchAnalysisContext);
+    expect(msg).toContain('Hakem istatistikleri — B. Kolak');
+    expect(msg).toContain('Bu sezon (2026/2027): 3 maç | maç başı sarı 4, kırmızı 0, penaltı 0.33, faul 24.67, VAR incelemesi —');
+    expect(findGamblingTerms(msg)).toEqual([]);
+    expect(buildAnalysisUserMessage(ctx)).not.toContain('Hakem istatistikleri');
+  });
+});

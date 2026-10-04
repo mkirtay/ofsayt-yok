@@ -16,6 +16,7 @@ import { formatLiveMinuteLabel } from './sportmonks/minuteDerivation';
 import { resolveRoundAndStage } from './sportmonks/roundStage';
 import { formatVenueLocation } from './sportmonks/venueFormatter';
 import { formatMainReferee } from './sportmonks/refereeFormatter';
+import { mapMatchExtras } from './sportmonks/matchExtras';
 import { normalizeTeamName } from '@/utils/displayName';
 
 /** `"2026-09-17 16:00:00"` → `{date:"2026-09-17", scheduled:"16:00"}` */
@@ -138,5 +139,6 @@ export function mapSportmonksFixtureToMatch(fixture: SportmonksFixture): Match {
     ...(leg && leg !== '1/1' ? { leg } : {}),
     ...(aggregate ? { aggregate } : {}),
     ...(finish ? { finish } : {}),
+    ...mapMatchExtras(fixture, home?.id, away?.id),
   };
 }

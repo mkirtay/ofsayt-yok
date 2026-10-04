@@ -182,6 +182,8 @@ export function sportmonksCacheTtl(
       // `latest`/`upcoming` include'u maç listesi taşıyor (takım sayfası, mobil fikstür): canlı maç ya da başlamaya
       // ±15 dk → 30 sn; yoksa sıradaki başlamaya (−15 dk) kadar, en fazla 15 dk.
       // Takım sezon istatistikleri (takım sayfası Sezon Özeti): maçtan sonra Sportmonks yeniden hesaplar → 1 sa.
+      // Rakip listesi (derbi rozeti) neredeyse hiç değişmez → 24 sa.
+      if (team && 'rivals' in team) return withStale(DAY, 2 * DAY);
       if (team && 'statistics' in team) {
         return allTeamStatisticSeasonsFinished(team.statistics) ? withStale(FINISHED_SEASON_TTL, FINISHED_SEASON_TTL) : withStale(HOUR, DAY);
       }
@@ -197,9 +199,12 @@ export function sportmonksCacheTtl(
     case 'squads':
       if (squadSeasonFinished(data)) return withStale(FINISHED_SEASON_TTL, FINISHED_SEASON_TTL);
       return data == null ? withStale(NOT_FOUND_TTL, NOT_FOUND_TTL) : withStale(6 * HOUR, DAY);
+    case 'referees':
+      // Hakem sezon istatistikleri (maç sayfası hakem kartı, AI bağlamı): haftada bir maç → 12 sa yeter.
+      return data == null ? withStale(NOT_FOUND_TTL, NOT_FOUND_TTL) : withStale(12 * HOUR, 2 * DAY);
+
     case 'players':
     case 'coaches':
-    case 'referees':
     case 'venues':
       return data == null ? withStale(NOT_FOUND_TTL, NOT_FOUND_TTL) : withStale(6 * HOUR, DAY);
 

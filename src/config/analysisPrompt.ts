@@ -6,6 +6,7 @@
  * (sadece sayı listelemez — neden/nasıl açıklar).
  */
 import type { MatchAnalysisContext } from '@/server/buildMatchAnalysisContext';
+import { refereeSummaryPromptLines } from '@/services/sportmonks/refereeStats';
 import type { LineupPlayer } from '@/models/domain';
 import type { AnalysisScenario } from '@/utils/analysisScenarios';
 import { impliedProbabilities } from '@/utils/impliedProbability';
@@ -344,6 +345,7 @@ function summarizeContextForPrompt(ctx: MatchAnalysisContext): string {
     lines.push(`Mevcut skor: ${m.scores.score}${m.scores.ht_score ? ` (İY: ${m.scores.ht_score})` : ''}`);
   }
   if (m.referee) lines.push(`Hakem: ${m.referee}`);
+  if (ctx.referee) lines.push(...refereeSummaryPromptLines(ctx.referee));
   if (m.location) lines.push(`Stadyum: ${m.location}`);
 
   lines.push(...teamLines(ctx.homeTeam, 'Ev Sahibi'));
