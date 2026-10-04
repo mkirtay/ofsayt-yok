@@ -1,0 +1,252 @@
+@use '../../styles/variables' as *;
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $spacing-2 $spacing-4;
+  padding: $spacing-3 $spacing-4;
+  border-bottom: 1px solid $color-border;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-2;
+}
+
+.chip {
+  @include filter-chip;
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.chipActive {
+  @include filter-chip-active;
+}
+
+.seasonSelect {
+  height: 34px;
+  padding: 0 $spacing-2;
+  font: inherit;
+  font-size: 13px;
+  color: $color-text;
+  background: $color-bg;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
+}
+
+.intro {
+  margin: 0;
+  padding: $spacing-3 $spacing-4 0;
+  font-size: 13px;
+  color: $color-text-secondary;
+}
+
+.sortBtn {
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  color: inherit;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  white-space: nowrap;
+
+  &:hover,
+  &[data-active] {
+    color: $color-text;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+    outline-offset: 2px;
+  }
+}
+
+.arrow {
+  display: inline-block;
+  width: 10px;
+  margin-left: 2px;
+}
+
+.refCell {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+}
+
+.miniAvatar {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 800;
+  color: $color-text;
+  background: $color-muted;
+  border: 1px solid $color-border;
+}
+
+.refLink {
+  font-weight: 600;
+  color: $color-text;
+  text-decoration: none;
+
+  &:hover {
+    color: $color-primary-text;
+  }
+}
+
+.fewBadge {
+  margin-left: 6px;
+  padding: 1px 6px;
+  font-size: 10px;
+  font-weight: 700;
+  color: $color-text-secondary;
+  background: $color-muted;
+  border-radius: $radius-full;
+}
+
+.check {
+  width: 16px;
+  height: 16px;
+  accent-color: $color-primary;
+  cursor: pointer;
+}
+
+.rowA td:first-child {
+  box-shadow: inset 3px 0 0 var(--compare-a), 1px 0 0 $color-border;
+}
+
+.rowB td:first-child {
+  box-shadow: inset 3px 0 0 var(--compare-b), 1px 0 0 $color-border;
+}
+
+// ── Karşılaştırma ──
+.compareHead {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $spacing-3;
+  padding: $spacing-4;
+}
+
+.compareSide {
+  display: grid;
+  gap: 2px;
+  padding-top: $spacing-2;
+  border-top: 3px solid var(--compare-a);
+  min-width: 0;
+}
+
+.compareSideB {
+  text-align: right;
+  border-top-color: var(--compare-b);
+}
+
+.compareName {
+  font-size: 15px;
+  font-weight: 800;
+  color: $color-text;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+
+  &:hover {
+    color: $color-primary-text;
+  }
+}
+
+.compareMeta {
+  font-size: 12px;
+  color: $color-text-secondary;
+}
+
+.bars {
+  padding: 0 $spacing-4 $spacing-3;
+}
+
+.bar {
+  padding: $spacing-2 0;
+}
+
+.barHead {
+  display: grid;
+  grid-template-columns: 64px 1fr 64px;
+  align-items: baseline;
+  margin-bottom: 4px;
+}
+
+.barLabel {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 500;
+  color: $color-text-secondary;
+}
+
+.barVal {
+  font-size: 14px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: $color-text;
+}
+
+.barValRight {
+  text-align: right;
+}
+
+.barTrack {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  height: 10px;
+}
+
+.barHalf {
+  display: flex;
+  background: $color-muted;
+  overflow: hidden;
+
+  &:first-child {
+    justify-content: flex-end;
+    border-radius: $radius-full 0 0 $radius-full;
+  }
+
+  &:last-child {
+    border-radius: 0 $radius-full $radius-full 0;
+  }
+}
+
+.barFill {
+  height: 100%;
+  min-width: 2px;
+}
+
+.fillA {
+  background: var(--compare-a);
+}
+
+.fillB {
+  background: var(--compare-b);
+}
+
+.compareActions {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 $spacing-4 $spacing-3;
+}
+
+.linkBtn {
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  color: $color-primary-text;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}

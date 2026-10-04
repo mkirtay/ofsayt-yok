@@ -430,6 +430,21 @@
     "metaRefereeTitle": "{{name}} — Referee Statistics | Ofsayt Yok",
     "metaRefereeDesc": "{{name}} referee statistics: cards, penalties, fouls and VAR reviews per match by season, recent matches and a by-team breakdown.",
     "metaCoachTitle": "{{name}} — Head Coach Statistics | Ofsayt Yok",
-    "metaCoachDesc": "{{name}} head coach statistics: wins, draws and losses by season and competition, and recent matches."
+    "metaCoachDesc": "{{name}} head coach statistics: wins, draws and losses by season and competition, and recent matches.",
+    "tableTitle": "{{league}} Referee Statistics {{season}}",
+    "tableDesc": "{{league}} {{season}} referee statistics: matches and yellow cards, red cards, penalties, fouls and VAR reviews per match.",
+    "tableIntro": "Referees who took charge as main referee this season. Click a column header to sort, select two referees to compare.",
+    "colReferee": "Referee",
+    "colCompare": "Compare",
+    "fewMatches": "few matches",
+    "fewMatchesNote": "Referees with fewer than {{count}} matches are listed and placed last when sorting by per-match columns.",
+    "seasonLabel": "Season",
+    "leagueLabel": "Competition",
+    "compareTitle": "Referee comparison",
+    "compareHint": "Select two referees in the table to compare.",
+    "compareClear": "Clear selection",
+    "compareWith": "Compare with another referee →",
+    "selectReferee": "Add {{name}} to comparison",
+    "sampleNote": "Small samples can be misleading; figures are for statistical information only."
   }
 }

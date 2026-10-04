@@ -3,6 +3,8 @@ import { useI18n, useTranslation } from '@/lib/i18n';
 import TeamLogo from '@/components/TeamLogo';
 import { leagueNameById } from '@/utils/leagueName';
 import { countryDisplayName } from '@/utils/countryName';
+import { personSlug } from '@/utils/personUrl';
+import { refereeComparePath } from '@/config/refereeTableLeagues';
 import type { RefereePageData } from '@/server/people/refereePage';
 import RecentMatchesTable from './RecentMatchesTable';
 import styles from './personPage.module.scss';
@@ -33,6 +35,11 @@ export default function RefereeView({ data }: { data: RefereePageData }) {
         <div className={styles.headText}>
           <p className={styles.role}>{t('person.refereeRole')}</p>
           <h1 className={styles.name}>{data.name}</h1>
+          <p className={styles.facts}>
+            <Link href={refereeComparePath(data.seasons, personSlug(data.name, data.id))} className={styles.teamLink} prefetch={false}>
+              {t('person.compareWith')}
+            </Link>
+          </p>
           {data.country ? (
             <p className={styles.facts}>
               <span className={styles.fact}>

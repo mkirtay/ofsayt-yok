@@ -67,8 +67,11 @@ export const getServerSideProps: GetServerSideProps = async ({ res }) => {
   // Hakem / teknik direktör sayfaları (Süper Lig + 1. Lig, son iki sezon) — hata sitemap'i düşürmez.
   let peopleUrls: { loc: string; priority: string; changefreq: string }[] = [];
   try {
-    const { loadSitemapPeoplePaths } = await import('@/server/people/sitemapPeople');
-    peopleUrls = (await loadSitemapPeoplePaths()).map((path) => ({ loc: `${BASE_URL}${path}`, priority: '0.4', changefreq: 'weekly' }));
+    const { loadSitemapPeoplePaths, refereeTableSitemapPaths } = await import('@/server/people/sitemapPeople');
+    peopleUrls = [
+      ...refereeTableSitemapPaths().map((path) => ({ loc: `${BASE_URL}${path}`, priority: '0.6', changefreq: 'daily' })),
+      ...(await loadSitemapPeoplePaths()).map((path) => ({ loc: `${BASE_URL}${path}`, priority: '0.4', changefreq: 'weekly' })),
+    ];
   } catch {
     // yok say
   }

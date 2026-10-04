@@ -7,6 +7,7 @@
 import { getSeasonsList } from '@/services/liveScoreService';
 import { sportmonksCollectAllPages } from '@/services/sportmonksRuntimeClient';
 import { coachHref, refereeHref } from '@/utils/personUrl';
+import { REFEREE_TABLE_LEAGUES, refereeTablePath } from '@/config/refereeTableLeagues';
 
 const LEAGUES = ['600', '603'];
 const SEASONS_PER_LEAGUE = 2;
@@ -46,4 +47,9 @@ export async function loadSitemapPeoplePaths(): Promise<string[]> {
     }),
   );
   return [...paths].sort();
+}
+
+/** Hakem tablosu: lig başına bir sayfa (güncel sezon). */
+export function refereeTableSitemapPaths(): string[] {
+  return REFEREE_TABLE_LEAGUES.map((l) => refereeTablePath(l.slug, null, true));
 }

@@ -30,6 +30,10 @@ const referee: RefereePageData = {
 
 describe('<RefereeView />', () => {
   const html = renderToStaticMarkup(<RefereeView data={referee} />);
+  it('"Başka bir hakemle karşılaştır" → /hakemler (lig + sezon, hakem seçili)', () => {
+    expect(html).toContain('href="/hakemler/super-lig/2026-2027?a=batuhan-kolak-62331"');
+  });
+
   it('başlık: baş harfli avatar, ad, ülke; foto / yaş yok', () => {
     expect(html).toContain('>BK<');
     expect(html).toContain('<h1');

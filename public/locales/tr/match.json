@@ -423,6 +423,21 @@
     "metaRefereeTitle": "{{name}} — Hakem İstatistikleri | Ofsayt Yok",
     "metaRefereeDesc": "{{name}} hakem istatistikleri: sezon bazında maç başı kart, penaltı, faul ve VAR sayıları, son maçlar ve takım kırılımı.",
     "metaCoachTitle": "{{name}} — Teknik Direktör İstatistikleri | Ofsayt Yok",
-    "metaCoachDesc": "{{name}} teknik direktör istatistikleri: sezon ve turnuva bazında galibiyet, beraberlik, mağlubiyet ve son maçlar."
+    "metaCoachDesc": "{{name}} teknik direktör istatistikleri: sezon ve turnuva bazında galibiyet, beraberlik, mağlubiyet ve son maçlar.",
+    "tableTitle": "{{league}} Hakem İstatistikleri {{season}}",
+    "tableDesc": "{{league}} {{season}} sezonu hakem istatistikleri: maç sayısı ve maç başı sarı kart, kırmızı kart, penaltı, faul ve VAR incelemesi.",
+    "tableIntro": "Sezonda orta hakem olarak görev alan hakemler. Sütun başlığına tıklayarak sıralayabilir, iki hakem seçip karşılaştırabilirsiniz.",
+    "colReferee": "Hakem",
+    "colCompare": "Karşılaştır",
+    "fewMatches": "az maç",
+    "fewMatchesNote": "{{count}} maçtan az hakem gösterilir; maç başı sütunlarına göre sıralamada en altta yer alır.",
+    "seasonLabel": "Sezon",
+    "leagueLabel": "Turnuva",
+    "compareTitle": "Hakem karşılaştırması",
+    "compareHint": "Karşılaştırmak için tablodan iki hakem seçin.",
+    "compareClear": "Seçimi temizle",
+    "compareWith": "Başka bir hakemle karşılaştır →",
+    "selectReferee": "{{name}} karşılaştırmaya ekle",
+    "sampleNote": "Küçük örneklemler yanıltıcı olabilir; veriler yalnız istatistiksel bilgi amaçlıdır."
   }
 }
