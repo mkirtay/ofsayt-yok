@@ -8,8 +8,8 @@
   "stadium": "Stadium",
   "referee": "Referee",
   "matchInfo": {
-    "watchOn": "Where to watch",
-    "coaches": "Head coaches",
+    "watchOn": "Where to Watch",
+    "coaches": "Head Coaches",
     "weather": "Weather",
     "weatherCondition": {
       "clear": "Clear",

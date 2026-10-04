@@ -17,15 +17,13 @@ import TeamTierBadge from '@/components/TeamTierBadge';
 import { useTurkeyTeamTiers } from '@/hooks/useTurkeyTeamTiers';
 import { isTurkishCupMatch } from '@/utils/cupTeamTier';
 import { getTeamsHead2Head, type Head2HeadData, type Head2HHistoricalMatch } from '@/services/liveScoreService';
-import StadiumIcon from '@/components/icons/StadiumIcon';
-import WhistleIcon from '@/components/icons/WhistleIcon';
 import { MatchCardSkeleton } from '@/components/Skeleton';
 import TeamLogo from '@/components/TeamLogo';
 import { impliedProbabilities } from '@/utils/impliedProbability';
 import { isSecondLeg } from '@/utils/aggregateScore';
 import { finishedLabelKey } from '@/utils/finishLabel';
 import TiePill from './TiePill';
-import MatchInfoRows from './MatchInfoRows';
+import MatchInfoGrid from './MatchInfoGrid';
 import RefereeStatsCard from './RefereeStatsCard';
 import { useIsDerby } from '@/hooks/useMatchInfoExtras';
 import infoStyles from './matchInfo.module.scss';
@@ -257,8 +255,8 @@ export default function MatchCard({ match, loading, initialH2h }: MatchCardProps
   const kickoffRelativeText = relativeDay ? ts(`day.${relativeDay}`) : null;
   // Ertelendi / iptal / tarih belirsiz: üst satırda eski tarih geçerli gibi görünmesin → durum + soluk, üstü çizili tarih.
   const headerDateState = special === 'postponed' || special === 'cancelled' || special === 'tba' ? special : null;
-  const refereeText = refereeName || (isPre && !special ? ts('refereeTba') : '—');
-  const showMatchFooter = Boolean(location.trim() || refereeName) || (isPre && !special);
+  // Hakem yoksa: başlamamış maçta "Açıklanmadı", diğerlerinde hücre yok.
+  const refereeText = refereeName || (isPre && !special ? ts('refereeTba') : '');
   const refereeStatsAvailable = Boolean(refereeName && match.referee_id && match.season_id);
   const refStatsId = `referee-stats-${match.id}`;
 
@@ -494,33 +492,15 @@ export default function MatchCard({ match, loading, initialH2h }: MatchCardProps
         ) : null}
       </div>
 
-      {showMatchFooter ? (
-        <div className={styles.matchFooter}>
-          <div className={styles.matchFooterCol}>
-            <StadiumIcon className={styles.matchFooterIcon} />
-            <span className={styles.matchFooterLabel}>{t('stadium')}</span>
-            <span className={styles.matchFooterValue}>{location.trim() || '—'}</span>
-          </div>
-          <div className={styles.matchFooterCol}>
-            <WhistleIcon className={styles.matchFooterIcon} />
-            <span className={styles.matchFooterLabel}>{t('referee')}</span>
-            {refereeStatsAvailable ? (
-              <button
-                type="button"
-                className={infoStyles.refToggle}
-                aria-expanded={refStatsOpen}
-                aria-controls={refStatsId}
-                title={t('matchInfo.refereeStatsToggle')}
-                onClick={() => setRefStatsOpen((v) => !v)}
-              >
-                {refereeText}
-              </button>
-            ) : (
-              <span className={styles.matchFooterValue}>{refereeText}</span>
-            )}
-          </div>
-        </div>
-      ) : null}
+      <MatchInfoGrid
+        match={match}
+        phase={phase}
+        location={location}
+        refereeText={refereeText}
+        refereeToggle={
+          refereeStatsAvailable ? { open: refStatsOpen, controlsId: refStatsId, onToggle: () => setRefStatsOpen((v) => !v) } : null
+        }
+      />
 
       {refereeStatsAvailable && refStatsOpen ? (
         <RefereeStatsCard
@@ -531,8 +511,6 @@ export default function MatchCard({ match, loading, initialH2h }: MatchCardProps
           leagueId={match.competition?.id}
         />
       ) : null}
-
-      <MatchInfoRows match={match} phase={phase} />
 
       {h2hPending ? (
         <H2hSkeleton />

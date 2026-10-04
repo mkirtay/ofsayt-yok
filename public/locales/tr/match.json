@@ -8,8 +8,8 @@
   "stadium": "Stadyum",
   "referee": "Hakem",
   "matchInfo": {
-    "watchOn": "Nerede izlenir",
-    "coaches": "Teknik direktörler",
+    "watchOn": "Nerede İzlenir",
+    "coaches": "Teknik Direktörler",
     "weather": "Hava",
     "weatherCondition": {
       "clear": "Açık",

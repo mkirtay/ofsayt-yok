@@ -1,35 +1,93 @@
 @use '../../styles/variables' as *;
 
-// ── Ek bilgi satırları (nerede izlenir / teknik direktörler / hava) ──
-.infoRows {
-  margin: 0;
-  padding: $spacing-3 $spacing-5;
+// ── Bilgi hücreleri (Stadyum · Hakem · Teknik Direktörler · Hava / Nerede İzlenir) ──
+// Kapsayıcının genişliğine göre (container query): split-view paneli viewport'tan dar, medya sorgusu yanıltır.
+// Dar: 2×2 (tek kalan hücre satırı kaplar); geniş (≥ 480 px): tek satır, hücreler eşit genişlikte.
+.infoGridWrap {
+  container-type: inline-size;
   border-top: 1px solid $color-border;
-  display: grid;
-  gap: $spacing-2;
 }
 
-.infoRow {
+.infoGrid {
+  margin: 0;
+  padding: $spacing-4 $spacing-3;
   display: grid;
-  grid-template-columns: minmax(96px, max-content) 1fr;
-  gap: $spacing-3;
-  align-items: baseline;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  row-gap: $spacing-3;
+
+  @container (min-width: 480px) {
+    grid-template-columns: none;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    row-gap: 0;
+  }
+}
+
+.infoCell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: $spacing-1;
+  min-width: 0;
+  padding: 0 $spacing-2;
+
+  // Dar: sütunlar arası dikey, satırlar arası yatay ince ayraç; tek kalan hücre iki sütunu kaplar.
+  &:nth-child(even) {
+    border-left: 1px solid $color-border;
+  }
+
+  &:nth-child(n + 3) {
+    border-top: 1px solid $color-border;
+    padding-top: $spacing-3;
+  }
+
+  &:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+
+  @container (min-width: 480px) {
+    &:nth-child(n) {
+      border-left: none;
+      border-top: none;
+      padding-top: 0;
+      grid-column: auto;
+    }
+
+    & + & {
+      border-left: 1px solid $color-border;
+    }
+  }
+}
+
+.infoLabel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $spacing-1;
+  font-size: 11px;
+  font-weight: 600;
+  color: $color-text-footer-label;
+}
+
+.infoIcon {
+  flex-shrink: 0;
+  color: $color-text-footer-label;
+}
+
+.infoValue {
+  margin: 0;
   font-size: 13px;
-  text-align: left;
+  font-weight: 700;
+  color: $color-text;
+  min-width: 0;
+  max-width: 100%;
+  word-break: break-word;
+}
 
-  dt {
-    font-size: 11px;
-    font-weight: 600;
-    color: $color-text-footer-label;
-  }
-
-  dd {
-    margin: 0;
-    font-weight: 700;
-    color: $color-text;
-    min-width: 0;
-    word-break: break-word;
-  }
+// Teknik direktörler: iki isim alt alta
+.infoLine {
+  display: block;
 }
 
 .personLink {
