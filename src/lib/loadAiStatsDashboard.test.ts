@@ -24,6 +24,10 @@ vi.mock('@/lib/prisma', () => ({
   },
 }));
 
+vi.mock('@/server/cronJobs', () => ({
+  readCronHeartbeats: vi.fn(async () => ({ 'evaluate-predictions': { lastRunAt: '2026-10-04T10:00:00Z', ms: 1, ok: true, summary: {}, trigger: 'cron' }, 'analysis-pregenerate': null })),
+}));
+
 import { loadAiStatsDashboard } from './loadAiStatsDashboard';
 
 describe('loadAiStatsDashboard — bekleyen tahmin sızıntısı', () => {
@@ -43,5 +47,10 @@ describe('loadAiStatsDashboard — bekleyen tahmin sızıntısı', () => {
     const d = await loadAiStatsDashboard({ role: 'ADMIN' });
     expect(JSON.stringify(d)).not.toMatch(/predictedScore|actualScore|scoreExact|2-1|1-0/);
     expect(d.history.find((h) => h.matchId === 'done-1')).toMatchObject({ predictedHomePct: 58, actualResult: 'HOME', result1x2Hit: true });
+  });
+
+  it('zamanlanmış iş nabzı yalnız yöneticiye', async () => {
+    expect((await loadAiStatsDashboard({ role: null })).cronStatus).toBeUndefined();
+    expect((await loadAiStatsDashboard({ role: 'ADMIN' })).cronStatus?.['evaluate-predictions']?.ok).toBe(true);
   });
 });

@@ -28,7 +28,8 @@ jobs:
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}")
           echo "HTTP status: $status"
           cat /tmp/response.json
-          if [ "$status" -ge 300 ]; then
+          # 202 = kabul edildi (iş arka planda), 409 = başka tetikleyici (cron-job.org) zaten çalıştırıyor.
+          if [ "$status" -ge 300 ] && [ "$status" != "409" ]; then
             echo "evaluate-predictions failed with status $status"
             exit 1
           fi
@@ -47,7 +48,8 @@ jobs:
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}")
           echo "HTTP status: $status"
           cat /tmp/response.json
-          if [ "$status" -ge 300 ]; then
+          # 202 = kabul edildi (iş arka planda), 409 = başka tetikleyici (cron-job.org) zaten çalıştırıyor.
+          if [ "$status" -ge 300 ] && [ "$status" != "409" ]; then
             echo "analysis-pregenerate failed with status $status"
             exit 1
           fi

@@ -55,5 +55,11 @@
   "notEvaluated": "—",
   "actualHome": "Ev sahibi kazandı",
   "actualDraw": "Beraberlik",
-  "actualAway": "Deplasman kazandı"
+  "actualAway": "Deplasman kazandı",
+  "cronLastEvaluate": "Son değerlendirme:",
+  "cronLastPregen": "Son ön üretim:",
+  "cronMinutesAgo": "{{n}} dk önce",
+  "cronNever": "hiç çalışmadı",
+  "cronFailed": "hata",
+  "cronStale": "Zamanlanmış işler {{n}} dakikadan uzun süredir çalışmadı — cron-job.org'u kontrol et."
 }

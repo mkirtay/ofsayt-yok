@@ -178,3 +178,16 @@ export async function runAnalysisPregen(opts: { now?: number; dryRun?: boolean; 
     ms: Date.now() - t0,
   };
 }
+
+/** Nabız / log özeti: üretilen, atlanan, hata, Sportmonks upstream isteği. */
+const SKIPPED = new Set(['exists', 'locked', 'not-pre', 'no-context']);
+
+export function summarizePregen(r: PregenResult): Record<string, number> {
+  return {
+    candidates: r.candidates,
+    generated: r.items.filter((i) => i.status === 'generated').length,
+    skipped: r.items.filter((i) => SKIPPED.has(i.status)).length,
+    errors: r.items.filter((i) => i.status === 'error').length,
+    sportmonksUpstream: r.selection.sportmonksUpstream + r.items.reduce((n, i) => n + (i.sportmonksUpstream ?? 0), 0),
+  };
+}

@@ -81,6 +81,23 @@
   font-weight: 600;
 }
 
+// Zamanlanmış işlerin nabzı (cron-job.org / GitHub): 45 dk'dan eskiyse kırmızı uyarı.
+.cronStatus {
+  flex-basis: 100%;
+  font-size: 12px;
+  color: #713f12;
+}
+
+.cronStale {
+  flex-basis: 100%;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  background: $color-danger;
+  border-radius: 6px;
+  padding: $spacing-1 $spacing-3;
+}
+
 .empty {
   text-align: center;
   padding: $spacing-8;

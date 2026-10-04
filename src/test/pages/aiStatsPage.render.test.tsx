@@ -22,7 +22,7 @@ vi.mock('@/lib/i18n', () => ({
 vi.mock('@/lib/i18nNamespaces/ai', () => ({}));
 vi.mock('@tanstack/react-query', () => ({ useQueryClient: () => ({ invalidateQueries: () => {} }) }));
 
-const data: AiStatsDashboard = {
+const data: AiStatsDashboard & { isAdmin: boolean } = {
   totalRecords: 3,
   totalEvaluated: 2,
   pendingCount: 1,
@@ -70,5 +70,24 @@ describe('/ai-istatistikleri — dil kuralları', () => {
     for (const d of [trAi, enAi] as Record<string, string>[]) {
       for (const k of ['scoreExact', 'scoreExactSub', 'colScorePrediction', 'colActualScore', 'colScoreHit']) expect(d[k]).toBeUndefined();
     }
+  });
+
+  it('admin bandı: son değerlendirme / ön üretim; 45 dk\'dan eskiyse ya da hiç yoksa kırmızı uyarı', () => {
+    const ago = (m: number) => new Date(Date.now() - m * 60_000).toISOString();
+    data.isAdmin = true;
+    data.cronStatus = {
+      'evaluate-predictions': { lastRunAt: ago(5), ms: 1, ok: true, summary: {}, trigger: 'cron' },
+      'analysis-pregenerate': { lastRunAt: ago(12), ms: 1, ok: false, summary: {}, trigger: 'cron' },
+    };
+    let t = render(trAi);
+    expect(t).toContain('Son değerlendirme: 5 dk önce · Son ön üretim: 12 dk önce (hata)');
+    expect(t).not.toContain('45 dakikadan uzun');
+    data.cronStatus = { 'evaluate-predictions': { lastRunAt: ago(50), ms: 1, ok: true, summary: {}, trigger: 'cron' }, 'analysis-pregenerate': null };
+    t = render(trAi);
+    expect(t).toContain('Son değerlendirme: 50 dk önce · Son ön üretim: hiç çalışmadı');
+    expect(t).toContain('Zamanlanmış işler 45 dakikadan uzun süredir çalışmadı');
+    data.isAdmin = false;
+    data.cronStatus = undefined;
+    expect(render(trAi)).not.toContain('Son değerlendirme');
   });
 });

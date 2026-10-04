@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import type { Role } from '@prisma/client';
 import { UNRESOLVED_ACTUAL_RESULT } from '@/lib/predictionRecords';
+import { readCronHeartbeats, type CronHeartbeat, type CronJobName } from '@/server/cronJobs';
 
 export type PhaseStats = {
   phase: 'PRE' | 'HT';
@@ -38,6 +39,8 @@ export type AiStatsDashboard = {
   result1x2HitRate: number;
   byPhase: PhaseStats[];
   isAdmin: boolean;
+  /** Yalnız yönetici: zamanlanmış işlerin son çalışması (admin bandı). */
+  cronStatus?: Record<CronJobName, CronHeartbeat | null>;
   history: AiStatsHistoryItem[];
 };
 
@@ -131,6 +134,7 @@ export async function loadAiStatsDashboard(auth: {
       totalEvaluated > 0 ? Math.round((result1x2HitCount / totalEvaluated) * 1000) / 10 : 0,
     byPhase,
     isAdmin,
+    ...(isAdmin ? { cronStatus: await readCronHeartbeats() } : {}),
     history,
   };
 }

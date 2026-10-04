@@ -9,7 +9,7 @@ import {
   aiStatsDashboardQueryKey,
   useAiStatsDashboard,
 } from '@/hooks/useAiStatsDashboard';
-import type { AiStatsHistoryItem } from '@/lib/loadAiStatsDashboard';
+import type { AiStatsDashboard, AiStatsHistoryItem } from '@/lib/loadAiStatsDashboard';
 import { buildMatchHref } from '@/utils/matchUrl';
 import styles from './ai-istatistikleri.module.scss';
 
@@ -162,6 +162,7 @@ export default function AiIstatistikleri() {
                     {evalLoading ? t('adminRunning') : t('adminEvaluate')}
                   </button>
                   {evalResult && <span className={styles.adminFeedback}>{evalResult}</span>}
+                  <CronStatusLine status={data.cronStatus} t={t} />
                 </div>
               )}
 
@@ -350,5 +351,35 @@ function HistorySection({
         </tbody>
       </table>
     </div>
+  );
+}
+
+/** Zamanlanmış işlerin son çalışması; 45 dk'dan eski ya da hiç yoksa kırmızı uyarı (bkz. server/cronJobs.ts). */
+const CRON_STALE_MINUTES = 45;
+
+function CronStatusLine({
+  status,
+  t,
+}: {
+  status: AiStatsDashboard['cronStatus'];
+  t: (key: string, opts?: Record<string, unknown>) => string;
+}) {
+  // Ölçüm anı sayfa açılınca bir kez alınır (render saf kalsın); sayfa yenilenince güncellenir.
+  const [now] = useState(() => Date.now());
+  if (!status) return null;
+  const age = (iso?: string) => (iso ? Math.max(0, Math.round((now - Date.parse(iso)) / 60_000)) : null);
+  const evalAge = age(status['evaluate-predictions']?.lastRunAt);
+  const pregenAge = age(status['analysis-pregenerate']?.lastRunAt);
+  const label = (m: number | null, ok: boolean | undefined) =>
+    m == null ? t('cronNever') : `${t('cronMinutesAgo', { n: m })}${ok === false ? ` (${t('cronFailed')})` : ''}`;
+  const stale = [evalAge, pregenAge].some((m) => m == null || m > CRON_STALE_MINUTES);
+  return (
+    <>
+      <span className={styles.cronStatus}>
+        {t('cronLastEvaluate')} {label(evalAge, status['evaluate-predictions']?.ok)} · {t('cronLastPregen')}{' '}
+        {label(pregenAge, status['analysis-pregenerate']?.ok)}
+      </span>
+      {stale && <span className={styles.cronStale}>{t('cronStale', { n: CRON_STALE_MINUTES })}</span>}
+    </>
   );
 }
