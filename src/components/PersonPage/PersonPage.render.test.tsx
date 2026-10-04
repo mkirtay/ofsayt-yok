@@ -14,7 +14,7 @@ const recent = [{ id: 19746609, status: 'FINISHED', date: '2026-09-19', home: { 
 const referee: RefereePageData = {
   id: 62331,
   name: 'Batuhan Kolak',
-  country: { name: 'Turkey' },
+  country: { name: 'Turkey', iso2: 'TR' },
   seasons: [{ seasonId: 28203, seasonName: '2026/2027', leagueId: 600, startingAt: '2026-08-14', matches: 4, yellowPerMatch: 3.5, redPerMatch: 0.5, penaltiesPerMatch: 0.25, foulsPerMatch: 26, varPerMatch: null }],
   recent,
   teams: {
@@ -35,6 +35,8 @@ describe('<RefereeView />', () => {
     expect(html).toContain('<h1');
     expect(html).toContain('Batuhan Kolak');
     expect(html).not.toMatch(/yaş/);
+    expect(html).toContain('Türkiye');
+    expect(html).not.toContain('Turkey');
   });
   it('sezon tablosu, son maçlar (maç sayfasına link), takım kırılımı başlığında sezon ve maç sayısı', () => {
     expect(html).toContain('Sezon istatistikleri');
@@ -56,7 +58,7 @@ describe('<CoachView />', () => {
     name: 'Okan Buruk',
     photo: 'https://cdn.sportmonks.com/images/soccer/coaches/20/199988.png',
     age: 52,
-    nationality: { name: 'Turkey' },
+    nationality: { name: 'Turkey', iso2: 'TR' },
     currentTeam: { id: 34, name: 'Galatasaray', since: '2022-06-23' },
     seasons: [{ seasonId: 25682, seasonName: '2025/2026', leagueId: 600, teamId: 34, teamName: 'Galatasaray', matches: 34, wins: 24, draws: 5, losses: 5, winPct: 71 }],
     recent,
@@ -66,6 +68,16 @@ describe('<CoachView />', () => {
     expect(html).toContain('52 yaş');
     expect(html).toContain('href="/teams/34"');
     expect(html).toContain('Göreve başlama: 23.06.2022');
+    expect(html).toContain('Türkiye');
+  });
+
+  it('mobilde tablolar kartı taşırmaz, kendi içinde kayar; ilk sütun sabit', async () => {
+    const { readFileSync } = await import('node:fs');
+    const scss = readFileSync(new URL('./personPage.module.scss', import.meta.url), 'utf8');
+    expect(scss).toMatch(/\.page \{[^}]*grid-template-columns: minmax\(0, 1fr\);/);
+    expect(scss).toMatch(/\.card \{\s*min-width: 0;/);
+    expect(scss).toMatch(/\.scroll \{\s*overflow-x: auto;/);
+    expect(scss).toMatch(/td:first-child \{\s*position: sticky;\s*left: 0;/);
   });
   it('sezon × turnuva × takım G-B-M ve galibiyet yüzdesi; kapsam notu', () => {
     expect(html).toContain('%71');

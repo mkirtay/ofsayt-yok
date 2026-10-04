@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { useI18n, useTranslation } from '@/lib/i18n';
 import TeamLogo from '@/components/TeamLogo';
 import { leagueNameById } from '@/utils/leagueName';
+import { countryDisplayName } from '@/utils/countryName';
 import type { RefereePageData } from '@/server/people/refereePage';
 import RecentMatchesTable from './RecentMatchesTable';
 import styles from './personPage.module.scss';
@@ -36,7 +37,7 @@ export default function RefereeView({ data }: { data: RefereePageData }) {
             <p className={styles.facts}>
               <span className={styles.fact}>
                 {data.country.flag ? <TeamLogo src={data.country.flag} width={20} height={14} className={styles.flag} /> : null}
-                {data.country.name}
+                {countryDisplayName(data.country, locale)}
               </span>
             </p>
           ) : null}

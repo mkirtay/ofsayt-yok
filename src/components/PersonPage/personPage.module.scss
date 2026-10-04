@@ -2,11 +2,14 @@
 
 .page {
   display: grid;
+  // Izgara öğeleri içerik genişliğine büyümesin: geniş tablo kartı taşırıp kesilmesin, kendi içinde kaysın.
+  grid-template-columns: minmax(0, 1fr);
   gap: $spacing-4;
   padding: $spacing-4 0 $spacing-8;
 }
 
 .card {
+  min-width: 0;
   background: $color-surface;
   border: 1px solid $color-border;
   border-radius: $radius-md;
@@ -122,6 +125,7 @@
 
 .scroll {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .table {
@@ -149,6 +153,20 @@
   td:first-child,
   .left {
     text-align: left;
+  }
+
+  // İlk sütun (sezon / takım) yatay kaydırmada sabit kalır.
+  th:first-child,
+  td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background: $color-surface;
+    box-shadow: 1px 0 0 $color-border;
+  }
+
+  th:first-child {
+    background: $color-muted;
   }
 
   tbody tr:last-child td {

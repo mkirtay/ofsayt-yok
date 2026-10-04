@@ -6,10 +6,13 @@
  * Kariyer zaman çizelgesi yok (Sportmonks `teams` kaydı eksik).
  */
 import { sportmonksClientRequest } from '@/services/sportmonksRuntimeClient';
-import { getTeamHistoryMatches } from '@/services/liveScoreService';
+import { loadMulti, isFinished, byKickoffDesc, toRecentMatch } from '@/server/people/refereePage';
+import { mapSportmonksStateToPhase } from '@/services/sportmonks/stateMapping';
 import { coachSeasonTable, ageOn, type CoachSeasonRow, type RawCoach } from '@/services/sportmonks/coachStats';
 import { todayIsoIstanbul } from '@/utils/dateStrip';
 import type { PersonRecentMatch } from '@/server/people/refereePage';
+
+type RawCoachFixtures = { fixtures?: { id: number; starting_at?: string | null; state_id?: number | null }[] | null };
 
 const RECENT_COUNT = 10;
 export const COACH_STATS_INCLUDE = 'statistics.details.type:developer_name;statistics.season:name,league_id;statistics.team:name,image_path';
@@ -21,7 +24,7 @@ type RawCoachProfile = {
   name?: string;
   image_path?: string | null;
   date_of_birth?: string | null;
-  nationality?: { name?: string; image_path?: string | null } | null;
+  nationality?: { name?: string; iso2?: string | null; image_path?: string | null } | null;
   teams?: { team_id?: number; start?: string | null; end?: string | null; team?: { name?: string; image_path?: string | null } | null }[] | null;
 };
 
@@ -30,7 +33,8 @@ export type CoachPageData = {
   name: string;
   photo?: string;
   age: number | null;
-  nationality: { name: string; flag?: string } | null;
+  /** `name` Sportmonks (İngilizce); görünen ad `countryDisplayName` ile. */
+  nationality: { name: string; iso2?: string; flag?: string } | null;
   currentTeam: { id: number; name: string; logo?: string; since: string | null } | null;
   seasons: CoachSeasonRow[];
   recent: PersonRecentMatch[];
@@ -72,35 +76,43 @@ async function loadStats(id: number): Promise<RawCoach | null> {
   }
 }
 
+/**
+ * Son maçlar: teknik direktörün görev aldığı maçlar (`coaches/{id}?include=fixtures:starting_at,state_id`, 1 sa; ~150
+ * satır, 37 KB) → biten son 10 → skor / takım / lig `fixtures/multi` ile (hakem sayfasıyla aynı include, cache'li).
+ */
+async function loadRecent(id: number): Promise<PersonRecentMatch[]> {
+  try {
+    const env = await sportmonksClientRequest<RawCoachFixtures>('football', `/coaches/${id}`, { include: 'fixtures:starting_at,state_id' });
+    const rows = env.data && !Array.isArray(env.data) ? (env.data.fixtures ?? []) : [];
+    const ids = rows
+      .filter((f) => f.state_id != null && mapSportmonksStateToPhase(f.state_id) === 'FINISHED')
+      .sort(byKickoffDesc)
+      .slice(0, RECENT_COUNT)
+      .map((f) => f.id);
+    return (await loadMulti(ids)).filter(isFinished).sort(byKickoffDesc).map(toRecentMatch);
+  } catch {
+    return [];
+  }
+}
+
 export async function loadCoachPage(id: number): Promise<CoachPageData | 'missing' | null> {
   const today = todayIsoIstanbul();
-  const [profile, stats] = await Promise.all([loadProfile(id), loadStats(id)]);
+  const [profile, stats, recent] = await Promise.all([loadProfile(id), loadStats(id), loadRecent(id)]);
   if (profile === 'missing') return 'missing';
   if (!profile) return null;
   const stint = currentTeamStint(profile.teams, today);
-  const recent = stint
-    ? (await getTeamHistoryMatches(String(stint.teamId)))
-        .filter((m) => m.status === 'FINISHED' && (!stint.since || (m.date ?? '') >= stint.since))
-        .slice(0, RECENT_COUNT)
-        .map(
-          (m): PersonRecentMatch => ({
-            id: m.id,
-            status: m.status,
-            home: m.home,
-            away: m.away,
-            ...(m.date ? { date: m.date } : {}),
-            ...(m.scheduled ? { scheduled: m.scheduled } : {}),
-            ...(m.scores ? { scores: m.scores } : {}),
-            ...(m.competition ? { competition: m.competition } : {}),
-          }),
-        )
-    : [];
   return {
     id,
     name: profile.display_name ?? profile.common_name ?? profile.name ?? '',
     ...(!isPlaceholder(profile.image_path) ? { photo: profile.image_path! } : {}),
     age: ageOn(profile.date_of_birth, today),
-    nationality: profile.nationality?.name ? { name: profile.nationality.name, ...(profile.nationality.image_path ? { flag: profile.nationality.image_path } : {}) } : null,
+    nationality: profile.nationality?.name
+      ? {
+          name: profile.nationality.name,
+          ...(profile.nationality.iso2 ? { iso2: profile.nationality.iso2 } : {}),
+          ...(profile.nationality.image_path ? { flag: profile.nationality.image_path } : {}),
+        }
+      : null,
     currentTeam: stint ? { id: stint.teamId, name: stint.name, since: stint.since, ...(stint.logo ? { logo: stint.logo } : {}) } : null,
     seasons: coachSeasonTable(stats),
     recent,

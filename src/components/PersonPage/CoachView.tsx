@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { useI18n, useTranslation } from '@/lib/i18n';
 import TeamLogo from '@/components/TeamLogo';
 import { leagueNameById } from '@/utils/leagueName';
+import { countryDisplayName } from '@/utils/countryName';
 import { isoDateToTr } from '@/utils/dateFormat';
 import type { CoachPageData } from '@/server/people/coachPage';
 import RecentMatchesTable from './RecentMatchesTable';
@@ -33,7 +34,7 @@ export default function CoachView({ data }: { data: CoachPageData }) {
             {data.nationality ? (
               <span className={styles.fact}>
                 {data.nationality.flag ? <TeamLogo src={data.nationality.flag} width={20} height={14} className={styles.flag} /> : null}
-                {data.nationality.name}
+                {countryDisplayName(data.nationality, locale)}
               </span>
             ) : null}
           </p>

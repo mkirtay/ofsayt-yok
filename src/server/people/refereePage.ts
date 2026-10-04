@@ -38,7 +38,8 @@ export type RefereeTeamBreakdown = {
 export type RefereePageData = {
   id: number;
   name: string;
-  country: { name: string; flag?: string } | null;
+  /** `name` Sportmonks (İngilizce); görünen ad `countryDisplayName` ile. */
+  country: { name: string; iso2?: string; flag?: string } | null;
   seasons: RefereeSeasonTableRow[];
   recent: PersonRecentMatch[];
   teams: RefereeTeamBreakdown;
@@ -49,7 +50,7 @@ type RawRefereeProfile = {
   display_name?: string;
   common_name?: string;
   name?: string;
-  country?: { name?: string; image_path?: string | null } | null;
+  country?: { name?: string; iso2?: string | null; image_path?: string | null } | null;
 };
 type RawRefereeFixtures = { fixtures?: { fixture_id?: number; type_id?: number }[] | null };
 
@@ -73,7 +74,7 @@ async function loadMainRefereeFixtureIds(id: number): Promise<number[]> {
   }
 }
 
-async function loadMulti(ids: number[]): Promise<SportmonksFixture[]> {
+export async function loadMulti(ids: number[]): Promise<SportmonksFixture[]> {
   if (!ids.length) return [];
   try {
     const env = await sportmonksClientRequest<SportmonksFixture[]>('football', `/fixtures/multi/${ids.join(',')}`, { include: MULTI_INCLUDE });
@@ -83,8 +84,8 @@ async function loadMulti(ids: number[]): Promise<SportmonksFixture[]> {
   }
 }
 
-const isFinished = (f: SportmonksFixture) => f.state_id != null && mapSportmonksStateToPhase(f.state_id) === 'FINISHED';
-const byKickoffDesc = (a: SportmonksFixture, b: SportmonksFixture) => String(b.starting_at ?? '').localeCompare(String(a.starting_at ?? ''));
+export const isFinished = (f: SportmonksFixture) => f.state_id != null && mapSportmonksStateToPhase(f.state_id) === 'FINISHED';
+export const byKickoffDesc = (a: Pick<SportmonksFixture, 'starting_at'>, b: Pick<SportmonksFixture, 'starting_at'>) => String(b.starting_at ?? '').localeCompare(String(a.starting_at ?? ''));
 
 export function toRecentMatch(f: SportmonksFixture): PersonRecentMatch {
   const m = mapSportmonksFixtureToMatch(f);
@@ -141,7 +142,13 @@ export async function loadRefereePage(id: number): Promise<RefereePageData | 'mi
   return {
     id,
     name: profile.display_name ?? profile.common_name ?? profile.name ?? '',
-    country: profile.country?.name ? { name: profile.country.name, ...(profile.country.image_path ? { flag: profile.country.image_path } : {}) } : null,
+    country: profile.country?.name
+      ? {
+          name: profile.country.name,
+          ...(profile.country.iso2 ? { iso2: profile.country.iso2 } : {}),
+          ...(profile.country.image_path ? { flag: profile.country.image_path } : {}),
+        }
+      : null,
     seasons: refereeSeasonTable(statsRaw),
     recent,
     teams,
