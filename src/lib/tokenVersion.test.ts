@@ -7,6 +7,7 @@ const h = vi.hoisted(() => {
   return { findUnique: vi.fn() };
 });
 vi.mock('@/lib/prisma', () => ({ prisma: { user: { findUnique: h.findUnique } } }));
+vi.mock('@/lib/redis', () => ({ withRedis: async (_fn: unknown, fallback: unknown) => fallback })); // önbellek yok → DB
 vi.mock('next-auth/next', () => ({ getServerSession: vi.fn(async () => null) }));
 vi.mock('@next-auth/prisma-adapter', () => ({ PrismaAdapter: () => ({}) }));
 
@@ -35,11 +36,13 @@ describe('web oturumu (NextAuth jwt callback)', () => {
     expect(t.tokenVersion).toBe(4);
   });
 
-  it('her kontrolde DB ile karşılaştırılır: eşleşirse alanlar DB\'den güncellenir', async () => {
+  it('her kontrolde sürüm karşılaştırılır; rol güncellenir, diğer alanlar 60 sn\'de bir', async () => {
     h.findUnique.mockResolvedValue(dbUser(2, 'ADMIN'));
-    const t = await jwt({ token: { sub: 'u1', tokenVersion: 2, role: 'USER' } });
+    const t = await jwt({ token: { sub: 'u1', tokenVersion: 2, role: 'USER', roleSyncedAt: Date.now() } });
     expect(t.role).toBe('ADMIN');
-    expect(h.findUnique).toHaveBeenCalledTimes(1);
+    expect(h.findUnique).toHaveBeenCalledTimes(1); // yalnız sürüm sorgusu
+    await jwt({ token: { sub: 'u1', tokenVersion: 2, roleSyncedAt: Date.now() - 61_000 } });
+    expect(h.findUnique).toHaveBeenCalledTimes(3); // sürüm + 60 sn tazelemesi
   });
 
   it('şifre değişti (sürüm arttı) → oturum geçersiz', async () => {
@@ -62,10 +65,10 @@ describe('mobil belirteç (getRequestAuth)', () => {
   const req = (token: string) => ({ headers: { authorization: `Bearer ${token}` } }) as unknown as NextApiRequest;
   const res = {} as NextApiResponse;
 
-  it('sürüm eşleşirse kullanıcı DB\'den (rol belirteçten değil)', async () => {
+  it('sürüm eşleşirse kabul; rol belirteçten değil güncel kayıttan', async () => {
     const token = await issueMobileToken({ sub: 'u1', role: 'ADMIN', tokenVersion: 1 });
     h.findUnique.mockResolvedValue(dbUser(1, 'USER'));
-    expect(await getRequestAuth(req(token), res)).toMatchObject({ id: 'u1', role: 'USER', credits: 3 });
+    expect(await getRequestAuth(req(token), res)).toMatchObject({ id: 'u1', role: 'USER' });
   });
 
   it('şifre değişince eski belirteç reddedilir', async () => {

@@ -9,6 +9,8 @@ const h = vi.hoisted(() => ({
 vi.mock('@/lib/prisma', () => ({ prisma: { user: { findUnique: h.findUnique, update: h.update } } }));
 vi.mock('@/lib/rateLimit', () => ({ hitFixedWindowRateLimit: vi.fn(async () => ({ success: true, remaining: 1, resetAt: 0 })) }));
 vi.mock('bcryptjs', () => ({ compare: vi.fn(async (a: string) => a === 'Eski-Sifre-123!'), hash: vi.fn(async () => 'HASH') }));
+const invalidate = vi.hoisted(() => vi.fn(async () => undefined));
+vi.mock('@/lib/sessionVersion', () => ({ invalidateSessionVersion: invalidate }));
 vi.mock('@/lib/mobileAuth', () => ({
   getRequestUserId: vi.fn(async () => 'u1'),
   hasBearerToken: () => h.bearer,
@@ -56,6 +58,7 @@ describe('POST /api/user/password', () => {
     expect(r.status).toBe(200);
     expect(h.update.mock.calls[0]![0].data).toEqual({ password: 'HASH', tokenVersion: { increment: 1 } });
     expect(r.json).toEqual({ ok: true, sessionsRevoked: true });
+    expect(invalidate).toHaveBeenCalledWith('u1'); // önbellekteki eski sürüm hemen silinir
   });
 
   it('mobil istemciye yeni belirteç döner', async () => {

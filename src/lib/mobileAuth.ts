@@ -13,7 +13,7 @@ import { getServerSession } from 'next-auth/next';
 import { encode, decode } from 'next-auth/jwt';
 import type { Role } from '@prisma/client';
 import { authOptions, tokenVersionOf } from '@/lib/auth-options';
-import { prisma } from '@/lib/prisma';
+import { getSessionVersion } from '@/lib/sessionVersion';
 
 const SECRET = process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET ?? '';
 const MOBILE_TOKEN_MAX_AGE_SEC = 60 * 60 * 24 * 30; // 30 gün
@@ -84,20 +84,17 @@ export async function getRequestAuth(
       // Geçersiz/expired token → cookie session'a düş
     }
     if (decoded?.sub) {
-      // Her istekte DB: sürüm eşleşmeli (şifre değişince / sıfırlanınca eski belirteçler düşer); rol ve diğer alanlar
-      // belirteçten değil DB'den (30 günlük belirteçte eski rol kalmasın). Eşleşmezse cookie'ye de düşülmez.
-      const row = await prisma.user.findUnique({
-        where: { id: String(decoded.sub) },
-        select: { id: true, role: true, credits: true, email: true, name: true, username: true, tokenVersion: true },
-      });
-      if (!row || row.tokenVersion !== tokenVersionOf(decoded)) return null;
+      // Her istekte sürüm karşılaştırılır (Redis'te 60 sn önbellek, şifre değişince silinir — lib/sessionVersion.ts);
+      // rol de oradan (30 günlük belirteçte eski rol kalmasın). Eşleşmezse cookie'ye de düşülmez.
+      const version = await getSessionVersion(String(decoded.sub));
+      if (!version || version.tokenVersion !== tokenVersionOf(decoded)) return null;
       return {
-        id: row.id,
-        role: row.role,
-        credits: row.credits,
-        email: row.email,
-        name: row.name,
-        username: row.username,
+        id: String(decoded.sub),
+        role: version.role,
+        credits: (decoded as { credits?: number | null }).credits ?? null,
+        email: (decoded.email as string | null) ?? null,
+        name: (decoded.name as string | null) ?? null,
+        username: (decoded as { username?: string | null }).username ?? null,
       };
     }
   }

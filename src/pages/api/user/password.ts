@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { hitFixedWindowRateLimit } from '@/lib/rateLimit';
 import { getRequestUserId, hasBearerToken, issueMobileToken } from '@/lib/mobileAuth';
 import { validatePassword } from '@/lib/validation';
+import { invalidateSessionVersion } from '@/lib/sessionVersion';
 
 function parseJsonBody(req: NextApiRequest): Record<string, unknown> {
   const b = req.body;
@@ -73,6 +74,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       data: { password: hashed, tokenVersion: { increment: 1 } },
       select: { id: true, role: true, credits: true, email: true, name: true, username: true, tokenVersion: true },
     });
+    await invalidateSessionVersion(userId); // önbellekteki eski sürüm hemen düşsün
 
     if (hasBearerToken(req)) {
       const token = await issueMobileToken({

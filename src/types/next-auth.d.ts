@@ -31,7 +31,9 @@ declare module 'next-auth/jwt' {
     credits?: number
     /** Premium bitişi (ISO) ya da null */
     premiumUntil?: string | null
-    /** Oturum sürümü (User.tokenVersion); her kontrolde DB ile karşılaştırılır */
+    /** Oturum sürümü (User.tokenVersion); her kontrolde karşılaştırılır (lib/sessionVersion.ts) */
     tokenVersion?: number
+    /** Kredi / premium / profil alanlarının son DB tazelemesi (ms; 60 sn'de bir) */
+    roleSyncedAt?: number
   }
 }

@@ -2,7 +2,8 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { hash } from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
 import { consumePasswordResetToken } from '@/lib/security';
-import { validatePassword } from '@/lib/validation';
+import { validatePassword } from '@/lib/validation'
+import { invalidateSessionVersion } from '@/lib/sessionVersion';
 import { hitFixedWindowRateLimit, requestIp } from '@/lib/rateLimit';
 
 const LIMIT = 5;
@@ -40,10 +41,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const hashed = await hash(password, 12);
   // tokenVersion artar → açık oturumlar ve mobil belirteçler geçersiz (hesabı ele geçiren varsa atılır).
-  await prisma.user.update({
+  const { id } = await prisma.user.update({
     where: { email },
     data: { password: hashed, tokenVersion: { increment: 1 } },
+    select: { id: true },
   });
+  await invalidateSessionVersion(id); // önbellekteki eski sürüm hemen düşsün
 
   return res.status(200).json({ ok: true, email });
 }

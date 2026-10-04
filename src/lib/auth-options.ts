@@ -4,6 +4,7 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import { compare } from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
+import { getSessionVersion } from '@/lib/sessionVersion';
 import {
   checkOAuthSignIn,
   EMAIL_ALREADY_REGISTERED,
@@ -12,6 +13,8 @@ import {
   onOAuthAccountLinked,
   onOAuthUserCreated,
 } from '@/lib/oauth';
+
+const ROLE_REFRESH_MS = 60_000;
 
 /** Oturum sürümü eşleşmedi (şifre değişti / sıfırlandı) ya da kullanıcı silindi → NextAuth oturum çerezini temizler. */
 export class SessionRevokedError extends Error {
@@ -118,29 +121,30 @@ export const authOptions: NextAuthOptions = {
         token.premiumUntil = toIso((user as { premiumUntil?: Date | string | null }).premiumUntil);
         // Credentials `authorize` ve OAuth adapter kullanıcısı (tam satır) tokenVersion taşır.
         token.tokenVersion = (user as { tokenVersion?: number }).tokenVersion ?? 0;
+        token.roleSyncedAt = Date.now();
       }
       if (!user && token.sub) {
-        // Her oturum kontrolünde: sürüm DB ile eşleşmeli (şifre değişince / sıfırlanınca eski oturumlar düşer); rol,
-        // kredi, premium da aynı sorguyla güncellenir (önceden 60 sn'de bir).
-        const row = await prisma.user.findUnique({
-          where: { id: token.sub },
-          select: {
-            role: true,
-            username: true,
-            name: true,
-            image: true,
-            credits: true,
-            premiumUntil: true,
-            tokenVersion: true,
-          },
-        });
-        if (!row || row.tokenVersion !== tokenVersionOf(token)) throw new SessionRevokedError();
-        token.role = row.role;
-        token.username = row.username;
-        token.name = row.name;
-        token.picture = row.image ?? undefined;
-        token.credits = row.credits;
-        token.premiumUntil = toIso(row.premiumUntil);
+        // Her oturum kontrolünde sürüm karşılaştırılır (Redis'te 60 sn önbellek, şifre değişince silinir — bkz.
+        // lib/sessionVersion.ts): şifre değişince / sıfırlanınca eski oturumlar düşer.
+        const version = await getSessionVersion(token.sub);
+        if (!version || version.tokenVersion !== tokenVersionOf(token)) throw new SessionRevokedError();
+        token.role = version.role;
+        // Diğer alanlar (kredi, premium, ad, avatar) 60 sn'de bir DB'den.
+        const last = typeof token.roleSyncedAt === 'number' ? token.roleSyncedAt : 0;
+        if (Date.now() - last > ROLE_REFRESH_MS) {
+          const row = await prisma.user.findUnique({
+            where: { id: token.sub },
+            select: { role: true, username: true, name: true, image: true, credits: true, premiumUntil: true },
+          });
+          if (!row) throw new SessionRevokedError();
+          token.role = row.role;
+          token.username = row.username;
+          token.name = row.name;
+          token.picture = row.image ?? undefined;
+          token.credits = row.credits;
+          token.premiumUntil = toIso(row.premiumUntil);
+          token.roleSyncedAt = Date.now();
+        }
       }
       if (trigger === 'update' && session && typeof session === 'object') {
         const s = session as Record<string, unknown>;
