@@ -295,6 +295,7 @@ export type SportmonksTvStationRow = {
 export type SportmonksFixtureCoach = {
   id: number;
   common_name?: string;
+  display_name?: string;
   meta?: { participant_id?: number; coach_id?: number } | null;
 };
 

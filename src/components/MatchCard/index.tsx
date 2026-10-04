@@ -526,6 +526,7 @@ export default function MatchCard({ match, loading, initialH2h }: MatchCardProps
         <RefereeStatsCard
           id={refStatsId}
           refereeId={match.referee_id!}
+          refereeName={refereeName}
           seasonId={match.season_id!}
           leagueId={match.competition?.id}
         />

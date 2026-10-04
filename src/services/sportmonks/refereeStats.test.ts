@@ -67,3 +67,17 @@ describe('hakem özeti', () => {
     expect(findGamblingTerms(lines.join('\n'))).toEqual([]);
   });
 });
+
+describe('hakem sayfası sezon tablosu', () => {
+  it('lig × sezon, maçı olan satırlar, yeni sezon önce; bu sezonun id\'leri', async () => {
+    const { refereeSeasonTable, currentSeasonIds } = await import('./refereeStats');
+    const rows = refereeSeasonTable(raw);
+    expect(rows.map((r) => [r.seasonName, r.leagueId, r.matches])).toEqual([
+      ['2026/2027', 600, 3],
+      ['2025/2026', 603, 4],
+      ['2025/2026', 600, 20],
+      ['2024/2025', 600, 25],
+    ]);
+    expect(currentSeasonIds(raw)).toEqual([28203]);
+  });
+});

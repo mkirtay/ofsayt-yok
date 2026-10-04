@@ -19,7 +19,7 @@ export const SPORTMONKS_TURKEY_COUNTRY_ID = 404;
 export const METADATA_HASHTAG_TYPE_ID = 613;
 
 /** Maç detayı isteğine eklenen include'lar + metadata süzgeci (yalnız hashtag satırı). Yayıncılar bunda YOK. */
-export const FIXTURE_DETAIL_EXTRA_INCLUDE = 'coaches:common_name;weatherReport;metadata';
+export const FIXTURE_DETAIL_EXTRA_INCLUDE = 'coaches:common_name,display_name;weatherReport;metadata';
 export const FIXTURE_DETAIL_EXTRA_FILTERS = `metadataTypes:${METADATA_HASHTAG_TYPE_ID}`;
 
 /**
@@ -65,16 +65,23 @@ export function mapFixtureCoaches(
   homeId: number | undefined,
   awayId: number | undefined,
 ): Match['coaches'] | undefined {
-  let home: string | undefined;
-  let away: string | undefined;
+  type Side = { name: string; id: number; full?: string };
+  let home: Side | undefined;
+  let away: Side | undefined;
   for (const c of fixture.coaches ?? []) {
     const name = c.common_name?.trim();
     if (!name) continue;
+    const full = c.display_name?.trim();
+    const side: Side = { name, id: c.id, ...(full && full !== name ? { full } : {}) };
     const team = c.meta?.participant_id;
-    if (team != null && team === homeId) home = name;
-    else if (team != null && team === awayId) away = name;
+    if (team != null && team === homeId) home = side;
+    else if (team != null && team === awayId) away = side;
   }
-  return home || away ? { ...(home ? { home } : {}), ...(away ? { away } : {}) } : undefined;
+  if (!home && !away) return undefined;
+  return {
+    ...(home ? { home: home.name, homeId: home.id, ...(home.full ? { homeFull: home.full } : {}) } : {}),
+    ...(away ? { away: away.name, awayId: away.id, ...(away.full ? { awayFull: away.full } : {}) } : {}),
+  };
 }
 
 /** OpenWeather ikon kodu (`01d`…`50n`) → kısa durum. */

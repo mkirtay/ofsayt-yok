@@ -1,4 +1,6 @@
+import Link from 'next/link';
 import { useTranslation } from '@/lib/i18n';
+import { coachHref } from '@/utils/personUrl';
 import type { Match } from '@/models/liveScore';
 import styles from './matchInfo.module.scss';
 
@@ -12,6 +14,19 @@ export function matchInfoRowsVisible(match: Match, phase: string): boolean {
 
 function watchOnVisible(match: Match, phase: string): boolean {
   return (phase === 'PRE' || phase === 'LIVE' || phase === 'HT') && (match.tv_stations?.length ?? 0) > 0;
+}
+
+/** Teknik direktör adı → teknik direktör sayfası (id yoksa düz metin). */
+function CoachName({ name, id, full }: { name?: string; id?: number; full?: string }) {
+  if (!name) return <>—</>;
+  // Link tam adla (sayfanın kanonik slug'ı) — kısa adla 301'e düşmesin.
+  return id ? (
+    <Link href={coachHref(id, full ?? name)} className={styles.personLink} prefetch={false}>
+      {name}
+    </Link>
+  ) : (
+    <>{name}</>
+  );
 }
 
 export default function MatchInfoRows({ match, phase }: { match: Match; phase: string }) {
@@ -30,7 +45,8 @@ export default function MatchInfoRows({ match, phase }: { match: Match; phase: s
         <div className={styles.infoRow} data-info="coaches">
           <dt>{t('matchInfo.coaches')}</dt>
           <dd>
-            {coaches.home ?? '—'} <span aria-hidden="true">·</span> {coaches.away ?? '—'}
+            <CoachName name={coaches.home} id={coaches.homeId} full={coaches.homeFull} /> <span aria-hidden="true">·</span>{' '}
+            <CoachName name={coaches.away} id={coaches.awayId} full={coaches.awayFull} />
           </dd>
         </div>
       ) : null}

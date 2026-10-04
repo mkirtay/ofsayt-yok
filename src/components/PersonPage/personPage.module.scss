@@ -1,0 +1,188 @@
+@use '../../styles/variables' as *;
+
+.page {
+  display: grid;
+  gap: $spacing-4;
+  padding: $spacing-4 0 $spacing-8;
+}
+
+.card {
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: $spacing-4;
+  padding: $spacing-5;
+}
+
+.avatar {
+  flex-shrink: 0;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: $color-text;
+  background: $color-muted;
+  border: 1px solid $color-border;
+  object-fit: cover;
+}
+
+.headText {
+  min-width: 0;
+  display: grid;
+  gap: $spacing-1;
+}
+
+.role {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: $color-text-secondary;
+}
+
+.name {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 800;
+  color: $color-text;
+  line-height: 1.2;
+}
+
+.facts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: $spacing-2 $spacing-4;
+  margin: 0;
+  font-size: 13px;
+  color: $color-text-secondary;
+}
+
+.fact {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.flag {
+  width: 20px;
+  height: 14px;
+  object-fit: cover;
+  border-radius: 2px;
+}
+
+.teamLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  color: $color-text;
+  text-decoration: none;
+
+  &:hover {
+    color: $color-primary-text;
+  }
+}
+
+.sectionTitle {
+  margin: 0;
+  padding: $spacing-3 $spacing-4;
+  font-size: 13px;
+  font-weight: 800;
+  color: $color-text;
+  border-bottom: 1px solid $color-border;
+}
+
+.note {
+  margin: 0;
+  padding: $spacing-3 $spacing-4;
+  font-size: 12px;
+  color: $color-text-secondary;
+  border-top: 1px solid $color-border;
+}
+
+.empty {
+  margin: 0;
+  padding: $spacing-4;
+  font-size: 13px;
+  color: $color-text-secondary;
+}
+
+.scroll {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+
+  th,
+  td {
+    padding: $spacing-2 $spacing-3;
+    border-bottom: 1px solid $color-border;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  th {
+    font-size: 11px;
+    font-weight: 700;
+    color: $color-text-secondary;
+    background: $color-muted;
+  }
+
+  th:first-child,
+  td:first-child,
+  .left {
+    text-align: left;
+  }
+
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+}
+
+.teamCell {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+  font-weight: 600;
+  color: $color-text;
+}
+
+.teamCellLink {
+  composes: teamCell;
+  text-decoration: none;
+
+  &:hover {
+    color: $color-primary-text;
+  }
+}
+
+.matchLink {
+  color: $color-text;
+  font-weight: 600;
+  text-decoration: none;
+
+  &:hover {
+    color: $color-primary-text;
+  }
+}
+
+.muted {
+  color: $color-text-secondary;
+}

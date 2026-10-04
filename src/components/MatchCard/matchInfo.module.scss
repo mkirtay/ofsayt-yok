@@ -32,6 +32,28 @@
   }
 }
 
+.personLink {
+  color: inherit;
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+
+  &:hover {
+    color: $color-primary-text;
+  }
+}
+
+.refProfileLink {
+  justify-self: start;
+  font-size: 12px;
+  font-weight: 700;
+  color: $color-primary-text;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
 // ── Hakem adı düğmesi + istatistik kartı ──
 .refToggle {
   font: inherit;

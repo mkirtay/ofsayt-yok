@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { SkeletonBlock } from '@/components/Skeleton';
 import TeamLogo from '@/components/TeamLogo';
+import { coachHref } from '@/utils/personUrl';
 import { useTranslation } from '@/lib/i18n';
 import '@/lib/i18nNamespaces/team';
 import type { FormResult, TeamMatch } from '@/services/sportmonks/teamOverview';
@@ -44,6 +45,8 @@ export type TeamHeaderCardProps = {
   live: HeaderLiveMatch | null;
   form: { result: FormResult; match: TeamMatch }[];
   coach?: string;
+  /** Sportmonks teknik direktör id'si → teknik direktör sayfası linki. */
+  coachId?: number;
   /** Dar kartta (mobil, panel) yalnız ad görünür; şehir `title` ve `aria-label`'da kalır. */
   venue?: { name: string; city?: string };
   compareOpen: boolean;
@@ -81,7 +84,7 @@ function StadiumIcon() {
 }
 
 export default function TeamHeaderCard(props: TeamHeaderCardProps) {
-  const { loading, name, logo, standing, standingLoading, next, live, form, coach, venue, compareOpen, onToggleCompare } = props;
+  const { loading, name, logo, standing, standingLoading, next, live, form, coach, coachId, venue, compareOpen, onToggleCompare } = props;
   const { t } = useTranslation('team');
   const [focused, setFocused] = useState<number | null>(null);
 
@@ -194,7 +197,15 @@ export default function TeamHeaderCard(props: TeamHeaderCardProps) {
                 </span>
                 <span className={styles.factText}>
                   <span className={styles.label}>{t('header.coachLabel')}</span>
-                  {loading ? <SkeletonBlock width={90} height={12} /> : <span className={styles.factValue}>{coach || '—'}</span>}
+                  {loading ? (
+                    <SkeletonBlock width={90} height={12} />
+                  ) : coach && coachId ? (
+                    <Link href={coachHref(coachId, coach)} className={styles.factValue} prefetch={false}>
+                      {coach}
+                    </Link>
+                  ) : (
+                    <span className={styles.factValue}>{coach || '—'}</span>
+                  )}
                 </span>
               </div>
               <div

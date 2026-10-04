@@ -50,7 +50,7 @@ function perMatch(count: number | null, matches: number): number | null {
   return Math.round((count / matches) * 100) / 100;
 }
 
-function seasonLine(stat: RawSeasonStat | undefined, seasonId: number, fallbackName: string): RefereeSeasonLine {
+export function seasonLine(stat: RawSeasonStat | undefined, seasonId: number, fallbackName: string): RefereeSeasonLine {
   const byType = new Map<string, unknown>();
   for (const d of stat?.details ?? []) {
     const key = d.type?.developer_name;
@@ -109,4 +109,23 @@ export function refereeSummaryPromptLines(s: RefereeSummary): string[] {
   const out = [`Hakem istatistikleri — ${s.name}`, line(s.current, 'Bu sezon')];
   if (s.previous) out.push(line(s.previous, 'Geçen sezon'));
   return out;
+}
+
+export type RefereeSeasonTableRow = RefereeSeasonLine & { leagueId: number | null; startingAt: string | null };
+
+/** Hakem sayfası sezon tablosu: lig × sezon, maçı olan satırlar; yeni sezon önce. */
+export function refereeSeasonTable(raw: RawReferee | null | undefined): RefereeSeasonTableRow[] {
+  return (raw?.statistics ?? [])
+    .map((s) => ({
+      ...seasonLine(s, s.season_id ?? s.season?.id ?? 0, ''),
+      leagueId: s.season?.league_id ?? null,
+      startingAt: s.season?.starting_at ?? null,
+    }))
+    .filter((r) => r.matches > 0)
+    .sort((a, b) => String(b.startingAt ?? b.seasonName).localeCompare(String(a.startingAt ?? a.seasonName)) || (a.leagueId ?? 0) - (b.leagueId ?? 0));
+}
+
+/** Bu sezonun (her ligde `is_current`) sezon id'leri. */
+export function currentSeasonIds(raw: RawReferee | null | undefined): number[] {
+  return (raw?.statistics ?? []).filter((s) => s.season?.is_current).map((s) => s.season_id ?? s.season?.id ?? 0).filter(Boolean);
 }

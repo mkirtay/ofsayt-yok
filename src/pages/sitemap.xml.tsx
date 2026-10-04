@@ -64,13 +64,22 @@ export const getServerSideProps: GetServerSideProps = async ({ res }) => {
     // sitemap still works with just static routes
   }
 
+  // Hakem / teknik direktör sayfaları (Süper Lig + 1. Lig, son iki sezon) — hata sitemap'i düşürmez.
+  let peopleUrls: { loc: string; priority: string; changefreq: string }[] = [];
+  try {
+    const { loadSitemapPeoplePaths } = await import('@/server/people/sitemapPeople');
+    peopleUrls = (await loadSitemapPeoplePaths()).map((path) => ({ loc: `${BASE_URL}${path}`, priority: '0.4', changefreq: 'weekly' }));
+  } catch {
+    // yok say
+  }
+
   const staticUrls = STATIC_ROUTES.map((r) => ({
     loc: `${BASE_URL}${r.path}`,
     priority: r.priority,
     changefreq: r.changefreq,
   }));
 
-  const xml = buildXml([...staticUrls, ...matchUrls]);
+  const xml = buildXml([...staticUrls, ...matchUrls, ...peopleUrls]);
 
   res.setHeader('Content-Type', 'text/xml; charset=utf-8');
   // ±3 günlük maç listesi günde bir değişir; üretim ~750 ms CPU (7 günün fikstürü) → CDN'de 1 gün, sonra 1 gün

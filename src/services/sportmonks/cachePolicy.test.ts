@@ -143,3 +143,14 @@ describe('maç bilgi kartı ekleri', () => {
     expect(sportmonksCacheTtl('football/teams/1071', { id: 1071, rivals: [] }, NOW).fresh).toBe(86400);
   });
 });
+
+describe('hakem / teknik direktör sayfaları', () => {
+  it('profil 7 gün, istatistik 12 sa, görev aldığı maçlar 1 sa, sezon listeleri 24 sa', () => {
+    expect(sportmonksCacheTtl('football/referees/62331', { id: 62331, country: {} }, NOW).fresh).toBe(7 * 86400);
+    expect(sportmonksCacheTtl('football/coaches/199988', { id: 199988, teams: [] }, NOW).fresh).toBe(7 * 86400);
+    expect(sportmonksCacheTtl('football/coaches/199988', { id: 199988, statistics: [] }, NOW).fresh).toBe(12 * 3600);
+    expect(sportmonksCacheTtl('football/referees/62331', { id: 62331, fixtures: [] }, NOW).fresh).toBe(3600);
+    expect(sportmonksCacheTtl('football/referees/seasons/28203', [{ id: 1 }], NOW).fresh).toBe(86400);
+    expect(sportmonksCacheTtl('football/teams/seasons/28203', [{ id: 34 }], NOW).fresh).toBe(86400);
+  });
+});

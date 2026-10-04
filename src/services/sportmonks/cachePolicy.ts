@@ -182,6 +182,8 @@ export function sportmonksCacheTtl(
       // `latest`/`upcoming` include'u maç listesi taşıyor (takım sayfası, mobil fikstür): canlı maç ya da başlamaya
       // ±15 dk → 30 sn; yoksa sıradaki başlamaya (−15 dk) kadar, en fazla 15 dk.
       // Takım sezon istatistikleri (takım sayfası Sezon Özeti): maçtan sonra Sportmonks yeniden hesaplar → 1 sa.
+      // Sezonun takımları + teknik direktörleri (sitemap) günde bir.
+      if (a === 'seasons') return withStale(DAY, 2 * DAY);
       // Rakip listesi (derbi rozeti) neredeyse hiç değişmez → 24 sa.
       if (team && 'rivals' in team) return withStale(DAY, 2 * DAY);
       if (team && 'statistics' in team) {
@@ -200,11 +202,20 @@ export function sportmonksCacheTtl(
       if (squadSeasonFinished(data)) return withStale(FINISHED_SEASON_TTL, FINISHED_SEASON_TTL);
       return data == null ? withStale(NOT_FOUND_TTL, NOT_FOUND_TTL) : withStale(6 * HOUR, DAY);
     case 'referees':
-      // Hakem sezon istatistikleri (maç sayfası hakem kartı, AI bağlamı): haftada bir maç → 12 sa yeter.
-      return data == null ? withStale(NOT_FOUND_TTL, NOT_FOUND_TTL) : withStale(12 * HOUR, 2 * DAY);
+    case 'coaches': {
+      if (data == null) return withStale(NOT_FOUND_TTL, NOT_FOUND_TTL);
+      // Sezon / ülke listeleri (sitemap) günde bir.
+      if (a === 'seasons' || a === 'countries') return withStale(DAY, 2 * DAY);
+      const person = typeof data === 'object' && !Array.isArray(data) ? (data as Record<string, unknown>) : null;
+      // Görev aldığı maçlar (hakem sayfası son maçlar): yeni maç ataması → 1 sa.
+      if (person && 'fixtures' in person) return withStale(HOUR, DAY);
+      // Sezon istatistikleri (hakem kartı, AI bağlamı, hakem / TD sayfası): haftada bir maç → 12 sa.
+      if (person && 'statistics' in person) return withStale(12 * HOUR, 2 * DAY);
+      // Profil (ad, ülke, foto, kariyer): neredeyse hiç değişmez → 7 gün.
+      return withStale(7 * DAY, 14 * DAY);
+    }
 
     case 'players':
-    case 'coaches':
     case 'venues':
       return data == null ? withStale(NOT_FOUND_TTL, NOT_FOUND_TTL) : withStale(6 * HOUR, DAY);
 

@@ -120,8 +120,8 @@ export interface Match {
   aggregate?: MatchAggregate;
   /** Yalnız maç detayı: Türkiye yayıncıları (tekil, Sportmonks sırasıyla); yoksa alan yok. */
   tv_stations?: string[];
-  /** Yalnız maç detayı: teknik direktörler (kısa ad). */
-  coaches?: { home?: string; away?: string };
+  /** Yalnız maç detayı: teknik direktörler (kısa ad + Sportmonks id — teknik direktör sayfası linki). */
+  coaches?: { home?: string; away?: string; homeId?: number; awayId?: number; homeFull?: string; awayFull?: string };
   /** Yalnız maç detayı: hava (bitmiş maçta gerçekleşen, yaklaşan maçta tahmin). */
   weather?: MatchWeather;
   /** Yalnız maç detayı: maçın resmî hashtag'i (Sportmonks metadata), ör. "#GALKAS". */

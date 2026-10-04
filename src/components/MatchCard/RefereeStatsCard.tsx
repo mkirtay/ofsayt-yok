@@ -1,15 +1,17 @@
+import Link from 'next/link';
 import { useI18n, useTranslation } from '@/lib/i18n';
+import { refereeHref } from '@/utils/personUrl';
 import { useRefereeSummary } from '@/hooks/useMatchInfoExtras';
 import { REFEREE_FEW_MATCHES, type RefereeSeasonLine } from '@/services/sportmonks/refereeStats';
 import styles from './matchInfo.module.scss';
 
-type Props = { refereeId: number; seasonId: number; leagueId?: number; id: string };
+type Props = { refereeId: number; refereeName: string; seasonId: number; leagueId?: number; id: string };
 
 /**
  * Hakem istatistik kartı (hakem adına tıklanınca açılır — kullanıcı girdisi, CLS sayılmaz). Maç sayısı her zaman
  * görünür; bu sezon 5 maçtan azsa geçen sezon da (varsa). Yalnız sayılar.
  */
-export default function RefereeStatsCard({ refereeId, seasonId, leagueId, id }: Props) {
+export default function RefereeStatsCard({ refereeId, refereeName, seasonId, leagueId, id }: Props) {
   const { t } = useTranslation('match');
   const { locale } = useI18n();
   const q = useRefereeSummary(refereeId, seasonId, leagueId, true);
@@ -56,6 +58,9 @@ export default function RefereeStatsCard({ refereeId, seasonId, leagueId, id }: 
             : null}
         </>
       )}
+      <Link href={refereeHref(refereeId, q.data?.name || refereeName)} className={styles.refProfileLink} prefetch={false}>
+        {t('person.refereeProfileLink')}
+      </Link>
     </div>
   );
 }
