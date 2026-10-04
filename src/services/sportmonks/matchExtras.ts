@@ -18,12 +18,37 @@ export const SPORTMONKS_TURKEY_COUNTRY_ID = 404;
 /** metadata türü: maçın resmî hashtag'i. */
 export const METADATA_HASHTAG_TYPE_ID = 613;
 
-/**
- * Maç detayı isteğine eklenen include'lar + metadata süzgeci (yalnız hashtag satırı). Alan seçimleri yanıtı küçültür
- * (bitmiş maçta ~160 yayıncı satırı: 57 KB → 39 KB).
- */
-export const FIXTURE_DETAIL_EXTRA_INCLUDE = 'tvStations.tvStation:name;coaches:common_name;weatherReport;metadata';
+/** Maç detayı isteğine eklenen include'lar + metadata süzgeci (yalnız hashtag satırı). Yayıncılar bunda YOK. */
+export const FIXTURE_DETAIL_EXTRA_INCLUDE = 'coaches:common_name;weatherReport;metadata';
 export const FIXTURE_DETAIL_EXTRA_FILTERS = `metadataTypes:${METADATA_HASHTAG_TYPE_ID}`;
+
+/**
+ * Yayıncılar AYRI, küçük istekle ve yalnız başlamamış / canlı maçta (bitmiş maçta satır görünmüyor; Sportmonks bitmiş
+ * maçta ~160 ülke satırı döndürüyordu). Durum ana yanıttan önce bilinmediği için iki adım.
+ */
+export const FIXTURE_TV_INCLUDE = 'tvStations.tvStation:name';
+
+/** Yayıncı satırı gösterilecek maç mı: başlamamış ya da canlı / devre arası. */
+export function wantsTvStations(phase: string): boolean {
+  return phase === 'NOT STARTED' || phase === 'IN PLAY' || phase === 'HALF TIME BREAK';
+}
+
+/**
+ * Sunucu tarafı (paylaşımlı cache'e yazmadan önce, proxy + sunucu yolu): yanıttaki yayıncı satırlarından yalnız
+ * Türkiye'yi bırakır — Redis'e de istemciye de yalnız TR kanalları gider. `data` tek fixture ya da fixture listesi.
+ */
+export function keepTurkeyTvStations(body: unknown): unknown {
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return body;
+  const data = (body as { data?: unknown }).data;
+  const trim = (f: unknown): unknown => {
+    if (!f || typeof f !== 'object' || !Array.isArray((f as { tvstations?: unknown }).tvstations)) return f;
+    const rows = (f as { tvstations: { country_id?: number | null }[] }).tvstations;
+    return { ...(f as object), tvstations: rows.filter((r) => r?.country_id === SPORTMONKS_TURKEY_COUNTRY_ID) };
+  };
+  if (Array.isArray(data)) return { ...(body as object), data: data.map(trim) };
+  if (data && typeof data === 'object') return { ...(body as object), data: trim(data) };
+  return body;
+}
 
 export function mapTurkeyTvStations(fixture: Pick<SportmonksFixture, 'tvstations'>): string[] {
   const out: string[] = [];

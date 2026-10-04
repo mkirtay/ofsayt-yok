@@ -43,6 +43,38 @@ describe('findMatchById / lookupSportmonksFixture (Sportmonks)', () => {
     expect(decodeURIComponent(url)).toContain(';events');
   });
 
+  it('yayıncılar yalnız başlamamış / canlı maçta, ayrı küçük istekle; sunucu Türkiye dışını ayıklar', async () => {
+    const tvRows = [
+      { tvstation_id: 878, country_id: 404, tvstation: { id: 878, name: 'TOD' } },
+      { tvstation_id: 9, country_id: 462, tvstation: { id: 9, name: 'Sport TV' } },
+    ];
+    const base = { ...(superLigFixture as object), id: 19746594 } as Record<string, unknown>;
+    const respond = (state: number) =>
+      vi.spyOn(global, 'fetch').mockImplementation(async (input) => {
+        const url = decodeURIComponent(String(input));
+        const body = url.includes('include=tvStations') ? { data: { id: 19746594, tvstations: tvRows } } : { data: { ...base, state_id: state, state: { id: state } } };
+        return new Response(JSON.stringify(body), { status: 200 });
+      });
+
+    // Başlamamış (state 1): 2 istek, ana istekte yayıncı yok, ikinci istek yalnız yayıncılar; yalnız TR kanalı kalır.
+    let spy = respond(1);
+    let mod = await import('./liveScoreService');
+    let r = await mod.lookupSportmonksFixture('19746594');
+    expect(spy).toHaveBeenCalledTimes(2);
+    expect(decodeURIComponent(String(spy.mock.calls[0]![0]))).not.toContain('tvStations');
+    expect(decodeURIComponent(String(spy.mock.calls[1]![0]))).toContain('include=tvStations.tvStation:name');
+    expect(r.kind === 'found' && r.match.tv_stations).toEqual(['TOD']);
+    spy.mockRestore();
+
+    // Bitmiş (state 5): tek istek, yayıncı istenmez.
+    vi.resetModules();
+    spy = respond(5);
+    mod = await import('./liveScoreService');
+    r = await mod.lookupSportmonksFixture('19746594');
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(r.kind === 'found' && r.match.tv_stations).toBeUndefined();
+  });
+
   it('bulunamayan maç: tek istek, liste taraması yok, kind=missing', async () => {
     const fetchSpy = vi
       .spyOn(global, 'fetch')

@@ -7,8 +7,14 @@ import { sportmonksClientRequest, sportmonksCollectAllPages } from './sportmonks
 import { SportmonksHttpError } from './sportmonks/httpClient';
 import { matchIstanbulDate } from '../utils/matchActivity';
 import { todayIsoIstanbul } from '../utils/dateStrip';
-import { FIXTURE_DETAIL_EXTRA_FILTERS, FIXTURE_DETAIL_EXTRA_INCLUDE } from '@/services/sportmonks/matchExtras';
+import {
+  FIXTURE_DETAIL_EXTRA_FILTERS,
+  FIXTURE_DETAIL_EXTRA_INCLUDE,
+  FIXTURE_TV_INCLUDE,
+  wantsTvStations,
+} from '@/services/sportmonks/matchExtras';
 import { mapSportmonksFixtureToMatch } from './sportmonksFixtureMapper';
+import { mapSportmonksStateToPhase } from './sportmonks/stateMapping';
 import {
   mapSportmonksEvents,
   mapSportmonksLineups,
@@ -225,13 +231,23 @@ const SPORTMONKS_MISSING_STATUSES = new Set([400, 403, 404, 422]);
 export async function lookupSportmonksFixture(matchId: string): Promise<SportmonksFixtureLookup> {
   if (!/^\d{1,12}$/.test(matchId)) return { kind: 'missing' };
   try {
-    // Detay: + Türkiye yayıncıları, teknik direktörler, hava, hashtag (bkz. sportmonks/matchExtras.ts) — aynı istek.
+    // Detay: + teknik direktörler, hava, hashtag (bkz. sportmonks/matchExtras.ts) — aynı istek.
     const envelope = await sportmonksClientRequest<SportmonksFixture>('football', `/fixtures/${matchId}`, {
       include: `${SPORTMONKS_FIXTURE_INCLUDE};events;${FIXTURE_DETAIL_EXTRA_INCLUDE}`,
       filters: FIXTURE_DETAIL_EXTRA_FILTERS,
     });
-    const fixture = envelope.data;
+    let fixture = envelope.data;
     if (!fixture || Array.isArray(fixture) || typeof fixture !== 'object') return { kind: 'missing' };
+    // Yayıncılar yalnız başlamamış / canlı maçta, ayrı küçük istekle (sunucu TR dışını ayıklar); hata maçı düşürmez.
+    const stateId = fixture.state?.id ?? fixture.state_id;
+    if (stateId != null && wantsTvStations(mapSportmonksStateToPhase(stateId))) {
+      try {
+        const tv = await sportmonksClientRequest<SportmonksFixture>('football', `/fixtures/${matchId}`, { include: FIXTURE_TV_INCLUDE });
+        if (tv.data && !Array.isArray(tv.data)) fixture = { ...fixture, tvstations: tv.data.tvstations ?? [] };
+      } catch {
+        // yayıncı satırı görünmez
+      }
+    }
     return { kind: 'found', match: mapSportmonksFixtureToMatch(fixture), events: mapSportmonksEvents(fixture) };
   } catch (error) {
     if (error instanceof SportmonksHttpError && SPORTMONKS_MISSING_STATUSES.has(error.status)) {

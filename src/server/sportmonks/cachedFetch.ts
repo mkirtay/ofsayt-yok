@@ -22,6 +22,7 @@ import { getRedisClient, withRedis } from '@/lib/redis';
 import { reportSportmonksQuota } from '@/services/sportmonks/quotaMonitor';
 import { LIVE_TTL, sportmonksCacheTtl } from '@/services/sportmonks/cachePolicy';
 import { cacheKeyPrefix } from '@/lib/cacheNamespace';
+import { keepTurkeyTvStations } from '@/services/sportmonks/matchExtras';
 
 const SPORTMONKS_BASE = 'https://api.sportmonks.com/v3';
 // Ortam + şema sürümü öneki (bkz. lib/cacheNamespace.ts): `prod:v2:smc:...` / `prod:v2:smc-lock:...`.
@@ -279,7 +280,8 @@ async function callUpstream(
       ...(opts.origin ? { origin: opts.origin } : {}),
     });
   }
-  return { status: res.status, body: stripSportmonksMeta(raw) };
+  // Yayıncı satırlarından yalnız Türkiye (bkz. matchExtras.keepTurkeyTvStations): cache'e ve istemciye küçük yanıt.
+  return { status: res.status, body: keepTurkeyTvStations(stripSportmonksMeta(raw)) };
 }
 
 /** Cache'lenebilir mi: gerçek veri (200 + data) ya da kalıcı "yok" (404/403/422/400, boş 200). */

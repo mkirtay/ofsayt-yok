@@ -3,6 +3,9 @@ import type { SportmonksFixture } from './types';
 import {
   FIXTURE_DETAIL_EXTRA_FILTERS,
   FIXTURE_DETAIL_EXTRA_INCLUDE,
+  FIXTURE_TV_INCLUDE,
+  keepTurkeyTvStations,
+  wantsTvStations,
   mapFixtureCoaches,
   mapFixtureHashtag,
   mapFixtureWeather,
@@ -69,10 +72,30 @@ describe('maç detayı ekleri (TV / teknik direktör / hava / hashtag / hakem id
     expect(mapMatchExtras({ id: 1 } as SportmonksFixture, 1, 2)).toEqual({});
   });
 
+  it('sunucu süzgeci: tek fixture ve listede yalnız Türkiye satırları kalır; yayıncısız yanıt aynen', () => {
+    const body = { data: finished };
+    const out = keepTurkeyTvStations(body) as { data: SportmonksFixture };
+    expect(out.data.tvstations!.map((r) => r.country_id)).toEqual([404, 404, 404]);
+    const list = keepTurkeyTvStations({ data: [finished] }) as { data: SportmonksFixture[] };
+    expect(list.data[0]!.tvstations).toHaveLength(3);
+    const plain = { data: { id: 1 } };
+    expect(keepTurkeyTvStations(plain)).toEqual(plain);
+    expect(keepTurkeyTvStations(null)).toBeNull();
+  });
+
+  it('yayıncı yalnız başlamamış / canlı maçta istenir; detay isteğinde yayıncı include yok', () => {
+    expect(wantsTvStations('NOT STARTED')).toBe(true);
+    expect(wantsTvStations('IN PLAY')).toBe(true);
+    expect(wantsTvStations('HALF TIME BREAK')).toBe(true);
+    expect(wantsTvStations('FINISHED')).toBe(false);
+    expect(FIXTURE_DETAIL_EXTRA_INCLUDE).not.toContain('tvStations');
+  });
+
   it('tarayıcı proxy izin listesi detay isteğini kabul eder', () => {
     const include = `participants;scores;state;periods;league.country;venue;referees.referee;round;stage;group;aggregate;events;${FIXTURE_DETAIL_EXTRA_INCLUDE}`;
     const r = checkProxyAllowlist('football/fixtures/19746594', { include, filters: FIXTURE_DETAIL_EXTRA_FILTERS });
     expect(r.violations).toEqual([]);
     expect(r.allowed).toBe(true);
+    expect(checkProxyAllowlist('football/fixtures/19746594', { include: FIXTURE_TV_INCLUDE }).violations).toEqual([]);
   });
 });
