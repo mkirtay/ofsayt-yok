@@ -1,0 +1,430 @@
+@use '../../styles/variables' as *;
+
+.page {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: $spacing-4 $spacing-4 $spacing-8;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+}
+
+.header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: $spacing-2 $spacing-3;
+}
+
+.title {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 900;
+  font-style: italic;
+  color: $color-text;
+}
+
+.sub {
+  margin: 0;
+  font-size: 14px;
+  color: $color-text-secondary;
+}
+
+.shared {
+  margin: 0;
+  padding: $spacing-2 $spacing-3;
+  font-size: 14px;
+  font-weight: 600;
+  color: $color-text;
+  background: $color-muted;
+  border-left: 3px solid $color-primary;
+  border-radius: $radius-sm;
+}
+
+// Oyun alanı: yüksekliği sunucu CSS'inde sabit → sahne sonradan yüklense de kayma yok. Gökyüzü CSS gradyanı
+// (tuval saydam): koyu temada gece, açık temada gündüz; WebGL yoksa / yüklenene kadar da bu görünür.
+.stage {
+  position: relative;
+  height: min(64vh, 640px);
+  min-height: 420px;
+  overflow: hidden;
+  border-radius: 18px;
+  container-type: inline-size;
+  isolation: isolate;
+  background: linear-gradient(180deg, #0b1424 0%, #0a1220 55%, #0c2415 56%, #0a1a10 100%);
+  user-select: none;
+  -webkit-user-select: none;
+
+  :global(:root[data-theme='light']) & {
+    background: linear-gradient(180deg, #8fcdf0 0%, #cfe6f2 55%, #6fb37a 56%, #4f9a5c 100%);
+  }
+
+  @include below-desktop {
+    height: min(68svh, 560px);
+    min-height: 380px;
+    border-radius: 14px;
+  }
+}
+
+.host {
+  position: absolute;
+  inset: 0;
+}
+
+.canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+
+  &[data-ready] {
+    opacity: 1;
+  }
+}
+
+// Topun üstünü izleyen tutamak: yalnız top tutulur (alanın geri kalanında sayfa kaydırılabilir).
+.handle {
+  position: absolute;
+  left: 0;
+  top: 0;
+  border-radius: 50%;
+  touch-action: none;
+  cursor: grab;
+  -webkit-tap-highlight-color: transparent;
+
+  &[data-dragging] {
+    cursor: grabbing;
+  }
+}
+
+.hud {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-3;
+  padding: $spacing-3 $spacing-4;
+  pointer-events: none;
+  color: #fff;
+  font-weight: 700;
+  font-size: 14px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+.dots {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  background: transparent;
+
+  &[data-state='goal'] {
+    background: #00a76f;
+    border-color: #00a76f;
+  }
+
+  &[data-state='miss'] {
+    background: rgba(229, 50, 45, 0.9);
+    border-color: rgba(229, 50, 45, 0.9);
+  }
+
+  &[data-state='current'] {
+    background: #fff;
+  }
+}
+
+.score {
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+}
+
+.center {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-4;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+}
+
+.hint {
+  position: absolute;
+  left: 50%;
+  bottom: $spacing-4;
+  z-index: 2;
+  transform: translateX(-50%);
+  max-width: calc(100% - #{$spacing-6});
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(6, 12, 20, 0.72);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+
+  &[data-hidden] {
+    opacity: 0;
+  }
+}
+
+.toast {
+  position: absolute;
+  left: 50%;
+  top: 64px;
+  z-index: 2;
+  transform: translateX(-50%);
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: rgba(6, 12, 20, 0.78);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 800;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: toast-in 1.6s ease both;
+
+  &[data-goal] {
+    background: #00a76f;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+@keyframes toast-in {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 8px);
+  }
+  12%,
+  80% {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -6px);
+  }
+}
+
+// "GOL!": sahnenin ortasında büyük, marka renklerinde (giriş sahnesiyle aynı dil).
+.goal {
+  position: absolute;
+  left: 50%;
+  top: 58%;
+  z-index: 2;
+  pointer-events: none;
+  font-size: 56px;
+  font-size: clamp(40px, 12cqw, 120px);
+  font-weight: 900;
+  font-style: italic;
+  line-height: 1;
+  white-space: nowrap;
+  color: #fff;
+  -webkit-text-stroke: 2px #00a76f;
+  text-shadow:
+    0 4px 0 #007b55,
+    0 0 28px rgba(0, 167, 111, 0.75),
+    0 0 60px rgba(255, 200, 61, 0.35);
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.3) rotate(-8deg);
+
+  &[data-show] {
+    animation: goal-pop 1.5s cubic-bezier(0.2, 0.9, 0.25, 1) both;
+  }
+}
+
+@keyframes goal-pop {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.3) rotate(-8deg);
+  }
+  18% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.18) rotate(-4deg);
+  }
+  40%,
+  78% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1) rotate(-5deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -62%) scale(1.08) rotate(-5deg);
+  }
+}
+
+// Seri sonu / bilgilendirme kartı (alanın üstünde)
+.overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-4;
+  background: rgba(4, 8, 14, 0.62);
+}
+
+.card {
+  width: 100%;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $spacing-3;
+  padding: $spacing-6 $spacing-5;
+  text-align: center;
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  box-shadow: $shadow-surface;
+}
+
+.cardTitle {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: $color-text-secondary;
+}
+
+.cardScore {
+  margin: 0;
+  font-size: 40px;
+  font-weight: 900;
+  line-height: 1;
+  color: $color-text;
+  font-variant-numeric: tabular-nums;
+}
+
+.cardText {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: $color-text-secondary;
+}
+
+.shotList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+
+  li {
+    display: flex;
+    justify-content: space-between;
+    gap: $spacing-3;
+    color: $color-text;
+  }
+
+  span:last-child {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: $spacing-2;
+}
+
+.btn {
+  min-height: 44px;
+  padding: 0 18px;
+  border: 1px solid $color-primary;
+  border-radius: $radius-full;
+  background: $color-primary;
+  color: #fff;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+
+  &:hover {
+    background: $color-primary-dark;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+    outline-offset: 2px;
+  }
+}
+
+.btnGhost {
+  background: transparent;
+  color: $color-primary-text;
+  border-color: $color-border;
+
+  &:hover {
+    background: $color-muted;
+  }
+}
+
+.note {
+  min-height: 18px;
+  margin: 0;
+  font-size: 12px;
+  color: $color-text-secondary;
+}
+
+.rules {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: $spacing-4 $spacing-6;
+  padding: $spacing-5;
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+
+  h2 {
+    margin: 0 0 $spacing-2;
+    font-size: 15px;
+    font-weight: 700;
+    color: $color-text;
+  }
+
+  ul,
+  ol {
+    margin: 0;
+    padding-left: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: $color-text-secondary;
+  }
+
+  @include below-desktop {
+    grid-template-columns: 1fr;
+  }
+}

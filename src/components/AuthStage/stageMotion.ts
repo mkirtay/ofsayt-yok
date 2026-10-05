@@ -12,9 +12,24 @@
  * Birimler: dünya birimi (top yarıçapı `BALL_RADIUS`), saniye.
  */
 
-export type V3 = { x: number; y: number; z: number };
-/** spin: açısal hız vektörü (eksen × rad/sn). */
-export type Ball = { pos: V3; vel: V3; spin: V3 };
+import {
+  advanceBall,
+  applyNetDrag,
+  collideGoal,
+  goalSpec,
+  len2,
+  len3,
+  nextSpin,
+  rollingSpin as coreRollingSpin,
+  type Ball,
+  type GoalSize,
+  type GoalSpec,
+  type StepEvent,
+  type Tuning,
+  type V3,
+} from '@/lib/pitchPhysics/core';
+
+export type { Ball, GoalSize, GoalSpec, StepEvent, V3 };
 
 /** Arcade ölçek: top sahaya göre biraz büyük (masaüstünde ~65 px görünsün, logolar seçilsin). */
 export const BALL_RADIUS = 0.62;
@@ -57,25 +72,25 @@ export function restingBall(x = 0, z = 0, r = BALL_RADIUS): Ball {
 
 /** Yuvarlanan topun açısal hızı: eksen = yukarı × hız, büyüklük |v| / r. */
 export function rollingSpin(vx: number, vz: number, r = BALL_RADIUS): V3 {
-  return { x: vz / r, y: 0, z: -vx / r };
+  return coreRollingSpin(vx, vz, r);
 }
 
-// ── Kaleler ───────────────────────────────────────────────────────────────────────────────────────────
-
-export type GoalSpec = {
-  /** -1 sol (x < 0), 1 sağ */
-  side: -1 | 1;
-  /** Kale çizgisi (direklerin x'i) ve file arkası. */
-  lineX: number;
-  backX: number;
-  /** Direkler z = ±halfW'de; üst direk `height`'ta, file arkası `backHeight`'a iner. */
-  halfW: number;
-  height: number;
-  backHeight: number;
-  postR: number;
+/** Ortak fizik çekirdeğinin (lib/pitchPhysics/core.ts) bu sahnedeki ayarları. */
+const TUNING: Tuning = {
+  gravity: GRAVITY,
+  groundRestitution: GROUND_RESTITUTION,
+  bounceFriction: BOUNCE_FRICTION,
+  minBounceSpeed: MIN_BOUNCE_SPEED,
+  rollDecel: ROLL_DECEL,
+  rollDamping: ROLL_DAMPING,
+  airDrag: AIR_DRAG,
+  postRestitution: POST_RESTITUTION,
+  netRestitution: NET_RESTITUTION,
+  netDamp: NET_DAMP,
+  netDrag: NET_DRAG,
 };
 
-export type GoalSize = { lineX: number; halfW: number; height: number; depth: number; postR: number };
+// ── Kaleler ───────────────────────────────────────────────────────────────────────────────────────────
 
 /** Arcade kale: ağız ~3,7 top çapı, yükseklik ~1,5 top çapı (orta noktadan orta güçte bir şutla ulaşılır). */
 export const DEFAULT_GOAL: GoalSize = { lineX: 3.6, halfW: 2.3, height: 1.9, depth: 1.45, postR: 0.08 };
@@ -98,117 +113,7 @@ export function arenaFor(lite: boolean, size: GoalSize = DEFAULT_GOAL): Arena {
 }
 
 export function goalSpecs(sides: readonly (-1 | 1)[], size: GoalSize = DEFAULT_GOAL): GoalSpec[] {
-  return sides.map((side) => ({
-    side,
-    lineX: side * size.lineX,
-    backX: side * (size.lineX + size.depth),
-    halfW: size.halfW,
-    height: size.height,
-    backHeight: size.height * 0.82,
-    postR: size.postR,
-  }));
-}
-
-export type StepEvent =
-  | { type: 'goal'; side: -1 | 1 }
-  | { type: 'post'; side: -1 | 1 }
-  /** File içten çarpma (dalga için hız ve nokta). */
-  | { type: 'net'; side: -1 | 1; speed: number; y: number; z: number };
-
-/** Daire (2B) çarpışması: merkezden itip normal bileşeni yansıtır. Çarptıysa true. */
-function bounceCircle(
-  p: { a: number; b: number },
-  v: { a: number; b: number },
-  ca: number,
-  cb: number,
-  min: number,
-  e: number,
-): boolean {
-  const da = p.a - ca;
-  const db = p.b - cb;
-  const d = Math.hypot(da, db);
-  if (d >= min || d < 1e-9) return false;
-  const na = da / d;
-  const nb = db / d;
-  const vn = v.a * na + v.b * nb;
-  if (vn < 0) {
-    v.a -= (1 + e) * vn * na;
-    v.b -= (1 + e) * vn * nb;
-  }
-  p.a = ca + na * min;
-  p.b = cb + nb * min;
-  return true;
-}
-
-function collideGoal(prev: V3, pos: V3, vel: V3, g: GoalSpec, r: number, events: StepEvent[]) {
-  const depth = Math.abs(g.backX - g.lineX);
-  const minPost = r + g.postR;
-  // Direkler (dikey silindir: xz düzleminde daire)
-  if (pos.y - r < g.height) {
-    for (const z0 of [-g.halfW, g.halfW]) {
-      const p = { a: pos.x, b: pos.z };
-      const v = { a: vel.x, b: vel.z };
-      if (bounceCircle(p, v, g.lineX, z0, minPost, POST_RESTITUTION)) {
-        [pos.x, pos.z, vel.x, vel.z] = [p.a, p.b, v.a, v.b];
-        events.push({ type: 'post', side: g.side });
-      }
-    }
-  }
-  // Üst direk (z boyunca silindir: xy düzleminde daire)
-  if (Math.abs(pos.z) <= g.halfW) {
-    const p = { a: pos.x, b: pos.y };
-    const v = { a: vel.x, b: vel.y };
-    if (bounceCircle(p, v, g.lineX, g.height, minPost, POST_RESTITUTION)) {
-      [pos.x, pos.y, vel.x, vel.y] = [p.a, p.b, v.a, v.b];
-      events.push({ type: 'post', side: g.side });
-    }
-  }
-
-  const outPrev = (prev.x - g.lineX) * g.side;
-  const out = (pos.x - g.lineX) * g.side;
-  const roofAt = (o: number) => g.height + (g.backHeight - g.height) * clamp(o / depth, 0, 1);
-
-  // File arkası (x = backX)
-  if (Math.abs(pos.z) < g.halfW && pos.y - r < g.backHeight) {
-    const relPrev = (prev.x - g.backX) * g.side; // < 0: içeride
-    const rel = (pos.x - g.backX) * g.side;
-    if (relPrev <= 0 && rel > -r) {
-      const speed = vel.x * g.side;
-      pos.x = g.backX - g.side * r;
-      vel.x = -g.side * Math.abs(vel.x) * NET_RESTITUTION;
-      vel.y *= NET_DAMP;
-      vel.z *= NET_DAMP;
-      if (speed > 0.3) events.push({ type: 'net', side: g.side, speed, y: pos.y, z: pos.z });
-    } else if (relPrev > 0 && rel < r) {
-      pos.x = g.backX + g.side * r;
-      vel.x = g.side * Math.abs(vel.x) * NET_RESTITUTION;
-    }
-  }
-  // Yan fileler (z = ±halfW), kale çizgisi ile file arkası arasında
-  if (out > 0 && out < depth + r && pos.y - r < roofAt(out)) {
-    for (const zw of [-g.halfW, g.halfW]) {
-      if (Math.abs(pos.z - zw) >= r) continue;
-      const s = Math.sign(prev.z - zw) || -Math.sign(zw);
-      const inside = Math.abs(prev.z) < g.halfW;
-      if (inside) events.push({ type: 'net', side: g.side, speed: Math.abs(vel.z), y: pos.y, z: zw });
-      pos.z = zw + s * r;
-      vel.z = s * Math.abs(vel.z) * NET_RESTITUTION;
-      if (inside) vel.x *= NET_DAMP;
-    }
-  }
-  // Çatı (kale çizgisinden arkaya hafif inen)
-  if (out > 0 && out < depth && Math.abs(pos.z) < g.halfW) {
-    const roof = roofAt(out);
-    if (Math.abs(pos.y - roof) < r) {
-      const s = prev.y >= roofAt(outPrev) ? 1 : -1;
-      pos.y = roof + s * r;
-      vel.y = s * Math.abs(vel.y) * NET_RESTITUTION;
-    }
-  }
-  // Gol: top çizgiyi tamamen geçti (merkez çizgiden r kadar içeride), direklerin arasında, üst direğin altında.
-  if (outPrev <= r && out > r && Math.abs(pos.z) < g.halfW && pos.y < g.height) {
-    events.push({ type: 'goal', side: g.side });
-  }
+  return sides.map((side) => goalSpec(side, size));
 }
 
 /**
@@ -236,60 +141,20 @@ export function stepBall(
   const pos = { ...b.pos };
   const vel = { ...b.vel };
   let spin = { ...b.spin };
-  const speed = Math.hypot(vel.x, vel.y, vel.z);
+  const speed = len3(vel.x, vel.y, vel.z);
   const n = Math.min(8, Math.max(1, Math.ceil((speed * dt) / (r * 0.5))));
   const h = dt / n;
   for (let i = 0; i < n; i++) {
     const prev = { ...pos };
-    const grounded = pos.y <= r + 1e-6 && Math.abs(vel.y) < 1e-6;
-    if (grounded) {
-      const s = Math.hypot(vel.x, vel.z);
-      if (s > 0) {
-        const ns = Math.max(0, s - (ROLL_DECEL + ROLL_DAMPING * s) * h);
-        vel.x *= ns / s;
-        vel.z *= ns / s;
-      }
-    } else {
-      vel.y -= GRAVITY * h;
-      const k = Math.exp(-AIR_DRAG * h);
-      vel.x *= k;
-      vel.y *= k;
-      vel.z *= k;
-    }
-    pos.x += vel.x * h;
-    pos.y += vel.y * h;
-    pos.z += vel.z * h;
-    let bounced = false;
-    if (pos.y < r) {
-      pos.y = r;
-      if (-vel.y > MIN_BOUNCE_SPEED) {
-        vel.y = -vel.y * GROUND_RESTITUTION;
-        vel.x *= BOUNCE_FRICTION;
-        vel.z *= BOUNCE_FRICTION;
-        bounced = true;
-      } else {
-        vel.y = 0;
-      }
-    }
+    const bounced = advanceBall(pos, vel, h, r, TUNING);
     if (walls) collideWalls(pos, vel, walls, r);
     for (const g of goals) {
-      collideGoal(prev, pos, vel, g, r, events);
-      if ((pos.x - g.lineX) * g.side > 0 && Math.abs(pos.z) < g.halfW && pos.y < g.height) {
-        const k = Math.exp(-NET_DRAG * h);
-        vel.x *= k;
-        vel.z *= k;
-      }
+      collideGoal(prev, pos, vel, g, r, events, TUNING);
+      applyNetDrag(pos, vel, g, h, TUNING);
     }
     // Direk / file sekmesi topu duvarın ya da tavanın ötesine itmesin.
     if (walls) collideWalls(pos, vel, walls, r);
-    // Dönüş: yerdeyken tam yuvarlanma; havada yavaşça söner; sekmede yuvarlanmaya yaklaşır.
-    const roll = rollingSpin(vel.x, vel.z, r);
-    if (pos.y <= r + 1e-6 && vel.y === 0) spin = roll;
-    else if (bounced) spin = { x: spin.x + (roll.x - spin.x) * 0.6, y: spin.y * 0.5, z: spin.z + (roll.z - spin.z) * 0.6 };
-    else {
-      const k = Math.exp(-0.3 * h);
-      spin = { x: spin.x * k, y: spin.y * k, z: spin.z * k };
-    }
+    spin = nextSpin(spin, pos, vel, bounced, h, r);
   }
   return { ball: { pos, vel, spin }, events };
 }
@@ -298,7 +163,7 @@ export function stepBall(
 
 /** Yerde ve (neredeyse) duran top şutlanabilir. */
 export function canShoot(b: Ball, r = BALL_RADIUS): boolean {
-  return b.pos.y <= r + 0.05 && Math.hypot(b.vel.x, b.vel.y, b.vel.z) < SHOOTABLE_SPEED;
+  return b.pos.y <= r + 0.05 && len3(b.vel.x, b.vel.y, b.vel.z) < SHOOTABLE_SPEED;
 }
 
 export type Shot = { dirX: number; dirZ: number; power: number; vel: V3 };
@@ -309,7 +174,7 @@ export type Shot = { dirX: number; dirZ: number; power: number; vel: V3 };
  * @param pullX, pullZ işaretçinin zemindeki noktası − topun konumu
  */
 export function shotFromPull(pullX: number, pullZ: number): Shot | null {
-  const d = Math.hypot(pullX, pullZ);
+  const d = len2(pullX, pullZ);
   const power = Math.min(1, d / MAX_PULL);
   if (power < MIN_SHOT_POWER || d < 1e-9) return null;
   const dirX = -pullX / d;

@@ -1,0 +1,51 @@
+{
+  "pageTitle": "Frikik — Free Kick Game | Ofsayt Yok",
+  "pageDesc": "5 free kicks, a wall and a keeper: bend it, hit the top corner, make this week's best.",
+  "sharedTitle": "{{score}} points in Frikik — can you beat it? | Ofsayt Yok",
+  "title": "Frikik",
+  "sub": "5 free kicks. Beat the wall, beat the keeper.",
+  "shared": "A friend scored {{score}} points. Can you beat it?",
+  "stageLabel": "Free kick game area",
+  "loading": "Preparing the pitch…",
+  "hint": "Press the ball, pull back, release — slide sideways as you release to curl it",
+  "hud": {
+    "shot": "Shot {{n}}/{{total}}",
+    "score": "{{score}} pts"
+  },
+  "goal": "GOAL!",
+  "result": {
+    "goal": "Goal",
+    "viaPost": "In off the post",
+    "corner": "Top corner!",
+    "saved": "Saved by the keeper",
+    "wall": "Blocked by the wall",
+    "post": "Off the post!",
+    "miss": "Wide",
+    "points": "+{{points}}"
+  },
+  "end": {
+    "title": "Series over",
+    "total": "{{score}} points",
+    "best": "Highest possible score is 1250",
+    "again": "Play again",
+    "share": "Share",
+    "copied": "Link copied",
+    "shareText": "I scored {{score}} points in Frikik. Can you beat it?"
+  },
+  "reduced": {
+    "title": "This game contains motion",
+    "desc": "Because \"reduce motion\" is turned on for your device, the game was not started automatically. You can read how it works below, or open the game anyway.",
+    "play": "Play anyway"
+  },
+  "noWebgl": "The game could not start because your browser does not support 3D graphics.",
+  "rules": {
+    "title": "How to play",
+    "r1": "Press the ball and pull back: the arrow shows direction and power. Pull further for a faster, higher shot.",
+    "r2": "Slide your finger or mouse sideways as you release: the ball curls that way and the arrow bends.",
+    "r3": "Each series has 5 shots; the ball position, the wall and the keeper's movement change every shot.",
+    "scoring": "Points",
+    "p1": "Goal: 100 points",
+    "p2": "In off the post: +50",
+    "p3": "Top corner: +100"
+  }
+}

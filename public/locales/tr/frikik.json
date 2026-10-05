@@ -1,0 +1,51 @@
+{
+  "pageTitle": "Frikik — Serbest Vuruş Oyunu | Ofsayt Yok",
+  "pageDesc": "5 serbest vuruş, baraj ve kaleci: falsolu vur, doksana tak, haftanın en iyileri arasına gir.",
+  "sharedTitle": "Frikik'te {{score}} puan — Sen kaç yaparsın? | Ofsayt Yok",
+  "title": "Frikik",
+  "sub": "5 serbest vuruş. Barajı aş, kaleciyi geç.",
+  "shared": "Bir arkadaşın {{score}} puan yaptı. Geçebilir misin?",
+  "stageLabel": "Frikik oyun alanı",
+  "loading": "Saha hazırlanıyor…",
+  "hint": "Topa bas, geri çek, bırak — bırakırken yana kaydır: falso",
+  "hud": {
+    "shot": "Vuruş {{n}}/{{total}}",
+    "score": "{{score}} puan"
+  },
+  "goal": "GOL!",
+  "result": {
+    "goal": "Gol",
+    "viaPost": "Direkten gol",
+    "corner": "Doksan!",
+    "saved": "Kaleci kurtardı",
+    "wall": "Barajda kaldı",
+    "post": "Direk!",
+    "miss": "Dışarı",
+    "points": "+{{points}}"
+  },
+  "end": {
+    "title": "Seri bitti",
+    "total": "{{score}} puan",
+    "best": "En yüksek olası skor 1250",
+    "again": "Tekrar oyna",
+    "share": "Paylaş",
+    "copied": "Bağlantı kopyalandı",
+    "shareText": "Frikik'te {{score}} puan yaptım. Sen kaç yaparsın?"
+  },
+  "reduced": {
+    "title": "Bu oyun hareketli sahneler içerir",
+    "desc": "Cihazında \"hareketi azalt\" ayarı açık olduğu için oyun kendiliğinden başlatılmadı. Aşağıda nasıl oynandığını okuyabilir, istersen oyunu yine de açabilirsin.",
+    "play": "Yine de oyna"
+  },
+  "noWebgl": "Tarayıcın 3D grafikleri desteklemediği için oyun açılamadı.",
+  "rules": {
+    "title": "Nasıl oynanır",
+    "r1": "Topa bas ve geriye çek: ok yönü ve gücü gösterir. Daha çok çekersen top daha hızlı ve daha yüksekten gider.",
+    "r2": "Bırakırken parmağını ya da fareyi yana kaydır: top o yöne falso alır, ok eğrilir.",
+    "r3": "Her seride 5 vuruş var; her vuruşta topun yeri, baraj ve kalecinin hareketi değişir.",
+    "scoring": "Puanlar",
+    "p1": "Gol: 100 puan",
+    "p2": "Direkten gol: +50",
+    "p3": "Doksan (üst köşe): +100"
+  }
+}

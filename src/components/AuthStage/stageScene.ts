@@ -20,7 +20,6 @@ import {
   BufferGeometry,
   CanvasTexture,
   Color,
-  CustomBlending,
   CylinderGeometry,
   DirectionalLight,
   DoubleSide,
@@ -28,45 +27,48 @@ import {
   Group,
   HemisphereLight,
   LineBasicMaterial,
-  LineSegments,
   Material,
   Mesh,
   MeshBasicMaterial,
-  MeshPhysicalMaterial,
   MeshStandardMaterial,
-  NoColorSpace,
   Object3D,
-  OneFactor,
   PerspectiveCamera,
   Plane,
   PlaneGeometry,
-  Shape,
-  ShapeGeometry,
   BoxGeometry,
-  PMREMGenerator,
   Points,
   PointsMaterial,
   Quaternion,
   Raycaster,
-  RepeatWrapping,
   Scene,
   ShaderMaterial,
-  SphereGeometry,
-  SrcAlphaFactor,
   Sprite,
   SpriteMaterial,
-  SRGBColorSpace,
   Texture,
   Vector2,
   Vector3,
   WebGLRenderer,
-  ZeroFactor,
 } from 'three';
-import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { HUB_LEAGUE_IDS } from '@/config/hubLeagueGroups';
 import { sportmonksLeagueLogoUrl } from '@/utils/leagueLogo';
 import { logoSrc } from '@/utils/logoUrl';
-import { panelMesh, pickSpreadHexagons, truncatedIcosahedron, type PanelMesh } from './ballGeometry';
+import {
+  LIGHT_BLEND,
+  beamMaterial,
+  boardTexture,
+  buildBall,
+  buildGoal,
+  canvasTexture,
+  cloudTexture,
+  createEnvTexture,
+  glowTexture,
+  grassTexture,
+  groundAlphaTexture,
+  loadBallLogos,
+  makeArrow,
+  rippleNet,
+  shadowTexture,
+} from '@/components/pitch3d/pitchKit';
 import {
   BALL_RADIUS,
   CEILING,
@@ -86,7 +88,6 @@ import {
   shotFromPull,
   stepBall,
   type Ball,
-  type GoalSpec,
   type Shot,
   type V3,
   type Walls,
@@ -132,199 +133,6 @@ const BRAND_GREEN = 0x00a76f;
 const NIGHT_FOG = 0x060a14;
 const DAY_FOG = 0xd3e8f2;
 const CONFETTI_COLORS = [0x00a76f, 0x2fe3a0, 0xffffff, 0xffc83d, 0x007b55];
-
-/**
- * Işık (huzme, hale, partikül, kenar parlaması): yalnız renk eklenir, tuvalin alfası değişmez. Tuval saydam ve CSS
- * zeminin üstünde: hazır AdditiveBlending alfayı da artırdığından açık (gündüz) zeminde ışık KARARTIYORDU.
- */
-const LIGHT_BLEND = {
-  blending: CustomBlending,
-  blendSrc: SrcAlphaFactor,
-  blendDst: OneFactor,
-  blendSrcAlpha: ZeroFactor,
-  blendDstAlpha: OneFactor,
-} as const;
-
-function mergePanels(meshes: PanelMesh[]): BufferGeometry {
-  const vCount = meshes.reduce((n, m) => n + m.positions.length / 3, 0);
-  const iCount = meshes.reduce((n, m) => n + m.indices.length, 0);
-  const positions = new Float32Array(vCount * 3);
-  const normals = new Float32Array(vCount * 3);
-  const uvs = new Float32Array(vCount * 2);
-  const indices = new Uint32Array(iCount);
-  let v = 0;
-  let i = 0;
-  for (const m of meshes) {
-    positions.set(m.positions, v * 3);
-    normals.set(m.normals, v * 3);
-    uvs.set(m.uvs, v * 2);
-    for (let k = 0; k < m.indices.length; k++) indices[i + k] = m.indices[k]! + v;
-    v += m.positions.length / 3;
-    i += m.indices.length;
-  }
-  return toGeometry(positions, normals, uvs, indices);
-}
-
-function toGeometry(positions: Float32Array, normals: Float32Array, uvs: Float32Array, indices: Uint16Array | Uint32Array) {
-  const g = new BufferGeometry();
-  g.setAttribute('position', new BufferAttribute(positions, 3));
-  g.setAttribute('normal', new BufferAttribute(normals, 3));
-  g.setAttribute('uv', new BufferAttribute(uvs, 2));
-  g.setIndex(new BufferAttribute(indices, 1));
-  return g;
-}
-
-function canvasTexture(size: number, draw: (ctx: CanvasRenderingContext2D, size: number) => void): CanvasTexture {
-  const canvas = document.createElement('canvas');
-  canvas.width = size;
-  canvas.height = size;
-  const ctx = canvas.getContext('2d');
-  if (ctx) draw(ctx, size);
-  const tex = new CanvasTexture(canvas);
-  tex.colorSpace = SRGBColorSpace;
-  return tex;
-}
-
-/** Yumuşak ışık noktası (partikül, lamba, hale). */
-function glowTexture(inner: string, outer: string): CanvasTexture {
-  return canvasTexture(128, (ctx, s) => {
-    const g = ctx.createRadialGradient(s / 2, s / 2, 0, s / 2, s / 2, s / 2);
-    g.addColorStop(0, inner);
-    g.addColorStop(0.35, outer);
-    g.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, s, s);
-  });
-}
-
-/** Bulut: üst üste binen yumuşak beyaz daireler. */
-function cloudTexture(): CanvasTexture {
-  return canvasTexture(256, (ctx, s) => {
-    ctx.filter = 'blur(7px)';
-    ctx.fillStyle = 'rgba(255,255,255,0.95)';
-    for (const [x, y, r] of [
-      [0.3, 0.6, 0.15],
-      [0.48, 0.5, 0.2],
-      [0.67, 0.58, 0.15],
-      [0.4, 0.66, 0.14],
-      [0.58, 0.67, 0.14],
-    ] as const) {
-      ctx.beginPath();
-      ctx.arc(x * s, y * s, r * s, 0, Math.PI * 2);
-      ctx.fill();
-    }
-  });
-}
-
-/** Kenar parlaması: bakış açısına dik kenarlarda artan, eklemeli renk (fresnel). */
-function rimMaterial(color: number, power: number, intensity: number): ShaderMaterial {
-  return new ShaderMaterial({
-    uniforms: { uColor: { value: new Color(color) }, uPower: { value: power }, uIntensity: { value: intensity } },
-    vertexShader: /* glsl */ `
-      varying vec3 vN;
-      varying vec3 vV;
-      void main() {
-        vec4 mv = modelViewMatrix * vec4(position, 1.0);
-        vN = normalize(normalMatrix * normal);
-        vV = normalize(-mv.xyz);
-        gl_Position = projectionMatrix * mv;
-      }`,
-    fragmentShader: /* glsl */ `
-      uniform vec3 uColor;
-      uniform float uPower;
-      uniform float uIntensity;
-      varying vec3 vN;
-      varying vec3 vV;
-      void main() {
-        float f = pow(1.0 - max(dot(normalize(vN), normalize(vV)), 0.0), uPower) * uIntensity;
-        gl_FragColor = vec4(uColor * f, f);
-      }`,
-    transparent: true,
-    depthWrite: false,
-    ...LIGHT_BLEND,
-  });
-}
-
-/** Projektör huzmesi: lambada parlak, uzaklaştıkça ve kenarlarda sönen açık koni. */
-function beamMaterial(color: number, intensity: number): ShaderMaterial {
-  return new ShaderMaterial({
-    uniforms: { uColor: { value: new Color(color) }, uIntensity: { value: intensity } },
-    vertexShader: /* glsl */ `
-      varying float vAlong;
-      varying vec3 vN;
-      varying vec3 vV;
-      void main() {
-        vAlong = uv.y;
-        vec4 mv = modelViewMatrix * vec4(position, 1.0);
-        vN = normalize(normalMatrix * normal);
-        vV = normalize(-mv.xyz);
-        gl_Position = projectionMatrix * mv;
-      }`,
-    fragmentShader: /* glsl */ `
-      uniform vec3 uColor;
-      uniform float uIntensity;
-      varying float vAlong;
-      varying vec3 vN;
-      varying vec3 vV;
-      void main() {
-        float edge = pow(abs(dot(normalize(vN), normalize(vV))), 1.6);
-        float a = uIntensity * pow(vAlong, 1.25) * edge;
-        gl_FragColor = vec4(uColor * a, a);
-      }`,
-    transparent: true,
-    depthWrite: false,
-    side: DoubleSide,
-    ...LIGHT_BLEND,
-  });
-}
-
-/** Logo dokusu: panel beyazı + ortada logo (oranı korunur). */
-function drawLogo(img: HTMLImageElement): CanvasTexture {
-  return canvasTexture(256, (ctx, s) => {
-    ctx.fillStyle = '#f4f6f8';
-    ctx.fillRect(0, 0, s, s);
-    // Küçük topta da seçilsin: logo panelin iç çemberine yakın (altıgen iç çemberi kare kenarının ~%87'si).
-    const box = s * 0.64;
-    const k = Math.min(box / img.naturalWidth, box / img.naturalHeight);
-    const w = img.naturalWidth * k;
-    const h = img.naturalHeight * k;
-    ctx.drawImage(img, (s - w) / 2, (s - h) / 2, w, h);
-  });
-}
-/** Çim karosu: iki biçme şeridi (açık / koyu) + ince ot dokusu. Kenarlar sarar (RepeatWrapping). */
-function grassTexture(size: number): CanvasTexture {
-  const tex = canvasTexture(size, (ctx, s) => {
-    ctx.fillStyle = '#367f33';
-    ctx.fillRect(0, 0, s / 2, s);
-    ctx.fillStyle = '#2d6f2b';
-    ctx.fillRect(s / 2, 0, s / 2, s);
-    // Ot dokusu: kısa, hafif eğik çizgiler (sarmalı: kenara taşan çizgi karşı kenarda da çizilir).
-    let seed = 7;
-    const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
-    const strokes = Math.round(s * s * 0.012);
-    for (let i = 0; i < strokes; i++) {
-      const x = rnd() * s;
-      const y = rnd() * s;
-      const len = 2 + rnd() * (s / 96);
-      const light = rnd() > 0.5;
-      ctx.strokeStyle = light ? `rgba(120,190,100,${0.18 + rnd() * 0.2})` : `rgba(20,70,25,${0.15 + rnd() * 0.2})`;
-      ctx.lineWidth = 1;
-      for (const [ox, oy] of [
-        [0, 0],
-        [-s, 0],
-        [0, -s],
-      ] as const) {
-        ctx.beginPath();
-        ctx.moveTo(x + ox, y + oy);
-        ctx.lineTo(x + ox + (rnd() - 0.5) * 2, y + oy - len);
-        ctx.stroke();
-      }
-    }
-  });
-  tex.wrapS = RepeatWrapping;
-  tex.wrapT = RepeatWrapping;
-  return tex;
-}
 
 /**
  * Saha çizgileri (saydam zemin üstüne beyaz): kale / kenar / orta çizgi, orta yuvarlak, ceza ve kale alanları.
@@ -376,179 +184,6 @@ function pitchLinesTexture(size: number, clipMinX: number | null): CanvasTexture
   });
 }
 
-/** Zemin saydamlığı: yakında opak, uzak kenara doğru gökyüzüne silinir (v = 1 uzak kenar). */
-function groundAlphaTexture(): CanvasTexture {
-  const tex = canvasTexture(64, (ctx, s) => {
-    const g = ctx.createLinearGradient(0, 0, 0, s);
-    g.addColorStop(0, '#000');
-    g.addColorStop(0.3, '#fff');
-    g.addColorStop(1, '#fff');
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, s, s);
-  });
-  tex.colorSpace = NoColorSpace;
-  return tex;
-}
-
-/** Yumuşak gölge lekesi. */
-function shadowTexture(): CanvasTexture {
-  return canvasTexture(128, (ctx, s) => {
-    const g = ctx.createRadialGradient(s / 2, s / 2, 0, s / 2, s / 2, s / 2);
-    g.addColorStop(0, 'rgba(0,0,0,0.9)');
-    g.addColorStop(0.5, 'rgba(0,0,0,0.45)');
-    g.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, s, s);
-  });
-}
-
-/** Reklam panosu: marka yeşili zemin, "OFSAYT YOK" yazısı, sarı vurgu şeridi (yatayda tekrar eder). */
-function boardTexture(): CanvasTexture {
-  const canvas = document.createElement('canvas');
-  canvas.width = 1024;
-  canvas.height = 128;
-  const ctx = canvas.getContext('2d');
-  if (ctx) {
-    const g = ctx.createLinearGradient(0, 0, 0, 128);
-    g.addColorStop(0, '#00b578');
-    g.addColorStop(1, '#00704c');
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, 1024, 128);
-    ctx.fillStyle = '#ffc83d';
-    ctx.fillRect(0, 112, 1024, 16);
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'italic 900 64px Inter, system-ui, sans-serif';
-    ctx.textBaseline = 'middle';
-    ctx.textAlign = 'center';
-    ctx.fillText('OFSAYT YOK', 256, 58);
-    ctx.fillText('OFSAYT YOK', 768, 58);
-    ctx.fillStyle = 'rgba(255,255,255,0.55)';
-    for (const x of [0, 512, 1024]) ctx.fillRect(x - 3, 30, 6, 56);
-  }
-  const tex = new CanvasTexture(canvas);
-  tex.colorSpace = SRGBColorSpace;
-  tex.wrapS = RepeatWrapping;
-  return tex;
-}
-
-/** Nişan oku (zemin düzleminde, +x yönünde): gövde boyu `setLength` ile değişir, uç sabit boyutta. */
-function makeArrow(mat: Material) {
-  const width = 0.22;
-  const headLen = 0.5;
-  const headW = 0.62;
-  const shaftGeo = new PlaneGeometry(1, width);
-  shaftGeo.translate(0.5, 0, 0);
-  const head = new Shape();
-  head.moveTo(0, -headW / 2);
-  head.lineTo(headLen, 0);
-  head.lineTo(0, headW / 2);
-  head.closePath();
-  const headGeo = new ShapeGeometry(head);
-  const flat = new Group();
-  flat.rotation.x = -Math.PI / 2;
-  const shaft = new Mesh(shaftGeo, mat);
-  const tip = new Mesh(headGeo, mat);
-  flat.add(shaft, tip);
-  const group = new Group();
-  group.add(flat);
-  group.visible = false;
-  for (const m of [shaft, tip]) m.renderOrder = 3;
-  return {
-    group,
-    geometries: [shaftGeo, headGeo],
-    /** start: topun merkezinden uzaklık; len: gövde boyu */
-    set(start: number, len: number) {
-      shaft.position.x = start;
-      shaft.scale.x = Math.max(0.01, len);
-      tip.position.x = start + len;
-    },
-  };
-}
-
-type GoalView = {
-  spec: GoalSpec;
-  group: Group;
-  geometries: BufferGeometry[];
-  net: BufferGeometry;
-  /** Filenin dalgasız köşeleri (dalga bunun üstüne yazılır). */
-  base: Float32Array;
-  ripple: { t: number; at: V3; dir: V3; amp: number } | null;
-};
-
-/**
- * Çimin üstünde 3D kale: iki direk (z = ±halfW), üst direk, arka çerçeve, file (arka, iki yan, arkaya inen çatı).
- * File çizgileri kısa parçalara bölünür → dalga yumuşak görünür.
- */
-function buildGoal(spec: GoalSpec, postMat: Material, netMat: LineBasicMaterial): GoalView {
-  const { lineX, backX, halfW, height, backHeight, postR } = spec;
-  const group = new Group();
-  const geometries: BufferGeometry[] = [];
-  const postGeo = new CylinderGeometry(postR, postR, height, 12);
-  postGeo.translate(0, height / 2, 0);
-  const barGeo = new CylinderGeometry(postR, postR, halfW * 2 + postR * 2, 12);
-  const backGeo = new CylinderGeometry(postR * 0.5, postR * 0.5, backHeight, 8);
-  backGeo.translate(0, backHeight / 2, 0);
-  geometries.push(postGeo, barGeo, backGeo);
-  for (const z of [-halfW, halfW]) {
-    const post = new Mesh(postGeo, postMat);
-    post.position.set(lineX, 0, z);
-    const back = new Mesh(backGeo, postMat);
-    back.position.set(backX, 0, z);
-    group.add(post, back);
-  }
-  const bar = new Mesh(barGeo, postMat);
-  bar.rotation.x = Math.PI / 2;
-  bar.position.set(lineX, height, 0);
-  group.add(bar);
-
-  const step = 0.14;
-  const pts: number[] = [];
-  type P = (u: number, v: number) => [number, number, number];
-  const grid = (f: P, lenU: number, lenV: number) => {
-    const nu = Math.max(2, Math.ceil(lenU / step));
-    const nv = Math.max(2, Math.ceil(lenV / step));
-    const line = (at: (t: number) => [number, number, number], n: number) => {
-      for (let k = 0; k < n; k++) pts.push(...at(k / n), ...at((k + 1) / n));
-    };
-    for (let i = 0; i <= nu; i++) line((t) => f(i / nu, t), nv);
-    for (let j = 0; j <= nv; j++) line((t) => f(t, j / nv), nu);
-  };
-  const depth = Math.abs(backX - lineX);
-  const roofAt = (u: number) => height + (backHeight - height) * u;
-  grid((u, v) => [backX, backHeight * v, -halfW + 2 * halfW * u], 2 * halfW, backHeight);
-  for (const z of [-halfW, halfW]) grid((u, v) => [lineX + (backX - lineX) * u, roofAt(u) * v, z], depth, height);
-  grid((u, v) => [lineX + (backX - lineX) * u, roofAt(u), -halfW + 2 * halfW * v], depth, 2 * halfW);
-  const base = new Float32Array(pts);
-  const net = new BufferGeometry();
-  net.setAttribute('position', new BufferAttribute(new Float32Array(base), 3));
-  geometries.push(net);
-  const lines = new LineSegments(net, netMat);
-  lines.renderOrder = 1;
-  group.add(lines);
-  return { spec, group, geometries, net, base, ripple: null };
-}
-
-/** File dalgası: çarpma noktası çevresinde çarpma yönünde sönümlü salınım. */
-function rippleNet(v: GoalView, dt: number) {
-  const r = v.ripple;
-  if (!r) return;
-  r.t += dt;
-  const attr = v.net.attributes.position as BufferAttribute;
-  const out = attr.array as Float32Array;
-  const done = r.t > 1.6;
-  const wave = done ? 0 : r.amp * Math.sin(r.t * 14) * Math.exp(-r.t * 3);
-  for (let i = 0; i < v.base.length; i += 3) {
-    const x = v.base[i]!;
-    const y = v.base[i + 1]!;
-    const z = v.base[i + 2]!;
-    const w = wave * Math.exp(-((x - r.at.x) ** 2 + (y - r.at.y) ** 2 + (z - r.at.z) ** 2) / 0.7);
-    out[i] = x + r.dir.x * w;
-    out[i + 1] = y + r.dir.y * w;
-    out[i + 2] = z + r.dir.z * w;
-  }
-  attr.needsUpdate = true;
-  if (done) v.ripple = null;
-}
 
 export function mountStage(host: HTMLElement, opts: StageOptions): StageHandle {
   const { reduced, lite } = opts;
@@ -596,14 +231,7 @@ export function mountStage(host: HTMLElement, opts: StageOptions): StageHandle {
   scene.add(hemi, key, rimLight);
   // Oda ortamı yansıması yalnız top ve direklerde (malzemeye doğrudan; scene.environment çimi de aydınlatıyordu ve
   // r163+ malzeme şiddetini yok sayıyor). Mobilde yok.
-  let envTex: Texture | null = null;
-  if (!lite) {
-    const pmrem = new PMREMGenerator(renderer);
-    const room = new RoomEnvironment();
-    envTex = track(pmrem.fromScene(room, 0.04).texture);
-    room.dispose();
-    pmrem.dispose();
-  }
+  const envTex: Texture | null = lite ? null : track(createEnvTexture(renderer));
 
   // ── Çim ve saha çizgileri ──────────────────────────────────────────────────────────────────────────
   const groundDepth = GROUND_NEAR_Z - GROUND_FAR_Z;
@@ -734,31 +362,10 @@ export function mountStage(host: HTMLElement, opts: StageOptions): StageHandle {
   shadow.position.y = 0.006;
   scene.add(shadow);
 
-  const faces = truncatedIcosahedron();
-  const panelOpts = { radius: 1, inset: 0.955, subdivisions: lite ? 3 : 5, puff: 0.03 };
-  const logoCount = lite ? 3 : 6;
-  const logoFaces = new Set(pickSpreadHexagons(faces, logoCount));
-  // Mobilde ucuz standart malzeme; masaüstünde parlak kaplama (clearcoat) + ortam yansıması.
-  const physical = (color: number, extra: { roughness?: number; clearcoat?: number } = {}) =>
-    track(
-      lite
-        ? new MeshStandardMaterial({ color, roughness: extra.roughness ?? 0.35, metalness: 0.05 })
-        : new MeshPhysicalMaterial({ color, roughness: 0.34, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.1, envMap: envTex, envMapIntensity: 0.6, ...extra }),
-    );
-  spinGroup.add(
-    new Mesh(track(mergePanels(faces.filter((f, i) => f.kind === 'hexagon' && !logoFaces.has(i)).map((f) => panelMesh(f, panelOpts)))), physical(0xf4f6f8)),
-    new Mesh(track(mergePanels(faces.filter((f) => f.kind === 'pentagon').map((f) => panelMesh(f, panelOpts)))), physical(0x005c3d)),
-    new Mesh(track(new SphereGeometry(0.985, 40, 28)), physical(0x0b1511, { roughness: 0.85, clearcoat: 0 })),
-  );
-  const logoMaterials: (MeshPhysicalMaterial | MeshStandardMaterial)[] = [];
-  for (const i of logoFaces) {
-    const m = panelMesh(faces[i]!, panelOpts);
-    const mat = physical(0xf4f6f8);
-    logoMaterials.push(mat);
-    spinGroup.add(new Mesh(track(toGeometry(m.positions, m.normals, m.uvs, m.indices)), mat));
-  }
-  const rimMat = track(rimMaterial(0x5cf2c0, 2.4, 0.45));
-  ballGroup.add(new Mesh(track(new SphereGeometry(1.03, 40, 28)), rimMat));
+  const ballView = track(buildBall({ lite, envTex, logoCount: lite ? 3 : 6 }));
+  spinGroup.add(ballView.spin);
+  ballGroup.add(...ballView.group.children.filter((c) => c !== ballView.spin));
+  const rimMat = ballView.rimMat;
 
   // ── Kaleler ve konfeti ─────────────────────────────────────────────────────────────────────────────
   const postMat = track(new MeshStandardMaterial({ color: 0xf6f8fa, roughness: 0.35, metalness: 0.1, emissive: 0x1a222b, envMap: envTex }));
@@ -961,30 +568,20 @@ export function mountStage(host: HTMLElement, opts: StageOptions): StageHandle {
     }
   };
 
-  // Logolar: aynı köken (/api/img/logo) → doku CORS'a takılmaz; yüklenemeyen panel düz beyaz kalır.
-  pickLogoIds(HUB_LEAGUE_IDS, logoCount, PINNED_LEAGUE_IDS)
-    .map((id) => logoSrc(sportmonksLeagueLogoUrl(id), 64))
-    .filter((u): u is string => Boolean(u))
-    .forEach((url, k) => {
-      const mat = logoMaterials[k];
-      if (!mat) return;
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.decoding = 'async';
-      img.onload = () => {
-        if (disposed || !img.naturalWidth) return;
-        try {
-          const tex = track(drawLogo(img));
-          tex.anisotropy = Math.min(4, maxAniso);
-          mat.map = tex;
-          mat.needsUpdate = true;
-          if (!raf) render(); // döngü duruyorsa (hareketi azalt / gizli) logolu kare yine çizilsin
-        } catch {
-          // kirli tuval / bozuk görsel: panel düz kalır
-        }
-      };
-      img.src = url;
-    });
+  loadBallLogos(
+    ballView,
+    pickLogoIds(HUB_LEAGUE_IDS, ballView.logoMaterials.length, PINNED_LEAGUE_IDS)
+      .map((id) => logoSrc(sportmonksLeagueLogoUrl(id), 64))
+      .filter((u): u is string => Boolean(u)),
+    {
+      maxAnisotropy: maxAniso,
+      isDisposed: () => disposed,
+      // döngü duruyorsa (hareketi azalt / gizli) logolu kare yine çizilsin
+      onLoad: () => {
+        if (!raf) render();
+      },
+    },
+  );
 
   let ball: Ball = restingBall(start.x, start.z);
   let pop = 1;

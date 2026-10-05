@@ -1,22 +1,12 @@
 import { useEffect, useRef } from 'react';
 import type { StageHandle } from './stageScene';
+import { webglAvailable } from '@/components/pitch3d/webgl';
 import styles from './authStage.module.scss';
 
 /** three.js sahnesi ayrı parça: sayfa yüklenip tarayıcı boşa düşünce gelir (ilk yüke ve diğer sayfalara girmez). */
 const loadScene = () => import('./stageScene');
 
-/** WebGL bağlamı açılabiliyor mu (deneme bağlamı hemen bırakılır). */
-export function webglAvailable(): boolean {
-  try {
-    const canvas = document.createElement('canvas');
-    const gl = (canvas.getContext('webgl2') ?? canvas.getContext('webgl')) as WebGLRenderingContext | null;
-    if (!gl) return false;
-    gl.getExtension('WEBGL_lose_context')?.loseContext();
-    return true;
-  } catch {
-    return false;
-  }
-}
+export { webglAvailable };
 
 /**
  * Giriş / kayıt sahnesi (gece maçı + 3D top). Sunucu HTML'inde yalnız sabit boyutlu, gradyanlı kutu (kayma yok);
