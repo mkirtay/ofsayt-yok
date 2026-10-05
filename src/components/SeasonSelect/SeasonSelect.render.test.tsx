@@ -62,4 +62,20 @@ describe('<MatchCompetitionStandings /> sezon satırı', () => {
     expect(html).not.toContain('{{season}}');
     expect(html).not.toContain('season.withValue');
   });
+
+  it('hideTitle: lig adı başlığı yok, sezon seçici tek başına; başlıklı kullanımda başlık korunur', () => {
+    const data = { competition: { id: 6, name: 'Süper Lig' }, season: { id: 1, name: '2026/2027' }, table: [] } as never;
+    const seasons = [{ id: 1, name: '2026/2027' }, { id: 2, name: '2025/2026' }];
+    const solo = renderToStaticMarkup(<MatchCompetitionStandings data={data} seasons={seasons} selectedSeasonId={1} onSeasonChange={() => {}} hideTitle />);
+    expect(solo).not.toContain('<h2');
+    expect(solo).not.toContain('>Süper Lig<');
+    expect(solo).toContain('<select');
+    expect(solo).toMatch(/titleContainerSolo/);
+    const withTitle = renderToStaticMarkup(<MatchCompetitionStandings data={data} seasons={seasons} selectedSeasonId={1} onSeasonChange={() => {}} />);
+    expect(withTitle).toContain('<h2');
+    expect(withTitle).toContain('Süper Lig');
+    // yükleniyor görünümü de başlıksız (yükseklik aynı kalsın)
+    const loading = renderToStaticMarkup(<MatchCompetitionStandings data={null} loading loadingRows={5} competitionName="Süper Lig" onSeasonChange={() => {}} hideTitle />);
+    expect(loading).not.toContain('<h2');
+  });
 });

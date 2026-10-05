@@ -884,6 +884,7 @@ export default function MatchHubPage({
                         selectedSeasonId={effectiveSeasonId}
                         onSeasonChange={handleSeasonChange}
                         loadingRows={standingsLoadingRows}
+                        hideTitle
                       />
                     )}
 

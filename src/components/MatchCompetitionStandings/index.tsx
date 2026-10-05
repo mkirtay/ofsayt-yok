@@ -62,16 +62,18 @@ function StandingsLoading({
   competitionName,
   rows,
   withSeasonSelect,
+  hideTitle,
 }: {
   variant: MatchCompetitionStandingsVariant;
   competitionName: string;
   rows: number;
   withSeasonSelect: boolean;
+  hideTitle?: boolean;
 }) {
   return (
     <section className={blockClass(variant)} aria-busy="true">
-      <div className={styles.titleContainer}>
-        <h2 className={styles.title}>{competitionName}</h2>
+      <div className={titleBarClass(hideTitle)}>
+        {hideTitle ? null : <h2 className={styles.title}>{competitionName}</h2>}
         {withSeasonSelect ? (
           <SeasonSelect
             seasons={[{ id: 0, name: "\u00a0" }]}
@@ -209,6 +211,16 @@ interface MatchCompetitionStandingsProps {
    * Verilirse yükleniyor görünümü gerçek tablo yapısında bu kadar satırla çizilir (kayma yok); verilmezse eski iskelet.
    */
   loadingRows?: number;
+  /**
+   * Lig adı başlığı çizilmez, sezon seçici tek başına kalır (ana sayfa yan paneli: lig adı üstteki lig seçicide zaten
+   * görünür). Takım sayfası vb. başlığı korur.
+   */
+  hideTitle?: boolean;
+}
+
+/** Başlık satırı: başlıksız modda sezon seçici solda tek başına (yükseklik sabit — yükleniyor / veri aynı). */
+function titleBarClass(hideTitle?: boolean): string {
+  return hideTitle ? `${styles.titleContainer} ${styles.titleContainerSolo}` : styles.titleContainer;
 }
 
 function blockClass(variant: MatchCompetitionStandingsVariant): string {
@@ -229,6 +241,7 @@ export default function MatchCompetitionStandings({
   selectedSeasonId,
   onSeasonChange,
   loadingRows,
+  hideTitle,
 }: MatchCompetitionStandingsProps) {
   const { t } = useTranslation("match");
   const [seasonChanging, setSeasonChanging] = useState(false);
@@ -259,6 +272,7 @@ export default function MatchCompetitionStandings({
         competitionName={competitionName || t("standings.fallbackName")}
         rows={loadingRows}
         withSeasonSelect={Boolean(onSeasonChange)}
+        hideTitle={hideTitle}
       />
     );
   }
@@ -274,7 +288,7 @@ export default function MatchCompetitionStandings({
   if (!data) {
     return (
       <section className={blockClass(variant)} aria-label={t("standings.ariaLabel")}>
-        <h2 className={styles.title}>{competitionName || t("standings.fallbackName")}</h2>
+        {hideTitle ? null : <h2 className={styles.title}>{competitionName || t("standings.fallbackName")}</h2>}
         <EmptyState className={styles.emptyState}>{t("standings.empty")}</EmptyState>
       </section>
     );
@@ -294,8 +308,8 @@ export default function MatchCompetitionStandings({
 
   return (
     <section className={blockClass(variant)} aria-label={t("standings.ariaLabel")}>
-      <div className={styles.titleContainer}>
-        <h2 className={styles.title}>{compName}</h2>
+      <div className={titleBarClass(hideTitle)}>
+        {hideTitle ? null : <h2 className={styles.title}>{compName}</h2>}
         {showSeasonSelect ? (
           <SeasonSelect
             seasons={seasons!}
