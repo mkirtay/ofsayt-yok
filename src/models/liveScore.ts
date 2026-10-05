@@ -28,6 +28,8 @@ export interface MatchCountry {
   name: string;
   flag?: string;
   fifa_code?: string;
+  /** ISO 3166-1 alfa-2 (TR'de görünen ad için — utils/countryName.ts). */
+  iso2?: string;
 }
 
 export interface MatchUrls {

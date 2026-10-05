@@ -438,6 +438,11 @@
     "compareClear": "Seçimi temizle",
     "compareWith": "Başka bir hakemle karşılaştır →",
     "selectReferee": "{{name}} karşılaştırmaya ekle",
-    "sampleNote": "Küçük örneklemler yanıltıcı olabilir; veriler yalnız istatistiksel bilgi amaçlıdır."
+    "sampleNote": "Küçük örneklemler yanıltıcı olabilir; veriler yalnız istatistiksel bilgi amaçlıdır.",
+    "summaryTitle": "Özet",
+    "summaryContext": "{{context}}, {{count}} maç",
+    "summaryMatches": "Kapsanan maç",
+    "summarySeasons": "{{count}} sezon",
+    "leagueAvg": "Lig ort.: {{value}}"
   }
 }

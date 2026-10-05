@@ -87,19 +87,22 @@ describe('maç kartı skor alanı', () => {
     expect(html).toContain('Açıklanmadı');
   });
 
-  it('ertelendi: skor yerinde durum; üst satırda "Ertelendi" + üstü çizili eski tarih', () => {
+  it('ertelendi: skor yerinde durum; eski tarih skorun altında üstü çizili (başlıkta tarih yok)', () => {
     const html = card(match('NOT STARTED', { state_code: 'POSTPONED' }));
-    expect(html).toContain('Ertelendi');
-    expect(html).not.toContain('2 Ekim Cuma');
-    expect(html).toMatch(/headerDateState[^>]*>Ertelendi<\/span> <s[^>]*>02\.10\.2026 21:30<\/s>/);
+    expect(html).toMatch(/scoreState[^>]*>Ertelendi</);
+    expect(html).toMatch(/<s[^>]*>02\.10\.2026 · 21:30<\/s>/);
+    expect(html).not.toMatch(/Tarih\s*:/);
   });
 
-  it('iptal / tarih belirsiz: üst satırda durum, eski tarih üstü çizili', () => {
-    expect(card(match('FINISHED', { state_code: 'CANCELLED' }))).toMatch(/>İptal edildi<\/span> <s[^>]*>02\.10\.2026 21:30</);
-    expect(card(match('NOT STARTED', { state_code: 'TBA' }))).toMatch(/>Tarih belirsiz<\/span> <s[^>]*>02\.10\.2026 21:30</);
+  it('iptal / tarih belirsiz: skor yerinde durum, eski tarih üstü çizili', () => {
+    for (const code of ['CANCELLED', 'TBA'] as const) {
+      const html = card(match(code === 'TBA' ? 'NOT STARTED' : 'FINISHED', { state_code: code }));
+      expect(html).toMatch(/scoreState/);
+      expect(html).toMatch(/<s[^>]*>02\.10\.2026 · 21:30<\/s>/);
+    }
   });
 
-  it('normal maçta üst satır değişmez', () => {
+  it('normal maçta tarih üstü çizili değil', () => {
     expect(card(match('NOT STARTED'))).not.toContain('<s ');
   });
 });

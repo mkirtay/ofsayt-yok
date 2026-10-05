@@ -55,14 +55,6 @@ $match-card-header-blue: var(--text-secondary); // tema-uyumlu (eskiden sabit la
   font-weight: 600;
 }
 
-.cardHeaderRight {
-  flex-shrink: 0;
-  font-size: 12px;
-  font-weight: 600;
-  color: $color-text;
-  font-variant-numeric: tabular-nums;
-}
-
 .cardHeaderFlag,
 .cardHeaderLogo {
   flex-shrink: 0;
@@ -144,7 +136,11 @@ $match-card-header-blue: var(--text-secondary); // tema-uyumlu (eskiden sabit la
 
 .team {
   flex: 1;
+  min-width: 0;
   max-width: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .teamLink {
@@ -225,12 +221,17 @@ $match-card-header-blue: var(--text-secondary); // tema-uyumlu (eskiden sabit la
   padding: 0 $spacing-1;
 }
 
-// Üst satır: ertelendi / iptal / tarih belirsiz → durum, yanında soluk ve üstü çizili eski tarih.
-.headerDateState {
-  font-weight: 700;
-  color: #d97706;
+// Canlı / bitmiş / ertelenmiş maçta tarih + saat skorun altında (başlamamışta saatin altında zaten var).
+.matchDay {
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: $color-text-secondary;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
+// Ertelendi / iptal / tarih belirsiz: eski tarih soluk ve üstü çizili.
 .headerDateOld {
   opacity: 0.55;
 }
@@ -355,10 +356,6 @@ $match-card-header-blue: var(--text-secondary); // tema-uyumlu (eskiden sabit la
   background-color: $color-surface;
 }
 
-.formRowH2h {
-  padding-top: $spacing-2;
-}
-
 .formSide {
   display: flex;
   align-items: center;
@@ -450,7 +447,7 @@ $match-card-header-blue: var(--text-secondary); // tema-uyumlu (eskiden sabit la
   flex-direction: column;
 }
 
-// thead (22 px) + 3 satır (24 px) ≈ tablo; satır çizgisiyle.
+// thead (22 px) + 5 satır (24 px) ≈ tablo; satır çizgisiyle.
 .h2hSkeletonRow {
   display: block;
   height: 24px;
@@ -498,40 +495,32 @@ $match-card-header-blue: var(--text-secondary); // tema-uyumlu (eskiden sabit la
 .h2hTable {
   table-layout: fixed;
   width: 100%;
-  min-width: 520px;
+  min-width: 400px;
   border-collapse: collapse;
   font-size: 11px;
   line-height: 1.25;
   color: $color-text;
 
-  // Oranlar en dar tabloya (min-width 520 px, mobil) göre: "19.09.2026" 11 px'te ≈ 63 px → tarih %15 (78 − 10 px
-  // dolgu), saat %9. Eskiden %11 / %8'di; mobilde tarih saat kolonuna taşıp "19.07.202403:00" görünüyordu.
+  // Oranlar en dar tabloya (min-width 400 px, mobil) göre: "19.09.2026" 11 px'te ≈ 63 px → tarih %19 (76 − 10 px
+  // dolgu); skor + UZS/PEN etiketi ("1-1 PEN" ≈ 48 px) %17.
   col.h2hColDate {
-    width: 15%;
-  }
-
-  col.h2hColTime {
-    width: 9%;
-  }
-
-  col.h2hColStatus {
-    width: 7%;
+    width: 19%;
   }
 
   col.h2hColHome {
-    width: 25.5%;
+    width: 27.5%;
   }
 
   col.h2hColScore {
-    width: 11%;
+    width: 17%;
   }
 
   col.h2hColAway {
-    width: 25.5%;
+    width: 27.5%;
   }
 
   col.h2hColHt {
-    width: 7%;
+    width: 9%;
   }
 
   thead th {
@@ -589,6 +578,27 @@ $match-card-header-blue: var(--text-secondary); // tema-uyumlu (eskiden sabit la
   text-align: center;
   font-weight: 700;
   white-space: nowrap;
+}
+
+// Kazanan takım kalın ve vurgulu (beraberlikte iki taraf da nötr).
+.h2hWinner {
+  font-weight: 800;
+  color: $color-primary-text;
+}
+
+// Uzatma / penaltıyla biten maç: skorun yanında küçük etiket (satır yüksekliğini değiştirmez).
+.h2hFinishTag {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 0 3px;
+  border-radius: 3px;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 13px;
+  vertical-align: 1px;
+  color: $color-text-secondary;
+  background: $color-muted;
+  border: 1px solid $color-border;
 }
 
 .h2hScoreLink {

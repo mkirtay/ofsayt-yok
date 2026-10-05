@@ -79,3 +79,14 @@ describe('loadWithSwr (stale-while-revalidate + kilit)', () => {
     expect(compute).toHaveBeenCalledTimes(2);
   });
 });
+
+describe('peekSwr', () => {
+  it('yalnız okur: değer varsa (taze ya da eski) döner, yoksa null; üretmez', async () => {
+    const { peekSwr } = await import('./swrCache');
+    h.redis = createFakeRedis(now);
+    expect(await peekSwr('yok')).toBeNull();
+    await loadWithSwr('t', { freshSeconds: 60, now }, async () => [1, 2]);
+    h.t += 10 * 60_000;
+    expect(await peekSwr('t')).toEqual([1, 2]);
+  });
+});

@@ -8,7 +8,6 @@ import { useNow } from '@/hooks/useNow';
 import { matchDisplayState, specialKeepsData } from '@/utils/matchDisplayState';
 import { kickoffInfo, relativeKickoffDay } from '@/utils/kickoff';
 import { formatFixtureDate } from '@/utils/fixtureDateLabel';
-import { utcTimeToTr, isoDateToTr } from '@/utils/dateFormat';
 import { h2hTeamKey, overallFormToPills, type FormPill } from '@/utils/matchForm';
 import { buildMatchHref } from '@/utils/matchUrl';
 import { competitionLogoNeedsBackdrop } from '@/utils/competitionLogo';
@@ -22,8 +21,10 @@ import TeamLogo from '@/components/TeamLogo';
 import { impliedProbabilities } from '@/utils/impliedProbability';
 import { isSecondLeg } from '@/utils/aggregateScore';
 import { finishedLabelKey } from '@/utils/finishLabel';
+import { countryDisplayName } from '@/utils/countryName';
+import { h2hWinner } from '@/utils/h2hResult';
 import TiePill from './TiePill';
-import MatchInfoGrid from './MatchInfoGrid';
+import MatchInfoLine, { CoachLink } from './MatchInfoLine';
 import RefereeStatsCard from './RefereeStatsCard';
 import { useIsDerby } from '@/hooks/useMatchInfoExtras';
 import infoStyles from './matchInfo.module.scss';
@@ -36,31 +37,6 @@ interface MatchCardProps {
    * istemci çeker ve yer iskeletle ayrılır.
    */
   initialH2h?: Head2HeadData | null;
-}
-
-/** Returns the date/time portion only (no "Tarih :" prefix). */
-function getMatchCardDateTimeText(match: Match): string {
-  const date = match.date?.trim();
-  const scheduled = match.scheduled?.trim();
-  if (date) {
-    const datePart = isoDateToTr(date);
-    if (scheduled && /^\d{2}:\d{2}$/.test(scheduled)) {
-      return `${datePart} ${utcTimeToTr(scheduled, date)}`;
-    }
-    return datePart;
-  }
-  if (scheduled) {
-    return utcTimeToTr(scheduled);
-  }
-  const added = match.added?.trim();
-  if (added) {
-    const [d, t] = added.split(/\s+/);
-    if (d && t) {
-      const hm = t.slice(0, 5);
-      return `${isoDateToTr(d)} ${utcTimeToTr(hm, d)}`;
-    }
-  }
-  return '—';
 }
 
 function formatTrDate(isoDate: string | undefined): string {
@@ -87,28 +63,27 @@ function parseDisplayScore(raw: string): { home: string; away: string } {
   return { home: s || '—', away: '' };
 }
 
-/** Form + karşılaşma geçmişi iskeleti (thead + 3 satır). `className`: ayrılmış kutuda görünmez ölçü olarak. */
+/** Form + karşılaşma geçmişi iskeleti (form satırı + thead + 5 satır). `className`: ayrılmış kutuda görünmez ölçü olarak. */
 function H2hSkeleton({ className }: { className?: string }) {
   return (
     <div aria-hidden="true" className={className}>
-      {[styles.formRow, `${styles.formRow} ${styles.formRowH2h}`].map((rowClass) => (
-        <div key={rowClass} className={rowClass}>
-          {[styles.formSide, `${styles.formSide} ${styles.formSideAway}`].map((sideClass) => (
-            <div key={sideClass} className={sideClass}>
-              <span className={`${styles.formLabel} ${styles.skeletonText}`}>&nbsp;</span>
-              <div className={styles.formPills}>
-                {[0, 1, 2, 3, 4].map((i) => (
-                  <span key={i} className={`${styles.formPill} ${styles.formPillSkeleton}`} />
-                ))}
-              </div>
+      <div className={styles.formRow}>
+        {[styles.formSide, `${styles.formSide} ${styles.formSideAway}`].map((sideClass) => (
+          <div key={sideClass} className={sideClass}>
+            <span className={`${styles.formLabel} ${styles.skeletonText}`}>&nbsp;</span>
+            <div className={styles.formPills}>
+              {[0, 1, 2, 3, 4].map((i) => (
+                <span key={i} className={`${styles.formPill} ${styles.formPillSkeleton}`} />
+              ))}
             </div>
-          ))}
-        </div>
-      ))}
+          </div>
+        ))}
+      </div>
       <div className={styles.h2hTableWrap}>
         <div className={`${styles.h2hTableTitle} ${styles.skeletonText}`}>&nbsp;</div>
         <div className={styles.h2hSkeletonRows}>
-          {[0, 1, 2, 3].map((i) => (
+          {/* "Karşılıklı son 5" satırı kalktı (≈ 2 tablo satırı): toplam yükseklik aynı kalsın diye thead + 5 satır */}
+          {[0, 1, 2, 3, 4, 5].map((i) => (
             <span key={i} className={styles.h2hSkeletonRow} />
           ))}
         </div>
@@ -131,12 +106,6 @@ export default function MatchCard({ match, loading, initialH2h }: MatchCardProps
   const [h2hExpanded, setH2hExpanded] = useState(false);
   const [h2hClipped, setH2hClipped] = useState(false);
   const reservedRef = useRef<HTMLDivElement>(null);
-
-  function h2hRowStatus(row: Head2HHistoricalMatch): string {
-    if (row.status === 'FINISHED') return t('fullTime');
-    if (row.status === 'HALF TIME BREAK') return t('halfTime');
-    return row.time?.trim() || '—';
-  }
 
   function minuteBadgeLabel(status: string, time: string): string | null {
     const tm = time.trim();
@@ -196,8 +165,6 @@ export default function MatchCard({ match, loading, initialH2h }: MatchCardProps
   const team1IsHome = h2hData ? Number(h2hData.team1.id) === match?.home?.id : true;
   const homeForm: FormPill[] = h2hData ? overallFormToPills((team1IsHome ? h2hData.team1 : h2hData.team2).overall_form, 5) : [];
   const awayForm: FormPill[] = h2hData ? overallFormToPills((team1IsHome ? h2hData.team2 : h2hData.team1).overall_form, 5) : [];
-  const homeH2hForm: FormPill[] = h2hData ? overallFormToPills((team1IsHome ? h2hData.team1 : h2hData.team2).h2h_form, 5) : [];
-  const awayH2hForm: FormPill[] = h2hData ? overallFormToPills((team1IsHome ? h2hData.team2 : h2hData.team1).h2h_form, 5) : [];
   const h2hHistory: Head2HHistoricalMatch[] = h2hData && Array.isArray(h2hData.h2h) ? h2hData.h2h : [];
 
   // Kupa maçında takım kademe rozeti için harita (yalnızca Türkiye Kupası maçında istenir).
@@ -224,6 +191,7 @@ export default function MatchCard({ match, loading, initialH2h }: MatchCardProps
   const compName = leagueNameById(match.competition?.id, match.competition?.name, tl, 'full');
   const compLogo = match.competition?.logo;
   const country = match.country;
+  const countryName = country?.name ? countryDisplayName(country, locale) : '';
   // Lig logosu yoksa Sportmonks ülke bayrağı (`league.country.image_path`); o da yoksa görsel yok.
   const countryFlag = compLogo ? null : country?.flag || null;
   const homeName = match.home?.name || '';
@@ -253,7 +221,12 @@ export default function MatchCard({ match, loading, initialH2h }: MatchCardProps
   // Tarih her zaman çizilir; "Bugün/Yarın" üstüne biner (tarih görünmez kalır) → kutunun genişliği SSR ile aynı.
   const kickoffDateText = showKickoff ? formatFixtureDate(kickoff.dayIso, locale) : '';
   const kickoffRelativeText = relativeDay ? ts(`day.${relativeDay}`) : null;
-  // Ertelendi / iptal / tarih belirsiz: üst satırda eski tarih geçerli gibi görünmesin → durum + soluk, üstü çizili tarih.
+  // Başlamamış maçta tarih saatin altında; diğerlerinde (canlı / bitmiş / ertelenmiş) skorun altında küçük satır.
+  // Ertelendi / iptal / tarih belirsiz: eski tarih soluk ve üstü çizili (geçerli gibi görünmesin).
+  const dayInfo = showKickoff ? null : kickoffInfo(match);
+  // Kısa biçim (gg.aa.yyyy · ss:dd): uzun gün adı dar skor sütununu genişletip mobilde takım adlarını sıkıştırıyordu.
+  const matchDayText = dayInfo ? `${formatTrDate(dayInfo.dayIso)} · ${dayInfo.time}` : '';
+  // Ertelendi / iptal / tarih belirsiz: eski tarih geçerli gibi görünmesin → soluk, üstü çizili (durum skor yerinde).
   const headerDateState = special === 'postponed' || special === 'cancelled' || special === 'tba' ? special : null;
   // Hakem yoksa: başlamamış maçta "Açıklanmadı", diğerlerinde hücre yok.
   const refereeText = refereeName || (isPre && !special ? ts('refereeTba') : '');
@@ -261,7 +234,6 @@ export default function MatchCard({ match, loading, initialH2h }: MatchCardProps
   const refStatsId = `referee-stats-${match.id}`;
 
   const showFormRow = homeForm.length > 0 || awayForm.length > 0;
-  const showH2hFormRow = homeH2hForm.length > 0 || awayH2hForm.length > 0;
   const showH2hTable = h2hHistory.length > 0;
 
   const h2hSections = (
@@ -287,27 +259,6 @@ export default function MatchCard({ match, loading, initialH2h }: MatchCardProps
         </div>
       ) : null}
 
-      {showH2hFormRow ? (
-        <div className={`${styles.formRow} ${styles.formRowH2h}`}>
-          <div className={styles.formSide}>
-            <span className={styles.formLabel}>{t('h2hLast5')}</span>
-            <div className={styles.formPills}>
-              {homeH2hForm.map((pill, i) => (
-                <FormPillBox key={`h2h-h-${i}`} pill={pill} />
-              ))}
-            </div>
-          </div>
-          <div className={`${styles.formSide} ${styles.formSideAway}`}>
-            <span className={styles.formLabel}>{t('h2hLast5')}</span>
-            <div className={styles.formPills}>
-              {awayH2hForm.map((pill, i) => (
-                <FormPillBox key={`h2h-a-${i}`} pill={pill} />
-              ))}
-            </div>
-          </div>
-        </div>
-      ) : null}
-
       {showH2hTable ? (
         <div className={styles.h2hTableWrap}>
           <div className={styles.h2hTableTitle}>{t('h2hHistory')}</div>
@@ -315,8 +266,6 @@ export default function MatchCard({ match, loading, initialH2h }: MatchCardProps
             <table className={styles.h2hTable}>
               <colgroup>
                 <col className={styles.h2hColDate} />
-                <col className={styles.h2hColTime} />
-                <col className={styles.h2hColStatus} />
                 <col className={styles.h2hColHome} />
                 <col className={styles.h2hColScore} />
                 <col className={styles.h2hColAway} />
@@ -325,8 +274,6 @@ export default function MatchCard({ match, loading, initialH2h }: MatchCardProps
               <thead>
                 <tr>
                   <th>{t('h2hDate')}</th>
-                  <th>{t('h2hTime')}</th>
-                  <th>{t('h2hStatus')}</th>
                   <th className={styles.h2hThHome}>{t('h2hHome')}</th>
                   <th>{t('h2hScore')}</th>
                   <th className={styles.h2hThAway}>{t('h2hAway')}</th>
@@ -334,21 +281,29 @@ export default function MatchCard({ match, loading, initialH2h }: MatchCardProps
                 </tr>
               </thead>
               <tbody>
-                {h2hHistory.map((row) => (
-                  <tr key={row.id} className={styles.h2hTr}>
-                    <td className={styles.h2hTdDate}>{formatTrDate(row.date)}</td>
-                    <td className={styles.h2hTdTime}>{row.scheduled?.trim() ? utcTimeToTr(row.scheduled.trim(), row.date) : '—'}</td>
-                    <td>{h2hRowStatus(row)}</td>
-                    <td className={styles.h2hTdHome}>{row.home_name || '—'}</td>
-                    <td className={styles.h2hTdScore}>
-                      <Link href={buildMatchHref({ id: Number(row.id), home_name: row.home_name, away_name: row.away_name })} className={styles.h2hScoreLink} prefetch={false}>
-                        {row.score?.trim() || '—'}
-                      </Link>
-                    </td>
-                    <td className={styles.h2hTdAway}>{row.away_name || '—'}</td>
-                    <td>{compactHt(row.ht_score)}</td>
-                  </tr>
-                ))}
+                {h2hHistory.map((row) => {
+                  // Kazanan kalın ve vurgulu; beraberlikte ikisi nötr. Uzatma / penaltı: skorun yanında küçük etiket.
+                  const winner = h2hWinner(row.score, row.ps_score);
+                  const finishKey = row.finish ? finishedLabelKey(row) : null;
+                  return (
+                    <tr key={row.id} className={styles.h2hTr}>
+                      <td className={styles.h2hTdDate}>{formatTrDate(row.date)}</td>
+                      <td className={`${styles.h2hTdHome} ${winner === 'home' ? styles.h2hWinner : ''}`.trim()}>
+                        {row.home_name || '—'}
+                      </td>
+                      <td className={styles.h2hTdScore}>
+                        <Link href={buildMatchHref({ id: Number(row.id), home_name: row.home_name, away_name: row.away_name })} className={styles.h2hScoreLink} prefetch={false}>
+                          {row.score?.trim() || '—'}
+                        </Link>
+                        {finishKey ? <span className={styles.h2hFinishTag}>{t(finishKey)}</span> : null}
+                      </td>
+                      <td className={`${styles.h2hTdAway} ${winner === 'away' ? styles.h2hWinner : ''}`.trim()}>
+                        {row.away_name || '—'}
+                      </td>
+                      <td>{compactHt(row.ht_score)}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -384,26 +339,15 @@ export default function MatchCard({ match, loading, initialH2h }: MatchCardProps
             />
           ) : null}
           <span className={styles.cardHeaderTitle}>
-            {country?.name ? (
+            {countryName ? (
               <>
-                <strong className={styles.cardHeaderCountry}>{country.name}</strong>
+                <strong className={styles.cardHeaderCountry}>{countryName}</strong>
                 <span className={styles.cardHeaderSep}> - </span>
               </>
             ) : null}
             <span className={styles.cardHeaderLeague}>{compName}</span>
           </span>
           {derby ? <span className={infoStyles.derbyBadge}>{t('matchInfo.derby')}</span> : null}
-        </div>
-        <div className={styles.cardHeaderRight}>
-          {t('date')} :{' '}
-          {headerDateState ? (
-            <>
-              <span className={styles.headerDateState}>{ts(`headerDate.${headerDateState}`)}</span>{' '}
-              <s className={styles.headerDateOld}>{getMatchCardDateTimeText(match)}</s>
-            </>
-          ) : (
-            getMatchCardDateTimeText(match)
-          )}
         </div>
       </header>
 
@@ -419,6 +363,7 @@ export default function MatchCard({ match, loading, initialH2h }: MatchCardProps
               <div className={styles.teamName}>{homeName}</div>
               <TeamTierBadge match={match} teamId={match.home?.id} tiers={cupTiers} />
             </Link>
+            <CoachLink name={match.coaches?.home} id={match.coaches?.homeId} full={match.coaches?.homeFull} />
           </div>
 
           <div className={styles.scoreContainer}>
@@ -458,6 +403,11 @@ export default function MatchCard({ match, loading, initialH2h }: MatchCardProps
                 ) : null}
               </div>
             )}
+            {matchDayText ? (
+              <span className={styles.matchDay}>
+                {headerDateState ? <s className={styles.headerDateOld}>{matchDayText}</s> : matchDayText}
+              </span>
+            ) : null}
             {showScoreMeta ? (
               <div className={styles.scoreMeta}>
                 {showIyBadge ? <span className={styles.htBadge}>{t('halfTime')} : {formatHtScoreDisplay(htScore)}</span> : null}
@@ -475,10 +425,21 @@ export default function MatchCard({ match, loading, initialH2h }: MatchCardProps
               <div className={styles.teamName}>{awayName}</div>
               <TeamTierBadge match={match} teamId={match.away?.id} tiers={cupTiers} />
             </Link>
+            <CoachLink name={match.coaches?.away} id={match.coaches?.awayId} full={match.coaches?.awayFull} />
           </div>
         </div>
 
         {isSecondLeg(match) ? <TiePill match={match} /> : null}
+
+        <MatchInfoLine
+          match={match}
+          phase={phase}
+          location={location}
+          refereeText={refereeText}
+          refereeToggle={
+            refereeStatsAvailable ? { open: refStatsOpen, controlsId: refStatsId, onToggle: () => setRefStatsOpen((v) => !v) } : null
+          }
+        />
 
         {expectation ? (
           <p className={styles.oddsStrip}>
@@ -491,16 +452,6 @@ export default function MatchCard({ match, loading, initialH2h }: MatchCardProps
           </p>
         ) : null}
       </div>
-
-      <MatchInfoGrid
-        match={match}
-        phase={phase}
-        location={location}
-        refereeText={refereeText}
-        refereeToggle={
-          refereeStatsAvailable ? { open: refStatsOpen, controlsId: refStatsId, onToggle: () => setRefStatsOpen((v) => !v) } : null
-        }
-      />
 
       {refereeStatsAvailable && refStatsOpen ? (
         <RefereeStatsCard
@@ -518,7 +469,7 @@ export default function MatchCard({ match, loading, initialH2h }: MatchCardProps
         <div className={styles.h2hReserved}>
           <H2hSkeleton className={styles.h2hReservedSizer} />
           <div ref={reservedRef} className={styles.h2hReservedContent}>
-            {showFormRow || showH2hFormRow || showH2hTable ? h2hSections : <p className={styles.h2hNone}>{ts('h2h.none')}</p>}
+            {showFormRow || showH2hTable ? h2hSections : <p className={styles.h2hNone}>{ts('h2h.none')}</p>}
           </div>
           {h2hClipped ? (
             <button type="button" className={styles.h2hShowAll} onClick={() => setH2hExpanded(true)}>

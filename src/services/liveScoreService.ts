@@ -788,6 +788,10 @@ export interface Head2HHistoricalMatch {
   away_name?: string;
   score?: string;
   ht_score?: string;
+  /** Penaltı skoru (penaltıyla biten maçta kazananı belirler). */
+  ps_score?: string;
+  /** Uzatmalar ("AET") / penaltılar ("PEN") sonucu bitti; normal bitişte yok. */
+  finish?: Match['finish'];
   time?: string;
   status?: string;
 }
@@ -839,6 +843,8 @@ function matchToH2HHistorical(m: Match): Head2HHistoricalMatch {
     ...(m.away?.name !== undefined ? { away_name: m.away.name } : {}),
     ...((m.scores?.score ?? m.score) !== undefined ? { score: m.scores?.score ?? m.score } : {}),
     ...(m.scores?.ht_score !== undefined ? { ht_score: m.scores.ht_score } : {}),
+    ...(m.scores?.ps_score ? { ps_score: m.scores.ps_score } : {}),
+    ...(m.finish ? { finish: m.finish } : {}),
     time: m.time,
     status: m.status,
   };

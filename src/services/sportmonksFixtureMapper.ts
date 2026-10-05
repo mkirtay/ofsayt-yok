@@ -71,6 +71,7 @@ function mapCountry(fixture: SportmonksFixture): MatchCountry | undefined {
     name: country.name,
     ...(country.image_path ? { flag: country.image_path } : {}),
     ...(country.fifa_name ? { fifa_code: country.fifa_name } : {}),
+    ...(country.iso2 ? { iso2: country.iso2 } : {}),
   };
 }
 

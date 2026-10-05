@@ -93,3 +93,8 @@ export async function loadWithSwr<T>(key: string, opts: SwrOptions, compute: () 
     if (locked) await unlock(key);
   }
 }
+
+/** Yalnız okur (üretmez): taze ya da eski değer, yoksa null. Başka bir sayfanın hesabını ek istek atmadan kullanmak için. */
+export async function peekSwr<T>(key: string): Promise<T | null> {
+  return (await readEntry<T>(key))?.v ?? null;
+}

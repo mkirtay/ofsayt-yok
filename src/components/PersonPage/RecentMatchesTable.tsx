@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import { useTranslation } from '@/lib/i18n';
-import { leagueNameById } from '@/utils/leagueName';
+import TeamLogo from '@/components/TeamLogo';
+import { competitionLogoNeedsBackdrop } from '@/utils/competitionLogo';
+import { personLeagueLabel } from './leagueLabel';
 import { buildMatchHref } from '@/utils/matchUrl';
 import { isoDateToTr } from '@/utils/dateFormat';
 import type { PersonRecentMatch } from '@/server/people/refereePage';
@@ -38,7 +40,18 @@ export default function RecentMatchesTable({ matches }: { matches: PersonRecentM
                     </Link>
                   </td>
                   <td>{m.scores?.score?.replace(/\s+/g, '') || '—'}</td>
-                  <td className={`${styles.left} ${styles.muted}`}>{leagueNameById(m.competition?.id, m.competition?.name, tl)}</td>
+                  <td className={`${styles.left} ${styles.muted}`}>
+                    <span className={styles.leagueCell}>
+                      {m.competition?.logo ? (
+                        <TeamLogo
+                          src={m.competition.logo}
+                          width={16}
+                          className={competitionLogoNeedsBackdrop(m.competition.id) ? styles.logoBackdrop : undefined}
+                        />
+                      ) : null}
+                      {personLeagueLabel(m.competition?.id, tl, m.competition?.name || '—')}
+                    </span>
+                  </td>
                 </tr>
               ))}
             </tbody>

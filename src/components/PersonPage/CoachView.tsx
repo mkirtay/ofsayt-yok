@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { useI18n, useTranslation } from '@/lib/i18n';
 import TeamLogo from '@/components/TeamLogo';
-import { leagueNameById } from '@/utils/leagueName';
+import { personLeagueLabel } from './leagueLabel';
 import { countryDisplayName } from '@/utils/countryName';
 import { isoDateToTr } from '@/utils/dateFormat';
 import type { CoachPageData } from '@/server/people/coachPage';
@@ -80,7 +80,7 @@ export default function CoachView({ data }: { data: CoachPageData }) {
                 {data.seasons.map((s) => (
                   <tr key={`${s.seasonId}-${s.teamId}`}>
                     <td>{s.seasonName}</td>
-                    <td className={styles.left}>{leagueNameById(s.leagueId ?? undefined, '—', tl)}</td>
+                    <td className={styles.left}>{personLeagueLabel(s.leagueId, tl)}</td>
                     <td className={styles.left}>
                       {s.teamId ? (
                         <Link href={`/teams/${s.teamId}`} className={styles.teamCellLink} prefetch={false}>

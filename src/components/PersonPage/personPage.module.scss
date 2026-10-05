@@ -204,3 +204,152 @@
 .muted {
   color: $color-text-secondary;
 }
+
+.sectionSub {
+  font-weight: 500;
+  color: $color-text-secondary;
+}
+
+// ── Özet kartları ──
+.statCards {
+  margin: 0;
+  padding: $spacing-3 $spacing-4 $spacing-4;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: $spacing-2;
+}
+
+.statCard {
+  padding: $spacing-3;
+  background: $color-muted;
+  border-radius: $radius-sm;
+  min-width: 0;
+
+  dt {
+    font-size: 11px;
+    font-weight: 600;
+    color: $color-text-secondary;
+  }
+
+  dd {
+    margin: 0;
+  }
+}
+
+.statValue {
+  margin-top: 2px !important;
+  font-size: 22px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: $color-text;
+}
+
+.statAvg {
+  font-size: 11px;
+  color: $color-text-secondary;
+  font-variant-numeric: tabular-nums;
+}
+
+// ── Sezon tablosu mini çubukları (yalnız görsel; sayı hücrede okunur) ──
+.barCell {
+  display: inline-grid;
+  justify-items: end;
+  gap: 3px;
+  min-width: 48px;
+}
+
+.miniTrack {
+  display: block;
+  width: 48px;
+  height: 4px;
+  background: $color-muted;
+  border-radius: $radius-full;
+  overflow: hidden;
+}
+
+.miniFill {
+  display: block;
+  height: 100%;
+  margin-left: auto;
+  background: $color-text-secondary;
+  border-radius: $radius-full;
+}
+
+.toolbar {
+  padding: $spacing-3 $spacing-4 0;
+}
+
+.select {
+  height: 32px;
+  padding: 0 $spacing-2;
+  font: inherit;
+  font-size: 13px;
+  color: $color-text;
+  background: $color-bg;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
+}
+
+.leagueCell {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.logoBackdrop {
+  @include logo-backdrop(1px, 3px);
+}
+
+// ── Mobil: daha kompakt kartlar ──
+@media (max-width: #{$bp-sm - 1px}) {
+  .page {
+    gap: $spacing-3;
+    padding-top: $spacing-3;
+  }
+
+  .header {
+    gap: $spacing-3;
+    padding: $spacing-3 $spacing-4;
+  }
+
+  .avatar {
+    width: 56px;
+    height: 56px;
+    font-size: 20px;
+  }
+
+  .name {
+    font-size: 20px;
+  }
+
+  .sectionTitle {
+    padding: $spacing-2 $spacing-3;
+  }
+
+  .statCards {
+    padding: $spacing-2 $spacing-3 $spacing-3;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .statCard {
+    padding: $spacing-2;
+  }
+
+  .statValue {
+    font-size: 18px;
+  }
+
+  .table {
+    font-size: 12px;
+
+    th,
+    td {
+      padding: 6px $spacing-2;
+    }
+  }
+
+  .note,
+  .empty {
+    padding: $spacing-2 $spacing-3;
+  }
+}

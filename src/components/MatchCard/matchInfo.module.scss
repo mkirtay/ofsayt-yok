@@ -1,102 +1,92 @@
 @use '../../styles/variables' as *;
 
-// ── Bilgi hücreleri (Stadyum · Hakem · Teknik Direktörler · Hava / Nerede İzlenir) ──
+// ── Bilgi satırı (Stadyum · Hakem · Nerede İzlenir / Hava) — saat / skorun altında, tek kompakt satır ──
 // Kapsayıcının genişliğine göre (container query): split-view paneli viewport'tan dar, medya sorgusu yanıltır.
-// Dar: 2×2 (tek kalan hücre satırı kaplar); geniş (≥ 480 px): tek satır, hücreler eşit genişlikte.
-.infoGridWrap {
+// Geniş (≥ 480 px): "·" ayraçlı tek satır; dar: ayraçsız, ortalı sarar (en çok 2 satır).
+.infoLineWrap {
   container-type: inline-size;
-  border-top: 1px solid $color-border;
+  width: 100%;
 }
 
-.infoGrid {
+.infoLine {
+  list-style: none;
   margin: 0;
-  padding: $spacing-4 $spacing-3;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  row-gap: $spacing-3;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  column-gap: $spacing-3;
+  row-gap: $spacing-1;
+  font-size: 12px;
+  line-height: 18px;
+  color: $color-text-secondary;
 
   @container (min-width: 480px) {
-    grid-template-columns: none;
-    grid-auto-flow: column;
-    grid-auto-columns: minmax(0, 1fr);
-    row-gap: 0;
+    column-gap: 0;
   }
 }
 
-.infoCell {
-  display: flex;
-  flex-direction: column;
+.infoItem {
+  display: inline-flex;
   align-items: center;
-  text-align: center;
-  gap: $spacing-1;
+  gap: 5px;
   min-width: 0;
-  padding: 0 $spacing-2;
-
-  // Dar: sütunlar arası dikey, satırlar arası yatay ince ayraç; tek kalan hücre iki sütunu kaplar.
-  &:nth-child(even) {
-    border-left: 1px solid $color-border;
-  }
-
-  &:nth-child(n + 3) {
-    border-top: 1px solid $color-border;
-    padding-top: $spacing-3;
-  }
-
-  &:last-child:nth-child(odd) {
-    grid-column: 1 / -1;
-  }
+  max-width: 100%;
 
   @container (min-width: 480px) {
-    &:nth-child(n) {
-      border-left: none;
-      border-top: none;
-      padding-top: 0;
-      grid-column: auto;
-    }
-
-    & + & {
-      border-left: 1px solid $color-border;
+    & + &::before {
+      content: '·';
+      margin: 0 $spacing-2;
+      color: var(--text-tertiary);
     }
   }
-}
-
-.infoLabel {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: $spacing-1;
-  font-size: 11px;
-  font-weight: 600;
-  color: $color-text-footer-label;
 }
 
 .infoIcon {
   flex-shrink: 0;
+  width: 14px;
+  height: 14px;
   color: $color-text-footer-label;
 }
 
 .infoValue {
-  margin: 0;
-  font-size: 13px;
-  font-weight: 700;
-  color: $color-text;
   min-width: 0;
-  max-width: 100%;
-  word-break: break-word;
+  font-weight: 600;
+  color: $color-text;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-// Teknik direktörler: iki isim alt alta
-.infoLine {
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+// Teknik direktör: takım adının altında küçük, gri; TD sayfasına link
+.coachName {
   display: block;
-}
+  margin-top: 2px;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 15px;
+  color: $color-text-secondary;
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 
-.personLink {
-  color: inherit;
-  text-decoration: underline dotted;
-  text-underline-offset: 3px;
-
-  &:hover {
+  @at-root a#{&}:hover {
     color: $color-primary-text;
+    text-decoration: underline;
   }
 }
 
@@ -115,8 +105,8 @@
 // ── Hakem adı düğmesi + istatistik kartı ──
 .refToggle {
   font: inherit;
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 600;
   color: $color-text;
   background: none;
   border: none;

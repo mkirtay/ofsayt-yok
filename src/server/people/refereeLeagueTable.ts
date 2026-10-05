@@ -55,7 +55,7 @@ export async function loadRefereeLeagueTable(leagueSlug: string, seasonSlug: str
   const season = seasonSlug ? seasons.find((s) => s.slug === seasonSlug) : seasons[0];
   if (!season) return 'missing';
 
-  const key = `${cacheKeyPrefix()}people:ref-table:v2:${season.id}`;
+  const key = refereeTableCacheKey(season.id);
   const cached = await loadWithSwr<RefereeTableRow[]>(key, { freshSeconds: TABLE_FRESH_SECONDS }, async () => {
     const referees = await sportmonksCollectAllPages<RawPerson>({ basePath: 'football', path: `/referees/seasons/${season.id}`, perPage: 50, maxPages: 5 }).catch(() => null);
     if (!referees) return null;
@@ -83,6 +83,11 @@ export async function loadRefereeLeagueTable(leagueSlug: string, seasonSlug: str
     seasons: seasons.map(({ name, slug }) => ({ name, slug })),
     rows,
   };
+}
+
+/** Sezon tablosunun Redis anahtarı (hakem sayfası lig ortalaması bunu ek istek atmadan okur). */
+export function refereeTableCacheKey(seasonId: number): string {
+  return `${cacheKeyPrefix()}people:ref-table:v2:${seasonId}`;
 }
 
 /** Varsayılan sıra: maç sayısı (çoktan aza), eşitlikte ad. */

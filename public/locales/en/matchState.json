@@ -55,11 +55,6 @@
     "home": "Home",
     "away": "Away"
   },
-  "headerDate": {
-    "postponed": "Postponed",
-    "cancelled": "Cancelled",
-    "tba": "Date TBA"
-  },
   "h2h": {
     "showAll": "Show all",
     "none": "These teams have no head-to-head history."

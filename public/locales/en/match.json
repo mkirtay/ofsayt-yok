@@ -445,6 +445,13 @@
     "compareClear": "Clear selection",
     "compareWith": "Compare with another referee →",
     "selectReferee": "Add {{name}} to comparison",
-    "sampleNote": "Small samples can be misleading; figures are for statistical information only."
+    "sampleNote": "Small samples can be misleading; figures are for statistical information only.",
+    "summaryTitle": "Summary",
+    "summaryContext": "{{context}}, {{count}} matches",
+    "summaryContext_one": "{{context}}, {{count}} match",
+    "summaryMatches": "Matches covered",
+    "summarySeasons": "{{count}} seasons",
+    "summarySeasons_one": "{{count}} season",
+    "leagueAvg": "League avg: {{value}}"
   }
 }

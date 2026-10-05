@@ -9,4 +9,11 @@ describe('ülke adı görünen dilde', () => {
     expect(countryDisplayName({ name: 'Turkey' }, 'tr')).toBe('Turkey');
     expect(countryDisplayName({ name: 'X', iso2: 'zz' }, 'tr')).toBe('X');
   });
+
+  it('TR: kodu yanıltıcı bölgeler ada göre (Sportmonks: Scotland GB, England EN, Europe EU)', () => {
+    expect(countryDisplayName({ name: 'Scotland', iso2: 'GB' }, 'tr')).toBe('İskoçya');
+    expect(countryDisplayName({ name: 'England', iso2: 'EN' }, 'tr')).toBe('İngiltere');
+    expect(countryDisplayName({ name: 'Europe', iso2: 'EU' }, 'tr')).toBe('Avrupa');
+    expect(countryDisplayName({ name: 'Scotland', iso2: 'GB' }, 'en')).toBe('Scotland');
+  });
 });
