@@ -90,7 +90,6 @@ export default function Frikik({ sharedScore }: { sharedScore: number | null }) 
             handleClassName: styles.handle!,
             goalClassName: styles.goal!,
             trailClassName: styles.trail!,
-            contactClassName: styles.contact!,
             goalLabel: goalLabelRef.current,
             onRound: (i) => setRound(i),
             onShot: (_i, result, sum) => {
@@ -250,7 +249,6 @@ export default function Frikik({ sharedScore }: { sharedScore: number | null }) 
             <li>{t('rules.r1')}</li>
             <li>{t('rules.r2')}</li>
             <li>{t('rules.r3')}</li>
-            <li>{t('rules.r4')}</li>
           </ol>
         </div>
         <div>

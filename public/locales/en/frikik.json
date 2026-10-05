@@ -39,20 +39,19 @@
   "noWebgl": "The game could not start because your browser does not support 3D graphics.",
   "rules": {
     "title": "How to play",
-    "r1": "Hold the ball and pull back: it flies opposite to your pull (pull right to aim left). The short arrow shows only the ball's first direction; where it lands is your call.",
-    "r2": "Pull distance sets the power, and power raises both speed and height. The green zone of the bar is the power that finds the goal from that distance; yellow falls short, red goes over. Hard shots stray more, and so does a shaky pull.",
-    "r3": "For curl, slide the contact point under the ball: drag it, use ←/→ or A/D, or the mouse wheel. Hitting the right side curls the ball left. Your choice stays between shots; on mobile, flicking sideways as you release adds a little extra curl.",
+    "r1": "Put your finger (or the mouse) on the ball and swipe towards the spot you want to hit: where your swipe ends is your target.",
+    "r2": "Power comes from the fastest moment of your swipe: swipe fast and the shot is hard enough to beat the keeper. The yellow end of the bar is too weak, the red end is too strong (the ball balloons). Draw a curved path and the ball curls around the wall.",
+    "r3": "Each series has 5 shots; the ball position, the wall and the keeper's movement change every shot.",
     "scoring": "Points",
     "p1": "Goal: 100 points",
     "p2": "In off the post: +50",
-    "p3": "Top corner: +100",
-    "r4": "Each series has 5 shots; the ball position, the wall and the keeper's movement change every shot. The first 2 shots are easier."
+    "p3": "Top corner: +100"
   },
   "tip": {
     "title": "How to play",
-    "l1": "Hold the ball and pull back: it flies opposite to your pull. The arrow shows only the first direction; the rest is your judgement.",
-    "l2": "Pull further for a harder, higher shot. Aim for the green zone of the bar: yellow falls short, red goes over; hard shots stray more.",
-    "l3": "Slide the contact point under the ball (←/→ or drag): hit the right side and the ball curls left, hit the left and it curls right.",
+    "l1": "Swipe from the ball towards the goal: the dashed line shows the path the ball will take.",
+    "l2": "Swipe fast for a hard shot. Stay in the green zone of the bar; in the red the ball balloons.",
+    "l3": "Draw a curved path and the ball curls around the wall.",
     "ok": "Got it"
   }
 }

@@ -39,20 +39,19 @@
   "noWebgl": "Tarayıcın 3D grafikleri desteklemediği için oyun açılamadı.",
   "rules": {
     "title": "Nasıl oynanır",
-    "r1": "Topu tut ve geriye çek: top çekmenin tersi yönde gider (sağa çekersen sola). Kısa ok yalnız topun ilk yönünü gösterir; nereye düşeceğini sen kestirirsin.",
-    "r2": "Çekme mesafesi gücü belirler: güç hem hızı hem yüksekliği artırır. Çubuğun yeşil bölgesi o mesafeden kaleyi bulan güçtür; sarı kısa kalır, kırmızı üstten gider. Sert şut daha çok sapar, titrek çekiş de.",
-    "r3": "Falso için topun altındaki vuruş noktasını kaydır: sürükle, ←/→ ya da A/D tuşları, fare tekerleği. Sağdan vurmak topu sola kıvırır. Seçimin atışlar arasında kalır; mobilde bırakırken parmağı yana kıvırmak falsoyu biraz daha artırır.",
+    "r1": "Parmağını (ya da fareyi) topun üstüne koy ve vurmak istediğin noktaya doğru kaydır: kaydırmayı bitirdiğin yer hedefindir.",
+    "r2": "Güç, kaydırmanın en hızlı anından gelir: hızlı kaydırırsan şut sert olur ve kaleci yetişemez. Çubuğun sarı ucu çok güçsüz, kırmızı ucu aşırı güçlüdür (top havalanır). Yolu kavisli çizersen top falso alıp barajın yanından dolanır.",
+    "r3": "Her seride 5 vuruş var; her vuruşta topun yeri, baraj ve kalecinin hareketi değişir.",
     "scoring": "Puanlar",
     "p1": "Gol: 100 puan",
     "p2": "Direkten gol: +50",
-    "p3": "Doksan (üst köşe): +100",
-    "r4": "Her seride 5 vuruş var; her vuruşta topun yeri, baraj ve kalecinin hareketi değişir. İlk 2 vuruş daha kolaydır."
+    "p3": "Doksan (üst köşe): +100"
   },
   "tip": {
     "title": "Nasıl oynanır?",
-    "l1": "Topu tut ve geriye çek: top çekmenin tersine gider. Ok yalnız ilk yönü gösterir, gerisi senin tahminin.",
-    "l2": "Ne kadar çekersen o kadar sert ve yüksek. Çubukta yeşil bölgeyi hedefle: sarı kaleye varmaz, kırmızı üstten gider; sert şut daha çok sapar.",
-    "l3": "Topun altındaki vuruş noktasını kaydır (←/→ ya da sürükle): sağdan vurursan top sola, soldan vurursan sağa kıvrılır.",
+    "l1": "Topun üstünden kaleye doğru kaydır: kesikli çizgi topun gideceği yolu gösterir.",
+    "l2": "Hızlı kaydır: sert şut. Alttaki çubukta yeşil bölgede kal; kırmızıda top havalanır.",
+    "l3": "Yolu kavisli çiz: top falso alır, barajın yanından dolanır.",
     "ok": "Anladım"
   }
 }
