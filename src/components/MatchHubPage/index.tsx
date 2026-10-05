@@ -764,10 +764,10 @@ export default function MatchHubPage({
 
   return (
     <>
-      {/* `?tab=` sunucuda bilinmez (ISR): boyamadan önce <html data-hub-tab> (bkz. utils/hubTabBoot.ts). */}
-      <script dangerouslySetInnerHTML={{ __html: HUB_TAB_BOOT_SCRIPT }} />
       {/* Hatırlanan lig sunucuda bilinmez: boyamadan önce <html data-hub-league-pending> (bkz. utils/hubLeagueBoot.ts). */}
       <script dangerouslySetInnerHTML={{ __html: hubLeagueBootScript(defaultCompetitionId) }} />
+      {/* `?tab=` sunucuda bilinmez (ISR): boyamadan önce <html data-hub-tab> (bkz. utils/hubTabBoot.ts). */}
+      <script dangerouslySetInnerHTML={{ __html: HUB_TAB_BOOT_SCRIPT }} />
       <SubHeader
         initialTodayIso={initialDate}
         selectedDate={selectedDate}
