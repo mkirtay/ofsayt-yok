@@ -4,8 +4,8 @@
  *
  * - `name`: Sportmonks'taki tam ad (doğrulama ve test için; ekranda Sportmonks'tan gelen ad kullanılır).
  * - `shortName`: dar ekranda (maç satırı, < 640 px) tam ad sığmadığında gösterilecek okunabilir kısa ad.
- * - `aliases`: takma adlar / yaygın yazımlar — AI asistanın takım çözümlemesi okur
- *   (server/assistant/matchAnalysisRequest.ts; başka yerde okunmaz).
+ * - `aliases`: takma adlar / yaygın yazımlar. ŞİMDİLİK YALNIZ VERİ — ileride AI asistanın takım çözümlemesi
+ *   kullanacak; bugün hiçbir yerde okunmuyor.
  *
  * `config/teamShortNames.ts` (Süper Lig puan durumu kısaltmaları) ayrı amaçlıdır; bu dosyayla ilişkisi yok.
  */

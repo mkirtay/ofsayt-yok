@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useRef, useState, type ComponentType, type KeyboardEvent } from 'react';
+import { useCallback, useEffect, useId, useRef, useState, type KeyboardEvent } from 'react';
 import { useI18n, useTranslation } from '@/lib/i18n';
 import '@/lib/i18nNamespaces/kuralKosesi';
 import { MOBILE_LAYOUT_QUERY } from '@/config/breakpoints';
@@ -61,11 +61,7 @@ function useIsMobileLayout(): boolean {
   return mobile;
 }
 
-const FOCUSABLE = 'button:not([disabled]), [href], input, [tabindex]:not([tabindex="-1"])';
-
-type PanelTab = 'rules' | 'assistant';
-/** Asistan sekmesi yalnız seçilince indirilir (Panel zaten düğmeye tıklanınca yükleniyor). */
-const loadAssistant = () => import('./AssistantTab').then((m) => m.default);
+const FOCUSABLE = 'button:not([disabled]), [href], [tabindex]:not([tabindex="-1"])';
 
 /**
  * Kural Köşesi paneli (09-kural-kosesi.html). Sağdan kayar; mobilde karartmalı ve modal (odak içeride),
@@ -81,12 +77,6 @@ export default function Panel({ open, side = 'right', facts, startIndex, onClose
   const closeRef = useRef<HTMLButtonElement>(null);
 
   const [index, setIndex] = useState(startIndex);
-  const [tab, setTab] = useState<PanelTab>('rules');
-  const [Assistant, setAssistant] = useState<ComponentType | null>(null);
-  const openAssistant = () => {
-    setTab('assistant');
-    if (!Assistant) void loadAssistant().then((C) => setAssistant(() => C));
-  };
   // `shown`: CSS açık sınıfı (bir kare gecikmeli → ilk açılışta da kayarak gelir). `sceneOn`: sahne çizili mi.
   const [shown, setShown] = useState(false);
   const [sceneOn, setSceneOn] = useState(false);
@@ -156,37 +146,6 @@ export default function Panel({ open, side = 'right', facts, startIndex, onClose
   const fact = localizeFact(facts[safeIndex], locale);
   const go = (delta: number) => setIndex((i) => (i + delta + total) % total);
 
-  const rulesView = (
-    <>
-      <div ref={bodyRef} className={styles.body}>
-        <ScaledScene>{sceneOn ? <Scene key={safeIndex} fact={fact} /> : null}</ScaledScene>
-        <h2 className={styles.fact} aria-live="polite">
-          {fact.title}
-        </h2>
-        <p className={styles.text}>{fact.body}</p>
-        {fact.note ? (
-          <div className={styles.note}>
-            <small>{t('didYouKnow')}</small>
-            <span>{fact.note}</span>
-          </div>
-        ) : null}
-      </div>
-      <div className={styles.foot}>
-        <button type="button" className={styles.btn} onClick={() => go(-1)}>
-          ‹ {t('prev')}
-        </button>
-        <div className={styles.dots} aria-hidden="true">
-          {facts.map((f, i) => (
-            <span key={f.id} className={`${styles.pip} ${i === safeIndex ? styles.pipOn : ''}`} />
-          ))}
-        </div>
-        <button type="button" className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => go(1)}>
-          {t('next')} ›
-        </button>
-      </div>
-    </>
-  );
-
   return (
     <>
       <div className={`${styles.backdrop} ${shown ? styles.backdropOpen : ''}`} onClick={onClose} aria-hidden="true" />
@@ -204,7 +163,7 @@ export default function Panel({ open, side = 'right', facts, startIndex, onClose
           </span>
           <div className={styles.titles}>
             <strong id={titleId}>{t('title')}</strong>
-            {tab === 'rules' ? <span>{t('counter', { current: safeIndex + 1, total })}</span> : null}
+            <span>{t('counter', { current: safeIndex + 1, total })}</span>
           </div>
           <button ref={closeRef} type="button" className={styles.close} aria-label={t('close')} onClick={onClose}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -213,15 +172,32 @@ export default function Panel({ open, side = 'right', facts, startIndex, onClose
             </svg>
           </button>
         </div>
-        <div className={styles.tabs} role="tablist">
-          <button type="button" role="tab" aria-selected={tab === 'rules'} className={`${styles.tab} ${tab === 'rules' ? styles.tabOn : ''}`} onClick={() => setTab('rules')}>
-            {t('tabs.rules')}
+        <div ref={bodyRef} className={styles.body}>
+          <ScaledScene>{sceneOn ? <Scene key={safeIndex} fact={fact} /> : null}</ScaledScene>
+          <h2 className={styles.fact} aria-live="polite">
+            {fact.title}
+          </h2>
+          <p className={styles.text}>{fact.body}</p>
+          {fact.note ? (
+            <div className={styles.note}>
+              <small>{t('didYouKnow')}</small>
+              <span>{fact.note}</span>
+            </div>
+          ) : null}
+        </div>
+        <div className={styles.foot}>
+          <button type="button" className={styles.btn} onClick={() => go(-1)}>
+            ‹ {t('prev')}
           </button>
-          <button type="button" role="tab" aria-selected={tab === 'assistant'} className={`${styles.tab} ${tab === 'assistant' ? styles.tabOn : ''}`} onClick={openAssistant}>
-            {t('tabs.assistant')}
+          <div className={styles.dots} aria-hidden="true">
+            {facts.map((f, i) => (
+              <span key={f.id} className={`${styles.pip} ${i === safeIndex ? styles.pipOn : ''}`} />
+            ))}
+          </div>
+          <button type="button" className={`${styles.btn} ${styles.btnPrimary}`} onClick={() => go(1)}>
+            {t('next')} ›
           </button>
         </div>
-        {tab === 'rules' ? rulesView : Assistant ? <Assistant /> : <div className={styles.body} />}
       </aside>
     </>
   );

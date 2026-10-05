@@ -172,31 +172,6 @@
   flex-shrink: 0;
 }
 
-.tabs {
-  display: flex;
-  gap: 6px;
-  padding: 0 16px 8px;
-}
-
-.tab {
-  flex: 1;
-  height: 36px;
-  border-radius: 10px;
-  border: 1px solid var(--kk-line);
-  background: transparent;
-  color: var(--kk-muted);
-  font-family: inherit;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.tabOn {
-  background: #00a76f;
-  border-color: #00a76f;
-  color: #ffffff;
-}
-
 .body {
   flex-grow: 1;
   overflow-y: auto;

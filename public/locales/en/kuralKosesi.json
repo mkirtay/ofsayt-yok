@@ -9,36 +9,5 @@
   "prev": "Previous",
   "next": "Next",
   "close": "Close",
-  "openInCorner": "Open in the Rules Corner",
-  "tabs": {
-    "rules": "Rules",
-    "assistant": "Assistant"
-  },
-  "assistant": {
-    "intro": "Ask for a match's AI analysis. Example: “Analyse GS–Kasımpaşa”.",
-    "placeholder": "e.g. Analyse GS–Kasımpaşa",
-    "send": "Send",
-    "thinking": "Looking…",
-    "you": "You",
-    "notUnderstood": "For now I can answer match analysis requests. Example: “Analyse GS–Kasımpaşa”.",
-    "teamNotFound": "I couldn't find a team called “{{query}}”.",
-    "matchNotFound": "I couldn't find an upcoming or recent match between {{home}} and {{away}}.",
-    "choose": "Which match did you mean?",
-    "none": "This match's analysis isn't ready yet. Analyses are prepared about 3 hours before kick-off.",
-    "preview": "Free preview",
-    "locked": "The full analysis is locked.",
-    "unlock": "Unlock for {{cost}} credit",
-    "unlocking": "Unlocking…",
-    "signIn": "Sign in to unlock the analysis",
-    "summary": "Analysis summary",
-    "mostLikely": "Most likely result",
-    "draw": "Draw",
-    "wins": "{{team}} win",
-    "openTab": "Open AI Analysis on the match page",
-    "matchPage": "Go to match page",
-    "insufficient": "Not enough credits.",
-    "buyCredits": "Buy credits",
-    "error": "I can't answer right now, please try again shortly.",
-    "disclaimer": "Informational statistical prediction."
-  }
+  "openInCorner": "Open in the Rules Corner"
 }

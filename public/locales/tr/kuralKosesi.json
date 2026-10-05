@@ -9,36 +9,5 @@
   "prev": "Önceki",
   "next": "Sonraki",
   "close": "Kapat",
-  "openInCorner": "Kural Köşesi'nde aç",
-  "tabs": {
-    "rules": "Kurallar",
-    "assistant": "Asistan"
-  },
-  "assistant": {
-    "intro": "Bir maçın AI analizini sorabilirsin. Örnek: “GS–Kasımpaşa maçını analiz et”.",
-    "placeholder": "Örn. GS–Kasımpaşa maçını analiz et",
-    "send": "Gönder",
-    "thinking": "Bakıyorum…",
-    "you": "Sen",
-    "notUnderstood": "Şimdilik maç analizi isteklerini yanıtlayabiliyorum. Örnek: “GS–Kasımpaşa maçını analiz et”.",
-    "teamNotFound": "“{{query}}” adında bir takım bulamadım.",
-    "matchNotFound": "{{home}} ile {{away}} arasında yakın bir maç bulamadım.",
-    "choose": "Hangi maçı kastettin?",
-    "none": "Bu maçın analizi henüz hazır değil. Analiz maçtan yaklaşık 3 saat önce hazırlanır.",
-    "preview": "Ücretsiz önizleme",
-    "locked": "Analizin tamamı kilitli.",
-    "unlock": "{{cost}} kredi ile aç",
-    "unlocking": "Açılıyor…",
-    "signIn": "Analizi açmak için giriş yap",
-    "summary": "Analiz özeti",
-    "mostLikely": "En olası sonuç",
-    "draw": "Beraberlik",
-    "wins": "{{team}} kazanır",
-    "openTab": "Maç sayfasında AI Analiz'i aç",
-    "matchPage": "Maç sayfasına git",
-    "insufficient": "Yetersiz kredi.",
-    "buyCredits": "Kredi satın al",
-    "error": "Şu an yanıt veremiyorum, biraz sonra tekrar dene.",
-    "disclaimer": "Bilgi amaçlı istatistiksel tahmindir."
-  }
+  "openInCorner": "Kural Köşesi'nde aç"
 }

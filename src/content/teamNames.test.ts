@@ -40,7 +40,7 @@ describe('takım ad sözlüğü', () => {
     expect(TEAM_NAMES[688].aliases).toEqual(expect.arrayContaining(['Trabzon', 'Fırtına', 'TS']));
   });
 
-  it('aliases yalnız AI asistanın takım çözümlemesinde okunur', () => {
+  it('aliases bugün hiçbir yerde okunmuyor (yalnız veri)', () => {
     const root = path.resolve(__dirname, '..');
     const files: string[] = [];
     const walk = (d: string) => {
@@ -52,7 +52,6 @@ describe('takım ad sözlüğü', () => {
     };
     walk(root);
     const users = files.filter((f) => /TEAM_NAMES|content\/teamNames/.test(readFileSync(f, 'utf8')));
-    const readers = users.filter((f) => /\.aliases\b/.test(readFileSync(f, 'utf8'))).map((f) => path.relative(root, f));
-    expect(readers).toEqual([path.join('server', 'assistant', 'matchAnalysisRequest.ts')]);
+    for (const f of users) expect(readFileSync(f, 'utf8'), f).not.toMatch(/\.aliases\b/);
   });
 });
