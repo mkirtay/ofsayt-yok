@@ -62,18 +62,19 @@ function StandingsLoading({
   competitionName,
   rows,
   withSeasonSelect,
-  hideTitle,
+  hideHeader,
 }: {
   variant: MatchCompetitionStandingsVariant;
   competitionName: string;
   rows: number;
   withSeasonSelect: boolean;
-  hideTitle?: boolean;
+  hideHeader?: boolean;
 }) {
   return (
     <section className={blockClass(variant)} aria-busy="true">
-      <div className={titleBarClass(hideTitle)}>
-        {hideTitle ? null : <h2 className={styles.title}>{competitionName}</h2>}
+      {hideHeader ? null : (
+      <div className={styles.titleContainer}>
+        <h2 className={styles.title}>{competitionName}</h2>
         {withSeasonSelect ? (
           <SeasonSelect
             seasons={[{ id: 0, name: "\u00a0" }]}
@@ -85,6 +86,7 @@ function StandingsLoading({
           />
         ) : null}
       </div>
+      )}
       <div className={styles.scroll}>
         <table className={styles.table}>
           <StandingsHead />
@@ -212,15 +214,12 @@ interface MatchCompetitionStandingsProps {
    */
   loadingRows?: number;
   /**
-   * Lig adı başlığı çizilmez, sezon seçici tek başına kalır (ana sayfa yan paneli: lig adı üstteki lig seçicide zaten
-   * görünür). Takım sayfası vb. başlığı korur.
+   * Başlık satırı (lig adı + sezon seçici) çizilmez: ana sayfa yan panelinde lig adı ve sezon üstteki lig seçici
+   * satırında (HubLeaguePicker). Takım sayfası vb. başlığı korur.
    */
-  hideTitle?: boolean;
-}
-
-/** Başlık satırı: başlıksız modda sezon seçici solda tek başına (yükseklik sabit — yükleniyor / veri aynı). */
-function titleBarClass(hideTitle?: boolean): string {
-  return hideTitle ? `${styles.titleContainer} ${styles.titleContainerSolo}` : styles.titleContainer;
+  hideHeader?: boolean;
+  /** Sezon dışarıdan değiştirilirken (yan panel seçicisi) tablo kutusunda karıştırma animasyonu. */
+  seasonBusy?: boolean;
 }
 
 function blockClass(variant: MatchCompetitionStandingsVariant): string {
@@ -241,7 +240,8 @@ export default function MatchCompetitionStandings({
   selectedSeasonId,
   onSeasonChange,
   loadingRows,
-  hideTitle,
+  hideHeader,
+  seasonBusy,
 }: MatchCompetitionStandingsProps) {
   const { t } = useTranslation("match");
   const [seasonChanging, setSeasonChanging] = useState(false);
@@ -272,7 +272,7 @@ export default function MatchCompetitionStandings({
         competitionName={competitionName || t("standings.fallbackName")}
         rows={loadingRows}
         withSeasonSelect={Boolean(onSeasonChange)}
-        hideTitle={hideTitle}
+        hideHeader={hideHeader}
       />
     );
   }
@@ -288,7 +288,7 @@ export default function MatchCompetitionStandings({
   if (!data) {
     return (
       <section className={blockClass(variant)} aria-label={t("standings.ariaLabel")}>
-        {hideTitle ? null : <h2 className={styles.title}>{competitionName || t("standings.fallbackName")}</h2>}
+        {hideHeader ? null : <h2 className={styles.title}>{competitionName || t("standings.fallbackName")}</h2>}
         <EmptyState className={styles.emptyState}>{t("standings.empty")}</EmptyState>
       </section>
     );
@@ -308,8 +308,9 @@ export default function MatchCompetitionStandings({
 
   return (
     <section className={blockClass(variant)} aria-label={t("standings.ariaLabel")}>
-      <div className={titleBarClass(hideTitle)}>
-        {hideTitle ? null : <h2 className={styles.title}>{compName}</h2>}
+      {hideHeader ? null : (
+      <div className={styles.titleContainer}>
+        <h2 className={styles.title}>{compName}</h2>
         {showSeasonSelect ? (
           <SeasonSelect
             seasons={seasons!}
@@ -326,8 +327,9 @@ export default function MatchCompetitionStandings({
           </p>
         ) : null}
       </div>
+      )}
 
-      <div className={styles.tableArea} aria-busy={seasonChanging || undefined}>
+      <div className={styles.tableArea} aria-busy={seasonChanging || seasonBusy || undefined}>
         {legacyTable?.length ? (
           <StandingsTable
             standings={legacyTable as CompetitionTableStandingRow[]}
@@ -368,7 +370,7 @@ export default function MatchCompetitionStandings({
         {!hasAnyRows ? (
           <EmptyState className={styles.emptyState}>{t("standings.empty")}</EmptyState>
         ) : null}
-        {seasonChanging ? <LazyLoad load={loadStandingsShuffle} props={{ label: t("common:loading") }} /> : null}
+        {seasonChanging || seasonBusy ? <LazyLoad load={loadStandingsShuffle} props={{ label: t("common:loading") }} /> : null}
       </div>
     </section>
   );

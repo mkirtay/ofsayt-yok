@@ -3,13 +3,28 @@
 // Lig seçici: düğme her zaman aynı yükseklikte (sunucu HTML'inde de) → seçim / açılma kayma yapmaz.
 .picker {
   border-bottom: 1px solid $color-border;
+  // Sezon alanı yan yana mı altta mı: kapsayıcı genişliğine göre (CSS'le, JS'siz → ilk boyamada doğru, kayma yok)
+  container-type: inline-size;
+}
+
+// Lig dropdown'u kalan genişliği alır; sezon alanı içeriği kadar. Dar kapsayıcıda sezon altta tek satır.
+.bar {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+
+  @container (max-width: 300px) {
+    flex-wrap: wrap;
+  }
 }
 
 .trigger {
   display: flex;
   align-items: center;
   gap: $spacing-2;
-  width: 100%;
+  flex: 1 1 0;
+  min-width: 0;
+  width: auto;
   height: 48px;
   padding: 0 $spacing-4;
   font: inherit;
@@ -29,6 +44,60 @@
   &:focus-visible {
     outline: 2px solid $color-primary;
     outline-offset: -2px;
+  }
+}
+
+.season {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  height: 48px;
+  padding: 0 $spacing-3 0 $spacing-1;
+  cursor: pointer;
+
+  @container (max-width: 300px) {
+    flex: 1 1 100%;
+    flex-direction: row;
+    align-items: center;
+    gap: $spacing-2;
+    height: 40px;
+    padding: 0 $spacing-4;
+    border-top: 1px solid $color-border;
+  }
+}
+
+.seasonLabel {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  line-height: 1;
+  text-transform: uppercase;
+  color: $color-text-secondary;
+}
+
+.seasonSelect {
+  min-width: 0;
+  max-width: 120px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: $color-text;
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
+  padding: 3px 6px;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+    outline-offset: 1px;
+  }
+
+  &:disabled {
+    cursor: default;
   }
 }
 

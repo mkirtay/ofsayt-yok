@@ -234,6 +234,19 @@ export default function MatchHubPage({
     setSeasonPatch({ seasonId, standings: table });
   }, [selectedCompId]);
 
+  // Yan panel sezon seçicisi lig satırında: değişince tablo kutusunda karıştırma animasyonu (standings `seasonBusy`).
+  const [seasonBusy, setSeasonBusy] = useState(false);
+  const handleSeasonPick = useCallback(
+    (seasonId: number) => {
+      setSeasonBusy(true);
+      handleSeasonChange(seasonId).then(
+        () => setSeasonBusy(false),
+        () => setSeasonBusy(false),
+      );
+    },
+    [handleSeasonChange],
+  );
+
   const FAV_LS_KEY = 'oy_fav_club_teams';
 
   useEffect(() => {
@@ -842,6 +855,10 @@ export default function MatchHubPage({
                 leagueName={selectedLeagueName}
                 logoSrc={selectedLeagueLogo}
                 logoBackdrop={selectedSportmonksLeagueId != null && competitionLogoNeedsBackdrop(selectedSportmonksLeagueId)}
+                seasons={seasons}
+                selectedSeasonId={effectiveSeasonId}
+                onSeasonChange={handleSeasonPick}
+                seasonsLoading={sidebarQueryLoading}
               >
                 <HubLeagueList
                   selectedId={selectedCompId}
@@ -880,11 +897,9 @@ export default function MatchHubPage({
                         data={standings}
                         loading={standingsLoading}
                         competitionName={selectedLeagueName}
-                        seasons={seasons}
-                        selectedSeasonId={effectiveSeasonId}
-                        onSeasonChange={handleSeasonChange}
                         loadingRows={standingsLoadingRows}
-                        hideTitle
+                        hideHeader
+                        seasonBusy={seasonBusy}
                       />
                     )}
 
@@ -892,9 +907,7 @@ export default function MatchHubPage({
                       <MatchCompetitionTopScorers
                         data={topScorers}
                         loading={topScorersLoading}
-                        seasons={seasons}
-                        selectedSeasonId={effectiveSeasonId}
-                        onSeasonChange={handleSeasonChange}
+                        hideHeader
                       />
                     )}
                   </div>

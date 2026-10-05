@@ -29,13 +29,6 @@
   border-bottom: 1px solid $color-border;
 }
 
-.titleContainerSolo {
-  justify-content: flex-start;
-  // Başlıksız: sezon seçici (≈ 26 px) + dolgu — veri / yükleniyor / seçici gelmeden önce aynı yükseklik
-  min-height: 50px;
-  box-sizing: border-box;
-}
-
 .season {
   font-size: 12px;
   color: $color-text-secondary;

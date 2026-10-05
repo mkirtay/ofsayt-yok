@@ -31,6 +31,8 @@ interface MatchCompetitionTopScorersProps {
   seasons?: SeasonListItem[];
   selectedSeasonId?: number | null;
   onSeasonChange?: (id: number) => void;
+  /** Başlık + sezon satırı çizilmez (ana sayfa yan paneli: sezon üstteki lig seçici satırında). */
+  hideHeader?: boolean;
 }
 
 export default function MatchCompetitionTopScorers({
@@ -39,6 +41,7 @@ export default function MatchCompetitionTopScorers({
   seasons,
   selectedSeasonId,
   onSeasonChange,
+  hideHeader,
 }: MatchCompetitionTopScorersProps) {
   const { t } = useTranslation('match');
   // "Tümünü Göster" durumu sezona bağlı: sezon/lig değişince liste yeniden 20'ye döner.
@@ -49,7 +52,7 @@ export default function MatchCompetitionTopScorers({
   if (loading) {
     return (
       <section className={styles.block} aria-label={t('topScorers.ariaLabel')}>
-        <div className={styles.sectionDivider} aria-hidden />
+        {hideHeader ? null : <div className={styles.sectionDivider} aria-hidden />}
         <div className={styles.loading}>{t('topScorers.loading')}</div>
       </section>
     );
@@ -61,30 +64,8 @@ export default function MatchCompetitionTopScorers({
   const seasonName = data?.season?.name;
   const showSeasonSelect = Boolean(seasons?.length && onSeasonChange);
 
-  if (!list.length) {
-    return (
-      <section className={styles.block} aria-label={t('topScorers.ariaLabel')}>
-        <div className={styles.sectionDivider} aria-hidden />
-        <div className={styles.titleContainer}>
-          <h2 className={styles.title}>{t('topScorers.title')}</h2>
-          {showSeasonSelect ? (
-            <SeasonSelect
-              seasons={seasons!}
-              value={selectedSeasonId ?? null}
-              onChange={onSeasonChange!}
-              selectClassName={styles.seasonSelect}
-            />
-          ) : seasonName ? (
-            <p className={styles.season}>{t('topScorers.season', { season: formatSeasonLabel(seasonName) })}</p>
-          ) : null}
-        </div>
-        <p className={styles.empty}>{t('topScorers.empty')}</p>
-      </section>
-    );
-  }
-
-  return (
-    <section className={styles.block} aria-label={t('topScorers.ariaLabel')}>
+  const header = hideHeader ? null : (
+    <>
       <div className={styles.sectionDivider} aria-hidden />
       <div className={styles.titleContainer}>
         <h2 className={styles.title}>{t('topScorers.title')}</h2>
@@ -99,6 +80,21 @@ export default function MatchCompetitionTopScorers({
           <p className={styles.season}>{t('topScorers.season', { season: formatSeasonLabel(seasonName) })}</p>
         ) : null}
       </div>
+    </>
+  );
+
+  if (!list.length) {
+    return (
+      <section className={styles.block} aria-label={t('topScorers.ariaLabel')}>
+        {header}
+        <p className={styles.empty}>{t('topScorers.empty')}</p>
+      </section>
+    );
+  }
+
+  return (
+    <section className={styles.block} aria-label={t('topScorers.ariaLabel')}>
+      {header}
       <div className={styles.scroll}>
         <table className={styles.table}>
           <thead>
