@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { parseShotInput, shotParams, makeRound } from './sim';
-import { resamplePath, swipeToInput, type GoalFrame, type SwipeSample } from './swipe';
+import { parseShotInput, shotParams, makeRound, SWIPE_SPEED } from './sim';
+import { effectiveMs, resamplePath, smoothPoint, swipeToInput, type GoalFrame, type ScreenPoint } from './swipe';
 
 const frame: GoalFrame = { originX: 500, originY: 300, pxPerMX: 30, pxPerMY: 30 };
 
@@ -20,10 +20,10 @@ describe('kaydırma → girdi', () => {
     expect(resamplePath([{ x: 5, y: 5 }], 16)).toHaveLength(16); // tek nokta: hepsi aynı
   });
 
-  it('ekran → kale düzlemi (cm, tam sayı): yukarı kaydırma y artar, sağa z artar; süre ms; sunucu biçimine uyar', () => {
-    // Topun üstünden (kale çizgisinin 240 px altı) kalenin sağ üstüne, 180 ms
-    const samples: SwipeSample[] = Array.from({ length: 30 }, (_, i) => ({ t: 1000 + i * (180 / 29), x: 500 + i * 3, y: 540 - i * 10 }));
-    const input = swipeToInput(samples, frame, 123.9)!;
+  it('ekran → kale düzlemi (cm, tam sayı): yukarı kaydırma y artar, sağa z artar; sunucu biçimine uyar', () => {
+    // Topun üstünden (kale çizgisinin 240 px altı) kalenin sağ üstüne
+    const path: ScreenPoint[] = Array.from({ length: 30 }, (_, i) => ({ x: 500 + i * 3, y: 540 - i * 10 }));
+    const input = swipeToInput(path, 180, frame, 123.9)!;
     expect(input.tick).toBe(123);
     expect(input.ms).toBe(180);
     expect(input.pts).toHaveLength(16);
@@ -34,15 +34,41 @@ describe('kaydırma → girdi', () => {
     const p = shotParams(makeRound(1, 0), input)!;
     expect(p.targetZ).toBeCloseTo(2.9, 6);
     expect(p.curve).toBe(0);
-    expect(swipeToInput(samples.slice(0, 1), frame, 0)).toBeNull();
+    expect(swipeToInput(path.slice(0, 1), 180, frame, 0)).toBeNull();
   });
 
   it('kavisli kaydırma falso üretir', () => {
-    const samples: SwipeSample[] = Array.from({ length: 40 }, (_, i) => {
+    const path: ScreenPoint[] = Array.from({ length: 40 }, (_, i) => {
       const u = i / 39;
-      return { t: u * 200, x: 500 + Math.sin(Math.PI * u) * 70, y: 540 - u * 290 };
+      return { x: 500 + Math.sin(Math.PI * u) * 70, y: 540 - u * 290 };
     });
-    const p = shotParams(makeRound(1, 0), swipeToInput(samples, frame, 0)!)!;
+    const p = shotParams(makeRound(1, 0), swipeToInput(path, 200, frame, 0)!)!;
     expect(p.curve).toBeLessThan(-0.3); // sağa bombe → sola kıvrılır
+  });
+
+  it('güç en yüksek hızdan: etkin süre = kiriş / en yüksek hız → bekleyip nişan düzeltmek gücü düşürmez', () => {
+    const path: ScreenPoint[] = [
+      { x: 500, y: 540 },
+      { x: 500, y: 300 },
+    ];
+    // 240 px kiriş, en yüksek hız 1,5 px/ms → 160 ms (parmak sonradan 2 sn bekletilse de aynı)
+    expect(effectiveMs(path, 1.5)).toBe(160);
+    const fast = shotParams(makeRound(1, 0), swipeToInput(path, effectiveMs(path, 1.5), frame, 0)!)!;
+    const slow = shotParams(makeRound(1, 0), swipeToInput(path, effectiveMs(path, 0.3), frame, 0)!)!;
+    // 240 px = 800 cm; 800 / 160 = 5 cm/ms ≥ üst sınır → tam güç
+    expect(800 / 160).toBeGreaterThanOrEqual(SWIPE_SPEED.max);
+    expect(fast.power).toBe(1);
+    expect(slow.power).toBeLessThan(0.2);
+    expect(effectiveMs(path, 0)).toBe(3000); // hiç hızlanmadı: en güçsüz
+    expect(effectiveMs(path, 1000)).toBe(30);
+  });
+
+  it('yumuşatma: küçük titreme yok sayılır (ölü bölge); yavaşta ağır, hızlı fiskede gecikmesiz', () => {
+    const prev = { x: 100, y: 100 };
+    expect(smoothPoint(prev, { x: 101.5, y: 101 }, 0.01)).toBe(prev);
+    const slow = smoothPoint(prev, { x: 120, y: 100 }, 0.02);
+    expect(slow.x).toBeGreaterThan(100);
+    expect(slow.x).toBeLessThan(108);
+    expect(smoothPoint(prev, { x: 120, y: 100 }, 2)).toEqual({ x: 120, y: 100 });
   });
 });

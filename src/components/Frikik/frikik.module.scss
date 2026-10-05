@@ -85,7 +85,7 @@
   }
 }
 
-// Kaydırma izi (ekran uzayı): parmağın yolu; bırakınca söner.
+// Önizleme katmanı (ekran uzayı, SVG): kesikli yörünge, hedef halkası, güç çubuğu — içerik sahnede çizilir.
 .trail {
   position: absolute;
   inset: 0;
@@ -94,21 +94,6 @@
   z-index: 1;
   pointer-events: none;
   overflow: visible;
-
-  polyline {
-    fill: none;
-    stroke: #fff;
-    stroke-width: 5;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    opacity: 0.9;
-    filter: drop-shadow(0 0 6px rgba(0, 167, 111, 0.9));
-  }
-
-  &[data-fade] {
-    opacity: 0;
-    transition: opacity 0.5s ease;
-  }
 }
 
 // Topun üstünü izleyen tutamak: yalnız top tutulur (alanın geri kalanında sayfa kaydırılabilir).
@@ -193,33 +178,10 @@
   pointer-events: none;
 }
 
-.hint {
-  position: absolute;
-  left: 50%;
-  top: 48px;
-  z-index: 2;
-  transform: translateX(-50%);
-  width: max-content;
-  max-width: calc(100% - #{$spacing-6});
-  padding: 6px 12px;
-  border-radius: 999px;
-  background: rgba(6, 12, 20, 0.72);
-  color: #fff;
-  font-size: 12px;
-  font-weight: 600;
-  text-align: center;
-  pointer-events: none;
-  transition: opacity 0.3s ease;
-
-  &[data-hidden] {
-    opacity: 0;
-  }
-}
-
 .toast {
   position: absolute;
   left: 50%;
-  top: 96px;
+  top: 56px;
   z-index: 2;
   transform: translateX(-50%);
   padding: 8px 16px;
@@ -363,6 +325,13 @@
   flex-direction: column;
   gap: 4px;
   font-size: 13px;
+
+  &.tipList li {
+    display: block;
+    text-align: left;
+    color: $color-text-secondary;
+    line-height: 1.45;
+  }
 
   li {
     display: flex;

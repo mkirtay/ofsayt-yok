@@ -6,13 +6,19 @@ import {
   FIGURE,
   GOAL,
   MAX_SERIES_SCORE,
+  KEEPER_LEVELS,
   MAX_SHOT_TICKS,
   POINTS,
+  POWER_ZONES,
+  PREVIEW_END_X,
   SHOT_SPEED,
+  SWIPE_SPEED,
   WALL_DISTANCE,
   keeperZ,
   makeRound,
   parseShotInput,
+  previewPath,
+  rng,
   scoreSeries,
   shotParams,
   simulateShot,
@@ -24,6 +30,11 @@ import {
 
 const SEED = 42;
 const round0 = makeRound(SEED, 0);
+/** Zor seviye (3. vuruş ve sonrası) kalecisi, barajsız, kaleci ortada sabit başlar. */
+const openHard = { ...makeRound(SEED, 3), wall: [], keeper: { amp: 0.0001, period: 300, phase: 0, react: KEEPER_LEVELS[1].react, speed: KEEPER_LEVELS[1].speed } };
+/** Güç (0–1) → o gücü veren etkin süre (ms). */
+const msFor = (targetZ: number, targetY: number, power: number) =>
+  Math.round(Math.hypot(targetZ * 100, targetY * 100 + 800) / (SWIPE_SPEED.min + (SWIPE_SPEED.max - SWIPE_SPEED.min) * power));
 
 /**
  * Test kaydırması (kale düzlemi, cm): toptan (kalenin 8 m "altı") hedefe 16 nokta; `bulge` > 0 yolu sağa bombeler
@@ -83,16 +94,16 @@ describe('belirlenimcilik', () => {
       {
         "shots": [
           {
-            "corner": true,
-            "kind": "goal",
-            "points": 200,
+            "corner": false,
+            "kind": "miss",
+            "points": 0,
             "viaPost": false,
           },
           {
             "corner": false,
             "kind": "goal",
-            "points": 150,
-            "viaPost": true,
+            "points": 100,
+            "viaPost": false,
           },
           {
             "corner": false,
@@ -108,19 +119,19 @@ describe('belirlenimcilik', () => {
           },
           {
             "corner": false,
-            "kind": "saved",
+            "kind": "miss",
             "points": 0,
             "viaPost": false,
           },
         ],
-        "total": 350,
+        "total": 100,
       }
     `);
   });
 });
 
 describe('tur üretimi', () => {
-  it('mesafe 16–24 m, açı sınırlı, 3–5 kişilik baraj top ile kale arasında 9,15 m\'de, kaleci direklerin içinde', () => {
+  it('mesafe 16–24 m, açı sınırlı, 3–5 kişilik baraj top ile kale arasında 9,15 m\'de, kaleci direklerin içinde; ilk 2 tur kolay', () => {
     for (let seed = 1; seed <= 300; seed++) {
       for (let i = 0; i < 5; i++) {
         const r = makeRound(seed, i);
@@ -130,6 +141,9 @@ describe('tur üretimi', () => {
         expect(Math.abs(r.ball.z)).toBeLessThanOrEqual(dist * 0.45);
         expect(r.wall.length).toBeGreaterThanOrEqual(3);
         expect(r.wall.length).toBeLessThanOrEqual(5);
+        // İlk 2 vuruş: 3 kişilik baraj, geç ve yavaş kaleci
+        if (i < 2) expect(r.wall.length).toBe(3);
+        expect([r.keeper.react, r.keeper.speed]).toEqual(i < 2 ? [KEEPER_LEVELS[0].react, KEEPER_LEVELS[0].speed] : [KEEPER_LEVELS[1].react, KEEPER_LEVELS[1].speed]);
         const last = r.wall[r.wall.length - 1]!;
         const cx = (r.wall[0]!.x + last.x) / 2;
         const cz = (r.wall[0]!.z + last.z) / 2;
@@ -204,21 +218,66 @@ describe('kaydırma → şut', () => {
     expect(shotParams(round0, swipe(0, 1.5, 200, 0.02))!.curve).toBe(0); // ölü bölge
   });
 
-  it('top hedef noktaya yönelir: barajsız / kalecisiz turda kale çizgisini hedefe yakın geçer (falsolu da)', () => {
-    const open = { ...round0, wall: [], keeper: { amp: 0, period: 300, phase: 0 } };
+  it('top hedef noktaya yönelir: barajsız turda kale çizgisini hedefe yakın geçer (falsolu da)', () => {
     for (const [z, y, bulge] of [
       [2.5, 1.6, 0],
       [-3, 0.8, 0],
       [3.0, 1.9, 0.2],
       [-2.0, 1.4, -0.25],
     ] as const) {
-      const far = { ...open, keeper: { amp: 0, period: 300, phase: 0 } };
-      const st = startShot(far, swipe(z, y, 170, bulge));
+      const st = startShot(openHard, swipe(z, y, msFor(z, y, 0.7), bulge));
       st.keeperTarget = st.keeperZ = 30; // kaleci sahnenin dışında
       while (st.pos.x < -0.05 && !st.result) stepShot(st);
-      expect(Math.abs(st.pos.z - z), `z ${z}`).toBeLessThan(0.6);
+      // Falsolu yolda varış yaklaşık (asıl yolu önizleme gösterir)
+      expect(Math.abs(st.pos.z - z), `z ${z}`).toBeLessThan(bulge === 0 ? 0.4 : 0.8);
       expect(Math.abs(st.pos.y - y), `y ${y}`).toBeLessThan(0.35);
     }
+  });
+
+  it('nişan yardımı: direğin hemen dışına düşen hedef biraz içeri çekilir; içerideki ve uzaktaki hedefe dokunulmaz', () => {
+    const tz = (z: number, y = 1.2) => shotParams(round0, swipe(z, y, 200))!.targetZ;
+    expect(tz(2)).toBeCloseTo(2, 9);
+    expect(tz(3.7)).toBeLessThan(3.7);
+    expect(tz(3.7)).toBeGreaterThan(3.26); // çok küçük: güvenli kenarın (3,26) ötesinde kalır
+    expect(tz(-3.7)).toBeCloseTo(-tz(3.7), 9);
+    expect(tz(6)).toBeCloseTo(6, 9); // bariz aut → yardım yok
+  });
+
+  it('güç bölgeleri: aşırı güçte top yükselir (aynı hedefe uygun güçten daha yüksekten geçer)', () => {
+    const height = (power: number) => {
+      const st = startShot(openHard, swipe(0.5, 1.9, msFor(0.5, 1.9, power)));
+      st.keeperTarget = st.keeperZ = 30;
+      while (st.pos.x < -0.05 && !st.result) stepShot(st);
+      return st.pos.y;
+    };
+    expect(shotParams(openHard, swipe(0.5, 1.9, msFor(0.5, 1.9, 0.6)))!.power).toBeCloseTo(0.6, 1);
+    expect(Math.abs(height(POWER_ZONES.over - 0.05) - 1.9)).toBeLessThan(0.3);
+    expect(height(1)).toBeGreaterThan(height(POWER_ZONES.over - 0.05) + 0.4);
+    expect(simulateShot(openHard, swipe(0.5, 2.05, msFor(0.5, 2.05, 1))).kind).not.toBe('goal'); // üstten gider / direk
+  });
+
+  it('önizleme = gerçek yol: aynı simülasyon, kalecinin önüne kadar her nokta birebir aynı; baraja takılan yol işaretlenir', () => {
+    const input = swipe(2.6, 1.5, msFor(2.6, 1.5, 0.75), 0.18, 40);
+    const pv = previewPath(openHard, input, 3);
+    expect(pv.blocked).toBe(false);
+    expect(pv.points.length).toBeGreaterThan(10);
+    // Bırakılan şut (farklı tick = kaleci başka yerde) aynı noktalardan geçer
+    const st = startShot(openHard, { ...input, tick: 999 });
+    const seen = new Map<number, { x: number; y: number; z: number }>([[0, { ...st.pos }]]);
+    while (!st.result && st.pos.x < PREVIEW_END_X) {
+      stepShot(st);
+      seen.set(st.tick, { ...st.pos });
+    }
+    pv.points.slice(0, -1).forEach((p, i) => expect(seen.get(i * 3)).toEqual(p));
+    expect(pv.points[pv.points.length - 1]!.x).toBeGreaterThanOrEqual(PREVIEW_END_X);
+    // Barajın ortasına alçak şut: önizleme "takıldı" der
+    const mid = round0.wall[1]!;
+    const zAtGoal = round0.ball.z + ((mid.z - round0.ball.z) * -round0.ball.x) / (mid.x - round0.ball.x);
+    expect(previewPath(round0, swipe(zAtGoal, 0.3, 130)).blocked).toBe(true);
+    expect(previewPath(round0, { tick: 0, ms: 200, pts: Array.from({ length: 16 }, (_, i) => [0, -800 + i] as [number, number]) })).toEqual({
+      points: [{ x: round0.ball.x, y: BALL_R, z: round0.ball.z }],
+      blocked: true,
+    });
   });
 });
 
@@ -240,7 +299,7 @@ describe('vuruş sonuçları ve puan', () => {
       if (st.result.kind === 'post') post++;
       if (st.result.viaPost) {
         viaPost++;
-        expect(st.result.points).toBe(POINTS.goal + POINTS.viaPost);
+        expect(st.result.points).toBe(POINTS.goal + POINTS.viaPost + (st.result.corner ? POINTS.corner : 0));
       }
     }
     expect(post).toBeGreaterThan(0);
@@ -250,9 +309,11 @@ describe('vuruş sonuçları ve puan', () => {
   });
 
   it('kaleci şuta tepki verir: aynı köşeye yavaş şut kurtarılır, sert şut gol olur', () => {
-    const noWall = { ...round0, wall: [], keeper: { amp: 0.0001, period: 300, phase: 0 } };
-    expect(simulateShot(noWall, swipe(2.9, 1.0, 600)).kind).toBe('saved');
-    expect(simulateShot(noWall, swipe(2.9, 1.0, 130)).kind).toBe('goal');
+    expect(simulateShot(openHard, swipe(2.9, 1.0, msFor(2.9, 1.0, 0.15))).kind).toBe('saved');
+    expect(simulateShot(openHard, swipe(2.9, 1.0, msFor(2.9, 1.0, 0.8))).kind).toBe('goal');
+    // Kolay seviyede (ilk 2 vuruş) orta güç de yeter
+    const easy = { ...openHard, keeper: { ...openHard.keeper, react: KEEPER_LEVELS[0].react, speed: KEEPER_LEVELS[0].speed } };
+    expect(simulateShot(easy, swipe(2.9, 1.0, msFor(2.9, 1.0, 0.45))).kind).toBe('goal');
   });
 
   it('barajın ortasına alçak sert şut barajda kalır', () => {
@@ -286,4 +347,53 @@ describe('vuruş sonuçları ve puan', () => {
     expect(MAX_SERIES_SCORE).toBe(1250);
     expect(scoreSeries(SEED, []).total).toBe(0);
   });
+});
+
+describe('zorluk dengesi (modellenmiş oyuncu, tohumlu)', () => {
+  /** Yaklaşık normal dağılım (4 düzgün sayının toplamı), σ = 1. */
+  const gauss = (r: () => number) => (r() + r() + r() + r() - 2) * Math.sqrt(3);
+
+  /**
+   * Oyuncu modeli: köşeye yakın hedef + nişan hatası (σ), güç aralığı. `smart`: kalecinin o anki tarafının tersine nişan
+   * alır ve önizleme "takıldı" derse falso / öbür tarafı dener (iyi oyuncu); değilse çoğu zaman olduğu gibi vurur.
+   */
+  function goalsPerSeries(p: { sigmaZ: number; sigmaY: number; power: [number, number]; smart: boolean }, series = 300): number {
+    const r = rng(20261006);
+    let goals = 0;
+    for (let n = 0; n < series; n++) {
+      const seed = Math.floor(r() * 4294967296);
+      for (let i = 0; i < 5; i++) {
+        const round = makeRound(seed, i);
+        const tick = Math.floor(r() * 600);
+        const kz = keeperZ(round, tick);
+        let side = p.smart ? (kz > 0 ? -1 : 1) : r() < 0.5 ? -1 : 1;
+        const power = p.power[0] + r() * (p.power[1] - p.power[0]);
+        const mk = (s: number, bulge: number) => {
+          const z = s * (2.2 + r() * 0.9) + gauss(r) * p.sigmaZ;
+          const y = 0.5 + r() * 1.4 + gauss(r) * p.sigmaY;
+          return swipe(z, y, msFor(z, y, power), bulge, tick);
+        };
+        let input = mk(side, 0);
+        if (previewPath(round, input).blocked && (p.smart || r() < 0.4)) {
+          const tries: [number, number][] = p.smart ? [[side, 0.18 * side], [side, -0.18 * side], [-side, 0]] : [[-side, 0]];
+          for (const [s2, b] of tries) {
+            side = s2;
+            input = mk(s2, b);
+            if (!previewPath(round, input).blocked) break;
+          }
+        }
+        if (simulateShot(round, input).kind === 'goal') goals++;
+      }
+    }
+    return goals / series;
+  }
+
+  it('ortalama oyuncu 5 vuruşta ~1–2 gol, iyi oyuncu ~3–4 gol', () => {
+    const average = goalsPerSeries({ sigmaZ: 0.75, sigmaY: 0.45, power: [0.3, 0.95], smart: false });
+    const good = goalsPerSeries({ sigmaZ: 0.3, sigmaY: 0.2, power: [0.7, 0.85], smart: true });
+    expect(average, `ortalama ${average}`).toBeGreaterThanOrEqual(1);
+    expect(average, `ortalama ${average}`).toBeLessThanOrEqual(2.1);
+    expect(good, `iyi ${good}`).toBeGreaterThanOrEqual(3);
+    expect(good, `iyi ${good}`).toBeLessThanOrEqual(4.1);
+  }, 60_000);
 });

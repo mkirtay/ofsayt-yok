@@ -55,9 +55,21 @@ const TUNING: Tuning = {
 export const FIGURE = { r: 0.26, height: 1.75, spacing: 0.56, restitution: 0.3 };
 export const KEEPER = { r: 0.85, height: 2.08, x: -0.75, restitution: 0.25 };
 export const WALL_DISTANCE = 9.15;
-/** Kaleci şuta tepki verir: bu kadar tick sonra hedefe doğru bu hızla (m/sn) kayar → yavaş şut kurtarılır. */
-export const KEEPER_REACT_TICKS = 36;
-export const KEEPER_SPEED = 3.6;
+/**
+ * Kaleci şuta tepki verir: `react` tick sonra hedefe doğru `speed` (m/sn) ile kayar → yavaş şut kurtarılır, sert +
+ * köşe şut geçer. Serinin ilk 2 vuruşu kolay (level 0: kaleci geç ve yavaş, baraj 3 kişi), sonrakiler normal.
+ */
+export const KEEPER_LEVELS = [
+  { react: 60, speed: 2.4, periodScale: 1.4 },
+  { react: 46, speed: 3.1, periodScale: 1 },
+] as const;
+export const EASY_ROUNDS = 2;
+/** Güç bölgeleri (0–1): altı "çok güçsüz" (kaleci yetişir), üstü "aşırı güçlü" (top yükselir, isabet düşer). */
+export const POWER_ZONES = { weak: 0.3, over: 0.85 };
+/** Aşırı güçte dikey hıza eklenen oran (tam güçte). */
+const OVERPOWER_LIFT = 0.22;
+/** Nişan yardımı: güvenli bölgenin (direklerin / üst direğin biraz içi) en çok bu kadar dışındaki hedef, içeri çekilir. */
+const AIM_ASSIST = { marginZ: 0.4, top: 0.42, bottom: 0.3, reach: 0.7, pull: 0.4 };
 /** Şut: güç 0–1 → yatay hız (m/sn); yükseklik hedef noktadan çözülür. Falso: yanal ivme = falso × CURVE_K × hız. */
 export const SHOT_SPEED = { min: 14, max: 30 };
 const CURVE_K = 0.45;
@@ -86,18 +98,23 @@ export type Round = {
   ball: { x: number; z: number };
   /** Baraj figürlerinin merkezleri. */
   wall: { x: number; z: number }[];
-  /** Kaleci: kale çizgisinin önünde z ekseninde üçgen dalgayla gidip gelir. */
-  keeper: { amp: number; period: number; phase: number };
+  /** Kaleci: şuta kadar kale çizgisinin önünde üçgen dalgayla gidip gelir; şutta `react` tick sonra `speed` ile kayar. */
+  keeper: { amp: number; period: number; phase: number; react: number; speed: number };
 };
 
-/** Serinin `index`. turu (0 tabanlı). Mesafe 16–24 m, açı sınırlı; 3–5 kişilik baraj yakın direği kapatır. */
+/**
+ * Serinin `index`. turu (0 tabanlı). Mesafe 16–24 m, açı sınırlı; baraj yakın direği kapatır (ilk 2 turda 3 kişi,
+ * sonra 3–5); kaleci ilk 2 turda daha yavaş.
+ */
 export function makeRound(seed: number, index: number): Round {
   const r = rng((Math.imul(seed >>> 0, 0x9e3779b1) ^ Math.imul(index + 1, 0x85ebca6b)) >>> 0);
   const dist = 16 + Math.floor(r() * 17) * 0.5;
   const k = Math.floor((dist * 0.45) / 0.5);
   const z = (Math.floor(r() * (2 * k + 1)) - k) * 0.5;
   const ball = { x: -dist, z };
-  const count = 3 + Math.floor(r() * 3);
+  const level = KEEPER_LEVELS[index < EASY_ROUNDS ? 0 : 1];
+  const countRand = r();
+  const count = index < EASY_ROUNDS ? 3 : 3 + Math.floor(countRand * 3);
   const sideRand = r();
   const side = z > 0 ? 1 : z < 0 ? -1 : sideRand < 0.5 ? -1 : 1;
   const targetZ = side * GOAL.halfW * (0.15 + 0.5 * r());
@@ -115,9 +132,9 @@ export function makeRound(seed: number, index: number): Round {
     wall.push({ x: cx - fz * o, z: cz + fx * o });
   }
   const amp = 1.2 + r() * 1.4;
-  const period = 230 + Math.floor(r() * 200);
+  const period = Math.floor((230 + Math.floor(r() * 200)) * level.periodScale);
   const phase = Math.floor(r() * period);
-  return { ball, wall, keeper: { amp, period, phase } };
+  return { ball, wall, keeper: { amp, period, phase, react: level.react, speed: level.speed } };
 }
 
 /** Kalecinin `tick` anındaki z'si (üçgen dalga, −amp…amp). */
@@ -153,7 +170,9 @@ export const SWIPE_BULGE = { full: 0.3, dead: 0.03 };
  * - `pts`: kaydırma yolunun örnekleri, KALE DÜZLEMİ koordinatında cm — [z, y]: z = kale ortasından sağa, y = kale
  *   çizgisinden yukarı (istemci ekran noktalarını kalenin ekrandaki ölçeğiyle çevirir; top bu düzlemde kalenin
  *   "altında" görünür, y < 0). İlk nokta topun üstü, son nokta hedef.
- * - `ms`: kaydırma süresi; `tick`: turun başından bırakma anına kadar geçen tick (kalecinin konumu).
+ * - `ms`: ETKİN kaydırma süresi = kiriş uzunluğu / kaydırmanın en yüksek hızı (istemci hesaplar; yavaşça nişan alıp
+ *   beklemek gücü düşürmez). Simülasyon gücü yalnız `kiriş uzunluğu / ms`'ten bulur → sunucu aynen yeniden hesaplar.
+ * - `tick`: turun başından bırakma anına kadar geçen tick (kalecinin o andaki konumu).
  */
 export type ShotInput = { tick: number; ms: number; pts: [number, number][] };
 
@@ -185,6 +204,13 @@ export type ShotParams = {
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
 
+/** Güvenli aralığın [lo, hi] en çok `reach` dışındaki değeri kenara doğru `pull` oranında çeker; içerideyse dokunmaz. */
+function assist(v: number, lo: number, hi: number): number {
+  const edge = v < lo ? lo : v > hi ? hi : v;
+  const off = v - edge;
+  return off === 0 || Math.abs(off) > AIM_ASSIST.reach ? v : edge + off * (1 - AIM_ASSIST.pull);
+}
+
 /**
  * Kaydırma → şut. Hedef = son nokta (kale düzleminde); güç = kaydırma hızı; falso = yolun kirişe göre eğriliği (yol
  * sağa bombeliyse top sağdan çıkıp sola kıvrılır ve yine hedefe yönelir). Yükseklik, top hedef noktadan geçecek şekilde
@@ -214,9 +240,12 @@ export function shotParams(round: Round, input: ShotInput): ShotParams | null {
   const curve = mag === 0 ? 0 : ratio > 0 ? -mag : mag;
   const speed = (len * 100) / input.ms;
   const power = clamp((speed - SWIPE_SPEED.min) / (SWIPE_SPEED.max - SWIPE_SPEED.min), 0, 1);
-  const targetZ = clamp(lz, -10, 10);
-  const targetY = clamp(ly, 0.15, 4.2);
+  // Hafif nişan yardımı: kale çerçevesinin hemen dışına / direğe düşen hedef biraz içeri çekilir.
+  const targetZ = assist(clamp(lz, -10, 10), -(GOAL.halfW - AIM_ASSIST.marginZ), GOAL.halfW - AIM_ASSIST.marginZ);
+  const targetY = assist(clamp(ly, 0.15, 4.2), AIM_ASSIST.bottom, GOAL.height - AIM_ASSIST.top);
   const vh = SHOT_SPEED.min + (SHOT_SPEED.max - SHOT_SPEED.min) * power;
+  // Aşırı güç: top yükselir (üst direğin üstünden gidebilir).
+  const lift = power > POWER_ZONES.over ? 1 + (OVERPOWER_LIFT * (power - POWER_ZONES.over)) / (1 - POWER_ZONES.over) : 1;
   const dist = len2(round.ball.x, targetZ - round.ball.z);
   const t = dist / vh;
   // Falsonun varışta yaptıracağı yanal kayma kadar ters yöne nişan (top hedefe kıvrılarak gelsin).
@@ -225,7 +254,7 @@ export function shotParams(round: Round, input: ShotInput): ShotParams | null {
   const az = targetZ - drift - round.ball.z;
   const a = len2(ax, az);
   return {
-    vel: { x: (ax / a) * vh, y: (targetY - BALL_R) / t + 0.5 * TUNING.gravity * t, z: (az / a) * vh },
+    vel: { x: (ax / a) * vh, y: ((targetY - BALL_R) / t + 0.5 * TUNING.gravity * t) * lift, z: (az / a) * vh },
     curve,
     power,
     targetZ,
@@ -306,8 +335,8 @@ function missKind(s: ShotState): ShotKind {
 /** Bir tick ilerletir (yerinde). Karar anında `state.result` dolar. */
 export function stepShot(s: ShotState): void {
   s.events = [];
-  if (s.tick >= KEEPER_REACT_TICKS && s.keeperZ !== s.keeperTarget) {
-    const step = KEEPER_SPEED * TICK;
+  if (s.tick >= s.round.keeper.react && s.keeperZ !== s.keeperTarget) {
+    const step = s.round.keeper.speed * TICK;
     const d = s.keeperTarget - s.keeperZ;
     s.keeperZ = Math.abs(d) <= step ? s.keeperTarget : s.keeperZ + (d > 0 ? step : -step);
   }
@@ -355,6 +384,31 @@ export function simulateShot(round: Round, input: ShotInput): ShotResult {
   const s = startShot(round, input);
   while (!s.result) stepShot(s);
   return s.result;
+}
+
+/** Önizlemenin bittiği x: kalecinin önü (önizleme kurtarışı ele vermez; kaleciye kadar gerçek yolla aynıdır). */
+export const PREVIEW_END_X = KEEPER.x - KEEPER.r - BALL_R - 0.05;
+
+/**
+ * Yörünge önizlemesi: AYNI simülasyon (startShot / stepShot), top kalecinin önüne gelene ya da bir şeye takılana kadar.
+ * Kaleci topa ancak dokunarak etki eder → bırakılan şut bu noktalara kadar birebir aynı yolu izler.
+ * @returns her `every` tick'te bir konum; `blocked`: baraja / direğe takıldı ya da kaleye varmadan sonuçlandı
+ */
+export function previewPath(round: Round, input: ShotInput, every = 3): { points: V3[]; blocked: boolean } {
+  const s = startShot(round, input);
+  const points: V3[] = [{ ...s.pos }];
+  if (s.result) return { points, blocked: true };
+  while (s.tick < MAX_SHOT_TICKS) {
+    stepShot(s);
+    if (s.touchedWall || s.touchedPost || s.result) {
+      points.push({ ...s.pos });
+      return { points, blocked: true };
+    }
+    if (s.pos.x >= PREVIEW_END_X) break;
+    if (s.tick % every === 0) points.push({ ...s.pos });
+  }
+  points.push({ ...s.pos });
+  return { points, blocked: false };
 }
 
 export type SeriesScore = { total: number; shots: ShotResult[] };

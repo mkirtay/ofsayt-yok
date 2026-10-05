@@ -7,7 +7,6 @@
   "shared": "A friend scored {{score}} points. Can you beat it?",
   "stageLabel": "Free kick game area",
   "loading": "Preparing the pitch…",
-  "hint": "Swipe from the ball towards the goal — swipe fast for power, swipe in a curve to bend it",
   "hud": {
     "shot": "Shot {{n}}/{{total}}",
     "score": "{{score}} pts"
@@ -41,11 +40,18 @@
   "rules": {
     "title": "How to play",
     "r1": "Put your finger (or the mouse) on the ball and swipe towards the spot you want to hit: where your swipe ends is your target.",
-    "r2": "A fast swipe is a harder shot (the keeper can't get there, but the ball flies flatter); draw a curved path and the ball curls along it, around the wall.",
+    "r2": "Power comes from the fastest moment of your swipe: swipe fast and the shot is hard enough to beat the keeper. The yellow end of the bar is too weak, the red end is too strong (the ball balloons). Draw a curved path and the ball curls around the wall.",
     "r3": "Each series has 5 shots; the ball position, the wall and the keeper's movement change every shot.",
     "scoring": "Points",
     "p1": "Goal: 100 points",
     "p2": "In off the post: +50",
     "p3": "Top corner: +100"
+  },
+  "tip": {
+    "title": "How to play",
+    "l1": "Swipe from the ball towards the goal: the dashed line shows the path the ball will take.",
+    "l2": "Swipe fast for a hard shot. Stay in the green zone of the bar; in the red the ball balloons.",
+    "l3": "Draw a curved path and the ball curls around the wall.",
+    "ok": "Got it"
   }
 }

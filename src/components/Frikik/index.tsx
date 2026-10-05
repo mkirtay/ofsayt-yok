@@ -12,6 +12,7 @@ import styles from './frikik.module.scss';
 const loadScene = () => import('./frikikScene');
 
 type Mode = 'boot' | 'reduced' | 'nowebgl' | 'game';
+const TIP_SEEN_KEY = 'oy_frikik_tip';
 
 function randomSeed(): number {
   try {
@@ -28,7 +29,8 @@ export function resultLabel(r: ShotResult, t: (key: string) => string): string {
 }
 
 /**
- * /frikik oyunu: HUD (vuruş sayacı, puan, sonuç), seri sonu kartı (tekrar oyna / paylaş) ve sahnenin yüklenmesi.
+ * /frikik oyunu: HUD (vuruş sayacı, puan, sonuç), tek seferlik ipucu, seri sonu kartı (tekrar oyna / paylaş) ve
+ * sahnenin yüklenmesi.
  * Oyun döngüsü sahnede (frikikScene.ts); burası yalnız olayları gösterir. "Hareketi azalt" açıksa oyun kendiliğinden
  * başlamaz (statik bilgilendirme, isteyen açar). Alan sabit yükseklikte → CLS yok.
  */
@@ -41,7 +43,8 @@ export default function Frikik({ sharedScore }: { sharedScore: number | null }) 
   const [round, setRound] = useState(0);
   const [results, setResults] = useState<ShotResult[]>([]);
   const [total, setTotal] = useState(0);
-  const [hintHidden, setHintHidden] = useState(false);
+  /** Tek seferlik "nasıl oynanır" ipucu (ilk açılışta; kapatılınca localStorage'a yazılır, bir daha çıkmaz). */
+  const [tipOpen, setTipOpen] = useState(false);
   const [summary, setSummary] = useState<FrikikSummary | null>(null);
   const [shareNote, setShareNote] = useState('');
   const goalLabel = t('goal');
@@ -94,10 +97,15 @@ export default function Frikik({ sharedScore }: { sharedScore: number | null }) 
               setTotal(sum);
             },
             onFinish: (s) => setSummary(s),
-            onAimStart: () => setHintHidden(true),
+            onAimStart: () => {},
           });
           setReady(true);
           startSeries();
+          try {
+            if (!localStorage.getItem(TIP_SEEN_KEY)) setTipOpen(true);
+          } catch {
+            // depolama kapalı: ipucu gösterilmez
+          }
         } catch {
           setMode('nowebgl');
         }
@@ -111,6 +119,15 @@ export default function Frikik({ sharedScore }: { sharedScore: number | null }) 
       setReady(false);
     };
   }, [mode, startSeries]);
+
+  const closeTip = () => {
+    setTipOpen(false);
+    try {
+      localStorage.setItem(TIP_SEEN_KEY, '1');
+    } catch {
+      // depolama kapalı: bu oturumda kapalı kalır
+    }
+  };
 
   const share = async () => {
     if (!summary) return;
@@ -155,11 +172,6 @@ export default function Frikik({ sharedScore }: { sharedScore: number | null }) 
               <div className={styles.score}>{t('hud.score', { score: total })}</div>
             </div>
             {!ready ? <div className={styles.center}>{t('loading')}</div> : null}
-            {ready ? (
-              <div className={styles.hint} data-hidden={hintHidden || summary ? '' : undefined}>
-                {t('hint')}
-              </div>
-            ) : null}
             {showToast ? (
               <div key={results.length} className={styles.toast} data-goal={last.kind === 'goal' ? '' : undefined} role="status">
                 {resultLabel(last, t)}
@@ -178,6 +190,22 @@ export default function Frikik({ sharedScore }: { sharedScore: number | null }) 
               <p className={styles.cardText}>{t('reduced.desc')}</p>
               <button type="button" className={styles.btn} onClick={() => setMode(webglAvailable() ? 'game' : 'nowebgl')}>
                 {t('reduced.play')}
+              </button>
+            </div>
+          </div>
+        ) : null}
+
+        {tipOpen && !summary ? (
+          <div className={styles.overlay}>
+            <div className={styles.card} role="dialog" aria-label={t('tip.title')}>
+              <h2 className={styles.cardTitle}>{t('tip.title')}</h2>
+              <ul className={`${styles.shotList} ${styles.tipList}`}>
+                <li>{t('tip.l1')}</li>
+                <li>{t('tip.l2')}</li>
+                <li>{t('tip.l3')}</li>
+              </ul>
+              <button type="button" className={styles.btn} onClick={closeTip}>
+                {t('tip.ok')}
               </button>
             </div>
           </div>
