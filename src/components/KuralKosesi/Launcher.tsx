@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type ComponentType } from 'react';
 import { useI18n, useTranslation } from '@/lib/i18n';
 import '@/lib/i18nNamespaces/kuralKosesi';
+import '@/lib/i18nNamespaces/assistant';
 import { useMotionPause } from '@/hooks/useMotionPause';
 import { loadFacts, localizeFact, type KuralFact } from './facts';
 import { KURAL_KOSESI_OPEN_EVENT } from './openEvent';
@@ -17,6 +18,8 @@ import {
   writeState,
 } from './schedule';
 import type { PanelProps } from './Panel';
+import { ASSISTANT_OPEN_EVENT } from '@/components/Assistant/openEvent';
+import type { AssistantPanelProps } from '@/components/Assistant/Panel';
 import WhistleIcon from './WhistleIcon';
 import { LAUNCHER_SIZE_PX, bubblePosition } from './launcherPosition';
 import { useLauncherDrag } from './useLauncherDrag';
@@ -35,6 +38,24 @@ function loadPanel(): Promise<ComponentType<PanelProps>> {
   return panelLoad;
 }
 
+let assistantLoad: Promise<ComponentType<AssistantPanelProps>> | null = null;
+/** AI Asistan paneli (sohbet, kartlar, metinler) ayrı chunk: yalnız ✦ balona / menüye tıklanınca indirilir. */
+function loadAssistantPanel(): Promise<ComponentType<AssistantPanelProps>> {
+  assistantLoad ??= import('@/components/Assistant/Panel').then(
+    (mod) => mod.default,
+    (error) => {
+      assistantLoad = null;
+      throw error;
+    },
+  );
+  return assistantLoad;
+}
+
+/** ✦ balon düdüğün üstünde: 52 px + 12 px boşluk. Üstte yer yoksa (düdük tepeye sürüklendiyse) altına geçer. */
+const ASSISTANT_BUBBLE_PX = 52;
+const ASSISTANT_GAP_PX = 12;
+const ASSISTANT_MIN_TOP_PX = 72;
+
 function preload() {
   void loadPanel().catch(() => {});
   void loadFacts().catch(() => {});
@@ -44,8 +65,9 @@ function preload() {
  * Sağ alttaki düdük düğmesi, sarı "yeni" noktası ve "Biliyor muydun?" baloncuğu; paneli açar. Düğme dikeyde
  * sürüklenebilir (ok tuşlarıyla da); baloncuk onunla birlikte hareket eder (bkz. useLauncherDrag).
  */
-export default function Launcher() {
+export default function Launcher({ assistantHidden = false }: { assistantHidden?: boolean }) {
   const { t } = useTranslation('kuralKosesi');
+  const { t: ta } = useTranslation('assistant');
   const { locale } = useI18n();
   const launcherRef = useRef<HTMLButtonElement>(null);
   useMotionPause(launcherRef, { offscreen: false });
@@ -61,6 +83,9 @@ export default function Launcher() {
   const [startIndex, setStartIndex] = useState(0);
   const [recheck, setRecheck] = useState(0);
   const drag = useLauncherDrag(launcherRef, storage);
+  const [AssistantPanel, setAssistantPanel] = useState<ComponentType<AssistantPanelProps> | null>(null);
+  const [assistantOpen, setAssistantOpen] = useState(false);
+  const assistantRef = useRef<HTMLButtonElement>(null);
 
   // Baloncuğu kurallara göre zamanla (depolama yoksa hiç). Panel açıkken ya da baloncuk görünürken bekler.
   useEffect(() => {
@@ -121,10 +146,35 @@ export default function Launcher() {
     } catch {
       return;
     }
+    setAssistantOpen(false);
     setOpen(true);
     setSeen(true);
     markOpened(storage, Date.now());
   }, [storage]);
+
+  // AI Asistan: balon, header menüsü ya da sayfadan gelen olay açar; Kural Köşesi paneli açıksa kapanır.
+  const openAssistantPanel = useCallback(async () => {
+    try {
+      const PanelComponent = await loadAssistantPanel();
+      setAssistantPanel(() => PanelComponent);
+    } catch {
+      return;
+    }
+    setOpen(false);
+    setPeekIndex(null);
+    setAssistantOpen(true);
+  }, []);
+
+  useEffect(() => {
+    const onOpenRequest = () => void openAssistantPanel();
+    window.addEventListener(ASSISTANT_OPEN_EVENT, onOpenRequest);
+    return () => window.removeEventListener(ASSISTANT_OPEN_EVENT, onOpenRequest);
+  }, [openAssistantPanel]);
+
+  const closeAssistant = useCallback(() => {
+    setAssistantOpen(false);
+    assistantRef.current?.focus();
+  }, []);
 
   // Sayfanın başka bir yerinden açma isteği (bkz. openEvent.ts).
   useEffect(() => {
@@ -143,6 +193,10 @@ export default function Launcher() {
   const peekPosition =
     drag.top !== null && drag.viewportHeight !== null ? bubblePosition(drag.top, LAUNCHER_SIZE_PX, drag.viewportHeight) : null;
 
+  const assistantVisible = !assistantHidden;
+  // Düdük tepeye yakınsa balon altına geçer (header'ın altına girmesin).
+  const assistantBelow = drag.top !== null && drag.top - ASSISTANT_GAP_PX - ASSISTANT_BUBBLE_PX < ASSISTANT_MIN_TOP_PX;
+
   return (
     <>
       {peekFact && !drag.dragging ? (
@@ -155,6 +209,24 @@ export default function Launcher() {
         >
           <small>{t('didYouKnow')}</small>
           <strong>{peekFact.title}</strong>
+        </button>
+      ) : null}
+      {assistantVisible ? (
+        <button
+          ref={assistantRef}
+          type="button"
+          className={styles.assistant}
+          style={{ transform: `translate(${drag.offsetX}px, ${drag.offset + (assistantBelow ? 2 * ASSISTANT_GAP_PX + ASSISTANT_BUBBLE_PX + LAUNCHER_SIZE_PX : 0)}px)` }}
+          data-side={drag.side}
+          data-ready={drag.ready || undefined}
+          data-hidden={drag.dragging || undefined}
+          aria-label={ta('open')}
+          aria-haspopup="dialog"
+          aria-expanded={assistantOpen}
+          onClick={() => void openAssistantPanel()}
+          onPointerEnter={() => void loadAssistantPanel().catch(() => {})}
+        >
+          <span aria-hidden="true">✦</span>
         </button>
       ) : null}
       <button
@@ -183,6 +255,7 @@ export default function Launcher() {
       {Panel && facts ? (
         <Panel open={open} side={drag.side} facts={facts} startIndex={startIndex} onClose={closePanel} />
       ) : null}
+      {AssistantPanel && assistantVisible ? <AssistantPanel open={assistantOpen} side={drag.side} onClose={closeAssistant} /> : null}
     </>
   );
 }

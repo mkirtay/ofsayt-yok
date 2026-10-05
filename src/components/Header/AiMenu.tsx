@@ -6,6 +6,7 @@ import { prefetchAiStatsDashboard } from '@/hooks/useAiStatsDashboard';
 import { useTranslation } from '@/lib/i18n';
 import MyAnalysesList from './MyAnalysesList';
 import { useDismiss } from './useDismiss';
+import { openAssistant } from '@/components/Assistant/openEvent';
 import styles from './header.module.scss';
 
 /** Ürün/AI özellikleri tek "AI" menüsü altında: AI İsabeti + (oturum varsa) AI Analizlerim. */
@@ -37,6 +38,17 @@ export default function AiMenu() {
       </button>
       {open ? (
         <div className={styles.menuPanel} role="menu">
+          <button
+            type="button"
+            role="menuitem"
+            className={`${styles.menuItem} ${styles.menuItemButton}`}
+            onClick={() => {
+              close();
+              openAssistant();
+            }}
+          >
+            {t('aiAssistant')}
+          </button>
           <Link
             href="/ai-istatistikleri"
             role="menuitem"

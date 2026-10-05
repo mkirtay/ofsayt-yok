@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ComponentType } from 'react';
 import { useRouter } from 'next/router';
 import { KURAL_KOSESI_OPEN_EVENT, openKuralKosesi } from './openEvent';
 import { isKuralKosesiHidden } from './paths';
+import { ASSISTANT_OPEN_EVENT, isAssistantHidden, openAssistant } from '@/components/Assistant/openEvent';
 
 /**
  * Kural Köşesi'nin Layout'taki tek parçası — giriş/kayıt ve admin dışında her sayfada.
@@ -12,9 +13,9 @@ import { isKuralKosesiHidden } from './paths';
  */
 export default function KuralKosesiMount() {
   const { pathname } = useRouter();
-  const [Launcher, setLauncher] = useState<ComponentType | null>(null);
+  const [Launcher, setLauncher] = useState<ComponentType<{ assistantHidden?: boolean }> | null>(null);
   // Düğme gelmeden sayfadan "aç" istendiyse: düğmeyi hemen yükle, gelince isteği yinele (Launcher olayı dinler).
-  const pendingOpen = useRef(false);
+  const pendingOpen = useRef<'rules' | 'assistant' | null>(null);
   const loaded = useRef(false);
 
   useEffect(() => {
@@ -31,11 +32,14 @@ export default function KuralKosesiMount() {
         () => {},
       );
     };
-    const onEarlyOpen = () => {
+    const early = (which: 'rules' | 'assistant') => () => {
       if (loaded.current) return;
-      pendingOpen.current = true;
+      pendingOpen.current = which;
       load();
     };
+    const onEarlyOpen = early('rules');
+    // AI Asistan balonu da Launcher'da yaşar: header menüsünden erken açılış aynı yolla.
+    const onEarlyAssistant = early('assistant');
     const schedule = () => {
       if (typeof window.requestIdleCallback === 'function') {
         idleId = window.requestIdleCallback(load, { timeout: 4000 });
@@ -44,11 +48,13 @@ export default function KuralKosesiMount() {
       }
     };
     window.addEventListener(KURAL_KOSESI_OPEN_EVENT, onEarlyOpen);
+    window.addEventListener(ASSISTANT_OPEN_EVENT, onEarlyAssistant);
     if (document.readyState === 'complete') schedule();
     else window.addEventListener('load', schedule, { once: true });
     return () => {
       cancelled = true;
       window.removeEventListener(KURAL_KOSESI_OPEN_EVENT, onEarlyOpen);
+      window.removeEventListener(ASSISTANT_OPEN_EVENT, onEarlyAssistant);
       window.removeEventListener('load', schedule);
       if (idleId !== undefined) window.cancelIdleCallback(idleId);
       if (timeoutId !== undefined) window.clearTimeout(timeoutId);
@@ -58,11 +64,13 @@ export default function KuralKosesiMount() {
   // Çocuğun (Launcher) olay dinleyicisi bu effect'ten önce kurulur.
   useEffect(() => {
     if (Launcher && pendingOpen.current) {
-      pendingOpen.current = false;
-      openKuralKosesi();
+      const which = pendingOpen.current;
+      pendingOpen.current = null;
+      if (which === 'assistant') openAssistant();
+      else openKuralKosesi();
     }
   }, [Launcher]);
 
   if (!Launcher || isKuralKosesiHidden(pathname)) return null;
-  return <Launcher />;
+  return <Launcher assistantHidden={isAssistantHidden(pathname)} />;
 }

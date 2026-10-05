@@ -183,6 +183,14 @@
   min-width: 200px;
 }
 
+// Menüde link yerine düğme (AI Asistan'ı açar): tarayıcı düğme stilini sıfırla.
+.menuItemButton {
+  border: none;
+  background: none;
+  font-family: inherit;
+  cursor: pointer;
+}
+
 .menuItem {
   display: flex;
   align-items: center;

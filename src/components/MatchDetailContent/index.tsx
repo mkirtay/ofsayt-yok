@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from '@/lib/i18n';
 import MatchCard from '@/components/MatchCard';
 import EventTimeline from '@/components/EventTimeline';
@@ -37,6 +37,11 @@ const PRERENDER_ANALYSIS: readonly MatchTabKey[] = ['analysis'];
 /** Varsayılan sekme: Genel Bakış (veri hazır, AI kredisi harcamaz). */
 export const DEFAULT_MATCH_TAB: MatchTabKey = 'overview';
 
+/** Derin bağlantı: `?sekme=ai-analiz` (AI Asistan'ın maç linki) → AI Analiz sekmesi. */
+export function tabFromSearch(search: string): MatchTabKey | null {
+  return new URLSearchParams(search).get('sekme') === 'ai-analiz' ? 'analysis' : null;
+}
+
 /**
  * Maç detayının ANA içeriği — sayfa ve split-view paneli AYNI IA: kart + dört eşit sekme
  * (Genel Bakış | Forum | AI Analiz | Trivia). "Genel Bakış" = Maç İstatistikleri → Maç Olayları → İlk 11.
@@ -48,6 +53,13 @@ export default function MatchDetailContent({ detail, requestedMatchId, variant =
   const { match, matchLoading, statsLoading, eventsLoading, lineupsLoading } = detail;
   const effectiveMatchId = detail.matchId || requestedMatchId;
   const [active, setActive] = useState<MatchTabKey>(DEFAULT_MATCH_TAB);
+  // Sekme mount sonrası adresten (SSR/CDN HTML'i sorgudan bağımsız kalsın; yalnız sayfa varyantında).
+  useEffect(() => {
+    if (variant !== 'page') return;
+    const fromUrl = tabFromSearch(window.location.search);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- URL → sekme (SSR HTML'i sorgudan bağımsız)
+    if (fromUrl) setActive(fromUrl);
+  }, [variant]);
   // AI analiz/kredi durumu sayfa açılışında çekilir — sekmeye girince beklemeden hazır olsun.
   const analysisState = useMatchAnalysis(effectiveMatchId, initialAnalysisPreview);
 

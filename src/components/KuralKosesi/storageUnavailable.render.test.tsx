@@ -69,6 +69,19 @@ describe.each(['methods-throw', 'access-throws'] as const)('localStorage erişil
     expect(launcher![1]).not.toContain('<span');
     // Baloncuk ("Biliyor muydun?") yok.
     expect(html).not.toContain('Biliyor muydun?');
+    // AI Asistan ✦ balonu düdükle aynı kenarda/konumda çizilir; panel kodu henüz yok (tıklayınca yüklenir).
+    const assistant = html.match(/<button[^>]*aria-label="AI Asistan&#x27;ı aç"[^>]*>/);
+    expect(assistant).not.toBeNull();
+    expect(assistant![0]).toContain('data-side="right"');
+    expect(assistant![0]).toContain('transform:translate(0px, 0px)');
+    expect(html).not.toContain('role="dialog"');
+  });
+
+  it('asistanın gizlendiği sayfada ✦ balon yok, düdük var', () => {
+    stubWindow(variant);
+    const html = renderToStaticMarkup(<Launcher assistantHidden />);
+    expect(html).not.toContain('AI Asistan');
+    expect(html).toContain('Kural Köşesi');
   });
 
   it('panel açık çizilir: diyalog, günün bilgisi ve gezinme düğmeleri', () => {
