@@ -7,7 +7,7 @@
   "shared": "A friend scored {{score}} points. Can you beat it?",
   "stageLabel": "Free kick game area",
   "loading": "Preparing the pitch…",
-  "hint": "Press the ball, pull back, release — slide sideways as you release to curl it",
+  "hint": "Swipe from the ball towards the goal — swipe fast for power, swipe in a curve to bend it",
   "hud": {
     "shot": "Shot {{n}}/{{total}}",
     "score": "{{score}} pts"
@@ -40,8 +40,8 @@
   "noWebgl": "The game could not start because your browser does not support 3D graphics.",
   "rules": {
     "title": "How to play",
-    "r1": "Press the ball and pull back: the arrow shows direction and power. Pull further for a faster, higher shot.",
-    "r2": "Slide your finger or mouse sideways as you release: the ball curls that way and the arrow bends.",
+    "r1": "Put your finger (or the mouse) on the ball and swipe towards the spot you want to hit: where your swipe ends is your target.",
+    "r2": "A fast swipe is a harder shot (the keeper can't get there, but the ball flies flatter); draw a curved path and the ball curls along it, around the wall.",
     "r3": "Each series has 5 shots; the ball position, the wall and the keeper's movement change every shot.",
     "scoring": "Points",
     "p1": "Goal: 100 points",

@@ -5,7 +5,8 @@
  * Belirlenimcilik kuralları (bkz. sim.test.ts kaynak taraması):
  * - Sabit adım (TICK = 1/120 sn, adım başına 2 alt adım); kare hızından bağımsız.
  * - Yalnız + − × ÷, Math.sqrt ve tam sayı işlemleri; sin / cos / exp / pow / hypot / random YOK.
- * - Girdiler tam sayı (yön bileşenleri, güç, falso, bırakma tick'i) → istemci ve sunucu aynı sayılardan başlar.
+ * - Girdi tam sayı: kaydırma yolunun 12–20 örnek noktası (kale düzlemine göre cm), kaydırma süresi (ms) ve bırakma
+ *   tick'i. Yön, güç ve falso bu noktalardan BURADA hesaplanır (`shotParams`) → sunucu aynı sayılardan aynı sonucu bulur.
  *
  * Dünya (metre ölçeğinde, top arcade boyutta): kale çizgisi x = 0, kale ağzı −x'e bakar, top x < 0'da; z yanal.
  * Ortak fizik: lib/pitchPhysics/core.ts (zemin, direk, file, gol tespiti).
@@ -54,9 +55,11 @@ const TUNING: Tuning = {
 export const FIGURE = { r: 0.26, height: 1.75, spacing: 0.56, restitution: 0.3 };
 export const KEEPER = { r: 0.85, height: 2.08, x: -0.75, restitution: 0.25 };
 export const WALL_DISTANCE = 9.15;
-/** Şut: güç 0–1 → yatay hız (m/sn); dikey hız = LOFT × yatay. Falso: yanal ivme = falso × CURVE_K × hız. */
-export const SHOT_SPEED = { min: 9, max: 30 };
-export const LOFT = 0.34;
+/** Kaleci şuta tepki verir: bu kadar tick sonra hedefe doğru bu hızla (m/sn) kayar → yavaş şut kurtarılır. */
+export const KEEPER_REACT_TICKS = 36;
+export const KEEPER_SPEED = 3.6;
+/** Şut: güç 0–1 → yatay hız (m/sn); yükseklik hedef noktadan çözülür. Falso: yanal ivme = falso × CURVE_K × hız. */
+export const SHOT_SPEED = { min: 14, max: 30 };
 const CURVE_K = 0.45;
 const CURVE_DECAY = 0.4;
 /** "Doksan": top çizgiyi üst köşeden geçti (direğe ≤ 1,1 m, üst direğe ≤ 0,95 m). */
@@ -134,25 +137,99 @@ export function aimBasis(round: Round): { fx: number; fz: number; rx: number; rz
   return { fx, fz, rx: -fz, rz: fx };
 }
 
-// ── Vuruş girdisi ─────────────────────────────────────────────────────────────────────────────────────
+// ── Vuruş girdisi (kaydırma) ──────────────────────────────────────────────────────────────────────────
+
+/** Kaydırma yolu örnek sayısı sınırları ve istemcinin ürettiği sayı. */
+export const SWIPE_POINTS = { min: 12, max: 20, client: 16 };
+/** Geçerli kaydırma: en az bu uzunlukta (m) ve bu kadar yukarı (kaleye doğru, m). */
+export const SWIPE_MIN = { length: 2.5, up: 1.5 };
+/** Kaydırma hızı (cm/ms, kale düzlemi ölçeğinde) → güç 0–1. */
+export const SWIPE_SPEED = { min: 1, max: 4.5 };
+/** Yolun kirişten en büyük sapması / kiriş uzunluğu → falso (bu oranda tam falso); altı ölü bölge. */
+export const SWIPE_BULGE = { full: 0.3, dead: 0.03 };
 
 /**
  * İstemciden gelen TEK şey. Hepsi tam sayı:
- * - `f`, `s`: nişan yönünün ileri (kaleye) ve sağa bileşenleri (oran önemli; f ≥ 1)
- * - `power` 0–1000, `curve` −1000…1000 (pozitif: sağa falso), `tick`: turun başından bırakma anına kadar geçen tick
+ * - `pts`: kaydırma yolunun örnekleri, KALE DÜZLEMİ koordinatında cm — [z, y]: z = kale ortasından sağa, y = kale
+ *   çizgisinden yukarı (istemci ekran noktalarını kalenin ekrandaki ölçeğiyle çevirir; top bu düzlemde kalenin
+ *   "altında" görünür, y < 0). İlk nokta topun üstü, son nokta hedef.
+ * - `ms`: kaydırma süresi; `tick`: turun başından bırakma anına kadar geçen tick (kalecinin konumu).
  */
-export type ShotInput = { f: number; s: number; power: number; curve: number; tick: number };
+export type ShotInput = { tick: number; ms: number; pts: [number, number][] };
 
 const isInt = (v: unknown, lo: number, hi: number): v is number => typeof v === 'number' && Number.isInteger(v) && v >= lo && v <= hi;
 
-/** Geçerli girdi ya da null (alan eksik / tam sayı değil / aralık dışı). */
+/** Geçerli girdi ya da null (alan eksik / tam sayı değil / aralık dışı / nokta sayısı uygunsuz). */
 export function parseShotInput(raw: unknown): ShotInput | null {
   if (!raw || typeof raw !== 'object') return null;
   const o = raw as Record<string, unknown>;
-  if (!isInt(o.f, 1, 4000) || !isInt(o.s, -4000, 4000) || !isInt(o.power, 0, 1000) || !isInt(o.curve, -1000, 1000) || !isInt(o.tick, 0, MAX_RELEASE_TICK)) {
-    return null;
+  if (!isInt(o.tick, 0, MAX_RELEASE_TICK) || !isInt(o.ms, 30, 3000) || !Array.isArray(o.pts)) return null;
+  if (o.pts.length < SWIPE_POINTS.min || o.pts.length > SWIPE_POINTS.max) return null;
+  const pts: [number, number][] = [];
+  for (const p of o.pts as unknown[]) {
+    if (!Array.isArray(p) || p.length !== 2 || !isInt(p[0], -5000, 5000) || !isInt(p[1], -5000, 3000)) return null;
+    pts.push([p[0], p[1]]);
   }
-  return { f: o.f, s: o.s, power: o.power, curve: o.curve, tick: o.tick };
+  return { tick: o.tick, ms: o.ms, pts };
+}
+
+export type ShotParams = {
+  /** İlk hız (m/sn). */
+  vel: V3;
+  /** Falso −1…1 (pozitif: sağa kıvrılır). */
+  curve: number;
+  power: number;
+  /** Hedef noktanın z'si (kaleci buraya yönelir). */
+  targetZ: number;
+};
+
+const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
+
+/**
+ * Kaydırma → şut. Hedef = son nokta (kale düzleminde); güç = kaydırma hızı; falso = yolun kirişe göre eğriliği (yol
+ * sağa bombeliyse top sağdan çıkıp sola kıvrılır ve yine hedefe yönelir). Yükseklik, top hedef noktadan geçecek şekilde
+ * çözülür. Çok kısa / kaleye doğru olmayan kaydırma → null (geçersiz vuruş).
+ */
+export function shotParams(round: Round, input: ShotInput): ShotParams | null {
+  const n = input.pts.length;
+  const fz = input.pts[0]![0] / 100;
+  const fy = input.pts[0]![1] / 100;
+  const lz = input.pts[n - 1]![0] / 100;
+  const ly = input.pts[n - 1]![1] / 100;
+  const cz = lz - fz;
+  const cy = ly - fy;
+  const len = len2(cz, cy);
+  if (len < SWIPE_MIN.length || cy < SWIPE_MIN.up) return null;
+  // Kirişten en büyük sapma (sağa pozitif)
+  let dev = 0;
+  for (let i = 1; i < n - 1; i++) {
+    const pz = input.pts[i]![0] / 100 - fz;
+    const py = input.pts[i]![1] / 100 - fy;
+    const cross = (pz * cy - py * cz) / len;
+    if (Math.abs(cross) > Math.abs(dev)) dev = cross;
+  }
+  const ratio = dev / len;
+  const mag = Math.abs(ratio) <= SWIPE_BULGE.dead ? 0 : Math.min(1, (Math.abs(ratio) - SWIPE_BULGE.dead) / (SWIPE_BULGE.full - SWIPE_BULGE.dead));
+  // Sağa bombe → sola kıvrılan top
+  const curve = mag === 0 ? 0 : ratio > 0 ? -mag : mag;
+  const speed = (len * 100) / input.ms;
+  const power = clamp((speed - SWIPE_SPEED.min) / (SWIPE_SPEED.max - SWIPE_SPEED.min), 0, 1);
+  const targetZ = clamp(lz, -10, 10);
+  const targetY = clamp(ly, 0.15, 4.2);
+  const vh = SHOT_SPEED.min + (SHOT_SPEED.max - SHOT_SPEED.min) * power;
+  const dist = len2(round.ball.x, targetZ - round.ball.z);
+  const t = dist / vh;
+  // Falsonun varışta yaptıracağı yanal kayma kadar ters yöne nişan (top hedefe kıvrılarak gelsin).
+  const drift = 0.5 * curve * CURVE_K * dist * t * 0.8;
+  const ax = -round.ball.x;
+  const az = targetZ - drift - round.ball.z;
+  const a = len2(ax, az);
+  return {
+    vel: { x: (ax / a) * vh, y: (targetY - BALL_R) / t + 0.5 * TUNING.gravity * t, z: (az / a) * vh },
+    curve,
+    power,
+    targetZ,
+  };
 }
 
 // ── Vuruş simülasyonu ─────────────────────────────────────────────────────────────────────────────────
@@ -162,9 +239,11 @@ export type ShotResult = { kind: ShotKind; points: number; viaPost: boolean; cor
 
 export type ShotState = {
   round: Round;
-  /** Bırakma anı (kaleci fazı) ve vuruştan beri geçen tick. */
-  releaseTick: number;
+  /** Vuruştan beri geçen tick. */
   tick: number;
+  /** Kalecinin z'si (bırakma anındaki yerinden hedefe doğru kayar) ve yöneldiği nokta. */
+  keeperZ: number;
+  keeperTarget: number;
   pos: V3;
   vel: V3;
   spin: V3;
@@ -179,26 +258,26 @@ export type ShotState = {
 };
 
 export function startShot(round: Round, input: ShotInput): ShotState {
-  const b = aimBasis(round);
-  const ax = b.fx * input.f + b.rx * input.s;
-  const az = b.fz * input.f + b.rz * input.s;
-  const a = len2(ax, az);
-  const p = input.power / 1000;
-  const vh = SHOT_SPEED.min + (SHOT_SPEED.max - SHOT_SPEED.min) * p;
-  return {
+  const p = shotParams(round, input);
+  const kz = keeperZ(round, input.tick);
+  const s: ShotState = {
     round,
-    releaseTick: input.tick,
     tick: 0,
+    keeperZ: kz,
+    keeperTarget: p ? clamp(p.targetZ, -(GOAL.halfW - 0.5), GOAL.halfW - 0.5) : kz,
     pos: { x: round.ball.x, y: BALL_R, z: round.ball.z },
-    vel: { x: (ax / a) * vh, y: LOFT * vh, z: (az / a) * vh },
-    spin: { x: 0, y: -(input.curve / 1000) * 14, z: 0 },
-    curve: input.curve / 1000,
+    vel: p ? p.vel : { x: 0, y: 0, z: 0 },
+    spin: { x: 0, y: p ? -p.curve * 14 : 0, z: 0 },
+    curve: p ? p.curve : 0,
     touchedWall: false,
     touchedKeeper: false,
     touchedPost: false,
     result: null,
     events: [],
   };
+  // Geçersiz kaydırma: vuruş sayılır, top yerinde kalır (0 puan).
+  if (!p) s.result = { kind: 'miss', points: 0, viaPost: false, corner: false };
+  return s;
 }
 
 function cylinderHit(pos: V3, vel: V3, cx: number, cz: number, radius: number, height: number, e: number): boolean {
@@ -227,7 +306,12 @@ function missKind(s: ShotState): ShotKind {
 /** Bir tick ilerletir (yerinde). Karar anında `state.result` dolar. */
 export function stepShot(s: ShotState): void {
   s.events = [];
-  const kz = keeperZ(s.round, s.releaseTick + s.tick);
+  if (s.tick >= KEEPER_REACT_TICKS && s.keeperZ !== s.keeperTarget) {
+    const step = KEEPER_SPEED * TICK;
+    const d = s.keeperTarget - s.keeperZ;
+    s.keeperZ = Math.abs(d) <= step ? s.keeperTarget : s.keeperZ + (d > 0 ? step : -step);
+  }
+  const kz = s.keeperZ;
   for (let i = 0; i < SUBSTEPS; i++) {
     const prev = { x: s.pos.x, y: s.pos.y, z: s.pos.z };
     // Falso (Magnus): havadayken yatay hıza dik ivme; zamanla söner.
@@ -279,28 +363,4 @@ export type SeriesScore = { total: number; shots: ShotResult[] };
 export function scoreSeries(seed: number, inputs: readonly ShotInput[]): SeriesScore {
   const shots = inputs.slice(0, SHOTS_PER_SERIES).map((input, i) => simulateShot(makeRound(seed, i), input));
   return { total: shots.reduce((n, s) => n + s.points, 0), shots };
-}
-
-// ── Nişan (istemci: işaretçi → girdi) ─────────────────────────────────────────────────────────────────
-
-/**
- * Geri çekme → girdi. `pullX` / `pullY`: işaretçinin toptan ekran uzaklığı (px; aşağı çekmek pozitif y),
- * `lateralPx`: bırakma anındaki yana kaydırma (px; sağa pozitif → sağa falso). Aşağı doğru çekilmemişse null.
- */
-export function aimToInput(pullX: number, pullY: number, lateralPx: number, maxPullPx: number, tick: number): ShotInput | null {
-  if (!(pullY > 6)) return null;
-  const d = len2(pullX, pullY);
-  const power = Math.round(Math.min(1, d / maxPullPx) * 1000);
-  if (power < 80) return null;
-  const scale = 2000 / d;
-  const dead = 6;
-  const lat = Math.abs(lateralPx) <= dead ? 0 : lateralPx - (lateralPx > 0 ? dead : -dead);
-  return {
-    f: Math.max(1, Math.min(4000, Math.round(pullY * scale))),
-    // Sağa çekmek sola nişan alır (sapan gibi).
-    s: Math.max(-4000, Math.min(4000, Math.round(-pullX * scale))),
-    power,
-    curve: Math.max(-1000, Math.min(1000, Math.round((lat / 70) * 1000))),
-    tick: Math.max(0, Math.min(MAX_RELEASE_TICK, Math.floor(tick))),
-  };
 }

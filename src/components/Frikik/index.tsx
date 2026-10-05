@@ -86,6 +86,7 @@ export default function Frikik({ sharedScore }: { sharedScore: number | null }) 
             canvasClassName: styles.canvas!,
             handleClassName: styles.handle!,
             goalClassName: styles.goal!,
+            trailClassName: styles.trail!,
             goalLabel: goalLabelRef.current,
             onRound: (i) => setRound(i),
             onShot: (_i, result, sum) => {

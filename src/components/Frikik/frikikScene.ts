@@ -3,20 +3,18 @@
  * parçasında kalır. Yapı taşları giriş sahnesiyle ortak (components/pitch3d/pitchKit.ts); fizik ve skor
  * lib/frikik/sim.ts'te (belirlenimci; sunucu aynı kodu çalıştırır) — burası yalnız çizer ve girdiyi toplar.
  *
- * Kamera topun arkasında, kaleye bakar. Baraj ve kaleci oyuncak "peg" figürler. Kontrol: topa bas, geri çek (yön +
- * güç), bırakırken yana kaydır (falso); nişan oku yönü, gücü ve falsoyu (eğri) gösterir.
+ * Kamera topun arkasında, kaleye bakar. Baraj ve kaleci oyuncak "peg" figürler. Kontrol: topun üstünden hedefe doğru
+ * kaydır (swipe) — son nokta hedef, hız güç, yolun eğriliği falso; parmağın izi ekranda çizilir. Yol 16 noktaya
+ * indirgenip kale düzlemi koordinatında tam sayı girdiye çevrilir (lib/frikik/swipe.ts).
  * Akış: tur (nişan) → uçuş → sonuç beklemesi → sıradaki tur … 5 vuruş → `onFinish`.
  * Sekme gizliyken / sahne ekran dışındayken döngü durur. `dispose()` GPU kaynaklarını bırakır.
  */
 import {
   ACESFilmicToneMapping,
-  BufferAttribute,
   BufferGeometry,
   CanvasTexture,
-  Color,
   CylinderGeometry,
   DirectionalLight,
-  DoubleSide,
   Fog,
   Group,
   HemisphereLight,
@@ -61,9 +59,9 @@ import {
   SHOTS_PER_SERIES,
   TICK,
   aimBasis,
-  aimToInput,
   keeperZ,
   makeRound,
+  shotParams,
   startShot,
   stepShot,
   type Round,
@@ -71,6 +69,7 @@ import {
   type ShotResult,
   type ShotState,
 } from '@/lib/frikik/sim';
+import { swipeToInput, type GoalFrame, type SwipeSample } from '@/lib/frikik/swipe';
 
 export type FrikikSummary = { seed: number; inputs: ShotInput[]; results: ShotResult[]; total: number };
 
@@ -80,20 +79,19 @@ export type FrikikOptions = {
   canvasClassName: string;
   handleClassName: string;
   goalClassName: string;
+  /** Kaydırma izi (SVG) sınıfı. */
+  trailClassName: string;
   goalLabel: string;
   onRound: (index: number) => void;
   onShot: (index: number, result: ShotResult, total: number) => void;
   onFinish: (summary: FrikikSummary) => void;
-  /** İlk nişan (ipucu kapansın). */
+  /** İlk kaydırma (ipucu kapansın). */
   onAimStart: () => void;
 };
 
 export type FrikikHandle = { dispose: () => void; start: (seed: number) => void; setGoalLabel: (label: string) => void };
 
-const BRAND_GREEN = 0x00a76f;
 const CONFETTI_COLORS = [0x00a76f, 0x2fe3a0, 0xffffff, 0xffc83d, 0x007b55];
-/** Yana kaydırma (falso) ölçüm penceresi: yön bu kadar önceki konumdan, falso o andan beri yana kaymadan. */
-const FLICK_WINDOW_MS = 130;
 /** Sonuçtan sonra bekleme (tick): gol kutlaması daha uzun. */
 const HOLD_TICKS = { goal: 210, other: 130 };
 const LINES = { minX: -30, maxX: 2, halfZ: 26 };
@@ -212,7 +210,14 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
   const goalText = document.createElement('div');
   goalText.className = opts.goalClassName;
   goalText.textContent = opts.goalLabel;
-  host.append(canvas, handle, goalText);
+  // Kaydırma izi: ekran uzayında çizgi (SVG), bırakınca söner.
+  const SVG_NS = 'http://www.w3.org/2000/svg';
+  const trail = document.createElementNS(SVG_NS, 'svg');
+  trail.setAttribute('class', opts.trailClassName);
+  trail.setAttribute('aria-hidden', 'true');
+  const trailLine = document.createElementNS(SVG_NS, 'polyline');
+  trail.appendChild(trailLine);
+  host.append(canvas, trail, handle, goalText);
   const maxAniso = renderer.capabilities.getMaxAnisotropy();
 
   const scene = new Scene();
@@ -247,9 +252,9 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
   standTex.repeat.set(10, 1);
   standTex.wrapS = RepeatWrapping;
   const standMat = track(new MeshBasicMaterial({ map: standTex, color: 0xffffff, fog: true }));
-  const stand = new Mesh(track(new PlaneGeometry(200, 9)), standMat);
+  const stand = new Mesh(track(new PlaneGeometry(200, 6.5)), standMat);
   stand.rotation.y = -Math.PI / 2;
-  stand.position.set(12, 5.4, 0);
+  stand.position.set(12, 4.1, 0);
   scene.add(stand);
   const boardTex = track(boardTexture());
   boardTex.repeat.set(14, 1);
@@ -295,24 +300,6 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
   const keeperShadow = makeShadow(1.3, 0.4);
   for (const x of [...pegGeos, ...pegMats]) track(x);
 
-  // ── Nişan oku (eğri şerit: yön + güç + falso) ──────────────────────────────────────────────────────
-  const SEG = 14;
-  const arrowPos = new Float32Array(((SEG + 1) * 2 + 3) * 3);
-  const arrowIdx: number[] = [];
-  for (let i = 0; i < SEG; i++) arrowIdx.push(i * 2, i * 2 + 1, i * 2 + 2, i * 2 + 1, i * 2 + 3, i * 2 + 2);
-  const headBase = (SEG + 1) * 2;
-  arrowIdx.push(headBase, headBase + 1, headBase + 2);
-  const arrowGeo = track(new BufferGeometry());
-  arrowGeo.setAttribute('position', new BufferAttribute(arrowPos, 3));
-  arrowGeo.setIndex(arrowIdx);
-  const arrowMat = track(new MeshBasicMaterial({ color: BRAND_GREEN, transparent: true, opacity: 0.92, depthWrite: false, side: DoubleSide, toneMapped: false, fog: false }));
-  const arrow = new Mesh(arrowGeo, arrowMat);
-  arrow.frustumCulled = false;
-  arrow.visible = false;
-  arrow.renderOrder = 3;
-  scene.add(arrow);
-  const arrowColor = new Color();
-
   const confetti = makeConfetti(lite ? 70 : 120, lite ? 0.2 : 0.16, CONFETTI_COLORS);
   track(confetti);
   scene.add(confetti.points);
@@ -326,7 +313,8 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
     hemi.intensity = day ? 1.3 : 0.8;
     key.color.setHex(day ? 0xfff0d2 : 0xe6eeff);
     key.intensity = day ? 2.5 : 1.9;
-    standMat.color.setHex(day ? 0xffffff : 0x6f7a90);
+    // Gece tribün sönük: kale ve top öne çıksın
+    standMat.color.setHex(day ? 0xdfe6ee : 0x4a546a);
     boardMat.emissiveIntensity = day ? 0.2 : 0.75;
     postMat.emissive.setHex(day ? 0x000000 : 0x1a222b);
     renderer.toneMappingExposure = day ? 1 : 0.95;
@@ -347,8 +335,7 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
   let inputs: ShotInput[] = [];
   let results: ShotResult[] = [];
   let total = 0;
-  let aiming: { id: number; samples: { t: number; x: number; y: number }[] } | null = null;
-  let aimInput: ShotInput | null = null;
+  let swiping: { id: number; samples: SwipeSample[] } | null = null;
   const ballPos = new Vector3();
   const camPos = new Vector3();
   const camLook = new Vector3();
@@ -368,14 +355,15 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
   const frameCamera = () => {
     if (!round) return;
     const portrait = width / height < 1;
-    // Top kadrajın alt üçte birinde (geri çekmeye yer kalsın), kale üst-orta bölgede.
-    const back = portrait ? 8 : 7.5;
-    const up = portrait ? 3.4 : 2.9;
-    camera.fov = portrait ? 58 : 38;
+    // Dar açılı (tele) kamera topun epey arkasında: kale büyük görünür, top kadrajın altında (kaydırma yukarı doğru).
+    const back = portrait ? 9 : 10;
+    const up = portrait ? 2.9 : 2.5;
+    camera.fov = portrait ? 46 : 28;
     camera.updateProjectionMatrix();
     camPosTarget.set(round.ball.x - basis.fx * back, up, round.ball.z - basis.fz * back);
-    const ahead = portrait ? 7 : 9;
-    camLookTarget.set(round.ball.x + basis.fx * ahead, 0.4, round.ball.z + basis.fz * ahead);
+    // Bakış yüksekliği: top kadrajın ~%75–80'inde, kale orta-üst bölgede (üstte boş gökyüzü az) kalacak şekilde
+    const lookY = portrait ? 0.2 : 0.3;
+    camLookTarget.set(0, lookY, 0);
   };
 
   const beginRound = (i: number) => {
@@ -384,9 +372,7 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
     basis = aimBasis(round);
     roundTick = 0;
     shot = null;
-    aimInput = null;
-    aiming = null;
-    arrow.visible = false;
+    swiping = null;
     handle.removeAttribute('data-dragging');
     ballPos.set(round.ball.x, BALL_R, round.ball.z);
     wallPegs.forEach((w, k) => {
@@ -416,67 +402,21 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
     handle.style.transform = `translate(${ballScreen.x - ballScreen.r}px, ${ballScreen.y - ballScreen.r}px)`;
   };
 
-  /** Nişan: yön FLICK_WINDOW_MS önceki konumdan; o andan beri yana kayma = falso. */
-  const computeAim = (now: number): ShotInput | null => {
-    if (!aiming) return null;
-    const s = aiming.samples;
-    const cur = s[s.length - 1]!;
-    let base = s[0]!;
-    for (let i = s.length - 1; i >= 0; i--) {
-      if (s[i]!.t <= now - FLICK_WINDOW_MS) {
-        base = s[i]!;
-        break;
-      }
-    }
-    const px = base.x - ballScreen.x;
-    const py = base.y - ballScreen.y;
-    const d = Math.hypot(px, py);
-    if (d < 1) return null;
-    // Çekme yönüne dik, ekran sağı pozitif
-    const lateral = (cur.x - base.x) * (py / d) - (cur.y - base.y) * (px / d);
-    const maxPull = Math.min(170, Math.max(90, height * 0.28));
-    return aimToInput(px, py, lateral, maxPull, roundTick);
+  /** Ekran → kale düzlemi ölçeği: kale çizgisi ortası ve direklerin / üst direğin ekrandaki izdüşümünden. */
+  const goalFrame = (): GoalFrame => {
+    const at = (x: number, y: number, z: number) => {
+      projected.set(x, y, z).project(camera);
+      return { x: (projected.x * 0.5 + 0.5) * width, y: (-projected.y * 0.5 + 0.5) * height };
+    };
+    const o = at(0, 0, 0);
+    const top = at(0, GOAL.height, 0);
+    const l = at(0, 0, -GOAL.halfW);
+    const r = at(0, 0, GOAL.halfW);
+    return { originX: o.x, originY: o.y, pxPerMX: Math.max(1, (r.x - l.x) / (2 * GOAL.halfW)), pxPerMY: Math.max(1, (o.y - top.y) / GOAL.height) };
   };
 
-  const updateArrow = () => {
-    arrow.visible = Boolean(aimInput);
-    if (!aimInput || !round) return;
-    const ax = basis.fx * aimInput.f + basis.rx * aimInput.s;
-    const az = basis.fz * aimInput.f + basis.rz * aimInput.s;
-    const a = Math.hypot(ax, az);
-    const dx = ax / a;
-    const dz = az / a;
-    const p = aimInput.power / 1000;
-    const c = aimInput.curve / 1000;
-    const len = 1.4 + p * 4.2;
-    const half = 0.11;
-    const at = (u: number) => {
-      const s = BALL_R * 1.6 + u * len;
-      const lat = c * 0.07 * (u * len) * (u * len);
-      return { x: round!.ball.x + dx * s - dz * lat, z: round!.ball.z + dz * s + dx * lat };
-    };
-    let prev = at(0);
-    let tx = dx;
-    let tz = dz;
-    for (let i = 0; i <= SEG; i++) {
-      const cur = at(i / SEG);
-      if (i > 0) {
-        const l = Math.hypot(cur.x - prev.x, cur.z - prev.z) || 1;
-        tx = (cur.x - prev.x) / l;
-        tz = (cur.z - prev.z) / l;
-      }
-      arrowPos.set([cur.x - tz * half, 0.03, cur.z + tx * half, cur.x + tz * half, 0.03, cur.z - tx * half], i * 6);
-      prev = cur;
-    }
-    const hw = 0.3;
-    const hl = 0.55;
-    arrowPos.set(
-      [prev.x - tz * hw, 0.03, prev.z + tx * hw, prev.x + tz * hw, 0.03, prev.z - tx * hw, prev.x + tx * hl, 0.03, prev.z + tz * hl],
-      headBase * 3,
-    );
-    arrowGeo.attributes.position!.needsUpdate = true;
-    arrowColor.setHex(BRAND_GREEN).lerp(new Color(0xffc83d), p);
-    arrowMat.color.copy(arrowColor);
+  const drawTrail = () => {
+    trailLine.setAttribute('points', swiping ? swiping.samples.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ') : '');
   };
 
   const rotateBall = (spin: { x: number; y: number; z: number }, dt: number) => {
@@ -530,14 +470,14 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
   };
 
   let acc = 0;
-  const update = (dt: number, now: number) => {
+  const update = (dt: number) => {
     acc += Math.min(dt, 0.1);
     while (acc >= TICK) {
       acc -= TICK;
       tick();
     }
     if (round) {
-      const kz = keeperZ(round, shot ? shot.releaseTick + shot.tick : roundTick);
+      const kz = shot ? shot.keeperZ : keeperZ(round, roundTick);
       keeperPeg.position.z = kz;
       keeperShadow.position.set(KEEPER.x, 0.008, kz);
     }
@@ -558,10 +498,6 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
     camera.updateMatrixWorld();
 
     placeHandle();
-    if (aiming) {
-      aimInput = computeAim(now);
-      updateArrow();
-    }
   };
 
   let raf = 0;
@@ -573,7 +509,7 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
     raf = requestAnimationFrame(frame);
     const dt = last ? (ts - last) / 1000 : 0;
     last = ts;
-    update(dt, ts);
+    update(dt);
     render();
   };
   const sync = () => {
@@ -595,7 +531,7 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
     frameCamera();
     camSnap = true;
     if (!raf) {
-      update(0, performance.now());
+      update(0);
       render();
     }
   };
@@ -606,31 +542,40 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
     return { t: e.timeStamp, x: e.clientX - r.left, y: e.clientY - r.top };
   };
   const onDown = (e: PointerEvent) => {
-    if (phase !== 'aim' || aiming) return;
+    if (phase !== 'aim' || swiping) return;
     e.preventDefault();
-    aiming = { id: e.pointerId, samples: [local(e)] };
+    // İlk örnek topun üstü: nereden tutulursa tutulsun yol toptan başlar
+    swiping = { id: e.pointerId, samples: [{ t: e.timeStamp, x: ballScreen.x, y: ballScreen.y }] };
     try {
       handle.setPointerCapture(e.pointerId);
     } catch {
       // yakalama olmadan da çalışır
     }
     handle.setAttribute('data-dragging', '');
+    trail.removeAttribute('data-fade');
+    drawTrail();
     opts.onAimStart();
   };
   const onMove = (e: PointerEvent) => {
-    if (!aiming || e.pointerId !== aiming.id) return;
-    aiming.samples.push(local(e));
-    if (aiming.samples.length > 40) aiming.samples.shift();
+    if (!swiping || e.pointerId !== swiping.id) return;
+    const p = local(e);
+    const last = swiping.samples[swiping.samples.length - 1]!;
+    if (Math.hypot(p.x - last.x, p.y - last.y) < 2) return;
+    swiping.samples.push(p);
+    if (swiping.samples.length > 240) swiping.samples.splice(1, 1);
+    drawTrail();
   };
   const onUp = (e: PointerEvent) => {
-    if (!aiming || e.pointerId !== aiming.id) return;
-    aiming.samples.push(local(e));
-    const input = e.type === 'pointercancel' ? null : computeAim(e.timeStamp);
-    aiming = null;
-    aimInput = null;
-    arrow.visible = false;
+    if (!swiping || e.pointerId !== swiping.id) return;
+    const samples = swiping.samples;
+    samples.push({ ...samples[samples.length - 1]!, t: e.timeStamp });
+    swiping = null;
     handle.removeAttribute('data-dragging');
-    if (!input || !round || phase !== 'aim') return;
+    trail.setAttribute('data-fade', '');
+    if (e.type === 'pointercancel' || !round || phase !== 'aim') return;
+    const input = swipeToInput(samples, goalFrame(), roundTick);
+    // Geçersiz kaydırma (çok kısa / kaleye doğru değil): vuruş harcanmaz, yeniden denenir.
+    if (!input || !shotParams(round, input)) return;
     inputs.push(input);
     shot = startShot(round, input);
     phase = 'flight';
@@ -711,6 +656,7 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
       renderer.dispose();
       renderer.forceContextLoss();
       canvas.remove();
+      trail.remove();
       handle.remove();
       goalText.remove();
     },

@@ -7,7 +7,7 @@
   "shared": "Bir arkadaşın {{score}} puan yaptı. Geçebilir misin?",
   "stageLabel": "Frikik oyun alanı",
   "loading": "Saha hazırlanıyor…",
-  "hint": "Topa bas, geri çek, bırak — bırakırken yana kaydır: falso",
+  "hint": "Topun üstünden kaleye doğru kaydır — hızlı kaydır: sert şut, kavisli kaydır: falso",
   "hud": {
     "shot": "Vuruş {{n}}/{{total}}",
     "score": "{{score}} puan"
@@ -40,8 +40,8 @@
   "noWebgl": "Tarayıcın 3D grafikleri desteklemediği için oyun açılamadı.",
   "rules": {
     "title": "Nasıl oynanır",
-    "r1": "Topa bas ve geriye çek: ok yönü ve gücü gösterir. Daha çok çekersen top daha hızlı ve daha yüksekten gider.",
-    "r2": "Bırakırken parmağını ya da fareyi yana kaydır: top o yöne falso alır, ok eğrilir.",
+    "r1": "Parmağını (ya da fareyi) topun üstüne koy ve vurmak istediğin noktaya doğru kaydır: kaydırmayı bitirdiğin yer hedefindir.",
+    "r2": "Hızlı kaydırırsan şut sert olur (kaleci yetişemez ama top alçaktan gider); yolu kavisli çizersen top o kavisle falso alır ve barajın yanından dolanır.",
     "r3": "Her seride 5 vuruş var; her vuruşta topun yeri, baraj ve kalecinin hareketi değişir.",
     "scoring": "Puanlar",
     "p1": "Gol: 100 puan",
