@@ -81,6 +81,22 @@
   border-color: color-mix(in srgb, #{$color-live} 45%, transparent);
 }
 
+.cardBig {
+  border-color: color-mix(in srgb, #{$color-primary} 40%, transparent);
+}
+
+.bigMark {
+  margin-left: -1px;
+  font-size: 10px;
+  line-height: 1;
+  color: $color-primary-text;
+}
+
+.tomorrow {
+  font-weight: 600;
+  font-size: 10px;
+}
+
 .status {
   display: inline-flex;
   align-items: center;

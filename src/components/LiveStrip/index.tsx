@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from '@/lib/i18n';
 import TeamLogo from '@/components/TeamLogo';
 import type { Match } from '@/models/liveScore';
@@ -7,14 +7,17 @@ import { buildMatchHref } from '@/utils/matchUrl';
 import { isModifiedClick } from '@/utils/matchSelection';
 import { utcTimeToTr } from '@/utils/dateFormat';
 import { isMatchLive } from '@/utils/matchActivity';
-import type { LiveStripKind } from '@/utils/liveStrip';
+import { matchIstanbulDate } from '@/utils/matchActivity';
 import styles from './liveStrip.module.scss';
 
 const GOAL_FLASH_MS = 2500;
 
 export type LiveStripProps = {
   matches: Match[];
-  kind: LiveStripKind;
+  /** Önemli (iki büyük takım) yaklaşan maçlar: kartta ince işaret. */
+  bigIds?: ReadonlySet<string>;
+  /** Bugünün İstanbul günü — başka günün (yarın) kartında "Yarın" etiketi için. */
+  todayIso?: string;
   /** Split-view'da maç detay paneli (verilmezse bağlantı maç sayfasına gider — mobil). */
   onSelectMatch?: (match: Match) => void;
   onPrefetchMatch?: (matchId: string) => void;
@@ -34,7 +37,7 @@ function parts(score: string): [string, string] {
  * (İY / ara dahil) + logolar + skor; değilse saat + logolar. Skor değişince kart kısa süre vurgulanır (reduced-motion
  * hariç, CSS). Kenarlarda fade, taşma varsa ok düğmeleri (masaüstü). Veri sayfanın mevcut listelerinden gelir.
  */
-export default function LiveStrip({ matches, kind, onSelectMatch, onPrefetchMatch }: LiveStripProps) {
+export default function LiveStrip({ matches, bigIds, todayIso, onSelectMatch, onPrefetchMatch }: LiveStripProps) {
   const { t } = useTranslation('match');
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [edges, setEdges] = useState({ left: false, right: false });
@@ -79,7 +82,7 @@ export default function LiveStrip({ matches, kind, onSelectMatch, onPrefetchMatc
     el?.scrollBy({ left: dir * Math.max(160, el.clientWidth * 0.7), behavior: 'smooth' });
   };
 
-  const label = useMemo(() => t(kind === 'live' ? 'liveStrip.liveLabel' : 'liveStrip.upcomingLabel'), [t, kind]);
+  const label = t('liveStrip.label');
 
   return (
     <div className={styles.strip} role="region" aria-label={label} data-edge-left={edges.left || undefined} data-edge-right={edges.right || undefined}>
@@ -93,6 +96,8 @@ export default function LiveStrip({ matches, kind, onSelectMatch, onPrefetchMatc
           const minute = (m.time || '').replace(/'$/u, '').trim();
           const [hs, as] = parts(scoreOf(m));
           const kickoff = m.scheduled && /^\d{2}:\d{2}/.test(m.scheduled) ? utcTimeToTr(m.scheduled.slice(0, 5), m.date) : '—';
+          const big = bigIds?.has(String(m.id)) ?? false;
+          const tomorrow = !live && todayIso != null && matchIstanbulDate(m) !== todayIso;
           const homeName = m.home?.name || '';
           const awayName = m.away?.name || '';
           const status = brk ? t('halfTime') : minute ? `${minute}'` : t('liveStrip.liveShort');
@@ -101,8 +106,8 @@ export default function LiveStrip({ matches, kind, onSelectMatch, onPrefetchMatc
               key={m.id}
               href={buildMatchHref(m)}
               prefetch={false}
-              className={`${styles.card} ${live ? styles.cardLive : ''} ${flash.has(String(m.id)) ? styles.cardFlash : ''}`.trim()}
-              aria-label={`${homeName} ${live ? `${hs}-${as}` : kickoff} ${awayName}`}
+              className={`${styles.card} ${live ? styles.cardLive : ''} ${big ? styles.cardBig : ''} ${flash.has(String(m.id)) ? styles.cardFlash : ''}`.trim()}
+              aria-label={`${homeName} ${live ? `${hs}-${as}` : kickoff} ${awayName}${big ? `, ${t('liveStrip.bigMatch')}` : ''}`}
               onMouseEnter={onPrefetchMatch ? () => onPrefetchMatch(String(m.id)) : undefined}
               onFocus={onPrefetchMatch ? () => onPrefetchMatch(String(m.id)) : undefined}
               onClick={
@@ -123,8 +128,12 @@ export default function LiveStrip({ matches, kind, onSelectMatch, onPrefetchMatc
                 </span>
               ) : null}
               <TeamLogo src={m.home?.logo} alt="" className={styles.crest} width={18} height={18} />
-              <span className={styles.mid}>{live ? <span className={styles.score}>{`${hs}–${as}`}</span> : <span className={styles.time}>{kickoff}</span>}</span>
+              <span className={styles.mid}>{live ? <span className={styles.score}>{`${hs}–${as}`}</span> : <span className={styles.time}>
+                    {tomorrow ? <span className={styles.tomorrow}>{t('liveStrip.tomorrow')} </span> : null}
+                    {kickoff}
+                  </span>}</span>
               <TeamLogo src={m.away?.logo} alt="" className={styles.crest} width={18} height={18} />
+              {big ? <span className={styles.bigMark} title={t('liveStrip.bigMatch')} aria-hidden="true">★</span> : null}
             </Link>
           );
         })}

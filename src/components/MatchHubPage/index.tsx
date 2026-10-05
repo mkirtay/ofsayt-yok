@@ -817,7 +817,8 @@ export default function MatchHubPage({
             {liveStrip ? (
               <LiveStrip
                 matches={liveStrip.matches}
-                kind={liveStrip.kind}
+                bigIds={liveStrip.bigIds}
+                todayIso={todayIso}
                 onSelectMatch={isSplit ? handleSelectMatch : undefined}
                 onPrefetchMatch={isSplit ? prefetchMatchDetailLazy : undefined}
               />

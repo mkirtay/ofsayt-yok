@@ -11,21 +11,25 @@ const m = (id: number, over: Partial<Match> = {}) =>
 describe('<LiveStrip />', () => {
   it('canlı kart: dakika + skor; İY\'de nokta yok; logolar iki yanda; maç sayfasına bağlantı', () => {
     const html = renderToStaticMarkup(
-      <LiveStrip kind="live" matches={[m(1, { status: 'IN PLAY', time: "63'", scores: { score: '2 - 1' } } as Partial<Match>), m(2, { status: 'HALF TIME BREAK', scores: { score: '0 - 0' } } as Partial<Match>)]} />,
+      <LiveStrip matches={[m(1, { status: 'IN PLAY', time: "63'", scores: { score: '2 - 1' } } as Partial<Match>), m(2, { status: 'HALF TIME BREAK', scores: { score: '0 - 0' } } as Partial<Match>)]} />,
     );
     expect(html).toContain('63&#x27;');
     expect(html).toContain('2–1');
     expect(html.match(/class="[^"]*dot[^"]*"/g)).toHaveLength(1); // yalnız oynanan maçta yanıp sönen nokta
     expect(html).toContain('İY');
     expect(html).toMatch(/href="\/matches\/1-/);
-    expect(html).toContain('aria-label="Canlı maçlar"');
+    expect(html).toContain('aria-label="Canlı ve yaklaşan maçlar"');
   });
 
-  it('yaklaşan kart: saat (İstanbul) + logolar, skor yok', () => {
-    const html = renderToStaticMarkup(<LiveStrip kind="upcoming" matches={[m(3)]} />);
+  it('yaklaşan kart: saat (İstanbul) + logolar, skor yok; yarın "Yarın"; büyük maçta ince işaret', () => {
+    const html = renderToStaticMarkup(
+      <LiveStrip matches={[m(3), m(4, { date: '2026-10-07' })]} todayIso="2026-10-06" bigIds={new Set(['3'])} />,
+    );
     expect(html).toContain('20:00'); // 17:00 UTC → 20:00 TR
     expect(html).not.toContain('–');
-    expect(html).toContain('aria-label="Bugünün yaklaşan maçları"');
+    expect(html.match(/Yarın/g)).toHaveLength(1); // yalnız yarının kartında
+    expect(html.match(/★/g)).toHaveLength(1);
+    expect(html).toContain('Büyük maç');
   });
 
   it('stil: reduced-motion\'da animasyon yok; ok düğmeleri yalnız masaüstünde; skor vurgusu animasyonlu', () => {

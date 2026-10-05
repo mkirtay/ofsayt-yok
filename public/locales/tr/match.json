@@ -444,10 +444,11 @@
     "leagueAvg": "Lig ort.: {{value}}"
   },
   "liveStrip": {
-    "liveLabel": "Canlı maçlar",
-    "upcomingLabel": "Bugünün yaklaşan maçları",
     "prev": "Geri kaydır",
     "next": "İleri kaydır",
-    "liveShort": "Canlı"
+    "liveShort": "Canlı",
+    "label": "Canlı ve yaklaşan maçlar",
+    "tomorrow": "Yarın",
+    "bigMatch": "Büyük maç"
   }
 }
