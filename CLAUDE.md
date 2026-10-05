@@ -11,3 +11,8 @@
 - **Ekran görüntüsü:** yalnızca görsel değişikliklerde.
 - Aynı anda birden fazla oturum çalıştığı için yerel ölçümlerde sapma normaldir; şüpheli bir düşüşte bir kez
   tekrar ölç, kalıcıysa raporla.
+
+## Paralel oturumlar ve git
+
+- Paralel oturumlar aynı git index'ini paylaşır; commit'leri yalnız kendi dosya yollarınla at:
+  `git commit -o -- <yollar>`. `git add -A` / yolsuz `git commit` kullanma.
