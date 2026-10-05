@@ -10,8 +10,9 @@
  *   4. Erişim (kredi modeli v2, server/analysisAccess.ts ile aynı kural):
  *      - açılmış (AnalysisUnlock) / premium / yönetici / maç bitmiş → kısa özet (en olası sonuç + 2-3 nokta)
  *      - hazır ama kilitli → YALNIZ ücretsiz önizleme (buildAnalysisPreview) + açma teklifi; kilitli alan yanıtta yok
- *      - analiz yok → kapsamdaysa ve maça 3 saatten çok varsa "maçtan ~3 saat önce hazırlanır", değilse "bu maç için
- *        analiz hazırlanmıyor" (noAnalysisReason); kullanıcı tetiklemesiyle üretim yapılmaz.
+ *      - analiz yok → kapsamdaysa ve maça 3 saatten çok varsa "maçtan ~3 saat önce hazırlanır"; maç başlamadıysa
+ *        "maç sayfasından kendin üretebilirsin" yönlendirmesi; başladıysa "hazırlanmıyor" (noAnalysisReason).
+ *        Asistan hiçbir koşulda üretim yapmaz, kredi harcamaz.
  */
 import type { MatchAnalysis } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
@@ -154,8 +155,12 @@ export type AssistantAnalysisCard =
   | { kind: 'team-not-found'; query: string }
   | { kind: 'match-not-found'; home: string; away: string }
   | { kind: 'choose'; options: AssistantMatchRef[] }
-  /** `scheduled`: ön üretim kapsamında ve maça 3 saatten çok var; `not-planned`: bu maç için analiz hazırlanmıyor. */
-  | { kind: 'none'; match: AssistantMatchRef; reason: 'scheduled' | 'not-planned' }
+  /**
+   * `scheduled`: ön üretim kapsamında ve maça 3 saatten çok var ("~3 saat önce hazırlanır").
+   * `self-serve`: hazır analiz yok ve hazırlanmayacak ama maç başlamadı → kullanıcı maç sayfasından kendi üretebilir
+   *   (asistan üretmez, yalnız yönlendirir). `not-planned`: maç başlamış / bitmiş / saati bilinmiyor.
+   */
+  | { kind: 'none'; match: AssistantMatchRef; reason: NoAnalysisReason; signedIn: boolean; cost: number }
   | { kind: 'locked'; match: AssistantMatchRef; preview: AnalysisPreview; cost: number; signedIn: boolean }
   | { kind: 'summary'; match: AssistantMatchRef; top: { outcome: PreviewOutcome; pct: number } | null; points: string[] };
 
@@ -195,20 +200,25 @@ export function buildAnalysisSummary(row: MatchAnalysis): { top: AnalysisPreview
 /** Analiz maçtan yaklaşık bu kadar önce hazırlanır (ön üretim penceresi 2 sa – 3 sa 15 dk; kullanıcıya "3 saat"). */
 export const ANALYSIS_READY_BEFORE_MS = 3 * 60 * 60_000;
 
+export type NoAnalysisReason = 'scheduled' | 'self-serve' | 'not-planned';
+
 /**
- * Analizi olmayan maç: "yaklaşık 3 saat önce hazırlanır" YALNIZ maç ön üretim kapsamındaysa ve başlamasına 3 saatten
- * çok varsa söylenir. Kapsam dışı lig, 3 saatten az kalmış / başlamış / bitmiş maç → "hazırlanmıyor".
+ * Analizi olmayan maç:
+ * - başlamış / bitmiş / başlama saati bilinmiyor → `not-planned` (artık üretilemez);
+ * - ön üretim kapsamında ve başlamasına 3 saatten çok var → `scheduled` ("yaklaşık 3 saat önce hazırlanır");
+ * - aksi halde (kapsam dışı lig ya da 3 saatten az kalmış) → `self-serve`: kullanıcı maç sayfasından kendi üretebilir.
  */
-export async function noAnalysisReason(match: FixtureCandidate, now: number = Date.now()): Promise<'scheduled' | 'not-planned'> {
-  if (match.kickoffMs == null || match.kickoffMs - now <= ANALYSIS_READY_BEFORE_MS) return 'not-planned';
+export async function noAnalysisReason(match: FixtureCandidate, now: number = Date.now()): Promise<NoAnalysisReason> {
+  if (match.kickoffMs == null || match.kickoffMs <= now) return 'not-planned';
   if (match.status && match.status !== 'NOT STARTED') return 'not-planned';
-  return (await isInPregenScope(match)) ? 'scheduled' : 'not-planned';
+  if (match.kickoffMs - now > ANALYSIS_READY_BEFORE_MS && (await isInPregenScope(match))) return 'scheduled';
+  return 'self-serve';
 }
 
 export async function analysisCardForMatch(viewer: AnalysisViewer | null, match: FixtureCandidate): Promise<AssistantAnalysisCard> {
   const ref = matchRef(match);
   const stored = await findStoredMatchAnalysis(String(match.id), 'PRE');
-  if (!stored) return { kind: 'none', match: ref, reason: await noAnalysisReason(match) };
+  if (!stored) return { kind: 'none', match: ref, reason: await noAnalysisReason(match), signedIn: viewer != null, cost: ANALYSIS_UNLOCK_COST };
   const privileged = viewer != null && (isAdminUser(viewer) || isPremiumUser(viewer));
   const unlocked = viewer != null && (await findUnlock(viewer.id, stored.id)) != null;
   const open =

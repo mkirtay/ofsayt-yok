@@ -35,6 +35,8 @@
     "choose": "Which match did you mean?",
     "none": "This match's analysis isn't ready yet. Analyses are prepared about 3 hours before kick-off.",
     "notPlanned": "No analysis is prepared for this match.",
+    "selfServe": "There's no ready analysis for this match. You can generate one yourself on the match page for {{cost}} credit.",
+    "goToAnalysisTab": "Go to the Analysis tab",
     "preview": "Free preview",
     "locked": "The full analysis is locked.",
     "unlock": "Unlock for {{cost}} credit",

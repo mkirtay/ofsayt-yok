@@ -9,6 +9,7 @@
 import rulesJson from '@/content/kural-kosesi.json';
 import { ASSISTANT_HELP_TOPICS, assistantHelp, type AssistantHelpTopic } from '@/content/assistantHelp';
 import { PLAN_SPORTMONKS_LEAGUE_IDS } from '@/config/leagueNameKeys';
+import { ANALYSIS_UNLOCK_COST } from '@/lib/analysisUnlock';
 import type { Match } from '@/models/liveScore';
 import {
   getAllLiveMatches,
@@ -230,17 +231,23 @@ async function getMatchAnalysis(args: Record<string, unknown>, ctx: ToolContext)
         links: [{ label: ctx.locale === 'tr' ? 'AI Analiz sekmesi' : 'AI Analysis tab', href: card.match.href }],
       };
     case 'none': {
-      // Sabit mesaj (kartla aynı cümle): model "3 saat" ile "hazırlanmıyor"u karıştırmasın.
-      const planned = card.reason === 'scheduled';
-      const reply = planned
-        ? ctx.locale === 'tr'
-          ? 'Bu maçın analizi henüz hazır değil. Analiz maçtan yaklaşık 3 saat önce hazırlanır.'
-          : "This match's analysis isn't ready yet. Analyses are prepared about 3 hours before kick-off."
-        : ctx.locale === 'tr'
-          ? 'Bu maç için analiz hazırlanmıyor.'
-          : 'No analysis is prepared for this match.';
+      // Sabit mesaj (kartla aynı cümle): model durumları karıştırmasın. Asistan üretmez; yalnız yönlendirir.
+      const tr = ctx.locale === 'tr';
+      const reply =
+        card.reason === 'scheduled'
+          ? tr
+            ? 'Bu maçın analizi henüz hazır değil. Analiz maçtan yaklaşık 3 saat önce hazırlanır.'
+            : "This match's analysis isn't ready yet. Analyses are prepared about 3 hours before kick-off."
+          : card.reason === 'self-serve'
+            ? tr
+              ? `Bu maç için hazır analiz yok. Maç sayfasından ${ANALYSIS_UNLOCK_COST} krediyle kendin üretebilirsin.`
+              : `There's no ready analysis for this match. You can generate one yourself on the match page for ${ANALYSIS_UNLOCK_COST} credit.`
+            : tr
+              ? 'Bu maç için analiz hazırlanmıyor.'
+              : 'No analysis is prepared for this match.';
+      const status = card.reason === 'scheduled' ? 'not_ready' : card.reason === 'self-serve' ? 'self_serve' : 'not_planned';
       return {
-        data: { status: planned ? 'not_ready' : 'not_planned', match: `${card.match.home} – ${card.match.away}`, message_for_user: reply },
+        data: { status, match: `${card.match.home} – ${card.match.away}`, message_for_user: reply },
         reply,
         card: { type: 'analysis', card },
         links: [{ label: `${card.match.home} – ${card.match.away}`, href: card.match.href }],

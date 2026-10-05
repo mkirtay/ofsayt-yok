@@ -8,6 +8,7 @@ import { findGamblingTerms } from '@/utils/gamblingTerms';
 import { tabFromSearch } from '@/components/MatchDetailContent';
 import AssistantCard from './AssistantCard';
 import { isAssistantHidden } from './openEvent';
+import { assistantSignInHref } from './signInHref';
 import { parseSseBuffer } from './sse';
 
 vi.mock('next/link', () => ({ default: ({ href, children, className }: { href: string; children: unknown; className?: string }) => <a href={href} className={className}>{children as never}</a> }));
@@ -38,11 +39,29 @@ describe('AI Asistan kartları', () => {
     const html = render({ kind: 'summary', match, top: { outcome: 'AWAY', pct: 49 }, points: ['A noktası.'] });
     expect(text(html)).toContain('En olası sonuç: Kasımpaşa kazanır %49');
     expect(html).toContain('href="/matches/1-galatasaray-kasimpasa?sekme=ai-analiz"');
-    expect(text(render({ kind: 'none', match, reason: 'scheduled' }))).toContain('Analiz maçtan yaklaşık 3 saat önce hazırlanır.');
-    const notPlanned = text(render({ kind: 'none', match, reason: 'not-planned' }));
-    expect(notPlanned).toContain('Bu maç için analiz hazırlanmıyor.');
-    expect(notPlanned).not.toContain('3 saat');
-    expect(notPlanned).toContain('Maç sayfasına git');
+    expect(text(render({ kind: 'none', match, reason: 'scheduled', signedIn: true, cost: 1 }))).toContain('Analiz maçtan yaklaşık 3 saat önce hazırlanır.');
+    expect(text(render({ kind: 'none', match, reason: 'not-planned', signedIn: true, cost: 1 }))).toContain('Bu maç için analiz hazırlanmıyor.');
+  });
+
+  it('hazır analiz yok (kapsam dışı): yalnız yönlendirme — üye "Analiz sekmesine git", misafir "Giriş yap" (dönüş AI sekmesine); üretim/açma düğmesi yok', () => {
+    const card = { kind: 'none', match, reason: 'self-serve', signedIn: true, cost: 1 };
+    const member = render(card);
+    expect(text(member)).toContain('Bu maç için hazır analiz yok. Maç sayfasından 1 krediyle kendin üretebilirsin.');
+    expect(text(member)).toContain('Analiz sekmesine git');
+    expect(member).toContain('href="/matches/1-galatasaray-kasimpasa?sekme=ai-analiz"');
+    expect(member).not.toContain('<button');
+    expect(text(member)).not.toContain('3 saat');
+    const guest = render({ ...card, signedIn: false });
+    expect(text(guest)).toContain('Giriş yap');
+    expect(guest).toContain('href="/auth/signin?callbackUrl=%2Fmatches%2F1-galatasaray-kasimpasa%3Fsekme%3Dai-analiz"');
+    expect(guest).not.toContain('<button');
+  });
+
+  it('giriş dönüş adresi beyaz listeden: yalnız maç sayfası AI sekmesi; diğerleri dönüş adressiz', () => {
+    expect(assistantSignInHref('/matches/19746594-galatasaray-kasimpasa?sekme=ai-analiz')).toBe('/auth/signin?callbackUrl=%2Fmatches%2F19746594-galatasaray-kasimpasa%3Fsekme%3Dai-analiz');
+    for (const bad of ['//evil.example/matches/1?sekme=ai-analiz', 'https://evil.example', '/admin', '/matches/1-a-b?sekme=ai-analiz&next=//evil.example', '/matches/1\\evil?sekme=ai-analiz', '/credits']) {
+      expect(assistantSignInHref(bad), bad).toBe('/auth/signin');
+    }
   });
 
   it('maç kartı: skor / canlı dakika / kanal ve maç linki', () => {

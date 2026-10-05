@@ -86,7 +86,7 @@ describe('asistan — kredi duvarı', () => {
     h.finished = false;
   });
 
-  it('analiz yok: kapsamda ve maça 3 saatten çok varsa "scheduled"; kapsam dışı lig / 3 saatten az / başlamış → "not-planned"; üretim yok', async () => {
+  it('analiz yok: kapsamda + 3 saatten çok → "scheduled"; başlamamış ama kapsam dışı / 3 saatten az → "self-serve"; başlamış → "not-planned"; üretim yok', async () => {
     h.stored = null;
     const HOUR = 3600_000;
     const now = Date.now();
@@ -94,18 +94,24 @@ describe('asistan — kredi duvarı', () => {
     expect(await analysisCardForMatch(viewer(), m({}))).toEqual({
       kind: 'none',
       reason: 'scheduled',
+      signedIn: true,
+      cost: 1,
       match: { id: 19746594, home: 'Galatasaray', away: 'Kasımpaşa', kickoffMs: now + 5 * HOUR, href: '/matches/19746594-galatasaray-kasimpasa?sekme=ai-analiz' },
     });
-    // Arjantin ligi (ör. Banfield–Rosario Central): ön üretim kapsamında değil.
-    expect(await analysisCardForMatch(viewer(), m({ leagueId: 636 }))).toMatchObject({ kind: 'none', reason: 'not-planned' });
-    // Kapsamda ama 3 saatten az kalmış: artık hazırlanmayacak.
-    expect(await analysisCardForMatch(viewer(), m({ kickoffMs: now + 2 * HOUR }))).toMatchObject({ reason: 'not-planned' });
+    // Arjantin ligi (ör. Banfield–Rosario Central): ön üretim kapsamında değil → kullanıcı kendi üretebilir (yönlendirme).
+    expect(await analysisCardForMatch(viewer(), m({ leagueId: 636 }))).toMatchObject({ kind: 'none', reason: 'self-serve', signedIn: true });
+    expect(await analysisCardForMatch(null, m({ leagueId: 636 }))).toMatchObject({ reason: 'self-serve', signedIn: false });
+    // Kapsamda ama 3 saatten az kalmış: ön üretim gelmeyecek → yine yönlendirme.
+    expect(await noAnalysisReason(m({ kickoffMs: now + 2 * HOUR }), now)).toBe('self-serve');
     expect(await noAnalysisReason(m({ kickoffMs: now + 3 * HOUR + 60_000 }), now)).toBe('scheduled');
-    expect(await noAnalysisReason(m({ kickoffMs: now + 3 * HOUR }), now)).toBe('not-planned');
-    expect(await noAnalysisReason(m({ status: 'FINISHED', kickoffMs: now - HOUR }), now)).toBe('not-planned');
+    expect(await noAnalysisReason(m({ kickoffMs: now + 3 * HOUR }), now)).toBe('self-serve');
+    // Lig bilgisi yoksa "hazırlanacak" sözü verilmez.
+    expect(await noAnalysisReason(m({ leagueId: undefined }), now)).toBe('self-serve');
+    // Başlamış / bitmiş / saati bilinmeyen maçta üretim mümkün değil → yönlendirme yok.
+    expect(await noAnalysisReason(m({ status: 'IN PLAY', kickoffMs: now - HOUR }), now)).toBe('not-planned');
+    expect(await noAnalysisReason(m({ status: 'FINISHED', kickoffMs: now - 3 * HOUR }), now)).toBe('not-planned');
+    expect(await noAnalysisReason(m({ kickoffMs: now - 60_000 }), now)).toBe('not-planned');
     expect(await noAnalysisReason(m({ kickoffMs: null }), now)).toBe('not-planned');
-    // Lig bilgisi yoksa (karttan yenileme) söz verilmez.
-    expect(await noAnalysisReason(m({ leagueId: undefined }), now)).toBe('not-planned');
   });
 
   it('açılmamış analiz: yalnız önizleme + açma teklifi; kilitli alanların HİÇBİRİ yanıtta yok', async () => {

@@ -35,6 +35,8 @@
     "choose": "Hangi maçı kastettin?",
     "none": "Bu maçın analizi henüz hazır değil. Analiz maçtan yaklaşık 3 saat önce hazırlanır.",
     "notPlanned": "Bu maç için analiz hazırlanmıyor.",
+    "selfServe": "Bu maç için hazır analiz yok. Maç sayfasından {{cost}} krediyle kendin üretebilirsin.",
+    "goToAnalysisTab": "Analiz sekmesine git",
     "preview": "Ücretsiz önizleme",
     "locked": "Analizin tamamı kilitli.",
     "unlock": "{{cost}} kredi ile aç",

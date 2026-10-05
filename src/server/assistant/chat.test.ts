@@ -115,7 +115,7 @@ describe('asistan sohbet döngüsü', () => {
     const { bodies } = await run([text('Tamam.')]);
     const system = (bodies[0]!.messages as Array<{ content: string }>)[0]!.content;
     expect(system).toContain('message_for_user alanındaki cümleyi AYNEN aktar');
-    expect(system).toContain('"not_planned" iken "3 saat"');
+    expect(system).toContain('"self_serve" ve "not_planned" iken "3 saat"');
   });
 
   it('boş yanıt → empty', async () => {

@@ -7,6 +7,7 @@ import Link from 'next/link';
 import type { AssistantAnalysisCard, AssistantMatchRef } from '@/server/assistant/matchAnalysisRequest';
 import type { PreviewOutcome } from '@/utils/analysisPreview';
 import type { AssistantCard as AssistantCardData, AssistantMatchItem } from '@/server/assistant/tools';
+import { assistantSignInHref } from './signInHref';
 import styles from './assistant.module.scss';
 
 type T = (key: string, opts?: Record<string, unknown>) => string;
@@ -55,10 +56,23 @@ export function AnalysisCard({ card, t, actions }: { card: AssistantAnalysisCard
           <strong className={styles.matchTitle}>
             {card.match.home} – {card.match.away}
           </strong>
-          <p className={styles.text}>{t(card.reason === 'scheduled' ? 'card.none' : 'card.notPlanned')}</p>
-          <Link href={card.match.href} className={styles.link}>
-            {t('card.matchPage')} →
-          </Link>
+          <p className={styles.text}>{t(card.reason === 'scheduled' ? 'card.none' : card.reason === 'self-serve' ? 'card.selfServe' : 'card.notPlanned', { cost: card.cost })}</p>
+          {card.reason === 'self-serve' ? (
+            // Yalnız yönlendirme: üretim maç sayfasında, kullanıcının kendi tıklamasıyla.
+            card.signedIn ? (
+              <Link href={card.match.href} className={styles.unlock}>
+                {t('card.goToAnalysisTab')}
+              </Link>
+            ) : (
+              <Link href={assistantSignInHref(card.match.href)} className={styles.unlock}>
+                {t('signIn')}
+              </Link>
+            )
+          ) : (
+            <Link href={card.match.href} className={styles.link}>
+              {t('card.matchPage')} →
+            </Link>
+          )}
         </div>
       );
     case 'locked': {
