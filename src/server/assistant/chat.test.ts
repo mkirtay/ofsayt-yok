@@ -52,7 +52,12 @@ async function run(rounds: Chunk[][], question = 'GS–Kasımpaşa maçını ana
 const LOCKED_CARD = { type: 'analysis', card: { kind: 'locked', match: { id: 1, home: 'Galatasaray', away: 'Kasımpaşa', kickoffMs: 1, href: '/matches/1-a-b?sekme=ai-analiz' }, preview: { summary: ['Tempo yüksek.'], top: { outcome: 'HOME', pct: 55 } }, cost: 1, signedIn: false } };
 
 describe('asistan sohbet döngüsü', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
+    const { runAssistantTool } = await import('./tools');
+    vi.mocked(runAssistantTool).mockImplementation(async (name: string, args: string) => {
+      h.toolRuns.push({ name, args });
+      return { ok: true, ...h.toolResult };
+    });
     h.toolRuns = [];
     h.toolResult = { data: { status: 'locked', free_preview: { most_likely: { outcome: 'HOME', pct: 55 } } }, card: LOCKED_CARD, links: [{ label: 'Maç', href: '/matches/1-a-b?sekme=ai-analiz' }, { label: 'Dış', href: 'https://evil.example' }] };
   });
@@ -64,7 +69,8 @@ describe('asistan sohbet döngüsü', () => {
     const second = bodies[1]!.messages as Array<{ role: string; content: string }>;
     expect(second.at(-1)).toMatchObject({ role: 'tool', content: JSON.stringify(h.toolResult.data) });
     expect(second[0]!.role).toBe('system');
-    expect(answer).toBe('Önizlemeye göre Galatasaray %55. Tamamı krediyle açılır.');
+    // Analiz kartı dönüyor → sohbet metni en fazla 1 cümle (özet kartta).
+    expect(answer).toBe('Önizlemeye göre Galatasaray %55.');
     expect(events.find((e) => e.type === 'card')).toEqual({ type: 'card', card: LOCKED_CARD });
     // Analiz kartı kendi düğmesini taşır: ayrıca link gönderilmez (dış adres zaten hiç geçmez).
     expect(events.filter((e) => e.type === 'card')).toHaveLength(1);
@@ -150,6 +156,21 @@ describe('asistan sohbet döngüsü', () => {
     expect(events.filter((e) => e.type === 'card')).toEqual([{ type: 'card', card: none }]);
     expect(events.some((e) => e.type === 'links')).toBe(false);
     expect(answer).toBe('Bu maç için hazır analiz yok.');
+  });
+
+  it('analiz kartı varken tek cümle: parça parça gelen metin ilk cümlede kesilir; noktasız kısa metin yine gönderilir', async () => {
+    const { answer, result } = await run([toolCall('get_match_analysis', '{}'), text('Önizle', 'me hazır. ', 'İkinci cümle. ', 'Üçüncü.')]);
+    expect(answer).toBe('Önizleme hazır.');
+    expect(result.outcome).toBe('answered');
+    expect((await run([toolCall('get_match_analysis', '{}'), text('Kartta özet var')])).answer).toBe('Kartta özet var');
+    // Analiz kartı yokken sınır uygulanmaz.
+    h.toolResult = { data: { total: 1 }, card: { type: 'matches', matches: [] } };
+    expect((await run([toolCall('get_fixtures', '{}'), text('Bir. ', 'İki.')])).answer).toBe('Bir. İki.');
+  });
+
+  it('sistem prompt\'u: analiz kartı dönünce en fazla tek cümle', async () => {
+    const { bodies } = await run([text('Tamam.')]);
+    expect((bodies[0]!.messages as Array<{ content: string }>)[0]!.content).toContain('EN FAZLA TEK CÜMLE');
   });
 
   it('boş yanıt → empty', async () => {

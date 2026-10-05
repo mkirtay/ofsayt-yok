@@ -91,8 +91,19 @@ export async function runAssistantChat(opts: {
   const cards: AssistantCard[] = [];
   const gate = createSentenceGate();
   let emitted = false;
+  // Analiz kartı dönecekse (özeti kart verir) sohbet metni EN FAZLA 1 cümle: ilk cümle gönderilir, kalanı atılır.
+  let oneSentenceOnly = false;
+  let sentenceDone = false;
+  let pendingSentence = '';
   const send = (text: string) => {
-    if (!text) return;
+    if (!text || sentenceDone) return;
+    if (oneSentenceOnly) {
+      pendingSentence += text;
+      const m = /^([\s\S]*?[.!?…]+)(?=\s|$)/.exec(pendingSentence);
+      if (!m) return;
+      text = m[1].trimStart();
+      sentenceDone = true;
+    }
     emitted = true;
     emit({ type: 'delta', text });
   };
@@ -150,7 +161,10 @@ export async function runAssistantChat(opts: {
     for (const call of toolCalls) {
       toolsUsed.push(call.name);
       const result = await runAssistantTool(call.name, call.arguments, ctx);
-      if (result.card) cards.push(result.card);
+      if (result.card) {
+        cards.push(result.card);
+        if (result.card.type === 'analysis') oneSentenceOnly = true;
+      }
       if (result.links) links.push(...result.links);
       if (result.reply) fixedReply = result.reply;
       messages.push({ role: 'tool', tool_call_id: call.id, content: JSON.stringify(result.data) });
@@ -163,6 +177,11 @@ export async function runAssistantChat(opts: {
   }
 
   send(gate.flush());
+  if (oneSentenceOnly && !sentenceDone && pendingSentence.trim()) {
+    sentenceDone = true;
+    emitted = true;
+    emit({ type: 'delta', text: pendingSentence.trim() });
+  }
   if (!gate.blocked()) {
     const attachments = finalizeAttachments(cards, links);
     if (attachments.card) emit({ type: 'card', card: attachments.card });
