@@ -40,18 +40,19 @@
   "rules": {
     "title": "Nasıl oynanır",
     "r1": "Topu tut ve geriye çek: top çekmenin tersi yönde gider (sağa çekersen sola). Kısa ok yalnız topun ilk yönünü gösterir; nereye düşeceğini sen kestirirsin.",
-    "r2": "Çekme mesafesi gücü belirler: güç hem hızı hem yüksekliği artırır. Çubuğun yeşil bölgesi o mesafeden kaleyi bulan güçtür; sarı kısa kalır, kırmızı üstten gider. Sert şut daha çok sapar, titrek çekiş de. Bırakırken parmağını yana kıvırırsan top falso alır.",
-    "r3": "Her seride 5 vuruş var; her vuruşta topun yeri, baraj ve kalecinin hareketi değişir.",
+    "r2": "Çekme mesafesi gücü belirler: güç hem hızı hem yüksekliği artırır. Çubuğun yeşil bölgesi o mesafeden kaleyi bulan güçtür; sarı kısa kalır, kırmızı üstten gider. Sert şut daha çok sapar, titrek çekiş de.",
+    "r3": "Falso için topun altındaki vuruş noktasını kaydır: sürükle, ←/→ ya da A/D tuşları, fare tekerleği. Sağdan vurmak topu sola kıvırır. Seçimin atışlar arasında kalır; mobilde bırakırken parmağı yana kıvırmak falsoyu biraz daha artırır.",
     "scoring": "Puanlar",
     "p1": "Gol: 100 puan",
     "p2": "Direkten gol: +50",
-    "p3": "Doksan (üst köşe): +100"
+    "p3": "Doksan (üst köşe): +100",
+    "r4": "Her seride 5 vuruş var; her vuruşta topun yeri, baraj ve kalecinin hareketi değişir. İlk 2 vuruş daha kolaydır."
   },
   "tip": {
     "title": "Nasıl oynanır?",
     "l1": "Topu tut ve geriye çek: top çekmenin tersine gider. Ok yalnız ilk yönü gösterir, gerisi senin tahminin.",
     "l2": "Ne kadar çekersen o kadar sert ve yüksek. Çubukta yeşil bölgeyi hedefle: sarı kaleye varmaz, kırmızı üstten gider; sert şut daha çok sapar.",
-    "l3": "Bırakırken parmağını yana kıvır: top o yöne falso alır.",
+    "l3": "Topun altındaki vuruş noktasını kaydır (←/→ ya da sürükle): sağdan vurursan top sola, soldan vurursan sağa kıvrılır.",
     "ok": "Anladım"
   }
 }

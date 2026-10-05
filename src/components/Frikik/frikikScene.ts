@@ -4,7 +4,8 @@
  * lib/frikik/sim.ts'te (belirlenimci; sunucu aynı kodu çalıştırır) — burası yalnız çizer ve girdiyi toplar.
  *
  * Kamera topun arkasında, kaleye bakar. Baraj ve kaleci oyuncak "peg" figürler. Kontrol (sapan): topu tut, geriye çek
- * — yön çekmenin tersi, güç çekme uzunluğu; bırakırken parmağı yana kıvır → falso. Yalnız KISA bir yön oku (ilk ~1,8 m)
+ * — yön çekmenin tersi, güç çekme uzunluğu. Falso: topun altındaki VURUŞ NOKTASI kaydırıcısı (sağdan vurmak sola
+ * kıvırır; sürükle, ←/→, A/D, tekerlek; atışlar arasında kalır) + mobilde bırakırken yana kıvırma (ek). Yalnız KISA bir yön oku (ilk ~1,8 m)
  * ve güç çubuğu gösterilir; topun nereye gideceği (yükseklik, falso, sapma) oyuncunun tahminine kalır.
  * Çekme yolu 16 noktalı tam sayı girdiye çevrilir (lib/frikik/pull.ts); gerisini simülasyon hesaplar.
  * Akış: tur (nişan) → uçuş → sonuç beklemesi → sıradaki tur … 5 vuruş → `onFinish`.
@@ -72,7 +73,7 @@ import {
   type ShotResult,
   type ShotState,
 } from '@/lib/frikik/sim';
-import { flickPx, pullToInput, type ScreenPoint } from '@/lib/frikik/pull';
+import { adjustContact, contactToFlick, flickPx, pullToInput, type ScreenPoint } from '@/lib/frikik/pull';
 
 export type FrikikSummary = { seed: number; inputs: ShotInput[]; results: ShotResult[]; total: number };
 
@@ -82,8 +83,10 @@ export type FrikikOptions = {
   canvasClassName: string;
   handleClassName: string;
   goalClassName: string;
-  /** Nişan katmanı (SVG: kısa yön oku, güç çubuğu) sınıfı. */
+  /** Nişan katmanı (SVG: kısa yön oku, güç çubuğu, vuruş noktası) sınıfı. */
   trailClassName: string;
+  /** Vuruş noktası tutamağı (topun altındaki kaydırıcı) sınıfı. */
+  contactClassName: string;
   goalLabel: string;
   onRound: (index: number) => void;
   onShot: (index: number, result: ShotResult, total: number) => void;
@@ -224,20 +227,31 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
   const trail = document.createElementNS(SVG_NS, 'svg');
   trail.setAttribute('class', opts.trailClassName);
   trail.setAttribute('aria-hidden', 'true');
-  trail.style.visibility = 'hidden';
-  const arrowShadow = el('polyline', { fill: 'none', stroke: 'rgba(0,0,0,0.45)', 'stroke-width': 9, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, trail);
-  const arrowLine = el('polyline', { fill: 'none', stroke: '#fff', 'stroke-width': 5, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, trail);
-  const arrowHead = el('polygon', { fill: '#fff', stroke: 'rgba(0,0,0,0.45)', 'stroke-width': 1.5, 'stroke-linejoin': 'round' }, trail);
+  const aimGroup = el('g', { visibility: 'hidden' }, trail);
+  const arrowShadow = el('polyline', { fill: 'none', stroke: 'rgba(0,0,0,0.45)', 'stroke-width': 9, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, aimGroup);
+  const arrowLine = el('polyline', { fill: 'none', stroke: '#fff', 'stroke-width': 5, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, aimGroup);
+  const arrowHead = el('polygon', { fill: '#fff', stroke: 'rgba(0,0,0,0.45)', 'stroke-width': 1.5, 'stroke-linejoin': 'round' }, aimGroup);
   // Güç çubuğu: çok güçsüz | uygun | aşırı güçlü (bölgeler tura göre: powerWindow) + imleç
   const BAR_W = 150;
   const BAR_H = 6;
-  const bar = el('g', {}, trail);
+  const bar = el('g', {}, aimGroup);
   el('rect', { x: -3, y: -3, width: BAR_W + 6, height: BAR_H + 6, rx: 6, fill: 'rgba(6,12,20,0.6)' }, bar);
   const barWeak = el('rect', { x: 0, y: 0, width: 1, height: BAR_H, fill: '#e5a23d' }, bar);
   const barOk = el('rect', { x: 0, y: 0, width: 1, height: BAR_H, fill: '#00a76f' }, bar);
   const barOver = el('rect', { x: 0, y: 0, width: 1, height: BAR_H, fill: '#e5322d' }, bar);
   const barMarker = el('rect', { x: -2, y: -4, width: 4, height: BAR_H + 8, rx: 2, fill: '#fff' }, bar);
-  host.append(canvas, trail, handle, goalText);
+  // Vuruş noktası: topun altında kaydırıcı (iz + orta çentik + nokta); nişan alınırken görünür
+  const contactGroup = el('g', { visibility: 'hidden' }, trail);
+  const contactTrack = el('rect', { height: 6, rx: 3, fill: 'rgba(6,12,20,0.55)', stroke: 'rgba(255,255,255,0.35)', 'stroke-width': 1 }, contactGroup);
+  const contactMid = el('rect', { width: 2, height: 10, fill: 'rgba(255,255,255,0.6)' }, contactGroup);
+  const contactDot = el('circle', { r: 7, fill: '#ffc83d', stroke: '#0b1511', 'stroke-width': 2 }, contactGroup);
+  const contactHandle = document.createElement('div');
+  contactHandle.className = opts.contactClassName;
+  contactHandle.setAttribute('role', 'slider');
+  contactHandle.setAttribute('aria-valuemin', '-100');
+  contactHandle.setAttribute('aria-valuemax', '100');
+  contactHandle.tabIndex = 0;
+  host.append(canvas, trail, handle, contactHandle, goalText);
   const maxAniso = renderer.capabilities.getMaxAnisotropy();
 
   const scene = new Scene();
@@ -359,6 +373,10 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
   let swiping: { id: number; samples: (ScreenPoint & { t: number })[]; input: ShotInput | null } | null = null;
   /** Yana kıvrım (falso) penceresi: yön bu kadar önceki çekme noktasından, falso o andan beri yana kaymadan. */
   const FLICK_WINDOW_MS = 130;
+  /** Vuruş noktası −1…1 (sağ pozitif); atışlar ve seriler arasında kalır. */
+  let contact = 0;
+  let contactDrag: { id: number } | null = null;
+  const CONTACT_STEP = 0.1;
   const ballPos = new Vector3();
   const camPos = new Vector3();
   const camLook = new Vector3();
@@ -397,7 +415,7 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
     shot = null;
     swiping = null;
     handle.removeAttribute('data-dragging');
-    trail.style.visibility = 'hidden';
+    aimGroup.setAttribute('visibility', 'hidden');
     ballPos.set(round.ball.x, BALL_R, round.ball.z);
     wallPegs.forEach((w, k) => {
       const f = round!.wall[k];
@@ -427,9 +445,25 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
     ballScreen.r = Math.max(32, rPx * 1.6);
     const show = phase === 'aim' && projected.z < 1;
     handle.style.visibility = show ? '' : 'hidden';
+    contactHandle.style.visibility = show ? '' : 'hidden';
+    contactGroup.setAttribute('visibility', show ? 'visible' : 'hidden');
     if (!show) return;
     handle.style.width = handle.style.height = `${ballScreen.r * 2}px`;
     handle.style.transform = `translate(${ballScreen.x - ballScreen.r}px, ${ballScreen.y - ballScreen.r}px)`;
+    // Vuruş noktası kaydırıcısı: topun hemen altında, top genişliğinde
+    const half = Math.max(26, ballScreen.r * 0.9);
+    const cy = ballScreen.y + ballScreen.r + 14;
+    const cx = ballScreen.x + contact * (half - 7);
+    contactTrack.setAttribute('x', String(ballScreen.x - half));
+    contactTrack.setAttribute('y', String(cy - 3));
+    contactTrack.setAttribute('width', String(half * 2));
+    contactMid.setAttribute('x', String(ballScreen.x - 1));
+    contactMid.setAttribute('y', String(cy - 5));
+    contactDot.setAttribute('cx', String(cx));
+    contactDot.setAttribute('cy', String(cy));
+    contactHandle.style.width = `${half * 2 + 24}px`;
+    contactHandle.style.transform = `translate(${ballScreen.x - half - 12}px, ${cy - 16}px)`;
+    contactHandle.setAttribute('aria-valuenow', String(Math.round(contact * 100)));
   };
 
   const toScreen = (x: number, y: number, z: number) => {
@@ -455,7 +489,10 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
       }
     }
     const anchor = s[anchorIdx]!;
-    return pullToInput(s.slice(0, anchorIdx + 1), flickPx(anchor, s[s.length - 1]!), maxPullPx(), roundTick);
+    const input = pullToInput(s.slice(0, anchorIdx + 1), flickPx(anchor, s[s.length - 1]!), maxPullPx(), roundTick);
+    // Vuruş noktası (ana falso) + bırakıştaki yana kıvrım (mobilde ek)
+    if (input) input.flick = Math.max(-2000, Math.min(2000, input.flick + contactToFlick(contact)));
+    return input;
   };
 
   /** Girdiyi günceller; kısa yön okunu (sapmasız nişan, ilk ~1,8 m, falso yönünde hafif eğik) ve güç çubuğunu çizer. */
@@ -464,7 +501,7 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
     swiping.input = computeInput(now);
     const params = swiping.input ? shotParams(round, swiping.input) : null;
     if (!params) {
-      trail.style.visibility = 'hidden';
+      aimGroup.setAttribute('visibility', 'hidden');
       return;
     }
     const pts: { x: number; y: number }[] = [];
@@ -489,7 +526,7 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
     );
     bar.setAttribute('transform', `translate(${(width - BAR_W) / 2}, ${height - 26})`);
     barMarker.setAttribute('x', String(params.power * BAR_W - 2));
-    trail.style.visibility = '';
+    aimGroup.setAttribute('visibility', 'visible');
   };
 
   const rotateBall = (spin: { x: number; y: number; z: number }, dt: number) => {
@@ -644,13 +681,52 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
     const input = e.type === 'pointercancel' ? null : computeInput(e.timeStamp);
     swiping = null;
     handle.removeAttribute('data-dragging');
-    trail.style.visibility = 'hidden';
+    aimGroup.setAttribute('visibility', 'hidden');
     if (!round || phase !== 'aim') return;
     // Geçersiz çekme (çok kısa / geriye doğru değil): vuruş harcanmaz, yeniden denenir.
     if (!input || !shotParams(round, input)) return;
     inputs.push(input);
     shot = startShot(round, input);
     phase = 'flight';
+  };
+  // Vuruş noktası: sürükle (fare / dokunma), ←/→ ve A/D, tekerlek
+  const setContact = (v: number) => {
+    contact = adjustContact(v, 0);
+    placeHandle();
+  };
+  const onContactDown = (e: PointerEvent) => {
+    if (phase !== 'aim' || swiping) return;
+    e.preventDefault();
+    e.stopPropagation();
+    contactDrag = { id: e.pointerId };
+    try {
+      contactHandle.setPointerCapture(e.pointerId);
+    } catch {
+      // yakalama olmadan da çalışır
+    }
+    contactHandle.focus({ preventScroll: true });
+    onContactMove(e);
+  };
+  const onContactMove = (e: PointerEvent) => {
+    if (!contactDrag || e.pointerId !== contactDrag.id) return;
+    const half = Math.max(26, ballScreen.r * 0.9) - 7;
+    setContact((local(e).x - ballScreen.x) / half);
+  };
+  const onContactUp = (e: PointerEvent) => {
+    if (contactDrag && e.pointerId === contactDrag.id) contactDrag = null;
+  };
+  const onKey = (e: KeyboardEvent) => {
+    const k = e.key.toLowerCase();
+    const dir = k === 'arrowleft' || k === 'a' ? -1 : k === 'arrowright' || k === 'd' ? 1 : 0;
+    if (!dir || phase !== 'aim') return;
+    e.preventDefault();
+    setContact(contact + dir * CONTACT_STEP);
+  };
+  const onWheel = (e: WheelEvent) => {
+    if (phase !== 'aim') return;
+    e.preventDefault();
+    const d = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+    if (d) setContact(contact + (d > 0 ? 1 : -1) * CONTACT_STEP * 0.5);
   };
   const onVisibility = () => {
     pageVisible = document.visibilityState === 'visible';
@@ -679,6 +755,15 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
   handle.addEventListener('pointermove', onMove);
   handle.addEventListener('pointerup', onUp);
   handle.addEventListener('pointercancel', onUp);
+  contactHandle.addEventListener('pointerdown', onContactDown);
+  contactHandle.addEventListener('pointermove', onContactMove);
+  contactHandle.addEventListener('pointerup', onContactUp);
+  contactHandle.addEventListener('pointercancel', onContactUp);
+  for (const t of [handle, contactHandle]) {
+    t.addEventListener('keydown', onKey);
+    t.addEventListener('wheel', onWheel, { passive: false });
+  }
+  handle.tabIndex = 0;
   document.addEventListener('visibilitychange', onVisibility);
   canvas.addEventListener('webglcontextlost', onContextLost);
   themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
@@ -719,6 +804,14 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
       handle.removeEventListener('pointermove', onMove);
       handle.removeEventListener('pointerup', onUp);
       handle.removeEventListener('pointercancel', onUp);
+      contactHandle.removeEventListener('pointerdown', onContactDown);
+      contactHandle.removeEventListener('pointermove', onContactMove);
+      contactHandle.removeEventListener('pointerup', onContactUp);
+      contactHandle.removeEventListener('pointercancel', onContactUp);
+      for (const t of [handle, contactHandle]) {
+        t.removeEventListener('keydown', onKey);
+        t.removeEventListener('wheel', onWheel);
+      }
       canvas.removeEventListener('webglcontextlost', onContextLost);
       scene.traverse((o: Object3D) => {
         const mesh = o as Mesh;
@@ -730,6 +823,7 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
       canvas.remove();
       trail.remove();
       handle.remove();
+      contactHandle.remove();
       goalText.remove();
     },
   };

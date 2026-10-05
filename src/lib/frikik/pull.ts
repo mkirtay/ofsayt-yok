@@ -4,7 +4,7 @@
  * Buradaki kayan nokta işlemleri sonucu etkilemez: sunucu yalnız üretilen tam sayıları görür ve yönü, gücü, falsoyu,
  * sapmayı onlardan hesaplar (sim.ts → shotParams).
  */
-import { MAX_RELEASE_TICK, PULL, PULL_POINTS, type ShotInput } from './sim';
+import { FLICK, MAX_RELEASE_TICK, PULL, PULL_POINTS, type ShotInput } from './sim';
 
 export type ScreenPoint = { x: number; y: number };
 
@@ -48,4 +48,15 @@ export function pullToInput(path: readonly ScreenPoint[], flick: number, maxPull
   const clampInt = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, Math.round(v)));
   const pts = resamplePath(path, PULL_POINTS.client).map((p): [number, number] => [clampInt(p.x * k, -3000, 3000), clampInt(p.y * k, -3000, 3000)]);
   return { tick: clampInt(Math.floor(tick), 0, MAX_RELEASE_TICK), flick: clampInt(flick * k, -2000, 2000), pts };
+}
+
+/** Vuruş noktası (−1 sol … 0 orta … 1 sağ) → `flick`: topa sağdan vurmak topu SOLA kıvırır (gerçek fizik). */
+export function contactToFlick(contact: number): number {
+  const v = Math.round(Math.max(-1, Math.min(1, contact)) * FLICK.full);
+  return v === 0 ? 0 : -v;
+}
+
+/** Vuruş noktasını adımla kaydırır (klavye / tekerlek), −1…1 içinde tutar. */
+export function adjustContact(contact: number, delta: number): number {
+  return Math.max(-1, Math.min(1, Math.round((contact + delta) * 100) / 100));
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { makeRound, parseShotInput, shotParams } from './sim';
-import { flickPx, pullToInput, resamplePath, type ScreenPoint } from './pull';
+import { adjustContact, contactToFlick, flickPx, pullToInput, resamplePath, type ScreenPoint } from './pull';
 
 describe('geri çekme → girdi', () => {
   it('yol yay uzunluğuna göre eşit aralıklı 16 noktaya iner; uçlar korunur', () => {
@@ -41,5 +41,17 @@ describe('geri çekme → girdi', () => {
     expect(flickPx({ x: 0, y: 0 }, { x: 25, y: 0 })).toBe(0);
     // Eğik çekmede de "sağ" çekmenin sağıdır
     expect(flickPx({ x: 60, y: 80 }, { x: 60 + 8, y: 80 - 6 })).toBeCloseTo(10, 9);
+  });
+
+  it('vuruş noktası → flick: sağdan vurmak sola kıvırır (negatif), orta sıfır, sınırlı; adımla ayar −1…1 içinde', () => {
+    expect(contactToFlick(0)).toBe(0);
+    expect(contactToFlick(1)).toBe(-420);
+    expect(contactToFlick(-0.5)).toBe(210);
+    expect(contactToFlick(3)).toBe(-420);
+    expect(shotParams(makeRound(1, 0), { tick: 0, flick: contactToFlick(1), pts: Array.from({ length: 16 }, (_, i) => [0, i * 40] as [number, number]) })!.curve).toBe(-1);
+    expect(adjustContact(0, 0.1)).toBe(0.1);
+    expect(adjustContact(0.95, 0.1)).toBe(1);
+    expect(adjustContact(-0.95, -0.1)).toBe(-1);
+    expect(adjustContact(0.1 + 0.2, 0)).toBe(0.3); // yuvarlama: 0,30000000000000004 değil
   });
 });

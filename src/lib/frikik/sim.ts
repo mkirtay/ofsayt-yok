@@ -300,7 +300,7 @@ export function powerWindow(round: Round): { weak: number; over: number } {
     const vh = dist * Math.sqrt(TUNING.gravity / (2 * drop));
     return clamp((vh - SHOT_SPEED.min) / (SHOT_SPEED.max - SHOT_SPEED.min), 0, 1);
   };
-  return { weak: toPower(0.3), over: toPower(GOAL.height - 0.3) };
+  return { weak: toPower(0.12), over: toPower(GOAL.height - 0.2) };
 }
 
 // ── Vuruş simülasyonu ─────────────────────────────────────────────────────────────────────────────────

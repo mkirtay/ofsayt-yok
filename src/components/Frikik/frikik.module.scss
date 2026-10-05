@@ -109,6 +109,29 @@
   &[data-dragging] {
     cursor: grabbing;
   }
+
+  &:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+  }
+}
+
+// Vuruş noktası kaydırıcısı tutamağı (topun altında; görseli SVG katmanında)
+.contact {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 32px;
+  z-index: 2;
+  touch-action: none;
+  cursor: ew-resize;
+  -webkit-tap-highlight-color: transparent;
+
+  &:focus-visible {
+    outline: 2px solid #ffc83d;
+    outline-offset: -2px;
+    border-radius: 16px;
+  }
 }
 
 .hud {
