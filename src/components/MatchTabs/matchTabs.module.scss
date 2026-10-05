@@ -2,6 +2,8 @@
 
 // Chip dili (lig filtresiyle aynı) — dar panelde taşarsa yatay kayar.
 .tabList {
+  // Derin bağlantıyla (`?sekme=…`) kaydırınca sabit header'ın altında kalmasın.
+  scroll-margin-top: calc(var(--header-height, 64px) + 12px);
   display: flex;
   align-items: center;
   gap: $spacing-2;

@@ -40,6 +40,10 @@ describe('AI Asistan kartları', () => {
     expect(text(html)).toContain('En olası sonuç: Kasımpaşa kazanır %49');
     expect(html).toContain('href="/matches/1-galatasaray-kasimpasa?sekme=ai-analiz"');
     expect(text(render({ kind: 'none', match, reason: 'scheduled', signedIn: true, cost: 1 }))).toContain('Analiz maçtan yaklaşık 3 saat önce hazırlanır.');
+    // Kartta maç adı + saat (Türkiye saati) + tek düğme/link.
+    const timed = render({ kind: 'none', match: { ...match, kickoffMs: Date.UTC(2026, 9, 9, 17, 0) }, reason: 'self-serve', signedIn: true, cost: 1 });
+    expect(text(timed)).toMatch(/Galatasaray – Kasımpaşa 9 Eki 20:00/);
+    expect(timed.match(/<a /g)).toHaveLength(1);
     expect(text(render({ kind: 'none', match, reason: 'not-planned', signedIn: true, cost: 1 }))).toContain('Bu maç için analiz hazırlanmıyor.');
   });
 

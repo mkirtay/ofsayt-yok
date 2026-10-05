@@ -23,6 +23,11 @@ type Props<K extends string> = {
   prerender?: readonly K[];
 };
 
+/** Ziyaret edilen sekmeler (panelleri mount edilir); zaten varsa aynı dizi döner. */
+export function markVisited<K extends string>(visited: readonly K[], key: K): readonly K[] {
+  return visited.includes(key) ? visited : [...visited, key];
+}
+
 /**
  * Maç detayının DÜZ (tek seviyeli) sekme şeridi — iç içe alt-sekme yok.
  * Bir sekme açıldıktan sonra paneli DOM'da kalır (yalnızca `hidden`), böylece
@@ -33,9 +38,12 @@ type Props<K extends string> = {
 export default function MatchTabs<K extends string>({ tabs, active, onChange, ariaLabel, prerender = [] }: Props<K>) {
   const uid = useId();
   const [visited, setVisited] = useState<readonly K[]>(() => [active, ...prerender.filter((k) => k !== active)]);
+  // Sekme DIŞARIDAN seçildiyse (derin bağlantı: `?sekme=ai-analiz`) paneli de mount et — yoksa başlık seçili görünür
+  // ama içerik çizilmezdi (hiç açılmamış ve prerender edilmemiş sekme).
+  if (!visited.includes(active)) setVisited(markVisited(visited, active));
 
   const select = (key: K) => {
-    setVisited((prev) => (prev.includes(key) ? prev : [...prev, key]));
+    setVisited((prev) => markVisited(prev, key));
     onChange(key);
   };
 
@@ -70,7 +78,7 @@ export default function MatchTabs<K extends string>({ tabs, active, onChange, ar
       </div>
 
       {tabs
-        .filter(({ key }) => visited.includes(key))
+        .filter(({ key }) => visited.includes(key) || key === active)
         .map(({ key, render }) => (
           <div
             key={key}

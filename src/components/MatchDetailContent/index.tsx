@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import Router from 'next/router';
 import { useTranslation } from '@/lib/i18n';
 import MatchCard from '@/components/MatchCard';
 import EventTimeline from '@/components/EventTimeline';
@@ -13,6 +14,7 @@ import MatchForumTab from '@/components/MatchForumTab';
 import type { MatchDetailState } from '@/hooks/useMatchDetail';
 import { useMatchAnalysis } from '@/hooks/useMatchAnalysis';
 import { matchDisplayState } from '@/utils/matchDisplayState';
+import { applyTabDeepLink } from './tabDeepLink';
 import styles from './matchDetailContent.module.scss';
 
 type Props = {
@@ -37,10 +39,7 @@ const PRERENDER_ANALYSIS: readonly MatchTabKey[] = ['analysis'];
 /** Varsayılan sekme: Genel Bakış (veri hazır, AI kredisi harcamaz). */
 export const DEFAULT_MATCH_TAB: MatchTabKey = 'overview';
 
-/** Derin bağlantı: `?sekme=ai-analiz` (AI Asistan'ın maç linki) → AI Analiz sekmesi. */
-export function tabFromSearch(search: string): MatchTabKey | null {
-  return new URLSearchParams(search).get('sekme') === 'ai-analiz' ? 'analysis' : null;
-}
+export { tabFromSearch } from './tabDeepLink';
 
 /**
  * Maç detayının ANA içeriği — sayfa ve split-view paneli AYNI IA: kart + dört eşit sekme
@@ -53,12 +52,21 @@ export default function MatchDetailContent({ detail, requestedMatchId, variant =
   const { match, matchLoading, statsLoading, eventsLoading, lineupsLoading } = detail;
   const effectiveMatchId = detail.matchId || requestedMatchId;
   const [active, setActive] = useState<MatchTabKey>(DEFAULT_MATCH_TAB);
-  // Sekme mount sonrası adresten (SSR/CDN HTML'i sorgudan bağımsız kalsın; yalnız sayfa varyantında).
+  const contentRef = useRef<HTMLDivElement>(null);
+  // Derin bağlantı (`?sekme=ai-analiz`, yalnız sayfa varyantı): açılışta, sayfa içi geçişte ve geri/ileride sekmeyi
+  // seçer + şeride kaydırır. Mount sonrası çalışır (SSR/CDN HTML'i sorgudan bağımsız). YALNIZ sekme açar — üretim /
+  // kredi harcama buradan tetiklenemez (bkz. tabDeepLink.ts).
   useEffect(() => {
     if (variant !== 'page') return;
-    const fromUrl = tabFromSearch(window.location.search);
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- URL → sekme (SSR HTML'i sorgudan bağımsız)
-    if (fromUrl) setActive(fromUrl);
+    const scrollToTabs = () =>
+      window.requestAnimationFrame(() => {
+        const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+        contentRef.current?.querySelector('[role="tablist"]')?.scrollIntoView({ block: 'start', behavior: reduce ? 'auto' : 'smooth' });
+      });
+    const apply = (url: string) => applyTabDeepLink(url, { selectTab: setActive, scrollToTabs });
+    apply(window.location.search);
+    Router.events.on('routeChangeComplete', apply);
+    return () => Router.events.off('routeChangeComplete', apply);
   }, [variant]);
   // AI analiz/kredi durumu sayfa açılışında çekilir — sekmeye girince beklemeden hazır olsun.
   const analysisState = useMatchAnalysis(effectiveMatchId, initialAnalysisPreview);
@@ -133,7 +141,7 @@ export default function MatchDetailContent({ detail, requestedMatchId, variant =
   );
 
   return (
-    <div className={`${styles.content} ${variant === 'panel' ? styles.contentPanel : ''}`.trim()}>
+    <div ref={contentRef} className={`${styles.content} ${variant === 'panel' ? styles.contentPanel : ''}`.trim()}>
       <MatchCard match={match} loading={matchLoading} initialH2h={initialH2h} />
       <MatchTabs
         tabs={tabs}

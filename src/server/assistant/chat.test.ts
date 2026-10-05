@@ -11,7 +11,7 @@ vi.mock('./tools', () => ({
 }));
 vi.mock('@/services/aiAnalysisService', () => ({ openAiNoReasoningParams: (_m: string, temperature: number) => ({ temperature, reasoning_effort: 'none' }) }));
 
-import { MAX_TOOL_ROUNDS, assistantCostMicroUsd, runAssistantChat, type AssistantChatClient, type AssistantEvent } from './chat';
+import { MAX_TOOL_ROUNDS, assistantCostMicroUsd, finalizeAttachments, runAssistantChat, type AssistantChatClient, type AssistantEvent } from './chat';
 
 type Chunk = Record<string, unknown>;
 const text = (...parts: string[]): Chunk[] => [...parts.map((p) => ({ choices: [{ delta: { content: p } }] })), { choices: [], usage: { prompt_tokens: 2500, completion_tokens: 40, prompt_tokens_details: { cached_tokens: 2400 } } }];
@@ -66,7 +66,9 @@ describe('asistan sohbet döngüsü', () => {
     expect(second[0]!.role).toBe('system');
     expect(answer).toBe('Önizlemeye göre Galatasaray %55. Tamamı krediyle açılır.');
     expect(events.find((e) => e.type === 'card')).toEqual({ type: 'card', card: LOCKED_CARD });
-    expect(events.find((e) => e.type === 'links')).toEqual({ type: 'links', links: [{ label: 'Maç', href: '/matches/1-a-b?sekme=ai-analiz' }] });
+    // Analiz kartı kendi düğmesini taşır: ayrıca link gönderilmez (dış adres zaten hiç geçmez).
+    expect(events.filter((e) => e.type === 'card')).toHaveLength(1);
+    expect(events.some((e) => e.type === 'links')).toBe(false);
     expect(result).toMatchObject({ outcome: 'answered', tools: ['get_match_analysis'], usage: { input: 5000, cached: 2400, output: 60 } });
     expect(result.costMicroUsd).toBe(assistantCostMicroUsd({ input: 5000, cached: 2400, output: 60 }));
   });
@@ -116,6 +118,38 @@ describe('asistan sohbet döngüsü', () => {
     const system = (bodies[0]!.messages as Array<{ content: string }>)[0]!.content;
     expect(system).toContain('message_for_user alanındaki cümleyi AYNEN aktar');
     expect(system).toContain('"self_serve" ve "not_planned" iken "3 saat"');
+  });
+
+  it('ekler sade: en çok 1 kart + 2 link; aynı hedef tekrarlanmaz; analiz kartı varken maç listesi ve linkler düşer', async () => {
+    const m = (id: number) => ({ id, home: 'A', away: 'B', kickoffMs: null, status: 'NOT STARTED', href: `/matches/${id}-a-b` });
+    const matches = { type: 'matches' as const, matches: [m(1), m(2)] };
+    const analysis = { type: 'analysis' as const, card: { kind: 'none' } as never };
+    const links = [
+      { label: 'A – B', href: '/matches/1-a-b' }, // karttaki maç → tekrar
+      { label: 'Takım', href: '/teams/34' },
+      { label: 'Takım (yine)', href: '/teams/34?x=1' }, // aynı hedef
+      { label: 'Dış', href: 'https://evil.example' },
+      { label: 'Puan', href: '/standings' },
+      { label: 'Ana', href: '/' },
+    ];
+    expect(finalizeAttachments([matches], links)).toEqual({ card: matches, links: [{ label: 'Takım', href: '/teams/34' }, { label: 'Puan', href: '/standings' }] });
+    expect(finalizeAttachments([matches, analysis, matches], links)).toEqual({ card: analysis, links: [] });
+    expect(finalizeAttachments([], links.slice(1, 2))).toEqual({ card: null, links: [{ label: 'Takım', href: '/teams/34' }] });
+
+    // Uçtan uca: iki araç turu (maç listesi + analiz yok) → tek kart (analiz), link yok, tek cümle.
+    const none = { type: 'analysis', card: { kind: 'none', reason: 'self-serve' } };
+    let call = 0;
+    const { runAssistantTool } = await import('./tools');
+    vi.mocked(runAssistantTool).mockImplementation(async () => {
+      call++;
+      return call === 1
+        ? { ok: true, data: {}, card: matches, links: [{ label: 'Karşıyaka', href: '/teams/1' }] }
+        : { ok: true, data: { status: 'self_serve' }, card: none as never, reply: 'Bu maç için hazır analiz yok.', links: [{ label: 'A – B', href: '/matches/1-a-b?sekme=ai-analiz' }] };
+    });
+    const { events, answer } = await run([toolCall('get_fixtures', '{}'), toolCall('get_match_analysis', '{}'), text('kullanılmaz')]);
+    expect(events.filter((e) => e.type === 'card')).toEqual([{ type: 'card', card: none }]);
+    expect(events.some((e) => e.type === 'links')).toBe(false);
+    expect(answer).toBe('Bu maç için hazır analiz yok.');
   });
 
   it('boş yanıt → empty', async () => {

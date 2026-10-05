@@ -108,8 +108,8 @@ const matchLinks = (items: AssistantMatchItem[], max = 2): AssistantLink[] => it
 async function findTeam(args: Record<string, unknown>): Promise<ToolResult> {
   const teams = (await resolveTeam(strArg(args.query, 'query'))).slice(0, 3);
   return {
+    // Link yok: takım bulma ara adımdır (takım çipi yanıtı kalabalıklaştırıyordu); takım linkini get_team_overview verir.
     data: teams.length ? { teams: teams.map((t) => ({ team_id: t.id, name: t.name })) } : { teams: [], note: 'not_found' },
-    links: teams.slice(0, 1).map((t) => ({ label: t.name, href: `/teams/${t.id}` })),
   };
 }
 

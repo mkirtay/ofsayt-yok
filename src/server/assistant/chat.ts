@@ -3,12 +3,37 @@
  *
  * Mesaj başına en çok MAX_TOOL_ROUNDS araç turu; sonrasında model araçsız yanıtlamaya zorlanır. Metin cümle kapısından
  * geçer (bahis terimi → kesilir). İstemciye giden olaylar: `delta` (metin), `card` (sunucunun araç çıktısından ürettiği
- * kart), `links` (yalnız site içi yollar). Model metni link ya da kart üretemez.
+ * kart; yanıt başına en çok 1), `links` (yalnız site içi yollar; en çok 2, aynı hedef tekrarsız). Model metni link ya da
+ * kart üretemez.
  */
 import { openAiNoReasoningParams } from '@/services/aiAnalysisService';
 import { buildAssistantSystemPrompt } from './prompt';
 import { openAiToolDefinitions, runAssistantTool, type AssistantCard, type ToolContext } from './tools';
 import { createSentenceGate, sanitizeLinks, type AssistantLink } from './outputFilter';
+
+export const MAX_LINKS_PER_REPLY = 2;
+
+const linkTarget = (href: string) => href.split(/[?#]/)[0]!;
+
+/**
+ * Yanıt ekleri sade kalsın: en çok 1 kart + en çok 2 link, aynı hedefe (sorgu/parça hariç yol) tek link.
+ * - Kart: analiz kartı varsa o (kendi düğmesi/linki var → ayrıca link gönderilmez); yoksa son maç listesi kartı.
+ * - Maç kartındaki maçlara giden linkler tekrar edilmez.
+ */
+export function finalizeAttachments(cards: AssistantCard[], links: AssistantLink[]): { card: AssistantCard | null; links: AssistantLink[] } {
+  const card = [...cards].reverse().find((c) => c.type === 'analysis') ?? cards[cards.length - 1] ?? null;
+  if (card?.type === 'analysis') return { card, links: [] };
+  const taken = new Set(card?.type === 'matches' ? card.matches.map((m) => linkTarget(m.href)) : []);
+  const out: AssistantLink[] = [];
+  for (const l of sanitizeLinks(links, 20)) {
+    const target = linkTarget(l.href);
+    if (taken.has(target)) continue;
+    taken.add(target);
+    out.push(l);
+    if (out.length >= MAX_LINKS_PER_REPLY) break;
+  }
+  return { card, links: out };
+}
 
 export const ASSISTANT_OPENAI_MODEL = process.env.OPENAI_ASSISTANT_MODEL || 'gpt-6-luna';
 /** USD / 1M token: girdi, önbellekli girdi, çıktı (gpt-6-luna, 2026-10). Bütçe sigortası için tahmin. */
@@ -63,6 +88,7 @@ export async function runAssistantChat(opts: {
   const usage = { input: 0, cached: 0, output: 0 };
   const toolsUsed: string[] = [];
   const links: AssistantLink[] = [];
+  const cards: AssistantCard[] = [];
   const gate = createSentenceGate();
   let emitted = false;
   const send = (text: string) => {
@@ -124,7 +150,7 @@ export async function runAssistantChat(opts: {
     for (const call of toolCalls) {
       toolsUsed.push(call.name);
       const result = await runAssistantTool(call.name, call.arguments, ctx);
-      if (result.card) emit({ type: 'card', card: result.card });
+      if (result.card) cards.push(result.card);
       if (result.links) links.push(...result.links);
       if (result.reply) fixedReply = result.reply;
       messages.push({ role: 'tool', tool_call_id: call.id, content: JSON.stringify(result.data) });
@@ -137,8 +163,11 @@ export async function runAssistantChat(opts: {
   }
 
   send(gate.flush());
-  const safeLinks = sanitizeLinks(links);
-  if (safeLinks.length && !gate.blocked()) emit({ type: 'links', links: safeLinks });
+  if (!gate.blocked()) {
+    const attachments = finalizeAttachments(cards, links);
+    if (attachments.card) emit({ type: 'card', card: attachments.card });
+    if (attachments.links.length) emit({ type: 'links', links: attachments.links });
+  }
   return {
     outcome: gate.blocked() ? 'filtered' : emitted ? 'answered' : 'empty',
     tools: toolsUsed,

@@ -56,6 +56,11 @@ export function AnalysisCard({ card, t, actions }: { card: AssistantAnalysisCard
           <strong className={styles.matchTitle}>
             {card.match.home} – {card.match.away}
           </strong>
+          {card.match.kickoffMs != null ? (
+            <span className={styles.muted}>
+              {kickoffText(card.match.kickoffMs)} {kickoffTime(card.match.kickoffMs)}
+            </span>
+          ) : null}
           <p className={styles.text}>{t(card.reason === 'scheduled' ? 'card.none' : card.reason === 'self-serve' ? 'card.selfServe' : 'card.notPlanned', { cost: card.cost })}</p>
           {card.reason === 'self-serve' ? (
             // Yalnız yönlendirme: üretim maç sayfasında, kullanıcının kendi tıklamasıyla.
