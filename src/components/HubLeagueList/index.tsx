@@ -16,13 +16,22 @@ export type HubLeagueListProps = {
   matchCountByLeague: ReadonlyMap<number, number>;
   /** Fikstürdeki `league.image_path` (Sportmonks league_id → URL); yoksa deterministik CDN yolu. */
   apiLogoByLeague: ReadonlyMap<number, string>;
+  /** Açılınca aramaya odaklan (lig seçici). */
+  autoFocusSearch?: boolean;
 };
 
 /**
- * "Ligler" sekmesi: planımızdaki 34 lig, gruplu (bkz. config/hubLeagueGroups.ts), üstte arama. Yalnızca sekme açıkken
- * çizilir; logolar `loading="lazy"` → görünür alana gelince iner. Mobilde alt menüdeki Ligler de aynı liste.
+ * Lig listesi: planımızdaki 34 lig, gruplu (bkz. config/hubLeagueGroups.ts), üstte arama, canlı maç sayacı. Yan
+ * paneldeki lig seçici (HubLeaguePicker) açılınca çizilir; logolar `loading="lazy"`. Mobilde alt menüdeki Ligler de
+ * aynı seçiciyi (tam ekran) açar.
  */
-export default function HubLeagueList({ selectedId, onSelect, matchCountByLeague, apiLogoByLeague }: HubLeagueListProps) {
+export default function HubLeagueList({
+  selectedId,
+  onSelect,
+  matchCountByLeague,
+  apiLogoByLeague,
+  autoFocusSearch = false,
+}: HubLeagueListProps) {
   const { t } = useTranslation('match');
   const { t: tl } = useTranslation('leagues');
   const { locale } = useI18n();
@@ -42,6 +51,8 @@ export default function HubLeagueList({ selectedId, onSelect, matchCountByLeague
           aria-label={t('hub.leagueSearchPlaceholder')}
           autoComplete="off"
           spellCheck={false}
+          // Kullanıcı seçiciyi açtı: odak aramaya
+          autoFocus={autoFocusSearch}
         />
       </div>
       {visible.length === 0 ? (

@@ -31,7 +31,12 @@ import MatchCompetitionTopScorers from '@/components/MatchCompetitionTopScorers'
 import SubHeader, { type MatchTab } from '@/components/SubHeader';
 import { isUefaCupCompetitionId, type SidebarLeague } from '@/config/leagues';
 import { resolveSportmonksLeagueId } from '@/services/sportmonksProviderFlag';
-import { sportmonksLeagueIdOfHubSelection } from '@/utils/hubLeagueSelection';
+import { hubSelectionIdForLeague, sportmonksLeagueIdOfHubSelection } from '@/utils/hubLeagueSelection';
+import { HUB_LEAGUE_IDS } from '@/config/hubLeagueGroups';
+import { parseLeagueImagePath, sportmonksLeagueLogoUrl } from '@/utils/leagueLogo';
+import { competitionLogoNeedsBackdrop } from '@/utils/competitionLogo';
+import { readStoredHubLeague, storeHubLeague } from '@/utils/hubLeaguePreference';
+import HubLeaguePicker from '@/components/HubLeaguePicker';
 import { leagueDisplayName, leagueNameById } from '@/utils/leagueName';
 import { todayIsoIstanbul } from '@/utils/dateStrip';
 import { buildMatchHref } from '@/utils/matchUrl';
@@ -63,7 +68,8 @@ import { buildNightGroups } from './nightSection';
 import styles from '@/pages/index.module.scss';
 import { HUB_TAB_BOOT_SCRIPT, clearHubTabBoot } from '@/utils/hubTabBoot';
 
-type SidebarTab = 'standings' | 'leagues' | 'scorers';
+type SidebarTab = 'standings' | 'scorers';
+const SIDEBAR_TABS: SidebarTab[] = ['standings', 'scorers'];
 
 /**
  * Yalnızca geniş ekranda (split ≥ 1200 / Gündem ≥ 1440) görünen paneller ayrı chunk: mobil hiç indirmez.
@@ -147,8 +153,9 @@ export default function MatchHubPage({
   }, []);
   const [activeTab, setActiveTab] = useState<MatchTab>('all');
 
-  // Varsayılan sekme Puan Durumu (Puan Durumu + Gol Krallığı varsayılan görünümde)
+  // Yan panel: üstte lig seçici (seçili lig her iki sekmenin de ligi), altında Puan Durumu | Gol Krallığı.
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>('standings');
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [selectedCompId, setSelectedCompId] = useState(defaultCompetitionId);
   const homeMatchesQuery = useHomeHubMatches(selectedDate);
   /**
@@ -400,7 +407,14 @@ export default function MatchHubPage({
     return map;
   }, [allMatches, liveMatches, fixtureMatches]);
 
-  // Ligler sekmesi rozeti: ekrandaki günün maç sayısı (Sportmonks league_id → sayı), mevcut veriden.
+  // Lig seçici düğmesinin logosu: fikstürdeki görsel → config logosu → deterministik CDN yolu (liste satırlarıyla aynı).
+  const selectedSportmonksLeagueId = sportmonksLeagueIdOfHubSelection(selectedCompId);
+  const selectedLeagueLogo =
+    (selectedSportmonksLeagueId != null ? parseLeagueImagePath(apiLogoBySportmonksLeagueId.get(selectedSportmonksLeagueId)) : null) ??
+    selectedLeague?.logo ??
+    (selectedSportmonksLeagueId != null ? sportmonksLeagueLogoUrl(selectedSportmonksLeagueId) : null);
+
+  // Lig seçici rozeti: ekrandaki günün maç sayısı (Sportmonks league_id → sayı), mevcut veriden.
   const matchCountByLeague = useMemo(() => {
     const ids = new Set<number>();
     const counts = new Map<number, number>();
@@ -458,6 +472,12 @@ export default function MatchHubPage({
     [replaceQuery],
   );
 
+  /** Lig seçiciyi kapatır; alt menüden (`?panel=leagues`) açıldıysa param da temizlenir. */
+  const closePicker = useCallback(() => {
+    setPickerOpen(false);
+    if (parseSidebarTab(queryRef.current[SIDEBAR_PANEL_QUERY]) === 'leagues') replaceQuery({ [SIDEBAR_PANEL_QUERY]: null });
+  }, [replaceQuery]);
+
   const queryTab = router.query[MATCH_TAB_QUERY];
   const queryPanel = router.query[SIDEBAR_PANEL_QUERY];
   const queryLeague = router.query.league;
@@ -473,7 +493,10 @@ export default function MatchHubPage({
   useEffect(() => {
     if (!router.isReady) return;
     setActiveTab(parseMatchTab(queryTab) ?? 'all');
-    setSidebarTab(parseSidebarTab(queryPanel) ?? 'standings');
+    // `?panel=leagues` (mobil alt menü "Ligler"): lig seçici açılır (sekme değişmez); diğerleri sekme.
+    const panel = parseSidebarTab(queryPanel);
+    setPickerOpen(panel === 'leagues');
+    if (panel !== 'leagues') setSidebarTab(panel === 'scorers' ? 'scorers' : 'standings');
 
     // Mobil alt navigasyon: ilgili bölüme kaydır (yalnızca param DEĞİŞTİĞİNDE; durum çiplerinden değil)
     const navKey = `${String(queryTab ?? '')}|${String(queryPanel ?? '')}`;
@@ -496,9 +519,35 @@ export default function MatchHubPage({
     if (Number.isFinite(id) && sidebarLeagues.some((l) => l.id === id)) {
       setSelectedCompId(id);
       setSidebarTab('standings');
+      storeHubLeague({ id, rows: null });
     }
     replaceQuery({ league: null });
   }, [router.isReady, queryLeague, sidebarLeagues, replaceQuery]);
+
+  // Hatırlanan lig (localStorage): sunucu HTML'i varsayılan ligle gelir, hatırlanan lig mount'ta uygulanır. İskelet o
+  // ligin son görülen satır sayısıyla çizilir (tablo gelince kayma yok). UEFA kupaları geri yüklenmez: maç listesini
+  // fikstür moduna çevirip sayfa açılışında büyük kayma yapardı (kupa seçimi o oturumla sınırlı).
+  // Header aramasından `?league=` geldiyse o öncelikli (aşağıdaki etki uygular).
+  useEffect(() => {
+    if (router.query.league != null) return;
+    const allowed = new Set<number>([...sidebarLeagues.map((l) => l.id), ...HUB_LEAGUE_IDS.map(hubSelectionIdForLeague)]);
+    const stored = readStoredHubLeague((id) => allowed.has(id) && !isUefaCupCompetitionId(id));
+    if (!stored || stored.id === defaultCompetitionId) return;
+    // localStorage yalnız istemcide: mount'ta bir kez (hydration ile uyumlu, kalıp yukarıdaki "bugün" düzeltmesiyle aynı).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (stored.rows) setStandingsRowsSeen((prev) => ({ ...prev, [stored.id]: stored.rows! }));
+    setSelectedCompId(stored.id);
+    // Yalnız mount'ta.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Hatırlanan ligin satır sayısı güncel kalsın (yalnız kayıtlı lig seçiliyken; varsayılanı kendiliğinden yazmaz).
+  useEffect(() => {
+    const rows = standingsRowsSeen[selectedCompId];
+    if (!rows) return;
+    const cur = readStoredHubLeague(() => true);
+    if (cur?.id === selectedCompId && cur.rows !== rows) storeHubLeague({ id: selectedCompId, rows });
+  }, [selectedCompId, standingsRowsSeen]);
 
   // Split açıldıysa detay panellerinin kodunu boşta önceden indir (ilk tıklamada bekleme olmasın).
   useEffect(() => {
@@ -578,8 +627,23 @@ export default function MatchHubPage({
 
   function handleLeagueClick(competitionId: number) {
     setSelectedCompId(competitionId);
-    handleSidebarTabChange('standings');
+    storeHubLeague({ id: competitionId, rows: standingsRowsSeen[competitionId] ?? null });
+    closePicker();
   }
+
+  function exitFixtureMode() {
+    setSelectedCompId(defaultCompetitionId);
+    storeHubLeague({ id: defaultCompetitionId, rows: standingsRowsSeen[defaultCompetitionId] ?? null });
+  }
+
+  // Sekmeler: ← / → ile geçiş (WAI-ARIA tab kalıbı; odak yeni sekmeye).
+  const onSidebarTabKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    e.preventDefault();
+    const next = SIDEBAR_TABS[(SIDEBAR_TABS.indexOf(sidebarTab) + 1) % SIDEBAR_TABS.length]!;
+    handleSidebarTabChange(next);
+    document.getElementById(`hub-sidebar-tab-${next}`)?.focus();
+  };
 
   /** Seçili gün (bugün ya da ileri) tümüyle boşsa sıradaki maç günü gösterilir — yalnız "Tümü" sekmesinde. */
   const showNextMatchDay = activeTab === 'all' && selectedDate >= todayIso;
@@ -713,63 +777,69 @@ export default function MatchHubPage({
         >
           <aside id="hub-sidebar" className={styles.hubSidebar}>
             <div className={styles.sidebar}>
-              <nav className={styles.sidebarTabs}>
-                <button
-                  type="button"
-                  className={`${styles.sidebarTab} ${sidebarTab === 'standings' ? styles.sidebarTabActive : ''}`}
-                  onClick={() => handleSidebarTabChange('standings')}
-                >
-                  {t('hub.tabStandings')}
-                </button>
-                <button
-                  type="button"
-                  className={`${styles.sidebarTab} ${sidebarTab === 'leagues' ? styles.sidebarTabActive : ''}`}
-                  onClick={() => handleSidebarTabChange('leagues')}
-                >
-                  {t('hub.tabLeagues')}
-                </button>
-                <button
-                  type="button"
-                  className={`${styles.sidebarTab} ${sidebarTab === 'scorers' ? styles.sidebarTabActive : ''}`}
-                  onClick={() => handleSidebarTabChange('scorers')}
-                >
-                  {t('hub.tabScorers')}
-                </button>
-              </nav>
+              <HubLeaguePicker
+                open={pickerOpen}
+                onOpenChange={(open) => (open ? setPickerOpen(true) : closePicker())}
+                leagueName={selectedLeagueName}
+                logoSrc={selectedLeagueLogo}
+                logoBackdrop={selectedSportmonksLeagueId != null && competitionLogoNeedsBackdrop(selectedSportmonksLeagueId)}
+              >
+                <HubLeagueList
+                  selectedId={selectedCompId}
+                  onSelect={handleLeagueClick}
+                  matchCountByLeague={matchCountByLeague}
+                  apiLogoByLeague={apiLogoBySportmonksLeagueId}
+                  // Masaüstünde açılınca aramaya odak; mobilde klavye açılıp listeyi örtmesin
+                  autoFocusSearch={pickerOpen && !window.matchMedia(MOBILE_LAYOUT_QUERY).matches}
+                />
+              </HubLeaguePicker>
 
-              <div className={styles.sidebarContent}>
-                {sidebarTab === 'standings' && (
-                  <MatchCompetitionStandings
-                    data={standings}
-                    loading={standingsLoading}
-                    competitionName={selectedLeagueName}
-                    seasons={seasons}
-                    selectedSeasonId={effectiveSeasonId}
-                    onSeasonChange={handleSeasonChange}
-                    loadingRows={standingsLoadingRows}
-                  />
-                )}
+              {pickerOpen ? null : (
+                <>
+                  <div className={styles.sidebarTabs} role="tablist" aria-label={selectedLeagueName}>
+                    {SIDEBAR_TABS.map((tab) => (
+                      <button
+                        key={tab}
+                        id={`hub-sidebar-tab-${tab}`}
+                        type="button"
+                        role="tab"
+                        aria-selected={sidebarTab === tab}
+                        aria-controls="hub-sidebar-panel"
+                        tabIndex={sidebarTab === tab ? 0 : -1}
+                        className={`${styles.sidebarTab} ${sidebarTab === tab ? styles.sidebarTabActive : ''}`}
+                        onClick={() => handleSidebarTabChange(tab)}
+                        onKeyDown={onSidebarTabKeyDown}
+                      >
+                        {t(tab === 'standings' ? 'hub.tabStandings' : 'hub.tabScorers')}
+                      </button>
+                    ))}
+                  </div>
 
-                {sidebarTab === 'scorers' && (
-                  <MatchCompetitionTopScorers
-                    data={topScorers}
-                    loading={topScorersLoading}
-                    seasons={seasons}
-                    selectedSeasonId={effectiveSeasonId}
-                    onSeasonChange={handleSeasonChange}
-                  />
-                )}
+                  <div id="hub-sidebar-panel" role="tabpanel" aria-labelledby={`hub-sidebar-tab-${sidebarTab}`} className={styles.sidebarContent}>
+                    {sidebarTab === 'standings' && (
+                      <MatchCompetitionStandings
+                        data={standings}
+                        loading={standingsLoading}
+                        competitionName={selectedLeagueName}
+                        seasons={seasons}
+                        selectedSeasonId={effectiveSeasonId}
+                        onSeasonChange={handleSeasonChange}
+                        loadingRows={standingsLoadingRows}
+                      />
+                    )}
 
-                {sidebarTab === 'leagues' && (
-                  <HubLeagueList
-                    selectedId={selectedCompId}
-                    onSelect={handleLeagueClick}
-                    matchCountByLeague={matchCountByLeague}
-                    apiLogoByLeague={apiLogoBySportmonksLeagueId}
-                  />
-                )}
-
-              </div>
+                    {sidebarTab === 'scorers' && (
+                      <MatchCompetitionTopScorers
+                        data={topScorers}
+                        loading={topScorersLoading}
+                        seasons={seasons}
+                        selectedSeasonId={effectiveSeasonId}
+                        onSeasonChange={handleSeasonChange}
+                      />
+                    )}
+                  </div>
+                </>
+              )}
             </div>
             <AdSlot slot="hub-sidebar" format="rectangle" desktopOnly />
           </aside>
@@ -786,7 +856,7 @@ export default function MatchHubPage({
                   <button
                     type="button"
                     className={styles.fixtureModeExit}
-                    onClick={() => setSelectedCompId(defaultCompetitionId)}
+                    onClick={exitFixtureMode}
                   >
                     {t('hub.fixtureModeExit')}
                   </button>

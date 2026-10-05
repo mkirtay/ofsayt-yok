@@ -4,7 +4,7 @@ import path from 'node:path';
 import { renderToStaticMarkup } from 'react-dom/server';
 import HubLeagueList from './index';
 
-describe('<HubLeagueList /> (Ligler sekmesi)', () => {
+describe('<HubLeagueList /> (yan panel lig seçicisinin listesi)', () => {
   const html = renderToStaticMarkup(
     <HubLeagueList
       selectedId={-636}
@@ -48,5 +48,13 @@ describe('<HubLeagueList /> (Ligler sekmesi)', () => {
     const scss = readFileSync(path.resolve(__dirname, 'hubLeagueList.module.scss'), 'utf8');
     expect(scss).toMatch(/\.item \{[^}]*height: 44px;/);
     expect(scss).toMatch(/\.groupTitle \{[^}]*height: 30px;/);
+  });
+
+  it('seçici açılınca aramaya odaklanır (autoFocus yalnız istenince)', () => {
+    expect(html).not.toMatch(/<input[^>]*autofocus/i);
+    const focused = renderToStaticMarkup(
+      <HubLeagueList selectedId={6} onSelect={() => {}} matchCountByLeague={new Map()} apiLogoByLeague={new Map()} autoFocusSearch />,
+    );
+    expect(focused).toMatch(/<input[^>]*autofocus/i);
   });
 });
