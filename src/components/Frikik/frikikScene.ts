@@ -3,10 +3,10 @@
  * parçasında kalır. Yapı taşları giriş sahnesiyle ortak (components/pitch3d/pitchKit.ts); fizik ve skor
  * lib/frikik/sim.ts'te (belirlenimci; sunucu aynı kodu çalıştırır) — burası yalnız çizer ve girdiyi toplar.
  *
- * Kamera topun arkasında, kaleye bakar. Baraj ve kaleci oyuncak "peg" figürler. Kontrol: topun üstünden hedefe doğru
- * kaydır (swipe) — son nokta hedef, en yüksek kaydırma hızı güç, yolun eğriliği falso. Kaydırırken kesikli yörünge
- * önizlemesi (aynı simülasyondan: previewPath) ve güç çubuğu çizilir; bırakınca son önizlemenin girdisi AYNEN şut olur
- * → top önizlemeyi izler. Parmak titremesi yumuşatılır. Yol 16 noktalı tam sayı girdiye çevrilir (lib/frikik/swipe.ts).
+ * Kamera topun arkasında, kaleye bakar. Baraj ve kaleci oyuncak "peg" figürler. Kontrol (sapan): topu tut, geriye çek
+ * — yön çekmenin tersi, güç çekme uzunluğu; bırakırken parmağı yana kıvır → falso. Yalnız KISA bir yön oku (ilk ~1,8 m)
+ * ve güç çubuğu gösterilir; topun nereye gideceği (yükseklik, falso, sapma) oyuncunun tahminine kalır.
+ * Çekme yolu 16 noktalı tam sayı girdiye çevrilir (lib/frikik/pull.ts); gerisini simülasyon hesaplar.
  * Akış: tur (nişan) → uçuş → sonuç beklemesi → sıradaki tur … 5 vuruş → `onFinish`.
  * Sekme gizliyken / sahne ekran dışındayken döngü durur. `dispose()` GPU kaynaklarını bırakır.
  */
@@ -62,9 +62,8 @@ import {
   TICK,
   aimBasis,
   keeperZ,
-  POWER_ZONES,
   makeRound,
-  previewPath,
+  powerWindow,
   shotParams,
   startShot,
   stepShot,
@@ -73,7 +72,7 @@ import {
   type ShotResult,
   type ShotState,
 } from '@/lib/frikik/sim';
-import { effectiveMs, smoothPoint, swipeToInput, type GoalFrame, type ScreenPoint } from '@/lib/frikik/swipe';
+import { flickPx, pullToInput, type ScreenPoint } from '@/lib/frikik/pull';
 
 export type FrikikSummary = { seed: number; inputs: ShotInput[]; results: ShotResult[]; total: number };
 
@@ -83,7 +82,7 @@ export type FrikikOptions = {
   canvasClassName: string;
   handleClassName: string;
   goalClassName: string;
-  /** Önizleme katmanı (SVG: kesikli yörünge, hedef halkası, güç çubuğu) sınıfı. */
+  /** Nişan katmanı (SVG: kısa yön oku, güç çubuğu) sınıfı. */
   trailClassName: string;
   goalLabel: string;
   onRound: (index: number) => void;
@@ -214,7 +213,7 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
   const goalText = document.createElement('div');
   goalText.className = opts.goalClassName;
   goalText.textContent = opts.goalLabel;
-  // Önizleme katmanı (ekran uzayı, SVG): kesikli yörünge + hedef halkası + güç çubuğu. Yalnız kaydırırken görünür.
+  // Nişan katmanı (ekran uzayı, SVG): kısa yön oku + güç çubuğu. Yalnız çekerken görünür.
   const SVG_NS = 'http://www.w3.org/2000/svg';
   const el = (name: string, attrs: Record<string, string | number>, parent: Element) => {
     const node = document.createElementNS(SVG_NS, name);
@@ -226,17 +225,17 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
   trail.setAttribute('class', opts.trailClassName);
   trail.setAttribute('aria-hidden', 'true');
   trail.style.visibility = 'hidden';
-  const pathShadow = el('polyline', { fill: 'none', stroke: 'rgba(0,0,0,0.45)', 'stroke-width': 6, 'stroke-linecap': 'round', 'stroke-dasharray': '2 12' }, trail);
-  const pathLine = el('polyline', { fill: 'none', stroke: '#fff', 'stroke-width': 4, 'stroke-linecap': 'round', 'stroke-dasharray': '2 12' }, trail);
-  const targetRing = el('circle', { r: 9, fill: 'rgba(255,255,255,0.18)', stroke: '#fff', 'stroke-width': 2.5 }, trail);
-  // Güç çubuğu: çok güçsüz | uygun | aşırı güçlü bölgeleri + imleç
+  const arrowShadow = el('polyline', { fill: 'none', stroke: 'rgba(0,0,0,0.45)', 'stroke-width': 9, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, trail);
+  const arrowLine = el('polyline', { fill: 'none', stroke: '#fff', 'stroke-width': 5, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, trail);
+  const arrowHead = el('polygon', { fill: '#fff', stroke: 'rgba(0,0,0,0.45)', 'stroke-width': 1.5, 'stroke-linejoin': 'round' }, trail);
+  // Güç çubuğu: çok güçsüz | uygun | aşırı güçlü (bölgeler tura göre: powerWindow) + imleç
   const BAR_W = 150;
   const BAR_H = 6;
   const bar = el('g', {}, trail);
   el('rect', { x: -3, y: -3, width: BAR_W + 6, height: BAR_H + 6, rx: 6, fill: 'rgba(6,12,20,0.6)' }, bar);
-  el('rect', { x: 0, y: 0, width: BAR_W * POWER_ZONES.weak, height: BAR_H, fill: '#e5a23d' }, bar);
-  el('rect', { x: BAR_W * POWER_ZONES.weak, y: 0, width: BAR_W * (POWER_ZONES.over - POWER_ZONES.weak), height: BAR_H, fill: '#00a76f' }, bar);
-  el('rect', { x: BAR_W * POWER_ZONES.over, y: 0, width: BAR_W * (1 - POWER_ZONES.over), height: BAR_H, fill: '#e5322d' }, bar);
+  const barWeak = el('rect', { x: 0, y: 0, width: 1, height: BAR_H, fill: '#e5a23d' }, bar);
+  const barOk = el('rect', { x: 0, y: 0, width: 1, height: BAR_H, fill: '#00a76f' }, bar);
+  const barOver = el('rect', { x: 0, y: 0, width: 1, height: BAR_H, fill: '#e5322d' }, bar);
   const barMarker = el('rect', { x: -2, y: -4, width: 4, height: BAR_H + 8, rx: 2, fill: '#fff' }, bar);
   host.append(canvas, trail, handle, goalText);
   const maxAniso = renderer.capabilities.getMaxAnisotropy();
@@ -356,20 +355,10 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
   let inputs: ShotInput[] = [];
   let results: ShotResult[] = [];
   let total = 0;
-  /**
-   * Kaydırma: `raw` son işaretçi konumu; `path` yumuşatılmış yol (ilk nokta top); `peak` en yüksek hız (px/ms, ~60 ms
-   * pencere); `input` son önizlemenin girdisi (bırakınca aynen kullanılır).
-   */
-  let swiping: {
-    id: number;
-    raw: ScreenPoint & { t: number };
-    recent: (ScreenPoint & { t: number })[];
-    path: ScreenPoint[];
-    peak: number;
-    input: ShotInput | null;
-  } | null = null;
-  /** Yan hassasiyet: hedef, parmağın toptan yatay uzaklığının bu kadarı kayar (ince ayar). */
-  const AIM_GAIN_X = 0.8;
+  /** Çekme: işaretçi örnekleri (px, topun ekrandaki yerine göre; zamanlı) ve son hesaplanan girdi. */
+  let swiping: { id: number; samples: (ScreenPoint & { t: number })[]; input: ShotInput | null } | null = null;
+  /** Yana kıvrım (falso) penceresi: yön bu kadar önceki çekme noktasından, falso o andan beri yana kaymadan. */
+  const FLICK_WINDOW_MS = 130;
   const ballPos = new Vector3();
   const camPos = new Vector3();
   const camLook = new Vector3();
@@ -417,6 +406,12 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
       w.peg.position.set(f.x, 0, f.z);
       w.shadow.position.set(f.x, 0.008, f.z);
     });
+    const win = powerWindow(round);
+    barWeak.setAttribute('width', String(BAR_W * win.weak));
+    barOk.setAttribute('x', String(BAR_W * win.weak));
+    barOk.setAttribute('width', String(Math.max(0, BAR_W * (win.over - win.weak))));
+    barOver.setAttribute('x', String(BAR_W * win.over));
+    barOver.setAttribute('width', String(BAR_W * (1 - win.over)));
     frameCamera();
     phase = 'aim';
     opts.onRound(i);
@@ -437,53 +432,61 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
     handle.style.transform = `translate(${ballScreen.x - ballScreen.r}px, ${ballScreen.y - ballScreen.r}px)`;
   };
 
-  /** Ekran → kale düzlemi ölçeği: kale çizgisi ortası ve direklerin / üst direğin ekrandaki izdüşümünden. */
-  const goalFrame = (): GoalFrame => {
-    const at = (x: number, y: number, z: number) => {
-      projected.set(x, y, z).project(camera);
-      return { x: (projected.x * 0.5 + 0.5) * width, y: (-projected.y * 0.5 + 0.5) * height };
-    };
-    const o = at(0, 0, 0);
-    const top = at(0, GOAL.height, 0);
-    const l = at(0, 0, -GOAL.halfW);
-    const r = at(0, 0, GOAL.halfW);
-    return { originX: o.x, originY: o.y, pxPerMX: Math.max(1, (r.x - l.x) / (2 * GOAL.halfW)), pxPerMY: Math.max(1, (o.y - top.y) / GOAL.height) };
-  };
-
   const toScreen = (x: number, y: number, z: number) => {
     projected.set(x, y, z).project(camera);
-    return `${((projected.x * 0.5 + 0.5) * width).toFixed(1)},${((-projected.y * 0.5 + 0.5) * height).toFixed(1)}`;
+    return { x: (projected.x * 0.5 + 0.5) * width, y: (-projected.y * 0.5 + 0.5) * height };
   };
 
-  /** Yumuşatmayı bir adım ilerletir, girdiyi ve önizlemeyi (aynı simülasyon) günceller. Her karede çağrılır. */
-  const updateSwipe = () => {
-    if (!swiping || !round) return;
-    const sw = swiping;
-    const last = sw.path[sw.path.length - 1]!;
-    const aimed = { x: ballScreen.x + (sw.raw.x - ballScreen.x) * AIM_GAIN_X, y: sw.raw.y };
-    const old = sw.recent[0]!;
-    const span = Math.max(16, sw.raw.t - old.t);
-    const speed = Math.hypot(sw.raw.x - old.x, sw.raw.y - old.y) / span;
-    const next = smoothPoint(last, aimed, speed);
-    if (next !== last) {
-      sw.path.push(next);
-      if (sw.path.length > 240) sw.path.splice(1, 1);
+  /** Tam güç için çekme mesafesi (px): alanın yüksekliğine göre, dokunmaya uygun aralıkta. */
+  const maxPullPx = () => Math.min(170, Math.max(90, height * 0.26));
+
+  /**
+   * Çekmeden girdi: yön / güç `FLICK_WINDOW_MS` önceki çekme noktasından (yol oraya kadar), falso o andan beri yana
+   * kaymadan. Parmak durunca pencere kayar → falso sıfırlanır, nişan son konuma oturur.
+   */
+  const computeInput = (now: number): ShotInput | null => {
+    if (!swiping) return null;
+    const s = swiping.samples;
+    let anchorIdx = 0;
+    for (let i = s.length - 1; i >= 0; i--) {
+      if (s[i]!.t <= now - FLICK_WINDOW_MS) {
+        anchorIdx = i;
+        break;
+      }
     }
-    sw.input = swipeToInput(sw.path, effectiveMs(sw.path, sw.peak), goalFrame(), roundTick);
-    const params = sw.input ? shotParams(round, sw.input) : null;
-    if (!sw.input || !params) {
+    const anchor = s[anchorIdx]!;
+    return pullToInput(s.slice(0, anchorIdx + 1), flickPx(anchor, s[s.length - 1]!), maxPullPx(), roundTick);
+  };
+
+  /** Girdiyi günceller; kısa yön okunu (sapmasız nişan, ilk ~1,8 m, falso yönünde hafif eğik) ve güç çubuğunu çizer. */
+  const updateSwipe = (now: number) => {
+    if (!swiping || !round) return;
+    swiping.input = computeInput(now);
+    const params = swiping.input ? shotParams(round, swiping.input) : null;
+    if (!params) {
       trail.style.visibility = 'hidden';
       return;
     }
-    const pv = previewPath(round, sw.input);
-    const pts = pv.points.map((p) => toScreen(p.x, p.y, p.z));
-    const line = pts.join(' ');
-    pathLine.setAttribute('points', line);
-    pathShadow.setAttribute('points', line);
-    const [ex, ey] = pts[pts.length - 1]!.split(',');
-    targetRing.setAttribute('cx', ex!);
-    targetRing.setAttribute('cy', ey!);
-    targetRing.setAttribute('stroke', pv.blocked ? '#e5a23d' : '#fff');
+    const pts: { x: number; y: number }[] = [];
+    const LEN = 1.8;
+    for (let i = 0; i <= 6; i++) {
+      const u = (i / 6) * LEN;
+      const lat = params.curve * 0.12 * u * u;
+      const d = BALL_R * 1.8 + u;
+      pts.push(toScreen(round.ball.x + params.aim.x * d - params.aim.z * lat, 0.05, round.ball.z + params.aim.z * d + params.aim.x * lat));
+    }
+    const line = pts.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+    arrowLine.setAttribute('points', line);
+    arrowShadow.setAttribute('points', line);
+    const tip = pts[6]!;
+    const prev = pts[5]!;
+    const l = Math.hypot(tip.x - prev.x, tip.y - prev.y) || 1;
+    const ux = (tip.x - prev.x) / l;
+    const uy = (tip.y - prev.y) / l;
+    arrowHead.setAttribute(
+      'points',
+      `${(tip.x + ux * 14).toFixed(1)},${(tip.y + uy * 14).toFixed(1)} ${(tip.x - uy * 9).toFixed(1)},${(tip.y + ux * 9).toFixed(1)} ${(tip.x + uy * 9).toFixed(1)},${(tip.y - ux * 9).toFixed(1)}`,
+    );
     bar.setAttribute('transform', `translate(${(width - BAR_W) / 2}, ${height - 26})`);
     barMarker.setAttribute('x', String(params.power * BAR_W - 2));
     trail.style.visibility = '';
@@ -541,7 +544,7 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
   };
 
   let acc = 0;
-  const update = (dt: number) => {
+  const update = (dt: number, now: number) => {
     acc += Math.min(dt, 0.1);
     while (acc >= TICK) {
       acc -= TICK;
@@ -569,7 +572,7 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
     camera.updateMatrixWorld();
 
     placeHandle();
-    updateSwipe();
+    updateSwipe(now);
   };
 
   let raf = 0;
@@ -581,7 +584,7 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
     raf = requestAnimationFrame(frame);
     const dt = last ? (ts - last) / 1000 : 0;
     last = ts;
-    update(dt);
+    update(dt, ts);
     render();
   };
   const sync = () => {
@@ -603,7 +606,7 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
     frameCamera();
     camSnap = true;
     if (!raf) {
-      update(0);
+      update(0, performance.now());
       render();
     }
   };
@@ -613,12 +616,15 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
     const r = host.getBoundingClientRect();
     return { t: e.timeStamp, x: e.clientX - r.left, y: e.clientY - r.top };
   };
+  /** İşaretçi → topun ekrandaki yerine göre px. */
+  const rel = (e: PointerEvent) => {
+    const p = local(e);
+    return { t: e.timeStamp, x: p.x - ballScreen.x, y: p.y - ballScreen.y };
+  };
   const onDown = (e: PointerEvent) => {
     if (phase !== 'aim' || swiping) return;
     e.preventDefault();
-    const p = local(e);
-    // Yol topun üstünden başlar (nereden tutulursa tutulsun)
-    swiping = { id: e.pointerId, raw: p, recent: [p], path: [{ x: ballScreen.x, y: ballScreen.y }], peak: 0, input: null };
+    swiping = { id: e.pointerId, samples: [rel(e)], input: null };
     try {
       handle.setPointerCapture(e.pointerId);
     } catch {
@@ -629,23 +635,18 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
   };
   const onMove = (e: PointerEvent) => {
     if (!swiping || e.pointerId !== swiping.id) return;
-    const p = local(e);
-    swiping.raw = p;
-    swiping.recent.push(p);
-    // ~60 ms'lik pencere: en yüksek hız (güç) buradan
-    while (swiping.recent.length > 2 && p.t - swiping.recent[1]!.t >= 60) swiping.recent.shift();
-    const old = swiping.recent[0]!;
-    if (p.t - old.t >= 24) swiping.peak = Math.max(swiping.peak, Math.hypot(p.x - old.x, p.y - old.y) / (p.t - old.t));
+    swiping.samples.push(rel(e));
+    if (swiping.samples.length > 400) swiping.samples.splice(1, 1);
   };
   const onUp = (e: PointerEvent) => {
     if (!swiping || e.pointerId !== swiping.id) return;
-    // Bırakma: SON ÖNİZLEMENİN girdisi aynen şut olur (yalnız tick güncellenir: kalecinin o andaki yeri).
-    const input = swiping.input ? { ...swiping.input, tick: roundTick } : null;
+    swiping.samples.push(rel(e));
+    const input = e.type === 'pointercancel' ? null : computeInput(e.timeStamp);
     swiping = null;
     handle.removeAttribute('data-dragging');
     trail.style.visibility = 'hidden';
-    if (e.type === 'pointercancel' || !round || phase !== 'aim') return;
-    // Geçersiz kaydırma (çok kısa / kaleye doğru değil): vuruş harcanmaz, yeniden denenir.
+    if (!round || phase !== 'aim') return;
+    // Geçersiz çekme (çok kısa / geriye doğru değil): vuruş harcanmaz, yeniden denenir.
     if (!input || !shotParams(round, input)) return;
     inputs.push(input);
     shot = startShot(round, input);
