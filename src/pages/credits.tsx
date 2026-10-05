@@ -8,6 +8,8 @@ import Container from '@/components/Container';
 import { useCredits } from '@/hooks/useCredits';
 import { isAdminUser, isPremiumUser } from '@/lib/premium';
 import { CREDIT_PACKAGES, PREMIUM_PLANS, formatTry, perCreditKurus, yearlyFreeMonths } from '@/config/creditPackages';
+import { TEST_PACKAGE_KEY, availablePackageKeys } from '@/config/paymentPackages';
+import PaymentBuyButton from '@/components/PaymentBuyButton';
 import styles from './credits.module.scss';
 
 
@@ -15,8 +17,27 @@ const STEPS = ['how1', 'how2', 'how3'];
 const FAQ_KEYS = ['1', '2', '3', '4'];
 const FREE_KEYS = ['free1', 'free2', 'free3'];
 
-export default function CreditsPage() {
+/** `availablePackages`: Hikie link + secret'ı tanımlı paketler (build anında; env değişince yeniden deploy gerekir). */
+export default function CreditsPage({ availablePackages = [] }: { availablePackages?: string[] }) {
   const { t } = useTranslation('credits');
+  const buyLabels = {
+    buy: t('buyNow'),
+    loading: t('buyLoading'),
+    soon: t('buyDisabled'),
+    error: t('buyError'),
+    unavailable: t('buyUnavailable'),
+  };
+  const buy = (packageKey: string) => (
+    <PaymentBuyButton
+      packageKey={packageKey}
+      available={availablePackages.includes(packageKey)}
+      labels={buyLabels}
+      className={styles.buyBtn}
+      activeClassName={styles.buyBtnActive}
+      errorClassName={styles.buyError}
+    />
+  );
+  const anyCreditOnSale = CREDIT_PACKAGES.some((p) => availablePackages.includes(p.paymentKey));
   const { authenticated, loading, credits } = useCredits();
   const { data: session } = useSession();
   const premium = authenticated && isPremiumUser({ premiumUntil: session?.user?.premiumUntil });
@@ -58,7 +79,7 @@ export default function CreditsPage() {
 
           <section className={styles.pricingSection}>
             <h2 className={styles.sectionTitle}>{t('packagesTitle')}</h2>
-            <p className={styles.comingSoonBanner}>{t('comingSoon')}</p>
+            {anyCreditOnSale ? null : <p className={styles.comingSoonBanner}>{t('comingSoon')}</p>}
             <div className={styles.pricingCards}>
               {CREDIT_PACKAGES.map((pkg) => (
                 <div key={pkg.key} className={`${styles.pricingCard} ${pkg.featured ? styles.pricingCardFeatured : ''}`.trim()}>
@@ -69,9 +90,7 @@ export default function CreditsPage() {
                   </div>
                   <div className={styles.pricingPrice}>{formatTry(pkg.priceKurus)}</div>
                   <div className={styles.pricingPer}>{t('perCredit', { price: formatTry(perCreditKurus(pkg)) })}</div>
-                  <button type="button" className={styles.buyBtn} disabled>
-                    {t('buyDisabled')}
-                  </button>
+                  {buy(pkg.paymentKey)}
                 </div>
               ))}
             </div>
@@ -89,14 +108,22 @@ export default function CreditsPage() {
                     {formatTry(plan.priceKurus)} <span className={styles.pricingPer}>{t(plan.key === 'monthly' ? 'perMonth' : 'perYear')}</span>
                   </div>
                   <p className={styles.premiumNote}>{t('premiumNote')}</p>
-                  <button type="button" className={styles.buyBtn} disabled>
-                    {t('buyDisabled')}
-                  </button>
+                  {buy(plan.paymentKey)}
                 </div>
               ))}
             </div>
             <p className={styles.vatNote}>{t('vatIncluded')}</p>
           </section>
+
+          {admin && availablePackages.includes(TEST_PACKAGE_KEY) ? (
+            <section className={styles.pricingSection}>
+              <div className={`${styles.pricingCard} ${styles.testCard}`}>
+                <div className={styles.pricingPlan}>{t('testPackageTitle')}</div>
+                <p className={styles.premiumNote}>{t('testPackageDesc')}</p>
+                {buy(TEST_PACKAGE_KEY)}
+              </div>
+            </section>
+          ) : null}
 
           <section className={styles.howSection}>
             <h2 className={styles.sectionTitle}>{t('freeTitle')}</h2>
@@ -138,5 +165,7 @@ export default function CreditsPage() {
 export const getStaticProps: GetStaticProps = async ({ locale }) => ({
   props: {
     ...(await serverSideTranslations(locale ?? 'tr', ['common', 'nav', 'credits'])),
+    // Yalnız "satışta mı" bilgisi; link ve secret istemciye gitmez.
+    availablePackages: availablePackageKeys(),
   },
 });

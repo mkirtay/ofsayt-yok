@@ -1,0 +1,99 @@
+@use '../../styles/variables' as *;
+
+// Ödeme sonuç sayfaları (/odeme/tamamlandi, /odeme/tekrar-dene). Kart yüksekliği sabit alt sınırlı: durum metni
+// değişirken (doğrulanıyor → alındı) alt içerik zıplamasın.
+.wrapper {
+  display: flex;
+  justify-content: center;
+  padding: $spacing-8 $spacing-4;
+}
+
+.card {
+  width: 100%;
+  max-width: 460px;
+  min-height: 260px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-4;
+  padding: $spacing-8 $spacing-6;
+  text-align: center;
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  box-shadow: $shadow-surface;
+}
+
+.title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  color: $color-text;
+}
+
+.text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: $color-text-secondary;
+}
+
+.strong {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: $color-text;
+}
+
+.spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid $color-border;
+  border-top-color: $color-primary;
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: $spacing-3;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 18px;
+  border-radius: $radius-full;
+  font-size: 14px;
+  font-weight: 700;
+  text-decoration: none;
+  background: $color-primary;
+  color: #fff;
+
+  &:hover {
+    background: $color-primary-dark;
+  }
+}
+
+.btnGhost {
+  background: transparent;
+  color: $color-primary-text;
+  border: 1px solid $color-border;
+
+  &:hover {
+    background: $color-muted;
+  }
+}

@@ -62,4 +62,21 @@ describe('Kredi sayfası rozetleri', () => {
     expect(html).toContain(trCredits.free1);
     expect((html.match(/disabled=""/g) ?? []).length).toBe(5); // 3 paket + 2 plan
   });
+
+  it('satıştaki paket "Satın al" (aktif), diğerleri "Yakında"; kredi paketi satıştaysa "yakında" bandı yok', () => {
+    const html = renderToStaticMarkup(<CreditsPage availablePackages={['credits_10', 'premium_30d']} />);
+    expect((html.match(/disabled=""/g) ?? []).length).toBe(3);
+    expect((html.match(/>Satın al</g) ?? []).length).toBe(2);
+    expect(html).not.toContain(trCredits.comingSoon);
+    // Satışta paket yokken bant görünür
+    expect(render()).toContain(trCredits.comingSoon);
+  });
+
+  it('1 TL test paketi yalnız yöneticiye ve yalnız satıştaysa görünür', () => {
+    const avail = ['test_1tl'];
+    expect(renderToStaticMarkup(<CreditsPage availablePackages={avail} />)).not.toContain(trCredits.testPackageTitle);
+    s.role = 'ADMIN';
+    expect(renderToStaticMarkup(<CreditsPage availablePackages={avail} />)).toContain(trCredits.testPackageTitle);
+    expect(renderToStaticMarkup(<CreditsPage availablePackages={[]} />)).not.toContain(trCredits.testPackageTitle);
+  });
 });

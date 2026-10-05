@@ -45,5 +45,32 @@
   "freeTitle": "Free credits",
   "free1": "Sign-up bonus: 2 credits once you verify your email.",
   "free2": "Unlock 1 ready analysis for free every week (verified email, account at least 1 day old).",
-  "free3": "Analyses of finished matches are free for everyone."
+  "free3": "Analyses of finished matches are free for everyone.",
+  "buyNow": "Buy now",
+  "buyLoading": "Redirecting…",
+  "buyError": "Could not start the payment. Please try again.",
+  "buyUnavailable": "This package is not available right now.",
+  "testPackageTitle": "Test payment (admin only)",
+  "testPackageDesc": "1 TL — 1 credit. To test the live payment flow end to end.",
+  "payment": {
+    "doneTitle": "Payment status",
+    "verifying": "Verifying your payment…",
+    "verifyingHint": "This may take a few seconds, please keep this page open.",
+    "slow": "Verification is taking longer than expected. Your credits will be added automatically once the payment is confirmed; check your balance in a few minutes.",
+    "paidTitle": "Payment received",
+    "paidCredits": "Your new balance: {{credits}} credits",
+    "paidPremium": "Your Premium membership is active until {{date}}.",
+    "failedTitle": "Payment not completed",
+    "failedDesc": "The payment was not approved and nothing was added to your account. You can try again; if you think your card was charged, contact us via the Contact page.",
+    "refunded": "This payment was refunded.",
+    "notFound": "Payment record not found.",
+    "signIn": "Sign in to see the payment status.",
+    "signInCta": "Sign in",
+    "retry": "Try again",
+    "backToCredits": "Back to credits",
+    "toProfile": "See credit history",
+    "toHome": "Back to home",
+    "retryTitle": "Payment not completed",
+    "retryDesc": "The payment was not completed or was cancelled; nothing was added to your account. You can pick a package again."
+  }
 }

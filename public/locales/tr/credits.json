@@ -45,5 +45,32 @@
   "freeTitle": "Ücretsiz krediler",
   "free1": "Kayıt bonusu: e-postanı doğrulayınca 2 kredi.",
   "free2": "Her hafta 1 hazır analizi ücretsiz açabilirsin (doğrulanmış e-posta, en az 1 günlük hesap).",
-  "free3": "Maçı biten analizler herkese açık."
+  "free3": "Maçı biten analizler herkese açık.",
+  "buyNow": "Satın al",
+  "buyLoading": "Yönlendiriliyor…",
+  "buyError": "Ödeme başlatılamadı. Lütfen tekrar deneyin.",
+  "buyUnavailable": "Bu paket şu an satışta değil.",
+  "testPackageTitle": "Test ödemesi (yalnız yönetici)",
+  "testPackageDesc": "1 TL — 1 kredi. Canlı ödeme akışını uçtan uca denemek için.",
+  "payment": {
+    "doneTitle": "Ödeme durumu",
+    "verifying": "Ödemeniz doğrulanıyor…",
+    "verifyingHint": "Bu birkaç saniye sürebilir, sayfayı kapatmayın.",
+    "slow": "Doğrulama beklenenden uzun sürüyor. Ödemeniz onaylandığında krediniz otomatik eklenir; birkaç dakika sonra bakiyenizi kontrol edin.",
+    "paidTitle": "Ödemeniz alındı",
+    "paidCredits": "Yeni bakiyeniz: {{credits}} kredi",
+    "paidPremium": "Premium üyeliğiniz {{date}} tarihine kadar aktif.",
+    "failedTitle": "Ödeme tamamlanamadı",
+    "failedDesc": "Ödeme onaylanmadı ve hesabınıza bir şey eklenmedi. Yeniden deneyebilirsiniz; kartınızdan çekim yapıldığını düşünüyorsanız İletişim sayfasından bize yazın.",
+    "refunded": "Bu ödeme iade edildi.",
+    "notFound": "Ödeme kaydı bulunamadı.",
+    "signIn": "Ödeme durumunu görmek için giriş yapın.",
+    "signInCta": "Giriş yap",
+    "retry": "Tekrar dene",
+    "backToCredits": "Kredi sayfasına dön",
+    "toProfile": "Kredi geçmişini gör",
+    "toHome": "Ana sayfaya dön",
+    "retryTitle": "Ödeme tamamlanamadı",
+    "retryDesc": "Ödeme işlemi tamamlanmadı ya da iptal edildi; hesabınıza bir şey eklenmedi. Dilediğiniz paketi yeniden seçebilirsiniz."
+  }
 }

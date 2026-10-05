@@ -218,6 +218,45 @@
   color: $color-text-secondary;
 }
 
+// Satıştaki paket: birincil düğme
+.buyBtnActive {
+  cursor: pointer;
+  border-color: $color-primary;
+  background: $color-primary;
+  color: #fff;
+  transition: $transition-base;
+
+  &:hover:not(:disabled) {
+    background: $color-primary-dark;
+    border-color: $color-primary-dark;
+  }
+
+  &:disabled {
+    cursor: progress;
+    opacity: 0.75;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+    outline-offset: 2px;
+  }
+}
+
+.buyError {
+  margin: $spacing-2 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: $color-danger;
+  text-align: center;
+}
+
+// Yönetici test paketi (yalnız ADMIN görür)
+.testCard {
+  max-width: 360px;
+  margin: 0 auto;
+  border-style: dashed;
+}
+
 /* ── How it works ─────────────────────────────────── */
 .howSection {
   margin-bottom: 56px;
