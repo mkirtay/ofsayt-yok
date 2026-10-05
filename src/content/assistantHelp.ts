@@ -34,13 +34,13 @@ export function assistantHelp(topic: AssistantHelpTopic, locale: 'tr' | 'en'): A
       return {
         facts: tr
           ? [
-              'AI maç analizi maçtan yaklaşık 3 saat önce hazırlanır.',
+              'AI maç analizi öne çıkan maçlar için (Süper Lig, Türk takımlarının Avrupa maçları, büyük liglerin zirve maçları) maçtan yaklaşık 3 saat önce hazırlanır.',
               'Herkes ücretsiz önizlemeyi (kısa özet + en olası sonuç) görür; tamamı 1 krediyle ya da premium ile açılır.',
               'Maç bitince analiz herkese açılır.',
               'Analizler bilgi amaçlı istatistiksel tahmindir.',
             ]
           : [
-              'AI match analyses are prepared about 3 hours before kick-off.',
+              'AI match analyses are prepared about 3 hours before kick-off for featured matches (Süper Lig, Turkish clubs in Europe, top-of-the-table games in the big leagues).',
               'Everyone sees the free preview (short summary + most likely result); the full analysis unlocks with 1 credit or premium.',
               'After the match ends the analysis is open to everyone.',
               'Analyses are informational statistical predictions.',

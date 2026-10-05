@@ -34,6 +34,7 @@
   "card": {
     "choose": "Hangi maçı kastettin?",
     "none": "Bu maçın analizi henüz hazır değil. Analiz maçtan yaklaşık 3 saat önce hazırlanır.",
+    "notPlanned": "Bu maç için analiz hazırlanmıyor.",
     "preview": "Ücretsiz önizleme",
     "locked": "Analizin tamamı kilitli.",
     "unlock": "{{cost}} kredi ile aç",

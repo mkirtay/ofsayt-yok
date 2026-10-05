@@ -191,3 +191,24 @@ export function summarizePregen(r: PregenResult): Record<string, number> {
     sportmonksUpstream: r.selection.sportmonksUpstream + r.items.reduce((n, i) => n + (i.sportmonksUpstream ?? 0), 0),
   };
 }
+
+/**
+ * Bu maç ön üretim KAPSAMINDA mı (aday seçimiyle aynı kural; zaman penceresi hariç)? AI Asistan "analiz ne zaman
+ * hazırlanır" mesajı için. Lig tabloları önbellekli (10 dk); Avrupa maçında "Türk takımı" = Süper Lig tablosundaki takım.
+ * Tablo alınamazsa kapsam dışı sayılır (yanlış "hazırlanacak" vaadi verilmez).
+ */
+export async function isInPregenScope(m: { leagueId?: number | null; homeId?: number | null; awayId?: number | null }): Promise<boolean> {
+  const league = Number(m.leagueId);
+  if (league === SUPER_LIG) return true;
+  const teams = [Number(m.homeId), Number(m.awayId)];
+  const isUefa = (UEFA_CLUB_LEAGUES as readonly number[]).includes(league);
+  const isBigFive = (BIG_FIVE as readonly number[]).includes(league);
+  if (!isUefa && !isBigFive) return false;
+  const table = await getCompetitionTableFull(String(isUefa ? SUPER_LIG : league)).catch(() => null);
+  if (isUefa) {
+    const turkish = topTeamIds(table, Number.MAX_SAFE_INTEGER);
+    return teams.some((id) => turkish.has(id));
+  }
+  const top = topTeamIds(table);
+  return teams.every((id) => top.has(id));
+}

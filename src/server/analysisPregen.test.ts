@@ -39,7 +39,7 @@ vi.mock('@/lib/predictionRecords', () => ({ ensurePredictionRecordForAnalysis: v
 vi.mock('@/lib/credits', () => ({ isUniqueViolation: () => false }));
 vi.mock('@/lib/logger', () => ({ captureError: vi.fn() }));
 
-import { runAnalysisPregen, selectPregenCandidates, topTeamIds, TURKEY_COUNTRY_ID } from './analysisPregen';
+import { isInPregenScope, runAnalysisPregen, selectPregenCandidates, topTeamIds, TURKEY_COUNTRY_ID } from './analysisPregen';
 
 const NOW = Date.parse('2026-10-09T12:00:00Z');
 const at = (hoursFromNow: number) => new Date(NOW + hoursFromNow * 3600_000).toISOString().replace('T', ' ').slice(0, 19);
@@ -134,5 +134,19 @@ describe('maç öncesi ön üretim — çalıştırma', () => {
     const failed = await runAnalysisPregen({ now: NOW });
     expect(failed.items[0]).toMatchObject({ status: 'error', error: 'zaman aşımı' });
     expect(h.released).toBeGreaterThan(0);
+  });
+});
+
+describe('ön üretim kapsamı (asistan mesajı için)', () => {
+  // Sahte tablo: takım id'leri 101–107, sıra 1–7 (ilk 6 = 101–106).
+  it('Süper Lig hep kapsamda; büyük 5\'te iki takım da ilk 6\'daysa; Avrupa\'da Süper Lig takımı varsa; diğer ligler değil', async () => {
+    expect(await isInPregenScope({ leagueId: 600, homeId: 1, awayId: 2 })).toBe(true);
+    expect(await isInPregenScope({ leagueId: 8, homeId: 101, awayId: 106 })).toBe(true);
+    expect(await isInPregenScope({ leagueId: 8, homeId: 101, awayId: 107 })).toBe(false);
+    expect(await isInPregenScope({ leagueId: 2, homeId: 107, awayId: 9999 })).toBe(true);
+    expect(await isInPregenScope({ leagueId: 2, homeId: 8888, awayId: 9999 })).toBe(false);
+    // Arjantin Liga Profesional (Banfield–Rosario Central) ve lig bilgisi olmayan maç.
+    expect(await isInPregenScope({ leagueId: 636, homeId: 1, awayId: 2 })).toBe(false);
+    expect(await isInPregenScope({})).toBe(false);
   });
 });

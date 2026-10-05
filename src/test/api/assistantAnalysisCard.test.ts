@@ -25,6 +25,7 @@ vi.mock('@/services/teamPage', () => ({
 }));
 vi.mock('@/services/sportmonksRuntimeClient', () => ({ sportmonksClientRequest: vi.fn(async () => ({ data: [] })) }));
 vi.mock('@/services/aiAnalysisService', () => ({ generateMatchAnalysis: vi.fn(async () => { h.generated++; }) }));
+vi.mock('@/server/analysisPregen', () => ({ isInPregenScope: vi.fn(async () => false) }));
 vi.mock('@/lib/logger', () => ({ captureError: vi.fn() }));
 
 import handler from '@/pages/api/assistant/analysis-card';

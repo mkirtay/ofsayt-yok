@@ -230,7 +230,10 @@ async function getMatchAnalysis(args: Record<string, unknown>, ctx: ToolContext)
       };
     case 'none':
       return {
-        data: { status: 'not_ready', match: `${card.match.home} – ${card.match.away}`, note: 'Analiz maçtan yaklaşık 3 saat önce hazırlanır; asistan analiz üretemez.' },
+        data:
+          card.reason === 'scheduled'
+            ? { status: 'not_ready', match: `${card.match.home} – ${card.match.away}`, note: 'Analiz maçtan yaklaşık 3 saat önce hazırlanır; asistan analiz üretemez.' }
+            : { status: 'not_planned', match: `${card.match.home} – ${card.match.away}`, note: 'Bu maç için analiz hazırlanmıyor; asistan analiz üretemez.' },
         card: { type: 'analysis', card },
         links: [{ label: `${card.match.home} – ${card.match.away}`, href: card.match.href }],
       };

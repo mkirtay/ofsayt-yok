@@ -97,8 +97,12 @@ describe('asistan araçları', () => {
   });
 
   it('analiz yok → not_ready (üretim yok); açık → özet', async () => {
-    h.card = { kind: 'none', match };
-    expect((await run('get_match_analysis', { home_team: 'GS', away_team: 'Kasımpaşa' })).data).toMatchObject({ status: 'not_ready' });
+    h.card = { kind: 'none', match, reason: 'scheduled' };
+    expect((await run('get_match_analysis', { home_team: 'GS', away_team: 'Kasımpaşa' })).data).toMatchObject({ status: 'not_ready', note: expect.stringContaining('yaklaşık 3 saat önce') });
+    h.card = { kind: 'none', match, reason: 'not-planned' };
+    const np = (await run('get_match_analysis', { home_team: 'Banfield', away_team: 'Rosario Central' })).data as { status: string; note: string };
+    expect(np).toMatchObject({ status: 'not_planned', note: expect.stringContaining('analiz hazırlanmıyor') });
+    expect(np.note).not.toContain('3 saat');
     h.card = { kind: 'summary', match, top: { outcome: 'HOME', pct: 55 }, points: ['A.'] };
     expect((await run('get_match_analysis', { home_team: 'GS', away_team: 'Kasımpaşa' })).data).toMatchObject({ status: 'open', points: ['A.'] });
   });

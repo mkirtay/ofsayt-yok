@@ -10,7 +10,8 @@
  *   4. Erişim (kredi modeli v2, server/analysisAccess.ts ile aynı kural):
  *      - açılmış (AnalysisUnlock) / premium / yönetici / maç bitmiş → kısa özet (en olası sonuç + 2-3 nokta)
  *      - hazır ama kilitli → YALNIZ ücretsiz önizleme (buildAnalysisPreview) + açma teklifi; kilitli alan yanıtta yok
- *      - analiz yok → "maçtan ~3 saat önce hazırlanır"; kullanıcı tetiklemesiyle üretim yapılmaz.
+ *      - analiz yok → kapsamdaysa ve maça 3 saatten çok varsa "maçtan ~3 saat önce hazırlanır", değilse "bu maç için
+ *        analiz hazırlanmıyor" (noAnalysisReason); kullanıcı tetiklemesiyle üretim yapılmaz.
  */
 import type { MatchAnalysis } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
@@ -23,6 +24,7 @@ import { findStoredMatchAnalysis } from '@/lib/matchAnalysisLookup';
 import { ANALYSIS_UNLOCK_COST, findUnlock } from '@/lib/analysisUnlock';
 import { isAdminUser, isPremiumUser } from '@/lib/premium';
 import { isAnalysisMatchFinished, type AnalysisViewer } from '@/server/analysisAccess';
+import { isInPregenScope } from '@/server/analysisPregen';
 import { buildAnalysisPreview, type AnalysisPreview, type PreviewOutcome } from '@/utils/analysisPreview';
 import { sanitizeLegacyAnalysis, splitSentences } from '@/utils/analysisSanitize';
 import { findGamblingTerms } from '@/utils/gamblingTerms';
@@ -93,7 +95,17 @@ export async function resolveTeam(raw: string): Promise<TeamCandidate[]> {
 
 // ─── 3. Maç ──────────────────────────────────────────────────────────────────
 
-export type FixtureCandidate = { id: number; home: string; away: string; kickoffMs: number | null; status: string };
+export type FixtureCandidate = {
+  id: number;
+  home: string;
+  away: string;
+  kickoffMs: number | null;
+  status: string;
+  /** Ön üretim kapsamı kontrolü için (fikstürden geliyorsa dolu). */
+  leagueId?: number;
+  homeId?: number;
+  awayId?: number;
+};
 
 const kickoff = (m: TeamMatch): number | null => (typeof m.kickoff_ts === 'number' ? m.kickoff_ts : null);
 
@@ -106,6 +118,9 @@ export function pickFixtures(overview: { recent: TeamMatch[]; fixtures: TeamMatc
     away: m.away?.name ?? '',
     kickoffMs: kickoff(m),
     status: m.status,
+    leagueId: Number(m.competition?.id ?? m.competition_id) || undefined,
+    homeId: Number(m.home?.id) || undefined,
+    awayId: Number(m.away?.id) || undefined,
   });
   return [...overview.fixtures.filter(isVs), ...overview.recent.filter(isVs)].map(toCandidate);
 }
@@ -139,7 +154,8 @@ export type AssistantAnalysisCard =
   | { kind: 'team-not-found'; query: string }
   | { kind: 'match-not-found'; home: string; away: string }
   | { kind: 'choose'; options: AssistantMatchRef[] }
-  | { kind: 'none'; match: AssistantMatchRef }
+  /** `scheduled`: ön üretim kapsamında ve maça 3 saatten çok var; `not-planned`: bu maç için analiz hazırlanmıyor. */
+  | { kind: 'none'; match: AssistantMatchRef; reason: 'scheduled' | 'not-planned' }
   | { kind: 'locked'; match: AssistantMatchRef; preview: AnalysisPreview; cost: number; signedIn: boolean }
   | { kind: 'summary'; match: AssistantMatchRef; top: { outcome: PreviewOutcome; pct: number } | null; points: string[] };
 
@@ -148,7 +164,10 @@ export const AI_TAB_QUERY = 'sekme=ai-analiz';
 
 function matchRef(c: Pick<FixtureCandidate, 'id' | 'home' | 'away' | 'kickoffMs'>): AssistantMatchRef {
   return {
-    ...c,
+    id: c.id,
+    home: c.home,
+    away: c.away,
+    kickoffMs: c.kickoffMs,
     href: `${buildMatchHref({ id: c.id, home: { name: c.home }, away: { name: c.away } })}?${AI_TAB_QUERY}`,
   };
 }
@@ -173,10 +192,23 @@ export function buildAnalysisSummary(row: MatchAnalysis): { top: AnalysisPreview
   return { top: buildAnalysisPreview(row).top, points };
 }
 
+/** Analiz maçtan yaklaşık bu kadar önce hazırlanır (ön üretim penceresi 2 sa – 3 sa 15 dk; kullanıcıya "3 saat"). */
+export const ANALYSIS_READY_BEFORE_MS = 3 * 60 * 60_000;
+
+/**
+ * Analizi olmayan maç: "yaklaşık 3 saat önce hazırlanır" YALNIZ maç ön üretim kapsamındaysa ve başlamasına 3 saatten
+ * çok varsa söylenir. Kapsam dışı lig, 3 saatten az kalmış / başlamış / bitmiş maç → "hazırlanmıyor".
+ */
+export async function noAnalysisReason(match: FixtureCandidate, now: number = Date.now()): Promise<'scheduled' | 'not-planned'> {
+  if (match.kickoffMs == null || match.kickoffMs - now <= ANALYSIS_READY_BEFORE_MS) return 'not-planned';
+  if (match.status && match.status !== 'NOT STARTED') return 'not-planned';
+  return (await isInPregenScope(match)) ? 'scheduled' : 'not-planned';
+}
+
 export async function analysisCardForMatch(viewer: AnalysisViewer | null, match: FixtureCandidate): Promise<AssistantAnalysisCard> {
   const ref = matchRef(match);
   const stored = await findStoredMatchAnalysis(String(match.id), 'PRE');
-  if (!stored) return { kind: 'none', match: ref };
+  if (!stored) return { kind: 'none', match: ref, reason: await noAnalysisReason(match) };
   const privileged = viewer != null && (isAdminUser(viewer) || isPremiumUser(viewer));
   const unlocked = viewer != null && (await findUnlock(viewer.id, stored.id)) != null;
   const open =

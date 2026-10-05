@@ -36,7 +36,11 @@ describe('AI Asistan kartları', () => {
     const html = render({ kind: 'summary', match, top: { outcome: 'AWAY', pct: 49 }, points: ['A noktası.'] });
     expect(text(html)).toContain('En olası sonuç: Kasımpaşa kazanır %49');
     expect(html).toContain('href="/matches/1-galatasaray-kasimpasa?sekme=ai-analiz"');
-    expect(text(render({ kind: 'none', match }))).toContain('Analiz maçtan yaklaşık 3 saat önce hazırlanır.');
+    expect(text(render({ kind: 'none', match, reason: 'scheduled' }))).toContain('Analiz maçtan yaklaşık 3 saat önce hazırlanır.');
+    const notPlanned = text(render({ kind: 'none', match, reason: 'not-planned' }));
+    expect(notPlanned).toContain('Bu maç için analiz hazırlanmıyor.');
+    expect(notPlanned).not.toContain('3 saat');
+    expect(notPlanned).toContain('Maç sayfasına git');
   });
 
   it('maç kartı: skor / canlı dakika / kanal ve maç linki', () => {

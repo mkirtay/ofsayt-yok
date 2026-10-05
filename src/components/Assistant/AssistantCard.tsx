@@ -55,7 +55,7 @@ export function AnalysisCard({ card, t, actions }: { card: AssistantAnalysisCard
           <strong className={styles.matchTitle}>
             {card.match.home} – {card.match.away}
           </strong>
-          <p className={styles.text}>{t('card.none')}</p>
+          <p className={styles.text}>{t(card.reason === 'scheduled' ? 'card.none' : 'card.notPlanned')}</p>
           <Link href={card.match.href} className={styles.link}>
             {t('card.matchPage')} →
           </Link>

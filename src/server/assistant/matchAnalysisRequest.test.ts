@@ -12,6 +12,7 @@ vi.mock('@/lib/prisma', () => ({ prisma: { predictionRecord: { findUnique: vi.fn
 vi.mock('@/lib/matchAnalysisLookup', () => ({ findStoredMatchAnalysis: vi.fn(async () => h.stored) }));
 vi.mock('@/lib/analysisUnlock', () => ({ ANALYSIS_UNLOCK_COST: 1, findUnlock: vi.fn(async () => h.unlock) }));
 vi.mock('@/server/analysisAccess', () => ({ isAnalysisMatchFinished: vi.fn(async () => h.finished) }));
+vi.mock('@/server/analysisPregen', () => ({ isInPregenScope: vi.fn(async (m: { leagueId?: number }) => m.leagueId === 600) }));
 vi.mock('@/services/teamPage', () => ({ getTeamOverview: vi.fn(async (id: string) => h.overview.get(id) ?? { recent: [], fixtures: [] }) }));
 vi.mock('@/services/sportmonksRuntimeClient', () => ({
   sportmonksClientRequest: vi.fn(async (_b: string, path: string) => ({ data: h.search.get(decodeURIComponent(path.split('/').pop()!)) ?? [] })),
@@ -20,6 +21,7 @@ vi.mock('@/services/sportmonksRuntimeClient', () => ({
 import {
   analysisCardForMatch,
   answerMatchAnalysisRequest,
+  noAnalysisReason,
   parseMatchAnalysisIntent,
   pickFixtures,
   resolveTeamFromAliases,
@@ -84,10 +86,26 @@ describe('asistan — kredi duvarı', () => {
     h.finished = false;
   });
 
-  it('analiz yok → "yaklaşık 3 saat önce" kartı, maç sayfası AI sekmesi linki; üretim yok', async () => {
+  it('analiz yok: kapsamda ve maça 3 saatten çok varsa "scheduled"; kapsam dışı lig / 3 saatten az / başlamış → "not-planned"; üretim yok', async () => {
     h.stored = null;
-    const card = await analysisCardForMatch(viewer(), match);
-    expect(card).toEqual({ kind: 'none', match: expect.objectContaining({ id: 19746594, href: '/matches/19746594-galatasaray-kasimpasa?sekme=ai-analiz' }) });
+    const HOUR = 3600_000;
+    const now = Date.now();
+    const m = (over: Record<string, unknown>) => ({ ...match, leagueId: 600, homeId: 34, awayId: 1071, kickoffMs: now + 5 * HOUR, ...over });
+    expect(await analysisCardForMatch(viewer(), m({}))).toEqual({
+      kind: 'none',
+      reason: 'scheduled',
+      match: { id: 19746594, home: 'Galatasaray', away: 'Kasımpaşa', kickoffMs: now + 5 * HOUR, href: '/matches/19746594-galatasaray-kasimpasa?sekme=ai-analiz' },
+    });
+    // Arjantin ligi (ör. Banfield–Rosario Central): ön üretim kapsamında değil.
+    expect(await analysisCardForMatch(viewer(), m({ leagueId: 636 }))).toMatchObject({ kind: 'none', reason: 'not-planned' });
+    // Kapsamda ama 3 saatten az kalmış: artık hazırlanmayacak.
+    expect(await analysisCardForMatch(viewer(), m({ kickoffMs: now + 2 * HOUR }))).toMatchObject({ reason: 'not-planned' });
+    expect(await noAnalysisReason(m({ kickoffMs: now + 3 * HOUR + 60_000 }), now)).toBe('scheduled');
+    expect(await noAnalysisReason(m({ kickoffMs: now + 3 * HOUR }), now)).toBe('not-planned');
+    expect(await noAnalysisReason(m({ status: 'FINISHED', kickoffMs: now - HOUR }), now)).toBe('not-planned');
+    expect(await noAnalysisReason(m({ kickoffMs: null }), now)).toBe('not-planned');
+    // Lig bilgisi yoksa (karttan yenileme) söz verilmez.
+    expect(await noAnalysisReason(m({ leagueId: undefined }), now)).toBe('not-planned');
   });
 
   it('açılmamış analiz: yalnız önizleme + açma teklifi; kilitli alanların HİÇBİRİ yanıtta yok', async () => {

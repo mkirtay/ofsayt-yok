@@ -34,6 +34,7 @@
   "card": {
     "choose": "Which match did you mean?",
     "none": "This match's analysis isn't ready yet. Analyses are prepared about 3 hours before kick-off.",
+    "notPlanned": "No analysis is prepared for this match.",
     "preview": "Free preview",
     "locked": "The full analysis is locked.",
     "unlock": "Unlock for {{cost}} credit",
