@@ -137,3 +137,38 @@
     overscroll-behavior: contain;
   }
 }
+
+// Hatırlanan lig ön-boyaması (bkz. utils/hubLeagueBoot.ts): sunucu HTML'indeki varsayılan lig adı / logosu yerine nötr
+// iskelet — yanlış lig adı yanıp sönmez. Düğme yüksekliği aynı (kayma yok). JS çalışmazsa 5 sn sonra gerçek ad.
+:global(html[data-hub-league-pending]) {
+  .name {
+    flex: 0 0 auto;
+    width: 96px;
+    height: 14px;
+    border-radius: 4px;
+    color: transparent;
+    background: var(--skeleton-base);
+    animation: hubLeagueBootReveal 0s linear 5s forwards;
+  }
+
+  .logo {
+    visibility: hidden;
+    animation: hubLeagueBootLogo 0s linear 5s forwards;
+  }
+}
+
+@keyframes hubLeagueBootReveal {
+  to {
+    width: auto;
+    height: auto;
+    flex: 1;
+    color: inherit;
+    background: none;
+  }
+}
+
+@keyframes hubLeagueBootLogo {
+  to {
+    visibility: visible;
+  }
+}

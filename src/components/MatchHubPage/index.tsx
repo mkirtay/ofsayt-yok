@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -67,6 +67,9 @@ import { nightDateOf } from '@/utils/nightMatches';
 import { buildNightGroups } from './nightSection';
 import styles from '@/pages/index.module.scss';
 import { HUB_TAB_BOOT_SCRIPT, clearHubTabBoot } from '@/utils/hubTabBoot';
+import { clearHubLeagueBoot, hubLeagueBootScript } from '@/utils/hubLeagueBoot';
+
+const noopSubscribe = () => () => {};
 
 type SidebarTab = 'standings' | 'scorers';
 const SIDEBAR_TABS: SidebarTab[] = ['standings', 'scorers'];
@@ -156,7 +159,17 @@ export default function MatchHubPage({
   // Yan panel: üstte lig seçici (seçili lig her iki sekmenin de ligi), altında Puan Durumu | Gol Krallığı.
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>('standings');
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [selectedCompId, setSelectedCompId] = useState(defaultCompetitionId);
+  // Hatırlanan lig: hydration'da sunucu HTML'iyle aynı (varsayılan) başlar, aşağıdaki mount etkisi uygular (ön-boyama
+  // betiği o arada yanlış lig adını gizler — utils/hubLeagueBoot.ts). İstemci tarafı geçişte (hydration yok) ilk
+  // render'da doğrudan kayıtlı lig: `useSyncExternalStore` hydration'da sunucu değerini (false), sonra istemciyi verir.
+  const isClientRender = useSyncExternalStore(noopSubscribe, () => true, () => false);
+  const restorableLeague = (id: number) =>
+    !isUefaCupCompetitionId(id) &&
+    (sidebarLeagues.some((l) => l.id === id) || HUB_LEAGUE_IDS.some((lid) => hubSelectionIdForLeague(lid) === id));
+  const [initialStored] = useState(() => (isClientRender ? readStoredHubLeague(restorableLeague) : null));
+  const [selectedCompId, setSelectedCompId] = useState(initialStored?.id ?? defaultCompetitionId);
+  // Ön-boyamanın beklediği lig (mount etkisi seçince öznitelik kalkar)
+  const pendingLeagueRef = useRef<number | null>(null);
   const homeMatchesQuery = useHomeHubMatches(selectedDate);
   /**
    * UEFA kupası seçiliyse maç listesi TEK GÜNE değil, o kupanın fikstürüne bakar: kupa maçları
@@ -186,7 +199,9 @@ export default function MatchHubPage({
   const standingsLoading = sidebarQueryLoading;
   // Yükleniyor görünümünün satır sayısı: bu ligin son görülen tablosu; yoksa lig tipine göre (yerli 18, UEFA lig aşaması 36).
   // (React'in "önceki render'dan bilgi saklama" kalıbı: render sırasında koşullu setState.)
-  const [standingsRowsSeen, setStandingsRowsSeen] = useState<Record<number, number>>({});
+  const [standingsRowsSeen, setStandingsRowsSeen] = useState<Record<number, number>>(() =>
+    initialStored?.rows ? { [initialStored.id]: initialStored.rows } : {},
+  );
   const standingsRowCount = standingsTableRowCount(standings);
   if (standingsRowCount > 0 && standingsRowsSeen[selectedCompId] !== standingsRowCount) {
     setStandingsRowsSeen({ ...standingsRowsSeen, [selectedCompId]: standingsRowCount });
@@ -520,6 +535,9 @@ export default function MatchHubPage({
       setSelectedCompId(id);
       setSidebarTab('standings');
       storeHubLeague({ id, rows: null });
+      // Aramadan gelen lig hatırlananın önüne geçer: ön-boyama beklemesi biter.
+      pendingLeagueRef.current = null;
+      clearHubLeagueBoot(document.documentElement);
     }
     replaceQuery({ league: null });
   }, [router.isReady, queryLeague, sidebarLeagues, replaceQuery]);
@@ -529,17 +547,27 @@ export default function MatchHubPage({
   // fikstür moduna çevirip sayfa açılışında büyük kayma yapardı (kupa seçimi o oturumla sınırlı).
   // Header aramasından `?league=` geldiyse o öncelikli (aşağıdaki etki uygular).
   useEffect(() => {
-    if (router.query.league != null) return;
-    const allowed = new Set<number>([...sidebarLeagues.map((l) => l.id), ...HUB_LEAGUE_IDS.map(hubSelectionIdForLeague)]);
-    const stored = readStoredHubLeague((id) => allowed.has(id) && !isUefaCupCompetitionId(id));
-    if (!stored || stored.id === defaultCompetitionId) return;
+    const stored = router.query.league != null ? null : readStoredHubLeague(restorableLeague);
+    if (!stored || stored.id === selectedCompId) {
+      // Uygulanacak bir şey yok (kayıt yok / geçersiz / istemci geçişinde zaten seçili): ön-boyama hemen kalkar.
+      clearHubLeagueBoot(document.documentElement);
+      return;
+    }
     // localStorage yalnız istemcide: mount'ta bir kez (hydration ile uyumlu, kalıp yukarıdaki "bugün" düzeltmesiyle aynı).
+    pendingLeagueRef.current = stored.id;
     // eslint-disable-next-line react-hooks/set-state-in-effect
     if (stored.rows) setStandingsRowsSeen((prev) => ({ ...prev, [stored.id]: stored.rows! }));
     setSelectedCompId(stored.id);
     // Yalnız mount'ta.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Hatırlanan lig seçildi → ön-boyama özniteliği kalkar, doğru ad görünür (mount'ta seçim henüz varsayılan: beklenir).
+  useEffect(() => {
+    if (pendingLeagueRef.current == null || pendingLeagueRef.current !== selectedCompId) return;
+    pendingLeagueRef.current = null;
+    clearHubLeagueBoot(document.documentElement);
+  }, [selectedCompId]);
 
   // Hatırlanan ligin satır sayısı güncel kalsın (yalnız kayıtlı lig seçiliyken; varsayılanı kendiliğinden yazmaz).
   useEffect(() => {
@@ -738,6 +766,8 @@ export default function MatchHubPage({
     <>
       {/* `?tab=` sunucuda bilinmez (ISR): boyamadan önce <html data-hub-tab> (bkz. utils/hubTabBoot.ts). */}
       <script dangerouslySetInnerHTML={{ __html: HUB_TAB_BOOT_SCRIPT }} />
+      {/* Hatırlanan lig sunucuda bilinmez: boyamadan önce <html data-hub-league-pending> (bkz. utils/hubLeagueBoot.ts). */}
+      <script dangerouslySetInnerHTML={{ __html: hubLeagueBootScript(defaultCompetitionId) }} />
       <SubHeader
         initialTodayIso={initialDate}
         selectedDate={selectedDate}
