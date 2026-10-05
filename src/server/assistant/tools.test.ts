@@ -98,11 +98,16 @@ describe('asistan araçları', () => {
 
   it('analiz yok → not_ready (üretim yok); açık → özet', async () => {
     h.card = { kind: 'none', match, reason: 'scheduled' };
-    expect((await run('get_match_analysis', { home_team: 'GS', away_team: 'Kasımpaşa' })).data).toMatchObject({ status: 'not_ready', note: expect.stringContaining('yaklaşık 3 saat önce') });
+    const ready = await run('get_match_analysis', { home_team: 'GS', away_team: 'Kasımpaşa' });
+    expect(ready.data).toMatchObject({ status: 'not_ready', message_for_user: expect.stringContaining('yaklaşık 3 saat önce') });
+    expect(ready.reply).toBe('Bu maçın analizi henüz hazır değil. Analiz maçtan yaklaşık 3 saat önce hazırlanır.');
     h.card = { kind: 'none', match, reason: 'not-planned' };
-    const np = (await run('get_match_analysis', { home_team: 'Banfield', away_team: 'Rosario Central' })).data as { status: string; note: string };
-    expect(np).toMatchObject({ status: 'not_planned', note: expect.stringContaining('analiz hazırlanmıyor') });
-    expect(np.note).not.toContain('3 saat');
+    const np = await run('get_match_analysis', { home_team: 'Banfield', away_team: 'Rosario Central' });
+    expect(np.data).toMatchObject({ status: 'not_planned', message_for_user: 'Bu maç için analiz hazırlanmıyor.' });
+    // Sabit yanıt kartla aynı cümle; araç çıktısının hiçbir yerinde "3 saat" yok.
+    expect(np.reply).toBe('Bu maç için analiz hazırlanmıyor.');
+    expect(JSON.stringify(np.data)).not.toMatch(/3 saat|3 hours/);
+    expect((await run('get_match_analysis', { home_team: 'Banfield', away_team: 'Rosario Central' }, { ...ctx, locale: 'en' })).reply).toBe('No analysis is prepared for this match.');
     h.card = { kind: 'summary', match, top: { outcome: 'HOME', pct: 55 }, points: ['A.'] };
     expect((await run('get_match_analysis', { home_team: 'GS', away_team: 'Kasımpaşa' })).data).toMatchObject({ status: 'open', points: ['A.'] });
   });

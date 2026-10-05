@@ -1,3 +1,5 @@
+import { readFileSync, readdirSync } from 'node:fs';
+import path from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import tr from '../../../public/locales/tr/assistant.json';
@@ -69,5 +71,30 @@ describe('AI Asistan kartları', () => {
     const parsed = parseSseBuffer('event: delta\ndata: {"text":"Mer"}\n\nevent: done\ndata: {"remaining":2}\n\nevent: del');
     expect(parsed.events).toEqual([{ event: 'delta', data: { text: 'Mer' } }, { event: 'done', data: { remaining: 2 } }]);
     expect(parsed.rest).toBe('event: del');
+  });
+
+  it('bileşenlerde kullanılan bütün çeviri anahtarları (card.* dahil) TR ve EN sözlükte tanımlı — ekranda ham anahtar görünmez', () => {
+    const dir = __dirname;
+    const used = new Set<string>();
+    for (const f of readdirSync(dir).filter((n) => /\.tsx$/.test(n) && !/\.test\./.test(n))) {
+      const src = readFileSync(path.join(dir, f), 'utf8');
+      // Doğrudan çağrılar t('anahtar') + koşullu kullanımlar için her 'card.x' dizgisi (t(a ? 'card.x' : 'card.y')).
+      for (const m of src.matchAll(/\bt\(\s*'([\w.]+)'/g)) used.add(m[1]!);
+      for (const m of src.matchAll(/'(card\.\w+)'/g)) used.add(m[1]!);
+      // Şablonla kurulan anahtarlar: chips.<ad>, quota.<kademe>.
+      for (const m of src.matchAll(/t\(`(\w+)\.\$\{/g)) used.add(`${m[1]}.*`);
+    }
+    const get = (dict: unknown, key: string) => key.split('.').reduce<unknown>((cur, k) => (cur as Record<string, unknown> | undefined)?.[k], dict);
+    const cardKeys = [...used].filter((k) => k.startsWith('card.'));
+    expect(cardKeys).toContain('card.notPlanned');
+    expect(cardKeys.length).toBeGreaterThan(12);
+    for (const key of used) {
+      for (const [lang, dict] of [['tr', tr], ['en', en]] as const) {
+        if (key.endsWith('.*')) expect(typeof get(dict, key.slice(0, -2)), `${lang}:${key}`).toBe('object');
+        else expect(typeof get(dict, key), `${lang}:${key}`).toBe('string');
+      }
+    }
+    // Sözlükteki her card.* metni dolu.
+    for (const dict of [tr, en]) for (const v of Object.values(dict.card)) expect(String(v).trim()).not.toBe('');
   });
 });

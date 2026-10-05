@@ -120,12 +120,19 @@ export async function runAssistantChat(opts: {
       content: content || null,
       tool_calls: toolCalls.map((c) => ({ id: c.id, type: 'function', function: { name: c.name, arguments: c.arguments || '{}' } })),
     });
+    let fixedReply: string | null = null;
     for (const call of toolCalls) {
       toolsUsed.push(call.name);
       const result = await runAssistantTool(call.name, call.arguments, ctx);
       if (result.card) emit({ type: 'card', card: result.card });
       if (result.links) links.push(...result.links);
+      if (result.reply) fixedReply = result.reply;
       messages.push({ role: 'tool', tool_call_id: call.id, content: JSON.stringify(result.data) });
+    }
+    // Araç sabit yanıt verdiyse (ör. "Bu maç için analiz hazırlanmıyor") metin oradan gelir; modele dönülmez.
+    if (fixedReply) {
+      send(gate.push(`${fixedReply}\n`).trimEnd());
+      break;
     }
   }
 

@@ -34,7 +34,8 @@ export type AssistantMatchItem = { id: number; home: string; away: string; leagu
 
 export type AssistantCard = { type: 'analysis'; card: AssistantAnalysisCard } | { type: 'matches'; matches: AssistantMatchItem[] };
 
-export type ToolResult = { data: unknown; links?: AssistantLink[]; card?: AssistantCard };
+/** `reply`: verilirse yanıt metni modelden değil buradan gelir (sohbet döngüsü modele dönmeden bitirir) — kartla birebir tutarlı sabit mesajlar için. */
+export type ToolResult = { data: unknown; links?: AssistantLink[]; card?: AssistantCard; reply?: string };
 
 export class ToolArgumentError extends Error {}
 
@@ -228,15 +229,23 @@ async function getMatchAnalysis(args: Record<string, unknown>, ctx: ToolContext)
         card: { type: 'analysis', card },
         links: [{ label: ctx.locale === 'tr' ? 'AI Analiz sekmesi' : 'AI Analysis tab', href: card.match.href }],
       };
-    case 'none':
+    case 'none': {
+      // Sabit mesaj (kartla aynı cümle): model "3 saat" ile "hazırlanmıyor"u karıştırmasın.
+      const planned = card.reason === 'scheduled';
+      const reply = planned
+        ? ctx.locale === 'tr'
+          ? 'Bu maçın analizi henüz hazır değil. Analiz maçtan yaklaşık 3 saat önce hazırlanır.'
+          : "This match's analysis isn't ready yet. Analyses are prepared about 3 hours before kick-off."
+        : ctx.locale === 'tr'
+          ? 'Bu maç için analiz hazırlanmıyor.'
+          : 'No analysis is prepared for this match.';
       return {
-        data:
-          card.reason === 'scheduled'
-            ? { status: 'not_ready', match: `${card.match.home} – ${card.match.away}`, note: 'Analiz maçtan yaklaşık 3 saat önce hazırlanır; asistan analiz üretemez.' }
-            : { status: 'not_planned', match: `${card.match.home} – ${card.match.away}`, note: 'Bu maç için analiz hazırlanmıyor; asistan analiz üretemez.' },
+        data: { status: planned ? 'not_ready' : 'not_planned', match: `${card.match.home} – ${card.match.away}`, message_for_user: reply },
+        reply,
         card: { type: 'analysis', card },
         links: [{ label: `${card.match.home} – ${card.match.away}`, href: card.match.href }],
       };
+    }
     case 'choose':
       return { data: { status: 'ambiguous', options: card.options.map((o) => ({ match_id: o.id, home: o.home, away: o.away })) }, card: { type: 'analysis', card } };
     default:
