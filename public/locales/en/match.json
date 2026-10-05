@@ -451,5 +451,12 @@
     "summarySeasons": "{{count}} seasons",
     "summarySeasons_one": "{{count}} season",
     "leagueAvg": "League avg: {{value}}"
+  },
+  "liveStrip": {
+    "liveLabel": "Live matches",
+    "upcomingLabel": "Today's upcoming matches",
+    "prev": "Scroll back",
+    "next": "Scroll forward",
+    "liveShort": "Live"
   }
 }

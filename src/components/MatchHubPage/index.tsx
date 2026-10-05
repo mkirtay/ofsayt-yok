@@ -57,6 +57,8 @@ import { MOBILE_LAYOUT_QUERY } from '@/config/breakpoints';
 import { GUNDEM_PANEL_MIN_WIDTH, useMinWidth, useSplitView } from '@/hooks/useSplitView';
 import { resolveHubSidePanel } from '@/utils/hubSidePanel';
 import LeagueFilterBar from '@/components/LeagueFilterBar';
+import LiveStrip from '@/components/LiveStrip';
+import { selectLiveStripMatches } from '@/utils/liveStrip';
 import { hubSectionToScroll } from '@/utils/hubNavScroll';
 import AdSlot from '@/components/AdSlot';
 import EmptyState from '@/components/EmptyState';
@@ -336,6 +338,19 @@ export default function MatchHubPage({
     // Kullanıcının lig filtresi (Tümü/Süper Lig/5 Büyük Lig/Liglerim) — üst sekmeden bağımsız hepsine uygulanır.
     return filterMatchesByLeagues(allowed, leagueFilter.state);
   }, [displayMatches, competitionFilterSet, leagueFilter.state]);
+
+  // Canlı maç şeridi: yeni istek yok — sayfanın mevcut canlı / fikstür verisinden (bkz. utils/liveStrip.ts).
+  const liveStrip = useMemo(
+    () =>
+      selectLiveStripMatches({
+        live: liveMatches,
+        pool: [...allMatches, ...fixtureMatches],
+        leagueFilter: leagueFilter.state,
+        allowedCompetitionIds: competitionFilterSet,
+        todayIso,
+      }),
+    [liveMatches, allMatches, fixtureMatches, leagueFilter.state, competitionFilterSet, todayIso],
+  );
 
   const grouped = useMemo(() => {
     const raw = groupMatchesByLeague(filteredDisplayMatches);
@@ -779,6 +794,7 @@ export default function MatchHubPage({
       />
       <div className={`${styles.hubShell} ${styles.hubShellWithLeagueBar}`}>
         <div className={styles.leagueBarRow}>
+          <div className={styles.leagueBarChips}>
           <LeagueFilterBar
             state={leagueFilter.state}
             catalog={leagueCatalog}
@@ -795,6 +811,18 @@ export default function MatchHubPage({
               />
             }
           />
+          </div>
+          {/* Alan her zaman çizilir (sabit yükseklik); maç yoksa boş kalır → şerit gelip gidince kayma yok. */}
+          <div className={styles.liveStripSlot}>
+            {liveStrip ? (
+              <LiveStrip
+                matches={liveStrip.matches}
+                kind={liveStrip.kind}
+                onSelectMatch={isSplit ? handleSelectMatch : undefined}
+                onPrefetchMatch={isSplit ? prefetchMatchDetailLazy : undefined}
+              />
+            ) : null}
+          </div>
         </div>
         <div
           className={[

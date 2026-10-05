@@ -442,5 +442,12 @@
     "summaryMatches": "Kapsanan maç",
     "summarySeasons": "{{count}} sezon",
     "leagueAvg": "Lig ort.: {{value}}"
+  },
+  "liveStrip": {
+    "liveLabel": "Canlı maçlar",
+    "upcomingLabel": "Bugünün yaklaşan maçları",
+    "prev": "Geri kaydır",
+    "next": "İleri kaydır",
+    "liveShort": "Canlı"
   }
 }
