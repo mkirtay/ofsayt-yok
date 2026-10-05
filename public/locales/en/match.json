@@ -1,6 +1,5 @@
 {
   "noMatchInfo": "Match information not found",
-  "date": "Date",
   "fullTime": "FT",
   "halfTime": "HT",
   "afterExtraTime": "AET",
@@ -9,7 +8,6 @@
   "referee": "Referee",
   "matchInfo": {
     "watchOn": "Where to Watch",
-    "coaches": "Head Coaches",
     "weather": "Weather",
     "weatherCondition": {
       "clear": "Clear",
@@ -35,11 +33,8 @@
     "refereeUnavailable": "No referee statistics right now."
   },
   "last5": "Last 5 :",
-  "h2hLast5": "H2H last 5 :",
   "h2hHistory": "Head-to-Head History",
   "h2hDate": "Date",
-  "h2hTime": "Time",
-  "h2hStatus": "Status",
   "h2hHome": "Home",
   "h2hScore": "Score",
   "h2hAway": "Away",

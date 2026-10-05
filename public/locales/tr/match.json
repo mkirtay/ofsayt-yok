@@ -1,6 +1,5 @@
 {
   "noMatchInfo": "Maç bilgisi bulunamadı",
-  "date": "Tarih",
   "fullTime": "MS",
   "halfTime": "İY",
   "afterExtraTime": "UZS",
@@ -9,7 +8,6 @@
   "referee": "Hakem",
   "matchInfo": {
     "watchOn": "Nerede İzlenir",
-    "coaches": "Teknik Direktörler",
     "weather": "Hava",
     "weatherCondition": {
       "clear": "Açık",
@@ -33,11 +31,8 @@
     "refereeUnavailable": "Hakem istatistiği şu an yok."
   },
   "last5": "Son 5 Maç :",
-  "h2hLast5": "Karşılıklı son 5 :",
   "h2hHistory": "Karşılaşma geçmişi",
   "h2hDate": "Tarih",
-  "h2hTime": "Saat",
-  "h2hStatus": "Durum",
   "h2hHome": "Ev sahibi",
   "h2hScore": "Skor",
   "h2hAway": "Deplasman",
