@@ -30,6 +30,8 @@ export type TickSummary = {
   errors: number;
   /** Takip edilen liglerde aktif maç yok → `inplay`'e gidilmedi. */
   idle: boolean;
+  /** Tick-düzeyi bir kaynak (inplay upstream / taslak DB okuması) hata verdi: Sentry'ye gitti, tick kısmi sonuçla döner. */
+  degraded?: 'inplay' | 'db';
 };
 
 export type TickDeps = {
@@ -100,18 +102,42 @@ export async function runBotTick(
   const leagueIds = getBotLeagueIds();
   const summary: TickSummary = { inplay: 0, tracked: 0, created: 0, duplicates: 0, skipped: 0, staled: 0, errors: 0, idle: false };
 
-  if (deps.shouldPoll && !(await deps.shouldPoll(now))) return { ...summary, idle: true };
+  // Tick-düzeyi kaynaklar (fikstür listesi, inplay, DB okuması) tek tek yakalanır: biri çökerse tick 500 dönmez
+  // (cron-job.org art arda hata sayıp işi devre dışı bırakır); hata Sentry'ye gider, sonraki dakika yeniden denenir.
+  if (deps.shouldPoll) {
+    let poll = true; // karar verilemezse güvenli taraf: poll et
+    try {
+      poll = await deps.shouldPoll(now);
+    } catch (e) {
+      captureError('gundem:bot-tick:shouldPoll', e);
+    }
+    if (!poll) return { ...summary, idle: true };
+  }
 
-  const inplay = await deps.fetchInplay();
+  let inplay: SportmonksFixture[];
+  try {
+    inplay = await deps.fetchInplay();
+  } catch (e) {
+    // Sportmonks 429/5xx/JSON olmayan gövde: kaçan golü sonraki tick yakalar (inplay TAM durumu verir).
+    captureError('gundem:bot-tick:inplay', e);
+    return { ...summary, errors: 1, degraded: 'inplay' };
+  }
   summary.inplay = inplay.length;
   const tracked = inplay.filter((f) => f.league_id != null && leagueIds.has(f.league_id) && startedRecently(f.starting_at, now));
   summary.tracked = tracked.length;
   if (tracked.length === 0) return summary;
 
-  const existingRows = await prisma.gundemBotDraft.findMany({
-    where: { fixtureId: { in: tracked.map((f) => f.id) } },
-    select: { id: true, fixtureId: true, eventId: true, status: true, facts: true },
-  });
+  let existingRows: ExistingDraft[];
+  try {
+    existingRows = await prisma.gundemBotDraft.findMany({
+      where: { fixtureId: { in: tracked.map((f) => f.id) } },
+      select: { id: true, fixtureId: true, eventId: true, status: true, facts: true },
+    });
+  } catch (e) {
+    // Mevcut taslaklar okunamazsa yazmaya devam etmek mükerrer riski taşır → bu tick'i atla.
+    captureError('gundem:bot-tick:db', e);
+    return { ...summary, errors: 1, degraded: 'db' };
+  }
   const byFixture = new Map<number, ExistingDraft[]>();
   for (const d of existingRows) byFixture.set(d.fixtureId, [...(byFixture.get(d.fixtureId) ?? []), d]);
 

@@ -115,3 +115,28 @@ describe('runBotTick', () => {
     expect(startedRecently(null, NOW)).toBe(true);
   });
 });
+
+describe('runBotTick — tick-düzeyi hata dayanıklılığı (500 yok)', () => {
+  it('inplay upstream hatası (429/5xx/JSON olmayan gövde) fırlatmaz: errors:1, degraded:inplay, Sentry\'ye gider', async () => {
+    const { captureError } = await import('@/lib/logger');
+    vi.mocked(captureError).mockClear();
+    const boom = Object.assign(new Error('Too Many Attempts.'), { status: 429 });
+    const s = await runBotTick({ ...deps([]), fetchInplay: async () => { throw boom; } });
+    expect(s).toMatchObject({ errors: 1, degraded: 'inplay', created: 0, idle: false });
+    expect(captureError).toHaveBeenCalledWith('gundem:bot-tick:inplay', boom);
+  });
+
+  it('shouldPoll fırlatırsa güvenli taraf: poll edilir, tick çalışır', async () => {
+    const g = ev({ type_id: 14, minute: 12 });
+    const s = await runBotTick({ ...deps([fixture([g])]), shouldPoll: async () => { throw new Error('fikstür listesi çöktü'); } });
+    expect(s).toMatchObject({ tracked: 1, created: 1 });
+  });
+
+  it('mevcut taslak okuması (DB) hata verirse mükerrer riskine girmeden atlanır: degraded:db', async () => {
+    const spy = vi.spyOn((prisma as any).gundemBotDraft, 'findMany').mockRejectedValueOnce(new Error('db down')); // eslint-disable-line @typescript-eslint/no-explicit-any
+    const s = await runBotTick(deps([fixture([ev({ type_id: 14, minute: 12 })])]));
+    expect(s).toMatchObject({ errors: 1, degraded: 'db', created: 0 });
+    expect(db.__rows()).toHaveLength(0);
+    spy.mockRestore();
+  });
+});
