@@ -1051,6 +1051,8 @@ export type CompetitionTableStandingRow = {
   /** Sportmonks takım kısaltması ("GAL"); dar panellerde gösterilir (bkz. utils/standingsTeamLabel). */
   short_code?: string;
   logo?: string;
+  /** Son 5 maç, eskiden yeniye; yalnız `include=form` ile istenen tabloda (Puan Durumu sayfası). */
+  form?: Array<'W' | 'D' | 'L'>;
 };
 
 export type CompetitionTableData = {
@@ -1340,11 +1342,11 @@ export const getTeamTopScorers = async (seasonId: number, teamId: number, limit 
 // Endpoint: GET /topscorers/seasons/{id}?filters=seasonTopscorerTypes:83,84 (Pass 4:
 // `getTopScorers` ile AYNI endpoint/primitif — `sportmonksFetchTopscorerRows` — sadece
 // filtre type_id'leri farklı; iki satır [kırmızı,sarı] oyuncu bazında tek satıra birleştiriliyor).
-export const getTopDisciplinary = async (competitionId: string): Promise<DisciplinaryRow[]> => {
+export const getTopDisciplinary = async (competitionId: string, opts?: { season?: number }): Promise<DisciplinaryRow[]> => {
   try {
     const rows = await sportmonksFetchTopscorerRows(
       competitionId,
-      undefined,
+      opts?.season,
       [DISCIPLINARY_TYPE_IDS.RED, DISCIPLINARY_TYPE_IDS.YELLOW],
       'getTopDisciplinary',
     );

@@ -52,7 +52,7 @@ const INCLUDE_TOKENS = new Set([
   // maç detayı ekleri: Türkiye yayıncıları, teknik direktörler, hava (services/sportmonks/matchExtras.ts)
   'tvStations.tvStation', 'coaches', 'weatherReport',
   // lig / puan / krallık / kadro
-  'seasons', 'participant', 'details.type', 'player', 'player.statistics.details',
+  'seasons', 'participant', 'details.type', 'form', 'player', 'player.statistics.details',
   // takım fikstürü (mobil) + takım sayfası tek isteği (services/sportmonks/teamOverview.ts)
   'upcoming.participants', 'upcoming.league', 'upcoming.state', 'upcoming.scores', 'upcoming.periods',
   'latest.participants', 'latest.scores', 'latest.league', 'latest.state',

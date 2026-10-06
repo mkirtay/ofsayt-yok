@@ -20,5 +20,20 @@
   "colPlayer": "Oyuncu",
   "colGoals": "Gol",
   "colYellow": "Sarı",
-  "colRed": "Kırmızı"
+  "colRed": "Kırmızı",
+  "retry": "Tekrar dene",
+  "colForm": "Form",
+  "colAssists": "Asist",
+  "formWin": "Galibiyet",
+  "formDraw": "Beraberlik",
+  "formLoss": "Mağlubiyet",
+  "legendLabel": "Sıra renkleri açıklaması",
+  "zoneUcl": "Şampiyonlar Ligi",
+  "zoneUclQual": "Şampiyonlar Ligi eleme",
+  "zoneEuropa": "Avrupa Ligi",
+  "zoneConference": "Konferans Ligi eleme",
+  "zonePromotion": "Üst tur / yükselme",
+  "zonePlayoff": "Play-off",
+  "zoneUefaPlayoff": "Play-off turu",
+  "zoneRelegation": "Küme düşme"
 }

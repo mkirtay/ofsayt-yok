@@ -358,6 +358,8 @@ export type SportmonksStandingRow = {
   stage_id?: number | null;
   participant?: SportmonksStandingParticipant;
   details?: SportmonksStandingDetail[];
+  /** `include=form`: son maçlar (`sort_order` büyük = daha yeni; gerçek yanıtta tarihle doğrulandı). */
+  form?: { form?: string | null; sort_order?: number | null }[];
 };
 
 /** `topscorers/seasons/{id}`, `squads/teams/{id}` gibi endpoint'lerde ortak oyuncu şekli. */

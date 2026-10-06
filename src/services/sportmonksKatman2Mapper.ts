@@ -350,8 +350,8 @@ export function extractTeamTopScorers(
 export const DISCIPLINARY_TYPE_IDS = { RED: 83, YELLOW: 84 } as const;
 
 export type DisciplinaryRow = {
-  player: { id: number; name: string };
-  team: { id: number; name: string };
+  player: { id: number; name: string; photo?: string };
+  team: { id: number; name: string; logo?: string };
   yellow_cards: number;
   red_cards: number;
 };
@@ -366,8 +366,16 @@ export function mergeDisciplinaryRows(rows: SportmonksTopscorerRow[]): Disciplin
   const byPlayer = new Map<number, DisciplinaryRow>();
   for (const row of rows) {
     const existing = byPlayer.get(row.player_id) ?? {
-      player: { id: row.player_id, name: normalizeDisplayName(row.player?.display_name ?? row.player?.name ?? '') },
-      team: { id: row.participant_id, name: normalizeTeamName(row.participant?.name ?? '') },
+      player: {
+        id: row.player_id,
+        name: normalizeDisplayName(row.player?.display_name ?? row.player?.name ?? ''),
+        ...(row.player?.image_path ? { photo: row.player.image_path } : {}),
+      },
+      team: {
+        id: row.participant_id,
+        name: normalizeTeamName(row.participant?.name ?? ''),
+        ...(row.participant?.image_path ? { logo: row.participant.image_path } : {}),
+      },
       yellow_cards: 0,
       red_cards: 0,
     };

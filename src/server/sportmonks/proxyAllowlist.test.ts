@@ -40,6 +40,7 @@ const WEB_REQUESTS: [string, Record<string, string>][] = [
   ['football/leagues/600', { include: 'seasons' }],
   ['football/leagues/600', {}],
   ['football/standings/seasons/28203', { include: 'participant;details.type', per_page: '50', page: '1' }],
+  ['football/standings/seasons/28203', { include: 'participant;details.type;group;stage;form', per_page: '50', page: '1' }],
   ['football/topscorers/seasons/28203', { include: 'player;participant', filters: 'seasonTopscorerTypes:208', per_page: '50', page: '4' }],
   [
     'football/topscorers/seasons/28203',

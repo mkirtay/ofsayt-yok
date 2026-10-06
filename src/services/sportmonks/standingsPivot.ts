@@ -41,6 +41,8 @@ export type PivotedStandingRow = {
   /** Takım kısaltması ("GAL") — `participant` include'unda zaten geliyor; alt liglerde çoğu zaman `null`. */
   short_code?: string;
   logo?: string;
+  /** Son 5 maç, eskiden yeniye (`W`/`D`/`L`); `form` include'u yoksa alan hiç yok. */
+  form?: Array<'W' | 'D' | 'L'>;
   group_id?: number | null;
   stage_id?: number | null;
 };
@@ -88,6 +90,19 @@ function pivotDetails(details: SportmonksStandingDetail[] | undefined): Partial<
   return out;
 }
 
+export const STANDING_FORM_LENGTH = 5;
+
+/** `form` include'u → son 5 sonuç, eskiden yeniye. Boş / tanınmayan harfler atlanır; hiç sonuç yoksa `undefined`. */
+export function pivotStandingForm(form: SportmonksStandingRow['form']): Array<'W' | 'D' | 'L'> | undefined {
+  if (!form?.length) return undefined;
+  const out = [...form]
+    .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0))
+    .map((f) => f.form)
+    .filter((f): f is 'W' | 'D' | 'L' => f === 'W' || f === 'D' || f === 'L')
+    .slice(-STANDING_FORM_LENGTH);
+  return out.length ? out : undefined;
+}
+
 /**
  * Bir `standings/seasons/{id}` satırını pivotlar. `goal_diff` `details[]`'te
  * yoksa (`OVERALL_GOAL_DIFFERENCE` satırı eksikse) `goals_scored - goals_conceded`'dan
@@ -118,6 +133,7 @@ export function pivotStandingRow(row: SportmonksStandingRow): PivotedStandingRow
     name: normalizeTeamName(row.participant?.name ?? ''),
     ...(row.participant?.short_code ? { short_code: row.participant.short_code } : {}),
     ...(row.participant?.image_path ? { logo: row.participant.image_path } : {}),
+    ...(pivotStandingForm(row.form) ? { form: pivotStandingForm(row.form)! } : {}),
     group_id: row.group_id ?? null,
     stage_id: row.stage_id ?? null,
   };

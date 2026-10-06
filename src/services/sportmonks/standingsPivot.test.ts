@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { pivotStandingRow } from './standingsPivot';
+import { pivotStandingForm, pivotStandingRow } from './standingsPivot';
 import type { SportmonksStandingRow } from './types';
 import standingsLaLiga from './__fixtures__/standingsLaLiga.json';
 
@@ -86,5 +86,21 @@ describe('pivotStandingRow — Faz 3, gerçek La Liga standings/seasons/27965 ö
     expect(pivoted.goals_scored).toBe(12);
     expect(pivoted.goals_conceded).toBe(4);
     expect(pivoted.goal_diff).toBe(8); // OVERALL_GOAL_DIFFERENCE satırı yok — türetildi
+  });
+});
+
+describe('pivotStandingForm — include=form (Amed SK 2026/27: sort_order büyük = daha yeni)', () => {
+  const f = (form: string, sort_order: number) => ({ form, sort_order });
+
+  it('son 5 sonucu eskiden yeniye verir', () => {
+    // Gerçek yanıt sırası: yeniden eskiye (6..1) — W W D W L W
+    const form = [f('W', 6), f('W', 5), f('D', 4), f('W', 3), f('L', 2), f('W', 1)];
+    expect(pivotStandingForm(form)).toEqual(['L', 'W', 'D', 'W', 'W']);
+  });
+
+  it('boş / tanınmayan değerlerde undefined', () => {
+    expect(pivotStandingForm(undefined)).toBeUndefined();
+    expect(pivotStandingForm([])).toBeUndefined();
+    expect(pivotStandingForm([f('?', 1)])).toBeUndefined();
   });
 });

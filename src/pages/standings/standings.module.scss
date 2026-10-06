@@ -1,11 +1,5 @@
 @use '../../styles/variables' as *;
 
-.loading {
-  text-align: center;
-  padding: $spacing-8;
-  color: $color-text-secondary;
-}
-
 .pageHeader {
   margin: $spacing-4 0;
 
@@ -21,112 +15,56 @@
   }
 }
 
-.tabs {
-  display: flex;
-  gap: $spacing-2;
-  margin-bottom: $spacing-4;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  flex-wrap: nowrap;
-  padding-bottom: $spacing-1;
-}
-
-.tab {
-  background-color: $color-surface;
-  border: 1px solid $color-border;
-  padding: $spacing-2 $spacing-4;
-  border-radius: $radius-full;
-  font-weight: 600;
-  color: $color-text-secondary;
-  transition: $transition-base;
-  white-space: nowrap;
-  flex-shrink: 0;
-
-  &:hover {
-    background-color: $color-bg;
-  }
-}
-
-.activeTab {
-  background-color: $color-muted;
-  color: $color-primary-dark;
-  border-color: $color-primary;
-}
-
-.content {
+// Ana sayfa yan paneliyle aynı kart: lig + sezon çubuğu, altında sekmeler. Kutuda `overflow` YOK —
+// tablo başlığı (position: sticky) sayfa kaydırılırken pencereye göre yapışır.
+.card {
   background-color: $color-surface;
   border-radius: $radius-md;
   box-shadow: $shadow-surface;
   border: 1px solid $color-border;
-  overflow-x: auto;
+  margin-bottom: $spacing-8;
 }
 
-.fullTable, .statsTable {
-  width: 100%;
-  border-collapse: collapse;
-  min-width: 600px;
-  
-  th, td {
-    padding: $spacing-3;
-    text-align: center;
-    border-bottom: 1px solid $color-border;
-  }
-  
-  th {
-    background-color: $color-muted;
-    font-size: 12px;
-    text-transform: uppercase;
-    color: $color-text-secondary;
-    font-weight: 600;
-  }
-  
-  td {
-    font-size: 14px;
-  }
-
-  tbody tr {
-    transition: $transition-base;
-    &:hover {
-      background-color: $color-bg;
-    }
-  }
-
-  tbody tr:last-child td {
-    border-bottom: none;
-  }
+// Yan panel sekmeleriyle aynı stil (pages/index.module.scss `.sidebarTab`)
+.tabs {
+  display: flex;
+  border-bottom: 1px solid $color-border;
 }
 
-.rankCell {
-  width: 44px;
-  vertical-align: middle;
-}
+.tab {
+  flex: 1;
+  height: 44px;
+  padding: 0 $spacing-2;
+  font-size: 13px;
+  font-weight: 600;
+  color: $color-text-secondary;
+  text-align: center;
+  white-space: nowrap;
+  transition: $transition-base;
 
-.teamCol {
-  text-align: left !important;
-  width: 40%;
-}
-
-.teamLink {
-  text-decoration: none;
-  color: $color-text;
-  font-weight: 500;
-  
   &:hover {
-    color: $color-primary;
+    background: $color-muted;
+    color: $color-text;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+    outline-offset: -2px;
   }
 }
 
-.points {
-  font-weight: 700;
-  color: $color-primary;
+.tabActive {
+  color: $color-text;
+  box-shadow: inset 0 -2px 0 $color-primary;
 }
 
-.statValue {
-  font-weight: 700;
-  font-size: 16px;
+// Yükleniyor / yüklendi yüksekliği yakın kalsın (CLS): 18 satır × 48px + başlık.
+.panel {
+  min-height: 560px;
 }
 
-.empty {
-  padding: $spacing-8 !important;
+.message {
+  padding: $spacing-8;
+  text-align: center;
   color: $color-text-secondary;
 }

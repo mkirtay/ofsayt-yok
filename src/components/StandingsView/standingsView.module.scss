@@ -1,0 +1,345 @@
+@use '../../styles/variables' as *;
+
+// Sıra renk bandı: renkler `styles/standingsRankZones.module.scss` ile aynı (açıklama + sıra hücresi tek tablodan).
+$zones: (
+  'ucl': #1d4ed8,
+  'ucl_qual': #3b82f6,
+  'europa': #ea580c,
+  'conference_qual': #16a34a,
+  'promotion': #047857,
+  'playoff': #c2410c,
+  'uefa_league_playoff': #ca8a04,
+  'relegation': #b91c1c,
+);
+
+.tableWrap {
+  // Takım adı kısaltması (StandingTeamName) tablonun genişliğine göre karar verir.
+  container-type: inline-size;
+}
+
+.groupTitle {
+  margin: 0;
+  padding: $spacing-3 $spacing-4;
+  font-size: 13px;
+  font-weight: 700;
+  color: $color-text-secondary;
+  background: $color-muted;
+  border-bottom: 1px solid $color-border;
+}
+
+.table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+
+  th,
+  td {
+    padding: 0 $spacing-2;
+    height: 48px;
+    text-align: center;
+    border-bottom: 1px solid $color-border;
+  }
+
+  th {
+    // Sabit başlık: sayfa kaydırılırken site başlığının altında kalır (kutuda overflow yok → sticky pencereye göre).
+    position: sticky;
+    top: var(--header-height);
+    z-index: 2;
+    height: 36px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: $color-text-secondary;
+    background: $color-muted;
+  }
+
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+}
+
+.clickable {
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+
+  &:hover td {
+    background: $color-row-highlight;
+  }
+}
+
+.colRank {
+  width: 44px;
+  font-weight: 700;
+  color: $color-text-secondary;
+  // Renk bandı: sol kenarda 4px, bölgesiz satırda aynı genişlikte saydam (hizalama kaymaz).
+  box-shadow: inset 4px 0 0 transparent;
+
+  @each $name, $color in $zones {
+    &[data-zone='#{$name}'] {
+      box-shadow: inset 4px 0 0 $color;
+      color: $color-text;
+    }
+  }
+}
+
+.rankPlain {
+  box-shadow: none;
+}
+
+.colTeam {
+  text-align: left !important;
+  min-width: 0;
+}
+
+.colPoints {
+  font-weight: 800;
+  color: $color-text;
+}
+
+.colForm {
+  width: 96px;
+}
+
+.teamCell {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  min-width: 0;
+}
+
+.teamLogo {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+
+.teamText {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.teamLink {
+  color: $color-text;
+  font-weight: 600;
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  &:hover {
+    color: $color-primary-text;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+}
+
+// ── Son 5 maç noktaları ──
+.formCol,
+.formInline {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.formInline {
+  display: none;
+}
+
+.dot {
+  display: block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.dotW {
+  background: var(--color-win);
+}
+
+.dotD {
+  background: var(--color-draw);
+}
+
+.dotL {
+  background: var(--color-loss);
+}
+
+// ── Açıklama ──
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-2 $spacing-4;
+  margin: 0;
+  padding: $spacing-3 $spacing-4;
+  list-style: none;
+  font-size: 12px;
+  color: $color-text-secondary;
+  border-top: 1px solid $color-border;
+
+  li {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+}
+
+.legendSwatch {
+  width: 4px;
+  height: 14px;
+  border-radius: 2px;
+  background: $color-border;
+
+  @each $name, $color in $zones {
+    &[data-zone='#{$name}'] {
+      background: $color;
+    }
+  }
+}
+
+// ── Gol krallığı / kartlar ──
+.playerCell {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  min-width: 0;
+}
+
+.photoWrap {
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: $color-muted;
+}
+
+.photo {
+  display: block;
+  width: 36px;
+  height: 36px;
+  object-fit: cover;
+}
+
+.avatar {
+  --avatar-bg: #{$color-muted};
+  --avatar-fg: #{$color-text-secondary};
+  width: 36px;
+  height: 36px;
+}
+
+.playerText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.playerName {
+  font-weight: 600;
+  color: $color-text;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.playerTeam {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  font-size: 12px;
+  color: $color-text-secondary;
+
+  .teamLink {
+    font-weight: 500;
+    color: $color-text-secondary;
+  }
+}
+
+.miniLogo {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+}
+
+// İlk 3: sol bantta madalya rengi + hafif zemin
+.gold,
+.silver,
+.bronze {
+  td {
+    background: color-mix(in srgb, var(--podium) 8%, transparent);
+  }
+
+  td:first-child {
+    box-shadow: inset 4px 0 0 var(--podium);
+    color: $color-text;
+  }
+
+  .photoWrap {
+    box-shadow: 0 0 0 2px var(--podium);
+  }
+}
+
+.gold {
+  --podium: #d4a017;
+}
+
+.silver {
+  --podium: #9ca3af;
+}
+
+.bronze {
+  --podium: #b4763f;
+}
+
+.card {
+  display: inline-block;
+  width: 10px;
+  height: 14px;
+  border-radius: 2px;
+  vertical-align: middle;
+}
+
+.cardYellow {
+  background: var(--color-draw);
+}
+
+.cardRed {
+  background: var(--color-loss);
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+// ── Mobil: sade kolonlar (S, takım, O, AV, P); form noktaları takım adının altında ──
+@media (max-width: #{$bp-sm - 1px}) {
+  .optional {
+    display: none;
+  }
+
+  .formInline {
+    display: inline-flex;
+  }
+
+  .table th,
+  .table td {
+    padding: 0 6px;
+  }
+}

@@ -20,5 +20,20 @@
   "colPlayer": "Player",
   "colGoals": "Goals",
   "colYellow": "Yellow",
-  "colRed": "Red"
+  "colRed": "Red",
+  "retry": "Try again",
+  "colForm": "Form",
+  "colAssists": "Assists",
+  "formWin": "Win",
+  "formDraw": "Draw",
+  "formLoss": "Loss",
+  "legendLabel": "Rank colour legend",
+  "zoneUcl": "Champions League",
+  "zoneUclQual": "Champions League qualifying",
+  "zoneEuropa": "Europa League",
+  "zoneConference": "Conference League qualifying",
+  "zonePromotion": "Promotion / next round",
+  "zonePlayoff": "Play-offs",
+  "zoneUefaPlayoff": "Play-off round",
+  "zoneRelegation": "Relegation"
 }

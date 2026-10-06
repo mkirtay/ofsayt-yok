@@ -18,6 +18,8 @@ import type { CompetitionTableData, CompetitionTableStandingRow } from './liveSc
 import { WORLD_CUP_COMPETITION_ID } from '@/config/worldCup';
 
 export const STANDINGS_WITH_GROUPS_INCLUDE = 'participant;details.type;group;stage';
+/** Puan Durumu sayfası: aynı istek + son 5 maç formu (yan panel hafif kalsın diye ayrı include). */
+export const STANDINGS_WITH_FORM_INCLUDE = `${STANDINGS_WITH_GROUPS_INCLUDE};form`;
 
 type StageInfo = { id: number; name?: string | null; is_current?: boolean | null; finished?: boolean | null; starting_at?: string | null };
 type GroupInfo = { id: number; name?: string | null };
@@ -40,6 +42,7 @@ function toRow(row: SportmonksStandingRowWithGroup): CompetitionTableStandingRow
     name: p.name,
     ...(p.short_code ? { short_code: p.short_code } : {}),
     ...(p.logo ? { logo: p.logo } : {}),
+    ...(p.form ? { form: p.form } : {}),
   } as CompetitionTableStandingRow;
 }
 
@@ -109,7 +112,7 @@ async function resolveCurrentSeasonId(leagueId: number): Promise<number | null> 
 /** `getCompetitionTableFull` ile aynı imza/dönüş; çok gruplu liglerde `stages`. Hata → null. */
 export async function getCompetitionStandings(
   competitionId: string,
-  query?: { season?: number; group_id?: number | string },
+  query?: { season?: number; group_id?: number | string; withForm?: boolean },
 ): Promise<CompetitionTableData | null> {
   try {
     const leagueId = Number(competitionId);
@@ -120,7 +123,7 @@ export async function getCompetitionStandings(
       basePath: 'football',
       path: `/standings/seasons/${seasonId}`,
       perPage: 50,
-      extraParams: { include: STANDINGS_WITH_GROUPS_INCLUDE },
+      extraParams: { include: query?.withForm ? STANDINGS_WITH_FORM_INCLUDE : STANDINGS_WITH_GROUPS_INCLUDE },
     });
     return buildStandingsData(rows, leagueId, seasonId, query?.group_id);
   } catch (error) {
