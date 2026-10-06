@@ -20,7 +20,8 @@ import {
 } from '@/services/liveScoreService';
 import { getTeamOverview } from '@/services/teamPage';
 import { teamForm } from '@/services/sportmonks/teamOverview';
-import { loadHomeDay } from '@/server/homeDay';
+import { loadHomeDay, loadUpcomingMatchDays } from '@/server/homeDay';
+import { shiftIsoDate } from '@/utils/dateStrip';
 import { getTeamAbsences } from '@/server/analysisTeamAbsences';
 import type { AnalysisViewer } from '@/server/analysisAccess';
 import { matchKickoffMs } from '@/utils/matchActivity';
@@ -52,6 +53,11 @@ export const ASSISTANT_LEAGUES: Readonly<Record<number, string>> = {
   72: 'Eredivisie', 462: 'Liga Portugal', 208: 'Belçika Pro League', 501: 'İskoçya Premiership', 325: 'Yunanistan Super League',
   944: 'Suudi Pro Lig', 779: 'MLS', 648: 'Brezilya Serie A', 636: 'Arjantin Liga Profesional',
 };
+
+/** "Türkiye / Türk maçları": takip edilen bütün Türk ligleri ve kupası (Süper Lig, 1. Lig, Türkiye Kupası, 2. Lig). */
+export const TURKEY_LEAGUE_IDS: readonly number[] = [600, 603, 606, 1282, 1283];
+/** "En yakın X maçı": bugünden sonra en çok bu kadar gün ileri bakılır (lig takvimi önbellekli). */
+export const FIXTURES_LOOKAHEAD_DAYS = 7;
 
 const TZ = 'Europe/Istanbul';
 const fmtDate = new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' });
@@ -148,15 +154,43 @@ async function getFixtures(args: Record<string, unknown>, ctx: ToolContext): Pro
   }
   const date = args.date == null ? ctx.todayIso : strArg(args.date, 'date', 10);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(date))) throw new ToolArgumentError('date YYYY-AA-GG olmalı');
-  const leagueId = args.league_id == null ? null : leagueArg(args.league_id);
-  const day = await loadHomeDay(date);
-  let list = day.fixtureMatches;
-  if (leagueId != null) list = list.filter((m) => Number(m.competition?.id ?? m.competition_id) === leagueId);
-  const rank = (m: Match) => (Number(m.competition?.id ?? m.competition_id) === 600 ? 0 : 1);
-  const items = [...list].sort((a, b) => rank(a) - rank(b) || (matchKickoffMs(a) ?? 0) - (matchKickoffMs(b) ?? 0)).map(matchItem);
+  // Lig süzgeci: tek lig ya da "turkey" kapsamı (bütün Türk ligleri). Yoksa günün tüm maçları.
+  const leagueIds: number[] | null = args.scope === 'turkey' ? [...TURKEY_LEAGUE_IDS] : args.league_id == null ? null : [leagueArg(args.league_id)];
+  const inScope = (m: Match) => leagueIds == null || leagueIds.includes(Number(m.competition?.id ?? m.competition_id));
+  const rank = (m: Match) => (TURKEY_LEAGUE_IDS.includes(Number(m.competition?.id ?? m.competition_id)) ? 0 : 1);
+  const listFor = async (day: string) =>
+    (await loadHomeDay(day)).fixtureMatches.filter(inScope).sort((a, b) => rank(a) - rank(b) || (matchKickoffMs(a) ?? 0) - (matchKickoffMs(b) ?? 0)).map(matchItem);
+  const scopeLabel = args.scope === 'turkey' ? (ctx.locale === 'tr' ? 'Türkiye' : 'Turkey') : leagueIds ? (ASSISTANT_LEAGUES[leagueIds[0]!] ?? String(leagueIds[0])) : null;
+  const allLink: AssistantLink = { label: ctx.locale === 'tr' ? 'Tüm maçlar' : 'All matches', href: '/' };
+
+  let items = await listFor(date);
+  let listedDate = date;
+  let note: string | undefined;
+  // Lig/kapsam verildi ve o gün maç yok (ya da "en yakın" istendi): önümüzdeki 7 güne bak (lig takvimi önbellekli).
+  if (leagueIds && (items.length === 0 || args.upcoming === true) && date === ctx.todayIso) {
+    const limit = shiftIsoDate(ctx.todayIso, FIXTURES_LOOKAHEAD_DAYS);
+    const days = (await loadUpcomingMatchDays(ctx.todayIso, leagueIds)).map((d) => d.date).sort();
+    const nextDay = days.find((d) => d > ctx.todayIso);
+    if (items.length === 0) {
+      if (nextDay && nextDay <= limit) {
+        items = await listFor(nextDay);
+        listedDate = nextDay;
+        note = 'no_match_today_next_day_listed';
+      } else {
+        const days7 = ctx.locale === 'tr' ? `Önümüzdeki ${FIXTURES_LOOKAHEAD_DAYS} günde ${scopeLabel} maçı yok.` : `No ${scopeLabel} matches in the next ${FIXTURES_LOOKAHEAD_DAYS} days.`;
+        return {
+          data: { date, scope: scopeLabel, matches: [], note: 'none_in_lookahead', lookahead_days: FIXTURES_LOOKAHEAD_DAYS, ...(nextDay ? { next_match_day: nextDay } : {}), message_for_user: days7 },
+          reply: nextDay ? `${days7} ${ctx.locale === 'tr' ? `İlk maç günü: ${nextDay}.` : `Next match day: ${nextDay}.`}` : days7,
+          links: [allLink],
+        };
+      }
+    } else if (nextDay && nextDay <= limit && args.upcoming === true) {
+      note = 'today_listed_more_days_ahead';
+    }
+  }
   return {
-    data: { date, total: items.length, matches: items.slice(0, 15).map(forModel) },
-    links: [{ label: ctx.locale === 'tr' ? 'Tüm maçlar' : 'All matches', href: '/' }, ...matchLinks(items, 2)],
+    data: { date: listedDate, requested_date: date, scope: scopeLabel, total: items.length, matches: items.slice(0, 15).map(forModel), ...(note ? { note } : {}) },
+    links: [allLink, ...matchLinks(items, 2)],
     card: items.length ? { type: 'matches', matches: items.slice(0, 5) } : undefined,
   };
 }
@@ -305,8 +339,15 @@ const LEAGUE_ID = { type: 'integer', description: 'Lig id (sistem mesajındaki l
 export const ASSISTANT_TOOLS: Readonly<Record<string, ToolDef>> = {
   find_team: { description: 'Takım adını/takma adını (GS, Cimbom, Fener) takım id\'sine çevirir.', parameters: obj({ query: { type: 'string' } }, ['query']), run: findTeam },
   get_fixtures: {
-    description: 'Maçlar: bir günün maçları (date, isteğe bağlı league_id) ya da bir takımın sıradaki ve son maçları (team_id). Saat, skor; TV kanalı YALNIZ team_id ile (sıradaki 2 maç).',
-    parameters: obj({ date: { type: 'string', description: 'YYYY-AA-GG (Türkiye günü); boşsa bugün' }, team_id: { type: 'integer' }, league_id: LEAGUE_ID }),
+    description:
+      'Maçlar: bir günün maçları (date; isteğe bağlı league_id ya da scope=turkey: bütün Türk ligleri/kupası) ya da bir takımın sıradaki ve son maçları (team_id). Lig/kapsam verildiğinde o gün maç yoksa önümüzdeki 7 güne bakar; upcoming=true "en yakın maç" için. Saat, skor; TV kanalı YALNIZ team_id ile (sıradaki 2 maç).',
+    parameters: obj({
+      date: { type: 'string', description: 'YYYY-AA-GG (Türkiye günü); boşsa bugün' },
+      team_id: { type: 'integer' },
+      league_id: LEAGUE_ID,
+      scope: { type: 'string', enum: ['turkey'], description: 'Türkiye / Türk maçları: bütün takip edilen Türk ligleri' },
+      upcoming: { type: 'boolean', description: 'En yakın maç(lar): bugünden itibaren 7 gün ileri' },
+    }),
     run: getFixtures,
   },
   get_live_scores: { description: 'Şu an oynanan maçlar: skor ve dakika.', parameters: obj({}), run: getLiveScores },

@@ -189,6 +189,8 @@ describe('asistan sohbet döngüsü', () => {
     expect(system).toContain('ARAÇ ÇAĞIRMA ve tam olarak şu cümleyi yaz: "Maçlar, puan durumu, takımlar, kurallar ve hazır analizler konusunda yardımcı olabilirim."');
     expect(system).toContain('YALNIZ araç çağrılıp veri gelmediğinde');
     expect(system).toContain('find_team → get_fixtures(team_id)');
+    expect(system).toContain('get_fixtures scope="turkey"');
+    expect(system).toContain('league_id + upcoming=true');
     expect(system).toContain('"Kanal bilgisi henüz yok"');
     // Kapsam dışı yanıtta araç çağrılmadığı için link ve kart da gitmez.
     const { events } = await run([text('Maçlar, puan durumu, takımlar, kurallar ve hazır analizler konusunda yardımcı olabilirim.')], 'Messi kaç gol attı?');

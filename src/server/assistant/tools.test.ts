@@ -16,7 +16,14 @@ vi.mock('@/services/sportmonks/teamOverview', () => ({ teamForm: () => [] }));
 vi.mock('@/server/homeDay', () => ({
   loadHomeDay: vi.fn(async (date: string) => {
     h.calls.push(`day:${date}`);
-    return { date, fixtureMatches: [{ ...fixture, id: 2, competition: { id: 8, name: 'Premier League' } }, fixture], liveMatches: [] };
+    const cup = { ...fixture, id: 3, competition: { id: 606, name: 'Türkiye Kupası' } };
+    const sl = date === '2026-10-09' ? [fixture] : [];
+    // Bugün: PL + Türkiye Kupası (Süper Lig maçı YOK); 9 Ekim: Süper Lig.
+    return { date, fixtureMatches: date === '2026-10-06' ? [{ ...fixture, id: 2, competition: { id: 8, name: 'Premier League' } }, cup] : sl, liveMatches: [] };
+  }),
+  loadUpcomingMatchDays: vi.fn(async (_from: string, leagueIds: number[] | null) => {
+    h.calls.push(`upcoming:${(leagueIds ?? []).join(',')}`);
+    return (leagueIds ?? []).includes(600) ? [{ leagueId: 600, date: '2026-10-09' }] : (leagueIds ?? []).includes(82) ? [{ leagueId: 82, date: '2026-10-20' }] : [];
   }),
 }));
 vi.mock('@/server/analysisTeamAbsences', () => ({ getTeamAbsences: vi.fn(async () => null) }));
@@ -28,7 +35,7 @@ vi.mock('./matchAnalysisRequest', () => ({
   }),
 }));
 
-import { ASSISTANT_LEAGUES, ASSISTANT_TOOLS, openAiToolDefinitions, runAssistantTool, type ToolContext } from './tools';
+import { ASSISTANT_LEAGUES, ASSISTANT_TOOLS, TURKEY_LEAGUE_IDS, openAiToolDefinitions, runAssistantTool, type ToolContext } from './tools';
 import { PLAN_SPORTMONKS_LEAGUE_IDS } from '@/config/leagueNameKeys';
 import { isAllowedLinkHref } from './outputFilter';
 import { findGamblingTerms } from '@/utils/gamblingTerms';
@@ -76,12 +83,32 @@ describe('asistan araçları', () => {
     for (const l of r.links ?? []) expect(isAllowedLinkHref(l.href), l.href).toBe(true);
   });
 
-  it('get_fixtures (gün): varsayılan bugün, lig süzgeci, Süper Lig önce', async () => {
+  it('get_fixtures (gün): varsayılan bugün, Türk ligleri önce; "Türkiye" kapsamı bütün Türk ligleri (yalnız Süper Lig değil)', async () => {
     const all = await run('get_fixtures', {});
     expect(h.calls).toEqual(['day:2026-10-06']);
-    expect((all.data as { matches: Array<{ match_id: number }> }).matches.map((m) => m.match_id)).toEqual([1, 2]);
-    const pl = await run('get_fixtures', { date: '2026-10-10', league_id: 8 });
-    expect((pl.data as { total: number }).total).toBe(1);
+    expect((all.data as { matches: Array<{ match_id: number }> }).matches.map((m) => m.match_id)).toEqual([3, 2]);
+    const tr = await run('get_fixtures', { scope: 'turkey' });
+    expect(tr.data).toMatchObject({ scope: 'Türkiye', total: 1, matches: [{ match_id: 3, league: 'Türkiye Kupası' }] });
+    expect(tr.card).toMatchObject({ type: 'matches' });
+    expect(TURKEY_LEAGUE_IDS).toEqual([600, 603, 606, 1282, 1283]);
+    for (const id of TURKEY_LEAGUE_IDS) expect(PLAN_SPORTMONKS_LEAGUE_IDS).toContain(id);
+  });
+
+  it('get_fixtures (lig): bugün maç yoksa önümüzdeki 7 günde en yakın maç günü listelenir; yoksa net "maç yok" yanıtı + Tüm maçlar linki', async () => {
+    // Süper Lig bugün yok → 9 Ekim (3 gün sonra) listelenir; lig takvimi önbellekli (loadUpcomingMatchDays).
+    const sl = await run('get_fixtures', { league_id: 600, upcoming: true });
+    expect(h.calls).toEqual(['day:2026-10-06', 'upcoming:600', 'day:2026-10-09']);
+    expect(sl.data).toMatchObject({ date: '2026-10-09', requested_date: '2026-10-06', scope: 'Süper Lig', total: 1, note: 'no_match_today_next_day_listed', matches: [{ match_id: 1 }] });
+    expect(sl.card).toMatchObject({ type: 'matches' });
+    // Bundesliga: bugün yok, ilk maç 20 Ekim (7 günden uzak) → sabit yanıt, kart yok, "Tüm maçlar" linki.
+    const pl = await run('get_fixtures', { league_id: 82 });
+    expect(pl.data).toMatchObject({ matches: [], note: 'none_in_lookahead', lookahead_days: 7, next_match_day: '2026-10-20' });
+    expect(pl.reply).toBe('Önümüzdeki 7 günde Bundesliga maçı yok. İlk maç günü: 2026-10-20.');
+    expect(pl.card).toBeUndefined();
+    expect(pl.links).toEqual([{ label: 'Tüm maçlar', href: '/' }]);
+    // Belirli bir geçmiş/ileri tarih istendiğinde ileriye bakılmaz.
+    expect((await run('get_fixtures', { date: '2026-10-10', league_id: 8 })).data).toMatchObject({ total: 0 });
+    expect(h.calls.filter((c) => c.startsWith('upcoming')).length).toBe(2);
   });
 
   it('puan durumu ve krallık (asist türü ayrı sıralanır)', async () => {
