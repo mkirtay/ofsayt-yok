@@ -12,7 +12,7 @@ vi.mock('@/lib/prisma', async () => {
 
 import { prisma } from '@/lib/prisma';
 import type { FakePaymentDb } from '@/test/fakePaymentDb';
-import { callbackMessage, hmacHex } from '@/server/payments/hikieSignature';
+import { hmacHex } from '@/server/payments/hikieSignature';
 import checkout from '@/pages/api/payments/checkout';
 import callback from '@/pages/api/payments/hikie/callback';
 import webhook, { config as webhookConfig } from '@/pages/api/payments/hikie/webhook';
@@ -31,6 +31,9 @@ function res() {
     },
     json(b: unknown) {
       this.body = b;
+      return this;
+    },
+    end() {
       return this;
     },
     setHeader(k: string, v: string) {
@@ -76,18 +79,19 @@ describe('POST /api/payments/checkout', () => {
 });
 
 describe('GET /api/payments/hikie/callback', () => {
-  it('imzalı başarılı callback 200 + kredi; geçersiz imza 401; POST 405', async () => {
+  it('imzasız callback: 302 + kredi yok, sipariş PENDING; POST 405', async () => {
     await db.user.create({ data: { id: 'u1' } });
-    await db.paymentOrder.create({ data: { merchantOrderId: 'm1', userId: 'u1', packageKey: 'credits_10', amountTRY: '39.99' } });
-    const timestamp = String(Math.floor(Date.now() / 1000));
-    const q = { isSuccess: 'true', status: 'success', orderId: 'inv_1', merchantOrderId: 'm1', timestamp };
-    const signed = { ...q, signature: hmacHex('sec-c10', callbackMessage(timestamp, 'inv_1', 'success')) };
-    const bad = await run(callback, { method: 'GET', query: { ...q, signature: hmacHex('yanlis', 'x') } });
-    expect(bad.statusCode).toBe(401);
-    const ok = await run(callback, { method: 'GET', query: signed });
-    expect(ok.statusCode).toBe(200);
-    expect(db.user.rows[0]!.credits).toBe(10);
-    expect((await run(callback, { method: 'POST', query: signed })).statusCode).toBe(405);
+    const m = `oy_${'c'.repeat(32)}`;
+    await db.paymentOrder.create({ data: { merchantOrderId: m, userId: 'u1', packageKey: 'credits_10', amountTRY: '39.99' } });
+    const q = { isSuccess: 'true', status: 'success', orderId: 'inv_1', merchantOrderId: m };
+    const ok = await run(callback, { method: 'GET', query: q });
+    expect(ok.statusCode).toBe(302);
+    expect(ok.headers.Location).toBe(`/odeme/tamamlandi?merchantOrderId=${m}`);
+    expect(db.user.rows[0]!.credits).toBe(0);
+    expect(db.paymentOrder.rows[0]).toMatchObject({ status: 'PENDING' });
+    const failed = await run(callback, { method: 'GET', query: { ...q, status: 'failed' } });
+    expect(failed.headers.Location).toBe('/odeme/tekrar-dene');
+    expect((await run(callback, { method: 'POST', query: q })).statusCode).toBe(405);
   });
 });
 

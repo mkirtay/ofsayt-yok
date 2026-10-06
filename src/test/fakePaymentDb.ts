@@ -113,6 +113,7 @@ export function createFakePaymentDb() {
       createdAt: now(),
       paidAt: null,
       refundedAt: null,
+      callbackAt: null,
     })),
     creditTransaction: table('creditTransaction', [['userId', 'idempotencyKey']], () => ({ id: `ct_${++seq}`, createdAt: now(), note: null, idempotencyKey: null })),
     premiumGrant: table('premiumGrant', [], () => ({ id: `pg_${++seq}`, createdAt: now() })),

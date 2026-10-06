@@ -1,10 +1,9 @@
 /**
- * Hikie imzaları (gerçek Hikie'ye istek YOK; yalnız gelen istek doğrulanır).
+ * Hikie webhook imzası (gerçek Hikie'ye istek YOK; yalnız gelen istek doğrulanır).
  *
- * - Callback (GET, ödeme sonuçlanınca): imza = hex(HMAC-SHA256(linkSecret, `${timestamp}.${orderId}.${status}`)).
- *   `merchantOrderId` ve `isSuccess` imzada YOK → kararlar yalnız imzalı alanlara (status, orderId) dayanır;
- *   merchantOrderId yalnız siparişi (ve dolayısıyla doğru paketin secret'ını) bulmak için kullanılır.
- * - Webhook (POST): imza = hex(HMAC-SHA256(webhookSecret, `${Hikie-Timestamp}.${ham gövde}`)).
+ * - Webhook (POST): imza = hex(HMAC-SHA256(webhookSecret, `${Hikie-Timestamp}.${ham gövde}`)). Başlık adları ve biçim
+ *   Hikie örneğiyle teyit edilecek (bkz. paymentOrders.parseHikieWebhook).
+ * - Checkout Link callback'i (GET) imza ÜRETMEZ; burada doğrulanacak bir şey yok, kredi vermez.
  * Karşılaştırma sabit zamanlı (timingSafeEqual); zaman damgası en çok 5 dk eski / ileri olabilir (tekrar oynatma).
  * İmza ve secret hiçbir yerde loglanmaz.
  */
@@ -36,17 +35,6 @@ export function timestampMs(raw: unknown): number | null {
 export function timestampFresh(raw: unknown, now: number = Date.now(), windowMs = SIGNATURE_WINDOW_MS): boolean {
   const t = timestampMs(raw);
   return t != null && Math.abs(now - t) <= windowMs;
-}
-
-export function callbackMessage(timestamp: string, orderId: string, status: string): string {
-  return `${timestamp}.${orderId}.${status}`;
-}
-
-export function verifyCallbackSignature(
-  secret: string,
-  p: { timestamp: string; orderId: string; status: string; signature: unknown },
-): boolean {
-  return signatureMatches(hmacHex(secret, callbackMessage(p.timestamp, p.orderId, p.status)), p.signature);
 }
 
 export function verifyWebhookSignature(secret: string, timestamp: string, rawBody: string, signature: unknown): boolean {

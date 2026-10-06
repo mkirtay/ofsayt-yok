@@ -1,7 +1,7 @@
 /**
- * GET /api/payments/hikie/callback — Hikie ödeme sonucu (isSuccess, status, orderId, merchantOrderId, timestamp,
- * signature). Doğrulama ve işlem server/payments/paymentOrders.ts → handleHikieCallback. Oturum gerekmez (imza
- * doğrular); middleware bu yolu kapsamaz. Log'a imza / secret yazılmaz.
+ * GET /api/payments/hikie/callback — Hikie Checkout Link callback'i (status, isSuccess, orderId, merchantOrderId; İMZA
+ * YOK). Kredi / premium ASLA burada verilmez (yalnız imzalı webhook): sipariş "callback geldi" diye işaretlenir ve
+ * kullanıcı sonuç sayfasına 302 ile yönlendirilir. Oturum gerekmez; middleware bu yolu kapsamaz.
  */
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { handleHikieCallback } from '@/server/payments/paymentOrders';
@@ -12,15 +12,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     res.setHeader('Allow', 'GET');
     return res.status(405).json({ error: 'Method not allowed' });
   }
+  let location = '/odeme/tamamlandi';
   try {
-    const result = await handleHikieCallback(req.query);
-    if (result.status !== 200) {
-      const m = typeof req.query.merchantOrderId === 'string' ? req.query.merchantOrderId : '-';
-      console.warn(`[payments] callback reddedildi: ${result.status} ${String(result.body.error)} (merchantOrderId=${m})`);
-    }
-    return res.status(result.status).json(result.body);
+    location = (await handleHikieCallback(req.query)).location;
   } catch (err) {
     console.error('[payments] callback hatası', err instanceof Error ? err.message : err);
-    return res.status(500).json({ error: 'internal' });
   }
+  res.setHeader('Location', location);
+  return res.status(302).end();
 }

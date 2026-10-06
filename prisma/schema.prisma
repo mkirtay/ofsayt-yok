@@ -145,8 +145,8 @@ enum PaymentOrderStatus {
   REFUNDED
 }
 
-/// Hikie ödemesi (Checkout Link). Kredi / premium kararı YALNIZ imzalı callback ya da webhook'tan verilir; tarayıcı
-/// yönlendirmesi hiçbir şey vermez (bkz. server/payments). merchantOrderId bizim ürettiğimiz, linke eklenen kimlik;
+/// Hikie ödemesi (Checkout Link). Kredi / premium kararı YALNIZ imzalı order.paid webhook'undan verilir; imzasız
+/// callback yalnız callbackAt işaretler, tarayıcı yönlendirmesi hiçbir şey vermez (bkz. server/payments). merchantOrderId bizim ürettiğimiz, linke eklenen kimlik;
 /// hikieOrderId Hikie'nin invoiceId'si (ödeme sonuçlanınca, tekil → aynı ödeme iki kez işlenmez).
 model PaymentOrder {
   id              String             @id @default(cuid())
@@ -161,6 +161,8 @@ model PaymentOrder {
   createdAt       DateTime           @default(now())
   paidAt          DateTime?
   refundedAt      DateTime?
+  /// İmzasız Checkout Link callback'i ilk ne zaman geldi (yalnız tanılama; kredi kararı değil).
+  callbackAt      DateTime?
 
   @@index([userId, createdAt])
   @@index([status, createdAt])
