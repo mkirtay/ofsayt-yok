@@ -56,10 +56,14 @@
   "actualHome": "Home won",
   "actualDraw": "Draw",
   "actualAway": "Away won",
-  "cronLastEvaluate": "Last evaluation:",
-  "cronLastPregen": "Last pre-generation:",
   "cronMinutesAgo": "{{n}} min ago",
   "cronNever": "never ran",
   "cronFailed": "failed",
+  "cronLastRun": "Last run:",
+  "cronLastWork": "Last work:",
+  "cronEval": "evaluation",
+  "cronPregen": "pre-generation",
+  "cronRunning": "running",
+  "cronNoWork": "none yet",
   "cronStale": "Scheduled jobs have not run for more than {{n}} minutes — check cron-job.org."
 }

@@ -4,8 +4,10 @@
  * - Kilit: iş başına Redis `SET NX PX` — GitHub ve cron-job.org aynı anda gelirse ikincisi "zaten çalışıyor" alır.
  *   Redis yoksa/erişilemezse kilit alınmış sayılır (fail-open): işler zaten idempotent (tek üretim, değerlendirilmiş
  *   kayıt atlanır).
- * - Nabız: her çalışmanın sonunda `lastRunAt`, süre, başarı ve özet Redis'e yazılır → /ai-istatistikleri admin bandı.
- * - Uyarı: çalışma başlarken önceki nabız 45 dk'dan eskiyse Sentry warning; çalışma hata verirse Sentry error.
+ * - Nabız: her tick'te (iş olmasa da) `lastRunAt` yazılır → /ai-istatistikleri admin bandı. Cron (202) yolunda tick
+ *   nabzı yanıttan ÖNCE, eşzamanlı yazılır: arka plan işi Vercel tarafından dondurulsa bile "son çalışma" güncel kalır.
+ *   İş bitince süre/başarı/özet eklenir; özet gerçek iş içeriyorsa (`evaluated`/`generated` > 0) `lastWorkAt` ilerler.
+ * - Uyarı: tick başlarken önceki nabız 45 dk'dan eskiyse Sentry warning; çalışma hata verirse Sentry error.
  * Secret, başlık ya da istek gövdesi hiçbir yere yazılmaz.
  */
 import { randomUUID } from 'node:crypto';
@@ -27,7 +29,12 @@ export const CRON_LOCK_TTL_MS: Record<CronJobName, number> = {
 };
 
 export type CronHeartbeat = {
+  /** Son tick (iş olsun olmasın). Bayatlık uyarısı yalnız buna bakar. */
   lastRunAt: string;
+  /** Son gerçek iş (değerlendirme/üretim yapılan çalışma); hiç yoksa yok. */
+  lastWorkAt?: string;
+  /** `started`: tick kabul edildi, iş sürüyor; `done`: iş bitti (ok/summary dolu). */
+  phase?: 'started' | 'done';
   ms: number;
   ok: boolean;
   /** Sayısal özet (üretilen / atlanan / değerlendirilen / hata …). */
@@ -80,35 +87,57 @@ export function staleGapMs(previous: CronHeartbeat | null, now: number): number 
   return Number.isFinite(gap) && gap > CRON_STALE_AFTER_MS ? gap : null;
 }
 
+/** Özet gerçek iş içeriyor mu (değerlendirilen ya da üretilen var)? */
+export function summaryHasWork(summary: Record<string, number>): boolean {
+  return (summary.evaluated ?? 0) > 0 || (summary.generated ?? 0) > 0;
+}
+
+export type CronTick = { previous: CronHeartbeat | null; at: number };
+
 /**
- * İşi kilit altında çalıştırır; nabzı yazar, hata/boşlukta Sentry'ye bildirir. Kilit alınamazsa `busy`.
- * `summarize` sonucu sayısal özete çevirir (heartbeat + log).
+ * Tick nabzı: `lastRunAt` = şimdi, `lastWorkAt` öncekinden taşınır; önceki nabız eskiyse Sentry warning.
+ * Cron yolunda 202'den ÖNCE await edilir (`runCronJob`'a `ticked` olarak verilir); admin yolunda `runCronJob` kendisi çağırır.
+ */
+export async function recordCronTick(job: CronJobName, trigger: CronHeartbeat['trigger']): Promise<CronTick> {
+  const at = Date.now();
+  const previous = await readCronHeartbeat(job);
+  const gap = staleGapMs(previous, at);
+  if (gap != null) {
+    Sentry.captureMessage(`Zamanlanmış iş ${Math.round(gap / 60_000)} dk çalışmamış: ${job}`, {
+      level: 'warning',
+      tags: { 'cron.job': job },
+    });
+  }
+  await writeCronHeartbeat(job, { lastRunAt: new Date(at).toISOString(), lastWorkAt: previous?.lastWorkAt, phase: 'started', ms: 0, ok: true, summary: {}, trigger });
+  return { previous, at };
+}
+
+/**
+ * İşi kilit altında çalıştırır; tick + bitiş nabzını yazar, hatada Sentry'ye bildirir. Kilit alınamazsa `busy`.
+ * `summarize` sonucu sayısal özete çevirir (heartbeat + log). `opts.lock`: önceden alınmış kilit; `opts.ticked`:
+ * tick nabzı zaten yazıldı (cron 202 yolu) — yeniden yazılmaz, önceki `lastWorkAt` oradan taşınır.
  */
 export async function runCronJob<T>(
   job: CronJobName,
   trigger: CronHeartbeat['trigger'],
   work: () => Promise<T>,
   summarize: (result: T) => Record<string, number>,
-  lock?: CronLock | null,
+  opts: { lock?: CronLock | null; ticked?: CronTick } = {},
 ): Promise<{ status: 'busy' } | { status: 'done'; result: T } | { status: 'failed'; error: unknown }> {
-  const held = lock === undefined ? await acquireCronLock(job) : lock;
+  const held = opts.lock === undefined ? await acquireCronLock(job) : opts.lock;
   if (!held) return { status: 'busy' };
+  const tick = opts.ticked ?? (await recordCronTick(job, trigger));
   const started = Date.now();
+  const lastRunAt = new Date(tick.at).toISOString();
   try {
-    const gap = staleGapMs(await readCronHeartbeat(job), started);
-    if (gap != null) {
-      Sentry.captureMessage(`Zamanlanmış iş ${Math.round(gap / 60_000)} dk çalışmamış: ${job}`, {
-        level: 'warning',
-        tags: { 'cron.job': job },
-      });
-    }
     const result = await work();
     const summary = summarize(result);
-    await writeCronHeartbeat(job, { lastRunAt: new Date().toISOString(), ms: Date.now() - started, ok: true, summary, trigger });
+    const lastWorkAt = summaryHasWork(summary) ? new Date().toISOString() : tick.previous?.lastWorkAt;
+    await writeCronHeartbeat(job, { lastRunAt, lastWorkAt, phase: 'done', ms: Date.now() - started, ok: true, summary, trigger });
     console.log(JSON.stringify({ event: 'cron-run', job, trigger, ms: Date.now() - started, ok: true, ...summary }));
     return { status: 'done', result };
   } catch (error) {
-    await writeCronHeartbeat(job, { lastRunAt: new Date().toISOString(), ms: Date.now() - started, ok: false, summary: {}, trigger });
+    await writeCronHeartbeat(job, { lastRunAt, lastWorkAt: tick.previous?.lastWorkAt, phase: 'done', ms: Date.now() - started, ok: false, summary: {}, trigger });
     console.error(JSON.stringify({ event: 'cron-run', job, trigger, ms: Date.now() - started, ok: false }));
     Sentry.captureException(error, { level: 'error', tags: { 'cron.job': job, context: `cron-${job}` } });
     return { status: 'failed', error };

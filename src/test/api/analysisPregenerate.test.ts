@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
-const h = vi.hoisted(() => ({ adminOk: false, runs: [] as Array<{ dryRun?: boolean } | undefined>, lockFree: true, background: [] as Array<() => Promise<unknown>> }));
+const h = vi.hoisted(() => ({ adminOk: false, runs: [] as Array<{ dryRun?: boolean } | undefined>, lockFree: true, ticks: 0, background: [] as Array<() => Promise<unknown>> }));
 vi.mock('@/lib/requireAuth', () => ({
   requireAdmin: vi.fn(async (_req: unknown, res: { status: (c: number) => { json: (b: unknown) => void } }) => {
     if (h.adminOk) return { ok: true, userId: 'admin' };
@@ -22,6 +22,10 @@ vi.mock('@/server/cronJobs', async (orig) => {
   return {
     isCronRequest: real.isCronRequest,
     acquireCronLock: vi.fn(async () => (h.lockFree ? { key: 'k', token: 't' } : null)),
+    recordCronTick: vi.fn(async () => {
+      h.ticks++;
+      return { previous: null, at: 1 };
+    }),
     runCronJob: vi.fn(async (_job: string, _trigger: string, work: () => Promise<unknown>) => {
       if (!h.lockFree) return { status: 'busy' };
       return { status: 'done', result: await work() };
@@ -66,6 +70,7 @@ describe('cron uçları — hızlı yanıt, çakışma, auth', () => {
     h.runs = [];
     h.lockFree = true;
     h.background = [];
+    h.ticks = 0;
     vi.mocked(runCronJob).mockClear();
   });
 
@@ -75,9 +80,10 @@ describe('cron uçları — hızlı yanıt, çakışma, auth', () => {
       expect(r.statusCode).toBe(202);
       expect(r.body).toEqual({ accepted: true, job: name });
       expect(h.background).toHaveLength(1);
+      expect(h.ticks).toBe(1); // tick nabzı yanıttan önce, eşzamanlı
       expect(JSON.stringify(r.body)).not.toContain('gizli');
       await h.background[0]!();
-      expect(runCronJob).toHaveBeenCalledWith(name, 'cron', expect.any(Function), expect.any(Function), { key: 'k', token: 't' });
+      expect(runCronJob).toHaveBeenCalledWith(name, 'cron', expect.any(Function), expect.any(Function), { lock: { key: 'k', token: 't' }, ticked: { previous: null, at: 1 } });
     });
 
     it(`${name}: aynı anda ikinci çağrı 409 ALREADY_RUNNING`, async () => {

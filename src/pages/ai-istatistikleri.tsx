@@ -10,6 +10,7 @@ import {
   useAiStatsDashboard,
 } from '@/hooks/useAiStatsDashboard';
 import type { AiStatsDashboard, AiStatsHistoryItem } from '@/lib/loadAiStatsDashboard';
+import type { CronHeartbeat } from '@/server/cronJobs';
 import { buildMatchHref } from '@/utils/matchUrl';
 import styles from './ai-istatistikleri.module.scss';
 
@@ -97,9 +98,8 @@ export default function AiIstatistikleri() {
             errors: evalData.errors,
           })
         );
-        if (evalData.evaluated > 0) {
-          void queryClient.invalidateQueries({ queryKey: aiStatsDashboardQueryKey });
-        }
+        // İş olmasa da admin bandındaki "son çalışma" değişti → her zaman yenile.
+        void queryClient.invalidateQueries({ queryKey: aiStatsDashboardQueryKey });
       }
     } catch {
       setEvalResult(t('evalConnectionError'));
@@ -354,7 +354,10 @@ function HistorySection({
   );
 }
 
-/** Zamanlanmış işlerin son çalışması; 45 dk'dan eski ya da hiç yoksa kırmızı uyarı (bkz. server/cronJobs.ts). */
+/**
+ * Zamanlanmış işlerin son tick'i ("son çalışma") ve son gerçek işi ayrı satırlarda; uyarı yalnız son çalışma
+ * 45 dk'dan eskiyse ya da hiç yoksa (bkz. server/cronJobs.ts). İş olmayan tick'ler alarm değildir.
+ */
 const CRON_STALE_MINUTES = 45;
 
 function CronStatusLine({
@@ -368,16 +371,29 @@ function CronStatusLine({
   const [now] = useState(() => Date.now());
   if (!status) return null;
   const age = (iso?: string) => (iso ? Math.max(0, Math.round((now - Date.parse(iso)) / 60_000)) : null);
-  const evalAge = age(status['evaluate-predictions']?.lastRunAt);
-  const pregenAge = age(status['analysis-pregenerate']?.lastRunAt);
-  const label = (m: number | null, ok: boolean | undefined) =>
-    m == null ? t('cronNever') : `${t('cronMinutesAgo', { n: m })}${ok === false ? ` (${t('cronFailed')})` : ''}`;
-  const stale = [evalAge, pregenAge].some((m) => m == null || m > CRON_STALE_MINUTES);
+  const ev = status['evaluate-predictions'];
+  const pg = status['analysis-pregenerate'];
+  const runLabel = (hb: CronHeartbeat | null) => {
+    const m = age(hb?.lastRunAt);
+    if (m == null) return t('cronNever');
+    const suffix = hb?.phase === 'started' ? ` (${t('cronRunning')})` : hb?.ok === false ? ` (${t('cronFailed')})` : '';
+    return `${t('cronMinutesAgo', { n: m })}${suffix}`;
+  };
+  const workLabel = (hb: CronHeartbeat | null) => {
+    const m = age(hb?.lastWorkAt);
+    return m == null ? t('cronNoWork') : t('cronMinutesAgo', { n: m });
+  };
+  const stale = [ev, pg].some((hb) => {
+    const m = age(hb?.lastRunAt);
+    return m == null || m > CRON_STALE_MINUTES;
+  });
   return (
     <>
       <span className={styles.cronStatus}>
-        {t('cronLastEvaluate')} {label(evalAge, status['evaluate-predictions']?.ok)} · {t('cronLastPregen')}{' '}
-        {label(pregenAge, status['analysis-pregenerate']?.ok)}
+        {t('cronLastRun')} {t('cronEval')} {runLabel(ev)} · {t('cronPregen')} {runLabel(pg)}
+      </span>
+      <span className={styles.cronStatus}>
+        {t('cronLastWork')} {t('cronEval')} {workLabel(ev)} · {t('cronPregen')} {workLabel(pg)}
       </span>
       {stale && <span className={styles.cronStale}>{t('cronStale', { n: CRON_STALE_MINUTES })}</span>}
     </>

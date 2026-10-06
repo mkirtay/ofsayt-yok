@@ -72,22 +72,30 @@ describe('/ai-istatistikleri — dil kuralları', () => {
     }
   });
 
-  it('admin bandı: son değerlendirme / ön üretim; 45 dk\'dan eskiyse ya da hiç yoksa kırmızı uyarı', () => {
+  it('admin bandı: son çalışma ve son iş ayrı; uyarı yalnız son çalışma 45 dk\'dan eskiyse ya da hiç yoksa', () => {
     const ago = (m: number) => new Date(Date.now() - m * 60_000).toISOString();
     data.isAdmin = true;
     data.cronStatus = {
-      'evaluate-predictions': { lastRunAt: ago(5), ms: 1, ok: true, summary: {}, trigger: 'cron' },
-      'analysis-pregenerate': { lastRunAt: ago(12), ms: 1, ok: false, summary: {}, trigger: 'cron' },
+      'evaluate-predictions': { lastRunAt: ago(5), lastWorkAt: ago(142), phase: 'done', ms: 1, ok: true, summary: {}, trigger: 'cron' },
+      'analysis-pregenerate': { lastRunAt: ago(12), phase: 'done', ms: 1, ok: false, summary: {}, trigger: 'cron' },
     };
     let t = render(trAi);
-    expect(t).toContain('Son değerlendirme: 5 dk önce · Son ön üretim: 12 dk önce (hata)');
-    expect(t).not.toContain('45 dakikadan uzun');
-    data.cronStatus = { 'evaluate-predictions': { lastRunAt: ago(50), ms: 1, ok: true, summary: {}, trigger: 'cron' }, 'analysis-pregenerate': null };
+    expect(t).toContain('Son çalışma: değerlendirme 5 dk önce · ön üretim 12 dk önce (hata)');
+    expect(t).toContain('Son iş: değerlendirme 142 dk önce · ön üretim henüz yok');
+    expect(t).not.toContain('45 dakikadan uzun'); // iş 142 dk önce ama tick taze → alarm yok
+    data.cronStatus = {
+      'evaluate-predictions': { lastRunAt: ago(50), ms: 1, ok: true, summary: {}, trigger: 'cron' },
+      'analysis-pregenerate': { lastRunAt: ago(1), phase: 'started', ms: 0, ok: true, summary: {}, trigger: 'cron' },
+    };
     t = render(trAi);
-    expect(t).toContain('Son değerlendirme: 50 dk önce · Son ön üretim: hiç çalışmadı');
+    expect(t).toContain('Son çalışma: değerlendirme 50 dk önce · ön üretim 1 dk önce (sürüyor)');
     expect(t).toContain('Zamanlanmış işler 45 dakikadan uzun süredir çalışmadı');
+    data.cronStatus = { 'evaluate-predictions': { lastRunAt: ago(3), ms: 1, ok: true, summary: {}, trigger: 'cron' }, 'analysis-pregenerate': null };
+    t = render(trAi);
+    expect(t).toContain('ön üretim hiç çalışmadı');
+    expect(t).toContain('45 dakikadan uzun');
     data.isAdmin = false;
     data.cronStatus = undefined;
-    expect(render(trAi)).not.toContain('Son değerlendirme');
+    expect(render(trAi)).not.toContain('Son çalışma');
   });
 });

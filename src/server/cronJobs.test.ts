@@ -21,7 +21,7 @@ vi.mock('@sentry/nextjs', () => ({
   },
 }));
 
-import { acquireCronLock, isCronRequest, readCronHeartbeat, runCronJob, staleGapMs } from './cronJobs';
+import { acquireCronLock, isCronRequest, readCronHeartbeat, recordCronTick, runCronJob, staleGapMs } from './cronJobs';
 
 const summarize = (r: { n: number }) => ({ evaluated: r.n });
 
@@ -35,10 +35,37 @@ describe('zamanlanmış işler — kilit, nabız, uyarı', () => {
   it('iş çalışırken ikinci çağrı busy; bitince kilit bırakılır ve nabız yazılır', async () => {
     const held = await acquireCronLock('evaluate-predictions');
     expect(await runCronJob('evaluate-predictions', 'cron', async () => ({ n: 1 }), summarize)).toEqual({ status: 'busy' });
-    const r = await runCronJob('evaluate-predictions', 'cron', async () => ({ n: 3 }), summarize, held);
+    const r = await runCronJob('evaluate-predictions', 'cron', async () => ({ n: 3 }), summarize, { lock: held });
     expect(r).toMatchObject({ status: 'done', result: { n: 3 } });
     expect(h.store.has('t:cron-lock:evaluate-predictions')).toBe(false);
-    expect(await readCronHeartbeat('evaluate-predictions')).toMatchObject({ ok: true, trigger: 'cron', summary: { evaluated: 3 } });
+    expect(await readCronHeartbeat('evaluate-predictions')).toMatchObject({ ok: true, phase: 'done', trigger: 'cron', summary: { evaluated: 3 } });
+  });
+
+  it('iş olmayan tick: lastRunAt ilerler, lastWorkAt önceki işten taşınır; iş olunca lastWorkAt ilerler', async () => {
+    await runCronJob('evaluate-predictions', 'cron', async () => ({ n: 2 }), summarize);
+    const first = (await readCronHeartbeat('evaluate-predictions'))!;
+    expect(first.lastWorkAt).toBe(first.lastRunAt);
+    h.store.set('t:cron-heartbeat:evaluate-predictions', { ...first, lastRunAt: '2026-10-05T10:00:00.000Z', lastWorkAt: '2026-10-05T09:00:00.000Z' });
+    await runCronJob('evaluate-predictions', 'cron', async () => ({ n: 0 }), summarize);
+    const idle = (await readCronHeartbeat('evaluate-predictions'))!;
+    expect(idle.lastWorkAt).toBe('2026-10-05T09:00:00.000Z');
+    expect(Date.now() - Date.parse(idle.lastRunAt)).toBeLessThan(5_000);
+    expect(idle).toMatchObject({ ok: true, phase: 'done', summary: { evaluated: 0 } });
+  });
+
+  it('cron 202 yolu: tick nabzı işten önce yazılır (phase started); runCronJob ticked ile yeniden yazmaz, bitişte done', async () => {
+    h.store.set('t:cron-heartbeat:analysis-pregenerate', { lastRunAt: '2026-10-05T10:00:00.000Z', lastWorkAt: '2026-10-05T09:00:00.000Z', ms: 1, ok: true, summary: {}, trigger: 'cron' });
+    const lock = await acquireCronLock('analysis-pregenerate');
+    const ticked = await recordCronTick('analysis-pregenerate', 'cron');
+    const started = (await readCronHeartbeat('analysis-pregenerate'))!;
+    expect(started).toMatchObject({ phase: 'started', ok: true, lastWorkAt: '2026-10-05T09:00:00.000Z', trigger: 'cron' });
+    expect(Date.now() - Date.parse(started.lastRunAt)).toBeLessThan(5_000);
+    // Arka plan işi dondurulsa bile "son çalışma" güncel.
+    const r = await runCronJob('analysis-pregenerate', 'cron', async () => ({ n: 0 }), summarize, { lock, ticked });
+    expect(r.status).toBe('done');
+    const done = (await readCronHeartbeat('analysis-pregenerate'))!;
+    expect(done).toMatchObject({ phase: 'done', lastRunAt: started.lastRunAt, lastWorkAt: '2026-10-05T09:00:00.000Z' });
+    expect(h.store.has('t:cron-lock:analysis-pregenerate')).toBe(false);
   });
 
   it('hata: Sentry error, nabız ok=false, kilit bırakılır', async () => {

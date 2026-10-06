@@ -19,7 +19,7 @@ import {
 } from '@/lib/predictionRecords';
 import { refundStalePendingSpends } from '@/lib/credits';
 import { captureError } from '@/lib/logger';
-import { acquireCronLock, isCronRequest, runCronJob } from '@/server/cronJobs';
+import { acquireCronLock, isCronRequest, recordCronTick, runCronJob } from '@/server/cronJobs';
 import { runInBackground } from '@/server/backgroundTask';
 
 export const config = { maxDuration: 300 };
@@ -59,7 +59,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   if (isCron) {
     const lock = await acquireCronLock('evaluate-predictions');
     if (!lock) return res.status(409).json(BUSY);
-    runInBackground(() => runCronJob('evaluate-predictions', 'cron', () => evaluateOnce(req), summarize, lock));
+    // Tick nabzı yanıttan önce (arka plan dondurulsa da "son çalışma" güncel); iş yanıttan sonra sürer.
+    const ticked = await recordCronTick('evaluate-predictions', 'cron');
+    runInBackground(() => runCronJob('evaluate-predictions', 'cron', () => evaluateOnce(req), summarize, { lock, ticked }));
     return res.status(202).json({ accepted: true, job: 'evaluate-predictions' });
   }
 

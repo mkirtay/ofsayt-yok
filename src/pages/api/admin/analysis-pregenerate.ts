@@ -12,7 +12,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { requireAdmin } from '@/lib/requireAuth';
 import { runAnalysisPregen, summarizePregen, type PregenResult } from '@/server/analysisPregen';
 import { captureError } from '@/lib/logger';
-import { acquireCronLock, isCronRequest, runCronJob } from '@/server/cronJobs';
+import { acquireCronLock, isCronRequest, recordCronTick, runCronJob } from '@/server/cronJobs';
 import { runInBackground } from '@/server/backgroundTask';
 
 export const config = { maxDuration: 120 };
@@ -44,7 +44,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
   if (isCron) {
     const lock = await acquireCronLock('analysis-pregenerate');
     if (!lock) return res.status(409).json(BUSY);
-    runInBackground(() => runCronJob('analysis-pregenerate', 'cron', () => runAnalysisPregen(), summarizePregen, lock));
+    // Tick nabzı yanıttan önce (arka plan dondurulsa da "son çalışma" güncel); iş yanıttan sonra sürer.
+    const ticked = await recordCronTick('analysis-pregenerate', 'cron');
+    runInBackground(() => runCronJob('analysis-pregenerate', 'cron', () => runAnalysisPregen(), summarizePregen, { lock, ticked }));
     return res.status(202).json({ accepted: true, job: 'analysis-pregenerate' });
   }
 
