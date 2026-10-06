@@ -53,6 +53,10 @@
     "error": "Couldn't unlock, please try again shortly.",
     "disclaimer": "Informational statistical prediction.",
     "live": "Live",
-    "finished": "FT"
+    "finished": "FT",
+    "team": "Team",
+    "played": "P",
+    "points": "Pts",
+    "allStandings": "Full standings"
   }
 }

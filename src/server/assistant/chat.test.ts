@@ -173,6 +173,28 @@ describe('asistan sohbet döngüsü', () => {
     expect((bodies[0]!.messages as Array<{ content: string }>)[0]!.content).toContain('EN FAZLA TEK CÜMLE');
   });
 
+  it('puan durumu kartı: tek cümle, ayrıca link yok (kartın kendi linki var)', async () => {
+    const standings = { type: 'standings' as const, league: 'Süper Lig', rows: [{ rank: 1, team: 'GS', played: 6, points: 13 }], href: '/standings' };
+    h.toolResult = { data: { league: 'Süper Lig' }, card: standings, links: [{ label: 'Puan durumu', href: '/standings' }] };
+    const { events, answer } = await run([toolCall('get_standings', '{"league_id":600}'), text('Lider Galatasaray. ', 'İkinci Fenerbahçe.')]);
+    expect(answer).toBe('Lider Galatasaray.');
+    expect(events.filter((e) => e.type === 'card')).toEqual([{ type: 'card', card: standings }]);
+    expect(events.some((e) => e.type === 'links')).toBe(false);
+    expect(finalizeAttachments([standings], [{ label: 'x', href: '/standings' }])).toEqual({ card: standings, links: [] });
+  });
+
+  it('sistem prompt\'u: kapsam dışında araç yok + sabit nazik cümle; "bende yok" yalnız araç verisizken; kanal → team_id', async () => {
+    const { bodies } = await run([text('Tamam.')]);
+    const system = (bodies[0]!.messages as Array<{ content: string }>)[0]!.content;
+    expect(system).toContain('ARAÇ ÇAĞIRMA ve tam olarak şu cümleyi yaz: "Maçlar, puan durumu, takımlar, kurallar ve hazır analizler konusunda yardımcı olabilirim."');
+    expect(system).toContain('YALNIZ araç çağrılıp veri gelmediğinde');
+    expect(system).toContain('find_team → get_fixtures(team_id)');
+    expect(system).toContain('"Kanal bilgisi henüz yok"');
+    // Kapsam dışı yanıtta araç çağrılmadığı için link ve kart da gitmez.
+    const { events } = await run([text('Maçlar, puan durumu, takımlar, kurallar ve hazır analizler konusunda yardımcı olabilirim.')], 'Messi kaç gol attı?');
+    expect(events.map((e) => e.type)).toEqual(['delta']);
+  });
+
   it('boş yanıt → empty', async () => {
     expect((await run([[{ choices: [], usage: { prompt_tokens: 10, completion_tokens: 0 } }]])).result.outcome).toBe('empty');
   });

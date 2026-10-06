@@ -6,7 +6,7 @@
 import Link from 'next/link';
 import type { AssistantAnalysisCard, AssistantMatchRef } from '@/server/assistant/matchAnalysisRequest';
 import type { PreviewOutcome } from '@/utils/analysisPreview';
-import type { AssistantCard as AssistantCardData, AssistantMatchItem } from '@/server/assistant/tools';
+import type { AssistantCard as AssistantCardData, AssistantMatchItem, AssistantStandingRow } from '@/server/assistant/tools';
 import { assistantSignInHref } from './signInHref';
 import styles from './assistant.module.scss';
 
@@ -53,6 +53,7 @@ export function AnalysisCard({ card, t, actions }: { card: AssistantAnalysisCard
     case 'none':
       return (
         <div className={styles.card}>
+          {card.match.league ? <span className={styles.leagueTag}>{card.match.league}</span> : null}
           <strong className={styles.matchTitle}>
             {card.match.home} – {card.match.away}
           </strong>
@@ -166,6 +167,7 @@ export function MatchesCard({ matches, t }: { matches: AssistantMatchItem[]; t: 
     <div className={styles.card}>
       {matches.map((m) => (
         <Link key={m.id} href={m.href} className={styles.matchRow}>
+          {m.league ? <span className={styles.leagueTag}>{m.league}</span> : null}
           <span className={styles.matchTeams}>
             {m.home} {m.score ? <b>{m.score}</b> : '–'} {m.away}
           </span>
@@ -179,6 +181,41 @@ export function MatchesCard({ matches, t }: { matches: AssistantMatchItem[]; t: 
   );
 }
 
+export function StandingsCard({ league, rows, href, t }: { league: string; rows: AssistantStandingRow[]; href: string; t: T }) {
+  return (
+    <div className={styles.card}>
+      <span className={styles.leagueTag}>{league}</span>
+      <table className={styles.table}>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>{t('card.team')}</th>
+            <th>{t('card.played')}</th>
+            <th>{t('card.points')}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr key={r.rank}>
+              <td>{r.rank}</td>
+              <td>{r.team}</td>
+              <td>{r.played}</td>
+              <td>
+                <b>{r.points}</b>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <Link href={href} className={styles.link}>
+        {t('card.allStandings')} →
+      </Link>
+    </div>
+  );
+}
+
 export default function AssistantCard({ card, t, actions }: { card: AssistantCardData; t: T; actions: AssistantCardActions }) {
-  return card.type === 'matches' ? <MatchesCard matches={card.matches} t={t} /> : <AnalysisCard card={card.card} t={t} actions={actions} />;
+  if (card.type === 'matches') return <MatchesCard matches={card.matches} t={t} />;
+  if (card.type === 'standings') return <StandingsCard league={card.league} rows={card.rows} href={card.href} t={t} />;
+  return <AnalysisCard card={card.card} t={t} actions={actions} />;
 }

@@ -33,7 +33,12 @@ export type ToolContext = { viewer: AnalysisViewer | null; locale: 'tr' | 'en'; 
 
 export type AssistantMatchItem = { id: number; home: string; away: string; league?: string; kickoffMs: number | null; status: string; score?: string; minute?: string; tv?: string[]; href: string };
 
-export type AssistantCard = { type: 'analysis'; card: AssistantAnalysisCard } | { type: 'matches'; matches: AssistantMatchItem[] };
+export type AssistantStandingRow = { rank: number; team: string; played: number; points: number };
+export type AssistantCard =
+  | { type: 'analysis'; card: AssistantAnalysisCard }
+  | { type: 'matches'; matches: AssistantMatchItem[] }
+  /** İlk 8 satır + "Tüm puan durumu" linki (kartın kendi linki; ayrıca link gönderilmez). */
+  | { type: 'standings'; league: string; rows: AssistantStandingRow[]; href: string };
 
 /** `reply`: verilirse yanıt metni modelden değil buradan gelir (sohbet döngüsü modele dönmeden bitirir) — kartla birebir tutarlı sabit mesajlar için. */
 export type ToolResult = { data: unknown; links?: AssistantLink[]; card?: AssistantCard; reply?: string };
@@ -119,17 +124,24 @@ async function getFixtures(args: Record<string, unknown>, ctx: ToolContext): Pro
     const overview = await getTeamOverview(String(teamId));
     const upcoming = overview.fixtures.slice(0, 3).map(matchItem);
     const recent = overview.recent.slice(0, 3).map(matchItem);
-    // TV kanalı yalnız maç detayında: sıradaki maç için (maç sayfasıyla aynı önbellekli istek).
-    if (upcoming[0]) {
-      try {
-        const detail = await lookupSportmonksFixture(String(upcoming[0].id));
-        if (detail.kind === 'found' && detail.match.tv_stations?.length) upcoming[0] = { ...upcoming[0], tv: detail.match.tv_stations.slice(0, 4) };
-      } catch {
-        // kanal bilgisi alınamadı: yanıt kanalsız
-      }
-    }
+    // TV kanalı yalnız maç detayında (maç sayfasıyla AYNI önbellekli `fixtures/{id}` isteği; yeni istek türü yok):
+    // sıradaki 2 maç için. Kanal yoksa `tv_note` → model "Kanal bilgisi henüz yok" der (uydurmaz).
+    await Promise.all(
+      upcoming.slice(0, 2).map(async (item, i) => {
+        try {
+          const detail = await lookupSportmonksFixture(String(item.id));
+          if (detail.kind === 'found' && detail.match.tv_stations?.length) upcoming[i] = { ...item, tv: detail.match.tv_stations.slice(0, 4) };
+        } catch {
+          // kanal bilgisi alınamadı: satır kanalsız
+        }
+      }),
+    );
     return {
-      data: { team: overview.team?.name, upcoming: upcoming.map(forModel), recent: recent.map(forModel) },
+      data: {
+        team: overview.team?.name,
+        upcoming: upcoming.map((u, i) => ({ ...forModel(u), ...(i < 2 && !u.tv ? { tv_note: 'not_announced' } : {}) })),
+        recent: recent.map(forModel),
+      },
       links: [...matchLinks(upcoming, 1), { label: overview.team?.name ?? 'Takım', href: `/teams/${teamId}` }],
       card: upcoming.length || recent.length ? { type: 'matches', matches: [...upcoming.slice(0, 2), ...recent.slice(0, 2)] } : undefined,
     };
@@ -167,11 +179,15 @@ function standingRows(table: Awaited<ReturnType<typeof getCompetitionTableFull>>
 async function getStandings(args: Record<string, unknown>, ctx: ToolContext): Promise<ToolResult> {
   const leagueId = leagueArg(args.league_id);
   const rows = standingRows(await getCompetitionTableFull(String(leagueId)));
+  const league = ASSISTANT_LEAGUES[leagueId] ?? String(leagueId);
+  const compact = rows.slice(0, 8).map((r) => ({ rank: r.rank, team: r.team?.name ?? r.name ?? '', played: r.matches, points: r.points }));
   return {
     data: {
-      league: ASSISTANT_LEAGUES[leagueId],
+      league,
       rows: rows.slice(0, 24).map((r) => ({ rank: r.rank, team: r.team?.name ?? r.name, played: r.matches, won: r.won, drawn: r.drawn, lost: r.lost, gd: r.goal_diff, points: r.points })),
+      note: 'Arayüz ilk 8 takımı tablo kartı olarak gösterir; en fazla tek cümle yaz.',
     },
+    ...(compact.length ? { card: { type: 'standings', league, rows: compact, href: '/standings' } } : {}),
     links: [{ label: ctx.locale === 'tr' ? 'Puan durumu' : 'Standings', href: '/standings' }],
   };
 }
@@ -289,7 +305,7 @@ const LEAGUE_ID = { type: 'integer', description: 'Lig id (sistem mesajındaki l
 export const ASSISTANT_TOOLS: Readonly<Record<string, ToolDef>> = {
   find_team: { description: 'Takım adını/takma adını (GS, Cimbom, Fener) takım id\'sine çevirir.', parameters: obj({ query: { type: 'string' } }, ['query']), run: findTeam },
   get_fixtures: {
-    description: 'Maçlar: bir günün maçları (date, isteğe bağlı league_id) ya da bir takımın sıradaki ve son maçları (team_id). Saat, skor, TV kanalı.',
+    description: 'Maçlar: bir günün maçları (date, isteğe bağlı league_id) ya da bir takımın sıradaki ve son maçları (team_id). Saat, skor; TV kanalı YALNIZ team_id ile (sıradaki 2 maç).',
     parameters: obj({ date: { type: 'string', description: 'YYYY-AA-GG (Türkiye günü); boşsa bugün' }, team_id: { type: 'integer' }, league_id: LEAGUE_ID }),
     run: getFixtures,
   },

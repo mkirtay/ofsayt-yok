@@ -73,11 +73,22 @@ describe('AI Asistan kartları', () => {
       <AssistantCard
         t={t}
         actions={actions}
-        card={{ type: 'matches', matches: [{ id: 2, home: 'A', away: 'B', kickoffMs: null, status: 'IN PLAY', score: '1-0', minute: '63', tv: ['beIN Sports 1'], href: '/matches/2-a-b' }] }}
+        card={{ type: 'matches', matches: [{ id: 2, home: 'A', away: 'B', league: 'Türkiye Kupası', kickoffMs: null, status: 'IN PLAY', score: '1-0', minute: '63', tv: ['beIN Sports 1'], href: '/matches/2-a-b' }] }}
       />,
     );
-    expect(text(html)).toContain("A 1-0 B Canlı 63' · beIN Sports 1");
+    expect(text(html)).toContain("Türkiye Kupası A 1-0 B Canlı 63' · beIN Sports 1");
     expect(html).toContain('href="/matches/2-a-b"');
+    // Analiz kartında da yarışma etiketi.
+    expect(text(render({ kind: 'none', match: { ...match, league: 'Şampiyonlar Ligi' }, reason: 'scheduled', signedIn: true, cost: 1 }))).toMatch(/^ ?Şampiyonlar Ligi Galatasaray – Kasımpaşa/);
+  });
+
+  it('puan durumu kartı: ilk 8 satır (sıra, takım, O, P) + "Tüm puan durumu" linki', () => {
+    const rows = Array.from({ length: 8 }, (_, i) => ({ rank: i + 1, team: `T${i + 1}`, played: 6, points: 20 - i }));
+    const html = renderToStaticMarkup(<AssistantCard t={t} actions={actions} card={{ type: 'standings', league: 'Süper Lig', rows, href: '/standings' }} />);
+    expect(html.match(/<tr>/g)).toHaveLength(9);
+    expect(text(html)).toContain('# Takım O P 1 T1 6 20');
+    expect(text(html)).toContain('Tüm puan durumu');
+    expect(html).toContain('href="/standings"');
   });
 
   it('metinlerde bahis terimi yok (TR/EN); iki dilde aynı anahtarlar', () => {

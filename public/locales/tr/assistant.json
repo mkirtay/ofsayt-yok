@@ -53,6 +53,10 @@
     "error": "Açılamadı, biraz sonra tekrar dene.",
     "disclaimer": "Bilgi amaçlı istatistiksel tahmindir.",
     "live": "Canlı",
-    "finished": "Bitti"
+    "finished": "Bitti",
+    "team": "Takım",
+    "played": "O",
+    "points": "P",
+    "allStandings": "Tüm puan durumu"
   }
 }

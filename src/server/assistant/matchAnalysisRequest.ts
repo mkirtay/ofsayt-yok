@@ -106,6 +106,8 @@ export type FixtureCandidate = {
   leagueId?: number;
   homeId?: number;
   awayId?: number;
+  /** Yarışma adı (kart etiketi). */
+  league?: string;
 };
 
 const kickoff = (m: TeamMatch): number | null => (typeof m.kickoff_ts === 'number' ? m.kickoff_ts : null);
@@ -120,6 +122,7 @@ export function pickFixtures(overview: { recent: TeamMatch[]; fixtures: TeamMatc
     kickoffMs: kickoff(m),
     status: m.status,
     leagueId: Number(m.competition?.id ?? m.competition_id) || undefined,
+    league: m.competition?.name ?? m.competition_name ?? undefined,
     homeId: Number(m.home?.id) || undefined,
     awayId: Number(m.away?.id) || undefined,
   });
@@ -148,7 +151,7 @@ async function findFixtures(home: TeamCandidate[], away: TeamCandidate[]): Promi
 
 // ─── 4. Yanıt kartı ──────────────────────────────────────────────────────────
 
-export type AssistantMatchRef = { id: number; home: string; away: string; kickoffMs: number | null; href: string };
+export type AssistantMatchRef = { id: number; home: string; away: string; kickoffMs: number | null; href: string; league?: string };
 
 export type AssistantAnalysisCard =
   | { kind: 'not-understood' }
@@ -167,8 +170,9 @@ export type AssistantAnalysisCard =
 /** Maç sayfasının AI sekmesi (MatchDetailContent `?sekme=ai-analiz`). */
 export const AI_TAB_QUERY = 'sekme=ai-analiz';
 
-function matchRef(c: Pick<FixtureCandidate, 'id' | 'home' | 'away' | 'kickoffMs'>): AssistantMatchRef {
+function matchRef(c: Pick<FixtureCandidate, 'id' | 'home' | 'away' | 'kickoffMs' | 'league'>): AssistantMatchRef {
   return {
+    ...(c.league ? { league: c.league } : {}),
     id: c.id,
     home: c.home,
     away: c.away,

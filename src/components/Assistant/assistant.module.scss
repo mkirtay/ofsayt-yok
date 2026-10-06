@@ -169,6 +169,44 @@
   }
 }
 
+// Yarışma etiketi (maç satırı, analiz kartı, puan tablosu).
+.leagueTag {
+  align-self: flex-start;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--as-note-label);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+
+  th,
+  td {
+    padding: 4px 6px;
+    text-align: left;
+    border-bottom: 1px solid var(--as-line);
+  }
+
+  th {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--as-muted);
+  }
+
+  th:nth-child(n + 3),
+  td:nth-child(n + 3) {
+    text-align: right;
+  }
+
+  td:nth-child(2) {
+    width: 100%;
+  }
+}
+
 .matchTeams {
   font-size: 14px;
   font-weight: 700;

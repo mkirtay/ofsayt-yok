@@ -6,10 +6,12 @@ vi.mock('@/services/liveScoreService', () => ({
   getAllLiveMatches: vi.fn(async () => []),
   getCompetitionTableFull: vi.fn(async () => ({ table: [{ rank: 1, team: { id: 34, name: 'Galatasaray' }, matches: 6, won: 4, drawn: 1, lost: 1, goal_diff: 3, points: 13 }] })),
   getTopScorers: vi.fn(async () => ({ topscorers: [{ goals: 6, assists: 2, played: 4, player: { name: 'Victor Osimhen ' }, team: { name: 'Galatasaray' } }, { goals: 0, assists: 5, player: { name: 'Pasör' }, team: { name: 'X' } }] })),
-  lookupSportmonksFixture: vi.fn(async () => ({ kind: 'found', match: { id: 1, tv_stations: ['beIN Sports 1'] }, events: [] })),
+  lookupSportmonksFixture: vi.fn(async (id: string) => ({ kind: 'found', match: { id: Number(id), ...(id === '1' ? { tv_stations: ['beIN Sports 1'] } : {}) }, events: [] })),
 }));
 const fixture = { id: 1, home: { id: 34, name: 'Galatasaray' }, away: { id: 1071, name: 'Kasımpaşa' }, status: 'NOT STARTED', date: '2026-10-09', scheduled: '17:00', competition: { id: 600, name: 'Süper Lig' } };
-vi.mock('@/services/teamPage', () => ({ getTeamOverview: vi.fn(async () => ({ team: { id: 34, name: 'Galatasaray' }, recent: [], fixtures: [fixture], campaigns: [] })) }));
+vi.mock('@/services/teamPage', () => ({
+  getTeamOverview: vi.fn(async () => ({ team: { id: 34, name: 'Galatasaray' }, recent: [], fixtures: [fixture, { ...fixture, id: 9, competition: { id: 2, name: 'Şampiyonlar Ligi' } }, { ...fixture, id: 10 }], campaigns: [] })),
+}));
 vi.mock('@/services/sportmonks/teamOverview', () => ({ teamForm: () => [] }));
 vi.mock('@/server/homeDay', () => ({
   loadHomeDay: vi.fn(async (date: string) => {
@@ -60,8 +62,17 @@ describe('asistan araçları', () => {
   it('find_team + get_fixtures (takım): sıradaki maç TV kanalıyla, Türkiye saatiyle; linkler site içi', async () => {
     expect((await run('find_team', { query: 'GS' })).data).toEqual({ teams: [{ team_id: 34, name: 'Galatasaray' }] });
     const r = await run('get_fixtures', { team_id: 34 });
-    expect(r.data).toMatchObject({ team: 'Galatasaray', upcoming: [{ match_id: 1, date: '2026-10-09', time_tr: '20:00', tv: ['beIN Sports 1'] }] });
-    expect(r.card).toMatchObject({ type: 'matches' });
+    // Kanal maç detayıyla aynı kaynaktan (lookupSportmonksFixture), sıradaki 2 maç için; yoksa tv_note.
+    const up = (r.data as { team: string; upcoming: Array<Record<string, unknown>> }).upcoming;
+    expect((r.data as { team: string }).team).toBe('Galatasaray');
+    expect(up).toHaveLength(3);
+    expect(up[0]).toMatchObject({ match_id: 1, date: '2026-10-09', time_tr: '20:00', tv: ['beIN Sports 1'], league: 'Süper Lig' });
+    expect(up[1]).toMatchObject({ match_id: 9, tv_note: 'not_announced', league: 'Şampiyonlar Ligi' });
+    expect(up[2]).not.toHaveProperty('tv_note');
+    const { lookupSportmonksFixture } = await import('@/services/liveScoreService');
+    expect(vi.mocked(lookupSportmonksFixture).mock.calls.map((c) => c[0])).toEqual(['1', '9']);
+    expect(r.card?.type).toBe('matches');
+    expect((r.card as { matches: Array<Record<string, unknown>> }).matches[0]).toMatchObject({ id: 1, league: 'Süper Lig', tv: ['beIN Sports 1'] });
     for (const l of r.links ?? []) expect(isAllowedLinkHref(l.href), l.href).toBe(true);
   });
 
@@ -74,7 +85,10 @@ describe('asistan araçları', () => {
   });
 
   it('puan durumu ve krallık (asist türü ayrı sıralanır)', async () => {
-    expect((await run('get_standings', { league_id: 600 })).data).toMatchObject({ league: 'Süper Lig', rows: [{ rank: 1, team: 'Galatasaray', points: 13 }] });
+    const st = await run('get_standings', { league_id: 600 });
+    expect(st.data).toMatchObject({ league: 'Süper Lig', rows: [{ rank: 1, team: 'Galatasaray', points: 13 }] });
+    // Tablo kartı: ilk 8 satır (sıra, takım, O, P) + tüm puan durumu linki.
+    expect(st.card).toEqual({ type: 'standings', league: 'Süper Lig', rows: [{ rank: 1, team: 'Galatasaray', played: 6, points: 13 }], href: '/standings' });
     const assists = (await run('get_top_scorers', { league_id: 600, type: 'assists' })).data as { players: Array<{ player: string }> };
     expect(assists.players[0]!.player).toBe('Pasör');
   });

@@ -22,7 +22,8 @@ const linkTarget = (href: string) => href.split(/[?#]/)[0]!;
  */
 export function finalizeAttachments(cards: AssistantCard[], links: AssistantLink[]): { card: AssistantCard | null; links: AssistantLink[] } {
   const card = [...cards].reverse().find((c) => c.type === 'analysis') ?? cards[cards.length - 1] ?? null;
-  if (card?.type === 'analysis') return { card, links: [] };
+  // Analiz ve puan durumu kartları kendi düğmesini/linkini taşır → ayrıca link yok.
+  if (card?.type === 'analysis' || card?.type === 'standings') return { card, links: [] };
   const taken = new Set(card?.type === 'matches' ? card.matches.map((m) => linkTarget(m.href)) : []);
   const out: AssistantLink[] = [];
   for (const l of sanitizeLinks(links, 20)) {
@@ -163,7 +164,8 @@ export async function runAssistantChat(opts: {
       const result = await runAssistantTool(call.name, call.arguments, ctx);
       if (result.card) {
         cards.push(result.card);
-        if (result.card.type === 'analysis') oneSentenceOnly = true;
+        // Analiz ve puan durumu kartı içeriği kendisi verir: sohbet metni en fazla 1 cümle.
+        if (result.card.type === 'analysis' || result.card.type === 'standings') oneSentenceOnly = true;
       }
       if (result.links) links.push(...result.links);
       if (result.reply) fixedReply = result.reply;
