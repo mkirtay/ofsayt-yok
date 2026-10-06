@@ -45,7 +45,7 @@ import {
 const SEED = 42;
 const round0 = makeRound(SEED, 0);
 /** Zor seviye (3. vuruş ve sonrası) kalecisi, barajsız, kaleci ortada sabit başlar. */
-const openHard = { ...makeRound(SEED, 3), wall: [], keeper: { amp: 0.0001, period: 300, phase: 0, react: KEEPER_LEVELS[1].react, speed: KEEPER_LEVELS[1].speed } };
+const openHard = { ...makeRound(SEED, 3), wall: [], keeper: { z0: 0, guessErr: 0, react: KEEPER_LEVELS[1]!.react, speed: KEEPER_LEVELS[1]!.speed } };
 /** Güç (0–1) → o gücü veren etkin süre (ms). */
 const msFor = (targetZ: number, targetY: number, power: number) =>
   Math.round(Math.hypot(targetZ * 100, targetY * 100 + 800) / (SWIPE_SPEED.min + (SWIPE_SPEED.max - SWIPE_SPEED.min) * power));
@@ -115,8 +115,8 @@ describe('belirlenimcilik', () => {
           },
           {
             "corner": false,
-            "kind": "goal",
-            "points": 100,
+            "kind": "saved",
+            "points": 0,
             "viaPost": false,
           },
           {
@@ -138,7 +138,7 @@ describe('belirlenimcilik', () => {
             "viaPost": false,
           },
         ],
-        "total": 100,
+        "total": 0,
       }
     `);
   });
@@ -157,7 +157,8 @@ describe('tur üretimi', () => {
         expect(r.wall.length).toBeLessThanOrEqual(5);
         // İlk 2 vuruş: 3 kişilik baraj, geç ve yavaş kaleci
         if (i < 2) expect(r.wall.length).toBe(3);
-        expect([r.keeper.react, r.keeper.speed]).toEqual(i < 2 ? [KEEPER_LEVELS[0].react, KEEPER_LEVELS[0].speed] : [KEEPER_LEVELS[1].react, KEEPER_LEVELS[1].speed]);
+        expect([r.keeper.react, r.keeper.speed]).toEqual(i < 2 ? [KEEPER_LEVELS[0]!.react, KEEPER_LEVELS[0]!.speed] : [KEEPER_LEVELS[1]!.react, KEEPER_LEVELS[1]!.speed]);
+        expect(Math.abs(r.keeper.guessErr)).toBeLessThanOrEqual(KEEPER_LEVELS[i < 2 ? 0 : 1]!.err);
         const last = r.wall[r.wall.length - 1]!;
         const cx = (r.wall[0]!.x + last.x) / 2;
         const cz = (r.wall[0]!.z + last.z) / 2;
@@ -165,9 +166,11 @@ describe('tur üretimi', () => {
         expect(cx).toBeGreaterThan(r.ball.x);
         expect(cx).toBeLessThan(0);
         expect(Math.hypot(r.wall[1]!.x - r.wall[0]!.x, r.wall[1]!.z - r.wall[0]!.z)).toBeCloseTo(FIGURE.spacing, 6);
-        expect(r.keeper.amp).toBeLessThan(GOAL.halfW - 0.85);
-        for (const t of [0, 1, 57, 999, 71999]) expect(Math.abs(keeperZ(r, t))).toBeLessThanOrEqual(r.keeper.amp + 1e-9);
-        expect(keeperZ(r, 5)).toBe(keeperZ(r, 5 + r.keeper.period));
+        // Kaleci vuruşa kadar yerinde: her tick aynı z; ortaya yakın, barajın kapattığı tarafın tersinde
+        for (const t of [0, 1, 57, 999, 71999]) expect(keeperZ(r, t)).toBe(r.keeper.z0);
+        expect(Math.abs(r.keeper.z0)).toBeGreaterThanOrEqual(0.4);
+        expect(Math.abs(r.keeper.z0)).toBeLessThanOrEqual(1.0);
+        if (r.ball.z !== 0) expect(Math.sign(r.keeper.z0)).toBe(-Math.sign(r.ball.z)); // baraj yakın direği kapatır, kaleci öbür yanı
       }
     }
   });
@@ -338,7 +341,7 @@ describe('vuruş sonuçları ve puan', () => {
     expect(goals(openHard, 0.45)).toBeLessThanOrEqual(0.1); // orta güç: kaleci yetişir
     expect(goals(openHard, 0.8)).toBeGreaterThanOrEqual(0.4); // sert: çoğu geçer (sapma payıyla)
     // Kolay seviyede (ilk 2 vuruş) orta güç de yeter
-    const easy = { ...openHard, keeper: { ...openHard.keeper, react: KEEPER_LEVELS[0].react, speed: KEEPER_LEVELS[0].speed } };
+    const easy = { ...openHard, keeper: { ...openHard.keeper, react: KEEPER_LEVELS[0]!.react, speed: KEEPER_LEVELS[0]!.speed } };
     expect(goals(easy, 0.45)).toBeGreaterThanOrEqual(0.6);
   });
 
@@ -376,8 +379,8 @@ describe('vuruş sonuçları ve puan', () => {
 });
 
 describe('seviye modu', () => {
-  it('kaldıraçlar kademeli: ilk 3 seviye kolay, her seviyede en çok 1 kaldıraç artar, üst sınırlar aşılmaz, belirlenimci', () => {
-    const keys = ['dist', 'angle', 'wall', 'keeper', 'wind', 'goal', 'moving'] as const;
+  it('kaldıraçlar kademeli: ilk 3 seviye kolay, mesafe/açı her seviyede belirgin artar, öteki kaldıraçlardan en çok 1; üst sınırlar; belirlenimci', () => {
+    const keys = ['wall', 'keeper', 'wind', 'goal', 'moving'] as const;
     for (const lv of [1, 2, 3]) {
       const s = levelSpec(lv);
       expect(s.wall).toBe(3);
@@ -385,11 +388,22 @@ describe('seviye modu', () => {
       expect(s.wind).toBe(0);
       expect(s.goal).toBe(1);
       expect(s.moving).toBe(0);
-      expect(s.dist).toBeLessThanOrEqual(17.5);
     }
+    // Mesafe: S1 ~20 m merkez, S5 ~24 m hafif açı, S10 ~28 m belirgin açı, S15+ 32 m geniş açı; monoton
+    expect(levelSpec(1).dist).toBe(20);
+    expect(Math.abs(levelSpec(5).dist - 24)).toBeLessThanOrEqual(1);
+    expect(Math.abs(levelSpec(10).dist - 28)).toBeLessThanOrEqual(1);
+    expect(levelSpec(15).dist).toBe(32);
+    expect(levelSpec(1).angle).toBeLessThan(0.1);
+    expect(levelSpec(5).angle).toBeGreaterThan(0.2);
+    expect(levelSpec(10).angle).toBeGreaterThan(0.4);
+    expect(levelSpec(15).angle).toBe(0.7);
     let prev = levelSpec(1);
     for (let lv = 2; lv <= 80; lv++) {
       const s = levelSpec(lv);
+      expect(s.dist).toBeGreaterThanOrEqual(prev.dist);
+      expect(s.angle).toBeGreaterThanOrEqual(prev.angle);
+      if (lv <= 15) expect(s.dist + s.angle).toBeGreaterThan(prev.dist + prev.angle);
       const changed = keys.filter((k) => s[k] !== prev[k]);
       expect(changed.length, `seviye ${lv}: ${changed.join()}`).toBeLessThanOrEqual(1);
       for (const k of keys) {
@@ -399,7 +413,7 @@ describe('seviye modu', () => {
       prev = s;
     }
     const top = levelSpec(200);
-    expect(top).toEqual({ level: 200, dist: LEVER_CAPS.dist, angle: LEVER_CAPS.angle, wall: LEVER_CAPS.wall, keeper: LEVER_CAPS.keeper, wind: LEVER_CAPS.wind, goal: LEVER_CAPS.goal, moving: LEVER_CAPS.moving });
+    expect(top).toEqual({ level: 200, dist: 32, angle: 0.7, wall: LEVER_CAPS.wall, keeper: LEVER_CAPS.keeper, wind: LEVER_CAPS.wind, goal: LEVER_CAPS.goal, moving: LEVER_CAPS.moving });
     expect(levelSpec(7)).toEqual(levelSpec(7));
     // Üst sınırlar oynanabilir kalır
     expect(KEEPER_TIERS[LEVER_CAPS.keeper]).toBeDefined();
@@ -414,10 +428,16 @@ describe('seviye modu', () => {
         expect(r).toEqual(makeLevelRound(seed, lv));
         const dist = -r.ball.x;
         expect(dist).toBeGreaterThanOrEqual(s.dist);
-        expect(dist).toBeLessThanOrEqual(s.dist + 2);
+        expect(dist).toBeLessThanOrEqual(s.dist + 1);
         expect(Math.abs(r.ball.z)).toBeLessThanOrEqual(dist * s.angle + 1e-9);
+        // Ceza sahası dışı (penaltı değil): x < −16,5; kale ortasına en az 20 m
+        expect(r.ball.x).toBeLessThan(-16.5);
+        expect(Math.hypot(r.ball.x, r.ball.z)).toBeGreaterThanOrEqual(20);
+        for (const tk of [0, 300, 5000]) expect(keeperZ(r, tk)).toBe(r.keeper.z0);
         expect(r.wall).toHaveLength(s.wall);
         expect([r.keeper.react, r.keeper.speed]).toEqual([KEEPER_TIERS[s.keeper]!.react, KEEPER_TIERS[s.keeper]!.speed]);
+        // Mesafe seviyeyle monoton (etiket: kale ortasına uzaklık)
+        if (lv > 1) expect(-r.ball.x).toBeGreaterThanOrEqual(-makeLevelRound(seed, lv - 1).ball.x - 1);
         if (s.wind === 0) expect(r.wind).toBe(0);
         else {
           expect(Math.abs(r.wind)).toBeGreaterThanOrEqual(s.wind * 0.85 - 1e-9);
@@ -425,7 +445,7 @@ describe('seviye modu', () => {
         }
         expect(r.goalScale).toBe(s.goal);
         expect(r.wallMotion.amp).toBe(s.moving);
-        expect(r.keeper.amp + KEEPER.r).toBeLessThanOrEqual(GOAL.halfW * s.goal);
+        expect(Math.abs(r.keeper.guessErr)).toBeLessThanOrEqual(KEEPER_TIERS[s.keeper]!.err);
         expect(roundGoal(r).halfW).toBeCloseTo(GOAL.halfW * s.goal, 9);
       }
       expect(makeLevelRound(seed, 5)).not.toEqual(makeLevelRound(seed + 1, 5));
@@ -460,6 +480,10 @@ describe('seviye modu', () => {
     while (!st2.result) stepShot(st2);
     expect(st2.result!.kind).not.toBe('goal');
     // Hareketli baraj
+    // Kaleci tahmin hatasıyla yanlış tarafa da gidebilir: hata hedefin ötesindeyse hedefe varmaz
+    const wrong = { ...openHard, keeper: { ...openHard.keeper, guessErr: -2.5 } };
+    const stK = startShot(wrong, swipe(2.0, 1.2, msFor(2.0, 1.2, 0.5)));
+    expect(stK.keeperTarget).toBeLessThan(0);
     const moving = { ...round0, wallMotion: { amp: 0.8, period: 400, phase: 37 } };
     for (const tick of [0, 13, 400, 999]) expect(Math.abs(wallOffset(moving, tick))).toBeLessThanOrEqual(0.8 + 1e-9);
     expect(wallOffset(moving, 5)).toBe(wallOffset(moving, 405));
@@ -525,7 +549,7 @@ describe('zorluk dengesi (modellenmiş oyuncu, tohumlu)', () => {
   };
 
   /**
-   * Oyuncu modeli: köşeye yakın hedef + nişan hatası (σ), güç aralığı. `smart`: kalecinin o anki tarafının tersine nişan
+   * Oyuncu modeli: köşeye yakın hedef + nişan hatası (σ), güç aralığı. `smart`: kalecinin durduğu tarafın tersine nişan
    * alır ve barajın kapattığını görürse falso / öbür tarafı dener (iyi oyuncu); değilse çoğu zaman olduğu gibi vurur.
    */
   function goalsPerSeries(p: { sigmaZ: number; sigmaY: number; power: [number, number]; smart: boolean }, series = 300): number {

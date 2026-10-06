@@ -64,13 +64,16 @@ export const FIGURE = { r: 0.26, height: 1.75, spacing: 0.56, restitution: 0.3 }
 export const KEEPER = { r: 0.85, height: 2.08, x: -0.75, restitution: 0.25 };
 export const WALL_DISTANCE = 9.15;
 /**
- * Kaleci şuta tepki verir: `react` tick sonra hedefe doğru `speed` (m/sn) ile kayar → yavaş şut kurtarılır, sert +
- * köşe şut geçer. Serinin ilk 2 vuruşu kolay (level 0: kaleci geç ve yavaş, baraj 3 kişi), sonrakiler normal.
+ * Kaleci vuruştan ÖNCE yerinde durur (gerçek serbest vuruş: barajın kapatmadığı tarafı kollayan, kale ortasına yakın bir
+ * nokta); hamle YALNIZ vuruştan `react` tick sonra başlar ve `speed` (m/sn) ile TAHMİN ettiği noktaya kayar. Tahmin
+ * hatası `err` (m, tohumlu): düşük seviyede büyük (yanlış köşeye de gidebilir), yüksek seviyede küçük. Kaleci vuruştan
+ * önce kıpırdamadığı için "hareketini bekleyip boş köşeye atmak" yok. Serinin ilk 2 vuruşu kolay, sonrakiler normal.
  */
-export const KEEPER_LEVELS = [
-  { react: 60, speed: 2.4, periodScale: 1.4 },
-  { react: 46, speed: 3.1, periodScale: 1 },
-] as const;
+export type KeeperTier = { react: number; speed: number; err: number };
+export const KEEPER_LEVELS: readonly KeeperTier[] = [
+  { react: 60, speed: 2.4, err: 1.6 },
+  { react: 46, speed: 3.1, err: 0.9 },
+];
 export const EASY_ROUNDS = 2;
 /** Güç bölgeleri (0–1): altı "çok güçsüz" (kaleci yetişir), üstü "aşırı güçlü" (top yükselir, isabet düşer). */
 export const POWER_ZONES = { weak: 0.3, over: 0.85 };
@@ -106,8 +109,8 @@ export type Round = {
   ball: { x: number; z: number };
   /** Baraj figürlerinin merkezleri (hareketli barajda `wallOffset` sıra boyunca eklenir). */
   wall: { x: number; z: number }[];
-  /** Kaleci: şuta kadar kale çizgisinin önünde üçgen dalgayla gidip gelir; şutta `react` tick sonra `speed` ile kayar. */
-  keeper: { amp: number; period: number; phase: number; react: number; speed: number };
+  /** Kaleci: vuruşa kadar `z0`'da durur; vuruştan `react` tick sonra `speed` ile hedefin `guessErr` kadar yanına kayar. */
+  keeper: { z0: number; guessErr: number; react: number; speed: number };
   /** Yanal rüzgâr (m/sn², +z sağa): havadaki topa sürekli ivme. 0 = rüzgârsız. */
   wind: number;
   /** Kale genişliği çarpanı (1 = tam kale; seviye modunda daralır). */
@@ -125,7 +128,7 @@ type RoundSpec = {
   angle: number;
   wallMin: number;
   wallMax: number;
-  keeper: { react: number; speed: number; periodScale: number };
+  keeper: KeeperTier;
   wind: number;
   goalScale: number;
   wallMotionAmp: number;
@@ -154,13 +157,13 @@ function buildRound(r: () => number, p: RoundSpec): Round {
     const o = (i - (count - 1) / 2) * FIGURE.spacing;
     wall.push({ x: cx - fz * o, z: cz + fx * o });
   }
-  const amp = Math.min(1.2 + r() * 1.4, GOAL.halfW * p.goalScale - KEEPER.r - 0.1);
-  const period = Math.floor((230 + Math.floor(r() * 200)) * p.keeper.periodScale);
-  const phase = Math.floor(r() * period);
+  // Kaleci: barajın kapattığı tarafın tersinde, ortaya yakın (0,4–1,0 m); tahmin hatası ±err (işareti tohumlu)
+  const z0 = -side * (0.4 + 0.6 * r());
+  const guessErr = (r() * 2 - 1) * p.keeper.err;
   // Seviye kaldıraçları (seri modunda hepsi etkisiz; RNG yalnız gerekince çekilir → seri turları değişmez)
   const wind = p.wind === 0 ? 0 : (r() < 0.5 ? -1 : 1) * p.wind * (0.85 + 0.3 * r());
   const wallMotion = p.wallMotionAmp === 0 ? { amp: 0, period: 1, phase: 0 } : { amp: p.wallMotionAmp, period: 300 + Math.floor(r() * 180), phase: Math.floor(r() * 400) };
-  return { ball, wall, keeper: { amp, period, phase, react: p.keeper.react, speed: p.keeper.speed }, wind, goalScale: p.goalScale, wallMotion };
+  return { ball, wall, keeper: { z0, guessErr, react: p.keeper.react, speed: p.keeper.speed }, wind, goalScale: p.goalScale, wallMotion };
 }
 
 /**
@@ -170,7 +173,7 @@ function buildRound(r: () => number, p: RoundSpec): Round {
 export function makeRound(seed: number, index: number): Round {
   const r = rng((Math.imul(seed >>> 0, 0x9e3779b1) ^ Math.imul(index + 1, 0x85ebca6b)) >>> 0);
   const easy = index < EASY_ROUNDS;
-  return buildRound(r, { distMin: 16, distSteps: 17, angle: 0.45, wallMin: 3, wallMax: easy ? 3 : 5, keeper: KEEPER_LEVELS[easy ? 0 : 1], wind: 0, goalScale: 1, wallMotionAmp: 0 });
+  return buildRound(r, { distMin: 16, distSteps: 17, angle: 0.45, wallMin: 3, wallMax: easy ? 3 : 5, keeper: KEEPER_LEVELS[easy ? 0 : 1]!, wind: 0, goalScale: 1, wallMotionAmp: 0 });
 }
 
 // ── Seviye modu ───────────────────────────────────────────────────────────────────────────────────────
@@ -178,35 +181,54 @@ export function makeRound(seed: number, index: number): Round {
 export const LIVES = 3;
 /** Bir koşuda en çok bu kadar vuruş kabul edilir (sunucu sınırı). */
 export const MAX_LEVEL_SHOTS = 400;
-/** Kaleci kademeleri (seviye modunda `keeper` kaldıracı bu diziyi tırmanır). */
-export const KEEPER_TIERS = [
-  { react: 60, speed: 2.4, periodScale: 1.4 },
-  { react: 52, speed: 2.8, periodScale: 1.2 },
-  { react: 46, speed: 3.1, periodScale: 1 },
-  { react: 40, speed: 3.5, periodScale: 0.9 },
-  { react: 34, speed: 3.9, periodScale: 0.8 },
-] as const;
-export type Lever = 'dist' | 'wall' | 'keeper' | 'wind' | 'goal' | 'moving' | 'angle';
+/** Kaleci kademeleri (seviye modunda `keeper` kaldıracı bu diziyi tırmanır): daha erken, daha hızlı, daha isabetli tahmin. */
+export const KEEPER_TIERS: readonly KeeperTier[] = [
+  { react: 64, speed: 2.3, err: 2.2 },
+  { react: 54, speed: 2.7, err: 1.5 },
+  { react: 46, speed: 3.1, err: 1.0 },
+  { react: 40, speed: 3.5, err: 0.6 },
+  { react: 34, speed: 3.9, err: 0.3 },
+];
+export type Lever = 'wall' | 'keeper' | 'wind' | 'goal' | 'moving';
 /**
- * Seviye n, bu listenin ilk n−1 adımını uygular (her seviyede 1 kaldıraç artar; ilk 3 seviye kolay: 1. seviye hiç,
- * 2–3. seviyeler yalnız mesafe/açı). Liste bitince `LEVER_CYCLE` üst sınıra kadar döner.
+ * Mesafe ve açı her seviyede BELİRGİN artar (sürekli: S1 ~20 m merkez, S5 ~24 m hafif açı, S10 ~28 m belirgin açı,
+ * S15+ 32 m geniş açı). Öteki kaldıraçlardan seviye n, bu listenin ilk n−1 adımını uygular (seviyede en çok 1 adım;
+ * ilk 3 seviye kolay: yalnız mesafe/açı). Liste bitince `LEVER_CYCLE` üst sınıra kadar döner.
  */
-export const LEVER_STEPS: readonly Lever[] = ['dist', 'angle', 'wall', 'keeper', 'wind', 'dist', 'wall', 'keeper', 'goal', 'wind', 'moving', 'dist', 'keeper', 'wind', 'goal', 'angle'];
-const LEVER_CYCLE: readonly Lever[] = ['dist', 'wind', 'keeper', 'moving', 'goal', 'angle'];
-export const LEVER_CAPS = { dist: 26, angle: 0.75, wall: 5, keeper: KEEPER_TIERS.length - 1, wind: 2.4, goal: 0.68, moving: 1.2 };
-const LEVER_STEP = { dist: 1.5, angle: 0.1, wall: 1, keeper: 1, wind: 0.6, goal: 0.08, moving: 0.4 };
+export const LEVER_STEPS: readonly (Lever | null)[] = [null, null, 'wall', 'keeper', 'wind', 'wall', 'keeper', 'goal', 'wind', 'moving', 'keeper', 'wind', 'goal', 'moving'];
+const LEVER_CYCLE: readonly Lever[] = ['wind', 'keeper', 'moving', 'goal'];
+export const LEVEL_DIST = { min: 20, max: 32, perLevel: 12 / 14 };
+export const LEVEL_ANGLE = { min: 0.08, max: 0.7, perLevel: 0.62 / 14 };
+export const LEVER_CAPS = { wall: 5, keeper: KEEPER_TIERS.length - 1, wind: 2.4, goal: 0.68, moving: 1.2 };
+const LEVER_STEP = { wall: 1, keeper: 1, wind: 0.6, goal: 0.08, moving: 0.4 };
 
 export type LevelSpec = { level: number; dist: number; angle: number; wall: number; keeper: number; wind: number; goal: number; moving: number };
 
 /** Seviyenin kaldıraç değerleri (1 tabanlı). Belirlenimci: seviye → aynı değerler. */
 export function levelSpec(level: number): LevelSpec {
-  const s: LevelSpec = { level, dist: 16, angle: 0.35, wall: 3, keeper: 0, wind: 0, goal: 1, moving: 0 };
-  for (let i = 0; i < level - 1; i++) {
-    const lever = i < LEVER_STEPS.length ? LEVER_STEPS[i]! : LEVER_CYCLE[(i - LEVER_STEPS.length) % LEVER_CYCLE.length]!;
+  const n = level - 1;
+  const s: LevelSpec = {
+    level,
+    dist: Math.round(Math.min(LEVEL_DIST.max, LEVEL_DIST.min + n * LEVEL_DIST.perLevel) * 2) / 2,
+    angle: Math.round(Math.min(LEVEL_ANGLE.max, LEVEL_ANGLE.min + n * LEVEL_ANGLE.perLevel) * 100) / 100,
+    wall: 3,
+    keeper: 0,
+    wind: 0,
+    goal: 1,
+    moving: 0,
+  };
+  for (let i = 0; i < n; i++) {
+    const lever = i < LEVER_STEPS.length ? LEVER_STEPS[i] : LEVER_CYCLE[(i - LEVER_STEPS.length) % LEVER_CYCLE.length]!;
+    if (!lever) continue;
     if (lever === 'goal') s.goal = Math.max(LEVER_CAPS.goal, Math.round((s.goal - LEVER_STEP.goal) * 100) / 100);
     else s[lever] = Math.min(LEVER_CAPS[lever], Math.round((s[lever] + LEVER_STEP[lever]) * 100) / 100);
   }
   return s;
+}
+
+/** Topun kale çizgisi ortasına uzaklığı (m). */
+export function ballDistance(round: Round): number {
+  return len2(round.ball.x, round.ball.z);
 }
 
 /** Seviye turu: tohum (gün ya da rastgele) + seviye → aynı tur. */
@@ -215,7 +237,7 @@ export function makeLevelRound(seed: number, level: number): Round {
   const r = rng((Math.imul(seed >>> 0, 0x7feb352d) ^ Math.imul(level, 0x846ca68b) ^ 0x5bd1e995) >>> 0);
   return buildRound(r, {
     distMin: p.dist,
-    distSteps: 5,
+    distSteps: 3,
     angle: p.angle,
     wallMin: p.wall,
     wallMax: p.wall,
@@ -247,11 +269,9 @@ export function roundGoal(round: Round): GoalSpec {
   return round.goalScale === 1 ? GOAL : goalSpec(1, { lineX: 0, halfW: GOAL.halfW * round.goalScale, height: GOAL.height, depth: 2, postR: 0.06 });
 }
 
-/** Kalecinin `tick` anındaki z'si (üçgen dalga, −amp…amp). */
-export function keeperZ(round: Round, tick: number): number {
-  const { amp, period, phase } = round.keeper;
-  const u = ((tick + phase) % period) / period;
-  return amp * (u < 0.5 ? 4 * u - 1 : 3 - 4 * u);
+/** Kalecinin vuruştan önceki yeri: `tick`ten bağımsız (patrol yok). İmza, vuruş anı tick'iyle çağıran kodla uyumlu. */
+export function keeperZ(round: Round, _tick: number): number {
+  return round.keeper.z0;
 }
 
 /** Nişan tabanı: F = toptan kale ortasına birim vektör, R = F'nin sağı (kameranın arkasından bakınca ekran sağı). */
@@ -322,8 +342,10 @@ export type ShotParams = {
   shake: number;
   /** Uygulanan sapma: `yaw` yön (sağa pozitif, radyan ≈), `lift` dikey hız çarpanı. */
   scatter: { yaw: number; lift: number };
-  /** Hedef noktanın z'si (kaleci buraya yönelir). */
+  /** Hedef noktanın z'si (kale düzlemi, nişan). */
   targetZ: number;
+  /** Topun kale çizgisine varacağı tahmini z (hedef + rüzgâr sürüklenmesi); kaleci bunu okur (+ tahmin hatası). */
+  arrivalZ: number;
 };
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
@@ -452,6 +474,7 @@ export function shotParams(round: Round, input: ShotInput): ShotParams | null {
     shake,
     scatter: { yaw, lift: liftScatter },
     targetZ,
+    arrivalZ: targetZ + 0.5 * round.wind * t * t,
   };
 }
 
@@ -467,7 +490,7 @@ export type ShotState = {
   releaseTick: number;
   /** Vuruştan beri geçen tick. */
   tick: number;
-  /** Kalecinin z'si (bırakma anındaki yerinden hedefe doğru kayar) ve yöneldiği nokta. */
+  /** Kalecinin z'si (duruş yerinden tahminine doğru kayar) ve yöneldiği nokta (hedef + tahmin hatası). */
   keeperZ: number;
   keeperTarget: number;
   pos: V3;
@@ -493,7 +516,7 @@ export function startShot(round: Round, input: ShotInput): ShotState {
     releaseTick: input.tick,
     tick: 0,
     keeperZ: kz,
-    keeperTarget: p ? clamp(p.targetZ, -(goal.halfW - 0.5), goal.halfW - 0.5) : kz,
+    keeperTarget: p ? clamp(p.arrivalZ + round.keeper.guessErr, -(goal.halfW - 0.5), goal.halfW - 0.5) : kz,
     pos: { x: round.ball.x, y: BALL_R, z: round.ball.z },
     vel: p ? p.vel : { x: 0, y: 0, z: 0 },
     spin: { x: 0, y: p ? -p.curve * 14 : 0, z: 0 },

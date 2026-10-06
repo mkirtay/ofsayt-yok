@@ -236,6 +236,20 @@
   }
 }
 
+.right {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+}
+
+.dist {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(6, 12, 20, 0.55);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
 .score {
   font-size: 16px;
   font-variant-numeric: tabular-nums;

@@ -3,7 +3,7 @@
  * parçasında kalır. Yapı taşları giriş sahnesiyle ortak (components/pitch3d/pitchKit.ts); fizik ve skor
  * lib/frikik/sim.ts'te (belirlenimci; sunucu aynı kodu çalıştırır) — burası yalnız çizer ve girdiyi toplar.
  *
- * Kamera topun arkasında, kaleye bakar. Baraj ve kaleci oyuncak "peg" figürler. Kontrol: topun üstünden hedefe doğru
+ * Kamera topun arkasında, kaleye bakar. Baraj ve kaleci oyuncak "peg" figürler (kaleci vuruşa kadar yerinde durur). Kontrol: topun üstünden hedefe doğru
  * kaydır (swipe) — genel yön hedef, en yüksek kaydırma hızı güç, yolun bombesi falso. Kaydırırken yalnız parmağın
  * çizdiği iz (ince çizgi) ve güç çubuğu görünür; topun yolu / hedef halkası ÇİZİLMEZ. Parmak titremesi yumuşatılır. Yol
  * 16 noktalı tam sayı girdiye çevrilir (lib/frikik/swipe.ts); bırakınca son girdi aynen şut olur.
@@ -64,6 +64,7 @@ import {
   SHOTS_PER_SERIES,
   TICK,
   aimBasis,
+  ballDistance,
   keeperZ,
   levelPoints,
   POWER_ZONES,
@@ -83,8 +84,8 @@ import { effectiveMs, smoothPoint, swipeToInput, type GoalFrame, type ScreenPoin
 export type FrikikMode = 'series' | 'level';
 /** Seri ya da seviye koşusu özeti. `results[i].points` seviye çarpanı uygulanmış puandır. */
 export type FrikikSummary = { mode: FrikikMode; seed: number; inputs: ShotInput[]; results: ShotResult[]; total: number; level: number; cleared: number };
-/** Tur başı bilgisi (HUD): seri indeksi, seviye, can, rüzgâr (m/sn², + sağa). */
-export type RoundInfo = { index: number; level: number; lives: number; wind: number };
+/** Tur başı bilgisi (HUD): seri indeksi, seviye, can, rüzgâr (m/sn², + sağa), kale ortasına uzaklık (m). */
+export type RoundInfo = { index: number; level: number; lives: number; wind: number; dist: number };
 
 export type FrikikOptions = {
   /** Mobil: düşük pixelRatio, ucuz malzeme, küçük dokular. */
@@ -115,7 +116,7 @@ export type FrikikHandle = {
 const CONFETTI_COLORS = [0x00a76f, 0x2fe3a0, 0xffffff, 0xffc83d, 0x007b55];
 /** Sonuçtan sonra bekleme (tick): gol kutlaması daha uzun. */
 const HOLD_TICKS = { goal: 210, other: 130 };
-const LINES = { minX: -30, maxX: 2, halfZ: 26 };
+const LINES = { minX: -46, maxX: 2, halfZ: 26 };
 
 /** Ceza sahası çizgileri (saydam zemin üstüne beyaz): kale çizgisi, ceza alanı, altı pas, penaltı noktası, yay. */
 function boxLinesTexture(pxPerM: number): CanvasTexture {
@@ -445,7 +446,7 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
     placeWall(0);
     frameCamera();
     phase = 'aim';
-    opts.onRound({ index: i, level, lives, wind: round.wind });
+    opts.onRound({ index: i, level, lives, wind: round.wind, dist: ballDistance(round) });
   };
 
   /** Baraj figürlerini sıra boyunca `off` kadar kaymış çizer (hareketli baraj; sabitte 0). */

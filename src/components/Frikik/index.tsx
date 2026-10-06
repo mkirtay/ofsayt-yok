@@ -48,7 +48,7 @@ export default function Frikik({ shared }: { shared: ShareInfo | null }) {
   const [mode, setMode] = useState<Mode>('boot');
   const [game, setGame] = useState<FrikikMode>(shared?.level == null && shared ? 'series' : 'level');
   const [ready, setReady] = useState(false);
-  const [info, setInfo] = useState<RoundInfo>({ index: 0, level: 1, lives: LIVES, wind: 0 });
+  const [info, setInfo] = useState<RoundInfo>({ index: 0, level: 1, lives: LIVES, wind: 0, dist: 0 });
   const [results, setResults] = useState<ShotResult[]>([]);
   const [total, setTotal] = useState(0);
   const [day, setDay] = useState<number | null>(null);
@@ -233,7 +233,10 @@ export default function Frikik({ shared }: { shared: ShareInfo | null }) {
                   })}
                 </div>
               )}
-              <div className={styles.score}>{t('hud.score', { score: total })}</div>
+              <div className={styles.right}>
+                {info.dist > 0 ? <span className={styles.dist}>{t('hud.dist', { m: Math.round(info.dist) })}</span> : null}
+                <span className={styles.score}>{t('hud.score', { score: total })}</span>
+              </div>
             </div>
             {!ready ? <div className={styles.center}>{t('loading')}</div> : null}
             {showToast ? (

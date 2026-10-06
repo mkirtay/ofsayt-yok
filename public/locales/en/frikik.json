@@ -13,7 +13,8 @@
     "level": "Level {{n}}",
     "lives": "{{n}}/{{total}} lives",
     "wind": "Wind, strength {{n}}",
-    "windShort": "Wind"
+    "windShort": "Wind",
+    "dist": "Distance: {{m}} m"
   },
   "goal": "GOAL!",
   "result": {
@@ -54,8 +55,8 @@
     "p1": "Goal: 100 points",
     "p2": "In off the post: +50",
     "p3": "Top corner: +100",
-    "r4": "Each series has 5 shots; the ball position, the wall and the keeper's movement change every shot. The first 2 shots are easier.",
-    "r5": "Level mode (free kick of the day): 3 lives, one shot per level. Goal → next level, miss → lose a life. As levels go up, distance, angle, wall, keeper, wind (direction and strength shown above the pitch), a narrower goal and a moving wall arrive step by step; everyone plays the same sequence that day.",
+    "r4": "Each series has 5 shots; the ball position and the wall change every shot. The keeper stays put until you shoot, then dives towards their guess (late and error-prone at low levels, fast and accurate at high ones). The first 2 shots are easier.",
+    "r5": "Level mode (free kick of the day): 3 lives, one shot per level. Goal → next level, miss → lose a life. Distance and angle grow every level (from 20 m central to 32 m wide; see \"Distance\" above the pitch); the wall, keeper, wind (direction and strength shown above the pitch), a narrower goal and a moving wall arrive step by step. Everyone plays the same sequence that day.",
     "p4": "In level mode points are multiplied by the level: level 1 ×1, level 2 ×1.5, level 3 ×2 … Ranking is by level reached first, then points."
   },
   "tip": {

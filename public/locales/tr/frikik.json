@@ -13,7 +13,8 @@
     "level": "Seviye {{n}}",
     "lives": "{{n}}/{{total}} can",
     "wind": "Rüzgâr, kademe {{n}}",
-    "windShort": "Rüzgâr"
+    "windShort": "Rüzgâr",
+    "dist": "Mesafe: {{m}} m"
   },
   "goal": "GOL!",
   "result": {
@@ -54,8 +55,8 @@
     "p1": "Gol: 100 puan",
     "p2": "Direkten gol: +50",
     "p3": "Doksan (üst köşe): +100",
-    "r4": "Her seride 5 vuruş var; her vuruşta topun yeri, baraj ve kalecinin hareketi değişir. İlk 2 vuruş daha kolaydır.",
-    "r5": "Seviye modu (Günün frikiği): 3 can, her seviye 1 vuruş. Gol → sonraki seviye, kaçırma → 1 can. Seviyeler ilerledikçe mesafe, açı, baraj, kaleci, rüzgâr (yönü ve gücü ekranın üstünde), daralan kale ve hareketli baraj kademeli gelir; herkes o günün aynı dizisini oynar.",
+    "r4": "Her seride 5 vuruş var; her vuruşta topun yeri ve baraj değişir. Kaleci vuruşa kadar yerinde bekler, vuruştan sonra tahminine doğru hamle yapar (düşük seviyede geç ve hatalı, yüksek seviyede hızlı ve isabetli). İlk 2 vuruş daha kolaydır.",
+    "r5": "Seviye modu (Günün frikiği): 3 can, her seviye 1 vuruş. Gol → sonraki seviye, kaçırma → 1 can. Mesafe ve açı her seviyede artar (20 m merkezden 32 m geniş açıya; ekranın üstünde \"Mesafe\"), baraj, kaleci, rüzgâr (yönü ve gücü ekranın üstünde), daralan kale ve hareketli baraj kademeli gelir; herkes o günün aynı dizisini oynar.",
     "p4": "Seviye modunda puanlar seviye çarpanıyla çarpılır: 1. seviye ×1, 2. ×1,5, 3. ×2 … Sıralama önce ulaşılan seviye, sonra puan."
   },
   "tip": {
