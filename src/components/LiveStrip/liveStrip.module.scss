@@ -3,10 +3,10 @@
 // Canlı maç şeridi: kapsayıcı yüksekliği ebeveynce sabit (masaüstü: chip satırı, mobil: 44 px) → CLS yok.
 .strip {
   position: relative;
-  height: 100%;
+  flex: 0 0 auto;
   min-width: 0;
-  display: flex;
-  align-items: center;
+  max-width: 100%;
+  margin-bottom: $spacing-3;
 
   // Kenar fade'leri: yalnız o yönde kaydırılacak içerik varken
   --fade: 28px;
@@ -17,8 +17,8 @@
   align-items: center;
   gap: $spacing-2;
   width: 100%;
-  height: 100%;
   overflow-x: auto;
+  overscroll-behavior-x: contain;
   scroll-snap-type: x proximity;
   scrollbar-width: none;
   -webkit-overflow-scrolling: touch;
@@ -43,21 +43,20 @@
 .card {
   flex: 0 0 auto;
   scroll-snap-align: start;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 32px;
-  padding: 0 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  width: 168px;
+  padding: 6px 10px 7px;
   border: 1px solid $color-border;
-  border-radius: $radius-full;
+  border-radius: $radius-md;
   background: $color-surface;
   color: $color-text;
   font-size: 12px;
-  font-weight: 700;
-  line-height: 1;
+  font-weight: 600;
+  line-height: 1.25;
   text-decoration: none;
   font-variant-numeric: tabular-nums;
-  white-space: nowrap;
   transition: background-color 0.15s ease, border-color 0.15s ease;
 
   &:hover {
@@ -70,31 +69,14 @@
   }
 
   @include below-desktop {
-    height: 30px;
-    padding: 0 8px;
-    gap: 5px;
+    width: 152px;
+    padding: 5px 8px 6px;
     font-size: 11px;
   }
 }
 
 .cardLive {
   border-color: color-mix(in srgb, #{$color-live} 45%, transparent);
-}
-
-.cardBig {
-  border-color: color-mix(in srgb, #{$color-primary} 40%, transparent);
-}
-
-.bigMark {
-  margin-left: -1px;
-  font-size: 10px;
-  line-height: 1;
-  color: $color-primary-text;
-}
-
-.tomorrow {
-  font-weight: 600;
-  font-size: 10px;
 }
 
 .status {
@@ -113,27 +95,62 @@
   animation: liveStripPulse 1.6s infinite;
 }
 
-.crest {
-  width: 18px;
-  height: 18px;
-  object-fit: contain;
-  flex-shrink: 0;
-}
-
-.mid {
-  display: inline-flex;
+.head {
+  display: flex;
   align-items: center;
-  min-width: 34px;
-  justify-content: center;
+  justify-content: space-between;
+  gap: $spacing-2;
+  min-width: 0;
+  height: 16px;
 }
 
-.score {
+.ft {
+  flex: 0 0 auto;
+  padding: 1px 5px;
+  border-radius: $radius-sm;
+  background: $color-muted;
+  color: $color-text-secondary;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.league {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 10px;
+  font-weight: 500;
+  color: $color-text-secondary;
+  text-align: right;
+}
+
+.teamRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.teamName {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.goals {
+  flex: 0 0 auto;
   font-weight: 800;
 }
 
-.time {
-  font-weight: 700;
-  color: $color-text-secondary;
+.crest {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  flex-shrink: 0;
 }
 
 // Skor değişince kısa vurgu

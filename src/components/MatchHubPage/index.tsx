@@ -352,17 +352,18 @@ export default function MatchHubPage({
     return filterMatchesByLeagues(allowed, leagueFilter.state);
   }, [displayMatches, competitionFilterSet, leagueFilter.state]);
 
-  // Canlı maç şeridi: yeni istek yok — sayfanın mevcut canlı / fikstür verisinden (bkz. utils/liveStrip.ts).
+  // Canlı maç şeridi (listenin üstünde, yalnız bugün): yeni istek yok — canlı poll + yüklü gün verisi (utils/liveStrip.ts).
   const liveStrip = useMemo(
     () =>
       selectLiveStripMatches({
         live: liveMatches,
-        pool: [...allMatches, ...fixtureMatches],
+        pool: allMatches,
         leagueFilter: leagueFilter.state,
         allowedCompetitionIds: competitionFilterSet,
         todayIso,
+        selectedDate,
       }),
-    [liveMatches, allMatches, fixtureMatches, leagueFilter.state, competitionFilterSet, todayIso],
+    [liveMatches, allMatches, leagueFilter.state, competitionFilterSet, todayIso, selectedDate],
   );
 
   const grouped = useMemo(() => {
@@ -807,7 +808,6 @@ export default function MatchHubPage({
       />
       <div className={`${styles.hubShell} ${styles.hubShellWithLeagueBar}`}>
         <div className={styles.leagueBarRow}>
-          <div className={styles.leagueBarChips}>
           <LeagueFilterBar
             state={leagueFilter.state}
             catalog={leagueCatalog}
@@ -824,19 +824,6 @@ export default function MatchHubPage({
               />
             }
           />
-          </div>
-          {/* Alan her zaman çizilir (sabit yükseklik); maç yoksa boş kalır → şerit gelip gidince kayma yok. */}
-          <div className={styles.liveStripSlot}>
-            {liveStrip ? (
-              <LiveStrip
-                matches={liveStrip.matches}
-                bigIds={liveStrip.bigIds}
-                todayIso={todayIso}
-                onSelectMatch={isSplit ? handleSelectMatch : undefined}
-                onPrefetchMatch={isSplit ? prefetchMatchDetailLazy : undefined}
-              />
-            ) : null}
-          </div>
         </div>
         <div
           className={[
@@ -918,6 +905,13 @@ export default function MatchHubPage({
           </aside>
           <div id="hub-list" className={styles.hubMain}>
             <div className={styles.hubList}>
+              {liveStrip ? (
+                <LiveStrip
+                  matches={liveStrip.matches}
+                  onSelectMatch={isSplit ? handleSelectMatch : undefined}
+                  onPrefetchMatch={isSplit ? prefetchMatchDetailLazy : undefined}
+                />
+              ) : null}
               {uefaFixtureMode ? (
                 <div className={styles.fixtureModeBar}>
                   <span className={styles.fixtureModeText}>

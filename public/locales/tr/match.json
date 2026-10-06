@@ -444,11 +444,9 @@
     "leagueAvg": "Lig ort.: {{value}}"
   },
   "liveStrip": {
+    "label": "Canlı ve bugün biten maçlar",
     "prev": "Geri kaydır",
     "next": "İleri kaydır",
-    "liveShort": "Canlı",
-    "label": "Canlı ve yaklaşan maçlar",
-    "tomorrow": "Yarın",
-    "bigMatch": "Büyük maç"
+    "liveShort": "Canlı"
   }
 }

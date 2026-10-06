@@ -453,11 +453,9 @@
     "leagueAvg": "League avg: {{value}}"
   },
   "liveStrip": {
+    "label": "Live and finished matches today",
     "prev": "Scroll back",
     "next": "Scroll forward",
-    "liveShort": "Live",
-    "label": "Live and upcoming matches",
-    "tomorrow": "Tomorrow",
-    "bigMatch": "Big match"
+    "liveShort": "Live"
   }
 }

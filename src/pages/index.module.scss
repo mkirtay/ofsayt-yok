@@ -172,43 +172,8 @@ $hub-fill-height: calc(100vh - var(--header-height) - 56px - 32px - var(--league
 }
 
 .leagueBarRow {
-  min-width: 0;
-  // Masaüstü: chip'ler solda, kalan genişliği canlı maç şeridi doldurur (sabit yükseklik — `--league-bar-h`).
-  display: flex;
-  align-items: center;
-  gap: $spacing-3;
   height: var(--league-bar-h);
-
-  // Mobil: şerit chip satırının ÜSTÜNDE ince tek satır (44 px, ilk HTML'de de yer ayrılı → CLS yok; maç yoksa boş).
-  @include below-desktop {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0;
-    height: auto;
-  }
-}
-
-.leagueBarChips {
-  flex: 0 1 auto;
   min-width: 0;
-  max-width: 62%;
-
-  @include below-desktop {
-    max-width: none;
-    height: var(--league-bar-h);
-  }
-}
-
-.liveStripSlot {
-  flex: 1 1 0;
-  min-width: 0;
-  height: 100%;
-
-  @include below-desktop {
-    flex: none;
-    order: -1;
-    height: 44px;
-  }
 }
 
 // Mobil: maç durumu çipleri lig çipleri satırının başında (MatchStatusChips). Masaüstünde yok (SubHeader sekmeleri).
