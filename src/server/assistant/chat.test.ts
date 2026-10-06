@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const h = vi.hoisted(() => ({ toolRuns: [] as Array<{ name: string; args: string }>, toolResult: {} as Record<string, unknown> }));
+const h = vi.hoisted(() => ({ toolRuns: [] as Array<{ name: string; args: string }>, toolResult: { data: {} } as { data: unknown; card?: unknown; links?: unknown; reply?: string } }));
 vi.mock('./tools', () => ({
   ASSISTANT_LEAGUES: { 600: 'Süper Lig' },
   openAiToolDefinitions: () => [{ type: 'function', function: { name: 'get_match_analysis', description: '', parameters: {} } }],
@@ -56,7 +56,7 @@ describe('asistan sohbet döngüsü', () => {
     const { runAssistantTool } = await import('./tools');
     vi.mocked(runAssistantTool).mockImplementation(async (name: string, args: string) => {
       h.toolRuns.push({ name, args });
-      return { ok: true, ...h.toolResult };
+      return { ok: true, data: {}, ...h.toolResult } as never;
     });
     h.toolRuns = [];
     h.toolResult = { data: { status: 'locked', free_preview: { most_likely: { outcome: 'HOME', pct: 55 } } }, card: LOCKED_CARD, links: [{ label: 'Maç', href: '/matches/1-a-b?sekme=ai-analiz' }, { label: 'Dış', href: 'https://evil.example' }] };
