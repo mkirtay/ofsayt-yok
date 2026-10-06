@@ -10,7 +10,7 @@ import { prisma } from '@/lib/prisma';
 import type { FakePaymentDb } from '@/test/fakePaymentDb';
 import { availablePackageKeys, checkoutUrl, findPaymentPackage } from '@/config/paymentPackages';
 import { hmacHex, signatureMatches, timestampFresh, verifyWebhookSignature } from './hikieSignature';
-import { CheckoutError, createCheckout, handleHikieCallback, handleHikieWebhook, parseHikieWebhook, refundOrder } from './paymentOrders';
+import { CheckoutError, createCheckout, handleHikieCallback, handleHikieWebhook, parseHikieWebhook, refundOrder, tlTextToKurus } from './paymentOrders';
 
 const db = prisma as unknown as FakePaymentDb;
 const NOW = Date.UTC(2026, 9, 5, 12, 0, 0);
@@ -129,104 +129,97 @@ describe('callback (imzasız)', () => {
   });
 });
 
-describe('webhook ve iade', () => {
-  const paidBody = (merchantOrderId: string, orderId: string, amount: string | number, extra: Record<string, unknown> = {}) =>
-    JSON.stringify({ event: 'order.paid', data: { orderId, merchantOrderId, amount, currency: 'TRY', ...extra } });
-  const sign = (body: string, t = ts()) => ({
+describe('webhook (Hikie sözleşmesi)', () => {
+  const sign = (body: string, t = ts(), id = 'wh_1', event = 'order.paid') => ({
+    'hikie-event': event,
+    'hikie-webhook-id': id,
     'hikie-timestamp': t,
     'hikie-signature': hmacHex('whsec', `${t}.${body}`),
-    'hikie-webhook-id': 'wh_1',
-    'hikie-event': 'order.updated',
+    'hikie-delivery-attempt': '1',
   });
+  /** Doğrudan sipariş nesnesi (zarfsız). */
+  const orderObj = (merchantOrderId: string | null, total: string, extra: Record<string, unknown> = {}) => ({
+    orderId: 'ord_1',
+    status: 'COMPLETED',
+    currency: 'TRY',
+    totals: { total },
+    merchantOrderId,
+    isLink: true,
+    linkId: 'lnk_1',
+    ...extra,
+  });
+  const direct = (...a: Parameters<typeof orderObj>) => JSON.stringify(orderObj(...a));
+  const envelope = (...a: Parameters<typeof orderObj>) => JSON.stringify({ id: 'evt_1', event: 'order.paid', data: orderObj(...a) });
+  const send = (body: string, id = 'wh_1', event = 'order.paid') => handleHikieWebhook(sign(body, ts(), id, event), body, ENV, NOW);
 
   async function paid(credits: number, packageKey = 'credits_10') {
     await seedUser('u1', { credits });
     await seedOrder('m1', packageKey);
-    const body = paidBody('m1', 'inv_1', PRICE[packageKey]!);
-    await handleHikieWebhook({ ...sign(body), 'hikie-event': 'order.paid', 'hikie-webhook-id': 'wh_paid' }, body, ENV, NOW);
+    await send(direct('m1', PRICE[packageKey]!), 'wh_paid');
   }
 
-  it('secret yoksa 503; geçersiz imza 401', async () => {
-    const body = '{}';
-    expect((await handleHikieWebhook(sign(body), body, { ...ENV, HIKIE_WEBHOOK_SECRET: '' }, NOW)).status).toBe(503);
-    expect((await handleHikieWebhook({ ...sign(body), 'hikie-signature': '00' }, body, ENV, NOW)).status).toBe(401);
-    expect((await handleHikieWebhook(sign(body, ts(NOW - 10 * 60_000)), body, ENV, NOW)).status).toBe(401);
+  it('tlTextToKurus: metin üzerinden, float yok; bozuk biçim null', () => {
+    expect(tlTextToKurus('249.90')).toBe(24990);
+    expect(tlTextToKurus('249')).toBe(24900);
+    expect(tlTextToKurus('0.5')).toBe(50);
+    expect(tlTextToKurus('39.99')).toBe(3999);
+    for (const bad of ['', '1,5', '1.234', '-1', 'abc', 12.5, null, undefined]) expect(tlTextToKurus(bad)).toBeNull();
   });
 
-  it('REFUNDED: sipariş REFUNDED, kredi geri alınır; aynı webhook id ikinci kez işlenmez', async () => {
-    await paid(2); // 2 + 10 = 12
-    const body = JSON.stringify({ event: 'order.updated', data: { orderId: 'inv_1', merchantOrderId: 'm1', status: 'REFUNDED' } });
-    expect((await handleHikieWebhook(sign(body), body, ENV, NOW)).body.result).toBe('refunded');
-    expect(order('m1').status).toBe('REFUNDED');
-    expect(user('u1').credits).toBe(2);
-    expect((await handleHikieWebhook(sign(body), body, ENV, NOW)).body.result).toBe('duplicate');
-    expect(user('u1').credits).toBe(2);
-    // Farklı teslimat kimliğiyle gelse bile ikinci iade yok
-    expect((await handleHikieWebhook({ ...sign(body), 'hikie-webhook-id': 'wh_2' }, body, ENV, NOW)).body.result).toBe('noop');
-    expect(db.creditTransaction.rows.filter((r) => r.type === 'REFUND')).toHaveLength(1);
-  });
-
-  it('bakiye yetmezse 0\'a kadar geri alınır, eksik not edilir (credits ≥ 0)', async () => {
-    await paid(0); // 10
-    await db.user.update({ where: { id: 'u1' }, data: { credits: 4 } }); // 6 kredi harcanmış
-    const r = await refundOrder(order('m1').id as string, NOW);
-    expect(r).toEqual({ result: 'refunded', shortfall: 6 });
-    expect(user('u1').credits).toBe(0);
-    const row = db.creditTransaction.rows.find((x) => x.type === 'REFUND')!;
-    expect(row).toMatchObject({ amount: -4, balanceAfter: 0 });
-    expect(row.note).toContain('6 kredi alınamadı');
-  });
-
-  it('premium iadesi premiumUntil\'i geri çeker; CANCELLED da iade sayılır', async () => {
-    await paid(0, 'premium_30d');
-    const body = JSON.stringify({ data: { orderId: 'inv_1', status: 'cancelled' } });
-    await handleHikieWebhook(sign(body), body, ENV, NOW);
-    expect(order('m1').status).toBe('REFUNDED');
-    expect((user('u1').premiumUntil as Date).getTime()).toBe(NOW);
-  });
-
-  const paidHeaders = (body: string, id = 'wh_p1') => ({ ...sign(body), 'hikie-event': 'order.paid', 'hikie-webhook-id': id });
-
-  it('order.paid: imzalı + eşleşen sipariş / tutar → kredi (bir kez); tekrar gönderim ve farklı teslimat kimliği kredi eklemez', async () => {
+  it('order.paid: zarfsız ve zarflı gövde → kredi bir kez; olay tipi başlıktan', async () => {
     await seedUser('u1');
     await seedOrder('m1', 'credits_10');
-    const body = paidBody('m1', 'inv_9', 39.99);
-    expect((await handleHikieWebhook(paidHeaders(body), body, ENV, NOW)).body.result).toBe('fulfilled');
-    expect(order('m1')).toMatchObject({ status: 'PAID', hikieOrderId: 'inv_9' });
-    expect(user('u1').credits).toBe(10);
-    expect((await handleHikieWebhook(paidHeaders(body), body, ENV, NOW)).body.result).toBe('duplicate');
-    expect((await handleHikieWebhook(paidHeaders(body, 'wh_p2'), body, ENV, NOW)).body.result).toBe('duplicate');
+    await seedOrder('m2', 'credits_10');
+    expect((await send(direct('m1', '39.99'), 'a')).body.result).toBe('fulfilled');
+    const env2 = JSON.stringify({ id: 'evt_2', event: 'order.paid', data: { ...orderObj('m2', '39.99'), orderId: 'ord_2' } });
+    expect((await send(env2, 'b')).body.result).toBe('fulfilled');
+    expect(order('m1')).toMatchObject({ status: 'PAID', hikieOrderId: 'ord_1' });
+    expect(order('m2')).toMatchObject({ status: 'PAID', hikieOrderId: 'ord_2' });
+    expect(user('u1').credits).toBe(20);
+    // başlık esas: gövdede event yok / başka, başlıkta order.paid → yine işlenir
+    expect(parseHikieWebhook({ 'hikie-event': 'order.paid' }, { event: 'order.updated', ...orderObj('m', '1.00') }).event).toBe('order.paid');
+    expect(parseHikieWebhook({}, JSON.parse(envelope('m', '1.00'))).event).toBe('order.paid');
+  });
+
+  it('tekrar gönderim: aynı Hikie-Webhook-Id ve aynı orderId farklı kimlikle → kredi bir kez, 200', async () => {
+    await seedUser('u1');
+    await seedOrder('m1', 'credits_10');
+    const body = direct('m1', '39.99');
+    expect(await send(body, 'a')).toEqual({ status: 200, body: { ok: true, result: 'fulfilled' } });
+    expect((await send(body, 'a')).body.result).toBe('duplicate');
+    expect((await send(body, 'b')).body.result).toBe('duplicate');
     expect(user('u1').credits).toBe(10);
     expect(db.creditTransaction.rows).toHaveLength(1);
   });
 
-  it('order.paid imzasız / yanlış imzalı / eski → kredi yok', async () => {
+  it('aynı Hikie orderId başka siparişe yazılmaz', async () => {
     await seedUser('u1');
     await seedOrder('m1', 'credits_10');
-    const body = paidBody('m1', 'inv_9', '39.99');
-    const noSig = { ...paidHeaders(body) } as Record<string, string>;
-    delete noSig['hikie-signature'];
-    expect((await handleHikieWebhook(noSig, body, ENV, NOW)).status).toBe(400);
-    expect((await handleHikieWebhook({ ...paidHeaders(body), 'hikie-signature': hmacHex('baska', 'x') }, body, ENV, NOW)).status).toBe(401);
-    expect((await handleHikieWebhook(paidHeaders(body), body, { ...ENV, HIKIE_WEBHOOK_SECRET: 'baska' }, NOW)).status).toBe(401);
-    expect((await handleHikieWebhook({ ...sign(body, ts(NOW - 10 * 60_000)), 'hikie-event': 'order.paid', 'hikie-webhook-id': 'w9' }, body, ENV, NOW)).status).toBe(401);
-    expect(order('m1').status).toBe('PENDING');
-    expect(user('u1').credits).toBe(0);
+    await seedOrder('m2', 'credits_10');
+    await send(direct('m1', '39.99'), 'a');
+    expect((await send(direct('m2', '39.99'), 'b')).body.result).toBe('duplicate');
+    expect(order('m2').status).toBe('PENDING');
+    expect(user('u1').credits).toBe(10);
   });
 
-  it('yanlış tutar / tutar yok / yanlış para birimi / bilinmeyen sipariş → kredi yok, olay "rejected" olarak kaydedilir', async () => {
+  it('iş kuralı reddi 200 + kredi yok + kayıt: yanlış tutar, merchantOrderId null, status, para birimi, bilinmeyen sipariş', async () => {
     await seedUser('u1');
     await seedOrder('m1', 'credits_10');
-    const cases: [string, string, string][] = [
-      [paidBody('m1', 'inv_1', '1.00'), 'amount_mismatch', 'w1'],
-      [JSON.stringify({ event: 'order.paid', data: { orderId: 'inv_1', merchantOrderId: 'm1' } }), 'amount_missing', 'w2'],
-      [paidBody('m1', 'inv_1', '39.99', { currency: 'USD' }), 'currency_mismatch', 'w3'],
-      [paidBody('yok', 'inv_1', '39.99'), 'unknown_order', 'w4'],
-      [JSON.stringify({ event: 'order.paid', data: { orderId: 'inv_1', amount: '39.99' } }), 'missing_fields', 'w5'],
+    const cases: [string, string][] = [
+      [direct('m1', '1.00'), 'amount_mismatch'],
+      [direct('m1', '39.9'), 'amount_mismatch'],
+      [direct(null, '39.99'), 'no_merchant_order_id'],
+      [direct('m1', '39.99', { status: 'PENDING' }), 'status_mismatch'],
+      [direct('m1', '39.99', { currency: 'USD' }), 'currency_mismatch'],
+      [direct('m1', '39.99', { currency: undefined }), 'currency_mismatch'],
+      [direct('yok', '39.99'), 'unknown_order'],
+      [JSON.stringify({ ...orderObj('m1', '39.99'), totals: {} }), 'amount_missing'],
+      [JSON.stringify({ ...orderObj('m1', '39.99'), orderId: undefined }), 'missing_order_id'],
     ];
-    for (const [body, reason, id] of cases) {
-      const r = await handleHikieWebhook(paidHeaders(body, id), body, ENV, NOW);
-      expect(r).toEqual({ status: 200, body: { ok: true, result: `rejected:${reason}` } });
+    let i = 0;
+    for (const [body, reason] of cases) {
+      const id = `rej_${++i}`;
+      expect(await send(body, id)).toEqual({ status: 200, body: { ok: true, result: `rejected:${reason}` } });
       expect(db.paymentWebhookEvent.rows.find((e) => e.id === id)?.event).toBe(`order.paid:rejected:${reason}`);
     }
     expect(order('m1')).toMatchObject({ status: 'PENDING', hikieOrderId: null });
@@ -234,18 +227,58 @@ describe('webhook ve iade', () => {
     expect(db.creditTransaction.rows).toHaveLength(0);
   });
 
+  it('400: imza yanlış / başlık eksik / eski zaman damgası / çözümlenemeyen gövde; 503: secret yok', async () => {
+    const body = direct('m1', '39.99');
+    expect((await handleHikieWebhook({ ...sign(body), 'hikie-signature': hmacHex('baska', 'x') }, body, ENV, NOW)).status).toBe(400);
+    expect((await handleHikieWebhook(sign(body), body, { ...ENV, HIKIE_WEBHOOK_SECRET: 'baska' }, NOW)).status).toBe(400);
+    expect((await handleHikieWebhook(sign(body), `${body} `, ENV, NOW)).status).toBe(400); // ham gövde değişti
+    const noSig = { ...sign(body) } as Record<string, string>;
+    delete noSig['hikie-signature'];
+    expect((await handleHikieWebhook(noSig, body, ENV, NOW)).status).toBe(400);
+    expect((await handleHikieWebhook(sign(body, ts(NOW - 10 * 60_000)), body, ENV, NOW)).status).toBe(400);
+    const bad = 'not json';
+    expect(await handleHikieWebhook(sign(bad), bad, ENV, NOW)).toEqual({ status: 400, body: { error: 'bad_json' } });
+    expect((await handleHikieWebhook(sign(body), body, { ...ENV, HIKIE_WEBHOOK_SECRET: '' }, NOW)).status).toBe(503);
+    expect(db.creditTransaction.rows).toHaveLength(0);
+  });
+
+  it('test.ping, tanınmayan olay, order.shipmentUpdated → 200 yok sayılır', async () => {
+    for (const [i, ev] of ['test.ping', 'order.shipmentUpdated', 'baska.olay'].entries()) {
+      const body = JSON.stringify({ id: `e${i}`, event: ev });
+      expect(await send(body, `p${i}`, ev)).toEqual({ status: 200, body: { ok: true, result: 'ignored' } });
+    }
+  });
+
+  it('order.updated REFUNDED / CANCELLED: yalnız log, kredi geri alınmaz, sipariş PAID kalır', async () => {
+    await paid(2);
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    for (const [i, st] of ['REFUNDED', 'CANCELLED'].entries()) {
+      const body = JSON.stringify({ id: `u${i}`, event: 'order.updated', data: orderObj('m1', '39.99', { status: st }) });
+      expect((await send(body, `up${i}`, 'order.updated')).body.result).toBe('logged');
+    }
+    expect(warn).toHaveBeenCalledTimes(2);
+    warn.mockRestore();
+    expect(order('m1').status).toBe('PAID');
+    expect(user('u1').credits).toBe(12);
+  });
+
   it('premium paketi order.paid ile premiumUntil = max(şimdi, mevcut) + 30 gün; 0 tutarlı PURCHASE satırı', async () => {
     const future = new Date(NOW + 10 * DAY);
     await seedUser('u1', { premiumUntil: future });
     await seedOrder('p1', 'premium_30d');
-    const body = paidBody('p1', 'inv_p1', '99.99');
-    await handleHikieWebhook(paidHeaders(body), body, ENV, NOW);
+    await send(direct('p1', '99.99'));
     expect((user('u1').premiumUntil as Date).getTime()).toBe(future.getTime() + 30 * DAY);
     expect(db.creditTransaction.rows).toEqual([expect.objectContaining({ type: 'PURCHASE', amount: 0 })]);
   });
 
-  it('parseHikieWebhook: yük biçimi tek yerde (data / kök, virgüllü tutar)', () => {
-    const p = parseHikieWebhook({ 'hikie-event': 'order.paid' }, { merchantOrderId: 'm', orderId: 'o', amount: '39,99' });
-    expect(p).toMatchObject({ event: 'order.paid', merchantOrderId: 'm', hikieOrderId: 'o', amountKurus: 3999 });
+  it('refundOrder (elle / ileride): bakiye yetmezse 0\'a kadar geri alınır, eksik not edilir', async () => {
+    await paid(0); // 10
+    await db.user.update({ where: { id: 'u1' }, data: { credits: 4 } });
+    const r = await refundOrder(order('m1').id as string, NOW);
+    expect(r).toEqual({ result: 'refunded', shortfall: 6 });
+    expect(user('u1').credits).toBe(0);
+    const row = db.creditTransaction.rows.find((x) => x.type === 'REFUND')!;
+    expect(row).toMatchObject({ amount: -4, balanceAfter: 0 });
+    expect(row.note).toContain('6 kredi alınamadı');
   });
 });

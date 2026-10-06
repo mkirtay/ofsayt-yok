@@ -1,8 +1,8 @@
 /**
  * Hikie webhook imzası (gerçek Hikie'ye istek YOK; yalnız gelen istek doğrulanır).
  *
- * - Webhook (POST): imza = hex(HMAC-SHA256(webhookSecret, `${Hikie-Timestamp}.${ham gövde}`)). Başlık adları ve biçim
- *   Hikie örneğiyle teyit edilecek (bkz. paymentOrders.parseHikieWebhook).
+ * - Webhook (POST): imza = hex(HMAC-SHA256(webhookSecret, `${Hikie-Timestamp}.${ham gövde}`)). Başlıklar ve gövde
+ *   biçimi paymentOrders.parseHikieWebhook'ta (Hikie dokümanı).
  * - Checkout Link callback'i (GET) imza ÜRETMEZ; burada doğrulanacak bir şey yok, kredi vermez.
  * Karşılaştırma sabit zamanlı (timingSafeEqual); zaman damgası en çok 5 dk eski / ileri olabilir (tekrar oynatma).
  * İmza ve secret hiçbir yerde loglanmaz.

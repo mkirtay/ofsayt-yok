@@ -96,23 +96,56 @@ describe('GET /api/payments/hikie/callback', () => {
 });
 
 describe('POST /api/payments/hikie/webhook', () => {
-  it('ham gövde ile imza doğrulanır (bodyParser kapalı); bozuk imza 401', async () => {
+  const t = () => String(Math.floor(Date.now() / 1000));
+  const mk = (body: string, sig: string, over: Record<string, string> = {}) =>
+    Object.assign(Readable.from([Buffer.from(body)]), {
+      method: 'POST',
+      headers: { 'hikie-timestamp': t(), 'hikie-signature': sig, 'hikie-webhook-id': 'wh_1', 'hikie-event': 'test.ping', ...over },
+      query: {},
+    }) as unknown as NextApiRequest;
+  const post = async (body: string, sigFor: (ts: string) => string, over: Record<string, string> = {}) => {
+    const ts = over['hikie-timestamp'] ?? t();
+    const r = res();
+    await webhook(mk(body, sigFor(ts), { ...over, 'hikie-timestamp': ts }), r as unknown as NextApiResponse);
+    return r;
+  };
+  const good = (body: string) => (ts: string) => hmacHex('whsec', `${ts}.${body}`);
+
+  it('ham gövde ile imza (bodyParser kapalı); test.ping 200 + boş gövde; bozuk imza 400', async () => {
     expect(webhookConfig.api.bodyParser).toBe(false);
-    const body = JSON.stringify({ event: 'ping' });
-    const t = String(Math.floor(Date.now() / 1000));
-    const mk = (sig: string) =>
-      Object.assign(Readable.from([Buffer.from(body)]), {
-        method: 'POST',
-        headers: { 'hikie-timestamp': t, 'hikie-signature': sig, 'hikie-webhook-id': 'wh_1', 'hikie-event': 'ping' },
-        query: {},
-      });
-    const ok = res();
-    await webhook(mk(hmacHex('whsec', `${t}.${body}`)) as unknown as NextApiRequest, ok as unknown as NextApiResponse);
+    const body = JSON.stringify({ id: 'e1', event: 'test.ping' });
+    const ok = await post(body, good(body));
     expect(ok.statusCode).toBe(200);
-    expect(ok.body).toEqual({ ok: true, result: 'ignored' });
-    const bad = res();
-    await webhook(mk('00'.repeat(32)) as unknown as NextApiRequest, bad as unknown as NextApiResponse);
-    expect(bad.statusCode).toBe(401);
+    expect(ok.body).toBeUndefined();
+    expect((await post(body, () => '00'.repeat(32))).statusCode).toBe(400);
+  });
+
+  it('order.paid uçtan uca: kredi + 200 boş gövde; tekrar 200 kredi artmaz; yanlış tutar 200 kredi yok', async () => {
+    await db.user.create({ data: { id: 'u1' } });
+    const m = `oy_${'d'.repeat(32)}`;
+    await db.paymentOrder.create({ data: { merchantOrderId: m, userId: 'u1', packageKey: 'credits_10', amountTRY: '39.99' } });
+    const mkBody = (total: string) =>
+      JSON.stringify({ orderId: 'ord_1', status: 'COMPLETED', currency: 'TRY', totals: { total }, merchantOrderId: m, isLink: true, linkId: 'l1' });
+    const wrong = mkBody('1.00');
+    expect((await post(wrong, good(wrong), { 'hikie-event': 'order.paid', 'hikie-webhook-id': 'w0' })).statusCode).toBe(200);
+    expect(db.user.rows[0]!.credits).toBe(0);
+    const body = mkBody('39.99');
+    const first = await post(body, good(body), { 'hikie-event': 'order.paid', 'hikie-webhook-id': 'w1' });
+    expect(first.statusCode).toBe(200);
+    expect(first.body).toBeUndefined();
+    expect(db.user.rows[0]!.credits).toBe(10);
+    expect((await post(body, good(body), { 'hikie-event': 'order.paid', 'hikie-webhook-id': 'w1' })).statusCode).toBe(200);
+    expect(db.user.rows[0]!.credits).toBe(10);
+  });
+
+  it('DB hatası 503; GET 405', async () => {
+    const body = JSON.stringify({ id: 'e1', event: 'order.paid' });
+    const spy = vi.spyOn(db.paymentWebhookEvent, 'findUnique').mockRejectedValueOnce(new Error('db down'));
+    const err = vi.spyOn(console, 'error').mockImplementation(() => {});
+    expect((await post(body, good(body), { 'hikie-event': 'order.paid' })).statusCode).toBe(503);
+    spy.mockRestore();
+    err.mockRestore();
+    expect((await run(webhook, { method: 'GET' })).statusCode).toBe(405);
   });
 });
 

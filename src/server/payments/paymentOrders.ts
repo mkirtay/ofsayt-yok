@@ -2,7 +2,7 @@
  * Hikie ödeme siparişleri (v1) — checkout, callback, webhook, iade.
  *
  * Kural: kredi / premium kararı YALNIZ imzalı `order.paid` webhook'undan (whsec_ secret) verilir; üstelik sipariş
- * eşleşmesi, tutar ve paket doğrulanır. Checkout Link callback'i (GET) imzasızdır: yalnız `callbackAt` işaretler ve
+ * eşleşmesi (merchantOrderId), status, para birimi ve tutar doğrulanır. Checkout Link callback'i (GET) imzasızdır: yalnız `callbackAt` işaretler ve
  * sonuç sayfasına yönlendirir, status / isSuccess hiçbir kredi kararında kullanılmaz. /odeme/tamamlandi yalnız
  * durumu okur (PAID olana kadar yoklar).
  *
@@ -263,82 +263,80 @@ export async function handleHikieCallback(query: Record<string, unknown>, now: n
 
 const header = (h: Record<string, string | string[] | undefined>, name: string) => str(h[name.toLowerCase()]);
 
-/** Gövdeden alan: önce data / order alt nesnesi, sonra kök. */
-function pick(body: Record<string, unknown>, keys: string[]): string | null {
-  const scopes = [body.data, body.order, body].filter((x): x is Record<string, unknown> => !!x && typeof x === 'object');
-  for (const scope of scopes) {
-    for (const k of keys) {
-      const v = scope[k];
-      if (typeof v === 'string' && v) return v;
-      if (typeof v === 'number') return String(v);
-    }
-  }
-  return null;
+const isObj = (x: unknown): x is Record<string, unknown> => !!x && typeof x === 'object' && !Array.isArray(x);
+
+/** "249.90" / "249" / "0.5" → kuruş; yalnız nokta ondalıklı, en çok 2 hane, metin üzerinden (float yok). Aksi halde null. */
+export function tlTextToKurus(text: unknown): number | null {
+  if (typeof text !== 'string') return null;
+  const m = /^(\d{1,9})(?:\.(\d{1,2}))?$/.exec(text.trim());
+  if (!m) return null;
+  return Number(m[1]) * 100 + Number((m[2] ?? '').padEnd(2, '0') || '0');
 }
 
 export type ParsedWebhook = {
   webhookId: string | null;
   timestamp: string | null;
   signature: string | null;
+  /** Yalnız log. */
+  attempt: string | null;
+  /** Olay tipi: BAŞLIK esas (Hikie-Event); başlık yoksa zarfın `event` alanı. */
   event: string;
+  orderId: string | null;
+  /** string | null — null ise eşleştirme yok → kredi yok. */
   merchantOrderId: string | null;
-  hikieOrderId: string | null;
   status: string;
-  /** Kuruş; yük bulunamadı / okunamadıysa null (o zaman kredi verilmez). */
-  amountKurus: number | null;
   currency: string | null;
+  /** totals.total (TL ondalık METİN) → kuruş; yoksa / bozuksa null → kredi yok. */
+  totalKurus: number | null;
 };
 
 /**
- * !!! HIKIE WEBHOOK YÜK BİÇİMİ VE BAŞLIK ADLARI HENÜZ TEYİT EDİLMEDİ !!!
- * Başlık adları (hikie-timestamp / hikie-signature / hikie-webhook-id / hikie-event) ve gövde alan adları (orderId,
- * merchantOrderId, status, amount, currency; data / order alt nesnesi) TAHMİNDİR. Hikie'nin örnek webhook'u gelince
- * düzeltilecek TEK YER bu fonksiyondur; geri kalan kod ayrıştırılmış alanlara bakar.
+ * Hikie webhook sözleşmesi (developer.hikie.space/tr/docs). Başlıklar: Hikie-Event, Hikie-Webhook-Id (tekrar anahtarı,
+ * denemelerde değişmez), Hikie-Timestamp (Unix sn), Hikie-Signature (64 hex), Hikie-Delivery-Attempt. Gövde iki biçimde
+ * gelebilir: doğrudan sipariş nesnesi ya da `{ id, event, ... }` zarfı (sipariş `data` / `order` altında) — ikisi de kabul
+ * edilir. order.paid alanları: orderId, status (COMPLETED), currency (TRY), totals.total (TL ondalık metin),
+ * merchantOrderId (string | null). Zarfın kendi `id`'si olay kimliğidir, sipariş kimliği DEĞİL (orderId yalnız `orderId`).
  */
 export function parseHikieWebhook(headers: Record<string, string | string[] | undefined>, body: Record<string, unknown>): ParsedWebhook {
-  const amountRaw = pick(body, ['amount', 'totalAmount', 'price']);
-  const amountNum = amountRaw == null ? NaN : Number(amountRaw.replace(',', '.'));
+  const order = [body.data, body.order].find(isObj) ?? body;
+  const text = (v: unknown) => (typeof v === 'string' && v ? v : null);
   return {
     webhookId: header(headers, 'hikie-webhook-id'),
     timestamp: header(headers, 'hikie-timestamp'),
     signature: header(headers, 'hikie-signature'),
-    event: header(headers, 'hikie-event') ?? (typeof body.event === 'string' ? body.event : '') ?? '',
-    merchantOrderId: pick(body, ['merchantOrderId']),
-    hikieOrderId: pick(body, ['orderId', 'invoiceId']) ?? pick({ data: body.data, order: body.order }, ['id']),
-    status: (pick(body, ['status']) ?? '').toUpperCase(),
-    amountKurus: Number.isFinite(amountNum) ? Math.round(amountNum * 100) : null,
-    currency: pick(body, ['currency'])?.toUpperCase() ?? null,
+    attempt: header(headers, 'hikie-delivery-attempt'),
+    event: header(headers, 'hikie-event') ?? text(body.event) ?? '',
+    orderId: text(order.orderId),
+    merchantOrderId: text(order.merchantOrderId),
+    status: (text(order.status) ?? '').toUpperCase(),
+    currency: text(order.currency)?.toUpperCase() ?? null,
+    totalKurus: isObj(order.totals) ? tlTextToKurus(order.totals.total) : null,
   };
 }
 
-async function findOrder(merchantOrderId: string | null, hikieOrderId: string | null) {
-  if (merchantOrderId) {
-    const o = await prisma.paymentOrder.findUnique({ where: { merchantOrderId } });
-    if (o) return o;
-  }
-  return hikieOrderId ? prisma.paymentOrder.findUnique({ where: { hikieOrderId } }) : null;
-}
-
 /**
- * `order.paid` doğrulaması: sipariş merchantOrderId ile eşleşmeli (hikieOrderId ile geri düşülmez — kredi için bizim
- * kimliğimiz şart), paket tanımlı, tutar sipariş tutarıyla birebir (para birimi varsa TRY). Uyuşmazlıkta kredi yok.
+ * `order.paid` doğrulaması: merchantOrderId ile eşleşen sipariş (null ise eşleştirme yok), status COMPLETED, para birimi
+ * TRY, tutar siparişin kuruş tutarıyla birebir. Uyuşmazlıkta kredi yok (iş kuralı reddi).
  */
-async function verifyPaidEvent(w: ParsedWebhook): Promise<{ ok: true; orderId: string } | { ok: false; reason: string }> {
-  if (!w.merchantOrderId || !w.hikieOrderId) return { ok: false, reason: 'missing_fields' };
+async function verifyPaidEvent(w: ParsedWebhook): Promise<{ ok: true; orderDbId: string; hikieOrderId: string } | { ok: false; reason: string }> {
+  if (!w.orderId) return { ok: false, reason: 'missing_order_id' };
+  if (!w.merchantOrderId) return { ok: false, reason: 'no_merchant_order_id' };
   const order = await prisma.paymentOrder.findUnique({ where: { merchantOrderId: w.merchantOrderId } });
   if (!order) return { ok: false, reason: 'unknown_order' };
   if (!findPaymentPackage(order.packageKey)) return { ok: false, reason: 'unknown_package' };
-  if (w.amountKurus == null) return { ok: false, reason: 'amount_missing' };
-  if (w.amountKurus !== Math.round(Number(order.amountTRY.toString()) * 100)) return { ok: false, reason: 'amount_mismatch' };
-  if (w.currency && w.currency !== 'TRY') return { ok: false, reason: 'currency_mismatch' };
-  return { ok: true, orderId: order.id };
+  if (w.status !== 'COMPLETED') return { ok: false, reason: 'status_mismatch' };
+  if (w.currency !== 'TRY') return { ok: false, reason: 'currency_mismatch' };
+  if (w.totalKurus == null) return { ok: false, reason: 'amount_missing' };
+  if (w.totalKurus !== tlTextToKurus(order.amountTRY.toString())) return { ok: false, reason: 'amount_mismatch' };
+  return { ok: true, orderDbId: order.id, hikieOrderId: w.orderId };
 }
 
 /**
- * İmzalı webhook: ham gövde + Hikie-Timestamp ile imza, ≤ 5 dk, Hikie-Webhook-Id tekrar koruması.
- * order.paid → doğrula + tamamla; order.updated + REFUNDED / CANCELLED → iade. Diğerleri yok sayılır.
- * Doğrulama reddi 200 döner (Hikie tekrar denemesin) ama kredi yok; olay `rejected:<neden>` olarak kaydedilir + uyarı log'u.
- * HIKIE_WEBHOOK_SECRET yoksa 503.
+ * İmzalı webhook. Yanıt kodları (Hikie kalıcı hatada aboneliği durdurur): imza yanlış / eski / başlık eksik / gövde
+ * çözümlenemez → 400; HIKIE_WEBHOOK_SECRET yok → 503; (DB / geçici hata endpoint'te 503); başarı, tekrar, tanınmayan
+ * olay, test.ping VE iş kuralı reddi (tutar / para birimi / status / sipariş) → 200 (+ log, 4xx yok).
+ * order.paid → doğrula + fulfillOrder (idempotent: Hikie-Webhook-Id ve orderId). order.updated REFUNDED / CANCELLED
+ * şimdilik yalnız log (otomatik kredi geri alma yok). Diğer olaylar yok sayılır.
  */
 export async function handleHikieWebhook(
   headers: Record<string, string | string[] | undefined>,
@@ -349,20 +347,22 @@ export async function handleHikieWebhook(
   const secret = env.HIKIE_WEBHOOK_SECRET?.trim();
   if (!secret) return { status: 503, body: { error: 'webhook_disabled' } };
 
-  let body: Record<string, unknown> = {};
-  let bodyOk = true;
+  const timestamp = header(headers, 'hikie-timestamp');
+  const signature = header(headers, 'hikie-signature');
+  if (!timestamp || !signature) return { status: 400, body: { error: 'missing_headers' } };
+  if (!verifyWebhookSignature(secret, timestamp, rawBody, signature)) return { status: 400, body: { error: 'bad_signature' } };
+  if (!timestampFresh(timestamp, now)) return { status: 400, body: { error: 'stale' } };
+
+  let body: Record<string, unknown>;
   try {
     const parsed: unknown = JSON.parse(rawBody);
-    if (!parsed || typeof parsed !== 'object') throw new Error('not an object');
-    body = parsed as Record<string, unknown>;
+    if (!isObj(parsed)) throw new Error('not an object');
+    body = parsed;
   } catch {
-    bodyOk = false;
+    return { status: 400, body: { error: 'bad_json' } };
   }
   const w = parseHikieWebhook(headers, body);
-  if (!w.timestamp || !w.signature || !w.webhookId) return { status: 400, body: { error: 'missing_headers' } };
-  if (!verifyWebhookSignature(secret, w.timestamp, rawBody, w.signature)) return { status: 401, body: { error: 'bad_signature' } };
-  if (!timestampFresh(w.timestamp, now)) return { status: 401, body: { error: 'stale' } };
-  if (!bodyOk) return { status: 400, body: { error: 'bad_json' } };
+  if (!w.webhookId) return { status: 400, body: { error: 'missing_headers' } };
 
   if (await prisma.paymentWebhookEvent.findUnique({ where: { id: w.webhookId } })) {
     return { status: 200, body: { ok: true, result: 'duplicate' } };
@@ -372,17 +372,16 @@ export async function handleHikieWebhook(
   let recorded = w.event || 'unknown';
   if (w.event === 'order.paid') {
     const v = await verifyPaidEvent(w);
-    if (v.ok && w.hikieOrderId) {
-      result = await fulfillOrder(v.orderId, w.hikieOrderId, now);
+    if (v.ok) {
+      result = await fulfillOrder(v.orderDbId, v.hikieOrderId, now);
     } else {
-      const reason = v.ok ? 'missing_fields' : v.reason;
-      result = `rejected:${reason}`;
-      recorded = `order.paid:rejected:${reason}`;
-      console.warn(`[payments] order.paid reddedildi: ${reason} (merchantOrderId=${w.merchantOrderId ?? '-'}, webhookId=${w.webhookId})`);
+      result = `rejected:${v.reason}`;
+      recorded = `order.paid:rejected:${v.reason}`;
+      console.warn(`[payments] order.paid reddedildi: ${v.reason} (merchantOrderId=${w.merchantOrderId ?? '-'}, webhookId=${w.webhookId}, deneme=${w.attempt ?? '-'})`);
     }
   } else if (w.event === 'order.updated' && (w.status === 'REFUNDED' || w.status === 'CANCELLED')) {
-    const order = await findOrder(w.merchantOrderId, w.hikieOrderId);
-    result = order ? (await refundOrder(order.id, now)).result : 'unknown_order';
+    result = 'logged';
+    console.warn(`[payments] order.updated ${w.status}: otomatik geri alma yok, elle incelenmeli (merchantOrderId=${w.merchantOrderId ?? '-'}, orderId=${w.orderId ?? '-'})`);
   }
 
   // İşlendikten sonra kaydedilir: kayıt başarısız olsa bile yeniden teslimat idempotent (durum koşulları).
