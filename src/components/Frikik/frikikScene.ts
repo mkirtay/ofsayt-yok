@@ -4,9 +4,9 @@
  * lib/frikik/sim.ts'te (belirlenimci; sunucu aynı kodu çalıştırır) — burası yalnız çizer ve girdiyi toplar.
  *
  * Kamera topun arkasında, kaleye bakar. Baraj ve kaleci oyuncak "peg" figürler. Kontrol: topun üstünden hedefe doğru
- * kaydır (swipe) — son nokta hedef, en yüksek kaydırma hızı güç, yolun eğriliği falso. Kaydırırken kesikli yörünge
- * önizlemesi (aynı simülasyondan: previewPath) ve güç çubuğu çizilir; bırakınca son önizlemenin girdisi AYNEN şut olur
- * → top önizlemeyi izler. Parmak titremesi yumuşatılır. Yol 16 noktalı tam sayı girdiye çevrilir (lib/frikik/swipe.ts).
+ * kaydır (swipe) — genel yön hedef, en yüksek kaydırma hızı güç, yolun bombesi falso. Kaydırırken yalnız parmağın
+ * çizdiği iz (ince çizgi) ve güç çubuğu görünür; topun yolu / hedef halkası ÇİZİLMEZ. Parmak titremesi yumuşatılır. Yol
+ * 16 noktalı tam sayı girdiye çevrilir (lib/frikik/swipe.ts); bırakınca son girdi aynen şut olur.
  * Akış: tur (nişan) → uçuş → sonuç beklemesi → sıradaki tur … 5 vuruş → `onFinish`.
  * Sekme gizliyken / sahne ekran dışındayken döngü durur. `dispose()` GPU kaynaklarını bırakır.
  */
@@ -64,7 +64,6 @@ import {
   keeperZ,
   POWER_ZONES,
   makeRound,
-  previewPath,
   shotParams,
   startShot,
   stepShot,
@@ -83,7 +82,7 @@ export type FrikikOptions = {
   canvasClassName: string;
   handleClassName: string;
   goalClassName: string;
-  /** Önizleme katmanı (SVG: kesikli yörünge, hedef halkası, güç çubuğu) sınıfı. */
+  /** Nişan katmanı (SVG: parmak izi, güç çubuğu) sınıfı. */
   trailClassName: string;
   goalLabel: string;
   onRound: (index: number) => void;
@@ -214,7 +213,7 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
   const goalText = document.createElement('div');
   goalText.className = opts.goalClassName;
   goalText.textContent = opts.goalLabel;
-  // Önizleme katmanı (ekran uzayı, SVG): kesikli yörünge + hedef halkası + güç çubuğu. Yalnız kaydırırken görünür.
+  // Nişan katmanı (ekran uzayı, SVG): parmağın izi (ince çizgi) + güç çubuğu. Yalnız kaydırırken görünür.
   const SVG_NS = 'http://www.w3.org/2000/svg';
   const el = (name: string, attrs: Record<string, string | number>, parent: Element) => {
     const node = document.createElementNS(SVG_NS, name);
@@ -226,9 +225,9 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
   trail.setAttribute('class', opts.trailClassName);
   trail.setAttribute('aria-hidden', 'true');
   trail.style.visibility = 'hidden';
-  const pathShadow = el('polyline', { fill: 'none', stroke: 'rgba(0,0,0,0.45)', 'stroke-width': 6, 'stroke-linecap': 'round', 'stroke-dasharray': '2 12' }, trail);
-  const pathLine = el('polyline', { fill: 'none', stroke: '#fff', 'stroke-width': 4, 'stroke-linecap': 'round', 'stroke-dasharray': '2 12' }, trail);
-  const targetRing = el('circle', { r: 9, fill: 'rgba(255,255,255,0.18)', stroke: '#fff', 'stroke-width': 2.5 }, trail);
+  const pathShadow = el('polyline', { fill: 'none', stroke: 'rgba(0,0,0,0.35)', 'stroke-width': 5, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, trail);
+  const pathLine = el('polyline', { fill: 'none', stroke: 'rgba(255,255,255,0.9)', 'stroke-width': 2.5, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, trail);
+  const pathTip = el('circle', { r: 4, fill: '#fff' }, trail);
   // Güç çubuğu: çok güçsüz | uygun | aşırı güçlü bölgeleri + imleç
   const BAR_W = 150;
   const BAR_H = 6;
@@ -357,8 +356,8 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
   let results: ShotResult[] = [];
   let total = 0;
   /**
-   * Kaydırma: `raw` son işaretçi konumu; `path` yumuşatılmış yol (ilk nokta top); `peak` en yüksek hız (px/ms, ~60 ms
-   * pencere); `input` son önizlemenin girdisi (bırakınca aynen kullanılır).
+   * Kaydırma: `raw` son işaretçi konumu; `path` yumuşatılmış yol (ilk nokta top; ekranda iz olarak çizilir); `peak` en
+   * yüksek hız (px/ms, ~60 ms pencere); `input` son girdi (bırakınca aynen kullanılır).
    */
   let swiping: {
     id: number;
@@ -450,12 +449,7 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
     return { originX: o.x, originY: o.y, pxPerMX: Math.max(1, (r.x - l.x) / (2 * GOAL.halfW)), pxPerMY: Math.max(1, (o.y - top.y) / GOAL.height) };
   };
 
-  const toScreen = (x: number, y: number, z: number) => {
-    projected.set(x, y, z).project(camera);
-    return `${((projected.x * 0.5 + 0.5) * width).toFixed(1)},${((-projected.y * 0.5 + 0.5) * height).toFixed(1)}`;
-  };
-
-  /** Yumuşatmayı bir adım ilerletir, girdiyi ve önizlemeyi (aynı simülasyon) günceller. Her karede çağrılır. */
+  /** Yumuşatmayı bir adım ilerletir, girdiyi günceller, izi ve güç çubuğunu çizer. Her karede çağrılır. */
   const updateSwipe = () => {
     if (!swiping || !round) return;
     const sw = swiping;
@@ -475,15 +469,13 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
       trail.style.visibility = 'hidden';
       return;
     }
-    const pv = previewPath(round, sw.input);
-    const pts = pv.points.map((p) => toScreen(p.x, p.y, p.z));
-    const line = pts.join(' ');
+    // Yalnız parmağın izi (yumuşatılmış yol); topun yolu çizilmez
+    const line = sw.path.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
     pathLine.setAttribute('points', line);
     pathShadow.setAttribute('points', line);
-    const [ex, ey] = pts[pts.length - 1]!.split(',');
-    targetRing.setAttribute('cx', ex!);
-    targetRing.setAttribute('cy', ey!);
-    targetRing.setAttribute('stroke', pv.blocked ? '#e5a23d' : '#fff');
+    const tip = sw.path[sw.path.length - 1]!;
+    pathTip.setAttribute('cx', tip.x.toFixed(1));
+    pathTip.setAttribute('cy', tip.y.toFixed(1));
     bar.setAttribute('transform', `translate(${(width - BAR_W) / 2}, ${height - 26})`);
     barMarker.setAttribute('x', String(params.power * BAR_W - 2));
     trail.style.visibility = '';
@@ -639,7 +631,7 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
   };
   const onUp = (e: PointerEvent) => {
     if (!swiping || e.pointerId !== swiping.id) return;
-    // Bırakma: SON ÖNİZLEMENİN girdisi aynen şut olur (yalnız tick güncellenir: kalecinin o andaki yeri).
+    // Bırakma: son girdi aynen şut olur (yalnız tick güncellenir: kalecinin o andaki yeri).
     const input = swiping.input ? { ...swiping.input, tick: roundTick } : null;
     swiping = null;
     handle.removeAttribute('data-dragging');

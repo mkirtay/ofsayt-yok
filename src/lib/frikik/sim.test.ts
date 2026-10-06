@@ -10,20 +10,23 @@ import {
   MAX_SHOT_TICKS,
   POINTS,
   POWER_ZONES,
-  PREVIEW_END_X,
   SHOT_SPEED,
+  SCATTER,
   SWIPE_SPEED,
   WALL_DISTANCE,
   keeperZ,
   makeRound,
   parseShotInput,
-  previewPath,
   rng,
+  scatterAmplitude,
+  scatterSeed,
   scoreSeries,
   shotParams,
   simulateShot,
   startShot,
   stepShot,
+  swipeShake,
+  type Round,
   type ShotInput,
   type ShotResult,
 } from './sim';
@@ -221,16 +224,19 @@ describe('kaydırma → şut', () => {
   it('top hedef noktaya yönelir: barajsız turda kale çizgisini hedefe yakın geçer (falsolu da)', () => {
     for (const [z, y, bulge] of [
       [2.5, 1.6, 0],
-      [-3, 0.8, 0],
-      [3.0, 1.9, 0.2],
-      [-2.0, 1.4, -0.25],
+      [-2.6, 0.8, 0],
+      [2.8, 1.9, 0.12],
+      [-2.0, 1.4, -0.14],
     ] as const) {
-      const st = startShot(openHard, swipe(z, y, msFor(z, y, 0.7), bulge));
+      const input = swipe(z, y, msFor(z, y, 0.7), bulge);
+      const p = shotParams(openHard, input)!;
+      const st = startShot(openHard, input);
       st.keeperTarget = st.keeperZ = 30; // kaleci sahnenin dışında
       while (st.pos.x < -0.05 && !st.result) stepShot(st);
-      // Falsolu yolda varış yaklaşık (asıl yolu önizleme gösterir)
-      expect(Math.abs(st.pos.z - z), `z ${z}`).toBeLessThan(bulge === 0 ? 0.4 : 0.8);
-      expect(Math.abs(st.pos.y - y), `y ${y}`).toBeLessThan(0.35);
+      // Tohumlu sapma payı: yaw × mesafe (yön), lift çarpanı (yükseklik); falsolu yolda varış daha yaklaşık
+      const dist = Math.hypot(openHard.ball.x, z - openHard.ball.z);
+      expect(Math.abs(st.pos.z - z), `z ${z}`).toBeLessThan((bulge === 0 ? 0.4 : 1.0) + Math.abs(p.scatter.yaw) * dist);
+      expect(Math.abs(st.pos.y - y), `y ${y}`).toBeLessThan(0.35 + Math.abs(p.scatter.lift - 1) * (y + 8));
     }
   });
 
@@ -256,28 +262,26 @@ describe('kaydırma → şut', () => {
     expect(simulateShot(openHard, swipe(0.5, 2.05, msFor(0.5, 2.05, 1))).kind).not.toBe('goal'); // üstten gider / direk
   });
 
-  it('önizleme = gerçek yol: aynı simülasyon, kalecinin önüne kadar her nokta birebir aynı; baraja takılan yol işaretlenir', () => {
-    const input = swipe(2.6, 1.5, msFor(2.6, 1.5, 0.75), 0.18, 40);
-    const pv = previewPath(openHard, input, 3);
-    expect(pv.blocked).toBe(false);
-    expect(pv.points.length).toBeGreaterThan(10);
-    // Bırakılan şut (farklı tick = kaleci başka yerde) aynı noktalardan geçer
-    const st = startShot(openHard, { ...input, tick: 999 });
-    const seen = new Map<number, { x: number; y: number; z: number }>([[0, { ...st.pos }]]);
-    while (!st.result && st.pos.x < PREVIEW_END_X) {
-      stepShot(st);
-      seen.set(st.tick, { ...st.pos });
-    }
-    pv.points.slice(0, -1).forEach((p, i) => expect(seen.get(i * 3)).toEqual(p));
-    expect(pv.points[pv.points.length - 1]!.x).toBeGreaterThanOrEqual(PREVIEW_END_X);
-    // Barajın ortasına alçak şut: önizleme "takıldı" der
-    const mid = round0.wall[1]!;
-    const zAtGoal = round0.ball.z + ((mid.z - round0.ball.z) * -round0.ball.x) / (mid.x - round0.ball.x);
-    expect(previewPath(round0, swipe(zAtGoal, 0.3, 130)).blocked).toBe(true);
-    expect(previewPath(round0, { tick: 0, ms: 200, pts: Array.from({ length: 16 }, (_, i) => [0, -800 + i] as [number, number]) })).toEqual({
-      points: [{ x: round0.ball.x, y: BALL_R, z: round0.ball.z }],
-      blocked: true,
-    });
+  it('tohumlu sapma: aynı girdi aynı sapma; güçle ve titremeyle büyür; sınırlı; Math.random yok', () => {
+    const input = swipe(2.0, 1.5, 200, 0.1, 40);
+    const a = shotParams(round0, input)!;
+    expect(a.scatter).toEqual(shotParams(round0, input)!.scatter);
+    expect(scatterSeed(round0, input)).toBe(scatterSeed(round0, input));
+    expect(scatterSeed(round0, input)).not.toBe(scatterSeed(round0, { ...input, ms: 201 }));
+    expect(scatterSeed(round0, input)).not.toBe(scatterSeed(makeRound(SEED, 1), input));
+    expect(Math.abs(a.scatter.yaw)).toBeLessThanOrEqual(scatterAmplitude(a.power, a.shake).yaw);
+    expect(scatterAmplitude(1, 0).yaw).toBeGreaterThan(scatterAmplitude(0.3, 0).yaw * 3);
+    expect(scatterAmplitude(0.5, 1).yaw - scatterAmplitude(0.5, 0).yaw).toBeCloseTo(SCATTER.byShake, 9);
+    expect(scatterAmplitude(1, 1).yaw).toBeLessThan(0.1);
+    // Pürüzsüz bombe titreme sayılmaz; zikzak sayılır
+    expect(a.shake).toBe(0);
+    expect(swipeShake(swipe(0, 1.5, 200).pts)).toBe(0);
+    const zigzag = swipe(0, 1.5, 200).pts.map(([z, y], i) => [z + (i % 2 ? 25 : -25), y] as [number, number]);
+    expect(swipeShake(zigzag)).toBe(1);
+    expect(shotParams(round0, { tick: 0, ms: 200, pts: zigzag })!.shake).toBe(1);
+    // Sapma yönü döndürür, hızı değiştirmez
+    const v = a.vel;
+    expect(Math.hypot(v.x, v.z)).toBeCloseTo(SHOT_SPEED.min + (SHOT_SPEED.max - SHOT_SPEED.min) * a.power, 6);
   });
 });
 
@@ -308,12 +312,23 @@ describe('vuruş sonuçları ve puan', () => {
     expect(simulateShot(round0, swipe(0, 4, 200))).toEqual({ kind: 'miss', points: 0, viaPost: false, corner: false });
   });
 
-  it('kaleci şuta tepki verir: aynı köşeye yavaş şut kurtarılır, sert şut gol olur', () => {
-    expect(simulateShot(openHard, swipe(2.9, 1.0, msFor(2.9, 1.0, 0.15))).kind).toBe('saved');
-    expect(simulateShot(openHard, swipe(2.9, 1.0, msFor(2.9, 1.0, 0.8))).kind).toBe('goal');
+  it('kaleci şuta tepki verir: köşeye orta güçte şut kurtarılır, sert şut geçer; kolay seviyede orta güç yeter', () => {
+    // Sapma tohumlu olduğundan tek vuruş yerine köşe hedefleri ızgarasının (z 2,6–3,3 × y 0,8–1,6) gol oranı sayılır
+    const goals = (round: Round, power: number) => {
+      let n = 0;
+      let g = 0;
+      for (const y of [0.8, 1.2, 1.6])
+        for (let z = 2.6; z <= 3.31; z += 0.1) {
+          n++;
+          if (simulateShot(round, swipe(z, y, msFor(z, y, power))).kind === 'goal') g++;
+        }
+      return g / n;
+    };
+    expect(goals(openHard, 0.45)).toBeLessThanOrEqual(0.1); // orta güç: kaleci yetişir
+    expect(goals(openHard, 0.8)).toBeGreaterThanOrEqual(0.4); // sert: çoğu geçer (sapma payıyla)
     // Kolay seviyede (ilk 2 vuruş) orta güç de yeter
     const easy = { ...openHard, keeper: { ...openHard.keeper, react: KEEPER_LEVELS[0].react, speed: KEEPER_LEVELS[0].speed } };
-    expect(simulateShot(easy, swipe(2.9, 1.0, msFor(2.9, 1.0, 0.45))).kind).toBe('goal');
+    expect(goals(easy, 0.45)).toBeGreaterThanOrEqual(0.6);
   });
 
   it('barajın ortasına alçak sert şut barajda kalır', () => {
@@ -353,9 +368,17 @@ describe('zorluk dengesi (modellenmiş oyuncu, tohumlu)', () => {
   /** Yaklaşık normal dağılım (4 düzgün sayının toplamı), σ = 1. */
   const gauss = (r: () => number) => (r() + r() + r() + r() - 2) * Math.sqrt(3);
 
+  /** Oyuncu barajı / direği "okur": kalecisiz simülasyonda top kaleye girmezse yol kapalı sayılır. */
+  const blocked = (round: Round, input: ShotInput) => {
+    const st = startShot(round, input);
+    st.keeperTarget = st.keeperZ = 30;
+    while (!st.result) stepShot(st);
+    return st.result.kind !== 'goal';
+  };
+
   /**
    * Oyuncu modeli: köşeye yakın hedef + nişan hatası (σ), güç aralığı. `smart`: kalecinin o anki tarafının tersine nişan
-   * alır ve önizleme "takıldı" derse falso / öbür tarafı dener (iyi oyuncu); değilse çoğu zaman olduğu gibi vurur.
+   * alır ve barajın kapattığını görürse falso / öbür tarafı dener (iyi oyuncu); değilse çoğu zaman olduğu gibi vurur.
    */
   function goalsPerSeries(p: { sigmaZ: number; sigmaY: number; power: [number, number]; smart: boolean }, series = 300): number {
     const r = rng(20261006);
@@ -374,12 +397,12 @@ describe('zorluk dengesi (modellenmiş oyuncu, tohumlu)', () => {
           return swipe(z, y, msFor(z, y, power), bulge, tick);
         };
         let input = mk(side, 0);
-        if (previewPath(round, input).blocked && (p.smart || r() < 0.4)) {
+        if (blocked(round, input) && (p.smart || r() < 0.4)) {
           const tries: [number, number][] = p.smart ? [[side, 0.18 * side], [side, -0.18 * side], [-side, 0]] : [[-side, 0]];
           for (const [s2, b] of tries) {
             side = s2;
             input = mk(s2, b);
-            if (!previewPath(round, input).blocked) break;
+            if (!blocked(round, input)) break;
           }
         }
         if (simulateShot(round, input).kind === 'goal') goals++;

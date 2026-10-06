@@ -1,8 +1,8 @@
 /**
  * Kaydırma (ekran) → simülasyon girdisi. YALNIZ istemcide: (yumuşatılmış) yol yay uzunluğuna göre eşit aralıklı
  * `SWIPE_POINTS.client` noktaya indirgenir ve kalenin ekrandaki ölçeğiyle kale düzlemi koordinatına (cm, tam sayı)
- * çevrilir; güç için etkin süre hesaplanır. Buradaki kayan nokta işlemleri sonucu etkilemez: sunucu yalnız üretilen tam sayıları görür ve her şeyi
- * onlardan hesaplar (sim.ts → shotParams).
+ * çevrilir; güç için etkin süre hesaplanır. Buradaki kayan nokta işlemleri sonucu etkilemez: sunucu yalnız üretilen
+ * tam sayıları ({ tick, ms, pts }) görür ve yön / güç / falso / sapmayı onlardan hesaplar (sim.ts → shotParams).
  */
 import { MAX_RELEASE_TICK, SWIPE_POINTS, type ShotInput } from './sim';
 

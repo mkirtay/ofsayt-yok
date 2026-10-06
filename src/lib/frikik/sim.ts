@@ -6,7 +6,8 @@
  * - Sabit adım (TICK = 1/120 sn, adım başına 2 alt adım); kare hızından bağımsız.
  * - Yalnız + − × ÷, Math.sqrt ve tam sayı işlemleri; sin / cos / exp / pow / hypot / random YOK.
  * - Girdi tam sayı: kaydırma yolunun 12–20 örnek noktası (kale düzlemine göre cm), kaydırma süresi (ms) ve bırakma
- *   tick'i. Yön, güç ve falso bu noktalardan BURADA hesaplanır (`shotParams`) → sunucu aynı sayılardan aynı sonucu bulur.
+ *   tick'i. Yön, güç, falso ve tohumlu sapma bu sayılardan BURADA hesaplanır (`shotParams`) → sunucu aynı sayılardan
+ *   aynı sonucu bulur. Math.random yok: sapma tohumu girdinin ve topun yerinin özetidir (`scatterSeed`).
  *
  * Dünya (metre ölçeğinde, top arcade boyutta): kale çizgisi x = 0, kale ağzı −x'e bakar, top x < 0'da; z yanal.
  * Ortak fizik: lib/pitchPhysics/core.ts (zemin, direk, file, gol tespiti).
@@ -162,8 +163,18 @@ export const SWIPE_POINTS = { min: 12, max: 20, client: 16 };
 export const SWIPE_MIN = { length: 2.5, up: 1.5 };
 /** Kaydırma hızı (cm/ms, kale düzlemi ölçeğinde) → güç 0–1. */
 export const SWIPE_SPEED = { min: 1, max: 4.5 };
-/** Yolun kirişten en büyük sapması / kiriş uzunluğu → falso (bu oranda tam falso); altı ölü bölge. */
-export const SWIPE_BULGE = { full: 0.3, dead: 0.03 };
+/**
+ * Falso: yolun kirişe göre ORTALAMA yanal sapması / kiriş uzunluğu (uç noktaya değil, yolun kıvrımına bakar; ortalama
+ * tek bir titremeyi değil bütün yolun bombesini ölçer → kendiliğinden yumuşak). `full` oranında tam falso, `dead` altı
+ * düz sayılır. Fare / dokunmatik yüzey için rahat: sinüs bombeli yolda en büyük sapma ≈ 1,57 × ortalama → kirişin
+ * ~%16'sı kadar bombe tam falso verir.
+ */
+export const SWIPE_BULGE = { full: 0.1, dead: 0.015 };
+/**
+ * Gerçekçilik: tohumlu sapma. Yaw (yön, radyan ≈ küçük açı) = base + güç² × byPower + titreme × byShake; dikey hız
+ * çarpanı 1 ± (liftBase + güç² × liftByPower). Sert şut ve titrek kaydırma daha çok sapar.
+ */
+export const SCATTER = { base: 0.004, byPower: 0.03, byShake: 0.03, liftBase: 0.01, liftByPower: 0.06 };
 
 /**
  * İstemciden gelen TEK şey. Hepsi tam sayı:
@@ -193,11 +204,15 @@ export function parseShotInput(raw: unknown): ShotInput | null {
 }
 
 export type ShotParams = {
-  /** İlk hız (m/sn). */
+  /** İlk hız (m/sn), sapma uygulanmış. */
   vel: V3;
   /** Falso −1…1 (pozitif: sağa kıvrılır). */
   curve: number;
   power: number;
+  /** Kaydırmadaki titreme 0–1 (yanal sapma artışlarının yön değiştirme sayısı). */
+  shake: number;
+  /** Uygulanan sapma: `yaw` yön (sağa pozitif, radyan ≈), `lift` dikey hız çarpanı. */
+  scatter: { yaw: number; lift: number };
   /** Hedef noktanın z'si (kaleci buraya yönelir). */
   targetZ: number;
 };
@@ -211,10 +226,70 @@ function assist(v: number, lo: number, hi: number): number {
   return off === 0 || Math.abs(off) > AIM_ASSIST.reach ? v : edge + off * (1 - AIM_ASSIST.pull);
 }
 
+/** Titreme sayımında bir "dönüş" için yanal sapmanın son uç değerinden en az bu kadar (cm) geri gelmesi gerekir. */
+const SHAKE_HYSTERESIS = 2;
+
 /**
- * Kaydırma → şut. Hedef = son nokta (kale düzleminde); güç = kaydırma hızı; falso = yolun kirişe göre eğriliği (yol
- * sağa bombeliyse top sağdan çıkıp sola kıvrılır ve yine hedefe yönelir). Yükseklik, top hedef noktadan geçecek şekilde
- * çözülür. Çok kısa / kaleye doğru olmayan kaydırma → null (geçersiz vuruş).
+ * Kaydırmadaki titreme 0–1: ara noktaların kirişe göre yanal sapması kaç kez yön değiştirdi (histerezisli: cm'ye
+ * yuvarlama kırpıntısı sayılmaz). Pürüzsüz bir bombe en çok 1 kez döner; zikzak çizen parmak daha çok. 4+ fazla dönüş =
+ * tam titreme.
+ */
+export function swipeShake(pts: readonly [number, number][]): number {
+  const n = pts.length;
+  const cz = pts[n - 1]![0] - pts[0]![0];
+  const cy = pts[n - 1]![1] - pts[0]![1];
+  const len = len2(cz, cy);
+  if (len === 0) return 0;
+  let dir = 0;
+  let extreme = 0;
+  let turns = 0;
+  for (let i = 1; i < n; i++) {
+    const dev = ((pts[i]![0] - pts[0]![0]) * cy - (pts[i]![1] - pts[0]![1]) * cz) / len;
+    if (dir >= 0 && dev > extreme) extreme = dev;
+    else if (dir <= 0 && dev < extreme) extreme = dev;
+    else if (dir >= 0 && dev < extreme - SHAKE_HYSTERESIS) {
+      if (dir > 0) turns++;
+      dir = -1;
+      extreme = dev;
+    } else if (dir <= 0 && dev > extreme + SHAKE_HYSTERESIS) {
+      if (dir < 0) turns++;
+      dir = 1;
+      extreme = dev;
+    }
+    if (dir === 0 && Math.abs(dev) > SHAKE_HYSTERESIS) dir = dev > 0 ? 1 : -1;
+  }
+  return Math.min(1, Math.max(0, turns - 1) / 4);
+}
+
+/** Sapma genliği (yaw: yön, lift: dikey çarpan payı). Güçle kare, titremeyle doğrusal büyür. */
+export function scatterAmplitude(power: number, shake: number): { yaw: number; lift: number } {
+  return {
+    yaw: SCATTER.base + power * power * SCATTER.byPower + shake * SCATTER.byShake,
+    lift: SCATTER.liftBase + power * power * SCATTER.liftByPower,
+  };
+}
+
+/** Sapma tohumu: girdi tam sayıları + topun yeri (FNV benzeri 32 bit karma) → aynı girdi her yerde aynı sapma. */
+export function scatterSeed(round: Round, input: ShotInput): number {
+  let h = 0x811c9dc5;
+  const mix = (v: number) => {
+    h = Math.imul(h ^ (v | 0), 0x01000193) >>> 0;
+  };
+  mix(Math.round(round.ball.x * 2));
+  mix(Math.round(round.ball.z * 2));
+  mix(input.ms);
+  for (const p of input.pts) {
+    mix(p[0]);
+    mix(p[1]);
+  }
+  return h;
+}
+
+/**
+ * Kaydırma → şut. Hedef = son nokta (kale düzleminde; kaydırmanın genel yönü); güç = kaydırma hızı; falso = yolun
+ * kirişe göre ortalama bombesi (yol sağa bombeliyse top sağdan çıkıp sola kıvrılır ve yine hedefe yönelir). Yükseklik,
+ * top hedef noktadan geçecek şekilde çözülür; sonra tohumlu sapma (güç ve titremeyle büyür) yön ve yüksekliğe eklenir.
+ * Çok kısa / kaleye doğru olmayan kaydırma → null (geçersiz vuruş).
  */
 export function shotParams(round: Round, input: ShotInput): ShotParams | null {
   const n = input.pts.length;
@@ -226,15 +301,14 @@ export function shotParams(round: Round, input: ShotInput): ShotParams | null {
   const cy = ly - fy;
   const len = len2(cz, cy);
   if (len < SWIPE_MIN.length || cy < SWIPE_MIN.up) return null;
-  // Kirişten en büyük sapma (sağa pozitif)
-  let dev = 0;
+  // Kirişe göre ortalama yanal sapma (sağa pozitif): yolun bombesi
+  let sum = 0;
   for (let i = 1; i < n - 1; i++) {
     const pz = input.pts[i]![0] / 100 - fz;
     const py = input.pts[i]![1] / 100 - fy;
-    const cross = (pz * cy - py * cz) / len;
-    if (Math.abs(cross) > Math.abs(dev)) dev = cross;
+    sum += (pz * cy - py * cz) / len;
   }
-  const ratio = dev / len;
+  const ratio = sum / (n - 2) / len;
   const mag = Math.abs(ratio) <= SWIPE_BULGE.dead ? 0 : Math.min(1, (Math.abs(ratio) - SWIPE_BULGE.dead) / (SWIPE_BULGE.full - SWIPE_BULGE.dead));
   // Sağa bombe → sola kıvrılan top
   const curve = mag === 0 ? 0 : ratio > 0 ? -mag : mag;
@@ -252,11 +326,21 @@ export function shotParams(round: Round, input: ShotInput): ShotParams | null {
   const drift = 0.5 * curve * CURVE_K * dist * t * 0.8;
   const ax = -round.ball.x;
   const az = targetZ - drift - round.ball.z;
-  const a = len2(ax, az);
+  // Tohumlu sapma: yönü sağa doğru `yaw` kadar döndür (küçük açı, trigonometri yok) ve yeniden birimle; yüksekliği çarp.
+  const shake = swipeShake(input.pts);
+  const amp = scatterAmplitude(power, shake);
+  const r = rng(scatterSeed(round, input));
+  const yaw = (r() * 2 - 1) * amp.yaw;
+  const liftScatter = 1 + (r() * 2 - 1) * amp.lift;
+  const dx = ax + -az * yaw;
+  const dz = az + ax * yaw;
+  const a = len2(dx, dz);
   return {
-    vel: { x: (ax / a) * vh, y: ((targetY - BALL_R) / t + 0.5 * TUNING.gravity * t) * lift, z: (az / a) * vh },
+    vel: { x: (dx / a) * vh, y: ((targetY - BALL_R) / t + 0.5 * TUNING.gravity * t) * lift * liftScatter, z: (dz / a) * vh },
     curve,
     power,
+    shake,
+    scatter: { yaw, lift: liftScatter },
     targetZ,
   };
 }
@@ -384,31 +468,6 @@ export function simulateShot(round: Round, input: ShotInput): ShotResult {
   const s = startShot(round, input);
   while (!s.result) stepShot(s);
   return s.result;
-}
-
-/** Önizlemenin bittiği x: kalecinin önü (önizleme kurtarışı ele vermez; kaleciye kadar gerçek yolla aynıdır). */
-export const PREVIEW_END_X = KEEPER.x - KEEPER.r - BALL_R - 0.05;
-
-/**
- * Yörünge önizlemesi: AYNI simülasyon (startShot / stepShot), top kalecinin önüne gelene ya da bir şeye takılana kadar.
- * Kaleci topa ancak dokunarak etki eder → bırakılan şut bu noktalara kadar birebir aynı yolu izler.
- * @returns her `every` tick'te bir konum; `blocked`: baraja / direğe takıldı ya da kaleye varmadan sonuçlandı
- */
-export function previewPath(round: Round, input: ShotInput, every = 3): { points: V3[]; blocked: boolean } {
-  const s = startShot(round, input);
-  const points: V3[] = [{ ...s.pos }];
-  if (s.result) return { points, blocked: true };
-  while (s.tick < MAX_SHOT_TICKS) {
-    stepShot(s);
-    if (s.touchedWall || s.touchedPost || s.result) {
-      points.push({ ...s.pos });
-      return { points, blocked: true };
-    }
-    if (s.pos.x >= PREVIEW_END_X) break;
-    if (s.tick % every === 0) points.push({ ...s.pos });
-  }
-  points.push({ ...s.pos });
-  return { points, blocked: false };
 }
 
 export type SeriesScore = { total: number; shots: ShotResult[] };

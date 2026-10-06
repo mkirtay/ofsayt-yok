@@ -39,19 +39,20 @@
   "noWebgl": "Tarayıcın 3D grafikleri desteklemediği için oyun açılamadı.",
   "rules": {
     "title": "Nasıl oynanır",
-    "r1": "Parmağını (ya da fareyi) topun üstüne koy ve vurmak istediğin noktaya doğru kaydır: kaydırmayı bitirdiğin yer hedefindir.",
-    "r2": "Güç, kaydırmanın en hızlı anından gelir: hızlı kaydırırsan şut sert olur ve kaleci yetişemez. Çubuğun sarı ucu çok güçsüz, kırmızı ucu aşırı güçlüdür (top havalanır). Yolu kavisli çizersen top falso alıp barajın yanından dolanır.",
-    "r3": "Her seride 5 vuruş var; her vuruşta topun yeri, baraj ve kalecinin hareketi değişir.",
+    "r1": "Parmağını (ya da fareyi) topun üstüne koy ve vurmak istediğin yere doğru kaydır: kaydırmanın genel yönü hedefindir. Ekranda yalnız çizdiğin iz görünür; topun nereye gideceğini sen tahmin edersin.",
+    "r2": "Güç, kaydırmanın en hızlı anından gelir: hızlı kaydırırsan şut sert olur ve kaleci yetişemez. Çubuğun sarı ucu çok güçsüz, kırmızı ucu aşırı güçlüdür (top havalanır). Sert şut daha çok sapar; titrek bir kaydırma da hafif sapma yaratır.",
+    "r3": "Falso için yolu kavisli çiz: sağa bombeli yol topu sağdan çıkarıp sola kıvırır, barajın yanından dolandırır. Hafif bir kavis yeter; düz çizgi falsosuz şuttur.",
     "scoring": "Puanlar",
     "p1": "Gol: 100 puan",
     "p2": "Direkten gol: +50",
-    "p3": "Doksan (üst köşe): +100"
+    "p3": "Doksan (üst köşe): +100",
+    "r4": "Her seride 5 vuruş var; her vuruşta topun yeri, baraj ve kalecinin hareketi değişir. İlk 2 vuruş daha kolaydır."
   },
   "tip": {
     "title": "Nasıl oynanır?",
-    "l1": "Topun üstünden kaleye doğru kaydır: kesikli çizgi topun gideceği yolu gösterir.",
+    "l1": "Topun üstünden kaleye doğru kaydır: kaydırmanın yönü hedefin, ekranda yalnız çizdiğin iz görünür.",
     "l2": "Hızlı kaydır: sert şut. Alttaki çubukta yeşil bölgede kal; kırmızıda top havalanır.",
-    "l3": "Yolu kavisli çiz: top falso alır, barajın yanından dolanır.",
+    "l3": "Yolu kavisli çiz: top falso alır, barajın yanından dolanır. Sert şut daha çok sapar.",
     "ok": "Anladım"
   }
 }

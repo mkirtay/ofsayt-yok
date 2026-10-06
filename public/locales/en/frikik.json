@@ -39,19 +39,20 @@
   "noWebgl": "The game could not start because your browser does not support 3D graphics.",
   "rules": {
     "title": "How to play",
-    "r1": "Put your finger (or the mouse) on the ball and swipe towards the spot you want to hit: where your swipe ends is your target.",
-    "r2": "Power comes from the fastest moment of your swipe: swipe fast and the shot is hard enough to beat the keeper. The yellow end of the bar is too weak, the red end is too strong (the ball balloons). Draw a curved path and the ball curls around the wall.",
-    "r3": "Each series has 5 shots; the ball position, the wall and the keeper's movement change every shot.",
+    "r1": "Put your finger (or the mouse) on the ball and swipe towards where you want to hit: the overall direction of the swipe is your target. Only the trace you draw is shown; you judge where the ball will go.",
+    "r2": "Power comes from the fastest moment of your swipe: swipe fast and the shot is hard enough to beat the keeper. The yellow end of the bar is too weak, the red end is too strong (the ball balloons). Hard shots stray more, and a shaky swipe adds a little scatter.",
+    "r3": "For curl, draw a curved path: a path bulging to the right sends the ball out right and curls it left, around the wall. A gentle curve is enough; a straight line is a straight shot.",
     "scoring": "Points",
     "p1": "Goal: 100 points",
     "p2": "In off the post: +50",
-    "p3": "Top corner: +100"
+    "p3": "Top corner: +100",
+    "r4": "Each series has 5 shots; the ball position, the wall and the keeper's movement change every shot. The first 2 shots are easier."
   },
   "tip": {
     "title": "How to play",
-    "l1": "Swipe from the ball towards the goal: the dashed line shows the path the ball will take.",
+    "l1": "Swipe from the ball towards the goal: the swipe direction is your target, and only your trace is shown.",
     "l2": "Swipe fast for a hard shot. Stay in the green zone of the bar; in the red the ball balloons.",
-    "l3": "Draw a curved path and the ball curls around the wall.",
+    "l3": "Draw a curved path and the ball curls around the wall. Hard shots stray more.",
     "ok": "Got it"
   }
 }
