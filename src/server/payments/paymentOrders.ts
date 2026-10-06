@@ -17,7 +17,7 @@ import { isUniqueViolation } from '@/lib/credits';
 import {
   findPaymentPackage,
   packageLink,
-  packageSecret,
+  webhookSecret,
   checkoutUrl,
   kurusToTryString,
   type PaymentPackage,
@@ -54,7 +54,7 @@ export class CheckoutError extends Error {
 
 /**
  * PENDING sipariş oluşturur, paketin Checkout Link'ine `merchantOrderId` ekleyip döner. Yönetici paketi yalnız
- * ADMIN'e görünür (diğerlerine bilinmeyen paket). Link / secret tanımlı değilse satışta değil.
+ * ADMIN'e görünür (diğerlerine bilinmeyen paket). Paket linki ya da webhook secret'ı tanımlı değilse satışta değil.
  */
 export async function createCheckout(
   userId: string,
@@ -68,7 +68,7 @@ export async function createCheckout(
     if (user?.role !== 'ADMIN') throw new CheckoutError(400, 'UNKNOWN_PACKAGE');
   }
   const link = packageLink(pkg.key, env);
-  if (!link || !packageSecret(pkg.key, env)) throw new CheckoutError(409, 'UNAVAILABLE');
+  if (!link || !webhookSecret(env)) throw new CheckoutError(409, 'UNAVAILABLE');
   const merchantOrderId = newMerchantOrderId();
   await prisma.paymentOrder.create({
     data: { merchantOrderId, userId, packageKey: pkg.key, amountTRY: kurusToTryString(pkg.priceKurus), status: 'PENDING' },
@@ -318,16 +318,20 @@ export function parseHikieWebhook(headers: Record<string, string | string[] | un
  * `order.paid` doğrulaması: merchantOrderId ile eşleşen sipariş (null ise eşleştirme yok), status COMPLETED, para birimi
  * TRY, tutar siparişin kuruş tutarıyla birebir. Uyuşmazlıkta kredi yok (iş kuralı reddi).
  */
-async function verifyPaidEvent(w: ParsedWebhook): Promise<{ ok: true; orderDbId: string; hikieOrderId: string } | { ok: false; reason: string }> {
-  if (!w.orderId) return { ok: false, reason: 'missing_order_id' };
-  if (!w.merchantOrderId) return { ok: false, reason: 'no_merchant_order_id' };
+async function verifyPaidEvent(
+  w: ParsedWebhook,
+): Promise<{ ok: true; orderDbId: string; hikieOrderId: string } | { ok: false; reason: string; expectedKurus: number | null }> {
+  const reject = (reason: string, expectedKurus: number | null = null) => ({ ok: false as const, reason, expectedKurus });
+  if (!w.orderId) return reject('missing_order_id');
+  if (!w.merchantOrderId) return reject('no_merchant_order_id');
   const order = await prisma.paymentOrder.findUnique({ where: { merchantOrderId: w.merchantOrderId } });
-  if (!order) return { ok: false, reason: 'unknown_order' };
-  if (!findPaymentPackage(order.packageKey)) return { ok: false, reason: 'unknown_package' };
-  if (w.status !== 'COMPLETED') return { ok: false, reason: 'status_mismatch' };
-  if (w.currency !== 'TRY') return { ok: false, reason: 'currency_mismatch' };
-  if (w.totalKurus == null) return { ok: false, reason: 'amount_missing' };
-  if (w.totalKurus !== tlTextToKurus(order.amountTRY.toString())) return { ok: false, reason: 'amount_mismatch' };
+  if (!order) return reject('unknown_order');
+  const expectedKurus = tlTextToKurus(order.amountTRY.toString());
+  if (!findPaymentPackage(order.packageKey)) return reject('unknown_package', expectedKurus);
+  if (w.status !== 'COMPLETED') return reject('status_mismatch', expectedKurus);
+  if (w.currency !== 'TRY') return reject('currency_mismatch', expectedKurus);
+  if (w.totalKurus == null) return reject('amount_missing', expectedKurus);
+  if (w.totalKurus !== expectedKurus) return reject('amount_mismatch', expectedKurus);
   return { ok: true, orderDbId: order.id, hikieOrderId: w.orderId };
 }
 
@@ -377,7 +381,13 @@ export async function handleHikieWebhook(
     } else {
       result = `rejected:${v.reason}`;
       recorded = `order.paid:rejected:${v.reason}`;
-      console.warn(`[payments] order.paid reddedildi: ${v.reason} (merchantOrderId=${w.merchantOrderId ?? '-'}, webhookId=${w.webhookId}, deneme=${w.attempt ?? '-'})`);
+      // Reddedilen ama parası alınmış sipariş elle bulunup tamamlanabilsin: yalnız kimlikler, tutarlar (kuruş), status, para
+      // birimi, neden. Kişisel veri (e-posta, adres, telefon) yok; imza / secret yok.
+      console.warn(
+        `[payments] order.paid reddedildi: neden=${v.reason} orderId=${w.orderId ?? '-'} merchantOrderId=${w.merchantOrderId ?? '-'} ` +
+          `gelenKurus=${w.totalKurus ?? '-'} beklenenKurus=${v.expectedKurus ?? '-'} currency=${w.currency ?? '-'} status=${w.status || '-'} ` +
+          `webhookId=${w.webhookId} deneme=${w.attempt ?? '-'}`,
+      );
     }
   } else if (w.event === 'order.updated' && (w.status === 'REFUNDED' || w.status === 'CANCELLED')) {
     result = 'logged';

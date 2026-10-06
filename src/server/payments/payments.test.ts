@@ -17,13 +17,9 @@ const NOW = Date.UTC(2026, 9, 5, 12, 0, 0);
 const DAY = 86_400_000;
 const ENV = {
   HIKIE_LINK_CREDITS_10: 'https://pay.hikie.example/l/c10?ref=oy',
-  HIKIE_SECRET_CREDITS_10: 'sec-c10',
   HIKIE_LINK_CREDITS_30: 'https://pay.hikie.example/l/c30',
-  HIKIE_SECRET_CREDITS_30: 'sec-c30',
   HIKIE_LINK_PREMIUM_30D: 'https://pay.hikie.example/l/p30',
-  HIKIE_SECRET_PREMIUM_30D: 'sec-p30',
   HIKIE_LINK_TEST_1TL: 'https://pay.hikie.example/l/t1',
-  HIKIE_SECRET_TEST_1TL: 'sec-t1',
   HIKIE_WEBHOOK_SECRET: 'whsec',
 };
 const PRICE: Record<string, string> = { credits_10: '39.99', credits_30: '99.99', premium_30d: '99.99', test_1tl: '1.00' };
@@ -71,7 +67,10 @@ describe('paket kataloğu', () => {
     expect(findPaymentPackage('test_1tl')).toMatchObject({ credits: 1, priceKurus: 100, adminOnly: true });
     expect(findPaymentPackage('yok')).toBeNull();
     expect(availablePackageKeys(ENV)).toEqual(['credits_10', 'credits_30', 'premium_30d', 'test_1tl']);
-    expect(availablePackageKeys({ HIKIE_LINK_CREDITS_10: 'http://x', HIKIE_SECRET_CREDITS_10: 's' })).toEqual([]);
+    expect(availablePackageKeys({ HIKIE_LINK_CREDITS_10: 'http://x', HIKIE_WEBHOOK_SECRET: 'w' })).toEqual([]);
+    // webhook secret yoksa hiçbir paket satışta değil (link tek başına yetmez); paket başına secret artık gerekmez
+    expect(availablePackageKeys({ HIKIE_LINK_CREDITS_10: 'https://p.example/l/x' })).toEqual([]);
+    expect(availablePackageKeys({ HIKIE_LINK_CREDITS_10: 'https://p.example/l/x', HIKIE_WEBHOOK_SECRET: 'w' })).toEqual(['credits_10']);
     expect(checkoutUrl('https://p.example/l/x?ref=oy', 'oy_1')).toBe('https://p.example/l/x?ref=oy&merchantOrderId=oy_1');
   });
 });
@@ -91,6 +90,8 @@ describe('checkout', () => {
     await expect(createCheckout('u1', 'credits_100', ENV)).rejects.toMatchObject({ status: 409, code: 'UNAVAILABLE' });
     await expect(createCheckout('u1', 'test_1tl', ENV)).rejects.toBeInstanceOf(CheckoutError);
     expect(db.paymentOrder.rows).toHaveLength(0);
+    // webhook secret yoksa link olsa bile satışta değil
+    await expect(createCheckout('a1', 'test_1tl', { ...ENV, HIKIE_WEBHOOK_SECRET: '' })).rejects.toMatchObject({ status: 409 });
     const ok = await createCheckout('a1', 'test_1tl', ENV);
     expect(order(ok.merchantOrderId).amountTRY).toBe('1.00');
   });
@@ -216,12 +217,21 @@ describe('webhook (Hikie sözleşmesi)', () => {
       [JSON.stringify({ ...orderObj('m1', '39.99'), totals: {} }), 'amount_missing'],
       [JSON.stringify({ ...orderObj('m1', '39.99'), orderId: undefined }), 'missing_order_id'],
     ];
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     let i = 0;
     for (const [body, reason] of cases) {
       const id = `rej_${++i}`;
       expect(await send(body, id)).toEqual({ status: 200, body: { ok: true, result: `rejected:${reason}` } });
       expect(db.paymentWebhookEvent.rows.find((e) => e.id === id)?.event).toBe(`order.paid:rejected:${reason}`);
     }
+    // Log: orderId, merchantOrderId, gelen / beklenen kuruş, neden; kişisel veri yok
+    const lines = warn.mock.calls.map((c) => String(c[0]));
+    warn.mockRestore();
+    expect(lines).toHaveLength(cases.length);
+    expect(lines[0]).toContain('neden=amount_mismatch orderId=ord_1 merchantOrderId=m1 gelenKurus=100 beklenenKurus=3999 currency=TRY status=COMPLETED');
+    expect(lines[2]).toContain('neden=no_merchant_order_id orderId=ord_1 merchantOrderId=- gelenKurus=3999 beklenenKurus=-');
+    expect(lines[6]).toContain('neden=unknown_order orderId=ord_1 merchantOrderId=yok');
+    expect(lines.join('\n')).not.toMatch(/@|whsec|signature/i);
     expect(order('m1')).toMatchObject({ status: 'PENDING', hikieOrderId: null });
     expect(user('u1').credits).toBe(0);
     expect(db.creditTransaction.rows).toHaveLength(0);

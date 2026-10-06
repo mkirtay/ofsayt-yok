@@ -1,7 +1,8 @@
 /**
  * Hikie ödeme kataloğu — /credits'teki paket ve planlardan türetilir (fiyatlar tek kaynakta) + yönetici test paketi.
- * Her paketin Hikie panelinde ayrı Checkout Link'i ve ayrı imza secret'ı var: HIKIE_LINK_<KEY> / HIKIE_SECRET_<KEY>
- * (KEY büyük harf, ör. HIKIE_LINK_CREDITS_10). İkisi de tanımlı olmayan paket satışa açık değil ("Yakında" kalır).
+ * Her paketin Hikie panelinde ayrı Checkout Link'i var: HIKIE_LINK_<KEY> (KEY büyük harf, ör. HIKIE_LINK_CREDITS_10).
+ * Checkout Link imza üretmez; imza yalnız webhook aboneliğinin tek secret'ıyla (HIKIE_WEBHOOK_SECRET, whsec_) doğrulanır.
+ * Paket yalnız HIKIE_LINK_<KEY> VE HIKIE_WEBHOOK_SECRET tanımlıysa satışa açıktır (webhook olmadan kredi verilemez).
  * Link ve secret yalnız sunucuda okunur; istemciye yalnız "satışta mı" bilgisi gider.
  */
 import { CREDIT_PACKAGES, PREMIUM_PLANS } from '@/config/creditPackages';
@@ -25,11 +26,11 @@ export function findPaymentPackage(key: unknown): PaymentPackage | null {
 
 type Env = Record<string, string | undefined>;
 
-const envName = (prefix: 'HIKIE_LINK_' | 'HIKIE_SECRET_', key: string) => `${prefix}${key.toUpperCase()}`;
+const envName = (key: string) => `HIKIE_LINK_${key.toUpperCase()}`;
 
 /** Paketin Checkout Link'i (yalnız https; değilse yok sayılır). */
 export function packageLink(key: string, env: Env = process.env): string | null {
-  const v = env[envName('HIKIE_LINK_', key)]?.trim();
+  const v = env[envName(key)]?.trim();
   if (!v) return null;
   try {
     return new URL(v).protocol === 'https:' ? v : null;
@@ -38,14 +39,14 @@ export function packageLink(key: string, env: Env = process.env): string | null 
   }
 }
 
-/** Paketin imza secret'ı (yalnız sunucuda; loglanmaz). */
-export function packageSecret(key: string, env: Env = process.env): string | null {
-  return env[envName('HIKIE_SECRET_', key)]?.trim() || null;
+/** Webhook imza secret'ı (whsec_; tek, abonelikten gelir; yalnız sunucuda, loglanmaz). */
+export function webhookSecret(env: Env = process.env): string | null {
+  return env.HIKIE_WEBHOOK_SECRET?.trim() || null;
 }
 
-/** Link ve secret'ı tanımlı paketler (satışta olanlar). */
+/** Satışta olan paketler: HIKIE_LINK_<KEY> + HIKIE_WEBHOOK_SECRET tanımlı. */
 export function availablePackageKeys(env: Env = process.env): string[] {
-  return PAYMENT_PACKAGES.filter((p) => packageLink(p.key, env) && packageSecret(p.key, env)).map((p) => p.key);
+  return webhookSecret(env) ? PAYMENT_PACKAGES.filter((p) => packageLink(p.key, env)).map((p) => p.key) : [];
 }
 
 /** Checkout URL'si: linke `merchantOrderId` eklenir (mevcut sorgu korunur). */

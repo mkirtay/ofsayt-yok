@@ -52,7 +52,6 @@ beforeEach(() => {
   h.userId = null;
   h.rateOk = true;
   vi.stubEnv('HIKIE_LINK_CREDITS_10', 'https://pay.hikie.example/l/c10');
-  vi.stubEnv('HIKIE_SECRET_CREDITS_10', 'sec-c10');
   vi.stubEnv('HIKIE_WEBHOOK_SECRET', 'whsec');
 });
 
