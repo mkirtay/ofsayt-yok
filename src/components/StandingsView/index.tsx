@@ -2,6 +2,7 @@ import { useRouter } from 'next/router';
 import Link from 'next/link';
 import type { MouseEvent } from 'react';
 import { useTranslation } from '@/lib/i18n';
+import '@/lib/i18nNamespaces/standings';
 import Avatar from '@/components/Avatar';
 import StandingTeamName from '@/components/StandingTeamName';
 import TeamLogo from '@/components/TeamLogo';
