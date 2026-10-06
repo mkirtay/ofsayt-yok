@@ -56,7 +56,7 @@ describe('asistan sohbet döngüsü', () => {
     const { runAssistantTool } = await import('./tools');
     vi.mocked(runAssistantTool).mockImplementation(async (name: string, args: string) => {
       h.toolRuns.push({ name, args });
-      return { ok: true, data: {}, ...h.toolResult } as never;
+      return { ok: true, ...h.toolResult } as never;
     });
     h.toolRuns = [];
     h.toolResult = { data: { status: 'locked', free_preview: { most_likely: { outcome: 'HOME', pct: 55 } } }, card: LOCKED_CARD, links: [{ label: 'Maç', href: '/matches/1-a-b?sekme=ai-analiz' }, { label: 'Dış', href: 'https://evil.example' }] };
