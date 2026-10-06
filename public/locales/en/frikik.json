@@ -1,6 +1,6 @@
 {
   "pageTitle": "Frikik — Free Kick Game | Ofsayt Yok",
-  "pageDesc": "5 free kicks, a wall and a keeper: bend it, hit the top corner, make this week's best.",
+  "pageDesc": "Free kick of the day: 3 lives, a wall, a keeper and wind that get harder every level. Bend it, hit the top corner, climb the levels.",
   "sharedTitle": "{{score}} points in Frikik — can you beat it? | Ofsayt Yok",
   "title": "Frikik",
   "sub": "5 free kicks. Beat the wall, beat the keeper.",
@@ -9,7 +9,11 @@
   "loading": "Preparing the pitch…",
   "hud": {
     "shot": "Shot {{n}}/{{total}}",
-    "score": "{{score}} pts"
+    "score": "{{score}} pts",
+    "level": "Level {{n}}",
+    "lives": "{{n}}/{{total}} lives",
+    "wind": "Wind, strength {{n}}",
+    "windShort": "Wind"
   },
   "goal": "GOAL!",
   "result": {
@@ -29,7 +33,11 @@
     "again": "Play again",
     "share": "Share",
     "copied": "Link copied",
-    "shareText": "I scored {{score}} points in Frikik. Can you beat it?"
+    "shareText": "I scored {{score}} points in Frikik. Can you beat it?",
+    "levelTitle": "Out of lives",
+    "level": "Level {{n}}",
+    "levelSummary": "{{cleared}} levels cleared · {{score}} points",
+    "shareLevelText": "I reached level {{level}} in Frikik with {{score}} points. How far can you get?"
   },
   "reduced": {
     "title": "This game contains motion",
@@ -46,13 +54,25 @@
     "p1": "Goal: 100 points",
     "p2": "In off the post: +50",
     "p3": "Top corner: +100",
-    "r4": "Each series has 5 shots; the ball position, the wall and the keeper's movement change every shot. The first 2 shots are easier."
+    "r4": "Each series has 5 shots; the ball position, the wall and the keeper's movement change every shot. The first 2 shots are easier.",
+    "r5": "Level mode (free kick of the day): 3 lives, one shot per level. Goal → next level, miss → lose a life. As levels go up, distance, angle, wall, keeper, wind (direction and strength shown above the pitch), a narrower goal and a moving wall arrive step by step; everyone plays the same sequence that day.",
+    "p4": "In level mode points are multiplied by the level: level 1 ×1, level 2 ×1.5, level 3 ×2 … Ranking is by level reached first, then points."
   },
   "tip": {
     "title": "How to play",
     "l1": "Swipe from the ball towards the goal: the swipe direction is your target, and only your trace is shown.",
     "l2": "Swipe fast for a hard shot. Stay in the green zone of the bar; in the red the ball balloons.",
     "l3": "Draw a curved path and the ball curls around the wall. Hard shots stray more.",
-    "ok": "Got it"
-  }
+    "ok": "Got it",
+    "l4": "Level mode: 3 lives. Watch the wind arrow; if it points right, the ball drifts right."
+  },
+  "sharedLevelTitle": "Level {{level}}, {{score}} points in Frikik — how far can you get? | Ofsayt Yok",
+  "subLevel": "Free kick of the day: 3 lives, one shot per level. How many levels can you clear?",
+  "sharedLevel": "A friend reached level {{level}} ({{score}} points). Can you beat it?",
+  "mode": {
+    "label": "Game mode",
+    "level": "Level mode",
+    "series": "5 shots"
+  },
+  "daily": "Free kick of the day · {{date}}"
 }

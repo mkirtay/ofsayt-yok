@@ -5,8 +5,13 @@ import {
   BALL_R,
   FIGURE,
   GOAL,
+  KEEPER,
   MAX_SERIES_SCORE,
   KEEPER_LEVELS,
+  KEEPER_TIERS,
+  LEVER_CAPS,
+  LIVES,
+  MAX_LEVEL_SHOTS,
   MAX_SHOT_TICKS,
   POINTS,
   POWER_ZONES,
@@ -15,7 +20,12 @@ import {
   SWIPE_SPEED,
   WALL_DISTANCE,
   keeperZ,
+  levelPoints,
+  levelSpec,
+  makeLevelRound,
   makeRound,
+  roundGoal,
+  scoreLevelRun,
   parseShotInput,
   rng,
   scatterAmplitude,
@@ -26,6 +36,7 @@ import {
   startShot,
   stepShot,
   swipeShake,
+  wallOffset,
   type Round,
   type ShotInput,
   type ShotResult,
@@ -361,6 +372,143 @@ describe('vuruş sonuçları ve puan', () => {
     expect(s.total).toBeLessThanOrEqual(MAX_SERIES_SCORE);
     expect(MAX_SERIES_SCORE).toBe(1250);
     expect(scoreSeries(SEED, []).total).toBe(0);
+  });
+});
+
+describe('seviye modu', () => {
+  it('kaldıraçlar kademeli: ilk 3 seviye kolay, her seviyede en çok 1 kaldıraç artar, üst sınırlar aşılmaz, belirlenimci', () => {
+    const keys = ['dist', 'angle', 'wall', 'keeper', 'wind', 'goal', 'moving'] as const;
+    for (const lv of [1, 2, 3]) {
+      const s = levelSpec(lv);
+      expect(s.wall).toBe(3);
+      expect(s.keeper).toBe(0);
+      expect(s.wind).toBe(0);
+      expect(s.goal).toBe(1);
+      expect(s.moving).toBe(0);
+      expect(s.dist).toBeLessThanOrEqual(17.5);
+    }
+    let prev = levelSpec(1);
+    for (let lv = 2; lv <= 80; lv++) {
+      const s = levelSpec(lv);
+      const changed = keys.filter((k) => s[k] !== prev[k]);
+      expect(changed.length, `seviye ${lv}: ${changed.join()}`).toBeLessThanOrEqual(1);
+      for (const k of keys) {
+        if (k === 'goal') expect(s.goal).toBeLessThanOrEqual(prev.goal);
+        else expect(s[k]).toBeGreaterThanOrEqual(prev[k]);
+      }
+      prev = s;
+    }
+    const top = levelSpec(200);
+    expect(top).toEqual({ level: 200, dist: LEVER_CAPS.dist, angle: LEVER_CAPS.angle, wall: LEVER_CAPS.wall, keeper: LEVER_CAPS.keeper, wind: LEVER_CAPS.wind, goal: LEVER_CAPS.goal, moving: LEVER_CAPS.moving });
+    expect(levelSpec(7)).toEqual(levelSpec(7));
+    // Üst sınırlar oynanabilir kalır
+    expect(KEEPER_TIERS[LEVER_CAPS.keeper]).toBeDefined();
+    expect(GOAL.halfW * LEVER_CAPS.goal).toBeGreaterThan(KEEPER.r + 1);
+  });
+
+  it('seviye turu: tohum + seviye → aynı tur; mesafe / açı / baraj / kaleci / rüzgâr / kale / hareket kaldıraçlara uyar', () => {
+    for (const seed of [1, 777, 20261006]) {
+      for (let lv = 1; lv <= 40; lv++) {
+        const s = levelSpec(lv);
+        const r = makeLevelRound(seed, lv);
+        expect(r).toEqual(makeLevelRound(seed, lv));
+        const dist = -r.ball.x;
+        expect(dist).toBeGreaterThanOrEqual(s.dist);
+        expect(dist).toBeLessThanOrEqual(s.dist + 2);
+        expect(Math.abs(r.ball.z)).toBeLessThanOrEqual(dist * s.angle + 1e-9);
+        expect(r.wall).toHaveLength(s.wall);
+        expect([r.keeper.react, r.keeper.speed]).toEqual([KEEPER_TIERS[s.keeper]!.react, KEEPER_TIERS[s.keeper]!.speed]);
+        if (s.wind === 0) expect(r.wind).toBe(0);
+        else {
+          expect(Math.abs(r.wind)).toBeGreaterThanOrEqual(s.wind * 0.85 - 1e-9);
+          expect(Math.abs(r.wind)).toBeLessThanOrEqual(s.wind * 1.15 + 1e-9);
+        }
+        expect(r.goalScale).toBe(s.goal);
+        expect(r.wallMotion.amp).toBe(s.moving);
+        expect(r.keeper.amp + KEEPER.r).toBeLessThanOrEqual(GOAL.halfW * s.goal);
+        expect(roundGoal(r).halfW).toBeCloseTo(GOAL.halfW * s.goal, 9);
+      }
+      expect(makeLevelRound(seed, 5)).not.toEqual(makeLevelRound(seed + 1, 5));
+    }
+    // Seri modu turları kaldıraçsız (eski davranış korunur)
+    expect(round0.wind).toBe(0);
+    expect(round0.goalScale).toBe(1);
+    expect(round0.wallMotion.amp).toBe(0);
+  });
+
+  it('rüzgâr topu yana sürükler; dar kale direğe yakın şutu dışarı atar; hareketli baraj periyodik ve sınırlı', () => {
+    const calm = { ...openHard, wind: 0 };
+    const input = swipe(0, 1.5, msFor(0, 1.5, 0.7));
+    const arrive = (round: Round) => {
+      const st = startShot(round, input);
+      st.keeperTarget = st.keeperZ = 30;
+      while (st.pos.x < -0.05 && !st.result) stepShot(st);
+      return st.pos.z;
+    };
+    expect(arrive({ ...calm, wind: 1.5 })).toBeGreaterThan(arrive(calm) + 0.3);
+    expect(arrive({ ...calm, wind: -1.5 })).toBeLessThan(arrive(calm) - 0.3);
+    // Dar kale: tam kalede gol olan direk dibi şut, %70 kalede dışarı / direk
+    const wide = { ...openHard, wall: [] as Round['wall'] };
+    const narrow = { ...wide, goalScale: 0.7 };
+    const corner = swipe(3.2, 1.0, msFor(3.2, 1.0, 0.8));
+    const st = startShot(wide, corner);
+    st.keeperTarget = st.keeperZ = -30;
+    while (!st.result) stepShot(st);
+    expect(st.result!.kind).toBe('goal');
+    const st2 = startShot(narrow, corner);
+    st2.keeperTarget = st2.keeperZ = -30;
+    while (!st2.result) stepShot(st2);
+    expect(st2.result!.kind).not.toBe('goal');
+    // Hareketli baraj
+    const moving = { ...round0, wallMotion: { amp: 0.8, period: 400, phase: 37 } };
+    for (const tick of [0, 13, 400, 999]) expect(Math.abs(wallOffset(moving, tick))).toBeLessThanOrEqual(0.8 + 1e-9);
+    expect(wallOffset(moving, 5)).toBe(wallOffset(moving, 405));
+    expect(wallOffset(round0, 123)).toBe(0);
+    // Tek figürlük hareketli baraja alçak şut: figür önündeyken takılır, yana kaymışken geçer → sonuç bırakma tick'ine bağlı
+    const mid = round0.wall[(round0.wall.length - 1) >> 1]!;
+    const zAtGoal = round0.ball.z + ((mid.z - round0.ball.z) * -round0.ball.x) / (mid.x - round0.ball.x);
+    const single = { ...moving, wall: [mid], wallMotion: { amp: 1.2, period: 400, phase: 0 } };
+    const kinds = new Set<string>();
+    for (let tick = 0; tick < 400; tick += 25) kinds.add(simulateShot(single, swipe(zAtGoal, 0.3, 130, 0, tick)).kind);
+    expect(kinds.has('wall')).toBe(true);
+    expect(kinds.size).toBeGreaterThan(1);
+  });
+
+  it('koşu skoru: gol → seviye, kaçırma → can; canlar bitince durur; puan × çarpan; JSON\'dan aynı; vuruş sınırı', () => {
+    const seed = 99;
+    // Her seviye için gol olan ve olmayan bir girdi bul (barajsız, kalecisiz hile yok: gerçek turda ara)
+    const findKind = (level: number, want: boolean): ShotInput => {
+      const round = makeLevelRound(seed, level);
+      for (const z of [2.6, -2.6, 3.0, -3.0, 2.2, -2.2, 0, 3.3, -3.3])
+        for (const y of [1.0, 1.8, 0.5])
+          for (const p of [0.75, 0.6, 0.9])
+            for (const b of [0, 0.1, -0.1]) {
+              const input = swipe(z, y, msFor(z, y, p), b, 30);
+              if ((simulateShot(round, input).kind === 'goal') === want) return input;
+            }
+      throw new Error(`seviye ${level}: ${want ? 'gol' : 'kaçırma'} bulunamadı`);
+    };
+    const g1 = findKind(1, true);
+    const m1 = findKind(1, false);
+    const g2 = findKind(2, true);
+    const m3 = findKind(3, false);
+    expect(levelPoints(100, 1)).toBe(100);
+    expect(levelPoints(250, 2)).toBe(375);
+    expect(levelPoints(150, 3)).toBe(300);
+    const run = scoreLevelRun(seed, [g1, g2, m3, m3, m3, g1]);
+    expect(run.level).toBe(3);
+    expect(run.cleared).toBe(2);
+    expect(run.lives).toBe(0);
+    expect(run.shots).toHaveLength(5); // canlar bitince 6. vuruş yok sayılır
+    expect(run.shots.map((s) => s.level)).toEqual([1, 2, 3, 3, 3]);
+    expect(run.total).toBe(run.shots.reduce((n, s) => n + s.points, 0));
+    expect(run.shots[1]!.points).toBe(levelPoints(run.shots[1]!.result.points, 2));
+    expect(run.shots[1]!.points % 25).toBe(0);
+    const partial = scoreLevelRun(seed, [m1, g1]);
+    expect(partial).toMatchObject({ level: 2, cleared: 1, lives: LIVES - 1 });
+    expect(scoreLevelRun(seed, [])).toEqual({ level: 1, cleared: 0, lives: LIVES, total: 0, shots: [] });
+    expect(scoreLevelRun(seed, JSON.parse(JSON.stringify([g1, g2, m3])))).toEqual(scoreLevelRun(seed, [g1, g2, m3]));
+    expect(scoreLevelRun(seed, Array.from({ length: MAX_LEVEL_SHOTS + 50 }, () => m1)).shots).toHaveLength(LIVES);
   });
 });
 

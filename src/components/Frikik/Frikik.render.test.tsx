@@ -10,12 +10,15 @@ const read = (p: string) => readFileSync(path.join(process.cwd(), p), 'utf8');
 
 describe('<Frikik />', () => {
   it('sunucu HTML\'i: başlık, sabit yükseklikte boş oyun alanı (sahne istemcide sonradan), kurallar; paylaşılan skor bandı', () => {
-    const html = renderToStaticMarkup(<Frikik sharedScore={null} />);
+    const html = renderToStaticMarkup(<Frikik shared={null} />);
     expect(html).toContain('>Frikik</h1>');
     expect(html).toMatch(/role="application" aria-label="Frikik oyun alanı"><div class="[^"]*"><\/div><\/div>/);
     expect(html).toContain(tr.rules.p3);
     expect(html).not.toContain('Bir arkadaşın');
-    expect(renderToStaticMarkup(<Frikik sharedScore={850} />)).toContain('Bir arkadaşın 850 puan yaptı');
+    expect(renderToStaticMarkup(<Frikik shared={{ score: 850, level: null }} />)).toContain('Bir arkadaşın 850 puan yaptı');
+    const lvl = renderToStaticMarkup(<Frikik shared={{ score: 1250, level: 7 }} />);
+    expect(lvl).toContain('7. seviyeye ulaştı');
+    expect(lvl).toContain('role="tablist"');
   });
 
   it('three.js yalnız dinamik import ile: bileşen ve sayfa statik olarak three / sahneyi içe aktarmaz', () => {

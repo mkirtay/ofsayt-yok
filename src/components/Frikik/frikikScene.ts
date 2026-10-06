@@ -7,7 +7,9 @@
  * kaydır (swipe) — genel yön hedef, en yüksek kaydırma hızı güç, yolun bombesi falso. Kaydırırken yalnız parmağın
  * çizdiği iz (ince çizgi) ve güç çubuğu görünür; topun yolu / hedef halkası ÇİZİLMEZ. Parmak titremesi yumuşatılır. Yol
  * 16 noktalı tam sayı girdiye çevrilir (lib/frikik/swipe.ts); bırakınca son girdi aynen şut olur.
- * Akış: tur (nişan) → uçuş → sonuç beklemesi → sıradaki tur … 5 vuruş → `onFinish`.
+ * Akış: tur (nişan) → uçuş → sonuç beklemesi → sıradaki tur. Seri modunda 5 vuruş → `onFinish`; seviye modunda gol →
+ * sonraki seviye, kaçırma → 1 can, canlar bitince `onFinish`. Seviye kaldıraçları (rüzgâr, daralan kale, hareketli
+ * baraj) turdan okunur; kale grubu z'de ölçeklenir, baraj figürleri her karede `wallOffset` ile kayar.
  * Sekme gizliyken / sahne ekran dışındayken döngü durur. `dispose()` GPU kaynaklarını bırakır.
  */
 import {
@@ -57,16 +59,20 @@ import {
   FIGURE,
   GOAL,
   KEEPER,
+  LIVES,
   MAX_RELEASE_TICK,
   SHOTS_PER_SERIES,
   TICK,
   aimBasis,
   keeperZ,
+  levelPoints,
   POWER_ZONES,
+  makeLevelRound,
   makeRound,
   shotParams,
   startShot,
   stepShot,
+  wallOffset,
   type Round,
   type ShotInput,
   type ShotResult,
@@ -74,7 +80,11 @@ import {
 } from '@/lib/frikik/sim';
 import { effectiveMs, smoothPoint, swipeToInput, type GoalFrame, type ScreenPoint } from '@/lib/frikik/swipe';
 
-export type FrikikSummary = { seed: number; inputs: ShotInput[]; results: ShotResult[]; total: number };
+export type FrikikMode = 'series' | 'level';
+/** Seri ya da seviye koşusu özeti. `results[i].points` seviye çarpanı uygulanmış puandır. */
+export type FrikikSummary = { mode: FrikikMode; seed: number; inputs: ShotInput[]; results: ShotResult[]; total: number; level: number; cleared: number };
+/** Tur başı bilgisi (HUD): seri indeksi, seviye, can, rüzgâr (m/sn², + sağa). */
+export type RoundInfo = { index: number; level: number; lives: number; wind: number };
 
 export type FrikikOptions = {
   /** Mobil: düşük pixelRatio, ucuz malzeme, küçük dokular. */
@@ -85,14 +95,22 @@ export type FrikikOptions = {
   /** Nişan katmanı (SVG: parmak izi, güç çubuğu) sınıfı. */
   trailClassName: string;
   goalLabel: string;
-  onRound: (index: number) => void;
+  onRound: (info: RoundInfo) => void;
+  /** `result.points` seviye çarpanı uygulanmış. */
   onShot: (index: number, result: ShotResult, total: number) => void;
   onFinish: (summary: FrikikSummary) => void;
   /** İlk kaydırma (ipucu kapansın). */
   onAimStart: () => void;
 };
 
-export type FrikikHandle = { dispose: () => void; start: (seed: number) => void; setGoalLabel: (label: string) => void };
+export type FrikikHandle = {
+  dispose: () => void;
+  /** Seri (5 vuruş) başlat. */
+  start: (seed: number) => void;
+  /** Seviye koşusu (3 can) başlat. */
+  startLevels: (seed: number) => void;
+  setGoalLabel: (label: string) => void;
+};
 
 const CONFETTI_COLORS = [0x00a76f, 0x2fe3a0, 0xffffff, 0xffc83d, 0x007b55];
 /** Sonuçtan sonra bekleme (tick): gol kutlaması daha uzun. */
@@ -345,8 +363,14 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
   let width = 1;
   let height = 1;
   let seed = 0;
+  let mode: FrikikMode = 'series';
   let index = 0;
+  let level = 1;
+  let lives = LIVES;
+  let cleared = 0;
   let round: Round | null = null;
+  /** Baraj sırasının doğrultusu (hareketli baraj bu eksende kayar). */
+  let wallRow = { x: 0, z: 1 };
   let basis = { fx: 1, fz: 0, rx: 0, rz: 1 };
   let phase: 'idle' | 'aim' | 'flight' | 'hold' | 'done' = 'idle';
   let roundTick = 0;
@@ -401,8 +425,14 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
 
   const beginRound = (i: number) => {
     index = i;
-    round = makeRound(seed, i);
+    round = mode === 'level' ? makeLevelRound(seed, level) : makeRound(seed, i);
     basis = aimBasis(round);
+    goal.group.scale.z = round.goalScale;
+    const w = round.wall;
+    if (w.length > 1) {
+      const l = Math.hypot(w[1]!.x - w[0]!.x, w[1]!.z - w[0]!.z);
+      wallRow = { x: (w[1]!.x - w[0]!.x) / l, z: (w[1]!.z - w[0]!.z) / l };
+    } else wallRow = { x: 0, z: 1 };
     roundTick = 0;
     shot = null;
     swiping = null;
@@ -410,15 +440,25 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
     trail.style.visibility = 'hidden';
     ballPos.set(round.ball.x, BALL_R, round.ball.z);
     wallPegs.forEach((w, k) => {
-      const f = round!.wall[k];
-      w.peg.visible = w.shadow.visible = Boolean(f);
-      if (!f) return;
-      w.peg.position.set(f.x, 0, f.z);
-      w.shadow.position.set(f.x, 0.008, f.z);
+      w.peg.visible = w.shadow.visible = Boolean(round!.wall[k]);
     });
+    placeWall(0);
     frameCamera();
     phase = 'aim';
-    opts.onRound(i);
+    opts.onRound({ index: i, level, lives, wind: round.wind });
+  };
+
+  /** Baraj figürlerini sıra boyunca `off` kadar kaymış çizer (hareketli baraj; sabitte 0). */
+  const placeWall = (off: number) => {
+    if (!round) return;
+    wallPegs.forEach((w, k) => {
+      const f = round!.wall[k];
+      if (!f) return;
+      const x = f.x + wallRow.x * off;
+      const z = f.z + wallRow.z * off;
+      w.peg.position.set(x, 0, z);
+      w.shadow.position.set(x, 0.008, z);
+    });
   };
 
   const placeHandle = () => {
@@ -488,7 +528,8 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
     ballView.spin.quaternion.premultiply(qTmp.setFromAxisAngle(axis, w * dt));
   };
 
-  const onResult = (result: ShotResult) => {
+  const onResult = (base: ShotResult) => {
+    const result = mode === 'level' ? { ...base, points: levelPoints(base.points, level) } : base;
     results.push(result);
     total += result.points;
     holdLeft = result.kind === 'goal' ? HOLD_TICKS.goal : HOLD_TICKS.other;
@@ -516,18 +557,26 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
       rotateBall(shot.spin, TICK);
       for (const e of shot.events) {
         if (e.type === 'net' && e.speed > 1.5) {
-          const side = Math.abs(Math.abs(e.z) - GOAL.halfW) < 0.05;
+          const side = Math.abs(Math.abs(e.z) - shot.goal.halfW) < 0.05;
           goal.ripple = { t: 0, at: { x: shot.pos.x, y: e.y, z: e.z }, dir: side ? { x: 0, y: 0, z: Math.sign(e.z) } : { x: 1, y: 0, z: 0 }, amp: Math.min(0.28, 0.02 * e.speed) };
         }
       }
       ballPos.set(shot.pos.x, shot.pos.y, shot.pos.z);
       if (phase === 'flight' && shot.result) onResult(shot.result);
       else if (phase === 'hold' && --holdLeft <= 0) {
-        if (index + 1 < SHOTS_PER_SERIES) beginRound(index + 1);
-        else {
+        const finish = () => {
           phase = 'done';
-          opts.onFinish({ seed, inputs: [...inputs], results: [...results], total });
-        }
+          opts.onFinish({ mode, seed, inputs: [...inputs], results: [...results], total, level, cleared });
+        };
+        if (mode === 'level') {
+          if (shot.result!.kind === 'goal') {
+            cleared++;
+            level++;
+          } else lives--;
+          if (lives <= 0) finish();
+          else beginRound(index + 1);
+        } else if (index + 1 < SHOTS_PER_SERIES) beginRound(index + 1);
+        else finish();
       }
     }
   };
@@ -543,6 +592,7 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
       const kz = shot ? shot.keeperZ : keeperZ(round, roundTick);
       keeperPeg.position.z = kz;
       keeperShadow.position.set(KEEPER.x, 0.008, kz);
+      if (round.wallMotion.amp > 0) placeWall(wallOffset(round, shot ? shot.releaseTick + shot.tick : roundTick));
     }
     ballView.group.position.copy(ballPos);
     const hgt = Math.max(0, ballPos.y - BALL_R);
@@ -685,16 +735,27 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
   );
   ballView.spin.quaternion.setFromAxisAngle(new Vector3(0, 0, 1), 0.5);
 
+  const begin = (nextMode: FrikikMode, nextSeed: number) => {
+    mode = nextMode;
+    seed = nextSeed >>> 0;
+    inputs = [];
+    results = [];
+    total = 0;
+    level = 1;
+    lives = LIVES;
+    cleared = 0;
+    camSnap = true;
+    beginRound(0);
+    resize();
+    sync();
+  };
+
   return {
     start(nextSeed: number) {
-      seed = nextSeed >>> 0;
-      inputs = [];
-      results = [];
-      total = 0;
-      camSnap = true;
-      beginRound(0);
-      resize();
-      sync();
+      begin('series', nextSeed);
+    },
+    startLevels(nextSeed: number) {
+      begin('level', nextSeed);
     },
     setGoalLabel(label: string) {
       goalText.textContent = label;

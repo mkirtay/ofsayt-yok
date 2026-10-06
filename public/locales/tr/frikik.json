@@ -1,6 +1,6 @@
 {
   "pageTitle": "Frikik — Serbest Vuruş Oyunu | Ofsayt Yok",
-  "pageDesc": "5 serbest vuruş, baraj ve kaleci: falsolu vur, doksana tak, haftanın en iyileri arasına gir.",
+  "pageDesc": "Günün frikiği: 3 can, her seviyede zorlaşan baraj, kaleci ve rüzgâr. Falsolu vur, doksana tak, seviyeleri geç.",
   "sharedTitle": "Frikik'te {{score}} puan — Sen kaç yaparsın? | Ofsayt Yok",
   "title": "Frikik",
   "sub": "5 serbest vuruş. Barajı aş, kaleciyi geç.",
@@ -9,7 +9,11 @@
   "loading": "Saha hazırlanıyor…",
   "hud": {
     "shot": "Vuruş {{n}}/{{total}}",
-    "score": "{{score}} puan"
+    "score": "{{score}} puan",
+    "level": "Seviye {{n}}",
+    "lives": "{{n}}/{{total}} can",
+    "wind": "Rüzgâr, kademe {{n}}",
+    "windShort": "Rüzgâr"
   },
   "goal": "GOL!",
   "result": {
@@ -29,7 +33,11 @@
     "again": "Tekrar oyna",
     "share": "Paylaş",
     "copied": "Bağlantı kopyalandı",
-    "shareText": "Frikik'te {{score}} puan yaptım. Sen kaç yaparsın?"
+    "shareText": "Frikik'te {{score}} puan yaptım. Sen kaç yaparsın?",
+    "levelTitle": "Canlar bitti",
+    "level": "Seviye {{n}}",
+    "levelSummary": "{{cleared}} seviye geçtin · {{score}} puan",
+    "shareLevelText": "Frikik'te {{level}}. seviyeye ulaştım, {{score}} puan. Sen kaça ulaşırsın?"
   },
   "reduced": {
     "title": "Bu oyun hareketli sahneler içerir",
@@ -46,13 +54,25 @@
     "p1": "Gol: 100 puan",
     "p2": "Direkten gol: +50",
     "p3": "Doksan (üst köşe): +100",
-    "r4": "Her seride 5 vuruş var; her vuruşta topun yeri, baraj ve kalecinin hareketi değişir. İlk 2 vuruş daha kolaydır."
+    "r4": "Her seride 5 vuruş var; her vuruşta topun yeri, baraj ve kalecinin hareketi değişir. İlk 2 vuruş daha kolaydır.",
+    "r5": "Seviye modu (Günün frikiği): 3 can, her seviye 1 vuruş. Gol → sonraki seviye, kaçırma → 1 can. Seviyeler ilerledikçe mesafe, açı, baraj, kaleci, rüzgâr (yönü ve gücü ekranın üstünde), daralan kale ve hareketli baraj kademeli gelir; herkes o günün aynı dizisini oynar.",
+    "p4": "Seviye modunda puanlar seviye çarpanıyla çarpılır: 1. seviye ×1, 2. ×1,5, 3. ×2 … Sıralama önce ulaşılan seviye, sonra puan."
   },
   "tip": {
     "title": "Nasıl oynanır?",
     "l1": "Topun üstünden kaleye doğru kaydır: kaydırmanın yönü hedefin, ekranda yalnız çizdiğin iz görünür.",
     "l2": "Hızlı kaydır: sert şut. Alttaki çubukta yeşil bölgede kal; kırmızıda top havalanır.",
     "l3": "Yolu kavisli çiz: top falso alır, barajın yanından dolanır. Sert şut daha çok sapar.",
-    "ok": "Anladım"
-  }
+    "ok": "Anladım",
+    "l4": "Seviye modu: 3 can. Rüzgâr okuna bak; ok sağa bakıyorsa top sağa sürüklenir."
+  },
+  "sharedLevelTitle": "Frikik'te {{level}}. seviye, {{score}} puan — Sen kaça ulaşırsın? | Ofsayt Yok",
+  "subLevel": "Günün frikiği: 3 can, her seviye 1 vuruş. Kaç seviye geçersin?",
+  "sharedLevel": "Bir arkadaşın {{level}}. seviyeye ulaştı ({{score}} puan). Geçebilir misin?",
+  "mode": {
+    "label": "Oyun modu",
+    "level": "Seviye modu",
+    "series": "5 vuruş"
+  },
+  "daily": "Günün frikiği · {{date}}"
 }

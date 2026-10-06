@@ -11,6 +11,13 @@
  *
  * Dünya (metre ölçeğinde, top arcade boyutta): kale çizgisi x = 0, kale ağzı −x'e bakar, top x < 0'da; z yanal.
  * Ortak fizik: lib/pitchPhysics/core.ts (zemin, direk, file, gol tespiti).
+ *
+ * İki mod, aynı vuruş girdisi:
+ * - SERİ: `makeRound(seed, i)` ile 5 tur, `scoreSeries(seed, inputs)`.
+ * - SEVİYE: `makeLevelRound(seed, level)` ile sonsuz seviye, 3 can, her seviye 1 vuruş; gol → sonraki seviye, kaçırma →
+ *   1 can. Kaldıraçlar (mesafe, baraj, kaleci, rüzgâr, kale daralması, hareketli baraj) seviyeyle kademeli (`levelSpec`).
+ *   Puan = temel puan × seviye çarpanı. Kayıt: `{ seed, shots: ShotInput[] }` (sırayla); `scoreLevelRun(seed, shots)`
+ *   seviyeleri ve canları girdilerden yeniden türetir → sunucu aynı koddan aynı sonucu bulur. Günlük tohum: lib/frikik/daily.ts.
  */
 import {
   advanceBall,
@@ -97,28 +104,43 @@ export function rng(seed: number): () => number {
 export type Round = {
   /** Topun konumu (zeminde). */
   ball: { x: number; z: number };
-  /** Baraj figürlerinin merkezleri. */
+  /** Baraj figürlerinin merkezleri (hareketli barajda `wallOffset` sıra boyunca eklenir). */
   wall: { x: number; z: number }[];
   /** Kaleci: şuta kadar kale çizgisinin önünde üçgen dalgayla gidip gelir; şutta `react` tick sonra `speed` ile kayar. */
   keeper: { amp: number; period: number; phase: number; react: number; speed: number };
+  /** Yanal rüzgâr (m/sn², +z sağa): havadaki topa sürekli ivme. 0 = rüzgârsız. */
+  wind: number;
+  /** Kale genişliği çarpanı (1 = tam kale; seviye modunda daralır). */
+  goalScale: number;
+  /** Hareketli baraj: sıra doğrultusunda üçgen dalga (m); amp 0 = sabit. */
+  wallMotion: { amp: number; period: number; phase: number };
 };
 
-/**
- * Serinin `index`. turu (0 tabanlı). Mesafe 16–24 m, açı sınırlı; baraj yakın direği kapatır (ilk 2 turda 3 kişi,
- * sonra 3–5); kaleci ilk 2 turda daha yavaş.
- */
-export function makeRound(seed: number, index: number): Round {
-  const r = rng((Math.imul(seed >>> 0, 0x9e3779b1) ^ Math.imul(index + 1, 0x85ebca6b)) >>> 0);
-  const dist = 16 + Math.floor(r() * 17) * 0.5;
-  const k = Math.floor((dist * 0.45) / 0.5);
+/** Tur üretim parametreleri (seri ve seviye modu aynı üreticiyi kullanır; RNG çağrı sırası sabittir). */
+type RoundSpec = {
+  /** Mesafe: `distMin` + 0…`distSteps`−1 adım × 0,5 m. */
+  distMin: number;
+  distSteps: number;
+  /** Yanal açı: |z| ≤ mesafe × angle. */
+  angle: number;
+  wallMin: number;
+  wallMax: number;
+  keeper: { react: number; speed: number; periodScale: number };
+  wind: number;
+  goalScale: number;
+  wallMotionAmp: number;
+};
+
+function buildRound(r: () => number, p: RoundSpec): Round {
+  const dist = p.distMin + Math.floor(r() * p.distSteps) * 0.5;
+  const k = Math.floor((dist * p.angle) / 0.5);
   const z = (Math.floor(r() * (2 * k + 1)) - k) * 0.5;
   const ball = { x: -dist, z };
-  const level = KEEPER_LEVELS[index < EASY_ROUNDS ? 0 : 1];
   const countRand = r();
-  const count = index < EASY_ROUNDS ? 3 : 3 + Math.floor(countRand * 3);
+  const count = p.wallMin + Math.floor(countRand * (p.wallMax - p.wallMin + 1));
   const sideRand = r();
   const side = z > 0 ? 1 : z < 0 ? -1 : sideRand < 0.5 ? -1 : 1;
-  const targetZ = side * GOAL.halfW * (0.15 + 0.5 * r());
+  const targetZ = side * GOAL.halfW * p.goalScale * (0.15 + 0.5 * r());
   // Baraj: top → hedef doğrultusunda 9,15 m, doğrultuya dik sıra.
   const dx = -ball.x;
   const dz = targetZ - ball.z;
@@ -132,10 +154,97 @@ export function makeRound(seed: number, index: number): Round {
     const o = (i - (count - 1) / 2) * FIGURE.spacing;
     wall.push({ x: cx - fz * o, z: cz + fx * o });
   }
-  const amp = 1.2 + r() * 1.4;
-  const period = Math.floor((230 + Math.floor(r() * 200)) * level.periodScale);
+  const amp = Math.min(1.2 + r() * 1.4, GOAL.halfW * p.goalScale - KEEPER.r - 0.1);
+  const period = Math.floor((230 + Math.floor(r() * 200)) * p.keeper.periodScale);
   const phase = Math.floor(r() * period);
-  return { ball, wall, keeper: { amp, period, phase, react: level.react, speed: level.speed } };
+  // Seviye kaldıraçları (seri modunda hepsi etkisiz; RNG yalnız gerekince çekilir → seri turları değişmez)
+  const wind = p.wind === 0 ? 0 : (r() < 0.5 ? -1 : 1) * p.wind * (0.85 + 0.3 * r());
+  const wallMotion = p.wallMotionAmp === 0 ? { amp: 0, period: 1, phase: 0 } : { amp: p.wallMotionAmp, period: 300 + Math.floor(r() * 180), phase: Math.floor(r() * 400) };
+  return { ball, wall, keeper: { amp, period, phase, react: p.keeper.react, speed: p.keeper.speed }, wind, goalScale: p.goalScale, wallMotion };
+}
+
+/**
+ * Serinin `index`. turu (0 tabanlı). Mesafe 16–24 m, açı sınırlı; baraj yakın direği kapatır (ilk 2 turda 3 kişi,
+ * sonra 3–5); kaleci ilk 2 turda daha yavaş.
+ */
+export function makeRound(seed: number, index: number): Round {
+  const r = rng((Math.imul(seed >>> 0, 0x9e3779b1) ^ Math.imul(index + 1, 0x85ebca6b)) >>> 0);
+  const easy = index < EASY_ROUNDS;
+  return buildRound(r, { distMin: 16, distSteps: 17, angle: 0.45, wallMin: 3, wallMax: easy ? 3 : 5, keeper: KEEPER_LEVELS[easy ? 0 : 1], wind: 0, goalScale: 1, wallMotionAmp: 0 });
+}
+
+// ── Seviye modu ───────────────────────────────────────────────────────────────────────────────────────
+
+export const LIVES = 3;
+/** Bir koşuda en çok bu kadar vuruş kabul edilir (sunucu sınırı). */
+export const MAX_LEVEL_SHOTS = 400;
+/** Kaleci kademeleri (seviye modunda `keeper` kaldıracı bu diziyi tırmanır). */
+export const KEEPER_TIERS = [
+  { react: 60, speed: 2.4, periodScale: 1.4 },
+  { react: 52, speed: 2.8, periodScale: 1.2 },
+  { react: 46, speed: 3.1, periodScale: 1 },
+  { react: 40, speed: 3.5, periodScale: 0.9 },
+  { react: 34, speed: 3.9, periodScale: 0.8 },
+] as const;
+export type Lever = 'dist' | 'wall' | 'keeper' | 'wind' | 'goal' | 'moving' | 'angle';
+/**
+ * Seviye n, bu listenin ilk n−1 adımını uygular (her seviyede 1 kaldıraç artar; ilk 3 seviye kolay: 1. seviye hiç,
+ * 2–3. seviyeler yalnız mesafe/açı). Liste bitince `LEVER_CYCLE` üst sınıra kadar döner.
+ */
+export const LEVER_STEPS: readonly Lever[] = ['dist', 'angle', 'wall', 'keeper', 'wind', 'dist', 'wall', 'keeper', 'goal', 'wind', 'moving', 'dist', 'keeper', 'wind', 'goal', 'angle'];
+const LEVER_CYCLE: readonly Lever[] = ['dist', 'wind', 'keeper', 'moving', 'goal', 'angle'];
+export const LEVER_CAPS = { dist: 26, angle: 0.75, wall: 5, keeper: KEEPER_TIERS.length - 1, wind: 2.4, goal: 0.68, moving: 1.2 };
+const LEVER_STEP = { dist: 1.5, angle: 0.1, wall: 1, keeper: 1, wind: 0.6, goal: 0.08, moving: 0.4 };
+
+export type LevelSpec = { level: number; dist: number; angle: number; wall: number; keeper: number; wind: number; goal: number; moving: number };
+
+/** Seviyenin kaldıraç değerleri (1 tabanlı). Belirlenimci: seviye → aynı değerler. */
+export function levelSpec(level: number): LevelSpec {
+  const s: LevelSpec = { level, dist: 16, angle: 0.35, wall: 3, keeper: 0, wind: 0, goal: 1, moving: 0 };
+  for (let i = 0; i < level - 1; i++) {
+    const lever = i < LEVER_STEPS.length ? LEVER_STEPS[i]! : LEVER_CYCLE[(i - LEVER_STEPS.length) % LEVER_CYCLE.length]!;
+    if (lever === 'goal') s.goal = Math.max(LEVER_CAPS.goal, Math.round((s.goal - LEVER_STEP.goal) * 100) / 100);
+    else s[lever] = Math.min(LEVER_CAPS[lever], Math.round((s[lever] + LEVER_STEP[lever]) * 100) / 100);
+  }
+  return s;
+}
+
+/** Seviye turu: tohum (gün ya da rastgele) + seviye → aynı tur. */
+export function makeLevelRound(seed: number, level: number): Round {
+  const p = levelSpec(level);
+  const r = rng((Math.imul(seed >>> 0, 0x7feb352d) ^ Math.imul(level, 0x846ca68b) ^ 0x5bd1e995) >>> 0);
+  return buildRound(r, {
+    distMin: p.dist,
+    distSteps: 5,
+    angle: p.angle,
+    wallMin: p.wall,
+    wallMax: p.wall,
+    keeper: KEEPER_TIERS[p.keeper]!,
+    wind: p.wind,
+    goalScale: p.goal,
+    wallMotionAmp: p.moving,
+  });
+}
+
+/** Seviye çarpanı: 1, 1.5, 2, … (puanlar 50'nin katı → sonuç tam sayı). */
+export function levelMultiplier(level: number): number {
+  return (level + 1) / 2;
+}
+export function levelPoints(basePoints: number, level: number): number {
+  return Math.round(basePoints * levelMultiplier(level));
+}
+
+/** Barajın `tick` anındaki sıra boyunca kayması (m; üçgen dalga). */
+export function wallOffset(round: Round, tick: number): number {
+  const { amp, period, phase } = round.wallMotion;
+  if (amp === 0) return 0;
+  const u = ((tick + phase) % period) / period;
+  return amp * (u < 0.5 ? 4 * u - 1 : 3 - 4 * u);
+}
+
+/** Turun kalesi (seviye modunda daralmış). */
+export function roundGoal(round: Round): GoalSpec {
+  return round.goalScale === 1 ? GOAL : goalSpec(1, { lineX: 0, halfW: GOAL.halfW * round.goalScale, height: GOAL.height, depth: 2, postR: 0.06 });
 }
 
 /** Kalecinin `tick` anındaki z'si (üçgen dalga, −amp…amp). */
@@ -315,7 +424,8 @@ export function shotParams(round: Round, input: ShotInput): ShotParams | null {
   const speed = (len * 100) / input.ms;
   const power = clamp((speed - SWIPE_SPEED.min) / (SWIPE_SPEED.max - SWIPE_SPEED.min), 0, 1);
   // Hafif nişan yardımı: kale çerçevesinin hemen dışına / direğe düşen hedef biraz içeri çekilir.
-  const targetZ = assist(clamp(lz, -10, 10), -(GOAL.halfW - AIM_ASSIST.marginZ), GOAL.halfW - AIM_ASSIST.marginZ);
+  const halfW = GOAL.halfW * round.goalScale;
+  const targetZ = assist(clamp(lz, -10, 10), -(halfW - AIM_ASSIST.marginZ), halfW - AIM_ASSIST.marginZ);
   const targetY = assist(clamp(ly, 0.15, 4.2), AIM_ASSIST.bottom, GOAL.height - AIM_ASSIST.top);
   const vh = SHOT_SPEED.min + (SHOT_SPEED.max - SHOT_SPEED.min) * power;
   // Aşırı güç: top yükselir (üst direğin üstünden gidebilir).
@@ -352,6 +462,9 @@ export type ShotResult = { kind: ShotKind; points: number; viaPost: boolean; cor
 
 export type ShotState = {
   round: Round;
+  goal: GoalSpec;
+  /** Bırakma tick'i (hareketli baraj bu andan sürer). */
+  releaseTick: number;
   /** Vuruştan beri geçen tick. */
   tick: number;
   /** Kalecinin z'si (bırakma anındaki yerinden hedefe doğru kayar) ve yöneldiği nokta. */
@@ -373,11 +486,14 @@ export type ShotState = {
 export function startShot(round: Round, input: ShotInput): ShotState {
   const p = shotParams(round, input);
   const kz = keeperZ(round, input.tick);
+  const goal = roundGoal(round);
   const s: ShotState = {
     round,
+    goal,
+    releaseTick: input.tick,
     tick: 0,
     keeperZ: kz,
-    keeperTarget: p ? clamp(p.targetZ, -(GOAL.halfW - 0.5), GOAL.halfW - 0.5) : kz,
+    keeperTarget: p ? clamp(p.targetZ, -(goal.halfW - 0.5), goal.halfW - 0.5) : kz,
     pos: { x: round.ball.x, y: BALL_R, z: round.ball.z },
     vel: p ? p.vel : { x: 0, y: 0, z: 0 },
     spin: { x: 0, y: p ? -p.curve * 14 : 0, z: 0 },
@@ -425,30 +541,41 @@ export function stepShot(s: ShotState): void {
     s.keeperZ = Math.abs(d) <= step ? s.keeperTarget : s.keeperZ + (d > 0 ? step : -step);
   }
   const kz = s.keeperZ;
+  const wallOff = wallOffset(s.round, s.releaseTick + s.tick);
+  const w = s.round.wall;
+  // Sıra doğrultusu (baraj iki+ kişiyse komşu figürlerden; tek kişilikse yanal)
+  const rowLen = w.length > 1 ? len2(w[1]!.x - w[0]!.x, w[1]!.z - w[0]!.z) : 1;
+  const rowX = w.length > 1 ? (w[1]!.x - w[0]!.x) / rowLen : 0;
+  const rowZ = w.length > 1 ? (w[1]!.z - w[0]!.z) / rowLen : 1;
+  const goal = s.goal;
   for (let i = 0; i < SUBSTEPS; i++) {
     const prev = { x: s.pos.x, y: s.pos.y, z: s.pos.z };
-    // Falso (Magnus): havadayken yatay hıza dik ivme; zamanla söner.
-    if (s.pos.y > BALL_R + 0.01 && s.curve !== 0) {
-      const k = s.curve * CURVE_K * H;
-      const vx = s.vel.x;
-      s.vel.x += -s.vel.z * k;
-      s.vel.z += vx * k;
-      s.curve *= decay(CURVE_DECAY, H);
+    if (s.pos.y > BALL_R + 0.01) {
+      // Falso (Magnus): havadayken yatay hıza dik ivme; zamanla söner.
+      if (s.curve !== 0) {
+        const k = s.curve * CURVE_K * H;
+        const vx = s.vel.x;
+        s.vel.x += -s.vel.z * k;
+        s.vel.z += vx * k;
+        s.curve *= decay(CURVE_DECAY, H);
+      }
+      // Yanal rüzgâr: sabit ivme
+      s.vel.z += s.round.wind * H;
     }
     const bounced = advanceBall(s.pos, s.vel, H, BALL_R, TUNING);
-    for (const f of s.round.wall) {
-      if (cylinderHit(s.pos, s.vel, f.x, f.z, FIGURE.r, FIGURE.height, FIGURE.restitution)) s.touchedWall = true;
+    for (const f of w) {
+      if (cylinderHit(s.pos, s.vel, f.x + rowX * wallOff, f.z + rowZ * wallOff, FIGURE.r, FIGURE.height, FIGURE.restitution)) s.touchedWall = true;
     }
     if (cylinderHit(s.pos, s.vel, KEEPER.x, kz, KEEPER.r, KEEPER.height, KEEPER.restitution)) s.touchedKeeper = true;
     const events: StepEvent[] = [];
-    collideGoal(prev, s.pos, s.vel, GOAL, BALL_R, events, TUNING);
-    applyNetDrag(s.pos, s.vel, GOAL, H, TUNING);
+    collideGoal(prev, s.pos, s.vel, goal, BALL_R, events, TUNING);
+    applyNetDrag(s.pos, s.vel, goal, H, TUNING);
     s.spin = nextSpin(s.spin, s.pos, s.vel, bounced, H, BALL_R);
     for (const e of events) {
       s.events.push(e);
       if (e.type === 'post') s.touchedPost = true;
       if (e.type === 'goal') {
-        const corner = Math.abs(s.pos.z) > GOAL.halfW - CORNER.side && s.pos.y > GOAL.height - CORNER.top;
+        const corner = Math.abs(s.pos.z) > goal.halfW - CORNER.side && s.pos.y > goal.height - CORNER.top;
         finish(s, 'goal', corner);
       }
     }
@@ -476,4 +603,46 @@ export type SeriesScore = { total: number; shots: ShotResult[] };
 export function scoreSeries(seed: number, inputs: readonly ShotInput[]): SeriesScore {
   const shots = inputs.slice(0, SHOTS_PER_SERIES).map((input, i) => simulateShot(makeRound(seed, i), input));
   return { total: shots.reduce((n, s) => n + s.points, 0), shots };
+}
+
+/**
+ * Seviye koşusu kaydı (sunucuya gidecek biçim; doğrulama bu adımda yok): `seed` turların tohumu (günlük: lib/frikik/daily.ts
+ * `dailySeed(day)`, `day` TR gün numarası; serbest: rastgele, `day` null), `shots` sırayla vuruş girdileri. Seviye /
+ * can / puan kayıtta YOK — `scoreLevelRun` türetir.
+ */
+export type LevelRunRecord = { seed: number; day: number | null; shots: ShotInput[] };
+export type LevelShot = { level: number; result: ShotResult; points: number };
+export type LevelRunScore = {
+  /** Ulaşılan (son oynanan) seviye. */
+  level: number;
+  /** Geçilen seviye sayısı (gol). */
+  cleared: number;
+  /** Kalan can (0 = koşu bitti). */
+  lives: number;
+  total: number;
+  shots: LevelShot[];
+};
+
+/**
+ * Seviye koşusunun skoru: tohum + sıralı vuruş girdileri → seviyeler, canlar ve puan BURADA türetilir (istemci seviye
+ * numarası göndermez). Canlar bitince sonraki girdiler yok sayılır. Sıralama: önce `level`, sonra `total`.
+ */
+export function scoreLevelRun(seed: number, inputs: readonly ShotInput[]): LevelRunScore {
+  let level = 1;
+  let lives = LIVES;
+  let cleared = 0;
+  let total = 0;
+  const shots: LevelShot[] = [];
+  for (const input of inputs.slice(0, MAX_LEVEL_SHOTS)) {
+    if (lives === 0) break;
+    const result = simulateShot(makeLevelRound(seed, level), input);
+    const points = levelPoints(result.points, level);
+    shots.push({ level, result, points });
+    total += points;
+    if (result.kind === 'goal') {
+      cleared++;
+      level++;
+    } else lives--;
+  }
+  return { level, cleared, lives, total, shots };
 }
