@@ -3,7 +3,9 @@
  * parçasında kalır. Yapı taşları giriş sahnesiyle ortak (components/pitch3d/pitchKit.ts); fizik ve skor
  * lib/frikik/sim.ts'te (belirlenimci; sunucu aynı kodu çalıştırır) — burası yalnız çizer ve girdiyi toplar.
  *
- * Kamera topun arkasında, kaleye bakar. Baraj ve kaleci oyuncak "peg" figürler (kaleci vuruşa kadar yerinde durur). Kontrol: topun üstünden hedefe doğru
+ * Kamera topun arkasında, kaleye bakar. Baraj ve kaleci insan oranlı düşük poligonlu figürler (figures.ts); kaleci
+ * vuruşa kadar hazır duruşta bekler, hamlesinde tahminine doğru dalış pozu alır. Reklam panoları tek atlas + tek
+ * geometri (adBoards.ts; içerik lib/frikik/ads.json), panoya tıklanınca URL açılır. Kontrol: topun üstünden hedefe doğru
  * kaydır (swipe) — genel yön hedef, en yüksek kaydırma hızı güç, yolun bombesi falso. Kaydırırken yalnız parmağın
  * çizdiği iz (ince çizgi) ve güç çubuğu görünür; topun yolu / hedef halkası ÇİZİLMEZ. Parmak titremesi yumuşatılır. Yol
  * 16 noktalı tam sayı girdiye çevrilir (lib/frikik/swipe.ts); bırakınca son girdi aynen şut olur.
@@ -16,10 +18,8 @@ import {
   ACESFilmicToneMapping,
   BufferGeometry,
   CanvasTexture,
-  CylinderGeometry,
   DirectionalLight,
   Fog,
-  Group,
   HemisphereLight,
   LineBasicMaterial,
   Material,
@@ -32,12 +32,14 @@ import {
   Quaternion,
   RepeatWrapping,
   Scene,
-  SphereGeometry,
   SRGBColorSpace,
   Texture,
+  Vector2,
   Vector3,
   WebGLRenderer,
 } from 'three';
+import { buildAdBoards } from './adBoards';
+import { makeFigure, makeShared, poseKeeperDive } from './figures';
 import { HUB_LEAGUE_IDS } from '@/config/hubLeagueGroups';
 import { sportmonksLeagueLogoUrl } from '@/utils/leagueLogo';
 import { logoSrc } from '@/utils/logoUrl';
@@ -90,6 +92,8 @@ export type RoundInfo = { index: number; level: number; lives: number; wind: num
 export type FrikikOptions = {
   /** Mobil: düşük pixelRatio, ucuz malzeme, küçük dokular. */
   lite: boolean;
+  /** Reklam panolarındaki boş pano metni için dil. */
+  lang: 'tr' | 'en';
   canvasClassName: string;
   handleClassName: string;
   goalClassName: string;
@@ -179,37 +183,6 @@ function standTexture(): CanvasTexture {
     ctx.globalAlpha = 1;
   });
   return tex;
-}
-
-/** Oyuncak "peg" figür: taban + konik gövde (forma) + bant + baş. Kaleci: yana açık kollar ve eldivenler. */
-function makePeg(colors: { body: number; band: number; head: number }, keeper: boolean, geos: BufferGeometry[], mats: Material[]): Group {
-  const g = new Group();
-  const h = keeper ? KEEPER.height : FIGURE.height;
-  const bodyH = h - 0.42;
-  const mat = (color: number, roughness = 0.55) => {
-    const m = new MeshStandardMaterial({ color, roughness, metalness: 0 });
-    mats.push(m);
-    return m;
-  };
-  const add = (geo: BufferGeometry, m: Material, x: number, y: number, z: number) => {
-    geos.push(geo);
-    const mesh = new Mesh(geo, m);
-    mesh.position.set(x, y, z);
-    g.add(mesh);
-    return mesh;
-  };
-  add(new CylinderGeometry(0.27, 0.29, 0.08, 20), mat(0x1c2430), 0, 0.04, 0);
-  add(new CylinderGeometry(0.17, 0.25, bodyH, 20), mat(colors.body), 0, 0.08 + bodyH / 2, 0);
-  add(new CylinderGeometry(0.2, 0.215, 0.14, 20), mat(colors.band), 0, 0.08 + bodyH * 0.55, 0);
-  add(new SphereGeometry(0.2, 20, 14), mat(colors.head, 0.4), 0, h - 0.2, 0);
-  if (keeper) {
-    const arm = add(new CylinderGeometry(0.075, 0.075, 1.5, 12), mat(colors.body), 0, h - 0.62, 0);
-    arm.rotation.x = Math.PI / 2;
-    const glove = mat(colors.band, 0.4);
-    add(new SphereGeometry(0.13, 14, 10), glove, 0, h - 0.62, -0.78);
-    add(new SphereGeometry(0.13, 14, 10), glove, 0, h - 0.62, 0.78);
-  }
-  return g;
 }
 
 export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandle {
@@ -325,19 +298,25 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
   };
   const ballShadow = makeShadow(BALL_R * 2.8, 0.5);
 
-  // ── Baraj ve kaleci (oyuncak figürler) ─────────────────────────────────────────────────────────────
-  const pegGeos: BufferGeometry[] = [];
-  const pegMats: Material[] = [];
-  const wallPegs = Array.from({ length: 5 }, () => {
-    const peg = makePeg({ body: 0x2a4fb0, band: 0xffffff, head: 0xf3dcc0 }, false, pegGeos, pegMats);
-    scene.add(peg);
-    return { peg, shadow: makeShadow(0.95, 0.4) };
+  // ── Baraj ve kaleci (insan oranlı figürler) ────────────────────────────────────────────────────────
+  const figGeos: BufferGeometry[] = [];
+  const figMats: Material[] = [];
+  const shared = makeShared(figGeos);
+  const SKINS = [0xf3dcc0, 0xd9a877, 0x8d5a3b, 0xf0c9a0, 0x6b3f25];
+  const wallPegs = Array.from({ length: 5 }, (_, k) => {
+    const fig = makeFigure(shared, { kit: 0x2a4fb0, shorts: 0xffffff, skin: SKINS[k % SKINS.length]!, hair: k % 2 ? 0x2a1b12 : 0x0c0a08, socks: 0x2a4fb0 }, false, figMats, FIGURE.height);
+    scene.add(fig.group);
+    return { fig, shadow: makeShadow(0.95, 0.4) };
   });
-  const keeperPeg = makePeg({ body: 0xffc83d, band: 0x0b1511, head: 0xf3dcc0 }, true, pegGeos, pegMats);
-  keeperPeg.position.x = KEEPER.x;
-  scene.add(keeperPeg);
+  const keeperFig = makeFigure(shared, { kit: 0xffc83d, shorts: 0x0b1511, skin: 0xe8b98a, hair: 0x1a120c, socks: 0x0b1511 }, true, figMats, KEEPER.height);
+  keeperFig.group.position.x = KEEPER.x;
+  scene.add(keeperFig.group);
   const keeperShadow = makeShadow(1.3, 0.4);
-  for (const x of [...pegGeos, ...pegMats]) track(x);
+  for (const x of [...figGeos, ...figMats]) track(x);
+
+  // ── Reklam panoları (tek atlas, tek geometri) ──────────────────────────────────────────────────────
+  const ads = track(buildAdBoards({ lite, lang: opts.lang }));
+  scene.add(ads.mesh);
 
   const confetti = makeConfetti(lite ? 70 : 120, lite ? 0.2 : 0.16, CONFETTI_COLORS);
   track(confetti);
@@ -441,9 +420,14 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
     trail.style.visibility = 'hidden';
     ballPos.set(round.ball.x, BALL_R, round.ball.z);
     wallPegs.forEach((w, k) => {
-      w.peg.visible = w.shadow.visible = Boolean(round!.wall[k]);
+      const f = round!.wall[k];
+      w.fig.group.visible = w.shadow.visible = Boolean(f);
+      // Figür topa döner (önü −x): (−1,0,0) yönünü a kadar çevir → (−cos a, 0, sin a) = top yönü
+      if (f) w.fig.group.rotation.y = Math.atan2(round!.ball.z - f.z, -(round!.ball.x - f.x));
     });
     placeWall(0);
+    keeperFig.group.rotation.y = Math.atan2(round.ball.z - round.keeper.z0, -(round.ball.x - KEEPER.x));
+    poseKeeperDive(keeperFig, 0, 1);
     frameCamera();
     phase = 'aim';
     opts.onRound({ index: i, level, lives, wind: round.wind, dist: ballDistance(round) });
@@ -457,7 +441,7 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
       if (!f) return;
       const x = f.x + wallRow.x * off;
       const z = f.z + wallRow.z * off;
-      w.peg.position.set(x, 0, z);
+      w.fig.group.position.set(x, 0, z);
       w.shadow.position.set(x, 0.008, z);
     });
   };
@@ -591,8 +575,13 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
     }
     if (round) {
       const kz = shot ? shot.keeperZ : keeperZ(round, roundTick);
-      keeperPeg.position.z = kz;
+      keeperFig.group.position.z = kz;
       keeperShadow.position.set(KEEPER.x, 0.008, kz);
+      // Dalış: hamle başladıktan sonra ~0,25 sn içinde poz; yön tahminine göre (yalnız görsel)
+      if (shot && shot.tick >= round.keeper.react) {
+        const dir = shot.keeperTarget >= round.keeper.z0 ? 1 : -1;
+        poseKeeperDive(keeperFig, Math.min(1, (shot.tick - round.keeper.react) / 30), dir);
+      }
       if (round.wallMotion.amp > 0) placeWall(wallOffset(round, shot ? shot.releaseTick + shot.tick : roundTick));
     }
     ballView.group.position.copy(ballPos);
@@ -694,6 +683,14 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
     shot = startShot(round, input);
     phase = 'flight';
   };
+  /** Panoya tıklama: reklamın URL'si yeni sekmede (kaydırma tutamağın üstünde olduğundan tuvale gelmez). */
+  const ndc = new Vector2();
+  const onCanvasClick = (e: MouseEvent) => {
+    const r = canvas.getBoundingClientRect();
+    ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+    const ad = ads.pick(ndc, camera);
+    if (ad?.url) window.open(ad.url, '_blank', 'noopener');
+  };
   const onVisibility = () => {
     pageVisible = document.visibilityState === 'visible';
     sync();
@@ -723,6 +720,7 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
   handle.addEventListener('pointercancel', onUp);
   document.addEventListener('visibilitychange', onVisibility);
   canvas.addEventListener('webglcontextlost', onContextLost);
+  canvas.addEventListener('click', onCanvasClick);
   themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
   io?.observe(host);
   ro.observe(host);
@@ -773,6 +771,7 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
       handle.removeEventListener('pointerup', onUp);
       handle.removeEventListener('pointercancel', onUp);
       canvas.removeEventListener('webglcontextlost', onContextLost);
+      canvas.removeEventListener('click', onCanvasClick);
       scene.traverse((o: Object3D) => {
         const mesh = o as Mesh;
         if (mesh.geometry) mesh.geometry.dispose();

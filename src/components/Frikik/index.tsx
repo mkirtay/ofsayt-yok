@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useTranslation } from '@/lib/i18n';
+import { useI18n, useTranslation } from '@/lib/i18n';
 import '@/lib/i18nNamespaces/frikik';
 import { MOBILE_LAYOUT_QUERY } from '@/config/breakpoints';
 import { webglAvailable } from '@/components/pitch3d/webgl';
@@ -43,6 +43,8 @@ export function windLevel(wind: number): number {
  */
 export default function Frikik({ shared }: { shared: ShareInfo | null }) {
   const { t } = useTranslation('frikik');
+  const { locale } = useI18n();
+  const langRef = useRef<'tr' | 'en'>('tr');
   const hostRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<FrikikHandle | null>(null);
   const [mode, setMode] = useState<Mode>('boot');
@@ -63,6 +65,10 @@ export default function Frikik({ shared }: { shared: ShareInfo | null }) {
   useEffect(() => {
     gameRef.current = game;
   }, [game]);
+
+  useEffect(() => {
+    langRef.current = locale === 'en' ? 'en' : 'tr';
+  }, [locale]);
 
   useEffect(() => {
     goalLabelRef.current = goalLabel;
@@ -118,6 +124,7 @@ export default function Frikik({ shared }: { shared: ShareInfo | null }) {
         try {
           sceneRef.current = mod.mountFrikik(host, {
             lite: window.matchMedia(MOBILE_LAYOUT_QUERY).matches,
+            lang: langRef.current,
             canvasClassName: styles.canvas!,
             handleClassName: styles.handle!,
             goalClassName: styles.goal!,
