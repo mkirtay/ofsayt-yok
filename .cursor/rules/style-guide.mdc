@@ -3,7 +3,7 @@ description: Ensure UI implementations follow the project style guide
 globs: ["**/*.tsx", "**/*.scss", "**/*.css", "**/*.module.scss"]
 ---
 
-# Ofsayt Yok Style Guide Enforcement
+# Style Guide Enforcement
 
 When writing or editing UI components and styles, ALWAYS refer to `public/docs/style-guide.md` and use the design tokens in `src/styles/_variables.scss`.
 

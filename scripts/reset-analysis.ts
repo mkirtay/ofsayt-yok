@@ -1,5 +1,5 @@
 /**
- * Ofsayt Yok — AI Analiz Sıfırlama / Yeniden Üretme CLI
+ * AI Analiz Sıfırlama / Yeniden Üretme CLI
  *
  * Belirli maçların önbelleklenmiş (PRE fazı) AI analizini SİLER ve yeni şema
  * ile (ör. ısı haritası zoneGrid) YENİDEN ÜRETİR. Siteden bağımsız çalışır —
@@ -18,6 +18,7 @@ import { buildMatchAnalysisContext } from '@/server/buildMatchAnalysisContext';
 import { generateMatchAnalysis } from '@/services/aiAnalysisService';
 import { ensurePredictionRecordForAnalysis } from '@/lib/predictionRecords';
 import type { Prisma } from '@prisma/client';
+import { BRAND } from '@/config/brand';
 
 // 2026 Dünya Kupası çeyrek finalleri (henüz oynanmamış 3 maç) — varsayılan liste.
 const DEFAULT_MATCH_IDS = ['1853411', '1853412', '1853413'];
@@ -97,7 +98,7 @@ async function main() {
   const args = process.argv.slice(2).filter(Boolean);
   const matchIds = args.length > 0 ? args : DEFAULT_MATCH_IDS;
 
-  console.log(`Ofsayt Yok — Analiz Sıfırlama`);
+  console.log(`${BRAND.name} — Analiz Sıfırlama`);
   console.log(`Hedef maçlar: ${matchIds.join(', ')}`);
 
   for (const matchId of matchIds) {

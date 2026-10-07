@@ -863,7 +863,7 @@ async function checkAllTeams() {
 }
 
 async function startBot() {
-  log('🤖 Ofsayt Yok Tweet Bot başlatılıyor...');
+  log('🤖 Tweet Bot başlatılıyor...');
   log(`🧪 DRY_RUN modu: ${isDryRun() ? 'AÇIK (tweet gönderilmez)' : 'KAPALI (gerçek tweet)'}`);
   log(`🎯 TEST_MODE: ${TEST_MODE ? `AÇIK — sadece ${ACTIVE_TEAMS.map((t) => t.name).join(', ')} izleniyor (${ACTIVE_TEAMS.length} satır)` : `KAPALI — tam liste izleniyor (${ACTIVE_TEAMS.length} satır)`}`);
   log(`💾 State dosyası: ${STATE_PATH}`);

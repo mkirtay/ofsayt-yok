@@ -5,6 +5,7 @@ import { LOCKED_SECTION_CLASS, analysisPaywallJsonLd } from './analysisPaywall';
 vi.mock('next-auth/react', () => ({ useSession: () => ({ status: 'unauthenticated', data: null }) }));
 
 import LockedPreview from '@/components/MatchAnalysis/LockedPreview';
+import { BRAND } from '@/config/brand';
 
 describe('ücretli içerik işaretlemesi (SEO)', () => {
   it('Article + isAccessibleForFree false + hasPart.cssSelector', () => {
@@ -13,7 +14,7 @@ describe('ücretli içerik işaretlemesi (SEO)', () => {
       '@type': 'Article',
       headline: 'A – B AI maç analizi',
       url: 'https://x/m',
-      publisher: { '@type': 'Organization', name: 'Ofsayt Yok' },
+      publisher: { '@type': 'Organization', name: BRAND.name },
       isAccessibleForFree: false,
       hasPart: { '@type': 'WebPageElement', isAccessibleForFree: false, cssSelector: '.ai-analysis-locked' },
     });

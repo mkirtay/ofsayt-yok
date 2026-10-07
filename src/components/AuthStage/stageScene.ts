@@ -6,7 +6,7 @@
  * ucunda derin fileli kaleler (mobilde tek); uzak çim gökyüzüne doğru silinir. Top çimin üstünde durur, altında
  * yüksekliğe göre değişen yumuşak gölge. Tema: koyu temada gece (projektör huzmeleri, sis, ışık partikülleri), açık
  * temada gündüz (güneş, yumuşak huzmeler, bulutlar); değişince renkler yeniden kurulmadan yumuşakça geçer.
- * Sahanın çevresinde marka renklerinde "Ofsayt Yok" reklam panoları (görünmez duvar: top seker, kadrajdan çıkmaz).
+ * Sahanın çevresinde marka renklerinde reklam panoları (pitch3d/pitchKit `boardTexture`) (görünmez duvar: top seker, kadrajdan çıkmaz).
  * Etkileşim (stageMotion.ts): nişan al ve şut çek — topa bas, geri çek (önünde yön + güç oku), bırak; yalnız duran /
  * çok yavaş top şutlanır. Top yay çizer, sekip yuvarlanır, durduğu yerde kalır. Gol: file dalgası + "GOL!" + konfeti,
  * 1,5 sn sonra top orta noktaya. İlk şuta kadar topun yanında ipucu. Fareyle hafif paralaks.

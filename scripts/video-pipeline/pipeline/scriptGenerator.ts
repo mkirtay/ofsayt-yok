@@ -1,5 +1,6 @@
 import OpenAI from 'openai';
 import type { TeamBriefing } from '../types';
+import { BRAND } from '@/config/brand';
 
 let client: OpenAI | null = null;
 
@@ -43,7 +44,7 @@ function buildPrompt(briefing: TeamBriefing, topic: string): string {
     : 'Yukarıdaki tüm istatistik alanları mevcut.';
 
   return `
-Sen "Ofsayt Yok" adlı Türkçe futbol analiz YouTube kanalının sunucususun. Ton: enerjik, analitik, cesur, zaman zaman provokatif. İzleyicilere direkt konuş, jargon kullan ama herkese anlaşılır ol.
+Sen "${BRAND.name}" adlı Türkçe futbol analiz YouTube kanalının sunucususun. Ton: enerjik, analitik, cesur, zaman zaman provokatif. İzleyicilere direkt konuş, jargon kullan ama herkese anlaşılır ol.
 
 Aşağıdaki takım verilerini kullanarak "${briefing.team}" hakkında "${topic}" konusunu işleyen yaklaşık 10-12 dakikalık bir YouTube video scripti yaz.
 
@@ -85,7 +86,7 @@ Mevcut kadroyu değerlendir. Yıldız oyuncular, güçlü/zayıf yanlar, teknik 
 
 ## BÖLÜM 3: 2026 DÜNYA KUPASI SENARYOSU (yaklaşık 3 dakika)
 Bu takım 2026'da ne kadar ilerleyebilir? Gerçekçi değerlendirme, olası rakipler.
-[B-ROLL: ofsaytyok.com bracket ekran kaydı]
+[B-ROLL: ${BRAND.domain} bracket ekran kaydı]
 
 ## BÖLÜM 4: İLGİNÇ DETAYLAR VE DEDIKODULAR (yaklaşık 2 dakika)
 Takımla ilgili daha az bilinen bir gerçek, sürpriz bir istatistik veya güncel bir dedikodu.

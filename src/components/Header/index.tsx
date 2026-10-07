@@ -25,6 +25,7 @@ import { MOBILE_LAYOUT_QUERY } from '@/config/breakpoints';
 import { WORLD_CUP_PAGE_ENABLED } from '@/config/worldCup';
 import styles from './header.module.scss';
 import { BRAND } from '@/config/brand';
+import { BRAND_LOGO_SVG } from '@/config/brandImages';
 
 export default function Header() {
   const router = useRouter();
@@ -129,7 +130,7 @@ export default function Header() {
             <div className={styles.logo}>
               <Link href="/" className={styles.logoLink} onMouseEnter={prefetchHome} onFocus={prefetchHome}>
                 <Image
-                  src={isWorldCupTheme ? '/images/logo-black.svg' : '/images/ofsaytyok-logo.svg'}
+                  src={isWorldCupTheme ? '/images/logo-black.svg' : BRAND_LOGO_SVG}
                   alt={BRAND.name}
                   width={isWorldCupTheme ? 146 : 110}
                   height={isWorldCupTheme ? 28 : 34}

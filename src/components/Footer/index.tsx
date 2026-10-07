@@ -4,6 +4,7 @@ import { useTranslation } from '@/lib/i18n';
 import Container from '@/components/Container';
 import styles from './footer.module.scss';
 import { BRAND } from '@/config/brand';
+import { BRAND_LOGO_SVG } from '@/config/brandImages';
 
 export default function Footer() {
   const { t } = useTranslation('common');
@@ -15,7 +16,7 @@ export default function Footer() {
         <div className={styles.footerTop}>
           <div className={styles.footerBrand}>
             <Image
-              src="/images/ofsaytyok-logo.svg"
+              src={BRAND_LOGO_SVG}
               alt={BRAND.name}
               width={110}
               height={34}
