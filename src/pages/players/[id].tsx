@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import Container from '@/components/Container';
 import PlayerProfile from '@/components/PlayerProfile';
 import { usePlayerProfile } from '@/hooks/usePlayerProfile';
+import { brandTitle } from '@/config/brand';
 
 /** /players/[id] — bağımsız oyuncu detay sayfası (panel DEĞİL). Kadro / İlk 11 / Gol Krallığı bağlantılarının hedefi. */
 export default function PlayerPage() {
@@ -13,7 +14,7 @@ export default function PlayerPage() {
   const fromPath = /^\[.*\]$/.test(rawFromPath) ? '' : rawFromPath;
   const playerId = typeof raw === 'string' ? raw : Array.isArray(raw) ? (raw[0] ?? fromPath) : fromPath;
   const { data } = usePlayerProfile(playerId, Boolean(playerId));
-  const title = `${data?.name ?? 'Oyuncu'} — Oyuncu Detayı | Ofsayt Yok`;
+  const title = brandTitle(`${data?.name ?? 'Oyuncu'} — Oyuncu Detayı`);
 
   return (
     <Container>

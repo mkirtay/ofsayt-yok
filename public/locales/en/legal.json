@@ -3,8 +3,8 @@
   "backToHome": "Back to home",
   "privacy": {
     "pageTitle": "Privacy Policy",
-    "pageDesc": "Ofsayt Yok privacy policy.",
-    "intro": "This Privacy Policy explains what personal data we collect through ofsaytyok.app (\"Site\", \"we\") and for what purposes, along with your rights.",
+    "pageDesc": "{{brand}} privacy policy.",
+    "intro": "This Privacy Policy explains what personal data we collect through {{siteDomain}} (\"Site\", \"we\") and for what purposes, along with your rights.",
     "sections": [
       {
         "heading": "1. Data Controller",
@@ -43,12 +43,12 @@
   },
   "terms": {
     "pageTitle": "Terms of Use",
-    "pageDesc": "Ofsayt Yok terms of use.",
-    "intro": "By visiting or using ofsaytyok.app, you agree to the terms below. If you do not agree, please do not use the site.",
+    "pageDesc": "{{brand}} terms of use.",
+    "intro": "By visiting or using {{siteDomain}}, you agree to the terms below. If you do not agree, please do not use the site.",
     "sections": [
       {
         "heading": "1. Description of Service",
-        "body": "Ofsayt Yok is an informational platform providing live match scores, standings, news, and AI-generated match analysis and prediction content."
+        "body": "{{brand}} is an informational platform providing live match scores, standings, news, and AI-generated match analysis and prediction content."
       },
       {
         "heading": "2. Accounts",
@@ -68,11 +68,11 @@
       },
       {
         "heading": "6. Intellectual Property",
-        "body": "The site design, logo, and original content belong to Ofsayt Yok. Score and statistics data obtained from third-party providers remain subject to those providers' rights."
+        "body": "The site design, logo, and original content belong to {{brand}}. Score and statistics data obtained from third-party providers remain subject to those providers' rights."
       },
       {
         "heading": "7. Limitation of Liability",
-        "body": "The site is provided \"as is\". We do not guarantee that match data, statistics, or AI outputs will always be accurate or up to date. To the maximum extent permitted by law, Ofsayt Yok is not liable for direct or indirect damages arising from use of the site."
+        "body": "The site is provided \"as is\". We do not guarantee that match data, statistics, or AI outputs will always be accurate or up to date. To the maximum extent permitted by law, {{brand}} is not liable for direct or indirect damages arising from use of the site."
       },
       {
         "heading": "8. Changes and Governing Law",
@@ -83,10 +83,10 @@
   },
   "contact": {
     "pageTitle": "Contact",
-    "pageDesc": "Get in touch with Ofsayt Yok.",
+    "pageDesc": "Get in touch with {{brand}}.",
     "intro": "For questions, feedback, or data protection requests, you can reach us through the channel below.",
     "emailLabel": "Email",
-    "email": "iletisim@ofsaytyok.app",
+    "email": "{{contactEmail}}",
     "responseNote": "We try to respond to requests as quickly as possible."
   }
 }

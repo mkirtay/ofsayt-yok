@@ -4,6 +4,8 @@ import { useRouter } from 'next/router';
 import Container from '@/components/Container';
 import TeamDetailView from '@/components/TeamDetailView';
 import { teamOgImagePath } from '@/utils/teamOgImage';
+import { siteBaseUrl } from '@/lib/siteUrl';
+import { BRAND, brandTitle } from '@/config/brand';
 
 type TeamPageProps = {
   /** Paylaşım etiketleri için (sunucuda, ISR); geçici hatada null — sayfa yine istemcide yüklenir. */
@@ -11,7 +13,7 @@ type TeamPageProps = {
   ogImagePath: string;
 };
 
-const SITE_URL = process.env.AUTH_URL ?? 'https://ofsaytyok.app';
+const SITE_URL = siteBaseUrl();
 const DAY_SECONDS = 86_400;
 /**
  * Kabukta yalnız takım adı var (değişmez) → 7 gün. Görsel adresindeki `v` (gün) bu sürede eskir; görsel route'u eski
@@ -51,12 +53,12 @@ export default function TeamDetail({ teamName, ogImagePath }: TeamPageProps) {
   const teamId =
     typeof idParam === 'string' ? idParam : Array.isArray(idParam) ? (idParam[0] ?? idFromPath) : idFromPath;
 
-  const title = teamName ? `${teamName} — Takım Detayı | Ofsayt Yok` : 'Takım Detayı | Ofsayt Yok';
+  const title = teamName ? brandTitle(`${teamName} — Takım Detayı`) : brandTitle('Takım Detayı');
   const description = teamName
     ? `${teamName} takımının son maçları, kadro bilgileri ve lig istatistikleri.`
     : 'Takımın son maçları, kadro bilgileri ve lig istatistikleri.';
   const ogImage = `${SITE_URL}${ogImagePath}`;
-  const imageAlt = teamName ? `${teamName} — lig sırası ve son maçlar` : 'Ofsayt Yok takım sayfası';
+  const imageAlt = teamName ? `${teamName} — lig sırası ve son maçlar` : `${BRAND.name} takım sayfası`;
 
   return (
     <Container>

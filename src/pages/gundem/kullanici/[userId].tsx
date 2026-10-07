@@ -3,6 +3,8 @@ import Head from 'next/head';
 import GundemProfilePage from '@/components/GundemProfilePage';
 import { prisma } from '@/lib/prisma';
 import { useTranslation } from '@/lib/i18n';
+import { siteBaseUrl } from '@/lib/siteUrl';
+import { BRAND } from '@/config/brand';
 
 type Props = {
   userId: string;
@@ -10,7 +12,7 @@ type Props = {
   meta: { name: string; username: string | null };
 };
 
-const SITE = () => process.env.AUTH_URL ?? 'https://ofsaytyok.app';
+const SITE = siteBaseUrl;
 
 /** `[postId].tsx` kalıbı: botlar JS çalıştırmaz → isim/kullanıcı adı SSR'da `<Head>`'e yazılır. Olmayan kullanıcı → 404. */
 export const getServerSideProps: GetServerSideProps<Props> = async (context) => {
@@ -21,10 +23,10 @@ export const getServerSideProps: GetServerSideProps<Props> = async (context) => 
   try {
     const user = await prisma.user.findUnique({ where: { id: userId }, select: { name: true, username: true } });
     if (!user) return { notFound: true };
-    return { props: { userId, meta: { name: user.name ?? user.username ?? 'Ofsayt Yok', username: user.username } } };
+    return { props: { userId, meta: { name: user.name ?? user.username ?? BRAND.name, username: user.username } } };
   } catch {
     // DB hatasında 500 yerine jenerik meta ile devam (istemci zaten yükler)
-    return { props: { userId, meta: { name: 'Ofsayt Yok', username: null } } };
+    return { props: { userId, meta: { name: BRAND.name, username: null } } };
   }
 };
 

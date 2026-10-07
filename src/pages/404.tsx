@@ -7,6 +7,7 @@ import Container from '@/components/Container';
 import ScaledScene from '@/components/PitchScenes/ScaledScene';
 import VarScene from '@/components/PitchScenes/VarScene';
 import styles from './error.module.scss';
+import { brandTitle } from '@/config/brand';
 
 export default function NotFound() {
   const { t } = useTranslation('common');
@@ -14,7 +15,7 @@ export default function NotFound() {
   return (
     <>
       <Head>
-        <title>{t('notFoundTitle')} | Ofsayt Yok</title>
+        <title>{brandTitle(t('notFoundTitle'))}</title>
         <meta name="robots" content="noindex" />
       </Head>
       <Container>

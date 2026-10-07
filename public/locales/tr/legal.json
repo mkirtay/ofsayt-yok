@@ -3,8 +3,8 @@
   "backToHome": "Anasayfaya dön",
   "privacy": {
     "pageTitle": "Gizlilik Politikası",
-    "pageDesc": "Ofsayt Yok gizlilik politikası ve KVKK aydınlatma metni.",
-    "intro": "Bu Gizlilik Politikası, Ofsayt Yok (\"Site\", \"biz\") tarafından işletilen ofsaytyok.app üzerinden topladığımız kişisel verilerin hangi amaçlarla işlendiğini ve haklarınızı açıklar.",
+    "pageDesc": "{{brand}} gizlilik politikası ve KVKK aydınlatma metni.",
+    "intro": "Bu Gizlilik Politikası, {{brand}} (\"Site\", \"biz\") tarafından işletilen {{siteDomain}} üzerinden topladığımız kişisel verilerin hangi amaçlarla işlendiğini ve haklarınızı açıklar.",
     "sections": [
       {
         "heading": "1. Veri Sorumlusu",
@@ -43,12 +43,12 @@
   },
   "terms": {
     "pageTitle": "Kullanım Şartları",
-    "pageDesc": "Ofsayt Yok kullanım şartları.",
-    "intro": "ofsaytyok.app adresini ziyaret ederek veya kullanarak aşağıdaki şartları kabul etmiş sayılırsınız. Şartları kabul etmiyorsanız lütfen siteyi kullanmayınız.",
+    "pageDesc": "{{brand}} kullanım şartları.",
+    "intro": "{{siteDomain}} adresini ziyaret ederek veya kullanarak aşağıdaki şartları kabul etmiş sayılırsınız. Şartları kabul etmiyorsanız lütfen siteyi kullanmayınız.",
     "sections": [
       {
         "heading": "1. Hizmetin Tanımı",
-        "body": "Ofsayt Yok; canlı maç skorları, puan durumu, haberler ile yapay zekâ tarafından üretilen maç analizi ve tahmin içerikleri sunan bir bilgilendirme platformudur."
+        "body": "{{brand}}; canlı maç skorları, puan durumu, haberler ile yapay zekâ tarafından üretilen maç analizi ve tahmin içerikleri sunan bir bilgilendirme platformudur."
       },
       {
         "heading": "2. Hesaplar",
@@ -68,11 +68,11 @@
       },
       {
         "heading": "6. Fikri Mülkiyet",
-        "body": "Site tasarımı, logo ve özgün içerikler Ofsayt Yok'a aittir. Üçüncü taraf veri sağlayıcılardan alınan skor/istatistik verileri ilgili sağlayıcıların haklarına tabidir."
+        "body": "Site tasarımı, logo ve özgün içerikler {{brand}} markasına aittir. Üçüncü taraf veri sağlayıcılardan alınan skor/istatistik verileri ilgili sağlayıcıların haklarına tabidir."
       },
       {
         "heading": "7. Sorumluluğun Sınırlandırılması",
-        "body": "Site \"olduğu gibi\" sunulur; maç verilerinin, istatistiklerin veya AI çıktılarının her zaman hatasız/güncel olacağı garanti edilmez. Ofsayt Yok, sitenin kullanımından doğabilecek doğrudan veya dolaylı zararlardan yasaların izin verdiği azami ölçüde sorumlu tutulamaz."
+        "body": "Site \"olduğu gibi\" sunulur; maç verilerinin, istatistiklerin veya AI çıktılarının her zaman hatasız/güncel olacağı garanti edilmez. {{brand}}, sitenin kullanımından doğabilecek doğrudan veya dolaylı zararlardan yasaların izin verdiği azami ölçüde sorumlu tutulamaz."
       },
       {
         "heading": "8. Değişiklikler ve Uygulanacak Hukuk",
@@ -83,10 +83,10 @@
   },
   "contact": {
     "pageTitle": "İletişim",
-    "pageDesc": "Ofsayt Yok ile iletişime geçin.",
+    "pageDesc": "{{brand}} ile iletişime geçin.",
     "intro": "Sorularınız, geri bildirimleriniz veya KVKK kapsamındaki talepleriniz için bizimle aşağıdaki kanaldan iletişime geçebilirsiniz.",
     "emailLabel": "E-posta",
-    "email": "iletisim@ofsaytyok.app",
+    "email": "{{contactEmail}}",
     "responseNote": "Taleplerinize mümkün olan en kısa sürede dönüş yapmaya çalışıyoruz."
   }
 }

@@ -23,6 +23,7 @@ import { hubSelectionIdForLeague, sportmonksLeagueIdOfHubSelection } from '@/uti
 import { leagueNameById } from '@/utils/leagueName';
 import { sportmonksLeagueLogoUrl } from '@/utils/leagueLogo';
 import styles from './standings.module.scss';
+import { siteBaseUrl } from '@/lib/siteUrl';
 
 const DEFAULT_SELECTION_ID = 6; // Süper Lig (legacy id; bkz. utils/hubLeagueSelection.ts)
 const CARDS_LIMIT = 50;
@@ -121,7 +122,7 @@ export default function Standings() {
   };
 
   const tabLabel = { table: t('tabStandings'), scorers: t('tabScorers'), cards: t('tabCards') } as const;
-  const origin = process.env.AUTH_URL ?? 'https://ofsaytyok.app';
+  const origin = siteBaseUrl();
 
   return (
     <Container>

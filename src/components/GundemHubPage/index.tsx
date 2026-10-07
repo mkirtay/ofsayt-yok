@@ -11,6 +11,7 @@ import { useTranslation } from '@/lib/i18n';
 import type { GundemScope } from '@/types/gundem';
 import { buildPostSelectionTarget, readSelectedPostId } from '@/utils/postSelection';
 import styles from './gundemHubPage.module.scss';
+import { siteBaseUrl } from '@/lib/siteUrl';
 
 /**
  * Gündem hub'ı: scope sekmeleri + composer + akış; geniş ekranda (≥ $bp-split) seçili post'un yorumları sağ panelde.
@@ -83,7 +84,7 @@ export default function GundemHubPage() {
         <meta name="description" content={t('meta.description')} />
         <meta property="og:title" content={t('meta.title')} />
         <meta property="og:description" content={t('meta.description')} />
-        <link rel="canonical" href={`${process.env.AUTH_URL ?? 'https://ofsaytyok.app'}/gundem`} />
+        <link rel="canonical" href={`${siteBaseUrl()}/gundem`} />
       </Head>
       <div className={styles.shell}>
         <div className={styles.top}>

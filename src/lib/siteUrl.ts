@@ -1,9 +1,17 @@
+import { BRAND } from '@/config/brand';
+
 /**
- * Sitenin canonical base URL'i (sonda "/" yok). Sayfa canonical/OG etiketleriyle AYNI kaynak: `AUTH_URL`.
- * Sunucu tarafı; API yanıtlarındaki site-içi yolları (ör. `/avatars/ball.svg`) tam URL'e çevirmek için kullanılır.
+ * Sitenin canonical base URL'i (sonda "/" yok) — canonical/OG/JSON-LD/sitemap ve API yanıtlarındaki site-içi yollar
+ * (ör. `/avatars/ball.svg`) için TEK kaynak. Sıra: `NEXT_PUBLIC_SITE_URL` → `AUTH_URL` → `NEXTAUTH_URL` → marka varsayılanı
+ * (`config/brand.ts`). İstemcide yalnız `NEXT_PUBLIC_*` görünür; orada da marka varsayılanına düşer.
  */
 export function siteBaseUrl(): string {
-  return (process.env.AUTH_URL ?? process.env.NEXTAUTH_URL ?? 'https://ofsaytyok.app').replace(/\/+$/, '');
+  return (
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    process.env.AUTH_URL ||
+    process.env.NEXTAUTH_URL ||
+    BRAND.siteUrl
+  ).replace(/\/+$/, '');
 }
 
 /**

@@ -7,10 +7,11 @@ import type { CoachPageData } from '@/server/people/coachPage';
 import { coachHref, COACH_BASE_PATH, personIdFromSlug, personSlug } from '@/utils/personUrl';
 import { stripUndefined } from '@/utils/homeInitialData';
 import { useTranslation } from '@/lib/i18n';
+import { siteBaseUrl } from '@/lib/siteUrl';
 
 type Props = { data: CoachPageData; /** Kanonik tam adres — sunucuda (istemcide AUTH_URL yok; JSON-LD hydration'ı eşleşsin). */ url: string };
 
-const SITE_URL = process.env.AUTH_URL ?? 'https://ofsaytyok.app';
+const SITE_URL = siteBaseUrl();
 const REVALIDATE_SECONDS = 3600;
 
 export const getStaticPaths: GetStaticPaths = async () => ({ paths: [], fallback: 'blocking' });

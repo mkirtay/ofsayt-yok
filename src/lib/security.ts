@@ -1,6 +1,7 @@
 import { createHash, randomBytes } from 'crypto';
 import { prisma } from '@/lib/prisma';
 import { grantVerifiedSignupBonus } from '@/lib/credits';
+import { BRAND } from '@/config/brand';
 
 const TURNSTILE_VERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
 
@@ -86,7 +87,7 @@ async function sendViaResend(to: string, subject: string, html: string): Promise
   }
   if (!from.includes('@')) {
     console.warn(
-      '[resend] EMAIL_FROM gecersiz (e-posta yok). Ornek: Ofsayt Yok <noreply@contact.ofsaytyok.app>',
+      `[resend] EMAIL_FROM gecersiz (e-posta yok). Ornek: ${BRAND.name} <noreply@${BRAND.domain}>`,
     );
     return false;
   }
@@ -125,7 +126,7 @@ export async function createAndSendEmailVerification(email: string): Promise<voi
   const link = `${appBaseUrl()}/api/auth/verify-email?token=${rawToken}`;
   const sent = await sendViaResend(
     email,
-    'Ofsayt Yok - E-posta Dogrulama',
+    `${BRAND.name} - E-posta Dogrulama`,
     `<p>Merhaba,</p><p>Hesabinizi aktif etmek icin asagidaki baglantiya tiklayin:</p><p><a href="${link}">${link}</a></p><p>Bu baglanti 24 saat gecerlidir.</p>`,
   );
 
@@ -177,7 +178,7 @@ export async function createAndSendPasswordReset(email: string): Promise<void> {
   const link = `${appBaseUrl()}/auth/reset-password?token=${rawToken}`;
   const sent = await sendViaResend(
     email,
-    'Ofsayt Yok - Sifre Sifirlama',
+    `${BRAND.name} - Sifre Sifirlama`,
     `<p>Merhaba,</p><p>Sifrenizi sifirlamak icin asagidaki baglantiya tiklayin:</p><p><a href="${link}">${link}</a></p><p>Bu baglanti <strong>1 saat</strong> gecerlidir. Bu istegi siz yapmadiysa bu e-postayi yoksayabilirsiniz.</p>`,
   );
 

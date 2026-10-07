@@ -1,7 +1,7 @@
 {
   "meta": {
-    "title": "Gündem | Ofsayt Yok",
-    "description": "Ofsayt Yok topluluğunun futbol gündemi: gönderiler, yorumlar ve resmi paylaşımlar."
+    "title": "Gündem | {{brand}}",
+    "description": "{{brand}} topluluğunun futbol gündemi: gönderiler, yorumlar ve resmi paylaşımlar."
   },
   "title": "Gündem",
   "panel": {
@@ -90,8 +90,8 @@
     "following": "Takip Ediliyor"
   },
   "profile": {
-    "metaTitle": "{{name}} | Ofsayt Yok",
-    "metaDescription": "{{name}} kullanıcısının Ofsayt Yok Gündem'deki gönderileri.",
+    "metaTitle": "{{name}} | {{brand}}",
+    "metaDescription": "{{name}} kullanıcısının {{brand}} Gündem'deki gönderileri.",
     "followers": "Takipçi",
     "following": "Takip",
     "posts": "Gönderi",
@@ -115,7 +115,7 @@
     "follow": "{{name}} seni takip etmeye başladı",
     "officialPost": "{{name}} yeni bir gönderi paylaştı",
     "someone": "Bir kullanıcı",
-    "official": "Ofsayt Yok",
+    "official": "{{brand}}",
     "postDeleted": "Gönderi silindi"
   }
 }

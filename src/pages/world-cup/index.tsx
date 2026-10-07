@@ -43,6 +43,8 @@ import { getNews } from '@/services/newsApi';
 import { useWorldCupBootstrap } from '@/hooks/useWorldCupBootstrap';
 import { extractGroupStandings, extractGroupsFromTable } from '@/utils/worldCupTable';
 import styles from './worldCup.module.scss';
+import { siteBaseUrl } from '@/lib/siteUrl';
+import { brandTitle } from '@/config/brand';
 
 type WorldCupMainTab = 'groups' | 'matches' | 'calendar' | 'bracket' | 'teams';
 type SidebarTab = 'standings' | 'groups' | 'news';
@@ -308,14 +310,14 @@ export default function WorldCupPage() {
   return (
     <>
       <Head>
-        <title>FIFA Dünya Kupası 2026 | Ofsayt Yok</title>
+        <title>{brandTitle('FIFA Dünya Kupası 2026')}</title>
         <meta name="description" content="FIFA Dünya Kupası 2026 grup aşaması, fikstür ve puan durumu. Tüm grupları ve maçları takip edin." />
-        <meta property="og:title" content="FIFA Dünya Kupası 2026 | Ofsayt Yok" />
+        <meta property="og:title" content={brandTitle('FIFA Dünya Kupası 2026')} />
         <meta property="og:description" content="FIFA Dünya Kupası 2026 grup aşaması, fikstür ve puan durumu. Tüm grupları ve maçları takip edin." />
-        <meta property="og:url" content={`${process.env.AUTH_URL ?? 'https://ofsaytyok.app'}/world-cup`} />
-        <meta property="og:image" content={`${process.env.AUTH_URL ?? 'https://ofsaytyok.app'}/images/2026_FIFA_World_Cup_Logo.png`} key="og:image" />
-        <meta name="twitter:image" content={`${process.env.AUTH_URL ?? 'https://ofsaytyok.app'}/images/2026_FIFA_World_Cup_Logo.png`} />
-        <link rel="canonical" href={`${process.env.AUTH_URL ?? 'https://ofsaytyok.app'}/world-cup`} />
+        <meta property="og:url" content={`${siteBaseUrl()}/world-cup`} />
+        <meta property="og:image" content={`${siteBaseUrl()}/images/2026_FIFA_World_Cup_Logo.png`} key="og:image" />
+        <meta name="twitter:image" content={`${siteBaseUrl()}/images/2026_FIFA_World_Cup_Logo.png`} />
+        <link rel="canonical" href={`${siteBaseUrl()}/world-cup`} />
       </Head>
       <WorldCupLayout
         activeTab={mainTab}

@@ -33,7 +33,7 @@ function isKnownType(type: string): type is GundemNotificationType {
 
 /**
  * Bildirim → görünüm eşlemesi (saf; `t` gundem namespace'i). Bilinmeyen `type` → null (çağıran satırı atlar, çökmez).
- * - `actor === null` (hesap silinmiş): isim yerine "Bir kullanıcı" ("Ofsayt Yok" resmi gönderi için).
+ * - `actor === null` (hesap silinmiş): isim yerine "Bir kullanıcı" (resmi gönderi için marka adı).
  * - POST_*: hedef `/gundem/{postId}`; `post === null` (silinmiş) → tıklanamaz + soluk + "Gönderi silindi".
  * - FOLLOW: hedef aktörün profili; aktör yoksa tıklanamaz.
  */

@@ -11,6 +11,7 @@ import { LAST_PAYMENT_KEY } from '@/components/PaymentBuyButton';
 import { findPaymentPackage } from '@/config/paymentPackages';
 import type { OrderStatusView } from '@/server/payments/paymentOrders';
 import styles from './odeme.module.scss';
+import { brandTitle } from '@/config/brand';
 
 const POLL_MS = 2000;
 const POLL_FOR_MS = 90_000;
@@ -163,7 +164,7 @@ export default function PaymentDonePage() {
   return (
     <>
       <Head>
-        <title>{`${t('payment.doneTitle')} | Ofsayt Yok`}</title>
+        <title>{brandTitle(t('payment.doneTitle'))}</title>
         <meta name="robots" content="noindex, nofollow" />
       </Head>
       <div className={styles.wrapper}>

@@ -13,6 +13,7 @@ import type { RecentMatchRow } from '@/server/buildMatchAnalysisContext';
 import { statBarWidths, type H2HSummary, type StatBarKind } from '@/utils/compareData';
 import styles from './compare.module.scss';
 import TeamLogo from '@/components/TeamLogo';
+import { brandTitle } from '@/config/brand';
 
 function FormPill({ result }: { result: RecentMatchRow['result'] }) {
   const { t } = useTranslation('compare');
@@ -238,7 +239,7 @@ function ComparePageContent({ data }: { data: ComparePagePayload }) {
   return (
     <>
       <Head>
-        <title>{title} | Ofsayt Yok</title>
+        <title>{brandTitle(title)}</title>
         <meta
           name="description"
           content={t('metaDesc', { team1: team1.teamName, team2: team2.teamName })}

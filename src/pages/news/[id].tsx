@@ -9,6 +9,8 @@ import { useNewsDetail } from '@/hooks/useNewsDetail';
 import { isOptimizableNewsImage } from '@/config/newsImageHosts';
 import { BRAND_LOGO_PNG } from '@/config/brandImages';
 import styles from './newsDetail.module.scss';
+import { siteBaseUrl } from '@/lib/siteUrl';
+import { BRAND, brandTitle } from '@/config/brand';
 
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr);
@@ -58,7 +60,7 @@ export default function NewsDetail() {
   }
 
   const { article, sidebarNews } = data;
-  const pageTitle = `${article.title} — Ofsayt Yok`;
+  const pageTitle = brandTitle(article.title, '—');
   const pageDescription = (article.summary || article.content || article.title).slice(0, 160);
 
   return (
@@ -87,7 +89,7 @@ export default function NewsDetail() {
           description: pageDescription,
           ...(article.image ? { image: article.image } : {}),
           datePublished: article.publishedAt,
-          publisher: { '@type': 'Organization', name: 'Ofsayt Yok', logo: `${process.env.AUTH_URL ?? 'https://ofsaytyok.app'}${BRAND_LOGO_PNG}` },
+          publisher: { '@type': 'Organization', name: BRAND.name, logo: `${siteBaseUrl()}${BRAND_LOGO_PNG}` },
         }} />
       </Head>
       <Container>

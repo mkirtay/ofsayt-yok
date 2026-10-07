@@ -13,6 +13,7 @@ import type { AiStatsDashboard, AiStatsHistoryItem } from '@/lib/loadAiStatsDash
 import type { CronHeartbeat } from '@/server/cronJobs';
 import { buildMatchHref } from '@/utils/matchUrl';
 import styles from './ai-istatistikleri.module.scss';
+import { siteBaseUrl } from '@/lib/siteUrl';
 
 function SkeletonBar({ width, height = 14 }: { width: string | number; height?: number }) {
   return (
@@ -119,10 +120,10 @@ export default function AiIstatistikleri() {
       <Head>
         <title>{t('pageTitle')}</title>
         <meta name="description" content={t('pageDesc')} />
-        <link rel="canonical" href={`${process.env.AUTH_URL ?? 'https://ofsaytyok.app'}/ai-istatistikleri`} />
+        <link rel="canonical" href={`${siteBaseUrl()}/ai-istatistikleri`} />
         <meta property="og:title" content={t('pageTitle')} />
         <meta property="og:description" content={t('pageDesc')} />
-        <meta property="og:url" content={`${process.env.AUTH_URL ?? 'https://ofsaytyok.app'}/ai-istatistikleri`} />
+        <meta property="og:url" content={`${siteBaseUrl()}/ai-istatistikleri`} />
       </Head>
 
       <Container>

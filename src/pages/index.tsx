@@ -5,6 +5,9 @@ import MatchHubPage from '@/components/MatchHubPage';
 import { HOME_SIDEBAR_LEAGUES } from '@/config/leagues';
 import type { HomeInitialData } from '@/utils/homeInitialData';
 import { todayIsoIstanbul } from '@/utils/dateStrip';
+import { siteBaseUrl } from '@/lib/siteUrl';
+import { BRAND_LOGO_PNG } from '@/config/brandImages';
+import { BRAND, socialProfileUrls } from '@/config/brand';
 
 const DEFAULT_COMPETITION_ID = 6;
 
@@ -38,24 +41,26 @@ export const getStaticProps: GetStaticProps<HomeProps> = async () => {
   }
 };
 
+const HOME_TITLE = `${BRAND.name} — Canlı Maç Sonuçları & Analiz`;
+
 export default function Home({ initialDate, initialData }: HomeProps) {
   return (
     <>
       <Head>
-        <title>Ofsayt Yok — Canlı Maç Sonuçları & Analiz</title>
+        <title>{HOME_TITLE}</title>
         <meta name="description" content="Türkiye Süper Lig, UEFA ve dünya futbolundan canlı skorlar, maç analizleri, puan durumu ve spor haberleri." />
-        <meta property="og:title" content="Ofsayt Yok — Canlı Maç Sonuçları & Analiz" />
+        <meta property="og:title" content={HOME_TITLE} />
         <meta property="og:description" content="Türkiye Süper Lig, UEFA ve dünya futbolundan canlı skorlar, maç analizleri, puan durumu ve spor haberleri." />
-        <meta property="og:url" content={process.env.AUTH_URL ?? 'https://ofsaytyok.app'} />
-        <link rel="canonical" href={process.env.AUTH_URL ?? 'https://ofsaytyok.app'} />
+        <meta property="og:url" content={siteBaseUrl()} />
+        <link rel="canonical" href={siteBaseUrl()} />
         <JsonLd schema={{
           '@context': 'https://schema.org',
           '@type': 'Organization',
-          name: 'Ofsayt Yok',
-          url: process.env.AUTH_URL ?? 'https://ofsaytyok.app',
-          // = BRAND_LOGO_PNG (config/brandImages.ts); ana sayfa ilk yük parçalarına yeni modül eklememek için düz yazıldı.
-          logo: `${process.env.AUTH_URL ?? 'https://ofsaytyok.app'}/icon-512.png`,
-          description: 'Türkiye ve dünya futbolundan canlı skorlar, maç analizleri, puan durumu ve spor haberleri.',
+          name: BRAND.name,
+          url: siteBaseUrl(),
+          logo: `${siteBaseUrl()}${BRAND_LOGO_PNG}`,
+          description: BRAND.description,
+          ...(socialProfileUrls().length > 0 && { sameAs: socialProfileUrls() }),
         }} />
       </Head>
       <MatchHubPage

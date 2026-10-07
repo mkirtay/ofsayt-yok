@@ -1,8 +1,9 @@
 import type { GetServerSideProps } from 'next';
 import { getFixturesByDate } from '@/services/liveScoreService';
 import { buildMatchSlug } from '@/utils/matchUrl';
+import { siteBaseUrl } from '@/lib/siteUrl';
 
-const BASE_URL = process.env.AUTH_URL ?? 'https://ofsaytyok.app';
+const BASE_URL = siteBaseUrl();
 
 const STATIC_ROUTES: { path: string; priority: string; changefreq: string }[] = [
   { path: '/', priority: '1.0', changefreq: 'hourly' },

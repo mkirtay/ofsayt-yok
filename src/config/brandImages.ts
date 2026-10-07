@@ -1,3 +1,5 @@
+import { BRAND } from '@/config/brand';
+
 /**
  * Marka görselleri — `scripts/generate-brand-images.mjs` üretir (kaynak: public/images/ofsaytyok-logo.svg,
  * public/icon.svg). Görsel değişince dosya adını sürümle (-v3 …): Facebook / Instagram / X paylaşım önbelleği URL'ye
@@ -7,7 +9,7 @@ export const OG_DEFAULT_IMAGE = {
   path: '/images/og-default-v2.png',
   width: 1200,
   height: 630,
-  alt: 'Ofsayt Yok — Canlı Skorlar · Maç Analizi · Puan Durumu',
+  alt: `${BRAND.name} — ${BRAND.tagline.tr}`,
 } as const;
 
 /** Yapılandırılmış veri (JSON-LD Organization / publisher) logosu: kare, beyaz zeminde de görünür (yeşil kare). */

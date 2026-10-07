@@ -1,3 +1,5 @@
+import { BRAND } from '@/config/brand';
+
 /**
  * Kilitli AI analizi bölümünün CSS sınıfı — maç sayfasının ücretli içerik işaretlemesi (JSON-LD `hasPart.cssSelector`)
  * ile `LockedPreview`'daki öğe AYNI sınıfı kullanmalı (Google seçicinin sayfadaki öğeyle eşleşmesini ister).
@@ -15,7 +17,7 @@ export function analysisPaywallJsonLd(input: { homeTeamName: string; awayTeamNam
     '@type': 'Article',
     headline: `${input.homeTeamName} – ${input.awayTeamName} AI maç analizi`,
     url: input.url,
-    publisher: { '@type': 'Organization', name: 'Ofsayt Yok' },
+    publisher: { '@type': 'Organization', name: BRAND.name },
     isAccessibleForFree: false,
     hasPart: { '@type': 'WebPageElement', isAccessibleForFree: false, cssSelector: `.${LOCKED_SECTION_CLASS}` },
   };

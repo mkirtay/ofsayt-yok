@@ -11,6 +11,9 @@ import Layout from '@/components/Layout'
 import RouteProgress from '@/components/RouteProgress'
 import SignupAttributionSync from '@/components/SignupAttributionSync'
 import '@/styles/globals.scss'
+import { siteBaseUrl } from '@/lib/siteUrl'
+import { OG_DEFAULT_IMAGE } from '@/config/brandImages'
+import { BRAND } from '@/config/brand'
 
 /**
  * Inter (v4.001, wght 400–900) iki parça — üretim: scripts/fonts/subset-inter.sh. Aynı aile adı, ayrı unicode-range:
@@ -64,20 +67,19 @@ function App({ Component, pageProps: { session, ...pageProps } }: AppProps) {
     <SessionProvider session={session}>
       <QueryClientProvider client={queryClient}>
       <Head>
-        <title>Ofsayt Yok</title>
+        <title>{BRAND.name}</title>
         <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-        <meta name="description" content="Ofsayt Yok — Türkiye ve dünya futbolundan canlı skorlar, maç analizleri, puan durumu ve spor haberleri." />
-        <meta property="og:site_name" content="Ofsayt Yok" />
+        <meta name="description" content={`${BRAND.name} — ${BRAND.description}`} />
+        <meta property="og:site_name" content={BRAND.name} />
         <meta property="og:type" content="website" key="og:type" />
-        {/* Varsayılan paylaşım görseli = OG_DEFAULT_IMAGE (config/brandImages.ts) — ilk yük parçalarına yeni modül eklememek
-            için değerler düz yazıldı; görsel değişirse ikisini birlikte güncelle. */}
-        <meta property="og:image" content={`${process.env.AUTH_URL ?? 'https://ofsaytyok.app'}/images/og-default-v2.png`} key="og:image" />
-        <meta property="og:image:width" content="1200" key="og:image:width" />
-        <meta property="og:image:height" content="630" key="og:image:height" />
-        <meta property="og:image:alt" content="Ofsayt Yok — Canlı Skorlar · Maç Analizi · Puan Durumu" key="og:image:alt" />
+        {/* Varsayılan paylaşım görseli: config/brandImages.ts (marka adı/alan adı: config/brand.ts). */}
+        <meta property="og:image" content={`${siteBaseUrl()}${OG_DEFAULT_IMAGE.path}`} key="og:image" />
+        <meta property="og:image:width" content={String(OG_DEFAULT_IMAGE.width)} key="og:image:width" />
+        <meta property="og:image:height" content={String(OG_DEFAULT_IMAGE.height)} key="og:image:height" />
+        <meta property="og:image:alt" content={OG_DEFAULT_IMAGE.alt} key="og:image:alt" />
         <meta name="twitter:card" content="summary_large_image" key="twitter:card" />
-        <meta name="twitter:image" content={`${process.env.AUTH_URL ?? 'https://ofsaytyok.app'}/images/og-default-v2.png`} key="twitter:image" />
-        <meta name="twitter:image:alt" content="Ofsayt Yok — Canlı Skorlar · Maç Analizi · Puan Durumu" key="twitter:image:alt" />
+        <meta name="twitter:image" content={`${siteBaseUrl()}${OG_DEFAULT_IMAGE.path}`} key="twitter:image" />
+        <meta name="twitter:image:alt" content={OG_DEFAULT_IMAGE.alt} key="twitter:image:alt" />
         <link rel="icon" href="/icon.svg" type="image/svg+xml" />
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />

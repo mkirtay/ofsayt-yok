@@ -31,6 +31,8 @@ import {
   type MatchPageCacheKind,
 } from '@/server/matchPageCache';
 import styles from './matchDetail.module.scss';
+import { siteBaseUrl } from '@/lib/siteUrl';
+import { brandTitle } from '@/config/brand';
 
 type MatchDetailProps = {
   initialMatch: Match | null;
@@ -223,7 +225,7 @@ export default function MatchDetail({
   const homeName = match?.home?.name || '';
   const awayName = match?.away?.name || '';
   const pageTitle =
-    homeName && awayName ? `${homeName} - ${awayName} | Ofsayt Yok` : 'Maç Detayı | Ofsayt Yok';
+    homeName && awayName ? brandTitle(`${homeName} - ${awayName}`) : brandTitle('Maç Detayı');
   const compName = match?.competition?.name || match?.competition_name || '';
   const pageDescription =
     homeName && awayName
@@ -231,10 +233,10 @@ export default function MatchDetail({
       : 'Maç detayı, istatistikler ve kadro bilgileri.';
   // Paylaşım metni (og / twitter): maçın resmî hashtag'i varsa sonuna (Sportmonks metadata, ör. "#GALKAS").
   const shareDescription = match?.hashtag ? `${pageDescription} ${match.hashtag}` : pageDescription;
-  const canonicalUrl = `${process.env.AUTH_URL ?? 'https://ofsaytyok.app'}${canonicalPath}`;
+  const canonicalUrl = `${siteBaseUrl()}${canonicalPath}`;
   // Kimlik tabanlı paylaşım görseli: içerik sunucudaki maç verisinden, `v` yalnız önbellek anahtarı (bkz. utils/matchOgImage.ts).
   const ogImageUrl = match && homeName && awayName
-    ? `${process.env.AUTH_URL ?? 'https://ofsaytyok.app'}${matchOgImagePath(match)}`
+    ? `${siteBaseUrl()}${matchOgImagePath(match)}`
     : null;
   const effectiveMatchId = matchId || requestedMatchId || (archived ? routeMatchId : '');
   const homeTeamId = match?.home?.id ?? match?.home_id;
@@ -245,7 +247,7 @@ export default function MatchDetail({
     return (
       <Container>
         <Head>
-          <title>Maç bulunamadı | Ofsayt Yok</title>
+          <title>{brandTitle('Maç bulunamadı')}</title>
           <meta name="robots" content="noindex" />
         </Head>
         <div className={styles.notFound}>Bu maç artık mevcut değil.</div>

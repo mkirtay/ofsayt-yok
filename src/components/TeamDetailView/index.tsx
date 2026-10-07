@@ -60,6 +60,7 @@ import { getTeamSeasonMatches, getTeamSeasonScorers, getTeamSeasonStats } from '
 import { combineSeasonStats } from '@/services/sportmonks/teamSeasonStats';
 import { mergeTeamScorers } from '@/services/sportmonks/teamScorers';
 import { getCompetitionStandings } from '@/services/competitionStandings';
+import { brandTitle } from '@/config/brand';
 
 // Kadro sekmesi yüklenirken (tıklamadan sonra): sahne ve CSS'i ayrı parçada. Kutu (yükseklik) burada.
 const loadFormationLoading = () => import('@/components/PitchScenes/FormationLoading');
@@ -527,7 +528,7 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
   }, [nextFixture, teamId, todayIso, locale, t, tl]);
 
   const teamInfoLoaded = teamInfo.name !== 'Takım Detayı';
-  const teamPageTitle = `${teamInfo.name} — Takım Detayı | Ofsayt Yok`;
+  const teamPageTitle = brandTitle(`${teamInfo.name} — Takım Detayı`);
   const teamPageDescription = `${teamInfo.name} takımının son maçları, kadro bilgileri ve lig istatistikleri.`;
 
   return (
