@@ -108,3 +108,92 @@ sonrası arka planı dondurunca hiç yazılmıyordu → nabız yalnız elle çal
 `phase: "done"`, `lastRunAt` 20:15 UTC (8 dk önce; 15 dk'lık cron'la uyumlu). Yani cron tick'leri artık nabız yazıyor,
 45 dk eşiği aşılmıyor. Sentry'de 2026-10-06 21:19 (deploy) sonrası yeni olay olmaması beklenir; Sentry'yi okuyamadığım
 için bu son adım panelden teyit edilmeli.
+
+## 6) Upstash "Max Request Size 10 MB" uyarısı (2026-10-07)
+
+**Sınırı aşan işlem: benim tanı betiğim.** 2026-10-07 ~20:16 UTC'de (23:16 TSİ) yukarıdaki anlık görüntü için prod
+Redis'e salt-okuma token'ıyla 200 anahtarlık tek bir `MGET` attım. Upstash bunu reddetti:
+`ERR max request size exceeded. Limit: 10485760 bytes, Actual: 11245919 bytes` (yanıt boyutu da sayılıyor). Uyarı zamanı
+bununla örtüşüyorsa kaynak budur; uygulamanın yazdığı hiçbir tek değer bu boyuta yaklaşmıyor.
+
+**Redis'e yazan yerler ve prod'daki gerçek boyutlar** (11.126 anahtar; `STRLEN`, salt-okuma):
+
+| Yazan | Anahtar | Toplam | En büyük | Koruma (önce → şimdi) |
+|---|---|---|---|---|
+| `cachedFetch` → `smc:football/fixtures/{id}` | 5.747 | 188,7 MB | 166 KB | 900 KB → gzip + 900 KB |
+| `smc:…/fixtures/multi` | 478 | 15,4 MB | 121 KB | aynı |
+| `smc:…/head-to-head` | 607 | 8,6 MB | 94 KB | aynı |
+| `smc:…/fixtures/between` (lig takvimi) | 323 | 8,1 MB | 87 KB | aynı |
+| `smc:…/teams/{id}` | 140 | 5,5 MB | 181 KB | aynı |
+| `smc:…/fixtures/date` | 46 | 4,3 MB | **289 KB** (en büyük) | aynı |
+| `smc:…/coaches`, `referees` | 2.311 | 5,7 MB | 43 KB | aynı |
+| `swrCache` (koç / hakem sayfası, hakem tablosu) | 1.269 | 5,0 MB | 29 KB | yok → 900 KB |
+| `refereePage` takım kırılımı | 43 | 0,3 MB | 19 KB | yok → 900 KB |
+| `livescoreCache` (gündem akışı, oyuncu maçları, bot golcüleri) | — | küçük | — | yok → 900 KB |
+| `newsCache` | 1 | küçük | — | yok → 900 KB |
+| Kilitler (`smc-lock`, swr `:lock`, cron, analiz), cron nabzı, rate limit, `sessionVersion`, AI kotası, `smq:*` | — | bayt düzeyi | — | gerek yok |
+
+**Gerçek riskler (uygulama tarafı):**
+1. **Otomatik pipeline.** `@upstash/redis` 1.38'de `enableAutoPipelining` varsayılan olarak açık ve `lib/redis.ts` bunu
+   kapatmıyor. Aynı mikro-görev turundaki bütün komutlar (en çok 1.000) tek HTTP isteğinde birleşiyor, 10 MB sınırı
+   bu toplam için geçerli. Tek bir aşırı büyük birleşik istek, içindeki her komutu düşürür.
+2. **Devre kesici.** `withRedis` her hatayı sayıyordu: birleşik istekte 3+ komut düşerse devre açılır ve instance 30 sn
+   boyunca Redis'i hiç denemez. O sürede cache okumaları hep MISS olur ve her istek Sportmonks'a gider. Tek
+   instance'ın bütün L1 dışı trafiği.
+3. **Depolama: 251,6 MB / 256 MB (Free).** Yalnız değer baytı; anahtar yükü hariç. Dolarsa yazmalar reddedilir
+   (eviction kapalıysa). Eski davranışta bu da devre kesiciyi açardı.
+
+**Düzeltme:**
+- `lib/redis.ts`: `MAX_REDIS_VALUE_BYTES` (900 KB, UTF-8 JSON baytı) + `fitsInRedis`. Boyut kaynaklı hatalar
+  (`max request size`, `max db/data size`, `OOM`) devre kesiciyi **açmaz**; yalnız o komut atlanır.
+- `cachedFetch`: 4 KB'tan büyük gövde gzip + base64 (`gz`) yazılıyor. Gerçek verideki oran: `fixtures/date` 242→37 KB
+  (6,5×), takım 180→17 KB (10,9×), `fixtures/{id}` 22→4 KB (5,4×), H2H 13→3 KB. gunzip en büyükte 0,3 ms.
+  Eski sıkıştırılmamış kayıtlar okunmaya devam ediyor, bozuk `gz` cache yokmuş gibi yenileniyor. `zlib`,
+  `process.getBuiltinModule` ile alınıyor (`require` tarayıcı paketine 300 KB `browserify-zlib` ekliyordu; build'de
+  doğrulandı, statik toplam temel değerle aynı: 6.280 KB).
+- `swrCache`, `livescoreCache`, `newsCache`, `refereePage`: sığmayan değer yazılmıyor; bellek / yeniden üretim kullanılıyor.
+
+**Yazma düşerse ne olur (testle doğrulandı):**
+- 500 yok: `withRedis` asla fırlatmıyor.
+- Aynı instance Sportmonks'a tekrar gitmiyor: L1, Redis yazımından önce dolduruluyor. Negatif cache (404) de L1'de.
+- Başka instance'lar yeniden ister (paylaşımlı kopya yok). Bu 900 KB üstü (artık sıkıştırılmış) yanıtlar için geçerli
+  ve pratikte hiç yok.
+
+Testler: `redis.test.ts` (boyut hatası devreyi açmıyor, bayt hesabı), `cachedFetch.test.ts` (gzip gidiş-dönüş, eski
+kayıt, max-request-size'da L1 HIT, negatif cache), `swrCache.test.ts` (sığmayan değer yazılmıyor).
+
+**Beklenen depolama:** Sıkıştırmayla `smc:*` ~245 MB → ~45–55 MB; toplam ~60–70 MB. Eski kayıtlar en çok 7 günde
+(`fixtures/{id}` saklama süresi) yenileriyle değişir. Deploy'dan sonraki ilk günlerde sınır hâlâ yakın, bu yüzden
+Upstash konsolunda **eviction'ı açmak** (dolunca reddetme yerine en eski anahtarı atma) önerilir.
+
+### Bu hata Sportmonks havuz tüketimini / rate limit olaylarını açıklıyor mu?
+
+**Hayır, kanıtlar buna işaret etmiyor:**
+- 10 MB'ı aşan bilinen tek istek uygulamanın değil, betiğin; uygulamanın en büyük tek değeri 289 KB.
+- Redis yazmaları çalışıyor: 2026-10-07 21:02 UTC'de en sıcak anahtar 0,5 dk önce yazılmıştı. Cron nabzı 21:00 UTC.
+- Bot-tick 429 olayları 14 gün boyunca birikti; tek seferlik bir Redis hatası bunu açıklamaz.
+
+**Ama mekanizma koda gerçekten vardı:** otomatik pipeline (risk 1) + devre kesici (risk 2) → 30 sn boyunca tüm okumalar
+MISS → Sportmonks'a yığılma. Depolama dolduğunda (risk 3) yazmalar düşse de okumalar sürerdi; ama devre kesici açıldığı
+için okumalar da kesilirdi. Bu zincir artık kırıldı. Vercel Logs'ta `[redis] art arda 3 hata` satırı geçmişte bu
+olayların olup olmadığını gösterir; ben okuyamıyorum.
+
+### Redis komut kullanımı tahmini (Free: aylık 500 bin komut, 256 MB — konsoldan teyit edilmeli)
+
+| Kaynak | Komut / olay | Günlük tahmin |
+|---|---|---|
+| `cachedFetch` MISS (upstream): GET + kilit SET NX + SET + DEL (+ soğuma GET ≤1/5 sn/havuz) | 4–5 | 5–25 bin MISS → 25–110 bin |
+| `cachedFetch` Redis HIT (L1 dışı) | 1 | 5–25 bin |
+| bot-tick (2 dk = 720/gün): soğuma GET + 2 gün listesinin sayfaları (L1 soğuksa) | 3–12 | 2–9 bin; canlı maçta + inplay MISS |
+| Cron (2 iş × 96 tick + GitHub yedeği): kilit, nabız GET/SET×2, DEL | ~5 | ~1–2 bin |
+| Rate limit (`fixedWindow`, CDN'e takılmayan API isteği) | 1–2 | trafiğe bağlı, birkaç bin |
+| `sessionVersion` (girişli istek) | 1 | birkaç yüz–bin |
+| AI kotası: kontrol 2 GET + kayıt 2×(INCRBY+EXPIRE) (+ atomik sayaç) | ~6–8 / mesaj | mesaj sayısı × 7 |
+| `smq` ölçüm (yeni): 20 istekte bir HINCRBY×alan + EXPIRE | ~0,2 / MISS | 1–5 bin |
+
+**Toplam:** günde ~40–150 bin → ayda ~1,2–4,5 milyon. Bu, aylık 500 bin Free sınırının **2–9 katı**. Yazmaların hâlâ
+başarılı olması bununla çelişiyor. Ya plan sınırı farklı, ya trafik tahminden düşük (L1 isabeti yüksek), ya da
+ay içinde sınıra henüz gelinmedi. Kesin sayı Upstash konsolunun Usage sekmesinde. Sınır aşılırsa Upstash bütün
+komutları reddeder → cache kapanır → Sportmonks havuzu hızla tükenir. Bu, rate limit olaylarının olası bir kök
+nedeni olarak **konsoldan kontrol edilmeli**. Komut azaltma seçenekleri: MISS başına kilit SET+DEL'i yalnız kısa TTL'li
+(canlı) anahtarlarda kullanmak (−2/MISS), L1'i "eski ama kullanılabilir" kayıtları da tutacak şekilde genişletmek.
