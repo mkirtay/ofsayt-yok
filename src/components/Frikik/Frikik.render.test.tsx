@@ -17,7 +17,7 @@ describe('<Frikik />', () => {
     expect(html).not.toContain('Bir arkadaşın');
     expect(html).not.toContain('role="tablist"'); // tek mod: mod seçici yok
     expect(html).not.toContain('Kalite');
-    const lvl = renderToStaticMarkup(<Frikik shared={{ score: 1250, level: 7 }} />);
+    const lvl = renderToStaticMarkup(<Frikik shared={{ score: 1250, level: 7, day: null }} />);
     expect(lvl).toContain('7. seviyeye ulaştı');
   });
 

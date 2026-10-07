@@ -1,7 +1,7 @@
 /**
  * /frikik paylaşım görseli (1200×630) — skor kartı. Diğer paylaşım görselleriyle aynı dil: marka yeşili + sağda koyu
- * eğik şerit, sol üstte logo. Seviye koşusu (seviye + puan); yoksa oyunun genel kartı. Font ve logo
- * gömülü (dış istek yok).
+ * eğik şerit, sol üstte logo. Seviye koşusu (seviye + puan + varsa gün: "Günün frikiği · 8 Ekim 2026"); yoksa oyunun
+ * genel kartı. Font ve logo gömülü (dış istek yok).
  */
 import type { ShareInfo } from '@/lib/frikik/share';
 import { ImageResponse } from './imageResponse';
@@ -11,6 +11,13 @@ const GREEN = '#00A76F';
 const GREEN_DARK = '#007B55';
 
 const fmt = (n: number) => n.toLocaleString('tr-TR');
+const MONTHS_TR = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+
+/** "2026-10-08" → "8 Ekim 2026" (ICU'suz; gün anahtarı parseShare'de doğrulanmış). */
+export function formatDayTr(day: string): string {
+  const [y, m, d] = day.split('-').map(Number);
+  return `${d} ${MONTHS_TR[(m ?? 1) - 1]} ${y}`;
+}
 
 export function renderFrikikOgImage(info: ShareInfo | null): ImageResponse {
   return new ImageResponse(
@@ -35,7 +42,7 @@ export function renderFrikikOgImage(info: ShareInfo | null): ImageResponse {
             <div style={{ display: 'flex', color: '#fff', fontSize: 92, fontWeight: 800, lineHeight: 1.05, marginTop: 8 }}>Serbest vuruş oyunu</div>
           )}
           <div style={{ display: 'flex', color: '#eafff5', fontSize: 38, fontWeight: 600, marginTop: 22 }}>
-            {info ? 'Günün frikiği, 3 can. Sen kaça ulaşırsın?' : 'Günün frikiği: 3 can. Barajı aş, kaleciyi geç.'}
+            {info ? (info.day ? `Günün frikiği · ${formatDayTr(info.day)} · Sen kaça ulaşırsın?` : 'Günün frikiği, 3 can. Sen kaça ulaşırsın?') : 'Günün frikiği: 3 can. Barajı aş, kaleciyi geç.'}
           </div>
         </div>
       </div>
