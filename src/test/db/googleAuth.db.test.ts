@@ -166,6 +166,9 @@ d('DB entegrasyonu — Google ile giriş', () => {
     if (!r.ok) return;
     expect((await prisma.user.findUniqueOrThrow({ where: { id: r.user.id }, select: { credits: true } })).credits).toBe(0);
     expect(await bonusCount(r.user.id)).toBe(0);
+    // Doğrulanmamış hesap bonus alamaz; doğrulama (consumeEmailVerificationToken) önce emailVerified'ı işaretler.
+    expect(await grantVerifiedSignupBonus(r.user.id)).toBe(false);
+    await prisma.user.update({ where: { id: r.user.id }, data: { emailVerified: new Date() } });
     expect(await grantVerifiedSignupBonus(r.user.id)).toBe(true);
     expect(await grantVerifiedSignupBonus(r.user.id)).toBe(false);
     expect(await bonusCount(r.user.id)).toBe(1);

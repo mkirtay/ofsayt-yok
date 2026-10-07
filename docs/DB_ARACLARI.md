@@ -95,3 +95,44 @@ npm run grant-premium
 ```
 
 Script çalıştırıldığında email ve süre (gün) sorar.
+
+---
+
+## Kural: yeni tablolarda Row Level Security
+
+Prisma'yla eklenen her yeni tablo için migration SQL'ine şunu ekle:
+
+```sql
+ALTER TABLE "<Tablo>" ENABLE ROW LEVEL SECURITY;
+```
+
+Politika eklenmez: uygulama tabloya yalnız Prisma'nın servis bağlantısıyla erişir (RLS'yi aşan rol). Böylece Supabase'in
+PostgREST/anon anahtarı üzerinden tabloya erişilemez. Deploy sonrası Supabase → Advisors → **Security Advisor**'da
+**0 hata** olduğunu doğrula (`rls_disabled_in_public` uyarısı kalmamalı).
+
+---
+
+## emailNormalized geri doldurma (kanonik e-posta, 2026-10)
+
+`canonicalEmail` (src/lib/emailNormalize.ts) genişledi: artık TÜM alan adlarında `+etiket` atılıyor (gmail'de ayrıca
+noktalar; IDN → punycode). Eski satırlarda `User.emailNormalized` boş (2026-10-04 öncesi) ya da eski kuralla yazılmış.
+Kod bu satırları ham e-postadaki `taban+…@alan` aramasıyla da yakalıyor, ama tekil indeksin tam koruma sağlaması için
+değerler güncel kuralla yeniden yazılmalı.
+
+```bash
+# 1) DRY-RUN (varsayılan; hiçbir şey yazmaz): plan + çakışma raporu, e-postalar maskeli
+npx dotenv -e .env.local -- npx tsx scripts/backfill-email-normalized.mjs
+
+# 2) Rapor uygunsa yaz
+npx dotenv -e .env.local -- npx tsx scripts/backfill-email-normalized.mjs --apply
+```
+
+- Sıra: önce bu değişikliğin (kanonik kural) deploy'u, sonra betik. Deploy'dan önce çalıştırılırsa yeni kayıtlar eski
+  kuralla yazılmaya devam eder.
+- **Çakışma grubu** = aynı posta kutusunda birden çok hesap (ör. `ali+1@outlook.com` ve `ali+2@outlook.com`). Betik bu
+  gruplardaki hiçbir satıra yazmaz; kullanıcı id'leri ve maskeli e-postaları listeler. Karar elle: hesapları birleştirme,
+  fazla kayıt bonuslarını (`CreditTransaction` `SIGNUP_BONUS`) geri alma ya da olduğu gibi bırakma. Kayıt bonusu kodu
+  (`grantVerifiedSignupBonus`) aynı posta kutusunda ikinci bonusu zaten vermez; bu gruplar yalnız geçmişte verilmiş
+  bonuslar için önemlidir.
+- `--apply` her satırı ayrı ve koşullu yazar (okunduğu andaki değer değişmişse atlar). Tekil çakışma (P2002) raporlanıp
+  atlanır; betiği bir kez daha çalıştırmak, sıralamadan doğan geçici çakışmaları çözer. Tekrar çalıştırmak güvenlidir.
