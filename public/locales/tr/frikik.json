@@ -97,6 +97,7 @@
     "level": "Seviye",
     "points": "Puan",
     "loading": "Tablo yükleniyor…",
-    "empty": "Henüz kayıt yok. İlk sen ol!"
+    "empty": "Henüz kayıt yok. İlk sen ol!",
+    "error": "Tablo şu an yüklenemedi; biraz sonra tekrar dene."
   }
 }

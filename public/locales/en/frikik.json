@@ -97,6 +97,7 @@
     "level": "Level",
     "points": "Points",
     "loading": "Loading the board…",
-    "empty": "No entries yet. Be the first!"
+    "empty": "No entries yet. Be the first!",
+    "error": "The board could not be loaded right now; try again shortly."
   }
 }

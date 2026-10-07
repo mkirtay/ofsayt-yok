@@ -10,7 +10,7 @@ type Tab = 'daily' | 'monthly';
  * Günlük / Aylık sekmeli puan durumu (en iyi 20). Kendi satırı vurgulu; ilk 20'de değilse altta kendi sırası.
  * Veri yokken iskelet değil kısa not (sabit yükseklik gerekmez; sayfanın altında).
  */
-export default function Leaderboard({ board, me, loading }: { board: Board | null; me: MyStanding | null; loading: boolean }) {
+export default function Leaderboard({ board, me, loading, error = false }: { board: Board | null; me: MyStanding | null; loading: boolean; error?: boolean }) {
   const { t } = useTranslation('frikik');
   const [tab, setTab] = useState<Tab>('daily');
   const rows = board ? board[tab] : [];
@@ -45,7 +45,7 @@ export default function Leaderboard({ board, me, loading }: { board: Board | nul
       <p className={styles.boardSub}>{tab === 'daily' ? t('board.dailySub') : t('board.monthlySub')}</p>
       <div id="frikik-board-panel" role="tabpanel" aria-labelledby={`frikik-tab-${tab}`}>
         {rows.length === 0 ? (
-          <p className={styles.boardEmpty}>{loading ? t('board.loading') : t('board.empty')}</p>
+          <p className={styles.boardEmpty}>{loading ? t('board.loading') : error ? t('board.error') : t('board.empty')}</p>
         ) : (
           <table className={styles.table}>
             <thead>

@@ -581,7 +581,7 @@ export default function Frikik({ shared }: { shared: ShareInfo | null }) {
         </p>
       ) : null}
 
-      <Leaderboard board={board} me={boardStanding} loading={board == null && !boardError} />
+      <Leaderboard board={board} me={boardStanding} loading={board == null && !boardError} error={boardError} />
 
       <section className={styles.rules}>
         <div>
