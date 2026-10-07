@@ -4,6 +4,7 @@ import { isSafeHttpUrl, sanitizePlainText } from '@/lib/security';
 import { isGalleryAvatarUrl, toStoredImage } from '@/lib/avatars';
 import { siteBaseUrl, withAbsoluteImage } from '@/lib/siteUrl';
 import { getRequestUserId } from '@/lib/mobileAuth';
+import { checkNickname } from '@/lib/frikik/nickname';
 import { hitFixedWindowRateLimit } from '@/lib/rateLimit';
 
 // Profil JSON'u birkaç KB'ı geçmez; Next varsayılanı (1 MB) yerine 16 KB — aşılırsa Next 413 döner.
@@ -132,6 +133,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             return res.status(400).json({
               error: 'Kullanıcı adı 3–30 karakter; yalnızca harf, rakam ve alt çizgi.',
             });
+          } else if (!checkNickname(t).ok) {
+            // Kullanıcı adı herkese açık (Gündem, Frikik skor tablosu): uygunsuz / ayrılmış adlar kabul edilmez.
+            return res.status(400).json({ error: 'Bu kullanıcı adı kullanılamaz; başka bir ad seç.', code: 'USERNAME_NOT_ALLOWED' });
           } else {
             data.username = t;
           }
