@@ -41,63 +41,9 @@
   border-radius: $radius-sm;
 }
 
-// Mod sekmeleri (seviye / 5 vuruş) + günün etiketi
-.modes {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: $spacing-2;
-}
-
-.modeBtn {
-  min-height: 36px;
-  padding: 0 14px;
-  border: 1px solid $color-border;
-  border-radius: $radius-full;
-  background: $color-surface;
-  color: $color-text;
-  font: inherit;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-
-  &[aria-selected='true'] {
-    background: $color-primary;
-    border-color: $color-primary;
-    color: #fff;
-  }
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: default;
-  }
-
-  &:focus-visible {
-    outline: 2px solid $color-primary;
-    outline-offset: 2px;
-  }
-}
-
-.qualityBtn {
-  min-height: 30px;
-  padding: 0 10px;
-  border: 1px solid $color-border;
-  border-radius: $radius-full;
-  background: transparent;
-  color: $color-text-secondary;
-  font: inherit;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: default;
-  }
-}
-
 .daily {
   margin-left: auto;
+  align-self: center;
   font-size: 12px;
   font-weight: 600;
   color: $color-text-secondary;
@@ -224,34 +170,6 @@
   font-weight: 700;
   font-size: 14px;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
-}
-
-.dots {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.85);
-  background: transparent;
-
-  &[data-state='goal'] {
-    background: #00a76f;
-    border-color: #00a76f;
-  }
-
-  &[data-state='miss'] {
-    background: rgba(229, 50, 45, 0.9);
-    border-color: rgba(229, 50, 45, 0.9);
-  }
-
-  &[data-state='current'] {
-    background: #fff;
-  }
 }
 
 .right {

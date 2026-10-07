@@ -15,10 +15,10 @@ describe('<Frikik />', () => {
     expect(html).toMatch(/role="application" aria-label="Frikik oyun alanı"><div class="[^"]*"><\/div><\/div>/);
     expect(html).toContain(tr.rules.p3);
     expect(html).not.toContain('Bir arkadaşın');
-    expect(renderToStaticMarkup(<Frikik shared={{ score: 850, level: null }} />)).toContain('Bir arkadaşın 850 puan yaptı');
+    expect(html).not.toContain('role="tablist"'); // tek mod: mod seçici yok
+    expect(html).not.toContain('Kalite');
     const lvl = renderToStaticMarkup(<Frikik shared={{ score: 1250, level: 7 }} />);
     expect(lvl).toContain('7. seviyeye ulaştı');
-    expect(lvl).toContain('role="tablist"');
   });
 
   it('three.js yalnız dinamik import ile: bileşen ve sayfa statik olarak three / sahneyi içe aktarmaz', () => {

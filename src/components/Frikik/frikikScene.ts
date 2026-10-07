@@ -9,8 +9,8 @@
  * kaydır (swipe) — genel yön hedef, en yüksek kaydırma hızı güç, yolun bombesi falso. Kaydırırken yalnız parmağın
  * çizdiği iz (ince çizgi) ve güç çubuğu görünür; topun yolu / hedef halkası ÇİZİLMEZ. Parmak titremesi yumuşatılır. Yol
  * 16 noktalı tam sayı girdiye çevrilir (lib/frikik/swipe.ts); bırakınca son girdi aynen şut olur.
- * Akış: tur (nişan) → uçuş → sonuç beklemesi → sıradaki tur. Seri modunda 5 vuruş → `onFinish`; seviye modunda gol →
- * sonraki seviye, kaçırma → 1 can, canlar bitince `onFinish`. Seviye kaldıraçları (rüzgâr, daralan kale, hareketli
+ * Akış: tur (nişan) → uçuş → sonuç beklemesi → sıradaki tur. Tek mod (Günün frikiği): gol →
+ * sonraki seviye, kaçırma → 1 can, canlar bitince `onFinish` (tek mod: Günün frikiği). Seviye kaldıraçları (rüzgâr, daralan kale, hareketli
  * baraj) turdan okunur; kale grubu z'de ölçeklenir, baraj figürleri her karede `wallOffset` ile kayar.
  * Sekme gizliyken / sahne ekran dışındayken döngü durur. `dispose()` GPU kaynaklarını bırakır.
  */
@@ -63,7 +63,6 @@ import {
   KEEPER,
   LIVES,
   MAX_RELEASE_TICK,
-  SHOTS_PER_SERIES,
   TICK,
   WALL_DISTANCE,
   aimBasis,
@@ -72,7 +71,6 @@ import {
   levelPoints,
   POWER_ZONES,
   makeLevelRound,
-  makeRound,
   shotParams,
   startShot,
   stepShot,
@@ -84,19 +82,14 @@ import {
 } from '@/lib/frikik/sim';
 import { effectiveMs, smoothPoint, swipeToInput, type GoalFrame, type ScreenPoint } from '@/lib/frikik/swipe';
 
-export type FrikikMode = 'series' | 'level';
-/** Seri ya da seviye koşusu özeti. `results[i].points` seviye çarpanı uygulanmış puandır. */
-export type FrikikSummary = { mode: FrikikMode; seed: number; inputs: ShotInput[]; results: ShotResult[]; total: number; level: number; cleared: number };
+/** Seviye koşusu özeti. `results[i].points` seviye çarpanı uygulanmış puandır. */
+export type FrikikSummary = { seed: number; inputs: ShotInput[]; results: ShotResult[]; total: number; level: number; cleared: number };
 /** Tur başı bilgisi (HUD): seri indeksi, seviye, can, rüzgâr (m/sn², + sağa), kale ortasına uzaklık (m). */
 export type RoundInfo = { index: number; level: number; lives: number; wind: number; dist: number };
 
 export type FrikikOptions = {
-  /** Mobil: düşük pixelRatio, ucuz malzeme, küçük dokular. */
-  lite: boolean;
   /** Reklam panolarındaki boş pano metni için dil. */
   lang: 'tr' | 'en';
-  /** Kalite: 'low' = az taraftar (240), projektör yok, pixelRatio 1; 'high' = tam tribün. */
-  quality: 'low' | 'high';
   canvasClassName: string;
   handleClassName: string;
   goalClassName: string;
@@ -115,10 +108,8 @@ export type FrikikHandle = {
   dispose: () => void;
   /** Son karenin draw call / üçgen sayısı (renderer.info). */
   stats: () => { calls: number; triangles: number };
-  /** Seri (5 vuruş) başlat. */
-  start: (seed: number) => void;
   /** Seviye koşusu (3 can) başlat. */
-  startLevels: (seed: number) => void;
+  start: (seed: number) => void;
   setGoalLabel: (label: string) => void;
 };
 
@@ -165,7 +156,6 @@ function boxLinesTexture(pxPerM: number): CanvasTexture {
 }
 
 export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandle {
-  const { lite } = opts;
   const disposables: { dispose: () => void }[] = [];
   const track = <T extends { dispose: () => void }>(x: T): T => {
     disposables.push(x);
@@ -174,8 +164,8 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
   let disposed = false;
 
   const renderer = new WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
-  const low = opts.quality === 'low';
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, low ? 1 : lite ? 1.5 : 1.75));
+  // Her zaman yüksek kalite; tek güvenlik ağı: kare süresi sürekli yüksekse (bkz. frame) sessizce hafifletilir
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75));
   renderer.setClearColor(0x000000, 0);
   renderer.toneMapping = ACESFilmicToneMapping;
   const canvas = renderer.domElement;
@@ -220,17 +210,17 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
   const key = new DirectionalLight(0xffffff, 2);
   key.position.set(-8, 14, 6);
   scene.add(hemi, key);
-  const envTex: Texture | null = lite ? null : track(createEnvTexture(renderer));
+  const envTex: Texture | null = track(createEnvTexture(renderer));
 
   // ── Zemin, çizgiler, tribün, pano ─────────────────────────────────────────────────────────────────
-  const grass = track(grassTexture(lite ? 256 : 512));
+  const grass = track(grassTexture(512));
   grass.repeat.set(160 / 4, 110 / 4);
   grass.anisotropy = maxAniso;
   const ground = new Mesh(track(new PlaneGeometry(160, 110)), track(new MeshStandardMaterial({ map: grass, roughness: 0.95, metalness: 0 })));
   ground.rotation.x = -Math.PI / 2;
   ground.position.set(-40, 0, 0);
   scene.add(ground);
-  const linesTex = track(boxLinesTexture(lite ? 20 : 32));
+  const linesTex = track(boxLinesTexture(32));
   linesTex.anisotropy = maxAniso;
   const lines = new Mesh(
     track(new PlaneGeometry(LINES.maxX - LINES.minX, LINES.halfZ * 2)),
@@ -241,7 +231,7 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
   scene.add(lines);
 
   // Kale arkası tribün + taraftarlar (stands.ts: 3–4 draw call, gölge yok)
-  const stands = track(buildStands({ lite, low }));
+  const stands = track(buildStands({}));
   scene.add(stands.group);
   const boardTex = track(boardTexture());
   boardTex.repeat.set(14, 1);
@@ -258,7 +248,7 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
   for (const g of goal.geometries) track(g);
   scene.add(goal.group);
 
-  const ballView = track(buildBall({ lite, envTex, logoCount: lite ? 2 : 4 }));
+  const ballView = track(buildBall({ lite: false, envTex, logoCount: 4 }));
   ballView.group.scale.setScalar(BALL_R);
   scene.add(ballView.group);
   const shadowTex = track(shadowTexture());
@@ -293,10 +283,10 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
   for (const x of [...figGeos, ...figMats]) track(x);
 
   // ── Reklam panoları (tek atlas, tek geometri) ──────────────────────────────────────────────────────
-  const ads = track(buildAdBoards({ lite, lang: opts.lang }));
+  const ads = track(buildAdBoards({ lang: opts.lang }));
   scene.add(ads.mesh);
 
-  const confetti = makeConfetti(lite ? 70 : 120, lite ? 0.2 : 0.16, CONFETTI_COLORS);
+  const confetti = makeConfetti(120, 0.16, CONFETTI_COLORS);
   track(confetti);
   scene.add(confetti.points);
 
@@ -321,7 +311,6 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
   let width = 1;
   let height = 1;
   let seed = 0;
-  let mode: FrikikMode = 'series';
   let index = 0;
   let level = 1;
   let lives = LIVES;
@@ -424,7 +413,7 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
 
   const beginRound = (i: number) => {
     index = i;
-    round = mode === 'level' ? makeLevelRound(seed, level) : makeRound(seed, i);
+    round = makeLevelRound(seed, level);
     basis = aimBasis(round);
     goal.group.scale.z = round.goalScale;
     const w = round.wall;
@@ -536,7 +525,7 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
   };
 
   const onResult = (base: ShotResult) => {
-    const result = mode === 'level' ? { ...base, points: levelPoints(base.points, level) } : base;
+    const result = { ...base, points: levelPoints(base.points, level) };
     results.push(result);
     total += result.points;
     holdLeft = result.kind === 'goal' ? HOLD_TICKS.goal : HOLD_TICKS.other;
@@ -574,17 +563,14 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
       else if (phase === 'hold' && --holdLeft <= 0) {
         const finish = () => {
           phase = 'done';
-          opts.onFinish({ mode, seed, inputs: [...inputs], results: [...results], total, level, cleared });
+          opts.onFinish({ seed, inputs: [...inputs], results: [...results], total, level, cleared });
         };
-        if (mode === 'level') {
-          if (shot.result!.kind === 'goal') {
-            cleared++;
-            level++;
-          } else lives--;
-          if (lives <= 0) finish();
-          else beginRound(index + 1);
-        } else if (index + 1 < SHOTS_PER_SERIES) beginRound(index + 1);
-        else finish();
+        if (shot.result!.kind === 'goal') {
+          cleared++;
+          level++;
+        } else lives--;
+        if (lives <= 0) finish();
+        else beginRound(index + 1);
       }
     }
   };
@@ -641,10 +627,34 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
   let pageVisible = document.visibilityState === 'visible';
   let inView = true;
   let contextLost = false;
+  /**
+   * Görünmez güvenlik ağı: 120 karelik pencerede medyan kare süresi iki pencere üst üste 30 ms'yi (≈ 33 fps) aşarsa
+   * bir kez hafiflet: pixelRatio 1 ve taraftar sayısı yarı. Arayüz yok, varsayılan her zaman yüksek kalite.
+   */
+  const FRAME_WINDOW = 120;
+  const SLOW_FRAME_MS = 30;
+  const frameTimes: number[] = [];
+  let slowWindows = 0;
+  let degraded = false;
+  const watchFrame = (ms: number) => {
+    if (degraded || ms <= 0 || ms > 250) return;
+    frameTimes.push(ms);
+    if (frameTimes.length < FRAME_WINDOW) return;
+    const sorted = [...frameTimes].sort((a, b) => a - b);
+    frameTimes.length = 0;
+    slowWindows = sorted[FRAME_WINDOW >> 1]! > SLOW_FRAME_MS ? slowWindows + 1 : 0;
+    if (slowWindows >= 2) {
+      degraded = true;
+      renderer.setPixelRatio(1);
+      renderer.setSize(width, height, false);
+      stands.setDensity(0.5);
+    }
+  };
   const frame = (ts: number) => {
     raf = requestAnimationFrame(frame);
     const dt = last ? (ts - last) / 1000 : 0;
     last = ts;
+    if (pageVisible && inView) watchFrame(dt * 1000);
     update(dt);
     render();
   };
@@ -766,8 +776,7 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
   );
   ballView.spin.quaternion.setFromAxisAngle(new Vector3(0, 0, 1), 0.5);
 
-  const begin = (nextMode: FrikikMode, nextSeed: number) => {
-    mode = nextMode;
+  const begin = (nextSeed: number) => {
     seed = nextSeed >>> 0;
     inputs = [];
     results = [];
@@ -786,10 +795,7 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
       return { calls: renderer.info.render.calls, triangles: renderer.info.render.triangles };
     },
     start(nextSeed: number) {
-      begin('series', nextSeed);
-    },
-    startLevels(nextSeed: number) {
-      begin('level', nextSeed);
+      begin(nextSeed);
     },
     setGoalLabel(label: string) {
       goalText.textContent = label;

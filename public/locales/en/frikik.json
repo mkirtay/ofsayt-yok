@@ -1,14 +1,11 @@
 {
   "pageTitle": "Frikik — Free Kick Game | Ofsayt Yok",
   "pageDesc": "Free kick of the day: 3 lives, a wall, a keeper and wind that get harder every level. Bend it, hit the top corner, climb the levels.",
-  "sharedTitle": "{{score}} points in Frikik — can you beat it? | Ofsayt Yok",
   "title": "Frikik",
-  "sub": "5 free kicks. Beat the wall, beat the keeper.",
-  "shared": "A friend scored {{score}} points. Can you beat it?",
+  "sub": "Free kick of the day: 3 lives, one shot per level. How many levels can you clear?",
   "stageLabel": "Free kick game area",
   "loading": "Preparing the pitch…",
   "hud": {
-    "shot": "Shot {{n}}/{{total}}",
     "score": "{{score}} pts",
     "level": "Level {{n}}",
     "lives": "{{n}}/{{total}} lives",
@@ -28,13 +25,9 @@
     "points": "+{{points}}"
   },
   "end": {
-    "title": "Series over",
-    "total": "{{score}} points",
-    "best": "Highest possible score is 1250",
     "again": "Play again",
     "share": "Share",
     "copied": "Link copied",
-    "shareText": "I scored {{score}} points in Frikik. Can you beat it?",
     "levelTitle": "Out of lives",
     "level": "Level {{n}}",
     "levelSummary": "{{cleared}} levels cleared · {{score}} points",
@@ -55,8 +48,7 @@
     "p1": "Goal: 100 points",
     "p2": "In off the post: +50",
     "p3": "Top corner: +100",
-    "r4": "Each series has 5 shots; the ball position and the wall change every shot. The keeper stays put until you shoot, then dives towards their guess (late and error-prone at low levels, fast and accurate at high ones). The first 2 shots are easier.",
-    "r5": "Level mode (free kick of the day): 3 lives, one shot per level. Goal → next level, miss → lose a life. Distance and angle grow every level (from 20 m central to 32 m wide; see \"Distance\" above the pitch); the wall, keeper, wind (direction and strength shown above the pitch), a narrower goal and a moving wall arrive step by step. Everyone plays the same sequence that day.",
+    "r4": "Level mode (free kick of the day): 3 lives, one shot per level. Goal → next level, miss → lose a life. Distance and angle grow every level (from 20 m central to 32 m wide; see \"Distance\" above the pitch); the wall, keeper, wind (direction and strength shown above the pitch), a narrower goal and a moving wall arrive step by step. Everyone plays the same sequence that day.",
     "p4": "In level mode points are multiplied by the level: level 1 ×1, level 2 ×1.5, level 3 ×2 … Ranking is by level reached first, then points."
   },
   "tip": {
@@ -68,18 +60,7 @@
     "l4": "Level mode: 3 lives. Watch the wind arrow; if it points right, the ball drifts right."
   },
   "sharedLevelTitle": "Level {{level}}, {{score}} points in Frikik — how far can you get? | Ofsayt Yok",
-  "subLevel": "Free kick of the day: 3 lives, one shot per level. How many levels can you clear?",
   "sharedLevel": "A friend reached level {{level}} ({{score}} points). Can you beat it?",
-  "mode": {
-    "label": "Game mode",
-    "level": "Level mode",
-    "series": "5 shots"
-  },
   "daily": "Free kick of the day · {{date}}",
-  "adContact": "To advertise on the pitch boards: {{email}}",
-  "quality": {
-    "label": "Graphics quality",
-    "low": "Quality: Low",
-    "high": "Quality: High"
-  }
+  "adContact": "To advertise on the pitch boards: {{email}}"
 }

@@ -1,6 +1,6 @@
 /**
  * /frikik paylaşım görseli (1200×630) — skor kartı. Diğer paylaşım görselleriyle aynı dil: marka yeşili + sağda koyu
- * eğik şerit, sol üstte logo. Seri skoru ya da seviye koşusu (seviye + puan); yoksa oyunun genel kartı. Font ve logo
+ * eğik şerit, sol üstte logo. Seviye koşusu (seviye + puan); yoksa oyunun genel kartı. Font ve logo
  * gömülü (dış istek yok).
  */
 import type { ShareInfo } from '@/lib/frikik/share';
@@ -13,8 +13,6 @@ const GREEN_DARK = '#007B55';
 const fmt = (n: number) => n.toLocaleString('tr-TR');
 
 export function renderFrikikOgImage(info: ShareInfo | null): ImageResponse {
-  const score = info?.score ?? null;
-  const level = info?.level ?? null;
   return new ImageResponse(
     (
       <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', background: GREEN, fontFamily: 'Inter', position: 'relative' }}>
@@ -25,24 +23,19 @@ export function renderFrikikOgImage(info: ShareInfo | null): ImageResponse {
         </div>
         <div style={{ display: 'flex', flex: 1, flexDirection: 'column', justifyContent: 'center', padding: '0 72px 48px' }}>
           <div style={{ display: 'flex', color: '#eafff5', fontSize: 40, fontWeight: 800, letterSpacing: 6 }}>FRİKİK</div>
-          {level != null && score != null ? (
+          {info ? (
             <div style={{ display: 'flex', flexDirection: 'column', marginTop: 8 }}>
               <div style={{ display: 'flex', alignItems: 'baseline' }}>
                 <div style={{ display: 'flex', color: '#eafff5', fontSize: 64, fontWeight: 800, marginRight: 24 }}>SEVİYE</div>
-                <div style={{ display: 'flex', color: '#fff', fontSize: 190, fontWeight: 800, lineHeight: 1 }}>{level}</div>
+                <div style={{ display: 'flex', color: '#fff', fontSize: 190, fontWeight: 800, lineHeight: 1 }}>{info.level}</div>
               </div>
-              <div style={{ display: 'flex', color: '#fff', fontSize: 64, fontWeight: 800, marginTop: 10 }}>{fmt(score)} puan</div>
-            </div>
-          ) : score != null ? (
-            <div style={{ display: 'flex', alignItems: 'baseline', marginTop: 8 }}>
-              <div style={{ display: 'flex', color: '#fff', fontSize: 190, fontWeight: 800, lineHeight: 1 }}>{score}</div>
-              <div style={{ display: 'flex', color: '#eafff5', fontSize: 56, fontWeight: 800, marginLeft: 20 }}>puan</div>
+              <div style={{ display: 'flex', color: '#fff', fontSize: 64, fontWeight: 800, marginTop: 10 }}>{fmt(info.score)} puan</div>
             </div>
           ) : (
             <div style={{ display: 'flex', color: '#fff', fontSize: 92, fontWeight: 800, lineHeight: 1.05, marginTop: 8 }}>Serbest vuruş oyunu</div>
           )}
           <div style={{ display: 'flex', color: '#eafff5', fontSize: 38, fontWeight: 600, marginTop: 22 }}>
-            {level != null ? 'Günün frikiği, 3 can. Sen kaça ulaşırsın?' : score != null ? '5 serbest vuruşta. Sen kaç yaparsın?' : '5 vuruş. Barajı aş, kaleciyi geç.'}
+            {info ? 'Günün frikiği, 3 can. Sen kaça ulaşırsın?' : 'Günün frikiği: 3 can. Barajı aş, kaleciyi geç.'}
           </div>
         </div>
       </div>

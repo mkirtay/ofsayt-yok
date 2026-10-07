@@ -1,7 +1,7 @@
 /**
- * GET /api/og/frikik[?s=<skor>] ya da [?l=<seviye>&s=<puan>] — /frikik paylaşım görseli (1200×630 PNG). Seri skoru yalnız
- * olası değerlerden (0–1250, 50'nin katı); seviye kartı l ≤ 999 ve puan o seviyenin üst sınırını aşmaz → adres uzayı
- * sınırlı; geçersiz parametre skorsuz adrese yönlendirilir (önbellek kırılıp CPU harcatılamaz).
+ * GET /api/og/frikik[?l=<seviye>&s=<puan>] — /frikik paylaşım görseli (1200×630 PNG). Seviye kartı: l ≤ 999 ve puan o
+ * seviyenin üst sınırını aşmaz → adres uzayı sınırlı; geçersiz parametre (eski ?s= dahil) skorsuz adrese yönlendirilir
+ * (önbellek kırılıp CPU harcatılamaz).
  */
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { OG_DEFAULT_IMAGE } from '@/config/brandImages';

@@ -8,7 +8,7 @@ import { parseShare, shareImagePath, type ShareInfo } from '@/lib/frikik/share';
 const SITE = process.env.AUTH_URL ?? 'https://ofsaytyok.app';
 
 /**
- * /frikik — serbest vuruş mini oyunu. `?s=<skor>` (seri) ya da `?l=<seviye>&s=<puan>` (seviye modu) paylaşım bağlantısı:
+ * /frikik — serbest vuruş mini oyunu (Günün frikiği). `?l=<seviye>&s=<puan>` paylaşım bağlantısı:
  * başlık ve paylaşım görseli sonucu gösterir (tarayıcılar JS çalıştırmadığı için sunucuda). Sayfa kişisel veri içermez →
  * CDN'de önbelleklenir.
  */
@@ -19,7 +19,7 @@ export const getServerSideProps: GetServerSideProps<{ shared: ShareInfo | null }
 
 export default function FrikikPage({ shared }: { shared: ShareInfo | null }) {
   const { t } = useTranslation('frikik');
-  const title = shared ? (shared.level == null ? t('sharedTitle', { score: shared.score }) : t('sharedLevelTitle', { level: shared.level, score: shared.score })) : t('pageTitle');
+  const title = shared ? t('sharedLevelTitle', { level: shared.level, score: shared.score }) : t('pageTitle');
   const image = `${SITE}${shareImagePath(shared)}`;
   return (
     <>

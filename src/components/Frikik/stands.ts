@@ -3,7 +3,7 @@
  * renkleri → 1 draw call; lamba başları ayrı emissive malzeme → +1), içinde düşük poligonlu taraftarlar (gövde + baş tek
  * geometri, InstancedMesh + instanceColor → 1 draw call; forma / atkı renk çeşitliliği tohumlu) ve birkaç bayrak /
  * pankart (birleşik, köşe renkli → 1 draw call). Gölge yok. Taraftarlar durağan; golde ucuz zıplama (yalnız kutlama
- * süresince matrisler güncellenir). Mobilde (lite) taraftar sayısı azalır; 'low' kalitede 240 taraftar, projektör yok.
+ * süresince matrisler güncellenir). Her zaman tam tribün; `setDensity` yalnız sahnenin FPS güvenlik ağı için.
  *
  * Tribün geometrisi: ön duvar x = 12 (y 0–2,6; üstünde LED şeridi adBoards'ta), basamaklar x = 12,8'den geriye
  * `ROWS` sıra (derinlik 0,85 m, yükseklik 0,5 m), z −32…32.
@@ -40,6 +40,8 @@ export type Stands = {
   update: (dt: number) => void;
   /** Tema (gündüz / gece): tribün ve lamba parlaklığı. */
   setDay: (day: boolean) => void;
+  /** Çizilen taraftar oranı (0–1): FPS güvenlik ağı yarıya indirir. */
+  setDensity: (f: number) => void;
   dispose: () => void;
 };
 
@@ -80,7 +82,7 @@ function mergedMesh(pos: number[], col: number[], idx: number[], material: MeshS
   return new Mesh(geo, material);
 }
 
-export function buildStands(opts: { lite: boolean; low?: boolean; seed?: number }): Stands {
+export function buildStands(opts: { seed?: number }): Stands {
   const group = new Group();
   const disposables: { dispose: () => void }[] = [];
   const rnd = lcg(opts.seed ?? 7);
@@ -122,7 +124,7 @@ export function buildStands(opts: { lite: boolean; low?: boolean; seed?: number 
   const lampGeo = new BoxGeometry(1.6, 0.9, 3.2);
   const lampMat = new MeshBasicMaterial({ color: 0xfff4d6 });
   disposables.push(lampGeo, lampMat);
-  for (const h of opts.low ? [] : lampHeads) {
+  for (const h of lampHeads) {
     const m = new Mesh(lampGeo, lampMat);
     m.position.set(h.x, h.y, h.z);
     m.rotation.z = 0.35;
@@ -163,8 +165,8 @@ export function buildStands(opts: { lite: boolean; low?: boolean; seed?: number 
   head.dispose();
   const fanMat = new MeshStandardMaterial({ roughness: 0.85, metalness: 0 });
   disposables.push(fanGeo, fanMat);
-  const perRow = opts.low ? 30 : opts.lite ? 40 : 64;
-  const rowsUsed = opts.low ? 8 : opts.lite ? 10 : STAND.rows;
+  const perRow = 64;
+  const rowsUsed = STAND.rows;
   const count = perRow * rowsUsed;
   const fans = new InstancedMesh(fanGeo, fanMat, count);
   fans.instanceMatrix.setUsage(DynamicDrawUsage);
@@ -224,6 +226,9 @@ export function buildStands(opts: { lite: boolean; low?: boolean; seed?: number 
         return;
       }
       setFans(party);
+    },
+    setDensity(f) {
+      fans.count = Math.max(1, Math.floor(count * Math.min(1, Math.max(0, f))));
     },
     setDay(day) {
       lampMat.color.setHex(day ? 0xdfe6ee : 0xfff4d6);

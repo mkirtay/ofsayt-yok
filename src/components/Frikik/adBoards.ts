@@ -70,9 +70,9 @@ function fitText(ctx: CanvasRenderingContext2D, text: string, x: number, y: numb
   ls.forEach((l, i) => ctx.fillText(l, x, y + (i - (ls.length - 1) / 2) * lh));
 }
 
-export function buildAdBoards(opts: { lite: boolean; lang: 'tr' | 'en'; config?: AdsConfig }): AdBoards {
+export function buildAdBoards(opts: { lang: 'tr' | 'en'; config?: AdsConfig }): AdBoards {
   const cfg = opts.config ?? (adsConfig as AdsConfig);
-  const scale = opts.lite ? 0.5 : 1;
+  const scale = 1;
   const canvas = document.createElement('canvas');
   canvas.width = ATLAS.w * scale;
   canvas.height = ATLAS.h * scale;
