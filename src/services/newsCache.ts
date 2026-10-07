@@ -1,4 +1,4 @@
-import { getRedisClient, withRedis } from '@/lib/redis';
+import { fitsInRedis, getRedisClient, withRedis } from '@/lib/redis';
 import { fetchAllNews } from '@/services/newsService';
 import type { NewsItem } from '@/models/domain';
 
@@ -25,7 +25,7 @@ export async function getCachedNews(): Promise<NewsItem[]> {
   memSnapshot = items;
   memSnapshotTs = Date.now();
 
-  if (redis) await withRedis((r) => r.set(REDIS_KEY, items, { ex: REDIS_TTL_SEC }), null);
+  if (redis && fitsInRedis(items)) await withRedis((r) => r.set(REDIS_KEY, items, { ex: REDIS_TTL_SEC }), null);
 
   return items;
 }

@@ -10,6 +10,39 @@ import { Redis } from '@upstash/redis';
  *   denenmez — her istek zaman aşımını beklemesin. Bu sürede `withRedis` doğrudan yedek değeri döner.
  */
 export const REDIS_COMMAND_TIMEOUT_MS = 1_000;
+
+/**
+ * Tek değerin Redis'e yazılabilecek üst sınırı (bayt, JSON). Upstash isteği en çok 10 MB ve istemcinin otomatik
+ * pipeline'ı (varsayılan açık) aynı mikro-görev turundaki komutları TEK HTTP isteğinde birleştirir: tek bir büyük
+ * değer bütün birleşik isteği düşürür. Büyük yanıtlar sıkıştırılır (bkz. server/sportmonks/cachedFetch.ts), sığmayan
+ * yazılmaz (yalnız instance belleğinde kalır).
+ */
+export const MAX_REDIS_VALUE_BYTES = 900_000;
+
+const utf8 = new TextEncoder();
+
+/** Değerin Redis'e gidecek JSON boyutu (bayt); serileştirilemiyorsa sonsuz. */
+export function redisValueBytes(value: unknown): number {
+  try {
+    return utf8.encode(JSON.stringify(value) ?? '').length;
+  } catch {
+    return Infinity;
+  }
+}
+
+export function fitsInRedis(value: unknown): boolean {
+  return redisValueBytes(value) <= MAX_REDIS_VALUE_BYTES;
+}
+
+/**
+ * Boyut kaynaklı ret: istek 10 MB'ı aştı ("max request size exceeded") ya da veritabanı doldu (OOM / max data size).
+ * Redis'in arızası değil — okumalar çalışmaya devam eder.
+ */
+export function isRedisSizeLimitError(error: unknown): boolean {
+  return /max request size|request size exceeded|request entity too large|max (db|database|data) size|OOM command not allowed/i.test(
+    String((error as Error)?.message ?? error),
+  );
+}
 export const REDIS_FAILURE_THRESHOLD = 3;
 export const REDIS_BYPASS_MS = 30_000;
 
@@ -59,7 +92,12 @@ export async function withRedis<T>(fn: (redis: Redis) => Promise<T>, fallback: T
     const value = await fn(redis);
     consecutiveFailures = 0;
     return value;
-  } catch {
+  } catch (error) {
+    // Boyut hatası devre kesiciyi AÇMAZ: açsaydı instance 30 sn boyunca hiç cache okumaz, her istek upstream'e giderdi.
+    if (isRedisSizeLimitError(error)) {
+      console.warn('[redis] boyut sınırı (istek 10 MB / veritabanı dolu) — bu komut atlandı', String((error as Error)?.message ?? error).slice(0, 200));
+      return fallback;
+    }
     recordFailure(Date.now());
     return fallback;
   }

@@ -8,7 +8,9 @@
  *   anahtar, dizi değerleri sırasıyla tekrar; `%&=` kaçışlı) — `include=a&include=b` ile `include=a,b` çakışmaz.
  * - Süre: `sportmonksCacheTtl` (içeriğe/maç durumuna göre). "Yok" cevapları da (404/403/422, boş 200)
  *   cache'lenir (negatif cache).
- * - Katmanlar: instance içi bellek (L1, yalnız taze kayıt) → Redis (taze + eski).
+ * - Katmanlar: instance içi bellek (L1, yalnız taze kayıt) → Redis (taze + eski). 4 KB'tan büyük gövde Redis'e gzip +
+ *   base64 yazılır (`gz`; Sportmonks JSON'u ölçümde 4–11 kat küçüldü): depolama (Free plan 256 MB) ve otomatik pipeline'ın
+ *   birleşik istek boyutu (10 MB) için. Sıkıştırılmış hali de sınırı aşarsa yalnız L1'de kalır.
  * - Tekil uçuş: aynı instance'ta aynı anahtar için tek upstream isteği; instance'lar arasında Redis
  *   `SET NX PX` kilidi — kilidi alamayan eski veri varsa onu verir, yoksa kısa süre cache'i yoklar.
  * - Sportmonks 429/5xx/ağ hatası/zaman aşımı → son geçerli veri (`stale: true`). Başka instance tazelerken kilide takılan
@@ -22,7 +24,7 @@
  * - Havuz bekçisi (`poolGuard.ts`): 429 → havuz soğumaya girer, soğuma bitene kadar o havuza istek atılmaz (eski veri
  *   ya da anında 429); havuz azalınca kısa TTL'ler esner; her gerçek istek rota × havuz olarak sayılır.
  */
-import { getRedisClient, withRedis } from '@/lib/redis';
+import { getRedisClient, MAX_REDIS_VALUE_BYTES, withRedis } from '@/lib/redis';
 import { currentRequestRoute, reportSportmonksQuota, reportSportmonksRateLimited } from '@/services/sportmonks/quotaMonitor';
 import { LIVE_TTL, sportmonksCacheTtl } from '@/services/sportmonks/cachePolicy';
 import { cacheKeyPrefix } from '@/lib/cacheNamespace';
@@ -46,8 +48,8 @@ const lockPrefix = () => `${cacheKeyPrefix()}smc-lock:`;
 const LOCK_TTL_MS = 10_000;
 const LOCK_WAIT_MS = 3_000;
 const LOCK_POLL_MS = 150;
-/** Upstash istek boyutu sınırının altında kal; daha büyük yanıtlar yalnız L1'de tutulur. */
-const MAX_REDIS_BYTES = 900_000;
+/** Bu boyuttan (JSON karakter) büyük gövde Redis'e sıkıştırılarak yazılır. */
+const COMPRESS_MIN_CHARS = 4_000;
 const L1_MAX_ENTRIES = 300;
 const STRIPPED_FIELDS = ['subscription', 'rate_limit', 'timezone'] as const;
 const NOT_FOUND_STATUSES = new Set([400, 403, 404, 422]);
@@ -64,6 +66,8 @@ export const SPORTMONKS_TIMEOUT_MS = { page: 3_000, api: 5_000 } as const;
 export type SportmonksQuery = Record<string, string | string[] | undefined>;
 
 type Entry = { status: number; body: unknown; fetchedAt: number; freshUntil: number; staleUntil: number };
+/** Redis'teki biçim: küçük gövde aynen, büyük gövde `gz` (gzip + base64 JSON). Eski (sıkıştırılmamış) kayıtlar da okunur. */
+type StoredEntry = Omit<Entry, 'body'> & { body?: unknown; gz?: string };
 
 export type CacheOutcome = 'HIT' | 'MISS' | 'STALE' | 'BYPASS';
 
@@ -237,15 +241,52 @@ function l1Set(key: string, e: Entry): void {
   l1.set(key, e);
 }
 
+/**
+ * `node:zlib` — `process.getBuiltinModule` ile (Node ≥ 20.16 / 22.3): bu modül istemci chunk grafiğine de girdiği için
+ * `require('node:zlib')` Turbopack'te tarayıcı paketine ~300 KB `browserify-zlib` dolgusu ekliyordu. Yoksa null →
+ * sıkıştırma yok (gövde aynen, boyut sınırı yine geçerli).
+ */
+function zlib(): typeof import('node:zlib') | null {
+  return typeof process !== 'undefined' && typeof process.getBuiltinModule === 'function'
+    ? (process.getBuiltinModule('node:zlib') ?? null)
+    : null;
+}
+
+/** Redis'e yazılacak biçim; sınırı aşıyorsa null (yalnız L1). */
+export function packEntry(e: Entry): StoredEntry | null {
+  const json = JSON.stringify(e.body) ?? 'null';
+  const z = json.length < COMPRESS_MIN_CHARS ? null : zlib();
+  if (!z) return new TextEncoder().encode(json).length <= MAX_REDIS_VALUE_BYTES ? e : null;
+  const gz = z.gzipSync(json).toString('base64');
+  if (gz.length > MAX_REDIS_VALUE_BYTES) return null;
+  const { body: _body, ...meta } = e;
+  return { ...meta, gz };
+}
+
+/** Bozuk sıkıştırılmış kayıt → null (cache yokmuş gibi; upstream'den yenilenir). */
+export function unpackEntry(s: StoredEntry): Entry | null {
+  if (typeof s.gz !== 'string') return s as Entry;
+  const z = zlib();
+  if (!z) return null;
+  try {
+    const { gz, ...meta } = s;
+    return { ...meta, body: JSON.parse(z.gunzipSync(Buffer.from(gz, 'base64')).toString('utf8')) };
+  } catch {
+    return null;
+  }
+}
+
 // Redis erişimi `withRedis` üzerinden: zaman aşımı/hata/devre açık → cache yokmuş gibi devam (bkz. lib/redis.ts).
 async function redisGet(key: string): Promise<Entry | null> {
-  return (await withRedis((r) => r.get<Entry>(key), null)) ?? null;
+  const stored = await withRedis((r) => r.get<StoredEntry>(key), null);
+  return stored ? unpackEntry(stored) : null;
 }
 
 async function redisSet(key: string, e: Entry, now: number): Promise<void> {
-  if (JSON.stringify(e.body).length > MAX_REDIS_BYTES) return;
+  const stored = packEntry(e);
+  if (!stored) return;
   const ex = Math.max(1, Math.ceil((e.staleUntil - now) / 1000));
-  await withRedis((r) => r.set(key, e, { ex }), null);
+  await withRedis((r) => r.set(key, stored, { ex }), null);
 }
 
 /** Kilit anahtarı veri anahtarından türetilir; önek tekrarlanmaz (`prod:v2:smc-lock:<path?query>`). */

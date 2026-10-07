@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
-vi.mock('@/lib/redis', () => ({ getRedisClient: () => null, withRedis: async (_fn: unknown, fallback: unknown) => fallback }));
+vi.mock('@/lib/redis', () => ({ MAX_REDIS_VALUE_BYTES: 900_000, getRedisClient: () => null, withRedis: async (_fn: unknown, fallback: unknown) => fallback }));
 vi.mock('@/lib/rateLimit', () => ({
   hitFixedWindowRateLimit: async () => ({ success: true, remaining: 99, resetAt: 0 }),
   requestIp: () => '10.0.0.1',

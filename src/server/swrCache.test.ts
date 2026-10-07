@@ -2,7 +2,8 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { createFakeRedis, type FakeRedis } from './sportmonks/fakeRedis.testutil';
 
 const h = vi.hoisted(() => ({ redis: null as FakeRedis | null, t: 1_000_000 }));
-vi.mock('@/lib/redis', () => ({
+vi.mock('@/lib/redis', async (orig) => ({
+  fitsInRedis: (await orig<typeof import('@/lib/redis')>()).fitsInRedis,
   getRedisClient: () => h.redis,
   withRedis: async <T,>(fn: (r: FakeRedis) => Promise<T>, fallback: T) => (h.redis ? fn(h.redis) : fallback),
 }));
@@ -77,6 +78,21 @@ describe('loadWithSwr (stale-while-revalidate + kilit)', () => {
     await loadWithSwr('k', { freshSeconds: 60, now }, compute);
     await loadWithSwr('k', { freshSeconds: 60, now }, compute);
     expect(compute).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('loadWithSwr — boyut koruması', () => {
+  beforeEach(() => {
+    h.t = 1_000_000;
+    h.redis = createFakeRedis(now);
+  });
+
+  it('Redis sınırını aşan değer yazılmaz (istek yine değer alır, 500 yok)', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const huge = 'x'.repeat(1_000_000);
+    const r = await loadWithSwr('big', { freshSeconds: 60, now }, async () => huge);
+    expect(r).toEqual({ value: huge, state: 'computed' });
+    expect(h.redis!.store.has('big')).toBe(false);
   });
 });
 

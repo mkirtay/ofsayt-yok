@@ -52,6 +52,30 @@ describe('withRedis — zaman aşımı/hata → yedek değer, devre kesici', () 
     expect(probe).toHaveBeenCalledTimes(1);
   });
 
+  it('Upstash "max request size exceeded" devre kesiciyi AÇMAZ (Redis arızası değil, isteğin kendisi büyük)', async () => {
+    const { withRedis, isRedisBypassed } = await import('./redis');
+    const tooBig = async () => {
+      throw new Error('Command failed: ERR max request size exceeded. Limit: 10485760 bytes, Actual: 11245919 bytes.');
+    };
+    for (let i = 0; i < 5; i++) expect(await withRedis(tooBig, 'yedek')).toBe('yedek');
+    const full = async () => {
+      throw new Error('OOM command not allowed when used memory > maxmemory');
+    };
+    for (let i = 0; i < 5; i++) await withRedis(full, null);
+    expect(isRedisBypassed()).toBe(false);
+    expect(await withRedis(async () => 'ok', null)).toBe('ok');
+  });
+
+  it('boyut koruması: JSON baytı (çok baytlı karakter dahil) sınırla karşılaştırılır', async () => {
+    const { fitsInRedis, redisValueBytes, MAX_REDIS_VALUE_BYTES } = await import('./redis');
+    expect(redisValueBytes({ a: 'ğ' })).toBe(10); // {"a":"ğ"} — ğ 2 bayt
+    expect(fitsInRedis('x'.repeat(MAX_REDIS_VALUE_BYTES - 2))).toBe(true); // tırnaklarla tam sınır
+    expect(fitsInRedis('x'.repeat(MAX_REDIS_VALUE_BYTES))).toBe(false);
+    const cyclic: Record<string, unknown> = {};
+    cyclic.self = cyclic;
+    expect(fitsInRedis(cyclic)).toBe(false);
+  });
+
   it('başarı ardışık hata sayacını sıfırlar (aralıklı tek hata devreyi açmaz)', async () => {
     const { withRedis, isRedisBypassed } = await import('./redis');
     const fail = async () => Promise.reject(new Error('x'));

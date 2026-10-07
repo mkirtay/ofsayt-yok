@@ -9,6 +9,7 @@ const h = vi.hoisted(() => ({
 }));
 
 vi.mock('@/lib/redis', () => ({
+  MAX_REDIS_VALUE_BYTES: 900_000,
   getRedisClient: () => h.redis,
   withRedis: async <T,>(fn: (r: FakeRedis) => Promise<T>, fallback: T) => {
     if (!h.redis) return fallback;
@@ -182,6 +183,55 @@ describe('fetchSportmonksCached', () => {
     expect(r.status).toBe(200);
     expect(r.body).toEqual({ data: [{ id: 7 }] });
     expect(other.sportmonksCacheControl(r)).toBe('public, s-maxage=15, stale-while-revalidate=60');
+  });
+
+  describe('Redis boyut koruması (sıkıştırma, yazma hatası)', () => {
+    const bigBody = () => envelope(Array.from({ length: 400 }, (_, i) => ({ id: i, name: `Takım ${i} — Galatasaray Fenerbahçe`, state_id: 5 })));
+
+    it('büyük gövde Redis\'e gzip olarak yazılır; başka instance aynı gövdeyi okur, upstream\'e gitmez', async () => {
+      const up = upstream(() => ({ status: 200, body: bigBody() }));
+      const a = await m.fetchSportmonksCached('football/standings/seasons/9', {}, { fetchImpl: up.impl, now });
+      const [key] = [...h.redis!.store.keys()].filter((k) => k.includes('smc:football/standings'));
+      const stored = h.redis!.store.get(key!)!.value as { gz?: string; body?: unknown };
+      expect(typeof stored.gz).toBe('string');
+      expect(stored.body).toBeUndefined();
+      expect(stored.gz!.length).toBeLessThan(JSON.stringify(a.body).length / 3);
+
+      const other = await freshModule();
+      const b = await other.fetchSportmonksCached('football/standings/seasons/9', {}, { fetchImpl: up.impl, now });
+      expect(b.cache).toBe('HIT');
+      expect(b.body).toEqual(a.body);
+      expect(up.calls).toHaveLength(1);
+    });
+
+    it('küçük gövde aynen; eski (sıkıştırılmamış) kayıt okunur; bozuk sıkıştırılmış kayıt cache yokmuş gibi yenilenir', async () => {
+      const entry = { status: 200, body: { data: [{ id: 1 }] }, fetchedAt: now(), freshUntil: now() + 60_000, staleUntil: now() + 120_000 };
+      expect(m.packEntry(entry)).toBe(entry);
+      expect(m.unpackEntry(entry)).toBe(entry);
+      expect(m.unpackEntry({ ...entry, body: undefined, gz: 'bozuk' })).toBeNull();
+    });
+
+    it('Redis yazması "max request size" ile düşerse: 500 yok, aynı instance tekrar upstream\'e GİTMEZ (L1)', async () => {
+      const fail = vi.spyOn(h.redis!, 'set').mockImplementation(async (key: string) => {
+        if (key.includes('smc-lock:')) return 'OK';
+        throw new Error('Command failed: ERR max request size exceeded. Limit: 10485760 bytes');
+      });
+      const up = upstream(() => ({ status: 200, body: bigBody() }));
+      const a = await m.fetchSportmonksCached('football/standings/seasons/9', {}, { fetchImpl: up.impl, now });
+      const b = await m.fetchSportmonksCached('football/standings/seasons/9', {}, { fetchImpl: up.impl, now });
+      expect([a.status, a.cache, b.cache]).toEqual([200, 'MISS', 'HIT']);
+      expect(up.calls).toHaveLength(1);
+      fail.mockRestore();
+    });
+
+    it('negatif cache Redis yazması düşse de instance içinde tutulur: bulunamayan fixture tekrar sorulmaz', async () => {
+      vi.spyOn(h.redis!, 'set').mockRejectedValue(new Error('down'));
+      const up = upstream(() => ({ status: 404, body: { message: 'No result(s) found' } }));
+      await m.fetchSportmonksCached('football/fixtures/123', {}, { fetchImpl: up.impl, now });
+      const again = await m.fetchSportmonksCached('football/fixtures/123', {}, { fetchImpl: up.impl, now });
+      expect(again.status).toBe(404);
+      expect(up.calls).toHaveLength(1);
+    });
   });
 
   describe('havuz bekçisi (429 soğuması, seyreltme, ölçüm)', () => {

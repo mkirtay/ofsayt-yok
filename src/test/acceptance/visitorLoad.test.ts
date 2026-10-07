@@ -11,6 +11,7 @@ import { createUpstreamCounter, simulateVisitors, type VisitorPattern, type Simu
 const h = vi.hoisted(() => ({ clock: { t: 0 }, redis: null as FakeRedis | null, scenario: 'quiet' as 'quiet' | 'live' }));
 
 vi.mock('@/lib/redis', () => ({
+  MAX_REDIS_VALUE_BYTES: 900_000,
   getRedisClient: () => h.redis,
   withRedis: async <T,>(fn: (r: FakeRedis) => Promise<T>, fallback: T) => {
     if (!h.redis) return fallback;
