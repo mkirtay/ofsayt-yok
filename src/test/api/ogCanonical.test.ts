@@ -65,10 +65,15 @@ beforeEach(() => {
 describe('kanonik adres: çizmeden 308', () => {
   it.each([
     ['/api/og/frikik?r=1', '/api/og/frikik'],
-    ['/api/og/frikik?s=850&r=1', '/api/og/frikik?s=850'],
-    ['/api/og/frikik?s=0850', '/api/og/frikik?s=850'],
-    ['/api/og/frikik?s=850&s=850', '/api/og/frikik?s=850'],
+    // Eski seri modu (`?s=` tek başına) kaldırıldı → skorsuz kanonik adres
+    ['/api/og/frikik?s=850&r=1', '/api/og/frikik'],
+    ['/api/og/frikik?s=0850', '/api/og/frikik'],
+    ['/api/og/frikik?l=1&s=75&r=1', '/api/og/frikik?l=1&s=75'],
+    ['/api/og/frikik?l=01&s=75', '/api/og/frikik?l=1&s=75'],
+    ['/api/og/frikik?l=1&s=75&l=1', '/api/og/frikik?l=1&s=75'],
     ['/api/og/frikik?s=75&l=1', '/api/og/frikik?l=1&s=75'],
+    ['/api/og/frikik?d=2026-10-08&l=1&s=75', '/api/og/frikik?l=1&s=75&d=2026-10-08'],
+    ['/api/og/frikik?l=1&s=75&d=2026-13-01', '/api/og/frikik?l=1&s=75'],
     ['/api/og/frikik?S=850', '/api/og/frikik'],
     ['/api/og/frikik?s=851', '/api/og/frikik'],
   ])('frikik %s → %s', async (raw, location) => {
@@ -117,7 +122,7 @@ describe('çizim bütçesi', () => {
   it('IP sınırı aşılınca: veri okunmaz, çizilmez, varsayılan görsele 307 (CDN saklamaz)', async () => {
     h.rl.mockImplementation(async (key: string) => ({ success: !key.startsWith('og-render:ip:'), remaining: 0, resetAt: 0 }));
     for (const r of [
-      await get(frikik as Handler, '/api/og/frikik?s=850'),
+      await get(frikik as Handler, '/api/og/frikik?l=1&s=75'),
       await get(match as Handler, '/api/og/match/19745050?v=F_2-1', { id: '19745050' }),
       await get(team as Handler, `/api/og/team/34?v=${teamOgVersion()}`, { id: '34' }),
     ]) {

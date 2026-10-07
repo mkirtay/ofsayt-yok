@@ -106,7 +106,7 @@ export default function Frikik({ shared }: { shared: ShareInfo | null }) {
   const playsRef = useRef(0);
   const goalLabel = t("goal");
   const goalLabelRef = useRef(goalLabel);
-  const { board, me, refresh: refreshBoard, setMe } = useFrikikBoard(mode !== "boot", signedIn);
+  const { board, me, error: boardError, refresh: refreshBoard, setMe } = useFrikikBoard(mode !== "boot", signedIn);
   useEffect(() => {
     langRef.current = locale === "en" ? "en" : "tr";
   }, [locale]);
@@ -581,7 +581,7 @@ export default function Frikik({ shared }: { shared: ShareInfo | null }) {
         </p>
       ) : null}
 
-      <Leaderboard board={board} me={boardStanding} loading={mode === "boot" || (board == null && mode === "game")} />
+      <Leaderboard board={board} me={boardStanding} loading={board == null && !boardError} />
 
       <section className={styles.rules}>
         <div>

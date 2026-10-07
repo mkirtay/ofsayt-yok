@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useTranslation } from '@/lib/i18n';
+import '@/lib/i18nNamespaces/frikik';
 import type { Leaderboard as Board, MyStanding } from '@/hooks/useFrikikBoard';
 import styles from './frikik.module.scss';
 
