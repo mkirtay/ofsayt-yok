@@ -65,6 +65,7 @@ import {
   MAX_RELEASE_TICK,
   SHOTS_PER_SERIES,
   TICK,
+  WALL_DISTANCE,
   aimBasis,
   ballDistance,
   keeperZ,
@@ -353,9 +354,13 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
     let ballZ = 0;
     let ballY = 0;
     let tCross = 0;
+    let tSeen: number | undefined;
+    const wallX = r.wall[0]?.x ?? r.ball.x + WALL_DISTANCE;
     while (!p.result || p.tick < 2) {
       stepShot(p);
-      if (!crossed && p.pos.x >= KEEPER.x - BALL_R) {
+      if (tSeen == null && p.pos.x >= wallX) tSeen = p.tick;
+      // Kurtarış: temas noktası ve anı (sim kararı); gol: topun kaleci düzlemini (x = KEEPER.x) kestiği nokta
+      if (!crossed && (p.touchedKeeper || p.pos.x >= KEEPER.x)) {
         crossed = true;
         ballZ = p.pos.z;
         ballY = p.pos.y;
@@ -363,7 +368,7 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
       }
       if (p.result && (crossed || p.tick > 840)) break;
     }
-    return { crossed, ballZ, ballY, tCross, saved: p.result?.kind === 'saved' };
+    return { crossed, ballZ, ballY, tCross, tSeen, saved: p.result?.kind === 'saved' };
   };
   let basis = { fx: 1, fz: 0, rx: 0, rz: 1 };
   let phase: 'idle' | 'aim' | 'flight' | 'hold' | 'done' = 'idle';

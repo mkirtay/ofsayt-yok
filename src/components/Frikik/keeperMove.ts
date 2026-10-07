@@ -2,7 +2,7 @@
  * Kaleci hamlesinin GÖRSEL planı (fizik ve sonuç sim.ts'te; burası yalnız kök konum / poz üretir, three.js bilmez →
  * test edilebilir). Eksenler sim ile aynı: derinlik x (kale çizgisi 0, top x < 0), yan eksen z.
  *
- * Akış (tick = 1/120 sn): hazır duruş → `REACT_TICKS` sonra kısa hazırlık adımı (`PREP_TICKS`, kök hedefe doğru az
+ * Akış (tick = 1/120 sn): hazır duruş → `REACT_TICKS` (lobda: top barajı geçince) sonra kısa hazırlık adımı (`PREP_TICKS`, kök hedefe doğru az
  * ilerler, çömelme) → yanal dalış: kök `prepZ`'den `rootEnd`'e ease-out ile ilerler, ayaklar yerden kopar (tepe süre
  * ortasında), gövde `tilt` kadar yana yatar, iniş `rootEnd`'de biter (ışınlanma / geri kayma yok). Sahne vuruş anında
  * sim'i bir kez ileri sarar (deterministik; sim değişmez) ve topun kaleci düzlemini kestiği z / tick ile sonucu öğrenir:
@@ -34,11 +34,15 @@ export type KeeperPlanInput = {
   saved: boolean;
   /** Kale yarı genişliği (daralmış kale dahil). */
   halfW: number;
+  /** Topun barajı geçtiği tick (lob: kaleci topu ancak o zaman görür); yoksa görsel tepki REACT_TICKS. */
+  tSeen?: number;
 };
 
 export type KeeperPlan = {
   dir: 1 | -1;
   dive: boolean;
+  /** Görsel tepkinin başladığı tick: max(REACT_TICKS, tSeen − 4). */
+  react: number;
   z0: number;
   prepZ: number;
   rootEnd: number;
@@ -80,7 +84,8 @@ export const HANDS_SIDE = 1.3;
 export const GOAL_SHORT = 0.45;
 
 export function planKeeperMove(i: KeeperPlanInput): KeeperPlan {
-  const prepEnd = REACT_TICKS + PREP_TICKS;
+  const react = Math.max(REACT_TICKS, i.tSeen != null ? i.tSeen - 4 : 0);
+  const prepEnd = react + PREP_TICKS;
   // Hedef: top kaleciye geliyorsa topun kestiği (z, y); golde eller topa GOAL_SHORT kala (gövde merkezinden topa doğru)
   const aimZ = i.crossed ? i.ballZ : i.target;
   const dir: 1 | -1 = aimZ >= i.z0 ? 1 : -1;
@@ -109,7 +114,7 @@ export function planKeeperMove(i: KeeperPlanInput): KeeperPlan {
   if (!dive) {
     const reach = clamp(need * 0.5, 0.2, 0.6);
     const rootEnd = clamp(i.z0 + dir * (need - reach), -(i.halfW - 0.45), i.halfW - 0.45);
-    return { dir, dive, z0: i.z0, prepZ: i.z0, rootEnd, handsZ, handsY, tilt: 0.25, handsLen: HANDS_SIDE, reach, jump: 0, diveStart: prepEnd, diveDur: minDur };
+    return { dir, dive, react, z0: i.z0, prepZ: i.z0, rootEnd, handsZ, handsY, tilt: 0.25, handsLen: HANDS_SIDE, reach, jump: 0, diveStart: prepEnd, diveDur: minDur };
   }
   // Gövde vektörü (ayak bileği → eller): yanal `reach` (tercih: kök mesafenin çoğunu alır) ve dikey handsY − liftC.
   // Uzunluğu kol duruşuyla 1,3 (omuz hizası) … 2,3 (kollar yukarı) arasında olmalı: sığmıyorsa alçak topta yatış artar
@@ -140,21 +145,21 @@ export function planKeeperMove(i: KeeperPlanInput): KeeperPlan {
   const diveStart = Math.max(prepEnd, Math.round(tContact - CONTACT_P * minDur));
   const diveDur = Math.max(minDur, Math.round((tContact - diveStart) / CONTACT_P));
   void TICK;
-  return { dir, dive, z0: i.z0, prepZ, rootEnd, handsZ, handsY, tilt, handsLen, reach, jump, diveStart, diveDur };
+  return { dir, dive, react, z0: i.z0, prepZ, rootEnd, handsZ, handsY, tilt, handsLen, reach, jump, diveStart, diveDur };
 }
 
 /** Vuruştan `tick` sonra kalecinin pozu. Kök z zamanla hedefe doğru monoton ilerler; temas anında hedefte, sonra sabit. */
 export function keeperPoseAt(k: KeeperPlan, tick: number): KeeperPose {
-  if (tick < REACT_TICKS) return { root: k.z0, lift: 0, tilt: 0, crouch: 0.35, reach: 0, armUp: 0, yaw: 0 };
+  if (tick < k.react) return { root: k.z0, lift: 0, tilt: 0, crouch: 0.35, reach: 0, armUp: 0, yaw: 0 };
   if (!k.dive) {
     // Küçük adım + çömelme + öndeki kolun uzanması; ayaklar yerde
-    const p = clamp((tick - REACT_TICKS) / STEP_TICKS, 0, 1);
+    const p = clamp((tick - k.react) / STEP_TICKS, 0, 1);
     const e = easeOut(p);
     return { root: k.z0 + (k.rootEnd - k.z0) * e, lift: 0, tilt: k.tilt * e, crouch: 0.35 + 0.5 * e, reach: e, armUp: 0, yaw: 0.25 * e };
   }
   if (tick < k.diveStart) {
     // Hazırlık adımı; dalış zamanı gelene kadar çömelik bekler
-    const u = clamp((tick - REACT_TICKS) / PREP_TICKS, 0, 1);
+    const u = clamp((tick - k.react) / PREP_TICKS, 0, 1);
     const e = easeOut(u);
     return { root: k.z0 + (k.prepZ - k.z0) * e, lift: 0, tilt: 0.1 * e, crouch: 0.35 + 0.55 * e, reach: 0.3 * e, armUp: 0, yaw: 0.15 * e };
   }

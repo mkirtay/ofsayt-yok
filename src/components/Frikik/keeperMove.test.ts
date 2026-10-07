@@ -89,6 +89,16 @@ describe('kaleci hamlesi (görsel plan)', () => {
     expect(early.diveDur).toBeGreaterThanOrEqual(30);
   });
 
+  it('lob: kaleci topu baraj geçilince görür (tSeen) → tepki gecikir, dalış yine temasta biter; eller topta', () => {
+    const k = base({ ballY: 1.5, ballZ: 1.4, z0: -0.6, target: 1.3, saved: true, tCross: 150, tSeen: 90 });
+    expect(k.react).toBe(86);
+    for (let t = 0; t < 86; t++) expect(keeperPoseAt(k, t).root).toBe(k.z0);
+    expect(contactTick(k)).toBeLessThanOrEqual(150);
+    const h = keeperHandsAt(k, contactTick(k));
+    expect(Math.hypot(h.y - 1.5, h.z - 1.4)).toBeLessThan(0.12);
+    expect(base({ tSeen: 5 }).react).toBe(REACT_TICKS);
+  });
+
   it('toparlanma: poz karışımı uçlarda tam değerler', () => {
     const k = base();
     const end = keeperPoseAt(k, 400);
