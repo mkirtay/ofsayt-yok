@@ -1,6 +1,6 @@
 {
-  "pageTitle": "AI Analysis Accuracy Statistics — Ofsayt Yok",
-  "pageDesc": "How often the most likely match result in Ofsayt Yok AI analyses actually happened. Informational statistics.",
+  "pageTitle": "AI Analysis Accuracy Statistics — {{brand}}",
+  "pageDesc": "How often the most likely match result in {{brand}} AI analyses actually happened. Informational statistics.",
   "heroTitle": "AI Analysis Accuracy Statistics",
   "heroSub": "How often the most likely match result in our analyses actually happened. Informational statistical prediction.",
   "adminBadge": "ADMIN",

@@ -20,7 +20,7 @@
     "termsOfUse": "Terms of Use",
     "contact": "Contact",
     "disclaimer": "Statistical predictions are for informational purposes only.",
-    "copyright": "© {{year}} Ofsayt Yok. All rights reserved."
+    "copyright": "© {{year}} {{brand}}. All rights reserved."
   },
   "themeToLight": "Switch to light theme",
   "themeToDark": "Switch to dark theme",

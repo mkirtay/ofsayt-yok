@@ -1,6 +1,7 @@
 import { createHash, randomBytes } from 'crypto';
 import { prisma } from '@/lib/prisma';
 import { grantVerifiedSignupBonus } from '@/lib/credits';
+import { BRAND } from '@/config/brand';
 
 const TURNSTILE_VERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
 
@@ -86,7 +87,7 @@ async function sendViaResend(to: string, subject: string, html: string): Promise
   }
   if (!from.includes('@')) {
     console.warn(
-      '[resend] EMAIL_FROM gecersiz (e-posta yok). Ornek: Ofsayt Yok <noreply@contact.ofsaytyok.app>',
+      `[resend] EMAIL_FROM gecersiz (e-posta yok). Ornek: ${BRAND.name} <noreply@${BRAND.domain}>`,
     );
     return false;
   }
@@ -125,7 +126,7 @@ export async function createAndSendEmailVerification(email: string): Promise<voi
   const link = `${appBaseUrl()}/api/auth/verify-email?token=${rawToken}`;
   const sent = await sendViaResend(
     email,
-    'Ofsayt Yok - E-posta Dogrulama',
+    `${BRAND.name} - E-posta Dogrulama`,
     `<p>Merhaba,</p><p>Hesabinizi aktif etmek icin asagidaki baglantiya tiklayin:</p><p><a href="${link}">${link}</a></p><p>Bu baglanti 24 saat gecerlidir.</p>`,
   );
 
@@ -177,7 +178,7 @@ export async function createAndSendPasswordReset(email: string): Promise<void> {
   const link = `${appBaseUrl()}/auth/reset-password?token=${rawToken}`;
   const sent = await sendViaResend(
     email,
-    'Ofsayt Yok - Sifre Sifirlama',
+    `${BRAND.name} - Sifre Sifirlama`,
     `<p>Merhaba,</p><p>Sifrenizi sifirlamak icin asagidaki baglantiya tiklayin:</p><p><a href="${link}">${link}</a></p><p>Bu baglanti <strong>1 saat</strong> gecerlidir. Bu istegi siz yapmadiysa bu e-postayi yoksayabilirsiniz.</p>`,
   );
 
@@ -211,17 +212,72 @@ export type SanitizePlainTextOptions = {
    * Varsayılan (kapalı): tüm kontrol karakterleri (satır sonu dahil) silinir — maç yorumları bu davranışta kalır.
    */
   allowNewlines?: boolean;
+  /**
+   * Ham girdi için sert üst sınır (karakter). Aşılırsa HİÇBİR işlem yapılmadan `PlainTextTooLongError` fırlatılır.
+   * Çağıran uç bunu (ya da `input.length`'i önceden kendisi kontrol edip) 400'e çevirir.
+   */
+  maxInputLength?: number;
 };
 
+/** `sanitizePlainText` ham girdisi `maxInputLength`'i aştı (temizleme çalıştırılmadı). */
+export class PlainTextTooLongError extends Error {
+  constructor(
+    readonly length: number,
+    readonly max: number,
+  ) {
+    super(`Girdi çok uzun (${length} > ${max}).`);
+    this.name = 'PlainTextTooLongError';
+  }
+}
+
+/**
+ * `input.replace(/<[^>]*>/g, '')` ile birebir aynı sonuç, doğrusal sürede.
+ * Regex, `>` içermeyen uzun bir `<<<…` kuyruğunda her `<` için sona kadar tarayıp O(n²) oluyordu. Bir `<`'den sonra
+ * hiç `>` yoksa sonraki `<`'ler de eşleşemez (onlardan sonra da `>` yok) → tarama orada biter.
+ */
+function stripTags(input: string): string {
+  let out = '';
+  let i = 0;
+  for (;;) {
+    const lt = input.indexOf('<', i);
+    if (lt === -1) break;
+    const gt = input.indexOf('>', lt + 1);
+    if (gt === -1) break;
+    out += input.slice(i, lt);
+    i = gt + 1;
+  }
+  return i === 0 ? input : out + input.slice(i);
+}
+
+// Eski `s.replace(/ *\n */g, '\n')` ile birebir aynı sonuç, doğrusal sürede: yalnız bir `\n`'e değen boşluk (U+0020)
+// dizileri silinir (ilk satırın başı ve son satırın sonu korunur). Regex uzun boşluk dizisinde O(n²) oluyordu.
+function trimSpacesAroundNewlines(s: string): string {
+  if (!s.includes('\n')) return s;
+  const lines = s.split('\n');
+  const last = lines.length - 1;
+  for (let k = 0; k <= last; k += 1) {
+    const line = lines[k]!;
+    let start = 0;
+    let end = line.length;
+    if (k > 0) while (start < end && line.charCodeAt(start) === 32) start += 1;
+    if (k < last) while (end > start && line.charCodeAt(end - 1) === 32) end -= 1;
+    if (start !== 0 || end !== line.length) lines[k] = line.slice(start, end);
+  }
+  return lines.join('\n');
+}
+
 export function sanitizePlainText(input: string, options?: SanitizePlainTextOptions): string {
-  const noTags = input.replace(/<[^>]*>/g, '');
+  // Uzunluk kontrolü temizlemeden ÖNCE: büyük gövde CPU harcatmadan reddedilir.
+  if (options?.maxInputLength !== undefined && input.length > options.maxInputLength) {
+    throw new PlainTextTooLongError(input.length, options.maxInputLength);
+  }
+  const noTags = stripTags(input);
   if (!options?.allowNewlines) {
     return noTags.replace(/[\u0000-\u001F\u007F]/g, '').trim();
   }
-  return noTags
-    .replace(/\r\n?/g, '\n')
-    .replace(/[\u0000-\u0009\u000B-\u001F\u007F]/g, '')
-    .replace(/ *\n */g, '\n') // satır kenarı boşlukları: "\n \n \n" da boş satır sayılır
+  return trimSpacesAroundNewlines(
+    noTags.replace(/\r\n?/g, '\n').replace(/[\u0000-\u0009\u000B-\u001F\u007F]/g, ''),
+  ) // satır kenarı boşlukları: "\n \n \n" da boş satır sayılır
     .replace(/\n{3,}/g, '\n\n')
     .trim();
 }

@@ -45,7 +45,8 @@ export async function fetchLogoDataUri(
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), opts.timeoutMs ?? OG_LOGO_TIMEOUT_MS);
   try {
-    const res = await (opts.fetchImpl ?? fetch)(parsed.toString(), { signal: controller.signal });
+    // redirect: 'error' — izinli host başka bir adrese yönlendirirse izlenmez (SSRF savunma derinliği).
+    const res = await (opts.fetchImpl ?? fetch)(parsed.toString(), { signal: controller.signal, redirect: 'error' });
     const type = res.headers.get('content-type') ?? '';
     if (!res.ok || !type.startsWith('image/')) return null;
     const buf = Buffer.from(await res.arrayBuffer());

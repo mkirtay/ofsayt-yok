@@ -1,4 +1,4 @@
-import { withRedis } from '@/lib/redis';
+import { fitsInRedis, withRedis } from '@/lib/redis';
 
 /**
  * LiveScore proxy için paylaşımlı cache katmanı.
@@ -122,5 +122,7 @@ export async function readCache(key: string): Promise<unknown | null> {
 
 export async function writeCache(key: string, value: unknown, ttlSeconds: number): Promise<void> {
   memSet(key, value, ttlSeconds);
+  // Sığmayan değer yalnız bellekte (bkz. lib/redis.ts MAX_REDIS_VALUE_BYTES).
+  if (!fitsInRedis(value)) return;
   await withRedis((r) => r.set(key, value, { ex: ttlSeconds }), null);
 }

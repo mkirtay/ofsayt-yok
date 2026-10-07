@@ -83,6 +83,42 @@ export function reportSportmonksQuota(obs: QuotaObservation, now: number = Date.
   return level;
 }
 
+/**
+ * Sportmonks hız sınırı (429) — havuz soğumaya girdiğinde instance başına TEK olay (bkz. server/sportmonks/poolGuard.ts).
+ * Soğuma boyunca istek atılmadığı için her tick / render ayrı bir `SportmonksHttpError` üretmez.
+ */
+export function reportSportmonksRateLimited(info: { pool: string; path: string; cooldownSeconds: number; route: string; origin?: 'proxy' | 'server' }): void {
+  Sentry.withScope((scope) => {
+    scope.setTag('sportmonks.pool', info.pool);
+    scope.setTag('sportmonks.quota_level', 'rate_limited');
+    if (info.origin) scope.setTag('sportmonks.origin', info.origin);
+    scope.setLevel('warning');
+    scope.setExtras({ path: info.path, cooldownSeconds: info.cooldownSeconds, route: info.route });
+    scope.setFingerprint(['sportmonks-rate-limited', info.pool]);
+    Sentry.captureMessage(`Sportmonks hız sınırı: ${info.pool} havuzu ${info.cooldownSeconds} sn bekletiliyor`, 'warning');
+  });
+}
+
+/**
+ * Upstream isteğini başlatan rota (kota ölçümü için): Sentry'nin istek kapsamındaki işlem adı
+ * (`POST /api/admin/gundem/bot-tick`, `getStaticProps (/teknik-direktor/[slug])`), yoksa istek yolu (sayısal
+ * segmentler `:id`), o da yoksa `unknown`.
+ */
+export function currentRequestRoute(): string {
+  try {
+    const data = Sentry.getIsolationScope().getScopeData();
+    if (data.transactionName) return data.transactionName;
+    const req = (data.sdkProcessingMetadata as { normalizedRequest?: { method?: string; url?: string } } | undefined)?.normalizedRequest;
+    if (req?.url) {
+      const path = new URL(req.url, 'http://x').pathname.replace(/\/[^/]*\d[^/]*/g, '/:id');
+      return `${req.method ?? 'GET'} ${path}`;
+    }
+  } catch {
+    // Sentry yoksa ölçüm yine çalışır
+  }
+  return 'unknown';
+}
+
 /** Test yardımcısı — throttle durumunu sıfırlar. */
 export function resetQuotaAlertThrottle(): void {
   lastAlertAt.clear();

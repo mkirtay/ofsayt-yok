@@ -88,4 +88,14 @@ describe('GET /api/matches/[id]/trivia — maç başına tek üretim', () => {
     await get('1');
     expect(h.created[0]).toMatchObject({ matchId: '1', matchStatus: 'POST', expiresAt: null });
   });
+
+  it('aylık LLM bütçesi dolu: 503 LLM_BUDGET, nazik mesaj; kayıt yazılmaz', async () => {
+    const { LlmBudgetExceededError } = await import('@/server/llmBudget');
+    const { generateMatchTrivia } = await import('@/services/aiTriviaService');
+    vi.mocked(generateMatchTrivia).mockRejectedValueOnce(new LlmBudgetExceededError());
+    const res = await get('1');
+    expect(res.statusCode).toBe(503);
+    expect(res.body).toMatchObject({ code: 'LLM_BUDGET', error: expect.stringContaining('bu ay') });
+    expect(h.created).toHaveLength(0);
+  });
 });

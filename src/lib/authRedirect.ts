@@ -1,4 +1,4 @@
-const CHECK_ORIGIN = 'https://ofsaytyok.invalid';
+const CHECK_ORIGIN = 'https://site.invalid';
 
 /**
  * Giriş sonrası dönüş adresi: yalnızca site içi göreli yol kabul edilir (open redirect yok); geçersizse `fallback`.

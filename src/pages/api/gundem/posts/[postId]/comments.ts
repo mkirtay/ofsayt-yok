@@ -10,6 +10,11 @@ import { PAGE_SIZE, queryString, readJsonBody } from '@/lib/gundem/validation';
 import { authorSelect, paginate, serializeUserRef } from '@/lib/gundem/posts';
 import { createNotification } from '@/lib/gundem/notify';
 
+// Gönderi/yorum gövdesi ~280 karakter; Next varsayılanı (1 MB) yerine 16 KB — aşılırsa Next 413 döner.
+export const config = { api: { bodyParser: { sizeLimit: '16kb' } } };
+/** Temizlenmemiş gövde için tavan (içerik sınırı 280; etiket/boşluk payı). Aşan istek temizlenmeden 400 alır. */
+const RAW_BODY_MAX_LENGTH = 2000;
+
 const commentSelect = {
   id: true,
   postId: true,
@@ -50,7 +55,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
 
       const input = readJsonBody(req);
-      const body = sanitizePlainText(typeof input.body === 'string' ? input.body : '', { allowNewlines: true });
+      const rawBody = typeof input.body === 'string' ? input.body : '';
+      // Ham uzunluk temizlemeden ÖNCE: büyük gövde CPU harcatmadan reddedilir.
+      if (rawBody.length > RAW_BODY_MAX_LENGTH) {
+        return res.status(400).json({ error: `Yorum 1–${COMMENT_MAX_LENGTH} karakter olmalıdır.` });
+      }
+      const body = sanitizePlainText(rawBody, { allowNewlines: true, maxInputLength: RAW_BODY_MAX_LENGTH });
       if (!body || body.length > COMMENT_MAX_LENGTH) {
         return res.status(400).json({ error: `Yorum 1–${COMMENT_MAX_LENGTH} karakter olmalıdır.` });
       }

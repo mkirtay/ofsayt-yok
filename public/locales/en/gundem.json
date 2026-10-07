@@ -1,7 +1,7 @@
 {
   "meta": {
-    "title": "Feed | Ofsayt Yok",
-    "description": "The Ofsayt Yok football community feed: posts, comments and official updates."
+    "title": "Feed | {{brand}}",
+    "description": "The {{brand}} football community feed: posts, comments and official updates."
   },
   "title": "Feed",
   "panel": {
@@ -91,8 +91,8 @@
     "following": "Following"
   },
   "profile": {
-    "metaTitle": "{{name}} | Ofsayt Yok",
-    "metaDescription": "Posts by {{name}} on the Ofsayt Yok feed.",
+    "metaTitle": "{{name}} | {{brand}}",
+    "metaDescription": "Posts by {{name}} on the {{brand}} feed.",
     "followers": "Followers",
     "following": "Following",
     "posts": "Posts",
@@ -116,7 +116,7 @@
     "follow": "{{name}} started following you",
     "officialPost": "{{name}} shared a new post",
     "someone": "Someone",
-    "official": "Ofsayt Yok",
+    "official": "{{brand}}",
     "postDeleted": "Post deleted"
   }
 }

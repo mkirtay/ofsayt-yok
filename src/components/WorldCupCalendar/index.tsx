@@ -3,6 +3,7 @@ import type { Match } from '@/models/liveScore';
 import { utcTimeToTr } from '@/utils/dateFormat';
 import styles from './calendar.module.scss';
 import TeamLogo from '@/components/TeamLogo';
+import { BRAND } from '@/config/brand';
 
 type ViewMode = 'month' | 'list';
 
@@ -95,8 +96,9 @@ function generateIcs(match: Match): string {
   return [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//OfsaytYok//WC2026//TR',
+    `PRODID:-//${BRAND.compactName}//WC2026//TR`,
     'BEGIN:VEVENT',
+    // UID kalıcı kimlik: marka/alan adı değişse de AYNI kalmalı (yoksa içe aktaran takvimde etkinlik çiftlenir).
     `UID:wcmatch-${match.id}@ofsaytyok.app`,
     `DTSTART:${toIcsDt(date, time)}`,
     `DTEND:${toIcsDt(date, endTime)}`,

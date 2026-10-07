@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import type { ComponentType, ReactNode } from 'react';
 import { resolvePluralKey } from './i18nPlural';
+import { BRAND_I18N_VARS, brandText } from '@/config/brand';
 
 import { getNamespace, registerNamespace } from './i18nRegistry';
 // Temel TR namespace'ler: her sayfada (header, alt menü, maç listesi, gündem paneli). Diğerleri sayfa chunk'ından
@@ -90,8 +91,11 @@ export function useTranslation(ns: string) {
       const dict = getNamespace(locale, namespace) ?? getNamespace('tr', namespace) ?? {};
       const lookupKey = resolvePluralKey(actualKey, opts?.count, locale, (k) => resolve(dict, k) !== undefined);
       let value = resolve(dict, lookupKey) ?? actualKey;
+      // Marka değişkenleri ({{brand}}, {{siteDomain}}, {{contactEmail}}) her zaman dolar; çağıranınki önce gelir.
       if (opts) {
-        value = value.replace(/\{\{(\w+)\}\}/g, (_, k: string) => String(opts[k] ?? ''));
+        value = value.replace(/\{\{(\w+)\}\}/g, (_, k: string) => String(opts[k] ?? BRAND_I18N_VARS[k] ?? ''));
+      } else {
+        value = brandText(value);
       }
       return value;
     },

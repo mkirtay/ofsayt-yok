@@ -38,5 +38,5 @@ export function matchOgVersion(m: OgMatch): string {
 }
 
 export function matchOgImagePath(m: OgMatch): string {
-  return `/api/og/match/${m.id}?v=${matchOgVersion(m)}`;
+  return `/api/og/match/${m.id}?v=${encodeURIComponent(matchOgVersion(m))}`;
 }

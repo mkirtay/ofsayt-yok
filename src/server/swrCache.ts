@@ -6,7 +6,7 @@
  * Aynı anahtar için aynı anda tek üretim: Redis `SET NX PX` kilidi. Kilit başkasındaysa ve değer hiç yoksa kısa süre
  * onun yazmasını bekler, olmazsa kendisi üretir. Redis yoksa / erişilemiyorsa her seferinde üretir (fail-open).
  */
-import { getRedisClient, withRedis } from '@/lib/redis';
+import { fitsInRedis, getRedisClient, withRedis } from '@/lib/redis';
 import { runInBackground } from '@/server/backgroundTask';
 
 type Entry<T> = { v: T; at: number };
@@ -33,6 +33,11 @@ async function readEntry<T>(key: string): Promise<Entry<T> | null> {
 }
 
 async function writeEntry<T>(key: string, v: T, at: number, keepSeconds: number): Promise<void> {
+  // Sığmayan değer yazılmaz (her istek yeniden üretir; alttaki Sportmonks çağrıları yine paylaşımlı cache'ten).
+  if (!fitsInRedis({ v, at })) {
+    console.warn('[swr] değer Redis sınırını aşıyor, yazılmadı', key);
+    return;
+  }
   await withRedis((r) => r.set(key, { v, at } satisfies Entry<T>, { ex: keepSeconds }), null);
 }
 

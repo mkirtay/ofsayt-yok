@@ -2,16 +2,17 @@ import Head from 'next/head';
 import { useI18n } from '@/lib/i18n';
 import Container from '@/components/Container';
 import styles from './error.module.scss';
+import { brandTitle } from '@/config/brand';
 
 const STRINGS = {
   tr: {
-    title: 'Sunucu Hatası | Ofsayt Yok',
+    title: brandTitle('Sunucu Hatası'),
     heading: 'Bir Şeyler Ters Gitti',
     desc: 'Sunucumuzda beklenmedik bir hata oluştu. Lütfen sayfayı yenileyin.',
     refresh: 'Sayfayı Yenile',
   },
   en: {
-    title: 'Server Error | Ofsayt Yok',
+    title: brandTitle('Server Error'),
     heading: 'Something Went Wrong',
     desc: 'An unexpected error occurred on our server. Please refresh the page.',
     refresh: 'Refresh Page',

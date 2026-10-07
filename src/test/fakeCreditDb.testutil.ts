@@ -21,6 +21,8 @@ export type FakeUser = {
   premiumUntil: Date | null;
   referralCode?: string | null;
   referredById?: string | null;
+  email?: string | null;
+  emailNormalized?: string | null;
 };
 export type FakeReferral = { id: string; referrerId: string; refereeId: string; createdAt: Date; rewardedAt: Date | null };
 export type FakeUnlock = {
@@ -62,7 +64,7 @@ function notFoundError(): Prisma.PrismaClientKnownRequestError {
   return new Prisma.PrismaClientKnownRequestError('Record to update not found.', { code: 'P2025', clientVersion: 'fake' });
 }
 
-/** Basit Prisma `where` eşleştirici: eşitlik, null, `in`, `not`, `lt`, `gte`, `OR`. */
+/** Basit Prisma `where` eşleştirici: eşitlik, null, `in`, `not`, `lt`, `gte`, `startsWith`/`endsWith`, `OR`. */
 function matches(row: Record<string, unknown>, where: Where | undefined): boolean {
   if (!where) return true;
   for (const [key, cond] of Object.entries(where)) {
@@ -72,13 +74,17 @@ function matches(row: Record<string, unknown>, where: Where | undefined): boolea
     }
     const v = row[key];
     if (cond !== null && typeof cond === 'object' && !(cond instanceof Date)) {
-      const c = cond as { in?: unknown[]; not?: unknown; lt?: Date | number; gte?: number; gt?: number };
+      const c = cond as {
+        in?: unknown[]; not?: unknown; lt?: Date | number; gte?: number; gt?: number; startsWith?: string; endsWith?: string;
+      };
       if ('in' in c && !c.in!.includes(v)) return false;
       // SQL: `x <> 'A'` NULL için doğru değil (UNKNOWN) — Prisma `not` da NULL satırı dışarıda bırakır.
       if ('not' in c && (v === null || v === undefined || v === c.not)) return false;
       if ('lt' in c && !((v as number | Date) < c.lt!)) return false;
       if ('gte' in c && !((v as number) >= c.gte!)) return false;
       if ('gt' in c && !((v as number) > c.gt!)) return false;
+      if ('startsWith' in c && !(typeof v === 'string' && v.startsWith(c.startsWith!))) return false;
+      if ('endsWith' in c && !(typeof v === 'string' && v.endsWith(c.endsWith!))) return false;
       continue;
     }
     if (cond === null ? v !== null && v !== undefined : v !== cond) return false;
@@ -151,6 +157,11 @@ export function createFakeCreditDb(opts: { now?: () => number } = {}) {
             ? [...users.values()].find((x) => x.referralCode === where.referralCode)
             : users.get(where.id!);
           return u ? { ...u } : null;
+        },
+        async findMany({ where, take }: { where?: Where; take?: number }) {
+          await tick();
+          const rows = [...users.values()].filter((u) => matches(u as unknown as Record<string, unknown>, where)).map((u) => ({ ...u }));
+          return take ? rows.slice(0, take) : rows;
         },
         async updateMany({ where, data }: { where: Where & { id: string }; data: CreditsData & Partial<Omit<FakeUser, 'credits'>> }) {
           await tick();
@@ -334,6 +345,13 @@ export function createFakeCreditDb(opts: { now?: () => number } = {}) {
           return null;
         },
       },
+      /** Yalnız `pg_advisory_xact_lock(...)`: parametre anahtarıyla işlem sonuna kadar tutulan kilit. */
+      async $executeRaw(strings: TemplateStringsArray, ...values: unknown[]) {
+        await tick();
+        if (!strings.join('?').includes('pg_advisory_xact_lock')) throw new Error(`fake $executeRaw desteklemiyor: ${strings.join('?')}`);
+        await lock(ctx, `ADV:${values.join('|')}`);
+        return 1;
+      },
     };
   }
 
@@ -397,7 +415,7 @@ export function createFakeCreditDb(opts: { now?: () => number } = {}) {
       id: string,
       credits: number,
       role = 'USER',
-      opts: Partial<Pick<FakeUser, 'emailVerified' | 'createdAt' | 'premiumUntil'>> = {},
+      opts: Partial<Pick<FakeUser, 'emailVerified' | 'createdAt' | 'premiumUntil' | 'email' | 'emailNormalized'>> = {},
     ) {
       const t = new Date(now());
       users.set(id, { id, role, credits, updatedAt: t, emailVerified: null, createdAt: t, premiumUntil: null, ...opts });

@@ -5,6 +5,7 @@ import { serverSideTranslations } from '@/lib/serverSideTranslations';
 import { useTranslation } from '@/lib/i18n';
 import '@/lib/i18nNamespaces/credits';
 import styles from './odeme.module.scss';
+import { brandTitle } from '@/config/brand';
 
 /** Hikie'de ödeme tamamlanmadı / iptal: bilgi + kredi sayfasına dönüş. Hiçbir durum değiştirmez. */
 export default function PaymentRetryPage() {
@@ -12,7 +13,7 @@ export default function PaymentRetryPage() {
   return (
     <>
       <Head>
-        <title>{`${t('payment.retryTitle')} | Ofsayt Yok`}</title>
+        <title>{brandTitle(t('payment.retryTitle'))}</title>
         <meta name="robots" content="noindex, nofollow" />
       </Head>
       <div className={styles.wrapper}>

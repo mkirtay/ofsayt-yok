@@ -5,6 +5,10 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 const h = vi.hoisted(() => ({ load: vi.fn(), rendered: 0 }));
 vi.mock('@/server/og/teamOgData', () => ({ loadTeamOgData: h.load }));
 vi.mock('@/lib/logger', () => ({ captureError: vi.fn() }));
+vi.mock('@/lib/rateLimit', () => ({
+  hitFixedWindowRateLimit: vi.fn(async () => ({ success: true, remaining: 1, resetAt: 0 })),
+  requestIp: () => '203.0.113.9',
+}));
 vi.mock('@/server/og/teamOgImage', () => ({
   renderTeamOgImage: async () => {
     h.rendered += 1;
@@ -29,7 +33,8 @@ async function get(query: Record<string, string>): Promise<Res> {
     send() {},
     end() {},
   };
-  await handler({ method: 'GET', query, headers: {} } as unknown as NextApiRequest, res as unknown as NextApiResponse);
+  const url = `/api/og/team/${query.id}${query.v !== undefined ? `?v=${encodeURIComponent(query.v)}` : ''}`;
+  await handler({ method: 'GET', url, query, headers: {} } as unknown as NextApiRequest, res as unknown as NextApiResponse);
   return out;
 }
 

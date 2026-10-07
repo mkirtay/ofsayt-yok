@@ -4,6 +4,7 @@
  */
 import { CREDIT_PACKAGES, PREMIUM_PLANS, formatTry } from '@/config/creditPackages';
 import { ANALYSIS_UNLOCK_COST } from '@/lib/analysisUnlock';
+import { BRAND } from '@/config/brand';
 
 export const ASSISTANT_HELP_TOPICS = ['credits', 'premium', 'analysis', 'account', 'assistant'] as const;
 export type AssistantHelpTopic = (typeof ASSISTANT_HELP_TOPICS)[number];
@@ -58,8 +59,8 @@ export function assistantHelp(topic: AssistantHelpTopic, locale: 'tr' | 'en'): A
     default:
       return {
         facts: tr
-          ? ['Asistan yalnız Ofsayt Yok verisini kullanır: fikstür, canlı skor, puan durumu, gol krallığı, takım bilgisi, hazır maç analizi ve futbol kuralları.', 'Günlük mesaj hakkı: misafir 3, üye 15, premium 50.']
-          : ['The assistant only uses Ofsayt Yok data: fixtures, live scores, standings, top scorers, team info, ready match analyses and the laws of the game.', 'Daily messages: guest 3, member 15, premium 50.'],
+          ? [`Asistan yalnız ${BRAND.name} verisini kullanır: fikstür, canlı skor, puan durumu, gol krallığı, takım bilgisi, hazır maç analizi ve futbol kuralları.`, 'Günlük mesaj hakkı: misafir 3, üye 15, premium 50.']
+          : [`The assistant only uses ${BRAND.name} data: fixtures, live scores, standings, top scorers, team info, ready match analyses and the laws of the game.`, 'Daily messages: guest 3, member 15, premium 50.'],
         links: [],
       };
   }

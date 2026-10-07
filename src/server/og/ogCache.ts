@@ -17,8 +17,16 @@ export const OG_CACHE = {
   other: 'public, max-age=3600, s-maxage=3600',
   /** Hata / maç yok → varsayılan görsele yönlendirme; kısa (geçici hata kalıcılaşmasın). */
   fallback: 'public, max-age=300, s-maxage=300',
-  /** Eski sürümlü adres → güncel adrese yönlendirme. */
+  /** Eski sürümlü adres → güncel adrese yönlendirme (hedef veriye bağlı → kısa). */
   versionRedirect: 'public, max-age=60, s-maxage=60',
+  /**
+   * Kanonik olmayan adres (fazla/tekrarlı parametre, baştaki sıfır, sıra, kodlama) → kanonik adrese 308. Eşleme veriye
+   * bağlı değil → uzun (1 gün; aynı çöp adres günde en çok bir kez fonksiyona gelir). Bir yıl değil: beklenmedik bir
+   * yönlendirme döngüsü olursa CDN'de takılı kalmasın (yeni deploy da önbelleği temizler).
+   */
+  canonicalRedirect: 'public, max-age=86400, s-maxage=86400',
+  /** Çizim bütçesi aşıldı → varsayılan görsel. CDN'de saklanmaz (adres limit geçince çizilebilsin); istemci 1 dk. */
+  throttled: 'private, max-age=60',
   /** Takım görseli (`v` = gün). */
   team: 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=3600',
 } as const;

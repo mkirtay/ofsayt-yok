@@ -1,6 +1,6 @@
 {
-  "pageTitle": "AI Analiz İsabet İstatistikleri — Ofsayt Yok",
-  "pageDesc": "Ofsayt Yok yapay zekâ analizlerinde en olası gösterilen maç sonucunun gerçekleşme oranı. Bilgi amaçlı istatistik.",
+  "pageTitle": "AI Analiz İsabet İstatistikleri — {{brand}}",
+  "pageDesc": "{{brand}} yapay zekâ analizlerinde en olası gösterilen maç sonucunun gerçekleşme oranı. Bilgi amaçlı istatistik.",
   "heroTitle": "AI Analiz İsabet İstatistikleri",
   "heroSub": "Analizlerde en olası gösterilen maç sonucunun gerçekleşme oranı. Bilgi amaçlı istatistiksel tahmindir.",
   "adminBadge": "ADMIN",

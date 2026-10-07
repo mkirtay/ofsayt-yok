@@ -4,11 +4,23 @@ import { isSafeHttpUrl, sanitizePlainText } from '@/lib/security';
 import { isGalleryAvatarUrl, toStoredImage } from '@/lib/avatars';
 import { siteBaseUrl, withAbsoluteImage } from '@/lib/siteUrl';
 import { getRequestUserId } from '@/lib/mobileAuth';
+import { hitFixedWindowRateLimit } from '@/lib/rateLimit';
+
+// Profil JSON'u birkaç KB'ı geçmez; Next varsayılanı (1 MB) yerine 16 KB — aşılırsa Next 413 döner.
+export const config = { api: { bodyParser: { sizeLimit: '16kb' } } };
 
 const USERNAME_RE = /^[a-zA-Z0-9_]{3,30}$/;
 const MAX_BIO = 2000;
 const MAX_NAME = 80;
 const MAX_IMAGE_URL = 2048;
+// Ham (temizlenmemiş) girdi tavanları: aşan değer temizlenmeden 400 alır. Etiketler silineceği için içerik sınırının
+// birkaç katı payı var; gerçek kullanıcı girdisi buna yaklaşmaz.
+const RAW_MAX_NAME = 400;
+const RAW_MAX_BIO = 4 * MAX_BIO;
+const RAW_MAX_IMAGE_URL = 2 * MAX_IMAGE_URL;
+// Profil güncellemesi kullanıcı başına 10 dakikada 20 (formu art arda kaydetmeye yeter).
+const PATCH_RATE_LIMIT = 20;
+const PATCH_RATE_WINDOW_MS = 10 * 60_000;
 
 function parseJsonBody(req: NextApiRequest): Record<string, unknown> {
   const b = req.body;
@@ -51,6 +63,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     if (req.method === 'PATCH') {
+      const rl = await hitFixedWindowRateLimit(`user-me-patch:user:${userId}`, PATCH_RATE_LIMIT, PATCH_RATE_WINDOW_MS);
+      if (!rl.success) {
+        res.setHeader('Retry-After', String(Math.max(1, Math.ceil((rl.resetAt - Date.now()) / 1000))));
+        return res.status(429).json({ error: 'Çok fazla güncelleme isteği. Biraz bekleyin.' });
+      }
+
       const body = parseJsonBody(req);
 
       const nameRaw = body.name;
@@ -69,7 +87,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         if (nameRaw === null) {
           data.name = null;
         } else if (typeof nameRaw === 'string') {
-          const t = sanitizePlainText(nameRaw);
+          if (nameRaw.length > RAW_MAX_NAME) {
+            return res.status(400).json({ error: `İsim en fazla ${MAX_NAME} karakter olabilir.` });
+          }
+          const t = sanitizePlainText(nameRaw, { maxInputLength: RAW_MAX_NAME });
           if (t.length > MAX_NAME) {
             return res.status(400).json({ error: `İsim en fazla ${MAX_NAME} karakter olabilir.` });
           }
@@ -83,8 +104,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         if (imageRaw === null) {
           data.image = null;
         } else if (typeof imageRaw === 'string') {
+          if (imageRaw.length > RAW_MAX_IMAGE_URL) {
+            return res.status(400).json({ error: 'Profil görseli URL’si çok uzun.' });
+          }
           // API çıktısı tam URL verdiği için gelen değer kendi galeri avatarımızsa göreli depolama formuna geri çevrilir.
-          const t = toStoredImage(sanitizePlainText(imageRaw), siteBaseUrl());
+          const t = toStoredImage(sanitizePlainText(imageRaw, { maxInputLength: RAW_MAX_IMAGE_URL }), siteBaseUrl());
           if (t.length > MAX_IMAGE_URL) {
             return res.status(400).json({ error: 'Profil görseli URL’si çok uzun.' });
           }
@@ -120,7 +144,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         if (bioRaw === null) {
           data.bio = null;
         } else if (typeof bioRaw === 'string') {
-          const t = sanitizePlainText(bioRaw);
+          if (bioRaw.length > RAW_MAX_BIO) {
+            return res.status(400).json({ error: `Hakkımda en fazla ${MAX_BIO} karakter olabilir.` });
+          }
+          const t = sanitizePlainText(bioRaw, { maxInputLength: RAW_MAX_BIO });
           if (t.length > MAX_BIO) {
             return res.status(400).json({ error: `Hakkımda en fazla ${MAX_BIO} karakter olabilir.` });
           }

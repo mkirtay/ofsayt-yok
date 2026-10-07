@@ -126,13 +126,65 @@ describe('proxy izin listesi', () => {
       expect(r.unsafe).toBe(true);
     });
 
-    it("arama terimi: harf, rakam, boşluk, . ' - kabul", () => {
-      for (const q of ['fenerbahçe spor', "Borussia M'gladbach", 'St. Pauli', 'Paris Saint-Germain', 'İstanbul 1907']) {
+    it("arama terimi: harf, işaret, rakam, boşluk, . ' ’ - & ( ) , kabul", () => {
+      for (const q of [
+        'fenerbahçe spor', "Borussia M'gladbach", 'St. Pauli', 'Paris Saint-Germain', 'İstanbul 1907',
+        'Brighton & Hove', 'Inter (Milan)', 'Wolverhampton, Wolves', 'Borussia M’gladbach',
+        'fenerbahc\u0327e'.normalize('NFD'), // iOS/macOS klavyesinin NFD aksanı
+      ]) {
         expect(checkProxyAllowlist(['football', 'teams', 'search', q], {}).violations).toEqual([]);
       }
-      for (const q of ['a;b', 'a&b', 'a=b', 'a<b>', 'x'.repeat(61)]) {
+      for (const q of ['a;b', 'a=b', 'a<b>', 'a"b', 'a*b', 'x'.repeat(61)]) {
         expect(checkProxyAllowlist(['football', 'teams', 'search', q], {}).allowed).toBe(false);
       }
+    });
+
+    // Next catch-all segmentleri bir kez çözülmüş gelir: `%2E%2E` → `..`, `%252E%252E` → `%2E%2E`, `%2F` → `/`.
+    it.each([
+      ['%2E%2E (çözülmüş)', ['football', '..', 'odds', 'bookmakers']],
+      ['%2e%2e küçük harf (çözülmüş)', ['football', 'teams', '..', '..', 'odds']],
+      ['çift kodlama %252E%252E', ['football', '%2E%2E', 'odds']],
+      ['çift kodlama küçük harf', ['football', '%2e%2e', 'odds']],
+      ['ham kodlu nokta', ['football', '%2E', 'teams', '34']],
+      ['%2F (segment içinde /)', ['football', 'teams', 'search', '../../odds']],
+      ['%5C ters bölü', ['football', 'teams', 'search', '..\\odds']],
+      ['tam genişlik nokta ．．', ['football', '\uFF0E\uFF0E', 'odds']],
+      ['iki nokta lideri ‥', ['football', '\u2025', 'odds']],
+      ['tek nokta lideri ․', ['football', 'teams', '\u2024', '34']],
+      ['ideografik nokta 。', ['football', 'teams', 'search', 'a\u3002b']],
+      ['küçük nokta ﹒', ['football', '\uFE52\uFE52']],
+      ['tam genişlik eğik çizgi ／', ['football', 'teams', 'search', 'a\uFF0Fb']],
+      ['tam genişlik ters bölü ＼', ['football', 'teams', 'search', 'a\uFF3Cb']],
+      ['tam genişlik yüzde ％', ['football', 'teams', 'search', '\uFF052e']],
+      ['tam genişlik soru işareti ？', ['football', 'teams', 'search', 'x\uFF1Finclude=odds']],
+      ['boş segment (sonda)', ['football', 'teams', '34', '']],
+      ['boş segment (başta)', ['', 'football', 'teams', '34']],
+      ['NUL', ['football', 'teams', 'search', 'a\u0000']],
+    ])('yol normalizasyonu — her zaman unsafe: %s', (_n, segments) => {
+      const r = checkProxyAllowlist(segments, {});
+      expect(r.unsafe).toBe(true);
+      expect(r.allowed).toBe(false);
+    });
+
+    it.each([
+      'football/../odds/bookmakers',
+      'football/%2E%2E/odds',
+      'football/%2e%2e/odds',
+      'football/%252E%252E/odds',
+      'football/teams//34',
+      'football/teams/34%2F..',
+      'football\\teams\\34',
+      'football/\uFF0E\uFF0E/odds',
+    ])('metin yol da unsafe: %s', (p) => {
+      expect(checkProxyAllowlist(p, {}).unsafe).toBe(true);
+    });
+
+    it('Sentry\'de görülen izin listesi dışı istekler: odds/bookmakers ve yol atlama reddedilir', () => {
+      const odds = checkProxyAllowlist(['football', 'odds', 'bookmakers'], {});
+      expect(odds).toMatchObject({ allowed: false, unsafe: false });
+      expect(odds.violations).toEqual(['path:football/odds/bookmakers']);
+      expect(checkProxyAllowlist(['football', 'teams', '34'], { include: 'odds.bookmaker' }).allowed).toBe(false);
+      expect(checkProxyAllowlist(['football', '..', 'odds', 'bookmakers'], {}).unsafe).toBe(true);
     });
 
     it('dizi (tekrarlanan) parametre reddedilir — önbellek zehirlemesi yok', () => {

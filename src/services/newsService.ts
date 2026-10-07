@@ -1,10 +1,11 @@
 import Parser from 'rss-parser';
 import { NEWS_SOURCES, type NewsSource } from '@/config/newsSources';
 import type { NewsItem } from '@/models/domain';
+import { BRAND } from '@/config/brand';
 
 const parser = new Parser({
   timeout: 8_000,
-  headers: { 'User-Agent': 'OfsaytYok/1.0' },
+  headers: { 'User-Agent': `${BRAND.compactName}/1.0` },
 });
 
 function hashId(source: string, url: string): string {

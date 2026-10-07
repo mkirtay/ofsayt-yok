@@ -1,7 +1,7 @@
 {
   "open": "AI Asistan'ı aç",
   "title": "AI Asistan",
-  "subtitle": "Ofsayt Yok verisiyle yanıtlar",
+  "subtitle": "{{brand}} verisiyle yanıtlar",
   "close": "Kapat",
   "intro": "Maçlar, puan durumu, takımlar, kurallar ve hazır maç analizleri hakkında sorabilirsin.",
   "placeholder": "Bir soru yaz…",
@@ -17,7 +17,7 @@
     "credits": "Krediler nasıl çalışır?"
   },
   "sources": "İlgili sayfalar",
-  "dataNote": "Ofsayt Yok verisi · bilgi amaçlıdır",
+  "dataNote": "{{brand}} verisi · bilgi amaçlıdır",
   "remaining": "Bugün kalan mesaj: {{n}}",
   "quota": {
     "guest": "Bugünkü {{limit}} ücretsiz mesaj hakkın doldu. Giriş yaparak günde 15 mesaj kullanabilirsin.",
@@ -25,6 +25,7 @@
     "premium": "Bugünkü {{limit}} mesaj hakkın doldu. Yarın tekrar görüşelim."
   },
   "budget": "Asistan bugünlük doldu. Yarın tekrar dene.",
+  "budgetMonthly": "Asistan bu ay için kapasitesine ulaştı; gelecek ay yeniden açılır.",
   "unavailable": "Asistan şu an misafirlere kapalı. Giriş yaparak kullanabilirsin.",
   "rate": "Biraz yavaş — birkaç saniye sonra tekrar dene.",
   "refused": "Bu konuda yardımcı olamıyorum.",

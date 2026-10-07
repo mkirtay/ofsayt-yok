@@ -19,7 +19,7 @@ import styles from './assistant.module.scss';
 
 export type AssistantPanelProps = { open: boolean; side?: 'left' | 'right'; onClose: () => void };
 
-type Notice = { kind: 'quota' | 'budget' | 'unavailable' | 'rate' | 'refused' | 'error'; tier?: string; limit?: number };
+type Notice = { kind: 'quota' | 'budget' | 'budgetMonthly' | 'unavailable' | 'rate' | 'refused' | 'error'; tier?: string; limit?: number };
 type Message = { id: number; role: 'user' | 'assistant'; text: string; cards: CardData[]; links: AssistantLink[]; notice?: Notice; pending?: boolean };
 
 const STORAGE_KEY = 'oy_assistant_chat_v1';
@@ -95,7 +95,7 @@ export default function AssistantPanel({ open, side = 'right', onClose }: Assist
         });
         if (!res.ok || !res.body) {
           const body = (await res.json().catch(() => ({}))) as { code?: string; tier?: string; limit?: number };
-          const kind: Notice['kind'] = body.code === 'QUOTA' ? 'quota' : body.code === 'BUDGET' ? 'budget' : body.code === 'UNAVAILABLE' ? 'unavailable' : body.code === 'RATE' ? 'rate' : 'error';
+          const kind: Notice['kind'] = body.code === 'QUOTA' ? 'quota' : body.code === 'BUDGET' ? 'budget' : body.code === 'BUDGET_MONTHLY' ? 'budgetMonthly' : body.code === 'UNAVAILABLE' ? 'unavailable' : body.code === 'RATE' ? 'rate' : 'error';
           patch(replyId, (m) => ({ ...m, pending: false, notice: { kind, tier: body.tier, limit: body.limit } }));
           return;
         }

@@ -55,7 +55,8 @@ describe('liveScoreService — Sportmonks Faz 2 wiring', () => {
     expect(fetchSpy).toHaveBeenCalledTimes(1);
     const calledUrl = fetchSpy.mock.calls[0][0] as string;
     expect(calledUrl).toContain('/livescores/inplay');
-    expect(calledUrl).toContain('api_token=test-token');
+    expect(calledUrl).not.toContain('api_token');
+    expect(new Headers((fetchSpy.mock.calls[0][1] as RequestInit | undefined)?.headers).get('authorization')).toBe('test-token');
     expect(matches).toHaveLength(1);
     expect(matches[0].id).toBe(19874789);
     expect(matches[0].fixture_id).toBeUndefined();

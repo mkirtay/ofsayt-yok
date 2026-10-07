@@ -3,6 +3,7 @@ import path from 'node:path';
 import sharp from 'sharp';
 import { describe, expect, it } from 'vitest';
 import { BRAND_LOGO_PNG, BRAND_LOGO_SVG, OG_DEFAULT_IMAGE } from './brandImages';
+import { BRAND } from './brand';
 
 const pub = (p: string) => path.join(process.cwd(), 'public', p);
 const src = (p: string) => readFileSync(path.join(process.cwd(), 'src', p), 'utf8');
@@ -15,16 +16,21 @@ describe('marka görselleri', () => {
     expect(statSync(pub(OG_DEFAULT_IMAGE.path)).size).toBeLessThan(300 * 1024);
   });
 
-  it('_app ve ana sayfa düz yazılmış yolları config ile aynı; eski logo ve /api/og/default referansı yok', () => {
+  it('_app ve ana sayfa görsel yollarını config\'den okur; eski logo ve /api/og/default referansı yok', () => {
     const app = src('pages/_app.tsx');
-    expect(app).toContain(`'https://ofsaytyok.app'}${OG_DEFAULT_IMAGE.path}`);
-    expect(app).toContain(`content="${OG_DEFAULT_IMAGE.alt}"`);
+    expect(app).toContain('${siteBaseUrl()}${OG_DEFAULT_IMAGE.path}');
+    expect(app).toContain('content={OG_DEFAULT_IMAGE.alt}');
+    expect(app).not.toContain('og-default-v');
     expect(app).toContain('href="/apple-touch-icon.png"');
     expect(app).not.toContain('/api/og/default');
-    expect(src('pages/index.tsx')).toContain(`'https://ofsaytyok.app'}${BRAND_LOGO_PNG}`);
+    expect(src('pages/index.tsx')).toContain('${siteBaseUrl()}${BRAND_LOGO_PNG}');
     for (const f of ['pages/_app.tsx', 'pages/index.tsx', 'pages/news/[id].tsx', 'server/og/matchOgImage.tsx']) {
       expect(src(f)).not.toContain('/images/logo.svg');
     }
+  });
+
+  it('paylaşım görseli alt metni marka adıyla başlar', () => {
+    expect(OG_DEFAULT_IMAGE.alt.startsWith(`${BRAND.name} — `)).toBe(true);
   });
 
   it('ikonlar: apple-touch-icon 180, JSON-LD logosu 512 kare, favicon.ico 3 boyut; yeni logo dosyası var', async () => {

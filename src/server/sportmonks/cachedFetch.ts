@@ -3,11 +3,14 @@
  * sunucu içi çağrılar (SSR, API route'ları, cron/bot) buradan geçer. Amaç: upstream istek sayısı
  * ziyaretçi sayısından bağımsız olsun.
  *
+ * - Kimlik: `SPORTMONKS_API_KEY` upstream'e `Authorization` başlığıyla gider, URL'de yoktur.
  * - Anahtar: `api_token` hariç normalize path + upstream'e giden sorgunun AYNISI (`canonicalQueryEntries`: sıralı
  *   anahtar, dizi değerleri sırasıyla tekrar; `%&=` kaçışlı) — `include=a&include=b` ile `include=a,b` çakışmaz.
  * - Süre: `sportmonksCacheTtl` (içeriğe/maç durumuna göre). "Yok" cevapları da (404/403/422, boş 200)
  *   cache'lenir (negatif cache).
- * - Katmanlar: instance içi bellek (L1, yalnız taze kayıt) → Redis (taze + eski).
+ * - Katmanlar: instance içi bellek (L1, yalnız taze kayıt) → Redis (taze + eski). 4 KB'tan büyük gövde Redis'e gzip +
+ *   base64 yazılır (`gz`; Sportmonks JSON'u ölçümde 4–11 kat küçüldü): depolama (Free plan 256 MB) ve otomatik pipeline'ın
+ *   birleşik istek boyutu (10 MB) için. Sıkıştırılmış hali de sınırı aşarsa yalnız L1'de kalır.
  * - Tekil uçuş: aynı instance'ta aynı anahtar için tek upstream isteği; instance'lar arasında Redis
  *   `SET NX PX` kilidi — kilidi alamayan eski veri varsa onu verir, yoksa kısa süre cache'i yoklar.
  * - Sportmonks 429/5xx/ağ hatası/zaman aşımı → son geçerli veri (`stale: true`). Başka instance tazelerken kilide takılan
@@ -18,12 +21,25 @@
  *   bütçesini paylaşır (en çok `api`).
  * - `subscription`/`rate_limit`/`timezone` yanıttan çıkarılır; kota Sentry'ye BURADAN raporlanır
  *   (her gerçek upstream isteği için bir kez).
+ * - Havuz bekçisi (`poolGuard.ts`): 429 → havuz soğumaya girer, soğuma bitene kadar o havuza istek atılmaz (eski veri
+ *   ya da anında 429); havuz azalınca kısa TTL'ler esner; her gerçek istek rota × havuz olarak sayılır.
  */
-import { getRedisClient, withRedis } from '@/lib/redis';
-import { reportSportmonksQuota } from '@/services/sportmonks/quotaMonitor';
+import { getRedisClient, MAX_REDIS_VALUE_BYTES, withRedis } from '@/lib/redis';
+import { currentRequestRoute, reportSportmonksQuota, reportSportmonksRateLimited } from '@/services/sportmonks/quotaMonitor';
 import { LIVE_TTL, sportmonksCacheTtl } from '@/services/sportmonks/cachePolicy';
 import { cacheKeyPrefix } from '@/lib/cacheNamespace';
 import { keepTurkeyTvStations } from '@/services/sportmonks/matchExtras';
+import {
+  cooldownSecondsFor429,
+  learnPool,
+  notePoolObservation,
+  poolCooldownUntil,
+  poolForPath,
+  recordUpstreamCall,
+  startPoolCooldown,
+  resetPoolGuardForTests,
+  stretchFreshSeconds,
+} from './poolGuard';
 
 const SPORTMONKS_BASE = 'https://api.sportmonks.com/v3';
 // Ortam + şema sürümü öneki (bkz. lib/cacheNamespace.ts): `prod:v2:smc:...` / `prod:v2:smc-lock:...`.
@@ -32,8 +48,8 @@ const lockPrefix = () => `${cacheKeyPrefix()}smc-lock:`;
 const LOCK_TTL_MS = 10_000;
 const LOCK_WAIT_MS = 3_000;
 const LOCK_POLL_MS = 150;
-/** Upstash istek boyutu sınırının altında kal; daha büyük yanıtlar yalnız L1'de tutulur. */
-const MAX_REDIS_BYTES = 900_000;
+/** Bu boyuttan (JSON karakter) büyük gövde Redis'e sıkıştırılarak yazılır. */
+const COMPRESS_MIN_CHARS = 4_000;
 const L1_MAX_ENTRIES = 300;
 const STRIPPED_FIELDS = ['subscription', 'rate_limit', 'timezone'] as const;
 const NOT_FOUND_STATUSES = new Set([400, 403, 404, 422]);
@@ -50,6 +66,8 @@ export const SPORTMONKS_TIMEOUT_MS = { page: 3_000, api: 5_000 } as const;
 export type SportmonksQuery = Record<string, string | string[] | undefined>;
 
 type Entry = { status: number; body: unknown; fetchedAt: number; freshUntil: number; staleUntil: number };
+/** Redis'teki biçim: küçük gövde aynen, büyük gövde `gz` (gzip + base64 JSON). Eski (sıkıştırılmamış) kayıtlar da okunur. */
+type StoredEntry = Omit<Entry, 'body'> & { body?: unknown; gz?: string };
 
 export type CacheOutcome = 'HIT' | 'MISS' | 'STALE' | 'BYPASS';
 
@@ -68,6 +86,8 @@ export type SportmonksCachedResult = {
    * CDN / proxy için `stale` ile aynı (kısa cache); yalnız istek izleme bunu "gecikmeli" saymaz.
    */
   concurrentRefresh?: true;
+  /** Havuz soğumada (429 sonrası): upstream'e GİDİLMEDİ — eski veri ya da anında 429. */
+  rateLimited?: true;
 };
 
 export type CachedFetchOptions = {
@@ -155,7 +175,7 @@ function noteOutcome(r: SportmonksCachedResult): SportmonksCachedResult {
     if (r.stale && !r.concurrentRefresh) t.stale = true;
     if (r.cache === 'BYPASS' && (r.status >= 500 || r.status === 429)) t.failed = true;
     t.calls += 1;
-    if (r.cache === 'MISS' || r.cache === 'BYPASS' || (r.stale && !r.concurrentRefresh)) t.upstream += 1;
+    if (!r.rateLimited && (r.cache === 'MISS' || r.cache === 'BYPASS' || (r.stale && !r.concurrentRefresh))) t.upstream += 1;
   }
   return r;
 }
@@ -221,15 +241,52 @@ function l1Set(key: string, e: Entry): void {
   l1.set(key, e);
 }
 
+/**
+ * `node:zlib` — `process.getBuiltinModule` ile (Node ≥ 20.16 / 22.3): bu modül istemci chunk grafiğine de girdiği için
+ * `require('node:zlib')` Turbopack'te tarayıcı paketine ~300 KB `browserify-zlib` dolgusu ekliyordu. Yoksa null →
+ * sıkıştırma yok (gövde aynen, boyut sınırı yine geçerli).
+ */
+function zlib(): typeof import('node:zlib') | null {
+  return typeof process !== 'undefined' && typeof process.getBuiltinModule === 'function'
+    ? (process.getBuiltinModule('node:zlib') ?? null)
+    : null;
+}
+
+/** Redis'e yazılacak biçim; sınırı aşıyorsa null (yalnız L1). */
+export function packEntry(e: Entry): StoredEntry | null {
+  const json = JSON.stringify(e.body) ?? 'null';
+  const z = json.length < COMPRESS_MIN_CHARS ? null : zlib();
+  if (!z) return new TextEncoder().encode(json).length <= MAX_REDIS_VALUE_BYTES ? e : null;
+  const gz = z.gzipSync(json).toString('base64');
+  if (gz.length > MAX_REDIS_VALUE_BYTES) return null;
+  const { body: _body, ...meta } = e;
+  return { ...meta, gz };
+}
+
+/** Bozuk sıkıştırılmış kayıt → null (cache yokmuş gibi; upstream'den yenilenir). */
+export function unpackEntry(s: StoredEntry): Entry | null {
+  if (typeof s.gz !== 'string') return s as Entry;
+  const z = zlib();
+  if (!z) return null;
+  try {
+    const { gz, ...meta } = s;
+    return { ...meta, body: JSON.parse(z.gunzipSync(Buffer.from(gz, 'base64')).toString('utf8')) };
+  } catch {
+    return null;
+  }
+}
+
 // Redis erişimi `withRedis` üzerinden: zaman aşımı/hata/devre açık → cache yokmuş gibi devam (bkz. lib/redis.ts).
 async function redisGet(key: string): Promise<Entry | null> {
-  return (await withRedis((r) => r.get<Entry>(key), null)) ?? null;
+  const stored = await withRedis((r) => r.get<StoredEntry>(key), null);
+  return stored ? unpackEntry(stored) : null;
 }
 
 async function redisSet(key: string, e: Entry, now: number): Promise<void> {
-  if (JSON.stringify(e.body).length > MAX_REDIS_BYTES) return;
+  const stored = packEntry(e);
+  if (!stored) return;
   const ex = Math.max(1, Math.ceil((e.staleUntil - now) / 1000));
-  await withRedis((r) => r.set(key, e, { ex }), null);
+  await withRedis((r) => r.set(key, stored, { ex }), null);
 }
 
 /** Kilit anahtarı veri anahtarından türetilir; önek tekrarlanmaz (`prod:v2:smc-lock:<path?query>`). */
@@ -256,7 +313,10 @@ export function stripSportmonksMeta(body: unknown): unknown {
   return out;
 }
 
-type UpstreamResult = { status: number; body: unknown } | { status: 'network-error' } | { status: 'timeout' };
+type UpstreamResult =
+  | { status: number; body: unknown; retryAfter: string | null }
+  | { status: 'network-error' }
+  | { status: 'timeout' };
 
 async function callUpstream(
   path: string,
@@ -266,8 +326,9 @@ async function callUpstream(
 ): Promise<UpstreamResult> {
   const apiToken = process.env.SPORTMONKS_API_KEY;
   if (!apiToken) throw new Error('Missing SPORTMONKS_API_KEY (sunucu ortam değişkeni tanımlı değil)');
+  // Anahtar URL'ye YAZILMAZ: `Authorization` başlığıyla gider (Sportmonks v3 destekler, Bearer'sız). URL'deki
+  // `api_token` Sentry fetch breadcrumb'ına (`http.query`) ve olası hata mesajlarına düşüyordu (güvenlik raporu Y1).
   const qs = new URLSearchParams(canonicalQueryEntries(query));
-  qs.set('api_token', apiToken);
 
   let res: Response;
   let raw: unknown;
@@ -279,7 +340,10 @@ async function callUpstream(
     const base = process.env.SPORTMONKS_UPSTREAM_BASE || SPORTMONKS_BASE;
     const url = new URL(`${base}/${path}?${qs.toString()}`);
     if (!url.href.startsWith(`${base}/`)) throw new Error('Sportmonks yolu tabanın dışına çıkıyor');
-    res = await (opts.fetchImpl ?? fetch)(url.toString(), { signal: controller.signal });
+    res = await (opts.fetchImpl ?? fetch)(url.toString(), {
+      signal: controller.signal,
+      headers: { Authorization: apiToken },
+    });
     raw = await res.json().catch(() => null);
   } catch {
     return { status: controller.signal.aborted ? 'timeout' : 'network-error' };
@@ -290,7 +354,10 @@ async function callUpstream(
 
   const rl = (raw as { rate_limit?: { requested_entity: string; remaining: number; resets_in_seconds: number } } | null)
     ?.rate_limit;
+  const observedAt = (opts.now ?? Date.now)();
   if (rl) {
+    learnPool(path, rl.requested_entity);
+    notePoolObservation(rl.requested_entity, rl.remaining, rl.resets_in_seconds, observedAt);
     reportSportmonksQuota({
       pool: rl.requested_entity,
       remaining: rl.remaining,
@@ -298,9 +365,17 @@ async function callUpstream(
       path: `/${path}`,
       ...(opts.origin ? { origin: opts.origin } : {}),
     });
+  } else {
+    // Gövdede `rate_limit` yoksa (ör. 429) başlıktaki kalan sayı varsa o kullanılır; sıfırlanma bilinmiyor → 5 dk geçerli.
+    const remaining = res.headers?.get?.('x-ratelimit-remaining');
+    if (remaining && /^\d+$/.test(remaining)) notePoolObservation(poolForPath(path), Number(remaining), 300, observedAt);
   }
   // Yayıncı satırlarından yalnız Türkiye (bkz. matchExtras.keepTurkeyTvStations): cache'e ve istemciye küçük yanıt.
-  return { status: res.status, body: keepTurkeyTvStations(stripSportmonksMeta(raw)) };
+  return {
+    status: res.status,
+    body: keepTurkeyTvStations(stripSportmonksMeta(raw)),
+    retryAfter: res.headers?.get?.('retry-after') ?? null,
+  };
 }
 
 /** Cache'lenebilir mi: gerçek veri (200 + data) ya da kalıcı "yok" (404/403/422/400, boş 200). */
@@ -334,6 +409,22 @@ async function refresh(
 ): Promise<SportmonksCachedResult> {
   const now = opts.now ?? Date.now;
   const startedAt = now();
+  const pool = poolForPath(path);
+
+  // Havuz soğumada (429): upstream'e hiç gitme — eski veri varsa o, yoksa anında 429 (tekrar deneme yağmuru yok).
+  const coolingUntil = await poolCooldownUntil(pool, startedAt);
+  if (coolingUntil > startedAt) {
+    if (previous && previous.staleUntil > startedAt) return { ...toResult(previous, 'STALE', startedAt, true), rateLimited: true };
+    return {
+      status: 429,
+      body: { message: `Sportmonks hız sınırı: ${pool} havuzu ${Math.ceil((coolingUntil - startedAt) / 1000)} sn bekletiliyor` },
+      cache: 'BYPASS',
+      freshForSeconds: 0,
+      ttlSeconds: 0,
+      stale: false,
+      rateLimited: true,
+    };
+  }
 
   const locked = await tryLock(key);
   if (!locked) {
@@ -355,14 +446,27 @@ async function refresh(
     const remainingMs = timeoutMs - (now() - startedAt);
     const up: UpstreamResult = remainingMs > 0 ? await callUpstream(path, query, opts, remainingMs) : { status: 'timeout' };
     const t = now();
+    if (remainingMs > 0) {
+      const route = currentRequestRoute();
+      recordUpstreamCall({ pool: poolForPath(path), route, origin: opts.origin ?? 'server', status: up.status }, t);
+      if (up.status === 429 && 'retryAfter' in up) {
+        const limitedPool = poolForPath(path);
+        const seconds = cooldownSecondsFor429(limitedPool, up.retryAfter, t);
+        if (await startPoolCooldown(limitedPool, seconds, t)) {
+          reportSportmonksRateLimited({ pool: limitedPool, path: `/${path}`, cooldownSeconds: seconds, route, ...(opts.origin ? { origin: opts.origin } : {}) });
+        }
+      }
+    }
     if (typeof up.status === 'number' && 'body' in up && isCacheable(up.status, up.body)) {
       const ttl = sportmonksCacheTtl(path, up.status === 200 ? dataOf(up.body) : undefined, t, query);
+      // Havuz azaldıysa kısa TTL'ler esner (canlı liste 30 sn → 90/180 sn); bkz. poolGuard.stretchFreshSeconds.
+      const fresh = stretchFreshSeconds(ttl.fresh, poolForPath(path), t);
       const entry: Entry = {
         status: up.status,
         body: up.body,
         fetchedAt: t,
-        freshUntil: t + ttl.fresh * 1000,
-        staleUntil: t + Math.max(ttl.fresh, ttl.stale) * 1000,
+        freshUntil: t + fresh * 1000,
+        staleUntil: t + Math.max(fresh, ttl.stale) * 1000,
       };
       l1Set(key, entry);
       await redisSet(key, entry, t);
@@ -441,4 +545,5 @@ export function sportmonksCacheControl(r: SportmonksCachedResult): string {
 export function resetSportmonksCacheForTests(): void {
   l1.clear();
   inFlight.clear();
+  resetPoolGuardForTests();
 }

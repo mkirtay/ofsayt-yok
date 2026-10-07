@@ -7,10 +7,11 @@ import type { RefereePageData } from '@/server/people/refereePage';
 import { personIdFromSlug, personSlug, refereeHref, REFEREE_BASE_PATH } from '@/utils/personUrl';
 import { stripUndefined } from '@/utils/homeInitialData';
 import { useTranslation } from '@/lib/i18n';
+import { siteBaseUrl } from '@/lib/siteUrl';
 
 type Props = { data: RefereePageData; /** Kanonik tam adres — sunucuda (istemcide AUTH_URL yok; JSON-LD hydration'ı eşleşsin). */ url: string };
 
-const SITE_URL = process.env.AUTH_URL ?? 'https://ofsaytyok.app';
+const SITE_URL = siteBaseUrl();
 /** Son maçlar 1 sa; sayfa da 1 sa (Sportmonks verisi alt katmanda daha uzun cache'li). */
 const REVALIDATE_SECONDS = 3600;
 

@@ -5,6 +5,11 @@
  * Takip edilen liglerde canlı ya da ±15 dk içinde başlayacak maç yoksa `inplay`'e hiç gidilmez: karar dünün + bugünün
  * fikstür listesinden (paylaşımlı cache'te, ana sayfayla ortak) verilir — maçsız saatlerde tick upstream'e ~0 istek atar.
  *
+ * Hız sınırı: Fixture havuzu 429 sonrası soğumadaysa (bkz. server/sportmonks/poolGuard.ts) tick hiçbir Sportmonks isteği
+ * atmadan döner (`degraded: 'rate-limited'`); tick içinde 429 gelirse Sentry'ye istisna yazılmaz (havuz soğuması tek olay
+ * üretir), sonraki çağrılar da soğuma yüzünden upstream'e gitmez. Havuz azaldığında `inplay` cache'i kendiliğinden esner
+ * (20 sn → 60/120 sn): dakikalık tick çoğunlukla cache'ten okur.
+ *
  * Neden `livescores/latest` değil: yalnızca son 10 sn'de güncellenen fixture'ları döndürür; 1 dk'lık tetiklemede olay kaçırır.
  */
 import type { Prisma } from '@prisma/client';
@@ -15,6 +20,8 @@ import { prisma } from '@/lib/prisma';
 import { sportmonksCollectAllPages } from '@/services/sportmonksRuntimeClient';
 import { getFixturesByDate } from '@/services/liveScoreService';
 import { trackSportmonksFetches } from '@/server/sportmonks/cachedFetch';
+import { poolCooldownUntil, poolForPath } from '@/server/sportmonks/poolGuard';
+import { SportmonksHttpError } from '@/services/sportmonks/httpClient';
 import { hasActiveMatch } from '@/utils/matchActivity';
 import type { SportmonksFixture } from '@/services/sportmonks/types';
 import { buildGoalDraft, fetchSeasonGoalScorers } from './goalDraft';
@@ -30,8 +37,11 @@ export type TickSummary = {
   errors: number;
   /** Takip edilen liglerde aktif maç yok → `inplay`'e gidilmedi. */
   idle: boolean;
-  /** Tick-düzeyi bir kaynak (inplay upstream / taslak DB okuması) hata verdi: Sentry'ye gitti, tick kısmi sonuçla döner. */
-  degraded?: 'inplay' | 'db';
+  /**
+   * Tick-düzeyi bir kaynak (inplay upstream / taslak DB okuması) hata verdi: Sentry'ye gitti, tick kısmi sonuçla döner.
+   * `rate-limited`: Sportmonks hız sınırı (429 / havuz soğumada) — Sentry'ye istisna yazılmaz.
+   */
+  degraded?: 'inplay' | 'db' | 'rate-limited';
 };
 
 export type TickDeps = {
@@ -39,6 +49,8 @@ export type TickDeps = {
   getScorers: (seasonId: number) => Promise<SeasonScorer[] | null>;
   /** `false` → bu tick `inplay`'e gitmez. Verilmezse her tick gider. */
   shouldPoll?: (now: Date) => Promise<boolean>;
+  /** `true` → Sportmonks havuzu soğumada, tick hiçbir istek atmaz. Verilmezse kontrol yok. */
+  isRateLimited?: (now: Date) => Promise<boolean>;
   now?: () => Date;
 };
 
@@ -57,11 +69,21 @@ export async function hasActiveTrackedFixtures(now: Date): Promise<boolean> {
 }
 
 const INPLAY_INCLUDE = 'participants;league;events';
+const INPLAY_PATH = '/livescores/inplay';
+
+/** `inplay`'in düştüğü havuz (Fixture) 429 sonrası soğumada mı — tüm instance'lar için Redis'ten. */
+export async function isInplayPoolCoolingDown(now: Date): Promise<boolean> {
+  return (await poolCooldownUntil(poolForPath(`football${INPLAY_PATH}`), now.getTime())) > now.getTime();
+}
+
+export function isSportmonksRateLimit(e: unknown): boolean {
+  return e instanceof SportmonksHttpError && e.status === 429;
+}
 
 export async function fetchInplayFixtures(): Promise<SportmonksFixture[]> {
   return sportmonksCollectAllPages<SportmonksFixture>({
     basePath: 'football',
-    path: '/livescores/inplay',
+    path: INPLAY_PATH,
     perPage: 50,
     extraParams: { include: INPLAY_INCLUDE },
   });
@@ -96,11 +118,24 @@ function sameGoalSignature(facts: unknown, minute: number, extra: number | null,
 }
 
 export async function runBotTick(
-  deps: TickDeps = { fetchInplay: fetchInplayFixtures, getScorers: getScorersCached, shouldPoll: hasActiveTrackedFixtures },
+  deps: TickDeps = {
+    fetchInplay: fetchInplayFixtures,
+    getScorers: getScorersCached,
+    shouldPoll: hasActiveTrackedFixtures,
+    isRateLimited: isInplayPoolCoolingDown,
+  },
 ): Promise<TickSummary> {
   const now = deps.now?.() ?? new Date();
   const leagueIds = getBotLeagueIds();
   const summary: TickSummary = { inplay: 0, tracked: 0, created: 0, duplicates: 0, skipped: 0, staled: 0, errors: 0, idle: false };
+
+  if (deps.isRateLimited) {
+    try {
+      if (await deps.isRateLimited(now)) return { ...summary, degraded: 'rate-limited' };
+    } catch {
+      // karar verilemezse normal akış
+    }
+  }
 
   // Tick-düzeyi kaynaklar (fikstür listesi, inplay, DB okuması) tek tek yakalanır: biri çökerse tick 500 dönmez
   // (cron-job.org art arda hata sayıp işi devre dışı bırakır); hata Sentry'ye gider, sonraki dakika yeniden denenir.
@@ -119,6 +154,11 @@ export async function runBotTick(
     inplay = await deps.fetchInplay();
   } catch (e) {
     // Sportmonks 429/5xx/JSON olmayan gövde: kaçan golü sonraki tick yakalar (inplay TAM durumu verir).
+    // 429 beklenen durum: havuz soğumaya girdi (tek Sentry olayı orada), burada istisna yazılmaz.
+    if (isSportmonksRateLimit(e)) {
+      console.warn('[gundem:bot-tick] Sportmonks hız sınırı — tick atlandı');
+      return { ...summary, degraded: 'rate-limited' };
+    }
     captureError('gundem:bot-tick:inplay', e);
     return { ...summary, errors: 1, degraded: 'inplay' };
   }

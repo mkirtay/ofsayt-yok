@@ -12,6 +12,7 @@ import {
   oauthProviders,
   onOAuthAccountLinked,
   onOAuthUserCreated,
+  prepareOAuthEmailLink,
 } from '@/lib/oauth';
 
 const ROLE_REFRESH_MS = 60_000;
@@ -108,6 +109,9 @@ export const authOptions: NextAuthOptions = {
       if (await isDuplicateMailboxOAuthSignup(account.provider, account.providerAccountId, user.email)) {
         return `/auth/signin?error=${EMAIL_ALREADY_REGISTERED}`;
       }
+      // E-postayla mevcut (şifreli / doğrulanmamış) hesaba bağlanacaksa: şifre silinir, tokenVersion artar, eski
+      // oturumlar düşer — callbackHandler kullanıcıyı bundan SONRA okuduğu için yeni oturum güncel sürümü taşır.
+      await prepareOAuthEmailLink(account.provider, account.providerAccountId, user.email);
       return true;
     },
     async jwt({ token, user, trigger, session }) {

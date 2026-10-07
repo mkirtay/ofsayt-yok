@@ -120,7 +120,8 @@ function active(body) {
 }
 
 async function get(path, ip) {
-  const url = path.startsWith('/') ? `${APP}${path}` : `${APP}/api/sportmonks/${path}${path.includes('?') ? '&' : '?'}api_token=`;
+  // Tarayıcı proxy'ye token göndermez (api_token yok; token sunucuda `Authorization` başlığıyla eklenir).
+  const url = path.startsWith('/') ? `${APP}${path}` : `${APP}/api/sportmonks/${path}`;
   const res = await fetch(url, { headers: { 'x-forwarded-for': ip } });
   return res.headers.get('content-type')?.includes('json') ? res.json() : res.text();
 }

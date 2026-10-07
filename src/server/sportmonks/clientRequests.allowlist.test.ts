@@ -55,3 +55,33 @@ describe('istemci Sportmonks istekleri — proxy izin listesi', () => {
     expect(checkProxyAllowlist(p, query).violations).toEqual([]);
   });
 });
+
+/**
+ * Mobil uygulama (ofsaytyok-native, 2b24cfc — `src/api/client.ts` `sportmonksApi` baseURL `${API}/api/sportmonks`)
+ * aynı proxy'yi kullanır. Kalıplar mobil kaynaktaki sabitlerin birebir kopyası (2026-10-07 taraması):
+ * liveScoreService.ts (SPORTMONKS_FIXTURE_INCLUDE, sayfalama per_page=50/page), sportmonks/teamUpcoming.ts
+ * (TEAM_UPCOMING_INCLUDE), playerProfile.ts (PLAYER_PROFILE_INCLUDE), hooks/useTeamSearch.ts (arama).
+ */
+const MOBILE_FIXTURE_INCLUDE = 'participants;scores;state;periods;league.country;venue;referees.referee;round;stage;group';
+const MOBILE_CASES: [string, string, Record<string, string>][] = [
+  ['mobil canlı', 'football/livescores/inplay', { include: MOBILE_FIXTURE_INCLUDE, per_page: '50', page: '1' }],
+  ['mobil tarih', 'football/fixtures/date/2026-10-07', { include: MOBILE_FIXTURE_INCLUDE, per_page: '50', page: '3' }],
+  ['mobil lig aralığı', 'football/fixtures/between/2026-10-01/2026-10-31', { include: MOBILE_FIXTURE_INCLUDE, filters: 'fixtureLeagues:600', per_page: '50', page: '1' }],
+  ['mobil takım geçmişi', 'football/fixtures/between/2026-07-01/2026-10-07/34', { include: MOBILE_FIXTURE_INCLUDE, per_page: '50', page: '1' }],
+  ['mobil maç + olaylar', 'football/fixtures/19746609', { include: `${MOBILE_FIXTURE_INCLUDE};events` }],
+  ['mobil maç istatistiği', 'football/fixtures/19746609', { include: 'statistics' }],
+  ['mobil kadro', 'football/fixtures/19746609', { include: 'lineups.player.nationality;lineups.details;participants' }],
+  ['mobil takım fikstürü', 'football/teams/34', { include: 'upcoming.participants;upcoming.league;upcoming.state' }],
+  ['mobil takım kadrosu', 'football/squads/teams/34', { include: 'player' }],
+  ['mobil lig sezonları', 'football/leagues/600', { include: 'seasons' }],
+  ['mobil puan durumu', 'football/standings/seasons/25749', { include: 'participant;details.type', per_page: '50', page: '1' }],
+  ['mobil krallık', 'football/topscorers/seasons/25749', { include: 'player;participant', filters: 'seasonTopscorerTypes:208', per_page: '50', page: '1' }],
+  ['mobil oyuncu', 'football/players/4783', { include: 'nationality;position;detailedPosition;statistics.details.type;statistics.season.league;statistics.team' }],
+  ['mobil takım arama', 'football/teams/search/Beşiktaş', {}],
+];
+
+describe('mobil Sportmonks istekleri — proxy izin listesi', () => {
+  it.each(MOBILE_CASES)('%s', (_name, p, query) => {
+    expect(checkProxyAllowlist(p, query).violations).toEqual([]);
+  });
+});

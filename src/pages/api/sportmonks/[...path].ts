@@ -18,6 +18,12 @@ import { allowlistMode, checkProxyAllowlist, logAllowlistViolation } from '@/ser
  * İzin listesi (bkz. server/sportmonks/proxyAllowlist.ts): varsayılan `enforce` — listede olmayan path/include/filtre
  * 403 (`SPORTMONKS_ALLOWLIST_MODE=log` yalnız loglar). Güvensiz yol segmenti / dizi parametre moddan bağımsız 400.
  * Upstream'e yalnız temizlenmiş sorgu (bilinen parametreler) gider; önbellek anahtarı da ondan kurulur.
+ *
+ * Hız sınırı: IP başına 100 istek / 60 sn (`sportmonks:{ip}`, Upstash sabit pencere). Redis cevap vermezse fail-open
+ * (lib/rateLimit.ts — içerik ucu siteyi kapatmasın); önbellek katmanı upstream'i yine korur.
+ *
+ * CDN: yalnız 200 + önbellekten gelen veri `public, s-maxage=…` alır (süre `sportmonksCacheControl` → cachePolicy TTL'i;
+ * canlı ≤ 15 sn). 200 dışı her yanıt (404 negatif önbellek, 4xx/5xx, 403/400/429) `no-store` — hata CDN'de kalmaz.
  */
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method && req.method.toUpperCase() !== 'GET') {
@@ -34,11 +40,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     );
     const rl = await hitFixedWindowRateLimit(`sportmonks:${ip}`, 100, 60_000);
     if (!rl.success) {
+      res.setHeader('Cache-Control', 'no-store');
       res.setHeader('Retry-After', String(Math.ceil((rl.resetAt - Date.now()) / 1000)));
       return res.status(429).json({ message: 'Too many requests' });
     }
 
     if (!process.env.SPORTMONKS_API_KEY) {
+      res.setHeader('Cache-Control', 'no-store');
       return res.status(500).json({ message: 'Missing Sportmonks API credentials' });
     }
 
@@ -63,7 +71,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const result = await fetchSportmonksCached(verdict.path, verdict.query, { origin: 'proxy' });
-    res.setHeader('Cache-Control', sportmonksCacheControl(result));
+    res.setHeader('Cache-Control', result.status === 200 ? sportmonksCacheControl(result) : 'no-store');
     res.setHeader('X-Cache', result.cache);
     if (result.stale) res.setHeader('X-Data-Stale', '1');
     return res.status(result.status).json(result.body);

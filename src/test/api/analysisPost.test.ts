@@ -218,4 +218,18 @@ describe('POST /api/matches/[id]/analysis — takım çifti yedeği yok', () => 
     const res = await post('19889999');
     expect(res.body.credits).toBe(45);
   });
+
+  it('aylık LLM bütçesi dolu: 503 LLM_BUDGET, rezerve kredi iade edilir, kilit bırakılır', async () => {
+    const { LlmBudgetExceededError } = await import('@/server/llmBudget');
+    const { generateMatchAnalysis } = await import('@/services/aiAnalysisService');
+    const { refundCredits } = await import('@/lib/credits');
+    vi.mocked(refundCredits).mockClear();
+    vi.mocked(generateMatchAnalysis).mockRejectedValueOnce(new LlmBudgetExceededError());
+    const res = await post('19889999');
+    expect(res.statusCode).toBe(503);
+    expect(res.body).toMatchObject({ code: 'LLM_BUDGET', error: expect.stringContaining('bu ay') });
+    expect(h.spent).toBe(1);
+    expect(refundCredits).toHaveBeenCalledWith('r1', 'AI aylık bütçesi doldu');
+    expect(h.released).toBe(1);
+  });
 });

@@ -53,7 +53,7 @@ describe('describeNotification', () => {
     expect(describeNotification(base({ actor: { id: 'u', name: null, username: null, image: null, official: false } }), t)?.text).toBe('notifications.postLike:notifications.someone');
   });
 
-  it('actor === null: "Bir kullanıcı"; FOLLOW tıklanamaz; OFFICIAL_POST için "Ofsayt Yok"', () => {
+  it('actor === null: "Bir kullanıcı"; FOLLOW tıklanamaz; OFFICIAL_POST için marka adı (notifications.official)', () => {
     expect(describeNotification(base({ actor: null }), t)?.text).toBe('notifications.postLike:notifications.someone');
     expect(describeNotification(base({ type: 'FOLLOW', actor: null, post: null }), t)).toMatchObject({ href: null, snippet: null });
     expect(describeNotification(base({ type: 'OFFICIAL_POST', actor: null }), t)?.text).toBe('notifications.officialPost:notifications.official');

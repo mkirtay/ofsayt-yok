@@ -5,7 +5,9 @@
  * log. `SPORTMONKS_ALLOWLIST_MODE=log` yalnız loglar, `off` listeyi kapatır.
  *
  * Moddan BAĞIMSIZ her zaman uygulanır (`unsafe` → 400): yol segmentinde `.`/`..`, `%`, `?`, `#`, `\`, `/`, kontrol
- * karakteri; tekrarlanan (dizi) parametre. Bilinmeyen parametreler upstream'e gitmez (atılır). Upstream'e ve önbellek
+ * karakteri; boş segment; Unicode nokta/eğik çizgi benzerleri (`．`, `‥`, `。`, `／`, `＼`, `％` … — NFKC sonrası da
+ * kontrol edilir); tekrarlanan (dizi) parametre. Next segmentleri BİR KEZ çözer: `%2E%2E` → `..`, `%2F` → `/` (segment
+ * içinde), çift kodlama `%252E` → `%2E` (`%` içerir) — hepsi bu kurallara takılır. Bilinmeyen parametreler upstream'e gitmez (atılır). Upstream'e ve önbellek
  * anahtarına yalnız `query` (temizlenmiş, tekil değerler) gider.
  */
 import * as Sentry from '@sentry/nextjs';
@@ -35,8 +37,10 @@ const PATH_PATTERNS: { name: string; re: RegExp }[] = [
   { name: 'squads/seasons/{id}/teams/{id}', re: new RegExp(`^football/squads/seasons/${ID}/teams/${ID}$`) },
   { name: 'schedules/seasons/{id}/teams/{id}', re: new RegExp(`^football/schedules/seasons/${ID}/teams/${ID}$`) },
   { name: 'teams/{id}', re: new RegExp(`^football/teams/${ID}$`) },
-  // Arama terimi: yalnız harf, rakam, boşluk ve . ' - (sorgu/yol enjeksiyonu yok)
-  { name: 'teams/search/{q}', re: /^football\/teams\/search\/[\p{L}\p{N} .'-]{1,60}$/u },
+  // Arama terimi (web + mobil `useTeamSearch`: kullanıcının yazdığı metin, encodeURIComponent): harf, birleşik işaret
+  // (NFD aksan), rakam, boşluk ve . ' ’ - & ( ) , — takım adlarında geçen noktalama ("Brighton & Hove", "Inter (Milan)").
+  // `;`, `=`, `<`, `>` vb. yok; `%`, `?`, `#`, `/`, `\` zaten güvensiz segment (400).
+  { name: 'teams/search/{q}', re: /^football\/teams\/search\/[\p{L}\p{M}\p{N} .'’&(),-]{1,60}$/u },
   { name: 'players/{id}', re: new RegExp(`^football/players/${ID}$`) },
 ];
 
@@ -88,6 +92,8 @@ const FIELD_SELECTION = /^[a-z_]{1,40}(,[a-z_]{1,40}){0,19}$/;
 /** Filtre değeri: id listesi. */
 const FILTER_VALUE = /^\d{1,12}(,\d{1,12}){0,49}$/;
 const UNSAFE_SEGMENT = /[%?#\\/\u0000-\u001f\u007f]/;
+/** Nokta benzeri karakterler (NFKC'de `.`'ya inmeyenler dahil: `。` U+3002, `｡` U+FF61). */
+const DOT_LIKE = /[\u2024\u2025\u2026\u3002\uFE52\uFF0E\uFF61]/;
 
 export type AllowlistResult = {
   /** İzin listesine uyuyor mu (mod `enforce` ise uymayan 403). */
@@ -105,7 +111,14 @@ export type AllowlistResult = {
 function unsafeSegments(segments: readonly string[]): string[] {
   const out: string[] = [];
   for (const seg of segments) {
-    if (seg === '.' || seg === '..' || UNSAFE_SEGMENT.test(seg)) out.push('segment:geçersiz');
+    // NFKC: tam genişlik `．．`, `／`, `＼`, `％`, `？` → ASCII karşılıkları; `‥` → `..`
+    const nfkc = seg.normalize('NFKC');
+    if (
+      seg === '.' || seg === '..' || UNSAFE_SEGMENT.test(seg) || DOT_LIKE.test(seg) ||
+      nfkc === '.' || nfkc === '..' || UNSAFE_SEGMENT.test(nfkc)
+    ) {
+      out.push('segment:geçersiz');
+    }
   }
   return out;
 }

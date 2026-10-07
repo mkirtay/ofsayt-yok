@@ -11,6 +11,7 @@
  */
 import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
+import { canonicalEmail, sameMailboxWhere } from '@/lib/emailNormalize';
 
 export type CreditTransactionType =
   | 'SIGNUP_BONUS'
@@ -193,18 +194,41 @@ export const SIGNUP_BONUS_CREDITS = 2;
 /**
  * E-posta doğrulanınca kayıt bonusu: +2 kredi, `SIGNUP_BONUS` defter satırı (anahtar `signup-bonus`, kullanıcı başına
  * tekil). Çağıranlar: e-posta doğrulama, Google ilk girişi (doğrulanmış sayılır), Google'la mevcut hesabı bağlama.
- * Bir kez: tutarı > 0 olan eski `SIGNUP_BONUS` satırı varsa (5 kredi almış eski kullanıcı) hiçbir şey yapmaz;
- * eşzamanlı ikinci çağrı tekil anahtarda düşer ve işlemi (artırma dahil) geri alınır.
+ * Koşullar (hepsi aynı işlemde):
+ * - `emailVerified` dolu olmalı (çağıranlar önce işaretler; savunma derinliği — doğrulanmamış hesap bonus alamaz).
+ * - Bir kez: tutarı > 0 olan eski `SIGNUP_BONUS` satırı varsa (5 kredi almış eski kullanıcı) hiçbir şey yapmaz;
+ *   eşzamanlı ikinci çağrı tekil anahtarda düşer ve işlemi (artırma dahil) geri alınır.
+ * - Posta kutusu başına bir kez: aynı kanonik e-postayı paylaşan BAŞKA bir hesap (kural genişlemeden önce açılmış
+ *   `ali+1@…`, `ali+2@…` gibi) bonusu almışsa verilmez. Aynı posta kutusunun eşzamanlı doğrulamaları kanonik e-posta
+ *   anahtarlı işlem kilidiyle (`pg_advisory_xact_lock`) sıraya girer.
  * @returns bonus verildiyse `true`
  */
 export async function grantVerifiedSignupBonus(userId: string): Promise<boolean> {
   try {
     return await prisma.$transaction(async (tx) => {
+      const me = await tx.user.findUnique({ where: { id: userId }, select: { email: true, emailVerified: true } });
+      if (!me || !me.emailVerified) return false;
+      const mailbox = me.email ? canonicalEmail(me.email) : null;
+      if (mailbox) await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${`signup-bonus:${mailbox}`}))`;
       const earlier = await tx.creditTransaction.findFirst({
         where: { userId, type: 'SIGNUP_BONUS', amount: { gt: 0 } },
         select: { id: true },
       });
       if (earlier) return false;
+      if (mailbox) {
+        const siblings = await tx.user.findMany({
+          where: { id: { not: userId }, OR: sameMailboxWhere(mailbox) },
+          select: { id: true },
+          take: 50,
+        });
+        if (siblings.length > 0) {
+          const siblingBonus = await tx.creditTransaction.findFirst({
+            where: { userId: { in: siblings.map((u) => u.id) }, type: 'SIGNUP_BONUS', amount: { gt: 0 } },
+            select: { id: true },
+          });
+          if (siblingBonus) return false;
+        }
+      }
       const user = await tx.user.update({
         where: { id: userId },
         data: { credits: { increment: SIGNUP_BONUS_CREDITS } },

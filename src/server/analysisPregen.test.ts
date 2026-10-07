@@ -7,6 +7,7 @@ const h = vi.hoisted(() => ({
   generated: [] as string[],
   phase: 'PRE' as string,
   fail: false,
+  budget: false,
   released: 0,
 }));
 
@@ -27,8 +28,9 @@ vi.mock('@/lib/analysisGenerationLock', () => ({
 vi.mock('@/server/buildMatchAnalysisContext', () => ({
   buildMatchAnalysisContext: vi.fn(async (id: string) => ({ archived: false, matchPhase: h.phase, match: { id: Number(id) } })),
 }));
-vi.mock('@/services/aiAnalysisService', () => ({
+vi.mock('@/services/aiAnalysisService', async () => ({
   generateMatchAnalysis: vi.fn(async (ctx: { match: { id: number } }) => {
+    if (h.budget) throw new (await import('@/server/llmBudget')).LlmBudgetExceededError();
     if (h.fail) throw new Error('zaman aşımı');
     h.generated.push(String(ctx.match.id));
     return { analysis: {}, modelVersion: 'v5-2026-10-openai:gpt-6-luna', tokensUsed: 5000 };
@@ -39,7 +41,7 @@ vi.mock('@/lib/predictionRecords', () => ({ ensurePredictionRecordForAnalysis: v
 vi.mock('@/lib/credits', () => ({ isUniqueViolation: () => false }));
 vi.mock('@/lib/logger', () => ({ captureError: vi.fn() }));
 
-import { isInPregenScope, runAnalysisPregen, selectPregenCandidates, topTeamIds, TURKEY_COUNTRY_ID } from './analysisPregen';
+import { isInPregenScope, runAnalysisPregen, selectPregenCandidates, summarizePregen, topTeamIds, TURKEY_COUNTRY_ID } from './analysisPregen';
 
 const NOW = Date.parse('2026-10-09T12:00:00Z');
 const at = (hoursFromNow: number) => new Date(NOW + hoursFromNow * 3600_000).toISOString().replace('T', ' ').slice(0, 19);
@@ -97,6 +99,7 @@ describe('maç öncesi ön üretim — çalıştırma', () => {
     h.generated = [];
     h.phase = 'PRE';
     h.fail = false;
+    h.budget = false;
     h.released = 0;
   });
 
@@ -148,5 +151,16 @@ describe('ön üretim kapsamı (asistan mesajı için)', () => {
     // Arjantin Liga Profesional (Banfield–Rosario Central) ve lig bilgisi olmayan maç.
     expect(await isInPregenScope({ leagueId: 636, homeId: 1, awayId: 2 })).toBe(false);
     expect(await isInPregenScope({})).toBe(false);
+  });
+
+  it('aylık LLM bütçesi dolu: ilk aday "budget", kalan adaylar denenmez; özet atlanan sayar, hata saymaz', async () => {
+    const { captureError } = await import('@/lib/logger');
+    vi.mocked(captureError).mockClear();
+    h.budget = true;
+    const r = await runAnalysisPregen({ now: NOW });
+    expect(r.items.map((i) => i.status)).toEqual(['budget']);
+    expect(h.generated).toEqual([]);
+    expect(captureError).not.toHaveBeenCalled();
+    expect(summarizePregen(r)).toMatchObject({ generated: 0, skipped: 1, errors: 0 });
   });
 });

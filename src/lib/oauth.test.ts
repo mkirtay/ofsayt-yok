@@ -1,8 +1,30 @@
 import { describe, expect, it, vi } from 'vitest';
 
-vi.mock('@/lib/prisma', () => ({ prisma: {} }));
+const db = vi.hoisted(() => {
+  const tx = { user: { findUnique: vi.fn(), updateMany: vi.fn() } };
+  return {
+    tx,
+    prisma: {
+      account: { findUnique: vi.fn() },
+      user: { findUnique: vi.fn() },
+      $transaction: vi.fn(async (fn: (t: typeof tx) => unknown) => fn(tx)),
+    },
+    invalidate: vi.fn(async () => undefined),
+    grant: vi.fn(async () => true),
+  };
+});
+vi.mock('@/lib/prisma', () => ({ prisma: db.prisma }));
+vi.mock('@/lib/sessionVersion', () => ({ invalidateSessionVersion: db.invalidate, getSessionVersion: vi.fn() }));
+vi.mock('@/lib/credits', () => ({ grantVerifiedSignupBonus: db.grant }));
 
-import { checkOAuthSignIn, googleProfileToUser, isGoogleAuthEnabled, oauthProviders } from '@/lib/oauth';
+import {
+  checkOAuthSignIn,
+  googleProfileToUser,
+  isGoogleAuthEnabled,
+  oauthProviders,
+  prepareOAuthEmailLink,
+  secureAccountForOAuthLink,
+} from '@/lib/oauth';
 import { mustChooseUsername } from '@/lib/gundem/authorGate';
 import { safeCallbackPath } from '@/lib/authRedirect';
 
@@ -117,5 +139,59 @@ describe('OAuth callback oturum çerezi koruması', () => {
         '__Host-next-auth.csrf-token': 'x',
       }),
     ).toEqual({ 'next-auth.state': 's', 'next-auth.pkce.code_verifier': 'p', '__Host-next-auth.csrf-token': 'x' });
+  });
+});
+
+describe('Google e-postayla bağlama hazırlığı (hesabı önceden açma)', () => {
+  const reset = () => {
+    for (const f of [db.prisma.account.findUnique, db.prisma.user.findUnique, db.tx.user.findUnique, db.tx.user.updateMany, db.invalidate, db.grant]) f.mockReset();
+    db.tx.user.updateMany.mockResolvedValue({ count: 1 });
+  };
+
+  it('Google hesabı zaten bağlıysa (normal giriş) ve e-posta yoksa hiçbir şey yapmaz', async () => {
+    reset();
+    db.prisma.account.findUnique.mockResolvedValue({ userId: 'u1' });
+    await prepareOAuthEmailLink('google', 'sub', 'a@b.c');
+    await prepareOAuthEmailLink('google', 'sub', null);
+    expect(db.prisma.user.findUnique).not.toHaveBeenCalled();
+    expect(db.tx.user.findUnique).not.toHaveBeenCalled();
+    expect(db.invalidate).not.toHaveBeenCalled();
+  });
+
+  it('doğrulanmamış şifreli hesap: şifre silinir, sürüm +1, e-posta doğrulanır, önbellek silinir, bonus', async () => {
+    reset();
+    db.prisma.account.findUnique.mockResolvedValue(null);
+    db.prisma.user.findUnique.mockResolvedValue({ id: 'u1' });
+    db.tx.user.findUnique.mockResolvedValue({ password: 'hash', emailVerified: null, tokenVersion: 3 });
+    await prepareOAuthEmailLink('google', 'sub', ' Kurban@Gmail.com ');
+    expect(db.prisma.user.findUnique).toHaveBeenCalledWith({ where: { email: 'kurban@gmail.com' }, select: { id: true } });
+    const arg = db.tx.user.updateMany.mock.calls[0][0];
+    expect(arg.where).toEqual({ id: 'u1', tokenVersion: 3 });
+    expect(arg.data).toMatchObject({ password: null, tokenVersion: { increment: 1 } });
+    expect(arg.data.emailVerified).toBeInstanceOf(Date);
+    expect(db.invalidate).toHaveBeenCalledWith('u1');
+    expect(db.grant).toHaveBeenCalledWith('u1');
+  });
+
+  it('doğrulanmış şifreli hesap: aynı temizlik, doğrulama tarihi korunur, bonus yok', async () => {
+    reset();
+    const verified = new Date('2026-01-01T00:00:00Z');
+    db.tx.user.findUnique.mockResolvedValue({ password: 'hash', emailVerified: verified, tokenVersion: 0 });
+    expect(await secureAccountForOAuthLink('u2')).toBe(true);
+    expect(db.tx.user.updateMany.mock.calls[0][0].data).toEqual({ password: null, tokenVersion: { increment: 1 }, emailVerified: verified });
+    expect(db.invalidate).toHaveBeenCalledWith('u2');
+    expect(db.grant).not.toHaveBeenCalled();
+  });
+
+  it('şifresiz + doğrulanmış hesap ya da eşzamanlı ikinci dönüş (sürüm değişmiş): no-op', async () => {
+    reset();
+    db.tx.user.findUnique.mockResolvedValue({ password: null, emailVerified: new Date(), tokenVersion: 1 });
+    expect(await secureAccountForOAuthLink('u3')).toBe(false);
+    expect(db.tx.user.updateMany).not.toHaveBeenCalled();
+    db.tx.user.findUnique.mockResolvedValue({ password: 'hash', emailVerified: null, tokenVersion: 1 });
+    db.tx.user.updateMany.mockResolvedValue({ count: 0 });
+    expect(await secureAccountForOAuthLink('u3')).toBe(false);
+    expect(db.invalidate).not.toHaveBeenCalled();
+    expect(db.grant).not.toHaveBeenCalled();
   });
 });

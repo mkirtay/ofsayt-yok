@@ -11,6 +11,7 @@ import { createUpstreamCounter, simulateVisitors, type VisitorPattern, type Simu
 const h = vi.hoisted(() => ({ clock: { t: 0 }, redis: null as FakeRedis | null, scenario: 'quiet' as 'quiet' | 'live' }));
 
 vi.mock('@/lib/redis', () => ({
+  MAX_REDIS_VALUE_BYTES: 900_000,
   getRedisClient: () => h.redis,
   withRedis: async <T,>(fn: (r: FakeRedis) => Promise<T>, fallback: T) => {
     if (!h.redis) return fallback;
@@ -25,7 +26,7 @@ vi.mock('@/lib/rateLimit', () => ({
   hitFixedWindowRateLimit: async () => ({ success: true, remaining: 99, resetAt: 0 }),
   requestIp: (headers: Record<string, string>) => headers['x-forwarded-for'] ?? '0.0.0.0',
 }));
-vi.mock('@/services/sportmonks/quotaMonitor', () => ({ reportSportmonksQuota: vi.fn() }));
+vi.mock('@/services/sportmonks/quotaMonitor', () => ({ reportSportmonksQuota: vi.fn(), reportSportmonksRateLimited: vi.fn(), currentRequestRoute: () => 'test' }));
 
 const START = Date.parse('2026-09-30T13:00:00Z'); // maçsız öğleden sonra; bugünün tek maçı 19:00'da
 const TODAY = '2026-09-30';

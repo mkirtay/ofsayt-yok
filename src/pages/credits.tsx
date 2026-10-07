@@ -11,6 +11,7 @@ import { CREDIT_PACKAGES, PREMIUM_PLANS, formatTry, perCreditKurus, yearlyFreeMo
 import { TEST_PACKAGE_KEY, availablePackageKeys } from '@/config/paymentPackages';
 import PaymentBuyButton from '@/components/PaymentBuyButton';
 import styles from './credits.module.scss';
+import { siteBaseUrl } from '@/lib/siteUrl';
 
 
 const STEPS = ['how1', 'how2', 'how3'];
@@ -48,10 +49,10 @@ export default function CreditsPage({ availablePackages = [] }: { availablePacka
       <Head>
         <title>{t('pageTitle')}</title>
         <meta name="description" content={t('pageDesc')} />
-        <link rel="canonical" href={`${process.env.AUTH_URL ?? 'https://ofsaytyok.app'}/credits`} />
+        <link rel="canonical" href={`${siteBaseUrl()}/credits`} />
         <meta property="og:title" content={t('pageTitle')} />
         <meta property="og:description" content={t('pageDesc')} />
-        <meta property="og:url" content={`${process.env.AUTH_URL ?? 'https://ofsaytyok.app'}/credits`} />
+        <meta property="og:url" content={`${siteBaseUrl()}/credits`} />
       </Head>
 
       <Container>

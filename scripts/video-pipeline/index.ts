@@ -1,5 +1,5 @@
 /**
- * Ofsayt Yok — Video Pipeline CLI
+ * Video Pipeline CLI
  *
  * Kullanım:
  *   npm run video -- --team "Türkiye" --topic "gruptan çıkabilir mi?"
@@ -10,6 +10,7 @@ import path from 'path';
 import { buildTeamBriefing } from './pipeline/contentBriefing';
 import { generateScript } from './pipeline/scriptGenerator';
 import { toSlug } from './config';
+import { BRAND } from '@/config/brand';
 
 function parseArgs(): { team: string; topic: string } {
   const args = process.argv.slice(2);
@@ -46,7 +47,7 @@ async function main() {
   const { team, topic } = parseArgs();
 
   console.log(`\n╔══════════════════════════════════════════╗`);
-  console.log(`║   Ofsayt Yok — Video Pipeline            ║`);
+  console.log(`║   ${`${BRAND.name} — Video Pipeline`.padEnd(39)}║`);
   console.log(`╚══════════════════════════════════════════╝`);
   console.log(`Takım   : ${team}`);
   console.log(`Konu    : ${topic}`);

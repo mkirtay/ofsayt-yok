@@ -20,6 +20,9 @@ function parseJsonBody(req: NextApiRequest): Record<string, unknown> {
   return {};
 }
 
+// Kimlik JSON'u (e-posta, şifre, Turnstile belirteci) birkaç KB; Next varsayılanı 1 MB yerine 16 KB — aşılırsa 413.
+export const config = { api: { bodyParser: { sizeLimit: '16kb' } } };
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');

@@ -19,6 +19,7 @@ import { ensurePredictionRecordForAnalysis } from '@/lib/predictionRecords';
 import { trackSportmonksFetches } from '@/server/sportmonks/cachedFetch';
 import { isUniqueViolation } from '@/lib/credits';
 import { captureError } from '@/lib/logger';
+import { LlmBudgetExceededError } from '@/server/llmBudget';
 
 export const SUPER_LIG = 600;
 export const UEFA_CLUB_LEAGUES = [2, 5, 2286] as const;
@@ -96,7 +97,8 @@ export type PregenItem = {
   matchId: number;
   name: string;
   reason: PregenCandidate['reason'];
-  status: 'generated' | 'exists' | 'locked' | 'not-pre' | 'no-context' | 'error' | 'dry-run';
+  /** `budget`: aylık LLM bütçesi dolu — bu çalışmada başka üretim denenmez. */
+  status: 'generated' | 'exists' | 'locked' | 'not-pre' | 'no-context' | 'error' | 'budget' | 'dry-run';
   ms?: number;
   tokens?: number;
   modelVersion?: string;
@@ -141,6 +143,7 @@ async function generateOne(c: PregenCandidate): Promise<PregenItem> {
     }
     return { ...base, ...sm, status: 'generated', ms: Date.now() - t0, tokens: ai.tokensUsed, modelVersion: ai.modelVersion };
   } catch (e) {
+    if (e instanceof LlmBudgetExceededError) return { ...base, status: 'budget', ms: Date.now() - t0 };
     captureError('analysis-pregen', e);
     return { ...base, status: 'error', ms: Date.now() - t0, error: e instanceof Error ? e.message.slice(0, 200) : String(e) };
   } finally {
@@ -170,6 +173,7 @@ export async function runAnalysisPregen(opts: { now?: number; dryRun?: boolean; 
     if (item.status === 'generated' || item.status === 'error') generated++;
     console.log(JSON.stringify({ event: 'analysis-pregen', ...item }));
     items.push(item);
+    if (item.status === 'budget') break;
   }
   return {
     candidates: candidates.length,
@@ -180,7 +184,7 @@ export async function runAnalysisPregen(opts: { now?: number; dryRun?: boolean; 
 }
 
 /** Nabız / log özeti: üretilen, atlanan, hata, Sportmonks upstream isteği. */
-const SKIPPED = new Set(['exists', 'locked', 'not-pre', 'no-context']);
+const SKIPPED = new Set(['exists', 'locked', 'not-pre', 'no-context', 'budget']);
 
 export function summarizePregen(r: PregenResult): Record<string, number> {
   return {

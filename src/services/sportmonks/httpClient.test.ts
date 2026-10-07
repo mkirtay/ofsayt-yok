@@ -36,7 +36,10 @@ describe('sportmonksRequest', () => {
     const calledUrl = (fetchImpl as ReturnType<typeof vi.fn>).mock.calls[0][0] as string;
     expect(calledUrl.startsWith('https://api.sportmonks.com/v3/football/fixtures/19874792')).toBe(true);
     expect(calledUrl).toContain('include=events');
-    expect(calledUrl).toContain('api_token=test-token');
+    expect(calledUrl).not.toContain('api_token');
+    expect(calledUrl).not.toContain('test-token');
+    const init = (fetchImpl as ReturnType<typeof vi.fn>).mock.calls[0][1] as RequestInit;
+    expect(new Headers(init.headers).get('authorization')).toBe('test-token');
 
     expect(result.data).toEqual(inplayFixture);
     expect(onRateLimit).toHaveBeenCalledWith({
@@ -68,6 +71,21 @@ describe('sportmonksRequest', () => {
     expect(onRateLimit).toHaveBeenCalledWith(
       expect.objectContaining({ pool: 'Type', remaining: 2499 }),
     );
+  });
+
+  it('tarayıcı proxy yolu (boş token): göreli URL, api_token yok, Authorization başlığı yok', async () => {
+    const fetchImpl = mockFetch({ data: [] });
+    await sportmonksRequest({
+      basePath: 'football',
+      path: '/livescores/inplay',
+      apiToken: '',
+      params: { include: 'participants' },
+      baseUrlOverride: '/api/sportmonks/football',
+      fetchImpl,
+    });
+    const call = (fetchImpl as ReturnType<typeof vi.fn>).mock.calls[0];
+    expect(call[0]).toBe('/api/sportmonks/football/livescores/inplay?include=participants');
+    expect(call[1]).toBeUndefined();
   });
 
   it('football altında core kaynağı istenirse 404 SportmonksHttpError fırlatır (Pass 5: /football/types → 404)', async () => {

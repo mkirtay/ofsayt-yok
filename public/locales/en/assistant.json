@@ -1,7 +1,7 @@
 {
   "open": "Open AI Assistant",
   "title": "AI Assistant",
-  "subtitle": "Answers from Ofsayt Yok data",
+  "subtitle": "Answers from {{brand}} data",
   "close": "Close",
   "intro": "Ask about matches, standings, teams, the laws of the game and ready match analyses.",
   "placeholder": "Type a question…",
@@ -17,7 +17,7 @@
     "credits": "How do credits work?"
   },
   "sources": "Related pages",
-  "dataNote": "Ofsayt Yok data · for information only",
+  "dataNote": "{{brand}} data · for information only",
   "remaining": "Messages left today: {{n}}",
   "quota": {
     "guest": "You've used today's {{limit}} free messages. Sign in for 15 messages a day.",
@@ -25,6 +25,7 @@
     "premium": "You've used today's {{limit}} messages. See you tomorrow."
   },
   "budget": "The assistant is full for today. Please try again tomorrow.",
+  "budgetMonthly": "The assistant has reached its capacity for this month and will reopen next month.",
   "unavailable": "The assistant is closed to guests right now. Sign in to use it.",
   "rate": "A bit too fast — try again in a few seconds.",
   "refused": "I can't help with that.",

@@ -7,7 +7,7 @@ import { hash } from 'bcryptjs';
 import type { Role } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { isDisposableEmail } from '@/lib/disposableEmail';
-import { canonicalEmail } from '@/lib/emailNormalize';
+import { canonicalEmail, sameMailboxWhere } from '@/lib/emailNormalize';
 import { recordReferral } from '@/lib/referral';
 import { createAndSendEmailVerification } from '@/lib/security';
 import { validatePassword, usernameRules } from '@/lib/validation';
@@ -48,8 +48,11 @@ export async function createUserAccount(input: CreateAccountInput): Promise<Crea
     return { ok: false, status: 400, error: 'E-posta ve şifre zorunludur' };
   }
 
-  // Kredi modeli v2: kayıt bonusu / haftalık ücretsiz açma suistimaline karşı geçici e-posta ile kayıt yok.
-  if (isDisposableEmail(normalizedEmail)) {
+  const emailNormalized = canonicalEmail(normalizedEmail);
+
+  // Kredi modeli v2: kayıt bonusu / haftalık ücretsiz açma suistimaline karşı geçici e-posta ile kayıt yok. Kanonik biçim
+  // de denenir (Unicode/tam genişlik alan adı → punycode/ASCII).
+  if (isDisposableEmail(normalizedEmail) || isDisposableEmail(emailNormalized)) {
     return { ok: false, status: 400, error: 'Geçici (tek kullanımlık) e-posta adresleriyle kayıt olunamıyor.' };
   }
 
@@ -74,11 +77,11 @@ export async function createUserAccount(input: CreateAccountInput): Promise<Crea
     }
   }
 
-  // Aynı posta kutusu (gmail `+etiket` / nokta varyantları) → ikinci hesap (ve ikinci kayıt bonusu) yok. Eski kayıtlarda
-  // `emailNormalized` boş: kanonik biçimiyle kayıtlı e-posta da yakalanır.
-  const emailNormalized = canonicalEmail(normalizedEmail);
+  // Aynı posta kutusu (her alan adında `+etiket`, gmail'de nokta varyantları) → ikinci hesap (ve ikinci kayıt bonusu)
+  // yok. Eski kayıtlarda `emailNormalized` boş ya da eski kuralla yazılmış: ham e-postada kanonik biçim ve `taban+…@alan`
+  // varyantı da aranır (lib/emailNormalize.ts → sameMailboxWhere).
   const existing = await prisma.user.findFirst({
-    where: { OR: [{ email: normalizedEmail }, { email: emailNormalized }, { emailNormalized }] },
+    where: { OR: [{ email: normalizedEmail }, ...sameMailboxWhere(emailNormalized)] },
     select: { id: true },
   });
   if (existing) {

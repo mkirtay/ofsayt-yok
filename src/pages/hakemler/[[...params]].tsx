@@ -7,10 +7,12 @@ import type { RefereeLeagueTable } from '@/server/people/refereeLeagueTable';
 import { DEFAULT_REFEREE_TABLE_LEAGUE, refereeTablePath, shortSeasonName } from '@/config/refereeTableLeagues';
 import { stripUndefined } from '@/utils/homeInitialData';
 import { useTranslation } from '@/lib/i18n';
+import { siteBaseUrl } from '@/lib/siteUrl';
+import { brandTitle } from '@/config/brand';
 
 type Props = { data: RefereeLeagueTable; url: string };
 
-const SITE_URL = process.env.AUTH_URL ?? 'https://ofsaytyok.app';
+const SITE_URL = siteBaseUrl();
 /** Tablo 12 sa (hakem istatistikleri de 12 sa cache'li). */
 const REVALIDATE_SECONDS = 12 * 60 * 60;
 
@@ -35,7 +37,8 @@ export default function RefereesPage({ data, url }: Props) {
   const { t: tl } = useTranslation('leagues');
   const league = tl(`short.${data.league.nameKey}`);
   // Başlık kısa sezonla: "Süper Lig Hakem İstatistikleri 2026/27"
-  const title = `${t('person.tableTitle', { league, season: shortSeasonName(data.season.name) })} | Ofsayt Yok`;
+  const datasetName = t('person.tableTitle', { league, season: shortSeasonName(data.season.name) });
+  const title = brandTitle(datasetName);
   const description = t('person.tableDesc', { league, season: data.season.name });
   return (
     <Container>
@@ -54,7 +57,7 @@ export default function RefereesPage({ data, url }: Props) {
         schema={{
           '@context': 'https://schema.org',
           '@type': 'Dataset',
-          name: title.replace(/ \| Ofsayt Yok$/, ''),
+          name: datasetName,
           description,
           url,
           variableMeasured: ['maç', 'maç başı sarı kart', 'maç başı kırmızı kart', 'maç başı penaltı', 'maç başı faul', 'maç başı VAR incelemesi'],

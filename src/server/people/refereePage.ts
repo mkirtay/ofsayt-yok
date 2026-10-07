@@ -15,7 +15,7 @@ import { REFEREE_TYPE_IDS } from '@/services/sportmonks/refereeFormatter';
 import { refereeSeasonTable, type RefereeSeasonLine, type RefereeSeasonTableRow } from '@/services/sportmonks/refereeStats';
 import { refereeTeamBreakdown, type BreakdownFixture, type TeamBreakdownRow } from '@/services/sportmonks/refereeTeamBreakdown';
 import { loadRefereeStatsRaw } from '@/server/refereeSummary';
-import { withRedis } from '@/lib/redis';
+import { fitsInRedis, withRedis } from '@/lib/redis';
 import { cacheKeyPrefix } from '@/lib/cacheNamespace';
 import { loadWithSwr, peekSwr } from '@/server/swrCache';
 import { runInBackground } from '@/server/backgroundTask';
@@ -212,7 +212,7 @@ async function computeRefereePage(id: number): Promise<RefereePageData | 'missin
       fetched.push(...(await loadMulti(mainIds.slice(chunk * MULTI_SIZE, (chunk + 1) * MULTI_SIZE))));
     }
     teams = breakdownsBySeason(fetched, seasonNameById, currentSeasonName);
-    if (firstChunk.length) await withRedis((r) => r.set(cacheKey, teams, { ex: BREAKDOWN_TTL_SECONDS }), null);
+    if (firstChunk.length && fitsInRedis(teams)) await withRedis((r) => r.set(cacheKey, teams, { ex: BREAKDOWN_TTL_SECONDS }), null);
   }
 
   const seasons = refereeSeasonTable(statsRaw);

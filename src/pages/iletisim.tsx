@@ -6,16 +6,21 @@ import ContactBand from '@/components/ContactBand';
 import trLegal from '../../public/locales/tr/legal.json';
 import enLegal from '../../public/locales/en/legal.json';
 import styles from './iletisim.module.scss';
+import { siteBaseUrl } from '@/lib/siteUrl';
+import { brandTitle, withBrandText } from '@/config/brand';
+
+/** Yasal metinler JSON'dan doğrudan okunur (t() değil) → marka değişkenleri burada doldurulur. */
+const LEGAL = { tr: withBrandText(trLegal), en: withBrandText(enLegal) };
 
 export default function IletisimPage() {
   const { locale } = useI18n();
-  const data = (locale === 'en' ? enLegal : trLegal).contact;
-  const canonicalBase = process.env.AUTH_URL ?? 'https://ofsaytyok.app';
+  const data = (locale === 'en' ? LEGAL.en : LEGAL.tr).contact;
+  const canonicalBase = siteBaseUrl();
 
   return (
     <>
       <Head>
-        <title>{data.pageTitle} — Ofsayt Yok</title>
+        <title>{brandTitle(data.pageTitle, '—')}</title>
         <meta name="description" content={data.pageDesc} />
         <link rel="canonical" href={`${canonicalBase}/iletisim`} />
       </Head>

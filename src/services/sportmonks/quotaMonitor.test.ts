@@ -1,17 +1,26 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+const isolation = vi.hoisted(() => ({ data: {} as Record<string, unknown> }));
 const { scope, sentry } = vi.hoisted(() => {
   const scope = { setTag: vi.fn(), setLevel: vi.fn(), setExtras: vi.fn(), setFingerprint: vi.fn() };
   const sentry = {
     addBreadcrumb: vi.fn(),
     captureMessage: vi.fn(),
     withScope: vi.fn((cb: (s: typeof scope) => void) => cb(scope)),
+    getIsolationScope: vi.fn(() => ({ getScopeData: () => isolation.data })),
   };
   return { scope, sentry };
 });
 vi.mock('@sentry/nextjs', () => sentry);
 
-import { reportSportmonksQuota, classifyQuota, resetQuotaAlertThrottle, SPORTMONKS_POOL_LIMIT } from './quotaMonitor';
+import {
+  reportSportmonksQuota,
+  reportSportmonksRateLimited,
+  classifyQuota,
+  currentRequestRoute,
+  resetQuotaAlertThrottle,
+  SPORTMONKS_POOL_LIMIT,
+} from './quotaMonitor';
 
 const obs = (remaining: number, pool = 'Fixture') => ({ pool, remaining, resetsInSeconds: 1200, path: '/livescores/inplay' });
 
@@ -58,5 +67,24 @@ describe('Sportmonks kota → Sentry', () => {
     expect(sentry.captureMessage).toHaveBeenCalledTimes(2);
     reportSportmonksQuota(obs(100, 'Topscorer'), 30_000); // farklı havuz bağımsız
     expect(sentry.captureMessage).toHaveBeenCalledTimes(3);
+  });
+});
+
+describe('hız sınırı olayı ve rota tespiti', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it('429 soğuması: havuz başına sabit parmak izli tek warning', () => {
+    reportSportmonksRateLimited({ pool: 'Fixture', path: '/football/livescores/inplay', cooldownSeconds: 900, route: 'POST /api/admin/gundem/bot-tick', origin: 'server' });
+    expect(sentry.captureMessage).toHaveBeenCalledWith('Sportmonks hız sınırı: Fixture havuzu 900 sn bekletiliyor', 'warning');
+    expect(scope.setFingerprint).toHaveBeenCalledWith(['sportmonks-rate-limited', 'Fixture']);
+  });
+
+  it('rota: Sentry işlem adı > istek yolu (sayısal segment :id) > unknown', () => {
+    isolation.data = { transactionName: 'GET /api/matches/day' };
+    expect(currentRequestRoute()).toBe('GET /api/matches/day');
+    isolation.data = { sdkProcessingMetadata: { normalizedRequest: { method: 'GET', url: 'https://x.app/teknik-direktor/jose-mourinho-476109?a=1' } } };
+    expect(currentRequestRoute()).toBe('GET /teknik-direktor/:id');
+    isolation.data = {};
+    expect(currentRequestRoute()).toBe('unknown');
   });
 });

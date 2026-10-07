@@ -55,7 +55,6 @@ export class SportmonksHttpError extends Error {
 function buildUrl(
   basePath: SportmonksBasePath,
   path: string,
-  apiToken: string,
   params?: SportmonksRequestParams,
   baseUrlOverride?: string,
 ): string {
@@ -66,7 +65,6 @@ function buildUrl(
   // yol olabilir — URLSearchParams kurmak için geçici bir origin ile parse edilip
   // sonda çıkarılıyor, gerçek fetch() isteği yine geçerli origin'e gider.
   const url = isAbsolute ? new URL(fullPath) : new URL(fullPath, 'http://localhost');
-  url.searchParams.set('api_token', apiToken);
   if (params) {
     for (const [key, value] of Object.entries(params)) {
       if (value === undefined) continue;
@@ -102,9 +100,11 @@ export async function sportmonksRequest<T>(
   options: SportmonksRequestOptions,
 ): Promise<SportmonksEnvelope<T>> {
   const { basePath, path, apiToken, params, fetchImpl = fetch, onRateLimit, baseUrlOverride } = options;
-  const url = buildUrl(basePath, path, apiToken, params, baseUrlOverride);
+  const url = buildUrl(basePath, path, params, baseUrlOverride);
 
-  const res = await fetchImpl(url);
+  // Token URL'ye yazılmaz (log / Sentry breadcrumb'ına düşmesin): `Authorization` başlığı, Bearer'sız (Sportmonks v3).
+  // Tarayıcıda `apiToken` boş → başlık yok (proxy token'ı sunucuda ekler).
+  const res = apiToken ? await fetchImpl(url, { headers: { Authorization: apiToken } }) : await fetchImpl(url);
   const body = (await res.json()) as SportmonksEnvelope<T> & { message?: string };
 
   if (!res.ok) {
@@ -122,37 +122,6 @@ export async function sportmonksRequest<T>(
       remaining: body.rate_limit.remaining,
       resetsInSeconds: body.rate_limit.resets_in_seconds,
       path,
-    });
-  }
-
-  return body;
-}
-
-/** Zaten bilinen bir `next_page`/`next_cursor` URL'sine (aynı temel doğrulamayla) istek atar. */
-export async function sportmonksRequestByUrl<T>(
-  url: string,
-  fetchImpl: typeof fetch = fetch,
-  onRateLimit?: RateLimitLogger,
-): Promise<SportmonksEnvelope<T>> {
-  const res = await fetchImpl(url);
-  const body = (await res.json()) as SportmonksEnvelope<T> & { message?: string };
-
-  if (!res.ok) {
-    throw new SportmonksHttpError(
-      body?.message ?? `Sportmonks isteği başarısız (HTTP ${res.status})`,
-      res.status,
-      body,
-    );
-  }
-
-  if (body.rate_limit) {
-    const logger = onRateLimit ?? defaultRateLimitLogger;
-    logger({
-      pool: body.rate_limit.requested_entity,
-      remaining: body.rate_limit.remaining,
-      resetsInSeconds: body.rate_limit.resets_in_seconds,
-      // Log'a query string (api_token içerir) yazılmaz.
-      path: url.split('?')[0],
     });
   }
 

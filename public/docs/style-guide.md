@@ -1,4 +1,4 @@
-# Ofsayt Yok Style Guide (MVP)
+# Style Guide (MVP)
 
 ## Overview
 

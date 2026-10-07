@@ -17,6 +17,7 @@ import type { PersonRecentMatch } from '@/server/people/refereePage';
 type RawCoachFixtures = { fixtures?: { id: number; starting_at?: string | null; state_id?: number | null }[] | null };
 
 const RECENT_COUNT = 10;
+export const COACH_PAGE_FRESH_SECONDS = 6 * 60 * 60;
 export const COACH_STATS_INCLUDE = 'statistics.details.type:developer_name;statistics.season:name,league_id;statistics.team:name,image_path';
 
 type RawCoachProfile = {
@@ -98,12 +99,14 @@ async function loadRecent(id: number): Promise<PersonRecentMatch[]> {
 }
 
 /**
- * Sayfa verisi Redis'te stale-while-revalidate (taze 1 sa, saklama 7 gün): süresi dolunca eski veri hemen, yenisi
+ * Sayfa verisi Redis'te stale-while-revalidate (taze 6 sa, saklama 7 gün): süresi dolunca eski veri hemen, yenisi
  * arka planda (bkz. server/swrCache.ts); "yok" (404) cache'lenmez. Hiç veri yokken ilk üretim eşzamanlı.
+ * 6 sa: teknik direktör haftada ~1 maç yapar; tarayıcılar çok sayıda sayfayı gezerken her saat yeniden üretim
+ * (Fixture havuzundan `fixtures/multi`) havuzu boşuna tüketiyordu.
  */
 export async function loadCoachPage(id: number): Promise<CoachPageData | 'missing' | null> {
   let missing = false;
-  const res = await loadWithSwr<CoachPageData>(`${cacheKeyPrefix()}people:coach-page:v1:${id}`, { freshSeconds: 60 * 60 }, async () => {
+  const res = await loadWithSwr<CoachPageData>(`${cacheKeyPrefix()}people:coach-page:v1:${id}`, { freshSeconds: COACH_PAGE_FRESH_SECONDS }, async () => {
     const r = await computeCoachPage(id);
     if (r === 'missing') missing = true;
     return r === 'missing' ? null : r;

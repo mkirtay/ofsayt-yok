@@ -15,6 +15,7 @@ import { buildMatchAnalysisContext } from '@/server/buildMatchAnalysisContext';
 import { generateMatchTrivia, TriviaTimeoutError } from '@/services/aiTriviaService';
 import { TRIVIA_MODEL_VERSION } from '@/config/triviaPrompt';
 import { captureError } from '@/lib/logger';
+import { LlmBudgetExceededError } from '@/server/llmBudget';
 
 /** Bu sürümle (ya da sonrasıyla aynı önekle) üretilmiş kayıt yeniden üretilmez. */
 const isCurrentTrivia = (modelVersion: string) => modelVersion.startsWith(TRIVIA_MODEL_VERSION);
@@ -28,7 +29,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const guard = await requireAuth(req, res);
   if (!guard.ok) return;
 
-  const rl = await hitFixedWindowRateLimit(`trivia:${guard.userId}`, 20, 60 * 60 * 1000);
+  // Redis kesintisinde instance içi yedek sayaç (LLM ucu sınırsız kalmasın).
+  const rl = await hitFixedWindowRateLimit(`trivia:${guard.userId}`, 20, 60 * 60 * 1000, { memoryFallback: true });
   if (!rl.success) {
     res.setHeader('Retry-After', String(Math.ceil((rl.resetAt - Date.now()) / 1000)));
     return res.status(429).json({ error: 'Saatlik trivia limitine ulaştınız. Lütfen bekleyin.' });
@@ -106,6 +108,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     return res.status(result.status).json(result.body);
   } catch (err) {
+    if (err instanceof LlmBudgetExceededError) {
+      return res.status(503).json({ error: err.message, code: 'LLM_BUDGET' });
+    }
     captureError('trivia', err);
     if (err instanceof TriviaTimeoutError) {
       return res.status(504).json({ error: err.message });
