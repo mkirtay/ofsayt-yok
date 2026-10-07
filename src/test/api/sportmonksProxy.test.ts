@@ -118,9 +118,11 @@ describe('/api/sportmonks proxy — izin listesi modları', () => {
   it('upstream\'e yalnız bilinen parametreler gider (api_token / bilinmeyenler atılır)', async () => {
     const handler = (await import('@/pages/api/sportmonks/[...path]')).default;
     await call(handler, ['football', 'teams', '34'], { include: 'seasons', junk: 'x' });
-    const url = new URL(String(vi.mocked(global.fetch).mock.calls[0]![0]));
-    expect([...url.searchParams.keys()].sort()).toEqual(['api_token', 'include']);
-    expect(url.searchParams.get('api_token')).toBe('test-token');
+    const [input, init] = vi.mocked(global.fetch).mock.calls[0]!;
+    const url = new URL(String(input));
+    expect([...url.searchParams.keys()].sort()).toEqual(['include']);
+    // token URL'de değil, Authorization başlığında (güvenlik raporu Y1)
+    expect(new Headers(init?.headers).get('authorization')).toBe('test-token');
   });
 
   it('enforce modu: 403, upstream\'e gitmez', async () => {

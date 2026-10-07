@@ -54,7 +54,7 @@ const times = [];
 for (let i = 0; i < N; i++) {
   const t0 = performance.now();
   // Her istek farklı anahtar → cache MISS: rate limit + Redis get + kilit + set + del yolunun tamamı.
-  const res = await fetch(`${base}/api/sportmonks/football/leagues/${1000 + i}?api_token=`, { headers: { 'x-forwarded-for': '10.9.9.9' } });
+  const res = await fetch(`${base}/api/sportmonks/football/leagues/${1000 + i}`, { headers: { 'x-forwarded-for': '10.9.9.9' } });
   await res.arrayBuffer();
   times.push(Math.round(performance.now() - t0));
 }

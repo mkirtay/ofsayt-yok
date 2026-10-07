@@ -3,6 +3,7 @@
  * sunucu içi çağrılar (SSR, API route'ları, cron/bot) buradan geçer. Amaç: upstream istek sayısı
  * ziyaretçi sayısından bağımsız olsun.
  *
+ * - Kimlik: `SPORTMONKS_API_KEY` upstream'e `Authorization` başlığıyla gider, URL'de yoktur.
  * - Anahtar: `api_token` hariç normalize path + upstream'e giden sorgunun AYNISI (`canonicalQueryEntries`: sıralı
  *   anahtar, dizi değerleri sırasıyla tekrar; `%&=` kaçışlı) — `include=a&include=b` ile `include=a,b` çakışmaz.
  * - Süre: `sportmonksCacheTtl` (içeriğe/maç durumuna göre). "Yok" cevapları da (404/403/422, boş 200)
@@ -266,8 +267,9 @@ async function callUpstream(
 ): Promise<UpstreamResult> {
   const apiToken = process.env.SPORTMONKS_API_KEY;
   if (!apiToken) throw new Error('Missing SPORTMONKS_API_KEY (sunucu ortam değişkeni tanımlı değil)');
+  // Anahtar URL'ye YAZILMAZ: `Authorization` başlığıyla gider (Sportmonks v3 destekler, Bearer'sız). URL'deki
+  // `api_token` Sentry fetch breadcrumb'ına (`http.query`) ve olası hata mesajlarına düşüyordu (güvenlik raporu Y1).
   const qs = new URLSearchParams(canonicalQueryEntries(query));
-  qs.set('api_token', apiToken);
 
   let res: Response;
   let raw: unknown;
@@ -279,7 +281,10 @@ async function callUpstream(
     const base = process.env.SPORTMONKS_UPSTREAM_BASE || SPORTMONKS_BASE;
     const url = new URL(`${base}/${path}?${qs.toString()}`);
     if (!url.href.startsWith(`${base}/`)) throw new Error('Sportmonks yolu tabanın dışına çıkıyor');
-    res = await (opts.fetchImpl ?? fetch)(url.toString(), { signal: controller.signal });
+    res = await (opts.fetchImpl ?? fetch)(url.toString(), {
+      signal: controller.signal,
+      headers: { Authorization: apiToken },
+    });
     raw = await res.json().catch(() => null);
   } catch {
     return { status: controller.signal.aborted ? 'timeout' : 'network-error' };

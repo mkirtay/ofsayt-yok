@@ -90,7 +90,8 @@ describe('fetchSportmonksCached', () => {
     expect(a.cache).toBe('MISS');
     expect(b.cache).toBe('HIT');
     expect(up.calls).toHaveLength(1);
-    expect(up.calls[0]).toContain('api_token=test-token');
+    expect(up.calls[0]).not.toContain('api_token');
+    expect(up.calls[0]).not.toContain('test-token');
     expect(up.calls[0]).not.toContain('from-browser');
     expect(a.body).toEqual({ data: [] });
     expect(h.quota).toHaveBeenCalledTimes(1);
@@ -368,11 +369,31 @@ describe('fetchSportmonksCached', () => {
     const fetchImpl = vi.fn(async () => new Response(JSON.stringify({ data: [] }), { status: 200 }));
     await m.fetchSportmonksCached('football/teams/34', { page: '1', include: ['b', 'a'], api_token: 'x' }, { fetchImpl });
     const url = new URL(String((fetchImpl.mock.calls[0] as unknown[])[0]));
-    expect([...url.searchParams.entries()].filter(([k2]) => k2 !== 'api_token')).toEqual([
+    expect([...url.searchParams.entries()]).toEqual([
       ['include', 'b'],
       ['include', 'a'],
       ['page', '1'],
     ]);
+  });
+
+  it('token URL\'de değil Authorization başlığında gider (Bearer\'sız); önbellek anahtarı ve yanıt aynı (güvenlik raporu Y1)', async () => {
+    const fetchImpl = vi.fn(
+      async (_input: RequestInfo | URL, _init?: RequestInit) =>
+        new Response(JSON.stringify(envelope({ id: 600 })), { status: 200 }),
+    );
+    const q = { include: 'seasons', api_token: 'from-browser' };
+    const r = await m.fetchSportmonksCached('football/leagues/600', q, { fetchImpl: fetchImpl as unknown as typeof fetch, now });
+    const [input, init] = fetchImpl.mock.calls[0]!;
+    const url = new URL(String(input));
+    expect(url.href).toBe('https://api.sportmonks.com/v3/football/leagues/600?include=seasons');
+    expect(url.searchParams.has('api_token')).toBe(false);
+    expect(String(input)).not.toContain('test-token');
+    expect(new Headers(init?.headers).get('authorization')).toBe('test-token');
+    expect(init?.signal).toBeInstanceOf(AbortSignal);
+    // anahtar biçimi değişmedi (canlı Redis önbelleği geçersiz kalmaz)
+    expect([...h.redis!.store.keys()]).toContain('dev:v2:smc:football/leagues/600?include=seasons');
+    expect(r.status).toBe(200);
+    expect(r.body).toEqual({ data: { id: 600 } });
   });
 
   it.each(['football/teams/search/x?include=odds', 'football/../odds', 'football/teams/search/x#y', 'football/%2e%2e/odds', 'a\\b'])(
