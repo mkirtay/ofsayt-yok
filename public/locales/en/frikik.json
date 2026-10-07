@@ -76,5 +76,10 @@
     "series": "5 shots"
   },
   "daily": "Free kick of the day · {{date}}",
-  "adContact": "To advertise on the pitch boards: {{email}}"
+  "adContact": "To advertise on the pitch boards: {{email}}",
+  "quality": {
+    "label": "Graphics quality",
+    "low": "Quality: Low",
+    "high": "Quality: High"
+  }
 }

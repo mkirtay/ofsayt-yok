@@ -78,6 +78,24 @@
   }
 }
 
+.qualityBtn {
+  min-height: 30px;
+  padding: 0 10px;
+  border: 1px solid $color-border;
+  border-radius: $radius-full;
+  background: transparent;
+  color: $color-text-secondary;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+}
+
 .daily {
   margin-left: auto;
   font-size: 12px;

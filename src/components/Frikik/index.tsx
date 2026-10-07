@@ -16,6 +16,19 @@ const loadScene = () => import('./frikikScene');
 type Mode = 'boot' | 'reduced' | 'nowebgl' | 'game';
 const TIP_SEEN_KEY = 'oy_frikik_tip';
 const MODE_KEY = 'oy_frikik_mode';
+const QUALITY_KEY = 'oy_frikik_quality';
+type Quality = 'low' | 'high';
+
+/** Kalite: kayıtlı tercih, yoksa mobilde düşük, masaüstünde yüksek. */
+function initialQuality(): Quality {
+  try {
+    const v = localStorage.getItem(QUALITY_KEY);
+    if (v === 'low' || v === 'high') return v;
+  } catch {
+    // depolama kapalı
+  }
+  return window.matchMedia(MOBILE_LAYOUT_QUERY).matches ? 'low' : 'high';
+}
 
 function randomSeed(): number {
   try {
@@ -49,6 +62,7 @@ export default function Frikik({ shared }: { shared: ShareInfo | null }) {
   const hostRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<FrikikHandle | null>(null);
   const [mode, setMode] = useState<Mode>('boot');
+  const [quality, setQuality] = useState<Quality>('high');
   const [game, setGame] = useState<FrikikMode>(shared?.level == null && shared ? 'series' : 'level');
   const [ready, setReady] = useState(false);
   const [info, setInfo] = useState<RoundInfo>({ index: 0, level: 1, lives: LIVES, wind: 0, dist: 0 });
@@ -78,8 +92,10 @@ export default function Frikik({ shared }: { shared: ShareInfo | null }) {
 
   // Karar: hareketi azalt → bilgilendirme; WebGL yok → mesaj; aksi halde oyun.
   useEffect(() => {
-    const decide = () =>
+    const decide = () => {
+      setQuality(initialQuality());
       setMode(window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'reduced' : webglAvailable() ? 'game' : 'nowebgl');
+    };
     if (document.readyState === 'complete') decide();
     else {
       window.addEventListener('load', decide, { once: true });
@@ -102,6 +118,17 @@ export default function Frikik({ shared }: { shared: ShareInfo | null }) {
       sceneRef.current?.start(randomSeed());
     }
   }, []);
+
+  /** Kalite değişince sahne yeniden kurulur (effect bağımlılığı); tercih saklanır. */
+  const pickQuality = (q: Quality) => {
+    if (q === quality) return;
+    setQuality(q);
+    try {
+      localStorage.setItem(QUALITY_KEY, q);
+    } catch {
+      // depolama kapalı
+    }
+  };
 
   const pickGame = (which: FrikikMode) => {
     if (which === game && !summary) return;
@@ -126,6 +153,7 @@ export default function Frikik({ shared }: { shared: ShareInfo | null }) {
           sceneRef.current = mod.mountFrikik(host, {
             lite: window.matchMedia(MOBILE_LAYOUT_QUERY).matches,
             lang: langRef.current,
+            quality,
             canvasClassName: styles.canvas!,
             handleClassName: styles.handle!,
             goalClassName: styles.goal!,
@@ -140,6 +168,8 @@ export default function Frikik({ shared }: { shared: ShareInfo | null }) {
             onAimStart: () => {},
           });
           setReady(true);
+          // Geliştirme: draw call / üçgen sayısı (headless ölçüm)
+          if (process.env.NODE_ENV !== 'production') (window as unknown as { __frikikStats?: () => unknown }).__frikikStats = () => sceneRef.current?.stats();
           startGame(gameRef.current);
           try {
             if (!localStorage.getItem(TIP_SEEN_KEY)) setTipOpen(true);
@@ -158,7 +188,7 @@ export default function Frikik({ shared }: { shared: ShareInfo | null }) {
       sceneRef.current = null;
       setReady(false);
     };
-  }, [mode, startGame]);
+  }, [mode, quality, startGame]);
 
   const closeTip = () => {
     setTipOpen(false);
@@ -210,6 +240,9 @@ export default function Frikik({ shared }: { shared: ShareInfo | null }) {
           </button>
         ))}
         {isLevel && day != null ? <span className={styles.daily}>{t('daily', { date: dayLabel(day) })}</span> : null}
+        <button type="button" className={styles.qualityBtn} onClick={() => pickQuality(quality === 'high' ? 'low' : 'high')} disabled={mode !== 'game'} aria-label={t('quality.label')}>
+          {t(`quality.${quality}`)}
+        </button>
       </div>
 
       <div className={styles.stage} role="application" aria-label={t('stageLabel')}>

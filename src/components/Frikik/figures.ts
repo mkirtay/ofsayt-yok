@@ -129,6 +129,8 @@ export type KeeperPose = {
   dir: number;
   /** Öndeki kolun yana uzanması 0–1 (0: hazır duruş, 1: tam uzanmış). */
   reach: number;
+  /** Dalışta kollar: 0 omuz hizasında (gövdeye dik), 1 gövde boyunca yukarı. Verilmezse 1. */
+  armUp?: number;
 };
 
 /** Kaleci pozu: hazır duruş (crouch .35), yan adım + uzanma (reach), dalış (tilt + lift). Ayaklar grup orijininde. */
@@ -146,8 +148,12 @@ export function setKeeperPose(f: Figure, p: KeeperPose): void {
   const lead = dir > 0 ? f.armR : f.armL;
   const trail = dir > 0 ? f.armL : f.armR;
   const t = Math.min(1, p.tilt / 1.3);
-  const leadSide = 0.55 + 1.6 * p.reach + (Math.PI * 0.92 - 0.55) * t;
-  const trailSide = 0.55 - 0.35 * p.reach + (Math.PI * 0.72 - 0.55) * t;
+  // Dalışta kol açısı: armUp 0 → gövdeye dik (π/2), 1 → gövde boyunca yukarı (0,92π)
+  const up = p.armUp ?? 1;
+  const diveLead = Math.PI * 0.5 + (Math.PI * 0.92 - Math.PI * 0.5) * up;
+  const diveTrail = Math.PI * 0.45 + (Math.PI * 0.72 - Math.PI * 0.45) * up;
+  const leadSide = 0.55 + 1.6 * p.reach + (diveLead - 0.55 - 1.6 * p.reach) * t;
+  const trailSide = 0.55 - 0.35 * p.reach + (diveTrail - 0.55 + 0.35 * p.reach) * t;
   lead.rotation.set(-dir * Math.min(leadSide, Math.PI * 0.92), 0, -0.35 * (1 - t));
   trail.rotation.set(dir * trailSide, 0, -0.35 * (1 - t));
   const leadFore = lead.children[1] as Group;

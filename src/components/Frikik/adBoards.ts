@@ -14,7 +14,9 @@ export type AdEntry = { slot: string; text?: string | null; image?: string | nul
 export type AdsConfig = { contact: string; empty: { tr: string; en: string }; ads: AdEntry[] };
 /**
  * Slotlar (dünya, m): 4 pano, tribüne (stands.ts) oturur. `led`: ön duvarın üstünde LED şeridi (x 12,05, y 2,7–4,1);
- * `rail-l` / `rail-r`: 2. sıra korkuluğuna asılı afişler; `upper`: 9. sıra korkuluğuna asılı büyük afiş. Hepsi y > 2,5
+ * `rail-l` / `rail-r`: 1. sıra taraftarlarının ÖNÜNDE (x 13,05), LED'in üstünde; `upper`: 6. sıra korkuluğunun önünde
+ * (x 17,6), alt kenarı (6,8) önündeki sıraların baş hizasının (≤ 6,6) üstünde → taraftarlar metni kesmez; kamera
+ * çerçevesinin içinde kalır (y ≤ 9,4). Hepsi y > 2,5
  * → kamera (~2,5 m yükseklik) için ekranda üst direğin ÜSTÜNDE; direk / ağ / top yoluyla kesişmez. Atlas hücreleri en-boy
  * oranına uyar; LED metni büyük (375 px genişlikte okunur).
  */
@@ -22,9 +24,9 @@ type Cell = { x: number; y: number; w: number; h: number };
 export type AdSlot = { id: string; kind: AdKind; face: AdFace; x: number; y: number; z: number; w: number; h: number; cell: Cell; style: 'led' | 'banner' };
 export const AD_SLOTS: readonly AdSlot[] = [
   { id: 'led', kind: 'wide', face: 'west', x: 12.05, y: 3.4, z: 0, w: 22, h: 1.4, cell: { x: 0, y: 0, w: 1024, h: 64 }, style: 'led' },
-  { id: 'rail-l', kind: 'wide', face: 'west', x: 13.4, y: 4.65, z: -8.5, w: 6.5, h: 1.9, cell: { x: 0, y: 64, w: 448, h: 128 }, style: 'banner' },
-  { id: 'rail-r', kind: 'wide', face: 'west', x: 13.4, y: 4.65, z: 8.5, w: 6.5, h: 1.9, cell: { x: 448, y: 64, w: 448, h: 128 }, style: 'banner' },
-  { id: 'upper', kind: 'wide', face: 'west', x: 19.4, y: 7.6, z: 0, w: 9, h: 2.4, cell: { x: 0, y: 192, w: 576, h: 152 }, style: 'banner' },
+  { id: 'rail-l', kind: 'wide', face: 'west', x: 13.05, y: 5.1, z: -8.5, w: 6.5, h: 1.9, cell: { x: 0, y: 64, w: 448, h: 128 }, style: 'banner' },
+  { id: 'rail-r', kind: 'wide', face: 'west', x: 13.05, y: 5.1, z: 8.5, w: 6.5, h: 1.9, cell: { x: 448, y: 64, w: 448, h: 128 }, style: 'banner' },
+  { id: 'upper', kind: 'wide', face: 'west', x: 17.6, y: 8.1, z: 0, w: 9, h: 2.6, cell: { x: 0, y: 192, w: 576, h: 152 }, style: 'banner' },
 ];
 
 const ATLAS = { w: 1024, h: 344 };

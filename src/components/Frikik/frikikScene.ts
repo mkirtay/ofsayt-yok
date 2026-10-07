@@ -94,6 +94,8 @@ export type FrikikOptions = {
   lite: boolean;
   /** Reklam panolarındaki boş pano metni için dil. */
   lang: 'tr' | 'en';
+  /** Kalite: 'low' = az taraftar (240), projektör yok, pixelRatio 1; 'high' = tam tribün. */
+  quality: 'low' | 'high';
   canvasClassName: string;
   handleClassName: string;
   goalClassName: string;
@@ -110,6 +112,8 @@ export type FrikikOptions = {
 
 export type FrikikHandle = {
   dispose: () => void;
+  /** Son karenin draw call / üçgen sayısı (renderer.info). */
+  stats: () => { calls: number; triangles: number };
   /** Seri (5 vuruş) başlat. */
   start: (seed: number) => void;
   /** Seviye koşusu (3 can) başlat. */
@@ -169,7 +173,8 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
   let disposed = false;
 
   const renderer = new WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, lite ? 1.5 : 1.75));
+  const low = opts.quality === 'low';
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, low ? 1 : lite ? 1.5 : 1.75));
   renderer.setClearColor(0x000000, 0);
   renderer.toneMapping = ACESFilmicToneMapping;
   const canvas = renderer.domElement;
@@ -235,7 +240,7 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
   scene.add(lines);
 
   // Kale arkası tribün + taraftarlar (stands.ts: 3–4 draw call, gölge yok)
-  const stands = track(buildStands({ lite }));
+  const stands = track(buildStands({ lite, low }));
   scene.add(stands.group);
   const boardTex = track(boardTexture());
   boardTex.repeat.set(14, 1);
@@ -337,7 +342,7 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
     keeperFig.group.position.z = p.root;
     keeperFig.group.rotation.y = keeperFaceYaw + dir * p.yaw;
     keeperShadow.position.set(KEEPER.x, 0.008, p.root);
-    setKeeperPose(keeperFig, { crouch: p.crouch, tilt: p.tilt, lift: p.lift / KEEPER_SCALE, dir, reach: p.reach });
+    setKeeperPose(keeperFig, { crouch: p.crouch, tilt: p.tilt, lift: p.lift / KEEPER_SCALE, dir, reach: p.reach, armUp: p.armUp });
   };
   let keeperLastPose: KeeperPose = READY_POSE;
   let keeperLastDir = 1;
@@ -346,17 +351,19 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
     const p = startShot(r, input);
     let crossed = false;
     let ballZ = 0;
+    let ballY = 0;
     let tCross = 0;
     while (!p.result || p.tick < 2) {
       stepShot(p);
       if (!crossed && p.pos.x >= KEEPER.x - BALL_R) {
         crossed = true;
         ballZ = p.pos.z;
+        ballY = p.pos.y;
         tCross = p.tick;
       }
       if (p.result && (crossed || p.tick > 840)) break;
     }
-    return { crossed, ballZ, tCross, saved: p.result?.kind === 'saved' };
+    return { crossed, ballZ, ballY, tCross, saved: p.result?.kind === 'saved' };
   };
   let basis = { fx: 1, fz: 0, rx: 0, rz: 1 };
   let phase: 'idle' | 'aim' | 'flight' | 'hold' | 'done' = 'idle';
@@ -770,6 +777,9 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
   };
 
   return {
+    stats() {
+      return { calls: renderer.info.render.calls, triangles: renderer.info.render.triangles };
+    },
     start(nextSeed: number) {
       begin('series', nextSeed);
     },

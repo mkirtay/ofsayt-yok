@@ -3,7 +3,7 @@
  * renkleri → 1 draw call; lamba başları ayrı emissive malzeme → +1), içinde düşük poligonlu taraftarlar (gövde + baş tek
  * geometri, InstancedMesh + instanceColor → 1 draw call; forma / atkı renk çeşitliliği tohumlu) ve birkaç bayrak /
  * pankart (birleşik, köşe renkli → 1 draw call). Gölge yok. Taraftarlar durağan; golde ucuz zıplama (yalnız kutlama
- * süresince matrisler güncellenir). Mobilde (lite) taraftar sayısı yarıya iner.
+ * süresince matrisler güncellenir). Mobilde (lite) taraftar sayısı azalır; 'low' kalitede 240 taraftar, projektör yok.
  *
  * Tribün geometrisi: ön duvar x = 12 (y 0–2,6; üstünde LED şeridi adBoards'ta), basamaklar x = 12,8'den geriye
  * `ROWS` sıra (derinlik 0,85 m, yükseklik 0,5 m), z −32…32.
@@ -80,7 +80,7 @@ function mergedMesh(pos: number[], col: number[], idx: number[], material: MeshS
   return new Mesh(geo, material);
 }
 
-export function buildStands(opts: { lite: boolean; seed?: number }): Stands {
+export function buildStands(opts: { lite: boolean; low?: boolean; seed?: number }): Stands {
   const group = new Group();
   const disposables: { dispose: () => void }[] = [];
   const rnd = lcg(opts.seed ?? 7);
@@ -122,7 +122,7 @@ export function buildStands(opts: { lite: boolean; seed?: number }): Stands {
   const lampGeo = new BoxGeometry(1.6, 0.9, 3.2);
   const lampMat = new MeshBasicMaterial({ color: 0xfff4d6 });
   disposables.push(lampGeo, lampMat);
-  for (const h of lampHeads) {
+  for (const h of opts.low ? [] : lampHeads) {
     const m = new Mesh(lampGeo, lampMat);
     m.position.set(h.x, h.y, h.z);
     m.rotation.z = 0.35;
@@ -156,15 +156,15 @@ export function buildStands(opts: { lite: boolean; seed?: number }): Stands {
   // ── Taraftarlar: gövde (silindir) + baş (küre) tek geometri, InstancedMesh ───────────────────────
   const torso = new CylinderGeometry(0.19, 0.22, 0.95, 7);
   torso.translate(0, 0.475, 0);
-  const head = new SphereGeometry(0.14, 7, 6);
+  const head = new SphereGeometry(0.14, 6, 5);
   head.translate(0, 1.1, 0);
   const fanGeo = mergeSimple(torso, head);
   torso.dispose();
   head.dispose();
   const fanMat = new MeshStandardMaterial({ roughness: 0.85, metalness: 0 });
   disposables.push(fanGeo, fanMat);
-  const perRow = opts.lite ? 36 : 64;
-  const rowsUsed = opts.lite ? 10 : STAND.rows;
+  const perRow = opts.low ? 30 : opts.lite ? 40 : 64;
+  const rowsUsed = opts.low ? 8 : opts.lite ? 10 : STAND.rows;
   const count = perRow * rowsUsed;
   const fans = new InstancedMesh(fanGeo, fanMat, count);
   fans.instanceMatrix.setUsage(DynamicDrawUsage);

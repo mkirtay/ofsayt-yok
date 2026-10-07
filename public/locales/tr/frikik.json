@@ -76,5 +76,10 @@
     "series": "5 vuruş"
   },
   "daily": "Günün frikiği · {{date}}",
-  "adContact": "Sahadaki panolarda reklam vermek için: {{email}}"
+  "adContact": "Sahadaki panolarda reklam vermek için: {{email}}",
+  "quality": {
+    "label": "Grafik kalitesi",
+    "low": "Kalite: Düşük",
+    "high": "Kalite: Yüksek"
+  }
 }
