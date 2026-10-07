@@ -18,6 +18,8 @@ import {
 } from '@/config/triviaPrompt';
 import type { MatchAnalysisContext } from '@/server/buildMatchAnalysisContext';
 import { openAiNoReasoningParams } from '@/services/aiAnalysisService';
+import { LlmBudgetExceededError, reserveLlmBudget, settleLlmBudget } from '@/server/llmBudget';
+import { llmCostMicroUsd } from '@/server/llmCost';
 
 const CLAUDE_MODEL = process.env.ANTHROPIC_MODEL ?? 'claude-sonnet-4-5-20250929';
 /**
@@ -110,6 +112,12 @@ export async function generateMatchTrivia(
   const userMessage = buildTriviaUserMessage(ctx);
   const provider = getProvider();
 
+  // Aylık bütçe (bkz. server/llmBudget.ts): önce tahmini ayır, sonra gerçek maliyetle kesinleştir.
+  const estimate = llmCostMicroUsd(TRIVIA_OPENAI_MODEL, { input: 7_000, output: 800 });
+  const budget = await reserveLlmBudget(estimate);
+  if (!budget) throw new LlmBudgetExceededError();
+  let cost: number | null = null;
+
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TRIVIA_TIMEOUT_MS);
 
@@ -129,6 +137,11 @@ export async function generateMatchTrivia(
         { signal: controller.signal }
       );
 
+      cost = llmCostMicroUsd(TRIVIA_OPENAI_MODEL, {
+        input: response.usage?.prompt_tokens ?? 0,
+        cached: response.usage?.prompt_tokens_details?.cached_tokens ?? 0,
+        output: response.usage?.completion_tokens ?? 0,
+      });
       const raw = response.choices?.[0]?.message?.content ?? '';
       if (!raw) throw new Error('OpenAI yanıtında metin bulunamadı');
 
@@ -156,6 +169,7 @@ export async function generateMatchTrivia(
       (c): c is Anthropic.TextBlock => c.type === 'text'
     );
     if (!textBlock) throw new Error('Anthropic yanıtında metin bloğu yok');
+    cost = llmCostMicroUsd(CLAUDE_MODEL, { input: response.usage?.input_tokens ?? 0, output: response.usage?.output_tokens ?? 0 });
 
     const validated = validateTriviaSchema(extractJson(textBlock.text));
     return {
@@ -176,5 +190,6 @@ export async function generateMatchTrivia(
     throw err;
   } finally {
     clearTimeout(timer);
+    await settleLlmBudget(budget, cost);
   }
 }

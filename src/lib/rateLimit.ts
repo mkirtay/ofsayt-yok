@@ -78,6 +78,11 @@ export type RateLimitOptions = {
    * Redis kesintisi kaba kuvvet denemelerine kapı açmasın. Varsayılan fail-open (içerik uçları siteyi kapatmasın).
    */
   failClosed?: boolean;
+  /**
+   * Redis cevap vermezse instance içi sayaçla devam et (dağıtık ortamda gevşek ama sınırsız değil). LLM uçları için:
+   * kesinti girişli kullanıcıyı sınırsız bırakmasın, ödeyen kullanıcıyı da kapatmasın. `failClosed` öncelikli.
+   */
+  memoryFallback?: boolean;
 };
 
 export async function hitFixedWindowRateLimit(
@@ -96,6 +101,7 @@ export async function hitFixedWindowRateLimit(
   const result = await withRedis(() => upstash.limit(key), null);
   if (!result) {
     if (opts.failClosed) return { success: false, remaining: 0, resetAt: Date.now() + 60_000 };
+    if (opts.memoryFallback) return hitInMemory(`mem:${key}`, limit, windowMs);
     return { success: true, remaining: limit, resetAt: Date.now() + windowMs };
   }
   return { success: result.success, remaining: result.remaining, resetAt: result.reset };

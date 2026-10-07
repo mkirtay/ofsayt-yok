@@ -23,6 +23,8 @@ import { ANALYSIS_RESPONSE_FORMAT } from '@/config/analysisJsonSchema';
 import { isAnalysisScenario } from '@/utils/analysisScenarios';
 import { findGamblingTerms } from '@/utils/gamblingTerms';
 import { captureError } from '@/lib/logger';
+import { LlmBudgetExceededError, reserveLlmBudget, settleLlmBudget } from '@/server/llmBudget';
+import { llmCostMicroUsd } from '@/server/llmCost';
 
 const CLAUDE_MODEL = process.env.ANTHROPIC_MODEL ?? 'claude-sonnet-4-5-20250929';
 /**
@@ -170,6 +172,12 @@ export async function generateMatchAnalysis(
   const userMessage = buildAnalysisUserMessage(ctx);
   const provider = getProvider();
 
+  // Aylık bütçe: tahmini üst sınır önce ayrılır; gerçek maliyet bilinirse fark yazılır (zaman aşımında tahmin kalır).
+  const estimate = llmCostMicroUsd(ANALYSIS_OPENAI_MODEL, { input: 9_000, output: 2_000 });
+  const budget = await reserveLlmBudget(estimate);
+  if (!budget) throw new LlmBudgetExceededError();
+  let cost: number | null = null;
+
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), ANALYSIS_TIMEOUT_MS);
 
@@ -189,6 +197,11 @@ export async function generateMatchAnalysis(
         { signal: controller.signal }
       );
 
+      cost = llmCostMicroUsd(ANALYSIS_OPENAI_MODEL, {
+        input: response.usage?.prompt_tokens ?? 0,
+        cached: response.usage?.prompt_tokens_details?.cached_tokens ?? 0,
+        output: response.usage?.completion_tokens ?? 0,
+      });
       const raw = response.choices?.[0]?.message?.content ?? '';
       if (!raw) {
         throw new Error('OpenAI yanitinda metin bulunamadi');
@@ -218,6 +231,7 @@ export async function generateMatchAnalysis(
       { signal: controller.signal }
     );
 
+    cost = llmCostMicroUsd(CLAUDE_MODEL, { input: response.usage?.input_tokens ?? 0, output: response.usage?.output_tokens ?? 0 });
     const textBlock = response.content.find(
       (c): c is Anthropic.TextBlock => c.type === 'text'
     );
@@ -247,5 +261,6 @@ export async function generateMatchAnalysis(
     throw err;
   } finally {
     clearTimeout(timer);
+    await settleLlmBudget(budget, cost);
   }
 }

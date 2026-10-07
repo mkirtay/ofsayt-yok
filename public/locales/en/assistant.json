@@ -25,6 +25,7 @@
     "premium": "You've used today's {{limit}} messages. See you tomorrow."
   },
   "budget": "The assistant is full for today. Please try again tomorrow.",
+  "budgetMonthly": "The assistant has reached its capacity for this month and will reopen next month.",
   "unavailable": "The assistant is closed to guests right now. Sign in to use it.",
   "rate": "A bit too fast — try again in a few seconds.",
   "refused": "I can't help with that.",

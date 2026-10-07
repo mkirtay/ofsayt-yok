@@ -25,6 +25,7 @@
     "premium": "Bugünkü {{limit}} mesaj hakkın doldu. Yarın tekrar görüşelim."
   },
   "budget": "Asistan bugünlük doldu. Yarın tekrar dene.",
+  "budgetMonthly": "Asistan bu ay için kapasitesine ulaştı; gelecek ay yeniden açılır.",
   "unavailable": "Asistan şu an misafirlere kapalı. Giriş yaparak kullanabilirsin.",
   "rate": "Biraz yavaş — birkaç saniye sonra tekrar dene.",
   "refused": "Bu konuda yardımcı olamıyorum.",

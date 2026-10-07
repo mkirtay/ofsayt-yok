@@ -11,7 +11,7 @@ vi.mock('./tools', () => ({
 }));
 vi.mock('@/services/aiAnalysisService', () => ({ openAiNoReasoningParams: (_m: string, temperature: number) => ({ temperature, reasoning_effort: 'none' }) }));
 
-import { MAX_TOOL_ROUNDS, assistantCostMicroUsd, finalizeAttachments, runAssistantChat, type AssistantChatClient, type AssistantEvent } from './chat';
+import { MAX_TOOL_CALLS_PER_REQUEST, MAX_TOOL_CALLS_PER_ROUND, MAX_TOOL_ROUNDS, assistantCostMicroUsd, finalizeAttachments, runAssistantChat, type AssistantChatClient, type AssistantEvent } from './chat';
 
 type Chunk = Record<string, unknown>;
 const text = (...parts: string[]): Chunk[] => [...parts.map((p) => ({ choices: [{ delta: { content: p } }] })), { choices: [], usage: { prompt_tokens: 2500, completion_tokens: 40, prompt_tokens_details: { cached_tokens: 2400 } } }];
@@ -199,5 +199,44 @@ describe('asistan sohbet döngüsü', () => {
 
   it('boş yanıt → empty', async () => {
     expect((await run([[{ choices: [], usage: { prompt_tokens: 10, completion_tokens: 0 } }]])).result.outcome).toBe('empty');
+  });
+
+  it('araç tavanı: tur başına en çok 4, mesaj başına en çok 6 çağrı; fazlası modele de gönderilmez; hak bitince tool_choice none', async () => {
+    expect([MAX_TOOL_CALLS_PER_ROUND, MAX_TOOL_CALLS_PER_REQUEST]).toEqual([4, 6]);
+    const many = (n: number): Chunk[] => [
+      ...Array.from({ length: n }, (_, i) => ({ choices: [{ delta: { tool_calls: [{ index: i, id: `c${i}`, function: { name: 'get_match_analysis', arguments: `{"i":${i}}` } }] } }] })),
+      { choices: [], usage: { prompt_tokens: 100, completion_tokens: 10 } },
+    ];
+    const { bodies, result } = await run([many(7), many(3), many(2), text('Yanıt.')]);
+    // 1. tur: 7 istendi, 4 koştu; 2. tur: 3 istendi, 2 koştu (toplam 6); 3. tur: hak yok → çağrı yok, tool_choice none.
+    expect(h.toolRuns.map((t) => t.args)).toEqual(['{"i":0}', '{"i":1}', '{"i":2}', '{"i":3}', '{"i":0}', '{"i":1}']);
+    expect(result.tools).toHaveLength(MAX_TOOL_CALLS_PER_REQUEST);
+    const assistantMsgs = (bodies[2]!.messages as Array<{ role: string; tool_calls?: unknown[] }>).filter((m) => m.role === 'assistant');
+    expect(assistantMsgs.map((m) => m.tool_calls?.length)).toEqual([4, 2]);
+    const toolMsgs = (bodies[2]!.messages as Array<{ role: string }>).filter((m) => m.role === 'tool');
+    expect(toolMsgs).toHaveLength(6);
+    expect(bodies.map((b) => b.tool_choice)).toEqual(['auto', 'auto', 'none', 'none']);
+  });
+
+  it('iptal sinyali araç çağrıları arasında kontrol edilir (zaman aşımı araç zincirini keser); onUsage her model çağrısında', async () => {
+    const abort = new AbortController();
+    const usages: Array<{ input: number }> = [];
+    const { runAssistantTool } = await import('./tools');
+    vi.mocked(runAssistantTool).mockImplementation(async (name: string, args: string) => {
+      h.toolRuns.push({ name, args });
+      abort.abort();
+      return { ok: true, data: {} } as never;
+    });
+    const two: Chunk[] = [
+      { choices: [{ delta: { tool_calls: [{ index: 0, id: 'c0', function: { name: 'get_match_analysis', arguments: '{}' } }] } }] },
+      { choices: [{ delta: { tool_calls: [{ index: 1, id: 'c1', function: { name: 'get_match_analysis', arguments: '{}' } }] } }] },
+      { choices: [], usage: { prompt_tokens: 100, completion_tokens: 10 } },
+    ];
+    const { client } = fakeClient([two, text('x')]);
+    await expect(
+      runAssistantChat({ client, messages: [{ role: 'user', content: 'a' }], ctx, emit: () => {}, signal: abort.signal, onUsage: (u) => usages.push(u) }),
+    ).rejects.toMatchObject({ name: 'AbortError' });
+    expect(h.toolRuns).toHaveLength(1); // ikinci araç çalışmadı
+    expect(usages).toEqual([{ input: 100, cached: 0, output: 10 }]);
   });
 });

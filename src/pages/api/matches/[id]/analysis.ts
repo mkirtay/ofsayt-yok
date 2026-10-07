@@ -55,6 +55,7 @@ import { hitFixedWindowRateLimit } from '@/lib/rateLimit';
 import { buildMatchAnalysisContext } from '@/server/buildMatchAnalysisContext';
 import { buildOffer, isAnalysisMatchFinished, loadViewer, type AnalysisViewer } from '@/server/analysisAccess';
 import { generateMatchAnalysis, AnalysisTimeoutError } from '@/services/aiAnalysisService';
+import { LlmBudgetExceededError } from '@/server/llmBudget';
 import { captureError } from '@/lib/logger';
 import { ensurePredictionRecordForAnalysis } from '@/lib/predictionRecords';
 import { findStoredMatchAnalysis } from '@/lib/matchAnalysisLookup';
@@ -197,7 +198,8 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse, matchId: st
   const guard = await requireAuth(req, res);
   if (!guard.ok) return;
 
-  const rl = await hitFixedWindowRateLimit(`analysis:user:${guard.userId}`, 30, 60 * 60_000);
+  // Redis kesintisinde instance içi yedek sayaç (LLM ucu sınırsız kalmasın).
+  const rl = await hitFixedWindowRateLimit(`analysis:user:${guard.userId}`, 30, 60 * 60_000, { memoryFallback: true });
   if (!rl.success) {
     res.setHeader('Retry-After', String(Math.ceil((rl.resetAt - Date.now()) / 1000)));
     return res.status(429).json({ error: 'Saatlik analiz limitine (30) ulaştınız. Biraz bekleyin.' });
@@ -299,7 +301,7 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse, matchId: st
         } catch (err) {
           const winner = isUniqueViolation(err) ? await findStoredMatchAnalysis(String(ctx.match.id), 'PRE') : null;
           if (!winner) {
-            await refund(err instanceof AnalysisTimeoutError ? 'AI analizi zaman aşımı' : 'AI analizi üretilemedi');
+            await refund(err instanceof AnalysisTimeoutError ? 'AI analizi zaman aşımı' : err instanceof LlmBudgetExceededError ? 'AI aylık bütçesi doldu' : 'AI analizi üretilemedi');
             throw err;
           }
           // Kilit devre dışıyken (Redis yok) aynı maçı başka bir istek önce kaydetti: bu kullanıcı da ödedi → açar,
@@ -363,6 +365,9 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse, matchId: st
       return res.status(403).json({ error: err.message, code: 'WEEKLY_FREE_NOT_ELIGIBLE', reason: err.reason });
     }
     captureError('analysis-post', err);
+    if (err instanceof LlmBudgetExceededError) {
+      return res.status(503).json({ error: err.message, code: 'LLM_BUDGET' });
+    }
     if (err instanceof AnalysisTimeoutError) {
       return res.status(504).json({ error: err.message });
     }

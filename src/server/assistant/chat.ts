@@ -1,12 +1,15 @@
 /**
  * AI Asistan sohbet döngüsü: OpenAI Chat Completions (gpt-6-luna, reasoning none, stream) + araçlar.
  *
- * Mesaj başına en çok MAX_TOOL_ROUNDS araç turu; sonrasında model araçsız yanıtlamaya zorlanır. Metin cümle kapısından
+ * Mesaj başına en çok MAX_TOOL_ROUNDS araç turu, tur başına en çok MAX_TOOL_CALLS_PER_ROUND ve mesaj başına en çok
+ * MAX_TOOL_CALLS_PER_REQUEST araç çağrısı (fazlası atılır; hak bitince model araçsız yanıtlamaya zorlanır). Araç çağrıları
+ * arasında iptal sinyali kontrol edilir (25 sn zaman aşımı araç zincirini de keser). Metin cümle kapısından
  * geçer (bahis terimi → kesilir). İstemciye giden olaylar: `delta` (metin), `card` (sunucunun araç çıktısından ürettiği
  * kart; yanıt başına en çok 1), `links` (yalnız site içi yollar; en çok 2, aynı hedef tekrarsız). Model metni link ya da
  * kart üretemez.
  */
 import { openAiNoReasoningParams } from '@/services/aiAnalysisService';
+import { llmCostMicroUsd } from '@/server/llmCost';
 import { buildAssistantSystemPrompt } from './prompt';
 import { openAiToolDefinitions, runAssistantTool, type AssistantCard, type ToolContext } from './tools';
 import { createSentenceGate, sanitizeLinks, type AssistantLink } from './outputFilter';
@@ -37,9 +40,9 @@ export function finalizeAttachments(cards: AssistantCard[], links: AssistantLink
 }
 
 export const ASSISTANT_OPENAI_MODEL = process.env.OPENAI_ASSISTANT_MODEL || 'gpt-6-luna';
-/** USD / 1M token: girdi, önbellekli girdi, çıktı (gpt-6-luna, 2026-10). Bütçe sigortası için tahmin. */
-const PRICE_PER_MTOK = { input: 0.1, cached: 0.01, output: 0.5 };
 export const MAX_TOOL_ROUNDS = 3;
+export const MAX_TOOL_CALLS_PER_ROUND = 4;
+export const MAX_TOOL_CALLS_PER_REQUEST = 6;
 const MAX_OUTPUT_TOKENS = 500;
 
 export type ChatMessage = { role: 'user' | 'assistant'; content: string };
@@ -69,8 +72,15 @@ export type AssistantChatClient = {
 
 type ToolCall = { id: string; name: string; arguments: string };
 
+/** Bütçe sigortası için tahmini maliyet (mikro-USD; fiyat tablosu server/llmCost.ts). */
 export function assistantCostMicroUsd(u: { input: number; cached: number; output: number }): number {
-  return Math.ceil((u.input - u.cached) * PRICE_PER_MTOK.input + u.cached * PRICE_PER_MTOK.cached + u.output * PRICE_PER_MTOK.output);
+  return llmCostMicroUsd(ASSISTANT_OPENAI_MODEL, u);
+}
+
+function abortError(): Error {
+  const e = new Error('Asistan çalışması iptal edildi');
+  e.name = 'AbortError';
+  return e;
 }
 
 export async function runAssistantChat(opts: {
@@ -80,6 +90,8 @@ export async function runAssistantChat(opts: {
   pagePath?: string | null;
   emit: (event: AssistantEvent) => void;
   signal?: AbortSignal;
+  /** Her model çağrısından sonra birikmiş kullanım (zaman aşımında bile gerçek maliyet bütçeye yazılsın). */
+  onUsage?: (usage: { input: number; cached: number; output: number }) => void;
 }): Promise<AssistantRunResult> {
   const { client, ctx, emit } = opts;
   const messages: Array<Record<string, unknown>> = [
@@ -109,6 +121,7 @@ export async function runAssistantChat(opts: {
     emit({ type: 'delta', text });
   };
 
+  let noMoreTools = false;
   for (let round = 0; round <= MAX_TOOL_ROUNDS; round++) {
     const stream = await client.chat.completions.create(
       {
@@ -120,7 +133,7 @@ export async function runAssistantChat(opts: {
         messages,
         tools: openAiToolDefinitions(),
         // Tur hakkı bittiyse model eldeki veriyle yanıtlar.
-        tool_choice: round === MAX_TOOL_ROUNDS ? 'none' : 'auto',
+        tool_choice: round === MAX_TOOL_ROUNDS || noMoreTools ? 'none' : 'auto',
       },
       { signal: opts.signal },
     );
@@ -148,10 +161,19 @@ export async function runAssistantChat(opts: {
         if (gate.blocked()) break;
       }
     }
+    opts.onUsage?.({ ...usage });
     if (gate.blocked()) break;
 
-    const toolCalls = [...calls.values()].filter((c) => c.name);
-    if (toolCalls.length === 0) break;
+    // Araç tavanı: tur başına ≤ MAX_TOOL_CALLS_PER_ROUND, mesaj başına ≤ MAX_TOOL_CALLS_PER_REQUEST; fazlası atılır.
+    const allCalls = [...calls.values()].filter((c) => c.name);
+    if (allCalls.length === 0) break;
+    const toolCalls = allCalls.slice(0, Math.max(0, Math.min(MAX_TOOL_CALLS_PER_ROUND, MAX_TOOL_CALLS_PER_REQUEST - toolsUsed.length)));
+    if (toolCalls.length === 0) {
+      // Hak bitti: model araçsız yanıtlamaya zorlanır (araç çağrısı mesaja eklenmez).
+      noMoreTools = true;
+      continue;
+    }
+    if (toolsUsed.length + toolCalls.length >= MAX_TOOL_CALLS_PER_REQUEST) noMoreTools = true;
 
     messages.push({
       role: 'assistant',
@@ -160,6 +182,7 @@ export async function runAssistantChat(opts: {
     });
     let fixedReply: string | null = null;
     for (const call of toolCalls) {
+      if (opts.signal?.aborted) throw abortError();
       toolsUsed.push(call.name);
       const result = await runAssistantTool(call.name, call.arguments, ctx);
       if (result.card) {

@@ -119,6 +119,8 @@ Mesaj = 2 model çağrısı (araç seçimi + yanıt); S3'te 3. Statik önek 2.40
 - Sayım **başarılı yanıtta** yapılır; hata ve "bilmiyorum" hakkı düşürmez (kötüye kullanım: "bilmiyorum" için ayrı günlük 20 sınırı).
 - **Hız:** kullanıcı/IP başına 6 mesaj/dk (`hitFixedWindowRateLimit`), mesaj ≤ 300 karakter, geçmiş ≤ 6 mesaj, araç turu ≤ 3, çıktı ≤ 500 token.
 - **Global bütçe sigortası:** Redis'te günlük tahmini maliyet toplanır; eşik (ör. $5/gün) aşılınca girişsiz kapanır, sonra girişli; premium en son.
+- **Uygulama (2026-10-07, güvenlik raporu Y4/O3/O4/O6):** kota ve günlük bütçe istek BAŞINDA atomik ayrılır (Redis INCR → sınır aşıldıysa DECR + red; eşzamanlı istekler aşamaz), `finally` içinde kesinleşir (yanıt / hata / 25 sn zaman aşımı / istemci iptali — hepsinde hak sayılır, yalnız boş yanıtta iade; bütçeye gerçek maliyet, bilinmiyorsa tahmini üst sınır 0,004 USD). Redis kesintisinde misafir kapalı, girişli kullanıcı instance içi 5 mesaj/gün. Araç tavanı: tur başına 4, mesaj başına 6 çağrı. Misafir IPv6 anahtarı kanonik /64.
+- **Aylık OpenAI tavanı (`server/llmBudget.ts`):** asistan + analiz üretimi + ön üretim + trivia tek sayaçta; `OPENAI_MONTHLY_BUDGET_USD` (varsayılan 30). %80'de Sentry warning, %100'de Sentry error ve LLM uçları nazik mesajla kapanır (asistan `BUDGET_MONTHLY`, analiz/trivia 503 `LLM_BUDGET`; rezerve kredi iade). Redis kesintisinde instance içi tavanın dörtte biri.
 - Redis erişilemezse (rate limit fail-open): girişsiz asistan **kapalı** (fail-closed), girişli için bellek içi yedek sayaç.
 - Girişsiz kötüye kullanım artarsa: ilk mesajda Turnstile (kayıtta zaten var).
 
