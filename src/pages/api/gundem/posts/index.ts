@@ -25,6 +25,11 @@ import {
 } from '@/lib/gundem/feedCache';
 import { MatchSnapshotError, ensureMatchSnapshot, normalizeFixtureId } from '@/lib/gundem/matchSnapshot';
 
+// Gönderi/yorum gövdesi ~280 karakter; Next varsayılanı (1 MB) yerine 16 KB — aşılırsa Next 413 döner.
+export const config = { api: { bodyParser: { sizeLimit: '16kb' } } };
+/** Temizlenmemiş gövde için tavan (içerik sınırı 280; etiket/boşluk payı). Aşan istek temizlenmeden 400 alır. */
+const RAW_BODY_MAX_LENGTH = 2000;
+
 const SCOPES = ['all', 'following', 'official', 'match'] as const;
 type Scope = (typeof SCOPES)[number];
 
@@ -111,7 +116,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
 
       const input = readJsonBody(req);
-      const body = sanitizePlainText(typeof input.body === 'string' ? input.body : '', { allowNewlines: true });
+      const rawBody = typeof input.body === 'string' ? input.body : '';
+      // Ham uzunluk temizlemeden ÖNCE: büyük gövde CPU harcatmadan reddedilir.
+      if (rawBody.length > RAW_BODY_MAX_LENGTH) {
+        return res.status(400).json({ error: `Gönderi 1–${POST_MAX_LENGTH} karakter olmalıdır.` });
+      }
+      const body = sanitizePlainText(rawBody, { allowNewlines: true, maxInputLength: RAW_BODY_MAX_LENGTH });
       if (!body || body.length > POST_MAX_LENGTH) {
         return res.status(400).json({ error: `Gönderi 1–${POST_MAX_LENGTH} karakter olmalıdır.` });
       }
