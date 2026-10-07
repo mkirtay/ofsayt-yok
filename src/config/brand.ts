@@ -23,8 +23,8 @@ export const BRAND = {
   siteUrl,
   /** Metinlerde gösterilen alan adı (ör. yasal metinler): `siteUrl`'in host'u. */
   domain: siteUrl.replace(/^https?:\/\//, ''),
-  /** Herkese açık iletişim adresi — gerçek adres belirlenene kadar nötr yer tutucu. */
-  contactEmail: 'iletisim@ornek.test',
+  /** Herkese açık iletişim adresi (/iletisim, yasal metinler). Yeni posta kutusu kurulunca yalnız bu satır değişir. */
+  contactEmail: 'iletisim@ofsaytyok.app',
   /** Sosyal hesaplar (kullanıcı adı, "@" olmadan); boş olanlar hiçbir yerde basılmaz. */
   social: { x: '', instagram: '', youtube: '' } as { x: string; instagram: string; youtube: string },
   tagline: { tr: 'Canlı Skorlar · Maç Analizi · Puan Durumu', en: 'Live Scores · Match Analysis · Standings' },

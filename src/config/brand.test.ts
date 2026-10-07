@@ -30,6 +30,11 @@ describe('marka yardımcıları', () => {
     expect(BRAND_I18N_VARS).toEqual({ brand: BRAND.name, siteDomain: BRAND.domain, contactEmail: BRAND.contactEmail });
   });
 
+  it('iletişim adresi gerçek bir alan adında (yer tutucu canlıya çıkmasın)', () => {
+    expect(BRAND.contactEmail).toMatch(/^[^@\s]+@[^@\s]+\.[a-z]{2,}$/);
+    expect(BRAND.contactEmail).not.toMatch(/\.(test|example|invalid|localhost)$|@ornek\./);
+  });
+
   it('boş sosyal hesaplar sameAs\'a girmez', () => {
     const filled = Object.values(BRAND.social).filter(Boolean).length;
     expect(socialProfileUrls()).toHaveLength(filled);
