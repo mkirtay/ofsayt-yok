@@ -1,7 +1,10 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
+
+// Oturum sağlayıcısız SSR: girişsiz kullanıcı (bileşen skor tablosu verisini yalnız istemcide çeker).
+vi.mock('next-auth/react', () => ({ useSession: () => ({ data: null, status: 'unauthenticated', update: async () => null }), signIn: vi.fn() }));
 import Frikik, { resultLabel } from './index';
 import tr from '../../../public/locales/tr/frikik.json';
 import en from '../../../public/locales/en/frikik.json';
@@ -15,10 +18,15 @@ describe('<Frikik />', () => {
     expect(html).toMatch(/role="application" aria-label="Frikik oyun alanı"><div class="[^"]*"><\/div><\/div>/);
     expect(html).toContain(tr.rules.p3);
     expect(html).not.toContain('Bir arkadaşın');
-    expect(html).not.toContain('role="tablist"'); // tek mod: mod seçici yok
+    expect(html).not.toContain('5 vuruş'); // tek mod: mod seçici yok
     expect(html).not.toContain('Kalite');
+    expect(html).toContain('Puan durumu'); // Günlük / Aylık sekmeli tablo (veri istemcide)
+    expect(html).toContain('role="tab"');
+    expect(html).not.toContain('reklam@'); // yer tutucu iletişim adresi yok (env tanımsız)
     const lvl = renderToStaticMarkup(<Frikik shared={{ score: 1250, level: 7, day: null }} />);
     expect(lvl).toContain('7. seviyeye ulaştı');
+    const withDay = renderToStaticMarkup(<Frikik shared={{ score: 1250, level: 7, day: '2026-10-08' }} />);
+    expect(withDay).toContain('2026-10-08 günü 7. seviyeye');
   });
 
   it('three.js yalnız dinamik import ile: bileşen ve sayfa statik olarak three / sahneyi içe aktarmaz', () => {

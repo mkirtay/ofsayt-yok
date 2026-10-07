@@ -49,7 +49,8 @@
     "p2": "Direkten gol: +50",
     "p3": "Doksan (üst köşe): +100",
     "r4": "Seviye modu (Günün frikiği): 3 can, her seviye 1 vuruş. Gol → sonraki seviye, kaçırma → 1 can. Mesafe ve açı her seviyede artar (20 m merkezden 32 m geniş açıya; ekranın üstünde \"Mesafe\"), baraj, kaleci, rüzgâr (yönü ve gücü ekranın üstünde), daralan kale ve hareketli baraj kademeli gelir; herkes o günün aynı dizisini oynar.",
-    "p4": "Seviye modunda puanlar seviye çarpanıyla çarpılır: 1. seviye ×1, 2. ×1,5, 3. ×2 … Sıralama önce ulaşılan seviye, sonra puan."
+    "p4": "Seviye modunda puanlar seviye çarpanıyla çarpılır: 1. seviye ×1, 2. ×1,5, 3. ×2 … Sıralama önce ulaşılan seviye, sonra puan.",
+    "p5": "Skor tablosu: oynamak için giriş gerekmez; skorunu tabloya yazmak için Google ile giriş yap ve bir takma ad seç. Günde yalnız ilk bitmiş koşun sayılır (tekrar oynamak serbest). Aylık tablo, ay içindeki tek en iyi günlük sonucun; ödül yok, yalnız sıralama."
   },
   "tip": {
     "title": "Nasıl oynanır?",
@@ -62,5 +63,40 @@
   "sharedLevelTitle": "Frikik'te {{level}}. seviye, {{score}} puan — Sen kaça ulaşırsın? | {{brand}}",
   "sharedLevel": "Bir arkadaşın {{level}}. seviyeye ulaştı ({{score}} puan). Geçebilir misin?",
   "daily": "Günün frikiği · {{date}}",
-  "adContact": "Sahadaki panolarda reklam vermek için: {{email}}"
+  "adContact": "Sahadaki panolarda reklam vermek için: {{email}}",
+  "sharedLevelDay": "Bir arkadaşın {{date}} günü {{level}}. seviyeye ulaştı ({{score}} puan). Bugünün frikiğinde geçebilir misin?",
+  "submit": {
+    "sending": "Skorun tabloya yazılıyor…",
+    "recorded": "Tabloya yazıldı: bugün {{rank}}. sıradasın.",
+    "already": "Bugünkü tablon: Seviye {{level}}, {{rank}}. sıra (günün ilk koşusu sayılır).",
+    "error": "Skor tabloya yazılamadı. Daha sonra tekrar dene.",
+    "versionError": "Oyun güncellendi; bu koşu tabloya yazılamadı. Sayfayı yenileyip tekrar oyna.",
+    "loginPrompt": "Skorunu tabloya yaz: Google ile giriş yap. Bu koşu seni bekler.",
+    "loginButton": "Giriş yap ve skoru yaz"
+  },
+  "nick": {
+    "prompt": "Tabloda görünecek takma adını seç (herkese açık; e-postan ve adın görünmez).",
+    "placeholder": "takma_ad",
+    "save": "Kaydet ve skoru yaz",
+    "taken": "Bu takma ad alınmış; başka bir tane dene.",
+    "notAllowed": "Bu takma ad kullanılamaz; başka bir tane seç.",
+    "format": "3–30 karakter; yalnızca harf, rakam ve alt çizgi."
+  },
+  "resume": {
+    "recorded": "Giriş yaptın: bugünkü koşun tabloya yazıldı — Seviye {{level}}, {{rank}}. sıra.",
+    "already": "Bugün zaten tablodasın: Seviye {{level}}, {{rank}}. sıra.",
+    "nickname": "Koşun hazır; tabloya yazmak için bir takma ad seç."
+  },
+  "board": {
+    "title": "Puan durumu",
+    "daily": "Günlük",
+    "monthly": "Aylık",
+    "dailySub": "Bugünün en iyi 20 koşusu. Sıralama: seviye, sonra puan.",
+    "monthlySub": "Bu ay: herkesin tek en iyi günlük koşusu (toplam değil).",
+    "player": "Oyuncu",
+    "level": "Seviye",
+    "points": "Puan",
+    "loading": "Tablo yükleniyor…",
+    "empty": "Henüz kayıt yok. İlk sen ol!"
+  }
 }

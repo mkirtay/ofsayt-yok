@@ -49,7 +49,8 @@
     "p2": "In off the post: +50",
     "p3": "Top corner: +100",
     "r4": "Level mode (free kick of the day): 3 lives, one shot per level. Goal → next level, miss → lose a life. Distance and angle grow every level (from 20 m central to 32 m wide; see \"Distance\" above the pitch); the wall, keeper, wind (direction and strength shown above the pitch), a narrower goal and a moving wall arrive step by step. Everyone plays the same sequence that day.",
-    "p4": "In level mode points are multiplied by the level: level 1 ×1, level 2 ×1.5, level 3 ×2 … Ranking is by level reached first, then points."
+    "p4": "In level mode points are multiplied by the level: level 1 ×1, level 2 ×1.5, level 3 ×2 … Ranking is by level reached first, then points.",
+    "p5": "Leaderboard: no sign-in needed to play; to post your score sign in with Google and pick a nickname. Only your first finished run of the day counts (replaying is free). The monthly board is your single best daily result of the month; no prizes, just the ranking."
   },
   "tip": {
     "title": "How to play",
@@ -62,5 +63,40 @@
   "sharedLevelTitle": "Level {{level}}, {{score}} points in Frikik — how far can you get? | {{brand}}",
   "sharedLevel": "A friend reached level {{level}} ({{score}} points). Can you beat it?",
   "daily": "Free kick of the day · {{date}}",
-  "adContact": "To advertise on the pitch boards: {{email}}"
+  "adContact": "To advertise on the pitch boards: {{email}}",
+  "sharedLevelDay": "A friend reached level {{level}} ({{score}} points) on {{date}}. Can you beat it in today's free kick?",
+  "submit": {
+    "sending": "Posting your score…",
+    "recorded": "Posted: you are #{{rank}} today.",
+    "already": "Your board entry today: level {{level}}, #{{rank}} (first run of the day counts).",
+    "error": "Could not post the score. Try again later.",
+    "versionError": "The game was updated; this run could not be posted. Refresh the page and play again.",
+    "loginPrompt": "Post your score to the board: sign in with Google. This run will wait for you.",
+    "loginButton": "Sign in and post score"
+  },
+  "nick": {
+    "prompt": "Pick the nickname shown on the board (public; your email and name stay hidden).",
+    "placeholder": "nickname",
+    "save": "Save and post score",
+    "taken": "That nickname is taken; try another.",
+    "notAllowed": "That nickname is not allowed; pick another.",
+    "format": "3–30 characters; letters, digits and underscore only."
+  },
+  "resume": {
+    "recorded": "Signed in: today's run was posted — level {{level}}, #{{rank}}.",
+    "already": "You are already on today's board: level {{level}}, #{{rank}}.",
+    "nickname": "Your run is ready; pick a nickname to post it."
+  },
+  "board": {
+    "title": "Leaderboard",
+    "daily": "Daily",
+    "monthly": "Monthly",
+    "dailySub": "Today's top 20 runs. Ranked by level, then points.",
+    "monthlySub": "This month: everyone's single best daily run (not a total).",
+    "player": "Player",
+    "level": "Level",
+    "points": "Points",
+    "loading": "Loading the board…",
+    "empty": "No entries yet. Be the first!"
+  }
 }
