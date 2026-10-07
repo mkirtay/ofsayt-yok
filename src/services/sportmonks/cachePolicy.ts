@@ -105,6 +105,18 @@ function scheduleFinished(stages: unknown): boolean {
   return Array.isArray(stages) && stages.length > 0 && stages.every((st) => finishedSeason(st));
 }
 
+/** Liste dolu ve hepsi bitmiş, en yenisi de 1 günden eski (skor/istatistik düzeltmeleri bitmiş). */
+function allFinishedBefore(list: FixtureLike[], now: number, ageMs: number): boolean {
+  return (
+    list.length > 0 &&
+    list.every((f) => {
+      if (f.state_id == null || mapSportmonksStateToPhase(f.state_id) !== 'FINISHED') return false;
+      const k = kickoffMs(f);
+      return k != null && now - k > ageMs;
+    })
+  );
+}
+
 function asList(data: unknown): FixtureLike[] {
   if (Array.isArray(data)) return data as FixtureLike[];
   if (data && typeof data === 'object') return [data as FixtureLike];
@@ -139,6 +151,8 @@ export function sportmonksCacheTtl(
       if (a === 'date' && b) {
         if (b < yesterday) return withStale(DAY);
         const tomorrow = utcDay(now, 1);
+        // Bir haftadan uzak gün: program nadiren değişir (tarih şeridinde ileri gezinme / tarama) → 6 sa.
+        if (b > utcDay(now, 7)) return withStale(6 * HOUR, DAY);
         if (b > tomorrow) return withStale(15 * MIN, DAY);
         // UTC yarın: ana sayfanın "gece maçları" için her gün listesiyle birlikte okunur (bkz. server/homeDay.ts). İçeriğe
         // bakar (başlamaya 15 dk kala / canlıyken 30 sn) ama tavan 15 dk — durum değişikliği yalnız başlama saatinde.
@@ -155,6 +169,8 @@ export function sportmonksCacheTtl(
         return withStale(fixtureListFreshSeconds(asList(data), 10 * MIN, now), DAY);
       }
       if (a === 'head-to-head' || a === 'multi') {
+        // Hepsi bitmiş ve 1 günden eski (kişi sayfası son maçları, eski eşleşmeler): sonuç kesin → 24 sa (6 sa yerine).
+        if (allFinishedBefore(asList(data), now, DAY_MS)) return withStale(DAY, DAY);
         return withStale(fixtureListFreshSeconds(asList(data), 6 * HOUR, now), DAY);
       }
       if (a && /^\d+$/.test(a)) {

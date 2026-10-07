@@ -5,6 +5,7 @@ const h = vi.hoisted(() => ({
   clock: { t: Date.parse('2026-09-30T12:00:00Z') },
   redis: null as FakeRedis | null,
   quota: vi.fn(),
+  rateLimited: vi.fn(),
 }));
 
 vi.mock('@/lib/redis', () => ({
@@ -18,7 +19,11 @@ vi.mock('@/lib/redis', () => ({
     }
   },
 }));
-vi.mock('@/services/sportmonks/quotaMonitor', () => ({ reportSportmonksQuota: h.quota }));
+vi.mock('@/services/sportmonks/quotaMonitor', () => ({
+  reportSportmonksQuota: h.quota,
+  reportSportmonksRateLimited: h.rateLimited,
+  currentRequestRoute: () => 'GET /api/test',
+}));
 
 type Mod = typeof import('./cachedFetch');
 const now = () => h.clock.t;
@@ -72,6 +77,7 @@ describe('fetchSportmonksCached', () => {
     h.clock.t = Date.parse('2026-09-30T12:00:00Z');
     h.redis = createFakeRedis(now);
     h.quota.mockReset();
+    h.rateLimited.mockReset();
     m = await freshModule();
   });
 
@@ -176,6 +182,92 @@ describe('fetchSportmonksCached', () => {
     expect(r.status).toBe(200);
     expect(r.body).toEqual({ data: [{ id: 7 }] });
     expect(other.sportmonksCacheControl(r)).toBe('public, s-maxage=15, stale-while-revalidate=60');
+  });
+
+  describe('havuz bekçisi (429 soğuması, seyreltme, ölçüm)', () => {
+    const limited = { status: 429, body: { message: 'You have reached your rate limit for this entity.' } };
+
+    it('429 → havuz soğumaya girer: aynı havuzdaki sonraki istekler upstream\'e GİTMEZ (tekrar deneme yağmuru yok), tek Sentry olayı', async () => {
+      const up = upstream(() => limited);
+      const opts = { fetchImpl: up.impl, now };
+      const a = await m.fetchSportmonksCached('football/livescores/inplay', { include: 'participants;league;events' }, opts);
+      expect(a.status).toBe(429);
+      expect(up.calls).toHaveLength(1);
+
+      // Aynı tick içinde: ikinci sayfa, fikstür listesi (aynı Fixture havuzu) → upstream yok, anında 429
+      const b = await m.fetchSportmonksCached('football/livescores/inplay', { include: 'participants;league;events', page: '2' }, opts);
+      const c = await m.fetchSportmonksCached('football/fixtures/date/2026-09-30', {}, opts);
+      expect(up.calls).toHaveLength(1);
+      expect([b.status, c.status]).toEqual([429, 429]);
+      expect(b.rateLimited).toBe(true);
+      expect(h.rateLimited).toHaveBeenCalledTimes(1);
+      expect(h.rateLimited.mock.calls[0]![0]).toMatchObject({ pool: 'Fixture', cooldownSeconds: 60, route: 'GET /api/test' });
+
+      // Başka havuz (Coach) etkilenmez
+      const coach = upstream(() => ({ status: 200, body: { data: { id: 5 }, rate_limit: { requested_entity: 'Coach', remaining: 2000, resets_in_seconds: 100 } } }));
+      await m.fetchSportmonksCached('football/coaches/5', {}, { fetchImpl: coach.impl, now });
+      expect(coach.calls).toHaveLength(1);
+    });
+
+    it('soğuma instance\'lar arasında Redis\'ten paylaşılır; süre dolunca yeniden denenir', async () => {
+      const up = upstream(() => limited);
+      await m.fetchSportmonksCached('football/livescores/inplay', {}, { fetchImpl: up.impl, now });
+      const other = await freshModule();
+      const ok = upstream(() => ({ status: 200, body: envelope([]) }));
+      const r = await other.fetchSportmonksCached('football/fixtures/date/2026-09-30', {}, { fetchImpl: ok.impl, now });
+      expect(r.status).toBe(429);
+      expect(ok.calls).toHaveLength(0);
+
+      h.clock.t += 61_000;
+      const later = await other.fetchSportmonksCached('football/fixtures/date/2026-09-30', {}, { fetchImpl: ok.impl, now });
+      expect(later.status).toBe(200);
+      expect(ok.calls).toHaveLength(1);
+    });
+
+    it('soğuma süresi: retry-after başlığı > havuzun bilinen sıfırlanması > 60 sn', async () => {
+      // Önce bir başarılı yanıt: Fixture havuzu 300 sn sonra sıfırlanacak
+      const seed = upstream(() => ({ status: 200, body: { data: [], rate_limit: { requested_entity: 'Fixture', remaining: 3, resets_in_seconds: 300 } } }));
+      await m.fetchSportmonksCached('football/fixtures/date/2026-09-29', {}, { fetchImpl: seed.impl, now });
+      const up = upstream(() => limited);
+      await m.fetchSportmonksCached('football/livescores/inplay', {}, { fetchImpl: up.impl, now });
+      expect(h.rateLimited.mock.calls.at(-1)![0]).toMatchObject({ cooldownSeconds: 300 });
+
+      const other = await freshModule();
+      h.clock.t += 400_000;
+      const withHeader = vi.fn(async () => new Response(JSON.stringify(limited.body), { status: 429, headers: { 'retry-after': '120' } })) as unknown as typeof fetch;
+      await other.fetchSportmonksCached('football/livescores/inplay', {}, { fetchImpl: withHeader, now });
+      expect(h.rateLimited.mock.calls.at(-1)![0]).toMatchObject({ cooldownSeconds: 120 });
+    });
+
+    it('soğumada eski veri varsa o verilir (upstream yok); istek izleme bunu upstream saymaz', async () => {
+      const ok = upstream(() => ({ status: 200, body: envelope([{ id: 1 }]) }));
+      await m.fetchSportmonksCached('football/fixtures/date/2026-09-30', {}, { fetchImpl: ok.impl, now });
+      const lim = upstream(() => limited);
+      await m.fetchSportmonksCached('football/livescores/inplay', {}, { fetchImpl: lim.impl, now });
+      h.clock.t += 6 * 60_000; // liste tazeliğini yitirdi, soğuma (60 sn) sürmüyor → yeniden soğuma kur
+      await m.fetchSportmonksCached('football/livescores/inplay', { page: '3' }, { fetchImpl: lim.impl, now });
+
+      const tracked = await m.trackSportmonksFetches(() => m.fetchSportmonksCached('football/fixtures/date/2026-09-30', {}, { fetchImpl: ok.impl, now }));
+      expect(tracked.value).toMatchObject({ status: 200, stale: true, rateLimited: true });
+      expect(ok.calls).toHaveLength(1);
+      expect(tracked.upstream).toBe(0);
+    });
+
+    it('havuz azalınca kısa TTL esner: %10 altı ×3, %2 altı ×6 (canlı 20 sn → 60 / 120 sn)', async () => {
+      const at = (remaining: number) => upstream(() => ({ status: 200, body: { data: [], rate_limit: { requested_entity: 'Fixture', remaining, resets_in_seconds: 1800 } } }));
+      const r1 = await m.fetchSportmonksCached('football/livescores/inplay', { page: '1' }, { fetchImpl: at(2000).impl, now });
+      expect(r1.ttlSeconds).toBe(20);
+      // İlk yanıt havuzu öğretir; sonraki MISS esnetilir
+      await m.fetchSportmonksCached('football/livescores/inplay', { page: '2' }, { fetchImpl: at(200).impl, now });
+      const r3 = await m.fetchSportmonksCached('football/livescores/inplay', { page: '3' }, { fetchImpl: at(200).impl, now });
+      expect(r3.ttlSeconds).toBe(60);
+      await m.fetchSportmonksCached('football/livescores/inplay', { page: '4' }, { fetchImpl: at(30).impl, now });
+      const r5 = await m.fetchSportmonksCached('football/livescores/inplay', { page: '5' }, { fetchImpl: at(30).impl, now });
+      expect(r5.ttlSeconds).toBe(120);
+      // Uzun TTL'ler (lig / sezon) dokunulmaz
+      const league = await m.fetchSportmonksCached('football/leagues/600', {}, { fetchImpl: at(30).impl, now });
+      expect(league.ttlSeconds).toBe(86_400);
+    });
   });
 
   describe('"veriler gecikmeli" yalnız gerçek upstream hatasında (istek izleme)', () => {

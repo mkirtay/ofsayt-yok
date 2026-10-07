@@ -126,6 +126,31 @@ describe('runBotTick — tick-düzeyi hata dayanıklılığı (500 yok)', () => 
     expect(captureError).toHaveBeenCalledWith('gundem:bot-tick:inplay', boom);
   });
 
+  it('Sportmonks hız sınırı (SportmonksHttpError 429): Sentry\'ye istisna YAZILMAZ, degraded:rate-limited', async () => {
+    const { captureError } = await import('@/lib/logger');
+    const { SportmonksHttpError } = await import('@/services/sportmonks/httpClient');
+    vi.mocked(captureError).mockClear();
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const s = await runBotTick({
+      ...deps([]),
+      fetchInplay: async () => {
+        throw new SportmonksHttpError('You have reached your rate limit', 429, {});
+      },
+    });
+    expect(s).toMatchObject({ errors: 0, degraded: 'rate-limited', created: 0 });
+    expect(captureError).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  it('havuz soğumadaysa tick hiçbir Sportmonks isteği atmaz (fikstür listesi de, inplay de)', async () => {
+    const shouldPoll = vi.fn(async () => true);
+    const fetchInplay = vi.fn(async () => []);
+    const s = await runBotTick({ ...deps([]), shouldPoll, fetchInplay, isRateLimited: async () => true });
+    expect(s).toMatchObject({ degraded: 'rate-limited', inplay: 0 });
+    expect(shouldPoll).not.toHaveBeenCalled();
+    expect(fetchInplay).not.toHaveBeenCalled();
+  });
+
   it('shouldPoll fırlatırsa güvenli taraf: poll edilir, tick çalışır', async () => {
     const g = ev({ type_id: 14, minute: 12 });
     const s = await runBotTick({ ...deps([fixture([g])]), shouldPoll: async () => { throw new Error('fikstür listesi çöktü'); } });

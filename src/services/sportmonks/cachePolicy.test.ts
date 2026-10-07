@@ -48,6 +48,20 @@ describe('sportmonksCacheTtl — TTL tablosu', () => {
     expect(sportmonksCacheTtl('football/fixtures/date/2026-09-29', [{ state_id: LIVE_1ST, starting_at: at(-100) }], NOW).fresh).toBe(30);
   });
 
+  it('bir haftadan uzak gün 6 sa (tarih şeridinde ileri gezinme / tarama Fixture havuzunu 15 dk\'da bir yemesin)', () => {
+    expect(sportmonksCacheTtl('football/fixtures/date/2026-10-07', [], NOW).fresh).toBe(900);
+    expect(sportmonksCacheTtl('football/fixtures/date/2026-10-08', [], NOW).fresh).toBe(6 * 3600);
+  });
+
+  it('H2H / multi: hepsi bitmiş ve 1 günden eskiyse 24 sa; yeni biten ya da başlamamış maç varsa eski kural', () => {
+    const old = [{ state_id: FT, starting_at: at(-3 * 24 * 60) }, { state_id: FT, starting_at: at(-30 * 24 * 60) }];
+    expect(sportmonksCacheTtl('football/fixtures/multi/1,2', old, NOW).fresh).toBe(86400);
+    expect(sportmonksCacheTtl('football/fixtures/head-to-head/1/2', old, NOW).fresh).toBe(86400);
+    expect(sportmonksCacheTtl('football/fixtures/multi/1,2', [...old, { state_id: FT, starting_at: at(-180) }], NOW).fresh).toBe(6 * 3600);
+    expect(sportmonksCacheTtl('football/fixtures/head-to-head/1/2', [...old, { state_id: NS, starting_at: at(3 * 24 * 60) }], NOW).fresh).toBe(6 * 3600);
+    expect(sportmonksCacheTtl('football/fixtures/multi/1', [], NOW).fresh).toBe(6 * 3600);
+  });
+
   it('between: tamamen geçmiş 24 sa, gelecek 15 dk, bugünü içeren içeriğe göre (en fazla 10 dk)', () => {
     const inc = { include: 'participants;scores' };
     expect(sportmonksCacheTtl('football/fixtures/between/2026-06-01/2026-08-01/34', [], NOW, inc).fresh).toBe(86400);

@@ -19,12 +19,25 @@
  *   bütçesini paylaşır (en çok `api`).
  * - `subscription`/`rate_limit`/`timezone` yanıttan çıkarılır; kota Sentry'ye BURADAN raporlanır
  *   (her gerçek upstream isteği için bir kez).
+ * - Havuz bekçisi (`poolGuard.ts`): 429 → havuz soğumaya girer, soğuma bitene kadar o havuza istek atılmaz (eski veri
+ *   ya da anında 429); havuz azalınca kısa TTL'ler esner; her gerçek istek rota × havuz olarak sayılır.
  */
 import { getRedisClient, withRedis } from '@/lib/redis';
-import { reportSportmonksQuota } from '@/services/sportmonks/quotaMonitor';
+import { currentRequestRoute, reportSportmonksQuota, reportSportmonksRateLimited } from '@/services/sportmonks/quotaMonitor';
 import { LIVE_TTL, sportmonksCacheTtl } from '@/services/sportmonks/cachePolicy';
 import { cacheKeyPrefix } from '@/lib/cacheNamespace';
 import { keepTurkeyTvStations } from '@/services/sportmonks/matchExtras';
+import {
+  cooldownSecondsFor429,
+  learnPool,
+  notePoolObservation,
+  poolCooldownUntil,
+  poolForPath,
+  recordUpstreamCall,
+  startPoolCooldown,
+  resetPoolGuardForTests,
+  stretchFreshSeconds,
+} from './poolGuard';
 
 const SPORTMONKS_BASE = 'https://api.sportmonks.com/v3';
 // Ortam + şema sürümü öneki (bkz. lib/cacheNamespace.ts): `prod:v2:smc:...` / `prod:v2:smc-lock:...`.
@@ -69,6 +82,8 @@ export type SportmonksCachedResult = {
    * CDN / proxy için `stale` ile aynı (kısa cache); yalnız istek izleme bunu "gecikmeli" saymaz.
    */
   concurrentRefresh?: true;
+  /** Havuz soğumada (429 sonrası): upstream'e GİDİLMEDİ — eski veri ya da anında 429. */
+  rateLimited?: true;
 };
 
 export type CachedFetchOptions = {
@@ -156,7 +171,7 @@ function noteOutcome(r: SportmonksCachedResult): SportmonksCachedResult {
     if (r.stale && !r.concurrentRefresh) t.stale = true;
     if (r.cache === 'BYPASS' && (r.status >= 500 || r.status === 429)) t.failed = true;
     t.calls += 1;
-    if (r.cache === 'MISS' || r.cache === 'BYPASS' || (r.stale && !r.concurrentRefresh)) t.upstream += 1;
+    if (!r.rateLimited && (r.cache === 'MISS' || r.cache === 'BYPASS' || (r.stale && !r.concurrentRefresh))) t.upstream += 1;
   }
   return r;
 }
@@ -257,7 +272,10 @@ export function stripSportmonksMeta(body: unknown): unknown {
   return out;
 }
 
-type UpstreamResult = { status: number; body: unknown } | { status: 'network-error' } | { status: 'timeout' };
+type UpstreamResult =
+  | { status: number; body: unknown; retryAfter: string | null }
+  | { status: 'network-error' }
+  | { status: 'timeout' };
 
 async function callUpstream(
   path: string,
@@ -295,7 +313,10 @@ async function callUpstream(
 
   const rl = (raw as { rate_limit?: { requested_entity: string; remaining: number; resets_in_seconds: number } } | null)
     ?.rate_limit;
+  const observedAt = (opts.now ?? Date.now)();
   if (rl) {
+    learnPool(path, rl.requested_entity);
+    notePoolObservation(rl.requested_entity, rl.remaining, rl.resets_in_seconds, observedAt);
     reportSportmonksQuota({
       pool: rl.requested_entity,
       remaining: rl.remaining,
@@ -303,9 +324,17 @@ async function callUpstream(
       path: `/${path}`,
       ...(opts.origin ? { origin: opts.origin } : {}),
     });
+  } else {
+    // Gövdede `rate_limit` yoksa (ör. 429) başlıktaki kalan sayı varsa o kullanılır; sıfırlanma bilinmiyor → 5 dk geçerli.
+    const remaining = res.headers?.get?.('x-ratelimit-remaining');
+    if (remaining && /^\d+$/.test(remaining)) notePoolObservation(poolForPath(path), Number(remaining), 300, observedAt);
   }
   // Yayıncı satırlarından yalnız Türkiye (bkz. matchExtras.keepTurkeyTvStations): cache'e ve istemciye küçük yanıt.
-  return { status: res.status, body: keepTurkeyTvStations(stripSportmonksMeta(raw)) };
+  return {
+    status: res.status,
+    body: keepTurkeyTvStations(stripSportmonksMeta(raw)),
+    retryAfter: res.headers?.get?.('retry-after') ?? null,
+  };
 }
 
 /** Cache'lenebilir mi: gerçek veri (200 + data) ya da kalıcı "yok" (404/403/422/400, boş 200). */
@@ -339,6 +368,22 @@ async function refresh(
 ): Promise<SportmonksCachedResult> {
   const now = opts.now ?? Date.now;
   const startedAt = now();
+  const pool = poolForPath(path);
+
+  // Havuz soğumada (429): upstream'e hiç gitme — eski veri varsa o, yoksa anında 429 (tekrar deneme yağmuru yok).
+  const coolingUntil = await poolCooldownUntil(pool, startedAt);
+  if (coolingUntil > startedAt) {
+    if (previous && previous.staleUntil > startedAt) return { ...toResult(previous, 'STALE', startedAt, true), rateLimited: true };
+    return {
+      status: 429,
+      body: { message: `Sportmonks hız sınırı: ${pool} havuzu ${Math.ceil((coolingUntil - startedAt) / 1000)} sn bekletiliyor` },
+      cache: 'BYPASS',
+      freshForSeconds: 0,
+      ttlSeconds: 0,
+      stale: false,
+      rateLimited: true,
+    };
+  }
 
   const locked = await tryLock(key);
   if (!locked) {
@@ -360,14 +405,27 @@ async function refresh(
     const remainingMs = timeoutMs - (now() - startedAt);
     const up: UpstreamResult = remainingMs > 0 ? await callUpstream(path, query, opts, remainingMs) : { status: 'timeout' };
     const t = now();
+    if (remainingMs > 0) {
+      const route = currentRequestRoute();
+      recordUpstreamCall({ pool: poolForPath(path), route, origin: opts.origin ?? 'server', status: up.status }, t);
+      if (up.status === 429 && 'retryAfter' in up) {
+        const limitedPool = poolForPath(path);
+        const seconds = cooldownSecondsFor429(limitedPool, up.retryAfter, t);
+        if (await startPoolCooldown(limitedPool, seconds, t)) {
+          reportSportmonksRateLimited({ pool: limitedPool, path: `/${path}`, cooldownSeconds: seconds, route, ...(opts.origin ? { origin: opts.origin } : {}) });
+        }
+      }
+    }
     if (typeof up.status === 'number' && 'body' in up && isCacheable(up.status, up.body)) {
       const ttl = sportmonksCacheTtl(path, up.status === 200 ? dataOf(up.body) : undefined, t, query);
+      // Havuz azaldıysa kısa TTL'ler esner (canlı liste 30 sn → 90/180 sn); bkz. poolGuard.stretchFreshSeconds.
+      const fresh = stretchFreshSeconds(ttl.fresh, poolForPath(path), t);
       const entry: Entry = {
         status: up.status,
         body: up.body,
         fetchedAt: t,
-        freshUntil: t + ttl.fresh * 1000,
-        staleUntil: t + Math.max(ttl.fresh, ttl.stale) * 1000,
+        freshUntil: t + fresh * 1000,
+        staleUntil: t + Math.max(fresh, ttl.stale) * 1000,
       };
       l1Set(key, entry);
       await redisSet(key, entry, t);
@@ -446,4 +504,5 @@ export function sportmonksCacheControl(r: SportmonksCachedResult): string {
 export function resetSportmonksCacheForTests(): void {
   l1.clear();
   inFlight.clear();
+  resetPoolGuardForTests();
 }

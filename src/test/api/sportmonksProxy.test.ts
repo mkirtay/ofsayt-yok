@@ -6,7 +6,7 @@ vi.mock('@/lib/rateLimit', () => ({
   hitFixedWindowRateLimit: async () => ({ success: true, remaining: 99, resetAt: 0 }),
   requestIp: () => '10.0.0.1',
 }));
-vi.mock('@/services/sportmonks/quotaMonitor', () => ({ reportSportmonksQuota: vi.fn() }));
+vi.mock('@/services/sportmonks/quotaMonitor', () => ({ reportSportmonksQuota: vi.fn(), reportSportmonksRateLimited: vi.fn(), currentRequestRoute: () => 'test' }));
 
 const ORIGINAL_TOKEN = process.env.SPORTMONKS_API_KEY;
 
