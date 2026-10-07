@@ -6,7 +6,7 @@ import { useInViewOnce } from '@/hooks/useInViewOnce';
 import { useFrikikBoard } from '@/hooks/useFrikikBoard';
 import { dayLabel, turkeyDay } from '@/lib/frikik/daily';
 import { readLastRun, type LastRun } from '@/lib/frikik/localRun';
-import { sharePath } from '@/lib/frikik/share';
+import { sharePath } from '@/lib/frikik/shareLink';
 import { trackFrikik } from '@/lib/frikik/analytics';
 import styles from './frikikDailyCard.module.scss';
 

@@ -1,8 +1,10 @@
 import { parseDayKey } from './daily';
 import { levelPoints, POINTS } from './sim';
+import type { ShareInfo } from './shareLink';
 
 /** Paylaşılan sonuç: seviye koşusu (ulaşılan seviye + toplam puan, 25'in katı) ve isteğe bağlı gün ("YYYY-MM-DD"). */
-export type ShareInfo = { score: number; level: number; day: string | null };
+export type { ShareInfo };
+export { sharePath, shareImagePath } from './shareLink';
 
 export const MAX_SHARE_LEVEL = 999;
 
@@ -33,12 +35,4 @@ export function parseShare(query: { l?: unknown; s?: unknown; d?: unknown }): Sh
   const d = Array.isArray(query.d) ? query.d[0] : query.d;
   const day = typeof d === 'string' && parseDayKey(d) != null ? d : null;
   return { score, level, day };
-}
-
-export function sharePath(level: number, score: number, day: string | null = null): string {
-  return `/frikik?l=${level}&s=${score}${day ? `&d=${day}` : ''}`;
-}
-
-export function shareImagePath(info: ShareInfo | null): string {
-  return info ? `/api/og/frikik?l=${info.level}&s=${info.score}${info.day ? `&d=${info.day}` : ''}` : '/api/og/frikik';
 }
