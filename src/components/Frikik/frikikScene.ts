@@ -30,7 +30,6 @@ import {
   PerspectiveCamera,
   PlaneGeometry,
   Quaternion,
-  RepeatWrapping,
   Scene,
   SRGBColorSpace,
   Texture,
@@ -40,6 +39,8 @@ import {
 } from 'three';
 import { buildAdBoards } from './adBoards';
 import { makeFigure, makeShared, setKeeperPose } from './figures';
+import { keeperPoseAt, mixPose, planKeeperMove, READY_POSE, type KeeperPlan, type KeeperPose } from './keeperMove';
+import { buildStands } from './stands';
 import { HUB_LEAGUE_IDS } from '@/config/hubLeagueGroups';
 import { sportmonksLeagueLogoUrl } from '@/utils/leagueLogo';
 import { logoSrc } from '@/utils/logoUrl';
@@ -48,7 +49,6 @@ import {
   boardTexture,
   buildBall,
   buildGoal,
-  canvasTexture,
   createEnvTexture,
   grassTexture,
   loadBallLogos,
@@ -159,32 +159,6 @@ function boxLinesTexture(pxPerM: number): CanvasTexture {
   return tex;
 }
 
-/** Kale arkası tribün: koyu zemin üstünde sıra sıra renkli noktalar (seyirci). */
-function standTexture(): CanvasTexture {
-  const tex = canvasTexture(512, (ctx, s) => {
-    const g = ctx.createLinearGradient(0, 0, 0, s);
-    g.addColorStop(0, '#0d1524');
-    g.addColorStop(1, '#172338');
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, s, s);
-    let seed = 11;
-    const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
-    const palette = ['#e8eef5', '#00a76f', '#ffc83d', '#c9d4e2', '#2fe3a0', '#8fa3bd', '#d9534f'];
-    for (let row = 0; row < 22; row++) {
-      for (let i = 0; i < 64; i++) {
-        if (rnd() < 0.12) continue;
-        ctx.fillStyle = palette[Math.floor(rnd() * palette.length)]!;
-        ctx.globalAlpha = 0.55 + rnd() * 0.4;
-        ctx.beginPath();
-        ctx.arc(i * 8 + 4 + (row % 2) * 4, row * 22 + 14 + rnd() * 3, 2.6, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-    ctx.globalAlpha = 1;
-  });
-  return tex;
-}
-
 export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandle {
   const { lite } = opts;
   const disposables: { dispose: () => void }[] = [];
@@ -260,14 +234,9 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
   lines.position.set((LINES.minX + LINES.maxX) / 2, 0.004, 0);
   scene.add(lines);
 
-  const standTex = track(standTexture());
-  standTex.repeat.set(10, 1);
-  standTex.wrapS = RepeatWrapping;
-  const standMat = track(new MeshBasicMaterial({ map: standTex, color: 0xffffff, fog: true }));
-  const stand = new Mesh(track(new PlaneGeometry(200, 6.5)), standMat);
-  stand.rotation.y = -Math.PI / 2;
-  stand.position.set(12, 4.1, 0);
-  scene.add(stand);
+  // Kale arkası tribün + taraftarlar (stands.ts: 3–4 draw call, gölge yok)
+  const stands = track(buildStands({ lite }));
+  scene.add(stands.group);
   const boardTex = track(boardTexture());
   boardTex.repeat.set(14, 1);
   const boardMat = track(new MeshStandardMaterial({ map: boardTex, emissiveMap: boardTex, emissive: 0xffffff, emissiveIntensity: 0.6, roughness: 0.6 }));
@@ -312,8 +281,6 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
   const KEEPER_VISUAL_HEIGHT = 1.88;
   const keeperFig = makeFigure(shared, { kit: 0xffc83d, shorts: 0x0b1511, skin: 0xe8b98a, hair: 0x1a120c, socks: 0x0b1511, glove: 0xff7a1a }, true, figMats, KEEPER_VISUAL_HEIGHT);
   const KEEPER_SCALE = KEEPER_VISUAL_HEIGHT / 1.8;
-  /** Dalışta ayak bileğinden parmak ucuna uzunluk (m): boy + yukarı uzanan kollar. */
-  const KEEPER_REACH_LEN = KEEPER_VISUAL_HEIGHT + 0.55;
   keeperFig.group.position.x = KEEPER.x;
   scene.add(keeperFig.group);
   const keeperShadow = makeShadow(1.3, 0.4);
@@ -337,7 +304,7 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
     key.color.setHex(day ? 0xfff0d2 : 0xe6eeff);
     key.intensity = day ? 2.5 : 1.9;
     // Gece tribün sönük: kale ve top öne çıksın
-    standMat.color.setHex(day ? 0xdfe6ee : 0x4a546a);
+    stands.setDay(day);
     boardMat.emissiveIntensity = day ? 0.2 : 0.75;
     postMat.emissive.setHex(day ? 0x000000 : 0x1a222b);
     renderer.toneMappingExposure = day ? 1 : 0.95;
@@ -362,10 +329,35 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
    * silindirinin merkezine ulaşır → sim "kurtardı" diyorsa top ellerin yanındadır, "gol" diyorsa top silindirin
    * dışından (parmak ucunun ötesinden) geçer. Ayaklar dalışta `feetEnd`'e sıçrar, iniş sonrası kayma yok.
    */
-  let keeperAnim: { dir: number; dive: boolean; feetEnd: number; stepZ: number; diveStart: number; diveDur: number; tiltMax: number } | null = null;
-  const READY_POSE = { crouch: 0.35, tilt: 0, lift: 0, dir: 1, reach: 0 };
-  /** Görsel tepki gecikmesi (tick; 15 ≈ 0,125 sn) — sim'in `react`'inden bağımsız, yalnız duruş. */
-  const KEEPER_REACT_TICKS = 15;
+  let keeperAnim: KeeperPlan | null = null;
+  /** Vuruş sonrası toparlanma: son pozdan hazır duruşa 36 tick'te yumuşak geçiş (yeni turda). */
+  let keeperRecover: { from: KeeperPose; t: number } | null = null;
+  let keeperFaceYaw = 0;
+  const applyKeeperPose = (p: KeeperPose, dir: number) => {
+    keeperFig.group.position.z = p.root;
+    keeperFig.group.rotation.y = keeperFaceYaw + dir * p.yaw;
+    keeperShadow.position.set(KEEPER.x, 0.008, p.root);
+    setKeeperPose(keeperFig, { crouch: p.crouch, tilt: p.tilt, lift: p.lift / KEEPER_SCALE, dir, reach: p.reach });
+  };
+  let keeperLastPose: KeeperPose = READY_POSE;
+  let keeperLastDir = 1;
+  /** Vuruş anında sim'i ileri sarar (deterministik, ≤ 840 adım): topun kaleci düzlemini kestiği z / tick ve sonuç. */
+  const probeShot = (r: Round, input: ShotInput) => {
+    const p = startShot(r, input);
+    let crossed = false;
+    let ballZ = 0;
+    let tCross = 0;
+    while (!p.result || p.tick < 2) {
+      stepShot(p);
+      if (!crossed && p.pos.x >= KEEPER.x - BALL_R) {
+        crossed = true;
+        ballZ = p.pos.z;
+        tCross = p.tick;
+      }
+      if (p.result && (crossed || p.tick > 840)) break;
+    }
+    return { crossed, ballZ, tCross, saved: p.result?.kind === 'saved' };
+  };
   let basis = { fx: 1, fz: 0, rx: 0, rz: 1 };
   let phase: 'idle' | 'aim' | 'flight' | 'hold' | 'done' = 'idle';
   let roundTick = 0;
@@ -441,9 +433,11 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
       if (f) w.fig.group.rotation.y = Math.atan2(round!.ball.z - f.z, -(round!.ball.x - f.x));
     });
     placeWall(0);
-    keeperFig.group.rotation.y = Math.atan2(round.ball.z - round.keeper.z0, -(round.ball.x - KEEPER.x));
+    keeperFaceYaw = Math.atan2(round.ball.z - round.keeper.z0, -(round.ball.x - KEEPER.x));
     keeperAnim = null;
-    setKeeperPose(keeperFig, READY_POSE);
+    // Önceki vuruşun pozundan yeni duruş yerine yumuşak dönüş (ilk turda anında)
+    keeperRecover = index > 0 ? { from: { ...keeperLastPose, yaw: 0 }, t: 0 } : null;
+    if (!keeperRecover) applyKeeperPose({ ...READY_POSE, root: round.keeper.z0 }, 1);
     frameCamera();
     phase = 'aim';
     opts.onRound({ index: i, level, lives, wind: round.wind, dist: ballDistance(round) });
@@ -537,6 +531,7 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
     phase = 'hold';
     if (result.kind === 'goal' && shot) {
       goal.ripple = { t: 0, at: { ...shot.pos }, dir: { x: 1, y: 0, z: 0 }, amp: 0.2 };
+      stands.celebrate();
       confetti.burst({ x: -0.4, y: GOAL.height * 0.8, z: shot.pos.z }, -1);
       goalText.removeAttribute('data-show');
       void goalText.offsetWidth; // animasyonu baştan başlat
@@ -590,55 +585,22 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
       tick();
     }
     if (round) {
-      let kz = shot ? shot.keeperZ : keeperZ(round, roundTick);
-      if (shot && shot.tick >= KEEPER_REACT_TICKS) {
+      if (shot) {
         const r = round.keeper;
         if (!keeperAnim) {
-          const dir = shot.keeperTarget >= r.z0 ? 1 : -1;
-          const travel = Math.abs(shot.keeperTarget - r.z0);
-          const speedH = Math.hypot(shot.vel.x, shot.vel.z);
-          // Sim kalecisinin hedefe varışı ve topun kaleci düzlemine varışı (tick): dalış bunlardan erken olana biter
-          const tArrive = r.react + Math.ceil(travel / (r.speed * TICK));
-          const tBall = Math.round((-round.ball.x + KEEPER.x) / Math.max(4, shot.vel.x) / TICK);
-          const tEnd = Math.max(KEEPER_REACT_TICKS + 12, Math.min(tArrive, tBall));
-          const dive = travel > 1.0 || (travel > 0.6 && speedH > 21);
-          // Dalış süresi ~0,3–0,4 sn; hızlı kaleci (yüksek seviye) daha seri
-          const minDur = Math.max(28, Math.min(44, Math.round((36 * 3.1) / r.speed)));
-          const diveStart = Math.max(KEEPER_REACT_TICKS + 6, tEnd - minDur);
-          const diveDur = Math.max(minDur, tEnd - diveStart);
-          // Parmak uçları tEnd'de sim silindirinin merkezinde: ayaklar gerekirse oraya sıçrar (erişim ≈ 2,2 m + sıçrama)
-          const simZAtEnd = r.z0 + dir * Math.min(travel, Math.max(0, tEnd - r.react) * r.speed * TICK);
-          const tiltMax = 1.0;
-          const reach = KEEPER_REACH_LEN * Math.sin(tiltMax);
-          const need = Math.abs(simZAtEnd - r.z0);
-          let feetEnd = need > reach ? simZAtEnd - dir * reach : r.z0;
-          feetEnd = Math.max(-(shot.goal.halfW - 0.3), Math.min(shot.goal.halfW - 0.3, feetEnd));
-          const stepZ = r.z0 + dir * Math.min(0.3, need);
-          keeperAnim = { dir, dive, feetEnd, stepZ, diveStart, diveDur, tiltMax };
+          const probe = probeShot(round, inputs[inputs.length - 1]!);
+          keeperAnim = planKeeperMove({ z0: r.z0, target: shot.keeperTarget, speed: r.speed, ...probe, halfW: shot.goal.halfW });
         }
-        const a = keeperAnim;
-        const t = shot.tick;
-        if (!a.dive) {
-          // Yan adım + uzanma: ayaklar yerde, sim z'sini izler; 12 tick'te çömelir, kol uzanır
-          const p = Math.min(1, (t - KEEPER_REACT_TICKS) / 12);
-          setKeeperPose(keeperFig, { crouch: 0.35 + 0.5 * p, tilt: 0.3 * p, lift: 0, dir: a.dir, reach: p });
-        } else if (t < a.diveStart) {
-          // Çömelme + yarım yan adım (ayaklar yerde)
-          const u = Math.min(1, (t - KEEPER_REACT_TICKS) / 10);
-          kz = r.z0 + (a.stepZ - r.z0) * u;
-          setKeeperPose(keeperFig, { crouch: 0.35 + 0.55 * u, tilt: 0.12 * u, lift: 0, dir: a.dir, reach: 0.3 * u });
-        } else {
-          const p = Math.min(1, (t - a.diveStart) / a.diveDur);
-          const e = p < 0.5 ? 2 * p * p : 1 - 2 * (1 - p) * (1 - p);
-          const landed = t - a.diveStart - a.diveDur;
-          // Havada: ayaklar stepZ → feetEnd (sıçrama), gövde yana uzanır, tepe ~0,5 m; inişte 6 tick sekme, sonra yerde
-          kz = a.stepZ + (a.feetEnd - a.stepZ) * e;
-          const lift = p < 1 ? 0.5 * Math.sin(Math.PI * p) : landed < 6 ? 0.05 * Math.sin((Math.PI * landed) / 6) : 0;
-          setKeeperPose(keeperFig, { crouch: 0.9 - 0.5 * e, tilt: a.tiltMax * e, lift: lift / KEEPER_SCALE, dir: a.dir, reach: 1 });
-        }
+        keeperLastPose = keeperPoseAt(keeperAnim, shot.tick);
+        keeperLastDir = keeperAnim.dir;
+        applyKeeperPose(keeperLastPose, keeperLastDir);
+      } else if (keeperRecover) {
+        keeperRecover.t += dt * 120;
+        const ready = { ...READY_POSE, root: keeperZ(round, roundTick) };
+        const u = Math.min(1, keeperRecover.t / 36);
+        applyKeeperPose(mixPose(keeperRecover.from, ready, u < 0.5 ? 2 * u * u : 1 - 2 * (1 - u) * (1 - u)), keeperLastDir);
+        if (u >= 1) keeperRecover = null;
       }
-      keeperFig.group.position.z = kz;
-      keeperShadow.position.set(KEEPER.x, 0.008, kz);
       if (round.wallMotion.amp > 0) placeWall(wallOffset(round, shot ? shot.releaseTick + shot.tick : roundTick));
     }
     ballView.group.position.copy(ballPos);
@@ -648,6 +610,7 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
     (ballShadow.material as MeshBasicMaterial).opacity = 0.5 / (1 + hgt * 0.9);
     rippleNet(goal, dt);
     confetti.step(dt);
+    stands.update(dt);
 
     const k = camSnap ? 1 : 1 - 1 / (1 + 5 * dt);
     camSnap = false;

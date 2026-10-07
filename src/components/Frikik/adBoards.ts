@@ -1,7 +1,7 @@
 /**
- * Frikik sahası reklam panoları: kale arkasındaki tribünde karışık boyutlu (LED şeridi, geniş / kare / dikey afişler) panolar.
- * İçerik tek dosyadan gelir (lib/frikik/ads.json: metin / görsel / URL); boş slotta "Reklam vermek için iletişime geçin"
- * + iletişim adresi yazar. Performans: bütün panolar TEK atlas dokusu + TEK birleşik geometri (1 draw call); görseller
+ * Frikik sahası reklam panoları: kale arkası tribünde LED şeridi + korkuluklara asılı afişler (4 slot).
+ * İçerik tek dosyadan gelir (lib/frikik/ads.json: metin / görsel / URL); boş slotta yalnız "Reklam vermek için iletişime
+ * geçin" yazar (iletişim adresi oyunun altında DOM satırı; bileşen ads.json'dan okur). Performans: bütün panolar TEK atlas dokusu + TEK birleşik geometri (1 draw call); görseller
  * sonradan yüklenip atlasa çizilir. Panolar topun yolunda değildir (kale arkası tribün duvarı, x ≈ 11,7, y > 2,8).
  */
 import { BufferAttribute, BufferGeometry, CanvasTexture, DoubleSide, Mesh, MeshBasicMaterial, Raycaster, SRGBColorSpace, Vector2, type Camera } from 'three';
@@ -12,30 +12,22 @@ export type AdKind = 'wide' | 'square' | 'tall';
 export type AdFace = 'west' | 'north' | 'south';
 export type AdEntry = { slot: string; text?: string | null; image?: string | null; url?: string | null };
 export type AdsConfig = { contact: string; empty: { tr: string; en: string }; ads: AdEntry[] };
-type Cell = { x: number; y: number; w: number; h: number };
-export type AdSlot = { id: string; kind: AdKind; face: AdFace; x: number; y: number; z: number; w: number; h: number; cell: Cell };
-
 /**
- * Slotlar (dünya, m). Hepsi kale arkasındaki tribün ön duvarında (x ≈ 11,7, tribün 12): kamera topun arkasında ~2,5 m
- * yükseklikte baktığı için 2,5 m'den yüksek her şey ekranda üst direğin ÜSTÜNDE görünür → panolar kale çerçevesi /
- * ağ / top yoluyla hiç kesişmez ve kalenin üst çizgisini kapatmaz. Sıra: LED şeridi (3 geniş, y 2,8–3,8), üstünde
- * tribüne asılı afişler (geniş + 2 kare), yanlarda kare ve dikey panolar. Her slotun atlas hücresi en-boy oranına uyar
- * (metin esnemez). Atlas 1024×848.
+ * Slotlar (dünya, m): 4 pano, tribüne (stands.ts) oturur. `led`: ön duvarın üstünde LED şeridi (x 12,05, y 2,7–4,1);
+ * `rail-l` / `rail-r`: 2. sıra korkuluğuna asılı afişler; `upper`: 9. sıra korkuluğuna asılı büyük afiş. Hepsi y > 2,5
+ * → kamera (~2,5 m yükseklik) için ekranda üst direğin ÜSTÜNDE; direk / ağ / top yoluyla kesişmez. Atlas hücreleri en-boy
+ * oranına uyar; LED metni büyük (375 px genişlikte okunur).
  */
+type Cell = { x: number; y: number; w: number; h: number };
+export type AdSlot = { id: string; kind: AdKind; face: AdFace; x: number; y: number; z: number; w: number; h: number; cell: Cell; style: 'led' | 'banner' };
 export const AD_SLOTS: readonly AdSlot[] = [
-  { id: 'led-l', kind: 'wide', face: 'west', x: 11.8, y: 3.3, z: -9.5, w: 9, h: 1.0, cell: { x: 0, y: 0, w: 1024, h: 112 } },
-  { id: 'led-c', kind: 'wide', face: 'west', x: 11.8, y: 3.3, z: 0, w: 9, h: 1.0, cell: { x: 0, y: 112, w: 1024, h: 112 } },
-  { id: 'led-r', kind: 'wide', face: 'west', x: 11.8, y: 3.3, z: 9.5, w: 9, h: 1.0, cell: { x: 0, y: 224, w: 1024, h: 112 } },
-  { id: 'banner-wide', kind: 'wide', face: 'west', x: 11.7, y: 5.3, z: 0, w: 8, h: 2.4, cell: { x: 0, y: 336, w: 768, h: 230 } },
-  { id: 'banner-sq-l', kind: 'square', face: 'west', x: 11.7, y: 5.3, z: -6.6, w: 2.8, h: 2.8, cell: { x: 768, y: 336, w: 256, h: 256 } },
-  { id: 'banner-sq-r', kind: 'square', face: 'west', x: 11.7, y: 5.3, z: 6.6, w: 2.8, h: 2.8, cell: { x: 768, y: 592, w: 256, h: 256 } },
-  { id: 'flank-sq-l', kind: 'square', face: 'west', x: 11.7, y: 5.3, z: -11.5, w: 2.6, h: 2.6, cell: { x: 0, y: 566, w: 256, h: 256 } },
-  { id: 'flank-sq-r', kind: 'square', face: 'west', x: 11.7, y: 5.3, z: 11.5, w: 2.6, h: 2.6, cell: { x: 256, y: 566, w: 256, h: 256 } },
-  { id: 'flank-tall-l', kind: 'tall', face: 'west', x: 11.7, y: 5.7, z: -14.6, w: 1.8, h: 3.6, cell: { x: 512, y: 566, w: 128, h: 256 } },
-  { id: 'flank-tall-r', kind: 'tall', face: 'west', x: 11.7, y: 5.7, z: 14.6, w: 1.8, h: 3.6, cell: { x: 640, y: 566, w: 128, h: 256 } },
+  { id: 'led', kind: 'wide', face: 'west', x: 12.05, y: 3.4, z: 0, w: 22, h: 1.4, cell: { x: 0, y: 0, w: 1024, h: 64 }, style: 'led' },
+  { id: 'rail-l', kind: 'wide', face: 'west', x: 13.4, y: 4.65, z: -8.5, w: 6.5, h: 1.9, cell: { x: 0, y: 64, w: 448, h: 128 }, style: 'banner' },
+  { id: 'rail-r', kind: 'wide', face: 'west', x: 13.4, y: 4.65, z: 8.5, w: 6.5, h: 1.9, cell: { x: 448, y: 64, w: 448, h: 128 }, style: 'banner' },
+  { id: 'upper', kind: 'wide', face: 'west', x: 19.4, y: 7.6, z: 0, w: 9, h: 2.4, cell: { x: 0, y: 192, w: 576, h: 152 }, style: 'banner' },
 ];
 
-const ATLAS = { w: 1024, h: 848 };
+const ATLAS = { w: 1024, h: 344 };
 
 export type AdBoards = {
   mesh: Mesh;
@@ -46,7 +38,7 @@ export type AdBoards = {
 
 /** Metni kutuya sığdırır (gerekirse küçültür, en çok 2 satır). */
 function fitText(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, maxW: number, maxH: number, color: string, weight = 800) {
-  let size = Math.min(maxH * 0.6, 72);
+  let size = Math.min(maxH * 0.72, 96);
   const lines = (s: number): string[] => {
     ctx.font = `${weight} ${s}px Inter, system-ui, sans-serif`;
     if (ctx.measureText(text).width <= maxW) return [text];
@@ -89,7 +81,7 @@ export function buildAdBoards(opts: { lite: boolean; lang: 'tr' | 'en'; config?:
   const byId = new Map(cfg.ads.map((a) => [a.slot, a] as const));
   const placed = AD_SLOTS.map((slot) => ({ slot, cell: slot.cell, ad: byId.get(slot.id) ?? null }));
 
-  const drawCell = (cell: Cell, ad: AdEntry | null, img?: HTMLImageElement) => {
+  const drawCell = (cell: Cell, ad: AdEntry | null, img?: HTMLImageElement, style: AdSlot['style'] = 'banner') => {
     if (!ctx) return;
     const x = cell.x * scale;
     const y = cell.y * scale;
@@ -107,27 +99,31 @@ export function buildAdBoards(opts: { lite: boolean; lang: 'tr' | 'en'; config?:
       const dw = img.width * k;
       const dh = img.height * k;
       ctx.drawImage(img, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
-    } else if (ad?.text) {
+    } else {
+      // Dolu: koyu zemin + beyaz büyük metin; boş: yalnız "Reklam vermek için iletişime geçin" (adres oyunun altında, DOM)
+      const led = style === 'led';
       const g = ctx.createLinearGradient(x, y, x, y + h);
-      g.addColorStop(0, '#13213a');
-      g.addColorStop(1, '#0b1424');
+      g.addColorStop(0, led ? '#0f1a2e' : '#f4f6f9');
+      g.addColorStop(1, led ? '#070d18' : '#dde3ea');
       ctx.fillStyle = g;
       ctx.fillRect(x, y, w, h);
-      fitText(ctx, ad.text, x + w / 2, y + h / 2, w - 4 * pad, h - 3 * pad, '#ffffff');
-    } else {
-      ctx.fillStyle = '#e9edf3';
-      ctx.fillRect(x, y, w, h);
-      const empty = cfg.empty[opts.lang] ?? cfg.empty.tr;
-      const tall = h > w;
-      fitText(ctx, empty, x + w / 2, y + h * (tall ? 0.42 : 0.4), w - 4 * pad, h * (tall ? 0.42 : 0.38), '#1c2430');
-      fitText(ctx, cfg.contact, x + w / 2, y + h * (tall ? 0.78 : 0.76), w - 4 * pad, h * 0.2, '#00704c', 600);
+      const text = ad?.text ?? (cfg.empty[opts.lang] ?? cfg.empty.tr);
+      fitText(ctx, text, x + w / 2, y + h / 2, w - 4 * pad, h - 2 * pad, led ? '#ffffff' : '#0b1424', 900);
+      if (led) {
+        // LED şerit: alt-üst ince yeşil çizgi
+        ctx.fillStyle = '#00a76f';
+        ctx.fillRect(x, y, w, Math.max(2, 3 * scale));
+        ctx.fillRect(x, y + h - Math.max(2, 3 * scale), w, Math.max(2, 3 * scale));
+      }
     }
-    ctx.strokeStyle = 'rgba(255,255,255,0.7)';
-    ctx.lineWidth = Math.max(2, 4 * scale);
-    ctx.strokeRect(x + 1, y + 1, w - 2, h - 2);
+    if (style !== 'led') {
+      ctx.strokeStyle = 'rgba(20,28,40,0.55)';
+      ctx.lineWidth = Math.max(2, 4 * scale);
+      ctx.strokeRect(x + 1, y + 1, w - 2, h - 2);
+    }
     ctx.restore();
   };
-  for (const p of placed) drawCell(p.cell, p.ad);
+  for (const p of placed) drawCell(p.cell, p.ad, undefined, p.slot.style);
   tex.needsUpdate = true;
 
   // Görseller sonradan: yüklenince hücre yeniden çizilir (başarısızsa metin / boş pano kalır)
@@ -138,7 +134,7 @@ export function buildAdBoards(opts: { lite: boolean; lang: 'tr' | 'en'; config?:
     img.crossOrigin = 'anonymous';
     img.onload = () => {
       if (disposed) return;
-      drawCell(p.cell, p.ad, img);
+      drawCell(p.cell, p.ad, img, p.slot.style);
       tex.needsUpdate = true;
     };
     img.src = p.ad.image;

@@ -6,6 +6,7 @@ import { webglAvailable } from '@/components/pitch3d/webgl';
 import { LIVES, SHOTS_PER_SERIES, type ShotResult } from '@/lib/frikik/sim';
 import { dailySeed, dayLabel, turkeyDay } from '@/lib/frikik/daily';
 import { sharePath, type ShareInfo } from '@/lib/frikik/share';
+import adsConfig from '@/lib/frikik/ads.json';
 import type { FrikikHandle, FrikikMode, FrikikSummary, RoundInfo } from './frikikScene';
 import styles from './frikik.module.scss';
 
@@ -325,6 +326,8 @@ export default function Frikik({ shared }: { shared: ShareInfo | null }) {
           </div>
         ) : null}
       </div>
+
+      <p className={styles.adContact}>{t('adContact', { email: adsConfig.contact })}</p>
 
       <section className={styles.rules}>
         <div>

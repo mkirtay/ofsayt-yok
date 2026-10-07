@@ -75,5 +75,6 @@
     "level": "Seviye modu",
     "series": "5 vuruş"
   },
-  "daily": "Günün frikiği · {{date}}"
+  "daily": "Günün frikiği · {{date}}",
+  "adContact": "Sahadaki panolarda reklam vermek için: {{email}}"
 }

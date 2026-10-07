@@ -75,5 +75,6 @@
     "level": "Level mode",
     "series": "5 shots"
   },
-  "daily": "Free kick of the day · {{date}}"
+  "daily": "Free kick of the day · {{date}}",
+  "adContact": "To advertise on the pitch boards: {{email}}"
 }

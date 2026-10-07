@@ -485,6 +485,13 @@
   color: $color-text-secondary;
 }
 
+.adContact {
+  margin: 0;
+  font-size: 12px;
+  color: $color-text-secondary;
+  text-align: center;
+}
+
 .rules {
   display: grid;
   grid-template-columns: 2fr 1fr;
