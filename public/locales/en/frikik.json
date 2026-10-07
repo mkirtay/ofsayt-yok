@@ -1,5 +1,5 @@
 {
-  "pageTitle": "Frikik — Free Kick Game | Ofsayt Yok",
+  "pageTitle": "Frikik — Free Kick Game | {{brand}}",
   "pageDesc": "Free kick of the day: 3 lives, a wall, a keeper and wind that get harder every level. Bend it, hit the top corner, climb the levels.",
   "title": "Frikik",
   "sub": "Free kick of the day: 3 lives, one shot per level. How many levels can you clear?",
@@ -59,7 +59,7 @@
     "ok": "Got it",
     "l4": "Level mode: 3 lives. Watch the wind arrow; if it points right, the ball drifts right."
   },
-  "sharedLevelTitle": "Level {{level}}, {{score}} points in Frikik — how far can you get? | Ofsayt Yok",
+  "sharedLevelTitle": "Level {{level}}, {{score}} points in Frikik — how far can you get? | {{brand}}",
   "sharedLevel": "A friend reached level {{level}} ({{score}} points). Can you beat it?",
   "daily": "Free kick of the day · {{date}}",
   "adContact": "To advertise on the pitch boards: {{email}}"

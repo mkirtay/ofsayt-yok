@@ -59,11 +59,6 @@ export const LEGACY_BRAND_ALLOWLIST: Izin[] = [
   { path: 'next.config.ts', allow: /(www\.)?ofsaytyok\.app/g, sinif: 'dis', neden: 'Eski alan adından yeniye yönlendirme ayarı (geçiş günü eklenecek).', optional: true },
 
   { path: 'src/components/pitch3d/pitchKit.ts', allow: /OFSAYT YOK/g, sinif: 'bekleyen', neden: 'Saha reklam panosu yazısı (/auth, /frikik). pitch3d başka oturumda; geçiş günü BRAND’e bağlanacak.' },
-  // optional: dosya frikik reklam panosu commit'iyle gelir; o commit henüz yayında değilken girdi bayat sayılmasın.
-  { path: 'src/lib/frikik/ads.json', allow: /OFSAYT YOK/g, sinif: 'bekleyen', neden: 'Frikik reklam panosu metni; başka oturumda.', optional: true },
-  { path: 'src/pages/frikik.tsx', allow: /'https:\/\/ofsaytyok\.app'/g, sinif: 'bekleyen', neden: 'Frikik canonical kökü; siteBaseUrl() ile değişecek (başka oturum).' },
-  { path: 'public/locales/tr/frikik.json', allow: /\| Ofsayt Yok/g, sinif: 'bekleyen', neden: 'Frikik sayfa başlıkları; {{brand}} olacak (başka oturum).' },
-  { path: 'public/locales/en/frikik.json', allow: /\| Ofsayt Yok/g, sinif: 'bekleyen', neden: 'Frikik sayfa başlıkları; {{brand}} olacak (başka oturum).' },
 ];
 
 const ROOT = process.cwd();

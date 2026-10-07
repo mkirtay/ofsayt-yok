@@ -49,9 +49,9 @@ Mevcut metinler eksiz kuruldu ("{{brand}} markasına aittir", "{{brand}} sitesin
 | Yer | Görünür olduğu yer | Geçiş günü |
 | --- | --- | --- |
 | `src/components/pitch3d/pitchKit.ts` — pano yazısı `'OFSAYT YOK'` | /auth sahnesi, /frikik | `BRAND.name.toUpperCase()` (tr yereli) |
-| `src/lib/frikik/ads.json` — `"OFSAYT YOK · Maç analizi"` | /frikik panoları | ad metni |
-| `src/pages/frikik.tsx` — `process.env.AUTH_URL ?? 'https://ofsaytyok.app'` | canonical / og | `siteBaseUrl()` |
-| `public/locales/{tr,en}/frikik.json` — `… \| Ofsayt Yok` (3'er) | sekme başlığı, paylaşım başlığı | `{{brand}}` |
+| ~~`src/lib/frikik/ads.json`~~ — YAPILDI: `{{BRAND}}` yer tutucusu (adBoards `resolveAdText`) | /frikik panoları | — |
+| ~~`src/pages/frikik.tsx`~~ — YAPILDI: `siteBaseUrl()` | canonical / og | — |
+| ~~`public/locales/{tr,en}/frikik.json`~~ — YAPILDI: `{{brand}}` | sekme başlığı, paylaşım başlığı | — |
 
 Bunlar düzeltilince izin listesindeki girdileri silinmeli (bayat girdi testi zaten hatırlatır).
 

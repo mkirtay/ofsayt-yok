@@ -1,5 +1,5 @@
 {
-  "pageTitle": "Frikik — Serbest Vuruş Oyunu | Ofsayt Yok",
+  "pageTitle": "Frikik — Serbest Vuruş Oyunu | {{brand}}",
   "pageDesc": "Günün frikiği: 3 can, her seviyede zorlaşan baraj, kaleci ve rüzgâr. Falsolu vur, doksana tak, seviyeleri geç.",
   "title": "Frikik",
   "sub": "Günün frikiği: 3 can, her seviye 1 vuruş. Kaç seviye geçersin?",
@@ -59,7 +59,7 @@
     "ok": "Anladım",
     "l4": "Seviye modu: 3 can. Rüzgâr okuna bak; ok sağa bakıyorsa top sağa sürüklenir."
   },
-  "sharedLevelTitle": "Frikik'te {{level}}. seviye, {{score}} puan — Sen kaça ulaşırsın? | Ofsayt Yok",
+  "sharedLevelTitle": "Frikik'te {{level}}. seviye, {{score}} puan — Sen kaça ulaşırsın? | {{brand}}",
   "sharedLevel": "Bir arkadaşın {{level}}. seviyeye ulaştı ({{score}} puan). Geçebilir misin?",
   "daily": "Günün frikiği · {{date}}",
   "adContact": "Sahadaki panolarda reklam vermek için: {{email}}"

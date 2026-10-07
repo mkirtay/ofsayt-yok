@@ -1,17 +1,23 @@
 /**
  * Frikik sahası reklam panoları: kale arkası tribünde LED şeridi + korkuluklara asılı afişler (4 slot).
  * İçerik tek dosyadan gelir (lib/frikik/ads.json: metin / görsel / URL); boş slotta yalnız "Reklam vermek için iletişime
- * geçin" yazar (iletişim adresi oyunun altında DOM satırı; bileşen ads.json'dan okur). Performans: bütün panolar TEK atlas dokusu + TEK birleşik geometri (1 draw call); görseller
+ * geçin" yazar (iletişim adresi oyunun altında DOM satırı; bileşen NEXT_PUBLIC_FRIKIK_AD_CONTACT'tan okur, yoksa satır yok). Performans: bütün panolar TEK atlas dokusu + TEK birleşik geometri (1 draw call); görseller
  * sonradan yüklenip atlasa çizilir. Panolar topun yolunda değildir (kale arkası tribün duvarı, x ≈ 11,7, y > 2,8).
  */
 import { BufferAttribute, BufferGeometry, CanvasTexture, DoubleSide, Mesh, MeshBasicMaterial, Raycaster, SRGBColorSpace, Vector2, type Camera } from 'three';
 import adsConfig from '@/lib/frikik/ads.json';
+import { BRAND, brandText } from '@/config/brand';
 
 export type AdKind = 'wide' | 'square' | 'tall';
 /** Pano yüzünün baktığı yön: 'west' = −x (kale arkası, topa bakar); 'north' = +z (sol yan), 'south' = −z (sağ yan). */
 export type AdFace = 'west' | 'north' | 'south';
 export type AdEntry = { slot: string; text?: string | null; image?: string | null; url?: string | null };
-export type AdsConfig = { contact: string; empty: { tr: string; en: string }; ads: AdEntry[] };
+export type AdsConfig = { empty: { tr: string; en: string }; ads: AdEntry[] };
+
+/** Pano metnindeki marka yer tutucuları: `{{BRAND}}` büyük harf (LED), `{{brand}}` / `{{siteDomain}}` vb. normal (config/brand.ts). */
+export function resolveAdText(text: string): string {
+  return brandText(text.replace(/\{\{BRAND\}\}/g, BRAND.name.toLocaleUpperCase('tr-TR')));
+}
 /**
  * Slotlar (dünya, m): 4 pano, tribüne (stands.ts) oturur. `led`: ön duvarın üstünde LED şeridi (x 12,05, y 2,7–4,1);
  * `rail-l` / `rail-r`: 1. sıra taraftarlarının ÖNÜNDE (x 13,05), LED'in üstünde; `upper`: 6. sıra korkuluğunun önünde
@@ -109,7 +115,7 @@ export function buildAdBoards(opts: { lang: 'tr' | 'en'; config?: AdsConfig }): 
       g.addColorStop(1, led ? '#070d18' : '#dde3ea');
       ctx.fillStyle = g;
       ctx.fillRect(x, y, w, h);
-      const text = ad?.text ?? (cfg.empty[opts.lang] ?? cfg.empty.tr);
+      const text = resolveAdText(ad?.text ?? (cfg.empty[opts.lang] ?? cfg.empty.tr));
       fitText(ctx, text, x + w / 2, y + h / 2, w - 4 * pad, h - 2 * pad, led ? '#ffffff' : '#0b1424', 900);
       if (led) {
         // LED şerit: alt-üst ince yeşil çizgi

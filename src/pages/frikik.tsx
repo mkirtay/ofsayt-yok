@@ -4,8 +4,8 @@ import { useTranslation } from '@/lib/i18n';
 import '@/lib/i18nNamespaces/frikik';
 import Frikik from '@/components/Frikik';
 import { parseShare, shareImagePath, type ShareInfo } from '@/lib/frikik/share';
+import { siteBaseUrl } from '@/lib/siteUrl';
 
-const SITE = process.env.AUTH_URL ?? 'https://ofsaytyok.app';
 
 /**
  * /frikik — serbest vuruş mini oyunu (Günün frikiği). `?l=<seviye>&s=<puan>` paylaşım bağlantısı:
@@ -20,6 +20,7 @@ export const getServerSideProps: GetServerSideProps<{ shared: ShareInfo | null }
 export default function FrikikPage({ shared }: { shared: ShareInfo | null }) {
   const { t } = useTranslation('frikik');
   const title = shared ? t('sharedLevelTitle', { level: shared.level, score: shared.score }) : t('pageTitle');
+  const SITE = siteBaseUrl();
   const image = `${SITE}${shareImagePath(shared)}`;
   return (
     <>

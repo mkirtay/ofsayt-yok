@@ -5,7 +5,6 @@ import { webglAvailable } from "@/components/pitch3d/webgl";
 import { LIVES, type ShotResult } from "@/lib/frikik/sim";
 import { dailySeed, dayLabel, turkeyDay } from "@/lib/frikik/daily";
 import { sharePath, type ShareInfo } from "@/lib/frikik/share";
-import adsConfig from "@/lib/frikik/ads.json";
 import type { FrikikHandle, FrikikSummary, RoundInfo } from "./frikikScene";
 import styles from "./frikik.module.scss";
 
@@ -14,6 +13,8 @@ const loadScene = () => import("./frikikScene");
 
 type Mode = "boot" | "reduced" | "nowebgl" | "game";
 const TIP_SEEN_KEY = "oy_frikik_tip";
+/** Pano reklam iletişim adresi (derlemede gömülür); tanımlı değilse satır hiç çizilmez (yer tutucu canlıya çıkmaz). */
+const AD_CONTACT = process.env.NEXT_PUBLIC_FRIKIK_AD_CONTACT?.trim() || "";
 /** Vuruş sonucunun kısa metni ("Doksan!", "Direkten gol", "Barajda kaldı" …). */
 export function resultLabel(r: ShotResult, t: (key: string) => string): string {
   if (r.kind !== "goal") return t(`result.${r.kind}`);
@@ -345,9 +346,11 @@ export default function Frikik({ shared }: { shared: ShareInfo | null }) {
         ) : null}
       </div>
 
-      <p className={styles.adContact}>
-        {t("adContact", { email: adsConfig.contact })}
-      </p>
+      {AD_CONTACT ? (
+        <p className={styles.adContact}>
+          {t("adContact", { email: AD_CONTACT })}
+        </p>
+      ) : null}
 
       <section className={styles.rules}>
         <div>
