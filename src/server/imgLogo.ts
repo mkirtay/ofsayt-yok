@@ -4,9 +4,28 @@
  * - Açık proxy DEĞİL: yalnız `cdn.sportmonks.com/images/<güvenli yol>` (bkz. utils/logoUrl.ts), genişlik beyaz listede.
  * - Başarı: 1 yıl `immutable` (aynı yol + genişlik hep aynı çıktı) → fonksiyon yalnız CDN ıskasında çalışır.
  * - Upstream 404 → 404 (1 gün cache; logo gerçekten yok). Diğer hatalar → orijinal URL'ye 302 (5 dk) — görsel kırılmaz.
+ * - Savunma derinliği (güvenlik denetimi O10/D33): upstream yönlendirmesi takip edilmez (`redirect: 'error'` → 302
+ *   yedeği); libvips yükleyicileri yalnız PNG / JPEG / WebP / GIF (bellekten) — SVG (librsvg), HEIF/AVIF (libheif),
+ *   TIFF, PDF, JP2K, JXL, VIPS, magick, FITS, OpenSlide … kapalı. Desteklenmeyen biçim → sharp hata → 302 yedeği
+ *   (tarayıcı orijinal logoyu doğrudan çizer; sunucu ayrıştırmaz).
  */
 import sharp from 'sharp';
 import { LOGO_WIDTHS, SPORTMONKS_IMAGE_ORIGIN, isValidLogoPath, type LogoWidth } from '@/utils/logoUrl';
+
+/**
+ * libvips işlem kilidi SÜREÇ GENELİDİR (bu modülü yükleyen fonksiyonun tüm sharp çağrıları): önce tüm yükleyiciler
+ * (`VipsForeignLoad*`) kapatılır, sonra yalnız bellekten okuyan dört biçim açılır. OG görselleri (server/og/ogAssets.ts)
+ * aynı süreçte çalışırsa da etkilenmez: orada sharp yalnız WebP/GIF gibi PNG/JPEG/SVG dışı logoları PNG'ye çevirir;
+ * SVG satori'ye doğrudan gider (bkz. imgLogo.test.ts → OG uyumu).
+ */
+export const ALLOWED_SHARP_LOADERS = [
+  'VipsForeignLoadPngBuffer',
+  'VipsForeignLoadJpegBuffer',
+  'VipsForeignLoadWebpBuffer',
+  'VipsForeignLoadNsgifBuffer',
+] as const;
+sharp.block({ operation: ['VipsForeignLoad'] });
+sharp.unblock({ operation: [...ALLOWED_SHARP_LOADERS] });
 
 const MAX_INPUT_BYTES = 5 * 1024 * 1024;
 const UPSTREAM_TIMEOUT_MS = 5_000;
@@ -37,7 +56,7 @@ export async function renderLogo(
   const fallback: LogoResult = { status: 302, location: original, headers: { 'Cache-Control': CACHE_FALLBACK } };
   let input: Buffer;
   try {
-    const res = await fetchImpl(original, { signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS) });
+    const res = await fetchImpl(original, { signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS), redirect: 'error' });
     if (res.status === 404) return { status: 404, headers: { 'Cache-Control': CACHE_MISSING } };
     const type = res.headers.get('content-type') ?? '';
     const length = Number(res.headers.get('content-length') ?? 0);
