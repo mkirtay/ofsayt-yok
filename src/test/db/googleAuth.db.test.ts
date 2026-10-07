@@ -172,7 +172,7 @@ d('DB entegrasyonu — Google ile giriş', () => {
     expect((await prisma.user.findUniqueOrThrow({ where: { id: r.user.id }, select: { credits: true } })).credits).toBe(2);
   });
 
-  it('aynı e-postalı (doğrulanmış) hesabı varsa Google o hesaba bağlanır ve o hesapla girilir; şifre, ad, bakiye aynen kalır', async () => {
+  it('aynı e-postalı (doğrulanmış) hesabı varsa Google o hesaba bağlanır ve o hesapla girilir; ad, bakiye aynen kalır, şifre silinir (eski oturumlar düşer)', async () => {
     const r = await createUserAccount({ email: email('linkv'), password: 'Itest-Pass-123!', name: 'Mevcut Ad' });
     if (!r.ok) throw new Error(r.error);
     await prisma.user.update({ where: { id: r.user.id }, data: { emailVerified: new Date('2026-01-01T00:00:00Z') } });
@@ -185,7 +185,9 @@ d('DB entegrasyonu — Google ile giriş', () => {
     expect(await prisma.account.findMany({ where: { userId: r.user.id }, select: { provider: true, providerAccountId: true } })).toEqual([
       { provider: 'google', providerAccountId: `${runId}-sub-linkv` },
     ]);
-    expect(await prisma.user.findUniqueOrThrow({ where: { id: r.user.id }, select: pick })).toEqual(before);
+    // Şifre silinir ve tokenVersion artar: o şifreyle açılmış oturumlar düşer (hesabı önceden açma, bkz. lib/oauth.ts)
+    expect(await prisma.user.findUniqueOrThrow({ where: { id: r.user.id }, select: pick })).toEqual({ ...before, password: null });
+    expect((await prisma.user.findUniqueOrThrow({ where: { id: r.user.id }, select: { tokenVersion: true } })).tokenVersion).toBe(1);
     expect(await prisma.user.count({ where: { email: { in: [email('linkv'), email('linkv').toUpperCase()] } } })).toBe(1);
 
     // Sonraki girişler aynı hesap; yeni bağ/bonus yok

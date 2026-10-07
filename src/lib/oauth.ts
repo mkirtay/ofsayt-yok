@@ -4,8 +4,19 @@
  *
  * Akış: hesabı yoksa Google profilinden oluşturulur; aynı e-postalı hesabı varsa Google hesabı e-postaya göre ona
  * bağlanır ve o hesapla girilir (`allowDangerousEmailAccountLinking`). Güvenlik: Google e-postası doğrulanmış olmalı
- * (`checkOAuthSignIn`), bizde doğrulanmamış hesabın şifresi bağlanırken silinir (`onOAuthAccountLinked`), açık
- * oturumdaki BAŞKA kullanıcıya bağlanma `oauthCallbackGuard` ile engellenir.
+ * (`checkOAuthSignIn`), açık oturumdaki BAŞKA kullanıcıya bağlanma `oauthCallbackGuard` ile engellenir.
+ *
+ * E-postayla mevcut hesaba bağlama (hesabı önceden açma saldırısı — saldırgan kurbanın e-postasıyla şifreli hesap açıp
+ * oturum/30 günlük mobil belirteç alır, kurban sonra Google ile girer):
+ *  1. Google Account henüz bağlı değil + aynı e-postalı User şifreli YA DA e-postası doğrulanmamış → `signIn` callback'inde
+ *     (NextAuth `callbackHandler`'ın getUserByEmail + linkAccount'undan ÖNCE) hesap devralmaya hazırlanır.
+ *  2. Tek transaction: `password = null`, `tokenVersion + 1`, `emailVerified = emailVerified ?? now` (tokenVersion
+ *     eşleşmesiyle iyimser kilit); ardından `invalidateSessionVersion` → eski web/mobil oturumlar hemen düşer.
+ *  3. Önceden doğrulanmamışsa kayıt bonusu `grantVerifiedSignupBonus` ile bir kez; `events.linkAccount` aynı fonksiyonu
+ *     çağırır ama artık iş kalmadığı için no-op (çifte bonus / çifte sürüm artışı yok).
+ *  4. `callbackHandler` kullanıcıyı bu güncellemeden SONRA okur → yeni Google oturumu güncel tokenVersion'ı taşır.
+ *  5. Zaten bağlı Account, şifresiz + doğrulanmış hesap ve yeni kullanıcı: dokunulmaz. Doğrulanmış şifreli meşru
+ *     kullanıcının şifresi de silinir ve diğer oturumları düşer (kabul edilen bedel; "şifremi unuttum" ile yeni şifre).
  */
 import type { Provider } from 'next-auth/providers/index';
 import GoogleProvider, { type GoogleProfile } from 'next-auth/providers/google';
@@ -13,6 +24,7 @@ import { prisma } from '@/lib/prisma';
 import { grantVerifiedSignupBonus } from '@/lib/credits';
 import { canonicalEmail } from '@/lib/emailNormalize';
 import { isGoogleAuthEnabled } from '@/lib/oauthEnv';
+import { invalidateSessionVersion } from '@/lib/sessionVersion';
 
 export { isGoogleAuthEnabled };
 
@@ -63,18 +75,59 @@ export function checkOAuthSignIn(
 }
 
 /**
- * NextAuth `events.linkAccount`: Google hesabı bir kullanıcıya bağlandı (yeni kullanıcı ya da e-postası eşleşen mevcut
- * hesap). E-postası bizde doğrulanmamış mevcut hesabın şifresini, e-postanın sahibi olmayan biri koymuş olabilir
- * (önceden hesap açıp bekleme saldırısı) → e-posta doğrulanmış işaretlenir ve o şifre silinir; gerçek sahip isterse
- * "şifremi unuttum" ile yeni şifre alır. Doğrulanmış hesaplara dokunulmaz.
+ * Google hesabı `userId`'ye bağlanacak / bağlandı: şifre biri tarafından (e-postanın sahibi olmayan) konmuş olabilir ya
+ * da e-posta bizde doğrulanmamış → şifre silinir, e-posta doğrulanmış işaretlenir ve `tokenVersion` artırılarak o
+ * şifreyle açılmış TÜM oturumlar (web çerezi + mobil belirteç) geçersiz kılınır. Şifresiz + doğrulanmış hesapta no-op.
+ * Doğrulanmamıştı ise kayıt bonusu (bir kez; `grantVerifiedSignupBonus` idempotent). Değişiklik yaptıysa true.
+ */
+export async function secureAccountForOAuthLink(userId: string): Promise<boolean> {
+  const result = await prisma.$transaction(async (tx) => {
+    const row = await tx.user.findUnique({
+      where: { id: userId },
+      select: { password: true, emailVerified: true, tokenVersion: true },
+    });
+    if (!row || (row.password == null && row.emailVerified != null)) return null;
+    // tokenVersion eşleşmesi: eşzamanlı ikinci bir Google dönüşü sürümü bir kez daha artırmasın.
+    const { count } = await tx.user.updateMany({
+      where: { id: userId, tokenVersion: row.tokenVersion },
+      data: { password: null, tokenVersion: { increment: 1 }, emailVerified: row.emailVerified ?? new Date() },
+    });
+    return count > 0 ? { wasUnverified: row.emailVerified == null } : null;
+  });
+  if (!result) return false;
+  await invalidateSessionVersion(userId); // önbellekteki eski sürüm hemen düşsün
+  // E-posta bu bağlamayla doğrulandı → kayıt bonusu (bir kez; 5 kredi almış eski hesaplara yok).
+  if (result.wasUnverified) await grantVerifiedSignupBonus(userId);
+  return true;
+}
+
+/**
+ * NextAuth `signIn` callback'inin bağlama hazırlığı (bkz. dosya başı 1–4). `callbackHandler`'dan ÖNCE çalışır: Google
+ * hesabı henüz bağlı değilse ve aynı e-postalı (NextAuth `getUserByEmail` ile aynı arama) kullanıcı varsa onu
+ * `secureAccountForOAuthLink` ile temizler. Bağlı hesapla normal giriş ya da yeni kullanıcıda hiçbir şey yapmaz.
+ */
+export async function prepareOAuthEmailLink(
+  provider: string,
+  providerAccountId: string,
+  email: string | null | undefined,
+): Promise<void> {
+  if (!email) return;
+  const linked = await prisma.account.findUnique({
+    where: { provider_providerAccountId: { provider, providerAccountId } },
+    select: { userId: true },
+  });
+  if (linked) return;
+  const target = await prisma.user.findUnique({ where: { email: email.trim().toLowerCase() }, select: { id: true } });
+  if (target) await secureAccountForOAuthLink(target.id);
+}
+
+/**
+ * NextAuth `events.linkAccount`: Google hesabı bir kullanıcıya bağlandı. Normalde `signIn`'deki hazırlık (ya da yeni
+ * kullanıcıda `onOAuthUserCreated`) işi bitirmiştir → no-op. Hazırlıktan kaçan bir durum olursa yine güvenli tarafta
+ * kalır (şifre silinir, oturumlar düşer; bu durumda yeni oturum da bir kez yeniden giriş ister).
  */
 export async function onOAuthAccountLinked(userId: string): Promise<void> {
-  const { count } = await prisma.user.updateMany({
-    where: { id: userId, emailVerified: null },
-    data: { emailVerified: new Date(), password: null },
-  });
-  // E-posta bu bağlamayla doğrulandı → kayıt bonusu (bir kez; 5 kredi almış eski hesaplara yok).
-  if (count > 0) await grantVerifiedSignupBonus(userId);
+  await secureAccountForOAuthLink(userId);
 }
 
 /**
@@ -84,12 +137,14 @@ export async function onOAuthAccountLinked(userId: string): Promise<void> {
  * kayıt bonusu (kredi modeli v2: 2 kredi, bir kez) doğrulanmış e-postaya verilir.
  */
 export async function onOAuthUserCreated(userId: string): Promise<void> {
-  // NextAuth bu olayı e-postayla MEVCUT hesaba bağlarken de çağırıyor → yalnızca az önce oluşmuş, şifresiz kayıt "yeni"dir.
+  // NextAuth bu olayı e-postayla MEVCUT hesaba bağlarken de çağırıyor → yalnızca az önce oluşmuş, şifresiz ve e-postası
+  // henüz işaretlenmemiş kayıt "yeni"dir (adapter `emailVerified: null` ile oluşturur; e-postayla bağlanan mevcut hesabı
+  // `signIn`'deki `prepareOAuthEmailLink` zaten doğrulanmış işaretler ve şifresini siler — burada krediye dokunulmamalı).
   const row = await prisma.user.findUnique({
     where: { id: userId },
-    select: { password: true, createdAt: true, email: true },
+    select: { password: true, emailVerified: true, createdAt: true, email: true },
   });
-  if (!row || row.password || Date.now() - row.createdAt.getTime() > FRESH_USER_MS) return;
+  if (!row || row.password || row.emailVerified || Date.now() - row.createdAt.getTime() > FRESH_USER_MS) return;
   // Adapter kullanıcıyı DB varsayılanıyla oluşturur (migration B'ye kadar 5) → v2'de 0'dan başlar, bonus 2.
   const data = { emailVerified: new Date(), credits: 0 };
   try {
