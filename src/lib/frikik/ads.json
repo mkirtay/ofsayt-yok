@@ -1,5 +1,5 @@
 {
-  "$comment": "Frikik sahası reklam panoları. Yeni reklam eklemek için 'ads' dizisine bir kayıt ekle; kod değişikliği gerekmez. slot: aşağıdaki kimliklerden biri (her slot bir kez). text: panoda yazılacak metin (görsel yoksa). image: görsel adresi (aynı kaynak ya da CORS izinli; pano kutusuna sığdırılır). url: panoya tıklanınca açılacak adres (yeni sekme). Boş slotlarda 'empty' metni + 'contact' yazar ('contact' tek satırdan değişir; panolardaki adres buradan okunur). Slotlar — kale arkası (geniş 7×1,6 m): goal-wide-l, goal-wide-r · (kare 2,2 m): goal-square-l, goal-square-r · (dikey 1,6×3,4 m): goal-tall-l, goal-tall-r · tribün yanı (geniş 10×1,5 m): side-wide-l, side-wide-r · (kare 2 m): side-square-l, side-square-r.",
+  "$comment": "Frikik sahası reklam panoları (kale arkası tribün). Yeni reklam eklemek için 'ads' dizisine bir kayıt ekle; kod değişikliği gerekmez. slot: aşağıdaki kimliklerden biri (her slot bir kez). text: panoda yazılacak metin (görsel yoksa). image: görsel adresi (aynı kaynak ya da CORS izinli; pano kutusuna sığdırılır). url: panoya tıklanınca açılacak adres (yeni sekme). Boş slotlarda 'empty' metni + 'contact' yazar ('contact' tek satırdan değişir; panolardaki adres buradan okunur). Slotlar — LED şeridi (9×1 m, kalenin hemen üstünde): led-l, led-c, led-r · tribün afişleri: banner-wide (8×2,4 m, orta), banner-sq-l / banner-sq-r (2,8 m kare) · yan afişler: flank-sq-l / flank-sq-r (2,6 m kare), flank-tall-l / flank-tall-r (1,8×3,6 m dikey).",
   "contact": "reklam@ornek.test",
   "empty": {
     "tr": "Reklam vermek için iletişime geçin",
@@ -7,13 +7,13 @@
   },
   "ads": [
     {
-      "slot": "goal-wide-l",
+      "slot": "led-c",
       "text": "OFSAYT YOK · Maç analizi",
       "image": null,
       "url": null
     },
     {
-      "slot": "side-wide-r",
+      "slot": "banner-sq-r",
       "text": "Kural Köşesi",
       "image": null,
       "url": null

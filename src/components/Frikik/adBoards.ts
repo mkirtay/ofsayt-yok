@@ -1,8 +1,8 @@
 /**
- * Frikik sahası reklam panoları: kale arkasında ve tribün yanında karışık boyutlu (geniş / kare / dikey) panolar.
+ * Frikik sahası reklam panoları: kale arkasındaki tribünde karışık boyutlu (LED şeridi, geniş / kare / dikey afişler) panolar.
  * İçerik tek dosyadan gelir (lib/frikik/ads.json: metin / görsel / URL); boş slotta "Reklam vermek için iletişime geçin"
  * + iletişim adresi yazar. Performans: bütün panolar TEK atlas dokusu + TEK birleşik geometri (1 draw call); görseller
- * sonradan yüklenip atlasa çizilir. Panolar topun yolunda değildir (kale arkası x = 11,5, yanlar |z| > 27).
+ * sonradan yüklenip atlasa çizilir. Panolar topun yolunda değildir (kale arkası tribün duvarı, x ≈ 11,7, y > 2,8).
  */
 import { BufferAttribute, BufferGeometry, CanvasTexture, DoubleSide, Mesh, MeshBasicMaterial, Raycaster, SRGBColorSpace, Vector2, type Camera } from 'three';
 import adsConfig from '@/lib/frikik/ads.json';
@@ -10,43 +10,32 @@ import adsConfig from '@/lib/frikik/ads.json';
 export type AdKind = 'wide' | 'square' | 'tall';
 /** Pano yüzünün baktığı yön: 'west' = −x (kale arkası, topa bakar); 'north' = +z (sol yan), 'south' = −z (sağ yan). */
 export type AdFace = 'west' | 'north' | 'south';
-export type AdSlot = { id: string; kind: AdKind; face: AdFace; x: number; y: number; z: number; w: number; h: number };
 export type AdEntry = { slot: string; text?: string | null; image?: string | null; url?: string | null };
 export type AdsConfig = { contact: string; empty: { tr: string; en: string }; ads: AdEntry[] };
+type Cell = { x: number; y: number; w: number; h: number };
+export type AdSlot = { id: string; kind: AdKind; face: AdFace; x: number; y: number; z: number; w: number; h: number; cell: Cell };
 
 /**
- * Slotlar (dünya, m). Kale arkası panolar kalenin 11,5 m gerisinde ve iç kenarı |z| ≥ 12: kamera en geniş açıdan
- * (|z| ≤ 22, x ≈ −42) baksa bile kale çizgisini |z| > 4,6'da keser → hiçbir pano direk / ağ ile kesişmez (0,215·camZ +
- * 0,785·panoZ hesabı). Yanlar |z| = 27,5 (saha kenarı 26).
+ * Slotlar (dünya, m). Hepsi kale arkasındaki tribün ön duvarında (x ≈ 11,7, tribün 12): kamera topun arkasında ~2,5 m
+ * yükseklikte baktığı için 2,5 m'den yüksek her şey ekranda üst direğin ÜSTÜNDE görünür → panolar kale çerçevesi /
+ * ağ / top yoluyla hiç kesişmez ve kalenin üst çizgisini kapatmaz. Sıra: LED şeridi (3 geniş, y 2,8–3,8), üstünde
+ * tribüne asılı afişler (geniş + 2 kare), yanlarda kare ve dikey panolar. Her slotun atlas hücresi en-boy oranına uyar
+ * (metin esnemez). Atlas 1024×848.
  */
 export const AD_SLOTS: readonly AdSlot[] = [
-  { id: 'goal-wide-l', kind: 'wide', face: 'west', x: 11.5, y: 1.0, z: -15.5, w: 7, h: 1.5 },
-  { id: 'goal-wide-r', kind: 'wide', face: 'west', x: 11.5, y: 1.0, z: 15.5, w: 7, h: 1.5 },
-  { id: 'goal-square-l', kind: 'square', face: 'west', x: 11.5, y: 1.3, z: -20.3, w: 2.2, h: 2.2 },
-  { id: 'goal-square-r', kind: 'square', face: 'west', x: 11.5, y: 1.3, z: 20.3, w: 2.2, h: 2.2 },
-  { id: 'goal-tall-l', kind: 'tall', face: 'west', x: 11.5, y: 1.9, z: -22.8, w: 1.6, h: 3.4 },
-  { id: 'goal-tall-r', kind: 'tall', face: 'west', x: 11.5, y: 1.9, z: 22.8, w: 1.6, h: 3.4 },
-  { id: 'side-wide-l', kind: 'wide', face: 'north', x: -14, y: 1.0, z: -27.5, w: 10, h: 1.5 },
-  { id: 'side-wide-r', kind: 'wide', face: 'south', x: -14, y: 1.0, z: 27.5, w: 10, h: 1.5 },
-  { id: 'side-square-l', kind: 'square', face: 'north', x: -24, y: 1.3, z: -27.5, w: 2, h: 2 },
-  { id: 'side-square-r', kind: 'square', face: 'south', x: -24, y: 1.3, z: 27.5, w: 2, h: 2 },
+  { id: 'led-l', kind: 'wide', face: 'west', x: 11.8, y: 3.3, z: -9.5, w: 9, h: 1.0, cell: { x: 0, y: 0, w: 1024, h: 112 } },
+  { id: 'led-c', kind: 'wide', face: 'west', x: 11.8, y: 3.3, z: 0, w: 9, h: 1.0, cell: { x: 0, y: 112, w: 1024, h: 112 } },
+  { id: 'led-r', kind: 'wide', face: 'west', x: 11.8, y: 3.3, z: 9.5, w: 9, h: 1.0, cell: { x: 0, y: 224, w: 1024, h: 112 } },
+  { id: 'banner-wide', kind: 'wide', face: 'west', x: 11.7, y: 5.3, z: 0, w: 8, h: 2.4, cell: { x: 0, y: 336, w: 768, h: 230 } },
+  { id: 'banner-sq-l', kind: 'square', face: 'west', x: 11.7, y: 5.3, z: -6.6, w: 2.8, h: 2.8, cell: { x: 768, y: 336, w: 256, h: 256 } },
+  { id: 'banner-sq-r', kind: 'square', face: 'west', x: 11.7, y: 5.3, z: 6.6, w: 2.8, h: 2.8, cell: { x: 768, y: 592, w: 256, h: 256 } },
+  { id: 'flank-sq-l', kind: 'square', face: 'west', x: 11.7, y: 5.3, z: -11.5, w: 2.6, h: 2.6, cell: { x: 0, y: 566, w: 256, h: 256 } },
+  { id: 'flank-sq-r', kind: 'square', face: 'west', x: 11.7, y: 5.3, z: 11.5, w: 2.6, h: 2.6, cell: { x: 256, y: 566, w: 256, h: 256 } },
+  { id: 'flank-tall-l', kind: 'tall', face: 'west', x: 11.7, y: 5.7, z: -14.6, w: 1.8, h: 3.6, cell: { x: 512, y: 566, w: 128, h: 256 } },
+  { id: 'flank-tall-r', kind: 'tall', face: 'west', x: 11.7, y: 5.7, z: 14.6, w: 1.8, h: 3.6, cell: { x: 640, y: 566, w: 128, h: 256 } },
 ];
 
-/** Atlas hücreleri (1024×768 tabanında px): geniş 512×128 ×4, kare 256×256 ×4, dikey 128×256 ×2. */
-const ATLAS = { w: 1024, h: 768 };
-const CELLS: Record<AdKind, { x: number; y: number; w: number; h: number }[]> = {
-  wide: [0, 128, 256, 384].map((y) => ({ x: 0, y, w: 512, h: 128 })),
-  square: [
-    { x: 512, y: 0, w: 256, h: 256 },
-    { x: 768, y: 0, w: 256, h: 256 },
-    { x: 512, y: 256, w: 256, h: 256 },
-    { x: 768, y: 256, w: 256, h: 256 },
-  ],
-  tall: [
-    { x: 512, y: 512, w: 128, h: 256 },
-    { x: 640, y: 512, w: 128, h: 256 },
-  ],
-};
+const ATLAS = { w: 1024, h: 848 };
 
 export type AdBoards = {
   mesh: Mesh;
@@ -98,15 +87,9 @@ export function buildAdBoards(opts: { lite: boolean; lang: 'tr' | 'en'; config?:
   tex.colorSpace = SRGBColorSpace;
   tex.anisotropy = 4;
   const byId = new Map(cfg.ads.map((a) => [a.slot, a] as const));
-  const counters: Record<AdKind, number> = { wide: 0, square: 0, tall: 0 };
-  const placed: { slot: AdSlot; cell: { x: number; y: number; w: number; h: number }; ad: AdEntry | null }[] = [];
-  for (const slot of AD_SLOTS) {
-    const cell = CELLS[slot.kind][counters[slot.kind]++];
-    if (!cell) continue;
-    placed.push({ slot, cell, ad: byId.get(slot.id) ?? null });
-  }
+  const placed = AD_SLOTS.map((slot) => ({ slot, cell: slot.cell, ad: byId.get(slot.id) ?? null }));
 
-  const drawCell = (cell: { x: number; y: number; w: number; h: number }, ad: AdEntry | null, img?: HTMLImageElement) => {
+  const drawCell = (cell: Cell, ad: AdEntry | null, img?: HTMLImageElement) => {
     if (!ctx) return;
     const x = cell.x * scale;
     const y = cell.y * scale;
@@ -188,7 +171,8 @@ export function buildAdBoards(opts: { lite: boolean; lang: 'tr' | 'en'; config?:
   geo.setAttribute('uv', new BufferAttribute(new Float32Array(uv), 2));
   geo.setIndex(idx);
   geo.computeBoundingSphere();
-  const mat = new MeshBasicMaterial({ map: tex, side: DoubleSide, fog: true, toneMapped: false });
+  // Sis yok: uzak seviyelerde (32 m) de okunur
+  const mat = new MeshBasicMaterial({ map: tex, side: DoubleSide, fog: false, toneMapped: false });
   const mesh = new Mesh(geo, mat);
   mesh.frustumCulled = true;
 

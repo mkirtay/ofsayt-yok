@@ -308,9 +308,12 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
     scene.add(fig.group);
     return { fig, shadow: makeShadow(0.95, 0.4) };
   });
-  // Kaleci görselde fiziğinden (2,08 m silindir) ~%17 büyük: üst direğe (2,44) yakın boy, hazır duruşta çömelik
-  const keeperFig = makeFigure(shared, { kit: 0xffc83d, shorts: 0x0b1511, skin: 0xe8b98a, hair: 0x1a120c, socks: 0x0b1511, glove: 0xff7a1a }, true, figMats, KEEPER.height * 1.17);
-  const KEEPER_SCALE = (KEEPER.height * 1.17) / 1.8;
+  // Kaleci boyu 1,88 m (üst direğin ~%77'si), barajla aynı ölçek sistemi; fizik silindiri (2,08 m) görselden bağımsız
+  const KEEPER_VISUAL_HEIGHT = 1.88;
+  const keeperFig = makeFigure(shared, { kit: 0xffc83d, shorts: 0x0b1511, skin: 0xe8b98a, hair: 0x1a120c, socks: 0x0b1511, glove: 0xff7a1a }, true, figMats, KEEPER_VISUAL_HEIGHT);
+  const KEEPER_SCALE = KEEPER_VISUAL_HEIGHT / 1.8;
+  /** Dalışta ayak bileğinden parmak ucuna uzunluk (m): boy + yukarı uzanan kollar. */
+  const KEEPER_REACH_LEN = KEEPER_VISUAL_HEIGHT + 0.55;
   keeperFig.group.position.x = KEEPER.x;
   scene.add(keeperFig.group);
   const keeperShadow = makeShadow(1.3, 0.4);
@@ -354,13 +357,15 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
   /** Baraj sırasının doğrultusu (hareketli baraj bu eksende kayar). */
   let wallRow = { x: 0, z: 1 };
   /**
-   * Kaleci animasyon planı (yalnız görsel; sonuç sim.ts'in): hamle yönü, dalış mı uzanma mı, dalışın başladığı z
-   * (yan adımın sonu; dalışta gövde sabit kalır, kayma yok) ve süresi (sim kalecisinin hedefe varış süresi).
+   * Kaleci animasyon planı (yalnız görsel; sonuç sim.ts'in). Vuruştan `KEEPER_REACT_TICKS` sonra çömelme / yan adım;
+   * dalış, sim kalecisinin hedefine (ya da topun kaleye varışına) `diveDur` önce başlar ve parmak uçları o anda sim
+   * silindirinin merkezine ulaşır → sim "kurtardı" diyorsa top ellerin yanındadır, "gol" diyorsa top silindirin
+   * dışından (parmak ucunun ötesinden) geçer. Ayaklar dalışta `feetEnd`'e sıçrar, iniş sonrası kayma yok.
    */
-  let keeperAnim: { dir: number; dive: boolean; diveZ: number; diveDur: number; tiltMax: number } | null = null;
+  let keeperAnim: { dir: number; dive: boolean; feetEnd: number; stepZ: number; diveStart: number; diveDur: number; tiltMax: number } | null = null;
   const READY_POSE = { crouch: 0.35, tilt: 0, lift: 0, dir: 1, reach: 0 };
-  /** Yan adım / çömelme süresi (tick ≈ 0,15 sn) ve kalecinin görsel uzunluğu (m; dalışta direğe girmemesi için). */
-  const KEEPER_STEP_TICKS = 18;
+  /** Görsel tepki gecikmesi (tick; 15 ≈ 0,125 sn) — sim'in `react`'inden bağımsız, yalnız duruş. */
+  const KEEPER_REACT_TICKS = 15;
   let basis = { fx: 1, fz: 0, rx: 0, rz: 1 };
   let phase: 'idle' | 'aim' | 'flight' | 'hold' | 'done' = 'idle';
   let roundTick = 0;
@@ -586,39 +591,50 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
     }
     if (round) {
       let kz = shot ? shot.keeperZ : keeperZ(round, roundTick);
-      if (shot && shot.tick >= round.keeper.react) {
-        // Hamle: yan adım / çömelme (~0,15 sn) → uzak-yavaş topta yan adım + uzanma, köşeye giden sert topta dalış.
+      if (shot && shot.tick >= KEEPER_REACT_TICKS) {
         const r = round.keeper;
         if (!keeperAnim) {
           const dir = shot.keeperTarget >= r.z0 ? 1 : -1;
           const travel = Math.abs(shot.keeperTarget - r.z0);
           const speedH = Math.hypot(shot.vel.x, shot.vel.z);
-          const stepDist = Math.min(travel, KEEPER_STEP_TICKS * r.speed * TICK);
-          const dive = travel > 1.3 || (travel > 0.7 && speedH > 21);
-          const diveZ = r.z0 + dir * stepDist;
-          const diveDur = Math.max(24, Math.min(54, Math.ceil((travel - stepDist) / (r.speed * TICK))));
-          // Dalışta uzanan gövde (≈1,9 m × ölçek) iç direği geçmesin
-          const room = Math.max(0, shot.goal.halfW - 0.2 - dir * diveZ);
-          const tiltMax = Math.min(1.1, Math.asin(Math.min(1, room / (1.9 * KEEPER_SCALE))));
-          keeperAnim = { dir, dive, diveZ, diveDur, tiltMax };
+          // Sim kalecisinin hedefe varışı ve topun kaleci düzlemine varışı (tick): dalış bunlardan erken olana biter
+          const tArrive = r.react + Math.ceil(travel / (r.speed * TICK));
+          const tBall = Math.round((-round.ball.x + KEEPER.x) / Math.max(4, shot.vel.x) / TICK);
+          const tEnd = Math.max(KEEPER_REACT_TICKS + 12, Math.min(tArrive, tBall));
+          const dive = travel > 1.0 || (travel > 0.6 && speedH > 21);
+          // Dalış süresi ~0,3–0,4 sn; hızlı kaleci (yüksek seviye) daha seri
+          const minDur = Math.max(28, Math.min(44, Math.round((36 * 3.1) / r.speed)));
+          const diveStart = Math.max(KEEPER_REACT_TICKS + 6, tEnd - minDur);
+          const diveDur = Math.max(minDur, tEnd - diveStart);
+          // Parmak uçları tEnd'de sim silindirinin merkezinde: ayaklar gerekirse oraya sıçrar (erişim ≈ 2,2 m + sıçrama)
+          const simZAtEnd = r.z0 + dir * Math.min(travel, Math.max(0, tEnd - r.react) * r.speed * TICK);
+          const tiltMax = 1.0;
+          const reach = KEEPER_REACH_LEN * Math.sin(tiltMax);
+          const need = Math.abs(simZAtEnd - r.z0);
+          let feetEnd = need > reach ? simZAtEnd - dir * reach : r.z0;
+          feetEnd = Math.max(-(shot.goal.halfW - 0.3), Math.min(shot.goal.halfW - 0.3, feetEnd));
+          const stepZ = r.z0 + dir * Math.min(0.3, need);
+          keeperAnim = { dir, dive, feetEnd, stepZ, diveStart, diveDur, tiltMax };
         }
         const a = keeperAnim;
-        const t = shot.tick - r.react;
-        if (t < KEEPER_STEP_TICKS) {
-          const u = t / KEEPER_STEP_TICKS;
-          setKeeperPose(keeperFig, { crouch: 0.35 + 0.5 * u, tilt: 0.1 * u, lift: 0, dir: a.dir, reach: 0.35 * u });
-        } else if (a.dive) {
-          kz = a.diveZ;
-          const p = Math.min(1, (t - KEEPER_STEP_TICKS) / a.diveDur);
-          const e = p < 0.5 ? 2 * p * p : 1 - 2 * (1 - p) * (1 - p);
-          const landed = t - KEEPER_STEP_TICKS - a.diveDur;
-          // Havada: yay (tepe ~0,4 m); inişte kısa sekme, sonra yerde kalır
-          const lift = p < 1 ? 0.4 * Math.sin(Math.PI * p) : landed < 10 ? 0.05 * Math.sin((Math.PI * landed) / 10) : 0;
-          // İnişte dizler bükülü kalır (yerde yan yatış), kayma yok: gövde z'si diveZ'de sabit
-          setKeeperPose(keeperFig, { crouch: 0.85 - 0.45 * e, tilt: a.tiltMax * e, lift: lift / KEEPER_SCALE, dir: a.dir, reach: 1 });
+        const t = shot.tick;
+        if (!a.dive) {
+          // Yan adım + uzanma: ayaklar yerde, sim z'sini izler; 12 tick'te çömelir, kol uzanır
+          const p = Math.min(1, (t - KEEPER_REACT_TICKS) / 12);
+          setKeeperPose(keeperFig, { crouch: 0.35 + 0.5 * p, tilt: 0.3 * p, lift: 0, dir: a.dir, reach: p });
+        } else if (t < a.diveStart) {
+          // Çömelme + yarım yan adım (ayaklar yerde)
+          const u = Math.min(1, (t - KEEPER_REACT_TICKS) / 10);
+          kz = r.z0 + (a.stepZ - r.z0) * u;
+          setKeeperPose(keeperFig, { crouch: 0.35 + 0.55 * u, tilt: 0.12 * u, lift: 0, dir: a.dir, reach: 0.3 * u });
         } else {
-          const p = Math.min(1, (t - KEEPER_STEP_TICKS) / 20);
-          setKeeperPose(keeperFig, { crouch: 0.85, tilt: 0.3 * p, lift: 0, dir: a.dir, reach: 0.35 + 0.65 * p });
+          const p = Math.min(1, (t - a.diveStart) / a.diveDur);
+          const e = p < 0.5 ? 2 * p * p : 1 - 2 * (1 - p) * (1 - p);
+          const landed = t - a.diveStart - a.diveDur;
+          // Havada: ayaklar stepZ → feetEnd (sıçrama), gövde yana uzanır, tepe ~0,5 m; inişte 6 tick sekme, sonra yerde
+          kz = a.stepZ + (a.feetEnd - a.stepZ) * e;
+          const lift = p < 1 ? 0.5 * Math.sin(Math.PI * p) : landed < 6 ? 0.05 * Math.sin((Math.PI * landed) / 6) : 0;
+          setKeeperPose(keeperFig, { crouch: 0.9 - 0.5 * e, tilt: a.tiltMax * e, lift: lift / KEEPER_SCALE, dir: a.dir, reach: 1 });
         }
       }
       keeperFig.group.position.z = kz;
