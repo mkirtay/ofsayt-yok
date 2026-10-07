@@ -51,3 +51,24 @@
 .contentPanel {
   gap: $spacing-3; // kompakt panel (§3: 12px)
 }
+
+// Bitmiş maçta "Sen de at" (frikik) bağlantısı: kartın altında, sakin tek satır.
+.frikikCta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: $spacing-2;
+  margin: $spacing-2 0 0;
+  font-size: 13px;
+  color: $color-text-secondary;
+
+  a {
+    font-weight: 700;
+    color: $color-primary-text;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}

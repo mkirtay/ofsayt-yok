@@ -448,5 +448,9 @@
     "prev": "Geri kaydır",
     "next": "İleri kaydır",
     "liveShort": "Canlı"
+  },
+  "frikikCta": {
+    "label": "Sen de at",
+    "hint": "Günün frikiği · 3 can"
   }
 }

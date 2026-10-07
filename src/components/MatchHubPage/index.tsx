@@ -58,6 +58,7 @@ import { GUNDEM_PANEL_MIN_WIDTH, useMinWidth, useSplitView } from '@/hooks/useSp
 import { resolveHubSidePanel } from '@/utils/hubSidePanel';
 import LeagueFilterBar from '@/components/LeagueFilterBar';
 import LiveStrip from '@/components/LiveStrip';
+import FrikikDailyCard from '@/components/FrikikDailyCard';
 import { selectLiveStripMatches } from '@/utils/liveStrip';
 import { hubSectionToScroll } from '@/utils/hubNavScroll';
 import AdSlot from '@/components/AdSlot';
@@ -912,6 +913,7 @@ export default function MatchHubPage({
                   onPrefetchMatch={isSplit ? prefetchMatchDetailLazy : undefined}
                 />
               ) : null}
+              <FrikikDailyCard />
               {uefaFixtureMode ? (
                 <div className={styles.fixtureModeBar}>
                   <span className={styles.fixtureModeText}>

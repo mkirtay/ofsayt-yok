@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Router from 'next/router';
+import Link from 'next/link';
 import { useTranslation } from '@/lib/i18n';
 import MatchCard from '@/components/MatchCard';
 import EventTimeline from '@/components/EventTimeline';
@@ -15,6 +16,7 @@ import type { MatchDetailState } from '@/hooks/useMatchDetail';
 import { useMatchAnalysis } from '@/hooks/useMatchAnalysis';
 import { matchDisplayState } from '@/utils/matchDisplayState';
 import { applyTabDeepLink } from './tabDeepLink';
+import { trackFrikik } from '@/lib/frikik/analytics';
 import styles from './matchDetailContent.module.scss';
 
 type Props = {
@@ -143,6 +145,15 @@ export default function MatchDetailContent({ detail, requestedMatchId, variant =
   return (
     <div ref={contentRef} className={`${styles.content} ${variant === 'panel' ? styles.contentPanel : ''}`.trim()}>
       <MatchCard match={match} loading={matchLoading} initialH2h={initialH2h} />
+      {variant === 'page' && match && matchDisplayState(match).phase === 'POST' ? (
+        // Bitmiş maç: sakin, bağlamsal "Sen de at" bağlantısı (yalnız sayfa; panelde yok).
+        <p className={styles.frikikCta}>
+          <Link href="/frikik?src=match_cta" onClick={() => trackFrikik('frikik_card_click', { entry: 'match_cta' })}>
+            ⚽ {t('frikikCta.label')}
+          </Link>
+          <span>{t('frikikCta.hint')}</span>
+        </p>
+      ) : null}
       <MatchTabs
         tabs={tabs}
         active={active}

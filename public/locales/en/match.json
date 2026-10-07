@@ -457,5 +457,9 @@
     "prev": "Scroll back",
     "next": "Scroll forward",
     "liveShort": "Live"
+  },
+  "frikikCta": {
+    "label": "Take a free kick",
+    "hint": "Free kick of the day · 3 lives"
   }
 }

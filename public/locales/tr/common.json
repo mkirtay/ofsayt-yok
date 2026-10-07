@@ -35,5 +35,21 @@
     "cancel": "Vazgeç",
     "delete": "Sil",
     "deleting": "Siliniyor…"
+  },
+  "frikikCard": {
+    "title": "Günün Frikiği",
+    "sub": "3 can, her seviye 1 vuruş. Herkes aynı frikiği oynuyor; kaç seviye geçersin?",
+    "play": "Oyna",
+    "bestToday": "Günün en iyisi: {{nick}} · Seviye {{level}}",
+    "monthLeader": "Ayın lideri: {{nick}} · Seviye {{level}}",
+    "yourResult": "Bugün: Seviye {{level}} · {{score}} puan",
+    "yourRank": "{{rank}}. sıra",
+    "tomorrow": "Yarın yeni frikik.",
+    "notRecorded": "Bu koşu tabloya yazılmadı; oyunu açıp tekrar dene.",
+    "signInToPost": "Skorunu tabloya yazmak için oyunda giriş yap.",
+    "share": "Paylaş",
+    "playAgain": "Tekrar oyna",
+    "open": "Oyuna git",
+    "shareText": "Frikik'te {{level}}. seviyeye ulaştım, {{score}} puan. Sen kaça ulaşırsın?"
   }
 }

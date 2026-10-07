@@ -9,6 +9,7 @@ import { prefetchHomeHubMatches } from '@/hooks/useHomeHubMatches';
 import { todayIsoIstanbul } from '@/utils/dateStrip';
 import { prefetchProfile } from '@/hooks/useProfile';
 import { useTranslation, useI18n } from '@/lib/i18n';
+import { trackFrikik } from '@/lib/frikik/analytics';
 import { useCredits } from '@/hooks/useCredits';
 import Container from '../Container';
 import HeaderButton from '../HeaderButton';
@@ -235,6 +236,9 @@ export default function Header() {
                 onFocus={prefetchAiStats}
               >
                 {t('aiAccuracy')}
+              </Link>
+              <Link href="/frikik?src=menu" className={styles.mobileNavLink} onClick={() => trackFrikik('frikik_card_click', { entry: 'menu' })}>
+                {t('frikik')}
               </Link>
               {session && <MyAnalysesDropdown />}
               <Link href="/credits" className={styles.mobileNavLinkPremium}>

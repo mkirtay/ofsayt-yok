@@ -35,5 +35,21 @@
     "cancel": "Cancel",
     "delete": "Delete",
     "deleting": "Deleting…"
+  },
+  "frikikCard": {
+    "title": "Free Kick of the Day",
+    "sub": "3 lives, one shot per level. Everyone plays the same free kick; how many levels can you clear?",
+    "play": "Play",
+    "bestToday": "Best today: {{nick}} · Level {{level}}",
+    "monthLeader": "Month leader: {{nick}} · Level {{level}}",
+    "yourResult": "Today: Level {{level}} · {{score}} pts",
+    "yourRank": "#{{rank}}",
+    "tomorrow": "New free kick tomorrow.",
+    "notRecorded": "This run was not posted; open the game and try again.",
+    "signInToPost": "Sign in inside the game to post your score.",
+    "share": "Share",
+    "playAgain": "Play again",
+    "open": "Open the game",
+    "shareText": "I reached level {{level}} in Frikik with {{score}} points. How far can you get?"
   }
 }
