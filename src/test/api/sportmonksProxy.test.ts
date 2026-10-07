@@ -133,3 +133,68 @@ describe('/api/sportmonks proxy — izin listesi modları', () => {
     expect(global.fetch).not.toHaveBeenCalled();
   });
 });
+
+describe('/api/sportmonks proxy — yol normalizasyonu ve önbellek başlıkları (2026-10-07)', () => {
+  const ORIGINAL_MODE = process.env.SPORTMONKS_ALLOWLIST_MODE;
+  beforeEach(() => {
+    vi.resetModules();
+    process.env.SPORTMONKS_API_KEY = 'test-token';
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+  afterEach(() => {
+    vi.restoreAllMocks();
+    if (ORIGINAL_MODE === undefined) delete process.env.SPORTMONKS_ALLOWLIST_MODE;
+    else process.env.SPORTMONKS_ALLOWLIST_MODE = ORIGINAL_MODE;
+  });
+
+  const TRAVERSALS: string[][] = [
+    ['football', '..', 'odds', 'bookmakers'], // %2E%2E / %2e%2e (Next çözer)
+    ['football', '%2E%2E', 'odds'], // %252E%252E
+    ['football', 'teams', 'search', '../odds'], // %2F
+    ['football', 'teams', 'search', 'a\\b'],
+    ['football', '', 'teams', '34'],
+    ['football', '．．', 'odds'],
+    ['football', '‥', 'odds'],
+  ];
+
+  it.each(['enforce', 'log', 'off', undefined])('mod %s: yol atlama varyantları 400, upstream\'e gitmez, no-store', async (mode) => {
+    if (mode === undefined) delete process.env.SPORTMONKS_ALLOWLIST_MODE;
+    else process.env.SPORTMONKS_ALLOWLIST_MODE = mode;
+    vi.spyOn(global, 'fetch').mockImplementation(async () => new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    const handler = (await import('@/pages/api/sportmonks/[...path]')).default;
+    for (const segments of TRAVERSALS) {
+      const res = await call(handler, segments);
+      expect(res.statusCode).toBe(400);
+      expect(res.headers['Cache-Control']).toBe('no-store');
+    }
+    expect(global.fetch).not.toHaveBeenCalled();
+  });
+
+  it('enforce: odds/bookmakers 403 no-store', async () => {
+    delete process.env.SPORTMONKS_ALLOWLIST_MODE;
+    vi.spyOn(global, 'fetch').mockImplementation(async () => new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    const handler = (await import('@/pages/api/sportmonks/[...path]')).default;
+    const res = await call(handler, ['football', 'odds', 'bookmakers']);
+    expect(res.statusCode).toBe(403);
+    expect(res.headers['Cache-Control']).toBe('no-store');
+  });
+
+  it('başarılı statik veri uzun, canlı veri ≤ 15 sn CDN önbelleği alır', async () => {
+    vi.spyOn(global, 'fetch').mockImplementation(async () => new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    const handler = (await import('@/pages/api/sportmonks/[...path]')).default;
+    const live = await call(handler, ['football', 'livescores', 'inplay']);
+    const m = /^public, s-maxage=(\d+), stale-while-revalidate=\d+$/.exec(live.headers['Cache-Control']!);
+    expect(m).not.toBeNull();
+    expect(Number(m![1])).toBeLessThanOrEqual(15);
+    const league = await call(handler, ['football', 'leagues', '600']);
+    expect(league.headers['Cache-Control']).toMatch(/^public, s-maxage=86400, /);
+  });
+
+  it.each([404, 500, 429, 401])('upstream %i → no-store (hata CDN\'e girmez)', async (status) => {
+    vi.spyOn(global, 'fetch').mockImplementation(async () => new Response(JSON.stringify({ message: 'x' }), { status }));
+    const handler = (await import('@/pages/api/sportmonks/[...path]')).default;
+    const res = await call(handler, ['football', 'teams', '999999']);
+    expect(res.statusCode).toBe(status);
+    expect(res.headers['Cache-Control']).toBe('no-store');
+  });
+});
