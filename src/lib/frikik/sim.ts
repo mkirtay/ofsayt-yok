@@ -34,6 +34,11 @@ import {
   type V3,
 } from '@/lib/pitchPhysics/core';
 
+/**
+ * Simülasyon sürümü: fizik / karar mantığı değişince artar (skor tablosu kayıtları bu sürümle saklanır; farklı sürümün
+ * girdileri yeniden hesaplanamaz). 2: kaleci kale çizgisinin önünde (x −1,1), temas = kurtarış (tutma / çelme).
+ */
+export const SIM_VERSION = 2;
 export const TICK = 1 / 120;
 const SUBSTEPS = 2;
 const H = TICK / SUBSTEPS;
@@ -61,7 +66,16 @@ const TUNING: Tuning = {
 
 /** Baraj figürü ve kaleci (dikey silindir). */
 export const FIGURE = { r: 0.26, height: 1.75, spacing: 0.56, restitution: 0.3 };
-export const KEEPER = { r: 0.85, height: 2.08, x: -0.75, restitution: 0.25 };
+/**
+ * Kaleci: dikey silindir; x = −1,1 → ön yüzü (−0,25) + top yarıçapı kale çizgisinin (top merkezi 0,22) gerisinde kalır:
+ * çarpışma çözümü topu asla çizginin ötesine itemez (v1'de x −0,75 / r 0,85 silindir çizgiyi kesiyordu → temastan sonra
+ * "gol"). Temas = kurtarış: hızlı top çelinir (parry), yavaş top tutulur (catch).
+ */
+export const KEEPER = { r: 0.85, height: 2.08, x: -1.1, restitution: 0.25 };
+/** Kurtarış: topun sürati bunun altındaysa tutulur (hız sıfır, yere düşer); üstündeyse çelinir. */
+export const CATCH_SPEED = 20;
+/** Çelme: topun kaleden uzağa (−x) en az bu hızla, yukarı en az bu hızla çıkması. */
+const PARRY = { back: 3, keepX: 0.35, keepZ: 0.5, up: 1.5, keepY: 0.3 };
 export const WALL_DISTANCE = 9.15;
 /**
  * Kaleci vuruştan ÖNCE yerinde durur (gerçek serbest vuruş: barajın kapatmadığı tarafı kollayan, kale ortasına yakın bir
@@ -183,7 +197,7 @@ export const LIVES = 3;
 export const MAX_LEVEL_SHOTS = 400;
 /** Kaleci kademeleri (seviye modunda `keeper` kaldıracı bu diziyi tırmanır): daha erken, daha hızlı, daha isabetli tahmin. */
 export const KEEPER_TIERS: readonly KeeperTier[] = [
-  { react: 64, speed: 2.3, err: 2.2 },
+  { react: 68, speed: 2.3, err: 2.6 },
   { react: 54, speed: 2.7, err: 1.5 },
   { react: 46, speed: 3.1, err: 1.0 },
   { react: 40, speed: 3.5, err: 0.6 },
@@ -481,6 +495,10 @@ export function shotParams(round: Round, input: ShotInput): ShotParams | null {
 // ── Vuruş simülasyonu ─────────────────────────────────────────────────────────────────────────────────
 
 export type ShotKind = 'goal' | 'saved' | 'wall' | 'post' | 'miss';
+/** Kurtarış biçimi (görsel): top kalecide kalır ya da çelinir. */
+export function saveStyle(speed: number): 'catch' | 'parry' {
+  return speed < CATCH_SPEED ? 'catch' : 'parry';
+}
 export type ShotResult = { kind: ShotKind; points: number; viaPost: boolean; corner: boolean };
 
 export type ShotState = {
@@ -589,7 +607,24 @@ export function stepShot(s: ShotState): void {
     for (const f of w) {
       if (cylinderHit(s.pos, s.vel, f.x + rowX * wallOff, f.z + rowZ * wallOff, FIGURE.r, FIGURE.height, FIGURE.restitution)) s.touchedWall = true;
     }
-    if (cylinderHit(s.pos, s.vel, KEEPER.x, kz, KEEPER.r, KEEPER.height, KEEPER.restitution)) s.touchedKeeper = true;
+    // Temas hızı çarpışma çözümünden ÖNCE ölçülür (bounceCircle normal bileşeni yansıtıp küçültür)
+    const speedIn = Math.sqrt(s.vel.x * s.vel.x + s.vel.y * s.vel.y + s.vel.z * s.vel.z);
+    if (!s.touchedKeeper && cylinderHit(s.pos, s.vel, KEEPER.x, kz, KEEPER.r, KEEPER.height, KEEPER.restitution)) {
+      // Temas = kurtarış (karar burada, v2). Hızlı top çelinir: kaleden uzağa ve hafif yukarı; yavaş top tutulur.
+      s.touchedKeeper = true;
+      if (speedIn < CATCH_SPEED) {
+        s.vel.x = 0;
+        s.vel.y = 0;
+        s.vel.z = 0;
+      } else {
+        const ax = Math.abs(s.vel.x);
+        s.vel.x = -Math.max(PARRY.back, ax * PARRY.keepX);
+        s.vel.z = (s.pos.z >= kz ? 1 : -1) * Math.max(1, Math.abs(s.vel.z) * PARRY.keepZ);
+        s.vel.y = Math.max(PARRY.up, s.vel.y * PARRY.keepY);
+      }
+      s.curve = 0;
+      finish(s, 'saved');
+    }
     const events: StepEvent[] = [];
     collideGoal(prev, s.pos, s.vel, goal, BALL_R, events, TUNING);
     applyNetDrag(s.pos, s.vel, goal, H, TUNING);

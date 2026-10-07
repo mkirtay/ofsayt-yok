@@ -3,10 +3,12 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
   BALL_R,
+  CATCH_SPEED,
   FIGURE,
   GOAL,
   KEEPER,
   MAX_SERIES_SCORE,
+  SIM_VERSION,
   KEEPER_LEVELS,
   KEEPER_TIERS,
   LEVER_CAPS,
@@ -30,6 +32,7 @@ import {
   rng,
   scatterAmplitude,
   scatterSeed,
+  saveStyle,
   scoreSeries,
   shotParams,
   simulateShot,
@@ -339,10 +342,12 @@ describe('vuruş sonuçları ve puan', () => {
       return g / n;
     };
     expect(goals(openHard, 0.45)).toBeLessThanOrEqual(0.1); // orta güç: kaleci yetişir
-    expect(goals(openHard, 0.8)).toBeGreaterThanOrEqual(0.4); // sert: çoğu geçer (sapma payıyla)
+    expect(goals(openHard, 0.8)).toBeGreaterThanOrEqual(0.15); // sert: bir kısmı geçer (v2: temas = kurtarış)
+    expect(goals(openHard, 0.8)).toBeGreaterThan(goals(openHard, 0.45));
     // Kolay seviyede (ilk 2 vuruş) orta güç de yeter
     const easy = { ...openHard, keeper: { ...openHard.keeper, react: KEEPER_LEVELS[0]!.react, speed: KEEPER_LEVELS[0]!.speed } };
-    expect(goals(easy, 0.45)).toBeGreaterThanOrEqual(0.6);
+    expect(goals(easy, 0.45)).toBeGreaterThanOrEqual(0.3); // v2: temas = kurtarış, yine de zor kalecinin 3+ katı
+    expect(goals(easy, 0.45)).toBeGreaterThan(goals(openHard, 0.45) * 3);
   });
 
   it('barajın ortasına alçak sert şut barajda kalır', () => {
@@ -375,6 +380,82 @@ describe('vuruş sonuçları ve puan', () => {
     expect(s.total).toBeLessThanOrEqual(MAX_SERIES_SCORE);
     expect(MAX_SERIES_SCORE).toBe(1250);
     expect(scoreSeries(SEED, []).total).toBe(0);
+  });
+});
+
+describe('kaleci teması (sim v2)', () => {
+  it('SIM_VERSION 2; kaleci silindiri kale çizgisini kesmez (çarpışma topu çizginin ötesine itemez)', () => {
+    expect(SIM_VERSION).toBe(2);
+    expect(KEEPER.x + KEEPER.r + BALL_R).toBeLessThanOrEqual(BALL_R);
+  });
+
+  it('temas = kurtarış: karar temas anında; top sonra kale çizgisini geçmez; hızlı top çelinir (geri + yukarı), yavaş top tutulur', () => {
+    const r = { ...openHard, keeper: { ...openHard.keeper, z0: 0, guessErr: 0 } };
+    let parries = 0;
+    let catches = 0;
+    for (const [z, y, power] of [
+      [0.3, 1.0, 0.9],
+      [-0.4, 1.6, 0.8],
+      [0.2, 0.5, 0.1],
+      [0.5, 1.2, 0.12],
+    ] as const) {
+      const st = startShot(r, swipe(z, y, msFor(z, y, power)));
+      let contactTick = -1;
+      while (!st.result) {
+        stepShot(st);
+        if (st.touchedKeeper && contactTick < 0) contactTick = st.tick;
+      }
+      expect(st.result!.kind, `z ${z} y ${y}`).toBe('saved');
+      expect(st.tick).toBe(contactTick); // karar temas anında
+      expect(st.pos.x).toBeLessThanOrEqual(BALL_R);
+      // Tutma: hız sıfır (sert şutlar çelinir: kaleden uzağa, yukarı); güç 0,1–0,12 yavaş (< 20 m/sn), 0,8–0,9 hızlı
+      if (st.vel.x === 0 && st.vel.z === 0) {
+        catches++;
+        expect(power).toBeLessThanOrEqual(0.2);
+      } else {
+        parries++;
+        expect(power).toBeGreaterThan(0.5);
+        expect(st.vel.x).toBeLessThan(0);
+        expect(st.vel.y).toBeGreaterThanOrEqual(1.3); // 1,5 − bir alt adım yer çekimi
+      }
+      // Sonraki 400 adım yalnız görsel: top kaleye girmez
+      for (let i = 0; i < 400; i++) {
+        stepShot(st);
+        expect(st.pos.x <= BALL_R || Math.abs(st.pos.z) > GOAL.halfW, `tick ${st.tick}`).toBe(true);
+      }
+      expect(st.result!.kind).toBe('saved');
+    }
+    expect(parries).toBeGreaterThan(0);
+    expect(catches).toBeGreaterThan(0);
+    expect(saveStyle(CATCH_SPEED - 0.1)).toBe('catch');
+    expect(saveStyle(CATCH_SPEED)).toBe('parry');
+  });
+
+  it('kural matrisi (hızlı): ortaya / kaleciye yakın lob ve şutlar 1. seviyede çoğunlukla kurtarılır, üst köşeler her seviyede gol, seviye arttıkça kaleci zorlaşır', () => {
+    const rate = (lv: number, pick: (r: Round) => { z: number; y: number; p: number; b?: number }, kind: ShotResult['kind'], seeds = 60) => {
+      let n = 0;
+      for (let seed = 1; seed <= seeds; seed++) {
+        const r = makeLevelRound(seed, lv);
+        const s = pick(r);
+        if (simulateShot(r, swipe(s.z, s.y, msFor(s.z, s.y, s.p), s.b ?? 0, 30)).kind === kind) n++;
+      }
+      return n / seeds;
+    };
+    const near = (r: Round) => r.keeper.z0 + (r.keeper.z0 > 0 ? 0.4 : -0.4);
+    const far = (r: Round) => (r.keeper.z0 > 0 ? -1 : 1);
+    // Lob (yavaş, yüksek yay: barajı aşar) ortaya / kaleciye yakın → L1'de çoğunlukla kurtarış
+    expect(rate(1, () => ({ z: 0, y: 1.6, p: 0.3 }), 'saved')).toBeGreaterThanOrEqual(0.55);
+    expect(rate(1, (r) => ({ z: near(r), y: 0.9, p: 0.35 }), 'goal')).toBeLessThanOrEqual(0.3);
+    expect(rate(1, (r) => ({ z: near(r), y: 1.2, p: 0.75 }), 'goal')).toBeLessThanOrEqual(0.2);
+    // Üst köşe: her seviyede gol (erişilemez)
+    for (const lv of [1, 3, 5]) expect(rate(lv, (r) => ({ z: far(r) * 3.0, y: 2.0, p: 0.75 }), 'goal'), `L${lv}`).toBeGreaterThanOrEqual(0.85);
+    // Kaleciden uzak tarafa lob: L1'de gol (yetişemez), L5'te belirgin daha az
+    expect(rate(1, (r) => ({ z: far(r) * 2.5, y: 1.6, p: 0.3 }), 'goal')).toBeGreaterThanOrEqual(0.8);
+    expect(rate(5, (r) => ({ z: far(r) * 2.5, y: 1.6, p: 0.3 }), 'goal')).toBeLessThanOrEqual(0.7);
+    // Yakın tarafa sert yer şutu: L1'de kısmen gol, L5'te çok az
+    const nearSideLow = (r: Round) => ({ z: (r.keeper.z0 > 0 ? 1 : -1) * 2.5, y: 0.4, p: 0.75 });
+    expect(rate(1, nearSideLow, 'goal')).toBeGreaterThanOrEqual(0.3);
+    expect(rate(5, nearSideLow, 'goal')).toBeLessThanOrEqual(0.2);
   });
 });
 
