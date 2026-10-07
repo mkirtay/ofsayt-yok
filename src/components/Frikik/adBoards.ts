@@ -2,7 +2,7 @@
  * Frikik sahası reklam panoları: kale arkasında ve tribün yanında karışık boyutlu (geniş / kare / dikey) panolar.
  * İçerik tek dosyadan gelir (lib/frikik/ads.json: metin / görsel / URL); boş slotta "Reklam vermek için iletişime geçin"
  * + iletişim adresi yazar. Performans: bütün panolar TEK atlas dokusu + TEK birleşik geometri (1 draw call); görseller
- * sonradan yüklenip atlasa çizilir. Panolar topun yolunda değildir (kale arkası x > 6, yanlar |z| > 27).
+ * sonradan yüklenip atlasa çizilir. Panolar topun yolunda değildir (kale arkası x = 11,5, yanlar |z| > 27).
  */
 import { BufferAttribute, BufferGeometry, CanvasTexture, DoubleSide, Mesh, MeshBasicMaterial, Raycaster, SRGBColorSpace, Vector2, type Camera } from 'three';
 import adsConfig from '@/lib/frikik/ads.json';
@@ -14,14 +14,18 @@ export type AdSlot = { id: string; kind: AdKind; face: AdFace; x: number; y: num
 export type AdEntry = { slot: string; text?: string | null; image?: string | null; url?: string | null };
 export type AdsConfig = { contact: string; empty: { tr: string; en: string }; ads: AdEntry[] };
 
-/** Slotlar (dünya, m). Kale arkası x = 8,5 (OFSAYT YOK şeridi 6,2 ile tribün 12 arasında); yanlar |z| = 27,5. */
+/**
+ * Slotlar (dünya, m). Kale arkası panolar kalenin 11,5 m gerisinde ve iç kenarı |z| ≥ 12: kamera en geniş açıdan
+ * (|z| ≤ 22, x ≈ −42) baksa bile kale çizgisini |z| > 4,6'da keser → hiçbir pano direk / ağ ile kesişmez (0,215·camZ +
+ * 0,785·panoZ hesabı). Yanlar |z| = 27,5 (saha kenarı 26).
+ */
 export const AD_SLOTS: readonly AdSlot[] = [
-  { id: 'goal-wide-l', kind: 'wide', face: 'west', x: 8.5, y: 1.5, z: -6.5, w: 7, h: 1.6 },
-  { id: 'goal-wide-r', kind: 'wide', face: 'west', x: 8.5, y: 1.5, z: 6.5, w: 7, h: 1.6 },
-  { id: 'goal-square-l', kind: 'square', face: 'west', x: 8.5, y: 1.8, z: -12, w: 2.2, h: 2.2 },
-  { id: 'goal-square-r', kind: 'square', face: 'west', x: 8.5, y: 1.8, z: 12, w: 2.2, h: 2.2 },
-  { id: 'goal-tall-l', kind: 'tall', face: 'west', x: 8.5, y: 2.4, z: -15.5, w: 1.6, h: 3.4 },
-  { id: 'goal-tall-r', kind: 'tall', face: 'west', x: 8.5, y: 2.4, z: 15.5, w: 1.6, h: 3.4 },
+  { id: 'goal-wide-l', kind: 'wide', face: 'west', x: 11.5, y: 1.0, z: -15.5, w: 7, h: 1.5 },
+  { id: 'goal-wide-r', kind: 'wide', face: 'west', x: 11.5, y: 1.0, z: 15.5, w: 7, h: 1.5 },
+  { id: 'goal-square-l', kind: 'square', face: 'west', x: 11.5, y: 1.3, z: -20.3, w: 2.2, h: 2.2 },
+  { id: 'goal-square-r', kind: 'square', face: 'west', x: 11.5, y: 1.3, z: 20.3, w: 2.2, h: 2.2 },
+  { id: 'goal-tall-l', kind: 'tall', face: 'west', x: 11.5, y: 1.9, z: -22.8, w: 1.6, h: 3.4 },
+  { id: 'goal-tall-r', kind: 'tall', face: 'west', x: 11.5, y: 1.9, z: 22.8, w: 1.6, h: 3.4 },
   { id: 'side-wide-l', kind: 'wide', face: 'north', x: -14, y: 1.0, z: -27.5, w: 10, h: 1.5 },
   { id: 'side-wide-r', kind: 'wide', face: 'south', x: -14, y: 1.0, z: 27.5, w: 10, h: 1.5 },
   { id: 'side-square-l', kind: 'square', face: 'north', x: -24, y: 1.3, z: -27.5, w: 2, h: 2 },

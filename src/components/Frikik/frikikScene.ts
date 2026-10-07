@@ -39,7 +39,7 @@ import {
   WebGLRenderer,
 } from 'three';
 import { buildAdBoards } from './adBoards';
-import { makeFigure, makeShared, poseKeeperDive } from './figures';
+import { makeFigure, makeShared, setKeeperPose } from './figures';
 import { HUB_LEAGUE_IDS } from '@/config/hubLeagueGroups';
 import { sportmonksLeagueLogoUrl } from '@/utils/leagueLogo';
 import { logoSrc } from '@/utils/logoUrl';
@@ -308,7 +308,9 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
     scene.add(fig.group);
     return { fig, shadow: makeShadow(0.95, 0.4) };
   });
-  const keeperFig = makeFigure(shared, { kit: 0xffc83d, shorts: 0x0b1511, skin: 0xe8b98a, hair: 0x1a120c, socks: 0x0b1511 }, true, figMats, KEEPER.height);
+  // Kaleci görselde fiziğinden (2,08 m silindir) ~%17 büyük: üst direğe (2,44) yakın boy, hazır duruşta çömelik
+  const keeperFig = makeFigure(shared, { kit: 0xffc83d, shorts: 0x0b1511, skin: 0xe8b98a, hair: 0x1a120c, socks: 0x0b1511, glove: 0xff7a1a }, true, figMats, KEEPER.height * 1.17);
+  const KEEPER_SCALE = (KEEPER.height * 1.17) / 1.8;
   keeperFig.group.position.x = KEEPER.x;
   scene.add(keeperFig.group);
   const keeperShadow = makeShadow(1.3, 0.4);
@@ -351,6 +353,14 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
   let round: Round | null = null;
   /** Baraj sırasının doğrultusu (hareketli baraj bu eksende kayar). */
   let wallRow = { x: 0, z: 1 };
+  /**
+   * Kaleci animasyon planı (yalnız görsel; sonuç sim.ts'in): hamle yönü, dalış mı uzanma mı, dalışın başladığı z
+   * (yan adımın sonu; dalışta gövde sabit kalır, kayma yok) ve süresi (sim kalecisinin hedefe varış süresi).
+   */
+  let keeperAnim: { dir: number; dive: boolean; diveZ: number; diveDur: number; tiltMax: number } | null = null;
+  const READY_POSE = { crouch: 0.35, tilt: 0, lift: 0, dir: 1, reach: 0 };
+  /** Yan adım / çömelme süresi (tick ≈ 0,15 sn) ve kalecinin görsel uzunluğu (m; dalışta direğe girmemesi için). */
+  const KEEPER_STEP_TICKS = 18;
   let basis = { fx: 1, fz: 0, rx: 0, rz: 1 };
   let phase: 'idle' | 'aim' | 'flight' | 'hold' | 'done' = 'idle';
   let roundTick = 0;
@@ -427,7 +437,8 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
     });
     placeWall(0);
     keeperFig.group.rotation.y = Math.atan2(round.ball.z - round.keeper.z0, -(round.ball.x - KEEPER.x));
-    poseKeeperDive(keeperFig, 0, 1);
+    keeperAnim = null;
+    setKeeperPose(keeperFig, READY_POSE);
     frameCamera();
     phase = 'aim';
     opts.onRound({ index: i, level, lives, wind: round.wind, dist: ballDistance(round) });
@@ -574,14 +585,44 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
       tick();
     }
     if (round) {
-      const kz = shot ? shot.keeperZ : keeperZ(round, roundTick);
+      let kz = shot ? shot.keeperZ : keeperZ(round, roundTick);
+      if (shot && shot.tick >= round.keeper.react) {
+        // Hamle: yan adım / çömelme (~0,15 sn) → uzak-yavaş topta yan adım + uzanma, köşeye giden sert topta dalış.
+        const r = round.keeper;
+        if (!keeperAnim) {
+          const dir = shot.keeperTarget >= r.z0 ? 1 : -1;
+          const travel = Math.abs(shot.keeperTarget - r.z0);
+          const speedH = Math.hypot(shot.vel.x, shot.vel.z);
+          const stepDist = Math.min(travel, KEEPER_STEP_TICKS * r.speed * TICK);
+          const dive = travel > 1.3 || (travel > 0.7 && speedH > 21);
+          const diveZ = r.z0 + dir * stepDist;
+          const diveDur = Math.max(24, Math.min(54, Math.ceil((travel - stepDist) / (r.speed * TICK))));
+          // Dalışta uzanan gövde (≈1,9 m × ölçek) iç direği geçmesin
+          const room = Math.max(0, shot.goal.halfW - 0.2 - dir * diveZ);
+          const tiltMax = Math.min(1.1, Math.asin(Math.min(1, room / (1.9 * KEEPER_SCALE))));
+          keeperAnim = { dir, dive, diveZ, diveDur, tiltMax };
+        }
+        const a = keeperAnim;
+        const t = shot.tick - r.react;
+        if (t < KEEPER_STEP_TICKS) {
+          const u = t / KEEPER_STEP_TICKS;
+          setKeeperPose(keeperFig, { crouch: 0.35 + 0.5 * u, tilt: 0.1 * u, lift: 0, dir: a.dir, reach: 0.35 * u });
+        } else if (a.dive) {
+          kz = a.diveZ;
+          const p = Math.min(1, (t - KEEPER_STEP_TICKS) / a.diveDur);
+          const e = p < 0.5 ? 2 * p * p : 1 - 2 * (1 - p) * (1 - p);
+          const landed = t - KEEPER_STEP_TICKS - a.diveDur;
+          // Havada: yay (tepe ~0,4 m); inişte kısa sekme, sonra yerde kalır
+          const lift = p < 1 ? 0.4 * Math.sin(Math.PI * p) : landed < 10 ? 0.05 * Math.sin((Math.PI * landed) / 10) : 0;
+          // İnişte dizler bükülü kalır (yerde yan yatış), kayma yok: gövde z'si diveZ'de sabit
+          setKeeperPose(keeperFig, { crouch: 0.85 - 0.45 * e, tilt: a.tiltMax * e, lift: lift / KEEPER_SCALE, dir: a.dir, reach: 1 });
+        } else {
+          const p = Math.min(1, (t - KEEPER_STEP_TICKS) / 20);
+          setKeeperPose(keeperFig, { crouch: 0.85, tilt: 0.3 * p, lift: 0, dir: a.dir, reach: 0.35 + 0.65 * p });
+        }
+      }
       keeperFig.group.position.z = kz;
       keeperShadow.position.set(KEEPER.x, 0.008, kz);
-      // Dalış: hamle başladıktan sonra ~0,25 sn içinde poz; yön tahminine göre (yalnız görsel)
-      if (shot && shot.tick >= round.keeper.react) {
-        const dir = shot.keeperTarget >= round.keeper.z0 ? 1 : -1;
-        poseKeeperDive(keeperFig, Math.min(1, (shot.tick - round.keeper.react) / 30), dir);
-      }
       if (round.wallMotion.amp > 0) placeWall(wallOffset(round, shot ? shot.releaseTick + shot.tick : roundTick));
     }
     ballView.group.position.copy(ballPos);

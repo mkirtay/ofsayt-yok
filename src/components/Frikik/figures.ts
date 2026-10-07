@@ -1,11 +1,14 @@
 /**
  * Frikik figürleri (yalnız görsel; fizik sim.ts'teki silindirlerdir): insan oranlı baraj oyuncusu (kollar göğüste
  * kavuşturulmuş, bacak / gövde / baş ayrı) ve kaleci (hazır duruş: dizler kırık, gövde önde, kollar yanda açık; vuruşta
- * tahminine doğru dalış animasyonu). Düşük poligon: her figür ~10 mesh, paylaşılan geometri ve malzemeler.
+ * `setKeeperPose` ile yan adım / uzanma / dalış). Düşük poligon: her figür ~10 mesh, paylaşılan geometri ve malzemeler.
+ *
+ * Eksenler: figür önü −x. Euler sırası XYZ (önce Z, sonra Y, sonra X uygulanır). Gövde / uzuv için: rotation.z =
+ * öne-arkaya (pozitif: öne / −x), rotation.x = yana (pozitif: baş / uzuv +z'ye).
  */
 import { BoxGeometry, CylinderGeometry, Group, Mesh, MeshStandardMaterial, SphereGeometry, type BufferGeometry, type Material } from 'three';
 
-export type FigureColors = { kit: number; shorts: number; skin: number; hair: number; socks: number };
+export type FigureColors = { kit: number; shorts: number; skin: number; hair: number; socks: number; glove?: number };
 
 export type Figure = {
   group: Group;
@@ -40,7 +43,7 @@ export function makeShared(geos: BufferGeometry[]): Shared {
     head: new SphereGeometry(0.115, 14, 10),
     hair: new SphereGeometry(0.12, 14, 10, 0, Math.PI * 2, 0, Math.PI * 0.55),
     boot: new BoxGeometry(0.22, 0.09, 0.11),
-    glove: new SphereGeometry(0.075, 10, 8),
+    glove: new SphereGeometry(0.11, 12, 9),
   };
   geos.push(...Object.values(s));
   return s;
@@ -97,44 +100,58 @@ export function makeFigure(shared: Shared, colors: FigureColors, keeper: boolean
     const fore = new Group();
     fore.position.set(0, -0.3, 0);
     add(fore, shared.forearm, skin, 0, -0.15, 0);
-    add(fore, keeper ? shared.glove : shared.head, keeper ? mat(colors.socks, 0.4) : skin, 0, -0.32, 0).scale.setScalar(keeper ? 1 : 0.45);
+    add(fore, keeper ? shared.glove : shared.head, keeper ? mat(colors.glove ?? 0xff7a1a, 0.45) : skin, 0, -0.3, 0).scale.setScalar(keeper ? 1 : 0.45);
     g.add(fore);
-    if (keeper) {
-      // Hazır duruş: üst kol yana-öne açık, ön kol öne kırık, avuçlar ileri
-      g.rotation.set(0.35, 0, sign * 0.55);
-      fore.rotation.x = -1.1;
-    } else {
-      // Kavuşturulmuş kollar: üst kol hafif öne, ön kol göğüs önünde yatay
-      g.rotation.set(0.5, 0, sign * 0.1);
-      fore.rotation.set(-1.75, 0, sign * -1.25);
+    if (!keeper) {
+      // Kavuşturulmuş kollar: üst kol öne, ön kol göğüs önünde yatay (önce −x'e çevrilir, sonra y ekseninde yana süpürülür)
+      g.rotation.set(0, 0, -0.5);
+      fore.rotation.set(0, -sign * 1.2, -1.57);
     }
     body.add(g);
     return g;
   };
   const armL = arm(-0.25, -1);
   const armR = arm(0.25, 1);
-  if (keeper) {
-    // Dizler kırık, gövde öne eğik
-    legL.rotation.x = legR.rotation.x = -0.15;
-    body.rotation.x = -0.18;
-    body.position.y = -0.03;
-  }
+  const fig = { group, body, armL, armR, legL, legR };
+  if (keeper) setKeeperPose(fig, { crouch: 0.35, tilt: 0, lift: 0, dir: 1, reach: 0 });
   group.scale.setScalar(height / 1.8);
-  return { group, body, armL, armR, legL, legR };
+  return fig;
 }
 
-/**
- * Kaleci dalışı: `p` 0→1 (vuruştan sonra), `dir` −1 / +1 (sola / sağa, dünya z). Gövde yana yatar, kollar o yöne
- * uzanır, bacaklar açılır; `p` 1'de poz tutulur. `p` 0 hazır duruşa döner.
- */
-export function poseKeeperDive(f: Figure, p: number, dir: number): void {
-  const e = p < 0.5 ? 2 * p * p : 1 - 2 * (1 - p) * (1 - p);
-  f.body.rotation.set(-0.18 - 0.25 * e, 0, dir * 1.15 * e);
-  f.body.position.y = -0.03 + 0.12 * Math.sin(Math.PI * Math.min(1, p * 1.2));
+export type KeeperPose = {
+  /** Çömelme 0–1 (dizler kırık, gövde önde, alçalır). */
+  crouch: number;
+  /** Yana yatış (rad, 0 = dik; 1,3 ≈ yerde uzanmış). Gövde ayak bileğinden döner. */
+  tilt: number;
+  /** Yerden yükselme (m, figür ölçeğinde): dalış havadayken > 0, inince 0. */
+  lift: number;
+  /** Hamle yönü (dünya z): −1 sol, +1 sağ. */
+  dir: number;
+  /** Öndeki kolun yana uzanması 0–1 (0: hazır duruş, 1: tam uzanmış). */
+  reach: number;
+};
+
+/** Kaleci pozu: hazır duruş (crouch .35), yan adım + uzanma (reach), dalış (tilt + lift). Ayaklar grup orijininde. */
+export function setKeeperPose(f: Figure, p: KeeperPose): void {
+  const dir = p.dir >= 0 ? 1 : -1;
+  // Gövde: öne eğim (çömelmeyle artar) + yana yatış; çömelirken alçalır
+  f.body.rotation.set(dir * p.tilt, 0, 0.12 + 0.3 * p.crouch);
+  f.body.position.y = p.lift - 0.14 * p.crouch - 0.02;
+  // Bacaklar: dizler kırık (geriye), çömelince açık; dalışta hafif bükülü ve kapalı
+  const spread = 0.12 + 0.3 * p.crouch;
+  f.legL.rotation.set(spread * (1 - p.tilt / 1.3), 0, 0.25 + 0.35 * p.crouch);
+  f.legR.rotation.set(-spread * (1 - p.tilt / 1.3), 0, 0.25 + 0.35 * p.crouch);
+  // Kollar: hazırda yana-öne açık, ön kol öne kırık; uzanmada öndeki kol yana yukarı; dalışta iki kol gövde boyunca
+  // "yukarı" (gövde yattığı için dünyada dalış yönüne) uzanır
   const lead = dir > 0 ? f.armR : f.armL;
   const trail = dir > 0 ? f.armL : f.armR;
-  lead.rotation.set(0.35 - 0.6 * e, 0, dir * (0.55 + 2.2 * e));
-  trail.rotation.set(0.35 + 0.3 * e, 0, -dir * (0.55 - 0.9 * e));
-  f.legL.rotation.set(-0.15 - 0.3 * e, 0, -0.35 * e);
-  f.legR.rotation.set(-0.15 - 0.3 * e, 0, 0.35 * e);
+  const t = Math.min(1, p.tilt / 1.3);
+  const leadSide = 0.55 + 1.6 * p.reach + (Math.PI * 0.92 - 0.55) * t;
+  const trailSide = 0.55 - 0.35 * p.reach + (Math.PI * 0.72 - 0.55) * t;
+  lead.rotation.set(-dir * Math.min(leadSide, Math.PI * 0.92), 0, -0.35 * (1 - t));
+  trail.rotation.set(dir * trailSide, 0, -0.35 * (1 - t));
+  const leadFore = lead.children[1] as Group;
+  const trailFore = trail.children[1] as Group;
+  leadFore.rotation.set(0, 0, -1.0 * (1 - p.reach) * (1 - t) - 0.05);
+  trailFore.rotation.set(0, 0, -1.0 * (1 - t) - 0.05);
 }
