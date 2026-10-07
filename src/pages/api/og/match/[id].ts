@@ -4,7 +4,9 @@
  * Güvenlik: görseldeki her metin / logo sunucudaki maç verisinden (önbellekli Sportmonks) gelir; adres yalnız kimlik
  * ve sürüm taşır. Maliyet: `v` güncel sürüm değilse çizmeden güncel adrese yönlendirir (rastgele `v` ile önbellek
  * kırılıp CPU harcatılamaz); CDN süreleri maç durumuna göre (bkz. server/og/ogCache.ts).
- * Maç yok / geçici hata → varsayılan paylaşım görseline 307 (kısa önbellek).
+ * Maç yok / geçici hata → varsayılan paylaşım görseline 307 (kısa önbellek). İzinli sorgu anahtarı yalnız `v`;
+ * kanonik olmayan adres (fazla / tekrarlı parametre, baştaki sıfır, farklı kodlama) veri okunmadan, çizilmeden 308.
+ * Veri okuma + çizim IP başına, çizim ayrıca global bütçeyle sınırlı (bkz. server/og/ogGuard.ts).
  */
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { OG_DEFAULT_IMAGE } from '@/config/brandImages';
@@ -15,14 +17,29 @@ import { renderMatchOgImage } from '@/server/og/matchOgImage';
 import { redirect, sendImageResponse } from '@/server/og/sendImage';
 import { matchOgImagePath, matchOgVersion } from '@/utils/matchOgImage';
 import { captureError } from '@/lib/logger';
+import {
+  allowOgRender,
+  allowOgWorkForIp,
+  canonicalNumericId,
+  canonicalQuery,
+  firstQueryValue,
+  rawPathSegment,
+  redirectIfNotCanonical,
+} from '@/server/og/ogGuard';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET' && req.method !== 'HEAD') {
     res.setHeader('Allow', 'GET, HEAD');
     return res.status(405).end();
   }
-  const id = String(req.query.id ?? '');
-  if (!/^\d{1,12}$/.test(id)) return redirect(res, OG_DEFAULT_IMAGE.path, OG_CACHE.fallback);
+  const id = canonicalNumericId(req.query.id, 12);
+  if (!id) return redirect(res, OG_DEFAULT_IMAGE.path, OG_CACHE.fallback);
+  const v = firstQueryValue(req.query.v);
+  const canonical = `/api/og/match/${id}${canonicalQuery([['v', v && v.length <= 64 ? v : null]])}`;
+  if (redirectIfNotCanonical(req, res, canonical, { name: 'id', rawValue: rawPathSegment(req, '/api/og/match/') })) {
+    return;
+  }
+  if (!(await allowOgWorkForIp(req, res, 'match'))) return;
 
   try {
     // Botlar beklemez: sayfa render'ı bütçesi. Veri maç sayfasıyla aynı önbellekten (çoğunlukla HIT).
@@ -32,9 +49,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (lookup.kind !== 'found') return redirect(res, OG_DEFAULT_IMAGE.path, OG_CACHE.fallback);
     const match = lookup.match;
 
-    if (req.query.v !== matchOgVersion(match)) {
+    if (v !== matchOgVersion(match)) {
       return redirect(res, matchOgImagePath(match), OG_CACHE.versionRedirect);
     }
+    if (!(await allowOgRender(res, 'match'))) return;
     return await sendImageResponse(res, await renderMatchOgImage(match), matchOgCacheControl(match));
   } catch (err) {
     captureError('og-match', err);

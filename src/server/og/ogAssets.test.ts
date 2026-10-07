@@ -26,6 +26,8 @@ describe('ogAssets', () => {
       expect(await fetchLogoDataUri(bad, { fetchImpl })).toBeNull();
     }
     expect(fetchImpl).toHaveBeenCalledTimes(1);
+    // İzinli host başka adrese yönlendirirse izlenmez (SSRF savunma derinliği).
+    expect(vi.mocked(fetchImpl).mock.calls[0]).toEqual([expect.any(String), expect.objectContaining({ redirect: 'error' })]);
   });
 
   it('logo zaman aşımı (1,5 sn) / HTTP hatası / görsel olmayan yanıt → null (baş harfler çizilir)', async () => {

@@ -10,6 +10,10 @@ const h = vi.hoisted(() => ({
 
 vi.mock('@/lib/resolveLiveMatch', () => ({ resolveSportmonksMatch: h.lookup }));
 vi.mock('@/lib/logger', () => ({ captureError: vi.fn() }));
+vi.mock('@/lib/rateLimit', () => ({
+  hitFixedWindowRateLimit: vi.fn(async () => ({ success: true, remaining: 1, resetAt: 0 })),
+  requestIp: () => '203.0.113.9',
+}));
 vi.mock('@/server/og/matchOgImage', () => ({
   renderMatchOgImage: async (match: { id: number }) => {
     h.rendered.push(match);
@@ -37,7 +41,8 @@ async function get(query: Record<string, string>): Promise<Res> {
     },
     end() {},
   };
-  await handler({ method: 'GET', query, headers: { host: 'example.test' } } as unknown as NextApiRequest, res as unknown as NextApiResponse);
+  const url = `/api/og/match/${query.id}${query.v !== undefined ? `?v=${encodeURIComponent(query.v)}` : ''}`;
+  await handler({ method: 'GET', url, query, headers: { host: 'example.test' } } as unknown as NextApiRequest, res as unknown as NextApiResponse);
   return out;
 }
 
