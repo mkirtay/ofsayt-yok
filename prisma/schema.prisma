@@ -72,6 +72,7 @@ model User {
   pushTokens          PushToken[]
   notifications       Notification[]  @relation("NotificationRecipient")
   notificationsAsActor Notification[] @relation("NotificationActor")
+  frikikScores        FrikikDailyScore[]
 }
 
 /// Kredi hareketleri defteri — bakiye değişikliklerinin denetim izi.
@@ -515,4 +516,29 @@ model GundemBotDraft {
 
   @@index([status, createdAt])
   @@index([fixtureId])
+}
+
+/// Frikik (günün frikiği) skor tablosu: kullanıcı + gün başına TEK kayıt (günün ilk bitmiş koşusu). Skor istemciden
+/// alınmaz; sunucu vuruş girdilerini sim.ts ile yeniden oynatır (lib/frikik/scoreSubmit.ts). `day` / `month` TR takvimi
+/// ("YYYY-MM-DD" / "YYYY-MM", lib/frikik/daily.ts). Sıralama: level DESC, score DESC, createdAt ASC. Aylık tablo
+/// kullanıcı başına ay içindeki en iyi kayıt. Tabloda görünen ad User.username (e-posta / gerçek ad asla).
+model FrikikDailyScore {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  day        String
+  month      String
+  score      Int
+  level      Int
+  cleared    Int
+  /// Yeniden oynatmada kullanılan simülasyon sürümü (lib/frikik/sim.ts SIM_VERSION); sürüm değişince eski kayıtlar
+  /// karşılaştırılabilir kalır ama yeniden üretilemez.
+  simVersion Int
+  seed       Int
+  shots      Int
+  createdAt  DateTime @default(now())
+
+  @@unique([userId, day])
+  @@index([day, level, score])
+  @@index([month, userId])
 }
