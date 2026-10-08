@@ -1,110 +1,204 @@
+@use 'sass:color';
 @use '../../styles/variables' as *;
 
-// Günün Frikiği kartı: canlı şeridin altında, sabit değil. Oynanmış / oynanmamış durumlar aynı en küçük yükseklikte
-// (kayma yok); oynanmış kart tek satır (daha hafif görünür).
+// Günün Frikiği kartı: canlı şeridin altında, sabit değil. Her iki temada aynı koyu yeşil zemin (marka yeşilinin
+// koyu tonları; metin beyaz, WCAG AA ≥ 4,5:1 — en açık metin zemini $color-primary-dark). Oynanmış / oynanmamış
+// durumlar aynı en küçük yükseklikte (hydration sonrası geçişte kayma yok). Süs: satır içi SVG (saha çizgileri + top),
+// yazı yok, aria-hidden; görsel isteği yok.
+$card-bg-deep: color.scale($color-primary-dark, $lightness: -58%); // #05332a civarı
+$card-bg-mid: color.scale($color-primary-dark, $lightness: -28%);
+$card-text: #ffffff;
+$card-text-soft: rgba(255, 255, 255, 0.9);
+$card-line: rgba(255, 255, 255, 0.16);
+$card-gold: var(--color-premium);
+$card-gold-strong: var(--color-premium-strong);
+$card-on-gold: var(--color-on-premium);
+
 .card {
-  min-height: 92px;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: flex;
+  // İki durum aynı yükseklik: masaüstü 140 px (başlık + 2 satır açıklama + liderler), mobil 144 px (kicker gizli).
+  min-height: 140px;
   margin-bottom: $spacing-3;
   padding: $spacing-3 $spacing-4;
-  background: $color-surface;
-  border: 1px solid $color-border;
-  border-left: 4px solid $color-primary;
-  border-radius: $radius-md;
   box-sizing: border-box;
+  color: $card-text;
+  // Metin en çok %60 genişlikte: zemin orada en açık $card-bg-mid (beyaz 8,4:1, altın 4,5:1); $color-primary-dark yalnız süsün altında.
+  background: linear-gradient(120deg, $card-bg-deep 0%, $card-bg-mid 70%, $color-primary-dark 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: $radius-md;
+  box-shadow: 0 6px 18px rgba(0, 60, 40, 0.18);
+
+  @media (max-width: 479px) {
+    min-height: 144px; // oynanmış kart (düğme satırı) bu yüksekliği doldurur; oynanmamış aynı kutuda ortalanır
+    padding: $spacing-3;
+  }
+
+  :global(:root[data-theme='light']) & {
+    box-shadow: 0 8px 22px rgba(0, 90, 60, 0.22);
+  }
+}
+
+// Süs: sağda ceza sahası çizgileri + top; içerik üstünde (z-index), süs tıklanmaz.
+.deco {
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: 46%;
+  max-width: 300px;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.9;
+
+  @media (max-width: 479px) {
+    width: 52%;
+    opacity: 0.7;
+  }
 }
 
 .row {
+  position: relative;
+  z-index: 1;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: $spacing-3;
-  min-height: 66px;
+  flex: 1 1 auto;
+  min-height: 116px;
+
+  @media (max-width: 479px) {
+    min-height: 120px;
+  }
 }
 
 .text {
   min-width: 0;
+  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
+}
+
+.kicker {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: $card-gold;
+
+  @media (max-width: 479px) {
+    display: none; // dar ekranda yükseklik bütçesi
+  }
 }
 
 .title {
   margin: 0;
-  font-size: 15px;
-  font-weight: 800;
+  font-size: 22px;
+  line-height: 1.1;
+  font-weight: 900;
   font-style: italic;
-  color: $color-text;
+  letter-spacing: -0.01em;
+  color: $card-text;
+
+  @media (max-width: 479px) {
+    font-size: 20px;
+  }
 }
 
 .meta {
   margin: 0;
-  font-size: 12px;
-  color: $color-text-secondary;
+  font-size: 13px;
+  line-height: 1.4;
+  color: $card-text-soft;
+  max-width: 34ch;
 }
 
 .leaders {
   display: flex;
   flex-wrap: wrap;
   gap: 2px $spacing-3;
-  margin: 0;
+  margin: 2px 0 0;
   min-height: 16px;
   font-size: 12px;
   font-weight: 600;
-  color: $color-text-secondary;
+  color: $card-text-soft;
+
+  @media (max-width: 479px) {
+    display: none; // dar ekranda yükseklik: liderler oyun sayfasında
+  }
 }
 
 .result {
   margin: 0;
-  font-size: 14px;
-  font-weight: 700;
-  color: $color-text;
+  font-size: 16px;
+  font-weight: 800;
+  color: $card-text;
   font-variant-numeric: tabular-nums;
 }
 
 .rank {
-  color: $color-primary-text;
+  color: $card-gold;
 }
 
+// Büyük "Oyna": altın (kredi rozetiyle aynı ton), koyu metin (kontrast ≈ 9:1).
 .play {
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 48px;
-  min-width: 112px;
-  padding: 0 $spacing-5;
+  gap: 8px;
+  min-height: 52px;
+  min-width: 132px;
+  padding: 0 $spacing-6;
   border-radius: $radius-full;
-  background: $color-primary;
-  color: #fff;
-  font-size: 15px;
-  font-weight: 800;
+  background: linear-gradient(135deg, $card-gold, $card-gold-strong);
+  color: $card-on-gold;
+  font-size: 17px;
+  font-weight: 900;
+  letter-spacing: 0.01em;
   text-decoration: none;
+  box-shadow: 0 4px 14px rgba(245, 179, 1, 0.35);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 
   &:hover {
-    background: $color-primary-dark;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(245, 179, 1, 0.45);
   }
 
   &:focus-visible {
-    outline: 2px solid $color-primary;
+    outline: 3px solid #fff;
     outline-offset: 2px;
+  }
+
+  @media (max-width: 479px) {
+    min-width: 112px;
+    min-height: 48px;
+    padding: 0 $spacing-4;
+    font-size: 16px;
   }
 }
 
 .actions {
   flex: 0 0 auto;
   display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   gap: $spacing-2;
 }
 
+// Oynanmış kart düğmeleri: beyaz çerçeveli, zemin şeffaf; "Tekrar oyna" altın dolgulu küçük varyant.
 .ghost {
   display: inline-flex;
   align-items: center;
-  min-height: 36px;
+  min-height: 38px;
   padding: 0 $spacing-3;
-  border: 1px solid $color-border;
+  border: 1px solid rgba(255, 255, 255, 0.45);
   border-radius: $radius-full;
-  background: transparent;
-  color: $color-primary-text;
+  background: rgba(255, 255, 255, 0.06);
+  color: $card-text;
   font: inherit;
   font-size: 13px;
   font-weight: 700;
@@ -112,21 +206,60 @@
   cursor: pointer;
 
   &:hover {
-    background: $color-muted;
+    background: rgba(255, 255, 255, 0.14);
   }
 
   &:focus-visible {
-    outline: 2px solid $color-primary;
+    outline: 2px solid #fff;
     outline-offset: 2px;
   }
 }
 
+.ghostGold {
+  border-color: transparent;
+  background: linear-gradient(135deg, $card-gold, $card-gold-strong);
+  color: $card-on-gold;
+
+  &:hover {
+    background: linear-gradient(135deg, $card-gold-strong, $card-gold);
+  }
+}
+
+// Mobil oynanmış kart: düğmeler metnin altında tam satır (metin sütunu daralmasın).
 @media (max-width: 479px) {
-  .row {
+  .card[data-played] .row {
     flex-wrap: wrap;
   }
 
-  .play {
+  .card[data-played] .actions {
     width: 100%;
+    justify-content: stretch;
   }
+
+  .card[data-played] .ghost {
+    flex: 1 1 0;
+    justify-content: center;
+  }
+
+  .result {
+    font-size: 15px;
+  }
+}
+
+// Süs çizgileri (SVG içinde currentColor kullanılmaz; sabit beyaz, düşük opaklık)
+.line {
+  fill: none;
+  stroke: $card-line;
+  stroke-width: 1.5;
+}
+
+.ball {
+  fill: #fff;
+  opacity: 0.92;
+}
+
+.ballSeam {
+  fill: none;
+  stroke: $card-bg-deep;
+  stroke-width: 1.2;
 }

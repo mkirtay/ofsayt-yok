@@ -38,7 +38,7 @@
   },
   "frikikCard": {
     "title": "Günün Frikiği",
-    "sub": "3 can, her seviye 1 vuruş. Herkes aynı frikiği oynuyor; kaç seviye geçersin?",
+    "sub": "3 can, her seviye 1 vuruş. Kaç seviye geçersin?",
     "play": "Oyna",
     "bestToday": "Günün en iyisi: {{nick}} · Seviye {{level}}",
     "monthLeader": "Ayın lideri: {{nick}} · Seviye {{level}}",
@@ -50,6 +50,7 @@
     "share": "Paylaş",
     "playAgain": "Tekrar oyna",
     "open": "Oyuna git",
-    "shareText": "Frikik'te {{level}}. seviyeye ulaştım, {{score}} puan. Sen kaça ulaşırsın?"
+    "shareText": "Frikik'te {{level}}. seviyeye ulaştım, {{score}} puan. Sen kaça ulaşırsın?",
+    "kicker": "Her gün yeni frikik"
   }
 }

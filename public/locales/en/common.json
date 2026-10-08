@@ -38,7 +38,7 @@
   },
   "frikikCard": {
     "title": "Free Kick of the Day",
-    "sub": "3 lives, one shot per level. Everyone plays the same free kick; how many levels can you clear?",
+    "sub": "3 lives, one shot per level. How many levels can you clear?",
     "play": "Play",
     "bestToday": "Best today: {{nick}} · Level {{level}}",
     "monthLeader": "Month leader: {{nick}} · Level {{level}}",
@@ -50,6 +50,7 @@
     "share": "Share",
     "playAgain": "Play again",
     "open": "Open the game",
-    "shareText": "I reached level {{level}} in Frikik with {{score}} points. How far can you get?"
+    "shareText": "I reached level {{level}} in Frikik with {{score}} points. How far can you get?",
+    "kicker": "New kick every day"
   }
 }

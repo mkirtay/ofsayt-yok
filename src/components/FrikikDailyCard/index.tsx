@@ -60,9 +60,11 @@ export default function FrikikDailyCard() {
 
   return (
     <section ref={ref} className={styles.card} data-played={played ? '' : undefined} aria-labelledby="frikik-card-title">
+      <PitchDeco />
       {played ? (
         <div className={styles.row}>
           <div className={styles.text}>
+            <p className={styles.kicker}>{t('frikikCard.kicker')}</p>
             <h2 id="frikik-card-title" className={styles.title}>
               {t('frikikCard.title')}
             </h2>
@@ -78,7 +80,7 @@ export default function FrikikDailyCard() {
             <button type="button" className={styles.ghost} onClick={() => void share()}>
               {t('frikikCard.share')}
             </button>
-            <Link href={PLAY_HREF} className={styles.ghost} onClick={onPlay}>
+            <Link href={PLAY_HREF} className={`${styles.ghost} ${styles.ghostGold}`} onClick={onPlay}>
               {played.rank ? t('frikikCard.playAgain') : t('frikikCard.open')}
             </Link>
           </div>
@@ -86,6 +88,7 @@ export default function FrikikDailyCard() {
       ) : (
         <div className={styles.row}>
           <div className={styles.text}>
+            <p className={styles.kicker}>{t('frikikCard.kicker')}</p>
             <h2 id="frikik-card-title" className={styles.title}>
               {t('frikikCard.title')}
             </h2>
@@ -96,10 +99,33 @@ export default function FrikikDailyCard() {
             </p>
           </div>
           <Link href={PLAY_HREF} className={styles.play} onClick={onPlay}>
+            <span aria-hidden="true">⚽</span>
             {t('frikikCard.play')}
           </Link>
         </div>
       )}
     </section>
+  );
+}
+
+/**
+ * Süs: ceza sahası + yay + top, kodla çizilmiş SVG (~0,8 KB satır içi, istek yok, her ölçekte keskin; yazı yok).
+ * Kırpılmış WebP/AVIF seçeneğine göre hafif: görsel ≥ 20 KB + ayrı istek + sabit en-boy gerektirirdi.
+ */
+function PitchDeco() {
+  return (
+    <svg className={styles.deco} viewBox="0 0 300 124" preserveAspectRatio="xMaxYMid slice" aria-hidden="true" focusable="false">
+      <g className={styles.line}>
+        <rect x="150" y="-20" width="220" height="164" rx="2" />
+        <rect x="236" y="22" width="134" height="80" />
+        <path d="M150 34 a30 30 0 0 1 0 56" />
+        <circle cx="190" cy="62" r="2.2" />
+        <path d="M-10 118 H 320" />
+      </g>
+      <g transform="translate(118 92)">
+        <circle className={styles.ball} r="13" />
+        <path className={styles.ballSeam} d="M0-13 L4-6 L11-5 M-11-5 L-4-6 L0-13 M-4-6 L-5 2 L0 6 L5 2 L4-6 M-5 2 L-11 6 M5 2 L11 6 M0 6 L0 13" />
+      </g>
+    </svg>
   );
 }
