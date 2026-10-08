@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import Link from 'next/link';
 import { useTranslation } from '@/lib/i18n';
+import '@/lib/i18nNamespaces/player';
 import TeamLogo from '@/components/TeamLogo';
 import type { PlayerSeasonStats } from '@/services/playerProfile';
 import { buildPlayerCareer, isCareerPartial, shortSeasonName, type CareerRow, type CareerTotals } from '@/utils/playerCareer';
