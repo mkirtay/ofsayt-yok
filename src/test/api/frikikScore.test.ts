@@ -1,9 +1,10 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { Prisma } from '@prisma/client';
 import { dailySeed, todayKey, parseDayKey } from '@/lib/frikik/daily';
 import { SIM_VERSION, scoreLevelRun } from '@/lib/frikik/sim';
 import { finishedRun } from '@/test/frikik/runFixture';
+import { parseScoreSubmission, verifyRun } from '@/lib/frikik/scoreSubmit';
 
 /** POST /api/frikik/score: sunucu skoru yeniden oynatır; istemci skoru asla kullanılmaz. DB ve Redis taklit. */
 const h = vi.hoisted(() => ({
@@ -94,7 +95,7 @@ describe('POST /api/frikik/score', () => {
   });
 
   it('yanlış tohum / bitmemiş koşu 400', async () => {
-    expect((await post({ ...good, seed: seed ^ 1 })).body).toMatchObject({ code: 'BAD_SEED' });
+    expect((await post({ ...good, seed: (seed ^ 1) >>> 0 })).body).toMatchObject({ code: 'BAD_SEED' });
     expect((await post({ ...good, shots: shots.slice(0, 1) })).body).toMatchObject({ code: 'RUN_NOT_FINISHED' });
     expect(h.created).toEqual([]);
   });
@@ -122,4 +123,62 @@ describe('POST /api/frikik/score', () => {
     expect(r.statusCode).toBe(429);
     expect(Number(r.headers['Retry-After'])).toBeGreaterThan(0);
   });
+});
+
+/**
+ * Tohum 32 bit işaretsiz; günlerin yaklaşık yarısında ≥ 2^31. `seed ^ 1` o günlerde negatif çıkıp gövde doğrulamasına
+ * (BAD_BODY) takılıyordu → test güne bağlı kırılıyordu. Burada gün sabit: biri 2^31 altı, biri üstü tohumlu.
+ */
+describe('POST /api/frikik/score – sabit günler (tohum 2^31 altı / üstü)', () => {
+  const CASES = [
+    { day: '2026-10-08', high: false }, // 1045983627
+    { day: '2026-10-09', high: true }, // 2147744602
+  ];
+
+  beforeEach(() => {
+    h.userId = 'u1';
+    h.username = 'eren';
+    h.created = [];
+    h.dupNext = false;
+    h.rl = { success: true, remaining: 1, resetAt: 0 };
+  });
+  afterEach(() => void vi.useRealTimers());
+
+  for (const { day: d, high } of CASES) {
+    it(`${d} (tohum ${high ? '≥' : '<'} 2^31): geçerli koşu kaydedilir, yanlış tohum BAD_SEED`, async () => {
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(new Date(`${d}T09:00:00Z`)); // TR 12:00
+      const s = dailySeed(parseDayKey(d)!);
+      expect(s >= 2 ** 31).toBe(high);
+      const run = finishedRun(s);
+      const body = { day: d, seed: s, simVersion: SIM_VERSION, shots: run };
+      const ok = await post(body);
+      expect(ok.statusCode).toBe(200);
+      expect(h.created[0]).toMatchObject({ day: d, seed: s, score: scoreLevelRun(s, run).total });
+      const wrong = (s ^ 1) >>> 0;
+      expect(wrong).toBeGreaterThanOrEqual(0);
+      const bad = await post({ ...body, seed: wrong });
+      expect(bad.statusCode).toBe(400);
+      expect(bad.body).toMatchObject({ code: 'BAD_SEED' });
+      expect(h.created).toHaveLength(1);
+    });
+  }
+});
+
+describe('verifyRun: 2^31 üstü tohumla geçerli koşu', () => {
+  // 2026-10-09 = 2147744602 (2^31'in hemen üstü), 2026-10-10 = 3804986645 (aralığın üst yarısı)
+  for (const d of ['2026-10-09', '2026-10-10']) {
+    it(`${d}: ayrıştırılır ve doğrulanır`, () => {
+      const s = dailySeed(parseDayKey(d)!);
+      expect(s).toBeGreaterThanOrEqual(2 ** 31);
+      expect(s).toBeLessThanOrEqual(0xffffffff);
+      const run = finishedRun(s);
+      const sub = parseScoreSubmission({ day: d, seed: s, simVersion: SIM_VERSION, shots: run });
+      expect(sub).not.toBeNull();
+      const expected = scoreLevelRun(s, run);
+      expect(verifyRun(sub!, Date.parse(`${d}T09:00:00Z`))).toEqual({
+        ok: true, day: d, seed: s, level: expected.level, cleared: expected.cleared, score: expected.total, shots: run.length,
+      });
+    });
+  }
 });
