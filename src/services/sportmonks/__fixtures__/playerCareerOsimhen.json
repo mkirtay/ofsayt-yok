@@ -1,0 +1,826 @@
+{
+ "data": {
+  "id": 455805,
+  "display_name": "Victor Osimhen ",
+  "transfers": [
+   {
+    "id": 381482,
+    "date": "2024-09-04",
+    "completed": true,
+    "amount": null,
+    "type": {
+     "name": "Loan"
+    },
+    "fromteam": {
+     "id": 597,
+     "name": "Napoli",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/21/597.png"
+    },
+    "toteam": {
+     "id": 34,
+     "name": "Galatasaray",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/2/34.png"
+    }
+   },
+   {
+    "id": 495467,
+    "date": "2025-07-31",
+    "completed": true,
+    "amount": 75000000,
+    "type": {
+     "name": "Transfer"
+    },
+    "fromteam": {
+     "id": 597,
+     "name": "Napoli",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/21/597.png"
+    },
+    "toteam": {
+     "id": 34,
+     "name": "Galatasaray",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/2/34.png"
+    }
+   },
+   {
+    "id": 35073,
+    "date": "2019-08-01",
+    "completed": true,
+    "amount": 22400000,
+    "type": {
+     "name": "Transfer"
+    },
+    "fromteam": {
+     "id": 1087,
+     "name": "Sporting Charleroi",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/31/1087.png"
+    },
+    "toteam": {
+     "id": 690,
+     "name": "LOSC Lille",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/18/690.png"
+    }
+   },
+   {
+    "id": 150017,
+    "date": "2019-06-30",
+    "completed": true,
+    "amount": null,
+    "type": {
+     "name": "End of loan"
+    },
+    "fromteam": {
+     "id": 1087,
+     "name": "Sporting Charleroi",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/31/1087.png"
+    },
+    "toteam": {
+     "id": 510,
+     "name": "VfL Wolfsburg",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/30/510.png"
+    }
+   },
+   {
+    "id": 150025,
+    "date": "2018-08-22",
+    "completed": true,
+    "amount": null,
+    "type": {
+     "name": "Loan"
+    },
+    "fromteam": {
+     "id": 510,
+     "name": "VfL Wolfsburg",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/30/510.png"
+    },
+    "toteam": {
+     "id": 1087,
+     "name": "Sporting Charleroi",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/31/1087.png"
+    }
+   },
+   {
+    "id": 41916,
+    "date": "2020-09-01",
+    "completed": true,
+    "amount": 75000000,
+    "type": {
+     "name": "Transfer"
+    },
+    "fromteam": {
+     "id": 690,
+     "name": "LOSC Lille",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/18/690.png"
+    },
+    "toteam": {
+     "id": 597,
+     "name": "Napoli",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/21/597.png"
+    }
+   },
+   {
+    "id": 35960,
+    "date": "2019-07-01",
+    "completed": true,
+    "amount": 3500000,
+    "type": {
+     "name": "Transfer"
+    },
+    "fromteam": {
+     "id": 510,
+     "name": "VfL Wolfsburg",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/30/510.png"
+    },
+    "toteam": {
+     "id": 1087,
+     "name": "Sporting Charleroi",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/31/1087.png"
+    }
+   },
+   {
+    "id": 434003,
+    "date": "2025-06-30",
+    "completed": true,
+    "amount": null,
+    "type": {
+     "name": "End of loan"
+    },
+    "fromteam": {
+     "id": 34,
+     "name": "Galatasaray",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/2/34.png"
+    },
+    "toteam": {
+     "id": 597,
+     "name": "Napoli",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/21/597.png"
+    }
+   }
+  ],
+  "statistics": [
+   {
+    "season_id": 21638,
+    "team_id": 34,
+    "has_values": false,
+    "season": {
+     "name": "2023/2024",
+     "starting_at": "2023-06-27",
+     "ending_at": "2024-06-01",
+     "league": {
+      "name": "Champions League",
+      "sub_type": "cup_international"
+     }
+    },
+    "team": {
+     "id": 34,
+     "name": "Galatasaray",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/2/34.png"
+    },
+    "details": []
+   },
+   {
+    "season_id": 23619,
+    "team_id": 34,
+    "has_values": false,
+    "season": {
+     "name": "2024/2025",
+     "starting_at": "2024-07-09",
+     "ending_at": "2025-05-31",
+     "league": {
+      "name": "Champions League",
+      "sub_type": "cup_international"
+     }
+    },
+    "team": {
+     "id": 34,
+     "name": "Galatasaray",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/2/34.png"
+    },
+    "details": []
+   },
+   {
+    "season_id": 23620,
+    "team_id": 34,
+    "has_values": true,
+    "season": {
+     "name": "2024/2025",
+     "starting_at": "2024-07-11",
+     "ending_at": "2025-05-21",
+     "league": {
+      "name": "Europa League",
+      "sub_type": "cup_international"
+     }
+    },
+    "team": {
+     "id": 34,
+     "name": "Galatasaray",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/2/34.png"
+    },
+    "details": [
+     {
+      "type_id": 52,
+      "value": {
+       "total": 6,
+       "goals": 5,
+       "penalties": 1
+      }
+     },
+     {
+      "type_id": 79,
+      "value": {
+       "total": 1
+      }
+     },
+     {
+      "type_id": 119,
+      "value": {
+       "total": 594
+      }
+     },
+     {
+      "type_id": 321,
+      "value": {
+       "total": 7
+      }
+     },
+     {
+      "type_id": 322,
+      "value": {
+       "total": 7
+      }
+     }
+    ]
+   },
+   {
+    "season_id": 23851,
+    "team_id": 34,
+    "has_values": true,
+    "season": {
+     "name": "2024/2025",
+     "starting_at": "2024-08-09",
+     "ending_at": "2025-06-01",
+     "league": {
+      "name": "Super Lig",
+      "sub_type": "domestic"
+     }
+    },
+    "team": {
+     "id": 34,
+     "name": "Galatasaray",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/2/34.png"
+    },
+    "details": [
+     {
+      "type_id": 52,
+      "value": {
+       "total": 26,
+       "goals": 20,
+       "penalties": 6
+      }
+     },
+     {
+      "type_id": 79,
+      "value": {
+       "total": 5
+      }
+     },
+     {
+      "type_id": 119,
+      "value": {
+       "total": 2339
+      }
+     },
+     {
+      "type_id": 321,
+      "value": {
+       "total": 30
+      }
+     },
+     {
+      "type_id": 322,
+      "value": {
+       "total": 28
+      }
+     }
+    ]
+   },
+   {
+    "season_id": 24546,
+    "team_id": 34,
+    "has_values": true,
+    "season": {
+     "name": "2024/2025",
+     "starting_at": "2024-09-10",
+     "ending_at": "2025-05-14",
+     "league": {
+      "name": "Turkish Cup",
+      "sub_type": "domestic_cup"
+     }
+    },
+    "team": {
+     "id": 34,
+     "name": "Galatasaray",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/2/34.png"
+    },
+    "details": [
+     {
+      "type_id": 52,
+      "value": {
+       "total": 5,
+       "goals": 4,
+       "penalties": 1
+      }
+     },
+     {
+      "type_id": 79,
+      "value": {
+       "total": 1
+      }
+     },
+     {
+      "type_id": 119,
+      "value": {
+       "total": 251
+      }
+     },
+     {
+      "type_id": 321,
+      "value": {
+       "total": 3
+      }
+     },
+     {
+      "type_id": 322,
+      "value": {
+       "total": 3
+      }
+     }
+    ]
+   },
+   {
+    "season_id": 25580,
+    "team_id": 34,
+    "has_values": true,
+    "season": {
+     "name": "2025/2026",
+     "starting_at": "2025-07-08",
+     "ending_at": "2026-05-30",
+     "league": {
+      "name": "Champions League",
+      "sub_type": "cup_international"
+     }
+    },
+    "team": {
+     "id": 34,
+     "name": "Galatasaray",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/2/34.png"
+    },
+    "details": [
+     {
+      "type_id": 52,
+      "value": {
+       "total": 7,
+       "goals": 4,
+       "penalties": 3
+      }
+     },
+     {
+      "type_id": 79,
+      "value": {
+       "total": 2
+      }
+     },
+     {
+      "type_id": 119,
+      "value": {
+       "total": 842
+      }
+     },
+     {
+      "type_id": 321,
+      "value": {
+       "total": 10
+      }
+     },
+     {
+      "type_id": 322,
+      "value": {
+       "total": 10
+      }
+     }
+    ]
+   },
+   {
+    "season_id": 25682,
+    "team_id": 34,
+    "has_values": true,
+    "season": {
+     "name": "2025/2026",
+     "starting_at": "2025-08-08",
+     "ending_at": "2026-05-17",
+     "league": {
+      "name": "Super Lig",
+      "sub_type": "domestic"
+     }
+    },
+    "team": {
+     "id": 34,
+     "name": "Galatasaray",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/2/34.png"
+    },
+    "details": [
+     {
+      "type_id": 52,
+      "value": {
+       "total": 15,
+       "goals": 13,
+       "penalties": 2
+      }
+     },
+     {
+      "type_id": 79,
+      "value": {
+       "total": 5
+      }
+     },
+     {
+      "type_id": 119,
+      "value": {
+       "total": 1724
+      }
+     },
+     {
+      "type_id": 321,
+      "value": {
+       "total": 22
+      }
+     },
+     {
+      "type_id": 322,
+      "value": {
+       "total": 19
+      }
+     }
+    ]
+   },
+   {
+    "season_id": 26074,
+    "team_id": 34,
+    "has_values": true,
+    "season": {
+     "name": "2025/2026",
+     "starting_at": "2025-09-02",
+     "ending_at": "2026-05-22",
+     "league": {
+      "name": "Turkish Cup",
+      "sub_type": "domestic_cup"
+     }
+    },
+    "team": {
+     "id": 34,
+     "name": "Galatasaray",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/2/34.png"
+    },
+    "details": [
+     {
+      "type_id": 119,
+      "value": {
+       "total": 12
+      }
+     },
+     {
+      "type_id": 321,
+      "value": {
+       "total": 1
+      }
+     }
+    ]
+   },
+   {
+    "season_id": 28155,
+    "team_id": 34,
+    "has_values": false,
+    "season": {
+     "name": "2026/2027",
+     "starting_at": "2026-07-07",
+     "ending_at": "2027-01-27",
+     "league": {
+      "name": "Champions League",
+      "sub_type": "cup_international"
+     }
+    },
+    "team": {
+     "id": 34,
+     "name": "Galatasaray",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/2/34.png"
+    },
+    "details": []
+   },
+   {
+    "season_id": 28203,
+    "team_id": 34,
+    "has_values": true,
+    "season": {
+     "name": "2026/2027",
+     "starting_at": "2026-08-14",
+     "ending_at": "2027-05-23",
+     "league": {
+      "name": "Super Lig",
+      "sub_type": "domestic"
+     }
+    },
+    "team": {
+     "id": 34,
+     "name": "Galatasaray",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/2/34.png"
+    },
+    "details": [
+     {
+      "type_id": 52,
+      "value": {
+       "total": 6,
+       "goals": 5,
+       "penalties": 1
+      }
+     },
+     {
+      "type_id": 79,
+      "value": {
+       "total": 2
+      }
+     },
+     {
+      "type_id": 119,
+      "value": {
+       "total": 303
+      }
+     },
+     {
+      "type_id": 321,
+      "value": {
+       "total": 4
+      }
+     },
+     {
+      "type_id": 322,
+      "value": {
+       "total": 4
+      }
+     }
+    ]
+   },
+   {
+    "season_id": 12945,
+    "team_id": 597,
+    "has_values": false,
+    "season": {
+     "name": "2018/2019",
+     "starting_at": "2018-06-26",
+     "ending_at": "2019-05-29",
+     "league": {
+      "name": "Europa League",
+      "sub_type": "cup_international"
+     }
+    },
+    "team": {
+     "id": 597,
+     "name": "Napoli",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/21/597.png"
+    },
+    "details": []
+   },
+   {
+    "season_id": 17367,
+    "team_id": 597,
+    "has_values": true,
+    "season": {
+     "name": "2020/2021",
+     "starting_at": "2020-08-18",
+     "ending_at": "2021-05-26",
+     "league": {
+      "name": "Europa League",
+      "sub_type": "cup_international"
+     }
+    },
+    "team": {
+     "id": 597,
+     "name": "Napoli",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/21/597.png"
+    },
+    "details": [
+     {
+      "type_id": 119,
+      "value": {
+       "total": 185
+      }
+     },
+     {
+      "type_id": 321,
+      "value": {
+       "total": 3
+      }
+     },
+     {
+      "type_id": 322,
+      "value": {
+       "total": 2
+      }
+     }
+    ]
+   },
+   {
+    "season_id": 18629,
+    "team_id": 597,
+    "has_values": true,
+    "season": {
+     "name": "2021/2022",
+     "starting_at": "2021-08-03",
+     "ending_at": "2022-05-18",
+     "league": {
+      "name": "Europa League",
+      "sub_type": "cup_international"
+     }
+    },
+    "team": {
+     "id": 597,
+     "name": "Napoli",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/21/597.png"
+    },
+    "details": [
+     {
+      "type_id": 52,
+      "value": {
+       "total": 4,
+       "goals": 4,
+       "penalties": 0
+      }
+     },
+     {
+      "type_id": 119,
+      "value": {
+       "total": 321
+      }
+     },
+     {
+      "type_id": 321,
+      "value": {
+       "total": 5
+      }
+     },
+     {
+      "type_id": 322,
+      "value": {
+       "total": 3
+      }
+     }
+    ]
+   },
+   {
+    "season_id": 19699,
+    "team_id": 597,
+    "has_values": true,
+    "season": {
+     "name": "2022/2023",
+     "starting_at": "2022-06-21",
+     "ending_at": "2023-06-10",
+     "league": {
+      "name": "Champions League",
+      "sub_type": "cup_international"
+     }
+    },
+    "team": {
+     "id": 597,
+     "name": "Napoli",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/21/597.png"
+    },
+    "details": [
+     {
+      "type_id": 52,
+      "value": {
+       "total": 5,
+       "goals": 5,
+       "penalties": 0
+      }
+     },
+     {
+      "type_id": 119,
+      "value": {
+       "total": 423
+      }
+     },
+     {
+      "type_id": 321,
+      "value": {
+       "total": 6
+      }
+     },
+     {
+      "type_id": 322,
+      "value": {
+       "total": 5
+      }
+     }
+    ]
+   },
+   {
+    "season_id": 21638,
+    "team_id": 597,
+    "has_values": true,
+    "season": {
+     "name": "2023/2024",
+     "starting_at": "2023-06-27",
+     "ending_at": "2024-06-01",
+     "league": {
+      "name": "Champions League",
+      "sub_type": "cup_international"
+     }
+    },
+    "team": {
+     "id": 597,
+     "name": "Napoli",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/21/597.png"
+    },
+    "details": [
+     {
+      "type_id": 52,
+      "value": {
+       "total": 2,
+       "goals": 2,
+       "penalties": 0
+      }
+     },
+     {
+      "type_id": 79,
+      "value": {
+       "total": 1
+      }
+     },
+     {
+      "type_id": 119,
+      "value": {
+       "total": 460
+      }
+     },
+     {
+      "type_id": 321,
+      "value": {
+       "total": 6
+      }
+     },
+     {
+      "type_id": 322,
+      "value": {
+       "total": 5
+      }
+     }
+    ]
+   },
+   {
+    "season_id": 16029,
+    "team_id": 690,
+    "has_values": true,
+    "season": {
+     "name": "2019/2020",
+     "starting_at": "2019-06-25",
+     "ending_at": "2020-08-23",
+     "league": {
+      "name": "Champions League",
+      "sub_type": "cup_international"
+     }
+    },
+    "team": {
+     "id": 690,
+     "name": "LOSC Lille",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/18/690.png"
+    },
+    "details": [
+     {
+      "type_id": 52,
+      "value": {
+       "total": 2,
+       "goals": 2,
+       "penalties": 0
+      }
+     },
+     {
+      "type_id": 119,
+      "value": {
+       "total": 450
+      }
+     },
+     {
+      "type_id": 321,
+      "value": {
+       "total": 5
+      }
+     },
+     {
+      "type_id": 322,
+      "value": {
+       "total": 5
+      }
+     }
+    ]
+   }
+  ]
+ }
+}

@@ -638,6 +638,44 @@
   font-weight: 600;
 }
 
+// Başlık + altında tek cümlelik kapsam notu: başlığın alt çizgisi notun altına taşınır.
+.careerHead {
+  margin-bottom: $spacing-3;
+  padding-bottom: $spacing-2;
+  border-bottom: 1px solid $color-border;
+
+  .cardTitle {
+    margin: 0;
+    padding: 0;
+    border: none;
+  }
+}
+
+.careerCoverage {
+  margin: 2px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: $color-text-secondary;
+}
+
+// "Kısmi veri": durum amberi + koyu yazı (form rozeti token'ları; iki temada aynı, 8.9:1).
+.partialBadge {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: $radius-full;
+  background: var(--color-draw);
+  color: var(--color-on-status);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
 .careerNote {
   margin: $spacing-3 0 0;
   font-size: 12px;

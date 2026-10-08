@@ -10,6 +10,7 @@
  * - Gol (52) / asist (79) yoksa 0: Sportmonks sıfır değerli tipi yanıttan atıyor (eksik her değer lineup verisinde 0 çıktı).
  * - Gol = `total` (penaltı dahil; `goals` alanı penaltısız).
  * - Lig / kupa ayrımı `isCup` (Sportmonks `league.sub_type`).
+ * - Takım / genel toplam "kısmi" bayrağı: bkz. `uncoveredSeasons`, `isCareerPartial`.
  */
 import type { PlayerSeasonStats } from '@/services/playerProfile';
 import { STAT, statMain } from '@/services/sportmonks/playerStatTypes';
@@ -32,7 +33,16 @@ export type CareerRow = {
 
 export type CareerGroup = { kind: 'league' | 'cup'; rows: CareerRow[]; total: CareerTotals };
 
-export type CareerTeamTotal = CareerTotals & { key: string; teamId?: number; teamName: string; teamLogo?: string };
+export type CareerTeamTotal = CareerTotals & {
+  key: string;
+  teamId?: number;
+  teamName: string;
+  teamLogo?: string;
+  /** Kapsam dışı sezonu var → toplam eksik ("Kısmi veri" rozeti). */
+  partial: boolean;
+  /** Kupa satırı olup lig satırı olmayan, plan kapsamı dışı sezonlar (azalan). */
+  partialSeasons: string[];
+};
 
 export type PlayerCareer = {
   /** Boş grup listede yer almaz; lig grubu her zaman önce. */
@@ -43,6 +53,9 @@ export type PlayerCareer = {
   /** En az bir satırda maç sayısı yok ("—" dipnotu gösterilir). */
   missingApps: boolean;
 };
+
+/** Genel toplam kısmi mi: en az bir takım toplamı kısmiyse (tek takımlı oyuncuda da `teams` dolu). */
+export const isCareerPartial = (c: Pick<PlayerCareer, 'teams'>) => c.teams.some((t) => t.partial);
 
 /** "2025/2026" → "2025/26"; tek yıllık sezon ("2025") olduğu gibi. */
 export const shortSeasonName = (name: string) => name.replace(/^(\d{4})\/\d{2}(\d{2})$/, '$1/$2');
@@ -64,6 +77,21 @@ function toRow(s: PlayerSeasonStats): CareerRow | null {
     goals: statMain(s.stats[STAT.GOALS]) ?? 0,
     assists: statMain(s.stats[STAT.ASSISTS]) ?? 0,
   };
+}
+
+/**
+ * Kapsam dışı sezon: takımın o sezonda kupa satırı var ama lig satırı yok VE sezon, oyuncunun verideki en eski lig
+ * sezonundan eski. Planda yerel ligler yalnız son sezonlardan (2024/25→) var, UEFA eski sezonlarıyla geliyor → Osimhen'in
+ * Napoli'si yalnız Avrupa maçlarıyla görünür. "En eskiden eski" şartı, kapsanan bir sezonda yalnız kupada oynayan
+ * oyuncuyu (yedek kaleci vb.) yanlışlıkla kısmi saymamak için; oyuncunun hiç lig satırı yoksa her kupa-yalnız sezon
+ * kapsam dışı sayılır. Hiç satırı olmayan sezonlar (Avrupa'da da oynamadığı eski sezonlar) buradan görülemez — başlık
+ * altındaki kapsam notu bunun için.
+ */
+function uncoveredSeasons(rows: CareerRow[], key: string, oldestLeague: string | null): string[] {
+  const mine = rows.filter((r) => teamKey(r) === key);
+  const league = new Set(mine.filter((r) => !r.isCup).map((r) => r.seasonName));
+  const cupOnly = new Set(mine.filter((r) => r.isCup && !league.has(r.seasonName)).map((r) => r.seasonName));
+  return [...cupOnly].filter((s) => oldestLeague == null || s < oldestLeague).sort().reverse();
 }
 
 const teamKey = (r: Pick<CareerRow, 'teamId' | 'teamName'>) => (r.teamId != null ? `id:${r.teamId}` : `name:${r.teamName ?? ''}`);
@@ -112,6 +140,8 @@ export function buildPlayerCareer(seasons: PlayerSeasonStats[]): PlayerCareer {
       apps: 0,
       goals: 0,
       assists: 0,
+      partial: false,
+      partialSeasons: [],
     };
     t.apps += r.apps ?? 0;
     t.goals += r.goals;
@@ -119,5 +149,11 @@ export function buildPlayerCareer(seasons: PlayerSeasonStats[]): PlayerCareer {
     teams.set(k, t);
   }
 
+  const leagueSeasons = rows.filter((r) => !r.isCup).map((r) => r.seasonName).sort();
+  const oldestLeague = leagueSeasons[0] ?? null;
+  for (const t of teams.values()) {
+    t.partialSeasons = uncoveredSeasons(rows, t.key, oldestLeague);
+    t.partial = t.partialSeasons.length > 0;
+  }
   return { groups, total: sum(rows), teams: [...teams.values()], missingApps: rows.some((r) => r.apps == null) };
 }

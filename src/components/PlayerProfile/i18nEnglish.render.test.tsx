@@ -109,7 +109,7 @@ describe('<PlayerProfile /> — İngilizce', () => {
   });
 
   it('kariyer kartı İngilizce (başlık, sütunlar, kısaltma açıklamaları, toplam, kapsam notu)', () => {
-    for (const s of ['>Career<', '>Competition<', 'title="Appearances">MP<', 'title="Goals">G<', 'title="Assists">A<', '>League<', 'Overall total', 'Only competitions and seasons covered by our data plan']) {
+    for (const s of ['>Career<', '>Competition<', 'title="Appearances">MP<', 'title="Goals">G<', 'title="Assists">A<', '>League<', 'Overall total', 'Our data plan does not cover older domestic league seasons']) {
       expect(html, s).toContain(s);
     }
   });

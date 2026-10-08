@@ -33,7 +33,7 @@ describe('Career (Kariyer kartı)', () => {
     expect([...html.matchAll(/<tbody data-group="(\w+)"/g)].map((m) => m[1])).toEqual(['league', 'cup']);
     expect(rowsWith(html, 'career-subtotal-league')).toEqual([['Lig toplamı', '', '66', '0', '0']]);
     expect(rowsWith(html, 'career-subtotal-cup')).toEqual([['Kupa ve uluslararası toplamı', '', '44', '0', '0']]);
-    expect(rowsWith(html, 'career-total')).toEqual([['Genel toplam', '', '110', '0', '0']]);
+    expect(rowsWith(html, 'career-total')).toEqual([['Genel toplam Kısmi veri', '', '110', '0', '0']]);
   });
 
   it('satır: kısa sezon, takım linki, turnuva; maç verisi yoksa "—" ve dipnot', () => {
@@ -43,12 +43,12 @@ describe('Career (Kariyer kartı)', () => {
     expect(rows.find((r) => r[0] === '2015/16')).toEqual(['2015/16', 'TrabzonsporEuropa League', 'Europa League', '—', '0', '0']);
     expect(html).toContain('href="/teams/34"');
     expect(html).toContain('maç sayısı verisi yok');
-    expect(html).toContain('veri planımızın kapsadığı');
+    expect(html).toContain('eski yerel lig sezonlarını kapsamıyor');
   });
 
   it('takım bazında: 2+ takımda gösterilir, en son takım önce', () => {
     const teams = [...html.matchAll(/<li data-testid="career-team-total">(.*?)<\/li>/g)].map((m) => text(m[1]));
-    expect(teams).toEqual(['GalatasarayM 43G 0A 0', 'TrabzonsporM 67G 0A 0']);
+    expect(teams).toEqual(['GalatasarayM 43G 0A 0', 'TrabzonsporKısmi veriM 67G 0A 0']);
   });
 
   it('tek kulüp (Lamine Yamal): takım bazında listesi yok, dipnot yok, Copa Del Rey kupa grubunda', () => {
@@ -57,7 +57,7 @@ describe('Career (Kariyer kartı)', () => {
     expect(one).not.toContain('maç sayısı verisi yok');
     expect(tbody(one, 'cup')).toContain('Copa Del Rey');
     expect(tbody(one, 'league')).not.toContain('Copa Del Rey');
-    expect(rowsWith(one, 'career-total')).toEqual([['Genel toplam', '', '114', '48', '47']]);
+    expect(rowsWith(one, 'career-total')).toEqual([['Genel toplam Kısmi veri', '', '114', '48', '47']]);
   });
 
   it('veri yoksa kart hiç render edilmez', () => {

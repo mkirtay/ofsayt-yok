@@ -115,7 +115,8 @@
     "total": "Overall total",
     "byTeam": "By team",
     "missingApps": "—: no appearance data for this row; not included in the total.",
-    "coverage": "Only competitions and seasons covered by our data plan are counted; older domestic league seasons and national team matches are not included."
+    "coverage": "Our data plan does not cover older domestic league seasons; totals may be partial.",
+    "partial": "Partial data"
   },
   "transfers": {
     "title": "Transfers",

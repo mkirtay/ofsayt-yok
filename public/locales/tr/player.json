@@ -110,7 +110,8 @@
     "total": "Genel toplam",
     "byTeam": "Takım bazında",
     "missingApps": "—: Bu satır için maç sayısı verisi yok; toplama katılmadı.",
-    "coverage": "Yalnızca veri planımızın kapsadığı turnuva ve sezonlar sayılır; eski yerel lig sezonları ve milli takım maçları bu tabloda yer almaz."
+    "coverage": "Veri planımız eski yerel lig sezonlarını kapsamıyor; toplamlar kısmi olabilir.",
+    "partial": "Kısmi veri"
   },
   "transfers": {
     "title": "Transferler",

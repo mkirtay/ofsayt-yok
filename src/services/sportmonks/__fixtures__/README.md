@@ -107,3 +107,7 @@ turda eklenen 4 yeni gerçek type_id de aynı maçtan geliyor: `EVENT_TYPES[10]`
   (321) OLMAYAN ama 90 dk'lık satır (Trabzonspor UEFA Avrupa Ligi 2015/16).
   Lamine Yamal: tek kulüp + `sub_type: domestic_cup` "Copa Del Rey" (eski ad
   regex'i bunu lig sanıyordu).
+- `playerCareerOsimhen.json` — aynı istek ve aynı kırpma, Victor Osimhen (455805), 16
+  `statistics[]` satırının tamamı (mevcut `playerProfileOsimhen.json` yalnız 3 satır).
+  Kariyer kartının "Kısmi veri" kuralı için: Napoli (2020/21–2023/24) ve Lille
+  (2019/20) yalnız UEFA satırlarıyla geliyor — yerel lig sezonları plan dışı.

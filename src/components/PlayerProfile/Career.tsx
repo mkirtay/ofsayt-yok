@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { useTranslation } from '@/lib/i18n';
 import TeamLogo from '@/components/TeamLogo';
 import type { PlayerSeasonStats } from '@/services/playerProfile';
-import { buildPlayerCareer, shortSeasonName, type CareerRow, type CareerTotals } from '@/utils/playerCareer';
+import { buildPlayerCareer, isCareerPartial, shortSeasonName, type CareerRow, type CareerTotals } from '@/utils/playerCareer';
 import styles from './playerProfile.module.scss';
 
 /**
@@ -16,6 +16,7 @@ export default function Career({ seasons }: { seasons: PlayerSeasonStats[] }) {
   const career = useMemo(() => buildPlayerCareer(seasons), [seasons]);
   if (career.groups.length === 0) return null;
   const showSubtotals = career.groups.length > 1;
+  const partialBadge = <span className={styles.partialBadge}>{t('career.partial')}</span>;
 
   const numCells = (x: CareerTotals | CareerRow) => (
     <>
@@ -27,7 +28,11 @@ export default function Career({ seasons }: { seasons: PlayerSeasonStats[] }) {
 
   return (
     <section className={styles.card} aria-labelledby="pp-career" data-testid="player-career">
-      <h2 id="pp-career" className={styles.cardTitle}>{t('career.title')}</h2>
+      <div className={styles.careerHead}>
+        <h2 id="pp-career" className={styles.cardTitle}>{t('career.title')}</h2>
+        {/* Kapsam notu başlığın altında, tek cümle (eskiden tablonun altındaydı ve görülmüyordu). */}
+        <p className={styles.careerCoverage}>{t('career.coverage')}</p>
+      </div>
       <div className={styles.tableScroll} role="region" aria-label={t('career.caption')} tabIndex={0}>
         <table className={`${styles.table} ${styles.careerTable}`}>
           <caption className={styles.srOnly}>{t('career.caption')}</caption>
@@ -81,7 +86,10 @@ export default function Career({ seasons }: { seasons: PlayerSeasonStats[] }) {
           ))}
           <tfoot>
             <tr className={styles.careerTotal} data-testid="career-total">
-              <th scope="row" colSpan={2} className={styles.left}>{t('career.total')}</th>
+              <th scope="row" colSpan={2} className={styles.left}>
+                {t('career.total')}
+                {isCareerPartial(career) ? <> {partialBadge}</> : null}
+              </th>
               <td className={styles.careerComp} />
               {numCells(career.total)}
             </tr>
@@ -98,6 +106,7 @@ export default function Career({ seasons }: { seasons: PlayerSeasonStats[] }) {
                 <span className={styles.teamCell}>
                   {tm.teamLogo ? <TeamLogo src={tm.teamLogo} alt="" width={18} height={18} className={styles.teamLogo} /> : null}
                   <span className={styles.teamName}>{tm.teamName}</span>
+                  {tm.partial ? partialBadge : null}
                 </span>
                 <span className={styles.careerTeamNums}>
                   <span><abbr title={t('career.apps')}>{t('career.appsShort')}</abbr> {tm.apps}</span>
@@ -111,7 +120,6 @@ export default function Career({ seasons }: { seasons: PlayerSeasonStats[] }) {
       ) : null}
 
       {career.missingApps ? <p className={styles.careerNote}>{t('career.missingApps')}</p> : null}
-      <p className={styles.careerNote}>{t('career.coverage')}</p>
     </section>
   );
 }
