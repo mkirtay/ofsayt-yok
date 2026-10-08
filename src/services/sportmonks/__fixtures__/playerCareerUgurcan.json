@@ -1,0 +1,622 @@
+{
+ "data": {
+  "id": 201739,
+  "display_name": "Uğurcan Çakır",
+  "transfers": [
+   {
+    "id": 515986,
+    "date": "2025-09-01",
+    "completed": true,
+    "amount": 27500000,
+    "type": {
+     "name": "Transfer"
+    },
+    "fromteam": {
+     "id": 688,
+     "name": "Trabzonspor",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/16/688.png"
+    },
+    "toteam": {
+     "id": 34,
+     "name": "Galatasaray",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/2/34.png"
+    }
+   }
+  ],
+  "statistics": [
+   {
+    "season_id": 25580,
+    "team_id": 34,
+    "has_values": true,
+    "season": {
+     "name": "2025/2026",
+     "starting_at": "2025-07-08",
+     "ending_at": "2026-05-30",
+     "league": {
+      "name": "Champions League",
+      "sub_type": "cup_international"
+     }
+    },
+    "team": {
+     "id": 34,
+     "name": "Galatasaray",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/2/34.png"
+    },
+    "details": [
+     {
+      "type_id": 119,
+      "value": {
+       "total": 1088
+      }
+     },
+     {
+      "type_id": 321,
+      "value": {
+       "total": 12
+      }
+     },
+     {
+      "type_id": 322,
+      "value": {
+       "total": 12
+      }
+     }
+    ]
+   },
+   {
+    "season_id": 25682,
+    "team_id": 34,
+    "has_values": true,
+    "season": {
+     "name": "2025/2026",
+     "starting_at": "2025-08-08",
+     "ending_at": "2026-05-17",
+     "league": {
+      "name": "Super Lig",
+      "sub_type": "domestic"
+     }
+    },
+    "team": {
+     "id": 34,
+     "name": "Galatasaray",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/2/34.png"
+    },
+    "details": [
+     {
+      "type_id": 119,
+      "value": {
+       "total": 2250
+      }
+     },
+     {
+      "type_id": 321,
+      "value": {
+       "total": 25
+      }
+     },
+     {
+      "type_id": 322,
+      "value": {
+       "total": 25
+      }
+     }
+    ]
+   },
+   {
+    "season_id": 26074,
+    "team_id": 34,
+    "has_values": false,
+    "season": {
+     "name": "2025/2026",
+     "starting_at": "2025-09-02",
+     "ending_at": "2026-05-22",
+     "league": {
+      "name": "Turkish Cup",
+      "sub_type": "domestic_cup"
+     }
+    },
+    "team": {
+     "id": 34,
+     "name": "Galatasaray",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/2/34.png"
+    },
+    "details": []
+   },
+   {
+    "season_id": 28155,
+    "team_id": 34,
+    "has_values": true,
+    "season": {
+     "name": "2026/2027",
+     "starting_at": "2026-07-07",
+     "ending_at": "2027-01-27",
+     "league": {
+      "name": "Champions League",
+      "sub_type": "cup_international"
+     }
+    },
+    "team": {
+     "id": 34,
+     "name": "Galatasaray",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/2/34.png"
+    },
+    "details": [
+     {
+      "type_id": 119,
+      "value": {
+       "total": 90
+      }
+     },
+     {
+      "type_id": 321,
+      "value": {
+       "total": 1
+      }
+     },
+     {
+      "type_id": 322,
+      "value": {
+       "total": 1
+      }
+     }
+    ]
+   },
+   {
+    "season_id": 28203,
+    "team_id": 34,
+    "has_values": true,
+    "season": {
+     "name": "2026/2027",
+     "starting_at": "2026-08-14",
+     "ending_at": "2027-05-23",
+     "league": {
+      "name": "Super Lig",
+      "sub_type": "domestic"
+     }
+    },
+    "team": {
+     "id": 34,
+     "name": "Galatasaray",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/2/34.png"
+    },
+    "details": [
+     {
+      "type_id": 119,
+      "value": {
+       "total": 450
+      }
+     },
+     {
+      "type_id": 321,
+      "value": {
+       "total": 5
+      }
+     },
+     {
+      "type_id": 322,
+      "value": {
+       "total": 5
+      }
+     }
+    ]
+   },
+   {
+    "season_id": 5337,
+    "team_id": 688,
+    "has_values": true,
+    "season": {
+     "name": "2015/2016",
+     "starting_at": "2015-06-30",
+     "ending_at": "2016-05-18",
+     "league": {
+      "name": "Europa League",
+      "sub_type": "cup_international"
+     }
+    },
+    "team": {
+     "id": 688,
+     "name": "Trabzonspor",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/16/688.png"
+    },
+    "details": [
+     {
+      "type_id": 119,
+      "value": {
+       "total": 90
+      }
+     }
+    ]
+   },
+   {
+    "season_id": 16030,
+    "team_id": 688,
+    "has_values": true,
+    "season": {
+     "name": "2019/2020",
+     "starting_at": "2019-06-27",
+     "ending_at": "2020-08-21",
+     "league": {
+      "name": "Europa League",
+      "sub_type": "cup_international"
+     }
+    },
+    "team": {
+     "id": 688,
+     "name": "Trabzonspor",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/16/688.png"
+    },
+    "details": [
+     {
+      "type_id": 119,
+      "value": {
+       "total": 630
+      }
+     },
+     {
+      "type_id": 321,
+      "value": {
+       "total": 7
+      }
+     },
+     {
+      "type_id": 322,
+      "value": {
+       "total": 7
+      }
+     }
+    ]
+   },
+   {
+    "season_id": 18283,
+    "team_id": 688,
+    "has_values": true,
+    "season": {
+     "name": "2021/2022",
+     "starting_at": "2021-07-06",
+     "ending_at": "2022-05-25",
+     "league": {
+      "name": "Europa Conference League",
+      "sub_type": "cup_international"
+     }
+    },
+    "team": {
+     "id": 688,
+     "name": "Trabzonspor",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/16/688.png"
+    },
+    "details": [
+     {
+      "type_id": 119,
+      "value": {
+       "total": 390
+      }
+     },
+     {
+      "type_id": 321,
+      "value": {
+       "total": 4
+      }
+     },
+     {
+      "type_id": 322,
+      "value": {
+       "total": 4
+      }
+     }
+    ]
+   },
+   {
+    "season_id": 19699,
+    "team_id": 688,
+    "has_values": true,
+    "season": {
+     "name": "2022/2023",
+     "starting_at": "2022-06-21",
+     "ending_at": "2023-06-10",
+     "league": {
+      "name": "Champions League",
+      "sub_type": "cup_international"
+     }
+    },
+    "team": {
+     "id": 688,
+     "name": "Trabzonspor",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/16/688.png"
+    },
+    "details": [
+     {
+      "type_id": 119,
+      "value": {
+       "total": 180
+      }
+     },
+     {
+      "type_id": 321,
+      "value": {
+       "total": 2
+      }
+     },
+     {
+      "type_id": 322,
+      "value": {
+       "total": 2
+      }
+     }
+    ]
+   },
+   {
+    "season_id": 19724,
+    "team_id": 688,
+    "has_values": true,
+    "season": {
+     "name": "2022/2023",
+     "starting_at": "2022-07-05",
+     "ending_at": "2023-06-07",
+     "league": {
+      "name": "Europa Conference League",
+      "sub_type": "cup_international"
+     }
+    },
+    "team": {
+     "id": 688,
+     "name": "Trabzonspor",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/16/688.png"
+    },
+    "details": [
+     {
+      "type_id": 119,
+      "value": {
+       "total": 180
+      }
+     },
+     {
+      "type_id": 321,
+      "value": {
+       "total": 2
+      }
+     },
+     {
+      "type_id": 322,
+      "value": {
+       "total": 2
+      }
+     }
+    ]
+   },
+   {
+    "season_id": 20090,
+    "team_id": 688,
+    "has_values": true,
+    "season": {
+     "name": "2022/2023",
+     "starting_at": "2022-08-04",
+     "ending_at": "2023-05-31",
+     "league": {
+      "name": "Europa League",
+      "sub_type": "cup_international"
+     }
+    },
+    "team": {
+     "id": 688,
+     "name": "Trabzonspor",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/16/688.png"
+    },
+    "details": [
+     {
+      "type_id": 119,
+      "value": {
+       "total": 450
+      }
+     },
+     {
+      "type_id": 321,
+      "value": {
+       "total": 5
+      }
+     },
+     {
+      "type_id": 322,
+      "value": {
+       "total": 5
+      }
+     }
+    ]
+   },
+   {
+    "season_id": 23616,
+    "team_id": 688,
+    "has_values": true,
+    "season": {
+     "name": "2024/2025",
+     "starting_at": "2024-07-10",
+     "ending_at": "2025-05-28",
+     "league": {
+      "name": "Europa Conference League",
+      "sub_type": "cup_international"
+     }
+    },
+    "team": {
+     "id": 688,
+     "name": "Trabzonspor",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/16/688.png"
+    },
+    "details": [
+     {
+      "type_id": 119,
+      "value": {
+       "total": 210
+      }
+     },
+     {
+      "type_id": 321,
+      "value": {
+       "total": 2
+      }
+     },
+     {
+      "type_id": 322,
+      "value": {
+       "total": 2
+      }
+     }
+    ]
+   },
+   {
+    "season_id": 23620,
+    "team_id": 688,
+    "has_values": true,
+    "season": {
+     "name": "2024/2025",
+     "starting_at": "2024-07-11",
+     "ending_at": "2025-05-21",
+     "league": {
+      "name": "Europa League",
+      "sub_type": "cup_international"
+     }
+    },
+    "team": {
+     "id": 688,
+     "name": "Trabzonspor",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/16/688.png"
+    },
+    "details": [
+     {
+      "type_id": 119,
+      "value": {
+       "total": 360
+      }
+     },
+     {
+      "type_id": 321,
+      "value": {
+       "total": 4
+      }
+     },
+     {
+      "type_id": 322,
+      "value": {
+       "total": 4
+      }
+     }
+    ]
+   },
+   {
+    "season_id": 23851,
+    "team_id": 688,
+    "has_values": true,
+    "season": {
+     "name": "2024/2025",
+     "starting_at": "2024-08-09",
+     "ending_at": "2025-06-01",
+     "league": {
+      "name": "Super Lig",
+      "sub_type": "domestic"
+     }
+    },
+    "team": {
+     "id": 688,
+     "name": "Trabzonspor",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/16/688.png"
+    },
+    "details": [
+     {
+      "type_id": 119,
+      "value": {
+       "total": 2880
+      }
+     },
+     {
+      "type_id": 321,
+      "value": {
+       "total": 32
+      }
+     },
+     {
+      "type_id": 322,
+      "value": {
+       "total": 32
+      }
+     }
+    ]
+   },
+   {
+    "season_id": 24546,
+    "team_id": 688,
+    "has_values": true,
+    "season": {
+     "name": "2024/2025",
+     "starting_at": "2024-09-10",
+     "ending_at": "2025-05-14",
+     "league": {
+      "name": "Turkish Cup",
+      "sub_type": "domestic_cup"
+     }
+    },
+    "team": {
+     "id": 688,
+     "name": "Trabzonspor",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/16/688.png"
+    },
+    "details": [
+     {
+      "type_id": 119,
+      "value": {
+       "total": 480
+      }
+     },
+     {
+      "type_id": 321,
+      "value": {
+       "total": 5
+      }
+     },
+     {
+      "type_id": 322,
+      "value": {
+       "total": 5
+      }
+     }
+    ]
+   },
+   {
+    "season_id": 25682,
+    "team_id": 688,
+    "has_values": true,
+    "season": {
+     "name": "2025/2026",
+     "starting_at": "2025-08-08",
+     "ending_at": "2026-05-17",
+     "league": {
+      "name": "Super Lig",
+      "sub_type": "domestic"
+     }
+    },
+    "team": {
+     "id": 688,
+     "name": "Trabzonspor",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/16/688.png"
+    },
+    "details": [
+     {
+      "type_id": 119,
+      "value": {
+       "total": 360
+      }
+     },
+     {
+      "type_id": 321,
+      "value": {
+       "total": 4
+      }
+     },
+     {
+      "type_id": 322,
+      "value": {
+       "total": 4
+      }
+     }
+    ]
+   }
+  ]
+ }
+}

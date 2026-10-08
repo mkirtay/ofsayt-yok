@@ -92,6 +92,31 @@
   "detailed": {
     "title": "Detailed Statistics"
   },
+  "career": {
+    "title": "Career",
+    "caption": "Career: season, team, competition, appearances, goals and assists",
+    "season": "Season",
+    "team": "Team",
+    "competition": "Competition",
+    "apps": "Appearances",
+    "appsShort": "MP",
+    "goals": "Goals",
+    "goalsShort": "G",
+    "assists": "Assists",
+    "assistsShort": "A",
+    "groups": {
+      "league": "League",
+      "cup": "Cups & international"
+    },
+    "subtotal": {
+      "league": "League total",
+      "cup": "Cups & international total"
+    },
+    "total": "Overall total",
+    "byTeam": "By team",
+    "missingApps": "—: no appearance data for this row; not included in the total.",
+    "coverage": "Only competitions and seasons covered by our data plan are counted; older domestic league seasons and national team matches are not included."
+  },
   "transfers": {
     "title": "Transfers",
     "pending": "not completed",

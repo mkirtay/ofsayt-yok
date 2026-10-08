@@ -46,7 +46,7 @@ export type RawPlayer = {
     season_id: number;
     team_id?: number;
     has_values?: boolean;
-    season?: { name?: string; starting_at?: string | null; ending_at?: string | null; league?: { name?: string } } | null;
+    season?: { name?: string; starting_at?: string | null; ending_at?: string | null; league?: { name?: string; sub_type?: string | null } } | null;
     team?: RawTeam | null;
     details?: Array<{ type_id: number; value?: PlayerStatValue }>;
   }>;
@@ -108,8 +108,15 @@ function preferredFoot(meta: RawPlayer['metadata']): string | undefined {
   return v;
 }
 
-const CUP_RE = /cup|champions|europa|conference|kupa|play-?off|qualif|shield|friendl/i;
-export const isCupCompetition = (name: string | undefined) => CUP_RE.test(name ?? '');
+const CUP_RE = /cup|champions|europa|conference|kupa|copa|coppa|coupe|pokal|beker|ta[cç]a|trophy|play-?off|qualif|shield|friendl/i;
+/**
+ * Lig mi, kupa mı? Sportmonks `league.sub_type` varsa belirleyici o: `domestic` = lig; `domestic_cup` (Türkiye Kupası,
+ * Copa Del Rey) ve `cup_international` (UEFA) = kupa (planın 34 ligi 2026-10-09'da bu üç değerle doğrulandı). Ad regex'i
+ * yalnızca `sub_type` taşımayan kaynaklar için yedek (ör. maç listesindeki `competition.name`) — eski regex "Copa Del Rey"i
+ * lig sanıyordu.
+ */
+export const isCupCompetition = (name: string | undefined, subType?: string | null) =>
+  subType ? subType !== 'domestic' : CUP_RE.test(name ?? '');
 
 const shiftDays = (iso: string, days: number) => new Date(Date.parse(`${iso}T00:00:00Z`) + days * 86_400_000).toISOString().slice(0, 10);
 
@@ -172,7 +179,7 @@ export function mapPlayerProfile(raw: RawPlayer): PlayerProfile {
       .filter((s) => (s.details?.length ?? 0) > 0)
       .map((s) => ({
         key: `${s.season_id}-${s.team_id ?? 0}`,
-        isCup: isCupCompetition(s.season?.league?.name),
+        isCup: isCupCompetition(s.season?.league?.name, s.season?.league?.sub_type),
         seasonId: s.season_id,
         seasonName: s.season?.name ?? String(s.season_id),
         ...(s.season?.league?.name ? { leagueName: s.season.league.name } : {}),

@@ -108,8 +108,14 @@ describe('<PlayerProfile /> — İngilizce', () => {
     for (const s of ['In the squad, did not play', 'Show all', 'min', 'Came off the bench']) expect(html, s).toContain(s);
   });
 
+  it('kariyer kartı İngilizce (başlık, sütunlar, kısaltma açıklamaları, toplam, kapsam notu)', () => {
+    for (const s of ['>Career<', '>Competition<', 'title="Appearances">MP<', 'title="Goals">G<', 'title="Assists">A<', '>League<', 'Overall total', 'Only competitions and seasons covered by our data plan']) {
+      expect(html, s).toContain(s);
+    }
+  });
+
   it('hiçbir Türkçe kalıntı yok', () => {
-    for (const bad of ['Profil<', 'Sezon', 'Detaylı', 'Transferler', 'Maç Geçmişi', 'Kadroda', 'Tümünü Göster', 'Kiralık', 'Toplam şut', 'Doğum', 'yaş<']) {
+    for (const bad of ['Kariyer', 'Genel toplam', 'Turnuva', 'Profil<', 'Sezon', 'Detaylı', 'Transferler', 'Maç Geçmişi', 'Kadroda', 'Tümünü Göster', 'Kiralık', 'Toplam şut', 'Doğum', 'yaş<']) {
       expect(html, bad).not.toContain(bad);
     }
   });

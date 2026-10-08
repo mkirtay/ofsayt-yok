@@ -1,7 +1,7 @@
 @use '../../styles/variables' as *;
 
 // Ana Sayfa/Maç Detay kart dili (Design System §2-§3): surface + 1px border + radius-md, iç padding 16px (kompakt 12px).
-// Tek sütun (mobil / dar): Profil → Sezon → Detaylı → Transferler → Maç Geçmişi.
+// Tek sütun (mobil / dar): Profil → Sezon → Rating → Rakibe karşı → Detaylı → Kariyer → Transferler → Maç Geçmişi.
 // İki sütun: viewport değil PlayerProfile'ın kendi genişliğine göre (Maç Detay paneli 520px deseni gibi container query).
 // Sarmalayıcı `.root` container'dır; `.page` grid'i onun çocuğudur.
 .root {
@@ -495,6 +495,185 @@
 
   &:hover {
     text-decoration: underline;
+  }
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+// Kariyer tablosu: `.table` dili; sayılar sağa yaslı (toplamlar alt alta okunur). Dar ekranda tablo kendi içinde kayar.
+.tableScroll:focus-visible {
+  outline: 2px solid $color-primary;
+  outline-offset: 2px;
+}
+
+.careerTable {
+  th,
+  td {
+    padding: 6px $spacing-2;
+  }
+
+  .num {
+    width: 40px;
+    text-align: right;
+  }
+
+  abbr {
+    text-decoration: none;
+    cursor: help;
+  }
+
+  tbody td {
+    color: $color-text;
+  }
+}
+
+.careerTable .careerTeam {
+  max-width: 180px;
+  background: transparent;
+  color: $color-text;
+  font-size: 13px;
+  font-weight: 500;
+
+  .teamCell {
+    display: flex;
+    max-width: 100%;
+  }
+}
+
+.careerCompInline {
+  display: none;
+}
+
+.careerTable tbody .careerComp {
+  color: $color-text-secondary;
+}
+
+.careerTable .careerGroup th,
+.careerTable .careerGroup td {
+  padding-top: $spacing-3;
+  background: transparent;
+  color: $color-text;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.careerTable .careerSubtotal th,
+.careerTable .careerSubtotal td {
+  background: $color-bg;
+  color: $color-text-secondary;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.careerTable .careerTotal th,
+.careerTable .careerTotal td {
+  border-bottom: none;
+  border-top: 2px solid $color-border;
+  background: transparent;
+  color: $color-text;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+// `.table` satır vurgusu: satır başlığı (takım) da vurgulanır; grup başlığı / ara toplam vurgulanmaz.
+.careerTable tbody tr:hover .careerTeam {
+  background: $color-row-highlight;
+}
+
+.careerTable tbody tr.careerGroup:hover th,
+.careerTable tbody tr.careerGroup:hover td {
+  background: transparent;
+}
+
+.careerTable tbody tr.careerSubtotal:hover th,
+.careerTable tbody tr.careerSubtotal:hover td {
+  background: $color-bg;
+}
+
+.tableScroll + .groupTitle {
+  margin-top: $spacing-4;
+}
+
+.careerTeams {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: $spacing-3;
+    padding: 6px 0;
+    border-bottom: 1px solid $color-border;
+    font-size: 13px;
+    color: $color-text;
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+
+  abbr {
+    text-decoration: none;
+    color: $color-text-secondary;
+  }
+}
+
+.careerTeamNums {
+  display: inline-flex;
+  gap: $spacing-3;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.careerNote {
+  margin: $spacing-3 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: $color-text-secondary;
+
+  & + & {
+    margin-top: $spacing-1;
+  }
+}
+
+@media (max-width: $bp-sm) {
+  // Takım sütunu kalan genişliği alır ve uzun adı kırpar (max-width:0 + width:100% tablo hücresi kalıbı).
+  .careerTable .careerTeam {
+    width: 100%;
+    max-width: 0;
+  }
+
+  // Dar ekranda turnuva sütunu yerine takım adının altında ikinci satır (M/G/A sütunları ekranda kalır).
+  .careerTable .careerComp {
+    display: none;
+  }
+
+  .careerCompInline {
+    display: block;
+    margin-top: 2px;
+    padding-left: 26px; // logo (18) + boşluk (8) hizası
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: $color-text-secondary;
+    font-size: 12px;
+    font-weight: 400;
+  }
+
+  .careerTable .num {
+    width: 32px;
   }
 }
 

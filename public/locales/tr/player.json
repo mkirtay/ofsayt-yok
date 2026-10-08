@@ -87,6 +87,31 @@
   "detailed": {
     "title": "Detaylı İstatistikler"
   },
+  "career": {
+    "title": "Kariyer",
+    "caption": "Kariyer: sezon, takım, turnuva, maç, gol ve asist",
+    "season": "Sezon",
+    "team": "Takım",
+    "competition": "Turnuva",
+    "apps": "Maç",
+    "appsShort": "M",
+    "goals": "Gol",
+    "goalsShort": "G",
+    "assists": "Asist",
+    "assistsShort": "A",
+    "groups": {
+      "league": "Lig",
+      "cup": "Kupa ve uluslararası"
+    },
+    "subtotal": {
+      "league": "Lig toplamı",
+      "cup": "Kupa ve uluslararası toplamı"
+    },
+    "total": "Genel toplam",
+    "byTeam": "Takım bazında",
+    "missingApps": "—: Bu satır için maç sayısı verisi yok; toplama katılmadı.",
+    "coverage": "Yalnızca veri planımızın kapsadığı turnuva ve sezonlar sayılır; eski yerel lig sezonları ve milli takım maçları bu tabloda yer almaz."
+  },
   "transfers": {
     "title": "Transferler",
     "pending": "tamamlanmadı",

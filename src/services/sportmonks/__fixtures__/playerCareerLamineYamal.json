@@ -1,0 +1,498 @@
+{
+ "data": {
+  "id": 37656179,
+  "display_name": "Lamine Yamal",
+  "transfers": [
+   {
+    "id": 293668,
+    "date": "2023-07-01",
+    "completed": true,
+    "amount": null,
+    "type": {
+     "name": "Transfer"
+    },
+    "fromteam": {
+     "id": 30893,
+     "name": "Barcelona U19",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/13/30893.png"
+    },
+    "toteam": {
+     "id": 83,
+     "name": "FC Barcelona",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/19/83.png"
+    }
+   }
+  ],
+  "statistics": [
+   {
+    "season_id": 21638,
+    "team_id": 83,
+    "has_values": true,
+    "season": {
+     "name": "2023/2024",
+     "starting_at": "2023-06-27",
+     "ending_at": "2024-06-01",
+     "league": {
+      "name": "Champions League",
+      "sub_type": "cup_international"
+     }
+    },
+    "team": {
+     "id": 83,
+     "name": "FC Barcelona",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/19/83.png"
+    },
+    "details": [
+     {
+      "type_id": 79,
+      "value": {
+       "total": 2
+      }
+     },
+     {
+      "type_id": 119,
+      "value": {
+       "total": 579
+      }
+     },
+     {
+      "type_id": 321,
+      "value": {
+       "total": 10
+      }
+     },
+     {
+      "type_id": 322,
+      "value": {
+       "total": 7
+      }
+     }
+    ]
+   },
+   {
+    "season_id": 23619,
+    "team_id": 83,
+    "has_values": true,
+    "season": {
+     "name": "2024/2025",
+     "starting_at": "2024-07-09",
+     "ending_at": "2025-05-31",
+     "league": {
+      "name": "Champions League",
+      "sub_type": "cup_international"
+     }
+    },
+    "team": {
+     "id": 83,
+     "name": "FC Barcelona",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/19/83.png"
+    },
+    "details": [
+     {
+      "type_id": 52,
+      "value": {
+       "total": 5,
+       "goals": 5,
+       "penalties": 0
+      }
+     },
+     {
+      "type_id": 79,
+      "value": {
+       "total": 3
+      }
+     },
+     {
+      "type_id": 119,
+      "value": {
+       "total": 1101
+      }
+     },
+     {
+      "type_id": 321,
+      "value": {
+       "total": 13
+      }
+     },
+     {
+      "type_id": 322,
+      "value": {
+       "total": 13
+      }
+     }
+    ]
+   },
+   {
+    "season_id": 23621,
+    "team_id": 83,
+    "has_values": true,
+    "season": {
+     "name": "2024/2025",
+     "starting_at": "2024-08-15",
+     "ending_at": "2025-05-25",
+     "league": {
+      "name": "La Liga",
+      "sub_type": "domestic"
+     }
+    },
+    "team": {
+     "id": 83,
+     "name": "FC Barcelona",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/19/83.png"
+    },
+    "details": [
+     {
+      "type_id": 52,
+      "value": {
+       "total": 9,
+       "goals": 9,
+       "penalties": 0
+      }
+     },
+     {
+      "type_id": 79,
+      "value": {
+       "total": 14
+      }
+     },
+     {
+      "type_id": 119,
+      "value": {
+       "total": 2864
+      }
+     },
+     {
+      "type_id": 321,
+      "value": {
+       "total": 35
+      }
+     },
+     {
+      "type_id": 322,
+      "value": {
+       "total": 31
+      }
+     }
+    ]
+   },
+   {
+    "season_id": 24526,
+    "team_id": 83,
+    "has_values": true,
+    "season": {
+     "name": "2024/2025",
+     "starting_at": "2024-10-09",
+     "ending_at": "2025-04-26",
+     "league": {
+      "name": "Copa Del Rey",
+      "sub_type": "domestic_cup"
+     }
+    },
+    "team": {
+     "id": 83,
+     "name": "FC Barcelona",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/19/83.png"
+    },
+    "details": [
+     {
+      "type_id": 52,
+      "value": {
+       "total": 2,
+       "goals": 2,
+       "penalties": 0
+      }
+     },
+     {
+      "type_id": 79,
+      "value": {
+       "total": 5
+      }
+     },
+     {
+      "type_id": 119,
+      "value": {
+       "total": 464
+      }
+     },
+     {
+      "type_id": 321,
+      "value": {
+       "total": 5
+      }
+     },
+     {
+      "type_id": 322,
+      "value": {
+       "total": 5
+      }
+     }
+    ]
+   },
+   {
+    "season_id": 25580,
+    "team_id": 83,
+    "has_values": true,
+    "season": {
+     "name": "2025/2026",
+     "starting_at": "2025-07-08",
+     "ending_at": "2026-05-30",
+     "league": {
+      "name": "Champions League",
+      "sub_type": "cup_international"
+     }
+    },
+    "team": {
+     "id": 83,
+     "name": "FC Barcelona",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/19/83.png"
+    },
+    "details": [
+     {
+      "type_id": 52,
+      "value": {
+       "total": 6,
+       "goals": 3,
+       "penalties": 3
+      }
+     },
+     {
+      "type_id": 79,
+      "value": {
+       "total": 4
+      }
+     },
+     {
+      "type_id": 119,
+      "value": {
+       "total": 874
+      }
+     },
+     {
+      "type_id": 321,
+      "value": {
+       "total": 10
+      }
+     },
+     {
+      "type_id": 322,
+      "value": {
+       "total": 10
+      }
+     }
+    ]
+   },
+   {
+    "season_id": 25659,
+    "team_id": 83,
+    "has_values": true,
+    "season": {
+     "name": "2025/2026",
+     "starting_at": "2025-08-15",
+     "ending_at": "2026-05-24",
+     "league": {
+      "name": "La Liga",
+      "sub_type": "domestic"
+     }
+    },
+    "team": {
+     "id": 83,
+     "name": "FC Barcelona",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/19/83.png"
+    },
+    "details": [
+     {
+      "type_id": 52,
+      "value": {
+       "total": 16,
+       "goals": 13,
+       "penalties": 3
+      }
+     },
+     {
+      "type_id": 79,
+      "value": {
+       "total": 11
+      }
+     },
+     {
+      "type_id": 119,
+      "value": {
+       "total": 2296
+      }
+     },
+     {
+      "type_id": 321,
+      "value": {
+       "total": 28
+      }
+     },
+     {
+      "type_id": 322,
+      "value": {
+       "total": 26
+      }
+     }
+    ]
+   },
+   {
+    "season_id": 26557,
+    "team_id": 83,
+    "has_values": true,
+    "season": {
+     "name": "2025/2026",
+     "starting_at": "2025-09-27",
+     "ending_at": "2026-04-25",
+     "league": {
+      "name": "Copa Del Rey",
+      "sub_type": "domestic_cup"
+     }
+    },
+    "team": {
+     "id": 83,
+     "name": "FC Barcelona",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/19/83.png"
+    },
+    "details": [
+     {
+      "type_id": 52,
+      "value": {
+       "total": 2,
+       "goals": 2,
+       "penalties": 0
+      }
+     },
+     {
+      "type_id": 79,
+      "value": {
+       "total": 2
+      }
+     },
+     {
+      "type_id": 119,
+      "value": {
+       "total": 450
+      }
+     },
+     {
+      "type_id": 321,
+      "value": {
+       "total": 5
+      }
+     },
+     {
+      "type_id": 322,
+      "value": {
+       "total": 5
+      }
+     }
+    ]
+   },
+   {
+    "season_id": 27965,
+    "team_id": 83,
+    "has_values": true,
+    "season": {
+     "name": "2026/2027",
+     "starting_at": "2026-08-15",
+     "ending_at": "2027-05-30",
+     "league": {
+      "name": "La Liga",
+      "sub_type": "domestic"
+     }
+    },
+    "team": {
+     "id": 83,
+     "name": "FC Barcelona",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/19/83.png"
+    },
+    "details": [
+     {
+      "type_id": 52,
+      "value": {
+       "total": 7,
+       "goals": 6,
+       "penalties": 1
+      }
+     },
+     {
+      "type_id": 79,
+      "value": {
+       "total": 4
+      }
+     },
+     {
+      "type_id": 119,
+      "value": {
+       "total": 581
+      }
+     },
+     {
+      "type_id": 321,
+      "value": {
+       "total": 7
+      }
+     },
+     {
+      "type_id": 322,
+      "value": {
+       "total": 7
+      }
+     }
+    ]
+   },
+   {
+    "season_id": 28155,
+    "team_id": 83,
+    "has_values": true,
+    "season": {
+     "name": "2026/2027",
+     "starting_at": "2026-07-07",
+     "ending_at": "2027-01-27",
+     "league": {
+      "name": "Champions League",
+      "sub_type": "cup_international"
+     }
+    },
+    "team": {
+     "id": 83,
+     "name": "FC Barcelona",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/19/83.png"
+    },
+    "details": [
+     {
+      "type_id": 52,
+      "value": {
+       "total": 1,
+       "goals": 1,
+       "penalties": 0
+      }
+     },
+     {
+      "type_id": 79,
+      "value": {
+       "total": 2
+      }
+     },
+     {
+      "type_id": 119,
+      "value": {
+       "total": 90
+      }
+     },
+     {
+      "type_id": 321,
+      "value": {
+       "total": 1
+      }
+     },
+     {
+      "type_id": 322,
+      "value": {
+       "total": 1
+      }
+     }
+    ]
+   }
+  ]
+ }
+}

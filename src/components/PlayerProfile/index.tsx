@@ -14,6 +14,7 @@ import RatingBadge from '@/components/RatingBadge';
 import { formatRating } from '@/config/ratingScale';
 import RatingTrendChart from './RatingTrendChart';
 import PlayerVsOpponent from './PlayerVsOpponent';
+import Career from './Career';
 import styles from './playerProfile.module.scss';
 import TeamLogo from '@/components/TeamLogo';
 
@@ -444,6 +445,34 @@ function RatingTrend({ playerId }: { playerId: number }) {
   );
 }
 
+/**
+ * Kariyer kartı ekrana yaklaşınca (600 px) çizilir. Kart her zaman ilk ekranın altında; profil verisi gelince aynı
+ * render'da çizilirse o iş Next'in ana sayfa prefetch'lerini fotoğraf (LCP) isteğinin önüne itiyor ve yerel mobil
+ * Lighthouse (Lantern) LCP'yi ~1 sn kötü simüle ediyordu (gözlenen LCP aynıydı) — bkz. docs/OYUNCU_KARIYER.md.
+ * IntersectionObserver yoksa (sunucu render'ı, eski tarayıcı) hemen çizilir.
+ */
+function CareerWhenNear({ seasons }: { seasons: PlayerSeasonStats[] }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [near, setNear] = useState(() => typeof IntersectionObserver === 'undefined');
+  useEffect(() => {
+    const el = ref.current;
+    if (near || !el) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        // yakında ya da zaten geçilmiş (ör. sayfa sonuna atlanmış) → çiz
+        if (entries.some((e) => e.isIntersecting || e.boundingClientRect.bottom < 0)) {
+          setNear(true);
+          io.disconnect();
+        }
+      },
+      { rootMargin: '600px 0px' },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [near]);
+  return near ? <Career seasons={seasons} /> : <div ref={ref} aria-hidden="true" />;
+}
+
 /* ─── Sayfa gövdesi ─── */
 
 export default function PlayerProfile({ playerId }: { playerId: string }) {
@@ -471,6 +500,7 @@ export default function PlayerProfile({ playerId }: { playerId: string }) {
           <RatingTrend playerId={data.id} />
           <PlayerVsOpponent playerId={data.id} />
           {season && hasStats ? <DetailedStats season={season} /> : null}
+          <CareerWhenNear seasons={data.seasons} />
         </div>
         <aside className={styles.side}>
           <Transfers items={data.transfers} />

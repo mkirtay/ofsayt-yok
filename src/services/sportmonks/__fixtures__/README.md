@@ -97,3 +97,13 @@ turda eklenen 4 yeni gerçek type_id de aynı maçtan geliyor: `EVENT_TYPES[10]`
   doğrulanmamış geçmiş-kadro endpoint'i için. Gerçekte BENZER ama AYNI DEĞİL:
   `captain`/`start`/`end` yok, ayrı bir kota havuzundan (`PlayerStatistic`)
   sayılıyor.
+- `playerCareerUgurcan.json` / `playerCareerLamineYamal.json` — 2026-10-09,
+  `GET /players/{201739|37656179}?include=<PLAYER_PROFILE_INCLUDE>` (oyuncu
+  sayfasının KENDİ çağrısı) yanıtının KIRPILMIŞ hâli: değerler birebir, yalnızca
+  Kariyer kartının okuduğu alanlar bırakıldı (`statistics[]` satırlarının tümü,
+  her satırda yalnız 321/322/52/79/119 detayları; transferlerde tarih/tip/takım).
+  Uğurcan: aynı sezonda iki takım (2025/26 Trabzonspor → Galatasaray),
+  `has_values:false` satır (Galatasaray Türkiye Kupası 2025/26) ve maç sayısı
+  (321) OLMAYAN ama 90 dk'lık satır (Trabzonspor UEFA Avrupa Ligi 2015/16).
+  Lamine Yamal: tek kulüp + `sub_type: domestic_cup` "Copa Del Rey" (eski ad
+  regex'i bunu lig sanıyordu).
