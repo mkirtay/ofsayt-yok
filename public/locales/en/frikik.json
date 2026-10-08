@@ -31,7 +31,9 @@
     "levelTitle": "Out of lives",
     "level": "Level {{n}}",
     "levelSummary": "{{cleared}} levels cleared · {{score}} points",
-    "shareLevelText": "I reached level {{level}} in Frikik with {{score}} points. How far can you get?"
+    "shareLevelText": "I reached level {{level}} in Frikik with {{score}} points. How far can you get?",
+    "copyRun": "Copy run (test)",
+    "runCopied": "Run copied to clipboard"
   },
   "reduced": {
     "title": "This game contains motion",

@@ -8,6 +8,7 @@ import { dailySeed, dayLabel, turkeyDay } from "@/lib/frikik/daily";
 import { sharePath, type ShareInfo } from "@/lib/frikik/share";
 import { entryFromQuery, trackFrikik, type FrikikEntry } from "@/lib/frikik/analytics";
 import { readPendingRun, writeLastRun, writePendingRun, type PendingRun } from "@/lib/frikik/localRun";
+import { buildExportedRun, debugExportEnabled } from "@/lib/frikik/runExport";
 import { useFrikikBoard, type MyStanding } from "@/hooks/useFrikikBoard";
 import Leaderboard from "./Leaderboard";
 import type { FrikikHandle, FrikikSummary, RoundInfo } from "./frikikScene";
@@ -305,6 +306,18 @@ export default function Frikik({ shared }: { shared: ShareInfo | null }) {
     }
   };
 
+  /** Gerçek cihaz testi (?debug=1): cihazın koşu çıktısını panoya kopyala → scripts/frikik-cross-engine/verify.mts. */
+  const copyRun = async () => {
+    if (!summary || day == null) return;
+    const run = buildExportedRun(dayLabel(day), summary.seed, SIM_VERSION, summary.inputs, summary.results, summary.level, summary.total, navigator.userAgent);
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(run));
+      setShareNote(t("end.runCopied"));
+    } catch {
+      setShareNote(JSON.stringify(run).slice(0, 120) + "…");
+    }
+  };
+
   const loginFromGame = () => {
     trackFrikik("frikik_login_from_game", { level: summary?.level ?? 0 });
     void signIn("google", { callbackUrl: "/frikik" });
@@ -566,6 +579,11 @@ export default function Frikik({ shared }: { shared: ShareInfo | null }) {
                 >
                   {t("end.share")}
                 </button>
+                {debugExportEnabled() ? (
+                  <button type="button" className={`${styles.btn} ${styles.btnGhost}`} onClick={() => void copyRun()}>
+                    {t("end.copyRun")}
+                  </button>
+                ) : null}
               </div>
               <p className={styles.note} role="status">
                 {shareNote}

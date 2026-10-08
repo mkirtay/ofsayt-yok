@@ -31,7 +31,9 @@
     "levelTitle": "Canlar bitti",
     "level": "Seviye {{n}}",
     "levelSummary": "{{cleared}} seviye geçtin · {{score}} puan",
-    "shareLevelText": "Frikik'te {{level}}. seviyeye ulaştım, {{score}} puan. Sen kaça ulaşırsın?"
+    "shareLevelText": "Frikik'te {{level}}. seviyeye ulaştım, {{score}} puan. Sen kaça ulaşırsın?",
+    "copyRun": "Koşuyu kopyala (test)",
+    "runCopied": "Koşu panoya kopyalandı"
   },
   "reduced": {
     "title": "Bu oyun hareketli sahneler içerir",

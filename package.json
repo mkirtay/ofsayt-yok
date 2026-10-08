@@ -27,7 +27,8 @@
     "db:push": "dotenv -e .env.local -- prisma db push",
     "db:generate": "dotenv -e .env.local -- prisma generate",
     "db:studio": "dotenv -e .env.local -- prisma studio",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "test:frikik-engines": "tsx scripts/frikik-cross-engine/run.mts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.91.1",

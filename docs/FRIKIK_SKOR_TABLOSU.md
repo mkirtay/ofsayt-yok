@@ -46,6 +46,34 @@ Dal: `feat/frikik-leaderboard`. Bu belge: karar özeti, deploy adımları (migra
 `frikik_started{entry, again}`, `frikik_finished{level, score, signedIn}`, `frikik_shared{level, method}`,
 `frikik_login_prompt_shown{level}`, `frikik_login_from_game{level}`, `frikik_card_click{entry}`; `entry` ∈ home_card | menu | match_cta | share_link | direct (`/frikik?src=…`).
 
+## Motorlar arası determinizm (tarayıcı ↔ sunucu)
+
+Sunucu istemcinin skorunu **karşılaştırmaz**; girdiyi yeniden oynatır ve kendi sonucunu yazar. Tarayıcı ile Node farklı
+sonuç üretse kullanıcı reddedilmez ama (a) tabloya ekranda gördüğünden farklı bir skor yazılır, (b) can sayımı kayarsa
+koşu `RUN_NOT_FINISHED` / `BAD_SHOTS` ile reddedilir. Bu yüzden sim.ts yalnız IEEE 754'te kesin tanımlı işlemler
+(+ − × ÷, `Math.sqrt`, `abs/min/max`, tam sayı) kullanır; `sin/cos/exp/pow/hypot/random` yasak (sim.test.ts kaynak taraması).
+
+Doğrulama (2026-10-08, macOS arm64): 36 koşu / 254 vuruş (gol 146, kurtarış 59, baraj 32, direk 9, dışarı 8; seviye 13'e
+kadar) Node 22 (V8), Chromium 145 (V8), Firefox 146 (SpiderMonkey) ve WebKit 26 (JavaScriptCore) üzerinde **bit düzeyinde
+aynı** iz üretti (vuruş sonucu, puan, karar tick'i, top konum/hız, kaleci yeri/hedefi, vuruş parametreleri).
+
+- Altın dosya: `src/lib/frikik/__fixtures__/crossEngine.golden.json` (Node çıktısı). `src/lib/frikik/crossEngine.test.ts`
+  her CI koşusunda Node çıktısının altınla bit düzeyinde aynı olduğunu ve `simVersion === SIM_VERSION` olduğunu doğrular.
+  **sim.ts değişirse:** `SIM_VERSION` artır + `npx tsx scripts/frikik-cross-engine/run.mts --write-golden` + motor
+  karşılaştırmasını yeniden koş.
+- Motor karşılaştırması (ağır, CI dışı): `npm run test:frikik-engines`. Playwright gerekir: `npm i -D playwright &&
+  npx playwright install chromium firefox webkit` ya da ayrı kurulum için `FRIKIK_PW_DIR=<klasör>` (içinde
+  `node_modules/playwright`). Karar farkı çıkarsa çıkış kodu 1; ilk fark koşu/vuruş/alan/Δ ile yazılır.
+- **Gerçek telefon testi:** telefonda `/frikik?debug=1` aç, bir koşu bitir, bitiş kartındaki "Koşuyu kopyala (test)"
+  düğmesine bas (JSON: gün, tohum, SIM_VERSION, vuruş girdileri, cihazın vuruş sonuçları, UA). JSON'u Mac'e geçir
+  (Notlar / AirDrop / mesaj) ve:
+  ```bash
+  pbpaste | npx tsx scripts/frikik-cross-engine/verify.mts -
+  ```
+  Çıktı vuruş vuruş "aynı / FARK" tablosu ve toplam skor karşılaştırmasıdır. En az 3 koşu (biri yüksek seviyeli, biri
+  çok falsolu) önerilir; iPhone Safari (JSC/arm64) ve bir Android Chrome yeterli. Tarayıcıda çalışan kod ile sunucu aynı
+  `sim.ts`; ekranda görünen sonuç = tabloya yazılan sonuç olmalı.
+
 ## Riskler / açık noktalar
 
 - **Tekrar koşu ipucu:** Tekrar koşular tabloya girmez ama skor sunucuya gönderilmez de (istemci bugünkü kaydı biliyorsa). Kullanıcı yerel depolamayı silip tekrar gönderirse tekil anahtar yine korur.
