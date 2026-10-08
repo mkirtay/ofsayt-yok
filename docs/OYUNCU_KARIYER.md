@@ -34,9 +34,35 @@ Kullanıcı isteği: "Oyuncuların kariyer geçmişi: hangi takımda kaç maç o
   (sezon seçicide Lamine'nin Copa Del Rey satırı lig gibi sıralanıyordu). Plandaki 34 lig: 28 `domestic`,
   2 `domestic_cup` (Copa Del Rey, Turkish Cup), 4 `cup_international` (UEFA). Regex yedeğine
   copa/coppa/coupe/pokal/beker/taça/trophy eklendi (`compareData.pickCurrentSeasonId` de bunu kullanıyor).
-- **Kapsam notu kartta sabit:** "Yalnızca veri planımızın kapsadığı turnuva ve sezonlar sayılır; eski yerel lig
-  sezonları ve milli takım maçları bu tabloda yer almaz." Toplam satırı "Genel toplam" (kariyer toplamı değil).
+- **Kapsam notu** başlık altında (bkz. "Kısmi veri" kuralı). Toplam satırı "Genel toplam" (kariyer toplamı değil).
 - **Kart ekrana yaklaşınca (600 px) çizilir** (`CareerWhenNear`, IntersectionObserver; yoksa hemen). Bkz. Lighthouse.
+
+## "Kısmi veri" kuralı (2026-10-09, 2. tur)
+
+Sorun: Osimhen'in Napoli toplamı "M 20, G 11" — yalnız UEFA maçları; Serie A sezonları plan dışı. Kullanıcı bunu
+yanlış istatistik sanar.
+
+- **Kural** (`uncoveredSeasons`, `isCareerPartial` — `src/utils/playerCareer.ts`): bir takımın, kupa satırı olup aynı
+  takım için lig satırı OLMAYAN ve oyuncunun verideki en eski lig sezonundan ESKİ bir sezonu varsa o takım toplamı
+  kısmidir. Oyuncunun hiç lig satırı yoksa her kupa-yalnız sezon kapsam dışı sayılır. En az bir takım kısmiyse
+  genel toplam da kısmidir.
+  - "En eskiden eski" şartı: kapsanan bir sezonda yalnız kupada oynayan oyuncu (yedek kaleci vb.) yanlışlıkla
+    "Kısmi" görünmesin.
+  - Görülemeyen durum: hiç satırı olmayan eski sezonlar (o yıl Avrupa'da da oynamamışsa). Başlık altındaki not
+    bunun için.
+- **Rozet mi, gizlemek mi → rozet.** Gizlemek: (1) takım tabloda satırlarıyla görünüp "Takım bazında"da kaybolur,
+  kullanıcı neden olduğunu anlamaz; (2) takım toplamlarının toplamı genel toplamı tutmaz, bu da başka bir
+  "yanlış" algısı yaratır; (3) doğru olan UEFA toplamı bilgisi de gider. Rozet, sayının doğru ama eksik olduğunu
+  sayının hemen yanında, metinle (ikon değil, ekran okuyucu da okur) söylüyor. Rozet: durum amberi + koyu yazı
+  (form rozeti token'ları, iki temada 8.9:1).
+- **Kapsam notu** tablonun altından başlığın altına taşındı, tek cümle: "Veri planımız eski yerel lig sezonlarını
+  kapsamıyor; toplamlar kısmi olabilir." / "Our data plan does not cover older domestic league seasons; totals may be
+  partial." Not her oyuncuda görünür (kapsam genel bir kısıt).
+- **Sonuçlar:** Osimhen → Napoli (2020/21–2023/24) ve LOSC Lille (2019/20) kısmi, Galatasaray eksiksiz, genel toplam
+  kısmi. Uğurcan → Trabzonspor kısmi (2015/16, 2019/20, 2021/22, 2022/23), Galatasaray eksiksiz.
+  **Lamine Yamal tam veride KISMİ çıkıyor:** Barcelona 2023/24 Şampiyonlar Ligi satırı (10 maç) var ama La Liga
+  2023/24 satırı yok (o sezon La Liga'da oynadı, plan dışı). Yalnız 2024/25 ve sonrası satırlarıyla eksiksiz; testte
+  "eksiksiz" durumu bu dilimle kuruldu.
 
 ## Veri doğruluğu (2026-10-09, ham Sportmonks yanıtı)
 
@@ -87,7 +113,7 @@ geliyor. Sonuç:
 - Lamine Yamal: La Liga 2023/24 yok (UEFA 2023/24 var).
 - Milli takım maçları planda yok.
 
-Bu yüzden kartta kapsam notu var ve toplam "Genel toplam" diye adlandırıldı. Transferler kartında görünen ama
+Bu yüzden kartta kapsam notu ve "Kısmi veri" rozetleri var; toplam "Genel toplam" diye adlandırıldı. Transferler kartında görünen ama
 Kariyer'de olmayan kulüpler bu kapsamdan kaynaklanır.
 
 ## Lighthouse (yerel üretim, mobil, `/players/455805`)
@@ -106,5 +132,9 @@ yaklaşınca çizilecek şekilde ertelenince fark kayboldu (6+3 koşu). CLS 0,01
 
 - Ham yanıtlar: `GET /players/{id}?include=<PLAYER_PROFILE_INCLUDE>`; lineup çapraz kontrolü yukarıdaki istek.
 - Testler: `src/utils/playerCareer.test.ts` (toplama, aynı sezon iki takım, veri olmayan sezon, Copa Del Rey),
+  `src/utils/playerCareer.coverage.test.ts` + `Career.coverage.render.test.tsx` (Kısmi veri kuralı),
   `src/components/PlayerProfile/Career.render.test.tsx`, `i18nEnglish.render.test.tsx`. Kırpılmış gerçek
-  fixture'lar: `src/services/sportmonks/__fixtures__/playerCareer{Ugurcan,LamineYamal}.json`.
+  fixture'lar: `src/services/sportmonks/__fixtures__/playerCareer{Ugurcan,LamineYamal,Osimhen}.json`.
+
+2. tur (Kısmi veri) sonrası yerel mobil: 3 koşu medyan 85, tekrar 3 koşu medyan 86 (LCP 4165/4460 ms iki kararlı
+Lantern modu, temelde de var); JS +0,2 KB, CSS +0,1 KB; kart hâlâ ertelenmiş çiziliyor.
