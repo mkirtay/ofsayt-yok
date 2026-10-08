@@ -64,3 +64,13 @@ export function logoSrc(src: string | null | undefined, displayPx: number, mode:
   }
   return `/api/img/logo?src=${encodeURI(path)}&w=${w}`;
 }
+
+/**
+ * `logoSrc`'nin kendi ucumuza (`/api/img/logo`) yazdığı adresin Sportmonks orijinali; başka adres → null. `<img>` /
+ * canvas yüklemesi hata verirse doğrudan CDN'e düşmek için (uç bozulsa da logo kırık görünmesin).
+ */
+export function originalLogoSrc(url: string): string | null {
+  if (!url.startsWith('/api/img/logo?')) return null;
+  const path = new URLSearchParams(url.slice(url.indexOf('?') + 1)).get('src');
+  return path && isValidLogoPath(path) ? `${SPORTMONKS_IMAGE_ORIGIN}${path}` : null;
+}

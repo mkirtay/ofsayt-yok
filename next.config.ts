@@ -18,6 +18,25 @@ export const SECURITY_HEADERS: { key: string; value: string }[] = [
   { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), usb=()' },
 ];
 
+/**
+ * sharp'ın bağlandığı libvips-cpp paylaşımlı kütüphanesi (kurulu platform paketinin `./binary` dışa aktarımı: tam dosya
+ * yolu). Glob değil tam yol: Turbopack include kalıplarını "içerir" diye eşler; `node_modules/@img/…` kalıbı Next'in
+ * kendi iç içe (kullanılmayan, 0.34) sharp'ının libvips'ini de çekiyordu (+~16 MB). Vercel'de yalnız linux-x64 kurulu;
+ * darwin girdileri yerel build trace denetimi içindir.
+ */
+function sharpLibvipsTrace(): string[] {
+  const files: string[] = [];
+  for (const pkg of ['@img/sharp-libvips-linux-x64', '@img/sharp-libvips-darwin-arm64', '@img/sharp-libvips-darwin-x64']) {
+    try {
+      files.push(path.relative(__dirname, require.resolve(`${pkg}/binary`)));
+    } catch {
+      // bu platformun paketi kurulu değil
+    }
+  }
+  return files;
+}
+const SHARP_LIBVIPS_TRACE = sharpLibvipsTrace();
+
 const nextConfig: NextConfig = {
   reactStrictMode: false,
   // Aynı klasörde ikinci bir `next dev` (ör. paralel önizleme) `.next/dev/lock` kilidine takılmasın diye
@@ -36,6 +55,14 @@ const nextConfig: NextConfig = {
       'node_modules/@prisma/client/runtime/binary.*',
       'node_modules/.prisma/client/*.wasm',
     ],
+  },
+  // sharp ≥0.35 girişi `dist/index.cjs`; @vercel/nft'nin sharp özel durumu hâlâ `sharp/lib/index.js` arıyor → platform
+  // `.node` dosyası trace'e giriyor ama bağlandığı libvips-cpp paylaşımlı kütüphanesi girmiyor; Vercel'de
+  // "libvips-cpp.so…: cannot open shared object file" (500). sharp kullanan fonksiyonlara açıkça eklenir; build sonrası
+  // denetim: scripts/check-sharp-trace.mjs (postbuild).
+  outputFileTracingIncludes: {
+    '/api/img/logo': SHARP_LIBVIPS_TRACE,
+    '/api/og/**': SHARP_LIBVIPS_TRACE,
   },
   async headers() {
     return [{ source: '/:path*', headers: SECURITY_HEADERS }];

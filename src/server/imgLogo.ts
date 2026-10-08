@@ -8,8 +8,10 @@
  *   yedeği); libvips yükleyicileri yalnız PNG / JPEG / WebP / GIF (bellekten) — SVG (librsvg), HEIF/AVIF (libheif),
  *   TIFF, PDF, JP2K, JXL, VIPS, magick, FITS, OpenSlide … kapalı. Desteklenmeyen biçim → sharp hata → 302 yedeği
  *   (tarayıcı orijinal logoyu doğrudan çizer; sunucu ayrıştırmaz).
+ * - sharp ilk istekte yüklenir: yerel kütüphane yüklenemezse (2026-10: libvips-cpp.so fonksiyon paketinde yoktu, bkz.
+ *   next.config.ts outputFileTracingIncludes) modül düşüp her istek 500 olmaz, 302 yedeği döner.
  */
-import sharp from 'sharp';
+import type Sharp from 'sharp';
 import { LOGO_WIDTHS, SPORTMONKS_IMAGE_ORIGIN, isValidLogoPath, type LogoWidth } from '@/utils/logoUrl';
 
 /**
@@ -24,8 +26,25 @@ export const ALLOWED_SHARP_LOADERS = [
   'VipsForeignLoadWebpBuffer',
   'VipsForeignLoadNsgifBuffer',
 ] as const;
-sharp.block({ operation: ['VipsForeignLoad'] });
-sharp.unblock({ operation: [...ALLOWED_SHARP_LOADERS] });
+
+let sharpPromise: Promise<typeof Sharp> | null = null;
+
+/** sharp + yükleyici kilidi (süreçte bir kez). Yükleme hatası önbelleğe alınmaz: sonraki istek yeniden dener. */
+function loadSharp(): Promise<typeof Sharp> {
+  sharpPromise ??= import('sharp').then(
+    ({ default: sharp }) => {
+      sharp.block({ operation: ['VipsForeignLoad'] });
+      sharp.unblock({ operation: [...ALLOWED_SHARP_LOADERS] });
+      return sharp;
+    },
+    (err: unknown) => {
+      sharpPromise = null;
+      console.error('[imgLogo] sharp yüklenemedi; orijinal logoya 302', err);
+      throw err;
+    },
+  );
+  return sharpPromise;
+}
 
 const MAX_INPUT_BYTES = 5 * 1024 * 1024;
 const UPSTREAM_TIMEOUT_MS = 5_000;
@@ -68,6 +87,7 @@ export async function renderLogo(
   }
 
   try {
+    const sharp = await loadSharp();
     const body = await sharp(input, { limitInputPixels: 25_000_000, animated: false })
       .resize({ width, height: width, fit: 'inside', withoutEnlargement: true })
       .webp({ quality: 80, effort: 4 })

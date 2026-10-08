@@ -39,6 +39,7 @@ import {
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import type { GoalSpec, V3 } from '@/lib/pitchPhysics/core';
 import { panelMesh, pickSpreadHexagons, truncatedIcosahedron, type PanelMesh } from './ballGeometry';
+import { originalLogoSrc } from '@/utils/logoUrl';
 
 /**
  * Işık (huzme, hale, partikül, kenar parlaması): yalnız renk eklenir, tuvalin alfası değişmez. Tuval saydam ve CSS
@@ -501,6 +502,14 @@ export function loadBallLogos(
         opts.onLoad();
       } catch {
         // kirli tuval / bozuk görsel: panel düz kalır
+      }
+    };
+    // Küçük sürüm ucu hata verirse (ör. sharp yüklenemedi) bir kez Sportmonks orijinali (CDN'de CORS *).
+    img.onerror = () => {
+      const original = originalLogoSrc(url);
+      if (original && !opts.isDisposed()) {
+        img.onerror = null;
+        img.src = original;
       }
     };
     img.src = url;

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isValidLogoPath, logoProxyMode, logoSrc, logoWidthFor, sportmonksImagePath } from './logoUrl';
+import { isValidLogoPath, logoProxyMode, logoSrc, logoWidthFor, originalLogoSrc, sportmonksImagePath } from './logoUrl';
 
 const TEAM = 'https://cdn.sportmonks.com/images/soccer/teams/0/4192.png';
 
@@ -61,5 +61,15 @@ describe('logoSrc', () => {
     expect(logoProxyMode('wsrv')).toBe('wsrv');
     expect(logoProxyMode('off')).toBe('off');
     expect(logoProxyMode('OFF')).toBe('self');
+  });
+
+  it('originalLogoSrc: kendi ucumuzun adresi → Sportmonks orijinali (hata yedeği); başka adres / bozuk yol → null', () => {
+    expect(originalLogoSrc(logoSrc(TEAM, 16, 'self')!)).toBe(TEAM);
+    expect(originalLogoSrc('/api/img/logo?src=soccer/teams/24/3224.png&w=32')).toBe(
+      'https://cdn.sportmonks.com/images/soccer/teams/24/3224.png',
+    );
+    expect(originalLogoSrc(TEAM)).toBeNull();
+    expect(originalLogoSrc('/api/img/logo?src=../x.png&w=32')).toBeNull();
+    expect(originalLogoSrc('/api/img/logo?w=32')).toBeNull();
   });
 });

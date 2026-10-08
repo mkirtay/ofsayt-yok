@@ -9,6 +9,7 @@
     "test:coverage": "vitest run --coverage",
     "dev": "next dev --turbo",
     "build": "next build",
+    "postbuild": "node scripts/check-sharp-trace.mjs",
     "start": "next start",
     "lint": "eslint",
     "tweet-bot": "dotenv -e .env.local -- node src/tweet-bot.js",
