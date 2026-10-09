@@ -4,9 +4,11 @@ Her main push'unun deploy'u "Ready" olduktan sonra, canlıda (birkaç dakika):
 
 1. **Gerçek bir logo URL'si 200 dönüyor mu?**
    ```bash
-   curl -sI "https://<alan-adı>/api/img/logo?src=soccer/teams/24/3224.png&w=32" | grep -iE "^HTTP|content-type|x-vercel-cache"
+   curl -s -o /dev/null -w "%{http_code} %{content_type}\n" "https://www.<alan-adı>/api/img/logo?src=soccer/teams/24/3224.png&w=32"
    ```
-   Beklenen: `HTTP/2 200` + `content-type: image/webp`. `302` (orijinale yedek) sharp çalışmıyor demektir; Vercel
+   Beklenen: `200 image/webp`. Uç yalnız GET kabul eder: `curl -I` (HEAD) her zaman 405 döner, kullanma. Çıplak alan
+   adı `www`'ye 307 ile yönlenir; ya `www` kullan ya da `-L` ekle. Önbellek durumunu görmek için `-D -` ile başlıkları
+   da yazdır (`x-vercel-cache`). `302` (orijinale yedek) sharp çalışmıyor demektir; Vercel
    Functions log'unda `[imgLogo] sharp yüklenemedi` ara. `x-vercel-cache: HIT` ise önbellek yanıtıdır, yeni
    fonksiyonu sınamak için `w`'yi değiştir (32/48/64/96/128) ya da başka bir takım id'si dene.
 2. **OG görseli çiziliyor mu?** `/api/og/team/<id>` ve `/api/og/match/<id>` 200 `image/png` dönmeli.
