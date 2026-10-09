@@ -69,6 +69,7 @@ export default function FrikikDailyCard() {
               {t('frikikCard.title')}
             </h2>
             <p className={styles.result}>
+              <span className={styles.resultPrefix}>{t('frikikCard.today')} </span>
               {t('frikikCard.yourResult', { level: played.level, score: played.score.toLocaleString('tr-TR') })}
               {played.rank ? <span className={styles.rank}> · {t('frikikCard.yourRank', { rank: played.rank })}</span> : null}
             </p>

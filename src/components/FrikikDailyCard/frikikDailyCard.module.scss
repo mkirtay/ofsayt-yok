@@ -229,6 +229,16 @@ $card-on-gold: var(--color-on-premium);
 @media (max-width: 479px) {
   .card[data-played] .row {
     flex-wrap: wrap;
+    min-width: 0; // kartın genişliğini aşmasın (tek satır metinler aşağıda kesilir, kart dışına taşmaz)
+  }
+
+  .card[data-played] .text {
+    flex-basis: 100%;
+  }
+
+  // "Bugün:" dar ekranda gizli (başlık zaten "Günün Frikiği"): sıra bilgisi 320 px'te tek satırda kesilmeden kalır.
+  .resultPrefix {
+    display: none;
   }
 
   .card[data-played] .actions {
@@ -239,6 +249,16 @@ $card-on-gold: var(--color-on-premium);
   .card[data-played] .ghost {
     flex: 1 1 0;
     justify-content: center;
+  }
+
+  // Oynanmış kartın yükseklik bütçesi tek satır sonuç + tek satır not: biri iki satıra kırılırsa kart 146 → 161 px
+  // olur (hydration sonrası kayma). Metinler 320 px'te tek satıra sığacak kadar kısa; kesme yalnız güvenlik ağı.
+  .card[data-played] .meta,
+  .card[data-played] .result {
+    max-width: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .result {
