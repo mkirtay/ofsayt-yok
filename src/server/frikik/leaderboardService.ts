@@ -96,7 +96,8 @@ export async function submitVerifiedRun(userId: string, run: VerifiedRun): Promi
         level: run.level,
         cleared: run.cleared,
         simVersion: SIM_VERSION,
-        seed: run.seed,
+        // Tohum 32 bit işaretsiz (0..2^32-1), sütun INT4: aynı bitler işaretli olarak yazılır. Geri okumak için `>>> 0`.
+        seed: run.seed | 0,
         shots: run.shots,
       },
     });

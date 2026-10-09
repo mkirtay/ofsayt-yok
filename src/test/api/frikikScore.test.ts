@@ -82,7 +82,7 @@ describe('POST /api/frikik/score', () => {
     expect(r.statusCode).toBe(200);
     const expected = scoreLevelRun(seed, shots);
     expect(h.created).toHaveLength(1);
-    expect(h.created[0]).toMatchObject({ userId: 'u1', day, month: day.slice(0, 7), score: expected.total, level: expected.level, cleared: expected.cleared, simVersion: SIM_VERSION, seed, shots: shots.length });
+    expect(h.created[0]).toMatchObject({ userId: 'u1', day, month: day.slice(0, 7), score: expected.total, level: expected.level, cleared: expected.cleared, simVersion: SIM_VERSION, seed: seed | 0, shots: shots.length });
     expect(r.body).toMatchObject({ recorded: true, standing: { day, nickname: 'eren', today: { level: expected.level, score: expected.total, rank: 3 } } });
   });
 
@@ -154,7 +154,7 @@ describe('POST /api/frikik/score – sabit günler (tohum 2^31 altı / üstü)',
       const body = { day: d, seed: s, simVersion: SIM_VERSION, shots: run };
       const ok = await post(body);
       expect(ok.statusCode).toBe(200);
-      expect(h.created[0]).toMatchObject({ day: d, seed: s, score: scoreLevelRun(s, run).total });
+      expect(h.created[0]).toMatchObject({ day: d, seed: s | 0, score: scoreLevelRun(s, run).total });
       const wrong = (s ^ 1) >>> 0;
       expect(wrong).toBeGreaterThanOrEqual(0);
       const bad = await post({ ...body, seed: wrong });
