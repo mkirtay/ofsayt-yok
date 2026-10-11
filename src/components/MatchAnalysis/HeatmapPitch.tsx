@@ -1,5 +1,6 @@
 import { useTranslation } from '@/lib/i18n';
 import styles from './heatmapPitch.module.scss';
+import { normalizeHeat, type HeatCell } from './heatmapScale';
 
 type ZoneGrid = number[]; // 15 değer: index = bölge*5 + kolon
 
@@ -10,7 +11,7 @@ interface HeatmapPitchProps {
   awayName: string;
 }
 
-const ZONES = 3; // 0 = kendi savunma, 1 = orta saha, 2 = rakip kaleye yakın hücum
+// Bölge: 0 = kendi savunma, 1 = orta saha, 2 = rakip kaleye yakın hücum
 const COLS = 5; // 0 = sol kanat, 1 = sol iç, 2 = merkez, 3 = sağ iç, 4 = sağ kanat
 
 // viewBox koordinatları — yatay saha: ev sahibi kalesi solda, deplasman kalesi sağda.
@@ -27,14 +28,6 @@ const AWAY_ZONE_X = [532, 428, 338];
 const HOME_COL_Y = [48, 124, 200, 276, 352];
 const AWAY_COL_Y = [352, 276, 200, 124, 48];
 
-function clampGrid(grid: ZoneGrid | undefined): number[] {
-  const arr = Array.isArray(grid) ? grid : [];
-  return Array.from({ length: ZONES * COLS }, (_, i) => {
-    const v = Number(arr[i]);
-    return Number.isFinite(v) ? Math.max(0, Math.min(100, v)) : 0;
-  });
-}
-
 type ColorStop = { at: number; rgb: [number, number, number]; alpha: number };
 
 // Sarı → turuncu → koyu kırmızı sıcaklık skalası (YlOrRd tarzı, matplotlib contour'a yakın).
@@ -46,8 +39,9 @@ const STOPS: ColorStop[] = [
   { at: 100, rgb: [128, 0, 38], alpha: 0.82 },
 ];
 
-function heatFill(value: number): string {
-  const v = Math.max(0, Math.min(100, value));
+/** 0–1 yoğunluk → renk (skala 0–100 üzerinde tanımlı). */
+function heatFill(level: number): string {
+  const v = Math.max(0, Math.min(1, level)) * 100;
   let lo = STOPS[0]!;
   let hi = STOPS[STOPS.length - 1]!;
   for (let i = 0; i < STOPS.length - 1; i++) {
@@ -66,29 +60,33 @@ function heatFill(value: number): string {
   return `rgba(${r}, ${g}, ${b}, ${a.toFixed(2)})`;
 }
 
-function ZoneBlobs({ grid, zoneX, colY }: { grid: number[]; zoneX: number[]; colY: number[] }) {
-  return (
-    <>
-      {zoneX.map((cx, row) =>
-        colY.map((cy, col) => {
-          const v = grid[row * COLS + col] ?? 0;
-          if (v <= 2) return null;
-          const r = 42 + (v / 100) * 46;
-          return <circle key={`${row}-${col}`} cx={cx} cy={cy} r={r} fill={heatFill(v)} />;
-        })
-      )}
-    </>
+/** Bu yoğunluğun altındaki hücre çizilmez — saha zemini "düşük" demektir. */
+const MIN_DRAWN = 0.08;
+
+type Blob = { key: string; cx: number; cy: number; v: number };
+
+function teamBlobs(team: string, grid: HeatCell[], zoneX: number[], colY: number[]): Blob[] {
+  return zoneX.flatMap((cx, row) =>
+    colY.flatMap((cy, col) => {
+      const v = grid[row * COLS + col] ?? null;
+      return v === null || v < MIN_DRAWN ? [] : [{ key: `${team}-${row}-${col}`, cx, cy, v }];
+    })
   );
 }
 
 /**
  * Isı haritasını matplotlib contour tarzına yakın, yumuşak geçişli blob'lar olarak
  * çizer (gaussian blur filtresiyle harmanlanmış daireler) — sert köşeli grid hücreleri yerine.
+ * Renk maç içi göreli yoğunluktan gelir (bkz. heatmapScale.ts): en yoğun bölge koyu kırmızı.
  */
 export default function HeatmapPitch({ homeGrid, awayGrid, homeName, awayName }: HeatmapPitchProps) {
   const { t } = useTranslation('match');
-  const home = clampGrid(homeGrid);
-  const away = clampGrid(awayGrid);
+  const { home, away } = normalizeHeat(homeGrid, awayGrid);
+  // Soğuktan sıcağa çizilir: soluk daire üst üste bindiği kırmızıyı örtmesin.
+  const blobs = [
+    ...teamBlobs('h', home, HOME_ZONE_X, HOME_COL_Y),
+    ...teamBlobs('a', away, AWAY_ZONE_X, AWAY_COL_Y),
+  ].sort((a, b) => a.v - b.v);
 
   return (
     <div className={styles.wrap}>
@@ -107,14 +105,15 @@ export default function HeatmapPitch({ homeGrid, awayGrid, homeName, awayName }:
         >
           <defs>
             <filter id="heatBlur" x="-40%" y="-40%" width="180%" height="180%">
-              <feGaussianBlur stdDeviation="16" />
+              <feGaussianBlur stdDeviation="12" />
             </filter>
           </defs>
 
           {/* Yumuşak ısı blob'ları */}
           <g filter="url(#heatBlur)">
-            <ZoneBlobs grid={home} zoneX={HOME_ZONE_X} colY={HOME_COL_Y} />
-            <ZoneBlobs grid={away} zoneX={AWAY_ZONE_X} colY={AWAY_COL_Y} />
+            {blobs.map(({ key, cx, cy, v }) => (
+              <circle key={key} cx={cx} cy={cy} r={38 + v * 28} fill={heatFill(v)} />
+            ))}
           </g>
 
           {/* Saha çizgileri — blur'un üzerinde, keskin */}
