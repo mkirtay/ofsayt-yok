@@ -72,6 +72,8 @@ const INCLUDE_TOKENS = new Set([
 ]);
 
 const FILTER_PREFIXES = new Set([
+  // yalnız kırmızı kart olayları (liste/canlı istekleri, services/sportmonks/redCards.ts)
+  'eventTypes',
   'fixtureLeagues',
   'seasonTopscorerTypes',
   'playerStatisticSeasons',

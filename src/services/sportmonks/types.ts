@@ -150,6 +150,11 @@ export type SportmonksEventRow = {
   extra_minute?: number | null;
   sub_type_id?: number;
   sort_order?: number;
+  /** Teknik direktöre gösterilen kart: `coach_id` dolu, `player_id` boş (2026-10-11 canlı yanıtta alan var). */
+  coach_id?: number | null;
+  /** VAR / hakem kararıyla geri alınan olay (ör. iptal edilen kırmızı kart). */
+  rescinded?: boolean | null;
+  on_bench?: boolean | null;
 };
 
 export type SportmonksStatisticRow = {

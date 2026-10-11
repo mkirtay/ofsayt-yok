@@ -42,6 +42,7 @@ import type {
   SportmonksTopscorerRow,
 } from './sportmonks/types';
 import { pivotStandingRow } from './sportmonks/standingsPivot';
+import { RED_CARD_EVENTS_FILTER, RED_CARD_EVENTS_INCLUDE } from './sportmonks/redCards';
 import {
   mapTeamUpcoming,
   TEAM_UPCOMING_INCLUDE,
@@ -71,6 +72,16 @@ export type PaginatedMatches = {
 export const SPORTMONKS_FIXTURE_INCLUDE =
   'participants;scores;state;periods;league.country;venue;referees.referee;round;stage;group;aggregate';
 
+/**
+ * Ana sayfa listesi ve canlı maçlar: + yalnız kırmızı kart olayları (kart ikonu; bkz. sportmonks/redCards.ts). Aynı
+ * istek, ek sayfa yok. Önbellek anahtarı include/filters'la değişir: eski kayıtlar kendi süreleri dolunca (bugün/yakın
+ * günler 24 sa, canlı 10 dk) Redis'ten düşer; ilk istekte bir kez upstream'e gidilir.
+ */
+const SPORTMONKS_LIST_PARAMS = {
+  include: `${SPORTMONKS_FIXTURE_INCLUDE};${RED_CARD_EVENTS_INCLUDE}`,
+  filters: RED_CARD_EVENTS_FILTER,
+};
+
 /** Pass 5: `/fixtures/date` 50'yi kabul etti — diğer fixture endpoint'leri için de güvenli üst sınır. */
 const SPORTMONKS_FIXTURE_PER_PAGE = 50;
 
@@ -85,7 +96,7 @@ async function sportmonksFetchAllLiveMatches(): Promise<Match[]> {
     basePath: 'football',
     path: '/livescores/inplay',
     perPage: SPORTMONKS_FIXTURE_PER_PAGE,
-    extraParams: { include: SPORTMONKS_FIXTURE_INCLUDE },
+    extraParams: SPORTMONKS_LIST_PARAMS,
   });
   return dedupeMatchesById(rows.map(mapSportmonksFixtureToMatch));
 }
@@ -95,7 +106,7 @@ async function sportmonksFetchFixturesByDate(isoDate: string): Promise<Match[]> 
     basePath: 'football',
     path: `/fixtures/date/${isoDate}`,
     perPage: SPORTMONKS_FIXTURE_PER_PAGE,
-    extraParams: { include: SPORTMONKS_FIXTURE_INCLUDE },
+    extraParams: SPORTMONKS_LIST_PARAMS,
   });
   return dedupeMatchesById(rows.map(mapSportmonksFixtureToMatch));
 }

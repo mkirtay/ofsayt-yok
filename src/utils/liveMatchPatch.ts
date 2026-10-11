@@ -8,8 +8,11 @@
  * - Evre geri gidemez: başlamadı → canlı / devre arası → bitti (bitmiş maç canlıya dönmez).
  * - Toplam gol geri gidemez (VAR iptali gibi gerçek düşüşleri listenin kendi yenilemesi düzeltir).
  * - Aynı evre ve gol sayısında dakika geri gidemez (dakikası okunamayan taraf, ör. devre arası, engellemez).
+ * - Kırmızı kart sayısı takım başına yalnız artar (iki tarafın büyüğü). Geride kalan yamada da uygulanır: kart sayısı
+ *   kendi başına monoton, yama daha çok kart biliyorsa liste eksik demektir. VAR'la geri alınan kartı listenin kendi
+ *   yenilemesi düzeltir.
  */
-import type { Match, MatchScore } from '@/models/liveScore';
+import type { Match, MatchRedCards, MatchScore } from '@/models/liveScore';
 import type { LiveMatchPatch } from '@/server/liveMatch';
 import { deriveMatchPhase } from '@/utils/matchPhase';
 import { parseScore } from '@/utils/parseScore';
@@ -66,22 +69,33 @@ function sameScores(a: MatchScore | undefined, b: MatchScore | undefined): boole
   );
 }
 
+/** Takım başına büyük olan; yama bilmiyorsa listedeki aynen kalır. */
+export function mergeRedCards(current: MatchRedCards | undefined, incoming: MatchRedCards | undefined): MatchRedCards | undefined {
+  if (!incoming) return current;
+  if (!current) return { home: incoming.home, away: incoming.away };
+  const home = Math.max(current.home, incoming.home);
+  const away = Math.max(current.away, incoming.away);
+  return home === current.home && away === current.away ? current : { home, away };
+}
+
 /**
- * Listedeki maça canlı yamayı uygular. Yalnız skor ya da durum (status / özel durum / uzatma-penaltı bitişi)
- * değiştiyse yeni nesne döner; yalnız dakika ilerlediyse ya da yama gerideyse AYNI nesne döner. Dakika tek başına
+ * Listedeki maça canlı yamayı uygular. Yalnız skor, durum (status / özel durum / uzatma-penaltı bitişi) ya da
+ * kırmızı kart sayısı değiştiyse yeni nesne döner; yalnız dakika ilerlediyse ya da yama gerideyse AYNI nesne döner. Dakika tek başına
  * yamalanmaz: react-query her önbellek değişiminde listenin 30 sn'lik yenileme sayacını baştan başlatıyor, dakikada bir
  * yama listenin kendi yenilemesini sürekli erteler.
  */
 export function applyLivePatchToMatch(current: Match, patch: LiveMatchPatch): Match {
   if (String(current.id) !== String(patch.id)) return current;
-  if (isLivePatchBehind(current, patch)) return current;
+  const redCards = mergeRedCards(current.red_cards, patch.red_cards);
+  const withCards = redCards === current.red_cards ? current : { ...current, red_cards: redCards };
+  if (isLivePatchBehind(current, patch)) return withCards;
   const changed =
     current.status !== patch.status ||
     current.state_code !== patch.state_code ||
     current.finish !== patch.finish ||
     !sameScores(current.scores, patch.scores);
-  if (!changed) return current;
-  const next: Match = { ...current, status: patch.status, time: patch.time };
+  if (!changed) return withCards;
+  const next: Match = { ...withCards, status: patch.status, time: patch.time };
   if (patch.state_code) next.state_code = patch.state_code;
   else delete next.state_code;
   if (patch.finish) next.finish = patch.finish;

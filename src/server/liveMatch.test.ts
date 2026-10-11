@@ -38,9 +38,11 @@ describe('loadLiveMatch', () => {
     expect(r!.match.time).toMatch(/^\d+'$/);
     expect(r!.match.scores?.score).toBe('2-1');
     expect(r!.events.length).toBeGreaterThan(0);
+    // Gerçek örnekte Celta'ya (ev) 51' kırmızı kart (type 20), Osasuna'ya yalnız sarı: kart sayısı yamaya geçer.
+    expect(r!.match.red_cards).toEqual({ home: 1, away: 0 });
     expect(r!.stats).not.toBeNull();
     // Yalnız güncellenecek alanlar (lig/stadyum/hakem sayfadan geliyor, inplay'de istenmiyor)
-    expect(Object.keys(r!.match).sort()).toEqual(['id', 'scores', 'status', 'time']);
+    expect(Object.keys(r!.match).sort()).toEqual(['id', 'red_cards', 'scores', 'status', 'time']);
     expect(loadFixture).not.toHaveBeenCalled();
   });
 

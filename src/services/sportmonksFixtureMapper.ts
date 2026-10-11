@@ -17,6 +17,7 @@ import { resolveRoundAndStage } from './sportmonks/roundStage';
 import { formatVenueLocation } from './sportmonks/venueFormatter';
 import { formatMainReferee } from './sportmonks/refereeFormatter';
 import { mapMatchExtras } from './sportmonks/matchExtras';
+import { countRedCards } from './sportmonks/redCards';
 import { normalizeTeamName } from '@/utils/displayName';
 
 /** `"2026-09-17 16:00:00"` → `{date:"2026-09-17", scheduled:"16:00"}` */
@@ -119,6 +120,7 @@ export function mapSportmonksFixtureToMatch(fixture: SportmonksFixture): Match {
   const leg = fixture.leg?.trim();
   const aggregate = mapAggregate(fixture);
   const finish = mapSportmonksFinish(stateId ?? undefined, Boolean(matchScore?.ps_score));
+  const redCards = countRedCards(fixture.events, home?.id, away?.id);
 
   return {
     id: fixture.id,
@@ -143,6 +145,8 @@ export function mapSportmonksFixtureToMatch(fixture: SportmonksFixture): Match {
     ...(leg && leg !== '1/1' ? { leg } : {}),
     ...(aggregate ? { aggregate } : {}),
     ...(finish ? { finish } : {}),
+    // Kart yoksa alan yok: ~300 maçlık ISR props'unda her maça `{0,0}` yazılmasın.
+    ...(redCards && redCards.home + redCards.away > 0 ? { red_cards: redCards } : {}),
     ...mapMatchExtras(fixture, home?.id, away?.id),
   };
 }

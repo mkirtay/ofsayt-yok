@@ -16,6 +16,7 @@ import { toStandingsCompetitionId } from '@/services/sportmonksProviderFlag';
 import { fetchWorldCupStandingsBundle, isWorldCupCompetition } from '@/utils/worldCupStandings';
 import { useLiveMatchUpdates } from '@/hooks/useLiveMatchUpdates';
 import { syncLivePatchToHomeQueries } from '@/hooks/useHomeHubMatches';
+import { mergeRedCards } from '@/utils/liveMatchPatch';
 import { deriveMatchPhase } from '@/utils/matchPhase';
 import { matchKickoffMs } from '@/utils/matchActivity';
 import { isProbableLineup } from '@/utils/lineupStatus';
@@ -317,6 +318,8 @@ export function useMatchDetail(
             finish: payload.match.finish,
             time: payload.match.time,
             ...(payload.match.scores ? { scores: payload.match.scores } : {}),
+            // Kart sayısı yalnız artar (listeyle aynı kural, bkz. utils/liveMatchPatch.ts).
+            ...(payload.match.red_cards ? { red_cards: mergeRedCards(prev.red_cards, payload.match.red_cards) } : {}),
           }
         : prev,
     );

@@ -16,13 +16,14 @@ import { SQUAD_SEASON_STATS_FINISHED_INCLUDE, SQUAD_SEASON_STATS_INCLUDE } from 
 import { TEAM_OVERVIEW_INCLUDE } from '@/services/sportmonks/teamOverview';
 import { STANDINGS_WITH_GROUPS_INCLUDE } from '@/services/competitionStandings';
 import { TOPSCORER_WITH_APPEARANCES_INCLUDE, topscorerAppearanceFilters } from '@/services/competitionTopScorers';
+import { RED_CARD_EVENTS_FILTER, RED_CARD_EVENTS_INCLUDE } from '@/services/sportmonks/redCards';
 
 const liveScoreSrc = readFileSync(path.resolve(__dirname, '../../services/liveScoreService.ts'), 'utf8');
 const FIXTURE_INCLUDE = /const SPORTMONKS_FIXTURE_INCLUDE =\s*'([^']+)'/.exec(liveScoreSrc)![1];
 
 const CASES: [string, string, Record<string, string>][] = [
-  ['canlı maçlar', 'football/livescores/inplay', { include: FIXTURE_INCLUDE }],
-  ['tarihe göre maçlar', 'football/fixtures/date/2026-10-03', { include: FIXTURE_INCLUDE }],
+  ['canlı maçlar', 'football/livescores/inplay', { include: `${FIXTURE_INCLUDE};${RED_CARD_EVENTS_INCLUDE}`, filters: RED_CARD_EVENTS_FILTER }],
+  ['tarihe göre maçlar', 'football/fixtures/date/2026-10-03', { include: `${FIXTURE_INCLUDE};${RED_CARD_EVENTS_INCLUDE}`, filters: RED_CARD_EVENTS_FILTER }],
   ['lig fikstürü (UEFA modu)', 'football/fixtures/between/2026-09-01/2026-11-29', { include: FIXTURE_INCLUDE, filters: 'fixtureLeagues:2' }],
   ['takım maç aralığı', 'football/fixtures/between/2026-09-01/2026-10-03/34', { include: FIXTURE_INCLUDE }],
   ['maç + olaylar', 'football/fixtures/19746609', { include: `${FIXTURE_INCLUDE};events` }],

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Match } from '@/models/liveScore';
 import type { LiveMatchPatch } from '@/server/liveMatch';
-import { applyLivePatchToLists, applyLivePatchToMatch, isLivePatchBehind, parseMatchMinute, type HomeMatchLists } from './liveMatchPatch';
+import { applyLivePatchToLists, applyLivePatchToMatch, isLivePatchBehind, mergeRedCards, parseMatchMinute, type HomeMatchLists } from './liveMatchPatch';
 
 const match = (over: Partial<Match> = {}): Match =>
   ({ id: 19746594, status: 'IN PLAY', time: "74'", scores: { score: '1-0' }, home: { id: 1 }, away: { id: 2 }, ...over }) as Match;
@@ -115,5 +115,39 @@ describe('applyLivePatchToLists', () => {
     expect(applyLivePatchToLists(data, patch({ scores: { score: '1-0' }, time: "74'" }))).toBe(data);
     expect(applyLivePatchToLists(data, patch({ status: 'NOT STARTED', scores: { score: '0-0' } }))).toBe(data);
     expect(applyLivePatchToLists(data, patch({ id: 999 }))).toBe(data);
+  });
+});
+
+describe('kırmızı kart (monoton: yalnız artar)', () => {
+  it('mergeRedCards: takım başına büyük olan; yama bilmiyorsa liste aynen; değişiklik yoksa aynı nesne', () => {
+    const cur = { home: 1, away: 0 };
+    expect(mergeRedCards(cur, { home: 1, away: 1 })).toEqual({ home: 1, away: 1 });
+    expect(mergeRedCards(cur, { home: 0, away: 0 })).toBe(cur);
+    expect(mergeRedCards(cur, undefined)).toBe(cur);
+    expect(mergeRedCards(undefined, { home: 0, away: 2 })).toEqual({ home: 0, away: 2 });
+    expect(mergeRedCards(undefined, undefined)).toBeUndefined();
+  });
+
+  it('yalnız kart değişince de yazılır (dakika ve skor aynı olsa da)', () => {
+    const current = match({ scores: { score: '1-1' }, time: "74'" });
+    const next = applyLivePatchToMatch(current, patch({ time: "75'", red_cards: { home: 1, away: 0 } }));
+    expect(next).not.toBe(current);
+    expect(next.red_cards).toEqual({ home: 1, away: 0 });
+    expect(next.time).toBe("74'"); // yalnız kart: dakika yazılmaz (yenileme sayacı kuralı)
+  });
+
+  it('kart sayısı geri gitmez; geride kalan yamadaki fazla kart yine de alınır', () => {
+    const current = match({ scores: { score: '1-1' }, time: "80'", red_cards: { home: 1, away: 1 } });
+    expect(applyLivePatchToMatch(current, patch({ time: "81'", red_cards: { home: 0, away: 1 } }))).toBe(current);
+    const behind = applyLivePatchToMatch(current, patch({ scores: { score: '1-0' }, time: "70'", red_cards: { home: 2, away: 1 } }));
+    expect(behind.red_cards).toEqual({ home: 2, away: 1 });
+    expect(behind.scores).toEqual({ score: '1-1' });
+  });
+
+  it('bitmiş maçta da kart korunur, kart yoksa alan eklenmez', () => {
+    const fin = match({ status: 'FINISHED', time: '', scores: { score: '2-1' }, red_cards: { home: 0, away: 1 } });
+    const next = applyLivePatchToMatch(fin, patch({ status: 'FINISHED', time: '', scores: { score: '2-1' } }));
+    expect(next).toBe(fin);
+    expect('red_cards' in applyLivePatchToMatch(match(), patch())).toBe(false);
   });
 });

@@ -120,6 +120,11 @@ export interface Match {
    * 2. ayakta çevrilir). Uzatma dahil, penaltı hariç. Yalnız eşleşme bitince gelir (bkz. utils/aggregateScore.ts).
    */
   aggregate?: MatchAggregate;
+  /**
+   * Görülen kırmızı kart sayısı (doğrudan kırmızı + ikinci sarıdan kırmızı; VAR'la iptal edilen ve teknik direktör kartı
+   * hariç). Yalnız olaylar istekte geldiyse ve en az bir kart varsa dolu (bkz. services/sportmonks/redCards.ts).
+   */
+  red_cards?: MatchRedCards;
   /** Yalnız maç detayı: Türkiye yayıncıları (tekil, Sportmonks sırasıyla); yoksa alan yok. */
   tv_stations?: string[];
   /** Yalnız maç detayı: teknik direktörler (kısa ad + Sportmonks id — teknik direktör sayfası linki). */
@@ -141,6 +146,11 @@ export interface MatchWeather {
 }
 
 export type MatchFinish = 'AET' | 'PEN';
+
+export interface MatchRedCards {
+  home: number;
+  away: number;
+}
 
 export interface MatchAggregate {
   home: number;
