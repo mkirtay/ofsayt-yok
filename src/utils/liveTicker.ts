@@ -32,21 +32,30 @@ export function tickerPriority(m: Match): number {
 
 const kickoff = (m: Match) => matchKickoffMs(m) ?? 0;
 
-export function selectLiveTickerMatches(input: {
+export type LiveFilterInput = {
   live: readonly Match[];
   leagueFilter: LeagueFilterState;
   allowedCompetitionIds?: ReadonlySet<number> | null;
-}): Match[] {
+};
+
+/**
+ * Lig filtresinden (ve sayfanın izinli lig listesinden) geçen, şu an oynanan / devre arasındaki maçlar (tekil, sırasız).
+ * "Canlı" sekmesinin gösterdiği küme — mobil "Canlı" çipinin sayısı da bundan (filtre "Süper Lig"ken yalnız onlar).
+ */
+export function filterLiveMatches(input: LiveFilterInput): Match[] {
   const live = input.live.filter((m) => isMatchLive(m));
   const byPage = input.allowedCompetitionIds ? live.filter((m) => input.allowedCompetitionIds!.has(m.competition?.id ?? 0)) : live;
   const seen = new Set<string>();
-  return filterMatchesByLeagues(byPage, input.leagueFilter)
-    .filter((m) => {
-      const id = String(m.id);
-      if (seen.has(id)) return false;
-      seen.add(id);
-      return true;
-    })
+  return filterMatchesByLeagues(byPage, input.leagueFilter).filter((m) => {
+    const id = String(m.id);
+    if (seen.has(id)) return false;
+    seen.add(id);
+    return true;
+  });
+}
+
+export function selectLiveTickerMatches(input: LiveFilterInput): Match[] {
+  return filterLiveMatches(input)
     .sort((a, b) => tickerPriority(a) - tickerPriority(b) || kickoff(a) - kickoff(b) || Number(a.id) - Number(b.id))
     .slice(0, LIVE_TICKER_MAX);
 }

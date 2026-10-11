@@ -59,7 +59,7 @@ import { resolveHubSidePanel } from '@/utils/hubSidePanel';
 import LeagueFilterBar from '@/components/LeagueFilterBar';
 import LiveTicker from '@/components/LiveTicker';
 import FrikikDailyCard from '@/components/FrikikDailyCard';
-import { selectLiveTickerMatches } from '@/utils/liveTicker';
+import { filterLiveMatches, selectLiveTickerMatches } from '@/utils/liveTicker';
 import { hubSectionToScroll } from '@/utils/hubNavScroll';
 import AdSlot from '@/components/AdSlot';
 import EmptyState from '@/components/EmptyState';
@@ -365,15 +365,13 @@ export default function MatchHubPage({
   }, [displayMatches, competitionFilterSet, leagueFilter.state]);
 
   // Lig filtre satırındaki canlı ticker: yeni istek yok — canlı poll verisi (utils/liveTicker.ts). Boşsa çizilmez.
-  const tickerMatches = useMemo(
-    () =>
-      selectLiveTickerMatches({
-        live: liveMatches,
-        leagueFilter: leagueFilter.state,
-        allowedCompetitionIds: competitionFilterSet,
-      }),
+  // Mobil "Canlı" çipinin sayısı da aynı filtreli kümeden ("Canlı" sekmesinin gösterdiği maçlar).
+  const liveFilterInput = useMemo(
+    () => ({ live: liveMatches, leagueFilter: leagueFilter.state, allowedCompetitionIds: competitionFilterSet }),
     [liveMatches, leagueFilter.state, competitionFilterSet],
   );
+  const liveCount = useMemo(() => filterLiveMatches(liveFilterInput).length, [liveFilterInput]);
+  const tickerMatches = useMemo(() => selectLiveTickerMatches(liveFilterInput), [liveFilterInput]);
 
   const grouped = useMemo(() => {
     const raw = groupMatchesByLeague(filteredDisplayMatches);
@@ -842,7 +840,7 @@ export default function MatchHubPage({
               leading={
                 <MatchStatusChips
                   activeTab={activeTab}
-                  liveCount={liveMatches.length}
+                  liveCount={liveCount}
                   onToggle={(tab) => {
                     tabFromChipRef.current = true;
                     handleTabChange(activeTab === tab ? 'all' : tab);

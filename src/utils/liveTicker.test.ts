@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { Match } from '@/models/liveScore';
-import { LIVE_TICKER_MAX, selectLiveTickerMatches, tickerPriority } from './liveTicker';
+import { LIVE_TICKER_MAX, filterLiveMatches, selectLiveTickerMatches, tickerPriority } from './liveTicker';
 
 const m = (id: number, over: Partial<Match> & { comp?: number; h?: number; a?: number } = {}) =>
   ({
@@ -56,5 +56,14 @@ describe('canlı ticker seçimi', () => {
     expect(ids(selectLiveTickerMatches({ live, leagueFilter: custom }))).toEqual([1]);
     expect(ids(selectLiveTickerMatches({ live, leagueFilter: ALL, allowedCompetitionIds: new Set([564]) }))).toEqual([2]);
     expect(selectLiveTickerMatches({ live, leagueFilter: { mode: 'custom', custom: [{ id: 1, name: 'x' }] } as never })).toEqual([]);
+  });
+
+  it('Canlı sayısı (filterLiveMatches): lig filtresine uyar, ticker gibi 20 ile sınırlı değil', () => {
+    const custom = { mode: 'custom', custom: [{ id: 600, name: 'Süper Lig' }] } as never;
+    const live = [m(1, { comp: 600 }), m(2, { comp: 564 }), m(3, { comp: 600, status: 'FINISHED' })];
+    expect(filterLiveMatches({ live, leagueFilter: ALL })).toHaveLength(2);
+    expect(ids(filterLiveMatches({ live, leagueFilter: custom }))).toEqual([1]);
+    const many = Array.from({ length: LIVE_TICKER_MAX + 5 }, (_, i) => m(200 + i));
+    expect(filterLiveMatches({ live: many, leagueFilter: ALL })).toHaveLength(LIVE_TICKER_MAX + 5);
   });
 });
