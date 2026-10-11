@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useTranslation } from '@/lib/i18n';
+import TeamLogo from '@/components/TeamLogo';
 import { narrowTeamName } from '@/components/MatchList/TeamNameLabel';
 import type { Match } from '@/models/liveScore';
 import { buildMatchHref } from '@/utils/matchUrl';
@@ -26,12 +27,6 @@ export type LiveTickerProps = {
   onPrefetchMatch?: (matchId: string) => void;
 };
 
-function scoreParts(m: Match): [string, string] {
-  const raw = (m.scores?.score || m.score || '').replace(/\s+/g, '');
-  const [h, a] = raw.split(/[-–]/);
-  return [h || '0', a || '0'];
-}
-
 export type TickerChoice = 'auto' | 'paused' | 'playing';
 
 /** Kendiliğinden dönüş kapalı mı: kullanıcı durdurduysa ya da (seçim yokken) hareket azaltılmışsa. */
@@ -51,39 +46,54 @@ export function tickerNextId(matches: readonly Match[], currentId: string | null
   return String(matches[(at + 1) % matches.length]!.id);
 }
 
+function scoreParts(m: Match): [string, string] {
+  const raw = (m.scores?.score || m.score || '').replace(/\s+/g, '');
+  const [h, a] = raw.split(/[-–]/);
+  return [h || '0', a || '0'];
+}
+
 const shortName = (team: Match['home']) => {
   const name = team?.name || '';
   return narrowTeamName(team?.id, name) ?? name;
 };
 
-/** Satırın görünen içeriği (dakika · ev · skor · deplasman) — bağlantı ve çıkış kopyası aynı düzende. */
-function ItemBody({ match }: { match: Match }) {
+/** Satırın görünen içeriği: canlı nokta + dakika · ev (ad + logo) · skor · deplasman (logo + ad). */
+function ItemBody({ match, priority = false }: { match: Match; priority?: boolean }) {
   const { t } = useTranslation('match');
+  const brk = match.status === 'HALF TIME BREAK';
   const minute = (match.time || '').replace(/'$/u, '').trim();
   const [hs, as] = scoreParts(match);
   return (
     <>
-      <span className={styles.minute}>
-        {match.status === 'HALF TIME BREAK' ? t('halfTime') : minute ? `${minute}'` : t('liveTicker.liveShort')}
+      <span className={`${styles.minute} ${brk ? styles.minuteBreak : ''}`.trim()}>
+        {brk ? null : <span className={styles.dot} aria-hidden="true" />}
+        {brk ? t('halfTime') : minute ? `${minute}'` : t('liveTicker.liveShort')}
       </span>
-      <span className={styles.home} title={match.home?.name}>
-        {shortName(match.home)}
+      <span className={styles.home}>
+        <span className={styles.name} title={match.home?.name}>
+          {shortName(match.home)}
+        </span>
+        <TeamLogo src={match.home?.logo} alt="" width={20} className={styles.crest} priority={priority} />
       </span>
       <span className={styles.score}>
         {hs}–{as}
       </span>
-      <span className={styles.away} title={match.away?.name}>
-        {shortName(match.away)}
+      <span className={styles.away}>
+        <TeamLogo src={match.away?.logo} alt="" width={20} className={styles.crest} priority={priority} />
+        <span className={styles.name} title={match.away?.name}>
+          {shortName(match.away)}
+        </span>
       </span>
     </>
   );
 }
 
 /**
- * Lig filtre satırındaki tek satırlık canlı maç ticker'ı: her `LIVE_TICKER_ROTATE_MS`'de bir sonraki canlı maça
- * kayarak geçer (~300 ms). Fare üstündeyken, odak içerideyken ve dokunurken durur; duraklat/sürdür düğmesi var
- * (WCAG 2.2.2). `prefers-reduced-motion`'da kendiliğinden dönmez (düğmeyle başlatılırsa geçiş animasyonsuz).
- * Yükseklik sabit (CSS); maç yoksa hiç çizilmez. Veri sayfanın mevcut canlı listesinden gelir (yeni istek yok).
+ * Lig filtre satırındaki canlı maç ticker'ı (kart görünümlü, sabit yükseklik: masaüstü 44 / mobil 40 px): her
+ * `LIVE_TICKER_ROTATE_MS`'de bir sonraki canlı maça kayarak geçer (~300 ms). Geniş kutuda (≥ 640 px) yanında sıradaki
+ * maç silik "peek" olarak durur; tıklanınca hemen ona geçer. Fare üstündeyken, odak içerideyken ve dokunurken durur;
+ * duraklat/sürdür düğmesi var (WCAG 2.2.2). `prefers-reduced-motion`'da kendiliğinden dönmez (düğmeyle başlatılırsa
+ * geçiş animasyonsuz). Maç yoksa hiç çizilmez. Veri sayfanın mevcut canlı listesinden gelir (yeni istek yok).
  */
 export default function LiveTicker({ matches, onSelectMatch, onPrefetchMatch }: LiveTickerProps) {
   const { t } = useTranslation('match');
@@ -103,6 +113,9 @@ export default function LiveTicker({ matches, onSelectMatch, onPrefetchMatch }: 
   const current = tickerCurrent(matches, view.id);
   const prev = view.prevId != null && view.prevId !== String(current?.id) ? matches.find((m) => String(m.id) === view.prevId) : undefined;
   const currentIndex = current ? matches.indexOf(current) : -1;
+  const currentId = current ? String(current.id) : null;
+  const nextId = matches.length > 1 ? tickerNextId(matches, currentId) : null;
+  const next = nextId != null ? matches.find((m) => String(m.id) === nextId) : undefined;
 
   const stopped = tickerStopped(choice, reducedMotion);
   const paused = stopped || hover || focusInside || touching;
@@ -113,20 +126,18 @@ export default function LiveTicker({ matches, onSelectMatch, onPrefetchMatch }: 
     matchesRef.current = matches;
   }, [matches]);
 
-  const currentId = current ? String(current.id) : null;
   useEffect(() => {
     if (paused || !canRotate || currentId == null) return;
     const timer = window.setTimeout(() => {
-      const next = tickerNextId(matchesRef.current, currentId);
-      if (next != null) setView({ id: next, prevId: currentId });
+      const following = tickerNextId(matchesRef.current, currentId);
+      if (following != null) setView({ id: following, prevId: currentId });
     }, LIVE_TICKER_ROTATE_MS);
     return () => window.clearTimeout(timer);
   }, [paused, canRotate, currentId]);
 
-  if (!current) return null;
+  if (!current || currentId == null) return null;
 
   const [hs, as] = scoreParts(current);
-  const id = String(current.id);
   return (
     <div
       className={styles.ticker}
@@ -142,10 +153,6 @@ export default function LiveTicker({ matches, onSelectMatch, onPrefetchMatch }: 
         if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setFocusInside(false);
       }}
     >
-      <span className={styles.badge}>
-        <span className={styles.dot} aria-hidden="true" />
-        <span className={styles.badgeText}>{t('liveTicker.liveShort')}</span>
-      </span>
       <div className={styles.viewport}>
         {prev ? (
           <span key={`out-${prev.id}`} className={`${styles.item} ${styles.itemOut}`} aria-hidden="true">
@@ -153,7 +160,7 @@ export default function LiveTicker({ matches, onSelectMatch, onPrefetchMatch }: 
           </span>
         ) : null}
         <Link
-          key={id}
+          key={currentId}
           href={buildMatchHref(current)}
           prefetch={false}
           className={`${styles.item} ${prev ? styles.itemIn : ''}`.trim()}
@@ -163,22 +170,35 @@ export default function LiveTicker({ matches, onSelectMatch, onPrefetchMatch }: 
             score: `${hs}-${as}`,
             minute: current.status === 'HALF TIME BREAK' ? t('halfTime') : current.time || t('liveTicker.liveShort'),
           })}
-          onMouseEnter={onPrefetchMatch ? () => onPrefetchMatch(id) : undefined}
-          onFocus={onPrefetchMatch ? () => onPrefetchMatch(id) : undefined}
+          onMouseEnter={onPrefetchMatch ? () => onPrefetchMatch(currentId) : undefined}
+          onFocus={onPrefetchMatch ? () => onPrefetchMatch(currentId) : undefined}
           onClick={
             onSelectMatch
               ? (e) => {
                   if (isModifiedClick(e)) return;
                   e.preventDefault();
-                  onPrefetchMatch?.(id);
+                  onPrefetchMatch?.(currentId);
                   onSelectMatch(current);
                 }
               : undefined
           }
         >
-          <ItemBody match={current} />
+          <ItemBody match={current} priority />
         </Link>
       </div>
+      {next ? (
+        // Sıradaki maç (yalnız geniş kutuda, CSS): silik önizleme; tıklayınca hemen ona geçer.
+        <button
+          type="button"
+          className={styles.peek}
+          aria-label={t('liveTicker.showNext', { home: next.home?.name || '', away: next.away?.name || '' })}
+          onClick={() => setView({ id: nextId, prevId: currentId })}
+        >
+          <span className={styles.peekItem}>
+            <ItemBody match={next} />
+          </span>
+        </button>
+      ) : null}
       {canRotate ? (
         <>
           <span className={styles.count} aria-hidden="true">

@@ -1,42 +1,30 @@
 @use '../../styles/variables' as *;
 
-// Canlı ticker: lig chip'leriyle aynı boy (34 px) tek satırlık hap. Yükseklik sabit → maç değişince kayma yok;
-// genişliği ebeveyn (MatchHubPage `.leagueBarTicker`) verir.
+// Canlı ticker: kart görünümlü tek satır (hafif kırmızı zemin, kenarlık, solda kırmızı vurgu). Yüksekliği ebeveyn
+// (MatchHubPage `.leagueBarTicker`) sabitler: masaüstü 44, mobil 40 px → maç değişince kayma yok. Kutu genişliğine
+// göre (container query) yanında sıradaki maç silik "peek" olarak görünür.
 .ticker {
+  container-type: inline-size;
   display: flex;
   align-items: center;
   gap: $spacing-2;
-  height: 34px;
+  height: 100%;
   min-width: 0;
   padding: 0 4px 0 $spacing-3;
-  border: 1.5px solid color-mix(in srgb, #{$color-live} 40%, var(--border-subtle));
-  border-radius: $radius-full;
-  background: var(--bg-surface);
+  border: 1px solid color-mix(in srgb, #{$color-live} 22%, var(--border-subtle));
+  border-radius: 10px;
+  background: linear-gradient(90deg, color-mix(in srgb, #{$color-live} 9%, var(--bg-surface)) 0%, var(--bg-surface) 55%);
+  box-shadow: inset 3px 0 0 $color-live;
   color: $color-text;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
-  line-height: 1;
+  line-height: 1.2;
   font-variant-numeric: tabular-nums;
-}
 
-.badge {
-  flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  color: $color-live;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: $color-live;
-  animation: liveTickerPulse 1.6s infinite;
+  @include below-desktop {
+    font-size: 13px;
+    padding-left: 10px;
+  }
 }
 
 // Tek maçlık pencere: giren ve çıkan satır üst üste (absolute), taşma kırpılır.
@@ -54,18 +42,22 @@
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
-  column-gap: $spacing-2;
+  column-gap: 10px;
   color: inherit;
   text-decoration: none;
-  border-radius: $radius-sm;
+  border-radius: 6px;
 
   &:focus-visible {
     outline: 2px solid $color-primary;
     outline-offset: -2px;
   }
+
+  @include below-desktop {
+    column-gap: $spacing-2;
+  }
 }
 
-a.item:hover .score {
+a.item:hover .name {
   color: var(--color-action-text);
 }
 
@@ -78,34 +70,146 @@ a.item:hover .score {
   animation: liveTickerOut 0.3s ease-in both;
 }
 
+// Dakika: kırmızı, kalın; önünde yanıp sönen canlı nokta (devre arasında nokta yok, turuncu "İY").
 .minute {
-  min-width: 26px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 46px;
   color: $color-live;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 800;
+
+  @include below-desktop {
+    min-width: 40px;
+    font-size: 12px;
+  }
+}
+
+.minuteBreak {
+  color: $color-warning;
+}
+
+.dot {
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: $color-live;
+  animation: liveTickerPulse 1.4s ease-out infinite;
 }
 
 .home,
 .away {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.home {
+  justify-content: flex-end;
+}
+
+.name {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  transition: color 0.12s;
 }
 
-.home {
-  text-align: right;
+.crest {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+
+  @include below-desktop {
+    width: 18px;
+    height: 18px;
+  }
 }
 
+// Skor: listedeki skor yazısıyla aynı aile, kalın; hafif kutu.
 .score {
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: color-mix(in srgb, #{$color-text} 8%, transparent);
+  font-family: $font-family-score;
+  font-stretch: $score-font-stretch;
+  font-size: 16px;
   font-weight: 800;
+  line-height: 1.15;
+  white-space: nowrap;
+
+  @include below-desktop {
+    padding: 1px 6px;
+    font-size: 15px;
+  }
+}
+
+// Sıradaki maç: ayraçla ayrılmış, silik; yalnız kutu yeterince genişken (masaüstü).
+.peek {
+  position: relative;
+  display: none;
+  flex: 1 1 0;
+  min-width: 0;
+  height: 100%;
+  padding: 0 0 0 $spacing-3;
+  border: 0;
+  border-left: 1px solid var(--border-subtle);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: opacity 0.15s;
+
+  &:hover,
+  &:focus-visible {
+    opacity: 0.85;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+    outline-offset: -2px;
+  }
+}
+
+// Geniş kutu: gösterilen maç ~420 px'te ortalı skorla (boşluk yok), kalan genişlikte sıradaki maç sola yaslı.
+@container (min-width: 640px) {
+  .viewport {
+    flex: 0 1 420px;
+  }
+
+  .peek {
+    display: block;
+  }
+}
+
+.peekItem {
+  position: absolute;
+  inset: 0 0 0 $spacing-3;
+  display: grid;
+  grid-template-columns: auto minmax(0, max-content) auto minmax(0, max-content);
+  justify-content: start;
+  align-items: center;
+  column-gap: $spacing-2;
+
+  .score {
+    font-size: 15px;
+  }
 }
 
 .count {
   flex: 0 0 auto;
+  min-width: 34px;
   color: $color-text-secondary;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
+  text-align: right;
 }
 
 .toggle {
@@ -113,8 +217,8 @@ a.item:hover .score {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
+  width: 30px;
+  height: 30px;
   padding: 0;
   border: 0;
   border-radius: 50%;
@@ -133,21 +237,23 @@ a.item:hover .score {
   }
 }
 
-// Dar telefonda (≤ 400 px) takım adlarına yer: "Canlı" yazısı (nokta kalır) ve sayaç gizli.
+// Dar telefonda (≤ 400 px) takım adlarına yer: sayaç gizli.
 @media (max-width: 400px) {
-  .badgeText,
   .count {
     display: none;
   }
 }
 
+// Nokta hep dolu kırmızı; çevresinden halka yayılır.
 @keyframes liveTickerPulse {
-  0%,
-  100% {
-    opacity: 1;
+  0% {
+    box-shadow: 0 0 0 0 rgba($color-live, 0.65);
   }
-  50% {
-    opacity: 0.35;
+  70% {
+    box-shadow: 0 0 0 7px rgba($color-live, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba($color-live, 0);
   }
 }
 

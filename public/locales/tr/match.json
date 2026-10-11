@@ -449,6 +449,7 @@
     "label": "Canlı maçlar",
     "liveShort": "Canlı",
     "itemLabel": "{{home}} {{score}} {{away}}, {{minute}}",
+    "showNext": "Sıradaki maça geç: {{home}} – {{away}}",
     "pause": "Canlı maç geçişini duraklat",
     "resume": "Canlı maç geçişini sürdür"
   },

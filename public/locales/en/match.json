@@ -458,6 +458,7 @@
     "label": "Live matches",
     "liveShort": "Live",
     "itemLabel": "{{home}} {{score}} {{away}}, {{minute}}",
+    "showNext": "Show next match: {{home}} – {{away}}",
     "pause": "Pause live match rotation",
     "resume": "Resume live match rotation"
   },
