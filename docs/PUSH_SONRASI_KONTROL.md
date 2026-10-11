@@ -69,6 +69,30 @@ Yalnız arayüz; hiçbir adım veri yazmaz.
    fikstür modundan çıkılır, günlük maç listesi 5 büyük lig filtresiyle gelir ve çip seçili görünür. "+ Ligler" → Uygula
    da aynı şekilde fikstür modundan çıkar.
 
+## Tur 9 (2026-10-11) kırmızı kart ikonu
+
+`B=https://www.ofsaytyok.app`. Veri: liste ve canlı isteklerine `include=events:<alanlar>` + `filters=eventTypes:20,21`
+(yalnız doğrudan kırmızı ve ikinci sarıdan kırmızı; VAR'la iptal edilen ve teknik direktör kartı sayılmaz). Ek istek yok.
+
+1. **İlk 15 dakika log.** Deploy "Ready" olduktan sonra 15 dk Sentry'de ve Vercel Functions log'unda yeni hata yok
+   (özellikle `/api/matches/day`, `/api/sportmonks/*`, `livescores/inplay` ve allowlist ihlali uyarıları).
+2. **İkon görünüyor.** Kırmızı kartlı bir canlı maçta ve kırmızı kartlı bitmiş bir maçta (ör. ikinci sarıdan çıkan) ikon
+   üç yerde: ana sayfa liste satırı, canlı ticker (bölünmüş görünüm dahil) ve maç sayfası başlığı. İkon kartı gören
+   takımın tarafında; 1–2 kartta o kadar kart simgesi, 3+ kartta tek simge + "×3". Üzerine gelince "Kırmızı kart" / "2 kırmızı kart" etiketi.
+3. **Kartsız maçta ikon yok, satır kaymıyor.** Aynı lig grubundaki kartlı/kartsız satırlarda skor ve takım adları aynı
+   hizada; kartlı satır kartsızdan yüksek değil.
+4. **Mobil uzun takım adı.** ~375 px'te iki satıra kırılan uzun adlı bir takımın (ör. "Nottingham Forest",
+   "Borussia Mönchengladbach") kartlı satırında ikon adın yanında, skor sütunu yerinde; satır yüksekliği komşu
+   satırlarla tutarlı.
+5. **API alanı yalnız kart varken.** Yanıttaki alan `red_cards` (`events` değil; liste yanıtına olay listesi taşınmaz):
+   ```bash
+   curl -s "$B/api/matches/day?date=$(TZ=Europe/Istanbul date +%F)" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{const j=JSON.parse(s);const all=[...j.liveMatches,...Object.values(j.fixtureMatches).flat()];const w=all.filter(m=>m.red_cards);console.log(all.length,"maç,",w.length,"kartlı:",w.map(m=>m.home.name+" "+m.red_cards.home+"-"+m.red_cards.away+" "+m.away.name).join(" | "));console.log("events alanı olan:",all.filter(m=>"events" in m).length)})'
+   ```
+   Beklenen: `red_cards` yalnız kartlı maçlarda ve en az bir taraf > 0; `{home:0,away:0}` yazılmaz; `events` alanı 0.
+6. **Sportmonks havuz kullanımı.** Önbellek anahtarı include/filters ile değiştiği için deploy sonrası her liste/canlı
+   uç bir kez upstream'e gider (tek seferlik ~15–20 istek). `GET /api/admin/sportmonks-usage?hours=2` (admin): ilk
+   saatte Fixture havuzu kullanımı önceki günlerin aynı saatine yakın, sonraki saatte normal. Kota uyarısı yok.
+
 ## Neden 1. madde
 
 2026-10-07'de sharp 0.34 → 0.35.5 yükseltmesinden sonra `/api/img/logo` canlıda her istekte 500 verdi:
