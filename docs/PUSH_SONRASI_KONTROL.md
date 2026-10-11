@@ -53,6 +53,22 @@ Her main push'unun deploy'u "Ready" olduktan sonra, canlıda (birkaç dakika):
    `deferred` alanı var; tur başına en çok 25 maç değerlendirilir, `deferred > 0` ise sonraki turlarda kalanlar
    sırayla işlenir (imleç Redis'te `…eval-predictions:cursor`). Ardışık koşularda `deferred` azalmalı, hata yok.
 
+## Tur 8 (2026-10-11) ek canlı doğrulama
+
+Yalnız arayüz; hiçbir adım veri yazmaz.
+
+1. **Masaüstü lig seçici kendi içinde kayar (7016c21).** ≥ masaüstü genişlikte ana sayfada sol paneldeki lig seçiciyi
+   ("Süper Lig ▾") aç. Açmadan önce ve açtıktan sonra `document.documentElement.scrollHeight` aynı kalmalı (sayfa
+   uzamaz). Listeyi fareyle sonuna kadar kaydır: kaydırma panelin içinde kalır, sayfa kaymaz (`overscroll-behavior:
+   contain`); arama kutusu üstte sabit. `/standings` sayfasındaki aynı liste tam boy kalır (orada sınır yok).
+2. **Mobil lig sheet'i (7016c21).** ~375 px'te aynı seçiciyi aç: tam ekran sheet; başlık satırı ve arama kutusu sabit,
+   yalnız liste kayar.
+3. **UEFA fikstür modunda çipler (fe3f465).** Sol panel seçicisinde Şampiyonlar Ligi / UEFA Avrupa Ligi / Konferans
+   Ligi seç (orta sütun kupa fikstürüne geçer, "Günlük maçlara dön" düğmesi görünür). Üstteki lig çiplerinden
+   (Tümü / Süper Lig / 5 Büyük Lig) hiçbiri seçili görünmemeli (`aria-pressed="false"`). "5 Büyük Lig"e bas:
+   fikstür modundan çıkılır, günlük maç listesi 5 büyük lig filtresiyle gelir ve çip seçili görünür. "+ Ligler" → Uygula
+   da aynı şekilde fikstür modundan çıkar.
+
 ## Neden 1. madde
 
 2026-10-07'de sharp 0.34 → 0.35.5 yükseltmesinden sonra `/api/img/logo` canlıda her istekte 500 verdi:
