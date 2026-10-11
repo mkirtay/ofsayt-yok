@@ -22,3 +22,14 @@ export const SCORERS_CACHE_TTL_SECONDS = 30 * 60;
 
 /** VAR yeniden doğrulaması: golden sonra bu kadar dakika içindeki aynı takım VAR olayı taslağı eskitir (sezgisel). */
 export const VAR_WINDOW_MINUTES = 10;
+
+/**
+ * Gol-draft üretimi (inplay poller) bayrağı — VARSAYILAN KAPALI (karar 2026-10-11: düz "GOL! dk. oyuncu skor" postları değer
+ * katmıyor, dakikalık `livescores/inplay` Sportmonks Fixture havuzundan kota yiyor). Açmak için `GUNDEM_BOT_GOALS_ENABLED=1`
+ * (ya da `true`). Kapalıyken `bot-tick` yetki kontrolünden sonra hemen döner: Sportmonks, Redis ve DB'ye HİÇ dokunmaz.
+ * Kod silinmedi; bayrak açılınca eski davranış aynen geri gelir.
+ */
+export function isGoalDraftsEnabled(env: string | undefined = process.env.GUNDEM_BOT_GOALS_ENABLED): boolean {
+  const v = (env ?? '').trim().toLowerCase();
+  return v === '1' || v === 'true';
+}

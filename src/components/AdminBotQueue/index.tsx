@@ -53,7 +53,7 @@ export default function AdminBotQueue() {
   return (
     <div className={styles.page}>
       <h1 className={styles.title}>Gündem onay kuyruğu</h1>
-      <p className={styles.lead}>Bot gol taslaklarını dakikada bir üretir; hiçbiri otomatik yayınlanmaz.</p>
+      <p className={styles.lead}>Gol taslağı üretimi varsayılan olarak kapalıdır (GUNDEM_BOT_GOALS_ENABLED=1 ile açılır; açıkken dakikada bir üretir). Hiçbir taslak otomatik yayınlanmaz.</p>
 
       <div className={styles.filters} role="tablist" aria-label="Durum">
         {FILTERS.map((f) => (

@@ -1,5 +1,8 @@
 # Gündem resmi hesap botu — tasarım taslağı
 
+> **2026-10-11: Gol-draft üretimi KAPALI (varsayılan).** `GUNDEM_BOT_GOALS_ENABLED=1` olmadıkça `bot-tick` yetkiden sonra hemen döner
+> (`{ ok: true, disabled: true }`) — Sportmonks/Redis/DB'ye gitmez; cron-job.org açık kalabilir. Kod duruyor. Aşağıdaki "dakikada 1 inplay" notları bayrak AÇIKKEN geçerlidir.
+
 Durum (2026-09-22): **Adım 1–3 kodlandı.** Migration dosyası hazır (`prisma/migrations/20260922120000_add_gundem_bot_draft`) ama **prod'a UYGULANMADI** —
 sahibi uygular. Hiçbir şey otomatik yayınlanmıyor: poller yalnızca PENDING taslak yazar, yayın yalnızca admin onayıyla (`/admin/gundem-kuyruk`).
 
