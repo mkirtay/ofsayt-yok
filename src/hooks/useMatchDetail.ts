@@ -1,5 +1,6 @@
 import type { MatchLineupData } from '@/models/domain';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { QueryClientContext } from '@tanstack/react-query';
 import {
   findMatchById,
   getMatchLineups,
@@ -14,6 +15,7 @@ import type { MatchEvent, MatchStatsData } from '@/models/domain';
 import { toStandingsCompetitionId } from '@/services/sportmonksProviderFlag';
 import { fetchWorldCupStandingsBundle, isWorldCupCompetition } from '@/utils/worldCupStandings';
 import { useLiveMatchUpdates } from '@/hooks/useLiveMatchUpdates';
+import { syncLivePatchToHomeQueries } from '@/hooks/useHomeHubMatches';
 import { deriveMatchPhase } from '@/utils/matchPhase';
 import { matchKickoffMs } from '@/utils/matchActivity';
 import { isProbableLineup } from '@/utils/lineupStatus';
@@ -297,8 +299,13 @@ export function useMatchDetail(
     };
   }, [requestedMatchId]);
 
+  // Sağlayıcısız render'da (testler) yok: `useQueryClient` fırlatırdı.
+  const queryClient = useContext(QueryClientContext);
+
   // Canlı güncelleme: yalnız skor/durum/dakika + olaylar + istatistik (lig/stadyum/hakem sayfa verisinde kalır).
+  // Aynı yama ana sayfa listesinin önbelleğine de yazılır (panel ile liste / canlı şerit aynı skoru göstersin).
   const applyLiveUpdate = useCallback((payload: LiveMatchPayload) => {
+    if (queryClient) syncLivePatchToHomeQueries(queryClient, payload.match);
     setMatch((prev) =>
       prev && String(prev.id) === String(payload.match.id)
         ? {
@@ -315,7 +322,7 @@ export function useMatchDetail(
     );
     setEvents(payload.events);
     if (payload.stats) setStats(payload.stats);
-  }, []);
+  }, [queryClient]);
   useLiveMatchUpdates(matchId, match, applyLiveUpdate);
 
   // Tahmini kadro ("Muhtemel 11") sayfa açıkken resmîleşebilir: maçtan önceki 2 saatte 5 dk'da bir, maç başlayınca

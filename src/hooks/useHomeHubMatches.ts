@@ -1,6 +1,8 @@
 import { useQuery, useQueryClient, type Query, type QueryClient } from '@tanstack/react-query';
 import type { Match } from '@/models/liveScore';
 import type { HomeDayPayload, UpcomingLeagueDay } from '@/server/homeDay';
+import type { LiveMatchPatch } from '@/server/liveMatch';
+import { applyLivePatchToLists } from '@/utils/liveMatchPatch';
 import { homePollDelayMs } from '@/utils/matchActivity';
 import { isTurkishCupMatch } from '@/utils/cupTeamTier';
 import { fetchTurkeyTeamTiers, TURKEY_TEAM_TIERS_QUERY_KEY, TURKEY_TEAM_TIERS_STALE_MS } from '@/hooks/useTurkeyTeamTiers';
@@ -71,6 +73,20 @@ export function useHomeHubMatches(selectedDate: string, enabled = true) {
     retry: 2,
     retryDelay: (attempt) => Math.min(5_000 * 2 ** attempt, 60_000),
   });
+}
+
+/**
+ * Maç detayının canlı güncellemesini (`/api/matches/[id]/live`) önbellekteki bütün gün listelerine yazar: panel golü
+ * gösterirken liste / canlı şerit kendi yenilemesini beklemesin. Geride kalan veri yeniyi ezmez, yalnız skor ya da durum
+ * değişince yazılır (bkz. utils/liveMatchPatch.ts). Listenin "son güncelleme" zamanı korunur — yama tazeleme sayılmaz.
+ */
+export function syncLivePatchToHomeQueries(queryClient: QueryClient, patch: LiveMatchPatch): void {
+  for (const query of queryClient.getQueryCache().findAll({ queryKey: ['home-hub-matches'] })) {
+    const data = query.state.data as HomeHubMatchesData | undefined;
+    if (!data) continue;
+    const next = applyLivePatchToLists(data, patch);
+    if (next !== data) queryClient.setQueryData(query.queryKey, next, { updatedAt: query.state.dataUpdatedAt });
+  }
 }
 
 export function prefetchHomeHubMatches(queryClient: QueryClient, selectedDate: string) {
