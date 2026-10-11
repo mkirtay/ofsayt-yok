@@ -18,6 +18,7 @@
 import { withRedis } from '@/lib/redis';
 import { cacheKeyPrefix } from '@/lib/cacheNamespace';
 import { runInBackground } from '@/server/backgroundTask';
+import { normalizeRouteLabel } from './routeLabel';
 
 // ─── Havuz eşlemesi ─────────────────────────────────────────────────────────
 
@@ -195,6 +196,27 @@ export function usageRowsFromHash(hash: Record<string, number | string> | null):
     rows.set(key, row);
   }
   return [...rows.values()].sort((a, b) => b.calls - a.calls || a.route.localeCompare(b.route));
+}
+
+/**
+ * Bu saat `pool` havuzunu en çok tüketen `n` rota: Redis'teki saatlik sayaç + bu instance'ın henüz yazılmamış sayımları.
+ * Eski (normalleştirilmemiş) alan adları da gruplanır. Redis yoksa / hata → yalnız yerel sayımlar.
+ */
+export async function topRoutesForHour(pool: string, n: number, now: number): Promise<{ route: string; calls: number }[]> {
+  const hour = usageHour(now);
+  const hash = await withRedis((r) => r.hgetall<Record<string, number>>(usageKey(hour)), null);
+  const merged: Record<string, number> = { ...(hash ?? {}) };
+  for (const [field, c] of pending.get(hour) ?? []) merged[field] = (Number(merged[field]) || 0) + c;
+  const byRoute = new Map<string, number>();
+  for (const row of usageRowsFromHash(merged)) {
+    if (row.pool !== pool) continue;
+    const route = normalizeRouteLabel(row.route);
+    byRoute.set(route, (byRoute.get(route) ?? 0) + row.calls);
+  }
+  return [...byRoute.entries()]
+    .map(([route, calls]) => ({ route, calls }))
+    .sort((a, b) => b.calls - a.calls || a.route.localeCompare(b.route))
+    .slice(0, n);
 }
 
 /** Son `hours` saatin sayaçları (yeni saat önce). */

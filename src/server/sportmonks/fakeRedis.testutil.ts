@@ -7,6 +7,10 @@ export type FakeRedis = {
   get<T>(key: string): Promise<T | null>;
   set(key: string, value: unknown, opts?: { ex?: number; px?: number; nx?: boolean }): Promise<'OK' | null>;
   del(key: string): Promise<number>;
+  hincrby(key: string, field: string, n: number): Promise<number>;
+  expire(key: string, seconds: number): Promise<number>;
+  hgetall<T>(key: string): Promise<T | null>;
+  pipeline(): { hincrby(key: string, field: string, n: number): unknown; expire(key: string, s: number): unknown; exec(): Promise<unknown[]> };
   commands: number;
 };
 
@@ -40,6 +44,39 @@ export function createFakeRedis(now: () => number): FakeRedis {
     async del(key) {
       r.commands += 1;
       return store.delete(key) ? 1 : 0;
+    },
+    async hincrby(key, field, n) {
+      r.commands += 1;
+      const e = alive(key);
+      const hash = (e?.value as Record<string, number> | undefined) ?? {};
+      hash[field] = (hash[field] ?? 0) + n;
+      store.set(key, { value: hash, expiresAt: e?.expiresAt ?? now() + 365 * 24 * 3600 * 1000 });
+      return hash[field]!;
+    },
+    async expire(key, seconds) {
+      r.commands += 1;
+      const e = alive(key);
+      if (!e) return 0;
+      e.expiresAt = now() + seconds * 1000;
+      return 1;
+    },
+    async hgetall<T>(key: string) {
+      r.commands += 1;
+      const e = alive(key);
+      return e ? (JSON.parse(JSON.stringify(e.value)) as T) : null;
+    },
+    pipeline() {
+      const ops: (() => Promise<unknown>)[] = [];
+      const p = {
+        hincrby: (key: string, field: string, n: number) => (ops.push(() => r.hincrby(key, field, n)), p),
+        expire: (key: string, s: number) => (ops.push(() => r.expire(key, s)), p),
+        exec: async () => {
+          const out: unknown[] = [];
+          for (const op of ops) out.push(await op());
+          return out;
+        },
+      };
+      return p;
     },
   };
   return r;

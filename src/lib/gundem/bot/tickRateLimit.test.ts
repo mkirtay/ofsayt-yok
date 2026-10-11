@@ -30,6 +30,7 @@ vi.mock('@/services/sportmonks/quotaMonitor', () => ({
   reportSportmonksQuota: vi.fn(),
   reportSportmonksRateLimited: h.rateLimited,
   currentRequestRoute: () => 'POST /api/admin/gundem/bot-tick',
+  quotaAlertDue: () => false,
 }));
 
 const ORIGINAL_TOKEN = process.env.SPORTMONKS_API_KEY;

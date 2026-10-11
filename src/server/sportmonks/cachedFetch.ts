@@ -25,7 +25,7 @@
  *   ya da anında 429); havuz azalınca kısa TTL'ler esner; her gerçek istek rota × havuz olarak sayılır.
  */
 import { getRedisClient, MAX_REDIS_VALUE_BYTES, withRedis } from '@/lib/redis';
-import { currentRequestRoute, reportSportmonksQuota, reportSportmonksRateLimited } from '@/services/sportmonks/quotaMonitor';
+import { currentRequestRoute, quotaAlertDue, reportSportmonksQuota, reportSportmonksRateLimited } from '@/services/sportmonks/quotaMonitor';
 import { LIVE_TTL, sportmonksCacheTtl } from '@/services/sportmonks/cachePolicy';
 import { cacheKeyPrefix } from '@/lib/cacheNamespace';
 import { keepTurkeyTvStations } from '@/services/sportmonks/matchExtras';
@@ -36,6 +36,7 @@ import {
   poolCooldownUntil,
   poolForPath,
   recordUpstreamCall,
+  topRoutesForHour,
   startPoolCooldown,
   resetPoolGuardForTests,
   stretchFreshSeconds,
@@ -358,13 +359,21 @@ async function callUpstream(
   if (rl) {
     learnPool(path, rl.requested_entity);
     notePoolObservation(rl.requested_entity, rl.remaining, rl.resets_in_seconds, observedAt);
-    reportSportmonksQuota({
-      pool: rl.requested_entity,
-      remaining: rl.remaining,
-      resetsInSeconds: rl.resets_in_seconds,
-      path: `/${path}`,
-      ...(opts.origin ? { origin: opts.origin } : {}),
-    });
+    // Olay gidecekse (instance başına dakikada en çok bir) bu saatin en çok tüketen 3 rotası eklenir: tek HGETALL.
+    const topRoutes = quotaAlertDue(rl.requested_entity, rl.remaining, observedAt)
+      ? await topRoutesForHour(rl.requested_entity, 3, observedAt)
+      : undefined;
+    reportSportmonksQuota(
+      {
+        pool: rl.requested_entity,
+        remaining: rl.remaining,
+        resetsInSeconds: rl.resets_in_seconds,
+        path: `/${path}`,
+        ...(opts.origin ? { origin: opts.origin } : {}),
+      },
+      observedAt,
+      topRoutes ? { topRoutes } : {},
+    );
   } else {
     // Gövdede `rate_limit` yoksa (ör. 429) başlıktaki kalan sayı varsa o kullanılır; sıfırlanma bilinmiyor → 5 dk geçerli.
     const remaining = res.headers?.get?.('x-ratelimit-remaining');

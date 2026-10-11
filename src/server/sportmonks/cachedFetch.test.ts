@@ -6,6 +6,8 @@ const h = vi.hoisted(() => ({
   redis: null as FakeRedis | null,
   quota: vi.fn(),
   rateLimited: vi.fn(),
+  route: 'GET /api/test',
+  alertDue: false,
 }));
 
 vi.mock('@/lib/redis', () => ({
@@ -23,7 +25,8 @@ vi.mock('@/lib/redis', () => ({
 vi.mock('@/services/sportmonks/quotaMonitor', () => ({
   reportSportmonksQuota: h.quota,
   reportSportmonksRateLimited: h.rateLimited,
-  currentRequestRoute: () => 'GET /api/test',
+  currentRequestRoute: () => h.route,
+  quotaAlertDue: (_pool: string, remaining: number) => h.alertDue && remaining < 250,
 }));
 
 type Mod = typeof import('./cachedFetch');
@@ -79,6 +82,8 @@ describe('fetchSportmonksCached', () => {
     h.redis = createFakeRedis(now);
     h.quota.mockReset();
     h.rateLimited.mockReset();
+    h.route = 'GET /api/test';
+    h.alertDue = false;
     m = await freshModule();
   });
 
@@ -235,6 +240,29 @@ describe('fetchSportmonksCached', () => {
   });
 
   describe('havuz bekçisi (429 soğuması, seyreltme, ölçüm)', () => {
+    it('kota uyarısı gidecekse bu saatin en çok tüketen 3 rotası eklenir (maç sayfaları tek ad altında)', async () => {
+      const at = (remaining: number) => upstream(() => ({ status: 200, body: { data: [], rate_limit: { requested_entity: 'Fixture', remaining, resets_in_seconds: 900 } } }));
+      const routes = ['GET /matches/1-a-b', 'GET /matches/2-c-d', 'GET /matches/3-e-f', 'GET /index', 'GET /index', 'POST /api/admin/gundem/bot-tick', 'GET /teknik-direktor/[slug]'];
+      for (const [i, route] of routes.entries()) {
+        h.route = route;
+        await m.fetchSportmonksCached(`football/fixtures/${100 + i}`, {}, { fetchImpl: at(2000).impl, now });
+      }
+      h.alertDue = true;
+      h.route = 'GET /teknik-direktor/[slug]';
+      await m.fetchSportmonksCached('football/fixtures/999', {}, { fetchImpl: at(7).impl, now });
+      const last = h.quota.mock.calls.at(-1)!;
+      expect(last[0]).toMatchObject({ pool: 'Fixture', remaining: 7 });
+      expect(last[2]).toEqual({
+        topRoutes: [
+          { route: 'GET /matches/[slug]', calls: 3 },
+          { route: 'GET /index', calls: 2 },
+          { route: 'GET /teknik-direktor/[slug]', calls: 1 },
+        ],
+      });
+      // Uyarı gitmeyecekse ek okuma / bağlam yok
+      expect(h.quota.mock.calls[0]![2]).toEqual({});
+    });
+
     const limited = { status: 429, body: { message: 'You have reached your rate limit for this entity.' } };
 
     it('429 → havuz soğumaya girer: aynı havuzdaki sonraki istekler upstream\'e GİTMEZ (tekrar deneme yağmuru yok), tek Sentry olayı', async () => {

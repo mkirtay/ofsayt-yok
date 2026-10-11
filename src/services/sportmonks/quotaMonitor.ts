@@ -13,6 +13,7 @@
  * güncellenmeli (rate_limit response'u limitin kendisini vermiyor).
  */
 import * as Sentry from '@sentry/nextjs';
+import { normalizeRouteLabel } from '@/server/sportmonks/routeLabel';
 
 export const SPORTMONKS_POOL_LIMIT = 2500;
 export const QUOTA_WARNING_RATIO = 0.1;
@@ -39,7 +40,27 @@ export function classifyQuota(remaining: number, limit = SPORTMONKS_POOL_LIMIT):
   return 'ok';
 }
 
-export function reportSportmonksQuota(obs: QuotaObservation, now: number = Date.now()): QuotaLevel {
+/** O saat havuzu en çok tüketen rotalar (bkz. server/sportmonks/poolGuard.ts `topRoutesForHour`). */
+export type QuotaRouteUsage = { route: string; calls: number };
+
+/**
+ * Bu gözlem bir Sentry olayı üretecek mi (eşik altı ve throttle süresi dolmuş) — çağıran yalnız o zaman ek bağlam
+ * (en çok tüketen rotalar) toplasın. Throttle'ı ayarlamaz.
+ */
+export function quotaAlertDue(pool: string, remaining: number, now: number = Date.now()): boolean {
+  const level = classifyQuota(remaining);
+  if (level === 'ok') return false;
+  const last = lastAlertAt.get(`${pool}:${level}`);
+  return last === undefined || now - last >= QUOTA_ALERT_THROTTLE_MS;
+}
+
+const formatTopRoutes = (top: QuotaRouteUsage[]) => top.map((r) => `${r.route} ${r.calls}`).join(', ');
+
+export function reportSportmonksQuota(
+  obs: QuotaObservation,
+  now: number = Date.now(),
+  context: { topRoutes?: QuotaRouteUsage[] } = {},
+): QuotaLevel {
   const level = classifyQuota(obs.remaining);
 
   Sentry.addBreadcrumb({
@@ -73,10 +94,13 @@ export function reportSportmonksQuota(obs: QuotaObservation, now: number = Date.
       threshold: Math.floor(SPORTMONKS_POOL_LIMIT * (level === 'error' ? QUOTA_ERROR_RATIO : QUOTA_WARNING_RATIO)),
       resetsInSeconds: obs.resetsInSeconds,
       path: obs.path,
+      ...(context.topRoutes?.length ? { topRoutes: context.topRoutes } : {}),
     });
     scope.setFingerprint(['sportmonks-quota', obs.pool, level]);
+    // Olayı yakalayan rota tüketen rota olmak zorunda değil: bu saatin en çok tüketenleri mesajda.
+    const top = context.topRoutes?.length ? ` — bu saat en çok: ${formatTopRoutes(context.topRoutes)}` : '';
     Sentry.captureMessage(
-      `Sportmonks kota düşük: ${obs.pool} havuzunda ${obs.remaining}/${SPORTMONKS_POOL_LIMIT} kaldı`,
+      `Sportmonks kota düşük: ${obs.pool} havuzunda ${obs.remaining}/${SPORTMONKS_POOL_LIMIT} kaldı${top}`,
       level,
     );
   });
@@ -101,18 +125,15 @@ export function reportSportmonksRateLimited(info: { pool: string; path: string; 
 
 /**
  * Upstream isteğini başlatan rota (kota ölçümü için): Sentry'nin istek kapsamındaki işlem adı
- * (`POST /api/admin/gundem/bot-tick`, `getStaticProps (/teknik-direktor/[slug])`), yoksa istek yolu (sayısal
- * segmentler `:id`), o da yoksa `unknown`.
+ * (`POST /api/admin/gundem/bot-tick`, `getStaticProps (/teknik-direktor/[slug])`), yoksa istek yolu, o da yoksa
+ * `unknown`. Her iki durumda `normalizeRouteLabel` (maç slug'ı → `[slug]`, sayısal segment → `:id`).
  */
 export function currentRequestRoute(): string {
   try {
     const data = Sentry.getIsolationScope().getScopeData();
-    if (data.transactionName) return data.transactionName;
+    if (data.transactionName) return normalizeRouteLabel(data.transactionName);
     const req = (data.sdkProcessingMetadata as { normalizedRequest?: { method?: string; url?: string } } | undefined)?.normalizedRequest;
-    if (req?.url) {
-      const path = new URL(req.url, 'http://x').pathname.replace(/\/[^/]*\d[^/]*/g, '/:id');
-      return `${req.method ?? 'GET'} ${path}`;
-    }
+    if (req?.url) return normalizeRouteLabel(`${req.method ?? 'GET'} ${new URL(req.url, 'http://x').pathname}`);
   } catch {
     // Sentry yoksa ölçüm yine çalışır
   }
