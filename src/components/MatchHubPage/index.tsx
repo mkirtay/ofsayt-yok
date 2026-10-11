@@ -213,13 +213,17 @@ export default function MatchHubPage({
     standingsRowsSeen[selectedCompId] ?? (isUefaCupCompetitionId(selectedCompId) ? 36 : 18);
   const topScorersLoading = sidebarQueryLoading || topScorersQuery.isLoading;
 
-  useEffect(() => {
+  // Lig değişince sezon seçimi ve yama sıfırlanır (render sırasında: React'in önerdiği "önceki prop'a göre state" kalıbı).
+  const [seasonResetCompId, setSeasonResetCompId] = useState(selectedCompId);
+  if (seasonResetCompId !== selectedCompId) {
+    setSeasonResetCompId(selectedCompId);
     setSelectedSeasonId(null);
     setSeasonPatch(null);
-  }, [selectedCompId]);
+  }
 
   useEffect(() => {
     if (sidebarData?.selectedSeasonId != null && selectedSeasonId === null) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- sunucudan gelen varsayılan sezon, sezon state'i boşken bir kez uygulanır
       setSelectedSeasonId(sidebarData.selectedSeasonId);
     }
   }, [sidebarData?.selectedSeasonId, selectedSeasonId]);
@@ -253,6 +257,7 @@ export default function MatchHubPage({
   useEffect(() => {
     try {
       const raw = localStorage.getItem(FAV_LS_KEY);
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- favori kulüpler localStorage'dan yalnız istemcide okunur (SSR/hydration uyumu)
       if (raw) setFavoriteTeamIds(JSON.parse(raw) as number[]);
     } catch {}
   }, []);
@@ -537,6 +542,7 @@ export default function MatchHubPage({
 
   useEffect(() => {
     if (!router.isReady) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- router query (harici sistem) sekme/panel state'ine senkronlanır
     setActiveTab(parseMatchTab(queryTab) ?? 'all');
     // `?panel=leagues` (mobil alt menü "Ligler"): lig seçici açılır (sekme değişmez); diğerleri sekme.
     const panel = parseSidebarTab(queryPanel);
@@ -562,6 +568,7 @@ export default function MatchHubPage({
     if (!router.isReady || queryLeague == null) return;
     const id = Number(Array.isArray(queryLeague) ? queryLeague[0] : queryLeague);
     if (Number.isFinite(id) && sidebarLeagues.some((l) => l.id === id)) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Header aramasından gelen ?league= (router query) seçili lige uygulanır
       setSelectedCompId(id);
       setSidebarTab('standings');
       storeHubLeague({ id, rows: null });

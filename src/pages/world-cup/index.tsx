@@ -132,6 +132,7 @@ export default function WorldCupPage() {
     } else {
       try {
         const raw = localStorage.getItem(FAV_TEAMS_KEY);
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- misafir favorileri localStorage'dan yalnız istemcide okunur (SSR/hydration uyumu)
         if (raw) setFavoriteTeamIds(JSON.parse(raw));
       } catch {
         // ignore
@@ -169,6 +170,7 @@ export default function WorldCupPage() {
   // Sync bootstrap query into local state (season changes override tableData locally)
   useEffect(() => {
     if (!bootstrapQuery.data) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- react-query bootstrap verisi, sezon/grup değişimlerinin yerelde ezebildiği state'e tohumlanır
     setTableData(bootstrapQuery.data.tableData);
     setSeasons(bootstrapQuery.data.seasons);
     setSelectedSeasonId(bootstrapQuery.data.selectedSeasonId);
@@ -178,6 +180,7 @@ export default function WorldCupPage() {
 
   useEffect(() => {
     if (bootstrapQuery.isError) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- sorgu hatası kullanıcıya gösterilen yerel hata durumuna yansıtılır
       setError('Grup verileri yüklenemedi.');
     }
   }, [bootstrapQuery.isError]);

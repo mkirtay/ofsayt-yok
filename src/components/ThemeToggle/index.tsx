@@ -14,6 +14,7 @@ export default function ThemeToggle({ className = '' }: { className?: string }) 
   const [theme, setTheme] = useState<Theme>(DEFAULT_THEME);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR ile aynı ilk değer, gerçek tema (DOM özniteliği) hydration sonrası okunur
     setTheme(readTheme());
   }, []);
 

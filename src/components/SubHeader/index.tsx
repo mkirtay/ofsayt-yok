@@ -64,6 +64,7 @@ export default function SubHeader({
   // ürettiği gün verildiyse ilk render onunla (sunucu = istemci).
   const [todayIso, setTodayIso] = useState<string | null>(initialTodayIso ?? null);
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- bugünün tarihi yalnız istemcide çözülür (statik prerender/hydration uyumu); harici sistem (saat) okuması
     setTodayIso(todayIsoIstanbul());
     // Gece yarısını geçen açık sekmede rozet/şerit de güncellensin
     const id = setInterval(() => setTodayIso(todayIsoIstanbul()), 60_000);

@@ -59,9 +59,11 @@ export default function Header() {
   const hamburgerRef = useRef<HTMLButtonElement>(null);
 
   // Rota veya query değişince (alt nav sekmeleri aynı sayfada query değiştirir) menü kapansın
-  useEffect(() => {
+  const [menuPath, setMenuPath] = useState(router.asPath);
+  if (menuPath !== router.asPath) {
+    setMenuPath(router.asPath);
     setMobileMenuOpen(false);
-  }, [router.asPath]);
+  }
 
   // Menü açıkken arka plan scroll kilidi — kapanışta (X, dışarı tık, Esc, rota, resize) eksiksiz geri alınır
   useEffect(() => {

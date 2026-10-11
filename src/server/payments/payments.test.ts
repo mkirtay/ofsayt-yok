@@ -98,7 +98,6 @@ describe('checkout', () => {
 });
 
 const M1 = `oy_${'a'.repeat(32)}`;
-const M2 = `oy_${'b'.repeat(32)}`;
 
 describe('callback (imzasız)', () => {
   it('ASLA kredi vermez: status=success / isSuccess=true olsa bile sipariş PENDING, kredi 0; yalnız callbackAt işaretlenir', async () => {
