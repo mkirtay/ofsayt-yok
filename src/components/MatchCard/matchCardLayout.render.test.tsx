@@ -49,8 +49,8 @@ describe('maç kartı üst bölümü (sadeleştirme)', () => {
 
   it('teknik direktörler takım adlarının altında (TD sayfasına link); bilgi kartında TD hücresi yok', () => {
     const html = render(pre);
-    expect(html).toMatch(/Galatasaray<\/div>[^]*?<a [^>]*href="\/teknik-direktor\/okan-buruk-199988"[^>]*>O\. Buruk<\/a>/);
-    expect(html).toMatch(/Kasımpaşa<\/div>[^]*?<span[^>]*>E\. Belözoğlu<\/span>/);
+    expect(html).toMatch(/Galatasaray(?:<\/span>)?<\/div>[^]*?<a [^>]*href="\/teknik-direktor\/okan-buruk-199988"[^>]*>O\. Buruk<\/a>/);
+    expect(html).toMatch(/Kasımpaşa(?:<\/span>)?<\/div>[^]*?<span[^>]*>E\. Belözoğlu<\/span>/);
     expect(html).not.toContain('Teknik Direktörler');
   });
 

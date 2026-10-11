@@ -13,6 +13,7 @@ import { buildMatchHref } from '@/utils/matchUrl';
 import { competitionLogoNeedsBackdrop } from '@/utils/competitionLogo';
 import { leagueNameById } from '@/utils/leagueName';
 import TeamTierBadge from '@/components/TeamTierBadge';
+import RedCardBadge, { redCardCountFor } from '@/components/RedCardBadge';
 import { useTurkeyTeamTiers } from '@/hooks/useTurkeyTeamTiers';
 import { isTurkishCupMatch } from '@/utils/cupTeamTier';
 import { getTeamsHead2Head, type Head2HeadData, type Head2HHistoricalMatch } from '@/services/liveScoreService';
@@ -361,7 +362,12 @@ export default function MatchCard({ match, loading, initialH2h }: MatchCardProps
               ) : (
                 <div className={styles.logoPlaceholder}>{homeName.charAt(0)}</div>
               )}
-              <div className={styles.teamName}>{homeName}</div>
+              <div className={styles.teamName}>
+                <span className={styles.teamNameText}>
+                  {homeName}
+                  <RedCardBadge count={redCardCountFor(match, 'home')} size="md" className={styles.redCardHome} />
+                </span>
+              </div>
               <TeamTierBadge match={match} teamId={match.home?.id} tiers={cupTiers} />
             </Link>
             <CoachLink name={match.coaches?.home} id={match.coaches?.homeId} full={match.coaches?.homeFull} />
@@ -423,7 +429,12 @@ export default function MatchCard({ match, loading, initialH2h }: MatchCardProps
               ) : (
                 <div className={styles.logoPlaceholder}>{awayName.charAt(0)}</div>
               )}
-              <div className={styles.teamName}>{awayName}</div>
+              <div className={styles.teamName}>
+                <span className={styles.teamNameText}>
+                  {awayName}
+                  <RedCardBadge count={redCardCountFor(match, 'away')} size="md" className={styles.redCardAway} />
+                </span>
+              </div>
               <TeamTierBadge match={match} teamId={match.away?.id} tiers={cupTiers} />
             </Link>
             <CoachLink name={match.coaches?.away} id={match.coaches?.awayId} full={match.coaches?.awayFull} />

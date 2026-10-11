@@ -1,0 +1,41 @@
+// Kırmızı kart ikonu — EventTimeline `.card.cardRed` ile aynı görünüm (dikdörtgen, 2 px köşe, --color-loss), satıra
+// sığacak kadar küçük. flex-shrink: 0 → uzun adda kart değil ad kısalır (ellipsis), satır genişliği değişmez.
+.badge {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 2px;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+.card {
+  display: block;
+  width: var(--red-card-w);
+  height: var(--red-card-h);
+  border-radius: 2px;
+  background: var(--color-loss);
+  // Koyu temada koyu zemin, açıkta beyaz zemin üstünde kenar netliği (kontrast) için ince iç gölge.
+  box-shadow: inset 0 0 0 0.5px rgb(0 0 0 / 0.15);
+}
+
+.sm {
+  --red-card-w: 7px;
+  --red-card-h: 10px;
+}
+
+.md {
+  --red-card-w: 9px;
+  --red-card-h: 13px;
+}
+
+.times {
+  font-size: 10px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-loss);
+
+  .md & {
+    font-size: 12px;
+  }
+}

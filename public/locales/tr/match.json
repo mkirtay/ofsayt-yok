@@ -456,5 +456,9 @@
   "frikikCta": {
     "label": "Sen de at",
     "hint": "Günün frikiği · 3 can"
+  },
+  "redCards": {
+    "one": "Kırmızı kart",
+    "many": "{{count}} kırmızı kart"
   }
 }

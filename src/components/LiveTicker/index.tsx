@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useTranslation } from '@/lib/i18n';
 import TeamLogo from '@/components/TeamLogo';
 import { narrowTeamName } from '@/components/MatchList/TeamNameLabel';
+import RedCardBadge, { redCardCountFor } from '@/components/RedCardBadge';
 import type { Match } from '@/models/liveScore';
 import { buildMatchHref } from '@/utils/matchUrl';
 import { isModifiedClick } from '@/utils/matchSelection';
@@ -71,6 +72,7 @@ function ItemBody({ match, priority = false }: { match: Match; priority?: boolea
         {brk ? t('halfTime') : minute || t('liveTicker.liveShort')}
       </span>
       <span className={styles.home}>
+        <RedCardBadge count={redCardCountFor(match, 'home')} />
         <span className={styles.name} title={match.home?.name}>
           {shortName(match.home)}
         </span>
@@ -84,6 +86,7 @@ function ItemBody({ match, priority = false }: { match: Match; priority?: boolea
         <span className={styles.name} title={match.away?.name}>
           {shortName(match.away)}
         </span>
+        <RedCardBadge count={redCardCountFor(match, 'away')} />
       </span>
     </>
   );

@@ -17,6 +17,7 @@ import { competitionLogoNeedsBackdrop, uefaCompetitionLogoSrcById } from '@/util
 import { utcTimeToTr } from '@/utils/dateFormat';
 import { buildMatchHref } from '@/utils/matchUrl';
 import TeamNameLabel from './TeamNameLabel';
+import RedCardBadge, { redCardCountFor } from '@/components/RedCardBadge';
 import TieLine from './TieLine';
 import { isSecondLeg } from '@/utils/aggregateScore';
 import { finishedLabelKey } from '@/utils/finishLabel';
@@ -493,6 +494,8 @@ function VirtualRow({
           onClick={match.home?.id ? (e) => { e.stopPropagation(); e.preventDefault(); if (onSelectTeam) onSelectTeam(match.home!.id); else navigateTo(`/teams/${match.home!.id}`); } : undefined}
         >
           <TeamLogo src={homeLogo} className={styles.teamCrest} width={18} priority={index < EAGER_LOGO_ROWS} />
+          {/* Kart adın dış tarafında: ad skora bitişik yerinde kalır (kayma yok). */}
+          <RedCardBadge count={redCardCountFor(match, 'home')} />
           <TeamNameLabel
             teamId={match.home?.id}
             name={homeName}
@@ -515,6 +518,7 @@ function VirtualRow({
             className={`${styles.teamName}${match.away?.id ? ` ${styles.teamNameLink}` : ''}`}
           />
           <TeamTierBadge match={match} teamId={match.away?.id} tiers={cupTiers} />
+          <RedCardBadge count={redCardCountFor(match, 'away')} />
         </div>
         <div className={`${styles.virtualCell} ${styles.virtualHt}`}>{htDisplay}</div>
       </Link>

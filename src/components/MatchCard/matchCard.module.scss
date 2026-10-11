@@ -183,6 +183,27 @@ $match-card-header-blue: var(--text-secondary); // tema-uyumlu (eskiden sabit la
   text-align: center;
 }
 
+// Kırmızı kart adın DIŞ tarafına mutlak konumlu: ortalanmış ad yerinde kalır (kart akışta yer kaplamaz).
+.teamNameText {
+  position: relative;
+  display: inline-block;
+}
+
+.redCardHome,
+.redCardAway {
+  position: absolute;
+  top: 0.5em;
+  transform: translateY(-50%);
+}
+
+.redCardHome {
+  right: calc(100% + 5px);
+}
+
+.redCardAway {
+  left: calc(100% + 5px);
+}
+
 .scoreContainer {
   flex: 0 0 auto;
   display: flex;

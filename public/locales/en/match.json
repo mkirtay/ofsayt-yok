@@ -465,5 +465,9 @@
   "frikikCta": {
     "label": "Take a free kick",
     "hint": "Free kick of the day · 3 lives"
+  },
+  "redCards": {
+    "one": "Red card",
+    "many": "{{count}} red cards"
   }
 }
