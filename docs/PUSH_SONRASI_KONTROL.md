@@ -16,6 +16,43 @@ Her main push'unun deploy'u "Ready" olduktan sonra, canlıda (birkaç dakika):
    `Cannot find module`).
 4. **Sentry:** yeni deploy'la açılan issue var mı.
 
+## Tur 7 (2026-10-11) ek canlı doğrulama
+
+`B=https://www.ofsaytyok.app`. Hepsi okuma; hiçbiri DB'ye yazmaz.
+
+1. **Canlı dakikada tek kesme (3f54055).** Canlı bir maçın sayfasında başlık rozeti `51'` olmalı (`51''` değil).
+   Ana sayfa listesi ve ticker'da da tek kesme; devre arasında da dakika tek kesmeyle görünür.
+2. **Isı haritası maç içi göreli ölçek (96fdd00, ff0b469).**
+   - Liverpool–Manchester City analiz sekmesi: iki takımın en yoğun bölgesi koyu, en zayıfı açık; ızgara tek tonda
+     "soluk" görünmüyor. Yeni üretilen analizlerde `modelVersion` `v6-2026-10-…` ile başlar.
+   - Eski bir analiz (v5 ya da öncesi, ör. 1–2 hafta önceki bir maç): pay dağılımı gibi düşük değerler de
+     görünür kontrastla çizilir, sayfa hata vermez. Sürüm etiketi değişikliği eski analizleri yeniden üretmez.
+3. **Takım formu TTL (5afc43e).** Bugün maçı olmayan bir takımın form isteği (son 89 gün):
+   ```bash
+   curl -s -D - -o /dev/null "$B/api/sportmonks/football/fixtures/between/$(date -v-89d +%F)/$(date +%F)/<takımId>" | grep -iE "^HTTP|^age|x-vercel-cache|x-cache"
+   ```
+   Not: Vercel yanıttaki `Cache-Control`'den `s-maxage`'ı siler (dışarıda yalnız `public` görünür); süre `age` ile
+   okunur. İlk istekte `x-cache: MISS`; 10 dakikadan sonra tekrarla: `x-vercel-cache: HIT` ve `age` > 600 ise CDN süresi
+   eskisinden (10 dk) uzun demektir (beklenen: son maç 5 sa'ten eskiyse 6 sa, 5 sa içindeyse 1 sa). Bugün başlamamış/
+   canlı maçı olan takımda kısa TTL sürer (doğru).
+4. **Havuz baskısında maç sayfası SSR'ı (9fd49d9).** Normal havuzda bitmiş bir maç:
+   ```bash
+   curl -s -D /tmp/h.txt "$B/matches/<slug>" -o /tmp/m.html; grep -iE "^age|x-vercel-cache" /tmp/h.txt; grep -c '"initialH2h"' /tmp/m.html
+   ```
+   Beklenen (normal havuz): `initialH2h` sayısı ≥ 1 ve bitmiş maçta tam önbellek (CDN'de `age` saatlere çıkabilir).
+   Havuz baskı altındaysa (kalan < %10 ya da 429 soğuması) `initialH2h` YOK, CDN kopyası kısa (`age` ≤ 60 sn: s-maxage 30
+   + swr 30); H2H/form, istatistik ve kadro tarayıcıda yüklenir (sayfada iskelet → dolu). Baskı durumu:
+   `GET /api/admin/sportmonks-usage` (admin).
+5. **Rota adı sayacı (40ab913).** `GET /api/admin/sportmonks-usage?hours=2` (admin) rotalarında maç sayfaları tek satır
+   `/matches/[slug]`, Next verisi `/_next/data/*/…` olarak gruplanır; maç başına ayrı satır açılmaz. Kota uyarısı
+   (Sentry) o saatin en çok tüketen 3 rotasını taşır.
+6. **Dünya Kupası sekmesi polling (bb2e0ad).** `/world-cup` Maçlar sekmesi açıkken tarayıcı sekmesini arka plana al:
+   ağ panelinde periyodik istek durur; öne gelince veri bayatsa tek istek atılır. (Sayfa `WORLD_CUP_PAGE_ENABLED`
+   kapalıysa ana sayfaya 302 — bu adım atlanır.)
+7. **evaluate-predictions imleci (441a64d).** GitHub Actions "Evaluate Predictions" koşusunun yanıt özetinde
+   `deferred` alanı var; tur başına en çok 25 maç değerlendirilir, `deferred > 0` ise sonraki turlarda kalanlar
+   sırayla işlenir (imleç Redis'te `…eval-predictions:cursor`). Ardışık koşularda `deferred` azalmalı, hata yok.
+
 ## Neden 1. madde
 
 2026-10-07'de sharp 0.34 → 0.35.5 yükseltmesinden sonra `/api/img/logo` canlıda her istekte 500 verdi:
