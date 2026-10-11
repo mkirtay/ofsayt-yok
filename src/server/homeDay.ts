@@ -60,6 +60,21 @@ export function homeDayFreshSeconds(payload: HomeDayPayload, todayIso: string, n
   return payload.liveMatches.length > 0 ? Math.min(fresh, 20) : fresh;
 }
 
+/**
+ * Canlı maç varken CDN'in süresi geçmiş kopyayı verebileceği pencere (sn). Uzun pencerede (eskiden `fresh × 3` = 60 sn)
+ * süre bittikten sonraki ilk istek eski skoru alıyor, tazelemeyi başlatıp bir sonraki 30 sn'lik turu bekliyordu
+ * (canlıda `age=20–30` ölçüldü, liste detayın 10–21 sn gerisinde). Maç detayının canlı ucuyla aynı: 5 sn.
+ */
+export const HOME_DAY_LIVE_SWR_SECONDS = 5;
+
+/** `/api/matches/day` CDN başlığı. Canlı maç yokken pencere `fresh × 3` (başlamaya kadar değişmeyen liste). */
+export function homeDayCacheControl(payload: HomeDayPayload, todayIso: string, degraded: boolean, now: number = Date.now()): string {
+  if (degraded) return 'public, s-maxage=15, stale-while-revalidate=60';
+  const fresh = homeDayFreshSeconds(payload, todayIso, now);
+  const swr = payload.liveMatches.length > 0 ? HOME_DAY_LIVE_SWR_SECONDS : fresh * 3;
+  return `public, s-maxage=${fresh}, stale-while-revalidate=${swr}`;
+}
+
 // ─── Sıradaki maç günü ──────────────────────────────────────────────────────
 
 export type UpcomingLeagueDay = { leagueId: number; date: string };

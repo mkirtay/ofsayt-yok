@@ -8,7 +8,9 @@
  *   (tüm instance'lar — Redis `smq:cooldown:<havuz>`). Aynı tick / render içindeki sonraki çağrılar upstream'e gitmez,
  *   eski veri ya da anında 429 alır: tekrar deneme yağmuru olmaz.
  * - Seyreltme: havuzda kalan %10'un altındaysa kısa TTL'ler ×3, %2'nin altındaysa ×6 (en çok 30 dk) — canlı liste
- *   30 sn yerine 90/180 sn'de bir tazelenir, bot'un `inplay`'i de aynı cache'ten okuduğu için kendiliğinden seyrelir.
+ *   30 sn yerine 90/180 sn'de bir tazelenir. `livescores/inplay` include'a göre ÜÇ ayrı anahtarda (ana sayfa listesi,
+ *   maç detayı canlı ucu, Gündem bot'u); her biri kendi kaydını tazeler, seyreltme her birine ayrı ayrı uygulanır.
+ *   Havuz durumu instance belleğinde: kaydı o an hangi instance tazeliyorsa onun bildiği kalan sayıya göre esner.
  * - Ölçüm: her GERÇEK upstream isteği saatlik Redis hash'ine `havuz|rota|kaynak` alanıyla sayılır
  *   (`smq:usage:<YYYY-MM-DDTHH>`, 8 gün). Instance içinde toplanıp toplu yazılır; instance kapanırsa son birkaç sayım
  *   kaybolabilir (yaklaşık ölçüm). Rapor: `GET /api/admin/sportmonks-usage`.

@@ -14,7 +14,7 @@ vi.mock('@/services/liveScoreService', () => ({
   getFixturesByCompetition: vi.fn(async () => []),
 }));
 
-import { homeDayFreshSeconds, istanbulDateOfKickoff, loadHomeDay, loadUpcomingMatchDays, normalizeUpcomingLeagueIds } from './homeDay';
+import { homeDayCacheControl, homeDayFreshSeconds, istanbulDateOfKickoff, loadHomeDay, loadUpcomingMatchDays, normalizeUpcomingLeagueIds } from './homeDay';
 
 const NOW = Date.parse('2026-09-30T13:00:00Z');
 
@@ -86,6 +86,15 @@ describe('homeDay', () => {
     ).toBe(30);
     expect(homeDayFreshSeconds({ ...base, date: '2026-09-20' }, '2026-09-30', NOW)).toBe(3600);
     expect(homeDayFreshSeconds({ ...base, date: '2026-10-05' }, '2026-09-30', NOW)).toBe(900);
+  });
+
+  it('CDN başlığı: canlı maç varken eski kopya penceresi 5 sn; yokken fresh × 3; hata durumunda kısa', () => {
+    const base = { date: '2026-09-30', fixtureMatches: [], liveMatches: [] };
+    const live = { ...base, liveMatches: [{ id: 1, status: 'IN PLAY' } as never] };
+    expect(homeDayCacheControl(live, '2026-09-30', false, NOW)).toBe('public, s-maxage=20, stale-while-revalidate=5');
+    expect(homeDayCacheControl(base, '2026-09-30', false, NOW)).toBe('public, s-maxage=300, stale-while-revalidate=900');
+    expect(homeDayCacheControl({ ...base, date: '2026-09-20' }, '2026-09-30', false, NOW)).toBe('public, s-maxage=3600, stale-while-revalidate=10800');
+    expect(homeDayCacheControl(live, '2026-09-30', true, NOW)).toBe('public, s-maxage=15, stale-while-revalidate=60');
   });
 
   it('başlama saati Türkiye gününe çevrilir (UTC 22:00 → ertesi gün)', () => {

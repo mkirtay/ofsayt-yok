@@ -2,13 +2,13 @@
  * GET /api/matches/day?date=YYYY-MM-DD — ana sayfanın günlük maç verisi (normalize, sağlayıcıdan bağımsız).
  *
  * Tarayıcı ham Sportmonks path'leri yerine bunu çağırır (bkz. server/homeDay.ts). CDN süresi maç
- * durumuna göre (canlı 20 sn, aktif 30 sn, aksi halde sıradaki başlamaya kadar). Upstream hatasında
+ * durumuna göre (canlı 20 sn + eski kopya en çok 5 sn, aktif 30 sn, aksi halde sıradaki başlamaya kadar). Upstream hatasında
  * son geçerli veri `stale: true` ile döner; hiç veri yoksa 503 (istemci önceki veriyi korur, üstel bekler).
  */
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { hitFixedWindowRateLimit, requestIp } from '@/lib/rateLimit';
 import { trackSportmonksFetches } from '@/server/sportmonks/cachedFetch';
-import { homeDayFreshSeconds, loadHomeDay } from '@/server/homeDay';
+import { homeDayCacheControl, loadHomeDay } from '@/server/homeDay';
 import { shiftIsoDate, todayIsoIstanbul } from '@/utils/dateStrip';
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -41,11 +41,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(503).json({ error: 'Maç verileri şu an alınamıyor.' });
     }
     const degraded = stale || failed;
-    const fresh = homeDayFreshSeconds(value, today);
-    res.setHeader(
-      'Cache-Control',
-      degraded ? 'public, s-maxage=15, stale-while-revalidate=60' : `public, s-maxage=${fresh}, stale-while-revalidate=${fresh * 3}`,
-    );
+    res.setHeader('Cache-Control', homeDayCacheControl(value, today, degraded));
     return res.status(200).json({ ...value, stale: degraded });
   } catch {
     res.setHeader('Cache-Control', 'no-store');
