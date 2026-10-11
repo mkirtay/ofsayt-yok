@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { resolveSportmonksMatch } from '@/lib/resolveLiveMatch';
 import { withRedis } from '@/lib/redis';
 import { cacheKeyPrefix } from '@/lib/cacheNamespace';
+import { extractFinalScore, extractHtScore, isMatchFinished } from '@/lib/matchResult';
 
 type MatchPredictionJson = { home?: number; draw?: number; away?: number };
 type ScorePredictionJson = { mostLikely?: string };
@@ -224,33 +225,6 @@ export function shouldMarkUnresolved(
     if (Number.isFinite(dayStart)) reference = dayStart + 24 * 60 * 60_000;
   }
   return now.getTime() - reference > UNRESOLVED_AFTER_MS;
-}
-
-function parseScoreGoals(raw?: string | null): [number, number] | null {
-  if (!raw) return null;
-  const m = /(\d+)\s*[-:]\s*(\d+)/.exec(String(raw));
-  if (!m) return null;
-  const a = Number(m[1]);
-  const b = Number(m[2]);
-  if (!Number.isFinite(a) || !Number.isFinite(b)) return null;
-  return [a, b];
-}
-
-function isMatchFinished(match: Match | null): boolean {
-  if (!match) return false;
-  const s = String(match.status ?? '').toUpperCase();
-  return s === 'FINISHED' || s === 'FT' || s === 'FULL TIME' || s === 'ENDED';
-}
-
-function extractFinalScore(match: Match): string | null {
-  const raw = match.scores?.ft_score || match.scores?.score || match.score;
-  const goals = parseScoreGoals(raw);
-  if (!goals) return null;
-  return `${goals[0]}-${goals[1]}`;
-}
-
-function extractHtScore(match: Match): [number, number] | null {
-  return parseScoreGoals(match.scores?.ht_score);
 }
 
 function normalizePredictedScore(raw: string): string {

@@ -16,8 +16,11 @@ import { withRedis } from '@/lib/redis';
 import { cacheKeyPrefix } from '@/lib/cacheNamespace';
 import { isCronAuthorization } from '@/lib/cronSecret';
 
-export type CronJobName = 'evaluate-predictions' | 'analysis-pregenerate';
-export const CRON_JOBS: readonly CronJobName[] = ['evaluate-predictions', 'analysis-pregenerate'];
+/** AI istatistikleri admin bandında gösterilen işler. */
+export type AiCronJobName = 'evaluate-predictions' | 'analysis-pregenerate';
+/** `game-settle`: tahmin oyunu sonuç işi (server/game/settle.ts; cron-job.org 10 dk). */
+export type CronJobName = AiCronJobName | 'game-settle';
+export const CRON_JOBS: readonly AiCronJobName[] = ['evaluate-predictions', 'analysis-pregenerate'];
 
 /** 15 dk'lık zamanlamada 3 çalışma kaçırılmış demek. */
 export const CRON_STALE_AFTER_MS = 45 * 60_000;
@@ -26,6 +29,7 @@ export const CRON_STALE_AFTER_MS = 45 * 60_000;
 export const CRON_LOCK_TTL_MS: Record<CronJobName, number> = {
   'evaluate-predictions': 300_000,
   'analysis-pregenerate': 120_000,
+  'game-settle': 120_000,
 };
 
 export type CronHeartbeat = {
@@ -67,7 +71,7 @@ export async function readCronHeartbeat(job: CronJobName): Promise<CronHeartbeat
   return withRedis(async (r) => (await r.get<CronHeartbeat>(heartbeatKey(job))) ?? null, null);
 }
 
-export async function readCronHeartbeats(): Promise<Record<CronJobName, CronHeartbeat | null>> {
+export async function readCronHeartbeats(): Promise<Record<AiCronJobName, CronHeartbeat | null>> {
   const [evaluate, pregen] = await Promise.all(CRON_JOBS.map(readCronHeartbeat));
   return { 'evaluate-predictions': evaluate ?? null, 'analysis-pregenerate': pregen ?? null };
 }

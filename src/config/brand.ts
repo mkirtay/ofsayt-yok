@@ -45,8 +45,28 @@ export const BRAND = {
   description: 'Türkiye ve dünya futbolundan canlı skorlar, maç analizleri, puan durumu ve spor haberleri.',
 } as const;
 
-/** Çevirilerde her zaman kullanılabilen değişkenler: `{{brand}}`, `{{siteDomain}}`, `{{contactEmail}}`. */
+/**
+ * Tahmin oyunu (ücretsiz, ödülsüz skor tahmini) — ad TEK KAYNAK. Ad kesinleşince (yön: "90+", 90arti.app) yalnız bu
+ * nesne değişir; metinler `{{game}}` / `{{gameShort}}` ile okur. URL (`basePath`), API yolu (`/api/game`) ve tablo adları
+ * (`Game*`) bilerek markadan bağımsız: ad değişince bağlantılar kırılmaz. Plan: docs/TAHMIN_OYUNU_PLANI.md.
+ */
+export const GAME_BRAND = {
+  /** Görünen ad (geçici). */
+  name: 'Tahmin Ligi',
+  /** Dar alanlar (menü, rozet). */
+  shortName: 'Tahmin',
+  /** Boşluksuz teknik ad (analytics etiketi, dosya adı). "90+" için "90arti". */
+  compactName: 'TahminLigi',
+  /** Ayrı alan adı (ör. https://90arti.app); yoksa null → site içi `basePath`. */
+  siteUrl: null as string | null,
+  /** Site içi kök yol — markadan bağımsız sabit. */
+  basePath: '/tahmin',
+} as const;
+
+/** Çevirilerde her zaman kullanılabilen değişkenler: `{{brand}}`, `{{siteDomain}}`, `{{contactEmail}}`, `{{game}}`, `{{gameShort}}`. */
 export const BRAND_I18N_VARS: Readonly<Record<string, string>> = {
+  game: GAME_BRAND.name,
+  gameShort: GAME_BRAND.shortName,
   brand: BRAND.name,
   siteDomain: BRAND.domain,
   contactEmail: BRAND.contactEmail,

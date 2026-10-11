@@ -88,6 +88,8 @@ model User {
   mentionsReceived     GundemMention[]     @relation("GundemMentionUser")
   moderationActions    ModerationAction[]  @relation("ModerationActionAdmin")
   moderationTargeted   ModerationAction[]  @relation("ModerationActionTarget")
+  gamePredictions      GamePrediction[]
+  gameWeekEntries      GameWeekEntry[]
 }
 
 /// Kredi hareketleri defteri — bakiye değişikliklerinin denetim izi.
@@ -732,4 +734,111 @@ model PinBid {
 
   @@index([weekStart, status])
   @@index([userId])
+}
+
+/// Tahmin oyunu (ücretsiz, ödülsüz skor tahmini; ad config/brand.ts GAME_BRAND). Plan: docs/TAHMIN_OYUNU_PLANI.md.
+/// Hafta: TR ISO haftası, Pazartesi 00:00 – Pazar 23:59 Europe/Istanbul. Kilit maç başına, `GameMatch.kickoffAt`'te; yazım
+/// tek koşullu SQL ile ve veritabanı saatiyle (lib/game/sql.ts).
+enum GameWeekStatus {
+  DRAFT
+  PUBLISHED
+  SETTLED
+}
+
+enum GameMatchStatus {
+  SCHEDULED
+  FINISHED
+  VOID
+}
+
+/// Oyun haftası. `weekKey` "2026-W42"; `season` "2026-27"; `startsAt`/`endsAt` UTC (hafta TR'de Pzt 00:00 / sonraki Pzt 00:00).
+model GameWeek {
+  id             String          @id @default(cuid())
+  weekKey        String          @unique
+  season         String
+  status         GameWeekStatus  @default(DRAFT)
+  scoringVersion Int             @default(1)
+  startsAt       DateTime
+  endsAt         DateTime
+  publishedAt    DateTime?
+  publishedById  String?
+  settledAt      DateTime?
+  createdAt      DateTime        @default(now())
+  matches        GameMatch[]
+  entries        GameWeekEntry[]
+
+  @@index([season, startsAt])
+  @@index([status, startsAt])
+}
+
+/// Haftanın maçı. `fixtureId` = MatchSnapshot.fixtureId (Sportmonks id, String). Takım adları/logolar gösterimde snapshot'tan.
+/// `kickoffAt` snapshot / önbellekteki gün listesinden güncellenir; KİLİT BU ALANA GÖRE. Skor normal süre (90').
+model GameMatch {
+  id           String           @id @default(cuid())
+  weekId       String
+  week         GameWeek         @relation(fields: [weekId], references: [id], onDelete: Cascade)
+  fixtureId    String
+  position     Int
+  kickoffAt    DateTime
+  status       GameMatchStatus  @default(SCHEDULED)
+  homeGoals    Int?
+  awayGoals    Int?
+  /// Sonuçlanınca: doğrulanmış hesapların skor dağılımı { "2-1": 14, ..., "_total": 82 } (nadir skor bonusu buna göre).
+  distribution Json?
+  settledAt    DateTime?
+  voidReason   String?
+  /// Yedek `fixtures/{id}` sorgusunun son zamanı (saatte en çok bir).
+  checkedAt    DateTime?
+  predictions  GamePrediction[]
+
+  @@unique([weekId, fixtureId])
+  @@index([status, kickoffAt])
+}
+
+/// Kullanıcının bir maça skor tahmini (kullanıcı × maç tek kayıt). `points`/`breakdown` sonuçlanınca yazılır (joker dahil).
+model GamePrediction {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gameMatchId String
+  gameMatch   GameMatch @relation(fields: [gameMatchId], references: [id], onDelete: Cascade)
+  /// Denormalize: haftalık toplamlar tek tablodan.
+  weekId      String
+  home        Int
+  away        Int
+  /// Kaç kez değiştirildi (kötüye kullanım sinyali).
+  revisions   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @default(now()) @updatedAt
+  points      Int?
+  /// { dir, diff, total, exact, rare, joker } — lib/game/scoring.ts.
+  breakdown   Json?
+
+  @@unique([userId, gameMatchId])
+  @@index([gameMatchId])
+  @@index([weekId, userId])
+}
+
+/// Kullanıcı × hafta: joker seçimi + sıralama toplamları (sonuçlanan maçlardan yeniden hesaplanır, idempotent).
+model GameWeekEntry {
+  id               String    @id @default(cuid())
+  userId           String
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  weekId           String
+  week             GameWeek  @relation(fields: [weekId], references: [id], onDelete: Cascade)
+  /// Denormalize: sezon tablosu.
+  season           String
+  jokerGameMatchId String?
+  totalPoints      Int       @default(0)
+  exactCount       Int       @default(0)
+  directionCount   Int       @default(0)
+  /// Son tahmin/joker değişikliği (eşitlikte erken karar veren önde).
+  lastChangeAt     DateTime  @default(now())
+  /// Admin: sıralamadan gizli (satır silinmez).
+  hiddenAt         DateTime?
+  createdAt        DateTime  @default(now())
+
+  @@unique([userId, weekId])
+  @@index([weekId, totalPoints])
+  @@index([season, userId])
 }

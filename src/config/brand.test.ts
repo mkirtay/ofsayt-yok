@@ -1,7 +1,7 @@
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { BRAND, BRAND_I18N_VARS, brandText, brandTitle, socialProfileUrls, withBrandText } from './brand';
+import { BRAND, BRAND_I18N_VARS, GAME_BRAND, brandText, brandTitle, socialProfileUrls, withBrandText } from './brand';
 import { I18nProvider, useTranslation } from '@/lib/i18n';
 import { buildRobotsTxt } from '@/pages/robots.txt';
 
@@ -25,7 +25,7 @@ describe('marka yardımcıları', () => {
   it('domain siteUrl host’u; siteUrl sonda "/" taşımaz', () => {
     expect(BRAND.siteUrl).not.toMatch(/\/$/);
     expect(BRAND.siteUrl.endsWith(`//${BRAND.domain}`)).toBe(true);
-    expect(BRAND_I18N_VARS).toEqual({ brand: BRAND.name, siteDomain: BRAND.domain, contactEmail: BRAND.contactEmail });
+    expect(BRAND_I18N_VARS).toEqual({ game: GAME_BRAND.name, gameShort: GAME_BRAND.shortName, brand: BRAND.name, siteDomain: BRAND.domain, contactEmail: BRAND.contactEmail });
   });
 
   it('iletişim adresi gerçek bir alan adında (yer tutucu canlıya çıkmasın)', () => {
