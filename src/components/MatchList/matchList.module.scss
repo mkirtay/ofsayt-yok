@@ -176,6 +176,22 @@
   flex: 0 0 12px;
 }
 
+// İlk grubun ardındaki slot satırı (ör. Günün Frikiği kartı): üstte grup boşluğu, içerik kendi alt boşluğunu taşır.
+.virtualSlot {
+  box-sizing: border-box;
+  padding-top: 12px;
+}
+
+// Ölçülen kutu alt boşluğu da kapsasın (içeriğin margin'i dışarı taşmasın).
+.virtualSlotContent {
+  display: flow-root;
+}
+
+// Liste boşken slot boş mesajın altında (sanal liste yok).
+.emptySlot {
+  margin-top: $spacing-3;
+}
+
 .virtualHeaderBar {
   box-sizing: border-box;
   flex: 1 1 auto;

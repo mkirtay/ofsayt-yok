@@ -454,11 +454,12 @@
     "summarySeasons_one": "{{count}} season",
     "leagueAvg": "League avg: {{value}}"
   },
-  "liveStrip": {
-    "label": "Live and finished matches today",
-    "prev": "Scroll back",
-    "next": "Scroll forward",
-    "liveShort": "Live"
+  "liveTicker": {
+    "label": "Live matches",
+    "liveShort": "Live",
+    "itemLabel": "{{home}} {{score}} {{away}}, {{minute}}",
+    "pause": "Pause live match rotation",
+    "resume": "Resume live match rotation"
   },
   "frikikCta": {
     "label": "Take a free kick",

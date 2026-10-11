@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { useMemo, useCallback, useEffect, useState, type CSSProperties } from 'react';
+import { useMemo, useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { List, type RowComponentProps } from 'react-window';
 import { useTranslation } from '@/lib/i18n';
 import TeamTierBadge from '@/components/TeamTierBadge';
@@ -64,8 +64,22 @@ export type MatchListTrailingSection = {
   groupedMatches: GroupedLeagueMatches[];
 };
 
+/**
+ * İlk grubun (lig ya da gün) hemen ardına, ikinci gruptan önce çizilen sabit yükseklikli içerik (ör. ana sayfa Günün
+ * Frikiği kartı). Sanal listenin bir satırıdır → yüksekliği baştan hesaplı, kayma yok. Üstte grup boşluğu (12 px)
+ * liste ekler; `height` içeriğin kendisi + kendi alt boşluğu (ardından gelen grup başlığına ayrıca boşluk eklenmez).
+ * İçerik dar sütunda (ör. split-view'da detay paneli açıkken) bundan uzun çıkarsa satır ölçülen yüksekliğe BÜYÜR
+ * (hiç küçülmez → olağan durumda yükseklik baştan sabit, kayma yok). Tek grup varsa en sona.
+ */
+export type MatchListInlineSlot = {
+  node: ReactNode;
+  height: number;
+};
+
 interface MatchListProps {
   groupedMatches?: GroupedLeagueMatches[];
+  /** İlk grubun ardına eklenen satır (bkz. `MatchListInlineSlot`); liste boşsa boş mesajın altında. */
+  afterFirstGroup?: MatchListInlineSlot | null;
   /** Yalnız lig gruplu modda: listenin altına eklenen bölüm (boşsa çizilmez). */
   trailingSection?: MatchListTrailingSection | null;
   /**
@@ -129,7 +143,8 @@ type FlatItem =
       match: Match;
       isFirstInGroup: boolean;
       isLastInGroup: boolean;
-    };
+    }
+  | { type: 'slot' };
 
 const HEADER_BAR_HEIGHT = 44;
 const GROUP_GAP = 12;
@@ -274,6 +289,10 @@ function buildFlatItems(groupedMatches: GroupedLeagueMatches[], items: FlatItem[
 
 type RowContext = {
   items: FlatItem[];
+  slot: MatchListInlineSlot | null;
+  /** Slot satırının içerik yüksekliği: `slot.height` ya da ölçülen (büyükse). */
+  slotHeight: number;
+  onSlotResize: (height: number) => void;
   showDateWhenNotToday: boolean;
   todayIso: string;
   favoriteTeamIds: Set<number>;
@@ -306,12 +325,22 @@ function VirtualRow({
   selectedMatchId,
   cupTiers,
   goals,
+  slot,
+  onSlotResize,
   ariaAttributes,
 }: VirtualRowProps) {
   const { t } = useTranslation('match');
   const { t: tl } = useTranslation('leagues');
   const item = items[index];
   if (!item) return null;
+
+  if (item.type === 'slot') {
+    return (
+      <div {...ariaAttributes} style={style} className={styles.virtualSlot}>
+        <SlotContent onResize={onSlotResize}>{slot?.node}</SlotContent>
+      </div>
+    );
+  }
 
   if (item.type === 'dateHeader') {
     return (
@@ -506,11 +535,29 @@ function VirtualRow({
   );
 }
 
+/** Slot içeriği: yüksekliğini (alt boşluk dahil, `flow-root`) bildirir — satır gerekirse büyüsün. */
+function SlotContent({ children, onResize }: { children: ReactNode; onResize: (height: number) => void }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(() => onResize(Math.ceil(el.getBoundingClientRect().height)));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [onResize]);
+  return (
+    <div ref={ref} className={styles.virtualSlotContent}>
+      {children}
+    </div>
+  );
+}
+
 const LIST_STYLE: CSSProperties = { height: '100%', width: '100%' };
 
 function rowHeight(index: number, rowProps: RowContext): number {
   const item = rowProps.items[index];
   if (!item) return MATCH_ROW_HEIGHT;
+  if (item.type === 'slot') return GROUP_GAP + rowProps.slotHeight;
   if (item.type === 'header' || item.type === 'dateHeader') {
     return HEADER_BAR_HEIGHT + (item.showGap ? GROUP_GAP : 0);
   }
@@ -533,8 +580,21 @@ function buildItemsWithTrailingSection(
   return buildFlatItems(section.groupedMatches, items);
 }
 
+/**
+ * Satır listesine ilk grubun (ilk `isLastInGroup` maç) ardına slot ekler; ardından gelen başlığın üst boşluğu kalkar
+ * (slot içeriği kendi alt boşluğunu taşır). Grup yoksa liste aynen döner.
+ */
+function insertSlotAfterFirstGroup(items: FlatItem[]): FlatItem[] {
+  const end = items.findIndex((item) => item.type === 'match' && item.isLastInGroup);
+  if (end < 0) return items;
+  const next = items[end + 1];
+  const after = next && (next.type === 'header' || next.type === 'dateHeader') ? [{ ...next, showGap: false }] : next ? [next] : [];
+  return [...items.slice(0, end + 1), { type: 'slot' }, ...after, ...items.slice(end + 2)];
+}
+
 export default function MatchList({
   groupedMatches = NO_GROUPS,
+  afterFirstGroup = null,
   trailingSection,
   dateGroups,
   variant = 'default',
@@ -554,10 +614,10 @@ export default function MatchList({
   const navigateTo = useCallback((path: string) => { void router.push(path); }, [router]);
   const isWorldCup = variant === 'worldCup';
 
-  const items = useMemo(
-    () => (dateGroups ? buildDateFlatItems(dateGroups) : buildItemsWithTrailingSection(groupedMatches, trailingSection)),
-    [dateGroups, groupedMatches, trailingSection],
-  );
+  const items = useMemo(() => {
+    const base = dateGroups ? buildDateFlatItems(dateGroups) : buildItemsWithTrailingSection(groupedMatches, trailingSection);
+    return afterFirstGroup ? insertSlotAfterFirstGroup(base) : base;
+  }, [dateGroups, groupedMatches, trailingSection, afterFirstGroup]);
 
   const todayIso = useMemo(() => todayIsoTr(), []);
 
@@ -583,6 +643,11 @@ export default function MatchList({
     return () => window.clearTimeout(id);
   }, [goals]);
 
+  // Slot yalnız büyür: ölçülen içerik verilen yükseklikten uzunsa (dar sütun) ona çıkar, kısaysa verilen kalır.
+  const [slotMeasured, setSlotMeasured] = useState(0);
+  const onSlotResize = useCallback((height: number) => setSlotMeasured((prev) => Math.max(prev, height)), []);
+  const slotHeight = afterFirstGroup ? Math.max(afterFirstGroup.height, slotMeasured) : 0;
+
   const rowProps = useMemo<RowContext>(
     () => ({
       items,
@@ -597,6 +662,9 @@ export default function MatchList({
       selectedMatchId: selectedMatchId ?? null,
       cupTiers,
       goals,
+      slot: afterFirstGroup,
+      slotHeight,
+      onSlotResize,
     }),
     [
       items,
@@ -611,6 +679,9 @@ export default function MatchList({
       selectedMatchId,
       cupTiers,
       goals,
+      afterFirstGroup,
+      slotHeight,
+      onSlotResize,
     ]
   );
 
@@ -635,9 +706,12 @@ export default function MatchList({
 
   if (items.length === 0) {
     return (
-      <div className={`${styles.empty} ${isWorldCup ? styles.worldCup : ''}`.trim()}>
-        {t('list.empty')}
-      </div>
+      <>
+        <div className={`${styles.empty} ${isWorldCup ? styles.worldCup : ''}`.trim()}>
+          {t('list.empty')}
+        </div>
+        {afterFirstGroup ? <div className={styles.emptySlot}>{afterFirstGroup.node}</div> : null}
+      </>
     );
   }
 

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -24,7 +24,7 @@ import NextMatchDayNotice from '@/components/NextMatchDayNotice';
 import { useCompetitionFixtures } from '@/hooks/useCompetitionFixtures';
 import { buildFixtureDateGroups } from '@/utils/fixtureDateGroups';
 import { fixtureDateHeading } from '@/utils/fixtureDateLabel';
-import MatchList, { type MatchListDateGroup, type MatchListTrailingSection } from '@/components/MatchList';
+import MatchList, { type MatchListDateGroup, type MatchListInlineSlot, type MatchListTrailingSection } from '@/components/MatchList';
 import { MatchListSkeleton, PanelSkeleton } from '@/components/Skeleton';
 import MatchCompetitionStandings from '@/components/MatchCompetitionStandings';
 import MatchCompetitionTopScorers from '@/components/MatchCompetitionTopScorers';
@@ -57,9 +57,9 @@ import { MOBILE_LAYOUT_QUERY } from '@/config/breakpoints';
 import { GUNDEM_PANEL_MIN_WIDTH, useMinWidth, useSplitView } from '@/hooks/useSplitView';
 import { resolveHubSidePanel } from '@/utils/hubSidePanel';
 import LeagueFilterBar from '@/components/LeagueFilterBar';
-import LiveStrip from '@/components/LiveStrip';
+import LiveTicker from '@/components/LiveTicker';
 import FrikikDailyCard from '@/components/FrikikDailyCard';
-import { selectLiveStripMatches } from '@/utils/liveStrip';
+import { selectLiveTickerMatches } from '@/utils/liveTicker';
 import { hubSectionToScroll } from '@/utils/hubNavScroll';
 import AdSlot from '@/components/AdSlot';
 import EmptyState from '@/components/EmptyState';
@@ -118,6 +118,12 @@ export type MatchHubPageProps = {
 
 const today = () => todayIsoIstanbul();
 const EMPTY_MATCHES: Match[] = [];
+
+/**
+ * Günün Frikiği kartı maç listesinde ilk lig grubunun ardında (sanal listenin sabit yükseklikli satırı). Kartın en büyük
+ * kutusu (mobil < 480 px: 146 px; masaüstü 142 px — bkz. FrikikDailyCard scss) + kendi alt boşluğu (12 px).
+ */
+const FRIKIK_SLOT: MatchListInlineSlot = { node: <FrikikDailyCard />, height: 146 + 12 };
 
 /** "2026-10-03" → "3 Ekim" / "3 October" (gün takvim günü; saat dilimi kaydırması yok). */
 function formatDayMonth(iso: string, locale: string): string {
@@ -358,18 +364,15 @@ export default function MatchHubPage({
     return filterMatchesByLeagues(allowed, leagueFilter.state);
   }, [displayMatches, competitionFilterSet, leagueFilter.state]);
 
-  // Canlı maç şeridi (listenin üstünde, yalnız bugün): yeni istek yok — canlı poll + yüklü gün verisi (utils/liveStrip.ts).
-  const liveStrip = useMemo(
+  // Lig filtre satırındaki canlı ticker: yeni istek yok — canlı poll verisi (utils/liveTicker.ts). Boşsa çizilmez.
+  const tickerMatches = useMemo(
     () =>
-      selectLiveStripMatches({
+      selectLiveTickerMatches({
         live: liveMatches,
-        pool: allMatches,
         leagueFilter: leagueFilter.state,
         allowedCompetitionIds: competitionFilterSet,
-        todayIso,
-        selectedDate,
       }),
-    [liveMatches, allMatches, leagueFilter.state, competitionFilterSet, todayIso, selectedDate],
+    [liveMatches, leagueFilter.state, competitionFilterSet],
   );
 
   const grouped = useMemo(() => {
@@ -728,14 +731,23 @@ export default function MatchHubPage({
     </div>
   ) : null;
 
+  // Liste yokken (boş / hata) kart mesajın altında; yüklenirken (iskelet) yok — liste gelince ilk grubun ardında.
+  const withFrikik = (node: ReactNode) => (
+    <>
+      {node}
+      <div className={styles.frikikBelow}>{FRIKIK_SLOT.node}</div>
+    </>
+  );
+
   const listNode = uefaFixtureMode ? (
     uefaFixturesQuery.isLoading ? (
       <MatchListSkeleton groups={5} />
     ) : uefaDateGroups.length === 0 ? (
-      <EmptyState>{t('hub.fixtureEmpty')}</EmptyState>
+      withFrikik(<EmptyState>{t('hub.fixtureEmpty')}</EmptyState>)
     ) : (
       <MatchList
         dateGroups={uefaDateGroups}
+        afterFirstGroup={FRIKIK_SLOT}
         favoriteTeamIds={favoriteTeamSet}
         onToggleFavorite={toggleFavoriteTeam}
         onSelectMatch={isSplit ? handleSelectMatch : undefined}
@@ -749,40 +761,45 @@ export default function MatchHubPage({
       />
     )
   ) : matchesFailed ? (
-    <EmptyState>
-      {t('hub.loadFailed')}{' '}
-      <button type="button" className={styles.emptyAction} onClick={() => void homeMatchesQuery.refetch()}>
-        {t('hub.retry')}
-      </button>
-    </EmptyState>
+    withFrikik(
+      <EmptyState>
+        {t('hub.loadFailed')}{' '}
+        <button type="button" className={styles.emptyAction} onClick={() => void homeMatchesQuery.refetch()}>
+          {t('hub.retry')}
+        </button>
+      </EmptyState>,
+    )
   ) : matchesLoading ? (
     // Liste kutusunun tavanıyla aynı yükseklik: dolu günde iskelet → liste geçişi kaymasız.
     <div className={styles.listSkeleton}>
       <MatchListSkeleton groups={5} />
     </div>
   ) : activeTab === 'favorites' && favoriteTeamIds.length === 0 ? (
-    <div className={styles.empty}>
-      {t('hub.favoritesEmpty')}
-    </div>
+    withFrikik(<div className={styles.empty}>{t('hub.favoritesEmpty')}</div>)
   ) : leagueFilterActive && listEmpty ? (
-    <EmptyState minLines={showNextMatchDay ? 3 : undefined}>
-      {t('hub.leagueFilterEmpty')}{' '}
-      <button type="button" className={styles.emptyAction} onClick={() => leagueFilter.selectMode('all')}>
-        {t('hub.showAll')}
-      </button>
-      {showNextMatchDay ? (
-        <NextMatchDayNotice from={selectedDate} leagueIds={activeCompetitionIds(leagueFilter.state)} onGoToDate={setSelectedDate} />
-      ) : null}
-    </EmptyState>
+    withFrikik(
+      <EmptyState minLines={showNextMatchDay ? 3 : undefined}>
+        {t('hub.leagueFilterEmpty')}{' '}
+        <button type="button" className={styles.emptyAction} onClick={() => leagueFilter.selectMode('all')}>
+          {t('hub.showAll')}
+        </button>
+        {showNextMatchDay ? (
+          <NextMatchDayNotice from={selectedDate} leagueIds={activeCompetitionIds(leagueFilter.state)} onGoToDate={setSelectedDate} />
+        ) : null}
+      </EmptyState>,
+    )
   ) : showNextMatchDay && listEmpty ? (
-    <EmptyState minLines={2}>
-      {t('list.empty')}
-      <NextMatchDayNotice from={selectedDate} leagueIds={null} onGoToDate={setSelectedDate} />
-    </EmptyState>
+    withFrikik(
+      <EmptyState minLines={2}>
+        {t('list.empty')}
+        <NextMatchDayNotice from={selectedDate} leagueIds={null} onGoToDate={setSelectedDate} />
+      </EmptyState>,
+    )
   ) : (
     <>
       <MatchList
         groupedMatches={grouped}
+        afterFirstGroup={FRIKIK_SLOT}
         trailingSection={nightSection}
         favoriteTeamIds={favoriteTeamSet}
         onToggleFavorite={toggleFavoriteTeam}
@@ -816,22 +833,34 @@ export default function MatchHubPage({
       />
       <div className={`${styles.hubShell} ${styles.hubShellWithLeagueBar}`}>
         <div className={styles.leagueBarRow}>
-          <LeagueFilterBar
-            state={leagueFilter.state}
-            catalog={leagueCatalog}
-            onSelectMode={leagueFilter.selectMode}
-            onApplyCustom={leagueFilter.applyCustom}
-            leading={
-              <MatchStatusChips
-                activeTab={activeTab}
-                liveCount={liveMatches.length}
-                onToggle={(tab) => {
-                  tabFromChipRef.current = true;
-                  handleTabChange(activeTab === tab ? 'all' : tab);
-                }}
+          <div className={styles.leagueBarChips}>
+            <LeagueFilterBar
+              state={leagueFilter.state}
+              catalog={leagueCatalog}
+              onSelectMode={leagueFilter.selectMode}
+              onApplyCustom={leagueFilter.applyCustom}
+              leading={
+                <MatchStatusChips
+                  activeTab={activeTab}
+                  liveCount={liveMatches.length}
+                  onToggle={(tab) => {
+                    tabFromChipRef.current = true;
+                    handleTabChange(activeTab === tab ? 'all' : tab);
+                  }}
+                />
+              }
+            />
+          </div>
+          {/* Masaüstü: satırın sağı; mobil: chip satırının altında tam genişlik. Canlı maç yoksa hiç çizilmez. */}
+          {tickerMatches.length > 0 ? (
+            <div className={styles.leagueBarTicker}>
+              <LiveTicker
+                matches={tickerMatches}
+                onSelectMatch={isSplit ? handleSelectMatch : undefined}
+                onPrefetchMatch={isSplit ? prefetchMatchDetailLazy : undefined}
               />
-            }
-          />
+            </div>
+          ) : null}
         </div>
         <div
           className={[
@@ -913,14 +942,6 @@ export default function MatchHubPage({
           </aside>
           <div id="hub-list" className={styles.hubMain}>
             <div className={styles.hubList}>
-              {liveStrip ? (
-                <LiveStrip
-                  matches={liveStrip.matches}
-                  onSelectMatch={isSplit ? handleSelectMatch : undefined}
-                  onPrefetchMatch={isSplit ? prefetchMatchDetailLazy : undefined}
-                />
-              ) : null}
-              <FrikikDailyCard />
               {uefaFixtureMode ? (
                 <div className={styles.fixtureModeBar}>
                   <span className={styles.fixtureModeText}>

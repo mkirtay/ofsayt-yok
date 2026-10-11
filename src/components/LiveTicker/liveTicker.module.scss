@@ -1,0 +1,186 @@
+@use '../../styles/variables' as *;
+
+// Canlı ticker: lig chip'leriyle aynı boy (34 px) tek satırlık hap. Yükseklik sabit → maç değişince kayma yok;
+// genişliği ebeveyn (MatchHubPage `.leagueBarTicker`) verir.
+.ticker {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  height: 34px;
+  min-width: 0;
+  padding: 0 4px 0 $spacing-3;
+  border: 1.5px solid color-mix(in srgb, #{$color-live} 40%, var(--border-subtle));
+  border-radius: $radius-full;
+  background: var(--bg-surface);
+  color: $color-text;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.badge {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: $color-live;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: $color-live;
+  animation: liveTickerPulse 1.6s infinite;
+}
+
+// Tek maçlık pencere: giren ve çıkan satır üst üste (absolute), taşma kırpılır.
+.viewport {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+.item {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: $spacing-2;
+  color: inherit;
+  text-decoration: none;
+  border-radius: $radius-sm;
+
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+    outline-offset: -2px;
+  }
+}
+
+a.item:hover .score {
+  color: var(--color-action-text);
+}
+
+.itemIn {
+  animation: liveTickerIn 0.3s ease-out both;
+}
+
+.itemOut {
+  pointer-events: none;
+  animation: liveTickerOut 0.3s ease-in both;
+}
+
+.minute {
+  min-width: 26px;
+  color: $color-live;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.home,
+.away {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home {
+  text-align: right;
+}
+
+.score {
+  font-weight: 800;
+}
+
+.count {
+  flex: 0 0 auto;
+  color: $color-text-secondary;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.toggle {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: $color-text-secondary;
+  cursor: pointer;
+
+  &:hover {
+    background: $color-muted;
+    color: $color-text;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+    outline-offset: 0;
+  }
+}
+
+// Dar telefonda (≤ 400 px) takım adlarına yer: "Canlı" yazısı (nokta kalır) ve sayaç gizli.
+@media (max-width: 400px) {
+  .badgeText,
+  .count {
+    display: none;
+  }
+}
+
+@keyframes liveTickerPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@keyframes liveTickerIn {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes liveTickerOut {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+}
+
+// Hareket azaltılmışsa: nabız ve geçiş yok (düğmeyle başlatılan dönüş anında değişir).
+@media (prefers-reduced-motion: reduce) {
+  .dot,
+  .itemIn {
+    animation: none;
+  }
+
+  .itemOut {
+    display: none;
+  }
+}

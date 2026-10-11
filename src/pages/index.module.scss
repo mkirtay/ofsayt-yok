@@ -172,8 +172,49 @@ $hub-fill-height: calc(100vh - var(--header-height) - 56px - 32px - var(--league
 }
 
 .leagueBarRow {
+  // Masaüstü: chip'ler solda, canlı ticker satırın sağında (aynı sabit yükseklik — `--league-bar-h`).
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
   height: var(--league-bar-h);
   min-width: 0;
+
+  // Mobil: ticker chip satırının ALTINDA tam genişlik, sabit yükseklik; canlı maç yoksa satır yalnız chip'ler.
+  @include below-desktop {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    height: auto;
+  }
+}
+
+.leagueBarChips {
+  flex: 0 1 auto;
+  min-width: 0;
+
+  @include below-desktop {
+    height: var(--league-bar-h);
+  }
+}
+
+.leagueBarTicker {
+  flex: 1 1 0;
+  min-width: 260px;
+  max-width: 560px;
+  margin-left: auto;
+
+  @include below-desktop {
+    flex: none;
+    min-width: 0;
+    max-width: none;
+    margin-left: 0;
+    height: 34px;
+  }
+}
+
+// Liste yokken (boş / hata) Günün Frikiği kartı mesajın altında.
+.frikikBelow {
+  margin-top: $spacing-3;
 }
 
 // Mobil: maç durumu çipleri lig çipleri satırının başında (MatchStatusChips). Masaüstünde yok (SubHeader sekmeleri).

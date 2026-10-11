@@ -445,11 +445,12 @@
     "summarySeasons": "{{count}} sezon",
     "leagueAvg": "Lig ort.: {{value}}"
   },
-  "liveStrip": {
-    "label": "Canlı ve bugün biten maçlar",
-    "prev": "Geri kaydır",
-    "next": "İleri kaydır",
-    "liveShort": "Canlı"
+  "liveTicker": {
+    "label": "Canlı maçlar",
+    "liveShort": "Canlı",
+    "itemLabel": "{{home}} {{score}} {{away}}, {{minute}}",
+    "pause": "Canlı maç geçişini duraklat",
+    "resume": "Canlı maç geçişini sürdür"
   },
   "frikikCta": {
     "label": "Sen de at",
