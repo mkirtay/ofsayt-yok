@@ -3,6 +3,15 @@
 > **2026-10-11: Gol-draft üretimi KAPALI (varsayılan).** `GUNDEM_BOT_GOALS_ENABLED=1` olmadıkça `bot-tick` yetkiden sonra hemen döner
 > (`{ ok: true, disabled: true }`) — Sportmonks/Redis/DB'ye gitmez; cron-job.org açık kalabilir. Kod duruyor. Aşağıdaki "dakikada 1 inplay" notları bayrak AÇIKKEN geçerlidir.
 
+> **Maç öncesi / sonrası taslaklar (2026-10-11):** `POST /api/admin/gundem/bot-match-tick` (Bearer CRON_SECRET; cron-job.org, **15 dk**, URL www ile,
+> query yok). Canlı polling yok; yalnızca PENDING taslak yazar. Kapsam ("büyük maç"): Süper Lig'de dört büyükten biri (34/88/554/688) · UCL/UEL/UECL'de Türk takımı ·
+> 5 büyük ligde derbi (Sportmonks `rivals`, 24 sa cache).
+> - **PREVIEW** (`preview:<fixtureId>`): başlamasına 1–2 sa kala; kayıtlı **PRE analizin ücretsiz önizlemesinden** (tempo + baskın taraf + ana olasılık) 2–3 cümle.
+>   PRE analizi yoksa post YOK ve analiz üretilmez (OpenAI bütçesi yenmez). Maç başladıktan sonra onaylanırsa STALE.
+> - **RECAP** (`recap:<fixtureId>`): yalnızca biten (FT/AET/pen) kapsam maçı + en az bir koşul: derbi · kırmızı kart · 3+ gol farkı · 5+ gol · Süper Lig'de büyüklerden birinin
+>   yenilgisi · penaltı. Düz şablon (LLM yok). Koşulsuz maç Redis `gundem-bot:recap-eval:<id>` ile işaretlenir (olay isteği tekrarlanmaz).
+> - Gol dışı tipler onayda olay doğrulaması olmadan yayınlanır (`approveDraft`); hiçbiri otomatik yayınlanmaz.
+
 Durum (2026-09-22): **Adım 1–3 kodlandı.** Migration dosyası hazır (`prisma/migrations/20260922120000_add_gundem_bot_draft`) ama **prod'a UYGULANMADI** —
 sahibi uygular. Hiçbir şey otomatik yayınlanmıyor: poller yalnızca PENDING taslak yazar, yayın yalnızca admin onayıyla (`/admin/gundem-kuyruk`).
 

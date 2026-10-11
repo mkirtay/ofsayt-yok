@@ -9,7 +9,10 @@ import { captureError } from '@/lib/logger';
 import { prisma } from '@/lib/prisma';
 import { findStoredMatchAnalysis } from '@/lib/matchAnalysisLookup';
 import { loadIsDerby } from '@/server/teamRivals';
-import { sportmonksCollectAllPages } from '@/services/sportmonksRuntimeClient';
+import { readCache, writeCache } from '@/lib/livescoreCache';
+import { sportmonksClientRequest, sportmonksCollectAllPages } from '@/services/sportmonksRuntimeClient';
+import type { SportmonksFixture } from '@/services/sportmonks/types';
+import { RECAP_MAX_AGE_MS, buildRecapDraft, cheapRecapReasons, countRedCards, recapKey, selectRecapCandidates, type RecapReason } from './recapPost';
 import {
   PREVIEW_WINDOW_MAX_MS,
   PREVIEW_WINDOW_MIN_MS,
@@ -19,12 +22,21 @@ import {
   type PreviewFixture,
 } from './previewPost';
 
+type PassSummary = { candidates: number; created: number; existing: number; skipped: number; errors: number };
 export type MatchPostsSummary = {
-  preview: { candidates: number; created: number; existing: number; noAnalysis: number; notDerby: number; skipped: number; errors: number };
+  preview: PassSummary & { noAnalysis: number; notDerby: number };
+  recap: PassSummary & { noReason: number; evaluated: number };
 };
 
 export type MatchPostsDeps = {
   loadFixtures: (from: string, to: string) => Promise<PreviewFixture[]>;
+  /** Bitmiş maçlar (skor + durum) — `from`/`to` UTC günleri. */
+  loadFinished: (from: string, to: string) => Promise<PreviewFixture[]>;
+  /** Maçın olayları (kırmızı kart sayımı için); tek maç, `include=events`. */
+  loadEvents: (fixtureId: number) => Promise<Array<{ type_id: number }> | null>;
+  /** "Değerlendirildi, koşul yok" işareti (Redis/in-memory): aynı maç için olay isteği tekrarlanmasın. */
+  isEvaluated: (fixtureId: number) => Promise<boolean>;
+  markEvaluated: (fixtureId: number) => Promise<void>;
   existingKeys: (keys: string[]) => Promise<Set<string>>;
   findAnalysis: typeof findStoredMatchAnalysis;
   isDerby: (homeId: number, awayId: number) => Promise<boolean | null>;
@@ -45,8 +57,26 @@ export function loadWindowFixtures(from: string, to: string): Promise<PreviewFix
   });
 }
 
+/** Maç sonu listesi: yalnızca takip edilen kapsamdaki ligler; skor + durum için `scores;state` (olaylar maç başına ayrı, yalnız gerekirse). */
+export function loadFinishedFixtures(from: string, to: string): Promise<PreviewFixture[]> {
+  return sportmonksCollectAllPages<PreviewFixture>({
+    basePath: 'football',
+    path: `/fixtures/between/${from}/${to}`,
+    perPage: 50,
+    maxPages: 4,
+    extraParams: { include: 'participants;scores;state', filters: `fixtureLeagues:${[SUPER_LIG, ...UEFA_CLUB_LEAGUES, ...BIG_FIVE].join(',')}` },
+  });
+}
+
+const evalKey = (id: number) => `gundem-bot:recap-eval:${id}`;
+
 export const defaultMatchPostsDeps: MatchPostsDeps = {
   loadFixtures: loadWindowFixtures,
+  loadFinished: loadFinishedFixtures,
+  loadEvents: async (id) =>
+    ((await sportmonksClientRequest<SportmonksFixture>('football', `/fixtures/${id}`, { include: 'events' })).data as SportmonksFixture | null)?.events ?? null,
+  isEvaluated: async (id) => (await readCache(evalKey(id))) != null,
+  markEvaluated: (id) => writeCache(evalKey(id), 1, Math.floor(RECAP_MAX_AGE_MS / 1000)),
   existingKeys: async (keys) => {
     if (keys.length === 0) return new Set();
     const rows = await prisma.gundemBotDraft.findMany({ where: { externalKey: { in: keys } }, select: { externalKey: true } });
@@ -116,7 +146,77 @@ export async function runPreviewPass(deps: MatchPostsDeps, now: number): Promise
   return s;
 }
 
+export async function runRecapPass(deps: MatchPostsDeps, now: number): Promise<MatchPostsSummary['recap']> {
+  const s = { candidates: 0, created: 0, existing: 0, noReason: 0, evaluated: 0, skipped: 0, errors: 0 };
+  let fixtures: PreviewFixture[];
+  try {
+    fixtures = await deps.loadFinished(isoDay(now - RECAP_MAX_AGE_MS), isoDay(now));
+  } catch (e) {
+    captureError('gundem:match-tick:recap-fixtures', e);
+    return { ...s, errors: 1 };
+  }
+  const candidates = selectRecapCandidates(fixtures, now);
+  s.candidates = candidates.length;
+  let existing: Set<string>;
+  try {
+    existing = await deps.existingKeys(candidates.map((c) => recapKey(c.fixture.id)));
+  } catch (e) {
+    captureError('gundem:match-tick:recap-existing', e);
+    return { ...s, errors: 1 };
+  }
+
+  for (const c of candidates) {
+    try {
+      if (existing.has(recapKey(c.fixture.id))) {
+        s.existing += 1;
+        continue;
+      }
+      if (await deps.isEvaluated(c.fixture.id)) {
+        s.evaluated += 1;
+        continue;
+      }
+      // Ucuzdan pahalıya: skor/durum → derbi (rakip listesi, 24 sa cache) → olaylar (maç başına tek istek, yalnız önceki koşul yoksa).
+      const reasons: RecapReason[] = cheapRecapReasons(c);
+      const derby = await deps.isDerby(c.homeId, c.awayId);
+      if (derby === null) {
+        s.skipped += 1; // rakip listesi okunamadı → karar verilemedi; sonraki tick yeniden dener, işaret konmaz
+        continue;
+      }
+      if (derby) reasons.push('derby');
+      let redCards = 0;
+      if (reasons.length === 0) {
+        const events = await deps.loadEvents(c.fixture.id);
+        if (events === null) {
+          s.skipped += 1;
+          continue;
+        }
+        redCards = countRedCards(events);
+        if (redCards > 0) reasons.push('red-card');
+      }
+      const draft = buildRecapDraft(c, reasons, redCards);
+      if (!draft) {
+        s.noReason += 1;
+        await deps.markEvaluated(c.fixture.id);
+        continue;
+      }
+      try {
+        await deps.createDraft({ externalKey: draft.externalKey, kind: 'RECAP', fixtureId: c.fixture.id, body: draft.body, facts: draft.facts, warnings: draft.warnings });
+        s.created += 1;
+      } catch (e) {
+        if ((e as { code?: string }).code === 'P2002') s.existing += 1;
+        else throw e;
+      }
+    } catch (e) {
+      s.errors += 1;
+      captureError('gundem:match-tick:recap', e);
+    }
+  }
+  return s;
+}
+
 export async function runMatchPostsTick(deps: MatchPostsDeps = defaultMatchPostsDeps): Promise<MatchPostsSummary> {
   const now = deps.now?.() ?? Date.now();
-  return { preview: await runPreviewPass(deps, now) };
+  // Bağımsız geçişler: biri çökerse diğeri yine çalışır (her biri kendi içinde yakalar).
+  const [preview, recap] = await Promise.all([runPreviewPass(deps, now), runRecapPass(deps, now)]);
+  return { preview, recap };
 }

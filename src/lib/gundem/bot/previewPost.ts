@@ -25,6 +25,8 @@ export type PreviewFixture = {
   starting_at?: string | null;
   starting_at_timestamp?: number | null;
   participants?: Array<{ id: number; name?: string; country_id?: number | null; meta?: { location?: string } }>;
+  /** Yalnızca maç sonu (RECAP) çağrısında: `include=scores`. */
+  scores?: Array<{ description: string; score: { goals: number; participant: 'home' | 'away' } }>;
 };
 
 export type PreviewCandidate = {
