@@ -33,3 +33,13 @@ export function isGoalDraftsEnabled(env: string | undefined = process.env.GUNDEM
   const v = (env ?? '').trim().toLowerCase();
   return v === '1' || v === 'true';
 }
+
+/**
+ * Maç öncesi/sonrası taslak (PREVIEW/RECAP) bayrağı — VARSAYILAN KAPALI, `GUNDEM_BOT_GOALS_ENABLED`'dan BAĞIMSIZ. Açmak için
+ * `GUNDEM_BOT_MATCH_ENABLED=1` (ya da `true`); tanımsız/boş/0/false/diğer her değer = kapalı. Kapalıyken `bot-match-tick` yetki
+ * kontrolünden sonra hemen döner: Sportmonks, Redis ve DB'ye HİÇ dokunmaz (cron-job.org işi tanımlı olsa bile).
+ */
+export function isMatchDraftsEnabled(env: string | undefined = process.env.GUNDEM_BOT_MATCH_ENABLED): boolean {
+  const v = (env ?? '').trim().toLowerCase();
+  return v === '1' || v === 'true';
+}

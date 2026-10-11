@@ -4,7 +4,8 @@
 > (`{ ok: true, disabled: true }`) — Sportmonks/Redis/DB'ye gitmez; cron-job.org açık kalabilir. Kod duruyor. Aşağıdaki "dakikada 1 inplay" notları bayrak AÇIKKEN geçerlidir.
 
 > **Maç öncesi / sonrası taslaklar (2026-10-11):** `POST /api/admin/gundem/bot-match-tick` (Bearer CRON_SECRET; cron-job.org, **15 dk**, URL www ile,
-> query yok). Canlı polling yok; yalnızca PENDING taslak yazar. Kapsam ("büyük maç"): Süper Lig'de dört büyükten biri (34/88/554/688) · UCL/UEL/UECL'de Türk takımı ·
+> query yok). **Varsayılan KAPALI:** `GUNDEM_BOT_MATCH_ENABLED=1` olmadıkça yetkiden sonra `{ ok: true, disabled: true }` döner (Sportmonks/Redis/DB yok);
+> `GUNDEM_BOT_GOALS_ENABLED`'dan bağımsız. Canlı polling yok; yalnızca PENDING taslak yazar. Kapsam ("büyük maç"): Süper Lig'de dört büyükten biri (34/88/554/688) · UCL/UEL/UECL'de Türk takımı ·
 > 5 büyük ligde derbi (Sportmonks `rivals`, 24 sa cache).
 > - **PREVIEW** (`preview:<fixtureId>`): başlamasına 1–2 sa kala; kayıtlı **PRE analizin ücretsiz önizlemesinden** (tempo + baskın taraf + ana olasılık) 2–3 cümle.
 >   PRE analizi yoksa post YOK ve analiz üretilmez (OpenAI bütçesi yenmez). Maç başladıktan sonra onaylanırsa STALE.
