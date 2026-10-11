@@ -4,6 +4,7 @@
 import type { Match } from '@/models/liveScore';
 import { istanbulMatchDate } from '@/utils/fixtureDateGroups';
 import { matchDisplayState } from '@/utils/matchDisplayState';
+import { liveMinuteLabel } from '@/utils/liveMinute';
 import { utcTimeToTr } from '@/utils/dateFormat';
 
 /** TR gününe göre "GG.AA"; tarih yoksa boş. */
@@ -28,7 +29,7 @@ export type RecentStatus =
 /** Satırdaki durum etiketi (çeviri anahtarları `match:list.*`). */
 export function recentMatchStatus(match: Match): RecentStatus {
   const s = (match.status ?? '').toUpperCase();
-  if (s === 'IN PLAY') return { kind: 'live', text: match.time ? `${String(match.time).replace(/'$/u, '')}'` : 'CANLI' };
+  if (s === 'IN PLAY') return { kind: 'live', text: liveMinuteLabel(match.time) || 'CANLI' };
   if (s === 'HALF TIME BREAK' && !match.state_code) return { kind: 'live', text: 'İY' };
   const { special } = matchDisplayState(match);
   if (special === 'postponed' || special === 'tba' || special === 'delayed') {

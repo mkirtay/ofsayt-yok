@@ -27,6 +27,7 @@ import TiePill from './TiePill';
 import MatchInfoLine, { CoachLink } from './MatchInfoLine';
 import RefereeStatsCard from './RefereeStatsCard';
 import { useIsDerby } from '@/hooks/useMatchInfoExtras';
+import { liveMinuteLabel } from '@/utils/liveMinute';
 import infoStyles from './matchInfo.module.scss';
 
 interface MatchCardProps {
@@ -108,10 +109,10 @@ export default function MatchCard({ match, loading, initialH2h }: MatchCardProps
   const reservedRef = useRef<HTMLDivElement>(null);
 
   function minuteBadgeLabel(status: string, time: string): string | null {
-    const tm = time.trim();
-    if (status === 'IN PLAY') return tm ? `${tm}'` : null;
+    const minute = liveMinuteLabel(time);
+    if (status === 'IN PLAY') return minute || null;
     if (status === 'FINISHED') return t(match ? finishedLabelKey(match) : 'fullTime');
-    if (status === 'HALF TIME BREAK') return tm ? `${tm}'` : null;
+    if (status === 'HALF TIME BREAK') return minute || null;
     return null;
   }
 

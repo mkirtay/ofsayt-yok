@@ -21,6 +21,7 @@ import TieLine from './TieLine';
 import { isSecondLeg } from '@/utils/aggregateScore';
 import { finishedLabelKey } from '@/utils/finishLabel';
 import { isModifiedClick } from '@/utils/matchSelection';
+import { liveMinuteLabel } from '@/utils/liveMinute';
 import styles from './matchList.module.scss';
 
 // 06 · Gol anı: yalnız bir gol olunca yüklenir (ana sayfa ilk yüküne JS/CSS eklemez); bu kadar sonra kaldırılır.
@@ -418,7 +419,7 @@ function VirtualRow({
   const score =
     variant === 'scheduled' && !scoreRaw?.trim() ? '—' : scoreRaw?.trim() || '- : -';
   const isLive = variant === 'live';
-  const liveMinute = isLive ? (match.time || '').replace(/'$/u, '').trim() : '';
+  const liveMinute = isLive ? liveMinuteLabel(match.time) : '';
   const htDisplay = normalizeHt(match.scores?.ht_score);
   const secondLeg = isSecondLeg(match);
 
@@ -481,7 +482,7 @@ function VirtualRow({
           {isLive ? (
             <span className={styles.liveText}>
               <span className={styles.liveCanliWord}>{t('list.live')} </span>
-              {`${liveMinute}'`}
+              {liveMinute}
             </span>
           ) : (
             statusText

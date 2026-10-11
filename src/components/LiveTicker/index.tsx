@@ -6,6 +6,7 @@ import { narrowTeamName } from '@/components/MatchList/TeamNameLabel';
 import type { Match } from '@/models/liveScore';
 import { buildMatchHref } from '@/utils/matchUrl';
 import { isModifiedClick } from '@/utils/matchSelection';
+import { liveMinuteLabel } from '@/utils/liveMinute';
 import styles from './liveTicker.module.scss';
 
 /** Bir maçın ekranda kalma süresi; geçiş (CSS) ~300 ms. */
@@ -61,13 +62,13 @@ const shortName = (team: Match['home']) => {
 function ItemBody({ match, priority = false }: { match: Match; priority?: boolean }) {
   const { t } = useTranslation('match');
   const brk = match.status === 'HALF TIME BREAK';
-  const minute = (match.time || '').replace(/'$/u, '').trim();
+  const minute = liveMinuteLabel(match.time);
   const [hs, as] = scoreParts(match);
   return (
     <>
       <span className={`${styles.minute} ${brk ? styles.minuteBreak : ''}`.trim()}>
         {brk ? null : <span className={styles.dot} aria-hidden="true" />}
-        {brk ? t('halfTime') : minute ? `${minute}'` : t('liveTicker.liveShort')}
+        {brk ? t('halfTime') : minute || t('liveTicker.liveShort')}
       </span>
       <span className={styles.home}>
         <span className={styles.name} title={match.home?.name}>
