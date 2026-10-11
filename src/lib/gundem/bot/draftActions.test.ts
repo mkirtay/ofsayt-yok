@@ -112,3 +112,31 @@ describe('rejectDraft / editDraftBody', () => {
     expect(await editDraftBody('yok', 'metin')).toMatchObject({ ok: false, status: 404 });
   });
 });
+
+describe('approveDraft — PREVIEW/RECAP (gol dışı tipler)', () => {
+  const seedKind = (kind: string, facts: Record<string, unknown>, key = `${kind.toLowerCase()}:5`) =>
+    db.gundemBotDraft.create({ data: { externalKey: key, kind, fixtureId: 5, eventId: null, body: 'özet', facts, warnings: [] } });
+  const noFetch = { fetchFixture: async () => { throw new Error('Sportmonks çağrılmamalı'); } };
+
+  it('PREVIEW: maç başlamadıysa Sportmonks doğrulaması olmadan yayınlar (teamId null)', async () => {
+    const d = await seedKind('PREVIEW', { kickoffAt: new Date(Date.now() + 3_600_000).toISOString() });
+    const r = await approveDraft(d.id, 'admin1', noFetch);
+    expect(r.ok).toBe(true);
+    expect(publish).toHaveBeenCalledWith({ body: 'özet', externalKey: 'preview:5', matchId: '5', teamId: null });
+    expect(db.__rows()[0]).toMatchObject({ status: 'POSTED', postId: 'post1' });
+  });
+
+  it('PREVIEW: maç başladıktan sonra onay → STALE, yayın yok', async () => {
+    const d = await seedKind('PREVIEW', { kickoffAt: new Date(Date.now() - 60_000).toISOString() });
+    const r = await approveDraft(d.id, 'admin1', noFetch);
+    expect(r).toMatchObject({ ok: false, status: 409 });
+    expect(publish).not.toHaveBeenCalled();
+    expect(db.__rows()[0].status).toBe('STALE');
+  });
+
+  it('RECAP: kickoff kontrolü yok, yayınlanır', async () => {
+    const d = await seedKind('RECAP', { kickoffAt: new Date(Date.now() - 86_400_000).toISOString() });
+    expect((await approveDraft(d.id, 'admin1', noFetch)).ok).toBe(true);
+    expect(publish).toHaveBeenCalledWith({ body: 'özet', externalKey: 'recap:5', matchId: '5', teamId: null });
+  });
+});

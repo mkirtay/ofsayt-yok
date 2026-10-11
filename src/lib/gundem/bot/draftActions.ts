@@ -56,6 +56,27 @@ export async function approveDraft(id: string, adminId: string, deps: ApproveDep
   const revert = () => prisma.gundemBotDraft.updateMany({ where: { id, status: 'APPROVED' }, data: { status: 'PENDING', decidedById: null, decidedAt: null } });
 
   const draft = await prisma.gundemBotDraft.findUnique({ where: { id } });
+
+  // Gol dışı tipler (PREVIEW/RECAP): olay doğrulaması yok (Sportmonks'a gidilmez); yönetici onayı yeterli.
+  if (draft && draft.kind !== 'GOAL') {
+    const facts = draft.facts as { kickoffAt?: string } | null;
+    // Maç öncesi taslak maç başladıktan sonra yayınlanmaz (içerik "başlamak üzere" bilgisi taşıyor).
+    if (draft.kind === 'PREVIEW' && facts?.kickoffAt && Date.now() >= Date.parse(facts.kickoffAt)) {
+      await prisma.gundemBotDraft.update({ where: { id }, data: { status: 'STALE', warnings: { push: 'stale: match-started' } } });
+      return { ok: false, status: 409, error: 'Maç başladı; maç öncesi taslak eskidi, yayınlanmadı.' };
+    }
+    const result = await createBotPost({ body: draft.body, externalKey: draft.externalKey, matchId: String(draft.fixtureId), teamId: null });
+    if (result.status === 'invalid-body') {
+      await revert();
+      return { ok: false, status: 400, error: `Gönderi 1–${POST_MAX_LENGTH} karakter olmalıdır.` };
+    }
+    if (result.status === 'no-account') {
+      await revert();
+      return { ok: false, status: 500, error: `Resmi hesap bulunamadı (${result.email}).` };
+    }
+    return { ok: true, draft: await prisma.gundemBotDraft.update({ where: { id }, data: { status: 'POSTED', postId: result.post.id } }) };
+  }
+
   if (!draft || draft.eventId == null) {
     await revert();
     return { ok: false, status: 500, error: 'Taslak eksik veri içeriyor.' };
