@@ -27,6 +27,9 @@ import styles from './matchList.module.scss';
 const loadGoalMoment = () => import('./GoalMoment');
 const GOAL_MOMENT_MS = 3200;
 const NO_GOALS: ReadonlyMap<string, GoalEvent> = new Map();
+/** Sabit boş varsayılan: `= []` her render'da yeni dizi verip `items` memo'sunu bozuyordu → gün gruplu (UEFA) modda
+ * render sırasındaki skor takibi setState'i sonsuz döngüye giriyordu ("Too many re-renders"). */
+const NO_GROUPS: GroupedLeagueMatches[] = [];
 
 /** Skoru okunabilen maçların id → skor haritası (gol karşılaştırması için). */
 function scoresById(items: FlatItem[]): Map<string, string> {
@@ -531,7 +534,7 @@ function buildItemsWithTrailingSection(
 }
 
 export default function MatchList({
-  groupedMatches = [],
+  groupedMatches = NO_GROUPS,
   trailingSection,
   dateGroups,
   variant = 'default',
