@@ -12,7 +12,8 @@ import type { AnalysisScenario } from '@/utils/analysisScenarios';
 import { impliedProbabilities } from '@/utils/impliedProbability';
 
 // v3: bahis dili yasak, "Bahis / İddia Pazarı" → olasılık senaryoları (AdSense kumar politikası).
-export const ANALYSIS_MODEL_VERSION = 'v5-2026-10';
+// v6: zoneGrid ölçeği açıkça tarif edildi (Luna grid'i pay dağılımı gibi 7–19 dolduruyordu).
+export const ANALYSIS_MODEL_VERSION = 'v6-2026-10';
 
 export const ANALYSIS_SYSTEM_PROMPT = `Sen profesyonel bir futbol veri analisti ve Opta/Wyscout seviyesinde maç öncesi
 analiz uzmanısın. Sana verilen maç verilerini (takım formu, head-to-head, lig sıralaması,
@@ -42,8 +43,9 @@ KURALLAR:
    Olayları istatistik diliyle yaz ("2+ gol", "iki takım da gol atar", "ilk yarıda gol",
    "ev sahibi kazanır") ve olasılığı yüzde ver ("%58"). Senaryolarda abartma — veri zayıfsa
    confidence "low".
-9. zoneGrid.home ve .away HER ZAMAN tam 15 sayı; homeZones/awayZones/narrative yalnız düz
-   metin — sayı dizisini bu metin alanlarına yazma.
+9. zoneGrid.home ve .away HER ZAMAN tam 15 sayı. Ölçek: her takımın en yoğun bölgesi 80-100,
+   en zayıfı 0-20; toplam 100 olmak zorunda değil, pay dağılımı verme. homeZones/awayZones/
+   narrative yalnız düz metin — sayı dizisini bu metin alanlarına yazma.
 
 ÖNEMLİ KALİBRASYON:
 - "high" güven sadece veri açıkça tek yönü işaret ederse (örn. ev avantajı + form +
@@ -82,7 +84,9 @@ export type AnalysisJsonSchema = {
      * Sıra: index = bölge*5 + kolon.
      * Bölge (0-2): 0 = kendi savunma bölgesi, 1 = orta saha, 2 = rakip kaleye yakın hücum bölgesi.
      * Kolon (0-4): 0 = sol kanat, 1 = sol iç (half-space), 2 = merkez, 3 = sağ iç (half-space), 4 = sağ kanat.
-     * Değerler 0-100 arası, o takımın topla oynama/aktivite yoğunluğunu temsil eder.
+     * Değerler 0-100 arası, o takımın topla oynama/aktivite yoğunluğunu temsil eder (v6'dan itibaren
+     * en yoğun bölge 80-100, en zayıfı 0-20 istenir; eski kayıtlar pay dağılımı gibi düşük olabilir —
+     * arayüz maç içi göreli ölçekle çizer, bkz. heatmapScale.ts).
      */
     zoneGrid?: {
       home: number[];
@@ -183,7 +187,7 @@ const OUTPUT_SCHEMA_DESCRIPTION = `{
     "homeZones": "1 cümle, en fazla 12 kelime, düz metin (sayı dizisi değil)",
     "awayZones": "1 cümle, en fazla 12 kelime, düz metin",
     "narrative": "1-2 cümle, en fazla 30 kelime, düz metin",
-    "zoneGrid": { "home": "tam 15 tam sayı (0-100), sıra bölge*5+kolon; bölge 0=kendi savunma 1=orta saha 2=rakip kale önü; kolon 0=sol kanat 1=sol iç 2=merkez 3=sağ iç 4=sağ kanat; zones metniyle tutarlı", "away": "aynı yapı, 15 sayı" }
+    "zoneGrid": { "home": "tam 15 tam sayı (0-100; en yoğun bölge 80-100, en zayıfı 0-20; toplam 100 olmak zorunda değil, pay dağılımı verme), sıra bölge*5+kolon; bölge 0=kendi savunma 1=orta saha 2=rakip kale önü; kolon 0=sol kanat 1=sol iç 2=merkez 3=sağ iç 4=sağ kanat; zones metniyle tutarlı", "away": "aynı yapı, 15 sayı" }
   },
   "matchPrediction": { "home": 0-100, "draw": 0-100, "away": 0-100, "reasoning": "1 cümle, en fazla 25 kelime" },
   "scorePrediction": { "mostLikely": "X-Y (örn. '2-1')" },

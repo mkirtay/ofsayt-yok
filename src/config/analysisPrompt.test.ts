@@ -35,7 +35,7 @@ describe('analiz prompt\'u — bahis dili yok, olasılık senaryoları', () => {
   it('sistem prompt\'u: yasak kuralı var, kuralın dışında bahis terimi yok', () => {
     expect(ANALYSIS_SYSTEM_PROMPT).toContain('DİL YASAĞI');
     expect(findGamblingTerms(withoutBanRule(ANALYSIS_SYSTEM_PROMPT))).toEqual([]);
-    expect(ANALYSIS_MODEL_VERSION).toBe('v5-2026-10');
+    expect(ANALYSIS_MODEL_VERSION).toBe('v6-2026-10');
   });
 
   it('kullanıcı mesajı: şema `scenarios` (metric / probability / confidence / reasoning), bettingTips yok', () => {
@@ -140,6 +140,13 @@ describe('analiz prompt\'u — bahis dili yok, olasılık senaryoları', () => {
     for (const k of ['tempo', 'narrative', 'keyBattleZones', 'analystComment', 'riskReasoning']) {
       expect(msg).toMatch(new RegExp(`"${k}": "[^"]*en fazla \\d+ kelime`));
     }
+  });
+
+  it('v6: zoneGrid ölçeği — en yoğun 80-100, en zayıf 0-20, pay dağılımı değil (kural + şema)', () => {
+    expect(ANALYSIS_SYSTEM_PROMPT).toMatch(/en yoğun bölgesi 80-100,\s+en zayıfı 0-20; toplam 100 olmak zorunda değil, pay dağılımı verme/);
+    expect(buildAnalysisUserMessage(ctx)).toMatch(
+      /"zoneGrid": \{ "home": "tam 15 tam sayı \(0-100; en yoğun bölge 80-100, en zayıfı 0-20; toplam 100 olmak zorunda değil, pay dağılımı verme\)/
+    );
   });
 
   it('taktik kısa alanları için "veri yok" yazma yönlendirmesi', () => {
