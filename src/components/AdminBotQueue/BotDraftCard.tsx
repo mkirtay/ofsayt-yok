@@ -19,10 +19,15 @@ type Props = {
   onSave: (id: string, body: string) => void;
   onApprove: (id: string) => void;
   onReject: (id: string) => void;
+  /** Toplu seçim (yalnızca bekleyen kartlarda gösterilir); verilmezse onay kutusu yok. */
+  selected?: boolean;
+  onToggleSelect?: (id: string) => void;
 };
 
+const KIND_LABEL: Record<string, string> = { GOAL: 'Gol', PREVIEW: 'Maç öncesi', RECAP: 'Maç sonu' };
+
 /** Tek taslak kartı (görünüm): maç adı + dakika + maç sayfası bağlantısı, düzenlenebilir metin, uyarılar, Onayla/Reddet. */
-export default function BotDraftCard({ draft, busy = false, onSave, onApprove, onReject }: Props) {
+export default function BotDraftCard({ draft, busy = false, onSave, onApprove, onReject, selected = false, onToggleSelect }: Props) {
   const [body, setBody] = useState(draft.body);
   const pending = draft.status === 'PENDING';
   const f = draft.facts;
@@ -33,12 +38,22 @@ export default function BotDraftCard({ draft, busy = false, onSave, onApprove, o
   return (
     <article className={styles.card} data-status={draft.status}>
       <header className={styles.head}>
+        {pending && onToggleSelect ? (
+          <input
+            type="checkbox"
+            className={styles.select}
+            checked={selected}
+            disabled={busy}
+            onChange={() => onToggleSelect(draft.id)}
+            aria-label={`Seç: ${f.homeName} - ${f.awayName}`}
+          />
+        ) : null}
         <div className={styles.match}>
           <strong>
             {f.homeName} {f.score ? `${f.score.home}-${f.score.away}` : 'vs'} {f.awayName}
           </strong>
           <span className={styles.meta}>
-            {formatMinute(f.minute, f.extraMinute)} · {f.playerName}
+            {draft.kind === 'GOAL' ? `${formatMinute(f.minute, f.extraMinute)} · ${f.playerName}` : (KIND_LABEL[draft.kind] ?? draft.kind)}
             {f.leagueName ? ` · ${f.leagueName}` : ''}
           </span>
         </div>

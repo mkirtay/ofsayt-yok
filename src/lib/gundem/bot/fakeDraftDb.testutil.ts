@@ -8,6 +8,7 @@ export function createFakeDb() {
   const matches = (r: Row, where: Row = {}): boolean =>
     Object.entries(where).every(([k, v]) => {
       if (v && typeof v === 'object' && 'in' in v) return (v.in as unknown[]).includes(r[k]);
+      if (v && typeof v === 'object' && 'path' in v) return (r[k] as Record<string, unknown> | null)?.[(v.path as string[])[0]] === v.equals; // Json yol filtresi (tek seviye)
       return r[k] === v;
     });
 
@@ -21,6 +22,9 @@ export function createFakeDb() {
   const gundemBotDraft = {
     async findMany({ where }: { where?: Row } = {}) {
       return rows.filter((r) => matches(r, where)).map((r) => ({ ...r }));
+    },
+    async count({ where }: { where?: Row } = {}) {
+      return rows.filter((r) => matches(r, where)).length;
     },
     async findUnique({ where }: { where: Row }) {
       const r = rows.find((x) => matches(x, where));
@@ -46,5 +50,12 @@ export function createFakeDb() {
     },
   };
 
-  return { gundemBotDraft, __rows: () => rows, __reset: () => { rows = []; seq = 0; } };
+  const db = {
+    gundemBotDraft,
+    /** Fonksiyon: aynı sahte DB'yle çalışır (gerçek transaction yok; testlerde tek istemci). */
+    async $transaction<T>(fn: (tx: { gundemBotDraft: typeof gundemBotDraft }) => Promise<T>) {
+      return fn({ gundemBotDraft });
+    },
+    __rows: () => rows, __reset: () => { rows = []; seq = 0; } };
+  return db;
 }

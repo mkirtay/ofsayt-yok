@@ -65,3 +65,28 @@ export function useBotDraftActions() {
   });
   return { edit, approve, reject };
 }
+
+export type BulkSelector = { ids: string[] } | { kind?: string; league?: string } | { all: true };
+export type PendingSummary = { total: number; kinds: { kind: string; count: number }[]; leagues: { name: string; count: number }[] };
+
+/** Bekleyenlerin tür/lig dağılımı (toplu ret filtreleri); yalnız "Bekliyor" sekmesinde çekilir. */
+export function usePendingSummary(enabled: boolean) {
+  return useQuery({
+    queryKey: [...KEY, 'pending-summary'],
+    queryFn: () => call<PendingSummary>('/api/admin/gundem/drafts/pending-summary'),
+    enabled,
+    refetchInterval: 30_000,
+  });
+}
+
+/** Toplu ret: `count` (dry-run, onay penceresinde gösterilir) ve `run` (gerçek). Silme yok, durum REJECTED. */
+export function useBulkReject() {
+  const qc = useQueryClient();
+  const post = <T,>(body: object) => call<T>('/api/admin/gundem/drafts/bulk-reject', { method: 'POST', body: JSON.stringify(body) });
+  const count = (sel: BulkSelector) => post<{ count: number }>({ ...sel, dryRun: true }).then((r) => r.count);
+  const run = useMutation({
+    mutationFn: (sel: BulkSelector) => post<{ rejected: number; skipped: number }>(sel),
+    onSettled: () => qc.invalidateQueries({ queryKey: KEY }),
+  });
+  return { count, run };
+}

@@ -40,4 +40,20 @@ describe('BotDraftCard', () => {
   it('eskimiş (STALE) taslak etiketlenir', () => {
     expect(render(draft({ status: 'STALE' }))).toContain('Eskidi (VAR/iptal)');
   });
+
+  it('toplu seçim: yalnız bekleyen kartta ve onToggleSelect verilmişse onay kutusu; seçili durum işaretlenir', () => {
+    const view = (d: BotDraft, extra: Record<string, unknown> = {}) =>
+      renderToStaticMarkup(<BotDraftCard draft={d} onSave={noop} onApprove={noop} onReject={noop} onToggleSelect={noop} {...extra} />);
+    expect(view(draft())).toContain('type="checkbox"');
+    expect(view(draft())).not.toContain('checked=""');
+    expect(view(draft(), { selected: true })).toContain('checked=""');
+    expect(view(draft({ status: 'POSTED', postId: 'p' }))).not.toContain('type="checkbox"');
+    expect(render(draft())).not.toContain('type="checkbox"'); // onToggleSelect yok
+  });
+
+  it('gol dışı tür (PREVIEW/RECAP): dakika/oyuncu yerine tür etiketi', () => {
+    const html = render(draft({ kind: 'PREVIEW', facts: { homeName: 'GS', awayName: 'FB', leagueName: 'Süper Lig' } as never }));
+    expect(html).toContain('Maç öncesi · Süper Lig');
+    expect(html).not.toContain('undefined');
+  });
 });

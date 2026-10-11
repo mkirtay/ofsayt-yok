@@ -1,8 +1,17 @@
 import { useState } from 'react';
 import { useConfirmDialog } from '@/components/ConfirmDialog';
 import EmptyState from '@/components/EmptyState';
-import { BotDraftApiError, useBotDraftActions, useBotDrafts, type BotDraftFilter } from '@/hooks/useBotDrafts';
+import {
+  BotDraftApiError,
+  useBotDraftActions,
+  useBotDrafts,
+  useBulkReject,
+  usePendingSummary,
+  type BotDraftFilter,
+  type BulkSelector,
+} from '@/hooks/useBotDrafts';
 import BotDraftCard, { STATUS_LABEL } from './BotDraftCard';
+import BulkToolbar, { BULK_KIND_LABEL } from './BulkToolbar';
 import styles from './adminBotQueue.module.scss';
 
 const FILTERS: BotDraftFilter[] = ['PENDING', 'POSTED', 'REJECTED', 'STALE', 'all'];
@@ -14,7 +23,13 @@ export default function AdminBotQueue() {
   const { edit, approve, reject } = useBotDraftActions();
   const { ask, dialog } = useConfirmDialog();
   const [notice, setNotice] = useState<string | null>(null);
-  const busy = edit.isPending || approve.isPending || reject.isPending;
+  const bulk = useBulkReject();
+  const busy = edit.isPending || approve.isPending || reject.isPending || bulk.run.isPending;
+  const pendingTab = filter === 'PENDING';
+  const summary = usePendingSummary(pendingTab);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkKind, setBulkKind] = useState('');
+  const [bulkLeague, setBulkLeague] = useState('');
 
   const errorOf = (e: unknown) => (e instanceof BotDraftApiError ? e.message : 'Beklenmeyen hata.');
 
@@ -49,6 +64,47 @@ export default function AdminBotQueue() {
   }
 
   const items = drafts.data?.items ?? [];
+  const pageIds = items.filter((d) => d.status === 'PENDING').map((d) => d.id);
+  // Seçim yalnızca görünen bekleyen kartlara uygulanır (kart listeden düşmüşse sayılmaz/gönderilmez).
+  const selectedIds = pageIds.filter((id) => selected.has(id));
+
+  function toggle(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (!next.delete(id)) next.add(id);
+      return next;
+    });
+  }
+
+  /** Onay penceresi: etkilenecek sayı dry-run ile sunucudan alınır (seçili kimliklerde yalnız hâlâ PENDING olanlar sayılır). */
+  async function confirmBulk(selector: BulkSelector, title: string, describe: (n: number) => string) {
+    setNotice(null);
+    let n: number;
+    try {
+      n = await bulk.count(selector);
+    } catch (e) {
+      setNotice(errorOf(e));
+      return;
+    }
+    if (n === 0) {
+      setNotice('Reddedilecek bekleyen taslak yok.');
+      return;
+    }
+    ask({
+      title,
+      message: `${describe(n)} Silinmez; durumları "Reddedildi" olur. Yayınlanmış taslaklara dokunulmaz.`,
+      confirmLabel: `${n} taslağı reddet`,
+      cancelLabel: 'Vazgeç',
+      errorMessage: 'Toplu ret başarısız.',
+      onConfirm: async () => {
+        const r = await bulk.run.mutateAsync(selector);
+        setSelected(new Set());
+        setNotice(`${r.rejected} taslak reddedildi${r.skipped ? ` (${r.skipped} tanesi artık bekleyen değildi, dokunulmadı)` : ''}.`);
+      },
+    });
+  }
+
+  const filterLabel = [bulkKind ? (BULK_KIND_LABEL[bulkKind] ?? bulkKind) : null, bulkLeague || null].filter(Boolean).join(' · ');
 
   return (
     <div className={styles.page}>
@@ -63,12 +119,40 @@ export default function AdminBotQueue() {
             role="tab"
             aria-selected={filter === f}
             className={`${styles.chip} ${filter === f ? styles.chipActive : ''}`.trim()}
-            onClick={() => setFilter(f)}
+            onClick={() => {
+              setFilter(f);
+              setSelected(new Set());
+            }}
           >
             {f === 'all' ? 'Tümü' : STATUS_LABEL[f]}
           </button>
         ))}
       </div>
+
+      {pendingTab ? (
+        <BulkToolbar
+          selectedCount={selectedIds.length}
+          pageCount={pageIds.length}
+          summary={summary.data}
+          kind={bulkKind}
+          league={bulkLeague}
+          busy={busy}
+          onKind={setBulkKind}
+          onLeague={setBulkLeague}
+          onToggleAll={() => setSelected(selectedIds.length === pageIds.length ? new Set() : new Set(pageIds))}
+          onRejectSelected={() =>
+            void confirmBulk({ ids: selectedIds }, 'Seçilenleri reddet', (n) => `Seçili ${n} bekleyen taslak reddedilecek.`)
+          }
+          onRejectAll={() => void confirmBulk({ all: true }, 'Tümünü reddet', (n) => `Bekleyen TÜM taslaklar (${n} adet) reddedilecek.`)}
+          onRejectFiltered={() =>
+            void confirmBulk(
+              { ...(bulkKind ? { kind: bulkKind } : {}), ...(bulkLeague ? { league: bulkLeague } : {}) },
+              'Filtreye göre reddet',
+              (n) => `Filtreye uyan (${filterLabel}) ${n} bekleyen taslak reddedilecek.`,
+            )
+          }
+        />
+      ) : null}
 
       {notice ? (
         <p className={styles.error} role="alert">
@@ -98,6 +182,8 @@ export default function AdminBotQueue() {
               onSave={(id, body) => edit.mutate({ id, body })}
               onApprove={onApprove}
               onReject={onReject}
+              selected={selected.has(d.id)}
+              onToggleSelect={toggle}
             />
           ))}
         </div>
