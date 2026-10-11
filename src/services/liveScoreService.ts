@@ -5,8 +5,8 @@ import { WORLD_CUP_COMPETITION_ID } from '../config/worldCup';
 import { resolveSportmonksLeagueId } from './sportmonksProviderFlag';
 import { sportmonksClientRequest, sportmonksCollectAllPages } from './sportmonksRuntimeClient';
 import { SportmonksHttpError } from './sportmonks/httpClient';
-import { matchIstanbulDate } from '../utils/matchActivity';
-import { todayIsoIstanbul } from '../utils/dateStrip';
+import { isMatchLive, matchIstanbulDate } from '../utils/matchActivity';
+import { shiftIsoDate, todayIsoIstanbul } from '../utils/dateStrip';
 import {
   FIXTURE_DETAIL_EXTRA_FILTERS,
   FIXTURE_DETAIL_EXTRA_INCLUDE,
@@ -558,15 +558,22 @@ export async function getFixturesByCompetition(
   }
 }
 
-/** `selectedDate` ana sayfanın Türkiye günü; maçın günü de başlama saatinden Türkiye saatine göre alınır. */
-export function isLiveMatchOnSelectedDate(m: Match, selectedDate: string): boolean {
+/**
+ * `selectedDate` ana sayfanın Türkiye günü; maçın günü de başlama saatinden Türkiye saatine göre alınır. Önceki akşam
+ * başlayıp gece yarısından sonra hâlâ oynanan maç BUGÜNÜN listesinde de görünür (yalnız sürerken; dünün listesinde
+ * de kalır). `todayIso` verilmezse saatten okunur (sayfa hydration için kendi "bugün" durumunu verir).
+ */
+export function isLiveMatchOnSelectedDate(m: Match, selectedDate: string, todayIso: string = todayIsoIstanbul()): boolean {
   const d = matchIstanbulDate(m);
-  if (d) return d === selectedDate;
-  return selectedDate === todayIsoIstanbul();
+  if (!d) return selectedDate === todayIso;
+  if (d === selectedDate) return true;
+  return selectedDate === todayIso && d === shiftIsoDate(todayIso, -1) && isMatchLive(m);
 }
 
 export type MergeMatchesForAllTabInput = {
   selectedDate: string;
+  /** Sayfanın "bugün"ü (TR) — dünden sarkan canlı maç kuralı için; verilmezse saatten. */
+  todayIso?: string;
   historyPageMatches: Match[];
   liveMatches: Match[];
   fixtures: Match[];
@@ -596,8 +603,8 @@ function mergeMatchRow(base: Match, overlay: Match): Match {
  * Öncelik: fikstür (temel) < history < live (`fixture_id` ile eşleşirse aynı satır güncellenir).
  */
 export function mergeMatchesForAllTab(input: MergeMatchesForAllTabInput): Match[] {
-  const { selectedDate, historyPageMatches, liveMatches, fixtures } = input;
-  const liveOnDay = liveMatches.filter((m) => isLiveMatchOnSelectedDate(m, selectedDate));
+  const { selectedDate, todayIso, historyPageMatches, liveMatches, fixtures } = input;
+  const liveOnDay = liveMatches.filter((m) => isLiveMatchOnSelectedDate(m, selectedDate, todayIso));
   const map = new Map<number, Match>();
 
   const put = (m: Match) => {
@@ -622,8 +629,8 @@ export function mergeMatchesForAllTab(input: MergeMatchesForAllTabInput): Match[
  * eşleyip üstüne yazmak yeterli.
  */
 export function mergeMatchesByIdForAllTab(input: MergeMatchesForAllTabInput): Match[] {
-  const { selectedDate, historyPageMatches, liveMatches, fixtures } = input;
-  const liveOnDay = liveMatches.filter((m) => isLiveMatchOnSelectedDate(m, selectedDate));
+  const { selectedDate, todayIso, historyPageMatches, liveMatches, fixtures } = input;
+  const liveOnDay = liveMatches.filter((m) => isLiveMatchOnSelectedDate(m, selectedDate, todayIso));
   const map = new Map<number, Match>();
 
   const put = (m: Match) => {

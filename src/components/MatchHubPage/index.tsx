@@ -307,12 +307,14 @@ export default function MatchHubPage({
         const merged = isSportmonksProviderEnabled()
           ? mergeMatchesByIdForAllTab({
               selectedDate,
+              todayIso,
               historyPageMatches: allMatches,
               liveMatches,
               fixtures: fixtureMatches,
             })
           : mergeMatchesForAllTab({
               selectedDate,
+              todayIso,
               historyPageMatches: allMatches,
               liveMatches,
               fixtures: fixtureMatches,
@@ -324,12 +326,14 @@ export default function MatchHubPage({
         return isSportmonksProviderEnabled()
           ? mergeMatchesByIdForAllTab({
               selectedDate,
+              todayIso,
               historyPageMatches: allMatches,
               liveMatches,
               fixtures: fixtureMatches,
             })
           : mergeMatchesForAllTab({
               selectedDate,
+              todayIso,
               historyPageMatches: allMatches,
               liveMatches,
               fixtures: fixtureMatches,
@@ -341,6 +345,7 @@ export default function MatchHubPage({
     liveMatches,
     fixtureMatches,
     selectedDate,
+    todayIso,
     favoriteTeamSet,
   ]);
 

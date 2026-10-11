@@ -184,6 +184,21 @@ describe('isLiveMatchOnSelectedDate — Türkiye günü', () => {
     const { isLiveMatchOnSelectedDate } = await import('./liveScoreService');
     const m = { id: 1, status: 'IN PLAY', time: '10', home: { id: 1, name: 'A' }, away: { id: 2, name: 'B' }, date: '2026-09-30', scheduled: '23:30' };
     expect(isLiveMatchOnSelectedDate(m as never, '2026-10-01')).toBe(true);
-    expect(isLiveMatchOnSelectedDate(m as never, '2026-09-30')).toBe(false);
+    expect(isLiveMatchOnSelectedDate(m as never, '2026-09-30', '2026-10-01')).toBe(false);
+  });
+
+  it('önceki akşam başlayıp gece yarısından sonra süren maç bugünün listesinde de (yalnız sürerken, yalnız bugün)', async () => {
+    const { isLiveMatchOnSelectedDate, mergeMatchesByIdForAllTab } = await import('./liveScoreService');
+    // 30 Eylül 20:30 UTC = 23:30 TSİ başladı; bugün 1 Ekim.
+    const m = { id: 7, status: 'IN PLAY', time: "78'", home: { id: 1, name: 'A' }, away: { id: 2, name: 'B' }, date: '2026-09-30', scheduled: '20:30' };
+    expect(isLiveMatchOnSelectedDate(m as never, '2026-10-01', '2026-10-01')).toBe(true);
+    expect(isLiveMatchOnSelectedDate(m as never, '2026-09-30', '2026-10-01')).toBe(true); // dünün listesinde de kalır
+    expect(isLiveMatchOnSelectedDate({ ...m, status: 'FINISHED' } as never, '2026-10-01', '2026-10-01')).toBe(false);
+    expect(isLiveMatchOnSelectedDate(m as never, '2026-10-02', '2026-10-01')).toBe(false); // yarının listesi
+    expect(isLiveMatchOnSelectedDate(m as never, '2026-10-01', '2026-10-02')).toBe(false); // bugün değilse yok
+    const older = { ...m, id: 8, date: '2026-09-29' };
+    expect(isLiveMatchOnSelectedDate(older as never, '2026-10-01', '2026-10-01')).toBe(false); // yalnız bir gün öncesi
+    const merged = mergeMatchesByIdForAllTab({ selectedDate: '2026-10-01', todayIso: '2026-10-01', historyPageMatches: [], liveMatches: [m as never], fixtures: [] });
+    expect(merged.map((x) => x.id)).toEqual([7]);
   });
 });
