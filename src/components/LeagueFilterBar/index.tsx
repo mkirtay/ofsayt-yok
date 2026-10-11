@@ -12,13 +12,18 @@ type BarProps = {
   onApplyCustom: (picked: PickedLeague[]) => void;
   /** Aynı kaydırmalı satırın başına eklenen içerik (mobilde maç durumu çipleri, bkz. MatchHubPage). */
   leading?: ReactNode;
+  /**
+   * Filtre şu an listeye uygulanmıyor (ana sayfa kupa fikstürü modu): hiçbir çip seçili görünmez. Çipe basmak yine
+   * `onSelectMode`'u çağırır (çağıran fikstür modundan çıkıp filtreyi uygular).
+   */
+  noActive?: boolean;
 };
 
 /**
  * Kalıcı lig filtresi chip satırı: Tümü | Süper Lig | 5 Büyük Lig | Liglerim (n) | + Ligler.
  * "Liglerim" yalnızca kayıtlı özel seçim varken görünür. ("Favoriler" sekmesi favori MAÇLARdır — karıştırma.)
  */
-export default function LeagueFilterBar({ state, catalog, onSelectMode, onApplyCustom, leading }: BarProps) {
+export default function LeagueFilterBar({ state, catalog, onSelectMode, onApplyCustom, leading, noActive = false }: BarProps) {
   const { t } = useTranslation('match');
   const [pickerOpen, setPickerOpen] = useState(false);
 
@@ -33,17 +38,20 @@ export default function LeagueFilterBar({ state, catalog, onSelectMode, onApplyC
     <>
       <div className={styles.bar} role="group" aria-label={t('leagueFilter.group')}>
         {leading}
-        {chips.map((c) => (
-          <button
-            key={c.mode}
-            type="button"
-            className={`${styles.chip} ${state.mode === c.mode ? styles.chipActive : ''}`.trim()}
-            aria-pressed={state.mode === c.mode}
-            onClick={() => onSelectMode(c.mode)}
-          >
-            {c.label}
-          </button>
-        ))}
+        {chips.map((c) => {
+          const active = !noActive && state.mode === c.mode;
+          return (
+            <button
+              key={c.mode}
+              type="button"
+              className={`${styles.chip} ${active ? styles.chipActive : ''}`.trim()}
+              aria-pressed={active}
+              onClick={() => onSelectMode(c.mode)}
+            >
+              {c.label}
+            </button>
+          );
+        })}
         <button
           type="button"
           className={`${styles.chip} ${styles.chipAdd}`}

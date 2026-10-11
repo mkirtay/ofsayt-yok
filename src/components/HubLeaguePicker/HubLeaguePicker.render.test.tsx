@@ -92,5 +92,14 @@ describe('<HubLeaguePicker /> (yan panel lig seçici)', () => {
     const hub = readFileSync(path.join(process.cwd(), 'src/components/MatchHubPage/index.tsx'), 'utf8');
     expect(hub).toMatch(/styles\.sidebar\} \$\{pickerOpen \? styles\.sidebarPickerOpen : ''\}/);
   });
+
+  it('ana sayfa: kupa fikstürü modunda çipler seçili görünmez; çip / "+ Ligler" önce fikstür modundan çıkar, sonra filtreyi uygular', () => {
+    const hub = readFileSync(path.join(process.cwd(), 'src/components/MatchHubPage/index.tsx'), 'utf8');
+    expect(hub).toMatch(/noActive=\{uefaFixtureMode\}/);
+    expect(hub).toMatch(/onSelectMode=\{\(mode\) => \{\s*if \(uefaFixtureMode\) exitFixtureMode\(\);\s*leagueFilter\.selectMode\(mode\);/);
+    expect(hub).toMatch(/onApplyCustom=\{\(picked\) => \{\s*if \(uefaFixtureMode\) exitFixtureMode\(\);\s*leagueFilter\.applyCustom\(picked\);/);
+    // "Günlük maçlara dön" ile aynı işlev
+    expect(hub).toMatch(/onClick=\{exitFixtureMode\}/);
+  });
 });
 

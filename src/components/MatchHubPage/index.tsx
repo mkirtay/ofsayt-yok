@@ -840,8 +840,17 @@ export default function MatchHubPage({
             <LeagueFilterBar
               state={leagueFilter.state}
               catalog={leagueCatalog}
-              onSelectMode={leagueFilter.selectMode}
-              onApplyCustom={leagueFilter.applyCustom}
+              // Kupa fikstürü modunda çip filtresi listeye uygulanmıyor → hiçbir çip seçili görünmez; çipe (ya da
+              // "+ Ligler" → Uygula) basınca önce günlük maçlara dönülür ("Günlük maçlara dön" ile aynı), sonra filtre.
+              noActive={uefaFixtureMode}
+              onSelectMode={(mode) => {
+                if (uefaFixtureMode) exitFixtureMode();
+                leagueFilter.selectMode(mode);
+              }}
+              onApplyCustom={(picked) => {
+                if (uefaFixtureMode) exitFixtureMode();
+                leagueFilter.applyCustom(picked);
+              }}
               leading={
                 <MatchStatusChips
                   activeTab={activeTab}

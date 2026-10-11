@@ -35,6 +35,21 @@ describe('<LeagueFilterBar />', () => {
     expect(html).not.toMatch(/Favorilerim/i);
   });
 
+  it('noActive (ana sayfa kupa fikstürü modu): hiçbir çip seçili görünmez, çipler yine çizilir ve tıklanabilir', () => {
+    const custom = { mode: 'custom' as const, custom: [{ id: 1, name: 'A' }] };
+    for (const state of [{ mode: 'super' as const, custom: [] }, DEFAULT_LEAGUE_FILTER, custom]) {
+      const html = renderToStaticMarkup(<LeagueFilterBar state={state} catalog={catalog} onSelectMode={noop} onApplyCustom={noop} noActive />);
+      expect(html).not.toContain('aria-pressed="true"');
+      expect(html).not.toMatch(/chipActive/);
+      expect(html.match(/aria-pressed="false"/g)).toHaveLength(state === custom ? 4 : 3);
+      expect(html).not.toMatch(/<button[^>]*disabled/);
+    }
+    // Varsayılan (noActive yok) davranış aynı
+    expect(renderToStaticMarkup(<LeagueFilterBar state={{ mode: 'super', custom: [] }} catalog={catalog} onSelectMode={noop} onApplyCustom={noop} />)).toMatch(
+      /aria-pressed="true"[^>]*>Süper Lig</,
+    );
+  });
+
   it('panel: modal dialog, aranabilir, checkbox\'lı liste; önceki seçim işaretli', () => {
     const html = renderToStaticMarkup(
       <LeaguePickerDialog catalog={catalog} initial={[{ id: 999, name: '2. Lig: Beyaz' }]} onClose={noop} onApply={noop} />,
