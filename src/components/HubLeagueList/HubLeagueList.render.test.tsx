@@ -57,4 +57,10 @@ describe('<HubLeagueList /> (yan panel lig seçicisinin listesi)', () => {
     );
     expect(focused).toMatch(/<input[^>]*autofocus/i);
   });
+
+  it('stil: arama satırı liste kaydırılırken kaydırma kabının üstünde sabit (sticky, zeminli)', () => {
+    const scss = readFileSync(path.join(process.cwd(), 'src/components/HubLeagueList/hubLeagueList.module.scss'), 'utf8');
+    expect(scss).toMatch(/\.searchRow \{[^}]*position: sticky;[^}]*top: 0;[^}]*z-index: 1;[^}]*background: \$color-surface;/);
+  });
 });
+

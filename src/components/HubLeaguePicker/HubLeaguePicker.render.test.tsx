@@ -74,4 +74,23 @@ describe('<HubLeaguePicker /> (yan panel lig seçici)', () => {
     expect(scss).toMatch(/@container \(max-width: 300px\)\s*{\s*flex: 1 1 100%;\s*flex-direction: row;/);
     expect(scss).toMatch(/\.seasonLabel \{[^}]*text-transform: uppercase;/);
   });
+
+  it('stil: liste kendi içinde kayar — düğme / sezon satırı sabit, sheet kalan alanı alıp kayar; mobilde kaydırma kabı gövde', () => {
+    const scss = readFileSync(path.join(process.cwd(), 'src/components/HubLeaguePicker/hubLeaguePicker.module.scss'), 'utf8');
+    const desktop = scss.slice(0, scss.indexOf('@include below-desktop'));
+    const mobile = scss.slice(scss.indexOf('@include below-desktop'));
+    expect(desktop).toMatch(/\.picker \{[^}]*display: flex;[^}]*flex-direction: column;[^}]*min-height: 0;/);
+    expect(desktop).toMatch(/\.bar \{[^}]*flex: 0 0 auto;/);
+    expect(desktop).toMatch(/\.sheet \{[^}]*flex: 1 1 auto;[^}]*min-height: 0;[^}]*overflow-y: auto;/);
+    expect(mobile).toMatch(/\.sheet \{[^}]*overflow: visible;/);
+    expect(mobile).toMatch(/\.sheetBody \{[^}]*overflow-y: auto;/);
+  });
+
+  it('stil: ana sayfa paneli seçici açıkken masaüstünde orta / sağ sütunlarla aynı tavanda (sayfa uzamaz)', () => {
+    const page = readFileSync(path.join(process.cwd(), 'src/pages/index.module.scss'), 'utf8');
+    expect(page).toMatch(/@media \(min-width: \$bp-desktop\) \{\s*\.sidebarPickerOpen \{[^}]*display: flex;[^}]*flex-direction: column;[^}]*max-height: \$hub-fill-height;/);
+    const hub = readFileSync(path.join(process.cwd(), 'src/components/MatchHubPage/index.tsx'), 'utf8');
+    expect(hub).toMatch(/styles\.sidebar\} \$\{pickerOpen \? styles\.sidebarPickerOpen : ''\}/);
+  });
 });
+

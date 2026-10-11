@@ -875,7 +875,7 @@ export default function MatchHubPage({
             .join(' ')}
         >
           <aside id="hub-sidebar" className={styles.hubSidebar}>
-            <div className={styles.sidebar}>
+            <div className={`${styles.sidebar} ${pickerOpen ? styles.sidebarPickerOpen : ''}`.trim()}>
               <HubLeaguePicker
                 open={pickerOpen}
                 onOpenChange={(open) => (open ? setPickerOpen(true) : closePicker())}

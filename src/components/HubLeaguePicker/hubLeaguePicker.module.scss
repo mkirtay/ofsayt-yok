@@ -5,10 +5,15 @@
   border-bottom: 1px solid $color-border;
   // Sezon alanı yan yana mı altta mı: kapsayıcı genişliğine göre (CSS'le, JS'siz → ilk boyamada doğru, kayma yok)
   container-type: inline-size;
+  // Ebeveyn yüksekliği sınırlıysa (ana sayfa paneli, seçici açık) düğme satırı sabit kalır, liste kalan alanda kayar.
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 // Lig dropdown'u kalan genişliği alır; sezon alanı içeriği kadar. Dar kapsayıcıda sezon altta tek satır.
 .bar {
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
   min-width: 0;
@@ -136,8 +141,14 @@
   }
 }
 
-// Masaüstü: panelin içinde (düğmenin altında) liste; başlık satırı yalnız mobilde.
+// Masaüstü: panelin içinde (düğmenin altında) liste; başlık satırı yalnız mobilde. Liste kendi kutusunda kayar:
+// ebeveyn yüksekliği sınırlıysa (ana sayfa `.sidebarPickerOpen`) kalan alanı alır, sınır yoksa (/standings) tam boy —
+// her iki durumda da kaydırma kabı bu, arama satırı (HubLeagueList, sticky) burada sabit kalır.
 .sheet {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   border-top: 1px solid $color-border;
 }
 
@@ -160,6 +171,8 @@
     border-top: none;
     background: $color-surface;
     padding-bottom: var(--safe-bottom);
+    // Mobilde kaydırma kabı `.sheetBody` (başlık satırı sabit kalsın)
+    overflow: visible;
   }
 
   .sheetHeader {
