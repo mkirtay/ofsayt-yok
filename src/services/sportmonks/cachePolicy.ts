@@ -166,6 +166,16 @@ export function sportmonksCacheTtl(
         // include'suz aralık = yalnız takvim (lig + başlama saati; skor/durum için kullanılmaz — ör. sıradaki maç günü):
         // canlı maç içerse de 30 sn'lik tazeleme gerekmez. Bot farklı tarih/lig deneyip kotayı yakamasın.
         if (!query.include) return withStale(15 * MIN, DAY);
+        // Takım formu (`between/{-89g}/{bugün}/{takım}`, maç sayfası + karşılaştırma): bugünün başlamamış/canlı maçı yoksa
+        // liste değişmez → son maç başlayalı 5 sa'ten azsa 1 sa (skor düzeltmesi), değilse 6 sa. Anahtar takım başına:
+        // bir takımın bütün maç sayfaları paylaşır (tarama dalgasında 10 dk'da bir yeniden çekiliyordu).
+        if (r[4] && /^\d+$/.test(r[4])) {
+          const list = asList(data);
+          if (allFinishedBefore(list, now, 0)) {
+            const newest = Math.max(...list.map((f) => kickoffMs(f) ?? 0));
+            return withStale(now - newest < RECENTLY_FINISHED_WINDOW_MS ? HOUR : 6 * HOUR, DAY);
+          }
+        }
         return withStale(fixtureListFreshSeconds(asList(data), 10 * MIN, now), DAY);
       }
       if (a === 'head-to-head' || a === 'multi') {
