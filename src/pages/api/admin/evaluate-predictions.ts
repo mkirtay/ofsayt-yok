@@ -43,6 +43,7 @@ const summarize = (r: EvaluateRunResult) => ({
   skipped: r.skipped,
   unresolved: r.unresolved,
   errors: r.errors,
+  deferred: r.deferred,
   staleCreditRefunds: r.staleCreditRefunds ?? 0,
 });
 

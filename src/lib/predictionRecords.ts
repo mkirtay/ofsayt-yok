@@ -3,6 +3,8 @@ import type { MatchAnalysis } from '@prisma/client';
 import type { Match } from '@/models/liveScore';
 import { prisma } from '@/lib/prisma';
 import { resolveSportmonksMatch } from '@/lib/resolveLiveMatch';
+import { withRedis } from '@/lib/redis';
+import { cacheKeyPrefix } from '@/lib/cacheNamespace';
 
 type MatchPredictionJson = { home?: number; draw?: number; away?: number };
 type ScorePredictionJson = { mostLikely?: string };
@@ -167,7 +169,32 @@ export type EvaluatePredictionsResult = {
   /** "Çözülemedi" diye kapatılan kayıtlar (bkz. `shouldMarkUnresolved`). */
   unresolved: number;
   errors: number;
+  /** Tur sınırı yüzünden bu turda bakılmayan kayıtlar (sonraki turlarda sırayla). */
+  deferred: number;
 };
+
+/**
+ * Tur başına en çok bu kadar FARKLI maça bakılır (maç başına 1–2 Fixture isteği: `fixtures/{id}` + başlamamış/canlıda TV).
+ * Bekleyen kayıtların çoğu henüz başlamamış maçlar ve her 15 dk'lık turda yeniden sorgulanıyordu; sınırsız liste
+ * havuzu analiz sayısıyla büyüyen oranda yiyordu. 25 maç × 4 tur/sa → en çok ~200 istek/sa.
+ */
+export const EVALUATION_MAX_MATCHES_PER_RUN = 25;
+const evaluationCursorKey = () => `${cacheKeyPrefix()}eval-predictions:cursor`;
+
+/**
+ * Bu turun maçları: `matchIds` (en eski kayıt önce, tekil) içinden `cursor`'dan SONRAKİ `limit` maç, sona gelince başa
+ * sarar — sınırı aşan liste sırayla dolaşılır, hiçbir maç aç kalmaz. `nextCursor`: hepsi seçildiyse null.
+ */
+export function selectEvaluationBatch(
+  matchIds: readonly string[],
+  cursor: string | null,
+  limit: number = EVALUATION_MAX_MATCHES_PER_RUN,
+): { selected: string[]; nextCursor: string | null } {
+  if (matchIds.length <= limit) return { selected: [...matchIds], nextCursor: null };
+  const start = cursor == null ? 0 : (matchIds.indexOf(cursor) + 1) % matchIds.length; // imleç listede yoksa (-1) baştan
+  const selected = Array.from({ length: limit }, (_, i) => matchIds[(start + i) % matchIds.length]!);
+  return { selected, nextCursor: selected[selected.length - 1]! };
+}
 
 /**
  * Değerlendirilemeyen kaydın kapanış işareti. `evaluatedAt` BOŞ kalır: isabet oranları yalnızca
@@ -253,8 +280,9 @@ export async function evaluatePendingPredictionRecords(
 ): Promise<EvaluatePredictionsResult> {
   await backfillMissingPredictionRecords();
 
-  const pending = await prisma.predictionRecord.findMany({
+  const allPending = await prisma.predictionRecord.findMany({
     where: { evaluatedAt: null, actualResult: null },
+    orderBy: { createdAt: 'asc' },
     select: {
       id: true,
       matchId: true,
@@ -269,8 +297,17 @@ export async function evaluatePendingPredictionRecords(
     },
   });
 
-  const result: EvaluatePredictionsResult = { evaluated: 0, skipped: 0, unresolved: 0, errors: 0 };
-  if (!pending.length) return result;
+  const result: EvaluatePredictionsResult = { evaluated: 0, skipped: 0, unresolved: 0, errors: 0, deferred: 0 };
+  if (!allPending.length) return result;
+
+  // Tur sınırı: en çok N farklı maç; imleç Redis'te (yoksa / Redis yoksa baştan — fail-open, yine en çok N maç).
+  const matchIds = [...new Set(allPending.map((r) => r.matchId))];
+  const cursor = matchIds.length > EVALUATION_MAX_MATCHES_PER_RUN ? await withRedis((r) => r.get<string>(evaluationCursorKey()), null) : null;
+  const { selected, nextCursor } = selectEvaluationBatch(matchIds, cursor);
+  const selectedSet = new Set(selected);
+  const pending = allPending.filter((r) => selectedSet.has(r.matchId));
+  result.deferred = allPending.length - pending.length;
+  if (nextCursor) await withRedis((r) => r.set(evaluationCursorKey(), nextCursor, { ex: 7 * 24 * 3600 }), null);
 
   const matchCache = new Map<string, EvaluationMatch>();
 
