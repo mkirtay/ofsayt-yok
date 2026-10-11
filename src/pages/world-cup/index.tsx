@@ -1,5 +1,6 @@
 import type { GetServerSideProps } from 'next';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { startVisiblePolling } from '@/utils/visiblePolling';
 import Head from 'next/head';
 import { useSession } from 'next-auth/react';
 import MatchCompetitionStandings from '@/components/MatchCompetitionStandings';
@@ -266,16 +267,12 @@ export default function WorldCupPage() {
     };
 
     void fetchMatchData();
-    const poll =
-      mainTab === 'matches'
-        ? window.setInterval(() => {
-            void fetchMatchData({ silent: true });
-          }, 30_000)
-        : undefined;
+    // Maçlar sekmesi 30 sn'de bir canlı veriyi tazeler; sekme gizliyken durur, öne gelince bir kez yeniler.
+    const stopPolling = mainTab === 'matches' ? startVisiblePolling(() => void fetchMatchData({ silent: true }), 30_000) : undefined;
 
     return () => {
       cancelled = true;
-      if (poll != null) window.clearInterval(poll);
+      stopPolling?.();
     };
   }, [mainTab, groups, selectedSeasonId, seasons]);
 
