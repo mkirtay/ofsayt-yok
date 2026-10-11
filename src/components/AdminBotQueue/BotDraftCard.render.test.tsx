@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 import type { BotDraft } from '@/hooks/useBotDrafts';
-import BotDraftCard from './BotDraftCard';
+import BotDraftCard, { approveMessage } from './BotDraftCard';
 
 const draft = (o: Partial<BotDraft> = {}): BotDraft => ({
   id: 'd1', externalKey: 'goal:1:77', kind: 'GOAL', fixtureId: 1, eventId: 77, body: "⚽ GOL! 30' Icardi (Galatasaray)",
@@ -55,5 +55,20 @@ describe('BotDraftCard', () => {
     const html = render(draft({ kind: 'PREVIEW', facts: { homeName: 'GS', awayName: 'FB', leagueName: 'Süper Lig' } as never }));
     expect(html).toContain('Maç öncesi · Süper Lig');
     expect(html).not.toContain('undefined');
+  });
+});
+
+describe('approveMessage', () => {
+  it('gol: Sportmonks yeniden doğrulaması cümlesi kalır', () => {
+    expect(approveMessage('GOAL')).toContain('gol Sportmonks üzerinden yeniden doğrulanır');
+  });
+
+  it('PREVIEW/RECAP: doğrulama olmadığı açıkça yazılır, gol cümlesi yoktur', () => {
+    for (const kind of ['PREVIEW', 'RECAP']) {
+      const m = approveMessage(kind);
+      expect(m).toContain('Sportmonks doğrulaması yoktur');
+      expect(m).not.toContain('yeniden doğrulanır');
+    }
+    expect(approveMessage('PREVIEW')).toContain('maç başladıysa');
   });
 });

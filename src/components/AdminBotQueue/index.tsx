@@ -10,7 +10,7 @@ import {
   type BotDraftFilter,
   type BulkSelector,
 } from '@/hooks/useBotDrafts';
-import BotDraftCard, { STATUS_LABEL } from './BotDraftCard';
+import BotDraftCard, { STATUS_LABEL, approveMessage } from './BotDraftCard';
 import BulkToolbar, { BULK_KIND_LABEL } from './BulkToolbar';
 import styles from './adminBotQueue.module.scss';
 
@@ -34,9 +34,10 @@ export default function AdminBotQueue() {
   const errorOf = (e: unknown) => (e instanceof BotDraftApiError ? e.message : 'Beklenmeyen hata.');
 
   function onApprove(id: string) {
+    const kind = drafts.data?.items.find((d) => d.id === id)?.kind ?? 'GOAL';
     ask({
       title: 'Yayınla',
-      message: 'Bu gönderi resmi hesap adına herkese açık yayınlanacak. Yayından önce gol Sportmonks üzerinden yeniden doğrulanır.',
+      message: approveMessage(kind),
       confirmLabel: 'Yayınla',
       cancelLabel: 'Vazgeç',
       errorMessage: 'Yayınlanamadı.',
@@ -109,7 +110,11 @@ export default function AdminBotQueue() {
   return (
     <div className={styles.page}>
       <h1 className={styles.title}>Gündem onay kuyruğu</h1>
-      <p className={styles.lead}>Gol taslağı üretimi varsayılan olarak kapalıdır (GUNDEM_BOT_GOALS_ENABLED=1 ile açılır; açıkken dakikada bir üretir). Hiçbir taslak otomatik yayınlanmaz.</p>
+      <p className={styles.lead}>
+        Bot üç tür taslak yazar: gol (GUNDEM_BOT_GOALS_ENABLED=1 ile açılır, dakikada bir), maç öncesi ve maç sonu özeti
+        (GUNDEM_BOT_MATCH_ENABLED=1 ile açılır, 15 dakikada bir). İkisi de varsayılan olarak kapalıdır. Hiçbir taslak otomatik
+        yayınlanmaz; her biri burada elle onaylanır.
+      </p>
 
       <div className={styles.filters} role="tablist" aria-label="Durum">
         {FILTERS.map((f) => (

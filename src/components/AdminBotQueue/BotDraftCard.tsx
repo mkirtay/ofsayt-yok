@@ -26,6 +26,14 @@ type Props = {
 
 const KIND_LABEL: Record<string, string> = { GOAL: 'Gol', PREVIEW: 'Maç öncesi', RECAP: 'Maç sonu' };
 
+/** "Yayınla" onay penceresi metni — tür bazlı (yalnız gol taslağı Sportmonks'ta yeniden doğrulanır). */
+export function approveMessage(kind: string): string {
+  const base = 'Bu gönderi resmi hesap adına herkese açık yayınlanacak.';
+  if (kind === 'GOAL') return `${base} Yayından önce gol Sportmonks üzerinden yeniden doğrulanır.`;
+  if (kind === 'PREVIEW') return `${base} Bu taslak olduğu gibi yayınlanır, Sportmonks doğrulaması yoktur; maç başladıysa taslak eskir ve yayınlanmaz.`;
+  return `${base} Bu taslak olduğu gibi yayınlanır, Sportmonks doğrulaması yoktur; metindeki skor ve olguları yayından önce siz kontrol edin.`;
+}
+
 /** Tek taslak kartı (görünüm): maç adı + dakika + maç sayfası bağlantısı, düzenlenebilir metin, uyarılar, Onayla/Reddet. */
 export default function BotDraftCard({ draft, busy = false, onSave, onApprove, onReject, selected = false, onToggleSelect }: Props) {
   const [body, setBody] = useState(draft.body);
