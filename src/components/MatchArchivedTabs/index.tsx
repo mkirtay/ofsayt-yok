@@ -25,7 +25,7 @@ export default function MatchArchivedTabs({ matchId }: Props) {
 
   const tabs = useMemo<MatchTabItem<ArchivedTabKey>[]>(
     () => [
-      { key: 'forum', label: t('tabs.forum'), render: () => <MatchForumTab matchId={matchId} /> },
+      { key: 'forum', label: t('tabs.forum'), render: () => <MatchForumTab matchId={matchId} pollLocked /> },
       {
         key: 'analysis',
         label: t('tabs.analysis'),

@@ -4,6 +4,8 @@ import styles from './matchForumTab.module.scss';
 
 interface MatchForumTabProps {
   matchId: string;
+  /** Anket kilitli (maç başladı/bitti); bkz. utils/matchPollLock.ts. */
+  pollLocked?: boolean;
 }
 
 /**
@@ -11,10 +13,10 @@ interface MatchForumTabProps {
  * Bilinçli olarak alt sekme YOK — anket üstte, yorumlar altta; ikisi de kendi
  * başlığını taşıdığı için kartın ayrıca üst başlığı yoktur (sekme adı yeterli).
  */
-export default function MatchForumTab({ matchId }: MatchForumTabProps) {
+export default function MatchForumTab({ matchId, pollLocked = false }: MatchForumTabProps) {
   return (
     <section className={styles.card}>
-      <MatchPoll matchId={matchId} />
+      <MatchPoll matchId={matchId} locked={pollLocked} />
       <MatchForum matchId={matchId} />
     </section>
   );

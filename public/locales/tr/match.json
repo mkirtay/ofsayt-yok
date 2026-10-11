@@ -192,7 +192,9 @@
     "totalVotes": "Toplam {{count}} oy",
     "loginCta": "Oy kullanmak için",
     "loginLink": "giriş yapın",
-    "error": "Bir hata oluştu."
+    "error": "Bir hata oluştu.",
+    "subtitleLocked": "Maç başladı, tahminler kapandı.",
+    "lockedNoVotes": "Bu maç için oy kullanılmadı."
   },
   "stats": {
     "title": "Maç İstatistikleri",

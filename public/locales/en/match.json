@@ -195,7 +195,9 @@
     "totalVotes_one": "{{count}} total vote",
     "loginCta": "to vote",
     "loginLink": "Sign in",
-    "error": "An error occurred."
+    "error": "An error occurred.",
+    "subtitleLocked": "The match has started; predictions are closed.",
+    "lockedNoVotes": "No votes were cast for this match."
   },
   "stats": {
     "title": "Match Statistics",

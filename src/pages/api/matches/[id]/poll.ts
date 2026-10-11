@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '@/lib/prisma';
 import { hitFixedWindowRateLimit, requestIp } from '@/lib/rateLimit';
 import { getRequestUserId } from '@/lib/mobileAuth';
+import { resolvePollLock } from '@/server/matchPollLock';
 
 type PollResponse = {
   matchId: string;
@@ -14,9 +15,14 @@ type PollResponse = {
 
 const VALID_PREDICTIONS = new Set(['HOME', 'DRAW', 'AWAY']);
 
+/** IP başına (paylaşımlı ağlar için gevşek) ve kullanıcı başına (IP değiştiren tek hesap) ayrı sabit pencereler. */
+export const POLL_IP_LIMIT = 10;
+export const POLL_USER_LIMIT = 6;
+export const POLL_WINDOW_MS = 60_000;
+
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse<PollResponse | { error: string }>
+  res: NextApiResponse<PollResponse | { error: string; code?: string }>
 ) {
   const { id } = req.query;
   const matchId = Array.isArray(id) ? id[0] : id;
@@ -66,14 +72,23 @@ export default async function handler(
     }
 
     const ip = requestIp(req.headers, req.socket.remoteAddress);
-    const rl = await hitFixedWindowRateLimit(`poll:${ip}`, 10, 60_000);
-    if (!rl.success) {
-      return res.status(429).json({ error: 'Çok fazla istek. Lütfen bekleyin.' });
+    const [ipRl, userRl] = await Promise.all([
+      hitFixedWindowRateLimit(`poll:${ip}`, POLL_IP_LIMIT, POLL_WINDOW_MS),
+      hitFixedWindowRateLimit(`poll:user:${userId}`, POLL_USER_LIMIT, POLL_WINDOW_MS),
+    ]);
+    if (!ipRl.success || !userRl.success) {
+      return res.status(429).json({ error: 'Çok fazla istek. Lütfen bekleyin.', code: 'RATE_LIMITED' });
     }
 
     const { prediction } = req.body as { prediction?: string };
     if (!prediction || !VALID_PREDICTIONS.has(prediction)) {
       return res.status(400).json({ error: 'Geçersiz tahmin. HOME, DRAW veya AWAY olmalı.' });
+    }
+
+    // Başlama düdüğünden sonra oy verilemez / değiştirilemez (bkz. server/matchPollLock.ts).
+    const lock = await resolvePollLock(matchId);
+    if (lock.locked) {
+      return res.status(409).json({ error: 'Maç başladı, tahminler kapandı.', code: 'LOCKED' });
     }
 
     await prisma.userPrediction.upsert({

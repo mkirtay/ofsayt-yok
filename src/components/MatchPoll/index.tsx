@@ -6,6 +6,8 @@ import styles from './matchPoll.module.scss';
 
 interface MatchPollProps {
   matchId: string;
+  /** Maç başladı/bitti: oy verilemez, sonuç herkese gösterilir (bkz. utils/matchPollLock.ts). */
+  locked?: boolean;
 }
 
 type Prediction = 'HOME' | 'DRAW' | 'AWAY';
@@ -23,12 +25,15 @@ function pct(votes: number, total: number): number {
   return Math.round((votes / total) * 100);
 }
 
-export default function MatchPoll({ matchId }: MatchPollProps) {
+export default function MatchPoll({ matchId, locked: lockedProp = false }: MatchPollProps) {
   const { data: session } = useSession();
   const { t } = useTranslation('match');
   const [poll, setPoll] = useState<PollData | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  // Sunucu 409 LOCKED dediyse (istemcinin maç verisi geride kaldıysa) da kilitli çizilir.
+  const [serverLocked, setServerLocked] = useState(false);
+  const locked = lockedProp || serverLocked;
 
   useEffect(() => {
     let cancelled = false;
@@ -41,7 +46,7 @@ export default function MatchPoll({ matchId }: MatchPollProps) {
 
   const vote = useCallback(
     async (prediction: Prediction) => {
-      if (submitting) return;
+      if (submitting || locked) return;
       setSubmitting(true);
       setError('');
       try {
@@ -51,7 +56,9 @@ export default function MatchPoll({ matchId }: MatchPollProps) {
           body: JSON.stringify({ prediction }),
         });
         const data = await res.json();
-        if (!res.ok) {
+        if (res.status === 409 && data.code === 'LOCKED') {
+          setServerLocked(true);
+        } else if (!res.ok) {
           setError(data.error || t('poll.error'));
         } else {
           setPoll(data as PollData);
@@ -62,7 +69,7 @@ export default function MatchPoll({ matchId }: MatchPollProps) {
         setSubmitting(false);
       }
     },
-    [matchId, submitting, t]
+    [matchId, submitting, locked, t]
   );
 
   const BUTTONS: { key: Prediction; labelKey: string }[] = [
@@ -74,29 +81,30 @@ export default function MatchPoll({ matchId }: MatchPollProps) {
   return (
     <div className={styles.poll}>
       <h4 className={styles.title}>{t('poll.title')}</h4>
-      <p className={styles.subtitle}>{t('poll.subtitle')}</p>
+      <p className={styles.subtitle}>{t(locked ? 'poll.subtitleLocked' : 'poll.subtitle')}</p>
 
       <div className={styles.buttons} role="group" aria-label={t('poll.title')}>
         {BUTTONS.map(({ key, labelKey }) => {
           const votes = poll ? (key === 'HOME' ? poll.home : key === 'DRAW' ? poll.draw : poll.away) : 0;
           const percentage = poll ? pct(votes, poll.total) : 0;
           const isSelected = poll?.userPrediction === key;
-          const hasVoted = !!poll?.userPrediction;
+          // Kilitliyken sonuç herkese açık; açıkken yalnız oy veren görür.
+          const showResult = locked || !!poll?.userPrediction;
 
           return (
             <button
               key={key}
               type="button"
-              disabled={submitting || !session}
+              disabled={locked || submitting || !session}
               onClick={() => void vote(key)}
               className={`${styles.voteBtn} ${isSelected ? styles.voteBtnSelected : ''}`}
               aria-pressed={isSelected}
             >
               <span className={styles.voteBtnLabel}>{t(labelKey)}</span>
-              {hasVoted && poll && (
+              {showResult && poll && (
                 <span className={styles.voteBtnPct}>{percentage}%</span>
               )}
-              {hasVoted && poll && poll.total > 0 && (
+              {showResult && poll && poll.total > 0 && (
                 <span className={styles.voteBtnTrack} aria-hidden>
                   <span className={styles.voteBtnBar} style={{ width: `${percentage}%` }} />
                 </span>
@@ -110,7 +118,9 @@ export default function MatchPoll({ matchId }: MatchPollProps) {
         <p className={styles.meta}>{t('poll.totalVotes', { count: poll.total })}</p>
       )}
 
-      {!session && (
+      {locked && poll && poll.total === 0 && <p className={styles.meta}>{t('poll.lockedNoVotes')}</p>}
+
+      {!session && !locked && (
         <p className={styles.loginCta}>
           {t('poll.loginCta')}{' '}
           <Link href="/auth/signin" className={styles.loginLink}>

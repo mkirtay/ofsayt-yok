@@ -15,6 +15,7 @@ import MatchForumTab from '@/components/MatchForumTab';
 import type { MatchDetailState } from '@/hooks/useMatchDetail';
 import { useMatchAnalysis } from '@/hooks/useMatchAnalysis';
 import { matchDisplayState } from '@/utils/matchDisplayState';
+import { isPollLockedForMatch } from '@/utils/matchPollLock';
 import { applyTabDeepLink } from './tabDeepLink';
 import { trackFrikik } from '@/lib/frikik/analytics';
 import styles from './matchDetailContent.module.scss';
@@ -109,7 +110,10 @@ export default function MatchDetailContent({ detail, requestedMatchId, variant =
       {
         key: 'forum',
         label: t('tabs.forum'),
-        render: () => (effectiveMatchId ? <MatchForumTab key={effectiveMatchId} matchId={effectiveMatchId} /> : null),
+        render: () =>
+          effectiveMatchId ? (
+            <MatchForumTab key={effectiveMatchId} matchId={effectiveMatchId} pollLocked={!!match && isPollLockedForMatch(match)} />
+          ) : null,
       },
       {
         key: 'analysis',
