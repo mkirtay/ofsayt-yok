@@ -172,4 +172,14 @@ describe('tahmin oyunu (PGlite + Prisma)', () => {
     // eren 9003 artık 2-1 tam skor 8 → 28; zeynep 9003 1-1 vs 2-1 → 0 → 1
     expect(board!.entries.map((e) => [e.nickname, e.points])).toEqual([['eren', 28], ['zeynep', 1]]);
   });
+  it('şu anki hafta: bu hafta açık değilse yayındaki en yakın gelecek hafta, o da yoksa son başlamış hafta', async () => {
+    // Test haftası (gelecek hafta) kapandı → bu haftada oyun yok, gelecekte açık hafta yok → son hafta (kapanmış) döner.
+    const now = new Date();
+    expect(await weeks.resolveCurrentWeekKey(new Date(week.weekRange(weekKey)!.endsAt.getTime() + 1000))).toBe(weekKey);
+    const later = week.shiftWeek(weekKey, 2)!;
+    await prisma.gameWeek.create({ data: { weekKey: later, season: week.seasonOf(later)!, status: 'PUBLISHED', ...week.weekRange(later)! } });
+    expect(await weeks.resolveCurrentWeekKey(now)).toBe(later);
+    await prisma.gameWeek.update({ where: { weekKey: later }, data: { status: 'DRAFT' } });
+    expect(await weeks.resolveCurrentWeekKey(now)).toBe(weekKey);
+  });
 });

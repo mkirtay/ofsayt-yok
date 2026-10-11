@@ -26,5 +26,6 @@
   "gundem": "Feed",
   "aiAssistant": "Assistant",
   "frikik": "Frikik",
-  "pricing": "Pricing"
+  "pricing": "Pricing",
+  "game": "{{gameShort}}"
 }

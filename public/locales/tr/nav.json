@@ -26,5 +26,6 @@
   "gundem": "Gündem",
   "aiAssistant": "Asistan",
   "frikik": "Frikik",
-  "pricing": "Fiyatlandırma"
+  "pricing": "Fiyatlandırma",
+  "game": "{{gameShort}}"
 }

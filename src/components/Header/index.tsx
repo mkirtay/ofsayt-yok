@@ -26,6 +26,7 @@ import { MOBILE_LAYOUT_QUERY } from '@/config/breakpoints';
 import { WORLD_CUP_PAGE_ENABLED } from '@/config/worldCup';
 import styles from './header.module.scss';
 import BrandLogo from '@/components/BrandLogo';
+import { GAME_BRAND } from '@/config/brand';
 
 export default function Header() {
   const router = useRouter();
@@ -241,6 +242,9 @@ export default function Header() {
               </Link>
               <Link href="/frikik?src=menu" className={styles.mobileNavLink} onClick={() => trackFrikik('frikik_card_click', { entry: 'menu' })}>
                 {t('frikik')}
+              </Link>
+              <Link href={GAME_BRAND.basePath} className={styles.mobileNavLink}>
+                {t('game')}
               </Link>
               {session && <MyAnalysesDropdown />}
               <Link href="/pricing" className={styles.mobileNavLink}>

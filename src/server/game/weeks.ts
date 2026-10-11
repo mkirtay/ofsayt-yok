@@ -59,19 +59,21 @@ export async function loadPublicWeek(weekKey: string): Promise<GameWeekView | nu
 }
 
 /**
- * "Şu anki" hafta: bu TR haftası yayındaysa o; değilse yayındaki en yakın gelecek hafta; o da yoksa en son hafta.
+ * "Şu anki" hafta: (1) bu TR haftası tahmine açıksa o; (2) değilse tahmine açık en yakın gelecek hafta (ör. Pazar akşamı bu
+ * hafta kapandı, gelecek hafta yayında); (3) o da yoksa başlamış en son hafta.
  */
 export async function resolveCurrentWeekKey(now: Date = new Date()): Promise<string | null> {
   const thisWeek = weekKeyOf(now.getTime());
   const weeks = await prisma.gameWeek.findMany({
     where: { status: { not: 'DRAFT' } },
     orderBy: { startsAt: 'desc' },
-    take: 6,
-    select: { weekKey: true, startsAt: true },
+    take: 8,
+    select: { weekKey: true, startsAt: true, status: true },
   });
-  if (weeks.some((w) => w.weekKey === thisWeek)) return thisWeek;
-  const upcoming = weeks.filter((w) => w.startsAt > now).sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime())[0];
-  return upcoming?.weekKey ?? weeks[0]?.weekKey ?? null;
+  if (weeks.some((w) => w.weekKey === thisWeek && w.status === 'PUBLISHED')) return thisWeek;
+  const upcoming = weeks.filter((w) => w.startsAt > now && w.status === 'PUBLISHED').sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime())[0];
+  if (upcoming) return upcoming.weekKey;
+  return weeks.find((w) => w.startsAt <= now)?.weekKey ?? weeks[0]?.weekKey ?? null;
 }
 
 /** Yayındaki haftaların listesi (yeniden eskiye) — hafta seçici. */

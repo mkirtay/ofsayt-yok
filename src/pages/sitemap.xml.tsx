@@ -2,6 +2,7 @@ import type { GetServerSideProps } from 'next';
 import { getFixturesByDate } from '@/services/liveScoreService';
 import { buildMatchSlug } from '@/utils/matchUrl';
 import { siteBaseUrl } from '@/lib/siteUrl';
+import { GAME_BRAND } from '@/config/brand';
 
 const BASE_URL = siteBaseUrl();
 
@@ -11,6 +12,9 @@ const STATIC_ROUTES: { path: string; priority: string; changefreq: string }[] = 
   { path: '/compare', priority: '0.6', changefreq: 'weekly' },
   { path: '/pricing', priority: '0.7', changefreq: 'monthly' },
   { path: '/hesap-silme', priority: '0.3', changefreq: 'yearly' },
+  { path: GAME_BRAND.basePath, priority: '0.7', changefreq: 'daily' },
+  { path: `${GAME_BRAND.basePath}/siralama`, priority: '0.5', changefreq: 'daily' },
+  { path: `${GAME_BRAND.basePath}/kurallar`, priority: '0.4', changefreq: 'monthly' },
 ];
 
 function isoDateOffset(days: number): string {

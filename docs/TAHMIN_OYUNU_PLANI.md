@@ -521,3 +521,31 @@ font yok. Yeni sayfa olduğu için yerelde 3 koşu Lighthouse, deploy sonrası c
 | K14 | AI'yı sıralamada sanal rakip olarak göstermek | Evet, Faz 2, sıra numarasız |
 | K15 | `poll.ts` kilitsizlik bulgusu ayrı iş olarak düzeltilsin mi? | Evet, oyundan önce |
 | K16 | Maç sayısı (5) sabit mi, bonus maç ileride? | 5 sabit; bonus Faz 4 |
+
+---
+
+## 15. MVP uygulama durumu (2026-10-11, dal `feat/prediction-game`, PUSH YOK)
+
+**Yapılanlar (Faz 1):** şema + migration `20261011120000_prediction_game`; hafta / puan / karar modülleri (`src/lib/game/*`);
+kilit SQL'i; `game-settle` işi + `/api/admin/game/settle`; `/api/game/*` ve `/api/admin/game/*`; sayfalar `/tahmin` (landing +
+form), `/tahmin/siralama`, `/tahmin/kurallar`, `/tahmin/hafta/[weekKey]`, `/admin/tahmin`; mobil menü bağlantısı; site
+haritası; TR + EN çeviriler (`game` namespace, `{{game}}`); `GAME_BRAND` + ad koruma testi; `lib/matchResult.ts` ortak skor
+yardımcıları (AI tahmin değerlendirmesi de kullanıyor).
+
+**Plandan sapmalar:**
+- Kilidin "ikinci savunması" (önbellekteki listede maç başlamış görünüyorsa yazımı reddetme) PUT ucunda değil, `game-settle`
+  işinde: liste canlı gösteriyorsa `kickoffAt = şimdi` yapılır → bir sonraki yazım DB kilidine takılır. Neden: PUT yolunda gün
+  listesini okumak soğuk cache'te Sportmonks isteği tetikleyebilirdi (kota kuralı).
+- Nadir skor dağılımı "başlama anında dondurma" yerine sonuçlandırmada hesaplanıp `GameMatch.distribution`'a yazılır.
+  Başlamadan sonra tahmin değişemediği için sonuç aynı; ayrı bir "kilit anı" işi gerekmedi.
+- `GameMatch.checkedAt` eklendi (yedek `fixtures/{id}` sorgusunu saatte bire sınırlamak için).
+- "Şu anki hafta": bu hafta tahmine açık değilse yayındaki en yakın gelecek hafta (Pazar akşamı sonraki haftaya geçiş).
+
+**Canlıya çıkış öncesi (kullanıcı / push oturumu):**
+1. Migration'ı prod'a uygula (yalnız yeni tablolar; deploy öncesi güvenli). Sıra: payments `20261007120000` → frikik
+   `20261008120000` → bu.
+2. cron-job.org'a iş ekle: `POST https://<alan>/api/admin/game/settle`, `Authorization: Bearer $CRON_SECRET`, 10 dk.
+   (Vercel günlük yedek `30 3 * * *` vercel.json'da.)
+3. `/admin/tahmin`'den ilk haftayı oluştur → 5 maç seç → yayınla.
+4. Deploy sonrası `/tahmin` için mobil Lighthouse 3 koşu (yeni sayfa; yerelde ölçülmedi — yerel ortam PGlite + dev sunucu,
+   temsil edici değil).
