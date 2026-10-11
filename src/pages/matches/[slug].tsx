@@ -16,11 +16,10 @@ import { WORLD_CUP_COMPETITION_ID } from '@/config/worldCup';
 import { useTranslation } from '@/lib/i18n';
 import { leagueNameById } from '@/utils/leagueName';
 import { resolveMatchPage } from '@/server/resolveMatchPage';
-import { loadMatchCardH2h } from '@/server/matchCardH2h';
 import { loadAnalysisPreviewForPage } from '@/server/analysisPreviewForPage';
 import type { AnalysisPreview } from '@/utils/analysisPreview';
 import { analysisPaywallJsonLd } from '@/utils/analysisPaywall';
-import { loadMatchDetailSeed } from '@/server/matchDetailSeed';
+import { defaultMatchPageOptionalDeps, loadMatchPageOptionalSections } from '@/server/matchPageOptional';
 import { SPORTMONKS_TIMEOUT_MS, withSportmonksTimeout } from '@/server/sportmonks/cachedFetch';
 import type { Head2HeadData } from '@/services/liveScoreService';
 import type { MatchEvent, MatchLineupData, MatchStatsData } from '@/models/domain';
@@ -102,9 +101,13 @@ export const getServerSideProps: GetServerSideProps<MatchDetailProps> = async (c
           return { redirect: { destination: qIdx >= 0 ? canonical + resolved.slice(qIdx) : canonical, statusCode: 301 } };
         }
         const apiMatchId = String(page.match.id);
-        const [h2h, seed, analysisPreview] = await Promise.all([
-          withPageTimeout(() => loadMatchCardH2h(page.match)),
-          withPageTimeout(() => loadMatchDetailSeed(apiMatchId)),
+        // H2H/form + istatistik/kadro: Fixture havuzu baskı altındaysa sunucuda atlanır, istemci çeker (bkz. matchPageOptional).
+        const [{ h2h, seed }, analysisPreview] = await Promise.all([
+          loadMatchPageOptionalSections(page.match, apiMatchId, {
+            ...defaultMatchPageOptionalDeps,
+            loadH2h: (m) => withPageTimeout(() => defaultMatchPageOptionalDeps.loadH2h(m)),
+            loadSeed: (id) => withPageTimeout(() => defaultMatchPageOptionalDeps.loadSeed(id)),
+          }),
           // Kredi modeli v2: AI analizi ücretsiz önizlemesi (tek DB sorgusu; hata → null, sayfa yine çizilir).
           loadAnalysisPreviewForPage(apiMatchId),
         ]);

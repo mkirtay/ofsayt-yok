@@ -80,6 +80,15 @@ export function stretchFreshSeconds(fresh: number, pool: string, now: number): n
   return Math.max(fresh, Math.min(fresh * factor, MAX_STRETCHED_FRESH_SECONDS));
 }
 
+/**
+ * Havuz baskı altında mı: bilinen kalan < %10 (seyreltme devrede) ya da 429 soğuması sürüyor. İsteğe bağlı sunucu
+ * çağrılarını (ör. maç sayfasında H2H / form / istatistik / kadro) atlamak için. Bilgi yoksa false (normal davranış).
+ */
+export async function isPoolUnderPressure(pool: string, now: number): Promise<boolean> {
+  if (freshStretchFactor(pool, now) > 1) return true;
+  return (await poolCooldownUntil(pool, now)) > now;
+}
+
 // ─── Soğuma (429) ──────────────────────────────────────────────────────────
 
 export const DEFAULT_COOLDOWN_SECONDS = 60;

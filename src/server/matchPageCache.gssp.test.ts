@@ -20,6 +20,8 @@ vi.mock('@/server/resolveMatchPage', () => ({
 }));
 vi.mock('@/server/matchCardH2h', () => ({ loadMatchCardH2h: async () => h2hResult.value }));
 vi.mock('@/server/matchDetailSeed', () => ({ loadMatchDetailSeed: async () => seedResult.value }));
+const pressure = vi.hoisted(() => ({ value: false, calls: { h2h: 0, seed: 0 } }));
+vi.mock('@/server/sportmonks/poolGuard', () => ({ isPoolUnderPressure: async () => pressure.value, poolForPath: () => 'Fixture' }));
 
 function context() {
   const headers: Record<string, string> = {};
@@ -34,6 +36,20 @@ describe('maç sayfası Cache-Control — form / karşılaşma geçmişi', () =>
   beforeEach(() => {
     h2hResult.value = undefined;
     seedResult.value = { stats: null, lineups: null };
+    pressure.value = false;
+  });
+
+  it('Fixture havuzu baskı altında → H2H / istatistik / kadro SSR\'da atlanır (istemci çeker), maç ve olaylar yine sunucuda, kısa CDN', async () => {
+    const { getServerSideProps } = await import('@/pages/matches/[slug]');
+    pressure.value = true;
+    h2hResult.value = { team1: {}, team2: {}, h2h: [] };
+    seedResult.value = { stats: { home: {}, away: {} }, lineups: null };
+    const { ctx, headers } = context();
+    const result = (await getServerSideProps(ctx)) as { props: Record<string, unknown> };
+    expect(result.props.initialMatch).toMatchObject({ id: 19745050 });
+    expect(result.props.initialEvents).toEqual([{ id: 1, minute: 4, type: 'goal' }]);
+    for (const k of ['initialH2h', 'initialStats', 'initialLineups']) expect(k in result.props).toBe(false);
+    expect(headers['Cache-Control']).toBe('public, s-maxage=30, stale-while-revalidate=30');
   });
 
   it('bütçe aşıldı (initialH2h yok, iskelet) → s-maxage=30, stale-while-revalidate=30', async () => {
