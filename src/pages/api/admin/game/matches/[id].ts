@@ -11,8 +11,9 @@ import { requireAdmin } from '@/lib/requireAuth';
 import { methodNotAllowed, queryString } from '@/server/game/http';
 import { invalidateLeaderboards } from '@/server/game/play';
 import { finishMatch, voidMatch } from '@/server/game/settle';
+import { withGameGate } from '@/server/game/access';
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return methodNotAllowed(res, 'POST');
   res.setHeader('Cache-Control', 'private, no-store');
   const guard = await requireAdmin(req, res);
@@ -38,3 +39,5 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(500).json({ error: 'Sunucu hatası.' });
   }
 }
+
+export default withGameGate(handler);

@@ -12,17 +12,23 @@ import { GAME_BRAND } from '@/config/brand';
 import { siteBaseUrl } from '@/lib/siteUrl';
 import { propsJsonSafe } from '@/server/propsJsonSafe';
 import { GAME_PAGE_CACHE, loadGameHome, type GameHomeData } from '@/server/game/pageData';
+import { gamePageGate } from '@/server/game/access';
+
+type Props = GameHomeData & { noindex: boolean };
 
 /**
  * Tahmin oyunu ana sayfası: hero → haftanın maçları (form) → 3 adım → nasıl oynanır → canlı sıralama (sezon ilk 10) → SSS → CTA.
  * ScoreHunter landing iskeletinden esinli (ödül / uygulama ekranı bölümleri yok). SSR verisi kişisel değil → CDN 60 sn.
  */
-export const getServerSideProps: GetServerSideProps<GameHomeData> = async ({ res }) => {
-  res.setHeader('Cache-Control', GAME_PAGE_CACHE);
-  return { props: propsJsonSafe(await loadGameHome()) };
+export const getServerSideProps: GetServerSideProps<Props> = async ({ req, res }) => {
+  // GAME_ENABLED kapısı (config/gameFlag.ts): kapalı / önizlemede yetkisiz → 404.
+  const gate = await gamePageGate(req, res);
+  if (!gate) return { notFound: true };
+  if (gate.publicCache) res.setHeader('Cache-Control', GAME_PAGE_CACHE);
+  return { props: propsJsonSafe({ ...(await loadGameHome()), noindex: gate.noindex }) };
 };
 
-export default function GameHomePage({ week, season, board, prevKey, nextKey }: GameHomeData) {
+export default function GameHomePage({ week, season, board, prevKey, nextKey, noindex }: Props) {
   const { t } = useTranslation('game');
   const { status } = useSession();
   const SITE = siteBaseUrl();
@@ -33,6 +39,7 @@ export default function GameHomePage({ week, season, board, prevKey, nextKey }: 
     <>
       <Head>
         <title>{t('pageTitle')}</title>
+        {noindex ? <meta name="robots" content="noindex, nofollow" /> : null}
         <meta name="description" content={t('pageDesc')} />
         <link rel="canonical" href={url} />
         <meta property="og:title" content={t('pageTitle')} />

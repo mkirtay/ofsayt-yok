@@ -7,8 +7,9 @@ import { captureError } from '@/lib/logger';
 import { isSeasonKey, isWeekKey } from '@/lib/game/week';
 import { limitRead, methodNotAllowed, queryString } from '@/server/game/http';
 import { LEADERBOARD_CACHE_SECONDS, loadLeaderboard } from '@/server/game/play';
+import { withGameGate } from '@/server/game/access';
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') return methodNotAllowed(res, 'GET');
   const scope = queryString(req, 'scope');
   const key = queryString(req, 'key');
@@ -24,3 +25,5 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(500).json({ error: 'Sunucu hatası.' });
   }
 }
+
+export default withGameGate(handler);

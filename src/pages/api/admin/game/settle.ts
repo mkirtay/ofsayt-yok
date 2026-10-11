@@ -9,13 +9,14 @@ import { requireAdmin } from '@/lib/requireAuth';
 import { acquireCronLock, isCronRequest, recordCronTick, runCronJob } from '@/server/cronJobs';
 import { runInBackground } from '@/server/backgroundTask';
 import { settleGameMatches, type SettleSummary } from '@/server/game/settle';
+import { withGameGate } from '@/server/game/access';
 
 export const config = { maxDuration: 120 };
 
 const BUSY = { error: 'Sonuç işi zaten çalışıyor.', code: 'ALREADY_RUNNING' } as const;
 const summarize = (r: SettleSummary) => ({ ...r });
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+async function handler(req: NextApiRequest, res: NextApiResponse) {
   const isCron = isCronRequest(req.headers.authorization);
   if (req.method !== 'POST' && !(isCron && req.method === 'GET')) {
     res.setHeader('Allow', 'GET, POST');
@@ -35,3 +36,5 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (run.status === 'failed') return res.status(500).json({ error: 'Sonuç işi başarısız oldu.' });
   return res.status(200).json(run.result);
 }
+
+export default withGameGate(handler, { cronBypass: (req) => isCronRequest(req.headers.authorization) });

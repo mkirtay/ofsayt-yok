@@ -6,8 +6,9 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { captureError } from '@/lib/logger';
 import { limitRead, methodNotAllowed, queryString } from '@/server/game/http';
 import { loadDistribution } from '@/server/game/play';
+import { withGameGate } from '@/server/game/access';
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') return methodNotAllowed(res, 'GET');
   const id = queryString(req, 'id');
   if (!id || !/^[a-z0-9]{8,40}$/i.test(id)) return res.status(400).json({ error: 'Geçersiz maç.' });
@@ -26,3 +27,5 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(500).json({ error: 'Sunucu hatası.' });
   }
 }
+
+export default withGameGate(handler);

@@ -549,3 +549,23 @@ yardımcıları (AI tahmin değerlendirmesi de kullanıyor).
 3. `/admin/tahmin`'den ilk haftayı oluştur → 5 maç seç → yayınla.
 4. Deploy sonrası `/tahmin` için mobil Lighthouse 3 koşu (yeni sayfa; yerelde ölçülmedi — yerel ortam PGlite + dev sunucu,
    temsil edici değil).
+
+## 16. Görünürlük bayrağı `GAME_ENABLED` (2026-10-11)
+
+Onay gelene kadar prod'da görünmesin diye. Sunucu env'i, **varsayılan KAPALI** (`src/config/gameFlag.ts`).
+
+| `GAME_ENABLED` | Mod | Sayfalar `/tahmin*`, `/admin/tahmin` | `/api/game/*`, `/api/admin/game/*` | Menü + sitemap | İndeks / önbellek |
+|---|---|---|---|---|---|
+| yok, boş, `0`, `false`, `off`, bilinmeyen | off | 404 (admin dahil) | 404 (admin ve cron dahil) | gizli | — |
+| `1`, `true`, `on`, `preview` | preview | yalnız ADMIN rolü ya da `GAME_PREVIEW_EMAILS`'teki e-postalar; diğerlerine 404 | aynı (sonuç işi Bearer CRON_SECRET ile geçer) | gizli | `noindex, nofollow` (meta + X-Robots-Tag); `Cache-Control: private, no-store` |
+| `public` | public | herkese açık | herkese açık | görünür | indekslenir; CDN önbelleği |
+
+- `GAME_PREVIEW_EMAILS`: virgül/boşluk ayrımlı e-posta listesi (büyük-küçük harf duyarsız). ADMIN rolü listede olmasa da görür.
+- "Açık" (`1`/`true`) bilerek **önizleme**: herkese açmak için ayrıca `public` gerekir.
+- Mobil menü bağlantısı derlemede gömülür (`next.config.ts` → `NEXT_PUBLIC_GAME_PUBLIC`): env değişince **yeniden deploy**.
+- `/admin/tahmin` ve `/api/admin/*` için middleware'in oturum kontrolü önce çalışır (girişsize giriş yönlendirmesi / 401);
+  oturumlu herkese kapalıyken 404.
+- Kapı her uçta/sayfada zorunlu: `src/server/game/access.guard.test.ts` yeni bir uç `withGameGate`'siz eklenirse kırılır.
+- Lansman sırası: migration → `GAME_ENABLED=1` + `GAME_PREVIEW_EMAILS` ile önizleme → cron-job.org `game-settle` →
+  onay → `GAME_ENABLED=public` + yeniden deploy.
+

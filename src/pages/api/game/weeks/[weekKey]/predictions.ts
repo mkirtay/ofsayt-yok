@@ -13,10 +13,11 @@ import { prisma } from '@/lib/prisma';
 import { requireAuth } from '@/lib/requireAuth';
 import { limitWrite, methodNotAllowed, queryString } from '@/server/game/http';
 import { parseSaveBody, savePredictions } from '@/server/game/play';
+import { withGameGate } from '@/server/game/access';
 
 export const NICKNAME_REQUIRED_CODE = 'NICKNAME_REQUIRED';
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'PUT') return methodNotAllowed(res, 'PUT');
   res.setHeader('Cache-Control', 'private, no-store');
   const weekKey = queryString(req, 'weekKey');
@@ -38,3 +39,5 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(500).json({ error: 'Sunucu hatası.' });
   }
 }
+
+export default withGameGate(handler);

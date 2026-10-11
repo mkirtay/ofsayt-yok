@@ -13,25 +13,29 @@ import { propsJsonSafe } from '@/server/propsJsonSafe';
 import { loadLeaderboard } from '@/server/game/play';
 import { GAME_PAGE_CACHE } from '@/server/game/pageData';
 import { resolveCurrentWeekKey } from '@/server/game/weeks';
+import { gamePageGate } from '@/server/game/access';
 
-type Props = { weekKey: string | null; season: string; board: LeaderboardView | null };
+type Props = { weekKey: string | null; season: string; board: LeaderboardView | null; noindex: boolean };
 
 /** Sıralama: bu hafta / sezon (ilk 50). İlk sekme haftalık; hafta yoksa sezon. */
-export const getServerSideProps: GetServerSideProps<Props> = async ({ res }) => {
-  res.setHeader('Cache-Control', GAME_PAGE_CACHE);
+export const getServerSideProps: GetServerSideProps<Props> = async ({ req, res }) => {
+  const gate = await gamePageGate(req, res);
+  if (!gate) return { notFound: true };
+  if (gate.publicCache) res.setHeader('Cache-Control', GAME_PAGE_CACHE);
   const weekKey = await resolveCurrentWeekKey();
   const season = (weekKey && seasonOf(weekKey)) || seasonOf(weekKeyOf(Date.now()))!;
   const board = weekKey ? await loadLeaderboard('week', weekKey) : await loadLeaderboard('season', season);
-  return { props: propsJsonSafe({ weekKey, season, board }) };
+  return { props: propsJsonSafe({ weekKey, season, board, noindex: gate.noindex }) };
 };
 
-export default function GameBoardPage({ weekKey, season, board }: Props) {
+export default function GameBoardPage({ weekKey, season, board, noindex }: Props) {
   const { t } = useTranslation('game');
   const url = `${siteBaseUrl()}${GAME_BRAND.basePath}/siralama`;
   return (
     <>
       <Head>
         <title>{t('boardTitle')}</title>
+        {noindex ? <meta name="robots" content="noindex, nofollow" /> : null}
         <meta name="description" content={t('pageDesc')} />
         <link rel="canonical" href={url} />
       </Head>

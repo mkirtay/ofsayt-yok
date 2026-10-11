@@ -42,6 +42,10 @@ const nextConfig: NextConfig = {
   // Aynı klasörde ikinci bir `next dev` (ör. paralel önizleme) `.next/dev/lock` kilidine takılmasın diye
   // build klasörü env ile değiştirilebilir; varsayılan `.next`.
   distDir: process.env.NEXT_DIST_DIR || '.next',
+  // Tahmin oyunu menü bağlantısı: yalnız GAME_ENABLED=public iken (config/gameFlag.ts). Derlemede gömülür → env değişince yeniden deploy.
+  env: {
+    NEXT_PUBLIC_GAME_PUBLIC: process.env.GAME_ENABLED?.trim().toLowerCase() === 'public' ? '1' : '0',
+  },
   // Üst dizindeki ekstra package-lock.json Turbopack'in yanlış root seçmesine yol açıyordu.
   turbopack: {
     root: path.resolve(__dirname),

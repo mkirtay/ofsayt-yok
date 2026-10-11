@@ -4,8 +4,9 @@ import { captureError } from '@/lib/logger';
 import { isWeekKey } from '@/lib/game/week';
 import { limitRead, methodNotAllowed, queryString } from '@/server/game/http';
 import { loadPublicWeek } from '@/server/game/weeks';
+import { withGameGate } from '@/server/game/access';
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') return methodNotAllowed(res, 'GET');
   const weekKey = queryString(req, 'weekKey');
   if (!isWeekKey(weekKey)) return res.status(400).json({ error: 'Geçersiz hafta.' });
@@ -20,3 +21,5 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(500).json({ error: 'Sunucu hatası.' });
   }
 }
+
+export default withGameGate(handler);

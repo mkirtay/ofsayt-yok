@@ -53,6 +53,7 @@ const ID = 'cmatch000000001';
 const good = { items: [{ gameMatchId: ID, home: 2, away: 1 }], jokerGameMatchId: ID };
 
 beforeEach(() => {
+  vi.stubEnv('GAME_ENABLED', 'public'); // kapı ayrı testte (gameGate.test.ts)
   h.userId = 'u1';
   h.username = 'eren';
   h.rl = { success: true, remaining: 1, resetAt: 0 };

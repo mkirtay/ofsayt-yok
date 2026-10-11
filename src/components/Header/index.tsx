@@ -27,6 +27,7 @@ import { WORLD_CUP_PAGE_ENABLED } from '@/config/worldCup';
 import styles from './header.module.scss';
 import BrandLogo from '@/components/BrandLogo';
 import { GAME_BRAND } from '@/config/brand';
+import { GAME_PUBLIC_CLIENT } from '@/config/gameFlag';
 
 export default function Header() {
   const router = useRouter();
@@ -243,9 +244,11 @@ export default function Header() {
               <Link href="/frikik?src=menu" className={styles.mobileNavLink} onClick={() => trackFrikik('frikik_card_click', { entry: 'menu' })}>
                 {t('frikik')}
               </Link>
-              <Link href={GAME_BRAND.basePath} className={styles.mobileNavLink}>
-                {t('game')}
-              </Link>
+              {GAME_PUBLIC_CLIENT ? (
+                <Link href={GAME_BRAND.basePath} className={styles.mobileNavLink}>
+                  {t('game')}
+                </Link>
+              ) : null}
               {session && <MyAnalysesDropdown />}
               <Link href="/pricing" className={styles.mobileNavLink}>
                 {t('pricing')}

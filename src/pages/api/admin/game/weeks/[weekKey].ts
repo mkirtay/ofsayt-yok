@@ -10,6 +10,7 @@ import { requireAdmin } from '@/lib/requireAuth';
 import { methodNotAllowed, queryString } from '@/server/game/http';
 import { loadSuggestions } from '@/server/game/suggestions';
 import { GameAdminError, loadAdminWeek, publishWeek, setWeekMatches } from '@/server/game/weeks';
+import { withGameGate } from '@/server/game/access';
 
 const STATUS: Record<GameAdminError['code'], number> = {
   BAD_WEEK: 400,
@@ -21,7 +22,7 @@ const STATUS: Record<GameAdminError['code'], number> = {
   SNAPSHOT: 502,
 };
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (!['GET', 'PUT', 'POST'].includes(req.method ?? '')) return methodNotAllowed(res, 'GET, PUT, POST');
   res.setHeader('Cache-Control', 'private, no-store');
   const guard = await requireAdmin(req, res);
@@ -48,3 +49,5 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(500).json({ error: 'Sunucu hatası.' });
   }
 }
+
+export default withGameGate(handler);
