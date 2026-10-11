@@ -39,6 +39,9 @@ describe('mapSportmonksFixtureToMatch', () => {
     // tek bir sentetik composite'e birleştiriliyor.
     const composite: SportmonksFixture = {
       ...(inplayFixture as SportmonksFixture),
+      // Canlı (1. yarı): başlamamış maçta skor yok sayılır (aşağıdaki test).
+      state_id: 2,
+      state: undefined,
       scores: scoresInplay as SportmonksFixture['scores'],
       periods: periodsLive as SportmonksFixture['periods'],
       venue: venueTurkishCup as SportmonksFixture['venue'],
@@ -91,5 +94,41 @@ describe('mapSportmonksFixtureToMatch', () => {
     expect(match.competition).toBeUndefined();
     expect(match.scores).toBeUndefined();
     expect(match.time).toBe('');
+  });
+
+  describe('başlamamış maçın skoru (Sportmonks başlamadan ~1 sa önce 0-0 yazıyor)', () => {
+    const zeroRows = [
+      { type_id: 1525, participant_id: 1, description: 'CURRENT', score: { goals: 0, participant: 'home' } },
+      { type_id: 1525, participant_id: 2, description: 'CURRENT', score: { goals: 0, participant: 'away' } },
+    ] as SportmonksFixture['scores'];
+    const withState = (stateId: number, scores = zeroRows): SportmonksFixture => ({
+      ...(inplayFixture as SportmonksFixture),
+      state_id: stateId,
+      state: undefined,
+      scores,
+    });
+
+    it('başlamadı / ertelendi / gecikti / tarih belirsiz / beklemede: skor yok (liste "—", maç sayfası saat)', () => {
+      for (const stateId of [1, 10, 13, 16, 26]) {
+        const match = mapSportmonksFixtureToMatch(withState(stateId));
+        expect(match.status, `state ${stateId}`).toBe('NOT STARTED');
+        expect(match.scores, `state ${stateId}`).toBeUndefined();
+      }
+    });
+
+    it('canlı, devre arası ve bitmiş maçta 0-0 dahil skor aynen kalır', () => {
+      for (const stateId of [2, 3, 22, 5, 7]) {
+        expect(mapSportmonksFixtureToMatch(withState(stateId)).scores?.score, `state ${stateId}`).toBe('0-0');
+      }
+      const twoOne = [
+        { type_id: 1525, participant_id: 1, description: 'CURRENT', score: { goals: 2, participant: 'home' } },
+        { type_id: 1525, participant_id: 2, description: 'CURRENT', score: { goals: 1, participant: 'away' } },
+      ] as SportmonksFixture['scores'];
+      expect(mapSportmonksFixtureToMatch(withState(5, twoOne)).scores?.score).toBe('2-1');
+      // Hükmen (WO / AWARDED) ve yarıda kalan "bitti" kovasında: skor korunur.
+      for (const stateId of [14, 15, 17]) {
+        expect(mapSportmonksFixtureToMatch(withState(stateId, twoOne)).scores?.score, `state ${stateId}`).toBe('2-1');
+      }
+    });
   });
 });

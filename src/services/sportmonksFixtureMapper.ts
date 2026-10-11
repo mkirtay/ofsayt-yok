@@ -106,7 +106,10 @@ export function mapSportmonksFixtureToMatch(fixture: SportmonksFixture): Match {
   const status = stateId != null ? mapSportmonksStateToPhase(stateId) : 'NOT STARTED';
   const stateCode = stateId != null ? mapSportmonksStateCode(stateId) : undefined;
   const minuteLabel = formatLiveMinuteLabel(fixture.periods);
-  const matchScore = deriveMatchScore(fixture.scores);
+  // Sportmonks başlama düdüğünden ~1 sa önce başlamamış maça 0-0 skor satırları yazıyor: başlamadı kovasındaki maçta
+  // (NS, ertelendi, gecikti, tarih belirsiz, beklemede) skor yok sayılır → liste "—", maç sayfası saat/gün gösterir.
+  // Canlı ve bitmiş (hükmen / yarıda kaldı dahil) maçların skoru aynen kalır.
+  const matchScore = status === 'NOT STARTED' ? null : deriveMatchScore(fixture.scores);
   const { date, scheduled } = splitStartingAt(fixture.starting_at);
   const roundStage = resolveRoundAndStage(fixture);
   const location = formatVenueLocation(fixture.venue);
