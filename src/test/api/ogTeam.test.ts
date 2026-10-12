@@ -77,16 +77,16 @@ describe('GET /api/og/team/[id]', () => {
   });
 
   it('geçersiz kimlik, takım yok, hata → varsayılan görsel (kısa önbellek)', async () => {
-    expect((await get({ id: '34abc', v: teamOgVersion() })).headers.location).toBe('/images/og-default-v2.png');
+    expect((await get({ id: '34abc', v: teamOgVersion() })).headers.location).toBe('/images/og-default-v3.png');
     h.load.mockResolvedValueOnce(null);
     const missing = await get({ id: '999', v: teamOgVersion() });
     expect([missing.statusCode, missing.headers.location, missing.headers['cache-control']]).toEqual([
       307,
-      '/images/og-default-v2.png',
+      '/images/og-default-v3.png',
       'public, max-age=300, s-maxage=300',
     ]);
     h.load.mockRejectedValueOnce(new Error('upstream'));
-    expect((await get({ id: '34', v: teamOgVersion() })).headers.location).toBe('/images/og-default-v2.png');
+    expect((await get({ id: '34', v: teamOgVersion() })).headers.location).toBe('/images/og-default-v3.png');
     expect(h.rendered).toBe(0);
   });
 });

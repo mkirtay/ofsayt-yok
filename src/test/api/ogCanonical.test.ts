@@ -126,7 +126,7 @@ describe('çizim bütçesi', () => {
       await get(match as Handler, '/api/og/match/19745050?v=F_2-1', { id: '19745050' }),
       await get(team as Handler, `/api/og/team/34?v=${teamOgVersion()}`, { id: '34' }),
     ]) {
-      expect([r.statusCode, r.headers.location]).toEqual([307, '/images/og-default-v2.png']);
+      expect([r.statusCode, r.headers.location]).toEqual([307, '/images/og-default-v3.png']);
       expect(r.headers['cache-control']).toBe('private, max-age=60');
     }
     expect(h.lookup).not.toHaveBeenCalled();
@@ -138,7 +138,7 @@ describe('çizim bütçesi', () => {
   it('global bütçe aşılınca çizilmez; yalnız çizimden önce sayılır (sürüm yönlendirmesi saymaz)', async () => {
     h.rl.mockImplementation(async (key: string) => ({ success: key !== 'og-render:global', remaining: 0, resetAt: 0 }));
     const r = await get(match as Handler, '/api/og/match/19745050?v=F_2-1', { id: '19745050' });
-    expect([r.statusCode, r.headers.location]).toEqual([307, '/images/og-default-v2.png']);
+    expect([r.statusCode, r.headers.location]).toEqual([307, '/images/og-default-v3.png']);
     expect(h.rendered).toEqual([]);
     expect(h.rl).toHaveBeenCalledWith('og-render:global', OG_RENDER_GLOBAL_LIMIT, 10 * 60_000);
 

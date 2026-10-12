@@ -77,7 +77,7 @@ const nextConfig: NextConfig = {
     // Yalnızca haber kapak görselleri optimize edilir (bkz. src/config/newsImageHosts.ts); diğer uzak görseller
     // `unoptimized` ya da düz <img>. Joker host kota kötüye kullanımına açıktı.
     remotePatterns: NEWS_IMAGE_HOSTS.map((hostname) => ({ protocol: 'https' as const, hostname, pathname: '/**' })),
-    localPatterns: [{ pathname: '/images/**' }],
+    localPatterns: [{ pathname: '/images/**' }, { pathname: '/brand/**' }],
   },
 };
 

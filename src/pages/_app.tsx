@@ -12,7 +12,7 @@ import RouteProgress from '@/components/RouteProgress'
 import SignupAttributionSync from '@/components/SignupAttributionSync'
 import '@/styles/globals.scss'
 import { siteBaseUrl } from '@/lib/siteUrl'
-import { OG_DEFAULT_IMAGE } from '@/config/brandImages'
+import { BRAND_ICON_SVG, OG_DEFAULT_IMAGE } from '@/config/brandImages'
 import { BRAND } from '@/config/brand'
 
 /**
@@ -80,9 +80,13 @@ function App({ Component, pageProps: { session, ...pageProps } }: AppProps) {
         <meta name="twitter:card" content="summary_large_image" key="twitter:card" />
         <meta name="twitter:image" content={`${siteBaseUrl()}${OG_DEFAULT_IMAGE.path}`} key="twitter:image" />
         <meta name="twitter:image:alt" content={OG_DEFAULT_IMAGE.alt} key="twitter:image:alt" />
-        <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+        {/* İkonlar: scripts/generate-brand-images.mjs üretir (kaynak public/brand/*.svg). */}
+        <link rel="icon" href={BRAND_ICON_SVG} type="image/svg+xml" />
         <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="icon" href="/brand/favicon-32.png" type="image/png" sizes="32x32" />
+        <link rel="icon" href="/brand/favicon-16.png" type="image/png" sizes="16x16" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <link rel="manifest" href="/manifest.webmanifest" />
       </Head>
       <div data-app-root className={`${inter.className} ${inter.variable} ${interExt.variable}`}>
         <RouteProgress />

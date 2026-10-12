@@ -25,8 +25,7 @@ import { lockBodyScroll } from '@/utils/scrollLock';
 import { MOBILE_LAYOUT_QUERY } from '@/config/breakpoints';
 import { WORLD_CUP_PAGE_ENABLED } from '@/config/worldCup';
 import styles from './header.module.scss';
-import { BRAND } from '@/config/brand';
-import { BRAND_LOGO_SVG } from '@/config/brandImages';
+import BrandLogo from '@/components/BrandLogo';
 
 export default function Header() {
   const router = useRouter();
@@ -132,14 +131,8 @@ export default function Header() {
           <div className={styles.left}>
             <div className={styles.logo}>
               <Link href="/" className={styles.logoLink} onMouseEnter={prefetchHome} onFocus={prefetchHome}>
-                <Image
-                  src={isWorldCupTheme ? '/images/logo-black.svg' : BRAND_LOGO_SVG}
-                  alt={BRAND.name}
-                  width={isWorldCupTheme ? 146 : 110}
-                  height={isWorldCupTheme ? 28 : 34}
-                  style={{ height: 'auto' }}
-                  priority
-                />
+                {/* Header her iki temada da koyu zeminli (Dünya Kupası teması dahil) → koyu-zemin varyantı. */}
+                <BrandLogo surface="dark" height={isWorldCupTheme ? 28 : 34} priority />
               </Link>
             </div>
           </div>

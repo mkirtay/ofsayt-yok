@@ -1,10 +1,8 @@
 import Link from 'next/link';
-import Image from 'next/image';
 import { useTranslation } from '@/lib/i18n';
 import Container from '@/components/Container';
 import styles from './footer.module.scss';
-import { BRAND } from '@/config/brand';
-import { BRAND_LOGO_SVG } from '@/config/brandImages';
+import BrandLogo from '@/components/BrandLogo';
 
 export default function Footer() {
   const { t } = useTranslation('common');
@@ -15,13 +13,8 @@ export default function Footer() {
       <Container className={styles.footerContainer}>
         <div className={styles.footerTop}>
           <div className={styles.footerBrand}>
-            <Image
-              src={BRAND_LOGO_SVG}
-              alt={BRAND.name}
-              width={110}
-              height={34}
-              className={styles.footerLogo}
-            />
+            {/* Footer her iki temada da koyu zeminli → koyu-zemin varyantı. */}
+            <BrandLogo surface="dark" height={34} />
             <p className={styles.footerTagline}>{t('footer.tagline')}</p>
           </div>
 

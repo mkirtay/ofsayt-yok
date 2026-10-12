@@ -74,16 +74,16 @@ describe('GET /api/og/match/[id]', () => {
   });
 
   it('geçersiz kimlik, maç yok ya da hata → varsayılan görsel (kısa önbellek)', async () => {
-    expect((await get({ id: '../etc', v: 'S' })).headers.location).toBe('/images/og-default-v2.png');
+    expect((await get({ id: '../etc', v: 'S' })).headers.location).toBe('/images/og-default-v3.png');
     expect(h.lookup).not.toHaveBeenCalled();
 
     h.lookup.mockResolvedValueOnce({ kind: 'missing' });
     const missing = await get({ id: '19999999', v: 'S' });
-    expect([missing.statusCode, missing.headers.location]).toEqual([307, '/images/og-default-v2.png']);
+    expect([missing.statusCode, missing.headers.location]).toEqual([307, '/images/og-default-v3.png']);
     expect(missing.headers['cache-control']).toBe('public, max-age=300, s-maxage=300');
 
     h.lookup.mockRejectedValueOnce(new Error('upstream'));
-    expect((await get({ id: '19745050', v: 'F_2-1' })).headers.location).toBe('/images/og-default-v2.png');
+    expect((await get({ id: '19745050', v: 'F_2-1' })).headers.location).toBe('/images/og-default-v3.png');
     expect(h.rendered).toHaveLength(0);
   });
 });
@@ -92,6 +92,6 @@ describe('eski /api/og/match?home=…', () => {
   it('serbest metni kabul etmez: her durumda varsayılan görsele 308', async () => {
     const r = legacy(new NextRequest('https://www.ofsaytyok.app/api/og/match?home=Sahte&away=Takım&score=9-0'));
     expect(r.status).toBe(308);
-    expect(r.headers.get('location')).toBe('https://www.ofsaytyok.app/images/og-default-v2.png');
+    expect(r.headers.get('location')).toBe('https://www.ofsaytyok.app/images/og-default-v3.png');
   });
 });

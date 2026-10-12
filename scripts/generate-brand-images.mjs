@@ -1,19 +1,19 @@
 #!/usr/bin/env node
 /**
- * Marka görsellerini güncel logodan (public/images/ofsaytyok-logo.svg; kare tam logo: scripts/brand/icon-square-logo.svg)
+ * Marka görsellerini Scor3 logo SVG'lerinden (public/brand/scor3-02-skorbord-*.svg — hazır vektör, elle düzenlenmez)
  * yeniden üretir:
  *
- * - public/images/og-default-v2.png  1200×630 varsayılan paylaşım görseli (og:image / twitter:image). Kompozisyon eski
- *   `/api/og/default` ile aynı (marka yeşili zemin, sağda koyu yeşil eğik şerit, ortada logo, altında alt yazı) ve
- *   aynı çizim motoruyla (next/og → satori) çizilir; yalnız logo yeni.
- * - public/apple-touch-icon.png      180×180 (iOS SVG kabul etmiyor) — kare tam logodan.
- * - public/icon-512.png              512×512 — yapılandırılmış veri (JSON-LD Organization / publisher) logosu; kare tam logodan.
- * - src/server/og/brandLogo.generated.ts  yeni logo (SVG, base64) — dinamik paylaşım görsellerine gömülü (ağdan okunmaz).
- * - public/favicon.ico               16/32/48 ve public/icon.svg (sekme ikonu) — logonun yalnız işareti (sol kısım) yeşil
- *   kare üstünde: tam logo 16–48 px'te okunmuyor.
+ * - public/images/og-default-v3.png  1200×630 varsayılan paylaşım görseli (og:image / twitter:image): koyu zemin,
+ *   ortada koyu-zemin logosu, altında alt yazı, altta lime şerit. next/og (satori) ile çizilir.
+ * - src/server/og/brandLogo.generated.ts  koyu-zemin logosu (SVG, base64) — dinamik paylaşım görsellerine gömülü.
+ * - public/favicon.ico               16/32/48 (PNG gömülü ICO) — ikon SVG'sinden.
+ * - public/brand/favicon-16.png, favicon-32.png
+ * - public/apple-touch-icon.png      180×180, köşesiz tam dolu (iOS köşeyi kendisi yuvarlar; şeffaf köşe siyah görünür).
+ * - public/brand/icon-192.png, icon-512.png  PWA ikonları (purpose "any"); icon-512 aynı zamanda JSON-LD logosu.
+ * - public/brand/icon-maskable-512.png  tam dolu lime zemin, işaret güvenli alanın (merkezde %80 çaplı daire) içinde.
  *
- * Kullanım: `node scripts/generate-brand-images.mjs`. Dosya adı değişirse (önbellek kırma: -v3 …) referansları da güncelle:
- * src/config/brandImages.ts.
+ * Kullanım: `node scripts/generate-brand-images.mjs`. OG dosya adı değişirse (önbellek kırma: -v4 …) referansı da
+ * güncelle: src/config/brandImages.ts.
  */
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -25,20 +25,24 @@ import { ImageResponse } from 'next/og.js';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const pub = (...p) => path.join(root, 'public', ...p);
 
-const GREEN = '#00A76F';
-const GREEN_DARK = '#007B55';
+const LIME = '#C6FF3A';
+const INK = '#0A0E13';
 const SUBTITLE = 'Canlı Skorlar · Maç Analizi · Puan Durumu';
+const SUBTITLE_COLOR = 'rgba(243,244,238,0.78)';
 const OG_MAX_BYTES = 300 * 1024;
 
-/** ofsaytyok-logo.svg: viewBox 0 0 138 42; işaret x 0–36 (ölçüldü: 36'dan sonra boş sütun, yazı 37,2'de başlıyor). */
-const LOGO_VIEWBOX = { w: 138, h: 42 };
-const MARK_WIDTH = 36;
+/** Yatay logo viewBox: -0.87 -143.47 551.19 184 (koyu ve açık zemin aynı). */
+const LOGO_VIEWBOX = { w: 551.19, h: 184 };
+/** İkon viewBox 0 0 168 168; işaret (3) merkezde, yatay şerit kenardan kenara. */
+const ICON_SIZE = 168;
+/** Maskable: işaret bu oranla küçültülür → en uzak köşesi merkezden ~%28 (güvenli daire yarıçapı %40). */
+const MASKABLE_SCALE = 0.85;
 
 const h = React.createElement;
 
 async function ogDefault(logoSvg) {
   const logoSrc = `data:image/svg+xml;base64,${Buffer.from(logoSvg).toString('base64')}`;
-  const logoWidth = 400;
+  const logoWidth = 600;
   const logoHeight = Math.round((logoWidth * LOGO_VIEWBOX.h) / LOGO_VIEWBOX.w);
   const tree = h(
     'div',
@@ -50,29 +54,18 @@ async function ogDefault(logoSvg) {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        background: GREEN,
+        background: INK,
         fontFamily: 'sans-serif',
         position: 'relative',
       },
     },
-    h('div', {
-      style: {
-        position: 'absolute',
-        top: 0,
-        right: -80,
-        width: 260,
-        height: 900,
-        background: GREEN_DARK,
-        transform: 'rotate(18deg)',
-        display: 'flex',
-      },
-    }),
     h(
       'div',
-      { style: { display: 'flex', alignItems: 'center', marginBottom: 28 } },
+      { style: { display: 'flex', alignItems: 'center', marginBottom: 40 } },
       h('img', { src: logoSrc, width: logoWidth, height: logoHeight, alt: '' }),
     ),
-    h('div', { style: { display: 'flex', color: '#eafff5', fontSize: 30, fontWeight: 600 } }, SUBTITLE),
+    h('div', { style: { display: 'flex', color: SUBTITLE_COLOR, fontSize: 32, fontWeight: 600 } }, SUBTITLE),
+    h('div', { style: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 14, background: LIME, display: 'flex' } }),
   );
   const res = new ImageResponse(tree, { width: 1200, height: 630 });
   const raw = Buffer.from(await res.arrayBuffer());
@@ -82,16 +75,22 @@ async function ogDefault(logoSvg) {
   return png;
 }
 
-/** Logo SVG'sinden yalnız işaret: yeşil kare, işaret ortada (yüksekliğin %72'si). */
-function markIconSvg(logoSvg, size) {
-  const inner = logoSvg.replace(/^[\s\S]*?<svg[^>]*>/, '').replace(/<\/svg>\s*$/, '');
-  const markH = size * 0.72;
-  const markW = (markH * MARK_WIDTH) / LOGO_VIEWBOX.h;
-  const x = (size - markW) / 2;
-  const y = (size - markH) / 2;
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
-<rect width="${size}" height="${size}" fill="${GREEN}"/>
-<svg x="${x}" y="${y}" width="${markW}" height="${markH}" viewBox="0 0 ${MARK_WIDTH} ${LOGO_VIEWBOX.h}" overflow="hidden">${inner}</svg>
+/** Köşesiz tam dolu kare (apple-touch-icon). */
+function fullBleedIcon(iconSvg) {
+  const out = iconSvg.replace(/(<rect\b[^>]*?)\s+rx="[^"]*"/, '$1');
+  if (out === iconSvg) throw new Error('ikon SVG: zemin rect rx bulunamadı');
+  return out;
+}
+
+/** Maskable: tam dolu zemin + kenardan kenara şerit; yalnız işaret (path) merkez etrafında küçültülür. */
+function maskableIcon(iconSvg) {
+  const glyph = iconSvg.match(/<path\b[^>]*\/>/)?.[0];
+  const bar = iconSvg.match(/<rect\b(?![^>]*\brx=)[^>]*\/>/)?.[0];
+  if (!glyph || !bar) throw new Error('ikon SVG: işaret veya şerit bulunamadı');
+  const c = ICON_SIZE / 2;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 ${ICON_SIZE} ${ICON_SIZE}">
+<rect width="${ICON_SIZE}" height="${ICON_SIZE}" fill="${LIME}"/>${bar}
+<g transform="translate(${c} ${c}) scale(${MASKABLE_SCALE}) translate(${-c} ${-c})">${glyph}</g>
 </svg>`;
 }
 
@@ -120,49 +119,40 @@ function ico(pngs) {
 }
 
 async function main() {
-  const logoSvg = await readFile(pub('images', 'ofsaytyok-logo.svg'), 'utf8');
-  const iconSvg = await readFile(path.join(root, 'scripts', 'brand', 'icon-square-logo.svg'));
+  const logoSvg = await readFile(pub('brand', 'scor3-02-skorbord-koyu-zemin.svg'), 'utf8');
+  const iconSvg = await readFile(pub('brand', 'scor3-02-skorbord-ikon.svg'), 'utf8');
 
   await writeFile(
     path.join(root, 'src', 'server', 'og', 'brandLogo.generated.ts'),
-    `// ÜRETİLDİ: scripts/generate-brand-images.mjs — elle düzenleme. Kaynak: public/images/ofsaytyok-logo.svg (${LOGO_VIEWBOX.w}×${LOGO_VIEWBOX.h}).\n` +
+    `// ÜRETİLDİ: scripts/generate-brand-images.mjs — elle düzenleme. Kaynak: public/brand/scor3-02-skorbord-koyu-zemin.svg (${LOGO_VIEWBOX.w}×${LOGO_VIEWBOX.h}).\n` +
       `export const BRAND_LOGO_DATA_URI = 'data:image/svg+xml;base64,${Buffer.from(logoSvg).toString('base64')}';\n` +
       `export const BRAND_LOGO_ASPECT = ${LOGO_VIEWBOX.w / LOGO_VIEWBOX.h};\n`,
   );
 
-  const og = await ogDefault(logoSvg);
-  await writeFile(pub('images', 'og-default-v2.png'), og);
+  // Büyük çizip küçült: ince kenarlar daha temiz.
+  const render = (svg, size) =>
+    sharp(Buffer.from(svg), { density: 300 }).resize(size, size).png({ compressionLevel: 9 }).toBuffer();
 
-  const fromIcon = (size) => sharp(iconSvg, { density: 300 }).resize(size, size).png({ compressionLevel: 9 }).toBuffer();
-  const touch = await fromIcon(180);
-  await writeFile(pub('apple-touch-icon.png'), touch);
-  const icon512 = await fromIcon(512);
-  await writeFile(pub('icon-512.png'), icon512);
+  const outputs = [];
+  const out = async (rel, buf) => {
+    await writeFile(pub(...rel.split('/')), buf);
+    outputs.push([rel, buf]);
+  };
 
-  const favSizes = [16, 32, 48];
+  await out('images/og-default-v3.png', await ogDefault(logoSvg));
+
   const favPngs = [];
-  for (const size of favSizes) {
-    // Büyük çizip küçült: ince çizgiler daha temiz.
-    const data = await sharp(Buffer.from(markIconSvg(logoSvg, 256)), { density: 72 })
-      .resize(size, size)
-      .png({ compressionLevel: 9 })
-      .toBuffer();
-    favPngs.push({ size, data });
-  }
-  const favicon = ico(favPngs);
-  await writeFile(pub('favicon.ico'), favicon);
-  const markSvg = `${markIconSvg(logoSvg, 64)}\n`;
-  await writeFile(pub('icon.svg'), markSvg);
+  for (const size of [16, 32, 48]) favPngs.push({ size, data: await render(iconSvg, size) });
+  await out('favicon.ico', ico(favPngs));
+  await out('brand/favicon-16.png', favPngs[0].data);
+  await out('brand/favicon-32.png', favPngs[1].data);
 
-  for (const [name, buf] of [
-    ['images/og-default-v2.png', og],
-    ['apple-touch-icon.png', touch],
-    ['icon-512.png', icon512],
-    ['favicon.ico', favicon],
-    ['icon.svg', Buffer.from(markSvg)],
-  ]) {
-    console.log(`${name.padEnd(28)} ${(buf.length / 1024).toFixed(1)} KB`);
-  }
+  await out('apple-touch-icon.png', await render(fullBleedIcon(iconSvg), 180));
+  await out('brand/icon-192.png', await render(iconSvg, 192));
+  await out('brand/icon-512.png', await render(iconSvg, 512));
+  await out('brand/icon-maskable-512.png', await render(maskableIcon(iconSvg), 512));
+
+  for (const [name, buf] of outputs) console.log(`${name.padEnd(30)} ${(buf.length / 1024).toFixed(1)} KB`);
 }
 
 main().catch((err) => {

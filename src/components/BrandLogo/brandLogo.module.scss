@@ -1,0 +1,18 @@
+.logo {
+  display: block;
+}
+
+// surface="theme": varsayılan (koyu tema / data-theme yok) koyu-zemin varyantı.
+.onLightTheme {
+  display: none;
+}
+
+:global(:root[data-theme='light']) {
+  .onDarkTheme {
+    display: none;
+  }
+
+  .onLightTheme {
+    display: block;
+  }
+}
