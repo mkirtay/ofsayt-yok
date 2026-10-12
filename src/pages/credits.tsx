@@ -6,8 +6,8 @@ import { useTranslation } from '@/lib/i18n';
 import '@/lib/i18nNamespaces/credits';
 import Container from '@/components/Container';
 import { useCredits } from '@/hooks/useCredits';
-import { isAdminUser, isPremiumUser } from '@/lib/premium';
-import { CREDIT_PACKAGES, PREMIUM_PLANS, formatTry, perCreditKurus, yearlyFreeMonths } from '@/config/creditPackages';
+import { isAdminUser } from '@/lib/premium';
+import { CREDIT_PACKAGES, formatTry, perCreditKurus } from '@/config/creditPackages';
 import { TEST_PACKAGE_KEY, availablePackageKeys } from '@/config/paymentPackages';
 import PaymentBuyButton from '@/components/PaymentBuyButton';
 import styles from './credits.module.scss';
@@ -41,7 +41,6 @@ export default function CreditsPage({ availablePackages = [] }: { availablePacka
   const anyCreditOnSale = CREDIT_PACKAGES.some((p) => availablePackages.includes(p.paymentKey));
   const { authenticated, loading, credits } = useCredits();
   const { data: session } = useSession();
-  const premium = authenticated && isPremiumUser({ premiumUntil: session?.user?.premiumUntil });
   const admin = authenticated && isAdminUser(session?.user);
 
   return (
@@ -69,7 +68,6 @@ export default function CreditsPage({ availablePackages = [] }: { availablePacka
                   <span className={styles.balanceValue}>
                     {credits} <span className={styles.balanceUnit}>{t('balanceUnit')}</span>
                   </span>
-                  {premium ? <span className={styles.premiumBadge}>{t('premiumActive')}</span> : null}
                   {admin ? <span className={styles.adminBadge}>{t('adminActive')}</span> : null}
                 </>
               ) : (
@@ -92,24 +90,6 @@ export default function CreditsPage({ availablePackages = [] }: { availablePacka
                   <div className={styles.pricingPrice}>{formatTry(pkg.priceKurus)}</div>
                   <div className={styles.pricingPer}>{t('perCredit', { price: formatTry(perCreditKurus(pkg)) })}</div>
                   {buy(pkg.paymentKey)}
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <section className={styles.pricingSection}>
-            <h2 className={styles.sectionTitle}>{t('premiumTitle')}</h2>
-            <p className={styles.premiumSub}>{t('premiumSub')}</p>
-            <div className={styles.pricingCards}>
-              {PREMIUM_PLANS.map((plan) => (
-                <div key={plan.key} className={`${styles.pricingCard} ${styles.pricingCardPremium}`}>
-                  {plan.key === 'yearly' ? <div className={styles.pricingPopular}>{t('yearlyFree', { months: yearlyFreeMonths() })}</div> : null}
-                  <div className={styles.pricingPlan}>{t(plan.key === 'monthly' ? 'premiumMonthly' : 'premiumYearly')}</div>
-                  <div className={styles.pricingPrice}>
-                    {formatTry(plan.priceKurus)} <span className={styles.pricingPer}>{t(plan.key === 'monthly' ? 'perMonth' : 'perYear')}</span>
-                  </div>
-                  <p className={styles.premiumNote}>{t('premiumNote')}</p>
-                  {buy(plan.paymentKey)}
                 </div>
               ))}
             </div>

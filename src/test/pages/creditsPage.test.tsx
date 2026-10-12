@@ -46,27 +46,29 @@ describe('Kredi sayfası rozetleri', () => {
     expect(html).not.toContain('>PREMIUM<');
   });
 
-  it('premiumUntil gelecekte → PREMIUM rozeti', () => {
+  it('premium satışı kapalı: premiumUntil gelecekte olsa da PREMIUM rozeti ve Premium bölümü yok', () => {
     s.premiumUntil = new Date(Date.now() + 86_400_000).toISOString();
-    expect(render()).toContain('>PREMIUM<');
+    expect(render()).not.toMatch(/premium/i);
   });
 
-  it('kredi modeli v2 fiyatları (KDV dahil, "Yakında"): 10 / 30 / 100 kredi, premium aylık / yıllık, 4 ay bedava', () => {
+  it('kredi modeli v2 fiyatları (KDV dahil, "Yakında"): 10 / 30 / 100 kredi; premium planı yok', () => {
     const html = render();
-    for (const price of ['39,99 TL', '99,99 TL', '249,99 TL', '799,99 TL']) expect(html).toContain(price);
+    for (const price of ['39,99 TL', '99,99 TL', '249,99 TL']) expect(html).toContain(price);
+    expect(html).not.toContain('799,99 TL');
     expect(html).toContain('Kredi başı 4,00 TL'); // 39,99 / 10
     expect(html).toContain('Kredi başı 2,50 TL'); // 249,99 / 100
-    expect(html).toContain('4 ay bedava');
+    expect(html).not.toContain('ay bedava');
     expect(html).toContain('En popüler');
     expect(html).toContain(trCredits.vatIncluded);
     expect(html).toContain(trCredits.free1);
-    expect((html.match(/disabled=""/g) ?? []).length).toBe(5); // 3 paket + 2 plan
+    expect((html.match(/disabled=""/g) ?? []).length).toBe(3); // 3 paket
+    expect(html.indexOf(trCredits.vatIncluded)).toBeGreaterThan(html.indexOf('249,99 TL')); // KDV notu paketlerin altında
   });
 
   it('satıştaki paket "Satın al" (aktif), diğerleri "Yakında"; kredi paketi satıştaysa "yakında" bandı yok', () => {
     const html = renderToStaticMarkup(<CreditsPage availablePackages={['credits_10', 'premium_30d']} />);
-    expect((html.match(/disabled=""/g) ?? []).length).toBe(3);
-    expect((html.match(/>Satın al</g) ?? []).length).toBe(2);
+    expect((html.match(/disabled=""/g) ?? []).length).toBe(2);
+    expect((html.match(/>Satın al</g) ?? []).length).toBe(1); // premium_30d env'i olsa da kart yok
     expect(html).not.toContain(trCredits.comingSoon);
     // Satışta paket yokken bant görünür
     expect(render()).toContain(trCredits.comingSoon);
