@@ -5,6 +5,9 @@ import { BRAND } from '@/config/brand';
  * `scripts/generate-brand-images.mjs` üretir. Görsel değişince dosya adını sürümle (-v4 …): Facebook / Instagram / X
  * paylaşım önbelleği URL'ye göre tutar, aynı adla yeni görsel uzun süre görünmez.
  */
+/** Eski adres, aynı içerik (önbellekteki eski sayfalar için; bkz. scripts/generate-brand-images.mjs). */
+export const OG_DEFAULT_IMAGE_LEGACY_PATHS = ['/images/og-default-v2.png'] as const;
+
 export const OG_DEFAULT_IMAGE = {
   path: '/images/og-default-v3.png',
   width: 1200,

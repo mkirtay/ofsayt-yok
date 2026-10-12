@@ -9,6 +9,7 @@ import {
   BRAND_LOGO_SVG_ON_LIGHT,
   BRAND_PWA_ICONS,
   OG_DEFAULT_IMAGE,
+  OG_DEFAULT_IMAGE_LEGACY_PATHS,
 } from './brandImages';
 import { buildWebManifest } from '@/pages/manifest.webmanifest';
 import { BRAND } from './brand';
@@ -34,6 +35,13 @@ describe('marka görselleri', () => {
     expect(src('pages/index.tsx')).toContain('${siteBaseUrl()}${BRAND_LOGO_PNG}');
     for (const f of ['pages/_app.tsx', 'pages/index.tsx', 'pages/news/[id].tsx', 'server/og/matchOgImage.tsx']) {
       expect(src(f)).not.toContain('/images/logo.svg');
+    }
+  });
+
+  it('eski varsayılan paylaşım görseli adresi yaşıyor ve güncel görselle birebir aynı', () => {
+    const current = readFileSync(pub(OG_DEFAULT_IMAGE.path));
+    for (const legacy of OG_DEFAULT_IMAGE_LEGACY_PATHS) {
+      expect(readFileSync(pub(legacy)).equals(current)).toBe(true);
     }
   });
 

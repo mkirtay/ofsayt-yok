@@ -5,6 +5,9 @@
  *
  * - public/images/og-default-v3.png  1200×630 varsayılan paylaşım görseli (og:image / twitter:image): koyu zemin,
  *   ortada koyu-zemin logosu, altında alt yazı, altta lime şerit. next/og (satori) ile çizilir.
+ * - public/images/og-default-v2.png  v3'ün birebir kopyası: eski sayfaların (sosyal ağ / arama önbelleği) og:image
+ *   adresi 404 vermesin. Yönlendirme yerine dosya: bazı tarayıcılar (WhatsApp, LinkedIn, Slack …) og:image
+ *   yönlendirmesini izlemiyor.
  * - src/server/og/brandLogo.generated.ts  koyu-zemin logosu (SVG, base64) — dinamik paylaşım görsellerine gömülü.
  * - public/favicon.ico               16/32/48 (PNG gömülü ICO) — ikon SVG'sinden.
  * - public/brand/favicon-16.png, favicon-32.png
@@ -139,7 +142,9 @@ async function main() {
     outputs.push([rel, buf]);
   };
 
-  await out('images/og-default-v3.png', await ogDefault(logoSvg));
+  const og = await ogDefault(logoSvg);
+  await out('images/og-default-v3.png', og);
+  await out('images/og-default-v2.png', og);
 
   const favPngs = [];
   for (const size of [16, 32, 48]) favPngs.push({ size, data: await render(iconSvg, size) });
