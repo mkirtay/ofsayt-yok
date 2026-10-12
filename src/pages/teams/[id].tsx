@@ -58,6 +58,8 @@ export default function TeamDetail({ teamName, ogImagePath }: TeamPageProps) {
     ? `${teamName} takımının son maçları, kadro bilgileri ve lig istatistikleri.`
     : 'Takımın son maçları, kadro bilgileri ve lig istatistikleri.';
   const ogImage = `${SITE_URL}${ogImagePath}`;
+  // Canonical = og:url: sorgusuz, her iki alan adında da siteBaseUrl() (www.getscor3.com).
+  const pageUrl = teamId ? `${SITE_URL}/teams/${teamId}` : null;
   const imageAlt = teamName ? `${teamName} — lig sırası ve son maçlar` : `${BRAND.name} takım sayfası`;
 
   return (
@@ -68,7 +70,8 @@ export default function TeamDetail({ teamName, ogImagePath }: TeamPageProps) {
         <meta property="og:title" content={title} key="og:title" />
         <meta property="og:description" content={description} key="og:description" />
         <meta property="og:type" content="website" key="og:type" />
-        {teamId ? <meta property="og:url" content={`${SITE_URL}/teams/${teamId}`} key="og:url" /> : null}
+        {pageUrl ? <link rel="canonical" href={pageUrl} key="canonical" /> : null}
+        {pageUrl ? <meta property="og:url" content={pageUrl} key="og:url" /> : null}
         <meta property="og:image" content={ogImage} key="og:image" />
         <meta property="og:image:width" content="1200" key="og:image:width" />
         <meta property="og:image:height" content="630" key="og:image:height" />

@@ -62,6 +62,8 @@ export default function NewsDetail() {
   const { article, sidebarNews } = data;
   const pageTitle = brandTitle(article.title, '—');
   const pageDescription = (article.summary || article.content || article.title).slice(0, 160);
+  // Canonical = og:url, sorgusuz (sayfa istemcide çizilir; etiket hydration sonrası gelir).
+  const pageUrl = `${siteBaseUrl()}/news/${encodeURIComponent(id)}`;
 
   return (
     <>
@@ -71,6 +73,8 @@ export default function NewsDetail() {
         <meta property="og:title" content={article.title} />
         <meta property="og:description" content={pageDescription} />
         <meta property="og:type" content="article" key="og:type" />
+        <link rel="canonical" href={pageUrl} key="canonical" />
+        <meta property="og:url" content={pageUrl} key="og:url" />
         {article.image && (
           <>
             <meta property="og:image" content={article.image} key="og:image" />

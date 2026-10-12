@@ -14,6 +14,7 @@ import { statBarWidths, type H2HSummary, type StatBarKind } from '@/utils/compar
 import styles from './compare.module.scss';
 import TeamLogo from '@/components/TeamLogo';
 import { brandTitle } from '@/config/brand';
+import { siteBaseUrl } from '@/lib/siteUrl';
 
 function FormPill({ result }: { result: RecentMatchRow['result'] }) {
   const { t } = useTranslation('compare');
@@ -235,11 +236,15 @@ function ComparePageContent({ data }: { data: ComparePagePayload }) {
   const last5Team2 = team2.recentMatches.slice(0, 5);
 
   const title = t('metaTitle', { team1: team1.teamName, team2: team2.teamName });
+  // Canonical = og:url: sayısal id'lerden (sorgusuz). Takım sırası farklı sayfa olarak kalır (kendi kendine canonical).
+  const pageUrl = `${siteBaseUrl()}/compare/${data.team1Id}-vs-${data.team2Id}`;
 
   return (
     <>
       <Head>
         <title>{brandTitle(title)}</title>
+        <link rel="canonical" href={pageUrl} key="canonical" />
+        <meta property="og:url" content={pageUrl} key="og:url" />
         <meta
           name="description"
           content={t('metaDesc', { team1: team1.teamName, team2: team2.teamName })}
