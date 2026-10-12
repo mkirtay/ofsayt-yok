@@ -41,8 +41,8 @@ Mevcut metinler eksiz kuruldu ("{{brand}} markasına aittir", "{{brand}} sitesin
 | --- | --- |
 | `public/brand/scor3-02-skorbord-{koyu-zemin,acik-zemin,ikon}.svg` | **Scor3 logosu yerleşti (2026-10-12).** Kaynak vektörler; yollar `src/config/brandImages.ts`. |
 | `public/favicon.ico`, `public/apple-touch-icon.png`, `public/brand/{favicon-16,favicon-32,icon-192,icon-512,icon-maskable-512}.png` | `node scripts/generate-brand-images.mjs` ikon SVG'sinden üretir. `icon-512` aynı zamanda JSON-LD logosu. |
-| `public/images/og-default-v3.png` | Aynı betik; görsel değişirse **adı sürümle** (`-v4`) — paylaşım önbellekleri URL'ye göre tutar. `OG_DEFAULT_IMAGE.path` güncelle. |
-| `src/server/og/brandLogo.generated.ts` | Maç/takım/frikik OG görsellerindeki logo (koyu-zemin varyantı); betik üretir, elle düzenlenmez. |
+| `public/images/og-default-v3.png` (+ `og-default-v2.png` birebir kopya: önbellekteki eski sayfalar 404 almasın) | Aynı betik; görsel değişirse **adı sürümle** (`-v4`) — paylaşım önbellekleri URL'ye göre tutar. `OG_DEFAULT_IMAGE.path` güncelle. |
+| `src/server/og/brandLogo.generated.ts` | Maç/takım/frikik OG görsellerindeki logo (koyu-zemin varyantı); betik üretir, elle düzenlenmez. Renkler: `src/server/og/ogTheme.tsx`. |
 
 ### a3. Bekleyen — görünür ama başka oturumun alanı (izin listesinde `bekleyen`)
 
@@ -64,7 +64,6 @@ Bunlar düzeltilince izin listesindeki girdileri silinmeli (bayat girdi testi za
 | VAR animasyonu: `VarScene.tsx` damgası `OFSAYT YOK` / `NO OFFSIDE`, yorumlar | Marka değil, hakem kararı ("ofsayt yok"). |
 | Kural Köşesi animasyon kimliği `03-var-ofsayt-yok` (`kural-kosesi.json`, `facts.ts`, `Panel.tsx`) | İçerik anahtarı; adla ilgisi yok, değişirse içerik eşleşmesi kırılır. |
 | Takvim UID'si `wcmatch-<id>@ofsaytyok.app` (`WorldCupCalendar`) | Kalıcı etkinlik kimliği; değişirse kullanıcı takviminde etkinlikler çiftlenir. |
-| Logo dosya adı `ofsaytyok-logo.svg` (`brandImages.ts`, `generate-brand-images.mjs`, `brandLogo.generated.ts`) | Yeni logo gelene kadar aynı dosya; logo değişince dosya + yol birlikte (a2). |
 | `docs/OFSAYT_YOK_DESIGN_SYSTEM.md` (ve `_tokens.scss`'teki referansı) | Belge dosya adı; istenirse ayrıca yeniden adlandırılır. |
 | `package.json` `"name": "ofsayt-yok"`, repo ve worktree klasör adları | Private paket, yayınlanmıyor; yeniden adlandırma yalnız yerel yolları bozar. |
 | `scripts/seed-official-account.mjs` (`official@ofsaytyok.invalid`, `ofsaytyok`) | DEPRECATED; DB'deki eski hesabın kimliği. |

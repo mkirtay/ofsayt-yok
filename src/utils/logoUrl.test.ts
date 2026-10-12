@@ -22,7 +22,7 @@ describe('sportmonksImagePath / isValidLogoPath', () => {
     expect(sportmonksImagePath('https://cdn.sportmonks.com/images/countries/png/short/tr.png')).toBe('countries/png/short/tr.png');
     expect(sportmonksImagePath('https://evil.com/images/soccer/teams/0/1.png')).toBeNull();
     expect(sportmonksImagePath('https://cdn.sportmonks.com.evil.com/images/a.png')).toBeNull();
-    expect(sportmonksImagePath('/images/ofsaytyok-logo.svg')).toBeNull();
+    expect(sportmonksImagePath('/brand/scor3-02-skorbord-koyu-zemin.svg')).toBeNull();
   });
 
   it('yol geçişi ve garip karakterler reddedilir', () => {
