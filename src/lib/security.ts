@@ -84,7 +84,40 @@ function normalizeEmailFrom(raw: string | undefined): string {
  */
 export const EMAIL_REPLY_TO = BRAND.contactEmail;
 
-async function sendViaResend(to: string, subject: string, html: string): Promise<boolean> {
+export type EmailContent = { subject: string; html: string; text: string };
+
+/** HTML gövdesi: UTF-8 bildiren küçük belge (bazı istemciler `<meta charset>` olmadan Türkçe karakteri bozuyor). */
+function emailHtml(body: string): string {
+  return `<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"></head><body>${body}</body></html>`;
+}
+
+/** Doğrulama e-postası (konu + HTML + düz metin). Marka adı `BRAND.name`. */
+export function verificationEmail(link: string): EmailContent {
+  return {
+    subject: `${BRAND.name} - E-posta Doğrulama`,
+    html: emailHtml(
+      `<p>Merhaba,</p><p>Hesabınızı aktif etmek için aşağıdaki bağlantıya tıklayın:</p><p><a href="${link}">${link}</a></p><p>Bu bağlantı 24 saat geçerlidir.</p>`,
+    ),
+    text: `Merhaba,\n\nHesabınızı aktif etmek için aşağıdaki bağlantıya tıklayın:\n${link}\n\nBu bağlantı 24 saat geçerlidir.\n`,
+  };
+}
+
+/** Şifre sıfırlama e-postası (konu + HTML + düz metin). */
+export function passwordResetEmail(link: string): EmailContent {
+  return {
+    subject: `${BRAND.name} - Şifre Sıfırlama`,
+    html: emailHtml(
+      `<p>Merhaba,</p><p>Şifrenizi sıfırlamak için aşağıdaki bağlantıya tıklayın:</p><p><a href="${link}">${link}</a></p><p>Bu bağlantı <strong>1 saat</strong> geçerlidir. Bu isteği siz yapmadıysanız bu e-postayı yoksayabilirsiniz.</p>`,
+    ),
+    text: `Merhaba,\n\nŞifrenizi sıfırlamak için aşağıdaki bağlantıya tıklayın:\n${link}\n\nBu bağlantı 1 saat geçerlidir. Bu isteği siz yapmadıysanız bu e-postayı yoksayabilirsiniz.\n`,
+  };
+}
+
+/**
+ * Resend HTTP API: gövde JSON (UTF-8); konu ve gövdedeki Türkçe karakterleri MIME'a (konu başlığı RFC 2047, gövde
+ * `charset=utf-8`) Resend kodlar. `text` düz metin alternatifi (multipart/alternative).
+ */
+async function sendViaResend(to: string, { subject, html, text }: EmailContent): Promise<boolean> {
   const apiKey = process.env.RESEND_API_KEY;
   const from = normalizeEmailFrom(process.env.EMAIL_FROM);
   if (!apiKey || !from) {
@@ -102,9 +135,9 @@ async function sendViaResend(to: string, subject: string, html: string): Promise
     method: 'POST',
     headers: {
       Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json',
+      'Content-Type': 'application/json; charset=utf-8',
     },
-    body: JSON.stringify({ from, to, reply_to: EMAIL_REPLY_TO, subject, html }),
+    body: JSON.stringify({ from, to, reply_to: EMAIL_REPLY_TO, subject, html, text }),
   });
 
   if (!response.ok) {
@@ -130,11 +163,7 @@ export async function createAndSendEmailVerification(email: string): Promise<voi
   });
 
   const link = `${appBaseUrl()}/api/auth/verify-email?token=${rawToken}`;
-  const sent = await sendViaResend(
-    email,
-    `${BRAND.name} - E-posta Dogrulama`,
-    `<p>Merhaba,</p><p>Hesabinizi aktif etmek icin asagidaki baglantiya tiklayin:</p><p><a href="${link}">${link}</a></p><p>Bu baglanti 24 saat gecerlidir.</p>`,
-  );
+  const sent = await sendViaResend(email, verificationEmail(link));
 
   if (!sent) {
     // Bağlantı (tek kullanımlık belirteç) loglanmaz: log erişimi hesap ele geçirmeye dönüşmesin.
@@ -182,11 +211,7 @@ export async function createAndSendPasswordReset(email: string): Promise<void> {
   });
 
   const link = `${appBaseUrl()}/auth/reset-password?token=${rawToken}`;
-  const sent = await sendViaResend(
-    email,
-    `${BRAND.name} - Sifre Sifirlama`,
-    `<p>Merhaba,</p><p>Sifrenizi sifirlamak icin asagidaki baglantiya tiklayin:</p><p><a href="${link}">${link}</a></p><p>Bu baglanti <strong>1 saat</strong> gecerlidir. Bu istegi siz yapmadiysa bu e-postayi yoksayabilirsiniz.</p>`,
-  );
+  const sent = await sendViaResend(email, passwordResetEmail(link));
 
   if (!sent) {
     // Bağlantı (tek kullanımlık belirteç) loglanmaz: log erişimi hesap ele geçirmeye dönüşmesin.
