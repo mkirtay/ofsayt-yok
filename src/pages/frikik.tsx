@@ -31,11 +31,14 @@ export default function FrikikPage({ shared }: { shared: ShareInfo | null }) {
         <meta property="og:title" content={title} />
         <meta property="og:description" content={t('pageDesc')} />
         <meta property="og:url" content={`${SITE}/frikik`} />
-        <meta property="og:image" content={image} />
-        <meta property="og:image:width" content="1200" />
-        <meta property="og:image:height" content="630" />
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:image" content={image} />
+        {/* Paylaşım görseli `_app` varsayılanıyla AYNI key'lerle: varsayılanın yerine geçer (bkz. AppDefaultHead). */}
+        <meta property="og:image" content={image} key="og:image" />
+        <meta property="og:image:width" content="1200" key="og:image:width" />
+        <meta property="og:image:height" content="630" key="og:image:height" />
+        <meta property="og:image:alt" content={title} key="og:image:alt" />
+        <meta name="twitter:card" content="summary_large_image" key="twitter:card" />
+        <meta name="twitter:image" content={image} key="twitter:image" />
+        <meta name="twitter:image:alt" content={title} key="twitter:image:alt" />
       </Head>
       <Frikik shared={shared} />
     </>

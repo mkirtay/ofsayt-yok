@@ -25,15 +25,15 @@ describe('marka görselleri', () => {
     expect(statSync(pub(OG_DEFAULT_IMAGE.path)).size).toBeLessThan(300 * 1024);
   });
 
-  it('_app ve ana sayfa görsel yollarını config\'den okur; eski logo ve /api/og/default referansı yok', () => {
-    const app = src('pages/_app.tsx');
+  it('_app (AppDefaultHead) ve ana sayfa görsel yollarını config\'den okur; eski logo ve /api/og/default referansı yok', () => {
+    const app = src('components/AppDefaultHead/index.tsx');
     expect(app).toContain('${siteBaseUrl()}${OG_DEFAULT_IMAGE.path}');
     expect(app).toContain('content={OG_DEFAULT_IMAGE.alt}');
     expect(app).not.toContain('og-default-v');
     expect(app).toContain('href="/apple-touch-icon.png"');
     expect(app).not.toContain('/api/og/default');
     expect(src('pages/index.tsx')).toContain('${siteBaseUrl()}${BRAND_LOGO_PNG}');
-    for (const f of ['pages/_app.tsx', 'pages/index.tsx', 'pages/news/[id].tsx', 'server/og/matchOgImage.tsx']) {
+    for (const f of ['pages/_app.tsx', 'components/AppDefaultHead/index.tsx', 'pages/index.tsx', 'pages/news/[id].tsx', 'server/og/matchOgImage.tsx']) {
       expect(src(f)).not.toContain('/images/logo.svg');
     }
   });
@@ -70,7 +70,7 @@ describe('marka görselleri', () => {
       expect(readFileSync(pub(f), 'utf8')).toContain('aria-label="Scor3"');
     }
     expect(readFileSync(pub(BRAND_ICON_SVG), 'utf8')).toContain('viewBox="0.00 0.00 168.00 168.00"');
-    expect(src('pages/_app.tsx')).toContain('href={BRAND_ICON_SVG}');
+    expect(src('components/AppDefaultHead/index.tsx')).toContain('href={BRAND_ICON_SVG}');
   });
 
   it('manifest: PWA ikonları 192/512 + maskable 512 (tam dolu zemin) ve dosya boyutları tutarlı', async () => {

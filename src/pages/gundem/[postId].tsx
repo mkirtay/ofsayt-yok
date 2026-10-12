@@ -57,7 +57,7 @@ export default function GundemPostPage({ postId, meta }: Props) {
         <meta property="og:title" content={title} />
         <meta property="og:description" content={description} />
         <meta property="og:url" content={url} />
-        <meta name="twitter:card" content="summary" />
+        <meta name="twitter:card" content="summary" key="twitter:card" />
         <meta name="twitter:title" content={title} />
         <meta name="twitter:description" content={description} />
         <link rel="canonical" href={url} />

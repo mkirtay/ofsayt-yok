@@ -316,7 +316,7 @@ export default function WorldCupPage() {
         <meta property="og:description" content="FIFA Dünya Kupası 2026 grup aşaması, fikstür ve puan durumu. Tüm grupları ve maçları takip edin." />
         <meta property="og:url" content={`${siteBaseUrl()}/world-cup`} />
         <meta property="og:image" content={`${siteBaseUrl()}/images/2026_FIFA_World_Cup_Logo.png`} key="og:image" />
-        <meta name="twitter:image" content={`${siteBaseUrl()}/images/2026_FIFA_World_Cup_Logo.png`} />
+        <meta name="twitter:image" content={`${siteBaseUrl()}/images/2026_FIFA_World_Cup_Logo.png`} key="twitter:image" />
         <link rel="canonical" href={`${siteBaseUrl()}/world-cup`} />
       </Head>
       <WorldCupLayout
