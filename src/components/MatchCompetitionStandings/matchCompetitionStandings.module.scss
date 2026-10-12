@@ -14,6 +14,49 @@
   position: relative;
 }
 
+// Yüksekliği sınırlı ebeveyn (`contained`, ana sayfa yan paneli): blok kalan alana sığar, tablo bölgesi kendi içinde
+// kayar (iki eksen — yatay taşma da burada, sağa yapışık P sütunu çalışmaya devam eder), başlık satırı sticky. Tablo
+// sığıyorsa doğal boyunda kalır, kaydırma çubuğu çıkmaz. İçteki .scroll kaydırma kabı olmaktan çıkar (yoksa sticky
+// başlık onun içinde kalır, dikeyde yapışmaz); takım adı kısaltma kararı (container query) aynı kutuda sürer.
+.blockContained {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+
+  > * {
+    flex: 0 0 auto;
+  }
+
+  > .tableArea {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+    overscroll-behavior: contain;
+  }
+
+  .tableArea .scroll {
+    overflow: visible;
+  }
+
+  .table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    // border-collapse'ta sticky hücrenin kenarlığı yerinde kalır → alt çizgi gölgeyle
+    box-shadow: inset 0 -1px 0 $color-border;
+  }
+
+  .table thead th.colPoints {
+    z-index: 3;
+    box-shadow: inset 0 -1px 0 $color-border, -6px 0 6px -6px rgba(0, 0, 0, 0.18);
+  }
+}
+
+// Ana sayfa yan panelinde (.sidebarContent > * küçülmez) yalnız bu blok küçülür.
+.block.blockContained {
+  flex-shrink: 1;
+}
+
 .title {
   font-size: 14px;
   font-weight: 700;

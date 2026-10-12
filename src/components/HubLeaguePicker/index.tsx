@@ -102,7 +102,7 @@ export default function HubLeaguePicker({
     selectedSeasonId != null && seasonList.some((s) => s.id === selectedSeasonId) ? selectedSeasonId : seasonList[0]?.id ?? 0;
 
   return (
-    <div className={styles.picker}>
+    <div className={styles.picker} data-open={open || undefined}>
       <div className={styles.bar}>
       <button
         ref={triggerRef}

@@ -884,7 +884,7 @@ export default function MatchHubPage({
             .join(' ')}
         >
           <aside id="hub-sidebar" className={styles.hubSidebar}>
-            <div className={`${styles.sidebar} ${pickerOpen ? styles.sidebarPickerOpen : ''}`.trim()}>
+            <div className={styles.sidebar}>
               <HubLeaguePicker
                 open={pickerOpen}
                 onOpenChange={(open) => (open ? setPickerOpen(true) : closePicker())}
@@ -936,6 +936,8 @@ export default function MatchHubPage({
                         loadingRows={standingsLoadingRows}
                         hideHeader
                         seasonBusy={seasonBusy}
+                        // Masaüstünde panelin tavanına sığar: tablo kendi içinde kayar, başlık sticky (mobilde akışta)
+                        contained
                       />
                     )}
 
@@ -944,6 +946,7 @@ export default function MatchHubPage({
                         data={topScorers}
                         loading={topScorersLoading}
                         hideHeader
+                        contained
                       />
                     )}
                   </div>

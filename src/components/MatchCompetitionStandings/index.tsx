@@ -63,15 +63,17 @@ function StandingsLoading({
   rows,
   withSeasonSelect,
   hideHeader,
+  contained,
 }: {
   variant: MatchCompetitionStandingsVariant;
   competitionName: string;
   rows: number;
   withSeasonSelect: boolean;
   hideHeader?: boolean;
+  contained?: boolean;
 }) {
   return (
-    <section className={blockClass(variant)} aria-busy="true">
+    <section className={blockClass(variant, contained)} aria-busy="true">
       {hideHeader ? null : (
       <div className={styles.titleContainer}>
         <h2 className={styles.title}>{competitionName}</h2>
@@ -87,6 +89,7 @@ function StandingsLoading({
         ) : null}
       </div>
       )}
+      <div className={styles.tableArea}>
       <div className={styles.scroll}>
         <table className={styles.table}>
           <StandingsHead />
@@ -109,6 +112,7 @@ function StandingsLoading({
             ))}
           </tbody>
         </table>
+      </div>
       </div>
     </section>
   );
@@ -220,13 +224,17 @@ interface MatchCompetitionStandingsProps {
   hideHeader?: boolean;
   /** Sezon dışarıdan değiştirilirken (yan panel seçicisi) tablo kutusunda karıştırma animasyonu. */
   seasonBusy?: boolean;
+  /**
+   * Ebeveynin yüksekliği sınırlı (ana sayfa yan paneli): tablo bölgesi kalan alanda kendi içinde kayar (iki eksen),
+   * başlık satırı sticky. Satır sayısından bağımsız; tablo sığıyorsa doğal boyunda kalır (kaydırma çubuğu yok).
+   * Verilmezse (puan durumu sayfası, maç / takım sayfası) davranış aynı: tablo sayfa akışında.
+   */
+  contained?: boolean;
 }
 
-function blockClass(variant: MatchCompetitionStandingsVariant): string {
-  if (variant === "worldCup") {
-    return `${styles.block} ${styles.blockWorldCup}`.trim();
-  }
-  return styles.block;
+function blockClass(variant: MatchCompetitionStandingsVariant, contained = false): string {
+  const base = variant === "worldCup" ? `${styles.block} ${styles.blockWorldCup}` : styles.block;
+  return contained ? `${base} ${styles.blockContained}` : base;
 }
 
 export default function MatchCompetitionStandings({
@@ -242,9 +250,16 @@ export default function MatchCompetitionStandings({
   loadingRows,
   hideHeader,
   seasonBusy,
+  contained = false,
 }: MatchCompetitionStandingsProps) {
   const { t } = useTranslation("match");
   const [seasonChanging, setSeasonChanging] = useState(false);
+  // contained: sezon değişirken tablo bölgesi başa döner — 04 katmanı (absolute, inset 0) görünür alanı kaplasın.
+  const tableAreaRef = useRef<HTMLDivElement>(null);
+  const shuffling = seasonChanging || Boolean(seasonBusy);
+  useEffect(() => {
+    if (contained && shuffling && tableAreaRef.current) tableAreaRef.current.scrollTop = 0;
+  }, [contained, shuffling]);
   const mounted = useRef(true);
   useEffect(() => {
     mounted.current = true;
@@ -273,13 +288,14 @@ export default function MatchCompetitionStandings({
         rows={loadingRows}
         withSeasonSelect={Boolean(onSeasonChange)}
         hideHeader={hideHeader}
+        contained={contained}
       />
     );
   }
 
   if (loading) {
     return (
-      <div className={blockClass(variant)}>
+      <div className={blockClass(variant, contained)}>
         <StandingsSkeleton variant={variant === 'worldCup' ? 'dark' : 'default'} />
       </div>
     );
@@ -287,7 +303,7 @@ export default function MatchCompetitionStandings({
 
   if (!data) {
     return (
-      <section className={blockClass(variant)} aria-label={t("standings.ariaLabel")}>
+      <section className={blockClass(variant, contained)} aria-label={t("standings.ariaLabel")}>
         {hideHeader ? null : <h2 className={styles.title}>{competitionName || t("standings.fallbackName")}</h2>}
         <EmptyState className={styles.emptyState}>{t("standings.empty")}</EmptyState>
       </section>
@@ -307,7 +323,7 @@ export default function MatchCompetitionStandings({
     (legacyTable?.length ?? 0) > 0 || Boolean(hasStageStandings);
 
   return (
-    <section className={blockClass(variant)} aria-label={t("standings.ariaLabel")}>
+    <section className={blockClass(variant, contained)} aria-label={t("standings.ariaLabel")}>
       {hideHeader ? null : (
       <div className={styles.titleContainer}>
         <h2 className={styles.title}>{compName}</h2>
@@ -329,7 +345,7 @@ export default function MatchCompetitionStandings({
       </div>
       )}
 
-      <div className={styles.tableArea} aria-busy={seasonChanging || seasonBusy || undefined}>
+      <div ref={tableAreaRef} className={styles.tableArea} aria-busy={shuffling || undefined}>
         {legacyTable?.length ? (
           <StandingsTable
             standings={legacyTable as CompetitionTableStandingRow[]}

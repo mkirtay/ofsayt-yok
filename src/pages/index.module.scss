@@ -156,14 +156,34 @@
 // Detay paneli (`.hubGridWithPanel`) ve idle Gündem (`.hubGridWithGundem .hubMain`) aynı değeri kullanır.
 $hub-fill-height: calc(100vh - var(--header-height) - 56px - 32px - var(--league-bar-total));
 
-// Masaüstü, lig seçici açıkken: panel orta / sağ sütunlarla aynı tavanda (`$hub-fill-height`: görünür alan − header −
-// tarih çubuğu − lig satırı). Lig listesi bu kutunun içinde kayar (HubLeaguePicker `.sheet`), sayfa uzamaz.
-// Mobilde seçici tam ekran sheet — bu kural yok.
+// Masaüstü yan panel: orta / sağ sütunlarla aynı tavanda (`$hub-fill-height`: görünür alan − header − tarih çubuğu −
+// lig satırı), içerik ne olursa olsun sayfayı uzatmaz. Lig seçici açıkken liste (HubLeaguePicker `.sheet`), kapalıyken
+// sekme içeriği kalan alanda kendi içinde kayar: puan durumu `contained` (tablo bölgesi kayar, başlık sticky), gol
+// krallığı vb. `.sidebarContent` içinde. Kısa içerikte panel doğal boyunda kalır. Mobilde (tek sütun) kural yok.
 @media (min-width: $bp-desktop) {
-  .sidebarPickerOpen {
+  .sidebar {
     display: flex;
     flex-direction: column;
     max-height: $hub-fill-height;
+  }
+
+  .sidebarTabs {
+    flex: 0 0 auto;
+  }
+
+  .sidebarContent {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+
+    // İçerik varsayılan olarak küçülmez: taşarsa .sidebarContent kayar (overflow: hidden'lı blok sessizce kırpılmasın).
+    // Puan durumu / gol krallığı `contained` blokları kendi modüllerinde küçülür, tabloları kendi içinde kayar.
+    > * {
+      flex-shrink: 0;
+    }
   }
 }
 

@@ -33,6 +33,11 @@ interface MatchCompetitionTopScorersProps {
   onSeasonChange?: (id: number) => void;
   /** Başlık + sezon satırı çizilmez (ana sayfa yan paneli: sezon üstteki lig seçici satırında). */
   hideHeader?: boolean;
+  /**
+   * Ebeveynin yüksekliği sınırlı (ana sayfa yan paneli): liste kalan alanda kendi içinde kayar, başlık satırı sticky,
+   * "Tümünü göster" altta görünür kalır. Sığıyorsa doğal boy. Puan durumundaki `contained` ile aynı.
+   */
+  contained?: boolean;
 }
 
 export default function MatchCompetitionTopScorers({
@@ -42,7 +47,9 @@ export default function MatchCompetitionTopScorers({
   selectedSeasonId,
   onSeasonChange,
   hideHeader,
+  contained = false,
 }: MatchCompetitionTopScorersProps) {
+  const blockClass = contained ? `${styles.block} ${styles.blockContained}` : styles.block;
   const { t } = useTranslation('match');
   // "Tümünü Göster" durumu sezona bağlı: sezon/lig değişince liste yeniden 20'ye döner.
   const listKey = `${data?.competition?.id ?? ''}:${data?.season?.id ?? ''}`;
@@ -51,7 +58,7 @@ export default function MatchCompetitionTopScorers({
 
   if (loading) {
     return (
-      <section className={styles.block} aria-label={t('topScorers.ariaLabel')}>
+      <section className={blockClass} aria-label={t('topScorers.ariaLabel')}>
         {hideHeader ? null : <div className={styles.sectionDivider} aria-hidden />}
         <div className={styles.loading}>{t('topScorers.loading')}</div>
       </section>
@@ -85,7 +92,7 @@ export default function MatchCompetitionTopScorers({
 
   if (!list.length) {
     return (
-      <section className={styles.block} aria-label={t('topScorers.ariaLabel')}>
+      <section className={blockClass} aria-label={t('topScorers.ariaLabel')}>
         {header}
         <p className={styles.empty}>{t('topScorers.empty')}</p>
       </section>
@@ -93,7 +100,7 @@ export default function MatchCompetitionTopScorers({
   }
 
   return (
-    <section className={styles.block} aria-label={t('topScorers.ariaLabel')}>
+    <section className={blockClass} aria-label={t('topScorers.ariaLabel')}>
       {header}
       <div className={styles.scroll}>
         <table className={styles.table}>

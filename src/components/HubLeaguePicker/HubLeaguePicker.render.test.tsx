@@ -86,11 +86,17 @@ describe('<HubLeaguePicker /> (yan panel lig seçici)', () => {
     expect(mobile).toMatch(/\.sheetBody \{[^}]*overflow-y: auto;/);
   });
 
-  it('stil: ana sayfa paneli seçici açıkken masaüstünde orta / sağ sütunlarla aynı tavanda (sayfa uzamaz)', () => {
+  it('stil: ana sayfa paneli masaüstünde orta / sağ sütunlarla aynı tavanda (seçici açık ya da kapalı, sayfa uzamaz)', () => {
     const page = readFileSync(path.join(process.cwd(), 'src/pages/index.module.scss'), 'utf8');
-    expect(page).toMatch(/@media \(min-width: \$bp-desktop\) \{\s*\.sidebarPickerOpen \{[^}]*display: flex;[^}]*flex-direction: column;[^}]*max-height: \$hub-fill-height;/);
+    expect(page).toMatch(/@media \(min-width: \$bp-desktop\) \{\s*\.sidebar \{[^}]*display: flex;[^}]*flex-direction: column;[^}]*max-height: \$hub-fill-height;/);
+    expect(page).toMatch(/\.sidebarContent \{\s*flex: 1 1 auto;\s*min-height: 0;[^}]*overflow-y: auto;/);
     const hub = readFileSync(path.join(process.cwd(), 'src/components/MatchHubPage/index.tsx'), 'utf8');
-    expect(hub).toMatch(/styles\.sidebar\} \$\{pickerOpen \? styles\.sidebarPickerOpen : ''\}/);
+    expect(hub).not.toContain('sidebarPickerOpen');
+    // Seçici kapalıyken küçülmez (lig düğmesi satırı sıkışmasın), açıkken liste kalan alanda kayar
+    const scss = readFileSync(path.join(process.cwd(), 'src/components/HubLeaguePicker/hubLeaguePicker.module.scss'), 'utf8');
+    expect(scss).toMatch(/\.picker \{[^}]*flex: 0 0 auto;\s*&\[data-open\] \{\s*flex-shrink: 1;/);
+    expect(render(true)).toMatch(/class="[^"]*picker[^"]*" data-open="true"/);
+    expect(render(false)).not.toContain('data-open');
   });
 
   it('ana sayfa: kupa fikstürü modunda çipler seçili görünmez; çip / "+ Ligler" önce fikstür modundan çıkar, sonra filtreyi uygular', () => {

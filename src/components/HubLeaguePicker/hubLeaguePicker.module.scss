@@ -9,6 +9,12 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
+  // Kapalıyken flex ebeveynde (ana sayfa paneli) küçülmez — sıkışan alanı altındaki sekme içeriği verir.
+  flex: 0 0 auto;
+
+  &[data-open] {
+    flex-shrink: 1;
+  }
 }
 
 // Lig dropdown'u kalan genişliği alır; sezon alanı içeriği kadar. Dar kapsayıcıda sezon altta tek satır.

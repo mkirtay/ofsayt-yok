@@ -102,3 +102,27 @@ describe('mergeAppearances — O doluysa asist listesinde olmayan oyuncuda A = 0
     expect(rows[2].slice(-3)).toEqual(['—', '—', '3']);
   });
 });
+
+describe('<MatchCompetitionTopScorers contained /> (ana sayfa yan paneli)', () => {
+  it('contained: blok sınırlı ebeveyne sığar, satırlar ve "Tümünü Göster" aynı; verilmezse sınıf yok', () => {
+    const a = renderToStaticMarkup(<MatchCompetitionTopScorers data={mk(81) as never} hideHeader contained />);
+    const b = renderToStaticMarkup(<MatchCompetitionTopScorers data={mk(81) as never} hideHeader />);
+    expect(a).toMatch(/<section class="[^"]*block[^"]* [^"]*blockContained/);
+    expect(b).not.toContain('blockContained');
+    expect(a.slice(a.indexOf('<tbody>'))).toBe(b.slice(b.indexOf('<tbody>')));
+    expect(rowCount(a)).toBe(20);
+    // "Tümünü Göster" tablonun (kaydırma kabının) dışında, altta
+    expect(a.indexOf('Tümünü Göster')).toBeGreaterThan(a.indexOf('</table>'));
+  });
+
+  it('stil: liste (.scroll) kalan alanda iki eksende kayar, başlık sticky, diğer çocuklar sabit; yan panelde yalnız bu blok küçülür', () => {
+    const scss = readFileSync(path.join(process.cwd(), 'src/components/MatchCompetitionTopScorers/matchCompetitionTopScorers.module.scss'), 'utf8');
+    const block = scss.slice(scss.indexOf('.blockContained {'));
+    expect(block).toMatch(/> \* \{\s*flex: 0 0 auto;/);
+    expect(block).toMatch(/> \.scroll \{\s*flex: 1 1 auto;\s*min-height: 0;\s*overflow: auto;/);
+    expect(block).toMatch(/\.table thead th \{\s*position: sticky;\s*top: 0;/);
+    expect(scss).toMatch(/\.block\.blockContained \{\s*flex-shrink: 1;/);
+    const page = readFileSync(path.join(process.cwd(), 'src/pages/index.module.scss'), 'utf8');
+    expect(page).toMatch(/\.sidebarContent \{[^}]*overflow-y: auto;[^]*?> \* \{\s*flex-shrink: 0;/);
+  });
+});

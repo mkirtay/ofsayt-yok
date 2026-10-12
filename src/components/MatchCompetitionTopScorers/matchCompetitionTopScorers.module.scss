@@ -60,6 +60,43 @@
   -webkit-overflow-scrolling: touch;
 }
 
+// Yüksekliği sınırlı ebeveyn (`contained`, ana sayfa yan paneli): blok kalan alana sığar, liste (.scroll) kendi içinde
+// iki eksende kayar, başlık satırı sticky; ayraç / "Tümünü göster" sabit. Sığıyorsa doğal boy (puan durumuyla aynı).
+.blockContained {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+
+  > * {
+    flex: 0 0 auto;
+  }
+
+  > .scroll {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+    overscroll-behavior: contain;
+  }
+
+  .table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    // border-collapse'ta sticky hücrenin kenarlığı yerinde kalır → alt çizgi gölgeyle
+    box-shadow: inset 0 -1px 0 $color-border;
+  }
+
+  .table thead th.colGoals {
+    z-index: 3;
+    box-shadow: inset 0 -1px 0 $color-border, -6px 0 6px -6px rgba(0, 0, 0, 0.18);
+  }
+}
+
+// Ana sayfa yan panelinde (.sidebarContent > * küçülmez) yalnız bu blok küçülür.
+.block.blockContained {
+  flex-shrink: 1;
+}
+
 .table {
   width: 100%;
   min-width: 260px;
