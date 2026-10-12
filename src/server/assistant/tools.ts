@@ -360,7 +360,7 @@ export const ASSISTANT_TOOLS: Readonly<Record<string, ToolDef>> = {
     run: getMatchAnalysis,
   },
   get_rules: { description: 'Futbol kuralları (Kural Köşesi metinleri). topic: aranan konu (ör. ofsayt, VAR, uzatma).', parameters: obj({ topic: { type: 'string' } }, ['topic']), run: getRules },
-  get_site_help: { description: 'Site yardımı: kredi, premium, analiz açma, hesap, asistan.', parameters: obj({ topic: { type: 'string', enum: [...ASSISTANT_HELP_TOPICS] } }, ['topic']), run: getSiteHelp },
+  get_site_help: { description: 'Site yardımı: kredi, analiz açma, hesap, asistan.', parameters: obj({ topic: { type: 'string', enum: [...ASSISTANT_HELP_TOPICS] } }, ['topic']), run: getSiteHelp },
 };
 
 /** OpenAI `tools` parametresi. */
