@@ -1,6 +1,6 @@
 /**
- * Takım paylaşım görseli (1200×630) — `/api/og/team/[id]` çizer. Maç görseliyle aynı dil: marka yeşili + sağda koyu
- * eğik şerit, sol üstte yeni logo. Solda takım logosu (beyaz daire), sağda ad, lig adı ve sırası, son 5 maç formu.
+ * Takım paylaşım görseli (1200×630) — `/api/og/team/[id]` çizer. Maç görseliyle aynı dil (ogTheme: Scor3 siyahı zemin,
+ * sağda açık eğik şerit, altta lime şerit), sol üstte logo. Solda takım logosu (beyaz daire), sağda ad, lig adı ve sırası, son 5 maç formu.
  * Font ve marka logosu gömülü; takım / lig logoları 1,5 sn zaman aşımıyla, olmazsa baş harfler (lig logosu yoksa yalnız ad).
  */
 import { ImageResponse } from './imageResponse';
@@ -8,17 +8,14 @@ import { TEAM_NAMES } from '@/content/teamNames';
 import type { FormResult } from '@/services/sportmonks/teamOverview';
 import { BRAND_LOGO_ASPECT, BRAND_LOGO_DATA_URI, fetchLogoDataUri, ogFonts, teamInitials } from './ogAssets';
 import type { TeamOgData } from './teamOgData';
-
-const GREEN = '#00A76F';
-const GREEN_DARK = '#007B55';
-const TEXT_SOFT = '#eafff5';
+import { OG_ACCENT, OG_BG, OG_CHIP, OG_LIVE, OG_TEXT, OG_TEXT_SOFT, OgBackdrop } from './ogTheme';
 const NAME_MAX_CHARS = 20;
 
 /** Form rozetleri: G(alibiyet) / B(eraberlik) / M(ağlubiyet) — sitedeki form rozetleriyle aynı harfler. */
 const FORM_STYLE: Record<FormResult, { letter: string; background: string; color: string }> = {
-  W: { letter: 'G', background: '#ffffff', color: '#007B55' },
-  D: { letter: 'B', background: 'rgba(255,255,255,0.28)', color: '#ffffff' },
-  L: { letter: 'M', background: '#E5322D', color: '#ffffff' },
+  W: { letter: 'G', background: OG_ACCENT, color: OG_BG },
+  D: { letter: 'B', background: 'rgba(243,244,238,0.24)', color: OG_TEXT },
+  L: { letter: 'M', background: OG_LIVE, color: '#ffffff' },
 };
 
 function truncate(s: string, max: number): string {
@@ -44,23 +41,12 @@ export async function renderTeamOgImage(data: TeamOgData): Promise<ImageResponse
           height: '100%',
           display: 'flex',
           flexDirection: 'column',
-          background: GREEN,
+          background: OG_BG,
           fontFamily: 'Inter',
           position: 'relative',
         }}
       >
-        <div
-          style={{
-            position: 'absolute',
-            top: 0,
-            right: -80,
-            width: 260,
-            height: 900,
-            background: GREEN_DARK,
-            transform: 'rotate(18deg)',
-            display: 'flex',
-          }}
-        />
+        <OgBackdrop />
 
         <div style={{ display: 'flex', padding: '40px 56px 0' }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -76,8 +62,8 @@ export async function renderTeamOgImage(data: TeamOgData): Promise<ImageResponse
               width: 260,
               height: 260,
               borderRadius: 130,
-              background: teamLogo ? '#ffffff' : 'rgba(255,255,255,0.16)',
-              color: '#fff',
+              background: teamLogo ? '#ffffff' : OG_CHIP,
+              color: OG_TEXT,
               fontSize: 96,
               fontWeight: 800,
               flexShrink: 0,
@@ -92,7 +78,7 @@ export async function renderTeamOgImage(data: TeamOgData): Promise<ImageResponse
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', marginLeft: 56, maxWidth: 680 }}>
-            <div style={{ display: 'flex', color: '#fff', fontSize: 68, fontWeight: 800, lineHeight: 1.05 }}>{name}</div>
+            <div style={{ display: 'flex', color: OG_TEXT, fontSize: 68, fontWeight: 800, lineHeight: 1.05 }}>{name}</div>
 
             {data.competition ? (
               <div style={{ display: 'flex', alignItems: 'center', marginTop: 26 }}>
@@ -113,7 +99,7 @@ export async function renderTeamOgImage(data: TeamOgData): Promise<ImageResponse
                     <img src={compLogo} width={36} height={36} style={{ objectFit: 'contain' }} alt="" />
                   </div>
                 ) : null}
-                <div style={{ display: 'flex', color: TEXT_SOFT, fontSize: 32, fontWeight: 600 }}>
+                <div style={{ display: 'flex', color: OG_TEXT_SOFT, fontSize: 32, fontWeight: 600 }}>
                   {truncate(data.competition.name, 26)}
                 </div>
                 {data.standing ? (
@@ -123,8 +109,8 @@ export async function renderTeamOgImage(data: TeamOgData): Promise<ImageResponse
                       marginLeft: 18,
                       padding: '6px 18px',
                       borderRadius: 999,
-                      background: 'rgba(0,0,0,0.22)',
-                      color: '#fff',
+                      background: OG_CHIP,
+                      color: OG_TEXT,
                       fontSize: 30,
                       fontWeight: 800,
                     }}
@@ -137,7 +123,7 @@ export async function renderTeamOgImage(data: TeamOgData): Promise<ImageResponse
 
             {data.form.length ? (
               <div style={{ display: 'flex', flexDirection: 'column', marginTop: 34 }}>
-                <div style={{ display: 'flex', color: TEXT_SOFT, fontSize: 24, fontWeight: 600, marginBottom: 12 }}>
+                <div style={{ display: 'flex', color: OG_TEXT_SOFT, fontSize: 24, fontWeight: 600, marginBottom: 12 }}>
                   Son {data.form.length} maç
                 </div>
                 <div style={{ display: 'flex' }}>

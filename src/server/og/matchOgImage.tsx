@@ -1,7 +1,7 @@
 /**
  * Maç paylaşım görseli (1200×630) — `/api/og/match/[id]` çizer. Veri sunucudaki maç kaydından gelir.
  *
- * Düzen (eski görselin kompozisyonu: marka yeşili + sağda koyu eğik şerit):
+ * Düzen (ogTheme: Scor3 siyahı zemin + sağda açık eğik şerit + altta lime şerit):
  * - üst: yeni logo (sol) · durum rozeti (sağ): canlıysa kırmızı "CANLI 67'", devre arası, maç sonu, özel durum
  *   (ertelendi …) ya da başlamamış maçta tarih
  * - turnuva: logo (beyaz zemin — lig logolarının çoğu koyu) + ad
@@ -13,11 +13,7 @@ import type { Match, MatchStateCode } from '@/models/liveScore';
 import { TEAM_NAMES } from '@/content/teamNames';
 import { matchKickoffMs } from '@/utils/matchActivity';
 import { BRAND_LOGO_ASPECT, BRAND_LOGO_DATA_URI, fetchLogoDataUri, ogFonts, teamInitials } from './ogAssets';
-
-const GREEN = '#00A76F';
-const GREEN_DARK = '#007B55';
-const LIVE_RED = '#E5322D';
-const TEXT_SOFT = '#eafff5';
+import { OG_ACCENT, OG_BG, OG_CHIP, OG_LIVE, OG_TEXT, OG_TEXT_SOFT, OgBackdrop } from './ogTheme';
 /** Takım adı bu kadar karakteri aşarsa sözlükteki kısa ad, o da yoksa kesme (32 px Inter 800 ≈ 340 px). */
 const NAME_MAX_CHARS = 18;
 
@@ -103,8 +99,8 @@ function LogoOrInitials({ src, name, size, inner }: { src: string | null; name: 
         width: size,
         height: size,
         borderRadius: size / 2,
-        background: src ? '#ffffff' : 'rgba(255,255,255,0.16)',
-        color: '#fff',
+        background: src ? '#ffffff' : OG_CHIP,
+        color: OG_TEXT,
         fontSize: Math.round(size * 0.34),
         fontWeight: 800,
       }}
@@ -123,7 +119,7 @@ function TeamColumn({ logo, name, fullName }: { logo: string | null; name: strin
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 360, gap: 22 }}>
       <LogoOrInitials src={logo} name={fullName} size={168} inner={124} />
-      <div style={{ display: 'flex', color: '#fff', fontSize: 32, fontWeight: 800, textAlign: 'center' }}>{name}</div>
+      <div style={{ display: 'flex', color: OG_TEXT, fontSize: 32, fontWeight: 800, textAlign: 'center' }}>{name}</div>
     </div>
   );
 }
@@ -148,24 +144,12 @@ export async function renderMatchOgImage(match: Match): Promise<ImageResponse> {
           height: '100%',
           display: 'flex',
           flexDirection: 'column',
-          background: GREEN,
+          background: OG_BG,
           fontFamily: 'Inter',
           position: 'relative',
         }}
       >
-        {/* diyagonal koyu şerit (sağ kenar) */}
-        <div
-          style={{
-            position: 'absolute',
-            top: 0,
-            right: -80,
-            width: 260,
-            height: 900,
-            background: GREEN_DARK,
-            transform: 'rotate(18deg)',
-            display: 'flex',
-          }}
-        />
+        <OgBackdrop />
 
         {/* üst: logo · durum */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '40px 56px 0' }}>
@@ -182,8 +166,8 @@ export async function renderMatchOgImage(match: Match): Promise<ImageResponse> {
                 fontSize: 26,
                 fontWeight: 800,
                 letterSpacing: 0.5,
-                color: '#fff',
-                background: status.kind === 'live' ? LIVE_RED : 'rgba(0,0,0,0.22)',
+                color: status.kind === 'live' ? '#fff' : OG_TEXT,
+                background: status.kind === 'live' ? OG_LIVE : OG_CHIP,
               }}
             >
               {status.kind === 'live' ? (
@@ -212,7 +196,7 @@ export async function renderMatchOgImage(match: Match): Promise<ImageResponse> {
               <img src={compLogo} width={38} height={38} style={{ objectFit: 'contain' }} alt="" />
             </div>
           ) : null}
-          <div style={{ display: 'flex', color: TEXT_SOFT, fontSize: 28, fontWeight: 600 }}>{comp}</div>
+          <div style={{ display: 'flex', color: OG_TEXT_SOFT, fontSize: 28, fontWeight: 600 }}>{comp}</div>
         </div>
 
         {/* orta: takımlar + skor / saat */}
@@ -224,7 +208,7 @@ export async function renderMatchOgImage(match: Match): Promise<ImageResponse> {
               alignItems: 'center',
               justifyContent: 'center',
               minWidth: 300,
-              color: '#fff',
+              color: OG_TEXT,
               fontSize: center.score ? 112 : center.text === 'VS' ? 56 : 88,
               fontWeight: 800,
               marginTop: -54,
@@ -233,7 +217,7 @@ export async function renderMatchOgImage(match: Match): Promise<ImageResponse> {
             {center.score ? (
               <div style={{ display: 'flex', alignItems: 'center', height: 120, lineHeight: 1 }}>
                 <div style={{ display: 'flex' }}>{center.score[0]}</div>
-                <div style={{ display: 'flex', width: 44, height: 10, borderRadius: 5, background: '#fff', opacity: 0.85, marginLeft: 30, marginRight: 30 }} />
+                <div style={{ display: 'flex', width: 44, height: 10, borderRadius: 5, background: OG_ACCENT, marginLeft: 30, marginRight: 30 }} />
                 <div style={{ display: 'flex' }}>{center.score[1]}</div>
               </div>
             ) : (
