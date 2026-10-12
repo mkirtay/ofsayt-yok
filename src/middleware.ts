@@ -34,11 +34,11 @@ export function isClosedLegacyRequest(req: NextRequest): boolean {
 
 const LEGACY_GONE_HTML = `<!doctype html>
 <html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="robots" content="noindex"><title>Scor3</title>
+<meta name="robots" content="noindex"><title>Bu adres kapatıldı</title>
 <style>html,body{height:100%;margin:0}body{display:flex;align-items:center;justify-content:center;background:#0A0E13;color:#E8EDF2;
-font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;text-align:center}h1{font-size:28px;margin:0 0 8px;letter-spacing:.02em}
-p{margin:0;color:#9AA4AF;font-size:16px}</style></head>
-<body><main><h1>Scor3</h1><p>Bu adres kapatıldı.</p></main></body></html>`;
+font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;text-align:center}
+p{margin:0;color:#9AA4AF;font-size:18px}</style></head>
+<body><main><p>Bu adres kapatıldı.</p></main></body></html>`;
 
 /** 410 Gone: önbelleğe alınmaz (geri açılabilsin), dizine eklenmez. */
 export function legacyGoneResponse(): NextResponse {

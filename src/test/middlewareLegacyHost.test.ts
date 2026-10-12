@@ -28,8 +28,8 @@ describe('eski alan adı: 410 Gone', () => {
       expect(res.headers.get('cache-control')).toBe('no-store');
       expect(res.headers.get('location')).toBeNull();
       const html = await res.text();
-      expect(html).toContain('Scor3');
       expect(html).toContain('Bu adres kapatıldı.');
+      expect(html).not.toMatch(/scor3|ofsayt/i); // marka adı yok
       expect(html).not.toMatch(/<a\b|http-equiv=["']?refresh|location\.|<script/i);
     },
   );
