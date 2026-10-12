@@ -65,3 +65,56 @@ describe('mobil gün şeridi', () => {
     expect(html).toMatch(/Pzt|Sal|Çar|Per|Cum|Cmt|Paz/);
   });
 });
+
+describe('mobil şerit ‹ › düğmeleri', () => {
+  const arrows = (html: string) => [...html.matchAll(/<button[^>]*data-strip-step="(-?1)"[^>]*>/g)].map((m) => ({ step: m[1], tag: m[0] }));
+
+  it('şeridin iki yanında: önce ‹ (-1), sonra şerit, sonra › (+1); TR aria-label; şeridin içinde değil', () => {
+    const { html } = render(TODAY);
+    const a = arrows(html);
+    expect(a.map((x) => x.step)).toEqual(['-1', '1']);
+    expect(a[0]!.tag).toContain('aria-label="Önceki gün"');
+    expect(a[1]!.tag).toContain('aria-label="Sonraki gün"');
+    const prev = html.indexOf('data-strip-step="-1"');
+    const list = html.indexOf('role="tablist"');
+    const next = html.indexOf('data-strip-step="1"');
+    expect(prev).toBeLessThan(list);
+    expect(next).toBeGreaterThan(html.lastIndexOf('role="tab"'));
+    expect(a.every((x) => !x.tag.includes('role="tab"'))).toBe(true);
+  });
+
+  it('sıra [‹][Bugün?][şerit][›][takvim]: "Bugün" çıkınca ‹ ve › yerinde kalır (art arda dokunuş kısayola denk gelmez)', () => {
+    const { html } = render('2026-10-20'); // kısayol görünür
+    const prev = html.indexOf('data-strip-step="-1"');
+    const today = html.search(/class="[^"]*stripToday/);
+    const list = html.indexOf('role="tablist"');
+    const next = html.indexOf('data-strip-step="1"');
+    const cal = html.search(/class="[^"]*stripCalendarWrap/);
+    expect(prev).toBeGreaterThan(-1);
+    expect([prev < today, today < list, list < next, next < cal]).toEqual([true, true, true, true]);
+  });
+
+  it('EN etiketleri: "Previous day" / "Next day" (aynı anahtarlar)', async () => {
+    const en = (await import('../../../public/locales/en/match.json')).default as { subHeader: Record<string, string> };
+    const tr = (await import('../../../public/locales/tr/match.json')).default as { subHeader: Record<string, string> };
+    expect([en.subHeader.prevDay, en.subHeader.nextDay]).toEqual(['Previous day', 'Next day']);
+    expect([tr.subHeader.prevDay, tr.subHeader.nextDay]).toEqual(['Önceki gün', 'Sonraki gün']);
+  });
+
+  it('pencere sınırında donmaz: bugün-30 → ‹ → bugün-31 seçilir, pencere o güne kayar (61 gün, seçili şeritte); › ile geri bugün merkezli pencere', () => {
+    const edge = shiftIsoDate(TODAY, -MOBILE_STRIP_RADIUS);
+    const atEdge = render(edge);
+    expect(isoOf(atEdge.tabs[0]!)).toBe(edge); // ‹'den önce seçili gün pencerenin sol ucunda
+    const beyond = shiftIsoDate(edge, -1); // ‹ = onDateChange(shiftIsoDate(selected, -1))
+    const after = render(beyond);
+    expect(after.tabs).toHaveLength(61);
+    expect(after.tabs.filter((t) => t.includes('aria-current="date"')).map(isoOf)).toEqual([beyond]);
+    expect(isoOf(after.tabs[30]!)).toBe(beyond); // pencere seçili güne ortalandı
+    const back = render(shiftIsoDate(beyond, 1)); // › ile tekrar bugün-30 → bugün merkezli pencere
+    expect(isoOf(back.tabs[30]!)).toBe(TODAY);
+    expect(back.tabs.filter((t) => t.includes('aria-current="date"')).map(isoOf)).toEqual([edge]);
+    // Sağ uç simetrik
+    const right = shiftIsoDate(TODAY, MOBILE_STRIP_RADIUS + 1);
+    expect(render(right).tabs.filter((t) => t.includes('aria-current="date"')).map(isoOf)).toEqual([right]);
+  });
+});

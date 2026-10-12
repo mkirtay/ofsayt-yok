@@ -219,6 +219,7 @@
 $strip-cell-h: 44px;
 
 .stripToday,
+.stripArrow,
 .stripCalendar {
   flex: none;
   min-height: $strip-cell-h;
@@ -241,6 +242,21 @@ $strip-cell-h: 44px;
 .stripCalendar {
   width: $strip-cell-h;
   color: var(--text-secondary);
+}
+
+// ‹ › önceki/sonraki gün: şeridin iki yanında ayrı hücre (üstüne binmez), dokunma alanı 40 × 44 px.
+.stripArrow {
+  width: 40px;
+  padding: 0;
+  font-size: 22px;
+  line-height: 1;
+  color: var(--text-secondary);
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid var(--color-action-text);
+    outline-offset: 2px;
+  }
 }
 
 // Takvim paneli (absolute) hücreye değil tüm şerit satırına göre konumlanır → ekranda ortalı, taşmaz.

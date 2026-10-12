@@ -194,6 +194,18 @@ export default function SubHeader({
           (durum çipleri lig çipleriyle aynı satırda, bkz. MatchHubPage). */}
       {strip.length > 0 && (
         <Container className={styles.stripWrap}>
+          {/* ‹ ›: seçili günü ±1 kaydırır (aynı onDateChange akışı). Pencere ucunda da çalışır: ±30 dışına çıkan gün
+              seçilince pencere o güne kayar (buildDateStripWindow), şerit ortalanır. Sıra [‹][Bugün?][şerit][›][takvim]:
+              ‹ hep sol uçta, › hep takvimin solunda — "Bugün" çıkınca yalnız şerit daralır, art arda dokunuş kısayola denk gelmez. */}
+          <button
+            type="button"
+            className={styles.stripArrow}
+            onClick={() => onDateChange(shiftIsoDate(selectedDate, -1))}
+            aria-label={t('subHeader.prevDay')}
+            data-strip-step="-1"
+          >
+            <span aria-hidden="true">‹</span>
+          </button>
           {showTodayShortcut ? (
             <button
               type="button"
@@ -222,6 +234,15 @@ export default function SubHeader({
               </button>
             ))}
           </div>
+          <button
+            type="button"
+            className={styles.stripArrow}
+            onClick={() => onDateChange(shiftIsoDate(selectedDate, 1))}
+            aria-label={t('subHeader.nextDay')}
+            data-strip-step="1"
+          >
+            <span aria-hidden="true">›</span>
+          </button>
           <div className={styles.stripCalendarWrap}>
             <button
               ref={stripCalendarRef}
