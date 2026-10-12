@@ -21,7 +21,7 @@
   "remaining": "Bugün kalan mesaj: {{n}}",
   "quota": {
     "guest": "Bugünkü {{limit}} ücretsiz mesaj hakkın doldu. Giriş yaparak günde 15 mesaj kullanabilirsin.",
-    "user": "Bugünkü {{limit}} mesaj hakkın doldu. Premium ile günde 50 mesaj.",
+    "user": "Bugünkü {{limit}} mesaj hakkın doldu. Yarın tekrar görüşelim.",
     "premium": "Bugünkü {{limit}} mesaj hakkın doldu. Yarın tekrar görüşelim."
   },
   "budget": "Asistan bugünlük doldu. Yarın tekrar dene.",
@@ -31,7 +31,6 @@
   "refused": "Bu konuda yardımcı olamıyorum.",
   "error": "Şu an yanıt veremiyorum, biraz sonra tekrar dene.",
   "signIn": "Giriş yap",
-  "premium": "Premium'a bak",
   "card": {
     "choose": "Hangi maçı kastettin?",
     "none": "Bu maçın analizi henüz hazır değil. Analiz maçtan yaklaşık 3 saat önce hazırlanır.",

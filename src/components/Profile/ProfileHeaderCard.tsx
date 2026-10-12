@@ -17,7 +17,7 @@ const STAT_KEYS = ['analyses', 'favoriteTeams', 'favoriteLeagues', 'posts'] as c
 
 /**
  * Profil başlık kartı (takım sayfası üst kartıyla aynı dil): avatar, ad, @kullanıcıadı, üyelik tarihi, kredi /
- * premium / yönetici rozetleri, "Profili düzenle" (Bilgilerim sekmesine geçip ilk alana odaklanır) + 4 istatistik.
+ * yönetici rozetleri, "Profili düzenle" (Bilgilerim sekmesine geçip ilk alana odaklanır) + 4 istatistik.
  * Bu sayfa her zaman oturum sahibinin kendi profili → YÖNETİCİ rozeti yalnız burada.
  */
 export default function ProfileHeaderCard({ profile, summary, onEdit }: Props) {
@@ -25,7 +25,6 @@ export default function ProfileHeaderCard({ profile, summary, onEdit }: Props) {
   const { locale } = useI18n();
   const displayName = profile.name || profile.username || profile.email.split('@')[0];
   const dateFmt = new Intl.DateTimeFormat(locale === 'en' ? 'en-GB' : 'tr-TR', { month: 'long', year: 'numeric' });
-  const dayFmt = new Intl.DateTimeFormat(locale === 'en' ? 'en-GB' : 'tr-TR', { day: 'numeric', month: 'short', year: 'numeric' });
 
   return (
     <section className={styles.headerCard} aria-label={displayName}>
@@ -46,14 +45,6 @@ export default function ProfileHeaderCard({ profile, summary, onEdit }: Props) {
             <Link href="/credits" className={styles.badgeCredits} title={t('header.creditBalance')}>
               {t('header.credits', { count: summary.credits })}
             </Link>
-            {summary.premium ? (
-              <span
-                className={styles.badgePremium}
-                title={summary.premiumUntil ? t('header.premiumUntil', { date: dayFmt.format(new Date(summary.premiumUntil)) }) : undefined}
-              >
-                {t('header.premium')}
-              </span>
-            ) : null}
             {summary.admin ? <span className={styles.badgeAdmin}>{t('header.admin')}</span> : null}
           </>
         ) : null}

@@ -82,7 +82,7 @@
       "ANALYSIS_FREE": "AI analysis (admin)",
       "PURCHASE": "Purchase",
       "REFUND": "Refund",
-      "ANALYSIS_PREMIUM": "AI analysis (Premium)",
+      "ANALYSIS_PREMIUM": "AI analysis (free unlock)",
       "ANALYSIS_WEEKLY_FREE": "AI analysis (weekly free)",
       "REFERRAL_BONUS": "Referral reward"
     }
@@ -92,8 +92,6 @@
     "memberSince": "Member since {{date}}",
     "editProfile": "Edit profile",
     "credits": "{{count}} ⚡",
-    "premium": "PREMIUM",
-    "premiumUntil": "Until {{date}}",
     "admin": "ADMIN",
     "buyCredits": "Buy credits",
     "creditBalance": "Credit balance"

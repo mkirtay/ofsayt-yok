@@ -81,7 +81,7 @@
       "ANALYSIS_FREE": "AI analiz (yönetici)",
       "PURCHASE": "Satın alma",
       "REFUND": "İade",
-      "ANALYSIS_PREMIUM": "AI analiz (Premium)",
+      "ANALYSIS_PREMIUM": "AI analiz (ücretsiz açma)",
       "ANALYSIS_WEEKLY_FREE": "AI analiz (haftalık ücretsiz)",
       "REFERRAL_BONUS": "Davet ödülü"
     }
@@ -91,8 +91,6 @@
     "memberSince": "Üyelik: {{date}}",
     "editProfile": "Profili düzenle",
     "credits": "{{count}} ⚡",
-    "premium": "PREMIUM",
-    "premiumUntil": "{{date}} tarihine kadar",
     "admin": "YÖNETİCİ",
     "buyCredits": "Kredi al",
     "creditBalance": "Kredi bakiyesi"

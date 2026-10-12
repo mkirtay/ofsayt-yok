@@ -21,7 +21,7 @@
   "remaining": "Messages left today: {{n}}",
   "quota": {
     "guest": "You've used today's {{limit}} free messages. Sign in for 15 messages a day.",
-    "user": "You've used today's {{limit}} messages. Premium gives 50 a day.",
+    "user": "You've used today's {{limit}} messages. See you tomorrow.",
     "premium": "You've used today's {{limit}} messages. See you tomorrow."
   },
   "budget": "The assistant is full for today. Please try again tomorrow.",
@@ -31,7 +31,6 @@
   "refused": "I can't help with that.",
   "error": "I can't answer right now, please try again shortly.",
   "signIn": "Sign in",
-  "premium": "See Premium",
   "card": {
     "choose": "Which match did you mean?",
     "none": "This match's analysis isn't ready yet. Analyses are prepared about 3 hours before kick-off.",

@@ -208,10 +208,6 @@ export default function AssistantPanel({ open, side = 'right', onClose }: Assist
                     <Link href="/auth/signin" className={styles.link}>
                       {t('signIn')}
                     </Link>
-                  ) : m.notice.kind === 'quota' && m.notice.tier === 'user' ? (
-                    <Link href="/credits" className={styles.link}>
-                      {t('premium')}
-                    </Link>
                   ) : null}
                 </p>
               ) : null}
