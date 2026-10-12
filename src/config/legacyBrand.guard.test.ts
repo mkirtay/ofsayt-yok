@@ -49,9 +49,8 @@ export const LEGACY_BRAND_ALLOWLIST: Izin[] = [
     path: 'src/lib/gundem/official.ts',
     allow: /bilgi\.ofsaytyok@gmail\.com|ofsaytyokmedia|official@ofsaytyok\.invalid|"ofsaytyok"/g,
     sinif: 'dis',
-    neden: 'Resmi Gündem hesabı (Gmail + DB kullanıcı adı); hesap taşınınca GUNDEM_BOT_EMAIL ile birlikte değişir.',
+    neden: 'Resmi Gündem hesabının DB kullanıcı adı (ofsaytyokmedia) ve geçiş notundaki eski Gmail; varsayılan e-posta artık info@getscor3.com.',
   },
-  { path: 'src/pages/api/admin/gundem/bot-post.ts', allow: /bilgi\.ofsaytyok@gmail\.com/g, sinif: 'dis', neden: 'Resmi hesap e-postası (yorum).' },
   { path: '.github/workflows/evaluate-predictions.yml', allow: /ofsayt-yok\.vercel\.app/g, sinif: 'dis', neden: 'Vercel proje alan adı; proje adı değişmedikçe sabit.' },
   { path: 'next.config.ts', allow: /(www\.)?ofsaytyok\.app/g, sinif: 'dis', neden: 'Eski alan adından yeniye yönlendirme ayarı (geçiş günü eklenecek).', optional: true },
 ];

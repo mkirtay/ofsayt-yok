@@ -11,7 +11,7 @@ sahibi uygular. Hiçbir şey otomatik yayınlanmıyor: poller yalnızca PENDING 
 GET  /api/admin/gundem/bot-goal-draft?fixtureId=&eventId=   → taslak (salt okunur; body, externalKey, matchId, teamId, facts, warnings)
 POST /api/admin/gundem/bot-post {body, externalKey, matchId, teamId}  → yayın (idempotent)
 ```
-Her ikisi `Bearer $CRON_SECRET` ya da ADMIN oturumu ister. Yazar: `GUNDEM_BOT_EMAIL` (varsayılan `bilgi.ofsaytyok@gmail.com`).
+Her ikisi `Bearer $CRON_SECRET` ya da ADMIN oturumu ister. Yazar: `GUNDEM_BOT_EMAIL` (varsayılan `info@getscor3.com`).
 Kod: `src/lib/gundem/{official,botAuth,botPost}.ts`, `src/lib/gundem/bot/{goalStanding,goalTemplates,goalDraft}.ts`.
 
 Kurallar (testli): lig/sezon bazlı topscorer (tip 208); kendi kalesine gol kimseye kredi yazmaz; atılan penaltı (tip 16) gol sayılır;

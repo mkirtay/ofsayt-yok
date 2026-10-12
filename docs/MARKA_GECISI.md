@@ -86,7 +86,7 @@ Bunlar düzeltilince izin listesindeki girdileri silinmeli (bayat girdi testi za
 | **cron-job.org** | `https://www.ofsaytyok.app/api/admin/gundem/bot-tick` (1 dk, Bearer `CRON_SECRET`) ve varsa diğer işler | URL'yi `www.<yeni>` yap (apex yönlendirmesi POST'u bozar). Sonrasında tick izi kontrol. |
 | **GitHub Actions** | `.github/workflows/evaluate-predictions.yml` → `https://ofsayt-yok.vercel.app/api/admin/{evaluate-predictions,analysis-pregenerate}` | Vercel proje adı değişirse URL'ler; daha iyisi bir repo değişkenine (`vars.SITE_URL`) taşımak. Repo adı (opsiyonel). |
 | **Cloudflare Turnstile** | Site anahtarının izinli hostname listesi | Yeni alan adını ekle; yoksa kayıt formu doğrulaması düşer. |
-| **Resmi Gündem hesabı** | Gmail `bilgi.ofsaytyok@gmail.com`, DB kullanıcı adı `ofsaytyokmedia` (`DEFAULT_BOT_ACCOUNT_EMAIL`, `GUNDEM_BOT_EMAIL`, `OFFICIAL_ACCOUNT_EMAILS`) | İsterseniz yeni hesap → env'leri ve DB kullanıcı adı/görünen adı güncelle; varsayılan sabiti değiştir. Ertelenebilir. |
+| **Resmi Gündem hesabı** | `info@getscor3.com` (2026-10-12: env'ler, DB ve `DEFAULT_BOT_ACCOUNT_EMAIL` taşındı; eski `bilgi.ofsaytyok@gmail.com`), DB kullanıcı adı `ofsaytyokmedia` (`GUNDEM_BOT_EMAIL`, `OFFICIAL_ACCOUNT_EMAILS`) | Kalan: DB kullanıcı adı/görünen adı (isteğe bağlı). |
 | **Mağaza (App Store / Google Play) ve mobil uygulama** | Uygulama adı, ikon, mağaza açıklaması; API kökü uygulamaya gömülü; UA `OfsaytYok/1.0` | Mobil sürüm yeni API köküyle; eski alan adı yönlendirmesi eski sürümler için kalmalı. |
 | **Sosyal hesaplar** | X / Instagram / YouTube kullanıcı adları | `BRAND.social` doldur → JSON-LD `sameAs` otomatik. |
 | **Google Search Console** | Mülk `ofsaytyok.app` | Yeni mülk + "Adres değişikliği" aracı + yeni sitemap gönder. |

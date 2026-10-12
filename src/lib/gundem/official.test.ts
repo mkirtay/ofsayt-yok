@@ -7,9 +7,11 @@ describe('isOfficialUser', () => {
     delete process.env.GUNDEM_BOT_EMAIL;
   });
 
-  it('varsayılan allowlist: bilgi.ofsaytyok@gmail.com (büyük/küçük harf ve boşluk duyarsız)', () => {
-    expect(isOfficialUser({ email: 'bilgi.ofsaytyok@gmail.com' })).toBe(true);
-    expect(isOfficialUser({ email: '  Bilgi.OfsaytYok@Gmail.com ' })).toBe(true);
+  it('varsayılan allowlist: info@getscor3.com (büyük/küçük harf ve boşluk duyarsız)', () => {
+    expect(isOfficialUser({ email: 'info@getscor3.com' })).toBe(true);
+    expect(isOfficialUser({ email: '  Info@GetScor3.com ' })).toBe(true);
+    // Eski Gmail adresi varsayılan olarak resmi DEĞİL (env'de yoksa).
+    expect(isOfficialUser({ email: 'bilgi.ofsaytyok@gmail.com' })).toBe(false);
   });
 
   it('eski seed hesabı artık resmi değil; OFFICIAL_BOT gönderisi (legacy) resmi kalır', () => {
@@ -26,12 +28,12 @@ describe('isOfficialUser', () => {
 
   it('env listesi allowlist’i genişletir', () => {
     process.env.OFFICIAL_ACCOUNT_EMAILS = 'a@x.com, B@x.com';
-    expect(getOfficialAccountEmails()).toEqual(expect.arrayContaining(['a@x.com', 'b@x.com', 'bilgi.ofsaytyok@gmail.com']));
+    expect(getOfficialAccountEmails()).toEqual(expect.arrayContaining(['a@x.com', 'b@x.com', 'info@getscor3.com']));
     expect(isOfficialUser({ email: 'b@x.com' })).toBe(true);
   });
 
   it('bot hesabı: varsayılan tek resmi hesap, GUNDEM_BOT_EMAIL ile değiştirilebilir', () => {
-    expect(getBotAccountEmail()).toBe('bilgi.ofsaytyok@gmail.com');
+    expect(getBotAccountEmail()).toBe('info@getscor3.com');
     process.env.GUNDEM_BOT_EMAIL = ' Bot@X.com ';
     expect(getBotAccountEmail()).toBe('bot@x.com');
   });

@@ -165,7 +165,7 @@ d('DB entegrasyonu — Gündem (post, beğeni, yorum, takip, bildirim, push, bot
     official = await mkUser('official');
 
     // Gerçek resmi hesap (varsa) — testin ona yazmadığını sonda doğrulamak için sayaç.
-    const real = await prisma.user.findUnique({ where: { email: 'bilgi.ofsaytyok@gmail.com' }, select: { id: true } });
+    const real = await prisma.user.findUnique({ where: { email: 'info@getscor3.com' }, select: { id: true } });
     realOfficialId = real?.id ?? null;
     if (realOfficialId) realOfficialPostsBefore = await prisma.post.count({ where: { authorId: realOfficialId } });
   });
@@ -314,7 +314,7 @@ d('DB entegrasyonu — Gündem (post, beğeni, yorum, takip, bildirim, push, bot
       expect(new Set(all).size).toBe(25);
     });
 
-    // Faz D: "Resmi" = OFFICIAL_BOT postları + allowlist'teki resmi hesapların (varsayılan bilgi.ofsaytyok@gmail.com + env)
+    // Faz D: "Resmi" = OFFICIAL_BOT postları + allowlist'teki resmi hesapların (varsayılan info@getscor3.com + env)
     // normal USER postları. Gerçek resmi hesabın postları da akışta olabilir → yalnızca "resmi mi" kuralı doğrulanır.
     it('official: OFFICIAL_BOT + resmi hesapların USER postları; sıradan kullanıcı postu yok', async () => {
       const bot = await mkPost(official.id, 'resmi bot', { authorType: 'OFFICIAL_BOT' });

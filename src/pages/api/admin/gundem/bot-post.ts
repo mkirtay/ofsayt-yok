@@ -1,7 +1,7 @@
 /**
  * POST /api/admin/gundem/bot-post
  *
- * Resmi hesap (`GUNDEM_BOT_EMAIL`, varsayılan bilgi.ofsaytyok@gmail.com) adına OFFICIAL_BOT gönderisi oluşturur.
+ * Resmi hesap (`GUNDEM_BOT_EMAIL`, varsayılan info@getscor3.com) adına OFFICIAL_BOT gönderisi oluşturur.
  * Erişim: `Authorization: Bearer $CRON_SECRET` ya da ADMIN oturumu (middleware + requireAdmin). Yalnızca elle tetiklenir.
  * Gövde: `{ body, externalKey?, matchId?, teamId? }`. `externalKey` idempotent: aynı anahtar tekrar gelirse hata değil
  * mevcut kayıt döner (200, `created: false`). Asıl mantık: `lib/gundem/botPost.ts`.

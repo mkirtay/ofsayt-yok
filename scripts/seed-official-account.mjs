@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * DEPRECATED: resmi hesap artık "ofsaytyokmedia" (bilgi.ofsaytyok@gmail.com; normal kayıtla oluşturulur) ve bu seed hesabı
+ * DEPRECATED: resmi hesap artık "ofsaytyokmedia" (info@getscor3.com; normal kayıtla oluşturulur) ve bu seed hesabı
  * resmi sayılmıyor (`src/lib/gundem/official.ts`). Yalnızca eski ortamlar için tutuluyor; yeni ortamda ÇALIŞTIRMAYIN.
  *
  * Eski: tek "Ofsayt Yok" bot hesabını oluşturur (idempotent — varsa dokunmaz). password: null → credentials girişi reddedilir.
