@@ -78,6 +78,12 @@ function normalizeEmailFrom(raw: string | undefined): string {
   return from;
 }
 
+/**
+ * Yanıtlar gönderen adresine (EMAIL_FROM, ör. noreply@) değil iletişim kutusuna gider: `BRAND.contactEmail`
+ * (info@getscor3.com). Gönderen adresi env'den (EMAIL_FROM) gelmeye devam eder.
+ */
+export const EMAIL_REPLY_TO = BRAND.contactEmail;
+
 async function sendViaResend(to: string, subject: string, html: string): Promise<boolean> {
   const apiKey = process.env.RESEND_API_KEY;
   const from = normalizeEmailFrom(process.env.EMAIL_FROM);
@@ -98,7 +104,7 @@ async function sendViaResend(to: string, subject: string, html: string): Promise
       Authorization: `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ from, to, subject, html }),
+    body: JSON.stringify({ from, to, reply_to: EMAIL_REPLY_TO, subject, html }),
   });
 
   if (!response.ok) {
