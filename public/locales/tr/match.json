@@ -132,7 +132,6 @@
     "confidenceBadge": "Güven: %{{score}}",
     "preMatchTag": "Maç Öncesi Tahmini",
     "disclaimer": "Bilgi amaçlı istatistiksel tahmindir.",
-    "premiumError": "Bu özellik giriş yapmış kullanıcılara özeldir.",
     "topPicks": "En güçlü tahminler",
     "pick": {
       "home": "Ev sahibi kazanır",

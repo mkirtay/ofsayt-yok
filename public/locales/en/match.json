@@ -134,7 +134,6 @@
     "confidenceBadge": "Confidence: {{score}}%",
     "preMatchTag": "Pre-Match Prediction",
     "disclaimer": "Informational statistical prediction.",
-    "premiumError": "This feature is for signed-in users only.",
     "topPicks": "Top predictions",
     "pick": {
       "home": "Home win",
