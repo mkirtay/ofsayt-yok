@@ -29,7 +29,8 @@ Mevcut metinler eksiz kuruldu ("{{brand}} markasına aittir", "{{brand}} sitesin
 - Canonical, `og:url`, `og:image`, `sitemap.xml`, `robots.txt` (Sitemap satırı) → `siteBaseUrl()`.
 - Çeviriler (tr/en): `ai`, `assistant`, `auth`, `common` (footer ©), `credits`, `gundem` (resmi hesap etiketi, meta),
   `legal` (gizlilik/şartlar/iletişim: ad, alan adı, iletişim adresi), `match`, `profile`, `standings`.
-- Header / Footer logo `alt` metni; logo yolu `BRAND_LOGO_SVG`.
+- Header / Footer logo `alt` metni (`BrandLogo`); logo yolları `BRAND_LOGO_SVG_ON_DARK` / `_ON_LIGHT`.
+- `manifest.webmanifest` `name` / `short_name` / `description` (`src/pages/manifest.webmanifest.tsx`).
 - E-posta konuları (doğrulama, şifre sıfırlama) — `src/lib/security.ts`.
 - AI asistan sistem prompt'u ve yardım metni; video pipeline prompt'u (YouTube kanal adı, ekran kaydı alan adı).
 - Teknik ama görünür: haber çekiminde `User-Agent` (`compactName/1.0`), takvim `PRODID`.
@@ -38,11 +39,10 @@ Mevcut metinler eksiz kuruldu ("{{brand}} markasına aittir", "{{brand}} sitesin
 
 | Dosya | Not |
 | --- | --- |
-| `public/images/ofsaytyok-logo.svg` | Yeni logo; dosya adı değişirse `src/config/brandImages.ts` `BRAND_LOGO_SVG` + üretim betiği yolu. |
-| `public/icon.svg`, `public/favicon.ico`, `public/apple-touch-icon.png`, `public/icon-512.png` | `node scripts/generate-brand-images.mjs` üretir. |
-| `public/images/og-default-v2.png` | Aynı betik; **adı sürümle** (`-v3`) — paylaşım önbellekleri URL'ye göre tutar. `OG_DEFAULT_IMAGE.path` güncelle. |
-| `src/server/og/brandLogo.generated.ts` | Maç/takım OG görsellerindeki logo; betik üretir, elle düzenlenmez. |
-| `public/images/logo-black.svg` | Dünya Kupası teması logosu (Header). |
+| `public/brand/scor3-02-skorbord-{koyu-zemin,acik-zemin,ikon}.svg` | **Scor3 logosu yerleşti (2026-10-12).** Kaynak vektörler; yollar `src/config/brandImages.ts`. |
+| `public/favicon.ico`, `public/apple-touch-icon.png`, `public/brand/{favicon-16,favicon-32,icon-192,icon-512,icon-maskable-512}.png` | `node scripts/generate-brand-images.mjs` ikon SVG'sinden üretir. `icon-512` aynı zamanda JSON-LD logosu. |
+| `public/images/og-default-v3.png` | Aynı betik; görsel değişirse **adı sürümle** (`-v4`) — paylaşım önbellekleri URL'ye göre tutar. `OG_DEFAULT_IMAGE.path` güncelle. |
+| `src/server/og/brandLogo.generated.ts` | Maç/takım/frikik OG görsellerindeki logo (koyu-zemin varyantı); betik üretir, elle düzenlenmez. |
 
 ### a3. Bekleyen — görünür ama başka oturumun alanı (izin listesinde `bekleyen`)
 
@@ -106,7 +106,7 @@ Bunlar düzeltilince izin listesindeki girdileri silinmeli (bayat girdi testi za
 - [ ] Cloudflare Turnstile: hostname listesine yeni alan adını ekle.
 - [ ] Sentry: izinli alan adlarına yenisini ekle.
 - [ ] Yeni iletişim posta kutusunu kur; eski adresten yönlendirme.
-- [ ] Yeni logo SVG'leri hazır; `node scripts/generate-brand-images.mjs` ile ikon/OG üret, OG adını sürümle (`og-default-v3.png`).
+- [x] Yeni logo SVG'leri hazır; ikon/OG üretildi (`og-default-v3.png`) — 2026-10-12, dal `feat/scor3-logo`.
 - [ ] Bekleyen (a3) maddeleri ilgili oturumla birlikte BRAND'e bağla.
 
 ### Kod değişikliği (tek PR)
