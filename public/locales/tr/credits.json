@@ -50,7 +50,6 @@
     "slow": "Doğrulama beklenenden uzun sürüyor. Ödemeniz onaylandığında krediniz otomatik eklenir; birkaç dakika sonra bakiyenizi kontrol edin.",
     "paidTitle": "Ödemeniz alındı",
     "paidCredits": "Yeni bakiyeniz: {{credits}} kredi",
-    "paidPremium": "Premium üyeliğiniz {{date}} tarihine kadar aktif.",
     "failedTitle": "Ödeme tamamlanamadı",
     "failedDesc": "Ödeme onaylanmadı ve hesabınıza bir şey eklenmedi. Yeniden deneyebilirsiniz; kartınızdan çekim yapıldığını düşünüyorsanız İletişim sayfasından bize yazın.",
     "refunded": "Bu ödeme iade edildi.",

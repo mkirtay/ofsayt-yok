@@ -4,11 +4,10 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import { serverSideTranslations } from '@/lib/serverSideTranslations';
-import { useI18n, useTranslation } from '@/lib/i18n';
+import { useTranslation } from '@/lib/i18n';
 import '@/lib/i18nNamespaces/credits';
 import { useCredits } from '@/hooks/useCredits';
 import { LAST_PAYMENT_KEY } from '@/components/PaymentBuyButton';
-import { findPaymentPackage } from '@/config/paymentPackages';
 import type { OrderStatusView } from '@/server/payments/paymentOrders';
 import styles from './odeme.module.scss';
 import { brandTitle } from '@/config/brand';
@@ -25,7 +24,6 @@ type View = { kind: 'loading' } | { kind: 'notfound' } | { kind: 'order'; order:
  */
 export default function PaymentDonePage() {
   const { t } = useTranslation('credits');
-  const { locale } = useI18n();
   const { status: sessionStatus, update } = useSession();
   const { refresh } = useCredits();
   const [view, setView] = useState<View>({ kind: 'loading' });
@@ -115,14 +113,12 @@ export default function PaymentDonePage() {
     );
   } else {
     const { order } = view;
-    const pkg = findPaymentPackage(order.packageKey);
     if (order.status === 'PAID') {
-      const date = order.premiumUntil ? new Date(order.premiumUntil).toLocaleDateString(locale === 'en' ? 'en-GB' : 'tr-TR') : '';
       body = (
         <>
           <h1 className={styles.title}>{t('payment.paidTitle')}</h1>
           <p className={styles.strong}>
-            {pkg?.kind === 'premium' ? t('payment.paidPremium', { date }) : t('payment.paidCredits', { credits: order.credits })}
+            {t('payment.paidCredits', { credits: order.credits })}
           </p>
           <div className={styles.actions}>
             <Link className={styles.btn} href="/">

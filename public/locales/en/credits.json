@@ -50,7 +50,6 @@
     "slow": "Verification is taking longer than expected. Your credits will be added automatically once the payment is confirmed; check your balance in a few minutes.",
     "paidTitle": "Payment received",
     "paidCredits": "Your new balance: {{credits}} credits",
-    "paidPremium": "Your Premium membership is active until {{date}}.",
     "failedTitle": "Payment not completed",
     "failedDesc": "The payment was not approved and nothing was added to your account. You can try again; if you think your card was charged, contact us via the Contact page.",
     "refunded": "This payment was refunded.",
