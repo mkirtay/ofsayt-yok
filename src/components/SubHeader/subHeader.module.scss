@@ -289,19 +289,23 @@ $strip-cell-h: 44px;
     gap: $spacing-1;
   }
 
+  // Bugün ±30 gün yatay kaydırılır (parmakla, snap: center); ekranda ~5 gün. Yatay taşma şeritte kalır (sayfa taşmaz),
+  // uçta tarayıcının geri/ileri kaydırma hareketi tetiklenmez.
   .dateStrip {
     flex: 1 1 auto;
     min-width: 0;
     gap: $spacing-1;
     padding: 0;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
   }
 
-  // Tek satır hücre: "Çar 30" — yükseklik dokunma alanı kadar (44 px).
+  // Tek satır hücre: "Çar 30" — yükseklik dokunma alanı kadar (44 px); en az şeridin 1/5'i (içerik daha genişse o).
   .stripItem {
-    flex: 1 0 auto;
+    flex: 0 0 auto;
     flex-direction: row;
     gap: 4px;
-    min-width: 0;
+    min-width: calc((100% - 4 * #{$spacing-1}) / 5);
     min-height: $strip-cell-h;
     padding: 0 6px;
   }

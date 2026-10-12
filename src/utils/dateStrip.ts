@@ -74,6 +74,13 @@ export function buildDateStripWindow(todayIso: string, selectedIso: string, radi
   return items;
 }
 
+/**
+ * Mobil gün şeridinin yarıçapı: bugün ±30 gün (61 hücre), yatay kaydırılır. Sabit pencere (uçta büyüyen değil): başa hücre
+ * eklemek kaydırma konumunu oynatır (dokunurken sıçrama), ek efekt/ölçüm gerekmez, DOM sınırlı. Daha uzağı takvimden; takvimden
+ * pencere dışı bir gün seçilirse pencere o günün ±30'una kayar (bkz. buildDateStripWindow). `/api/matches/day` ±400 gün kabul eder.
+ */
+export const MOBILE_STRIP_RADIUS = 30;
+
 export function stripHasToday(strip: DateStripItem[]): boolean {
   return strip.some((item) => item.isToday);
 }

@@ -1,6 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { buildDateStripWindow, isoDayOfMonth, shiftIsoDate, stripHasToday, todayIsoIstanbul } from '@/utils/dateStrip';
+import {
+  buildDateStripWindow,
+  isoDayOfMonth,
+  MOBILE_STRIP_RADIUS,
+  shiftIsoDate,
+  stripHasToday,
+  todayIsoIstanbul,
+} from '@/utils/dateStrip';
 import { useTranslation, useI18n } from '@/lib/i18n';
 import { useHideOnScroll } from '@/hooks/useHideOnScroll';
 import Container from '../Container';
@@ -71,20 +78,40 @@ export default function SubHeader({
     return () => clearInterval(id);
   }, []);
 
-  // Seçili gün bugün ±2 dışındaysa (takvimden) pencere o güne kayar; bugün yoksa "Bugün" kısayolu çıkar.
+  // Mobil şerit bugün ±30 gün, yatay kaydırılır (bkz. MOBILE_STRIP_RADIUS); seçili gün pencere dışındaysa (takvimden)
+  // pencere o güne kayar. Kaydırmak yalnız görünümü değiştirir; veri yalnız gün SEÇİLİNCE (onDateChange) çekilir.
   const strip = useMemo(
-    () => (todayIso ? buildDateStripWindow(todayIso, selectedDate) : []),
+    () => (todayIso ? buildDateStripWindow(todayIso, selectedDate, MOBILE_STRIP_RADIUS) : []),
     [todayIso, selectedDate],
   );
-  const showTodayShortcut = strip.length > 0 && !stripHasToday(strip);
+  // Seçili gün bugün değilse "Bugün" kısayolu (bugün pencerede olsa da kaydırılıp görünmez olabilir).
+  const showTodayShortcut = strip.length > 0 && todayIso != null && (selectedDate !== todayIso || !stripHasToday(strip));
   const stripRef = useRef<HTMLDivElement>(null);
+  const centeredOnce = useRef(false);
   useEffect(() => {
-    // Seçili gün şeritte ortalansın — yalnız yatay kaydırma (scrollIntoView sayfayı dikeyde de oynatabiliyordu).
+    // Seçili gün şeritte ortalansın — yalnız yatay kaydırma (scrollIntoView sayfayı dikeyde de oynatabiliyordu). İlk
+    // konumlama anında; sonraki gün değişimlerinde yumuşak (hareketi azalt açıksa anında).
     const box = stripRef.current;
     const el = box?.querySelector<HTMLElement>('[aria-current="date"]');
     if (!box || !el || box.scrollWidth <= box.clientWidth) return;
-    box.scrollTo?.({ left: el.offsetLeft - (box.clientWidth - el.clientWidth) / 2 });
-  }, [strip]);
+    const smooth = centeredOnce.current && !prefersReducedMotion();
+    centeredOnce.current = true;
+    box.scrollTo?.({ left: centeredScrollLeft(box, el), behavior: smooth ? 'smooth' : 'auto' });
+  }, [strip, showTodayShortcut]);
+  // Klavye: şerit tek sekme durağı (seçili gün); ←/→ önceki/sonraki güne odak, Home/End uçlara. Enter/Space seçer.
+  const onStripKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    const keys = ['ArrowLeft', 'ArrowRight', 'Home', 'End'];
+    if (!keys.includes(e.key)) return;
+    const items = Array.from(e.currentTarget.querySelectorAll<HTMLButtonElement>('[role="tab"]'));
+    const i = items.indexOf(document.activeElement as HTMLButtonElement);
+    const next =
+      e.key === 'Home' ? 0 : e.key === 'End' ? items.length - 1 : Math.min(items.length - 1, Math.max(0, (i < 0 ? 0 : i) + (e.key === 'ArrowLeft' ? -1 : 1)));
+    e.preventDefault();
+    items[next]?.focus({ preventScroll: true });
+    const box = stripRef.current;
+    const el = items[next];
+    if (box && el) box.scrollTo?.({ left: centeredScrollLeft(box, el), behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
+  };
   const weekdayFmt = useMemo(
     () => new Intl.DateTimeFormat(dateLocale, { weekday: 'short', timeZone: 'UTC' }),
     [dateLocale],
@@ -177,14 +204,16 @@ export default function SubHeader({
               {t('subHeader.today')}
             </button>
           ) : null}
-          <div className={styles.dateStrip} ref={stripRef} role="tablist" aria-label={t('subHeader.dayStrip')}>
+          <div className={styles.dateStrip} ref={stripRef} role="tablist" aria-label={t('subHeader.dayStrip')} onKeyDown={onStripKeyDown}>
             {strip.map((d) => (
               <button
                 key={d.iso}
                 type="button"
                 role="tab"
+                tabIndex={d.isSelected ? 0 : -1}
                 aria-selected={d.isSelected}
                 aria-current={d.isSelected ? 'date' : undefined}
+                data-iso={d.iso}
                 className={`${styles.stripItem} ${d.isSelected ? styles.stripItemActive : ''}`}
                 onClick={() => onDateChange(d.iso)}
               >
@@ -221,6 +250,20 @@ export default function SubHeader({
       )}
     </div>
   );
+}
+
+/**
+ * Hücreyi şeritte ortalayan scrollLeft. `offsetLeft` KULLANILMAZ: o en yakın konumlu ataya (`.stripWrap`) göredir ve solda
+ * "Bugün" kısayolu varken onun genişliği kadar kayıyordu; şeride göre konum dikdörtgenlerden hesaplanır.
+ */
+function centeredScrollLeft(box: HTMLElement, el: HTMLElement): number {
+  const offset = el.getBoundingClientRect().left - box.getBoundingClientRect().left + box.scrollLeft;
+  return offset - (box.clientWidth - el.clientWidth) / 2;
+}
+
+/** Hareketi azalt tercihi (sunucuda / matchMedia yoksa false). */
+function prefersReducedMotion(): boolean {
+  return typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches === true;
 }
 
 /** Takvim ikonu + içinde bugünün günü (mount'a kadar boş — statik prerender'da bayat gün olmasın). */
