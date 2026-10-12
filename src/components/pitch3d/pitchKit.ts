@@ -37,6 +37,7 @@ import {
   ZeroFactor,
 } from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
+import { BRAND } from '@/config/brand';
 import type { GoalSpec, V3 } from '@/lib/pitchPhysics/core';
 import { panelMesh, pickSpreadHexagons, truncatedIcosahedron, type PanelMesh } from './ballGeometry';
 import { originalLogoSrc } from '@/utils/logoUrl';
@@ -260,7 +261,7 @@ export function shadowTexture(): CanvasTexture {
   });
 }
 
-/** Reklam panosu: marka yeşili zemin, "OFSAYT YOK" yazısı, sarı vurgu şeridi (yatayda tekrar eder). */
+/** Reklam panosu: marka yeşili zemin, büyük harf marka adı (config/brand.ts), sarı vurgu şeridi (yatayda tekrar eder). */
 export function boardTexture(): CanvasTexture {
   const canvas = document.createElement('canvas');
   canvas.width = 1024;
@@ -278,8 +279,9 @@ export function boardTexture(): CanvasTexture {
     ctx.font = 'italic 900 64px Inter, system-ui, sans-serif';
     ctx.textBaseline = 'middle';
     ctx.textAlign = 'center';
-    ctx.fillText('OFSAYT YOK', 256, 58);
-    ctx.fillText('OFSAYT YOK', 768, 58);
+    const label = BRAND.name.toLocaleUpperCase('tr-TR');
+    ctx.fillText(label, 256, 58);
+    ctx.fillText(label, 768, 58);
     ctx.fillStyle = 'rgba(255,255,255,0.55)';
     for (const x of [0, 512, 1024]) ctx.fillRect(x - 3, 30, 6, 56);
   }

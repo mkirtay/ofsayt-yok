@@ -14,10 +14,13 @@ const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || DEFAULT_SITE_URL).replace(/
 
 export const BRAND = {
   /** Görünen ad (başlıklar, og:site_name, JSON-LD, e-posta). */
-  name: 'Ofsayt Yok',
+  name: 'Scor3',
   /** Dar alanlar için kısa ad. */
-  shortName: 'Ofsayt Yok',
-  /** Boşluksuz ad: User-Agent, takvim PRODID gibi teknik kimlikler. */
+  shortName: 'Scor3',
+  /**
+   * Boşluksuz ad: User-Agent, takvim PRODID, frikik takma ad yasağı gibi teknik kimlikler. Ad değişiminde BİLEREK eski ad
+   * kaldı (teknik kimlik; "scor3" leet açılımı "score" olur → takma ad yasağı "highscore" gibi adları da keserdi).
+   */
   compactName: 'OfsaytYok',
   /** Canonical kök (sonda "/" yok). Sayfalarda `lib/siteUrl.ts` `siteBaseUrl()` kullan (env zinciri). */
   siteUrl,
@@ -53,7 +56,7 @@ export function withBrandText<T>(value: T): T {
   return value;
 }
 
-/** Sayfa başlığı soneki: `"Puan Durumu | Ofsayt Yok"`. */
+/** Sayfa başlığı soneki: `"Puan Durumu | Scor3"`. */
 export function brandTitle(title: string, sep: '|' | '—' = '|'): string {
   return `${title} ${sep} ${BRAND.name}`;
 }

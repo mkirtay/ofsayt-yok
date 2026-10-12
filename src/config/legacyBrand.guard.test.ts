@@ -54,8 +54,6 @@ export const LEGACY_BRAND_ALLOWLIST: Izin[] = [
   { path: 'src/pages/api/admin/gundem/bot-post.ts', allow: /bilgi\.ofsaytyok@gmail\.com/g, sinif: 'dis', neden: 'Resmi hesap e-postası (yorum).' },
   { path: '.github/workflows/evaluate-predictions.yml', allow: /ofsayt-yok\.vercel\.app/g, sinif: 'dis', neden: 'Vercel proje alan adı; proje adı değişmedikçe sabit.' },
   { path: 'next.config.ts', allow: /(www\.)?ofsaytyok\.app/g, sinif: 'dis', neden: 'Eski alan adından yeniye yönlendirme ayarı (geçiş günü eklenecek).', optional: true },
-
-  { path: 'src/components/pitch3d/pitchKit.ts', allow: /OFSAYT YOK/g, sinif: 'bekleyen', neden: 'Saha reklam panosu yazısı (/auth, /frikik). pitch3d başka oturumda; geçiş günü BRAND’e bağlanacak.' },
 ];
 
 const ROOT = process.cwd();
