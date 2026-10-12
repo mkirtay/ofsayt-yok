@@ -93,6 +93,49 @@ Yalnız arayüz; hiçbir adım veri yazmaz.
    uç bir kez upstream'e gider (tek seferlik ~15–20 istek). `GET /api/admin/sportmonks-usage?hours=2` (admin): ilk
    saatte Fixture havuzu kullanımı önceki günlerin aynı saatine yakın, sonraki saatte normal. Kota uyarısı yok.
 
+## Tur 10 (2026-10-12) Scor3 markası, canonical getscor3.com, iki alan adında giriş
+
+`N=https://www.getscor3.com`, `O=https://www.ofsaytyok.app`. Aynı deployment iki alan adında; canonical `N` (kodda
+`config/brand.ts`, `NEXT_PUBLIC_SITE_URL` boş — `AUTH_URL`/`NEXTAUTH_URL` artık canonical'ı ETKİLEMEZ).
+
+1. **Logo ve ikonlar (her iki alan adında).** Header ve footer'da Scor3 logosu (açık/koyu tema). Sekme ikonu (SVG +
+   `/favicon.ico` + `/brand/favicon-32.png`), `/apple-touch-icon.png`, `/manifest.webmanifest` (ad "Scor3",
+   `/brand/icon-192.png`, `/brand/icon-512.png`, maskable). Kontrol:
+   ```bash
+   for p in /favicon.ico /apple-touch-icon.png /brand/favicon-32.png /brand/icon-192.png /brand/icon-512.png /brand/icon-maskable-512.png /manifest.webmanifest; do curl -s -o /dev/null -w "$p %{http_code} %{content_type}\n" "$N$p"; done
+   ```
+   Silinen eski dosyalar (`/icon.svg`, `/icon-512.png`, `/images/logo*.svg`) 404 olabilir; sayfalardan referans yok.
+2. **OG görselleri.** Varsayılan `/images/og-default-v3.png` ve eski adres `/images/og-default-v2.png` (paylaşılmış
+   eski linkler için, v3'ün kopyası) ikisi de `200 image/png`. Dinamik: `/api/og/default`, `/api/og/match/<id>`,
+   `/api/og/team/<id>`, `/api/og/frikik?...` — `200 image/png`, Scor3 siyahı zemin (#0A0E13), Scor3 logosu. Bir maç ve
+   takım sayfasının `og:image` meta'sı bu uçları gösteriyor; paylaşım önizlemesinde (ör. opengraph.xyz) yeni görsel.
+3. **Başlık, meta, canonical, sitemap, robots.** Ana sayfa ve bir maç/takım sayfasında `<title>` "… | Scor3",
+   `meta description` ve `og:site_name` Scor3. `<link rel="canonical">` ve `og:url` HER İKİ alan adında da `N` ile
+   başlar:
+   ```bash
+   for h in $N $O; do curl -s "$h/" | grep -oE '<title>[^<]*|<link rel="canonical"[^>]*>|og:site_name" content="[^"]*'; done
+   curl -s "$N/robots.txt"; curl -s "$N/sitemap.xml" | grep -oE '<loc>[^<]*' | head -3
+   ```
+   `robots.txt` içindeki `Sitemap:` satırı ve sitemap `<loc>`'ları `N`. Search Console'a `N` mülkü + sitemap eklenmeli
+   (elle).
+4. **Yan panel puan durumu iç kaydırma (ada2411).** Masaüstünde ana sayfa sol panelinde lig olarak Şampiyonlar Ligi,
+   1. Lig ve Danimarka Superliga seç: uzun tablo / gol krallığı panelin içinde kayar, sayfa uzamaz
+   (`document.documentElement.scrollHeight` değişmez), başlık satırı sabit.
+5. **Google girişi iki alan adında (1502c21 test).** `N`'de ve `O`'da ayrı ayrı "Google ile giriş": callback isteğin
+   kendi alan adına döner (`/api/auth/callback/google`), giriş sonrası aynı alan adında kalınır. Ön koşul: Google Cloud
+   Console OAuth istemcisinde `N/api/auth/callback/google` yetkili yönlendirme URI'si ekli. Çerezler alan adına özel:
+   `O`'daki mevcut oturumlar açık kalır; `N`'de ayrıca giriş gerekir (beklenen).
+6. **E-posta kayıt.** Her iki alan adında kayıt formunda Turnstile çıkar ve geçer (Cloudflare Turnstile site
+   anahtarının alan adı listesinde `getscor3.com` olmalı). Doğrulama / şifre sıfırlama e-postasındaki link kökü
+   `AUTH_URL`'den gelir (`lib/security.ts`): `N`'ye gitmesi için Vercel'de `AUTH_URL=https://www.getscor3.com`
+   (env değişikliği, kod değil). Test: yeni bir test adresiyle kayıt → gelen linkin alan adı.
+7. **Mobil API (ofsayt-yok.vercel.app) etkilenmez.** Mobil uygulamada giriş, liste ve profil çalışır.
+   `GET /api/user/me` (mobil token ile) yanıtında galeri avatarı tam URL olarak `N/avatars/<id>.svg` döner (eskiden
+   ofsaytyok.app); adres açılır (`200 image/svg+xml`). Not: uygulama eski tam adresi (`O/avatars/…`) geri gönderirse
+   göreli forma çevrilmez, tam URL olarak saklanır — çalışır (aynı deployment), yalnız veri biçimi farklı.
+8. **İletişim e-postası (a82c6c8).** `/iletisim`, `/gizlilik-politikasi`, `/kullanim-sartlari` (TR ve EN) adres
+   `info@getscor3.com`, `mailto:` linki aynı.
+
 ## Neden 1. madde
 
 2026-10-07'de sharp 0.34 → 0.35.5 yükseltmesinden sonra `/api/img/logo` canlıda her istekte 500 verdi:
