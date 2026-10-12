@@ -7,6 +7,7 @@ import { useFrikikBoard } from '@/hooks/useFrikikBoard';
 import { dayLabel, turkeyDay } from '@/lib/frikik/daily';
 import { readLastRun, type LastRun } from '@/lib/frikik/localRun';
 import { sharePath } from '@/lib/frikik/shareLink';
+import { siteBaseUrl } from '@/lib/siteUrl';
 import { trackFrikik } from '@/lib/frikik/analytics';
 import styles from './frikikDailyCard.module.scss';
 
@@ -43,7 +44,7 @@ export default function FrikikDailyCard() {
 
   const share = async () => {
     if (!played || !today) return;
-    const url = `${window.location.origin}${sharePath(played.level, played.score, today)}`;
+    const url = `${siteBaseUrl()}${sharePath(played.level, played.score, today)}`;
     const text = t('frikikCard.shareText', { level: played.level, score: played.score });
     try {
       if (navigator.share) {

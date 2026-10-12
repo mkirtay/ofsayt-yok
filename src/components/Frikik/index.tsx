@@ -6,6 +6,7 @@ import { webglAvailable } from "@/components/pitch3d/webgl";
 import { LIVES, SIM_VERSION, type ShotResult } from "@/lib/frikik/sim";
 import { dailySeed, dayLabel, turkeyDay } from "@/lib/frikik/daily";
 import { sharePath, type ShareInfo } from "@/lib/frikik/share";
+import { siteBaseUrl } from "@/lib/siteUrl";
 import { entryFromQuery, trackFrikik, type FrikikEntry } from "@/lib/frikik/analytics";
 import { readPendingRun, writeLastRun, writePendingRun, type PendingRun } from "@/lib/frikik/localRun";
 import { buildExportedRun, debugExportEnabled } from "@/lib/frikik/runExport";
@@ -287,7 +288,7 @@ export default function Frikik({ shared }: { shared: ShareInfo | null }) {
   const share = async () => {
     if (!summary) return;
     const dayKey = day != null ? dayLabel(day) : null;
-    const url = `${window.location.origin}${sharePath(summary.level, summary.total, dayKey)}`;
+    const url = `${siteBaseUrl()}${sharePath(summary.level, summary.total, dayKey)}`;
     const text = t("end.shareLevelText", {
       level: summary.level,
       score: summary.total,

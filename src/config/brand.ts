@@ -6,8 +6,11 @@
  * Logo/ikon dosyaları, dış paneller (OAuth, ödeme, Sentry, Vercel alan adı, cron) burada DEĞİL — elle güncellenir.
  */
 
-/** Canlı alan adı; `NEXT_PUBLIC_SITE_URL` yoksa kullanılır. */
-const DEFAULT_SITE_URL = 'https://ofsaytyok.app';
+/**
+ * Canlı alan adı (canonical, sitemap, robots, OG/JSON-LD url, paylaşım linkleri); `NEXT_PUBLIC_SITE_URL` yoksa kullanılır.
+ * Eski alan adı (ofsaytyok.app) aynı deployment'ı sunmaya devam eder (mobil, dış sistemler); sayfaları buraya canonical verir.
+ */
+const DEFAULT_SITE_URL = 'https://www.getscor3.com';
 
 /** Sondaki "/" atılır. `NEXT_PUBLIC_*` derlemede gömülür → sunucu ve istemcide aynı değer. */
 const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL || DEFAULT_SITE_URL).replace(/\/+$/, '');
@@ -22,7 +25,7 @@ export const BRAND = {
    * kaldı (teknik kimlik; "scor3" leet açılımı "score" olur → takma ad yasağı "highscore" gibi adları da keserdi).
    */
   compactName: 'OfsaytYok',
-  /** Canonical kök (sonda "/" yok). Sayfalarda `lib/siteUrl.ts` `siteBaseUrl()` kullan (env zinciri). */
+  /** Canonical kök (sonda "/" yok). Sayfalarda `lib/siteUrl.ts` `siteBaseUrl()` kullan. */
   siteUrl,
   /** Metinlerde gösterilen alan adı (ör. yasal metinler): `siteUrl`'in host'u. */
   domain: siteUrl.replace(/^https?:\/\//, ''),

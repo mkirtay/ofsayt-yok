@@ -1,5 +1,6 @@
-import { describe, expect, it } from 'vitest';
-import { absoluteImageUrl, withAbsoluteImage } from './siteUrl';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { BRAND } from '@/config/brand';
+import { absoluteImageUrl, siteBaseUrl, withAbsoluteImage } from './siteUrl';
 import { galleryPathOf, toStoredImage } from './avatars';
 
 const BASE = 'https://ofsaytyok.app';
@@ -17,7 +18,7 @@ describe('absoluteImageUrl (API çıkış normalizasyonu)', () => {
     expect(absoluteImageUrl('//evil.com/x.png', BASE)).toBe('//evil.com/x.png');
   });
   it('withAbsoluteImage yalnızca image alanını değiştirir', () => {
-    expect(withAbsoluteImage({ id: '1', image: '/avatars/ball.svg' })).toEqual({ id: '1', image: `${BASE}/avatars/ball.svg` });
+    expect(withAbsoluteImage({ id: '1', image: '/avatars/ball.svg' })).toEqual({ id: '1', image: `${siteBaseUrl()}/avatars/ball.svg` });
     expect(withAbsoluteImage({ id: '1', image: null })).toEqual({ id: '1', image: null });
   });
 });
@@ -34,5 +35,21 @@ describe('depolama formu (yazma yolu)', () => {
     expect(galleryPathOf('http://localhost:3000/avatars/trophy.svg')).toBe('/avatars/trophy.svg');
     expect(galleryPathOf('https://x.com/photo.png')).toBeNull();
     expect(galleryPathOf('/avatars/unknown.svg')).toBeNull();
+  });
+});
+
+describe('siteBaseUrl (canonical kök)', () => {
+  afterEach(() => vi.unstubAllEnvs());
+
+  it('NEXT_PUBLIC_SITE_URL yoksa marka varsayılanı; AUTH_URL / NEXTAUTH_URL canonical\'ı değiştirmez', () => {
+    vi.stubEnv('NEXT_PUBLIC_SITE_URL', '');
+    vi.stubEnv('AUTH_URL', 'https://www.eski-alan.example');
+    vi.stubEnv('NEXTAUTH_URL', 'https://www.eski-alan.example');
+    expect(siteBaseUrl()).toBe(BRAND.siteUrl);
+  });
+
+  it('NEXT_PUBLIC_SITE_URL verilirse o (sondaki "/" atılır)', () => {
+    vi.stubEnv('NEXT_PUBLIC_SITE_URL', 'http://localhost:3000/');
+    expect(siteBaseUrl()).toBe('http://localhost:3000');
   });
 });
