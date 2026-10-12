@@ -162,7 +162,7 @@
     },
     "unlockCredit": "1 krediyle aç",
     "unlockWeekly": "Bu haftaki ücretsiz açma hakkını kullan",
-    "unlockPremium": "Premium ile aç",
+    "unlockFree": "Ücretsiz aç",
     "unlockAdmin": "Yönetici olarak aç",
     "signInToUnlock": "Analizin tamamını görmek için giriş yap.",
     "unlockPermanent": "Açtığın analiz sana hep açık kalır.",
@@ -263,7 +263,6 @@
     "teams": "Takımlar",
     "tabsAriaLabel": "Dünya kupası içerik sekmeleri"
   },
-  "premiumBadge": "PREMIUM",
   "leagueFilter": {
     "group": "Lig filtresi",
     "all": "Tümü",

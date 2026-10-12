@@ -164,7 +164,7 @@
     },
     "unlockCredit": "Unlock for 1 credit",
     "unlockWeekly": "Use this week's free unlock",
-    "unlockPremium": "Unlock with Premium",
+    "unlockFree": "Unlock for free",
     "unlockAdmin": "Unlock as admin",
     "signInToUnlock": "Sign in to see the full analysis.",
     "unlockPermanent": "Analyses you unlock stay unlocked for you.",
@@ -266,7 +266,6 @@
     "teams": "Teams",
     "tabsAriaLabel": "World Cup content tabs"
   },
-  "premiumBadge": "PREMIUM",
   "leagueFilter": {
     "group": "League filter",
     "all": "All",

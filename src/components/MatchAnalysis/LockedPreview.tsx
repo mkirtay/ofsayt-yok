@@ -40,7 +40,6 @@ export default function LockedPreview({ preview, offer, loading, busy, error, is
         <h3 className={styles.title}>
           <span className={styles.aiBadge}>AI</span>
           {t('analysis.titleShort')}
-          <span className={styles.premiumBadge}>{t('premiumBadge')}</span>
         </h3>
         <span className={styles.previewTag}>{t('analysis.previewLabel')}</span>
       </div>
@@ -88,7 +87,7 @@ export default function LockedPreview({ preview, offer, loading, busy, error, is
           </>
         ) : offer?.free ? (
           <button type="button" className={styles.ctaButton} disabled={disabled} onClick={() => onUnlock('credit')}>
-            {t(offer.admin ? 'analysis.unlockAdmin' : 'analysis.unlockPremium')}
+            {t(offer.admin ? 'analysis.unlockAdmin' : 'analysis.unlockFree')}
           </button>
         ) : (
           <>

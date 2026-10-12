@@ -143,7 +143,6 @@ export default function MatchAnalysis({ match, state, archived = false }: Props)
           <h3 className={styles.title}>
             <span className={styles.aiBadge}>AI</span>
             {t('analysis.titleShort')}
-            <span className={styles.premiumBadge}>{t('premiumBadge')}</span>
           </h3>
         </div>
         <div className={styles.loading}>{t('common:loading')}</div>
@@ -159,7 +158,6 @@ export default function MatchAnalysis({ match, state, archived = false }: Props)
           <h3 className={styles.title}>
             <span className={styles.aiBadge}>AI</span>
             {t('analysis.titleShort')}
-            <span className={styles.premiumBadge}>{t('premiumBadge')}</span>
           </h3>
         </div>
 
@@ -225,7 +223,6 @@ export default function MatchAnalysis({ match, state, archived = false }: Props)
         <h3 className={styles.title}>
           <span className={styles.aiBadge}>AI</span>
           {t('analysis.titleShort')}
-          <span className={styles.premiumBadge}>{t('premiumBadge')}</span>
           {isPostMatch && <span className={styles.preTag}>{t('analysis.preGeneratedTag')}</span>}
         </h3>
         <span className={styles.confidenceBadge}>

@@ -49,13 +49,13 @@ describe('kilitli analiz kartı', () => {
     expect(text(html)).not.toContain('Bu haftaki ücretsiz açma hakkını kullan ');
   });
 
-  it('haftalık hak varsa iki düğme; bakiye 0 → "Kredi Satın Al"; premium / yönetici tek düğme', () => {
+  it('haftalık hak varsa iki düğme; bakiye 0 → "Kredi Satın Al"; ücretsiz açma (süren premium) / yönetici tek düğme', () => {
     const weekly = render({ offer: offer({ weeklyFree: { available: true, reason: null } }) });
     expect(text(weekly)).toContain('Bu haftaki ücretsiz açma hakkını kullan');
     expect(text(weekly)).toContain('1 krediyle aç');
     expect(text(render({ offer: offer({ balance: 0 }) }))).not.toContain('1 krediyle aç');
     expect(render({ offer: offer({ balance: 0 }) })).toContain('href="/credits"');
-    expect(text(render({ offer: offer({ free: true, premium: true }) }))).toContain('Premium ile aç');
+    expect(text(render({ offer: offer({ free: true, premium: true }) }))).toContain('Ücretsiz aç');
     expect(text(render({ offer: offer({ free: true, admin: true }) }))).toContain('Yönetici olarak aç');
   });
 
