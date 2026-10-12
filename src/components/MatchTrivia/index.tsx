@@ -81,7 +81,7 @@ export default function MatchTrivia({ matchId, match }: Props) {
         const res = await fetch(`/api/matches/${matchId}/trivia`);
         if (res.status === 401 || res.status === 403) {
           const body = await res.json().catch(() => ({}));
-          setError(body?.error ?? t('trivia.premiumError'));
+          setError(body?.error ?? t('trivia.authError'));
           return;
         }
         if (!res.ok) {
@@ -91,7 +91,7 @@ export default function MatchTrivia({ matchId, match }: Props) {
         const body = (await res.json()) as { trivia: ApiTrivia };
         setTrivia(body.trivia);
       } catch (err) {
-        setError(err instanceof Error ? err.message : t('trivia.premiumError'));
+        setError(err instanceof Error ? err.message : t('trivia.authError'));
       } finally {
         lastFetchedMatchId.current = matchId;
         inFlightMatchId.current = null;
@@ -124,7 +124,6 @@ export default function MatchTrivia({ matchId, match }: Props) {
           <h3 className={styles.title}>
             <span className={styles.aiBadge}>AI</span>
             {t('trivia.title')}
-            <span className={styles.premiumBadge}>{t('premiumBadge')}</span>
           </h3>
         </div>
         <div className={styles.lockedWrap}>
@@ -135,7 +134,7 @@ export default function MatchTrivia({ matchId, match }: Props) {
             <h4 className={styles.lockedTitle}>{t('trivia.lockedTitle')}</h4>
             <p className={styles.lockedSubtitle}>{t('trivia.lockedDesc')}</p>
             <Link href="/auth/signin" className={styles.ctaButton}>
-              {t('trivia.upgradePremium')}
+              {t('trivia.signInCta')}
             </Link>
           </div>
         </div>
@@ -150,7 +149,6 @@ export default function MatchTrivia({ matchId, match }: Props) {
           <h3 className={styles.title}>
             <span className={styles.aiBadge}>AI</span>
             {t('trivia.title')}
-            <span className={styles.premiumBadge}>{t('premiumBadge')}</span>
           </h3>
         </div>
         <TriviaGenerating label={t('trivia.loading')} />
@@ -166,7 +164,6 @@ export default function MatchTrivia({ matchId, match }: Props) {
           <h3 className={styles.title}>
             <span className={styles.aiBadge}>AI</span>
             {t('trivia.title')}
-            <span className={styles.premiumBadge}>{t('premiumBadge')}</span>
           </h3>
         </div>
         <div className={styles.errorBox}>
@@ -198,7 +195,6 @@ export default function MatchTrivia({ matchId, match }: Props) {
         <h3 className={styles.title}>
           <span className={styles.aiBadge}>AI</span>
           {t('trivia.title')}
-          <span className={styles.premiumBadge}>{t('premiumBadge')}</span>
         </h3>
       </div>
 

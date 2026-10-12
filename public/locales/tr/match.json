@@ -175,13 +175,13 @@
   "trivia": {
     "title": "Maç Trivia & Bilinmeyenler",
     "loading": "Trivia hazırlanıyor… Bu işlem birkaç saniye sürebilir.",
-    "lockedTitle": "🔒 Premium Üyelere Özel",
-    "lockedDesc": "Maç verisinden ilginç istatistikler, kadro bağlamı ve karşılaşma geçmişi için Premium üyeliğe geç.",
-    "upgradePremium": "Premium'a Geç",
+    "lockedTitle": "🔒 Üyelere özel",
+    "lockedDesc": "Maç verisinden ilginç istatistikler, kadro bağlamı ve karşılaşma geçmişi için giriş yap. Trivia kredi harcamaz.",
+    "signInCta": "Giriş yap",
     "unknowns": "Bilinmeyenler",
     "context": "Sahada Bağlam",
     "rivalry": "Karşılaşma Geçmişi",
-    "premiumError": "Bu özellik premium üyelere özeldir."
+    "authError": "Bu özellik giriş yapmış kullanıcılara özeldir."
   },
   "poll": {
     "title": "Topluluk Tahmini",
