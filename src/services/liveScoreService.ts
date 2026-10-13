@@ -890,13 +890,14 @@ export const getTeamsHead2Head = async (
       { include: SPORTMONKS_FIXTURE_INCLUDE },
     );
     const fixtures = envelope.data ?? [];
-    if (fixtures.length === 0) return null;
-
     const h2hMatches = fixtures.map(mapSportmonksFixtureToMatch);
+    // Karşılaşma geçmişi boş olsa da iki takımın son maç formu çekilir ("Son 5 Maç" kaybolmasın). Sportmonks boş H2H'de
+    // "sonuç yok ya da plan erişimi yok" der; ikisi ayırt edilemez → kart "geçmiş yok" notunu formun altında gösterir.
     const [team1Last, team2Last] = await Promise.all([
       sportmonksFetchTeamFixtures(team1Id),
       sportmonksFetchTeamFixtures(team2Id),
     ]);
+    if (h2hMatches.length === 0 && team1Last.length === 0 && team2Last.length === 0) return null;
 
     return {
       team1: {

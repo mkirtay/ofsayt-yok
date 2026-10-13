@@ -49,9 +49,23 @@ describe('getTeamsHead2Head sözleşmesi', () => {
     await expect(getTeamsHead2Head('34', '83')).rejects.toThrow();
   });
 
-  it('gerçekten boş sonuç → null', async () => {
+  it('gerçekten boş sonuç (H2H yok, iki takımın da son maçı yok) → null', async () => {
     sm.request.mockResolvedValueOnce({ data: [] });
+    sm.pages.mockResolvedValue([]);
     expect(await getTeamsHead2Head('34', '83')).toBeNull();
+  });
+
+  it('H2H yok ama son maçlar var → form dolu, h2h boş liste (Son 5 Maç kaybolmaz)', async () => {
+    sm.request.mockResolvedValueOnce({ data: [] });
+    // Gerçek Sportmonks örneği (Barcelona 83 – Real Madrid 3468 maçları) iki takımın "son maçları" olarak.
+    const sample = (await import('@/services/sportmonks/__fixtures__/headToHeadBarcaMadrid.json')).default as { data?: unknown[] } | unknown[];
+    const fixtures = Array.isArray(sample) ? sample : (sample.data ?? []);
+    sm.pages.mockResolvedValue(fixtures);
+    const d = await getTeamsHead2Head('83', '3468');
+    expect(d).not.toBeNull();
+    expect(d!.h2h).toEqual([]);
+    expect(d!.team1.overall_form?.length ?? 0).toBeGreaterThan(0);
+    expect(d!.team2.overall_form?.length ?? 0).toBeGreaterThan(0);
   });
 });
 
@@ -105,6 +119,24 @@ describe('görünüm: hata ⇒ yüklenemedi, boş ⇒ geçmiş yok, başarı ⇒
   it('boş: mevcut "geçmiş yok" metni', () => {
     const html = renderToStaticMarkup(<H2hNone message={trState.h2h.none} />);
     expect(html).toContain('Bu iki takımın karşılaşma geçmişi yok.');
+  });
+
+  it('form var, karşılaşma geçmişi yok: Son 5 Maç + "geçmiş yok" notu, tablo yok', () => {
+    const match = { id: 19872635, status: 'NOT STARTED', time: '', date: '2026-10-13', scheduled: '22:00', home: { id: 19, name: 'Arsenal' }, away: { id: 690, name: 'LOSC Lille' } } as Match;
+    const formOnly = {
+      team1: { id: '19', name: 'Arsenal', overall_form: ['W', 'D', 'W'], h2h_form: [] },
+      team2: { id: '690', name: 'LOSC Lille', overall_form: ['L', 'W'], h2h_form: [] },
+      h2h: [],
+    } as unknown as Head2HeadData;
+    const html = renderToStaticMarkup(
+      <QueryClientProvider client={new QueryClient()}>
+        <MatchCard match={match} initialH2h={formOnly} />
+      </QueryClientProvider>,
+    );
+    expect(html).toMatch(/formPill/);
+    expect(html).toContain('data-testid="h2h-none"');
+    expect(html).toContain('Bu iki takımın karşılaşma geçmişi yok.');
+    expect(html).not.toMatch(/h2hTableWrap/);
   });
 
   it('başarı: karşılaşma tablosu', () => {

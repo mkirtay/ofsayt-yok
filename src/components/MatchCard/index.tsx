@@ -352,6 +352,9 @@ export default function MatchCard({ match, loading, initialH2h }: MatchCardProps
             </table>
           </div>
         </div>
+      ) : showFormRow ? (
+        // Form var, karşılaşma geçmişi yok: formun altında not (Son 5 Maç kaybolmaz).
+        <H2hNone message={ts('h2h.none')} />
       ) : null}
     </>
   );
