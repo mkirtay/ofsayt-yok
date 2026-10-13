@@ -66,6 +66,48 @@ function parseDisplayScore(raw: string): { home: string; away: string } {
 }
 
 /** Form + karşılaşma geçmişi iskeleti (form satırı + thead + 5 satır). `className`: ayrılmış kutuda görünmez ölçü olarak. */
+/** Karşılaşma geçmişi hatasında tek otomatik yeniden deneme gecikmesi. */
+export const H2H_RETRY_DELAY_MS = 1500;
+
+export type H2hLoadResult = { data: Head2HeadData | null } | { error: true };
+
+/**
+ * Karşılaşma geçmişini çeker; hata (zaman aşımı/504/ağ) "veri yok" sayılmaz: `retries` kez `delayMs` sonra yeniden
+ * denenir, yine olmazsa `{ error: true }`. Boş sonuç `{ data: null }`. `isCancelled` true olursa sonuç çözülmez.
+ */
+export function loadH2hWithRetry(
+  fetcher: () => Promise<Head2HeadData | null>,
+  opts: { retries?: number; delayMs?: number; isCancelled?: () => boolean } = {},
+): Promise<H2hLoadResult> {
+  const { retries = 1, delayMs = H2H_RETRY_DELAY_MS, isCancelled = () => false } = opts;
+  return fetcher().then(
+    (data) => ({ data }),
+    () =>
+      retries > 0 && !isCancelled()
+        ? new Promise<void>((r) => setTimeout(r, delayMs)).then(() =>
+            isCancelled() ? { error: true as const } : loadH2hWithRetry(fetcher, { retries: retries - 1, delayMs, isCancelled }),
+          )
+        : { error: true as const },
+  );
+}
+
+/** "Yüklenemedi" kutusu (hata ≠ veri yok). */
+export function H2hError({ message, retryLabel, onRetry }: { message: string; retryLabel: string; onRetry: () => void }) {
+  return (
+    <div className={styles.h2hError} role="status" data-testid="h2h-error">
+      <p className={styles.h2hNone}>{message}</p>
+      <button type="button" className={styles.h2hRetry} onClick={onRetry}>
+        {retryLabel}
+      </button>
+    </div>
+  );
+}
+
+/** Gerçekten boş karşılaşma geçmişi. */
+export function H2hNone({ message }: { message: string }) {
+  return <p className={styles.h2hNone} data-testid="h2h-none">{message}</p>;
+}
+
 function H2hSkeleton({ className }: { className?: string }) {
   return (
     <div aria-hidden="true" className={className}>
@@ -99,7 +141,8 @@ export default function MatchCard({ match, loading, initialH2h }: MatchCardProps
   const { t: tl } = useTranslation('leagues');
   // Form + karşılaşma geçmişi tek state'te, takım çiftine bağlı. SSR verdiyse onunla başlar (istek yok, kart uzamaz).
   const teamKey = h2hTeamKey(match);
-  const [h2h, setH2h] = useState<{ key: string; data: Head2HeadData | null } | null>(() =>
+  // `data: null` = gerçekten boş (karşılaşma yok); `error` = yüklenemedi (hata/zaman aşımı) — ayrı gösterilir.
+  const [h2h, setH2h] = useState<{ key: string; data: Head2HeadData | null; error?: false } | { key: string; data?: undefined; error: true } | null>(() =>
     teamKey && initialH2h !== undefined ? { key: teamKey.key, data: initialH2h } : null,
   );
   // SSR vermediyse (bütçe aşıldı / panel) bölüm iskelet yüksekliğinde kalır: veri gelince kart uzamaz ya da kısalmaz
@@ -141,14 +184,11 @@ export default function MatchCard({ match, loading, initialH2h }: MatchCardProps
     if (!teamKey || h2h?.key === teamKey.key) return;
     let cancelled = false;
     const { key, team1Id, team2Id } = teamKey;
-    getTeamsHead2Head(team1Id, team2Id).then(
-      (data) => {
-        if (!cancelled) setH2h({ key, data });
-      },
-      () => {
-        if (!cancelled) setH2h({ key, data: null });
-      },
-    );
+    // Hata "veri yok" DEĞİL: bir kez kendiliğinden yeniden denenir, yine olmazsa "yüklenemedi" + Tekrar dene.
+    void loadH2hWithRetry(() => getTeamsHead2Head(team1Id, team2Id), { isCancelled: () => cancelled }).then((r) => {
+      if (cancelled) return;
+      setH2h('error' in r ? { key, error: true } : { key, data: r.data });
+    });
     return () => {
       cancelled = true;
     };
@@ -156,9 +196,11 @@ export default function MatchCard({ match, loading, initialH2h }: MatchCardProps
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [teamKey?.key, h2h?.key]);
 
-  // undefined = bu takım çifti için henüz gelmedi (iskelet), null = veri yok.
-  const h2hData = teamKey && h2h?.key === teamKey.key ? h2h.data : teamKey ? undefined : null;
-  const h2hPending = h2hData === undefined;
+  // undefined = bu takım çifti için henüz gelmedi (iskelet), null = veri yok; hata ayrı (h2hError).
+  const h2hCurrent = teamKey && h2h?.key === teamKey.key ? h2h : null;
+  const h2hError = h2hCurrent?.error === true;
+  const h2hData = h2hError ? null : h2hCurrent ? (h2hCurrent.data ?? null) : teamKey ? undefined : null;
+  const h2hPending = h2hData === undefined && !h2hError;
   const h2hReserved = reserveH2h && !h2hExpanded && teamKey != null && !h2hPending;
   useEffect(() => {
     const el = reservedRef.current;
@@ -477,11 +519,13 @@ export default function MatchCard({ match, loading, initialH2h }: MatchCardProps
 
       {h2hPending ? (
         <H2hSkeleton />
+      ) : h2hError ? (
+        <H2hError message={ts('h2h.loadError')} retryLabel={ts('h2h.retry')} onRetry={() => setH2h(null)} />
       ) : h2hReserved ? (
         <div className={styles.h2hReserved}>
           <H2hSkeleton className={styles.h2hReservedSizer} />
           <div ref={reservedRef} className={styles.h2hReservedContent}>
-            {showFormRow || showH2hTable ? h2hSections : <p className={styles.h2hNone}>{ts('h2h.none')}</p>}
+            {showFormRow || showH2hTable ? h2hSections : <H2hNone message={ts('h2h.none')} />}
           </div>
           {h2hClipped ? (
             <button type="button" className={styles.h2hShowAll} onClick={() => setH2hExpanded(true)}>

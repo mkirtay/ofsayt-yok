@@ -413,7 +413,8 @@ export async function buildMatchAnalysisContext(
     getMatchStats(apiMatchId),
     getMatchLineups(apiMatchId),
     compId != null ? getCompetitionTableFull(String(compId)) : Promise.resolve(null),
-    getTeamsHead2Head(String(homeId), String(awayId)),
+    // H2H hatası analizi düşürmesin (eski davranış: hata = bağlamda H2H yok).
+    getTeamsHead2Head(String(homeId), String(awayId)).catch(() => null),
     match.referee_id != null && match.season_id != null
       ? loadRefereeSummary(match.referee_id, match.season_id, match.competition?.id ?? null)
       : Promise.resolve(null),

@@ -874,6 +874,11 @@ function matchToH2HHistorical(m: Match): Head2HHistoricalMatch {
  * `overall_form`/`h2h_form` burada `getTeamHistoryMatches`'ten (zaten en-yeni-
  * önce sıralı) client-side türetiliyor.
  */
+/**
+ * Karşılaşma geçmişi + iki takımın son maç formu. `null` YALNIZ gerçekten boş sonuç (iki takım hiç karşılaşmamış);
+ * Sportmonks hatası / zaman aşımı (504) / ağ hatası FIRLATILIR — "geçmiş yok" sanılmasın (panel "yüklenemedi" gösterir,
+ * SSR sayfası eksik sayılıp kısa önbelleklenir). Sportmonks katmanı (cachedFetch) zaten yalnız başarılı yanıtı yazar.
+ */
 export const getTeamsHead2Head = async (
   team1Id: string,
   team2Id: string
@@ -910,7 +915,7 @@ export const getTeamsHead2Head = async (
     };
   } catch (error) {
     console.error('Error fetching head2head (sportmonks)', error);
-    return null;
+    throw error;
   }
 };
 

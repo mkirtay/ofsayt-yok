@@ -439,6 +439,31 @@ $match-card-header-blue: var(--text-secondary); // tema-uyumlu (eskiden sabit la
   overflow: hidden;
 }
 
+// Karşılaşma geçmişi yüklenemedi (hata/zaman aşımı): metin + Tekrar dene; "geçmiş yok"tan ayrı.
+.h2hError {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: $spacing-4;
+
+  .h2hNone {
+    width: 100%;
+    padding-bottom: 0;
+  }
+}
+
+.h2hRetry {
+  padding: 6px 14px;
+  border: 1px solid $color-border;
+  border-radius: 999px;
+  background: $color-surface;
+  color: var(--color-action-text);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 .h2hNone {
   border-top: 1px solid $color-border;
   padding: $spacing-4;

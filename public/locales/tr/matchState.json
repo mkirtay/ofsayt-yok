@@ -57,6 +57,8 @@
   },
   "h2h": {
     "showAll": "Tümünü göster",
-    "none": "Bu iki takımın karşılaşma geçmişi yok."
+    "none": "Bu iki takımın karşılaşma geçmişi yok.",
+    "loadError": "Karşılaşma geçmişi yüklenemedi.",
+    "retry": "Tekrar dene"
   }
 }
