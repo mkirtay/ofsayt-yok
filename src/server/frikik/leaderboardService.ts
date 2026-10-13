@@ -3,7 +3,7 @@
  * (anahtar ortam önekli; kişisel veri yok: yalnız takma ad + seviye + puan + gün). Kişisel sıra her zaman DB'den.
  * Sıralama SQL'leri lib/frikik/leaderboard.ts'te (PGlite testiyle aynı metin).
  */
-import { Prisma } from '@prisma/client';
+import { randomUUID } from 'node:crypto';
 import { cacheKeyPrefix } from '@/lib/cacheNamespace';
 import { monthKey } from '@/lib/frikik/daily';
 import {
@@ -15,11 +15,13 @@ import {
   type LeaderboardRow,
   type RunKey,
   type SqlQuery,
+  upsertBestRunSql,
 } from '@/lib/frikik/leaderboard';
 import type { VerifiedRun } from '@/lib/frikik/scoreSubmit';
 import { SIM_VERSION } from '@/lib/frikik/sim';
 import { readCache, writeCache } from '@/lib/livescoreCache';
 import { prisma } from '@/lib/prisma';
+import { FRIKIK_DAILY_ATTEMPTS, readAttempts } from './attempts';
 
 export const LEADERBOARD_CACHE_SECONDS = 30;
 
@@ -36,6 +38,8 @@ export type MyStanding = {
   today: { level: number; score: number; cleared: number; rank: number } | null;
   /** Ay içindeki en iyi günlük kaydı ve aylık sırası. */
   month_best: { level: number; score: number; day: string; rank: number } | null;
+  /** Bugün harcanan tablo denemesi / günlük tavan (`used` null: sayaç okunamadı). */
+  attempts: { used: number | null; max: number };
 };
 
 const raw = <T>(q: SqlQuery) => prisma.$queryRawUnsafe<T[]>(q.text, ...q.values);
@@ -62,10 +66,11 @@ async function rankOf(q: SqlQuery): Promise<number> {
 
 export async function loadMyStanding(userId: string, day: string): Promise<MyStanding> {
   const month = monthKey(day);
-  const [user, todayRow, bestRows] = await Promise.all([
+  const [user, todayRow, bestRows, used] = await Promise.all([
     prisma.user.findUnique({ where: { id: userId }, select: { username: true } }),
     prisma.frikikDailyScore.findUnique({ where: { userId_day: { userId, day } }, select: { level: true, score: true, cleared: true, createdAt: true } }),
     raw<LeaderboardRow>(myMonthBestSql(userId, month)),
+    readAttempts(userId, day),
   ]);
   const best = bestRows[0] ?? null;
   const [dayRank, monthRank] = await Promise.all([
@@ -78,32 +83,31 @@ export async function loadMyStanding(userId: string, day: string): Promise<MySta
     nickname: user?.username ?? null,
     today: todayRow && dayRank ? { level: todayRow.level, score: todayRow.score, cleared: todayRow.cleared, rank: dayRank } : null,
     month_best: best && monthRank ? { level: best.level, score: best.score, day: best.day, rank: monthRank } : null,
+    attempts: { used: used == null ? null : Math.min(used, FRIKIK_DAILY_ATTEMPTS), max: FRIKIK_DAILY_ATTEMPTS },
   };
 }
 
-export type SubmitOutcome = { recorded: boolean; standing: MyStanding };
+/** first: günün ilk kaydı · improved: tablo iyileşti · kept: mevcut kayıt daha iyi ya da eşit (dokunulmadı). */
+export type SubmitResult = 'first' | 'improved' | 'kept';
+export type SubmitOutcome = { recorded: boolean; result: SubmitResult; standing: MyStanding };
 
-/** Günün ilk bitmiş koşusu yazılır; aynı gün ikinci gönderim (tekil anahtar) mevcut kaydı döner (recorded=false). */
+/** Günün EN İYİ koşusu tutulur (koşullu upsert, tek ifade — bkz. `upsertBestRunSql`). Kötü/eşit koşu recorded=false. */
 export async function submitVerifiedRun(userId: string, run: VerifiedRun): Promise<SubmitOutcome> {
-  let recorded = true;
-  try {
-    await prisma.frikikDailyScore.create({
-      data: {
-        userId,
-        day: run.day,
-        month: monthKey(run.day),
-        score: run.score,
-        level: run.level,
-        cleared: run.cleared,
-        simVersion: SIM_VERSION,
-        // Tohum 32 bit işaretsiz (0..2^32-1), sütun INT4: aynı bitler işaretli olarak yazılır. Geri okumak için `>>> 0`.
-        seed: run.seed | 0,
-        shots: run.shots,
-      },
-    });
-  } catch (e) {
-    if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === 'P2002') recorded = false;
-    else throw e;
-  }
-  return { recorded, standing: await loadMyStanding(userId, run.day) };
+  const rows = await raw<{ inserted: boolean }>(
+    upsertBestRunSql({
+      id: randomUUID(),
+      userId,
+      day: run.day,
+      month: monthKey(run.day),
+      score: run.score,
+      level: run.level,
+      cleared: run.cleared,
+      simVersion: SIM_VERSION,
+      // Tohum 32 bit işaretsiz (0..2^32-1), sütun INT4: aynı bitler işaretli olarak yazılır. Geri okumak için `>>> 0`.
+      seed: run.seed | 0,
+      shots: run.shots,
+    }),
+  );
+  const result: SubmitResult = rows.length === 0 ? 'kept' : rows[0]!.inserted ? 'first' : 'improved';
+  return { recorded: result !== 'kept', result, standing: await loadMyStanding(userId, run.day) };
 }

@@ -53,7 +53,7 @@ describe('frikik_daily_score migration (gerçek SQL)', () => {
     }
   });
 
-  it('kullanıcı + gün tekil (günün ilk koşusu kalır); kullanıcı silinince kayıtlar silinir', async () => {
+  it('kullanıcı + gün tekil (düz INSERT reddedilir; günün en iyisi upsert ile); kullanıcı silinince kayıtlar silinir', async () => {
     await expect(
       db.query(`INSERT INTO "FrikikDailyScore" (id, "userId", day, month, score, level, cleared, "simVersion", seed, shots) VALUES ('dup', 'u1', '2026-10-01', '2026-10', 99999, 99, 98, 2, 1, 4)`),
     ).rejects.toThrow(/FrikikDailyScore_userId_day_key/);

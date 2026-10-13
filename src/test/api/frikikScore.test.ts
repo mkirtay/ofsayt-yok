@@ -1,40 +1,56 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { Prisma } from '@prisma/client';
 import { dailySeed, todayKey, parseDayKey } from '@/lib/frikik/daily';
 import { SIM_VERSION, scoreLevelRun } from '@/lib/frikik/sim';
-import { finishedRun } from '@/test/frikik/runFixture';
+import { finishedRun, zeroRun } from '@/test/frikik/runFixture';
 import { parseScoreSubmission, verifyRun } from '@/lib/frikik/scoreSubmit';
 
-/** POST /api/frikik/score: sunucu skoru yeniden oynatır; istemci skoru asla kullanılmaz. DB ve Redis taklit. */
+/**
+ * POST /api/frikik/score: sunucu skoru yeniden oynatır; istemci skoru asla kullanılmaz. DB ve Redis taklit: upsert SQL'i
+ * taklitte "en iyi koşu" kuralıyla uygulanır (gerçek SQL'in kendisi PGlite testinde: frikikBestRun.pglite.test.ts).
+ */
 const h = vi.hoisted(() => ({
   userId: 'u1' as string | null,
   username: 'eren' as string | null,
+  /** Yazılan/güncellenen satırlar (kronolojik; her yazım bir giriş). */
   created: [] as Record<string, unknown>[],
-  dupNext: false,
+  row: null as Record<string, unknown> | null,
+  attempts: 0 as number,
+  redisDown: false,
   rl: { success: true, remaining: 1, resetAt: 0 },
   warn: [] as string[],
+  sentry: [] as { message: string; extra?: Record<string, unknown> }[],
 }));
 
 vi.mock('@/lib/mobileAuth', () => ({ getRequestUserId: vi.fn(async () => h.userId) }));
 vi.mock('@/lib/rateLimit', () => ({ hitFixedWindowRateLimit: vi.fn(async () => h.rl), requestIp: () => '1.1.1.1' }));
 vi.mock('@/lib/livescoreCache', () => ({ readCache: vi.fn(async () => null), writeCache: vi.fn(async () => {}) }));
-vi.mock('@/lib/logger', () => ({ captureError: vi.fn() }));
+vi.mock('@/lib/logger', () => ({
+  captureError: vi.fn(),
+  captureWarning: vi.fn((_c: string, message: string, extra?: Record<string, unknown>) => void h.sentry.push({ message, extra })),
+}));
+vi.mock('@/server/frikik/attempts', () => ({
+  FRIKIK_DAILY_ATTEMPTS: 5,
+  takeAttempt: vi.fn(async () => (h.redisDown ? null : ++h.attempts)),
+  readAttempts: vi.fn(async () => (h.redisDown ? null : h.attempts)),
+}));
+const COLS = ['id', 'userId', 'day', 'month', 'score', 'level', 'cleared', 'simVersion', 'seed', 'shots'] as const;
 vi.mock('@/lib/prisma', () => ({
   prisma: {
     user: { findUnique: vi.fn(async () => (h.userId ? { username: h.username } : null)) },
     frikikDailyScore: {
-      create: vi.fn(async ({ data }: { data: Record<string, unknown> }) => {
-        if (h.dupNext) throw new Prisma.PrismaClientKnownRequestError('dup', { code: 'P2002', clientVersion: 'test' });
-        h.created.push(data);
-        return { id: 'r1', ...data };
-      }),
-      findUnique: vi.fn(async () => {
-        const c = h.created[0];
-        return c ? { level: c.level, score: c.score, cleared: c.cleared, createdAt: new Date() } : null;
-      }),
+      findUnique: vi.fn(async () => (h.row ? { level: h.row.level, score: h.row.score, cleared: h.row.cleared, createdAt: new Date() } : null)),
     },
-    $queryRawUnsafe: vi.fn(async (text: string) => (text.startsWith('SELECT count') ? [{ n: 2 }] : [])),
+    $queryRawUnsafe: vi.fn(async (text: string, ...values: unknown[]) => {
+      if (text.startsWith('SELECT count')) return [{ n: 2 }];
+      if (!text.startsWith('INSERT')) return [];
+      const data = Object.fromEntries(COLS.map((c, i) => [c, values[i]])) as Record<string, number | string>;
+      const cur = h.row as Record<string, number> | null;
+      if (cur && !(data.level as number > cur.level || (data.level === cur.level && (data.score as number) > cur.score))) return [];
+      h.row = data;
+      h.created.push(data);
+      return [{ inserted: cur == null }];
+    }),
   },
 }));
 
@@ -62,7 +78,10 @@ describe('POST /api/frikik/score', () => {
     h.userId = 'u1';
     h.username = 'eren';
     h.created = [];
-    h.dupNext = false;
+    h.row = null;
+    h.attempts = 0;
+    h.redisDown = false;
+    h.sentry = [];
     h.rl = { success: true, remaining: 1, resetAt: 0 };
     vi.spyOn(console, 'warn').mockImplementation((m: unknown) => void h.warn.push(String(m)));
   });
@@ -83,7 +102,7 @@ describe('POST /api/frikik/score', () => {
     const expected = scoreLevelRun(seed, shots);
     expect(h.created).toHaveLength(1);
     expect(h.created[0]).toMatchObject({ userId: 'u1', day, month: day.slice(0, 7), score: expected.total, level: expected.level, cleared: expected.cleared, simVersion: SIM_VERSION, seed: seed | 0, shots: shots.length });
-    expect(r.body).toMatchObject({ recorded: true, standing: { day, nickname: 'eren', today: { level: expected.level, score: expected.total, rank: 3 } } });
+    expect(r.body).toMatchObject({ recorded: true, result: 'first', standing: { day, nickname: 'eren', today: { level: expected.level, score: expected.total, rank: 3 }, attempts: { used: 1, max: 5 } } });
   });
 
   it('sürüm uyuşmazlığı 409 ve nedeni loglanır; kayıt yok', async () => {
@@ -108,13 +127,67 @@ describe('POST /api/frikik/score', () => {
     expect(h.created).toEqual([]);
   });
 
-  it('aynı gün ikinci gönderim: tekil anahtar → mevcut kayıt döner, recorded=false', async () => {
+  it('aynı koşu ikinci kez (eşit): mevcut kayıt döner, recorded=false, result=kept', async () => {
     await post(good);
-    h.dupNext = true;
     const r = await post({ ...good, score: 1 });
     expect(r.statusCode).toBe(200);
-    expect(r.body).toMatchObject({ recorded: false });
+    expect(r.body).toMatchObject({ recorded: false, result: 'kept', standing: { attempts: { used: 2, max: 5 } } });
     expect(h.created).toHaveLength(1);
+  });
+
+  it('günün en iyi koşusu: kötü koşu tabloyu bozmaz, daha iyi koşu günceller (improved)', async () => {
+    const best = scoreLevelRun(seed, shots);
+    const worse = zeroRun(seed); 
+    const w = scoreLevelRun(seed, worse);
+    expect(w.level).toBeLessThan(best.level);
+
+    const r1 = await post({ ...good, shots: worse });
+    expect(r1.body).toMatchObject({ recorded: true, result: 'first', standing: { today: { level: 1, score: 0 } } });
+    const r2 = await post(good);
+    expect(r2.body).toMatchObject({ recorded: true, result: 'improved', standing: { today: { level: best.level, score: best.total } } });
+    const r3 = await post({ ...good, shots: worse });
+    expect(r3.body).toMatchObject({ recorded: false, result: 'kept', standing: { today: { level: best.level, score: best.total } } });
+    expect(h.row).toMatchObject({ level: best.level, score: best.total });
+  });
+
+  it('günlük deneme tavanı: 6. doğrulanmış koşu 429 ATTEMPTS_EXHAUSTED, kayıt değişmez, mevcut durum döner', async () => {
+    const worse = zeroRun(seed);
+    for (let i = 0; i < 5; i++) expect((await post({ ...good, shots: worse })).statusCode).toBe(200);
+    const writes = h.created.length;
+    const r = await post(good); // daha iyi olsa bile yazılmaz
+    expect(r.statusCode).toBe(429);
+    expect(r.body).toMatchObject({ code: 'ATTEMPTS_EXHAUSTED', standing: { today: { level: 1, score: 0 }, attempts: { used: 5, max: 5 } } });
+    expect((r.body as { error: string }).error).toMatch(/5 deneme/);
+    expect(h.created).toHaveLength(writes);
+  });
+
+  it('reddedilen koşu (bozuk / yanlış tohum / takma adsız) deneme harcamaz', async () => {
+    await post({ ...good, shots: 'x' });
+    await post({ ...good, seed: (seed ^ 1) >>> 0 });
+    h.username = null;
+    await post(good);
+    expect(h.attempts).toBe(0);
+  });
+
+  it('Redis yoksa (sayaç okunamaz) fail-open: kayıt yapılır, used=null', async () => {
+    h.redisDown = true;
+    const r = await post(good);
+    expect(r.statusCode).toBe(200);
+    expect(r.body).toMatchObject({ recorded: true, standing: { attempts: { used: null, max: 5 } } });
+  });
+
+  it('teşhis: istemcinin bildirdiği sonuç sunucudan farklıysa Sentry uyarısı; kayda etkisi yok', async () => {
+    const expected = scoreLevelRun(seed, shots);
+    await post({ ...good, claimed: { level: expected.level, score: expected.total } });
+    expect(h.sentry).toEqual([]);
+    h.row = null;
+    const r = await post({ ...good, claimed: { level: 99, score: 123456 } });
+    expect(r.statusCode).toBe(200);
+    expect(h.sentry).toHaveLength(1);
+    expect(h.sentry[0]!.extra).toMatchObject({ userId: 'u1', client: { level: 99, score: 123456 }, server: { level: expected.level, score: expected.total } });
+    expect(h.row).toMatchObject({ level: expected.level, score: expected.total });
+    await post({ ...good, claimed: 'bozuk' });
+    expect(h.sentry).toHaveLength(1);
   });
 
   it('hız sınırı 429 + Retry-After', async () => {
@@ -139,7 +212,9 @@ describe('POST /api/frikik/score – sabit günler (tohum 2^31 altı / üstü)',
     h.userId = 'u1';
     h.username = 'eren';
     h.created = [];
-    h.dupNext = false;
+    h.row = null;
+    h.attempts = 0;
+    h.redisDown = false;
     h.rl = { success: true, remaining: 1, resetAt: 0 };
   });
   afterEach(() => void vi.useRealTimers());

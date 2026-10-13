@@ -1,26 +1,39 @@
 /**
- * POST /api/frikik/score — günün koşusunu tabloya yazar. Gövde: { day, seed, simVersion, shots } (vuruş GİRDİLERİ; skor
+ * POST /api/frikik/score — günün koşusunu tabloya gönderir. Gövde: { day, seed, simVersion, shots } (vuruş GİRDİLERİ; skor
  * yok). Sunucu günü/tohumu doğrular, koşuyu sim.ts ile yeniden oynatır ve puanı kendisi hesaplar (lib/frikik/scoreSubmit.ts).
+ * İsteğe bağlı `claimed: { level, score }` yalnız teşhis içindir: sunucu sonucundan farklıysa Sentry'ye uyarı düşer
+ * (istemci/sunucu simülasyon ayrışması); kayda hiçbir etkisi yoktur.
  * - 401 giriş yok · 403 NICKNAME_REQUIRED (takma ad yok) · 400 geçersiz gövde / gün / tohum / bitmemiş koşu
  * - 409 SIM_VERSION: istemci eski simülasyonla oynamış (nedeni loglanır)
- * - Aynı kullanıcı + gün için tek kayıt: ikinci gönderim mevcut kaydı döner (recorded=false).
+ * - Kullanıcı + gün için tek satır = günün EN İYİ koşusu; daha kötü/eşit koşu mevcut kaydı döner (recorded=false).
+ * - 429 ATTEMPTS_EXHAUSTED: günde en fazla FRIKIK_DAILY_ATTEMPTS doğrulanmış koşu (gövdede mevcut durum döner).
  * Hız sınırı: kullanıcı 6/dk, IP 20/dk (Upstash; fail-open).
  */
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { parseScoreSubmission, verifyRun } from '@/lib/frikik/scoreSubmit';
 import { readJsonBody } from '@/lib/gundem/validation';
-import { captureError } from '@/lib/logger';
+import { captureError, captureWarning } from '@/lib/logger';
 import { prisma } from '@/lib/prisma';
 import { hitFixedWindowRateLimit, requestIp } from '@/lib/rateLimit';
 import { requireAuth } from '@/lib/requireAuth';
-import { submitVerifiedRun } from '@/server/frikik/leaderboardService';
+import { FRIKIK_DAILY_ATTEMPTS, takeAttempt } from '@/server/frikik/attempts';
+import { loadMyStanding, submitVerifiedRun } from '@/server/frikik/leaderboardService';
 
 export const NICKNAME_REQUIRED_CODE = 'NICKNAME_REQUIRED';
+export const ATTEMPTS_EXHAUSTED_CODE = 'ATTEMPTS_EXHAUSTED';
 export const SCORE_USER_LIMIT = 6;
 export const SCORE_IP_LIMIT = 20;
 export const SCORE_WINDOW_MS = 60_000;
 
 const REJECT_STATUS: Record<string, number> = { SIM_VERSION: 409 };
+
+/** İstemcinin kendi bulduğu sonuç (teşhis); biçimsizse yok sayılır. */
+function parseClaim(raw: unknown): { level: number; score: number } | null {
+  const c = raw && typeof raw === 'object' ? (raw as Record<string, unknown>).claimed : null;
+  if (!c || typeof c !== 'object') return null;
+  const { level, score } = c as Record<string, unknown>;
+  return Number.isInteger(level) && Number.isInteger(score) ? { level: level as number, score: score as number } : null;
+}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -41,18 +54,37 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(429).json({ error: 'Çok fazla istek gönderdiniz. Biraz bekleyin.' });
   }
 
-  const sub = parseScoreSubmission(readJsonBody(req));
+  const body = readJsonBody(req);
+  const sub = parseScoreSubmission(body);
   if (!sub) return res.status(400).json({ error: 'Geçersiz koşu verisi.', code: 'BAD_BODY' });
   const verified = verifyRun(sub, Date.now());
   if (!verified.ok) {
     if (verified.code === 'SIM_VERSION') console.warn(`[frikik-score] sürüm uyuşmazlığı: user=${guard.userId} ${verified.detail}`);
     return res.status(REJECT_STATUS[verified.code] ?? 400).json({ error: 'Koşu doğrulanamadı.', code: verified.code });
   }
+  const claim = parseClaim(body);
+  if (claim && (claim.level !== verified.level || claim.score !== verified.score)) {
+    captureWarning('frikik-score', 'istemci/sunucu sonuç ayrışması', {
+      userId: guard.userId,
+      day: verified.day,
+      client: claim,
+      server: { level: verified.level, score: verified.score },
+      shots: verified.shots,
+    });
+  }
 
   try {
     const user = await prisma.user.findUnique({ where: { id: guard.userId }, select: { username: true } });
     if (!user) return res.status(401).json({ error: 'Giriş yapmanız gerekiyor.' });
     if (!user.username) return res.status(403).json({ error: 'Tabloya yazmak için bir takma ad seç.', code: NICKNAME_REQUIRED_CODE });
+    const used = await takeAttempt(guard.userId, verified.day);
+    if (used != null && used > FRIKIK_DAILY_ATTEMPTS) {
+      return res.status(429).json({
+        error: `Bugünkü ${FRIKIK_DAILY_ATTEMPTS} deneme hakkın doldu; tablon en iyi koşunla duruyor. Yarın yeni hak.`,
+        code: ATTEMPTS_EXHAUSTED_CODE,
+        standing: await loadMyStanding(guard.userId, verified.day),
+      });
+    }
     const outcome = await submitVerifiedRun(guard.userId, verified);
     return res.status(200).json(outcome);
   } catch (err) {

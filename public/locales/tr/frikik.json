@@ -52,7 +52,7 @@
     "p3": "Doksan (üst köşe): +100",
     "r4": "Seviye modu (Günün frikiği): 3 can, her seviye 1 vuruş. Gol → sonraki seviye, kaçırma → 1 can. Mesafe ve açı her seviyede artar (20 m merkezden 32 m geniş açıya; ekranın üstünde \"Mesafe\"), baraj, kaleci, rüzgâr (yönü ve gücü ekranın üstünde), daralan kale ve hareketli baraj kademeli gelir; herkes o günün aynı dizisini oynar.",
     "p4": "Seviye modunda puanlar seviye çarpanıyla çarpılır: 1. seviye ×1, 2. ×1,5, 3. ×2 … Sıralama önce ulaşılan seviye, sonra puan.",
-    "p5": "Skor tablosu: oynamak için giriş gerekmez; skorunu tabloya yazmak için Google ile giriş yap ve bir takma ad seç. Günde yalnız ilk bitmiş koşun sayılır (tekrar oynamak serbest). Aylık tablo, ay içindeki tek en iyi günlük sonucun; ödül yok, yalnız sıralama."
+    "p5": "Skor tablosu: oynamak için giriş gerekmez; skorunu tabloya yazmak için Google ile giriş yap ve bir takma ad seç. Günün en iyi koşun sayılır: günde 5 deneme tabloya gönderilir, tablo yalnız daha yüksek seviye ya da aynı seviyede daha yüksek puan gelirse güncellenir (5 denemeden sonra oynamak serbest, tabloya yazılmaz). Aylık tablo, ay içindeki tek en iyi günlük sonucun; ödül yok, yalnız sıralama."
   },
   "tip": {
     "title": "Nasıl oynanır?",
@@ -70,7 +70,11 @@
   "submit": {
     "sending": "Skorun tabloya yazılıyor…",
     "recorded": "Tabloya yazıldı: bugün {{rank}}. sıradasın.",
-    "already": "Bugünkü tablon: Seviye {{level}}, {{rank}}. sıra (günün ilk koşusu sayılır).",
+    "improved": "Tabloyu güncelledin: bugün {{rank}}. sıradasın.",
+    "kept": "Bu koşu en iyi koşunun altında kaldı.",
+    "exhausted": "Bugünkü {{max}} deneme hakkın doldu; bu koşu tabloya yazılmadı. Yarın yeni hak.",
+    "today": "Bugünkü tablon: Seviye {{level}}, {{score}} puan (günün en iyi koşusu sayılır, {{used}}/{{max}} deneme).",
+    "todayNoCount": "Bugünkü tablon: Seviye {{level}}, {{score}} puan (günün en iyi koşusu sayılır).",
     "error": "Skor tabloya yazılamadı. Daha sonra tekrar dene.",
     "versionError": "Oyun güncellendi; bu koşu tabloya yazılamadı. Sayfayı yenileyip tekrar oyna.",
     "loginPrompt": "Skorunu tabloya yaz: Google ile giriş yap. Bu koşu seni bekler.",
@@ -86,7 +90,7 @@
   },
   "resume": {
     "recorded": "Giriş yaptın: bugünkü koşun tabloya yazıldı — Seviye {{level}}, {{rank}}. sıra.",
-    "already": "Bugün zaten tablodasın: Seviye {{level}}, {{rank}}. sıra.",
+    "already": "Bugün zaten tablodasın; en iyi koşun duruyor: Seviye {{level}}, {{rank}}. sıra.",
     "nickname": "Koşun hazır; tabloya yazmak için bir takma ad seç."
   },
   "board": {

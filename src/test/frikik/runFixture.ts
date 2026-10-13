@@ -42,3 +42,9 @@ export function finishedRun(seed: number): ShotInput[] {
   const m2 = findShot(seed, 2, false);
   return [g1, m2, m2, m2];
 }
+
+/** Golsüz bitmiş koşu: 1. seviyede üç kaçırma → seviye 1, 0 puan, 0 can. */
+export function zeroRun(seed: number): ShotInput[] {
+  const m1 = findShot(seed, 1, false);
+  return [m1, m1, m1];
+}

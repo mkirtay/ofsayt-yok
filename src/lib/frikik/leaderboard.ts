@@ -1,6 +1,6 @@
 /**
- * Frikik skor tablosu — sıralama kuralı ve SQL. Sıralama anahtarı: önce ulaşılan SEVİYE, sonra PUAN, sonra erken
- * kayıt (kurallar metniyle tutarlı: "Sıralama önce ulaşılan seviye, sonra puan"). Aylık tablo: her kullanıcının o ay
+ * Frikik skor tablosu — sıralama kuralı ve SQL. Kullanıcı başına günde tek satır: günün EN İYİ koşusu
+ * (`upsertBestRunSql`). Sıralama anahtarı: önce ulaşılan SEVİYE, sonra PUAN, sonra erken kayıt (kurallar metniyle tutarlı: "Sıralama önce ulaşılan seviye, sonra puan"). Aylık tablo: her kullanıcının o ay
  * içindeki tek en iyi günlük kaydı (toplam değil), aynı anahtarla.
  *
  * SQL metinleri `$1…` yer tutuculu düz Postgres: Prisma `$queryRawUnsafe(text, ...values)` ile canlıda, PGlite ile testte
@@ -8,6 +8,8 @@
  */
 
 export const LEADERBOARD_LIMIT = 20;
+/** Kullanıcı başına günde tabloya gönderilebilen doğrulanmış koşu sayısı (sayaç: server/frikik/attempts.ts). */
+export const FRIKIK_DAILY_ATTEMPTS = 5;
 
 export type RunKey = { level: number; score: number; createdAt: Date };
 
@@ -80,5 +82,38 @@ export function myMonthBestSql(userId: string, month: string): SqlQuery {
   return {
     text: `SELECT b."userId", NULL::text AS nickname, b.level, b.score, b.day, b."createdAt" FROM "FrikikDailyScore" b WHERE b."userId" = $1 AND b.month = $2 ORDER BY b.level DESC, b.score DESC, b."createdAt" ASC LIMIT 1`,
     values: [userId, month],
+  };
+}
+
+export type BestRunInput = {
+  id: string;
+  userId: string;
+  day: string;
+  month: string;
+  score: number;
+  level: number;
+  cleared: number;
+  simVersion: number;
+  seed: number;
+  shots: number;
+};
+
+/**
+ * Günün EN İYİ koşusu (tek ifade, yarış güvenli): kayıt yoksa eklenir; varsa yalnız yeni koşu daha yüksek seviye ya da
+ * aynı seviyede daha yüksek puansa güncellenir (eşit/kötü → dokunulmaz). Koşul ON CONFLICT … WHERE içinde; satır kilidi
+ * altında değerlendirildiği için eşzamanlı iki gönderimden hangisi önce gelirse gelsin en iyisi kalır.
+ * Satır dönerse yazıldı (`inserted`: ilk kayıt mı); satır dönmezse mevcut kayıt daha iyi ya da eşit.
+ * "createdAt" iyileşmede yenilenir: eşitlikte "erken kayıt" sırası, o sonuca ulaşılan an olsun.
+ */
+export function upsertBestRunSql(r: BestRunInput): SqlQuery {
+  return {
+    text:
+      `INSERT INTO "FrikikDailyScore" AS b (id, "userId", day, month, score, level, cleared, "simVersion", seed, shots, "createdAt") ` +
+      `VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, CURRENT_TIMESTAMP) ` +
+      `ON CONFLICT ("userId", day) DO UPDATE SET score = EXCLUDED.score, level = EXCLUDED.level, cleared = EXCLUDED.cleared, ` +
+      `"simVersion" = EXCLUDED."simVersion", seed = EXCLUDED.seed, shots = EXCLUDED.shots, "createdAt" = EXCLUDED."createdAt" ` +
+      `WHERE EXCLUDED.level > b.level OR (EXCLUDED.level = b.level AND EXCLUDED.score > b.score) ` +
+      `RETURNING (xmax = 0) AS inserted`,
+    values: [r.id, r.userId, r.day, r.month, r.score, r.level, r.cleared, r.simVersion, r.seed, r.shots],
   };
 }

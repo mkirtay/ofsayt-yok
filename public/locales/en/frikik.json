@@ -52,7 +52,7 @@
     "p3": "Top corner: +100",
     "r4": "Level mode (free kick of the day): 3 lives, one shot per level. Goal → next level, miss → lose a life. Distance and angle grow every level (from 20 m central to 32 m wide; see \"Distance\" above the pitch); the wall, keeper, wind (direction and strength shown above the pitch), a narrower goal and a moving wall arrive step by step. Everyone plays the same sequence that day.",
     "p4": "In level mode points are multiplied by the level: level 1 ×1, level 2 ×1.5, level 3 ×2 … Ranking is by level reached first, then points.",
-    "p5": "Leaderboard: no sign-in needed to play; to post your score sign in with Google and pick a nickname. Only your first finished run of the day counts (replaying is free). The monthly board is your single best daily result of the month; no prizes, just the ranking."
+    "p5": "Leaderboard: no sign-in needed to play; to post your score sign in with Google and pick a nickname. Your best run of the day counts: up to 5 runs a day are submitted, and the board only updates for a higher level, or a higher score at the same level (after 5 runs you can keep playing, but runs are not posted). The monthly board is your single best daily result of the month; no prizes, just the ranking."
   },
   "tip": {
     "title": "How to play",
@@ -70,7 +70,11 @@
   "submit": {
     "sending": "Posting your score…",
     "recorded": "Posted: you are #{{rank}} today.",
-    "already": "Your board entry today: level {{level}}, #{{rank}} (first run of the day counts).",
+    "improved": "Board updated: you are #{{rank}} today.",
+    "kept": "This run fell short of your best run.",
+    "exhausted": "You have used all {{max}} runs for today; this run was not posted. New runs tomorrow.",
+    "today": "Your board entry today: level {{level}}, {{score}} points (best run of the day counts, {{used}}/{{max}} runs).",
+    "todayNoCount": "Your board entry today: level {{level}}, {{score}} points (best run of the day counts).",
     "error": "Could not post the score. Try again later.",
     "versionError": "The game was updated; this run could not be posted. Refresh the page and play again.",
     "loginPrompt": "Post your score to the board: sign in with Google. This run will wait for you.",
@@ -86,7 +90,7 @@
   },
   "resume": {
     "recorded": "Signed in: today's run was posted — level {{level}}, #{{rank}}.",
-    "already": "You are already on today's board: level {{level}}, #{{rank}}.",
+    "already": "You are already on today's board with a better run: level {{level}}, #{{rank}}.",
     "nickname": "Your run is ready; pick a nickname to post it."
   },
   "board": {

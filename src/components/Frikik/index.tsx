@@ -5,6 +5,7 @@ import "@/lib/i18nNamespaces/frikik";
 import { webglAvailable } from "@/components/pitch3d/webgl";
 import { LIVES, SIM_VERSION, type ShotResult } from "@/lib/frikik/sim";
 import { dailySeed, dayLabel, turkeyDay } from "@/lib/frikik/daily";
+import { FRIKIK_DAILY_ATTEMPTS } from "@/lib/frikik/leaderboard";
 import { sharePath, type ShareInfo } from "@/lib/frikik/share";
 import { siteBaseUrl } from "@/lib/siteUrl";
 import { entryFromQuery, trackFrikik, type FrikikEntry } from "@/lib/frikik/analytics";
@@ -23,11 +24,15 @@ const TIP_SEEN_KEY = "oy_frikik_tip";
 /** Pano reklam iletişim adresi (derlemede gömülür); tanımlı değilse satır hiç çizilmez (yer tutucu canlıya çıkmaz). */
 const AD_CONTACT = process.env.NEXT_PUBLIC_FRIKIK_AD_CONTACT?.trim() || "";
 
-/** Skor kaydı durumu (bitiş kartı): idle → sending → recorded | already (bugün yazılmış) | login (girişsiz) | nickname | error */
+/**
+ * Skor kaydı durumu (bitiş kartı): idle → sending → recorded (result: ilk kayıt / tablo iyileşti / en iyinin altında) |
+ * exhausted (günlük deneme tavanı) | login (girişsiz) | nickname | error
+ */
 type Submit =
   | { state: "idle" }
   | { state: "sending" }
-  | { state: "recorded"; standing: MyStanding; first: boolean }
+  | { state: "recorded"; standing: MyStanding; result: SubmitResult }
+  | { state: "exhausted"; standing: MyStanding | null }
   | { state: "login" }
   | { state: "nickname"; error: string | null }
   | { state: "error"; code: string };
@@ -47,10 +52,11 @@ export function windLevel(wind: number): number {
   return wind === 0 ? 0 : Math.min(3, Math.ceil(Math.abs(wind) / 0.8));
 }
 
-type ScoreResponse = { recorded: boolean; standing: MyStanding };
+type SubmitResult = "first" | "improved" | "kept";
+type ScoreResponse = { recorded: boolean; result: SubmitResult; standing: MyStanding };
 
-/** POST /api/frikik/score — sonuç ya da hata kodu (ağ hatası: NETWORK). */
-async function postScore(run: PendingRun): Promise<{ ok: true; data: ScoreResponse } | { ok: false; code: string }> {
+/** POST /api/frikik/score — sonuç ya da hata kodu (ağ hatası: NETWORK). Tavan aşımında gövdede mevcut durum gelir. */
+async function postScore(run: PendingRun): Promise<{ ok: true; data: ScoreResponse } | { ok: false; code: string; standing?: MyStanding }> {
   try {
     const res = await fetch("/api/frikik/score", {
       method: "POST",
@@ -60,7 +66,7 @@ async function postScore(run: PendingRun): Promise<{ ok: true; data: ScoreRespon
     });
     const data = (await res.json().catch(() => ({}))) as Partial<ScoreResponse> & { code?: string };
     if (res.ok && data.standing) return { ok: true, data: data as ScoreResponse };
-    return { ok: false, code: data.code ?? (res.status === 401 ? "UNAUTHORIZED" : `HTTP_${res.status}`) };
+    return { ok: false, code: data.code ?? (res.status === 401 ? "UNAUTHORIZED" : `HTTP_${res.status}`), standing: data.standing };
   } catch {
     return { ok: false, code: "NETWORK" };
   }
@@ -71,7 +77,7 @@ async function postScore(run: PendingRun): Promise<{ ok: true; data: ScoreRespon
  * sonuç), tek seferlik ipucu, bitiş kartı (tekrar oyna / paylaş / tabloya yaz) ve sahnenin yüklenmesi; altta Günlük /
  * Aylık puan durumu. Oyun döngüsü sahnede (frikikScene.ts); burası yalnız olayları gösterir.
  * Skor: oyun giriş istemez; tabloya yazmak için Google girişi. Bitişte vuruş GİRDİLERİ sunucuya gider, skoru sunucu
- * hesaplar; günün ilk bitmiş koşusu yazılır (sonrakiler serbest, tabloya girmez). Girişsiz oyuncuya "giriş yap"
+ * hesaplar; tabloda günün EN İYİ koşusu durur (günde 5 deneme, sonrası serbest ama tabloya girmez). Girişsiz oyuncuya "giriş yap"
  * teklifi; koşu tarayıcıda bekler, girişten sonra kendiliğinden gönderilir. "Hareketi azalt" açıksa oyun kendiliğinden
  * başlamaz (statik bilgilendirme, isteyen açar). Alan sabit yükseklikte → CLS yok.
  */
@@ -150,22 +156,26 @@ export default function Frikik({ shared }: { shared: ShareInfo | null }) {
     playsRef.current += 1;
   }, []);
 
-  /** Koşuyu tabloya gönderir; sonuç kartta. `first`: bu oturumdaki ilk koşu (tekrar koşularda tablo zaten yazılmıştır). */
+  /** Koşuyu tabloya gönderir; sonuç kartta (ilk kayıt / tablo iyileşti / en iyinin altında / deneme tavanı). */
   const sendRun = useCallback(
-    async (run: PendingRun, first: boolean) => {
+    async (run: PendingRun) => {
       setSubmit({ state: "sending" });
       const r = await postScore(run);
       if (r.ok) {
         writePendingRun(null);
         setMe(r.data.standing);
-        setSubmit({ state: "recorded", standing: r.data.standing, first });
+        setSubmit({ state: "recorded", standing: r.data.standing, result: r.data.result });
         const today = r.data.standing.today;
         if (today) writeLastRun({ day: run.day, level: today.level, score: today.score, cleared: today.cleared, recorded: true, rank: today.rank });
         refreshBoard();
         return;
       }
       if (r.code === "NICKNAME_REQUIRED") setSubmit({ state: "nickname", error: null });
-      else if (r.code === "UNAUTHORIZED") setSubmit({ state: "login" });
+      else if (r.code === "ATTEMPTS_EXHAUSTED") {
+        writePendingRun(null);
+        if (r.standing) setMe(r.standing);
+        setSubmit({ state: "exhausted", standing: r.standing ?? null });
+      } else if (r.code === "UNAUTHORIZED") setSubmit({ state: "login" });
       else setSubmit({ state: "error", code: r.code });
     },
     [refreshBoard, setMe],
@@ -175,10 +185,10 @@ export default function Frikik({ shared }: { shared: ShareInfo | null }) {
   const onFinish = useCallback(
     (s: FrikikSummary, d: number) => {
       const dayKey = dayLabel(d);
-      const run: PendingRun = { day: dayKey, seed: s.seed, simVersion: SIM_VERSION, shots: s.inputs };
+      const run: PendingRun = { day: dayKey, seed: s.seed, simVersion: SIM_VERSION, shots: s.inputs, claimed: { level: s.level, score: s.total } };
       trackFrikik("frikik_finished", { level: s.level, score: s.total, signedIn });
       writeLastRun({ day: dayKey, level: s.level, score: s.total, cleared: s.cleared, recorded: false });
-      if (signedIn) void sendRun(run, true);
+      if (signedIn) void sendRun(run);
       else {
         writePendingRun(run);
         trackFrikik("frikik_login_prompt_shown", { level: s.level });
@@ -209,6 +219,10 @@ export default function Frikik({ shared }: { shared: ShareInfo | null }) {
           setSummary((cur) => cur);
           setSubmit({ state: "nickname", error: null });
           setResumeNote(t("resume.nickname"));
+        } else if (r.code === "ATTEMPTS_EXHAUSTED") {
+          writePendingRun(null);
+          if (r.standing) setMe(r.standing);
+          setResumeNote(t("submit.exhausted", { max: r.standing?.attempts.max ?? FRIKIK_DAILY_ATTEMPTS }));
         }
         return;
       }
@@ -342,8 +356,8 @@ export default function Frikik({ shared }: { shared: ShareInfo | null }) {
         return;
       }
       await updateSession({ username: data.username ?? value }).catch(() => {});
-      const pending = summary && day != null ? { day: dayLabel(day), seed: summary.seed, simVersion: SIM_VERSION, shots: summary.inputs } : readPendingRun(dayLabel(turkeyDay(Date.now())));
-      if (pending) await sendRun(pending, true);
+      const pending = summary && day != null ? { day: dayLabel(day), seed: summary.seed, simVersion: SIM_VERSION, shots: summary.inputs, claimed: { level: summary.level, score: summary.total } } : readPendingRun(dayLabel(turkeyDay(Date.now())));
+      if (pending) await sendRun(pending);
       else setSubmit({ state: "idle" });
     } finally {
       setNickBusy(false);
@@ -354,6 +368,12 @@ export default function Frikik({ shared }: { shared: ShareInfo | null }) {
   const showToast = last != null && !summary;
   const wl = windLevel(info.wind);
   const boardStanding = submit.state === "recorded" ? submit.standing : me;
+  /** Bitiş kartındaki "Bugünkü tablon: …" satırı (günün en iyi koşusu + deneme sayısı). */
+  const todayLine = (st: MyStanding | null): string => {
+    if (!st?.today) return "";
+    const v = { level: st.today.level, score: st.today.score, used: st.attempts.used, max: st.attempts.max };
+    return st.attempts.used == null ? t("submit.todayNoCount", v) : t("submit.today", v);
+  };
 
   return (
     <div className={styles.page}>
@@ -512,13 +532,20 @@ export default function Frikik({ shared }: { shared: ShareInfo | null }) {
                 </p>
               ) : null}
               {submit.state === "recorded" ? (
-                <p className={styles.rankNote} role="status">
-                  {submit.standing.today
-                    ? submit.first && me?.today == null
-                      ? t("submit.recorded", { rank: submit.standing.today.rank })
-                      : t("submit.already", { level: submit.standing.today.level, rank: submit.standing.today.rank })
-                    : ""}
-                </p>
+                <div role="status">
+                  <p className={styles.rankNote}>
+                    {submit.result === "kept"
+                      ? t("submit.kept")
+                      : t(submit.result === "first" ? "submit.recorded" : "submit.improved", { rank: submit.standing.today?.rank ?? "–" })}
+                  </p>
+                  <p className={styles.note}>{todayLine(submit.standing)}</p>
+                </div>
+              ) : null}
+              {submit.state === "exhausted" ? (
+                <div role="status">
+                  <p className={styles.rankNote}>{t("submit.exhausted", { max: submit.standing?.attempts.max ?? FRIKIK_DAILY_ATTEMPTS })}</p>
+                  <p className={styles.note}>{todayLine(submit.standing)}</p>
+                </div>
               ) : null}
               {submit.state === "error" ? (
                 <p className={styles.note} role="status">

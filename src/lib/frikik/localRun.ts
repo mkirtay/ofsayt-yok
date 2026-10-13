@@ -9,7 +9,8 @@ export const LAST_RUN_KEY = 'oy_frikik_last';
 export const PENDING_RUN_KEY = 'oy_frikik_pending';
 
 export type LastRun = { day: string; level: number; score: number; cleared: number; recorded: boolean; rank?: number | null };
-export type PendingRun = { day: string; seed: number; simVersion: number; shots: ShotInput[] };
+/** `claimed`: istemcinin kendi bulduğu sonuç — yalnız teşhis (sunucu yok sayar, ayrışırsa Sentry uyarısı). */
+export type PendingRun = { day: string; seed: number; simVersion: number; shots: ShotInput[]; claimed?: { level: number; score: number } };
 
 function read<T>(key: string): T | null {
   try {
