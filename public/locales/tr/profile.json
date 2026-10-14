@@ -102,5 +102,22 @@
     "favoriteLeagues": "Favori lig",
     "posts": "Gündem gönderisi"
   },
-  "avatarToggle": "Avatarı değiştir"
+  "avatarToggle": "Avatarı değiştir",
+  "deleteAccount": {
+    "title": "Hesabı sil",
+    "intro": "Hesabını ve kişisel verilerini kalıcı olarak silebilirsin. Bu işlem geri alınamaz.",
+    "start": "Hesabımı sil",
+    "effects": {
+      "account": "Profilin, Google bağlantın ve tüm oturumların (web ve mobil) hemen kapatılır.",
+      "credits": "Kredi bakiyen, açtığın analizler, favorilerin, Frikik skorların ve bildirimlerin silinir.",
+      "posts": "Gündem'deki gönderi ve yorumların silinmez; \"Silinmiş kullanıcı\" adıyla anonim olarak kalır.",
+      "orders": "Varsa ödeme / sipariş kayıtları yasal yükümlülükler için hesabınla bağlantısı koparılarak saklanır.",
+      "irreversible": "Bu işlem geri alınamaz; aynı e-postayla daha sonra yeniden üye olabilirsin."
+    },
+    "confirmLabel": "Onaylamak için e-posta adresini ya da {{word}} yaz",
+    "submit": "Hesabımı kalıcı olarak sil",
+    "deleting": "Siliniyor…",
+    "cancel": "Vazgeç",
+    "error": "Hesap silinemedi. Lütfen tekrar dene."
+  }
 }

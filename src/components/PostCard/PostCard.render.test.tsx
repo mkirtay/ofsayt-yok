@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import PostCard from './index';
-import PostComposer, { composerErrorMessage, isUsernameRequiredError, shouldCollapseOnBlur } from '@/components/PostComposer';
+import PostComposer, { composerErrorMessage, isTermsRequiredError, isUsernameRequiredError, shouldCollapseOnBlur } from '@/components/PostComposer';
 import { GundemApiError } from '@/hooks/useGundem';
 import type { GundemPost } from '@/types/gundem';
 
@@ -39,6 +39,15 @@ describe('<PostCard />', () => {
     const plain = renderToStaticMarkup(<PostCard post={post()} linkAuthor={false} onToggleLike={noop} now={NOW} />);
     expect(plain).not.toContain('/gundem/kullanici/');
     expect(plain).toContain('Ada');
+  });
+
+  it('silinmiş kullanıcının gönderisi: çevrilmiş ad, profil bağlantısı yok, DB adı / @ yok', () => {
+    const author = { ...post().author, id: 'deleted-user', name: 'Silinmiş kullanıcı', username: null, deleted: true };
+    const html = renderToStaticMarkup(<PostCard post={post({ author })} onToggleLike={noop} now={NOW} />);
+    expect(html).toContain('Silinmiş kullanıcı');
+    expect(html).not.toContain('/gundem/kullanici/');
+    expect(html).not.toContain('@');
+    expect(html).toContain('href="/gundem/cpost0000000000000001"'); // gönderinin kendisi açılır
   });
 
   it('maç postu: kompakt rozet (kısa ad varsa kısa, yoksa tam ad + logolar) maç detayına bağlanır', () => {
@@ -201,6 +210,12 @@ describe('composerErrorMessage', () => {
 });
 
 describe('isUsernameRequiredError', () => {
+  it('yalnızca sunucunun TERMS_REQUIRED kodu onay sayfası bağlantısını açar', () => {
+    expect(isTermsRequiredError(new GundemApiError('onay gerekli', 403, null, 'TERMS_REQUIRED'))).toBe(true);
+    expect(isTermsRequiredError(new GundemApiError('ad gerekli', 403, null, 'USERNAME_REQUIRED'))).toBe(false);
+    expect(isTermsRequiredError(new Error('TERMS_REQUIRED'))).toBe(false);
+  });
+
   it('yalnızca sunucunun USERNAME_REQUIRED kodu kullanıcı adı adımına yönlendirir', () => {
     expect(isUsernameRequiredError(new GundemApiError('ad gerekli', 403, null, 'USERNAME_REQUIRED'))).toBe(true);
     expect(isUsernameRequiredError(new GundemApiError('yasak', 403))).toBe(false);

@@ -103,5 +103,22 @@
     "favoriteLeagues": "Favourite leagues",
     "posts": "Posts"
   },
-  "avatarToggle": "Change avatar"
+  "avatarToggle": "Change avatar",
+  "deleteAccount": {
+    "title": "Delete account",
+    "intro": "You can permanently delete your account and personal data. This cannot be undone.",
+    "start": "Delete my account",
+    "effects": {
+      "account": "Your profile, Google connection and all sessions (web and mobile) are closed immediately.",
+      "credits": "Your credit balance, unlocked analyses, favourites, Frikik scores and notifications are deleted.",
+      "posts": "Your Gündem posts and comments are not deleted; they stay anonymous under the name \"Deleted user\".",
+      "orders": "Any payment / order records are kept for legal obligations, with the link to your account removed.",
+      "irreversible": "This cannot be undone; you can sign up again later with the same email."
+    },
+    "confirmLabel": "To confirm, type your email address or {{word}}",
+    "submit": "Permanently delete my account",
+    "deleting": "Deleting…",
+    "cancel": "Cancel",
+    "error": "Could not delete the account. Please try again."
+  }
 }

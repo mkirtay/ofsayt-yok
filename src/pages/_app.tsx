@@ -9,6 +9,7 @@ import { createQueryClient } from '@/lib/queryClient'
 import Layout from '@/components/Layout'
 import RouteProgress from '@/components/RouteProgress'
 import SignupAttributionSync from '@/components/SignupAttributionSync'
+import TermsConsentGate from '@/components/TermsConsentGate'
 import '@/styles/globals.scss'
 import AppDefaultHead from '@/components/AppDefaultHead'
 
@@ -67,6 +68,7 @@ function App({ Component, pageProps: { session, ...pageProps } }: AppProps) {
       <div data-app-root className={`${inter.className} ${inter.variable} ${interExt.variable}`}>
         <RouteProgress />
         <SignupAttributionSync />
+        <TermsConsentGate />
         <Layout>
           <Component {...pageProps} />
         </Layout>

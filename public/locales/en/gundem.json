@@ -37,7 +37,9 @@
     "error": "Could not send. Please try again.",
     "connectionError": "Connection error. Please try again.",
     "usernameRequired": "You need to choose a username before posting in Gündem.",
-    "chooseUsername": "Choose a username"
+    "chooseUsername": "Choose a username",
+    "termsRequired": "You need to accept the Terms of Use and Privacy Policy before posting.",
+    "acceptTerms": "Accept the terms"
   },
   "feed": {
     "loading": "Loading…",
@@ -62,6 +64,7 @@
     "deleteError": "Could not delete the post.",
     "official": "Official account",
     "anonymous": "Anonymous",
+    "deletedUser": "Deleted user",
     "open": "Open post",
     "deleteTitle": "Delete post",
     "matchBadge": "Go to match: {{match}}"

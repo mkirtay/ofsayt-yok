@@ -114,6 +114,21 @@ export function passwordResetEmail(link: string): EmailContent {
 }
 
 /**
+ * Hesap silindi onayı (konu + HTML + düz metin). Gövdede kişisel veri yok (ad, kullanıcı adı, kimlik); yalnızca alıcı
+ * adresine gider. Silmeyi kendisi yapmadıysa iletişim adresine yazması istenir.
+ */
+export function accountDeletedEmail(): EmailContent {
+  const contact = BRAND.contactEmail;
+  return {
+    subject: `${BRAND.name} - Hesabınız silindi`,
+    html: emailHtml(
+      `<p>Merhaba,</p><p>${BRAND.name} hesabınız isteğiniz üzerine silindi. Oturumlarınız kapatıldı; profiliniz, favorileriniz, kredi bakiyeniz ve açtığınız analizler silindi. Gündem'deki gönderi ve yorumlarınız "Silinmiş kullanıcı" adıyla anonim olarak kalır.</p><p>Bu işlemi siz yapmadıysanız <a href="mailto:${contact}">${contact}</a> adresine yazın.</p>`,
+    ),
+    text: `Merhaba,\n\n${BRAND.name} hesabınız isteğiniz üzerine silindi. Oturumlarınız kapatıldı; profiliniz, favorileriniz, kredi bakiyeniz ve açtığınız analizler silindi. Gündem'deki gönderi ve yorumlarınız "Silinmiş kullanıcı" adıyla anonim olarak kalır.\n\nBu işlemi siz yapmadıysanız ${contact} adresine yazın.\n`,
+  };
+}
+
+/**
  * Resend HTTP API: gövde JSON (UTF-8); konu ve gövdedeki Türkçe karakterleri MIME'a (konu başlığı RFC 2047, gövde
  * `charset=utf-8`) Resend kodlar. `text` düz metin alternatifi (multipart/alternative).
  */
@@ -147,6 +162,18 @@ async function sendViaResend(to: string, { subject, html, text }: EmailContent):
   }
 
   return response.ok;
+}
+
+/** Hesap silme onayı; gönderilemezse false (silme geri alınmaz). Adres loglanmaz. */
+export async function sendAccountDeletedEmail(email: string): Promise<boolean> {
+  try {
+    const sent = await sendViaResend(email, accountDeletedEmail());
+    if (!sent) console.warn('[account-delete] Onay e-postası gönderilemedi (sağlayıcı yapılandırılmamış ya da hata).');
+    return sent;
+  } catch {
+    console.warn('[account-delete] Onay e-postası gönderilemedi (ağ hatası).');
+    return false;
+  }
 }
 
 export async function createAndSendEmailVerification(email: string): Promise<void> {

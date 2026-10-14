@@ -36,6 +36,9 @@ const SENSITIVE_NAMES = [
   'secret',
   'CRON_SECRET',
   'cronSecret',
+  // Hesap silme onay metni (e-posta olabilir)
+  'confirm',
+  'CONFIRM',
 ];
 
 const SECRET = 'S3CRETvalue';

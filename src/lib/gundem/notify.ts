@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { captureError } from '@/lib/logger';
+import { isDeletedUserId } from '@/config/deletedUser';
 
 export type NotificationType = 'POST_LIKE' | 'POST_COMMENT' | 'FOLLOW' | 'OFFICIAL_POST';
 
@@ -10,7 +11,8 @@ type NotifyInput = { userId: string; actorId: string; type: NotificationType; po
  * `dedupe`: aynı (alıcı, aktör, tür, post) için zaten kayıt varsa yenisini yazmaz (beğen/geri al/beğen spam'ini önler).
  */
 export async function createNotification(input: NotifyInput, opts: { dedupe?: boolean } = {}): Promise<void> {
-  if (input.userId === input.actorId) return;
+  // Kendine bildirim yok; silinmiş kullanıcı yer tutucusuna (anonimleştirilmiş gönderiler) bildirim yazılmaz.
+  if (input.userId === input.actorId || isDeletedUserId(input.userId)) return;
   try {
     const postId = input.postId ?? null;
     if (opts.dedupe) {

@@ -24,6 +24,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import type { MatchAnalysis, PredictionRecord } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { requireAuth } from '@/lib/requireAuth';
+import { requireTermsConsent } from '@/lib/termsConsentGate';
 import { getRequestAuth } from '@/lib/mobileAuth';
 import {
   DuplicateSpendError,
@@ -204,6 +205,9 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse, matchId: st
     res.setHeader('Retry-After', String(Math.ceil((rl.resetAt - Date.now()) / 1000)));
     return res.status(429).json({ error: 'Saatlik analiz limitine (30) ulaştınız. Biraz bekleyin.' });
   }
+  // Analiz açma: Kullanım Şartları onayı yoksa 403 TERMS_REQUIRED (web; mobil Bearer muaf — lib/termsConsentGate.ts).
+  // Açık / ücretsiz analizi okumak GET'tir, etkilenmez.
+  if (!(await requireTermsConsent(req, res, guard.userId))) return;
 
   const rawMethod = (req.body as { method?: unknown } | undefined)?.method;
   const method: 'credit' | 'weekly_free' = rawMethod === 'weekly_free' ? 'weekly_free' : 'credit';

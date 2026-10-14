@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '@/lib/prisma';
+import { isDeletedUserId } from '@/config/deletedUser';
 import { hitFixedWindowRateLimit } from '@/lib/rateLimit';
 import { captureError } from '@/lib/logger';
 import { getRequestUserId } from '@/lib/mobileAuth';
@@ -10,6 +11,8 @@ import { createNotification } from '@/lib/gundem/notify';
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const targetId = queryString(req.query.userId);
   if (!targetId) return res.status(400).json({ error: 'Geçersiz kullanıcı kimliği.' });
+  // Silinmiş kullanıcı yer tutucusunun profili yok (anonimleştirilmiş içerik gruplanmasın — config/deletedUser.ts).
+  if (isDeletedUserId(targetId)) return res.status(404).json({ error: 'Kullanıcı bulunamadı.' });
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
     return res.status(405).end();

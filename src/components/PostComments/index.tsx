@@ -62,7 +62,7 @@ export default function PostComments({ postId, currentUserId, isAdmin }: Props) 
       ) : (
         <ul className={styles.list}>
           {items.map((c) => {
-            const name = c.user.name ?? c.user.username ?? t('post.anonymous');
+            const name = c.user.deleted ? t('post.deletedUser') : (c.user.name ?? c.user.username ?? t('post.anonymous'));
             const canDelete = !!currentUserId && (c.user.id === currentUserId || isAdmin);
             return (
               <li key={c.id} className={styles.item}>

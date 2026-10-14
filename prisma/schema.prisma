@@ -546,3 +546,22 @@ model FrikikDailyScore {
   @@index([day, level, score])
   @@index([month, userId])
 }
+
+/// Hesap silme denetim kaydı — KİŞİSEL VERİ YOK: kullanıcı kimliği, e-posta, ad, IP tutulmaz (kişiyle eşleştirilemez).
+/// Yalnız silmenin yapıldığı, kanalı ve neyin silindiği / anonimleştirildiği (sayılar). Saklama süresi avukata soruldu
+/// (docs/YASAL_NOTLAR.md → "Hesap silme ve saklama süreleri"). Bkz. server/account/deleteAccount.ts.
+model AccountDeletionLog {
+  id             String   @id @default(cuid())
+  createdAt      DateTime @default(now())
+  /// "web" (oturum çerezi) | "mobile" (Bearer belirteç)
+  source         String
+  /// Hesabın giriş yöntemleri: şifre vardı mı, bağlı OAuth sağlayıcıları ("google" …)
+  hadPassword    Boolean
+  oauthProviders String[]
+  /// Hesap yaşı (gün, aşağı yuvarlanmış) — kesin kayıt tarihi tutulmaz.
+  accountAgeDays Int
+  /// { postsAnonymized, postCommentsAnonymized, matchCommentsAnonymized, paymentOrdersDetached, ... } sayıları
+  counts         Json
+
+  @@index([createdAt])
+}

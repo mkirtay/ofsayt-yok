@@ -76,6 +76,7 @@ export const authOptions: NextAuthOptions = {
             credits: true,
             premiumUntil: true,
             tokenVersion: true,
+            termsAcceptedAt: true,
           },
         });
 
@@ -94,6 +95,7 @@ export const authOptions: NextAuthOptions = {
           credits: user.credits,
           premiumUntil: user.premiumUntil,
           tokenVersion: user.tokenVersion,
+          termsAcceptedAt: user.termsAcceptedAt,
         };
       },
     }),
@@ -125,6 +127,9 @@ export const authOptions: NextAuthOptions = {
         token.premiumUntil = toIso((user as { premiumUntil?: Date | string | null }).premiumUntil);
         // Credentials `authorize` ve OAuth adapter kullanıcısı (tam satır) tokenVersion taşır.
         token.tokenVersion = (user as { tokenVersion?: number }).tokenVersion ?? 0;
+        // Kullanım Şartları onayı: Credentials `authorize` ve OAuth adapter kullanıcısı (tam satır) termsAcceptedAt taşır.
+        // Google ile ilk girişte boş → istemci /auth/onay'a yönlendirir (components/TermsConsentGate).
+        token.termsAccepted = (user as { termsAcceptedAt?: Date | string | null }).termsAcceptedAt != null;
         token.roleSyncedAt = Date.now();
       }
       if (!user && token.sub) {
@@ -135,10 +140,20 @@ export const authOptions: NextAuthOptions = {
         token.role = version.role;
         // Diğer alanlar (kredi, premium, ad, avatar) 60 sn'de bir DB'den.
         const last = typeof token.roleSyncedAt === 'number' ? token.roleSyncedAt : 0;
-        if (Date.now() - last > ROLE_REFRESH_MS) {
+        // Onay sayfası `update({ termsAccepted: true })` çağırır → beklemeden DB'den tazelenir (istemciye güvenilmez).
+        const forceRefresh = trigger === 'update' && !!session && typeof session === 'object' && 'termsAccepted' in session;
+        if (forceRefresh || Date.now() - last > ROLE_REFRESH_MS) {
           const row = await prisma.user.findUnique({
             where: { id: token.sub },
-            select: { role: true, username: true, name: true, image: true, credits: true, premiumUntil: true },
+            select: {
+              role: true,
+              username: true,
+              name: true,
+              image: true,
+              credits: true,
+              premiumUntil: true,
+              termsAcceptedAt: true,
+            },
           });
           if (!row) throw new SessionRevokedError();
           token.role = row.role;
@@ -147,6 +162,7 @@ export const authOptions: NextAuthOptions = {
           token.picture = row.image ?? undefined;
           token.credits = row.credits;
           token.premiumUntil = toIso(row.premiumUntil);
+          token.termsAccepted = row.termsAcceptedAt != null;
           token.roleSyncedAt = Date.now();
         }
       }
@@ -176,6 +192,8 @@ export const authOptions: NextAuthOptions = {
         }
         session.user.credits = (token.credits as number | undefined) ?? 0;
         session.user.premiumUntil = token.premiumUntil ?? null;
+        // Alan eklenmeden önce verilmiş belirteçte bilinmiyor (undefined) → ilk 60 sn tazelemesinde dolar.
+        if (typeof token.termsAccepted === 'boolean') session.user.termsAccepted = token.termsAccepted;
       }
       return session;
     },

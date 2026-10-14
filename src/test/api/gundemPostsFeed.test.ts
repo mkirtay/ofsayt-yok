@@ -12,6 +12,8 @@ vi.mock('@/lib/prisma', () => ({
     user: { findUnique: vi.fn(async () => ({ id: 'u1' })) },
   },
 }));
+// Onay kapısı (Kullanım Şartları) bu dosyanın konusu değil: açık. Kapının kendisi: src/test/api/termsConsentGate.test.ts
+vi.mock('@/lib/termsConsentGate', () => ({ requireTermsConsent: async () => true }));
 vi.mock('@/lib/mobileAuth', () => ({ getRequestUserId: vi.fn(async () => h.viewer) }));
 vi.mock('@/lib/rateLimit', () => ({
   hitFixedWindowRateLimit: vi.fn(async () => ({ success: true, resetAt: 0 })),

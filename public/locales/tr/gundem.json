@@ -36,7 +36,9 @@
     "error": "Gönderilemedi. Lütfen tekrar dene.",
     "connectionError": "Bağlantı hatası. Lütfen tekrar dene.",
     "usernameRequired": "Gündem'de paylaşım yapmadan önce bir kullanıcı adı seçmelisin.",
-    "chooseUsername": "Kullanıcı adı seç"
+    "chooseUsername": "Kullanıcı adı seç",
+    "termsRequired": "Paylaşım yapmadan önce Kullanım Şartları ve Gizlilik Politikası'nı onaylamalısın.",
+    "acceptTerms": "Şartları onayla"
   },
   "feed": {
     "loading": "Yükleniyor…",
@@ -61,6 +63,7 @@
     "deleteError": "Gönderi silinemedi.",
     "official": "Resmi hesap",
     "anonymous": "Anonim",
+    "deletedUser": "Silinmiş kullanıcı",
     "open": "Gönderiyi aç",
     "deleteTitle": "Gönderiyi sil",
     "matchBadge": "Maça git: {{match}}"

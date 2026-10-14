@@ -12,6 +12,8 @@ declare module 'next-auth' {
       credits?: number
       /** Premium bitişi (ISO) ya da null — bkz. lib/premium.ts */
       premiumUntil?: string | null
+      /** Kullanım Şartları + Gizlilik onayı kayıtlı mı (User.termsAcceptedAt); bilinmiyorsa undefined */
+      termsAccepted?: boolean
     } & DefaultSession['user']
   }
 
@@ -20,6 +22,7 @@ declare module 'next-auth' {
     username?: string | null
     credits?: number
     premiumUntil?: Date | string | null
+    termsAcceptedAt?: Date | string | null
   }
 }
 
@@ -33,6 +36,8 @@ declare module 'next-auth/jwt' {
     premiumUntil?: string | null
     /** Oturum sürümü (User.tokenVersion); her kontrolde karşılaştırılır (lib/sessionVersion.ts) */
     tokenVersion?: number
+    /** Kullanım Şartları onayı kayıtlı mı (60 sn'de bir / onay sonrası DB'den) */
+    termsAccepted?: boolean
     /** Kredi / premium / profil alanlarının son DB tazelemesi (ms; 60 sn'de bir) */
     roleSyncedAt?: number
   }

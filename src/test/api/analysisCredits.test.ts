@@ -26,6 +26,8 @@ vi.mock('@/lib/prisma', () => ({
 vi.mock('@/lib/requireAuth', () => ({
   requireAuth: async (req: NextApiRequest) => ({ ok: true, userId: String(req.headers['x-user']) }),
 }));
+// Onay kapısı (Kullanım Şartları) bu dosyanın konusu değil: açık. Kapının kendisi: src/test/api/termsConsentGate.test.ts
+vi.mock('@/lib/termsConsentGate', () => ({ requireTermsConsent: async () => true }));
 vi.mock('@/lib/mobileAuth', () => ({
   getRequestAuth: async (req: NextApiRequest) => (req.headers['x-user'] ? { id: String(req.headers['x-user']) } : null),
 }));

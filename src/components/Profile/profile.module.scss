@@ -658,3 +658,76 @@ a.favLink:hover .favName {
   max-height: 480px;
   overflow-y: auto;
 }
+
+// ── Hesap silme (tehlikeli işlem) ────────────────────────────────────────────
+
+.dangerSection {
+  border-color: rgba($color-danger, 0.45);
+}
+
+.dangerList {
+  margin: 0 0 $spacing-4;
+  padding-left: 1.25em;
+  font-size: 13px;
+  line-height: 1.55;
+  color: $color-text-secondary;
+
+  li + li {
+    margin-top: $spacing-1;
+  }
+}
+
+.dangerActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-3;
+}
+
+.danger,
+.dangerOutline,
+.dangerCancel {
+  min-height: 40px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: $font-family;
+  border-radius: $radius-sm;
+  cursor: pointer;
+  transition: $transition-base;
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+}
+
+// Beyaz yazı / #DC2626 ≈ 4.8:1 (AA).
+.danger {
+  border: none;
+  background: $color-danger;
+  color: #fff;
+
+  &:hover:not(:disabled) {
+    background: #B91C1C;
+  }
+}
+
+.dangerOutline {
+  border: 1px solid rgba($color-danger, 0.7);
+  background: transparent;
+  color: $color-text;
+
+  &:hover:not(:disabled) {
+    background: rgba($color-danger, 0.1);
+  }
+}
+
+.dangerCancel {
+  border: 1px solid $color-border;
+  background: transparent;
+  color: $color-text;
+
+  &:hover:not(:disabled) {
+    background: $color-muted;
+  }
+}

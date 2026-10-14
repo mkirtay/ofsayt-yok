@@ -25,6 +25,11 @@ export function isUsernameRequiredError(err: unknown): boolean {
   return err instanceof GundemApiError && err.code === 'USERNAME_REQUIRED';
 }
 
+/** Kullanım Şartları onayı olmayan hesap: sunucu 403 + `TERMS_REQUIRED` döner (lib/termsConsentGate.ts). */
+export function isTermsRequiredError(err: unknown): boolean {
+  return err instanceof GundemApiError && err.code === 'TERMS_REQUIRED';
+}
+
 /** `post-inline`: kapalıyken tek satır, odakta tam composer'a genişler (X.com kalıbı); gönderi composer'ıyla aynı gönderim/hata mantığı. */
 export type PostComposerVariant = 'post' | 'post-inline' | 'comment';
 
@@ -77,6 +82,7 @@ export default function PostComposer({ authenticated, variant, maxLength, onSubm
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
   const [needsUsername, setNeedsUsername] = useState(false);
+  const [needsTerms, setNeedsTerms] = useState(false);
   const isInline = variant === 'post-inline';
   const isPost = variant !== 'comment';
   // Inline: `autoFocus` odak alıp açılmayı da tetikler (onFocus) — ilk render'da bile açık başlasın
@@ -102,6 +108,7 @@ export default function PostComposer({ authenticated, variant, maxLength, onSubm
     setSending(true);
     setError('');
     setNeedsUsername(false);
+    setNeedsTerms(false);
     try {
       await onSubmit(value);
       setValue('');
@@ -116,6 +123,9 @@ export default function PostComposer({ authenticated, variant, maxLength, onSubm
       if (isUsernameRequiredError(err)) {
         setNeedsUsername(true);
         setError(t('composer.usernameRequired'));
+      } else if (isTermsRequiredError(err)) {
+        setNeedsTerms(true);
+        setError(t('composer.termsRequired'));
       } else {
         setError(composerErrorMessage(err, t));
       }
@@ -186,6 +196,14 @@ export default function PostComposer({ authenticated, variant, maxLength, onSubm
                   {' '}
                   <Link href={`/auth/choose-username?callbackUrl=${encodeURIComponent(window.location.pathname + window.location.search)}`}>
                     {t('composer.chooseUsername')}
+                  </Link>
+                </>
+              ) : null}
+              {needsTerms ? (
+                <>
+                  {' '}
+                  <Link href={`/auth/onay?callbackUrl=${encodeURIComponent(window.location.pathname + window.location.search)}`}>
+                    {t('composer.acceptTerms')}
                   </Link>
                 </>
               ) : null}

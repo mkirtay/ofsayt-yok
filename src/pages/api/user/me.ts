@@ -3,9 +3,11 @@ import { prisma } from '@/lib/prisma';
 import { isSafeHttpUrl, sanitizePlainText } from '@/lib/security';
 import { isGalleryAvatarUrl, toStoredImage } from '@/lib/avatars';
 import { siteBaseUrl, withAbsoluteImage } from '@/lib/siteUrl';
-import { getRequestUserId } from '@/lib/mobileAuth';
+import { getRequestUserId, hasBearerToken } from '@/lib/mobileAuth';
 import { checkNickname } from '@/lib/frikik/nickname';
 import { hitFixedWindowRateLimit } from '@/lib/rateLimit';
+import { captureWarning } from '@/lib/logger';
+import { deleteOwnAccount } from '@/server/account/deleteAccount';
 
 // Profil JSON'u birkaç KB'ı geçmez; Next varsayılanı (1 MB) yerine 16 KB — aşılırsa Next 413 döner.
 export const config = { api: { bodyParser: { sizeLimit: '16kb' } } };
@@ -22,6 +24,46 @@ const RAW_MAX_IMAGE_URL = 2 * MAX_IMAGE_URL;
 // Profil güncellemesi kullanıcı başına 10 dakikada 20 (formu art arda kaydetmeye yeter).
 const PATCH_RATE_LIMIT = 20;
 const PATCH_RATE_WINDOW_MS = 10 * 60_000;
+// Hesap silme: kullanıcı başına 15 dakikada 5 deneme (yanlış onay metni dahil). Redis kesintisinde instance içi sayaç —
+// silme hakkı Redis'e bağlı kalmasın.
+const DELETE_RATE_LIMIT = 5;
+const DELETE_RATE_WINDOW_MS = 15 * 60_000;
+
+/**
+ * DELETE: hesabı kalıcı siler (web oturumu ya da mobil Bearer). Gövde `{ confirm: "<hesabın e-postası>" | "SİL" }`.
+ * 200 `{ ok: true, deleted: true, emailSent }` → istemci oturumu kapatır (sunucuda oturum / belirteç zaten geçersiz).
+ * 400 `CONFIRM_MISMATCH` · 403 `PROTECTED_ACCOUNT` (yönetici / resmi hesap) · 429. Ayrıntı: server/account/deleteAccount.ts.
+ */
+async function handleDelete(req: NextApiRequest, res: NextApiResponse, userId: string) {
+  const rl = await hitFixedWindowRateLimit(`account-delete:user:${userId}`, DELETE_RATE_LIMIT, DELETE_RATE_WINDOW_MS, {
+    memoryFallback: true,
+  });
+  if (!rl.success) {
+    res.setHeader('Retry-After', String(Math.max(1, Math.ceil((rl.resetAt - Date.now()) / 1000))));
+    return res.status(429).json({ error: 'Çok fazla deneme. Biraz bekleyip tekrar deneyin.' });
+  }
+  const body = parseJsonBody(req);
+  try {
+    const result = await deleteOwnAccount(userId, { confirm: body.confirm, source: hasBearerToken(req) ? 'mobile' : 'web' });
+    if (result.ok) return res.status(200).json({ ok: true, deleted: true, emailSent: result.emailSent });
+    if (result.reason === 'NOT_FOUND') return res.status(401).json({ error: 'Oturum geçersiz. Lütfen tekrar giriş yapın.' });
+    if (result.reason === 'PROTECTED_ACCOUNT') {
+      return res.status(403).json({ error: 'Bu hesap buradan silinemez. Destek ile iletişime geçin.', code: 'PROTECTED_ACCOUNT' });
+    }
+    return res.status(400).json({
+      error: 'Onay için hesabının e-posta adresini ya da SİL yazmalısın.',
+      code: 'CONFIRM_MISMATCH',
+    });
+  } catch (e) {
+    // Ham hata Sentry'ye gönderilmez (Prisma iletisi sorgu değerlerini içerebilir): yalnız hata kodu / türü.
+    const code = (e as { code?: unknown } | null)?.code;
+    captureWarning('user:delete', 'Hesap silme başarısız', {
+      code: typeof code === 'string' ? code : null,
+      name: e instanceof Error ? e.name : typeof e,
+    });
+    return res.status(500).json({ error: 'Hesap silinemedi. Lütfen biraz sonra tekrar deneyin.' });
+  }
+}
 
 function parseJsonBody(req: NextApiRequest): Record<string, unknown> {
   const b = req.body;
@@ -42,6 +84,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!userId) {
     return res.status(401).json({ error: 'Giriş yapmanız gerekiyor.' });
   }
+
+  if (req.method === 'DELETE') return handleDelete(req, res, userId);
 
   try {
     if (req.method === 'GET') {
@@ -192,7 +236,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(200).json(withAbsoluteImage(user));
     }
 
-    res.setHeader('Allow', 'GET, PATCH');
+    res.setHeader('Allow', 'GET, PATCH, DELETE');
     return res.status(405).end();
   } catch (e) {
     console.error('[user/me]', e);

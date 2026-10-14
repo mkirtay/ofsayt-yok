@@ -7,6 +7,7 @@ import { readCache, writeCache } from '@/lib/livescoreCache';
 import { captureError } from '@/lib/logger';
 import { getRequestUserId } from '@/lib/mobileAuth';
 import { checkGundemAuthor, USERNAME_REQUIRED_CODE, USERNAME_REQUIRED_MESSAGE } from '@/lib/gundem/authorGate';
+import { requireTermsConsent } from '@/lib/termsConsentGate';
 import { POST_MAX_LENGTH, matchPostsInAllFeed } from '@/config/gundem';
 import {
   PAGE_SIZE,
@@ -114,6 +115,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         res.setHeader('Retry-After', String(Math.ceil((rl.resetAt - Date.now()) / 1000)));
         return res.status(429).json({ error: 'Çok fazla gönderi paylaştınız. Biraz bekleyin.' });
       }
+      // Kullanım Şartları onayı yoksa 403 TERMS_REQUIRED (web; mobil Bearer muaf — lib/termsConsentGate.ts).
+      if (!(await requireTermsConsent(req, res, userId))) return;
 
       const input = readJsonBody(req);
       const rawBody = typeof input.body === 'string' ? input.body : '';

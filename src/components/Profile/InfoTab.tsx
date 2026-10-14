@@ -6,10 +6,11 @@ import { useTranslation } from '@/lib/i18n';
 import '@/lib/i18nNamespaces/profile';
 import { profileQueryKey, type ProfileDto } from '@/hooks/useProfile';
 import AvatarPicker from './AvatarPicker';
+import DeleteAccountSection from './DeleteAccountSection';
 import { galleryPathOf } from '@/lib/avatars';
 import styles from './profile.module.scss';
 
-/** "Bilgilerim": profil alanları + avatar + şifre değiştirme. */
+/** "Bilgilerim": profil alanları + avatar + şifre değiştirme + hesap silme. */
 export default function InfoTab({ profile }: { profile: ProfileDto }) {
   const queryClient = useQueryClient();
   const { t } = useTranslation('profile');
@@ -245,6 +246,8 @@ export default function InfoTab({ profile }: { profile: ProfileDto }) {
             </p>
           )}
         </form>
+
+        <DeleteAccountSection email={email} />
     </>
   );
 }

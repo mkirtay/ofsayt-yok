@@ -35,6 +35,8 @@ const SENSITIVE_KEYS = new Set(
     'set-cookie',
     'secret',
     'CRON_SECRET',
+    // Hesap silme onay metni (DELETE /api/user/me) e-posta adresi olabilir.
+    'confirm',
   ].map(norm),
 );
 /** URL/sorgu parametresi olarak ayrıca gizlenen adlar (nesne anahtarında değil). */

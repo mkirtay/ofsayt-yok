@@ -48,7 +48,10 @@ export default function PostCard({
 }: PostCardProps) {
   const { t } = useTranslation('gundem');
   const official = post.authorType === 'OFFICIAL_BOT' || post.author.official;
-  const displayName = post.author.name ?? post.author.username ?? t('post.anonymous');
+  const deletedAuthor = post.author.deleted === true;
+  const displayName = deletedAuthor ? t('post.deletedUser') : (post.author.name ?? post.author.username ?? t('post.anonymous'));
+  // Silinmiş kullanıcının profili yok → bağlantı verilmez.
+  const authorLinked = linkAuthor && !deletedAuthor;
   const canDelete = !!onDelete && !!currentUserId && (post.author.id === currentUserId || isAdmin);
   const href = `/gundem/${post.id}`;
   const profileHref = `/gundem/kullanici/${post.author.id}`;
@@ -63,7 +66,7 @@ export default function PostCard({
   return (
     <article className={`${styles.card} ${selected ? styles.selected : ''}`.trim()} aria-current={selected || undefined}>
       <header className={styles.head}>
-        {linkAuthor ? (
+        {authorLinked ? (
           // Avatar bağlantısı klavye/ekran okuyucu için yinelenen durak olmasın: isim bağlantısı asıl bağlantıdır
           <Link href={profileHref} className={styles.avatarLink} tabIndex={-1} aria-hidden="true">
             {avatar}
@@ -72,7 +75,7 @@ export default function PostCard({
           avatar
         )}
         <div className={styles.who}>
-          {linkAuthor ? (
+          {authorLinked ? (
             <Link href={profileHref} className={`${styles.name} ${styles.nameLink}`}>
               {nameContent}
             </Link>

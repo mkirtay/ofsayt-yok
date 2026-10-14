@@ -6,6 +6,8 @@ export type GundemAuthor = {
   image: string | null;
   /** Resmi hesap (allowlist ya da legacy bot) — doğrulanmış rozeti. Sunucuda türetilir. */
   official: boolean;
+  /** Hesabını silmiş kullanıcının anonimleştirilmiş içeriği ("Silinmiş kullanıcı"; profil yok). Eski yanıtlarda yok. */
+  deleted?: boolean;
   followedByMe: boolean;
   followerCount: number;
   followingCount: number;
@@ -39,7 +41,7 @@ export type GundemPost = {
   likedByMe: boolean;
 };
 
-export type GundemCommentUser = Pick<GundemAuthor, 'id' | 'name' | 'username' | 'image' | 'official'>;
+export type GundemCommentUser = Pick<GundemAuthor, 'id' | 'name' | 'username' | 'image' | 'official' | 'deleted'>;
 
 export type GundemComment = {
   id: string;
@@ -62,6 +64,6 @@ export type GundemNotification = {
   postId: string | null;
   createdAt: string;
   readAt: string | null;
-  actor: Pick<GundemAuthor, 'id' | 'name' | 'username' | 'image' | 'official'> | null;
+  actor: Pick<GundemAuthor, 'id' | 'name' | 'username' | 'image' | 'official' | 'deleted'> | null;
   post: { id: string; body: string } | null;
 };

@@ -2,6 +2,7 @@ import type { MatchSnapshot, Prisma } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { withAbsoluteImage } from '@/lib/siteUrl';
 import { isOfficialUser } from '@/lib/gundem/official';
+import { isDeletedUserId } from '@/config/deletedUser';
 
 /** `email` yalnızca `official` türetmek için okunur; `serializeUserRef`/`serializeAuthor` yanıttan çıkarır. */
 export const authorSelect = { id: true, name: true, username: true, image: true, email: true } as const;
@@ -9,7 +10,9 @@ export const authorSelect = { id: true, name: true, username: true, image: true,
 /** Yorum yazarı/bildirim aktörü: temel alanlar + `official`; e-posta sızmaz. */
 export function serializeUserRef<T extends { email: string | null; image: string | null }>(row: T) {
   const { email, ...rest } = row;
-  return { ...withAbsoluteImage(rest), official: isOfficialUser({ email }) };
+  const id = (row as { id?: string }).id;
+  // `deleted`: hesabını silmiş kullanıcının anonimleştirilmiş içeriği (config/deletedUser.ts) — web adı çevirir, profile bağlamaz.
+  return { ...withAbsoluteImage(rest), official: isOfficialUser({ email }), deleted: isDeletedUserId(id) };
 }
 
 /**
@@ -50,6 +53,7 @@ export function serializeAuthor(row: AuthorRow, viewerId: string | null = null) 
   return {
     ...withAbsoluteImage(base),
     official: isOfficialUser({ email }),
+    deleted: isDeletedUserId(base.id),
     followedByMe: viewerFollows && base.id !== viewerId,
     followerCount: _count.followers,
     followingCount: _count.following,
