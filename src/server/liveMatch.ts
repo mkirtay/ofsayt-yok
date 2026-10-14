@@ -7,8 +7,8 @@
  * sayfa başına). Değişmeyen alanlar (lig, stadyum, hakem) istenmez: istemci yalnız skor/durum/olay/istatistik günceller.
  *
  * Maç inplay'de yoksa (henüz başlamadı / bitti / Sportmonks ara durumları listeden düşürdüyse) tekil fixture'a
- * düşülür — maç sayfasının kullandığı AYNI cache anahtarları (`fixtures/{id}` + events, `statistics`), canlıyken
- * 20 sn. Böylece devre arası / uzatma arası / penaltılar inplay'de görünmese bile güncelleme durmaz; bittiğinde son
+ * düşülür — maç sayfasının kullandığı AYNI tek cache anahtarı (`fixtures/{id}`, MATCH_PAGE_INCLUDE; iki çağrı uçuşta
+ * birleşir), canlıyken 20 sn. Böylece devre arası / uzatma arası / penaltılar inplay'de görünmese bile güncelleme durmaz; bittiğinde son
  * durum dönülür ve istemci durur.
  */
 import type { Match } from '@/models/liveScore';

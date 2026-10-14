@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { SportmonksFixture } from './types';
 import {
-  FIXTURE_DETAIL_EXTRA_FILTERS,
   FIXTURE_DETAIL_EXTRA_INCLUDE,
   FIXTURE_TV_INCLUDE,
   keepTurkeyTvStations,
@@ -91,9 +90,9 @@ describe('maç detayı ekleri (TV / teknik direktör / hava / hashtag / hakem id
     expect(FIXTURE_DETAIL_EXTRA_INCLUDE).not.toContain('tvStations');
   });
 
-  it('tarayıcı proxy izin listesi detay isteğini kabul eder', () => {
+  it('tarayıcı proxy izin listesi detay eklerini ve yayıncı include’unu kabul eder', () => {
     const include = `participants;scores;state;periods;league.country;venue;referees.referee;round;stage;group;aggregate;events;${FIXTURE_DETAIL_EXTRA_INCLUDE}`;
-    const r = checkProxyAllowlist('football/fixtures/19746594', { include, filters: FIXTURE_DETAIL_EXTRA_FILTERS });
+    const r = checkProxyAllowlist('football/fixtures/19746594', { include, filters: 'metadataTypes:613' });
     expect(r.violations).toEqual([]);
     expect(r.allowed).toBe(true);
     expect(checkProxyAllowlist('football/fixtures/19746594', { include: FIXTURE_TV_INCLUDE }).violations).toEqual([]);

@@ -74,6 +74,15 @@ export async function findMatchRetryingTransient(
   return found;
 }
 
+/** Maç aramasının (tek `fixtures/{id}` isteği) getirdiği istatistik / kadro; `undefined` → yanıtta yok, ayrıca istenir. */
+export function detailFromFind(found: FindResult): { stats?: MatchStatsData | null; lineups?: MatchLineupData | null } {
+  if (!found.match) return {};
+  return {
+    ...(found.stats !== undefined ? { stats: found.stats } : {}),
+    ...(found.lineups !== undefined ? { lineups: found.lineups } : {}),
+  };
+}
+
 /** Maça hover/focus/tıklamada çağrılır: panel açıldığında ana veri zaten yolda/hazır olur. */
 export function prefetchMatchDetail(matchId: string): void {
   if (!/^\d+$/.test(matchId)) return;
@@ -298,20 +307,33 @@ export function useMatchDetail(
         setStandingsLoading(false);
       }
 
+      // İstatistik / kadro maç aramasıyla aynı `fixtures/{id}` yanıtında (bkz. liveScoreService MATCH_PAGE_INCLUDE): ayrı
+      // istek yalnız yanıtta yoksa (SSR maçıyla devam edilirken arama geçici hata verdiyse).
+      const fromFind = detailFromFind(found);
       if (!seededStats) {
-        void getMatchStats(apiMatchId).then((statsData) => {
-          if (cancelled) return;
-          setStats(statsData);
+        if (fromFind.stats !== undefined) {
+          setStats(fromFind.stats);
           setStatsLoading(false);
-        });
+        } else {
+          void getMatchStats(apiMatchId).then((statsData) => {
+            if (cancelled) return;
+            setStats(statsData);
+            setStatsLoading(false);
+          });
+        }
       }
 
       if (!seededLineups) {
-        void getMatchLineups(apiMatchId).then((lineupsData) => {
-          if (cancelled) return;
-          setLineups(lineupsData);
+        if (fromFind.lineups !== undefined) {
+          setLineups(fromFind.lineups);
           setLineupsLoading(false);
-        });
+        } else {
+          void getMatchLineups(apiMatchId).then((lineupsData) => {
+            if (cancelled) return;
+            setLineups(lineupsData);
+            setLineupsLoading(false);
+          });
+        }
       }
 
       if (cid != null) {

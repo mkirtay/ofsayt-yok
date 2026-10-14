@@ -10,6 +10,7 @@
  * Böylece maçsız bir günde "bugün" listesi 30 sn'de bir değil, en fazla 5 dk'da bir tazelenir.
  */
 import { mapSportmonksStateToPhase } from './stateMapping';
+import { TEAM_FORM_INCLUDE, teamFormFreshSeconds } from './teamForm';
 
 export type CacheTtl = { fresh: number; stale: number };
 
@@ -215,6 +216,9 @@ export function sportmonksCacheTtl(
       if (team && 'statistics' in team) {
         return allTeamStatisticSeasonsFinished(team.statistics) ? withStale(FINISHED_SEASON_TTL, FINISHED_SEASON_TTL) : withStale(HOUR, DAY);
       }
+      // Takım formu (maç kartı "Son 5 Maç", karşılaştırma; bkz. sportmonks/teamForm.ts): eski `between` formu kuralı + sıradaki
+      // maçın beklenen bitişi.
+      if (team && query.include === TEAM_FORM_INCLUDE) return withStale(teamFormFreshSeconds(team, now), DAY);
       if (team && ('latest' in team || 'upcoming' in team)) {
         return withStale(fixtureListFreshSeconds([...asList(team.latest), ...asList(team.upcoming)], 15 * MIN, now), DAY);
       }
@@ -233,10 +237,10 @@ export function sportmonksCacheTtl(
       // Sezon / ülke listeleri (sitemap) günde bir.
       if (a === 'seasons' || a === 'countries') return withStale(DAY, 2 * DAY);
       const person = typeof data === 'object' && !Array.isArray(data) ? (data as Record<string, unknown>) : null;
-      // Teknik direktör sayfasının tek isteği (profil + istatistik + maçlar): sayfa önbelleğiyle aynı 6 sa (bkz.
-      // server/people/coachPage.ts); haftada ~1 maç. Eski kopya 7 gün (429'da sunulur).
+      // Teknik direktör / hakem sayfasının tek isteği (profil + istatistik + maçlar): sayfa önbelleğiyle aynı 6 sa (bkz.
+      // server/people/coachPage.ts, refereePage.ts); haftada ~1 maç. Eski kopya 7 gün (429'da sunulur).
       if (person && 'fixtures' in person && 'statistics' in person) return withStale(6 * HOUR, 7 * DAY);
-      // Görev aldığı maçlar (hakem sayfası son maçlar): yeni maç ataması → 1 sa.
+      // Yalnız görev aldığı maçlar (eski hakem sayfası anahtarı): yeni maç ataması → 1 sa.
       if (person && 'fixtures' in person) return withStale(HOUR, DAY);
       // Sezon istatistikleri (hakem kartı, AI bağlamı, hakem / TD sayfası): haftada bir maç → 12 sa.
       if (person && 'statistics' in person) return withStale(12 * HOUR, 2 * DAY);

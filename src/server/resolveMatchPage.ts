@@ -1,5 +1,5 @@
 import type { Match } from '@/models/liveScore';
-import type { MatchEvent } from '@/models/domain';
+import type { MatchEvent, MatchLineupData, MatchStatsData } from '@/models/domain';
 import type { SportmonksFixtureLookup } from '@/services/liveScoreService';
 import { isUnambiguousSportmonksId } from '@/services/sportmonks/fixtureIdRange';
 import { matchSlugMatches } from '@/utils/matchUrl';
@@ -15,7 +15,8 @@ import { findStoredMatchInfo, type StoredMatchInfo } from '@/server/storedMatch'
  * - `error`: geçici hata → cache'lenmez, istemci tekrar dener.
  */
 export type MatchPageResolution =
-  | { kind: 'match'; match: Match; events: MatchEvent[] }
+  /** `stats` / `lineups`: maçı çözen aynı `fixtures/{id}` yanıtından (yoksa `undefined` → sayfa ayrıca ister). */
+  | { kind: 'match'; match: Match; events: MatchEvent[]; stats?: MatchStatsData | null; lineups?: MatchLineupData | null }
   | { kind: 'archived' }
   | { kind: 'gone' }
   | { kind: 'missing' }
@@ -25,6 +26,16 @@ export type ResolveMatchPageDeps = {
   findStored: (matchId: string) => Promise<StoredMatchInfo | null>;
   resolve: (matchId: string, opts: { lookupAmbiguous?: boolean }) => Promise<SportmonksFixtureLookup>;
 };
+
+function found(lookup: Extract<SportmonksFixtureLookup, { kind: 'found' }>): MatchPageResolution {
+  return {
+    kind: 'match',
+    match: lookup.match,
+    events: lookup.events,
+    ...(lookup.stats !== undefined ? { stats: lookup.stats } : {}),
+    ...(lookup.lineups !== undefined ? { lineups: lookup.lineups } : {}),
+  };
+}
 
 const defaultDeps: ResolveMatchPageDeps = { findStored: findStoredMatchInfo, resolve: resolveSportmonksMatch };
 
@@ -46,7 +57,7 @@ export async function resolveMatchPage(
 ): Promise<MatchPageResolution> {
   if (isUnambiguousSportmonksId(matchId)) {
     const lookup = await deps.resolve(matchId, {});
-    if (lookup.kind === 'found') return { kind: 'match', match: lookup.match, events: lookup.events };
+    if (lookup.kind === 'found') return found(lookup);
     return lookup.kind === 'error' ? { kind: 'error' } : { kind: 'missing' };
   }
 
@@ -65,6 +76,6 @@ export async function resolveMatchPage(
   const lookup = await deps.resolve(matchId, { lookupAmbiguous: true });
   if (lookup.kind === 'error') return { kind: 'error' };
   if (lookup.kind !== 'found') return { kind: 'gone' };
-  if (!urlSlug || matchSlugMatches(urlSlug, lookup.match)) return { kind: 'match', match: lookup.match, events: lookup.events };
+  if (!urlSlug || matchSlugMatches(urlSlug, lookup.match)) return found(lookup);
   return { kind: 'gone' };
 }

@@ -30,9 +30,9 @@ async function withinBudget<T>(fn: () => Promise<T>, budgetMs: number): Promise<
 
 /**
  * İstatistik ve kadro SSR'da: istemci çekince Genel Bakış'taki kartlar iskeletten gerçek boya uzuyor, altındaki
- * kadro kutusu (masaüstünde ilk ekranda görünür) aşağı itiliyordu (CLS 0,01–0,07). Olaylar zaten maçı çözen
- * `fixtures/{id}` isteğinde geliyor (bkz. resolveMatchPage). Aynı `fixtures/{id}?include=…` istekleri → aynı sunucu
- * cache katmanı (proxy ile ortak); bütçe aşılırsa istek arka planda sürer ve cache'i ısıtır.
+ * kadro kutusu (masaüstünde ilk ekranda görünür) aşağı itiliyordu (CLS 0,01–0,07). Maç sayfası tohumu normalde maçı çözen
+ * `fixtures/{id}` yanıtından alır (bkz. resolveMatchPage); bu yedek yalnız o yanıtta yoksa. İstatistik ve kadro aynı tek
+ * istekte (liveScoreService `MATCH_PAGE_INCLUDE`) → iki çağrı tek cache anahtarı (proxy ile ortak, uçuştaki istek birleşir).
  */
 export async function loadMatchDetailSeed(
   matchId: string,

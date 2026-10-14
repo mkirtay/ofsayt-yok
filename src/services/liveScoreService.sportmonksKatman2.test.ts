@@ -99,7 +99,7 @@ describe('getTeamsHead2Head — Faz 3, /fixtures/head-to-head/{id1}/{id2}', () =
       const fetchSpy = vi.spyOn(global, 'fetch').mockImplementation(
         routedFetch([
           { match: '/fixtures/head-to-head/', data: headToHeadBarcaMadrid },
-          { match: '/fixtures/between/', data: [] }, // overall_form için (team last matches) — boş, sadece h2h_form test edilsin
+          { match: '/teams/', data: { latest: [] } }, // overall_form için (takım `latest`) — boş, sadece h2h_form test edilsin
         ]),
       );
       const { getTeamsHead2Head } = await import('./liveScoreService');
@@ -121,6 +121,44 @@ describe('getTeamsHead2Head — Faz 3, /fixtures/head-to-head/{id1}/{id2}', () =
       // bu sırada döndü):
       expect(result?.team1.h2h_form).toEqual(['W', 'L', 'W', 'W']); // FC Barcelona
       expect(result?.team2.h2h_form).toEqual(['L', 'W', 'L', 'L']); // Real Madrid (aynı maçların tersi)
+    });
+  });
+
+  it('form Team havuzundan: iki `teams/{id}?include=latest…` isteği, `fixtures/between` yok; 89 gün dışı maçlar forma girmez', async () => {
+    await withSportmonksEnabled(async () => {
+      const day = (ago: number) => new Date(Date.now() - ago * 86_400_000).toISOString().slice(0, 10);
+      const fx = (id: number, ago: number, home: number, away: number) => ({
+        id,
+        state_id: 5,
+        state: { id: 5, state: 'FT' },
+        starting_at: `${day(ago)} 18:00:00`,
+        participants: [
+          { id: 83, name: 'FC Barcelona', meta: { location: home === 83 ? 'home' : 'away', winner: home === 83 } },
+          { id: 999, name: 'Rakip', meta: { location: home === 83 ? 'away' : 'home', winner: home !== 83 } },
+        ],
+        scores: [
+          { participant_id: home, description: 'CURRENT', score: { goals: 2, participant: 'home' } },
+          { participant_id: away, description: 'CURRENT', score: { goals: 0, participant: 'away' } },
+        ],
+      });
+      // En yeni önce değil (sıra Sportmonks'a bağlı olmasın): 3 gün önce galibiyet, 10 gün önce yenilgi, 120 gün önce (pencere dışı).
+      const latest = [fx(2, 10, 999, 83), fx(1, 3, 83, 999), fx(3, 120, 83, 999)];
+      const fetchSpy = vi.spyOn(global, 'fetch').mockImplementation(
+        routedFetch([
+          { match: '/fixtures/head-to-head/', data: [] },
+          { match: '/teams/', data: { latest } },
+        ]),
+      );
+      const { getTeamsHead2Head } = await import('./liveScoreService');
+      const { TEAM_FORM_INCLUDE } = await import('./sportmonks/teamForm');
+      const result = await getTeamsHead2Head('83', '3468');
+      const urls = fetchSpy.mock.calls.map((c) => decodeURIComponent(String(c[0])));
+      expect(urls.filter((u) => u.includes('/fixtures/'))).toHaveLength(1);
+      expect(urls.filter((u) => u.includes('/fixtures/between/'))).toHaveLength(0);
+      const teamUrls = urls.filter((u) => u.includes('/teams/'));
+      expect(teamUrls).toHaveLength(2);
+      for (const u of teamUrls) expect(u).toContain(`include=${TEAM_FORM_INCLUDE}`);
+      expect(result?.team1.overall_form).toEqual(['W', 'L']);
     });
   });
 
@@ -169,7 +207,8 @@ describe('getMatchWithEvents / getMatchStats / getMatchLineups — Faz 3, gerçe
       const lineups = await getMatchLineups('19732740');
       // Oyuncu reytingi için lineups.details include'u şart (type_id 118).
       const url = decodeURIComponent(fetchSpy.mock.calls[0][0] as string);
-      expect(url).toContain('include=lineups.player.nationality;lineups.details;participants');
+      expect(url).toContain(';lineups.player.nationality;lineups.details;');
+      expect(url).toContain('include=participants;');
       expect(lineups!.lineup.home.team.name).toBe('Celta de Vigo');
       expect(lineups!.lineup.away.team.name).toBe('Osasuna');
       expect(lineups!.lineup.home.players.some((p: { substitution: string }) => p.substitution === '0')).toBe(true);

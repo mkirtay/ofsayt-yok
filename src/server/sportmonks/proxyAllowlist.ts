@@ -60,6 +60,8 @@ const INCLUDE_TOKENS = new Set([
   // takım fikstürü (mobil) + takım sayfası tek isteği (services/sportmonks/teamOverview.ts)
   'upcoming.participants', 'upcoming.league', 'upcoming.state', 'upcoming.scores', 'upcoming.periods',
   'latest.participants', 'latest.scores', 'latest.league', 'latest.state',
+  // takım formu (maç kartı, services/sportmonks/teamForm.ts): sıradaki maçların yalnız başlama saati
+  'upcoming',
   'coaches.coach', 'seasons.league',
   // takım sezon istatistikleri (services/sportmonks/teamSeasonStats.ts)
   'statistics.details', 'statistics.season', 'sidelined.player', 'sidelined.type',

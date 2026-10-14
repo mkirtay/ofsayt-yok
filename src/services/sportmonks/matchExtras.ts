@@ -18,13 +18,13 @@ export const SPORTMONKS_TURKEY_COUNTRY_ID = 404;
 /** metadata türü: maçın resmî hashtag'i. */
 export const METADATA_HASHTAG_TYPE_ID = 613;
 
-/** Maç detayı isteğine eklenen include'lar + metadata süzgeci (yalnız hashtag satırı). Yayıncılar bunda YOK. */
+/** Maç detayı isteğine eklenen include'lar (metadata süzgeci maç sayfası isteğinde: hashtag 613 + kadro 572). */
 export const FIXTURE_DETAIL_EXTRA_INCLUDE = 'coaches:common_name,display_name;weatherReport;metadata';
-export const FIXTURE_DETAIL_EXTRA_FILTERS = `metadataTypes:${METADATA_HASHTAG_TYPE_ID}`;
 
 /**
- * Yayıncılar AYRI, küçük istekle ve yalnız başlamamış / canlı maçta (bitmiş maçta satır görünmüyor; Sportmonks bitmiş
- * maçta ~160 ülke satırı döndürüyordu). Durum ana yanıttan önce bilinmediği için iki adım.
+ * Yayıncılar maç sayfasının tek isteğinde (bkz. liveScoreService `MATCH_PAGE_INCLUDE`); satır yalnız başlamamış / canlı
+ * maçta gösterilir. Bitmiş maçta Sportmonks ~160 ülke satırı döndürüyor (+~20 KB ham): cache'e yazılmadan önce TR dışı
+ * ayıklanır (`keepTurkeyTvStations`). Önce ayrı ikinci istekti (2026-10-14'e kadar).
  */
 export const FIXTURE_TV_INCLUDE = 'tvStations.tvStation:name';
 

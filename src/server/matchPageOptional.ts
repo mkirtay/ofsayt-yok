@@ -1,6 +1,7 @@
 /**
- * Maç sayfası SSR'ının isteğe bağlı bölümleri: maç kartı H2H + form (`loadMatchCardH2h`) ve Genel Bakış tohumu (istatistik +
- * kadro, `loadMatchDetailSeed`). Hepsi Fixture havuzundan; render başına ~3–5 istek (tarama dalgalarında havuzun %94'ü).
+ * Maç sayfası SSR'ının isteğe bağlı bölümleri: maç kartı H2H + form (`loadMatchCardH2h`: `fixtures/head-to-head` Fixture
+ * havuzundan, iki takım formu Team havuzundan) ve Genel Bakış tohumu (istatistik + kadro). Sayfa tohumu normalde maçı çözen
+ * tek `fixtures/{id}` yanıtından verir (ek istek yok; bkz. pages/matches/[slug].tsx); `loadMatchDetailSeed` yalnız yedek.
  *
  * Fixture havuzu baskı altındaysa (kalan < %10 ya da 429 soğuması; bkz. server/sportmonks/poolGuard.ts) bu bölümler
  * sunucuda HİÇ çekilmez: `undefined` döner → istemci mevcut yolla tarayıcıdan (CDN önbellekli proxy) çeker, sayfa CDN'de

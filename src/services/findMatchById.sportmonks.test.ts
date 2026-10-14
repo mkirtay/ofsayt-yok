@@ -43,30 +43,34 @@ describe('findMatchById / lookupSportmonksFixture (Sportmonks)', () => {
     expect(decodeURIComponent(url)).toContain(';events');
   });
 
-  it('yayıncılar yalnız başlamamış / canlı maçta, ayrı küçük istekle; sunucu Türkiye dışını ayıklar', async () => {
+  it('maç sayfası TEK istek: yayıncı + istatistik + kadro aynı yanıtta; yayıncı yalnız başlamamış / canlı maçta, TR dışı ayıklanır', async () => {
     const tvRows = [
       { tvstation_id: 878, country_id: 404, tvstation: { id: 878, name: 'TOD' } },
       { tvstation_id: 9, country_id: 462, tvstation: { id: 9, name: 'Sport TV' } },
     ];
     const base = { ...(superLigFixture as object), id: 19746594 } as Record<string, unknown>;
     const respond = (state: number) =>
-      vi.spyOn(global, 'fetch').mockImplementation(async (input) => {
-        const url = decodeURIComponent(String(input));
-        const body = url.includes('include=tvStations') ? { data: { id: 19746594, tvstations: tvRows } } : { data: { ...base, state_id: state, state: { id: state } } };
+      vi.spyOn(global, 'fetch').mockImplementation(async () => {
+        const body = { data: { ...base, state_id: state, state: { id: state }, tvstations: tvRows, statistics: [], lineups: [] } };
         return new Response(JSON.stringify(body), { status: 200 });
       });
 
-    // Başlamamış (state 1): 2 istek, ana istekte yayıncı yok, ikinci istek yalnız yayıncılar; yalnız TR kanalı kalır.
+    // Başlamamış (state 1): tek istek; include'da yayıncı + istatistik + kadro, süzgeçte iki metadata türü; yalnız TR kanalı.
     let spy = respond(1);
     let mod = await import('./liveScoreService');
     let r = await mod.lookupSportmonksFixture('19746594');
-    expect(spy).toHaveBeenCalledTimes(2);
-    expect(decodeURIComponent(String(spy.mock.calls[0]![0]))).not.toContain('tvStations');
-    expect(decodeURIComponent(String(spy.mock.calls[1]![0]))).toContain('include=tvStations.tvStation:name');
+    expect(spy).toHaveBeenCalledTimes(1);
+    const url = decodeURIComponent(String(spy.mock.calls[0]![0]));
+    for (const inc of ['events', 'statistics', 'lineups.player.nationality', 'lineups.details', 'tvStations.tvStation:name', 'coaches:common_name,display_name', 'weatherReport', 'metadata']) {
+      expect(url).toContain(`;${inc}`);
+    }
+    expect(url).toContain('filters=metadataTypes:572,613');
     expect(r.kind === 'found' && r.match.tv_stations).toEqual(['TOD']);
+    expect(r.kind === 'found' && r.stats).toBeNull();
+    expect(r.kind === 'found' && r.lineups).toBeNull();
     spy.mockRestore();
 
-    // Bitmiş (state 5): tek istek, yayıncı istenmez.
+    // Bitmiş (state 5): yine tek istek; yayıncı satırı gösterilmez.
     vi.resetModules();
     spy = respond(5);
     mod = await import('./liveScoreService');

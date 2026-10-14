@@ -116,16 +116,21 @@ export const getServerSideProps: GetServerSideProps<MatchDetailProps> = async (c
         }
         const apiMatchId = String(page.match.id);
         // H2H/form + istatistik/kadro: Fixture havuzu baskı altındaysa sunucuda atlanır, istemci çeker (bkz. matchPageOptional).
-        const [{ h2h, seed, transientError }, analysisPreview] = await Promise.all([
+        // İstatistik/kadro maçı çözen aynı `fixtures/{id}` yanıtında geldiyse (normal yol) ek istek yok ve baskıda da verilir;
+        // hafif bot sürümünde yok.
+        const pageSeed = page.stats !== undefined && page.lineups !== undefined ? { stats: page.stats, lineups: page.lineups } : null;
+        const [optional, analysisPreview] = await Promise.all([
           loadMatchPageOptionalSections(page.match, apiMatchId, {
             ...defaultMatchPageOptionalDeps,
             loadH2h: (m) => withPageTimeout(() => defaultMatchPageOptionalDeps.loadH2h(m)),
-            loadSeed: (id) => withPageTimeout(() => defaultMatchPageOptionalDeps.loadSeed(id)),
+            loadSeed: (id) => (pageSeed ? Promise.resolve(pageSeed) : withPageTimeout(() => defaultMatchPageOptionalDeps.loadSeed(id))),
             ...(lightBot ? { underPressure: async () => true } : {}),
           }),
           // Kredi modeli v2: AI analizi ücretsiz önizlemesi (tek DB sorgusu; hata → null, sayfa yine çizilir).
           loadAnalysisPreviewForPage(apiMatchId),
         ]);
+        const { h2h, transientError } = optional;
+        const seed = optional.skipped && !lightBot && pageSeed ? pageSeed : optional.seed;
         const complete = h2h !== undefined && seed.stats !== undefined && seed.lineups !== undefined;
         // Bütçe aşıldıysa (undefined) bölüm iskeletle gider → CDN bu kopyayı ≤1 sa tutar; geçici hatada ≤60 sn; bot kopyası
         // hiç saklanmaz.

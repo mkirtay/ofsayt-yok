@@ -134,4 +134,15 @@ describe('resolveMatchPage — kesin Sportmonks id (≥10M)', () => {
     expect(await resolveMatchPage('19999999', '')).toEqual({ kind: 'missing' });
     expect(h.cache.get('dev:v2:sportmonks:fixture-missing:19999999')?.ttl).toBe(60 * 60);
   });
+
+  it('aynı yanıttaki istatistik / kadro sayfaya taşınır (ayrı istek yok); `null` = veri yok korunur', async () => {
+    const current = { ...gsReal, id: 19443204 } as Match;
+    const stats = { home: { possession: 51 }, away: { possession: 49 } };
+    h.lookup.mockResolvedValueOnce({ kind: 'found', match: current, events: [], stats, lineups: null });
+    expect(await resolveMatchPage('19443204', '')).toEqual({ kind: 'match', match: current, events: [], stats, lineups: null });
+
+    h.lookup.mockResolvedValueOnce({ kind: 'found', match: current, events: [] });
+    const r = await resolveMatchPage('19443204', '');
+    expect(r.kind === 'match' && 'stats' in r).toBe(false);
+  });
 });

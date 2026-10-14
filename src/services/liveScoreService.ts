@@ -8,9 +8,9 @@ import { SportmonksHttpError } from './sportmonks/httpClient';
 import { isMatchLive, matchIstanbulDate } from '../utils/matchActivity';
 import { shiftIsoDate, todayIsoIstanbul } from '../utils/dateStrip';
 import {
-  FIXTURE_DETAIL_EXTRA_FILTERS,
   FIXTURE_DETAIL_EXTRA_INCLUDE,
   FIXTURE_TV_INCLUDE,
+  METADATA_HASHTAG_TYPE_ID,
   wantsTvStations,
 } from '@/services/sportmonks/matchExtras';
 import { mapSportmonksFixtureToMatch } from './sportmonksFixtureMapper';
@@ -30,6 +30,7 @@ import {
   ASSIST_TOPSCORER_TYPE_ID,
   mergeDisciplinaryRows,
   DISCIPLINARY_TYPE_IDS,
+  LINEUP_CONFIRMED_METADATA_TYPE_ID,
 } from './sportmonksKatman2Mapper';
 import { checkFilteredResult } from './sportmonks/filterAssertion';
 import { resolvePositionShortCode } from './sportmonks/typeDictionaries';
@@ -50,6 +51,7 @@ import {
   type TeamUpcoming,
 } from './sportmonks/teamUpcoming';
 import { normalizeDisplayName } from '@/utils/displayName';
+import { TEAM_FORM_INCLUDE } from './sportmonks/teamForm';
 
 export type PaginatedMatches = {
   matches: Match[];
@@ -222,7 +224,8 @@ export async function getFixturesByDate(isoDate: string): Promise<Match[]> {
 export const getTodayFixtures = (): Promise<Match[]> => getFixturesByDate(todayIsoUtc());
 
 export type SportmonksFixtureLookup =
-  | { kind: 'found'; match: Match; events: MatchEvent[] }
+  /** `stats` / `lineups`: aynı yanıttan (ek istek yok); `null` = veri yok. */
+  | { kind: 'found'; match: Match; events: MatchEvent[]; stats?: MatchStatsData | null; lineups?: MatchLineupData | null }
   /** Eski sağlayıcı (livescore) id aralığında — sunucu tarafı hiç istek atmadı (bkz. resolveSportmonksMatch). */
   | { kind: 'legacy' }
   /** Sportmonks "yok / erişim yok" dedi (404/403/422 ya da boş 200) — kalıcı, negatif cache'lenebilir. */
@@ -233,8 +236,8 @@ export type SportmonksFixtureLookup =
 const SPORTMONKS_MISSING_STATUSES = new Set([400, 403, 404, 422]);
 
 /**
- * Tek maçı `fixtures/{id}` (+events) ile çeker ve sonucu kalıcı/geçici diye ayırır.
- * Sportmonks'ta id uzayı tek: `fixtures/{id}` bulamadıysa tarih/lig listeleri de bulamaz,
+ * Tek maçı `fixtures/{id}` ile çeker (maç sayfasının tek isteği, bkz. `MATCH_PAGE_INCLUDE`) ve sonucu kalıcı/geçici diye
+ * ayırır. Sportmonks'ta id uzayı tek: `fixtures/{id}` bulamadıysa tarih/lig listeleri de bulamaz,
  * bu yüzden liste taraması (eski `findMatchById` adım 2-3) yapılmaz.
  * Id aralığı burada kontrol EDİLMEZ: eski UEFA sezonlarının Sportmonks id'leri eski livescore
  * id'leriyle aynı aralıkta (bkz. fixtureIdRange.ts) — hangisi olduğuna SSR slug'la karar verir.
@@ -242,24 +245,9 @@ const SPORTMONKS_MISSING_STATUSES = new Set([400, 403, 404, 422]);
 export async function lookupSportmonksFixture(matchId: string): Promise<SportmonksFixtureLookup> {
   if (!/^\d{1,12}$/.test(matchId)) return { kind: 'missing' };
   try {
-    // Detay: + teknik direktörler, hava, hashtag (bkz. sportmonks/matchExtras.ts) — aynı istek.
-    const envelope = await sportmonksClientRequest<SportmonksFixture>('football', `/fixtures/${matchId}`, {
-      include: `${SPORTMONKS_FIXTURE_INCLUDE};events;${FIXTURE_DETAIL_EXTRA_INCLUDE}`,
-      filters: FIXTURE_DETAIL_EXTRA_FILTERS,
-    });
-    let fixture = envelope.data;
+    const fixture = await fetchMatchPageFixture(matchId);
     if (!fixture || Array.isArray(fixture) || typeof fixture !== 'object') return { kind: 'missing' };
-    // Yayıncılar yalnız başlamamış / canlı maçta, ayrı küçük istekle (sunucu TR dışını ayıklar); hata maçı düşürmez.
-    const stateId = fixture.state?.id ?? fixture.state_id;
-    if (stateId != null && wantsTvStations(mapSportmonksStateToPhase(stateId))) {
-      try {
-        const tv = await sportmonksClientRequest<SportmonksFixture>('football', `/fixtures/${matchId}`, { include: FIXTURE_TV_INCLUDE });
-        if (tv.data && !Array.isArray(tv.data)) fixture = { ...fixture, tvstations: tv.data.tvstations ?? [] };
-      } catch {
-        // yayıncı satırı görünmez
-      }
-    }
-    return { kind: 'found', match: mapSportmonksFixtureToMatch(fixture), events: mapSportmonksEvents(fixture) };
+    return { kind: 'found', ...mapMatchPageFixture(fixture) };
   } catch (error) {
     if (error instanceof SportmonksHttpError && SPORTMONKS_MISSING_STATUSES.has(error.status)) {
       return { kind: 'missing' };
@@ -275,9 +263,19 @@ export async function lookupSportmonksFixture(matchId: string): Promise<Sportmon
  */
 export async function findMatchById(
   matchId: string,
-): Promise<{ match: Match | null; events: MatchEvent[]; fromFixture: boolean; transient?: boolean }> {
+): Promise<{
+  match: Match | null;
+  events: MatchEvent[];
+  fromFixture: boolean;
+  transient?: boolean;
+  /** Aynı yanıttaki istatistik / kadro (maç sayfası tek isteği): istemci ayrıca istemez. */
+  stats?: MatchStatsData | null;
+  lineups?: MatchLineupData | null;
+}> {
   const lookup = await lookupSportmonksFixture(matchId);
-  if (lookup.kind === 'found') return { match: lookup.match, events: lookup.events, fromFixture: false };
+  if (lookup.kind === 'found') {
+    return { match: lookup.match, events: lookup.events, fromFixture: false, stats: lookup.stats, lineups: lookup.lineups };
+  }
   // `transient`: geçici hata (429 / 5xx / zaman aşımı) — maç "yok" değil, çağıran yeniden deneyebilir.
   return { match: null, events: [], fromFixture: false, ...(lookup.kind === 'error' ? { transient: true } : {}) };
 }
@@ -297,6 +295,47 @@ async function sportmonksFetchFixtureDetail(
     ...(filters ? { filters } : {}),
   });
   return envelope.data ?? null;
+}
+
+/**
+ * Maç sayfasının TEK `fixtures/{id}` isteği: maç + olaylar + detay ekleri (teknik direktör, hava, hashtag) + istatistik +
+ * kadro (resmî mi: metadata 572) + yayıncılar. Önce aynı fixture'a 3–4 ayrı istekti (ana, `statistics`, kadro, yayıncı);
+ * hepsi aynı önbellek anahtarında: SSR, istemci (proxy), canlı yedek, kadro yoklaması ve AI bağlamı paylaşır.
+ * 2026-10-14 gerçek istekle doğrulandı (bitmiş 19746609, canlı 19748641, başlamamış 19609886): her include eski ayrı
+ * isteklerle aynı satır sayısını döndürüyor, eşlenmiş maç / olay / istatistik / kadro birebir aynı; iki metadata türü tek
+ * süzgeçte (`metadataTypes:572,613`). Yayıncı satırları bitmiş maçta da gelir (cache'e yazılmadan TR dışı ayıklanır,
+ * bkz. matchExtras.keepTurkeyTvStations); görünürlük eskisi gibi yalnız başlamamış / canlı maçta (`mapMatchPageFixture`).
+ */
+export const MATCH_PAGE_INCLUDE = [
+  SPORTMONKS_FIXTURE_INCLUDE,
+  'events',
+  FIXTURE_DETAIL_EXTRA_INCLUDE,
+  'statistics',
+  'lineups.player.nationality;lineups.details',
+  FIXTURE_TV_INCLUDE,
+].join(';');
+export const MATCH_PAGE_FILTERS = `metadataTypes:${LINEUP_CONFIRMED_METADATA_TYPE_ID},${METADATA_HASHTAG_TYPE_ID}`;
+
+async function fetchMatchPageFixture(matchId: string): Promise<SportmonksFixture | null> {
+  return sportmonksFetchFixtureDetail(matchId, MATCH_PAGE_INCLUDE, MATCH_PAGE_FILTERS);
+}
+
+/** Tek yanıttan maç sayfasının bütün parçaları. Yayıncılar yalnız başlamamış / canlı maçta (eski ayrı istekle aynı kural). */
+export function mapMatchPageFixture(fixture: SportmonksFixture): {
+  match: Match;
+  events: MatchEvent[];
+  stats: MatchStatsData | null;
+  lineups: MatchLineupData | null;
+} {
+  const stateId = fixture.state?.id ?? fixture.state_id;
+  const showTv = stateId != null && wantsTvStations(mapSportmonksStateToPhase(stateId));
+  const forMatch: SportmonksFixture = showTv ? fixture : { ...fixture, tvstations: undefined };
+  return {
+    match: mapSportmonksFixtureToMatch(forMatch),
+    events: mapSportmonksEvents(fixture),
+    stats: mapSportmonksStatistics(fixture.statistics),
+    lineups: mapSportmonksLineups(fixture),
+  };
 }
 
 /** `leagues/{id}?include=seasons` — Pass 4: ayrı bir global `/seasons` endpoint'i yok. */
@@ -377,6 +416,23 @@ async function sportmonksFetchTeamFixtures(teamId: string): Promise<Match[]> {
   });
   const matches = dedupeMatchesById(rows.map(mapSportmonksFixtureToMatch));
   // Upstream artan tarihe göre dönüyor (Pass 4 + Faz 3'te tazelenmiş teyit) — "son maçlar" için en yeni önce.
+  return matches.sort((a, b) => (b.date ?? '').localeCompare(a.date ?? ''));
+}
+
+/**
+ * Takım formu (maç kartı "Son 5 Maç", karşılaştırma, AI bağlamı): `teams/{id}?include=latest.*` — Team havuzu (kıt Fixture
+ * havuzu değil). `latest` takımın plandaki bütün turnuvalardaki son 40 BİTMİŞ maçı, en yeni önce. Önce
+ * `fixtures/between/{−89 g}/{bugün}/{takım}` (Fixture havuzu, maç sayfası başına 2 istek) idi; içerik aynı kalsın diye aynı
+ * 89 günlük pencere uygulanır. 2026-10-14 gerçek istekle doğrulandı (Galatasaray 34, Lyngby 2650): pencere içindeki maçlar
+ * ve sırası `between` ile birebir aynı. Önbellek süresi: sportmonks/teamForm.ts.
+ */
+async function sportmonksFetchTeamForm(teamId: string): Promise<Match[]> {
+  const envelope = await sportmonksClientRequest<{ latest?: SportmonksFixture[] | null }>('football', `/teams/${teamId}`, {
+    include: TEAM_FORM_INCLUDE,
+  });
+  const team = envelope.data && !Array.isArray(envelope.data) ? envelope.data : null;
+  const from = isoDateOffset(-SPORTMONKS_TEAM_HISTORY_WINDOW_PAST_DAYS);
+  const matches = dedupeMatchesById((team?.latest ?? []).map(mapSportmonksFixtureToMatch)).filter((m) => (m.date ?? '') >= from);
   return matches.sort((a, b) => (b.date ?? '').localeCompare(a.date ?? ''));
 }
 
@@ -871,8 +927,8 @@ function matchToH2HHistorical(m: Match): Head2HHistoricalMatch {
 /**
  * `Endpoint: GET /fixtures/head-to-head/{id1}/{id2}` (Pass 4). Sportmonks bu
  * endpoint'te `team1`/`team2` form ÖZETİ döndürmüyor (rapor bulgusu) —
- * `overall_form`/`h2h_form` burada `getTeamHistoryMatches`'ten (zaten en-yeni-
- * önce sıralı) client-side türetiliyor.
+ * `overall_form` takımların `latest` maçlarından (`sportmonksFetchTeamForm`, Team havuzu), `h2h_form` karşılaşmalardan
+ * client-side türetiliyor.
  */
 /**
  * Karşılaşma geçmişi + iki takımın son maç formu. `null` YALNIZ gerçekten boş sonuç (iki takım hiç karşılaşmamış);
@@ -893,10 +949,7 @@ export const getTeamsHead2Head = async (
     const h2hMatches = fixtures.map(mapSportmonksFixtureToMatch);
     // Karşılaşma geçmişi boş olsa da iki takımın son maç formu çekilir ("Son 5 Maç" kaybolmasın). Sportmonks boş H2H'de
     // "sonuç yok ya da plan erişimi yok" der; ikisi ayırt edilemez → kart "geçmiş yok" notunu formun altında gösterir.
-    const [team1Last, team2Last] = await Promise.all([
-      sportmonksFetchTeamFixtures(team1Id),
-      sportmonksFetchTeamFixtures(team2Id),
-    ]);
+    const [team1Last, team2Last] = await Promise.all([sportmonksFetchTeamForm(team1Id), sportmonksFetchTeamForm(team2Id)]);
     if (h2hMatches.length === 0 && team1Last.length === 0 && team2Last.length === 0) return null;
 
     return {
@@ -920,28 +973,28 @@ export const getTeamsHead2Head = async (
   }
 };
 
-// Endpoint: GET /fixtures/{id}?include=events (Pass 4/5)
+// Endpoint: GET /fixtures/{id} (maç sayfasının tek isteği, bkz. `MATCH_PAGE_INCLUDE`)
 // Returns both match details and events
 export const getMatchWithEvents = async (
   matchId: string
 ): Promise<{ match: Match | null; events: MatchEvent[] }> => {
   try {
-    const fixture = await sportmonksFetchFixtureDetail(matchId, `${SPORTMONKS_FIXTURE_INCLUDE};events`);
+    const fixture = await fetchMatchPageFixture(matchId);
     if (!fixture) return { match: null, events: [] };
-    return { match: mapSportmonksFixtureToMatch(fixture), events: mapSportmonksEvents(fixture) };
+    const { match, events } = mapMatchPageFixture(fixture);
+    return { match, events };
   } catch (error) {
     console.error('Error fetching match events (sportmonks)', error);
     return { match: null, events: [] };
   }
 };
 
-// Endpoint: GET /fixtures/{id}?include=statistics (Pass 4/5)
 /**
- * İstatistik — hata (429 / 5xx / zaman aşımı) FIRLATIR; `null` yalnız gerçekten veri yok. Maç sayfası SSR'ı geçici hatayı
- * "veri yok" sayıp boş kartlı kopyayı CDN'de 1 gün tutmasın diye (bkz. server/matchDetailSeed.ts; H2H'de aynı desen).
+ * İstatistik (maç sayfasının tek isteğinden) — hata (429 / 5xx / zaman aşımı) FIRLATIR; `null` yalnız gerçekten veri yok.
+ * Maç sayfası SSR'ı geçici hatayı "veri yok" sayıp boş kartlı kopyayı CDN'de 1 gün tutmasın diye (H2H'de aynı desen).
  */
 export async function fetchMatchStats(matchId: string): Promise<MatchStatsData | null> {
-  const fixture = await sportmonksFetchFixtureDetail(matchId, 'statistics');
+  const fixture = await fetchMatchPageFixture(matchId);
   return mapSportmonksStatistics(fixture?.statistics);
 }
 
@@ -955,15 +1008,9 @@ export const getMatchStats = async (matchId: string): Promise<MatchStatsData | n
   }
 };
 
-// Endpoint: GET /fixtures/{id}?include=lineups.player.nationality;lineups.details;participants (Pass 4/5)
-/** Kadro — hata FIRLATIR, `null` yalnız gerçekten veri yok (bkz. `fetchMatchStats`). */
+/** Kadro (maç sayfasının tek isteğinden; metadata 572 = resmî mi) — hata FIRLATIR, `null` yalnız gerçekten veri yok. */
 export async function fetchMatchLineups(matchId: string): Promise<MatchLineupData | null> {
-  // metadata 572 = kadro resmî mi (Muhtemel 11 / İlk 11); filtre yalnız o satırı getirir.
-  const fixture = await sportmonksFetchFixtureDetail(
-    matchId,
-    'lineups.player.nationality;lineups.details;participants;metadata',
-    'metadataTypes:572',
-  );
+  const fixture = await fetchMatchPageFixture(matchId);
   return fixture ? mapSportmonksLineups(fixture) : null;
 }
 

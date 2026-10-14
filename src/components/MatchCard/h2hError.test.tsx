@@ -42,25 +42,29 @@ describe('getTeamsHead2Head sözleşmesi', () => {
     await expect(getTeamsHead2Head('34', '83')).rejects.toThrow(/504/);
   });
 
-  it('form isteği (takım maçları) hatası da fırlatır', async () => {
+  it('form isteği (takım son maçları) hatası da fırlatır', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
-    sm.request.mockResolvedValueOnce({ data: [{ id: 10, participants: [] }] });
-    sm.pages.mockRejectedValue(new Error('502'));
+    sm.request.mockResolvedValueOnce({ data: [{ id: 10, participants: [] }] }).mockRejectedValue(new Error('502'));
     await expect(getTeamsHead2Head('34', '83')).rejects.toThrow();
   });
 
   it('gerçekten boş sonuç (H2H yok, iki takımın da son maçı yok) → null', async () => {
-    sm.request.mockResolvedValueOnce({ data: [] });
-    sm.pages.mockResolvedValue([]);
+    sm.request.mockResolvedValueOnce({ data: [] }).mockResolvedValue({ data: { id: 34, latest: [] } });
     expect(await getTeamsHead2Head('34', '83')).toBeNull();
+    expect(sm.pages).not.toHaveBeenCalled();
   });
 
   it('H2H yok ama son maçlar var → form dolu, h2h boş liste (Son 5 Maç kaybolmaz)', async () => {
-    sm.request.mockResolvedValueOnce({ data: [] });
-    // Gerçek Sportmonks örneği (Barcelona 83 – Real Madrid 3468 maçları) iki takımın "son maçları" olarak.
+    // Gerçek Sportmonks örneği (Barcelona 83 – Real Madrid 3468 maçları) iki takımın `latest` maçları olarak; tarihler
+    // son 89 günün içine taşındı (form penceresi).
     const sample = (await import('@/services/sportmonks/__fixtures__/headToHeadBarcaMadrid.json')).default as { data?: unknown[] } | unknown[];
-    const fixtures = Array.isArray(sample) ? sample : (sample.data ?? []);
-    sm.pages.mockResolvedValue(fixtures);
+    const recent = new Date(Date.now() - 7 * 86_400_000).toISOString().slice(0, 10);
+    const fixtures = (Array.isArray(sample) ? sample : (sample.data ?? [])).map((f) => ({
+      ...(f as object),
+      starting_at: `${recent} 19:00:00`,
+      starting_at_timestamp: undefined,
+    }));
+    sm.request.mockResolvedValueOnce({ data: [] }).mockResolvedValue({ data: { latest: fixtures } });
     const d = await getTeamsHead2Head('83', '3468');
     expect(d).not.toBeNull();
     expect(d!.h2h).toEqual([]);
