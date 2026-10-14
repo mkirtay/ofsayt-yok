@@ -275,11 +275,11 @@ export async function lookupSportmonksFixture(matchId: string): Promise<Sportmon
  */
 export async function findMatchById(
   matchId: string,
-): Promise<{ match: Match | null; events: MatchEvent[]; fromFixture: boolean }> {
+): Promise<{ match: Match | null; events: MatchEvent[]; fromFixture: boolean; transient?: boolean }> {
   const lookup = await lookupSportmonksFixture(matchId);
-  return lookup.kind === 'found'
-    ? { match: lookup.match, events: lookup.events, fromFixture: false }
-    : { match: null, events: [], fromFixture: false };
+  if (lookup.kind === 'found') return { match: lookup.match, events: lookup.events, fromFixture: false };
+  // `transient`: geçici hata (429 / 5xx / zaman aşımı) — maç "yok" değil, çağıran yeniden deneyebilir.
+  return { match: null, events: [], fromFixture: false, ...(lookup.kind === 'error' ? { transient: true } : {}) };
 }
 
 // ─── Sportmonks (Faz 3) — Katman-2/3 yardımcıları ──────────────────────────

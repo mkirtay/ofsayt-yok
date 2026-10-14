@@ -35,6 +35,8 @@ const PREFETCH_TTL_MS = 60_000;
 /** Tahmini kadro yenileme: maçtan önceki bu pencerede, bu aralıkla. */
 const LINEUP_REFRESH_WINDOW_MS = 2 * 60 * 60_000;
 const LINEUP_REFRESH_MS = 5 * 60_000;
+/** Maç araması geçici hata verdiyse (429 / zaman aşımı) yeniden deneme aralıkları. */
+export const TRANSIENT_RETRY_DELAYS_MS = [15_000, 30_000, 60_000, 120_000];
 const findCache = new Map<string, { at: number; promise: Promise<FindResult> }>();
 
 /** Aynı maç için kısa süreli tekilleştirilmiş `findMatchById` — hover prefetch ile panel açılışı paylaşır. */
@@ -50,6 +52,26 @@ export function findMatchByIdCached(matchId: string): Promise<FindResult> {
     })
     .catch(() => findCache.delete(matchId));
   return promise;
+}
+
+/**
+ * Maç araması: sonuç geçici hataysa (`transient`) `delays` aralıklarıyla yeniden dener; maç bulunur, kesin "yok" gelir,
+ * iptal edilir ya da denemeler biterse son sonuç döner.
+ */
+export async function findMatchRetryingTransient(
+  find: () => Promise<FindResult>,
+  delays: readonly number[],
+  wait: (ms: number) => Promise<void> = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+  cancelled: () => boolean = () => false,
+): Promise<FindResult> {
+  let found = await find();
+  for (const delay of delays) {
+    if (cancelled() || found.match || !found.transient) break;
+    await wait(delay);
+    if (cancelled()) break;
+    found = await find();
+  }
+  return found;
 }
 
 /** Maça hover/focus/tıklamada çağrılır: panel açıldığında ana veri zaten yolda/hazır olur. */
@@ -213,7 +235,14 @@ export function useMatchDetail(
       setSelectedSeasonId(null);
       setMatchId('');
 
-      const found = await findMatchByIdCached(requestedMatchId);
+      // Geçici sağlayıcı hatası (429 soğuması / zaman aşımı) "bulunamadı" sayılmaz: yükleniyor durumunda kalınır, artan
+      // aralıklarla yeniden denenir (SSR maçı varsa onunla devam edilir); denemeler tükenince normal akış.
+      const found = await findMatchRetryingTransient(
+        () => findMatchByIdCached(requestedMatchId),
+        seeded ? [] : TRANSIENT_RETRY_DELAYS_MS,
+        undefined,
+        () => cancelled,
+      );
       if (cancelled) return;
       // İstemci araması boş döndüyse (geçici sağlayıcı hatası) SSR'ın çözdüğü maçla devam: sayfa 404'e düşmesin.
       const resolved = found.match ?? seeded;
