@@ -23,7 +23,7 @@ import { impliedProbabilities } from '@/utils/impliedProbability';
 import { isSecondLeg } from '@/utils/aggregateScore';
 import { finishedLabelKey } from '@/utils/finishLabel';
 import { countryDisplayName } from '@/utils/countryName';
-import { h2hWinner } from '@/utils/h2hResult';
+import { h2hFollowedIds, h2hWinner } from '@/utils/h2hResult';
 import TiePill from './TiePill';
 import MatchInfoLine, { CoachLink } from './MatchInfoLine';
 import RefereeStatsCard from './RefereeStatsCard';
@@ -210,6 +210,7 @@ export default function MatchCard({ match, loading, initialH2h }: MatchCardProps
   const homeForm: FormPill[] = h2hData ? overallFormToPills((team1IsHome ? h2hData.team1 : h2hData.team2).overall_form, 5) : [];
   const awayForm: FormPill[] = h2hData ? overallFormToPills((team1IsHome ? h2hData.team2 : h2hData.team1).overall_form, 5) : [];
   const h2hHistory: Head2HHistoricalMatch[] = h2hData && Array.isArray(h2hData.h2h) ? h2hData.h2h : [];
+  const h2hFollowed = h2hFollowedIds(h2hHistory);
 
   // Kupa maçında takım kademe rozeti için harita (yalnızca Türkiye Kupası maçında istenir).
   const cupTiers = useTurkeyTeamTiers(isTurkishCupMatch(match)).data ?? null;
@@ -336,7 +337,12 @@ export default function MatchCard({ match, loading, initialH2h }: MatchCardProps
                         {row.home_name || '—'}
                       </td>
                       <td className={styles.h2hTdScore}>
-                        <Link href={buildMatchHref({ id: Number(row.id), home_name: row.home_name, away_name: row.away_name })} className={styles.h2hScoreLink} prefetch={false}>
+                        <Link
+                          href={buildMatchHref({ id: Number(row.id), home_name: row.home_name, away_name: row.away_name })}
+                          className={styles.h2hScoreLink}
+                          prefetch={false}
+                          {...(h2hFollowed.has(row.id) ? {} : { rel: 'nofollow' })}
+                        >
                           {row.score?.trim() || '—'}
                         </Link>
                         {finishKey ? <span className={styles.h2hFinishTag}>{t(finishKey)}</span> : null}
