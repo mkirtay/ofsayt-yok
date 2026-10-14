@@ -26,10 +26,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const { name, email, password, username, turnstileToken, attribution, referralCode, acceptedTerms } = req.body ?? {}
 
-  // Kullanım Koşulları + Gizlilik Politikası onayı zorunlu — istemcideki kutuya güvenilmez. Turnstile'dan önce:
+  // Kullanım Şartları + Gizlilik Politikası onayı zorunlu — istemcideki kutuya güvenilmez. Turnstile'dan önce:
   // belirteç tek kullanımlık, onaysız istek onu harcamasın.
   if (!isTermsAccepted(acceptedTerms)) {
-    return res.status(400).json({ error: 'Kayıt için Kullanım Koşulları ve Gizlilik Politikası onaylanmalıdır.', code: 'TERMS_REQUIRED' })
+    return res.status(400).json({ error: 'Kayıt için Kullanım Şartları ve Gizlilik Politikası onaylanmalıdır.', code: 'TERMS_REQUIRED' })
   }
 
   // Üretimde zorunlu; anahtar yoksa kayıt reddedilir (bkz. lib/security.ts → checkSignupTurnstile)
