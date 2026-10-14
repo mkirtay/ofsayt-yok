@@ -8,7 +8,7 @@ vi.mock('@/lib/prisma', async () => {
 
 import { prisma } from '@/lib/prisma';
 import type { FakePaymentDb } from '@/test/fakePaymentDb';
-import { availablePackageKeys, checkoutUrl, findPaymentPackage } from '@/config/paymentPackages';
+import { availablePackageKeys, checkoutUrl, findPaymentPackage, paymentsEnabled } from '@/config/paymentPackages';
 import { hmacHex, signatureMatches, timestampFresh, verifyWebhookSignature } from './hikieSignature';
 import { CheckoutError, createCheckout, handleHikieCallback, handleHikieWebhook, parseHikieWebhook, refundOrder, tlTextToKurus } from './paymentOrders';
 
@@ -16,6 +16,7 @@ const db = prisma as unknown as FakePaymentDb;
 const NOW = Date.UTC(2026, 9, 5, 12, 0, 0);
 const DAY = 86_400_000;
 const ENV = {
+  PAYMENTS_ENABLED: 'true',
   HIKIE_LINK_CREDITS_10: 'https://pay.hikie.example/l/c10?ref=oy',
   HIKIE_LINK_CREDITS_30: 'https://pay.hikie.example/l/c30',
   HIKIE_LINK_PREMIUM_30D: 'https://pay.hikie.example/l/p30',
@@ -67,11 +68,32 @@ describe('paket kataloğu', () => {
     expect(findPaymentPackage('test_1tl')).toMatchObject({ credits: 1, priceKurus: 100, adminOnly: true });
     expect(findPaymentPackage('yok')).toBeNull();
     expect(availablePackageKeys(ENV)).toEqual(['credits_10', 'credits_30', 'premium_30d', 'test_1tl']);
-    expect(availablePackageKeys({ HIKIE_LINK_CREDITS_10: 'http://x', HIKIE_WEBHOOK_SECRET: 'w' })).toEqual([]);
+    expect(availablePackageKeys({ PAYMENTS_ENABLED: 'true', HIKIE_LINK_CREDITS_10: 'http://x', HIKIE_WEBHOOK_SECRET: 'w' })).toEqual([]);
     // webhook secret yoksa hiçbir paket satışta değil (link tek başına yetmez); paket başına secret artık gerekmez
-    expect(availablePackageKeys({ HIKIE_LINK_CREDITS_10: 'https://p.example/l/x' })).toEqual([]);
-    expect(availablePackageKeys({ HIKIE_LINK_CREDITS_10: 'https://p.example/l/x', HIKIE_WEBHOOK_SECRET: 'w' })).toEqual(['credits_10']);
+    expect(availablePackageKeys({ PAYMENTS_ENABLED: 'true', HIKIE_LINK_CREDITS_10: 'https://p.example/l/x' })).toEqual([]);
+    expect(availablePackageKeys({ PAYMENTS_ENABLED: 'true', HIKIE_LINK_CREDITS_10: 'https://p.example/l/x', HIKIE_WEBHOOK_SECRET: 'w' })).toEqual(['credits_10']);
     expect(checkoutUrl('https://p.example/l/x?ref=oy', 'oy_1')).toBe('https://p.example/l/x?ref=oy&merchantOrderId=oy_1');
+  });
+});
+
+describe('PAYMENTS_ENABLED (ana ödeme anahtarı, varsayılan kapalı)', () => {
+  const LINKS = { ...ENV, PAYMENTS_ENABLED: undefined };
+
+  it.each([undefined, '', 'false', '1', 'TRUE', 'yes'])('PAYMENTS_ENABLED=%s → link + secret olsa da hiçbir paket satışta değil', (v) => {
+    expect(paymentsEnabled({ ...LINKS, PAYMENTS_ENABLED: v })).toBe(false);
+    expect(availablePackageKeys({ ...LINKS, PAYMENTS_ENABLED: v })).toEqual([]);
+  });
+
+  it('" true " (boşluklu) açar', () => {
+    expect(paymentsEnabled({ PAYMENTS_ENABLED: ' true ' })).toBe(true);
+  });
+
+  it('kapalıyken checkout 409 UNAVAILABLE, sipariş açılmaz (yönetici test paketi dahil)', async () => {
+    await seedUser('u1');
+    await seedUser('a1', { role: 'ADMIN' });
+    await expect(createCheckout('u1', 'credits_10', LINKS)).rejects.toMatchObject({ status: 409, code: 'UNAVAILABLE' });
+    await expect(createCheckout('a1', 'test_1tl', LINKS)).rejects.toMatchObject({ status: 409, code: 'UNAVAILABLE' });
+    expect(db.paymentOrder.rows).toHaveLength(0);
   });
 });
 

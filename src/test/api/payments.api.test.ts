@@ -53,6 +53,7 @@ beforeEach(() => {
   h.rateOk = true;
   vi.stubEnv('HIKIE_LINK_CREDITS_10', 'https://pay.hikie.example/l/c10');
   vi.stubEnv('HIKIE_WEBHOOK_SECRET', 'whsec');
+  vi.stubEnv('PAYMENTS_ENABLED', 'true');
 });
 
 describe('POST /api/payments/checkout', () => {

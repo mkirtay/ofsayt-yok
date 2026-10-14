@@ -19,7 +19,9 @@ vi.mock('@/hooks/useCredits', () => ({
   useCredits: () => ({ authenticated: true, loading: false, credits: s.credits, refresh: async () => {} }),
 }));
 
-import CreditsPage from '@/pages/credits';
+vi.mock('@/lib/serverSideTranslations', () => ({ serverSideTranslations: async () => ({}) }));
+
+import CreditsPage, { getStaticProps } from '@/pages/credits';
 
 const render = () => renderToStaticMarkup(<CreditsPage />);
 
@@ -80,5 +82,27 @@ describe('Kredi sayfası rozetleri', () => {
     s.role = 'ADMIN';
     expect(renderToStaticMarkup(<CreditsPage availablePackages={avail} />)).toContain(trCredits.testPackageTitle);
     expect(renderToStaticMarkup(<CreditsPage availablePackages={[]} />)).not.toContain(trCredits.testPackageTitle);
+  });
+
+  it('PAYMENTS_ENABLED kapalı (varsayılan): HIKIE_LINK_* + webhook tanımlı olsa da tüm düğmeler pasif "Çok yakında"', async () => {
+    vi.stubEnv('HIKIE_WEBHOOK_SECRET', 'whsec');
+    for (const k of ['CREDITS_10', 'CREDITS_30', 'CREDITS_100', 'TEST_1TL']) vi.stubEnv(`HIKIE_LINK_${k}`, `https://pay.example/l/${k}`);
+    try {
+      vi.stubEnv('PAYMENTS_ENABLED', '');
+      const off = (await getStaticProps({ locale: 'tr' } as never)) as { props: { availablePackages: string[] } };
+      expect(off.props.availablePackages).toEqual([]);
+      s.role = 'ADMIN';
+      const html = renderToStaticMarkup(<CreditsPage availablePackages={off.props.availablePackages} />);
+      expect((html.match(/disabled=""/g) ?? []).length).toBe(3);
+      expect((html.match(/>Çok yakında</g) ?? []).length).toBe(3);
+      expect(html).not.toContain('>Satın al<');
+      expect(html).not.toContain(trCredits.testPackageTitle);
+
+      vi.stubEnv('PAYMENTS_ENABLED', 'true');
+      const on = (await getStaticProps({ locale: 'tr' } as never)) as { props: { availablePackages: string[] } };
+      expect(on.props.availablePackages).toEqual(expect.arrayContaining(['credits_10', 'credits_30', 'credits_100', 'test_1tl']));
+    } finally {
+      vi.unstubAllEnvs();
+    }
   });
 });

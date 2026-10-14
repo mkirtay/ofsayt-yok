@@ -17,6 +17,7 @@ import { isUniqueViolation } from '@/lib/credits';
 import {
   findPaymentPackage,
   packageLink,
+  paymentsEnabled,
   webhookSecret,
   checkoutUrl,
   kurusToTryString,
@@ -54,7 +55,8 @@ export class CheckoutError extends Error {
 
 /**
  * PENDING sipariş oluşturur, paketin Checkout Link'ine `merchantOrderId` ekleyip döner. Yönetici paketi yalnız
- * ADMIN'e görünür (diğerlerine bilinmeyen paket). Paket linki ya da webhook secret'ı tanımlı değilse satışta değil.
+ * ADMIN'e görünür (diğerlerine bilinmeyen paket). PAYMENTS_ENABLED kapalıysa ya da paket linki / webhook secret'ı
+ * tanımlı değilse satışta değil.
  */
 export async function createCheckout(
   userId: string,
@@ -68,7 +70,7 @@ export async function createCheckout(
     if (user?.role !== 'ADMIN') throw new CheckoutError(400, 'UNKNOWN_PACKAGE');
   }
   const link = packageLink(pkg.key, env);
-  if (!link || !webhookSecret(env)) throw new CheckoutError(409, 'UNAVAILABLE');
+  if (!paymentsEnabled(env) || !link || !webhookSecret(env)) throw new CheckoutError(409, 'UNAVAILABLE');
   const merchantOrderId = newMerchantOrderId();
   await prisma.paymentOrder.create({
     data: { merchantOrderId, userId, packageKey: pkg.key, amountTRY: kurusToTryString(pkg.priceKurus), status: 'PENDING' },
