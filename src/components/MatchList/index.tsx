@@ -154,8 +154,11 @@ const GROUP_GAP = 12;
 const MATCH_ROW_HEIGHT = 40;
 /** Kutunun en büyük yüksekliği (`min(72vh, 900px)`) — ölçümden önceki (SSR) ilk render bu kadar satırı çizer. */
 const MAX_HOST_HEIGHT = 900;
-/** İlk ekrandaki satırların logoları hemen (eager), kalanı tembel. */
-const EAGER_LOGO_ROWS = 14;
+/**
+ * Liste logoları hep tembel (TeamLogo varsayılanı): mobilde liste canlı şerit + Frikik kartının altında (ilk ekranda
+ * değil); eager satırlar HTML'e ~25 görsel preload'ı basıyor ve ilk boyamayı bekleyen CSS/font ile bant genişliği
+ * yarışıyordu. Masaüstünde ilk ekrandaki satırların logoları yerleşimden hemen sonra (tembel eşiği içinde) iner.
+ */
 
 function formatKickoff(match: Match): string {
   const date = match.date?.trim();
@@ -376,7 +379,6 @@ function VirtualRow({
                   competitionLogoNeedsBackdrop(item.competition_id) ? styles.logoBackdrop : ''
                 }`.trim()}
                 width={22}
-                priority={index < EAGER_LOGO_ROWS}
               />
             ) : countryFlag ? (
               <TeamLogo
@@ -384,7 +386,6 @@ function VirtualRow({
                 className={styles.virtualHeaderFlag}
                 width={22}
                 height={16}
-                priority={index < EAGER_LOGO_ROWS}
               />
             ) : null}
             <span className={styles.virtualHeaderTitleBlock}>
@@ -494,7 +495,7 @@ function VirtualRow({
           className={`${styles.virtualCell} ${styles.virtualHome}${match.home?.id ? ` ${styles.virtualTeamCell}` : ''}`}
           onClick={match.home?.id ? (e) => { e.stopPropagation(); e.preventDefault(); if (onSelectTeam) onSelectTeam(match.home!.id); else navigateTo(`/teams/${match.home!.id}`); } : undefined}
         >
-          <TeamLogo src={homeLogo} className={styles.teamCrest} width={18} priority={index < EAGER_LOGO_ROWS} />
+          <TeamLogo src={homeLogo} className={styles.teamCrest} width={18} />
           {/* Kart adın dış tarafında: ad skora bitişik yerinde kalır (kayma yok). */}
           <RedCardBadge count={redCardCountFor(match, 'home')} />
           <TeamNameLabel
@@ -512,7 +513,7 @@ function VirtualRow({
           className={`${styles.virtualCell} ${styles.virtualAway}${match.away?.id ? ` ${styles.virtualTeamCell}` : ''}`}
           onClick={match.away?.id ? (e) => { e.stopPropagation(); e.preventDefault(); if (onSelectTeam) onSelectTeam(match.away!.id); else navigateTo(`/teams/${match.away!.id}`); } : undefined}
         >
-          <TeamLogo src={awayLogo} className={styles.teamCrest} width={18} priority={index < EAGER_LOGO_ROWS} />
+          <TeamLogo src={awayLogo} className={styles.teamCrest} width={18} />
           <TeamNameLabel
             teamId={match.away?.id}
             name={awayName}
