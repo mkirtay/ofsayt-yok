@@ -168,6 +168,8 @@ async function seedFullUser(label: string) {
 describe('hesap silme (gerçek SQL)', () => {
   it('kişisel veriler silinir; gönderi/yorum "Silinmiş kullanıcı"ya, sipariş yer tutucuya devredilir; denetim kaydında PII yok', async () => {
     const { user, other, post, otherPost, order, analysis } = await seedFullUser('full');
+    // Canlıdaki gibi: yer tutucu satırı önceden YOK (migration / ayrı INSERT gerekmez) — ilk silmede upsert ile oluşur.
+    expect(await prisma.user.count({ where: { id: DELETED_USER_ID } })).toBe(0);
     const result = await deleteOwnAccount(user.id, { confirm: 'SİL', source: 'web' });
     expect(result).toEqual({
       ok: true,
