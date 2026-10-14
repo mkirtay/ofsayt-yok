@@ -22,6 +22,8 @@ export type CreateAccountInput = {
   attribution?: SignupAttributionFields | null;
   /** Davet kodu (isteğe bağlı) — geçersizse yok sayılır; ödül ilk satın almada (lib/referral.ts). */
   referralCode?: unknown;
+  /** Kayıt onayı sürümü (web kaydı zorunlu tutar → api/auth/register.ts); verilirse onay zamanıyla birlikte yazılır. */
+  termsVersion?: string;
 };
 
 export type CreatedAccount = {
@@ -37,7 +39,7 @@ export type CreateAccountResult =
   | { ok: false; status: number; error: string };
 
 export async function createUserAccount(input: CreateAccountInput): Promise<CreateAccountResult> {
-  const { name, email, password, username, attribution, referralCode } = input;
+  const { name, email, password, username, attribution, referralCode, termsVersion } = input;
 
   if (!email || !password) {
     return { ok: false, status: 400, error: 'E-posta ve şifre zorunludur' };
@@ -103,6 +105,7 @@ export async function createUserAccount(input: CreateAccountInput): Promise<Crea
         // yazılır: DB varsayılanı migration B'ye kadar 5.
         credits: 0,
         ...(attribution ?? {}),
+        ...(termsVersion ? { termsAcceptedAt: new Date(), termsVersion } : {}),
       },
       select: { id: true, email: true, name: true, role: true, username: true, credits: true },
     });

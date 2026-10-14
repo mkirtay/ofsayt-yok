@@ -13,6 +13,7 @@ import { isGoogleAuthEnabled } from '@/lib/oauthEnv'
 import { markSessionAttributionSent, readSessionAttribution } from '@/lib/signupAttributionClient'
 import AuthStage from '@/components/AuthStage'
 import { useRedirectIfSignedIn } from '@/hooks/useRedirectIfSignedIn'
+import { PRIVACY_PATH, TERMS_PATH } from '@/config/legalConsent'
 import styles from './auth.module.scss'
 
 declare global {
@@ -42,6 +43,7 @@ export default function SignUpPage({ googleEnabled }: { googleEnabled: boolean }
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [turnstileToken, setTurnstileToken] = useState('')
+  const [acceptedTerms, setAcceptedTerms] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ''
@@ -84,6 +86,12 @@ export default function SignUpPage({ googleEnabled }: { googleEnabled: boolean }
     e.preventDefault()
     setError('')
 
+    // Düğme zaten kapalı; Enter ile gönderime karşı da. Sunucu ayrıca doğrular (api/auth/register.ts).
+    if (!acceptedTerms) {
+      setError(t('signUp.termsRequired'))
+      return
+    }
+
     if (turnstileRequired && !turnstileToken) {
       setError(t('signUp.completeVerification'))
       return
@@ -100,6 +108,7 @@ export default function SignUpPage({ googleEnabled }: { googleEnabled: boolean }
         email,
         password,
         turnstileToken,
+        acceptedTerms,
         // Kayıt kaynağı (ilk temas) — yalnız bu tarayıcı oturumunda tutulan utm_* (bkz. signupAttributionClient.ts)
         attribution: readSessionAttribution() ?? undefined,
       }),
@@ -219,6 +228,30 @@ export default function SignUpPage({ googleEnabled }: { googleEnabled: boolean }
               </ul>
             </div>
 
+            {/* Kullanım Şartları + Gizlilik onayı (zorunlu). Bağlantılar yeni sekmede: form içeriği kaybolmasın. */}
+            <label className={styles.consent}>
+              <input
+                type="checkbox"
+                className={styles.consentBox}
+                checked={acceptedTerms}
+                onChange={(e) => setAcceptedTerms(e.target.checked)}
+                required
+              />
+              <span>
+                {t('signUp.consentBefore')}
+                <a href={TERMS_PATH} target="_blank" rel="noopener noreferrer" className={styles.link}>
+                  {t('signUp.termsLink')}
+                  <span className={styles.srOnly}> {t('signUp.opensInNewTab')}</span>
+                </a>
+                {t('signUp.consentMiddle')}
+                <a href={PRIVACY_PATH} target="_blank" rel="noopener noreferrer" className={styles.link}>
+                  {t('signUp.privacyLink')}
+                  <span className={styles.srOnly}> {t('signUp.opensInNewTab')}</span>
+                </a>
+                {t('signUp.consentAfter')}
+              </span>
+            </label>
+
             {turnstileRequired ? <div id="turnstile-container" className={styles.turnstile} /> : null}
             {turnstileRequired && !turnstileToken ? (
               <p className={styles.footer}>{t('signUp.completeVerificationFirst')}</p>
@@ -227,7 +260,7 @@ export default function SignUpPage({ googleEnabled }: { googleEnabled: boolean }
             <button
               className={styles.submit}
               type="submit"
-              disabled={loading || !pwCheck.valid || (turnstileRequired && !turnstileToken)}
+              disabled={loading || !acceptedTerms || !pwCheck.valid || (turnstileRequired && !turnstileToken)}
             >
               {loading ? t('signUp.submitting') : t('signUp.submit')}
             </button>

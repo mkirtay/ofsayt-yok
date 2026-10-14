@@ -279,3 +279,35 @@
   font-weight: 400;
   color: $color-text-secondary;
 }
+
+/* Kayıt onayı: kutu + Kullanım Şartları / Gizlilik bağlantıları */
+.consent {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-2;
+  font-size: 13px;
+  line-height: 1.5;
+  color: $color-text-secondary;
+  cursor: pointer;
+}
+
+.consentBox {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  margin: 1px 0 0;
+  accent-color: $color-primary;
+  cursor: pointer;
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

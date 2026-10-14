@@ -3,6 +3,7 @@ import { hitFixedWindowRateLimit, requestIp } from '@/lib/rateLimit'
 import { checkSignupTurnstile } from '@/lib/security'
 import { createUserAccount } from '@/lib/accounts'
 import { parseSignupAttribution } from '@/utils/signupAttribution'
+import { isTermsAccepted, TERMS_CONSENT_VERSION } from '@/config/legalConsent'
 
 const REGISTER_LIMIT = 5
 const REGISTER_WINDOW_MS = 15 * 60 * 1000
@@ -23,7 +24,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(429).json({ error: 'Çok fazla kayıt denemesi. Lütfen daha sonra tekrar deneyin.' })
   }
 
-  const { name, email, password, username, turnstileToken, attribution, referralCode } = req.body ?? {}
+  const { name, email, password, username, turnstileToken, attribution, referralCode, acceptedTerms } = req.body ?? {}
+
+  // Kullanım Koşulları + Gizlilik Politikası onayı zorunlu — istemcideki kutuya güvenilmez. Turnstile'dan önce:
+  // belirteç tek kullanımlık, onaysız istek onu harcamasın.
+  if (!isTermsAccepted(acceptedTerms)) {
+    return res.status(400).json({ error: 'Kayıt için Kullanım Koşulları ve Gizlilik Politikası onaylanmalıdır.', code: 'TERMS_REQUIRED' })
+  }
 
   // Üretimde zorunlu; anahtar yoksa kayıt reddedilir (bkz. lib/security.ts → checkSignupTurnstile)
   const turnstile = await checkSignupTurnstile(turnstileToken, ip)
@@ -32,7 +39,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   // Kayıt kaynağı geçersizse kayıt yine yapılır, yalnız kaynak yazılmaz.
-  const result = await createUserAccount({ name, email, password, username, attribution: parseSignupAttribution(attribution), referralCode })
+  const result = await createUserAccount({ name, email, password, username, attribution: parseSignupAttribution(attribution), referralCode, termsVersion: TERMS_CONSENT_VERSION })
   if (!result.ok) {
     return res.status(result.status).json({ error: result.error })
   }

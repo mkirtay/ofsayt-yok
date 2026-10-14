@@ -26,6 +26,13 @@ describe('createUserAccount — kredi modeli v2', () => {
     expect(h.bonus).not.toHaveBeenCalled();
   });
 
+  it('onay sürümü verilmezse (mobil kayıt) termsAcceptedAt / termsVersion yazılmaz', async () => {
+    await createUserAccount({ email: 'mobil@gmail.com', password: 'Guclu-Sifre1!' });
+    const data = h.create.mock.calls[0]![0].data as Record<string, unknown>;
+    expect(data).not.toHaveProperty('termsAcceptedAt');
+    expect(data).not.toHaveProperty('termsVersion');
+  });
+
   it('geçici e-posta ile kayıt reddedilir, DB\'ye yazılmaz', async () => {
     const r = await createUserAccount({ email: 'x@mailinator.com', password: 'Itest-Pass-123!' });
     expect(r).toMatchObject({ ok: false, status: 400 });

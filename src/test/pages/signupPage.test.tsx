@@ -56,4 +56,21 @@ describe('Kayıt sayfası', () => {
     expect(trMatch.hub.homeHeading).toContain('{{brand}}');
     expect(enMatch.hub.homeHeading).toContain('{{brand}}');
   });
+
+  it('onay kutusu: zorunlu, işaretsiz; Kullanım Şartları + Gizlilik yeni sekmede (noopener); gönder düğmesi kapalı', () => {
+    const out = html();
+    expect(out).toMatch(/<input type="checkbox"[^>]*required=""/);
+    expect(out).not.toMatch(/<input type="checkbox"[^>]*checked/);
+    expect(out).toMatch(/<a href="\/kullanim-sartlari" target="_blank" rel="noopener noreferrer"/);
+    expect(out).toMatch(/<a href="\/gizlilik-politikasi" target="_blank" rel="noopener noreferrer"/);
+    expect(out).toContain(trAuth.signUp.opensInNewTab);
+    expect(out).toMatch(/<button[^>]*type="submit"[^>]*disabled=""/);
+  });
+
+  it('onay metinleri iki dilde de var', () => {
+    for (const k of ['termsLink', 'privacyLink', 'consentAfter', 'opensInNewTab', 'termsRequired'] as const) {
+      expect(trAuth.signUp[k]).toBeTruthy();
+      expect(enAuth.signUp[k]).toBeTruthy();
+    }
+  });
 });

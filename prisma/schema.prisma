@@ -50,6 +50,10 @@ model User {
   signupUtmMedium    String?
   signupUtmCampaign  String?
   firstTouchAt       DateTime?
+  /// Kayıtta Kullanım Koşulları + Gizlilik Politikası onayı: zaman ve metin sürümü (config/legalConsent.ts →
+  /// TERMS_CONSENT_VERSION). 2026-10-14 öncesi kayıtlarda ve Google / mobil ile açılan hesaplarda boş.
+  termsAcceptedAt    DateTime?
+  termsVersion       String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   accounts      Account[]
