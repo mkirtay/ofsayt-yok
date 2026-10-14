@@ -40,11 +40,11 @@ describe('loadMatchCardH2h', () => {
     expect(await pending).toBeUndefined();
   });
 
-  it('hata → undefined; takımlar bilinmiyorsa null', async () => {
+  it('geçici hata fırlatılır ("veri yok" sayılmaz, çağıran kısa önbelleğe alır); takımlar bilinmiyorsa null', async () => {
     h2h.impl = async () => {
       throw new Error('ağ');
     };
-    expect(await loadMatchCardH2h(match)).toBeUndefined();
+    await expect(loadMatchCardH2h(match)).rejects.toThrow('ağ');
     expect(await loadMatchCardH2h({ ...match, home: { id: 0, name: '' } } as Match)).toBeNull();
   });
 });

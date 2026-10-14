@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   PARTIAL_MATCH_PAGE_CACHE,
+  TRANSIENT_PARTIAL_MATCH_PAGE_CACHE,
   matchPageCacheControl,
   matchPageCacheControlForMatch,
   matchPageCacheControlForPage,
@@ -59,6 +60,16 @@ describe('matchPageCacheControlForPage — form / karşılaşma geçmişi bütç
   it('bütçe aşıldı (iskelet): uzun süreli maçta (bitmiş, 1 gün) CDN en çok 1 sa + 1 sa swr', () => {
     expect(PARTIAL_MATCH_PAGE_CACHE).toBe('public, s-maxage=3600, stale-while-revalidate=3600');
     expect(matchPageCacheControlForPage(oldFinished, false, now)).toBe(PARTIAL_MATCH_PAGE_CACHE);
+  });
+
+  it('geçici hata (429 / zaman aşımı) ile eksik: bitmiş maçta da en çok 60 sn + 60 sn swr; tam veri olsa bile', () => {
+    expect(TRANSIENT_PARTIAL_MATCH_PAGE_CACHE).toBe('public, s-maxage=60, stale-while-revalidate=60');
+    for (const m of [oldFinished, recentFinished, scheduled]) {
+      expect(matchPageCacheControlForPage(m, false, now, true)).toBe(TRANSIENT_PARTIAL_MATCH_PAGE_CACHE);
+      expect(matchPageCacheControlForPage(m, true, now, true)).toBe(TRANSIENT_PARTIAL_MATCH_PAGE_CACHE);
+    }
+    // Canlı maçın kendi süresi (20 sn) zaten daha kısa.
+    expect(matchPageCacheControlForPage(live, false, now, true)).toBe('public, s-maxage=20, stale-while-revalidate=10');
   });
 
   it('maçın kendi süresi zaten ≤ 1 sa ise (canlı, başlamamış, yeni biten) o kalır', () => {

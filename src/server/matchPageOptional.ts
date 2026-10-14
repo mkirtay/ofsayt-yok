@@ -17,6 +17,8 @@ export type MatchPageOptionalSections = {
   seed: MatchDetailServerSeed;
   /** Havuz baskısı yüzünden sunucuda çekilmedi. */
   skipped: boolean;
+  /** En az bir bölüm geçici hata verdi (429 / 5xx / zaman aşımı): "veri yok" değil → sayfa CDN'de kısa tutulur. */
+  transientError?: boolean;
 };
 
 export type MatchPageOptionalDeps = {
@@ -45,10 +47,18 @@ export async function loadMatchPageOptionalSections(
     skip = false;
   }
   if (skip) return SKIPPED;
-  // Bir bölüm hata verirse yalnız o bölüm istemciye kalır (undefined); sayfa çizilir.
+  // Bir bölüm hata verirse yalnız o bölüm istemciye kalır (undefined); sayfa çizilir, kopya kısa saklanır.
+  let failed = false;
   const [h2h, seed] = await Promise.all([
-    deps.loadH2h(match).catch(() => undefined),
-    deps.loadSeed(matchId).catch(() => ({ stats: undefined, lineups: undefined })),
+    deps.loadH2h(match).catch(() => {
+      failed = true;
+      return undefined;
+    }),
+    deps.loadSeed(matchId).catch((): MatchDetailServerSeed => {
+      failed = true;
+      return { stats: undefined, lineups: undefined };
+    }),
   ]);
-  return { h2h, seed: seed ?? { stats: undefined, lineups: undefined }, skipped: false };
+  const { failed: seedFailed, ...seedData } = seed ?? { stats: undefined, lineups: undefined };
+  return { h2h, seed: seedData, skipped: false, ...(failed || seedFailed ? { transientError: true } : {}) };
 }

@@ -44,9 +44,19 @@ describe('maç sayfası isteğe bağlı SSR bölümleri', () => {
     const b = await loadMatchPageOptionalSections(match, '1', deps({ loadH2h: async () => Promise.reject(new Error('x')) }));
     expect(b.h2h).toBeUndefined();
     expect(b.seed).toEqual(seed);
+    expect(b.transientError).toBe(true);
 
     const c = await loadMatchPageOptionalSections(match, '1', deps({ loadSeed: async () => Promise.reject(new Error('x')) }));
     expect(c.seed).toEqual({ stats: undefined, lineups: undefined });
     expect(c.h2h).toEqual(h2h);
+    expect(c.transientError).toBe(true);
+  });
+
+  it('tohumdaki istatistik / kadro geçici hatası (failed) → transientError; seed alanı props\'a taşınmaz', async () => {
+    const r = await loadMatchPageOptionalSections(match, '1', deps({ loadSeed: async () => ({ stats: undefined, lineups: null, failed: true }) }));
+    expect(r.seed).toEqual({ stats: undefined, lineups: null });
+    expect(r.transientError).toBe(true);
+    const ok = await loadMatchPageOptionalSections(match, '1', deps());
+    expect(ok.transientError).toBeUndefined();
   });
 });

@@ -116,7 +116,7 @@ export const getServerSideProps: GetServerSideProps<MatchDetailProps> = async (c
         }
         const apiMatchId = String(page.match.id);
         // H2H/form + istatistik/kadro: Fixture havuzu baskı altındaysa sunucuda atlanır, istemci çeker (bkz. matchPageOptional).
-        const [{ h2h, seed }, analysisPreview] = await Promise.all([
+        const [{ h2h, seed, transientError }, analysisPreview] = await Promise.all([
           loadMatchPageOptionalSections(page.match, apiMatchId, {
             ...defaultMatchPageOptionalDeps,
             loadH2h: (m) => withPageTimeout(() => defaultMatchPageOptionalDeps.loadH2h(m)),
@@ -127,8 +127,12 @@ export const getServerSideProps: GetServerSideProps<MatchDetailProps> = async (c
           loadAnalysisPreviewForPage(apiMatchId),
         ]);
         const complete = h2h !== undefined && seed.stats !== undefined && seed.lineups !== undefined;
-        // Bütçe aşıldıysa (undefined) bölüm iskeletle gider → CDN bu kopyayı kısa tutar; bot kopyası hiç saklanmaz.
-        context.res.setHeader('Cache-Control', lightBot ? LIGHT_BOT_PAGE_CACHE : matchPageCacheControlForPage(page.match, complete));
+        // Bütçe aşıldıysa (undefined) bölüm iskeletle gider → CDN bu kopyayı ≤1 sa tutar; geçici hatada ≤60 sn; bot kopyası
+        // hiç saklanmaz.
+        context.res.setHeader(
+          'Cache-Control',
+          lightBot ? LIGHT_BOT_PAGE_CACHE : matchPageCacheControlForPage(page.match, complete, Date.now(), transientError),
+        );
         return {
           props: {
             initialMatch: page.match,

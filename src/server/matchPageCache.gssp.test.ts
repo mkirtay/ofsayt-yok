@@ -5,7 +5,7 @@ import type { Match } from '@/models/liveScore';
 // `/matches/[slug]` gSSP: form / karşılaşma geçmişi bütçeye yetişmezse yanıt kısa cache'lenir.
 
 const h2hResult = vi.hoisted(() => ({ value: undefined as unknown }));
-const seedResult = vi.hoisted(() => ({ value: { stats: null, lineups: null } as { stats: unknown; lineups: unknown } }));
+const seedResult = vi.hoisted(() => ({ value: { stats: null, lineups: null } as { stats: unknown; lineups: unknown; failed?: boolean } }));
 
 vi.mock('@/services/sportmonksProviderFlag', () => ({
   isSportmonksProviderEnabled: () => true,
@@ -154,5 +154,16 @@ describe('maç sayfası Cache-Control — form / karşılaşma geçmişi', () =>
       expect(data.ctx.res.statusCode).toBe(200);
       expect(data.headers['Cache-Control']).toBeUndefined();
     }
+  });
+
+  it('istatistik / kadro 429 ya da zaman aşımı (failed) → "veri yok" değil: alan props\'ta yok (istemci çeker), bitmiş maç CDN\'de 60 sn', async () => {
+    const { getServerSideProps } = await import('@/pages/matches/[slug]');
+    h2hResult.value = null;
+    seedResult.value = { stats: undefined, lineups: undefined, failed: true };
+    const { ctx, headers } = context();
+    const result = (await getServerSideProps(ctx)) as { props: Record<string, unknown> };
+    expect('initialStats' in result.props).toBe(false);
+    expect('initialLineups' in result.props).toBe(false);
+    expect(headers['Cache-Control']).toBe('public, s-maxage=60, stale-while-revalidate=60');
   });
 });

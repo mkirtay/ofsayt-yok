@@ -70,6 +70,12 @@ export function matchPageCacheControlForMatch(match: Pick<Match, 'status' | 'dat
  */
 export const PARTIAL_MATCH_PAGE_CACHE = 'public, s-maxage=3600, stale-while-revalidate=3600';
 const PARTIAL_MAX_SECONDS = 3600;
+/**
+ * Bölüm GEÇİCİ HATA ile eksik (429 / 5xx / zaman aşımı; "veri yok" değil): CDN'de en çok 60 sn (+60 sn swr) — sağlayıcı
+ * toparlanınca tam sayfa hızla gelsin. (Önce istatistik / kadro hatası "veri yok" sayılıp bitmiş maçta 1 gün kalıyordu.)
+ */
+export const TRANSIENT_PARTIAL_MATCH_PAGE_CACHE = 'public, s-maxage=60, stale-while-revalidate=60';
+const TRANSIENT_PARTIAL_MAX_SECONDS = 60;
 
 function sMaxAge(cacheControl: string): number | null {
   const m = /s-maxage=(\d+)/.exec(cacheControl);
@@ -86,11 +92,15 @@ export function matchPageCacheControlForPage(
   match: Pick<Match, 'status' | 'date' | 'scheduled'>,
   h2hComplete: boolean,
   now: number = Date.now(),
+  transientError = false,
 ): string {
   const full = matchPageCacheControlForMatch(match, now);
-  if (h2hComplete) return full;
+  if (h2hComplete && !transientError) return full;
+  const [cap, partial] = transientError
+    ? [TRANSIENT_PARTIAL_MAX_SECONDS, TRANSIENT_PARTIAL_MATCH_PAGE_CACHE]
+    : [PARTIAL_MAX_SECONDS, PARTIAL_MATCH_PAGE_CACHE];
   const fullMaxAge = sMaxAge(full);
-  return fullMaxAge !== null && fullMaxAge <= PARTIAL_MAX_SECONDS ? full : PARTIAL_MATCH_PAGE_CACHE;
+  return fullMaxAge !== null && fullMaxAge <= cap ? full : partial;
 }
 
 /**

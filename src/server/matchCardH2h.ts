@@ -8,8 +8,9 @@ export const MATCH_CARD_H2H_BUDGET_MS = 400;
 /**
  * Maç kartının "Son 5 maç / Karşılıklı son 5 / Karşılaşma geçmişi" verisi SSR'da (kart sonradan uzamasın, CLS).
  * Aynı `getTeamsHead2Head` → aynı sunucu cache katmanı (proxy ile ortak): ek Sportmonks isteği yok.
- * - `Head2HeadData`: veri var · `null`: veri yok (kart bu bölümleri hiç çizmez) · `undefined`: bütçe aşıldı / hata →
+ * - `Head2HeadData`: veri var · `null`: veri yok (kart bu bölümleri hiç çizmez) · `undefined`: bütçe aşıldı →
  *   istemci çeker (yer iskeletle ayrılır). Bütçe aşılsa da istek arka planda sürer ve cache'i ısıtır.
+ * - Geçici hata (429 / 5xx / zaman aşımı) FIRLATILIR: çağıran (matchPageOptional) "geçici hata" olarak işaretler.
  */
 export async function loadMatchCardH2h(
   match: Match,
@@ -23,8 +24,6 @@ export async function loadMatchCardH2h(
   });
   try {
     return await Promise.race([getTeamsHead2Head(key.team1Id, key.team2Id), timeout]);
-  } catch {
-    return undefined;
   } finally {
     clearTimeout(timer);
   }

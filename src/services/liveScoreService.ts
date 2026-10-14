@@ -936,10 +936,19 @@ export const getMatchWithEvents = async (
 };
 
 // Endpoint: GET /fixtures/{id}?include=statistics (Pass 4/5)
+/**
+ * İstatistik — hata (429 / 5xx / zaman aşımı) FIRLATIR; `null` yalnız gerçekten veri yok. Maç sayfası SSR'ı geçici hatayı
+ * "veri yok" sayıp boş kartlı kopyayı CDN'de 1 gün tutmasın diye (bkz. server/matchDetailSeed.ts; H2H'de aynı desen).
+ */
+export async function fetchMatchStats(matchId: string): Promise<MatchStatsData | null> {
+  const fixture = await sportmonksFetchFixtureDetail(matchId, 'statistics');
+  return mapSportmonksStatistics(fixture?.statistics);
+}
+
+/** `fetchMatchStats`'ın hatayı yutan hâli (istemci, AI bağlamı, canlı uç): hata → `null`. */
 export const getMatchStats = async (matchId: string): Promise<MatchStatsData | null> => {
   try {
-    const fixture = await sportmonksFetchFixtureDetail(matchId, 'statistics');
-    return mapSportmonksStatistics(fixture?.statistics);
+    return await fetchMatchStats(matchId);
   } catch (error) {
     console.error('Error fetching stats (sportmonks)', error);
     return null;
@@ -947,15 +956,21 @@ export const getMatchStats = async (matchId: string): Promise<MatchStatsData | n
 };
 
 // Endpoint: GET /fixtures/{id}?include=lineups.player.nationality;lineups.details;participants (Pass 4/5)
+/** Kadro — hata FIRLATIR, `null` yalnız gerçekten veri yok (bkz. `fetchMatchStats`). */
+export async function fetchMatchLineups(matchId: string): Promise<MatchLineupData | null> {
+  // metadata 572 = kadro resmî mi (Muhtemel 11 / İlk 11); filtre yalnız o satırı getirir.
+  const fixture = await sportmonksFetchFixtureDetail(
+    matchId,
+    'lineups.player.nationality;lineups.details;participants;metadata',
+    'metadataTypes:572',
+  );
+  return fixture ? mapSportmonksLineups(fixture) : null;
+}
+
+/** `fetchMatchLineups`'ın hatayı yutan hâli: hata → `null`. */
 export const getMatchLineups = async (matchId: string): Promise<MatchLineupData | null> => {
   try {
-    // metadata 572 = kadro resmî mi (Muhtemel 11 / İlk 11); filtre yalnız o satırı getirir.
-    const fixture = await sportmonksFetchFixtureDetail(
-      matchId,
-      'lineups.player.nationality;lineups.details;participants;metadata',
-      'metadataTypes:572',
-    );
-    return fixture ? mapSportmonksLineups(fixture) : null;
+    return await fetchMatchLineups(matchId);
   } catch (error) {
     console.error('Error fetching lineups (sportmonks)', error);
     return null;
