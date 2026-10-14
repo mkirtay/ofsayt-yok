@@ -24,11 +24,14 @@ import { SPORTMONKS_TIMEOUT_MS, withSportmonksTimeout } from '@/server/sportmonk
 import type { Head2HeadData } from '@/services/liveScoreService';
 import type { MatchEvent, MatchLineupData, MatchStatsData } from '@/models/domain';
 import {
+  LIGHT_BOT_PAGE_CACHE,
   matchPageCacheControl,
   matchPageCacheControlForPage,
   matchPageCacheKindForStatus,
+  TRANSIENT_ERROR_RETRY_AFTER_SECONDS,
   type MatchPageCacheKind,
 } from '@/server/matchPageCache';
+import { isLightPageBot } from '@/config/crawlers';
 import styles from './matchDetail.module.scss';
 import { siteBaseUrl } from '@/lib/siteUrl';
 import { brandTitle } from '@/config/brand';
@@ -86,6 +89,17 @@ export const getServerSideProps: GetServerSideProps<MatchDetailProps> = async (c
 
   // Sportmonks bütçesi sayfa render'ı için kısa (zaman aşımı → 'error' → istemci çeker; bkz. cachedFetch).
   const withPageTimeout = <T,>(fn: () => Promise<T>) => withSportmonksTimeout(SPORTMONKS_TIMEOUT_MS.page, fn);
+  // AI / kazıyıcı bot (bkz. config/crawlers.ts): maç + olaylar + meta tam, H2H/form/istatistik/kadro sunucuda çekilmez.
+  const lightBot = isLightPageBot(context.req?.headers?.['user-agent']);
+  // Geçici hata: HTML isteğine 503 (bkz. TRANSIENT_ERROR_RETRY_AFTER_SECONDS); istemci gezinmesinin veri isteği
+  // (`x-nextjs-data`) 200 kalır — Next 5xx veri yanıtında sayfayı baştan yükler.
+  const transientError = () => {
+    if (context.req?.headers?.['x-nextjs-data']) return { props: { initialMatch: null } };
+    context.res.statusCode = 503;
+    context.res.setHeader('Retry-After', String(TRANSIENT_ERROR_RETRY_AFTER_SECONDS));
+    context.res.setHeader('Cache-Control', 'no-store');
+    return { props: { initialMatch: null } };
+  };
   try {
     const page = await withPageTimeout(() => resolveMatchPage(matchId, parseMatchSlugFromParam(slug ?? '')));
     switch (page.kind) {
@@ -107,13 +121,14 @@ export const getServerSideProps: GetServerSideProps<MatchDetailProps> = async (c
             ...defaultMatchPageOptionalDeps,
             loadH2h: (m) => withPageTimeout(() => defaultMatchPageOptionalDeps.loadH2h(m)),
             loadSeed: (id) => withPageTimeout(() => defaultMatchPageOptionalDeps.loadSeed(id)),
+            ...(lightBot ? { underPressure: async () => true } : {}),
           }),
           // Kredi modeli v2: AI analizi ücretsiz önizlemesi (tek DB sorgusu; hata → null, sayfa yine çizilir).
           loadAnalysisPreviewForPage(apiMatchId),
         ]);
         const complete = h2h !== undefined && seed.stats !== undefined && seed.lineups !== undefined;
-        // Bütçe aşıldıysa (undefined) bölüm iskeletle gider → CDN bu kopyayı kısa tutar.
-        context.res.setHeader('Cache-Control', matchPageCacheControlForPage(page.match, complete));
+        // Bütçe aşıldıysa (undefined) bölüm iskeletle gider → CDN bu kopyayı kısa tutar; bot kopyası hiç saklanmaz.
+        context.res.setHeader('Cache-Control', lightBot ? LIGHT_BOT_PAGE_CACHE : matchPageCacheControlForPage(page.match, complete));
         return {
           props: {
             initialMatch: page.match,
@@ -139,10 +154,10 @@ export const getServerSideProps: GetServerSideProps<MatchDetailProps> = async (c
         setCache('missing');
         return { props: { initialMatch: null } };
       default:
-        return { props: { initialMatch: null } };
+        return transientError();
     }
   } catch {
-    return { props: { initialMatch: null } };
+    return transientError();
   }
 };
 

@@ -56,17 +56,17 @@ describe('matchPageCacheControlForPage — form / karşılaşma geçmişi bütç
     }
   });
 
-  it('bütçe aşıldı (iskelet): s-maxage=30, stale-while-revalidate=30', () => {
-    expect(PARTIAL_MATCH_PAGE_CACHE).toBe('public, s-maxage=30, stale-while-revalidate=30');
-    expect(matchPageCacheControlForPage(scheduled, false, now)).toBe(PARTIAL_MATCH_PAGE_CACHE);
+  it('bütçe aşıldı (iskelet): uzun süreli maçta (bitmiş, 1 gün) CDN en çok 1 sa + 1 sa swr', () => {
+    expect(PARTIAL_MATCH_PAGE_CACHE).toBe('public, s-maxage=3600, stale-while-revalidate=3600');
     expect(matchPageCacheControlForPage(oldFinished, false, now)).toBe(PARTIAL_MATCH_PAGE_CACHE);
-    expect(matchPageCacheControlForPage(recentFinished, false, now)).toBe(PARTIAL_MATCH_PAGE_CACHE);
   });
 
-  it('maçın kendi süresi zaten kısaysa (canlı, başlamak üzere) o kalır', () => {
+  it('maçın kendi süresi zaten ≤ 1 sa ise (canlı, başlamamış, yeni biten) o kalır', () => {
     expect(matchPageCacheControlForPage(live, false, now)).toBe('public, s-maxage=20, stale-while-revalidate=10');
     const soon = { status: 'NOT STARTED', date: '2026-10-04', scheduled: '12:10' };
     expect(matchPageCacheControlForPage(soon, false, now)).toBe('public, s-maxage=30, stale-while-revalidate=30');
+    expect(matchPageCacheControlForPage(scheduled, false, now)).toBe(matchPageCacheControlForMatch(scheduled, now));
+    expect(matchPageCacheControlForPage(recentFinished, false, now)).toBe('public, s-maxage=600, stale-while-revalidate=600');
   });
 });
 

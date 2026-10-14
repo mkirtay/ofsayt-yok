@@ -64,9 +64,12 @@ export function matchPageCacheControlForMatch(match: Pick<Match, 'status' | 'dat
     : `public, s-maxage=${fresh}, stale-while-revalidate=${Math.min(fresh, ACTIVE_SWR_SECONDS)}`;
 }
 
-/** Maç kartı formu / karşılaşma geçmişi SSR bütçesini aştı (bölüm iskeletle gitti): kopya kısa yaşasın. */
-export const PARTIAL_MATCH_PAGE_CACHE = 'public, s-maxage=30, stale-while-revalidate=30';
-const PARTIAL_MAX_SECONDS = 30;
+/**
+ * Eksik render (bütçe aşımı / havuz baskısı: bölüm iskeletle gitti, istemci CDN önbellekli proxy'den çeker): CDN'de en çok
+ * 1 sa (+1 sa swr). Önce 30 sn'ydi; tarama dalgasında her yeniden üretim maç başına 3–5 Fixture isteği demekti.
+ */
+export const PARTIAL_MATCH_PAGE_CACHE = 'public, s-maxage=3600, stale-while-revalidate=3600';
+const PARTIAL_MAX_SECONDS = 3600;
 
 function sMaxAge(cacheControl: string): number | null {
   const m = /s-maxage=(\d+)/.exec(cacheControl);
@@ -76,8 +79,8 @@ function sMaxAge(cacheControl: string): number | null {
 /**
  * Maç sayfası yanıtı: tam veride maçın kendi süresi (`matchPageCacheControlForMatch`) aynen; form / karşılaşma
  * geçmişi ya da Genel Bakış verisi (istatistik, kadro) bütçeye yetişmediyse (`h2hComplete: false`) CDN o iskeletli
- * kopyayı en çok 30 sn (+30 sn swr) tutar —
- * soğuk önbellekte çizilen kopya bitmiş maçta bir gün kalmasın. Maçın süresi zaten daha kısaysa (canlı) o kalır.
+ * kopyayı en çok 1 sa (+1 sa swr) tutar — soğuk önbellekte çizilen kopya bitmiş maçta bir gün kalmasın. Maçın süresi
+ * zaten daha kısaysa (canlı, başlamamış, yeni biten) o kalır.
  */
 export function matchPageCacheControlForPage(
   match: Pick<Match, 'status' | 'date' | 'scheduled'>,
@@ -89,3 +92,15 @@ export function matchPageCacheControlForPage(
   const fullMaxAge = sMaxAge(full);
   return fullMaxAge !== null && fullMaxAge <= PARTIAL_MAX_SECONDS ? full : PARTIAL_MATCH_PAGE_CACHE;
 }
+
+/**
+ * Hafif sürüm (AI / kazıyıcı bot, bkz. config/crawlers.ts): CDN'de SAKLANMAZ — aynı URL'nin önbelleği gerçek kullanıcı ve
+ * Googlebot için hep tam sayfa olsun (CDN anahtarı UA'ya göre ayrılmıyor). CDN'de tam kopya varsa bot zaten onu alır.
+ */
+export const LIGHT_BOT_PAGE_CACHE = 'private, no-store';
+
+/**
+ * Geçici sağlayıcı hatası (429 soğuması / zaman aşımı) ve Redis'te eski veri de yok: HTML isteğine 503 + Retry-After
+ * (arama motoru boş kabuğu dizine almaz, sonra yeniden gelir); istemci maçı kendisi yeniden dener. Saklanmaz.
+ */
+export const TRANSIENT_ERROR_RETRY_AFTER_SECONDS = 120;
