@@ -295,6 +295,7 @@
     "cancelledShort": "Canc."
   },
   "hub": {
+    "homeHeading": "Live Scores, Standings and AI Predictions — {{brand}}",
     "favoritesEmpty": "Tap the ☆ button on a match row to add its team to favorites.",
     "leagueFilterEmpty": "No matches in this view for the selected leagues.",
     "showAll": "Show all",

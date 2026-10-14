@@ -291,6 +291,7 @@
     "cancelledShort": "İpt."
   },
   "hub": {
+    "homeHeading": "Canlı Skorlar, Puan Durumu ve Yapay Zekâ Tahminleri — {{brand}}",
     "favoritesEmpty": "Takım favorilere eklemek için maç satırındaki ☆ butonuna tıklayın.",
     "leagueFilterEmpty": "Seçili liglerde bu görünümde maç yok.",
     "showAll": "Tümünü göster",

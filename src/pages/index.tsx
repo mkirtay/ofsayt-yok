@@ -8,6 +8,8 @@ import { todayIsoIstanbul } from '@/utils/dateStrip';
 import { siteBaseUrl } from '@/lib/siteUrl';
 import { BRAND_LOGO_PNG } from '@/config/brandImages';
 import { BRAND, socialProfileUrls } from '@/config/brand';
+import { useTranslation } from '@/lib/i18n';
+import styles from './index.module.scss';
 
 const DEFAULT_COMPETITION_ID = 6;
 
@@ -44,6 +46,7 @@ export const getStaticProps: GetStaticProps<HomeProps> = async () => {
 const HOME_TITLE = `${BRAND.name} — Canlı Maç Sonuçları & Analiz`;
 
 export default function Home({ initialDate, initialData }: HomeProps) {
+  const { t } = useTranslation('match');
   return (
     <>
       <Head>
@@ -63,6 +66,8 @@ export default function Home({ initialDate, initialData }: HomeProps) {
           ...(socialProfileUrls().length > 0 && { sameAs: socialProfileUrls() }),
         }} />
       </Head>
+      {/* Sayfanın tek H1'i: görsel tasarımda başlık yok → yalnız ekran okuyucu / arama motoru için (yerleşimi etkilemez). */}
+      <h1 className={styles.srOnly}>{t('hub.homeHeading')}</h1>
       <MatchHubPage
         sidebarLeagues={HOME_SIDEBAR_LEAGUES}
         defaultCompetitionId={DEFAULT_COMPETITION_ID}

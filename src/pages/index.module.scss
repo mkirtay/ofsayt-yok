@@ -594,3 +594,16 @@ $hub-fill-height: calc(100vh - var(--header-height) - 56px - 32px - var(--league
     bottom: calc(var(--bottom-nav-height) + var(--safe-bottom) + #{$spacing-3});
   }
 }
+
+// Ana sayfanın tek H1'i: görünmez ama ekran okuyucuya açık — yerleşimde yer kaplamaz.
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

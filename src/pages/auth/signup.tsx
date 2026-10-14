@@ -40,6 +40,7 @@ export default function SignUpPage({ googleEnabled }: { googleEnabled: boolean }
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [turnstileToken, setTurnstileToken] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -131,6 +132,11 @@ export default function SignUpPage({ googleEnabled }: { googleEnabled: boolean }
           <form className={styles.card} onSubmit={handleSubmit}>
             <h1 className={styles.title}>{t('signUp.title')}</h1>
 
+            <ul className={styles.benefits} aria-label={t('signUp.benefitsLabel')}>
+              <li>{t('signUp.benefitVerify')}</li>
+              <li>{t('signUp.benefitWeekly')}</li>
+            </ul>
+
             {error && <p className={styles.error}>{error}</p>}
 
             {googleEnabled && <GoogleSignInButton callbackPath={safeCallbackPath(router.query.callbackUrl)} />}
@@ -171,31 +177,47 @@ export default function SignUpPage({ googleEnabled }: { googleEnabled: boolean }
               />
             </label>
 
-            <label className={styles.label}>
-              {t('signUp.password')}
-              <input
-                className={styles.input}
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                minLength={10}
-                autoComplete="new-password"
-              />
-              {pwTouched && (
-                <ul className={styles.ruleList}>
-                  {pwCheck.results.map((r) => (
-                    <li
-                      key={r.key}
-                      className={r.passed ? styles.rulePassed : styles.ruleFailed}
-                    >
-                      <span className={styles.ruleIcon}>{r.passed ? '✓' : '✗'}</span>
-                      {t(`password.${r.key}`)}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </label>
+            {/* Kural listesi etiketin DIŞINDA: içeride olunca alanın erişilebilir adına karışıyordu (aria-describedby ile bağlı). */}
+            <div className={styles.label}>
+              <label htmlFor="signup-password">{t('signUp.password')}</label>
+              <div className={styles.passwordField}>
+                <input
+                  id="signup-password"
+                  className={styles.input}
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  minLength={10}
+                  autoComplete="new-password"
+                  aria-describedby="signup-password-rules"
+                />
+                <button
+                  type="button"
+                  className={styles.passwordToggle}
+                  onClick={() => setShowPassword((v) => !v)}
+                  aria-label={showPassword ? t('password.hide') : t('password.show')}
+                  aria-pressed={showPassword}
+                  aria-controls="signup-password"
+                >
+                  <EyeIcon off={showPassword} />
+                </button>
+              </div>
+              {/* Kurallar alan boşken de görünür (nötr ○); sağlananlar yeşil ✓, yazılmışken eksikler ✗. */}
+              <ul id="signup-password-rules" className={styles.ruleList}>
+                {pwCheck.results.map((r) => (
+                  <li
+                    key={r.key}
+                    className={r.passed ? styles.rulePassed : styles.ruleFailed}
+                  >
+                    <span className={styles.ruleIcon} aria-hidden="true">
+                      {r.passed ? '✓' : pwTouched ? '✗' : '○'}
+                    </span>
+                    {t(`password.${r.key}`)}
+                  </li>
+                ))}
+              </ul>
+            </div>
 
             {turnstileRequired ? <div id="turnstile-container" className={styles.turnstile} /> : null}
             {turnstileRequired && !turnstileToken ? (
@@ -220,6 +242,17 @@ export default function SignUpPage({ googleEnabled }: { googleEnabled: boolean }
         </div>
       </div>
     </>
+  )
+}
+
+/** Göz ikonu (açık / üstü çizili); dekoratif — adı düğmenin aria-label'ı verir. */
+function EyeIcon({ off }: { off: boolean }) {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+      <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" />
+      <circle cx="12" cy="12" r="3" />
+      {off && <path d="M3 3l18 18" />}
+    </svg>
   )
 }
 
