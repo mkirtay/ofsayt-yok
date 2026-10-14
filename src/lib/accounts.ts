@@ -61,7 +61,7 @@ export async function createUserAccount(input: CreateAccountInput): Promise<Crea
       ok: false,
       status: 400,
       error:
-        'Sifre en az 10 karakter olmali, buyuk harf, kucuk harf, rakam ve ozel karakter icermelidir.',
+        'Şifre en az 10 karakter olmalı; büyük harf, küçük harf, rakam ve özel karakter içermelidir.',
     };
   }
 

@@ -52,10 +52,10 @@ export async function checkSignupTurnstile(
     return { ok: false, status: 503, error: 'Kayıt şu anda yapılamıyor. Lütfen daha sonra tekrar deneyin.' };
   }
   if (typeof token !== 'string' || !token) {
-    return { ok: false, status: 400, error: 'Guvenlik dogrulamasi basarisiz.' };
+    return { ok: false, status: 400, error: 'Güvenlik doğrulaması başarısız.' };
   }
   const ok = await verifyTurnstileToken(token, remoteIp).catch(() => false);
-  return ok ? { ok: true } : { ok: false, status: 400, error: 'Guvenlik dogrulamasi basarisiz.' };
+  return ok ? { ok: true } : { ok: false, status: 400, error: 'Güvenlik doğrulaması başarısız.' };
 }
 
 function sha256(input: string): string {

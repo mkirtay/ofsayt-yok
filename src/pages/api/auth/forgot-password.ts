@@ -19,12 +19,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const limitState = await hitFixedWindowRateLimit(`forgot-pw:${ip}`, LIMIT, WINDOW_MS, { failClosed: true });
   if (!limitState.success) {
     res.setHeader('Retry-After', Math.max(1, Math.ceil((limitState.resetAt - Date.now()) / 1000)).toString());
-    return res.status(429).json({ error: 'Cok fazla deneme. Lutfen daha sonra tekrar deneyin.' });
+    return res.status(429).json({ error: 'Çok fazla deneme. Lütfen daha sonra tekrar deneyin.' });
   }
 
   const { email } = req.body ?? {};
   if (typeof email !== 'string' || !email.includes('@')) {
-    return res.status(400).json({ error: 'Gecersiz e-posta adresi.' });
+    return res.status(400).json({ error: 'Geçersiz e-posta adresi.' });
   }
 
   const normalizedEmail = email.trim().toLowerCase();
