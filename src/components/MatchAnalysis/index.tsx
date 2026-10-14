@@ -183,7 +183,7 @@ export default function MatchAnalysis({ match, state, archived = false }: Props)
               {t('analysis.buyCredits')}
             </Link>
             <p className={styles.reasoning}>
-              {t('analysis.creditBalance', { credits })} · {t('analysis.generateCost', { cost: ANALYSIS_COST })}
+              {t('analysis.creditBalance', { credits })} · {t('analysis.generateCost', { count: ANALYSIS_COST })}
             </p>
           </div>
         ) : (
@@ -194,7 +194,7 @@ export default function MatchAnalysis({ match, state, archived = false }: Props)
               className={styles.ctaButton}
               onClick={() => void generateAnalysis()}
             >
-              {t('analysis.generateButton')} {unlimited ? t('analysis.generateUnlimited') : t('analysis.generateCost', { cost: ANALYSIS_COST })}
+              {t('analysis.generateButton')} {unlimited ? t('analysis.generateUnlimited') : t('analysis.generateCost', { count: ANALYSIS_COST })}
             </button>
             {unlimited ? null : <p className={styles.reasoning}>{t('analysis.creditBalance', { credits })}</p>}
           </div>

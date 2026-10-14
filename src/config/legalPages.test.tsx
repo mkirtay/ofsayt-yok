@@ -22,6 +22,8 @@ vi.mock('@/lib/i18n', () => ({
   }),
 }));
 
+vi.mock('next/head', () => ({ default: ({ children }: { children: React.ReactNode }) => <>{children}</> }));
+
 import LegalDocPage from '@/components/LegalPage/LegalDocPage';
 import Footer from '@/components/Footer';
 
@@ -92,8 +94,23 @@ describe('yasal sayfalar', () => {
     }
   });
 
-  it('render: taslak notu başlıktan önce (role=note), canonical rota', () => {
-    const html = renderToStaticMarkup(<LegalDocPage docKey="kvkk" path="/kvkk-aydinlatma-metni" />);
+  it('noindex: 4 taslak sayfa robots noindex + canonical yok; gizlilik / şartlar indekslenir (canonical)', () => {
+    const draft = ['kvkk', 'cookies', 'distanceSales', 'refund'];
+    for (const p of LEGAL_PAGES) {
+      const html = renderToStaticMarkup(<LegalDocPage docKey={p.docKey} />);
+      if (draft.includes(p.docKey)) {
+        expect(html, p.path).toContain('<meta name="robots" content="noindex, follow"/>');
+        expect(html, p.path).not.toContain('rel="canonical"');
+      } else {
+        expect(html, p.path).not.toContain('noindex');
+        expect(html, p.path).toContain(`rel="canonical" href="https://`);
+        expect(html, p.path).toContain(`${p.path}"`);
+      }
+    }
+  });
+
+  it('render: taslak notu başlıktan önce (role=note)', () => {
+    const html = renderToStaticMarkup(<LegalDocPage docKey="kvkk" />);
     const note = html.indexOf('role="note"');
     expect(note).toBeGreaterThan(-1);
     expect(note).toBeLessThan(html.indexOf('<h1'));

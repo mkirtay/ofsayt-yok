@@ -75,7 +75,7 @@
     "inProgress": "Bu maçın analizi şu an üretiliyor — birkaç saniye içinde hazır olacak.",
     "inProgressSlow": "Analiz hâlâ hazırlanıyor. Birazdan tekrar deneyebilirsin; kredin düşmedi.",
     "generateButton": "AI ile Analiz Et",
-    "generateCost": "({{cost}} kredi)",
+    "generateCost": "({{count}} kredi)",
     "generateUnlimited": "(sınırsız)",
     "notGenerated": "Bu maç için henüz AI analizi üretilmedi.",
     "matchStartedNoAnalysis": "Maç başladığı için bu maç artık AI ile analiz edilemiyor.",

@@ -4,15 +4,16 @@
  */
 export type LegalDocKey = 'privacy' | 'terms' | 'kvkk' | 'cookies' | 'refund' | 'distanceSales';
 
-export const LEGAL_PAGES: readonly { docKey: LegalDocKey; path: string; footerKey: string }[] = [
+/** `noindex`: yer tutucular dolana kadar arama motorlarına kapalı (robots noindex, canonical yok). */
+export const LEGAL_PAGES: readonly { docKey: LegalDocKey; path: string; footerKey: string; noindex?: boolean }[] = [
   { docKey: 'privacy', path: '/gizlilik-politikasi', footerKey: 'footer.privacyPolicy' },
-  { docKey: 'kvkk', path: '/kvkk-aydinlatma-metni', footerKey: 'footer.kvkk' },
-  { docKey: 'cookies', path: '/cerez-politikasi', footerKey: 'footer.cookiePolicy' },
+  { docKey: 'kvkk', noindex: true, path: '/kvkk-aydinlatma-metni', footerKey: 'footer.kvkk' },
+  { docKey: 'cookies', noindex: true, path: '/cerez-politikasi', footerKey: 'footer.cookiePolicy' },
   { docKey: 'terms', path: '/kullanim-sartlari', footerKey: 'footer.termsOfUse' },
-  { docKey: 'distanceSales', path: '/mesafeli-satis-sozlesmesi', footerKey: 'footer.distanceSales' },
-  { docKey: 'refund', path: '/iade-ve-iptal', footerKey: 'footer.refundPolicy' },
+  { docKey: 'distanceSales', noindex: true, path: '/mesafeli-satis-sozlesmesi', footerKey: 'footer.distanceSales' },
+  { docKey: 'refund', noindex: true, path: '/iade-ve-iptal', footerKey: 'footer.refundPolicy' },
 ];
 
-export function legalPagePath(docKey: LegalDocKey): string {
-  return LEGAL_PAGES.find((p) => p.docKey === docKey)!.path;
+export function legalPage(docKey: LegalDocKey) {
+  return LEGAL_PAGES.find((p) => p.docKey === docKey)!;
 }
