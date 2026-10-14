@@ -1,9 +1,16 @@
 import type { GetServerSideProps } from 'next';
 import { siteBaseUrl } from '@/lib/siteUrl';
+import { ROBOTS_BLOCKED_AI_AGENTS } from '@/config/crawlers';
 
-/** Eskiden `public/robots.txt` (statik); Sitemap satırı alan adına bağlı olduğu için `siteBaseUrl()`'den üretilir. */
+/**
+ * Eskiden `public/robots.txt` (statik); Sitemap satırı alan adına bağlı olduğu için `siteBaseUrl()`'den üretilir.
+ * AI tarayıcıları (bkz. config/crawlers.ts) ayrı grupta tüm siteden engellenir; kendi grubu olan bot `*` grubunu okumaz.
+ */
 export function buildRobotsTxt(baseUrl: string): string {
   return [
+    ...ROBOTS_BLOCKED_AI_AGENTS.map((agent) => `User-agent: ${agent}`),
+    'Disallow: /',
+    '',
     'User-agent: *',
     'Allow: /',
     '',
