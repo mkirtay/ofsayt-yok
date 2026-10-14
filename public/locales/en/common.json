@@ -18,6 +18,11 @@
     "privacyPolicy": "Privacy Policy",
     "termsOfUse": "Terms of Use",
     "contact": "Contact",
+    "legalHeading": "Legal",
+    "kvkk": "KVKK Information Notice",
+    "cookiePolicy": "Cookie Policy",
+    "distanceSales": "Distance Sales Agreement",
+    "refundPolicy": "Refund & Cancellation",
     "disclaimer": "Statistical predictions are for informational purposes only.",
     "copyright": "© {{year}} {{brand}}. All rights reserved."
   },

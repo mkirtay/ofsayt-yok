@@ -3,16 +3,16 @@
   "backToHome": "Anasayfaya dön",
   "privacy": {
     "pageTitle": "Gizlilik Politikası",
-    "pageDesc": "{{brand}} gizlilik politikası ve KVKK aydınlatma metni.",
+    "pageDesc": "{{brand}} gizlilik politikası.",
     "intro": "Bu Gizlilik Politikası, {{brand}} (\"Site\", \"biz\") tarafından işletilen {{siteDomain}} üzerinden topladığımız kişisel verilerin hangi amaçlarla işlendiğini ve haklarınızı açıklar.",
     "sections": [
       {
         "heading": "1. Veri Sorumlusu",
-        "body": "6698 sayılı Kişisel Verilerin Korunması Kanunu (\"KVKK\") kapsamında veri sorumlusu [Şirket/Kişi Unvanı Buraya Eklenecek] olup iletişim bilgilerimize İletişim sayfasından ulaşabilirsiniz."
+        "body": "6698 sayılı Kişisel Verilerin Korunması Kanunu (\"KVKK\") kapsamında veri sorumlusu [ŞİRKET/KİŞİ ÜNVANI] ([ADRES]) olup [İLETİŞİM E-POSTASI] adresinden veya İletişim sayfasından bize ulaşabilirsiniz. KVKK kapsamındaki ayrıntılı bilgilendirme için KVKK Aydınlatma Metni'ne bakınız."
       },
       {
         "heading": "2. Toplanan Veriler",
-        "body": "Hesap oluşturduğunuzda ad/kullanıcı adı, e-posta adresi ve şifre (şifrelenmiş olarak); siteyi kullanırken favori takım/lig tercihleri, yorum ve oylama etkinliğiniz, kredi bakiyeniz ile IP adresi ve tarayıcı bilgileri gibi teknik veriler toplanabilir. Hesap oluşturduğunuzda sizi siteye hangi kampanya bağlantısının getirdiği (utm kaynak/ortam/kampanya) ve bu ziyaretin başlama zamanı hesabınıza kaydedilir. Bu bilgiyi yalnızca hangi tanıtım çalışmalarımızın işe yaradığını ölçmek için kullanırız. Bu bilgi kayıt olana kadar yalnızca tarayıcı oturumunuz boyunca cihazınızda tutulur; bunun için çerez kullanılmaz ve bilgi üçüncü taraflarla paylaşılmaz."
+        "body": "Hesap oluşturduğunuzda ad/kullanıcı adı, e-posta adresi ve şifre (şifrelenmiş olarak); siteyi kullanırken favori takım/lig tercihleri, yorum ve oylama etkinliğiniz, kredi bakiyeniz ile IP adresi ve tarayıcı bilgileri gibi teknik veriler toplanabilir. Hesap oluşturduğunuzda sizi siteye hangi kampanya bağlantısının getirdiği (utm kaynak/ortam/kampanya) ve bu ziyaretin başlama zamanı hesabınıza kaydedilir. Bu bilgiyi yalnızca hangi tanıtım çalışmalarımızın işe yaradığını ölçmek için kullanırız. Bu bilgi kayıt olana kadar yalnızca tarayıcı oturumunuz boyunca cihazınızda tutulur; bunun için çerez kullanılmaz ve bilgi üçüncü taraflarla paylaşılmaz. Kayıt sırasında Kullanım Şartları ve Gizlilik Politikası'nı onayladığınız tarih ve onayladığınız metnin sürümü hesabınızla birlikte saklanır."
       },
       {
         "heading": "3. Kullanım Amaçları",
@@ -20,7 +20,7 @@
       },
       {
         "heading": "4. Çerezler (Cookies)",
-        "body": "Oturum açık tutma, dil tercihi (TR/EN) ve temel kullanım istatistikleri için çerezler ve benzeri teknolojiler kullanılır. Tarayıcı ayarlarınızdan çerezleri yönetebilirsiniz; bazı çerezleri devre dışı bırakmanız hâlinde sitenin bazı bölümleri beklendiği gibi çalışmayabilir."
+        "body": "Oturum açık tutma ve güvenlik için zorunlu çerezler; üye olmadan AI asistanı kullanıldığında günlük mesaj hakkı için işlevsel bir çerez kullanılır. Dil, tema ve favori tercihleri çerezde değil tarayıcı depolamasında tutulur; sayfa istatistikleri çerezsiz toplanır. Tarayıcı ayarlarınızdan çerezleri yönetebilirsiniz; zorunlu çerezleri engellerseniz oturum açamayabilirsiniz. Kullandığımız çerezlerin ve tarayıcı depolamasının ayrıntıları Çerez Politikası sayfasındadır."
       },
       {
         "heading": "5. Üçüncü Taraflarla Paylaşım",
@@ -39,7 +39,7 @@
         "body": "Bu politika zaman zaman güncellenebilir; güncel sürüm her zaman bu sayfada yayınlanır."
       }
     ],
-    "draftNotice": "Bu metin genel bir taslak olarak hazırlanmıştır; yayına almadan önce bir hukuk danışmanı tarafından gözden geçirilmesi ve şirket/iletişim bilgilerinin tamamlanması önerilir."
+    "draftNotice": "TASLAK — Bu metin yayın öncesi hukuki inceleme gerektirir. Köşeli parantez içindeki alanlar ([…]) henüz doldurulmamıştır."
   },
   "terms": {
     "pageTitle": "Kullanım Şartları",
@@ -60,7 +60,7 @@
       },
       {
         "heading": "4. Kredi Sistemi",
-        "body": "AI analiz üretimi kredi karşılığında sunulur. Kredi paketleri ve ödeme entegrasyonu aktif değilken satın alma yapılamaz; bu durum ilgili sayfada ayrıca belirtilir. Kredi sisteminin işleyişine ilişkin koşullar önceden haber verilmeksizin güncellenebilir."
+        "body": "AI maç analizleri kredi ile açılır; bir analizi açmak 1 kredidir. E-posta adresini doğrulayan yeni üyelere bir kez 2 kredi kayıt bonusu tanımlanır. E-postası doğrulanmış ve en az 24 saatlik hesaplar her hafta hazır (önceden üretilmiş) bir analizi ücretsiz açabilir. Kredi satın alma çok yakında kullanıma açılacak; şu anda kredi paketi satılmamakta ve ödeme alınmamaktadır. Satış başladığında paketler, fiyatlar, iade ve cayma koşulları Mesafeli Satış Sözleşmesi ile İade ve İptal Koşulları sayfalarında yayımlanacaktır. Kredi sisteminin koşulları güncellenebilir; güncel koşullar her zaman bu sayfada yer alır."
       },
       {
         "heading": "5. Kullanıcı Davranış Kuralları",
@@ -79,7 +79,151 @@
         "body": "Bu şartlar zaman zaman güncellenebilir. Bu şartlardan doğan uyuşmazlıklarda Türkiye Cumhuriyeti kanunları uygulanır."
       }
     ],
-    "draftNotice": "Bu metin genel bir taslak olarak hazırlanmıştır; yayına almadan önce bir hukuk danışmanı tarafından gözden geçirilmesi önerilir."
+    "draftNotice": "TASLAK — Bu metin yayın öncesi hukuki inceleme gerektirir. Köşeli parantez içindeki alanlar ([…]) henüz doldurulmamıştır."
+  },
+  "kvkk": {
+    "pageTitle": "KVKK Aydınlatma Metni",
+    "pageDesc": "{{brand}} kişisel verilerin işlenmesine ilişkin aydınlatma metni (6698 sayılı KVKK md. 10).",
+    "intro": "Bu metin, 6698 sayılı Kişisel Verilerin Korunması Kanunu'nun 10. maddesi uyarınca, {{siteDomain}} kullanıcılarının kişisel verilerinin işlenmesine ilişkin bilgilendirme amacıyla hazırlanmıştır.",
+    "sections": [
+      {
+        "heading": "1. Veri Sorumlusu",
+        "body": "Unvan: [ŞİRKET/KİŞİ ÜNVANI] · Adres: [ADRES] · Vergi dairesi / no: [VERGİ DAİRESİ] / [VERGİ NO] · MERSİS: [MERSİS NO] · Telefon: [TELEFON] · E-posta: [İLETİŞİM E-POSTASI] · KEP: [KEP ADRESİ]"
+      },
+      {
+        "heading": "2. İşlenen Kişisel Veriler",
+        "body": "Kimlik (ad, kullanıcı adı), iletişim (e-posta adresi), hesap ve işlem bilgileri (kredi hareketleri, açılan analizler, favori takım/lig tercihleri, yorum ve gönderiler), işlem güvenliği bilgileri (IP adresi, oturum bilgisi, şifrenin geri döndürülemez özeti, giriş denemeleri), kayıt kaynağı (kampanya bağlantısı utm bilgisi) ve kayıt onayı kaydı (onay tarihi ve metin sürümü)."
+      },
+      {
+        "heading": "3. İşleme Amaçları",
+        "body": "Üyelik hesabının oluşturulması ve yönetimi, AI analiz ve kredi işlemlerinin yürütülmesi, kişiselleştirilmiş içerik sunulması, bilgi ve hesap güvenliğinin sağlanması, kötüye kullanımın önlenmesi, tanıtım çalışmalarının ölçülmesi ve yasal yükümlülüklerin yerine getirilmesi."
+      },
+      {
+        "heading": "4. Hukuki Sebepler",
+        "body": "[HUKUKİ METİN EKLENECEK: her işleme amacı için KVKK md. 5/2 kapsamındaki hukuki sebep (ör. sözleşmenin kurulması/ifası, meşru menfaat, hukuki yükümlülük) ve açık rıza gerekip gerekmediği]"
+      },
+      {
+        "heading": "5. Toplama Yöntemi",
+        "body": "Kişisel veriler kayıt ve profil formları, Google ile giriş, site kullanımı sırasında oluşan teknik kayıtlar ve zorunlu çerezler aracılığıyla elektronik ortamda toplanır."
+      },
+      {
+        "heading": "6. Aktarım",
+        "body": "Hizmetin sunulması için veriler; barındırma (Vercel), veritabanı (Supabase), önbellek ve hız sınırlama (Upstash), hata izleme (Sentry), e-posta gönderimi, bot koruması (Cloudflare Turnstile), Google ile giriş (Google) ve yapay zekâ analizi (OpenAI) hizmet sağlayıcılarına, yalnız ilgili hizmet için gerekli ölçüde aktarılabilir. [HUKUKİ METİN EKLENECEK: alıcı grupları, yurt dışına aktarımın KVKK md. 9 kapsamındaki dayanağı ve sağlayıcıların sunucu konumları]"
+      },
+      {
+        "heading": "7. Saklama Süresi",
+        "body": "[HUKUKİ METİN EKLENECEK: veri kategorisine göre saklama süreleri ve imha politikası]"
+      },
+      {
+        "heading": "8. Haklarınız ve Başvuru",
+        "body": "KVKK md. 11 kapsamındaki haklarınızı kullanmak için başvurunuzu [İLETİŞİM E-POSTASI] adresine, [KEP ADRESİ] KEP adresine veya [ADRES] adresine yazılı olarak iletebilirsiniz. [HUKUKİ METİN EKLENECEK: Veri Sorumlusuna Başvuru Usul ve Esasları Hakkında Tebliğ'e uygun başvuru yöntemi ve yanıt süresi]"
+      }
+    ],
+    "draftNotice": "TASLAK — Bu metin yayın öncesi hukuki inceleme gerektirir. Köşeli parantez içindeki alanlar ([…]) henüz doldurulmamıştır."
+  },
+  "cookies": {
+    "pageTitle": "Çerez Politikası",
+    "pageDesc": "{{brand}} çerez ve tarayıcı depolaması politikası.",
+    "intro": "Bu sayfa {{siteDomain}} üzerinde kullanılan çerezleri ve benzeri tarayıcı depolama teknolojilerini açıklar.",
+    "sections": [
+      {
+        "heading": "1. Zorunlu Çerezler",
+        "body": "Oturum açma ve güvenlik için kimlik doğrulama çerezleri (oturum belirteci, CSRF koruması, giriş sonrası dönüş adresi) kullanılır. Bu çerezler olmadan üyelik özellikleri çalışmaz."
+      },
+      {
+        "heading": "2. İşlevsel Çerez",
+        "body": "Üye olmadan AI asistanına mesaj gönderdiğinizde günlük mesaj hakkını takip etmek için rastgele bir tanımlayıcı içeren oy_aid çerezi (HttpOnly, 1 yıl) yazılır. Bu çerez yalnız asistan kullanıldığında oluşur."
+      },
+      {
+        "heading": "3. Tarayıcı Depolaması",
+        "body": "Dil, tema, favori takım/lig ve benzeri tercihler cihazınızın tarayıcı depolamasında (localStorage) tutulur ve sunucuya gönderilmez. Siteye ilk girdiğiniz oturumun kampanya bilgisi (utm) ve başlangıç zamanı yalnız tarayıcı oturumu boyunca (sessionStorage) tutulur; üye olursanız hesabınıza bir kez kaydedilir."
+      },
+      {
+        "heading": "4. Analitik ve Hata İzleme",
+        "body": "Sayfa görüntüleme istatistikleri için Vercel Web Analytics kullanılır; bu hizmet çerez kullanmaz. Teknik hatalar Sentry ile kaydedilir; hata kaydına çerez, ad veya e-posta eklenmez."
+      },
+      {
+        "heading": "5. Üçüncü Taraf Hizmetler",
+        "body": "Kayıt sayfasında bot koruması için Cloudflare Turnstile yüklenir; Cloudflare kendi tarafında güvenlik amaçlı tanımlayıcılar kullanabilir. Takım ve lig logoları veri sağlayıcımızın sunucularından yüklenir. Reklam çerezi kullanılmamaktadır."
+      },
+      {
+        "heading": "6. Çerez Tercihleri",
+        "body": "[HUKUKİ METİN EKLENECEK: zorunlu olmayan çerez ve benzeri teknolojiler için onay gerekliliği ve onay yönetimi yöntemi] Çerezleri tarayıcınızın ayarlarından silebilir veya engelleyebilirsiniz; zorunlu çerezleri engellerseniz oturum açamayabilirsiniz."
+      }
+    ],
+    "draftNotice": "TASLAK — Bu metin yayın öncesi hukuki inceleme gerektirir. Köşeli parantez içindeki alanlar ([…]) henüz doldurulmamıştır."
+  },
+  "refund": {
+    "pageTitle": "İade ve İptal Koşulları",
+    "pageDesc": "{{brand}} kredi paketleri için iade ve iptal koşulları.",
+    "intro": "Kredi satın alma çok yakında kullanıma açılacak. Şu anda kredi paketi satışı yapılmamakta ve ödeme alınmamaktadır; bu koşullar satış başladığında geçerli olacaktır.",
+    "sections": [
+      {
+        "heading": "1. Satıcı",
+        "body": "Unvan: [ŞİRKET/KİŞİ ÜNVANI] · Adres: [ADRES] · Vergi dairesi / no: [VERGİ DAİRESİ] / [VERGİ NO] · MERSİS: [MERSİS NO] · Telefon: [TELEFON] · E-posta: [İLETİŞİM E-POSTASI] · KEP: [KEP ADRESİ]"
+      },
+      {
+        "heading": "2. Kapsam",
+        "body": "Bu koşullar {{siteDomain}} üzerinden satın alınacak AI analiz kredisi paketlerini kapsar. Kayıt bonusu ve haftalık ücretsiz analiz gibi ücretsiz tanımlanan haklar satış kapsamında değildir."
+      },
+      {
+        "heading": "3. Cayma Hakkı",
+        "body": "[HUKUKİ METİN EKLENECEK: dijital içerik / anında ifa edilen hizmetlerde cayma hakkı ve istisnası (Mesafeli Sözleşmeler Yönetmeliği md. 15), ödeme öncesi alınacak onay beyanı]"
+      },
+      {
+        "heading": "4. Kullanılmamış Kredilerin İadesi",
+        "body": "[HUKUKİ METİN EKLENECEK: kullanılmamış kredilerin iade edilip edilmeyeceği, süresi ve yöntemi]"
+      },
+      {
+        "heading": "5. Hatalı veya Tamamlanmamış İşlemler",
+        "body": "[HUKUKİ METİN EKLENECEK: ödeme alınıp kredinin tanımlanmadığı veya mükerrer ödeme hâllerinde izlenecek yol ve süre]"
+      },
+      {
+        "heading": "6. Başvuru",
+        "body": "İade ve iptal talepleri için [İLETİŞİM E-POSTASI] adresine yazabilirsiniz."
+      }
+    ],
+    "draftNotice": "TASLAK — Bu metin yayın öncesi hukuki inceleme gerektirir. Köşeli parantez içindeki alanlar ([…]) henüz doldurulmamıştır."
+  },
+  "distanceSales": {
+    "pageTitle": "Mesafeli Satış Sözleşmesi",
+    "pageDesc": "{{brand}} kredi paketleri mesafeli satış sözleşmesi.",
+    "intro": "Kredi satın alma çok yakında kullanıma açılacak. Şu anda satış yapılmamaktadır; bu sözleşme satış başladığında geçerli olacaktır.",
+    "sections": [
+      {
+        "heading": "1. Satıcı",
+        "body": "Unvan: [ŞİRKET/KİŞİ ÜNVANI] · Adres: [ADRES] · Vergi dairesi / no: [VERGİ DAİRESİ] / [VERGİ NO] · MERSİS: [MERSİS NO] · Telefon: [TELEFON] · E-posta: [İLETİŞİM E-POSTASI] · KEP: [KEP ADRESİ]"
+      },
+      {
+        "heading": "2. Alıcı",
+        "body": "Satın alma işlemini {{siteDomain}} üzerindeki üyelik hesabıyla yapan kişi. Alıcının ad ve e-posta bilgileri üyelik kaydından alınır."
+      },
+      {
+        "heading": "3. Sözleşmenin Konusu",
+        "body": "Alıcının elektronik ortamda sipariş verdiği AI analiz kredisi paketinin satışı ve hesaba tanımlanmasına ilişkin tarafların hak ve yükümlülükleri."
+      },
+      {
+        "heading": "4. Ürün ve Fiyat",
+        "body": "[HUKUKİ METİN EKLENECEK: paket adları, kredi miktarları, KDV dahil fiyatlar (satış açıldığında /credits sayfasıyla aynı)]"
+      },
+      {
+        "heading": "5. Ödeme ve İfa",
+        "body": "[HUKUKİ METİN EKLENECEK: ödeme yöntemi ve aracı ödeme kuruluşu, kredinin hesaba tanımlanma zamanı]"
+      },
+      {
+        "heading": "6. Cayma Hakkı",
+        "body": "[HUKUKİ METİN EKLENECEK: cayma hakkı ve istisnası; İade ve İptal Koşulları ile uyumlu]"
+      },
+      {
+        "heading": "7. Uyuşmazlıkların Çözümü",
+        "body": "[HUKUKİ METİN EKLENECEK: tüketici hakem heyeti / tüketici mahkemesi parasal sınırları ve yetki]"
+      },
+      {
+        "heading": "8. Yürürlük",
+        "body": "[HUKUKİ METİN EKLENECEK: sözleşmenin elektronik onayla kurulması ve saklanması]"
+      }
+    ],
+    "draftNotice": "TASLAK — Bu metin yayın öncesi hukuki inceleme gerektirir. Köşeli parantez içindeki alanlar ([…]) henüz doldurulmamıştır."
   },
   "contact": {
     "pageTitle": "İletişim",

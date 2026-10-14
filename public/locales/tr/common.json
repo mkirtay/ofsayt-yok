@@ -18,6 +18,11 @@
     "privacyPolicy": "Gizlilik Politikası",
     "termsOfUse": "Kullanım Şartları",
     "contact": "İletişim",
+    "legalHeading": "Yasal",
+    "kvkk": "KVKK Aydınlatma Metni",
+    "cookiePolicy": "Çerez Politikası",
+    "distanceSales": "Mesafeli Satış Sözleşmesi",
+    "refundPolicy": "İade ve İptal",
     "disclaimer": "İstatistiksel tahminler bilgi amaçlıdır.",
     "copyright": "© {{year}} {{brand}}. Tüm hakları saklıdır."
   },

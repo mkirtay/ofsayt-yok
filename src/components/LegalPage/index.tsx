@@ -25,6 +25,13 @@ export default function LegalPage({ pageTitle, intro, sections, draftNotice }: L
           {locale === 'en' ? '← Back to home' : '← Anasayfaya dön'}
         </Link>
 
+        {/* Taslak uyarısı en üstte: yayın öncesi hukuki inceleme bitene kadar okur metnin bağlayıcı olmadığını görür. */}
+        {draftNotice ? (
+          <p className={styles.draftNotice} role="note">
+            {draftNotice}
+          </p>
+        ) : null}
+
         <h1 className={styles.title}>{pageTitle}</h1>
         <p className={styles.intro}>{intro}</p>
 
@@ -36,8 +43,6 @@ export default function LegalPage({ pageTitle, intro, sections, draftNotice }: L
             </section>
           ))}
         </div>
-
-        {draftNotice ? <p className={styles.draftNotice}>{draftNotice}</p> : null}
       </div>
     </Container>
   );

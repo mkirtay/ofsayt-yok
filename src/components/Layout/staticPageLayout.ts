@@ -5,7 +5,9 @@
  * Diğer sayfalarda `main` en az ekran boyu kalır (footer ilk boyamada ekranın dışında): içerik istemcide yüklenip
  * uzadıkça görünür alandaki footer aşağı kaymasın (CLS). Bu yüzden düzen sayfa listesine göre seçilir.
  */
-const STATIC_PAGE_PATHS = new Set(['/iletisim', '/gizlilik-politikasi', '/kullanim-sartlari', '/credits', '/404', '/500']);
+import { LEGAL_PAGES } from '@/config/legalPages';
+
+const STATIC_PAGE_PATHS = new Set(['/iletisim', ...LEGAL_PAGES.map((p) => p.path), '/credits', '/404', '/500']);
 
 export function usesStaticPageLayout(pathname: string): boolean {
   return STATIC_PAGE_PATHS.has(pathname) || pathname.startsWith('/auth/');

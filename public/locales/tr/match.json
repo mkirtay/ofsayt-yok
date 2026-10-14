@@ -81,7 +81,7 @@
     "matchStartedNoAnalysis": "Maç başladığı için bu maç artık AI ile analiz edilemiyor.",
     "preGeneratedTag": "Maç Öncesi Üretildi",
     "insufficientCredits": "Yetersiz kredi bakiyesi.",
-    "buyCredits": "Kredi Satın Al",
+    "buyCredits": "Kredi paketleri (çok yakında)",
     "signInToGenerate": "Analiz üretmek için giriş yapmalısınız.",
     "signIn": "Giriş yap",
     "creditBalance": "Bakiyeniz: {{credits}} kredi",

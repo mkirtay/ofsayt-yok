@@ -19,8 +19,8 @@ export function assistantHelp(topic: AssistantHelpTopic, locale: 'tr' | 'en'): A
     case 'credits':
       return {
         facts: tr
-          ? [`Kredi paketleri (KDV dahil): ${packages}.`, `1 kredi = ${ANALYSIS_UNLOCK_COST} AI maç analizi açma.`, 'Krediler süresizdir.', 'Açılan analiz kullanıcıya kalıcı olarak açık kalır.']
-          : [`Credit packs (VAT included): ${packages}.`, `1 credit unlocks ${ANALYSIS_UNLOCK_COST} AI match analysis.`, 'Credits do not expire.', 'An unlocked analysis stays unlocked for the user.'],
+          ? ['Kredi satın alma henüz açık değil, çok yakında; şu an ödeme alınmıyor.', `Planlanan kredi paketleri (KDV dahil): ${packages}.`, 'E-posta doğrulanınca bir kez 2 kredi kayıt bonusu verilir; doğrulanmış ve en az 24 saatlik hesaplar her hafta 1 hazır analizi ücretsiz açabilir.', `1 kredi = ${ANALYSIS_UNLOCK_COST} AI maç analizi açma.`, 'Krediler süresizdir.', 'Açılan analiz kullanıcıya kalıcı olarak açık kalır.']
+          : ['Buying credits is not open yet, coming soon; no payments are taken right now.', `Planned credit packs (VAT included): ${packages}.`, 'A one-time 2-credit signup bonus is given on email verification; verified accounts at least 24 hours old can unlock 1 ready-made analysis for free each week.', `1 credit unlocks ${ANALYSIS_UNLOCK_COST} AI match analysis.`, 'Credits do not expire.', 'An unlocked analysis stays unlocked for the user.'],
         links: [creditsLink],
       };
     case 'analysis':

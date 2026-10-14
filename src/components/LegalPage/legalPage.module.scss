@@ -61,12 +61,14 @@
 }
 
 .draftNotice {
-  margin-top: $spacing-6;
+  margin: 0 0 $spacing-5;
   padding: $spacing-3 $spacing-4;
-  background: $color-muted;
-  border: 1px dashed $color-border;
+  background: rgba($color-warning, 0.12);
+  border: 1px solid rgba($color-warning, 0.5);
+  border-left-width: 4px;
   border-radius: $radius-sm;
-  font-size: 12px;
+  font-size: 13px;
+  font-weight: 600;
   line-height: 1.6;
-  color: $color-text-secondary;
+  color: $color-text;
 }

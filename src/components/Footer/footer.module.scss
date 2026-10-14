@@ -40,6 +40,12 @@
   color: $color-text-on-dark-secondary;
 }
 
+.footerLinkGroups {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-6 $spacing-8;
+}
+
 .footerLinksCol {
   display: flex;
   flex-direction: column;

@@ -8,11 +8,11 @@
     "sections": [
       {
         "heading": "1. Data Controller",
-        "body": "The data controller under applicable data protection law is [Company/Owner Name To Be Added]. You can reach us via the Contact page."
+        "body": "The data controller under Turkish Personal Data Protection Law No. 6698 (\"KVKK\") is [ŞİRKET/KİŞİ ÜNVANI] ([ADRES]). You can reach us at [İLETİŞİM E-POSTASI] or via the Contact page. See the KVKK Information Notice for details."
       },
       {
         "heading": "2. Data We Collect",
-        "body": "When you create an account we collect your username, email address, and password (stored encrypted). While using the site we may collect your favorite teams/leagues, comments and poll activity, credit balance, and technical data such as IP address and browser information. When you create an account, the campaign link that brought you to the site (utm source/medium/campaign) and the time that visit started are saved to your account. We use this information only to measure which of our promotional efforts work. Until you sign up, this information is kept only on your device for the duration of your browser session; no cookie is used for this and it is not shared with third parties."
+        "body": "When you create an account we collect your username, email address, and password (stored encrypted). While using the site we may collect your favorite teams/leagues, comments and poll activity, credit balance, and technical data such as IP address and browser information. When you create an account, the campaign link that brought you to the site (utm source/medium/campaign) and the time that visit started are saved to your account. We use this information only to measure which of our promotional efforts work. Until you sign up, this information is kept only on your device for the duration of your browser session; no cookie is used for this and it is not shared with third parties. When you sign up, the date on which you accepted the Terms of Use and the Privacy Policy and the version of the text you accepted are stored with your account."
       },
       {
         "heading": "3. How We Use Your Data",
@@ -20,7 +20,7 @@
       },
       {
         "heading": "4. Cookies",
-        "body": "We use cookies and similar technologies to keep you signed in, remember your language preference (TR/EN), and gather basic usage statistics. You can manage cookies from your browser settings; disabling some cookies may affect site functionality."
+        "body": "Strictly necessary cookies keep you signed in and secure; a functional cookie tracks the daily message allowance when the AI assistant is used without an account. Language, theme and favourite preferences are kept in browser storage, not cookies; page statistics are collected without cookies. You can manage cookies in your browser settings; if you block strictly necessary cookies you may not be able to sign in. Details of the cookies and browser storage we use are on the Cookie Policy page."
       },
       {
         "heading": "5. Sharing With Third Parties",
@@ -39,7 +39,7 @@
         "body": "This policy may be updated from time to time; the current version is always published on this page."
       }
     ],
-    "draftNotice": "This text is a generic draft. We recommend legal review and completing the company/contact details before publishing."
+    "draftNotice": "DRAFT — This text requires legal review before publication. Fields in square brackets ([…]) have not been filled in yet."
   },
   "terms": {
     "pageTitle": "Terms of Use",
@@ -60,7 +60,7 @@
       },
       {
         "heading": "4. Credit System",
-        "body": "Generating AI analyses requires credits. Credit packages cannot be purchased while payment integration is inactive, as noted on the relevant page. Terms governing the credit system may be updated without prior notice."
+        "body": "AI match analyses are unlocked with credits; unlocking one analysis costs 1 credit. New members receive a one-time 2-credit signup bonus when they verify their email address. Accounts with a verified email that are at least 24 hours old can unlock one ready-made (already generated) analysis for free each week. Buying credits is coming soon; credit packages are not on sale and no payments are taken at this time. When sales start, packages, prices, refund and withdrawal terms will be published on the Distance Sales Agreement and Refund & Cancellation pages. Credit system terms may be updated; the current terms are always on this page."
       },
       {
         "heading": "5. User Conduct",
@@ -79,7 +79,151 @@
         "body": "These terms may be updated from time to time. Disputes arising from these terms are governed by the laws of the Republic of Türkiye."
       }
     ],
-    "draftNotice": "This text is a generic draft. We recommend legal review before publishing."
+    "draftNotice": "DRAFT — This text requires legal review before publication. Fields in square brackets ([…]) have not been filled in yet."
+  },
+  "kvkk": {
+    "pageTitle": "KVKK Information Notice",
+    "pageDesc": "{{brand}} information notice on the processing of personal data (Turkish Law No. 6698, Art. 10).",
+    "intro": "This notice is provided under Article 10 of Turkish Personal Data Protection Law No. 6698 (KVKK) to inform {{siteDomain}} users about how their personal data is processed.",
+    "sections": [
+      {
+        "heading": "1. Data Controller",
+        "body": "Name: [ŞİRKET/KİŞİ ÜNVANI] · Address: [ADRES] · Tax office / no: [VERGİ DAİRESİ] / [VERGİ NO] · MERSIS: [MERSİS NO] · Phone: [TELEFON] · Email: [İLETİŞİM E-POSTASI] · KEP: [KEP ADRESİ]"
+      },
+      {
+        "heading": "2. Personal Data Processed",
+        "body": "Identity (name, username), contact (email address), account and transaction data (credit history, unlocked analyses, favourite teams/leagues, comments and posts), security data (IP address, session data, irreversible password hash, login attempts), signup source (campaign link utm data) and the signup consent record (date and text version)."
+      },
+      {
+        "heading": "3. Purposes",
+        "body": "Creating and managing member accounts, running AI analysis and credit operations, providing personalised content, keeping information and accounts secure, preventing abuse, measuring promotional campaigns and meeting legal obligations."
+      },
+      {
+        "heading": "4. Legal Grounds",
+        "body": "[HUKUKİ METİN EKLENECEK: legal ground under KVKK Art. 5/2 for each purpose (e.g. contract, legitimate interest, legal obligation) and whether explicit consent is required]"
+      },
+      {
+        "heading": "5. Collection Method",
+        "body": "Personal data is collected electronically through signup and profile forms, Google sign-in, technical logs created while using the site and strictly necessary cookies."
+      },
+      {
+        "heading": "6. Transfers",
+        "body": "To provide the service, data may be shared, only as needed for the relevant service, with providers for hosting (Vercel), database (Supabase), caching and rate limiting (Upstash), error monitoring (Sentry), email delivery, bot protection (Cloudflare Turnstile), Google sign-in (Google) and AI analysis (OpenAI). [HUKUKİ METİN EKLENECEK: recipient groups, legal basis for cross-border transfer under KVKK Art. 9 and provider server locations]"
+      },
+      {
+        "heading": "7. Retention",
+        "body": "[HUKUKİ METİN EKLENECEK: retention periods per data category and destruction policy]"
+      },
+      {
+        "heading": "8. Your Rights and Requests",
+        "body": "To exercise your rights under KVKK Art. 11, you can send a written request to [İLETİŞİM E-POSTASI], to the KEP address [KEP ADRESİ] or by post to [ADRES]. [HUKUKİ METİN EKLENECEK: request procedure and response time under the Communiqué on Application Procedures to the Data Controller]"
+      }
+    ],
+    "draftNotice": "DRAFT — This text requires legal review before publication. Fields in square brackets ([…]) have not been filled in yet."
+  },
+  "cookies": {
+    "pageTitle": "Cookie Policy",
+    "pageDesc": "{{brand}} cookie and browser storage policy.",
+    "intro": "This page explains the cookies and similar browser storage technologies used on {{siteDomain}}.",
+    "sections": [
+      {
+        "heading": "1. Strictly Necessary Cookies",
+        "body": "Authentication cookies (session token, CSRF protection, post-login return address) are used for sign-in and security. Member features do not work without them."
+      },
+      {
+        "heading": "2. Functional Cookie",
+        "body": "If you message the AI assistant without an account, an oy_aid cookie containing a random identifier (HttpOnly, 1 year) is set to track the daily message allowance. It is only created when the assistant is used."
+      },
+      {
+        "heading": "3. Browser Storage",
+        "body": "Preferences such as language, theme and favourite teams/leagues are kept in your browser's storage (localStorage) and are not sent to our servers. The campaign info (utm) and start time of your first visit session are kept only for the browser session (sessionStorage) and saved to your account once if you sign up."
+      },
+      {
+        "heading": "4. Analytics and Error Monitoring",
+        "body": "Vercel Web Analytics is used for page view statistics; it does not use cookies. Technical errors are recorded with Sentry; no cookies, name or email are attached to error reports."
+      },
+      {
+        "heading": "5. Third-Party Services",
+        "body": "Cloudflare Turnstile is loaded on the signup page for bot protection; Cloudflare may use security identifiers on its side. Team and league logos are loaded from our data provider's servers. No advertising cookies are used."
+      },
+      {
+        "heading": "6. Cookie Preferences",
+        "body": "[HUKUKİ METİN EKLENECEK: consent requirement and consent management for non-essential cookies and similar technologies] You can delete or block cookies in your browser settings; if you block strictly necessary cookies you may not be able to sign in."
+      }
+    ],
+    "draftNotice": "DRAFT — This text requires legal review before publication. Fields in square brackets ([…]) have not been filled in yet."
+  },
+  "refund": {
+    "pageTitle": "Refund & Cancellation Policy",
+    "pageDesc": "{{brand}} refund and cancellation terms for credit packages.",
+    "intro": "Buying credits is coming soon. Credit packages are not on sale and no payments are taken at this time; these terms will apply once sales start.",
+    "sections": [
+      {
+        "heading": "1. Seller",
+        "body": "Name: [ŞİRKET/KİŞİ ÜNVANI] · Address: [ADRES] · Tax office / no: [VERGİ DAİRESİ] / [VERGİ NO] · MERSIS: [MERSİS NO] · Phone: [TELEFON] · Email: [İLETİŞİM E-POSTASI] · KEP: [KEP ADRESİ]"
+      },
+      {
+        "heading": "2. Scope",
+        "body": "These terms cover AI analysis credit packages to be purchased on {{siteDomain}}. Free entitlements such as the signup bonus and the weekly free analysis are not sales."
+      },
+      {
+        "heading": "3. Right of Withdrawal",
+        "body": "[HUKUKİ METİN EKLENECEK: right of withdrawal and its exception for digital content / immediately performed services (Distance Contracts Regulation Art. 15), consent statement before payment]"
+      },
+      {
+        "heading": "4. Refund of Unused Credits",
+        "body": "[HUKUKİ METİN EKLENECEK: whether unused credits are refundable, time limit and method]"
+      },
+      {
+        "heading": "5. Failed or Incomplete Transactions",
+        "body": "[HUKUKİ METİN EKLENECEK: procedure and time limit when payment is taken but credits are not added, or for duplicate payments]"
+      },
+      {
+        "heading": "6. Requests",
+        "body": "For refund and cancellation requests, write to [İLETİŞİM E-POSTASI]."
+      }
+    ],
+    "draftNotice": "DRAFT — This text requires legal review before publication. Fields in square brackets ([…]) have not been filled in yet."
+  },
+  "distanceSales": {
+    "pageTitle": "Distance Sales Agreement",
+    "pageDesc": "{{brand}} distance sales agreement for credit packages.",
+    "intro": "Buying credits is coming soon. No sales are made at this time; this agreement will apply once sales start.",
+    "sections": [
+      {
+        "heading": "1. Seller",
+        "body": "Name: [ŞİRKET/KİŞİ ÜNVANI] · Address: [ADRES] · Tax office / no: [VERGİ DAİRESİ] / [VERGİ NO] · MERSIS: [MERSİS NO] · Phone: [TELEFON] · Email: [İLETİŞİM E-POSTASI] · KEP: [KEP ADRESİ]"
+      },
+      {
+        "heading": "2. Buyer",
+        "body": "The person purchasing with their member account on {{siteDomain}}. The buyer's name and email are taken from the account."
+      },
+      {
+        "heading": "3. Subject",
+        "body": "The rights and obligations of the parties regarding the sale of the AI analysis credit package ordered online and its addition to the buyer's account."
+      },
+      {
+        "heading": "4. Product and Price",
+        "body": "[HUKUKİ METİN EKLENECEK: package names, credit amounts, prices incl. VAT (same as the /credits page once sales start)]"
+      },
+      {
+        "heading": "5. Payment and Performance",
+        "body": "[HUKUKİ METİN EKLENECEK: payment method and payment institution, when credits are added to the account]"
+      },
+      {
+        "heading": "6. Right of Withdrawal",
+        "body": "[HUKUKİ METİN EKLENECEK: right of withdrawal and its exception; consistent with the Refund & Cancellation Policy]"
+      },
+      {
+        "heading": "7. Dispute Resolution",
+        "body": "[HUKUKİ METİN EKLENECEK: consumer arbitration committee / consumer court monetary limits and jurisdiction]"
+      },
+      {
+        "heading": "8. Entry into Force",
+        "body": "[HUKUKİ METİN EKLENECEK: formation by electronic acceptance and record keeping]"
+      }
+    ],
+    "draftNotice": "DRAFT — This text requires legal review before publication. Fields in square brackets ([…]) have not been filled in yet."
   },
   "contact": {
     "pageTitle": "Contact",

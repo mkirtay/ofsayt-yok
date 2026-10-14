@@ -83,7 +83,7 @@
     "matchStartedNoAnalysis": "This match has started, so it can no longer be analyzed with AI.",
     "preGeneratedTag": "Generated Pre-Match",
     "insufficientCredits": "Insufficient credit balance.",
-    "buyCredits": "Buy Credits",
+    "buyCredits": "Credit packs (coming soon)",
     "signInToGenerate": "You must sign in to generate an analysis.",
     "signIn": "Sign in",
     "creditBalance": "Your balance: {{credits}} credits",
