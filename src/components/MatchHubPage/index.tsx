@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+import { useSession } from 'next-auth/react';
 import { useI18n, useTranslation } from '@/lib/i18n';
 import {
   groupMatchesByLeague,
@@ -71,6 +72,8 @@ import { buildNightGroups } from './nightSection';
 import styles from '@/pages/index.module.scss';
 import { HUB_TAB_BOOT_SCRIPT, clearHubTabBoot } from '@/utils/hubTabBoot';
 import { clearHubLeagueBoot, hubLeagueBootScript } from '@/utils/hubLeagueBoot';
+import { HOME_FAVORITES_LS_KEY, parseLocalFavoriteIds } from '@/utils/favoriteImport';
+import { HUB_FAV_COUNT_BOOT_SCRIPT, applyFavCount, toggleMatchFavorite } from '@/utils/hubFavorites';
 
 const noopSubscribe = () => () => {};
 
@@ -258,26 +261,44 @@ export default function MatchHubPage({
     [handleSeasonChange],
   );
 
-  const FAV_LS_KEY = 'oy_fav_club_teams';
-
   useEffect(() => {
     try {
-      const raw = localStorage.getItem(FAV_LS_KEY);
+      const ids = parseLocalFavoriteIds(localStorage.getItem(HOME_FAVORITES_LS_KEY));
       // eslint-disable-next-line react-hooks/set-state-in-effect -- favori kulüpler localStorage'dan yalnız istemcide okunur (SSR/hydration uyumu)
-      if (raw) setFavoriteTeamIds(JSON.parse(raw) as number[]);
+      if (ids.length) setFavoriteTeamIds(ids);
     } catch {}
   }, []);
 
-  const toggleFavoriteTeam = useCallback((teamId: number) => {
-    if (!teamId) return;
-    setFavoriteTeamIds((prev) => {
-      const next = prev.includes(teamId) ? prev.filter((id) => id !== teamId) : [...prev, teamId];
+  // "Favoriler (n)" sayacı: ön-boyama betiğinin yazdığı CSS değişkeni React state'iyle senkron (bkz. utils/hubFavorites.ts).
+  useEffect(() => {
+    applyFavCount(favoriteTeamIds.length, document.documentElement.style);
+  }, [favoriteTeamIds]);
+
+  // Yıldız geri bildirimi (kısa, kendiliğinden kapanır; ekran okuyucuya `role="status"` ile duyurulur).
+  // Kapanırken metin solma süresince kalır (`visible: false`), sonra boşalır — boş balon görünmez.
+  const [favToast, setFavToast] = useState<{ id: number; added: boolean; visible: boolean } | null>(null);
+  useEffect(() => {
+    if (!favToast) return;
+    const timer = window.setTimeout(
+      () => setFavToast((cur) => (cur && cur.visible ? { ...cur, visible: false } : null)),
+      favToast.visible ? 2500 : 200,
+    );
+    return () => window.clearTimeout(timer);
+  }, [favToast]);
+
+  const toggleFavoriteTeam = useCallback(
+    (homeTeamId: number, awayTeamId: number) => {
+      const { next, change } = toggleMatchFavorite(favoriteTeamIds, homeTeamId, awayTeamId);
+      if (!change) return;
+      setFavoriteTeamIds(next);
       try {
-        localStorage.setItem(FAV_LS_KEY, JSON.stringify(next));
+        localStorage.setItem(HOME_FAVORITES_LS_KEY, JSON.stringify(next));
       } catch {}
-      return next;
-    });
-  }, []);
+      setFavToast((prev) => ({ id: (prev?.id ?? 0) + 1, added: change === 'added', visible: true }));
+    },
+    [favoriteTeamIds],
+  );
+  const { status: sessionStatus } = useSession();
 
   // Veri yokken sabit boş dizi: `?? []` her render'da yeni dizi verip memo'ları boşa yeniden hesaplatıyordu.
   const allMatches = homeMatchesQuery.data?.allMatches ?? EMPTY_MATCHES;
@@ -778,7 +799,14 @@ export default function MatchHubPage({
       <MatchListSkeleton groups={5} />
     </div>
   ) : activeTab === 'favorites' && favoriteTeamIds.length === 0 ? (
-    withFrikik(<div className={styles.empty}>{t('hub.favoritesEmpty')}</div>)
+    withFrikik(
+      <EmptyState>
+        {t('hub.favoritesEmpty')}{' '}
+        <button type="button" className={styles.emptyAction} onClick={() => handleTabChange('all')}>
+          {t('hub.favoritesBackToAll')}
+        </button>
+      </EmptyState>,
+    )
   ) : leagueFilterActive && listEmpty ? (
     withFrikik(
       <EmptyState minLines={showNextMatchDay ? 3 : undefined}>
@@ -823,6 +851,8 @@ export default function MatchHubPage({
     <>
       {/* Hatırlanan lig sunucuda bilinmez: boyamadan önce <html data-hub-league-pending> (bkz. utils/hubLeagueBoot.ts). */}
       <script dangerouslySetInnerHTML={{ __html: hubLeagueBootScript(defaultCompetitionId) }} />
+      {/* Favori sayısı sunucuda bilinmez: boyamadan önce `--hub-fav-count` (bkz. utils/hubFavorites.ts). */}
+      <script dangerouslySetInnerHTML={{ __html: HUB_FAV_COUNT_BOOT_SCRIPT }} />
       {/* `?tab=` sunucuda bilinmez (ISR): boyamadan önce <html data-hub-tab> (bkz. utils/hubTabBoot.ts). */}
       <script dangerouslySetInnerHTML={{ __html: HUB_TAB_BOOT_SCRIPT }} />
       <SubHeader
@@ -975,6 +1005,15 @@ export default function MatchHubPage({
                 </div>
               ) : null}
               {delayedNote}
+              {/* Ana sayfa favorileri yalnız bu cihazda (localStorage); hesaba otomatik gitmez — misafire nerede durduğunu söyle. */}
+              {activeTab === 'favorites' && sessionStatus === 'unauthenticated' && !uefaFixtureMode ? (
+                <p className={styles.favGuestNote}>
+                  {t('hub.favoritesGuestNote')}{' '}
+                  <Link href="/auth/signup" className={styles.emptyAction}>
+                    {t('hub.favoritesGuestSignup')}
+                  </Link>
+                </p>
+              ) : null}
               {listNode}
             </div>
             {showDetailPanel ? (
@@ -1001,6 +1040,9 @@ export default function MatchHubPage({
             ) : null}
           </div>
         </div>
+      </div>
+      <div className={styles.favToast} role="status" data-visible={favToast?.visible ? '' : undefined}>
+        {favToast ? <span key={favToast.id}>{t(favToast.added ? 'hub.favoriteAdded' : 'hub.favoriteRemoved')}</span> : null}
       </div>
     </>
   );

@@ -132,7 +132,7 @@
 
   .colGoals {
     font-weight: 800;
-    color: $color-primary-dark;
+    color: $color-primary-text;
     padding-right: $spacing-2;
     // Puan Durumu'ndaki "P" sütunuyla AYNI mekanizma (ortak mixin): G sütunu yatay scroll'dan bağımsız görünür.
     @include sticky-last-column;

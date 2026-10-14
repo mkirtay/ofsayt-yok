@@ -6,7 +6,10 @@ $color-primary: #00a76f;
 // Koyu zeminde okunabilir yeşil METİN rengi (color: için kullanın)
 $color-primary-text: var(--color-action-text);
 $color-premium: var(--color-premium);
-$color-primary-dark: #007B55;
+$color-primary-dark: #007B55; // ZEMİN içindir (beyaz yazı 5.3:1); yeşil METİN için $color-primary-text (koyu temada #007B55 3.2:1)
+// Beyaz yazılı yeşil degrade dolgu (aktif sekme): başlangıç #00875A (beyaz 4.6:1) → $color-primary-dark (5.3:1).
+// Eski degrade #00A76F'den başlıyordu (beyaz 3.1:1).
+$color-action-fill-start: #00875a;
 $color-surface: var(--bg-surface);
 $color-bg: var(--bg-page);
 $color-muted: var(--bg-muted);

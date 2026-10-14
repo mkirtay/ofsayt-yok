@@ -292,7 +292,12 @@
   },
   "hub": {
     "homeHeading": "Canlı Skorlar, Puan Durumu ve Yapay Zekâ Tahminleri — {{brand}}",
-    "favoritesEmpty": "Takım favorilere eklemek için maç satırındaki ☆ butonuna tıklayın.",
+    "favoritesEmpty": "Henüz favori eklemedin. Eklemek için maç satırındaki ☆ simgesine dokun.",
+    "favoritesBackToAll": "Hepsi’ne dön",
+    "favoritesGuestNote": "Favorilerin bu cihazda saklanır. Üye olursan profilindeki Favorilerim bölümüne aktarıp her cihazdan görebilirsin.",
+    "favoritesGuestSignup": "Üye ol",
+    "favoriteAdded": "Favorilere eklendi",
+    "favoriteRemoved": "Favorilerden çıkarıldı",
     "leagueFilterEmpty": "Seçili liglerde bu görünümde maç yok.",
     "showAll": "Tümünü göster",
     "tabStandings": "Puan Durumu",

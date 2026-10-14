@@ -268,7 +268,7 @@
 .mainScore {
   font-size: 32px;
   font-weight: 800;
-  color: $color-primary-dark;
+  color: $color-primary-text;
 }
 
 .altScores {
@@ -364,7 +364,7 @@
 
   &.high {
     background: rgba($color-primary, 0.15);
-    color: $color-primary-dark;
+    color: $color-primary-text;
   }
 }
 
@@ -552,7 +552,7 @@
 
   &.hitYes {
     background: rgba($color-primary, 0.15);
-    color: $color-primary-dark;
+    color: $color-primary-text;
   }
 
   &.hitNo {
@@ -583,7 +583,7 @@
 .playerRole {
   font-size: 11px;
   font-weight: 600;
-  color: $color-primary-dark;
+  color: $color-primary-text;
   background: rgba($color-primary, 0.1);
   padding: 2px 8px;
   border-radius: $radius-full;

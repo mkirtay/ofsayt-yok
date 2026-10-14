@@ -326,7 +326,7 @@ $profile-card-h: 290px;
   margin-top: $spacing-3;
 
   &.ok {
-    color: $color-primary-dark;
+    color: $color-primary-text;
   }
 
   &.err {
@@ -348,7 +348,7 @@ $profile-card-h: 290px;
 
 .roleAdmin {
   background: rgba($color-primary, 0.15);
-  color: $color-primary-dark;
+  color: $color-primary-text;
 }
 
 // ── Sekmeler (Match Detay / lig filtresiyle aynı chip dili) ──────────────────

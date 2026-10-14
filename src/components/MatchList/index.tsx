@@ -94,7 +94,8 @@ interface MatchListProps {
   /** Bugünden farklı tarihli maçlar için kickoff hücresine kısa tarih ekler (örn. "15 Nis") */
   showDateWhenNotToday?: boolean;
   favoriteTeamIds?: Set<number>;
-  onToggleFavorite?: (teamId: number) => void;
+  /** Satır yıldızı: maçın ev sahibi ve deplasman takımı (hangisinin değişeceğine çağıran karar verir). */
+  onToggleFavorite?: (homeTeamId: number, awayTeamId: number) => void;
   /**
    * Split-view (masaüstü): verilirse satır tıklaması sayfa geçişi yerine bunu çağırır
    * (cmd/ctrl-tık ve orta tuş hâlâ normal link davranışı). Verilmezse — mobil dahil —
@@ -298,7 +299,7 @@ type RowContext = {
   showDateWhenNotToday: boolean;
   todayIso: string;
   favoriteTeamIds: Set<number>;
-  onToggleFavorite: ((teamId: number) => void) | null;
+  onToggleFavorite: ((homeTeamId: number, awayTeamId: number) => void) | null;
   navigateTo: (path: string) => void;
   onSelectMatch: ((match: Match) => void) | null;
   onPrefetchMatch: ((matchId: string) => void) | null;
@@ -528,9 +529,10 @@ function VirtualRow({
           className={`${styles.virtualMatchStar} ${isFav ? styles.virtualMatchStarActive : ''}`}
           onClick={(e) => {
             e.stopPropagation();
-            onToggleFavorite(match.home?.id ?? 0);
+            onToggleFavorite(match.home?.id ?? 0, match.away?.id ?? 0);
           }}
           aria-label={isFav ? t('list.removeFavorite') : t('list.addFavorite')}
+          title={isFav ? t('list.removeFavorite') : t('list.addFavorite')}
         >
           {isFav ? '★' : '☆'}
         </button>

@@ -55,11 +55,11 @@ describe('toplam skor — maç kartı hapı', () => {
 });
 
 describe('CLS: sabit yükseklikler', () => {
-  it('satır 40 px (değişmedi), toplam satırı 11 px, kart hapı alanı 28 px', () => {
+  it('satır 40 px (değişmedi), toplam satırı 14 px (12 px yazı, a11y), kart hapı alanı 28 px', () => {
     const listTsx = readFileSync(path.resolve(__dirname, 'index.tsx'), 'utf8');
     expect(listTsx).toContain('const MATCH_ROW_HEIGHT = 40;');
     const listScss = readFileSync(path.resolve(__dirname, 'matchList.module.scss'), 'utf8');
-    expect(listScss).toMatch(/\.tieLine \{\s*display: block;\s*height: 11px;/);
+    expect(listScss).toMatch(/\.tieLine \{\s*display: block;\s*height: 14px;/);
     const cardScss = readFileSync(path.resolve(__dirname, '../MatchCard/matchCard.module.scss'), 'utf8');
     expect(cardScss).toMatch(/\.tieRow \{[^}]*height: 28px;/);
   });

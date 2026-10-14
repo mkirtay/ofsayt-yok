@@ -73,6 +73,9 @@
 
   // Canlı gösterge
   --color-live: #ef4444;
+  // Beyaz yazılı DOLU canlı rozetleri (dakika rozeti, "Canlı" sayısı): #ef4444 üstünde beyaz 3.8:1 kalıyordu → 4.8:1.
+  // Nokta / kırmızı metin `--color-live`'da kalır (koyu yüzeyde koyu kırmızı metin okunmaz).
+  --color-live-fill: #dc2626;
 
   // Oyuncu maç reytingi skalası (eşikler: src/config/ratingScale.ts). Rozet zemini renkli, metin `--on-rating-*`.
   // Kontrast (metin/zemin): excellent beyaz 5.3:1 · good koyu 6.3:1 · bad koyu 5.2:1 · none beyaz 4.8:1.
@@ -112,8 +115,10 @@
 
   --text-primary: #f2f3f5; // kırık beyaz
   --text-secondary: #9aa0ae; // orta gri
-  --text-tertiary: #6b7280; // soluk gri (etiket/mikro)
+  --text-tertiary: #878e9b; // soluk gri (etiket/mikro) — WCAG AA: yüzeyde 5.2:1, muted'da 4.6:1, sayfada 5.8:1 (eski #6b7280 3.5:1)
   --color-action-text: #2fd39b; // koyu zeminde okunur yeşil metin
+  --color-warning-text: #f59e0b; // amber METİN (İY) — yüzeyde 7.9:1
+  --color-favorite: #f59e0b; // dolu favori yıldızı (ikon, ≥ 3:1) — yüzeyde 7.9:1
 
   // Karşılaştırma (/compare) TARAF renkleri — sol=A, sağ=B; kulüp rengi değil. Marka yeşilinin (hsl 161°) analog komşusu
   // camgöbeği (190°) ve tamamlayıcısı magenta (322°); form G/B/M (yeşil/amber/kırmızı) ve mavi bölge çubuğundan ayrışır.
@@ -145,8 +150,10 @@
 
   --text-primary: #102015;
   --text-secondary: #4b5f52;
-  --text-tertiary: #7b8a80;
+  --text-tertiary: #61706a; // WCAG AA: beyazda 5.2:1, sayfada 4.8:1, muted'da 4.6:1 (eski #7b8a80 3.6:1)
   --color-action-text: #007b55;
+  --color-warning-text: #b05108; // #f59e0b beyazda 2.2:1 → 5.2:1 (muted 4.6:1)
+  --color-favorite: #c26a05; // ikon: beyazda 3.9:1, muted'da 3.5:1 (#f59e0b 2.2:1 idi)
 
   --compare-a: #0099b8; // beyazda 3.4:1 (grafik ≥3:1)
   --compare-b: #a30e6c; // beyazda 7.4:1 · A↔B 2.2:1

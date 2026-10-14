@@ -278,7 +278,7 @@
 .virtualHeaderColIy {
   display: none;
   flex: 0 0 auto;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 800;
   opacity: 0.88;
   min-width: 2rem;
@@ -363,16 +363,35 @@
   border-left: 1px solid $color-border;
   cursor: pointer;
   padding: 0;
-  transition: color 0.15s, background-color 0.15s;
+  transition: color 0.15s, background-color 0.15s, transform 0.1s;
 
-  &:hover {
+  // Tıklanabilir olduğu belli olsun: üstüne gelince/odakta amber + zemin, basınca hafif küçülür.
+  &:hover,
+  &:focus-visible {
     background-color: $color-muted;
-    color: #f59e0b;
+    color: var(--color-favorite);
+  }
+
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+    outline-offset: -2px;
+  }
+
+  &:active {
+    transform: scale(0.88);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+
+    &:active {
+      transform: none;
+    }
   }
 }
 
 .virtualMatchStarActive {
-  color: #f59e0b;
+  color: var(--color-favorite);
 }
 
 .virtualMatchRowLive {}
@@ -430,7 +449,7 @@
   display: flex;
   align-items: center;
   padding: 0 3px;
-  font-size: 11px;
+  font-size: 12px;
   min-width: 0;
 
   @media (min-width: $bp-sm) {
@@ -448,7 +467,7 @@
   justify-content: center;
   color: $color-text-secondary;
   font-weight: 600;
-  font-size: 9px;
+  font-size: 12px;
   font-variant-numeric: tabular-nums;
   text-align: center;
   line-height: 1.2;
@@ -456,13 +475,11 @@
   padding-right: 2px;
 
   @media (min-width: $bp-sm) {
-    font-size: 10px;
     padding-left: 6px;
     padding-right: 6px;
   }
 
   @media (min-width: $bp-lg) {
-    font-size: 11px;
     padding-left: 0;
     padding-right: 0;
   }
@@ -476,52 +493,38 @@
 }
 
 .kickoffDate {
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 600;
   color: $color-text-secondary;
-  opacity: 0.85;
   text-transform: lowercase;
   letter-spacing: 0.01em;
-
-  @media (min-width: $bp-sm) {
-    font-size: 10px;
-  }
 }
 
 // Ertelendi / iptal: saat yerine kısa etiket (amber, saatle aynı punto).
 .kickoffState {
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 800;
   color: #d97706;
   white-space: nowrap;
 }
 
 .kickoffTime {
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
   color: $color-text;
   font-variant-numeric: tabular-nums;
-
-  @media (min-width: $bp-sm) {
-    font-size: 11px;
-  }
-
-  @media (min-width: $bp-lg) {
-    font-size: 12px;
-  }
 }
 
 .virtualStatus {
   justify-content: flex-start;
   font-weight: 700;
-  font-size: 10px;
+  font-size: 12px;
   font-variant-numeric: tabular-nums;
   color: $color-text-secondary;
   padding-left: 2px;
   padding-right: 3px;
 
   @media (min-width: $bp-sm) {
-    font-size: 11px;
     padding-left: 4px;
     padding-right: 6px;
   }
@@ -538,12 +541,13 @@
 }
 
 .virtualStatusHt {
-  color: $color-warning;
+  color: var(--color-warning-text);
   font-weight: 800;
 }
 
 .virtualStatusFt {
-  color: $color-finished;
+  // Sabit #6B7280 koyu yüzeyde 3.5:1 kalıyordu → tema-duyarlı soluk gri (iki temada ≥ 4.5:1).
+  color: var(--text-tertiary);
   font-weight: 700;
 }
 
@@ -562,7 +566,7 @@
 
 .liveText {
   color: #fff;
-  background-color: $color-live;
+  background-color: var(--color-live-fill);
   // Rozet durum sütunundan ASLA taşmaz (takım adı/logosuyla çakışmasın): sütun genişliğine kırpılır.
   max-width: 100%;
   min-width: 0;
@@ -571,10 +575,16 @@
   border-radius: $radius-full;
   line-height: 1;
   white-space: nowrap;
+  // Mobilde 10 px kalır: 44 px'lik saat/durum sütununda "90+5'" 10 px'te bile sınırda (12 px kırpılırdı). Masaüstünde 12 px.
   font-size: 10px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   height: 16px;
+
+  @media (min-width: $bp-lg) {
+    font-size: 12px;
+    height: 18px;
+  }
   display: inline-flex;
   align-items: center;
   justify-content: flex-start;
@@ -594,7 +604,7 @@
 /* Mobilde sadece dakika (+ 🔴); tablet+ "CANLI" */
 .liveCanliWord {
   display: none;
-  font-size: 10px;
+  font-size: inherit;
 
   @media (min-width: $bp-sm) {
     display: inline;
@@ -699,17 +709,13 @@
 
 .tieLine {
   display: block;
-  height: 11px;
-  font-size: 9px;
-  line-height: 11px;
+  height: 14px;
+  font-size: 12px;
+  line-height: 14px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   color: $color-text-secondary;
   white-space: nowrap;
-
-  @media (min-width: $bp-sm) {
-    font-size: 10px;
-  }
 }
 
 .tieWide {
@@ -747,7 +753,7 @@
 .virtualHt {
   display: none;
   justify-content: center;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   color: $color-text-secondary;
@@ -758,7 +764,6 @@
   }
 
   @media (min-width: $bp-lg) {
-    font-size: 11px;
     padding: 0 $spacing-1 !important;
   }
 }

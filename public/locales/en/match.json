@@ -296,7 +296,12 @@
   },
   "hub": {
     "homeHeading": "Live Scores, Standings and AI Predictions — {{brand}}",
-    "favoritesEmpty": "Tap the ☆ button on a match row to add its team to favorites.",
+    "favoritesEmpty": "You haven't added any favorites yet. Tap the ☆ icon on a match row to add one.",
+    "favoritesBackToAll": "Back to All",
+    "favoritesGuestNote": "Your favorites are saved on this device. Sign up to import them into My Favorites on your profile and see them on any device.",
+    "favoritesGuestSignup": "Sign up",
+    "favoriteAdded": "Added to favorites",
+    "favoriteRemoved": "Removed from favorites",
     "leagueFilterEmpty": "No matches in this view for the selected leagues.",
     "showAll": "Show all",
     "tabStandings": "Standings",

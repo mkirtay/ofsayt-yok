@@ -157,7 +157,7 @@
   line-height: 1;
 
   .statCardHighlight & {
-    color: $color-primary-dark;
+    color: $color-primary-text;
   }
 }
 
@@ -269,7 +269,7 @@
   text-decoration: none;
 
   &:hover .teamName {
-    color: $color-primary-dark;
+    color: $color-primary-text;
     text-decoration: underline;
   }
 }
@@ -359,7 +359,7 @@
 }
 
 .hit {
-  color: $color-primary-dark;
+  color: $color-primary-text;
   font-weight: 800;
 }
 

@@ -117,7 +117,7 @@
   width: 100%;
   min-width: 280px;
   border-collapse: collapse;
-  font-size: 11px;
+  font-size: 12px;
 
   th,
   td {
@@ -131,7 +131,13 @@
     background: $color-muted;
     color: $color-text-secondary;
     font-weight: 700;
-    font-size: 10px;
+    font-size: 12px;
+  }
+
+  // Takım bağlantısı en az 24 × 24 px (aşağıda): hücrenin dikey dolgusu 4 → 2 px, satır yüksekliği değişmez.
+  td.colTeam {
+    padding-top: 2px;
+    padding-bottom: 2px;
   }
 
   .colRank {
@@ -147,7 +153,7 @@
 
   .colPoints {
     font-weight: 800;
-    color: $color-primary-dark;
+    color: $color-primary-text;
     padding-right: $spacing-2;
     // "P" (puan) sütunu tablonun en önemli bilgisi olduğu halde geniş
     // tablolarda yatay scroll yapılmadan görünmüyordu; sağa sabitleyip
@@ -172,10 +178,11 @@
   .table {
     min-width: 0;
 
+    // 12 px yazıda (a11y) sütunlar genişledi: dolgu 4 → 3 px, dar panelde görünen sütun sayısı 11 px'teki gibi kalır.
     th,
     td {
-      padding-left: 4px;
-      padding-right: 4px;
+      padding-left: 3px;
+      padding-right: 3px;
     }
 
     .colTeam {
@@ -223,6 +230,11 @@
 }
 
 .teamLink {
+  // Dokunma hedefi ≥ 24 × 24 px (WCAG 2.5.8) — dar panelde "GS"/"FB" kısaltması 14–16 × 21 px kalıyordu.
+  display: inline-flex;
+  align-items: center;
+  min-width: 24px;
+  min-height: 24px;
   color: $color-text;
   text-decoration: none;
   overflow: hidden;

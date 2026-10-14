@@ -47,7 +47,7 @@
 }
 
 .footerLinksHeading {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -57,10 +57,14 @@
 .footerLinks {
   display: flex;
   flex-direction: column;
-  gap: $spacing-2;
+  gap: $spacing-1;
 }
 
 .footerLink {
+  // Dokunma hedefi ≥ 24 px (WCAG 2.5.8): 21 px satır → 24 px; aradaki boşluk 8 → 4 px, dikey ritim aynı kalır.
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
   font-size: 13px;
   font-weight: 600;
   color: $color-text-on-dark;
@@ -74,7 +78,7 @@
 
 .footerDisclaimer {
   margin-top: $spacing-4;
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.6;
   color: rgba(244, 247, 244, 0.5);
   max-width: 760px;
