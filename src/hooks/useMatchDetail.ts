@@ -20,6 +20,7 @@ import { mergeRedCards } from '@/utils/liveMatchPatch';
 import { deriveMatchPhase } from '@/utils/matchPhase';
 import { matchKickoffMs } from '@/utils/matchActivity';
 import { isProbableLineup } from '@/utils/lineupStatus';
+import { startVisiblePolling } from '@/utils/visiblePolling';
 import type { LiveMatchPayload } from '@/server/liveMatch';
 import { getCompetitionStandings } from '@/services/competitionStandings';
 
@@ -349,10 +350,11 @@ export function useMatchDetail(
       };
     }
     if (kickoffMs == null) return;
-    let intervalId: number | undefined;
+    // Sekme arka plandayken istek atılmaz; öne gelince bayatsa hemen bir kez (bkz. utils/visiblePolling).
+    let stopPolling: (() => void) | undefined;
     const startPolling = () => {
       refresh();
-      intervalId = window.setInterval(refresh, LINEUP_REFRESH_MS);
+      stopPolling = startVisiblePolling(refresh, LINEUP_REFRESH_MS);
     };
     const untilWindow = kickoffMs - LINEUP_REFRESH_WINDOW_MS - Date.now();
     let timeoutId: number | undefined;
@@ -361,7 +363,7 @@ export function useMatchDetail(
     return () => {
       cancelled = true;
       window.clearTimeout(timeoutId);
-      window.clearInterval(intervalId);
+      stopPolling?.();
     };
   }, [matchId, lineupProbable, phase, kickoffMs]);
 
