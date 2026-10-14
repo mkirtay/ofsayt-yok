@@ -12,8 +12,8 @@ import { siteBaseUrl } from '@/lib/siteUrl';
 type Props = { data: RefereePageData; /** Kanonik tam adres — sunucuda (istemcide AUTH_URL yok; JSON-LD hydration'ı eşleşsin). */ url: string };
 
 const SITE_URL = siteBaseUrl();
-/** Son maçlar 1 sa; sayfa da 1 sa (Sportmonks verisi alt katmanda daha uzun cache'li). */
-const REVALIDATE_SECONDS = 3600;
+/** Sayfa verisiyle aynı 6 sa (tek Sportmonks isteği 6 sa cache'li; bkz. server/people/refereePage.ts). */
+const REVALIDATE_SECONDS = 6 * 60 * 60;
 
 export const getStaticPaths: GetStaticPaths = async () => ({ paths: [], fallback: 'blocking' });
 

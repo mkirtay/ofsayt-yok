@@ -1,10 +1,9 @@
 /**
  * Hakem sayfası (/hakem/[slug]) verisi — sunucuda (ISR), Sportmonks istekleri paylaşımlı cache'ten:
- * - profil `referees/{id}?include=country` (7 gün), sezon istatistikleri (hakem kartıyla ortak anahtar, 12 sa),
- * - görev aldığı maçlar `referees/{id}?include=fixtures` (eşleme satırları: fixture_id + görev; 1 sa),
- * - maç ayrıntısı `fixtures/multi` (20'lik; yalnız katılımcı + skor + olay türü — kart / penaltı için).
- * Takım kırılımı bu sezonun bütün orta hakemlik maçlarından (en çok 3 × 20 maç); bu sezon maçı yoksa son 20 maç.
- * Hesaplanan kırılım Redis'te 24 sa.
+ * - TEK `referees/{id}` isteği (`REFEREE_PAGE_INCLUDE`): profil (ülke) + sezon istatistikleri + görev aldığı maçlar
+ *   (eşleme satırları: fixture_id + görev); 6 sa (bkz. cachePolicy `referees`). Önce üç ayrı istekti (7 g / 12 sa / 1 sa).
+ * - maç ayrıntısı `fixtures/multi` (20'lik SABİT parçalar, bkz. `anchoredChunks`; yalnız katılımcı + skor + olay türü).
+ * Takım kırılımı orta hakemlik maçlarından (en yeni 8 parça); hesaplanan kırılım Redis'te 24 sa.
  */
 import type { Match } from '@/models/liveScore';
 import { sportmonksClientRequest } from '@/services/sportmonksRuntimeClient';
@@ -14,7 +13,8 @@ import { mapSportmonksStateToPhase } from '@/services/sportmonks/stateMapping';
 import { REFEREE_TYPE_IDS } from '@/services/sportmonks/refereeFormatter';
 import { refereeSeasonTable, type RefereeSeasonLine, type RefereeSeasonTableRow } from '@/services/sportmonks/refereeStats';
 import { refereeTeamBreakdown, type BreakdownFixture, type TeamBreakdownRow } from '@/services/sportmonks/refereeTeamBreakdown';
-import { loadRefereeStatsRaw } from '@/server/refereeSummary';
+import { REFEREE_STATS_INCLUDE } from '@/server/refereeSummary';
+import type { RawReferee } from '@/services/sportmonks/refereeStats';
 import { fitsInRedis, withRedis } from '@/lib/redis';
 import { cacheKeyPrefix } from '@/lib/cacheNamespace';
 import { loadWithSwr, peekSwr } from '@/server/swrCache';
@@ -25,6 +25,8 @@ import { REFEREE_TABLE_LEAGUES, seasonSlugOf } from '@/config/refereeTableLeague
 const MULTI_SIZE = 20;
 /** Takım kırılımı (bütün sezonlar) için en çok bu kadar 20'lik parça (160 orta hakemlik maçı). */
 const MAX_BREAKDOWN_CHUNKS = 8;
+/** Sayfa verisi (SWR) ve ISR: tek Sportmonks isteğinin önbelleğiyle aynı 6 sa (haftada ~1 maç; yeni atama ≤ 6 sa gecikir). */
+export const REFEREE_PAGE_FRESH_SECONDS = 6 * 60 * 60;
 const RECENT_COUNT = 10;
 const BREAKDOWN_TTL_SECONDS = 24 * 60 * 60;
 const MULTI_INCLUDE = 'participants;scores;events:type_id,participant_id;league:name,image_path';
@@ -68,25 +70,39 @@ type RawRefereeProfile = {
   country?: { name?: string; iso2?: string | null; image_path?: string | null } | null;
 };
 type RawRefereeFixtures = { fixtures?: { fixture_id?: number; type_id?: number }[] | null };
+type RawRefereePage = RawRefereeProfile & RawReferee & RawRefereeFixtures;
 
-async function loadProfile(id: number): Promise<RawRefereeProfile | null | 'missing'> {
+/**
+ * Sayfanın tek isteği. 2026-10-14 gerçek istekle doğrulandı (hakem 62331): ülke, istatistik (9 sezon / 57 detay) ve
+ * maç satırları (187) eski üç ayrı istekle birebir aynı.
+ */
+export const REFEREE_PAGE_INCLUDE = `country;${REFEREE_STATS_INCLUDE};fixtures`;
+
+/** `missing`: Sportmonks 404 / boş; `null`: geçici hata. */
+async function loadReferee(id: number): Promise<RawRefereePage | null | 'missing'> {
   try {
-    const env = await sportmonksClientRequest<RawRefereeProfile>('football', `/referees/${id}`, { include: 'country' });
+    const env = await sportmonksClientRequest<RawRefereePage>('football', `/referees/${id}`, { include: REFEREE_PAGE_INCLUDE });
     return env.data && !Array.isArray(env.data) && env.data.id ? env.data : 'missing';
   } catch (e) {
     return (e as { status?: number })?.status === 404 ? 'missing' : null;
   }
 }
 
-async function loadMainRefereeFixtureIds(id: number): Promise<number[]> {
-  try {
-    const env = await sportmonksClientRequest<RawRefereeFixtures>('football', `/referees/${id}`, { include: 'fixtures' });
-    const rows = env.data && !Array.isArray(env.data) ? (env.data.fixtures ?? []) : [];
-    // Yeni sezon fikstürleri en büyük id'lerde (fikstür sezon başında topluca açılır).
-    return [...new Set(rows.filter((r) => r.type_id === REFEREE_TYPE_IDS.MAIN).map((r) => r.fixture_id).filter((x): x is number => typeof x === 'number'))].sort((a, b) => b - a);
-  } catch {
-    return [];
-  }
+/** Orta hakemlik maç id'leri, eskiden yeniye (yeni sezon fikstürleri en büyük id'lerde: fikstür sezon başında topluca açılır). */
+export function mainRefereeFixtureIds(raw: RawRefereeFixtures): number[] {
+  const rows = raw.fixtures ?? [];
+  return [...new Set(rows.filter((r) => r.type_id === REFEREE_TYPE_IDS.MAIN).map((r) => r.fixture_id).filter((x): x is number => typeof x === 'number'))].sort((a, b) => a - b);
+}
+
+/**
+ * `fixtures/multi` parçaları: EN ESKİ maçtan başlayan sabit 20'lik sınırlar, en yeni `maxChunks` parça, en yeni parça önce.
+ * Yeni atama yalnız eklendiği parçayı (çoğunlukla son parça) değiştirir; diğer parçaların önbellek anahtarı aynı kalır. Önce
+ * en yeni maçtan dilimleniyordu: her yeni atama bütün sınırları kaydırıp 8 parçanın hepsini yeniden çektiriyordu.
+ */
+export function anchoredChunks(idsAsc: readonly number[], size: number, maxChunks: number): number[][] {
+  const chunks: number[][] = [];
+  for (let i = 0; i < idsAsc.length; i += size) chunks.push(idsAsc.slice(i, i + size));
+  return chunks.slice(-maxChunks).reverse();
 }
 
 export async function loadMulti(ids: number[]): Promise<SportmonksFixture[]> {
@@ -178,12 +194,12 @@ async function leagueAverage(row: RefereeSeasonTableRow): Promise<RefereeRates |
 }
 
 /**
- * Sayfa verisi Redis'te stale-while-revalidate (taze 1 sa, saklama 7 gün): süresi dolunca eski veri hemen, yenisi
+ * Sayfa verisi Redis'te stale-while-revalidate (taze 6 sa, saklama 7 gün): süresi dolunca eski veri hemen, yenisi
  * arka planda (bkz. server/swrCache.ts); "yok" (404) cache'lenmez. Hiç veri yokken ilk üretim eşzamanlı.
  */
 export async function loadRefereePage(id: number): Promise<RefereePageData | 'missing' | null> {
   let missing = false;
-  const res = await loadWithSwr<RefereePageData>(`${cacheKeyPrefix()}people:referee-page:v2:${id}`, { freshSeconds: 60 * 60 }, async () => {
+  const res = await loadWithSwr<RefereePageData>(`${cacheKeyPrefix()}people:referee-page:v2:${id}`, { freshSeconds: REFEREE_PAGE_FRESH_SECONDS }, async () => {
     const r = await computeRefereePage(id);
     if (r === 'missing') missing = true;
     return r === 'missing' ? null : r;
@@ -193,26 +209,33 @@ export async function loadRefereePage(id: number): Promise<RefereePageData | 'mi
 }
 
 async function computeRefereePage(id: number): Promise<RefereePageData | 'missing' | null> {
-  const [profile, statsRaw, mainIds] = await Promise.all([loadProfile(id), loadRefereeStatsRaw(id), loadMainRefereeFixtureIds(id)]);
-  if (profile === 'missing') return 'missing';
-  if (!profile) return null;
+  const raw = await loadReferee(id);
+  if (raw === 'missing') return 'missing';
+  if (!raw) return null;
+  const profile = raw;
+  const statsRaw: RawReferee = raw;
+  const mainIds = mainRefereeFixtureIds(raw);
 
-  const stats = statsRaw?.statistics ?? [];
+  const stats = statsRaw.statistics ?? [];
   const currentSeasonName = stats.find((s) => s.season?.is_current)?.season?.name ?? null;
   const seasonNameById = new Map(stats.map((s) => [s.season_id ?? s.season?.id ?? 0, s.season?.name ?? '']).filter(([id, n]) => id && n) as [number, string][]);
-  const firstChunk = await loadMulti(mainIds.slice(0, MULTI_SIZE));
-  const recent = firstChunk.filter(isFinished).sort(byKickoffDesc).slice(0, RECENT_COUNT).map(toRecentMatch);
+  // Son maçlar en yeni parçadan; yeterli biten maç yoksa (yeni sezonun atanmış ama oynanmamış maçları) bir önceki parça da.
+  const chunks = anchoredChunks(mainIds, MULTI_SIZE, MAX_BREAKDOWN_CHUNKS);
+  const loaded: SportmonksFixture[][] = [];
+  for (const chunk of chunks) {
+    loaded.push(await loadMulti(chunk));
+    if (loaded.flat().filter(isFinished).length >= RECENT_COUNT) break;
+  }
+  const recent = loaded.flat().filter(isFinished).sort(byKickoffDesc).slice(0, RECENT_COUNT).map(toRecentMatch);
 
-  // Takım kırılımı bütün sezonlar için (orta hakemlik maçları, en çok 8 × 20); hesap Redis'te 24 sa.
+  // Takım kırılımı bütün sezonlar için (orta hakemlik maçları, en yeni 8 parça); hesap Redis'te 24 sa.
   const cacheKey = `${cacheKeyPrefix()}people:ref-teams:v2:${id}:${mainIds.length}`;
   let teams = await breakdownFromCache(cacheKey);
   if (!teams) {
-    const fetched: SportmonksFixture[] = [...firstChunk];
-    for (let chunk = 1; chunk < MAX_BREAKDOWN_CHUNKS && chunk * MULTI_SIZE < mainIds.length; chunk++) {
-      fetched.push(...(await loadMulti(mainIds.slice(chunk * MULTI_SIZE, (chunk + 1) * MULTI_SIZE))));
-    }
+    const fetched: SportmonksFixture[] = loaded.flat();
+    for (const chunk of chunks.slice(loaded.length)) fetched.push(...(await loadMulti(chunk)));
     teams = breakdownsBySeason(fetched, seasonNameById, currentSeasonName);
-    if (firstChunk.length && fitsInRedis(teams)) await withRedis((r) => r.set(cacheKey, teams, { ex: BREAKDOWN_TTL_SECONDS }), null);
+    if (loaded[0]?.length && fitsInRedis(teams)) await withRedis((r) => r.set(cacheKey, teams, { ex: BREAKDOWN_TTL_SECONDS }), null);
   }
 
   const seasons = refereeSeasonTable(statsRaw);

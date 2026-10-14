@@ -3,8 +3,9 @@
  * - Hakem listesi `referees/seasons/{seasonId}` (sezonda görev alanlar; 24 sa cache, sitemap ile ortak),
  * - her hakemin o sezonki satırı mevcut hakem istatistik cache'inden (hakem kartı / sayfası ile ortak anahtar, 12 sa),
  *   eşzamanlı en çok 8 istek. Sezon satırı olmayan (yardımcı hakem / dördüncü hakem) listeye girmez.
- * Hesaplanan tablo Redis'te stale-while-revalidate (taze 12 sa, saklama 7 gün): süresi dolunca eski tablo hemen,
- * yenisi arka planda (bkz. server/swrCache.ts). Hiç tablo yokken ilk üretim eşzamanlı (soğukta ~4–7 sn).
+ * Hesaplanan tablo Redis'te stale-while-revalidate (taze 12 sa, saklama 7 gün; bitmiş eski sezon taze 30 gün, saklama 60
+ * gün — yenileme ~35 Referee isteği, eski sezonun satırları değişmez): süresi dolunca eski tablo hemen, yenisi arka planda
+ * (bkz. server/swrCache.ts). Hiç tablo yokken ilk üretim eşzamanlı (soğukta ~4–7 sn).
  */
 import { getSeasonsList } from '@/services/liveScoreService';
 import { sportmonksCollectAllPages } from '@/services/sportmonksRuntimeClient';
@@ -17,6 +18,9 @@ import { REFEREE_TABLE_LEAGUES, seasonSlugOf, type RefereeTableLeague } from '@/
 
 const STATS_CONCURRENCY = 8;
 const TABLE_FRESH_SECONDS = 12 * 60 * 60;
+const DAY_SECONDS = 24 * 60 * 60;
+export const PAST_SEASON_TABLE_FRESH_SECONDS = 30 * DAY_SECONDS;
+export const PAST_SEASON_TABLE_KEEP_SECONDS = 60 * DAY_SECONDS;
 /** İstatistik isteklerinin bu oranından fazlası başarısızsa tablo yazılmaz (geçici hata eski tabloyu ezmesin). */
 const MAX_FAILED_RATIO = 0.25;
 const SEASON_OPTIONS = 3;
@@ -56,7 +60,8 @@ export async function loadRefereeLeagueTable(leagueSlug: string, seasonSlug: str
   if (!season) return 'missing';
 
   const key = refereeTableCacheKey(season.id);
-  const cached = await loadWithSwr<RefereeTableRow[]>(key, { freshSeconds: TABLE_FRESH_SECONDS }, async () => {
+  const end = seasonList.find((s) => s.id === season.id)?.end;
+  const cached = await loadWithSwr<RefereeTableRow[]>(key, refereeTableSwrOptions(season.id === seasons[0]!.id, end), async () => {
     const referees = await sportmonksCollectAllPages<RawPerson>({ basePath: 'football', path: `/referees/seasons/${season.id}`, perPage: 50, maxPages: 5 }).catch(() => null);
     if (!referees) return null;
     const unique = [...new Map(referees.filter((r) => r?.id).map((r) => [r.id, r])).values()];
@@ -83,6 +88,14 @@ export async function loadRefereeLeagueTable(leagueSlug: string, seasonSlug: str
     seasons: seasons.map(({ name, slug }) => ({ name, slug })),
     rows,
   };
+}
+
+/** Güncel sezon 12 sa; listede eski ve bitiş tarihi geçmiş (ya da bilinmeyen) sezon 30 gün taze, 60 gün saklanır. */
+export function refereeTableSwrOptions(isLatestSeason: boolean, seasonEnd: string | undefined, now = Date.now()): { freshSeconds: number; keepSeconds?: number } {
+  const endMs = seasonEnd ? Date.parse(seasonEnd) : NaN;
+  const ended = !Number.isFinite(endMs) || endMs < now;
+  if (isLatestSeason || !ended) return { freshSeconds: TABLE_FRESH_SECONDS };
+  return { freshSeconds: PAST_SEASON_TABLE_FRESH_SECONDS, keepSeconds: PAST_SEASON_TABLE_KEEP_SECONDS };
 }
 
 /** Sezon tablosunun Redis anahtarı (hakem sayfası lig ortalaması bunu ek istek atmadan okur). */
