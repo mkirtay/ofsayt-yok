@@ -1,8 +1,10 @@
 /**
- * Teknik direktör sayfası (/teknik-direktor/[slug]) verisi — sunucuda (ISR), Sportmonks paylaşımlı cache'ten:
- * - profil `coaches/{id}?include=nationality;teams.team` (7 gün) — mevcut takım + göreve başlama,
- * - sezon istatistikleri (12 sa) — sezon × turnuva × takım G-B-M,
- * - son 10 maç: mevcut takımın maçlarından (takım sayfasıyla ortak cache), göreve başladığı tarihten sonra.
+ * Teknik direktör sayfası (/teknik-direktor/[slug]) verisi — sunucuda (ISR), Sportmonks paylaşımlı cache'ten TEK istek:
+ * `coaches/{id}?include=` profil (nationality; teams.team) + sezon istatistikleri + görev aldığı maçlar
+ * (`COACH_PAGE_INCLUDE`, ~50 KB). Önce üç ayrı `coaches/{id}` isteğiydi (Coach havuzu, tarayıcı dalgasında 3×).
+ * - profil — mevcut takım + göreve başlama,
+ * - sezon istatistikleri — sezon × turnuva × takım G-B-M,
+ * - son 10 maç: görev aldığı biten maçlar → skor / takım / lig `fixtures/multi` ile.
  * Kariyer zaman çizelgesi yok (Sportmonks `teams` kaydı eksik).
  */
 import { sportmonksClientRequest } from '@/services/sportmonksRuntimeClient';
@@ -19,6 +21,8 @@ type RawCoachFixtures = { fixtures?: { id: number; starting_at?: string | null; 
 const RECENT_COUNT = 10;
 export const COACH_PAGE_FRESH_SECONDS = 6 * 60 * 60;
 export const COACH_STATS_INCLUDE = 'statistics.details.type:developer_name;statistics.season:name,league_id;statistics.team:name,image_path';
+/** Sayfanın tek isteği (2026-10-14 gerçek istekle doğrulandı: dört include birlikte eksiksiz dönüyor). */
+export const COACH_PAGE_INCLUDE = `nationality;teams.team:name,image_path;${COACH_STATS_INCLUDE};fixtures:starting_at,state_id`;
 
 type RawCoachProfile = {
   id?: number;
@@ -61,33 +65,22 @@ export function currentTeamStint(teams: RawCoachProfile['teams'], today: string)
   return { teamId: cur.team_id!, since, name: cur.team?.name ?? '', ...(cur.team?.image_path ? { logo: cur.team.image_path } : {}) };
 }
 
-async function loadProfile(id: number): Promise<RawCoachProfile | 'missing' | null> {
+type RawCoachPage = RawCoachProfile & RawCoach & RawCoachFixtures;
+
+/** `missing`: Sportmonks 404 / boş; `null`: geçici hata. */
+async function loadCoach(id: number): Promise<RawCoachPage | 'missing' | null> {
   try {
-    const env = await sportmonksClientRequest<RawCoachProfile>('football', `/coaches/${id}`, { include: 'nationality;teams.team:name,image_path' });
+    const env = await sportmonksClientRequest<RawCoachPage>('football', `/coaches/${id}`, { include: COACH_PAGE_INCLUDE });
     return env.data && !Array.isArray(env.data) && env.data.id ? env.data : 'missing';
   } catch (e) {
     return (e as { status?: number })?.status === 404 ? 'missing' : null;
   }
 }
 
-async function loadStats(id: number): Promise<RawCoach | null> {
+/** Son maçlar: görev aldığı biten son 10 maç (~150 satırdan) → skor / takım / lig `fixtures/multi` ile (hakem sayfasıyla aynı include, cache'li). */
+async function loadRecent(fixtures: RawCoachFixtures['fixtures']): Promise<PersonRecentMatch[]> {
   try {
-    const env = await sportmonksClientRequest<RawCoach>('football', `/coaches/${id}`, { include: COACH_STATS_INCLUDE });
-    return env.data && !Array.isArray(env.data) ? env.data : null;
-  } catch {
-    return null;
-  }
-}
-
-/**
- * Son maçlar: teknik direktörün görev aldığı maçlar (`coaches/{id}?include=fixtures:starting_at,state_id`, 1 sa; ~150
- * satır, 37 KB) → biten son 10 → skor / takım / lig `fixtures/multi` ile (hakem sayfasıyla aynı include, cache'li).
- */
-async function loadRecent(id: number): Promise<PersonRecentMatch[]> {
-  try {
-    const env = await sportmonksClientRequest<RawCoachFixtures>('football', `/coaches/${id}`, { include: 'fixtures:starting_at,state_id' });
-    const rows = env.data && !Array.isArray(env.data) ? (env.data.fixtures ?? []) : [];
-    const ids = rows
+    const ids = (fixtures ?? [])
       .filter((f) => f.state_id != null && mapSportmonksStateToPhase(f.state_id) === 'FINISHED')
       .sort(byKickoffDesc)
       .slice(0, RECENT_COUNT)
@@ -115,11 +108,12 @@ export async function loadCoachPage(id: number): Promise<CoachPageData | 'missin
   return missing ? 'missing' : null;
 }
 
-async function computeCoachPage(id: number): Promise<CoachPageData | 'missing' | null> {
+export async function computeCoachPage(id: number): Promise<CoachPageData | 'missing' | null> {
   const today = todayIsoIstanbul();
-  const [profile, stats, recent] = await Promise.all([loadProfile(id), loadStats(id), loadRecent(id)]);
+  const profile = await loadCoach(id);
   if (profile === 'missing') return 'missing';
   if (!profile) return null;
+  const recent = await loadRecent(profile.fixtures);
   const stint = currentTeamStint(profile.teams, today);
   return {
     id,
@@ -134,7 +128,7 @@ async function computeCoachPage(id: number): Promise<CoachPageData | 'missing' |
         }
       : null,
     currentTeam: stint ? { id: stint.teamId, name: stint.name, since: stint.since, ...(stint.logo ? { logo: stint.logo } : {}) } : null,
-    seasons: coachSeasonTable(stats),
+    seasons: coachSeasonTable(profile),
     recent,
   };
 }

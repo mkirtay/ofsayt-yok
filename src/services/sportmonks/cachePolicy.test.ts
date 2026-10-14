@@ -181,4 +181,13 @@ describe('hakem / teknik direktör sayfaları', () => {
     expect(sportmonksCacheTtl('football/referees/seasons/28203', [{ id: 1 }], NOW).fresh).toBe(86400);
     expect(sportmonksCacheTtl('football/teams/seasons/28203', [{ id: 34 }], NOW).fresh).toBe(86400);
   });
+
+  it('teknik direktör sayfasının tek isteği (profil + istatistik + maçlar): 6 sa taze, 7 gün eski kopya', () => {
+    expect(sportmonksCacheTtl('football/coaches/199988', { id: 199988, teams: [], statistics: [], fixtures: [] }, NOW)).toEqual({
+      fresh: 6 * 3600,
+      stale: 7 * 86400,
+    });
+    // Hakemde değişiklik yok: maçlar 1 sa.
+    expect(sportmonksCacheTtl('football/referees/62331', { id: 62331, fixtures: [] }, NOW).fresh).toBe(3600);
+  });
 });
