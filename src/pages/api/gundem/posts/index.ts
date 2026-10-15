@@ -6,7 +6,17 @@ import { hitFixedWindowRateLimit, requestIp } from '@/lib/rateLimit';
 import { readCache, writeCache } from '@/lib/livescoreCache';
 import { captureError } from '@/lib/logger';
 import { getRequestUserId } from '@/lib/mobileAuth';
-import { checkGundemAuthor, USERNAME_REQUIRED_CODE, USERNAME_REQUIRED_MESSAGE } from '@/lib/gundem/authorGate';
+import {
+  GUNDEM_SUSPENDED_CODE,
+  USERNAME_REQUIRED_CODE,
+  USERNAME_REQUIRED_MESSAGE,
+  loadGundemAuthor,
+  suspendedMessage,
+} from '@/lib/gundem/authorGate';
+import { postVisibilityWhere } from '@/lib/gundem/visibility';
+import { notifyMentions, resolveMentions, saveMentions } from '@/lib/gundem/mentions';
+import { moderateGundemText } from '@/lib/moderation/contentGate';
+import { fileAutoFlags } from '@/lib/moderation/reports';
 import { requireTermsConsent } from '@/lib/termsConsentGate';
 import { POST_MAX_LENGTH, matchPostsInAllFeed } from '@/config/gundem';
 import {
@@ -71,7 +81,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
       }
 
-      const where: Prisma.PostWhereInput = { deletedAt: null };
+      // Moderasyon gizlemesi + izleyicinin engellediği yazarlar (tek NOT EXISTS; bkz. lib/gundem/visibility.ts).
+      const where: Prisma.PostWhereInput = { deletedAt: null, AND: [postVisibilityWhere(viewerId)] };
       if (scope === 'all') {
         if (!matchPostsInAllFeed()) where.matchId = null;
       } else if (scope === 'match') {
@@ -129,11 +140,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(400).json({ error: `Gönderi 1–${POST_MAX_LENGTH} karakter olmalıdır.` });
       }
 
-      const author = await checkGundemAuthor(userId);
-      if (author === 'missing') return res.status(401).json({ error: 'Oturum geçersiz. Lütfen tekrar giriş yapın.' });
-      if (author === 'needsUsername') {
+      const author = await loadGundemAuthor(userId);
+      if (author.status === 'missing') return res.status(401).json({ error: 'Oturum geçersiz. Lütfen tekrar giriş yapın.' });
+      if (author.status === 'needsUsername') {
         return res.status(403).json({ error: USERNAME_REQUIRED_MESSAGE, code: USERNAME_REQUIRED_CODE });
       }
+      if (author.status === 'suspended') {
+        return res
+          .status(403)
+          .json({ error: suspendedMessage(author.until), code: GUNDEM_SUSPENDED_CODE, suspendedUntil: author.until.toISOString() });
+      }
+      // İçerik filtresi + spam (AĞIR / bağlantı / tekrar → red; ORTA → yayın + kuyruk işareti).
+      const gate = await moderateGundemText({ userId, body, surface: 'post', accountCreatedAt: author.createdAt });
+      if (!gate.ok) return res.status(gate.status).json({ error: gate.error, code: gate.code });
 
       // matchId verildiyse maç gerçek olmalı: rozet verisi (MatchSnapshot) burada garanti edilir.
       let matchId: string | null = null;
@@ -156,9 +175,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           matchId,
           teamId: optionalInt(input.teamId),
         },
-        select: postSelect(userId),
+        select: { id: true },
       });
-      const [post] = await serializePosts([created], userId);
+      const mentions = await resolveMentions(userId, body);
+      await saveMentions({ postId: created.id }, mentions);
+      await notifyMentions(userId, created.id, mentions);
+      await fileAutoFlags({ type: 'POST', id: created.id, authorId: userId }, gate.flags, 'post');
+      const row = await prisma.post.findUniqueOrThrow({ where: { id: created.id }, select: postSelect(userId) });
+      const [post] = await serializePosts([row], userId);
       return res.status(201).json(post);
     }
 

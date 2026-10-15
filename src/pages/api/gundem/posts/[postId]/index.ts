@@ -5,6 +5,7 @@ import { getRequestUserId } from '@/lib/mobileAuth';
 import { queryString } from '@/lib/gundem/validation';
 import { postSelect, serializePosts } from '@/lib/gundem/posts';
 import { isAdminUser } from '@/lib/gundem/authz';
+import { postVisibilityWhere } from '@/lib/gundem/visibility';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const postId = queryString(req.query.postId);
@@ -13,8 +14,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     if (req.method === 'GET') {
       const viewerId = await getRequestUserId(req, res);
+      // Gizlenmiş / engellenen yazarın gönderisi: yalnız yazar (ve yönetici, inceleme için) görür; diğerlerine 404.
+      const admin = viewerId ? await isAdminUser(viewerId) : false;
       const post = await prisma.post.findFirst({
-        where: { id: postId, deletedAt: null },
+        where: { id: postId, deletedAt: null, ...(admin ? {} : { AND: [postVisibilityWhere(viewerId)] }) },
         select: postSelect(viewerId),
       });
       if (!post) return res.status(404).json({ error: 'Gönderi bulunamadı.' });

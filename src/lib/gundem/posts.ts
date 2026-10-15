@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { withAbsoluteImage } from '@/lib/siteUrl';
 import { isOfficialUser } from '@/lib/gundem/official';
 import { isDeletedUserId } from '@/config/deletedUser';
+import { mentionsSelect, serializeMentions } from '@/lib/gundem/mentions';
 
 /** `email` yalnızca `official` türetmek için okunur; `serializeUserRef`/`serializeAuthor` yanıttan çıkarır. */
 export const authorSelect = { id: true, name: true, username: true, image: true, email: true } as const;
@@ -37,7 +38,9 @@ export function postSelect(viewerId: string | null) {
     matchId: true,
     teamId: true,
     author: { select: postAuthorSelect(viewerId) },
-    _count: { select: { likes: true, comments: { where: { deletedAt: null } } } },
+    hiddenAt: true,
+    mentions: mentionsSelect,
+    _count: { select: { likes: true, comments: { where: { deletedAt: null, hiddenAt: null } } } },
     likes: viewerId ? { where: { userId: viewerId }, select: { id: true } } : false,
   } satisfies Prisma.PostSelect;
 }
@@ -71,8 +74,12 @@ export function serializeMatchBadge(snap: MatchSnapshot) {
   };
 }
 
+/**
+ * `mentions` (isteğe bağlı alan): doğrulanmış @etiketler → profil bağlantısı. `underReview` yalnız gizlenmiş içeriğin
+ * YAZARINA döner (diğerleri bu içeriği hiç almaz; bkz. lib/gundem/visibility.ts).
+ */
 export function serializePost(row: PostRow, viewerId: string | null = null, snapshot: MatchSnapshot | null = null) {
-  const { _count, likes, author, ...rest } = row;
+  const { _count, likes, author, hiddenAt, mentions, ...rest } = row;
   return {
     ...rest,
     match: snapshot ? serializeMatchBadge(snapshot) : null,
@@ -80,6 +87,31 @@ export function serializePost(row: PostRow, viewerId: string | null = null, snap
     likes: _count.likes,
     comments: _count.comments,
     likedByMe: Array.isArray(likes) && likes.length > 0,
+    mentions: serializeMentions(mentions),
+    ...(hiddenAt && viewerId && author.id === viewerId ? { underReview: true as const } : {}),
+  };
+}
+
+/** Yorum select'i (liste + oluşturma yanıtı aynı biçim). */
+export const commentSelect = {
+  id: true,
+  postId: true,
+  body: true,
+  createdAt: true,
+  hiddenAt: true,
+  user: { select: authorSelect },
+  mentions: mentionsSelect,
+} satisfies Prisma.PostCommentSelect;
+
+type CommentRow = Prisma.PostCommentGetPayload<{ select: typeof commentSelect }>;
+
+export function serializeComment(row: CommentRow, viewerId: string | null = null) {
+  const { hiddenAt, mentions, user, ...rest } = row;
+  return {
+    ...rest,
+    user: serializeUserRef(user),
+    mentions: serializeMentions(mentions),
+    ...(hiddenAt && viewerId && user.id === viewerId ? { underReview: true as const } : {}),
   };
 }
 

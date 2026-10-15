@@ -129,6 +129,30 @@ export function accountDeletedEmail(): EmailContent {
 }
 
 /**
+ * Yönetici şikâyet özeti (toplu: lib/moderation/adminAlert.ts en fazla 30 dakikada bir). Kişisel veri yok: yalnız açık
+ * şikâyetli içerik sayısı ve kuyruk bağlantısı (şikâyet eden / edilen, içerik metni e-postaya yazılmaz).
+ */
+export function moderationAlertEmail(openTargets: number, link: string, reviewHours: number): EmailContent {
+  return {
+    subject: `${BRAND.name} - Gündem: ${openTargets} açık şikâyet`,
+    html: emailHtml(
+      `<p>Merhaba,</p><p>Gündem'de incelenmeyi bekleyen <strong>${openTargets}</strong> içerik var. Topluluk kurallarında şikâyetlere en geç ${reviewHours} saatte bakma taahhüdü var.</p><p><a href="${link}">${link}</a></p>`,
+    ),
+    text: `Merhaba,\n\nGündem'de incelenmeyi bekleyen ${openTargets} içerik var. Topluluk kurallarında şikâyetlere en geç ${reviewHours} saatte bakma taahhüdü var.\n${link}\n`,
+  };
+}
+
+/** Yönetici şikâyet özeti; gönderilemezse false (şikâyet kaydı etkilenmez). Adres loglanmaz. */
+export async function sendModerationAlertEmail(to: string, content: EmailContent): Promise<boolean> {
+  try {
+    return await sendViaResend(to, content);
+  } catch {
+    console.warn('[moderation] Yönetici özet e-postası gönderilemedi (ağ hatası).');
+    return false;
+  }
+}
+
+/**
  * Resend HTTP API: gövde JSON (UTF-8); konu ve gövdedeki Türkçe karakterleri MIME'a (konu başlığı RFC 2047, gövde
  * `charset=utf-8`) Resend kodlar. `text` düz metin alternatifi (multipart/alternative).
  */

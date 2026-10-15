@@ -4,11 +4,21 @@ import { sanitizePlainText } from '@/lib/security';
 import { hitFixedWindowRateLimit } from '@/lib/rateLimit';
 import { captureError } from '@/lib/logger';
 import { getRequestUserId } from '@/lib/mobileAuth';
-import { checkGundemAuthor, USERNAME_REQUIRED_CODE, USERNAME_REQUIRED_MESSAGE } from '@/lib/gundem/authorGate';
+import {
+  GUNDEM_SUSPENDED_CODE,
+  USERNAME_REQUIRED_CODE,
+  USERNAME_REQUIRED_MESSAGE,
+  loadGundemAuthor,
+  suspendedMessage,
+} from '@/lib/gundem/authorGate';
+import { commentVisibilityWhere, postVisibilityWhere } from '@/lib/gundem/visibility';
+import { notifyMentions, resolveMentions, saveMentions } from '@/lib/gundem/mentions';
+import { moderateGundemText } from '@/lib/moderation/contentGate';
+import { fileAutoFlags } from '@/lib/moderation/reports';
 import { requireTermsConsent } from '@/lib/termsConsentGate';
 import { COMMENT_MAX_LENGTH } from '@/config/gundem';
 import { PAGE_SIZE, queryString, readJsonBody } from '@/lib/gundem/validation';
-import { authorSelect, paginate, serializeUserRef } from '@/lib/gundem/posts';
+import { commentSelect, paginate, serializeComment } from '@/lib/gundem/posts';
 import { createNotification } from '@/lib/gundem/notify';
 
 // Gönderi/yorum gövdesi ~280 karakter; Next varsayılanı (1 MB) yerine 16 KB — aşılırsa Next 413 döner.
@@ -16,33 +26,29 @@ export const config = { api: { bodyParser: { sizeLimit: '16kb' } } };
 /** Temizlenmemiş gövde için tavan (içerik sınırı 280; etiket/boşluk payı). Aşan istek temizlenmeden 400 alır. */
 const RAW_BODY_MAX_LENGTH = 2000;
 
-const commentSelect = {
-  id: true,
-  postId: true,
-  body: true,
-  createdAt: true,
-  user: { select: authorSelect },
-} as const;
-
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const postId = queryString(req.query.postId);
   if (!postId) return res.status(400).json({ error: 'Geçersiz gönderi kimliği.' });
 
   try {
     if (req.method === 'GET') {
-      const post = await prisma.post.findFirst({ where: { id: postId, deletedAt: null }, select: { id: true } });
+      const viewerId = await getRequestUserId(req, res);
+      const post = await prisma.post.findFirst({
+        where: { id: postId, deletedAt: null, AND: [postVisibilityWhere(viewerId)] },
+        select: { id: true },
+      });
       if (!post) return res.status(404).json({ error: 'Gönderi bulunamadı.' });
 
       const cursor = queryString(req.query.cursor);
       const rows = await prisma.postComment.findMany({
-        where: { postId, deletedAt: null },
+        where: { postId, deletedAt: null, AND: [commentVisibilityWhere(viewerId)] },
         orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
         take: PAGE_SIZE + 1,
         ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
         select: commentSelect,
       });
       const { items, nextCursor } = paginate(rows, PAGE_SIZE);
-      return res.json({ items: items.map((c) => ({ ...c, user: serializeUserRef(c.user) })), nextCursor });
+      return res.json({ items: items.map((c) => serializeComment(c, viewerId)), nextCursor });
     }
 
     if (req.method === 'POST') {
@@ -74,16 +80,30 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
       if (!post) return res.status(404).json({ error: 'Gönderi bulunamadı.' });
 
-      const author = await checkGundemAuthor(userId);
-      if (author === 'missing') return res.status(401).json({ error: 'Oturum geçersiz. Lütfen tekrar giriş yapın.' });
-      if (author === 'needsUsername') {
+      const author = await loadGundemAuthor(userId);
+      if (author.status === 'missing') return res.status(401).json({ error: 'Oturum geçersiz. Lütfen tekrar giriş yapın.' });
+      if (author.status === 'needsUsername') {
         return res.status(403).json({ error: USERNAME_REQUIRED_MESSAGE, code: USERNAME_REQUIRED_CODE });
       }
+      if (author.status === 'suspended') {
+        return res
+          .status(403)
+          .json({ error: suspendedMessage(author.until), code: GUNDEM_SUSPENDED_CODE, suspendedUntil: author.until.toISOString() });
+      }
+      const gate = await moderateGundemText({ userId, body, surface: 'comment', postId, accountCreatedAt: author.createdAt });
+      if (!gate.ok) return res.status(gate.status).json({ error: gate.error, code: gate.code });
 
-      const comment = await prisma.postComment.create({ data: { postId, userId, body }, select: commentSelect });
+      const created = await prisma.postComment.create({ data: { postId, userId, body }, select: { id: true } });
+      // Gönderi sahibine yorum bildirimi (sahip yorumcuyu engellediyse yazılmaz — createNotification).
       await createNotification({ userId: post.authorId, actorId: userId, type: 'POST_COMMENT', postId });
+      const mentions = await resolveMentions(userId, body);
+      await saveMentions({ postId, commentId: created.id }, mentions);
+      // Gönderi sahibi zaten yorum bildirimi aldı → etiket bildirimi ikinci kez gitmez.
+      await notifyMentions(userId, postId, mentions.filter((m) => m.userId !== post.authorId));
+      await fileAutoFlags({ type: 'COMMENT', id: created.id, authorId: userId }, gate.flags, 'comment');
 
-      return res.status(201).json({ ...comment, user: serializeUserRef(comment.user) });
+      const comment = await prisma.postComment.findUniqueOrThrow({ where: { id: created.id }, select: commentSelect });
+      return res.status(201).json(serializeComment(comment, userId));
     }
 
     res.setHeader('Allow', 'GET, POST');

@@ -181,6 +181,9 @@ describe('hesap silme (gerçek SQL)', () => {
         paymentOrdersDetached: 1,
         referralsDeleted: 1,
         verificationTokensDeleted: 2,
+        reportsAnonymized: 0,
+        blocksDeleted: 0,
+        mentionsDeleted: 0,
       },
     });
     expect(sent.to).toEqual(['full@example.invalid']);

@@ -13,8 +13,14 @@ export type GundemAuthor = {
   followingCount: number;
 };
 
-/** Profil başlığı: yazar alanları + silinmemiş post sayısı + resmi hesap bayrağı (`GET /api/gundem/users/[userId]`). */
-export type GundemUserProfile = GundemAuthor & { postCount: number };
+/**
+ * Profil başlığı: yazar alanları + silinmemiş post sayısı + resmi hesap bayrağı (`GET /api/gundem/users/[userId]`).
+ * `blockedByMe`: izleyici bu kullanıcıyı engellemiş mi (eski yanıtlarda yok).
+ */
+export type GundemUserProfile = GundemAuthor & { postCount: number; blockedByMe?: boolean };
+
+/** Doğrulanmış @etiket (sunucu yazma anında çözer) → profil bağlantısı. Eski yanıtlarda alan yok. */
+export type GundemMention = { username: string; userId: string };
 
 export type GundemMatchTeam = { id: number; name: string; shortName: string | null; logo: string | null };
 
@@ -39,6 +45,9 @@ export type GundemPost = {
   likes: number;
   comments: number;
   likedByMe: boolean;
+  mentions?: GundemMention[];
+  /** Moderasyonla gizlenmiş içerik — yalnız YAZARINA döner ("inceleme altında"). */
+  underReview?: boolean;
 };
 
 export type GundemCommentUser = Pick<GundemAuthor, 'id' | 'name' | 'username' | 'image' | 'official' | 'deleted'>;
@@ -49,13 +58,15 @@ export type GundemComment = {
   body: string;
   createdAt: string;
   user: GundemCommentUser;
+  mentions?: GundemMention[];
+  underReview?: boolean;
 };
 
 export type GundemPage<T> = { items: T[]; nextCursor: string | null };
 
 export type GundemScope = 'all' | 'following' | 'official' | 'match';
 
-export type GundemNotificationType = 'POST_LIKE' | 'POST_COMMENT' | 'FOLLOW' | 'OFFICIAL_POST';
+export type GundemNotificationType = 'POST_LIKE' | 'POST_COMMENT' | 'FOLLOW' | 'OFFICIAL_POST' | 'MENTION' | 'MODERATION_WARNING';
 
 /** `GET /api/gundem/notifications` satırı. `type` sunucuda serbest string: bilinmeyen değerler istemcide elenir. `post` silinmişse null. */
 export type GundemNotification = {

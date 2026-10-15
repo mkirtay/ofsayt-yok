@@ -21,7 +21,7 @@ describe('feedCacheKey', () => {
   const on = { matchId: null, matchPostsInAll: true };
 
   it('scope ve cursor anahtarı ayırır', () => {
-    expect(feedCacheKey('all', null, on)).toBe('gundem:feed:v2:all:m-:k1:-');
+    expect(feedCacheKey('all', null, on)).toBe('gundem:feed:v3:all:m-:k1:-');
     expect(feedCacheKey('all', 'abc', on)).not.toBe(feedCacheKey('all', null, on));
     expect(feedCacheKey('official', 'abc', on)).not.toBe(feedCacheKey('all', 'abc', on));
   });

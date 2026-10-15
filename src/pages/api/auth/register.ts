@@ -41,7 +41,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   // Kayıt kaynağı geçersizse kayıt yine yapılır, yalnız kaynak yazılmaz.
   const result = await createUserAccount({ name, email, password, username, attribution: parseSignupAttribution(attribution), referralCode, termsVersion: TERMS_CONSENT_VERSION })
   if (!result.ok) {
-    return res.status(result.status).json({ error: result.error })
+    return res.status(result.status).json({ error: result.error, ...(result.code ? { code: result.code } : {}) })
   }
 
   return res.status(201).json({ user: result.user })

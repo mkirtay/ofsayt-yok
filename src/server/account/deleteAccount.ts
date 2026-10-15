@@ -7,6 +7,9 @@
  *  2. Gündem gönderileri, gönderi yorumları ve eski maç yorumları yer tutucuya devredilir (içerik kalır, kişi kopar).
  *  3. Sipariş kayıtları (PaymentOrder) yer tutucuya devredilir: tutar / paket / durum / tarih / Hikie kimliği kalır,
  *     kullanıcıyla bağlantı kopar. Saklama süresi avukata soruldu (docs/YASAL_NOTLAR.md).
+ *  3b. Gündem moderasyonu: kullanıcının verdiği şikâyetler anonimleşir (reporterId boş — kuyruk kaybolmaz), hakkındaki
+ *     şikâyetlerin targetUserId'si boşalır (içerik yer tutucuya geçti; şikâyet içerik kimliğiyle kalır), engelleri (iki
+ *     yön) ve etiketlendiği satırlar silinir (metin düz "@ad" kalır), yönetici kaydındaki hedef kimliği boşalır.
  *  4. Davet kayıtları silinir, bu kullanıcının davet ettiklerindeki `referredById` boşaltılır, e-posta doğrulama /
  *     şifre sıfırlama belirteçleri silinir.
  *  5. User satırı silinir → CASCADE: Account (Google bağlantısı), Session, beğeniler, takipler, bildirimler, push
@@ -31,6 +34,9 @@ export type DeletionCounts = {
   paymentOrdersDetached: number;
   referralsDeleted: number;
   verificationTokensDeleted: number;
+  reportsAnonymized: number;
+  blocksDeleted: number;
+  mentionsDeleted: number;
 };
 
 export type DeleteAccountResult =
@@ -64,6 +70,11 @@ export async function deleteOwnAccount(
       const posts = await tx.post.updateMany({ where: { authorId: userId }, data: { authorId: DELETED_USER_ID } });
       const postComments = await tx.postComment.updateMany({ where: { userId }, data: { userId: DELETED_USER_ID } });
       const matchComments = await tx.matchComment.updateMany({ where: { userId }, data: { userId: DELETED_USER_ID } });
+      const reports = await tx.contentReport.updateMany({ where: { reporterId: userId }, data: { reporterId: null } });
+      await tx.contentReport.updateMany({ where: { targetUserId: userId }, data: { targetUserId: null } });
+      const blocks = await tx.userBlock.deleteMany({ where: { OR: [{ blockerId: userId }, { blockedId: userId }] } });
+      const mentions = await tx.gundemMention.deleteMany({ where: { mentionedUserId: userId } });
+      await tx.moderationAction.updateMany({ where: { targetUserId: userId }, data: { targetUserId: null } });
       const orders = await tx.paymentOrder.updateMany({ where: { userId }, data: { userId: DELETED_USER_ID } });
       const referrals = await tx.referral.deleteMany({ where: { OR: [{ refereeId: userId }, { referrerId: userId }] } });
       await tx.user.updateMany({ where: { referredById: userId }, data: { referredById: null } });
@@ -78,6 +89,9 @@ export async function deleteOwnAccount(
         paymentOrdersDetached: orders.count,
         referralsDeleted: referrals.count,
         verificationTokensDeleted: tokens.count,
+        reportsAnonymized: reports.count,
+        blocksDeleted: blocks.count,
+        mentionsDeleted: mentions.count,
       };
       await tx.accountDeletionLog.create({
         data: {

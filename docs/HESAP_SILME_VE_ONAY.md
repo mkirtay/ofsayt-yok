@@ -30,6 +30,12 @@ onay adımı, mobil için yalnız rapor (C). Hukuki sorular: `docs/YASAL_NOTLAR.
 | Diğer kullanıcıların `referredById` | silinen kullanıcının kimliği | — | **Boşalt** | Kopuk kimlik kalmasın |
 | `GundemBotDraft.decidedById`, `CreditTransaction.actorId` | yönetici kimliği | — | Dokunulmaz | Yalnız yöneticiler; yönetici silinemez |
 | `MatchAnalysis`, `PredictionRecord`, `MatchTrivia`, `MatchSnapshot` | — | kullanıcıya bağlı değil | Dokunulmaz | — |
+| `UserBlock` (iki yön; WEB-GUNDEM 2026-10-16) | engelleyen / engellenen | CASCADE (+ kodla sayılır: `blocksDeleted`) | **Sil** | Sosyal graf |
+| `ContentReport.reporterId` (verdiği şikâyetler) | neden, isteğe bağlı not | SET NULL (kodla: `reportsAnonymized`) | **Anonimleştir** | Şikâyet kuyruğu / karar kaybolmasın; not kişiyi göstermez |
+| `ContentReport.targetUserId` (hakkındaki şikâyetler) | — | kodla boşaltılır | **Boşalt** | İçerik yer tutucuya geçti; şikâyet içerik kimliğiyle kalır |
+| `GundemMention` (etiketlendiği satırlar) | — | CASCADE (kodla: `mentionsDeleted`) | **Sil** | Metin düz "@ad" kalır, bağlantı ve bildirim kalkar |
+| `ModerationAction.targetUserId` | yönetici işlem kaydının hedefi | SET NULL (kodla) | **Boşalt** | Denetim kaydı kalır (işlem, zaman, yönetici) |
+| `User.gundemSuspendedUntil` | Gündem yazma askısı | satırla | **Sil** | Hesap verisi |
 | `AccountDeletionLog` (YENİ) | kişisel veri YOK | — | Yazılır | Denetim izi |
 | Redis | `session-version:{id}` (60 sn), hız sınırı sayaçları, `frikik:attempts:{id}:{gün}` | TTL | Oturum sürümü **hemen silinir**; diğerleri TTL ile düşer | — |
 | Sentry / Vercel günlükleri / Supabase yedekleri / Resend gönderim kaydı | — | kod dışı | — | Avukata soruldu (yedek süresi, Resend) |

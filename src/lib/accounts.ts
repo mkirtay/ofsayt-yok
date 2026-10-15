@@ -11,6 +11,8 @@ import { canonicalEmail, sameMailboxWhere } from '@/lib/emailNormalize';
 import { recordReferral } from '@/lib/referral';
 import { createAndSendEmailVerification } from '@/lib/security';
 import { validatePassword, usernameRules } from '@/lib/validation';
+import { checkNickname } from '@/lib/frikik/nickname';
+import { CONTENT_REJECTED_CODE, PROFILE_REJECTED_MESSAGE, isProfileTextAllowed } from '@/lib/moderation/contentGate';
 import type { SignupAttributionFields } from '@/utils/signupAttribution';
 
 export type CreateAccountInput = {
@@ -36,7 +38,7 @@ export type CreatedAccount = {
 
 export type CreateAccountResult =
   | { ok: true; user: CreatedAccount }
-  | { ok: false; status: number; error: string };
+  | { ok: false; status: number; error: string; code?: string };
 
 export async function createUserAccount(input: CreateAccountInput): Promise<CreateAccountResult> {
   const { name, email, password, username, attribution, referralCode, termsVersion } = input;
@@ -73,10 +75,18 @@ export async function createUserAccount(input: CreateAccountInput): Promise<Crea
       return { ok: false, status: 400, error: usernameRules.message };
     }
     usernameNorm = username.trim();
+    // Kullanıcı adı herkese açık (Gündem, Frikik): profil düzenlemedeki kuralla aynı — ayrılmış / uygunsuz ad yok.
+    if (!checkNickname(usernameNorm).ok || !(await isProfileTextAllowed(usernameNorm))) {
+      return { ok: false, status: 400, error: 'Bu kullanıcı adı kullanılamaz; başka bir ad seç.', code: 'USERNAME_NOT_ALLOWED' };
+    }
     const taken = await prisma.user.findUnique({ where: { username: usernameNorm } });
     if (taken) {
       return { ok: false, status: 409, error: 'Bu kullanıcı adı alınmış.' };
     }
+  }
+
+  if (typeof name === 'string' && name && !(await isProfileTextAllowed(name))) {
+    return { ok: false, status: 400, error: PROFILE_REJECTED_MESSAGE, code: CONTENT_REJECTED_CODE };
   }
 
   // Aynı posta kutusu (her alan adında `+etiket`, gmail'de nokta varyantları) → ikinci hesap (ve ikinci kayıt bonusu)

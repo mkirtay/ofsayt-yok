@@ -4,6 +4,7 @@ import { captureError } from '@/lib/logger';
 import { requireAuth } from '@/lib/requireAuth';
 import { PAGE_SIZE, queryString, readJsonBody } from '@/lib/gundem/validation';
 import { authorSelect, paginate, serializeUserRef } from '@/lib/gundem/posts';
+import { notificationVisibilityWhere } from '@/lib/gundem/visibility';
 
 /**
  * GET: bildirim listesi (cursor). POST: okundu işaretle — gövde `{ ids?: string[] }`;
@@ -18,7 +19,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       const cursor = queryString(req.query.cursor);
       const rows = await prisma.notification.findMany({
-        where: { userId },
+        where: { userId, ...notificationVisibilityWhere(userId) },
         orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
         take: PAGE_SIZE + 1,
         ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
@@ -29,7 +30,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           createdAt: true,
           readAt: true,
           actor: { select: authorSelect },
-          post: { select: { id: true, body: true, deletedAt: true } },
+          post: { select: { id: true, body: true, deletedAt: true, hiddenAt: true, authorId: true } },
         },
       });
       const { items, nextCursor } = paginate(rows, PAGE_SIZE);
@@ -37,7 +38,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         items: items.map(({ actor, post, ...n }) => ({
           ...n,
           actor: actor ? serializeUserRef(actor) : null,
-          post: post && !post.deletedAt ? { id: post.id, body: post.body } : null,
+          // Silinmiş ya da moderasyonla gizlenmiş (yazarı değilse) gönderi → null ("Gönderi silindi").
+          post: post && !post.deletedAt && (!post.hiddenAt || post.authorId === userId) ? { id: post.id, body: post.body } : null,
         })),
         nextCursor,
       });

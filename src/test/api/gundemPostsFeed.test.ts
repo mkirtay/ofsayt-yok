@@ -6,10 +6,20 @@ const h = vi.hoisted(() => ({ viewer: null as string | null, cache: new Map<stri
 
 vi.mock('@/lib/prisma', () => ({
   prisma: {
-    post: { findMany: vi.fn(), create: vi.fn() },
+    post: { findMany: vi.fn(), create: vi.fn(), findUniqueOrThrow: vi.fn() },
     matchSnapshot: { findMany: vi.fn(), findUnique: vi.fn(), upsert: vi.fn() },
     follow: { findMany: vi.fn(async () => []) },
-    user: { findUnique: vi.fn(async () => ({ id: 'u1' })) },
+    // Yazar kapısı (lib/gundem/authorGate → loadGundemAuthor): eski, askısız, şifreli hesap.
+    user: {
+      findUnique: vi.fn(async () => ({
+        id: 'u1',
+        username: 'u1',
+        password: 'x',
+        createdAt: new Date('2025-01-01T00:00:00Z'),
+        gundemSuspendedUntil: null,
+        _count: { accounts: 0 },
+      })),
+    },
   },
 }));
 // Onay kapısı (Kullanım Şartları) bu dosyanın konusu değil: açık. Kapının kendisi: src/test/api/termsConsentGate.test.ts
@@ -43,9 +53,14 @@ const row = (id: string, matchId: string | null) => ({
   matchId,
   teamId: null,
   author: { id: 'a', name: 'A', username: null, image: null, email: null, _count: { followers: 0, following: 0 }, followers: false },
+  hiddenAt: null,
+  mentions: [],
   _count: { likes: 0, comments: 0 },
   likes: false,
 });
+
+/** Oturumsuz akışta görünürlük parçası (lib/gundem/visibility.ts): moderasyonla gizlenen içerik dönmez. */
+const anon = { AND: [{ hiddenAt: null }] };
 
 const snapshot = (fixtureId: string) => ({
   fixtureId,
@@ -103,30 +118,30 @@ describe('GET /api/gundem/posts — scope ve kill-switch', () => {
   it('Tümü: varsayılan olarak maç postları dahil (matchId filtresi yok)', async () => {
     const r = await get({});
     expect(r.status).toBe(200);
-    expect(whereOf()).toEqual({ deletedAt: null });
+    expect(whereOf()).toEqual({ deletedAt: null, ...anon });
   });
 
   it('Tümü: GUNDEM_MATCH_POSTS_IN_ALL=false → maç postları dışlanır', async () => {
     process.env.GUNDEM_MATCH_POSTS_IN_ALL = 'false';
     await get({ scope: 'all' });
-    expect(whereOf()).toEqual({ deletedAt: null, matchId: null });
+    expect(whereOf()).toEqual({ deletedAt: null, ...anon, matchId: null });
   });
 
   it('kill-switch yalnızca "false" ile kapanır (bozuk değer → görünür)', async () => {
     process.env.GUNDEM_MATCH_POSTS_IN_ALL = 'hayir';
     await get({ scope: 'all' });
-    expect(whereOf()).toEqual({ deletedAt: null });
+    expect(whereOf()).toEqual({ deletedAt: null, ...anon });
   });
 
   it('Maçlar: yalnızca maç postları; kill-switch kapalıyken de', async () => {
     process.env.GUNDEM_MATCH_POSTS_IN_ALL = 'false';
     await get({ scope: 'match' });
-    expect(whereOf()).toEqual({ deletedAt: null, matchId: { not: null } });
+    expect(whereOf()).toEqual({ deletedAt: null, ...anon, matchId: { not: null } });
   });
 
   it('Maç forumu: scope=match&matchId → tek maç', async () => {
     await get({ scope: 'match', matchId: '19134567' });
-    expect(whereOf()).toEqual({ deletedAt: null, matchId: '19134567' });
+    expect(whereOf()).toEqual({ deletedAt: null, ...anon, matchId: '19134567' });
   });
 
   it('bozuk matchId → 400; matchId başka scope ile → 400', async () => {
@@ -178,7 +193,7 @@ describe('GET /api/gundem/posts — oturumsuz paylaşılan cache', () => {
     process.env.GUNDEM_MATCH_POSTS_IN_ALL = 'false';
     await get({ scope: 'all' });
     expect(findMany).toHaveBeenCalledTimes(2);
-    expect(whereOf()).toEqual({ deletedAt: null, matchId: null });
+    expect(whereOf()).toEqual({ deletedAt: null, ...anon, matchId: null });
     expect(new Set(keys()).size).toBe(2);
   });
 
@@ -215,7 +230,9 @@ describe('POST /api/gundem/posts — matchId doğrulama', () => {
   const post = (body: unknown) => call({ method: 'POST', body });
   beforeEach(() => {
     h.viewer = 'u1';
-    vi.mocked(prisma.post.create).mockReset().mockImplementation((async ({ data }: any) => row('new', data.matchId)) as never);
+    let created: ReturnType<typeof row> | null = null;
+    vi.mocked(prisma.post.create).mockReset().mockImplementation((async ({ data }: any) => (created = row('new', data.matchId))) as never);
+    vi.mocked(prisma.post.findUniqueOrThrow).mockReset().mockImplementation((async () => created) as never);
   });
 
   it('bozuk matchId → 400 Türkçe hata, sağlayıcıya gidilmez, post yazılmaz', async () => {

@@ -5,8 +5,12 @@ import { captureError } from '@/lib/logger';
 import { getRequestUserId } from '@/lib/mobileAuth';
 import { PAGE_SIZE, queryString } from '@/lib/gundem/validation';
 import { feedOrder, paginate, postSelect, serializePosts } from '@/lib/gundem/posts';
+import { postVisibilityWhere } from '@/lib/gundem/visibility';
 
-/** GET: kullanıcının profil akışı (silinmemiş postları, yeniden eskiye, cursor sayfalama). */
+/**
+ * GET: kullanıcının profil akışı (silinmemiş postları, yeniden eskiye, cursor sayfalama). İzleyici bu kullanıcıyı
+ * engellediyse liste boş (görünürlük kuralı); gizlenmiş gönderileri yalnız yazar görür.
+ */
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   const targetId = queryString(req.query.userId);
   if (!targetId) return res.status(400).json({ error: 'Geçersiz kullanıcı kimliği.' });
@@ -24,7 +28,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const cursor = queryString(req.query.cursor);
     const viewerId = await getRequestUserId(req, res);
     const rows = await prisma.post.findMany({
-      where: { authorId: targetId, deletedAt: null },
+      where: { authorId: targetId, deletedAt: null, AND: [postVisibilityWhere(viewerId)] },
       orderBy: [...feedOrder],
       take: PAGE_SIZE + 1,
       ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),

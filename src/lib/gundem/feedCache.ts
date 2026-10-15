@@ -8,7 +8,7 @@
  * Cache: yanıt kişiye özel (`likedByMe`, `followedByMe`, `scope=following`) → paylaşılan cache YALNIZCA oturumsuz istekte ve
  * `all`/`official`/`match` akışında. Oturumlu istek her zaman DB'den okunur: kendi postu/beğenisi/silmesi anında görünür.
  * Oturumsuz kullanıcı en fazla TTL (30 sn) gecikmeli görür. Anahtar: scope + matchId + `GUNDEM_MATCH_POSTS_IN_ALL` + cursor
- * (kill-switch çevrilince eski "Tümü" sayfaları okunmaz). Cache'lenen sayfa maç rozeti (snapshot) verisini de taşır → v2.
+ * (kill-switch çevrilince eski "Tümü" sayfaları okunmaz). Cache'lenen sayfa maç rozeti (snapshot) verisini de taşır → v2; `mentions` alanı + moderasyon gizlemesi → v3.
  */
 export const FEED_GET_RATE_LIMIT = 120;
 export const FEED_GET_RATE_WINDOW_MS = 60_000;
@@ -26,5 +26,5 @@ export function feedCacheKey(
   cursor: string | null,
   opts: { matchId: string | null; matchPostsInAll: boolean },
 ): string {
-  return `gundem:feed:v2:${scope}:m${opts.matchId ?? '-'}:k${opts.matchPostsInAll ? 1 : 0}:${cursor ?? '-'}`;
+  return `gundem:feed:v3:${scope}:m${opts.matchId ?? '-'}:k${opts.matchPostsInAll ? 1 : 0}:${cursor ?? '-'}`;
 }

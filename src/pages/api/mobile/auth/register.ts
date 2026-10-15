@@ -55,7 +55,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   });
 
   if (!result.ok) {
-    return res.status(result.status).json({ error: result.error });
+    return res.status(result.status).json({ error: result.error, ...(result.code ? { code: result.code } : {}) });
   }
 
   // Kayıt sonrası otomatik giriş: token ver (email doğrulaması girişi engellemiyor)

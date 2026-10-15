@@ -1,15 +1,11 @@
 import type { GetServerSideProps } from 'next';
 import Head from 'next/head';
-import { getServerSession } from 'next-auth/next';
 import AdminPayments from '@/components/AdminPayments';
-import { authOptions } from '@/lib/auth-options';
+import { adminPageGuard } from '@/lib/adminPageGuard';
 
 /** Yalnızca ADMIN: oturum yok / ADMIN değil → 404 (middleware ek katman; API requireAdmin). */
-export const getServerSideProps: GetServerSideProps = async ({ req, res }) => {
-  const session = await getServerSession(req, res, authOptions);
-  if (session?.user?.role !== 'ADMIN') return { notFound: true };
-  return { props: {} };
-};
+/** Yalnızca ADMIN: geçerli oturum yok → giriş, ADMIN değil → 404 (lib/adminPageGuard.ts; API'ler requireAdmin). */
+export const getServerSideProps: GetServerSideProps = (ctx) => adminPageGuard(ctx);
 
 export default function AdminPaymentsPage() {
   return (

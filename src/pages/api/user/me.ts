@@ -8,6 +8,7 @@ import { checkNickname } from '@/lib/frikik/nickname';
 import { hitFixedWindowRateLimit } from '@/lib/rateLimit';
 import { captureWarning } from '@/lib/logger';
 import { deleteOwnAccount } from '@/server/account/deleteAccount';
+import { CONTENT_REJECTED_CODE, PROFILE_REJECTED_MESSAGE, isProfileTextAllowed } from '@/lib/moderation/contentGate';
 
 // Profil JSON'u birkaç KB'ı geçmez; Next varsayılanı (1 MB) yerine 16 KB — aşılırsa Next 413 döner.
 export const config = { api: { bodyParser: { sizeLimit: '16kb' } } };
@@ -207,6 +208,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       if (Object.keys(data).length === 0) {
         return res.status(400).json({ error: 'Güncellenecek alan yok.' });
+      }
+
+      // Herkese açık profil metinleri (ad, kullanıcı adı, hakkımda): AĞIR içerik reddedilir (lib/moderation).
+      for (const field of ['name', 'username', 'bio'] as const) {
+        const v = data[field];
+        if (typeof v === 'string' && !(await isProfileTextAllowed(v))) {
+          return res.status(400).json({ error: PROFILE_REJECTED_MESSAGE, code: CONTENT_REJECTED_CODE, field });
+        }
       }
 
       if (data.username !== undefined && data.username !== null) {
