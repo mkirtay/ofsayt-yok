@@ -54,6 +54,9 @@ model User {
   /// TERMS_CONSENT_VERSION). 2026-10-14 öncesi kayıtlarda ve Google / mobil ile açılan hesaplarda boş.
   termsAcceptedAt    DateTime?
   termsVersion       String?
+  /// Gündem yazma askısı (yönetici kararı): > şimdi ⇒ gönderi / yorum yazamaz; giriş ve okuma açık. Kalıcı askı
+  /// 9999-12-31 (lib/moderation/suspension.ts). Boş = askı yok.
+  gundemSuspendedUntil DateTime?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
   accounts      Account[]
@@ -77,6 +80,13 @@ model User {
   notifications       Notification[]  @relation("NotificationRecipient")
   notificationsAsActor Notification[] @relation("NotificationActor")
   frikikScores        FrikikDailyScore[]
+  blocksMade          UserBlock[]     @relation("UserBlockBlocker")
+  blockedBy           UserBlock[]     @relation("UserBlockBlocked")
+  reportsMade         ContentReport[] @relation("ContentReportReporter")
+  reportsResolved     ContentReport[] @relation("ContentReportResolver")
+  mentionsReceived    GundemMention[] @relation("GundemMentionUser")
+  moderationActions   ModerationAction[] @relation("ModerationActionAdmin")
+  moderationTargeted  ModerationAction[] @relation("ModerationActionTarget")
 }
 
 /// Kredi hareketleri defteri — bakiye değişikliklerinin denetim izi.
@@ -384,9 +394,15 @@ model Post {
   deletedAt       DateTime?
   deletedByUserId String?
   deletedBy       User?          @relation("PostDeletedBy", fields: [deletedByUserId], references: [id], onDelete: SetNull)
+  /// Moderasyonla gizlendi (şikâyet eşiği ya da yönetici): yazar görür ("inceleme altında"), diğerleri görmez.
+  hiddenAt        DateTime?
+  /// "REPORTS" (eşik) | "ADMIN"
+  hiddenReason    String?
   likes           PostLike[]
   comments        PostComment[]
   notifications   Notification[]
+  reports         ContentReport[]
+  mentions        GundemMention[]
 
   @@index([createdAt])
   @@index([authorType, createdAt])
@@ -438,6 +454,11 @@ model PostComment {
   deletedAt       DateTime?
   deletedByUserId String?
   deletedBy       User?     @relation("PostCommentDeletedBy", fields: [deletedByUserId], references: [id], onDelete: SetNull)
+  /// Moderasyonla gizlendi (bkz. Post.hiddenAt)
+  hiddenAt        DateTime?
+  hiddenReason    String?
+  reports         ContentReport[]
+  mentions        GundemMention[]
 
   @@index([postId, createdAt])
 }
@@ -478,7 +499,7 @@ model Notification {
   user      User      @relation("NotificationRecipient", fields: [userId], references: [id], onDelete: Cascade)
   actorId   String?
   actor     User?     @relation("NotificationActor", fields: [actorId], references: [id], onDelete: SetNull)
-  /// "POST_LIKE" | "POST_COMMENT" | "FOLLOW" | "OFFICIAL_POST"
+  /// "POST_LIKE" | "POST_COMMENT" | "FOLLOW" | "OFFICIAL_POST" | "MENTION" | "MODERATION_WARNING"
   type      String
   postId    String?
   post      Post?     @relation(fields: [postId], references: [id], onDelete: Cascade)
@@ -564,4 +585,120 @@ model AccountDeletionLog {
   counts         Json
 
   @@index([createdAt])
+}
+
+/// Kullanıcı engeli: blocker, blocked'ın içeriğini / bildirimlerini görmez; blocked, blocker'ı etiketleyemez ve ona
+/// bildirim üretemez. Engellenen tarafa hiçbir yanıtta söylenmez. Hesap silinince iki yönde de CASCADE.
+model UserBlock {
+  id        String   @id @default(cuid())
+  blockerId String
+  blockedId String
+  createdAt DateTime @default(now())
+  blocker   User     @relation("UserBlockBlocker", fields: [blockerId], references: [id], onDelete: Cascade)
+  blocked   User     @relation("UserBlockBlocked", fields: [blockedId], references: [id], onDelete: Cascade)
+
+  @@unique([blockerId, blockedId])
+  @@index([blockedId])
+}
+
+/// Gündem şikâyeti (gönderi / yorum / kullanıcı). `targetKey` = "post:<id>" | "comment:<id>" | "user:<id>" — kullanıcı
+/// başına hedef başına tek şikâyet. `source` "USER" (kullanıcı) | "AUTO" (filtre ORTA seviye işareti; reporterId boş).
+/// Şikâyet eden hesabını silerse reporterId boşalır (kuyruk kaybolmaz). Şikâyet edenin kimliği hiçbir yanıtta yok.
+model ContentReport {
+  id           String       @id @default(cuid())
+  targetKey    String
+  /// "POST" | "COMMENT" | "USER"
+  targetType   String
+  postId       String?
+  commentId    String?
+  targetUserId String?
+  reporterId   String?
+  source       String       @default("USER")
+  /// HARASSMENT | HATE | SPAM | SEXUAL | VIOLENCE | MISINFO | OTHER | AUTO_*
+  reason       String
+  note         String?
+  /// "OPEN" | "RESOLVED" | "DISMISSED"
+  status       String       @default("OPEN")
+  createdAt    DateTime     @default(now())
+  resolvedAt   DateTime?
+  resolvedById String?
+  post         Post?        @relation(fields: [postId], references: [id], onDelete: Cascade)
+  comment      PostComment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  reporter     User?        @relation("ContentReportReporter", fields: [reporterId], references: [id], onDelete: SetNull)
+  resolvedBy   User?        @relation("ContentReportResolver", fields: [resolvedById], references: [id], onDelete: SetNull)
+
+  @@unique([targetKey, reporterId])
+  @@index([status, createdAt])
+  @@index([targetKey, status])
+  @@index([reporterId, createdAt])
+}
+
+/// Gönderi / yorumdaki doğrulanmış @etiket (yazma anında çözülür; metin düz "@kullaniciadi" kalır). En fazla 5 / içerik.
+model GundemMention {
+  id              String       @id @default(cuid())
+  /// "post:<id>" | "comment:<id>"
+  targetKey       String
+  postId          String?
+  commentId       String?
+  mentionedUserId String
+  /// Metinde yazıldığı biçim (küçük harf); gösterimde eşleştirme için.
+  username        String
+  createdAt       DateTime     @default(now())
+  post            Post?        @relation(fields: [postId], references: [id], onDelete: Cascade)
+  comment         PostComment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  mentionedUser   User         @relation("GundemMentionUser", fields: [mentionedUserId], references: [id], onDelete: Cascade)
+
+  @@unique([targetKey, mentionedUserId])
+  @@index([postId])
+  @@index([commentId])
+  @@index([mentionedUserId])
+}
+
+/// Yönetici moderasyon işlemleri denetim kaydı: kim (adminId), ne zaman, ne yaptı, hangi hedef. Kişisel veri en az:
+/// içerik metni / e-posta tutulmaz; not yöneticinin kısa açıklaması.
+model ModerationAction {
+  id           String   @id @default(cuid())
+  createdAt    DateTime @default(now())
+  adminId      String?
+  /// HIDE | UNHIDE | DELETE | DISMISS | WARN | SUSPEND | UNSUSPEND | TERM_ADD | TERM_REMOVE
+  action       String
+  targetKey    String?
+  targetUserId String?
+  reportCount  Int?
+  note         String?
+  /// İşleme özel küçük ayrıntılar (askı süresi gün, terim seviyesi …)
+  meta         Json?
+  admin        User?    @relation("ModerationActionAdmin", fields: [adminId], references: [id], onDelete: SetNull)
+  targetUser   User?    @relation("ModerationActionTarget", fields: [targetUserId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([targetUserId])
+}
+
+/// Filtre sözlüğüne kod değişmeden ek: yöneticinin eklediği terimler (BLOCK: AĞIR / FLAG: ORTA) ve istisnalar (ALLOW:
+/// yanlış pozitif veren kelime). Temel liste src/config/moderation/terms.tr.json; bu tablo onu genişletir.
+model ModerationTerm {
+  id        String   @id @default(cuid())
+  term      String   @unique
+  /// "BLOCK" | "FLAG" | "ALLOW"
+  level     String
+  /// "exact" | "prefix" | "contains"
+  match     String   @default("prefix")
+  category  String   @default("custom")
+  createdAt DateTime @default(now())
+}
+
+/// Reddedilen / işaretlenen içerik sayaçları — kişisel veri yok (gün + yüzey + kategori + sayı).
+model ModerationStat {
+  id       String   @id @default(cuid())
+  day      DateTime @db.Date
+  /// "post" | "comment" | "profile"
+  surface  String
+  /// profanity | sexual | hate | threat | spam_links | duplicate | flag_* …
+  category String
+  /// "rejected" | "flagged"
+  outcome  String
+  count    Int      @default(0)
+
+  @@unique([day, surface, category, outcome])
 }
