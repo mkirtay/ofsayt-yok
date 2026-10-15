@@ -225,7 +225,15 @@ export const getTodayFixtures = (): Promise<Match[]> => getFixturesByDate(todayI
 
 export type SportmonksFixtureLookup =
   /** `stats` / `lineups`: aynı yanıttan (ek istek yok); `null` = veri yok. */
-  | { kind: 'found'; match: Match; events: MatchEvent[]; stats?: MatchStatsData | null; lineups?: MatchLineupData | null }
+  | {
+      kind: 'found';
+      match: Match;
+      events: MatchEvent[];
+      stats?: MatchStatsData | null;
+      lineups?: MatchLineupData | null;
+      /** Birleşik istek geçici hata verdi, yanıt hafif yedekten (istatistik / kadro / yayıncı yok). */
+      partial?: true;
+    }
   /** Eski sağlayıcı (livescore) id aralığında — sunucu tarafı hiç istek atmadı (bkz. resolveSportmonksMatch). */
   | { kind: 'legacy' }
   /** Sportmonks "yok / erişim yok" dedi (404/403/422 ya da boş 200) — kalıcı, negatif cache'lenebilir. */
@@ -244,15 +252,25 @@ const SPORTMONKS_MISSING_STATUSES = new Set([400, 403, 404, 422]);
  */
 export async function lookupSportmonksFixture(matchId: string): Promise<SportmonksFixtureLookup> {
   if (!/^\d{1,12}$/.test(matchId)) return { kind: 'missing' };
+  const isMissing = (error: unknown) => error instanceof SportmonksHttpError && SPORTMONKS_MISSING_STATUSES.has(error.status);
+  const notFixture = (f: unknown) => !f || Array.isArray(f) || typeof f !== 'object';
   try {
     const fixture = await fetchMatchPageFixture(matchId);
-    if (!fixture || Array.isArray(fixture) || typeof fixture !== 'object') return { kind: 'missing' };
-    return { kind: 'found', ...mapMatchPageFixture(fixture) };
+    if (notFixture(fixture)) return { kind: 'missing' };
+    return { kind: 'found', ...mapMatchPageFixture(fixture!) };
   } catch (error) {
-    if (error instanceof SportmonksHttpError && SPORTMONKS_MISSING_STATUSES.has(error.status)) {
-      return { kind: 'missing' };
-    }
+    if (isMissing(error)) return { kind: 'missing' };
     console.error('Error fetching fixture (sportmonks)', error);
+  }
+  // Birleşik istek geçici hata verdi (429 / 5xx / zaman aşımı, önbellekte eski kopyası da yok): çekirdek veri (skor, olaylar,
+  // takımlar, TD, hava) hafif yedekten → sayfa çizilir; istatistik / kadro / yayıncı yok (`partial`, istemci ayrıca ister).
+  try {
+    const core = await sportmonksFetchFixtureDetail(matchId, MATCH_CORE_INCLUDE, MATCH_CORE_FILTERS);
+    if (notFixture(core)) return { kind: 'missing' };
+    return { kind: 'found', match: mapSportmonksFixtureToMatch(core!), events: mapSportmonksEvents(core!), partial: true };
+  } catch (error) {
+    if (isMissing(error)) return { kind: 'missing' };
+    console.error('Error fetching fixture core fallback (sportmonks)', error);
     return { kind: 'error' };
   }
 }
@@ -315,6 +333,14 @@ export const MATCH_PAGE_INCLUDE = [
   FIXTURE_TV_INCLUDE,
 ].join(';');
 export const MATCH_PAGE_FILTERS = `metadataTypes:${LINEUP_CONFIRMED_METADATA_TYPE_ID},${METADATA_HASHTAG_TYPE_ID}`;
+
+/**
+ * Birleşik istek geçici hata verirse hafif yedek: maç + olaylar + detay ekleri (istatistik / kadro / yayıncı yok). 2026-10-14
+ * öncesinin ana isteğiyle BİREBİR aynı anahtar → Redis'te o istekten kalan eski kopya (≤ 7 gün) da 429 / zaman aşımında
+ * verilebilir.
+ */
+export const MATCH_CORE_INCLUDE = `${SPORTMONKS_FIXTURE_INCLUDE};events;${FIXTURE_DETAIL_EXTRA_INCLUDE}`;
+export const MATCH_CORE_FILTERS = `metadataTypes:${METADATA_HASHTAG_TYPE_ID}`;
 
 async function fetchMatchPageFixture(matchId: string): Promise<SportmonksFixture | null> {
   return sportmonksFetchFixtureDetail(matchId, MATCH_PAGE_INCLUDE, MATCH_PAGE_FILTERS);

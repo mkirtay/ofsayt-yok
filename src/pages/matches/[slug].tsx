@@ -123,13 +123,21 @@ export const getServerSideProps: GetServerSideProps<MatchDetailProps> = async (c
           loadMatchPageOptionalSections(page.match, apiMatchId, {
             ...defaultMatchPageOptionalDeps,
             loadH2h: (m) => withPageTimeout(() => defaultMatchPageOptionalDeps.loadH2h(m)),
-            loadSeed: (id) => (pageSeed ? Promise.resolve(pageSeed) : withPageTimeout(() => defaultMatchPageOptionalDeps.loadSeed(id))),
+            // Çekirdek veri hafif yedekten geldiyse (birleşik istek geçici hata) tohum yeniden denenmez: istemci çeker, sayfa
+            // CDN'de geçici hata süresi kadar (≤ 60 sn) tutulur.
+            loadSeed: (id) =>
+              page.partial
+                ? Promise.resolve({ stats: undefined, lineups: undefined, failed: true })
+                : pageSeed
+                  ? Promise.resolve(pageSeed)
+                  : withPageTimeout(() => defaultMatchPageOptionalDeps.loadSeed(id)),
             ...(lightBot ? { underPressure: async () => true } : {}),
           }),
           // Kredi modeli v2: AI analizi ücretsiz önizlemesi (tek DB sorgusu; hata → null, sayfa yine çizilir).
           loadAnalysisPreviewForPage(apiMatchId),
         ]);
-        const { h2h, transientError } = optional;
+        const { h2h } = optional;
+        const transientError = optional.transientError || page.partial === true;
         const seed = optional.skipped && !lightBot && pageSeed ? pageSeed : optional.seed;
         const complete = h2h !== undefined && seed.stats !== undefined && seed.lineups !== undefined;
         // Bütçe aşıldıysa (undefined) bölüm iskeletle gider → CDN bu kopyayı ≤1 sa tutar; geçici hatada ≤60 sn; bot kopyası

@@ -65,6 +65,58 @@ describe('maç sayfası tek fixtures/{id} isteği', () => {
   });
 });
 
+describe('birleşik istek geçici hata verirse hafif yedek (çekirdek veri)', () => {
+  const routed = (merged: number) =>
+    vi.spyOn(global, 'fetch').mockImplementation(async (input) => {
+      const url = decodeURIComponent(String(input));
+      if (url.includes(';statistics')) return new Response(JSON.stringify({ message: 'x' }), { status: merged });
+      return new Response(JSON.stringify({ data: celtaVigoFixture }), { status: 200 });
+    });
+
+  // 429 ayrı (matchPageCoreFallback.redis.test.ts): havuz soğumaya girer, yedek yalnız Redis'teki eski kopyadan.
+  for (const status of [500, 503]) {
+    it(`${status} → eski ana istekle birebir anahtardan maç + olaylar; istatistik / kadro yok (partial)`, async () => {
+      await withServer(async () => {
+        vi.spyOn(console, 'error').mockImplementation(() => {});
+        const spy = routed(status);
+        const mod = await import('./liveScoreService');
+        const r = await mod.lookupSportmonksFixture('19732740');
+        expect(r.kind).toBe('found');
+        if (r.kind !== 'found') return;
+        expect(r.partial).toBe(true);
+        expect(r.match.home?.name).toBeTruthy();
+        expect(r.events.length).toBeGreaterThan(0);
+        expect(r.stats).toBeUndefined();
+        expect(r.lineups).toBeUndefined();
+        const params = spy.mock.calls.map((c) => new URL(String(c[0])).searchParams);
+        const core = params.find((q) => !q.get('include')!.includes('statistics'))!;
+        expect(core.get('include')).toBe(mod.MATCH_CORE_INCLUDE);
+        expect(core.get('filters')).toBe(mod.MATCH_CORE_FILTERS);
+        expect(mod.MATCH_CORE_INCLUDE).not.toMatch(/statistics|lineups|tvStations/);
+        // İstemci de çekirdek veriyle devam eder; istatistik / kadro ayrıca istenir.
+        const found = await mod.findMatchById('19732740');
+        expect(found.match).not.toBeNull();
+        expect(found.transient).toBeUndefined();
+      });
+    });
+  }
+
+  it('yedek de hata verirse → error (sayfa 503 + yeniden deneme); 404 → missing, yedek denenmez', async () => {
+    await withServer(async () => {
+      vi.spyOn(console, 'error').mockImplementation(() => {});
+      vi.spyOn(global, 'fetch').mockImplementation(async () => new Response('{}', { status: 500 }));
+      let mod = await import('./liveScoreService');
+      expect((await mod.lookupSportmonksFixture('19732740')).kind).toBe('error');
+      vi.restoreAllMocks();
+      vi.resetModules();
+      const spy = vi.spyOn(global, 'fetch').mockImplementation(async () => new Response('{}', { status: 404 }));
+      mod = await import('./liveScoreService');
+      expect((await mod.lookupSportmonksFixture('19732740')).kind).toBe('missing');
+      expect(spy).toHaveBeenCalledTimes(1);
+    });
+  });
+});
+
 describe('istemci: maç aramasının getirdiği istatistik / kadro', () => {
   const match = { id: 1 } as unknown as Match;
   it('arama yanıtında varsa kullanılır (ayrı istek yok), yoksa / maç yoksa ayrıca istenir', () => {

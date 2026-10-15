@@ -13,7 +13,7 @@ vi.mock('@/services/sportmonksProviderFlag', () => ({
 }));
 const resolveKind = vi.hoisted(() => ({ value: 'match' as 'match' | 'error' | 'throw' }));
 // Maçı çözen tek `fixtures/{id}` yanıtındaki istatistik / kadro (gerçek akış); undefined → yanıtta yok (yedek yol).
-const resolveSeed = vi.hoisted(() => ({ value: undefined as { stats: unknown; lineups: unknown } | undefined }));
+const resolveSeed = vi.hoisted(() => ({ value: undefined as { stats?: unknown; lineups?: unknown; partial?: true } | undefined }));
 vi.mock('@/server/resolveMatchPage', () => ({
   resolveMatchPage: async () => {
     if (resolveKind.value === 'throw') throw new Error('Sportmonks 429');
@@ -92,6 +92,28 @@ describe('maç sayfası Cache-Control — form / karşılaşma geçmişi', () =>
     const bot = context({ 'user-agent': 'Mozilla/5.0 (compatible; GPTBot/1.2; +https://openai.com/gptbot)' });
     const r3 = (await getServerSideProps(bot.ctx)) as { props: Record<string, unknown> };
     for (const k of ['initialH2h', 'initialStats', 'initialLineups']) expect(k in r3.props).toBe(false);
+  });
+
+  it('birleşik istek geçici hata → çekirdek veri hafif yedekten: sayfa 200 çizilir (503 / "bulunamadı" değil), istatistik / kadro istemciye, CDN 60 sn', async () => {
+    const { getServerSideProps } = await import('@/pages/matches/[slug]');
+    resolveSeed.value = { partial: true };
+    h2hResult.value = { team1: {}, team2: {}, h2h: [] };
+    seedResult.value = { stats: { home: {}, away: {} }, lineups: null };
+    const { ctx, headers } = context();
+    const result = (await getServerSideProps(ctx)) as { props: Record<string, unknown> };
+    expect(ctx.res.statusCode).toBe(200);
+    expect(result.props.initialMatch).toMatchObject({ id: 19745050 });
+    expect(result.props.initialEvents).toEqual([{ id: 1, minute: 4, type: 'goal' }]);
+    expect(result.props.initialH2h).toEqual({ team1: {}, team2: {}, h2h: [] });
+    for (const k of ['initialStats', 'initialLineups']) expect(k in result.props).toBe(false);
+    expect(pressure.calls.seed).toBe(0);
+    expect(headers['Cache-Control']).toBe('public, s-maxage=60, stale-while-revalidate=60');
+
+    // Havuz baskısında da (H2H atlanır) kısa: 1 sa'lik eksik kopya değil.
+    pressure.value = true;
+    const p2 = context();
+    await getServerSideProps(p2.ctx);
+    expect(p2.headers['Cache-Control']).toBe('public, s-maxage=60, stale-while-revalidate=60');
   });
 
   it('bütçe aşıldı (initialH2h yok, iskelet) → bitmiş maçta s-maxage=3600, stale-while-revalidate=3600', async () => {

@@ -16,7 +16,15 @@ import { findStoredMatchInfo, type StoredMatchInfo } from '@/server/storedMatch'
  */
 export type MatchPageResolution =
   /** `stats` / `lineups`: maçı çözen aynı `fixtures/{id}` yanıtından (yoksa `undefined` → sayfa ayrıca ister). */
-  | { kind: 'match'; match: Match; events: MatchEvent[]; stats?: MatchStatsData | null; lineups?: MatchLineupData | null }
+  | {
+      kind: 'match';
+      match: Match;
+      events: MatchEvent[];
+      stats?: MatchStatsData | null;
+      lineups?: MatchLineupData | null;
+      /** Çekirdek veri hafif yedekten (birleşik istek geçici hata verdi): istatistik / kadro yok, sayfa CDN'de kısa. */
+      partial?: true;
+    }
   | { kind: 'archived' }
   | { kind: 'gone' }
   | { kind: 'missing' }
@@ -34,6 +42,7 @@ function found(lookup: Extract<SportmonksFixtureLookup, { kind: 'found' }>): Mat
     events: lookup.events,
     ...(lookup.stats !== undefined ? { stats: lookup.stats } : {}),
     ...(lookup.lineups !== undefined ? { lineups: lookup.lineups } : {}),
+    ...(lookup.partial ? { partial: true as const } : {}),
   };
 }
 
