@@ -94,8 +94,8 @@ describe('yasal sayfalar', () => {
     }
   });
 
-  it('noindex: 4 taslak sayfa robots noindex + canonical yok; gizlilik / şartlar indekslenir (canonical)', () => {
-    const draft = ['kvkk', 'cookies', 'distanceSales', 'refund'];
+  it('noindex: 5 taslak sayfa robots noindex + canonical yok; gizlilik / şartlar indekslenir (canonical)', () => {
+    const draft = ['kvkk', 'cookies', 'distanceSales', 'refund', 'community'];
     for (const p of LEGAL_PAGES) {
       const html = renderToStaticMarkup(<LegalDocPage docKey={p.docKey} />);
       if (draft.includes(p.docKey)) {
@@ -126,5 +126,23 @@ describe('yasal sayfalar', () => {
       expect(enCommon.footer[key as keyof typeof enCommon.footer]).toBeTruthy();
     }
     expect(html).toContain('href="/iletisim"');
+  });
+});
+
+describe('Topluluk Kuralları', () => {
+  it('inceleme süresi metne config/moderation.ts\'ten girer (tek kaynak); şikâyet / engelleme / iletişim anlatılır', async () => {
+    const { REPORT_REVIEW_HOURS } = await import('@/config/moderation');
+    const html = renderToStaticMarkup(<LegalDocPage docKey="community" />);
+    expect(html).toContain(`en geç ${REPORT_REVIEW_HOURS} saat`);
+    expect(html).not.toContain('{{reviewHours}}');
+    expect(html).toMatch(/Şikâyet et/);
+    expect(html).toMatch(/Engelleme/);
+    expect(trLegal.community.sections.map((s) => s.body).join(' ')).toContain('{{contactEmail}}');
+    expect(enLegal.community.sections.map((s) => s.body).join(' ')).toContain('{{reviewHours}}');
+  });
+
+  it('Kullanım Şartları §5: uygunsuz içerik yasağı + hesap kapatma maddesi avukat işaretiyle (iki dil)', () => {
+    expect(trLegal.terms.sections[4]!.body).toMatch(/hesabı kapatabilir\. \[HUKUKİ METİN EKLENECEK: /);
+    expect(enLegal.terms.sections[4]!.body).toMatch(/close the account .*\[HUKUKİ METİN EKLENECEK: /);
   });
 });

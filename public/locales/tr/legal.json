@@ -64,7 +64,7 @@
       },
       {
         "heading": "5. Kullanıcı Davranış Kuralları",
-        "body": "Yorum ve oylama alanlarında hakaret, taciz, yasa dışı içerik veya spam paylaşmak yasaktır. Kurallara aykırı içerikler kaldırılabilir ve ilgili hesap askıya alınabilir."
+        "body": "Yorum ve oylama alanlarında hakaret, taciz, yasa dışı içerik veya spam paylaşmak yasaktır. Kurallara aykırı içerikler kaldırılabilir ve ilgili hesap askıya alınabilir. Gündem ve diğer kullanıcı içeriği alanlarında Topluluk Kuralları'na aykırı içerik (hakaret, nefret söylemi, tehdit, müstehcenlik, spam, kişisel veri paylaşımı, yasa dışı içerik) yasaktır; uygunsuz içeriğe ve kötüye kullanan kullanıcılara tolerans gösterilmez. {{brand}}, aykırı içeriği önceden bildirimde bulunmaksızın gizleyebilir veya kaldırabilir, kullanıcıyı uyarabilir, Gündem'de yazma iznini geçici ya da kalıcı olarak kapatabilir ve ağır ya da tekrarlayan ihlallerde hesabı kapatabilir. [HUKUKİ METİN EKLENECEK: hesap kapatma yetkisinin kapsamı, bildirim ve itiraz usulü, kapatılan hesabın verileri ve kalan kredilerin durumu]"
       },
       {
         "heading": "6. Fikri Mülkiyet",
@@ -232,5 +232,37 @@
     "emailLabel": "E-posta",
     "email": "{{contactEmail}}",
     "responseNote": "Taleplerinize mümkün olan en kısa sürede dönüş yapmaya çalışıyoruz."
+  },
+  "community": {
+    "pageTitle": "Topluluk Kuralları",
+    "pageDesc": "{{brand}} Gündem topluluk kuralları: yasak içerik, şikâyet, engelleme ve yaptırımlar.",
+    "intro": "Bu kurallar Gündem'deki gönderiler, yorumlar ve herkese açık profil alanları (ad, kullanıcı adı, hakkımda) için geçerlidir. Amacımız futbolu rahatça konuşabileceğin, saygılı bir alan. Uygunsuz içeriğe ve kötüye kullanan kullanıcılara tolerans gösterilmez.",
+    "sections": [
+      {
+        "heading": "1. Yasak içerik",
+        "body": "Küfür ve hakaret; ırk, etnik köken, din, mezhep, cinsiyet, cinsel yönelim, engellilik ya da benzeri özelliklere yönelik nefret söylemi; tehdit, şiddete çağrı ve kendine zarar vermeye teşvik; taciz, hedef gösterme ve ısrarlı rahatsız etme; müstehcen ya da cinsel içerik; başkalarının kişisel verilerini (adres, telefon, kimlik bilgisi vb.) izinsiz paylaşmak; spam, reklam ve zararlı bağlantılar; başkasını taklit etmek ve kasıtlı olarak yanıltıcı içerik; yasa dışı her türlü içerik."
+      },
+      {
+        "heading": "2. Otomatik denetim",
+        "body": "Paylaşımlar yayınlanmadan önce otomatik bir filtreden geçer. Ağır ihlal içeren metin yayınlanmaz; sınırdaki içerik yayınlanır ancak inceleme kuyruğuna alınır. Yeni hesapların bir paylaşımda ekleyebileceği bağlantı sayısı sınırlıdır ve aynı içeriğin kısa sürede tekrar paylaşılması engellenir. Filtre hata yapabilir; yanlışlıkla engellendiğini düşünüyorsan bize yaz."
+      },
+      {
+        "heading": "3. Şikâyet etme",
+        "body": "Her gönderi ve yorumun “⋯” menüsünde “Şikâyet et” seçeneği vardır; bir neden seçip isteğe bağlı kısa bir not ekleyebilirsin. Şikâyet için giriş yapman gerekir ve aynı içeriği bir kez şikâyet edebilirsin. Şikâyet edenin kimliği içerik sahibine hiçbir zaman gösterilmez. Birden fazla farklı kullanıcının şikâyet ettiği içerik, inceleme tamamlanana kadar gizlenir. Şikâyetlere en geç {{reviewHours}} saat içinde bakarız."
+      },
+      {
+        "heading": "4. Engelleme",
+        "body": "Bir kullanıcıyı profilinden ya da gönderisinin “⋯” menüsünden engelleyebilirsin. Engellediğin kişinin gönderileri, yorumları ve bildirimleri sana gösterilmez; seni etiketleyemez ve sana bildirim gönderemez; varsa karşılıklı takip kaldırılır. Engellenen kişiye engellendiği bildirilmez. Engelini Profil › Engellenenler bölümünden kaldırabilirsin."
+      },
+      {
+        "heading": "5. Yaptırımlar",
+        "body": "Kurallara aykırı içerik gizlenebilir veya kaldırılabilir; kullanıcı uyarılabilir, Gündem'de yazma izni geçici ya da kalıcı olarak kapatılabilir (giriş ve okuma açık kalır); ağır veya tekrarlayan ihlallerde hesap kapatılabilir. [HUKUKİ METİN EKLENECEK: yaptırım kademeleri, itiraz usulü ve süreleri, yetkili makamlara bildirim ve içerik saklama yükümlülükleri (5651 sayılı Kanun dahil)]"
+      },
+      {
+        "heading": "6. İtiraz ve iletişim",
+        "body": "Bir karara itiraz etmek, yanlış engellenen bir içeriği bildirmek ya da acil bir durumu iletmek için {{contactEmail}} adresine yazabilirsin. Can güvenliğini ilgilendiren durumlarda lütfen önce yetkili makamlara (112) başvur."
+      }
+    ],
+    "draftNotice": "TASLAK — Bu metin yayın öncesi hukuki inceleme gerektirir. Köşeli parantez içindeki alanlar ([…]) henüz doldurulmamıştır."
   }
 }

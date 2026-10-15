@@ -15,7 +15,7 @@
   "roleMember": "Üye",
   "save": "Kaydet",
   "saving": "Kaydediliyor…",
-  "saved": "Profil güncellendi.",
+  "saved": "Kaydedildi.",
   "saveError": "Kaydedilemedi.",
   "connectionError": "Bağlantı hatası.",
   "changePassword": "Şifre değiştir",
@@ -32,7 +32,8 @@
     "info": "Bilgilerim",
     "favorites": "Favorilerim",
     "credits": "Kredi Geçmişi",
-    "analyses": "Analizlerim"
+    "analyses": "Analizlerim",
+    "blocked": "Engellenenler"
   },
   "avatar": {
     "title": "Profil görseli",
@@ -119,5 +120,7 @@
     "deleting": "Siliniyor…",
     "cancel": "Vazgeç",
     "error": "Hesap silinemedi. Lütfen tekrar dene."
-  }
+  },
+  "contentRejected": "Bu alan topluluk kurallarımıza uymayan ifadeler içeriyor. Lütfen değiştir.",
+  "toastClose": "Bildirimi kapat"
 }

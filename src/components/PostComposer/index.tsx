@@ -1,6 +1,8 @@
 import Link from 'next/link';
-import { useRef, useState, type FocusEvent, type KeyboardEvent } from 'react';
+import { useRef, useState, type ComponentType, type FocusEvent, type KeyboardEvent } from 'react';
 import { COUNTER_WARN_AT } from '@/config/gundem';
+import { NEW_ACCOUNT_MAX_LINKS } from '@/config/moderation';
+import type { MentionSuggestProps } from '@/components/Moderation/MentionSuggest';
 import { GundemApiError } from '@/hooks/useGundem';
 import { useTranslation } from '@/lib/i18n';
 import styles from './postComposer.module.scss';
@@ -15,6 +17,11 @@ export function composerErrorMessage(err: unknown, t: TFn): string {
     }
     if (err.status === 0) return t('composer.connectionError');
     if (err.status === 401) return t('composer.loginPrompt');
+    // Moderasyon kodları (lib/moderation/contentGate.ts, authorGate): ileti seçili dilde; hangi kelime olduğu söylenmez.
+    if (err.code === 'CONTENT_REJECTED') return t('composer.contentRejected');
+    if (err.code === 'LINK_LIMIT') return t('composer.linkLimit', { count: NEW_ACCOUNT_MAX_LINKS });
+    if (err.code === 'DUPLICATE_CONTENT') return t('composer.duplicate');
+    if (err.code === 'GUNDEM_SUSPENDED') return t('composer.suspended');
     if (err.message && err.message !== 'error') return err.message;
   }
   return t('composer.error');
@@ -76,6 +83,16 @@ export function PostComposerPlaceholder({ variant }: { variant: PostComposerVari
   );
 }
 
+let mentionModule: Promise<ComponentType<MentionSuggestProps>> | null = null;
+/** @etiket önerisi ilk odakta yüklenir (yerel import()): ana sayfa ilk yüküne girmez. */
+function loadMentionSuggest() {
+  mentionModule ??= import('@/components/Moderation/MentionSuggest').then((m) => m.default).catch((e) => {
+    mentionModule = null;
+    throw e;
+  });
+  return mentionModule;
+}
+
 export default function PostComposer({ authenticated, variant, maxLength, onSubmit, autoFocus, placeholder }: PostComposerProps) {
   const { t } = useTranslation('gundem');
   const [value, setValue] = useState('');
@@ -90,6 +107,7 @@ export default function PostComposer({ authenticated, variant, maxLength, onSubm
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   // Gönderim sonrası odağı alana geri verirken yeniden açılmayı bastırır
   const skipExpandOnFocus = useRef(false);
+  const [Mention, setMention] = useState<ComponentType<MentionSuggestProps> | null>(null);
 
   if (!authenticated) {
     return (
@@ -165,6 +183,7 @@ export default function PostComposer({ authenticated, variant, maxLength, onSubm
         onKeyDown={onKeyDown}
         onFocus={() => {
           if (isInline && !skipExpandOnFocus.current) setExpanded(true);
+          if (!Mention) void loadMentionSuggest().then((C) => setMention(() => C), () => undefined);
         }}
         placeholder={placeholderText}
         aria-label={placeholderText}
@@ -173,10 +192,23 @@ export default function PostComposer({ authenticated, variant, maxLength, onSubm
         rows={collapsed ? 1 : isPost ? 3 : 2}
         autoFocus={autoFocus}
       />
+      {Mention && !collapsed ? (
+        <Mention
+          textareaRef={textareaRef}
+          value={value}
+          onPick={(next, caret) => {
+            setValue(next.slice(0, maxLength));
+            requestAnimationFrame(() => textareaRef.current?.setSelectionRange(caret, caret));
+          }}
+        />
+      ) : null}
       {collapsed ? null : (
         <>
           <div className={styles.bar}>
             <span className={styles.hint}>{t('composer.hint')}</span>
+            <Link href="/topluluk-kurallari" className={styles.rulesLink}>
+              {t('composer.guidelines')}
+            </Link>
             <span
               className={`${styles.counter} ${warn ? styles.counterWarn : ''}`.trim()}
               aria-live="polite"

@@ -116,3 +116,23 @@
     opacity: 0.6;
   }
 }
+
+.mention {
+  color: $color-primary-text;
+  font-weight: 600;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.review {
+  margin: 0 0 4px;
+  padding: 4px 8px;
+  border-left: 3px solid $color-warning;
+  border-radius: 6px;
+  background: $color-muted;
+  color: $color-text;
+  font-size: 12px;
+}

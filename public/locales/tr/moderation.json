@@ -1,0 +1,66 @@
+{
+  "menu": {
+    "label": "Diğer işlemler",
+    "report": "Şikâyet et",
+    "block": "Kullanıcıyı engelle",
+    "unblock": "Engeli kaldır",
+    "loading": "Yükleniyor…"
+  },
+  "report": {
+    "titlePost": "Gönderiyi şikâyet et",
+    "titleComment": "Yorumu şikâyet et",
+    "titleUser": "Kullanıcıyı şikâyet et",
+    "intro": "Neden şikâyet ediyorsun? Kimliğin içerik sahibine gösterilmez.",
+    "reasonLegend": "Şikâyet nedeni",
+    "reasons": {
+      "HARASSMENT": "Hakaret / küfür",
+      "HATE": "Nefret söylemi",
+      "SPAM": "Spam veya reklam",
+      "SEXUAL": "Müstehcen veya şiddet içeren",
+      "MISINFO": "Yanıltıcı içerik",
+      "OTHER": "Diğer"
+    },
+    "noteLabel": "Not (isteğe bağlı)",
+    "notePlaceholder": "Kısaca açıklayabilirsin",
+    "submit": "Şikâyet et",
+    "sending": "Gönderiliyor…",
+    "cancel": "Vazgeç",
+    "done": "Şikâyetin alındı. En geç {{hours}} saat içinde inceleyeceğiz.",
+    "duplicate": "Bu içeriği zaten şikâyet ettin; inceleniyor.",
+    "error": "Şikâyet gönderilemedi. Lütfen tekrar dene.",
+    "rateLimited": "Çok fazla şikâyet gönderdin. Biraz sonra tekrar dene.",
+    "self": "Kendi içeriğini şikâyet edemezsin.",
+    "notFound": "Bu içerik artık yok.",
+    "loginRequired": "Şikâyet etmek için giriş yapmalısın.",
+    "rulesLink": "Topluluk kuralları"
+  },
+  "block": {
+    "confirmTitle": "{{name}} engellensin mi?",
+    "confirmBody": "Gönderilerini, yorumlarını ve bildirimlerini görmeyeceksin; seni etiketleyemeyecek. Varsa karşılıklı takip kalkar. Bu kişiye bildirilmez.",
+    "confirm": "Engelle",
+    "cancel": "Vazgeç",
+    "done": "{{name}} engellendi.",
+    "undone": "{{name}} için engel kaldırıldı.",
+    "error": "İşlem yapılamadı. Lütfen tekrar dene.",
+    "profileNotice": "Bu kullanıcıyı engelledin. Gönderileri sana gösterilmiyor."
+  },
+  "blocked": {
+    "title": "Engellenen kullanıcılar",
+    "intro": "Engellediğin kişilerin gönderi, yorum ve bildirimleri sana gösterilmez.",
+    "empty": "Engellediğin kimse yok.",
+    "loading": "Yükleniyor…",
+    "error": "Liste yüklenemedi.",
+    "unblock": "Engeli kaldır",
+    "loadMore": "Daha fazla",
+    "since": "{{date}} tarihinden beri"
+  },
+  "mention": {
+    "listLabel": "Kullanıcı önerileri",
+    "results": "{{count}} öneri",
+    "noResults": "Eşleşen kullanıcı yok",
+    "hint": "Seçmek için Enter, kapatmak için Esc"
+  },
+  "toast": {
+    "close": "Bildirimi kapat"
+  }
+}

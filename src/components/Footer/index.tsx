@@ -6,7 +6,7 @@ import BrandLogo from '@/components/BrandLogo';
 import { LEGAL_PAGES, type LegalDocKey } from '@/config/legalPages';
 
 /** Kurumsal: iletişim + hesabı ilgilendiren metinler; Yasal: KVKK, çerez ve satış metinleri. */
-const CORPORATE_KEYS: readonly LegalDocKey[] = ['terms', 'privacy'];
+const CORPORATE_KEYS: readonly LegalDocKey[] = ['terms', 'community', 'privacy'];
 const CORPORATE = LEGAL_PAGES.filter((p) => CORPORATE_KEYS.includes(p.docKey));
 const LEGAL = LEGAL_PAGES.filter((p) => !CORPORATE_KEYS.includes(p.docKey));
 

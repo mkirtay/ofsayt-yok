@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import Avatar from '@/components/Avatar';
 import LikeButton from '@/components/LikeButton';
+import MoreButton from '@/components/Moderation/MoreButton';
 import PostMatchBadge from '@/components/PostMatchBadge';
 import CommentIcon from '@/components/icons/CommentIcon';
 import TrashIcon from '@/components/icons/TrashIcon';
@@ -8,7 +9,8 @@ import VerifiedIcon from '@/components/icons/VerifiedIcon';
 import { useTranslation } from '@/lib/i18n';
 import { isModifiedClick } from '@/utils/matchSelection';
 import { formatRelativeTime } from '@/utils/relativeTime';
-import type { GundemPost } from '@/types/gundem';
+import { splitMentions } from '@/utils/mentions';
+import type { GundemMention, GundemPost } from '@/types/gundem';
 import styles from './postCard.module.scss';
 
 export type PostCardProps = {
@@ -31,7 +33,27 @@ export type PostCardProps = {
   now?: number;
 };
 
-/** Tek gönderi kartı: Avatar + isim (resmi rozet) + göreli zaman + gövde (satır sonları korunur) + beğeni/yorum/sil. */
+/** Gövde: doğrulanmış @etiketler profil bağlantısı, gerisi düz metin (gönderi ve yorum aynı kuralı kullanır). */
+export function MentionText({ body, mentions, linkClassName }: { body: string; mentions?: GundemMention[]; linkClassName?: string }) {
+  return (
+    <>
+      {splitMentions(body, mentions).map((part, i) =>
+        'text' in part ? (
+          part.text
+        ) : (
+          <Link key={i} href={`/gundem/kullanici/${part.userId}`} className={linkClassName}>
+            @{part.handle}
+          </Link>
+        ),
+      )}
+    </>
+  );
+}
+
+/**
+ * Tek gönderi kartı: Avatar + isim (resmi rozet) + göreli zaman + gövde (satır sonları korunur) + beğeni/yorum/sil.
+ * Başkasının gönderisinde "⋯" (şikâyet / engelle; menü tembel yüklenir). Moderasyonla gizlenmiş kendi gönderinde not.
+ */
 export default function PostCard({
   post,
   currentUserId = null,
@@ -53,6 +75,8 @@ export default function PostCard({
   // Silinmiş kullanıcının profili yok → bağlantı verilmez.
   const authorLinked = linkAuthor && !deletedAuthor;
   const canDelete = !!onDelete && !!currentUserId && (post.author.id === currentUserId || isAdmin);
+  // Şikâyet / engelleme: oturum açık ve başkasının gönderisi. Silinmiş kullanıcı ve resmi hesap engellenmez (yalnız şikâyet).
+  const canModerate = !!currentUserId && post.author.id !== currentUserId;
   const href = `/gundem/${post.id}`;
   const profileHref = `/gundem/kullanici/${post.author.id}`;
   const avatar = <Avatar name={displayName} image={post.author.image} size={40} />;
@@ -110,11 +134,27 @@ export default function PostCard({
             <TrashIcon />
           </button>
         ) : null}
+        {canModerate ? (
+          <MoreButton
+            label={t('post.more')}
+            targetType="POST"
+            targetId={post.id}
+            blockTarget={deletedAuthor || official ? null : { id: post.author.id, name: displayName }}
+          />
+        ) : null}
       </header>
 
       {showMatchBadge && post.match ? <PostMatchBadge match={post.match} /> : null}
 
-      <p className={styles.body}>{post.body}</p>
+      {post.underReview ? (
+        <p className={styles.review} role="note">
+          {t('post.underReview')}
+        </p>
+      ) : null}
+
+      <p className={styles.body}>
+        <MentionText body={post.body} mentions={post.mentions} linkClassName={styles.mention} />
+      </p>
 
       <footer className={styles.actions}>
         <LikeButton

@@ -2,12 +2,14 @@ import Link from 'next/link';
 import Avatar from '@/components/Avatar';
 import EmptyState from '@/components/EmptyState';
 import FollowButton from '@/components/FollowButton';
+import MoreButton from '@/components/Moderation/MoreButton';
 import VerifiedIcon from '@/components/icons/VerifiedIcon';
 import PostCard from '@/components/PostCard';
 import { GundemApiError, useGundemUser, useGundemUserPosts } from '@/hooks/useGundem';
 import { useInfiniteSentinel } from '@/hooks/useInfiniteSentinel';
 import { usePostActions } from '@/hooks/usePostActions';
 import { useTranslation } from '@/lib/i18n';
+import '@/lib/i18nNamespaces/moderation';
 import hub from '@/components/GundemHubPage/gundemHubPage.module.scss';
 import styles from './gundemProfilePage.module.scss';
 
@@ -18,6 +20,7 @@ import styles from './gundemProfilePage.module.scss';
  */
 export default function GundemProfilePage({ userId }: { userId: string }) {
   const { t } = useTranslation('gundem');
+  const { t: tm } = useTranslation('moderation');
   const profile = useGundemUser(userId);
   const feed = useGundemUserPosts(userId);
   const actions = usePostActions();
@@ -28,6 +31,8 @@ export default function GundemProfilePage({ userId }: { userId: string }) {
   const user = profile.data;
   const isSelf = !!actions.currentUserId && actions.currentUserId === userId;
   const displayName = user ? (user.name ?? user.username ?? t('post.anonymous')) : '';
+  // Engellediğin kullanıcı: profil görünür, gönderileri gizli (sunucu zaten boş liste döner) + engeli kaldırma menüde.
+  const blocked = user?.blockedByMe === true;
 
   return (
     <>
@@ -79,13 +84,27 @@ export default function GundemProfilePage({ userId }: { userId: string }) {
                       {t('profile.edit')}
                     </Link>
                   ) : (
-                    <FollowButton userId={user.id} following={user.followedByMe} />
+                    <>
+                      {blocked ? null : <FollowButton userId={user.id} following={user.followedByMe} />}
+                      {actions.currentUserId ? (
+                        <MoreButton
+                          label={t('post.more')}
+                          targetType="USER"
+                          targetId={user.id}
+                          blockTarget={user.official ? null : { id: user.id, name: displayName }}
+                          blocked={blocked}
+                          onBlockedChange={() => void profile.refetch()}
+                        />
+                      ) : null}
+                    </>
                   )}
                 </div>
               </header>
 
               <section className={hub.feed} aria-busy={feed.isPending}>
-                {feed.isPending ? (
+                {blocked ? (
+                  <EmptyState>{tm('block.profileNotice')}</EmptyState>
+                ) : feed.isPending ? (
                   <EmptyState>{t('feed.loading')}</EmptyState>
                 ) : feed.isError ? (
                   <EmptyState>

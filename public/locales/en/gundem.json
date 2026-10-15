@@ -39,7 +39,12 @@
     "usernameRequired": "You need to choose a username before posting in Gündem.",
     "chooseUsername": "Choose a username",
     "termsRequired": "You need to accept the Terms of Use and Privacy Policy before posting.",
-    "acceptTerms": "Accept the terms"
+    "acceptTerms": "Accept the terms",
+    "guidelines": "Community guidelines",
+    "contentRejected": "Your post contains language that breaks our community guidelines. Please edit it and try again.",
+    "linkLimit": "New accounts can add at most {{count}} link per post.",
+    "duplicate": "You posted this recently. You cannot send the same text again.",
+    "suspended": "Your ability to post in Gündem is currently suspended. You can keep reading."
   },
   "feed": {
     "loading": "Loading…",
@@ -67,7 +72,9 @@
     "deletedUser": "Deleted user",
     "open": "Open post",
     "deleteTitle": "Delete post",
-    "matchBadge": "Go to match: {{match}}"
+    "matchBadge": "Go to match: {{match}}",
+    "more": "More actions",
+    "underReview": "Under review — only you can see this for now."
   },
   "comments": {
     "title": "Comments",
@@ -78,7 +85,8 @@
     "delete": "Delete comment",
     "confirmDelete": "Are you sure you want to delete this comment?",
     "deleteError": "Could not delete the comment.",
-    "deleteTitle": "Delete comment"
+    "deleteTitle": "Delete comment",
+    "more": "More actions for comment"
   },
   "detail": {
     "panelLabel": "Post details",
@@ -120,6 +128,9 @@
     "officialPost": "{{name}} shared a new post",
     "someone": "Someone",
     "official": "{{brand}}",
-    "postDeleted": "Post deleted"
+    "postDeleted": "Post deleted",
+    "mention": "{{name}} mentioned you",
+    "moderationWarning": "You received a warning because some of your content broke the community guidelines.",
+    "rulesLink": "Community guidelines"
   }
 }

@@ -24,7 +24,8 @@
     "distanceSales": "Mesafeli Satış Sözleşmesi",
     "refundPolicy": "İade ve İptal",
     "disclaimer": "İstatistiksel tahminler bilgi amaçlıdır.",
-    "copyright": "© {{year}} {{brand}}. Tüm hakları saklıdır."
+    "copyright": "© {{year}} {{brand}}. Tüm hakları saklıdır.",
+    "communityRules": "Topluluk Kuralları"
   },
   "themeToLight": "Açık temaya geç",
   "themeToDark": "Koyu temaya geç",

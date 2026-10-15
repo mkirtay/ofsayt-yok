@@ -1,0 +1,66 @@
+{
+  "menu": {
+    "label": "More actions",
+    "report": "Report",
+    "block": "Block user",
+    "unblock": "Unblock",
+    "loading": "Loading…"
+  },
+  "report": {
+    "titlePost": "Report post",
+    "titleComment": "Report comment",
+    "titleUser": "Report user",
+    "intro": "Why are you reporting this? Your identity is not shown to the author.",
+    "reasonLegend": "Reason",
+    "reasons": {
+      "HARASSMENT": "Insult / profanity",
+      "HATE": "Hate speech",
+      "SPAM": "Spam or advertising",
+      "SEXUAL": "Obscene or violent",
+      "MISINFO": "Misleading content",
+      "OTHER": "Other"
+    },
+    "noteLabel": "Note (optional)",
+    "notePlaceholder": "You can briefly explain",
+    "submit": "Report",
+    "sending": "Sending…",
+    "cancel": "Cancel",
+    "done": "Thanks, we received your report. We will review it within {{hours}} hours.",
+    "duplicate": "You already reported this; it is being reviewed.",
+    "error": "Could not send the report. Please try again.",
+    "rateLimited": "You sent too many reports. Please try again later.",
+    "self": "You cannot report your own content.",
+    "notFound": "This content no longer exists.",
+    "loginRequired": "You need to sign in to report.",
+    "rulesLink": "Community guidelines"
+  },
+  "block": {
+    "confirmTitle": "Block {{name}}?",
+    "confirmBody": "You will not see their posts, comments or notifications, and they cannot mention you. Any follow between you is removed. They are not notified.",
+    "confirm": "Block",
+    "cancel": "Cancel",
+    "done": "{{name}} blocked.",
+    "undone": "{{name}} unblocked.",
+    "error": "Something went wrong. Please try again.",
+    "profileNotice": "You blocked this user. Their posts are hidden from you."
+  },
+  "blocked": {
+    "title": "Blocked users",
+    "intro": "Posts, comments and notifications from people you block are hidden from you.",
+    "empty": "You have not blocked anyone.",
+    "loading": "Loading…",
+    "error": "Could not load the list.",
+    "unblock": "Unblock",
+    "loadMore": "Load more",
+    "since": "Since {{date}}"
+  },
+  "mention": {
+    "listLabel": "User suggestions",
+    "results": "{{count}} suggestions",
+    "noResults": "No matching users",
+    "hint": "Enter to choose, Esc to close"
+  },
+  "toast": {
+    "close": "Dismiss notification"
+  }
+}

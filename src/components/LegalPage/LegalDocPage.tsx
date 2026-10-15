@@ -6,9 +6,20 @@ import enLegal from '../../../public/locales/en/legal.json';
 import { siteBaseUrl } from '@/lib/siteUrl';
 import { brandTitle, withBrandText } from '@/config/brand';
 import { legalPage, type LegalDocKey } from '@/config/legalPages';
+import { REPORT_REVIEW_HOURS } from '@/config/moderation';
 
-/** Yasal metinler JSON'dan doğrudan okunur (t() değil) → marka değişkenleri burada doldurulur. */
-const LEGAL = { tr: withBrandText(trLegal), en: withBrandText(enLegal) };
+/** Metindeki sayılar tek kaynaktan (ör. şikâyet inceleme süresi → config/moderation.ts). */
+function withLegalVars<T>(value: T): T {
+  if (typeof value === 'string') return value.replaceAll('{{reviewHours}}', String(REPORT_REVIEW_HOURS)) as T;
+  if (Array.isArray(value)) return value.map(withLegalVars) as T;
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, withLegalVars(v)])) as T;
+  }
+  return value;
+}
+
+/** Yasal metinler JSON'dan doğrudan okunur (t() değil) → marka ve sayı değişkenleri burada doldurulur. */
+const LEGAL = { tr: withLegalVars(withBrandText(trLegal)), en: withLegalVars(withBrandText(enLegal)) };
 
 /** Yasal sayfa rotası (legal.json'daki belge + canonical ya da noindex). Rotalar ve sırası: config/legalPages.ts. */
 export default function LegalDocPage({ docKey }: { docKey: LegalDocKey }) {

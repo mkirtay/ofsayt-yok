@@ -46,7 +46,9 @@ export default function ProfilePage() {
     </Head>
   );
 
-  if (status === 'loading' || profileLoading) {
+  // Profil yüklüyken oturum `update()` sırasında da (status kısa süre 'loading') içerik yerinde kalır: iskelete dönmek
+  // sekmeyi söküp takıyordu → "Kaydedildi" bildirimi kayboluyor, form eski değerlere dönüyordu.
+  if ((status === 'loading' && !profile) || profileLoading) {
     return (
       <>
         {head}
@@ -65,7 +67,7 @@ export default function ProfilePage() {
     );
   }
 
-  if (status !== 'authenticated' || !profile) return null;
+  if (status === 'unauthenticated' || !profile) return null;
 
   const active = PROFILE_TABS.find((tab) => tab.id === activeId) ?? PROFILE_TABS[0];
 

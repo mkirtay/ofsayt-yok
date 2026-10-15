@@ -18,6 +18,8 @@ const KEYS: Record<GundemNotificationType, string> = {
   POST_COMMENT: 'notifications.postComment',
   FOLLOW: 'notifications.follow',
   OFFICIAL_POST: 'notifications.officialPost',
+  MENTION: 'notifications.mention',
+  MODERATION_WARNING: 'notifications.moderationWarning',
 };
 
 const SNIPPET_MAX = 60;
@@ -36,6 +38,8 @@ function isKnownType(type: string): type is GundemNotificationType {
  * - `actor === null` (hesap silinmiş): isim yerine "Bir kullanıcı" (resmi gönderi için marka adı).
  * - POST_*: hedef `/gundem/{postId}`; `post === null` (silinmiş) → tıklanamaz + soluk + "Gönderi silindi".
  * - FOLLOW: hedef aktörün profili; aktör yoksa tıklanamaz.
+ * - MENTION: gönderi bildirimi gibi (etiketlendiği gönderi / yorumun gönderisi).
+ * - MODERATION_WARNING: aktörsüz yönetici uyarısı → Topluluk Kuralları sayfası.
  */
 export function describeNotification(n: GundemNotification, t: TFn): NotificationView | null {
   if (!isKnownType(n.type)) return null;
@@ -44,6 +48,9 @@ export function describeNotification(n: GundemNotification, t: TFn): Notificatio
   const name = n.actor?.name ?? n.actor?.username ?? fallbackName;
   const text = t(KEYS[n.type], { name });
 
+  if (n.type === 'MODERATION_WARNING') {
+    return { text: t(KEYS[n.type]), snippet: t('notifications.rulesLink'), href: '/topluluk-kurallari', muted: false };
+  }
   if (n.type === 'FOLLOW') {
     return { text, snippet: null, href: n.actor ? `/gundem/kullanici/${n.actor.id}` : null, muted: false };
   }

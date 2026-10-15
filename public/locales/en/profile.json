@@ -15,7 +15,7 @@
   "roleMember": "Member",
   "save": "Save",
   "saving": "Saving…",
-  "saved": "Profile updated.",
+  "saved": "Saved.",
   "saveError": "Could not save.",
   "connectionError": "Connection error.",
   "changePassword": "Change password",
@@ -32,7 +32,8 @@
     "info": "My info",
     "favorites": "My favorites",
     "credits": "Credit history",
-    "analyses": "My analyses"
+    "analyses": "My analyses",
+    "blocked": "Blocked users"
   },
   "avatar": {
     "title": "Profile picture",
@@ -120,5 +121,7 @@
     "deleting": "Deleting…",
     "cancel": "Cancel",
     "error": "Could not delete the account. Please try again."
-  }
+  },
+  "contentRejected": "This field contains language that breaks our community guidelines. Please change it.",
+  "toastClose": "Dismiss notification"
 }

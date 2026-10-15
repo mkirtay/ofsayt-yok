@@ -38,7 +38,12 @@
     "usernameRequired": "Gündem'de paylaşım yapmadan önce bir kullanıcı adı seçmelisin.",
     "chooseUsername": "Kullanıcı adı seç",
     "termsRequired": "Paylaşım yapmadan önce Kullanım Şartları ve Gizlilik Politikası'nı onaylamalısın.",
-    "acceptTerms": "Şartları onayla"
+    "acceptTerms": "Şartları onayla",
+    "guidelines": "Topluluk kuralları",
+    "contentRejected": "Paylaşımın topluluk kurallarımıza uymayan ifadeler içeriyor. Lütfen düzenleyip tekrar dene.",
+    "linkLimit": "Yeni hesaplar bir paylaşımda en fazla {{count}} bağlantı ekleyebilir.",
+    "duplicate": "Bu içeriği kısa süre önce paylaştın. Aynı metni tekrar gönderemezsin.",
+    "suspended": "Gündem'de yazma iznin şu an kapalı. Okumaya devam edebilirsin."
   },
   "feed": {
     "loading": "Yükleniyor…",
@@ -66,7 +71,9 @@
     "deletedUser": "Silinmiş kullanıcı",
     "open": "Gönderiyi aç",
     "deleteTitle": "Gönderiyi sil",
-    "matchBadge": "Maça git: {{match}}"
+    "matchBadge": "Maça git: {{match}}",
+    "more": "Diğer işlemler",
+    "underReview": "İnceleme altında — şu an yalnız sen görüyorsun."
   },
   "comments": {
     "title": "Yorumlar",
@@ -77,7 +84,8 @@
     "delete": "Yorumu sil",
     "confirmDelete": "Bu yorumu silmek istediğinize emin misiniz?",
     "deleteError": "Yorum silinemedi.",
-    "deleteTitle": "Yorumu sil"
+    "deleteTitle": "Yorumu sil",
+    "more": "Yorum için diğer işlemler"
   },
   "detail": {
     "panelLabel": "Gönderi detayı",
@@ -119,6 +127,9 @@
     "officialPost": "{{name}} yeni bir gönderi paylaştı",
     "someone": "Bir kullanıcı",
     "official": "{{brand}}",
-    "postDeleted": "Gönderi silindi"
+    "postDeleted": "Gönderi silindi",
+    "mention": "{{name}} senden bahsetti",
+    "moderationWarning": "Topluluk kurallarına aykırı bir içeriğin nedeniyle uyarıldın.",
+    "rulesLink": "Topluluk kuralları"
   }
 }

@@ -6,18 +6,23 @@ import { useTranslation } from '@/lib/i18n';
 import '@/lib/i18nNamespaces/profile';
 import { profileQueryKey, type ProfileDto } from '@/hooks/useProfile';
 import AvatarPicker from './AvatarPicker';
+import { useToast } from '@/components/Toast';
 import DeleteAccountSection from './DeleteAccountSection';
 import { galleryPathOf } from '@/lib/avatars';
 import styles from './profile.module.scss';
 
-/** "Bilgilerim": profil alanları + avatar + şifre değiştirme + hesap silme. */
+/**
+ * "Bilgilerim": profil alanları + avatar + şifre değiştirme + hesap silme.
+ * Kaydet geri bildirimi: başarıda "Kaydedildi", hatada sunucunun iletisi — kısa, kendiliğinden kapanan, aria-live ile
+ * duyurulan toast (components/Toast). Düğme kaydederken pasif + "Kaydediliyor…" (aria-busy); değişiklik yoksa pasif.
+ */
 export default function InfoTab({ profile }: { profile: ProfileDto }) {
   const queryClient = useQueryClient();
   const { t } = useTranslation('profile');
   const { update } = useSession();
 
   const [saving, setSaving] = useState(false);
-  const [profileMsg, setProfileMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
+  const { show, toastNode } = useToast(t('toastClose'));
 
   // Sekme profil yüklendikten SONRA mount edilir → form alanları ilk değerlerini doğrudan profilden alır.
   const [name, setName] = useState(profile.name ?? '');
@@ -26,12 +31,15 @@ export default function InfoTab({ profile }: { profile: ProfileDto }) {
   // API galeri avatarını tam URL döndürür; form/depolama göreli galeri yolunu kullanır.
   const [image, setImage] = useState(galleryPathOf(profile.image ?? '') ?? profile.image ?? '');
   const email = profile.email;
+  // Son kaydedilen değerler: form bunlardan farklı değilse Kaydet pasif.
+  const [baseline, setBaseline] = useState({ name, username, bio, image });
+  const dirty = name !== baseline.name || username !== baseline.username || bio !== baseline.bio || image !== baseline.image;
 
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [passSaving, setPassSaving] = useState(false);
-  const [passMsg, setPassMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
+  const passReady = currentPassword.length > 0 && newPassword.length > 0 && confirmPassword.length > 0;
 
   const refreshProfile = useCallback(async () => {
     await queryClient.invalidateQueries({ queryKey: profileQueryKey });
@@ -39,7 +47,7 @@ export default function InfoTab({ profile }: { profile: ProfileDto }) {
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    setProfileMsg(null);
+    if (!dirty || saving) return;
     setSaving(true);
     try {
       const res = await fetch('/api/user/me', {
@@ -50,23 +58,32 @@ export default function InfoTab({ profile }: { profile: ProfileDto }) {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setProfileMsg({ type: 'err', text: data.error || t('saveError') });
+        show('error', data.code === 'CONTENT_REJECTED' ? t('contentRejected') : data.error || t('saveError'));
         return;
       }
       const u = data.user ?? data;
-      setName(u.name ?? '');
-      setUsername(u.username ?? '');
-      setBio(u.bio ?? '');
-      setImage(galleryPathOf(u.image ?? '') ?? u.image ?? '');
+      const next = {
+        name: u.name ?? '',
+        username: u.username ?? '',
+        bio: u.bio ?? '',
+        image: galleryPathOf(u.image ?? '') ?? u.image ?? '',
+      };
+      setName(next.name);
+      setUsername(next.username);
+      setBio(next.bio);
+      setImage(next.image);
+      setBaseline(next);
+      // Önbellek hemen güncel (başlık kartı, sekme yeniden takılırsa form eski değere dönmesin).
+      queryClient.setQueryData<ProfileDto>(profileQueryKey, (old) => (old ? { ...old, ...u } : old));
       await update({
         name: u.name,
         image: u.image,
         username: u.username,
       });
       void refreshProfile();
-      setProfileMsg({ type: 'ok', text: t('saved') });
+      show('success', t('saved'));
     } catch {
-      setProfileMsg({ type: 'err', text: t('connectionError') });
+      show('error', t('connectionError'));
     } finally {
       setSaving(false);
     }
@@ -74,9 +91,9 @@ export default function InfoTab({ profile }: { profile: ProfileDto }) {
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    setPassMsg(null);
+    if (!passReady || passSaving) return;
     if (newPassword !== confirmPassword) {
-      setPassMsg({ type: 'err', text: t('passwordMismatch') });
+      show('error', t('passwordMismatch'));
       return;
     }
     setPassSaving(true);
@@ -89,7 +106,7 @@ export default function InfoTab({ profile }: { profile: ProfileDto }) {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setPassMsg({ type: 'err', text: data.error || t('passwordChangeError') });
+        show('error', data.error || t('passwordChangeError'));
         return;
       }
       // Şifre değişince tüm oturumlar (bu dahil) geçersiz → yeni şifreyle hemen yeniden giriş; olmazsa giriş sayfası.
@@ -101,9 +118,9 @@ export default function InfoTab({ profile }: { profile: ProfileDto }) {
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
-      setPassMsg({ type: 'ok', text: t('passwordChanged') });
+      show('success', t('passwordChanged'));
     } catch {
-      setPassMsg({ type: 'err', text: t('connectionError') });
+      show('error', t('connectionError'));
     } finally {
       setPassSaving(false);
     }
@@ -179,15 +196,10 @@ export default function InfoTab({ profile }: { profile: ProfileDto }) {
           </div>
 
           <div className={styles.actions}>
-            <button type="submit" className={styles.submit} disabled={saving}>
+            <button type="submit" className={styles.submit} disabled={saving || !dirty} aria-busy={saving || undefined}>
               {saving ? t('saving') : t('save')}
             </button>
           </div>
-          {profileMsg && (
-            <p className={`${styles.message} ${profileMsg.type === 'ok' ? styles.ok : styles.err}`}>
-              {profileMsg.text}
-            </p>
-          )}
         </form>
 
         <form className={styles.section} onSubmit={handleChangePassword}>
@@ -236,18 +248,14 @@ export default function InfoTab({ profile }: { profile: ProfileDto }) {
           </div>
 
           <div className={styles.actions}>
-            <button type="submit" className={styles.submit} disabled={passSaving}>
+            <button type="submit" className={styles.submit} disabled={passSaving || !passReady} aria-busy={passSaving || undefined}>
               {passSaving ? t('updating') : t('updatePassword')}
             </button>
           </div>
-          {passMsg && (
-            <p className={`${styles.message} ${passMsg.type === 'ok' ? styles.ok : styles.err}`}>
-              {passMsg.text}
-            </p>
-          )}
         </form>
 
         <DeleteAccountSection email={email} />
+        {toastNode}
     </>
   );
 }

@@ -64,7 +64,7 @@
       },
       {
         "heading": "5. User Conduct",
-        "body": "Posting abusive, harassing, unlawful, or spam content in comments or polls is prohibited. Content that violates these rules may be removed and the associated account may be suspended."
+        "body": "Posting abusive, harassing, unlawful, or spam content in comments or polls is prohibited. Content that violates these rules may be removed and the associated account may be suspended. In Gündem and other user content areas, content that breaks the Community Guidelines (insults, hate speech, threats, obscenity, spam, sharing personal data, illegal content) is prohibited; there is no tolerance for objectionable content or abusive users. {{brand}} may hide or remove such content without prior notice, warn the user, suspend their ability to post in Gündem temporarily or permanently, and close the account for severe or repeated violations. [HUKUKİ METİN EKLENECEK: scope of the account closure right, notice and appeal procedure, data of closed accounts and remaining credits]"
       },
       {
         "heading": "6. Intellectual Property",
@@ -232,5 +232,37 @@
     "emailLabel": "Email",
     "email": "{{contactEmail}}",
     "responseNote": "We try to respond to requests as quickly as possible."
+  },
+  "community": {
+    "pageTitle": "Community Guidelines",
+    "pageDesc": "{{brand}} Gündem community guidelines: prohibited content, reporting, blocking and enforcement.",
+    "intro": "These guidelines apply to posts, comments and public profile fields (name, username, bio) in Gündem. We want a respectful place to talk football. There is no tolerance for objectionable content or abusive users.",
+    "sections": [
+      {
+        "heading": "1. Prohibited content",
+        "body": "Profanity and insults; hate speech targeting race, ethnicity, religion, sect, gender, sexual orientation, disability or similar characteristics; threats, incitement to violence and encouraging self-harm; harassment, targeting and persistent unwanted contact; obscene or sexual content; sharing other people's personal data (address, phone, ID details, etc.) without permission; spam, advertising and harmful links; impersonation and deliberately misleading content; any illegal content."
+      },
+      {
+        "heading": "2. Automatic moderation",
+        "body": "Posts pass through an automatic filter before they are published. Text containing severe violations is not published; borderline content is published but queued for review. New accounts can add only a limited number of links per post, and posting the same content again within a short time is blocked. The filter can make mistakes; if you think you were blocked by mistake, write to us."
+      },
+      {
+        "heading": "3. Reporting",
+        "body": "Every post and comment has a “Report” option in its “⋯” menu; choose a reason and optionally add a short note. You need to be signed in to report, and you can report the same content once. The reporter's identity is never shown to the author. Content reported by several different users is hidden until the review is complete. We review reports within {{reviewHours}} hours at the latest."
+      },
+      {
+        "heading": "4. Blocking",
+        "body": "You can block a user from their profile or from the “⋯” menu of their post. Posts, comments and notifications from people you block are not shown to you; they cannot mention you or send you notifications; any follow between you is removed. The blocked person is not told that they were blocked. You can unblock from Profile › Blocked users."
+      },
+      {
+        "heading": "5. Enforcement",
+        "body": "Content that breaks these guidelines may be hidden or removed; the user may be warned, their ability to post in Gündem may be suspended temporarily or permanently (signing in and reading remain available), and the account may be closed for severe or repeated violations. [HUKUKİ METİN EKLENECEK: enforcement levels, appeal procedure and deadlines, reporting to authorities and content retention obligations (including Law No. 5651)]"
+      },
+      {
+        "heading": "6. Appeals and contact",
+        "body": "To appeal a decision, report content that was blocked by mistake or tell us about an urgent issue, write to {{contactEmail}}. If someone's safety is at risk, please contact the authorities (112) first."
+      }
+    ],
+    "draftNotice": "DRAFT — This text requires legal review before publication. Fields in square brackets ([…]) have not been filled in yet."
   }
 }

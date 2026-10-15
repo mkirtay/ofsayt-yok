@@ -4,6 +4,8 @@ import { useConfirmDialog } from '@/components/ConfirmDialog';
 import EmptyState from '@/components/EmptyState';
 import VerifiedIcon from '@/components/icons/VerifiedIcon';
 import PostComposer from '@/components/PostComposer';
+import MoreButton from '@/components/Moderation/MoreButton';
+import { MentionText } from '@/components/PostCard';
 import TrashIcon from '@/components/icons/TrashIcon';
 import { COMMENT_MAX_LENGTH } from '@/config/gundem';
 import { useCreateComment, useDeleteComment, useGundemComments } from '@/hooks/useGundem';
@@ -64,6 +66,7 @@ export default function PostComments({ postId, currentUserId, isAdmin }: Props) 
           {items.map((c) => {
             const name = c.user.deleted ? t('post.deletedUser') : (c.user.name ?? c.user.username ?? t('post.anonymous'));
             const canDelete = !!currentUserId && (c.user.id === currentUserId || isAdmin);
+            const canModerate = !!currentUserId && c.user.id !== currentUserId;
             return (
               <li key={c.id} className={styles.item}>
                 <Avatar name={name} image={c.user.image} size={32} />
@@ -77,7 +80,14 @@ export default function PostComments({ postId, currentUserId, isAdmin }: Props) 
                       {formatRelativeTime(c.createdAt, t)}
                     </time>
                   </div>
-                  <p className={styles.text}>{c.body}</p>
+                  {c.underReview ? (
+                    <p className={styles.review} role="note">
+                      {t('post.underReview')}
+                    </p>
+                  ) : null}
+                  <p className={styles.text}>
+                    <MentionText body={c.body} mentions={c.mentions} linkClassName={styles.mention} />
+                  </p>
                 </div>
                 {canDelete ? (
                   <button
@@ -90,6 +100,15 @@ export default function PostComments({ postId, currentUserId, isAdmin }: Props) 
                   >
                     <TrashIcon size={15} />
                   </button>
+                ) : null}
+                {canModerate ? (
+                  <MoreButton
+                    size="sm"
+                    label={t('comments.more')}
+                    targetType="COMMENT"
+                    targetId={c.id}
+                    blockTarget={c.user.deleted || c.user.official ? null : { id: c.user.id, name }}
+                  />
                 ) : null}
               </li>
             );

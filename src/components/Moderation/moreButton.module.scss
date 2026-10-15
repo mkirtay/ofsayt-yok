@@ -1,0 +1,36 @@
+@use '../../styles/variables' as *;
+
+// Yalnız düğme (ilk yükte gelir); menü / diyalog stilleri moderation.module.scss'te (tembel).
+.wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: $color-text-secondary;
+  cursor: pointer;
+
+  &:hover {
+    background: $color-muted;
+    color: $color-text;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+    outline-offset: 1px;
+  }
+}
+
+.sm {
+  width: 28px;
+  height: 28px;
+}

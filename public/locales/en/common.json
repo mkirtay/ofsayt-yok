@@ -24,7 +24,8 @@
     "distanceSales": "Distance Sales Agreement",
     "refundPolicy": "Refund & Cancellation",
     "disclaimer": "Statistical predictions are for informational purposes only.",
-    "copyright": "© {{year}} {{brand}}. All rights reserved."
+    "copyright": "© {{year}} {{brand}}. All rights reserved.",
+    "communityRules": "Community Guidelines"
   },
   "themeToLight": "Switch to light theme",
   "themeToDark": "Switch to dark theme",

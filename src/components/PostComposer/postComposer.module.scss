@@ -1,6 +1,7 @@
 @use '../../styles/variables' as *;
 
 .composer {
+  position: relative; // @etiket öneri listesi (Moderation/MentionSuggest) bu kutuya göre konumlanır
   display: flex;
   flex-direction: column;
   gap: $spacing-2;
@@ -140,4 +141,20 @@
 // Son oturum açıksa daraltılmış satır içi composer: 2 × 8 px dolgu + 1 satırlık textarea (21 + 2 × 8 + 2) + 2 kenarlık.
 :global(html[data-auth-hint='in']) .placeholderInline {
   min-height: 57px;
+}
+
+// Topluluk kuralları bağlantısı: her ekranda görünür (ipucu mobilde gizli → orada boşluğu bu doldurur). Hedef ≥ 24 px.
+.rulesLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  font-size: 12px;
+  color: $color-primary-text;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  white-space: nowrap;
+
+  @include below-desktop {
+    margin-right: auto;
+  }
 }
