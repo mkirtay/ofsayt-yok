@@ -47,10 +47,6 @@
   color: #fff;
 }
 
-.status:empty {
-  display: none;
-}
-
 .list {
   display: flex;
   flex-direction: column;
@@ -250,12 +246,6 @@
 .error {
   margin: 0;
   color: $color-danger;
-  font-size: 14px;
-}
-
-.ok {
-  margin: 0;
-  color: $color-primary-text;
   font-size: 14px;
 }
 

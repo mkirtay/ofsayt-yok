@@ -1,0 +1,29 @@
+@use '../../styles/variables' as *;
+
+.nav {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: $spacing-3 $spacing-4 0;
+}
+
+// Hedef ≥ 32 px; yeşil metin token'ı her iki temada AA.
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  font-size: 14px;
+  font-weight: 600;
+  color: $color-primary-text;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+}

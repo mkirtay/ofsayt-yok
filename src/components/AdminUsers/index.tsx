@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { useToast } from '@/components/Toast';
 import styles from './adminUsers.module.scss';
 
 /**
@@ -52,8 +53,8 @@ export default function AdminUsers() {
   const [q, setQ] = useState('');
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [detail, setDetail] = useState<Detail | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [ok, setOk] = useState<string | null>(null);
+  // Sonuç / hata: aria-live ile duyurulan, kendiliğinden kapanan toast (components/Toast).
+  const { show, toastNode } = useToast('Bildirimi kapat');
   const [busy, setBusy] = useState(false);
   const [hasOlder, setHasOlder] = useState(false);
   const [amount, setAmount] = useState('');
@@ -63,26 +64,23 @@ export default function AdminUsers() {
   const [premiumNote, setPremiumNote] = useState('');
 
   const search = useCallback(async () => {
-    setError(null);
     try {
       const r = await api<{ users: AdminUser[] }>(`/api/admin/users?q=${encodeURIComponent(q)}`);
       setUsers(r.users);
     } catch (e) {
-      setError((e as Error).message);
+      show('error', (e as Error).message);
     }
-  }, [q]);
+  }, [q, show]);
 
   const load = useCallback(async (id: string) => {
-    setError(null);
-    setOk(null);
     try {
       const d = await api<Detail>(`/api/admin/users/${encodeURIComponent(id)}`);
       setDetail(d);
       setHasOlder(d.transactions.length === PAGE);
     } catch (e) {
-      setError((e as Error).message);
+      show('error', (e as Error).message);
     }
-  }, []);
+  }, [show]);
 
   const loadOlder = async () => {
     if (!detail || detail.transactions.length === 0) return;
@@ -93,7 +91,7 @@ export default function AdminUsers() {
       setDetail({ ...detail, transactions: [...detail.transactions, ...d.transactions] });
       setHasOlder(d.transactions.length === PAGE);
     } catch (e) {
-      setError((e as Error).message);
+      show('error', (e as Error).message);
     } finally {
       setBusy(false);
     }
@@ -104,18 +102,17 @@ export default function AdminUsers() {
     const n = Math.abs(Number(amount));
     if (!window.confirm(`${detail.user.email}: ${sign > 0 ? '+' : '−'}${n} kredi. Onaylıyor musun?`)) return;
     setBusy(true);
-    setError(null);
     try {
       const r = await api<{ credits: number }>(`/api/admin/users/${detail.user.id}/credits`, {
         method: 'POST',
         body: JSON.stringify({ amount: sign * n, note: creditNote }),
       });
-      setOk(`Yeni bakiye: ${r.credits}`);
+      show('success', `Yeni bakiye: ${r.credits}`);
       setAmount('');
       setCreditNote('');
       await load(detail.user.id);
     } catch (e) {
-      setError((e as Error).message);
+      show('error', (e as Error).message);
     } finally {
       setBusy(false);
     }
@@ -126,14 +123,13 @@ export default function AdminUsers() {
     const until = remove ? null : premiumChoice === 'custom' ? new Date(customUntil).toISOString() : addMonths(Number(premiumChoice));
     if (!window.confirm(remove ? `${detail.user.email}: premium kaldırılsın mı?` : `${detail.user.email}: premium bitişi ${fmt(until)}. Onaylıyor musun?`)) return;
     setBusy(true);
-    setError(null);
     try {
       await api(`/api/admin/users/${detail.user.id}/premium`, { method: 'POST', body: JSON.stringify({ until, note: premiumNote }) });
-      setOk(remove ? 'Premium kaldırıldı.' : 'Premium verildi.');
+      show('success', remove ? 'Premium kaldırıldı.' : 'Premium verildi.');
       setPremiumNote('');
       await load(detail.user.id);
     } catch (e) {
-      setError((e as Error).message);
+      show('error', (e as Error).message);
     } finally {
       setBusy(false);
     }
@@ -176,8 +172,7 @@ export default function AdminUsers() {
         </ul>
       ) : null}
 
-      {error ? <p className={styles.error} role="alert">{error}</p> : null}
-      {ok ? <p className={styles.ok}>{ok}</p> : null}
+      {toastNode}
 
       {u && detail ? (
         <section className={styles.card} aria-label="Kullanıcı ayrıntısı">

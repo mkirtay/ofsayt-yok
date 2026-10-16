@@ -1,0 +1,78 @@
+@use '../../styles/variables' as *;
+
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: $spacing-4;
+}
+
+.title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: $color-text;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: $spacing-3;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  height: 100%;
+  padding: $spacing-4;
+  border: 1px solid $color-border;
+  border-radius: 14px;
+  background: $color-surface;
+  color: $color-text;
+  text-decoration: none;
+
+  &:hover {
+    border-color: $color-primary-dark;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+    outline-offset: 2px;
+  }
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-2;
+}
+
+.cardTitle {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+// Beyaz yazı $color-danger üstünde 4.8:1.
+.badge {
+  min-width: 24px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: $color-danger;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.desc {
+  font-size: 13px;
+  line-height: 1.45;
+  color: $color-text-secondary;
+}

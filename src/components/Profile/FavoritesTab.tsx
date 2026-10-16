@@ -9,6 +9,7 @@ import { resolveSidebarLeagueLogo } from '@/utils/leagueLogo';
 import { leagueDisplayName } from '@/utils/leagueName';
 import { sportmonksClientRequest } from '@/services/sportmonksRuntimeClient';
 import { HOME_FAVORITES_LS_KEY, mergeFavoriteIds, parseLocalFavoriteIds } from '@/utils/favoriteImport';
+import { useToast } from '@/components/Toast';
 import styles from './profile.module.scss';
 
 type Favorites = { favoriteTeamIds: number[]; favoriteLeagueIds: number[] };
@@ -86,11 +87,11 @@ export default function FavoritesTab() {
   const leagues = useLeagueNames(leagueIds);
 
   const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
+  // Sonuç bildirimi: aria-live ile duyurulan, kendiliğinden kapanan toast (components/Toast).
+  const { show, toastNode } = useToast(t('toastClose'));
 
   async function remove(kind: 'team' | 'league', id: number) {
     if (!q.data) return;
-    setMsg(null);
     const next: Favorites = {
       favoriteTeamIds: kind === 'team' ? teamIds.filter((x) => x !== id) : teamIds,
       favoriteLeagueIds: kind === 'league' ? leagueIds.filter((x) => x !== id) : leagueIds,
@@ -100,12 +101,11 @@ export default function FavoritesTab() {
       queryClient.setQueryData(FAV_KEY, await saveFavorites(kind === 'team' ? { favoriteTeamIds: next.favoriteTeamIds } : { favoriteLeagueIds: next.favoriteLeagueIds }));
     } catch {
       queryClient.setQueryData(FAV_KEY, q.data);
-      setMsg({ type: 'err', text: t('favorites.error') });
+      show('error', t('favorites.error'));
     }
   }
 
   async function importFromDevice() {
-    setMsg(null);
     let local: number[] = [];
     try {
       local = parseLocalFavoriteIds(localStorage.getItem(HOME_FAVORITES_LS_KEY));
@@ -114,15 +114,15 @@ export default function FavoritesTab() {
     }
     const { merged, added } = mergeFavoriteIds(teamIds, local);
     if (added.length === 0) {
-      setMsg({ type: 'ok', text: local.length === 0 ? t('favorites.importNone') : t('favorites.importNothingNew') });
+      show('success', local.length === 0 ? t('favorites.importNone') : t('favorites.importNothingNew'));
       return;
     }
     setBusy(true);
     try {
       queryClient.setQueryData(FAV_KEY, await saveFavorites({ favoriteTeamIds: merged }));
-      setMsg({ type: 'ok', text: t('favorites.imported', { count: added.length }) });
+      show('success', t('favorites.imported', { count: added.length }));
     } catch {
-      setMsg({ type: 'err', text: t('favorites.error') });
+      show('error', t('favorites.error'));
     } finally {
       setBusy(false);
     }
@@ -182,7 +182,7 @@ export default function FavoritesTab() {
         </button>
       </section>
 
-      {msg ? <p className={`${styles.message} ${msg.type === 'ok' ? styles.ok : styles.err}`}>{msg.text}</p> : null}
+      {toastNode}
     </>
   );
 }

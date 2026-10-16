@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useToast } from '@/components/Toast';
 import styles from './adminReports.module.scss';
 
 /**
@@ -230,8 +231,8 @@ function QueueCard({ item, onAction, busy }: { item: QueueItem; onAction: (body:
 export default function AdminReports() {
   const qc = useQueryClient();
   const [tab, setTab] = useState<Tab>('queue');
-  const [error, setError] = useState<string | null>(null);
-  const [ok, setOk] = useState<string | null>(null);
+  // İşlem sonucu: aria-live ile duyurulan, kendiliğinden kapanan toast (components/Toast).
+  const { show, toastNode } = useToast('Bildirimi kapat');
   const [busy, setBusy] = useState(false);
   const [term, setTerm] = useState('');
   const [level, setLevel] = useState('BLOCK');
@@ -262,14 +263,12 @@ export default function AdminReports() {
   async function act(body: object, confirmText?: string) {
     if (confirmText && !window.confirm(confirmText)) return;
     setBusy(true);
-    setError(null);
-    setOk(null);
     try {
       await api('/api/admin/moderation/actions', { method: 'POST', body: JSON.stringify(body) });
-      setOk('İşlem kaydedildi.');
+      show('success', 'İşlem kaydedildi.');
       await loadQueue();
     } catch (e) {
-      setError((e as Error).message);
+      show('error', (e as Error).message);
     } finally {
       setBusy(false);
     }
@@ -278,15 +277,13 @@ export default function AdminReports() {
   async function addTerm(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
-    setError(null);
-    setOk(null);
     try {
       await api('/api/admin/moderation/terms', { method: 'POST', body: JSON.stringify({ term, level, match }) });
       setTerm('');
-      setOk('Terim kaydedildi (en geç 1 dakikada tüm sunucularda geçerli).');
+      show('success', 'Terim kaydedildi (en geç 1 dakikada tüm sunucularda geçerli).');
       await loadTerms();
     } catch (err) {
-      setError((err as Error).message);
+      show('error', (err as Error).message);
     } finally {
       setBusy(false);
     }
@@ -299,7 +296,7 @@ export default function AdminReports() {
       await api(`/api/admin/moderation/terms?id=${encodeURIComponent(id)}`, { method: 'DELETE' });
       await loadTerms();
     } catch (err) {
-      setError((err as Error).message);
+      show('error', (err as Error).message);
     } finally {
       setBusy(false);
     }
@@ -329,10 +326,12 @@ export default function AdminReports() {
         ))}
       </div>
 
-      <div aria-live="polite" className={styles.status}>
-        {error || loadError ? <p className={styles.error}>{error ?? loadError?.message}</p> : null}
-        {ok ? <p className={styles.ok}>{ok}</p> : null}
-      </div>
+      {loadError ? (
+        <p className={styles.error} role="alert">
+          {loadError.message}
+        </p>
+      ) : null}
+      {toastNode}
 
       {tab === 'queue' ? (
         queue && queue.items.length === 0 ? (
