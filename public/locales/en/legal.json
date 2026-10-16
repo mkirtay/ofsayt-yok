@@ -8,11 +8,11 @@
     "sections": [
       {
         "heading": "1. Data Controller",
-        "body": "The data controller under Turkish Personal Data Protection Law No. 6698 (\"KVKK\") is [ŞİRKET/KİŞİ ÜNVANI] ([ADRES]). You can reach us at [İLETİŞİM E-POSTASI] or via the Contact page. See the KVKK Information Notice for details."
+        "body": "The data controller under Turkish Personal Data Protection Law No. 6698 (\"KVKK\") is {{seller.legalName}} ({{seller.address}}). You can reach us at {{seller.email}} or via the Contact page. See the KVKK Information Notice for details."
       },
       {
         "heading": "2. Data We Collect",
-        "body": "When you create an account we collect your username, email address, and password (stored encrypted). While using the site we may collect your favorite teams/leagues, comments and poll activity, credit balance, and technical data such as IP address and browser information. When you create an account, the campaign link that brought you to the site (utm source/medium/campaign) and the time that visit started are saved to your account. We use this information only to measure which of our promotional efforts work. Until you sign up, this information is kept only on your device for the duration of your browser session; no cookie is used for this and it is not shared with third parties. When you sign up, the date on which you accepted the Terms of Use and the Privacy Policy and the version of the text you accepted are stored with your account."
+        "body": "When you create an account we collect your username, email address, and password (stored encrypted). While using the site we may collect your favorite teams/leagues, comments and poll activity, credit balance, and technical data such as IP address and browser information. When you create an account, the campaign link that brought you to the site (utm source/medium/campaign) and the time that visit started are saved to your account. We use this information only to measure which of our promotional efforts work. Until you sign up, this information is kept only on your device for the duration of your browser session; no cookie is used for this and it is not shared with third parties. When you sign up, the date on which you accepted the Terms of Use and the Privacy Policy and the version of the text you accepted are stored with your account. When you buy credits, the order record (order number, package, amount, date, status, payment provider transaction number) and the time of your pre-purchase approval and the version of the approved text are stored; an order summary is sent to your e-mail address."
       },
       {
         "heading": "3. How We Use Your Data",
@@ -24,7 +24,9 @@
       },
       {
         "heading": "5. Sharing With Third Parties",
-        "body": "We do not share your personal data with third parties except where legally required, or with service providers we use for hosting/infrastructure, analytics, and payment processing. These providers process your data only on our behalf and for the purposes we define. We use Sentry (Functional Software, Inc., USA) error monitoring to detect and fix technical errors on the site. Error reports are stored on Sentry's servers in the European Union (Germany). When an error occurs, technical details such as the error message, the page where it occurred, and your browser and operating system type are sent to Sentry. Your name, email address, and cookies are not attached to these reports. Your IP address is not stored. No session recording or performance tracking takes place."
+        "body": "Apart from legal obligations, your personal data is shared only with the service providers below, to the extent needed to provide the service; they process it on our behalf and for the purposes we set. The table is based on the providers actually used in the site's code. Sentry error logs are stored on servers in the European Union (Germany); no session replay or performance monitoring is used.\n\nOn the payment result page, information the payment provider adds to the address (e.g. your e-mail address) is removed from the address as soon as the page opens and is not sent to page statistics or error logs. [HUKUKİ METİN EKLENECEK: sağlayıcıların sunucu konumları ve yurt dışına aktarımın KVKK md. 9 kapsamındaki dayanağı]",
+        "table": "dataProcessors",
+        "review": true
       },
       {
         "heading": "6. Data Security and Retention",
@@ -39,7 +41,8 @@
         "body": "This policy may be updated from time to time; the current version is always published on this page."
       }
     ],
-    "draftNotice": "DRAFT — This text requires legal review before publication. Fields in square brackets ([…]) have not been filled in yet."
+    "draftNotice": "DRAFT — awaiting lawyer approval. This text requires legal review before publication; sections marked “Awaiting lawyer approval” are not final. Fields in square brackets ([…]) have not been filled in yet.",
+    "effectiveDate": "Effective date: {{legalEffectiveDate}}"
   },
   "terms": {
     "pageTitle": "Terms of Use",
@@ -79,7 +82,7 @@
         "body": "These terms may be updated from time to time. Disputes arising from these terms are governed by the laws of the Republic of Türkiye."
       }
     ],
-    "draftNotice": "DRAFT — This text requires legal review before publication. Fields in square brackets ([…]) have not been filled in yet."
+    "draftNotice": "DRAFT — awaiting lawyer approval. This text requires legal review before publication; sections marked “Awaiting lawyer approval” are not final. Fields in square brackets ([…]) have not been filled in yet."
   },
   "kvkk": {
     "pageTitle": "KVKK Information Notice",
@@ -88,11 +91,11 @@
     "sections": [
       {
         "heading": "1. Data Controller",
-        "body": "Name: [ŞİRKET/KİŞİ ÜNVANI] · Address: [ADRES] · Tax office / no: [VERGİ DAİRESİ] / [VERGİ NO] · MERSIS: [MERSİS NO] · Phone: [TELEFON] · Email: [İLETİŞİM E-POSTASI] · KEP: [KEP ADRESİ]"
+        "body": "Name: {{seller.legalName}} · Address: {{seller.address}} · Tax office / no: {{seller.taxOffice}} / {{seller.taxNumber}} · MERSIS: {{seller.mersis}} · Phone: {{seller.phone}} · Email: {{seller.email}} · KEP: {{seller.kep}}"
       },
       {
         "heading": "2. Personal Data Processed",
-        "body": "Identity (name, username), contact (email address), account and transaction data (credit history, unlocked analyses, favourite teams/leagues, comments and posts), security data (IP address, session data, irreversible password hash, login attempts), signup source (campaign link utm data) and the signup consent record (date and text version)."
+        "body": "Identity (name, username), contact (email address), account and transaction data (credit history, unlocked analyses, favourite teams/leagues, comments and posts), security data (IP address, session data, irreversible password hash, login attempts), signup source (campaign link utm data) and the signup consent record (date and text version). For purchases, the order record and the purchase approval record (time of approval and text version)."
       },
       {
         "heading": "3. Purposes",
@@ -108,7 +111,9 @@
       },
       {
         "heading": "6. Transfers",
-        "body": "To provide the service, data may be shared, only as needed for the relevant service, with providers for hosting (Vercel), database (Supabase), caching and rate limiting (Upstash), error monitoring (Sentry), email delivery, bot protection (Cloudflare Turnstile), Google sign-in (Google) and AI analysis (OpenAI). [HUKUKİ METİN EKLENECEK: recipient groups, legal basis for cross-border transfer under KVKK Art. 9 and provider server locations]"
+        "body": "To provide the service, data is transferred to the service providers below only to the extent needed for that service (the table is based on the site's code). [HUKUKİ METİN EKLENECEK: alıcı grupları, yurt dışına aktarımın KVKK md. 9 kapsamındaki dayanağı ve sağlayıcıların sunucu konumları]",
+        "table": "dataProcessors",
+        "review": true
       },
       {
         "heading": "7. Retention",
@@ -116,10 +121,11 @@
       },
       {
         "heading": "8. Your Rights and Requests",
-        "body": "To exercise your rights under KVKK Art. 11, you can send a written request to [İLETİŞİM E-POSTASI], to the KEP address [KEP ADRESİ] or by post to [ADRES]. You can delete your account and the data linked to it yourself, without a request, under Profile › My info › Delete account; what is deleted and what is anonymized is described in section 6 of the Privacy Policy. [HUKUKİ METİN EKLENECEK: request procedure and response time under the Communiqué on Application Procedures to the Data Controller]"
+        "body": "To exercise your rights under KVKK Art. 11, you can send a written request to {{seller.email}}, to the KEP address {{seller.kep}} or by post to {{seller.address}}. You can delete your account and the data linked to it yourself, without a request, under Profile › My info › Delete account; what is deleted and what is anonymized is described in section 6 of the Privacy Policy. [HUKUKİ METİN EKLENECEK: request procedure and response time under the Communiqué on Application Procedures to the Data Controller]"
       }
     ],
-    "draftNotice": "DRAFT — This text requires legal review before publication. Fields in square brackets ([…]) have not been filled in yet."
+    "draftNotice": "DRAFT — awaiting lawyer approval. This text requires legal review before publication; sections marked “Awaiting lawyer approval” are not final. Fields in square brackets ([…]) have not been filled in yet.",
+    "effectiveDate": "Effective date: {{legalEffectiveDate}}"
   },
   "cookies": {
     "pageTitle": "Cookie Policy",
@@ -151,7 +157,7 @@
         "body": "[HUKUKİ METİN EKLENECEK: consent requirement and consent management for non-essential cookies and similar technologies] You can delete or block cookies in your browser settings; if you block strictly necessary cookies you may not be able to sign in."
       }
     ],
-    "draftNotice": "DRAFT — This text requires legal review before publication. Fields in square brackets ([…]) have not been filled in yet."
+    "draftNotice": "DRAFT — awaiting lawyer approval. This text requires legal review before publication; sections marked “Awaiting lawyer approval” are not final. Fields in square brackets ([…]) have not been filled in yet."
   },
   "refund": {
     "pageTitle": "Refund & Cancellation Policy",
@@ -160,7 +166,7 @@
     "sections": [
       {
         "heading": "1. Seller",
-        "body": "Name: [ŞİRKET/KİŞİ ÜNVANI] · Address: [ADRES] · Tax office / no: [VERGİ DAİRESİ] / [VERGİ NO] · MERSIS: [MERSİS NO] · Phone: [TELEFON] · Email: [İLETİŞİM E-POSTASI] · KEP: [KEP ADRESİ]"
+        "body": "Name: {{seller.legalName}} · Address: {{seller.address}} · Tax office / no: {{seller.taxOffice}} / {{seller.taxNumber}} · MERSIS: {{seller.mersis}} · Phone: {{seller.phone}} · Email: {{seller.email}} · KEP: {{seller.kep}}"
       },
       {
         "heading": "2. Scope",
@@ -180,50 +186,130 @@
       },
       {
         "heading": "6. Requests",
-        "body": "For refund and cancellation requests, write to [İLETİŞİM E-POSTASI]."
+        "body": "For refund and cancellation requests, write to {{seller.email}}."
       }
     ],
-    "draftNotice": "DRAFT — This text requires legal review before publication. Fields in square brackets ([…]) have not been filled in yet."
+    "draftNotice": "DRAFT — awaiting lawyer approval. This text requires legal review before publication; sections marked “Awaiting lawyer approval” are not final. Fields in square brackets ([…]) have not been filled in yet.",
+    "effectiveDate": "Effective date: {{legalEffectiveDate}}"
   },
-  "distanceSales": {
-    "pageTitle": "Distance Sales Agreement",
-    "pageDesc": "{{brand}} distance sales agreement for credit packages.",
-    "intro": "Buying credits is coming soon. No sales are made at this time; this agreement will apply once sales start.",
+  "preInfo": {
+    "pageTitle": "Pre-Contract Information Form",
+    "pageDesc": "{{brand}} pre-contract information form for buying AI analysis credits.",
+    "intro": "Credit purchases are coming soon; no sales are made at the moment. This form contains the information to read and accept before placing an order and is accepted with the checkbox at the purchase step.",
+    "effectiveDate": "Effective date: {{legalEffectiveDate}}",
     "sections": [
       {
-        "heading": "1. Seller",
-        "body": "Name: [ŞİRKET/KİŞİ ÜNVANI] · Address: [ADRES] · Tax office / no: [VERGİ DAİRESİ] / [VERGİ NO] · MERSIS: [MERSİS NO] · Phone: [TELEFON] · Email: [İLETİŞİM E-POSTASI] · KEP: [KEP ADRESİ]"
+        "heading": "1. Seller Details",
+        "body": "Name: {{seller.legalName}} · Address: {{seller.address}} · Tax office / no: {{seller.taxOffice}} / {{seller.taxNumber}} · MERSİS: {{seller.mersis}} · Phone: {{seller.phone}} · E-mail: {{seller.email}} · KEP: {{seller.kep}}"
       },
       {
-        "heading": "2. Buyer",
-        "body": "The person purchasing with their member account on {{siteDomain}}. The buyer's name and email are taken from the account."
+        "heading": "2. Main Characteristics of the Product",
+        "body": "AI analysis credits: 1 credit is the right to unlock one AI match analysis for your account; an unlocked analysis stays unlocked permanently. Credits do not expire. Packages are one-time purchases; there is no subscription, automatic renewal or recurring charge. Credits cannot be exchanged for cash or transferred to another account. AI match analyses are statistical predictions for information only; no outcome is guaranteed.",
+        "review": true
       },
       {
-        "heading": "3. Subject",
-        "body": "The rights and obligations of the parties regarding the sale of the AI analysis credit package ordered online and its addition to the buyer's account."
+        "heading": "3. Price and Additional Costs",
+        "body": "Prices are in Turkish lira and include VAT; there are no shipping or extra service fees. The price shown on the credits page at the time of the order applies. Current packages:",
+        "review": true,
+        "table": "creditPackages"
       },
       {
-        "heading": "4. Product and Price",
-        "body": "[HUKUKİ METİN EKLENECEK: package names, credit amounts, prices incl. VAT (same as the /credits page once sales start)]"
+        "heading": "4. Payment",
+        "body": "Payment is taken on the payment page provided by the Seller's payment service provider Hikie ([HUKUKİ METİN EKLENECEK: Hikie'nin ticari unvanı, ülkesi ve ödeme kuruluşu lisans bilgisi]). Card details are entered only on Hikie's payment page; {{brand}} does not see, process or store the card number, expiry date or security code. From the payment result {{brand}} records only that the order was paid, the amount, the currency and Hikie's transaction number in the order record. If the payment is not completed or is declined, no credits are added to the account.",
+        "review": true
       },
       {
-        "heading": "5. Payment and Performance",
-        "body": "[HUKUKİ METİN EKLENECEK: payment method and payment institution, when credits are added to the account]"
+        "heading": "5. Delivery",
+        "body": "The product is digital; there is no physical delivery. Credits are added to the Buyer's account automatically and immediately once Hikie confirms the payment (signed payment notification); this usually takes a few seconds. An order summary (order number, package, credits, amount, date, seller details) is also sent to the account's e-mail address.\n\nIf payment was taken but the credits do not appear within a reasonable time, the Buyer can write to {{seller.email}} with the order number; the order record is checked and a paid order is credited to the account.",
+        "review": true
       },
       {
         "heading": "6. Right of Withdrawal",
-        "body": "[HUKUKİ METİN EKLENECEK: right of withdrawal and its exception; consistent with the Refund & Cancellation Policy]"
+        "body": "In distance contracts the consumer generally has a 14-day right of withdrawal. However, the right of withdrawal cannot be exercised for services performed instantly in electronic form, intangible goods delivered instantly to the consumer, and services whose performance starts with the consumer's approval before the withdrawal period ends (Distance Contracts Regulation art. 15/1-ğ and h). Because credits are added to the account as soon as payment is confirmed, by ticking the box at the purchase step the Buyer confirms that they agree to immediate performance and know that they therefore lose the right of withdrawal. [HUKUKİ METİN EKLENECEK: istisnanın kullanılmamış krediler bakımından kapsamı ve onay beyanının nihai metni]\n\nFor wrong or duplicate charges, the Refund and Cancellation Terms apply.",
+        "review": true
       },
       {
-        "heading": "7. Dispute Resolution",
-        "body": "[HUKUKİ METİN EKLENECEK: consumer arbitration committee / consumer court monetary limits and jurisdiction]"
+        "heading": "7. Complaints and Remedies",
+        "body": "Complaints and requests can first be sent to {{seller.email}}. For disputes, the Buyer may apply to the Consumer Arbitration Committee at their place of residence or where the transaction was made within the monetary limit announced each year by the Ministry of Trade ([GÜNCEL PARASAL SINIR]), and to the Consumer Court above that limit.",
+        "review": true
       },
       {
-        "heading": "8. Entry into Force",
-        "body": "[HUKUKİ METİN EKLENECEK: formation by electronic acceptance and record keeping]"
+        "heading": "8. Personal Data",
+        "body": "For the personal data processed during the order (account details, order record, time of approval and text version, payment result) and the service providers it is shared with, see the Privacy Policy and the KVKK Information Notice."
+      },
+      {
+        "heading": "9. Contact",
+        "body": "E-mail: {{seller.email}} · Phone: {{seller.phone}} · KEP: {{seller.kep}} · Address: {{seller.address}}"
+      },
+      {
+        "heading": "10. Confirmation",
+        "body": "By ticking the box at the purchase step you confirm that you received the information in this form, read the Distance Sales Contract and agree to the immediate performance of the digital content. The time of approval and the form version ({{legalEffectiveDate}}) are stored in the order record.",
+        "review": true
       }
     ],
-    "draftNotice": "DRAFT — This text requires legal review before publication. Fields in square brackets ([…]) have not been filled in yet."
+    "draftNotice": "DRAFT — awaiting lawyer approval. This text requires legal review before publication; sections marked “Awaiting lawyer approval” are not final. Fields in square brackets ([…]) have not been filled in yet."
+  },
+  "distanceSales": {
+    "pageTitle": "Distance Sales Contract",
+    "pageDesc": "{{brand}} distance sales contract for AI analysis credit packages.",
+    "intro": "Credit purchases are coming soon. No sales are made at the moment; this contract will apply once sales start. It is concluded electronically between the user who buys a credit package on {{siteDomain}} (\"Buyer\") and the seller identified below (\"Seller\").",
+    "effectiveDate": "Effective date: {{legalEffectiveDate}}",
+    "sections": [
+      {
+        "heading": "1. Seller",
+        "body": "Name: {{seller.legalName}} · Address: {{seller.address}} · Tax office / no: {{seller.taxOffice}} / {{seller.taxNumber}} · MERSİS: {{seller.mersis}} · Phone: {{seller.phone}} · E-mail: {{seller.email}} · KEP: {{seller.kep}}"
+      },
+      {
+        "heading": "2. Buyer",
+        "body": "The person who makes the purchase with their member account on {{siteDomain}}. The Buyer's name and e-mail are taken from the account; the order record (order number starting with \"oy_\") is linked to the account."
+      },
+      {
+        "heading": "3. Subject and Product",
+        "body": "The subject of this contract is the sale of the AI analysis credit package ordered electronically by the Buyer and its crediting to the account.\n\nAI analysis credits: 1 credit is the right to unlock one AI match analysis for your account; an unlocked analysis stays unlocked permanently. Credits do not expire. Packages are one-time purchases; there is no subscription, automatic renewal or recurring charge. Credits cannot be exchanged for cash or transferred to another account. AI match analyses are statistical predictions for information only; no outcome is guaranteed.",
+        "review": true
+      },
+      {
+        "heading": "4. Price",
+        "body": "Prices are in Turkish lira and include VAT; there are no shipping or extra service fees. The price shown on the credits page at the time of the order applies. Current packages:",
+        "review": true,
+        "table": "creditPackages"
+      },
+      {
+        "heading": "5. Payment",
+        "body": "Payment is taken on the payment page provided by the Seller's payment service provider Hikie ([HUKUKİ METİN EKLENECEK: Hikie'nin ticari unvanı, ülkesi ve ödeme kuruluşu lisans bilgisi]). Card details are entered only on Hikie's payment page; {{brand}} does not see, process or store the card number, expiry date or security code. From the payment result {{brand}} records only that the order was paid, the amount, the currency and Hikie's transaction number in the order record. If the payment is not completed or is declined, no credits are added to the account.",
+        "review": true
+      },
+      {
+        "heading": "6. Delivery (Performance)",
+        "body": "The product is digital; there is no physical delivery. Credits are added to the Buyer's account automatically and immediately once Hikie confirms the payment (signed payment notification); this usually takes a few seconds. An order summary (order number, package, credits, amount, date, seller details) is also sent to the account's e-mail address.\n\nIf payment was taken but the credits do not appear within a reasonable time, the Buyer can write to {{seller.email}} with the order number; the order record is checked and a paid order is credited to the account.",
+        "review": true
+      },
+      {
+        "heading": "7. Right of Withdrawal",
+        "body": "In distance contracts the consumer generally has a 14-day right of withdrawal. However, the right of withdrawal cannot be exercised for services performed instantly in electronic form, intangible goods delivered instantly to the consumer, and services whose performance starts with the consumer's approval before the withdrawal period ends (Distance Contracts Regulation art. 15/1-ğ and h). Because credits are added to the account as soon as payment is confirmed, by ticking the box at the purchase step the Buyer confirms that they agree to immediate performance and know that they therefore lose the right of withdrawal. [HUKUKİ METİN EKLENECEK: istisnanın kullanılmamış krediler bakımından kapsamı ve onay beyanının nihai metni]\n\nFor wrong or duplicate charges, the Refund and Cancellation Terms apply.",
+        "review": true
+      },
+      {
+        "heading": "8. Buyer's Declarations",
+        "body": "The Buyer accepts that they read the Pre-Contract Information Form and this contract before ordering and approved them electronically. [HUKUKİ METİN EKLENECEK: yaş sınırı ve hesap bilgilerinin doğruluğuna ilişkin beyan]",
+        "review": true
+      },
+      {
+        "heading": "9. Complaints and Disputes",
+        "body": "Complaints and requests can first be sent to {{seller.email}}. For disputes, the Buyer may apply to the Consumer Arbitration Committee at their place of residence or where the transaction was made within the monetary limit announced each year by the Ministry of Trade ([GÜNCEL PARASAL SINIR]), and to the Consumer Court above that limit.",
+        "review": true
+      },
+      {
+        "heading": "10. Contact",
+        "body": "E-mail: {{seller.email}} · Phone: {{seller.phone}} · KEP: {{seller.kep}} · Address: {{seller.address}}"
+      },
+      {
+        "heading": "11. Entry into Force",
+        "body": "This contract is concluded when the Buyer ticks the box at the purchase step and completes the payment. The time of approval and the version of the approved text ({{legalEffectiveDate}}) are stored in the order record; the contract text is available on this page. [HUKUKİ METİN EKLENECEK: sözleşmenin saklanması ve Alıcıya kalıcı veri saklayıcısıyla iletilmesi]",
+        "review": true
+      }
+    ],
+    "draftNotice": "DRAFT — awaiting lawyer approval. This text requires legal review before publication; sections marked “Awaiting lawyer approval” are not final. Fields in square brackets ([…]) have not been filled in yet."
   },
   "contact": {
     "pageTitle": "Contact",
@@ -263,6 +349,6 @@
         "body": "To appeal a decision, report content that was blocked by mistake or tell us about an urgent issue, write to {{contactEmail}}. If someone's safety is at risk, please contact the authorities (112) first."
       }
     ],
-    "draftNotice": "DRAFT — This text requires legal review before publication. Fields in square brackets ([…]) have not been filled in yet."
+    "draftNotice": "DRAFT — awaiting lawyer approval. This text requires legal review before publication; sections marked “Awaiting lawyer approval” are not final. Fields in square brackets ([…]) have not been filled in yet."
   }
 }

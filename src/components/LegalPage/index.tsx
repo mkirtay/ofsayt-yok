@@ -3,9 +3,20 @@ import { useI18n } from '@/lib/i18n';
 import Container from '@/components/Container';
 import styles from './legalPage.module.scss';
 
-interface LegalSection {
+/** Bölüm tablosu: başlık + satırlar (metin). Kod kaynaklı tablolar (fiyat, veri alıcıları) LegalDocPage'de doldurulur. */
+export interface LegalTable {
+  caption?: string;
+  head: string[];
+  rows: string[][];
+}
+
+export interface LegalSection {
   heading: string;
+  /** Paragraflar boş satırla ("\n\n") ayrılır. */
   body: string;
+  /** Hukuki iddia / taahhüt içeren bölüm: avukat onayına kadar "Avukat onayı bekler" rozetiyle işaretlenir. */
+  review?: boolean;
+  table?: LegalTable;
 }
 
 interface LegalPageProps {
@@ -15,10 +26,13 @@ interface LegalPageProps {
   draftNotice?: string;
   /** Metnin altında ilgili sayfa bağlantıları (ör. Gizlilik → Hesap silme). */
   related?: { href: string; label: string }[];
+  /** "Yürürlük tarihi: 2026-10-16" gibi tek satır (satış belgeleri). */
+  effectiveDate?: string;
 }
 
-export default function LegalPage({ pageTitle, intro, sections, draftNotice, related }: LegalPageProps) {
+export default function LegalPage({ pageTitle, intro, sections, draftNotice, related, effectiveDate }: LegalPageProps) {
   const { locale } = useI18n();
+  const reviewLabel = locale === 'en' ? 'Awaiting lawyer approval' : 'Avukat onayı bekler';
 
   return (
     <Container>
@@ -35,13 +49,49 @@ export default function LegalPage({ pageTitle, intro, sections, draftNotice, rel
         ) : null}
 
         <h1 className={styles.title}>{pageTitle}</h1>
+        {effectiveDate ? <p className={styles.effectiveDate}>{effectiveDate}</p> : null}
         <p className={styles.intro}>{intro}</p>
 
         <div className={styles.sections}>
           {sections.map((section) => (
             <section key={section.heading} className={styles.section}>
-              <h2 className={styles.sectionHeading}>{section.heading}</h2>
-              <p className={styles.sectionBody}>{section.body}</p>
+              <h2 className={styles.sectionHeading}>
+                {section.heading}
+                {section.review ? <span className={styles.reviewBadge}>{reviewLabel}</span> : null}
+              </h2>
+              {section.body
+                .split('\n\n')
+                .filter(Boolean)
+                .map((para, i) => (
+                  <p key={i} className={styles.sectionBody}>
+                    {para}
+                  </p>
+                ))}
+              {section.table ? (
+                <div className={styles.tableWrap}>
+                  <table className={styles.table}>
+                    {section.table.caption ? <caption>{section.table.caption}</caption> : null}
+                    <thead>
+                      <tr>
+                        {section.table.head.map((h) => (
+                          <th key={h} scope="col">
+                            {h}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {section.table.rows.map((row, i) => (
+                        <tr key={i}>
+                          {row.map((cell, j) => (
+                            <td key={j}>{cell}</td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : null}
             </section>
           ))}
         </div>
