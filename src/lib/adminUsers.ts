@@ -5,6 +5,8 @@
  */
 import { prisma } from '@/lib/prisma';
 import { addCredits } from '@/lib/credits';
+import { DELETED_USER_ID } from '@/config/deletedUser';
+import { isGundemSuspended } from '@/lib/gundem/authorGate';
 
 export const ADMIN_NOTE_MIN = 5;
 export const ADMIN_CREDIT_MAX = 10_000;
@@ -33,6 +35,7 @@ export async function searchUsers(q: string) {
   if (term.length < 2) return [];
   return prisma.user.findMany({
     where: {
+      id: { not: DELETED_USER_ID },
       OR: [
         { email: { contains: term, mode: 'insensitive' } },
         { username: { contains: term, mode: 'insensitive' } },
@@ -43,6 +46,43 @@ export async function searchUsers(q: string) {
     take: 20,
     select: USER_FIELDS,
   });
+}
+
+export const ADMIN_LIST_PAGE = 50;
+
+/**
+ * Tüm kullanıcılar listesi (yönetici): en yeni kayıt üstte, sayfa başına 50, cursor = son satırın id'si. "Silinmiş
+ * kullanıcı" yer tutucusu listede yok. Alanlar açık beyaz liste: şifre, belirteç, oturum sürümü vb. ASLA seçilmez.
+ */
+export async function listUsers(cursor: string | null, now = new Date()) {
+  const rows = await prisma.user.findMany({
+    where: { id: { not: DELETED_USER_ID } },
+    orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+    take: ADMIN_LIST_PAGE + 1,
+    ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+    select: {
+      id: true,
+      username: true,
+      name: true,
+      email: true,
+      role: true,
+      credits: true,
+      createdAt: true,
+      emailVerified: true,
+      termsAcceptedAt: true,
+      gundemSuspendedUntil: true,
+    },
+  });
+  const hasMore = rows.length > ADMIN_LIST_PAGE;
+  const page = hasMore ? rows.slice(0, ADMIN_LIST_PAGE) : rows;
+  return {
+    users: page.map(({ gundemSuspendedUntil, ...u }) => ({
+      ...u,
+      gundemSuspended: isGundemSuspended(gundemSuspendedUntil, now),
+      gundemSuspendedUntil: isGundemSuspended(gundemSuspendedUntil, now) ? gundemSuspendedUntil : null,
+    })),
+    nextCursor: hasMore ? page[page.length - 1]!.id : null,
+  };
 }
 
 export async function getUserDetail(userId: string, opts: { before?: Date } = {}) {

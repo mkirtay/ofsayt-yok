@@ -175,3 +175,40 @@
 .minus {
   color: $color-danger;
 }
+
+.listSection {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+}
+
+.listRow {
+  cursor: pointer;
+
+  &:hover {
+    background: $color-muted;
+  }
+}
+
+.listRowActive {
+  background: $color-muted;
+  box-shadow: inset 3px 0 0 $color-primary-dark;
+}
+
+// Satırın klavye denetimi; hedef ≥ 24 px, yeşil metin token'ı AA.
+.rowButton {
+  min-height: 24px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: $color-primary-text;
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+    outline-offset: 2px;
+  }
+}
