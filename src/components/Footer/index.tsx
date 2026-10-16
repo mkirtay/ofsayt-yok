@@ -36,6 +36,9 @@ export default function Footer() {
                     {t(p.footerKey)}
                   </Link>
                 ))}
+                <Link href="/hesap-silme" className={styles.footerLink}>
+                  {t('footer.accountDeletion')}
+                </Link>
               </nav>
             </div>
 

@@ -1,4 +1,4 @@
-import { useId, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { signOut } from 'next-auth/react';
 import { useTranslation } from '@/lib/i18n';
 import '@/lib/i18nNamespaces/profile';
@@ -17,6 +17,12 @@ export default function DeleteAccountSection({ email }: { email: string }) {
   const [confirm, setConfirm] = useState('');
   const [deleting, setDeleting] = useState(false);
   const [error, setError] = useState('');
+  const sectionRef = useRef<HTMLElement>(null);
+
+  // /hesap-silme → "/profile#hesabi-sil": profil istemcide yüklendiği için tarayıcının kendi kaydırması kaçar.
+  useEffect(() => {
+    if (window.location.hash === '#hesabi-sil') sectionRef.current?.scrollIntoView({ block: 'start' });
+  }, []);
 
   const confirmed = isDeletionConfirmed(confirm, email);
 
@@ -46,7 +52,7 @@ export default function DeleteAccountSection({ email }: { email: string }) {
   };
 
   return (
-    <section className={`${styles.section} ${styles.dangerSection}`} aria-labelledby={`${inputId}-title`}>
+    <section id="hesabi-sil" ref={sectionRef} className={`${styles.section} ${styles.dangerSection}`} aria-labelledby={`${inputId}-title`}>
       <h2 id={`${inputId}-title`} className={styles.sectionTitle}>
         {t('deleteAccount.title')}
       </h2>

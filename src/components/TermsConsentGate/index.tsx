@@ -6,7 +6,8 @@ import { LEGAL_PAGES } from '@/config/legalPages';
 /** Tarayıcı oturumu başına bir kez yönlendirilir ("Şimdi değil" diyen tekrar tekrar sayfaya itilmez). */
 export const TERMS_PROMPT_STORAGE_KEY = 'oy_terms_prompted_v1';
 
-const EXEMPT_PATHS = new Set<string>([...LEGAL_PAGES.map((p) => p.path), '/iletisim']);
+// Hesap silme sayfaları da muaf: hesabını silmek isteyen onay ekranına yönlendirilmez.
+const EXEMPT_PATHS = new Set<string>([...LEGAL_PAGES.map((p) => p.path), '/iletisim', '/hesap-silme', '/hesap-silme/onay']);
 
 /**
  * Onay sayfasına yönlendirilmeli mi (saf — test edilebilir): oturum açık, onay kesin olarak YOK (bilinmiyorsa —

@@ -7,7 +7,15 @@
  */
 import { LEGAL_PAGES } from '@/config/legalPages';
 
-const STATIC_PAGE_PATHS = new Set(['/iletisim', ...LEGAL_PAGES.map((p) => p.path), '/credits', '/404', '/500']);
+const STATIC_PAGE_PATHS = new Set([
+  '/iletisim',
+  ...LEGAL_PAGES.map((p) => p.path),
+  '/hesap-silme',
+  '/hesap-silme/onay',
+  '/credits',
+  '/404',
+  '/500',
+]);
 
 export function usesStaticPageLayout(pathname: string): boolean {
   return STATIC_PAGE_PATHS.has(pathname) || pathname.startsWith('/auth/');

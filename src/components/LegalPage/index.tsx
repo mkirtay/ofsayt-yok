@@ -13,9 +13,11 @@ interface LegalPageProps {
   intro: string;
   sections: LegalSection[];
   draftNotice?: string;
+  /** Metnin altında ilgili sayfa bağlantıları (ör. Gizlilik → Hesap silme). */
+  related?: { href: string; label: string }[];
 }
 
-export default function LegalPage({ pageTitle, intro, sections, draftNotice }: LegalPageProps) {
+export default function LegalPage({ pageTitle, intro, sections, draftNotice, related }: LegalPageProps) {
   const { locale } = useI18n();
 
   return (
@@ -43,6 +45,18 @@ export default function LegalPage({ pageTitle, intro, sections, draftNotice }: L
             </section>
           ))}
         </div>
+
+        {related?.length ? (
+          <ul className={styles.related}>
+            {related.map((r) => (
+              <li key={r.href}>
+                <Link href={r.href} className={styles.relatedLink}>
+                  {r.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        ) : null}
       </div>
     </Container>
   );

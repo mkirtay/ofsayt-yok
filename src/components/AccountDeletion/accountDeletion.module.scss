@@ -1,0 +1,273 @@
+@use '../../styles/variables' as *;
+
+// /hesap-silme + /hesap-silme/onay. Kontrast (WCAG AA, iki tema): metin $color-text / $color-text-secondary, bağlantı
+// $color-primary-text (a11yContrast.test.ts), dolu düğmeler beyaz yazı + $color-primary-dark (5.3:1) / $color-danger
+// (4.8:1). Kırmızı METİN kullanılmaz (#DC2626 koyu zeminde 4:1'in altında) — hata kutusu kırmızı kenarlı, yazı ana renk.
+// Dokunma hedefleri ≥ 44 px.
+
+.page {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: $spacing-6 0 $spacing-8;
+  overflow-wrap: anywhere; // uzun e-posta / alan adı dar ekranda taşmasın
+}
+
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: 13px;
+  font-weight: 600;
+  color: $color-text-secondary;
+  margin-bottom: $spacing-2;
+
+  &:hover {
+    color: $color-primary-text;
+  }
+}
+
+.title {
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.25;
+  color: $color-text;
+  margin: 0 0 $spacing-3;
+
+  &:focus {
+    outline: none;
+  }
+}
+
+.intro {
+  font-size: 14px;
+  line-height: 1.6;
+  color: $color-text-secondary;
+  margin: 0 0 $spacing-2;
+}
+
+.meta {
+  font-size: 13px;
+  color: $color-text-secondary;
+  margin: 0 0 $spacing-6;
+}
+
+.paths {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  gap: $spacing-4;
+  margin-bottom: $spacing-8;
+}
+
+.card,
+.dangerCard {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+  min-width: 0;
+  padding: $spacing-5;
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+}
+
+.dangerCard {
+  border-left: 4px solid $color-danger;
+}
+
+.cardHeading {
+  font-size: 17px;
+  font-weight: 700;
+  color: $color-text;
+  margin: 0;
+}
+
+.body {
+  font-size: 14px;
+  line-height: 1.65;
+  color: $color-text-secondary;
+  margin: 0;
+}
+
+.sections {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-5;
+}
+
+.section {
+  padding-bottom: $spacing-4;
+  border-bottom: 1px solid $color-border;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.sectionHeading {
+  font-size: 15px;
+  font-weight: 700;
+  color: $color-text;
+  margin: 0 0 $spacing-2;
+}
+
+.list {
+  margin: 0;
+  padding-left: $spacing-5;
+  font-size: 14px;
+  line-height: 1.65;
+  color: $color-text-secondary;
+
+  li + li {
+    margin-top: $spacing-1;
+  }
+}
+
+.contactLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: 15px;
+  color: $color-primary-text;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+// ── Form ────────────────────────────────────────────────────────────────────────────────────────────────────────────
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+  margin-top: auto;
+}
+
+.label {
+  font-size: 13px;
+  font-weight: 600;
+  color: $color-text;
+}
+
+.input {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  font-size: 16px; // iOS Safari 16 px altında odakta yakınlaştırır
+  font-family: inherit;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
+  background: $color-bg;
+  color: $color-text;
+  outline: none;
+
+  &:focus-visible {
+    border-color: $color-primary;
+    box-shadow: 0 0 0 3px rgba($color-primary, 0.25);
+  }
+
+  &[aria-invalid='true'] {
+    border-color: $color-danger;
+  }
+}
+
+.hint {
+  font-size: 12px;
+  color: $color-text-secondary;
+  margin: 0;
+}
+
+// Turnstile kutusu (300×65 iframe → 70 px) betik yüklenince çizilir: yeri baştan ayrılır (CLS 0).
+.turnstile {
+  min-height: 70px;
+  max-width: 100%;
+  overflow: hidden;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-3;
+  margin-top: $spacing-2;
+}
+
+%button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 10px 18px;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: inherit;
+  line-height: 1.3;
+  text-align: center;
+  text-decoration: none;
+  border-radius: $radius-sm;
+  cursor: pointer;
+  max-width: 100%;
+
+  &:focus-visible {
+    outline: 2px solid $color-primary-text;
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.primaryButton {
+  @extend %button;
+  border: none;
+  background: $color-primary-dark;
+  color: #fff;
+
+  &:hover:not(:disabled) {
+    filter: brightness(1.08);
+  }
+}
+
+.dangerButton {
+  @extend %button;
+  border: none;
+  background: $color-danger;
+  color: #fff;
+
+  &:hover:not(:disabled) {
+    filter: brightness(1.08);
+  }
+}
+
+.secondaryButton {
+  @extend %button;
+  align-self: flex-start;
+  border: 1px solid $color-border;
+  background: transparent;
+  color: $color-text;
+
+  &:hover {
+    border-color: $color-primary-text;
+  }
+}
+
+.success,
+.error {
+  margin: $spacing-2 0 0;
+  padding: $spacing-3 $spacing-4;
+  border-radius: $radius-sm;
+  border-left: 4px solid;
+  font-size: 14px;
+  line-height: 1.55;
+  color: $color-text;
+}
+
+.success {
+  background: rgba($color-primary, 0.1);
+  border-left-color: $color-primary;
+}
+
+.error {
+  background: rgba($color-danger, 0.1);
+  border-left-color: $color-danger;
+}

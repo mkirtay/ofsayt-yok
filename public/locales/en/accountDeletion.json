@@ -1,0 +1,65 @@
+{
+  "page": {
+    "pageTitle": "Delete your account",
+    "pageDesc": "Delete your {{brand}} account and its data: from your Profile when signed in, or by email confirmation without signing in.",
+    "intro": "You can delete your {{brand}} account and the personal data linked to it from this page. It applies to the {{brand}} website ({{siteDomain}}) and the {{brand}} mobile app (Android and iOS); both use the same account.",
+    "developer": "App: {{brand}} · Developer: [ŞİRKET/KİŞİ ÜNVANI]",
+    "signedIn": {
+      "heading": "If you can sign in",
+      "body": "Fastest way: sign in and go to Profile › My info › Delete account. To confirm, type your email address or \"SİL\" (DELETE); no password is needed (Google sign-ins included).",
+      "cta": "Profile › Delete account"
+    },
+    "signedOut": {
+      "heading": "If you cannot sign in",
+      "body": "Enter your account's email address. If the address is registered, we send a confirmation link to it; your account is deleted when you open the link and press the button on that page. If you signed in with Google, enter your Google account's email address.",
+      "emailLabel": "Email address",
+      "emailHint": "The link is sent only to this address and is valid for 1 hour.",
+      "submit": "Send confirmation link",
+      "submitting": "Sending…",
+      "verifyFirst": "Complete the security check before sending.",
+      "sent": "If this email address is registered, we have sent a confirmation link. The link is valid for 1 hour; check your inbox and spam folder.",
+      "invalidEmail": "Enter a valid email address.",
+      "rateLimited": "Too many attempts. Please wait a little and try again.",
+      "error": "The request could not be sent. Please try again later.",
+      "connectionError": "Connection error. Check your internet connection and try again."
+    },
+    "deletedHeading": "What is deleted",
+    "deleted": [
+      "Your profile: name, username, email address, profile photo, bio and password",
+      "Your sessions and Google link (all sessions on web and mobile are signed out)",
+      "Your favourite teams and leagues, notifications and mobile push registrations",
+      "Your credit balance and credit history, analyses you unlocked",
+      "Your likes, follows, blocked users, poll votes and Free Kick scores",
+      "Your referral records"
+    ],
+    "anonymizedHeading": "What is anonymised",
+    "anonymized": "Your Gündem posts and comments are not deleted; the author information is removed and they stay public anonymously under the name \"Deleted user\". Reports you submitted also remain without information on who made them.",
+    "retainedHeading": "What is kept for legal reasons",
+    "retained": "Payment and order records (amount, package, date, status, payment provider transaction number) are kept for [AVUKAT ONAYLI SÜRE], detached from your account; they do not contain information that directly identifies you, such as your name or email. An audit record without personal data (date, channel, counts) is kept to show that the deletion took place. Copies in system backups are removed within [AVUKAT ONAYLI SÜRE] as backups rotate.",
+    "timingHeading": "How long it takes",
+    "timing": "Deletion happens the moment you press the confirm button and cannot be undone. The email link is valid for 1 hour and can be used only once; opening the link alone deletes nothing. After deletion, we send a notice to your email address.",
+    "contactHeading": "Contact",
+    "contact": "For questions, or requests you cannot complete on this page:"
+  },
+  "confirm": {
+    "pageTitle": "Confirm account deletion",
+    "checking": "Checking the link…",
+    "heading": "You are about to delete your account",
+    "body": "This cannot be undone. Your profile, sessions, favourites, credit balance and unlocked analyses are deleted immediately; your Gündem posts and comments stay anonymously under the name \"Deleted user\".",
+    "submit": "Delete my account",
+    "submitting": "Deleting…",
+    "cancel": "Cancel, back to home",
+    "invalidHeading": "Invalid link",
+    "invalidBody": "This link is invalid, has expired or has already been used. You can request a new link.",
+    "requestNew": "Request a new link",
+    "protected": "This account cannot be deleted here. Please write to the contact address.",
+    "error": "The account could not be deleted. Please try again later.",
+    "rateLimited": "Too many attempts. Please wait a little and try again.",
+    "connectionError": "Connection error. Check your internet connection and try again.",
+    "doneHeading": "Your account has been deleted",
+    "doneBody": "Your account and its data have been deleted and all your sessions are signed out.",
+    "doneEmail": "We sent a notice to your email address.",
+    "home": "Back to home"
+  },
+  "backHome": "← Back to home"
+}

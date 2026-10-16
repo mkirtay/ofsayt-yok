@@ -1,4 +1,4 @@
-# Hesap silme ve Kullanım Şartları onayı (WEB-HESAP, 2026-10-14)
+# Hesap silme ve Kullanım Şartları onayı (WEB-HESAP, 2026-10-14; girişsiz silme sayfası WEB-SILME, 2026-10-16)
 
 Kapsam: kullanıcının kendi hesabını silmesi (web + mobil aynı uç), Google ile ilk girişte / onaysız eski hesaplarda
 onay adımı, mobil için yalnız rapor (C). Hukuki sorular: `docs/YASAL_NOTLAR.md` → "Hesap silme ve saklama süreleri".
@@ -73,6 +73,59 @@ adres loglanmaz). Hata Sentry'ye ham gönderilmez: yalnız Prisma kodu / hata t�
 
 Web: Profil › Bilgilerim › "Hesabı sil" (iki adım; düğme onay metni doğru olana dek pasif) → başarıda `signOut` → ana
 sayfa.
+
+## A3. Giriş yapmadan silme: `/hesap-silme` (WEB-SILME, 2026-10-16)
+
+Google Play Data Safety "hesap silme URL'si": **https://www.getscor3.com/hesap-silme** — herkese açık, girişsiz, dizine
+açık (canonical, sitemap), TR/EN. Footer (Kurumsal) ve Gizlilik Politikası'ndan bağlantılı. Silme mantığı
+çoğaltılmadı: onaydan sonra `deleteOwnAccount` (A2 ile aynı transaction, aynı envanter, aynı korumalar).
+
+İki yol:
+- **Giriş yapabilen:** Profil › Bilgilerim › Hesabı sil (`/profile#hesabi-sil`; oturum yoksa middleware girişe yollar,
+  dönüşte Bilgilerim zaten varsayılan sekme).
+- **Giriş yapamayan:** e-posta + Turnstile → onay bağlantısı → onay sayfasında düğme → silme.
+
+| Adım | Uç / sayfa | Davranış |
+|---|---|---|
+| Talep | `POST /api/account-deletion/request { email, turnstileToken, locale }` | Her durumda 200 `{ ok: true }` (hesap var / yok / korunuyor / e-posta sınırı aşıldı). 400 biçim ya da Turnstile, 429 IP sınırı, 503 Turnstile anahtarı yok. |
+| Bağlantı | e-posta (Resend, TR/EN) | `https://www.getscor3.com/hesap-silme/onay#token=<64 hex>` — 1 saat, tek kullanım. |
+| Onay sayfası | `/hesap-silme/onay` (noindex) | Açılınca `POST /api/account-deletion/confirm { token, check: true }` → `{ valid }`; hiçbir şey silinmez. |
+| Silme | `POST /api/account-deletion/confirm { token, locale }` | 200 `{ ok, deleted, emailSent }` · 410 `INVALID_TOKEN` · 403 `PROTECTED_ACCOUNT` · 429. GET → 405. |
+
+Güvenlik tasarımı:
+- **Numaralandırma yok:** yanıt gövdesi ve durum kodu hesaptan bağımsız; hesap araması ve e-posta yanıt gönderildikten
+  SONRA `runInBackground` (Vercel `waitUntil`) ile → yanıt süresi yalnız hız sınırı + Turnstile'a bağlı. E-posta başına
+  sınır sayacı da her istekte artar (hesap olsun olmasın).
+- **Hız sınırı:** IP başına 15 dk'da 5 (Redis yoksa reddet), e-posta başına saatte 3 bağlantı (anahtar kanonik e-postanın
+  SHA-256'sı; aşılınca yanıt aynı, e-posta gönderilmez); onay ucu IP başına 15 dk'da 20.
+- **Belirteç:** 32 bayt rastgele; veritabanında yalnız SHA-256 (`VerificationToken`, identifier `account-delete:<userId>`
+  — e-posta tutulmaz) → **migration yok**. Kullanıcı başına tek geçerli bağlantı (yenisi eskisini siler). Tüketim
+  koşullu `deleteMany` (eşzamanlı iki tıklamada yalnız biri siler). Silme transaction'ı bu belirteçleri de temizler.
+- **Önizleyici / tarayıcı güvenli:** belirteç URL parçasında (`#token=`): sunucuya, Vercel günlüklerine ve Referer'a
+  gitmez; sayfayı açmak silmez, silme yalnız düğmeyle POST.
+- **E-posta gönderilmez:** ADMIN, resmi Gündem hesabı (`isOfficialUser`), "Silinmiş kullanıcı" yer tutucusu, kayıtsız
+  adres. Bağlantı her zaman KAYITLI adrese gider (eşleşme birebir, yoksa kanonik — Gmail noktası / +etiket).
+- **Google ile girişli, şifresiz hesaplar** aynı akışla silinir (şifre istenmez). Denetim kaydında `source: "email_link"`.
+- **Gizlilik:** adres ve bağlantı loglanmaz; hata Sentry'ye yalnız Prisma kodu / tür olarak gider; Sentry temizleyicisi
+  artık `email` anahtarını da gizler (istek gövdeleri, olay verisi).
+- Sayfa: Turnstile betiği e-posta alanına odaklanınca yüklenir (ilk yükte üçüncü taraf betik yok); dokunma hedefleri
+  ≥ 44 px; hata / sonuç `aria-live`; kırmızı metin yok (kutu kırmızı kenarlı, yazı ana renk).
+
+Avukata kalan yer tutucular: sayfada `[AVUKAT ONAYLI SÜRE]` (sipariş kayıtları ve yedekler), `[ŞİRKET/KİŞİ ÜNVANI]`
+(geliştirici adı — Play Console'daki geliştirici adıyla aynı olmalı).
+
+### Mobil notu (Play Data Safety + uygulama içi bağlantı)
+
+- **Data Safety formu → "Hesap silme URL'si":** `https://www.getscor3.com/hesap-silme`. Sayfa uygulama adını (Scor3)
+  ve geliştirici adını gösterir, adımları ve silinen / saklanan verileri listeler (Google'ın istediği üç öğe).
+- **Mobil uçlar ve `DELETE /api/user/me` şeması değişmedi.** Uygulama içi silme ekranı aynen kalmalı (Play ve App Store
+  uygulama İÇİNDEN silmeyi de istiyor; bu sayfa onun yerine geçmez, ek yoldur).
+- **Öneri:** mobil hesap silme ekranına küçük bir ikincil bağlantı ekle — "Giriş yapamıyor musun? Web'den sil" →
+  `https://www.getscor3.com/hesap-silme` (harici tarayıcıda). Asıl düğme uygulama içi silme olarak kalsın; bağlantı
+  yalnız giriş ekranında / oturum düşmüş kullanıcı için anlamlı, bu yüzden **giriş ekranının "Yardım" / ayarlar
+  bölümüne** koymak profil ekranına koymaktan daha yararlı. Yeni sürüm gerekmez: URL formda verilince Play şartı karşılanır.
+- Uygulama içinden açılacaksa `?lang=` gerekmez; sayfa dili tarayıcıdaki seçime göre (varsayılan TR), e-posta dili
+  sayfadaki dil.
 
 ## B. Google ilk girişi / eski hesaplar — onay
 

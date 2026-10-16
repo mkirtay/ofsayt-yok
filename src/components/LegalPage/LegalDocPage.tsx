@@ -8,6 +8,9 @@ import { brandTitle, withBrandText } from '@/config/brand';
 import { legalPage, type LegalDocKey } from '@/config/legalPages';
 import { REPORT_REVIEW_HOURS } from '@/config/moderation';
 
+/** Hesap silme sayfası (components/AccountDeletion/content.ts ile aynı yol; o modül JSON taşıdığı için burada sabit). */
+const ACCOUNT_DELETION_PATH = '/hesap-silme';
+
 /** Metindeki sayılar tek kaynaktan (ör. şikâyet inceleme süresi → config/moderation.ts). */
 function withLegalVars<T>(value: T): T {
   if (typeof value === 'string') return value.replaceAll('{{reviewHours}}', String(REPORT_REVIEW_HOURS)) as T;
@@ -38,7 +41,13 @@ export default function LegalDocPage({ docKey }: { docKey: LegalDocKey }) {
           <link rel="canonical" href={`${siteBaseUrl()}${path}`} />
         )}
       </Head>
-      <LegalPage pageTitle={data.pageTitle} intro={data.intro} sections={data.sections} draftNotice={data.draftNotice} />
+      <LegalPage
+        pageTitle={data.pageTitle}
+        intro={data.intro}
+        sections={data.sections}
+        draftNotice={data.draftNotice}
+        related={docKey === 'privacy' ? [{ href: ACCOUNT_DELETION_PATH, label: locale === 'en' ? 'Delete your account →' : 'Hesap silme →' }] : undefined}
+      />
     </>
   );
 }

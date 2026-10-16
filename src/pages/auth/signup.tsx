@@ -1,5 +1,5 @@
 import type { GetStaticProps } from 'next'
-import { useEffect, useMemo, useState, FormEvent } from 'react'
+import { useMemo, useState, FormEvent } from 'react'
 import { serverSideTranslations } from '@/lib/serverSideTranslations'
 import { useTranslation } from '@/lib/i18n'
 import '@/lib/i18nNamespaces/auth';
@@ -13,25 +13,9 @@ import { isGoogleAuthEnabled } from '@/lib/oauthEnv'
 import { markSessionAttributionSent, readSessionAttribution } from '@/lib/signupAttributionClient'
 import AuthStage from '@/components/AuthStage'
 import { useRedirectIfSignedIn } from '@/hooks/useRedirectIfSignedIn'
+import { useTurnstile } from '@/hooks/useTurnstile'
 import { PRIVACY_PATH, TERMS_PATH } from '@/config/legalConsent'
 import styles from './auth.module.scss'
-
-declare global {
-  interface Window {
-    turnstile?: {
-      render: (
-        container: string | HTMLElement,
-        options: {
-          sitekey: string
-          callback: (token: string) => void
-          'expired-callback'?: () => void
-          'error-callback'?: () => void
-        },
-      ) => string
-      reset: (widgetId?: string) => void
-    }
-  }
-}
 
 export default function SignUpPage({ googleEnabled }: { googleEnabled: boolean }) {
   const router = useRouter()
@@ -42,45 +26,13 @@ export default function SignUpPage({ googleEnabled }: { googleEnabled: boolean }
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [turnstileToken, setTurnstileToken] = useState('')
   const [acceptedTerms, setAcceptedTerms] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || ''
-  const turnstileRequired =
-    process.env.NODE_ENV === 'production' && Boolean(turnstileSiteKey)
+  const { required: turnstileRequired, token: turnstileToken, reset: resetTurnstile, containerRef: turnstileRef } = useTurnstile()
 
   const pwCheck = useMemo(() => validatePassword(password), [password])
   const pwTouched = password.length > 0
-
-  useEffect(() => {
-    if (!turnstileSiteKey) return
-
-    const scriptId = 'cf-turnstile-script'
-    if (!document.getElementById(scriptId)) {
-      const s = document.createElement('script')
-      s.id = scriptId
-      s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit'
-      s.async = true
-      s.defer = true
-      document.head.appendChild(s)
-    }
-
-    const mount = () => {
-      if (!window.turnstile) return
-      const el = document.getElementById('turnstile-container')
-      if (!el || el.childNodes.length > 0) return
-      window.turnstile.render(el, {
-        sitekey: turnstileSiteKey,
-        callback: (token) => setTurnstileToken(token),
-        'expired-callback': () => setTurnstileToken(''),
-        'error-callback': () => setTurnstileToken(''),
-      })
-    }
-
-    const timer = window.setInterval(mount, 300)
-    return () => window.clearInterval(timer)
-  }, [turnstileSiteKey])
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -121,8 +73,7 @@ export default function SignUpPage({ googleEnabled }: { googleEnabled: boolean }
 
     if (!res.ok) {
       setError(data.error || t('signUp.registrationFailed'))
-      if (window.turnstile) window.turnstile.reset()
-      setTurnstileToken('')
+      resetTurnstile()
       return
     }
 
@@ -252,7 +203,7 @@ export default function SignUpPage({ googleEnabled }: { googleEnabled: boolean }
               </span>
             </label>
 
-            {turnstileRequired ? <div id="turnstile-container" className={styles.turnstile} /> : null}
+            {turnstileRequired ? <div ref={turnstileRef} className={styles.turnstile} /> : null}
             {turnstileRequired && !turnstileToken ? (
               <p className={styles.footer}>{t('signUp.completeVerificationFirst')}</p>
             ) : null}

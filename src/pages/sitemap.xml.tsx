@@ -10,6 +10,7 @@ const STATIC_ROUTES: { path: string; priority: string; changefreq: string }[] = 
   { path: '/standings', priority: '0.8', changefreq: 'daily' },
   { path: '/compare', priority: '0.6', changefreq: 'weekly' },
   { path: '/credits', priority: '0.7', changefreq: 'monthly' },
+  { path: '/hesap-silme', priority: '0.3', changefreq: 'yearly' },
 ];
 
 function isoDateOffset(days: number): string {

@@ -1,0 +1,65 @@
+{
+  "page": {
+    "pageTitle": "Hesap silme",
+    "pageDesc": "{{brand}} hesabınızı ve hesaba bağlı verilerinizi silin: giriş yaparak Profil'den ya da giriş yapmadan e-posta onayıyla.",
+    "intro": "{{brand}} hesabınızı ve hesaba bağlı kişisel verilerinizi bu sayfadan silebilirsiniz. Bu sayfa {{brand}} web sitesi ({{siteDomain}}) ve {{brand}} mobil uygulaması (Android ve iOS) için geçerlidir; iki tarafta da aynı hesap kullanılır.",
+    "developer": "Uygulama: {{brand}} · Geliştirici: [ŞİRKET/KİŞİ ÜNVANI]",
+    "signedIn": {
+      "heading": "Giriş yapabiliyorsanız",
+      "body": "En hızlı yol: giriş yapın ve Profil › Bilgilerim › Hesabı sil adımını izleyin. Onay için e-posta adresinizi ya da \"SİL\" yazmanız yeterli; şifre istenmez (Google ile girenler dahil).",
+      "cta": "Profil › Hesabı sil"
+    },
+    "signedOut": {
+      "heading": "Giriş yapamıyorsanız",
+      "body": "Hesabınızın e-posta adresini girin. Adres kayıtlıysa o adrese bir onay bağlantısı göndeririz; bağlantıyı açıp sayfadaki düğmeye bastığınızda hesabınız silinir. Google ile giriş yaptıysanız Google hesabınızın e-posta adresini yazın.",
+      "emailLabel": "E-posta adresi",
+      "emailHint": "Bağlantı yalnızca bu adrese gönderilir ve 1 saat geçerlidir.",
+      "submit": "Onay bağlantısı gönder",
+      "submitting": "Gönderiliyor…",
+      "verifyFirst": "Göndermeden önce güvenlik doğrulamasını tamamlayın.",
+      "sent": "Bu e-posta adresi kayıtlıysa onay bağlantısını gönderdik. Bağlantı 1 saat geçerlidir; gelen kutunuzu ve istenmeyen (spam) klasörünü kontrol edin.",
+      "invalidEmail": "Geçerli bir e-posta adresi girin.",
+      "rateLimited": "Çok fazla deneme yapıldı. Lütfen biraz bekleyip tekrar deneyin.",
+      "error": "Talep gönderilemedi. Lütfen biraz sonra tekrar deneyin.",
+      "connectionError": "Bağlantı hatası. İnternet bağlantınızı kontrol edip tekrar deneyin."
+    },
+    "deletedHeading": "Neler silinir",
+    "deleted": [
+      "Profiliniz: ad, kullanıcı adı, e-posta adresi, profil fotoğrafı, hakkımda yazısı ve şifre",
+      "Oturumlarınız ve Google bağlantınız (web ve mobilde tüm oturumlar kapanır)",
+      "Favori takım ve ligleriniz, bildirimleriniz ve mobil bildirim kayıtlarınız",
+      "Kredi bakiyeniz ve kredi hareketleriniz, açtığınız analizler",
+      "Beğenileriniz, takipleriniz, engellediğiniz kişiler, anket oylarınız ve Frikik skorlarınız",
+      "Davet kayıtlarınız"
+    ],
+    "anonymizedHeading": "Neler anonimleşir",
+    "anonymized": "Gündem gönderileriniz ve yorumlarınız silinmez; yazar bilgisi kaldırılır ve \"Silinmiş kullanıcı\" adıyla anonim olarak yayında kalır. Verdiğiniz şikâyetler de kim tarafından yapıldığı bilgisi olmadan kalır.",
+    "retainedHeading": "Neler yasal olarak saklanır",
+    "retained": "Ödeme ve sipariş kayıtları (tutar, paket, tarih, durum, ödeme kuruluşu işlem numarası) hesabınızla bağlantısı koparılarak [AVUKAT ONAYLI SÜRE] boyunca saklanır; bu kayıtlar sizi doğrudan tanımlayan ad, e-posta gibi bilgileri içermez. Silme işleminin yapıldığına dair kişisel veri içermeyen bir denetim kaydı (tarih, kanal, sayılar) tutulur. Sistem yedeklerindeki kopyalar [AVUKAT ONAYLI SÜRE] içinde yedek döngüsüyle silinir.",
+    "timingHeading": "Ne kadar sürer",
+    "timing": "Silme, onay düğmesine bastığınız anda gerçekleşir ve geri alınamaz. E-posta bağlantısı 1 saat geçerlidir ve yalnızca bir kez kullanılabilir; bağlantıyı açmak tek başına hiçbir şeyi silmez. Silmeden sonra e-posta adresinize bir bilgilendirme gönderilir.",
+    "contactHeading": "İletişim",
+    "contact": "Sorularınız ya da bu sayfadan yapamadığınız talepler için:"
+  },
+  "confirm": {
+    "pageTitle": "Hesap silmeyi onayla",
+    "checking": "Bağlantı kontrol ediliyor…",
+    "heading": "Hesabınızı silmek üzeresiniz",
+    "body": "Bu işlem geri alınamaz. Profiliniz, oturumlarınız, favorileriniz, kredi bakiyeniz ve açtığınız analizler hemen silinir; Gündem gönderi ve yorumlarınız \"Silinmiş kullanıcı\" adıyla anonim olarak kalır.",
+    "submit": "Hesabımı sil",
+    "submitting": "Siliniyor…",
+    "cancel": "Vazgeç, ana sayfaya dön",
+    "invalidHeading": "Bağlantı geçersiz",
+    "invalidBody": "Bu bağlantı geçersiz, süresi dolmuş ya da daha önce kullanılmış. Yeni bir bağlantı isteyebilirsiniz.",
+    "requestNew": "Yeni bağlantı iste",
+    "protected": "Bu hesap buradan silinemez. Lütfen iletişim adresine yazın.",
+    "error": "Hesap silinemedi. Lütfen biraz sonra tekrar deneyin.",
+    "rateLimited": "Çok fazla deneme yapıldı. Lütfen biraz bekleyip tekrar deneyin.",
+    "connectionError": "Bağlantı hatası. İnternet bağlantınızı kontrol edip tekrar deneyin.",
+    "doneHeading": "Hesabınız silindi",
+    "doneBody": "Hesabınız ve hesaba bağlı verileriniz silindi, tüm oturumlarınız kapatıldı.",
+    "doneEmail": "E-posta adresinize bir bilgilendirme gönderdik.",
+    "home": "Ana sayfaya dön"
+  },
+  "backHome": "← Anasayfaya dön"
+}

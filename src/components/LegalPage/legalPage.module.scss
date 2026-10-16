@@ -72,3 +72,23 @@
   line-height: 1.6;
   color: $color-text;
 }
+
+.related {
+  list-style: none;
+  margin: $spacing-6 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-3;
+}
+
+.relatedLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-size: 14px;
+  font-weight: 600;
+  color: $color-primary-text;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
