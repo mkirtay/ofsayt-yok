@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 const h = vi.hoisted(() => ({ userId: null as string | null, rateOk: true }));
-vi.mock('@/lib/mobileAuth', () => ({ getRequestUserId: async () => h.userId }));
+vi.mock('@/lib/mobileAuth', () => ({ getRequestUserId: async () => h.userId, hasBearerToken: () => false }));
 vi.mock('@/lib/rateLimit', () => ({ hitFixedWindowRateLimit: async () => ({ success: h.rateOk, remaining: 0, resetAt: Date.now() + 1000 }) }));
 vi.mock('@/lib/prisma', async () => {
   const { createFakePaymentDb } = await import('@/test/fakePaymentDb');
@@ -17,6 +17,10 @@ import checkout from '@/pages/api/payments/checkout';
 import callback from '@/pages/api/payments/hikie/callback';
 import webhook, { config as webhookConfig } from '@/pages/api/payments/hikie/webhook';
 import orderApi from '@/pages/api/payments/order';
+import { PURCHASE_TERMS_VERSION } from '@/config/legalConsent';
+
+/** Onaylı checkout gövdesi (istemcinin gönderdiği). */
+const buy = (packageKey: string, extra: Record<string, unknown> = {}) => ({ packageKey, acceptedTerms: true, termsVersion: PURCHASE_TERMS_VERSION, ...extra });
 
 const db = prisma as unknown as FakePaymentDb;
 
@@ -64,17 +68,42 @@ describe('POST /api/payments/checkout', () => {
     expect((await run(checkout, { method: 'GET' })).statusCode).toBe(405);
   });
 
-  it('oturumlu: PENDING sipariş + yönlendirme URL\'si; env eksik paket 409; rate limit 429', async () => {
+  it('oturumlu: PENDING sipariş + yönlendirme URL\'si + onay kaydı; env eksik paket 409; rate limit 429', async () => {
     h.userId = 'u1';
-    await db.user.create({ data: { id: 'u1' } });
-    const r = await run(checkout, { method: 'POST', body: { packageKey: 'credits_10' } });
+    await db.user.create({ data: { id: 'u1', termsAcceptedAt: new Date() } });
+    const r = await run(checkout, { method: 'POST', body: buy('credits_10', { locale: 'en' }) });
     expect(r.statusCode).toBe(200);
     const body = r.body as { url: string; merchantOrderId: string };
     expect(body.url).toBe(`https://pay.hikie.example/l/c10?merchantOrderId=${body.merchantOrderId}`);
     expect(r.headers['Cache-Control']).toBe('private, no-store');
-    expect((await run(checkout, { method: 'POST', body: { packageKey: 'credits_100' } })).statusCode).toBe(409);
+    expect(db.paymentOrder.rows[0]).toMatchObject({ termsVersion: PURCHASE_TERMS_VERSION, locale: 'en' });
+    expect(db.paymentOrder.rows[0]!.termsAcceptedAt).toBeInstanceOf(Date);
+    expect((await run(checkout, { method: 'POST', body: buy('credits_100') })).statusCode).toBe(409);
     h.rateOk = false;
-    expect((await run(checkout, { method: 'POST', body: { packageKey: 'credits_10' } })).statusCode).toBe(429);
+    expect((await run(checkout, { method: 'POST', body: buy('credits_10') })).statusCode).toBe(429);
+  });
+
+  it('satın alma onayı / sürümü yoksa 400 PURCHASE_TERMS_REQUIRED; eski sürüm 409; sipariş yazılmaz', async () => {
+    h.userId = 'u1';
+    await db.user.create({ data: { id: 'u1', termsAcceptedAt: new Date() } });
+    for (const body of [{ packageKey: 'credits_10' }, buy('credits_10', { acceptedTerms: false }), buy('credits_10', { termsVersion: undefined })]) {
+      const r = await run(checkout, { method: 'POST', body });
+      expect(r.statusCode).toBe(400);
+      expect(r.body).toMatchObject({ code: 'PURCHASE_TERMS_REQUIRED' });
+    }
+    const old = await run(checkout, { method: 'POST', body: buy('credits_10', { termsVersion: '2000-01-01' }) });
+    expect(old.statusCode).toBe(409);
+    expect(old.body).toMatchObject({ code: 'PURCHASE_TERMS_OUTDATED' });
+    expect(db.paymentOrder.rows).toHaveLength(0);
+  });
+
+  it('hesap onayı (Kullanım Şartları) yoksa satın alma onayı olsa da 403 TERMS_REQUIRED (WEB-HESAP kapısı)', async () => {
+    h.userId = 'u1';
+    await db.user.create({ data: { id: 'u1', termsAcceptedAt: null } });
+    const r = await run(checkout, { method: 'POST', body: buy('credits_10') });
+    expect(r.statusCode).toBe(403);
+    expect(r.body).toMatchObject({ code: 'TERMS_REQUIRED' });
+    expect(db.paymentOrder.rows).toHaveLength(0);
   });
 });
 
@@ -161,6 +190,7 @@ describe('GET /api/payments/order', () => {
     h.userId = 'u1';
     const mine = await run(orderApi, { method: 'GET', query: { merchantOrderId: m } });
     expect(mine.statusCode).toBe(200);
-    expect(mine.body).toMatchObject({ merchantOrderId: m, status: 'PENDING', credits: 0 });
+    expect(mine.body).toMatchObject({ merchantOrderId: m, status: 'PENDING', credits: 0, packageCredits: 10 });
+    expect(mine.body).not.toHaveProperty('premiumUntil');
   });
 });

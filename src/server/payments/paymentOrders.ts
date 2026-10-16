@@ -1,7 +1,7 @@
 /**
  * Hikie ödeme siparişleri (v1) — checkout, callback, webhook, iade.
  *
- * Kural: kredi / premium kararı YALNIZ imzalı `order.paid` webhook'undan (whsec_ secret) verilir; üstelik sipariş
+ * Kural: kredi kararı YALNIZ imzalı `order.paid` webhook'undan (whsec_ secret) verilir; üstelik sipariş
  * eşleşmesi (merchantOrderId), status, para birimi ve tutar doğrulanır. Checkout Link callback'i (GET) imzasızdır: yalnız `callbackAt` işaretler ve
  * sonuç sayfasına yönlendirir, status / isSuccess hiçbir kredi kararında kullanılmaz. /odeme/tamamlandi yalnız
  * durumu okur (PAID olana kadar yoklar).
@@ -23,7 +23,10 @@ import {
   kurusToTryString,
   type PaymentPackage,
 } from '@/config/paymentPackages';
+import { PURCHASE_TERMS_VERSION } from '@/config/legalConsent';
+import { captureError } from '@/lib/logger';
 import { timestampFresh, verifyWebhookSignature } from './hikieSignature';
+import { sendOrderConfirmationOnce } from './orderConfirmationEmail';
 
 type Env = Record<string, string | undefined>;
 type Tx = Prisma.TransactionClient;
@@ -38,7 +41,7 @@ export function newMerchantOrderId(): string {
 }
 
 function packageNote(pkg: PaymentPackage): string {
-  return pkg.kind === 'credits' ? `${pkg.credits} kredi (${pkg.key})` : `Premium ${pkg.days} gün (${pkg.key})`;
+  return `${pkg.credits} kredi (${pkg.key})`;
 }
 
 // ── Checkout ──────────────────────────────────────────────────────────────────────────────────────────
@@ -46,25 +49,38 @@ function packageNote(pkg: PaymentPackage): string {
 export class CheckoutError extends Error {
   constructor(
     readonly status: number,
-    readonly code: 'UNKNOWN_PACKAGE' | 'UNAVAILABLE',
+    readonly code: 'UNKNOWN_PACKAGE' | 'UNAVAILABLE' | 'PURCHASE_TERMS_REQUIRED' | 'PURCHASE_TERMS_OUTDATED',
   ) {
     super(code);
     this.name = 'CheckoutError';
   }
 }
 
+/** Satın alma onayı (istemciden): `accepted` yalnız JSON `true`; `version` istemcinin gösterdiği metin sürümü. */
+export type PurchaseTerms = { accepted?: unknown; version?: unknown; locale?: unknown };
+
 /**
  * PENDING sipariş oluşturur, paketin Checkout Link'ine `merchantOrderId` ekleyip döner. Yönetici paketi yalnız
  * ADMIN'e görünür (diğerlerine bilinmeyen paket). PAYMENTS_ENABLED kapalıysa ya da paket linki / webhook secret'ı
  * tanımlı değilse satışta değil.
+ *
+ * Satın alma onayı ZORUNLU (Ön Bilgilendirme + Mesafeli Satış + anında ifa / cayma hakkı beyanı): `accepted === true`
+ * ve sürüm yoksa 400 PURCHASE_TERMS_REQUIRED; sürüm güncel değilse (eski sekme) 409 PURCHASE_TERMS_OUTDATED. Kayda
+ * istemcinin değil SUNUCUNUN sürümü ve zamanı yazılır (termsAcceptedAt / termsVersion).
  */
 export async function createCheckout(
   userId: string,
   packageKey: unknown,
+  terms: PurchaseTerms = {},
   env: Env = process.env,
+  now: number = Date.now(),
 ): Promise<{ url: string; merchantOrderId: string }> {
   const pkg = findPaymentPackage(packageKey);
   if (!pkg) throw new CheckoutError(400, 'UNKNOWN_PACKAGE');
+  if (terms.accepted !== true || typeof terms.version !== 'string' || !terms.version) {
+    throw new CheckoutError(400, 'PURCHASE_TERMS_REQUIRED');
+  }
+  if (terms.version !== PURCHASE_TERMS_VERSION) throw new CheckoutError(409, 'PURCHASE_TERMS_OUTDATED');
   if (pkg.adminOnly) {
     const user = await prisma.user.findUnique({ where: { id: userId }, select: { role: true } });
     if (user?.role !== 'ADMIN') throw new CheckoutError(400, 'UNKNOWN_PACKAGE');
@@ -73,38 +89,21 @@ export async function createCheckout(
   if (!paymentsEnabled(env) || !link || !webhookSecret(env)) throw new CheckoutError(409, 'UNAVAILABLE');
   const merchantOrderId = newMerchantOrderId();
   await prisma.paymentOrder.create({
-    data: { merchantOrderId, userId, packageKey: pkg.key, amountTRY: kurusToTryString(pkg.priceKurus), status: 'PENDING' },
+    data: {
+      merchantOrderId,
+      userId,
+      packageKey: pkg.key,
+      amountTRY: kurusToTryString(pkg.priceKurus),
+      status: 'PENDING',
+      termsAcceptedAt: new Date(now),
+      termsVersion: PURCHASE_TERMS_VERSION,
+      locale: terms.locale === 'en' ? 'en' : 'tr',
+    },
   });
   return { url: checkoutUrl(link, merchantOrderId), merchantOrderId };
 }
 
 // ── Ödeme tamamlama / başarısız / iade ────────────────────────────────────────────────────────────────
-
-/** premiumUntil = max(şimdi, mevcut) + gün. İyimser eşzamanlılık: değer okunduğundan beri değiştiyse yeniden dener. */
-async function extendPremium(tx: Tx, userId: string, days: number, now: number): Promise<Date> {
-  for (let i = 0; i < OPTIMISTIC_RETRIES; i++) {
-    const u = await tx.user.findUnique({ where: { id: userId }, select: { premiumUntil: true } });
-    if (!u) throw new Error('Kullanıcı bulunamadı');
-    const base = Math.max(now, u.premiumUntil?.getTime() ?? 0);
-    const next = new Date(base + days * DAY_MS);
-    const { count } = await tx.user.updateMany({ where: { id: userId, premiumUntil: u.premiumUntil }, data: { premiumUntil: next } });
-    if (count === 1) return next;
-  }
-  throw new Error('premiumUntil güncellenemedi (eşzamanlı değişiklik)');
-}
-
-/** premiumUntil'i gün kadar geri çeker (iade). Yoksa dokunmaz. */
-async function retractPremium(tx: Tx, userId: string, days: number): Promise<Date | null> {
-  for (let i = 0; i < OPTIMISTIC_RETRIES; i++) {
-    const u = await tx.user.findUnique({ where: { id: userId }, select: { premiumUntil: true } });
-    if (!u) throw new Error('Kullanıcı bulunamadı');
-    if (!u.premiumUntil) return null;
-    const next = new Date(u.premiumUntil.getTime() - days * DAY_MS);
-    const { count } = await tx.user.updateMany({ where: { id: userId, premiumUntil: u.premiumUntil }, data: { premiumUntil: next } });
-    if (count === 1) return next;
-  }
-  throw new Error('premiumUntil geri çekilemedi (eşzamanlı değişiklik)');
-}
 
 /** Bakiyeden en çok `amount` kredi düşer (0'ın altına inmez). @returns düşülen miktar ve kalan bakiye */
 async function takeCreditsUpTo(tx: Tx, userId: string, amount: number): Promise<{ taken: number; balanceAfter: number }> {
@@ -123,7 +122,7 @@ export type FulfillResult = 'fulfilled' | 'duplicate' | 'missing';
 
 /**
  * Ödeme başarılı: tek işlemde sipariş PAID + hikieOrderId, kredi eklenir (PURCHASE, tekrar anahtarı
- * `hikie:{hikieOrderId}`) ya da premium uzatılır (PremiumGrant + 0 tutarlı PURCHASE satırı → kredi geçmişinde görünür).
+ * `hikie:{hikieOrderId}`).
  * Sipariş zaten işlenmişse / bu Hikie ödemesi başka siparişe yazılmışsa 'duplicate' (hiçbir şey değişmez).
  */
 export async function fulfillOrder(orderId: string, hikieOrderId: string, now: number = Date.now()): Promise<FulfillResult> {
@@ -142,38 +141,21 @@ export async function fulfillOrder(orderId: string, hikieOrderId: string, now: n
         data: { status: 'PAID', hikieOrderId, paidAt: new Date(now) },
       });
       if (count === 0) return 'duplicate';
-      const idempotencyKey = `hikie:${hikieOrderId}`;
-      if (pkg.kind === 'credits') {
-        const user = await tx.user.update({
-          where: { id: order.userId },
-          data: { credits: { increment: pkg.credits } },
-          select: { credits: true },
-        });
-        await tx.creditTransaction.create({
-          data: {
-            userId: order.userId,
-            type: 'PURCHASE',
-            amount: pkg.credits,
-            balanceAfter: user.credits,
-            idempotencyKey,
-            note: `Satın alma: ${packageNote(pkg)}`,
-          },
-        });
-      } else {
-        const until = await extendPremium(tx, order.userId, pkg.days, now);
-        await tx.premiumGrant.create({ data: { userId: order.userId, until, source: 'PURCHASE', note: order.merchantOrderId } });
-        const user = await tx.user.findUnique({ where: { id: order.userId }, select: { credits: true } });
-        await tx.creditTransaction.create({
-          data: {
-            userId: order.userId,
-            type: 'PURCHASE',
-            amount: 0,
-            balanceAfter: user?.credits ?? 0,
-            idempotencyKey,
-            note: `Satın alma: ${packageNote(pkg)} — ${until.toISOString().slice(0, 10)} tarihine kadar`,
-          },
-        });
-      }
+      const user = await tx.user.update({
+        where: { id: order.userId },
+        data: { credits: { increment: pkg.credits } },
+        select: { credits: true },
+      });
+      await tx.creditTransaction.create({
+        data: {
+          userId: order.userId,
+          type: 'PURCHASE',
+          amount: pkg.credits,
+          balanceAfter: user.credits,
+          idempotencyKey: `hikie:${hikieOrderId}`,
+          note: `Satın alma: ${packageNote(pkg)}`,
+        },
+      });
       return 'fulfilled';
     });
   } catch (err) {
@@ -183,11 +165,11 @@ export async function fulfillOrder(orderId: string, hikieOrderId: string, now: n
   }
 }
 
-export type RefundResult = { result: 'refunded' | 'noop'; shortfall?: number };
+export type RefundResult = { result: 'refunded' | 'noop'; shortfall?: number; unknownPackage?: boolean };
 
 /**
- * İade / iptal: PAID → REFUNDED. Kredi paketinde verilen kredi geri alınır — bakiye yetmezse 0'a kadar, eksik kalan
- * not edilir (credits ≥ 0 korunur); premium paketinde premiumUntil süre kadar geri çekilir. Bir kez.
+ * İade / iptal: PAID → REFUNDED. Verilen kredi geri alınır — bakiye yetmezse 0'a kadar, eksik kalan not edilir
+ * (credits ≥ 0 korunur). Bir kez.
  */
 export async function refundOrder(orderId: string, now: number = Date.now()): Promise<RefundResult> {
   return prisma.$transaction(async (tx) => {
@@ -199,39 +181,23 @@ export async function refundOrder(orderId: string, now: number = Date.now()): Pr
     });
     if (count === 0) return { result: 'noop' as const };
     const pkg = findPaymentPackage(order.packageKey);
-    if (!pkg) throw new Error(`Bilinmeyen paket: ${order.packageKey}`);
-    const idempotencyKey = `hikie-refund:${order.hikieOrderId ?? order.id}`;
-    if (pkg.kind === 'credits') {
-      const { taken, balanceAfter } = await takeCreditsUpTo(tx, order.userId, pkg.credits);
-      const shortfall = pkg.credits - taken;
-      await tx.creditTransaction.create({
-        data: {
-          userId: order.userId,
-          type: 'REFUND',
-          amount: -taken,
-          balanceAfter,
-          idempotencyKey,
-          note:
-            `İade: ${packageNote(pkg)}` +
-            (shortfall > 0 ? ` — bakiye yetersiz: ${taken} kredi geri alındı, ${shortfall} kredi alınamadı` : ''),
-        },
-      });
-      return { result: 'refunded' as const, shortfall };
-    }
-    const until = await retractPremium(tx, order.userId, pkg.days);
-    await tx.premiumGrant.create({ data: { userId: order.userId, until, source: 'REFUND', note: order.merchantOrderId } });
-    const user = await tx.user.findUnique({ where: { id: order.userId }, select: { credits: true } });
+    // Katalogda olmayan eski paket (ör. kaldırılan premium_30d): sipariş REFUNDED olur, bakiyeye dokunulmaz (elle incele).
+    if (!pkg) return { result: 'refunded' as const, shortfall: 0, unknownPackage: true };
+    const { taken, balanceAfter } = await takeCreditsUpTo(tx, order.userId, pkg.credits);
+    const shortfall = pkg.credits - taken;
     await tx.creditTransaction.create({
       data: {
         userId: order.userId,
         type: 'REFUND',
-        amount: 0,
-        balanceAfter: user?.credits ?? 0,
-        idempotencyKey,
-        note: `İade: ${packageNote(pkg)} — premium süresi geri çekildi`,
+        amount: -taken,
+        balanceAfter,
+        idempotencyKey: `hikie-refund:${order.hikieOrderId ?? order.id}`,
+        note:
+          `İade: ${packageNote(pkg)}` +
+          (shortfall > 0 ? ` — bakiye yetersiz: ${taken} kredi geri alındı, ${shortfall} kredi alınamadı` : ''),
       },
     });
-    return { result: 'refunded' as const, shortfall: 0 };
+    return { result: 'refunded' as const, shortfall };
   });
 }
 
@@ -245,7 +211,7 @@ export type CallbackOutcome = { location: string };
 
 /**
  * Hikie Checkout Link callback'i: yalnız `status, isSuccess, orderId, merchantOrderId` gelir, imza YOK. Bu yüzden
- * ASLA kredi / premium vermez ve durumu değiştirmez; yalnız mevcut siparişe `callbackAt` yazar (tanılama) ve kullanıcıyı
+ * ASLA kredi vermez ve durumu değiştirmez; yalnız mevcut siparişe `callbackAt` yazar (tanılama) ve kullanıcıyı
  * sonuç sayfasına yönlendirir. Yönlendirme yeri yalnız arayüz içindir (status / isSuccess istemci tarafında güvenilmez
  * bilgi); gerçek sonuç /odeme/tamamlandi'da siparişin PAID olmasıyla (imzalı webhook) görünür.
  */
@@ -341,7 +307,8 @@ async function verifyPaidEvent(
  * İmzalı webhook. Yanıt kodları (Hikie kalıcı hatada aboneliği durdurur): imza yanlış / eski / başlık eksik / gövde
  * çözümlenemez → 400; HIKIE_WEBHOOK_SECRET yok → 503; (DB / geçici hata endpoint'te 503); başarı, tekrar, tanınmayan
  * olay, test.ping VE iş kuralı reddi (tutar / para birimi / status / sipariş) → 200 (+ log, 4xx yok).
- * order.paid → doğrula + fulfillOrder (idempotent: Hikie-Webhook-Id ve orderId). order.updated REFUNDED / CANCELLED
+ * order.paid → doğrula + fulfillOrder (idempotent: Hikie-Webhook-Id ve orderId) + sipariş onay e-postası (bir kez;
+ * hatası yanıtı değiştirmez). order.updated REFUNDED / CANCELLED
  * şimdilik yalnız log (otomatik kredi geri alma yok). Diğer olaylar yok sayılır.
  */
 export async function handleHikieWebhook(
@@ -380,6 +347,15 @@ export async function handleHikieWebhook(
     const v = await verifyPaidEvent(w);
     if (v.ok) {
       result = await fulfillOrder(v.orderDbId, v.hikieOrderId, now);
+      // Sipariş onay e-postası: sipariş PAID ise ve daha önce gönderilmediyse BİR KEZ (çift webhook / eşzamanlı teslimatta
+      // tekrar yok). Hata kredi kararını ve yanıtı (200) ETKİLEMEZ; yalnız Sentry'ye yazılır.
+      if (result === 'fulfilled' || result === 'duplicate') {
+        try {
+          await sendOrderConfirmationOnce(v.orderDbId);
+        } catch (err) {
+          captureError('payment-confirmation-email', err);
+        }
+      }
     } else {
       result = `rejected:${v.reason}`;
       recorded = `order.paid:rejected:${v.reason}`;
@@ -411,29 +387,51 @@ export type OrderStatusView = {
   merchantOrderId: string;
   packageKey: string;
   status: 'PENDING' | 'PAID' | 'FAILED' | 'REFUNDED';
+  /** Paketin kredisi (katalogda yoksa null). */
+  packageCredits: number | null;
+  /** Kullanıcının güncel bakiyesi (DB). */
   credits: number;
-  premiumUntil: string | null;
 };
 
+/** Başka sekme / cihazda tamamlanan ödemenin sonuç sayfasında "ödendi" görünmesi için bakılan pencere. */
+export const RECENT_PAID_WINDOW_MS = 30 * 60_000;
+
 /**
- * Kullanıcının siparişi (yalnız kendi): merchantOrderId verilmezse son 24 saatteki en yeni sipariş. Bakiye ve
- * premium DB'den (yönlendirme parametresine güvenilmez).
+ * Sonuç sayfası için kullanıcının siparişi — YALNIZ kendi siparişleri (her sorgu `userId` ile; başkasının
+ * merchantOrderId'si 404 ile aynı sonucu verir). Hangi sipariş:
+ * 1. `merchantOrderId` verildiyse o sipariş; ama o sipariş PAID değilse ve kullanıcının ONDAN SONRA açılıp son 30 dk'da
+ *    ödenen başka bir siparişi varsa o gösterilir (ödeme başka sekmede / cihazda yeni bir siparişle tamamlanmış olabilir).
+ *    Daha önceki bir ödeme, bekleyen yeni siparişin yerine "ödendi" diye gösterilmez.
+ * 2. Verilmediyse (Hikie doğrudan dönüşü, sipariş kimliği adreste yok; başka tarayıcı): son 30 dk'da ödenen en yeni
+ *    sipariş, yoksa son 24 saatte açılan en yeni sipariş.
+ * Bakiye DB'den (yönlendirme parametresine güvenilmez).
  */
 export async function getOrderStatusForUser(userId: string, merchantOrderId: string | null, now: number = Date.now()): Promise<OrderStatusView | null> {
-  const order = merchantOrderId
-    ? await prisma.paymentOrder.findFirst({ where: { merchantOrderId, userId } })
-    : await prisma.paymentOrder.findFirst({
-        where: { userId, createdAt: { gte: new Date(now - DAY_MS) } },
-        orderBy: { createdAt: 'desc' },
-      });
+  const recentPaid = (createdSince?: Date) =>
+    prisma.paymentOrder.findFirst({
+      where: {
+        userId,
+        status: 'PAID',
+        paidAt: { gte: new Date(now - RECENT_PAID_WINDOW_MS) },
+        ...(createdSince ? { createdAt: { gte: createdSince } } : {}),
+      },
+      orderBy: { paidAt: 'desc' },
+    });
+  let order = merchantOrderId ? await prisma.paymentOrder.findFirst({ where: { merchantOrderId, userId } }) : null;
+  if (merchantOrderId && order && order.status !== 'PAID') order = (await recentPaid(order.createdAt)) ?? order;
+  if (!merchantOrderId) {
+    order =
+      (await recentPaid()) ??
+      (await prisma.paymentOrder.findFirst({ where: { userId, createdAt: { gte: new Date(now - DAY_MS) } }, orderBy: { createdAt: 'desc' } }));
+  }
   if (!order) return null;
-  const user = await prisma.user.findUnique({ where: { id: userId }, select: { credits: true, premiumUntil: true } });
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { credits: true } });
   return {
     merchantOrderId: order.merchantOrderId,
     packageKey: order.packageKey,
     status: order.status,
+    packageCredits: findPaymentPackage(order.packageKey)?.credits ?? null,
     credits: user?.credits ?? 0,
-    premiumUntil: user?.premiumUntil?.toISOString() ?? null,
   };
 }
 

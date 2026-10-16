@@ -17,9 +17,9 @@ export type CreditTransactionType =
   | 'SIGNUP_BONUS'
   | 'PURCHASE'
   | 'ANALYSIS_SPEND'
-  /** Kredi düşmeyen (yönetici; ileride premium) analiz (miktar 0) — "AI Analizlerim" listesinde görünsün diye kaydedilir. */
+  /** Kredi düşmeyen (yönetici) analiz (miktar 0) — "AI Analizlerim" listesinde görünsün diye kaydedilir. */
   | 'ANALYSIS_FREE'
-  /** Premium kullanıcının analiz açması (miktar 0; premium bitince de açık kalır — bkz. lib/analysisUnlock.ts). */
+  /** ESKİ: premium kullanıcının analiz açması (miktar 0). Premium kaldırıldı; yeni yazılmaz, geçmiş satırlar okunur. */
   | 'ANALYSIS_PREMIUM'
   /** Haftalık ücretsiz açma hakkı (miktar 0; anahtar `weekly-free:{ISO hafta}` → haftada bir). */
   | 'ANALYSIS_WEEKLY_FREE'
@@ -181,7 +181,7 @@ export async function refundStalePendingSpends(opts: { userId?: string; now?: nu
   return refunded;
 }
 
-/** Kredi düşmeyen (yönetici; ileride premium) analiz üretimini 0 tutarlı kayıtla denetim izine yazar. */
+/** Kredi düşmeyen (yönetici) analiz üretimini 0 tutarlı kayıtla denetim izine yazar. */
 export async function recordFreeAnalysis(userId: string, matchId: string, balance: number): Promise<void> {
   await prisma.creditTransaction.create({
     data: { userId, type: 'ANALYSIS_FREE', amount: 0, balanceAfter: balance, matchId, note: 'Kredisiz analiz' },

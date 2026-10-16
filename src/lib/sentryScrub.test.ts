@@ -171,6 +171,7 @@ describe('Sentry olay temizliği (güvenlik denetimi 2026-10-04 / rapor Y1-Y2)',
     expect(JSON.parse(json.request.data)).toEqual({ emailOrUsername: 'ali', password: F, nested: { resetToken: F } });
 
     const form = scrubSentryEvent({ request: { data: 'email=a%40b.c&newPassword=x1&currentPassword=x2&lang=tr' } });
+    // e-posta her yerde gizlenir (hesap silme talebi + ödeme dönüşü customerEmail)
     expect(form.request.data).toBe(`email=${F}&newPassword=${F}&currentPassword=${F}&lang=tr`);
 
     const plain = scrubSentryEvent({ request: { data: 'merhaba dünya' } });

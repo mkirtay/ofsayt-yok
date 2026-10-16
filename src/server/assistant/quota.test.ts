@@ -46,8 +46,8 @@ describe('asistan günlük kotası — önce ayır, sonra kesinleştir', () => {
     resetAssistantQuotaMemoryForTests();
   });
 
-  it('sınırlar: misafir 3, üye 15, premium 50; tahmin 0,004 USD', () => {
-    expect(ASSISTANT_DAILY_LIMIT).toEqual({ guest: 3, user: 15, premium: 50 });
+  it('sınırlar: misafir 3, üye 15, yönetici 50; tahmin 0,004 USD', () => {
+    expect(ASSISTANT_DAILY_LIMIT).toEqual({ guest: 3, user: 15, admin: 50 });
     expect(ASSISTANT_ESTIMATE_MICRO_USD).toBe(4_000);
   });
 
@@ -96,9 +96,9 @@ describe('asistan günlük kotası — önce ayır, sonra kesinleştir', () => {
     expect(h.store.get(BUDGET)).toBe(4_000);
   });
 
-  it('günlük bütçe 5 USD: eşzamanlı isteklerle de aşılmaz; aşan red geri alınır; premium dahil herkese kapalı', async () => {
+  it('günlük bütçe 5 USD: eşzamanlı isteklerle de aşılmaz; aşan red geri alınır; yönetici dahil herkese kapalı', async () => {
     h.store.set(BUDGET, ASSISTANT_DAILY_BUDGET_MICRO_USD - 4_000 * 2 - 1);
-    const results = await Promise.all(Array.from({ length: 8 }, (_, i) => reserveAssistantQuota('premium', [`u:${i}`], DAY)));
+    const results = await Promise.all(Array.from({ length: 8 }, (_, i) => reserveAssistantQuota('admin', [`u:${i}`], DAY)));
     expect(results.filter((r) => r.allowed)).toHaveLength(2);
     expect(results.filter((r) => !r.allowed && r.reason === 'BUDGET')).toHaveLength(6);
     expect(h.store.get(BUDGET)).toBe(ASSISTANT_DAILY_BUDGET_MICRO_USD - 1);

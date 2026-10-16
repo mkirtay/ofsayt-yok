@@ -1,7 +1,8 @@
 /**
- * Yönetici paneli — kullanıcı arama, ayrıntı, kredi ± ve premium ver / kaldır (kredi modeli v2, karar 10).
- * Her işlem atomik ve denetim izli: kredi `CreditTransaction` (ADMIN_GRANT, actorId, zorunlu gerekçe), premium
- * `PremiumGrant` (source ADMIN, actorId, not). Yeni ADMIN atama YOK (yalnız DB'de elle, karar 9).
+ * Yönetici paneli — kullanıcı arama, ayrıntı, kredi ± (kredi modeli v2, karar 10).
+ * Her işlem atomik ve denetim izli: kredi `CreditTransaction` (ADMIN_GRANT, actorId, zorunlu gerekçe). Premium ver /
+ * kaldır ucu 2026-10-16'da kaldırıldı (premium sistemi yok; PremiumGrant tablosu DB'de geçmiş kayıt olarak duruyor).
+ * Yeni ADMIN atama YOK (yalnız DB'de elle, karar 9).
  */
 import { prisma } from '@/lib/prisma';
 import { addCredits } from '@/lib/credits';
@@ -25,7 +26,6 @@ const USER_FIELDS = {
   name: true,
   role: true,
   credits: true,
-  premiumUntil: true,
   emailVerified: true,
   createdAt: true,
 } as const;
@@ -88,17 +88,16 @@ export async function listUsers(cursor: string | null, now = new Date()) {
 export async function getUserDetail(userId: string, opts: { before?: Date } = {}) {
   const user = await prisma.user.findUnique({ where: { id: userId }, select: USER_FIELDS });
   if (!user) return null;
-  const [transactions, premiumGrants, unlockCount] = await Promise.all([
+  const [transactions, unlockCount] = await Promise.all([
     prisma.creditTransaction.findMany({
       where: { userId, ...(opts.before ? { createdAt: { lt: opts.before } } : {}) },
       orderBy: { createdAt: 'desc' },
       take: 50,
       select: { id: true, type: true, amount: true, balanceAfter: true, matchId: true, note: true, status: true, actorId: true, createdAt: true },
     }),
-    prisma.premiumGrant.findMany({ where: { userId }, orderBy: { createdAt: 'desc' }, take: 20 }),
     prisma.analysisUnlock.count({ where: { userId } }),
   ]);
-  return { user, transactions, premiumGrants, unlockCount };
+  return { user, transactions, unlockCount };
 }
 
 function requireNote(note: unknown): string {
@@ -115,23 +114,4 @@ export async function adminAdjustCredits(actorId: string, userId: string, amount
   }
   const note = requireNote(noteRaw);
   return addCredits(userId, amount, 'ADMIN_GRANT', note, actorId);
-}
-
-/**
- * Premium ver (bitiş tarihi) ya da kaldır (`until` null). Atomik: alan + denetim satırı aynı işlemde.
- * @returns yeni premiumUntil
- */
-export async function adminSetPremium(actorId: string, userId: string, untilRaw: unknown, noteRaw: unknown): Promise<Date | null> {
-  const note = requireNote(noteRaw);
-  let until: Date | null = null;
-  if (untilRaw != null) {
-    until = new Date(String(untilRaw));
-    if (!Number.isFinite(until.getTime())) throw new AdminInputError('Geçersiz bitiş tarihi.');
-    if (until.getTime() <= Date.now()) throw new AdminInputError('Bitiş tarihi gelecekte olmalı (kaldırmak için boş bırak).');
-  }
-  return prisma.$transaction(async (tx) => {
-    const user = await tx.user.update({ where: { id: userId }, data: { premiumUntil: until }, select: { premiumUntil: true } });
-    await tx.premiumGrant.create({ data: { userId, until, source: 'ADMIN', actorId, note } });
-    return user.premiumUntil;
-  });
 }

@@ -2,6 +2,7 @@ import type { AppProps } from 'next/app'
 import { SessionProvider } from 'next-auth/react'
 import localFont from 'next/font/local'
 import { Analytics } from '@vercel/analytics/next'
+import { scrubAnalyticsEvent } from '@/lib/analyticsScrub'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { useState } from 'react'
 import { appWithTranslation } from '@/lib/i18n'
@@ -72,7 +73,7 @@ function App({ Component, pageProps: { session, ...pageProps } }: AppProps) {
         <Layout>
           <Component {...pageProps} />
         </Layout>
-        <Analytics />
+        <Analytics beforeSend={scrubAnalyticsEvent} />
       </div>
       </QueryClientProvider>
     </SessionProvider>

@@ -154,7 +154,7 @@ export default function AssistantPanel({ open, side = 'right', onClose }: Assist
   );
 
   const noticeText = (n: Notice) =>
-    n.kind === 'quota' ? t(`quota.${n.tier === 'guest' || n.tier === 'premium' ? n.tier : 'user'}`, { limit: n.limit ?? '' }) : t(n.kind);
+    n.kind === 'quota' ? t(`quota.${n.tier === 'guest' || n.tier === 'admin' ? n.tier : 'user'}`, { limit: n.limit ?? '' }) : t(n.kind);
 
   return (
     <aside className={`${styles.panel} ${side === 'left' ? styles.panelLeft : ''} ${open ? styles.panelOpen : ''}`} role="dialog" aria-label={t('title')} aria-hidden={!open}>

@@ -5,7 +5,7 @@ import styles from './adminUsers.module.scss';
 
 /**
  * Yönetici paneli — kullanıcı arama, tüm kullanıcılar listesi (en yeni üstte, 50'şer), kredi ± (gerekçe zorunlu, denetim
- * izine yazılır), kredi hareketleri. Premium sistemi kaldırıldı: arayüzde premium yok (eski API ucu dokunulmadı).
+ * izine yazılır), kredi hareketleri. Premium sistemi kaldırıldı (arayüz ve API ucu yok).
  * Uçlar: /api/admin/users… (requireAdmin + middleware). Yalnız Türkçe (iç araç).
  */
 type AdminUser = {

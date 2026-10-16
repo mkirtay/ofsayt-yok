@@ -3,7 +3,7 @@
  *
  * Gövde: `{ messages: [{ role: 'user' | 'assistant', content }], locale?: 'tr' | 'en', page?: string }` — son mesaj
  * kullanıcıdan, ≤ 300 karakter; geçmiş ≤ 6 mesaj (istemci tutar, sunucuda sohbet saklanmaz).
- * Sıra: oturum (isteğe bağlı) → hız sınırı (6/dk) → kota + günlük bütçe REZERVASYONU (misafir 3 / üye 15 / premium 50,
+ * Sıra: oturum (isteğe bağlı) → hız sınırı (6/dk) → kota + günlük bütçe REZERVASYONU (misafir 3 / üye 15 / yönetici 50,
  * atomik INCR) → aylık OpenAI bütçesi rezervasyonu → model. Kota/bütçe/hız reddi akış başlamadan 429 JSON döner.
  * Rezervasyon `finally` içinde kesinleşir: yanıt / hata / 25 sn zaman aşımı / istemci iptali — hepsinde hak sayılır
  * (yalnız boş yanıtta iade), bütçeye gerçek maliyet (bilinmiyorsa tahmini üst sınır) yazılır. Hiçbir yol kotayı atlamaz.
@@ -15,7 +15,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import OpenAI from 'openai';
 import { getRequestAuth } from '@/lib/mobileAuth';
 import { hitFixedWindowRateLimit, requestIp } from '@/lib/rateLimit';
-import { isAdminUser, isPremiumUser } from '@/lib/premium';
+import { isAdminUser } from '@/lib/userRole';
 import { captureError } from '@/lib/logger';
 import { loadViewer } from '@/server/analysisAccess';
 import { trackSportmonksFetches } from '@/server/sportmonks/cachedFetch';
@@ -78,7 +78,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const auth = await getRequestAuth(req, res);
   const viewer = await loadViewer(auth?.id);
-  const tier: AssistantTier = !viewer ? 'guest' : isAdminUser(viewer) || isPremiumUser(viewer) ? 'premium' : 'user';
+  const tier: AssistantTier = !viewer ? 'guest' : isAdminUser(viewer) ? 'admin' : 'user';
 
   let keys: string[];
   if (viewer) keys = [`u:${viewer.id}`];

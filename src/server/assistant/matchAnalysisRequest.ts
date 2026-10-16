@@ -8,7 +8,7 @@
  *   3. Maç: takımın fikstürü (takım sayfasıyla aynı önbellekli `teams/{id}` genel bakış isteği) içinde rakip.
  *      Birden fazla aday → en çok 3 seçenek.
  *   4. Erişim (kredi modeli v2, server/analysisAccess.ts ile aynı kural):
- *      - açılmış (AnalysisUnlock) / premium / yönetici / maç bitmiş → kısa özet (en olası sonuç + 2-3 nokta)
+ *      - açılmış (AnalysisUnlock) / yönetici / maç bitmiş → kısa özet (en olası sonuç + 2-3 nokta)
  *      - hazır ama kilitli → YALNIZ ücretsiz önizleme (buildAnalysisPreview) + açma teklifi; kilitli alan yanıtta yok
  *      - analiz yok → kapsamdaysa ve maça 3 saatten çok varsa "maçtan ~3 saat önce hazırlanır"; maç başlamadıysa
  *        "maç sayfasından kendin üretebilirsin" yönlendirmesi; başladıysa "hazırlanmıyor" (noAnalysisReason).
@@ -23,7 +23,7 @@ import { getTeamOverview } from '@/services/teamPage';
 import type { TeamMatch } from '@/services/sportmonks/teamOverview';
 import { findStoredMatchAnalysis } from '@/lib/matchAnalysisLookup';
 import { ANALYSIS_UNLOCK_COST, findUnlock } from '@/lib/analysisUnlock';
-import { isAdminUser, isPremiumUser } from '@/lib/premium';
+import { isAdminUser } from '@/lib/userRole';
 import { isAnalysisMatchFinished, type AnalysisViewer } from '@/server/analysisAccess';
 import { isInPregenScope } from '@/server/analysisPregen';
 import { buildAnalysisPreview, type AnalysisPreview, type PreviewOutcome } from '@/utils/analysisPreview';
@@ -223,7 +223,7 @@ export async function analysisCardForMatch(viewer: AnalysisViewer | null, match:
   const ref = matchRef(match);
   const stored = await findStoredMatchAnalysis(String(match.id), 'PRE');
   if (!stored) return { kind: 'none', match: ref, reason: await noAnalysisReason(match), signedIn: viewer != null, cost: ANALYSIS_UNLOCK_COST };
-  const privileged = viewer != null && (isAdminUser(viewer) || isPremiumUser(viewer));
+  const privileged = viewer != null && isAdminUser(viewer);
   const unlocked = viewer != null && (await findUnlock(viewer.id, stored.id)) != null;
   const open =
     privileged ||

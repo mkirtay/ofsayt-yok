@@ -1,23 +1,22 @@
 /**
- * Hikie ödeme kataloğu — /credits'teki paket ve planlardan türetilir (fiyatlar tek kaynakta) + yönetici test paketi.
+ * Hikie ödeme kataloğu — /credits'teki kredi paketlerinden türetilir (fiyatlar tek kaynakta) + yönetici test paketi.
+ * Yalnız kredi satılır: premium_30d / premium_365d kaldırıldı (HIKIE_LINK_PREMIUM_* tanımlansa bile satılmaz; eski
+ * premium siparişi kayıtları `findPaymentPackage` → null döner, webhook'ta unknown_package olarak reddedilir).
  * Her paketin Hikie panelinde ayrı Checkout Link'i var: HIKIE_LINK_<KEY> (KEY büyük harf, ör. HIKIE_LINK_CREDITS_10).
  * Checkout Link imza üretmez; imza yalnız webhook aboneliğinin tek secret'ıyla (HIKIE_WEBHOOK_SECRET, whsec_) doğrulanır.
  * Paket yalnız PAYMENTS_ENABLED=true VE HIKIE_LINK_<KEY> VE HIKIE_WEBHOOK_SECRET tanımlıysa satışa açıktır (webhook olmadan kredi
  * verilemez). PAYMENTS_ENABLED varsayılan KAPALI: linkler tanımlı olsa bile satış yok, düğmeler "Çok yakında".
  * Link ve secret yalnız sunucuda okunur; istemciye yalnız "satışta mı" bilgisi gider.
  */
-import { CREDIT_PACKAGES, PREMIUM_PLANS } from '@/config/creditPackages';
+import { CREDIT_PACKAGES } from '@/config/creditPackages';
 
-export type PaymentPackage =
-  | { key: string; kind: 'credits'; credits: number; priceKurus: number; adminOnly?: boolean }
-  | { key: string; kind: 'premium'; days: number; priceKurus: number; adminOnly?: boolean };
+export type PaymentPackage = { key: string; kind: 'credits'; credits: number; priceKurus: number; adminOnly?: boolean };
 
 /** Yalnız ADMIN görür / satın alır: canlı ödeme akışını 1 TL ile uçtan uca denemek için (1 kredi verir). */
 export const TEST_PACKAGE_KEY = 'test_1tl';
 
 export const PAYMENT_PACKAGES: readonly PaymentPackage[] = [
   ...CREDIT_PACKAGES.map((p): PaymentPackage => ({ key: p.paymentKey, kind: 'credits', credits: p.credits, priceKurus: p.priceKurus })),
-  ...PREMIUM_PLANS.map((p): PaymentPackage => ({ key: p.paymentKey, kind: 'premium', days: p.days, priceKurus: p.priceKurus })),
   { key: TEST_PACKAGE_KEY, kind: 'credits', credits: 1, priceKurus: 100, adminOnly: true },
 ];
 

@@ -76,10 +76,10 @@ describe('GET /api/user/summary', () => {
     expect(json).not.toMatch(/email|"name"|username|image|password/);
   });
 
-  it('premium: premiumUntil gelecekteyse', async () => {
+  it('premium kaldırıldı: DB\'de premiumUntil gelecekte olsa da premium false, premiumUntil null', async () => {
     h.sessionUserId = 'other';
     const res = await call();
-    expect(res.body).toMatchObject({ premium: true, admin: false, premiumUntil: '2099-01-01T00:00:00.000Z' });
+    expect(res.body).toMatchObject({ premium: false, admin: false, premiumUntil: null });
   });
 
   it('yalnız GET', async () => {

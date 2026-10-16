@@ -49,6 +49,7 @@
     "verifyingHint": "Bu birkaç saniye sürebilir, sayfayı kapatmayın.",
     "slow": "Doğrulama beklenenden uzun sürüyor. Ödemeniz onaylandığında krediniz otomatik eklenir; birkaç dakika sonra bakiyenizi kontrol edin.",
     "paidTitle": "Ödemeniz alındı",
+    "paidAdded": "Hesabınıza {{added}} kredi eklendi.",
     "paidCredits": "Yeni bakiyeniz: {{credits}} kredi",
     "failedTitle": "Ödeme tamamlanamadı",
     "failedDesc": "Ödeme onaylanmadı ve hesabınıza bir şey eklenmedi. Yeniden deneyebilirsiniz; kartınızdan çekim yapıldığını düşünüyorsanız İletişim sayfasından bize yazın.",
@@ -62,5 +63,13 @@
     "toHome": "Ana sayfaya dön",
     "retryTitle": "Ödeme tamamlanamadı",
     "retryDesc": "Ödeme işlemi tamamlanmadı ya da iptal edildi; hesabınıza bir şey eklenmedi. Dilediğiniz paketi yeniden seçebilirsiniz."
+  },
+  "consent": {
+    "required": "Satın almak için Ön Bilgilendirme Formu ve Mesafeli Satış Sözleşmesi onayı gerekir. Kutuyu işaretleyip tekrar deneyin; sayfa eskiyse yenileyin.",
+    "before": "",
+    "preInfo": "Ön Bilgilendirme Formu",
+    "and": "'nu ve ",
+    "contract": "Mesafeli Satış Sözleşmesi",
+    "after": "'ni okudum, onaylıyorum. Kredilerin ödeme onaylanınca hesabıma anında yükleneceğini (dijital içeriğin anında ifası) ve bu nedenle cayma hakkımın sona ereceğini kabul ediyorum."
   }
 }

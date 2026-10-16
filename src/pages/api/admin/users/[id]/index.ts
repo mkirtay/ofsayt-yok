@@ -1,4 +1,4 @@
-/** GET /api/admin/users/{id}?before=ISO — yönetici: kullanıcı ayrıntısı, kredi hareketleri (sayfalı), premium geçmişi. */
+/** GET /api/admin/users/{id}?before=ISO — yönetici: kullanıcı ayrıntısı, kredi hareketleri (sayfalı). */
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { requireAdmin } from '@/lib/requireAuth';
 import { getUserDetail } from '@/lib/adminUsers';

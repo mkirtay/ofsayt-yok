@@ -22,7 +22,7 @@
   "quota": {
     "guest": "You've used today's {{limit}} free messages. Sign in for 15 messages a day.",
     "user": "You've used today's {{limit}} messages. See you tomorrow.",
-    "premium": "You've used today's {{limit}} messages. See you tomorrow."
+    "admin": "You've used today's {{limit}} messages. See you tomorrow."
   },
   "budget": "The assistant is full for today. Please try again tomorrow.",
   "budgetMonthly": "The assistant has reached its capacity for this month and will reopen next month.",

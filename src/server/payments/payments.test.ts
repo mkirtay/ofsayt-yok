@@ -6,15 +6,19 @@ vi.mock('@/lib/prisma', async () => {
   return { prisma: createFakePaymentDb() };
 });
 
+const mail = vi.hoisted(() => ({ send: vi.fn(async (..._a: unknown[]) => true), capture: vi.fn() }));
+vi.mock('@/lib/security', async (orig) => ({ ...(await orig<typeof import('@/lib/security')>()), sendTransactionalEmail: mail.send }));
+vi.mock('@/lib/logger', async (orig) => ({ ...(await orig<typeof import('@/lib/logger')>()), captureError: mail.capture }));
+
 import { prisma } from '@/lib/prisma';
+import { PURCHASE_TERMS_VERSION } from '@/config/legalConsent';
 import type { FakePaymentDb } from '@/test/fakePaymentDb';
 import { availablePackageKeys, checkoutUrl, findPaymentPackage, paymentsEnabled } from '@/config/paymentPackages';
 import { hmacHex, signatureMatches, timestampFresh, verifyWebhookSignature } from './hikieSignature';
-import { CheckoutError, createCheckout, handleHikieCallback, handleHikieWebhook, parseHikieWebhook, refundOrder, tlTextToKurus } from './paymentOrders';
+import { CheckoutError, createCheckout, getOrderStatusForUser, handleHikieCallback, handleHikieWebhook, parseHikieWebhook, refundOrder, tlTextToKurus } from './paymentOrders';
 
 const db = prisma as unknown as FakePaymentDb;
 const NOW = Date.UTC(2026, 9, 5, 12, 0, 0);
-const DAY = 86_400_000;
 const ENV = {
   PAYMENTS_ENABLED: 'true',
   HIKIE_LINK_CREDITS_10: 'https://pay.hikie.example/l/c10?ref=oy',
@@ -25,6 +29,8 @@ const ENV = {
 };
 const PRICE: Record<string, string> = { credits_10: '39.99', credits_30: '99.99', premium_30d: '99.99', test_1tl: '1.00' };
 const ts = (ms = NOW) => String(Math.floor(ms / 1000));
+/** Geçerli satın alma onayı (istemcinin gönderdiği). */
+const TERMS = { accepted: true, version: PURCHASE_TERMS_VERSION };
 
 async function seedUser(id: string, data: Record<string, unknown> = {}) {
   await db.user.create({ data: { id, ...data } });
@@ -37,6 +43,9 @@ const order = (m: string) => db.paymentOrder.rows.find((r) => r.merchantOrderId 
 
 beforeEach(() => {
   db.reset();
+  mail.send.mockReset();
+  mail.send.mockResolvedValue(true);
+  mail.capture.mockReset();
 });
 
 describe('Hikie imzası', () => {
@@ -64,10 +73,12 @@ describe('Hikie imzası', () => {
 describe('paket kataloğu', () => {
   it('fiyatlar ve env: link + secret ikisi de varsa satışta; yalnız https link', () => {
     expect(findPaymentPackage('credits_10')).toMatchObject({ kind: 'credits', credits: 10, priceKurus: 3999 });
-    expect(findPaymentPackage('premium_365d')).toMatchObject({ kind: 'premium', days: 365, priceKurus: 79999 });
+    // Premium kaldırıldı: env'de HIKIE_LINK_PREMIUM_30D olsa da katalogda yok, satışa açılmaz.
+    expect(findPaymentPackage('premium_30d')).toBeNull();
+    expect(findPaymentPackage('premium_365d')).toBeNull();
     expect(findPaymentPackage('test_1tl')).toMatchObject({ credits: 1, priceKurus: 100, adminOnly: true });
     expect(findPaymentPackage('yok')).toBeNull();
-    expect(availablePackageKeys(ENV)).toEqual(['credits_10', 'credits_30', 'premium_30d', 'test_1tl']);
+    expect(availablePackageKeys(ENV)).toEqual(['credits_10', 'credits_30', 'test_1tl']);
     expect(availablePackageKeys({ PAYMENTS_ENABLED: 'true', HIKIE_LINK_CREDITS_10: 'http://x', HIKIE_WEBHOOK_SECRET: 'w' })).toEqual([]);
     // webhook secret yoksa hiçbir paket satışta değil (link tek başına yetmez); paket başına secret artık gerekmez
     expect(availablePackageKeys({ PAYMENTS_ENABLED: 'true', HIKIE_LINK_CREDITS_10: 'https://p.example/l/x' })).toEqual([]);
@@ -91,8 +102,8 @@ describe('PAYMENTS_ENABLED (ana ödeme anahtarı, varsayılan kapalı)', () => {
   it('kapalıyken checkout 409 UNAVAILABLE, sipariş açılmaz (yönetici test paketi dahil)', async () => {
     await seedUser('u1');
     await seedUser('a1', { role: 'ADMIN' });
-    await expect(createCheckout('u1', 'credits_10', LINKS)).rejects.toMatchObject({ status: 409, code: 'UNAVAILABLE' });
-    await expect(createCheckout('a1', 'test_1tl', LINKS)).rejects.toMatchObject({ status: 409, code: 'UNAVAILABLE' });
+    await expect(createCheckout('u1', 'credits_10', TERMS, LINKS)).rejects.toMatchObject({ status: 409, code: 'UNAVAILABLE' });
+    await expect(createCheckout('a1', 'test_1tl', TERMS, LINKS)).rejects.toMatchObject({ status: 409, code: 'UNAVAILABLE' });
     expect(db.paymentOrder.rows).toHaveLength(0);
   });
 });
@@ -100,21 +111,48 @@ describe('PAYMENTS_ENABLED (ana ödeme anahtarı, varsayılan kapalı)', () => {
 describe('checkout', () => {
   it('PENDING sipariş + linke merchantOrderId; tutar paketten', async () => {
     await seedUser('u1');
-    const r = await createCheckout('u1', 'credits_10', ENV);
+    const r = await createCheckout('u1', 'credits_10', TERMS, ENV, NOW);
     expect(r.url).toBe(`https://pay.hikie.example/l/c10?ref=oy&merchantOrderId=${r.merchantOrderId}`);
     expect(order(r.merchantOrderId)).toMatchObject({ userId: 'u1', packageKey: 'credits_10', amountTRY: '39.99', status: 'PENDING' });
+    // Onay kaydı: SUNUCUNUN sürümü ve zamanı; dil yoksa tr
+    expect(order(r.merchantOrderId)).toMatchObject({ termsAcceptedAt: new Date(NOW), termsVersion: PURCHASE_TERMS_VERSION, locale: 'tr' });
+    const en = await createCheckout('u1', 'credits_10', { ...TERMS, locale: 'en' }, ENV, NOW);
+    expect(order(en.merchantOrderId).locale).toBe('en');
+  });
+
+  it('satın alma onayı yoksa 400 PURCHASE_TERMS_REQUIRED, eski sürüm 409 PURCHASE_TERMS_OUTDATED; sipariş açılmaz', async () => {
+    await seedUser('u1');
+    const bad: Record<string, unknown>[] = [
+      {},
+      { accepted: false, version: PURCHASE_TERMS_VERSION },
+      { accepted: 'true', version: PURCHASE_TERMS_VERSION },
+      { accepted: 1, version: PURCHASE_TERMS_VERSION },
+      { accepted: true },
+      { accepted: true, version: '' },
+      { accepted: true, version: 5 },
+    ];
+    for (const t of bad) {
+      await expect(createCheckout('u1', 'credits_10', t, ENV)).rejects.toMatchObject({ status: 400, code: 'PURCHASE_TERMS_REQUIRED' });
+    }
+    await expect(createCheckout('u1', 'credits_10', { accepted: true, version: '2000-01-01' }, ENV)).rejects.toMatchObject({
+      status: 409,
+      code: 'PURCHASE_TERMS_OUTDATED',
+    });
+    // Onaysız istek, satış kapalıyken de önce onay hatası alır (kapı sırası)
+    await expect(createCheckout('u1', 'credits_10', {}, { ...ENV, PAYMENTS_ENABLED: undefined })).rejects.toMatchObject({ code: 'PURCHASE_TERMS_REQUIRED' });
+    expect(db.paymentOrder.rows).toHaveLength(0);
   });
 
   it('bilinmeyen paket 400; env eksik paket 409; test paketi yalnız ADMIN', async () => {
     await seedUser('u1');
     await seedUser('a1', { role: 'ADMIN' });
-    await expect(createCheckout('u1', 'yok', ENV)).rejects.toMatchObject({ status: 400 });
-    await expect(createCheckout('u1', 'credits_100', ENV)).rejects.toMatchObject({ status: 409, code: 'UNAVAILABLE' });
-    await expect(createCheckout('u1', 'test_1tl', ENV)).rejects.toBeInstanceOf(CheckoutError);
+    await expect(createCheckout('u1', 'yok', TERMS, ENV)).rejects.toMatchObject({ status: 400 });
+    await expect(createCheckout('u1', 'credits_100', TERMS, ENV)).rejects.toMatchObject({ status: 409, code: 'UNAVAILABLE' });
+    await expect(createCheckout('u1', 'test_1tl', TERMS, ENV)).rejects.toBeInstanceOf(CheckoutError);
     expect(db.paymentOrder.rows).toHaveLength(0);
     // webhook secret yoksa link olsa bile satışta değil
-    await expect(createCheckout('a1', 'test_1tl', { ...ENV, HIKIE_WEBHOOK_SECRET: '' })).rejects.toMatchObject({ status: 409 });
-    const ok = await createCheckout('a1', 'test_1tl', ENV);
+    await expect(createCheckout('a1', 'test_1tl', TERMS, { ...ENV, HIKIE_WEBHOOK_SECRET: '' })).rejects.toMatchObject({ status: 409 });
+    const ok = await createCheckout('a1', 'test_1tl', TERMS, ENV);
     expect(order(ok.merchantOrderId).amountTRY).toBe('1.00');
   });
 });
@@ -293,13 +331,24 @@ describe('webhook (Hikie sözleşmesi)', () => {
     expect(user('u1').credits).toBe(12);
   });
 
-  it('premium paketi order.paid ile premiumUntil = max(şimdi, mevcut) + 30 gün; 0 tutarlı PURCHASE satırı', async () => {
-    const future = new Date(NOW + 10 * DAY);
-    await seedUser('u1', { premiumUntil: future });
+  it('eski premium siparişi (katalogda yok) order.paid → 200 rejected:unknown_package; premiumUntil / kredi değişmez', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    await seedUser('u1', { premiumUntil: null });
     await seedOrder('p1', 'premium_30d');
-    await send(direct('p1', '99.99'));
-    expect((user('u1').premiumUntil as Date).getTime()).toBe(future.getTime() + 30 * DAY);
-    expect(db.creditTransaction.rows).toEqual([expect.objectContaining({ type: 'PURCHASE', amount: 0 })]);
+    expect(await send(direct('p1', '99.99'))).toEqual({ status: 200, body: { ok: true, result: 'rejected:unknown_package' } });
+    warn.mockRestore();
+    expect(user('u1')).toMatchObject({ premiumUntil: null, credits: 0 });
+    expect(order('p1').status).toBe('PENDING');
+    expect(db.creditTransaction.rows).toHaveLength(0);
+    expect(mail.send).not.toHaveBeenCalled();
+  });
+
+  it('refundOrder: katalogda olmayan eski paket → REFUNDED, bakiyeye dokunulmaz', async () => {
+    await seedUser('u1', { credits: 5 });
+    await seedOrder('p1', 'premium_30d', 'u1', 'PAID');
+    expect(await refundOrder(order('p1').id as string, NOW)).toEqual({ result: 'refunded', shortfall: 0, unknownPackage: true });
+    expect(order('p1').status).toBe('REFUNDED');
+    expect(user('u1').credits).toBe(5);
   });
 
   it('refundOrder (elle / ileride): bakiye yetmezse 0\'a kadar geri alınır, eksik not edilir', async () => {
@@ -311,5 +360,141 @@ describe('webhook (Hikie sözleşmesi)', () => {
     const row = db.creditTransaction.rows.find((x) => x.type === 'REFUND')!;
     expect(row).toMatchObject({ amount: -4, balanceAfter: 0 });
     expect(row.note).toContain('6 kredi alınamadı');
+  });
+});
+
+describe('sipariş onay e-postası (order.paid sonrası, bir kez)', () => {
+  const sign = (body: string, id: string) => ({
+    'hikie-event': 'order.paid',
+    'hikie-webhook-id': id,
+    'hikie-timestamp': ts(),
+    'hikie-signature': hmacHex('whsec', `${ts()}.${body}`),
+  });
+  const body = (m: string, total = '39.99', orderId = 'ord_1') =>
+    JSON.stringify({ orderId, status: 'COMPLETED', currency: 'TRY', totals: { total }, merchantOrderId: m });
+  const send = (b: string, id: string) => handleHikieWebhook(sign(b, id), b, ENV, NOW);
+
+  async function seed(locale: string | null = 'tr', email = 'ali@example.com') {
+    await seedUser('u1', { email });
+    await db.paymentOrder.create({ data: { merchantOrderId: 'm1', userId: 'u1', packageKey: 'credits_30', amountTRY: '99.99', status: 'PENDING', locale } });
+  }
+
+  it('PAID olunca bir kez gönderilir: sipariş no, paket, kredi, KDV dahil tutar, tarih, satıcı, iletişim', async () => {
+    await seed();
+    expect(await send(body('m1', '99.99'), 'w1')).toEqual({ status: 200, body: { ok: true, result: 'fulfilled' } });
+    expect(mail.send).toHaveBeenCalledTimes(1);
+    const [to, content] = mail.send.mock.calls[0] as [string, { subject: string; text: string; html: string }];
+    expect(to).toBe('ali@example.com');
+    expect(content.subject).toContain('Sipariş onayı (m1)');
+    expect(content.text).toContain('Sipariş numarası: m1');
+    expect(content.text).toContain('Paket: 30 AI analiz kredisi');
+    expect(content.text).toContain('Yüklenen kredi: 30');
+    expect(content.text).toContain('Tutar (KDV dahil): 99,99 TL');
+    expect(content.text).toMatch(/Tarih: 5 Ekim 2026 15:00 \(TSİ\)/);
+    expect(content.text).toContain('Satıcı: Unvan: [ŞİRKET/KİŞİ ÜNVANI]');
+    expect(content.text).toContain('info@');
+    expect(content.html).toContain('<html lang="tr">');
+    expect(order('m1').confirmationEmailSentAt).toBeInstanceOf(Date);
+  });
+
+  it('çift webhook (aynı ve farklı Hikie-Webhook-Id) tekrar göndermez', async () => {
+    await seed();
+    await send(body('m1', '99.99'), 'w1');
+    await send(body('m1', '99.99'), 'w1');
+    await send(body('m1', '99.99'), 'w2');
+    expect(mail.send).toHaveBeenCalledTimes(1);
+    expect(user('u1').credits).toBe(30);
+  });
+
+  it('e-posta hatası (false ya da istisna): webhook yine 200, kredi verilir, hata Sentry\'ye, talep geri alınır', async () => {
+    await seed();
+    mail.send.mockResolvedValueOnce(false);
+    expect(await send(body('m1', '99.99'), 'w1')).toEqual({ status: 200, body: { ok: true, result: 'fulfilled' } });
+    expect(user('u1').credits).toBe(30);
+    expect(order('m1').status).toBe('PAID');
+    expect(mail.capture).toHaveBeenCalledWith('payment-confirmation-email', expect.any(Error));
+    expect(order('m1').confirmationEmailSentAt).toBeNull();
+
+    // Ağ hatası da aynı: yanıt 200, kredi değişmez
+    db.reset();
+    await seed();
+    mail.send.mockRejectedValueOnce(new Error('ağ'));
+    expect((await send(body('m1', '99.99'), 'w9')).status).toBe(200);
+    expect(user('u1').credits).toBe(30);
+    expect(mail.capture).toHaveBeenCalledTimes(2);
+  });
+
+  it('İngilizce sipariş EN şablonu; silinmiş kullanıcı adresine gönderilmez', async () => {
+    await seed('en');
+    await send(body('m1', '99.99'), 'w1');
+    const [, content] = mail.send.mock.calls[0] as [string, { subject: string; text: string; html: string }];
+    expect(content.subject).toContain('Order confirmation (m1)');
+    expect(content.text).toContain('Amount (VAT included): 99.99 TRY');
+    expect(content.html).toContain('<html lang="en">');
+
+    db.reset();
+    mail.send.mockClear();
+    await seed('tr', 'deleted-user@deleted.invalid');
+    await send(body('m1', '99.99'), 'w2');
+    expect(mail.send).not.toHaveBeenCalled();
+  });
+
+  it('reddedilen ödeme (yanlış tutar) e-posta göndermez', async () => {
+    await seed();
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    await send(body('m1', '1.00'), 'w1');
+    warn.mockRestore();
+    expect(mail.send).not.toHaveBeenCalled();
+  });
+});
+
+describe('sonuç sayfası sipariş durumu (yalnız kendi siparişi)', () => {
+  const M = (c: string) => `oy_${c.repeat(32)}`;
+  async function mk(m: string, userId: string, status: string, createdAgoMs: number, paidAgoMs: number | null = null) {
+    await db.paymentOrder.create({
+      data: {
+        merchantOrderId: m,
+        userId,
+        packageKey: 'credits_10',
+        amountTRY: '39.99',
+        status,
+        createdAt: new Date(NOW - createdAgoMs),
+        paidAt: paidAgoMs == null ? null : new Date(NOW - paidAgoMs),
+      },
+    });
+  }
+
+  it('kimlik verilmezse (başka cihaz / Hikie doğrudan dönüşü) son 30 dk\'da ödenen sipariş; yoksa son 24 sa en yeni', async () => {
+    await seedUser('u1', { credits: 12 });
+    await mk(M('a'), 'u1', 'PAID', 20 * 60_000, 10 * 60_000);
+    await mk(M('b'), 'u1', 'PENDING', 60_000); // sonradan açılıp yarım bırakılan
+    expect(await getOrderStatusForUser('u1', null, NOW)).toMatchObject({ merchantOrderId: M('a'), status: 'PAID', packageCredits: 10, credits: 12 });
+    // 30 dk'dan eski ödeme öne alınmaz → en yeni sipariş
+    db.paymentOrder.rows.find((r) => r.merchantOrderId === M('a'))!.paidAt = new Date(NOW - 31 * 60_000);
+    expect(await getOrderStatusForUser('u1', null, NOW)).toMatchObject({ merchantOrderId: M('b'), status: 'PENDING' });
+  });
+
+  it('tarayıcıdaki kimlik PENDING ama ödeme başka siparişle tamamlandıysa ödenen gösterilir', async () => {
+    await seedUser('u1');
+    await mk(M('a'), 'u1', 'PENDING', 15 * 60_000);
+    await mk(M('b'), 'u1', 'PAID', 5 * 60_000, 2 * 60_000);
+    expect(await getOrderStatusForUser('u1', M('a'), NOW)).toMatchObject({ merchantOrderId: M('b'), status: 'PAID' });
+  });
+
+  it('bekleyen YENİ siparişin yerine daha önceki ödeme "ödendi" diye gösterilmez (30 dk içinde iki satın alma)', async () => {
+    await seedUser('u1');
+    await mk(M('a'), 'u1', 'PAID', 20 * 60_000, 15 * 60_000); // ilk satın alma
+    await mk(M('b'), 'u1', 'PENDING', 2 * 60_000); // ikinci, henüz onaylanmadı
+    expect(await getOrderStatusForUser('u1', M('b'), NOW)).toMatchObject({ merchantOrderId: M('b'), status: 'PENDING' });
+  });
+
+  it('yetkisiz erişim yok: başkasının sipariş kimliği null; başkasının ödenmiş siparişi asla dönmez', async () => {
+    await seedUser('u1');
+    await seedUser('u2');
+    await mk(M('a'), 'u1', 'PAID', 5 * 60_000, 60_000);
+    expect(await getOrderStatusForUser('u2', M('a'), NOW)).toBeNull();
+    expect(await getOrderStatusForUser('u2', null, NOW)).toBeNull();
+    await mk(M('c'), 'u2', 'PENDING', 60_000);
+    expect(await getOrderStatusForUser('u2', M('c'), NOW)).toMatchObject({ merchantOrderId: M('c'), status: 'PENDING' });
   });
 });

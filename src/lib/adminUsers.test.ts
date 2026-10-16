@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createFakeCreditDb, type FakeCreditDb } from '@/test/fakeCreditDb.testutil';
 
-/** Yönetici paneli (karar 10): kredi ± atomik + gerekçe + actorId; premium ver / kaldır + denetim; yetki. */
+/** Yönetici paneli (karar 10): kredi ± atomik + gerekçe + actorId; yetki. Premium ucu kaldırıldı. */
 const h = vi.hoisted(() => ({ db: null as FakeCreditDb | null, admin: true }));
 vi.mock('@/lib/prisma', () => ({
   prisma: new Proxy({}, { get: (_t, k: string) => (h.db!.prisma as Record<string, unknown>)[k] }),
@@ -15,10 +15,11 @@ vi.mock('@/lib/requireAuth', () => ({
   },
 }));
 
-import { AdminInputError, adminAdjustCredits, adminSetPremium } from './adminUsers';
+import { existsSync } from 'node:fs';
+import path from 'node:path';
+import { AdminInputError, adminAdjustCredits } from './adminUsers';
 import { InsufficientCreditsError } from './credits';
 import creditsRoute from '@/pages/api/admin/users/[id]/credits';
-import premiumRoute from '@/pages/api/admin/users/[id]/premium';
 
 let db: FakeCreditDb;
 beforeEach(() => {
@@ -67,25 +68,9 @@ describe('adminAdjustCredits', () => {
   });
 });
 
-describe('adminSetPremium', () => {
-  it('ver ve kaldır: alan + PremiumGrant denetim satırı (ADMIN, actorId, not)', async () => {
-    db.addUser('u', 0);
-    const until = new Date(Date.now() + 30 * 86_400_000).toISOString();
-    expect((await adminSetPremium('admin1', 'u', until, 'Kampanya: 1 ay'))?.toISOString()).toBe(until);
-    expect(db.users.get('u')!.premiumUntil?.toISOString()).toBe(until);
-    expect(await adminSetPremium('admin1', 'u', null, 'İade talebi')).toBeNull();
-    expect(db.premiumGrants.map((g) => [g.until?.toISOString() ?? null, g.source, g.actorId, g.note])).toEqual([
-      [until, 'ADMIN', 'admin1', 'Kampanya: 1 ay'],
-      [null, 'ADMIN', 'admin1', 'İade talebi'],
-    ]);
-  });
-
-  it('geçmiş / bozuk tarih ve gerekçesiz istek reddedilir', async () => {
-    db.addUser('u', 0);
-    await expect(adminSetPremium('admin1', 'u', '2020-01-01', 'Geçerli gerekçe')).rejects.toBeInstanceOf(AdminInputError);
-    await expect(adminSetPremium('admin1', 'u', 'bozuk', 'Geçerli gerekçe')).rejects.toBeInstanceOf(AdminInputError);
-    await expect(adminSetPremium('admin1', 'u', null, '')).rejects.toBeInstanceOf(AdminInputError);
-    expect(db.premiumGrants).toHaveLength(0);
+describe('premium ucu kaldırıldı', () => {
+  it('/api/admin/users/{id}/premium dosyası yok', () => {
+    expect(existsSync(path.join(process.cwd(), 'src/pages/api/admin/users/[id]/premium.ts'))).toBe(false);
   });
 });
 
@@ -94,11 +79,9 @@ describe('yönetici API uçları', () => {
     db.addUser('u', 2);
     h.admin = false;
     expect((await call(creditsRoute, 'u', { amount: 5, note: 'Geçerli gerekçe' })).status).toBe(403);
-    expect((await call(premiumRoute, 'u', { until: null, note: 'Geçerli gerekçe' })).status).toBe(403);
     h.admin = true;
     expect((await call(creditsRoute, 'u', { amount: 5 })).status).toBe(400);
     expect((await call(creditsRoute, 'u', { amount: -5, note: 'Geçerli gerekçe' })).status).toBe(409);
     expect(await call(creditsRoute, 'u', { amount: 5, note: 'Geçerli gerekçe' })).toEqual({ status: 200, body: { credits: 7 } });
-    expect((await call(premiumRoute, 'u', { until: '2020-01-01', note: 'Geçerli gerekçe' })).status).toBe(400);
   });
 });

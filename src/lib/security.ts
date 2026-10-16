@@ -108,7 +108,7 @@ export function emailLocale(raw: unknown): EmailLocale {
 }
 
 /** HTML gövdesi: UTF-8 bildiren küçük belge (bazı istemciler `<meta charset>` olmadan Türkçe karakteri bozuyor). */
-function emailHtml(body: string, lang: EmailLocale = 'tr'): string {
+export function emailHtml(body: string, lang: EmailLocale = 'tr'): string {
   return `<!doctype html><html lang="${lang}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"></head><body>${body}</body></html>`;
 }
 
@@ -212,7 +212,7 @@ export async function sendModerationAlertEmail(to: string, content: EmailContent
  * Resend HTTP API: gövde JSON (UTF-8); konu ve gövdedeki Türkçe karakterleri MIME'a (konu başlığı RFC 2047, gövde
  * `charset=utf-8`) Resend kodlar. `text` düz metin alternatifi (multipart/alternative).
  */
-async function sendViaResend(to: string, { subject, html, text }: EmailContent): Promise<boolean> {
+async function sendViaResend(to: string, { subject, html, text }: EmailContent, timeoutMs?: number): Promise<boolean> {
   const apiKey = process.env.RESEND_API_KEY;
   const from = normalizeEmailFrom(process.env.EMAIL_FROM);
   if (!apiKey || !from) {
@@ -233,6 +233,7 @@ async function sendViaResend(to: string, { subject, html, text }: EmailContent):
       'Content-Type': 'application/json; charset=utf-8',
     },
     body: JSON.stringify({ from, to, reply_to: EMAIL_REPLY_TO, subject, html, text }),
+    ...(timeoutMs ? { signal: AbortSignal.timeout(timeoutMs) } : {}),
   });
 
   if (!response.ok) {
@@ -242,6 +243,14 @@ async function sendViaResend(to: string, { subject, html, text }: EmailContent):
   }
 
   return response.ok;
+}
+
+/**
+ * İşlem e-postası (ör. sipariş onayı): başarılıysa true, sağlayıcı yapılandırılmamış / HTTP hatasıysa false; ağ hatası
+ * fırlatır (zaman aşımı 8 sn dahil; çağıran Sentry'ye yazar). Adres loglanmaz.
+ */
+export async function sendTransactionalEmail(to: string, content: EmailContent): Promise<boolean> {
+  return sendViaResend(to, content, 8_000);
 }
 
 /** Hesap silme onayı; gönderilemezse false (silme geri alınmaz). Adres loglanmaz. */

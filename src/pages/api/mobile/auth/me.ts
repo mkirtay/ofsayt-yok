@@ -26,7 +26,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       image: true,
       role: true,
       credits: true,
-      premiumUntil: true,
       favoriteTeamIds: true,
       favoriteLeagueIds: true,
     },
@@ -46,8 +45,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     image: absoluteImageUrl(user.image),
     role: user.role,
     credits: user.credits,
-    // Ek alan (eski istemci yok sayar): premium bitişi ISO ya da null.
-    premiumUntil: user.premiumUntil?.toISOString() ?? null,
+    // Premium kaldırıldı (2026-10-16): sabit null. Mobil analysisIsFree bu alanı okur; DB'deki eski değer dönerse
+    // uygulama "sınırsız" gösterir ama sunucu kredi ister (402) — bu yüzden alan aynı deploy'da nötrlenir.
+    premiumUntil: null,
     favoriteTeamIds: user.favoriteTeamIds,
     favoriteLeagueIds: user.favoriteLeagueIds,
   });

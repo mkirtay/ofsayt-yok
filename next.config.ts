@@ -65,7 +65,12 @@ const nextConfig: NextConfig = {
     '/api/og/**': SHARP_LIBVIPS_TRACE,
   },
   async headers() {
-    return [{ source: '/:path*', headers: SECURITY_HEADERS }];
+    return [
+      { source: '/:path*', headers: SECURITY_HEADERS },
+      // Ödeme dönüş sayfaları: Hikie adrese kişisel sorgu (customerEmail …) ekler; dışarı giden isteklerde adres (Referer)
+      // gitmesin. Aynı anahtarlı sonraki kural öncekini ezer (yalnız bu yollarda).
+      { source: '/odeme/:path*', headers: [{ key: 'Referrer-Policy', value: 'no-referrer' }] },
+    ];
   },
   async redirects() {
     // /uefa sayfası kaldırıldı (Şampiyonlar Ligi ana sayfadaki lig listesinden/filtresinden erişilir).

@@ -23,7 +23,7 @@ export const ADMIN_PAGES: readonly AdminPageDef[] = [
   {
     path: '/admin/kullanicilar',
     title: 'Kullanıcılar',
-    description: 'Kullanıcı arama, kredi ekle / çıkar (gerekçeli), premium ver / kaldır.',
+    description: 'Kullanıcı arama, kredi ekle / çıkar (gerekçeli).',
   },
   {
     path: '/admin/odemeler',

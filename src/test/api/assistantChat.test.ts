@@ -133,7 +133,7 @@ describe('POST /api/assistant/chat', () => {
     expect(line).not.toMatch(/GIZLI_SORU|user-123|85\.100|cerez-abcdef12|ip:ozet/);
   });
 
-  it('kademeler: üye → user, premium ve yönetici → premium; anahtar kullanıcı id\'si', async () => {
+  it('kademeler: üye → user (premiumUntil dolu olsa da), yönetici → admin; anahtar kullanıcı id\'si', async () => {
     h.userId = 'u1';
     h.viewer = { id: 'u1', role: 'USER', premiumUntil: null };
     await post({ messages: [{ role: 'user', content: 'a' }] });
@@ -141,7 +141,7 @@ describe('POST /api/assistant/chat', () => {
     await post({ messages: [{ role: 'user', content: 'a' }] });
     h.viewer = { id: 'u1', role: 'ADMIN', premiumUntil: null };
     await post({ messages: [{ role: 'user', content: 'a' }] });
-    expect(h.quotaArgs.map((q) => q.tier)).toEqual(['user', 'premium', 'premium']);
+    expect(h.quotaArgs.map((q) => q.tier)).toEqual(['user', 'user', 'admin']);
     expect(h.quotaArgs[0]!.keys).toEqual(['u:u1']);
   });
 

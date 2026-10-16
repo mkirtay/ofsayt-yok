@@ -160,7 +160,7 @@ enum PaymentOrderStatus {
   REFUNDED
 }
 
-/// Hikie ödemesi (Checkout Link). Kredi / premium kararı YALNIZ imzalı order.paid webhook'undan verilir; imzasız
+/// Hikie ödemesi (Checkout Link). Kredi kararı YALNIZ imzalı order.paid webhook'undan verilir; imzasız
 /// callback yalnız callbackAt işaretler, tarayıcı yönlendirmesi hiçbir şey vermez (bkz. server/payments). merchantOrderId bizim ürettiğimiz, linke eklenen kimlik;
 /// hikieOrderId Hikie'nin invoiceId'si (ödeme sonuçlanınca, tekil → aynı ödeme iki kez işlenmez).
 model PaymentOrder {
@@ -168,7 +168,7 @@ model PaymentOrder {
   merchantOrderId String             @unique
   userId          String
   user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  /// config/paymentPackages.ts anahtarı (credits_10, premium_30d, test_1tl …)
+  /// config/paymentPackages.ts anahtarı (credits_10, credits_30, credits_100, test_1tl; eski premium_* katalogda yok)
   packageKey      String
   amountTRY       Decimal            @db.Decimal(10, 2)
   status          PaymentOrderStatus @default(PENDING)
@@ -178,6 +178,14 @@ model PaymentOrder {
   refundedAt      DateTime?
   /// İmzasız Checkout Link callback'i ilk ne zaman geldi (yalnız tanılama; kredi kararı değil).
   callbackAt      DateTime?
+  /// Sipariş öncesi onay (Ön Bilgilendirme Formu + Mesafeli Satış Sözleşmesi + anında ifa / cayma hakkı beyanı): zaman
+  /// ve metin sürümü (config/legalConsent.ts PURCHASE_TERMS_VERSION). Bu alanlar eklenmeden önceki siparişlerde null.
+  termsAcceptedAt DateTime?
+  termsVersion    String?
+  /// Sipariş onay e-postasının dili ("tr" | "en"; checkout anındaki site dili). Eski siparişlerde null → tr.
+  locale          String?
+  /// Sipariş onay e-postası gönderildi (tek sefer: koşullu güncelleme ile talep edilir; gönderim başarısızsa geri null).
+  confirmationEmailSentAt DateTime?
 
   @@index([userId, createdAt])
   @@index([status, createdAt])

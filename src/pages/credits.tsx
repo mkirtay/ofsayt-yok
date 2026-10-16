@@ -1,22 +1,26 @@
+import { useState } from 'react';
 import type { GetStaticProps } from 'next';
 import Head from 'next/head';
+import Link from 'next/link';
 import { serverSideTranslations } from '@/lib/serverSideTranslations';
 import { useSession } from 'next-auth/react';
 import { useTranslation } from '@/lib/i18n';
 import '@/lib/i18nNamespaces/credits';
 import Container from '@/components/Container';
 import { useCredits } from '@/hooks/useCredits';
-import { isAdminUser } from '@/lib/premium';
+import { isAdminUser } from '@/lib/userRole';
 import { CREDIT_PACKAGES, formatTry, perCreditKurus } from '@/config/creditPackages';
 import { TEST_PACKAGE_KEY, availablePackageKeys } from '@/config/paymentPackages';
 import PaymentBuyButton from '@/components/PaymentBuyButton';
 import styles from './credits.module.scss';
 import { siteBaseUrl } from '@/lib/siteUrl';
+import { DISTANCE_SALES_PATH, PRE_INFO_PATH } from '@/config/legalConsent';
 
 
 const STEPS = ['how1', 'how2', 'how3'];
 const FAQ_KEYS = ['1', '2', '3', '4'];
 const FREE_KEYS = ['free1', 'free2', 'free3'];
+const CONSENT_ID = 'purchase-consent';
 
 /** `availablePackages`: Hikie link + secret'ı tanımlı paketler (build anında; env değişince yeniden deploy gerekir). */
 export default function CreditsPage({ availablePackages = [] }: { availablePackages?: string[] }) {
@@ -27,11 +31,16 @@ export default function CreditsPage({ availablePackages = [] }: { availablePacka
     soon: t('buyDisabled'),
     error: t('buyError'),
     unavailable: t('buyUnavailable'),
+    termsRequired: t('consent.required'),
   };
+  // Satın alma onayı: sayfa başına tek kutu, tüm paket düğmeleri buna bağlı (işaretlenmeden pasif).
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const buy = (packageKey: string) => (
     <PaymentBuyButton
       packageKey={packageKey}
       available={availablePackages.includes(packageKey)}
+      termsAccepted={termsAccepted}
+      describedBy={CONSENT_ID}
       labels={buyLabels}
       className={styles.buyBtn}
       activeClassName={styles.buyBtnActive}
@@ -42,6 +51,8 @@ export default function CreditsPage({ availablePackages = [] }: { availablePacka
   const { authenticated, loading, credits } = useCredits();
   const { data: session } = useSession();
   const admin = authenticated && isAdminUser(session?.user);
+  // Onay kutusu yalnız gerçekten satılan bir paket varken görünür (PAYMENTS_ENABLED kapalıyken sayfa değişmez).
+  const anyOnSale = anyCreditOnSale || (admin && availablePackages.includes(TEST_PACKAGE_KEY));
 
   return (
     <>
@@ -79,6 +90,30 @@ export default function CreditsPage({ availablePackages = [] }: { availablePacka
           <section className={styles.pricingSection}>
             <h2 className={styles.sectionTitle}>{t('packagesTitle')}</h2>
             {anyCreditOnSale ? null : <p className={styles.comingSoonBanner}>{t('comingSoon')}</p>}
+            {anyOnSale ? (
+              <div className={styles.consent}>
+                <label className={styles.consentLabel}>
+                  <input
+                    id={CONSENT_ID}
+                    type="checkbox"
+                    className={styles.consentCheckbox}
+                    checked={termsAccepted}
+                    onChange={(e) => setTermsAccepted(e.target.checked)}
+                  />
+                  <span>
+                    {t('consent.before')}
+                    <Link href={PRE_INFO_PATH} target="_blank" rel="noopener" className={styles.consentLink}>
+                      {t('consent.preInfo')}
+                    </Link>
+                    {t('consent.and')}
+                    <Link href={DISTANCE_SALES_PATH} target="_blank" rel="noopener" className={styles.consentLink}>
+                      {t('consent.contract')}
+                    </Link>
+                    {t('consent.after')}
+                  </span>
+                </label>
+              </div>
+            ) : null}
             <div className={styles.pricingCards}>
               {CREDIT_PACKAGES.map((pkg) => (
                 <div key={pkg.key} className={`${styles.pricingCard} ${pkg.featured ? styles.pricingCardFeatured : ''}`.trim()}>

@@ -8,8 +8,8 @@
  *   `?|&|#key=değer` biçimi (form gövdesi `key=değer&…` dahil), JSON metnindeki `"key":"değer"` ve `Bearer <değer>`.
  * - `request.data` metni JSON ise ayrıştırılıp temizlenir ve yeniden metne çevrilir; değilse form/sorgu kalıbıyla.
  * - `request.headers` içindeki authorization / cookie / set-cookie / proxy-authorization ve `request.cookies` silinir.
- * - `code` (OAuth dönüş kodu) yalnız URL/sorgu parametresi olarak gizlenir; nesne anahtarı `code` (ör. Prisma
- *   `P2002`) korunur.
+ * - `code` (OAuth dönüş kodu) ve `phone` yalnız URL/sorgu parametresi olarak gizlenir; nesne anahtarı `code`
+ *   (ör. Prisma `P2002`) korunur. Hikie dönüşündeki `customerEmail` / `checkoutLinkToken` her yerde gizlenir.
  * Girdiyi değiştirmez (temiz kopya döner); döngüsel referans güvenli, derinlik sınırlı (`MAX_DEPTH`; ötesi `[Filtered]`).
  * Sentry SDK'sını import etmez (tarayıcıda ilk açılışa yük bindirmez).
  */
@@ -39,10 +39,15 @@ const SENSITIVE_KEYS = new Set(
     'confirm',
     // E-posta adresi (giriş yapmadan hesap silme talebi /api/account-deletion/request, kayıt, şifre sıfırlama gövdeleri).
     'email',
+    // Hikie ödeme dönüşü adrese müşteri e-postası ve ödeme bağlantısı belirteci ekler (/odeme/tamamlandi?customerEmail=…).
+    'customerEmail',
+    'checkoutLinkToken',
+    'customerName',
+    'customerPhone',
   ].map(norm),
 );
 /** URL/sorgu parametresi olarak ayrıca gizlenen adlar (nesne anahtarında değil). */
-const URL_ONLY_PARAMS = new Set(['code']);
+const URL_ONLY_PARAMS = new Set(['code', 'phone']);
 const SECRET_HEADERS = new Set(['authorization', 'cookie', 'set-cookie', 'proxy-authorization']);
 
 const isSensitiveKey = (k: string) => SENSITIVE_KEYS.has(norm(k));

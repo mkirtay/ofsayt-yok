@@ -21,7 +21,8 @@ export function shouldPromptTerms(input: {
 }): boolean {
   if (input.status !== 'authenticated' || input.termsAccepted !== false || input.alreadyPrompted) return false;
   const p = input.pathname;
-  if (p.startsWith('/auth/') || p.startsWith('/admin') || p === '/404' || p === '/500' || p === '/_error') return false;
+  // /odeme/*: ödeme dönüşü (adres temizliği ve sipariş yoklaması bölünmesin; satın alma zaten onay ister).
+  if (p.startsWith('/auth/') || p.startsWith('/admin') || p.startsWith('/odeme/') || p === '/404' || p === '/500' || p === '/_error') return false;
   return !EXEMPT_PATHS.has(p);
 }
 

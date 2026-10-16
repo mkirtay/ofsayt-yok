@@ -37,7 +37,7 @@ vi.mock('@/lib/requireAuth', () => ({ requireAuth: async () => ({ ok: true, user
 // Onay kapısı (Kullanım Şartları) bu dosyanın konusu değil: açık. Kapının kendisi: src/test/api/termsConsentGate.test.ts
 vi.mock('@/lib/termsConsentGate', () => ({ requireTermsConsent: async () => true }));
 vi.mock('@/lib/rateLimit', () => ({ hitFixedWindowRateLimit: async () => ({ success: true, remaining: 9, resetAt: 0 }) }));
-vi.mock('@/lib/premium', () => ({ isAdminUser: () => false, isPremiumUser: () => false }));
+vi.mock('@/lib/userRole', () => ({ isAdminUser: () => false, isPremiumUser: () => false }));
 // Kredi modeli v2: hazır analizi açma (1 kredi) ve üretim sonrası açma kaydı — burada sayaçla izlenir.
 vi.mock('@/lib/analysisUnlock', () => ({
   ANALYSIS_UNLOCK_COST: 1,

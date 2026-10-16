@@ -22,7 +22,7 @@
   "quota": {
     "guest": "Bugünkü {{limit}} ücretsiz mesaj hakkın doldu. Giriş yaparak günde 15 mesaj kullanabilirsin.",
     "user": "Bugünkü {{limit}} mesaj hakkın doldu. Yarın tekrar görüşelim.",
-    "premium": "Bugünkü {{limit}} mesaj hakkın doldu. Yarın tekrar görüşelim."
+    "admin": "Bugünkü {{limit}} mesaj hakkın doldu. Yarın tekrar görüşelim."
   },
   "budget": "Asistan bugünlük doldu. Yarın tekrar dene.",
   "budgetMonthly": "Asistan bu ay için kapasitesine ulaştı; gelecek ay yeniden açılır.",

@@ -6,13 +6,14 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { prisma } from '@/lib/prisma';
 import { getRequestUserId } from '@/lib/mobileAuth';
-import { isAdminUser, isPremiumUser } from '@/lib/premium';
+import { isAdminUser } from '@/lib/userRole';
 
 export type UserSummaryDto = {
   memberSince: string;
   credits: number;
-  premium: boolean;
-  premiumUntil: string | null;
+  /** Premium kaldırıldı: sabit false / null (mobil ve eski istemciler alanı okuyor; dolu dönerse "sınırsız" sanar). */
+  premium: false;
+  premiumUntil: null;
   admin: boolean;
   counts: {
     analyses: number;
@@ -36,7 +37,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const user = await prisma.user.findUnique({
     where: { id: userId },
-    select: { createdAt: true, credits: true, premiumUntil: true, role: true, favoriteTeamIds: true, favoriteLeagueIds: true },
+    select: { createdAt: true, credits: true, role: true, favoriteTeamIds: true, favoriteLeagueIds: true },
   });
   if (!user) return res.status(401).json({ error: 'Oturum geçersiz.' });
 
@@ -50,8 +51,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const body: UserSummaryDto = {
     memberSince: user.createdAt.toISOString(),
     credits: user.credits,
-    premium: isPremiumUser(user),
-    premiumUntil: user.premiumUntil?.toISOString() ?? null,
+    premium: false,
+    premiumUntil: null,
     admin: isAdminUser(user),
     counts: {
       analyses,

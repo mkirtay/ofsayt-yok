@@ -1,6 +1,6 @@
 /**
  * GET /api/payments/hikie/callback — Hikie Checkout Link callback'i (status, isSuccess, orderId, merchantOrderId; İMZA
- * YOK). Kredi / premium ASLA burada verilmez (yalnız imzalı webhook): sipariş "callback geldi" diye işaretlenir ve
+ * YOK). Kredi ASLA burada verilmez (yalnız imzalı webhook): sipariş "callback geldi" diye işaretlenir ve
  * kullanıcı sonuç sayfasına 302 ile yönlendirilir. Oturum gerekmez; middleware bu yolu kapsamaz.
  */
 import type { NextApiRequest, NextApiResponse } from 'next';

@@ -2,7 +2,7 @@
  * Kredi modeli v2 — analiz erişim durumu (okuma ve açma rotalarının ortak kuralı).
  *
  * Erişim (tam analiz) = açma kaydı (AnalysisUnlock) VAR ya da maç BİTTİ (karar 1: bitmiş maçın analizi herkese açık).
- * Premium / yönetici erişimi tek tıkla açar (POST) — okuma yan etki yazmaz.
+ * Yönetici erişimi tek tıkla açar (POST) — okuma yan etki yazmaz.
  * Maç bitti mi: tahmin değerlendirildiyse (evaluatedAt) kesin; değilse maç sayfasıyla aynı önbellekli `fixtures/{id}`
  * isteği (çoğunlukla HIT, 3 sn bütçe). Hata / zaman aşımı → bitmemiş say (kilitli kalır, içerik sızmaz).
  */
@@ -10,7 +10,7 @@ import type { MatchAnalysis, PredictionRecord } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { resolveSportmonksMatch } from '@/lib/resolveLiveMatch';
 import { SPORTMONKS_TIMEOUT_MS, withSportmonksTimeout } from '@/server/sportmonks/cachedFetch';
-import { analysisIsFree, isAdminUser, isPremiumUser } from '@/lib/premium';
+import { analysisIsFree, isAdminUser } from '@/lib/userRole';
 import { ANALYSIS_UNLOCK_COST, weeklyFreeIneligibility, weeklyFreeUsed } from '@/lib/analysisUnlock';
 import { captureError } from '@/lib/logger';
 
@@ -18,7 +18,6 @@ export type AnalysisViewer = {
   id: string;
   role: string;
   credits: number;
-  premiumUntil: Date | null;
   emailVerified: Date | null;
   createdAt: Date;
 };
@@ -27,7 +26,7 @@ export async function loadViewer(userId: string | null | undefined): Promise<Ana
   if (!userId) return null;
   return prisma.user.findUnique({
     where: { id: userId },
-    select: { id: true, role: true, credits: true, premiumUntil: true, emailVerified: true, createdAt: true },
+    select: { id: true, role: true, credits: true, emailVerified: true, createdAt: true },
   });
 }
 
@@ -57,9 +56,10 @@ export type AnalysisOffer = {
   cost: number;
   signedIn: boolean;
   balance: number;
-  premium: boolean;
+  /** Premium kaldırıldı: her zaman false (eski istemciler alanı okuyabilir diye yanıtta duruyor). */
+  premium: false;
   admin: boolean;
-  /** Kredisiz açabilir mi (premium / yönetici). */
+  /** Kredisiz açabilir mi (yalnız yönetici). */
   free: boolean;
   /** Yalnız hazır analizde anlamlı. */
   weeklyFree: WeeklyFreeOffer;
@@ -83,9 +83,9 @@ export async function buildOffer(viewer: AnalysisViewer | null, now: number = Da
     cost: ANALYSIS_UNLOCK_COST,
     signedIn: true,
     balance: viewer.credits,
-    premium: isPremiumUser(viewer, now),
+    premium: false,
     admin: isAdminUser(viewer),
-    free: analysisIsFree(viewer, now),
+    free: analysisIsFree(viewer),
     weeklyFree: { available: !reason && !used, reason: reason ?? (used ? 'USED' : null) },
   };
 }

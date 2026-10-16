@@ -111,13 +111,13 @@ describe('haftalık ücretsiz açma', () => {
   });
 });
 
-describe('premium / yönetici ve üretim sonrası açma', () => {
-  it('premium: 0 tutarlı ANALYSIS_PREMIUM + açma; tekrar çağrı yeni satır yazmaz', async () => {
-    db.addUser('p', 0);
+describe('yönetici ve üretim sonrası açma', () => {
+  it('yönetici: 0 tutarlı ANALYSIS_FREE + açma; tekrar çağrı yeni satır yazmaz', async () => {
+    db.addUser('p', 0, 'ADMIN');
     const a = db.addAnalysis('1');
-    expect(await unlockAsPrivileged('p', a, 'PREMIUM')).toMatchObject({ source: 'PREMIUM', created: true });
-    expect(await unlockAsPrivileged('p', a, 'PREMIUM')).toMatchObject({ created: false });
-    expect(db.ledger.map((t) => [t.type, t.amount])).toEqual([['ANALYSIS_PREMIUM', 0]]);
+    expect(await unlockAsPrivileged('p', a, 'ADMIN')).toMatchObject({ source: 'ADMIN', created: true });
+    expect(await unlockAsPrivileged('p', a, 'ADMIN')).toMatchObject({ created: false });
+    expect(db.ledger.map((t) => [t.type, t.amount])).toEqual([['ANALYSIS_FREE', 0]]);
     expect(db.balance('p')).toBe(0);
   });
 

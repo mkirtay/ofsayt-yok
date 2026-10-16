@@ -49,6 +49,7 @@
     "verifyingHint": "This may take a few seconds, please keep this page open.",
     "slow": "Verification is taking longer than expected. Your credits will be added automatically once the payment is confirmed; check your balance in a few minutes.",
     "paidTitle": "Payment received",
+    "paidAdded": "{{added}} credits were added to your account.",
     "paidCredits": "Your new balance: {{credits}} credits",
     "failedTitle": "Payment not completed",
     "failedDesc": "The payment was not approved and nothing was added to your account. You can try again; if you think your card was charged, contact us via the Contact page.",
@@ -62,5 +63,13 @@
     "toHome": "Back to home",
     "retryTitle": "Payment not completed",
     "retryDesc": "The payment was not completed or was cancelled; nothing was added to your account. You can pick a package again."
+  },
+  "consent": {
+    "required": "To buy, you need to accept the Pre-Contract Information Form and the Distance Sales Contract. Tick the box and try again; refresh the page if it is outdated.",
+    "before": "I have read and accept the ",
+    "preInfo": "Pre-Contract Information Form",
+    "and": " and the ",
+    "contract": "Distance Sales Contract",
+    "after": ". I agree that the credits are added to my account immediately after payment is confirmed (immediate performance of digital content) and that I therefore lose my right of withdrawal."
   }
 }

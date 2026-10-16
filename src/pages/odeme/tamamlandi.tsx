@@ -3,6 +3,8 @@ import type { GetStaticProps } from 'next';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
+import PaymentReturnPrivacy from '@/components/PaymentReturnPrivacy';
+import { MERCHANT_ORDER_ID_RE, readReturnOrderId } from '@/lib/paymentReturnUrl';
 import { serverSideTranslations } from '@/lib/serverSideTranslations';
 import { useTranslation } from '@/lib/i18n';
 import '@/lib/i18nNamespaces/credits';
@@ -14,32 +16,34 @@ import { brandTitle } from '@/config/brand';
 
 const POLL_MS = 2000;
 const POLL_FOR_MS = 90_000;
-const ID_RE = /^oy_[0-9a-f]{32}$/;
 
 type View = { kind: 'loading' } | { kind: 'notfound' } | { kind: 'order'; order: OrderStatusView; slow: boolean };
 
 /**
- * Hikie'den dönüş: durum KENDİ API'mizden okunur (kredi / premium kararı yalnız imzalı callback'te verilir; bu sayfa
- * yönlendirme parametresine göre hiçbir şey vermez). PENDING ise kısa yoklama.
+ * Hikie'den dönüş: durum KENDİ API'mizden okunur (kredi kararı yalnız imzalı webhook'ta verilir; bu sayfa yönlendirme
+ * parametresine göre hiçbir şey vermez). PENDING ise kısa yoklama.
+ * Gizlilik: Hikie adrese müşteri e-postası vb. ekler → ilk yüklemede _document betiği, sonra PaymentReturnPrivacy siler.
+ * Hangi sipariş: adreste (callback yönlendirmesi) ya da bu sekmede başlatılan; yoksa sunucu kullanıcının son 30 dk'da
+ * ödenen / son 24 sa açılan siparişini bulur (başka tarayıcı / cihazda ödeme). Sunucu yalnız oturum sahibinin siparişini döner.
  */
 export default function PaymentDonePage() {
   const { t } = useTranslation('credits');
-  const { status: sessionStatus, update } = useSession();
+  const { status: sessionStatus } = useSession();
   const { refresh } = useCredits();
   const [view, setView] = useState<View>({ kind: 'loading' });
   const refreshed = useRef(false);
 
   useEffect(() => {
     if (sessionStatus !== 'authenticated') return;
-    // Hangi sipariş: URL'de varsa o, yoksa bu sekmede başlatılan, o da yoksa son 24 saatteki (sunucu sahipliği denetler).
-    const fromUrl = new URLSearchParams(window.location.search).get('merchantOrderId');
+    // Hangi sipariş: URL'de varsa o, yoksa bu sekmede başlatılan, o da yoksa sunucu seçer (sahipliği sunucu denetler).
+    const fromUrl = readReturnOrderId(window.location.search);
     let fromStorage: string | null = null;
     try {
       fromStorage = sessionStorage.getItem(LAST_PAYMENT_KEY);
     } catch {
       fromStorage = null;
     }
-    const id = [fromUrl, fromStorage].find((v): v is string => !!v && ID_RE.test(v)) ?? null;
+    const id = [fromUrl, fromStorage].find((v): v is string => !!v && MERCHANT_ORDER_ID_RE.test(v)) ?? null;
     const started = Date.now();
     let timer = 0;
     let cancelled = false;
@@ -61,7 +65,6 @@ export default function PaymentDonePage() {
           if (order.status === 'PAID' && !refreshed.current) {
             refreshed.current = true;
             void refresh(); // başlıktaki bakiye
-            void update(); // oturumdaki premiumUntil
           }
           return;
         }
@@ -117,6 +120,7 @@ export default function PaymentDonePage() {
       body = (
         <>
           <h1 className={styles.title}>{t('payment.paidTitle')}</h1>
+          {order.packageCredits ? <p className={styles.text}>{t('payment.paidAdded', { added: order.packageCredits })}</p> : null}
           <p className={styles.strong}>
             {t('payment.paidCredits', { credits: order.credits })}
           </p>
@@ -163,6 +167,7 @@ export default function PaymentDonePage() {
         <title>{brandTitle(t('payment.doneTitle'))}</title>
         <meta name="robots" content="noindex, nofollow" />
       </Head>
+      <PaymentReturnPrivacy keepOrderId />
       <div className={styles.wrapper}>
         <div className={styles.card} aria-live="polite">
           {body}

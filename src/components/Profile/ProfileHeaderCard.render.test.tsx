@@ -31,9 +31,9 @@ describe('<ProfileHeaderCard />', () => {
     expect(t).toContain('Profili düzenle');
   });
 
-  it('premium rozeti yok (premium satışı kapandı; süresi süren kullanıcıda da görünmez); e-posta görünmez', () => {
+  it('premium rozeti yok; e-posta görünmez', () => {
     const html = renderToStaticMarkup(
-      <ProfileHeaderCard profile={profile} summary={summary({ premium: true, admin: false, premiumUntil: '2026-11-12T00:00:00.000Z' })} onEdit={() => {}} />,
+      <ProfileHeaderCard profile={profile} summary={summary({ admin: false })} onEdit={() => {}} />,
     );
     expect(html).not.toMatch(/premium/i);
     expect(html).not.toContain('YÖNETİCİ');

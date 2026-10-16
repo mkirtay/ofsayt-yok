@@ -13,7 +13,7 @@ type AdSlotProps = {
 
 /**
  * Yeniden kullanılabilir reklam alanı — ŞİMDİLİK placeholder (gerçek reklam script'i YOK).
- * `NEXT_PUBLIC_ADS_ENABLED` kapalıyken veya kullanıcı premium iken hiçbir şey render etmez.
+ * `NEXT_PUBLIC_ADS_ENABLED` kapalıyken (ya da oturum yüklenirken) hiçbir şey render etmez.
  * AdSense bağlanınca yalnızca `.frame` içeriği (ins etiketi) değişir; yerleşim ve kapı aynı kalır.
  */
 export default function AdSlot({ slot, format = 'rectangle', desktopOnly = false, className }: AdSlotProps) {

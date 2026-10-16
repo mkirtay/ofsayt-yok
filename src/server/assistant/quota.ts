@@ -1,7 +1,7 @@
 /**
  * AI Asistan günlük kotası ve günlük bütçe sigortası (docs/AI_ASISTAN_V2_PLAN.md §6).
  *
- * Kota (Türkiye günü): misafir 3 · kayıtlı 15 · premium / yönetici 50. Misafir iki anahtarla sayılır (IP /24 ya da /64
+ * Kota (Türkiye günü): misafir 3 · kayıtlı 15 · yönetici 50. Misafir iki anahtarla sayılır (IP /24 ya da /64
  * özeti + tarayıcı çerezi); biri dolunca kapanır. Bütçe: günlük tahmini LLM maliyeti (mikro-USD); 5 USD aşılınca asistan
  * o gün herkese kapanır. Aylık tavan ayrıca `server/llmBudget.ts`.
  *
@@ -19,8 +19,8 @@ import { getRedisClient, withRedis } from '@/lib/redis';
 import { cacheKeyPrefix } from '@/lib/cacheNamespace';
 import { todayIsoIstanbul } from '@/utils/dateStrip';
 
-export type AssistantTier = 'guest' | 'user' | 'premium';
-export const ASSISTANT_DAILY_LIMIT: Record<AssistantTier, number> = { guest: 3, user: 15, premium: 50 };
+export type AssistantTier = 'guest' | 'user' | 'admin';
+export const ASSISTANT_DAILY_LIMIT: Record<AssistantTier, number> = { guest: 3, user: 15, admin: 50 };
 export const ASSISTANT_DAILY_BUDGET_MICRO_USD = 5_000_000;
 /** Mesaj başına önden ayrılan tahmini maliyet (üst sınır: 4 model çağrısı × ~6k girdi + 500 çıktı, gpt-6-luna ≈ 0,004 USD). */
 export const ASSISTANT_ESTIMATE_MICRO_USD = 4_000;

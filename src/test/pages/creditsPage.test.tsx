@@ -5,6 +5,7 @@ import trCredits from '../../../public/locales/tr/credits.json';
 
 const s = vi.hoisted(() => ({ role: 'USER' as string, credits: 5, premiumUntil: null as string | null }));
 vi.mock('@/lib/i18n', () => ({
+  useI18n: () => ({ locale: 'tr' }),
   useTranslation: () => ({
     t: (key: string, opts?: Record<string, unknown>) => {
       const v = key.split('.').reduce<unknown>((o, k) => (o as Record<string, unknown> | undefined)?.[k], trCredits);
@@ -69,7 +70,8 @@ describe('Kredi sayfası rozetleri', () => {
 
   it('satıştaki paket "Satın al" (aktif), diğerleri "Yakında"; kredi paketi satıştaysa "yakında" bandı yok', () => {
     const html = renderToStaticMarkup(<CreditsPage availablePackages={['credits_10', 'premium_30d']} />);
-    expect((html.match(/disabled=""/g) ?? []).length).toBe(2);
+    // 2 "Yakında" + satıştaki paket de onay kutusu işaretlenene kadar pasif
+    expect((html.match(/disabled=""/g) ?? []).length).toBe(3);
     expect((html.match(/>Satın al</g) ?? []).length).toBe(1); // premium_30d env'i olsa da kart yok
     expect(html).not.toContain(trCredits.comingSoon);
     // Satışta paket yokken bant görünür
@@ -105,4 +107,19 @@ describe('Kredi sayfası rozetleri', () => {
       vi.unstubAllEnvs();
     }
   });
+
+  it('satın alma onayı: kutu yalnız satışta paket varken; Ön Bilgilendirme + Mesafeli Satış bağlantıları yeni sekmede; işaretsizken "Satın al" pasif', () => {
+    expect(render()).not.toContain('type="checkbox"'); // PAYMENTS_ENABLED kapalı → sayfa değişmez
+    const html = renderToStaticMarkup(<CreditsPage availablePackages={['credits_30']} />);
+    expect(html).toContain('id="purchase-consent"');
+    expect(html).toMatch(/<input id="purchase-consent" type="checkbox"[^>]*>/);
+    expect(html).not.toMatch(/id="purchase-consent"[^>]*checked/);
+    expect(html).toMatch(/<a target="_blank" rel="noopener"[^>]*href="\/on-bilgilendirme-formu"/);
+    expect(html).toMatch(/<a target="_blank" rel="noopener"[^>]*href="\/mesafeli-satis-sozlesmesi"/);
+    expect(html).toContain('cayma hakkımın sona ereceğini');
+    expect(html).toMatch(/<button[^>]*disabled=""[^>]*aria-describedby="purchase-consent"[^>]*>Satın al</);
+    // Onay kutusu paket kartlarından önce
+    expect(html.indexOf('purchase-consent')).toBeLessThan(html.indexOf('39,99 TL'));
+  });
 });
+

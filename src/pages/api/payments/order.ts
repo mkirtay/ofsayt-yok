@@ -1,6 +1,6 @@
 /**
- * GET /api/payments/order?merchantOrderId= — kullanıcının KENDİ siparişinin durumu + güncel bakiye / premium (DB'den).
- * merchantOrderId yoksa son 24 saatteki en yeni sipariş. /odeme/tamamlandi bunu yoklar; karar burada verilmez.
+ * GET /api/payments/order?merchantOrderId= — kullanıcının KENDİ siparişinin durumu + güncel bakiye (DB'den).
+ * merchantOrderId yoksa son 30 dk'da ödenen, o da yoksa son 24 saatte açılan en yeni sipariş (server/payments). /odeme/tamamlandi bunu yoklar; karar burada verilmez.
  */
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { requireAuth } from '@/lib/requireAuth';

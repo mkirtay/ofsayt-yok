@@ -1,13 +1,11 @@
 import { useSession } from 'next-auth/react';
 import { ADS_ENABLED } from '@/config/ads';
-import { isPremiumUser } from '@/lib/premium';
 
 /**
- * Reklam/sponsor alanları gösterilsin mi: bayrak açık VE oturum durumu netleşmiş VE kullanıcı premium değil.
- * Oturum yüklenirken `false` döner (premium kullanıcıya reklamın bir an görünüp kaybolmaması için).
+ * Reklam/sponsor alanları gösterilsin mi: bayrak açık VE oturum durumu netleşmiş. Premium kaldırıldı (2026-10-16):
+ * reklamsız kullanıcı yok (yönetici de görür). Oturum yüklenirken `false` (ilk boyamada yer kayması olmasın).
  */
 export function useAdsVisible(): boolean {
-  const { data: session, status } = useSession();
-  if (!ADS_ENABLED || status === 'loading') return false;
-  return !isPremiumUser({ premiumUntil: session?.user?.premiumUntil }); // yönetici de reklam görür
+  const { status } = useSession();
+  return ADS_ENABLED && status !== 'loading';
 }

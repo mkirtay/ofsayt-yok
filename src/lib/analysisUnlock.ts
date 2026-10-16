@@ -5,7 +5,8 @@
  *   `analysis:{matchId}:PRE`, 106f818 ile aynı) + açma kaydı. AI çağrısı yok → PENDING / iade gerekmez.
  * - Haftalık ücretsiz: yalnız hazır analizde; tek işlemde haftalık hak (`ANALYSIS_WEEKLY_FREE`, tutar 0, anahtar
  *   `weekly-free:{ISO hafta, TSİ}` — kullanıcı başına haftada bir) + açma. Koşul: doğrulanmış e-posta + ≥ 24 sa hesap.
- * - Premium / yönetici: 0 tutarlı defter satırı (`ANALYSIS_PREMIUM` / `ANALYSIS_FREE`) + açma; premium bitince açık kalır.
+ * - Yönetici: 0 tutarlı defter satırı (`ANALYSIS_FREE`) + açma. Premium kaldırıldı (2026-10-16); eski `PREMIUM` açmaları
+ *   ve `ANALYSIS_PREMIUM` defter satırları DB'de geçmiş kayıt olarak kalır (okunur, yeni yazılmaz).
  * - Üretim (analiz yoksa) rotada mevcut güvenli akışla (`reserveCredits` → AI → kayıt); kayıttan sonra
  *   `recordGenerationUnlock` açma kaydını yazar.
  * Çift tık / iki sekme: açma `(userId, matchAnalysisId)` ve defter anahtarları tekil → en fazla bir düşüm.
@@ -180,8 +181,8 @@ export async function unlockWithWeeklyFree(userId: string, analysis: AnalysisRef
   }
 }
 
-/** Premium / yönetici açması: 0 tutarlı defter satırı + açma (premium bitince de açık kalır). */
-export async function unlockAsPrivileged(userId: string, analysis: AnalysisRef, source: 'PREMIUM' | 'ADMIN'): Promise<UnlockResult> {
+/** Yönetici açması: 0 tutarlı defter satırı + açma. */
+export async function unlockAsPrivileged(userId: string, analysis: AnalysisRef, source: 'ADMIN'): Promise<UnlockResult> {
   const existing = await alreadyUnlocked(userId, analysis);
   if (existing) return existing;
   try {
@@ -190,11 +191,11 @@ export async function unlockAsPrivileged(userId: string, analysis: AnalysisRef, 
       const row = await tx.creditTransaction.create({
         data: {
           userId,
-          type: source === 'PREMIUM' ? 'ANALYSIS_PREMIUM' : 'ANALYSIS_FREE',
+          type: 'ANALYSIS_FREE',
           amount: 0,
           balanceAfter: user?.credits ?? 0,
           matchId: analysis.matchId,
-          note: source === 'PREMIUM' ? 'Premium: analiz açma' : 'Yönetici: kredisiz analiz',
+          note: 'Yönetici: kredisiz analiz',
         },
         select: { id: true },
       });
@@ -213,13 +214,13 @@ export async function unlockAsPrivileged(userId: string, analysis: AnalysisRef, 
 }
 
 /**
- * Üretimden sonra açma kaydı: krediyle üretende rezervasyon satırına bağlı (`CREDIT`), premium / yönetici üretiminde
+ * Üretimden sonra açma kaydı: krediyle üretende rezervasyon satırına bağlı (`CREDIT`), yönetici üretiminde
  * `unlockAsPrivileged`. Yarışı kaybeden (DB tekil kısıtı) kullanıcı da ödediği için açar (karar 6, iade yok).
  */
 export async function recordGenerationUnlock(
   userId: string,
   analysis: AnalysisRef,
-  paidBy: { reservationId: string } | { privileged: 'PREMIUM' | 'ADMIN' },
+  paidBy: { reservationId: string } | { privileged: 'ADMIN' },
 ): Promise<UnlockResult> {
   if ('privileged' in paidBy) return unlockAsPrivileged(userId, analysis, paidBy.privileged);
   const existing = await alreadyUnlocked(userId, analysis);

@@ -23,7 +23,7 @@ describe('Kullanım Şartları onay yönlendirmesi', () => {
 
   it('giriş / onay / yasal metin / iletişim / yönetim / hata sayfalarında yönlendirmez', () => {
     for (const p of ['/auth/onay', '/auth/signin', '/auth/choose-username', '/kullanim-sartlari', '/gizlilik-politikasi',
-      '/kvkk-aydinlatma-metni', '/cerez-politikasi', '/iletisim', '/admin', '/admin/users', '/404', '/_error']) {
+      '/kvkk-aydinlatma-metni', '/cerez-politikasi', '/on-bilgilendirme-formu', '/iletisim', '/admin', '/admin/users', '/404', '/_error', '/odeme/tamamlandi', '/odeme/tekrar-dene']) {
       expect(shouldPromptTerms({ ...base, pathname: p }), p).toBe(false);
     }
   });

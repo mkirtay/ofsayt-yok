@@ -126,7 +126,7 @@ describe('asistan — kredi duvarı', () => {
     for (const marker of LOCKED_MARKERS) expect(JSON.stringify(anon)).not.toContain(marker);
   });
 
-  it('açılmış / premium / yönetici / maç bitmiş → özet (en olası sonuç + noktalar); bahis cümlesi atılır', async () => {
+  it('açılmış / yönetici / maç bitmiş → özet (premiumUntil açmaz) (en olası sonuç + noktalar); bahis cümlesi atılır', async () => {
     h.unlock = { id: 'u' };
     const card = await analysisCardForMatch(viewer(), match);
     expect(card).toMatchObject({ kind: 'summary', top: { outcome: 'HOME', pct: 55 } });
@@ -137,7 +137,7 @@ describe('asistan — kredi duvarı', () => {
     expect(JSON.stringify(card)).not.toMatch(/GIZLI_SENARYO|GIZLI_TAKIM|3-1/);
 
     h.unlock = null;
-    expect((await analysisCardForMatch(viewer({ premiumUntil: new Date(Date.now() + 86400_000) }), match)).kind).toBe('summary');
+    expect((await analysisCardForMatch(viewer({ premiumUntil: new Date(Date.now() + 86400_000) }), match)).kind).toBe('locked'); // premium yok
     expect((await analysisCardForMatch(viewer({ role: 'ADMIN' }), match)).kind).toBe('summary');
     h.finished = true;
     expect((await analysisCardForMatch(null, match)).kind).toBe('summary');

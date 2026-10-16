@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useTranslation } from '@/lib/i18n';
 import { useCredits } from '@/hooks/useCredits';
-import { analysisIsFree } from '@/lib/premium';
+import { analysisIsFree } from '@/lib/userRole';
 import type { ApiAnalysis, ApiPredictionRecord } from '@/components/MatchAnalysis/types';
 import type { AnalysisPreview } from '@/utils/analysisPreview';
 import { pollUntilReady } from '@/hooks/analysisInProgressPoll';
@@ -14,7 +14,8 @@ export type AnalysisOffer = {
   cost: number;
   signedIn: boolean;
   balance: number;
-  premium: boolean;
+  /** Premium kaldırıldı: sunucu her zaman false döner. */
+  premium: false;
   admin: boolean;
   free: boolean;
   weeklyFree: { available: boolean; reason: 'USED' | 'EMAIL_NOT_VERIFIED' | 'ACCOUNT_TOO_NEW' | 'SIGNED_OUT' | null };
@@ -35,11 +36,11 @@ export type MatchAnalysisState = {
   /** Analiz başka bir istekte üretiliyor (POST 409): "birkaç saniye içinde hazır" + arka planda yoklama. */
   inProgress?: boolean;
   error: string | null;
-  /** Kredi bakiyesi ve kredisiz üretim (yönetici/premium) — "Kredi Satın Al" CTA'sı üretime basmadan görünsün diye. */
+  /** Kredi bakiyesi ve kredisiz üretim (yalnız yönetici) — "Kredi Satın Al" CTA'sı üretime basmadan görünsün diye. */
   credits: number;
   unlimited: boolean;
   isAuthenticated: boolean;
-  /** Analiz yoksa üretir, varsa açar (1 kredi / haftalık hak / premium). */
+  /** Analiz yoksa üretir, varsa açar (1 kredi / haftalık hak / yönetici). */
   generate: (method?: UnlockMethod) => Promise<void>;
 };
 
@@ -63,7 +64,7 @@ export function useMatchAnalysis(
   const { data: session, status: sessionStatus } = useSession();
   const isAuthenticated = sessionStatus === 'authenticated';
   const { credits, refresh: refreshCredits, apply: applyCredits } = useCredits();
-  const unlimited = analysisIsFree({ role: session?.user?.role, premiumUntil: session?.user?.premiumUntil });
+  const unlimited = analysisIsFree({ role: session?.user?.role });
 
   const [analysis, setAnalysis] = useState<ApiAnalysis | null>(null);
   const [preview, setPreview] = useState<AnalysisPreview | null>(initialPreview);

@@ -1,7 +1,7 @@
 /**
  * /api/matches/[id]/analysis — kredi modeli v2 (docs/kredi-modeli-v2-plan.md).
  *
- * Erişim: her kullanıcı analizi kendisi için açar (1 kredi / haftalık ücretsiz / premium / yönetici); açtığı kalıcı açık.
+ * Erişim: her kullanıcı analizi kendisi için açar (1 kredi / haftalık ücretsiz / yönetici); açtığı kalıcı açık.
  * Maç bitince analiz herkese açık. Diğer herkes yalnız önizlemeyi (kısa özet + ana olasılık) görür — kilitli alanlar
  * hiçbir yanıtta yok. Kural: server/analysisAccess.ts, açma: lib/analysisUnlock.ts.
  *
@@ -11,7 +11,7 @@
  *   - Eski istemci (parametresiz; yayınlanmamış eski mobil): erişim varsa bugünkü şekil `{ analysis, predictionRecord }`,
  *     yoksa 404 (uygulama "Analiz et" gösterir; POST 1 krediyle açar). `?optional=1` → 404 yerine `{ analysis: null }`.
  * POST `{ method?: 'credit' | 'weekly_free' }` (gövdesiz = credit; eski istemciyle uyumlu)
- *   - Analiz hazırsa açar: zaten açık / maç bitmiş → ücretsiz; premium / yönetici → ücretsiz açma; haftalık hak;
+ *   - Analiz hazırsa açar: zaten açık / maç bitmiş → ücretsiz; yönetici → ücretsiz açma; haftalık hak;
  *     1 kredi (tek işlem). Haftalık hak kullanılmışsa 409 WEEKLY_FREE_USED, uygun değilse 403 WEEKLY_FREE_NOT_ELIGIBLE.
  *   - Analiz yoksa üretir (yalnız maç başlamadan): maç başına Redis üretim kilidi (ce48734) → başka üretim sürüyorsa kredi
  *     ayrılmadan 409 ANALYSIS_IN_PROGRESS; 1 kredi ayrılır (PENDING) → AI → kayıt → açma + kesinleştirme; AI / kayıt hatasında
@@ -49,7 +49,7 @@ import {
   weeklyFreeIneligibility,
   type UnlockResult,
 } from '@/lib/analysisUnlock';
-import { isAdminUser, isPremiumUser } from '@/lib/premium';
+import { isAdminUser } from '@/lib/userRole';
 import { toPublicAnalysis } from '@/utils/analysisScenarios';
 import { buildAnalysisPreview } from '@/utils/analysisPreview';
 import { hitFixedWindowRateLimit } from '@/lib/rateLimit';
@@ -178,7 +178,6 @@ async function openStored(
   const ref = { id: analysis.id, matchId: analysis.matchId };
   let unlock: UnlockResult;
   if (isAdminUser(viewer)) unlock = await unlockAsPrivileged(viewer.id, ref, 'ADMIN');
-  else if (isPremiumUser(viewer)) unlock = await unlockAsPrivileged(viewer.id, ref, 'PREMIUM');
   else if (method === 'weekly_free') {
     const reason = weeklyFreeIneligibility(viewer);
     if (reason) throw new WeeklyFreeNotEligibleError(reason);
@@ -262,7 +261,7 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse, matchId: st
       const lock = await acquireAnalysisLock(String(ctx.match.id));
       if (!lock) return IN_PROGRESS;
       try {
-        const privileged = isAdminUser(viewer) ? 'ADMIN' : isPremiumUser(viewer) ? 'PREMIUM' : null;
+        const privileged = isAdminUser(viewer) ? 'ADMIN' : null;
         let reservation: CreditReservation | null = null;
         if (!privileged) {
           // Bu kullanıcının yarım kalmış eski harcaması varsa önce iade (aynı maçın tekrar anahtarını da serbest bırakır).

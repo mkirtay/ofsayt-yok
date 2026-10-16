@@ -5,7 +5,7 @@ import { createFakeCreditDb, type FakeCreditDb } from '@/test/fakeCreditDb.testu
 /**
  * /api/matches/[id]/analysis — kredi modeli v2 (veritabanı bellek içi sahte; bkz. fakeCreditDb.testutil.ts).
  * Açma 1 kredi; her kullanıcı kendisi için açar, açtığı kalıcı açık; maç bitince herkese açık; haftalık ücretsiz
- * (yalnız hazır analiz); premium / yönetici ücretsiz. Kredi güvenliği senaryoları (106f818) 1 krediyle yeniden.
+ * (yalnız hazır analiz); yalnız yönetici ücretsiz (premium kaldırıldı). Kredi güvenliği senaryoları (106f818) 1 krediyle yeniden.
  */
 const h = vi.hoisted(() => ({
   db: null as FakeCreditDb | null,
@@ -254,7 +254,7 @@ describe('v2 — hazır analizi açma ve okuma', () => {
   });
 });
 
-describe('v2 — haftalık ücretsiz, premium, yönetici', () => {
+describe('v2 — haftalık ücretsiz, yönetici (premium yok)', () => {
   it('haftalık: hazır analizde ücretsiz; aynı hafta ikinci → 409; analiz yoksa 409 NOT_READY; yeni / doğrulanmamış hesap 403', async () => {
     db.addUser('gen', 5);
     db.addUser('u1', 0, 'USER', VERIFIED_OLD);
@@ -277,22 +277,22 @@ describe('v2 — haftalık ücretsiz, premium, yönetici', () => {
     expect((await post('unverified', '19000002', { method: 'weekly_free' })).body.reason).toBe('EMAIL_NOT_VERIFIED');
   });
 
-  it('premium: açma ve üretim kredisiz (açtıkları premium bitince de açık); süresi geçmiş premium öder; yönetici kredisiz', async () => {
-    db.addUser('p', 0, 'USER', { premiumUntil: new Date('2026-11-01') });
-    expect((await post('p', '19000001')).statusCode).toBe(200); // üretim
+  it('muafiyet YALNIZ yönetici: premiumUntil gelecekte olan kullanıcı kredi öder (0 krediyle 402); 100+ kredili kullanıcı her açmada 1 kredi harcar', async () => {
+    db.addUser('p', 0, 'USER', { premiumUntil: new Date('2099-01-01') });
+    expect((await post('p', '19000001')).statusCode).toBe(402); // üretim: kredisiz değil
     db.addUser('gen', 5);
     await post('gen', '19000002');
-    expect((await post('p', '19000002')).body).toMatchObject({ unlock: { source: 'PREMIUM', charged: false } });
+    expect((await post('p', '19000002')).statusCode).toBe(402); // hazır analizi açma: kredisiz değil
     expect(db.balance('p')).toBe(0);
 
-    vi.setSystemTime(new Date('2026-12-01T12:00:00Z')); // premium bitti
-    db.users.get('p')!.premiumUntil = new Date('2026-11-01');
-    expect((await getV2('p', '19000002')).body.access).toBe('unlocked');
-    expect((await post('p', '19000003')).statusCode).toBe(402);
+    db.addUser('rich', 150); // 100 kredilik paket + bakiye: eski "≥100 kredi = premium" eşiği yok
+    expect((await post('rich', '19000002')).body).toMatchObject({ unlock: { source: 'CREDIT', charged: true } });
+    expect(db.balance('rich')).toBe(149);
 
     db.addUser('admin', 0, 'ADMIN');
     expect((await post('admin', '19000002')).body).toMatchObject({ unlock: { source: 'ADMIN' } });
-    expect(db.ledgerOf('p').map((t) => t.type)).toEqual(['ANALYSIS_PREMIUM', 'ANALYSIS_PREMIUM']);
+    expect(db.balance('admin')).toBe(0);
+    expect(db.ledger.some((t) => t.type === 'ANALYSIS_PREMIUM')).toBe(false);
   });
 });
 

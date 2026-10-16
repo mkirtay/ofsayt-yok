@@ -30,7 +30,7 @@ function SponsorItem({ s }: { s: Sponsor }) {
 
 /**
  * Anlaşmalı sponsor markaları için basit dönen şerit — ŞİMDİLİK yer tutucu veriyle.
- * `NEXT_PUBLIC_ADS_ENABLED` kapalıyken / premium kullanıcıda render edilmez (bkz. `useAdsVisible`).
+ * `NEXT_PUBLIC_ADS_ENABLED` kapalıyken render edilmez (bkz. `useAdsVisible`).
  */
 export default function SponsorSlider({ sponsors = SPONSORS, intervalMs = 5000, className }: SponsorSliderProps) {
   const visible = useAdsVisible();

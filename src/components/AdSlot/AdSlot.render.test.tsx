@@ -19,7 +19,7 @@ vi.mock('next-auth/react', () => ({
 
 import AdSlot from './index';
 import SponsorSlider from '@/components/SponsorSlider';
-import { analysisIsFree, isAdminUser, isPremiumUser } from '@/lib/premium';
+import { analysisIsFree, isAdminUser } from '@/lib/userRole';
 
 beforeEach(() => {
   state.enabled = true;
@@ -29,7 +29,7 @@ beforeEach(() => {
   state.premiumUntil = null;
 });
 
-describe('AdSlot / SponsorSlider — bayrak ve premium kapısı', () => {
+describe('AdSlot / SponsorSlider — bayrak (premium kapısı yok)', () => {
   it('bayrak KAPALI (varsayılan) → hiçbir şey render edilmez', () => {
     state.enabled = false;
     expect(renderToStaticMarkup(<AdSlot slot="x" />)).toBe('');
@@ -63,28 +63,19 @@ describe('AdSlot / SponsorSlider — bayrak ve premium kapısı', () => {
     expect(renderToStaticMarkup(<AdSlot slot="x" />)).toContain('Reklam');
   });
 
-  it('premium = premiumUntil gelecekte: reklam ve sponsor gizlenir; süresi geçmiş premium reklam görür', () => {
+  it('premium kaldırıldı: premiumUntil gelecekte olsa da reklam ve sponsor görünür', () => {
     state.status = 'authenticated';
     state.role = 'USER';
     state.premiumUntil = new Date(Date.now() + 86_400_000).toISOString();
-    expect(renderToStaticMarkup(<AdSlot slot="x" />)).toBe('');
-    expect(renderToStaticMarkup(<SponsorSlider />)).toBe('');
-    state.premiumUntil = new Date(Date.now() - 1_000).toISOString();
     expect(renderToStaticMarkup(<AdSlot slot="x" />)).toContain('Reklam');
   });
 
-  it('isPremiumUser / isAdminUser / analysisIsFree (kredi modeli v2)', () => {
-    const now = Date.parse('2026-10-03T12:00:00Z');
-    expect(isPremiumUser({ premiumUntil: '2026-10-04T00:00:00Z' }, now)).toBe(true);
-    expect(isPremiumUser({ premiumUntil: new Date('2026-10-03T11:59:59Z') }, now)).toBe(false);
-    for (const u of [{ role: 'ADMIN' }, { role: 'USER', premiumUntil: null }, { premiumUntil: 'bozuk' }, null]) {
-      expect(isPremiumUser(u, now)).toBe(false);
-    }
+  it('isAdminUser / analysisIsFree: muafiyet YALNIZ yönetici (premiumUntil ve bakiye muafiyet vermez)', () => {
     expect(isAdminUser({ role: 'ADMIN' })).toBe(true);
-    expect(isAdminUser({ role: 'USER', premiumUntil: '2027-01-01' })).toBe(false);
-    expect(analysisIsFree({ role: 'ADMIN' }, now)).toBe(true);
-    expect(analysisIsFree({ role: 'USER', premiumUntil: '2026-11-01' }, now)).toBe(true);
-    expect(analysisIsFree({ role: 'USER' }, now)).toBe(false);
+    expect(isAdminUser({ role: 'USER' })).toBe(false);
+    expect(analysisIsFree({ role: 'ADMIN' })).toBe(true);
+    expect(analysisIsFree({ role: 'USER', premiumUntil: '2099-01-01', credits: 500 } as { role: string })).toBe(false);
+    expect(analysisIsFree({ role: 'USER' })).toBe(false);
     expect(analysisIsFree(null)).toBe(false);
   });
 });
