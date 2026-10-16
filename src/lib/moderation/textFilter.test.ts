@@ -176,3 +176,92 @@ describe('bağlantı sayımı ve tekrar parmak izi', () => {
     expect(duplicateFingerprint('Şampiyon')).toBe(duplicateFingerprint('sampiyon'));
   });
 });
+
+// ── 2026-10-16 ayarı: ı/i belirsizliği ("sikti" ASCII = "sıktı" da olabilir) ───────────────────────────────────────
+
+describe('ı/i belirsizliği: Türkçe ı ile yazılan serbest, ASCII sınırda (yayın + kuyruk), net küfür red', () => {
+  it.each([
+    'çok sıktı',
+    'Bu maç beni çok sıktı',
+    'sıkıldım',
+    'sıkı savunma',
+    'aksi',
+    'Sikkim',
+    'SİKKİM',
+    'şikayet',
+    'şikâyet ettim',
+    'kasım',
+    'Kasım ayında derbi',
+    'sık sık',
+    'SIK SIK GOL',
+    'sıkıcı maç',
+    'sıkıştı',
+    'sıktım',
+    'sıktığı şut',
+    'sıkmak',
+    'sıkıyor',
+    'topu götürdü',
+    'pic',
+    'got it',
+  ])('serbest: %s', (s) => {
+    expect(level(s)).toBe('ok');
+  });
+
+  it.each([
+    'sikti',
+    'çok sikti maç',
+    'mac cok sikti',
+    'SİKTİ',
+    's.i.k.t.i',
+    'siktiler',
+    'sik sik gol',
+    'sikici mac',
+    'sikis',
+    'siktim',
+    'siktigi',
+    'sikmek',
+    'sikildim',
+    'sikiyor',
+    'gotu',
+    'gotune',
+    'picler',
+  ])('sınırda → yayın + kuyruk: %s', (s) => {
+    expect(level(s)).toBe('flag');
+  });
+
+  it.each([
+    'siktir',
+    'SIKTIR',
+    'sıktır',
+    'siiiktir git',
+    's.i.k.t.i.r',
+    's i k t i r',
+    'sikeyim',
+    'sikerim',
+    'sikik',
+    'sikim',
+    'sikkkim',
+    'sikiş',
+    'siktiğim',
+    'orospu',
+    'orrrospu',
+    'o.r.o.s.p.u',
+    'amına koyayım',
+    'amina koyayim',
+    'a.m.k',
+    'amkkk',
+    'aq',
+    'göt',
+    'götüne',
+    'piç',
+    'pic kurusu',
+    'oç',
+  ])('red: %s', (s) => {
+    expect(level(s)).toBe('block');
+  });
+
+  it('istisna harf tekrarını korur: "Sikkim" serbest, aynı metindeki "sikim" yine red', () => {
+    expect(level('Sikkim gezisi')).toBe('ok');
+    expect(level('Sikkim sikim')).toBe('block');
+  });
+});

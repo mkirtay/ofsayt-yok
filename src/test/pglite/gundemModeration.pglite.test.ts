@@ -195,6 +195,23 @@ describe('içerik filtresi (sunucu)', () => {
     expect(await createUserAccount({ ...base, name: 'pezevenk' })).toMatchObject({ ok: false, code: 'CONTENT_REJECTED' });
   });
 
+  it('yönetici "İncelemeye al" (FLAG) terimi: yayınlanır + kuyruk; "İstisna" (ALLOW) temel listedeki eşleşmeyi kaldırır', async () => {
+    const [admin, a] = [await user({ admin: true }), await user()];
+    expect((await call(h.adminTerms, admin.id, 'POST', {}, { term: 'incelemelik', level: 'FLAG', match: 'exact' })).statusCode).toBe(201);
+    const r = await call(h.posts, a.id, 'POST', {}, { body: 'bu incelemelik bir yorum' });
+    expect(r.statusCode).toBe(201);
+    expect(await prisma.contentReport.count({ where: { postId: r.body.id, source: 'AUTO', reason: 'AUTO_CUSTOM' } })).toBe(1);
+    expect((await call(h.posts, a.id, 'POST', {}, { body: 'mac cok sikti' })).statusCode).toBe(201); // sınırda: yayın
+    expect((await call(h.adminTerms, admin.id, 'POST', {}, { term: 'sikti', level: 'ALLOW' })).statusCode).toBe(201);
+    const allowed = await call(h.posts, a.id, 'POST', {}, { body: 'bugün mac yine sikti' });
+    expect(allowed.statusCode).toBe(201);
+    expect(await prisma.contentReport.count({ where: { postId: allowed.body.id } })).toBe(0);
+    const terms = (await call(h.adminTerms, admin.id, 'GET')).body.terms.map((t: any) => [t.term, t.level]);
+    expect(terms).toEqual(expect.arrayContaining([['incelemelik', 'FLAG'], ['sikti', 'ALLOW']]));
+    // Temizlik: istisna sonraki testleri etkilemesin.
+    for (const t of (await call(h.adminTerms, admin.id, 'GET')).body.terms) await call(h.adminTerms, admin.id, 'DELETE', { id: t.id });
+  });
+
   it('yönetici sözlüğe terim ekleyince (kod değişmeden) hemen uygulanır', async () => {
     const [admin, a] = [await user({ admin: true }), await user()];
     expect((await call(h.adminTerms, admin.id, 'POST', {}, { term: 'yasakkelime', level: 'BLOCK', match: 'prefix' })).statusCode).toBe(201);

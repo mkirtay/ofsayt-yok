@@ -12,6 +12,7 @@
  *  - Harf arası ayırıcı: en az 3 tek harflik kelime art arda → birleştirilmiş kelime de aranır ("a m k", "a.m.k").
  *  - URL / e-posta: nokta, eğik çizgi ve @ ayırıcıdır → "www.<terim>.com", "<terim>@x.com" kelimeye bölünür.
  *  - Yıldızla sansür ("s*ktir"): yıldız tek harf joker; en fazla 1/3'ü maskelenmiş ≥5 harfli terimler → ORTA (işaret).
+ *  - İstisna (allow) kelimenin tamamı, harf tekrarı korunarak: "Sikkim" serbest, "sikkkim" / "sikim" değil.
  */
 export type TermLevel = 'block' | 'flag';
 export type TermMatch = 'exact' | 'prefix' | 'contains';
@@ -53,35 +54,48 @@ function foldChars(s: string, v: TermVariant): string {
 const collapse = (s: string) => s.replace(/(\p{L})\1+/gu, '$1');
 const hasLetter = (s: string) => /\p{L}/u.test(s);
 
-/** Tek kelime normalizasyonu (leet yalnız harf içeren kelimede; '*' joker olarak kalır). */
-function normalizeToken(raw: string, v: TermVariant): string {
+/** Tek kelime normalizasyonu, harf tekrarı TEKLEŞMEDEN (leet yalnız harf içeren kelimede; '*' joker olarak kalır). */
+function normalizeTokenUncollapsed(raw: string, v: TermVariant): string {
   let w = raw.replace(/^[@#]+/, ''); // @etiket / #etiket işareti kelimenin parçası değil
   if (!hasLetter(w)) return '';
   let out = '';
   for (const ch of w) out += LEET[ch] ?? ch;
   w = out.replace(/[^\p{L}*]/gu, '');
-  return collapse(foldChars(w, v));
+  return foldChars(w, v);
 }
+
+function normalizeToken(raw: string, v: TermVariant): string {
+  return collapse(normalizeTokenUncollapsed(raw, v));
+}
+
+/**
+ * Kelime: `n` = eşleştirme biçimi (harf tekrarı tek), `r` = tekrarı korunmuş biçim. İstisna listesi `r` ile karşılaştırılır:
+ * "Sikkim" (r: sikkim) istisna olabilir ama tekleşmiş "sikim" küfür kalır.
+ */
+type Tok = { n: string; r: string };
 
 /**
  * Kelimelere böl: harf, rakam ve leet işaretleri kelime içinde kalır. İki mod: (1) @ harf, * joker; (2) @ ve * ayırıcı
  * ("a*m*k" → a m k → birleşik "amk").
  */
-function tokenize(lowered: string, v: TermVariant, symbolsAsSeparators: boolean): string[] {
+function tokenize(lowered: string, v: TermVariant, symbolsAsSeparators: boolean): Tok[] {
   const splitter = symbolsAsSeparators ? /[^\p{L}\p{N}$!|€]+/u : /[^\p{L}\p{N}*@$!|€]+/u;
   const tokens = lowered
     .split(splitter)
-    .map((t) => normalizeToken(t, v))
-    .filter(Boolean);
+    .map((t) => {
+      const r = normalizeTokenUncollapsed(t, v);
+      return { n: collapse(r), r };
+    })
+    .filter((t) => t.n);
   // Harf arası ayırıcı: ≥3 tek harflik kelime art arda → birleşik kelime de eklenir ("a m k" → "amk").
-  const joined: string[] = [];
+  const joined: Tok[] = [];
   let run: string[] = [];
   const flush = () => {
-    if (run.length >= 3) joined.push(collapse(run.join('')));
+    if (run.length >= 3) joined.push({ n: collapse(run.join('')), r: run.join('') });
     run = [];
   };
   for (const t of tokens) {
-    if (t.length === 1) run.push(t);
+    if (t.n.length === 1) run.push(t.n);
     else flush();
   }
   flush();
@@ -108,8 +122,9 @@ export function compileDictionary(terms: readonly FilterTerm[], allow: readonly 
     if (!words.length) continue;
     compiled.push({ words, joined: words.join(''), m: term.m, l: term.l, c: term.c, v });
   }
+  // İstisnalar harf tekrarı KORUNARAK saklanır (bkz. Tok.r).
   const allowSet = new Set<string>();
-  for (const a of allow) for (const v of VARIANTS) allowSet.add(normalizeTermWord(a, v));
+  for (const a of allow) for (const v of VARIANTS) allowSet.add(normalizeTokenUncollapsed(lowerTr(a.trim()), v).replace(/\*/g, ''));
   return { terms: compiled, allow: allowSet };
 }
 
@@ -134,7 +149,7 @@ function wildcardMatches(token: string, w: string, m: TermMatch): boolean {
   return false;
 }
 
-type Prepared = { tokens: string[]; sequence: string[]; compact: string };
+type Prepared = { tokens: Tok[]; sequence: Tok[]; compact: string };
 
 function prepare(text: string): Record<TermVariant, Prepared> {
   const lowered = lowerTr(text);
@@ -142,18 +157,20 @@ function prepare(text: string): Record<TermVariant, Prepared> {
   for (const v of VARIANTS) {
     const a = tokenize(lowered, v, false);
     const b = tokenize(lowered, v, true);
-    out[v] = { tokens: [...new Set([...a, ...b])], sequence: b, compact: compactText(lowered, v) };
+    const seen = new Map<string, Tok>();
+    for (const t of [...a, ...b]) seen.set(`${t.n}\u0000${t.r}`, t);
+    out[v] = { tokens: [...seen.values()], sequence: b, compact: compactText(lowered, v) };
   }
   return out;
 }
 
-function phraseMatches(seq: readonly string[], term: CompiledTerm, allow: Set<string>): boolean {
+function phraseMatches(seq: readonly Tok[], term: CompiledTerm, allow: Set<string>): boolean {
   const n = term.words.length;
   for (let i = 0; i + n <= seq.length; i++) {
     let ok = true;
     for (let k = 0; k < n && ok; k++) {
-      const tok = seq[i + k];
-      ok = k < n - 1 ? tok === term.words[k] : !allow.has(tok) && wordMatches(tok, term.words[k], term.m);
+      const tok = seq[i + k]!;
+      ok = k < n - 1 ? tok.n === term.words[k] : !allow.has(tok.r) && wordMatches(tok.n, term.words[k], term.m);
     }
     if (ok) return true;
   }
@@ -177,11 +194,11 @@ export function analyzeText(text: string, dict: CompiledDictionary): FilterVerdi
     let matched = false;
     if (term.words.length === 1) {
       const w = term.words[0];
-      matched = p.tokens.some((t) => !t.includes('*') && !dict.allow.has(t) && wordMatches(t, w, term.m));
+      matched = p.tokens.some((t) => !t.n.includes('*') && !dict.allow.has(t.r) && wordMatches(t.n, w, term.m));
       if (!matched && term.m === 'contains' && w.length >= 5) matched = p.compact.includes(w);
       if (!matched && w.length >= 5) {
         // Yıldızla sansürlenmiş kelime: ORTA (kullanıcı kendisi sansürlemiş; yanlış pozitife karşı yalnız işaret).
-        const masked = p.tokens.some((t) => {
+        const masked = p.tokens.some(({ n: t }) => {
           const stars = (t.match(/\*/g) ?? []).length;
           return stars > 0 && stars <= Math.floor(w.length / 3) && wildcardMatches(t, w, term.m);
         });

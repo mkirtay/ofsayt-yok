@@ -76,6 +76,7 @@ const ACTION_LABEL: Record<string, string> = {
   TERM_REMOVE: 'Terim silindi',
 };
 
+const TERM_LEVEL_LABEL: Record<string, string> = { BLOCK: 'Reddet', FLAG: 'İncelemeye al', ALLOW: 'İstisna' };
 const fmt = (iso: string | null) => (iso ? new Date(iso).toLocaleString('tr-TR', { timeZone: 'Europe/Istanbul' }) : '—');
 const isSuspended = (until: string | null) => until != null && Date.parse(until) > Date.now();
 const flagLabel = (f: string) => f.replace(/^AUTO_/, '').toLowerCase().replace(/_/g, ' ');
@@ -346,8 +347,9 @@ export default function AdminReports() {
       {tab === 'terms' ? (
         <section className={styles.section}>
           <p className={styles.lead}>
-            Temel liste kodda (src/config/moderationTerms.json, testli). Buradan eklenenler onu genişletir: Engelle = AĞIR (reddedilir),
-            İşaretle = ORTA (yayınlanır, kuyruğa düşer), İstisna = yanlış pozitif veren kelime (kelimenin tamamı).
+            Temel liste kodda (src/config/moderationTerms.json, testli). Buradan eklenenler onu genişletir: Reddet = AĞIR (yayınlanmaz),
+            İncelemeye al = ORTA (yayınlanır, şikâyet kuyruğuna otomatik düşer), İstisna = yanlış pozitif veren kelime (kelimenin
+            tamamı, harf tekrarı korunarak).
           </p>
           <form className={styles.termForm} onSubmit={addTerm}>
             <label className={styles.noteLabel}>
@@ -357,9 +359,9 @@ export default function AdminReports() {
             <label className={styles.noteLabel}>
               Seviye
               <select className={styles.select} value={level} onChange={(e) => setLevel(e.target.value)}>
-                <option value="BLOCK">Engelle (AĞIR)</option>
-                <option value="FLAG">İşaretle (ORTA)</option>
-                <option value="ALLOW">İstisna</option>
+                <option value="BLOCK">Reddet (AĞIR — yayınlanmaz)</option>
+                <option value="FLAG">İncelemeye al (ORTA — yayınlanır, kuyruğa düşer)</option>
+                <option value="ALLOW">İstisna (yanlış pozitif; kelimenin tamamı)</option>
               </select>
             </label>
             <label className={styles.noteLabel}>
@@ -378,7 +380,7 @@ export default function AdminReports() {
             {terms.map((t) => (
               <li key={t.id}>
                 <span>
-                  <strong>{t.term}</strong> · {t.level} · {t.match}
+                  <strong>{t.term}</strong> · {TERM_LEVEL_LABEL[t.level] ?? t.level} · {t.match}
                 </span>
                 <button type="button" className={styles.buttonGhost} disabled={busy} onClick={() => void removeTerm(t.id)}>
                   Sil
