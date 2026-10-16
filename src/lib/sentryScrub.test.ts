@@ -39,6 +39,9 @@ const SENSITIVE_NAMES = [
   // Hesap silme onay metni (e-posta olabilir)
   'confirm',
   'CONFIRM',
+  // E-posta adresi (hesap silme talebi, kayıt, şifre sıfırlama gövdeleri)
+  'email',
+  'EMAIL',
 ];
 
 const SECRET = 'S3CRETvalue';
@@ -168,7 +171,7 @@ describe('Sentry olay temizliği (güvenlik denetimi 2026-10-04 / rapor Y1-Y2)',
     expect(JSON.parse(json.request.data)).toEqual({ emailOrUsername: 'ali', password: F, nested: { resetToken: F } });
 
     const form = scrubSentryEvent({ request: { data: 'email=a%40b.c&newPassword=x1&currentPassword=x2&lang=tr' } });
-    expect(form.request.data).toBe(`email=a%40b.c&newPassword=${F}&currentPassword=${F}&lang=tr`);
+    expect(form.request.data).toBe(`email=${F}&newPassword=${F}&currentPassword=${F}&lang=tr`);
 
     const plain = scrubSentryEvent({ request: { data: 'merhaba dünya' } });
     expect(plain.request.data).toBe('merhaba dünya');
@@ -296,7 +299,7 @@ describe('Sentry SDK zinciriyle (beforeBreadcrumb + beforeSend)', () => {
     expect(ev.request.headers).not.toHaveProperty('authorization');
     expect(ev.request.headers).not.toHaveProperty('cookie');
     expect(ev.request.cookies).toBeUndefined();
-    expect(ev.request.data).toMatchObject({ email: 'a@b.c', token: F, password: F });
+    expect(ev.request.data).toMatchObject({ email: F, token: F, password: F });
     const crumb = ev.breadcrumbs.find((b) => b.data?.['http.method'] === 'GET')!;
     expect(crumb.data.url).toBe('https://api.sportmonks.com/v3/football/leagues/600');
     expect(crumb.data['http.query']).toBe(`?include=seasons&api_token=${F}`);

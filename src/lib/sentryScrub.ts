@@ -37,6 +37,8 @@ const SENSITIVE_KEYS = new Set(
     'CRON_SECRET',
     // Hesap silme onay metni (DELETE /api/user/me) e-posta adresi olabilir.
     'confirm',
+    // E-posta adresi (giriş yapmadan hesap silme talebi /api/account-deletion/request, kayıt, şifre sıfırlama gövdeleri).
+    'email',
   ].map(norm),
 );
 /** URL/sorgu parametresi olarak ayrıca gizlenen adlar (nesne anahtarında değil). */

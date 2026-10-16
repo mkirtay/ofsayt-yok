@@ -38,18 +38,20 @@ export async function verifyTurnstileToken(
 export type SignupTurnstileResult = { ok: true } | { ok: false; status: number; error: string };
 
 /**
- * Kayıt uçlarının (web + mobil) Turnstile kapısı. Üretimde zorunlu: `TURNSTILE_SECRET_KEY` yoksa kayıt REDDEDİLİR
- * (önceden sessizce atlanıyordu — ortam değişkeni düşerse bot kaydı açık kalırdı). Geliştirme / testte atlanır.
+ * Turnstile kapısı (kayıt ve herkese açık formlar: hesap silme talebi). Üretimde zorunlu: `TURNSTILE_SECRET_KEY` yoksa
+ * istek REDDEDİLİR (önceden sessizce atlanıyordu — ortam değişkeni düşerse bot kaydı açık kalırdı). Geliştirme / testte
+ * atlanır. `unavailableError`: anahtar yokken dönen 503 metni.
  */
-export async function checkSignupTurnstile(
+export async function checkTurnstileGate(
   token: unknown,
   remoteIp: string | undefined,
-  env: { NODE_ENV?: string; TURNSTILE_SECRET_KEY?: string } = process.env,
+  opts: { unavailableError: string; env?: { NODE_ENV?: string; TURNSTILE_SECRET_KEY?: string } },
 ): Promise<SignupTurnstileResult> {
+  const env = opts.env ?? process.env;
   if (env.NODE_ENV !== 'production') return { ok: true };
   if (!env.TURNSTILE_SECRET_KEY) {
-    console.error('[turnstile] TURNSTILE_SECRET_KEY tanımlı değil — kayıt reddedildi.');
-    return { ok: false, status: 503, error: 'Kayıt şu anda yapılamıyor. Lütfen daha sonra tekrar deneyin.' };
+    console.error('[turnstile] TURNSTILE_SECRET_KEY tanımlı değil — istek reddedildi.');
+    return { ok: false, status: 503, error: opts.unavailableError };
   }
   if (typeof token !== 'string' || !token) {
     return { ok: false, status: 400, error: 'Güvenlik doğrulaması başarısız.' };
@@ -58,11 +60,23 @@ export async function checkSignupTurnstile(
   return ok ? { ok: true } : { ok: false, status: 400, error: 'Güvenlik doğrulaması başarısız.' };
 }
 
-function sha256(input: string): string {
+/** Kayıt uçlarının (web + mobil) Turnstile kapısı (bkz. `checkTurnstileGate`). */
+export async function checkSignupTurnstile(
+  token: unknown,
+  remoteIp: string | undefined,
+  env: { NODE_ENV?: string; TURNSTILE_SECRET_KEY?: string } = process.env,
+): Promise<SignupTurnstileResult> {
+  return checkTurnstileGate(token, remoteIp, {
+    unavailableError: 'Kayıt şu anda yapılamıyor. Lütfen daha sonra tekrar deneyin.',
+    env,
+  });
+}
+
+export function sha256(input: string): string {
   return createHash('sha256').update(input).digest('hex');
 }
 
-function appBaseUrl(): string {
+export function appBaseUrl(): string {
   return (process.env.AUTH_URL ?? 'http://localhost:3000').replace(/\/+$/, '');
 }
 
@@ -86,9 +100,16 @@ export const EMAIL_REPLY_TO = BRAND.contactEmail;
 
 export type EmailContent = { subject: string; html: string; text: string };
 
+export type EmailLocale = 'tr' | 'en';
+
+/** İstemciden gelen dil (`locale`) → e-posta dili; bilinmeyen değer Türkçe. */
+export function emailLocale(raw: unknown): EmailLocale {
+  return raw === 'en' ? 'en' : 'tr';
+}
+
 /** HTML gövdesi: UTF-8 bildiren küçük belge (bazı istemciler `<meta charset>` olmadan Türkçe karakteri bozuyor). */
-function emailHtml(body: string): string {
-  return `<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"></head><body>${body}</body></html>`;
+function emailHtml(body: string, lang: EmailLocale = 'tr'): string {
+  return `<!doctype html><html lang="${lang}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"></head><body>${body}</body></html>`;
 }
 
 /** Doğrulama e-postası (konu + HTML + düz metin). Marka adı `BRAND.name`. */
@@ -114,17 +135,52 @@ export function passwordResetEmail(link: string): EmailContent {
 }
 
 /**
- * Hesap silindi onayı (konu + HTML + düz metin). Gövdede kişisel veri yok (ad, kullanıcı adı, kimlik); yalnızca alıcı
- * adresine gider. Silmeyi kendisi yapmadıysa iletişim adresine yazması istenir.
+ * Hesap silindi onayı (konu + HTML + düz metin; TR / EN). Gövdede kişisel veri yok (ad, kullanıcı adı, kimlik);
+ * yalnızca alıcı adresine gider. Silmeyi kendisi yapmadıysa iletişim adresine yazması istenir.
  */
-export function accountDeletedEmail(): EmailContent {
+export function accountDeletedEmail(locale: EmailLocale = 'tr'): EmailContent {
   const contact = BRAND.contactEmail;
+  if (locale === 'en') {
+    const body = `Your ${BRAND.name} account has been deleted at your request. Your sessions were signed out; your profile, favourites, credit balance and unlocked analyses were deleted. Your Gündem posts and comments remain anonymously under the name "Deleted user".`;
+    return {
+      subject: `${BRAND.name} - Your account has been deleted`,
+      html: emailHtml(
+        `<p>Hello,</p><p>${body}</p><p>If you did not do this, write to <a href="mailto:${contact}">${contact}</a>.</p>`,
+        'en',
+      ),
+      text: `Hello,\n\n${body}\n\nIf you did not do this, write to ${contact}.\n`,
+    };
+  }
   return {
     subject: `${BRAND.name} - Hesabınız silindi`,
     html: emailHtml(
       `<p>Merhaba,</p><p>${BRAND.name} hesabınız isteğiniz üzerine silindi. Oturumlarınız kapatıldı; profiliniz, favorileriniz, kredi bakiyeniz ve açtığınız analizler silindi. Gündem'deki gönderi ve yorumlarınız "Silinmiş kullanıcı" adıyla anonim olarak kalır.</p><p>Bu işlemi siz yapmadıysanız <a href="mailto:${contact}">${contact}</a> adresine yazın.</p>`,
     ),
     text: `Merhaba,\n\n${BRAND.name} hesabınız isteğiniz üzerine silindi. Oturumlarınız kapatıldı; profiliniz, favorileriniz, kredi bakiyeniz ve açtığınız analizler silindi. Gündem'deki gönderi ve yorumlarınız "Silinmiş kullanıcı" adıyla anonim olarak kalır.\n\nBu işlemi siz yapmadıysanız ${contact} adresine yazın.\n`,
+  };
+}
+
+/**
+ * Hesap silme talebi onay bağlantısı (/hesap-silme formu; TR / EN). Konu ve gövdede "siz istemediyseniz yok sayın"
+ * uyarısı; bağlantı yalnız onay sayfasını açar, silme o sayfadaki düğmeyle olur. Kişisel veri yok.
+ */
+export function accountDeletionRequestEmail(link: string, locale: EmailLocale = 'tr'): EmailContent {
+  if (locale === 'en') {
+    return {
+      subject: `${BRAND.name} - Confirm account deletion (ignore if you did not request this)`,
+      html: emailHtml(
+        `<p>Hello,</p><p>We received a request to delete your ${BRAND.name} account. To continue, open the link below and press the <strong>Delete my account</strong> button on that page:</p><p><a href="${link}">${link}</a></p><p>This link is valid for <strong>1 hour</strong> and can be used once. Opening the link alone does not delete anything.</p><p><strong>If you did not make this request, ignore this email</strong> — your account stays as it is.</p>`,
+        'en',
+      ),
+      text: `Hello,\n\nWe received a request to delete your ${BRAND.name} account. To continue, open the link below and press the "Delete my account" button on that page:\n${link}\n\nThis link is valid for 1 hour and can be used once. Opening the link alone does not delete anything.\n\nIf you did not make this request, ignore this email — your account stays as it is.\n`,
+    };
+  }
+  return {
+    subject: `${BRAND.name} - Hesap silme onayı (siz istemediyseniz yok sayın)`,
+    html: emailHtml(
+      `<p>Merhaba,</p><p>${BRAND.name} hesabınızın silinmesi için bir talep aldık. Devam etmek için aşağıdaki bağlantıyı açın ve sayfadaki <strong>Hesabımı sil</strong> düğmesine basın:</p><p><a href="${link}">${link}</a></p><p>Bu bağlantı <strong>1 saat</strong> geçerlidir ve bir kez kullanılabilir. Yalnızca bağlantıyı açmak hiçbir şeyi silmez.</p><p><strong>Bu isteği siz yapmadıysanız bu e-postayı yok sayın</strong> — hesabınız olduğu gibi kalır.</p>`,
+    ),
+    text: `Merhaba,\n\n${BRAND.name} hesabınızın silinmesi için bir talep aldık. Devam etmek için aşağıdaki bağlantıyı açın ve sayfadaki "Hesabımı sil" düğmesine basın:\n${link}\n\nBu bağlantı 1 saat geçerlidir ve bir kez kullanılabilir. Yalnızca bağlantıyı açmak hiçbir şeyi silmez.\n\nBu isteği siz yapmadıysanız bu e-postayı yok sayın — hesabınız olduğu gibi kalır.\n`,
   };
 }
 
@@ -189,13 +245,25 @@ async function sendViaResend(to: string, { subject, html, text }: EmailContent):
 }
 
 /** Hesap silme onayı; gönderilemezse false (silme geri alınmaz). Adres loglanmaz. */
-export async function sendAccountDeletedEmail(email: string): Promise<boolean> {
+export async function sendAccountDeletedEmail(email: string, locale: EmailLocale = 'tr'): Promise<boolean> {
   try {
-    const sent = await sendViaResend(email, accountDeletedEmail());
+    const sent = await sendViaResend(email, accountDeletedEmail(locale));
     if (!sent) console.warn('[account-delete] Onay e-postası gönderilemedi (sağlayıcı yapılandırılmamış ya da hata).');
     return sent;
   } catch {
     console.warn('[account-delete] Onay e-postası gönderilemedi (ağ hatası).');
+    return false;
+  }
+}
+
+/** Hesap silme talebi bağlantısı; gönderilemezse false. Adres ve bağlantı (tek kullanımlık belirteç) loglanmaz. */
+export async function sendAccountDeletionRequestEmail(email: string, link: string, locale: EmailLocale = 'tr'): Promise<boolean> {
+  try {
+    const sent = await sendViaResend(email, accountDeletionRequestEmail(link, locale));
+    if (!sent) console.warn('[account-delete-request] Onay bağlantısı gönderilemedi (sağlayıcı yapılandırılmamış ya da hata).');
+    return sent;
+  } catch {
+    console.warn('[account-delete-request] Onay bağlantısı gönderilemedi (ağ hatası).');
     return false;
   }
 }

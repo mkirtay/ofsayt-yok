@@ -11,7 +11,7 @@
  *     şikâyetlerin targetUserId'si boşalır (içerik yer tutucuya geçti; şikâyet içerik kimliğiyle kalır), engelleri (iki
  *     yön) ve etiketlendiği satırlar silinir (metin düz "@ad" kalır), yönetici kaydındaki hedef kimliği boşalır.
  *  4. Davet kayıtları silinir, bu kullanıcının davet ettiklerindeki `referredById` boşaltılır, e-posta doğrulama /
- *     şifre sıfırlama belirteçleri silinir.
+ *     şifre sıfırlama / hesap silme talebi belirteçleri silinir.
  *  5. User satırı silinir → CASCADE: Account (Google bağlantısı), Session, beğeniler, takipler, bildirimler, push
  *     belirteçleri, kredi defteri, açılan analizler, premium kayıtları, anket oyları, Frikik skorları.
  *  6. PII'siz denetim kaydı (AccountDeletionLog: kanal, giriş yöntemi, hesap yaşı, sayılar).
@@ -25,7 +25,8 @@ import { isOfficialUser } from '@/lib/gundem/official';
 import { isDeletionConfirmed } from '@/lib/accountDeletion';
 import { DELETED_USER_EMAIL, DELETED_USER_ID, DELETED_USER_NAME, isDeletedUserId } from '@/config/deletedUser';
 
-export type DeletionSource = 'web' | 'mobile';
+/** `email_link`: giriş yapmadan /hesap-silme talebi + e-posta onay bağlantısı (server/account/deletionRequest.ts). */
+export type DeletionSource = 'web' | 'mobile' | 'email_link';
 
 export type DeletionCounts = {
   postsAnonymized: number;
@@ -79,7 +80,7 @@ export async function deleteOwnAccount(
       const referrals = await tx.referral.deleteMany({ where: { OR: [{ refereeId: userId }, { referrerId: userId }] } });
       await tx.user.updateMany({ where: { referredById: userId }, data: { referredById: null } });
       const tokens = await tx.verificationToken.deleteMany({
-        where: { identifier: { in: [email, `reset:${email}`] } },
+        where: { identifier: { in: [email, `reset:${email}`, `account-delete:${userId}`] } },
       });
       await tx.user.delete({ where: { id: userId } });
       const c: DeletionCounts = {
