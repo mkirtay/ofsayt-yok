@@ -1,5 +1,5 @@
 /**
- * Top fiziğinin ORTAK çekirdeği — giriş sahnesi (components/AuthStage) ve /frikik oyunu (lib/frikik) kullanır.
+ * Top fiziğinin çekirdeği — /frikik oyunu (lib/frikik) ve sunucudaki skor doğrulaması kullanır.
  * DOM / three.js'ten bağımsız. Dünya: zemin y = 0; kale ağzı x ekseninde (`side` yönüne bakan çizgi x = lineX), z yanal.
  *
  * BELİRLENİMCİLİK: /frikik skorunu sunucu aynı kodla yeniden hesaplar → burada yalnız + − × ÷ ve Math.sqrt kullanılır
@@ -38,7 +38,7 @@ export function goalSpec(side: -1 | 1, size: GoalSize): GoalSpec {
   };
 }
 
-/** Fizik ayarları (sahneye göre değişir: arcade giriş sahnesi / frikik). */
+/** Fizik ayarları (sahneye göre değişir). */
 export type Tuning = {
   gravity: number;
   /** Çimden sekmede dikey / yatay hızın korunan oranı; bu dikey hızın altında top sekmez, yuvarlanır. */
@@ -60,7 +60,6 @@ export type Tuning = {
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
 
 export const len2 = (a: number, b: number) => Math.sqrt(a * a + b * b);
-export const len3 = (a: number, b: number, c: number) => Math.sqrt(a * a + b * b + c * c);
 /** Üstel sönümün belirlenimci karşılığı: hız bu çarpanla çarpılır. */
 export const decay = (k: number, h: number) => 1 / (1 + k * h);
 

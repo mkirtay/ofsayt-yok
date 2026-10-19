@@ -1,7 +1,7 @@
 /**
- * three.js saha yapı taşları — giriş sahnesi (components/AuthStage) ve /frikik oyunu (components/Frikik) ortak kullanır:
- * dokular (çim, parıltı, gölge, pano), malzemeler (huzme, kenar parlaması), top (kesik ikosahedron + lig logoları),
- * kale (direkler + file + dalga), nişan oku. Yalnız dinamik import edilen sahne modüllerinden içe aktarılır →
+ * three.js saha yapı taşları — /frikik oyunu (components/Frikik) kullanır:
+ * dokular (çim, gölge, pano), kenar parlaması malzemesi, top (kesik ikosahedron + lig logoları),
+ * kale (direkler + file + dalga), konfeti. Yalnız dinamik import edilen sahne modüllerinden içe aktarılır →
  * three.js ilk yüke ve diğer sayfalara girmez.
  */
 import {
@@ -11,7 +11,6 @@ import {
   Color,
   CustomBlending,
   CylinderGeometry,
-  DoubleSide,
   Group,
   LineBasicMaterial,
   LineSegments,
@@ -19,16 +18,12 @@ import {
   Mesh,
   MeshPhysicalMaterial,
   MeshStandardMaterial,
-  NoColorSpace,
   OneFactor,
-  PlaneGeometry,
   PMREMGenerator,
   Points,
   PointsMaterial,
   RepeatWrapping,
   ShaderMaterial,
-  Shape,
-  ShapeGeometry,
   SphereGeometry,
   SrcAlphaFactor,
   SRGBColorSpace,
@@ -94,37 +89,6 @@ export function canvasTexture(size: number, draw: (ctx: CanvasRenderingContext2D
   return tex;
 }
 
-/** Yumuşak ışık noktası (partikül, lamba, hale). */
-export function glowTexture(inner: string, outer: string): CanvasTexture {
-  return canvasTexture(128, (ctx, s) => {
-    const g = ctx.createRadialGradient(s / 2, s / 2, 0, s / 2, s / 2, s / 2);
-    g.addColorStop(0, inner);
-    g.addColorStop(0.35, outer);
-    g.addColorStop(1, 'rgba(0,0,0,0)');
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, s, s);
-  });
-}
-
-/** Bulut: üst üste binen yumuşak beyaz daireler. */
-export function cloudTexture(): CanvasTexture {
-  return canvasTexture(256, (ctx, s) => {
-    ctx.filter = 'blur(7px)';
-    ctx.fillStyle = 'rgba(255,255,255,0.95)';
-    for (const [x, y, r] of [
-      [0.3, 0.6, 0.15],
-      [0.48, 0.5, 0.2],
-      [0.67, 0.58, 0.15],
-      [0.4, 0.66, 0.14],
-      [0.58, 0.67, 0.14],
-    ] as const) {
-      ctx.beginPath();
-      ctx.arc(x * s, y * s, r * s, 0, Math.PI * 2);
-      ctx.fill();
-    }
-  });
-}
-
 /** Kenar parlaması: bakış açısına dik kenarlarda artan, eklemeli renk (fresnel). */
 export function rimMaterial(color: number, power: number, intensity: number): ShaderMaterial {
   return new ShaderMaterial({
@@ -150,39 +114,6 @@ export function rimMaterial(color: number, power: number, intensity: number): Sh
       }`,
     transparent: true,
     depthWrite: false,
-    ...LIGHT_BLEND,
-  });
-}
-
-/** Projektör huzmesi: lambada parlak, uzaklaştıkça ve kenarlarda sönen açık koni. */
-export function beamMaterial(color: number, intensity: number): ShaderMaterial {
-  return new ShaderMaterial({
-    uniforms: { uColor: { value: new Color(color) }, uIntensity: { value: intensity } },
-    vertexShader: /* glsl */ `
-      varying float vAlong;
-      varying vec3 vN;
-      varying vec3 vV;
-      void main() {
-        vAlong = uv.y;
-        vec4 mv = modelViewMatrix * vec4(position, 1.0);
-        vN = normalize(normalMatrix * normal);
-        vV = normalize(-mv.xyz);
-        gl_Position = projectionMatrix * mv;
-      }`,
-    fragmentShader: /* glsl */ `
-      uniform vec3 uColor;
-      uniform float uIntensity;
-      varying float vAlong;
-      varying vec3 vN;
-      varying vec3 vV;
-      void main() {
-        float edge = pow(abs(dot(normalize(vN), normalize(vV))), 1.6);
-        float a = uIntensity * pow(vAlong, 1.25) * edge;
-        gl_FragColor = vec4(uColor * a, a);
-      }`,
-    transparent: true,
-    depthWrite: false,
-    side: DoubleSide,
     ...LIGHT_BLEND,
   });
 }
@@ -235,20 +166,6 @@ export function grassTexture(size: number): CanvasTexture {
   return tex;
 }
 
-/** Zemin saydamlığı: yakında opak, uzak kenara doğru gökyüzüne silinir (v = 1 uzak kenar). */
-export function groundAlphaTexture(): CanvasTexture {
-  const tex = canvasTexture(64, (ctx, s) => {
-    const g = ctx.createLinearGradient(0, 0, 0, s);
-    g.addColorStop(0, '#000');
-    g.addColorStop(0.3, '#fff');
-    g.addColorStop(1, '#fff');
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, s, s);
-  });
-  tex.colorSpace = NoColorSpace;
-  return tex;
-}
-
 /** Yumuşak gölge lekesi. */
 export function shadowTexture(): CanvasTexture {
   return canvasTexture(128, (ctx, s) => {
@@ -289,40 +206,6 @@ export function boardTexture(): CanvasTexture {
   tex.colorSpace = SRGBColorSpace;
   tex.wrapS = RepeatWrapping;
   return tex;
-}
-
-/** Nişan oku (zemin düzleminde, +x yönünde): gövde boyu `setLength` ile değişir, uç sabit boyutta. */
-export function makeArrow(mat: Material) {
-  const width = 0.22;
-  const headLen = 0.5;
-  const headW = 0.62;
-  const shaftGeo = new PlaneGeometry(1, width);
-  shaftGeo.translate(0.5, 0, 0);
-  const head = new Shape();
-  head.moveTo(0, -headW / 2);
-  head.lineTo(headLen, 0);
-  head.lineTo(0, headW / 2);
-  head.closePath();
-  const headGeo = new ShapeGeometry(head);
-  const flat = new Group();
-  flat.rotation.x = -Math.PI / 2;
-  const shaft = new Mesh(shaftGeo, mat);
-  const tip = new Mesh(headGeo, mat);
-  flat.add(shaft, tip);
-  const group = new Group();
-  group.add(flat);
-  group.visible = false;
-  for (const m of [shaft, tip]) m.renderOrder = 3;
-  return {
-    group,
-    geometries: [shaftGeo, headGeo],
-    /** start: topun merkezinden uzaklık; len: gövde boyu */
-    set(start: number, len: number) {
-      shaft.position.x = start;
-      shaft.scale.x = Math.max(0.01, len);
-      tip.position.x = start + len;
-    },
-  };
 }
 
 export type GoalView = {

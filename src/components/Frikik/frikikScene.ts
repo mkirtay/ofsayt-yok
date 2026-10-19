@@ -1,6 +1,6 @@
 /**
  * /frikik sahnesi (three.js). Yalnız `Frikik` bileşeni dinamik olarak yükler → three.js bu sayfanın sonradan gelen
- * parçasında kalır. Yapı taşları giriş sahnesiyle ortak (components/pitch3d/pitchKit.ts); fizik ve skor
+ * parçasında kalır. Yapı taşları components/pitch3d/pitchKit.ts'te; fizik ve skor
  * lib/frikik/sim.ts'te (belirlenimci; sunucu aynı kodu çalıştırır) — burası yalnız çizer ve girdiyi toplar.
  *
  * Kamera topun arkasında, kaleye bakar. Baraj ve kaleci insan oranlı düşük poligonlu figürler (figures.ts); kaleci
@@ -44,7 +44,7 @@ import { buildStands } from './stands';
 import { HUB_LEAGUE_IDS } from '@/config/hubLeagueGroups';
 import { sportmonksLeagueLogoUrl } from '@/utils/leagueLogo';
 import { logoSrc } from '@/utils/logoUrl';
-import { pickLogoIds } from '@/components/AuthStage/stageMotion';
+import { pickLogoIds } from '@/components/pitch3d/ballLogos';
 import {
   boardTexture,
   buildBall,
