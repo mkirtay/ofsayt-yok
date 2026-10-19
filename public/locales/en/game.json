@@ -186,5 +186,99 @@
     "exact_one": "{{count}} exact score",
     "text": "{{game}} week {{week}}: {{points}} points. Make your picks:",
     "textRank": "{{game}} week {{week}}: {{points}} points, rank {{rank}}. Make your picks:"
+  },
+  "easy": {
+    "lead": "Predict the score of every match. The closer you get, the more points.",
+    "steps": {
+      "s1": "Enter the score",
+      "s2": "Play your joker",
+      "s3": "Collect points"
+    },
+    "dir": {
+      "title": "Get the outcome",
+      "text": "Home side ahead, a draw or the away side? Call it right.",
+      "short": "Outcome"
+    },
+    "diff": {
+      "title": "Get the margin",
+      "text": "Also call the goal difference.",
+      "short": "Margin"
+    },
+    "total": {
+      "title": "Get the goal count",
+      "text": "Call how many goals the match has in total.",
+      "short": "Goals"
+    },
+    "exact": {
+      "title": "Get the exact score",
+      "text": "Call the score exactly.",
+      "short": "Exact score"
+    },
+    "rare": {
+      "title": "Few got it",
+      "text": "Bonus when at most 5 in 100 players called the exact score."
+    },
+    "joker": {
+      "title": "Use your joker",
+      "text": "Put it on one match a week; that match counts double."
+    },
+    "max": "Up to 10 points per match, 20 with the joker.",
+    "exampleTitle": "Example",
+    "yourPick": "Your pick",
+    "result": "Result",
+    "barLabel": "{{points}} of {{max}} points",
+    "scTitle": "More examples",
+    "sc": {
+      "exact": {
+        "title": "Exact score",
+        "text": "Outcome, margin, goal count and exact score: all correct."
+      },
+      "draw": {
+        "title": "Draw",
+        "text": "You called the draw and the margin (both 0). The goal count was off."
+      },
+      "joker": {
+        "title": "Joker",
+        "text": "Outcome and margin correct: 4 points. Joker on this match, so double."
+      }
+    },
+    "detailed": "Full rules",
+    "fromMatch": "From this match:"
+  },
+  "easyRules": {
+    "lock": {
+      "title": "Locks at kick-off",
+      "text": "Change your pick until the match starts. Then it locks."
+    },
+    "week": {
+      "title": "The week",
+      "text": "Starts Monday, ends Sunday night (Turkey time)."
+    },
+    "regular": {
+      "title": "90 minutes only",
+      "text": "Regular time including stoppage time. Extra time and penalties do not count."
+    },
+    "void": {
+      "title": "If a match is not played",
+      "text": "Cancelled or moved out of the week: everyone gets 0 and the joker on it is lost."
+    },
+    "tiebreak": {
+      "title": "Level on points",
+      "text": "More exact scores goes first, then more correct outcomes."
+    },
+    "visible": {
+      "title": "Show up in the table",
+      "text": "Pick a nickname and verify your email (Google sign-in is already verified)."
+    },
+    "free": {
+      "title": "Completely free",
+      "text": "No money, no prizes. Just points and rank."
+    }
+  },
+  "board2": {
+    "exactShort": "{{count}} exact",
+    "exactShort_one": "{{count}} exact",
+    "pts": "{{count}} pts",
+    "meRank": "Your rank"
   }
 }

@@ -186,5 +186,99 @@
     "exact_one": "{{count}} tam skor",
     "text": "{{game}} {{week}}. hafta: {{points}} puan. Sen de tahmin et:",
     "textRank": "{{game}} {{week}}. hafta: {{points}} puan, {{rank}}. sıra. Sen de tahmin et:"
+  },
+  "easy": {
+    "lead": "Her maçın skorunu tahmin et. Ne kadar yaklaşırsan o kadar puan.",
+    "steps": {
+      "s1": "Skoru yaz",
+      "s2": "Jokeri koy",
+      "s3": "Puanları topla"
+    },
+    "dir": {
+      "title": "Sonucu bil",
+      "text": "Ev sahibi mi önde biter, berabere mi, deplasman mı? Doğru bil.",
+      "short": "Sonuç"
+    },
+    "diff": {
+      "title": "Farkı da bil",
+      "text": "Kaç farkla biteceğini de tuttur.",
+      "short": "Fark"
+    },
+    "total": {
+      "title": "Gol sayısını bil",
+      "text": "Maçta toplam kaç gol olacağını tuttur.",
+      "short": "Gol sayısı"
+    },
+    "exact": {
+      "title": "Skoru tam bil",
+      "text": "Skoru birebir tuttur.",
+      "short": "Tam skor"
+    },
+    "rare": {
+      "title": "Az kişi bilsin",
+      "text": "Tam skoru 100 kişiden en çok 5'i bildiyse ek puan."
+    },
+    "joker": {
+      "title": "Jokerini kullan",
+      "text": "Haftada bir maça koy, o maçın puanı iki katına çıkar."
+    },
+    "max": "Bir maçtan en çok 10 puan, jokerle 20 puan alırsın.",
+    "exampleTitle": "Örnek",
+    "yourPick": "Tahminin",
+    "result": "Sonuç",
+    "barLabel": "{{max}} puanın {{points}} puanı",
+    "scTitle": "Başka örnekler",
+    "sc": {
+      "exact": {
+        "title": "Tam skor",
+        "text": "Sonuç, fark, gol sayısı ve tam skor: hepsi tuttu."
+      },
+      "draw": {
+        "title": "Beraberlik",
+        "text": "Beraberliği bildin, fark da tuttu (ikisi de 0). Gol sayısı tutmadı."
+      },
+      "joker": {
+        "title": "Joker",
+        "text": "Sonuç ve fark tuttu: 4 puan. Joker bu maçtaydı, iki katı."
+      }
+    },
+    "detailed": "Ayrıntılı kurallar",
+    "fromMatch": "Bu maçtan:"
+  },
+  "easyRules": {
+    "lock": {
+      "title": "Maç başlayınca kapanır",
+      "text": "Her maçı başlama saatine kadar değiştirebilirsin. Sonra kilitlenir."
+    },
+    "week": {
+      "title": "Hafta",
+      "text": "Pazartesi başlar, pazar gece biter (Türkiye saati)."
+    },
+    "regular": {
+      "title": "Sadece 90 dakika",
+      "text": "Eklenen dakikalar dahil normal süre sayılır. Uzatma ve penaltılar sayılmaz."
+    },
+    "void": {
+      "title": "Maç oynanmazsa",
+      "text": "İptal ya da hafta dışına ertelenirse herkes 0 alır, o maçtaki joker de yanar."
+    },
+    "tiebreak": {
+      "title": "Puanlar eşitse",
+      "text": "Daha çok tam skor bilen öne geçer, sonra daha çok sonucu bilen."
+    },
+    "visible": {
+      "title": "Sıralamada görün",
+      "text": "Bir takma ad seç ve e-postanı doğrula (Google ile girdiysen hazırsın)."
+    },
+    "free": {
+      "title": "Tamamen ücretsiz",
+      "text": "Para yok, ödül yok. Sadece puan ve sıra."
+    }
+  },
+  "board2": {
+    "exactShort": "{{count}} tam skor",
+    "exactShort_one": "{{count}} tam skor",
+    "pts": "{{count}} p",
+    "meRank": "Senin sıran"
   }
 }

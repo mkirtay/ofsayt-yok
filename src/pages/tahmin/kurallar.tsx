@@ -3,7 +3,7 @@ import Head from 'next/head';
 import { useTranslation } from '@/lib/i18n';
 import '@/lib/i18nNamespaces/game';
 import JsonLd from '@/components/JsonLd';
-import { FAQ_KEYS, Faq, GameNav, RulesList, ScoringTable } from '@/components/Game/Info';
+import { EasyRules, FAQ_KEYS, Faq, GameNav, PointRules, RulesList, Scenarios, ScoreExample } from '@/components/Game/Info';
 import styles from '@/components/Game/game.module.scss';
 import { GAME_BRAND } from '@/config/brand';
 import { siteBaseUrl } from '@/lib/siteUrl';
@@ -40,10 +40,25 @@ export default function GameRulesPage({ noindex }: { noindex: boolean }) {
         <GameNav current="rules" />
         <section className={styles.section}>
           <h1 className={styles.h2}>{t('rules.title')}</h1>
-          <ScoringTable />
-          <div className={styles.card}>
-            <RulesList />
+          <div className={styles.rulesGrid}>
+            <div className={styles.sideCard}>
+              <p className={styles.sideLead}>{t('easy.lead')}</p>
+              <PointRules />
+              <p className={styles.sideNote}>{t('easy.max')}</p>
+            </div>
+            <div className={styles.sideCard}>
+              <ScoreExample />
+              <h2 className={styles.sideSub}>{t('easy.scTitle')}</h2>
+              <Scenarios />
+            </div>
           </div>
+          <div className={styles.sideCard}>
+            <EasyRules />
+          </div>
+          <details className={styles.card}>
+            <summary className={styles.detailSummary}>{t('easy.detailed')}</summary>
+            <RulesList />
+          </details>
         </section>
         <Faq />
       </div>

@@ -592,3 +592,14 @@ adlandırıldı (kullanıcı onayı). Seçilen yön: **A (Maç Günü Kartları)
   10'u tablo olarak kalır.
 - SSR `renderedAt`: ilk çizimde başlamış maçlar doğru grupta (istemci saati gelince düzelir). Mikro animasyonlar (skor kutusu
   dolunca, joker açılınca, halka) `prefers-reduced-motion`'da kapalı.
+
+### 17.1 İki sütun + görsel puanlama (2026-10-19, kullanıcı isteği)
+
+- `/tahmin` ≥ 1024 px iki sütun: solda maçlar (+ SSS, CTA), sağda **360 px** yapışkan yan sütun (ana sayfa Gündem paneliyle
+  aynı genişlik; kendi içinde kayar): "Nasıl oynanır" + sezonun ilk 10'u. Mobilde tek sütun: maçlar → yan sütun → SSS.
+  Maç kartları sütun genişliğine göre (container query ≥ 700 px) iki sütun.
+- Puanlama tablosu yerine ikonlu kurallar + puan çipleri (3, +1, +1, +3, +2, ×2), "2-1 → 3-2" örneği (mini skor kartları,
+  adım adım ✓/✗, dolan puan çubuğu), 3 senaryo kartı (tam skor, beraberlik, joker). Puanlar `scorePrediction` ile hesaplanır.
+  Kurallar sekmesi ikonlu kısa kartlar (`easyRules.*`); ayrıntılı metin `/tahmin/kurallar`'da "Ayrıntılı kurallar" altında.
+- Sıralama tablosu yerine liste: ilk 3 madalya rengi, baş harf avatarı, lidere göre puan çubuğu, tam skor sayısı, "Sen" vurgusu.
+  Podyum yalnız Sıralama sekmesinde. "3 adımda" bölümü yan sütundaki 3 adım şeridine indi.

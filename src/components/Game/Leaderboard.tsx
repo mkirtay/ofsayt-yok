@@ -69,10 +69,12 @@ export default function Leaderboard({
   const showMine = me && me.rank && me.rank > rows.length;
   const podium = !limit && rows.length >= 3 ? rows.slice(0, 3) : [];
   const tableRows = podium.length ? rows.slice(3) : rows;
+  const leader = Math.max(1, rows[0]?.points ?? 1);
+  const side = !!limit;
 
   return (
-    <section className={styles.section} aria-labelledby="game-board-title">
-      <h2 id="game-board-title" className={styles.h2}>
+    <section className={side ? styles.sideSection : styles.section} aria-labelledby="game-board-title">
+      <h2 id="game-board-title" className={side ? styles.sideTitle : styles.h2}>
         {title ?? t('board.title')}
       </h2>
       {weekKey ? (
@@ -84,7 +86,7 @@ export default function Leaderboard({
           ))}
         </div>
       ) : null}
-      <div id="game-board-panel" role="tabpanel" className={styles.card}>
+      <div id="game-board-panel" role="tabpanel" className={side ? styles.sideCard : styles.card}>
         {rows.length === 0 ? (
           <p className={styles.muted}>
             {board === undefined && !error ? t('board.loading') : error ? t('board.error') : scope === 'season' ? t('board.seasonEmpty') : t('board.empty')}
@@ -108,43 +110,59 @@ export default function Leaderboard({
               </ol>
             ) : null}
             {tableRows.length || showMine ? (
-              <table className={styles.table}>
-                <thead>
-                  <tr>
-                    <th scope="col">#</th>
-                    <th scope="col">{t('board.player')}</th>
-                    <th scope="col" className={styles.num}>
-                      {t('board.exact')}
-                    </th>
-                    <th scope="col" className={styles.num}>
-                      {t('board.points')}
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {tableRows.map((r) => (
-                    <tr key={r.nickname} data-me={me?.rank === r.rank ? '' : undefined}>
-                      <td>{r.rank}</td>
-                      <td className={styles.nick}>{r.nickname}</td>
-                      <td className={styles.num}>{r.exact}</td>
-                      <td className={styles.num}>{r.points}</td>
-                    </tr>
-                  ))}
-                  {showMine ? (
-                    <tr data-me="">
-                      <td>{me.rank}</td>
-                      <td className={styles.nick}>{t('board.you')}</td>
-                      <td className={styles.num}>{me.exact}</td>
-                      <td className={styles.num}>{me.points}</td>
-                    </tr>
-                  ) : null}
-                </tbody>
-              </table>
+              <ol className={styles.boardList} aria-label={title ?? t('board.title')}>
+                {tableRows.map((r) => (
+                  <BoardRow key={r.nickname} rank={r.rank} nickname={r.nickname} points={r.points} exact={r.exact} leader={leader} me={me?.rank === r.rank} />
+                ))}
+                {showMine ? <BoardRow rank={me.rank!} nickname={t('board.you')} points={me.points} exact={me.exact} leader={leader} me separated /> : null}
+              </ol>
             ) : null}
           </>
         )}
       </div>
-      {limit ? <Link href={`${GAME_BRAND.basePath}/siralama`}>{t('board.all')} →</Link> : null}
+      {limit ? (
+        <Link href={`${GAME_BRAND.basePath}/siralama`} className={styles.sideLink}>
+          {t('board.all')} →
+        </Link>
+      ) : null}
     </section>
+  );
+}
+
+/** Baş harf avatarının tonu: takma addan sabit renk (koyu doygunluk → beyaz harf ≥ 4.5:1 iki temada). */
+function hueOf(name: string): number {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) % 360;
+  return h;
+}
+
+/** Sıralama satırı: madalya (ilk 3) ya da sıra, baş harf avatarı, ad + tam skor, lidere göre puan çubuğu. */
+function BoardRow({ rank, nickname, points, exact, leader, me, separated }: { rank: number; nickname: string; points: number; exact: number; leader: number; me?: boolean; separated?: boolean }) {
+  const { t } = useTranslation('game');
+  return (
+    <li className={styles.boardRow} data-me={me ? '' : undefined} data-separated={separated ? '' : undefined}>
+      <span className={styles.boardRank} data-medal={rank <= 3 ? rank : undefined}>
+        {rank}
+      </span>
+      <span className={styles.avatar} style={{ background: `hsl(${hueOf(nickname)} 45% 32%)` }} aria-hidden="true">
+        {nickname.slice(0, 1).toUpperCase()}
+      </span>
+      <span className={styles.boardWho}>
+        <span className={styles.boardNick}>
+          {nickname}
+          {me && !separated ? <span className={styles.youTag}>{t('board.you')}</span> : null}
+        </span>
+        <span className={styles.boardBar} aria-hidden="true">
+          <span style={{ width: `${Math.min(100, (points / leader) * 100)}%` }} />
+        </span>
+      </span>
+      <span className={styles.boardPts}>
+        <strong>
+          {points}
+          <span className={styles.srOnly}> {t('board.points')}</span>
+        </strong>
+        <span>{t('board2.exactShort', { count: exact })}</span>
+      </span>
+    </li>
   );
 }

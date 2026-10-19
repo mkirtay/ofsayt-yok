@@ -169,76 +169,6 @@ $on-action-fg: var(--color-on-action);
   border-radius: $radius-md;
 }
 
-// ── 3 adım ──
-.steps {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: $spacing-3;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  counter-reset: step;
-
-  li {
-    counter-increment: step;
-    padding: $spacing-4;
-    background: $color-surface;
-    border: 1px solid $color-border;
-    border-radius: $radius-md;
-
-    &::before {
-      content: counter(step);
-      display: inline-grid;
-      place-items: center;
-      width: 28px;
-      height: 28px;
-      margin-bottom: $spacing-2;
-      border-radius: $radius-full;
-      background: $on-action-bg;
-      color: $on-action-fg;
-      font-weight: 900;
-    }
-  }
-
-  h3 {
-    margin: 0 0 4px;
-    font-size: 16px;
-    color: $color-text;
-  }
-
-  p {
-    margin: 0;
-    font-size: 14px;
-    color: $color-text-secondary;
-  }
-
-  // Dar ekranda kompakt: numara solda, metin sağda (üç adım ≈ 200 px).
-  @media (max-width: 639px) {
-    grid-template-columns: 1fr;
-    gap: $spacing-2;
-
-    li {
-      display: grid;
-      grid-template-columns: 28px 1fr;
-      column-gap: $spacing-3;
-      padding: $spacing-3;
-
-      &::before {
-        grid-row: span 2;
-        margin-bottom: 0;
-      }
-    }
-
-    h3 {
-      font-size: 15px;
-    }
-
-    p {
-      font-size: 13px;
-    }
-  }
-}
-
 // ── Sekmeler ──
 .tabs {
   display: inline-flex;
@@ -296,24 +226,13 @@ $on-action-fg: var(--color-on-action);
   }
 }
 
-.num {
-  text-align: right !important;
-  white-space: nowrap;
-}
-
-.nick {
-  max-width: 180px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 // ── Hafta: kompakt hero + maç kartları + tek satırlık başlamış/biten maçlar ──
 .play {
   display: flex;
   flex-direction: column;
   gap: $spacing-3;
   scroll-margin-top: 80px;
+  container: game-play / inline-size;
 
   @media (prefers-reduced-motion: reduce) {
     &,
@@ -476,7 +395,8 @@ $on-action-fg: var(--color-on-action);
   padding: 0;
   list-style: none;
 
-  @media (min-width: $bp-md) {
+  // Sütun genişliğine göre (yan sütunlu düzende ana akış 1024 px'te ≈ 600 px → tek kart).
+  @container game-play (min-width: 700px) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -1280,4 +1200,638 @@ $on-action-fg: var(--color-on-action);
   overflow: hidden;
   clip: rect(0 0 0 0);
   white-space: nowrap;
+}
+
+// ── İki sütun düzen (/tahmin): ana akış + 360 px yan sütun (ana sayfa Gündem paneliyle aynı genişlik) ──
+.pageWide {
+  max-width: $container-width;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    'main'
+    'side'
+    'rest';
+  gap: $spacing-6;
+
+  @media (max-width: 479px) {
+    gap: $spacing-4;
+  }
+
+  @media (min-width: $bp-desktop) {
+    grid-template-columns: minmax(0, 1fr) 360px;
+    // Yan sütun iki satırı kaplar; fazla yükseklik 2. satıra (SSS) gider → maçlarla SSS arasında boşluk kalmaz.
+    grid-template-rows: auto 1fr;
+    grid-template-areas:
+      'main side'
+      'rest side';
+    align-items: start;
+  }
+}
+
+.layoutMain {
+  grid-area: main;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-6;
+}
+
+.layoutRest {
+  grid-area: rest;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-6;
+}
+
+.layoutSide {
+  grid-area: side;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+
+  // Masaüstünde yapışkan, uzun içerik kendi içinde kayar.
+  @media (min-width: $bp-desktop) {
+    position: sticky;
+    top: calc(var(--header-height) + #{$spacing-4});
+    max-height: calc(100vh - var(--header-height) - #{$spacing-8});
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    padding-right: 2px;
+  }
+}
+
+.sideSection {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+  scroll-margin-top: 80px;
+}
+
+.sideTitle {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 900;
+  color: $color-text;
+}
+
+.sideCard {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+  padding: $spacing-4;
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-lg;
+}
+
+.sideLead {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: $color-text;
+}
+
+.sideNote {
+  margin: 0;
+  padding: $spacing-2 $spacing-3;
+  border-radius: $radius-sm;
+  background: $color-muted;
+  font-size: 13px;
+  font-weight: 700;
+  color: $color-text;
+}
+
+.sideSub {
+  margin: $spacing-1 0 0;
+  font-size: 14px;
+  font-weight: 800;
+  color: $color-text;
+}
+
+.sideLink {
+  align-self: flex-start;
+  font-size: 13px;
+  font-weight: 800;
+  color: $color-primary-text;
+}
+
+// 3 adım şeridi
+.stepsMini {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    padding: 8px;
+    border-radius: $radius-md;
+    background: $color-surface;
+    border: 1px solid $color-border;
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1.2;
+    color: $color-text;
+  }
+
+  span {
+    flex: none;
+    display: grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: $on-action-bg;
+    color: $on-action-fg;
+    font-size: 12px;
+    font-weight: 900;
+  }
+}
+
+// Puan kuralları
+.pointRules {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: grid;
+    grid-template-columns: 34px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: $radius-md;
+    background: $color-bg;
+    border: 1px solid $color-border;
+  }
+
+  li[data-key='joker'] {
+    border-color: var(--joker);
+    background: var(--joker-bg);
+  }
+}
+
+.pointIcon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: $color-muted;
+  font-size: 16px;
+  color: $color-text;
+}
+
+.pointText {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+
+  strong {
+    font-size: 14px;
+    font-weight: 800;
+    color: $color-text;
+  }
+
+  span {
+    font-size: 12.5px;
+    line-height: 1.35;
+    color: $color-text-secondary;
+  }
+}
+
+.pointChip {
+  min-width: 40px;
+  padding: 5px 9px;
+  border-radius: $radius-full;
+  background: $on-action-bg;
+  color: $on-action-fg;
+  font-size: 14px;
+  font-weight: 900;
+  text-align: center;
+
+  &[data-key='joker'] {
+    background: var(--color-premium);
+    color: var(--color-on-premium);
+  }
+
+  &[data-key='rare'] {
+    background: #5b3fd1;
+    color: #fff;
+  }
+}
+
+// Örnek: mini skor kartları + adımlar + çubuk
+.example {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: $spacing-3;
+  border-radius: $radius-md;
+  background: linear-gradient(140deg, $hero-deep 0%, $hero-mid 100%);
+  color: #fff;
+}
+
+.exampleTitle {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.exampleScores {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-3;
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.miniScore {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 92px;
+  padding: 8px 12px;
+  border-radius: $radius-md;
+  background: rgba(0, 0, 0, 0.25);
+
+  span {
+    font-size: 11px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.85);
+  }
+
+  strong {
+    font-size: 26px;
+    font-weight: 900;
+    line-height: 1.1;
+  }
+
+  &[data-tone='result'] {
+    background: rgba(255, 255, 255, 0.14);
+  }
+}
+
+.exampleSteps {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1px;
+    padding: 6px 2px;
+    border-radius: $radius-sm;
+    background: rgba(0, 0, 0, 0.22);
+    font-size: 11px;
+    font-weight: 700;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.75);
+
+    > span:first-child {
+      font-size: 14px;
+      font-weight: 900;
+    }
+
+    strong {
+      font-size: 14px;
+      font-weight: 900;
+    }
+  }
+
+  li[data-ok] {
+    background: rgba(255, 255, 255, 0.16);
+    color: #fff;
+
+    > span:first-child {
+      color: #7cf0bf;
+    }
+  }
+}
+
+.exampleBar {
+  display: flex;
+  height: 10px;
+  overflow: hidden;
+  border-radius: $radius-full;
+  background: rgba(255, 255, 255, 0.16);
+
+  span {
+    background: var(--color-premium);
+    transform-origin: left;
+    animation: barGrow 0.7s ease both;
+
+    & + span {
+      border-left: 2px solid $hero-deep;
+      animation-delay: 0.25s;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    span {
+      animation: none;
+    }
+  }
+}
+
+@keyframes barGrow {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+.exampleTotal {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.9);
+
+  strong {
+    font-size: 18px;
+    font-weight: 900;
+    color: #fff;
+  }
+}
+
+// Senaryo kartları
+.scenarios {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'title pts'
+      'scores pts'
+      'text text';
+    gap: 2px $spacing-2;
+    padding: 10px 12px;
+    border-radius: $radius-md;
+    background: $color-bg;
+    border: 1px solid $color-border;
+  }
+
+  li[data-joker] {
+    border-color: var(--joker);
+    background: var(--joker-bg);
+  }
+}
+
+.scenarioTitle {
+  grid-area: title;
+  font-size: 13px;
+  font-weight: 800;
+  color: $color-text;
+}
+
+.scenarioScores {
+  grid-area: scores;
+  font-family: $font-family-score;
+  font-size: 16px;
+  font-weight: 900;
+  color: $color-text;
+}
+
+.scenarioText {
+  grid-area: text;
+  font-size: 12.5px;
+  line-height: 1.35;
+  color: $color-text-secondary;
+}
+
+.scenarioPts {
+  grid-area: pts;
+  align-self: center;
+  padding: 5px 10px;
+  border-radius: $radius-full;
+  background: $on-action-bg;
+  color: $on-action-fg;
+  font-size: 13px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+// Kurallar (ikonlu kartlar)
+.easyRules {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: grid;
+    grid-template-columns: 34px minmax(0, 1fr);
+    gap: 10px;
+    align-items: start;
+  }
+
+  li > span:last-child {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  strong {
+    font-size: 14px;
+    font-weight: 800;
+    color: $color-text;
+  }
+
+  li > span:last-child > span {
+    font-size: 13px;
+    line-height: 1.4;
+    color: $color-text-secondary;
+  }
+}
+
+.ruleIcon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: $radius-md;
+  background: $color-muted;
+  font-size: 16px;
+}
+
+.rulesGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: $spacing-3;
+
+  @media (min-width: $bp-md) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+}
+
+.detailSummary {
+  cursor: pointer;
+  font-weight: 800;
+  color: $color-text;
+}
+
+// ── Sıralama satırları ──
+.boardList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.boardRow {
+  display: grid;
+  grid-template-columns: 28px 32px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: $radius-md;
+  border: 1px solid transparent;
+
+  &[data-me] {
+    background: $color-row-highlight;
+    border-color: rgba(0, 167, 111, 0.45);
+  }
+
+  &[data-separated] {
+    margin-top: 6px;
+  }
+}
+
+.boardRank {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-size: 13px;
+  font-weight: 900;
+  color: $color-text-secondary;
+
+  &[data-medal] {
+    color: #1a1300;
+  }
+
+  &[data-medal='1'] {
+    background: #f5b301;
+    box-shadow: 0 0 0 2px rgba(245, 179, 1, 0.3);
+  }
+
+  &[data-medal='2'] {
+    background: #c3cad4;
+  }
+
+  &[data-medal='3'] {
+    background: #d39363;
+  }
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.boardWho {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.boardNick {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 800;
+  color: $color-text;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.youTag {
+  flex: none;
+  padding: 1px 7px;
+  border-radius: $radius-full;
+  background: $on-action-bg;
+  color: $on-action-fg;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.boardBar {
+  display: block;
+  height: 5px;
+  border-radius: $radius-full;
+  background: $color-muted;
+  overflow: hidden;
+
+  span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: $color-primary;
+  }
+}
+
+.boardPts {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 1.15;
+
+  strong {
+    font-size: 16px;
+    font-weight: 900;
+    color: $color-text;
+  }
+
+  > span {
+    font-size: 11px;
+    font-weight: 700;
+    color: $color-text-secondary;
+  }
 }
