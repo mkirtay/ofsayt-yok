@@ -11,17 +11,22 @@ import {
   distributionRowsSql,
   ensureEntrySql,
   mySeasonTotalSql,
+  predictedWeeksSql,
+  seasonAboveSql,
   seasonRankSql,
   seasonTopSql,
   setJokerSql,
   touchEntrySql,
   upsertPredictionSql,
+  weekAboveSql,
   weekRankSql,
   weekTopSql,
   type BoardRow,
   type SqlQuery,
 } from '@/lib/game/sql';
 import { buildDistribution, isValidGoals, outcomeShares, type Breakdown } from '@/lib/game/scoring';
+import { weekStreak } from '@/lib/game/week';
+import { listPublicWeekKeys, resolveCurrentWeekKey } from '@/server/game/weeks';
 import type { BoardEntryView, DistributionView, LeaderboardView, MyStandingView, MyWeekView, SaveItemResult, SaveResult } from '@/lib/game/types';
 
 export const LEADERBOARD_CACHE_SECONDS = 60;
@@ -151,19 +156,43 @@ export async function invalidateLeaderboards(weekKey: string, season: string): P
   await Promise.all([writeCache(boardKey('week', weekKey), null, 1), writeCache(boardKey('season', season), null, 1)]);
 }
 
+async function myStreak(userId: string): Promise<number> {
+  const [published, mine, current] = await Promise.all([listPublicWeekKeys(60), raw<{ weekKey: string }>(predictedWeeksSql(userId)), resolveCurrentWeekKey()]);
+  return weekStreak(published, new Set(mine.map((r) => r.weekKey)), current);
+}
+
+const abovePoints = async (q: SqlQuery) => {
+  const row = (await raw<{ points: number }>(q))[0];
+  return row ? Number(row.points) : null;
+};
+
 export async function loadMyStanding(userId: string, scope: 'week' | 'season', key: string): Promise<MyStandingView | null> {
   const v = await viewer(userId);
   if (scope === 'week') {
     const week = await prisma.gameWeek.findUnique({ where: { weekKey: key }, select: { id: true } });
     if (!week) return null;
     const entry = await prisma.gameWeekEntry.findUnique({ where: { userId_weekId: { userId, weekId: week.id } } });
-    const rank = entry && v.visible && !entry.hiddenAt ? Number((await raw<{ n: number }>(weekRankSql(week.id, userId)))[0]?.n ?? 0) + 1 : null;
-    return { scope, key, points: entry?.totalPoints ?? 0, exact: entry?.exactCount ?? 0, rank, visible: v.visible };
+    const ranked = !!entry && v.visible && !entry.hiddenAt;
+    const [rankRow, above, streak] = await Promise.all([
+      ranked ? raw<{ n: number }>(weekRankSql(week.id, userId)) : Promise.resolve([]),
+      ranked ? abovePoints(weekAboveSql(week.id, userId)) : Promise.resolve(null),
+      myStreak(userId),
+    ]);
+    const points = entry?.totalPoints ?? 0;
+    const rank = ranked ? Number(rankRow[0]?.n ?? 0) + 1 : null;
+    return { scope, key, points, exact: entry?.exactCount ?? 0, rank, visible: v.visible, gap: above == null ? null : above - points, streak };
   }
   const total = (await raw<{ points: number; exact: number; weeks: number }>(mySeasonTotalSql(key, userId)))[0];
   const hidden = await prisma.gameWeekEntry.count({ where: { userId, season: key, hiddenAt: { not: null } } });
-  const rank = total && total.weeks > 0 && v.visible && !hidden ? Number((await raw<{ n: number }>(seasonRankSql(key, userId)))[0]?.n ?? 0) + 1 : null;
-  return { scope, key, points: Number(total?.points ?? 0), exact: Number(total?.exact ?? 0), rank, visible: v.visible };
+  const ranked = !!total && total.weeks > 0 && v.visible && !hidden;
+  const [rankRow, above, streak] = await Promise.all([
+    ranked ? raw<{ n: number }>(seasonRankSql(key, userId)) : Promise.resolve([]),
+    ranked ? abovePoints(seasonAboveSql(key, userId)) : Promise.resolve(null),
+    myStreak(userId),
+  ]);
+  const points = Number(total?.points ?? 0);
+  const rank = ranked ? Number(rankRow[0]?.n ?? 0) + 1 : null;
+  return { scope, key, points, exact: Number(total?.exact ?? 0), rank, visible: v.visible, gap: above == null ? null : above - points, streak };
 }
 
 // ── Dağılım (yalnız kilit sonrası) ──────────────────────────────────────────────────────────────────────────────────

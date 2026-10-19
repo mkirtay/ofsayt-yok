@@ -93,3 +93,17 @@ export function isInWeek(weekKey: string, at: Date): boolean {
   const r = weekRange(weekKey);
   return !!r && at >= r.startsAt && at < r.endsAt;
 }
+
+/**
+ * Seri: yayındaki haftalar (yeniden eskiye) içinde art arda tahmin yapılan hafta sayısı. İçinde bulunulan hafta henüz
+ * tahminsizse seriyi bozmaz (bir önceki haftadan sayılır); yayınlanmamış (oyunsuz) haftalar seriyi bozmaz.
+ */
+export function weekStreak(publishedDesc: readonly string[], predicted: ReadonlySet<string>, currentKey: string | null): number {
+  let n = 0;
+  for (const key of publishedDesc) {
+    if (predicted.has(key)) n++;
+    else if (key === currentKey && n === 0) continue;
+    else break;
+  }
+  return n;
+}

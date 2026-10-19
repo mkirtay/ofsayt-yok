@@ -48,7 +48,18 @@ export type BoardEntryView = { rank: number; nickname: string; points: number; e
 
 export type LeaderboardView = { scope: 'week' | 'season'; key: string; entries: BoardEntryView[] };
 
-export type MyStandingView = { scope: 'week' | 'season'; key: string; points: number; exact: number; rank: number | null; visible: boolean };
+export type MyStandingView = {
+  scope: 'week' | 'season';
+  key: string;
+  points: number;
+  exact: number;
+  rank: number | null;
+  visible: boolean;
+  /** Hemen üstümdeki oyuncuyla puan farkı (lider ya da sırasızsam null). */
+  gap: number | null;
+  /** Art arda tahmin yapılan yayındaki hafta sayısı (lib/game/week.ts → weekStreak). */
+  streak: number;
+};
 
 export type DistributionView = {
   total: number;

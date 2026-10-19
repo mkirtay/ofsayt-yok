@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isInWeek, isSeasonKey, isWeekKey, seasonOf, shiftWeek, weekKeyOf, weekRange } from './week';
+import { isInWeek, isSeasonKey, isWeekKey, seasonOf, shiftWeek, weekKeyOf, weekRange, weekStreak } from './week';
 
 const at = (iso: string) => Date.parse(iso);
 
@@ -44,5 +44,20 @@ describe('tahmin oyunu haftası (TR, Pzt 00:00 – Paz 23:59)', () => {
   it('isInWeek', () => {
     expect(isInWeek('2026-W42', new Date('2026-10-17T18:00:00Z'))).toBe(true);
     expect(isInWeek('2026-W42', new Date('2026-10-19T18:00:00Z'))).toBe(false);
+  });
+});
+
+describe('weekStreak', () => {
+  const pub = ['2026-W43', '2026-W42', '2026-W41', '2026-W39', '2026-W38'];
+  it('içinde bulunulan hafta tahminsizse önceki haftadan sayar', () => {
+    expect(weekStreak(pub, new Set(['2026-W42', '2026-W41', '2026-W39']), '2026-W43')).toBe(3);
+  });
+  it('bu hafta da tahmin varsa dahil; yayınsız hafta (W40) seriyi bozmaz, eksik yayınlı hafta bozar', () => {
+    expect(weekStreak(pub, new Set(['2026-W43', '2026-W42', '2026-W41', '2026-W39']), '2026-W43')).toBe(4);
+    expect(weekStreak(pub, new Set(['2026-W43', '2026-W41']), '2026-W43')).toBe(1);
+  });
+  it('hiç tahmin yoksa 0', () => {
+    expect(weekStreak(pub, new Set(), '2026-W43')).toBe(0);
+    expect(weekStreak([], new Set(['2026-W43']), null)).toBe(0);
   });
 });

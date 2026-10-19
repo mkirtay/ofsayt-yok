@@ -172,6 +172,44 @@ SELECT count(*)::int AS n FROM s, me WHERE
   };
 }
 
+/** Sezonda hemen üstümdeki görünür oyuncunun puanı (benden önde olanların en sonuncusu); lider ya da görünmezsem satır yok. */
+export function seasonAboveSql(season: string, userId: string): SqlQuery {
+  return {
+    text: `WITH s AS (${SEASON_AGG}), me AS (SELECT * FROM s WHERE "userId" = $2)
+SELECT s.points FROM s, me WHERE
+  s.points > me.points
+  OR (s.points = me.points AND s.exact > me.exact)
+  OR (s.points = me.points AND s.exact = me.exact AND s.direction > me.direction)
+  OR (s.points = me.points AND s.exact = me.exact AND s.direction = me.direction AND (s.first_at, s."userId") < (me.first_at, me."userId"))
+ORDER BY s.points ASC, s.exact ASC, s.direction ASC, s.first_at DESC, s."userId" DESC LIMIT 1`,
+    values: [season, userId],
+  };
+}
+
+/** Haftada hemen üstümdeki görünür oyuncunun puanı (sıra ölçütü `weekRankSql` ile aynı). */
+export function weekAboveSql(weekId: string, userId: string): SqlQuery {
+  return {
+    text: `SELECT e."totalPoints" AS points FROM "GameWeekEntry" e JOIN "User" u ON u.id = e."userId", "GameWeekEntry" me
+WHERE me."weekId" = $1 AND me."userId" = $2 AND e."weekId" = $1 AND ${VISIBLE} AND (
+  e."totalPoints" > me."totalPoints"
+  OR (e."totalPoints" = me."totalPoints" AND e."exactCount" > me."exactCount")
+  OR (e."totalPoints" = me."totalPoints" AND e."exactCount" = me."exactCount" AND e."directionCount" > me."directionCount")
+  OR (e."totalPoints" = me."totalPoints" AND e."exactCount" = me."exactCount" AND e."directionCount" = me."directionCount"
+      AND (e."lastChangeAt", e."userId") < (me."lastChangeAt", me."userId")))
+ORDER BY e."totalPoints" ASC, e."exactCount" ASC, e."directionCount" ASC, e."lastChangeAt" DESC, e."userId" DESC LIMIT 1`,
+    values: [weekId, userId],
+  };
+}
+
+/** Tahmin yaptığım haftalar (seri hesabı; yeniden eskiye, en çok 60). */
+export function predictedWeeksSql(userId: string): SqlQuery {
+  return {
+    text: `SELECT DISTINCT w."weekKey" AS "weekKey" FROM "GamePrediction" p JOIN "GameWeek" w ON w.id = p."weekId"
+WHERE p."userId" = $1 ORDER BY 1 DESC LIMIT 60`,
+    values: [userId],
+  };
+}
+
 /** Sezon toplamım (görünürlükten bağımsız — kendi puanımı her zaman görürüm). */
 export function mySeasonTotalSql(season: string, userId: string): SqlQuery {
   return {

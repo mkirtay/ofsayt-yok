@@ -7,6 +7,8 @@ import {
   distributionRowsSql,
   ensureEntrySql,
   mySeasonTotalSql,
+  predictedWeeksSql,
+  seasonAboveSql,
   predictionsForScoringSql,
   recomputeEntriesSql,
   seasonRankSql,
@@ -14,6 +16,7 @@ import {
   setJokerSql,
   upsertPredictionSql,
   voidPointsSql,
+  weekAboveSql,
   weekRankSql,
   weekTopSql,
   type BoardRow,
@@ -169,6 +172,8 @@ describe('prediction_game migration (gerçek SQL)', () => {
     expect((await one<{ n: number }>(weekRankSql('w42', 'u2')))!.n + 1).toBe(2);
     expect((await one<{ n: number }>(weekRankSql('w42', 'u1')))!.n + 1).toBe(1);
     expect(await run(weekTopSql('w42', 1))).toHaveLength(1);
+    expect(await one(weekAboveSql('w42', 'u2'))).toEqual({ points: 16 }); // zeynep'in üstü eren
+    expect(await run(weekAboveSql('w42', 'u1'))).toEqual([]); // lider
   });
 
   it('sezon tablosu: haftaların toplamı; eşitlikte ilk katılım', async () => {
@@ -184,6 +189,9 @@ describe('prediction_game migration (gerçek SQL)', () => {
     expect((await one<{ n: number }>(seasonRankSql('2026-27', 'u1')))!.n + 1).toBe(2);
     expect(await one(mySeasonTotalSql('2026-27', 'u4'))).toEqual({ points: 8, exact: 1, direction: 1, weeks: 1 }); // kendi puanını görür
     expect(await run(seasonTopSql('2025-26'))).toEqual([]);
+    expect(await one(seasonAboveSql('2026-27', 'u1'))).toEqual({ points: 16 }); // eşit puanda önde zeynep
+    expect(await run(seasonAboveSql('2026-27', 'u2'))).toEqual([]);
+    expect((await run<{ weekKey: string }>(predictedWeeksSql('u2'))).length).toBeGreaterThan(0);
   });
 
   it('kullanıcı silinince tahmin ve özet satırları silinir', async () => {
