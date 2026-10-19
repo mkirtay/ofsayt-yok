@@ -13,7 +13,6 @@ import {
 import type { Match } from '@/models/liveScore';
 import type { MatchEvent, MatchStatsData } from '@/models/domain';
 import { toStandingsCompetitionId } from '@/services/sportmonksProviderFlag';
-import { fetchWorldCupStandingsBundle, isWorldCupCompetition } from '@/utils/worldCupStandings';
 import { useLiveMatchUpdates } from '@/hooks/useLiveMatchUpdates';
 import { syncLivePatchToHomeQueries } from '@/hooks/useHomeHubMatches';
 import { mergeRedCards } from '@/utils/liveMatchPatch';
@@ -94,15 +93,6 @@ export async function loadStandingsForMatch(cid: number): Promise<{
   selectedSeasonId: number | null;
   standings: CompetitionTableData | null;
 }> {
-  if (isWorldCupCompetition(cid)) {
-    const wc = await fetchWorldCupStandingsBundle();
-    return {
-      seasons: wc.seasons,
-      selectedSeasonId: wc.selectedSeasonId,
-      standings: wc.standings,
-    };
-  }
-
   const compIdStr = String(cid);
   const [seasonsList, table1] = await Promise.all([
     getSeasonsList({ competitionId: compIdStr }),

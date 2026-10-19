@@ -15,7 +15,7 @@ import { sportmonksClientRequest, sportmonksCollectAllPages } from './sportmonks
 import { pivotStandingRow } from './sportmonks/standingsPivot';
 import type { SportmonksStandingRow } from './sportmonks/types';
 import type { CompetitionTableData, CompetitionTableStandingRow } from './liveScoreService';
-import { WORLD_CUP_COMPETITION_ID } from '@/config/worldCup';
+import { WORLD_CUP_COMPETITION_ID } from '@/services/sportmonksProviderFlag';
 
 export const STANDINGS_WITH_GROUPS_INCLUDE = 'participant;details.type;group;stage';
 /** Puan Durumu sayfası: aynı istek + son 5 maç formu (yan panel hafif kalsın diye ayrı include). */

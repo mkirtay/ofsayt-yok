@@ -9,9 +9,8 @@
  * turnuva), tier 2 UEFA hâlâ Ş→Avrupa→Konferans.
  */
 
-import { WORLD_CUP_COMPETITION_ID } from './worldCup';
 import { compareLeaguePriority } from './leaguePriority';
-import { isSportmonksProviderEnabled, resolveSportmonksLeagueId } from '@/services/sportmonksProviderFlag';
+import { WORLD_CUP_COMPETITION_ID, isSportmonksProviderEnabled, resolveSportmonksLeagueId } from '@/services/sportmonksProviderFlag';
 
 export type LeagueGroupSortInput = {
   competition_id: number;

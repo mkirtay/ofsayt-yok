@@ -63,7 +63,6 @@ Bunlar düzeltilince izin listesindeki girdileri silinmeli (bayat girdi testi za
 | --- | --- |
 | VAR animasyonu: `VarScene.tsx` damgası `OFSAYT YOK` / `NO OFFSIDE`, yorumlar | Marka değil, hakem kararı ("ofsayt yok"). |
 | Kural Köşesi animasyon kimliği `03-var-ofsayt-yok` (`kural-kosesi.json`, `facts.ts`, `Panel.tsx`) | İçerik anahtarı; adla ilgisi yok, değişirse içerik eşleşmesi kırılır. |
-| Takvim UID'si `wcmatch-<id>@ofsaytyok.app` (`WorldCupCalendar`) | Kalıcı etkinlik kimliği; değişirse kullanıcı takviminde etkinlikler çiftlenir. |
 | `docs/OFSAYT_YOK_DESIGN_SYSTEM.md` (ve `_tokens.scss`'teki referansı) | Belge dosya adı; istenirse ayrıca yeniden adlandırılır. |
 | `package.json` `"name": "ofsayt-yok"`, repo ve worktree klasör adları | Private paket, yayınlanmıyor; yeniden adlandırma yalnız yerel yolları bozar. |
 | `scripts/seed-official-account.mjs` (`official@ofsaytyok.invalid`, `ofsaytyok`) | DEPRECATED; DB'deki eski hesabın kimliği. |

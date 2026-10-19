@@ -254,14 +254,6 @@
     "goals": "G",
     "showAll": "Tümünü Göster ({{count}})"
   },
-  "worldCup": {
-    "groups": "Gruplar",
-    "matches": "Maçlar",
-    "calendar": "Takvim",
-    "bracket": "Eleme Turu",
-    "teams": "Takımlar",
-    "tabsAriaLabel": "Dünya kupası içerik sekmeleri"
-  },
   "leagueFilter": {
     "group": "Lig filtresi",
     "all": "Tümü",

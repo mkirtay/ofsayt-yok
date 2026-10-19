@@ -94,29 +94,6 @@ export function StandingsSkeleton({
   );
 }
 
-export function WorldCupGroupCardSkeleton() {
-  return (
-    <div className={styles.wcGroupCard}>
-      <SkeletonBlock variant="dark" width={120} height={22} />
-      <div className={styles.wcGroupRows}>
-        {Array.from({ length: 4 }, (_, i) => (
-          <SkeletonBlock key={i} variant="dark" height={14} />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-export function WorldCupGroupCardsSkeleton({ count = 12 }: { count?: number }) {
-  return (
-    <>
-      {Array.from({ length: count }, (_, i) => (
-        <WorldCupGroupCardSkeleton key={i} />
-      ))}
-    </>
-  );
-}
-
 export function MatchListSkeleton({
   groups = 3,
   variant = 'default',

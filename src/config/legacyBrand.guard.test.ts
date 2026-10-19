@@ -40,7 +40,6 @@ export const LEGACY_BRAND_ALLOWLIST: Izin[] = [
   { path: 'src/components/KuralKosesi/Panel.tsx', allow: /03-var-ofsayt-yok/g, sinif: 'teknik', neden: 'VAR animasyon kimliği (içerik JSON anahtarı).' },
   { path: 'src/components/KuralKosesi/facts.ts', allow: /03-var-ofsayt-yok/g, sinif: 'teknik', neden: 'VAR animasyon kimliği.' },
   { path: 'src/content/kural-kosesi.json', allow: /03-var-ofsayt-yok/g, sinif: 'teknik', neden: 'VAR animasyon kimliği.' },
-  { path: 'src/components/WorldCupCalendar/index.tsx', allow: /@ofsaytyok\.app/g, sinif: 'teknik', neden: 'Takvim UID’si kalıcı; değişirse içe aktarılmış etkinlikler çiftlenir.' },
   { path: 'src/styles/_tokens.scss', allow: /OFSAYT_YOK_DESIGN_SYSTEM\.md/g, sinif: 'teknik', neden: 'Belge dosya adı referansı.' },
   { path: 'package.json', allow: /"name": "ofsayt-yok"/g, sinif: 'teknik', neden: 'npm paket adı (private, yayınlanmıyor).' },
   { path: 'scripts/seed-official-account.mjs', sinif: 'teknik', neden: 'DEPRECATED seed; DB’deki eski hesabın kimliği (e-posta/kullanıcı adı).' },

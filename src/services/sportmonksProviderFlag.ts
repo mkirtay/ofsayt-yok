@@ -1,4 +1,8 @@
-import { WORLD_CUP_COMPETITION_ID } from '@/config/worldCup';
+/**
+ * Eski (livescore-api.com) Dünya Kupası `competition_id`'si. Sportmonks planında Dünya Kupası yok: bu id'ye
+ * istek atılmaz, puan durumu / gol krallığı `null` döner (/world-cup sayfası kaldırıldı, 2026-10-19).
+ */
+export const WORLD_CUP_COMPETITION_ID = 362;
 
 /**
  * Faz 2 sağlayıcı anahtarı — Katman-1 fonksiyonlarını livescore-api.com yerine

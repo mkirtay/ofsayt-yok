@@ -129,22 +129,6 @@ $wc-shimmer-mid: #2a2a2a;
   width: 100%;
 }
 
-.wcGroupCard {
-  background: $wc-bg;
-  border: 1px solid $wc-border;
-  border-radius: 8px;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.wcGroupRows {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
 .teamHeaderSkeleton {
   display: flex;
   align-items: center;

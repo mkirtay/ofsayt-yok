@@ -1,4 +1,3 @@
-import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useSession, signOut } from 'next-auth/react';
@@ -23,7 +22,6 @@ import AccountMenu from './AccountMenu';
 import NotificationBell from './NotificationBell';
 import { lockBodyScroll } from '@/utils/scrollLock';
 import { MOBILE_LAYOUT_QUERY } from '@/config/breakpoints';
-import { WORLD_CUP_PAGE_ENABLED } from '@/config/worldCup';
 import styles from './header.module.scss';
 import BrandLogo from '@/components/BrandLogo';
 
@@ -35,24 +33,7 @@ export default function Header() {
   const { credits, authenticated: hasCredits } = useCredits();
   const { t } = useTranslation('nav');
   const { locale, setLocale } = useI18n();
-  const isWorldCupRoute = router.pathname.startsWith('/world-cup');
-  const [bodyHasWcHeader, setBodyHasWcHeader] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  useEffect(() => {
-    const sync = () => {
-      setBodyHasWcHeader(
-        document.body.classList.contains('worldCupHeaderOnly') ||
-          document.body.classList.contains('worldCupTheme'),
-      );
-    };
-    sync();
-    const observer = new MutationObserver(sync);
-    observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
-    return () => observer.disconnect();
-  }, []);
-
-  const isWorldCupTheme = isWorldCupRoute || bodyHasWcHeader;
 
   const menuRef = useRef<HTMLDivElement>(null);
   const hamburgerRef = useRef<HTMLButtonElement>(null);
@@ -126,36 +107,19 @@ export default function Header() {
   return (
     <>
       <script dangerouslySetInnerHTML={{ __html: AUTH_HINT_SCRIPT }} />
-      <header className={`${styles.header} ${isWorldCupTheme ? styles.headerWorldCup : ''}`.trim()}>
+      <header className={styles.header}>
         <Container className={styles.headerContainer}>
           <div className={styles.left}>
             <div className={styles.logo}>
               <Link href="/" className={styles.logoLink} onMouseEnter={prefetchHome} onFocus={prefetchHome}>
-                {/* Header her iki temada da koyu zeminli (Dünya Kupası teması dahil) → koyu-zemin varyantı. */}
-                <BrandLogo surface="dark" height={isWorldCupTheme ? 28 : 34} priority />
+                {/* Header her iki temada da koyu zeminli → koyu-zemin varyantı. */}
+                <BrandLogo surface="dark" height={34} priority />
               </Link>
             </div>
           </div>
           <HeaderSearch />
           <div className={styles.right}>
             <div className={styles.headerNavPills}>
-              {/* /world-cup kapalıyken bağlantı yok (config/worldCup.ts › WORLD_CUP_PAGE_ENABLED). */}
-              {WORLD_CUP_PAGE_ENABLED && isWorldCupTheme && (
-                <Link
-                  href="/world-cup"
-                  className={styles.worldCupMarkLink}
-                  aria-label="FIFA World Cup"
-                >
-                  <Image
-                    src="/images/2026_FIFA_World_Cup_Logo.png"
-                    alt="FIFA World Cup"
-                    width={28}
-                    height={42}
-                    className={styles.worldCupMark}
-                    priority
-                  />
-                </Link>
-              )}
               <AiMenu />
               <Link href="/pricing" className={styles.headerNavPillPremium}>
                 {hasCredits ? `${credits} ⚡` : t('credits')}
@@ -228,7 +192,7 @@ export default function Header() {
         </Container>
 
         {mobileMenuOpen && (
-          <div ref={menuRef} className={`${styles.mobileMenu} ${isWorldCupTheme ? styles.mobileMenuWorldCup : ''}`}>
+          <div ref={menuRef} className={styles.mobileMenu}>
             <HeaderSearch onNavigate={() => setMobileMenuOpen(false)} />
             <nav className={styles.mobileNav}>
               <Link

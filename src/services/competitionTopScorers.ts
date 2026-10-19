@@ -18,7 +18,7 @@ import {
 } from './sportmonksKatman2Mapper';
 import type { SportmonksPlayerStatistic, SportmonksTopscorerRow } from './sportmonks/types';
 import type { TopScorersPayload } from './liveScoreService';
-import { WORLD_CUP_COMPETITION_ID } from '@/config/worldCup';
+import { WORLD_CUP_COMPETITION_ID } from '@/services/sportmonksProviderFlag';
 
 /** Tür başına en çok bu kadar sayfa (50'şer → ilk 100) — `getTopScorers` ile aynı sınır. */
 const MAX_PAGES = 2;

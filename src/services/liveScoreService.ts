@@ -1,8 +1,7 @@
 import { Match } from '../models/liveScore';
 import { MatchEvent, MatchLineupData, MatchStatsData } from '../models/domain';
 import { compareGroupedLeagues } from '../config/leagues';
-import { WORLD_CUP_COMPETITION_ID } from '../config/worldCup';
-import { resolveSportmonksLeagueId } from './sportmonksProviderFlag';
+import { WORLD_CUP_COMPETITION_ID, resolveSportmonksLeagueId } from './sportmonksProviderFlag';
 import { sportmonksClientRequest, sportmonksCollectAllPages } from './sportmonksRuntimeClient';
 import { SportmonksHttpError } from './sportmonks/httpClient';
 import { isMatchLive, matchIstanbulDate } from '../utils/matchActivity';

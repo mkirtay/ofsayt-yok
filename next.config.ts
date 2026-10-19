@@ -75,9 +75,12 @@ const nextConfig: NextConfig = {
   async redirects() {
     // /uefa sayfası kaldırıldı (Şampiyonlar Ligi ana sayfadaki lig listesinden/filtresinden erişilir).
     // /credits → /pricing (Fiyatlandırma, 2026-10): eski bağlantılar, mobil uygulama ve arama sonuçları için kalıcı.
+    // /world-cup kaldırıldı (2026-10-19): Dünya Kupası Sportmonks planında yok, sayfa boş geliyordu.
     return [
       { source: '/uefa', destination: '/', permanent: true },
       { source: '/credits', destination: '/pricing', permanent: true },
+      { source: '/world-cup', destination: '/', permanent: true },
+      { source: '/world-cup/:path*', destination: '/', permanent: true },
     ];
   },
   images: {

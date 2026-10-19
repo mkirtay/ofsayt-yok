@@ -258,14 +258,6 @@
     "goals": "G",
     "showAll": "Show all ({{count}})"
   },
-  "worldCup": {
-    "groups": "Groups",
-    "matches": "Matches",
-    "calendar": "Calendar",
-    "bracket": "Knockout",
-    "teams": "Teams",
-    "tabsAriaLabel": "World Cup content tabs"
-  },
   "leagueFilter": {
     "group": "League filter",
     "all": "All",

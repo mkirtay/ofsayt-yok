@@ -1,7 +1,7 @@
 import type { GetServerSideProps } from 'next';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import Container from '@/components/Container';
 import MatchDetailContent from '@/components/MatchDetailContent';
 import { toStandingsCompetitionId } from '@/services/sportmonksProviderFlag';
@@ -12,7 +12,6 @@ import { useMatchDetail } from '@/hooks/useMatchDetail';
 import type { Match } from '@/models/liveScore';
 import { buildMatchHref, buildMatchSlug, parseMatchIdFromParam, parseMatchSlugFromParam } from '@/utils/matchUrl';
 import { matchOgImagePath } from '@/utils/matchOgImage';
-import { WORLD_CUP_COMPETITION_ID } from '@/config/worldCup';
 import { useTranslation } from '@/lib/i18n';
 import { leagueNameById } from '@/utils/leagueName';
 import { resolveMatchPage } from '@/server/resolveMatchPage';
@@ -241,15 +240,7 @@ export default function MatchDetail({
 
   const { t: tl } = useTranslation('leagues');
   const compId = match?.competition?.id ?? match?.competition_id;
-  const isWorldCup = compId === WORLD_CUP_COMPETITION_ID;
   const standingsCompId = toStandingsCompetitionId(compId);
-
-  useEffect(() => {
-    document.body.classList.toggle('worldCupHeaderOnly', isWorldCup);
-    return () => {
-      document.body.classList.remove('worldCupHeaderOnly');
-    };
-  }, [isWorldCup]);
 
   const showArchived =
     archived || (router.isReady && Boolean(requestedMatchId) && isArchivedMatch && !match);
