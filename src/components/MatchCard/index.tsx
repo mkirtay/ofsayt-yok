@@ -29,6 +29,7 @@ import MatchInfoLine, { CoachLink } from './MatchInfoLine';
 import RefereeStatsCard from './RefereeStatsCard';
 import { useIsDerby } from '@/hooks/useMatchInfoExtras';
 import { liveMinuteLabel } from '@/utils/liveMinute';
+import { loadWithRetry, type LoadResult } from '@/utils/loadWithRetry';
 import infoStyles from './matchInfo.module.scss';
 
 interface MatchCardProps {
@@ -69,26 +70,14 @@ function parseDisplayScore(raw: string): { home: string; away: string } {
 /** Karşılaşma geçmişi hatasında tek otomatik yeniden deneme gecikmesi. */
 export const H2H_RETRY_DELAY_MS = 1500;
 
-export type H2hLoadResult = { data: Head2HeadData | null } | { error: true };
+export type H2hLoadResult = LoadResult<Head2HeadData | null>;
 
-/**
- * Karşılaşma geçmişini çeker; hata (zaman aşımı/504/ağ) "veri yok" sayılmaz: `retries` kez `delayMs` sonra yeniden
- * denenir, yine olmazsa `{ error: true }`. Boş sonuç `{ data: null }`. `isCancelled` true olursa sonuç çözülmez.
- */
+/** Karşılaşma geçmişini çeker; hata "veri yok" sayılmaz (bkz. `loadWithRetry`). Boş sonuç `{ data: null }`. */
 export function loadH2hWithRetry(
   fetcher: () => Promise<Head2HeadData | null>,
   opts: { retries?: number; delayMs?: number; isCancelled?: () => boolean } = {},
 ): Promise<H2hLoadResult> {
-  const { retries = 1, delayMs = H2H_RETRY_DELAY_MS, isCancelled = () => false } = opts;
-  return fetcher().then(
-    (data) => ({ data }),
-    () =>
-      retries > 0 && !isCancelled()
-        ? new Promise<void>((r) => setTimeout(r, delayMs)).then(() =>
-            isCancelled() ? { error: true as const } : loadH2hWithRetry(fetcher, { retries: retries - 1, delayMs, isCancelled }),
-          )
-        : { error: true as const },
-  );
+  return loadWithRetry(fetcher, { delayMs: H2H_RETRY_DELAY_MS, ...opts });
 }
 
 /** "Yüklenemedi" kutusu (hata ≠ veri yok). */

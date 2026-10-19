@@ -2,6 +2,7 @@ import { useTranslation } from '@/lib/i18n';
 import '@/lib/i18nNamespaces/matchState';
 import { PanelSkeleton } from '@/components/Skeleton';
 import MatchStateNote from '@/components/MatchStateNote';
+import LoadError from '@/components/LoadError';
 import styles from './matchStats.module.scss';
 import { MatchStatsData } from '@/models/domain';
 import type { Match } from '@/models/liveScore';
@@ -13,9 +14,12 @@ interface MatchStatsProps {
   loading?: boolean;
   /** Verilirse boş/bekleme metinleri maçın evresine göre (başlamadı, canlı, bitti, ertelendi…). */
   match?: Match | null;
+  /** Yüklenemedi (hata ≠ veri yok): boş metin yerine "yüklenemedi · tekrar dene". */
+  error?: boolean;
+  onRetry?: () => void;
 }
 
-export default function MatchStats({ stats, loading, match }: MatchStatsProps) {
+export default function MatchStats({ stats, loading, match, error, onRetry }: MatchStatsProps) {
   const { t } = useTranslation('match');
   const { t: ts } = useTranslation('matchState');
   const state = match ? matchDisplayState(match) : null;
@@ -73,7 +77,9 @@ export default function MatchStats({ stats, loading, match }: MatchStatsProps) {
       {state?.special && statEntries.length > 0 ? <MatchStateNote special={state.special} variant="banner" /> : null}
 
       {statEntries.length === 0 ? (
-        state?.special ? (
+        error ? (
+          <LoadError onRetry={onRetry} />
+        ) : state?.special ? (
           <MatchStateNote special={state.special} variant="message" />
         ) : (
           <div className={styles.empty}>

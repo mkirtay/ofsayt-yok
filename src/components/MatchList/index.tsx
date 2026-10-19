@@ -44,8 +44,6 @@ function scoresById(items: FlatItem[]): Map<string, string> {
   return map;
 }
 
-export type MatchListVariant = 'default' | 'worldCup';
-
 /** Tarih gruplu fikstür modu: başlık lig değil GÜN (bkz. `utils/fixtureDateGroups.ts`). */
 export type MatchListDateGroup = {
   /** `YYYY-MM-DD` (TR günü) — React anahtarı ve sıra için */
@@ -89,8 +87,6 @@ interface MatchListProps {
    * tarih başlığı, altında o günün maçları. `groupedMatches` bu modda yok sayılır.
    */
   dateGroups?: MatchListDateGroup[];
-  /** `worldCup`: koyu arka plan / yüksek kontrast (World Cup sayfası) */
-  variant?: MatchListVariant;
   /** Bugünden farklı tarihli maçlar için kickoff hücresine kısa tarih ekler (örn. "15 Nis") */
   showDateWhenNotToday?: boolean;
   favoriteTeamIds?: Set<number>;
@@ -605,7 +601,6 @@ export default function MatchList({
   afterFirstGroup = null,
   trailingSection,
   dateGroups,
-  variant = 'default',
   showDateWhenNotToday = false,
   favoriteTeamIds,
   onToggleFavorite,
@@ -620,7 +615,6 @@ export default function MatchList({
   const { t } = useTranslation('match');
   const router = useRouter();
   const navigateTo = useCallback((path: string) => { void router.push(path); }, [router]);
-  const isWorldCup = variant === 'worldCup';
 
   const items = useMemo(() => {
     const base = dateGroups ? buildDateFlatItems(dateGroups) : buildItemsWithTrailingSection(groupedMatches, trailingSection);
@@ -704,7 +698,6 @@ export default function MatchList({
     fill ? styles.virtualHostFill : '',
     fit ? styles.virtualHostFit : '',
     fit && fitContent === 'belowSplit' ? styles.virtualHostFitBelowSplit : '',
-    isWorldCup ? styles.worldCup : '',
     compact ? styles.virtualHostCompact : '',
   ]
     .filter(Boolean)
@@ -715,9 +708,7 @@ export default function MatchList({
   if (items.length === 0) {
     return (
       <>
-        <div className={`${styles.empty} ${isWorldCup ? styles.worldCup : ''}`.trim()}>
-          {t('list.empty')}
-        </div>
+        <div className={styles.empty}>{t('list.empty')}</div>
         {afterFirstGroup ? <div className={styles.emptySlot}>{afterFirstGroup.node}</div> : null}
       </>
     );

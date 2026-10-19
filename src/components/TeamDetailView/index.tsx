@@ -17,7 +17,6 @@ import hubStyles from '@/pages/index.module.scss';
 import {
   getTeamCompetitions,
   getTeamSquads,
-  getSeasonsList,
   type CompetitionTableData,
   type CompetitionTableStandingRow,
   type SeasonListItem,
@@ -59,7 +58,9 @@ import { useInViewOnce } from '@/hooks/useInViewOnce';
 import { getTeamSeasonMatches, getTeamSeasonScorers, getTeamSeasonStats } from '@/services/teamPage';
 import { combineSeasonStats } from '@/services/sportmonks/teamSeasonStats';
 import { mergeTeamScorers } from '@/services/sportmonks/teamScorers';
-import { getCompetitionStandings } from '@/services/competitionStandings';
+import { fetchCompetitionStandings } from '@/services/competitionStandings';
+import { loadStandingsForMatch } from '@/services/standingsBundle';
+import { loadWithRetry } from '@/utils/loadWithRetry';
 import { brandTitle } from '@/config/brand';
 
 // Kadro sekmesi yüklenirken (tıklamadan sonra): sahne ve CSS'i ayrı parçada. Kutu (yükseklik) burada.
@@ -184,6 +185,10 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
   const [seasons, setSeasons] = useState<SeasonListItem[]>([]);
   const [selectedSeasonId, setSelectedSeasonId] = useState<number | null>(null);
   const [standingsLoading, setStandingsLoading] = useState(false);
+  // Yüklenemedi (hata ≠ tablo yok) + "Tekrar dene"nin yineleyeceği son yükleme (güncel ya da seçilen sezon).
+  const [standingsError, setStandingsError] = useState(false);
+  const [standingsReload, setStandingsReload] = useState(0);
+  const [seasonRequest, setSeasonRequest] = useState<{ seasonId: number; competitionIdStr: string } | null>(null);
   // Puan durumu ilk kez yerleşti mi (sağ kolondaki kartlar ondan sonra çizilir; iskelet → tablo büyümesi onları kaydırmasın).
   const [standingsSettled, setStandingsSettled] = useState(false);
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>('standings');
@@ -196,9 +201,14 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
 
   const handleSeasonChange = useCallback(async (seasonId: number, competitionIdStr: string) => {
     setSelectedSeasonId(seasonId);
+    setSeasonRequest({ seasonId, competitionIdStr });
     setStandingsLoading(true);
-    const tbl = await getCompetitionStandings(competitionIdStr, { season: seasonId });
-    setTable(tbl);
+    setStandingsError(false);
+    const r = await loadWithRetry(() => fetchCompetitionStandings(competitionIdStr, { season: seasonId }));
+    if ('error' in r) {
+      setTable(null);
+      setStandingsError(true);
+    } else setTable(r.data);
     setStandingsLoading(false);
   }, []);
 
@@ -223,37 +233,18 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
         return;
       }
       setStandingsLoading(true);
-      const standingsIdStr = String(standingsId);
-      const [seasonsList, table1] = await Promise.all([
-        getSeasonsList({ competitionId: standingsIdStr }),
-        getCompetitionStandings(standingsIdStr),
-      ]);
+      setStandingsError(false);
+      setSeasonRequest(null);
+      const r = await loadWithRetry(() => loadStandingsForMatch(standingsId), { isCancelled: () => cancelled });
       if (cancelled) return;
-      setSeasons(seasonsList);
-
-      const fromTable =
-        table1?.season?.id != null && Number.isFinite(Number(table1.season.id))
-          ? Number(table1.season.id)
-          : null;
-      let sid: number | null = fromTable;
-      if (sid != null && seasonsList.length && !seasonsList.some((s) => s.id === sid)) {
-        sid = seasonsList[0]!.id;
-      } else if (sid == null && seasonsList.length) {
-        sid = seasonsList[0]!.id;
+      if ('error' in r) {
+        setTable(null);
+        setStandingsError(true);
+      } else {
+        setSeasons(r.data.seasons);
+        setSelectedSeasonId(r.data.selectedSeasonId);
+        setTable(r.data.standings);
       }
-      setSelectedSeasonId(sid);
-
-      const needTableRefetch =
-        sid != null &&
-        table1 != null &&
-        (table1.season?.id == null || Number(table1.season.id) !== sid);
-
-      let tableFinal = table1;
-      if (needTableRefetch && sid != null) {
-        tableFinal = await getCompetitionStandings(standingsIdStr, { season: sid });
-      }
-      if (cancelled) return;
-      setTable(tableFinal ?? table1);
       setStandingsLoading(false);
       setStandingsSettled(true);
     };
@@ -262,7 +253,12 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
     return () => {
       cancelled = true;
     };
-  }, [teamId, selectedCompetitionId]);
+  }, [teamId, selectedCompetitionId, standingsReload]);
+
+  const retryStandings = useCallback(() => {
+    if (seasonRequest) void handleSeasonChange(seasonRequest.seasonId, seasonRequest.competitionIdStr);
+    else setStandingsReload((n) => n + 1);
+  }, [seasonRequest, handleSeasonChange]);
 
   // Kadro: takım kapsamlı (Sportmonks'ta lig değil) → yalnız Kadro sekmesi açılınca.
   const squadQuery = useQuery({
@@ -279,8 +275,9 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
     queryKey: ['team-page-topscorers', standingsCompetitionId, selectedSeasonId] as const,
     queryFn: async () => {
       // Yalnız sekme açılınca yüklenir (düz import(): ilk yük parçalarına girmez).
-      const { getTopScorersWithAppearances } = await import('@/services/competitionTopScorers');
-      return getTopScorersWithAppearances(standingsCompetitionId, selectedSeasonId != null ? { season: selectedSeasonId } : undefined);
+      // Hata fırlatır: react-query yeniden dener, sonra sekme "yüklenemedi · tekrar dene" gösterir.
+      const { fetchTopScorersWithAppearances } = await import('@/services/competitionTopScorers');
+      return fetchTopScorersWithAppearances(standingsCompetitionId, selectedSeasonId != null ? { season: selectedSeasonId } : undefined);
     },
     enabled: variant === 'page' && sidebarTab === 'scorers' && Boolean(standingsCompetitionId) && !standingsLoading,
     staleTime: 10 * 60_000,
@@ -812,6 +809,8 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
                   <MatchCompetitionStandings
                     data={table}
                     loading={overviewLoading || standingsLoading}
+                    error={standingsError}
+                    onRetry={retryStandings}
                     competitionName={selectedCompName}
                     homeTeamId={Number.isFinite(Number(teamId)) ? Number(teamId) : undefined}
                     seasons={seasons}
@@ -826,6 +825,8 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
                   <MatchCompetitionTopScorers
                     data={topScorersWithAppearances}
                     loading={overviewLoading || topScorersLoading}
+                    error={topScorersQuery.isError && !topScorersQuery.data}
+                    onRetry={() => void topScorersQuery.refetch()}
                     seasons={seasons}
                     selectedSeasonId={selectedSeasonId}
                     onSeasonChange={

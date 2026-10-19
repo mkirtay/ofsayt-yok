@@ -25,11 +25,6 @@
   }
 }
 
-.headerWorldCup {
-  background: #0a0a0a;
-  border-bottom: 1px solid #2a2a2a;
-}
-
 .headerContainer {
   display: flex;
   align-items: center;
@@ -128,16 +123,6 @@
   &:hover {
     background: linear-gradient(135deg, var(--color-premium-strong), var(--color-premium));
     border-color: transparent;
-  }
-}
-
-.headerWorldCup .headerNavPill {
-  border-color: #444;
-  color: #fff;
-
-  &:hover {
-    background: #181818;
-    border-color: #fff;
   }
 }
 
@@ -336,10 +321,6 @@
   background: $color-border-dark;
 }
 
-.headerWorldCup .avatarBtn {
-  border-color: #444;
-}
-
 .myAnalysesWrap {
   position: relative;
   display: inline-flex;
@@ -396,29 +377,6 @@
   text-align: center;
 }
 
-.worldCupMarkLink {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 44px;
-  border-radius: $radius-sm;
-  border: 1px solid #2d2d2d;
-  background: #101010;
-  transition: $transition-base;
-
-  &:hover {
-    border-color: #5a5a5a;
-    background: #181818;
-  }
-}
-
-.worldCupMark {
-  width: 24px;
-  height: auto;
-  object-fit: contain;
-}
-
 .actions {
   display: flex;
   align-items: center;
@@ -437,16 +395,6 @@
 
   &:hover {
     background: rgba(255, 255, 255, 0.12);
-    border-color: #fff;
-  }
-}
-
-.headerWorldCup .profileLink {
-  border-color: #444;
-  color: #fff;
-
-  &:hover {
-    background: #181818;
     border-color: #fff;
   }
 }
@@ -561,11 +509,6 @@
     max-width: none;
     width: 100%;
   }
-}
-
-.mobileMenuWorldCup {
-  background: #0f0f0f;
-  border-top-color: #2a2a2a;
 }
 
 .mobileNav {

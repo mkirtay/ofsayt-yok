@@ -33,6 +33,9 @@ vi.mock('@/lib/redis', () => {
     async hgetall(key: string) {
       return h.hashes.get(key) ?? null;
     },
+    async get() {
+      return null;
+    },
   };
   return { withRedis: async <T,>(fn: (r: typeof redis) => Promise<T>) => fn(redis) };
 });
@@ -46,10 +49,12 @@ import {
   cooldownSecondsFor429,
   flushUsage,
   freshStretchFactor,
+  isPoolInReserve,
   learnPool,
   notePoolObservation,
   poolForPath,
   readUsage,
+  recordCacheOnlySkip,
   recordUpstreamCall,
   resetPoolGuardForTests,
   sportmonksResource,
@@ -87,6 +92,15 @@ describe('seyreltme ve soğuma süresi', () => {
     expect(freshStretchFactor('Fixture', T + 601_000)).toBe(1);
   });
 
+  it('havuz rezervi: bilinen kalan < %30 (750); bilgi yoksa ya da sıfırlanma geçince değil', async () => {
+    expect(await isPoolInReserve('Fixture', T)).toBe(false);
+    notePoolObservation('Fixture', 800, 600, T);
+    expect(await isPoolInReserve('Fixture', T)).toBe(false);
+    notePoolObservation('Fixture', 749, 600, T);
+    expect(await isPoolInReserve('Fixture', T)).toBe(true);
+    expect(await isPoolInReserve('Fixture', T + 601_000)).toBe(false);
+  });
+
   it('429 bekleme süresi [15 sn, 1 sa] aralığında', () => {
     expect(cooldownSecondsFor429('Fixture', '5', T)).toBe(15);
     expect(cooldownSecondsFor429('Fixture', '99999', T)).toBe(3600);
@@ -109,6 +123,19 @@ describe('saatlik ölçüm', () => {
     expect(hour!.rows).toEqual([
       { pool: 'Fixture', route: 'GET /api/matches/day', origin: 'server', calls: 3, rateLimited: 0 },
       { pool: 'Fixture', route: 'POST /api/admin/gundem/bot-tick', origin: 'server', calls: 2, rateLimited: 1 },
+    ]);
+  });
+
+  it('yalnız-önbellek ıskası ayrı "skip:<havuz>" satırı; gerçek tüketim satırına karışmaz', async () => {
+    recordUpstreamCall({ pool: 'Fixture', route: '/matches/[slug]', origin: 'server', status: 200 }, T);
+    recordCacheOnlySkip('Fixture', '/matches/[slug]', T);
+    recordCacheOnlySkip('Fixture', '/matches/[slug]', T);
+    await Promise.all(h.background);
+    await flushUsage();
+    const [hour] = await readUsage(1, T);
+    expect(hour!.rows).toEqual([
+      { pool: 'skip:Fixture', route: '/matches/[slug]', origin: 'server', calls: 2, rateLimited: 0 },
+      { pool: 'Fixture', route: '/matches/[slug]', origin: 'server', calls: 1, rateLimited: 0 },
     ]);
   });
 

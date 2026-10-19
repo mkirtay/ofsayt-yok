@@ -7,10 +7,8 @@ export type SeasonSelectProps = {
   seasons: SeasonListItem[];
   value: number | null;
   onChange: (id: number) => void;
-  /** Visually match parent block (e.g. world cup dark surface) */
+  /** Ebeveyn bloğa uyan seçici sınıfı */
   selectClassName?: string;
-  /** Dark sidebar (World Cup) */
-  dark?: boolean;
   /** Yükleniyor yer tutucusu: aynı ölçü, seçilemez. */
   disabled?: boolean;
 };
@@ -20,7 +18,6 @@ export default function SeasonSelect({
   value,
   onChange,
   selectClassName,
-  dark,
   disabled,
 }: SeasonSelectProps) {
   const { t } = useTranslation('match');
@@ -30,7 +27,7 @@ export default function SeasonSelect({
     value != null && seasons.some((s) => s.id === value) ? value : seasons[0]!.id;
 
   return (
-    <div className={`${styles.wrap} ${dark ? styles.wrapDark : ''}`.trim()}>
+    <div className={styles.wrap}>
       <span className={styles.label}>{t('season.label')}</span>
       <select
         className={selectClassName ?? styles.select}

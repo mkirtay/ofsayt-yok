@@ -74,6 +74,7 @@ import { HUB_TAB_BOOT_SCRIPT, clearHubTabBoot } from '@/utils/hubTabBoot';
 import { clearHubLeagueBoot, hubLeagueBootScript } from '@/utils/hubLeagueBoot';
 import { HOME_FAVORITES_LS_KEY, parseLocalFavoriteIds } from '@/utils/favoriteImport';
 import { HUB_FAV_COUNT_BOOT_SCRIPT, applyFavCount, toggleMatchFavorite } from '@/utils/hubFavorites';
+import { loadWithRetry } from '@/utils/loadWithRetry';
 
 const noopSubscribe = () => () => {};
 
@@ -190,19 +191,28 @@ export default function MatchHubPage({
    */
   const uefaFixtureMode = isUefaCupCompetitionId(selectedCompId);
   const uefaFixturesQuery = useCompetitionFixtures(uefaFixtureMode ? selectedCompId : null);
-  const { data: sidebarData, isLoading: sidebarQueryLoading } = useCompetitionSidebar(selectedCompId);
+  const {
+    data: sidebarData,
+    isLoading: sidebarQueryLoading,
+    isError: sidebarQueryError,
+    refetch: refetchSidebar,
+  } = useCompetitionSidebar(selectedCompId);
   const [selectedSeasonId, setSelectedSeasonId] = useState<number | null>(null);
+  // `failed`: seçilen sezonun tablosu yüklenemedi (hata ≠ tablo yok) → eski sezonun tablosu gösterilmez.
   const [seasonPatch, setSeasonPatch] = useState<{
     seasonId: number;
     standings: NonNullable<typeof sidebarData>['standings'];
+    failed?: boolean;
   } | null>(null);
 
   const seasons = sidebarData?.seasons ?? [];
   const effectiveSeasonId = selectedSeasonId ?? sidebarData?.selectedSeasonId ?? null;
-  const standings =
-    (seasonPatch && seasonPatch.seasonId === effectiveSeasonId ? seasonPatch.standings : null) ??
-    sidebarData?.standings ??
-    null;
+  const activePatch = seasonPatch && seasonPatch.seasonId === effectiveSeasonId ? seasonPatch : null;
+  const standings = activePatch?.failed
+    ? null
+    : (activePatch?.standings ?? null) ?? sidebarData?.standings ?? null;
+  // Yüklenemedi: ilk yükleme hatası (react-query 1 yeniden denemeden sonra) ya da seçilen sezon hatası.
+  const standingsError = activePatch ? Boolean(activePatch.failed) : sidebarQueryError && !sidebarData;
   // Gol krallığı yalnızca sekme açıkken (ayrı sorgu): gizli sekme için her açılışta 4 sayfa çekilmesin.
   const scorersOpen = sidebarTab === 'scorers';
   const topScorersQuery = useCompetitionTopScorers(selectedCompId, effectiveSeasonId, scorersOpen && !sidebarQueryLoading);
@@ -244,8 +254,8 @@ export default function MatchHubPage({
 
   const handleSeasonChange = useCallback(async (seasonId: number) => {
     setSelectedSeasonId(seasonId);
-    const table = await fetchCompetitionStandingsForSeason(selectedCompId, seasonId);
-    setSeasonPatch({ seasonId, standings: table });
+    const r = await loadWithRetry(() => fetchCompetitionStandingsForSeason(selectedCompId, seasonId));
+    setSeasonPatch('error' in r ? { seasonId, standings: null, failed: true } : { seasonId, standings: r.data });
   }, [selectedCompId]);
 
   // Yan panel sezon seçicisi lig satırında: değişince tablo kutusunda karıştırma animasyonu (standings `seasonBusy`).
@@ -966,6 +976,11 @@ export default function MatchHubPage({
                         loadingRows={standingsLoadingRows}
                         hideHeader
                         seasonBusy={seasonBusy}
+                        error={standingsError}
+                        onRetry={() => {
+                          if (activePatch?.failed) handleSeasonPick(activePatch.seasonId);
+                          else void refetchSidebar();
+                        }}
                         // Masaüstünde panelin tavanına sığar: tablo kendi içinde kayar, başlık sticky (mobilde akışta)
                         contained
                       />
@@ -975,6 +990,8 @@ export default function MatchHubPage({
                       <MatchCompetitionTopScorers
                         data={topScorers}
                         loading={topScorersLoading}
+                        error={topScorersQuery.isError && !topScorersQuery.data}
+                        onRetry={() => void topScorersQuery.refetch()}
                         hideHeader
                         contained
                       />

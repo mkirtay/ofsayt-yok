@@ -16,7 +16,7 @@ vi.mock('@/lib/i18n', () => ({
 }));
 vi.mock('next/router', () => ({ useRouter: () => ({ query: {}, push: async () => true }) }));
 vi.mock('@/hooks/useRedirectIfSignedIn', () => ({ useRedirectIfSignedIn: () => {} }));
-vi.mock('@/components/AuthStage', () => ({ default: () => null }));
+vi.mock('@/components/AuthShowcase', () => ({ default: () => null }));
 vi.mock('@/components/GoogleSignInButton', () => ({ default: () => null }));
 
 import SignUpPage from '@/pages/auth/signup';

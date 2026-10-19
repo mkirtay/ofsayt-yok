@@ -1,7 +1,7 @@
 import type { GetServerSideProps } from 'next';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import Container from '@/components/Container';
 import MatchDetailContent from '@/components/MatchDetailContent';
 import { toStandingsCompetitionId } from '@/services/sportmonksProviderFlag';
@@ -12,7 +12,6 @@ import { useMatchDetail } from '@/hooks/useMatchDetail';
 import type { Match } from '@/models/liveScore';
 import { buildMatchHref, buildMatchSlug, parseMatchIdFromParam, parseMatchSlugFromParam } from '@/utils/matchUrl';
 import { matchOgImagePath } from '@/utils/matchOgImage';
-import { WORLD_CUP_COMPETITION_ID } from '@/config/worldCup';
 import { useTranslation } from '@/lib/i18n';
 import { leagueNameById } from '@/utils/leagueName';
 import { resolveMatchPage } from '@/server/resolveMatchPage';
@@ -20,7 +19,8 @@ import { loadAnalysisPreviewForPage } from '@/server/analysisPreviewForPage';
 import type { AnalysisPreview } from '@/utils/analysisPreview';
 import { analysisPaywallJsonLd } from '@/utils/analysisPaywall';
 import { defaultMatchPageOptionalDeps, loadMatchPageOptionalSections } from '@/server/matchPageOptional';
-import { SPORTMONKS_TIMEOUT_MS, withSportmonksTimeout } from '@/server/sportmonks/cachedFetch';
+import { SPORTMONKS_TIMEOUT_MS, withSportmonksCacheOnly, withSportmonksTimeout } from '@/server/sportmonks/cachedFetch';
+import { isPoolInReserve, poolForPath } from '@/server/sportmonks/poolGuard';
 import type { Head2HeadData } from '@/services/liveScoreService';
 import type { MatchEvent, MatchLineupData, MatchStatsData } from '@/models/domain';
 import {
@@ -101,7 +101,11 @@ export const getServerSideProps: GetServerSideProps<MatchDetailProps> = async (c
     return { props: { initialMatch: null } };
   };
   try {
-    const page = await withPageTimeout(() => resolveMatchPage(matchId, parseMatchSlugFromParam(slug ?? '')));
+    // Havuz rezervi (Fixture kalan < %30, bkz. poolGuard.isPoolInReserve): maç yalnız Redis'ten; yoksa geçici hata → HTML 503
+    // + Retry-After (bot sonra gelir), sayfa kabuğu istemcide maçı kendisi çeker. Kalan kota canlı uçlara ve ana sayfaya.
+    const reserve = await isPoolInReserve(poolForPath('football/fixtures'), Date.now()).catch(() => false);
+    const resolve = () => resolveMatchPage(matchId, parseMatchSlugFromParam(slug ?? ''));
+    const page = await withPageTimeout(() => (reserve ? withSportmonksCacheOnly({ misses: 0 }, resolve) : resolve()));
     switch (page.kind) {
       case 'match': {
         // Slug kanonik değilse (yalnız id, eski slug kuralı "s-o-paulo-santos", ad değişikliği) sunucuda 301; sorgu korunur.
@@ -228,6 +232,8 @@ export default function MatchDetail({
     selectedSeasonId,
     matchLoading,
     standingsLoading,
+    standingsError,
+    retryStandings,
     notFound,
     isArchivedMatch,
     handleSeasonChange,
@@ -241,15 +247,7 @@ export default function MatchDetail({
 
   const { t: tl } = useTranslation('leagues');
   const compId = match?.competition?.id ?? match?.competition_id;
-  const isWorldCup = compId === WORLD_CUP_COMPETITION_ID;
   const standingsCompId = toStandingsCompetitionId(compId);
-
-  useEffect(() => {
-    document.body.classList.toggle('worldCupHeaderOnly', isWorldCup);
-    return () => {
-      document.body.classList.remove('worldCupHeaderOnly');
-    };
-  }, [isWorldCup]);
 
   const showArchived =
     archived || (router.isReady && Boolean(requestedMatchId) && isArchivedMatch && !match);
@@ -384,6 +382,8 @@ export default function MatchDetail({
                 <MatchCompetitionStandings
                   data={standings}
                   loading={standingsLoading || matchLoading}
+                  error={standingsError}
+                  onRetry={retryStandings}
                   competitionName={leagueNameById(compId, match?.competition?.name ?? match?.competition_name, tl, 'full')}
                   homeTeamId={homeTeamId}
                   awayTeamId={awayTeamId}

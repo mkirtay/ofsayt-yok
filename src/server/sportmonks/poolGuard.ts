@@ -90,6 +90,20 @@ export async function isPoolUnderPressure(pool: string, now: number): Promise<bo
   return (await poolCooldownUntil(pool, now)) > now;
 }
 
+/**
+ * Havuz rezervi: bilinen kalan bunun altına inince maç sayfası SSR'ı Sportmonks'a hiç gitmez, yalnız Redis'tekini kullanır
+ * (bkz. `withSportmonksCacheOnly`, pages/matches/[slug].tsx). Son %30 canlı uçlar, ana sayfa listesi ve tarayıcı proxy'si
+ * için kalır — gece tarama dalgası (binlerce farklı maç sayfası, JS çalıştırmayan bot) havuzu tüketemez.
+ */
+export const RESERVE_POOL_RATIO = 0.3;
+
+/** Havuz rezervde mi: bilinen kalan < %30 ya da 429 soğuması. Bilgi yoksa false. */
+export async function isPoolInReserve(pool: string, now: number): Promise<boolean> {
+  const remaining = knownPoolRemaining(pool, now);
+  if (remaining != null && remaining < POOL_LIMIT * RESERVE_POOL_RATIO) return true;
+  return (await poolCooldownUntil(pool, now)) > now;
+}
+
 // ─── Soğuma (429) ──────────────────────────────────────────────────────────
 
 export const DEFAULT_COOLDOWN_SECONDS = 60;
@@ -149,18 +163,30 @@ export type UpstreamCall = { pool: string; route: string; origin: 'proxy' | 'ser
 /** `|` alan ayırıcı; rota adında geçmesin. */
 const clean = (s: string) => s.replace(/\|/g, '/').slice(0, 120);
 
-export function recordUpstreamCall(call: UpstreamCall, now: number): void {
+function countUsage(now: number, ...fieldNames: string[]): void {
   const hour = usageHour(now);
   const fields = pending.get(hour) ?? new Map<string, number>();
-  const base = `${clean(call.pool)}|${clean(call.route)}|${call.origin}`;
-  fields.set(base, (fields.get(base) ?? 0) + 1);
-  if (call.status === 429) fields.set(`429|${base}`, (fields.get(`429|${base}`) ?? 0) + 1);
+  for (const f of fieldNames) fields.set(f, (fields.get(f) ?? 0) + 1);
   pending.set(hour, fields);
   pendingCount += 1;
   if (pendingCount >= FLUSH_EVERY_CALLS || now - lastFlushAt >= FLUSH_EVERY_MS) {
     lastFlushAt = now;
     runInBackground(flushUsage);
   }
+}
+
+export function recordUpstreamCall(call: UpstreamCall, now: number): void {
+  const base = `${clean(call.pool)}|${clean(call.route)}|${call.origin}`;
+  countUsage(now, base, ...(call.status === 429 ? [`429|${base}`] : []));
+}
+
+/**
+ * Yalnız-önbellek kapsamında (bkz. `withSportmonksCacheOnly`) Redis'te bulunamadığı için upstream'e GİDİLMEYEN istek: aynı
+ * saatlik hash'e `skip:<havuz>|rota|server` alanıyla sayılır — kazanç raporu (`/api/admin/sportmonks-usage`) için.
+ * Gerçek tüketim satırlarına karışmaz (havuz adı farklı).
+ */
+export function recordCacheOnlySkip(pool: string, route: string, now: number): void {
+  countUsage(now, `skip:${clean(pool)}|${clean(route)}|server`);
 }
 
 export async function flushUsage(): Promise<void> {

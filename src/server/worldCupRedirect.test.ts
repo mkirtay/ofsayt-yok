@@ -1,15 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import type { GetServerSidePropsContext } from 'next';
-import { WORLD_CUP_PAGE_ENABLED } from '@/config/worldCup';
+import { existsSync } from 'node:fs';
+import nextConfig from '../../next.config';
 
-// /world-cup kapalı: ana sayfaya 302 (sayfa kodu duruyor).
+// /world-cup kaldırıldı (Dünya Kupası Sportmonks planında yok): eski bağlantılar ana sayfaya kalıcı yönlenir.
 describe('/world-cup yönlendirmesi', () => {
-  it('sayfa kapalıyken ana sayfaya 302', async () => {
-    expect(WORLD_CUP_PAGE_ENABLED).toBe(false);
-    const { getServerSideProps } = await import('@/pages/world-cup/index');
-    const headers: Record<string, string> = {};
-    const ctx = { res: { setHeader: (k: string, v: string) => void (headers[k] = v) } } as unknown as GetServerSidePropsContext;
-    expect(await getServerSideProps(ctx)).toEqual({ redirect: { destination: '/', statusCode: 302 } });
-    expect(headers['Cache-Control']).toContain('s-maxage=3600');
+  it('sayfa yok, /world-cup ve alt yolları / adresine 308', async () => {
+    expect(existsSync('src/pages/world-cup')).toBe(false);
+    const redirects = (await nextConfig.redirects?.()) ?? [];
+    for (const source of ['/world-cup', '/world-cup/:path*']) {
+      expect(redirects).toContainEqual({ source, destination: '/', permanent: true });
+    }
   });
 });

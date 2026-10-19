@@ -191,9 +191,10 @@ export function sportmonksCacheTtl(
         if (isNotStarted(f)) return withStale(fixtureListFreshSeconds([f], 10 * MIN, now), DAY);
         const k = kickoffMs(f);
         // Yeni biten maç (başlamadan sonraki 5 sa ≈ bitişten sonraki 3 sa): Sportmonks istatistik ve oyuncu puanlarını
-        // güncelliyor → 15 dk; 1 güne kadar 6 sa; daha eski 24 sa.
+        // güncelliyor → 15 dk; 1 güne kadar 6 sa; daha eski maç değişmez → kayıt Redis'te zaten tutulduğu 7 gün boyunca taze
+        // (eskiden 24 sa'te bir yeniden çekiliyordu; Redis'te yer değişmez).
         if (k != null && now - k < RECENTLY_FINISHED_WINDOW_MS) return withStale(RECENTLY_FINISHED_TTL, 7 * DAY);
-        return withStale(k != null && now - k > DAY_MS ? DAY : 6 * HOUR, 7 * DAY);
+        return k != null && now - k > DAY_MS ? withStale(7 * DAY, 7 * DAY) : withStale(6 * HOUR, 7 * DAY);
       }
       return withStale(5 * MIN);
     }

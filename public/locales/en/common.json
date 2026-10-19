@@ -3,6 +3,7 @@
   "error": "An error occurred.",
   "connectionError": "Connection error. Please try again.",
   "retry": "Try Again",
+  "loadError": "Couldn't load this right now.",
   "close": "Close",
   "dataNotFound": "No data found.",
   "notFoundTitle": "Page Not Found",

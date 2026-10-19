@@ -9,7 +9,7 @@ import {
   type TopScorersPayload,
 } from '@/services/liveScoreService';
 import { isSportmonksProviderEnabled, legacyToStandingsLeagueId } from '@/services/sportmonksProviderFlag';
-import { getCompetitionStandings } from '@/services/competitionStandings';
+import { fetchCompetitionStandings } from '@/services/competitionStandings';
 
 /**
  * Yan panelin varsayılan görünümü (Puan Durumu): sezon listesi + seçili sezon + tablo. Gol krallığı bu sorguda
@@ -34,12 +34,16 @@ function sidebarStandingsLeagueId(competitionId: number): string | null {
   return id == null ? null : String(id);
 }
 
+/**
+ * Tablo isteği hata verirse FIRLATIR (react-query hatayı "puan durumu yok" diye 5 dk önbelleğe yazmasın; ana sayfa
+ * ISR'ı hatada son başarılı sayfayı korur). Sezon listesi hatası yutulur (seçicisiz tablo).
+ */
 export async function loadCompetitionSidebar(competitionId: number): Promise<CompetitionSidebarData> {
   const compId = sidebarStandingsLeagueId(competitionId);
   if (compId == null) return EMPTY_SIDEBAR;
   const [seasonsList, table1] = await Promise.all([
     getSeasonsList({ competitionId: compId }),
-    getCompetitionStandings(compId),
+    fetchCompetitionStandings(compId),
   ]);
 
   const fromTable =
@@ -60,7 +64,7 @@ export async function loadCompetitionSidebar(competitionId: number): Promise<Com
 
   let tableFinal = table1;
   if (needTableRefetch && sid != null) {
-    tableFinal = await getCompetitionStandings(compId, { season: sid });
+    tableFinal = await fetchCompetitionStandings(compId, { season: sid });
   }
 
   return {
@@ -97,14 +101,14 @@ export async function prefetchCompetitionSidebar(
   });
 }
 
-/** Sezon seçicisi: seçilen sezonun puan durumu (gol krallığı sezon id'si değişince kendi sorgusuyla gelir). */
+/** Sezon seçicisi: seçilen sezonun puan durumu (gol krallığı sezon id'si değişince kendi sorgusuyla gelir). Hata fırlatır. */
 export async function fetchCompetitionStandingsForSeason(
   competitionId: number,
   seasonId: number
 ): Promise<CompetitionTableData | null> {
   const compId = sidebarStandingsLeagueId(competitionId);
   if (compId == null) return null;
-  return getCompetitionStandings(compId, { season: seasonId });
+  return fetchCompetitionStandings(compId, { season: seasonId });
 }
 
 /**
@@ -118,8 +122,9 @@ export function useCompetitionTopScorers(competitionId: number, seasonId: number
       if (compId == null) return null;
       // O (oynanan maç) yanıta gömülü: takım başına kadro isteği yok (bkz. competitionTopScorers.ts). Modül yalnız
       // sekme açılınca yüklenir (düz import(): ilk yük parçalarına girmez).
-      const { getTopScorersWithAppearances } = await import('@/services/competitionTopScorers');
-      return getTopScorersWithAppearances(compId, seasonId != null ? { season: seasonId } : undefined);
+      // Hata fırlatır: react-query yeniden dener, sonra sekme "yüklenemedi · tekrar dene" gösterir.
+      const { fetchTopScorersWithAppearances } = await import('@/services/competitionTopScorers');
+      return fetchTopScorersWithAppearances(compId, seasonId != null ? { season: seasonId } : undefined);
     },
     enabled: enabled && competitionId !== 0,
     staleTime: COMPETITION_SIDEBAR_STALE_MS,

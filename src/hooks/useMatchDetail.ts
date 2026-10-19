@@ -2,18 +2,17 @@ import type { MatchLineupData } from '@/models/domain';
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { QueryClientContext } from '@tanstack/react-query';
 import {
+  fetchMatchLineups,
+  fetchMatchStats,
+  fetchMatchWithEvents,
   findMatchById,
   getMatchLineups,
-  getMatchStats,
-  getMatchWithEvents,
-  getSeasonsList,
   type CompetitionTableData,
   type SeasonListItem,
 } from '@/services/liveScoreService';
 import type { Match } from '@/models/liveScore';
 import type { MatchEvent, MatchStatsData } from '@/models/domain';
 import { toStandingsCompetitionId } from '@/services/sportmonksProviderFlag';
-import { fetchWorldCupStandingsBundle, isWorldCupCompetition } from '@/utils/worldCupStandings';
 import { useLiveMatchUpdates } from '@/hooks/useLiveMatchUpdates';
 import { syncLivePatchToHomeQueries } from '@/hooks/useHomeHubMatches';
 import { mergeRedCards } from '@/utils/liveMatchPatch';
@@ -22,7 +21,9 @@ import { matchKickoffMs } from '@/utils/matchActivity';
 import { isProbableLineup } from '@/utils/lineupStatus';
 import { startVisiblePolling } from '@/utils/visiblePolling';
 import type { LiveMatchPayload } from '@/server/liveMatch';
-import { getCompetitionStandings } from '@/services/competitionStandings';
+import { fetchCompetitionStandings } from '@/services/competitionStandings';
+import { loadStandingsForMatch } from '@/services/standingsBundle';
+import { loadWithRetry } from '@/utils/loadWithRetry';
 
 /**
  * Maç detayı veri yükleme — `/matches/[slug]` sayfası ve masaüstü split-view
@@ -89,53 +90,14 @@ export function prefetchMatchDetail(matchId: string): void {
   void findMatchByIdCached(matchId).catch(() => {});
 }
 
-export async function loadStandingsForMatch(cid: number): Promise<{
-  seasons: SeasonListItem[];
-  selectedSeasonId: number | null;
+/** Puan durumu yüklemesinin sonucu; sezon alanları yalnız ilk (güncel sezon) yüklemede. */
+type StandingsUpdate = {
+  seasons?: SeasonListItem[];
+  selectedSeasonId?: number | null;
   standings: CompetitionTableData | null;
-}> {
-  if (isWorldCupCompetition(cid)) {
-    const wc = await fetchWorldCupStandingsBundle();
-    return {
-      seasons: wc.seasons,
-      selectedSeasonId: wc.selectedSeasonId,
-      standings: wc.standings,
-    };
-  }
+};
 
-  const compIdStr = String(cid);
-  const [seasonsList, table1] = await Promise.all([
-    getSeasonsList({ competitionId: compIdStr }),
-    getCompetitionStandings(compIdStr),
-  ]);
-
-  const fromTable =
-    table1?.season?.id != null && Number.isFinite(Number(table1.season.id))
-      ? Number(table1.season.id)
-      : null;
-  let sid: number | null = fromTable;
-  if (sid != null && seasonsList.length && !seasonsList.some((s) => s.id === sid)) {
-    sid = seasonsList[0]!.id;
-  } else if (sid == null && seasonsList.length) {
-    sid = seasonsList[0]!.id;
-  }
-
-  const needTableRefetch =
-    sid != null &&
-    table1 != null &&
-    (table1.season?.id == null || Number(table1.season.id) !== sid);
-
-  let tableFinal = table1;
-  if (needTableRefetch && sid != null) {
-    tableFinal = await getCompetitionStandings(compIdStr, { season: sid });
-  }
-
-  return {
-    seasons: seasonsList,
-    selectedSeasonId: sid,
-    standings: tableFinal ?? table1,
-  };
-}
+export { loadStandingsForMatch } from '@/services/standingsBundle';
 
 export type MatchDetailState = {
   matchId: string;
@@ -151,6 +113,18 @@ export type MatchDetailState = {
   statsLoading: boolean;
   lineupsLoading: boolean;
   standingsLoading: boolean;
+  /**
+   * Yüklenemedi (sağlayıcı hatası / zaman aşımı, 1 otomatik yeniden denemeden sonra) — "veri yok"tan ayrı: bileşen
+   * "yüklenemedi · tekrar dene" gösterir, `retry*` yeniden çeker.
+   */
+  eventsError: boolean;
+  statsError: boolean;
+  lineupsError: boolean;
+  standingsError: boolean;
+  retryEvents: () => void;
+  retryStats: () => void;
+  retryLineups: () => void;
+  retryStandings: () => void;
   notFound: boolean;
   isArchivedMatch: boolean;
   handleSeasonChange: (seasonId: number, competitionIdStr: string) => Promise<void>;
@@ -200,6 +174,74 @@ export function useMatchDetail(
   const [selectedSeasonId, setSelectedSeasonId] = useState<number | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [isArchivedMatch, setIsArchivedMatch] = useState(false);
+  const [eventsError, setEventsError] = useState(false);
+  const [statsError, setStatsError] = useState(false);
+  const [lineupsError, setLineupsError] = useState(false);
+  const [standingsError, setStandingsError] = useState(false);
+  // Yükleme kuşağı: maç değişince / bileşen kalkınca artar → eski isteklerin (ve yeniden denemelerin) sonucu yazılmaz.
+  const genRef = useRef(0);
+  // "Tekrar dene" son puan durumu yüklemesini (güncel sezon ya da seçilen sezon) yineler.
+  const standingsReloadRef = useRef<(() => Promise<StandingsUpdate>) | null>(null);
+
+  const loadEvents = useCallback((id: string, gen: number) => {
+    const stale = () => genRef.current !== gen;
+    setEventsLoading(true);
+    setEventsError(false);
+    void loadWithRetry(() => fetchMatchWithEvents(id), { isCancelled: stale }).then((r) => {
+      if (stale()) return;
+      if ('error' in r) setEventsError(true);
+      else {
+        if (r.data.match) setMatch(r.data.match);
+        setEvents(r.data.events);
+      }
+      setEventsLoading(false);
+    });
+  }, []);
+
+  const loadStats = useCallback((id: string, gen: number) => {
+    const stale = () => genRef.current !== gen;
+    setStatsLoading(true);
+    setStatsError(false);
+    void loadWithRetry(() => fetchMatchStats(id), { isCancelled: stale }).then((r) => {
+      if (stale()) return;
+      if ('error' in r) setStatsError(true);
+      else setStats(r.data);
+      setStatsLoading(false);
+    });
+  }, []);
+
+  const loadLineups = useCallback((id: string, gen: number) => {
+    const stale = () => genRef.current !== gen;
+    setLineupsLoading(true);
+    setLineupsError(false);
+    void loadWithRetry(() => fetchMatchLineups(id), { isCancelled: stale }).then((r) => {
+      if (stale()) return;
+      if ('error' in r) setLineupsError(true);
+      else setLineups(r.data);
+      setLineupsLoading(false);
+    });
+  }, []);
+
+  /** Puan durumu yüklemesi (güncel sezon ya da seçilen sezon); "Tekrar dene" aynı yüklemeyi yineler. */
+  const runStandings = useCallback((load: () => Promise<StandingsUpdate>, gen: number): Promise<void> => {
+    const stale = () => genRef.current !== gen;
+    standingsReloadRef.current = load;
+    setStandingsLoading(true);
+    setStandingsError(false);
+    return loadWithRetry(load, { isCancelled: stale }).then((r) => {
+      if (stale()) return;
+      if ('error' in r) {
+        // Önceki sezonun tablosu seçilen sezonun etiketiyle kalmasın: kutu "yüklenemedi · tekrar dene"ye döner.
+        setStandings(null);
+        setStandingsError(true);
+      } else {
+        if (r.data.seasons) setSeasons(r.data.seasons);
+        if (r.data.selectedSeasonId !== undefined) setSelectedSeasonId(r.data.selectedSeasonId);
+        setStandings(r.data.standings);
+      }
+      setStandingsLoading(false);
+    });
+  }, []);
 
   const onFoundRef = useRef(onMatchFound);
   useEffect(() => {
@@ -218,6 +260,8 @@ export function useMatchDetail(
     if (!requestedMatchId) return;
 
     let cancelled = false;
+    const gen = ++genRef.current;
+    standingsReloadRef.current = null;
 
     const seeded =
       initialMatchRef.current && String(initialMatchRef.current.id) === requestedMatchId ? initialMatchRef.current : null;
@@ -235,6 +279,10 @@ export function useMatchDetail(
       setStandingsLoading(true);
       setNotFound(false);
       setIsArchivedMatch(false);
+      setEventsError(false);
+      setStatsError(false);
+      setLineupsError(false);
+      setStandingsError(false);
       setMatch(seeded);
       setEvents(detailSeed.events ?? []);
       setLineups(detailSeed.lineups ?? null);
@@ -293,14 +341,7 @@ export function useMatchDetail(
       setEventsLoading(fromFixture && !seededEvents);
       onFoundRef.current?.(resolved);
 
-      if (fromFixture && !seededEvents) {
-        void getMatchWithEvents(apiMatchId).then((ev) => {
-          if (cancelled) return;
-          if (ev.match) setMatch(ev.match);
-          setEvents(ev.events);
-          setEventsLoading(false);
-        });
-      }
+      if (fromFixture && !seededEvents) loadEvents(apiMatchId, gen);
 
       const cid = toStandingsCompetitionId(resolved.competition?.id ?? resolved.competition_id);
       if (cid == null) {
@@ -315,11 +356,7 @@ export function useMatchDetail(
           setStats(fromFind.stats);
           setStatsLoading(false);
         } else {
-          void getMatchStats(apiMatchId).then((statsData) => {
-            if (cancelled) return;
-            setStats(statsData);
-            setStatsLoading(false);
-          });
+          loadStats(apiMatchId, gen);
         }
       }
 
@@ -328,29 +365,18 @@ export function useMatchDetail(
           setLineups(fromFind.lineups);
           setLineupsLoading(false);
         } else {
-          void getMatchLineups(apiMatchId).then((lineupsData) => {
-            if (cancelled) return;
-            setLineups(lineupsData);
-            setLineupsLoading(false);
-          });
+          loadLineups(apiMatchId, gen);
         }
       }
 
-      if (cid != null) {
-        void loadStandingsForMatch(cid).then((standingsBundle) => {
-          if (cancelled) return;
-          setSeasons(standingsBundle.seasons);
-          setSelectedSeasonId(standingsBundle.selectedSeasonId);
-          setStandings(standingsBundle.standings);
-          setStandingsLoading(false);
-        });
-      }
+      if (cid != null) void runStandings(() => loadStandingsForMatch(cid), gen);
     })();
 
     return () => {
       cancelled = true;
+      genRef.current += 1;
     };
-  }, [requestedMatchId]);
+  }, [requestedMatchId, loadEvents, loadStats, loadLineups, runStandings]);
 
   // Sağlayıcısız render'da (testler) yok: `useQueryClient` fırlatırdı.
   const queryClient = useContext(QueryClientContext);
@@ -418,13 +444,30 @@ export function useMatchDetail(
     };
   }, [matchId, lineupProbable, phase, kickoffMs]);
 
-  const handleSeasonChange = useCallback(async (seasonId: number, competitionIdStr: string) => {
-    setSelectedSeasonId(seasonId);
-    setStandingsLoading(true);
-    const table = await getCompetitionStandings(competitionIdStr, { season: seasonId });
-    setStandings(table);
-    setStandingsLoading(false);
-  }, []);
+  const handleSeasonChange = useCallback(
+    async (seasonId: number, competitionIdStr: string) => {
+      setSelectedSeasonId(seasonId);
+      await runStandings(
+        () => fetchCompetitionStandings(competitionIdStr, { season: seasonId }).then((standings) => ({ standings })),
+        genRef.current,
+      );
+    },
+    [runStandings],
+  );
+
+  const retryEvents = useCallback(() => {
+    if (matchId) loadEvents(matchId, genRef.current);
+  }, [matchId, loadEvents]);
+  const retryStats = useCallback(() => {
+    if (matchId) loadStats(matchId, genRef.current);
+  }, [matchId, loadStats]);
+  const retryLineups = useCallback(() => {
+    if (matchId) loadLineups(matchId, genRef.current);
+  }, [matchId, loadLineups]);
+  const retryStandings = useCallback(() => {
+    const load = standingsReloadRef.current;
+    if (load) void runStandings(load, genRef.current);
+  }, [runStandings]);
 
   return {
     matchId,
@@ -440,6 +483,14 @@ export function useMatchDetail(
     statsLoading,
     lineupsLoading,
     standingsLoading,
+    eventsError,
+    statsError,
+    lineupsError,
+    standingsError,
+    retryEvents,
+    retryStats,
+    retryLineups,
+    retryStandings,
     notFound,
     isArchivedMatch,
     handleSeasonChange,

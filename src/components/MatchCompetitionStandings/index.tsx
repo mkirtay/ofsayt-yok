@@ -10,13 +10,13 @@ import { standingsGroupHeading } from "./groupHeading";
 import { useTranslation } from "@/lib/i18n";
 import { formatSeasonLabel } from "@/utils/seasonLabel";
 import { getStandingRankZone } from "@/config/standingsZones";
-import { sortWorldCupGroupsByName } from "@/config/worldCup";
 import { standingsRankZoneClass } from "@/utils/standingsRankZoneUi";
 import { standingTeamFullName } from "@/utils/standingsTeamLabel";
 import EmptyState from "@/components/EmptyState";
 import LazyLoad from "@/components/LazyLoad";
 import StandingTeamName from "@/components/StandingTeamName";
 import { StandingsSkeleton } from "@/components/Skeleton";
+import LoadError from "@/components/LoadError";
 import styles from "./matchCompetitionStandings.module.scss";
 import TeamLogo from '@/components/TeamLogo';
 
@@ -58,14 +58,12 @@ function StandingsHead() {
  * satır sayısı (çağıran bilir: o ligin son tablosu ya da lig tipine göre varsayılan).
  */
 function StandingsLoading({
-  variant,
   competitionName,
   rows,
   withSeasonSelect,
   hideHeader,
   contained,
 }: {
-  variant: MatchCompetitionStandingsVariant;
   competitionName: string;
   rows: number;
   withSeasonSelect: boolean;
@@ -73,7 +71,7 @@ function StandingsLoading({
   contained?: boolean;
 }) {
   return (
-    <section className={blockClass(variant, contained)} aria-busy="true">
+    <section className={blockClass(contained)} aria-busy="true">
       {hideHeader ? null : (
       <div className={styles.titleContainer}>
         <h2 className={styles.title}>{competitionName}</h2>
@@ -83,8 +81,7 @@ function StandingsLoading({
             value={0}
             onChange={() => {}}
             disabled
-            dark={variant === "worldCup"}
-            selectClassName={variant === "worldCup" ? styles.seasonSelectWorldCup : styles.seasonSelect}
+            selectClassName={styles.seasonSelect}
           />
         ) : null}
       </div>
@@ -199,16 +196,12 @@ function StandingsTable({
   );
 }
 
-export type MatchCompetitionStandingsVariant = "default" | "worldCup";
-
 interface MatchCompetitionStandingsProps {
   data: CompetitionTableData | null;
   loading?: boolean;
   competitionName?: string;
   homeTeamId?: number;
   awayTeamId?: number;
-  /** `worldCup`: koyu arka plan (yalnızca World Cup sayfası) */
-  variant?: MatchCompetitionStandingsVariant;
   seasons?: SeasonListItem[];
   selectedSeasonId?: number | null;
   /** Promise dönerse beklerken tablo kutusunun içinde 04 · Puan tablosu animasyonu (tablo yerinde kalır). */
@@ -224,6 +217,9 @@ interface MatchCompetitionStandingsProps {
   hideHeader?: boolean;
   /** Sezon dışarıdan değiştirilirken (yan panel seçicisi) tablo kutusunda karıştırma animasyonu. */
   seasonBusy?: boolean;
+  /** Yüklenemedi (hata ≠ tablo yok): `data` yokken "yüklenemedi · tekrar dene". */
+  error?: boolean;
+  onRetry?: () => void;
   /**
    * Ebeveynin yüksekliği sınırlı (ana sayfa yan paneli): tablo bölgesi kalan alanda kendi içinde kayar (iki eksen),
    * başlık satırı sticky. Satır sayısından bağımsız; tablo sığıyorsa doğal boyunda kalır (kaydırma çubuğu yok).
@@ -232,9 +228,8 @@ interface MatchCompetitionStandingsProps {
   contained?: boolean;
 }
 
-function blockClass(variant: MatchCompetitionStandingsVariant, contained = false): string {
-  const base = variant === "worldCup" ? `${styles.block} ${styles.blockWorldCup}` : styles.block;
-  return contained ? `${base} ${styles.blockContained}` : base;
+function blockClass(contained = false): string {
+  return contained ? `${styles.block} ${styles.blockContained}` : styles.block;
 }
 
 export default function MatchCompetitionStandings({
@@ -243,7 +238,6 @@ export default function MatchCompetitionStandings({
   competitionName,
   homeTeamId,
   awayTeamId,
-  variant = "default",
   seasons,
   selectedSeasonId,
   onSeasonChange,
@@ -251,6 +245,8 @@ export default function MatchCompetitionStandings({
   hideHeader,
   seasonBusy,
   contained = false,
+  error = false,
+  onRetry,
 }: MatchCompetitionStandingsProps) {
   const { t } = useTranslation("match");
   const [seasonChanging, setSeasonChanging] = useState(false);
@@ -283,7 +279,6 @@ export default function MatchCompetitionStandings({
   if (loading && loadingRows) {
     return (
       <StandingsLoading
-        variant={variant}
         competitionName={competitionName || t("standings.fallbackName")}
         rows={loadingRows}
         withSeasonSelect={Boolean(onSeasonChange)}
@@ -295,17 +290,21 @@ export default function MatchCompetitionStandings({
 
   if (loading) {
     return (
-      <div className={blockClass(variant, contained)}>
-        <StandingsSkeleton variant={variant === 'worldCup' ? 'dark' : 'default'} />
+      <div className={blockClass(contained)}>
+        <StandingsSkeleton />
       </div>
     );
   }
 
   if (!data) {
     return (
-      <section className={blockClass(variant, contained)} aria-label={t("standings.ariaLabel")}>
+      <section className={blockClass(contained)} aria-label={t("standings.ariaLabel")}>
         {hideHeader ? null : <h2 className={styles.title}>{competitionName || t("standings.fallbackName")}</h2>}
-        <EmptyState className={styles.emptyState}>{t("standings.empty")}</EmptyState>
+        {error ? (
+          <LoadError className={styles.emptyState} onRetry={onRetry} />
+        ) : (
+          <EmptyState className={styles.emptyState}>{t("standings.empty")}</EmptyState>
+        )}
       </section>
     );
   }
@@ -323,7 +322,7 @@ export default function MatchCompetitionStandings({
     (legacyTable?.length ?? 0) > 0 || Boolean(hasStageStandings);
 
   return (
-    <section className={blockClass(variant, contained)} aria-label={t("standings.ariaLabel")}>
+    <section className={blockClass(contained)} aria-label={t("standings.ariaLabel")}>
       {hideHeader ? null : (
       <div className={styles.titleContainer}>
         <h2 className={styles.title}>{compName}</h2>
@@ -332,10 +331,7 @@ export default function MatchCompetitionStandings({
             seasons={seasons!}
             value={selectedSeasonId ?? null}
             onChange={changeSeason}
-            dark={variant === "worldCup"}
-            selectClassName={
-              variant === "worldCup" ? styles.seasonSelectWorldCup : styles.seasonSelect
-            }
+            selectClassName={styles.seasonSelect}
           />
         ) : season?.name ? (
           <p className={styles.season}>
@@ -360,15 +356,9 @@ export default function MatchCompetitionStandings({
             {data.stages!.length > 1 && stageBlock.stage?.name ? (
               <h3 className={styles.subheading}>{stageBlock.stage.name}</h3>
             ) : null}
-            {(variant === "worldCup"
-              ? sortWorldCupGroupsByName(stageBlock.groups ?? [])
-              : stageBlock.groups ?? []
-            ).map((group, gi) => (
+            {(stageBlock.groups ?? []).map((group, gi) => (
               <div key={group.id ?? `${si}-${gi}`}>
-                {(variant === "worldCup"
-                  ? sortWorldCupGroupsByName(stageBlock.groups ?? [])
-                  : stageBlock.groups ?? []
-                ).length > 1 && group.name ? (
+                {(stageBlock.groups ?? []).length > 1 && group.name ? (
                   <h3 className={styles.subheading}>{standingsGroupHeading(group.name, t)}</h3>
                 ) : null}
                 {group.standings?.length ? (

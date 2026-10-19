@@ -2,7 +2,7 @@
  * Futbol topu geometrisi — kesik ikosahedron (12 beşgen + 20 altıgen panel), DOM / three.js'ten bağımsız (birim testli).
  *
  * İkosahedronun her kenarı üçe bölünür (60 köşe); her ikosahedron köşesinin çevresi beşgen, her yüzü altıgen olur.
- * Paneller küreye izdüşürülür (hafif şişkin, aralarında dikiş boşluğu); çizim tarafı (stageScene.ts) bunları
+ * Paneller küreye izdüşürülür (hafif şişkin, aralarında dikiş boşluğu); çizim tarafı (pitchKit.ts) bunları
  * BufferGeometry'ye çevirir. Yüzler dışarıdan bakınca saat yönünün tersine sıralıdır.
  */
 

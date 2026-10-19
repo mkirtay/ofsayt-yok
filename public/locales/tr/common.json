@@ -3,6 +3,7 @@
   "error": "Bir hata oluştu.",
   "connectionError": "Bağlantı hatası. Lütfen tekrar deneyin.",
   "retry": "Tekrar Dene",
+  "loadError": "Veriler şu an yüklenemedi.",
   "close": "Kapat",
   "dataNotFound": "Veri bulunamadı.",
   "notFoundTitle": "Sayfa Bulunamadı",
