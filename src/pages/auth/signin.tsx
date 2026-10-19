@@ -10,7 +10,7 @@ import Head from 'next/head'
 import GoogleSignInButton from '@/components/GoogleSignInButton'
 import { safeCallbackPath } from '@/lib/authRedirect'
 import { isGoogleAuthEnabled } from '@/lib/oauthEnv'
-import AuthShowcase, { showcaseVariant } from '@/components/AuthShowcase'
+import AuthShowcase from '@/components/AuthShowcase'
 import { useRedirectIfSignedIn } from '@/hooks/useRedirectIfSignedIn'
 import styles from './auth.module.scss'
 
@@ -132,7 +132,7 @@ export default function SignInPage({ googleEnabled }: { googleEnabled: boolean }
               </Link>
             </p>
           </form>
-          <AuthShowcase variant={showcaseVariant(router.query.panel)} className={styles.showcase} />
+          <AuthShowcase className={styles.showcase} />
         </div>
       </div>
     </>

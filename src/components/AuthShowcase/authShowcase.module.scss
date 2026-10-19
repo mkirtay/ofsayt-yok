@@ -88,13 +88,6 @@
   }
 }
 
-.leadBig {
-  @media (min-width: $bp-desktop) {
-    font-size: 40px;
-    line-height: 1.1;
-  }
-}
-
 .caption {
   margin: 0;
   font-size: 12px;
@@ -125,10 +118,6 @@
   }
 }
 
-.cardCompact {
-  gap: $spacing-3;
-}
-
 .cardHead {
   display: flex;
   align-items: center;
@@ -147,30 +136,6 @@
   text-transform: uppercase;
   color: var(--sc-accent);
   background: rgba($color-primary, 0.14);
-}
-
-.liveTag {
-  gap: 6px;
-  color: #ff6b6b;
-  background: rgba($color-live, 0.14);
-}
-
-.liveDot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: $color-live;
-  animation: pulse 1.6s ease-in-out infinite;
-
-  @media (prefers-reduced-motion: reduce) {
-    animation: none;
-  }
-}
-
-@keyframes pulse {
-  50% {
-    opacity: 0.35;
-  }
 }
 
 .meta {
@@ -229,13 +194,6 @@
   letter-spacing: $score-letter-spacing;
   font-variant-numeric: tabular-nums;
   line-height: 1;
-}
-
-.minute {
-  margin-top: 4px;
-  font-size: 11px;
-  font-weight: 700;
-  color: #ff6b6b;
 }
 
 .prob {
@@ -344,235 +302,4 @@
   @media (min-width: $bp-desktop) {
     font-size: 14px;
   }
-}
-
-/* ── B: dönen anlar ─────────────────────────────────────────────────────── */
-.momentsWrap {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-4;
-}
-
-// Kartlar üst üste (grid tek hücre): yükseklik en uzun karttan, geçişte kayma yok.
-.momentStack {
-  display: grid;
-
-  > * {
-    grid-area: 1 / 1;
-  }
-}
-
-.moment {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-3;
-  opacity: 0;
-  transform: translateY(10px) scale(0.98);
-  transition:
-    opacity 0.5s ease,
-    transform 0.5s ease;
-  pointer-events: none;
-
-  @media (prefers-reduced-motion: reduce) {
-    transform: none;
-    transition: opacity 0.2s linear;
-  }
-}
-
-.momentOn {
-  opacity: 1;
-  transform: none;
-}
-
-.momentCaption {
-  margin: 0;
-  font-size: 14px;
-  line-height: 1.45;
-  color: var(--sc-text);
-  font-weight: 500;
-}
-
-.dots {
-  display: flex;
-  gap: 2px;
-  margin-left: -10px;
-}
-
-// 24 px dokunma hedefi, görünen nokta küçük.
-.dot {
-  width: 28px;
-  height: 24px;
-  padding: 0;
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  position: relative;
-
-  &::after {
-    content: '';
-    position: absolute;
-    left: 10px;
-    top: 9px;
-    width: 8px;
-    height: 6px;
-    border-radius: $radius-full;
-    background: var(--sc-draw);
-    transition:
-      width 0.3s ease,
-      background 0.3s ease;
-  }
-
-  &:focus-visible {
-    outline: 2px solid var(--sc-accent);
-    outline-offset: -2px;
-    border-radius: 6px;
-  }
-}
-
-.dotOn::after {
-  width: 18px;
-  background: var(--sc-accent);
-}
-
-.favRow {
-  display: flex;
-  align-items: center;
-  gap: $spacing-2;
-  font-size: 12px;
-  color: var(--sc-muted);
-}
-
-.star {
-  color: #f5b301;
-}
-
-.bell {
-  position: relative;
-  display: inline-flex;
-  color: var(--sc-muted);
-}
-
-.bellDot {
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: $color-live;
-}
-
-.post {
-  display: flex;
-  gap: $spacing-3;
-
-  p {
-    margin: 0;
-  }
-}
-
-.avatar {
-  flex-shrink: 0;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 13px;
-  font-weight: 700;
-  color: #fff;
-  background: linear-gradient(135deg, $color-primary, #0e7490);
-}
-
-.postUser {
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.postText {
-  margin-top: 2px !important;
-  font-size: 13px;
-  line-height: 1.45;
-  color: var(--sc-text);
-}
-
-.postMeta {
-  margin-top: 6px !important;
-  display: flex;
-  gap: $spacing-3;
-  font-size: 12px;
-  color: var(--sc-muted);
-}
-
-/* ── C: marka + sosyal kanıt ────────────────────────────────────────────── */
-.proofStat {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-1;
-  min-height: 72px; // oran sonradan gelir: yer baştan ayrılı
-
-  @media (min-width: $bp-desktop) {
-    min-height: 120px;
-  }
-}
-
-.bigNum {
-  display: inline-flex;
-  align-items: center;
-  gap: $spacing-2;
-  font-family: $font-family-score;
-  font-size: 44px;
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  line-height: 1;
-  color: var(--sc-accent);
-  font-variant-numeric: tabular-nums;
-
-  @media (min-width: $bp-desktop) {
-    font-size: 84px;
-  }
-}
-
-.bigCheck {
-  display: inline-flex;
-  padding: 6px;
-  border-radius: 50%;
-  color: #fff;
-  background: $color-primary-dark;
-
-  svg {
-    width: 20px;
-    height: 20px;
-  }
-}
-
-.bigLabel {
-  font-size: 14px;
-  line-height: 1.45;
-  color: var(--sc-muted);
-  max-width: 34ch;
-
-  @media (min-width: $bp-desktop) {
-    font-size: 16px;
-  }
-}
-
-.proof .perks {
-  padding-top: $spacing-4;
-  border-top: 1px solid var(--sc-card-border);
-}
-
-// Mobilde kanıt paneli kısa bant: yalnız oran + kazanımlar (lead gizli).
-@media (max-width: #{$bp-desktop - 1px}) {
-  .panel .leadBig {
-    display: none;
-  }
-}
-
-// Varyant kancaları (kök sınıfa eklenir).
-.preview,
-.proof,
-.momentsVariant {
-  --sc-variant: 1;
 }
