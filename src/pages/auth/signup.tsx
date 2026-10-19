@@ -11,7 +11,7 @@ import GoogleSignInButton from '@/components/GoogleSignInButton'
 import { safeCallbackPath } from '@/lib/authRedirect'
 import { isGoogleAuthEnabled } from '@/lib/oauthEnv'
 import { markSessionAttributionSent, readSessionAttribution } from '@/lib/signupAttributionClient'
-import AuthStage from '@/components/AuthStage'
+import AuthShowcase, { showcaseVariant } from '@/components/AuthShowcase'
 import { useRedirectIfSignedIn } from '@/hooks/useRedirectIfSignedIn'
 import { useTurnstile } from '@/hooks/useTurnstile'
 import { PRIVACY_PATH, TERMS_PATH } from '@/config/legalConsent'
@@ -88,7 +88,6 @@ export default function SignUpPage({ googleEnabled }: { googleEnabled: boolean }
       </Head>
       <div className={styles.wrapper}>
         <div className={styles.stage}>
-          <AuthStage className={styles.stageScene} goalLabel={t('stage.goal')} hintLabel={t('stage.hint')} />
           <form className={styles.card} onSubmit={handleSubmit}>
             <h1 className={styles.title}>{t('signUp.title')}</h1>
 
@@ -223,6 +222,7 @@ export default function SignUpPage({ googleEnabled }: { googleEnabled: boolean }
               </Link>
             </p>
           </form>
+          <AuthShowcase variant={showcaseVariant(router.query.panel)} className={styles.showcase} />
         </div>
       </div>
     </>
