@@ -1,19 +1,17 @@
 import type { GetServerSideProps } from 'next';
 import Head from 'next/head';
-import { getServerSession } from 'next-auth/next';
 import AdminGame from '@/components/Game/AdminGame';
-import { authOptions } from '@/lib/auth-options';
+import AdminNav from '@/components/AdminNav';
+import { adminPageGuard } from '@/lib/adminPageGuard';
 import { gameMode } from '@/config/gameFlag';
 
 /**
- * Yalnızca ADMIN: oturum yok/ADMIN değil → 404. Asıl koruma burada ve API uçlarındaki `requireAdmin`;
- * `src/middleware.ts`'teki `/admin/*` kontrolü ek bir katman.
+ * Yalnızca ADMIN: geçerli oturum yok → giriş, ADMIN değil → 404 (lib/adminPageGuard.ts; API'ler requireAdmin). GAME_ENABLED
+ * kapalıyken sayfa da yok (404).
  */
-export const getServerSideProps: GetServerSideProps = async ({ req, res }) => {
+export const getServerSideProps: GetServerSideProps = async (ctx) => {
   if (gameMode() === 'off') return { notFound: true }; // GAME_ENABLED kapalı → yönetim de yok
-  const session = await getServerSession(req, res, authOptions);
-  if (session?.user?.role !== 'ADMIN') return { notFound: true };
-  return { props: {} };
+  return adminPageGuard(ctx);
 };
 
 export default function AdminGamePage() {
@@ -23,6 +21,7 @@ export default function AdminGamePage() {
         <title>Tahmin oyunu yönetimi</title>
         <meta name="robots" content="noindex, nofollow" />
       </Head>
+      <AdminNav />
       <AdminGame />
     </>
   );

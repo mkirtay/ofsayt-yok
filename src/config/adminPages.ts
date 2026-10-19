@@ -30,4 +30,9 @@ export const ADMIN_PAGES: readonly AdminPageDef[] = [
     title: 'Ödemeler',
     description: 'Ödeme siparişleri ve durumları.',
   },
+  {
+    path: '/admin/tahmin',
+    title: 'Tahmin oyunu',
+    description: 'Haftalık 10 maçı seç ve yayınla, sonuç düzelt / iptal et (GAME_ENABLED kapalıyken 404).',
+  },
 ];
