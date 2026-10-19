@@ -131,6 +131,34 @@
     "postDeleted": "Post deleted",
     "mention": "{{name}} mentioned you",
     "moderationWarning": "You received a warning because some of your content broke the community guidelines.",
-    "rulesLink": "Community guidelines"
+    "rulesLink": "Community guidelines",
+    "pinOutbid": "Someone took the #1 spot in Gündem.",
+    "pinRemoved": "Your #1 message in Gündem was removed for breaking the rules.",
+    "pinRefundNote": "Credits for any unused days were refunded to your account."
+  },
+  "pin": {
+    "badge": "#1",
+    "title": "This week's #1 spot",
+    "empty": "The #1 spot is empty. Pin your message to the top for everyone to see for 1 credit.",
+    "amount": "{{amount}} credits",
+    "hidden": "A message from a user you blocked.",
+    "resets": "Resets every Monday at 01:00 (Istanbul)",
+    "cta": "Take the #1 spot",
+    "ctaMin": "at least {{min}} credits",
+    "yours": "You hold the #1 spot",
+    "messageLabel": "Your message",
+    "messagePlaceholder": "A short message everyone will see (no links)",
+    "amountLabel": "Your bid (credits)",
+    "submit": "Take #1 for {{amount}} credits",
+    "submitting": "Sending…",
+    "cancel": "Cancel",
+    "rules": "Your whole bid is deducted now. If someone outbids you, 1/7 of your bid is used for each started day you held the spot (rounded up) and the rest is refunded. If you still hold #1 on Monday at 01:00, your whole bid is used.",
+    "balance": "Balance: {{credits}} credits",
+    "signIn": "Sign in to bid",
+    "needCredits": "You don't have enough credits for this bid.",
+    "buyCredits": "Get credits",
+    "remove": "Remove",
+    "removeConfirm": "Remove this #1 message? Credits for unused days will be refunded.",
+    "error": "Could not place the bid. Please try again."
   }
 }

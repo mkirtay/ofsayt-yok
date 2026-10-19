@@ -130,6 +130,34 @@
     "postDeleted": "Gönderi silindi",
     "mention": "{{name}} senden bahsetti",
     "moderationWarning": "Topluluk kurallarına aykırı bir içeriğin nedeniyle uyarıldın.",
-    "rulesLink": "Topluluk kuralları"
+    "rulesLink": "Topluluk kuralları",
+    "pinOutbid": "Gündem 1. sırası başka bir kullanıcıya geçti.",
+    "pinRemoved": "Gündem 1. sıra mesajın kurallara aykırı bulunduğu için kaldırıldı.",
+    "pinRefundNote": "Kullanmadığın günler varsa kredisi hesabına iade edildi."
+  },
+  "pin": {
+    "badge": "1. sıra",
+    "title": "Haftanın 1. sırası",
+    "empty": "1. sıra boş. 1 krediyle mesajını herkesin göreceği en üst sıraya sabitle.",
+    "amount": "{{amount}} kredi",
+    "hidden": "Engellediğin bir kullanıcının mesajı.",
+    "resets": "Her pazartesi 01:00'de sıfırlanır",
+    "cta": "1. sıraya geç",
+    "ctaMin": "en az {{min}} kredi",
+    "yours": "1. sıra sende",
+    "messageLabel": "Mesajın",
+    "messagePlaceholder": "Herkesin göreceği kısa mesaj (bağlantı paylaşılamaz)",
+    "amountLabel": "Teklifin (kredi)",
+    "submit": "{{amount}} krediyle 1. sıraya geç",
+    "submitting": "Gönderiliyor…",
+    "cancel": "Vazgeç",
+    "rules": "Teklifin tamamı şimdi düşülür. Biri seni geçerse kaldığın her başlayan gün için teklifin 1/7'si kullanılır (yukarı yuvarlanır), kalanı iade edilir. Pazartesi 01:00'de hâlâ 1. sıradaysan teklifin tamamı kullanılır.",
+    "balance": "Bakiyen: {{credits}} kredi",
+    "signIn": "Teklif vermek için giriş yap",
+    "needCredits": "Bu teklif için yeterli kredin yok.",
+    "buyCredits": "Kredi al",
+    "remove": "Kaldır",
+    "removeConfirm": "Bu 1. sıra mesajı kaldırılsın mı? Kullanılmayan günlerin kredisi iade edilir.",
+    "error": "Teklif verilemedi. Lütfen tekrar deneyin."
   }
 }

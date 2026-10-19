@@ -66,7 +66,17 @@ export type GundemPage<T> = { items: T[]; nextCursor: string | null };
 
 export type GundemScope = 'all' | 'following' | 'official' | 'match';
 
-export type GundemNotificationType = 'POST_LIKE' | 'POST_COMMENT' | 'FOLLOW' | 'OFFICIAL_POST' | 'MENTION' | 'MODERATION_WARNING';
+export type GundemNotificationType =
+  | 'POST_LIKE'
+  | 'POST_COMMENT'
+  | 'FOLLOW'
+  | 'OFFICIAL_POST'
+  | 'MENTION'
+  | 'MODERATION_WARNING'
+  /** Gündem 1. sırası başka kullanıcıya geçti (aktörsüz; kullanılmayan günler iade edildi). */
+  | 'PIN_OUTBID'
+  /** 1. sıra mesajı yönetici tarafından kaldırıldı (aktörsüz). */
+  | 'PIN_REMOVED';
 
 /** `GET /api/gundem/notifications` satırı. `type` sunucuda serbest string: bilinmeyen değerler istemcide elenir. `post` silinmişse null. */
 export type GundemNotification = {
@@ -77,4 +87,23 @@ export type GundemNotification = {
   readAt: string | null;
   actor: Pick<GundemAuthor, 'id' | 'name' | 'username' | 'image' | 'official' | 'deleted'> | null;
   post: { id: string; body: string } | null;
+};
+
+/** `GET /api/gundem/pin` — Gündem 1. sıra (haftalık teklif). */
+export type GundemPinState = {
+  weekStart: string;
+  /** Bir sonraki sıfırlama (Pazartesi 01:00 İstanbul). */
+  resetsAt: string;
+  minBid: number;
+  maxBid: number;
+  messageMaxLength: number;
+  leader: {
+    id: string;
+    amount: number;
+    since: string;
+    /** İzleyici lideri engellediyse (ya da tersi) null. */
+    message: string | null;
+    user: { id: string; username: string | null; name: string | null; image: string | null };
+    isMine: boolean;
+  } | null;
 };

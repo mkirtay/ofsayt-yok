@@ -7,7 +7,16 @@ import {
   type QueryClient,
 } from '@tanstack/react-query';
 import { useSession } from 'next-auth/react';
-import type { GundemAuthor, GundemComment, GundemNotification, GundemPage, GundemPost, GundemScope, GundemUserProfile } from '@/types/gundem';
+import type {
+  GundemAuthor,
+  GundemComment,
+  GundemNotification,
+  GundemPage,
+  GundemPinState,
+  GundemPost,
+  GundemScope,
+  GundemUserProfile,
+} from '@/types/gundem';
 
 /** API hatası: `error` Türkçe mesajı + HTTP durumu (+ 429'da `Retry-After` saniyesi). */
 export class GundemApiError extends Error {
@@ -49,6 +58,8 @@ async function api<T>(url: string, init?: RequestInit): Promise<T> {
 }
 
 export const gundemKeys = {
+  /** 1. sıra teklifi (izleyiciye göre: `isMine`, engel). */
+  pin: (viewer: string) => ['gundem', 'pin', viewer] as const,
   feeds: ['gundem', 'feed'] as const,
   feed: (scope: GundemScope, viewer: string) => ['gundem', 'feed', scope, viewer] as const,
   /** Tek maçın forumu (`scope=match&matchId`): `feeds` önekinin altında → beğeni yaması/oluşturma/silme invalidation'ı kapsar. */
@@ -288,5 +299,40 @@ export function useMarkNotificationsRead() {
       );
       return qc.invalidateQueries({ queryKey: ['gundem', 'notifications', 'unread'] });
     },
+  });
+}
+
+/** Gündem 1. sıra durumu (GET /api/gundem/pin). Lider değişince diğer izleyicilere en geç `staleTime`'da yansır. */
+export function useGundemPin(opts: { enabled?: boolean } = {}) {
+  const { data: session, status } = useSession();
+  const viewer = session?.user?.id ?? 'anon';
+  return useQuery({
+    queryKey: gundemKeys.pin(viewer),
+    queryFn: () => api<GundemPinState>('/api/gundem/pin'),
+    enabled: (opts.enabled ?? true) && status !== 'loading',
+    staleTime: 30_000,
+    refetchInterval: 60_000,
+  });
+}
+
+/** Teklif ver: yanıttaki durum önbelleğe yazılır; `credits` güncel bakiye (header rozeti için). */
+export function usePlacePinBid() {
+  const qc = useQueryClient();
+  const { data: session } = useSession();
+  const viewer = session?.user?.id ?? 'anon';
+  return useMutation({
+    mutationFn: (input: { amount: number; message: string }) =>
+      api<{ state: GundemPinState; credits: number }>('/api/gundem/pin', { method: 'POST', body: JSON.stringify(input) }),
+    onSuccess: (data) => qc.setQueryData(gundemKeys.pin(viewer), data.state),
+    onError: () => qc.invalidateQueries({ queryKey: ['gundem', 'pin'] }),
+  });
+}
+
+/** Yönetici: aktif 1. sıra mesajını kaldır (oransal iade sunucuda). */
+export function useRemovePin() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (bidId: string) => api<{ state: GundemPinState }>(`/api/gundem/pin?id=${encodeURIComponent(bidId)}`, { method: 'DELETE' }),
+    onSettled: () => qc.invalidateQueries({ queryKey: ['gundem', 'pin'] }),
   });
 }

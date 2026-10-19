@@ -61,7 +61,7 @@
       },
       {
         "heading": "4. Kredi Sistemi",
-        "body": "AI maç analizleri kredi ile açılır; bir analizi açmak 1 kredidir. E-posta adresini doğrulayan yeni üyelere bir kez 2 kredi kayıt bonusu tanımlanır. E-postası doğrulanmış ve en az 24 saatlik hesaplar her hafta hazır (önceden üretilmiş) bir analizi ücretsiz açabilir. Kredi paketleri Fiyatlandırma sayfasından satın alınabilir; paketler, fiyatlar, iade ve cayma koşulları Ön Bilgilendirme Formu, Mesafeli Satış Sözleşmesi ve İade ve İptal Koşulları sayfalarındadır. Kredi sisteminin koşulları güncellenebilir; güncel koşullar her zaman bu sayfada yer alır."
+        "body": "AI maç analizleri kredi ile açılır; bir analizi açmak 1 kredidir. E-posta adresini doğrulayan yeni üyelere bir kez 2 kredi kayıt bonusu tanımlanır. E-postası doğrulanmış ve en az 24 saatlik hesaplar her hafta hazır (önceden üretilmiş) bir analizi ücretsiz açabilir. Kredi paketleri Fiyatlandırma sayfasından satın alınabilir; paketler, fiyatlar, iade ve cayma koşulları Ön Bilgilendirme Formu, Mesafeli Satış Sözleşmesi ve İade ve İptal Koşulları sayfalarındadır. Krediler ayrıca Gündem'in haftalık 1. sıra mesajı için teklif vermekte kullanılabilir: teklifin tamamı verilirken düşülür; sıra başka bir kullanıcıya geçerse kalınan her başlayan gün için teklifin 1/7'si (yukarı yuvarlanarak) kullanılır ve kalanı iade edilir; her pazartesi 01:00'de (Türkiye saati) 1. sırada kalan teklifin tamamı kullanılmış sayılır. Kurallara aykırı 1. sıra mesajı kaldırılabilir; bu durumda da kullanılmayan günler iade edilir. Kredi sisteminin koşulları güncellenebilir; güncel koşullar her zaman bu sayfada yer alır."
       },
       {
         "heading": "5. Kullanıcı Davranış Kuralları",
@@ -197,7 +197,7 @@
       },
       {
         "heading": "2. Ürünün Temel Nitelikleri",
-        "body": "AI analiz kredisi: 1 kredi, bir AI maç analizini hesabınız için açma hakkıdır; açılan analiz hesabınızda kalıcı olarak açık kalır. Krediler süresizdir (son kullanma tarihi yoktur). Paketler tek seferlik satın alımdır; abonelik, otomatik yenileme ve tekrarlayan tahsilat yoktur. Krediler nakde çevrilemez ve başka hesaba devredilemez. AI maç analizleri bilgi amaçlı istatistiksel tahmindir; herhangi bir sonuç garanti edilmez."
+        "body": "AI analiz kredisi: 1 kredi, bir AI maç analizini hesabınız için açma hakkıdır; açılan analiz hesabınızda kalıcı olarak açık kalır. Krediler süresizdir (son kullanma tarihi yoktur). Paketler tek seferlik satın alımdır; abonelik, otomatik yenileme ve tekrarlayan tahsilat yoktur. Krediler nakde çevrilemez ve başka hesaba devredilemez. AI maç analizleri bilgi amaçlı istatistiksel tahmindir; herhangi bir sonuç garanti edilmez. Krediler ayrıca Gündem 1. sıra teklifinde kullanılabilir (kurallar Kullanım Şartları 4. bölümde)."
       },
       {
         "heading": "3. Fiyat ve Ek Masraflar",
@@ -250,7 +250,7 @@
       },
       {
         "heading": "3. Sözleşmenin Konusu ve Ürün",
-        "body": "Sözleşmenin konusu, Alıcının elektronik ortamda sipariş verdiği AI analiz kredisi paketinin satışı ve hesaba tanımlanmasıdır.\n\nAI analiz kredisi: 1 kredi, bir AI maç analizini hesabınız için açma hakkıdır; açılan analiz hesabınızda kalıcı olarak açık kalır. Krediler süresizdir (son kullanma tarihi yoktur). Paketler tek seferlik satın alımdır; abonelik, otomatik yenileme ve tekrarlayan tahsilat yoktur. Krediler nakde çevrilemez ve başka hesaba devredilemez. AI maç analizleri bilgi amaçlı istatistiksel tahmindir; herhangi bir sonuç garanti edilmez."
+        "body": "Sözleşmenin konusu, Alıcının elektronik ortamda sipariş verdiği AI analiz kredisi paketinin satışı ve hesaba tanımlanmasıdır.\n\nAI analiz kredisi: 1 kredi, bir AI maç analizini hesabınız için açma hakkıdır; açılan analiz hesabınızda kalıcı olarak açık kalır. Krediler süresizdir (son kullanma tarihi yoktur). Paketler tek seferlik satın alımdır; abonelik, otomatik yenileme ve tekrarlayan tahsilat yoktur. Krediler nakde çevrilemez ve başka hesaba devredilemez. AI maç analizleri bilgi amaçlı istatistiksel tahmindir; herhangi bir sonuç garanti edilmez. Krediler ayrıca Gündem 1. sıra teklifinde kullanılabilir (kurallar Kullanım Şartları 4. bölümde)."
       },
       {
         "heading": "4. Fiyat",

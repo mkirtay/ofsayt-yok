@@ -26,7 +26,11 @@ export type CreditTransactionType =
   | 'ADMIN_GRANT'
   | 'REFUND'
   /** Arkadaş daveti ödülü — yalnız davet edilenin ilk satın alımında (ödeme entegrasyonunda bağlanacak). */
-  | 'REFERRAL_BONUS';
+  | 'REFERRAL_BONUS'
+  /** Gündem 1. sıra teklifi (tutarın tamamı teklifte düşülür; lib/pinBid.ts). */
+  | 'PIN_BID'
+  /** 1. sıra kaybedilince kullanılmayan günlerin iadesi. */
+  | 'PIN_REFUND';
 // Karar 8: hiçbir tür maç sonucuna / tahmine bağlı değil (kredi yatırıp kazanma yok) — bkz. creditPolicy.test.ts.
 
 export type SpendStatus = 'PENDING' | 'SETTLED' | 'REFUNDED';
@@ -290,4 +294,40 @@ export async function addCredits(
     });
     return balanceAfter;
   });
+}
+
+/**
+ * Çağıranın işlemi içinde koşullu düşüm + SETTLED defter satırı (birden çok bakiye hareketini tek işlemde birleştiren
+ * akışlar için, ör. lib/pinBid.ts). Yetersiz bakiyede `InsufficientCreditsError` (çağıranın işlemi geri alınır).
+ * @returns düşüm sonrası bakiye
+ */
+export async function debitCreditsTx(
+  tx: Prisma.TransactionClient,
+  userId: string,
+  amount: number,
+  opts: { type: CreditTransactionType; note?: string },
+): Promise<number> {
+  const { count } = await tx.user.updateMany({
+    where: { id: userId, credits: { gte: amount } },
+    data: { credits: { decrement: amount } },
+  });
+  if (count === 0) throw new InsufficientCreditsError();
+  const user = await tx.user.findUnique({ where: { id: userId }, select: { credits: true } });
+  const balanceAfter = user?.credits ?? 0;
+  await tx.creditTransaction.create({
+    data: { userId, type: opts.type, amount: -amount, balanceAfter, note: opts.note, status: 'SETTLED' },
+  });
+  return balanceAfter;
+}
+
+/** Çağıranın işlemi içinde atomik ekleme + defter satırı. @returns ekleme sonrası bakiye */
+export async function creditCreditsTx(
+  tx: Prisma.TransactionClient,
+  userId: string,
+  amount: number,
+  opts: { type: CreditTransactionType; note?: string },
+): Promise<number> {
+  const user = await tx.user.update({ where: { id: userId }, data: { credits: { increment: amount } }, select: { credits: true } });
+  await tx.creditTransaction.create({ data: { userId, type: opts.type, amount, balanceAfter: user.credits, note: opts.note } });
+  return user.credits;
 }

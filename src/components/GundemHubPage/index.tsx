@@ -4,6 +4,7 @@ import { useSession } from 'next-auth/react';
 import { useCallback, useEffect, useRef } from 'react';
 import EmptyState from '@/components/EmptyState';
 import GundemPanel from '@/components/GundemPanel';
+import GundemPin from '@/components/GundemPin';
 import GundemScopeTabs, { readGundemScope } from '@/components/GundemScopeTabs';
 import PostDetailPanel from '@/components/PostDetailPanel';
 import { useSplitView } from '@/hooks/useSplitView';
@@ -90,6 +91,7 @@ export default function GundemHubPage() {
         <div className={styles.top}>
           <h1 className={styles.title}>{t('title')}</h1>
           <GundemScopeTabs value={scope} onChange={selectScope} hideFollowing={unauthenticated} />
+          <GundemPin />
         </div>
 
         <div className={`${styles.grid} ${isSplit ? styles.gridSplit : ''}`.trim()}>

@@ -19,100 +19,101 @@ enum PostAuthorType {
 }
 
 model User {
-  id            String   @id @default(cuid())
-  name          String?
-  username      String?  @unique
-  bio           String?  @db.Text
-  email         String   @unique
+  id                   String              @id @default(cuid())
+  name                 String?
+  username             String?             @unique
+  bio                  String?             @db.Text
+  email                String              @unique
   /// Kanonik e-posta (gmail/googlemail: `+etiket` ve noktalar atılır, alan gmail.com) — aynı kutuya ikinci hesap ve
   /// ikinci kayıt bonusu engellenir (lib/emailNormalize.ts). 2026-10-04'ten önceki kayıtlarda boş (geri doldurulmadı).
-  emailNormalized String? @unique
-  emailVerified DateTime?
-  password      String?
+  emailNormalized      String?             @unique
+  emailVerified        DateTime?
+  password             String?
   /// Oturum sürümü: şifre değişince / sıfırlanınca artar; web oturumu ve mobil belirteç bu değeri taşır, her
   /// kimlik kontrolünde karşılaştırılır (eşleşmeyen oturum geçersiz).
-  tokenVersion  Int      @default(0)
-  image         String?
-  role          Role     @default(USER)
+  tokenVersion         Int                 @default(0)
+  image                String?
+  role                 Role                @default(USER)
   /// AI analiz kredisi bakiyesi (süresiz). Yeni kullanıcı 0 ile başlar; e-posta doğrulanınca 2 kredi kayıt bonusu
   /// (lib/credits.ts → grantVerifiedSignupBonus). 2026-10 öncesi kayıtlar 5 ile başlamıştı (bakiyeleri aynen kalır).
-  credits            Int      @default(0)
+  credits              Int                 @default(0)
   /// Premium bitişi: > şimdi ⇒ premium (sınırsız analiz açma, reklamsız). Yönetici panelinden elle; ileride ödemeden.
-  premiumUntil       DateTime?
+  premiumUntil         DateTime?
   /// Davet kodu (ilk istekte üretilir) ve kaydı getiren davet edenin kimliği (ödül ödeme entegrasyonunda).
-  referralCode       String?  @unique
-  referredById       String?
-  favoriteTeamIds    Int[]
-  favoriteLeagueIds  Int[]
+  referralCode         String?             @unique
+  referredById         String?
+  favoriteTeamIds      Int[]
+  favoriteLeagueIds    Int[]
   /// Kayıt kaynağı (ilk temas): kayıt oturumunun ilk sayfasındaki utm_* değerleri ve o oturumun ilk giriş
   /// zamanı. Tarayıcıda yalnız oturum boyunca (sessionStorage) tutulur; kayıtta bir kez yazılır.
-  signupUtmSource    String?
-  signupUtmMedium    String?
-  signupUtmCampaign  String?
-  firstTouchAt       DateTime?
+  signupUtmSource      String?
+  signupUtmMedium      String?
+  signupUtmCampaign    String?
+  firstTouchAt         DateTime?
   /// Kayıtta Kullanım Koşulları + Gizlilik Politikası onayı: zaman ve metin sürümü (config/legalConsent.ts →
   /// TERMS_CONSENT_VERSION). 2026-10-14 öncesi kayıtlarda ve Google / mobil ile açılan hesaplarda boş.
-  termsAcceptedAt    DateTime?
-  termsVersion       String?
+  termsAcceptedAt      DateTime?
+  termsVersion         String?
   /// Gündem yazma askısı (yönetici kararı): > şimdi ⇒ gönderi / yorum yazamaz; giriş ve okuma açık. Kalıcı askı
   /// 9999-12-31 (lib/moderation/suspension.ts). Boş = askı yok.
   gundemSuspendedUntil DateTime?
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  accounts      Account[]
-  sessions      Session[]
-  comments        MatchComment[] @relation("MatchCommentAuthor")
-  deletedComments MatchComment[] @relation("MatchCommentDeletedBy")
-  commentLikes    MatchCommentLike[]
-  userPredictions UserPrediction[]
-  creditTransactions CreditTransaction[]
-  analysisUnlocks    AnalysisUnlock[]
-  premiumGrants      PremiumGrant[]
-  paymentOrders      PaymentOrder[]
-  posts               Post[]          @relation("PostAuthor")
-  deletedPosts        Post[]          @relation("PostDeletedBy")
-  postLikes           PostLike[]      @relation("PostLikeUser")
-  postComments        PostComment[]   @relation("PostCommentAuthor")
-  deletedPostComments PostComment[]   @relation("PostCommentDeletedBy")
-  following           Follow[]        @relation("FollowFollower")
-  followers           Follow[]        @relation("FollowFollowing")
-  pushTokens          PushToken[]
-  notifications       Notification[]  @relation("NotificationRecipient")
-  notificationsAsActor Notification[] @relation("NotificationActor")
-  frikikScores        FrikikDailyScore[]
-  blocksMade          UserBlock[]     @relation("UserBlockBlocker")
-  blockedBy           UserBlock[]     @relation("UserBlockBlocked")
-  reportsMade         ContentReport[] @relation("ContentReportReporter")
-  reportsResolved     ContentReport[] @relation("ContentReportResolver")
-  mentionsReceived    GundemMention[] @relation("GundemMentionUser")
-  moderationActions   ModerationAction[] @relation("ModerationActionAdmin")
-  moderationTargeted  ModerationAction[] @relation("ModerationActionTarget")
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  accounts             Account[]
+  sessions             Session[]
+  comments             MatchComment[]      @relation("MatchCommentAuthor")
+  deletedComments      MatchComment[]      @relation("MatchCommentDeletedBy")
+  commentLikes         MatchCommentLike[]
+  userPredictions      UserPrediction[]
+  creditTransactions   CreditTransaction[]
+  analysisUnlocks      AnalysisUnlock[]
+  premiumGrants        PremiumGrant[]
+  paymentOrders        PaymentOrder[]
+  posts                Post[]              @relation("PostAuthor")
+  deletedPosts         Post[]              @relation("PostDeletedBy")
+  postLikes            PostLike[]          @relation("PostLikeUser")
+  postComments         PostComment[]       @relation("PostCommentAuthor")
+  deletedPostComments  PostComment[]       @relation("PostCommentDeletedBy")
+  following            Follow[]            @relation("FollowFollower")
+  followers            Follow[]            @relation("FollowFollowing")
+  pushTokens           PushToken[]
+  notifications        Notification[]      @relation("NotificationRecipient")
+  notificationsAsActor Notification[]      @relation("NotificationActor")
+  pinBids              PinBid[]
+  frikikScores         FrikikDailyScore[]
+  blocksMade           UserBlock[]         @relation("UserBlockBlocker")
+  blockedBy            UserBlock[]         @relation("UserBlockBlocked")
+  reportsMade          ContentReport[]     @relation("ContentReportReporter")
+  reportsResolved      ContentReport[]     @relation("ContentReportResolver")
+  mentionsReceived     GundemMention[]     @relation("GundemMentionUser")
+  moderationActions    ModerationAction[]  @relation("ModerationActionAdmin")
+  moderationTargeted   ModerationAction[]  @relation("ModerationActionTarget")
 }
 
 /// Kredi hareketleri defteri — bakiye değişikliklerinin denetim izi.
 model CreditTransaction {
-  id           String   @id @default(cuid())
-  userId       String
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   /// "SIGNUP_BONUS" | "PURCHASE" | "ANALYSIS_SPEND" | "ANALYSIS_FREE" | "ANALYSIS_PREMIUM" | "ANALYSIS_WEEKLY_FREE"
   /// | "ADMIN_GRANT" | "REFUND" | "REFERRAL_BONUS". Hiçbir tür maç sonucuna / tahmine bağlı DEĞİL.
-  type         String
+  type           String
   /// Pozitif (ekleme) veya negatif (harcama)
-  amount       Int
-  balanceAfter Int
+  amount         Int
+  balanceAfter   Int
   /// ANALYSIS_SPEND için ilgili maç
-  matchId      String?
-  note         String?
+  matchId        String?
+  note           String?
   /// Harcamanın tekrar anahtarı (kullanıcı başına tekil): aynı iş için en fazla bir düşüm. Analiz:
   /// `analysis:{matchId}:PRE`. İade edilince anahtar `…:refunded:{id}` olur (yeniden denenebilsin). Eski satırlarda null.
   idempotencyKey String?
   /// Harcama durumu: "PENDING" (üretim sürüyor) | "SETTLED" | "REFUNDED". Diğer tiplerde ve eski satırlarda null.
-  status       String?
+  status         String?
   /// REFUND satırı → iade ettiği harcama (tekil: bir harcama en fazla bir kez iade edilir).
-  refundOfId   String?  @unique
+  refundOfId     String?  @unique
   /// Yönetici işlemlerinde (ADMIN_GRANT) işlemi yapan yöneticinin kimliği — denetim izi.
-  actorId      String?
-  createdAt    DateTime @default(now())
+  actorId        String?
+  createdAt      DateTime @default(now())
 
   @@unique([userId, idempotencyKey])
   @@index([userId])
@@ -164,26 +165,26 @@ enum PaymentOrderStatus {
 /// callback yalnız callbackAt işaretler, tarayıcı yönlendirmesi hiçbir şey vermez (bkz. server/payments). merchantOrderId bizim ürettiğimiz, linke eklenen kimlik;
 /// hikieOrderId Hikie'nin invoiceId'si (ödeme sonuçlanınca, tekil → aynı ödeme iki kez işlenmez).
 model PaymentOrder {
-  id              String             @id @default(cuid())
-  merchantOrderId String             @unique
-  userId          String
-  user            User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                      String             @id @default(cuid())
+  merchantOrderId         String             @unique
+  userId                  String
+  user                    User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   /// config/paymentPackages.ts anahtarı (credits_10, credits_30, credits_100, test_1tl; eski premium_* katalogda yok)
-  packageKey      String
-  amountTRY       Decimal            @db.Decimal(10, 2)
-  status          PaymentOrderStatus @default(PENDING)
-  hikieOrderId    String?            @unique
-  createdAt       DateTime           @default(now())
-  paidAt          DateTime?
-  refundedAt      DateTime?
+  packageKey              String
+  amountTRY               Decimal            @db.Decimal(10, 2)
+  status                  PaymentOrderStatus @default(PENDING)
+  hikieOrderId            String?            @unique
+  createdAt               DateTime           @default(now())
+  paidAt                  DateTime?
+  refundedAt              DateTime?
   /// İmzasız Checkout Link callback'i ilk ne zaman geldi (yalnız tanılama; kredi kararı değil).
-  callbackAt      DateTime?
+  callbackAt              DateTime?
   /// Sipariş öncesi onay (Ön Bilgilendirme Formu + Mesafeli Satış Sözleşmesi + anında ifa / cayma hakkı beyanı): zaman
   /// ve metin sürümü (config/legalConsent.ts PURCHASE_TERMS_VERSION). Bu alanlar eklenmeden önceki siparişlerde null.
-  termsAcceptedAt DateTime?
-  termsVersion    String?
+  termsAcceptedAt         DateTime?
+  termsVersion            String?
   /// Sipariş onay e-postasının dili ("tr" | "en"; checkout anındaki site dili). Eski siparişlerde null → tr.
-  locale          String?
+  locale                  String?
   /// Sipariş onay e-postası gönderildi (tek sefer: koşullu güncelleme ile talep edilir; gönderim başarısızsa geri null).
   confirmationEmailSentAt DateTime?
 
@@ -211,43 +212,43 @@ model Referral {
 
 /// AI üretimli maç analizi cache'i. Aynı maç + status için tek aktif kayıt.
 model MatchAnalysis {
-  id                 String   @id @default(cuid())
-  matchId            String
+  id                String            @id @default(cuid())
+  matchId           String
   /// "PRE" (maç öncesi) | "HT" (devre arası) | "POST" (maç sonu)
-  matchStatus        String
-  modelVersion       String
+  matchStatus       String
+  modelVersion      String
   /// Takım kimlikleri ve adları (denormalize — analiz görüntülemede tek sorgu)
-  homeTeamId         String?
-  awayTeamId         String?
-  homeTeamName       String
-  awayTeamName       String
-  competitionId      String?
-  competitionName    String?
+  homeTeamId        String?
+  awayTeamId        String?
+  homeTeamName      String
+  awayTeamName      String
+  competitionId     String?
+  competitionName   String?
   /// Hızlı erişim için takım anlatımları ayrıca tutulur
-  homeTeamNarrative  String   @db.Text
-  awayTeamNarrative  String   @db.Text
+  homeTeamNarrative String            @db.Text
+  awayTeamNarrative String            @db.Text
   /// Yapılandırılmış AI çıktıları (Json)
-  matchPrediction    Json
-  scorePrediction    Json
-  goalExpectation    Json
-  bettingTips        Json
-  teamAnalyses       Json
+  matchPrediction   Json
+  scorePrediction   Json
+  goalExpectation   Json
+  bettingTips       Json
+  teamAnalyses      Json
   /// v2 promptun geniş bölümleri (matchSummary, tacticalAnalysis, heatmapAnalysis,
   /// playerAnalysis, riskFactors, finalVerdict, analystComment)
-  fullReport         Json?
+  fullReport        Json?
   /// "low" | "medium" | "high"
-  riskLevel          String
-  riskReasoning      String   @db.Text
+  riskLevel         String
+  riskReasoning     String            @db.Text
   /// 0-100 arası modelin kendi güven skoru
-  confidenceScore    Float
+  confidenceScore   Float
   /// Maliyet takibi
-  tokensUsed         Int      @default(0)
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @default(now()) @updatedAt
+  tokensUsed        Int               @default(0)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @default(now()) @updatedAt
   /// PRE fazında 30 dk TTL; HT/POST için null (kalıcı)
-  expiresAt          DateTime?
-  predictionRecord   PredictionRecord?
-  unlocks            AnalysisUnlock[]
+  expiresAt         DateTime?
+  predictionRecord  PredictionRecord?
+  unlocks           AnalysisUnlock[]
 
   @@unique([matchId, matchStatus])
   @@index([matchId])
@@ -255,8 +256,8 @@ model MatchAnalysis {
 
 /// Tahmin doğruluk takibi — maç bittiğinde MatchAnalysis ile karşılaştırılır.
 model PredictionRecord {
-  id                  String   @id @default(cuid())
-  matchAnalysisId     String   @unique
+  id                  String        @id @default(cuid())
+  matchAnalysisId     String        @unique
   matchAnalysis       MatchAnalysis @relation(fields: [matchAnalysisId], references: [id], onDelete: Cascade)
   matchId             String
   matchLabel          String?
@@ -282,7 +283,7 @@ model PredictionRecord {
   extendedHits        Json?
   modelVersion        String
   evaluatedAt         DateTime?
-  createdAt           DateTime @default(now())
+  createdAt           DateTime      @default(now())
 
   @@index([matchId])
   @@index([modelVersion, result1x2Hit])
@@ -303,16 +304,16 @@ model UserPrediction {
 }
 
 model MatchComment {
-  id                String    @id @default(cuid())
-  matchId           String
-  body              String    @db.Text
-  createdAt         DateTime  @default(now())
-  userId            String
-  user              User      @relation("MatchCommentAuthor", fields: [userId], references: [id], onDelete: Cascade)
-  deletedAt         DateTime?
-  deletedByUserId   String?
-  deletedBy         User?     @relation("MatchCommentDeletedBy", fields: [deletedByUserId], references: [id], onDelete: SetNull)
-  likes             MatchCommentLike[]
+  id              String             @id @default(cuid())
+  matchId         String
+  body            String             @db.Text
+  createdAt       DateTime           @default(now())
+  userId          String
+  user            User               @relation("MatchCommentAuthor", fields: [userId], references: [id], onDelete: Cascade)
+  deletedAt       DateTime?
+  deletedByUserId String?
+  deletedBy       User?              @relation("MatchCommentDeletedBy", fields: [deletedByUserId], references: [id], onDelete: SetNull)
+  likes           MatchCommentLike[]
 
   @@index([matchId, createdAt])
 }
@@ -389,19 +390,19 @@ model VerificationToken {
 
 /// Gündem (sosyal akış) postu. Resmi/otomatik postlar OFFICIAL_BOT; yazarı bot User kaydıdır.
 model Post {
-  id              String         @id @default(cuid())
+  id              String          @id @default(cuid())
   authorId        String
-  author          User           @relation("PostAuthor", fields: [authorId], references: [id], onDelete: Cascade)
-  authorType      PostAuthorType @default(USER)
-  body            String         @db.Text
+  author          User            @relation("PostAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  authorType      PostAuthorType  @default(USER)
+  body            String          @db.Text
   matchId         String?
   teamId          Int?
   /// Bot postlarının tekrar üretimini engelleyen anahtar (örn. "goal:<matchId>:<eventId>")
-  externalKey     String?        @unique
-  createdAt       DateTime       @default(now())
+  externalKey     String?         @unique
+  createdAt       DateTime        @default(now())
   deletedAt       DateTime?
   deletedByUserId String?
-  deletedBy       User?          @relation("PostDeletedBy", fields: [deletedByUserId], references: [id], onDelete: SetNull)
+  deletedBy       User?           @relation("PostDeletedBy", fields: [deletedByUserId], references: [id], onDelete: SetNull)
   /// Moderasyonla gizlendi (şikâyet eşiği ya da yönetici): yazar görür ("inceleme altında"), diğerleri görmez.
   hiddenAt        DateTime?
   /// "REPORTS" (eşik) | "ADMIN"
@@ -452,16 +453,16 @@ model PostLike {
 }
 
 model PostComment {
-  id              String    @id @default(cuid())
+  id              String          @id @default(cuid())
   postId          String
-  post            Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  post            Post            @relation(fields: [postId], references: [id], onDelete: Cascade)
   userId          String
-  user            User      @relation("PostCommentAuthor", fields: [userId], references: [id], onDelete: Cascade)
-  body            String    @db.Text
-  createdAt       DateTime  @default(now())
+  user            User            @relation("PostCommentAuthor", fields: [userId], references: [id], onDelete: Cascade)
+  body            String          @db.Text
+  createdAt       DateTime        @default(now())
   deletedAt       DateTime?
   deletedByUserId String?
-  deletedBy       User?     @relation("PostCommentDeletedBy", fields: [deletedByUserId], references: [id], onDelete: SetNull)
+  deletedBy       User?           @relation("PostCommentDeletedBy", fields: [deletedByUserId], references: [id], onDelete: SetNull)
   /// Moderasyonla gizlendi (bkz. Post.hiddenAt)
   hiddenAt        DateTime?
   hiddenReason    String?
@@ -709,4 +710,26 @@ model ModerationStat {
   count    Int      @default(0)
 
   @@unique([day, surface, category, outcome])
+}
+
+/// Gündem 1. sıra teklifi (haftalık açık artırma; kurallar: src/lib/pinBid.ts). Haftada en fazla bir ACTIVE (kısmi tekil
+/// indeks, migration 20261019120000). Teklif tutarı verilirken düşülür (defter `PIN_BID`); sıra kaybedilince başlayan gün
+/// oranında kesinti, kalanı `PIN_REFUND`. Hafta sonunda lider olan teklifin tamamı kullanılmış sayılır (iade yok).
+model PinBid {
+  id             String    @id @default(cuid())
+  userId         String
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Haftanın başlangıcı: Pazartesi 01:00 Europe/Istanbul (UTC olarak saklanır)
+  weekStart      DateTime
+  amount         Int
+  message        String
+  /// "ACTIVE" | "OUTBID" | "REMOVED" (yönetici) | "COMPLETED" (hafta sonunda lider)
+  status         String    @default("ACTIVE")
+  chargedAmount  Int?
+  refundedAmount Int?
+  endedAt        DateTime?
+  createdAt      DateTime  @default(now())
+
+  @@index([weekStart, status])
+  @@index([userId])
 }

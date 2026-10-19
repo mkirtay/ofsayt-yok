@@ -3,6 +3,10 @@
     {
       "path": "/api/admin/evaluate-predictions",
       "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/gundem/pin/settle",
+      "schedule": "0 22 * * 0"
     }
   ]
 }

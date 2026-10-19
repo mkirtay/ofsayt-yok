@@ -20,6 +20,8 @@ const KEYS: Record<GundemNotificationType, string> = {
   OFFICIAL_POST: 'notifications.officialPost',
   MENTION: 'notifications.mention',
   MODERATION_WARNING: 'notifications.moderationWarning',
+  PIN_OUTBID: 'notifications.pinOutbid',
+  PIN_REMOVED: 'notifications.pinRemoved',
 };
 
 const SNIPPET_MAX = 60;
@@ -40,6 +42,7 @@ function isKnownType(type: string): type is GundemNotificationType {
  * - FOLLOW: hedef aktörün profili; aktör yoksa tıklanamaz.
  * - MENTION: gönderi bildirimi gibi (etiketlendiği gönderi / yorumun gönderisi).
  * - MODERATION_WARNING: aktörsüz yönetici uyarısı → Topluluk Kuralları sayfası.
+ * - PIN_OUTBID / PIN_REMOVED: aktörsüz 1. sıra bildirimi → Gündem.
  */
 export function describeNotification(n: GundemNotification, t: TFn): NotificationView | null {
   if (!isKnownType(n.type)) return null;
@@ -50,6 +53,9 @@ export function describeNotification(n: GundemNotification, t: TFn): Notificatio
 
   if (n.type === 'MODERATION_WARNING') {
     return { text: t(KEYS[n.type]), snippet: t('notifications.rulesLink'), href: '/topluluk-kurallari', muted: false };
+  }
+  if (n.type === 'PIN_OUTBID' || n.type === 'PIN_REMOVED') {
+    return { text: t(KEYS[n.type]), snippet: t('notifications.pinRefundNote'), href: '/gundem', muted: false };
   }
   if (n.type === 'FOLLOW') {
     return { text, snippet: null, href: n.actor ? `/gundem/kullanici/${n.actor.id}` : null, muted: false };

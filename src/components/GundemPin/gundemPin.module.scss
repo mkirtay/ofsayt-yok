@@ -1,0 +1,235 @@
+@use '../../styles/variables' as *;
+
+.pin {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+  padding: $spacing-4;
+  background: var(--bg-surface);
+  border: 1px solid color-mix(in srgb, var(--color-premium) 55%, var(--border-subtle));
+  border-radius: $radius-md;
+  box-shadow: 0 0 18px -10px color-mix(in srgb, var(--color-premium) 60%, transparent);
+}
+
+.compact {
+  padding: $spacing-3;
+  gap: $spacing-2;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-2;
+}
+
+.badge {
+  padding: 2px 10px;
+  border-radius: $radius-full;
+  background: linear-gradient(135deg, var(--color-premium), var(--color-premium-strong));
+  color: var(--color-on-premium);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.resets {
+  font-size: 12px;
+  color: $color-text-secondary;
+}
+
+.leader {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-3;
+}
+
+.avatarLink {
+  flex: 0 0 auto;
+}
+
+.leaderBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.leaderMeta {
+  display: flex;
+  align-items: baseline;
+  gap: $spacing-2;
+  flex-wrap: wrap;
+}
+
+.name {
+  font-size: 14px;
+  font-weight: 700;
+  color: $color-text;
+}
+
+.amount {
+  font-size: 12px;
+  font-weight: 700;
+  color: $color-text-secondary;
+}
+
+.message {
+  margin: 2px 0 0;
+  font-size: 14px;
+  line-height: 1.45;
+  color: $color-text;
+  overflow-wrap: anywhere;
+}
+
+.hidden {
+  color: $color-text-secondary;
+}
+
+.empty,
+.yours {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: $color-text-secondary;
+}
+
+.yours {
+  font-weight: 700;
+  color: $color-primary-text;
+}
+
+.cta,
+.submit,
+.cancel,
+.remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 $spacing-4;
+  border-radius: $radius-full;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1px solid $color-border;
+  background: $color-muted;
+  color: $color-text;
+  transition: $transition-base;
+
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+    outline-offset: 2px;
+  }
+}
+
+.cta {
+  align-self: stretch;
+}
+
+.cta:hover,
+.cancel:hover {
+  border-color: $color-primary;
+}
+
+.remove {
+  flex: 0 0 auto;
+  min-height: 32px;
+  padding: 0 $spacing-3;
+  font-size: 12px;
+  color: $color-danger;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+}
+
+.label {
+  font-size: 12px;
+  font-weight: 700;
+  color: $color-text;
+}
+
+.textarea,
+.amountInput {
+  width: 100%;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
+  padding: $spacing-2 $spacing-3;
+  font-size: 14px;
+  font-family: $font-family;
+  color: $color-text;
+  background: var(--bg-page);
+
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+    outline-offset: 1px;
+  }
+}
+
+.textarea {
+  resize: none;
+  line-height: 1.45;
+}
+
+.counter {
+  align-self: flex-end;
+  font-size: 11px;
+  color: $color-text-secondary;
+}
+
+.amountRow {
+  display: grid;
+  grid-template-columns: auto 96px 1fr;
+  align-items: center;
+  gap: $spacing-2;
+}
+
+.amountInput {
+  min-height: 40px;
+}
+
+.balance {
+  justify-self: end;
+  font-size: 12px;
+  color: $color-text-secondary;
+}
+
+.rules {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: $color-text-secondary;
+}
+
+.error {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: $color-danger;
+}
+
+.link {
+  color: $color-primary-text;
+  text-decoration: underline;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: $spacing-2;
+}
+
+.submit {
+  border-color: $color-primary-dark;
+  background: $color-primary-dark;
+  color: #fff;
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  &[aria-busy='true'] {
+    cursor: progress;
+  }
+}
