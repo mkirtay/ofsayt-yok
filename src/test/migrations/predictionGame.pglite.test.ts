@@ -23,11 +23,11 @@ import {
 import { buildDistribution, isRareScore, scorePrediction } from '@/lib/game/scoring';
 
 /**
- * Tahmin oyunu migration'ı (20261011120000_prediction_game) GERÇEK Postgres motorunda (PGlite, bellek içi — üretim DB'sine
+ * Tahmin oyunu migration'ı (20261019180000_prediction_game) GERÇEK Postgres motorunda (PGlite, bellek içi — üretim DB'sine
  * bağlanmaz) + canlıda kullanılan SQL'ler aynı metinle (lib/game/sql.ts): kilit (DB saati), joker kuralları, puan yazımı,
  * haftalık / sezonluk sıralama ve görünürlük.
  */
-const SQL = readFileSync(path.join(process.cwd(), 'prisma', 'migrations', '20261011120000_prediction_game', 'migration.sql'), 'utf8');
+const SQL = readFileSync(path.join(process.cwd(), 'prisma', 'migrations', '20261019180000_prediction_game', 'migration.sql'), 'utf8');
 let db: PGlite;
 const run = async <T>(q: SqlQuery) => (await db.query<T>(q.text, q.values)).rows;
 const one = async <T>(q: SqlQuery) => (await run<T>(q))[0];

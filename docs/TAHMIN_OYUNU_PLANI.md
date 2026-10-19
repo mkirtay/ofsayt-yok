@@ -501,7 +501,8 @@ font yok. Yeni sayfa olduğu için yerelde 3 koşu Lighthouse, deploy sonrası c
 ## 14. Kararlar
 
 > 2026-10-11: K4 ve K10 kullanıcı tarafından belirlendi; diğer tüm maddeler önerilen varsayılanlarla **ONAYLANDI**.
-> Migration zaman damgası payments dalındaki `20261007120000` ve main'deki `20261008120000`'dan sonra: `20261011120000_prediction_game`.
+> Migration zaman damgası main'deki son migration `20261019120000_pin_bid`'den sonra: `20261019180000_prediction_game` (2026-10-19'da
+> origin/main üstüne taşınırken `20261011120000`'dan yeniden adlandırıldı; prod'a hiç uygulanmamıştı).
 
 | # | Karar | Öneri |
 |---|---|---|
@@ -526,7 +527,7 @@ font yok. Yeni sayfa olduğu için yerelde 3 koşu Lighthouse, deploy sonrası c
 
 ## 15. MVP uygulama durumu (2026-10-11, dal `feat/prediction-game`, PUSH YOK)
 
-**Yapılanlar (Faz 1):** şema + migration `20261011120000_prediction_game`; hafta / puan / karar modülleri (`src/lib/game/*`);
+**Yapılanlar (Faz 1):** şema + migration `20261019180000_prediction_game`; hafta / puan / karar modülleri (`src/lib/game/*`);
 kilit SQL'i; `game-settle` işi + `/api/admin/game/settle`; `/api/game/*` ve `/api/admin/game/*`; sayfalar `/tahmin` (landing +
 form), `/tahmin/siralama`, `/tahmin/kurallar`, `/tahmin/hafta/[weekKey]`, `/admin/tahmin`; mobil menü bağlantısı; site
 haritası; TR + EN çeviriler (`game` namespace, `{{game}}`); `GAME_BRAND` + ad koruma testi; `lib/matchResult.ts` ortak skor
@@ -542,8 +543,8 @@ yardımcıları (AI tahmin değerlendirmesi de kullanıyor).
 - "Şu anki hafta": bu hafta tahmine açık değilse yayındaki en yakın gelecek hafta (Pazar akşamı sonraki haftaya geçiş).
 
 **Canlıya çıkış öncesi (kullanıcı / push oturumu):**
-1. Migration'ı prod'a uygula (yalnız yeni tablolar; deploy öncesi güvenli). Sıra: payments `20261007120000` → frikik
-   `20261008120000` → bu.
+1. Migration'ı prod'a uygula (yalnız yeni tablolar; deploy öncesi güvenli). Sıra: main'deki son
+   `20261019120000_pin_bid` → bu.
 2. cron-job.org'a iş ekle: `POST https://<alan>/api/admin/game/settle`, `Authorization: Bearer $CRON_SECRET`, 10 dk.
    (Vercel günlük yedek `30 3 * * *` vercel.json'da.)
 3. `/admin/tahmin`'den ilk haftayı oluştur → 5 maç seç → yayınla.
