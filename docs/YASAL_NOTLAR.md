@@ -32,6 +32,14 @@ e-postasında kısa açıklama var)?
 
 ## Ödeme ve satış belgeleri (WEB-ODEME, 2026-10-16)
 
+> **2026-10-19 — yer tutucular kaldırıldı, satış açılıyor (kullanıcı kararı).** Satıcı kimliği yalnız marka adı + alan adı +
+> resmi e-posta (`config/seller.ts`: name / website / email); unvan, adres, vergi, MERSİS, telefon, KEP yok. Tüm
+> `[HUKUKİ METİN EKLENECEK: …]` ve `[GÜNCEL PARASAL SINIR]` yerlerine metin yazıldı, `draftNotice` ve `review` rozetleri
+> silindi, `LEGAL_EFFECTIVE_DATE` 2026-10-19. Seçilen politikalar: kullanılmamış kredi kural olarak iade edilmez (hesabı biz
+> kapatırsak bedeli iade); hatalı / mükerrer tahsilat 3 iş günü inceleme + 14 gün içinde karta iade; sipariş kayıtları 10 yıl,
+> güvenlik kayıtları ≤ 2 yıl, yedekler ≤ 30 gün; Hakem Heyeti sınırı rakamsız ("her yıl ilan edilen"). **Avukat incelemesi
+> yapılmadı**; aşağıdaki sorular ve satıcı kimliği hâlâ açık — bilgiler gelince `seller.ts`'e alan eklenip metinler güncellenmeli.
+
 Kapsam: Ön Bilgilendirme Formu (`/on-bilgilendirme-formu`, yeni), Mesafeli Satış Sözleşmesi (yeniden yazıldı), /credits satın
 alma onay kutusu + sunucu kapısı, sipariş onay e-postası, gizlilik / KVKK veri alıcıları tablosu. Hepsi TASLAK; satış
 `PAYMENTS_ENABLED` kapalı olduğu için canlıda görünmez (yalnız metin sayfaları erişilebilir, noindex).

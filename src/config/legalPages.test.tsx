@@ -1,6 +1,6 @@
 /**
- * Yasal sayfalar: her belge iki dilde, en üstte taslak notu, yer tutucular yalnız izinli listeden (raporda kullanıcıya
- * verilen liste), kredi metni kodla uyumlu ve satın almayı bugün mümkünmüş gibi anlatmıyor; footer hepsine bağlı.
+ * Yasal sayfalar: her belge iki dilde, taslak notu / avukat rozeti / köşeli parantezli yer tutucu yok (satış açıldı,
+ * 2026-10-19), kredi metni kodla uyumlu; footer hepsine bağlı.
  */
 import { existsSync } from 'node:fs';
 import path from 'node:path';
@@ -14,7 +14,7 @@ import { LEGAL_PAGES } from './legalPages';
 import { findGamblingTerms } from '@/utils/gamblingTerms';
 import { ANALYSIS_UNLOCK_COST } from '@/lib/analysisUnlock';
 import { SIGNUP_BONUS_CREDITS } from '@/lib/credits';
-import { LEGAL_EFFECTIVE_DATE, SELLER, SELLER_PLACEHOLDERS, sellerHasPlaceholders } from './seller';
+import { LEGAL_EFFECTIVE_DATE, SELLER } from './seller';
 import { CREDIT_PACKAGES, formatTry } from './creditPackages';
 import { DATA_PROCESSOR_NAMES } from './dataProcessors';
 
@@ -30,10 +30,7 @@ vi.mock('next/head', () => ({ default: ({ children }: { children: React.ReactNod
 import LegalDocPage from '@/components/LegalPage/LegalDocPage';
 import Footer from '@/components/Footer';
 
-/** Kullanıcının dolduracağı alanlar (Aşama 1 raporundaki liste). `[HUKUKİ METİN EKLENECEK: …]` avukat metni içindir. */
-const ALLOWED_PLACEHOLDERS = new Set<string>([...SELLER_PLACEHOLDERS, '[GÜNCEL PARASAL SINIR]']);
-
-type Doc = { pageTitle: string; pageDesc: string; intro: string; draftNotice: string; sections: { heading: string; body: string }[] };
+type Doc = { pageTitle: string; pageDesc: string; intro: string; sections: { heading: string; body: string }[] };
 const docs = (legal: typeof trLegal) => LEGAL_PAGES.map((p) => [p.docKey, legal[p.docKey] as Doc] as const);
 const allText = (d: Doc) => [d.pageTitle, d.pageDesc, d.intro, ...d.sections.flatMap((s) => [s.heading, s.body])].join('\n');
 
@@ -43,24 +40,24 @@ describe('yasal sayfalar', () => {
     expect(new Set(LEGAL_PAGES.map((p) => p.path)).size).toBe(LEGAL_PAGES.length);
   });
 
-  it('TR/EN: her belgede taslak notu ve aynı sayıda bölüm', () => {
+  it('TR/EN: aynı sayıda bölüm; taslak notu ve avukat rozeti alanı yok', () => {
     for (const p of LEGAL_PAGES) {
       const tr = trLegal[p.docKey] as Doc;
       const en = enLegal[p.docKey] as Doc;
-      expect(tr.draftNotice).toMatch(/^TASLAK — avukat onayı bekliyor\. .*hukuki inceleme/);
-      expect(en.draftNotice).toMatch(/^DRAFT — awaiting lawyer approval\. .*legal review/);
       expect(en.sections.length).toBe(tr.sections.length);
+      for (const d of [tr, en]) {
+        expect(d, p.docKey).not.toHaveProperty('draftNotice');
+        expect(JSON.stringify(d), p.docKey).not.toContain('"review"');
+      }
     }
   });
 
-  it('yer tutucular yalnız izinli listeden; eski "Buraya Eklenecek" kalıbı yok', () => {
+  it('yer tutucu yok: köşeli parantez, "HUKUKİ METİN EKLENECEK", "Buraya Eklenecek" ya da "çok yakında" kalmadı', () => {
     for (const legal of [trLegal, enLegal]) {
-      for (const [, d] of docs(legal)) {
+      for (const [k, d] of docs(legal)) {
         const text = allText(d);
-        for (const m of text.match(/\[[^\]]*\]/g) ?? []) {
-          expect(ALLOWED_PLACEHOLDERS.has(m) || m.startsWith('[HUKUKİ METİN EKLENECEK: '), m).toBe(true);
-        }
-        expect(text).not.toMatch(/Buraya Eklenecek|To Be Added/);
+        expect(text.match(/\[[^\]]*\]/g) ?? [], k).toEqual([]);
+        expect(text, k).not.toMatch(/HUKUKİ METİN|Buraya Eklenecek|To Be Added|çok yakında|coming soon|TASLAK|DRAFT/);
       }
     }
   });
@@ -73,7 +70,7 @@ describe('yasal sayfalar', () => {
     }
   });
 
-  it('Kullanım Şartları §4 kodla uyumlu: açma 1 kredi, doğrulamada 2 kredi, haftalık ücretsiz, satın alma çok yakında', () => {
+  it('Kullanım Şartları §4 kodla uyumlu: açma 1 kredi, doğrulamada 2 kredi, haftalık ücretsiz, paketler satışta', () => {
     expect(ANALYSIS_UNLOCK_COST).toBe(1);
     expect(SIGNUP_BONUS_CREDITS).toBe(2);
     const tr = trLegal.terms.sections[3]!.body;
@@ -81,26 +78,16 @@ describe('yasal sayfalar', () => {
     expect(tr).toMatch(/1 kredidir/);
     expect(tr).toMatch(/doğrulayan .*2 kredi/);
     expect(tr).toMatch(/her hafta/);
-    expect(tr).toMatch(/çok yakında/);
-    expect(tr).toMatch(/satılmamakta/);
+    expect(tr).toMatch(/Fiyatlandırma sayfasından satın alınabilir/);
     expect(en).toMatch(/costs 1 credit/);
     expect(en).toMatch(/2-credit signup bonus when they verify/);
-    expect(en).toMatch(/coming soon/);
+    expect(en).toMatch(/can be bought on the Pricing page/);
   });
 
-  it('satış belgeleri satışın henüz olmadığını en başta söyler', () => {
-    for (const k of ['refund', 'distanceSales', 'preInfo'] as const) {
-      expect(trLegal[k].intro).toMatch(/çok yakında/);
-      expect(enLegal[k].intro).toMatch(/coming soon/);
-    }
-  });
-
-  it('noindex: taslak sayfalar + satıcı yer tutucusu taşıyan gizlilik noindex (canonical yok); şartlar indekslenir', () => {
-    expect(sellerHasPlaceholders()).toBe(true);
-    const draft = ['kvkk', 'cookies', 'distanceSales', 'preInfo', 'refund', 'community', 'privacy'];
+  it('noindex yalnız config/legalPages.ts\'teki sayfalarda (canonical yok); gizlilik ve şartlar indekslenir', () => {
     for (const p of LEGAL_PAGES) {
       const html = renderToStaticMarkup(<LegalDocPage docKey={p.docKey} />);
-      if (draft.includes(p.docKey)) {
+      if (p.noindex) {
         expect(html, p.path).toContain('<meta name="robots" content="noindex, follow"/>');
         expect(html, p.path).not.toContain('rel="canonical"');
       } else {
@@ -109,14 +96,15 @@ describe('yasal sayfalar', () => {
         expect(html, p.path).toContain(`${p.path}"`);
       }
     }
+    expect(LEGAL_PAGES.find((p) => p.docKey === 'privacy')?.noindex).toBeUndefined();
   });
 
-  it('render: taslak notu başlıktan önce (role=note)', () => {
-    const html = renderToStaticMarkup(<LegalDocPage docKey="kvkk" />);
-    const note = html.indexOf('role="note"');
-    expect(note).toBeGreaterThan(-1);
-    expect(note).toBeLessThan(html.indexOf('<h1'));
-    expect(html).toContain(trLegal.kvkk.draftNotice);
+  it('render: taslak notu ve "Avukat onayı bekler" rozeti yok', () => {
+    for (const p of LEGAL_PAGES) {
+      const html = renderToStaticMarkup(<LegalDocPage docKey={p.docKey} />);
+      expect(html, p.path).not.toContain('role="note"');
+      expect(html, p.path).not.toContain('Avukat onayı bekler');
+    }
   });
 
   it('footer: tüm yasal sayfalar + iletişim; etiketler iki dilde', () => {
@@ -143,31 +131,30 @@ describe('Topluluk Kuralları', () => {
     expect(enLegal.community.sections.map((s) => s.body).join(' ')).toContain('{{reviewHours}}');
   });
 
-  it('Kullanım Şartları §5: uygunsuz içerik yasağı + hesap kapatma maddesi avukat işaretiyle (iki dil)', () => {
-    expect(trLegal.terms.sections[4]!.body).toMatch(/hesabı kapatabilir\. \[HUKUKİ METİN EKLENECEK: /);
-    expect(enLegal.terms.sections[4]!.body).toMatch(/close the account .*\[HUKUKİ METİN EKLENECEK: /);
+  it('Kullanım Şartları §5: uygunsuz içerik yasağı + hesap kapatma, itiraz ve kalan kredi (iki dil)', () => {
+    expect(trLegal.terms.sections[4]!.body).toMatch(/hesabı kapatabilir\. Hesap kapatma kararına \{\{contactEmail\}\} adresinden itiraz/);
+    expect(trLegal.terms.sections[4]!.body).toMatch(/kullanılmamış kredi .*iade edilir/);
+    expect(enLegal.terms.sections[4]!.body).toMatch(/close the account .*appealed by writing to \{\{contactEmail\}\}/);
   });
 });
 
 describe('satış belgeleri ve satıcı tek kaynağı', () => {
   const html = (k: Parameters<typeof LegalDocPage>[0]['docKey']) => renderToStaticMarkup(<LegalDocPage docKey={k} />);
 
-  it('satıcı bilgisi config/seller.ts\'ten; ham değişken ({{…}}) sayfaya sızmaz; JSON\'da satıcı yer tutucusu elle yazılmaz', () => {
+  it('satıcı bilgisi config/seller.ts\'ten (ad, web sitesi, e-posta); ham değişken ({{…}}) sayfaya sızmaz', () => {
     for (const k of ['privacy', 'kvkk', 'refund', 'distanceSales', 'preInfo'] as const) {
       const h = html(k);
-      expect(h, k).toContain(SELLER.legalName);
+      expect(h, k).toContain(SELLER.name);
+      expect(h, k).toContain(SELLER.email);
       expect(h, k).not.toMatch(/\{\{/);
-      expect(JSON.stringify(trLegal[k]), k).not.toContain('[ŞİRKET/KİŞİ ÜNVANI]');
     }
-    expect(html('distanceSales')).toContain(SELLER.kep);
+    expect(html('distanceSales')).toContain(`Satıcı: ${SELLER.name} · Web sitesi: ${SELLER.website}`);
   });
 
-  it('render: yalnız izinli yer tutucular (satıcı + Hakem Heyeti sınırı + avukat metni)', () => {
+  it('render: sayfada köşeli parantezli yer tutucu yok', () => {
     for (const p of LEGAL_PAGES) {
       const text = html(p.docKey).replace(/<[^>]+>/g, ' ');
-      for (const m of text.match(/\[[^\]]*\]/g) ?? []) {
-        expect(ALLOWED_PLACEHOLDERS.has(m) || m.startsWith('[HUKUKİ METİN EKLENECEK: ') || m === '[…]', `${p.path} ${m}`).toBe(true);
-      }
+      expect(text.match(/\[[^\]]*\]/g) ?? [], p.path).toEqual([]);
     }
   });
 
@@ -180,24 +167,19 @@ describe('satış belgeleri ve satıcı tek kaynağı', () => {
       expect(h, k).toMatch(/süresizdir/);
       expect(h, k).toMatch(/anında/);
       expect(h, k).toMatch(/cayma hakkının sona ereceğini/);
-      expect(h, k).toContain('[GÜNCEL PARASAL SINIR]');
+      expect(h, k).toMatch(/her yıl ilan edilen parasal sınır dâhilinde/);
       expect(h, k).toContain(`Yürürlük tarihi: ${LEGAL_EFFECTIVE_DATE}`);
-      expect(h, k).toContain('Avukat onayı bekler');
       expect(h, k).not.toMatch(/premium/i);
     }
   });
 
-  it('hukuki iddia içeren bölümler işaretli; satıcı / iletişim satırları işaretsiz', () => {
-    const ds = trLegal.distanceSales.sections as { heading: string; review?: boolean }[];
-    expect(ds.filter((s) => s.review).map((s) => s.heading)).toEqual(
-      expect.arrayContaining(['7. Cayma Hakkı', '9. Şikâyet ve Uyuşmazlıkların Çözümü', '4. Fiyat']),
-    );
-    expect(ds.find((s) => s.heading === '1. Satıcı')?.review).toBeUndefined();
-    for (const k of ['distanceSales', 'preInfo'] as const) {
-      expect((enLegal[k].sections as { review?: boolean }[]).map((s) => !!s.review)).toEqual(
-        (trLegal[k].sections as { review?: boolean }[]).map((s) => !!s.review),
-      );
-    }
+  it('iade: kullanılmamış kredi kural olarak iade edilmez; hatalı / mükerrer tahsilat 14 gün içinde karta iade (iki dil)', () => {
+    const tr = trLegal.refund.sections.map((x) => x.body).join(' ');
+    const en = enLegal.refund.sections.map((x) => x.body).join(' ');
+    expect(tr).toMatch(/kullanılmamış krediler kural olarak iade edilmez/);
+    expect(tr).toMatch(/en geç 14 gün içinde iade edilir/);
+    expect(en).toMatch(/unused credits are, as a rule, not refunded/);
+    expect(en).toMatch(/within 14 days at the latest/);
   });
 
   it('Gizlilik §5 ve KVKK §6: veri alıcıları tablosu koddaki sağlayıcılarla', () => {

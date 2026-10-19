@@ -8,7 +8,7 @@
     "sections": [
       {
         "heading": "1. Veri Sorumlusu",
-        "body": "6698 sayılı Kişisel Verilerin Korunması Kanunu (\"KVKK\") kapsamında veri sorumlusu {{seller.legalName}} ({{seller.address}}) olup {{seller.email}} adresinden veya İletişim sayfasından bize ulaşabilirsiniz. KVKK kapsamındaki ayrıntılı bilgilendirme için KVKK Aydınlatma Metni'ne bakınız."
+        "body": "6698 sayılı Kişisel Verilerin Korunması Kanunu (\"KVKK\") kapsamında veri sorumlusu {{seller.name}} ({{seller.website}}) olup {{seller.email}} adresinden veya İletişim sayfasından bize ulaşabilirsiniz. KVKK kapsamındaki ayrıntılı bilgilendirme için KVKK Aydınlatma Metni'ne bakınız."
       },
       {
         "heading": "2. Toplanan Veriler",
@@ -24,13 +24,12 @@
       },
       {
         "heading": "5. Üçüncü Taraflarla Paylaşım",
-        "body": "Kişisel verileriniz, yasal zorunluluklar dışında yalnız aşağıdaki hizmet sağlayıcılarla, hizmetin sunulması için gerekli ölçüde paylaşılır; bu sağlayıcılar verileri bizim adımıza ve belirlediğimiz amaçlarla işler. Tablo, sitenin kodunda gerçekten kullanılan sağlayıcılardan hazırlanmıştır. Sentry hata kayıtları Avrupa Birliği'ndeki (Almanya) sunucularda tutulur; ekran kaydı ya da performans izlemesi yapılmaz.\n\nÖdeme sonucu sayfasında ödeme kuruluşunun adrese eklediği bilgiler (ör. e-posta adresi) sayfa açılır açılmaz adresten silinir ve sayfa istatistiğine / hata kayıtlarına gönderilmez. [HUKUKİ METİN EKLENECEK: sağlayıcıların sunucu konumları ve yurt dışına aktarımın KVKK md. 9 kapsamındaki dayanağı]",
-        "table": "dataProcessors",
-        "review": true
+        "body": "Kişisel verileriniz, yasal zorunluluklar dışında yalnız aşağıdaki hizmet sağlayıcılarla, hizmetin sunulması için gerekli ölçüde paylaşılır; bu sağlayıcılar verileri bizim adımıza ve belirlediğimiz amaçlarla işler. Tablo, sitenin kodunda gerçekten kullanılan sağlayıcılardan hazırlanmıştır. Sentry hata kayıtları Avrupa Birliği'ndeki (Almanya) sunucularda tutulur; ekran kaydı ya da performans izlemesi yapılmaz.\n\nÖdeme sonucu sayfasında ödeme kuruluşunun adrese eklediği bilgiler (ör. e-posta adresi) sayfa açılır açılmaz adresten silinir ve sayfa istatistiğine / hata kayıtlarına gönderilmez. Sağlayıcıların bir kısmı yurt dışında yerleşiktir veya verileri yurt dışındaki sunucularda işler; bu aktarımlar KVKK md. 9'da öngörülen şartlar çerçevesinde ve yalnız hizmetin sunulması için gerekli ölçüde yapılır.",
+        "table": "dataProcessors"
       },
       {
         "heading": "6. Veri Güvenliği ve Saklama Süresi",
-        "body": "Verileriniz, amaçla orantılı bir süre boyunca ve makul teknik/idari güvenlik tedbirleriyle saklanır. Hesabınızı istediğiniz zaman Profil › Bilgilerim › Hesabı sil adımından kendiniz silebilirsiniz; onay için e-posta adresinizi ya da \"SİL\" yazmanız istenir ve silme sonrası e-posta adresinize bir bilgilendirme gönderilir. Giriş yapamıyorsanız Hesap silme sayfasından ({{siteDomain}}/hesap-silme) e-posta adresinize gelen onay bağlantısıyla da silebilirsiniz. Silme anında profiliniz, oturumlarınız ve Google bağlantınız, favorileriniz, kredi bakiyeniz ve kredi hareketleriniz, açtığınız analizler, bildirimleriniz, beğeni ve takipleriniz, anket oylarınız ve Frikik skorlarınız silinir. Gündem gönderi ve yorumlarınız silinmez; yazar bilgisi kaldırılarak \"Silinmiş kullanıcı\" adıyla anonim olarak yayında kalır. Ödeme ve sipariş kayıtları (tutar, paket, tarih, durum, ödeme kuruluşu işlem numarası) hesabınızla bağlantısı koparılarak saklanır. [HUKUKİ METİN EKLENECEK: sipariş kayıtlarının saklama süresi ve hukuki dayanağı; yedeklerden silinme süresi]"
+        "body": "Verileriniz, amaçla orantılı bir süre boyunca ve makul teknik/idari güvenlik tedbirleriyle saklanır. Hesabınızı istediğiniz zaman Profil › Bilgilerim › Hesabı sil adımından kendiniz silebilirsiniz; onay için e-posta adresinizi ya da \"SİL\" yazmanız istenir ve silme sonrası e-posta adresinize bir bilgilendirme gönderilir. Giriş yapamıyorsanız Hesap silme sayfasından ({{siteDomain}}/hesap-silme) e-posta adresinize gelen onay bağlantısıyla da silebilirsiniz. Silme anında profiliniz, oturumlarınız ve Google bağlantınız, favorileriniz, kredi bakiyeniz ve kredi hareketleriniz, açtığınız analizler, bildirimleriniz, beğeni ve takipleriniz, anket oylarınız ve Frikik skorlarınız silinir. Gündem gönderi ve yorumlarınız silinmez; yazar bilgisi kaldırılarak \"Silinmiş kullanıcı\" adıyla anonim olarak yayında kalır. Ödeme ve sipariş kayıtları (tutar, paket, tarih, durum, ödeme kuruluşu işlem numarası) hesabınızla bağlantısı koparılarak saklanır. Sipariş kayıtları, vergi ve ticaret mevzuatındaki saklama yükümlülükleri (Vergi Usul Kanunu, Türk Ticaret Kanunu) gereği 10 yıl saklanır. Silinen veriler yedeklerden, yedekleme döngüsü içinde en geç 30 gün içinde silinir."
       },
       {
         "heading": "7. KVKK Kapsamındaki Haklarınız",
@@ -41,7 +40,6 @@
         "body": "Bu politika zaman zaman güncellenebilir; güncel sürüm her zaman bu sayfada yayınlanır."
       }
     ],
-    "draftNotice": "TASLAK — avukat onayı bekliyor. Bu metin yayın öncesi hukuki inceleme gerektirir; “Avukat onayı bekler” işaretli bölümler kesin metin değildir. Köşeli parantez içindeki alanlar ([…]) henüz doldurulmamıştır.",
     "effectiveDate": "Yürürlük tarihi: {{legalEffectiveDate}}"
   },
   "terms": {
@@ -63,11 +61,11 @@
       },
       {
         "heading": "4. Kredi Sistemi",
-        "body": "AI maç analizleri kredi ile açılır; bir analizi açmak 1 kredidir. E-posta adresini doğrulayan yeni üyelere bir kez 2 kredi kayıt bonusu tanımlanır. E-postası doğrulanmış ve en az 24 saatlik hesaplar her hafta hazır (önceden üretilmiş) bir analizi ücretsiz açabilir. Kredi satın alma çok yakında kullanıma açılacak; şu anda kredi paketi satılmamakta ve ödeme alınmamaktadır. Satış başladığında paketler, fiyatlar, iade ve cayma koşulları Mesafeli Satış Sözleşmesi ile İade ve İptal Koşulları sayfalarında yayımlanacaktır. Kredi sisteminin koşulları güncellenebilir; güncel koşullar her zaman bu sayfada yer alır."
+        "body": "AI maç analizleri kredi ile açılır; bir analizi açmak 1 kredidir. E-posta adresini doğrulayan yeni üyelere bir kez 2 kredi kayıt bonusu tanımlanır. E-postası doğrulanmış ve en az 24 saatlik hesaplar her hafta hazır (önceden üretilmiş) bir analizi ücretsiz açabilir. Kredi paketleri Fiyatlandırma sayfasından satın alınabilir; paketler, fiyatlar, iade ve cayma koşulları Ön Bilgilendirme Formu, Mesafeli Satış Sözleşmesi ve İade ve İptal Koşulları sayfalarındadır. Kredi sisteminin koşulları güncellenebilir; güncel koşullar her zaman bu sayfada yer alır."
       },
       {
         "heading": "5. Kullanıcı Davranış Kuralları",
-        "body": "Yorum ve oylama alanlarında hakaret, taciz, yasa dışı içerik veya spam paylaşmak yasaktır. Kurallara aykırı içerikler kaldırılabilir ve ilgili hesap askıya alınabilir. Gündem ve diğer kullanıcı içeriği alanlarında Topluluk Kuralları'na aykırı içerik (hakaret, nefret söylemi, tehdit, müstehcenlik, spam, kişisel veri paylaşımı, yasa dışı içerik) yasaktır; uygunsuz içeriğe ve kötüye kullanan kullanıcılara tolerans gösterilmez. {{brand}}, aykırı içeriği önceden bildirimde bulunmaksızın gizleyebilir veya kaldırabilir, kullanıcıyı uyarabilir, Gündem'de yazma iznini geçici ya da kalıcı olarak kapatabilir ve ağır ya da tekrarlayan ihlallerde hesabı kapatabilir. [HUKUKİ METİN EKLENECEK: hesap kapatma yetkisinin kapsamı, bildirim ve itiraz usulü, kapatılan hesabın verileri ve kalan kredilerin durumu]"
+        "body": "Yorum ve oylama alanlarında hakaret, taciz, yasa dışı içerik veya spam paylaşmak yasaktır. Kurallara aykırı içerikler kaldırılabilir ve ilgili hesap askıya alınabilir. Gündem ve diğer kullanıcı içeriği alanlarında Topluluk Kuralları'na aykırı içerik (hakaret, nefret söylemi, tehdit, müstehcenlik, spam, kişisel veri paylaşımı, yasa dışı içerik) yasaktır; uygunsuz içeriğe ve kötüye kullanan kullanıcılara tolerans gösterilmez. {{brand}}, aykırı içeriği önceden bildirimde bulunmaksızın gizleyebilir veya kaldırabilir, kullanıcıyı uyarabilir, Gündem'de yazma iznini geçici ya da kalıcı olarak kapatabilir ve ağır ya da tekrarlayan ihlallerde hesabı kapatabilir. Hesap kapatma kararına {{contactEmail}} adresinden itiraz edilebilir. Kapatılan hesabın verileri Gizlilik Politikası'ndaki hesap silme kurallarına göre işlenir. Kapatma anında hesapta satın alınmış ve kullanılmamış kredi bulunuyorsa, bu kredilerin bedeli talep üzerine iade edilir."
       },
       {
         "heading": "6. Fikri Mülkiyet",
@@ -81,8 +79,7 @@
         "heading": "8. Değişiklikler ve Uygulanacak Hukuk",
         "body": "Bu şartlar zaman zaman güncellenebilir. Bu şartlardan doğan uyuşmazlıklarda Türkiye Cumhuriyeti kanunları uygulanır."
       }
-    ],
-    "draftNotice": "TASLAK — avukat onayı bekliyor. Bu metin yayın öncesi hukuki inceleme gerektirir; “Avukat onayı bekler” işaretli bölümler kesin metin değildir. Köşeli parantez içindeki alanlar ([…]) henüz doldurulmamıştır."
+    ]
   },
   "kvkk": {
     "pageTitle": "KVKK Aydınlatma Metni",
@@ -91,7 +88,7 @@
     "sections": [
       {
         "heading": "1. Veri Sorumlusu",
-        "body": "Unvan: {{seller.legalName}} · Adres: {{seller.address}} · Vergi dairesi / no: {{seller.taxOffice}} / {{seller.taxNumber}} · MERSİS: {{seller.mersis}} · Telefon: {{seller.phone}} · E-posta: {{seller.email}} · KEP: {{seller.kep}}"
+        "body": "Veri sorumlusu: {{seller.name}} · Web sitesi: {{seller.website}} · E-posta: {{seller.email}}"
       },
       {
         "heading": "2. İşlenen Kişisel Veriler",
@@ -103,7 +100,7 @@
       },
       {
         "heading": "4. Hukuki Sebepler",
-        "body": "[HUKUKİ METİN EKLENECEK: her işleme amacı için KVKK md. 5/2 kapsamındaki hukuki sebep (ör. sözleşmenin kurulması/ifası, meşru menfaat, hukuki yükümlülük) ve açık rıza gerekip gerekmediği]"
+        "body": "Üyelik hesabının oluşturulması ve yönetimi, AI analiz ve kredi işlemleri ile satın almalar bir sözleşmenin kurulması ve ifası için gereklidir (KVKK md. 5/2-c). Sipariş, ödeme ve satın alma onayı kayıtları hukuki yükümlülüğün yerine getirilmesi için işlenir (md. 5/2-ç). Bilgi ve hesap güvenliğinin sağlanması, kötüye kullanımın önlenmesi, tanıtım çalışmalarının ölçülmesi ve hizmetin iyileştirilmesi meşru menfaate dayanır (md. 5/2-f); olası uyuşmazlıklarda hakların korunması için gereken kayıtlar md. 5/2-e kapsamında saklanır. Açık rızaya dayalı bir işleme yapılmamaktadır."
       },
       {
         "heading": "5. Toplama Yöntemi",
@@ -111,20 +108,18 @@
       },
       {
         "heading": "6. Aktarım",
-        "body": "Hizmetin sunulması için veriler aşağıdaki hizmet sağlayıcılara, yalnız ilgili hizmet için gerekli ölçüde aktarılır (tablo sitenin kodundan hazırlanmıştır). [HUKUKİ METİN EKLENECEK: alıcı grupları, yurt dışına aktarımın KVKK md. 9 kapsamındaki dayanağı ve sağlayıcıların sunucu konumları]",
-        "table": "dataProcessors",
-        "review": true
+        "body": "Hizmetin sunulması için veriler aşağıdaki hizmet sağlayıcılara, yalnız ilgili hizmet için gerekli ölçüde aktarılır (tablo sitenin kodundan hazırlanmıştır). Alıcı grupları: barındırma ve veritabanı, e-posta gönderimi, hata izleme, bot koruması, yapay zekâ ve ödeme hizmeti sağlayıcıları ile talep hâlinde yetkili kamu kurum ve kuruluşları. Sağlayıcıların bir kısmı yurt dışında yerleşiktir veya verileri yurt dışındaki sunucularda işler; bu aktarımlar KVKK md. 9'da öngörülen şartlar çerçevesinde yapılır.",
+        "table": "dataProcessors"
       },
       {
         "heading": "7. Saklama Süresi",
-        "body": "[HUKUKİ METİN EKLENECEK: veri kategorisine göre saklama süreleri ve imha politikası]"
+        "body": "Hesap verileri hesap silinene kadar saklanır. Sipariş ve ödeme kayıtları vergi ve ticaret mevzuatı gereği 10 yıl, işlem güvenliği kayıtları (IP adresi, giriş denemeleri) en fazla 2 yıl saklanır. Süresi dolan veriler silinir veya anonim hâle getirilir; yedeklerden silinme, yedekleme döngüsü içinde en geç 30 gün içinde tamamlanır."
       },
       {
         "heading": "8. Haklarınız ve Başvuru",
-        "body": "KVKK md. 11 kapsamındaki haklarınızı kullanmak için başvurunuzu {{seller.email}} adresine, {{seller.kep}} KEP adresine veya {{seller.address}} adresine yazılı olarak iletebilirsiniz. Hesabınızı ve hesaba bağlı verilerinizi başvuru yapmadan Profil › Bilgilerim › Hesabı sil adımından kendiniz silebilirsiniz; silinen ve anonimleştirilen veriler Gizlilik Politikası'nın 6. bölümünde açıklanmıştır. [HUKUKİ METİN EKLENECEK: Veri Sorumlusuna Başvuru Usul ve Esasları Hakkında Tebliğ'e uygun başvuru yöntemi ve yanıt süresi]"
+        "body": "KVKK md. 11 kapsamındaki haklarınızı kullanmak için başvurunuzu, Veri Sorumlusuna Başvuru Usul ve Esasları Hakkında Tebliğ'e uygun olarak, hesabınızda kayıtlı e-posta adresinizden {{seller.email}} adresine iletebilirsiniz. Başvurular en geç 30 gün içinde ücretsiz olarak sonuçlandırılır. Hesabınızı ve hesaba bağlı verilerinizi başvuru yapmadan Profil › Bilgilerim › Hesabı sil adımından kendiniz silebilirsiniz; silinen ve anonimleştirilen veriler Gizlilik Politikası'nın 6. bölümünde açıklanmıştır."
       }
     ],
-    "draftNotice": "TASLAK — avukat onayı bekliyor. Bu metin yayın öncesi hukuki inceleme gerektirir; “Avukat onayı bekler” işaretli bölümler kesin metin değildir. Köşeli parantez içindeki alanlar ([…]) henüz doldurulmamıştır.",
     "effectiveDate": "Yürürlük tarihi: {{legalEffectiveDate}}"
   },
   "cookies": {
@@ -154,19 +149,18 @@
       },
       {
         "heading": "6. Çerez Tercihleri",
-        "body": "[HUKUKİ METİN EKLENECEK: zorunlu olmayan çerez ve benzeri teknolojiler için onay gerekliliği ve onay yönetimi yöntemi] Çerezleri tarayıcınızın ayarlarından silebilir veya engelleyebilirsiniz; zorunlu çerezleri engellerseniz oturum açamayabilirsiniz."
+        "body": "Sitede yalnız hizmetin çalışması için gerekli zorunlu ve işlevsel çerezler kullanılır; reklam veya çerez tabanlı analitik çerezi kullanılmadığından ayrıca çerez onayı istenmez. Zorunlu olmayan bir çerez eklenirse kullanılmadan önce onayınız alınır. Çerezleri tarayıcınızın ayarlarından silebilir veya engelleyebilirsiniz; zorunlu çerezleri engellerseniz oturum açamayabilirsiniz."
       }
-    ],
-    "draftNotice": "TASLAK — avukat onayı bekliyor. Bu metin yayın öncesi hukuki inceleme gerektirir; “Avukat onayı bekler” işaretli bölümler kesin metin değildir. Köşeli parantez içindeki alanlar ([…]) henüz doldurulmamıştır."
+    ]
   },
   "refund": {
     "pageTitle": "İade ve İptal Koşulları",
     "pageDesc": "{{brand}} kredi paketleri için iade ve iptal koşulları.",
-    "intro": "Kredi satın alma çok yakında kullanıma açılacak. Şu anda kredi paketi satışı yapılmamakta ve ödeme alınmamaktadır; bu koşullar satış başladığında geçerli olacaktır.",
+    "intro": "Bu koşullar {{siteDomain}} üzerinden satın alınan AI analiz kredisi paketleri için geçerlidir.",
     "sections": [
       {
         "heading": "1. Satıcı",
-        "body": "Unvan: {{seller.legalName}} · Adres: {{seller.address}} · Vergi dairesi / no: {{seller.taxOffice}} / {{seller.taxNumber}} · MERSİS: {{seller.mersis}} · Telefon: {{seller.phone}} · E-posta: {{seller.email}} · KEP: {{seller.kep}}"
+        "body": "Satıcı: {{seller.name}} · Web sitesi: {{seller.website}} · E-posta: {{seller.email}}"
       },
       {
         "heading": "2. Kapsam",
@@ -174,64 +168,57 @@
       },
       {
         "heading": "3. Cayma Hakkı",
-        "body": "[HUKUKİ METİN EKLENECEK: dijital içerik / anında ifa edilen hizmetlerde cayma hakkı ve istisnası (Mesafeli Sözleşmeler Yönetmeliği md. 15), ödeme öncesi alınacak onay beyanı]"
+        "body": "Mesafeli sözleşmelerde tüketici kural olarak 14 gün içinde cayma hakkına sahiptir. Ancak elektronik ortamda anında ifa edilen hizmetler ve tüketiciye anında teslim edilen gayrimaddi mallarda cayma hakkı kullanılamaz (Mesafeli Sözleşmeler Yönetmeliği md. 15/1-ğ ve h). Krediler ödeme onaylanır onaylanmaz hesaba yüklendiğinden, Alıcı satın alma adımındaki onay kutusunu işaretleyerek ifanın hemen başlamasına onay verir ve cayma hakkının sona ereceğini kabul eder."
       },
       {
         "heading": "4. Kullanılmamış Kredilerin İadesi",
-        "body": "[HUKUKİ METİN EKLENECEK: kullanılmamış kredilerin iade edilip edilmeyeceği, süresi ve yöntemi]"
+        "body": "Satın alınan krediler hesaba anında yüklendiğinden cayma hakkı kapsamında değildir ve kullanılmamış krediler kural olarak iade edilmez. Mevzuatın iadeyi zorunlu kıldığı hâller ile {{brand}} tarafından hesabın kapatılması (Kullanım Şartları, 5. bölüm) saklıdır."
       },
       {
         "heading": "5. Hatalı veya Tamamlanmamış İşlemler",
-        "body": "[HUKUKİ METİN EKLENECEK: ödeme alınıp kredinin tanımlanmadığı veya mükerrer ödeme hâllerinde izlenecek yol ve süre]"
+        "body": "Ödeme alındığı hâlde kredi hesaba yüklenmediyse, aynı sipariş için birden fazla tahsilat yapıldıysa ya da tahsil edilen tutar paket fiyatından farklıysa sipariş numarasıyla {{seller.email}} adresine yazın. Talep en geç 3 iş günü içinde incelenir: eksik kredi hesaba yüklenir; mükerrer veya fazla tahsilat Hikie üzerinden ödemenin yapıldığı karta en geç 14 gün içinde iade edilir. İadenin kart ekstresine yansıma süresi bankanıza bağlıdır. Hikie üzerinden iade edilen siparişin kredileri hesaptan düşülür."
       },
       {
         "heading": "6. Başvuru",
         "body": "İade ve iptal talepleri için {{seller.email}} adresine yazabilirsiniz."
       }
     ],
-    "draftNotice": "TASLAK — avukat onayı bekliyor. Bu metin yayın öncesi hukuki inceleme gerektirir; “Avukat onayı bekler” işaretli bölümler kesin metin değildir. Köşeli parantez içindeki alanlar ([…]) henüz doldurulmamıştır.",
     "effectiveDate": "Yürürlük tarihi: {{legalEffectiveDate}}"
   },
   "preInfo": {
     "pageTitle": "Ön Bilgilendirme Formu",
     "pageDesc": "{{brand}} AI analiz kredisi satın alımı için ön bilgilendirme formu.",
-    "intro": "Kredi satın alma çok yakında kullanıma açılacak; şu anda satış yapılmamaktadır. Bu form, sipariş vermeden önce okunup onaylanması gereken bilgileri içerir ve satın alma adımındaki onay kutusuyla kabul edilir.",
+    "intro": "Bu form, sipariş vermeden önce okunup onaylanması gereken bilgileri içerir ve satın alma adımındaki onay kutusuyla kabul edilir.",
     "effectiveDate": "Yürürlük tarihi: {{legalEffectiveDate}}",
     "sections": [
       {
         "heading": "1. Satıcı Bilgileri",
-        "body": "Unvan: {{seller.legalName}} · Adres: {{seller.address}} · Vergi dairesi / no: {{seller.taxOffice}} / {{seller.taxNumber}} · MERSİS: {{seller.mersis}} · Telefon: {{seller.phone}} · E-posta: {{seller.email}} · KEP: {{seller.kep}}"
+        "body": "Satıcı: {{seller.name}} · Web sitesi: {{seller.website}} · E-posta: {{seller.email}}"
       },
       {
         "heading": "2. Ürünün Temel Nitelikleri",
-        "body": "AI analiz kredisi: 1 kredi, bir AI maç analizini hesabınız için açma hakkıdır; açılan analiz hesabınızda kalıcı olarak açık kalır. Krediler süresizdir (son kullanma tarihi yoktur). Paketler tek seferlik satın alımdır; abonelik, otomatik yenileme ve tekrarlayan tahsilat yoktur. Krediler nakde çevrilemez ve başka hesaba devredilemez. AI maç analizleri bilgi amaçlı istatistiksel tahmindir; herhangi bir sonuç garanti edilmez.",
-        "review": true
+        "body": "AI analiz kredisi: 1 kredi, bir AI maç analizini hesabınız için açma hakkıdır; açılan analiz hesabınızda kalıcı olarak açık kalır. Krediler süresizdir (son kullanma tarihi yoktur). Paketler tek seferlik satın alımdır; abonelik, otomatik yenileme ve tekrarlayan tahsilat yoktur. Krediler nakde çevrilemez ve başka hesaba devredilemez. AI maç analizleri bilgi amaçlı istatistiksel tahmindir; herhangi bir sonuç garanti edilmez."
       },
       {
         "heading": "3. Fiyat ve Ek Masraflar",
-        "body": "Fiyatlar Türk lirası cinsindendir ve KDV dahildir; kargo veya ek hizmet bedeli yoktur. Sipariş anında kredi sayfasında gösterilen fiyat geçerlidir. Güncel paketler:",
-        "review": true,
+        "body": "Fiyatlar Türk lirası cinsindendir ve KDV dahildir; kargo veya ek hizmet bedeli yoktur. Sipariş anında Fiyatlandırma sayfasında gösterilen fiyat geçerlidir. Güncel paketler:",
         "table": "creditPackages"
       },
       {
         "heading": "4. Ödeme",
-        "body": "Ödeme, Satıcının ödeme hizmeti sağlayıcısı Hikie ([HUKUKİ METİN EKLENECEK: Hikie'nin ticari unvanı, ülkesi ve ödeme kuruluşu lisans bilgisi]) tarafından sunulan ödeme sayfasında alınır. Kart bilgileri yalnız Hikie'nin ödeme sayfasına girilir; {{brand}} kart numarasını, son kullanma tarihini ve güvenlik kodunu görmez, işlemez ve saklamaz. {{brand}} ödeme sonucundan yalnız siparişin ödendiği bilgisini, tutarı, para birimini ve Hikie işlem numarasını sipariş kaydına yazar. Ödeme tamamlanmazsa veya reddedilirse hesaba kredi yüklenmez.",
-        "review": true
+        "body": "Ödeme, Satıcının ödeme hizmeti sağlayıcısı Hikie (hikie.space) tarafından sunulan ödeme sayfasında alınır. Kart bilgileri yalnız Hikie'nin ödeme sayfasına girilir; {{brand}} kart numarasını, son kullanma tarihini ve güvenlik kodunu görmez, işlemez ve saklamaz. {{brand}} ödeme sonucundan yalnız siparişin ödendiği bilgisini, tutarı, para birimini ve Hikie işlem numarasını sipariş kaydına yazar. Ödeme tamamlanmazsa veya reddedilirse hesaba kredi yüklenmez."
       },
       {
         "heading": "5. Teslimat",
-        "body": "Ürün dijitaldir; fiziksel teslimat yoktur. Krediler, ödemenin Hikie tarafından onaylanmasıyla (imzalı ödeme bildirimi) otomatik ve anında Alıcının hesabına yüklenir; bu genellikle birkaç saniye sürer. Sipariş özeti (sipariş numarası, paket, kredi, tutar, tarih, satıcı bilgisi) ayrıca hesabın e-posta adresine gönderilir.\n\nÖdeme alındığı hâlde kredi makul sürede hesapta görünmezse sipariş numarasıyla {{seller.email}} adresine yazılabilir; sipariş kaydı incelenir ve ödenmiş sipariş hesaba işlenir.",
-        "review": true
+        "body": "Ürün dijitaldir; fiziksel teslimat yoktur. Krediler, ödemenin Hikie tarafından onaylanmasıyla (imzalı ödeme bildirimi) otomatik ve anında Alıcının hesabına yüklenir; bu genellikle birkaç saniye sürer. Sipariş özeti (sipariş numarası, paket, kredi, tutar, tarih, satıcı bilgisi) ayrıca hesabın e-posta adresine gönderilir.\n\nÖdeme alındığı hâlde kredi makul sürede hesapta görünmezse sipariş numarasıyla {{seller.email}} adresine yazılabilir; sipariş kaydı incelenir ve ödenmiş sipariş hesaba işlenir."
       },
       {
         "heading": "6. Cayma Hakkı",
-        "body": "Mesafeli sözleşmelerde tüketici kural olarak 14 gün içinde cayma hakkına sahiptir. Ancak elektronik ortamda anında ifa edilen hizmetler ve tüketiciye anında teslim edilen gayrimaddi mallar ile cayma süresi dolmadan tüketicinin onayıyla ifasına başlanan hizmetlerde cayma hakkı kullanılamaz (Mesafeli Sözleşmeler Yönetmeliği md. 15/1-ğ ve h). Krediler ödeme onaylanır onaylanmaz hesaba yüklendiğinden, Alıcı satın alma adımındaki onay kutusunu işaretleyerek ifanın hemen başlamasına onay verdiğini ve bu nedenle cayma hakkının sona ereceğini bildiğini beyan eder. [HUKUKİ METİN EKLENECEK: istisnanın kullanılmamış krediler bakımından kapsamı ve onay beyanının nihai metni]\n\nHatalı veya mükerrer tahsilat gibi durumlar için İade ve İptal Koşulları geçerlidir.",
-        "review": true
+        "body": "Mesafeli sözleşmelerde tüketici kural olarak 14 gün içinde cayma hakkına sahiptir. Ancak elektronik ortamda anında ifa edilen hizmetler ve tüketiciye anında teslim edilen gayrimaddi mallar ile cayma süresi dolmadan tüketicinin onayıyla ifasına başlanan hizmetlerde cayma hakkı kullanılamaz (Mesafeli Sözleşmeler Yönetmeliği md. 15/1-ğ ve h). Krediler ödeme onaylanır onaylanmaz hesaba yüklendiğinden, Alıcı satın alma adımındaki onay kutusunu işaretleyerek ifanın hemen başlamasına onay verdiğini ve bu nedenle cayma hakkının sona ereceğini bildiğini beyan eder. Bu istisna hesaba yüklenmiş ancak henüz kullanılmamış krediler için de geçerlidir; krediler hesaba yüklendiği anda ifa tamamlanmış olur.\n\nHatalı veya mükerrer tahsilat gibi durumlar için İade ve İptal Koşulları geçerlidir."
       },
       {
         "heading": "7. Şikâyet ve Başvuru Yolları",
-        "body": "Şikâyet ve talepler önce {{seller.email}} adresine iletilebilir. Uyuşmazlıklarda, Ticaret Bakanlığınca her yıl ilan edilen parasal sınır ([GÜNCEL PARASAL SINIR]) dâhilinde Alıcının yerleşim yerindeki veya tüketici işlemini yaptığı yerdeki Tüketici Hakem Heyetine, bu sınırın üzerindeki uyuşmazlıklarda Tüketici Mahkemesine başvurulabilir.",
-        "review": true
+        "body": "Şikâyet ve talepler önce {{seller.email}} adresine iletilebilir. Uyuşmazlıklarda, Ticaret Bakanlığınca her yıl ilan edilen parasal sınır dâhilinde Alıcının yerleşim yerindeki veya tüketici işlemini yaptığı yerdeki Tüketici Hakem Heyetine, bu sınırın üzerindeki uyuşmazlıklarda Tüketici Mahkemesine başvurulabilir."
       },
       {
         "heading": "8. Kişisel Veriler",
@@ -239,25 +226,23 @@
       },
       {
         "heading": "9. İletişim",
-        "body": "E-posta: {{seller.email}} · Telefon: {{seller.phone}} · KEP: {{seller.kep}} · Adres: {{seller.address}}"
+        "body": "E-posta: {{seller.email}} · İletişim formu: {{siteDomain}}/iletisim"
       },
       {
         "heading": "10. Teyit",
-        "body": "Satın alma adımındaki onay kutusunu işaretleyerek bu formdaki bilgileri aldığınızı, Mesafeli Satış Sözleşmesi'ni okuduğunuzu ve dijital içeriğin anında ifasına onay verdiğinizi teyit edersiniz. Onay zamanı ve form sürümü ({{legalEffectiveDate}}) sipariş kaydında saklanır.",
-        "review": true
+        "body": "Satın alma adımındaki onay kutusunu işaretleyerek bu formdaki bilgileri aldığınızı, Mesafeli Satış Sözleşmesi'ni okuduğunuzu ve dijital içeriğin anında ifasına onay verdiğinizi teyit edersiniz. Onay zamanı ve form sürümü ({{legalEffectiveDate}}) sipariş kaydında saklanır."
       }
-    ],
-    "draftNotice": "TASLAK — avukat onayı bekliyor. Bu metin yayın öncesi hukuki inceleme gerektirir; “Avukat onayı bekler” işaretli bölümler kesin metin değildir. Köşeli parantez içindeki alanlar ([…]) henüz doldurulmamıştır."
+    ]
   },
   "distanceSales": {
     "pageTitle": "Mesafeli Satış Sözleşmesi",
     "pageDesc": "{{brand}} AI analiz kredisi paketleri mesafeli satış sözleşmesi.",
-    "intro": "Kredi satın alma çok yakında kullanıma açılacak. Şu anda satış yapılmamaktadır; bu sözleşme satış başladığında geçerli olacaktır. Sözleşme, {{siteDomain}} üzerinden kredi paketi satın alan kullanıcı (\"Alıcı\") ile aşağıda kimliği yazılı satıcı (\"Satıcı\") arasında elektronik ortamda kurulur.",
+    "intro": "Bu sözleşme, {{siteDomain}} üzerinden kredi paketi satın alan kullanıcı (\"Alıcı\") ile aşağıda bilgileri yazılı satıcı (\"Satıcı\") arasında elektronik ortamda kurulur.",
     "effectiveDate": "Yürürlük tarihi: {{legalEffectiveDate}}",
     "sections": [
       {
         "heading": "1. Satıcı",
-        "body": "Unvan: {{seller.legalName}} · Adres: {{seller.address}} · Vergi dairesi / no: {{seller.taxOffice}} / {{seller.taxNumber}} · MERSİS: {{seller.mersis}} · Telefon: {{seller.phone}} · E-posta: {{seller.email}} · KEP: {{seller.kep}}"
+        "body": "Satıcı: {{seller.name}} · Web sitesi: {{seller.website}} · E-posta: {{seller.email}}"
       },
       {
         "heading": "2. Alıcı",
@@ -265,51 +250,42 @@
       },
       {
         "heading": "3. Sözleşmenin Konusu ve Ürün",
-        "body": "Sözleşmenin konusu, Alıcının elektronik ortamda sipariş verdiği AI analiz kredisi paketinin satışı ve hesaba tanımlanmasıdır.\n\nAI analiz kredisi: 1 kredi, bir AI maç analizini hesabınız için açma hakkıdır; açılan analiz hesabınızda kalıcı olarak açık kalır. Krediler süresizdir (son kullanma tarihi yoktur). Paketler tek seferlik satın alımdır; abonelik, otomatik yenileme ve tekrarlayan tahsilat yoktur. Krediler nakde çevrilemez ve başka hesaba devredilemez. AI maç analizleri bilgi amaçlı istatistiksel tahmindir; herhangi bir sonuç garanti edilmez.",
-        "review": true
+        "body": "Sözleşmenin konusu, Alıcının elektronik ortamda sipariş verdiği AI analiz kredisi paketinin satışı ve hesaba tanımlanmasıdır.\n\nAI analiz kredisi: 1 kredi, bir AI maç analizini hesabınız için açma hakkıdır; açılan analiz hesabınızda kalıcı olarak açık kalır. Krediler süresizdir (son kullanma tarihi yoktur). Paketler tek seferlik satın alımdır; abonelik, otomatik yenileme ve tekrarlayan tahsilat yoktur. Krediler nakde çevrilemez ve başka hesaba devredilemez. AI maç analizleri bilgi amaçlı istatistiksel tahmindir; herhangi bir sonuç garanti edilmez."
       },
       {
         "heading": "4. Fiyat",
-        "body": "Fiyatlar Türk lirası cinsindendir ve KDV dahildir; kargo veya ek hizmet bedeli yoktur. Sipariş anında kredi sayfasında gösterilen fiyat geçerlidir. Güncel paketler:",
-        "review": true,
+        "body": "Fiyatlar Türk lirası cinsindendir ve KDV dahildir; kargo veya ek hizmet bedeli yoktur. Sipariş anında Fiyatlandırma sayfasında gösterilen fiyat geçerlidir. Güncel paketler:",
         "table": "creditPackages"
       },
       {
         "heading": "5. Ödeme",
-        "body": "Ödeme, Satıcının ödeme hizmeti sağlayıcısı Hikie ([HUKUKİ METİN EKLENECEK: Hikie'nin ticari unvanı, ülkesi ve ödeme kuruluşu lisans bilgisi]) tarafından sunulan ödeme sayfasında alınır. Kart bilgileri yalnız Hikie'nin ödeme sayfasına girilir; {{brand}} kart numarasını, son kullanma tarihini ve güvenlik kodunu görmez, işlemez ve saklamaz. {{brand}} ödeme sonucundan yalnız siparişin ödendiği bilgisini, tutarı, para birimini ve Hikie işlem numarasını sipariş kaydına yazar. Ödeme tamamlanmazsa veya reddedilirse hesaba kredi yüklenmez.",
-        "review": true
+        "body": "Ödeme, Satıcının ödeme hizmeti sağlayıcısı Hikie (hikie.space) tarafından sunulan ödeme sayfasında alınır. Kart bilgileri yalnız Hikie'nin ödeme sayfasına girilir; {{brand}} kart numarasını, son kullanma tarihini ve güvenlik kodunu görmez, işlemez ve saklamaz. {{brand}} ödeme sonucundan yalnız siparişin ödendiği bilgisini, tutarı, para birimini ve Hikie işlem numarasını sipariş kaydına yazar. Ödeme tamamlanmazsa veya reddedilirse hesaba kredi yüklenmez."
       },
       {
         "heading": "6. Teslimat (İfa)",
-        "body": "Ürün dijitaldir; fiziksel teslimat yoktur. Krediler, ödemenin Hikie tarafından onaylanmasıyla (imzalı ödeme bildirimi) otomatik ve anında Alıcının hesabına yüklenir; bu genellikle birkaç saniye sürer. Sipariş özeti (sipariş numarası, paket, kredi, tutar, tarih, satıcı bilgisi) ayrıca hesabın e-posta adresine gönderilir.\n\nÖdeme alındığı hâlde kredi makul sürede hesapta görünmezse sipariş numarasıyla {{seller.email}} adresine yazılabilir; sipariş kaydı incelenir ve ödenmiş sipariş hesaba işlenir.",
-        "review": true
+        "body": "Ürün dijitaldir; fiziksel teslimat yoktur. Krediler, ödemenin Hikie tarafından onaylanmasıyla (imzalı ödeme bildirimi) otomatik ve anında Alıcının hesabına yüklenir; bu genellikle birkaç saniye sürer. Sipariş özeti (sipariş numarası, paket, kredi, tutar, tarih, satıcı bilgisi) ayrıca hesabın e-posta adresine gönderilir.\n\nÖdeme alındığı hâlde kredi makul sürede hesapta görünmezse sipariş numarasıyla {{seller.email}} adresine yazılabilir; sipariş kaydı incelenir ve ödenmiş sipariş hesaba işlenir."
       },
       {
         "heading": "7. Cayma Hakkı",
-        "body": "Mesafeli sözleşmelerde tüketici kural olarak 14 gün içinde cayma hakkına sahiptir. Ancak elektronik ortamda anında ifa edilen hizmetler ve tüketiciye anında teslim edilen gayrimaddi mallar ile cayma süresi dolmadan tüketicinin onayıyla ifasına başlanan hizmetlerde cayma hakkı kullanılamaz (Mesafeli Sözleşmeler Yönetmeliği md. 15/1-ğ ve h). Krediler ödeme onaylanır onaylanmaz hesaba yüklendiğinden, Alıcı satın alma adımındaki onay kutusunu işaretleyerek ifanın hemen başlamasına onay verdiğini ve bu nedenle cayma hakkının sona ereceğini bildiğini beyan eder. [HUKUKİ METİN EKLENECEK: istisnanın kullanılmamış krediler bakımından kapsamı ve onay beyanının nihai metni]\n\nHatalı veya mükerrer tahsilat gibi durumlar için İade ve İptal Koşulları geçerlidir.",
-        "review": true
+        "body": "Mesafeli sözleşmelerde tüketici kural olarak 14 gün içinde cayma hakkına sahiptir. Ancak elektronik ortamda anında ifa edilen hizmetler ve tüketiciye anında teslim edilen gayrimaddi mallar ile cayma süresi dolmadan tüketicinin onayıyla ifasına başlanan hizmetlerde cayma hakkı kullanılamaz (Mesafeli Sözleşmeler Yönetmeliği md. 15/1-ğ ve h). Krediler ödeme onaylanır onaylanmaz hesaba yüklendiğinden, Alıcı satın alma adımındaki onay kutusunu işaretleyerek ifanın hemen başlamasına onay verdiğini ve bu nedenle cayma hakkının sona ereceğini bildiğini beyan eder. Bu istisna hesaba yüklenmiş ancak henüz kullanılmamış krediler için de geçerlidir; krediler hesaba yüklendiği anda ifa tamamlanmış olur.\n\nHatalı veya mükerrer tahsilat gibi durumlar için İade ve İptal Koşulları geçerlidir."
       },
       {
         "heading": "8. Alıcının Beyanları",
-        "body": "Alıcı, sipariş vermeden önce Ön Bilgilendirme Formu'nu ve bu sözleşmeyi okuduğunu ve elektronik ortamda onayladığını kabul eder. [HUKUKİ METİN EKLENECEK: yaş sınırı ve hesap bilgilerinin doğruluğuna ilişkin beyan]",
-        "review": true
+        "body": "Alıcı, sipariş vermeden önce Ön Bilgilendirme Formu'nu ve bu sözleşmeyi okuduğunu ve elektronik ortamda onayladığını kabul eder. Alıcı, 18 yaşından büyük olduğunu ya da işlemi yasal temsilcisinin onayıyla yaptığını ve hesabındaki bilgilerin doğru olduğunu beyan eder."
       },
       {
         "heading": "9. Şikâyet ve Uyuşmazlıkların Çözümü",
-        "body": "Şikâyet ve talepler önce {{seller.email}} adresine iletilebilir. Uyuşmazlıklarda, Ticaret Bakanlığınca her yıl ilan edilen parasal sınır ([GÜNCEL PARASAL SINIR]) dâhilinde Alıcının yerleşim yerindeki veya tüketici işlemini yaptığı yerdeki Tüketici Hakem Heyetine, bu sınırın üzerindeki uyuşmazlıklarda Tüketici Mahkemesine başvurulabilir.",
-        "review": true
+        "body": "Şikâyet ve talepler önce {{seller.email}} adresine iletilebilir. Uyuşmazlıklarda, Ticaret Bakanlığınca her yıl ilan edilen parasal sınır dâhilinde Alıcının yerleşim yerindeki veya tüketici işlemini yaptığı yerdeki Tüketici Hakem Heyetine, bu sınırın üzerindeki uyuşmazlıklarda Tüketici Mahkemesine başvurulabilir."
       },
       {
         "heading": "10. İletişim",
-        "body": "E-posta: {{seller.email}} · Telefon: {{seller.phone}} · KEP: {{seller.kep}} · Adres: {{seller.address}}"
+        "body": "E-posta: {{seller.email}} · İletişim formu: {{siteDomain}}/iletisim"
       },
       {
         "heading": "11. Yürürlük",
-        "body": "Bu sözleşme, Alıcının satın alma adımındaki onay kutusunu işaretleyip ödemeyi tamamlamasıyla kurulur. Onay zamanı ve onaylanan metnin sürümü ({{legalEffectiveDate}}) sipariş kaydında saklanır; sözleşme metni bu sayfada erişilebilir. [HUKUKİ METİN EKLENECEK: sözleşmenin saklanması ve Alıcıya kalıcı veri saklayıcısıyla iletilmesi]",
-        "review": true
+        "body": "Bu sözleşme, Alıcının satın alma adımındaki onay kutusunu işaretleyip ödemeyi tamamlamasıyla kurulur. Onay zamanı ve onaylanan metnin sürümü ({{legalEffectiveDate}}) sipariş kaydında saklanır; sözleşme metni bu sayfada erişilebilir. Ön Bilgilendirme Formu ve bu sözleşmenin bağlantıları, ödeme sonrası gönderilen sipariş onay e-postasında da yer alır; Alıcı metinleri bu sayfadan her zaman görüntüleyip kaydedebilir."
       }
-    ],
-    "draftNotice": "TASLAK — avukat onayı bekliyor. Bu metin yayın öncesi hukuki inceleme gerektirir; “Avukat onayı bekler” işaretli bölümler kesin metin değildir. Köşeli parantez içindeki alanlar ([…]) henüz doldurulmamıştır."
+    ]
   },
   "contact": {
     "pageTitle": "İletişim",
@@ -342,13 +318,12 @@
       },
       {
         "heading": "5. Yaptırımlar",
-        "body": "Kurallara aykırı içerik gizlenebilir veya kaldırılabilir; kullanıcı uyarılabilir, Gündem'de yazma izni geçici ya da kalıcı olarak kapatılabilir (giriş ve okuma açık kalır); ağır veya tekrarlayan ihlallerde hesap kapatılabilir. [HUKUKİ METİN EKLENECEK: yaptırım kademeleri, itiraz usulü ve süreleri, yetkili makamlara bildirim ve içerik saklama yükümlülükleri (5651 sayılı Kanun dahil)]"
+        "body": "Kurallara aykırı içerik gizlenebilir veya kaldırılabilir; kullanıcı uyarılabilir, Gündem'de yazma izni geçici ya da kalıcı olarak kapatılabilir (giriş ve okuma açık kalır); ağır veya tekrarlayan ihlallerde hesap kapatılabilir. Yaptırımlar ihlalin ağırlığına göre uyarı, içeriğin gizlenmesi veya kaldırılması, yazma izninin kapatılması ve hesabın kapatılması şeklinde kademeli uygulanır; ağır ihlallerde doğrudan hesap kapatılabilir. Yasa dışı içerik, 5651 sayılı Kanun ve ilgili mevzuat kapsamında saklanabilir ve yetkili makamların talebi üzerine bu makamlarla paylaşılabilir. İtiraz için 6. bölüme bakınız."
       },
       {
         "heading": "6. İtiraz ve iletişim",
         "body": "Bir karara itiraz etmek, yanlış engellenen bir içeriği bildirmek ya da acil bir durumu iletmek için {{contactEmail}} adresine yazabilirsin. Can güvenliğini ilgilendiren durumlarda lütfen önce yetkili makamlara (112) başvur."
       }
-    ],
-    "draftNotice": "TASLAK — avukat onayı bekliyor. Bu metin yayın öncesi hukuki inceleme gerektirir; “Avukat onayı bekler” işaretli bölümler kesin metin değildir. Köşeli parantez içindeki alanlar ([…]) henüz doldurulmamıştır."
+    ]
   }
 }

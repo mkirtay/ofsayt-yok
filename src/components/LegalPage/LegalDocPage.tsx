@@ -7,7 +7,7 @@ import { siteBaseUrl } from '@/lib/siteUrl';
 import { brandTitle, withBrandText } from '@/config/brand';
 import { legalPage, type LegalDocKey } from '@/config/legalPages';
 import { REPORT_REVIEW_HOURS } from '@/config/moderation';
-import { sellerHasPlaceholders, sellerText } from '@/config/seller';
+import { sellerText } from '@/config/seller';
 import { CREDIT_PACKAGES, formatTry, perCreditKurus } from '@/config/creditPackages';
 import { dataProcessorTable } from '@/config/dataProcessors';
 
@@ -39,7 +39,7 @@ export function creditPackageTable(locale: 'tr' | 'en'): LegalTable {
 }
 
 type RawSection = { heading: string; body: string; review?: boolean; table?: string };
-type RawDoc = { pageTitle: string; pageDesc: string; intro: string; draftNotice: string; effectiveDate?: string; sections: RawSection[] };
+type RawDoc = { pageTitle: string; pageDesc: string; intro: string; effectiveDate?: string; sections: RawSection[] };
 
 /** JSON'daki `"table": "<ad>"` → koddan üretilen tablo. */
 const TABLES: Record<string, (locale: 'tr' | 'en') => LegalTable> = {
@@ -47,16 +47,12 @@ const TABLES: Record<string, (locale: 'tr' | 'en') => LegalTable> = {
   dataProcessors: dataProcessorTable,
 };
 
-/** Metninde satıcı bilgisi geçen belge (yer tutucu kaldıkça noindex). */
-const usesSeller = (doc: RawDoc) => JSON.stringify(doc).includes('{{seller.');
-
 /** Yasal metinler JSON'dan doğrudan okunur (t() değil) → marka, sayı ve satıcı değişkenleri burada doldurulur. */
 const LEGAL = { tr: withLegalVars(withBrandText(trLegal)), en: withLegalVars(withBrandText(enLegal)) };
 
-/** Belge noindex mi: sabit taslak sayfa ya da satıcı yer tutucusu taşıyan sayfa. */
+/** Belge noindex mi (config/legalPages.ts). */
 export function legalDocNoindex(docKey: LegalDocKey): boolean {
-  const raw = trLegal[docKey] as RawDoc;
-  return Boolean(legalPage(docKey).noindex) || (usesSeller(raw) && sellerHasPlaceholders());
+  return Boolean(legalPage(docKey).noindex);
 }
 
 /** Yasal sayfa rotası (legal.json'daki belge + canonical ya da noindex). Rotalar ve sırası: config/legalPages.ts. */
@@ -86,7 +82,6 @@ export default function LegalDocPage({ docKey }: { docKey: LegalDocKey }) {
         pageTitle={data.pageTitle}
         intro={data.intro}
         sections={sections}
-        draftNotice={data.draftNotice}
         effectiveDate={data.effectiveDate}
         related={docKey === 'privacy' ? [{ href: ACCOUNT_DELETION_PATH, label: locale === 'en' ? 'Delete your account →' : 'Hesap silme →' }] : undefined}
       />

@@ -71,7 +71,6 @@ export function orderConfirmationEmail(input: OrderEmailInput): EmailContent {
   const intro = en
     ? `Thank you for your purchase. Your payment was confirmed and ${input.credits} credits were added to your ${BRAND.name} account. Credits do not expire; each AI match analysis you unlock costs 1 credit.`
     : `Satın alımınız için teşekkürler. Ödemeniz onaylandı ve ${BRAND.name} hesabınıza ${input.credits} kredi yüklendi. Krediler süresizdir; açtığınız her AI maç analizi 1 kredidir.`;
-  const sellerTitle = en ? 'Seller' : 'Satıcı';
   const seller = sellerLine(input.locale, SELLER);
   const help = en
     ? `Questions about your order? Write to ${contact} with your order number.`
@@ -88,13 +87,13 @@ export function orderConfirmationEmail(input: OrderEmailInput): EmailContent {
     `<p>${en ? 'Hello,' : 'Merhaba,'}</p><p>${esc(intro)}</p><table role="presentation" style="border-collapse:collapse">${tableHtml}</table>` +
       `<p>${esc(help).replace(esc(contact), `<a href="mailto:${esc(contact)}">${esc(contact)}</a>`)}</p>` +
       `<p style="color:#555;font-size:13px">${esc(docs)}</p>` +
-      `<p style="color:#555;font-size:13px">${esc(sellerTitle)}: ${esc(seller)}</p>`,
+      `<p style="color:#555;font-size:13px">${esc(seller)}</p>`,
     input.locale,
   );
   const text =
     `${en ? 'Hello,' : 'Merhaba,'}\n\n${intro}\n\n` +
     rows.map(([k, v]) => `${k}: ${v}`).join('\n') +
-    `\n\n${help}\n\n${docs}\n\n${sellerTitle}: ${seller}\n`;
+    `\n\n${help}\n\n${docs}\n\n${seller}\n`;
   return { subject, html, text };
 }
 

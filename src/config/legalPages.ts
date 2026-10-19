@@ -1,13 +1,11 @@
 /**
- * Yasal sayfalar (footer sırası). Metinler public/locales/{tr,en}/legal.json; hepsi taslak — en üstte "taslak, avukat
- * onayı bekliyor" notu, doldurulacak alanlar köşeli parantezli yer tutucu (legalPages.test.ts listeyi zorlar).
- * Satıcı bilgisi `{{seller.*}}` değişkenleriyle config/seller.ts'ten gelir.
+ * Yasal sayfalar (footer sırası). Metinler public/locales/{tr,en}/legal.json; yer tutucu ve taslak notu yok
+ * (legalPages.test.tsx zorlar). Satıcı bilgisi `{{seller.*}}` değişkenleriyle config/seller.ts'ten gelir.
  */
 export type LegalDocKey = 'privacy' | 'terms' | 'community' | 'kvkk' | 'cookies' | 'refund' | 'distanceSales' | 'preInfo';
 
 /**
- * `noindex`: her zaman arama motorlarına kapalı (robots noindex, canonical yok). Ayrıca metninde satıcı bilgisi
- * (`{{seller.*}}`) geçen sayfa, config/seller.ts'te yer tutucu kaldığı sürece noindex olur (LegalDocPage).
+ * `noindex`: arama motorlarına kapalı (robots noindex, canonical yok).
  */
 export const LEGAL_PAGES: readonly { docKey: LegalDocKey; path: string; footerKey: string; noindex?: boolean }[] = [
   { docKey: 'privacy', path: '/gizlilik-politikasi', footerKey: 'footer.privacyPolicy' },

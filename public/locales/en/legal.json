@@ -8,7 +8,7 @@
     "sections": [
       {
         "heading": "1. Data Controller",
-        "body": "The data controller under Turkish Personal Data Protection Law No. 6698 (\"KVKK\") is {{seller.legalName}} ({{seller.address}}). You can reach us at {{seller.email}} or via the Contact page. See the KVKK Information Notice for details."
+        "body": "The data controller under Turkish Personal Data Protection Law No. 6698 (\"KVKK\") is {{seller.name}} ({{seller.website}}). You can reach us at {{seller.email}} or via the Contact page. See the KVKK Information Notice for details."
       },
       {
         "heading": "2. Data We Collect",
@@ -24,13 +24,12 @@
       },
       {
         "heading": "5. Sharing With Third Parties",
-        "body": "Apart from legal obligations, your personal data is shared only with the service providers below, to the extent needed to provide the service; they process it on our behalf and for the purposes we set. The table is based on the providers actually used in the site's code. Sentry error logs are stored on servers in the European Union (Germany); no session replay or performance monitoring is used.\n\nOn the payment result page, information the payment provider adds to the address (e.g. your e-mail address) is removed from the address as soon as the page opens and is not sent to page statistics or error logs. [HUKUKİ METİN EKLENECEK: sağlayıcıların sunucu konumları ve yurt dışına aktarımın KVKK md. 9 kapsamındaki dayanağı]",
-        "table": "dataProcessors",
-        "review": true
+        "body": "Apart from legal obligations, your personal data is shared only with the service providers below, to the extent needed to provide the service; they process it on our behalf and for the purposes we set. The table is based on the providers actually used in the site's code. Sentry error logs are stored on servers in the European Union (Germany); no session replay or performance monitoring is used.\n\nOn the payment result page, information the payment provider adds to the address (e.g. your e-mail address) is removed from the address as soon as the page opens and is not sent to page statistics or error logs. Some providers are established abroad or process data on servers abroad; these transfers are made under the conditions set out in KVKK Art. 9 and only to the extent needed to provide the service.",
+        "table": "dataProcessors"
       },
       {
         "heading": "6. Data Security and Retention",
-        "body": "Your data is retained for a period proportionate to its purpose and protected with reasonable technical and administrative safeguards. You can delete your account yourself at any time under Profile › My info › Delete account; you will be asked to type your email address or \"SİL\" to confirm, and a confirmation is sent to your email address afterwards. If you cannot sign in, you can also delete it from the Delete account page ({{siteDomain}}/hesap-silme) with a confirmation link sent to your email address. On deletion, your profile, sessions and Google connection, favourites, credit balance and credit history, unlocked analyses, notifications, likes and follows, poll votes and Frikik scores are deleted immediately. Your Gündem posts and comments are not deleted; the author information is removed and they stay published anonymously under the name \"Deleted user\". Payment and order records (amount, package, date, status, payment provider transaction id) are retained with the link to your account removed. [HUKUKİ METİN EKLENECEK: retention period and legal basis for order records; deletion period from backups]"
+        "body": "Your data is retained for a period proportionate to its purpose and protected with reasonable technical and administrative safeguards. You can delete your account yourself at any time under Profile › My info › Delete account; you will be asked to type your email address or \"SİL\" to confirm, and a confirmation is sent to your email address afterwards. If you cannot sign in, you can also delete it from the Delete account page ({{siteDomain}}/hesap-silme) with a confirmation link sent to your email address. On deletion, your profile, sessions and Google connection, favourites, credit balance and credit history, unlocked analyses, notifications, likes and follows, poll votes and Frikik scores are deleted immediately. Your Gündem posts and comments are not deleted; the author information is removed and they stay published anonymously under the name \"Deleted user\". Payment and order records (amount, package, date, status, payment provider transaction id) are retained with the link to your account removed. Order records are kept for 10 years under the retention obligations of tax and commercial law (Tax Procedure Law, Turkish Commercial Code). Deleted data is removed from backups within the backup cycle, at the latest within 30 days."
       },
       {
         "heading": "7. Your Rights",
@@ -41,7 +40,6 @@
         "body": "This policy may be updated from time to time; the current version is always published on this page."
       }
     ],
-    "draftNotice": "DRAFT — awaiting lawyer approval. This text requires legal review before publication; sections marked “Awaiting lawyer approval” are not final. Fields in square brackets ([…]) have not been filled in yet.",
     "effectiveDate": "Effective date: {{legalEffectiveDate}}"
   },
   "terms": {
@@ -63,11 +61,11 @@
       },
       {
         "heading": "4. Credit System",
-        "body": "AI match analyses are unlocked with credits; unlocking one analysis costs 1 credit. New members receive a one-time 2-credit signup bonus when they verify their email address. Accounts with a verified email that are at least 24 hours old can unlock one ready-made (already generated) analysis for free each week. Buying credits is coming soon; credit packages are not on sale and no payments are taken at this time. When sales start, packages, prices, refund and withdrawal terms will be published on the Distance Sales Agreement and Refund & Cancellation pages. Credit system terms may be updated; the current terms are always on this page."
+        "body": "AI match analyses are unlocked with credits; unlocking one analysis costs 1 credit. New members receive a one-time 2-credit signup bonus when they verify their email address. Accounts with a verified email that are at least 24 hours old can unlock one ready-made (already generated) analysis for free each week. Credit packages can be bought on the Pricing page; packages, prices, refund and withdrawal terms are on the Pre-Contract Information Form, Distance Sales Agreement and Refund & Cancellation pages. Credit system terms may be updated; the current terms are always on this page."
       },
       {
         "heading": "5. User Conduct",
-        "body": "Posting abusive, harassing, unlawful, or spam content in comments or polls is prohibited. Content that violates these rules may be removed and the associated account may be suspended. In Gündem and other user content areas, content that breaks the Community Guidelines (insults, hate speech, threats, obscenity, spam, sharing personal data, illegal content) is prohibited; there is no tolerance for objectionable content or abusive users. {{brand}} may hide or remove such content without prior notice, warn the user, suspend their ability to post in Gündem temporarily or permanently, and close the account for severe or repeated violations. [HUKUKİ METİN EKLENECEK: scope of the account closure right, notice and appeal procedure, data of closed accounts and remaining credits]"
+        "body": "Posting abusive, harassing, unlawful, or spam content in comments or polls is prohibited. Content that violates these rules may be removed and the associated account may be suspended. In Gündem and other user content areas, content that breaks the Community Guidelines (insults, hate speech, threats, obscenity, spam, sharing personal data, illegal content) is prohibited; there is no tolerance for objectionable content or abusive users. {{brand}} may hide or remove such content without prior notice, warn the user, suspend their ability to post in Gündem temporarily or permanently, and close the account for severe or repeated violations. An account closure can be appealed by writing to {{contactEmail}}. The data of a closed account is handled under the account deletion rules in the Privacy Policy. If the account holds purchased, unused credits at the time of closure, their price is refunded on request."
       },
       {
         "heading": "6. Intellectual Property",
@@ -81,8 +79,7 @@
         "heading": "8. Changes and Governing Law",
         "body": "These terms may be updated from time to time. Disputes arising from these terms are governed by the laws of the Republic of Türkiye."
       }
-    ],
-    "draftNotice": "DRAFT — awaiting lawyer approval. This text requires legal review before publication; sections marked “Awaiting lawyer approval” are not final. Fields in square brackets ([…]) have not been filled in yet."
+    ]
   },
   "kvkk": {
     "pageTitle": "KVKK Information Notice",
@@ -91,7 +88,7 @@
     "sections": [
       {
         "heading": "1. Data Controller",
-        "body": "Name: {{seller.legalName}} · Address: {{seller.address}} · Tax office / no: {{seller.taxOffice}} / {{seller.taxNumber}} · MERSIS: {{seller.mersis}} · Phone: {{seller.phone}} · Email: {{seller.email}} · KEP: {{seller.kep}}"
+        "body": "Data controller: {{seller.name}} · Website: {{seller.website}} · E-mail: {{seller.email}}"
       },
       {
         "heading": "2. Personal Data Processed",
@@ -103,7 +100,7 @@
       },
       {
         "heading": "4. Legal Grounds",
-        "body": "[HUKUKİ METİN EKLENECEK: legal ground under KVKK Art. 5/2 for each purpose (e.g. contract, legitimate interest, legal obligation) and whether explicit consent is required]"
+        "body": "Creating and managing the account, AI analysis and credit operations and purchases are necessary to conclude and perform a contract (KVKK Art. 5/2-c). Order, payment and purchase consent records are processed to comply with a legal obligation (Art. 5/2-ç). Information and account security, abuse prevention, measuring promotional activity and improving the service rely on legitimate interest (Art. 5/2-f); records needed to protect rights in possible disputes are kept under Art. 5/2-e. No processing is based on explicit consent."
       },
       {
         "heading": "5. Collection Method",
@@ -111,20 +108,18 @@
       },
       {
         "heading": "6. Transfers",
-        "body": "To provide the service, data is transferred to the service providers below only to the extent needed for that service (the table is based on the site's code). [HUKUKİ METİN EKLENECEK: alıcı grupları, yurt dışına aktarımın KVKK md. 9 kapsamındaki dayanağı ve sağlayıcıların sunucu konumları]",
-        "table": "dataProcessors",
-        "review": true
+        "body": "To provide the service, data is transferred to the service providers below only to the extent needed for that service (the table is based on the site's code). Recipient groups: hosting and database, e-mail delivery, error monitoring, bot protection, AI and payment service providers, and competent public authorities on request. Some providers are established abroad or process data on servers abroad; these transfers are made under the conditions set out in KVKK Art. 9.",
+        "table": "dataProcessors"
       },
       {
         "heading": "7. Retention",
-        "body": "[HUKUKİ METİN EKLENECEK: retention periods per data category and destruction policy]"
+        "body": "Account data is kept until the account is deleted. Order and payment records are kept for 10 years under tax and commercial law, and transaction security records (IP address, sign-in attempts) for at most 2 years. Data whose period has expired is deleted or anonymized; removal from backups is completed within the backup cycle, at the latest within 30 days."
       },
       {
         "heading": "8. Your Rights and Requests",
-        "body": "To exercise your rights under KVKK Art. 11, you can send a written request to {{seller.email}}, to the KEP address {{seller.kep}} or by post to {{seller.address}}. You can delete your account and the data linked to it yourself, without a request, under Profile › My info › Delete account; what is deleted and what is anonymized is described in section 6 of the Privacy Policy. [HUKUKİ METİN EKLENECEK: request procedure and response time under the Communiqué on Application Procedures to the Data Controller]"
+        "body": "To exercise your rights under KVKK Art. 11, you can send your request, in line with the Communiqué on Application Procedures to the Data Controller, from the e-mail address registered to your account to {{seller.email}}. Requests are concluded free of charge within 30 days at the latest. You can delete your account and the data linked to it yourself, without a request, under Profile › My info › Delete account; what is deleted and what is anonymized is described in section 6 of the Privacy Policy."
       }
     ],
-    "draftNotice": "DRAFT — awaiting lawyer approval. This text requires legal review before publication; sections marked “Awaiting lawyer approval” are not final. Fields in square brackets ([…]) have not been filled in yet.",
     "effectiveDate": "Effective date: {{legalEffectiveDate}}"
   },
   "cookies": {
@@ -154,19 +149,18 @@
       },
       {
         "heading": "6. Cookie Preferences",
-        "body": "[HUKUKİ METİN EKLENECEK: consent requirement and consent management for non-essential cookies and similar technologies] You can delete or block cookies in your browser settings; if you block strictly necessary cookies you may not be able to sign in."
+        "body": "The site uses only strictly necessary and functional cookies needed for the service to work; no advertising or cookie-based analytics cookies are used, so no separate cookie consent is requested. If a non-essential cookie is added, your consent will be asked before it is used. You can delete or block cookies in your browser settings; if you block strictly necessary cookies you may not be able to sign in."
       }
-    ],
-    "draftNotice": "DRAFT — awaiting lawyer approval. This text requires legal review before publication; sections marked “Awaiting lawyer approval” are not final. Fields in square brackets ([…]) have not been filled in yet."
+    ]
   },
   "refund": {
     "pageTitle": "Refund & Cancellation Policy",
     "pageDesc": "{{brand}} refund and cancellation terms for credit packages.",
-    "intro": "Buying credits is coming soon. Credit packages are not on sale and no payments are taken at this time; these terms will apply once sales start.",
+    "intro": "These terms apply to AI analysis credit packages purchased on {{siteDomain}}.",
     "sections": [
       {
         "heading": "1. Seller",
-        "body": "Name: {{seller.legalName}} · Address: {{seller.address}} · Tax office / no: {{seller.taxOffice}} / {{seller.taxNumber}} · MERSIS: {{seller.mersis}} · Phone: {{seller.phone}} · Email: {{seller.email}} · KEP: {{seller.kep}}"
+        "body": "Seller: {{seller.name}} · Website: {{seller.website}} · E-mail: {{seller.email}}"
       },
       {
         "heading": "2. Scope",
@@ -174,64 +168,57 @@
       },
       {
         "heading": "3. Right of Withdrawal",
-        "body": "[HUKUKİ METİN EKLENECEK: right of withdrawal and its exception for digital content / immediately performed services (Distance Contracts Regulation Art. 15), consent statement before payment]"
+        "body": "In distance contracts the consumer generally has a 14-day right of withdrawal. However, it cannot be exercised for services performed instantly in electronic form and intangible goods delivered instantly to the consumer (Distance Contracts Regulation Art. 15/1-ğ and h). Because credits are added to the account as soon as payment is confirmed, by ticking the box at the purchase step the Buyer agrees to immediate performance and accepts that the right of withdrawal ends."
       },
       {
         "heading": "4. Refund of Unused Credits",
-        "body": "[HUKUKİ METİN EKLENECEK: whether unused credits are refundable, time limit and method]"
+        "body": "Because purchased credits are added to the account immediately, they are not covered by the right of withdrawal and unused credits are, as a rule, not refunded. Cases where the law requires a refund and the closure of the account by {{brand}} (Terms of Use, section 5) are reserved."
       },
       {
         "heading": "5. Failed or Incomplete Transactions",
-        "body": "[HUKUKİ METİN EKLENECEK: procedure and time limit when payment is taken but credits are not added, or for duplicate payments]"
+        "body": "If payment was taken but the credits were not added, the same order was charged more than once, or the amount charged differs from the package price, write to {{seller.email}} with the order number. The request is reviewed within 3 business days at the latest: missing credits are added to the account; duplicate or excess charges are refunded through Hikie to the card used for payment within 14 days at the latest. How long the refund takes to appear on your card statement depends on your bank. Credits of an order refunded through Hikie are deducted from the account."
       },
       {
         "heading": "6. Requests",
         "body": "For refund and cancellation requests, write to {{seller.email}}."
       }
     ],
-    "draftNotice": "DRAFT — awaiting lawyer approval. This text requires legal review before publication; sections marked “Awaiting lawyer approval” are not final. Fields in square brackets ([…]) have not been filled in yet.",
     "effectiveDate": "Effective date: {{legalEffectiveDate}}"
   },
   "preInfo": {
     "pageTitle": "Pre-Contract Information Form",
     "pageDesc": "{{brand}} pre-contract information form for buying AI analysis credits.",
-    "intro": "Credit purchases are coming soon; no sales are made at the moment. This form contains the information to read and accept before placing an order and is accepted with the checkbox at the purchase step.",
+    "intro": "This form contains the information to read and accept before placing an order and is accepted with the checkbox at the purchase step.",
     "effectiveDate": "Effective date: {{legalEffectiveDate}}",
     "sections": [
       {
         "heading": "1. Seller Details",
-        "body": "Name: {{seller.legalName}} · Address: {{seller.address}} · Tax office / no: {{seller.taxOffice}} / {{seller.taxNumber}} · MERSİS: {{seller.mersis}} · Phone: {{seller.phone}} · E-mail: {{seller.email}} · KEP: {{seller.kep}}"
+        "body": "Seller: {{seller.name}} · Website: {{seller.website}} · E-mail: {{seller.email}}"
       },
       {
         "heading": "2. Main Characteristics of the Product",
-        "body": "AI analysis credits: 1 credit is the right to unlock one AI match analysis for your account; an unlocked analysis stays unlocked permanently. Credits do not expire. Packages are one-time purchases; there is no subscription, automatic renewal or recurring charge. Credits cannot be exchanged for cash or transferred to another account. AI match analyses are statistical predictions for information only; no outcome is guaranteed.",
-        "review": true
+        "body": "AI analysis credits: 1 credit is the right to unlock one AI match analysis for your account; an unlocked analysis stays unlocked permanently. Credits do not expire. Packages are one-time purchases; there is no subscription, automatic renewal or recurring charge. Credits cannot be exchanged for cash or transferred to another account. AI match analyses are statistical predictions for information only; no outcome is guaranteed."
       },
       {
         "heading": "3. Price and Additional Costs",
-        "body": "Prices are in Turkish lira and include VAT; there are no shipping or extra service fees. The price shown on the credits page at the time of the order applies. Current packages:",
-        "review": true,
+        "body": "Prices are in Turkish lira and include VAT; there are no shipping or extra service fees. The price shown on the Pricing page at the time of the order applies. Current packages:",
         "table": "creditPackages"
       },
       {
         "heading": "4. Payment",
-        "body": "Payment is taken on the payment page provided by the Seller's payment service provider Hikie ([HUKUKİ METİN EKLENECEK: Hikie'nin ticari unvanı, ülkesi ve ödeme kuruluşu lisans bilgisi]). Card details are entered only on Hikie's payment page; {{brand}} does not see, process or store the card number, expiry date or security code. From the payment result {{brand}} records only that the order was paid, the amount, the currency and Hikie's transaction number in the order record. If the payment is not completed or is declined, no credits are added to the account.",
-        "review": true
+        "body": "Payment is taken on the payment page provided by the Seller's payment service provider Hikie (hikie.space). Card details are entered only on Hikie's payment page; {{brand}} does not see, process or store the card number, expiry date or security code. From the payment result {{brand}} records only that the order was paid, the amount, the currency and Hikie's transaction number in the order record. If the payment is not completed or is declined, no credits are added to the account."
       },
       {
         "heading": "5. Delivery",
-        "body": "The product is digital; there is no physical delivery. Credits are added to the Buyer's account automatically and immediately once Hikie confirms the payment (signed payment notification); this usually takes a few seconds. An order summary (order number, package, credits, amount, date, seller details) is also sent to the account's e-mail address.\n\nIf payment was taken but the credits do not appear within a reasonable time, the Buyer can write to {{seller.email}} with the order number; the order record is checked and a paid order is credited to the account.",
-        "review": true
+        "body": "The product is digital; there is no physical delivery. Credits are added to the Buyer's account automatically and immediately once Hikie confirms the payment (signed payment notification); this usually takes a few seconds. An order summary (order number, package, credits, amount, date, seller details) is also sent to the account's e-mail address.\n\nIf payment was taken but the credits do not appear within a reasonable time, the Buyer can write to {{seller.email}} with the order number; the order record is checked and a paid order is credited to the account."
       },
       {
         "heading": "6. Right of Withdrawal",
-        "body": "In distance contracts the consumer generally has a 14-day right of withdrawal. However, the right of withdrawal cannot be exercised for services performed instantly in electronic form, intangible goods delivered instantly to the consumer, and services whose performance starts with the consumer's approval before the withdrawal period ends (Distance Contracts Regulation art. 15/1-ğ and h). Because credits are added to the account as soon as payment is confirmed, by ticking the box at the purchase step the Buyer confirms that they agree to immediate performance and know that they therefore lose the right of withdrawal. [HUKUKİ METİN EKLENECEK: istisnanın kullanılmamış krediler bakımından kapsamı ve onay beyanının nihai metni]\n\nFor wrong or duplicate charges, the Refund and Cancellation Terms apply.",
-        "review": true
+        "body": "In distance contracts the consumer generally has a 14-day right of withdrawal. However, the right of withdrawal cannot be exercised for services performed instantly in electronic form, intangible goods delivered instantly to the consumer, and services whose performance starts with the consumer's approval before the withdrawal period ends (Distance Contracts Regulation art. 15/1-ğ and h). Because credits are added to the account as soon as payment is confirmed, by ticking the box at the purchase step the Buyer confirms that they agree to immediate performance and know that they therefore lose the right of withdrawal. This exception also applies to credits that have been added to the account but not yet used; performance is complete as soon as the credits are added.\n\nFor wrong or duplicate charges, the Refund and Cancellation Terms apply."
       },
       {
         "heading": "7. Complaints and Remedies",
-        "body": "Complaints and requests can first be sent to {{seller.email}}. For disputes, the Buyer may apply to the Consumer Arbitration Committee at their place of residence or where the transaction was made within the monetary limit announced each year by the Ministry of Trade ([GÜNCEL PARASAL SINIR]), and to the Consumer Court above that limit.",
-        "review": true
+        "body": "Complaints and requests can first be sent to {{seller.email}}. For disputes, the Buyer may apply to the Consumer Arbitration Committee at their place of residence or where the transaction was made within the monetary limit announced each year by the Ministry of Trade, and to the Consumer Court above that limit."
       },
       {
         "heading": "8. Personal Data",
@@ -239,25 +226,23 @@
       },
       {
         "heading": "9. Contact",
-        "body": "E-mail: {{seller.email}} · Phone: {{seller.phone}} · KEP: {{seller.kep}} · Address: {{seller.address}}"
+        "body": "E-mail: {{seller.email}} · Contact form: {{siteDomain}}/iletisim"
       },
       {
         "heading": "10. Confirmation",
-        "body": "By ticking the box at the purchase step you confirm that you received the information in this form, read the Distance Sales Contract and agree to the immediate performance of the digital content. The time of approval and the form version ({{legalEffectiveDate}}) are stored in the order record.",
-        "review": true
+        "body": "By ticking the box at the purchase step you confirm that you received the information in this form, read the Distance Sales Contract and agree to the immediate performance of the digital content. The time of approval and the form version ({{legalEffectiveDate}}) are stored in the order record."
       }
-    ],
-    "draftNotice": "DRAFT — awaiting lawyer approval. This text requires legal review before publication; sections marked “Awaiting lawyer approval” are not final. Fields in square brackets ([…]) have not been filled in yet."
+    ]
   },
   "distanceSales": {
     "pageTitle": "Distance Sales Contract",
     "pageDesc": "{{brand}} distance sales contract for AI analysis credit packages.",
-    "intro": "Credit purchases are coming soon. No sales are made at the moment; this contract will apply once sales start. It is concluded electronically between the user who buys a credit package on {{siteDomain}} (\"Buyer\") and the seller identified below (\"Seller\").",
+    "intro": "This contract is concluded electronically between the user who buys a credit package on {{siteDomain}} (\"Buyer\") and the seller identified below (\"Seller\").",
     "effectiveDate": "Effective date: {{legalEffectiveDate}}",
     "sections": [
       {
         "heading": "1. Seller",
-        "body": "Name: {{seller.legalName}} · Address: {{seller.address}} · Tax office / no: {{seller.taxOffice}} / {{seller.taxNumber}} · MERSİS: {{seller.mersis}} · Phone: {{seller.phone}} · E-mail: {{seller.email}} · KEP: {{seller.kep}}"
+        "body": "Seller: {{seller.name}} · Website: {{seller.website}} · E-mail: {{seller.email}}"
       },
       {
         "heading": "2. Buyer",
@@ -265,51 +250,42 @@
       },
       {
         "heading": "3. Subject and Product",
-        "body": "The subject of this contract is the sale of the AI analysis credit package ordered electronically by the Buyer and its crediting to the account.\n\nAI analysis credits: 1 credit is the right to unlock one AI match analysis for your account; an unlocked analysis stays unlocked permanently. Credits do not expire. Packages are one-time purchases; there is no subscription, automatic renewal or recurring charge. Credits cannot be exchanged for cash or transferred to another account. AI match analyses are statistical predictions for information only; no outcome is guaranteed.",
-        "review": true
+        "body": "The subject of this contract is the sale of the AI analysis credit package ordered electronically by the Buyer and its crediting to the account.\n\nAI analysis credits: 1 credit is the right to unlock one AI match analysis for your account; an unlocked analysis stays unlocked permanently. Credits do not expire. Packages are one-time purchases; there is no subscription, automatic renewal or recurring charge. Credits cannot be exchanged for cash or transferred to another account. AI match analyses are statistical predictions for information only; no outcome is guaranteed."
       },
       {
         "heading": "4. Price",
-        "body": "Prices are in Turkish lira and include VAT; there are no shipping or extra service fees. The price shown on the credits page at the time of the order applies. Current packages:",
-        "review": true,
+        "body": "Prices are in Turkish lira and include VAT; there are no shipping or extra service fees. The price shown on the Pricing page at the time of the order applies. Current packages:",
         "table": "creditPackages"
       },
       {
         "heading": "5. Payment",
-        "body": "Payment is taken on the payment page provided by the Seller's payment service provider Hikie ([HUKUKİ METİN EKLENECEK: Hikie'nin ticari unvanı, ülkesi ve ödeme kuruluşu lisans bilgisi]). Card details are entered only on Hikie's payment page; {{brand}} does not see, process or store the card number, expiry date or security code. From the payment result {{brand}} records only that the order was paid, the amount, the currency and Hikie's transaction number in the order record. If the payment is not completed or is declined, no credits are added to the account.",
-        "review": true
+        "body": "Payment is taken on the payment page provided by the Seller's payment service provider Hikie (hikie.space). Card details are entered only on Hikie's payment page; {{brand}} does not see, process or store the card number, expiry date or security code. From the payment result {{brand}} records only that the order was paid, the amount, the currency and Hikie's transaction number in the order record. If the payment is not completed or is declined, no credits are added to the account."
       },
       {
         "heading": "6. Delivery (Performance)",
-        "body": "The product is digital; there is no physical delivery. Credits are added to the Buyer's account automatically and immediately once Hikie confirms the payment (signed payment notification); this usually takes a few seconds. An order summary (order number, package, credits, amount, date, seller details) is also sent to the account's e-mail address.\n\nIf payment was taken but the credits do not appear within a reasonable time, the Buyer can write to {{seller.email}} with the order number; the order record is checked and a paid order is credited to the account.",
-        "review": true
+        "body": "The product is digital; there is no physical delivery. Credits are added to the Buyer's account automatically and immediately once Hikie confirms the payment (signed payment notification); this usually takes a few seconds. An order summary (order number, package, credits, amount, date, seller details) is also sent to the account's e-mail address.\n\nIf payment was taken but the credits do not appear within a reasonable time, the Buyer can write to {{seller.email}} with the order number; the order record is checked and a paid order is credited to the account."
       },
       {
         "heading": "7. Right of Withdrawal",
-        "body": "In distance contracts the consumer generally has a 14-day right of withdrawal. However, the right of withdrawal cannot be exercised for services performed instantly in electronic form, intangible goods delivered instantly to the consumer, and services whose performance starts with the consumer's approval before the withdrawal period ends (Distance Contracts Regulation art. 15/1-ğ and h). Because credits are added to the account as soon as payment is confirmed, by ticking the box at the purchase step the Buyer confirms that they agree to immediate performance and know that they therefore lose the right of withdrawal. [HUKUKİ METİN EKLENECEK: istisnanın kullanılmamış krediler bakımından kapsamı ve onay beyanının nihai metni]\n\nFor wrong or duplicate charges, the Refund and Cancellation Terms apply.",
-        "review": true
+        "body": "In distance contracts the consumer generally has a 14-day right of withdrawal. However, the right of withdrawal cannot be exercised for services performed instantly in electronic form, intangible goods delivered instantly to the consumer, and services whose performance starts with the consumer's approval before the withdrawal period ends (Distance Contracts Regulation art. 15/1-ğ and h). Because credits are added to the account as soon as payment is confirmed, by ticking the box at the purchase step the Buyer confirms that they agree to immediate performance and know that they therefore lose the right of withdrawal. This exception also applies to credits that have been added to the account but not yet used; performance is complete as soon as the credits are added.\n\nFor wrong or duplicate charges, the Refund and Cancellation Terms apply."
       },
       {
         "heading": "8. Buyer's Declarations",
-        "body": "The Buyer accepts that they read the Pre-Contract Information Form and this contract before ordering and approved them electronically. [HUKUKİ METİN EKLENECEK: yaş sınırı ve hesap bilgilerinin doğruluğuna ilişkin beyan]",
-        "review": true
+        "body": "The Buyer accepts that they read the Pre-Contract Information Form and this contract before ordering and approved them electronically. The Buyer declares that they are over 18 or act with the approval of their legal representative, and that the information in their account is accurate."
       },
       {
         "heading": "9. Complaints and Disputes",
-        "body": "Complaints and requests can first be sent to {{seller.email}}. For disputes, the Buyer may apply to the Consumer Arbitration Committee at their place of residence or where the transaction was made within the monetary limit announced each year by the Ministry of Trade ([GÜNCEL PARASAL SINIR]), and to the Consumer Court above that limit.",
-        "review": true
+        "body": "Complaints and requests can first be sent to {{seller.email}}. For disputes, the Buyer may apply to the Consumer Arbitration Committee at their place of residence or where the transaction was made within the monetary limit announced each year by the Ministry of Trade, and to the Consumer Court above that limit."
       },
       {
         "heading": "10. Contact",
-        "body": "E-mail: {{seller.email}} · Phone: {{seller.phone}} · KEP: {{seller.kep}} · Address: {{seller.address}}"
+        "body": "E-mail: {{seller.email}} · Contact form: {{siteDomain}}/iletisim"
       },
       {
         "heading": "11. Entry into Force",
-        "body": "This contract is concluded when the Buyer ticks the box at the purchase step and completes the payment. The time of approval and the version of the approved text ({{legalEffectiveDate}}) are stored in the order record; the contract text is available on this page. [HUKUKİ METİN EKLENECEK: sözleşmenin saklanması ve Alıcıya kalıcı veri saklayıcısıyla iletilmesi]",
-        "review": true
+        "body": "This contract is concluded when the Buyer ticks the box at the purchase step and completes the payment. The time of approval and the version of the approved text ({{legalEffectiveDate}}) are stored in the order record; the contract text is available on this page. Links to the Pre-Contract Information Form and this contract are also included in the order confirmation e-mail sent after payment; the Buyer can view and save the texts on this page at any time."
       }
-    ],
-    "draftNotice": "DRAFT — awaiting lawyer approval. This text requires legal review before publication; sections marked “Awaiting lawyer approval” are not final. Fields in square brackets ([…]) have not been filled in yet."
+    ]
   },
   "contact": {
     "pageTitle": "Contact",
@@ -342,13 +318,12 @@
       },
       {
         "heading": "5. Enforcement",
-        "body": "Content that breaks these guidelines may be hidden or removed; the user may be warned, their ability to post in Gündem may be suspended temporarily or permanently (signing in and reading remain available), and the account may be closed for severe or repeated violations. [HUKUKİ METİN EKLENECEK: enforcement levels, appeal procedure and deadlines, reporting to authorities and content retention obligations (including Law No. 5651)]"
+        "body": "Content that breaks these guidelines may be hidden or removed; the user may be warned, their ability to post in Gündem may be suspended temporarily or permanently (signing in and reading remain available), and the account may be closed for severe or repeated violations. Enforcement is applied in steps according to the severity of the violation: a warning, hiding or removing content, suspending posting rights and closing the account; the account may be closed directly for severe violations. Illegal content may be retained under Law No. 5651 and related legislation and shared with competent authorities on their request. See section 6 for appeals."
       },
       {
         "heading": "6. Appeals and contact",
         "body": "To appeal a decision, report content that was blocked by mistake or tell us about an urgent issue, write to {{contactEmail}}. If someone's safety is at risk, please contact the authorities (112) first."
       }
-    ],
-    "draftNotice": "DRAFT — awaiting lawyer approval. This text requires legal review before publication; sections marked “Awaiting lawyer approval” are not final. Fields in square brackets ([…]) have not been filled in yet."
+    ]
   }
 }

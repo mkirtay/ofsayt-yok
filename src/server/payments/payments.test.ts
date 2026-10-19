@@ -391,7 +391,7 @@ describe('sipariş onay e-postası (order.paid sonrası, bir kez)', () => {
     expect(content.text).toContain('Yüklenen kredi: 30');
     expect(content.text).toContain('Tutar (KDV dahil): 99,99 TL');
     expect(content.text).toMatch(/Tarih: 5 Ekim 2026 15:00 \(TSİ\)/);
-    expect(content.text).toContain('Satıcı: Unvan: [ŞİRKET/KİŞİ ÜNVANI]');
+    expect(content.text).toContain('Satıcı: Scor3 · Web sitesi: ');
     expect(content.text).toContain('info@');
     expect(content.html).toContain('<html lang="tr">');
     expect(order('m1').confirmationEmailSentAt).toBeInstanceOf(Date);
