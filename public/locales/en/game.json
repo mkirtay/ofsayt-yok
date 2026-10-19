@@ -1,19 +1,35 @@
 {
   "pageTitle": "{{game}} – Free score prediction game",
   "pageDesc": "Predict the score of 5 selected matches every week, earn points and climb the weekly and season rankings. Free, not betting, no prizes.",
-  "nav": { "play": "Predict", "leaderboard": "Rankings", "rules": "Rules" },
+  "nav": {
+    "play": "Predict",
+    "leaderboard": "Rankings",
+    "rules": "Rules"
+  },
   "hero": {
     "title": "Predict the score, be the best of the week.",
     "sub": "Free. Not betting. 5 selected matches every week.",
     "ctaLogin": "Start with Google",
     "ctaPlay": "Make this week's predictions",
-    "howLink": "How to play?"
+    "howLink": "How to play?",
+    "jokerShort": "Joker ×2",
+    "free": "Free · no prizes · just points",
+    "guest": "Fill in now, sign in when you save."
   },
   "steps": {
     "title": "In 3 steps",
-    "s1": { "title": "See the matches", "text": "5 selected matches every week." },
-    "s2": { "title": "Predict the score", "text": "Change it until kick-off. Put your joker on one match." },
-    "s3": { "title": "Climb the rankings", "text": "Weekly and season tables." }
+    "s1": {
+      "title": "See the matches",
+      "text": "5 selected matches every week."
+    },
+    "s2": {
+      "title": "Predict the score",
+      "text": "Change it until kick-off. Put your joker on one match."
+    },
+    "s3": {
+      "title": "Climb the rankings",
+      "text": "Weekly and season tables."
+    }
   },
   "how": {
     "title": "How to play",
@@ -105,9 +121,23 @@
     "matchPage": "Match page",
     "community": "Community",
     "prev": "Previous week",
-    "next": "Next week"
+    "next": "Next week",
+    "picked": "{{done}}/{{total}} predictions made",
+    "openTitle": "Matches to predict",
+    "lockedTitle": "Started and finished",
+    "quick": "Quick score",
+    "noPickShort": "No pick",
+    "saveCount": "Save · {{done}}/{{total}}",
+    "unsavedShort": "Not saved"
   },
-  "bd": { "dir": "Result", "diff": "Difference", "total": "Total", "exact": "Exact", "rare": "Rare", "joker": "Joker ×2" },
+  "bd": {
+    "dir": "Result",
+    "diff": "Difference",
+    "total": "Total",
+    "exact": "Exact",
+    "rare": "Rare",
+    "joker": "Joker ×2"
+  },
   "board": {
     "title": "Rankings",
     "week": "This week",
@@ -121,7 +151,8 @@
     "error": "Couldn't load rankings.",
     "all": "Full rankings",
     "you": "You",
-    "top": "Season top 10"
+    "top": "Season top 10",
+    "podium": "Podium"
   },
   "nick": {
     "prompt": "Pick a nickname to show in the rankings.",
@@ -131,8 +162,29 @@
     "notAllowed": "This nickname can't be used.",
     "format": "3–30 characters; letters, digits, underscore."
   },
-  "time": { "d": "{{d}}d {{h}}h", "h": "{{h}}h {{m}}m", "m": "{{m}}m" },
+  "time": {
+    "d": "{{d}}d {{h}}h",
+    "h": "{{h}}h {{m}}m",
+    "m": "{{m}}m"
+  },
   "boardTitle": "Rankings – {{game}}",
   "rulesTitle": "Rules – {{game}}",
-  "weekTitle": "Week {{week}} – {{game}}"
+  "weekTitle": "Week {{week}} – {{game}}",
+  "standing": {
+    "unranked": "Season rank arrives with the first result",
+    "leader": "season leader",
+    "gap": "{{count}} pts to the next spot",
+    "gap_one": "{{count}} pt to the next spot",
+    "streakLabel": "{{count}} weeks in a row",
+    "streakLabel_one": "{{count}} week in a row"
+  },
+  "share": {
+    "title": "My week",
+    "button": "Share",
+    "copied": "Copied",
+    "exact": "{{count}} exact scores",
+    "exact_one": "{{count}} exact score",
+    "text": "{{game}} week {{week}}: {{points}} points. Make your picks:",
+    "textRank": "{{game}} week {{week}}: {{points}} points, rank {{rank}}. Make your picks:"
+  }
 }

@@ -17,7 +17,7 @@ import { GAME_PAGE_CACHE, neighbourWeeks } from '@/server/game/pageData';
 import { loadPublicWeek } from '@/server/game/weeks';
 import { gamePageGate } from '@/server/game/access';
 
-type Props = { week: GameWeekView; board: LeaderboardView | null; prevKey: string | null; nextKey: string | null; noindex: boolean };
+type Props = { week: GameWeekView; board: LeaderboardView | null; prevKey: string | null; nextKey: string | null; renderedAt: string; noindex: boolean };
 
 /** Tek hafta: maçlar, sonuçlar, kendi tahminlerim (istemcide) ve haftalık tablo. Taslak / olmayan hafta → 404. */
 export const getServerSideProps: GetServerSideProps<Props> = async ({ params, req, res }) => {
@@ -29,10 +29,10 @@ export const getServerSideProps: GetServerSideProps<Props> = async ({ params, re
   if (!week) return { notFound: true };
   if (gate.publicCache) res.setHeader('Cache-Control', GAME_PAGE_CACHE);
   const [board, nav] = await Promise.all([loadLeaderboard('week', key), neighbourWeeks(key)]);
-  return { props: propsJsonSafe({ week, board, ...nav, noindex: gate.noindex }) };
+  return { props: propsJsonSafe({ week, board, ...nav, renderedAt: new Date().toISOString(), noindex: gate.noindex }) };
 };
 
-export default function GameWeekPage({ week, board, prevKey, nextKey, noindex }: Props) {
+export default function GameWeekPage({ week, board, prevKey, nextKey, renderedAt, noindex }: Props) {
   const { t } = useTranslation('game');
   const url = `${siteBaseUrl()}${GAME_BRAND.basePath}/hafta/${week.weekKey}`;
   return (
@@ -45,7 +45,7 @@ export default function GameWeekPage({ week, board, prevKey, nextKey, noindex }:
       </Head>
       <div className={styles.page}>
         <GameNav current="play" />
-        <WeekPlay week={week} prevKey={prevKey} nextKey={nextKey} />
+        <WeekPlay week={week} prevKey={prevKey} nextKey={nextKey} renderedAt={renderedAt} />
         <Leaderboard weekKey={week.weekKey} season={week.season} initial={board} initialScope="week" />
       </div>
     </>

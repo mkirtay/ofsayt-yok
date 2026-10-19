@@ -570,3 +570,25 @@ Onay gelene kadar prod'da görünmesin diye. Sunucu env'i, **varsayılan KAPALI*
 - Lansman sırası: migration → `GAME_ENABLED=1` + `GAME_PREVIEW_EMAILS` ile önizleme → cron-job.org `game-settle` →
   onay → `GAME_ENABLED=public` + yeniden deploy.
 
+
+## 17. Arayüz yenilemesi (2026-10-19, dal `feat/prediction-game-v2`, PUSH YOK)
+
+Dal origin/main (761ed6c) üstüne cherry-pick ile taşındı; migration `20261019180000_prediction_game` olarak yeniden
+adlandırıldı (kullanıcı onayı). Seçilen yön: **A (Maç Günü Kartları) + C'den parçalar** (kullanıcı onayı, 2026-10-19).
+
+- **Kompakt hafta kartı** (`WeekPlay` içinde, sayfanın h1'i): hafta + ad, başlık, ilk kilide kalan süre · joker ×2, sağda
+  ilerleme halkası (`n/5`). Girişliyse altta **tek satırlık sıra şeridi**: `#sıra · üstündekine X puan / sezon lideri · 🔥seri ·
+  bu hafta puanı` (`GET /api/game/leaderboard/me?scope=season` → yeni `gap` + `streak` alanları; seri = yayındaki haftalarda
+  art arda tahmin, içinde bulunulan hafta henüz boşsa bozmaz — `lib/game/week.ts → weekStreak`).
+- **Açık maçlar büyük kartlarda**: 44 px logolar, +/– ile 52 px skor kutuları, hızlı skor çipleri (1-0, 2-1, 1-1 …), altın joker
+  (kart parıltısı). Mobilde (390×844) ilk ekranda **2 maç kartı tam** görünür; masaüstünde kartlar iki sütun.
+- **Başlamış / biten / iptal maçlar tek satır** (`<details>`): kısa adlar + skor + tahminim (✓ tam skor, ★ joker) + puan rozeti
+  ya da "Başladı"; açılınca puan kırılımı, topluluk dağılımı, maç sayfası.
+- **Kaydet çubuğu** yalnız kaydedilmemiş değişiklik / kayıt / sonuç mesajı varken altta sabit (5 nokta ilerleme, "Kaydet · n/5");
+  sağdaki asistan / Frikik düğmeleri için dar ekranda sağda boşluk.
+- **Paylaşım kartı** (en az bir maç puanlanınca): hafta puanı + sıra + tam skor sayısı; Web Share, yoksa panoya metin + bağlantı
+  (görsel OG kartı Faz 2).
+- **Podyum yalnız Sıralama sekmesinde** (`/tahmin/siralama`, ilk 3; tablo 4.'den devam). `/tahmin` ana sayfasında sezonun ilk
+  10'u tablo olarak kalır.
+- SSR `renderedAt`: ilk çizimde başlamış maçlar doğru grupta (istemci saati gelince düzelir). Mikro animasyonlar (skor kutusu
+  dolunca, joker açılınca, halka) `prefers-reduced-motion`'da kapalı.

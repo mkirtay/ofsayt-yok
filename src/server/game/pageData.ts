@@ -6,7 +6,15 @@ import { listPublicWeekKeys, loadPublicWeek, resolveCurrentWeekKey } from '@/ser
 
 export const GAME_PAGE_CACHE = 'public, s-maxage=60, stale-while-revalidate=300';
 
-export type GameHomeData = { week: GameWeekView | null; season: string; board: LeaderboardView | null; prevKey: string | null; nextKey: string | null };
+export type GameHomeData = {
+  week: GameWeekView | null;
+  season: string;
+  board: LeaderboardView | null;
+  prevKey: string | null;
+  nextKey: string | null;
+  /** SSR anı (ISO) — WeekPlay ilk çizimde başlamış maçları doğru gruba koysun. */
+  renderedAt: string;
+};
 
 /** Yayındaki haftalar arasında komşular (taslaklar atlanır). */
 export async function neighbourWeeks(weekKey: string): Promise<{ prevKey: string | null; nextKey: string | null }> {
@@ -21,5 +29,5 @@ export async function loadGameHome(now: Date = new Date()): Promise<GameHomeData
   const week = key ? await loadPublicWeek(key) : null;
   const season = week?.season ?? seasonOf(weekKeyOf(now.getTime()))!;
   const [board, nav] = await Promise.all([loadLeaderboard('season', season), week ? neighbourWeeks(week.weekKey) : { prevKey: null, nextKey: null }]);
-  return { week, season, board, ...nav };
+  return { week, season, board, ...nav, renderedAt: now.toISOString() };
 }

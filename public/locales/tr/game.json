@@ -1,19 +1,35 @@
 {
   "pageTitle": "{{game}} – Ücretsiz skor tahmin oyunu",
   "pageDesc": "Her hafta 5 seçilmiş maçın skorunu tahmin et, puan topla, haftalık ve sezonluk sıralamada yüksel. Ücretsiz, bahis değil, ödül yok.",
-  "nav": { "play": "Tahmin yap", "leaderboard": "Sıralama", "rules": "Kurallar" },
+  "nav": {
+    "play": "Tahmin yap",
+    "leaderboard": "Sıralama",
+    "rules": "Kurallar"
+  },
   "hero": {
     "title": "Skoru tahmin et, haftanın en iyisi ol.",
     "sub": "Ücretsiz. Bahis değil. Her hafta 5 seçilmiş maç.",
     "ctaLogin": "Google ile başla",
     "ctaPlay": "Bu haftanın tahminlerini yap",
-    "howLink": "Nasıl oynanır?"
+    "howLink": "Nasıl oynanır?",
+    "jokerShort": "Joker ×2",
+    "free": "Ücretsiz · ödül yok · yalnız puan",
+    "guest": "Girişsiz doldur, kaydederken giriş yap."
   },
   "steps": {
     "title": "3 adımda",
-    "s1": { "title": "Maçları gör", "text": "Her hafta 5 seçilmiş maç." },
-    "s2": { "title": "Skoru tahmin et", "text": "Maç başlayana kadar değiştirebilirsin. Bir maça joker koy." },
-    "s3": { "title": "Sıralamada yüksel", "text": "Haftalık ve sezonluk tablo." }
+    "s1": {
+      "title": "Maçları gör",
+      "text": "Her hafta 5 seçilmiş maç."
+    },
+    "s2": {
+      "title": "Skoru tahmin et",
+      "text": "Maç başlayana kadar değiştirebilirsin. Bir maça joker koy."
+    },
+    "s3": {
+      "title": "Sıralamada yüksel",
+      "text": "Haftalık ve sezonluk tablo."
+    }
   },
   "how": {
     "title": "Nasıl oynanır",
@@ -105,9 +121,23 @@
     "matchPage": "Maç sayfası",
     "community": "Topluluk",
     "prev": "Önceki hafta",
-    "next": "Sonraki hafta"
+    "next": "Sonraki hafta",
+    "picked": "{{done}}/{{total}} tahmin yapıldı",
+    "openTitle": "Tahmin bekleyen maçlar",
+    "lockedTitle": "Başlayan ve biten",
+    "quick": "Hızlı skor",
+    "noPickShort": "Tahmin yok",
+    "saveCount": "Kaydet · {{done}}/{{total}}",
+    "unsavedShort": "Kaydedilmedi"
   },
-  "bd": { "dir": "Yön", "diff": "Fark", "total": "Toplam", "exact": "Tam skor", "rare": "Nadir", "joker": "Joker ×2" },
+  "bd": {
+    "dir": "Yön",
+    "diff": "Fark",
+    "total": "Toplam",
+    "exact": "Tam skor",
+    "rare": "Nadir",
+    "joker": "Joker ×2"
+  },
   "board": {
     "title": "Sıralama",
     "week": "Bu hafta",
@@ -121,7 +151,8 @@
     "error": "Sıralama yüklenemedi.",
     "all": "Tüm sıralama",
     "you": "Sen",
-    "top": "Sezonun ilk 10'u"
+    "top": "Sezonun ilk 10'u",
+    "podium": "Podyum"
   },
   "nick": {
     "prompt": "Sıralamada görünecek bir takma ad seç.",
@@ -131,8 +162,29 @@
     "notAllowed": "Bu takma ad kullanılamaz.",
     "format": "3–30 karakter; harf, rakam, alt çizgi."
   },
-  "time": { "d": "{{d}} g {{h}} sa", "h": "{{h}} sa {{m}} dk", "m": "{{m}} dk" },
+  "time": {
+    "d": "{{d}} g {{h}} sa",
+    "h": "{{h}} sa {{m}} dk",
+    "m": "{{m}} dk"
+  },
   "boardTitle": "Sıralama – {{game}}",
   "rulesTitle": "Kurallar – {{game}}",
-  "weekTitle": "{{week}}. hafta – {{game}}"
+  "weekTitle": "{{week}}. hafta – {{game}}",
+  "standing": {
+    "unranked": "Sezon sırası ilk sonuçla gelir",
+    "leader": "sezon lideri",
+    "gap": "üstündekine {{count}} puan",
+    "gap_one": "üstündekine {{count}} puan",
+    "streakLabel": "{{count}} hafta üst üste",
+    "streakLabel_one": "{{count}} hafta üst üste"
+  },
+  "share": {
+    "title": "Haftam",
+    "button": "Paylaş",
+    "copied": "Kopyalandı",
+    "exact": "{{count}} tam skor",
+    "exact_one": "{{count}} tam skor",
+    "text": "{{game}} {{week}}. hafta: {{points}} puan. Sen de tahmin et:",
+    "textRank": "{{game}} {{week}}. hafta: {{points}} puan, {{rank}}. sıra. Sen de tahmin et:"
+  }
 }
