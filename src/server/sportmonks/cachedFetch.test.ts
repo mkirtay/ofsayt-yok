@@ -120,6 +120,39 @@ describe('fetchSportmonksCached', () => {
     expect(r).toMatchObject({ calls: 3, upstream: 2, stale: false, failed: false });
   });
 
+  it('yalnız-önbellek kapsamı: Redis\'te taze / eski kayıt verilir, yoksa upstream\'e gidilmez (503 + cacheOnlyMiss, sayaç artar)', async () => {
+    const up = upstream(() => ({ status: 200, body: envelope({ id: 1, state_id: 5, starting_at: '2026-09-01 18:00:00' }) }));
+    await m.fetchSportmonksCached('football/fixtures/1', {}, { fetchImpl: up.impl, now });
+    expect(up.calls).toHaveLength(1);
+
+    // Başka instance (L1 boş), aynı Redis.
+    const other = await freshModule();
+    const state = { misses: 0 };
+    const [hit, miss] = await other.withSportmonksCacheOnly(state, async () => [
+      await other.fetchSportmonksCached('football/fixtures/1', {}, { fetchImpl: up.impl, now }),
+      await other.fetchSportmonksCached('football/fixtures/2', {}, { fetchImpl: up.impl, now }),
+    ]);
+    expect(hit).toMatchObject({ status: 200, cache: 'HIT' });
+    expect(miss).toMatchObject({ status: 503, cache: 'BYPASS', cacheOnlyMiss: true });
+    expect(state.misses).toBe(1);
+    expect(up.calls).toHaveLength(1);
+
+    // Taze süre bitti ama eski kopya duruyor (eski maç: 7 gün taze = 7 gün saklama; burada canlı uç ile): eski kopya, upstream yok.
+    await other.fetchSportmonksCached('football/livescores/inplay', {}, { fetchImpl: up.impl, now });
+    h.clock.t += 60_000;
+    const third = await freshModule();
+    const stale = await third.withSportmonksCacheOnly(state, () =>
+      third.fetchSportmonksCached('football/livescores/inplay', {}, { fetchImpl: up.impl, now }),
+    );
+    expect(stale).toMatchObject({ cache: 'STALE', stale: true });
+    expect(up.calls).toHaveLength(2);
+    expect(state.misses).toBe(1);
+
+    // Kapsam dışı aynı çağrı normal yoldan upstream'e gider.
+    expect((await third.fetchSportmonksCached('football/fixtures/2', {}, { fetchImpl: up.impl, now })).cache).toBe('MISS');
+    expect(up.calls).toHaveLength(3);
+  });
+
   it('süre dolunca yeniden upstream (canlı skor 20 sn)', async () => {
     const up = upstream(() => ({ status: 200, body: envelope([]) }));
     const opts = { fetchImpl: up.impl, now };

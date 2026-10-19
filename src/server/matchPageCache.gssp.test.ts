@@ -11,13 +11,24 @@ vi.mock('@/services/sportmonksProviderFlag', () => ({
   isSportmonksProviderEnabled: () => true,
   toStandingsCompetitionId: (id: unknown) => id,
 }));
-const resolveKind = vi.hoisted(() => ({ value: 'match' as 'match' | 'error' | 'throw' }));
+const resolveKind = vi.hoisted(() => ({ value: 'match' as 'match' | 'error' | 'throw' | 'probe', upstream: 0 }));
+vi.mock('@/lib/redis', () => ({ MAX_REDIS_VALUE_BYTES: 900_000, getRedisClient: () => null, withRedis: async (_fn: unknown, fallback: unknown) => fallback }));
 // Maçı çözen tek `fixtures/{id}` yanıtındaki istatistik / kadro (gerçek akış); undefined → yanıtta yok (yedek yol).
 const resolveSeed = vi.hoisted(() => ({ value: undefined as { stats?: unknown; lineups?: unknown; partial?: true } | undefined }));
 vi.mock('@/server/resolveMatchPage', () => ({
   resolveMatchPage: async () => {
     if (resolveKind.value === 'throw') throw new Error('Sportmonks 429');
     if (resolveKind.value === 'error') return { kind: 'error' };
+    if (resolveKind.value === 'probe') {
+      // Gerçek önbellek katmanı (Redis yok): kapsam yalnız-önbellekse upstream'e gidilmez → geçici hata.
+      const { fetchSportmonksCached } = await import('@/server/sportmonks/cachedFetch');
+      const fetchImpl = (async () => {
+        resolveKind.upstream += 1;
+        return new Response('{}', { status: 500 });
+      }) as unknown as typeof fetch;
+      await fetchSportmonksCached('football/fixtures/19745050', {}, { fetchImpl });
+      return { kind: 'error' };
+    }
     return {
       kind: 'match',
       match: { id: 19745050, status: 'FINISHED', date: '2026-09-20', scheduled: '18:00' } as unknown as Match,
@@ -34,7 +45,13 @@ vi.mock('@/server/matchDetailSeed', () => ({
     return seedResult.value;
   },
 }));
-vi.mock('@/server/sportmonks/poolGuard', () => ({ isPoolUnderPressure: async () => pressure.value, poolForPath: () => 'Fixture' }));
+const reserve = vi.hoisted(() => ({ value: false }));
+vi.mock('@/server/sportmonks/poolGuard', async (orig) => ({
+  ...(await orig<typeof import('@/server/sportmonks/poolGuard')>()),
+  isPoolUnderPressure: async () => pressure.value,
+  isPoolInReserve: async () => reserve.value,
+  poolForPath: () => 'Fixture',
+}));
 
 function context(reqHeaders: Record<string, string> = {}) {
   const headers: Record<string, string> = {};
@@ -53,7 +70,28 @@ describe('maç sayfası Cache-Control — form / karşılaşma geçmişi', () =>
     pressure.value = false;
     pressure.calls.seed = 0;
     resolveKind.value = 'match';
+    resolveKind.upstream = 0;
     resolveSeed.value = undefined;
+    reserve.value = false;
+  });
+
+  it('havuz rezervi (kalan < %30): maç yalnız önbellekten, Redis\'te yoksa Sportmonks\'a gidilmez → HTML 503 + Retry-After (istemci çeker)', async () => {
+    const { getServerSideProps } = await import('@/pages/matches/[slug]');
+    resolveKind.value = 'probe';
+    reserve.value = true;
+    const html = context();
+    const r = (await getServerSideProps(html.ctx)) as { props: Record<string, unknown> };
+    expect(resolveKind.upstream).toBe(0);
+    expect(r.props.initialMatch).toBeNull();
+    expect(html.ctx.res.statusCode).toBe(503);
+    expect(html.headers['Retry-After']).toBe('120');
+
+    // Rezerv yokken aynı çağrı upstream'e gider.
+    reserve.value = false;
+    vi.stubEnv('SPORTMONKS_API_KEY', 'test-token');
+    await getServerSideProps(context().ctx);
+    vi.unstubAllEnvs();
+    expect(resolveKind.upstream).toBe(1);
   });
 
   it('Fixture havuzu baskı altında (çözen yanıtta tohum yoksa) → H2H / istatistik / kadro SSR\'da atlanır (istemci çeker), maç ve olaylar yine sunucuda, kısa CDN', async () => {

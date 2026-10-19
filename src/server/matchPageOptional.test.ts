@@ -3,8 +3,11 @@ import type { Match } from '@/models/liveScore';
 
 vi.mock('@/server/matchCardH2h', () => ({ loadMatchCardH2h: vi.fn() }));
 vi.mock('@/server/matchDetailSeed', () => ({ loadMatchDetailSeed: vi.fn() }));
+// Redis yok: yalnız-önbellek kapsamı her anahtarda ıskalar.
+vi.mock('@/lib/redis', () => ({ MAX_REDIS_VALUE_BYTES: 900_000, getRedisClient: () => null, withRedis: async (_fn: unknown, fallback: unknown) => fallback }));
 
-import { loadMatchPageOptionalSections, type MatchPageOptionalDeps } from './matchPageOptional';
+import { isOldFinishedMatch, loadMatchPageOptionalSections, type MatchPageOptionalDeps } from './matchPageOptional';
+import { fetchSportmonksCached } from '@/server/sportmonks/cachedFetch';
 
 const match = { id: 1 } as unknown as Match;
 const h2h = { team1: {}, team2: {}, h2h: [] } as never;
@@ -15,6 +18,7 @@ function deps(over: Partial<MatchPageOptionalDeps> = {}) {
     loadH2h: vi.fn(async () => h2h),
     loadSeed: vi.fn(async () => seed),
     underPressure: vi.fn(async () => false),
+    cacheOnly: vi.fn(async () => false),
     ...over,
   };
 }
@@ -58,5 +62,42 @@ describe('maç sayfası isteğe bağlı SSR bölümleri', () => {
     expect(r.transientError).toBe(true);
     const ok = await loadMatchPageOptionalSections(match, '1', deps());
     expect(ok.transientError).toBeUndefined();
+  });
+
+  it('eski bitmiş maç: başlama + 3 gün sonrası (bitmemiş / tarihsiz maç eski sayılmaz)', () => {
+    const now = Date.parse('2026-10-19T12:00:00Z');
+    expect(isOldFinishedMatch({ status: 'FINISHED', date: '2026-10-16', scheduled: '11:00' }, now)).toBe(true);
+    expect(isOldFinishedMatch({ status: 'FINISHED', date: '2026-10-16', scheduled: '13:00' }, now)).toBe(false);
+    expect(isOldFinishedMatch({ status: 'FINISHED', date: '2013-04-03', scheduled: '18:45' }, now)).toBe(true);
+    expect(isOldFinishedMatch({ status: 'NOT STARTED', date: '2013-04-03', scheduled: '18:45' }, now)).toBe(false);
+    expect(isOldFinishedMatch({ status: 'FINISHED' }, now)).toBe(false);
+  });
+
+  it('yalnız-önbellek: Redis\'te yoksa Sportmonks\'a gidilmez, bölüm istemciye kalır ve geçici hata SAYILMAZ (kısa CDN yok)', async () => {
+    const fetchImpl = vi.fn(async () => new Response('{}')) as unknown as typeof fetch;
+    const viaCache = async () => {
+      const r = await fetchSportmonksCached('football/fixtures/head-to-head/1/2', {}, { fetchImpl });
+      if (r.status !== 200) throw new Error(`Sportmonks ${r.status}`);
+      return h2h;
+    };
+    const r = await loadMatchPageOptionalSections(
+      match,
+      '1',
+      deps({ cacheOnly: async () => true, loadH2h: viaCache, loadSeed: async () => ({ stats: undefined, lineups: undefined, failed: true }) }),
+    );
+    expect(fetchImpl).not.toHaveBeenCalled();
+    expect(r.h2h).toBeUndefined();
+    // Tohum yalnız-önbellek dışı bir nedenle düştü (misses = 0) → geçici hata kalır.
+    expect(r.transientError).toBe(true);
+
+    const onlyMiss = await loadMatchPageOptionalSections(match, '1', deps({ cacheOnly: async () => true, loadH2h: viaCache }));
+    expect(onlyMiss.h2h).toBeUndefined();
+    expect(onlyMiss.seed).toEqual(seed);
+    expect(onlyMiss.transientError).toBeUndefined();
+    expect(onlyMiss.skipped).toBe(false);
+
+    // Karar hata verirse normal yol (fail-soft).
+    const d = deps({ cacheOnly: async () => Promise.reject(new Error('x')) });
+    expect((await loadMatchPageOptionalSections(match, '1', d)).h2h).toEqual(h2h);
   });
 });

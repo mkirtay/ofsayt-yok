@@ -23,6 +23,9 @@
  *   (her gerçek upstream isteği için bir kez).
  * - Havuz bekçisi (`poolGuard.ts`): 429 → havuz soğumaya girer, soğuma bitene kadar o havuza istek atılmaz (eski veri
  *   ya da anında 429); havuz azalınca kısa TTL'ler esner; her gerçek istek rota × havuz olarak sayılır.
+ * - Yalnız-önbellek kapsamı (`withSportmonksCacheOnly`): kapsamdaki çağrılar upstream'e hiç gitmez — Redis'te taze ya da
+ *   eski kayıt varsa o, yoksa anında 503 (`cacheOnlyMiss`). Eski / bitmiş maç sayfasının isteğe bağlı bölümleri ve havuz
+ *   rezervindeki maç sayfası SSR'ı için (bkz. pages/matches/[slug].tsx).
  */
 import { getRedisClient, MAX_REDIS_VALUE_BYTES, withRedis } from '@/lib/redis';
 import { currentRequestRoute, quotaAlertDue, reportSportmonksQuota, reportSportmonksRateLimited } from '@/services/sportmonks/quotaMonitor';
@@ -35,6 +38,7 @@ import {
   notePoolObservation,
   poolCooldownUntil,
   poolForPath,
+  recordCacheOnlySkip,
   recordUpstreamCall,
   topRoutesForHour,
   startPoolCooldown,
@@ -89,6 +93,8 @@ export type SportmonksCachedResult = {
   concurrentRefresh?: true;
   /** Havuz soğumada (429 sonrası): upstream'e GİDİLMEDİ — eski veri ya da anında 429. */
   rateLimited?: true;
+  /** Yalnız-önbellek kapsamı ve Redis'te kayıt yok: upstream'e GİDİLMEDİ (503). */
+  cacheOnlyMiss?: true;
 };
 
 export type CachedFetchOptions = {
@@ -163,6 +169,35 @@ function timeoutScope(): TimeoutStore {
 /** `fn` içindeki tüm Sportmonks çağrılarına `timeoutMs` bütçesi verir (ör. sayfa render'ı → `SPORTMONKS_TIMEOUT_MS.page`). */
 export function withSportmonksTimeout<T>(timeoutMs: number, fn: () => Promise<T>): Promise<T> {
   return timeoutScope().run(timeoutMs, fn);
+}
+
+// ─── Yalnız-önbellek kapsamı ───────────────────────────────────────────────
+
+/** Kapsam boyunca Redis'te bulunamayan (upstream'e gidilmeyen) çağrı sayısı. */
+export type SportmonksCacheOnlyState = { misses: number };
+
+type CacheOnlyStore = {
+  run: <R>(store: SportmonksCacheOnlyState, fn: () => R) => R;
+  getStore: () => SportmonksCacheOnlyState | undefined;
+};
+let cacheOnlyStore: CacheOnlyStore | null = null;
+
+function cacheOnlyScope(): CacheOnlyStore {
+  if (!cacheOnlyStore) {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { AsyncLocalStorage } = require('node:async_hooks') as typeof import('node:async_hooks');
+    cacheOnlyStore = new AsyncLocalStorage<SportmonksCacheOnlyState>() as unknown as CacheOnlyStore;
+  }
+  return cacheOnlyStore;
+}
+
+/**
+ * `fn` içindeki Sportmonks çağrıları upstream'e GİTMEZ: Redis'te taze ya da eski (stale süresi içinde) kayıt varsa o
+ * verilir, yoksa anında 503 + `cacheOnlyMiss` (servis katmanı geçici hata gibi fırlatır) ve `state.misses` artar —
+ * çağıran "veri yok" ile "önbellekte yok"u buradan ayırır.
+ */
+export function withSportmonksCacheOnly<T>(state: SportmonksCacheOnlyState, fn: () => Promise<T>): Promise<T> {
+  return cacheOnlyScope().run(state, fn);
 }
 
 function resolveTimeoutMs(opts: CachedFetchOptions): number {
@@ -513,6 +548,10 @@ export async function fetchSportmonksCached(
   const hot = l1Get(key, now());
   if (hot) return noteOutcome(toResult(hot, 'HIT', now()));
 
+  const cacheOnly = cacheOnlyScope().getStore();
+  // Uçuş tablosuna girmez: aynı anahtarı bekleyen normal çağrı yalnız-önbellek sonucunu (503) almasın.
+  if (cacheOnly) return noteOutcome(await cacheOnlyLookup(key, normPath, cacheOnly, now));
+
   const pending = inFlight.get(key);
   if (pending) return noteOutcome(await pending);
 
@@ -532,6 +571,32 @@ export async function fetchSportmonksCached(
   } finally {
     inFlight.delete(key);
   }
+}
+
+async function cacheOnlyLookup(
+  key: string,
+  path: string,
+  state: SportmonksCacheOnlyState,
+  now: () => number,
+): Promise<SportmonksCachedResult> {
+  const stored = await redisGet(key);
+  const t = now();
+  if (stored && stored.freshUntil > t) {
+    l1Set(key, stored);
+    return toResult(stored, 'HIT', t);
+  }
+  if (stored && stored.staleUntil > t) return toResult(stored, 'STALE', t, true);
+  state.misses += 1;
+  recordCacheOnlySkip(poolForPath(path), currentRequestRoute(), t);
+  return {
+    status: 503,
+    body: { message: 'Sportmonks: yalnız önbellek (kayıt yok)' },
+    cache: 'BYPASS',
+    freshForSeconds: 0,
+    ttlSeconds: 0,
+    stale: false,
+    cacheOnlyMiss: true,
+  };
 }
 
 /**

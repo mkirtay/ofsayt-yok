@@ -19,7 +19,8 @@ import { loadAnalysisPreviewForPage } from '@/server/analysisPreviewForPage';
 import type { AnalysisPreview } from '@/utils/analysisPreview';
 import { analysisPaywallJsonLd } from '@/utils/analysisPaywall';
 import { defaultMatchPageOptionalDeps, loadMatchPageOptionalSections } from '@/server/matchPageOptional';
-import { SPORTMONKS_TIMEOUT_MS, withSportmonksTimeout } from '@/server/sportmonks/cachedFetch';
+import { SPORTMONKS_TIMEOUT_MS, withSportmonksCacheOnly, withSportmonksTimeout } from '@/server/sportmonks/cachedFetch';
+import { isPoolInReserve, poolForPath } from '@/server/sportmonks/poolGuard';
 import type { Head2HeadData } from '@/services/liveScoreService';
 import type { MatchEvent, MatchLineupData, MatchStatsData } from '@/models/domain';
 import {
@@ -100,7 +101,11 @@ export const getServerSideProps: GetServerSideProps<MatchDetailProps> = async (c
     return { props: { initialMatch: null } };
   };
   try {
-    const page = await withPageTimeout(() => resolveMatchPage(matchId, parseMatchSlugFromParam(slug ?? '')));
+    // Havuz rezervi (Fixture kalan < %30, bkz. poolGuard.isPoolInReserve): maç yalnız Redis'ten; yoksa geçici hata → HTML 503
+    // + Retry-After (bot sonra gelir), sayfa kabuğu istemcide maçı kendisi çeker. Kalan kota canlı uçlara ve ana sayfaya.
+    const reserve = await isPoolInReserve(poolForPath('football/fixtures'), Date.now()).catch(() => false);
+    const resolve = () => resolveMatchPage(matchId, parseMatchSlugFromParam(slug ?? ''));
+    const page = await withPageTimeout(() => (reserve ? withSportmonksCacheOnly({ misses: 0 }, resolve) : resolve()));
     switch (page.kind) {
       case 'match': {
         // Slug kanonik değilse (yalnız id, eski slug kuralı "s-o-paulo-santos", ad değişikliği) sunucuda 301; sorgu korunur.
