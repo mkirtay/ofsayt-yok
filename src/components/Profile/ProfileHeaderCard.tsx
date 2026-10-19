@@ -42,7 +42,7 @@ export default function ProfileHeaderCard({ profile, summary, onEdit }: Props) {
       <div className={styles.headerBadges}>
         {summary ? (
           <>
-            <Link href="/credits" className={styles.badgeCredits} title={t('header.creditBalance')}>
+            <Link href="/pricing" className={styles.badgeCredits} title={t('header.creditBalance')}>
               {t('header.credits', { count: summary.credits })}
             </Link>
             {summary.admin ? <span className={styles.badgeAdmin}>{t('header.admin')}</span> : null}

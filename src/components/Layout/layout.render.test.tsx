@@ -27,7 +27,7 @@ const rule = (scss: string, sel: string) => scss.slice(scss.indexOf(`${sel} {`),
 
 describe('usesStaticPageLayout', () => {
   it('statik sayfalar ve giriş/kayıt sayfaları evet; veri yüklenen sayfalar hayır', () => {
-    for (const p of ['/iletisim', '/gizlilik-politikasi', '/kullanim-sartlari', '/kvkk-aydinlatma-metni', '/cerez-politikasi', '/mesafeli-satis-sozlesmesi', '/iade-ve-iptal', '/credits', '/404', '/500', '/auth/signin', '/auth/signup']) {
+    for (const p of ['/iletisim', '/gizlilik-politikasi', '/kullanim-sartlari', '/kvkk-aydinlatma-metni', '/cerez-politikasi', '/mesafeli-satis-sozlesmesi', '/iade-ve-iptal', '/pricing', '/404', '/500', '/auth/signin', '/auth/signup']) {
       expect(usesStaticPageLayout(p)).toBe(true);
     }
     for (const p of ['/', '/teams/[id]', '/matches/[id]', '/profile', '/ai-istatistikleri', '/standings', '/authx']) {

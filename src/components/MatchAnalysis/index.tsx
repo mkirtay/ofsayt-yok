@@ -179,7 +179,7 @@ export default function MatchAnalysis({ match, state, archived = false }: Props)
         ) : insufficientCredits ? (
           <div className={styles.cta}>
             <div className={styles.errorBox}>{t('analysis.insufficientCredits')}</div>
-            <Link href="/credits" className={styles.ctaButton}>
+            <Link href="/pricing" className={styles.ctaButton}>
               {t('analysis.buyCredits')}
             </Link>
             <p className={styles.reasoning}>

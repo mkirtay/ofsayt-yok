@@ -1,5 +1,5 @@
 /**
- * Hikie ödeme kataloğu — /credits'teki kredi paketlerinden türetilir (fiyatlar tek kaynakta) + yönetici test paketi.
+ * Hikie ödeme kataloğu — /pricing'teki kredi paketlerinden türetilir (fiyatlar tek kaynakta) + yönetici test paketi.
  * Yalnız kredi satılır: premium_30d / premium_365d kaldırıldı (HIKIE_LINK_PREMIUM_* tanımlansa bile satılmaz; eski
  * premium siparişi kayıtları `findPaymentPackage` → null döner, webhook'ta unknown_package olarak reddedilir).
  * Her paketin Hikie panelinde ayrı Checkout Link'i var: HIKIE_LINK_<KEY> (KEY büyük harf, ör. HIKIE_LINK_CREDITS_10).

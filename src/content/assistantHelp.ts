@@ -14,7 +14,7 @@ export type AssistantHelpEntry = { facts: string[]; links: Array<{ label: string
 export function assistantHelp(topic: AssistantHelpTopic, locale: 'tr' | 'en'): AssistantHelpEntry {
   const tr = locale === 'tr';
   const packages = CREDIT_PACKAGES.map((p) => `${p.credits} ${tr ? 'kredi' : 'credits'}: ${formatTry(p.priceKurus)}`).join(' · ');
-  const creditsLink = { label: tr ? 'Krediler' : 'Credits', href: '/credits' };
+  const creditsLink = { label: tr ? 'Krediler' : 'Credits', href: '/pricing' };
   switch (topic) {
     case 'credits':
       return {

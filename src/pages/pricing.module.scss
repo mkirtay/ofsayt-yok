@@ -1,7 +1,7 @@
 @use '../styles/variables' as *;
 
 .page {
-  max-width: 860px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: $spacing-8 $spacing-4 64px;
 
@@ -86,6 +86,29 @@
   color: $color-text-secondary;
 }
 
+/* ── İki sütun: solda paketler + ücretsiz krediler, sağda örnek analiz ── */
+.split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: $spacing-8;
+  margin-bottom: 56px;
+
+  @media (max-width: #{$bp-desktop - 1px}) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.splitMain {
+  min-width: 0;
+}
+
+.splitAside {
+  min-width: 0;
+  // Masaüstünde sol sütun boyunda; örnek analiz kalan yükseklikte kendi içinde kayar (bkz. PricingSampleAnalysis).
+  display: flex;
+  flex-direction: column;
+}
+
 /* ── Pricing ──────────────────────────────────────── */
 .sectionTitle {
   font-size: 20px;
@@ -120,6 +143,7 @@
 
 .pricingCard {
   flex: 1;
+  min-width: 0;
   max-width: 260px;
   background: $color-surface;
   border: 2px solid $color-border;
@@ -190,7 +214,7 @@
 }
 
 .pricingAmount {
-  font-size: 40px;
+  font-size: 36px;
   font-weight: 900;
   color: $color-text;
   line-height: 1;
@@ -263,47 +287,52 @@
   border-style: dashed;
 }
 
-/* ── How it works ─────────────────────────────────── */
+/* ── Adım adım kullanım ───────────────────────────── */
 .howSection {
-  margin-bottom: 56px;
+  margin-bottom: $spacing-8;
 }
 
-.stepsGrid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: $spacing-4;
-
-  @media (max-width: $bp-md) {
-    grid-template-columns: 1fr;
-  }
+.guideSection {
+  margin-bottom: 0;
 }
 
-.stepCard {
+.guideList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+}
+
+.guideStep {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-3;
   background: $color-surface;
   border: 1px solid $color-border;
   border-radius: $radius-lg;
-  padding: $spacing-5 $spacing-4;
-  text-align: center;
+  padding: $spacing-4;
 }
 
 .stepNumber {
+  flex: 0 0 auto;
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: $color-primary;
+  background: $color-primary-dark;
   color: #fff;
   font-weight: 800;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto $spacing-3;
 }
 
 .stepTitle {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
   color: $color-text;
-  margin-bottom: $spacing-2;
+  margin: 5px 0 $spacing-1;
 }
 
 .stepDesc {
@@ -311,6 +340,48 @@
   color: $color-text-secondary;
   line-height: 1.5;
   margin: 0;
+}
+
+.guideCtas {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: $spacing-3;
+  margin-top: $spacing-6;
+}
+
+.guideCta,
+.guideCtaPrimary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 $spacing-5;
+  border-radius: $radius-full;
+  font-size: 14px;
+  font-weight: 700;
+  border: 2px solid $color-border;
+  color: $color-text;
+  background: $color-surface;
+  transition: $transition-base;
+
+  &:hover {
+    border-color: $color-primary;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+    outline-offset: 2px;
+  }
+}
+
+.guideCtaPrimary {
+  border-color: $color-primary-dark;
+  background: $color-primary-dark;
+  color: #fff;
+
+  &:hover {
+    background: $color-action-fill-start;
+  }
 }
 
 /* ── FAQ ──────────────────────────────────────────── */

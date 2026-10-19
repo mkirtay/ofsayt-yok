@@ -108,7 +108,7 @@ export default function PaymentDonePage() {
         <h1 className={styles.title}>{t('payment.doneTitle')}</h1>
         <p className={styles.text}>{t('payment.notFound')}</p>
         <div className={styles.actions}>
-          <Link className={styles.btn} href="/credits">
+          <Link className={styles.btn} href="/pricing">
             {t('payment.backToCredits')}
           </Link>
         </div>
@@ -152,7 +152,7 @@ export default function PaymentDonePage() {
           <h1 className={styles.title}>{t('payment.failedTitle')}</h1>
           <p className={styles.text}>{order.status === 'REFUNDED' ? t('payment.refunded') : t('payment.failedDesc')}</p>
           <div className={styles.actions}>
-            <Link className={styles.btn} href="/credits">
+            <Link className={styles.btn} href="/pricing">
               {t('payment.retry')}
             </Link>
           </div>

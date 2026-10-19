@@ -1,6 +1,6 @@
 {
-  "pageTitle": "Credits — {{brand}}",
-  "pageDesc": "Unlock AI match analyses with credits. 1 credit = 1 analysis; credits never expire.",
+  "pageTitle": "Pricing — {{brand}}",
+  "pageDesc": "Unlock AI match analyses with credits: packages, free credits, a sample analysis from a real match and a step-by-step guide.",
   "heroBadge": "⚡ AI Credits",
   "heroTitle": "Analyze matches with AI",
   "heroSub": "Unlock each analysis for yourself with 1 credit; it stays unlocked for you. Analyses become free for everyone after the match.",
@@ -12,13 +12,6 @@
   "creditsUnit": "credits",
   "comingSoon": "Buying credits is coming soon",
   "buyDisabled": "Coming soon",
-  "howItWorksTitle": "How It Works",
-  "how1Title": "Pick a match",
-  "how1Desc": "Go to a match detail page that hasn't started yet.",
-  "how2Title": "Unlock the analysis",
-  "how2Desc": "See the short summary and main probability for free; unlock the full analysis with 1 credit. If it doesn't exist yet, it's generated for 1 credit.",
-  "how3Title": "See the results",
-  "how3Desc": "After the match ends, see which predictions hit or missed on the analysis page.",
   "faqTitle": "Frequently Asked Questions",
   "faqItems": {
     "q1": "When will the payment system be active?",
@@ -28,7 +21,9 @@
     "q3": "Do my credits expire?",
     "a3": "No, credits stay on your account indefinitely.",
     "q4": "Do credits depend on whether a prediction is right?",
-    "a4": "No. Credits are only for unlocking analyses; there is no gain or refund tied to match results or predictions."
+    "a4": "No. Credits are only for unlocking analyses; there is no gain or refund tied to match results or predictions.",
+    "q1Live": "How do I pay?",
+    "a1Live": "Pick a package, tick the consent box and pay by card on Hikie's secure payment page. Credits are added to your account as soon as the payment is confirmed."
   },
   "perCredit": "{{price}} per credit",
   "popularBadge": "Most popular",
@@ -71,5 +66,34 @@
     "and": " and the ",
     "contract": "Distance Sales Contract",
     "after": ". I agree that the credits are added to my account immediately after payment is confirmed (immediate performance of digital content) and that I therefore lose my right of withdrawal."
+  },
+  "sample": {
+    "badge": "Sample analysis",
+    "title": "A real match: what the AI said, what happened",
+    "desc": "This analysis was generated before kick-off; it's public now because the match has ended. Analyses you unlock with credits look exactly like this.",
+    "finalScore": "Final score",
+    "predicted": "AI score prediction",
+    "hit1x2": "Result correct",
+    "hitScore": "Exact score correct",
+    "markets": "Goal predictions: {{hit}}/{{total}} correct",
+    "openMatch": "See on the match page"
+  },
+  "guide": {
+    "title": "Step by step: how to use AI analysis",
+    "s1Title": "Sign up for free",
+    "s1Desc": "Verify your email and get 2 credits. You can also unlock 1 ready analysis for free every week.",
+    "s2Title": "Pick a match",
+    "s2Desc": "Open the page of a match that hasn't started yet, from the home page or search.",
+    "s3Title": "Go to the AI Analysis tab",
+    "s3Desc": "The AI Analysis tab on the match page shows a short summary and the main probability for free.",
+    "s4Title": "Unlock it with 1 credit",
+    "s4Desc": "If an analysis is ready it opens right away; otherwise it's generated for 1 credit before kick-off. Analyses you unlock stay unlocked.",
+    "s5Title": "Read the analysis",
+    "s5Desc": "Result probabilities, goal expectations, tactical profiles, heatmap and risk level. The sample alongside is a full analysis.",
+    "s6Title": "Compare after the match",
+    "s6Desc": "When the match ends, each prediction gets a ✓ / ✗ badge. The overall hit rate is on the AI Accuracy page.",
+    "ctaSignup": "Sign up for free",
+    "ctaMatches": "Browse matches",
+    "ctaAccuracy": "See AI accuracy"
   }
 }

@@ -23,7 +23,7 @@ export default function PaymentRetryPage() {
           <h1 className={styles.title}>{t('payment.retryTitle')}</h1>
           <p className={styles.text}>{t('payment.retryDesc')}</p>
           <div className={styles.actions}>
-            <Link className={styles.btn} href="/credits">
+            <Link className={styles.btn} href="/pricing">
               {t('payment.retry')}
             </Link>
           </div>

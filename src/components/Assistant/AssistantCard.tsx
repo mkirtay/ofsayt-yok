@@ -114,7 +114,7 @@ export function AnalysisCard({ card, t, actions }: { card: AssistantAnalysisCard
           {actions.unlockError === 'insufficient' ? (
             <p className={styles.error}>
               {t('card.insufficient')}{' '}
-              <Link href="/credits" className={styles.link}>
+              <Link href="/pricing" className={styles.link}>
                 {t('card.buyCredits')}
               </Link>
             </p>

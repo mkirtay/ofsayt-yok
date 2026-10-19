@@ -74,7 +74,11 @@ const nextConfig: NextConfig = {
   },
   async redirects() {
     // /uefa sayfası kaldırıldı (Şampiyonlar Ligi ana sayfadaki lig listesinden/filtresinden erişilir).
-    return [{ source: '/uefa', destination: '/', permanent: true }];
+    // /credits → /pricing (Fiyatlandırma, 2026-10): eski bağlantılar, mobil uygulama ve arama sonuçları için kalıcı.
+    return [
+      { source: '/uefa', destination: '/', permanent: true },
+      { source: '/credits', destination: '/pricing', permanent: true },
+    ];
   },
   images: {
     minimumCacheTTL: 2592000,

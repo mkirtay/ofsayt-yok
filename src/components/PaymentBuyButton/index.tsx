@@ -18,7 +18,7 @@ export function checkoutRequestBody(packageKey: string, locale: string) {
 type Labels = { buy: string; loading: string; soon: string; error: string; unavailable: string; termsRequired: string };
 
 /**
- * Hikie ödemesi başlatır: oturum yoksa girişe (dönüş /credits), varsa POST /api/payments/checkout → Hikie'ye yönlenir.
+ * Hikie ödemesi başlatır: oturum yoksa girişe (dönüş /pricing), varsa POST /api/payments/checkout → Hikie'ye yönlenir.
  * Satışta olmayan paket "Yakında" (devre dışı) kalır. Satın alma onayı (sayfadaki kutu: Ön Bilgilendirme + Mesafeli
  * Satış + cayma beyanı) işaretlenmeden düğme pasif; istek onay + metin sürümüyle gider, sunucu yine doğrular
  * (400 PURCHASE_TERMS_REQUIRED / 409 PURCHASE_TERMS_OUTDATED).
@@ -59,7 +59,7 @@ export default function PaymentBuyButton({
   const start = async () => {
     if (!termsAccepted) return;
     if (status !== 'authenticated') {
-      void Router.push(`/auth/signin?callbackUrl=${encodeURIComponent('/credits')}`);
+      void Router.push(`/auth/signin?callbackUrl=${encodeURIComponent('/pricing')}`);
       return;
     }
     setBusy(true);
@@ -72,7 +72,7 @@ export default function PaymentBuyButton({
       });
       const body = (await res.json().catch(() => ({}))) as { url?: string; merchantOrderId?: string; code?: string };
       if (res.status === 403 && body.code === 'TERMS_REQUIRED') {
-        void Router.push(`${ACCOUNT_TERMS_PAGE}?callbackUrl=${encodeURIComponent('/credits')}`);
+        void Router.push(`${ACCOUNT_TERMS_PAGE}?callbackUrl=${encodeURIComponent('/pricing')}`);
         return;
       }
       if (!res.ok || !body.url) {

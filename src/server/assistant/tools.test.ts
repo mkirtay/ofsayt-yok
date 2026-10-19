@@ -162,7 +162,7 @@ describe('asistan araçları', () => {
     expect(none.available_topics.length).toBeGreaterThan(3);
     const help = await run('get_site_help', { topic: 'credits' });
     expect(JSON.stringify(help.data)).toContain('1 kredi = 1 AI maç analizi açma');
-    expect(help.links).toEqual([{ label: 'Krediler', href: '/credits' }]);
+    expect(help.links).toEqual([{ label: 'Krediler', href: '/pricing' }]);
     for (const topic of ['credits', 'analysis', 'account', 'assistant', 'premium']) {
       const data = JSON.stringify((await run('get_site_help', { topic })).data);
       expect(findGamblingTerms(data)).toEqual([]);

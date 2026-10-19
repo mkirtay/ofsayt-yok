@@ -157,12 +157,19 @@ export default function Header() {
                 </Link>
               )}
               <AiMenu />
-              <Link href="/credits" className={styles.headerNavPillPremium}>
+              <Link href="/pricing" className={styles.headerNavPillPremium}>
                 {hasCredits ? `${credits} ⚡` : t('credits')}
               </Link>
             </div>
           </div>
           <div className={styles.actions}>
+            <Link
+              href="/pricing"
+              className={`${styles.headerNavPill} ${router.pathname === '/pricing' ? styles.headerNavPillActive : ''}`.trim()}
+              aria-current={router.pathname === '/pricing' ? 'page' : undefined}
+            >
+              {t('pricing')}
+            </Link>
             <Link
               href="/gundem"
               className={`${styles.headerNavPill} ${router.pathname.startsWith('/gundem') ? styles.headerNavPillActive : ''}`.trim()}
@@ -236,9 +243,15 @@ export default function Header() {
                 {t('frikik')}
               </Link>
               {session && <MyAnalysesDropdown />}
-              <Link href="/credits" className={styles.mobileNavLinkPremium}>
-                {hasCredits ? `${credits} ⚡ ${t('credits')}` : t('credits')}
+              <Link href="/pricing" className={styles.mobileNavLink}>
+                {t('pricing')}
               </Link>
+              {/* Bakiye yalnız oturumda; ziyaretçide "Fiyatlandırma" aynı sayfaya gider (çift bağlantı olmasın). */}
+              {hasCredits ? (
+                <Link href="/pricing" className={styles.mobileNavLinkPremium}>
+                  {`${credits} ⚡ ${t('credits')}`}
+                </Link>
+              ) : null}
             </nav>
             <div className={styles.mobileActions}>
               {sessionLoading ? (

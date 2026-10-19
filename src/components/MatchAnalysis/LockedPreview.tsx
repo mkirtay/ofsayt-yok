@@ -97,7 +97,7 @@ export default function LockedPreview({ preview, offer, loading, busy, error, is
               </button>
             ) : null}
             {offer && offer.balance < offer.cost ? (
-              <Link href="/credits" className={styles.ctaButton}>
+              <Link href="/pricing" className={styles.ctaButton}>
                 {t('analysis.buyCredits')}
               </Link>
             ) : (

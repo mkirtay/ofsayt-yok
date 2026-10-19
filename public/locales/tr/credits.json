@@ -1,6 +1,6 @@
 {
-  "pageTitle": "Krediler — {{brand}}",
-  "pageDesc": "AI maç analizlerini krediyle aç. 1 kredi = 1 analiz; krediler süresiz.",
+  "pageTitle": "Fiyatlandırma — {{brand}}",
+  "pageDesc": "AI maç analizlerini krediyle aç: paketler, ücretsiz krediler, gerçek bir maçtan örnek analiz ve adım adım kullanım.",
   "heroBadge": "⚡ AI Kredileri",
   "heroTitle": "Maçları AI ile analiz et",
   "heroSub": "Her analizi kendin için 1 krediyle açarsın; açtığın analiz sana hep açık kalır. Maç bitince analizler herkese açık.",
@@ -12,13 +12,6 @@
   "creditsUnit": "kredi",
   "comingSoon": "Kredi satın alma çok yakında",
   "buyDisabled": "Çok yakında",
-  "howItWorksTitle": "Nasıl Çalışır?",
-  "how1Title": "Maçı seç",
-  "how1Desc": "Henüz başlamamış bir maçın detay sayfasına git.",
-  "how2Title": "Analizi aç",
-  "how2Desc": "Kısa özeti ve ana olasılığı ücretsiz gör; tamamını 1 krediyle aç. Analiz yoksa 1 krediyle üretilir.",
-  "how3Title": "Sonucu gör",
-  "how3Desc": "Maç bittikten sonra tahminlerin isabet durumunu analiz sayfasında görebilirsin.",
   "faqTitle": "Sıkça Sorulan Sorular",
   "faqItems": {
     "q1": "Ödeme sistemi ne zaman aktif olacak?",
@@ -28,7 +21,9 @@
     "q3": "Kredilerimin son kullanma tarihi var mı?",
     "a3": "Hayır, krediler süresiz olarak hesabınızda kalır.",
     "q4": "Kredi tahminin tutup tutmamasına bağlı mı?",
-    "a4": "Hayır. Kredi yalnızca analiz açmak içindir; maç sonucuna ya da tahmine bağlı hiçbir kazanç ya da iade yoktur."
+    "a4": "Hayır. Kredi yalnızca analiz açmak içindir; maç sonucuna ya da tahmine bağlı hiçbir kazanç ya da iade yoktur.",
+    "q1Live": "Nasıl ödeme yaparım?",
+    "a1Live": "Paketi seç, onay kutusunu işaretle ve Hikie'nin güvenli ödeme sayfasında kartınla öde. Ödeme onaylanınca krediler hesabına anında yüklenir."
   },
   "perCredit": "Kredi başı {{price}}",
   "popularBadge": "En popüler",
@@ -71,5 +66,34 @@
     "and": "'nu ve ",
     "contract": "Mesafeli Satış Sözleşmesi",
     "after": "'ni okudum, onaylıyorum. Kredilerin ödeme onaylanınca hesabıma anında yükleneceğini (dijital içeriğin anında ifası) ve bu nedenle cayma hakkımın sona ereceğini kabul ediyorum."
+  },
+  "sample": {
+    "badge": "Örnek analiz",
+    "title": "Gerçek bir maç: AI ne dedi, ne oldu?",
+    "desc": "Bu analiz maçtan önce üretildi; maç bittiği için herkese açık. Krediyle açtığın analizler de tam olarak böyle görünür.",
+    "finalScore": "Maç sonucu",
+    "predicted": "AI skor tahmini",
+    "hit1x2": "Sonuç tuttu",
+    "hitScore": "Tam skor tuttu",
+    "markets": "Gol tahminleri: {{hit}}/{{total}} isabet",
+    "openMatch": "Maç sayfasında gör"
+  },
+  "guide": {
+    "title": "Adım adım: AI analizini nasıl kullanırsın?",
+    "s1Title": "Ücretsiz üye ol",
+    "s1Desc": "E-postanı doğrula, hesabına 2 kredi yüklensin. Her hafta 1 hazır analiz de ücretsiz.",
+    "s2Title": "Maçı seç",
+    "s2Desc": "Ana sayfadan ya da aramadan henüz başlamamış bir maçın sayfasını aç.",
+    "s3Title": "AI Analiz sekmesine geç",
+    "s3Desc": "Maç sayfasındaki AI Analiz sekmesinde kısa özet ve ana olasılık ücretsiz görünür.",
+    "s4Title": "Analizi 1 krediyle aç",
+    "s4Desc": "Hazır analiz varsa hemen açılır; yoksa maç başlamadan 1 krediyle üretilir. Açtığın analiz sana hep açık kalır.",
+    "s5Title": "Analizi oku",
+    "s5Desc": "Sonuç olasılıkları, gol beklentisi, taktik profil, ısı haritası ve risk seviyesi. Yandaki örnek, bir analizin tamamı.",
+    "s6Title": "Maçtan sonra karşılaştır",
+    "s6Desc": "Maç bitince her tahminin yanında ✓ / ✗ isabet rozeti çıkar. Genel isabet oranı AI İsabeti sayfasında.",
+    "ctaSignup": "Ücretsiz üye ol",
+    "ctaMatches": "Maçlara göz at",
+    "ctaAccuracy": "AI isabet oranını gör"
   }
 }

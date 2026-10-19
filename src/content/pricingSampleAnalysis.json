@@ -1,0 +1,180 @@
+{
+  "meta": {
+    "competition": "Bundesliga",
+    "kickoffDate": "2026-10-18",
+    "homeScore": 2,
+    "awayScore": 1
+  },
+  "analysis": {
+    "id": "cmvdo6g3r0000kx08knshiy48",
+    "matchId": "19735151",
+    "matchStatus": "FT",
+    "homeTeamName": "Bayer 04 Leverkusen",
+    "awayTeamName": "SC Freiburg",
+    "matchPrediction": {
+      "away": 28,
+      "draw": 27,
+      "home": 45,
+      "reasoning": "Leverkusen’in ev sahibi üstünlüğü ve H2H avantajı öne çıkıyor, ancak Freiburg’un yenilmez formu maçı dengeliyor."
+    },
+    "scorePrediction": {
+      "mostLikely": "2-1"
+    },
+    "goalExpectation": {
+      "btts": 62,
+      "over15": 86,
+      "over25": 66,
+      "over35": 43,
+      "htOver05": 72,
+      "htOver15": 35,
+      "reasoning": "İki takımın yüksek gol ortalamaları ve Leverkusen’in evdeki üretimi en az iki gol ihtimalini yükseltiyor.",
+      "awayToScore": 68,
+      "homeToScore": 88,
+      "bttsFirstHalf": 24
+    },
+    "scenarios": [
+      {
+        "metric": "2+ gol",
+        "reasoning": "İki ekibin son dönem gol ortalamaları yüksek.",
+        "confidence": "high",
+        "probability": 86
+      },
+      {
+        "metric": "İki takım da gol atar",
+        "reasoning": "Freiburg’un hücum formu güçlü, Leverkusen’in ev savunması ise sağlam.",
+        "confidence": "medium",
+        "probability": 62
+      },
+      {
+        "metric": "Ev sahibi kazanır",
+        "reasoning": "Ev avantajı ve H2H üstünlüğü, Freiburg’un formuyla dengeleniyor.",
+        "confidence": "medium",
+        "probability": 45
+      }
+    ],
+    "teamAnalyses": {
+      "away": {
+        "narrative": "Freiburg son sekiz maçında yenilmedi ve ligde 13 puanla Leverkusen’in önünde. Ancak Suzuki’nin cezası ile Scherhant ve Beste’nin muhtemel yokluğu, dört gollük ve üç asistlik katkıları eksilterek hücum kanatlarını zayıflatıyor.",
+        "keyFactors": [
+          "Freiburg son sekiz maçında yenilmedi.",
+          "Suzuki’nin dört golü hücumda önemli eksik.",
+          "Scherhant’ın üç asisti ve Beste’nin yokluğu kanatları daraltıyor.",
+          "Deplasmanda ligde bir galibiyet ve bir beraberlik aldı."
+        ],
+        "formSummary": "Son 8 maçta 7G-1B-0M, maç başı 3 gol",
+        "firstHalfNote": "16-30 aralığındaki dört golü erken bölümde tehdit yaratıyor.",
+        "secondHalfNote": "Son 15 dakikada dört gol bulması geç reaksiyon gücünü gösteriyor."
+      },
+      "home": {
+        "narrative": "Leverkusen son yedi maçında beş galibiyet aldı ve ligde evinde gol yemeden kazandı. Schick’in beş golü hücumun temel dayanağı; Kofane’nin yokluğu santrfor seçeneklerini azaltabilir. Freiburg karşısındaki yenilmez H2H serisi ev sahibine güven veriyor.",
+        "keyFactors": [
+          "Schick ligde beş golle öne çıkıyor.",
+          "Leverkusen evinde iki maçta altı gol attı.",
+          "Kofane’nin yokluğu hücum derinliğini azaltabilir.",
+          "Son dört H2H maçında yenilgi yaşamadı."
+        ],
+        "formSummary": "Son 7 maçta 5G-1B-1M, maç başı 2,86 gol",
+        "firstHalfNote": "İlk 15 dakikada üç gol bulması erken baskı ihtimalini artırıyor.",
+        "secondHalfNote": "Son bölümdeki gol üretimi maçı geç dakikalarda açabilir."
+      }
+    },
+    "fullReport": {
+      "riskFactors": [
+        "Freiburg’un yenilmez serisi",
+        "Üç önemli hücum oyuncusunun yokluğu",
+        "Leverkusen’in yüksek deplasman gol yeme oranı"
+      ],
+      "matchSummary": {
+        "tempo": "İki takımın yüksek gol üretimi, tempolu ve karşılıklı ataklara açık bir maç düşündürüyor.",
+        "balanceType": "dengeli, gollü mücadele",
+        "dominantSide": "Leverkusen saha avantajıyla önde; Freiburg’un güçlü formu üstünlüğü sınırlıyor.",
+        "homeAwayImpact": "Leverkusen evinde iki maçını da kazandı; Freiburg deplasmanda henüz yenilmedi."
+      },
+      "analystComment": "Leverkusen’in ev performansı ve H2H üstünlüğü hafif avantaj sağlıyor. Freiburg’un formu ve iki tarafın gol üretimi, karşılıklı gollü maçı öne çıkarıyor; en olası skor 2-1.",
+      "heatmapAnalysis": {
+        "zoneGrid": {
+          "away": [
+            14,
+            18,
+            16,
+            15,
+            12,
+            22,
+            36,
+            52,
+            40,
+            24,
+            38,
+            62,
+            84,
+            66,
+            42
+          ],
+          "home": [
+            12,
+            18,
+            14,
+            20,
+            16,
+            24,
+            38,
+            48,
+            44,
+            32,
+            45,
+            68,
+            92,
+            78,
+            58
+          ]
+        },
+        "awayZones": "Freiburg merkezden ve sol iç koridordan ceza alanına yönelmeye çalışabilir.",
+        "homeZones": "Leverkusen’in ağırlığı rakip ceza alanı merkezi ve sağ iç koridorda bekleniyor.",
+        "narrative": "Ev sahibinin hücum yoğunluğu rakip yarı sahada; Freiburg’un eksik kanatları hücum dağılımını merkeze çekebilir."
+      },
+      "tacticalAnalysis": {
+        "away": {
+          "formation": "4-2-3-1",
+          "wingUsage": "Eksik kanat oyuncuları geniş hücumu sınırlayabilir.",
+          "pressLevel": "Orta-yüksek baskı olası.",
+          "setPieceThreat": "Eggestein ve Matanovic hava tehdidi sunabilir.",
+          "defensiveWeakness": "Son sekiz maçta maç başı bir gol yedi.",
+          "transitionStrength": "Hızlı hücumlarla boşlukları değerlendirebilir."
+        },
+        "home": {
+          "formation": "4-2-3-1",
+          "wingUsage": "Diaby ve Moreira üzerinden genişlik arar.",
+          "pressLevel": "Önde ve yoğun baskı kurması bekleniyor.",
+          "setPieceThreat": "Gutiérrez’in servisleriyle etkili olabilir.",
+          "defensiveWeakness": "Deplasman maçlarındaki yüksek gol yeme oranı savunma geçişlerini riskli kılıyor.",
+          "transitionStrength": "Hızlı hücum geçişleri güçlü görünüyor."
+        },
+        "keyBattleZones": "Leverkusen’in kanat hücumları, Freiburg’un eksik kanat savunması ve merkezdeki geçiş mücadelesi belirleyici olabilir."
+      }
+    },
+    "riskLevel": "high",
+    "riskReasoning": "İki takım da güçlü formda; Freiburg’un önemli hücum eksikleri tahmini daha değişken kılıyor.",
+    "confidenceScore": 61,
+    "modelVersion": "v6-2026-10-openai:gpt-6-luna",
+    "createdAt": "2026-10-18T10:15:34.404Z",
+    "updatedAt": "2026-10-18T10:15:34.404Z"
+  },
+  "predictionRecord": {
+    "id": "cmvdo6g560002kx08fnze101g",
+    "actualResult": "HOME",
+    "actualScore": "2-1",
+    "result1x2Hit": true,
+    "scoreExactHit": true,
+    "evaluatedAt": "2026-10-18T15:30:28.583Z",
+    "extendedHits": {
+      "bttsHit": true,
+      "over25Hit": true,
+      "over35Hit": true,
+      "htOver05Hit": true,
+      "htOver15Hit": false,
+      "awayToScoreHit": true,
+      "homeToScoreHit": true,
+      "bttsFirstHalfHit": false
+    }
+  }
+}

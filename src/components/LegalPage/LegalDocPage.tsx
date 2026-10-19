@@ -24,7 +24,7 @@ function withLegalVars<T>(value: T): T {
   return value;
 }
 
-/** Fiyat tablosu: config/creditPackages.ts'ten (KDV dahil) — /credits ve ödeme kataloğuyla aynı kaynak. */
+/** Fiyat tablosu: config/creditPackages.ts'ten (KDV dahil) — /pricing ve ödeme kataloğuyla aynı kaynak. */
 export function creditPackageTable(locale: 'tr' | 'en'): LegalTable {
   const en = locale === 'en';
   return {

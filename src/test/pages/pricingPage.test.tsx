@@ -1,4 +1,4 @@
-/** Kredi sayfası rozetleri (bkz. comparePage.i18n.test.tsx — sayfa testleri `src/pages` dışında durur). */
+/** Fiyatlandırma (eski /credits) sayfası rozetleri (bkz. comparePage.i18n.test.tsx — sayfa testleri `src/pages` dışında durur). */
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import trCredits from '../../../public/locales/tr/credits.json';
@@ -22,7 +22,7 @@ vi.mock('@/hooks/useCredits', () => ({
 
 vi.mock('@/lib/serverSideTranslations', () => ({ serverSideTranslations: async () => ({}) }));
 
-import CreditsPage, { getStaticProps } from '@/pages/credits';
+import CreditsPage, { getStaticProps } from '@/pages/pricing';
 
 const render = () => renderToStaticMarkup(<CreditsPage />);
 
@@ -121,5 +121,33 @@ describe('Kredi sayfası rozetleri', () => {
     // Onay kutusu paket kartlarından önce
     expect(html.indexOf('purchase-consent')).toBeLessThan(html.indexOf('39,99 TL'));
   });
-});
 
+  it('iki sütun: solda paketler, sağda bitmiş maçın örnek analizi (sonuç + isabet rozetleri, maç bağlantısı)', () => {
+    const html = render();
+    expect(html).toContain(trCredits.sample.title);
+    expect(html).toContain('Bayer 04 Leverkusen');
+    expect(html).toContain('SC Freiburg');
+    expect(html).toContain(`>✓ ${trCredits.sample.hitScore}<`);
+    expect(html).toContain('href="/matches/19735151"');
+    // Sol sütun (paketler → ücretsiz krediler → adım adım) önce, örnek analiz sağ sütunda (mobilde altta)
+    expect(html.indexOf(trCredits.guide.title)).toBeGreaterThan(html.indexOf('249,99 TL'));
+    expect(html.indexOf(trCredits.sample.title)).toBeGreaterThan(html.indexOf(trCredits.guide.title));
+  });
+
+  it('adım adım kullanım: 6 adım sıralı liste; üye ol çağrısı oturumda gizli', () => {
+    const html = render();
+    for (const k of ['s1', 's2', 's3', 's4', 's5', 's6'] as const) {
+      expect(html).toContain(trCredits.guide[`${k}Title`]);
+    }
+    expect(html).toMatch(/<ol[^>]*>/);
+    expect(html).not.toContain('href="/auth/signup"'); // mock oturumu açık
+    expect(html).toContain('href="/ai-istatistikleri"');
+  });
+
+  it('SSS ilk sorusu satış durumuna göre: kapalıyken "ne zaman", açıkken "nasıl ödeme"', () => {
+    expect(render()).toContain(trCredits.faqItems.q1);
+    const on = renderToStaticMarkup(<CreditsPage availablePackages={['credits_30']} />);
+    expect(on).toContain(trCredits.faqItems.q1Live);
+    expect(on).not.toContain(trCredits.faqItems.q1);
+  });
+});

@@ -1,5 +1,5 @@
 /**
- * Kredi paketleri — TEK KAYNAK (/credits sayfası, ödeme kataloğu config/paymentPackages.ts, yasal sayfalardaki fiyat
+ * Kredi paketleri — TEK KAYNAK (/pricing sayfası, ödeme kataloğu config/paymentPackages.ts, yasal sayfalardaki fiyat
  * tablosu ve sipariş e-postası). Premium planları 2026-10-16'da kaldırıldı (yalnız kredi satılır).
  * Fiyatlar TL, KDV dahil, kuruş cinsinden tam sayı (kayan nokta hatası olmasın). Krediler süresiz. 1 kredi = 1 analiz
  * açma (kredi modeli v2, lib/analysisUnlock.ts). `paymentKey`: Hikie Checkout Link'inin env anahtarı (HIKIE_LINK_<KEY>).

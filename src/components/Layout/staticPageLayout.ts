@@ -12,7 +12,7 @@ const STATIC_PAGE_PATHS = new Set([
   ...LEGAL_PAGES.map((p) => p.path),
   '/hesap-silme',
   '/hesap-silme/onay',
-  '/credits',
+  '/pricing',
   '/404',
   '/500',
 ]);
