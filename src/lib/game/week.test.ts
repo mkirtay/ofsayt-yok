@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isInWeek, isSeasonKey, isWeekKey, seasonOf, shiftWeek, weekKeyOf, weekRange, weekStreak } from './week';
+import { dayKeyOf, dayRange, isDayKey, isInWeek, isSeasonKey, isWeekKey, seasonOf, shiftDay, shiftWeek, utcDatesOfDay, weekKeyOf, weekRange, weekStreak } from './week';
 
 const at = (iso: string) => Date.parse(iso);
 
@@ -59,5 +59,21 @@ describe('weekStreak', () => {
   it('hiç tahmin yoksa 0', () => {
     expect(weekStreak(pub, new Set(), '2026-W43')).toBe(0);
     expect(weekStreak([], new Set(['2026-W43']), null)).toBe(0);
+  });
+});
+
+describe('günlük oyun günü (İstanbul 00:00–24:00)', () => {
+  it('İstanbul günü: 21:00 UTC ertesi gün', () => {
+    expect(dayKeyOf(Date.parse('2026-10-19T20:59:59Z'))).toBe('2026-10-19');
+    expect(dayKeyOf(Date.parse('2026-10-19T21:00:00Z'))).toBe('2026-10-20');
+  });
+  it('sınırlar, kaydırma, UTC günleri, doğrulama', () => {
+    expect(dayRange('2026-10-20')).toEqual({ startsAt: new Date('2026-10-19T21:00:00Z'), endsAt: new Date('2026-10-20T21:00:00Z') });
+    expect(shiftDay('2026-10-31', 1)).toBe('2026-11-01');
+    expect(utcDatesOfDay('2026-10-20')).toEqual(['2026-10-19', '2026-10-20']);
+    expect(isDayKey('2026-02-30')).toBe(false);
+    expect(isDayKey('2025-10-20')).toBe(false);
+    expect(isDayKey('2026-10-20')).toBe(true);
+    expect(dayRange('x')).toBeNull();
   });
 });

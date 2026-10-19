@@ -107,3 +107,46 @@ export function weekStreak(publishedDesc: readonly string[], predicted: Readonly
   }
   return n;
 }
+
+// ── Günlük oyun ("Günün 3 maçı"): İstanbul günü 00:00–24:00 ─────────────────────────────────────────────────────────
+const DAY_KEY_RE = /^(\d{4})-(\d{2})-(\d{2})$/;
+
+/** O anın İstanbul günü: "2026-10-19". */
+export function dayKeyOf(ms: number): string {
+  return new Date(trDayNumber(ms) * DAY_MS).toISOString().slice(0, 10);
+}
+
+function dayNumberOf(dayKey: unknown): number | null {
+  if (typeof dayKey !== 'string') return null;
+  const m = DAY_KEY_RE.exec(dayKey);
+  if (!m) return null;
+  const ms = Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  const n = ms / DAY_MS;
+  if (!Number.isInteger(n) || new Date(ms).toISOString().slice(0, 10) !== dayKey) return null;
+  const y = Number(m[1]);
+  return y >= 2026 && y <= 2099 ? n : null;
+}
+
+export function isDayKey(value: unknown): value is string {
+  return dayNumberOf(value) != null;
+}
+
+/** Günün UTC sınırları: [startsAt, endsAt) — İstanbul 00:00 ve ertesi gün 00:00. */
+export function dayRange(dayKey: string): { startsAt: Date; endsAt: Date } | null {
+  const n = dayNumberOf(dayKey);
+  if (n == null) return null;
+  const start = n * DAY_MS - TR_OFFSET_MS;
+  return { startsAt: new Date(start), endsAt: new Date(start + DAY_MS) };
+}
+
+export function shiftDay(dayKey: string, n: number): string | null {
+  const d = dayNumberOf(dayKey);
+  return d == null ? null : new Date((d + n) * DAY_MS).toISOString().slice(0, 10);
+}
+
+/** Günün kapsadığı UTC tarihleri (fikstür listeleri UTC gününe göre önbellekte): İstanbul günü iki UTC gününe yayılır. */
+export function utcDatesOfDay(dayKey: string): string[] {
+  const r = dayRange(dayKey);
+  if (!r) return [];
+  return [...new Set([r.startsAt.toISOString().slice(0, 10), new Date(r.endsAt.getTime() - 1).toISOString().slice(0, 10)])];
+}

@@ -1,14 +1,11 @@
 /**
  * Admin hafta oluşturucu için aday maçlar: haftanın UTC günlerinin fikstür listeleri (paylaşımlı cache — ana sayfayla aynı
- * `fixtures/date/{d}` anahtarları; yeni istek türü yok), yalnız başlamamış maçlar, lig önceliğine göre sıralı.
+ * `fixtures/date/{d}` anahtarları; yeni istek türü yok), yalnız başlamamış maçlar; sıra lib/game/selection.ts (büyük takım ↓, lig önceliği, saat).
  */
 import type { Match } from '@/models/liveScore';
 import { getFixturesByDate } from '@/services/liveScoreService';
 import { weekRange } from '@/lib/game/week';
-import { matchKickoffMs } from '@/utils/matchActivity';
-
-/** Öncelik: Süper Lig, UEFA kupaları, beş büyük lig, TFF 1. Lig / Türkiye Kupası. Listede olmayan ligler sona. */
-export const LEAGUE_PRIORITY: readonly number[] = [600, 2, 5, 2286, 8, 564, 384, 82, 301, 606, 603];
+import { candidatesIn, rankWeekly } from '@/lib/game/selection';
 
 export type Suggestion = {
   fixtureId: string;
@@ -17,28 +14,13 @@ export type Suggestion = {
   leagueName: string;
   home: string;
   away: string;
+  /** Maçtaki büyük takım sayısı (0–2; lib/game/selection.ts BIG_TEAM_IDS). */
+  big: number;
 };
 
+/** Sıra: büyük takım sayısı ↓ (derbiler ve Avrupa devleri önde), lig önceliği, başlama saati. */
 export function rankSuggestions(matches: readonly Match[], startsAt: Date, endsAt: Date, now: Date): Suggestion[] {
-  const out = new Map<string, Suggestion & { prio: number; k: number }>();
-  for (const m of matches) {
-    const k = matchKickoffMs(m);
-    if (k == null || k <= now.getTime() || k < startsAt.getTime() || k >= endsAt.getTime()) continue;
-    if (m.state_code || m.time_tbd) continue;
-    const leagueId = m.competition_id ?? (m.competition?.id != null ? Number(m.competition.id) : null);
-    const idx = leagueId != null ? LEAGUE_PRIORITY.indexOf(leagueId) : -1;
-    out.set(String(m.id), {
-      fixtureId: String(m.id),
-      kickoffAt: new Date(k).toISOString(),
-      leagueId,
-      leagueName: m.competition?.name ?? m.competition_name ?? '',
-      home: m.home?.name ?? m.home_name ?? '',
-      away: m.away?.name ?? m.away_name ?? '',
-      prio: idx === -1 ? LEAGUE_PRIORITY.length : idx,
-      k,
-    });
-  }
-  return [...out.values()].sort((a, b) => a.prio - b.prio || a.k - b.k).map(({ prio: _p, k: _k, ...s }) => s);
+  return rankWeekly(candidatesIn(matches, startsAt, endsAt, now)).map(({ kickoffMs, ...c }) => ({ ...c, kickoffAt: new Date(kickoffMs).toISOString() }));
 }
 
 export async function loadSuggestions(weekKey: string, now: Date = new Date(), listFor = getFixturesByDate): Promise<Suggestion[] | null> {

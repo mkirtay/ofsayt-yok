@@ -41,3 +41,6 @@ export function methodNotAllowed(res: NextApiResponse, allow: string) {
   res.setHeader('Allow', allow);
   return res.status(405).json({ error: 'Method not allowed' });
 }
+
+/** 403: takma ad yok (Frikik ile aynı akış) — haftalık ve günlük kayıt uçları. */
+export const NICKNAME_REQUIRED_CODE = 'NICKNAME_REQUIRED';

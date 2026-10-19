@@ -9,7 +9,7 @@ import { isValidGoals } from '@/lib/game/scoring';
 import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/requireAuth';
 import { methodNotAllowed, queryString } from '@/server/game/http';
-import { invalidateLeaderboards } from '@/server/game/play';
+import { invalidateDayLeaderboard, invalidateLeaderboards } from '@/server/game/play';
 import { finishMatch, voidMatch } from '@/server/game/settle';
 import { withGameGate } from '@/server/game/access';
 
@@ -21,8 +21,12 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   const id = queryString(req, 'id');
   if (!id) return res.status(400).json({ error: 'Geçersiz maç.' });
   try {
-    const m = await prisma.gameMatch.findUnique({ where: { id }, include: { week: { select: { weekKey: true, season: true, status: true } } } });
-    if (!m || m.week.status === 'DRAFT') return res.status(404).json({ error: 'Maç bulunamadı.' });
+    const m = await prisma.gameMatch.findUnique({
+      where: { id },
+      include: { week: { select: { weekKey: true, season: true, status: true } }, day: { select: { dayKey: true, status: true } } },
+    });
+    const published = (m?.week && m.week.status !== 'DRAFT') || (m?.day && m.day.status !== 'DRAFT');
+    if (!m || !published) return res.status(404).json({ error: 'Maç bulunamadı.' });
     const body = readJsonBody(req);
     if (body.action === 'void') {
       await voidMatch(m, typeof body.reason === 'string' && body.reason.trim() ? `ADMIN:${body.reason.trim()}` : 'ADMIN');
@@ -32,7 +36,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       await finishMatch(m, body.home, body.away);
     } else return res.status(400).json({ error: 'Geçersiz işlem.' });
     // Hafta kapanmışsa tekrar açılmaz; açıktaysa sonuç işi kapatır.
-    await invalidateLeaderboards(m.week.weekKey, m.week.season);
+    await Promise.all([m.week ? invalidateLeaderboards(m.week.weekKey, m.week.season) : null, m.day ? invalidateDayLeaderboard(m.day.dayKey) : null]);
     return res.status(200).json({ ok: true });
   } catch (err) {
     captureError('admin-game-match', err);

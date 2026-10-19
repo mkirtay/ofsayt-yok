@@ -15,26 +15,47 @@ export const LEADERBOARD_LIMIT = 50;
 const OPEN_MATCH = `m.status = 'SCHEDULED' AND m."kickoffAt" > now()`;
 
 /**
- * Tahmin ekle / güncelle — yalnız maç bu haftanın, hafta YAYINDA ve maç başlamamışsa. Dönen satır yoksa kilitli/geçersiz.
- * `changed`: yeni kayıt ya da skor değişti.
+ * Tahmin ekle / güncelle — yalnız maç bu listenin (haftalık: `weekKey`, günlük: `dayKey`), liste YAYINDA ve maç başlamamışsa.
+ * Dönen satır yoksa kilitli/geçersiz. Maç iki listedeyse (çakışma) satır TEK: `weekId` ve `dayId` maçın listelerinden yazılır,
+ * hangi oyundan girilirse girilsin iki oyunda da sayılır. `changed`: yeni kayıt ya da skor değişti.
  */
-export function upsertPredictionSql(p: { id: string; userId: string; gameMatchId: string; weekKey: string; home: number; away: number }): SqlQuery {
+export function upsertPredictionSql(p: { id: string; userId: string; gameMatchId: string; weekKey?: string; dayKey?: string; home: number; away: number }): SqlQuery {
+  const list =
+    p.dayKey != null
+      ? `JOIN "GameDay" l ON l.id = m."dayId" WHERE m.id = $3 AND l."dayKey" = $4`
+      : `JOIN "GameWeek" l ON l.id = m."weekId" WHERE m.id = $3 AND l."weekKey" = $4`;
   return {
     text: `WITH old AS (SELECT home, away FROM "GamePrediction" WHERE "userId" = $2 AND "gameMatchId" = $3),
 up AS (
-INSERT INTO "GamePrediction" (id, "userId", "gameMatchId", "weekId", home, away, "createdAt", "updatedAt")
-SELECT $1, $2, m.id, m."weekId", $5, $6, now(), now()
-FROM "GameMatch" m JOIN "GameWeek" w ON w.id = m."weekId"
-WHERE m.id = $3 AND w."weekKey" = $4 AND w.status = 'PUBLISHED' AND ${OPEN_MATCH}
+INSERT INTO "GamePrediction" (id, "userId", "gameMatchId", "weekId", "dayId", home, away, "createdAt", "updatedAt")
+SELECT $1, $2, m.id, m."weekId", m."dayId", $5, $6, now(), now()
+FROM "GameMatch" m ${list} AND l.status = 'PUBLISHED' AND ${OPEN_MATCH}
 ON CONFLICT ("userId", "gameMatchId") DO UPDATE SET
   home = EXCLUDED.home,
   away = EXCLUDED.away,
+  "weekId" = EXCLUDED."weekId",
+  "dayId" = EXCLUDED."dayId",
   revisions = "GamePrediction".revisions + CASE WHEN "GamePrediction".home = EXCLUDED.home AND "GamePrediction".away = EXCLUDED.away THEN 0 ELSE 1 END,
   "updatedAt" = CASE WHEN "GamePrediction".home = EXCLUDED.home AND "GamePrediction".away = EXCLUDED.away THEN "GamePrediction"."updatedAt" ELSE now() END
 RETURNING id, home, away
 )
 SELECT up.id, (old.home IS NULL OR old.home <> up.home OR old.away <> up.away) AS changed FROM up LEFT JOIN old ON true`,
-    values: [p.id, p.userId, p.gameMatchId, p.weekKey, p.home, p.away],
+    values: [p.id, p.userId, p.gameMatchId, p.dayKey ?? p.weekKey, p.home, p.away],
+  };
+}
+
+/**
+ * Günlük oyundan girilen tahmin haftalık listede de olan maçtaysa: o haftanın kullanıcı satırını garanti eder (haftalık
+ * toplam satırdan hesaplanır) ve değişiklik zamanını günceller. Haftalık oyundan girişte `ensureEntrySql` yeterli.
+ */
+export function ensureEntriesForMatchesSql(userId: string, gameMatchIds: string[]): SqlQuery {
+  return {
+    text: `INSERT INTO "GameWeekEntry" (id, "userId", "weekId", season, "lastChangeAt", "createdAt")
+SELECT DISTINCT ON (w.id) replace(gen_random_uuid()::text, '-', ''), $1, w.id, w.season, now(), now()
+FROM "GameMatch" m JOIN "GameWeek" w ON w.id = m."weekId"
+WHERE m.id = ANY($2::text[]) AND w.status = 'PUBLISHED'
+ON CONFLICT ("userId", "weekId") DO UPDATE SET "lastChangeAt" = now()`,
+    values: [userId, gameMatchIds],
   };
 }
 
@@ -92,18 +113,29 @@ WHERE p."gameMatchId" = $1`,
   };
 }
 
-/** Toplu puan yazımı (dizi parametreleri). `breakdowns` JSON metinleri. */
-export function applyPointsSql(ids: string[], points: number[], breakdowns: string[]): SqlQuery {
+/**
+ * Toplu puan yazımı (dizi parametreleri). `points` haftalık (joker dahil), `basePoints` günlük (jokersiz). `breakdowns` JSON
+ * metinleri.
+ */
+export function applyPointsSql(ids: string[], points: number[], basePoints: number[], breakdowns: string[]): SqlQuery {
   return {
-    text: `UPDATE "GamePrediction" p SET points = v.points, breakdown = v.b::jsonb
-FROM unnest($1::text[], $2::int[], $3::text[]) AS v(id, points, b) WHERE p.id = v.id`,
-    values: [ids, points, breakdowns],
+    text: `UPDATE "GamePrediction" p SET points = v.points, "basePoints" = v.base, breakdown = v.b::jsonb
+FROM unnest($1::text[], $2::int[], $3::int[], $4::text[]) AS v(id, points, base, b) WHERE p.id = v.id`,
+    values: [ids, points, basePoints, breakdowns],
   };
 }
 
-/** İptal edilen maçın tahminleri 0 puan. */
+/** İptal edilen maçın tahminleri 0 puan (iki oyunda da). */
 export function voidPointsSql(gameMatchId: string): SqlQuery {
-  return { text: `UPDATE "GamePrediction" SET points = 0, breakdown = NULL WHERE "gameMatchId" = $1`, values: [gameMatchId] };
+  return { text: `UPDATE "GamePrediction" SET points = 0, "basePoints" = 0, breakdown = NULL WHERE "gameMatchId" = $1`, values: [gameMatchId] };
+}
+
+/** Maç sonradan güne eklendiyse (günlük seçim, haftalık maç) mevcut tahminlerin `dayId`'si. */
+export function attachDayToPredictionsSql(gameMatchIds: string[]): SqlQuery {
+  return {
+    text: `UPDATE "GamePrediction" p SET "dayId" = m."dayId" FROM "GameMatch" m WHERE m.id = p."gameMatchId" AND m.id = ANY($1::text[]) AND p."dayId" IS DISTINCT FROM m."dayId"`,
+    values: [gameMatchIds],
+  };
 }
 
 /** Haftanın kullanıcı toplamlarını sonuçlanmış tahminlerden yeniden hesaplar (idempotent). */
@@ -206,6 +238,57 @@ export function predictedWeeksSql(userId: string): SqlQuery {
   return {
     text: `SELECT DISTINCT w."weekKey" AS "weekKey" FROM "GamePrediction" p JOIN "GameWeek" w ON w.id = p."weekId"
 WHERE p."userId" = $1 ORDER BY 1 DESC LIMIT 60`,
+    values: [userId],
+  };
+}
+
+// ── Günlük sıralama: tahminlerden doğrudan (gün satırı yok). Puan `basePoints` (jokersiz). Eşitlik: tam skor ↓, doğru yön ↓,
+// son değişiklik ↑. Görünürlük haftalıkla aynı (takma ad + doğrulanmış e-posta).
+const DAY_AGG = `SELECT p."userId", SUM(COALESCE(p."basePoints", 0))::int AS points,
+  COUNT(*) FILTER (WHERE (p.breakdown->>'exact')::int > 0)::int AS exact,
+  COUNT(*) FILTER (WHERE (p.breakdown->>'dir')::int > 0)::int AS direction, MAX(p."updatedAt") AS last_at
+FROM "GamePrediction" p JOIN "User" u ON u.id = p."userId"
+WHERE p."dayId" = $1 AND u.username IS NOT NULL AND u."emailVerified" IS NOT NULL GROUP BY p."userId"`;
+
+const DAY_AHEAD = `s.points > me.points
+  OR (s.points = me.points AND s.exact > me.exact)
+  OR (s.points = me.points AND s.exact = me.exact AND s.direction > me.direction)
+  OR (s.points = me.points AND s.exact = me.exact AND s.direction = me.direction AND (s.last_at, s."userId") < (me.last_at, me."userId"))`;
+
+export function dayTopSql(dayId: string, limit = LEADERBOARD_LIMIT): SqlQuery {
+  return {
+    text: `SELECT s."userId", u.username AS nickname, s.points, s.exact, s.direction FROM (${DAY_AGG}) s JOIN "User" u ON u.id = s."userId"
+ORDER BY s.points DESC, s.exact DESC, s.direction DESC, s.last_at ASC, s."userId" ASC LIMIT $2`,
+    values: [dayId, limit],
+  };
+}
+
+export function dayRankSql(dayId: string, userId: string): SqlQuery {
+  return { text: `WITH s AS (${DAY_AGG}), me AS (SELECT * FROM s WHERE "userId" = $2) SELECT count(*)::int AS n FROM s, me WHERE ${DAY_AHEAD}`, values: [dayId, userId] };
+}
+
+export function dayAboveSql(dayId: string, userId: string): SqlQuery {
+  return {
+    text: `WITH s AS (${DAY_AGG}), me AS (SELECT * FROM s WHERE "userId" = $2) SELECT s.points FROM s, me WHERE ${DAY_AHEAD}
+ORDER BY s.points ASC, s.exact ASC, s.direction ASC, s.last_at DESC, s."userId" DESC LIMIT 1`,
+    values: [dayId, userId],
+  };
+}
+
+/** Günlük toplamım (görünürlükten bağımsız). */
+export function myDayTotalSql(dayId: string, userId: string): SqlQuery {
+  return {
+    text: `SELECT COALESCE(SUM("basePoints"), 0)::int AS points, COUNT(*) FILTER (WHERE (breakdown->>'exact')::int > 0)::int AS exact,
+  count(*)::int AS picks FROM "GamePrediction" WHERE "dayId" = $1 AND "userId" = $2`,
+    values: [dayId, userId],
+  };
+}
+
+/** Tahmin yaptığım günler (günlük seri; yeniden eskiye, en çok 120). */
+export function predictedDaysSql(userId: string): SqlQuery {
+  return {
+    text: `SELECT DISTINCT d."dayKey" AS "dayKey" FROM "GamePrediction" p JOIN "GameDay" d ON d.id = p."dayId"
+WHERE p."userId" = $1 ORDER BY 1 DESC LIMIT 120`,
     values: [userId],
   };
 }

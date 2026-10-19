@@ -5,7 +5,8 @@ import type { Suggestion } from '@/server/game/suggestions';
 import type { AdminWeekView } from '@/server/game/weeks';
 import styles from './game.module.scss';
 
-const WEEK_MATCHES = 5;
+/** server/game/weeks.ts WEEK_MATCH_COUNT ile aynı (istemci paketi sunucu modülünü almasın). */
+const WEEK_MATCHES = 10;
 const fmt = new Intl.DateTimeFormat('tr-TR', { timeZone: 'Europe/Istanbul', weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 
 async function api<T>(url: string, init?: RequestInit): Promise<T> {
@@ -16,7 +17,7 @@ async function api<T>(url: string, init?: RequestInit): Promise<T> {
 }
 
 /**
- * Admin: tahmin oyunu hafta oluşturucu. Hafta seç → taslak → aday maçlardan 5 seç (sıra = seçim sırası) → kaydet → yayınla.
+ * Admin: tahmin oyunu hafta oluşturucu. Hafta seç → taslak → aday maçlardan 10 seç (sıra = seçim sırası; büyük takım maçları listenin başında) → kaydet → yayınla.
  * Yayından sonra maç başına iptal / sonucu düzelt; oyuncuyu sıralamadan gizle; sonuç işini elle çalıştır.
  * Metinler yalnız admin için (TR, çeviri yok).
  */
@@ -183,7 +184,10 @@ export default function AdminGame() {
                             <input type="checkbox" checked={picked.includes(s.fixtureId)} onChange={() => toggle(s.fixtureId)} aria-label={`${s.home} – ${s.away}`} />
                             {picked.includes(s.fixtureId) ? ` ${picked.indexOf(s.fixtureId) + 1}` : ''}
                           </td>
-                          <td>{s.home} – {s.away}</td>
+                          <td>
+                            {s.big ? <span aria-label={`${s.big} büyük takım`}>{'★'.repeat(s.big)} </span> : null}
+                            {s.home} – {s.away}
+                          </td>
                           <td>{s.leagueName}</td>
                           <td>{fmt.format(new Date(s.kickoffAt))}</td>
                         </tr>

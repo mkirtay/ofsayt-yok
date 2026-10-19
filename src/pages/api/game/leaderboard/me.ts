@@ -1,7 +1,7 @@
-/** GET /api/game/leaderboard/me?scope=week|season&key=… — puanım ve sıram (görünür değilsem sıra null). Önbellek yok. */
+/** GET /api/game/leaderboard/me?scope=week|season|day&key=… — puanım ve sıram (görünür değilsem sıra null). Önbellek yok. */
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { captureError } from '@/lib/logger';
-import { isSeasonKey, isWeekKey } from '@/lib/game/week';
+import { isDayKey, isSeasonKey, isWeekKey } from '@/lib/game/week';
 import { requireAuth } from '@/lib/requireAuth';
 import { methodNotAllowed, queryString } from '@/server/game/http';
 import { loadMyStanding } from '@/server/game/play';
@@ -12,7 +12,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
   res.setHeader('Cache-Control', 'private, no-store');
   const scope = queryString(req, 'scope');
   const key = queryString(req, 'key');
-  if (!(scope === 'week' && isWeekKey(key)) && !(scope === 'season' && isSeasonKey(key))) return res.status(400).json({ error: 'Geçersiz tablo.' });
+  if (!(scope === 'week' && isWeekKey(key)) && !(scope === 'season' && isSeasonKey(key)) && !(scope === 'day' && isDayKey(key))) return res.status(400).json({ error: 'Geçersiz tablo.' });
   const guard = await requireAuth(req, res);
   if (!guard.ok) return;
   try {

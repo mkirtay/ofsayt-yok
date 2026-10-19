@@ -16,6 +16,9 @@ export type GameMatchView = {
   result: { home: number; away: number } | null;
   /** Maç sayfası bağlantısı. */
   href: string;
+  /** Maçın listeleri: ikisi de doluysa tek tahmin iki oyunda sayılır ("Haftalık + Günlük" rozeti). */
+  weekKey: string | null;
+  dayKey: string | null;
 };
 
 export type GameWeekView = {
@@ -27,11 +30,21 @@ export type GameWeekView = {
   matches: GameMatchView[];
 };
 
+/** Günlük oyun ("Günün 3 maçı"): İstanbul günü; joker yok. */
+export type GameDayView = {
+  dayKey: string;
+  status: 'PUBLISHED' | 'SETTLED';
+  startsAt: string;
+  endsAt: string;
+  matches: GameMatchView[];
+};
+
 import type { Breakdown } from './scoring';
 
 export type { Breakdown };
 
-export type MyPredictionView = { gameMatchId: string; home: number; away: number; points: number | null; breakdown: Breakdown | null };
+/** `points`: haftalık (joker dahil), `basePoints`: günlük (jokersiz). */
+export type MyPredictionView = { gameMatchId: string; home: number; away: number; points: number | null; basePoints: number | null; breakdown: Breakdown | null };
 
 export type MyWeekView = {
   weekKey: string;
@@ -46,10 +59,12 @@ export type MyWeekView = {
 
 export type BoardEntryView = { rank: number; nickname: string; points: number; exact: number; direction: number };
 
-export type LeaderboardView = { scope: 'week' | 'season'; key: string; entries: BoardEntryView[] };
+export type BoardScope = 'week' | 'season' | 'day';
+
+export type LeaderboardView = { scope: BoardScope; key: string; entries: BoardEntryView[] };
 
 export type MyStandingView = {
-  scope: 'week' | 'season';
+  scope: BoardScope;
   key: string;
   points: number;
   exact: number;
@@ -57,7 +72,7 @@ export type MyStandingView = {
   visible: boolean;
   /** Hemen üstümdeki oyuncuyla puan farkı (lider ya da sırasızsam null). */
   gap: number | null;
-  /** Art arda tahmin yapılan yayındaki hafta sayısı (lib/game/week.ts → weekStreak). */
+  /** Art arda tahmin yapılan yayındaki hafta (günlükte: gün) sayısı (lib/game/week.ts → weekStreak). */
   streak: number;
 };
 
@@ -71,3 +86,16 @@ export type DistributionView = {
 /** PUT /predictions kalem sonucu. */
 export type SaveItemResult = { gameMatchId: string; ok: boolean; code?: 'LOCKED' | 'INVALID' };
 export type SaveResult = { items: SaveItemResult[]; joker: { ok: boolean; code?: 'LOCKED' } | null; me: MyWeekView };
+
+/** Günlük oyunda kendi günüm. */
+export type MyDayView = {
+  dayKey: string;
+  nickname: string | null;
+  visible: boolean;
+  predictions: MyPredictionView[];
+  totalPoints: number;
+  rank: number | null;
+};
+
+/** Günlük PUT sonucu (joker yok). */
+export type DaySaveResult = { items: SaveItemResult[]; me: MyDayView };

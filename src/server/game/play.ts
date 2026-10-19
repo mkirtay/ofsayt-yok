@@ -8,7 +8,13 @@ import { cacheKeyPrefix } from '@/lib/cacheNamespace';
 import { readCache, writeCache } from '@/lib/livescoreCache';
 import { prisma } from '@/lib/prisma';
 import {
+  dayAboveSql,
+  dayRankSql,
+  dayTopSql,
   distributionRowsSql,
+  ensureEntriesForMatchesSql,
+  myDayTotalSql,
+  predictedDaysSql,
   ensureEntrySql,
   mySeasonTotalSql,
   predictedWeeksSql,
@@ -27,7 +33,8 @@ import {
 import { buildDistribution, isValidGoals, outcomeShares, type Breakdown } from '@/lib/game/scoring';
 import { weekStreak } from '@/lib/game/week';
 import { listPublicWeekKeys, resolveCurrentWeekKey } from '@/server/game/weeks';
-import type { BoardEntryView, DistributionView, LeaderboardView, MyStandingView, MyWeekView, SaveItemResult, SaveResult } from '@/lib/game/types';
+import { listPublicDayKeys, todayKey } from '@/server/game/days';
+import type { BoardEntryView, BoardScope, DaySaveResult, DistributionView, LeaderboardView, MyDayView, MyStandingView, MyWeekView, SaveItemResult, SaveResult } from '@/lib/game/types';
 
 export const LEADERBOARD_CACHE_SECONDS = 60;
 export const MAX_ITEMS = 10;
@@ -61,6 +68,8 @@ export function parseSaveBody(body: unknown): SaveBody | null {
   return { items, ...(j !== undefined ? { jokerGameMatchId: j as string | null } : {}) };
 }
 
+const PRED_SELECT = { gameMatchId: true, home: true, away: true, points: true, basePoints: true, breakdown: true } as const;
+
 // ── Kendi haftam ────────────────────────────────────────────────────────────────────────────────────────────────────
 
 async function viewer(userId: string) {
@@ -74,7 +83,7 @@ export async function loadMyWeek(userId: string, weekKey: string): Promise<MyWee
   const [v, entry, preds] = await Promise.all([
     viewer(userId),
     prisma.gameWeekEntry.findUnique({ where: { userId_weekId: { userId, weekId: week.id } } }),
-    prisma.gamePrediction.findMany({ where: { userId, weekId: week.id }, select: { gameMatchId: true, home: true, away: true, points: true, breakdown: true } }),
+    prisma.gamePrediction.findMany({ where: { userId, weekId: week.id }, select: PRED_SELECT }),
   ]);
   const rank = entry && v.visible ? Number((await raw<{ n: number }>(weekRankSql(week.id, userId)))[0]?.n ?? 0) + 1 : null;
   return {
@@ -124,6 +133,50 @@ export async function savePredictions(userId: string, weekKey: string, body: Sav
   return { items, joker, me: (await loadMyWeek(userId, weekKey))! };
 }
 
+// ── Günlük oyun: kendi günüm + kaydet (joker yok) ───────────────────────────────────────────────────────────────────
+
+export async function loadMyDay(userId: string, dayKey: string): Promise<MyDayView | null> {
+  const day = await prisma.gameDay.findUnique({ where: { dayKey }, select: { id: true, status: true } });
+  if (!day || day.status === 'DRAFT') return null;
+  const [v, preds, total] = await Promise.all([
+    viewer(userId),
+    prisma.gamePrediction.findMany({ where: { userId, dayId: day.id }, select: PRED_SELECT }),
+    raw<{ points: number; picks: number }>(myDayTotalSql(day.id, userId)),
+  ]);
+  const picks = Number(total[0]?.picks ?? 0);
+  const rank = picks && v.visible ? Number((await raw<{ n: number }>(dayRankSql(day.id, userId)))[0]?.n ?? 0) + 1 : null;
+  return {
+    dayKey,
+    nickname: v.nickname,
+    visible: v.visible,
+    predictions: preds.map((p) => ({ ...p, breakdown: (p.breakdown as Breakdown | null) ?? null })),
+    totalPoints: Number(total[0]?.points ?? 0),
+    rank,
+  };
+}
+
+/**
+ * Günlük tahminleri yazar (joker alanı yok sayılır). Haftalık listede de olan maçta aynı satır güncellenir → iki oyunda sayılır;
+ * o haftanın kullanıcı satırı garanti edilir (haftalık toplam ve "son değişiklik" eşitlik ölçütü).
+ */
+export async function saveDayPredictions(userId: string, dayKey: string, body: SaveBody): Promise<DaySaveResult | null> {
+  const day = await prisma.gameDay.findUnique({ where: { dayKey }, select: { id: true, status: true } });
+  if (!day || day.status !== 'PUBLISHED') return null;
+  const items: SaveItemResult[] = [];
+  const changedIds: string[] = [];
+  for (const it of body.items) {
+    const rows = await raw<{ id: string; changed: boolean }>(
+      upsertPredictionSql({ id: randomUUID().replace(/-/g, ''), userId, gameMatchId: it.gameMatchId, dayKey, home: it.home, away: it.away }),
+    );
+    if (rows[0]) {
+      items.push({ gameMatchId: it.gameMatchId, ok: true });
+      if (rows[0].changed) changedIds.push(it.gameMatchId);
+    } else items.push({ gameMatchId: it.gameMatchId, ok: false, code: 'LOCKED' });
+  }
+  if (changedIds.length) await raw(ensureEntriesForMatchesSql(userId, changedIds));
+  return { items, me: (await loadMyDay(userId, dayKey))! };
+}
+
 // ── Sıralama ────────────────────────────────────────────────────────────────────────────────────────────────────────
 
 function toEntries(rows: BoardRow[]): BoardEntryView[] {
@@ -132,7 +185,7 @@ function toEntries(rows: BoardRow[]): BoardEntryView[] {
 
 const boardKey = (scope: string, key: string) => `${cacheKeyPrefix()}game:lb:v1:${scope}:${key}`;
 
-export async function loadLeaderboard(scope: 'week' | 'season', key: string): Promise<LeaderboardView | null> {
+export async function loadLeaderboard(scope: BoardScope, key: string): Promise<LeaderboardView | null> {
   const cacheKey = boardKey(scope, key);
   const cached = (await readCache(cacheKey)) as LeaderboardView | null;
   if (cached) return cached;
@@ -143,6 +196,11 @@ export async function loadLeaderboard(scope: 'week' | 'season', key: string): Pr
     // Hiç maç sonuçlanmadıysa tablo anlamsız (herkes 0): boş döner.
     const settled = await prisma.gameMatch.count({ where: { weekId: week.id, status: { not: 'SCHEDULED' } } });
     rows = settled ? await raw<BoardRow>(weekTopSql(week.id)) : [];
+  } else if (scope === 'day') {
+    const day = await prisma.gameDay.findUnique({ where: { dayKey: key }, select: { id: true, status: true } });
+    if (!day || day.status === 'DRAFT') return null;
+    const settled = await prisma.gameMatch.count({ where: { dayId: day.id, status: { not: 'SCHEDULED' } } });
+    rows = settled ? await raw<BoardRow>(dayTopSql(day.id)) : [];
   } else {
     rows = await raw<BoardRow>(seasonTopSql(key));
   }
@@ -151,9 +209,19 @@ export async function loadLeaderboard(scope: 'week' | 'season', key: string): Pr
   return view;
 }
 
+/** Günlük tablo (sonuç yazılınca). */
+export async function invalidateDayLeaderboard(dayKey: string): Promise<void> {
+  await writeCache(boardKey('day', dayKey), null, 1);
+}
+
 /** Sonuç yazılınca herkese açık tabloları düşür. */
 export async function invalidateLeaderboards(weekKey: string, season: string): Promise<void> {
   await Promise.all([writeCache(boardKey('week', weekKey), null, 1), writeCache(boardKey('season', season), null, 1)]);
+}
+
+async function myDayStreak(userId: string): Promise<number> {
+  const [published, mine] = await Promise.all([listPublicDayKeys(120), raw<{ dayKey: string }>(predictedDaysSql(userId))]);
+  return weekStreak(published, new Set(mine.map((r) => r.dayKey)), todayKey());
 }
 
 async function myStreak(userId: string): Promise<number> {
@@ -166,8 +234,22 @@ const abovePoints = async (q: SqlQuery) => {
   return row ? Number(row.points) : null;
 };
 
-export async function loadMyStanding(userId: string, scope: 'week' | 'season', key: string): Promise<MyStandingView | null> {
+export async function loadMyStanding(userId: string, scope: BoardScope, key: string): Promise<MyStandingView | null> {
   const v = await viewer(userId);
+  if (scope === 'day') {
+    const day = await prisma.gameDay.findUnique({ where: { dayKey: key }, select: { id: true } });
+    if (!day) return null;
+    const total = (await raw<{ points: number; exact: number; picks: number }>(myDayTotalSql(day.id, userId)))[0];
+    const ranked = Number(total?.picks ?? 0) > 0 && v.visible;
+    const [rankRow, above, streak] = await Promise.all([
+      ranked ? raw<{ n: number }>(dayRankSql(day.id, userId)) : Promise.resolve([]),
+      ranked ? abovePoints(dayAboveSql(day.id, userId)) : Promise.resolve(null),
+      myDayStreak(userId),
+    ]);
+    const points = Number(total?.points ?? 0);
+    const rank = ranked ? Number(rankRow[0]?.n ?? 0) + 1 : null;
+    return { scope, key, points, exact: Number(total?.exact ?? 0), rank, visible: v.visible, gap: above == null ? null : above - points, streak };
+  }
   if (scope === 'week') {
     const week = await prisma.gameWeek.findUnique({ where: { weekKey: key }, select: { id: true } });
     if (!week) return null;
@@ -200,8 +282,12 @@ export async function loadMyStanding(userId: string, scope: 'week' | 'season', k
 export type DistributionOutcome = { kind: 'ok'; view: DistributionView } | { kind: 'not-found' } | { kind: 'locked' };
 
 export async function loadDistribution(gameMatchId: string, now: Date = new Date()): Promise<DistributionOutcome> {
-  const m = await prisma.gameMatch.findUnique({ where: { id: gameMatchId }, select: { kickoffAt: true, status: true, distribution: true, week: { select: { status: true } } } });
-  if (!m || m.week.status === 'DRAFT') return { kind: 'not-found' };
+  const m = await prisma.gameMatch.findUnique({
+    where: { id: gameMatchId },
+    select: { kickoffAt: true, status: true, distribution: true, week: { select: { status: true } }, day: { select: { status: true } } },
+  });
+  // Yayında en az bir listede olmalı (taslak haftanın maçı görünmez).
+  if (!m || ((!m.week || m.week.status === 'DRAFT') && (!m.day || m.day.status === 'DRAFT'))) return { kind: 'not-found' };
   // Başlamadan önce başkalarının tahmini hiçbir uçta dönmez (kopyalama / nadir skor oyunu).
   if (m.status === 'SCHEDULED' && m.kickoffAt > now) return { kind: 'locked' };
   const stored = m.distribution as Record<string, number> | null;

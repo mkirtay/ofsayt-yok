@@ -771,14 +771,19 @@ model GameWeek {
   @@index([status, startsAt])
 }
 
-/// Haftanın maçı. `fixtureId` = MatchSnapshot.fixtureId (Sportmonks id, String). Takım adları/logolar gösterimde snapshot'tan.
+/// Oyundaki maç — fixture başına TEK satır (`fixtureId` tekil). Haftalık listeye (`weekId` + `position`) ve/veya günlük listeye
+/// (`dayId` + `dayPosition`) bağlanır; ikisindeyse tek tahmin iki oyunda da sayılır. En az biri dolu (CHECK).
+/// `fixtureId` = MatchSnapshot.fixtureId (Sportmonks id, String). Takım adları/logolar gösterimde snapshot'tan.
 /// `kickoffAt` snapshot / önbellekteki gün listesinden güncellenir; KİLİT BU ALANA GÖRE. Skor normal süre (90').
 model GameMatch {
   id           String           @id @default(cuid())
-  weekId       String
-  week         GameWeek         @relation(fields: [weekId], references: [id], onDelete: Cascade)
-  fixtureId    String
-  position     Int
+  weekId       String?
+  week         GameWeek?        @relation(fields: [weekId], references: [id], onDelete: Cascade)
+  position     Int?
+  dayId        String?
+  day          GameDay?         @relation(fields: [dayId], references: [id], onDelete: SetNull)
+  dayPosition  Int?
+  fixtureId    String           @unique
   kickoffAt    DateTime
   status       GameMatchStatus  @default(SCHEDULED)
   homeGoals    Int?
@@ -791,8 +796,26 @@ model GameMatch {
   checkedAt    DateTime?
   predictions  GamePrediction[]
 
-  @@unique([weekId, fixtureId])
   @@index([status, kickoffAt])
+  @@index([weekId])
+  @@index([dayId])
+}
+
+/// Günlük oyun ("Günün 3 maçı"): İstanbul günü (00:00–24:00). Otomatik seçilir (sonuç işi, lib/game/daily.ts önceliği);
+/// joker yok, puan `GamePrediction.basePoints`. O gün aday maç yoksa satır açılmaz (seri bozulmaz).
+model GameDay {
+  id        String         @id @default(cuid())
+  /// "2026-10-19" (İstanbul tarihi)
+  dayKey    String         @unique
+  /// PUBLISHED | SETTLED (DRAFT kullanılmaz)
+  status    GameWeekStatus @default(PUBLISHED)
+  startsAt  DateTime
+  endsAt    DateTime
+  settledAt DateTime?
+  createdAt DateTime       @default(now())
+  matches   GameMatch[]
+
+  @@index([status, startsAt])
 }
 
 /// Kullanıcının bir maça skor tahmini (kullanıcı × maç tek kayıt). `points`/`breakdown` sonuçlanınca yazılır (joker dahil).
@@ -802,21 +825,25 @@ model GamePrediction {
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   gameMatchId String
   gameMatch   GameMatch @relation(fields: [gameMatchId], references: [id], onDelete: Cascade)
-  /// Denormalize: haftalık toplamlar tek tablodan.
-  weekId      String
+  /// Denormalize (maçın listeleri): haftalık / günlük toplamlar tek tablodan. Maç sonradan güne eklenirse `dayId` güncellenir.
+  weekId      String?
+  dayId       String?
   home        Int
   away        Int
   /// Kaç kez değiştirildi (kötüye kullanım sinyali).
   revisions   Int       @default(0)
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @default(now()) @updatedAt
+  /// Haftalık puan (joker dahil). Günlük oyun `basePoints` (jokersiz) kullanır.
   points      Int?
+  basePoints  Int?
   /// { dir, diff, total, exact, rare, joker } — lib/game/scoring.ts.
   breakdown   Json?
 
   @@unique([userId, gameMatchId])
   @@index([gameMatchId])
   @@index([weekId, userId])
+  @@index([dayId, userId])
 }
 
 /// Kullanıcı × hafta: joker seçimi + sıralama toplamları (sonuçlanan maçlardan yeniden hesaplanır, idempotent).

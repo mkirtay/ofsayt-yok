@@ -11,11 +11,11 @@ import { captureError } from '@/lib/logger';
 import { isWeekKey } from '@/lib/game/week';
 import { prisma } from '@/lib/prisma';
 import { requireAuth } from '@/lib/requireAuth';
-import { limitWrite, methodNotAllowed, queryString } from '@/server/game/http';
+import { limitWrite, methodNotAllowed, NICKNAME_REQUIRED_CODE, queryString } from '@/server/game/http';
 import { parseSaveBody, savePredictions } from '@/server/game/play';
 import { withGameGate } from '@/server/game/access';
 
-export const NICKNAME_REQUIRED_CODE = 'NICKNAME_REQUIRED';
+export { NICKNAME_REQUIRED_CODE };
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'PUT') return methodNotAllowed(res, 'PUT');

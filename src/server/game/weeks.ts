@@ -10,36 +10,51 @@ import type { GameMatchView, GameWeekView } from '@/lib/game/types';
 import { prisma } from '@/lib/prisma';
 import { buildMatchHref } from '@/utils/matchUrl';
 
-export const WEEK_MATCH_COUNT = 5;
+/** Haftalık maç sayısı (kullanıcı kararı 2026-10-19: 5 → 10; hafta sonu Süper Lig + büyük ligler, hafta ortası Avrupa kupaları). */
+export const WEEK_MATCH_COUNT = 10;
 
 function teamView(id: number, name: string, short: string | null, logo: string | null) {
   return { id, name, shortName: short, logo };
 }
 
-export function toMatchView(m: GameMatch, snap: MatchSnapshot | undefined): GameMatchView {
+export type MatchLists = { weekKey: string | null; dayKey: string | null };
+
+type MatchWithLists = GameMatch & { week?: { weekKey: string } | null; day?: { dayKey: string } | null };
+
+/** Maçın listeleri (ilişkiler yüklendiyse; yoksa bilinen liste anahtarı). */
+export const listsOf = (m: MatchWithLists, known: Partial<MatchLists> = {}): MatchLists => ({
+  weekKey: m.week?.weekKey ?? (m.weekId ? (known.weekKey ?? null) : null),
+  dayKey: m.day?.dayKey ?? (m.dayId ? (known.dayKey ?? null) : null),
+});
+
+/** Ortak maç ilişkileri (görünüm için liste anahtarları). */
+export const MATCH_LISTS_INCLUDE = { week: { select: { weekKey: true } }, day: { select: { dayKey: true } } } as const;
+
+export function toMatchView(m: GameMatch, snap: MatchSnapshot | undefined, lists: MatchLists = { weekKey: null, dayKey: null }): GameMatchView {
   const homeName = snap?.homeName ?? '?';
   const awayName = snap?.awayName ?? '?';
   return {
     id: m.id,
     fixtureId: m.fixtureId,
-    position: m.position,
+    position: m.position ?? m.dayPosition ?? 0,
     kickoffAt: m.kickoffAt.toISOString(),
     status: m.status,
     home: teamView(snap?.homeTeamId ?? 0, homeName, snap?.homeShortName ?? null, snap?.homeLogo ?? null),
     away: teamView(snap?.awayTeamId ?? 0, awayName, snap?.awayShortName ?? null, snap?.awayLogo ?? null),
     result: m.status === 'FINISHED' && m.homeGoals != null && m.awayGoals != null ? { home: m.homeGoals, away: m.awayGoals } : null,
     href: buildMatchHref({ id: Number(m.fixtureId), home: { name: homeName }, away: { name: awayName } }),
+    ...lists,
   };
 }
 
-async function snapshotsFor(fixtureIds: string[]): Promise<Map<string, MatchSnapshot>> {
+export async function snapshotsFor(fixtureIds: string[]): Promise<Map<string, MatchSnapshot>> {
   if (!fixtureIds.length) return new Map();
   const rows = await prisma.matchSnapshot.findMany({ where: { fixtureId: { in: fixtureIds } } });
   return new Map(rows.map((r) => [r.fixtureId, r]));
 }
 
-export async function toWeekView(week: GameWeek & { matches: GameMatch[] }): Promise<GameWeekView> {
-  const matches = [...week.matches].sort((a, b) => a.position - b.position || a.kickoffAt.getTime() - b.kickoffAt.getTime());
+export async function toWeekView(week: GameWeek & { matches: MatchWithLists[] }): Promise<GameWeekView> {
+  const matches = [...week.matches].sort((a, b) => (a.position ?? 0) - (b.position ?? 0) || a.kickoffAt.getTime() - b.kickoffAt.getTime());
   const snaps = await snapshotsFor(matches.map((m) => m.fixtureId));
   return {
     weekKey: week.weekKey,
@@ -47,13 +62,13 @@ export async function toWeekView(week: GameWeek & { matches: GameMatch[] }): Pro
     status: week.status === 'SETTLED' ? 'SETTLED' : 'PUBLISHED',
     startsAt: week.startsAt.toISOString(),
     endsAt: week.endsAt.toISOString(),
-    matches: matches.map((m) => toMatchView(m, snaps.get(m.fixtureId))),
+    matches: matches.map((m) => toMatchView(m, snaps.get(m.fixtureId), listsOf(m, { weekKey: week.weekKey }))),
   };
 }
 
 /** Yayındaki (taslak olmayan) hafta. */
 export async function loadPublicWeek(weekKey: string): Promise<GameWeekView | null> {
-  const week = await prisma.gameWeek.findUnique({ where: { weekKey }, include: { matches: true } });
+  const week = await prisma.gameWeek.findUnique({ where: { weekKey }, include: { matches: { include: MATCH_LISTS_INCLUDE } } });
   if (!week || week.status === 'DRAFT') return null;
   return toWeekView(week);
 }
@@ -94,7 +109,7 @@ export class GameAdminError extends Error {
 export type AdminWeekView = GameWeekView & { id: string; rawStatus: GameWeek['status']; entries: number; predictions: number };
 
 export async function loadAdminWeek(weekKey: string): Promise<AdminWeekView | null> {
-  const week = await prisma.gameWeek.findUnique({ where: { weekKey }, include: { matches: true } });
+  const week = await prisma.gameWeek.findUnique({ where: { weekKey }, include: { matches: { include: MATCH_LISTS_INCLUDE } } });
   if (!week) return null;
   const [entries, predictions] = await Promise.all([
     prisma.gameWeekEntry.count({ where: { weekId: week.id } }),
@@ -143,12 +158,19 @@ export async function setWeekMatches(weekKey: string, fixtureIds: string[], now:
     if (!isInWeek(weekKey, s.startingAt)) throw new GameAdminError('OUT_OF_WEEK', `Maç hafta dışında: ${s.homeName} – ${s.awayName}`);
     if (s.startingAt <= now) throw new GameAdminError('STARTED', `Maç başlamış: ${s.homeName} – ${s.awayName}`);
   }
-  await prisma.$transaction([
-    prisma.gameMatch.deleteMany({ where: { weekId: week.id } }),
-    prisma.gameMatch.createMany({
-      data: snaps.map((s, i) => ({ weekId: week.id, fixtureId: s.fixtureId, position: i + 1, kickoffAt: s.startingAt })),
-    }),
-  ]);
+  // Maç fixture başına tek satır: günlük listede de olan maç silinmez, yalnız haftadan ayrılır; listedeki maç (varsa günlükten)
+  // haftaya bağlanır.
+  await prisma.$transaction(async (tx) => {
+    await tx.gameMatch.deleteMany({ where: { weekId: week.id, dayId: null, fixtureId: { notIn: ids } } });
+    await tx.gameMatch.updateMany({ where: { weekId: week.id, fixtureId: { notIn: ids } }, data: { weekId: null, position: null } });
+    for (const [i, sn] of snaps.entries()) {
+      await tx.gameMatch.upsert({
+        where: { fixtureId: sn.fixtureId },
+        create: { weekId: week.id, fixtureId: sn.fixtureId, position: i + 1, kickoffAt: sn.startingAt },
+        update: { weekId: week.id, position: i + 1, kickoffAt: sn.startingAt },
+      });
+    }
+  });
   return (await loadAdminWeek(weekKey))!;
 }
 

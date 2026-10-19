@@ -26,6 +26,9 @@ function schemaSql(): string {
 
 export async function startPgliteServer(): Promise<PgliteServer> {
   const db = new PGlite();
+  // Üretim (Supabase) oturumu UTC; PGlite ana makinenin saat dilimini alır (TR'de UTC+3). Prisma `timestamp` sütunlarına UTC
+  // yazar → `now()` ile karşılaştırmalar (ör. tahmin kilidi) prod'daki gibi olsun diye oturum UTC'ye sabitlenir.
+  await db.exec(`SET TIME ZONE 'UTC'`);
   await db.exec(schemaSql());
 
   let queue: Promise<void> = Promise.resolve();
