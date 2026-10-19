@@ -350,8 +350,13 @@ export default function WeekPlay({
             return (
               <li key={m.id} className={styles.matchCard} data-joker={isJoker ? '' : undefined}>
                 <div className={styles.cardMeta}>
-                  <span>{formatKickoff(m.kickoffAt, locale)}</span>
-                  {left != null ? <span className={styles.lockIn}>{t('week.lockIn', { left: formatLeft(left, t) })}</span> : null}
+                  <span className={styles.cardWhen}>
+                    <span>{formatKickoff(m.kickoffAt, locale)}</span>
+                    {left != null ? <span className={styles.lockIn}>{t('week.lockIn', { left: formatLeft(left, t) })}</span> : null}
+                  </span>
+                  <Link href={m.href} className={styles.matchLink} aria-label={`${m.home.name} – ${m.away.name}: ${t('week.matchPage')}`}>
+                    {t('week.matchPage')} <span aria-hidden="true">›</span>
+                  </Link>
                 </div>
                 <div className={styles.duel}>
                   <TeamBadge team={m.home} />
@@ -573,6 +578,9 @@ function MatchRow({ m, pick, isJoker, dv }: { m: GameMatchView; pick: MyPredicti
           ) : (
             <span className={styles.rowState}>{t('week.result')}</span>
           )}
+          <span className={styles.rowGo} aria-hidden="true">
+            ›
+          </span>
         </Link>
         <button type="button" className={styles.rowToggle} aria-expanded={open} aria-controls={bodyId} aria-label={t('week.details')} onClick={() => setOpen((v) => !v)}>
           <span aria-hidden="true">▾</span>

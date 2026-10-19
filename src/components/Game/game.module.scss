@@ -448,6 +448,70 @@ $on-action-fg: var(--color-on-action);
   color: $color-primary-text;
 }
 
+.cardMeta {
+  align-items: center;
+}
+
+// Tarih · kilit sayacı tek satırda (dar ekranda gerekirse alta kayar).
+.cardWhen {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 6px;
+  min-width: 0;
+
+  > span + span::before {
+    content: '·';
+    margin-right: 6px;
+    color: $color-text-secondary;
+    font-weight: 600;
+  }
+}
+
+// Maç sayfası: kartın sağ üstünde belirgin hap düğme (≥ 32 px hedef).
+.matchLink {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 30px;
+  padding: 0 10px;
+  border: 1.5px solid $color-primary;
+  border-radius: $radius-full;
+  color: $color-primary-text;
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: none;
+  white-space: nowrap;
+
+  span {
+    font-size: 16px;
+    line-height: 1;
+  }
+
+  &:hover {
+    background: $color-row-highlight;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+    outline-offset: 2px;
+  }
+}
+
+.rowGo {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: $color-row-highlight;
+  color: $color-primary-text;
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 1;
+}
+
 .duel {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
