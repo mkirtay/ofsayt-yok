@@ -4,6 +4,7 @@ import { useRouter } from 'next/router';
 import Container from '@/components/Container';
 import CompareTeamPicker from '@/components/CompareTeamPicker';
 import EmptyState from '@/components/EmptyState';
+import LoadError from '@/components/LoadError';
 import { PanelSkeleton } from '@/components/Skeleton';
 import { useTranslation } from '@/lib/i18n';
 import '@/lib/i18nNamespaces/compare';
@@ -75,13 +76,26 @@ function StatBar({
   );
 }
 
-function H2HCard({ summary, t1, t2 }: { summary: H2HSummary; t1: string; t2: string }) {
+function H2HCard({
+  summary,
+  t1,
+  t2,
+  failed,
+  onRetry,
+}: {
+  summary: H2HSummary;
+  t1: string;
+  t2: string;
+  /** Karşılaşma geçmişi yüklenemedi (hata ≠ karşılaşma yok). */
+  failed?: boolean;
+  onRetry?: () => void;
+}) {
   const { t } = useTranslation('compare');
   if (summary.total === 0) {
     return (
       <div className={styles.card}>
         <h2 className={styles.cardTitle}>{t('h2h.title')}</h2>
-        <EmptyState>{t('h2h.empty')}</EmptyState>
+        {failed ? <LoadError onRetry={onRetry} /> : <EmptyState>{t('h2h.empty')}</EmptyState>}
       </div>
     );
   }
@@ -203,7 +217,8 @@ export default function ComparePage() {
       : Array.isArray(slugParam)
         ? slugParam[0] ?? slugFromPath
         : slugFromPath;
-  const { data, isLoading, isError } = useComparePage(slug, router.isReady || Boolean(slugFromPath));
+  const { data, isLoading, isError, error, refetch } = useComparePage(slug, router.isReady || Boolean(slugFromPath));
+  const retry = () => void refetch();
 
   return (
     <Container>
@@ -218,17 +233,19 @@ export default function ComparePage() {
             <PanelSkeleton rows={5} />
             <PanelSkeleton rows={5} />
           </>
+        ) : isError && !data && error?.message !== 'NOT_FOUND' ? (
+          <LoadError onRetry={retry} />
         ) : isError || !data ? (
           <div className={styles.empty}>{t('notFound')}</div>
         ) : (
-          <ComparePageContent data={data} />
+          <ComparePageContent data={data} onRetry={retry} />
         )}
       </div>
     </Container>
   );
 }
 
-function ComparePageContent({ data }: { data: ComparePagePayload }) {
+function ComparePageContent({ data, onRetry }: { data: ComparePagePayload; onRetry: () => void }) {
   const { t } = useTranslation('compare');
   const { team1, team2 } = data;
 
@@ -298,7 +315,13 @@ function ComparePageContent({ data }: { data: ComparePagePayload }) {
           </div>
 
           {/* ── Karşılıklı maçlar (H2H) ── */}
-          <H2HCard summary={data.h2hSummary} t1={team1.teamName} t2={team2.teamName} />
+          <H2HCard
+            summary={data.h2hSummary}
+            t1={team1.teamName}
+            t2={team2.teamName}
+            failed={data.failed?.h2h}
+            onRetry={onRetry}
+          />
 
           {/* ── Sezonun en golcüleri ── */}
           {(team1.topScorers.length > 0 || team2.topScorers.length > 0) && (
@@ -317,7 +340,11 @@ function ComparePageContent({ data }: { data: ComparePagePayload }) {
             <div className={styles.card}>
               <h2 className={styles.cardTitle}>{t('recent.title', { team: team1.teamName })}</h2>
               {last5Team1.length === 0 ? (
-                <p className={styles.empty}>{t('recent.empty')}</p>
+                data.failed?.team1Recent ? (
+                  <LoadError onRetry={onRetry} />
+                ) : (
+                  <p className={styles.empty}>{t('recent.empty')}</p>
+                )
               ) : (
                 <div className={styles.tableWrap}>
                   <table className={styles.table}>
@@ -348,7 +375,11 @@ function ComparePageContent({ data }: { data: ComparePagePayload }) {
             <div className={styles.card}>
               <h2 className={styles.cardTitle}>{t('recent.title', { team: team2.teamName })}</h2>
               {last5Team2.length === 0 ? (
-                <p className={styles.empty}>{t('recent.empty')}</p>
+                data.failed?.team2Recent ? (
+                  <LoadError onRetry={onRetry} />
+                ) : (
+                  <p className={styles.empty}>{t('recent.empty')}</p>
+                )
               ) : (
                 <div className={styles.tableWrap}>
                   <table className={styles.table}>

@@ -33,7 +33,11 @@ export default async function handler(
     if (!data) {
       return res.status(404).json({ error: 'Not found' });
     }
-    res.setHeader('Cache-Control', 'public, s-maxage=120, stale-while-revalidate=300');
+    // Bir bölüm yüklenemediyse (geçici sağlayıcı hatası) eksik kopya CDN'de kısa kalır; tam yanıt 2 dk.
+    res.setHeader(
+      'Cache-Control',
+      data.failed ? 'public, s-maxage=30, stale-while-revalidate=30' : 'public, s-maxage=120, stale-while-revalidate=300',
+    );
     return res.status(200).json(propsJsonSafe(data));
   } catch (e) {
     console.error('GET /api/compare/[slug]', e);

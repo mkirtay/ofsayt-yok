@@ -1,6 +1,6 @@
 import {
+  fetchTeamLastMatches,
   getTeamsHead2Head,
-  getTeamLastMatches,
   getTeamTopScorers,
   type Head2HeadData,
 } from '@/services/liveScoreService';
@@ -35,7 +35,14 @@ export type ComparePagePayload = {
   h2hRaw: Head2HeadData | null;
   /** Son 10 karşılaşma özeti (team1/team2 perspektifi). */
   h2hSummary: H2HSummary;
+  /**
+   * Yüklenemeyen bölümler (sağlayıcı hatası / zaman aşımı — "veri yok" DEĞİL). Varsa API yanıtı CDN'de kısa tutulur,
+   * sayfa o bölümde "yüklenemedi · tekrar dene" gösterir. Yalnız en az biri hatalıyken alan var.
+   */
+  failed?: CompareFailedSections;
 };
+
+export type CompareFailedSections = { h2h?: true; team1Recent?: true; team2Recent?: true };
 
 export function parseCompareSlug(slug: string): { team1Id: number; team2Id: number } | null {
   const m = /^(\d+)-vs-(\d+)$/.exec(slug);
@@ -51,11 +58,24 @@ export async function loadComparePageData(
   team2Id: number
 ): Promise<ComparePagePayload | null> {
   return timedSsrLoad(`compare:${team1Id}-vs-${team2Id}`, async () => {
-  const [h2hData, team1Matches, team2Matches] = await Promise.all([
-        getTeamsHead2Head(String(team1Id), String(team2Id)).catch(() => null),
-        getTeamLastMatches(String(team1Id), 10).catch(() => []),
-        getTeamLastMatches(String(team2Id), 10).catch(() => []),
-      ]);
+  // Hata ≠ veri yok: her bölümün hatası ayrı işaretlenir (boş karşılaşma geçmişi / maçsız takım gerçek içeriktir).
+  const [h2hRes, team1Res, team2Res] = await Promise.allSettled([
+    getTeamsHead2Head(String(team1Id), String(team2Id)),
+    fetchTeamLastMatches(String(team1Id), 10),
+    fetchTeamLastMatches(String(team2Id), 10),
+  ]);
+  // Hiçbiri alınamadıysa sayfa "Takım #id" adlı boş kopya olmasın: hata (API 500, istemci yeniden dener).
+  if (h2hRes.status === 'rejected' && team1Res.status === 'rejected' && team2Res.status === 'rejected') {
+    throw h2hRes.reason;
+  }
+  const h2hData = h2hRes.status === 'fulfilled' ? h2hRes.value : null;
+  const team1Matches = team1Res.status === 'fulfilled' ? team1Res.value : [];
+  const team2Matches = team2Res.status === 'fulfilled' ? team2Res.value : [];
+  const failed: CompareFailedSections = {
+    ...(h2hRes.status === 'rejected' ? { h2h: true as const } : {}),
+    ...(team1Res.status === 'rejected' ? { team1Recent: true as const } : {}),
+    ...(team2Res.status === 'rejected' ? { team2Recent: true as const } : {}),
+  };
 
   const team1Rows = team1Matches
     .map((m) => buildRecentMatchRow(m, team1Id))
@@ -125,6 +145,7 @@ export async function loadComparePageData(
     h2h,
     h2hRaw: h2hData,
     h2hSummary,
+    ...(Object.keys(failed).length ? { failed } : {}),
   };
   });
 }

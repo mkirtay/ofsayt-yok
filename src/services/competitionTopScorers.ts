@@ -99,27 +99,39 @@ async function resolveCurrentSeasonId(leagueId: number): Promise<number | null> 
   return envelope.data?.seasons?.find((s) => s.is_current)?.id ?? null;
 }
 
-/** `getTopScorers` ile aynı imza ve sonuç + `played` (O) + `appearancesIncluded`. Hata → null. */
+/**
+ * `getTopScorers` ile aynı imza ve sonuç + `played` (O) + `appearancesIncluded`. Gol satırları alınamazsa (429 /
+ * 5xx / zaman aşımı) FIRLATIR — "gol krallığı yok" sanılmasın; `null` yalnız gerçekten veri yok. Asist hatası
+ * yutulur (asistsiz liste gösterilir).
+ */
+export async function fetchTopScorersWithAppearances(
+  competitionId: string | number,
+  opts?: { season?: number },
+): Promise<TopScorersWithAppearances | null> {
+  const leagueId = Number(competitionId);
+  if (!Number.isFinite(leagueId) || leagueId <= 0 || leagueId === WORLD_CUP_COMPETITION_ID) return null;
+  const seasonId = opts?.season ?? (await resolveCurrentSeasonId(leagueId));
+  if (seasonId == null) return null;
+  const [goalRows, assistRows] = await Promise.all([
+    fetchRows(seasonId, GOAL_TOPSCORER_TYPE_ID),
+    fetchRows(seasonId, ASSIST_TOPSCORER_TYPE_ID).catch(() => null),
+  ]);
+  if (goalRows == null) return null;
+  return {
+    competition: { id: leagueId, name: '' },
+    season: { id: seasonId },
+    topscorers: mapTopScorersWithAppearances([...goalRows, ...(assistRows ?? [])], seasonId),
+    appearancesIncluded: true,
+  };
+}
+
+/** `fetchTopScorersWithAppearances`'ın hatayı yutan hâli: hata → null. */
 export async function getTopScorersWithAppearances(
   competitionId: string | number,
   opts?: { season?: number },
 ): Promise<TopScorersWithAppearances | null> {
   try {
-    const leagueId = Number(competitionId);
-    if (!Number.isFinite(leagueId) || leagueId <= 0 || leagueId === WORLD_CUP_COMPETITION_ID) return null;
-    const seasonId = opts?.season ?? (await resolveCurrentSeasonId(leagueId));
-    if (seasonId == null) return null;
-    const [goalRows, assistRows] = await Promise.all([
-      fetchRows(seasonId, GOAL_TOPSCORER_TYPE_ID),
-      fetchRows(seasonId, ASSIST_TOPSCORER_TYPE_ID).catch(() => null),
-    ]);
-    if (goalRows == null) return null;
-    return {
-      competition: { id: leagueId, name: '' },
-      season: { id: seasonId },
-      topscorers: mapTopScorersWithAppearances([...goalRows, ...(assistRows ?? [])], seasonId),
-      appearancesIncluded: true,
-    };
+    return await fetchTopScorersWithAppearances(competitionId, opts);
   } catch (error) {
     console.error('Error fetching top scorers with appearances (sportmonks)', error);
     return null;

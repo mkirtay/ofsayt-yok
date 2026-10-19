@@ -7,7 +7,7 @@ import {
   type TopScorersPayload,
 } from '@/services/liveScoreService';
 import type { DisciplinaryRow } from '@/services/sportmonksKatman2Mapper';
-import { getCompetitionStandings } from '@/services/competitionStandings';
+import { fetchCompetitionStandings } from '@/services/competitionStandings';
 import { sportmonksLeagueIdOfHubSelection } from '@/utils/hubLeagueSelection';
 
 /**
@@ -44,7 +44,8 @@ export function useStandingsTable(selectionId: number, seasonId: number | null, 
     queryFn: async () => {
       const leagueId = standingsLeagueId(selectionId);
       if (leagueId == null) return null;
-      return getCompetitionStandings(leagueId, { ...(seasonId != null ? { season: seasonId } : {}), withForm: true });
+      // Hata fırlatır (hata ≠ tablo yok): sayfa "Veri yüklenemedi · Tekrar dene" gösterir, önbelleğe boş yazılmaz.
+      return fetchCompetitionStandings(leagueId, { ...(seasonId != null ? { season: seasonId } : {}), withForm: true });
     },
     enabled,
     staleTime: STALE_MS,
@@ -59,8 +60,8 @@ export function useStandingsScorers(selectionId: number, seasonId: number | null
       const leagueId = standingsLeagueId(selectionId);
       if (leagueId == null) return null;
       // Ana sayfa Gol Krallığı sekmesiyle aynı çağrı: oynanan maç (O) yanıta gömülü, ek istek yok. Yalnız sekme açılınca yüklenir.
-      const { getTopScorersWithAppearances } = await import('@/services/competitionTopScorers');
-      return getTopScorersWithAppearances(leagueId, seasonId != null ? { season: seasonId } : undefined);
+      const { fetchTopScorersWithAppearances } = await import('@/services/competitionTopScorers');
+      return fetchTopScorersWithAppearances(leagueId, seasonId != null ? { season: seasonId } : undefined);
     },
     enabled,
     staleTime: STALE_MS,

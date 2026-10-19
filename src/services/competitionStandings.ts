@@ -109,23 +109,37 @@ async function resolveCurrentSeasonId(leagueId: number): Promise<number | null> 
   return envelope.data?.seasons?.find((s) => s.is_current)?.id ?? null;
 }
 
-/** `getCompetitionTableFull` ile aynı imza/dönüş; çok gruplu liglerde `stages`. Hata → null. */
+type StandingsQuery = { season?: number; group_id?: number | string; withForm?: boolean };
+
+/**
+ * `getCompetitionTableFull` ile aynı imza/dönüş; çok gruplu liglerde `stages`. Hata (429 / 5xx / zaman aşımı)
+ * FIRLATIR; `null` yalnız gerçekten tablo yok (geçersiz lig, sezon yok). İstemci (react-query) hatayı "puan durumu
+ * yok" diye önbelleğe yazmasın, "yüklenemedi · tekrar dene" göstersin diye.
+ */
+export async function fetchCompetitionStandings(
+  competitionId: string,
+  query?: StandingsQuery,
+): Promise<CompetitionTableData | null> {
+  const leagueId = Number(competitionId);
+  if (!Number.isFinite(leagueId) || leagueId <= 0 || leagueId === WORLD_CUP_COMPETITION_ID) return null;
+  const seasonId = query?.season ?? (await resolveCurrentSeasonId(leagueId));
+  if (seasonId == null) return null;
+  const rows = await sportmonksCollectAllPages<SportmonksStandingRowWithGroup>({
+    basePath: 'football',
+    path: `/standings/seasons/${seasonId}`,
+    perPage: 50,
+    extraParams: { include: query?.withForm ? STANDINGS_WITH_FORM_INCLUDE : STANDINGS_WITH_GROUPS_INCLUDE },
+  });
+  return buildStandingsData(rows, leagueId, seasonId, query?.group_id);
+}
+
+/** `fetchCompetitionStandings`'in hatayı yutan hâli (sunucu: OG görseli, AI bağlamı): hata → null. */
 export async function getCompetitionStandings(
   competitionId: string,
-  query?: { season?: number; group_id?: number | string; withForm?: boolean },
+  query?: StandingsQuery,
 ): Promise<CompetitionTableData | null> {
   try {
-    const leagueId = Number(competitionId);
-    if (!Number.isFinite(leagueId) || leagueId <= 0 || leagueId === WORLD_CUP_COMPETITION_ID) return null;
-    const seasonId = query?.season ?? (await resolveCurrentSeasonId(leagueId));
-    if (seasonId == null) return null;
-    const rows = await sportmonksCollectAllPages<SportmonksStandingRowWithGroup>({
-      basePath: 'football',
-      path: `/standings/seasons/${seasonId}`,
-      perPage: 50,
-      extraParams: { include: query?.withForm ? STANDINGS_WITH_FORM_INCLUDE : STANDINGS_WITH_GROUPS_INCLUDE },
-    });
-    return buildStandingsData(rows, leagueId, seasonId, query?.group_id);
+    return await fetchCompetitionStandings(competitionId, query);
   } catch (error) {
     console.error('Error fetching competition standings (sportmonks)', error);
     return null;

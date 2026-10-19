@@ -227,6 +227,8 @@ export default function MatchDetail({
     selectedSeasonId,
     matchLoading,
     standingsLoading,
+    standingsError,
+    retryStandings,
     notFound,
     isArchivedMatch,
     handleSeasonChange,
@@ -375,6 +377,8 @@ export default function MatchDetail({
                 <MatchCompetitionStandings
                   data={standings}
                   loading={standingsLoading || matchLoading}
+                  error={standingsError}
+                  onRetry={retryStandings}
                   competitionName={leagueNameById(compId, match?.competition?.name ?? match?.competition_name, tl, 'full')}
                   homeTeamId={homeTeamId}
                   awayTeamId={awayTeamId}

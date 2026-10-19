@@ -11,6 +11,7 @@ import { buildFormationLayout } from '@/utils/lineupFormation';
 import { POSITION_LABEL_TR, positionLabel } from '@/utils/positionLabel';
 import { formatRating } from '@/config/ratingScale';
 import RatingBadge from '@/components/RatingBadge';
+import LoadError from '@/components/LoadError';
 import styles from './lineup.module.scss';
 
 // Ekranın altında: sahne ve CSS'i ayrı parçada (ana sayfanın maç paneliyle ilk yüke girmesin). Kutu burada.
@@ -25,6 +26,9 @@ interface LineupProps {
   loading?: boolean;
   /** Verilirse başlık (İlk 11 / Muhtemel 11) ve boş metin maçın evresine göre. */
   match?: Match | null;
+  /** Yüklenemedi (hata ≠ kadro açıklanmadı): "yüklenemedi · tekrar dene". */
+  error?: boolean;
+  onRetry?: () => void;
 }
 
 /** Başlık + tahmini kadroda alt not ("Resmî ilk 11'ler maçtan yaklaşık 1 saat önce açıklanır."). */
@@ -236,7 +240,7 @@ function LineupLoading({ probable }: { probable: boolean }) {
   );
 }
 
-export default function Lineup({ lineups, loading, match }: LineupProps) {
+export default function Lineup({ lineups, loading, match, error, onRetry }: LineupProps) {
   const { t } = useTranslation('matchState');
   const state = match ? matchDisplayState(match) : null;
   const phase = state?.phase ?? 'POST';
@@ -252,6 +256,7 @@ export default function Lineup({ lineups, loading, match }: LineupProps) {
   if (!homeData && !awayData) {
     // Ertelendi / iptal / tarih belirsiz / gecikti: istatistik ve olay kartları durumu zaten söylüyor → tekrar etme.
     if (state?.special && !specialKeepsData(state.special)) return null;
+    if (error) return <LoadError onRetry={onRetry} />;
     return (
       <div className={styles.empty}>
         {!state

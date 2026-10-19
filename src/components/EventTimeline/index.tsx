@@ -5,6 +5,7 @@ import LazyLoad from '@/components/LazyLoad';
 import { useTranslation } from '@/lib/i18n';
 import '@/lib/i18nNamespaces/matchState';
 import MatchStateNote from '@/components/MatchStateNote';
+import LoadError from '@/components/LoadError';
 import type { Match } from '@/models/liveScore';
 import { matchDisplayState, specialKeepsData } from '@/utils/matchDisplayState';
 import styles from './eventTimeline.module.scss';
@@ -19,6 +20,9 @@ interface EventTimelineProps {
   loading?: boolean;
   /** Verilirse boş metin maçın evresine göre (başlamadı, canlı, bitti, ertelendi…). */
   match?: Match | null;
+  /** Yüklenemedi (hata ≠ olay yok): boş metin yerine "yüklenemedi · tekrar dene". */
+  error?: boolean;
+  onRetry?: () => void;
 }
 
 type T = (key: string, opts?: Record<string, unknown>) => string;
@@ -134,6 +138,8 @@ export default function EventTimeline({
   events,
   loading,
   match,
+  error,
+  onRetry,
 }: EventTimelineProps) {
   const { t } = useTranslation('match');
   const { t: ts } = useTranslation('matchState');
@@ -174,7 +180,9 @@ export default function EventTimeline({
     return (
       <div className={styles.timeline}>
         <h3 className={styles.title}>{t('events.title')}</h3>
-        {state?.special ? (
+        {error ? (
+          <LoadError onRetry={onRetry} />
+        ) : state?.special ? (
           <MatchStateNote special={state.special} variant="message" />
         ) : (
           <div className={styles.empty}>

@@ -91,7 +91,13 @@ export default function MatchDetailContent({ detail, requestedMatchId, variant =
                 .join(' ')}
             >
               <div className={styles.col}>
-                <MatchStats stats={detail.stats} loading={matchLoading || statsLoading} match={match} />
+                <MatchStats
+                  stats={detail.stats}
+                  loading={matchLoading || statsLoading}
+                  match={match}
+                  error={detail.statsError}
+                  onRetry={detail.retryStats}
+                />
               </div>
               <div className={styles.col}>
                 <EventTimeline
@@ -100,10 +106,18 @@ export default function MatchDetailContent({ detail, requestedMatchId, variant =
                   awayName={match?.away?.name}
                   loading={matchLoading || eventsLoading}
                   match={match}
+                  error={detail.eventsError}
+                  onRetry={detail.retryEvents}
                 />
               </div>
             </div>
-            <Lineup lineups={detail.lineups} loading={matchLoading || lineupsLoading} match={match} />
+            <Lineup
+              lineups={detail.lineups}
+              loading={matchLoading || lineupsLoading}
+              match={match}
+              error={detail.lineupsError}
+              onRetry={detail.retryLineups}
+            />
           </>
         ),
       },
@@ -136,6 +150,12 @@ export default function MatchDetailContent({ detail, requestedMatchId, variant =
       detail.stats,
       detail.events,
       detail.lineups,
+      detail.statsError,
+      detail.eventsError,
+      detail.lineupsError,
+      detail.retryStats,
+      detail.retryEvents,
+      detail.retryLineups,
       match,
       matchLoading,
       statsLoading,

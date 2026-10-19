@@ -999,15 +999,22 @@ export const getTeamsHead2Head = async (
 };
 
 // Endpoint: GET /fixtures/{id} (maç sayfasının tek isteği, bkz. `MATCH_PAGE_INCLUDE`)
-// Returns both match details and events
+/**
+ * Maç + olaylar — hata (429 / 5xx / zaman aşımı) FIRLATIR; `{ match: null }` yalnız maç gerçekten yok. İstemci
+ * (maç detayı) hatayı "olay yok" sanmasın diye; `getMatchWithEvents` hatayı yutan hâli (canlı uç).
+ */
+export async function fetchMatchWithEvents(matchId: string): Promise<{ match: Match | null; events: MatchEvent[] }> {
+  const fixture = await fetchMatchPageFixture(matchId);
+  if (!fixture) return { match: null, events: [] };
+  const { match, events } = mapMatchPageFixture(fixture);
+  return { match, events };
+}
+
 export const getMatchWithEvents = async (
   matchId: string
 ): Promise<{ match: Match | null; events: MatchEvent[] }> => {
   try {
-    const fixture = await fetchMatchPageFixture(matchId);
-    if (!fixture) return { match: null, events: [] };
-    const { match, events } = mapMatchPageFixture(fixture);
-    return { match, events };
+    return await fetchMatchWithEvents(matchId);
   } catch (error) {
     console.error('Error fetching match events (sportmonks)', error);
     return { match: null, events: [] };
@@ -1054,6 +1061,11 @@ export const getTeamLastMatches = async (teamId: string, count = 10): Promise<Ma
   const matches = await getTeamHistoryMatches(teamId);
   return matches.slice(0, count);
 };
+
+/** `getTeamLastMatches`'ın hata FIRLATAN hâli (karşılaştırma sayfası): boş liste yalnız gerçekten maç yok. */
+export async function fetchTeamLastMatches(teamId: string, count = 10): Promise<Match[]> {
+  return (await sportmonksFetchTeamFixtures(teamId)).slice(0, count);
+}
 
 /**
  * Takımın tüm turnuvalardaki oynanmamış maçları (en yakından uzağa) — `GET /teams/{id}?include=upcoming...`

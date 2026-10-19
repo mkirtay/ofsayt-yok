@@ -10,6 +10,7 @@ import SeasonSelect from '@/components/SeasonSelect';
 import { formatSeasonLabel } from '@/utils/seasonLabel';
 import styles from './matchCompetitionTopScorers.module.scss';
 import TeamLogo from '@/components/TeamLogo';
+import LoadError from '@/components/LoadError';
 
 /** Gol Krallığı varsayılan görünür satır sayısı; kalanı "Tümünü Göster" ile açılır (veri zaten elde, ek istek yok). */
 export const TOP_SCORERS_INITIAL_LIMIT = 20;
@@ -38,6 +39,9 @@ interface MatchCompetitionTopScorersProps {
    * "Tümünü göster" altta görünür kalır. Sığıyorsa doğal boy. Puan durumundaki `contained` ile aynı.
    */
   contained?: boolean;
+  /** Yüklenemedi (hata ≠ liste boş): "yüklenemedi · tekrar dene". */
+  error?: boolean;
+  onRetry?: () => void;
 }
 
 export default function MatchCompetitionTopScorers({
@@ -48,6 +52,8 @@ export default function MatchCompetitionTopScorers({
   onSeasonChange,
   hideHeader,
   contained = false,
+  error = false,
+  onRetry,
 }: MatchCompetitionTopScorersProps) {
   const blockClass = contained ? `${styles.block} ${styles.blockContained}` : styles.block;
   const { t } = useTranslation('match');
@@ -94,7 +100,7 @@ export default function MatchCompetitionTopScorers({
     return (
       <section className={blockClass} aria-label={t('topScorers.ariaLabel')}>
         {header}
-        <p className={styles.empty}>{t('topScorers.empty')}</p>
+        {error ? <LoadError onRetry={onRetry} /> : <p className={styles.empty}>{t('topScorers.empty')}</p>}
       </section>
     );
   }

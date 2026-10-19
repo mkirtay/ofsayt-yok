@@ -16,6 +16,7 @@ import EmptyState from "@/components/EmptyState";
 import LazyLoad from "@/components/LazyLoad";
 import StandingTeamName from "@/components/StandingTeamName";
 import { StandingsSkeleton } from "@/components/Skeleton";
+import LoadError from "@/components/LoadError";
 import styles from "./matchCompetitionStandings.module.scss";
 import TeamLogo from '@/components/TeamLogo';
 
@@ -216,6 +217,9 @@ interface MatchCompetitionStandingsProps {
   hideHeader?: boolean;
   /** Sezon dışarıdan değiştirilirken (yan panel seçicisi) tablo kutusunda karıştırma animasyonu. */
   seasonBusy?: boolean;
+  /** Yüklenemedi (hata ≠ tablo yok): `data` yokken "yüklenemedi · tekrar dene". */
+  error?: boolean;
+  onRetry?: () => void;
   /**
    * Ebeveynin yüksekliği sınırlı (ana sayfa yan paneli): tablo bölgesi kalan alanda kendi içinde kayar (iki eksen),
    * başlık satırı sticky. Satır sayısından bağımsız; tablo sığıyorsa doğal boyunda kalır (kaydırma çubuğu yok).
@@ -241,6 +245,8 @@ export default function MatchCompetitionStandings({
   hideHeader,
   seasonBusy,
   contained = false,
+  error = false,
+  onRetry,
 }: MatchCompetitionStandingsProps) {
   const { t } = useTranslation("match");
   const [seasonChanging, setSeasonChanging] = useState(false);
@@ -294,7 +300,11 @@ export default function MatchCompetitionStandings({
     return (
       <section className={blockClass(contained)} aria-label={t("standings.ariaLabel")}>
         {hideHeader ? null : <h2 className={styles.title}>{competitionName || t("standings.fallbackName")}</h2>}
-        <EmptyState className={styles.emptyState}>{t("standings.empty")}</EmptyState>
+        {error ? (
+          <LoadError className={styles.emptyState} onRetry={onRetry} />
+        ) : (
+          <EmptyState className={styles.emptyState}>{t("standings.empty")}</EmptyState>
+        )}
       </section>
     );
   }
