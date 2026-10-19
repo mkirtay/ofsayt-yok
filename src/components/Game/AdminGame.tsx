@@ -17,7 +17,7 @@ async function api<T>(url: string, init?: RequestInit): Promise<T> {
 }
 
 /**
- * Admin: tahmin oyunu hafta oluşturucu. Hafta seç → taslak → aday maçlardan 10 seç (sıra = seçim sırası; büyük takım maçları listenin başında) → kaydet → yayınla.
+ * Admin: tahmin oyunu hafta oluşturucu. Hafta seç → taslak → aday maçlardan 10 seç (sıra = seçim sırası; ★ otomatik öneri = config/gameMatchPriority.ts; elle ekle / çıkar serbest) → kaydet → yayınla.
  * Yayından sonra maç başına iptal / sonucu düzelt; oyuncuyu sıralamadan gizle; sonuç işini elle çalıştır.
  * Metinler yalnız admin için (TR, çeviri yok).
  */
@@ -148,6 +148,11 @@ export default function AdminGame() {
                 <button type="button" className={styles.tab} disabled={busy} onClick={() => void run(() => load(weekKey, true))}>
                   Aday maçları getir
                 </button>
+                {suggestions?.some((x) => x.auto) ? (
+                  <button type="button" className={styles.tab} disabled={busy} onClick={() => setPicked(suggestions.filter((x) => x.auto).map((x) => x.fixtureId))}>
+                    Önerilen {suggestions.filter((x) => x.auto).length}&apos;u seç
+                  </button>
+                ) : null}
                 <button type="button" className={styles.btn} disabled={busy || picked.length === 0} onClick={() => void run(async () => {
                   const d = await api<{ week: AdminWeekView }>(`/api/admin/game/weeks/${weekKey}`, { method: 'PUT', body: JSON.stringify({ fixtureIds: picked }) });
                   setWeek(d.week);
@@ -185,7 +190,7 @@ export default function AdminGame() {
                             {picked.includes(s.fixtureId) ? ` ${picked.indexOf(s.fixtureId) + 1}` : ''}
                           </td>
                           <td>
-                            {s.big ? <span aria-label={`${s.big} büyük takım`}>{'★'.repeat(s.big)} </span> : null}
+                            {s.auto ? <span aria-label="önerilen">★ </span> : null}
                             {s.home} – {s.away}
                           </td>
                           <td>{s.leagueName}</td>

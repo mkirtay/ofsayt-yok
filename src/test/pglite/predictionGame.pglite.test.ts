@@ -196,7 +196,7 @@ describe('tahmin oyunu (PGlite + Prisma)', () => {
     const now = new Date();
     const dayKey = week.dayKeyOf(now.getTime());
     const end = week.dayRange(dayKey)!.endsAt.getTime();
-    // Kalan gün içinde 4 aday: 1. Lig (alt seviye), Süper Lig, Premier Lig (büyük takım), Şampiyonlar Ligi → 3'ü seçilir.
+    // Kalan gün içinde 4 aday: 1. Lig, Süper Lig, Premier Lig (Liverpool = Avrupa devi), Şampiyonlar Ligi → 3'ü seçilir.
     const at = (min: number) => new Date(Math.min(now.getTime() + min * 60_000, end - (10 - min) * 60_000));
     const cand = [
       fixture('8001', at(5), { competition_id: 603 }),
@@ -217,7 +217,7 @@ describe('tahmin oyunu (PGlite + Prisma)', () => {
     const created = await days.ensureDailyRound({ now, fixturesForUtcDate: async () => cand, snapshot });
     expect(created?.dayKey).toBe(dayKey);
     const view = await days.loadPublicDay(dayKey);
-    expect(view!.matches.map((m) => m.fixtureId)).toEqual(['8002', '8003', '8004']); // Süper Lig → büyük 5 → kupa; 1. Lig dışarıda
+    expect(view!.matches.map((m) => m.fixtureId)).toEqual(['8003', '8002', '8004']); // Avrupa devi (Liverpool) → Süper Lig → kupa; 1. Lig dışarıda
     expect(view!.matches.every((m) => m.dayKey === dayKey && m.weekKey === null)).toBe(true);
     expect((await days.ensureDailyRound({ now, fixturesForUtcDate: async () => cand, snapshot }))?.id).toBe(created!.id); // idempotent
 

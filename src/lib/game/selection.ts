@@ -1,53 +1,76 @@
 /**
- * Maç seçimi (saf): haftalık admin önerilerinin sırası ve günlük oyunun ("Günün 3 maçı") otomatik seçimi. DB / ağ yok →
- * tablo testli (selection.test.ts). Girdi ana sayfayla aynı önbellekli gün listeleri (`fixtures/date/{d}`); yeni istek türü yok.
+ * Maç seçimi (saf): haftalık admin önerilerinin sırası (ilk 10 = otomatik öneri) ve günlük oyunun ("Günün 3 maçı") otomatik
+ * seçimi. Öncelik ve sınırlar config/gameMatchPriority.ts'te (tek kaynak). DB / ağ yok → tablo testli (selection.test.ts).
+ * Girdi ana sayfayla aynı önbellekli gün listeleri (`fixtures/date/{d}`); yeni istek türü yok.
  */
 import type { Match } from '@/models/liveScore';
 import { matchKickoffMs } from '@/utils/matchActivity';
+import {
+  DAILY_LIMITS,
+  EURO_GIANT_EXTRA_IDS,
+  EURO_GIANT_IDS,
+  LEAGUE_ORDER,
+  TOP_LEAGUE_IDS,
+  TURKEY_BIG_TEAM_IDS,
+  TURKISH_LEAGUE_IDS,
+  UEFA_IDS,
+  WEEKLY_LIMITS,
+  type DiversityLimits,
+} from '@/config/gameMatchPriority';
 
-/** Haftalık öneri önceliği: Süper Lig, UEFA kupaları, beş büyük lig, Türkiye Kupası / 1. Lig. Listede olmayan ligler sona. */
-export const LEAGUE_PRIORITY: readonly number[] = [600, 2, 5, 2286, 8, 564, 384, 82, 301, 606, 603];
-
-/**
- * Günlük öncelik kademeleri (kullanıcı kararı 2026-10-19): Süper Lig → beş büyük lig → Avrupa kupaları → alt seviye
- * (1. Lig, Türkiye Kupası, Hollanda, Portekiz, Belçika, İskoçya, ikinci ligler …). Kademede yer almayan ligler en sonda.
- */
-export const DAILY_TIERS: readonly (readonly number[])[] = [
-  [600],
-  [8, 564, 384, 82, 301],
-  [2, 5, 2286],
-  [603, 606, 72, 462, 208, 501, 9, 85, 304, 387, 567, 570, 325, 591],
-];
-
-/**
- * Büyük takımlar (Sportmonks takım id): Süper Lig'in büyükleri + Avrupa devleri. Aynı kademede büyük takım içeren maç öne
- * alınır (iki büyük takım = derbi en önde).
- */
-export const BIG_TEAM_IDS: ReadonlySet<number> = new Set([
-  34, 88, 554, 688, // Galatasaray, Fenerbahçe, Beşiktaş, Trabzonspor
-  3468, 83, 7980, // Real Madrid, Barcelona, Atlético
-  9, 8, 19, 18, 14, 6, // Man City, Liverpool, Arsenal, Chelsea, Man United, Tottenham
-  503, 68, 3321, // Bayern, Dortmund, Leverkusen
-  2930, 113, 625, 597, // Inter, Milan, Juventus, Napoli
-  591, // PSG
-]);
-
-export type Candidate = { fixtureId: string; kickoffMs: number; leagueId: number | null; leagueName: string; home: string; away: string; big: number };
+export type Candidate = {
+  fixtureId: string;
+  kickoffMs: number;
+  leagueId: number | null;
+  leagueName: string;
+  home: string;
+  away: string;
+  homeId: number | null;
+  awayId: number | null;
+  /** Kademe (1 en önemli; config/gameMatchPriority.ts). */
+  tier: number;
+  /** Maçtaki Avrupa devi sayısı (çekirdek 2, ek liste 1 ağırlık). */
+  giants: number;
+};
 
 const teamId = (t: Match['home'] | undefined, fallback: number | undefined) => {
   const n = Number((t as { id?: unknown } | undefined)?.id ?? fallback);
-  return Number.isFinite(n) ? n : null;
+  return Number.isFinite(n) && n > 0 ? n : null;
 };
+const leagueOf = (m: Match) => m.competition_id ?? (m.competition?.id != null ? Number(m.competition.id) : null);
+
+/** Türk takımları: listelerde Türkiye liglerinde oynayan takımlar (o haftanın fikstürü; ek istek yok). */
+export function turkishTeamsIn(matches: readonly Match[]): Set<number> {
+  const out = new Set<number>(TURKEY_BIG_TEAM_IDS);
+  for (const m of matches) {
+    const l = leagueOf(m);
+    if (l == null || !TURKISH_LEAGUE_IDS.has(l)) continue;
+    for (const id of [teamId(m.home, m.home_id), teamId(m.away, m.away_id)]) if (id != null) out.add(id);
+  }
+  return out;
+}
+
+export function tierOf(leagueId: number | null, ids: readonly (number | null)[], turkish: ReadonlySet<number>): number {
+  const has = (set: ReadonlySet<number>) => ids.some((id) => id != null && set.has(id));
+  if (has(TURKEY_BIG_TEAM_IDS)) return 1;
+  if (leagueId != null && UEFA_IDS.has(leagueId) && has(turkish)) return 2;
+  if (has(EURO_GIANT_IDS) || has(EURO_GIANT_EXTRA_IDS)) return 3;
+  if (leagueId != null && TOP_LEAGUE_IDS.has(leagueId)) return 4;
+  return 5;
+}
 
 /** Pencere içinde ve henüz başlamamış (durum kodu yok, saat belli) maçlar; fixture başına tek aday. */
 export function candidatesIn(matches: readonly Match[], startsAt: Date, endsAt: Date, now: Date): Candidate[] {
+  const turkish = turkishTeamsIn(matches);
   const out = new Map<string, Candidate>();
   for (const m of matches) {
     const k = matchKickoffMs(m);
     if (k == null || k <= now.getTime() || k < startsAt.getTime() || k >= endsAt.getTime()) continue;
     if (m.state_code || m.time_tbd) continue;
-    const leagueId = m.competition_id ?? (m.competition?.id != null ? Number(m.competition.id) : null);
-    const big = [teamId(m.home, m.home_id), teamId(m.away, m.away_id)].filter((id) => id != null && BIG_TEAM_IDS.has(id)).length;
+    const leagueId = leagueOf(m);
+    const homeId = teamId(m.home, m.home_id);
+    const awayId = teamId(m.away, m.away_id);
+    const ids = [homeId, awayId];
     out.set(String(m.id), {
       fixtureId: String(m.id),
       kickoffMs: k,
@@ -55,31 +78,64 @@ export function candidatesIn(matches: readonly Match[], startsAt: Date, endsAt: 
       leagueName: m.competition?.name ?? m.competition_name ?? '',
       home: m.home?.name ?? m.home_name ?? '',
       away: m.away?.name ?? m.away_name ?? '',
-      big,
+      homeId,
+      awayId,
+      tier: tierOf(leagueId, ids, turkish),
+      giants: ids.reduce<number>((n, id) => n + (id != null && EURO_GIANT_IDS.has(id) ? 2 : id != null && EURO_GIANT_EXTRA_IDS.has(id) ? 1 : 0), 0),
     });
   }
   return [...out.values()];
 }
 
-const prioOf = (leagueId: number | null) => {
-  const i = leagueId != null ? LEAGUE_PRIORITY.indexOf(leagueId) : -1;
-  return i === -1 ? LEAGUE_PRIORITY.length : i;
+const leagueRank = (leagueId: number | null) => {
+  const i = leagueId != null ? LEAGUE_ORDER.indexOf(leagueId) : -1;
+  return i === -1 ? LEAGUE_ORDER.length : i;
 };
 
-/** Haftalık öneri sırası: büyük takım sayısı ↓, lig önceliği, başlama saati. */
-export function rankWeekly(cands: readonly Candidate[]): Candidate[] {
-  return [...cands].sort((a, b) => b.big - a.big || prioOf(a.leagueId) - prioOf(b.leagueId) || a.kickoffMs - b.kickoffMs);
+/** Öncelik sırası: kademe ↑, dev ağırlığı ↓, lig önceliği, başlama saati ↑. */
+export function rankCandidates(cands: readonly Candidate[]): Candidate[] {
+  return [...cands].sort((a, b) => a.tier - b.tier || b.giants - a.giants || leagueRank(a.leagueId) - leagueRank(b.leagueId) || a.kickoffMs - b.kickoffMs);
 }
 
-const tierOf = (leagueId: number | null) => {
-  const i = leagueId == null ? -1 : DAILY_TIERS.findIndex((t) => t.includes(leagueId));
-  return i === -1 ? DAILY_TIERS.length : i;
-};
-
 /**
- * Günün maçları: kademe sırasıyla (Süper Lig → büyük 5 → kupalar → alt seviye → diğer), kademe içinde büyük takım ↓ ve erken
- * başlayan önce; en çok `count`. Kademeye girmeyen ligler yalnız başka aday yoksa.
+ * Öncelik sırasıyla en çok `count` maç; 1. kademe (Türkiye'nin büyükleri) her zaman girer, diğerleri çeşitlilik sınırlarına
+ * uyar (aynı lig / aynı takım; 1. kademe maçları da sayıma girer). Sınırlar yüzünden liste dolmazsa (aday çeşitliliği yok)
+ * kalan en öncelikli adaylarla tamamlanır — yayın için tam liste gerekir.
  */
+export function selectMatches(cands: readonly Candidate[], count: number, limits: DiversityLimits): Candidate[] {
+  const ranked = rankCandidates(cands);
+  const picked: Candidate[] = [];
+  const perLeague = new Map<string, number>();
+  const perTeam = new Map<number, number>();
+  const take = (c: Candidate) => {
+    picked.push(c);
+    const lk = String(c.leagueId);
+    perLeague.set(lk, (perLeague.get(lk) ?? 0) + 1);
+    for (const id of [c.homeId, c.awayId]) if (id != null) perTeam.set(id, (perTeam.get(id) ?? 0) + 1);
+  };
+  for (const c of ranked.filter((x) => x.tier === 1)) if (picked.length < count) take(c);
+  for (const c of ranked) {
+    if (picked.length >= count) break;
+    if (c.tier === 1) continue;
+    if ((perLeague.get(String(c.leagueId)) ?? 0) >= limits.maxPerLeague) continue;
+    if ([c.homeId, c.awayId].some((id) => id != null && (perTeam.get(id) ?? 0) >= limits.maxPerTeam)) continue;
+    take(c);
+  }
+  for (const c of ranked) {
+    if (picked.length >= count) break;
+    if (!picked.includes(c)) take(c);
+  }
+  return rankCandidates(picked);
+}
+
+/** Haftalık admin önerisi: otomatik 10 (sınırlarla) önce, sonra kalan adaylar öncelik sırasıyla. */
+export function rankWeekly(cands: readonly Candidate[], count = 10): (Candidate & { auto: boolean })[] {
+  const auto = selectMatches(cands, count, WEEKLY_LIMITS);
+  const ids = new Set(auto.map((c) => c.fixtureId));
+  return [...auto.map((c) => ({ ...c, auto: true })), ...rankCandidates(cands.filter((c) => !ids.has(c.fixtureId))).map((c) => ({ ...c, auto: false }))];
+}
+
+/** Günün maçları: aynı sıra, günlük sınırlar. */
 export function pickDaily(cands: readonly Candidate[], count = 3): Candidate[] {
-  return [...cands].sort((a, b) => tierOf(a.leagueId) - tierOf(b.leagueId) || b.big - a.big || a.kickoffMs - b.kickoffMs).slice(0, count);
+  return selectMatches(cands, count, DAILY_LIMITS);
 }

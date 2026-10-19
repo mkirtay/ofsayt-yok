@@ -618,11 +618,17 @@ iki oyunda sayılır (haftalıkta joker çarpanı, günlükte yok); kartta "Haft
 - `GamePrediction.weekId` / `dayId` maçın listelerinden yazılır (hangi oyundan girilirse girilsin); `points` haftalık (joker
   dahil), `basePoints` günlük (jokersiz). Günlük tablo tahminlerden doğrudan hesaplanır (gün satırı/entry yok).
 
-**Günlük seçim** (`lib/game/selection.ts → pickDaily`, `server/game/days.ts → ensureDailyRound`): `game-settle` her turda bugünü
-dener; günün iki UTC tarihinin önbellekli fikstür listelerinden (ana sayfayla aynı anahtar) başlamamış adaylar; kademe Süper Lig →
-beş büyük lig → Avrupa kupaları → alt seviye (1. Lig, Türkiye Kupası, Hollanda, Portekiz, Belçika, İskoçya, ikinci ligler …) →
-diğer; kademe içinde büyük takım (BIG_TEAM_IDS) önce, sonra saat. Maç başına snapshot (yoksa bir `fixtures/{id}`, günde en çok 3).
-Haftalık maç güne eklenirse mevcut tahminlerin `dayId`'si güncellenir. Haftalık admin önerileri de büyük takım ↓ sıralı (★).
+**Maç önceliği** (kullanıcı kararı 2026-10-19, tek kaynak `src/config/gameMatchPriority.ts`, seçim `lib/game/selection.ts`):
+1) Türkiye'nin büyükleri (GS, FB, BJK, TS) — o hafta / gün oynadıkları HER maç her zaman girer; 2) Avrupa kupalarındaki diğer Türk
+takımları (Türk takımı = o haftanın Türkiye ligi fikstürlerinde oynayan takım; ek istek yok); 3) Avrupa devlerinin maçları (iki dev
+karşılaşıyorsa en üstte; çekirdek: RM, BAR, Bayern, PSG, LIV, ARS, MCI, Inter, Milan, Juve; ek: Atlético, BVB, Chelsea, Man Utd);
+4) Süper Lig'in kalanı + beş büyük lig; 5) diğerleri. Çeşitlilik: haftalıkta aynı ligden en çok 5, aynı takımdan en çok 2; günlükte
+aynı ligden en çok 2 (dört büyükler sınırsız ama sayıma girer). Sınırlar yüzünden dolmazsa en öncelikli adaylarla tamamlanır.
+Admin önerisinde otomatik 10 ★ ile ve listenin başında; "Önerilen 10'u seç" düğmesi; elle ekle / çıkar aynen.
+
+**Günlük seçim** (`server/game/days.ts → ensureDailyRound`, `pickDaily`): `game-settle` her turda bugünü dener; günün iki UTC
+tarihinin önbellekli fikstür listelerinden (ana sayfayla aynı anahtar) başlamamış adaylar, yukarıdaki sırayla (günlük sınırlar).
+Maç başına snapshot (yoksa bir `fixtures/{id}`, günde en çok 3). Haftalık maç güne eklenirse mevcut tahminlerin `dayId`'si güncellenir.
 
 **Erteleme penceresi:** haftalık listedeki maç (çakışanlar dahil) hafta penceresine, yalnız günlük maç o güne göre; dışına
 ertelenirse VOID (iki oyunda 0, joker yanar).

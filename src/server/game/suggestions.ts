@@ -1,11 +1,12 @@
 /**
  * Admin hafta oluşturucu için aday maçlar: haftanın UTC günlerinin fikstür listeleri (paylaşımlı cache — ana sayfayla aynı
- * `fixtures/date/{d}` anahtarları; yeni istek türü yok), yalnız başlamamış maçlar; sıra lib/game/selection.ts (büyük takım ↓, lig önceliği, saat).
+ * `fixtures/date/{d}` anahtarları; yeni istek türü yok), yalnız başlamamış maçlar; sıra config/gameMatchPriority.ts (Türkiye'nin büyükleri → Avrupa'daki Türk takımları → devler → Süper Lig / büyük 5).
  */
 import type { Match } from '@/models/liveScore';
 import { getFixturesByDate } from '@/services/liveScoreService';
 import { weekRange } from '@/lib/game/week';
 import { candidatesIn, rankWeekly } from '@/lib/game/selection';
+import { WEEK_MATCH_COUNT } from '@/server/game/weeks';
 
 export type Suggestion = {
   fixtureId: string;
@@ -14,13 +15,24 @@ export type Suggestion = {
   leagueName: string;
   home: string;
   away: string;
-  /** Maçtaki büyük takım sayısı (0–2; lib/game/selection.ts BIG_TEAM_IDS). */
-  big: number;
+  /** Öncelik kademesi (1 = Türkiye'nin büyükleri; config/gameMatchPriority.ts). */
+  tier: number;
+  /** Otomatik önerilen 10'dan mı (çeşitlilik sınırlarıyla; admin "Önerilen 10'u seç" ile işaretler). */
+  auto: boolean;
 };
 
-/** Sıra: büyük takım sayısı ↓ (derbiler ve Avrupa devleri önde), lig önceliği, başlama saati. */
+/** Sıra: otomatik 10 önce (lib/game/selection.ts → rankWeekly), sonra kalan adaylar öncelik sırasıyla. */
 export function rankSuggestions(matches: readonly Match[], startsAt: Date, endsAt: Date, now: Date): Suggestion[] {
-  return rankWeekly(candidatesIn(matches, startsAt, endsAt, now)).map(({ kickoffMs, ...c }) => ({ ...c, kickoffAt: new Date(kickoffMs).toISOString() }));
+  return rankWeekly(candidatesIn(matches, startsAt, endsAt, now), WEEK_MATCH_COUNT).map((c) => ({
+    fixtureId: c.fixtureId,
+    kickoffAt: new Date(c.kickoffMs).toISOString(),
+    leagueId: c.leagueId,
+    leagueName: c.leagueName,
+    home: c.home,
+    away: c.away,
+    tier: c.tier,
+    auto: c.auto,
+  }));
 }
 
 export async function loadSuggestions(weekKey: string, now: Date = new Date(), listFor = getFixturesByDate): Promise<Suggestion[] | null> {
