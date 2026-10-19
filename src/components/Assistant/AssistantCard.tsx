@@ -4,6 +4,7 @@
  * (sunucu göndermez — bkz. server/assistant/matchAnalysisRequest.ts). Maç kartı: saat/skor/kanal + maç linki.
  */
 import Link from 'next/link';
+import BuyCreditsButton from '@/components/BuyCredits';
 import type { AssistantAnalysisCard, AssistantMatchRef } from '@/server/assistant/matchAnalysisRequest';
 import type { PreviewOutcome } from '@/utils/analysisPreview';
 import type { AssistantCard as AssistantCardData, AssistantMatchItem, AssistantStandingRow } from '@/server/assistant/tools';
@@ -114,9 +115,7 @@ export function AnalysisCard({ card, t, actions }: { card: AssistantAnalysisCard
           {actions.unlockError === 'insufficient' ? (
             <p className={styles.error}>
               {t('card.insufficient')}{' '}
-              <Link href="/pricing" className={styles.link}>
-                {t('card.buyCredits')}
-              </Link>
+              <BuyCreditsButton className={styles.link}>{t('card.buyCredits')}</BuyCreditsButton>
             </p>
           ) : actions.unlockError === 'error' ? (
             <p className={styles.error}>{t('card.error')}</p>

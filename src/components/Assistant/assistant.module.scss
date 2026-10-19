@@ -274,6 +274,12 @@
 }
 
 .link {
+  // <a> ve <button> (kredi popup'ı) aynı görünsün
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: inherit;
+  cursor: pointer;
   font-size: 13px;
   font-weight: 700;
   color: var(--as-note-label);

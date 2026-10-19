@@ -1,19 +1,6 @@
-import { useState } from 'react';
-import Router from 'next/router';
-import { useSession } from 'next-auth/react';
-import { useI18n } from '@/lib/i18n';
-import { PURCHASE_TERMS_VERSION } from '@/config/legalConsent';
+import { useCheckout, type CheckoutErrorKind } from './useCheckout';
 
-/** Son başlatılan ödemenin kimliği: sonuç sayfası hangi siparişi yoklayacağını buradan da bilir (karar sunucuda). */
-export const LAST_PAYMENT_KEY = 'oy_last_payment';
-
-/** Hesap onayı sayfası (lib/termsConsentGate.ts TERMS_CONSENT_PAGE; o modül sunucu tarafı, istemciye alınmaz). */
-const ACCOUNT_TERMS_PAGE = '/auth/onay';
-
-/** Checkout isteği gövdesi: onay + sunucunun beklediği metin sürümü + e-posta dili. */
-export function checkoutRequestBody(packageKey: string, locale: string) {
-  return { packageKey, acceptedTerms: true as const, termsVersion: PURCHASE_TERMS_VERSION, locale: locale === 'en' ? 'en' : 'tr' };
-}
+export { LAST_PAYMENT_KEY, checkoutRequestBody } from './useCheckout';
 
 type Labels = { buy: string; loading: string; soon: string; error: string; unavailable: string; termsRequired: string };
 
@@ -43,10 +30,8 @@ export default function PaymentBuyButton({
   activeClassName: string;
   errorClassName: string;
 }) {
-  const { status } = useSession();
-  const { locale } = useI18n();
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const { start, busyKey, error } = useCheckout('/pricing');
+  const busy = busyKey !== null;
 
   if (!available) {
     return (
@@ -56,46 +41,10 @@ export default function PaymentBuyButton({
     );
   }
 
-  const start = async () => {
-    if (!termsAccepted) return;
-    if (status !== 'authenticated') {
-      void Router.push(`/auth/signin?callbackUrl=${encodeURIComponent('/pricing')}`);
-      return;
-    }
-    setBusy(true);
-    setError(null);
-    try {
-      const res = await fetch('/api/payments/checkout', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(checkoutRequestBody(packageKey, locale)),
-      });
-      const body = (await res.json().catch(() => ({}))) as { url?: string; merchantOrderId?: string; code?: string };
-      if (res.status === 403 && body.code === 'TERMS_REQUIRED') {
-        void Router.push(`${ACCOUNT_TERMS_PAGE}?callbackUrl=${encodeURIComponent('/pricing')}`);
-        return;
-      }
-      if (!res.ok || !body.url) {
-        setError(
-          body.code === 'UNAVAILABLE'
-            ? labels.unavailable
-            : body.code === 'PURCHASE_TERMS_REQUIRED' || body.code === 'PURCHASE_TERMS_OUTDATED'
-              ? labels.termsRequired
-              : labels.error,
-        );
-        setBusy(false);
-        return;
-      }
-      try {
-        if (body.merchantOrderId) sessionStorage.setItem(LAST_PAYMENT_KEY, body.merchantOrderId);
-      } catch {
-        // depolama kapalı: sonuç sayfası son siparişi sunucudan bulur
-      }
-      window.location.assign(body.url);
-    } catch {
-      setError(labels.error);
-      setBusy(false);
-    }
+  const errorText: Record<CheckoutErrorKind, string> = {
+    unavailable: labels.unavailable,
+    termsRequired: labels.termsRequired,
+    error: labels.error,
   };
 
   return (
@@ -103,7 +52,7 @@ export default function PaymentBuyButton({
       <button
         type="button"
         className={`${className} ${activeClassName}`}
-        onClick={() => void start()}
+        onClick={() => termsAccepted && void start(packageKey)}
         disabled={busy || !termsAccepted}
         aria-busy={busy}
         aria-describedby={describedBy}
@@ -112,7 +61,7 @@ export default function PaymentBuyButton({
       </button>
       {error ? (
         <p className={errorClassName} role="alert">
-          {error}
+          {errorText[error]}
         </p>
       ) : null}
     </>

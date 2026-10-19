@@ -95,5 +95,19 @@
     "ctaSignup": "Sign up for free",
     "ctaMatches": "Browse matches",
     "ctaAccuracy": "See AI accuracy"
+  },
+  "modal": {
+    "title": "Top up credits",
+    "desc": "1 credit = 1 AI match analysis. Balance: {{credits}} credits.",
+    "pick": "Pick a package to go straight to checkout.",
+    "consentFirst": "Tick the consent box first to continue to payment.",
+    "secure": "Payment is taken on Hikie's secure payment page; your card details never reach us. Credits are added as soon as the payment is confirmed.",
+    "details": "Package and free credit details",
+    "close": "Close",
+    "signIn": "Sign in to buy credits",
+    "loading": "Loading packages…",
+    "closed": "Credit sales are currently closed.",
+    "redirecting": "Redirecting to payment…",
+    "popular": "Most popular"
   }
 }

@@ -95,5 +95,19 @@
     "ctaSignup": "Ücretsiz üye ol",
     "ctaMatches": "Maçlara göz at",
     "ctaAccuracy": "AI isabet oranını gör"
+  },
+  "modal": {
+    "title": "Kredi yükle",
+    "desc": "1 kredi = 1 AI maç analizi. Bakiyen: {{credits}} kredi.",
+    "pick": "Paketi seç, doğrudan ödeme sayfasına geç.",
+    "consentFirst": "Ödemeye geçmek için önce onay kutusunu işaretle.",
+    "secure": "Ödeme Hikie'nin güvenli ödeme sayfasında alınır; kart bilgilerin bize ulaşmaz. Krediler ödeme onaylanınca hesabına anında yüklenir.",
+    "details": "Paket ve ücretsiz kredi ayrıntıları",
+    "close": "Kapat",
+    "signIn": "Kredi almak için giriş yap",
+    "loading": "Paketler yükleniyor…",
+    "closed": "Kredi satışı şu an kapalı.",
+    "redirecting": "Ödeme sayfasına yönlendiriliyor…",
+    "popular": "En popüler"
   }
 }

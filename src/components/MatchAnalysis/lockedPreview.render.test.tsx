@@ -54,7 +54,8 @@ describe('kilitli analiz kartı', () => {
     expect(text(weekly)).toContain('Bu haftaki ücretsiz açma hakkını kullan');
     expect(text(weekly)).toContain('1 krediyle aç');
     expect(text(render({ offer: offer({ balance: 0 }) }))).not.toContain('1 krediyle aç');
-    expect(render({ offer: offer({ balance: 0 }) })).toContain('href="/pricing"');
+    // Bakiye 0: /pricing'e bağlantı değil, kredi popup'ını açan düğme (paket seçilince doğrudan ödeme).
+    expect(render({ offer: offer({ balance: 0 }) })).toMatch(/<button type="button"[^>]*aria-haspopup="dialog"[^>]*>Kredi al</);
     expect(text(render({ offer: offer({ free: true }) }))).toContain('Ücretsiz aç'); // yönetici dışı kredisiz yol artık yok; görünüm yedeği
     expect(text(render({ offer: offer({ free: true, admin: true }) }))).toContain('Yönetici olarak aç');
   });

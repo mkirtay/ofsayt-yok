@@ -1,0 +1,254 @@
+@use '../../styles/variables' as *;
+
+// Görsel dil ConfirmDialog ile aynı: masaüstünde ortada modal, mobilde alttan sayfa.
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-4;
+  background: rgba(0, 0, 0, 0.55);
+  font-family: $font-family;
+
+  @include below-desktop {
+    align-items: flex-end;
+    padding: 0;
+  }
+}
+
+.dialog {
+  position: relative;
+  width: min(620px, 100%);
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  padding: $spacing-6;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: $radius-lg;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+  outline: none;
+
+  @include below-desktop {
+    width: 100%;
+    max-height: 92dvh;
+    padding: $spacing-5 $spacing-4 calc(#{$spacing-5} + var(--safe-bottom, 0px));
+    border-radius: $radius-lg $radius-lg 0 0;
+  }
+}
+
+.close {
+  position: absolute;
+  top: $spacing-3;
+  right: $spacing-3;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: $color-text-secondary;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+
+  &:hover {
+    background: $color-muted;
+    color: $color-text;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+  }
+}
+
+.eyebrow {
+  margin: 0 0 $spacing-1;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: $color-text-secondary;
+}
+
+.title {
+  margin: 0 0 $spacing-2;
+  font-size: 22px;
+  font-weight: 800;
+  color: $color-text;
+}
+
+.desc {
+  margin: 0 0 $spacing-4;
+  padding-right: $spacing-8;
+  font-size: 14px;
+  line-height: 1.5;
+  color: $color-text-secondary;
+}
+
+.consent {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-3;
+  padding: $spacing-3;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  font-size: 13px;
+  line-height: 1.5;
+  color: $color-text;
+  cursor: pointer;
+}
+
+.consentNudge {
+  border-color: $color-danger;
+}
+
+.checkbox {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  margin: 1px 0 0;
+  accent-color: $color-primary;
+  cursor: pointer;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: $spacing-3;
+  margin-top: $spacing-5;
+
+  @media (max-width: $bp-sm) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: $spacing-4;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  background: var(--bg-page);
+  color: $color-text;
+  text-align: left;
+  cursor: pointer;
+  transition: $transition-base;
+
+  &:hover:not(:disabled) {
+    border-color: $color-primary;
+    transform: translateY(-1px);
+  }
+
+  &:disabled {
+    cursor: progress;
+    opacity: 0.6;
+  }
+
+  &[aria-busy='true'] {
+    opacity: 1;
+    border-color: $color-primary;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+    outline-offset: 2px;
+  }
+
+  @media (max-width: $bp-sm) {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    grid-template-areas: 'amount unit price' 'amount unit per';
+    align-items: center;
+    column-gap: $spacing-2;
+  }
+}
+
+.cardFeatured {
+  border: 2px solid $color-primary;
+}
+
+.popular {
+  position: absolute;
+  top: -10px;
+  right: $spacing-3;
+  padding: 2px 8px;
+  border-radius: $radius-full;
+  background: $color-primary-dark;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.amount {
+  grid-area: amount;
+  font-size: 30px;
+  font-weight: 900;
+  line-height: 1.1;
+}
+
+.unit {
+  grid-area: unit;
+  margin-bottom: $spacing-3;
+  font-size: 12px;
+  color: $color-text-secondary;
+
+  @media (max-width: $bp-sm) {
+    margin: 0;
+  }
+}
+
+.price {
+  grid-area: price;
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.per {
+  grid-area: per;
+  font-size: 12px;
+  color: $color-text-secondary;
+}
+
+.signIn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 $spacing-5;
+  border-radius: $radius-full;
+  background: $color-primary-dark;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.note {
+  margin: $spacing-4 0 0;
+  font-size: 13px;
+  color: $color-text-secondary;
+}
+
+.error {
+  margin: $spacing-2 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: $color-danger;
+}
+
+.footer {
+  margin: $spacing-5 0 0;
+  padding-top: $spacing-4;
+  border-top: 1px solid $color-border;
+  font-size: 12px;
+  line-height: 1.5;
+  color: $color-text-secondary;
+}
+
+.link {
+  color: $color-primary-text;
+  font-weight: 600;
+  text-decoration: underline;
+}

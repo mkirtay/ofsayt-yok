@@ -32,7 +32,7 @@ describe('AI Asistan kartları', () => {
     expect(t1).toContain('En olası sonuç: Galatasaray kazanır %55');
     expect(t1).toContain('1 kredi ile aç');
     expect(text(render({ ...card, signedIn: false }))).toContain('Analizi açmak için giriş yap');
-    expect(text(render(card, { unlockError: 'insufficient' }))).toContain('Yetersiz kredi. Kredi paketleri (çok yakında)');
+    expect(text(render(card, { unlockError: 'insufficient' }))).toContain('Yetersiz kredi. Kredi al');
   });
 
   it('özet: en olası sonuç, noktalar, AI sekmesi linki; analiz yok: "yaklaşık 3 saat önce"', () => {

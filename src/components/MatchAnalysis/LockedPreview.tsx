@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import BuyCreditsButton from '@/components/BuyCredits';
 import { useTranslation } from '@/lib/i18n';
 import type { AnalysisOffer, UnlockMethod } from '@/hooks/useMatchAnalysis';
 import type { AnalysisPreview } from '@/utils/analysisPreview';
@@ -97,9 +98,7 @@ export default function LockedPreview({ preview, offer, loading, busy, error, is
               </button>
             ) : null}
             {offer && offer.balance < offer.cost ? (
-              <Link href="/pricing" className={styles.ctaButton}>
-                {t('analysis.buyCredits')}
-              </Link>
+              <BuyCreditsButton className={styles.ctaButton}>{t('analysis.buyCredits')}</BuyCreditsButton>
             ) : (
               <button
                 type="button"

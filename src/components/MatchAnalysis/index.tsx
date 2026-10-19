@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import BuyCreditsButton from '@/components/BuyCredits';
 import { useTranslation } from '@/lib/i18n';
 import { ANALYSIS_COST, type MatchAnalysisState } from '@/hooks/useMatchAnalysis';
 import LockedPreview from './LockedPreview';
@@ -179,9 +180,7 @@ export default function MatchAnalysis({ match, state, archived = false }: Props)
         ) : insufficientCredits ? (
           <div className={styles.cta}>
             <div className={styles.errorBox}>{t('analysis.insufficientCredits')}</div>
-            <Link href="/pricing" className={styles.ctaButton}>
-              {t('analysis.buyCredits')}
-            </Link>
+            <BuyCreditsButton className={styles.ctaButton}>{t('analysis.buyCredits')}</BuyCreditsButton>
             <p className={styles.reasoning}>
               {t('analysis.creditBalance', { credits })} · {t('analysis.generateCost', { count: ANALYSIS_COST })}
             </p>

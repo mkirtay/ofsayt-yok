@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import Avatar from '@/components/Avatar';
+import BuyCreditsButton from '@/components/BuyCredits';
 import { GundemApiError, useGundemPin, usePlacePinBid, useRemovePin } from '@/hooks/useGundem';
 import { useCredits } from '@/hooks/useCredits';
 import { useTranslation } from '@/lib/i18n';
@@ -137,9 +138,7 @@ export default function GundemPin({ compact = false }: { compact?: boolean }) {
           {notEnough ? (
             <p className={styles.error} role="alert">
               {t('pin.needCredits')}{' '}
-              <Link href="/pricing" className={styles.link}>
-                {t('pin.buyCredits')}
-              </Link>
+              <BuyCreditsButton className={styles.link}>{t('pin.buyCredits')}</BuyCreditsButton>
             </p>
           ) : null}
           {error ? (
