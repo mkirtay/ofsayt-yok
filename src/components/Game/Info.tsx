@@ -6,7 +6,7 @@ import { GAME_BRAND } from '@/config/brand';
 import { POINTS, scorePrediction, type Score } from '@/lib/game/scoring';
 import styles from './game.module.scss';
 
-export const RULE_KEYS = ['lock', 'week', 'regular', 'void', 'tiebreak', 'visible', 'noPrize'] as const;
+export const RULE_KEYS = ['lock', 'week', 'daily', 'both', 'regular', 'void', 'tiebreak', 'visible', 'noPrize'] as const;
 
 export function RulesList() {
   const { t } = useTranslation('game');
@@ -129,8 +129,18 @@ export function Scenarios() {
   );
 }
 
-export const EASY_RULE_KEYS = ['lock', 'week', 'regular', 'void', 'tiebreak', 'visible', 'free'] as const;
-const RULE_ICONS: Record<(typeof EASY_RULE_KEYS)[number], string> = { lock: '🔒', week: '📅', regular: '⏱', void: '✖', tiebreak: '⚖', visible: '👤', free: '🎁' };
+export const EASY_RULE_KEYS = ['lock', 'week', 'daily', 'both', 'regular', 'void', 'tiebreak', 'visible', 'free'] as const;
+const RULE_ICONS: Record<(typeof EASY_RULE_KEYS)[number], string> = {
+  lock: '🔒',
+  week: '📅',
+  daily: '🔥',
+  both: '🔗',
+  regular: '⏱',
+  void: '✖',
+  tiebreak: '⚖',
+  visible: '👤',
+  free: '🎁',
+};
 
 /** Kurallar: ikonlu kısa kartlar (ayrıntılı metin /kurallar sayfasında). */
 export function EasyRules() {
@@ -215,6 +225,20 @@ export function Faq() {
         ))}
       </div>
     </section>
+  );
+}
+
+/** Hero'nun üstünde Haftalık | Günün 3 maçı geçişi (koyu yeşil zemin üstünde segmentli düğme). */
+export function GameModeSwitch({ mode, onChange }: { mode: 'week' | 'day'; onChange: (m: 'week' | 'day') => void }) {
+  const { t } = useTranslation('game');
+  return (
+    <div className={styles.modeSwitch} role="group" aria-label={t('day.switchLabel')}>
+      {(['week', 'day'] as const).map((m) => (
+        <button key={m} type="button" aria-pressed={mode === m} onClick={() => onChange(m)}>
+          {m === 'week' ? t('day.tabWeek') : t('day.tab')}
+        </button>
+      ))}
+    </div>
   );
 }
 

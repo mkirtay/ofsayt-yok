@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { signIn, useSession } from 'next-auth/react';
 import { useI18n, useTranslation } from '@/lib/i18n';
@@ -7,8 +7,8 @@ import { useNow } from '@/hooks/useNow';
 import TeamLogo from '@/components/TeamLogo';
 import { GAME_BRAND } from '@/config/brand';
 import { MAX_GOALS } from '@/lib/game/scoring';
-import type { DistributionView, GameMatchView, GameWeekView, MyPredictionView, MyStandingView, MyWeekView, SaveResult } from '@/lib/game/types';
-import { formatKickoff, formatLeft, weekNumber } from './format';
+import type { DistributionView, GameDayView, GameMatchView, GameWeekView, MyDayView, MyPredictionView, MyStandingView, MyWeekView, SaveResult } from '@/lib/game/types';
+import { formatDayLabel, formatKickoff, formatLeft, weekNumber } from './format';
 import styles from './game.module.scss';
 
 type Pick = { home: number | null; away: number | null };
@@ -66,8 +66,15 @@ export default function WeekPlay({
   nextKey,
   renderedAt,
   headingLevel = 'h1',
+  mode = 'week',
+  switcher,
 }: {
-  week: GameWeekView;
+  /** Haftalık hafta ya da günlük gün (`mode`). */
+  week: GameWeekView | GameDayView;
+  /** "week": 10 maç + joker; "day": Günün 3 maçı (joker yok, günlük sıra ve seri). */
+  mode?: 'week' | 'day';
+  /** Hero'nun üstündeki Haftalık | Günlük geçişi (sayfa verir). */
+  switcher?: ReactNode;
   prevKey?: string | null;
   nextKey?: string | null;
   /** SSR anı (ISO): ilk çizimde başlamış maçlar doğru grupta olsun (istemci saati gelince düzelir). */
@@ -77,6 +84,10 @@ export default function WeekPlay({
   const { t } = useTranslation('game');
   const { locale } = useI18n();
   const { status: authStatus, update: updateSession } = useSession();
+  const isDay = mode === 'day';
+  const roundKey = isDay ? (week as GameDayView).dayKey : (week as GameWeekView).weekKey;
+  const api = isDay ? `/api/game/days/${roundKey}` : `/api/game/weeks/${roundKey}`;
+  const backHref = isDay ? `${GAME_BRAND.basePath}?oyun=gunluk#hafta` : `${GAME_BRAND.basePath}#hafta`;
   const liveNow = useNow(30_000);
   const now = liveNow ?? (renderedAt ? Date.parse(renderedAt) : null);
   const [standing, setStanding] = useState<MyStandingView | null>(null);
@@ -91,17 +102,22 @@ export default function WeekPlay({
   const [dist, setDist] = useState<Record<string, DistributionView>>({});
 
   const applyMe = useCallback(
-    (m: MyWeekView) => {
+    (raw: MyWeekView | MyDayView) => {
+      // Günlük görünüm haftalık şekline çevrilir: joker yok, puan jokersiz `basePoints`.
+      const m: MyWeekView =
+        'dayKey' in raw
+          ? { ...raw, weekKey: raw.dayKey, jokerGameMatchId: null, predictions: raw.predictions.map((p) => ({ ...p, points: p.basePoints })) }
+          : raw;
       setMe(m);
       const picks: Draft = {};
       for (const p of m.predictions) picks[p.gameMatchId] = { home: p.home, away: p.away };
-      const local = readDraft(week.weekKey);
+      const local = readDraft(roundKey);
       // Kaydedilmemiş taslak (ör. girişten dönüş) sunucudakinin üstüne — yalnız hâlâ açık maçlar için.
       if (local) for (const [id, p] of Object.entries(local.picks)) if (week.matches.some((mm) => mm.id === id && !isLocked(mm, Date.now()))) picks[id] = p;
       setDraft(picks);
-      setJoker(local?.joker !== undefined ? local.joker : m.jokerGameMatchId);
+      setJoker(isDay ? null : local?.joker !== undefined ? local.joker : m.jokerGameMatchId);
     },
-    [week],
+    [week, roundKey, isDay],
   );
 
   useEffect(() => {
@@ -110,10 +126,10 @@ export default function WeekPlay({
       // Girişsiz taslak tarayıcıda; mount sonrası (SSR HTML'iyle uyuşmazlık olmasın) okunur.
       let cancelled = false;
       void Promise.resolve().then(() => {
-        const local = cancelled ? null : readDraft(week.weekKey);
+        const local = cancelled ? null : readDraft(roundKey);
         if (local) {
           setDraft(local.picks);
-          setJoker(local.joker ?? null);
+          setJoker(isDay ? null : (local.joker ?? null));
         }
       });
       return () => {
@@ -121,7 +137,7 @@ export default function WeekPlay({
       };
     }
     let cancelled = false;
-    fetch(`/api/game/weeks/${week.weekKey}/me`, { credentials: 'include' })
+    fetch(`${api}/me`, { credentials: 'include' })
       .then((r) => (r.ok ? (r.json() as Promise<MyWeekView>) : null))
       .then((m) => {
         if (!cancelled && m) applyMe(m);
@@ -130,13 +146,14 @@ export default function WeekPlay({
     return () => {
       cancelled = true;
     };
-  }, [authStatus, week.weekKey, applyMe]);
+  }, [authStatus, roundKey, api, applyMe, isDay]);
 
-  // Sezon sırası · üstündekine fark · seri (kompakt şerit).
+  // Sıra (haftalıkta sezon, günlükte gün) · üstündekine fark · seri (kompakt şerit).
+  const standingQuery = isDay ? `scope=day&key=${roundKey}` : `scope=season&key=${(week as GameWeekView).season}`;
   useEffect(() => {
     if (authStatus !== 'authenticated') return;
     let cancelled = false;
-    fetch(`/api/game/leaderboard/me?scope=season&key=${week.season}`, {
+    fetch(`/api/game/leaderboard/me?${standingQuery}`, {
       credentials: 'include',
     })
       .then((r) => (r.ok ? (r.json() as Promise<MyStandingView>) : null))
@@ -145,7 +162,7 @@ export default function WeekPlay({
     return () => {
       cancelled = true;
     };
-  }, [authStatus, week.season, me?.totalPoints]);
+  }, [authStatus, standingQuery, me?.totalPoints]);
 
   // Başlamış maçların topluluk dağılımı (kilit sonrası açık).
   const startedIds = useMemo(() => week.matches.filter((m) => m.status !== 'VOID' && isLocked(m, now)).map((m) => m.id), [week.matches, now]);
@@ -166,7 +183,7 @@ export default function WeekPlay({
     const s = saved.get(m.id);
     return !s || s.home !== d.home || s.away !== d.away;
   });
-  const jokerDirty = (me?.jokerGameMatchId ?? null) !== joker;
+  const jokerDirty = !isDay && (me?.jokerGameMatchId ?? null) !== joker;
   const dirty = dirtyItems.length > 0 || jokerDirty;
   const open = week.status === 'PUBLISHED' && week.matches.some((m) => !isLocked(m, now));
 
@@ -174,7 +191,7 @@ export default function WeekPlay({
     setStatus(null);
     setDraft((prev) => {
       const next = { ...prev, [id]: { home, away } };
-      if (authStatus !== 'authenticated') writeDraft(week.weekKey, { picks: next, joker });
+      if (authStatus !== 'authenticated') writeDraft(roundKey, { picks: next, joker });
       return next;
     });
   };
@@ -190,7 +207,7 @@ export default function WeekPlay({
           [side]: value == null ? null : Math.max(0, Math.min(MAX_GOALS, value)),
         },
       };
-      if (authStatus !== 'authenticated') writeDraft(week.weekKey, { picks: next, joker });
+      if (authStatus !== 'authenticated') writeDraft(roundKey, { picks: next, joker });
       return next;
     });
   };
@@ -199,13 +216,13 @@ export default function WeekPlay({
     setStatus(null);
     const next = joker === id ? null : id;
     setJoker(next);
-    if (authStatus !== 'authenticated') writeDraft(week.weekKey, { picks: draft, joker: next });
+    if (authStatus !== 'authenticated') writeDraft(roundKey, { picks: draft, joker: next });
   };
 
   const save = async () => {
     if (authStatus !== 'authenticated') {
-      writeDraft(week.weekKey, { picks: draft, joker });
-      void signIn('google', { callbackUrl: `${GAME_BRAND.basePath}#hafta` });
+      writeDraft(roundKey, { picks: draft, joker });
+      void signIn('google', { callbackUrl: backHref });
       return;
     }
     setSaving(true);
@@ -219,7 +236,7 @@ export default function WeekPlay({
         })),
         ...(jokerDirty ? { jokerGameMatchId: joker } : {}),
       };
-      const res = await fetch(`/api/game/weeks/${week.weekKey}/predictions`, {
+      const res = await fetch(`${api}/predictions`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -234,7 +251,7 @@ export default function WeekPlay({
         setStatus({ tone: 'error', text: t('week.error') });
         return;
       }
-      writeDraft(week.weekKey, null);
+      writeDraft(roundKey, null);
       applyMe(data.me);
       const partial = data.items?.some((i) => !i.ok);
       const jokerFail = data.joker && !data.joker.ok;
@@ -281,17 +298,24 @@ export default function WeekPlay({
   const scored = me?.predictions.filter((p) => p.points != null) ?? [];
   const showBar = open && (dirty || saving || !!status);
   const Heading = headingLevel;
+  // Henüz tahmini olmayan ilk açık maç: "N boş ↓" bağlantısı oraya kaydırır (10 maçlık listede kolay gezinme).
+  const emptyOpen = openMatches.filter((m) => {
+    const d = draft[m.id];
+    return !(d && d.home != null && d.away != null) && !saved.has(m.id);
+  });
+  const roundLabel = isDay ? formatDayLabel(roundKey, locale) : t('week.label', { week: weekNumber(roundKey) });
 
   return (
     <section id="hafta" className={styles.play} aria-labelledby="game-week-title">
-      <header className={styles.weekHero}>
+      <header className={styles.weekHero} data-mode={mode}>
         <div className={styles.weekHeroTop}>
           <div className={styles.weekHeroText}>
+            {switcher}
             <p className={styles.kicker}>
-              {t('week.label', { week: weekNumber(week.weekKey) })} · {GAME_BRAND.name}
+              {roundLabel} · {isDay ? t('day.name') : GAME_BRAND.name}
             </p>
             <Heading id="game-week-title" className={styles.weekTitle}>
-              {t('hero.title')}
+              {isDay ? t('day.title') : t('hero.title')}
             </Heading>
             <p className={styles.weekHeroMeta}>
               {liveCount > 0 ? (
@@ -304,29 +328,42 @@ export default function WeekPlay({
               ) : week.status === 'SETTLED' ? (
                 t('week.settled')
               ) : firstOpen && now != null ? (
-                `${t('cta.firstKickoff', { left: formatLeft(Date.parse(firstOpen.kickoffAt) - now, t) })} · ${t('hero.jokerShort')}`
+                `${t('cta.firstKickoff', { left: formatLeft(Date.parse(firstOpen.kickoffAt) - now, t) })} · ${isDay ? t('day.noJoker') : t('hero.jokerShort')}`
               ) : (
                 t('hero.free')
               )}
             </p>
           </div>
-          <ProgressRing
-            done={pickedCount}
-            total={playable.length}
-            label={t('week.picked', {
-              done: pickedCount,
-              total: playable.length,
-            })}
-          />
+          <div className={styles.ringCol}>
+            <ProgressRing
+              done={pickedCount}
+              total={playable.length}
+              label={t('week.picked', {
+                done: pickedCount,
+                total: playable.length,
+              })}
+            />
+            {emptyOpen.length && open ? (
+              <a href={`#kart-${emptyOpen[0]!.id}`} className={styles.emptyJump}>
+                {t('week.emptyJump', { count: emptyOpen.length })}
+              </a>
+            ) : null}
+          </div>
         </div>
         {authStatus === 'authenticated' && standing ? (
           <p className={styles.standing}>
             <span className={styles.standingRank}>{standing.rank ? `#${standing.rank}` : '–'}</span>
-            <span>{standing.rank == null ? t('standing.unranked') : standing.gap == null ? t('standing.leader') : t('standing.gap', { count: Math.max(standing.gap, 0) })}</span>
+            <span>
+              {standing.rank == null
+                ? t(isDay ? 'day.unranked' : 'standing.unranked')
+                : standing.gap == null
+                  ? t(isDay ? 'day.leader' : 'standing.leader')
+                  : t('standing.gap', { count: Math.max(standing.gap, 0) })}
+            </span>
             {standing.streak > 0 ? (
               <span
                 className={styles.streak}
-                aria-label={t('standing.streakLabel', {
+                aria-label={t(isDay ? 'day.streakLabel' : 'standing.streakLabel', {
                   count: standing.streak,
                 })}
               >
@@ -348,7 +385,8 @@ export default function WeekPlay({
             const isJoker = joker === m.id;
             const left = now != null ? Date.parse(m.kickoffAt) - now : null;
             return (
-              <li key={m.id} className={styles.matchCard} data-joker={isJoker ? '' : undefined}>
+              <li key={m.id} id={`kart-${m.id}`} className={styles.matchCard} data-joker={isJoker ? '' : undefined} data-both={m.weekKey && m.dayKey ? '' : undefined}>
+                {m.weekKey && m.dayKey ? <BothBadge /> : null}
                 <div className={styles.cardMeta}>
                   <span className={styles.cardWhen}>
                     <span>{formatKickoff(m.kickoffAt, locale)}</span>
@@ -377,15 +415,17 @@ export default function WeekPlay({
                       </button>
                     ))}
                   </div>
-                  <button
-                    type="button"
-                    className={styles.jokerBtn}
-                    aria-pressed={isJoker}
-                    aria-label={`${m.home.name} – ${m.away.name}: ${isJoker ? t('week.jokerOn') : t('week.setJoker')}`}
-                    onClick={() => toggleJoker(m.id)}
-                  >
-                    <span aria-hidden="true">{isJoker ? '★' : '☆'}</span> {isJoker ? '×2' : t('week.joker')}
-                  </button>
+                  {isDay ? null : (
+                    <button
+                      type="button"
+                      className={styles.jokerBtn}
+                      aria-pressed={isJoker}
+                      aria-label={`${m.home.name} – ${m.away.name}: ${isJoker ? t('week.jokerOn') : t('week.setJoker')}`}
+                      onClick={() => toggleJoker(m.id)}
+                    >
+                      <span aria-hidden="true">{isJoker ? '★' : '☆'}</span> {isJoker ? '×2' : t('week.joker')}
+                    </button>
+                  )}
                 </div>
               </li>
             );
@@ -404,14 +444,14 @@ export default function WeekPlay({
         </div>
       ) : null}
 
-      {prevKey || nextKey ? (
+      {!isDay && (prevKey || nextKey) ? (
         <nav className={styles.weekNav} aria-label={t('week.title')}>
           {prevKey ? <Link href={`${GAME_BRAND.basePath}/hafta/${prevKey}`}>← {t('week.prev')}</Link> : <span />}
           {nextKey ? <Link href={`${GAME_BRAND.basePath}/hafta/${nextKey}`}>{t('week.next')} →</Link> : null}
         </nav>
       ) : null}
 
-      {me && scored.length ? <ShareCard week={week} me={me} rank={standing?.rank ?? null} /> : null}
+      {me && scored.length ? <ShareCard label={roundLabel} isDay={isDay} me={me} rank={standing?.rank ?? null} /> : null}
 
       {me && !me.visible && me.nickname ? <p className={styles.muted}>{t('week.notVisible')}</p> : null}
 
@@ -450,7 +490,7 @@ export default function WeekPlay({
           <p className={styles.status} data-tone={status?.tone ?? 'info'} role="status">
             {status?.text ?? (dirty ? t('week.unsavedShort') : '')}
           </p>
-          <span className={styles.saveDots} aria-hidden="true">
+          <span className={styles.saveDots} data-many={playable.length > 5 ? '' : undefined} aria-hidden="true">
             {playable.map((m) => {
               const d = draft[m.id];
               const filled = (d && d.home != null && d.away != null) || saved.has(m.id);
@@ -629,14 +669,14 @@ function MatchRow({ m, pick, isJoker, dv }: { m: GameMatchView; pick: MyPredicti
 }
 
 /** Haftanın sonuç kartı: puan, sıra, tam skorlar; Web Share ya da panoya kopyalama (yalnız metin + bağlantı). */
-function ShareCard({ week, me, rank }: { week: GameWeekView; me: MyWeekView; rank: number | null }) {
+function ShareCard({ label, isDay, me, rank }: { label: string; isDay: boolean; me: MyWeekView; rank: number | null }) {
   const { t } = useTranslation('game');
   const [copied, setCopied] = useState(false);
   const exact = me.predictions.filter((p) => p.breakdown?.exact).length;
-  const n = weekNumber(week.weekKey);
   const share = async () => {
-    const url = `${window.location.origin}${GAME_BRAND.basePath}`;
-    const text = rank ? t('share.textRank', { week: n, points: me.totalPoints, rank }) : t('share.text', { week: n, points: me.totalPoints });
+    const url = `${window.location.origin}${GAME_BRAND.basePath}${isDay ? '?oyun=gunluk' : ''}`;
+    const vars = { round: label, points: me.totalPoints, rank };
+    const text = rank ? t('share.textRank', vars) : t('share.text', vars);
     try {
       if (navigator.share) {
         await navigator.share({ text, url });
@@ -653,7 +693,7 @@ function ShareCard({ week, me, rank }: { week: GameWeekView; me: MyWeekView; ran
     <div className={styles.shareCard}>
       <div>
         <p className={styles.kicker}>
-          {t('share.title')} · {t('week.label', { week: n })}
+          {t('share.title')} · {label}
         </p>
         <p className={styles.shareBig}>
           {t('week.points', { count: me.totalPoints })}
@@ -690,6 +730,16 @@ function GoalInput({ label, value, onChange, t }: { label: string; value: number
       <button type="button" aria-label={`${label} – ${t('week.dec')}`} onClick={() => onChange(value == null ? 0 : value - 1)} disabled={value == null || value <= 0}>
         −
       </button>
+    </span>
+  );
+}
+
+/** Maç hem haftalık hem günlük listede: tek tahmin iki oyunda sayılır. */
+function BothBadge() {
+  const { t } = useTranslation('game');
+  return (
+    <span className={styles.bothBadge} title={t('both.hint')}>
+      {t('both.badge')}
     </span>
   );
 }

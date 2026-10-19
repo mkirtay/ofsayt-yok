@@ -277,6 +277,16 @@ $on-action-fg: var(--color-on-action);
   line-height: 1.1;
   font-weight: 900;
   font-style: italic;
+
+  // Dar ekranda başlık yalnız ekran okuyucuya (h1 kalır): mod geçişi + halka + şerit yeterli, ilk ekranda 2 maç kartı sığsın.
+  @media (max-width: 479px) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
 }
 
 .weekHeroMeta {
@@ -1958,4 +1968,100 @@ $on-action-fg: var(--color-on-action);
     font-weight: 700;
     color: $color-text-secondary;
   }
+}
+
+// ── Haftalık | Günün 3 maçı geçişi (hero'nun üstünde, koyu zemin) ──
+.modeSwitch {
+  display: inline-flex;
+  gap: 4px;
+  margin: 0 0 $spacing-2;
+  padding: 3px;
+  border-radius: $radius-full;
+  background: rgba(0, 0, 0, 0.28);
+
+  button {
+    min-height: 32px;
+    padding: 0 14px;
+    border: 0;
+    border-radius: $radius-full;
+    background: transparent;
+    color: rgba(255, 255, 255, 0.9);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+
+    &[aria-pressed='true'] {
+      background: #fff;
+      color: #06281a;
+    }
+
+    &:focus-visible {
+      outline: 2px solid #fff;
+      outline-offset: 2px;
+    }
+  }
+}
+
+// Günlük hero: aynı koyu yeşil, sıcak (turuncu) vurgu → iki oyun ilk bakışta ayrılır.
+.weekHero[data-mode='day'] {
+  background:
+    radial-gradient(120% 90% at 100% 0%, rgba(214, 112, 30, 0.55) 0%, transparent 60%),
+    linear-gradient(140deg, $hero-deep 0%, $hero-mid 70%, $color-primary-dark 100%);
+
+  .ringValue {
+    stroke: #ffb35c;
+  }
+}
+
+.ringCol {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.emptyJump {
+  padding: 2px 8px;
+  border-radius: $radius-full;
+  background: rgba(0, 0, 0, 0.28);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  text-decoration: none;
+  white-space: nowrap;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+// Kartın üst kenarına oturan rozet (yükseklik eklemez → ilk ekranda 2 kart korunur).
+.bothBadge {
+  position: absolute;
+  top: -9px;
+  left: 12px;
+  padding: 1px 8px;
+  border: 1px solid var(--joker);
+  border-radius: $radius-full;
+  background: var(--bg-surface);
+  color: var(--joker-text);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 16px;
+  white-space: nowrap;
+}
+
+.matchCard[data-both] {
+  position: relative;
+  border-color: var(--joker);
+}
+
+.saveDots[data-many] i {
+  width: 12px;
+}
+
+.matchCard {
+  scroll-margin-top: calc(var(--header-height) + #{$spacing-3});
 }

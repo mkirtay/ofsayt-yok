@@ -1,6 +1,6 @@
 {
   "pageTitle": "{{game}} – Free score prediction game",
-  "pageDesc": "Predict the score of 5 selected matches every week, earn points and climb the weekly and season rankings. Free, not betting, no prizes.",
+  "pageDesc": "Predict the score of 10 selected matches every week and 3 matches every day; collect points and climb the weekly, daily and season rankings. Free, not betting, no prizes.",
   "nav": {
     "play": "Predict",
     "leaderboard": "Rankings",
@@ -8,7 +8,7 @@
   },
   "hero": {
     "title": "Predict the score, be the best of the week.",
-    "sub": "Free. Not betting. 5 selected matches every week.",
+    "sub": "Free. Not betting. 10 selected matches a week, 3 a day.",
     "ctaLogin": "Start with Google",
     "ctaPlay": "Make this week's predictions",
     "howLink": "How to play?",
@@ -20,7 +20,7 @@
     "title": "In 3 steps",
     "s1": {
       "title": "See the matches",
-      "text": "5 selected matches every week."
+      "text": "10 selected matches a week, 3 a day."
     },
     "s2": {
       "title": "Predict the score",
@@ -54,7 +54,7 @@
     "rareC": "Exact score and 5% or fewer predicted it (with at least 30 predictions)",
     "joker": "Joker",
     "jokerC": "One match a week; that match's points are doubled",
-    "max": "Up to 10 points per match, 20 with the joker. Up to 60 points a week."
+    "max": "Up to 10 points per match, 20 with the joker. Up to 110 points a week; up to 30 in the daily game."
   },
   "rules": {
     "title": "Rules and scoring",
@@ -64,7 +64,9 @@
     "void": "A postponed match still counts if it's played within the week. A match moved outside the week, cancelled, abandoned or awarded is void: everyone gets 0 and a joker on it is lost.",
     "tiebreak": "Ties are broken by: more exact scores, more correct results, earlier last change.",
     "visible": "To appear in the rankings you need a nickname and a verified email (Google accounts are verified).",
-    "noPrize": "{{game}} is free and has no prizes: no money is deposited, no money or gifts are won. Only points and rankings."
+    "noPrize": "{{game}} is free and has no prizes: no money is deposited, no money or gifts are won. Only points and rankings.",
+    "daily": "Today's 3 matches: every day (Istanbul time, resets at midnight) 3 of that day's matches are picked: Süper Lig first, then the big 5 leagues, then European cups. No joker. Same scoring; a daily ranking and a streak of consecutive days are kept. Days without matches do not break the streak.",
+    "both": "If a match is in both the weekly and the daily list you enter one pick and it counts in both; the joker multiplier applies to the weekly score only."
   },
   "faq": {
     "title": "FAQ",
@@ -131,7 +133,9 @@
     "unsavedShort": "Not saved",
     "details": "Details",
     "liveCount": "{{count}} matches in play",
-    "liveCount_one": "{{count}} match in play"
+    "liveCount_one": "{{count}} match in play",
+    "emptyJump": "{{count}} empty ↓",
+    "emptyJump_one": "{{count}} empty ↓"
   },
   "bd": {
     "dir": "Result",
@@ -155,7 +159,8 @@
     "all": "Full rankings",
     "you": "You",
     "top": "Season top 10",
-    "podium": "Podium"
+    "podium": "Podium",
+    "today": "Today"
   },
   "nick": {
     "prompt": "Pick a nickname to show in the rankings.",
@@ -187,8 +192,8 @@
     "copied": "Copied",
     "exact": "{{count}} exact scores",
     "exact_one": "{{count}} exact score",
-    "text": "{{game}} week {{week}}: {{points}} points. Make your picks:",
-    "textRank": "{{game}} week {{week}}: {{points}} points, rank {{rank}}. Make your picks:"
+    "text": "{{game}} {{round}}: {{points}} points. Make your picks:",
+    "textRank": "{{game}} {{round}}: {{points}} points, rank {{rank}}. Make your picks:"
   },
   "easy": {
     "lead": "Predict the score of every match. The closer you get, the more points.",
@@ -222,10 +227,10 @@
       "text": "Bonus when at most 5 in 100 players called the exact score."
     },
     "joker": {
-      "title": "Use your joker",
-      "text": "Put it on one match a week; that match counts double."
+      "title": "Use your joker (weekly)",
+      "text": "Put it on one weekly match; that match counts double. No joker in the daily game."
     },
-    "max": "Up to 10 points per match, 20 with the joker.",
+    "max": "Up to 10 points per match, 20 with the joker. Up to 110 points a week.",
     "exampleTitle": "Example",
     "yourPick": "Your pick",
     "result": "Result",
@@ -276,6 +281,14 @@
     "free": {
       "title": "Completely free",
       "text": "No money, no prizes. Just points and rank."
+    },
+    "daily": {
+      "title": "Today's 3 matches",
+      "text": "3 more matches every day. No joker; playing on consecutive days grows your streak. Days without matches do not break it."
+    },
+    "both": {
+      "title": "Match in both lists",
+      "text": "The same match can be in the weekly and the daily list. Pick once, it counts in both."
     }
   },
   "board2": {
@@ -283,5 +296,24 @@
     "exactShort_one": "{{count}} exact",
     "pts": "{{count}} pts",
     "meRank": "Your rank"
+  },
+  "day": {
+    "name": "Today's 3 matches",
+    "tab": "Today's 3",
+    "tabWeek": "Weekly",
+    "title": "Call today's 3 matches, keep your streak.",
+    "noJoker": "No joker",
+    "unranked": "Daily rank arrives with the first result",
+    "leader": "leader today",
+    "streakLabel": "{{count}} days in a row",
+    "streakLabel_one": "{{count}} day in a row",
+    "none": "No matches today",
+    "noneText": "No listed matches today. Your streak is safe; 3 new matches tomorrow.",
+    "boardTitle": "Today's ranking",
+    "switchLabel": "Choose game"
+  },
+  "both": {
+    "badge": "Weekly + Daily",
+    "hint": "This match is in both lists: one pick counts in both games (joker only in the weekly)."
   }
 }

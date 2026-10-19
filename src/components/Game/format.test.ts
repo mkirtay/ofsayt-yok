@@ -14,3 +14,11 @@ describe('oyun gösterim yardımcıları', () => {
   });
   it('hafta numarası', () => expect(weekNumber('2026-W07')).toBe(7));
 });
+
+describe('gün etiketi', () => {
+  it('gün anahtarı İstanbul tarihiyle, kaymadan', async () => {
+    const { formatDayLabel } = await import('./format');
+    expect(formatDayLabel('2026-10-19', 'tr')).toBe('19 Ekim Pazartesi');
+    expect(formatDayLabel('2026-10-19', 'en')).toMatch(/19 October/);
+  });
+});

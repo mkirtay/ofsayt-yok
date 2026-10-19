@@ -1,6 +1,6 @@
 {
   "pageTitle": "{{game}} – Ücretsiz skor tahmin oyunu",
-  "pageDesc": "Her hafta 5 seçilmiş maçın skorunu tahmin et, puan topla, haftalık ve sezonluk sıralamada yüksel. Ücretsiz, bahis değil, ödül yok.",
+  "pageDesc": "Her hafta 10 seçilmiş maçın, her gün de günün 3 maçının skorunu tahmin et; puan topla, haftalık, günlük ve sezonluk sıralamada yüksel. Ücretsiz, bahis değil, ödül yok.",
   "nav": {
     "play": "Tahmin yap",
     "leaderboard": "Sıralama",
@@ -8,7 +8,7 @@
   },
   "hero": {
     "title": "Skoru tahmin et, haftanın en iyisi ol.",
-    "sub": "Ücretsiz. Bahis değil. Her hafta 5 seçilmiş maç.",
+    "sub": "Ücretsiz. Bahis değil. Her hafta 10 seçilmiş maç, her gün 3 maç.",
     "ctaLogin": "Google ile başla",
     "ctaPlay": "Bu haftanın tahminlerini yap",
     "howLink": "Nasıl oynanır?",
@@ -20,7 +20,7 @@
     "title": "3 adımda",
     "s1": {
       "title": "Maçları gör",
-      "text": "Her hafta 5 seçilmiş maç."
+      "text": "Her hafta 10 seçilmiş maç, her gün 3 maç."
     },
     "s2": {
       "title": "Skoru tahmin et",
@@ -54,7 +54,7 @@
     "rareC": "Tam skoru bildin ve o skoru tahmin edenler %5 veya daha az (en az 30 tahmin varsa)",
     "joker": "Joker",
     "jokerC": "Haftada bir maç; o maçın puanı ikiye katlanır",
-    "max": "Maç başına en çok 10 puan, jokerle 20. Hafta başına en çok 60 puan."
+    "max": "Maç başına en çok 10 puan, jokerle 20. Hafta başına en çok 110 puan; günlük oyunda en çok 30."
   },
   "rules": {
     "title": "Kurallar ve puanlama",
@@ -64,7 +64,9 @@
     "void": "Ertelenen maç hafta içinde oynanırsa tahminler geçerli kalır. Hafta dışına ertelenen, iptal edilen, yarıda kalan ya da hükmen sonuçlanan maç iptal sayılır: herkes 0 puan alır, o maçtaki joker yanar.",
     "tiebreak": "Eşitlikte sırasıyla: daha çok tam skor, daha çok doğru yön, son değişikliği daha erken yapan.",
     "visible": "Sıralamada görünmek için takma ad ve doğrulanmış e-posta gerekir (Google hesapları doğrulanmıştır).",
-    "noPrize": "{{game}} ücretsizdir ve ödül yoktur: para yatırılmaz, para ya da hediye kazanılmaz. Yalnız puan ve sıralama."
+    "noPrize": "{{game}} ücretsizdir ve ödül yoktur: para yatırılmaz, para ya da hediye kazanılmaz. Yalnız puan ve sıralama.",
+    "daily": "Günün 3 maçı: her gün (İstanbul saati, gece yarısı yenilenir) o gün oynanan maçlardan 3'ü seçilir; önce Süper Lig, sonra büyük 5 lig, sonra Avrupa kupaları. Joker yoktur. Aynı puanlama geçerlidir; günlük sıralama ve art arda oynanan günlerin serisi tutulur. Maç olmayan gün seriyi bozmaz.",
+    "both": "Bir maç hem haftalık hem günlük listedeyse tek tahmin girilir ve iki oyunda da sayılır; joker çarpanı yalnız haftalık puana uygulanır."
   },
   "faq": {
     "title": "Sık sorulan sorular",
@@ -131,7 +133,9 @@
     "unsavedShort": "Kaydedilmedi",
     "details": "Ayrıntı",
     "liveCount": "{{count}} maç oynanıyor",
-    "liveCount_one": "{{count}} maç oynanıyor"
+    "liveCount_one": "{{count}} maç oynanıyor",
+    "emptyJump": "{{count}} boş ↓",
+    "emptyJump_one": "{{count}} boş ↓"
   },
   "bd": {
     "dir": "Yön",
@@ -155,7 +159,8 @@
     "all": "Tüm sıralama",
     "you": "Sen",
     "top": "Sezonun ilk 10'u",
-    "podium": "Podyum"
+    "podium": "Podyum",
+    "today": "Bugün"
   },
   "nick": {
     "prompt": "Sıralamada görünecek bir takma ad seç.",
@@ -187,8 +192,8 @@
     "copied": "Kopyalandı",
     "exact": "{{count}} tam skor",
     "exact_one": "{{count}} tam skor",
-    "text": "{{game}} {{week}}. hafta: {{points}} puan. Sen de tahmin et:",
-    "textRank": "{{game}} {{week}}. hafta: {{points}} puan, {{rank}}. sıra. Sen de tahmin et:"
+    "text": "{{game}} {{round}}: {{points}} puan. Sen de tahmin et:",
+    "textRank": "{{game}} {{round}}: {{points}} puan, {{rank}}. sıra. Sen de tahmin et:"
   },
   "easy": {
     "lead": "Her maçın skorunu tahmin et. Ne kadar yaklaşırsan o kadar puan.",
@@ -222,10 +227,10 @@
       "text": "Tam skoru 100 kişiden en çok 5'i bildiyse ek puan."
     },
     "joker": {
-      "title": "Jokerini kullan",
-      "text": "Haftada bir maça koy, o maçın puanı iki katına çıkar."
+      "title": "Jokerini kullan (haftalık)",
+      "text": "Haftalık oyunda bir maça koy, o maçın puanı iki katına çıkar. Günün 3 maçında joker yok."
     },
-    "max": "Bir maçtan en çok 10 puan, jokerle 20 puan alırsın.",
+    "max": "Bir maçtan en çok 10 puan, jokerle 20 puan alırsın. Hafta boyunca en çok 110 puan.",
     "exampleTitle": "Örnek",
     "yourPick": "Tahminin",
     "result": "Sonuç",
@@ -276,6 +281,14 @@
     "free": {
       "title": "Tamamen ücretsiz",
       "text": "Para yok, ödül yok. Sadece puan ve sıra."
+    },
+    "daily": {
+      "title": "Günün 3 maçı",
+      "text": "Her gün 3 maç daha. Joker yok; art arda oynadığın günler serini büyütür. Maç olmayan gün serini bozmaz."
+    },
+    "both": {
+      "title": "İki listede olan maç",
+      "text": "Aynı maç hem haftalıkta hem günlükte olabilir. Bir kez tahmin edersin, iki oyunda da sayılır."
     }
   },
   "board2": {
@@ -283,5 +296,24 @@
     "exactShort_one": "{{count}} tam skor",
     "pts": "{{count}} p",
     "meRank": "Senin sıran"
+  },
+  "day": {
+    "name": "Günün 3 maçı",
+    "tab": "Günün 3 maçı",
+    "tabWeek": "Haftalık",
+    "title": "Bugünün 3 maçını bil, seriyi sürdür.",
+    "noJoker": "Joker yok",
+    "unranked": "Günlük sıra ilk sonuçla gelir",
+    "leader": "günün lideri",
+    "streakLabel": "{{count}} gün üst üste",
+    "streakLabel_one": "{{count}} gün üst üste",
+    "none": "Bugün maç yok",
+    "noneText": "Bugün listede oynanan maç yok. Serin bozulmaz; yarın yeni 3 maç seni bekliyor.",
+    "boardTitle": "Günün sıralaması",
+    "switchLabel": "Oyun seç"
+  },
+  "both": {
+    "badge": "Haftalık + Günlük",
+    "hint": "Bu maç iki listede: tek tahminin iki oyunda da sayılır (joker yalnız haftalıkta)."
   }
 }

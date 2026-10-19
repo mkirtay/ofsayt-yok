@@ -28,3 +28,16 @@ export function formatLeft(ms: number, t: T): string {
 export function weekNumber(weekKey: string): number {
   return Number(weekKey.slice(-2));
 }
+
+const dayFmt = new Map<string, Intl.DateTimeFormat>();
+
+/** "2026-10-19" → "19 Ekim Pazartesi" (gün anahtarı İstanbul tarihi; öğlen UTC ile biçimlenir, gün kaymaz). */
+export function formatDayLabel(dayKey: string, locale: string): string {
+  const key = locale === 'en' ? 'en-GB' : 'tr-TR';
+  let f = dayFmt.get(key);
+  if (!f) {
+    f = new Intl.DateTimeFormat(key, { timeZone: 'Europe/Istanbul', day: 'numeric', month: 'long', weekday: 'long' });
+    dayFmt.set(key, f);
+  }
+  return f.format(new Date(`${dayKey}T12:00:00Z`));
+}

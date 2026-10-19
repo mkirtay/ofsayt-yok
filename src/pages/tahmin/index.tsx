@@ -1,12 +1,14 @@
 import type { GetServerSideProps } from 'next';
+import { useState } from 'react';
 import Head from 'next/head';
+import { useRouter } from 'next/router';
 import { signIn, useSession } from 'next-auth/react';
 import { useTranslation } from '@/lib/i18n';
 import '@/lib/i18nNamespaces/game';
 import JsonLd from '@/components/JsonLd';
 import WeekPlay from '@/components/Game/WeekPlay';
 import Leaderboard from '@/components/Game/Leaderboard';
-import { FAQ_KEYS, Faq, GameNav, HowToPlay } from '@/components/Game/Info';
+import { FAQ_KEYS, Faq, GameModeSwitch, GameNav, HowToPlay } from '@/components/Game/Info';
 import styles from '@/components/Game/game.module.scss';
 import { GAME_BRAND } from '@/config/brand';
 import { siteBaseUrl } from '@/lib/siteUrl';
@@ -14,23 +16,34 @@ import { propsJsonSafe } from '@/server/propsJsonSafe';
 import { GAME_PAGE_CACHE, loadGameHome, type GameHomeData } from '@/server/game/pageData';
 import { gamePageGate } from '@/server/game/access';
 
-type Props = GameHomeData & { noindex: boolean };
+type Mode = 'week' | 'day';
+type Props = GameHomeData & { noindex: boolean; initialMode: Mode };
 
 /**
- * Tahmin oyunu ana sayfası: hero → haftanın maçları (form) → 3 adım → nasıl oynanır → canlı sıralama (sezon ilk 10) → SSS → CTA.
+ * Tahmin oyunu ana sayfası: Haftalık (10 maç + joker) | Günün 3 maçı geçişi → maçlar; yan sütunda nasıl oynanır + sıralama
+ * (haftalıkta sezon ilk 10, günlükte günün sıralaması) → SSS → CTA.
  * ScoreHunter landing iskeletinden esinli (ödül / uygulama ekranı bölümleri yok). SSR verisi kişisel değil → CDN 60 sn.
  */
-export const getServerSideProps: GetServerSideProps<Props> = async ({ req, res }) => {
+export const getServerSideProps: GetServerSideProps<Props> = async ({ req, res, query }) => {
   // GAME_ENABLED kapısı (config/gameFlag.ts): kapalı / önizlemede yetkisiz → 404.
   const gate = await gamePageGate(req, res);
   if (!gate) return { notFound: true };
   if (gate.publicCache) res.setHeader('Cache-Control', GAME_PAGE_CACHE);
-  return { props: propsJsonSafe({ ...(await loadGameHome()), noindex: gate.noindex }) };
+  const initialMode: Mode = query.oyun === 'gunluk' ? 'day' : 'week';
+  return { props: propsJsonSafe({ ...(await loadGameHome()), noindex: gate.noindex, initialMode }) };
 };
 
-export default function GameHomePage({ week, season, board, prevKey, nextKey, renderedAt, noindex }: Props) {
+export default function GameHomePage({ week, season, board, prevKey, nextKey, renderedAt, noindex, initialMode, dayKey, day, dayBoard }: Props) {
   const { t } = useTranslation('game');
   const { status } = useSession();
+  const router = useRouter();
+  // Haftalık | Günün 3 maçı: adres çubuğunda `?oyun=gunluk` (paylaşılabilir), sayfa yenilenmeden.
+  const [mode, setMode] = useState<Mode>(initialMode);
+  const changeMode = (next: Mode) => {
+    setMode(next);
+    void router.replace({ pathname: router.pathname, query: next === 'day' ? { oyun: 'gunluk' } : {} }, undefined, { shallow: true, scroll: false });
+  };
+  const switcher = <GameModeSwitch mode={mode} onChange={changeMode} />;
   const SITE = siteBaseUrl();
   const url = `${SITE}${GAME_BRAND.basePath}`;
   const startLogin = () => void signIn('google', { callbackUrl: `${GAME_BRAND.basePath}#hafta` });
@@ -60,11 +73,27 @@ export default function GameHomePage({ week, season, board, prevKey, nextKey, re
             Mobilde tek sütun: maçlar → nasıl oynanır + sıralama → SSS. */}
         <div className={styles.layout}>
           <div className={styles.layoutMain}>
-            {week ? (
-              <WeekPlay week={week} prevKey={prevKey} nextKey={nextKey} renderedAt={renderedAt} />
+            {mode === 'day' ? (
+              day ? (
+                <WeekPlay key={`day-${day.dayKey}`} week={day} mode="day" renderedAt={renderedAt} switcher={switcher} />
+              ) : (
+                <section id="hafta" className={styles.play} aria-labelledby="game-week-title">
+                  <header className={styles.weekHero} data-mode="day">
+                    {switcher}
+                    <p className={styles.kicker}>{t('day.name')}</p>
+                    <h1 id="game-week-title" className={styles.weekTitle}>
+                      {t('day.none')}
+                    </h1>
+                    <p className={styles.weekHeroMeta}>{t('day.noneText')}</p>
+                  </header>
+                </section>
+              )
+            ) : week ? (
+              <WeekPlay key={`week-${week.weekKey}`} week={week} prevKey={prevKey} nextKey={nextKey} renderedAt={renderedAt} switcher={switcher} />
             ) : (
               <>
                 <header className={styles.hero}>
+                  {switcher}
                   <svg className={styles.heroDeco} viewBox="0 0 200 200" aria-hidden="true">
                     <circle cx="100" cy="100" r="90" fill="none" stroke="#fff" strokeWidth="3" />
                     <circle cx="100" cy="100" r="28" fill="none" stroke="#fff" strokeWidth="3" />
@@ -93,7 +122,11 @@ export default function GameHomePage({ week, season, board, prevKey, nextKey, re
           </div>
           <aside className={styles.layoutSide} aria-label={t('how.title')}>
             <HowToPlay />
-            <Leaderboard weekKey={null} season={season} initial={board} initialScope="season" limit={10} title={t('board.top')} />
+            {mode === 'day' && day ? (
+              <Leaderboard key="day" weekKey={null} season={season} dayKey={dayKey} scopes={['day']} initial={dayBoard} initialScope="day" limit={10} title={t('day.boardTitle')} />
+            ) : (
+              <Leaderboard key="season" weekKey={null} season={season} initial={board} initialScope="season" limit={10} title={t('board.top')} />
+            )}
           </aside>
           <div className={styles.layoutRest}>
             <Faq />

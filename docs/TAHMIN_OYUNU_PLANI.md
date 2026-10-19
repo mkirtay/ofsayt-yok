@@ -603,3 +603,39 @@ adlandırıldı (kullanıcı onayı). Seçilen yön: **A (Maç Günü Kartları)
   Kurallar sekmesi ikonlu kısa kartlar (`easyRules.*`); ayrıntılı metin `/tahmin/kurallar`'da "Ayrıntılı kurallar" altında.
 - Sıralama tablosu yerine liste: ilk 3 madalya rengi, baş harf avatarı, lidere göre puan çubuğu, tam skor sayısı, "Sen" vurgusu.
   Podyum yalnız Sıralama sekmesinde. "3 adımda" bölümü yan sütundaki 3 adım şeridine indi.
+
+## 18. Haftalık 10 maç + "Günün 3 maçı" + çakışma (2026-10-19, kullanıcı kararları)
+
+**Kararlar:** haftalık 5 → **10 maç** (hafta sonu Süper Lig'in büyük maçları + büyük Avrupa ligleri, hafta ortası Avrupa
+kupalarındaki büyük takım maçları); joker haftada 1 (×2); puan kuralları aynı; hafta üst sınırı 10 × 10 + 10 (joker) = **110**.
+Yeni **günlük oyun "Günün 3 maçı"**: İstanbul günü (gece yarısı sıfırlanır), o gün oynanan maçlardan 3'ü, joker yok, günlük
+sıralama + **seri** (art arda tahmin yapılan gün; maçı olmayan gün seriyi bozmaz). **Çakışma:** maç iki listedeyse tek tahmin,
+iki oyunda sayılır (haftalıkta joker çarpanı, günlükte yok); kartta "Haftalık + Günlük" rozeti. Ödül yok.
+
+**Veri modeli** (tek migration `20261019180000_prediction_game`; prod'a hiç uygulanmadığı için birleştirildi):
+- `GameMatch` fixture başına tek satır (`fixtureId` tekil); `weekId`+`position` ve/veya `dayId`+`dayPosition`; CHECK en az bir liste.
+- `GameDay` (dayKey "2026-10-19", PUBLISHED → SETTLED). Gün satırı yalnız aday maç varsa açılır.
+- `GamePrediction.weekId` / `dayId` maçın listelerinden yazılır (hangi oyundan girilirse girilsin); `points` haftalık (joker
+  dahil), `basePoints` günlük (jokersiz). Günlük tablo tahminlerden doğrudan hesaplanır (gün satırı/entry yok).
+
+**Günlük seçim** (`lib/game/selection.ts → pickDaily`, `server/game/days.ts → ensureDailyRound`): `game-settle` her turda bugünü
+dener; günün iki UTC tarihinin önbellekli fikstür listelerinden (ana sayfayla aynı anahtar) başlamamış adaylar; kademe Süper Lig →
+beş büyük lig → Avrupa kupaları → alt seviye (1. Lig, Türkiye Kupası, Hollanda, Portekiz, Belçika, İskoçya, ikinci ligler …) →
+diğer; kademe içinde büyük takım (BIG_TEAM_IDS) önce, sonra saat. Maç başına snapshot (yoksa bir `fixtures/{id}`, günde en çok 3).
+Haftalık maç güne eklenirse mevcut tahminlerin `dayId`'si güncellenir. Haftalık admin önerileri de büyük takım ↓ sıralı (★).
+
+**Erteleme penceresi:** haftalık listedeki maç (çakışanlar dahil) hafta penceresine, yalnız günlük maç o güne göre; dışına
+ertelenirse VOID (iki oyunda 0, joker yanar).
+
+**Arayüz:** `/tahmin` hero'sunda Haftalık | Günün 3 maçı geçişi (`?oyun=gunluk`, paylaşılabilir); günlük hero sıcak vurgulu,
+halka n/3, şerit "#sıra · üstündekine X puan / günün lideri · 🔥 gün serisi". Halkanın altında "N boş ↓" (ilk boş maça kaydırır),
+kaydet çubuğunda 10 nokta. Yan sütunda günlükte "Günün sıralaması". `/tahmin/siralama`: Bu hafta | Bugün | Sezon. 390 px'te ilk
+ekranda 2 maç kartı korunur (dar ekranda hero başlığı yalnız ekran okuyucuya).
+
+**API:** `GET /api/game/days/current`, `GET /api/game/days/[dayKey]/me`, `PUT /api/game/days/[dayKey]/predictions`,
+`leaderboard?scope=day&key=2026-10-19` (+ `/me`: günlük sıra, fark, seri).
+
+**Canlıya çıkış (güncel):** 1) `prisma migrate deploy` (yalnız 20261019180000; yeni tablolar). 2) cron-job.org `game-settle`
+(10 dk, `POST /api/admin/game/settle`, `Authorization: Bearer <CRON_SECRET>`) artık günlük oyunu da açar ve kapatır — gün
+başında ilk tur (00:00–00:10 İstanbul) bugünün 3 maçını seçer. 3) Haftalık için admin her Pazartesi öncesi 10 maç seçip yayınlar.
+4) `GAME_ENABLED` kapalı / önizleme / public kararı kullanıcıda.

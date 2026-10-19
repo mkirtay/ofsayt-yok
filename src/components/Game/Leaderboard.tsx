@@ -4,10 +4,10 @@ import { useSession } from 'next-auth/react';
 import { useTranslation } from '@/lib/i18n';
 import '@/lib/i18nNamespaces/game';
 import { GAME_BRAND } from '@/config/brand';
-import type { LeaderboardView, MyStandingView } from '@/lib/game/types';
+import type { BoardScope, LeaderboardView, MyStandingView } from '@/lib/game/types';
 import styles from './game.module.scss';
 
-type Scope = 'week' | 'season';
+type Scope = BoardScope;
 
 /**
  * Haftalık / sezonluk sıralama. İlk veri sunucudan (`initial`, CDN önbellekli sayfa); sekme değişince herkese açık uç.
@@ -17,6 +17,8 @@ type Scope = 'week' | 'season';
 export default function Leaderboard({
   weekKey,
   season,
+  dayKey = null,
+  scopes,
   initial,
   initialScope = 'season',
   limit,
@@ -24,6 +26,10 @@ export default function Leaderboard({
 }: {
   weekKey: string | null;
   season: string;
+  /** Günlük tablo anahtarı (bugün). */
+  dayKey?: string | null;
+  /** Sekmeler (varsayılan: hafta varsa Bu hafta | Sezon). Tek kapsam → sekme yok. */
+  scopes?: Scope[];
   initial: LeaderboardView | null;
   initialScope?: Scope;
   limit?: number;
@@ -35,7 +41,8 @@ export default function Leaderboard({
   const [boards, setBoards] = useState<Partial<Record<Scope, LeaderboardView | null>>>(initial ? { [initial.scope]: initial } : {});
   const [error, setError] = useState(false);
   const [mine, setMine] = useState<Partial<Record<Scope, MyStandingView | null>>>({});
-  const key = scope === 'week' ? weekKey : season;
+  const key = scope === 'week' ? weekKey : scope === 'day' ? dayKey : season;
+  const tabs = scopes ?? (weekKey ? (['week', 'season'] as Scope[]) : []);
 
   useEffect(() => {
     if (!key || boards[scope] !== undefined) return;
@@ -77,11 +84,11 @@ export default function Leaderboard({
       <h2 id="game-board-title" className={side ? styles.sideTitle : styles.h2}>
         {title ?? t('board.title')}
       </h2>
-      {weekKey ? (
+      {tabs.length > 1 ? (
         <div className={styles.tabs} role="tablist" aria-label={t('board.title')}>
-          {(['week', 'season'] as const).map((s) => (
+          {tabs.map((s) => (
             <button key={s} type="button" role="tab" aria-selected={scope === s} aria-controls="game-board-panel" className={styles.tab} onClick={() => setScope(s)}>
-              {t(`board.${s}`)}
+              {t(s === 'day' ? 'board.today' : `board.${s}`)}
             </button>
           ))}
         </div>
