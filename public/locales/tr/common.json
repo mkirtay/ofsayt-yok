@@ -27,7 +27,8 @@
     "refundPolicy": "İade ve İptal",
     "disclaimer": "İstatistiksel tahminler bilgi amaçlıdır.",
     "copyright": "© {{year}} {{brand}}. Tüm hakları saklıdır.",
-    "communityRules": "Topluluk Kuralları"
+    "communityRules": "Topluluk Kuralları",
+    "social": "Sosyal medya"
   },
   "themeToLight": "Açık temaya geç",
   "themeToDark": "Koyu temaya geç",

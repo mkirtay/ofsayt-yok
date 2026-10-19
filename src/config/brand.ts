@@ -31,8 +31,16 @@ export const BRAND = {
   domain: siteUrl.replace(/^https?:\/\//, ''),
   /** Herkese açık iletişim adresi (/iletisim, yasal metinler). Yeni posta kutusu kurulunca yalnız bu satır değişir. */
   contactEmail: 'info@getscor3.com',
-  /** Sosyal hesaplar (kullanıcı adı, "@" olmadan); boş olanlar hiçbir yerde basılmaz. */
-  social: { x: '', instagram: '', youtube: '' } as { x: string; instagram: string; youtube: string },
+  /**
+   * Sosyal hesaplar (kullanıcı adı, "@" olmadan; Facebook'ta sayfa adresinin yolu); boş olanlar hiçbir yerde basılmaz
+   * (footer bağlantıları, JSON-LD `sameAs`).
+   */
+  social: { instagram: 'getscor3', youtube: 'getscor3', x: 'getscor3', facebook: '' } as {
+    instagram: string;
+    youtube: string;
+    x: string;
+    facebook: string;
+  },
   tagline: { tr: 'Canlı Skorlar · Maç Analizi · Puan Durumu', en: 'Live Scores · Match Analysis · Standings' },
   description: 'Türkiye ve dünya futbolundan canlı skorlar, maç analizleri, puan durumu ve spor haberleri.',
 } as const;
@@ -64,12 +72,21 @@ export function brandTitle(title: string, sep: '|' | '—' = '|'): string {
   return `${title} ${sep} ${BRAND.name}`;
 }
 
+export type SocialNetwork = 'instagram' | 'youtube' | 'x' | 'facebook';
+
+/** Dolu sosyal hesaplar, gösterim sırasıyla (footer). */
+export function socialProfiles(): { network: SocialNetwork; label: string; url: string }[] {
+  const { instagram, youtube, x, facebook } = BRAND.social;
+  const all: { network: SocialNetwork; label: string; handle: string; url: string }[] = [
+    { network: 'instagram', label: 'Instagram', handle: instagram, url: `https://www.instagram.com/${instagram}` },
+    { network: 'youtube', label: 'YouTube', handle: youtube, url: `https://www.youtube.com/@${youtube}` },
+    { network: 'x', label: 'X', handle: x, url: `https://x.com/${x}` },
+    { network: 'facebook', label: 'Facebook', handle: facebook, url: `https://www.facebook.com/${facebook}` },
+  ];
+  return all.filter((p) => p.handle).map(({ network, label, url }) => ({ network, label, url }));
+}
+
 /** Dolu sosyal hesapların profil adresleri (JSON-LD `sameAs`). */
 export function socialProfileUrls(): string[] {
-  const { x, instagram, youtube } = BRAND.social;
-  return [
-    x && `https://x.com/${x}`,
-    instagram && `https://www.instagram.com/${instagram}`,
-    youtube && `https://www.youtube.com/@${youtube}`,
-  ].filter((u): u is string => Boolean(u));
+  return socialProfiles().map((p) => p.url);
 }

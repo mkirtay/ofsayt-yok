@@ -27,7 +27,8 @@
     "refundPolicy": "Refund & Cancellation",
     "disclaimer": "Statistical predictions are for informational purposes only.",
     "copyright": "© {{year}} {{brand}}. All rights reserved.",
-    "communityRules": "Community Guidelines"
+    "communityRules": "Community Guidelines",
+    "social": "Social media"
   },
   "themeToLight": "Switch to light theme",
   "themeToDark": "Switch to dark theme",

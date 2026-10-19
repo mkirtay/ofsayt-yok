@@ -38,6 +38,14 @@ describe('marka yardımcıları', () => {
     expect(socialProfileUrls()).toHaveLength(filled);
   });
 
+  it('sosyal profiller: Instagram / YouTube / X sırası ve adres biçimleri (YouTube @tanıtıcı)', () => {
+    const urls = socialProfileUrls();
+    if (BRAND.social.instagram) expect(urls).toContain(`https://www.instagram.com/${BRAND.social.instagram}`);
+    if (BRAND.social.youtube) expect(urls).toContain(`https://www.youtube.com/@${BRAND.social.youtube}`);
+    if (BRAND.social.x) expect(urls).toContain(`https://x.com/${BRAND.social.x}`);
+    for (const u of urls) expect(u).toMatch(/^https:\/\/(www\.)?(instagram|youtube|x|facebook)\.com\/@?[\w.]+$/);
+  });
+
   it('robots.txt Sitemap satırı verilen kökten', () => {
     expect(buildRobotsTxt('https://ornek.test')).toContain('Sitemap: https://ornek.test/sitemap.xml');
   });

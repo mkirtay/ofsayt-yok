@@ -4,6 +4,7 @@ import Container from '@/components/Container';
 import styles from './footer.module.scss';
 import BrandLogo from '@/components/BrandLogo';
 import { LEGAL_PAGES, type LegalDocKey } from '@/config/legalPages';
+import SocialLinks from './SocialLinks';
 
 /** Kurumsal: iletişim + hesabı ilgilendiren metinler; Yasal: KVKK, çerez ve satış metinleri. */
 const CORPORATE_KEYS: readonly LegalDocKey[] = ['terms', 'community', 'privacy'];
@@ -22,6 +23,7 @@ export default function Footer() {
             {/* Footer her iki temada da koyu zeminli → koyu-zemin varyantı. */}
             <BrandLogo surface="dark" height={34} />
             <p className={styles.footerTagline}>{t('footer.tagline')}</p>
+            <SocialLinks className={styles.footerSocial} linkClassName={styles.footerSocialLink} label={t('footer.social')} />
           </div>
 
           <div className={styles.footerLinkGroups}>

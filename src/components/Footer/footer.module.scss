@@ -40,6 +40,38 @@
   color: $color-text-on-dark-secondary;
 }
 
+.footerSocial {
+  display: flex;
+  gap: $spacing-2;
+  margin: $spacing-3 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+// 40×40 dokunma hedefi (WCAG 2.5.8 için ≥24), footer her iki temada koyu → açık ikon.
+.footerSocialLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid $color-border-dark;
+  color: $color-text-on-dark-secondary;
+  transition: $transition-base;
+
+  &:hover {
+    color: $color-text-on-dark;
+    border-color: $color-primary;
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+    outline-offset: 2px;
+  }
+}
+
 .footerLinkGroups {
   display: flex;
   flex-wrap: wrap;
