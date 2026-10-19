@@ -128,7 +128,10 @@
     "quick": "Hızlı skor",
     "noPickShort": "Tahmin yok",
     "saveCount": "Kaydet · {{done}}/{{total}}",
-    "unsavedShort": "Kaydedilmedi"
+    "unsavedShort": "Kaydedilmedi",
+    "details": "Ayrıntı",
+    "liveCount": "{{count}} maç oynanıyor",
+    "liveCount_one": "{{count}} maç oynanıyor"
   },
   "bd": {
     "dir": "Yön",

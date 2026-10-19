@@ -272,6 +272,7 @@ export default function WeekPlay({
   const firstOpen = week.matches.filter((m) => !isLocked(m, now)).sort((a, b) => Date.parse(a.kickoffAt) - Date.parse(b.kickoffAt))[0];
   const openMatches = week.matches.filter((m) => !isLocked(m, now));
   const lockedMatches = week.matches.filter((m) => isLocked(m, now));
+  const liveCount = lockedMatches.filter((m) => m.status === 'SCHEDULED').length;
   const playable = week.matches.filter((m) => m.status !== 'VOID');
   const pickedCount = playable.filter((m) => {
     const d = draft[m.id];
@@ -293,11 +294,20 @@ export default function WeekPlay({
               {t('hero.title')}
             </Heading>
             <p className={styles.weekHeroMeta}>
-              {week.status === 'SETTLED'
-                ? t('week.settled')
-                : firstOpen && now != null
-                  ? `${t('cta.firstKickoff', { left: formatLeft(Date.parse(firstOpen.kickoffAt) - now, t) })} · ${t('hero.jokerShort')}`
-                  : t('hero.free')}
+              {liveCount > 0 ? (
+                <>
+                  <a href="#baslayan" className={styles.heroLive}>
+                    {t('week.liveCount', { count: liveCount })}
+                  </a>
+                  {firstOpen && now != null ? ` · ${t('cta.firstKickoff', { left: formatLeft(Date.parse(firstOpen.kickoffAt) - now, t) })}` : null}
+                </>
+              ) : week.status === 'SETTLED' ? (
+                t('week.settled')
+              ) : firstOpen && now != null ? (
+                `${t('cta.firstKickoff', { left: formatLeft(Date.parse(firstOpen.kickoffAt) - now, t) })} · ${t('hero.jokerShort')}`
+              ) : (
+                t('hero.free')
+              )}
             </p>
           </div>
           <ProgressRing
@@ -379,7 +389,7 @@ export default function WeekPlay({
       ) : null}
 
       {lockedMatches.length ? (
-        <div className={styles.rowsBlock}>
+        <div id="baslayan" className={styles.rowsBlock}>
           <h2 className={styles.rowsTitle}>{t('week.lockedTitle')}</h2>
           <ul className={styles.rows}>
             {lockedMatches.map((m) => (
@@ -503,15 +513,20 @@ function TeamBadge({ team }: { team: GameMatchView['home'] }) {
 
 const shortName = (team: GameMatchView['home']) => team.shortName || team.name.slice(0, 3).toUpperCase();
 
-/** Başlamış / biten / iptal maç: tek satır; açılınca puan kırılımı ve topluluk dağılımı. */
+/**
+ * Başlamış / biten / iptal maç: tek satır — satırın kendisi maç sayfasına gider (canlı skor, olaylar); sağdaki düğme puan
+ * kırılımını ve topluluk dağılımını açar.
+ */
 function MatchRow({ m, pick, isJoker, dv }: { m: GameMatchView; pick: MyPredictionView | undefined; isJoker: boolean; dv: DistributionView | undefined }) {
   const { t } = useTranslation('game');
+  const [open, setOpen] = useState(false);
   const kind = m.status === 'VOID' ? 'void' : m.result ? 'done' : 'live';
   const hit = !!pick?.breakdown?.exact;
+  const bodyId = `game-row-${m.id}`;
   return (
     <li className={styles.row} data-kind={kind}>
-      <details>
-        <summary>
+      <div className={styles.rowLine}>
+        <Link href={m.href} className={styles.rowLink} aria-label={`${m.home.name} – ${m.away.name}: ${t('week.matchPage')}`}>
           <span className={styles.rowTeams}>
             <TeamLogo
               src={m.home.logo}
@@ -558,8 +573,13 @@ function MatchRow({ m, pick, isJoker, dv }: { m: GameMatchView; pick: MyPredicti
           ) : (
             <span className={styles.rowState}>{t('week.result')}</span>
           )}
-        </summary>
-        <div className={styles.rowBody}>
+        </Link>
+        <button type="button" className={styles.rowToggle} aria-expanded={open} aria-controls={bodyId} aria-label={t('week.details')} onClick={() => setOpen((v) => !v)}>
+          <span aria-hidden="true">▾</span>
+        </button>
+      </div>
+      {open ? (
+        <div id={bodyId} className={styles.rowBody}>
           <p className={styles.rowFull}>
             {m.home.name} – {m.away.name}
           </p>
@@ -595,7 +615,7 @@ function MatchRow({ m, pick, isJoker, dv }: { m: GameMatchView; pick: MyPredicti
           ) : null}
           <Link href={m.href}>{t('week.matchPage')} →</Link>
         </div>
-      </details>
+      ) : null}
     </li>
   );
 }

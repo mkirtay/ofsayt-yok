@@ -128,7 +128,10 @@
     "quick": "Quick score",
     "noPickShort": "No pick",
     "saveCount": "Save · {{done}}/{{total}}",
-    "unsavedShort": "Not saved"
+    "unsavedShort": "Not saved",
+    "details": "Details",
+    "liveCount": "{{count}} matches in play",
+    "liveCount_one": "{{count}} match in play"
   },
   "bd": {
     "dir": "Result",
