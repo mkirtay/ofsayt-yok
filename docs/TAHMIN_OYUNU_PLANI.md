@@ -656,8 +656,8 @@ başında ilk tur (00:00–00:10 İstanbul) bugünün 3 maçını seçer. 3) Haf
 - Admin `/admin/tahmin`'de (varsayılan: içinde bulunulan hafta) listeyi taslakta da yayında da değiştirebilir; kaydedince hafta
   **kilitlenir** (`GameWeek.lockedByAdmin`) → cron ezmez. "Otomatiğe bırak" kilidi kaldırır. Başlamış ya da tahmin almış maç
   listeden çıkarılamaz (gerekirse maç iptal edilir). Bitmiş hafta için taslak açılmaz (`PAST`). Yayın 1–10 maçla.
-- `/tahmin`: Günün 3 maçı varsa varsayılan o (`?oyun=gunluk|haftalik` açık seçim); haftalık liste henüz yoksa "sistem
-  seçiyor" metni.
+- `/tahmin`: varsayılan HAFTALIK (kullanıcı kararı 2026-10-20, önceki "günlük varsa günlük" kararının yerine); `?oyun=gunluk`
+  Günün 3 maçı ile açar. Haftalık liste henüz yoksa "sistem seçiyor" metni.
 - Migration `20261020120000_game_week_auto` (yalnız iki sütun; deploy öncesi uygulanabilir).
 - **Admin ekranı sadeleştirildi (2026-10-20):** açılınca "Bu hafta · 19–25 Ekim"; durum "Otomatik seçildi · yayında" / "Admin
   düzenledi · yayında" / "Henüz seçilmedi · sonuç işi ilk turda seçer" / "Kapandı". Tek akış: "Listeyi düzenle" → seçili maçlar
@@ -669,3 +669,5 @@ başında ilk tur (00:00–00:10 İstanbul) bugünün 3 maçını seçer. 3) Haf
   tahmin yaptı · ilk sonuç: <saat>" / "x/y maç sonuçlandı". Podyum yalnız puan alan varken. Kendi satırın ilk 50'de değilse altta
   sabit. Engellediğin kullanıcılar gizli (`/me` → `blockedNicknames`, Gündem kuralı). Maçlar sürerken dakikada bir yenilenir.
   Önbellek anahtarı `game:lb:v2`. Boş durum: "İlk tahmini sen yap" + Tahmin yap.
+- **Sıralamada profil fotoğrafı (2026-10-20):** satırlarda ve podyumda `@/components/Avatar` (User.image; resmi hesap @scor3'te
+  logo — Gündem ile aynı), yoksa takma addan sabit tonlu baş harf. Önbellek anahtarı `game:lb:v3`.

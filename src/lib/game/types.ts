@@ -58,7 +58,16 @@ export type MyWeekView = {
 };
 
 /** `picks`: yapılan tahmin sayısı (haftalıkta n/10, günlükte n/3; sezonda toplam). */
-export type BoardEntryView = { rank: number; nickname: string; points: number; exact: number; direction: number; picks: number };
+export type BoardEntryView = {
+  rank: number;
+  nickname: string;
+  /** Profil fotoğrafı (User.image; resmi hesapta logo) — yoksa baş harf. */
+  image: string | null;
+  points: number;
+  exact: number;
+  direction: number;
+  picks: number;
+};
 
 export type BoardScope = 'week' | 'season' | 'day';
 
@@ -89,6 +98,8 @@ export type MyStandingView = {
   streak: number;
   /** Bu kapsamdaki tahmin sayım. */
   picks: number;
+  /** Kendi profil fotoğrafım (altta sabit "Sen" satırı için). */
+  image: string | null;
   /** Gündem engel kuralı: engellediğim kullanıcıların takma adları — sıralamada gizlenir (tablo herkese açık önbellekte). */
   blockedNicknames: string[];
 };

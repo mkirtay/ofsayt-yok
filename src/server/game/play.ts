@@ -76,8 +76,8 @@ const PRED_SELECT = { gameMatchId: true, home: true, away: true, points: true, b
 // ── Kendi haftam ────────────────────────────────────────────────────────────────────────────────────────────────────
 
 async function viewer(userId: string) {
-  const u = await prisma.user.findUnique({ where: { id: userId }, select: { username: true, emailVerified: true } });
-  return { nickname: u?.username ?? null, visible: !!u?.username && !!u?.emailVerified };
+  const u = await prisma.user.findUnique({ where: { id: userId }, select: { username: true, emailVerified: true, image: true } });
+  return { nickname: u?.username ?? null, image: u?.image ?? null, visible: !!u?.username && !!u?.emailVerified };
 }
 
 export async function loadMyWeek(userId: string, weekKey: string): Promise<MyWeekView | null> {
@@ -183,11 +183,19 @@ export async function saveDayPredictions(userId: string, dayKey: string, body: S
 // ── Sıralama ────────────────────────────────────────────────────────────────────────────────────────────────────────
 
 function toEntries(rows: BoardRow[]): BoardEntryView[] {
-  return rows.map((r, i) => ({ rank: i + 1, nickname: r.nickname, points: Number(r.points), exact: Number(r.exact), direction: Number(r.direction), picks: Number(r.picks ?? 0) }));
+  return rows.map((r, i) => ({
+    rank: i + 1,
+    nickname: r.nickname,
+    image: r.image ?? null,
+    points: Number(r.points),
+    exact: Number(r.exact),
+    direction: Number(r.direction),
+    picks: Number(r.picks ?? 0),
+  }));
 }
 
-// v2: maçlar sonuçlanmadan da katılımcılar + sayaçlar (eski v1 kayıtları şekil farkı yüzünden okunmaz).
-const boardKey = (scope: string, key: string) => `${cacheKeyPrefix()}game:lb:v2:${scope}:${key}`;
+// v3: satırda profil fotoğrafı (eski kayıtlar şekil farkı yüzünden okunmaz).
+const boardKey = (scope: string, key: string) => `${cacheKeyPrefix()}game:lb:v3:${scope}:${key}`;
 
 async function listStats(where: { weekId: string } | { dayId: string }) {
   const ms = await prisma.gameMatch.findMany({ where, select: { kickoffAt: true, status: true } });
@@ -252,10 +260,12 @@ async function blockedNicknames(userId: string): Promise<string[]> {
 
 export async function loadMyStanding(userId: string, scope: BoardScope, key: string): Promise<MyStandingView | null> {
   const s = await loadMyStandingCore(userId, scope, key);
-  return s ? { ...s, blockedNicknames: await blockedNicknames(userId) } : null;
+  if (!s) return null;
+  const [blocked, v] = await Promise.all([blockedNicknames(userId), viewer(userId)]);
+  return { ...s, blockedNicknames: blocked, image: v.image };
 }
 
-async function loadMyStandingCore(userId: string, scope: BoardScope, key: string): Promise<Omit<MyStandingView, 'blockedNicknames'> | null> {
+async function loadMyStandingCore(userId: string, scope: BoardScope, key: string): Promise<Omit<MyStandingView, 'blockedNicknames' | 'image'> | null> {
   const v = await viewer(userId);
   if (scope === 'day') {
     const day = await prisma.gameDay.findUnique({ where: { dayKey: key }, select: { id: true } });

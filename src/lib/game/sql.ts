@@ -174,7 +174,7 @@ WHERE e.id = e2.id AND e."weekId" = $1`,
   };
 }
 
-export type BoardRow = { userId: string; nickname: string; points: number; exact: number; direction: number; picks: number };
+export type BoardRow = { userId: string; nickname: string; image: string | null; points: number; exact: number; direction: number; picks: number };
 
 /**
  * Görünür katılımcı: takma ad + doğrulanmış e-posta + admin gizlemesi yok + o haftada EN AZ BİR tahmin (maçlar sonuçlanmadan da
@@ -187,7 +187,7 @@ const WEEK_ORDER = `ORDER BY e."totalPoints" DESC, e."exactCount" DESC, e."direc
 
 export function weekTopSql(weekId: string, limit = LEADERBOARD_LIMIT): SqlQuery {
   return {
-    text: `SELECT e."userId", u.username AS nickname, e."totalPoints" AS points, e."exactCount" AS exact, e."directionCount" AS direction, ${WEEK_PICKS} AS picks
+    text: `SELECT e."userId", u.username AS nickname, u.image, e."totalPoints" AS points, e."exactCount" AS exact, e."directionCount" AS direction, ${WEEK_PICKS} AS picks
 FROM "GameWeekEntry" e JOIN "User" u ON u.id = e."userId" WHERE e."weekId" = $1 AND ${VISIBLE} ${WEEK_ORDER} LIMIT $2`,
     values: [weekId, limit],
   };
@@ -218,7 +218,7 @@ FROM "GameWeekEntry" e JOIN "User" u ON u.id = e."userId" WHERE e.season = $1 AN
 
 export function seasonTopSql(season: string, limit = LEADERBOARD_LIMIT): SqlQuery {
   return {
-    text: `SELECT s."userId", u.username AS nickname, s.points, s.exact, s.direction, s.picks FROM (${SEASON_AGG}) s JOIN "User" u ON u.id = s."userId"
+    text: `SELECT s."userId", u.username AS nickname, u.image, s.points, s.exact, s.direction, s.picks FROM (${SEASON_AGG}) s JOIN "User" u ON u.id = s."userId"
 ORDER BY s.points DESC, s.exact DESC, s.direction DESC, s.first_at ASC, s."userId" ASC LIMIT $2`,
     values: [season, limit],
   };
@@ -293,7 +293,7 @@ const DAY_AHEAD = `s.points > me.points
 
 export function dayTopSql(dayId: string, limit = LEADERBOARD_LIMIT): SqlQuery {
   return {
-    text: `SELECT s."userId", u.username AS nickname, s.points, s.exact, s.direction, s.picks FROM (${DAY_AGG}) s JOIN "User" u ON u.id = s."userId"
+    text: `SELECT s."userId", u.username AS nickname, u.image, s.points, s.exact, s.direction, s.picks FROM (${DAY_AGG}) s JOIN "User" u ON u.id = s."userId"
 ORDER BY s.points DESC, s.exact DESC, s.direction DESC, s.last_at ASC, s."userId" ASC LIMIT $2`,
     values: [dayId, limit],
   };

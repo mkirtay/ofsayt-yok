@@ -169,7 +169,7 @@ describe('otomatik haftalık liste (game-settle)', () => {
       expect(board).toMatchObject({ participants: 1, settledCount: 0 });
       expect(board!.matchCount).toBeGreaterThan(0);
       expect(board!.firstKickoffAt).not.toBeNull();
-      expect(board!.entries).toEqual([{ rank: 1, nickname: 'eren', points: 0, exact: 0, direction: 0, picks: 1 }]);
+      expect(board!.entries).toEqual([{ rank: 1, nickname: 'eren', image: null, points: 0, exact: 0, direction: 0, picks: 1 }]);
       const eren = await prisma.user.findFirstOrThrow({ where: { username: 'eren' } });
       const other = await prisma.user.create({ data: { email: 'b@ornek.example', username: 'zeynep', emailVerified: new Date() } });
       await prisma.userBlock.create({ data: { blockerId: other.id, blockedId: eren.id } });

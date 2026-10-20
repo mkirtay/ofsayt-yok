@@ -54,7 +54,7 @@ const save = (userId: string, gameMatchId: string, home: number, away: number, w
 beforeAll(async () => {
   db = new PGlite();
   await db.exec(`
-    CREATE TABLE "User" (id TEXT PRIMARY KEY, username TEXT, "emailVerified" TIMESTAMP(3));
+    CREATE TABLE "User" (id TEXT PRIMARY KEY, username TEXT, "emailVerified" TIMESTAMP(3), image TEXT);
     INSERT INTO "User" (id, username, "emailVerified") VALUES
       ('u1', 'eren', now()), ('u2', 'zeynep', now()), ('u3', NULL, now()), ('u4', 'dogrulanmamis', NULL), ('u5', 'gizli', now());
     CREATE ROLE anon; CREATE ROLE authenticated;

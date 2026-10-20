@@ -1850,17 +1850,6 @@ $on-action-fg: var(--color-on-action);
   }
 }
 
-.avatar {
-  display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  color: #fff;
-  font-size: 14px;
-  font-weight: 900;
-}
-
 .boardWho {
   display: flex;
   flex-direction: column;
@@ -2293,4 +2282,9 @@ $on-action-fg: var(--color-on-action);
   @media (min-width: $bp-desktop) {
     bottom: $spacing-2;
   }
+}
+
+.playerAvatar {
+  display: inline-flex;
+  flex: none;
 }

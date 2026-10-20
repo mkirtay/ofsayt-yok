@@ -1,12 +1,12 @@
-import { useEffect, useState } from 'react';
-import { useI18n } from '@/lib/i18n';
-import { formatKickoff } from './format';
+import { useEffect, useState, type CSSProperties } from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
-import { useTranslation } from '@/lib/i18n';
+import { useI18n, useTranslation } from '@/lib/i18n';
+import Avatar from '@/components/Avatar';
 import '@/lib/i18nNamespaces/game';
 import { GAME_BRAND } from '@/config/brand';
 import type { BoardScope, LeaderboardView, MyStandingView } from '@/lib/game/types';
+import { formatKickoff } from './format';
 import styles from './game.module.scss';
 
 type Scope = BoardScope;
@@ -155,6 +155,7 @@ export default function Leaderboard({
                     <span className={styles.podiumMedal} aria-hidden="true">
                       {r.rank === 1 ? '🥇' : r.rank === 2 ? '🥈' : '🥉'}
                     </span>
+                    <PlayerAvatar nickname={r.nickname} image={r.image} size={r.rank === 1 ? 48 : 40} />
                     <span className={styles.podiumPts}>{r.points}</span>
                     <span className={styles.podiumNick}>
                       <span className={styles.srOnly}>{r.rank}. </span>
@@ -167,9 +168,9 @@ export default function Leaderboard({
             {tableRows.length || showMine ? (
               <ol className={styles.boardList} aria-label={title ?? t('board.title')}>
                 {tableRows.map((r) => (
-                  <BoardRow key={r.nickname} rank={r.rank} nickname={r.nickname} points={r.points} exact={r.exact} picks={picksLabel(r.picks)} leader={leader} me={me?.rank === r.rank} />
+                  <BoardRow key={r.nickname} rank={r.rank} nickname={r.nickname} image={r.image} points={r.points} exact={r.exact} picks={picksLabel(r.picks)} leader={leader} me={me?.rank === r.rank} />
                 ))}
-                {showMine ? <BoardRow rank={me.rank!} nickname={t('board.you')} points={me.points} exact={me.exact} picks={picksLabel(me.picks)} leader={leader} me separated /> : null}
+                {showMine ? <BoardRow rank={me.rank!} nickname={t('board.you')} image={me.image} points={me.points} exact={me.exact} picks={picksLabel(me.picks)} leader={leader} me separated /> : null}
               </ol>
             ) : null}
           </>
@@ -191,10 +192,24 @@ function hueOf(name: string): number {
   return h;
 }
 
+/**
+ * Oyuncu görseli: profil fotoğrafı (User.image; resmi hesapta logo — Gündem ile aynı @/components/Avatar), yoksa / yüklenemezse
+ * takma addan sabit tonlu baş harf.
+ */
+function PlayerAvatar({ nickname, image, size }: { nickname: string; image: string | null; size: number }) {
+  const vars = { '--avatar-bg': `hsl(${hueOf(nickname)} 45% 32%)`, '--avatar-fg': '#fff' } as CSSProperties;
+  return (
+    <span className={styles.playerAvatar} style={vars} aria-hidden="true">
+      <Avatar name={nickname} image={image} size={size} />
+    </span>
+  );
+}
+
 /** Sıralama satırı: madalya (ilk 3) ya da sıra, baş harf avatarı, ad + tam skor, lidere göre puan çubuğu. */
 function BoardRow({
   rank,
   nickname,
+  image,
   points,
   exact,
   picks,
@@ -204,6 +219,7 @@ function BoardRow({
 }: {
   rank: number;
   nickname: string;
+  image: string | null;
   points: number;
   exact: number;
   picks: string;
@@ -217,9 +233,7 @@ function BoardRow({
       <span className={styles.boardRank} data-medal={rank <= 3 && points > 0 ? rank : undefined}>
         {rank}
       </span>
-      <span className={styles.avatar} style={{ background: `hsl(${hueOf(nickname)} 45% 32%)` }} aria-hidden="true">
-        {nickname.slice(0, 1).toUpperCase()}
-      </span>
+      <PlayerAvatar nickname={nickname} image={image} size={32} />
       <span className={styles.boardWho}>
         <span className={styles.boardNick}>
           {nickname}

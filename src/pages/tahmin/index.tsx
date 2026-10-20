@@ -30,8 +30,8 @@ export const getServerSideProps: GetServerSideProps<Props> = async ({ req, res, 
   if (!gate) return { notFound: true };
   if (gate.publicCache) res.setHeader('Cache-Control', GAME_PAGE_CACHE);
   const data = await loadGameHome();
-  // `?oyun=gunluk|haftalik` açık seçim; yoksa bugünün oyunu varsa Günün 3 maçı, değilse haftalık.
-  const initialMode: Mode = query.oyun === 'gunluk' ? 'day' : query.oyun === 'haftalik' ? 'week' : data.day ? 'day' : 'week';
+  // Varsayılan HAFTALIK (kullanıcı kararı 2026-10-20); `?oyun=gunluk` Günün 3 maçı ile açar.
+  const initialMode: Mode = query.oyun === 'gunluk' ? 'day' : 'week';
   return { props: propsJsonSafe({ ...data, noindex: gate.noindex, initialMode }) };
 };
 
