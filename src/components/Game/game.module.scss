@@ -2329,3 +2329,133 @@ $on-action-fg: var(--color-on-action);
   }
 }
 
+// ── Maç sayfası "skorunu tahmin et" kartı (SSR yerinde; marka koyu yeşil) ──
+.matchGame {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+  margin: $spacing-3 0;
+  padding: $spacing-3 $spacing-4;
+  border-radius: $radius-lg;
+  color: #fff;
+  background: linear-gradient(120deg, $hero-deep 0%, $hero-mid 70%, $color-primary-dark 100%);
+
+  .colon {
+    color: rgba(255, 255, 255, 0.7);
+  }
+
+  .goal {
+    width: 44px;
+    height: 44px;
+    font-size: 24px;
+    background: rgba(0, 0, 0, 0.25);
+    border-color: rgba(255, 255, 255, 0.25);
+    color: #fff;
+
+    &::placeholder {
+      color: rgba(255, 255, 255, 0.6);
+    }
+  }
+
+  .status {
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  .btn {
+    background: var(--color-premium);
+    color: var(--color-on-premium);
+  }
+
+  a {
+    color: #fff;
+    font-weight: 800;
+  }
+}
+
+.matchGameHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px $spacing-2;
+}
+
+.matchGameTitle {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.matchGameMeta {
+  font-size: 12px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.matchGameRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: $spacing-2;
+
+  > .btn {
+    margin-left: auto;
+  }
+}
+
+.miniGoal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.miniGoalTeam {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.miniGoalCtl {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  button {
+    width: 30px;
+    height: 30px;
+    border: 0;
+    border-radius: $radius-sm;
+    background: rgba(255, 255, 255, 0.14);
+    color: #fff;
+    font: inherit;
+    font-size: 16px;
+    font-weight: 900;
+    cursor: pointer;
+
+    &:disabled {
+      opacity: 0.4;
+      cursor: default;
+    }
+  }
+}
+
+.matchGameLocked {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.matchGameFoot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-2;
+  margin: 0;
+  font-size: 13px;
+}

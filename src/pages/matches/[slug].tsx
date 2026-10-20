@@ -35,6 +35,7 @@ import { isLightPageBot } from '@/config/crawlers';
 import styles from './matchDetail.module.scss';
 import { siteBaseUrl } from '@/lib/siteUrl';
 import { brandTitle } from '@/config/brand';
+import { loadGameSlotForFixture, type GameSlot } from '@/server/game/matchSlot';
 
 type MatchDetailProps = {
   initialMatch: Match | null;
@@ -57,6 +58,8 @@ type MatchDetailProps = {
   archived?: boolean;
   /** AI analizi ücretsiz önizlemesi (kredi modeli v2; analiz yoksa alan yok) — SEO için HTML'de. */
   initialAnalysisPreview?: AnalysisPreview;
+  /** Maç tahmin oyununun bu haftaki / bugünkü listesinde ve başlamamış (oyun herkese açıkken) → "skorunu tahmin et" kartı. */
+  gameSlot?: GameSlot;
 };
 
 /**
@@ -123,7 +126,7 @@ export const getServerSideProps: GetServerSideProps<MatchDetailProps> = async (c
         // İstatistik/kadro maçı çözen aynı `fixtures/{id}` yanıtında geldiyse (normal yol) ek istek yok ve baskıda da verilir;
         // hafif bot sürümünde yok.
         const pageSeed = page.stats !== undefined && page.lineups !== undefined ? { stats: page.stats, lineups: page.lineups } : null;
-        const [optional, analysisPreview] = await Promise.all([
+        const [optional, analysisPreview, gameSlot] = await Promise.all([
           loadMatchPageOptionalSections(page.match, apiMatchId, {
             ...defaultMatchPageOptionalDeps,
             loadH2h: (m) => withPageTimeout(() => defaultMatchPageOptionalDeps.loadH2h(m)),
@@ -139,6 +142,8 @@ export const getServerSideProps: GetServerSideProps<MatchDetailProps> = async (c
           }),
           // Kredi modeli v2: AI analizi ücretsiz önizlemesi (tek DB sorgusu; hata → null, sayfa yine çizilir).
           loadAnalysisPreviewForPage(apiMatchId),
+          // Tahmin oyunu kartı (oyun herkese açıkken; tek indeksli sorgu, hata → null).
+          lightBot ? Promise.resolve(null) : loadGameSlotForFixture(apiMatchId),
         ]);
         const { h2h } = optional;
         const transientError = optional.transientError || page.partial === true;
@@ -161,6 +166,7 @@ export const getServerSideProps: GetServerSideProps<MatchDetailProps> = async (c
             // DOM) mobilde FCP/LCP'yi ~130/370 ms geciktiriyordu.
             ...(seed.lineups === null ? { initialLineups: null } : {}),
             ...(analysisPreview ? { initialAnalysisPreview: analysisPreview } : {}),
+            ...(gameSlot ? { gameSlot } : {}),
           },
         };
       }
@@ -191,6 +197,7 @@ export default function MatchDetail({
   gone = false,
   archived = false,
   initialAnalysisPreview,
+  gameSlot,
 }: MatchDetailProps) {
   const router = useRouter();
   const slugParam = router.query.slug;
@@ -375,6 +382,7 @@ export default function MatchDetail({
                 requestedMatchId={requestedMatchId}
                 initialH2h={initialH2h}
                 initialAnalysisPreview={initialAnalysisPreview ?? null}
+                gameSlot={gameSlot ?? null}
               />
             </div>
             <div className="layout-right">

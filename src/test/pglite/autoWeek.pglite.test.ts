@@ -179,4 +179,21 @@ describe('otomatik haftalık liste (game-settle)', () => {
       vi.useRealTimers();
     }
   });
+
+  it('maç sayfası kartı: yalnız oyun herkese açıkken, yayındaki listede ve başlamamış maçta', async () => {
+    const { loadGameSlotForFixture } = await import('@/server/game/matchSlot');
+    const m = await prisma.gameMatch.findFirstOrThrow({ where: { week: { status: 'PUBLISHED' }, kickoffAt: { gt: new Date() } }, include: { week: true } });
+    const prev = process.env.GAME_ENABLED;
+    try {
+      process.env.GAME_ENABLED = '1'; // önizleme: CDN'deki sayfada çizilmez
+      expect(await loadGameSlotForFixture(m.fixtureId)).toBeNull();
+      process.env.GAME_ENABLED = 'public';
+      expect(await loadGameSlotForFixture(m.fixtureId)).toMatchObject({ gameMatchId: m.id, weekKey: m.week!.weekKey });
+      expect(await loadGameSlotForFixture(m.fixtureId, new Date(m.kickoffAt.getTime() + 1000))).toBeNull(); // başladı
+      expect(await loadGameSlotForFixture('123456789')).toBeNull(); // oyunda değil
+    } finally {
+      if (prev === undefined) delete process.env.GAME_ENABLED;
+      else process.env.GAME_ENABLED = prev;
+    }
+  });
 });

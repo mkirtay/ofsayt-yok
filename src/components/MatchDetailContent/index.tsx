@@ -1,3 +1,4 @@
+import dynamic from 'next/dynamic';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Router from 'next/router';
 import Link from 'next/link';
@@ -18,7 +19,11 @@ import { matchDisplayState } from '@/utils/matchDisplayState';
 import { isPollLockedForMatch } from '@/utils/matchPollLock';
 import { applyTabDeepLink } from './tabDeepLink';
 import { trackFrikik } from '@/lib/frikik/analytics';
+import type { GameSlot } from '@/server/game/matchSlot';
 import styles from './matchDetailContent.module.scss';
+
+// Yalnız oyundaki maçlarda çizilir → ayrı parça (diğer maç sayfalarının paketine eklenmez).
+const MatchGameCard = dynamic(() => import('@/components/Game/MatchGameCard'));
 
 type Props = {
   detail: MatchDetailState;
@@ -30,6 +35,8 @@ type Props = {
   initialH2h?: Head2HeadData | null;
   /** SSR'da hazırlanan AI analizi ücretsiz önizlemesi (yalnız sayfa) — AI sekmesi ilk HTML'de gizli çizilir. */
   initialAnalysisPreview?: AnalysisPreview | null;
+  /** Maç tahmin oyununda (yalnız sayfa, SSR) → sekmelerin üstünde "skorunu tahmin et" kartı; yer ilk HTML'de (CLS yok). */
+  gameSlot?: GameSlot | null;
 };
 
 /** Maç detayının DÜZ sekmeleri — sıra = görünüm sırası, alt sekme yok. */
@@ -50,7 +57,7 @@ export { tabFromSearch } from './tabDeepLink';
  * `/matches/[slug]` sayfası ile split-view paneli aynı bileşeni kullanır; yükleme
  * durumlarında alt bileşenler kendi iskeletlerini (skeleton) gösterir.
  */
-export default function MatchDetailContent({ detail, requestedMatchId, variant = 'page', initialH2h, initialAnalysisPreview = null }: Props) {
+export default function MatchDetailContent({ detail, requestedMatchId, variant = 'page', initialH2h, initialAnalysisPreview = null, gameSlot = null }: Props) {
   const { t } = useTranslation('match');
   const { match, matchLoading, statsLoading, eventsLoading, lineupsLoading } = detail;
   const effectiveMatchId = detail.matchId || requestedMatchId;
@@ -178,6 +185,7 @@ export default function MatchDetailContent({ detail, requestedMatchId, variant =
           <span>{t('frikikCta.hint')}</span>
         </p>
       ) : null}
+      {variant === 'page' && gameSlot && match ? <MatchGameCard slot={gameSlot} match={match} /> : null}
       <MatchTabs
         tabs={tabs}
         active={active}
