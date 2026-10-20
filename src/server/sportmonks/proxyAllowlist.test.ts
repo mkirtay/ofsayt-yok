@@ -47,6 +47,7 @@ const WEB_REQUESTS: [string, Record<string, string>][] = [
     { include: TOPSCORER_WITH_APPEARANCES_INCLUDE, filters: topscorerAppearanceFilters(209, 28203), per_page: '50', page: '2' },
   ],
   ['football/squads/teams/34', { include: 'player' }],
+  ['football/squads/teams/34/extended', { include: 'transfers:player_id,date;transfers.toTeam:name,image_path' }],
   ['football/squads/seasons/28203/teams/34', { include: 'player.statistics.details', filters: 'playerStatisticSeasons:28203' }],
   ['football/teams/34', { include: TEAM_UPCOMING_INCLUDE }],
   ['football/teams/34', { include: TEAM_OVERVIEW_INCLUDE }],

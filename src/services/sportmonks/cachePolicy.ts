@@ -230,6 +230,9 @@ export function sportmonksCacheTtl(
       return scheduleFinished(data) ? withStale(FINISHED_SEASON_TTL, FINISHED_SEASON_TTL) : withStale(5 * MIN);
 
     case 'squads':
+      // Genişletilmiş kadro + transfer geçmişi (Kadro sekmesi kiralıklar): transfer dönemleri dışında neredeyse hiç
+      // değişmez → 12 sa, eski kopya 2 gün.
+      if (a === 'teams' && r[3] === 'extended') return data == null ? withStale(NOT_FOUND_TTL, NOT_FOUND_TTL) : withStale(12 * HOUR, 2 * DAY);
       if (squadSeasonFinished(data)) return withStale(FINISHED_SEASON_TTL, FINISHED_SEASON_TTL);
       return data == null ? withStale(NOT_FOUND_TTL, NOT_FOUND_TTL) : withStale(6 * HOUR, DAY);
     case 'referees':

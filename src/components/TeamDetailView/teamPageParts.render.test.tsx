@@ -242,3 +242,34 @@ describe('<ScoringMinutesCard /> ve <SidelinedCard />', async () => {
     expect((many.match(/href="\/players\//g) ?? []).length).toBe(5);
   });
 });
+
+describe('<LoanedPlayers />', async () => {
+  const { default: LoanedPlayers } = await import('./LoanedPlayers');
+  const loan = (id: number, until?: string) => ({
+    id,
+    name: `Oyuncu ${id}`,
+    detailedPositionId: 151,
+    club: { id: 1041, name: 'Rizespor', logo: 'https://cdn.sportmonks.com/images/soccer/teams/17/1041.png' },
+    since: '2026-07-19',
+    ...(until ? { until } : {}),
+  });
+
+  it('satır oyuncu sayfasına gider; kulüp adı + logosu, mevki ve dönüş tarihi', () => {
+    const html = renderToStaticMarkup(<LoanedPlayers players={[loan(1, '2027-06-30'), loan(2)]} error={false} onRetry={() => {}} />);
+    expect(html).toContain('Kiralıktaki oyuncular (2)');
+    expect(count(html, /href="\/players\/\d+"/g)).toBe(2);
+    expect(html).toContain('Rizespor');
+    expect(count(html, /<img /g)).toBe(2);
+    expect(html).toContain('Santrfor');
+    expect(html).toContain('Haz 2027');
+    expect(html).toContain('title="30.06.2027"');
+  });
+
+  it('liste boşken ya da yüklenirken bölüm yok; hata "kiralık yok" sayılmaz', () => {
+    expect(renderToStaticMarkup(<LoanedPlayers players={[]} error={false} onRetry={() => {}} />)).toBe('');
+    expect(renderToStaticMarkup(<LoanedPlayers players={null} error={false} onRetry={() => {}} />)).toBe('');
+    const err = renderToStaticMarkup(<LoanedPlayers players={null} error onRetry={() => {}} />);
+    expect(err).toContain('Kiralıktaki oyuncular yüklenemedi.');
+    expect(err).toContain('<button');
+  });
+});

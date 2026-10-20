@@ -28,6 +28,7 @@ import {
 } from './sportmonks/teamScorers';
 import type { SportmonksSquadStatsRow } from './sportmonks/types';
 import type { SportmonksSidelinedRow } from './sportmonks/teamSidelined';
+import { TEAM_LOANS_INCLUDE, type SportmonksExtendedSquadRow } from './sportmonks/teamLoans';
 
 /** Son Maçlar + Fikstür + başlık (form, sıradaki maç) — tek `teams/{id}` isteği. Hata fırlatır (react-query yeniden dener). */
 export async function getTeamOverview(teamId: string): Promise<TeamOverview> {
@@ -53,6 +54,17 @@ export async function getTeamSeasonStats(teamId: string, seasonIds: number[]): P
     filters: teamStatsFilters(seasonIds),
   });
   return { stats: mapTeamSeasonStats(envelope.data), sidelined: envelope.data?.sidelined ?? [] };
+}
+
+/**
+ * Kadro sekmesi "Kiralıktaki oyuncular": ham `squads/teams/{id}/extended` satırları (transfer geçmişiyle); süzme
+ * `mapTeamLoans` ile (bugünün tarihine bağlı). Yalnız Kadro sekmesi açılınca; önbellek 12 sa (cachePolicy). Hata fırlatır.
+ */
+export async function getTeamExtendedSquad(teamId: string): Promise<SportmonksExtendedSquadRow[]> {
+  const envelope = await sportmonksClientRequest<SportmonksExtendedSquadRow[]>('football', `/squads/teams/${teamId}/extended`, {
+    include: TEAM_LOANS_INCLUDE,
+  });
+  return Array.isArray(envelope.data) ? envelope.data : [];
 }
 
 /**

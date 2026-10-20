@@ -144,5 +144,13 @@
     "tomorrow": "Tomorrow {{time}}",
     "tomorrowNoTime": "Tomorrow",
     "days": "In {{count}} days"
+  },
+  "loans": {
+    "title": "Players out on loan",
+    "player": "Player",
+    "position": "Position",
+    "club": "Club",
+    "until": "Returns",
+    "error": "Couldn't load players out on loan."
   }
 }
