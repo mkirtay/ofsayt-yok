@@ -60,6 +60,8 @@ import { resolveHubSidePanel } from '@/utils/hubSidePanel';
 import LeagueFilterBar from '@/components/LeagueFilterBar';
 import LiveTicker from '@/components/LiveTicker';
 import FrikikDailyCard from '@/components/FrikikDailyCard';
+import GameHomeCard from '@/components/GameHomeCard';
+import { GAME_PUBLIC_CLIENT } from '@/config/gameFlag';
 import { filterLiveMatches, selectLiveTickerMatches } from '@/utils/liveTicker';
 import { hubSectionToScroll } from '@/utils/hubNavScroll';
 import AdSlot from '@/components/AdSlot';
@@ -125,9 +127,21 @@ const EMPTY_MATCHES: Match[] = [];
 
 /**
  * Günün Frikiği kartı maç listesinde ilk lig grubunun ardında (sanal listenin sabit yükseklikli satırı). Kartın en büyük
- * kutusu (mobil < 480 px: 146 px; masaüstü 142 px — bkz. FrikikDailyCard scss) + kendi alt boşluğu (12 px).
+ * kutusu (mobil < 480 px: 146 px; masaüstü 142 px — bkz. FrikikDailyCard scss) + kendi alt boşluğu (12 px). Oyun herkese
+ * açıkken (derlemede NEXT_PUBLIC_GAME_PUBLIC) altında sabit yükseklikli oyun şeridi.
  */
-const FRIKIK_SLOT: MatchListInlineSlot = { node: <FrikikDailyCard />, height: 146 + 12 };
+const FRIKIK_SLOT: MatchListInlineSlot = GAME_PUBLIC_CLIENT
+  ? {
+      // Altında oyun şeridi (sabit 56 px + 12 px boşluk; bkz. GameHomeCard scss) — yükseklik baştan ayrılır.
+      node: (
+        <>
+          <FrikikDailyCard />
+          <GameHomeCard />
+        </>
+      ),
+      height: 146 + 12 + 56 + 12,
+    }
+  : { node: <FrikikDailyCard />, height: 146 + 12 };
 
 /** "2026-10-03" → "3 Ekim" / "3 October" (gün takvim günü; saat dilimi kaydırması yok). */
 function formatDayMonth(iso: string, locale: string): string {

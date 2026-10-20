@@ -26,5 +26,12 @@
   "aiAssistant": "Assistant",
   "frikik": "Frikik",
   "pricing": "Pricing",
-  "game": "{{gameShort}}"
+  "game": "{{gameShort}}",
+  "gameCard": {
+    "title": "{{game}}",
+    "week": "{{total}} matches this week · predict the scores",
+    "progress": "{{done}}/{{total}} picks · this week",
+    "play": "Play",
+    "playFree": "Play free"
+  }
 }

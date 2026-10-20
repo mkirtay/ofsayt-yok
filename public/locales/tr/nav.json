@@ -26,5 +26,12 @@
   "aiAssistant": "Asistan",
   "frikik": "Frikik",
   "pricing": "Fiyatlandırma",
-  "game": "{{gameShort}}"
+  "game": "{{gameShort}}",
+  "gameCard": {
+    "title": "{{game}}",
+    "week": "Bu hafta {{total}} maç · skorları tahmin et",
+    "progress": "{{done}}/{{total}} tahminin · haftanın maçları",
+    "play": "Oyna",
+    "playFree": "Ücretsiz oyna"
+  }
 }
