@@ -32,7 +32,7 @@ export const BRAND = {
    * Sosyal hesaplar (kullanıcı adı, "@" olmadan; Facebook'ta sayfa adresinin yolu); boş olanlar hiçbir yerde basılmaz
    * (footer bağlantıları, JSON-LD `sameAs`).
    */
-  social: { instagram: 'getscor3', youtube: 'getscor3', x: 'getscor3', facebook: '' } as {
+  social: { instagram: 'getscor3', youtube: 'getscor3', x: 'getscor3', facebook: 'getscor3' } as {
     instagram: string;
     youtube: string;
     x: string;
