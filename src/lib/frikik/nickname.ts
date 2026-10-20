@@ -6,7 +6,7 @@
  * Filtre: küçük harfe çevir (TR yereli), leet yazımını aç (0→o, 1→i, 3→e, 4→a, 5→s, 7→t, 8→b), alt çizgi ve tekrarlı
  * harfleri sadeleştir; sonra desenler. Desenler kısa gövde değil çekimli kalıp (örn. "klasik" içindeki "sik" yakalanmaz).
  */
-import { BRAND } from '@/config/brand';
+import { BRAND, LEGACY_BRAND_COMPACT } from '@/config/brand';
 import { usernameRules } from '@/lib/validation';
 
 export const NICKNAME_MIN = 3;
@@ -56,8 +56,14 @@ export function checkNickname(raw: unknown): NicknameCheck {
     return { ok: false, reason: 'format' };
   }
   const n = normalizeNickname(value);
-  const brand = normalizeNickname(BRAND.compactName);
-  if (n.includes(brand) || RESERVED_NICKNAMES.some((re) => re.test(n))) return { ok: false, reason: 'reserved' };
+  // Marka: harf/rakam düz karşılaştırma ("scor3" leet açılımı "score" olurdu → "highscore" gibi adları da keserdi);
+  // eski marka normalleştirilmiş biçimiyle (o_f_s_4_y_t gibi yazımlar da).
+  const plain = value.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const brandPlain = BRAND.compactName.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const legacy = normalizeNickname(LEGACY_BRAND_COMPACT);
+  if (plain.includes(brandPlain) || n.includes(legacy) || RESERVED_NICKNAMES.some((re) => re.test(n))) {
+    return { ok: false, reason: 'reserved' };
+  }
   if (BLOCKED_NICKNAME_PATTERNS.some((re) => re.test(n))) return { ok: false, reason: 'blocked' };
   return { ok: true, value };
 }

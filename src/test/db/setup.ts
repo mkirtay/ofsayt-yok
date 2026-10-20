@@ -5,4 +5,4 @@ try {
   /* .env.local yoksa ortam değişkenleri dışarıdan verilmiş olmalı */
 }
 // Yanıtlardaki mutlak URL'leri deterministik test etmek için sabit base.
-process.env.AUTH_URL = 'https://itest.ofsaytyok.example';
+process.env.AUTH_URL = 'https://itest.getscor3.example';

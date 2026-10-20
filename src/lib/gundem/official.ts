@@ -1,8 +1,7 @@
 /**
  * Gündem resmi hesabı — TEK KAYNAK (rozet, profil `official` bayrağı, `scope=official` akışı, bot yazarı).
- * Tek resmi hesap: "ofsaytyokmedia" (`info@getscor3.com`; 2026-10-12'ye kadar `bilgi.ofsaytyok@gmail.com`, DB'de taşındı) — hem
- * elle yazılan hem bot postlarının hesabı.
- * Eski seed hesabı (`official@ofsaytyok.invalid`, "ofsaytyok") resmi statüden çıkarıldı; hesap silinmedi.
+ * Tek resmi hesap: `info@getscor3.com` (kullanıcı adı @scor3) — hem elle yazılan hem bot postlarının hesabı. Eski e-postalar ve
+ * eski seed hesabı resmi statüden çıkarıldı (official.test.ts).
  *
  * Şema/migration gerektirmez: varsayılan liste + `OFFICIAL_ACCOUNT_EMAILS` env'i (virgülle ayrılmış e-postalar).
  * Kural (`isOfficialUser`): e-posta listede VEYA post `OFFICIAL_BOT` (legacy bot satırı; prod'da yok). E-posta hiçbir

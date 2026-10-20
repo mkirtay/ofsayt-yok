@@ -16,13 +16,13 @@ describe('takma ad denetimi', () => {
   });
 
   it('yanlış pozitif yok: masum adlar geçer', () => {
-    for (const ok of ['klasik', 'fizikci', 'pusula', 'picasso', 'cockpit_x', 'mustafa', 'ayse_k', 'ankara_06', 'scunthorpe', 'tasarim', 'gotham', 'dickens', 'assistant']) {
+    for (const ok of ['klasik', 'fizikci', 'pusula', 'picasso', 'cockpit_x', 'mustafa', 'ayse_k', 'ankara_06', 'scunthorpe', 'tasarim', 'gotham', 'dickens', 'assistant', 'highscore', 'score_king']) {
       expect(checkNickname(ok), ok).toEqual({ ok: true, value: ok });
     }
   });
 
   it('ayrılmış adlar: marka ve yetkili izlenimi', () => {
-    for (const r of ['admin', 'Admin_1', 'OfsaytYok', 'ofsayt_yok', 'moderator', 'official_x', 'destek', 'bot']) {
+    for (const r of ['admin', 'Admin_1', 'OfsaytYok', 'ofsayt_yok', 'Scor3', 'scor3_fan', 'moderator', 'official_x', 'destek', 'bot']) {
       expect(checkNickname(r), r).toEqual({ ok: false, reason: 'reserved' });
     }
   });

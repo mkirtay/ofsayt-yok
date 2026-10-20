@@ -1,5 +1,5 @@
 {
-  "name": "ofsayt-yok",
+  "name": "scor3",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -21,7 +21,6 @@
     "pm2List": "pm2 list",
     "pm2Save": "pm2 save",
     "grant-credits": "dotenv -e .env.local -- node scripts/grant-credits.mjs",
-    "seed-official": "dotenv -e .env.local -- node scripts/seed-official-account.mjs",
     "video": "dotenv -e .env.local -- npx tsx scripts/video-pipeline/index.ts",
     "analysis:reset": "dotenv -e .env.local -- npx tsx scripts/reset-analysis.ts",
     "db:migrate": "dotenv -e .env.local -- prisma migrate dev",

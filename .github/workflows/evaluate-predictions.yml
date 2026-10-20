@@ -24,7 +24,7 @@ jobs:
       - name: Call evaluate-predictions endpoint
         run: |
           status=$(curl -s -o /tmp/response.json -w "%{http_code}" \
-            -X POST "https://ofsayt-yok.vercel.app/api/admin/evaluate-predictions" \
+            -X POST "https://www.getscor3.com/api/admin/evaluate-predictions" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}")
           echo "HTTP status: $status"
           cat /tmp/response.json
@@ -44,7 +44,7 @@ jobs:
       - name: Call analysis-pregenerate endpoint
         run: |
           status=$(curl -s -o /tmp/response.json -w "%{http_code}" --max-time 150 \
-            -X POST "https://ofsayt-yok.vercel.app/api/admin/analysis-pregenerate" \
+            -X POST "https://www.getscor3.com/api/admin/analysis-pregenerate" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}")
           echo "HTTP status: $status"
           cat /tmp/response.json

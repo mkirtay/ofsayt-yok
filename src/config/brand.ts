@@ -8,7 +8,7 @@
 
 /**
  * Canlı alan adı (canonical, sitemap, robots, OG/JSON-LD url, paylaşım linkleri); `NEXT_PUBLIC_SITE_URL` yoksa kullanılır.
- * Eski alan adı (ofsaytyok.app) aynı deployment'ı sunmaya devam eder (mobil, dış sistemler); sayfaları buraya canonical verir.
+ * Eski alan adı (ofsaytyok.app) sayfa isteklerinde 410 Gone döner (src/middleware.ts); API uçları mobil için açık.
  */
 const DEFAULT_SITE_URL = 'https://www.getscor3.com';
 
@@ -20,11 +20,8 @@ export const BRAND = {
   name: 'Scor3',
   /** Dar alanlar için kısa ad. */
   shortName: 'Scor3',
-  /**
-   * Boşluksuz ad: User-Agent, takvim PRODID, frikik takma ad yasağı gibi teknik kimlikler. Ad değişiminde BİLEREK eski ad
-   * kaldı (teknik kimlik; "scor3" leet açılımı "score" olur → takma ad yasağı "highscore" gibi adları da keserdi).
-   */
-  compactName: 'OfsaytYok',
+  /** Boşluksuz ad: User-Agent, takvim PRODID gibi teknik kimlikler. */
+  compactName: 'Scor3',
   /** Canonical kök (sonda "/" yok). Sayfalarda `lib/siteUrl.ts` `siteBaseUrl()` kullan. */
   siteUrl,
   /** Metinlerde gösterilen alan adı (ör. yasal metinler): `siteUrl`'in host'u. */
@@ -62,6 +59,12 @@ export const GAME_BRAND = {
   /** Site içi kök yol — markadan bağımsız sabit. */
   basePath: '/tahmin',
 } as const;
+
+/**
+ * Eski marka (Frikik takma ad yasağı: kimse eski markanın adıyla resmi izlenim vermesin). Yalnız bu dosyada yazılır
+ * (legacyBrand.guard.test.ts).
+ */
+export const LEGACY_BRAND_COMPACT = 'OfsaytYok';
 
 /** Çevirilerde her zaman kullanılabilen değişkenler: `{{brand}}`, `{{siteDomain}}`, `{{contactEmail}}`, `{{game}}`, `{{gameShort}}`. */
 export const BRAND_I18N_VARS: Readonly<Record<string, string>> = {

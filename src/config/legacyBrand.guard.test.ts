@@ -40,23 +40,13 @@ export const LEGACY_BRAND_ALLOWLIST: Izin[] = [
   { path: 'src/components/KuralKosesi/Panel.tsx', allow: /03-var-ofsayt-yok/g, sinif: 'teknik', neden: 'VAR animasyon kimliği (içerik JSON anahtarı).' },
   { path: 'src/components/KuralKosesi/facts.ts', allow: /03-var-ofsayt-yok/g, sinif: 'teknik', neden: 'VAR animasyon kimliği.' },
   { path: 'src/content/kural-kosesi.json', allow: /03-var-ofsayt-yok/g, sinif: 'teknik', neden: 'VAR animasyon kimliği.' },
-  { path: 'src/styles/_tokens.scss', allow: /OFSAYT_YOK_DESIGN_SYSTEM\.md/g, sinif: 'teknik', neden: 'Belge dosya adı referansı.' },
-  { path: 'package.json', allow: /"name": "ofsayt-yok"/g, sinif: 'teknik', neden: 'npm paket adı (private, yayınlanmıyor).' },
-  { path: 'scripts/seed-official-account.mjs', sinif: 'teknik', neden: 'DEPRECATED seed; DB’deki eski hesabın kimliği (e-posta/kullanıcı adı).' },
 
-  {
-    path: 'src/lib/gundem/official.ts',
-    allow: /bilgi\.ofsaytyok@gmail\.com|ofsaytyokmedia|official@ofsaytyok\.invalid|"ofsaytyok"/g,
-    sinif: 'dis',
-    neden: 'Resmi Gündem hesabının DB kullanıcı adı (ofsaytyokmedia) ve geçiş notundaki eski Gmail; varsayılan e-posta artık info@getscor3.com.',
-  },
   {
     path: 'src/middleware.ts',
     allow: /ofsaytyok(?:\\\\)?\.app|ofsayt-yok\.vercel\.app/g,
     sinif: 'dis',
     neden: 'Kapatılan eski alan adı (410 Gone): host listesi, matcher host deseni ve etkilenmeyen Vercel proje alan adı (yorum); LEGACY_HOST_CLOSED bloğu kaldırılınca gider.',
   },
-  { path: '.github/workflows/evaluate-predictions.yml', allow: /ofsayt-yok\.vercel\.app/g, sinif: 'dis', neden: 'Vercel proje alan adı; proje adı değişmedikçe sabit.' },
   { path: 'next.config.ts', allow: /(www\.)?ofsaytyok\.app/g, sinif: 'dis', neden: 'Eski alan adından yeniye yönlendirme ayarı (geçiş günü eklenecek).', optional: true },
 ];
 

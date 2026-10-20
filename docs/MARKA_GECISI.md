@@ -63,9 +63,9 @@ Bunlar düzeltilince izin listesindeki girdileri silinmeli (bayat girdi testi za
 | --- | --- |
 | VAR animasyonu: `VarScene.tsx` damgası `OFSAYT YOK` / `NO OFFSIDE`, yorumlar | Marka değil, hakem kararı ("ofsayt yok"). |
 | Kural Köşesi animasyon kimliği `03-var-ofsayt-yok` (`kural-kosesi.json`, `facts.ts`, `Panel.tsx`) | İçerik anahtarı; adla ilgisi yok, değişirse içerik eşleşmesi kırılır. |
-| `docs/OFSAYT_YOK_DESIGN_SYSTEM.md` (ve `_tokens.scss`'teki referansı) | Belge dosya adı; istenirse ayrıca yeniden adlandırılır. |
+| ~~`docs/OFSAYT_YOK_DESIGN_SYSTEM.md`~~ → `docs/DESIGN_SYSTEM.md` | 2026-10-20 yeniden adlandırıldı. |
 | `package.json` `"name": "ofsayt-yok"`, repo ve worktree klasör adları | Private paket, yayınlanmıyor; yeniden adlandırma yalnız yerel yolları bozar. |
-| `scripts/seed-official-account.mjs` (`official@ofsaytyok.invalid`, `ofsaytyok`) | DEPRECATED; DB'deki eski hesabın kimliği. |
+| ~~`scripts/seed-official-account.mjs`~~ | 2026-10-20 silindi (DEPRECATED seed). |
 | Test fikstürleri (`*.test.*`, `src/test/**`): örnek URL'ler, `itest.ofsaytyok.example`, mobil UA `OfsaytYok/1.0 (iOS)` | Girdi verisi; canlı çıktıyı doğrulayan testler `BRAND` okur. |
 | `src/lib/authRedirect.ts` iç köken | Nötr `https://site.invalid` yapıldı (marka içermiyor). |
 
@@ -143,3 +143,8 @@ Bunlar düzeltilince izin listesindeki girdileri silinmeli (bayat girdi testi za
 - [ ] Sentry'de yeni alan adından olay geliyor; yeni hata dalgası yok.
 - [ ] Mobil Lighthouse (canlı, 3 koşu medyan): ana sayfa, maç, puan durumu.
 - [ ] Eski alan adı yönlendirmesi en az 12 ay açık kalacak (takvime hatırlatma).
+
+
+## 2026-10-20 temizlik
+
+`compactName` artık `Scor3` (User-Agent, takvim PRODID); eski ad yalnız `LEGACY_BRAND_COMPACT` olarak Frikik takma ad yasağında. npm paket adı `scor3`. GitHub Actions cron'u `www.getscor3.com`'a gidiyor. Bilinçli kalanlar: VAR animasyonundaki "Ofsayt yok" (futbol terimi), `src/middleware.ts` eski alan adı 410 bloğu, testler. Dış paneller (cron-job.org URL'leri, Vercel proje adı / `ofsayt-yok.vercel.app`, GitHub repo adı, Sentry/Supabase proje adları) kullanıcıda.
