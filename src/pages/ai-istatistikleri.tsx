@@ -60,6 +60,7 @@ function AiStatsPageSkeleton() {
 
 export default function AiIstatistikleri() {
   const { t } = useTranslation('ai');
+  const { t: tm } = useTranslation('match');
   const queryClient = useQueryClient();
   const { data, isLoading, isError, refetch } = useAiStatsDashboard();
   const [evalLoading, setEvalLoading] = useState(false);
@@ -70,17 +71,6 @@ export default function AiIstatistikleri() {
     if (r === 'DRAW') return t('actualDraw');
     if (r === 'AWAY') return t('actualAway');
     return t('notEvaluated');
-  }
-
-  function predictedOutcome(
-    home: number,
-    draw: number,
-    away: number
-  ): { label: string; pct: number } {
-    const maxPct = Math.max(home, draw, away);
-    const label =
-      home === maxPct ? t('resultHome') : draw === maxPct ? t('resultDraw') : t('resultAway');
-    return { label, pct: maxPct };
   }
 
   async function runEvaluation() {
@@ -182,6 +172,17 @@ export default function AiIstatistikleri() {
                   )}
 
                   <div className={styles.statCards}>
+                    <div className={`${styles.statCard} ${styles.statCardHighlight}`}>
+                      <span className={styles.statValue}>
+                        {data.topPicks.picks > 0 ? `${data.topPicks.rate}%` : '—'}
+                      </span>
+                      <span className={styles.statLabel}>{t('topPicks')}</span>
+                      <span className={styles.statSub}>
+                        {data.topPicks.picks > 0
+                          ? t('topPicksSub', { hit: data.topPicks.hits, total: data.topPicks.picks, matches: data.topPicks.matches })
+                          : t('awaitingEvaluation')}
+                      </span>
+                    </div>
                     <div className={styles.statCard}>
                       <span className={styles.statValue}>{totalRecords}</span>
                       <span className={styles.statLabel}>{t('totalRecords')}</span>
@@ -191,67 +192,17 @@ export default function AiIstatistikleri() {
                         </span>
                       )}
                     </div>
-                    <div className={`${styles.statCard} ${styles.statCardHighlight}`}>
-                      <span className={styles.statValue}>
-                        {totalEvaluated > 0 ? `${data.result1x2HitRate}%` : '—'}
-                      </span>
-                      <span className={styles.statLabel}>{t('result1x2')}</span>
-                      <span className={styles.statSub}>
-                        {totalEvaluated > 0
-                          ? t('result1x2Sub', {
-                              hit: data.result1x2HitCount,
-                              total: totalEvaluated,
-                            })
-                          : t('awaitingEvaluation')}
-                      </span>
-                    </div>
                   </div>
 
-                  {data.byPhase.length > 0 && (
-                    <div className={styles.section}>
-                      <h2 className={styles.sectionTitle}>{t('byPhaseTitle')}</h2>
-                      <p className={styles.sectionHint}>{t('byPhaseHint')}</p>
-                      <div className={styles.phaseGrid}>
-                        {data.byPhase.map((p) => (
-                          <div key={p.phase} className={styles.phaseCard}>
-                            <h3 className={styles.phaseTitle}>
-                              {p.phase === 'PRE' ? t('phasePre') : t('phaseHt')}
-                            </h3>
-                            <dl className={styles.phaseStats}>
-                              <div>
-                                <dt>{t('phaseTotal')}</dt>
-                                <dd>{p.total}</dd>
-                              </div>
-                              <div>
-                                <dt>{t('phaseEvaluated')}</dt>
-                                <dd>{p.evaluated}</dd>
-                              </div>
-                              <div>
-                                <dt>{t('result1x2')}</dt>
-                                <dd>
-                                  {p.evaluated > 0 ? `${p.result1x2HitRate}%` : '—'}
-                                  {p.evaluated > 0 && (
-                                    <span className={styles.phaseSub}>
-                                      {' '}
-                                      ({p.result1x2HitCount}/{p.evaluated})
-                                    </span>
-                                  )}
-                                </dd>
-                              </div>
-                            </dl>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                  <p className={styles.topPicksHint}>{t('topPicksHint')}</p>
 
                   <div className={styles.section}>
                     <h2 className={styles.sectionTitle}>{t('historyTitle')}</h2>
                     <HistorySection
                       history={data.history}
                       t={t}
+                      tm={tm}
                       resultLabel={resultLabel}
-                      predictedOutcome={predictedOutcome}
                     />
                   </div>
                 </>
@@ -267,34 +218,26 @@ export default function AiIstatistikleri() {
 function HistorySection({
   history,
   t,
+  tm,
   resultLabel,
-  predictedOutcome,
 }: {
   history: AiStatsHistoryItem[];
   t: (key: string, opts?: Record<string, unknown>) => string;
+  tm: (key: string, opts?: Record<string, unknown>) => string;
   resultLabel: (r: string | null) => string;
-  predictedOutcome: (home: number, draw: number, away: number) => { label: string; pct: number };
 }) {
   return (
     <div className={styles.tableWrap}>
       <table className={styles.table}>
         <thead>
           <tr>
-            <th>{t('colMatch')}</th>
-            <th>{t('colPhase')}</th>
-            <th>{t('col1x2Prediction')}</th>
-            <th>{t('colActualResult')}</th>
-            <th>{t('col1x2')}</th>
-            <th>{t('colStatus')}</th>
+            <th className={styles.colMatch}>{t('colMatch')}</th>
+            <th>{t('colTopPicks')}</th>
+            <th className={styles.colResult}>{t('colActualResult')}</th>
           </tr>
         </thead>
         <tbody>
           {history.map((item) => {
-            const pred = predictedOutcome(
-              item.predictedHomePct,
-              item.predictedDrawPct,
-              item.predictedAwayPct
-            );
             const matchHref = buildMatchHref({
               id: Number(item.matchId),
               home: { name: item.homeTeamName },
@@ -304,53 +247,64 @@ function HistorySection({
 
             return (
               <tr
-                key={`${item.matchId}-${item.phase}-${item.createdAt}`}
+                key={`${item.matchId}-${item.createdAt}`}
                 className={isPending ? styles.rowPending : undefined}
               >
-                <td className={styles.matchCell}>
-                  <Link href={matchHref} className={styles.matchLink}>
+                <td className={styles.colMatch}>
+                  <Link href={matchHref} className={`${styles.matchLink} ${styles.matchCell}`}>
                     <span className={styles.teamName}>{item.homeTeamName}</span>
                     <span className={styles.vs}>—</span>
                     <span className={styles.teamName}>{item.awayTeamName}</span>
                   </Link>
                 </td>
                 <td>
-                  <span
-                    className={`${styles.phaseBadge} ${
-                      item.phase === 'HT' ? styles.phaseBadgeHt : styles.phaseBadgePre
-                    }`}
-                  >
-                    {item.phase === 'PRE' ? t('phasePre') : t('phaseHt')}
-                  </span>
+                  <TopPicksCell picks={item.topPicks} pending={isPending} t={t} tm={tm} />
                 </td>
-                <td>
-                  {pred.label}{' '}
-                  <span className={styles.pct}>({pred.pct.toFixed(0)}%)</span>
-                </td>
-                <td>{isPending ? t('notEvaluated') : resultLabel(item.actualResult)}</td>
-                <td>
-                  {isPending ? (
-                    t('statusPending')
-                  ) : item.result1x2Hit === true ? (
-                    <span className={styles.hit}>{t('hitYes')}</span>
-                  ) : item.result1x2Hit === false ? (
-                    <span className={styles.miss}>{t('hitNo')}</span>
-                  ) : (
-                    t('notEvaluated')
-                  )}
-                </td>
-                <td>
-                  {isPending ? (
-                    <span className={styles.statusPending}>{t('statusPending')}</span>
-                  ) : (
-                    <span className={styles.statusDone}>{t('statusDone')}</span>
-                  )}
+                <td className={styles.colResult}>
+                  {isPending ? <span className={styles.statusPending}>{t('statusPending')}</span> : resultLabel(item.actualResult)}
                 </td>
               </tr>
             );
           })}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+/** Kart rozetleri (en güçlü 3 tahmin) + tuttu/tutmadı işareti ve "2/3" özeti. */
+function TopPicksCell({
+  picks,
+  pending,
+  t,
+  tm,
+}: {
+  picks: AiStatsHistoryItem['topPicks'];
+  pending: boolean;
+  t: (key: string, opts?: Record<string, unknown>) => string;
+  tm: (key: string, opts?: Record<string, unknown>) => string;
+}) {
+  if (picks.length === 0) return <>—</>;
+  const known = picks.filter((p) => p.hit != null);
+  const hits = known.filter((p) => p.hit).length;
+  return (
+    <div className={styles.topPicks}>
+      <ul className={styles.topPickList}>
+        {picks.map((p) => (
+          <li
+            key={p.key}
+            className={`${styles.topPick} ${pending || p.hit == null ? '' : p.hit ? styles.topPickHit : styles.topPickMiss}`.trim()}
+          >
+            {!pending && p.hit != null ? (
+              <span aria-label={p.hit ? t('hitYes') : t('hitNo')}>{p.hit ? '✓' : '✗'} </span>
+            ) : null}
+            {tm(`analysis.pick.${p.key}`)} <span className={styles.pct}>%{p.pct}</span>
+          </li>
+        ))}
+      </ul>
+      {!pending && known.length > 0 ? (
+        <span className={styles.topPickScore}>{t('topPicksRow', { hit: hits, total: known.length })}</span>
+      ) : null}
     </div>
   );
 }

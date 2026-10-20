@@ -6,6 +6,8 @@ import { describe, expect, it, vi } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import trAi from '../../../public/locales/tr/ai.json';
 import enAi from '../../../public/locales/en/ai.json';
+import trMatch from '../../../public/locales/tr/match.json';
+import enMatch from '../../../public/locales/en/match.json';
 import { findGamblingTerms } from '@/utils/gamblingTerms';
 import type { AiStatsDashboard } from '@/lib/loadAiStatsDashboard';
 
@@ -26,13 +28,11 @@ const data: AiStatsDashboard & { isAdmin: boolean } = {
   totalRecords: 3,
   totalEvaluated: 2,
   pendingCount: 1,
-  result1x2HitCount: 1,
-  result1x2HitRate: 50,
-  byPhase: [{ phase: 'PRE', total: 3, evaluated: 2, pending: 1, result1x2HitCount: 1, result1x2HitRate: 50 }],
+  topPicks: { matches: 2, picks: 6, hits: 5, rate: 83.3 },
   isAdmin: false,
   history: [
-    { matchId: '1', homeTeamName: 'Trabzonspor', awayTeamName: 'Galatasaray', phase: 'PRE', predictedHomePct: 30, predictedDrawPct: 25, predictedAwayPct: 45, actualResult: 'HOME', result1x2Hit: false, evaluatedAt: '2026-09-20T00:00:00Z', createdAt: '2026-09-19T00:00:00Z' },
-    { matchId: '2', homeTeamName: 'Arsenal', awayTeamName: 'Leeds United', phase: 'PRE', predictedHomePct: 63, predictedDrawPct: 23, predictedAwayPct: 14, actualResult: 'HOME', result1x2Hit: true, evaluatedAt: '2026-10-10T00:00:00Z', createdAt: '2026-10-03T00:00:00Z' },
+    { matchId: '1', homeTeamName: 'Trabzonspor', awayTeamName: 'Galatasaray', actualResult: 'HOME', evaluatedAt: '2026-09-20T00:00:00Z', createdAt: '2026-09-19T00:00:00Z', topPicks: [{ key: 'over15', pct: 80, hit: true }, { key: 'homeToScore', pct: 75, hit: true }, { key: 'away', pct: 45, hit: false }] },
+    { matchId: '2', homeTeamName: 'Arsenal', awayTeamName: 'Leeds United', actualResult: 'HOME', evaluatedAt: '2026-10-10T00:00:00Z', createdAt: '2026-10-03T00:00:00Z', topPicks: [{ key: 'homeToScore', pct: 88, hit: true }, { key: 'over15', pct: 82, hit: true }, { key: 'home', pct: 63, hit: true }] },
   ],
 };
 vi.mock('@/hooks/useAiStatsDashboard', () => ({
@@ -42,16 +42,22 @@ vi.mock('@/hooks/useAiStatsDashboard', () => ({
 
 import AiIstatistikleri from '@/pages/ai-istatistikleri';
 
+/** Sayfa `match` ad alanındaki rozet adlarını da kullanır (analysis.pick.*). */
+const withPicks = (d: Record<string, string>, m: { analysis: { pick: Record<string, string> } }) => ({
+  ...d,
+  ...Object.fromEntries(Object.entries(m.analysis.pick).map(([k, v]) => [`analysis.pick.${k}`, v])),
+});
+
 const render = (d: Record<string, string>) => {
-  dict.current = d;
+  dict.current = withPicks(d, d === (enAi as Record<string, string>) ? enMatch : trMatch);
   return renderToStaticMarkup(<AiIstatistikleri />).replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
 };
 
 describe('/ai-istatistikleri — dil kuralları', () => {
-  it('TR: skor öngörüsü (sütun, kart, faz satırı) yok; analiz terimleri; bahis terimi yok', () => {
+  it('TR: skor öngörüsü ve maç sonucu isabeti yok; en güçlü 3 tahmin; bahis terimi yok', () => {
     const t = render(trAi);
-    for (const gone of ['Skor', 'Tam Skor', 'Gerçek Skor']) expect(t).not.toContain(gone);
-    for (const label of ['AI Analiz İsabet İstatistikleri', 'Maç Sonucu İsabeti', 'En Olası Sonuç', 'Maç Sonucu', 'Tahmin Sonucu', 'Deplasman kazanır (45%)', 'Ev sahibi kazandı', 'Doğru', 'Yanlış', 'Analiz Geçmişi']) {
+    for (const gone of ['Skor', 'Tam Skor', 'Gerçek Skor', 'Maç Sonucu İsabeti', 'En Olası Sonuç', 'Tahmin Sonucu']) expect(t).not.toContain(gone);
+    for (const label of ['AI Analiz İsabet İstatistikleri', 'Maç Sonucu', 'Ev sahibi kazandı', 'Deplasman kazanır %45', 'Analiz Geçmişi', 'En Güçlü 3 Tahmin İsabeti', '83.3%', '5 / 6 tahmin doğru · 2 analiz', '2/3 doğru', '3/3 doğru', '2+ gol %80', 'Ev sahibi gol bulur %88']) {
       expect(t).toContain(label);
     }
     expect(findGamblingTerms(t)).toEqual([]);
@@ -61,7 +67,8 @@ describe('/ai-istatistikleri — dil kuralları', () => {
   it('EN: skor yok, bahis terimi yok', () => {
     const t = render(enAi);
     expect(t).not.toMatch(/Score/);
-    expect(t).toContain('Most Likely Result');
+    expect(t).not.toContain('Most Likely Result');
+    expect(t).toContain('Top 3 Picks Accuracy');
     expect(findGamblingTerms(t)).toEqual([]);
     expect(findGamblingTerms(JSON.stringify(enAi))).toEqual([]);
   });

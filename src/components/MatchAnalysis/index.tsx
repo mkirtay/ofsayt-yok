@@ -9,7 +9,7 @@ import EmptyState from '@/components/EmptyState';
 import DailyFactCard from '@/components/KuralKosesi/DailyFactCard';
 import AiLoadingPitch from './AiLoadingPitch';
 import HeatmapPitch from './HeatmapPitch';
-import type { ApiAnalysis } from './types';
+import { pickTopPredictions } from '@/utils/analysisTopPicks';
 import styles from './matchAnalysis.module.scss';
 
 /**
@@ -31,44 +31,6 @@ type Props = {
   /** Maç artık sağlayıcıda yok (arşiv görünümü) — yalnızca saklı analiz gösterilir. */
   archived?: boolean;
 };
-
-type PickKey =
-  | 'home'
-  | 'draw'
-  | 'away'
-  | 'over15'
-  | 'over25'
-  | 'over35'
-  | 'btts'
-  | 'htOver05'
-  | 'htOver15'
-  | 'homeToScore'
-  | 'awayToScore'
-  | 'bttsFirstHalf';
-
-/** Maç sonucu + gol pazarlarından en yüksek olasılıklı 3 tahmin (özet başlığındaki pill'ler). */
-function pickTopPredictions(analysis: ApiAnalysis): Array<{ key: PickKey; pct: number }> {
-  const { matchPrediction: mp, goalExpectation: ge } = analysis;
-  const candidates: Array<[PickKey, unknown]> = [
-    ['home', mp?.home],
-    ['draw', mp?.draw],
-    ['away', mp?.away],
-    ['over15', ge?.over15],
-    ['over25', ge?.over25],
-    ['over35', ge?.over35],
-    ['btts', ge?.btts],
-    ['htOver05', ge?.htOver05],
-    ['htOver15', ge?.htOver15],
-    ['homeToScore', ge?.homeToScore],
-    ['awayToScore', ge?.awayToScore],
-    ['bttsFirstHalf', ge?.bttsFirstHalf],
-  ];
-  return candidates
-    .map(([key, v]) => ({ key, pct: Math.round(Number(v)) }))
-    .filter((c) => Number.isFinite(c.pct) && c.pct > 0 && c.pct <= 100)
-    .sort((a, b) => b.pct - a.pct)
-    .slice(0, 3);
-}
 
 /** Okuma anında temizlenen eski analiz metinleri boş gelebilir (bkz. utils/analysisSanitize.ts): boşsa çizilmez. */
 function hasText(value: unknown): value is string {

@@ -2,7 +2,7 @@
   "pageTitle": "AI Analiz İsabet İstatistikleri — {{brand}}",
   "pageDesc": "{{brand}} yapay zekâ analizlerinde en olası gösterilen maç sonucunun gerçekleşme oranı. Bilgi amaçlı istatistik.",
   "heroTitle": "AI Analiz İsabet İstatistikleri",
-  "heroSub": "Analizlerde en olası gösterilen maç sonucunun gerçekleşme oranı. Bilgi amaçlı istatistiksel tahmindir.",
+  "heroSub": "AI analizlerinin maçtan önce öne çıkardığı tahminlerin gerçekleşme oranları. Bilgi amaçlı istatistiksel tahmindir.",
   "adminBadge": "ADMIN",
   "adminPending": "Sonucu bekleyen analiz:",
   "adminEvaluate": "Sonuçlarla Karşılaştır",
@@ -63,5 +63,10 @@
   "cronPregen": "ön üretim",
   "cronRunning": "sürüyor",
   "cronNoWork": "henüz yok",
-  "cronStale": "Zamanlanmış işler {{n}} dakikadan uzun süredir çalışmadı — cron-job.org'u kontrol et."
+  "cronStale": "Zamanlanmış işler {{n}} dakikadan uzun süredir çalışmadı — cron-job.org'u kontrol et.",
+  "topPicks": "En Güçlü 3 Tahmin İsabeti",
+  "topPicksSub": "{{hit}} / {{total}} tahmin doğru · {{matches}} analiz",
+  "topPicksHint": "Her analiz kartının üstünde en yüksek olasılıkla öne çıkan 3 tahmin (ör. 2+ gol, ev sahibi gol bulur) maç bitince kontrol edilir. Yalnız güncel modelle (3 Ekim 2026'dan beri) üretilmiş, maç sayfası açılan analizler sayılır.",
+  "colTopPicks": "En Güçlü 3 Tahmin",
+  "topPicksRow": "{{hit}}/{{total}} doğru"
 }

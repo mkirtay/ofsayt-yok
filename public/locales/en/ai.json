@@ -2,7 +2,7 @@
   "pageTitle": "AI Analysis Accuracy Statistics — {{brand}}",
   "pageDesc": "How often the most likely match result in {{brand}} AI analyses actually happened. Informational statistics.",
   "heroTitle": "AI Analysis Accuracy Statistics",
-  "heroSub": "How often the most likely match result in our analyses actually happened. Informational statistical prediction.",
+  "heroSub": "How often the predictions our AI analyses highlighted before kick-off actually happened. Informational statistical prediction.",
   "adminBadge": "ADMIN",
   "adminPending": "Analyses awaiting results:",
   "adminEvaluate": "Compare With Results",
@@ -63,5 +63,10 @@
   "cronPregen": "pre-generation",
   "cronRunning": "running",
   "cronNoWork": "none yet",
-  "cronStale": "Scheduled jobs have not run for more than {{n}} minutes — check cron-job.org."
+  "cronStale": "Scheduled jobs have not run for more than {{n}} minutes — check cron-job.org.",
+  "topPicks": "Top 3 Picks Accuracy",
+  "topPicksSub": "{{hit}} / {{total}} picks correct · {{matches}} analyses",
+  "topPicksHint": "The 3 highest-probability picks shown at the top of each analysis card (e.g. 2+ goals, home team finds the net) are checked after the match. Only analyses from the current model (since 3 Oct 2026) whose match page is available are counted.",
+  "colTopPicks": "Top 3 Picks",
+  "topPicksRow": "{{hit}}/{{total}} correct"
 }

@@ -146,7 +146,8 @@
 
 .statCardHighlight {
   border-color: $color-primary;
-  background: linear-gradient(135deg, $color-surface 0%, #f0fdf7 100%);
+  // Koyu temada da okunur: zemin yüzeyden hafif yeşile (sabit açık renk değil).
+  background: linear-gradient(135deg, $color-surface 0%, color-mix(in srgb, #{$color-primary} 10%, #{$color-surface}) 100%);
 }
 
 .statValue {
@@ -369,17 +370,42 @@
 }
 
 .matchCell {
-  display: flex;
+  display: inline-flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 4px;
+  column-gap: 4px;
+}
+
+.colMatch {
+  width: 34%;
+}
+
+.colResult {
+  white-space: nowrap;
+}
+
+// Telefonda tablo ekrana sığar: maç sonucu sütunu gizlenir (rozetlerdeki ✓ / ✗ sonucu zaten gösterir).
+@media (max-width: $bp-sm) {
+  .table {
+    min-width: 0;
+
+    th,
+    td {
+      padding: $spacing-3;
+    }
+  }
+
+  .colResult {
+    display: none;
+  }
+
+  .colMatch {
+    width: 38%;
+  }
 }
 
 .teamName {
-  font-weight: 500;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 120px;
+  font-weight: 600;
 }
 
 .vs {
@@ -505,4 +531,55 @@
   margin-bottom: $spacing-4;
   font-size: 14px;
   color: #991b1b;
+}
+
+// ── En güçlü 3 tahmin (kart rozetleri) ──
+
+.topPicksHint {
+  margin: -$spacing-3 0 $spacing-6;
+  font-size: 13px;
+  line-height: 1.5;
+  color: $color-text-secondary;
+}
+
+.topPicks {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.topPickList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.topPick {
+  padding: 2px 8px;
+  border-radius: $radius-full;
+  border: 1px solid $color-border;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: $color-text;
+}
+
+.topPickHit {
+  border-color: color-mix(in srgb, #{$color-primary} 45%, transparent);
+  background: color-mix(in srgb, #{$color-primary} 10%, transparent);
+  color: $color-primary-text;
+}
+
+.topPickMiss {
+  border-color: color-mix(in srgb, #{$color-danger} 40%, transparent);
+  color: $color-danger;
+}
+
+.topPickScore {
+  font-size: 12px;
+  font-weight: 700;
+  color: $color-text-secondary;
 }
