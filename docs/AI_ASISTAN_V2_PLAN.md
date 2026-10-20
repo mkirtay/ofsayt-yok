@@ -52,8 +52,9 @@ Hepsi salt okunur. "Kota" = önbellek soğukken Sportmonks'a giden istek (çoğu
 | `get_match_analysis(match_id)` | **kilitli:** önizleme + teklif · **açık:** özet · **yok:** "≈3 sa önce hazırlanır" | `c909a33` `analysisCardForMatch` → `server/analysisAccess.ts`, `utils/analysisPreview.ts` | 0–1 | v2.0 |
 | `get_rules(topic?)` | Kural Köşesi maddeleri (başlık, metin, id) | `src/content/kural-kosesi.json` (statik) | 0 | v2.0 |
 | `get_site_help(topic)` | kredi, premium, analiz açma, hesap — sabit metin + link | yeni `src/content/assistantHelp.ts` (creditPackages'tan fiyat) | 0 | v2.0 |
-| `get_head_to_head(team_a, team_b)` | son karşılaşmalar, G/B/M, goller, karşılaştırma linki | `getTeamsHead2Head`, `server/loadComparePageData.ts` | 0–2 | v2.1 |
-| `get_player(query \| player_id)` | kulüp, mevki, sezon istatistiği, oyuncu linki | `services/playerProfile.ts` (+ `players/search`) | 1–2 | v2.1 |
+| `get_head_to_head(team_a, team_b)` | son karşılaşmalar (≤5), G/B/M, goller, karşılaştırma linki; takım adı ya da id | `getTeamsHead2Head` (maç kartıyla aynı önbellek) | 0–3 | v2.1 ✅ |
+| `get_player(query \| player_id)` | kulüp, mevki, BU SEZON maç/gol/asist, `coverage_note` (kariyer toplamı yok), oyuncu linki | `services/playerProfile.ts` (+ `players/search`) | 1–2 | v2.1 ✅ |
+| `get_match_detail(match_id \| home_team+away_team(+date))` | oynanmış/canlı maç: skor, goller, kırmızı kart oyuncuları, temel istatistik (kart sayısı statistics'ten) | `lookupSportmonksFixture` (maç sayfasıyla aynı istek) + `getTeamOverview` | 0–2 | v2.1 ✅ |
 | `get_referee(query \| id)` | maç, kart/penaltı ortalaması, hakem linki | `server/people/refereePage.ts`, `refereeLeagueTable.ts` | 0–2 | v2.1 |
 | `get_coach(query \| id)` | takım, son 10 maç, TD linki | `server/people/coachPage.ts` | 0–2 | v2.1 |
 

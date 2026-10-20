@@ -186,14 +186,19 @@ describe('asistan sohbet döngüsü', () => {
   it('sistem prompt\'u: kapsam dışında araç yok + sabit nazik cümle; "bende yok" yalnız araç verisizken; kanal → team_id', async () => {
     const { bodies } = await run([text('Tamam.')]);
     const system = (bodies[0]!.messages as Array<{ content: string }>)[0]!.content;
-    expect(system).toContain('ARAÇ ÇAĞIRMA ve tam olarak şu cümleyi yaz: "Maçlar, puan durumu, takımlar, kurallar ve hazır analizler konusunda yardımcı olabilirim."');
+    expect(system).toContain('ARAÇ ÇAĞIRMA ve tam olarak şu cümleyi yaz: "Maçlar, puan durumu, takımlar, oyuncular, kurallar ve hazır analizler konusunda yardımcı olabilirim."');
+    // v2.1: oyuncu / H2H / geçmiş maç kapsamda; transfer hâlâ dışarıda; kariyer toplamı uydurulmaz.
+    expect(system).toMatch(/Kapsam dışı istekte \(transfer/);
+    expect(system).toContain('kariyer / tüm zamanlar sayısı sorulursa "Bu bilgi bende yok" de');
+    expect(system).toContain('get_head_to_head');
+    expect(system).toContain('get_match_detail');
     expect(system).toContain('YALNIZ araç çağrılıp veri gelmediğinde');
     expect(system).toContain('find_team → get_fixtures(team_id)');
     expect(system).toContain('get_fixtures scope="turkey"');
     expect(system).toContain('league_id + upcoming=true');
     expect(system).toContain('"Kanal bilgisi henüz yok"');
     // Kapsam dışı yanıtta araç çağrılmadığı için link ve kart da gitmez.
-    const { events } = await run([text('Maçlar, puan durumu, takımlar, kurallar ve hazır analizler konusunda yardımcı olabilirim.')], 'Messi kaç gol attı?');
+    const { events } = await run([text('Maçlar, puan durumu, takımlar, oyuncular, kurallar ve hazır analizler konusunda yardımcı olabilirim.')], 'Icardi hangi takıma transfer olacak?');
     expect(events.map((e) => e.type)).toEqual(['delta']);
   });
 
