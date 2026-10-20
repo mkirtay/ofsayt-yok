@@ -1,0 +1,244 @@
+@use '../../styles/variables' as *;
+
+.root {
+  padding: $spacing-4;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: $spacing-3;
+  margin-bottom: $spacing-3;
+}
+
+.titleBlock {
+  min-width: 0;
+}
+
+.title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: $color-text;
+}
+
+.meta {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: $color-text-secondary;
+}
+
+.formation {
+  flex-shrink: 0;
+  padding: 3px 8px;
+  border-radius: $radius-full;
+  border: 1px solid $color-border;
+  font-size: 12px;
+  font-weight: 700;
+  color: $color-text;
+  font-variant-numeric: tabular-nums;
+}
+
+// Sabit yükseklik: içerik ne olursa olsun kutu değişmez (CLS). Saha maç kadro sekmesiyle aynı yeşil.
+.pitch {
+  position: relative;
+  height: 520px;
+  max-width: 520px;
+  margin: 0 auto;
+  background: linear-gradient(180deg, #1f7a3d 0%, #2d8b47 50%, #1f7a3d 100%);
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  border-radius: $radius-sm;
+  overflow: hidden;
+}
+
+.markings {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+
+  span {
+    position: absolute;
+    border: 2px solid rgba(255, 255, 255, 0.28);
+  }
+}
+
+// Üstte orta çizgi yay (sahanın yarısı), altta ceza sahası + kale alanı.
+.centerArc {
+  top: -46px;
+  left: 50%;
+  width: 92px;
+  height: 92px;
+  border-radius: 50%;
+  transform: translateX(-50%);
+}
+
+.box {
+  bottom: -2px;
+  left: 50%;
+  width: 56%;
+  height: 84px;
+  transform: translateX(-50%);
+}
+
+.smallBox {
+  bottom: -2px;
+  left: 50%;
+  width: 26%;
+  height: 32px;
+  transform: translateX(-50%);
+}
+
+.rows {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  height: 100%;
+  margin: 0;
+  padding: $spacing-3 $spacing-2;
+  list-style: none;
+}
+
+.row {
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-start;
+}
+
+.player {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 76px;
+  min-width: 0;
+  color: #fff;
+  text-decoration: none;
+
+  &:hover .name,
+  &:focus-visible .name {
+    text-decoration: underline;
+  }
+}
+
+.dot {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.18);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  flex-shrink: 0;
+}
+
+.dotBest {
+  border-color: #f5c542;
+  box-shadow:
+    0 0 0 2px rgba(245, 197, 66, 0.45),
+    0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.photo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.initials {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.rating {
+  position: absolute;
+  left: -12px;
+  top: -6px;
+  z-index: 1;
+  padding: 2px 4px;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+.teamLogo {
+  position: absolute;
+  right: -7px;
+  bottom: -4px;
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  padding: 1px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+.name {
+  max-width: 100%;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+}
+
+.team {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  opacity: 0.85;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
+}
+
+.footer {
+  margin: $spacing-3 0 0;
+  font-size: 13px;
+  color: $color-text;
+  text-align: center;
+}
+
+.star {
+  color: #d9a400;
+}
+
+.note {
+  margin: $spacing-1 0 0;
+  font-size: 11px;
+  color: $color-text-meta;
+  text-align: center;
+}
+
+@media (max-width: $bp-sm) {
+  .root {
+    padding: $spacing-3 $spacing-2;
+  }
+
+  .pitch {
+    height: 480px;
+  }
+
+  .player {
+    width: 64px;
+  }
+
+  .dot {
+    width: 38px;
+    height: 38px;
+  }
+
+  .name {
+    font-size: 10px;
+  }
+}

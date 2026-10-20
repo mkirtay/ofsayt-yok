@@ -35,5 +35,12 @@
   "zonePromotion": "Promotion / next round",
   "zonePlayoff": "Play-offs",
   "zoneUefaPlayoff": "Play-off round",
-  "zoneRelegation": "Relegation"
+  "zoneRelegation": "Relegation",
+  "tabTotw": "Team of the Week",
+  "totwTitle": "Team of the Week",
+  "totwRound": "Matchweek {{round}}",
+  "totwFormation": "Formation {{formation}}",
+  "totwRatingLabel": "Rating {{rating}}",
+  "totwBest": "Player of the week: {{name}} ({{team}}) · {{rating}}",
+  "totwNote": "Players are selected by their match ratings."
 }
