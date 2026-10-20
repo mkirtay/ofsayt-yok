@@ -1,7 +1,7 @@
 /**
  * Maç momentumu yükleyicisi (bkz. services/sportmonks/momentum.ts, uç: /api/matches/[id]/momentum).
  *
- * Maliyet: maç başına TEK `fixtures/{id}` isteği (Fixture havuzu), yalnız 3 trend türü + devreler (~13 KB ham, Redis'e
+ * Maliyet: maç başına TEK `fixtures/{id}` isteği (Fixture havuzu), yalnız 3 trend türü + devreler + forma renkleri (~13 KB ham, Redis'e
  * gzip ~2 KB). Süre maç durumuna göre `cachePolicy` (`fixtures/{id}`): canlı 20 sn, yeni biten 15 dk, 1 günden eski 7 gün.
  * Sayfa SSR'ına girmez; istemci Genel Bakış'ta çeker. Havuz rezervdeyse (kalan < %30 / 429 soğuması) yalnız önbellek:
  * Redis'te yoksa Sportmonks'a gidilmez, bileşen görünmez.
@@ -21,6 +21,7 @@ import {
   type PeriodRow,
   type TrendRow,
 } from '@/services/sportmonks/momentum';
+import { MOMENTUM_COLOR_METADATA_TYPES, momentumColorsFromMetadata } from '@/services/sportmonks/momentumColors';
 
 export type MatchMomentumResult =
   | { kind: 'ok'; value: MatchMomentumResponse; cacheControl: string }
@@ -32,14 +33,16 @@ export type MatchMomentumResult =
 export const MOMENTUM_QUERY = {
   select: 'state_id,starting_at',
   include:
-    'trends:participant_id,type_id,minute,value,period_id;participants:id;periods:type_id,sort_order,counts_from,period_length,minutes,ended',
-  filters: `trendTypes:${Object.values(MOMENTUM_TREND_TYPES).join(',')}`,
+    // `metadata` alan seçimiyle boş geliyor (2026-10-21) → seçimsiz; filtre yalnız forma renkleri (161/162, ~450 B).
+    'trends:participant_id,type_id,minute,value,period_id;participants:id;periods:type_id,sort_order,counts_from,period_length,minutes,ended;metadata',
+  filters: `trendTypes:${Object.values(MOMENTUM_TREND_TYPES).join(',')};metadataTypes:${Object.values(MOMENTUM_COLOR_METADATA_TYPES).join(',')}`,
 };
 
 type RawFixture = {
   state_id?: number | null;
   trends?: TrendRow[] | null;
   periods?: PeriodRow[] | null;
+  metadata?: { type_id?: number | null; values?: unknown }[] | null;
   participants?: { id: number; meta?: { location?: string | null } | null }[] | null;
 };
 
@@ -73,5 +76,5 @@ export async function loadMatchMomentum(matchId: string, deps: MatchMomentumDeps
   const team = (loc: string) => fixture.participants?.find((p) => p.meta?.location === loc)?.id ?? null;
   const momentum = computeMomentum({ trends: fixture.trends, periods: fixture.periods, homeId: team('home'), awayId: team('away') });
   if (!momentum) return { kind: 'empty', cacheControl };
-  return { kind: 'ok', value: { ...momentum, live: phase === 'IN PLAY' || phase === 'HALF TIME BREAK' }, cacheControl };
+  return { kind: 'ok', value: { ...momentum, live: phase === 'IN PLAY' || phase === 'HALF TIME BREAK', colors: momentumColorsFromMetadata(fixture.metadata) }, cacheControl };
 }

@@ -29,6 +29,7 @@ const data: MatchMomentumResponse = {
     { from: 45, length: 50, start: 46, played: 50 },
   ],
   live: false,
+  colors: null,
 };
 
 describe('MatchMomentum', () => {
@@ -70,6 +71,21 @@ describe('MomentumChart', () => {
     expect(html).toContain("title=\"88&#x27; Gol · İrfan Can\"");
     expect(html).toContain("title=\"30&#x27; Kırmızı kart · İrfan Can\"");
     expect(html.match(/title="/g)).toHaveLength(2);
+  });
+
+  it('forma renkleri CSS değişkeni olarak; renk yoksa stil yok (token)', () => {
+    expect(html).not.toContain('--mm-home');
+    const colored = renderToStaticMarkup(
+      <MomentumChart
+        data={{ ...data, colors: { home: { fill: '#c40010', edge: { light: null, dark: null } }, away: { fill: '#f0f0f0', edge: { light: '#8a8a8a', dark: null } } } }}
+        homeName="A"
+        awayName="B"
+        events={[]}
+      />,
+    );
+    expect(colored).toContain('--mm-home:#c40010');
+    expect(colored).toContain('--mm-away-edge-l:#8a8a8a');
+    expect(colored).not.toContain('--mm-away-edge-d');
   });
 
   it('eksen etiketleri: 0\', 45\', 90\'', () => {

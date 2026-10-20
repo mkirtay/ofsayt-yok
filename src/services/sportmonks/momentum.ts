@@ -13,6 +13,8 @@
  * diye tabanı MIN_SCALE).
  */
 
+import type { MomentumColors } from './momentumColors';
+
 export const MOMENTUM_TREND_TYPES = { DANGEROUS_ATTACKS: 44, SHOTS_TOTAL: 42, CORNERS: 34 } as const;
 
 const WEIGHTS: Record<number, number> = {
@@ -73,8 +75,8 @@ export type MatchMomentum = {
   segments: MomentumSegment[];
 };
 
-/** `/api/matches/[id]/momentum` yanıtı. */
-export type MatchMomentumResponse = MatchMomentum & { live: boolean };
+/** `/api/matches/[id]/momentum` yanıtı. `colors` null → tasarım token'ları (bkz. momentumColors.ts). */
+export type MatchMomentumResponse = MatchMomentum & { live: boolean; colors: MomentumColors | null };
 
 function num(v: unknown): number | null {
   const n = typeof v === 'string' ? Number(v) : v;

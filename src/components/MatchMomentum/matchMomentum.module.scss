@@ -5,6 +5,16 @@ $chart-h: 64px;
 $card-h: 134px;
 
 .card {
+  // Takım renkleri (bkz. services/sportmonks/momentumColors.ts): inline --mm-home/--mm-away; kenar yalnız zemine karşı
+  // kontrastı yetersiz temada (varsayılan tema koyu).
+  --mm-home-edge: var(--mm-home-edge-d, transparent);
+  --mm-away-edge: var(--mm-away-edge-d, transparent);
+
+  :global(:root[data-theme='light']) & {
+    --mm-home-edge: var(--mm-home-edge-l, transparent);
+    --mm-away-edge: var(--mm-away-edge-l, transparent);
+  }
+
   height: $card-h;
   box-sizing: border-box;
   margin-top: $spacing-4;
@@ -67,11 +77,13 @@ $card-h: 134px;
 }
 
 .legendHome::before {
-  background: $color-primary;
+  background: var(--mm-home, #{$color-primary});
+  box-shadow: inset 0 0 0 1px var(--mm-home-edge);
 }
 
 .legendAway::before {
-  background: $color-info;
+  background: var(--mm-away, #{$color-info});
+  box-shadow: inset 0 0 0 1px var(--mm-away-edge);
 }
 
 .chart {
@@ -93,13 +105,17 @@ $card-h: 134px;
 }
 
 .areaHome {
-  fill: $color-primary;
-  fill-opacity: 0.85;
+  fill: var(--mm-home, #{$color-primary});
+  fill-opacity: 0.9;
+  stroke: var(--mm-home-edge);
+  stroke-width: 1.5;
 }
 
 .areaAway {
-  fill: $color-info;
-  fill-opacity: 0.85;
+  fill: var(--mm-away, #{$color-info});
+  fill-opacity: 0.9;
+  stroke: var(--mm-away-edge);
+  stroke-width: 1.5;
 }
 
 .zero {
@@ -168,11 +184,13 @@ $card-h: 134px;
 }
 
 .tipHome::before {
-  background: $color-primary;
+  background: var(--mm-home, #{$color-primary});
+  box-shadow: inset 0 0 0 1px var(--mm-home-edge);
 }
 
 .tipAway::before {
-  background: $color-info;
+  background: var(--mm-away, #{$color-info});
+  box-shadow: inset 0 0 0 1px var(--mm-away-edge);
 }
 
 .axis {

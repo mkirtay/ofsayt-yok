@@ -23,11 +23,13 @@ describe('loadMatchMomentum', () => {
     const r = await loadMatchMomentum('19746587', d);
     expect(d.fetch).toHaveBeenCalledTimes(1);
     expect(d.fetch).toHaveBeenCalledWith('football/fixtures/19746587', MOMENTUM_QUERY);
-    expect(MOMENTUM_QUERY.filters).toBe('trendTypes:44,42,34');
+    expect(MOMENTUM_QUERY.filters).toBe('trendTypes:44,42,34;metadataTypes:161,162');
     expect(r.kind).toBe('ok');
     if (r.kind !== 'ok') return;
     expect(r.value.live).toBe(false);
     expect(r.value.points).toHaveLength(98);
+    expect(r.value.colors?.home.fill).toBe('#c40010');
+    expect(r.value.colors?.away.fill).toBe('#f0f0f0');
     expect(r.cacheControl).toMatch(/s-maxage=604800/);
   });
 

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent } from 'react';
 import { useTranslation } from '@/lib/i18n';
 import type { Match } from '@/models/liveScore';
 import type { MatchEvent } from '@/models/domain';
@@ -118,6 +118,18 @@ export default function MatchMomentum({ matchId, match, events }: Props) {
   return <MomentumChart data={data} homeName={match?.home?.name ?? ''} awayName={match?.away?.name ?? ''} events={events} />;
 }
 
+/** Forma renkleri (yoksa CSS token'ları kalır); kenar rengi temaya göre CSS'te seçilir. */
+function teamColorVars(data: MatchMomentumResponse): CSSProperties | undefined {
+  const c = data.colors;
+  if (!c) return undefined;
+  const vars: Record<string, string> = { '--mm-home': c.home.fill, '--mm-away': c.away.fill };
+  if (c.home.edge.light) vars['--mm-home-edge-l'] = c.home.edge.light;
+  if (c.home.edge.dark) vars['--mm-home-edge-d'] = c.home.edge.dark;
+  if (c.away.edge.light) vars['--mm-away-edge-l'] = c.away.edge.light;
+  if (c.away.edge.dark) vars['--mm-away-edge-d'] = c.away.edge.dark;
+  return vars as CSSProperties;
+}
+
 type ChartProps = { data: MatchMomentumResponse; homeName: string; awayName: string; events: MatchEvent[] };
 
 /** Dolu kart (veri hazır). */
@@ -171,7 +183,7 @@ export function MomentumChart({ data, homeName, awayName, events }: ChartProps) 
   });
 
   return (
-    <section className={styles.card} aria-label={t('momentum.title')}>
+    <section className={styles.card} aria-label={t('momentum.title')} style={teamColorVars(data)}>
       <div className={styles.header}>
         <h3 className={styles.title}>{t('momentum.title')}</h3>
         {hoverInfo ? (
@@ -200,8 +212,8 @@ export function MomentumChart({ data, homeName, awayName, events }: ChartProps) 
           {data.segments.map((g, s) => (
             <rect key={s} x={layout[s]!.x0} y={0} width={g.length * layout[s]!.unit} height={CHART_H} className={styles.band} />
           ))}
-          <path d={areaPath(data, layout, 1)} className={styles.areaHome} />
-          <path d={areaPath(data, layout, -1)} className={styles.areaAway} />
+          <path d={areaPath(data, layout, 1)} className={styles.areaHome} vectorEffect="non-scaling-stroke" />
+          <path d={areaPath(data, layout, -1)} className={styles.areaAway} vectorEffect="non-scaling-stroke" />
           <line x1={0} x2={CHART_W} y1={MID} y2={MID} className={styles.zero} vectorEffect="non-scaling-stroke" />
           {hoverInfo ? (
             <line x1={hoverInfo.x} x2={hoverInfo.x} y1={0} y2={CHART_H} className={styles.guide} vectorEffect="non-scaling-stroke" />
