@@ -1,0 +1,216 @@
+@use '../../styles/variables' as *;
+
+// Sabit yükseklik: iskelet ile dolu kart aynı boyda (CLS yok). 12 + 20 + 8 + 64 + 4 + 14 + 12 = 134.
+$chart-h: 64px;
+$card-h: 134px;
+
+.card {
+  height: $card-h;
+  box-sizing: border-box;
+  margin-top: $spacing-4;
+  padding: $spacing-3 $spacing-4;
+  background-color: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  box-shadow: $shadow-surface;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+
+  @container (max-width: 700px) {
+    padding: $spacing-3;
+  }
+}
+
+.header {
+  height: 20px;
+  margin-bottom: $spacing-2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-2;
+  min-width: 0;
+}
+
+.title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 20px;
+  white-space: nowrap;
+}
+
+.legend {
+  display: flex;
+  gap: $spacing-3;
+  min-width: 0;
+  font-size: 12px;
+  color: $color-text-secondary;
+
+  span {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    &::before {
+      content: '';
+      flex: none;
+      width: 8px;
+      height: 8px;
+      border-radius: 2px;
+    }
+  }
+}
+
+.legendHome::before {
+  background: $color-primary;
+}
+
+.legendAway::before {
+  background: $color-info;
+}
+
+.chart {
+  position: relative;
+  height: $chart-h;
+  flex: none;
+  touch-action: pan-y; // yatay sürükleme ipucunu gezdirir, dikey kaydırma sayfada kalır
+  cursor: crosshair;
+}
+
+.svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.band {
+  fill: $color-bg;
+}
+
+.areaHome {
+  fill: $color-primary;
+  fill-opacity: 0.85;
+}
+
+.areaAway {
+  fill: $color-info;
+  fill-opacity: 0.85;
+}
+
+.zero {
+  stroke: $color-text-secondary;
+  stroke-opacity: 0.35;
+  stroke-width: 1;
+}
+
+.guide {
+  stroke: $color-text;
+  stroke-opacity: 0.5;
+  stroke-width: 1;
+}
+
+// Olay işaretleri: ev üst kenarda, deplasman alt kenarda.
+.marker {
+  position: absolute;
+  transform: translateX(-50%);
+  pointer-events: none;
+  box-sizing: border-box;
+}
+
+.markerHome {
+  top: -4px;
+}
+
+.markerAway {
+  bottom: -4px;
+}
+
+.goal {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: $color-surface;
+  border: 2px solid $color-text;
+}
+
+.red {
+  width: 7px;
+  height: 10px;
+  border-radius: 1.5px;
+  background: var(--color-loss);
+  border: 1px solid $color-surface;
+}
+
+.tip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 600;
+  color: $color-text;
+
+  &::before {
+    content: '';
+    flex: none;
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+  }
+}
+
+.tipHome::before {
+  background: $color-primary;
+}
+
+.tipAway::before {
+  background: $color-info;
+}
+
+.axis {
+  position: relative;
+  height: 14px;
+  margin-top: $spacing-1;
+  font-size: 11px;
+  line-height: 14px;
+  color: $color-text-secondary;
+
+  span {
+    position: absolute;
+    top: 0;
+    transform: translateX(-50%);
+
+    &:first-child {
+      transform: none;
+    }
+
+    &:last-child {
+      transform: translateX(-100%);
+    }
+  }
+}
+
+.skeleton {
+  height: 100%;
+  border-radius: $radius-sm;
+  background: $color-bg;
+  animation: pulse 1.4s ease-in-out infinite;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.55;
+  }
+}

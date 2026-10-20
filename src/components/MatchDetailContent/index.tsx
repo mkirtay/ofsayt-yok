@@ -9,6 +9,7 @@ import Lineup from '@/components/Lineup';
 import type { Head2HeadData } from '@/services/liveScoreService';
 import type { AnalysisPreview } from '@/utils/analysisPreview';
 import MatchStats from '@/components/MatchStats';
+import MatchMomentum from '@/components/MatchMomentum';
 import MatchTabs, { type MatchTabItem } from '@/components/MatchTabs';
 import MatchTrivia from '@/components/MatchTrivia';
 import MatchAnalysis from '@/components/MatchAnalysis';
@@ -90,6 +91,7 @@ export default function MatchDetailContent({ detail, requestedMatchId, variant =
         label: t('tabs.overview'),
         render: () => (
           <>
+            <MatchMomentum matchId={effectiveMatchId} match={match} events={detail.events} />
             <div
               className={[
                 styles.statsEventsRow,

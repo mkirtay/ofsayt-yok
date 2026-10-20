@@ -400,6 +400,14 @@
       "offside": "Offside"
     }
   },
+  "momentum": {
+    "title": "Match momentum",
+    "aria": "Minute-by-minute pressure chart: {{home}} above, {{away}} below",
+    "pressure": "{{team}} pressure",
+    "balanced": "Balanced",
+    "goal": "Goal",
+    "redCard": "Red card"
+  },
   "person": {
     "refereeRole": "Referee",
     "coachRole": "Head coach",

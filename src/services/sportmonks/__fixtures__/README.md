@@ -111,3 +111,5 @@ turda eklenen 4 yeni gerçek type_id de aynı maçtan geliyor: `EVENT_TYPES[10]`
   `statistics[]` satırının tamamı (mevcut `playerProfileOsimhen.json` yalnız 3 satır).
   Kariyer kartının "Kısmi veri" kuralı için: Napoli (2020/21–2023/24) ve Lille
   (2019/20) yalnız UEFA satırlarıyla geliyor — yerel lig sezonları plan dışı.
+- `momentumSuperLig.json` — 2026-10-21 gerçek istek: `fixtures/19746587?select=state_id,starting_at&include=trends:participant_id,type_id,minute,value,period_id;participants:id;periods:type_id,sort_order,counts_from,period_length,minutes,ended&filters=trendTypes:44,42,34`
+  (Gençlerbirliği 0–1 Galatasaray, SL; `subscription`/`rate_limit` çıkarıldı). Momentum grafiği (`momentum.ts`).

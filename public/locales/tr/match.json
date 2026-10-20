@@ -395,6 +395,14 @@
       "offside": "Ofsayt"
     }
   },
+  "momentum": {
+    "title": "Maç baskısı",
+    "aria": "Dakika dakika baskı grafiği: {{home}} üstte, {{away}} altta",
+    "pressure": "{{team}} baskısı",
+    "balanced": "Dengeli",
+    "goal": "Gol",
+    "redCard": "Kırmızı kart"
+  },
   "person": {
     "refereeRole": "Hakem",
     "coachRole": "Teknik direktör",
