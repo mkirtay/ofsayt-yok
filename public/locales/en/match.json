@@ -230,9 +230,21 @@
   "tabs": {
     "label": "Match sections",
     "overview": "Overview",
+    "commentary": "Commentary",
     "forum": "Forum",
     "analysis": "AI Analysis",
     "trivia": "Facts"
+  },
+  "commentary": {
+    "title": "Match Commentary",
+    "filtersLabel": "Commentary filter",
+    "filters": { "all": "All", "goals": "Goals", "cards": "Cards", "shots": "Shots", "substitutions": "Substitutions", "important": "Important" },
+    "kinds": { "goal": "Goal", "card": "Card", "redCard": "Red card", "shot": "Shot", "corner": "Corner", "offside": "Offside", "substitution": "Substitution", "var": "VAR", "update": "Update", "other": "Event" },
+    "minuteSuffix": " min",
+    "liveNote": "Live · refreshes every minute",
+    "pre": "Commentary will appear here once the match kicks off.",
+    "empty": "No commentary for this match.",
+    "emptyFilter": "No entries for this filter."
   },
   "news": {
     "loading": "Loading news...",

@@ -8,6 +8,7 @@ vi.mock('@/lib/i18n', () => ({
       ({
         'tabs.label': 'Maç detay bölümleri',
         'tabs.overview': 'Genel Bakış',
+        'tabs.commentary': 'Anlatım',
         'tabs.forum': 'Forum',
         'tabs.analysis': 'AI Analiz',
         'tabs.trivia': 'Trivia',
@@ -21,6 +22,7 @@ vi.mock('@/components/Lineup', () => ({ default: () => <div data-testid="lineup-
 vi.mock('@/components/MatchTrivia', () => ({ default: () => <div data-testid="trivia-content" /> }));
 vi.mock('@/components/MatchAnalysis', () => ({ default: () => <div data-testid="analysis-content" /> }));
 vi.mock('@/hooks/useMatchAnalysis', () => ({ useMatchAnalysis: () => ({}) }));
+vi.mock('@/components/MatchCommentary', () => ({ default: () => <div data-testid="commentary-content" /> }));
 vi.mock('@/components/MatchForumTab', () => ({ default: () => <div data-testid="forum-content" /> }));
 
 import MatchDetailContent, { DEFAULT_MATCH_TAB, MATCH_TAB_KEYS } from './index';
@@ -57,10 +59,11 @@ describe('<MatchDetailContent />', () => {
   const html = renderToStaticMarkup(<MatchDetailContent detail={detail} requestedMatchId="1" />);
   const tabs = [...html.matchAll(/<button[^>]*role="tab"[^>]*>/g)].map((m) => m[0]);
 
-  it('DÜZ dört üst sekme, bu sırayla: Genel Bakış | Forum | AI Analiz | Trivia', () => {
-    expect(MATCH_TAB_KEYS).toEqual(['overview', 'forum', 'analysis', 'trivia']);
-    expect(tabs).toHaveLength(4);
-    expect(html.indexOf('>Genel Bakış')).toBeLessThan(html.indexOf('>Forum'));
+  it('DÜZ beş üst sekme, bu sırayla: Genel Bakış | Anlatım | Forum | AI Analiz | Trivia', () => {
+    expect(MATCH_TAB_KEYS).toEqual(['overview', 'commentary', 'forum', 'analysis', 'trivia']);
+    expect(tabs).toHaveLength(5);
+    expect(html.indexOf('>Genel Bakış')).toBeLessThan(html.indexOf('>Anlatım'));
+    expect(html.indexOf('>Anlatım')).toBeLessThan(html.indexOf('>Forum'));
     expect(html.indexOf('>Forum')).toBeLessThan(html.indexOf('>AI Analiz'));
     expect(html.indexOf('>AI Analiz')).toBeLessThan(html.indexOf('>Trivia'));
   });
@@ -77,6 +80,7 @@ describe('<MatchDetailContent />', () => {
     expect(html).toContain('stats-content');
     expect(html).toContain('events-content');
     expect(html).toContain('lineup-content');
+    expect(html).not.toContain('commentary-content');
     expect(html).not.toContain('forum-content');
     expect(html).not.toContain('analysis-content');
     expect(html).not.toContain('trivia-content');
@@ -86,7 +90,8 @@ describe('<MatchDetailContent />', () => {
     const chunk = (i: number) => html.split('role="tab"').slice(1)[i].split('</button>')[0];
     expect(chunk(0)).not.toContain('premiumDot');
     expect(chunk(1)).not.toContain('premiumDot');
-    expect(chunk(2)).toContain('premiumDot');
+    expect(chunk(2)).not.toContain('premiumDot');
     expect(chunk(3)).toContain('premiumDot');
+    expect(chunk(4)).toContain('premiumDot');
   });
 });
