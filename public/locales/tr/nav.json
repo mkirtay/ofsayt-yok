@@ -33,5 +33,6 @@
     "progress": "{{done}}/{{total}} tahminin · haftanın maçları",
     "play": "Oyna",
     "playFree": "Ücretsiz oyna"
-  }
+  },
+  "gameLong": "{{game}}: skorları tahmin et"
 }

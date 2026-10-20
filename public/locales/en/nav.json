@@ -33,5 +33,6 @@
     "progress": "{{done}}/{{total}} picks · this week",
     "play": "Play",
     "playFree": "Play free"
-  }
+  },
+  "gameLong": "{{game}}: predict the scores"
 }

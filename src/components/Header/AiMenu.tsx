@@ -7,6 +7,8 @@ import { useTranslation } from '@/lib/i18n';
 import MyAnalysesList from './MyAnalysesList';
 import { useDismiss } from './useDismiss';
 import { openAssistant } from '@/components/Assistant/openEvent';
+import { GAME_BRAND } from '@/config/brand';
+import { GAME_PUBLIC_CLIENT } from '@/config/gameFlag';
 import styles from './header.module.scss';
 
 /** Ürün/AI özellikleri tek "AI" menüsü altında: AI İsabeti + (oturum varsa) AI Analizlerim. */
@@ -59,6 +61,11 @@ export default function AiMenu() {
           >
             {t('aiAccuracy')}
           </Link>
+          {GAME_PUBLIC_CLIENT ? (
+            <Link href={`${GAME_BRAND.basePath}?src=ai_menu`} role="menuitem" className={styles.menuItem} onClick={close}>
+              {t('gameLong')}
+            </Link>
+          ) : null}
           {session ? (
             <>
               <div className={styles.menuHeading}>{t('myAnalyses')}</div>
