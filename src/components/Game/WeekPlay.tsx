@@ -415,6 +415,21 @@ export default function WeekPlay({
                       </button>
                     ))}
                   </div>
+                  <Link
+                    href={`${m.href}?sekme=ai-analiz`}
+                    className={styles.aiChip}
+                    data-ready={m.aiReady ? '' : undefined}
+                    aria-label={`${m.home.name} – ${m.away.name}: ${m.aiReady ? t('ai.readyLabel') : t('ai.label')}`}
+                    title={m.aiReady ? t('ai.readyLabel') : t('ai.label')}
+                  >
+                    <span aria-hidden="true">🤖</span>
+                    <span className={styles.aiChipShort} aria-hidden="true">
+                      AI
+                    </span>
+                    <span className={styles.aiChipLong} aria-hidden="true">
+                      {m.aiReady ? t('ai.ready') : t('ai.cta')}
+                    </span>
+                  </Link>
                   {isDay ? null : (
                     <button
                       type="button"

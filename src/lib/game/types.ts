@@ -19,6 +19,8 @@ export type GameMatchView = {
   /** Maçın listeleri: ikisi de doluysa tek tahmin iki oyunda sayılır ("Haftalık + Günlük" rozeti). */
   weekKey: string | null;
   dayKey: string | null;
+  /** Maç öncesi AI analizi üretilmiş mi (MatchAnalysis PRE; görünüm başına tek toplu sorgu) — kartta "AI analizi hazır". */
+  aiReady: boolean;
 };
 
 export type GameWeekView = {

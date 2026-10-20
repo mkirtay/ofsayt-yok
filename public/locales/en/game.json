@@ -329,5 +329,11 @@
   "both": {
     "badge": "Weekly + Daily",
     "hint": "This match is in both lists: one pick counts in both games (joker only in the weekly)."
+  },
+  "ai": {
+    "label": "What does the AI say about this match? Review the analysis and compare with your pick",
+    "readyLabel": "AI analysis ready: review it and compare with your pick",
+    "cta": "See AI analysis",
+    "ready": "AI analysis ready"
   }
 }

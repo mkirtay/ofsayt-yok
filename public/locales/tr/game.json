@@ -329,5 +329,11 @@
   "both": {
     "badge": "Haftalık + Günlük",
     "hint": "Bu maç iki listede: tek tahminin iki oyunda da sayılır (joker yalnız haftalıkta)."
+  },
+  "ai": {
+    "label": "AI bu maç için ne diyor? Analizi incele, tahmininle karşılaştır",
+    "readyLabel": "AI analizi hazır: incele, tahmininle karşılaştır",
+    "cta": "AI analizine bak",
+    "ready": "AI analizi hazır"
   }
 }

@@ -18,7 +18,7 @@ import type { GameDayView } from '@/lib/game/types';
 import { dayKeyOf, dayRange, utcDatesOfDay } from '@/lib/game/week';
 import { prisma } from '@/lib/prisma';
 import { getFixturesByDate } from '@/services/liveScoreService';
-import { GameAdminError, listsOf, MATCH_LISTS_INCLUDE, predictionCountsFor, snapshotsFor, toMatchView } from '@/server/game/weeks';
+import { aiReadyFor, GameAdminError, listsOf, MATCH_LISTS_INCLUDE, predictionCountsFor, snapshotsFor, toMatchView } from '@/server/game/weeks';
 import type { Suggestion } from '@/server/game/suggestions';
 
 /** Günlük maç sayısı (kullanıcı kararı 2026-10-19). */
@@ -28,13 +28,14 @@ type DayWithMatches = GameDay & { matches: Prisma.GameMatchGetPayload<{ include:
 
 export async function toDayView(day: DayWithMatches): Promise<GameDayView> {
   const matches = [...day.matches].sort((a, b) => (a.dayPosition ?? 0) - (b.dayPosition ?? 0) || a.kickoffAt.getTime() - b.kickoffAt.getTime());
-  const snaps = await snapshotsFor(matches.map((m) => m.fixtureId));
+  const ids = matches.map((m) => m.fixtureId);
+  const [snaps, ai] = await Promise.all([snapshotsFor(ids), aiReadyFor(ids)]);
   return {
     dayKey: day.dayKey,
     status: day.status === 'SETTLED' ? 'SETTLED' : 'PUBLISHED',
     startsAt: day.startsAt.toISOString(),
     endsAt: day.endsAt.toISOString(),
-    matches: matches.map((m) => ({ ...toMatchView(m, snaps.get(m.fixtureId), listsOf(m, { dayKey: day.dayKey })), position: m.dayPosition ?? 0 })),
+    matches: matches.map((m) => ({ ...toMatchView(m, snaps.get(m.fixtureId), listsOf(m, { dayKey: day.dayKey })), position: m.dayPosition ?? 0, aiReady: ai.has(m.fixtureId) })),
   };
 }
 

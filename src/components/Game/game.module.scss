@@ -2288,3 +2288,44 @@ $on-action-fg: var(--color-on-action);
   display: inline-flex;
   flex: none;
 }
+
+// AI analizi ipucu (kart altı, hızlı skor çiplerinin yanında; kart yüksekliği değişmez). Mobilde kısa "🤖 AI", geniş ekranda metin.
+.aiChip {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 32px;
+  padding: 0 10px;
+  border: 1.5px solid $color-border;
+  border-radius: $radius-full;
+  color: $color-text;
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: none;
+  white-space: nowrap;
+
+  &[data-ready] {
+    border-color: $color-primary;
+    color: $color-primary-text;
+  }
+
+  &:hover {
+    background: $color-muted;
+  }
+}
+
+.aiChipLong {
+  display: none;
+}
+
+@container game-play (min-width: 520px) {
+  .aiChipShort {
+    display: none;
+  }
+
+  .aiChipLong {
+    display: inline;
+  }
+}
+

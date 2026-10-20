@@ -45,7 +45,19 @@ export function toMatchView(m: GameMatch, snap: MatchSnapshot | undefined, lists
     result: m.status === 'FINISHED' && m.homeGoals != null && m.awayGoals != null ? { home: m.homeGoals, away: m.awayGoals } : null,
     href: buildMatchHref({ id: Number(m.fixtureId), home: { name: homeName }, away: { name: awayName } }),
     ...lists,
+    aiReady: false,
   };
+}
+
+/** Maç öncesi AI analizi olan fixture'lar (tek sorgu; hata → boş — kart yalnız ipucunu "hazır" yazmaz). */
+export async function aiReadyFor(fixtureIds: string[]): Promise<Set<string>> {
+  if (!fixtureIds.length) return new Set();
+  try {
+    const rows = await prisma.matchAnalysis.findMany({ where: { matchId: { in: fixtureIds }, matchStatus: 'PRE' }, select: { matchId: true } });
+    return new Set(rows.map((r) => r.matchId));
+  } catch {
+    return new Set();
+  }
 }
 
 export async function snapshotsFor(fixtureIds: string[]): Promise<Map<string, MatchSnapshot>> {
@@ -56,14 +68,15 @@ export async function snapshotsFor(fixtureIds: string[]): Promise<Map<string, Ma
 
 export async function toWeekView(week: GameWeek & { matches: MatchWithLists[] }): Promise<GameWeekView> {
   const matches = [...week.matches].sort((a, b) => (a.position ?? 0) - (b.position ?? 0) || a.kickoffAt.getTime() - b.kickoffAt.getTime());
-  const snaps = await snapshotsFor(matches.map((m) => m.fixtureId));
+  const ids = matches.map((m) => m.fixtureId);
+  const [snaps, ai] = await Promise.all([snapshotsFor(ids), aiReadyFor(ids)]);
   return {
     weekKey: week.weekKey,
     season: week.season,
     status: week.status === 'SETTLED' ? 'SETTLED' : 'PUBLISHED',
     startsAt: week.startsAt.toISOString(),
     endsAt: week.endsAt.toISOString(),
-    matches: matches.map((m) => toMatchView(m, snaps.get(m.fixtureId), listsOf(m, { weekKey: week.weekKey }))),
+    matches: matches.map((m) => ({ ...toMatchView(m, snaps.get(m.fixtureId), listsOf(m, { weekKey: week.weekKey })), aiReady: ai.has(m.fixtureId) })),
   };
 }
 
