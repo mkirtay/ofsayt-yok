@@ -659,3 +659,8 @@ başında ilk tur (00:00–00:10 İstanbul) bugünün 3 maçını seçer. 3) Haf
 - `/tahmin`: Günün 3 maçı varsa varsayılan o (`?oyun=gunluk|haftalik` açık seçim); haftalık liste henüz yoksa "sistem
   seçiyor" metni.
 - Migration `20261020120000_game_week_auto` (yalnız iki sütun; deploy öncesi uygulanabilir).
+- **Admin ekranı sadeleştirildi (2026-10-20):** açılınca "Bu hafta · 19–25 Ekim"; durum "Otomatik seçildi · yayında" / "Admin
+  düzenledi · yayında" / "Henüz seçilmedi · sonuç işi ilk turda seçer" / "Kapandı". Tek akış: "Listeyi düzenle" → seçili maçlar
+  (Çıkar; başlamış / tahmin almış kilitli) + aranabilir "Maç ekle" (★ otomatik öneri; boş listede öneriyle başlar) → "Kaydet ve
+  yayınla" (hafta yoksa burada açılır). Aynı sayfada "Bugün · Günün 3 maçı" kartı (Değiştir; `PUT /api/admin/game/days/[dayKey]`).
+  "Sonuç işini çalıştır" ve "Sıralamadan gizle" Bakım bölümünde. Okumak / gezinmek satır AÇMAZ.

@@ -115,7 +115,16 @@ export type AdminWeekView = GameWeekView & {
   /** Admin elle değiştirdi → otomatik seçim dokunmaz. */
   lockedByAdmin: boolean;
   autoCheckedAt: string | null;
+  /** Maç id → tahmin sayısı (tahmin almış maç listeden çıkarılamaz). */
+  predictionCounts: Record<string, number>;
 };
+
+/** Maç başına tahmin sayısı (admin: çıkarılabilir mi). */
+export async function predictionCountsFor(matchIds: string[]): Promise<Record<string, number>> {
+  if (!matchIds.length) return {};
+  const rows = await prisma.gamePrediction.groupBy({ by: ['gameMatchId'], where: { gameMatchId: { in: matchIds } }, _count: { _all: true } });
+  return Object.fromEntries(rows.map((r) => [r.gameMatchId, r._count._all]));
+}
 
 export async function loadAdminWeek(weekKey: string): Promise<AdminWeekView | null> {
   const week = await prisma.gameWeek.findUnique({ where: { weekKey }, include: { matches: { include: MATCH_LISTS_INCLUDE } } });
@@ -132,6 +141,7 @@ export async function loadAdminWeek(weekKey: string): Promise<AdminWeekView | nu
     predictions,
     lockedByAdmin: week.lockedByAdmin,
     autoCheckedAt: week.autoCheckedAt?.toISOString() ?? null,
+    predictionCounts: await predictionCountsFor(week.matches.map((m) => m.id)),
   };
 }
 
@@ -207,6 +217,17 @@ export async function setWeekMatches(weekKey: string, fixtureIds: string[], now:
 async function linkWeekPredictions(weekId: string, matchIds: string[]): Promise<void> {
   if (!matchIds.length) return;
   for (const q of [attachWeekToPredictionsSql(matchIds), ensureEntriesForWeekSql(weekId)]) await prisma.$executeRawUnsafe(q.text, ...q.values);
+}
+
+/**
+ * Admin "Kaydet ve yayınla" (tek işlem): hafta yoksa burada açılır (gezinmek satır açmaz; bitmiş haftada `PAST`), liste yazılır
+ * (hafta kilitlenir) ve taslaksa yayınlanır.
+ */
+export async function saveAndPublishWeek(weekKey: string, fixtureIds: string[], adminId: string, now: Date = new Date()): Promise<AdminWeekView> {
+  await createDraftWeek(weekKey, now);
+  const view = await setWeekMatches(weekKey, fixtureIds, now);
+  if (view.rawStatus === 'DRAFT') return publishWeek(weekKey, adminId, now);
+  return view;
 }
 
 /** "Otomatiğe bırak": admin kilidi kalkar, sonraki sonuç işi turunda boş yerler otomatik dolar. */

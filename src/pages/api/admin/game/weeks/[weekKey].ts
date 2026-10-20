@@ -1,7 +1,8 @@
 /**
- * Admin — tek hafta. GET: hafta + maçlar + sayılar + aday maçlar (`?suggest=1`). PUT `{ fixtureIds: string[] }`: maç listesi
- * (taslak ya da yayında; sıra = dizi; snapshot alınır; haftayı kilitler → otomatik seçim dokunmaz). POST `{ action: 'publish' }`:
- * yayınla (1–10 maç). POST `{ action: 'unlock' }`: otomatiğe bırak.
+ * Admin — tek hafta. GET (satır AÇMAZ): hafta + maçlar + sayılar + aday maçlar (`?suggest=1`). PUT `{ fixtureIds, publish? }`:
+ * maç listesi; `publish: true` = kaydet ve yayınla (hafta yoksa açılır, bitmiş haftada 409 PAST).
+ * Liste taslakta da yayında da yazılır (sıra = dizi; snapshot alınır; haftayı kilitler → otomatik seçim dokunmaz).
+ * POST `{ action: 'publish' }`: yayınla (1–10 maç). POST `{ action: 'unlock' }`: otomatiğe bırak.
  */
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { readJsonBody } from '@/lib/gundem/validation';
@@ -10,7 +11,7 @@ import { isWeekKey } from '@/lib/game/week';
 import { requireAdmin } from '@/lib/requireAuth';
 import { methodNotAllowed, queryString } from '@/server/game/http';
 import { loadSuggestions } from '@/server/game/suggestions';
-import { GameAdminError, loadAdminWeek, publishWeek, setWeekMatches, unlockWeek } from '@/server/game/weeks';
+import { GameAdminError, loadAdminWeek, publishWeek, saveAndPublishWeek, setWeekMatches, unlockWeek } from '@/server/game/weeks';
 import { withGameGate } from '@/server/game/access';
 
 const STATUS: Record<GameAdminError['code'], number> = {
@@ -42,6 +43,8 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     if (req.method === 'PUT') {
       const ids = body.fixtureIds;
       if (!Array.isArray(ids) || ids.some((x) => typeof x !== 'string' && typeof x !== 'number')) return res.status(400).json({ error: 'fixtureIds gerekli.' });
+      // `publish: true` → "Kaydet ve yayınla" (hafta yoksa açılır); yoksa yalnız mevcut haftanın listesi.
+      if (body.publish === true) return res.status(200).json({ week: await saveAndPublishWeek(weekKey, ids.map(String), guard.userId) });
       return res.status(200).json({ week: await setWeekMatches(weekKey, ids.map(String)) });
     }
     if (body.action === 'unlock') return res.status(200).json({ week: await unlockWeek(weekKey) });

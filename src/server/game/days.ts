@@ -7,17 +7,19 @@
  * Aday yoksa satır açılmaz → "bugün maç yok", seri bozulmaz. Haftalık listede de olan maç aynı satıra bağlanır (çakışma:
  * tek tahmin iki oyunda sayılır).
  */
-import type { GameDay, Prisma } from '@prisma/client';
+import type { GameDay, MatchSnapshot, Prisma } from '@prisma/client';
 import type { Match } from '@/models/liveScore';
 import { captureError } from '@/lib/logger';
 import { ensureMatchSnapshot } from '@/lib/gundem/matchSnapshot';
 import { attachDayToPredictionsSql } from '@/lib/game/sql';
-import { candidatesIn, pickDaily } from '@/lib/game/selection';
+import { DAILY_LIMITS } from '@/config/gameMatchPriority';
+import { candidatesIn, pickDaily, rankCandidates, selectMatches } from '@/lib/game/selection';
 import type { GameDayView } from '@/lib/game/types';
 import { dayKeyOf, dayRange, utcDatesOfDay } from '@/lib/game/week';
 import { prisma } from '@/lib/prisma';
 import { getFixturesByDate } from '@/services/liveScoreService';
-import { listsOf, MATCH_LISTS_INCLUDE, snapshotsFor, toMatchView } from '@/server/game/weeks';
+import { GameAdminError, listsOf, MATCH_LISTS_INCLUDE, predictionCountsFor, snapshotsFor, toMatchView } from '@/server/game/weeks';
+import type { Suggestion } from '@/server/game/suggestions';
 
 /** Günlük maç sayısı (kullanıcı kararı 2026-10-19). */
 export const DAY_MATCH_COUNT = 3;
@@ -98,4 +100,77 @@ export async function ensureDailyRound(deps: EnsureDayDeps = {}): Promise<GameDa
 /** Bugünün (İstanbul) günü yayında mı — sayfa ve API için anahtar. */
 export function todayKey(now: Date = new Date()): string {
   return dayKeyOf(now.getTime());
+}
+
+// ── Admin: günün listesini değiştir ─────────────────────────────────────────────────────────────────────────────────
+
+export type AdminDayView = GameDayView & { id: string; predictionCounts: Record<string, number> };
+
+/** Günün admin görünümü (satır AÇMAZ). */
+export async function loadAdminDay(dayKey: string): Promise<AdminDayView | null> {
+  const day = await prisma.gameDay.findUnique({ where: { dayKey }, include: { matches: { include: MATCH_LISTS_INCLUDE } } });
+  if (!day) return null;
+  return { ...(await toDayView(day)), id: day.id, predictionCounts: await predictionCountsFor(day.matches.map((m) => m.id)) };
+}
+
+/** Günün aday maçları (öncelik sırası; ilk 3 = otomatik öneri) — haftalık önerilerle aynı şekil. */
+export async function loadDaySuggestions(dayKey: string, now: Date = new Date(), listFor = getFixturesByDate): Promise<Suggestion[] | null> {
+  const range = dayRange(dayKey);
+  if (!range) return null;
+  const lists = await Promise.all(utcDatesOfDay(dayKey).map((d) => listFor(d).catch(() => [] as Match[])));
+  const cands = candidatesIn(lists.flat(), range.startsAt, range.endsAt, now);
+  const auto = new Set(selectMatches(cands, DAY_MATCH_COUNT, DAILY_LIMITS).map((c) => c.fixtureId));
+  return rankCandidates(cands)
+    .sort((a, b) => Number(auto.has(b.fixtureId)) - Number(auto.has(a.fixtureId)))
+    .map((c) => ({ fixtureId: c.fixtureId, kickoffAt: new Date(c.kickoffMs).toISOString(), leagueId: c.leagueId, leagueName: c.leagueName, home: c.home, away: c.away, tier: c.tier, auto: auto.has(c.fixtureId) }));
+}
+
+/**
+ * Admin günün listesini yazar (en çok 3, sıra = dizi). Gün yoksa açılır (bugün ya da gelecek gün; geçmişte `PAST`). Eklenen maç
+ * o gün içinde ve başlamamış olmalı; çıkarılan maç başlamış ya da tahmin almışsa çıkarılmaz. Çıkarılan maç haftalıkta da varsa
+ * yalnız günden ayrılır. (Otomatik seçim yalnız gün yokken çalıştığı için admin listesi ezilmez.)
+ */
+export async function setDayMatches(dayKey: string, fixtureIds: string[], now: Date = new Date()): Promise<AdminDayView> {
+  const range = dayRange(dayKey);
+  if (!range) throw new GameAdminError('BAD_WEEK', 'Geçersiz gün.');
+  if (range.endsAt <= now) throw new GameAdminError('PAST', 'Bitmiş gün değiştirilemez.');
+  const ids = [...new Set(fixtureIds.map((s) => String(s).trim()))];
+  if (!ids.length || ids.length !== fixtureIds.length || ids.length > DAY_MATCH_COUNT || ids.some((s) => !/^\d{1,12}$/.test(s))) {
+    throw new GameAdminError('BAD_MATCHES', `1–${DAY_MATCH_COUNT} farklı maç.`);
+  }
+  const existing = await prisma.gameDay.findUnique({ where: { dayKey }, include: { matches: { include: { _count: { select: { predictions: true } } } } } });
+  const current = new Map((existing?.matches ?? []).map((m) => [m.fixtureId, m]));
+  const blocked = (existing?.matches ?? []).filter((m) => !ids.includes(m.fixtureId) && (m.kickoffAt <= now || m._count.predictions > 0));
+  if (blocked.length) throw new GameAdminError('HAS_PREDICTIONS', `Başlamış ya da tahmin almış maç listeden çıkarılamaz (${blocked.length}).`);
+  const snaps: MatchSnapshot[] = [];
+  for (const id of ids) {
+    try {
+      snaps.push(await ensureMatchSnapshot(id));
+    } catch {
+      throw new GameAdminError('SNAPSHOT', `Maç bilgisi alınamadı: ${id}`);
+    }
+  }
+  for (const s of snaps) {
+    if (current.has(s.fixtureId)) continue;
+    if (s.startingAt < range.startsAt || s.startingAt >= range.endsAt) throw new GameAdminError('OUT_OF_WEEK', `Maç bu günde değil: ${s.homeName} – ${s.awayName}`);
+    if (s.startingAt <= now) throw new GameAdminError('STARTED', `Maç başlamış: ${s.homeName} – ${s.awayName}`);
+  }
+  const matchIds = await prisma.$transaction(async (tx) => {
+    const day = await tx.gameDay.upsert({ where: { dayKey }, create: { dayKey, startsAt: range.startsAt, endsAt: range.endsAt }, update: {} });
+    await tx.gameMatch.deleteMany({ where: { dayId: day.id, weekId: null, fixtureId: { notIn: ids } } });
+    await tx.gameMatch.updateMany({ where: { dayId: day.id, fixtureId: { notIn: ids } }, data: { dayId: null, dayPosition: null } });
+    const out: string[] = [];
+    for (const [i, sn] of snaps.entries()) {
+      const m = await tx.gameMatch.upsert({
+        where: { fixtureId: sn.fixtureId },
+        create: { dayId: day.id, dayPosition: i + 1, fixtureId: sn.fixtureId, kickoffAt: sn.startingAt },
+        update: { dayId: day.id, dayPosition: i + 1 },
+      });
+      out.push(m.id);
+    }
+    return out;
+  });
+  const q = attachDayToPredictionsSql(matchIds);
+  await prisma.$executeRawUnsafe(q.text, ...q.values);
+  return (await loadAdminDay(dayKey))!;
 }

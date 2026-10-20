@@ -120,4 +120,43 @@ describe('otomatik haftalık liste (game-settle)', () => {
     expect(other).toMatchObject({ created: false, skipped: 'none' });
     expect(await prisma.gameWeek.count({ where: { weekKey: wk.weekKeyOf(nextNow.getTime()) } })).toBe(0);
   });
+
+  it('admin: okumak satır açmaz; "Kaydet ve yayınla" haftayı açar + yayınlar + kilitler; bitmiş haftada PAST', async () => {
+    const future = wk.shiftWeek(wk.weekKeyOf(Date.now()), 3)!;
+    expect(await weeks.loadAdminWeek(future)).toBeNull();
+    expect(await prisma.gameWeek.count({ where: { weekKey: future } })).toBe(0); // GET satır açmadı
+    const fr = wk.weekRange(future)!;
+    const f = fx(new Date(fr.startsAt.getTime() + 2 * 86_400_000), 8, 9, 19);
+    const v = await weeks.saveAndPublishWeek(future, [String(f.id)], 'admin');
+    expect(v).toMatchObject({ rawStatus: 'PUBLISHED', lockedByAdmin: true });
+    expect(v.matches).toHaveLength(1);
+    expect(v.predictionCounts).toEqual({});
+    const past = wk.shiftWeek(wk.weekKeyOf(Date.now()), -2)!;
+    await expect(weeks.saveAndPublishWeek(past, [String(f.id)], 'admin')).rejects.toMatchObject({ code: 'PAST' });
+    expect(await prisma.gameWeek.count({ where: { weekKey: past } })).toBe(0);
+  });
+
+  it('admin: Günün 3 maçını değiştirir; gün yoksa açılır; tahmin almış maç çıkarılamaz; aday listesi ilk 3 önerili', async () => {
+    const days = await import('@/server/game/days');
+    const dayKey = wk.shiftDay(wk.dayKeyOf(Date.now()), 2)!;
+    const dr = wk.dayRange(dayKey)!;
+    const at = (h: number) => new Date(dr.startsAt.getTime() + h * 3_600_000);
+    const a = fx(at(18), 600, 34, 88); // GS – FB
+    const b = fx(at(19), 8, 8, 9); // LIV – MCI
+    const c = fx(at(20), 999, 1, 2);
+    const d = fx(at(21), 564, 83, 7000);
+    const sug = await days.loadDaySuggestions(dayKey, new Date(), async () => [a, b, c, d]);
+    expect(sug!.filter((x) => x.auto).map((x) => x.fixtureId)).toEqual([String(a.id), String(b.id), String(d.id)]);
+    expect(await days.loadAdminDay(dayKey)).toBeNull();
+    const v = await days.setDayMatches(dayKey, [String(a.id), String(c.id)]);
+    expect(v.matches.map((m) => m.fixtureId)).toEqual([String(a.id), String(c.id)]);
+    const u = await prisma.user.findFirstOrThrow();
+    await prisma.gamePrediction.create({ data: { userId: u.id, gameMatchId: v.matches[0]!.id, dayId: v.id, home: 1, away: 0 } });
+    await expect(days.setDayMatches(dayKey, [String(c.id)])).rejects.toMatchObject({ code: 'HAS_PREDICTIONS' });
+    const v2 = await days.setDayMatches(dayKey, [String(a.id), String(b.id), String(d.id)]);
+    expect(v2.matches.map((m) => m.fixtureId)).toEqual([String(a.id), String(b.id), String(d.id)]);
+    expect(v2.predictionCounts[v2.matches[0]!.id]).toBe(1);
+    expect(await prisma.gameMatch.count({ where: { fixtureId: String(c.id) } })).toBe(0); // yalnız günlükteydi → silindi
+    await expect(days.setDayMatches(wk.shiftDay(wk.dayKeyOf(Date.now()), -1)!, [String(a.id)])).rejects.toMatchObject({ code: 'PAST' });
+  });
 });
