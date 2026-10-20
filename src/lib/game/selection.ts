@@ -99,8 +99,8 @@ export function rankCandidates(cands: readonly Candidate[]): Candidate[] {
 
 /**
  * Öncelik sırasıyla toplam en çok `total` maç; 1. kademe (Türkiye'nin büyükleri) her zaman girer, diğerleri çeşitlilik sınırlarına
- * uyar (aynı lig / aynı takım; 1. kademe maçları da sayıma girer). Sınırlar yüzünden liste dolmazsa (aday çeşitliliği yok)
- * kalan en öncelikli adaylarla tamamlanır — yayın için tam liste gerekir.
+ * uyar (aynı lig / aynı takım; 1. kademe maçları da sayıma girer). Sınırlar yüzünden liste dolmazsa önce 2.–4. kademenin sınır
+ * aşan maçlarıyla, sonra diğer liglerle tamamlanır (önemli maç, alt lig maçından önce).
  */
 export type ListedMatch = Pick<Candidate, 'leagueId' | 'homeId' | 'awayId'>;
 
@@ -125,16 +125,16 @@ export function selectMatches(cands: readonly Candidate[], total: number, limits
     count1(c);
   };
   for (const c of ranked.filter((x) => x.tier === 1)) if (picked.length < count) take(c);
-  for (const c of ranked) {
-    if (picked.length >= count) break;
-    if (c.tier === 1) continue;
-    if ((perLeague.get(String(c.leagueId)) ?? 0) >= limits.maxPerLeague) continue;
-    if ([c.homeId, c.awayId].some((id) => id != null && (perTeam.get(id) ?? 0) >= limits.maxPerTeam)) continue;
-    take(c);
-  }
-  for (const c of ranked) {
-    if (picked.length >= count) break;
-    if (!picked.includes(c)) take(c);
+  const fits = (c: Candidate) =>
+    (perLeague.get(String(c.leagueId)) ?? 0) < limits.maxPerLeague && ![c.homeId, c.awayId].some((id) => id != null && (perTeam.get(id) ?? 0) >= limits.maxPerTeam);
+  // Geçişler: (a) 2.–4. kademe sınırlarla, (b) 2.–4. kademe sınırsız (ör. Şampiyonlar Ligi gecesi: dev maçı alt lig maçından
+  // önce), (c) 5. kademe sınırlarla, (d) kalanlar.
+  const passes: ((c: Candidate) => boolean)[] = [(c) => c.tier <= 4 && fits(c), (c) => c.tier <= 4, (c) => fits(c), () => true];
+  for (const ok of passes) {
+    for (const c of ranked) {
+      if (picked.length >= count) break;
+      if (!picked.includes(c) && ok(c)) take(c);
+    }
   }
   return rankCandidates(picked);
 }

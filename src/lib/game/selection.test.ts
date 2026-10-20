@@ -87,4 +87,9 @@ describe('maç önceliği (config/gameMatchPriority.ts)', () => {
     expect(add).toHaveLength(2); // 10 − 8
     expect(selectMatches(candidatesIn(list, START, END, NOW), 10, WEEKLY_LIMITS, Array.from({ length: 10 }, () => ({ leagueId: 1, homeId: 1, awayId: 2 })))).toEqual([]);
   });
+
+  it('günlük: lig sınırı dolunca dev maçı alt lig maçından önce gelir (Şampiyonlar Ligi gecesi)', () => {
+    const day = [m('2026-10-20', 2, 88, 216, '16:45'), m('2026-10-20', 2, 591, 83, '19:00'), m('2026-10-20', 2, 9, 333, '19:00'), m('2026-10-20', 999, 777, 778, '15:00')];
+    expect(ids(pickDaily(candidatesIn(day, START, END, NOW)))).toEqual(['T88-T216', 'T591-T83', 'T9-T333']);
+  });
 });
