@@ -43,7 +43,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(404).json({ error: 'Maç bulunamadı' });
     }
     res.setHeader('Cache-Control', commentaryCacheControl(value));
-    return res.status(200).json({ items: value.items, live: value.live });
+    return res.status(200).json({ items: value.items, live: value.live, squads: value.squads });
   } catch {
     res.setHeader('Cache-Control', 'no-store');
     return res.status(503).json({ error: 'Anlatım şu an alınamıyor.' });

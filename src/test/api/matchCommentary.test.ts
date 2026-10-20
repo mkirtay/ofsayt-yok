@@ -84,7 +84,7 @@ describe('GET /api/matches/[id]/commentary', () => {
         path: '/fixtures/19746587',
         params: {
           select: 'state_id,starting_at,starting_at_timestamp',
-          include: 'comments:comment,minute,extra_minute,is_goal,is_important,order',
+          include: 'comments:comment,minute,extra_minute,is_goal,is_important,order;lineups:player_name,team_id,type_id,position_id,formation_field,jersey_number;participants:name;formations:participant_id,formation,location',
         },
       },
     ]);
@@ -138,10 +138,10 @@ describe('GET /api/matches/[id]/commentary', () => {
 
   it('commentaryCacheControl: yeni biten / başlamamış 5 dk', () => {
     const now = 2_000_000_000;
-    expect(commentaryCacheControl({ items: [], live: false, phase: 'FINISHED', kickoff: now - 3600 }, now)).toBe(
+    expect(commentaryCacheControl({ items: [], squads: null, live: false, phase: 'FINISHED', kickoff: now - 3600 }, now)).toBe(
       'public, s-maxage=300, stale-while-revalidate=300',
     );
-    expect(commentaryCacheControl({ items: [], live: false, phase: 'NOT STARTED', kickoff: now + 3600 }, now)).toBe(
+    expect(commentaryCacheControl({ items: [], squads: null, live: false, phase: 'NOT STARTED', kickoff: now + 3600 }, now)).toBe(
       'public, s-maxage=300, stale-while-revalidate=300',
     );
   });

@@ -22,6 +22,47 @@ export type CommentaryItem = {
   en: string;
   /** Kural tabanlı Türkçe; kalıp tanınmadıysa null. */
   tr: string | null;
+  /** Temsili 2D canlandırma için sahne; olay sahneye dönüşmüyorsa (başlama, ofsayt, devre sonu…) null. */
+  scene: CommentaryScene | null;
+};
+
+export type SceneType =
+  | 'shot_saved'
+  | 'shot_blocked'
+  | 'shot_off'
+  | 'goal'
+  | 'corner'
+  | 'card_yellow'
+  | 'card_red'
+  | 'substitution'
+  | 'foul';
+
+/** Vuruşun kabaca bölgesi — sol/sağ HÜCUM EDEN oyuncunun bakışına göre (kaleye dönük). */
+export type SceneZone =
+  | 'six_yard'
+  | 'box_centre'
+  | 'box_left'
+  | 'box_right'
+  | 'outside_box_centre'
+  | 'outside_box_left'
+  | 'outside_box_right';
+
+export type SceneSide = 'home' | 'away';
+
+export type CommentaryScene = {
+  type: SceneType;
+  /** Olayı yapan takım (vuruşta / kornerde hücum eden, kartta kartı gören, değişiklikte değişiklik yapan). Bilinmiyorsa null. */
+  side: SceneSide | null;
+  /** Metindeki oyuncu adları: vuruşta [vuran], kartta [kart gören], değişiklikte [giren, çıkan], faulde [faul yapan, ?maruz kalan]. */
+  actors: string[];
+  /** Vuruş bölgesi (şut/gol; kornerde hedef bölge). Metinde yoksa olay kimliğinden belirlenimli temsili seçim (`zoneFromText` false). */
+  zone: SceneZone | null;
+  zoneFromText: boolean;
+  header: boolean;
+  /** Direkten dönen vuruş (shot_off). */
+  post?: boolean;
+  /** Kendi kalesine gol: aktör savunan takımdan; `side` golü kazanan (hücum eden) takım. */
+  ownGoal?: boolean;
 };
 
 export type RawComment = {
@@ -101,6 +142,104 @@ const SUB_PATTERNS: ReadonlyArray<{ re: RegExp; on: number; off: number }> = [
 ];
 
 const score = (s: string) => s.replace(/\s+/g, '');
+
+/** Metindeki bölge ifadeleri (Sportmonks/Opta tarzı uzun cümleler; Süper Lig örneğinde yok, diğer liglerde görülüyor). */
+const ZONE_TEXT: ReadonlyArray<[RegExp, SceneZone]> = [
+  [/six[- ]yard|very close range|close range/i, 'six_yard'],
+  [/outside the box|long range|from distance|from 25|from 30/i, 'outside_box_centre'],
+  [/left side of the (?:box|six yard box)|difficult angle (?:on|from) the left/i, 'box_left'],
+  [/right side of the (?:box|six yard box)|difficult angle (?:on|from) the right/i, 'box_right'],
+  [/centre of the box|center of the box|inside the box|in the box/i, 'box_centre'],
+];
+
+function zoneFromText(text: string): SceneZone | null {
+  for (const [re, zone] of ZONE_TEXT) {
+    if (!re.test(text)) continue;
+    // "outside the box on the left/right"
+    if (zone === 'outside_box_centre' && /outside the box[^.]*\bleft\b/i.test(text)) return 'outside_box_left';
+    if (zone === 'outside_box_centre' && /outside the box[^.]*\bright\b/i.test(text)) return 'outside_box_right';
+    return zone;
+  }
+  return null;
+}
+
+/**
+ * Metinde bölge yoksa temsili bölge — olay kimliğinden belirlenimli (her yüklemede aynı sahne). Kafa vuruşu ceza sahası
+ * içinden; savunmaya takılan şut çoğunlukla ceza sahası dışından; gol çoğunlukla ceza sahası içinden.
+ */
+function defaultZone(id: number, outcome: ShotOutcome, header: boolean): SceneZone {
+  const pick = <T,>(xs: readonly T[]) => xs[Math.abs(id) % xs.length]!;
+  if (header) return pick(['six_yard', 'box_centre', 'box_centre'] as const);
+  if (outcome === 'goal') return pick(['box_centre', 'box_left', 'box_right', 'six_yard', 'outside_box_centre'] as const);
+  if (outcome === 'blocked') return pick(['outside_box_centre', 'outside_box_left', 'outside_box_right', 'box_centre'] as const);
+  if (outcome === 'saved') return pick(['box_centre', 'box_left', 'box_right', 'outside_box_centre'] as const);
+  return pick(['box_left', 'box_right', 'outside_box_centre', 'outside_box_left', 'outside_box_right'] as const);
+}
+
+const SHOT_SCENE: Record<ShotOutcome, SceneType> = { goal: 'goal', saved: 'shot_saved', blocked: 'shot_blocked', post: 'shot_off', miss: 'shot_off' };
+
+/** Faul kalıpları (Süper Lig örneğinde yok; Opta tarzı "Foul by X (Team).", "X commits a foul", "X is fouled by Y"). */
+const FOUL_PATTERNS: ReadonlyArray<{ re: RegExp; by: number; on?: number }> = [
+  { re: new RegExp(`^Foul by ${N}(?: \\([^)]*\\))?(?: on ${N}(?: \\([^)]*\\))?)?\\.`, 'i'), by: 1, on: 2 },
+  { re: new RegExp(`^${N} commits a foul(?: on ${N})?(?=[.,(]| in |$)`, 'i'), by: 1, on: 2 },
+  { re: new RegExp(`^${N}(?: \\([^)]*\\))? is fouled by ${N}(?=[.,(]| in |$)`, 'i'), by: 2, on: 1 },
+];
+
+/**
+ * Satır → sahne (taraf hariç: `side` kadroyla sonradan çözülür, bkz. commentaryScene.ts). Saf; yalnız metne bakar.
+ * Sahne türleri: şut (kurtarıldı / bloke / dışarı-direk), gol, korner, sarı/kırmızı kart, oyuncu değişikliği, faul.
+ */
+export function classifyScene(text: string, id = 0): CommentaryScene | null {
+  let m: RegExpMatchArray | null;
+  const base = { side: null, zone: null, zoneFromText: false, header: false } as const;
+
+  if (/^Corner awarded\b/i.test(text)) return { ...base, type: 'corner', actors: [] };
+
+  if ((m = text.match(new RegExp(`^Goal! ${N} scores\\b`, 'i')))) {
+    const tz = zoneFromText(text);
+    const header = /\bheader\b|\bhead\b/i.test(text);
+    return { ...base, type: 'goal', actors: [m[1]!], zone: tz ?? defaultZone(id, 'goal', header), zoneFromText: !!tz, header };
+  }
+  if ((m = text.match(new RegExp(`^Own goal by ${N} puts\\b`, 'i')))) {
+    return { ...base, type: 'goal', actors: [m[1]!], zone: 'six_yard', ownGoal: true };
+  }
+
+  if ((m = text.match(new RegExp(`^${N} receives a (yellow|red) card\\.$`, 'i')))) {
+    return { ...base, type: m[2]!.toLowerCase() === 'red' ? 'card_red' : 'card_yellow', actors: [m[1]!] };
+  }
+  if ((m = text.match(new RegExp(`^(Yellow|Red) card (?:shown|issued|given) to ${N}\\.$`, 'i')))) {
+    return { ...base, type: m[1]!.toLowerCase() === 'red' ? 'card_red' : 'card_yellow', actors: [m[2]!] };
+  }
+  if ((m = text.match(/^(Yellow|Red) card\.$/i))) return { ...base, type: m[1]!.toLowerCase() === 'red' ? 'card_red' : 'card_yellow', actors: [] };
+
+  for (const { re, on, off } of SUB_PATTERNS) {
+    if ((m = text.match(re))) return { ...base, type: 'substitution', actors: [m[on]!, m[off]!] };
+  }
+
+  for (const { re, by, on } of FOUL_PATTERNS) {
+    if ((m = text.match(re))) return { ...base, type: 'foul', actors: [m[by]!, ...(on && m[on] ? [m[on]] : [])] };
+  }
+
+  for (const { re, body, outcome: fixed } of SHOT_PATTERNS) {
+    if (!(m = text.match(re))) continue;
+    const rest = m[m.length - 1] ?? '';
+    const outcome = fixed ?? shotOutcome(rest);
+    if (!outcome) return null;
+    const header = body(m) === 'kafayla';
+    if (outcome === 'goal' && /own goal/i.test(rest)) return { ...base, type: 'goal', actors: [m[1]!], zone: 'six_yard', ownGoal: true };
+    const tz = zoneFromText(text);
+    return {
+      ...base,
+      type: SHOT_SCENE[outcome],
+      actors: [m[1]!],
+      zone: tz ?? defaultZone(id, outcome, header),
+      zoneFromText: !!tz,
+      header,
+      ...(outcome === 'post' ? { post: true } : {}),
+    };
+  }
+  return null;
+}
 
 /** Kalıp → çeviri (sıra önemli: özel kalıplar genel vuruş kalıplarından önce). */
 function translateLine(text: string): Translation | null {
@@ -204,6 +343,7 @@ export function normalizeCommentary(rows: readonly RawComment[] | null | undefin
       important: !!raw.is_important || !!raw.is_goal || kind === 'goal',
       en,
       tr,
+      scene: classifyScene(en, raw.id),
     });
   }
   return out.sort((a, b) => b.order - a.order || b.id - a.id);
