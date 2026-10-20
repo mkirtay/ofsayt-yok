@@ -253,6 +253,11 @@ export function sportmonksCacheTtl(
     case 'venues':
       return data == null ? withStale(NOT_FOUND_TTL, NOT_FOUND_TTL) : withStale(6 * HOUR, DAY);
 
+    case 'statistics':
+      // Hafta / aşama istatistiği (lig sayfası Haftanın Özeti, bkz. server/roundStats.ts): üstünde hesaplanmış özetin SWR'si
+      // var (2 sa / 7 gün); bu kayıt yalnız onun yenilemesi ve 429/5xx'te eski veri için.
+      return withStale(HOUR, 7 * DAY);
+
     case 'leagues':
     case 'seasons':
     case 'stages':

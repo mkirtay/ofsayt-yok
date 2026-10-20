@@ -1,0 +1,256 @@
+{
+ "data": [
+  {
+   "id": 77482840,
+   "league_id": 600,
+   "season_id": 28203,
+   "type_id": 223,
+   "name": "Regular Season",
+   "sort_order": 1,
+   "finished": false,
+   "is_current": true,
+   "starting_at": "2026-08-14",
+   "ending_at": "2027-05-23",
+   "rounds": [
+    {
+     "id": 410382,
+     "stage_id": 77482840,
+     "name": "9",
+     "starting_at": "2026-10-23",
+     "ending_at": "2026-10-26"
+    },
+    {
+     "id": 410389,
+     "stage_id": 77482840,
+     "name": "2",
+     "starting_at": "2026-08-21",
+     "ending_at": "2026-08-24"
+    },
+    {
+     "id": 410371,
+     "stage_id": 77482840,
+     "name": "20",
+     "starting_at": "2027-02-07",
+     "ending_at": "2027-02-07"
+    },
+    {
+     "id": 410368,
+     "stage_id": 77482840,
+     "name": "23",
+     "starting_at": "2027-02-28",
+     "ending_at": "2027-02-28"
+    },
+    {
+     "id": 410388,
+     "stage_id": 77482840,
+     "name": "3",
+     "starting_at": "2026-08-28",
+     "ending_at": "2026-08-31"
+    },
+    {
+     "id": 410379,
+     "stage_id": 77482840,
+     "name": "12",
+     "starting_at": "2026-11-21",
+     "ending_at": "2026-11-23"
+    },
+    {
+     "id": 410374,
+     "stage_id": 77482840,
+     "name": "17",
+     "starting_at": "2027-01-17",
+     "ending_at": "2027-01-17"
+    },
+    {
+     "id": 410365,
+     "stage_id": 77482840,
+     "name": "26",
+     "starting_at": "2027-03-21",
+     "ending_at": "2027-03-21"
+    },
+    {
+     "id": 410380,
+     "stage_id": 77482840,
+     "name": "11",
+     "starting_at": "2026-11-06",
+     "ending_at": "2026-11-08"
+    },
+    {
+     "id": 410376,
+     "stage_id": 77482840,
+     "name": "15",
+     "starting_at": "2026-12-11",
+     "ending_at": "2026-12-14"
+    },
+    {
+     "id": 410360,
+     "stage_id": 77482840,
+     "name": "31",
+     "starting_at": "2027-05-02",
+     "ending_at": "2027-05-02"
+    },
+    {
+     "id": 410377,
+     "stage_id": 77482840,
+     "name": "14",
+     "starting_at": "2026-12-04",
+     "ending_at": "2026-12-07"
+    },
+    {
+     "id": 410378,
+     "stage_id": 77482840,
+     "name": "13",
+     "starting_at": "2026-11-27",
+     "ending_at": "2026-11-30"
+    },
+    {
+     "id": 410385,
+     "stage_id": 77482840,
+     "name": "6",
+     "starting_at": "2026-09-18",
+     "ending_at": "2026-09-20"
+    },
+    {
+     "id": 410381,
+     "stage_id": 77482840,
+     "name": "10",
+     "starting_at": "2026-10-30",
+     "ending_at": "2026-11-02"
+    },
+    {
+     "id": 410384,
+     "stage_id": 77482840,
+     "name": "7",
+     "starting_at": "2026-10-09",
+     "ending_at": "2026-10-12"
+    },
+    {
+     "id": 410386,
+     "stage_id": 77482840,
+     "name": "5",
+     "starting_at": "2026-09-11",
+     "ending_at": "2026-09-14"
+    },
+    {
+     "id": 410362,
+     "stage_id": 77482840,
+     "name": "29",
+     "starting_at": "2027-04-18",
+     "ending_at": "2027-04-18"
+    },
+    {
+     "id": 410369,
+     "stage_id": 77482840,
+     "name": "22",
+     "starting_at": "2027-02-21",
+     "ending_at": "2027-02-21"
+    },
+    {
+     "id": 410370,
+     "stage_id": 77482840,
+     "name": "21",
+     "starting_at": "2027-02-14",
+     "ending_at": "2027-02-14"
+    },
+    {
+     "id": 410359,
+     "stage_id": 77482840,
+     "name": "32",
+     "starting_at": "2027-05-09",
+     "ending_at": "2027-05-09"
+    },
+    {
+     "id": 410383,
+     "stage_id": 77482840,
+     "name": "8",
+     "starting_at": "2026-10-16",
+     "ending_at": "2026-10-19"
+    },
+    {
+     "id": 410363,
+     "stage_id": 77482840,
+     "name": "28",
+     "starting_at": "2027-04-11",
+     "ending_at": "2027-04-11"
+    },
+    {
+     "id": 410366,
+     "stage_id": 77482840,
+     "name": "25",
+     "starting_at": "2027-03-14",
+     "ending_at": "2027-03-14"
+    },
+    {
+     "id": 410390,
+     "stage_id": 77482840,
+     "name": "1",
+     "starting_at": "2026-08-14",
+     "ending_at": "2026-08-17"
+    },
+    {
+     "id": 410361,
+     "stage_id": 77482840,
+     "name": "30",
+     "starting_at": "2027-04-25",
+     "ending_at": "2027-04-25"
+    },
+    {
+     "id": 410357,
+     "stage_id": 77482840,
+     "name": "34",
+     "starting_at": "2027-05-23",
+     "ending_at": "2027-05-23"
+    },
+    {
+     "id": 410375,
+     "stage_id": 77482840,
+     "name": "16",
+     "starting_at": "2026-12-18",
+     "ending_at": "2026-12-21"
+    },
+    {
+     "id": 410367,
+     "stage_id": 77482840,
+     "name": "24",
+     "starting_at": "2027-03-07",
+     "ending_at": "2027-03-07"
+    },
+    {
+     "id": 410373,
+     "stage_id": 77482840,
+     "name": "18",
+     "starting_at": "2027-01-24",
+     "ending_at": "2027-01-24"
+    },
+    {
+     "id": 410364,
+     "stage_id": 77482840,
+     "name": "27",
+     "starting_at": "2027-04-04",
+     "ending_at": "2027-04-04"
+    },
+    {
+     "id": 410387,
+     "stage_id": 77482840,
+     "name": "4",
+     "starting_at": "2026-09-04",
+     "ending_at": "2026-09-07"
+    },
+    {
+     "id": 410372,
+     "stage_id": 77482840,
+     "name": "19",
+     "starting_at": "2027-01-31",
+     "ending_at": "2027-01-31"
+    },
+    {
+     "id": 410358,
+     "stage_id": 77482840,
+     "name": "33",
+     "starting_at": "2027-05-16",
+     "ending_at": "2027-05-16"
+    }
+   ]
+  }
+ ]
+}
