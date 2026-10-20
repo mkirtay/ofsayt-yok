@@ -35,18 +35,55 @@ function standingTeamLogo(s: CompetitionTableStandingRow): string | undefined {
 
 const STANDINGS_HEAD = ["#", "Takım", "O", "G", "B", "M", "A", "Y", "Av", "P"] as const;
 
-function StandingsHead() {
+type FormResult = "W" | "D" | "L";
+
+/** Tabloda en az bir satırın lig formu var mı (yoksa sütun hiç çizilmez: eski önbellek / formsuz istek). */
+function tableHasForm(rows: readonly CompetitionTableStandingRow[]): boolean {
+  return rows.some((r) => (r.form?.length ?? 0) > 0);
+}
+
+/**
+ * "Lig formu" başlığı — geniş kapta tam etiket, dar kapta (yan panel, < 400 px) "Form"; ikisi de aynı title ile.
+ * MatchCard / H2H'teki tüm turnuvalı "Son 5 maç"tan ayrı: yalnız bu ligin maçları (standings `form` include'u).
+ */
+function FormHead() {
+  const { t } = useTranslation("match");
+  return (
+    <th className={styles.colForm} title={t("standings.formTitle")}>
+      <span className={styles.formHeadFull}>{t("standings.formHead")}</span>
+      <span className={styles.formHeadShort} aria-hidden="true">
+        {t("standings.formHeadShort")}
+      </span>
+    </th>
+  );
+}
+
+/** Son 5 lig maçı, eskiden yeniye (soldan sağa) küçük G/B/M noktaları. */
+function FormDots({ form }: { form: readonly FormResult[] }) {
+  const { t } = useTranslation("match");
+  const label = { W: t("standings.formWin"), D: t("standings.formDraw"), L: t("standings.formLoss") } as const;
+  return (
+    <span className={styles.formDots} role="img" aria-label={t("standings.formAria", { list: form.map((f) => label[f]).join(", ") })}>
+      {form.map((f, i) => (
+        <i key={i} className={`${styles.dot} ${f === "W" ? styles.dotW : f === "D" ? styles.dotD : styles.dotL}`} />
+      ))}
+    </span>
+  );
+}
+
+function StandingsHead({ withForm = false }: { withForm?: boolean }) {
+  const last = STANDINGS_HEAD.length - 1;
   return (
     <thead>
       <tr>
         {STANDINGS_HEAD.map((h, i) => (
           <th
             key={h}
-            className={i === 0 ? styles.colRank : i === 1 ? styles.colTeam : i === STANDINGS_HEAD.length - 1 ? styles.colPoints : undefined}
+            className={i === 0 ? styles.colRank : i === 1 ? styles.colTeam : i === last ? styles.colPoints : undefined}
           >
             {h}
           </th>
-        ))}
+        )).flatMap((th, i) => (withForm && i === last ? [<FormHead key="form" />, th] : [th]))}
       </tr>
     </thead>
   );
@@ -89,7 +126,7 @@ function StandingsLoading({
       <div className={styles.tableArea}>
       <div className={styles.scroll}>
         <table className={styles.table}>
-          <StandingsHead />
+          <StandingsHead withForm />
           <tbody>
             {Array.from({ length: rows }, (_, i) => (
               <tr key={i} aria-hidden>
@@ -100,11 +137,11 @@ function StandingsLoading({
                     <span className={`${styles.teamLink} ${styles.placeholderText}`}>{"\u00a0"}</span>
                   </div>
                 </td>
-                {STANDINGS_HEAD.slice(2).map((h) => (
-                  <td key={h} className={h === "P" ? styles.colPoints : undefined}>
-                    {"\u00a0"}
-                  </td>
+                {STANDINGS_HEAD.slice(2, -1).map((h) => (
+                  <td key={h}>{"\u00a0"}</td>
                 ))}
+                <td className={styles.colForm}>{"\u00a0"}</td>
+                <td className={styles.colPoints}>{"\u00a0"}</td>
               </tr>
             ))}
           </tbody>
@@ -129,11 +166,12 @@ function StandingsTable({
   if (!standings.length) return null;
 
   const total = standings.length;
+  const withForm = tableHasForm(standings);
 
   return (
     <div className={styles.scroll}>
       <table className={styles.table}>
-        <StandingsHead />
+        <StandingsHead withForm={withForm} />
         <tbody>
           {standings.map((row, i) => {
             const tid = standingTeamId(row);
@@ -186,6 +224,9 @@ function StandingsTable({
                 <td>{row.goals_scored ?? "—"}</td>
                 <td>{row.goals_conceded ?? "—"}</td>
                 <td>{row.goal_diff}</td>
+                {withForm ? (
+                  <td className={styles.colForm}>{row.form?.length ? <FormDots form={row.form} /> : null}</td>
+                ) : null}
                 <td className={styles.colPoints}>{row.points}</td>
               </tr>
             );

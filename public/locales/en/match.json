@@ -342,7 +342,14 @@
     "empty": "No standings table found.",
     "groupHeading": "Group {{name}}",
     "conferenceWest": "Western Conference",
-    "conferenceEast": "Eastern Conference"
+    "conferenceEast": "Eastern Conference",
+    "formHead": "League form",
+    "formHeadShort": "Form",
+    "formTitle": "League form: last 5 league matches, newest on the right",
+    "formAria": "League form, last 5 league matches: {{list}}",
+    "formWin": "Win",
+    "formDraw": "Draw",
+    "formLoss": "Loss"
   },
   "events": {
     "title": "Match Events",
