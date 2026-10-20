@@ -53,6 +53,15 @@
   }
 }
 
+// Haftanın 11'i yanıtı gelene kadar yer tutucu (aynı genişlik, görünmez).
+.tabPlaceholder {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  visibility: hidden;
+  pointer-events: none;
+}
+
 // Dar telefonlarda 4 sekme (Haftanın 11'i varken) taşmasın: 360 px'te 9 px taşıyordu.
 @media (max-width: 400px) {
   .tab {

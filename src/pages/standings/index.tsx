@@ -95,6 +95,8 @@ export default function Standings() {
   const showTotwTab = totwAvailable || (tab === 'totw' && (totwQuery.isLoading || totwQuery.isError));
   const activeTab: Tab = tab === 'totw' && !showTotwTab ? 'table' : tab;
   const visibleTabs: readonly Tab[] = showTotwTab ? TABS : TABS.filter((id) => id !== 'totw');
+  // Yanıt gelene kadar 4. sekmenin yeri görünmez tutulur: veri gelince diğer sekmeler kaymaz (CLS). Ligde yoksa kalkar.
+  const totwPlaceholder = !showTotwTab && totwQuery.isPending;
 
   const sportmonksLeagueId = sportmonksLeagueIdOfHubSelection(selectedId);
   const leagueName = leagueNameById(sportmonksLeagueId, tl('fallback'), tl);
@@ -199,6 +201,11 @@ export default function Standings() {
                   {tabLabel[id]}
                 </button>
               ))}
+              {totwPlaceholder ? (
+                <span className={`${styles.tab} ${styles.tabPlaceholder}`} aria-hidden="true">
+                  {tabLabel.totw}
+                </span>
+              ) : null}
             </div>
 
             <div id="standings-panel" role="tabpanel" aria-labelledby={`standings-tab-${activeTab}`} className={styles.panel}>
