@@ -664,3 +664,8 @@ başında ilk tur (00:00–00:10 İstanbul) bugünün 3 maçını seçer. 3) Haf
   (Çıkar; başlamış / tahmin almış kilitli) + aranabilir "Maç ekle" (★ otomatik öneri; boş listede öneriyle başlar) → "Kaydet ve
   yayınla" (hafta yoksa burada açılır). Aynı sayfada "Bugün · Günün 3 maçı" kartı (Değiştir; `PUT /api/admin/game/days/[dayKey]`).
   "Sonuç işini çalıştır" ve "Sıralamadan gizle" Bakım bölümünde. Okumak / gezinmek satır AÇMAZ.
+- **Sıralama sonuç beklemez (2026-10-20):** Bu hafta / Bugün / Sezon, maçlar sonuçlanmadan da tahmin yapan HERKESİ gösterir (puan 0;
+  satırda "7/10 tahmin · 1 tam skor"); sıra puan → tam skor → doğru yön → tahminlerini daha önce tamamlayan. Üstte "Bu hafta N kişi
+  tahmin yaptı · ilk sonuç: <saat>" / "x/y maç sonuçlandı". Podyum yalnız puan alan varken. Kendi satırın ilk 50'de değilse altta
+  sabit. Engellediğin kullanıcılar gizli (`/me` → `blockedNicknames`, Gündem kuralı). Maçlar sürerken dakikada bir yenilenir.
+  Önbellek anahtarı `game:lb:v2`. Boş durum: "İlk tahmini sen yap" + Tahmin yap.

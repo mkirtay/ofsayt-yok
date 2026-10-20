@@ -57,11 +57,24 @@ export type MyWeekView = {
   rank: number | null;
 };
 
-export type BoardEntryView = { rank: number; nickname: string; points: number; exact: number; direction: number };
+/** `picks`: yapılan tahmin sayısı (haftalıkta n/10, günlükte n/3; sezonda toplam). */
+export type BoardEntryView = { rank: number; nickname: string; points: number; exact: number; direction: number; picks: number };
 
 export type BoardScope = 'week' | 'season' | 'day';
 
-export type LeaderboardView = { scope: BoardScope; key: string; entries: BoardEntryView[] };
+export type LeaderboardView = {
+  scope: BoardScope;
+  key: string;
+  /** İlk 50 (maçlar sonuçlanmadan da tahmin yapan herkes; puan 0). */
+  entries: BoardEntryView[];
+  /** Görünür katılımcı sayısı ("Bu hafta N kişi tahmin yaptı"). */
+  participants: number;
+  /** Listedeki maç sayısı ve sonuçlanan (bitmiş / iptal) maç sayısı; sezonda null. */
+  matchCount: number | null;
+  settledCount: number | null;
+  /** Henüz sonuçlanmış maç yoksa ilk maçın başlama saati (ISO; "ilk sonuç ~ <saat>"). */
+  firstKickoffAt: string | null;
+};
 
 export type MyStandingView = {
   scope: BoardScope;
@@ -74,6 +87,10 @@ export type MyStandingView = {
   gap: number | null;
   /** Art arda tahmin yapılan yayındaki hafta (günlükte: gün) sayısı (lib/game/week.ts → weekStreak). */
   streak: number;
+  /** Bu kapsamdaki tahmin sayım. */
+  picks: number;
+  /** Gündem engel kuralı: engellediğim kullanıcıların takma adları — sıralamada gizlenir (tablo herkese açık önbellekte). */
+  blockedNicknames: string[];
 };
 
 export type DistributionView = {

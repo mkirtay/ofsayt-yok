@@ -16,6 +16,9 @@ import {
   mySeasonTotalSql,
   predictedWeeksSql,
   seasonAboveSql,
+  seasonParticipantsSql,
+  weekParticipantsSql,
+  dayParticipantsSql,
   predictionsForScoringSql,
   recomputeEntriesSql,
   seasonRankSql,
@@ -187,6 +190,11 @@ describe('prediction_game migration (gerçek SQL)', () => {
     expect((await one<{ n: number }>(weekRankSql('w42', 'u2')))!.n + 1).toBe(2);
     expect((await one<{ n: number }>(weekRankSql('w42', 'u1')))!.n + 1).toBe(1);
     expect(await run(weekTopSql('w42', 1))).toHaveLength(1);
+    expect((await run<BoardRow>(weekTopSql('w42'))).map((r) => r.picks)).toEqual([1, 2]); // tahmin sayısı (eren mOpen; zeynep mOpen + mOpen2)
+    expect(await one(weekParticipantsSql('w42'))).toEqual({ n: 2 });
+    // Tahmini olmayan hafta satırı (yalnız joker / boş) listede görünmez.
+    await db.exec(`INSERT INTO "User" (id, username, "emailVerified") VALUES ('u6', 'bos', now()); INSERT INTO "GameWeekEntry" (id, "userId", "weekId", season) VALUES ('e6', 'u6', 'w42', '2026-27')`);
+    expect((await run<BoardRow>(weekTopSql('w42'))).map((r) => r.nickname)).not.toContain('bos');
     expect(await one(weekAboveSql('w42', 'u2'))).toEqual({ points: 16 }); // zeynep'in üstü eren
     expect(await run(weekAboveSql('w42', 'u1'))).toEqual([]); // lider
   });
@@ -195,6 +203,7 @@ describe('prediction_game migration (gerçek SQL)', () => {
     await db.exec(`
       INSERT INTO "GameWeekEntry" (id, "userId", "weekId", season, "totalPoints", "exactCount", "directionCount", "createdAt")
       VALUES ('e41a', 'u2', 'w41', '2026-27', 8, 0, 2, now() - interval '8 days');
+      INSERT INTO "GamePrediction" (id, "userId", "gameMatchId", "weekId", home, away, points) VALUES ('p41a', 'u2', 'm41', 'w41', 2, 0, 8);
     `);
     const rows = await run<BoardRow>(seasonTopSql('2026-27'));
     expect(rows.map((r) => [r.nickname, r.points, r.exact, r.direction])).toEqual([
@@ -204,6 +213,7 @@ describe('prediction_game migration (gerçek SQL)', () => {
     expect((await one<{ n: number }>(seasonRankSql('2026-27', 'u1')))!.n + 1).toBe(2);
     expect(await one(mySeasonTotalSql('2026-27', 'u4'))).toEqual({ points: 8, exact: 1, direction: 1, weeks: 1 }); // kendi puanını görür
     expect(await run(seasonTopSql('2025-26'))).toEqual([]);
+    expect(await one(seasonParticipantsSql('2026-27'))).toEqual({ n: 2 });
     expect(await one(seasonAboveSql('2026-27', 'u1'))).toEqual({ points: 16 }); // eşit puanda önde zeynep
     expect(await run(seasonAboveSql('2026-27', 'u2'))).toEqual([]);
     expect((await run<{ weekKey: string }>(predictedWeeksSql('u2'))).length).toBeGreaterThan(0);
@@ -261,6 +271,8 @@ describe('prediction_game migration (gerçek SQL)', () => {
     expect(await one(dayAboveSql('d1', 'u1'))).toEqual({ points: 8 });
     expect(await run(dayAboveSql('d1', 'u2'))).toEqual([]);
     expect(await one(myDayTotalSql('d1', 'u1'))).toEqual({ points: 8, exact: 1, picks: 2 });
+    expect(await one(dayParticipantsSql('d1'))).toEqual({ n: 2 });
+    expect(top.map((r) => r.picks)).toEqual([1, 2]);
     expect(await run<{ dayKey: string }>(predictedDaysSql('u1'))).toEqual([{ dayKey: '2026-10-17' }]);
     // Haftalık toplam: çakışan maç haftaya girer (u3'te joker ×2).
     await run(recomputeEntriesSql('w42'));

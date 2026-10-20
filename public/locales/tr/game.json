@@ -295,7 +295,21 @@
     "exactShort": "{{count}} tam skor",
     "exactShort_one": "{{count}} tam skor",
     "pts": "{{count}} p",
-    "meRank": "Senin sıran"
+    "meRank": "Senin sıran",
+    "picksOf": "{{n}}/{{total}} tahmin",
+    "picks": "{{count}} tahmin",
+    "picks_one": "{{count}} tahmin",
+    "count": {
+      "week": "Bu hafta {{count}} kişi tahmin yaptı",
+      "week_one": "Bu hafta {{count}} kişi tahmin yaptı",
+      "day": "Bugün {{count}} kişi tahmin yaptı",
+      "day_one": "Bugün {{count}} kişi tahmin yaptı",
+      "season": "Sezonda {{count}} oyuncu",
+      "season_one": "Sezonda {{count}} oyuncu"
+    },
+    "firstResult": "ilk sonuç: {{at}}",
+    "settled": "{{done}}/{{total}} maç sonuçlandı",
+    "emptyTitle": "Henüz kimse tahmin yapmadı. İlk tahmini sen yap!"
   },
   "day": {
     "name": "Günün 3 maçı",

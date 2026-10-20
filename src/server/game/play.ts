@@ -9,6 +9,7 @@ import { readCache, writeCache } from '@/lib/livescoreCache';
 import { prisma } from '@/lib/prisma';
 import {
   dayAboveSql,
+  dayParticipantsSql,
   dayRankSql,
   dayTopSql,
   distributionRowsSql,
@@ -19,12 +20,14 @@ import {
   mySeasonTotalSql,
   predictedWeeksSql,
   seasonAboveSql,
+  seasonParticipantsSql,
   seasonRankSql,
   seasonTopSql,
   setJokerSql,
   touchEntrySql,
   upsertPredictionSql,
   weekAboveSql,
+  weekParticipantsSql,
   weekRankSql,
   weekTopSql,
   type BoardRow,
@@ -180,31 +183,38 @@ export async function saveDayPredictions(userId: string, dayKey: string, body: S
 // ── Sıralama ────────────────────────────────────────────────────────────────────────────────────────────────────────
 
 function toEntries(rows: BoardRow[]): BoardEntryView[] {
-  return rows.map((r, i) => ({ rank: i + 1, nickname: r.nickname, points: Number(r.points), exact: Number(r.exact), direction: Number(r.direction) }));
+  return rows.map((r, i) => ({ rank: i + 1, nickname: r.nickname, points: Number(r.points), exact: Number(r.exact), direction: Number(r.direction), picks: Number(r.picks ?? 0) }));
 }
 
-const boardKey = (scope: string, key: string) => `${cacheKeyPrefix()}game:lb:v1:${scope}:${key}`;
+// v2: maçlar sonuçlanmadan da katılımcılar + sayaçlar (eski v1 kayıtları şekil farkı yüzünden okunmaz).
+const boardKey = (scope: string, key: string) => `${cacheKeyPrefix()}game:lb:v2:${scope}:${key}`;
+
+async function listStats(where: { weekId: string } | { dayId: string }) {
+  const ms = await prisma.gameMatch.findMany({ where, select: { kickoffAt: true, status: true } });
+  const settled = ms.filter((m) => m.status !== 'SCHEDULED').length;
+  const first = ms.map((m) => m.kickoffAt.getTime()).sort((a, b) => a - b)[0];
+  return { matchCount: ms.length, settledCount: settled, firstKickoffAt: !settled && first != null ? new Date(first).toISOString() : null };
+}
 
 export async function loadLeaderboard(scope: BoardScope, key: string): Promise<LeaderboardView | null> {
   const cacheKey = boardKey(scope, key);
   const cached = (await readCache(cacheKey)) as LeaderboardView | null;
   if (cached) return cached;
-  let rows: BoardRow[];
+  let view: LeaderboardView;
   if (scope === 'week') {
     const week = await prisma.gameWeek.findUnique({ where: { weekKey: key }, select: { id: true, status: true } });
     if (!week || week.status === 'DRAFT') return null;
-    // Hiç maç sonuçlanmadıysa tablo anlamsız (herkes 0): boş döner.
-    const settled = await prisma.gameMatch.count({ where: { weekId: week.id, status: { not: 'SCHEDULED' } } });
-    rows = settled ? await raw<BoardRow>(weekTopSql(week.id)) : [];
+    const [rows, n, stats] = await Promise.all([raw<BoardRow>(weekTopSql(week.id)), raw<{ n: number }>(weekParticipantsSql(week.id)), listStats({ weekId: week.id })]);
+    view = { scope, key, entries: toEntries(rows), participants: Number(n[0]?.n ?? 0), ...stats };
   } else if (scope === 'day') {
     const day = await prisma.gameDay.findUnique({ where: { dayKey: key }, select: { id: true, status: true } });
     if (!day || day.status === 'DRAFT') return null;
-    const settled = await prisma.gameMatch.count({ where: { dayId: day.id, status: { not: 'SCHEDULED' } } });
-    rows = settled ? await raw<BoardRow>(dayTopSql(day.id)) : [];
+    const [rows, n, stats] = await Promise.all([raw<BoardRow>(dayTopSql(day.id)), raw<{ n: number }>(dayParticipantsSql(day.id)), listStats({ dayId: day.id })]);
+    view = { scope, key, entries: toEntries(rows), participants: Number(n[0]?.n ?? 0), ...stats };
   } else {
-    rows = await raw<BoardRow>(seasonTopSql(key));
+    const [rows, n] = await Promise.all([raw<BoardRow>(seasonTopSql(key)), raw<{ n: number }>(seasonParticipantsSql(key))]);
+    view = { scope, key, entries: toEntries(rows), participants: Number(n[0]?.n ?? 0), matchCount: null, settledCount: null, firstKickoffAt: null };
   }
-  const view: LeaderboardView = { scope, key, entries: toEntries(rows) };
   await writeCache(cacheKey, view, LEADERBOARD_CACHE_SECONDS);
   return view;
 }
@@ -234,7 +244,18 @@ const abovePoints = async (q: SqlQuery) => {
   return row ? Number(row.points) : null;
 };
 
+/** Gündem engel kuralı: engellediğim kullanıcıların takma adları (sıralamada istemcide gizlenir; tablo herkese açık önbellekte). */
+async function blockedNicknames(userId: string): Promise<string[]> {
+  const rows = await prisma.userBlock.findMany({ where: { blockerId: userId }, select: { blocked: { select: { username: true } } } });
+  return rows.map((r) => r.blocked.username).filter((n): n is string => !!n);
+}
+
 export async function loadMyStanding(userId: string, scope: BoardScope, key: string): Promise<MyStandingView | null> {
+  const s = await loadMyStandingCore(userId, scope, key);
+  return s ? { ...s, blockedNicknames: await blockedNicknames(userId) } : null;
+}
+
+async function loadMyStandingCore(userId: string, scope: BoardScope, key: string): Promise<Omit<MyStandingView, 'blockedNicknames'> | null> {
   const v = await viewer(userId);
   if (scope === 'day') {
     const day = await prisma.gameDay.findUnique({ where: { dayKey: key }, select: { id: true } });
@@ -248,13 +269,16 @@ export async function loadMyStanding(userId: string, scope: BoardScope, key: str
     ]);
     const points = Number(total?.points ?? 0);
     const rank = ranked ? Number(rankRow[0]?.n ?? 0) + 1 : null;
-    return { scope, key, points, exact: Number(total?.exact ?? 0), rank, visible: v.visible, gap: above == null ? null : above - points, streak };
+    return { scope, key, points, exact: Number(total?.exact ?? 0), rank, visible: v.visible, gap: above == null ? null : above - points, streak, picks: Number(total?.picks ?? 0) };
   }
   if (scope === 'week') {
     const week = await prisma.gameWeek.findUnique({ where: { weekKey: key }, select: { id: true } });
     if (!week) return null;
-    const entry = await prisma.gameWeekEntry.findUnique({ where: { userId_weekId: { userId, weekId: week.id } } });
-    const ranked = !!entry && v.visible && !entry.hiddenAt;
+    const [entry, picks] = await Promise.all([
+      prisma.gameWeekEntry.findUnique({ where: { userId_weekId: { userId, weekId: week.id } } }),
+      prisma.gamePrediction.count({ where: { userId, weekId: week.id } }),
+    ]);
+    const ranked = !!entry && picks > 0 && v.visible && !entry.hiddenAt;
     const [rankRow, above, streak] = await Promise.all([
       ranked ? raw<{ n: number }>(weekRankSql(week.id, userId)) : Promise.resolve([]),
       ranked ? abovePoints(weekAboveSql(week.id, userId)) : Promise.resolve(null),
@@ -262,11 +286,14 @@ export async function loadMyStanding(userId: string, scope: BoardScope, key: str
     ]);
     const points = entry?.totalPoints ?? 0;
     const rank = ranked ? Number(rankRow[0]?.n ?? 0) + 1 : null;
-    return { scope, key, points, exact: entry?.exactCount ?? 0, rank, visible: v.visible, gap: above == null ? null : above - points, streak };
+    return { scope, key, points, exact: entry?.exactCount ?? 0, rank, visible: v.visible, gap: above == null ? null : above - points, streak, picks };
   }
   const total = (await raw<{ points: number; exact: number; weeks: number }>(mySeasonTotalSql(key, userId)))[0];
-  const hidden = await prisma.gameWeekEntry.count({ where: { userId, season: key, hiddenAt: { not: null } } });
-  const ranked = !!total && total.weeks > 0 && v.visible && !hidden;
+  const [hidden, picks] = await Promise.all([
+    prisma.gameWeekEntry.count({ where: { userId, season: key, hiddenAt: { not: null } } }),
+    prisma.gameWeek.findMany({ where: { season: key }, select: { id: true } }).then((ws) => prisma.gamePrediction.count({ where: { userId, weekId: { in: ws.map((w) => w.id) } } })),
+  ]);
+  const ranked = !!total && total.weeks > 0 && picks > 0 && v.visible && !hidden;
   const [rankRow, above, streak] = await Promise.all([
     ranked ? raw<{ n: number }>(seasonRankSql(key, userId)) : Promise.resolve([]),
     ranked ? abovePoints(seasonAboveSql(key, userId)) : Promise.resolve(null),
@@ -274,7 +301,7 @@ export async function loadMyStanding(userId: string, scope: BoardScope, key: str
   ]);
   const points = Number(total?.points ?? 0);
   const rank = ranked ? Number(rankRow[0]?.n ?? 0) + 1 : null;
-  return { scope, key, points, exact: Number(total?.exact ?? 0), rank, visible: v.visible, gap: above == null ? null : above - points, streak };
+  return { scope, key, points, exact: Number(total?.exact ?? 0), rank, visible: v.visible, gap: above == null ? null : above - points, streak, picks };
 }
 
 // ── Dağılım (yalnız kilit sonrası) ──────────────────────────────────────────────────────────────────────────────────

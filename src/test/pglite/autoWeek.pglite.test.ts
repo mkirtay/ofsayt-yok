@@ -159,4 +159,24 @@ describe('otomatik haftalık liste (game-settle)', () => {
     expect(await prisma.gameMatch.count({ where: { fixtureId: String(c.id) } })).toBe(0); // yalnız günlükteydi → silindi
     await expect(days.setDayMatches(wk.shiftDay(wk.dayKeyOf(Date.now()), -1)!, [String(a.id)])).rejects.toMatchObject({ code: 'PAST' });
   });
+
+  it('sıralama sonuç beklemeden: tahmin yapan herkes 0 puanla, tahmin sayısı, katılımcı sayacı, ilk maç saati; engel listesi', async () => {
+    vi.useFakeTimers({ now, toFake: ['Date'] });
+    try {
+      const play = await import('@/server/game/play');
+      const wKey = wk.weekKeyOf(now.getTime());
+      const board = await play.loadLeaderboard('week', wKey);
+      expect(board).toMatchObject({ participants: 1, settledCount: 0 });
+      expect(board!.matchCount).toBeGreaterThan(0);
+      expect(board!.firstKickoffAt).not.toBeNull();
+      expect(board!.entries).toEqual([{ rank: 1, nickname: 'eren', points: 0, exact: 0, direction: 0, picks: 1 }]);
+      const eren = await prisma.user.findFirstOrThrow({ where: { username: 'eren' } });
+      const other = await prisma.user.create({ data: { email: 'b@ornek.example', username: 'zeynep', emailVerified: new Date() } });
+      await prisma.userBlock.create({ data: { blockerId: other.id, blockedId: eren.id } });
+      expect(await play.loadMyStanding(other.id, 'week', wKey)).toMatchObject({ rank: null, picks: 0, blockedNicknames: ['eren'] });
+      expect(await play.loadMyStanding(eren.id, 'week', wKey)).toMatchObject({ rank: 1, picks: 1, blockedNicknames: [] });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });

@@ -295,7 +295,21 @@
     "exactShort": "{{count}} exact",
     "exactShort_one": "{{count}} exact",
     "pts": "{{count}} pts",
-    "meRank": "Your rank"
+    "meRank": "Your rank",
+    "picksOf": "{{n}}/{{total}} picks",
+    "picks": "{{count}} picks",
+    "picks_one": "{{count}} pick",
+    "count": {
+      "week": "{{count}} players made picks this week",
+      "week_one": "{{count}} player made picks this week",
+      "day": "{{count}} players made picks today",
+      "day_one": "{{count}} player made picks today",
+      "season": "{{count}} players this season",
+      "season_one": "{{count}} player this season"
+    },
+    "firstResult": "first result: {{at}}",
+    "settled": "{{done}}/{{total}} matches settled",
+    "emptyTitle": "No picks yet. Be the first!"
   },
   "day": {
     "name": "Today's 3 matches",

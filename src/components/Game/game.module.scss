@@ -2248,3 +2248,49 @@ $on-action-fg: var(--color-on-action);
     bottom: 0;
   }
 }
+
+// Sıralama: katılımcı sayacı + boş durum; kendi satırın (listede aşağıdaysa) altta sabit.
+.boardSummary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  margin: 0 0 $spacing-2;
+  font-size: 13px;
+  color: $color-text-secondary;
+
+  strong {
+    font-size: 14px;
+    color: $color-text;
+  }
+}
+
+.boardEmpty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: $spacing-3;
+
+  p {
+    margin: 0;
+    font-weight: 700;
+    color: $color-text;
+  }
+
+  a {
+    display: inline-flex;
+    align-items: center;
+    text-decoration: none;
+  }
+}
+
+.boardRow[data-separated] {
+  position: sticky;
+  bottom: calc(var(--bottom-nav-height) + #{$spacing-2} + env(safe-area-inset-bottom));
+  background: var(--bg-surface);
+  box-shadow: 0 -6px 16px rgba(0, 0, 0, 0.18);
+
+  @media (min-width: $bp-desktop) {
+    bottom: $spacing-2;
+  }
+}

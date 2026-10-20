@@ -174,17 +174,28 @@ WHERE e.id = e2.id AND e."weekId" = $1`,
   };
 }
 
-export type BoardRow = { userId: string; nickname: string; points: number; exact: number; direction: number };
+export type BoardRow = { userId: string; nickname: string; points: number; exact: number; direction: number; picks: number };
 
-const VISIBLE = `e."hiddenAt" IS NULL AND u.username IS NOT NULL AND u."emailVerified" IS NOT NULL`;
+/**
+ * Görünür katılımcı: takma ad + doğrulanmış e-posta + admin gizlemesi yok + o haftada EN AZ BİR tahmin (maçlar sonuçlanmadan da
+ * listede; puan 0). Sıra: puan ↓, tam skor ↓, doğru yön ↓, son değişiklik ↑ (tahminlerini daha önce tamamlayan önde).
+ */
+const VISIBLE = `e."hiddenAt" IS NULL AND u.username IS NOT NULL AND u."emailVerified" IS NOT NULL
+  AND EXISTS (SELECT 1 FROM "GamePrediction" gp WHERE gp."userId" = e."userId" AND gp."weekId" = e."weekId")`;
+const WEEK_PICKS = `(SELECT count(*)::int FROM "GamePrediction" gp WHERE gp."userId" = e."userId" AND gp."weekId" = e."weekId")`;
 const WEEK_ORDER = `ORDER BY e."totalPoints" DESC, e."exactCount" DESC, e."directionCount" DESC, e."lastChangeAt" ASC, e."userId" ASC`;
 
 export function weekTopSql(weekId: string, limit = LEADERBOARD_LIMIT): SqlQuery {
   return {
-    text: `SELECT e."userId", u.username AS nickname, e."totalPoints" AS points, e."exactCount" AS exact, e."directionCount" AS direction
+    text: `SELECT e."userId", u.username AS nickname, e."totalPoints" AS points, e."exactCount" AS exact, e."directionCount" AS direction, ${WEEK_PICKS} AS picks
 FROM "GameWeekEntry" e JOIN "User" u ON u.id = e."userId" WHERE e."weekId" = $1 AND ${VISIBLE} ${WEEK_ORDER} LIMIT $2`,
     values: [weekId, limit],
   };
+}
+
+/** Haftanın görünür katılımcı sayısı (sayaç: "Bu hafta N kişi tahmin yaptı"). */
+export function weekParticipantsSql(weekId: string): SqlQuery {
+  return { text: `SELECT count(*)::int AS n FROM "GameWeekEntry" e JOIN "User" u ON u.id = e."userId" WHERE e."weekId" = $1 AND ${VISIBLE}`, values: [weekId] };
 }
 
 /** Haftalık sıram: benden önde görünen satır sayısı (+1 çağıranda). */
@@ -202,15 +213,19 @@ WHERE me."weekId" = $1 AND me."userId" = $2 AND e."weekId" = $1 AND ${VISIBLE} A
 }
 
 const SEASON_AGG = `SELECT e."userId", SUM(e."totalPoints")::int AS points, SUM(e."exactCount")::int AS exact,
-  SUM(e."directionCount")::int AS direction, MIN(e."createdAt") AS first_at
+  SUM(e."directionCount")::int AS direction, MIN(e."createdAt") AS first_at, SUM(${WEEK_PICKS})::int AS picks
 FROM "GameWeekEntry" e JOIN "User" u ON u.id = e."userId" WHERE e.season = $1 AND ${VISIBLE} GROUP BY e."userId"`;
 
 export function seasonTopSql(season: string, limit = LEADERBOARD_LIMIT): SqlQuery {
   return {
-    text: `SELECT s."userId", u.username AS nickname, s.points, s.exact, s.direction FROM (${SEASON_AGG}) s JOIN "User" u ON u.id = s."userId"
+    text: `SELECT s."userId", u.username AS nickname, s.points, s.exact, s.direction, s.picks FROM (${SEASON_AGG}) s JOIN "User" u ON u.id = s."userId"
 ORDER BY s.points DESC, s.exact DESC, s.direction DESC, s.first_at ASC, s."userId" ASC LIMIT $2`,
     values: [season, limit],
   };
+}
+
+export function seasonParticipantsSql(season: string): SqlQuery {
+  return { text: `SELECT count(*)::int AS n FROM (${SEASON_AGG}) s`, values: [season] };
 }
 
 export function seasonRankSql(season: string, userId: string): SqlQuery {
@@ -267,7 +282,7 @@ WHERE p."userId" = $1 ORDER BY 1 DESC LIMIT 60`,
 // son değişiklik ↑. Görünürlük haftalıkla aynı (takma ad + doğrulanmış e-posta).
 const DAY_AGG = `SELECT p."userId", SUM(COALESCE(p."basePoints", 0))::int AS points,
   COUNT(*) FILTER (WHERE (p.breakdown->>'exact')::int > 0)::int AS exact,
-  COUNT(*) FILTER (WHERE (p.breakdown->>'dir')::int > 0)::int AS direction, MAX(p."updatedAt") AS last_at
+  COUNT(*) FILTER (WHERE (p.breakdown->>'dir')::int > 0)::int AS direction, MAX(p."updatedAt") AS last_at, count(*)::int AS picks
 FROM "GamePrediction" p JOIN "User" u ON u.id = p."userId"
 WHERE p."dayId" = $1 AND u.username IS NOT NULL AND u."emailVerified" IS NOT NULL GROUP BY p."userId"`;
 
@@ -278,10 +293,14 @@ const DAY_AHEAD = `s.points > me.points
 
 export function dayTopSql(dayId: string, limit = LEADERBOARD_LIMIT): SqlQuery {
   return {
-    text: `SELECT s."userId", u.username AS nickname, s.points, s.exact, s.direction FROM (${DAY_AGG}) s JOIN "User" u ON u.id = s."userId"
+    text: `SELECT s."userId", u.username AS nickname, s.points, s.exact, s.direction, s.picks FROM (${DAY_AGG}) s JOIN "User" u ON u.id = s."userId"
 ORDER BY s.points DESC, s.exact DESC, s.direction DESC, s.last_at ASC, s."userId" ASC LIMIT $2`,
     values: [dayId, limit],
   };
+}
+
+export function dayParticipantsSql(dayId: string): SqlQuery {
+  return { text: `SELECT count(*)::int AS n FROM (${DAY_AGG}) s`, values: [dayId] };
 }
 
 export function dayRankSql(dayId: string, userId: string): SqlQuery {
