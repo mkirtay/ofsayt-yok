@@ -118,6 +118,27 @@ function allFinishedBefore(list: FixtureLike[], now: number, ageMs: number): boo
   );
 }
 
+type StageLike = { type_id?: number | null; name?: string | null; fixtures?: FixtureLike[] | null };
+
+/**
+ * Kupa aşamaları + maçları (eleme ağacı): Final oynanıp 1 gün geçtiyse sezon bitti → 30 gün. Değilse yalnız eleme /
+ * ön eleme maçlarına bakılır (lig aşaması ağacı değiştirmez): canlı / başlama penceresi → 5 dk (ağır yanıt; 30 sn
+ * gereksiz), eleme maçı olan gün (−6 sa … +18 sa) en çok 1 sa, diğer günler en çok 12 sa (yeni kura en geç 12 sa'te).
+ */
+export function cupStagesTtl(data: unknown, now: number): CacheTtl {
+  const stages = Array.isArray(data) ? (data as StageLike[]) : [];
+  const knockout = stages.filter((s) => s.type_id === 224 || s.type_id === 225);
+  const final = knockout.find((s) => /^finals?$/i.test((s.name ?? '').trim()));
+  if (final && allFinishedBefore(final.fixtures ?? [], now, DAY_MS)) return withStale(FINISHED_SEASON_TTL, FINISHED_SEASON_TTL);
+  const fixtures = knockout.flatMap((s) => s.fixtures ?? []);
+  const matchDay = fixtures.some((f) => {
+    const k = kickoffMs(f);
+    return k != null && k > now - 6 * HOUR * 1000 && k < now + 18 * HOUR * 1000;
+  });
+  const max = matchDay ? HOUR : 12 * HOUR;
+  return withStale(Math.max(5 * MIN, fixtureListFreshSeconds(fixtures, max, now)), 7 * DAY);
+}
+
 function asList(data: unknown): FixtureLike[] {
   if (Array.isArray(data)) return data as FixtureLike[];
   if (data && typeof data === 'object') return [data as FixtureLike];
@@ -253,9 +274,12 @@ export function sportmonksCacheTtl(
     case 'venues':
       return data == null ? withStale(NOT_FOUND_TTL, NOT_FOUND_TTL) : withStale(6 * HOUR, DAY);
 
+    case 'stages':
+      // Kupa eleme ağacı (`stages/seasons/{id}?include=…fixtures…`, bkz. server/cupBracket.ts): içeriğe göre.
+      if (a === 'seasons' && String(query.include ?? '').includes('fixtures')) return cupStagesTtl(data, now);
+      return withStale(DAY, 7 * DAY);
     case 'leagues':
     case 'seasons':
-    case 'stages':
     case 'rounds':
     case 'types':
     case 'states':
