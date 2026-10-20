@@ -249,6 +249,11 @@ export function sportmonksCacheTtl(
       return withStale(7 * DAY, 14 * DAY);
     }
 
+    case 'team-of-the-week':
+      // Haftanın Takımı (lig sayfası, bkz. server/teamOfTheWeek.ts): tur bittikten sonra bir kez hesaplanır, hafta boyunca
+      // değişmez → 12 sa. Ligin listesi yok ("No result") → 6 sa (desteklemeyen lig her ziyarette sorulmasın).
+      return data == null || (Array.isArray(data) && data.length === 0) ? withStale(6 * HOUR, DAY) : withStale(12 * HOUR, 7 * DAY);
+
     case 'players':
     case 'venues':
       return data == null ? withStale(NOT_FOUND_TTL, NOT_FOUND_TTL) : withStale(6 * HOUR, DAY);

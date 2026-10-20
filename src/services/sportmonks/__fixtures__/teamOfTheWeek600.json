@@ -1,0 +1,323 @@
+{
+ "data": [
+  {
+   "id": 47240,
+   "player_id": 108695,
+   "fixture_id": 19746594,
+   "round_id": 410384,
+   "team_id": 1071,
+   "rating": 8.27,
+   "formation_position": 1,
+   "formation": "4-4-2",
+   "player": {
+    "id": 108695,
+    "display_name": "Andreas Gianniotis",
+    "common_name": "A. Gianniotis",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/23/108695.png"
+   },
+   "team": {
+    "id": 1071,
+    "name": "Kasımpaşa",
+    "short_code": "KAS",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/teams/15/1071.png"
+   },
+   "round": {
+    "id": 410384,
+    "name": "7",
+    "season_id": 28203,
+    "starting_at": "2026-10-09",
+    "ending_at": "2026-10-12"
+   }
+  },
+  {
+   "id": 47245,
+   "player_id": 202002,
+   "fixture_id": 19746600,
+   "round_id": 410384,
+   "team_id": 13871,
+   "rating": 7.75,
+   "formation_position": 6,
+   "formation": "4-4-2",
+   "player": {
+    "id": 202002,
+    "display_name": "Cengiz Ünder",
+    "common_name": "C. Ünder",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/18/202002.png"
+   },
+   "team": {
+    "id": 13871,
+    "name": "Çorum FK",
+    "short_code": "COR",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/teams/15/13871.png"
+   },
+   "round": {
+    "id": 410384,
+    "name": "7",
+    "season_id": 28203,
+    "starting_at": "2026-10-09",
+    "ending_at": "2026-10-12"
+   }
+  },
+  {
+   "id": 47244,
+   "player_id": 534376,
+   "fixture_id": 19746592,
+   "round_id": 410384,
+   "team_id": 688,
+   "rating": 7.62,
+   "formation_position": 5,
+   "formation": "4-4-2",
+   "player": {
+    "id": 534376,
+    "display_name": "Mustafa Eskihellaç",
+    "common_name": "M. Eskihellaç",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/8/534376.png"
+   },
+   "team": {
+    "id": 688,
+    "name": "Trabzonspor",
+    "short_code": "TRA",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/teams/16/688.png"
+   },
+   "round": {
+    "id": 410384,
+    "name": "7",
+    "season_id": 28203,
+    "starting_at": "2026-10-09",
+    "ending_at": "2026-10-12"
+   }
+  },
+  {
+   "id": 47243,
+   "player_id": 540319,
+   "fixture_id": 19746593,
+   "round_id": 410384,
+   "team_id": 554,
+   "rating": 7.99,
+   "formation_position": 4,
+   "formation": "4-4-2",
+   "player": {
+    "id": 540319,
+    "display_name": "Tiago Djaló",
+    "common_name": "T. Embalo Djaló",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/31/540319.png"
+   },
+   "team": {
+    "id": 554,
+    "name": "Beşiktaş",
+    "short_code": "BES",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/teams/10/554.png"
+   },
+   "round": {
+    "id": 410384,
+    "name": "7",
+    "season_id": 28203,
+    "starting_at": "2026-10-09",
+    "ending_at": "2026-10-12"
+   }
+  },
+  {
+   "id": 47236,
+   "player_id": 8417851,
+   "fixture_id": 19746594,
+   "round_id": 410384,
+   "team_id": 34,
+   "rating": 8.21,
+   "formation_position": 7,
+   "formation": "4-4-2",
+   "player": {
+    "id": 8417851,
+    "display_name": "Gabriel Sara",
+    "common_name": "G. Gomes Sara",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/27/8417851.png"
+   },
+   "team": {
+    "id": 34,
+    "name": "Galatasaray",
+    "short_code": "GAL",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/teams/2/34.png"
+   },
+   "round": {
+    "id": 410384,
+    "name": "7",
+    "season_id": 28203,
+    "starting_at": "2026-10-09",
+    "ending_at": "2026-10-12"
+   }
+  },
+  {
+   "id": 47246,
+   "player_id": 10967396,
+   "fixture_id": 19746597,
+   "round_id": 410384,
+   "team_id": 88,
+   "rating": 7.86,
+   "formation_position": 11,
+   "formation": "4-4-2",
+   "player": {
+    "id": 10967396,
+    "display_name": "Oğuz Aydın",
+    "common_name": "O. Aydın",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/4/10967396.png"
+   },
+   "team": {
+    "id": 88,
+    "name": "Fenerbahçe",
+    "short_code": "FEN",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/teams/24/88.png"
+   },
+   "round": {
+    "id": 410384,
+    "name": "7",
+    "season_id": 28203,
+    "starting_at": "2026-10-09",
+    "ending_at": "2026-10-12"
+   }
+  },
+  {
+   "id": 47238,
+   "player_id": 35259800,
+   "fixture_id": 19746600,
+   "round_id": 410384,
+   "team_id": 13871,
+   "rating": 8.68,
+   "formation_position": 9,
+   "formation": "4-4-2",
+   "player": {
+    "id": 35259800,
+    "display_name": "Alexandros Kyziridis",
+    "common_name": "A. Kiziridis",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/24/35259800.png"
+   },
+   "team": {
+    "id": 13871,
+    "name": "Çorum FK",
+    "short_code": "COR",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/teams/15/13871.png"
+   },
+   "round": {
+    "id": 410384,
+    "name": "7",
+    "season_id": 28203,
+    "starting_at": "2026-10-09",
+    "ending_at": "2026-10-12"
+   }
+  },
+  {
+   "id": 47241,
+   "player_id": 37375221,
+   "fixture_id": 19746599,
+   "round_id": 410384,
+   "team_id": 3897,
+   "rating": 7.76,
+   "formation_position": 2,
+   "formation": "4-4-2",
+   "player": {
+    "id": 37375221,
+    "display_name": "Arda Okan Kurtulan",
+    "common_name": "A. Kurtulan",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/21/37375221.png"
+   },
+   "team": {
+    "id": 3897,
+    "name": "Göztepe",
+    "short_code": "GOZ",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/teams/25/3897.png"
+   },
+   "round": {
+    "id": 410384,
+    "name": "7",
+    "season_id": 28203,
+    "starting_at": "2026-10-09",
+    "ending_at": "2026-10-12"
+   }
+  },
+  {
+   "id": 47239,
+   "player_id": 37426978,
+   "fixture_id": 19746599,
+   "round_id": 410384,
+   "team_id": 3897,
+   "rating": 9.04,
+   "formation_position": 10,
+   "formation": "4-4-2",
+   "player": {
+    "id": 37426978,
+    "display_name": "André Henrique",
+    "common_name": "Andre Martins",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/2/37426978.png"
+   },
+   "team": {
+    "id": 3897,
+    "name": "Göztepe",
+    "short_code": "GOZ",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/teams/25/3897.png"
+   },
+   "round": {
+    "id": 410384,
+    "name": "7",
+    "season_id": 28203,
+    "starting_at": "2026-10-09",
+    "ending_at": "2026-10-12"
+   }
+  },
+  {
+   "id": 47242,
+   "player_id": 37635461,
+   "fixture_id": 19746592,
+   "round_id": 410384,
+   "team_id": 688,
+   "rating": 8.97,
+   "formation_position": 3,
+   "formation": "4-4-2",
+   "player": {
+    "id": 37635461,
+    "display_name": "Chibuike Nwaiwu",
+    "common_name": "C. Nwaiwu",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/placeholder.png"
+   },
+   "team": {
+    "id": 688,
+    "name": "Trabzonspor",
+    "short_code": "TRA",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/teams/16/688.png"
+   },
+   "round": {
+    "id": 410384,
+    "name": "7",
+    "season_id": 28203,
+    "starting_at": "2026-10-09",
+    "ending_at": "2026-10-12"
+   }
+  },
+  {
+   "id": 47237,
+   "player_id": 37674431,
+   "fixture_id": 19746594,
+   "round_id": 410384,
+   "team_id": 34,
+   "rating": 7.94,
+   "formation_position": 8,
+   "formation": "4-4-2",
+   "player": {
+    "id": 37674431,
+    "display_name": "Aleksey Batrakov",
+    "common_name": "A. Batrakov",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/31/37674431.png"
+   },
+   "team": {
+    "id": 34,
+    "name": "Galatasaray",
+    "short_code": "GAL",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/teams/2/34.png"
+   },
+   "round": {
+    "id": 410384,
+    "name": "7",
+    "season_id": 28203,
+    "starting_at": "2026-10-09",
+    "ending_at": "2026-10-12"
+   }
+  }
+ ]
+}
