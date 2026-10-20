@@ -344,12 +344,5 @@
     "lockedNoPick": "The match has started; you have no pick for it.",
     "yourPick": "Your pick: {{score}}",
     "all": "All matches this week"
-  },
-  "home2": {
-    "title": "{{game}}",
-    "week": "{{total}} matches this week",
-    "progress": "{{done}}/{{total}} picks",
-    "play": "Play",
-    "playFree": "Play free"
   }
 }

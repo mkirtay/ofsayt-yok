@@ -344,12 +344,5 @@
     "lockedNoPick": "Maç başladı; bu maç için tahminin yok.",
     "yourPick": "Tahminin: {{score}}",
     "all": "Haftanın tüm maçları"
-  },
-  "home2": {
-    "title": "{{game}}",
-    "week": "Bu hafta {{total}} maç",
-    "progress": "{{done}}/{{total}} tahminin",
-    "play": "Oyna",
-    "playFree": "Ücretsiz oyna"
   }
 }
