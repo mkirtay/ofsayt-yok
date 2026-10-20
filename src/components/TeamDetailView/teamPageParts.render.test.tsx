@@ -172,6 +172,18 @@ describe('<TeamHeaderCard />', () => {
     expect(html).toContain('aria-label="Stadyum: Rams Park, İstanbul"');
     expect(html).toContain('title="Rams Park, İstanbul"');
   });
+
+  it('resmî X hesabı: dış bağlantı nofollow + yeni sekme, erişilebilir ad; iskelette ve hesap yokken çizilmez', () => {
+    const social = { handle: 'GalatasaraySK', url: 'https://x.com/GalatasaraySK' };
+    const html = renderToStaticMarkup(<TeamHeaderCard {...base} social={social} />);
+    expect(html).toMatch(/<a href="https:\/\/x\.com\/GalatasaraySK" class="_social_\w+" target="_blank" rel="noopener noreferrer nofollow"/);
+    expect(html).toContain('aria-label="Galatasaray resmî X hesabı: @GalatasaraySK (yeni sekmede açılır)"');
+    expect(html).toContain('>@GalatasaraySK<');
+    // Mutlak konumlu: sabit satır kapları değişmez (CLS).
+    expect(rows(html)).toEqual(rows(renderToStaticMarkup(<TeamHeaderCard {...base} />)));
+    expect(renderToStaticMarkup(<TeamHeaderCard {...base} social={social} loading />)).not.toContain('x.com');
+    expect(renderToStaticMarkup(<TeamHeaderCard {...base} />)).not.toContain('_social_');
+  });
 });
 
 describe('<SeasonSummaryCard /> ve <TeamScorersCard />', async () => {

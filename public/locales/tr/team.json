@@ -16,7 +16,8 @@
     "pointsShort": "{{points}} P",
     "pointsTitle": "{{points}} puan",
     "coachLabel": "Teknik direktör",
-    "venueLabel": "Stadyum"
+    "venueLabel": "Stadyum",
+    "socialAria": "{{name}} resmî X hesabı: @{{handle}} (yeni sekmede açılır)"
   },
   "form": {
     "empty": "Henüz oynanmış maç yok",

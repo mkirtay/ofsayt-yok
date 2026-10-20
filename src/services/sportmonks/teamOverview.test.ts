@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { SportmonksFixture } from './types';
-import { defaultCompetitionId, mapTeamOverview, teamForm, teamMatchResult, type TeamMatch } from './teamOverview';
+import { defaultCompetitionId, mapTeamOverview, mapTeamSocial, teamForm, teamMatchResult, type TeamMatch } from './teamOverview';
 
 const NOW = Date.parse('2026-10-02T12:00:00Z');
 const SL = { id: 600, name: 'Super Lig', image_path: '600.png', sub_type: 'domestic' };
@@ -175,6 +175,7 @@ describe('mapTeamOverview — teknik direktör, stadyum, sezonlar', () => {
         { coach_id: 2, active: true, start: '2022-07-01', coach: { id: 2, display_name: 'Okan Buruk', image_path: 'ob.png' } },
       ],
       venue: { id: 9, name: 'Rams Park', city_name: 'İstanbul', capacity: 53978 },
+      socials: [{ social_channel_id: 2, value: '@GalatasaraySK' }],
       seasons: [
         { id: 25682, name: '2025/2026', league_id: 600, finished: true, starting_at: '2025-08-08', league: { id: 600, name: 'Super Lig' } },
         { id: 28155, name: '2026/2027', league_id: 2, is_current: true, starting_at: '2026-07-07', league: { id: 2, name: 'Champions League', image_path: 'ucl.png' } },
@@ -190,11 +191,30 @@ describe('mapTeamOverview — teknik direktör, stadyum, sezonlar', () => {
     expect(out.venue).toEqual({ name: 'Rams Park', city: 'İstanbul', capacity: 53978 });
   });
 
+  it('resmî X hesabı (socials kanal 2) → x.com bağlantısı', () => {
+    expect(out.social).toEqual({ network: 'x', handle: 'GalatasaraySK', url: 'https://x.com/GalatasaraySK' });
+  });
+
   it('sezonlar ada göre gruplanır, en yeni başta; grup içinde başlangıca göre', () => {
     expect(out.campaigns.map((c) => [c.name, c.seasons.map((s) => s.id)])).toEqual([
       ['2026/2027', [28155, 28203]],
       ['2025/2026', [25580, 25682]],
     ]);
     expect(out.campaigns[0]!.seasons[0]).toMatchObject({ leagueId: 2, leagueName: 'Champions League', leagueLogo: 'ucl.png', isCurrent: true });
+  });
+});
+
+describe('mapTeamSocial', () => {
+  it('yalnız X kanalı ve geçerli kullanıcı adı; bilinmeyen kanal / bozuk değer / boş liste → yok', () => {
+    expect(mapTeamSocial([{ social_channel_id: 7, value: '@foo' }, { social_channel_id: 2, value: 'LFC' }])).toEqual({
+      network: 'x',
+      handle: 'LFC',
+      url: 'https://x.com/LFC',
+    });
+    expect(mapTeamSocial([{ social_channel_id: 7, value: '@foo' }])).toBeUndefined();
+    expect(mapTeamSocial([{ social_channel_id: 2, value: 'https://evil.example/x' }])).toBeUndefined();
+    expect(mapTeamSocial([{ social_channel_id: 2, value: '@bu_ad_on_bes_karakterden_uzun' }])).toBeUndefined();
+    expect(mapTeamSocial([])).toBeUndefined();
+    expect(mapTeamSocial(null)).toBeUndefined();
   });
 });

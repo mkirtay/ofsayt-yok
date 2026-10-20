@@ -16,7 +16,8 @@
     "pointsShort": "{{points}} pts",
     "pointsTitle": "{{points}} points",
     "coachLabel": "Manager",
-    "venueLabel": "Stadium"
+    "venueLabel": "Stadium",
+    "socialAria": "{{name}} official X account: @{{handle}} (opens in a new tab)"
   },
   "form": {
     "empty": "No matches played yet",
