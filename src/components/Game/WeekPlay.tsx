@@ -87,7 +87,7 @@ export default function WeekPlay({
   const isDay = mode === 'day';
   const roundKey = isDay ? (week as GameDayView).dayKey : (week as GameWeekView).weekKey;
   const api = isDay ? `/api/game/days/${roundKey}` : `/api/game/weeks/${roundKey}`;
-  const backHref = isDay ? `${GAME_BRAND.basePath}?oyun=gunluk#hafta` : `${GAME_BRAND.basePath}#hafta`;
+  const backHref = `${GAME_BRAND.basePath}?oyun=${isDay ? 'gunluk' : 'haftalik'}#hafta`;
   const liveNow = useNow(30_000);
   const now = liveNow ?? (renderedAt ? Date.parse(renderedAt) : null);
   const [standing, setStanding] = useState<MyStandingView | null>(null);
@@ -674,7 +674,7 @@ function ShareCard({ label, isDay, me, rank }: { label: string; isDay: boolean; 
   const [copied, setCopied] = useState(false);
   const exact = me.predictions.filter((p) => p.breakdown?.exact).length;
   const share = async () => {
-    const url = `${window.location.origin}${GAME_BRAND.basePath}${isDay ? '?oyun=gunluk' : ''}`;
+    const url = `${window.location.origin}${GAME_BRAND.basePath}?oyun=${isDay ? 'gunluk' : 'haftalik'}`;
     const vars = { round: label, points: me.totalPoints, rank };
     const text = rank ? t('share.textRank', vars) : t('share.text', vars);
     try {

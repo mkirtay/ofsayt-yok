@@ -763,6 +763,10 @@ model GameWeek {
   publishedAt    DateTime?
   publishedById  String?
   settledAt      DateTime?
+  /// Admin listeyi elle değiştirdi → otomatik seçim (game-settle) bu haftaya dokunmaz. "Otomatiğe bırak" false yapar.
+  lockedByAdmin  Boolean         @default(false)
+  /// Otomatik doldurmanın son denemesi (boş yer varsa saatte en çok bir kez yeniden dener).
+  autoCheckedAt  DateTime?
   createdAt      DateTime        @default(now())
   matches        GameMatch[]
   entries        GameWeekEntry[]

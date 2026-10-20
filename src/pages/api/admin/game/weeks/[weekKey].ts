@@ -1,6 +1,7 @@
 /**
- * Admin — tek hafta. GET: hafta + maçlar + sayılar + aday maçlar (`?suggest=1`). PUT `{ fixtureIds: string[] }`: taslağın
- * maç listesi (sıra = dizi; snapshot alınır). POST `{ action: 'publish' }`: yayınla (tam 5 maç, hiçbiri başlamamış).
+ * Admin — tek hafta. GET: hafta + maçlar + sayılar + aday maçlar (`?suggest=1`). PUT `{ fixtureIds: string[] }`: maç listesi
+ * (taslak ya da yayında; sıra = dizi; snapshot alınır; haftayı kilitler → otomatik seçim dokunmaz). POST `{ action: 'publish' }`:
+ * yayınla (1–10 maç). POST `{ action: 'unlock' }`: otomatiğe bırak.
  */
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { readJsonBody } from '@/lib/gundem/validation';
@@ -9,7 +10,7 @@ import { isWeekKey } from '@/lib/game/week';
 import { requireAdmin } from '@/lib/requireAuth';
 import { methodNotAllowed, queryString } from '@/server/game/http';
 import { loadSuggestions } from '@/server/game/suggestions';
-import { GameAdminError, loadAdminWeek, publishWeek, setWeekMatches } from '@/server/game/weeks';
+import { GameAdminError, loadAdminWeek, publishWeek, setWeekMatches, unlockWeek } from '@/server/game/weeks';
 import { withGameGate } from '@/server/game/access';
 
 const STATUS: Record<GameAdminError['code'], number> = {
@@ -20,6 +21,8 @@ const STATUS: Record<GameAdminError['code'], number> = {
   OUT_OF_WEEK: 400,
   STARTED: 409,
   SNAPSHOT: 502,
+  PAST: 409,
+  HAS_PREDICTIONS: 409,
 };
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -41,6 +44,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       if (!Array.isArray(ids) || ids.some((x) => typeof x !== 'string' && typeof x !== 'number')) return res.status(400).json({ error: 'fixtureIds gerekli.' });
       return res.status(200).json({ week: await setWeekMatches(weekKey, ids.map(String)) });
     }
+    if (body.action === 'unlock') return res.status(200).json({ week: await unlockWeek(weekKey) });
     if (body.action !== 'publish') return res.status(400).json({ error: 'Geçersiz işlem.' });
     return res.status(200).json({ week: await publishWeek(weekKey, guard.userId) });
   } catch (err) {

@@ -79,4 +79,12 @@ describe('maç önceliği (config/gameMatchPriority.ts)', () => {
     expect(candidatesIn(list, START, END, NOW)).toEqual([]);
     expect(pickDaily([])).toEqual([]);
   });
+
+  it('boş yer doldurma: mevcut maçlar toplama ve sınırlara sayılır, yalnız yeniler döner', () => {
+    const list = Array.from({ length: 6 }, (_, i) => m('2026-10-24', 8, 4000 + i, 4100 + i));
+    const existing = Array.from({ length: 8 }, (_, i) => ({ leagueId: i < 4 ? 8 : 600, homeId: 5000 + i, awayId: 5100 + i }));
+    const add = selectMatches(candidatesIn(list, START, END, NOW), 10, WEEKLY_LIMITS, existing);
+    expect(add).toHaveLength(2); // 10 − 8
+    expect(selectMatches(candidatesIn(list, START, END, NOW), 10, WEEKLY_LIMITS, Array.from({ length: 10 }, () => ({ leagueId: 1, homeId: 1, awayId: 2 })))).toEqual([]);
+  });
 });

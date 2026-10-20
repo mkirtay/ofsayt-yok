@@ -5,6 +5,7 @@
  */
 import type { GameMatch, GameWeek, MatchSnapshot } from '@prisma/client';
 import { ensureMatchSnapshot } from '@/lib/gundem/matchSnapshot';
+import { attachWeekToPredictionsSql, ensureEntriesForWeekSql } from '@/lib/game/sql';
 import { isInWeek, seasonOf, weekKeyOf, weekRange } from '@/lib/game/week';
 import type { GameMatchView, GameWeekView } from '@/lib/game/types';
 import { prisma } from '@/lib/prisma';
@@ -100,13 +101,21 @@ export async function listPublicWeekKeys(limit = 20): Promise<string[]> {
 // ── Admin ────────────────────────────────────────────────────────────────────────────────────────────────────────────
 
 export class GameAdminError extends Error {
-  constructor(readonly code: 'BAD_WEEK' | 'NOT_FOUND' | 'NOT_DRAFT' | 'BAD_MATCHES' | 'OUT_OF_WEEK' | 'STARTED' | 'SNAPSHOT', message: string) {
+  constructor(readonly code: 'BAD_WEEK' | 'NOT_FOUND' | 'NOT_DRAFT' | 'BAD_MATCHES' | 'OUT_OF_WEEK' | 'STARTED' | 'SNAPSHOT' | 'PAST' | 'HAS_PREDICTIONS', message: string) {
     super(message);
     this.name = 'GameAdminError';
   }
 }
 
-export type AdminWeekView = GameWeekView & { id: string; rawStatus: GameWeek['status']; entries: number; predictions: number };
+export type AdminWeekView = GameWeekView & {
+  id: string;
+  rawStatus: GameWeek['status'];
+  entries: number;
+  predictions: number;
+  /** Admin elle değiştirdi → otomatik seçim dokunmaz. */
+  lockedByAdmin: boolean;
+  autoCheckedAt: string | null;
+};
 
 export async function loadAdminWeek(weekKey: string): Promise<AdminWeekView | null> {
   const week = await prisma.gameWeek.findUnique({ where: { weekKey }, include: { matches: { include: MATCH_LISTS_INCLUDE } } });
@@ -115,18 +124,27 @@ export async function loadAdminWeek(weekKey: string): Promise<AdminWeekView | nu
     prisma.gameWeekEntry.count({ where: { weekId: week.id } }),
     prisma.gamePrediction.count({ where: { weekId: week.id } }),
   ]);
-  return { ...(await toWeekView(week)), id: week.id, rawStatus: week.status, entries, predictions };
+  return {
+    ...(await toWeekView(week)),
+    id: week.id,
+    rawStatus: week.status,
+    entries,
+    predictions,
+    lockedByAdmin: week.lockedByAdmin,
+    autoCheckedAt: week.autoCheckedAt?.toISOString() ?? null,
+  };
 }
 
 export async function listAdminWeeks(limit = 12) {
   return prisma.gameWeek.findMany({ orderBy: { startsAt: 'desc' }, take: limit, select: { weekKey: true, status: true, season: true, startsAt: true } });
 }
 
-/** Taslak hafta (varsa olduğu gibi döner). */
-export async function createDraftWeek(weekKey: string): Promise<GameWeek> {
+/** Taslak hafta (varsa olduğu gibi döner). Bitmiş hafta için satır açılmaz. */
+export async function createDraftWeek(weekKey: string, now: Date = new Date()): Promise<GameWeek> {
   const range = weekRange(weekKey);
   const season = seasonOf(weekKey);
   if (!range || !season) throw new GameAdminError('BAD_WEEK', 'Geçersiz hafta.');
+  if (range.endsAt <= now) throw new GameAdminError('PAST', 'Bitmiş hafta için liste oluşturulmaz.');
   return prisma.gameWeek.upsert({
     where: { weekKey },
     create: { weekKey, season, startsAt: range.startsAt, endsAt: range.endsAt },
@@ -135,17 +153,22 @@ export async function createDraftWeek(weekKey: string): Promise<GameWeek> {
 }
 
 /**
- * Taslak haftanın maç listesini yazar (sıra = dizi sırası). Her maçın snapshot'ı alınır; başlama saati hafta içinde olmalı
- * ve maç başlamamış olmalı. Yalnız TASLAK hafta (yayından sonra liste değişmez; tek tek iptal edilir).
+ * Admin maç listesini yazar (sıra = dizi sırası) ve haftayı KİLİTLER (`lockedByAdmin`: otomatik seçim artık dokunmaz).
+ * Taslak ve yayındaki haftada çalışır (kapanmışta değil). Yeni eklenen maç hafta içinde ve başlamamış olmalı; listeden çıkarılan
+ * maç başlamış ya da tahmin almışsa çıkarılmaz (tahminler kaybolmasın).
  */
 export async function setWeekMatches(weekKey: string, fixtureIds: string[], now: Date = new Date()): Promise<AdminWeekView> {
-  const week = await prisma.gameWeek.findUnique({ where: { weekKey } });
+  const week = await prisma.gameWeek.findUnique({ where: { weekKey }, include: { matches: { include: { _count: { select: { predictions: true } } } } } });
   if (!week) throw new GameAdminError('NOT_FOUND', 'Hafta yok.');
-  if (week.status !== 'DRAFT') throw new GameAdminError('NOT_DRAFT', 'Yayındaki haftanın listesi değişmez.');
+  if (week.status === 'SETTLED') throw new GameAdminError('NOT_DRAFT', 'Kapanmış haftanın listesi değişmez.');
   const ids = [...new Set(fixtureIds.map((s) => String(s).trim()))];
-  if (ids.length !== fixtureIds.length || ids.length > WEEK_MATCH_COUNT || ids.some((s) => !/^\d{1,12}$/.test(s))) {
-    throw new GameAdminError('BAD_MATCHES', `En çok ${WEEK_MATCH_COUNT} farklı maç.`);
+  if (!ids.length || ids.length !== fixtureIds.length || ids.length > WEEK_MATCH_COUNT || ids.some((s) => !/^\d{1,12}$/.test(s))) {
+    throw new GameAdminError('BAD_MATCHES', `1–${WEEK_MATCH_COUNT} farklı maç.`);
   }
+  const current = new Map(week.matches.map((m) => [m.fixtureId, m]));
+  const removed = week.matches.filter((m) => !ids.includes(m.fixtureId));
+  const blocked = removed.filter((m) => m.kickoffAt <= now || m._count.predictions > 0);
+  if (blocked.length) throw new GameAdminError('HAS_PREDICTIONS', `Başlamış ya da tahmin almış maç listeden çıkarılamaz (${blocked.length}); gerekirse iptal et.`);
   const snaps: MatchSnapshot[] = [];
   for (const id of ids) {
     try {
@@ -155,32 +178,52 @@ export async function setWeekMatches(weekKey: string, fixtureIds: string[], now:
     }
   }
   for (const s of snaps) {
+    if (current.has(s.fixtureId)) continue; // listede kalan maç (başlamış olabilir)
     if (!isInWeek(weekKey, s.startingAt)) throw new GameAdminError('OUT_OF_WEEK', `Maç hafta dışında: ${s.homeName} – ${s.awayName}`);
     if (s.startingAt <= now) throw new GameAdminError('STARTED', `Maç başlamış: ${s.homeName} – ${s.awayName}`);
   }
   // Maç fixture başına tek satır: günlük listede de olan maç silinmez, yalnız haftadan ayrılır; listedeki maç (varsa günlükten)
   // haftaya bağlanır.
-  await prisma.$transaction(async (tx) => {
+  const matchIds = await prisma.$transaction(async (tx) => {
     await tx.gameMatch.deleteMany({ where: { weekId: week.id, dayId: null, fixtureId: { notIn: ids } } });
     await tx.gameMatch.updateMany({ where: { weekId: week.id, fixtureId: { notIn: ids } }, data: { weekId: null, position: null } });
+    const out: string[] = [];
     for (const [i, sn] of snaps.entries()) {
-      await tx.gameMatch.upsert({
+      const m = await tx.gameMatch.upsert({
         where: { fixtureId: sn.fixtureId },
         create: { weekId: week.id, fixtureId: sn.fixtureId, position: i + 1, kickoffAt: sn.startingAt },
-        update: { weekId: week.id, position: i + 1, kickoffAt: sn.startingAt },
+        update: current.has(sn.fixtureId) ? { position: i + 1 } : { weekId: week.id, position: i + 1, kickoffAt: sn.startingAt },
       });
+      out.push(m.id);
     }
+    await tx.gameWeek.update({ where: { id: week.id }, data: { lockedByAdmin: true } });
+    return out;
   });
+  await linkWeekPredictions(week.id, matchIds);
   return (await loadAdminWeek(weekKey))!;
 }
 
-/** Yayınla: tam `WEEK_MATCH_COUNT` maç ve hiçbiri başlamamış. */
+/** Haftaya eklenen maçların mevcut (günlükten gelen) tahminleri haftaya bağlanır, kullanıcıların hafta satırı açılır. */
+async function linkWeekPredictions(weekId: string, matchIds: string[]): Promise<void> {
+  if (!matchIds.length) return;
+  for (const q of [attachWeekToPredictionsSql(matchIds), ensureEntriesForWeekSql(weekId)]) await prisma.$executeRawUnsafe(q.text, ...q.values);
+}
+
+/** "Otomatiğe bırak": admin kilidi kalkar, sonraki sonuç işi turunda boş yerler otomatik dolar. */
+export async function unlockWeek(weekKey: string): Promise<AdminWeekView> {
+  const week = await prisma.gameWeek.findUnique({ where: { weekKey } });
+  if (!week) throw new GameAdminError('NOT_FOUND', 'Hafta yok.');
+  await prisma.gameWeek.update({ where: { id: week.id }, data: { lockedByAdmin: false, autoCheckedAt: null } });
+  return (await loadAdminWeek(weekKey))!;
+}
+
+/** Yayınla: 1–`WEEK_MATCH_COUNT` maç, en az biri başlamamış (otomatik akışta hafta ortası da yayınlanabilir). */
 export async function publishWeek(weekKey: string, adminId: string, now: Date = new Date()): Promise<AdminWeekView> {
   const week = await prisma.gameWeek.findUnique({ where: { weekKey }, include: { matches: true } });
   if (!week) throw new GameAdminError('NOT_FOUND', 'Hafta yok.');
   if (week.status !== 'DRAFT') throw new GameAdminError('NOT_DRAFT', 'Hafta zaten yayında.');
-  if (week.matches.length !== WEEK_MATCH_COUNT) throw new GameAdminError('BAD_MATCHES', `Tam ${WEEK_MATCH_COUNT} maç gerekli.`);
-  if (week.matches.some((m) => m.kickoffAt <= now)) throw new GameAdminError('STARTED', 'Listede başlamış maç var.');
+  if (!week.matches.length || week.matches.length > WEEK_MATCH_COUNT) throw new GameAdminError('BAD_MATCHES', `1–${WEEK_MATCH_COUNT} maç gerekli.`);
+  if (!week.matches.some((m) => m.kickoffAt > now)) throw new GameAdminError('STARTED', 'Listede başlamamış maç yok.');
   await prisma.gameWeek.update({ where: { id: week.id }, data: { status: 'PUBLISHED', publishedAt: now, publishedById: adminId } });
   return (await loadAdminWeek(weekKey))!;
 }

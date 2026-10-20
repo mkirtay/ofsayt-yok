@@ -29,19 +29,21 @@ export const getServerSideProps: GetServerSideProps<Props> = async ({ req, res, 
   const gate = await gamePageGate(req, res);
   if (!gate) return { notFound: true };
   if (gate.publicCache) res.setHeader('Cache-Control', GAME_PAGE_CACHE);
-  const initialMode: Mode = query.oyun === 'gunluk' ? 'day' : 'week';
-  return { props: propsJsonSafe({ ...(await loadGameHome()), noindex: gate.noindex, initialMode }) };
+  const data = await loadGameHome();
+  // `?oyun=gunluk|haftalik` açık seçim; yoksa bugünün oyunu varsa Günün 3 maçı, değilse haftalık.
+  const initialMode: Mode = query.oyun === 'gunluk' ? 'day' : query.oyun === 'haftalik' ? 'week' : data.day ? 'day' : 'week';
+  return { props: propsJsonSafe({ ...data, noindex: gate.noindex, initialMode }) };
 };
 
 export default function GameHomePage({ week, season, board, prevKey, nextKey, renderedAt, noindex, initialMode, dayKey, day, dayBoard }: Props) {
   const { t } = useTranslation('game');
   const { status } = useSession();
   const router = useRouter();
-  // Haftalık | Günün 3 maçı: adres çubuğunda `?oyun=gunluk` (paylaşılabilir), sayfa yenilenmeden.
+  // Haftalık | Günün 3 maçı: adres çubuğunda `?oyun=gunluk|haftalik` (paylaşılabilir), sayfa yenilenmeden.
   const [mode, setMode] = useState<Mode>(initialMode);
   const changeMode = (next: Mode) => {
     setMode(next);
-    void router.replace({ pathname: router.pathname, query: next === 'day' ? { oyun: 'gunluk' } : {} }, undefined, { shallow: true, scroll: false });
+    void router.replace({ pathname: router.pathname, query: { oyun: next === 'day' ? 'gunluk' : 'haftalik' } }, undefined, { shallow: true, scroll: false });
   };
   const switcher = <GameModeSwitch mode={mode} onChange={changeMode} />;
   const SITE = siteBaseUrl();

@@ -98,20 +98,31 @@ export function rankCandidates(cands: readonly Candidate[]): Candidate[] {
 }
 
 /**
- * Öncelik sırasıyla en çok `count` maç; 1. kademe (Türkiye'nin büyükleri) her zaman girer, diğerleri çeşitlilik sınırlarına
+ * Öncelik sırasıyla toplam en çok `total` maç; 1. kademe (Türkiye'nin büyükleri) her zaman girer, diğerleri çeşitlilik sınırlarına
  * uyar (aynı lig / aynı takım; 1. kademe maçları da sayıma girer). Sınırlar yüzünden liste dolmazsa (aday çeşitliliği yok)
  * kalan en öncelikli adaylarla tamamlanır — yayın için tam liste gerekir.
  */
-export function selectMatches(cands: readonly Candidate[], count: number, limits: DiversityLimits): Candidate[] {
+export type ListedMatch = Pick<Candidate, 'leagueId' | 'homeId' | 'awayId'>;
+
+/**
+ * `existing`: listede zaten olan maçlar (boş yer doldurma) — toplam `count`'a ve çeşitlilik sayımına girer; dönen yalnız YENİ
+ * seçilenler.
+ */
+export function selectMatches(cands: readonly Candidate[], total: number, limits: DiversityLimits, existing: readonly ListedMatch[] = []): Candidate[] {
   const ranked = rankCandidates(cands);
   const picked: Candidate[] = [];
   const perLeague = new Map<string, number>();
   const perTeam = new Map<number, number>();
-  const take = (c: Candidate) => {
-    picked.push(c);
+  const count1 = (c: ListedMatch) => {
     const lk = String(c.leagueId);
     perLeague.set(lk, (perLeague.get(lk) ?? 0) + 1);
     for (const id of [c.homeId, c.awayId]) if (id != null) perTeam.set(id, (perTeam.get(id) ?? 0) + 1);
+  };
+  existing.forEach(count1);
+  const count = Math.max(0, total - existing.length);
+  const take = (c: Candidate) => {
+    picked.push(c);
+    count1(c);
   };
   for (const c of ranked.filter((x) => x.tier === 1)) if (picked.length < count) take(c);
   for (const c of ranked) {

@@ -645,3 +645,17 @@ ekranda 2 maç kartı korunur (dar ekranda hero başlığı yalnız ekran okuyuc
 (10 dk, `POST /api/admin/game/settle`, `Authorization: Bearer <CRON_SECRET>`) artık günlük oyunu da açar ve kapatır — gün
 başında ilk tur (00:00–00:10 İstanbul) bugünün 3 maçını seçer. 3) Haftalık için admin her Pazartesi öncesi 10 maç seçip yayınlar.
 4) `GAME_ENABLED` kapalı / önizleme / public kararı kullanıcıda.
+
+## 19. Haftalık liste de otomatik (2026-10-20, kullanıcı kararı)
+
+"Maçları her hafta / her gün onaylamam gerekmesin; cron kurallarla seçsin, admin isterse değiştirsin."
+- `game-settle` her turda önce **bu haftanın** listesini garanti eder (`server/game/autoWeek.ts → ensureWeeklyRound`): hafta yoksa
+  haftanın başlamamış maçlarından §18 öncelik + çeşitlilik kurallarıyla en çok 10 maç seçilir ve hafta **doğrudan YAYINLANIR**
+  (hafta ortasında açılırsa yalnız kickoff'u gelecekte olanlar). 10'dan az maç varsa boş yerler saatte en çok bir kez yeniden
+  denenir (`GameWeek.autoCheckedAt`); listedeki maçlara dokunulmaz, yalnız eklenir. Başka haftanın listesindeki maç alınmaz.
+- Admin `/admin/tahmin`'de (varsayılan: içinde bulunulan hafta) listeyi taslakta da yayında da değiştirebilir; kaydedince hafta
+  **kilitlenir** (`GameWeek.lockedByAdmin`) → cron ezmez. "Otomatiğe bırak" kilidi kaldırır. Başlamış ya da tahmin almış maç
+  listeden çıkarılamaz (gerekirse maç iptal edilir). Bitmiş hafta için taslak açılmaz (`PAST`). Yayın 1–10 maçla.
+- `/tahmin`: Günün 3 maçı varsa varsayılan o (`?oyun=gunluk|haftalik` açık seçim); haftalık liste henüz yoksa "sistem
+  seçiyor" metni.
+- Migration `20261020120000_game_week_auto` (yalnız iki sütun; deploy öncesi uygulanabilir).

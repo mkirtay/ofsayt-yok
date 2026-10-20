@@ -90,7 +90,7 @@
   "week": {
     "title": "Haftanın maçları",
     "label": "{{week}}. hafta",
-    "none": "Bu haftanın maç listesi henüz yayınlanmadı.",
+    "none": "Bu haftanın maçları sistem tarafından seçiliyor; kısa süre içinde burada olacak. Bu arada Günün 3 maçına göz at.",
     "settled": "Hafta tamamlandı",
     "save": "Tahminleri kaydet",
     "saving": "Kaydediliyor…",

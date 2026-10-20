@@ -9,7 +9,8 @@
  * Puanlama idempotent: aynı maç yeniden puanlanırsa sonuç aynı (admin "sonucu düzelt" de bunu kullanır). Maç hem haftalık hem
  * günlük listedeyse tek kez puanlanır: `points` haftalık (joker dahil), `basePoints` günlük (jokersiz).
  *
- * Günlük oyun: her tur önce bugünün "Günün 3 maçı"nı garanti eder (server/game/days.ts → ensureDailyRound), sonra maçları
+ * Haftalık liste de otomatik: her tur önce bu haftanın listesini garanti eder / boş yerleri doldurur (server/game/autoWeek.ts;
+ * admin kilidi varsa dokunmaz). Günlük oyun: sonra bugünün "Günün 3 maçı"nı garanti eder (server/game/days.ts → ensureDailyRound), sonra maçları
  * izler; tüm maçları sonuçlanan günü kapatır.
  */
 import type { GameDay, GameMatch, GameWeek, Prisma } from '@prisma/client';
@@ -31,6 +32,7 @@ import {
 } from '@/lib/game/sql';
 import { invalidateDayLeaderboard, invalidateLeaderboards } from '@/server/game/play';
 import { ensureDailyRound, todayKey } from '@/server/game/days';
+import { ensureWeeklyRound } from '@/server/game/autoWeek';
 
 export type SettleDeps = {
   now?: () => Date;
@@ -49,6 +51,9 @@ export type SettleSummary = {
   closedDays: number;
   /** Bu turda günlük oyun açıldı mı (1/0; mevcutsa 0). */
   dayCreated: number;
+  /** Bu turda haftalık liste açıldı mı (1/0) ve kaç maç eklendi (otomatik seçim, server/game/autoWeek.ts). */
+  weekCreated: number;
+  weekAdded: number;
   errors: number;
 };
 
@@ -125,7 +130,17 @@ export async function settleGameMatches(deps: SettleDeps = {}): Promise<SettleSu
   const now = (deps.now ?? (() => new Date()))();
   const listFor = deps.fixturesForUtcDate ?? getFixturesByDate;
   const lookup = deps.lookupFixture ?? defaultLookup;
-  const summary: SettleSummary = { evaluated: 0, voided: 0, kickoffUpdates: 0, fallbacks: 0, closedWeeks: 0, closedDays: 0, dayCreated: 0, errors: 0 };
+  const summary: SettleSummary = { evaluated: 0, voided: 0, kickoffUpdates: 0, fallbacks: 0, closedWeeks: 0, closedDays: 0, dayCreated: 0, weekCreated: 0, weekAdded: 0, errors: 0 };
+
+  // Önce haftalık liste (günlük seçim aynı maçı seçerse çakışma olarak aynı satıra bağlanır).
+  try {
+    const w = await ensureWeeklyRound({ now, fixturesForUtcDate: listFor });
+    summary.weekCreated = w.created ? 1 : 0;
+    summary.weekAdded = w.added;
+  } catch (e) {
+    summary.errors += 1;
+    captureError('game-settle:weekly', e);
+  }
 
   try {
     const before = await prisma.gameDay.count({ where: { dayKey: todayKey(now) } });

@@ -130,6 +130,27 @@ export function voidPointsSql(gameMatchId: string): SqlQuery {
   return { text: `UPDATE "GamePrediction" SET points = 0, "basePoints" = 0, breakdown = NULL WHERE "gameMatchId" = $1`, values: [gameMatchId] };
 }
 
+/**
+ * Maç sonradan haftaya eklendiyse (otomatik doldurma; maç günlükte tahmin almış olabilir): tahminlerin `weekId`'si ve o
+ * kullanıcıların hafta satırı (haftalık toplam satırdan hesaplanır).
+ */
+export function attachWeekToPredictionsSql(gameMatchIds: string[]): SqlQuery {
+  return {
+    text: `UPDATE "GamePrediction" p SET "weekId" = m."weekId" FROM "GameMatch" m WHERE m.id = p."gameMatchId" AND m.id = ANY($1::text[]) AND p."weekId" IS DISTINCT FROM m."weekId"`,
+    values: [gameMatchIds],
+  };
+}
+
+export function ensureEntriesForWeekSql(weekId: string): SqlQuery {
+  return {
+    text: `INSERT INTO "GameWeekEntry" (id, "userId", "weekId", season, "lastChangeAt", "createdAt")
+SELECT replace(gen_random_uuid()::text, '-', ''), p."userId", w.id, w.season, MAX(p."updatedAt"), now()
+FROM "GamePrediction" p JOIN "GameWeek" w ON w.id = p."weekId" WHERE p."weekId" = $1 GROUP BY p."userId", w.id, w.season
+ON CONFLICT ("userId", "weekId") DO NOTHING`,
+    values: [weekId],
+  };
+}
+
 /** Maç sonradan güne eklendiyse (günlük seçim, haftalık maç) mevcut tahminlerin `dayId`'si. */
 export function attachDayToPredictionsSql(gameMatchIds: string[]): SqlQuery {
   return {

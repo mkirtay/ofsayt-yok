@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { weekKeyOf, shiftWeek } from '@/lib/game/week';
+import { weekKeyOf, shiftWeek, weekRange } from '@/lib/game/week';
 import { GAME_BRAND } from '@/config/brand';
 import type { Suggestion } from '@/server/game/suggestions';
 import type { AdminWeekView } from '@/server/game/weeks';
@@ -17,12 +17,16 @@ async function api<T>(url: string, init?: RequestInit): Promise<T> {
 }
 
 /**
- * Admin: tahmin oyunu hafta oluşturucu. Hafta seç → taslak → aday maçlardan 10 seç (sıra = seçim sırası; ★ otomatik öneri = config/gameMatchPriority.ts; elle ekle / çıkar serbest) → kaydet → yayınla.
+ * Admin: tahmin oyunu haftaları. Haftalık liste OTOMATİK (game-settle cron'u seçer ve yayınlar; server/game/autoWeek.ts). Admin
+ * isterse listeyi değiştirir (aday maçlar, ★ otomatik öneri = config/gameMatchPriority.ts; elle ekle / çıkar) → kaydet: hafta
+ * kilitlenir, cron artık ezmez; "Otomatiğe bırak" kilidi kaldırır. Taslak + yayınla akışı gelecek haftalar için duruyor.
  * Yayından sonra maç başına iptal / sonucu düzelt; oyuncuyu sıralamadan gizle; sonuç işini elle çalıştır.
  * Metinler yalnız admin için (TR, çeviri yok).
  */
 export default function AdminGame() {
-  const [weekKey, setWeekKey] = useState(() => shiftWeek(weekKeyOf(Date.now()), 1)!);
+  // Varsayılan: içinde bulunulan hafta (İstanbul, Pzt–Paz).
+  const [nowMs] = useState(() => Date.now());
+  const [weekKey, setWeekKey] = useState(() => weekKeyOf(nowMs));
   const [week, setWeek] = useState<AdminWeekView | null>(null);
   const [suggestions, setSuggestions] = useState<Suggestion[] | null>(null);
   const [picked, setPicked] = useState<string[]>([]);
@@ -73,6 +77,8 @@ export default function AdminGame() {
   };
 
   const isDraft = week?.rawStatus === 'DRAFT';
+  const editable = !!week && week.rawStatus !== 'SETTLED';
+  const isPast = (weekRange(weekKey)?.endsAt.getTime() ?? 0) <= nowMs;
   const toggle = (id: string) => setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : p.length >= WEEK_MATCHES ? p : [...p, id]));
 
   return (
@@ -87,8 +93,24 @@ export default function AdminGame() {
         <button type="button" className={styles.tab} onClick={() => changeWeek(1)}>
           →
         </button>
-        <span className={styles.muted}>Durum: {week ? `${week.rawStatus} · ${week.entries} oyuncu · ${week.predictions} tahmin` : 'yok'}</span>
-        {!week ? (
+        <span className={styles.muted}>
+          Durum:{' '}
+          {week
+            ? `${week.rawStatus} · ${week.matches.length} maç · ${week.entries} oyuncu · ${week.predictions} tahmin · ${week.lockedByAdmin ? 'elle (kilitli)' : 'otomatik'}`
+            : isPast
+              ? 'yok (bitmiş hafta)'
+              : 'yok — sonuç işi otomatik oluşturur'}
+        </span>
+        {week?.lockedByAdmin ? (
+          <button type="button" className={styles.tab} disabled={busy} onClick={() => void run(async () => {
+            const d = await api<{ week: AdminWeekView }>(`/api/admin/game/weeks/${weekKey}`, { method: 'POST', body: JSON.stringify({ action: 'unlock' }) });
+            setWeek(d.week);
+            setMsg('Otomatiğe bırakıldı: sonraki sonuç işi turunda boş yerler dolar.');
+          })}>
+            Otomatiğe bırak
+          </button>
+        ) : null}
+        {!week && !isPast ? (
           <button type="button" className={styles.btn} disabled={busy} onClick={() => void run(async () => {
             await api('/api/admin/game/weeks', { method: 'POST', body: JSON.stringify({ weekKey }) });
             await load(weekKey, true);
@@ -142,7 +164,7 @@ export default function AdminGame() {
             ))}
           </ol>
 
-          {isDraft ? (
+          {editable ? (
             <>
               <div className={styles.adminRow}>
                 <button type="button" className={styles.tab} disabled={busy} onClick={() => void run(() => load(weekKey, true))}>
@@ -156,11 +178,11 @@ export default function AdminGame() {
                 <button type="button" className={styles.btn} disabled={busy || picked.length === 0} onClick={() => void run(async () => {
                   const d = await api<{ week: AdminWeekView }>(`/api/admin/game/weeks/${weekKey}`, { method: 'PUT', body: JSON.stringify({ fixtureIds: picked }) });
                   setWeek(d.week);
-                  setMsg('Liste kaydedildi.');
+                  setMsg('Liste kaydedildi; hafta elle yönetiliyor (otomatik seçim dokunmaz).');
                 })}>
-                  Listeyi kaydet ({picked.length})
+                  Listeyi kaydet ({picked.length}){isDraft ? '' : ' · kilitler'}
                 </button>
-                <button type="button" className={styles.btn} disabled={busy || week.matches.length !== WEEK_MATCHES} onClick={() => {
+                <button type="button" className={styles.btn} hidden={!isDraft} disabled={busy || !week.matches.length} onClick={() => {
                   if (!window.confirm(`${weekKey} yayınlansın mı? Yayından sonra liste değişmez.`)) return;
                   void run(async () => {
                     const d = await api<{ week: AdminWeekView }>(`/api/admin/game/weeks/${weekKey}`, { method: 'POST', body: JSON.stringify({ action: 'publish' }) });

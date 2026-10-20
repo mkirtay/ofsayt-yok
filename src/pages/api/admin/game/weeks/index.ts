@@ -7,7 +7,7 @@ import { captureError } from '@/lib/logger';
 import { isWeekKey } from '@/lib/game/week';
 import { requireAdmin } from '@/lib/requireAuth';
 import { methodNotAllowed } from '@/server/game/http';
-import { createDraftWeek, listAdminWeeks, loadAdminWeek } from '@/server/game/weeks';
+import { createDraftWeek, GameAdminError, listAdminWeeks, loadAdminWeek } from '@/server/game/weeks';
 import { withGameGate } from '@/server/game/access';
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -22,6 +22,7 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
     await createDraftWeek(weekKey);
     return res.status(200).json({ week: await loadAdminWeek(weekKey) });
   } catch (err) {
+    if (err instanceof GameAdminError) return res.status(409).json({ error: err.message, code: err.code });
     captureError('admin-game-weeks', err);
     return res.status(500).json({ error: 'Sunucu hatası.' });
   }

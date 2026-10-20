@@ -90,7 +90,7 @@
   "week": {
     "title": "This week's matches",
     "label": "Week {{week}}",
-    "none": "This week's match list hasn't been published yet.",
+    "none": "This week's matches are being picked automatically and will appear here shortly. Meanwhile, try today's 3 matches.",
     "settled": "Week completed",
     "save": "Save predictions",
     "saving": "Saving…",

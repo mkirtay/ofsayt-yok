@@ -38,6 +38,7 @@ import { buildDistribution, isRareScore, scorePrediction } from '@/lib/game/scor
  * haftalık / sezonluk sıralama ve görünürlük.
  */
 const SQL = readFileSync(path.join(process.cwd(), 'prisma', 'migrations', '20261019180000_prediction_game', 'migration.sql'), 'utf8');
+const SQL_AUTO = readFileSync(path.join(process.cwd(), 'prisma', 'migrations', '20261020120000_game_week_auto', 'migration.sql'), 'utf8');
 let db: PGlite;
 const run = async <T>(q: SqlQuery) => (await db.query<T>(q.text, q.values)).rows;
 const one = async <T>(q: SqlQuery) => (await run<T>(q))[0];
@@ -57,6 +58,7 @@ beforeAll(async () => {
     ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO anon, authenticated;
   `);
   await db.exec(SQL);
+  await db.exec(SQL_AUTO);
   await db.exec(`
     INSERT INTO "GameWeek" (id, "weekKey", season, status, "startsAt", "endsAt") VALUES
       ('w42', '2026-W42', '2026-27', 'PUBLISHED', '2026-10-11T21:00:00Z', '2026-10-18T21:00:00Z'),
@@ -75,6 +77,10 @@ beforeAll(async () => {
 });
 
 describe('prediction_game migration (gerçek SQL)', () => {
+  it('20261020120000: GameWeek.lockedByAdmin varsayılan false, autoCheckedAt boş', async () => {
+    expect((await db.query(`SELECT "lockedByAdmin" AS l, "autoCheckedAt" AS a FROM "GameWeek" WHERE id = 'w42'`)).rows).toEqual([{ l: false, a: null }]);
+  });
+
   it('RLS açık, anon / authenticated tablo yetkisi yok', async () => {
     for (const t of ['GameWeek', 'GameDay', 'GameMatch', 'GamePrediction', 'GameWeekEntry']) {
       expect((await db.query<{ r: boolean }>(`SELECT relrowsecurity AS r FROM pg_class WHERE relname = '${t}'`)).rows[0]).toEqual({ r: true });

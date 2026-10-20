@@ -75,15 +75,16 @@ describe('tahmin oyunu (PGlite + Prisma)', () => {
     await expect(weeks.setWeekMatches(weekKey, ['9000', '9999'])).rejects.toMatchObject({ code: 'OUT_OF_WEEK' });
     await expect(weeks.publishWeek(weekKey, 'admin')).rejects.toMatchObject({ code: 'BAD_MATCHES' });
     const TEN = Array.from({ length: 10 }, (_, i) => String(9000 + i));
-    await weeks.setWeekMatches(weekKey, TEN.slice(0, 5));
-    await expect(weeks.publishWeek(weekKey, 'admin')).rejects.toMatchObject({ code: 'BAD_MATCHES' }); // 5 maç yetmez
     const w = await weeks.setWeekMatches(weekKey, TEN);
+    expect(w.lockedByAdmin).toBe(true); // admin listesi → otomatik seçim dokunmaz
     expect(w.matches.map((m) => m.home.name)).toEqual(TEN.map((id) => `Ev ${id}`));
     ids = w.matches.map((m) => m.id);
     expect(await weeks.loadPublicWeek(weekKey)).toBeNull(); // taslak görünmez
     await weeks.publishWeek(weekKey, 'admin');
     expect((await weeks.loadPublicWeek(weekKey))?.matches).toHaveLength(10);
-    await expect(weeks.setWeekMatches(weekKey, ['9000'])).rejects.toMatchObject({ code: 'NOT_DRAFT' });
+    // Yayında da düzenlenebilir; geçmiş hafta için taslak açılmaz.
+    expect((await weeks.setWeekMatches(weekKey, TEN)).matches).toHaveLength(10);
+    await expect(weeks.createDraftWeek(week.shiftWeek(week.weekKeyOf(Date.now()), -1)!)).rejects.toMatchObject({ code: 'PAST' });
   });
 
   it('tahmin + joker; başlamış maç kalemi LOCKED, diğerleri yazılır', async () => {
@@ -119,8 +120,11 @@ describe('tahmin oyunu (PGlite + Prisma)', () => {
     const lookup = vi.fn(async () => null);
     const s = await settle.settleGameMatches({ fixturesForUtcDate: listFor, lookupFixture: lookup });
     expect(s).toMatchObject({ evaluated: 1, voided: 0, errors: 0, closedWeeks: 0 });
-    // Uzak maçlara istek yok: yalnız başlamış maçın günü + günlük oyun için bugünün UTC günleri (aynı önbellek).
+    // Uzak maçlara istek yok: yalnız başlamış maçın günü + otomatik seçim için İÇİNDE BULUNULAN haftanın günleri (haftalık ve
+    // günlük; ana sayfayla aynı önbellek). Test haftası (gelecek hafta) listeleri okunmaz.
+    const cur = week.weekRange(week.weekKeyOf(Date.now()))!;
     const allowed = new Set([k0.toISOString().slice(0, 10), ...week.utcDatesOfDay(week.dayKeyOf(Date.now()))]);
+    for (let t = cur.startsAt.getTime(); t <= cur.endsAt.getTime(); t += 86_400_000) allowed.add(new Date(t).toISOString().slice(0, 10));
     expect(listFor.mock.calls.every(([d]) => allowed.has(d))).toBe(true);
     expect(lookup).not.toHaveBeenCalled();
 
@@ -167,7 +171,8 @@ describe('tahmin oyunu (PGlite + Prisma)', () => {
     expect(season!.entries.map((e) => [e.nickname, e.points])).toEqual([['eren', 20], ['zeynep', 9]]);
     expect(await play.loadMyStanding(users.b!, 'season', week.seasonOf(weekKey)!)).toMatchObject({ points: 9, rank: 2, visible: true });
 
-    // Kapanmış haftaya yazım yok.
+    // Kapanmış haftaya yazım yok; listesi de değişmez.
+    await expect(weeks.setWeekMatches(weekKey, ['9000'])).rejects.toMatchObject({ code: 'NOT_DRAFT' });
     expect(await play.savePredictions(users.a!, weekKey, { items: [{ gameMatchId: ids[4]!, home: 0, away: 0 }] })).toBeNull();
   });
 
