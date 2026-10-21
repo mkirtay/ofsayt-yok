@@ -88,9 +88,104 @@
   text-transform: uppercase;
   letter-spacing: 0.04em;
   line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  max-width: 100%;
+  min-width: 0;
 
   .voteBtnSelected & {
     color: var(--color-action-text);
+  }
+
+  // Takım modu: takım adları büyük harfe çevrilmez ("İ" sorunu + okunurluk); beraberlik de aynı biçimde.
+  .teamMode & {
+    font-size: 13px;
+    color: $color-text;
+    text-transform: none;
+    letter-spacing: 0;
+    line-height: 1.2;
+    min-height: 20px; // logo yüksekliği: beraberliğin yüzdesi takımlarınkiyle aynı hizada
+  }
+
+  .teamMode .voteBtnSelected & {
+    color: var(--color-action-text);
+  }
+}
+
+// Uzun takım adı tek satırda kesilir (…); tam ad butonun `title`'ında ve aria-label'ında.
+.voteBtnText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.voteBtnLogo,
+.voteBtnLogoFallback {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+}
+
+.voteBtnLogo {
+  object-fit: contain;
+}
+
+.voteBtnLogoFallback {
+  border-radius: 50%;
+  background: var(--border-subtle);
+}
+
+/* ── Takım modu, dar ekran: üç seçenek yan yana kalır; logo adın üstüne geçer (ada tam sütun genişliği) ── */
+@media (max-width: 480px) {
+  .buttons.teamMode {
+    flex-direction: row;
+  }
+
+  .teamMode .voteBtn {
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 4px;
+    padding: 8px 3px 12px;
+  }
+
+  .teamMode .voteBtnLabel {
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+    font-size: 12px;
+  }
+
+  // ~90 px sütunda tek satır "Kastamonu…" bile kesiyordu → en çok iki satır ("Borussia / Dortmund"), sonra (…).
+  // Tek kelimelik adlar kelime ortasından bölünmez: tek satır + (…), uzunsa bir punto küçük ("Kastamonuspor").
+  .teamMode .voteBtnText {
+    max-width: 100%;
+  }
+
+  .teamMode .voteBtnTextMulti {
+    white-space: normal;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+  }
+
+  .teamMode .voteBtnTextLongWord {
+    font-size: 11px;
+  }
+
+  // Yüzde sütunun dibinde: iki satırlık ad yanında da üç yüzde aynı hizada.
+  .teamMode .voteBtnPct {
+    margin-top: auto;
+  }
+
+  // Beraberlikte logo yok: adın satırı takımlarınkiyle hizalı kalsın diye logo yüksekliği kadar boşluk.
+  .teamMode .voteBtnDraw .voteBtnLabel::before {
+    content: '';
+    display: block;
+    height: 20px;
   }
 }
 

@@ -188,6 +188,8 @@
     "home": "Ev Sahibi",
     "draw": "Beraberlik",
     "away": "Deplasman",
+    "teamWins": "{{team}} kazanır",
+    "optionResult": "{{label}}, oyların %{{pct}}",
     "totalVotes": "Toplam {{count}} oy",
     "loginCta": "Oy kullanmak için",
     "loginLink": "giriş yapın",

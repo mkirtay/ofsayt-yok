@@ -142,7 +142,13 @@ export default function MatchDetailContent({ detail, requestedMatchId, variant =
         label: t('tabs.forum'),
         render: () =>
           effectiveMatchId ? (
-            <MatchForumTab key={effectiveMatchId} matchId={effectiveMatchId} pollLocked={!!match && isPollLockedForMatch(match)} />
+            <MatchForumTab
+              key={effectiveMatchId}
+              matchId={effectiveMatchId}
+              pollLocked={!!match && isPollLockedForMatch(match)}
+              home={match?.home}
+              away={match?.away}
+            />
           ) : null,
       },
       {

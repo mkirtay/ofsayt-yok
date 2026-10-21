@@ -191,6 +191,8 @@
     "home": "Home",
     "draw": "Draw",
     "away": "Away",
+    "teamWins": "{{team}} wins",
+    "optionResult": "{{label}}, {{pct}}% of votes",
     "totalVotes": "{{count}} total votes",
     "totalVotes_one": "{{count}} total vote",
     "loginCta": "to vote",
