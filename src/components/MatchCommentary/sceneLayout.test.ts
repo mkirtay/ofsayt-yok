@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import lineupSample from '@/services/sportmonks/__fixtures__/commentaryLineup19746587.json';
 import { classifyScene, type CommentaryItem } from '@/services/sportmonks/matchCommentary';
 import { buildSceneSquads, type RawFormation, type RawLineupRow, type RawParticipant } from '@/services/sportmonks/commentaryScene';
-import { BENCH_Y, SCENE_H, SCENE_W, buildScene, drift, goalMouth, placeSquad, zonePoint } from './sceneLayout';
+import { BENCH_Y, SCENE_H, SCENE_W, buildKickoffScene, buildScene, drift, goalMouth, placeSquad, zonePoint } from './sceneLayout';
 
 const lineup = lineupSample as { participants: RawParticipant[]; formations: RawFormation[]; lineups: RawLineupRow[] };
 const squads = buildSceneSquads(lineup.lineups, lineup.participants, lineup.formations)!;
@@ -157,5 +157,26 @@ describe('drift — oyuncuların topa doğru kayması', () => {
   it('top yoksa kayma yok', () => {
     const layout = buildScene(item('Victor James Osimhen receives a yellow card.', { id: 13, side: 'away' }), squads)!;
     expect(drift(layout.dots[0]!, layout.ball)).toEqual({ dx: 0, dy: 0 });
+  });
+});
+
+describe('buildKickoffScene — maç öncesi bekleme sahnesi', () => {
+  it('22 nokta, top orta noktada, olay etkisi yok', () => {
+    const layout = buildKickoffScene(null);
+    expect(layout.dots).toHaveLength(22);
+    expect(layout.ball).toEqual({ x1: SCENE_W / 2, y1: SCENE_H / 2, x2: SCENE_W / 2, y2: SCENE_H / 2, arc: 0, rebound: false });
+    expect([layout.goalFlash, layout.save, layout.card]).toEqual([null, null, null]);
+    expect(layout.dots.every((d) => !d.actor)).toBe(true);
+  });
+
+  it('iki takım kendi yarısında (ev solda, deplasman sağda)', () => {
+    const { dots } = buildKickoffScene(null);
+    expect(dots.filter((d) => d.side === 'home').every((d) => d.x < SCENE_W / 2)).toBe(true);
+    expect(dots.filter((d) => d.side === 'away').every((d) => d.x > SCENE_W / 2)).toBe(true);
+  });
+
+  it('kadro gelirse onu kullanır (maç öncesi gelmiyor, yine de desteklenir)', () => {
+    const layout = buildKickoffScene(squads);
+    expect(layout.dots.filter((d) => d.name)).toHaveLength(22);
   });
 });

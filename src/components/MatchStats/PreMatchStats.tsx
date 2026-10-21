@@ -4,21 +4,13 @@ import '@/lib/i18nNamespaces/matchState';
 import type { Match } from '@/models/liveScore';
 import { useNow } from '@/hooks/useNow';
 import { formatFixtureDate } from '@/utils/fixtureDateLabel';
-import { countdown, kickoffInfo, type Countdown } from '@/utils/kickoff';
+import { countdown, kickoffInfo } from '@/utils/kickoff';
+import { countdownText } from '@/utils/kickoffText';
 import styles from './preMatchStats.module.scss';
 
 // 08 sahnesi ayrı parçada (yerel import(): ortak LazyLoad'a bağımlılık ana sayfa parçalarını bölüyordu). Kutu
 // (96 px, düz yeşil) baştan yer tutar.
 const loadKickoffRing = () => import('@/components/PitchScenes/KickoffRing');
-
-function countdownText(c: Countdown, t: (k: string, o?: Record<string, unknown>) => string): string {
-  if (c.kind === 'soon') return t('countdown.soon');
-  if (c.kind === 'awaiting') return t('countdown.awaiting');
-  const parts = c.days > 0
-    ? [t('countdown.days', { n: c.days }), c.hours > 0 ? t('countdown.hours', { n: c.hours }) : '']
-    : [c.hours > 0 ? t('countdown.hours', { n: c.hours }) : '', t('countdown.minutes', { n: c.minutes })];
-  return t('countdown.startsIn', { left: parts.filter(Boolean).join(' ') });
-}
 
 /**
  * Başlamamış maçta istatistik kartı (08): animasyon + "Maç henüz başlamadı." + ilk düdük tarihi/saati + geri sayım.

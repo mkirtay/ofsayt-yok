@@ -5,19 +5,27 @@ import ScaledScene from '@/components/PitchScenes/ScaledScene';
 import turf from '@/components/PitchScenes/turf.module.scss';
 import type { CommentaryItem } from '@/services/sportmonks/matchCommentary';
 import type { SceneSquads } from '@/services/sportmonks/commentaryScene';
-import { BENCH_Y, SCENE_H, SCENE_W, buildScene, drift, type SceneDot } from './sceneLayout';
+import { BENCH_Y, SCENE_H, SCENE_W, buildKickoffScene, buildScene, drift, type SceneDot } from './sceneLayout';
 import styles from './commentaryScene.module.scss';
+
+export type CommentarySceneProps = {
+  /** Oynatılacak anlatım satırı; `kickoff` modunda null. */
+  item: CommentaryItem | null;
+  squads: SceneSquads | null;
+  /** Maç başlamadan önceki bekleme sahnesi: diziliş + orta noktada top, olay yok. */
+  kickoff?: boolean;
+};
 
 /**
  * Anlatım satırının temsili 2D sahnesi (504×320, yukarıdan saha). Saf CSS + SVG; yalnız transform/opacity canlandırılır
  * (docs/animasyon-referans/README.md). Konumlar GERÇEK DEĞİL: oyuncular kadro dizilişinden, top metinden çıkarılan
  * bölgeden. Sekme gizliyken / ekran dışındayken durur, "hareketi azalt"ta son kare görünür.
  */
-export default function CommentaryScene({ item, squads }: { item: CommentaryItem; squads: SceneSquads | null }) {
+export default function CommentaryScene({ item, squads, kickoff = false }: CommentarySceneProps) {
   const { t } = useTranslation('match');
   const ref = useRef<HTMLDivElement>(null);
   useMotionPause(ref);
-  const layout = useMemo(() => buildScene(item, squads), [item, squads]);
+  const layout = useMemo(() => (kickoff ? buildKickoffScene(squads) : item ? buildScene(item, squads) : null), [item, squads, kickoff]);
   if (!layout) return null;
 
   const { ball } = layout;
@@ -40,13 +48,14 @@ export default function CommentaryScene({ item, squads }: { item: CommentaryItem
   } as React.CSSProperties;
 
   const dotMotion = (dot: SceneDot) => {
+    if (kickoff) return { dx: 0, dy: 0 };
     if (dot.comingOn) return { dx: 0, dy: 46 };
     if (dot.goingOff) return { dx: 0, dy: BENCH_Y - dot.y };
     return drift(dot, ball);
   };
 
   return (
-    <div className={styles.root} style={vars} data-scene={item.scene?.type}>
+    <div className={`${styles.root} ${kickoff ? styles.idle : ''}`.trim()} style={vars} data-scene={kickoff ? 'kickoff' : item?.scene?.type}>
       <ScaledScene height={SCENE_H} className={styles.stage}>
         <div ref={ref} className={`${turf.turf} ${styles.pitch}`} aria-hidden="true">
           <span className={turf.stripes} />
@@ -77,10 +86,12 @@ export default function CommentaryScene({ item, squads }: { item: CommentaryItem
               <span
                 key={`${dot.side}-${dot.name || index}`}
                 className={classes}
-                style={{ '--x': dot.x, '--y': dot.y, '--dx': motion.dx, '--dy': motion.dy } as React.CSSProperties}
+                style={{ '--x': dot.x, '--y': dot.y, '--dx': motion.dx, '--dy': motion.dy, '--i': index } as React.CSSProperties}
               />
             );
           })}
+
+          {kickoff ? <span className={styles.ring} /> : null}
 
           {ball ? (
             <span className={styles.ballPath}>
@@ -100,7 +111,7 @@ export default function CommentaryScene({ item, squads }: { item: CommentaryItem
           ) : null}
         </div>
       </ScaledScene>
-      <p className={styles.note}>{t('commentary.scene.note')}</p>
+      <p className={styles.note}>{t(kickoff ? 'commentary.scene.kickoffNote' : 'commentary.scene.note')}</p>
     </div>
   );
 }
