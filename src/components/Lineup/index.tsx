@@ -31,7 +31,7 @@ interface LineupProps {
   onRetry?: () => void;
 }
 
-/** Başlık + tahmini kadroda alt not ("Resmî ilk 11'ler maçtan yaklaşık 1 saat önce açıklanır."). */
+/** Başlık + tahmini kadroda alt not ("Tahmini — resmî kadro açıklanınca güncellenir …"). */
 function LineupTitle({ probable }: { probable: boolean }) {
   const { t } = useTranslation('matchState');
   return (
@@ -262,7 +262,7 @@ export default function Lineup({ lineups, loading, match, error, onRetry }: Line
         {!state
           ? t('lineup.notAnnounced')
           : phase === 'PRE'
-            ? `${t('lineup.notAnnounced')} ${t('lineup.probableNote')}`
+            ? `${t('lineup.notAnnounced')} ${t('lineup.announceNote')}`
             : phase === 'POST'
               ? t('post.lineups')
               : t('lineup.notAnnounced')}

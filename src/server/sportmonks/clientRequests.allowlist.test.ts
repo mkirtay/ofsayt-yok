@@ -18,6 +18,7 @@ import { STANDINGS_WITH_FORM_INCLUDE, STANDINGS_WITH_GROUPS_INCLUDE } from '@/se
 import { TOPSCORER_WITH_APPEARANCES_INCLUDE, topscorerAppearanceFilters } from '@/services/competitionTopScorers';
 import { TEAM_LOANS_INCLUDE } from '@/services/sportmonks/teamLoans';
 import { RED_CARD_EVENTS_FILTER, RED_CARD_EVENTS_INCLUDE } from '@/services/sportmonks/redCards';
+import { PREDICTED_LINEUPS_INCLUDE } from '@/services/sportmonks/predictedLineups';
 
 const liveScoreSrc = readFileSync(path.resolve(__dirname, '../../services/liveScoreService.ts'), 'utf8');
 const FIXTURE_INCLUDE = /const SPORTMONKS_FIXTURE_INCLUDE =\s*'([^']+)'/.exec(liveScoreSrc)![1];
@@ -30,6 +31,7 @@ const CASES: [string, string, Record<string, string>][] = [
   ['maç + olaylar', 'football/fixtures/19746609', { include: `${FIXTURE_INCLUDE};events` }],
   ['maç istatistiği', 'football/fixtures/19746609', { include: 'statistics' }],
   ['kadro', 'football/fixtures/19746609', { include: 'lineups.player.nationality;lineups.details;participants;metadata', filters: 'metadataTypes:572' }],
+  ['muhtemel 11 yedeği (predictedLineups)', 'football/fixtures/19746580', { include: PREDICTED_LINEUPS_INCLUDE }],
   ['karşılaşma geçmişi', 'football/fixtures/head-to-head/34/88', { include: FIXTURE_INCLUDE }],
   ['lig sezonları', 'football/leagues/600', { include: 'seasons' }],
   ['lig adı (favoriler)', 'football/leagues/600', {}],

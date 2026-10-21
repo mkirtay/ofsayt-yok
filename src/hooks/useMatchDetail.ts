@@ -19,6 +19,7 @@ import { mergeRedCards } from '@/utils/liveMatchPatch';
 import { deriveMatchPhase } from '@/utils/matchPhase';
 import { matchKickoffMs } from '@/utils/matchActivity';
 import { isProbableLineup } from '@/utils/lineupStatus';
+import { fetchPredictedLineups, shouldLoadPredictedLineups } from '@/services/sportmonks/predictedLineups';
 import { startVisiblePolling } from '@/utils/visiblePolling';
 import type { LiveMatchPayload } from '@/server/liveMatch';
 import { fetchCompetitionStandings } from '@/services/competitionStandings';
@@ -444,6 +445,27 @@ export function useMatchDetail(
     };
   }, [matchId, lineupProbable, phase, kickoffMs]);
 
+  // Yedek "Muhtemel 11": başlamamış maçta kadro (resmî / tahmini `lineups`) hiç yoksa ve başlamaya ≤ 3 gün varsa Sportmonks
+  // `predictedLineups` ayrı, küçük bir istekle sorulur (bkz. services/sportmonks/predictedLineups.ts). Gelirse tahmini kadro
+  // olarak gösterilir; yukarıdaki yoklama resmî kadroyu getirince onunla değişir. Hata ≠ veri yok: hata/boşta durum
+  // "Kadrolar henüz açıklanmadı" kalır (doğru), tahmin uydurulmaz.
+  const lineupsMissing = lineups == null;
+  useEffect(() => {
+    if (!matchId || lineupsLoading || lineupsError) return;
+    if (!shouldLoadPredictedLineups({ phase, hasLineups: !lineupsMissing, kickoffMs, now: Date.now() })) return;
+    let cancelled = false;
+    void fetchPredictedLineups(matchId)
+      .then((data) => {
+        if (!cancelled && data) setLineups((prev) => prev ?? data);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [matchId, lineupsLoading, lineupsError, lineupsMissing, phase, kickoffMs]);
+  // Tahmin yedeği yalnız başlamamış maçta: maç başladıysa (resmî kadro gelmediyse bile) gösterilmez.
+  const shownLineups = lineups?.source === 'predicted' && phase !== 'PRE' ? null : lineups;
+
   const handleSeasonChange = useCallback(
     async (seasonId: number, competitionIdStr: string) => {
       setSelectedSeasonId(seasonId);
@@ -473,7 +495,7 @@ export function useMatchDetail(
     matchId,
     match,
     events,
-    lineups,
+    lineups: shownLineups,
     stats,
     standings,
     seasons,

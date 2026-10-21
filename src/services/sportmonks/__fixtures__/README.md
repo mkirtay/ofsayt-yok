@@ -117,3 +117,5 @@ turda eklenen 4 yeni gerçek type_id de aynı maçtan geliyor: `EVENT_TYPES[10]`
   (SL / Şampiyonlar Ligi / Türkiye Kupası 2026/27, süren sezonlar). KIRPILMIŞ: sezon alanları + her satırda id/model_id/type_id/
   relation_id/value; `participant` (çok biçimli: takım ya da oyuncu) yalnız id/name/display_name/common_name/image_path.
   Sezon Özeti (`seasonStats.ts`). TK'da sarı kart 0 (eksik veri), ŞL'de kaleci "gol yememe" 2/2 (bozuk) — dönüştürücü gizler.
+- `predictedLineupsSuperLig.json` — 2026-10-21 gerçek istek: `fixtures/19746580?include=` + `PREDICTED_LINEUPS_INCLUDE` (Alanyaspor–Kocaelispor, SL, maça 2 gün).
+  Yanıt anahtarı küçük harf `predictedlineups`, satır `position_id` ayrıntılı mevki; oyuncu alanları kırpıldı. Yedek Muhtemel 11 (`predictedLineups.ts`).

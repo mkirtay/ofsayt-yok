@@ -48,7 +48,8 @@
   "lineup": {
     "starting": "Starting XI",
     "probable": "Probable XI",
-    "probableNote": "Official line-ups are announced about an hour before kick-off.",
+    "probableNote": "Predicted — updates once official line-ups are announced (usually about an hour before kick-off).",
+    "announceNote": "Official line-ups are announced about an hour before kick-off.",
     "bench": "Substitutes",
     "benchCount": "Substitutes ({{count}})",
     "notAnnounced": "Line-ups haven't been announced yet.",

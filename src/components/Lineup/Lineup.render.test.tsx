@@ -4,6 +4,9 @@ import Lineup, { formatPlayerRating } from './index';
 import { mapSportmonksLineups } from '@/services/sportmonksKatman2Mapper';
 import type { SportmonksFixture, SportmonksLineupRow } from '@/services/sportmonks/types';
 import fixture from '@/services/sportmonks/__fixtures__/lineupFormationSuperLig.json';
+import predictedSample from '@/services/sportmonks/__fixtures__/predictedLineupsSuperLig.json';
+import { mapSportmonksPredictedLineups, type SportmonksFixtureWithPredicted } from '@/services/sportmonks/predictedLineups';
+import type { Match } from '@/models/liveScore';
 
 /** Gerçek fixture 19746621'i gerçekten render eder: saha üzerinde satırların formasyon şeklinde olduğunu doğrular. */
 describe('<Lineup /> render — formasyon satırları', () => {
@@ -166,5 +169,27 @@ describe('<Lineup /> render — Yedekler (bench)', () => {
   it('bench yoksa bölüm hiç çizilmez', () => {
     const noBench = mapSportmonksLineups({ id: 1, participants: f.participants, lineups: f.lineups });
     expect(renderToStaticMarkup(<Lineup lineups={noBench} />)).not.toContain('Yedekler');
+  });
+});
+
+describe('<Lineup /> render — yedek tahmini kadro (predictedLineups)', () => {
+  const data = mapSportmonksPredictedLineups(predictedSample as unknown as SportmonksFixtureWithPredicted);
+  const pre = { id: 19746580, status: 'NOT STARTED', date: '2026-10-23', scheduled: '20:00' } as unknown as Match;
+
+  it('"Muhtemel 11" + tahmini notu, saha 3-4-3 / 4-3-3, yedek bölümü yok', () => {
+    const html = renderToStaticMarkup(<Lineup lineups={data} match={pre} />);
+    expect(html).toContain('Muhtemel 11');
+    expect(html).toContain('Tahmini — resmî kadro açıklanınca güncellenir');
+    expect(html).toContain('3-4-3');
+    expect(html).toContain('4-3-3');
+    expect((html.match(/class="[^"]*formationPlayer/g) ?? []).length).toBe(22);
+    expect(html).not.toContain('data-testid="bench-bottom"');
+  });
+
+  it('kadro hiç yoksa (tahmin de yok) bölüm değil "henüz açıklanmadı" metni', () => {
+    const html = renderToStaticMarkup(<Lineup lineups={null} match={pre} />);
+    expect(html).not.toContain('Muhtemel 11');
+    expect(html).toContain('Kadrolar henüz açıklanmadı.');
+    expect(html).toContain('yaklaşık 1 saat önce açıklanır');
   });
 });

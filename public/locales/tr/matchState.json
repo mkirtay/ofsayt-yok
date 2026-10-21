@@ -48,7 +48,8 @@
   "lineup": {
     "starting": "İlk 11",
     "probable": "Muhtemel 11",
-    "probableNote": "Resmî ilk 11'ler maçtan yaklaşık 1 saat önce açıklanır.",
+    "probableNote": "Tahmini — resmî kadro açıklanınca güncellenir (genelde maçtan yaklaşık 1 saat önce).",
+    "announceNote": "Resmî ilk 11'ler maçtan yaklaşık 1 saat önce açıklanır.",
     "bench": "Yedekler",
     "benchCount": "Yedekler ({{count}})",
     "notAnnounced": "Kadrolar henüz açıklanmadı.",
