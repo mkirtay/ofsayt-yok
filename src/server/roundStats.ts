@@ -68,7 +68,7 @@ function summaryKey(kind: StatUnitKind, id: number): string {
   return `${cacheKeyPrefix()}round-stats:v1:${kind}:${id}`;
 }
 
-async function seasonBelongsToLeague(leagueId: number, seasonId: number): Promise<boolean> {
+export async function seasonBelongsToLeague(leagueId: number, seasonId: number): Promise<boolean> {
   const envelope = await sportmonksClientRequest<{ id: number; seasons?: { id: number }[] }>('football', `/leagues/${leagueId}`, {
     include: 'seasons',
   });

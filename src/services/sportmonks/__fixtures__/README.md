@@ -113,3 +113,7 @@ turda eklenen 4 yeni gerçek type_id de aynı maçtan geliyor: `EVENT_TYPES[10]`
   (2019/20) yalnız UEFA satırlarıyla geliyor — yerel lig sezonları plan dışı.
 - `momentumSuperLig.json` — 2026-10-21 gerçek istek: `fixtures/19746587?select=state_id,starting_at&include=trends:participant_id,type_id,minute,value,period_id;participants:id;periods:type_id,sort_order,counts_from,period_length,minutes,ended;metadata&filters=trendTypes:44,42,34;metadataTypes:161,162`
   (Gençlerbirliği 0–1 Galatasaray, SL; `subscription`/`rate_limit` çıkarıldı). Momentum grafiği (`momentum.ts`, forma renkleri `momentumColors.ts`).
+- `seasonStatistics{SuperLig,Ucl,TurkishCup}.json` — 2026-10-21 gerçek istek: `seasons/{28203|28155|28283}?include=statistics.participant`
+  (SL / Şampiyonlar Ligi / Türkiye Kupası 2026/27, süren sezonlar). KIRPILMIŞ: sezon alanları + her satırda id/model_id/type_id/
+  relation_id/value; `participant` (çok biçimli: takım ya da oyuncu) yalnız id/name/display_name/common_name/image_path.
+  Sezon Özeti (`seasonStats.ts`). TK'da sarı kart 0 (eksik veri), ŞL'de kaleci "gol yememe" 2/2 (bozuk) — dönüştürücü gizler.

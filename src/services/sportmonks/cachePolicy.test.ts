@@ -196,6 +196,21 @@ describe('Haftanın Takımı', () => {
   });
 });
 
+describe('Sezon Özeti (seasons/{id}?include=statistics.participant)', () => {
+  const q = { include: 'statistics.participant' };
+  const MONTH30 = 30 * 86400;
+  it('süren sezon 6 sa, biten sezon 30 gün, "sonuç yok" 1 sa; include\'suz sezon 24 sa', () => {
+    const live = { id: 28203, finished: false, ending_at: '2027-05-23', statistics: [] };
+    const done = { id: 25580, finished: true, ending_at: '2026-05-30', statistics: [] };
+    const endedLongAgo = { id: 1, finished: false, ending_at: '2020-05-30', statistics: [] };
+    expect(sportmonksCacheTtl('football/seasons/28203', live, NOW, q)).toEqual({ fresh: 6 * 3600, stale: 7 * 86400 });
+    expect(sportmonksCacheTtl('football/seasons/25580', done, NOW, q)).toEqual({ fresh: MONTH30, stale: MONTH30 });
+    expect(sportmonksCacheTtl('football/seasons/1', endedLongAgo, NOW, q)).toEqual({ fresh: MONTH30, stale: MONTH30 });
+    expect(sportmonksCacheTtl('football/seasons/9', undefined, NOW, q)).toEqual({ fresh: 3600, stale: 3600 });
+    expect(sportmonksCacheTtl('football/seasons/28203', { id: 28203 }, NOW).fresh).toBe(86400);
+  });
+});
+
 describe('hakem / teknik direktör sayfaları', () => {
   it('profil 7 gün, istatistik 12 sa, görev aldığı maçlar 1 sa, sezon listeleri 24 sa', () => {
     expect(sportmonksCacheTtl('football/referees/62331', { id: 62331, country: {} }, NOW).fresh).toBe(7 * 86400);

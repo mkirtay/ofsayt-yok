@@ -67,7 +67,7 @@ const obj = (v: unknown): Record<string, unknown> | null => (v && typeof v === '
 const round1 = (v: number) => Math.round(v * 10) / 10;
 const round2 = (v: number) => Math.round(v * 100) / 100;
 
-function entity(row: RawRoundStatistic | undefined, idKey: string, nameKey: string): StatEntity | null {
+export function statEntity(row: RawRoundStatistic | undefined, idKey: string, nameKey: string): StatEntity | null {
   if (!row) return null;
   const v = obj(row.value) ?? {};
   const id = num(v[idKey]) ?? num(row.relation_id) ?? num(row.participant?.id);
@@ -78,7 +78,7 @@ function entity(row: RawRoundStatistic | undefined, idKey: string, nameKey: stri
 }
 
 /** Sportmonks bazen "placeholder" görsel verir; ayırt etmek için yalnız yol sonu kontrol edilir. */
-function cleanImage(image: string | null): string | null {
+export function cleanStatImage(image: string | null): string | null {
   return image && !/placeholder/i.test(image) ? image : null;
 }
 
@@ -136,7 +136,8 @@ export function summarizeRoundStatistics(rows: readonly RawRoundStatistic[] | nu
   const cardsV = obj(by.get(ROUND_STAT_TYPES.CARDS)?.value);
   const yellow = num(cardsV?.yellowcards);
   const red = (num(cardsV?.redcards) ?? 0) + (num(cardsV?.yellowredcards) ?? 0);
-  const cards = yellow != null ? { yellow, red, perMatch: round1((yellow + red) / played) } : null;
+  // 3+ maçta hiç sarı kart yok = eksik veri (Türkiye Kupası 2026/27 sezon özeti: 51 maç, 0 sarı, 3 kırmızı) → gizli.
+  const cards = yellow != null && !(yellow === 0 && played >= 3) ? { yellow, red, perMatch: round1((yellow + red) / played) } : null;
 
   const winV = obj(by.get(ROUND_STAT_TYPES.WIN_PERCENTAGE)?.value);
   const homePct = num(winV?.home);
@@ -155,23 +156,23 @@ export function summarizeRoundStatistics(rows: readonly RawRoundStatistic[] | nu
         .sort((a, b) => Number(a.bin.split('-')[0]) - Number(b.bin.split('-')[0]))
     : null;
 
-  const withImage = <T extends StatEntity>(e: T | null): T | null => (e ? { ...e, image: cleanImage(e.image) } : null);
+  const withImage = <T extends StatEntity>(e: T | null): T | null => (e ? { ...e, image: cleanStatImage(e.image) } : null);
 
   const playerRow = by.get(ROUND_STAT_TYPES.HIGHEST_RATED_PLAYER);
   const playerRating = num(obj(playerRow?.value)?.rating);
-  const player = entity(playerRow, 'player_id', 'player_name');
+  const player = statEntity(playerRow, 'player_id', 'player_name');
   const teamRow = by.get(ROUND_STAT_TYPES.HIGHEST_RATED_TEAM);
   const teamRating = num(obj(teamRow?.value)?.rating);
-  const team = entity(teamRow, 'team_id', 'team_name');
+  const team = statEntity(teamRow, 'team_id', 'team_name');
   const scoredRow = by.get(ROUND_STAT_TYPES.PARTICIPANT_MOST_SCORED);
   const scoredCount = num(obj(scoredRow?.value)?.count);
-  const scored = entity(scoredRow, 'participant_id', 'participant_name');
+  const scored = statEntity(scoredRow, 'participant_id', 'participant_name');
   const scorerRow = by.get(ROUND_STAT_TYPES.GOAL_TOPSCORER);
   const scorerCount = num(obj(scorerRow?.value)?.count);
-  const scorer = entity(scorerRow, 'player_id', 'player_name');
+  const scorer = statEntity(scorerRow, 'player_id', 'player_name');
   const assistRow = by.get(ROUND_STAT_TYPES.ASSIST_TOPSCORER);
   const assistCount = num(obj(assistRow?.value)?.count);
-  const assister = entity(assistRow, 'player_id', 'player_name');
+  const assister = statEntity(assistRow, 'player_id', 'player_name');
 
   return {
     played,
