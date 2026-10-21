@@ -500,5 +500,21 @@
   "redCards": {
     "one": "Red card",
     "many": "{{count}} red cards"
+  },
+  "venueCard": {
+    "title": "Stadium",
+    "city": "City",
+    "capacity": "Capacity",
+    "surface": "Surface",
+    "address": "Address",
+    "surfaceType": {
+      "grass": "Natural grass",
+      "artificial": "Artificial turf",
+      "hybrid": "Hybrid grass"
+    },
+    "openMap": "Open in Maps",
+    "openMapLabel": "Open {{name}} in Google Maps (opens in a new tab)",
+    "photoAlt": "Photo of {{name}}",
+    "photoAltFallback": "Stadium photo"
   }
 }

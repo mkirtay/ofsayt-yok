@@ -14,6 +14,7 @@ import MatchTabs, { type MatchTabItem } from '@/components/MatchTabs';
 import MatchTrivia from '@/components/MatchTrivia';
 import MatchAnalysis from '@/components/MatchAnalysis';
 import MatchForumTab from '@/components/MatchForumTab';
+import MatchVenueCard from '@/components/MatchVenueCard';
 import type { MatchDetailState } from '@/hooks/useMatchDetail';
 import { useMatchAnalysis } from '@/hooks/useMatchAnalysis';
 import { matchDisplayState } from '@/utils/matchDisplayState';
@@ -56,7 +57,7 @@ export { tabFromSearch } from './tabDeepLink';
 
 /**
  * Maç detayının ANA içeriği — sayfa ve split-view paneli AYNI IA: kart + beş eşit sekme
- * (Genel Bakış | Anlatım | Forum | AI Analiz | Trivia). "Genel Bakış" = Maç İstatistikleri → Maç Olayları → İlk 11.
+ * (Genel Bakış | Anlatım | Forum | AI Analiz | Trivia). "Genel Bakış" = Maç İstatistikleri → Maç Olayları → İlk 11 → Stadyum.
  * `/matches/[slug]` sayfası ile split-view paneli aynı bileşeni kullanır; yükleme
  * durumlarında alt bileşenler kendi iskeletlerini (skeleton) gösterir.
  */
@@ -129,6 +130,8 @@ export default function MatchDetailContent({ detail, requestedMatchId, variant =
               error={detail.lineupsError}
               onRetry={detail.retryLineups}
             />
+            {/* İlk 11'in altında: ekranın altında kalır, fotoğraf tembel (ilk görünüme / LCP'ye girmez). */}
+            <MatchVenueCard venue={match?.venue_info} />
           </>
         ),
       },

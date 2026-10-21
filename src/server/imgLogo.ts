@@ -1,5 +1,5 @@
 /**
- * `GET /api/img/logo?src=<sportmonks yolu>&w=<32|48|64|96|128>` — Sportmonks logosunun küçük webp sürümü.
+ * `GET /api/img/logo?src=<sportmonks yolu>&w=<32|48|64|96|128; stadyum fotoğrafı 320|640>` — Sportmonks logosunun küçük webp sürümü.
  *
  * - Açık proxy DEĞİL: yalnız `cdn.sportmonks.com/images/<güvenli yol>` (bkz. utils/logoUrl.ts), genişlik beyaz listede.
  * - Başarı: 1 yıl `immutable` (aynı yol + genişlik hep aynı çıktı) → fonksiyon yalnız CDN ıskasında çalışır.
@@ -12,7 +12,7 @@
  *   next.config.ts outputFileTracingIncludes) modül düşüp her istek 500 olmaz, 302 yedeği döner.
  */
 import type Sharp from 'sharp';
-import { LOGO_WIDTHS, SPORTMONKS_IMAGE_ORIGIN, isValidLogoPath, type LogoWidth } from '@/utils/logoUrl';
+import { SPORTMONKS_IMAGE_ORIGIN, isAllowedImageWidth, isValidLogoPath, type ImageWidth } from '@/utils/logoUrl';
 
 /**
  * libvips işlem kilidi SÜREÇ GENELİDİR (bu modülü yükleyen fonksiyonun tüm sharp çağrıları): önce tüm yükleyiciler
@@ -58,17 +58,18 @@ export type LogoResult =
   | { status: 302; location: string; headers: Record<string, string> }
   | { status: 400 | 404; headers: Record<string, string> };
 
-export function parseLogoQuery(src: unknown, w: unknown): { path: string; width: LogoWidth } | null {
+export function parseLogoQuery(src: unknown, w: unknown): { path: string; width: ImageWidth } | null {
   if (typeof src !== 'string' || typeof w !== 'string') return null;
   const width = Number(w);
-  if (!(LOGO_WIDTHS as readonly number[]).includes(width)) return null;
   if (!isValidLogoPath(src)) return null;
-  return { path: src, width: width as LogoWidth };
+  // Logo genişlikleri her yolda; 320 / 640 yalnız stadyum fotoğrafında (bkz. utils/logoUrl.ts VENUE_IMAGE_WIDTHS).
+  if (!isAllowedImageWidth(src, width)) return null;
+  return { path: src, width };
 }
 
 export async function renderLogo(
   path: string,
-  width: LogoWidth,
+  width: ImageWidth,
   fetchImpl: typeof fetch = fetch,
 ): Promise<LogoResult> {
   const original = `${SPORTMONKS_IMAGE_ORIGIN}${path}`;

@@ -1,5 +1,5 @@
 /**
- * GET /api/img/logo?src=<sportmonks yolu>&w=<32|48|64|96|128> — bkz. server/imgLogo.ts.
+ * GET /api/img/logo?src=<sportmonks yolu>&w=<32|48|64|96|128; stadyum 320|640> — bkz. server/imgLogo.ts.
  * CDN'de 1 yıl immutable; fonksiyon yalnız ıskada (yol × genişlik başına bir kez, bölge başına) çalışır.
  */
 import type { NextApiRequest, NextApiResponse } from 'next';

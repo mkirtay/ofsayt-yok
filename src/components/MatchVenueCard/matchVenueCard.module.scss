@@ -1,0 +1,147 @@
+@use '../../styles/variables' as *;
+
+// Genel Bakış kartlarıyla (MatchStats / EventTimeline) aynı yüzey.
+.card {
+  background-color: $color-surface;
+  border-radius: $radius-md;
+  padding: $spacing-3 $spacing-4;
+  box-shadow: $shadow-surface;
+  border: 1px solid $color-border;
+  margin-top: $spacing-4;
+  // Yerleşim kartın KENDİ genişliğine göre (sayfa ve split-view paneli aynı bileşen).
+  container-type: inline-size;
+}
+
+.title {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  margin: 0 0 $spacing-3;
+  padding-bottom: $spacing-2;
+  border-bottom: 1px solid $color-border;
+  font-size: 15px;
+  font-weight: 600;
+  color: $color-text;
+}
+
+.titleIcon {
+  flex-shrink: 0;
+  color: $color-text-secondary;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+}
+
+// Masaüstü: fotoğraf solda (sabit genişlik), bilgiler sağda; dar ekranda / panelde alt alta.
+.withPhoto {
+  @container (min-width: 560px) {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+}
+
+// Sabit 16:9 yer: görsel yüklenmeden de aynı yükseklik (CLS 0); yüklenemezse ikon kalır.
+.photo {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: $radius-sm;
+  overflow: hidden;
+  background: $color-muted;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  @container (min-width: 560px) {
+    width: 320px;
+  }
+
+  img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.photoFallbackIcon {
+  width: 40px;
+  height: 40px;
+  color: $color-text-secondary;
+}
+
+.details {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+}
+
+.name {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: $color-text;
+  overflow-wrap: anywhere;
+}
+
+.rows {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(76px, auto) 1fr;
+  gap: $spacing-3;
+  font-size: 14px;
+  line-height: 1.35;
+
+  dt {
+    color: $color-text-secondary;
+  }
+
+  dd {
+    margin: 0;
+    color: $color-text;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+}
+
+// Dokunma hedefi ≥ 24 px (WCAG 2.5.8); metin bağlantısı, düğme görünümünde değil.
+.mapLink {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 32px;
+  padding: 0 $spacing-1;
+  margin-left: -$spacing-1;
+  font-size: 14px;
+  font-weight: 700;
+  color: $color-primary-text;
+  text-decoration: none;
+  border-radius: $radius-sm;
+
+  &:hover {
+    text-decoration: underline;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+    outline-offset: 2px;
+  }
+}
+
+.external {
+  font-size: 12px;
+}

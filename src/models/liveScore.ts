@@ -135,6 +135,24 @@ export interface Match {
   hashtag?: string;
   /** Yalnız maç detayı: orta hakemin Sportmonks id'si (hakem istatistik kartı). */
   referee_id?: number;
+  /** Yalnız maç sayfası: stadyum ayrıntıları (Genel Bakış "Stadyum" kartı); bkz. sportmonks/venueFormatter.ts. */
+  venue_info?: MatchVenue;
+}
+
+export type MatchVenueSurface = 'grass' | 'artificial' | 'hybrid';
+
+/** Stadyum kartı — yalnız dolu alanlar; hiçbiri yoksa `Match.venue_info` yok. */
+export interface MatchVenue {
+  name?: string;
+  city?: string;
+  capacity?: number;
+  surface?: MatchVenueSurface;
+  address?: string;
+  /** Enlem / boylam (ikisi birlikte; "Haritada aç"). */
+  lat?: number;
+  lng?: number;
+  /** Sportmonks CDN fotoğrafı (orijinal adres; gösterimde küçültülür). */
+  image?: string;
 }
 
 export type MatchWeatherCondition = 'clear' | 'partlyCloudy' | 'cloudy' | 'rain' | 'storm' | 'snow' | 'fog';

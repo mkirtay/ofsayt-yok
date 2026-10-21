@@ -24,6 +24,7 @@ vi.mock('@/components/MatchAnalysis', () => ({ default: () => <div data-testid="
 vi.mock('@/hooks/useMatchAnalysis', () => ({ useMatchAnalysis: () => ({}) }));
 vi.mock('@/components/MatchCommentary', () => ({ default: () => <div data-testid="commentary-content" /> }));
 vi.mock('@/components/MatchForumTab', () => ({ default: () => <div data-testid="forum-content" /> }));
+vi.mock('@/components/MatchVenueCard', () => ({ default: () => null }));
 
 import MatchDetailContent, { DEFAULT_MATCH_TAB, MATCH_TAB_KEYS } from './index';
 import type { MatchDetailState } from '@/hooks/useMatchDetail';
