@@ -67,6 +67,8 @@ const nextConfig: NextConfig = {
   outputFileTracingIncludes: {
     '/api/img/logo': SHARP_LIBVIPS_TRACE,
     '/api/og/**': SHARP_LIBVIPS_TRACE,
+    // X botu maç sonu tweet'i OG kartını (next/og → sharp) sunucuda çizer.
+    '/api/admin/x/**': SHARP_LIBVIPS_TRACE,
   },
   async headers() {
     return [
