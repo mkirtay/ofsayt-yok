@@ -80,6 +80,7 @@ describe('runXTick', () => {
     expect(s3.sent).toBe(1);
     expect(post).toHaveBeenCalledTimes(1);
     expect(post.mock.calls[0][0]).toContain("12' Yunus Akgün (Galatasaray)");
+    expect(post.mock.calls[0][0]).not.toContain('getscor3.com'); // varsayılan: gol tweet'inde bağlantı yok
     await runXTick(d);
     expect(post).toHaveBeenCalledTimes(1);
   });
@@ -139,6 +140,7 @@ describe('runXTick', () => {
     expect(s.sent).toBe(1);
     expect(post).toHaveBeenCalledWith(expect.stringContaining('Maç sonu: LOSC Lille 2-4 Galatasaray'), img);
     expect(post.mock.calls[0][0]).toContain('Şampiyonlar Ligi');
+    expect(post.mock.calls[0][0]).toContain('https://www.getscor3.com/matches/1'); // varsayılan: maç sonunda bağlantı
     expect(post.mock.calls[0][0]).not.toContain('Champions League');
     await runXTick(d);
     expect(post).toHaveBeenCalledTimes(1);

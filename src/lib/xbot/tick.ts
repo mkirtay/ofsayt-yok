@@ -10,6 +10,7 @@
  */
 import {
   getXBotLeagueIds,
+  getXBotLinkMode,
   getXBotMode,
   X_BOT_FINAL_MAX_TRIES,
   X_BOT_MAX_TWEETS_PER_TICK,
@@ -30,7 +31,7 @@ import { getFixturesByDate } from '@/services/liveScoreService';
 import type { SportmonksFixture } from '@/services/sportmonks/types';
 import { hasActiveMatch } from '@/utils/matchActivity';
 import { createXPoster, type XPoster } from './xClient';
-import { renderFinalTweet, renderGoalTweet, type FinalFacts, type FinalGoal } from './templates';
+import { matchLink, renderFinalTweet, renderGoalTweet, type FinalFacts, type FinalGoal } from './templates';
 
 export type XTickSummary = {
   mode: XBotMode;
@@ -131,6 +132,7 @@ export async function runXTick(deps: XTickDeps = defaultXTickDeps): Promise<XTic
   const now = deps.now?.() ?? new Date();
   const p = mode === 'live' ? 'xbot:' : 'xbot:dry:';
   const leagueIds = getXBotLeagueIds();
+  const linkMode = getXBotLinkMode();
 
   try {
     if (await deps.isRateLimited(now)) return { ...summary, degraded: 'rate-limited' };
@@ -195,7 +197,7 @@ export async function runXTick(deps: XTickDeps = defaultXTickDeps): Promise<XTic
         const draft = buildGoalDraft({ fixture, eventId: goal.id, scorers: null, now });
         if (!draft.ok) continue;
         try {
-          await send('goal', renderGoalTweet(draft.facts, fixture.id + goal.minute), null);
+          await send('goal', renderGoalTweet(draft.facts, fixture.id + goal.minute, linkMode === 'all' ? matchLink(fixture.id) : undefined), null);
           budget -= 1;
         } catch (e) {
           // Atılamadı: işareti bırak, 3 denemeye kadar yeniden dene (sonra vazgeç; sonsuz maliyet döngüsü olmasın).
@@ -228,7 +230,7 @@ export async function runXTick(deps: XTickDeps = defaultXTickDeps): Promise<XTic
       const facts = finalFactsOf(resolved);
       if (!facts) continue;
       try {
-        await send('final', renderFinalTweet(facts), await deps.renderImage(resolved.match));
+        await send('final', renderFinalTweet(facts, linkMode === 'none' ? undefined : matchLink(resolved.match.id)), await deps.renderImage(resolved.match));
         budget -= 1;
       } catch (e) {
         captureError('xbot:post-final', e);

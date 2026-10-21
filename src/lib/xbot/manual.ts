@@ -8,7 +8,8 @@ import { resolveLiveMatch } from '@/lib/resolveLiveMatch';
 import { sportmonksClientRequest } from '@/services/sportmonksRuntimeClient';
 import type { SportmonksFixture } from '@/services/sportmonks/types';
 import { defaultXTickDeps, finalFactsOf } from './tick';
-import { renderFinalTweet, renderGoalTweet } from './templates';
+import { getXBotLinkMode } from '@/config/xBot';
+import { matchLink, renderFinalTweet, renderGoalTweet } from './templates';
 
 export type ManualTweet = { text: string; image: Buffer | null };
 
@@ -18,7 +19,7 @@ export async function buildManualTweet(kind: 'goal' | 'final', fixtureId: number
     if (!resolved) throw new Error('Maç bulunamadı.');
     const facts = finalFactsOf(resolved);
     if (!facts) throw new Error('Maç skoru yok (bitmemiş olabilir).');
-    return { text: renderFinalTweet(facts), image: await defaultXTickDeps.renderImage(resolved.match) };
+    return { text: renderFinalTweet(facts, getXBotLinkMode() === 'none' ? undefined : matchLink(resolved.match.id)), image: await defaultXTickDeps.renderImage(resolved.match) };
   }
   const { data: fixture } = await sportmonksClientRequest<SportmonksFixture>('football', `/fixtures/${fixtureId}`, {
     include: 'participants;league;events',
@@ -29,5 +30,5 @@ export async function buildManualTweet(kind: 'goal' | 'final', fixtureId: number
   if (!goal) throw new Error(minute == null ? 'Maçta gol yok.' : `${minute}. dakikada gol yok.`);
   const draft = buildGoalDraft({ fixture, eventId: goal.id, scorers: null });
   if (!draft.ok) throw new Error(`Gol verisi eksik: ${draft.reason}`);
-  return { text: renderGoalTweet(draft.facts, fixture.id + goal.minute), image: null };
+  return { text: renderGoalTweet(draft.facts, fixture.id + goal.minute, getXBotLinkMode() === 'all' ? matchLink(fixture.id) : undefined), image: null };
 }

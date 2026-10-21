@@ -1,16 +1,25 @@
 /**
  * X tweet metinleri — DÜZ template-string (LLM yok): her sayı / isim veriden gelir, eksikse ilgili satır yazılmaz.
- * Bahis dili yok (src/utils/gamblingTerms). Ana tweet'te bağlantı YOK: X, bağlantılı gönderiyi çok daha pahalı faturalıyor.
+ * Bahis dili yok (src/utils/gamblingTerms). Bağlantı yalnız verilirse eklenir (X_BOT_LINKS; bağlantılı gönderi çok daha pahalı).
  */
 import type { GoalFacts } from '@/lib/gundem/bot/goalTemplates';
 import { formatMinute } from '@/lib/gundem/bot/goalTemplates';
 
 export const TWEET_MAX = 270; // 280 sınırının altında pay (emoji 2 sayılır)
 
-/** X sayacı: emoji ve BMP dışı karakterler 2. */
+/** Maç bağlantısı (kimlikle; sayfa kendi slug adresine yönlendirir). */
+export const matchLink = (matchId: number): string => `https://www.getscor3.com/matches/${matchId}`;
+
+/** X sayacı: emoji ve BMP dışı karakterler 2; her bağlantı (t.co) 23. */
 export function tweetLength(text: string): number {
   let n = 0;
-  for (const ch of text) n += (ch.codePointAt(0) ?? 0) > 0xffff ? 2 : 1;
+  for (const part of text.split(/(https?:\/\/\S+)/)) {
+    if (/^https?:\/\//.test(part)) {
+      n += 23;
+      continue;
+    }
+    for (const ch of part) n += (ch.codePointAt(0) ?? 0) > 0xffff ? 2 : 1;
+  }
   return n;
 }
 
@@ -21,7 +30,7 @@ function pick<T>(items: readonly T[], seed: number): T {
   return items[Math.abs(seed) % items.length];
 }
 
-export function renderGoalTweet(f: GoalFacts, seed: number): string {
+export function renderGoalTweet(f: GoalFacts, seed: number, link?: string): string {
   const min = formatMinute(f.minute, f.extraMinute);
   const lines: string[] = [];
   if (f.kind === 'own-goal') lines.push(`⚽ Kendi kalesine gol! ${min} ${f.playerName}`);
@@ -29,6 +38,7 @@ export function renderGoalTweet(f: GoalFacts, seed: number): string {
   else lines.push(`⚽ ${pick(GOAL_OPENERS, seed)} ${min} ${f.playerName}${f.teamName ? ` (${f.teamName})` : ''}`);
   if (f.score) lines.push(`${f.homeName} ${f.score.home}-${f.score.away} ${f.awayName}`);
   if (f.leagueName) lines.push(f.leagueName);
+  if (link) lines.push(link);
   lines.push('#Scor3');
   return lines.join('\n');
 }
@@ -58,7 +68,7 @@ function goalLine(goals: FinalGoal[], side: 'home' | 'away', max: number): strin
   return [...rows.slice(0, max - 1), `+${rest} gol daha`];
 }
 
-export function renderFinalTweet(f: FinalFacts): string {
+export function renderFinalTweet(f: FinalFacts, link?: string): string {
   const build = (max: number) => {
     const lines = [`Maç sonu: ${f.homeName} ${f.score[0]}-${f.score[1]} ${f.awayName}`];
     if (f.note) lines.push(f.note);
@@ -68,6 +78,7 @@ export function renderFinalTweet(f: FinalFacts): string {
     if (h.length) lines.push(`⚽ ${f.homeName}: ${h.join(', ')}`);
     if (a.length) lines.push(`⚽ ${f.awayName}: ${a.join(', ')}`);
     if (f.leagueName) lines.push('', f.leagueName);
+    if (link) lines.push('', link);
     lines.push('#Scor3');
     return lines.join('\n');
   };
@@ -75,5 +86,5 @@ export function renderFinalTweet(f: FinalFacts): string {
     const t = build(max);
     if (tweetLength(t) <= TWEET_MAX) return t;
   }
-  return `Maç sonu: ${f.homeName} ${f.score[0]}-${f.score[1]} ${f.awayName}\n#Scor3`;
+  return `Maç sonu: ${f.homeName} ${f.score[0]}-${f.score[1]} ${f.awayName}${link ? `\n${link}` : ''}\n#Scor3`;
 }

@@ -6,13 +6,14 @@
 - `POST /api/admin/x/tick` — dakikada bir harici cron (cron-job.org), `Authorization: Bearer $CRON_SECRET`, adres `https://www.getscor3.com/api/admin/x/tick` (www ile).
 - Veri: Gündem botuyla aynı `livescores/inplay` (paylaşımlı önbellek). Maç sonu: maç inplay'den düşünce `resolveLiveMatch` FINISHED ise; görsel sitenin OG kartı (`renderMatchOgImage`).
 - Güvenlik ağları: gol 2 ardışık tick'te görünürse atılır (VAR iptali elenir) · bota girişte maçta olan goller atılmaz (baseline) · tick başına en çok 3 tweet · Redis `SET NX` ile mükerrer yok · Redis/anahtar yoksa tweet yok.
-- Ana tweet'te bağlantı YOK (X bağlantılı gönderiyi çok daha pahalı faturalıyor).
+- Bağlantı: `X_BOT_LINKS` = `final` (varsayılan, yalnız maç sonu) | `all` | `none`. X bağlantılı gönderiyi çok daha pahalı faturalıyor (doğrulanmadı) ve bağlantılı tweet erişimde geride kalır.
 
 ## Env (Vercel, Production)
 | Değişken | Anlam |
 |---|---|
 | `X_API_KEY`, `X_API_SECRET`, `X_ACCESS_TOKEN`, `X_ACCESS_TOKEN_SECRET` | OAuth 1.0a, uygulama izni **Read and write** |
 | `X_BOT_MODE` | yok / `off` = kapalı · `dry` = üretir, atmaz (yanıtta döner) · `live` = atar |
+| `X_BOT_LINKS` | `final` (varsayılan) · `all` · `none` |
 | `X_BOT_LEAGUE_IDS` | isteğe bağlı, varsayılan `600,2,5` (Süper Lig, Şampiyonlar Ligi, Avrupa Ligi) |
 
 ## Test

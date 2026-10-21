@@ -31,3 +31,15 @@ export const X_BOT_SEEN_TTL_SECONDS = 6 * 3600;
 export const X_BOT_SENT_TTL_SECONDS = 3 * 24 * 3600;
 /** Biten maç bulunamazsa (inplay'den düştü ama sonuç henüz FINISHED değil) bu kadar tick yeniden denenir. */
 export const X_BOT_FINAL_MAX_TRIES = 20;
+
+/**
+ * Tweet'e maç bağlantısı (getscor3.com/matches/<id>) — trafik için. X bağlantılı gönderiyi düz gönderiden ÇOK daha pahalı
+ * faturalıyor (üçüncü taraf kaynaklara göre ~$0,20 / ~$0,015, doğrulanmadı) ve bağlantılı tweet erişimde de geride kalır.
+ * `X_BOT_LINKS`: `final` (varsayılan: yalnız maç sonu), `all` (gol + maç sonu), `none`.
+ */
+export type XBotLinkMode = 'none' | 'final' | 'all';
+
+export function getXBotLinkMode(env: string | undefined = process.env.X_BOT_LINKS): XBotLinkMode {
+  const v = (env ?? '').trim().toLowerCase();
+  return v === 'none' || v === 'all' ? v : 'final';
+}

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { findGamblingTerms } from '@/utils/gamblingTerms';
-import { renderFinalTweet, renderGoalTweet, tweetLength, TWEET_MAX, type FinalFacts } from './templates';
+import { matchLink, renderFinalTweet, renderGoalTweet, tweetLength, TWEET_MAX, type FinalFacts } from './templates';
 import type { GoalFacts } from '@/lib/gundem/bot/goalTemplates';
 
 const goal = (over: Partial<GoalFacts> = {}): GoalFacts => ({
@@ -54,5 +54,16 @@ describe('xbot şablonları', () => {
     const t = renderFinalTweet({ homeName: 'Bayern München', awayName: 'Borussia Dortmund', score: [7, 7], leagueName: 'Bundesliga', note: 'Uzatmalar sonucu', goals });
     expect(tweetLength(t)).toBeLessThanOrEqual(TWEET_MAX);
     expect(t).toContain('Maç sonu: Bayern München 7-7 Borussia Dortmund');
+  });
+
+  it('bağlantı: verilirse eklenir, X sayacında 23 sayılır, 270 sınırı bağlantıyla da tutar', () => {
+    const link = matchLink(19873251);
+    expect(link).toBe('https://www.getscor3.com/matches/19873251');
+    expect(renderGoalTweet(goal(), 1, link)).toContain(link);
+    expect(tweetLength(`a ${link}`)).toBe(2 + 23);
+    const goals = Array.from({ length: 14 }, (_, i) => ({ minute: i + 1, player: `Uzun İsimli Futbolcu ${i}`, side: (i % 2 ? 'home' : 'away') as 'home' | 'away' }));
+    const t = renderFinalTweet({ homeName: 'Bayern München', awayName: 'Borussia Dortmund', score: [7, 7], leagueName: 'Bundesliga', note: 'Uzatmalar sonucu', goals }, link);
+    expect(t).toContain(link);
+    expect(tweetLength(t)).toBeLessThanOrEqual(TWEET_MAX);
   });
 });
