@@ -1,0 +1,36 @@
+{
+  "regionLabel": "Knockout bracket",
+  "roundsLabel": "Rounds",
+  "treeChip": "Bracket",
+  "slot": {
+    "ko_po": "Play-offs",
+    "r16": "Round of 16",
+    "qf": "Quarter-finals",
+    "sf": "Semi-finals",
+    "final": "Final"
+  },
+  "qualifyingRound": "Qualifying round {{n}}",
+  "qualifyingPlayoff": "Qualifying play-offs",
+  "earlyRound": "Round {{n}}",
+  "status": {
+    "done": "Completed",
+    "current": "In progress",
+    "upcoming": "Next",
+    "tbd": "Awaiting draw"
+  },
+  "tbd": "Awaiting draw",
+  "tbdRound": "The draw for this round has not been made yet.",
+  "leg": "Leg {{n}}",
+  "live": "Live",
+  "decided": {
+    "et": "After extra time",
+    "pen": "On penalties",
+    "awarded": "Awarded"
+  },
+  "notPlayed": "Not played",
+  "leagueStageLink": "League phase standings",
+  "groupStageLink": "Group stage standings",
+  "loadError": "Could not load the bracket.",
+  "retry": "Try again",
+  "openMatch": "{{home}} – {{away}} match page"
+}

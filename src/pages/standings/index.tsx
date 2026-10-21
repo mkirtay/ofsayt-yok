@@ -1,6 +1,7 @@
 import { useTranslation } from '@/lib/i18n';
 import '@/lib/i18nNamespaces/standings';
 import { useEffect, useMemo, useState } from 'react';
+import dynamic from 'next/dynamic';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import Container from '@/components/Container';
@@ -10,6 +11,8 @@ import { standingsGroupHeading } from '@/components/MatchCompetitionStandings/gr
 import { StandingsSkeleton } from '@/components/Skeleton';
 import { CardsList, ScorersList, StandingsTable, type StandingsBlock } from '@/components/StandingsView';
 import { HUB_LEAGUE_IDS } from '@/config/hubLeagueGroups';
+import { hasCupBracket } from '@/config/cupBrackets';
+import { useCupBracket } from '@/hooks/useCupBracket';
 import {
   useStandingsCards,
   useStandingsScorers,
@@ -28,7 +31,9 @@ import { siteBaseUrl } from '@/lib/siteUrl';
 const DEFAULT_SELECTION_ID = 6; // Süper Lig (legacy id; bkz. utils/hubLeagueSelection.ts)
 const CARDS_LIMIT = 50;
 const TABS = ['table', 'scorers', 'cards'] as const;
-type Tab = (typeof TABS)[number];
+// Kupa eleme ağacı: yalnız ağacı olan kupalarda ve veri varsa (bkz. config/cupBrackets.ts); içerik tembel parça.
+type Tab = (typeof TABS)[number] | 'bracket';
+const CupBracket = dynamic(() => import('@/components/CupBracket'), { ssr: false, loading: () => <StandingsSkeleton rows={12} /> });
 const EMPTY_MAP: ReadonlyMap<number, number> = new Map();
 const EMPTY_LOGOS: ReadonlyMap<number, string> = new Map();
 
@@ -74,8 +79,9 @@ export default function Standings() {
     const next = fromUrl ?? stored?.id;
     // eslint-disable-next-line react-hooks/set-state-in-effect -- URL / localStorage → durum (SSR'da okunamaz; hidrasyon farkı olmasın)
     if (next != null) setSelectedId(next);
+    if (router.query.tab === 'bracket') setTab('bracket');
     setReady(true);
-  }, [router.isReady, router.query.league]);
+  }, [router.isReady, router.query.league, router.query.tab]);
 
   const seasonsQuery = useStandingsSeasons(selectedId, ready);
   const tableQuery = useStandingsTable(selectedId, seasonId, ready);
@@ -83,6 +89,12 @@ export default function Standings() {
   const dataReady = ready && tableQuery.isFetched;
   const scorersQuery = useStandingsScorers(selectedId, effectiveSeasonId, dataReady && tab === 'scorers');
   const cardsQuery = useStandingsCards(selectedId, effectiveSeasonId, dataReady && tab === 'cards');
+  const bracketLeagueId = sportmonksLeagueIdOfHubSelection(selectedId);
+  const isCup = hasCupBracket(bracketLeagueId);
+  const bracketQuery = useCupBracket(isCup ? bracketLeagueId : null, effectiveSeasonId, isCup && (dataReady || tab === 'bracket'));
+  // Veri yoksa (null) sekme gizli; hata ise açık kalır ("yüklenemedi"), hata ≠ veri yok.
+  const showBracket = isCup && (bracketQuery.data != null || bracketQuery.isError || (tab === 'bracket' && bracketQuery.isLoading));
+  const tabs: readonly Tab[] = showBracket ? [...TABS, 'bracket'] : TABS;
 
   const sportmonksLeagueId = sportmonksLeagueIdOfHubSelection(selectedId);
   const leagueName = leagueNameById(sportmonksLeagueId, tl('fallback'), tl);
@@ -102,26 +114,35 @@ export default function Standings() {
     [cardsQuery.data],
   );
 
-  const active = { table: tableQuery, scorers: scorersQuery, cards: cardsQuery }[tab];
-  const loading = !ready || (tab === 'table' ? tableQuery.isLoading : !dataReady || active.isLoading);
-  const isEmpty = tab === 'table' ? blocks.length === 0 : tab === 'scorers' ? scorers.length === 0 : cards.length === 0;
+  const active = { table: tableQuery, scorers: scorersQuery, cards: cardsQuery, bracket: bracketQuery }[tab];
+  const loading =
+    !ready || (tab === 'table' ? tableQuery.isLoading : tab === 'bracket' ? bracketQuery.isLoading : !dataReady || active.isLoading);
+  const isEmpty =
+    tab === 'table'
+      ? blocks.length === 0
+      : tab === 'scorers'
+        ? scorers.length === 0
+        : tab === 'cards'
+          ? cards.length === 0
+          : bracketQuery.data == null;
 
   const pickLeague = (id: number) => {
     setSelectedId(id);
     setSeasonId(null);
     setPickerOpen(false);
+    if (tab === 'bracket' && !hasCupBracket(sportmonksLeagueIdOfHubSelection(id))) setTab('table');
   };
 
   const onTabKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
     if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
     e.preventDefault();
-    const step = e.key === 'ArrowRight' ? 1 : TABS.length - 1;
-    const next = TABS[(TABS.indexOf(tab) + step) % TABS.length]!;
+    const step = e.key === 'ArrowRight' ? 1 : tabs.length - 1;
+    const next = tabs[(tabs.indexOf(tab) + step) % tabs.length]!;
     setTab(next);
     document.getElementById(`standings-tab-${next}`)?.focus();
   };
 
-  const tabLabel = { table: t('tabStandings'), scorers: t('tabScorers'), cards: t('tabCards') } as const;
+  const tabLabel = { table: t('tabStandings'), scorers: t('tabScorers'), cards: t('tabCards'), bracket: t('tabBracket') } as const;
   const origin = siteBaseUrl();
 
   return (
@@ -162,7 +183,7 @@ export default function Standings() {
         {pickerOpen ? null : (
           <>
             <div className={styles.tabs} role="tablist" aria-label={leagueName}>
-              {TABS.map((id) => (
+              {tabs.map((id) => (
                 <button
                   key={id}
                   id={`standings-tab-${id}`}
@@ -191,7 +212,19 @@ export default function Standings() {
                   </button>
                 </div>
               ) : isEmpty ? (
-                <div className={styles.message}>{t('noData')}</div>
+                <div className={styles.message}>
+                  {t('noData')}
+                  {tab === 'table' && bracketQuery.data ? (
+                    <>
+                      {' '}
+                      <button type="button" onClick={() => setTab('bracket')}>
+                        {t('tabBracket')} →
+                      </button>
+                    </>
+                  ) : null}
+                </div>
+              ) : tab === 'bracket' ? (
+                <CupBracket bracket={bracketQuery.data!} onShowStandings={blocks.length ? () => setTab('table') : undefined} />
               ) : tab === 'table' ? (
                 <StandingsTable blocks={blocks} competitionId={tableQuery.data?.competition?.id} />
               ) : tab === 'scorers' ? (

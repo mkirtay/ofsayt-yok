@@ -11,6 +11,7 @@
  *   Kupası'nda `brackets` edges'te var → verilirse kullanılır, yoksa sonraki turda takım eşlemesiyle türetilir.
  */
 import { slotOfStageName, type BracketSlotTemplate } from '@/config/cupBrackets';
+import { isLegFinished, isLegStarted, STATE_AET, STATE_AWARDED, STATE_PEN, STATE_VOID } from './legState';
 import type { BracketSlot, CupBracket, CupLeg, CupRound, CupRoundStatus, CupTeam, CupTie } from './types';
 
 export type RawParticipant = {
@@ -50,16 +51,6 @@ export const STAGE_TYPE_KNOCKOUT = 224;
 export const STAGE_TYPE_QUALIFYING = 225;
 const SCORE_CURRENT = 1525;
 const SCORE_PENALTIES = 5;
-const STATE_NS = new Set([1, 10, 13, 16, 26]);
-const STATE_LIVE = new Set([2, 3, 4, 6, 9, 11, 18, 19, 21, 22, 23, 25]);
-const STATE_AET = 7;
-const STATE_PEN = 8;
-const STATE_AWARDED = new Set([14, 17]);
-/** İptal / silinmiş: oynanmayacak, sonuç da yok. */
-const STATE_VOID = new Set([12, 15, 20]);
-
-export const isLegLive = (stateId: number) => STATE_LIVE.has(stateId);
-export const isLegFinished = (stateId: number) => !STATE_NS.has(stateId) && !STATE_LIVE.has(stateId) && !STATE_VOID.has(stateId);
 
 function toIso(startingAt: string | null | undefined): string | null {
   if (!startingAt) return null;
@@ -90,7 +81,7 @@ function goalsOf(f: RawFixture, typeId: number, participantId: number | undefine
 function toLeg(f: RawFixture): CupLeg {
   const { home, away } = sides(f);
   const stateId = f.state_id ?? 1;
-  const started = !STATE_NS.has(stateId) && !STATE_VOID.has(stateId);
+  const started = isLegStarted(stateId);
   const hg = started ? goalsOf(f, SCORE_CURRENT, home?.id) : null;
   const ag = started ? goalsOf(f, SCORE_CURRENT, away?.id) : null;
   const ph = goalsOf(f, SCORE_PENALTIES, home?.id);
@@ -190,7 +181,7 @@ function buildTie(id: string, fixtures: RawFixture[], aggregate: RawAggregate | 
 function roundStatus(ties: CupTie[]): Exclude<CupRoundStatus, 'tbd' | 'current'> | 'started' {
   const decided = (t: CupTie) => t.winnerId != null || (t.legs.length > 0 && t.legs.every((l) => isLegFinished(l.stateId) || STATE_VOID.has(l.stateId)));
   if (ties.every(decided)) return 'done';
-  return ties.some((t) => t.legs.some((l) => !STATE_NS.has(l.stateId) && !STATE_VOID.has(l.stateId))) ? 'started' : 'upcoming';
+  return ties.some((t) => t.legs.some((l) => isLegStarted(l.stateId))) ? 'started' : 'upcoming';
 }
 
 const teamIdsOf = (t: CupTie) => [t.home?.id, t.away?.id].filter((x): x is number => x != null);

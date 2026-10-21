@@ -1,0 +1,377 @@
+@use '../../styles/variables' as *;
+
+// Ağaç geometrisi: her sütunun gövdesi aynı yükseklikte (en kalabalık tur × satır); N kutulu sütunda her kutu
+// yükseklik/N'lik dilimin ortasında → yarıya inen turda üst turun kutusu alttaki iki kutunun tam ortasına düşer.
+$box-h: 76px;
+$slot-h: 88px;
+$col-gap: 32px;
+$line: 2px solid rgba(128, 128, 128, 0.5);
+
+.root {
+  padding: $spacing-3 $spacing-4 $spacing-4;
+}
+
+.desktopOnly {
+  @include below-desktop {
+    display: none;
+  }
+}
+
+.mobileOnly {
+  display: none;
+
+  @include below-desktop {
+    display: block;
+  }
+}
+
+.topLinks {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: $spacing-2;
+}
+
+.linkButton {
+  font-size: 13px;
+  font-weight: 600;
+  color: $color-primary-text;
+  min-height: 32px;
+  padding: 0 $spacing-1;
+
+  &:hover {
+    text-decoration: underline;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+    outline-offset: 2px;
+  }
+}
+
+// Çipler alt satıra kayar (yatay kaydırma yok).
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-2;
+  margin-bottom: $spacing-4;
+}
+
+.chip {
+  @include filter-chip;
+}
+
+.chipActive {
+  @include filter-chip-active;
+}
+
+.chipCurrent:not(.chipActive) {
+  border-color: rgba(0, 167, 111, 0.45);
+}
+
+// ── Ağaç ────────────────────────────────────────────────────────────────────
+.tree {
+  display: grid;
+  grid-template-columns: repeat(var(--bracket-cols), minmax(0, 1fr));
+  column-gap: $col-gap;
+}
+
+.column {
+  min-width: 0;
+}
+
+.columnHead {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  height: 40px;
+  margin: 0 0 $spacing-2;
+  font-size: 13px;
+  font-weight: 700;
+  color: $color-text;
+}
+
+.status {
+  font-size: var(--fs-micro);
+  font-weight: var(--fw-micro);
+  letter-spacing: var(--ls-micro);
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+.status_current {
+  color: $color-primary-text;
+}
+
+.columnBody {
+  display: grid;
+  height: calc(var(--bracket-rows) * #{$slot-h});
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.slot {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+
+  &::after,
+  &::before {
+    content: none;
+    position: absolute;
+    pointer-events: none;
+  }
+}
+
+// Sonraki tura giden kol: üst kutu aşağı, alt kutu yukarı döner; ikisi dilimlerin birleştiği yerde buluşur.
+.out_pairTop::after,
+.out_pairBottom::after {
+  content: '';
+  left: 100%;
+  width: $col-gap * 0.5;
+  height: 50%;
+  border-right: $line;
+}
+
+.out_pairTop::after {
+  top: 50%;
+  border-top: $line;
+  border-top-right-radius: 6px;
+}
+
+.out_pairBottom::after {
+  bottom: 50%;
+  border-bottom: $line;
+  border-bottom-right-radius: 6px;
+}
+
+.out_straight::after {
+  content: '';
+  left: 100%;
+  top: 50%;
+  width: $col-gap;
+  border-top: $line;
+}
+
+// İki koldan gelen çizginin kutuya son yarısı.
+.inPair::before {
+  content: '';
+  right: 100%;
+  top: 50%;
+  width: $col-gap * 0.5;
+  border-top: $line;
+}
+
+// ── Eşleşme kutusu ──────────────────────────────────────────────────────────
+.box {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  height: $box-h;
+  padding: 6px $spacing-2;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
+  background: $color-surface;
+  color: $color-text;
+  text-decoration: none;
+}
+
+.boxLink {
+  transition: $transition-base;
+
+  &:hover {
+    background: $color-muted;
+    border-color: rgba(0, 167, 111, 0.5);
+  }
+
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+    outline-offset: 2px;
+  }
+}
+
+.boxTbd {
+  border-style: dashed;
+  background: transparent;
+}
+
+.teamRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  min-width: 0;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.logoSlot {
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+
+  img {
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+  }
+}
+
+.teamName {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tbdBar {
+  flex: 0 1 60%;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--skeleton-base, rgba(128, 128, 128, 0.15));
+}
+
+.legGoal {
+  flex: 0 0 auto;
+  min-width: 14px;
+  text-align: center;
+  font-size: 12px;
+  color: $color-text-secondary;
+}
+
+.total {
+  flex: 0 0 auto;
+  min-width: 18px;
+  text-align: right;
+  font-weight: 700;
+}
+
+.pens {
+  margin-left: 1px;
+  font-size: 10px;
+  font-weight: 600;
+  color: $color-text-secondary;
+}
+
+.winner .teamName {
+  font-weight: 700;
+}
+
+.loser {
+  color: $color-text-secondary;
+
+  .total {
+    font-weight: 500;
+  }
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 16px;
+  margin-top: 2px;
+  font-size: var(--fs-micro);
+  color: var(--text-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.metaLive {
+  color: $color-live;
+  font-weight: 700;
+}
+
+.liveDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: $color-live;
+}
+
+// ── Liste (mobil + erken turlar) ───────────────────────────────────────────
+.list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: $spacing-3;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  > li {
+    min-width: 0;
+  }
+
+  @include below-desktop {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.boxList {
+  height: auto;
+}
+
+.legLinks {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: $spacing-1;
+  padding-top: $spacing-1;
+  border-top: 1px solid $color-border;
+}
+
+.legLink {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  min-height: 28px;
+  font-size: 12px;
+  color: $color-text-secondary;
+  text-decoration: none;
+
+  &:hover .legText {
+    color: $color-text;
+    text-decoration: underline;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+    outline-offset: 1px;
+  }
+}
+
+.legNo {
+  flex: 0 0 auto;
+  font-weight: 600;
+  color: var(--text-tertiary);
+}
+
+.legText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.summary {
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 600;
+  color: $color-primary-text;
+}
+
+.tbdNote {
+  padding: $spacing-8 $spacing-4;
+  text-align: center;
+  color: $color-text-secondary;
+
+  p {
+    margin: 0 0 $spacing-2;
+  }
+}
