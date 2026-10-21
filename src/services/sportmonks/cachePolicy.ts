@@ -11,6 +11,7 @@
  */
 import { mapSportmonksStateToPhase } from './stateMapping';
 import { TEAM_FORM_INCLUDE, teamFormFreshSeconds } from './teamForm';
+import { seasonStatsFinished, type RawSeasonWithStatistics } from './seasonStats';
 
 export type CacheTtl = { fresh: number; stale: number };
 
@@ -302,8 +303,18 @@ export function sportmonksCacheTtl(
       // var (2 sa / 7 gün); bu kayıt yalnız onun yenilemesi ve 429/5xx'te eski veri için.
       return withStale(HOUR, 7 * DAY);
 
+    case 'seasons': {
+      // Sezon Özeti (`seasons/{id}?include=statistics.participant`, bkz. server/seasonStats.ts): biten sezon değişmez → 30 gün;
+      // süren sezonda Sportmonks maçlardan sonra yeniden hesaplar → 6 sa (haftada ~1 tur; eski kopya 7 gün, 429'da sunulur).
+      if (a && String(query.include ?? '').includes('statistics')) {
+        const season = data != null && typeof data === 'object' && !Array.isArray(data) ? (data as RawSeasonWithStatistics) : null;
+        if (!season) return withStale(NOT_FOUND_TTL, NOT_FOUND_TTL);
+        return seasonStatsFinished(season, utcDay(now)) ? withStale(FINISHED_SEASON_TTL, FINISHED_SEASON_TTL) : withStale(6 * HOUR, 7 * DAY);
+      }
+      return withStale(DAY, 7 * DAY);
+    }
+
     case 'leagues':
-    case 'seasons':
     case 'rounds':
     case 'types':
     case 'states':

@@ -1,0 +1,545 @@
+{
+ "data": {
+  "id": 28155,
+  "league_id": 2,
+  "name": "2026/2027",
+  "finished": false,
+  "pending": false,
+  "is_current": true,
+  "starting_at": "2026-07-07",
+  "ending_at": "2027-01-27",
+  "statistics": [
+   {
+    "id": 426735,
+    "model_id": 28155,
+    "type_id": 34,
+    "relation_id": 138649,
+    "value": {
+     "count": 59,
+     "percentage": 4.51,
+     "avg_per_match": 9.7,
+     "team_most_corners_id": 138649,
+     "team_most_corners_name": "Sabah"
+    },
+    "participant": {
+     "id": 138649,
+     "name": "Sabah",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/25/138649.png"
+    }
+   },
+   {
+    "id": 426731,
+    "model_id": 28155,
+    "type_id": 43,
+    "relation_id": null,
+    "value": {
+     "count": 27340,
+     "average": 202.52
+    }
+   },
+   {
+    "id": 426736,
+    "model_id": 28155,
+    "type_id": 44,
+    "relation_id": null,
+    "value": {
+     "count": 14967,
+     "average": 110.87
+    }
+   },
+   {
+    "id": 426783,
+    "model_id": 28155,
+    "type_id": 79,
+    "relation_id": null,
+    "value": {
+     "count": 210,
+     "average": 1.56
+    }
+   },
+   {
+    "id": 426973,
+    "model_id": 28155,
+    "type_id": 106,
+    "relation_id": null,
+    "value": {
+     "total": 7393,
+     "avg_per_game": 54.8
+    }
+   },
+   {
+    "id": 443275,
+    "model_id": 28155,
+    "type_id": 124,
+    "relation_id": null,
+    "value": {
+     "total": 77
+    }
+   },
+   {
+    "id": 443276,
+    "model_id": 28155,
+    "type_id": 125,
+    "relation_id": null,
+    "value": {
+     "total": 39
+    }
+   },
+   {
+    "id": 426453,
+    "model_id": 28155,
+    "type_id": 188,
+    "relation_id": null,
+    "value": {
+     "total": 234,
+     "played": 135,
+     "percentage": 57.69
+    }
+   },
+   {
+    "id": 426455,
+    "model_id": 28155,
+    "type_id": 189,
+    "relation_id": null,
+    "value": {
+     "total": 81,
+     "countries": 53
+    }
+   },
+   {
+    "id": 426744,
+    "model_id": 28155,
+    "type_id": 190,
+    "relation_id": null,
+    "value": {
+     "count": 25,
+     "percentage": 18.52
+    }
+   },
+   {
+    "id": 426745,
+    "model_id": 28155,
+    "type_id": 191,
+    "relation_id": null,
+    "value": {
+     "total": 451,
+     "home": {
+      "count": 274,
+      "percentage": 60.75,
+      "average": 2.03
+     },
+     "away": {
+      "count": 177,
+      "percentage": 39.25,
+      "average": 1.31
+     },
+     "average": 3.34,
+     "avg_min_per_goal": 26
+    }
+   },
+   {
+    "id": 426732,
+    "model_id": 28155,
+    "type_id": 192,
+    "relation_id": null,
+    "value": {
+     "count": 78,
+     "percentage": 57.78
+    }
+   },
+   {
+    "id": 426734,
+    "model_id": 28155,
+    "type_id": 193,
+    "relation_id": null,
+    "value": {
+     "yellowcards": 522,
+     "redcards": 20,
+     "yellowredcards": 12,
+     "average_yellowcards": 3.87,
+     "average_redcards": 0.15,
+     "average_yellowredcards": 0.09
+    }
+   },
+   {
+    "id": 427489,
+    "model_id": 28155,
+    "type_id": 194,
+    "relation_id": null,
+    "value": {
+     "count": 61,
+     "percentage": 22.59
+    }
+   },
+   {
+    "id": 426741,
+    "model_id": 28155,
+    "type_id": 195,
+    "relation_id": 3130,
+    "value": {
+     "count": 2,
+     "home": 1,
+     "away": 1,
+     "percentage": 100,
+     "total_games": 2,
+     "player_id": 3130,
+     "player_name": "David Raya"
+    },
+    "participant": {
+     "id": 3130,
+     "name": "David Raya Martin",
+     "display_name": "David Raya",
+     "common_name": "D. Raya Martin",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/players/26/3130.png"
+    }
+   },
+   {
+    "id": 426751,
+    "model_id": 28155,
+    "type_id": 196,
+    "relation_id": null,
+    "value": {
+     "0-15": {
+      "count": 50,
+      "percentage": 11.09
+     },
+     "15-30": {
+      "count": 69,
+      "percentage": 15.3
+     },
+     "30-45": {
+      "count": 72,
+      "percentage": 15.96
+     },
+     "45-60": {
+      "count": 79,
+      "percentage": 17.52
+     },
+     "60-75": {
+      "count": 76,
+      "percentage": 16.85
+     },
+     "75-90": {
+      "count": 91,
+      "percentage": 20.18
+     }
+    }
+   },
+   {
+    "id": 426739,
+    "model_id": 28155,
+    "type_id": 197,
+    "relation_id": null,
+    "value": {
+     "over": {
+      "0_5": {
+       "count": 131,
+       "percentage": 97.04
+      },
+      "1_5": {
+       "count": 113,
+       "percentage": 83.7
+      },
+      "2_5": {
+       "count": 83,
+       "percentage": 61.48
+      },
+      "3_5": {
+       "count": 58,
+       "percentage": 42.96
+      },
+      "4_5": {
+       "count": 38,
+       "percentage": 28.15
+      },
+      "5_5": {
+       "count": 18,
+       "percentage": 13.33
+      },
+      "6_5": {
+       "count": 8,
+       "percentage": 5.93
+      }
+     },
+     "under": {
+      "0_5": {
+       "count": 4,
+       "percentage": 2.96
+      },
+      "1_5": {
+       "count": 22,
+       "percentage": 16.3
+      },
+      "2_5": {
+       "count": 52,
+       "percentage": 38.52
+      },
+      "3_5": {
+       "count": 77,
+       "percentage": 57.04
+      },
+      "4_5": {
+       "count": 97,
+       "percentage": 71.85
+      },
+      "5_5": {
+       "count": 117,
+       "percentage": 86.67
+      },
+      "6_5": {
+       "count": 127,
+       "percentage": 94.07
+      }
+     }
+    }
+   },
+   {
+    "id": 426753,
+    "model_id": 28155,
+    "type_id": 201,
+    "relation_id": null,
+    "value": {
+     "all": 81.48,
+     "home": 54.07,
+     "away": 27.41
+    }
+   },
+   {
+    "id": 426737,
+    "model_id": 28155,
+    "type_id": 202,
+    "relation_id": null,
+    "value": {
+     "all": 81.48,
+     "home": 27.41,
+     "away": 54.07
+    }
+   },
+   {
+    "id": 426738,
+    "model_id": 28155,
+    "type_id": 203,
+    "relation_id": null,
+    "value": {
+     "all": 18.52
+    }
+   },
+   {
+    "id": 426748,
+    "model_id": 28155,
+    "type_id": 204,
+    "relation_id": 138649,
+    "value": {
+     "count": 21,
+     "home": 15,
+     "away": 6,
+     "percentage": 4.66,
+     "participant_id": 138649,
+     "participant_name": "Sabah"
+    },
+    "participant": {
+     "id": 138649,
+     "name": "Sabah",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/25/138649.png"
+    }
+   },
+   {
+    "id": 426746,
+    "model_id": 28155,
+    "type_id": 205,
+    "relation_id": 2417,
+    "value": {
+     "count": 17,
+     "home": 5,
+     "away": 12,
+     "percentage": 3.77,
+     "participant_id": 2417,
+     "participant_name": "Slovan Bratislava"
+    },
+    "participant": {
+     "id": 2417,
+     "name": "Slovan Bratislava",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/17/2417.png"
+    }
+   },
+   {
+    "id": 426749,
+    "model_id": 28155,
+    "type_id": 206,
+    "relation_id": 591,
+    "value": {
+     "count": 4.67,
+     "home": 5,
+     "away": 4,
+     "home_adv_percentage": 7.07,
+     "participant_id": 591,
+     "participant_name": "Paris Saint Germain"
+    },
+    "participant": {
+     "id": 591,
+     "name": "Paris Saint Germain",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/15/591.png"
+    }
+   },
+   {
+    "id": 426747,
+    "model_id": 28155,
+    "type_id": 207,
+    "relation_id": 73,
+    "value": {
+     "count": 3.5,
+     "home": 5,
+     "away": 2,
+     "home_adv_percentage": -42.86,
+     "participant_id": 73,
+     "participant_name": "Feyenoord"
+    },
+    "participant": {
+     "id": 73,
+     "name": "Feyenoord",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/9/73.png"
+    }
+   },
+   {
+    "id": 426740,
+    "model_id": 28155,
+    "type_id": 208,
+    "relation_id": 183962,
+    "value": {
+     "count": 6,
+     "player_id": 183962,
+     "player_name": "Veljko Simic"
+    },
+    "participant": {
+     "id": 183962,
+     "name": "Veljko Simić",
+     "display_name": "Veljko Simic",
+     "common_name": "V. Simić",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/players/26/183962.png"
+    }
+   },
+   {
+    "id": 426729,
+    "model_id": 28155,
+    "type_id": 209,
+    "relation_id": 522606,
+    "value": {
+     "count": 6,
+     "player_id": 522606,
+     "player_name": "Tymoteusz Puchacz"
+    },
+    "participant": {
+     "id": 522606,
+     "name": "Tymoteusz Puchacz",
+     "display_name": "Tymoteusz Puchacz",
+     "common_name": "T. Puchacz",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/players/14/522606.png"
+    }
+   },
+   {
+    "id": 426733,
+    "model_id": 28155,
+    "type_id": 210,
+    "relation_id": 126398,
+    "value": {
+     "count": 4,
+     "player_id": 126398,
+     "player_name": "Eliel Peretz"
+    },
+    "participant": {
+     "id": 126398,
+     "name": "Eliel Peretz",
+     "display_name": "Eliel Peretz",
+     "common_name": "E. Peretz",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/players/30/126398.png"
+    }
+   },
+   {
+    "id": 426742,
+    "model_id": 28155,
+    "type_id": 211,
+    "relation_id": 37590938,
+    "value": {
+     "rating": 8.65,
+     "player_id": 37590938,
+     "player_name": "Désiré Doué"
+    },
+    "participant": {
+     "id": 37590938,
+     "name": "Desire Doue",
+     "display_name": "Désiré Doué",
+     "common_name": "D. Doue",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/players/26/37590938.png"
+    }
+   },
+   {
+    "id": 426743,
+    "model_id": 28155,
+    "type_id": 212,
+    "relation_id": 15,
+    "value": {
+     "rating": 7.2,
+     "team_id": 15,
+     "team_name": "Aston Villa"
+    },
+    "participant": {
+     "id": 15,
+     "name": "Aston Villa",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/15/15.png"
+    }
+   },
+   {
+    "id": 426750,
+    "model_id": 28155,
+    "type_id": 574,
+    "relation_id": null,
+    "value": {
+     "total": 371
+    }
+   },
+   {
+    "id": 427490,
+    "model_id": 28155,
+    "type_id": 575,
+    "relation_id": 3108,
+    "value": {
+     "count": 61,
+     "percentage": 22.59,
+     "participant_id": 3108,
+     "participant_name": "Kairat",
+     "participant_count": 3
+    },
+    "participant": {
+     "id": 3108,
+     "name": "Kairat",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/4/3108.png"
+    }
+   },
+   {
+    "id": 426752,
+    "model_id": 28155,
+    "type_id": 1677,
+    "relation_id": null,
+    "value": {
+     "total": 3413,
+     "on_target": 1323,
+     "off_target": 1475,
+     "inside_box": 1517,
+     "outside_box": 845,
+     "blocked": 852,
+     "average": 25.28
+    }
+   },
+   {
+    "id": 426773,
+    "model_id": 28155,
+    "type_id": 27260,
+    "relation_id": null,
+    "value": {
+     "total": 26,
+     "average": 0.19
+    }
+   }
+  ]
+ }
+}

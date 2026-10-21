@@ -5,7 +5,10 @@ import RoundStatsCard from './Card';
 import RoundStatsSlot from './index';
 import { stageKey, stageLabel, unitDateRange, unitLabel } from './labels';
 import { buildStatUnits, summarizeRoundStatistics, type RawRoundStatistic, type RawSeasonStage } from '@/services/sportmonks/roundStats';
+import { summarizeSeasonStatistics, type RawSeasonWithStatistics } from '@/services/sportmonks/seasonStats';
 import { findGamblingTerms } from '@/utils/gamblingTerms';
+import seasonSl from '@/services/sportmonks/__fixtures__/seasonStatisticsSuperLig.json';
+import seasonUcl from '@/services/sportmonks/__fixtures__/seasonStatisticsUcl.json';
 import roundSl8 from '@/services/sportmonks/__fixtures__/roundStatisticsSuperLig8.json';
 import stagesSl from '@/services/sportmonks/__fixtures__/stagesSeasonSuperLig.json';
 import stagesUcl from '@/services/sportmonks/__fixtures__/stagesSeasonUcl.json';
@@ -22,6 +25,17 @@ function render(league: number, season: number, data: unknown) {
   return renderToStaticMarkup(
     <QueryClientProvider client={client}>
       <RoundStatsCard leagueId={league} seasonId={season} />
+    </QueryClientProvider>,
+  );
+}
+
+function renderSeason(league: number, season: number, data: unknown, seasonData: unknown) {
+  const client = new QueryClient();
+  client.setQueryData(['round-stats', league, season, 'default'], data);
+  client.setQueryData(['season-stats', league, season], seasonData);
+  return renderToStaticMarkup(
+    <QueryClientProvider client={client}>
+      <RoundStatsCard leagueId={league} seasonId={season} initialView="season" />
     </QueryClientProvider>,
   );
 }
@@ -68,6 +82,64 @@ describe('<RoundStatsCard />', () => {
     expect(t).toContain('Play-off');
     expect(t).toContain('En yüksek puanlı oyuncu');
     expect(html).toContain('aria-label="Önceki aşama"');
+  });
+
+  it('Hafta | Sezon seçici: varsayılan hafta basılı, sezon isteği yapılmaz', () => {
+    const html = render(600, 28203, { mode: 'rounds', units: unitsSl, selected: 'r410383', summary: summarySl });
+    expect(html).toMatch(/<div[^>]*role="group"[^>]*aria-label="Özet dönemi"/);
+    expect(html).toMatch(/<button[^>]*aria-pressed="true"[^>]*>Hafta<\/button>/);
+    expect(html).toMatch(/<button[^>]*aria-pressed="false"[^>]*>Sezon<\/button>/);
+    // Haftalık görünümde ek öne çıkanlar yok
+    expect(text(html)).not.toContain('Gol kralı');
+  });
+
+  it('Sezon görünümü (Süper Lig): başlık, sezon adı, krallar, en çok gol yiyen, kaleci; ‹ › gizli', () => {
+    const html = renderSeason(600, 28203, { mode: 'rounds', units: unitsSl, selected: 'r410383', summary: summarySl }, {
+      season: { id: 28203, name: '2026/2027', finished: false },
+      summary: summarizeSeasonStatistics((seasonSl.data as RawSeasonWithStatistics).statistics),
+    });
+    const t = text(html);
+    expect(t).toContain('Sezon Özeti');
+    expect(t).toContain('2026/2027');
+    expect(t).toContain('sürüyor');
+    expect(t).toContain('72/306 maç oynandı');
+    expect(t).toContain('Maç başı 2,89');
+    expect(t).toContain('Gol kralı');
+    expect(html).toContain('href="/players/4125"');
+    expect(t).toContain('8 gol');
+    expect(t).toContain('Asist kralı');
+    expect(t).toContain('4 asist');
+    expect(t).toContain('En çok gol yiyen takım');
+    expect(html).toContain('href="/teams/3224"');
+    expect(t).toContain('En çok kart gören oyuncu');
+    expect(t).toContain('3 kart');
+    expect(t).toContain('En çok maçta gol yemeyen kaleci');
+    expect(html).toContain('title="5/7 maçta gol yemedi"');
+    expect(html).toMatch(/<button[^>]*aria-pressed="true"[^>]*>Sezon<\/button>/);
+    expect(html).toMatch(/<button[^>]*disabled=""[^>]*aria-hidden="true"[^>]*tabindex="-1"[^>]*aria-label="Önceki hafta"/);
+    expect(findGamblingTerms(t)).toEqual([]);
+  });
+
+  it('Sezon görünümü (Şampiyonlar Ligi): "Aşama | Sezon", tüm aşamalar, bozuk kaleci satırı yok', () => {
+    const units = buildStatUnits(stagesUcl.data as RawSeasonStage[], 'stages', '2026-10-21');
+    const html = renderSeason(2, 28155, { mode: 'stages', units, selected: 's77483291', summary: summarizeRoundStatistics(stageUclPo.data as RawRoundStatistic[]) }, {
+      season: { id: 28155, name: '2026/2027', finished: false },
+      summary: summarizeSeasonStatistics((seasonUcl.data as RawSeasonWithStatistics).statistics),
+    });
+    const t = text(html);
+    expect(html).toMatch(/>Aşama<\/button>/);
+    expect(t).toContain('sürüyor · tüm aşamalar');
+    expect(t).not.toContain('gol yemeyen kaleci');
+    expect(findGamblingTerms(t)).toEqual([]);
+  });
+
+  it('Sezon görünümü: sezon özeti boş → "veri yok" mesajı (kart kalır), bitmiş sezon "tamamlandı"', () => {
+    const html = renderSeason(600, 28203, { mode: 'rounds', units: unitsSl, selected: 'r410383', summary: summarySl }, {
+      season: { id: 28203, name: '2026/2027', finished: true },
+      summary: null,
+    });
+    expect(text(html)).toContain('Bu dönem için istatistik henüz yok.');
+    expect(text(html)).toContain('tamamlandı');
   });
 
   it('veri yok → kart hiç çizilmez; birim yok → çizilmez', () => {

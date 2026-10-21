@@ -46,10 +46,46 @@ $min-h-mobile: 752px;
   }
 }
 
+// Başlık + Hafta | Sezon seçici aynı satırda; seçici başlık satırını uzatmaz → yuva yüksekliği değişmez (kayma yok).
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  min-width: 0;
+
+  @media (max-width: $bp-sm) {
+    justify-content: space-between;
+  }
+}
+
 .title {
   font-size: 16px;
   font-weight: 700;
   color: $color-text;
+}
+
+.views {
+  display: inline-flex;
+  flex: none;
+  gap: $spacing-1;
+}
+
+.viewBtn {
+  @include filter-chip;
+  // 24 px = başlık satırı yüksekliği (16 px × 1,5): seçici satırı uzatmaz; WCAG 2.5.8 en az hedef boyutu.
+  min-height: 24px;
+  padding: 0 $spacing-3;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.viewBtnActive {
+  @include filter-chip-active;
+}
+
+// Sezon görünümünde ‹ › yer tutar ama görünmez (seçici genişliği / başlık yüksekliği sabit).
+.navHidden {
+  visibility: hidden;
 }
 
 .picker {

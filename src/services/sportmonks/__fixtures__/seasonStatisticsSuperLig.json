@@ -1,0 +1,527 @@
+{
+ "data": {
+  "id": 28203,
+  "league_id": 600,
+  "name": "2026/2027",
+  "finished": false,
+  "pending": false,
+  "is_current": true,
+  "starting_at": "2026-08-14",
+  "ending_at": "2027-05-23",
+  "statistics": [
+   {
+    "id": 433681,
+    "model_id": 28203,
+    "type_id": 34,
+    "relation_id": 34,
+    "value": {
+     "count": 60,
+     "percentage": 8.73,
+     "avg_per_match": 9.54,
+     "team_most_corners_id": 34,
+     "team_most_corners_name": "Galatasaray"
+    },
+    "participant": {
+     "id": 34,
+     "name": "Galatasaray",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/2/34.png"
+    }
+   },
+   {
+    "id": 433677,
+    "model_id": 28203,
+    "type_id": 43,
+    "relation_id": null,
+    "value": {
+     "count": 12124,
+     "average": 168.39
+    }
+   },
+   {
+    "id": 433682,
+    "model_id": 28203,
+    "type_id": 44,
+    "relation_id": null,
+    "value": {
+     "count": 5787,
+     "average": 80.38
+    }
+   },
+   {
+    "id": 434423,
+    "model_id": 28203,
+    "type_id": 79,
+    "relation_id": null,
+    "value": {
+     "count": 130,
+     "average": 1.81
+    }
+   },
+   {
+    "id": 433684,
+    "model_id": 28203,
+    "type_id": 106,
+    "relation_id": null,
+    "value": {
+     "total": 6468,
+     "avg_per_game": 89.8
+    }
+   },
+   {
+    "id": 430086,
+    "model_id": 28203,
+    "type_id": 188,
+    "relation_id": null,
+    "value": {
+     "total": 306,
+     "played": 72,
+     "percentage": 23.53
+    }
+   },
+   {
+    "id": 430087,
+    "model_id": 28203,
+    "type_id": 189,
+    "relation_id": null,
+    "value": {
+     "total": 18,
+     "countries": 1
+    }
+   },
+   {
+    "id": 433689,
+    "model_id": 28203,
+    "type_id": 190,
+    "relation_id": null,
+    "value": {
+     "count": 14,
+     "percentage": 19.44
+    }
+   },
+   {
+    "id": 433690,
+    "model_id": 28203,
+    "type_id": 191,
+    "relation_id": null,
+    "value": {
+     "total": 208,
+     "home": {
+      "count": 121,
+      "percentage": 58.17,
+      "average": 1.68
+     },
+     "away": {
+      "count": 87,
+      "percentage": 41.83,
+      "average": 1.21
+     },
+     "average": 2.89,
+     "avg_min_per_goal": 31
+    }
+   },
+   {
+    "id": 433678,
+    "model_id": 28203,
+    "type_id": 192,
+    "relation_id": null,
+    "value": {
+     "count": 32,
+     "percentage": 44.44
+    }
+   },
+   {
+    "id": 433680,
+    "model_id": 28203,
+    "type_id": 193,
+    "relation_id": null,
+    "value": {
+     "yellowcards": 285,
+     "redcards": 10,
+     "yellowredcards": 2,
+     "average_yellowcards": 3.96,
+     "average_redcards": 0.14,
+     "average_yellowredcards": 0.03
+    }
+   },
+   {
+    "id": 443643,
+    "model_id": 28203,
+    "type_id": 194,
+    "relation_id": null,
+    "value": {
+     "count": 44,
+     "percentage": 30.56
+    }
+   },
+   {
+    "id": 434431,
+    "model_id": 28203,
+    "type_id": 195,
+    "relation_id": 159142,
+    "value": {
+     "count": 5,
+     "home": 2,
+     "away": 3,
+     "percentage": 62.5,
+     "total_games": 7,
+     "player_id": 159142,
+     "player_name": "Ederson"
+    },
+    "participant": {
+     "id": 159142,
+     "name": "Ederson Santana de Moraes",
+     "display_name": "Ederson",
+     "common_name": "E. Santana de Moraes",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/players/6/159142.png"
+    }
+   },
+   {
+    "id": 433698,
+    "model_id": 28203,
+    "type_id": 196,
+    "relation_id": null,
+    "value": {
+     "0-15": {
+      "count": 32,
+      "percentage": 15.38
+     },
+     "15-30": {
+      "count": 31,
+      "percentage": 14.9
+     },
+     "30-45": {
+      "count": 32,
+      "percentage": 15.38
+     },
+     "45-60": {
+      "count": 32,
+      "percentage": 15.38
+     },
+     "60-75": {
+      "count": 35,
+      "percentage": 16.83
+     },
+     "75-90": {
+      "count": 46,
+      "percentage": 22.12
+     }
+    }
+   },
+   {
+    "id": 433685,
+    "model_id": 28203,
+    "type_id": 197,
+    "relation_id": null,
+    "value": {
+     "over": {
+      "0_5": {
+       "count": 68,
+       "percentage": 94.44
+      },
+      "1_5": {
+       "count": 54,
+       "percentage": 75
+      },
+      "2_5": {
+       "count": 42,
+       "percentage": 58.33
+      },
+      "3_5": {
+       "count": 22,
+       "percentage": 30.56
+      },
+      "4_5": {
+       "count": 12,
+       "percentage": 16.67
+      },
+      "5_5": {
+       "count": 6,
+       "percentage": 8.33
+      },
+      "6_5": {
+       "count": 2,
+       "percentage": 2.78
+      }
+     },
+     "under": {
+      "0_5": {
+       "count": 4,
+       "percentage": 5.56
+      },
+      "1_5": {
+       "count": 18,
+       "percentage": 25
+      },
+      "2_5": {
+       "count": 30,
+       "percentage": 41.67
+      },
+      "3_5": {
+       "count": 50,
+       "percentage": 69.44
+      },
+      "4_5": {
+       "count": 60,
+       "percentage": 83.33
+      },
+      "5_5": {
+       "count": 66,
+       "percentage": 91.67
+      },
+      "6_5": {
+       "count": 70,
+       "percentage": 97.22
+      }
+     }
+    }
+   },
+   {
+    "id": 434432,
+    "model_id": 28203,
+    "type_id": 201,
+    "relation_id": null,
+    "value": {
+     "all": 80.56,
+     "home": 48.61,
+     "away": 31.94
+    }
+   },
+   {
+    "id": 434430,
+    "model_id": 28203,
+    "type_id": 202,
+    "relation_id": null,
+    "value": {
+     "all": 80.56,
+     "home": 31.94,
+     "away": 48.61
+    }
+   },
+   {
+    "id": 433683,
+    "model_id": 28203,
+    "type_id": 203,
+    "relation_id": null,
+    "value": {
+     "all": 19.44
+    }
+   },
+   {
+    "id": 433694,
+    "model_id": 28203,
+    "type_id": 204,
+    "relation_id": 88,
+    "value": {
+     "count": 22,
+     "home": 16,
+     "away": 6,
+     "percentage": 10.58,
+     "participant_id": 88,
+     "participant_name": "Fenerbahçe"
+    },
+    "participant": {
+     "id": 88,
+     "name": "Fenerbahçe",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/24/88.png"
+    }
+   },
+   {
+    "id": 433691,
+    "model_id": 28203,
+    "type_id": 205,
+    "relation_id": 3224,
+    "value": {
+     "count": 22,
+     "home": 8,
+     "away": 14,
+     "percentage": 10.58,
+     "participant_id": 3224,
+     "participant_name": "Eyüpspor"
+    },
+    "participant": {
+     "id": 3224,
+     "name": "Eyüpspor",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/24/3224.png"
+    }
+   },
+   {
+    "id": 433695,
+    "model_id": 28203,
+    "type_id": 206,
+    "relation_id": 88,
+    "value": {
+     "count": 2.75,
+     "home": 4,
+     "away": 1.5,
+     "home_adv_percentage": 45.45,
+     "participant_id": 88,
+     "participant_name": "Fenerbahçe"
+    },
+    "participant": {
+     "id": 88,
+     "name": "Fenerbahçe",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/24/88.png"
+    }
+   },
+   {
+    "id": 433693,
+    "model_id": 28203,
+    "type_id": 207,
+    "relation_id": 3224,
+    "value": {
+     "count": 2.75,
+     "home": 3.5,
+     "away": 2,
+     "home_adv_percentage": -27.27,
+     "participant_id": 3224,
+     "participant_name": "Eyüpspor"
+    },
+    "participant": {
+     "id": 3224,
+     "name": "Eyüpspor",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/24/3224.png"
+    }
+   },
+   {
+    "id": 433686,
+    "model_id": 28203,
+    "type_id": 208,
+    "relation_id": 4125,
+    "value": {
+     "count": 8,
+     "player_id": 4125,
+     "player_name": "Mohamed Salah"
+    },
+    "participant": {
+     "id": 4125,
+     "name": "Mohamed Salah Ghaly",
+     "display_name": "Mohamed Salah",
+     "common_name": "M. Salah",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/players/29/4125.png"
+    }
+   },
+   {
+    "id": 433676,
+    "model_id": 28203,
+    "type_id": 209,
+    "relation_id": 35259800,
+    "value": {
+     "count": 4,
+     "player_id": 35259800,
+     "player_name": "Alexandros Kyziridis"
+    },
+    "participant": {
+     "id": 35259800,
+     "name": "Alexandros Kiziridis",
+     "display_name": "Alexandros Kyziridis",
+     "common_name": "A. Kiziridis",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/players/24/35259800.png"
+    }
+   },
+   {
+    "id": 433679,
+    "model_id": 28203,
+    "type_id": 210,
+    "relation_id": 203954,
+    "value": {
+     "count": 3,
+     "player_id": 203954,
+     "player_name": "Adil Demirbağ "
+    },
+    "participant": {
+     "id": 203954,
+     "name": "Adil Demirbağ",
+     "display_name": "Adil Demirbağ",
+     "common_name": "A. Demirbağ",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/players/18/203954.png"
+    }
+   },
+   {
+    "id": 433687,
+    "model_id": 28203,
+    "type_id": 211,
+    "relation_id": 4125,
+    "value": {
+     "rating": 7.94,
+     "player_id": 4125,
+     "player_name": "Mohamed Salah"
+    },
+    "participant": {
+     "id": 4125,
+     "name": "Mohamed Salah Ghaly",
+     "display_name": "Mohamed Salah",
+     "common_name": "M. Salah",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/players/29/4125.png"
+    }
+   },
+   {
+    "id": 433688,
+    "model_id": 28203,
+    "type_id": 212,
+    "relation_id": 88,
+    "value": {
+     "rating": 7.04,
+     "team_id": 88,
+     "team_name": "Fenerbahçe"
+    },
+    "participant": {
+     "id": 88,
+     "name": "Fenerbahçe",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/24/88.png"
+    }
+   },
+   {
+    "id": 433697,
+    "model_id": 28203,
+    "type_id": 574,
+    "relation_id": null,
+    "value": {
+     "total": 90
+    }
+   },
+   {
+    "id": 443644,
+    "model_id": 28203,
+    "type_id": 575,
+    "relation_id": 3224,
+    "value": {
+     "count": 44,
+     "percentage": 30.56,
+     "participant_id": 3224,
+     "participant_name": "Eyüpspor",
+     "participant_count": 7
+    },
+    "participant": {
+     "id": 3224,
+     "name": "Eyüpspor",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/24/3224.png"
+    }
+   },
+   {
+    "id": 433699,
+    "model_id": 28203,
+    "type_id": 1677,
+    "relation_id": null,
+    "value": {
+     "total": 2023,
+     "on_target": 676,
+     "off_target": 838,
+     "inside_box": 1249,
+     "outside_box": 774,
+     "blocked": 509,
+     "average": 28.1
+    }
+   },
+   {
+    "id": 436677,
+    "model_id": 28203,
+    "type_id": 27260,
+    "relation_id": null,
+    "value": {
+     "total": 9,
+     "average": 0.13
+    }
+   }
+  ]
+ }
+}

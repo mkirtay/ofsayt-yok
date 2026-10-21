@@ -1,0 +1,485 @@
+{
+ "data": {
+  "id": 28283,
+  "league_id": 606,
+  "name": "2026/2027",
+  "finished": false,
+  "pending": false,
+  "is_current": true,
+  "starting_at": "2026-09-15",
+  "ending_at": "2026-10-29",
+  "statistics": [
+   {
+    "id": 444446,
+    "model_id": 28283,
+    "type_id": 34,
+    "relation_id": 274968,
+    "value": {
+     "count": 10,
+     "percentage": 5.46,
+     "avg_per_match": 3.59,
+     "team_most_corners_id": 274968,
+     "team_most_corners_name": "Galata"
+    },
+    "participant": {
+     "id": 274968,
+     "name": "Galata",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/team_placeholder.png"
+    }
+   },
+   {
+    "id": 444445,
+    "model_id": 28283,
+    "type_id": 43,
+    "relation_id": null,
+    "value": {
+     "count": 4559,
+     "average": 89.39
+    }
+   },
+   {
+    "id": 444447,
+    "model_id": 28283,
+    "type_id": 44,
+    "relation_id": null,
+    "value": {
+     "count": 2720,
+     "average": 53.33
+    }
+   },
+   {
+    "id": 444409,
+    "model_id": 28283,
+    "type_id": 188,
+    "relation_id": null,
+    "value": {
+     "total": 51,
+     "played": 51,
+     "percentage": 100
+    }
+   },
+   {
+    "id": 444417,
+    "model_id": 28283,
+    "type_id": 189,
+    "relation_id": null,
+    "value": {
+     "total": 82,
+     "countries": 1
+    }
+   },
+   {
+    "id": 446924,
+    "model_id": 28283,
+    "type_id": 190,
+    "relation_id": null,
+    "value": {
+     "count": 1,
+     "percentage": 1.96
+    }
+   },
+   {
+    "id": 444410,
+    "model_id": 28283,
+    "type_id": 191,
+    "relation_id": null,
+    "value": {
+     "total": 188,
+     "home": {
+      "count": 108,
+      "percentage": 57.45,
+      "average": 2.12
+     },
+     "away": {
+      "count": 80,
+      "percentage": 42.55,
+      "average": 1.57
+     },
+     "average": 3.69,
+     "avg_min_per_goal": 25
+    }
+   },
+   {
+    "id": 444405,
+    "model_id": 28283,
+    "type_id": 192,
+    "relation_id": null,
+    "value": {
+     "count": 21,
+     "percentage": 41.18
+    }
+   },
+   {
+    "id": 446897,
+    "model_id": 28283,
+    "type_id": 193,
+    "relation_id": null,
+    "value": {
+     "yellowcards": 0,
+     "redcards": 1,
+     "yellowredcards": 2,
+     "average_yellowcards": 0,
+     "average_redcards": 0.02,
+     "average_yellowredcards": 0.04
+    }
+   },
+   {
+    "id": 444491,
+    "model_id": 28283,
+    "type_id": 194,
+    "relation_id": null,
+    "value": {
+     "count": 30,
+     "percentage": 29.41
+    }
+   },
+   {
+    "id": 444416,
+    "model_id": 28283,
+    "type_id": 196,
+    "relation_id": null,
+    "value": {
+     "0-15": {
+      "count": 20,
+      "percentage": 10.99
+     },
+     "15-30": {
+      "count": 20,
+      "percentage": 10.99
+     },
+     "30-45": {
+      "count": 29,
+      "percentage": 15.93
+     },
+     "45-60": {
+      "count": 21,
+      "percentage": 11.54
+     },
+     "60-75": {
+      "count": 29,
+      "percentage": 15.93
+     },
+     "75-90": {
+      "count": 58,
+      "percentage": 31.87
+     }
+    }
+   },
+   {
+    "id": 444407,
+    "model_id": 28283,
+    "type_id": 197,
+    "relation_id": null,
+    "value": {
+     "over": {
+      "0_5": {
+       "count": 51,
+       "percentage": 100
+      },
+      "1_5": {
+       "count": 44,
+       "percentage": 86.27
+      },
+      "2_5": {
+       "count": 35,
+       "percentage": 68.63
+      },
+      "3_5": {
+       "count": 22,
+       "percentage": 43.14
+      },
+      "4_5": {
+       "count": 16,
+       "percentage": 31.37
+      },
+      "5_5": {
+       "count": 11,
+       "percentage": 21.57
+      },
+      "6_5": {
+       "count": 3,
+       "percentage": 5.88
+      }
+     },
+     "under": {
+      "0_5": {
+       "count": 0,
+       "percentage": 0
+      },
+      "1_5": {
+       "count": 7,
+       "percentage": 13.73
+      },
+      "2_5": {
+       "count": 16,
+       "percentage": 31.37
+      },
+      "3_5": {
+       "count": 29,
+       "percentage": 56.86
+      },
+      "4_5": {
+       "count": 35,
+       "percentage": 68.63
+      },
+      "5_5": {
+       "count": 40,
+       "percentage": 78.43
+      },
+      "6_5": {
+       "count": 48,
+       "percentage": 94.12
+      }
+     }
+    }
+   },
+   {
+    "id": 444418,
+    "model_id": 28283,
+    "type_id": 201,
+    "relation_id": null,
+    "value": {
+     "all": 98.04,
+     "home": 54.9,
+     "away": 43.14
+    }
+   },
+   {
+    "id": 444406,
+    "model_id": 28283,
+    "type_id": 202,
+    "relation_id": null,
+    "value": {
+     "all": 98.04,
+     "home": 43.14,
+     "away": 54.9
+    }
+   },
+   {
+    "id": 446923,
+    "model_id": 28283,
+    "type_id": 203,
+    "relation_id": null,
+    "value": {
+     "all": 1.96
+    }
+   },
+   {
+    "id": 444413,
+    "model_id": 28283,
+    "type_id": 204,
+    "relation_id": 255667,
+    "value": {
+     "count": 14,
+     "home": 14,
+     "away": 0,
+     "percentage": 7.45,
+     "participant_id": 255667,
+     "participant_name": "Orduspor 1967"
+    },
+    "participant": {
+     "id": 255667,
+     "name": "Orduspor 1967",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/19/255667.png"
+    }
+   },
+   {
+    "id": 444411,
+    "model_id": 28283,
+    "type_id": 205,
+    "relation_id": 249912,
+    "value": {
+     "count": 10,
+     "home": 0,
+     "away": 10,
+     "percentage": 5.32,
+     "participant_id": 249912,
+     "participant_name": "Torul Belediye Gençlik"
+    },
+    "participant": {
+     "id": 249912,
+     "name": "Torul Belediye Gençlik",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/team_placeholder.png"
+    }
+   },
+   {
+    "id": 444414,
+    "model_id": 28283,
+    "type_id": 206,
+    "relation_id": 255667,
+    "value": {
+     "count": 7,
+     "home": 7,
+     "away": 0,
+     "home_adv_percentage": 0,
+     "participant_id": 255667,
+     "participant_name": "Orduspor 1967"
+    },
+    "participant": {
+     "id": 255667,
+     "name": "Orduspor 1967",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/teams/19/255667.png"
+    }
+   },
+   {
+    "id": 444412,
+    "model_id": 28283,
+    "type_id": 207,
+    "relation_id": 249912,
+    "value": {
+     "count": 10,
+     "home": 0,
+     "away": 0,
+     "home_adv_percentage": 100,
+     "participant_id": 249912,
+     "participant_name": "Torul Belediye Gençlik"
+    },
+    "participant": {
+     "id": 249912,
+     "name": "Torul Belediye Gençlik",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/team_placeholder.png"
+    }
+   },
+   {
+    "id": 444408,
+    "model_id": 28283,
+    "type_id": 208,
+    "relation_id": 11676724,
+    "value": {
+     "count": 2,
+     "player_id": 11676724,
+     "player_name": "Ahmet Gokbayrak"
+    },
+    "participant": {
+     "id": 11676724,
+     "name": "Ahmet Gökbayrak",
+     "display_name": "Ahmet Gokbayrak",
+     "common_name": "A. Gökbayrak",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/players/20/11676724.png"
+    }
+   },
+   {
+    "id": 444654,
+    "model_id": 28283,
+    "type_id": 209,
+    "relation_id": 32404741,
+    "value": {
+     "count": 2,
+     "player_id": 32404741,
+     "player_name": "Atakan Aybasti"
+    },
+    "participant": {
+     "id": 32404741,
+     "name": "Atakan Aybastı",
+     "display_name": "Atakan Aybasti",
+     "common_name": "A. Aybastı",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/placeholder.png"
+    }
+   },
+   {
+    "id": 446896,
+    "model_id": 28283,
+    "type_id": 210,
+    "relation_id": 37563325,
+    "value": {
+     "count": 1,
+     "player_id": 37563325,
+     "player_name": "Ahmet Daniel Akyıldız"
+    },
+    "participant": {
+     "id": 37563325,
+     "name": "Ahmet Daniel Akyıldız",
+     "display_name": "Ahmet Daniel Akyıldız",
+     "common_name": "A. Akyıldız",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/placeholder.png"
+    }
+   },
+   {
+    "id": 446820,
+    "model_id": 28283,
+    "type_id": 211,
+    "relation_id": 37563145,
+    "value": {
+     "rating": 6.86,
+     "player_id": 37563145,
+     "player_name": "Azad Demir"
+    },
+    "participant": {
+     "id": 37563145,
+     "name": "Cemal Azad Demir",
+     "display_name": "Azad Demir",
+     "common_name": "C. Demir",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/placeholder.png"
+    }
+   },
+   {
+    "id": 446821,
+    "model_id": 28283,
+    "type_id": 212,
+    "relation_id": 274968,
+    "value": {
+     "rating": 6.86,
+     "team_id": 274968,
+     "team_name": "Galata"
+    },
+    "participant": {
+     "id": 274968,
+     "name": "Galata",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/team_placeholder.png"
+    }
+   },
+   {
+    "id": 444415,
+    "model_id": 28283,
+    "type_id": 574,
+    "relation_id": null,
+    "value": {
+     "total": 139
+    }
+   },
+   {
+    "id": 444492,
+    "model_id": 28283,
+    "type_id": 575,
+    "relation_id": 249912,
+    "value": {
+     "count": 30,
+     "percentage": 29.41,
+     "participant_id": 249912,
+     "participant_name": "Torul Belediye Gençlik",
+     "participant_count": 1
+    },
+    "participant": {
+     "id": 249912,
+     "name": "Torul Belediye Gençlik",
+     "image_path": "https://cdn.sportmonks.com/images/soccer/team_placeholder.png"
+    }
+   },
+   {
+    "id": 444449,
+    "model_id": 28283,
+    "type_id": 1677,
+    "relation_id": null,
+    "value": {
+     "total": 624,
+     "on_target": 357,
+     "off_target": 292,
+     "inside_box": null,
+     "outside_box": null,
+     "blocked": 56,
+     "average": 12.24
+    }
+   },
+   {
+    "id": 444448,
+    "model_id": 28283,
+    "type_id": 27260,
+    "relation_id": null,
+    "value": {
+     "total": 9,
+     "average": 0.18
+    }
+   }
+  ]
+ }
+}
