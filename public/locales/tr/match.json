@@ -226,9 +226,22 @@
   "tabs": {
     "label": "Maç detay bölümleri",
     "overview": "Genel Bakış",
+    "commentary": "Anlatım",
     "forum": "Forum",
     "analysis": "AI Analiz",
     "trivia": "İlginç"
+  },
+  "commentary": {
+    "title": "Maç Anlatımı",
+    "filtersLabel": "Anlatım filtresi",
+    "filters": { "all": "Tümü", "goals": "Goller", "cards": "Kartlar", "shots": "Şutlar", "substitutions": "Değişiklikler", "important": "Önemli" },
+    "kinds": { "goal": "Gol", "card": "Kart", "redCard": "Kırmızı kart", "shot": "Şut", "corner": "Korner", "offside": "Ofsayt", "substitution": "Oyuncu değişikliği", "var": "VAR", "update": "Bilgi", "other": "Olay" },
+    "minuteSuffix": ". dakika",
+    "liveNote": "Canlı · dakikada bir yenilenir",
+    "pre": "Anlatım maç başlayınca burada akacak.",
+    "empty": "Bu maç için anlatım yok.",
+    "emptyFilter": "Bu filtrede satır yok.",
+    "scene": { "note": "Temsili canlandırma – gerçek konumlar değil", "play": "Sahneyi oynat" }
   },
   "news": {
     "loading": "Haberler yükleniyor...",
@@ -392,6 +405,14 @@
       "mistaken_identity": "Yanlış oyuncu düzeltildi",
       "offside": "Ofsayt"
     }
+  },
+  "momentum": {
+    "title": "Maç baskısı",
+    "aria": "Dakika dakika baskı grafiği: {{home}} üstte, {{away}} altta",
+    "pressure": "{{team}} baskısı",
+    "balanced": "Dengeli",
+    "goal": "Gol",
+    "redCard": "Kırmızı kart"
   },
   "person": {
     "refereeRole": "Hakem",

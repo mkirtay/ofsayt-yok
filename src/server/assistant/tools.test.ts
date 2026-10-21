@@ -1,16 +1,60 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const h = vi.hoisted(() => ({ card: null as unknown, calls: [] as string[] }));
+const h = vi.hoisted(() => ({ card: null as unknown, calls: [] as string[], finished: null as unknown }));
 
 vi.mock('@/services/liveScoreService', () => ({
   getAllLiveMatches: vi.fn(async () => []),
   getCompetitionTableFull: vi.fn(async () => ({ table: [{ rank: 1, team: { id: 34, name: 'Galatasaray' }, matches: 6, won: 4, drawn: 1, lost: 1, goal_diff: 3, points: 13 }] })),
   getTopScorers: vi.fn(async () => ({ topscorers: [{ goals: 6, assists: 2, played: 4, player: { name: 'Victor Osimhen ' }, team: { name: 'Galatasaray' } }, { goals: 0, assists: 5, player: { name: 'Pasör' }, team: { name: 'X' } }] })),
-  lookupSportmonksFixture: vi.fn(async (id: string) => ({ kind: 'found', match: { id: Number(id), ...(id === '1' ? { tv_stations: ['beIN Sports 1'] } : {}) }, events: [] })),
+  lookupSportmonksFixture: vi.fn(async (id: string) => (id === '77' ? h.finished : { kind: 'found', match: { id: Number(id), status: 'NOT STARTED', ...(id === '1' ? { tv_stations: ['beIN Sports 1'] } : {}) }, events: [] })),
+  getTeamsHead2Head: vi.fn(async (a: string, b: string) => {
+    h.calls.push(`h2h:${a}:${b}`);
+    const row = (date: string, home: string, away: string, score: string) => ({ id: date, date, home_name: home, away_name: away, score });
+    return {
+      team1: { id: a, name: 'Galatasaray' },
+      team2: { id: b, name: 'Fenerbahçe' },
+      h2h: [
+        row('2026-04-01', 'Galatasaray', 'Fenerbahçe', '2-1'),
+        row('2025-12-01', 'Fenerbahçe', 'Galatasaray', '0-0'),
+        row('2025-09-01', 'Fenerbahçe', 'Galatasaray', '3-1'),
+        row('2025-04-01', 'Galatasaray', 'Fenerbahçe', '1-0'),
+        row('2024-12-01', 'Fenerbahçe', 'Galatasaray', '1-2'),
+        row('2024-09-01', 'Galatasaray', 'Fenerbahçe', '4-4'), // 6. maç: limit dışı
+        { id: 'x', date: '2026-11-01', home_name: 'Galatasaray', away_name: 'Fenerbahçe' }, // oynanmamış
+      ],
+    };
+  }),
+}));
+vi.mock('@/services/sportmonksRuntimeClient', () => ({
+  sportmonksClientRequest: vi.fn(async (_base: string, path: string) => {
+    h.calls.push(`req:${path}`);
+    return { data: path.toLowerCase().includes('icardi') ? [{ id: 5, display_name: 'Icardi Junior' }, { id: 9, display_name: 'Mauro Icardi', common_name: 'Icardi\u00a0' }] : [] };
+  }),
+}));
+vi.mock('@/services/playerProfile', () => ({
+  getPlayerProfile: vi.fn(async (id: number) => {
+    h.calls.push(`player:${id}`);
+    const row = (seasonName: string, leagueName: string, stats: Record<number, unknown>) => ({ key: leagueName, isCup: false, seasonId: 1, seasonName, leagueName, teamId: 34, teamName: 'Galatasaray', stats });
+    return {
+      id,
+      name: 'Mauro Icardi\u00a0',
+      position: 'Attacker',
+      detailedPosition: 'Centre Forward',
+      currentTeam: { id: 34, name: 'Galatasaray' },
+      seasons: [
+        row('2026/2027', 'Süper Lig', { 321: { total: 8 }, 52: { total: 5, goals: 4, penalties: 1 } }),
+        row('2026/2027', 'Champions League', { 321: { total: 3 }, 79: { total: 2 } }),
+        row('2026/2027', 'Türkiye Kupası', { 119: { total: 12 } }), // maç sayısı yok → atlanır
+        row('2025/2026', 'Süper Lig', { 321: { total: 30 }, 52: { total: 20 } }), // geçen sezon → modele gitmez
+      ],
+      transfers: [],
+    };
+  }),
 }));
 const fixture = { id: 1, home: { id: 34, name: 'Galatasaray' }, away: { id: 1071, name: 'Kasımpaşa' }, status: 'NOT STARTED', date: '2026-10-09', scheduled: '17:00', competition: { id: 600, name: 'Süper Lig' } };
+const played = { ...fixture, id: 77, away: { id: 286, name: 'Gençlerbirliği' }, status: 'FINISHED', kickoff_ts: Date.parse('2026-10-17T13:00:00Z') };
 vi.mock('@/services/teamPage', () => ({
-  getTeamOverview: vi.fn(async () => ({ team: { id: 34, name: 'Galatasaray' }, recent: [], fixtures: [fixture, { ...fixture, id: 9, competition: { id: 2, name: 'Şampiyonlar Ligi' } }, { ...fixture, id: 10 }], campaigns: [] })),
+  getTeamOverview: vi.fn(async () => ({ team: { id: 34, name: 'Galatasaray' }, recent: [played], fixtures: [fixture, { ...fixture, id: 9, competition: { id: 2, name: 'Şampiyonlar Ligi' } }, { ...fixture, id: 10 }], campaigns: [] })),
 }));
 vi.mock('@/services/sportmonks/teamOverview', () => ({ teamForm: () => [] }));
 vi.mock('@/server/homeDay', () => ({
@@ -27,8 +71,9 @@ vi.mock('@/server/homeDay', () => ({
   }),
 }));
 vi.mock('@/server/analysisTeamAbsences', () => ({ getTeamAbsences: vi.fn(async () => null) }));
-vi.mock('./matchAnalysisRequest', () => ({
-  resolveTeam: vi.fn(async (q: string) => (q === 'GS' ? [{ id: 34, name: 'Galatasaray' }] : [])),
+vi.mock('./matchAnalysisRequest', async (orig) => ({
+  pickFixtures: (await orig<typeof import('./matchAnalysisRequest')>()).pickFixtures,
+  resolveTeam: vi.fn(async (q: string) => ({ GS: [{ id: 34, name: 'Galatasaray' }], FB: [{ id: 88, name: 'Fenerbahçe' }], 'Gençlerbirliği': [{ id: 286, name: 'Gençlerbirliği' }] })[q] ?? []),
   analysisCardForTeams: vi.fn(async (viewer: unknown) => {
     h.calls.push(`viewer:${viewer == null ? 'none' : (viewer as { id: string }).id}`);
     return h.card;
@@ -48,10 +93,15 @@ describe('asistan araçları', () => {
   beforeEach(() => {
     h.calls = [];
     h.card = null;
+    h.finished = null;
   });
 
-  it('v2.0 araç seti; tanımlar katı şemalı ve bahis terimsiz; lig listesi plan liglerinden', () => {
-    expect(Object.keys(ASSISTANT_TOOLS)).toEqual(['find_team', 'get_fixtures', 'get_live_scores', 'get_standings', 'get_top_scorers', 'get_team_overview', 'get_match_analysis', 'get_rules', 'get_site_help']);
+  it('v2.1 araç seti; tanımlar katı şemalı ve bahis terimsiz; lig listesi plan liglerinden', () => {
+    expect(Object.keys(ASSISTANT_TOOLS)).toEqual(['find_team', 'get_fixtures', 'get_live_scores', 'get_standings', 'get_top_scorers', 'get_team_overview', 'get_match_analysis', 'get_head_to_head', 'get_player', 'get_match_detail', 'get_rules', 'get_site_help']);
+    // Lig listesi sitenin lig tablosundan türetilir (34 lig, lig sekmeleriyle aynı adlar).
+    expect(Object.keys(ASSISTANT_LEAGUES).map(Number).sort()).toEqual([...PLAN_SPORTMONKS_LEAGUE_IDS].sort());
+    expect(ASSISTANT_LEAGUES[600]).toBe('Süper Lig');
+    expect(ASSISTANT_LEAGUES[1283]).toBe('2. Lig Kırmızı');
     for (const def of openAiToolDefinitions()) expect((def.function.parameters as { additionalProperties: boolean }).additionalProperties).toBe(false);
     expect(findGamblingTerms(JSON.stringify(openAiToolDefinitions()))).toEqual([]);
     for (const id of Object.keys(ASSISTANT_LEAGUES)) expect(PLAN_SPORTMONKS_LEAGUE_IDS, id).toContain(Number(id));
@@ -168,5 +218,75 @@ describe('asistan araçları', () => {
       expect(findGamblingTerms(data)).toEqual([]);
       expect(data, topic).not.toMatch(/premium/i); // premium satışı kapalı; eski konu adı genel yardıma düşer
     }
+  });
+
+  it('get_head_to_head: ad ya da id; son 5 oynanmış karşılaşma, G/B/M ve goller team_a açısından; karşılaştırma linki', async () => {
+    const r = await run('get_head_to_head', { team_a: 'GS', team_b: 'FB' });
+    expect(h.calls).toEqual(['h2h:34:88']);
+    expect(r.data).toMatchObject({ team_a: 'Galatasaray', team_b: 'Fenerbahçe', last_meetings: 5, team_a_wins: 3, draws: 1, team_b_wins: 1, goals_team_a: 6, goals_team_b: 5 });
+    const rows = (r.data as { matches_newest_first: Array<{ date: string; score: string }> }).matches_newest_first;
+    expect(rows.map((x) => x.date)).toEqual(['2026-04-01', '2025-12-01', '2025-09-01', '2025-04-01', '2024-12-01']);
+    expect(r.links).toEqual([{ label: 'Galatasaray – Fenerbahçe karşılaştırma', href: '/compare/34-vs-88' }]);
+    expect((await run('get_head_to_head', { team_a: '34', team_b: 88 })).ok).toBe(true);
+    expect(h.calls.at(-1)).toBe('h2h:34:88');
+    expect((await run('get_head_to_head', { team_a: 'Bilinmez', team_b: 'FB' })).data).toEqual({ note: 'team_not_found', missing: 'team_a' });
+    expect((await run('get_head_to_head', { team_a: 34, team_b: 34 })).ok).toBe(false);
+  });
+
+  it('get_player: arama tek istek, tam ad öne; yalnız bu sezon (maç sayısı olan satırlar), sıfır gol/asist 0; NBSP kırpılır; kapsam notu', async () => {
+    const r = await run('get_player', { query: 'Icardi' });
+    expect(h.calls).toEqual(['req:/players/search/Icardi', 'player:9']);
+    expect(r.data).toMatchObject({
+      player_id: 9,
+      name: 'Mauro Icardi',
+      team: 'Galatasaray',
+      position: 'Centre Forward',
+      season: '2026/2027',
+      season_stats: [
+        { competition: 'Süper Lig', apps: 8, goals: 5, assists: 0 },
+        { competition: 'Champions League', apps: 3, goals: 0, assists: 2 },
+      ],
+      other_matches: [{ player_id: 5, name: 'Icardi Junior' }],
+    });
+    expect((r.data as { season_stats: unknown[] }).season_stats).toHaveLength(2);
+    expect((r.data as { coverage_note: string }).coverage_note).toMatch(/Kariyer/);
+    expect(r.links).toEqual([{ label: 'Mauro Icardi', href: '/players/9' }]);
+    h.calls = [];
+    await run('get_player', { player_id: 455805 });
+    expect(h.calls).toEqual(['player:455805']);
+    expect((await run('get_player', { query: 'zzzz' })).data).toEqual({ players: [], note: 'not_found' });
+    expect((await run('get_player', { query: 'ab' })).ok).toBe(false);
+  });
+
+  it('get_match_detail: takım adlarıyla son oynanmış maç bulunur; kart SAYISI istatistikten (TD kartı olaydan sayılmaz), goller olaylardan', async () => {
+    const ev = (id: number, event: string, time: number, name: string, home: boolean, playerId = id) => ({ id, player: { id: playerId, name }, time, event, sort: time, info: null, is_home: home, is_away: !home });
+    h.finished = {
+      kind: 'found',
+      match: { ...played, scores: { score: '0 - 1', ht_score: '0 - 0' }, home: { id: 286, name: 'Gençlerbirliği' }, away: { id: 34, name: 'Galatasaray' } },
+      events: [
+        ev(1, 'GOAL', 88, 'İrfan Can Eğribayat ', false),
+        ev(2, 'RED_CARD', 90, 'Teknik Direktör', true, 0), // TD kartı: player_id yok
+        ev(3, 'YELLOW_RED_CARD', 70, 'Oyuncu A', true),
+        ev(4, 'SUBSTITUTION', 60, 'Oyuncu B', true),
+      ],
+      stats: { possesion: '41:59', red_cards: '1:0', yellow_cards: '3:2', attempts_on_goal: '8:15', corners: '2:7' },
+    };
+    const r = await run('get_match_detail', { home_team: 'Gençlerbirliği', away_team: 'GS' });
+    expect(r.data).toMatchObject({
+      match_id: 77,
+      score: '0 - 1',
+      ht_score: '0 - 0',
+      status: 'FINISHED',
+      goals: [{ minute: 88, player: 'İrfan Can Eğribayat', team: 'away' }],
+      red_card_players: [{ minute: 70, player: 'Oyuncu A', team: 'home', second_yellow: true }],
+      stats_home_away: { possession_pct: [41, 59], red_cards: [1, 0], yellow_cards: [3, 2], shots: [8, 15], corners: [2, 7] },
+    });
+    expect(r.card).toMatchObject({ type: 'matches', matches: [{ id: 77 }] });
+    expect(r.links?.[0]?.href).toMatch(/^\/matches\/77-/);
+    // Tarih süzgeci: o gün maç yoksa bulunamadı.
+    expect((await run('get_match_detail', { home_team: 'Gençlerbirliği', away_team: 'GS', date: '2026-10-01' })).data).toMatchObject({ note: 'match_not_found_in_recent_or_upcoming' });
+    // match_id doğrudan; oynanmamış maçta yalnız saat + not.
+    expect((await run('get_match_detail', { match_id: 1 })).data).toMatchObject({ match_id: 1, note: 'not_started' });
+    expect((await run('get_match_detail', {})).ok).toBe(false);
   });
 });

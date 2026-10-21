@@ -9,6 +9,7 @@ import Lineup from '@/components/Lineup';
 import type { Head2HeadData } from '@/services/liveScoreService';
 import type { AnalysisPreview } from '@/utils/analysisPreview';
 import MatchStats from '@/components/MatchStats';
+import MatchMomentum from '@/components/MatchMomentum';
 import MatchTabs, { type MatchTabItem } from '@/components/MatchTabs';
 import MatchTrivia from '@/components/MatchTrivia';
 import MatchAnalysis from '@/components/MatchAnalysis';
@@ -24,6 +25,8 @@ import styles from './matchDetailContent.module.scss';
 
 // Yalnız oyundaki maçlarda çizilir → ayrı parça (diğer maç sayfalarının paketine eklenmez).
 const MatchGameCard = dynamic(() => import('@/components/Game/MatchGameCard'));
+// Anlatım sekmesi açılınca yüklenir (ilk HTML/JS'e girmez); veri de sekmeden istenir.
+const MatchCommentary = dynamic(() => import('@/components/MatchCommentary'));
 
 type Props = {
   detail: MatchDetailState;
@@ -40,9 +43,9 @@ type Props = {
 };
 
 /** Maç detayının DÜZ sekmeleri — sıra = görünüm sırası, alt sekme yok. */
-export type MatchTabKey = 'overview' | 'forum' | 'analysis' | 'trivia';
+export type MatchTabKey = 'overview' | 'commentary' | 'forum' | 'analysis' | 'trivia';
 
-export const MATCH_TAB_KEYS: readonly MatchTabKey[] = ['overview', 'forum', 'analysis', 'trivia'];
+export const MATCH_TAB_KEYS: readonly MatchTabKey[] = ['overview', 'commentary', 'forum', 'analysis', 'trivia'];
 
 const PRERENDER_ANALYSIS: readonly MatchTabKey[] = ['analysis'];
 
@@ -52,8 +55,8 @@ export const DEFAULT_MATCH_TAB: MatchTabKey = 'overview';
 export { tabFromSearch } from './tabDeepLink';
 
 /**
- * Maç detayının ANA içeriği — sayfa ve split-view paneli AYNI IA: kart + dört eşit sekme
- * (Genel Bakış | Forum | AI Analiz | Trivia). "Genel Bakış" = Maç İstatistikleri → Maç Olayları → İlk 11.
+ * Maç detayının ANA içeriği — sayfa ve split-view paneli AYNI IA: kart + beş eşit sekme
+ * (Genel Bakış | Anlatım | Forum | AI Analiz | Trivia). "Genel Bakış" = Maç İstatistikleri → Maç Olayları → İlk 11.
  * `/matches/[slug]` sayfası ile split-view paneli aynı bileşeni kullanır; yükleme
  * durumlarında alt bileşenler kendi iskeletlerini (skeleton) gösterir.
  */
@@ -88,6 +91,7 @@ export default function MatchDetailContent({ detail, requestedMatchId, variant =
         label: t('tabs.overview'),
         render: () => (
           <>
+            <MatchMomentum matchId={effectiveMatchId} match={match} events={detail.events} />
             <div
               className={[
                 styles.statsEventsRow,
@@ -127,6 +131,11 @@ export default function MatchDetailContent({ detail, requestedMatchId, variant =
             />
           </>
         ),
+      },
+      {
+        key: 'commentary',
+        label: t('tabs.commentary'),
+        render: () => (effectiveMatchId ? <MatchCommentary key={effectiveMatchId} matchId={effectiveMatchId} match={match} /> : null),
       },
       {
         key: 'forum',

@@ -22,6 +22,8 @@ const DAY_MS = DAY * 1000;
 export const LIVE_TTL = 20;
 /** Canlı puan durumu katmanı (bkz. services/liveStandings.ts). */
 export const LIVE_STANDINGS_TTL = 45;
+/** Canlı maç anlatımı (`fixtures/{id}?include=comments…`). */
+export const COMMENTARY_LIVE_TTL = 60;
 /** Bitmiş sezonun verisi (program, takım/oyuncu sezon istatistikleri) değişmez: CDN ve Redis'te 30 gün. */
 export const FINISHED_SEASON_TTL = 30 * DAY;
 export const ACTIVE_LIST_TTL = 30;
@@ -210,7 +212,9 @@ export function sportmonksCacheTtl(
       if (a && /^\d+$/.test(a)) {
         if (data == null || typeof data !== 'object' || Array.isArray(data)) return withStale(NOT_FOUND_TTL, NOT_FOUND_TTL);
         const f = data as FixtureLike;
-        if (isLive(f)) return withStale(LIVE_TTL, DAY);
+        // Anlatım (`include=comments…`, maç sayfası Anlatım sekmesi): canlıda 60 sn yeter — açık sekme başına değil maç başına
+        // dakikada ≤ 1 istek; skor/olay gibi saniye hassasiyeti yok.
+        if (isLive(f)) return withStale(String(query.include ?? '').startsWith('comments') ? COMMENTARY_LIVE_TTL : LIVE_TTL, DAY);
         if (isNotStarted(f)) return withStale(fixtureListFreshSeconds([f], 10 * MIN, now), DAY);
         const k = kickoffMs(f);
         // Yeni biten maç (başlamadan sonraki 5 sa ≈ bitişten sonraki 3 sa): Sportmonks istatistik ve oyuncu puanlarını

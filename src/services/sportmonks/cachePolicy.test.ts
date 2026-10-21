@@ -102,6 +102,15 @@ describe('sportmonksCacheTtl — TTL tablosu', () => {
     expect(sportmonksCacheTtl('football/fixtures/19999999', undefined, NOW)).toEqual({ fresh: 3600, stale: 3600 });
   });
 
+  it('maç anlatımı (include=comments…): canlıda 60 sn; bitmiş maçta tekil maç kuralı (1 günden eski 7 gün)', () => {
+    const q = { include: 'comments:comment,minute', select: 'state_id' };
+    expect(sportmonksCacheTtl('football/fixtures/19746594', { state_id: LIVE_1ST, starting_at: at(-20) }, NOW, q).fresh).toBe(60);
+    expect(sportmonksCacheTtl('football/fixtures/19746594', { state_id: HT, starting_at: at(-50) }, NOW, q).fresh).toBe(60);
+    expect(sportmonksCacheTtl('football/fixtures/19746594', { state_id: FT, starting_at: at(-25 * 60) }, NOW, q).fresh).toBe(7 * 86400);
+    // Diğer tekil maç istekleri canlıda 20 sn kalır.
+    expect(sportmonksCacheTtl('football/fixtures/19746594', { state_id: LIVE_1ST, starting_at: at(-20) }, NOW, { include: 'events' }).fresh).toBe(20);
+  });
+
   it('puan durumu 10 dk, gol krallığı 30 dk, takım/kadro/oyuncu 6 sa, lig/sezon/type 24 sa', () => {
     expect(sportmonksCacheTtl('football/standings/seasons/28203', [], NOW).fresh).toBe(600);
     // Canlı puan durumu katmanı (ayrı LiveStanding havuzu): 45 sn taze, 10 dk eski kopya (429/5xx'te)
