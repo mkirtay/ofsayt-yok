@@ -1,0 +1,31 @@
+{
+  "title": "Today on {{brand}}",
+  "metaTitle": "Today on {{brand}} – the day's top matches",
+  "metaDescription": "The day's top matches: Turkish clubs in Europe, Süper Lig, Champions League and the big five leagues. Kick-off times, live scores and match analysis.",
+  "todayHeading": "Today's top matches",
+  "tomorrowHeading": "Tomorrow",
+  "tomorrowNote": "No top matches today; here's tomorrow:",
+  "empty": "No top matches today or tomorrow. See the home page for all matches.",
+  "allMatches": "All matches",
+  "cta": "Match analysis",
+  "ctaLabel": "{{home}} – {{away}} match analysis",
+  "live": "Live",
+  "halfTime": "HT",
+  "fullTime": "FT",
+  "tv": "TV",
+  "tier": {
+    "turkishInEurope": "Turkish club in Europe",
+    "derby": "Derby",
+    "superLig": "Süper Lig",
+    "championsLeague": "Champions League",
+    "bigFive": "Big five leagues"
+  },
+  "moreHeading": "Explore {{brand}}",
+  "links": {
+    "frikik": { "title": "Free Kick of the Day", "desc": "Take today's free kick and climb the leaderboard." },
+    "game": { "title": "{{game}}", "desc": "Predict this week's matches and climb the league." },
+    "gundem": { "title": "Gündem", "desc": "Post-match talk and fan comments." },
+    "aiStats": { "title": "AI statistics", "desc": "How accurate were the AI predictions?" }
+  },
+  "socialLabel": "Our social media accounts"
+}

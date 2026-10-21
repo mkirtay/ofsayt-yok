@@ -1,0 +1,31 @@
+{
+  "title": "Bugün {{brand}}'te",
+  "metaTitle": "Bugün {{brand}}'te – günün öne çıkan maçları",
+  "metaDescription": "Günün öne çıkan maçları: Avrupa'da Türk takımları, Süper Lig, Şampiyonlar Ligi ve büyük 5 lig. Saatler, canlı skor ve maç analizleri.",
+  "todayHeading": "Bugünün öne çıkan maçları",
+  "tomorrowHeading": "Yarın",
+  "tomorrowNote": "Bugün öne çıkan maç yok; yarının maçları:",
+  "empty": "Bugün ve yarın öne çıkan maç yok. Tüm maçlar için ana sayfaya göz at.",
+  "allMatches": "Tüm maçlar",
+  "cta": "Maç analizi",
+  "ctaLabel": "{{home}} – {{away}} maç analizi",
+  "live": "Canlı",
+  "halfTime": "İY",
+  "fullTime": "MS",
+  "tv": "Yayın",
+  "tier": {
+    "turkishInEurope": "Avrupa'da Türk takımı",
+    "derby": "Derbi",
+    "superLig": "Süper Lig",
+    "championsLeague": "Şampiyonlar Ligi",
+    "bigFive": "Büyük 5 lig"
+  },
+  "moreHeading": "{{brand}}'te keşfet",
+  "links": {
+    "frikik": { "title": "Günün Frikiği", "desc": "Günün frikiğini at, skor tablosuna gir." },
+    "game": { "title": "{{game}}", "desc": "Haftanın maçlarını tahmin et, ligde yüksel." },
+    "gundem": { "title": "Gündem", "desc": "Maç sonrası konuşulanlar, taraftar yorumları." },
+    "aiStats": { "title": "AI istatistikleri", "desc": "Yapay zekâ tahminleri ne kadar tuttu?" }
+  },
+  "socialLabel": "Sosyal medya hesaplarımız"
+}

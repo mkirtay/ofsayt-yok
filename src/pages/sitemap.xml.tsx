@@ -8,6 +8,7 @@ const BASE_URL = siteBaseUrl();
 
 const STATIC_ROUTES: { path: string; priority: string; changefreq: string }[] = [
   { path: '/', priority: '1.0', changefreq: 'hourly' },
+  { path: '/bugun', priority: '0.7', changefreq: 'hourly' },
   { path: '/standings', priority: '0.8', changefreq: 'daily' },
   { path: '/compare', priority: '0.6', changefreq: 'weekly' },
   { path: '/pricing', priority: '0.7', changefreq: 'monthly' },
