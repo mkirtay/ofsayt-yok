@@ -288,6 +288,11 @@ export function sportmonksCacheTtl(
       // değişmez → 12 sa. Ligin listesi yok ("No result") → 6 sa (desteklemeyen lig her ziyarette sorulmasın).
       return data == null || (Array.isArray(data) && data.length === 0) ? withStale(6 * HOUR, DAY) : withStale(12 * HOUR, 7 * DAY);
 
+    case 'transfers':
+      // Takım transferleri (takım sayfası Transferler sekmesi, bkz. server/teamTransfers.ts): dönem dışında nadiren değişir →
+      // 12 sa, eski kopya 2 gün (429 / 5xx'te sunulur).
+      return data == null ? withStale(NOT_FOUND_TTL, NOT_FOUND_TTL) : withStale(12 * HOUR, 2 * DAY);
+
     case 'players':
     case 'venues':
       return data == null ? withStale(NOT_FOUND_TTL, NOT_FOUND_TTL) : withStale(6 * HOUR, DAY);

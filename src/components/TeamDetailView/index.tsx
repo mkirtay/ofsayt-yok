@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any -- Kadro / puan API gevşek şema */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Head from 'next/head';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useQueries, useQuery } from '@tanstack/react-query';
@@ -56,7 +57,7 @@ import SeasonProfileCard from './SeasonProfileCard';
 import SidelinedCard from './SidelinedCard';
 import { mapTeamSidelined } from '@/services/sportmonks/teamSidelined';
 import { useInViewOnce } from '@/hooks/useInViewOnce';
-import { getTeamExtendedSquad, getTeamSeasonMatches, getTeamSeasonScorers, getTeamSeasonStats } from '@/services/teamPage';
+import { getTeamExtendedSquad, getTeamSeasonMatches, getTeamSeasonScorers, getTeamSeasonStats, getTeamTransfers } from '@/services/teamPage';
 import { mapTeamLoans } from '@/services/sportmonks/teamLoans';
 import LoanedPlayers from './LoanedPlayers';
 import { combineSeasonStats } from '@/services/sportmonks/teamSeasonStats';
@@ -69,6 +70,8 @@ import { brandTitle } from '@/config/brand';
 
 // Kadro sekmesi yüklenirken (tıklamadan sonra): sahne ve CSS'i ayrı parçada. Kutu (yükseklik) burada.
 const loadFormationLoading = () => import('@/components/PitchScenes/FormationLoading');
+// Transferler sekmesi açılınca yüklenir (ilk JS'e girmez).
+const TeamTransfers = dynamic(() => import('./TeamTransfers'));
 
 
 /* ─── Helpers ─── */
@@ -183,7 +186,7 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
   const { t: tl } = useTranslation('leagues');
   const { locale } = useI18n();
 
-  const [activeTab, setActiveTab] = useState<'matches' | 'fixtures' | 'squad'>('matches');
+  const [activeTab, setActiveTab] = useState<'matches' | 'fixtures' | 'squad' | 'transfers'>('matches');
   const [compareOpen, setCompareOpen] = useState(false);
   const [table, setTable] = useState<CompetitionTableData | null>(null);
   const [seasons, setSeasons] = useState<SeasonListItem[]>([]);
@@ -320,6 +323,13 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
     queryKey: ['team-loans', teamId] as const,
     queryFn: () => getTeamExtendedSquad(teamId),
     enabled: activeTab === 'squad' && Boolean(teamId),
+    staleTime: 60 * 60_000,
+  });
+  // Transferler: sekme açılınca kendi ucumuzdan (sunucuda süzülmüş, 12 sa SWR); hata ≠ "transfer yok".
+  const transfersQuery = useQuery({
+    queryKey: ['team-transfers', teamId] as const,
+    queryFn: () => getTeamTransfers(teamId),
+    enabled: activeTab === 'transfers' && Boolean(teamId),
     staleTime: 60 * 60_000,
   });
   const loanedPlayers = useMemo(
@@ -632,6 +642,13 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
             >
               {t('tabs.squad')}
             </button>
+            <button
+              type="button"
+              className={`${styles.tab} ${activeTab === 'transfers' ? styles.activeTab : ''}`}
+              onClick={() => setActiveTab('transfers')}
+            >
+              {t('tabs.transfers')}
+            </button>
           </div>
 
           <div className={styles.tabContent}>
@@ -785,6 +802,14 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
                 <LoanedPlayers players={loanedPlayers} error={loansQuery.isError} onRetry={() => void loansQuery.refetch()} />
               </div>
               )
+            )}
+            {activeTab === 'transfers' && (
+              <TeamTransfers
+                data={transfersQuery.data ?? null}
+                loading={transfersQuery.isFetching}
+                error={transfersQuery.isError}
+                onRetry={() => void transfersQuery.refetch()}
+              />
             )}
           </div>
           </div>

@@ -30,6 +30,7 @@ import {
 import type { SportmonksSquadStatsRow } from './sportmonks/types';
 import type { SportmonksSidelinedRow } from './sportmonks/teamSidelined';
 import { TEAM_LOANS_INCLUDE, type SportmonksExtendedSquadRow } from './sportmonks/teamLoans';
+import type { TeamTransfers } from './sportmonks/teamTransfers';
 
 /** Son Maçlar + Fikstür + başlık (form, sıradaki maç) — tek `teams/{id}` isteği. Hata fırlatır (react-query yeniden dener). */
 export async function getTeamOverview(teamId: string): Promise<TeamOverview> {
@@ -107,4 +108,15 @@ export async function getTeamSeasonMatches(teamId: string, seasons: TeamSeasonRe
   const ok = results.filter((r): r is PromiseFulfilledResult<TeamMatch[]> => r.status === 'fulfilled');
   if (ok.length === 0 && results.length > 0) throw (results[0] as PromiseRejectedResult).reason;
   return mergeSeasonMatches(ok.map((r) => r.value));
+}
+
+/**
+ * Transferler sekmesi: kendi ucumuz (`/api/teams/{id}/transfers`, sunucuda süzülmüş + SWR). Hata FIRLATIR (503 / ağ) —
+ * react-query yeniden dener, sonra sekme "yüklenemedi · tekrar dene" gösterir (boş liste yalnız gerçekten transfer yoksa).
+ */
+export async function getTeamTransfers(teamId: string): Promise<TeamTransfers> {
+  const res = await fetch(`/api/teams/${encodeURIComponent(teamId)}/transfers`);
+  if (!res.ok) throw new Error(`team-transfers ${res.status}`);
+  const body = (await res.json()) as Partial<TeamTransfers>;
+  return { incoming: body.incoming ?? [], outgoing: body.outgoing ?? [] };
 }

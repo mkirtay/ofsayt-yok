@@ -1,0 +1,121 @@
+@use '../../styles/variables' as *;
+
+// Transferler sekmesi: kadro satırıyla aynı kutu (squadPlayer), sütunlar oyuncu | kulüp | tür + tarih/bedel.
+.wrap {
+  display: flex;
+  flex-direction: column;
+}
+
+.scope {
+  margin: 0 0 $spacing-3;
+  font-size: 12px;
+  color: $color-text-secondary;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-1;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) 96px;
+  align-items: center;
+  column-gap: $spacing-2;
+  min-height: 44px; // dokunma hedefi
+
+  @container (min-width: 520px) {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 132px;
+  }
+}
+
+.head {
+  min-height: 0;
+  padding: 0 $spacing-2 $spacing-1;
+  font-size: 11px;
+  font-weight: 700;
+  color: $color-text-secondary;
+}
+
+.club {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.clubLogo {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.clubName {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 12px;
+}
+
+.metaCol {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  text-align: right;
+  min-width: 0;
+}
+
+.kind {
+  display: inline-block;
+  padding: 1px 6px;
+  border-radius: $radius-full;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.4;
+  white-space: nowrap;
+  background: $color-muted;
+  color: $color-text;
+}
+
+.kind_permanent {
+  background: var(--bg-row-highlight);
+  color: $color-primary-text;
+}
+
+.sub {
+  font-size: 11px;
+  color: $color-text-secondary;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.fee {
+  font-weight: 700;
+  color: $color-text;
+}
+
+.sectionEmpty,
+.loading {
+  margin: 0;
+  font-size: 13px;
+  color: $color-text-secondary;
+}
+
+.loading {
+  min-height: 120px;
+  padding: $spacing-4 0;
+  text-align: center;
+}
+
+.source {
+  margin: $spacing-3 0 0;
+  font-size: 11px;
+  color: $color-text-secondary;
+}
