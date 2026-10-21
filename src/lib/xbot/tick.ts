@@ -19,6 +19,7 @@ import {
 } from '@/config/xBot';
 import { buildGoalDraft } from '@/lib/gundem/bot/goalDraft';
 import { goalKindOf, sortEvents } from '@/lib/gundem/bot/goalStanding';
+import { leagueDisplayName } from '@/lib/gundem/bot/leagueNames';
 import { fetchInplayFixtures, isInplayPoolCoolingDown, isSportmonksRateLimit, startedRecently } from '@/lib/gundem/bot/tick';
 import { captureError } from '@/lib/logger';
 import { withRedis } from '@/lib/redis';
@@ -114,7 +115,8 @@ export function finalFactsOf(m: ResolvedLiveMatch): FinalFacts | null {
     homeName: m.match.home?.name ?? 'Ev Sahibi',
     awayName: m.match.away?.name ?? 'Deplasman',
     score: [Number(score[1]), Number(score[2])],
-    leagueName: m.match.competition?.name || m.match.competition_name || null,
+    // Gol tweet'iyle aynı Türkçe ad ('Şampiyonlar Ligi'); id'ye göre, bilinmeyen lig → API adı.
+    leagueName: leagueDisplayName(m.match.competition?.id ?? m.match.competition_id, m.match.competition?.name || m.match.competition_name),
     goals,
     note,
   };

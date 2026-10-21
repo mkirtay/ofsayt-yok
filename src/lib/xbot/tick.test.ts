@@ -129,7 +129,7 @@ describe('runXTick', () => {
 
   it('maç sonu: inplay\'den düşen maç FINISHED ise skor + görselle bir kez atılır', async () => {
     const resolved = {
-      match: { id: 1, status: 'FINISHED', home: { name: 'LOSC Lille' }, away: { name: 'Galatasaray' }, scores: { score: '2-4' }, competition: { name: 'Şampiyonlar Ligi' } },
+      match: { id: 1, status: 'FINISHED', home: { name: 'LOSC Lille' }, away: { name: 'Galatasaray' }, scores: { score: '2-4' }, competition: { id: 2, name: 'Champions League' } },
       events: [{ id: 1, player: { id: 1, name: 'Yunus Akgün' }, time: 2, event: 'GOAL', sort: 1, info: null, is_home: false, is_away: true }],
     } as never;
     const img = Buffer.from('png');
@@ -138,6 +138,8 @@ describe('runXTick', () => {
     const s = await runXTick(d); // düştü → final
     expect(s.sent).toBe(1);
     expect(post).toHaveBeenCalledWith(expect.stringContaining('Maç sonu: LOSC Lille 2-4 Galatasaray'), img);
+    expect(post.mock.calls[0][0]).toContain('Şampiyonlar Ligi');
+    expect(post.mock.calls[0][0]).not.toContain('Champions League');
     await runXTick(d);
     expect(post).toHaveBeenCalledTimes(1);
   });
