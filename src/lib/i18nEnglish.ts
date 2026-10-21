@@ -23,7 +23,8 @@ import assistant from '../../public/locales/en/assistant.json';
 import moderation from '../../public/locales/en/moderation.json';
 import game from '../../public/locales/en/game.json';
 import roundStats from '../../public/locales/en/roundStats.json';
+import cupBracket from '../../public/locales/en/cupBracket.json';
 
-const EN = { common, nav, auth, credits, match, leagues, player, compare, standings, profile, ai, gundem, team, kuralKosesi, matchState, frikik, assistant, moderation, game, roundStats };
+const EN = { common, nav, auth, credits, match, leagues, player, compare, standings, profile, ai, gundem, team, kuralKosesi, matchState, frikik, assistant, moderation, game, roundStats, cupBracket };
 
 for (const [ns, dict] of Object.entries(EN)) registerNamespace('en', ns, dict);
