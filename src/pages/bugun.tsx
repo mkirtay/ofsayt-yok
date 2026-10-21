@@ -15,7 +15,7 @@ import styles from './bugun.module.scss';
 type Props = {
   /** `null` → build sırasında veri alınamadı: sade boş durum, 60 sn sonra yeniden üretilir. */
   data: TodayLandingData | null;
-  /** Tahmin Ligi herkese açık mı (GAME_ENABLED=public); kapalı / önizlemede bağlantı yok. */
+  /** Tahmin oyunu (GAME_BRAND) herkese açık mı (GAME_ENABLED=public); kapalı / önizlemede bağlantı yok. */
   gamePublic: boolean;
 };
 
