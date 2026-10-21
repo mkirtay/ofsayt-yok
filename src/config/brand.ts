@@ -32,11 +32,12 @@ export const BRAND = {
    * Sosyal hesaplar (kullanıcı adı, "@" olmadan; Facebook'ta sayfa adresinin yolu); boş olanlar hiçbir yerde basılmaz
    * (footer bağlantıları, JSON-LD `sameAs`).
    */
-  social: { instagram: 'getscor3', youtube: 'getscor3', x: 'getscor3', facebook: 'getscor3' } as {
+  social: { instagram: 'getscor3', youtube: 'getscor3', x: 'getscor3', facebook: 'getscor3', tiktok: 'getscor3' } as {
     instagram: string;
     youtube: string;
     x: string;
     facebook: string;
+    tiktok: string;
   },
   tagline: { tr: 'Canlı Skorlar · Maç Analizi · Puan Durumu', en: 'Live Scores · Match Analysis · Standings' },
   description: 'Türkiye ve dünya futbolundan canlı skorlar, maç analizleri, puan durumu ve spor haberleri.',
@@ -95,16 +96,17 @@ export function brandTitle(title: string, sep: '|' | '—' = '|'): string {
   return `${title} ${sep} ${BRAND.name}`;
 }
 
-export type SocialNetwork = 'instagram' | 'youtube' | 'x' | 'facebook';
+export type SocialNetwork = 'instagram' | 'youtube' | 'x' | 'facebook' | 'tiktok';
 
 /** Dolu sosyal hesaplar, gösterim sırasıyla (footer). */
 export function socialProfiles(): { network: SocialNetwork; label: string; url: string }[] {
-  const { instagram, youtube, x, facebook } = BRAND.social;
+  const { instagram, youtube, x, facebook, tiktok } = BRAND.social;
   const all: { network: SocialNetwork; label: string; handle: string; url: string }[] = [
     { network: 'instagram', label: 'Instagram', handle: instagram, url: `https://www.instagram.com/${instagram}` },
     { network: 'youtube', label: 'YouTube', handle: youtube, url: `https://www.youtube.com/@${youtube}` },
     { network: 'x', label: 'X', handle: x, url: `https://x.com/${x}` },
     { network: 'facebook', label: 'Facebook', handle: facebook, url: `https://www.facebook.com/${facebook}` },
+    { network: 'tiktok', label: 'TikTok', handle: tiktok, url: `https://www.tiktok.com/@${tiktok}` },
   ];
   return all.filter((p) => p.handle).map(({ network, label, url }) => ({ network, label, url }));
 }

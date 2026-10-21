@@ -38,12 +38,14 @@ describe('marka yardımcıları', () => {
     expect(socialProfileUrls()).toHaveLength(filled);
   });
 
-  it('sosyal profiller: Instagram / YouTube / X sırası ve adres biçimleri (YouTube @tanıtıcı)', () => {
+  it('sosyal profiller: Instagram / YouTube / X / Facebook / TikTok adres biçimleri (YouTube ve TikTok @tanıtıcı)', () => {
     const urls = socialProfileUrls();
     if (BRAND.social.instagram) expect(urls).toContain(`https://www.instagram.com/${BRAND.social.instagram}`);
     if (BRAND.social.youtube) expect(urls).toContain(`https://www.youtube.com/@${BRAND.social.youtube}`);
     if (BRAND.social.x) expect(urls).toContain(`https://x.com/${BRAND.social.x}`);
-    for (const u of urls) expect(u).toMatch(/^https:\/\/(www\.)?(instagram|youtube|x|facebook)\.com\/@?[\w.]+$/);
+    if (BRAND.social.facebook) expect(urls).toContain(`https://www.facebook.com/${BRAND.social.facebook}`);
+    if (BRAND.social.tiktok) expect(urls).toContain(`https://www.tiktok.com/@${BRAND.social.tiktok}`);
+    for (const u of urls) expect(u).toMatch(/^https:\/\/(www\.)?(instagram|youtube|x|facebook|tiktok)\.com\/@?[\w.]+$/);
   });
 
   it('robots.txt Sitemap satırı verilen kökten', () => {
