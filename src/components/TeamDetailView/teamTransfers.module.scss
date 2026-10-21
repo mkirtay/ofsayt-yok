@@ -21,15 +21,31 @@
   gap: $spacing-1;
 }
 
+// Dar (mobil / panel): oyuncu üstte, karşı kulüp altında (fotoğraf hizasında), tür + tarih sağda. Geniş: üç sütun.
 .row {
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) 96px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'player meta'
+    'club meta';
   align-items: center;
   column-gap: $spacing-2;
+  row-gap: 2px;
   min-height: 44px; // dokunma hedefi
+
+  > :nth-child(1) {
+    grid-area: player;
+  }
+  > :nth-child(2) {
+    grid-area: club;
+  }
+  > :nth-child(3) {
+    grid-area: meta;
+  }
 
   @container (min-width: 520px) {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 132px;
+    grid-template-areas: 'player club meta';
   }
 }
 
@@ -39,6 +55,17 @@
   font-size: 11px;
   font-weight: 700;
   color: $color-text-secondary;
+
+  // Dar ekranda kulüp başlığı ayrı sütun değil (satırın altında).
+  > :nth-child(2) {
+    display: none;
+  }
+
+  @container (min-width: 520px) {
+    > :nth-child(2) {
+      display: block;
+    }
+  }
 }
 
 .club {
@@ -46,6 +73,11 @@
   align-items: center;
   gap: 6px;
   min-width: 0;
+  padding-left: 36px; // fotoğraf (28) + boşluk (8) hizası
+
+  @container (min-width: 520px) {
+    padding-left: 0;
+  }
 }
 
 .clubLogo {
