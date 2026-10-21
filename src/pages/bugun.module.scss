@@ -137,6 +137,24 @@
   text-align: right;
 }
 
+// Dar ekran: logo üstte, ad altta ortalı (uzun adlar kelime ortasından bölünmesin).
+@media (max-width: 559px) {
+  .team {
+    flex-direction: column;
+    gap: 4px;
+    text-align: center;
+  }
+
+  .home {
+    flex-direction: column-reverse;
+    text-align: center;
+  }
+
+  .teamName {
+    font-size: 14px;
+  }
+}
+
 .teamLogo {
   width: 32px;
   height: 32px;
@@ -150,7 +168,7 @@
   font-weight: 700;
   color: $color-text;
   line-height: 1.2;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 
 .time {

@@ -65,7 +65,8 @@ function MatchItem({ m }: { m: TodayLandingMatch }) {
       <div className={styles.matchMeta}>
         {m.competition.logo ? <TeamLogo src={m.competition.logo} alt="" width={16} height={16} className={styles.compLogo} /> : null}
         <span className={styles.compName}>{m.competition.name}</span>
-        <span className={styles.tier}>{t(`tier.${m.tier}`)}</span>
+        {/* Rozet yalnız lig adının söylemediği nedenlerde (Avrupa'da Türk takımı, derbi). */}
+        {m.tier === 'turkishInEurope' || m.tier === 'derby' ? <span className={styles.tier}>{t(`tier.${m.tier}`)}</span> : null}
       </div>
       <div className={styles.teams}>
         <span className={`${styles.team} ${styles.home}`}>
