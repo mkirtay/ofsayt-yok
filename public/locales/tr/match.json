@@ -240,7 +240,8 @@
     "liveNote": "Canlı · dakikada bir yenilenir",
     "pre": "Anlatım maç başlayınca burada akacak.",
     "empty": "Bu maç için anlatım yok.",
-    "emptyFilter": "Bu filtrede satır yok."
+    "emptyFilter": "Bu filtrede satır yok.",
+    "scene": { "note": "Temsili canlandırma – gerçek konumlar değil", "play": "Sahneyi oynat" }
   },
   "news": {
     "loading": "Haberler yükleniyor...",

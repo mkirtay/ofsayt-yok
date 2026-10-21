@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from 'react';
 import { useI18n, useTranslation } from '@/lib/i18n';
 import '@/lib/i18nNamespaces/matchState';
 import { PanelSkeleton } from '@/components/Skeleton';
@@ -6,6 +6,7 @@ import LoadError from '@/components/LoadError';
 import MatchStateNote from '@/components/MatchStateNote';
 import type { Match } from '@/models/liveScore';
 import type { CommentaryItem, CommentaryKind } from '@/services/sportmonks/matchCommentary';
+import type { SceneSquads } from '@/services/sportmonks/commentaryScene';
 import { matchDisplayState, specialKeepsData } from '@/utils/matchDisplayState';
 import styles from './matchCommentary.module.scss';
 
@@ -94,10 +95,14 @@ type ViewProps = {
   filter: CommentaryFilter;
   onFilter: (f: CommentaryFilter) => void;
   locale: string;
+  /** Sahnesi olan satır seçiliyse üstte gösterilen temsili canlandırma (tembel yüklenir; yokken yer tutucu). */
+  scene?: ReactNode;
+  selectedId?: number | null;
+  onSelect?: (item: CommentaryItem) => void;
 };
 
 /** Dolu anlatım: filtre çipleri (sayılarıyla) + satırlar. Saf — durum/veri `MatchCommentary`'de. */
-export function CommentaryView({ items, live, filter, onFilter, locale }: ViewProps) {
+export function CommentaryView({ items, live, filter, onFilter, locale, scene, selectedId, onSelect }: ViewProps) {
   const { t } = useTranslation('match');
   const counts = useMemo(() => {
     const c = {} as Record<CommentaryFilter, number>;
@@ -127,6 +132,7 @@ export function CommentaryView({ items, live, filter, onFilter, locale }: ViewPr
           </button>
         ))}
       </div>
+      {scene}
       {visible.length === 0 ? (
         <p className={styles.empty}>{t('commentary.emptyFilter')}</p>
       ) : (
@@ -135,11 +141,22 @@ export function CommentaryView({ items, live, filter, onFilter, locale }: ViewPr
             const minute = minuteLabel(item);
             const tr = locale === 'tr' ? item.tr : null;
             const kindLabel = item.kind === 'card' && isRed(item) ? t('commentary.kinds.redCard') : t(`commentary.kinds.${item.kind}`);
+            const playable = !!item.scene && !!onSelect;
+            const Row = playable ? 'button' : 'div';
             return (
-              <li
-                key={item.id}
-                className={[styles.row, item.important ? styles.important : '', item.kind === 'goal' ? styles.goal : ''].filter(Boolean).join(' ')}
-              >
+              <li key={item.id} className={styles.rowItem}>
+                <Row
+                  {...(playable ? { type: 'button' as const, onClick: () => onSelect!(item), 'aria-pressed': selectedId === item.id } : {})}
+                  className={[
+                    styles.row,
+                    item.important ? styles.important : '',
+                    item.kind === 'goal' ? styles.goal : '',
+                    playable ? styles.playable : '',
+                    playable && selectedId === item.id ? styles.playing : '',
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
+                >
                 <span className={styles.minute}>
                   {minute ? (
                     <>
@@ -159,6 +176,8 @@ export function CommentaryView({ items, live, filter, onFilter, locale }: ViewPr
                   </span>
                   {tr ? <p className={styles.text}>{tr}</p> : <p className={styles.text} lang="en">{item.en}</p>}
                 </div>
+                {playable ? <span className={styles.playHint}>{t('commentary.scene.play')}</span> : null}
+                </Row>
               </li>
             );
           })}
@@ -169,12 +188,27 @@ export function CommentaryView({ items, live, filter, onFilter, locale }: ViewPr
 }
 
 /** 404 (maç yok) = boş anlatım; diğer başarısız yanıtlar fırlatır (hata ≠ veri yok). */
-async function fetchCommentary(matchId: string, signal?: AbortSignal): Promise<{ items: CommentaryItem[]; live: boolean }> {
+async function fetchCommentary(matchId: string, signal?: AbortSignal): Promise<{ items: CommentaryItem[]; live: boolean; squads: SceneSquads | null }> {
   const res = await fetch(`/api/matches/${encodeURIComponent(matchId)}/commentary`, { signal });
-  if (res.status === 404) return { items: [], live: false };
+  if (res.status === 404) return { items: [], live: false, squads: null };
   if (!res.ok) throw new Error(`commentary ${res.status}`);
-  const body = (await res.json()) as { items?: CommentaryItem[]; live?: boolean };
-  return { items: Array.isArray(body.items) ? body.items : [], live: !!body.live };
+  const body = (await res.json()) as { items?: CommentaryItem[]; live?: boolean; squads?: SceneSquads | null };
+  return { items: Array.isArray(body.items) ? body.items : [], live: !!body.live, squads: body.squads ?? null };
+}
+
+type SceneProps = { item: CommentaryItem; squads: SceneSquads | null };
+
+let sceneLoad: Promise<ComponentType<SceneProps>> | null = null;
+/** Sahne (saha çizimi + animasyonlar) ayrı chunk: yalnız Anlatım sekmesinde, sahnesi olan satır varsa indirilir. */
+function loadScene(): Promise<ComponentType<SceneProps>> {
+  sceneLoad ??= import('./CommentaryScene').then(
+    (mod) => mod.default,
+    (error) => {
+      sceneLoad = null;
+      throw error;
+    },
+  );
+  return sceneLoad;
 }
 
 type Props = {
@@ -198,6 +232,7 @@ export default function MatchCommentary({ matchId, match }: Props) {
   const skip = state?.phase === 'PRE' || !!blockingSpecial;
 
   const [items, setItems] = useState<CommentaryItem[]>([]);
+  const [squads, setSquads] = useState<SceneSquads | null>(null);
   const [live, setLive] = useState(false);
   const [status, setStatus] = useState<Status>('loading');
   const [filter, setFilter] = useState<CommentaryFilter>('all');
@@ -210,6 +245,7 @@ export default function MatchCommentary({ matchId, match }: Props) {
         (data) => {
           hasData.current = true;
           setItems(data.items);
+          setSquads(data.squads);
           setLive(data.live);
           setStatus('ready');
         },
@@ -237,6 +273,33 @@ export default function MatchCommentary({ matchId, match }: Props) {
     }, COMMENTARY_REFRESH_MS);
     return () => window.clearInterval(id);
   }, [skip, live, phaseLive, load]);
+
+  // Sahne: seçili satır yoksa en yeni sahneli satır (canlı maçta kendiliğinden son olayı gösterir).
+  const sceneItems = useMemo(() => items.filter((i) => i.scene), [items]);
+  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [replay, setReplay] = useState(0);
+  const current = useMemo(() => sceneItems.find((i) => i.id === selectedId) ?? sceneItems[0] ?? null, [sceneItems, selectedId]);
+
+  const [Scene, setScene] = useState<ComponentType<SceneProps> | null>(null);
+  useEffect(() => {
+    if (!current || Scene) return;
+    let alive = true;
+    // Sahne yüklenemezse (ağ hatası) anlatım listesi olduğu gibi kalır — sahne süs, veri değil.
+    void loadScene().then(
+      (mod) => {
+        if (alive) setScene(() => mod);
+      },
+      () => {},
+    );
+    return () => {
+      alive = false;
+    };
+  }, [current, Scene]);
+
+  const onSelect = useCallback((item: CommentaryItem) => {
+    setSelectedId(item.id);
+    setReplay((n) => n + 1);
+  }, []);
 
   const title = <h3 className={styles.title}>{t('commentary.title')}</h3>;
 
@@ -279,5 +342,25 @@ export default function MatchCommentary({ matchId, match }: Props) {
     );
   }
 
-  return <CommentaryView items={items} live={live} filter={filter} onFilter={setFilter} locale={locale} />;
+  // Yer tutucu: sahne chunk'ı gelene kadar aynı en-boy oranında kutu durur (kayma yok).
+  const scene = current ? (
+    Scene ? (
+      <Scene key={`${current.id}-${replay}`} item={current} squads={squads} />
+    ) : (
+      <div className={styles.scenePlaceholder} aria-hidden="true" />
+    )
+  ) : null;
+
+  return (
+    <CommentaryView
+      items={items}
+      live={live}
+      filter={filter}
+      onFilter={setFilter}
+      locale={locale}
+      scene={scene}
+      selectedId={current?.id ?? null}
+      onSelect={onSelect}
+    />
+  );
 }

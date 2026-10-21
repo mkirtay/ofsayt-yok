@@ -1,0 +1,236 @@
+@use '../../styles/variables' as *;
+@use '../../styles/motion' as *;
+
+// Temsili anlatım sahnesi — 504×320 çizilir, ScaledScene kutuya ölçekler (kayma yok). Yalnız transform/opacity
+// canlandırılır; animasyonsuz temel stil son kareyi verir (docs/animasyon-referans/README.md, kural 2 ve 4).
+
+.root {
+  margin-bottom: $spacing-3;
+}
+
+.stage {
+  max-width: 100%;
+}
+
+.pitch {
+  @include motion-root;
+  height: 320px;
+}
+
+.lines {
+  position: absolute;
+  inset: 0;
+}
+
+.goal {
+  position: absolute;
+  top: 50%;
+  width: 8px;
+  height: 60px;
+  margin-top: -30px;
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 2px;
+}
+
+.goalL {
+  left: 0;
+}
+
+.goalR {
+  right: 0;
+}
+
+// ─── Oyuncular ───
+
+.dot {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 13px;
+  height: 13px;
+  margin: -6.5px 0 0 -6.5px;
+  border-radius: 50%;
+  transform: translate(calc(var(--x) * 1px), calc(var(--y) * 1px));
+  animation: dotDrift var(--dur) ease-in-out 1 both;
+}
+
+@keyframes dotDrift {
+  0%,
+  100% {
+    transform: translate(calc(var(--x) * 1px), calc(var(--y) * 1px));
+  }
+  55% {
+    transform: translate(calc((var(--x) + var(--dx)) * 1px), calc((var(--y) + var(--dy)) * 1px));
+  }
+}
+
+// Aktör: halka + hafif büyüme. Halka ayrı eleman istemesin diye outline kullanılıyor (yerleşimi etkilemez).
+.actor {
+  outline: 2px solid $color-warning;
+  outline-offset: 2px;
+  z-index: 2;
+}
+
+// Oyuna giren kenardan içeri, çıkan kenara gider; her ikisi de son karede yerinde kalır.
+.comingOn,
+.goingOff {
+  animation-timing-function: ease-out;
+}
+
+.comingOn {
+  opacity: 0.95;
+}
+
+.goingOff {
+  opacity: 0.6;
+}
+
+// ─── Top ───
+
+.ballPath {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 18px;
+  height: 18px;
+  margin: -9px 0 0 -9px;
+  transform: translate(calc(var(--fx) * 1px), calc(var(--fy) * 1px));
+  animation: ballMove var(--dur) ease-out 1 both;
+  z-index: 3;
+}
+
+@keyframes ballMove {
+  0% {
+    transform: translate(calc(var(--x1) * 1px), calc(var(--y1) * 1px));
+  }
+  70% {
+    transform: translate(calc(var(--x2) * 1px), calc(var(--y2) * 1px));
+  }
+  100% {
+    transform: translate(calc(var(--fx) * 1px), calc(var(--fy) * 1px));
+  }
+}
+
+.ballArc {
+  position: absolute;
+  left: 0;
+  top: 0;
+  animation: ballArc var(--dur) ease-in-out 1 both;
+}
+
+@keyframes ballArc {
+  0%,
+  70%,
+  100% {
+    transform: translateY(0);
+  }
+  35% {
+    transform: translateY(calc(var(--arc) * -1px));
+  }
+}
+
+// ─── Etkiler ───
+
+.save,
+.flash,
+.card {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 4;
+}
+
+// Kurtarış: topun durduğu noktada genişleyip sönen halka.
+.save {
+  width: 26px;
+  height: 26px;
+  margin: -13px 0 0 -13px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  transform: translate(calc(var(--x) * 1px), calc(var(--y) * 1px)) scale(1);
+  opacity: 0;
+  animation: savePop var(--dur) ease-out 1 both;
+}
+
+@keyframes savePop {
+  0%,
+  60% {
+    transform: translate(calc(var(--x) * 1px), calc(var(--y) * 1px)) scale(0.4);
+    opacity: 0;
+  }
+  75% {
+    transform: translate(calc(var(--x) * 1px), calc(var(--y) * 1px)) scale(1.15);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(calc(var(--x) * 1px), calc(var(--y) * 1px)) scale(1);
+    opacity: 0.85;
+  }
+}
+
+// Gol: kale ağzında parlama.
+.flash {
+  width: 22px;
+  height: 72px;
+  margin: -36px 0 0 -11px;
+  border-radius: 4px;
+  background: $color-warning;
+  opacity: 0.9;
+  transform: translate(calc(var(--x) * 1px), calc(var(--y) * 1px));
+  animation: goalFlash var(--dur) ease-out 1 both;
+}
+
+@keyframes goalFlash {
+  0%,
+  60% {
+    opacity: 0;
+  }
+  72% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.9;
+  }
+}
+
+// Kart: kartı gören oyuncunun yanında yükselir.
+.card {
+  width: 12px;
+  height: 17px;
+  margin: -26px 0 0 4px;
+  border-radius: 2px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.35);
+  transform: translate(calc(var(--x) * 1px), calc(var(--y) * 1px)) rotate(8deg);
+  animation: cardRise var(--dur) ease-out 1 both;
+}
+
+.cardYellow {
+  background: #f5c400;
+}
+
+.cardRed {
+  background: #e03131;
+}
+
+@keyframes cardRise {
+  0%,
+  30% {
+    transform: translate(calc(var(--x) * 1px), calc(var(--y) * 1px + 14px)) rotate(-6deg);
+    opacity: 0;
+  }
+  55% {
+    transform: translate(calc(var(--x) * 1px), calc(var(--y) * 1px - 4px)) rotate(10deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(calc(var(--x) * 1px), calc(var(--y) * 1px)) rotate(8deg);
+    opacity: 1;
+  }
+}
+
+.note {
+  margin: $spacing-1 0 0;
+  font-size: 11px;
+  color: $color-text-secondary;
+  text-align: center;
+}

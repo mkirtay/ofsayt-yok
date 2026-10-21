@@ -92,19 +92,77 @@
   list-style: none;
 }
 
-// Dakika kapsülü | (tür etiketi + metin). Önemli satır: solda ince marka çizgisi + hafif zemin.
-.row {
-  display: grid;
-  grid-template-columns: 48px minmax(0, 1fr);
-  align-items: start;
-  column-gap: $spacing-3;
-  padding: $spacing-2 $spacing-2 $spacing-2 6px;
+// Satır çerçevesi li'de: içerik sahnesi olan satırlarda <button>, olmayanlarda <div>.
+.rowItem {
   border-bottom: 1px solid $color-border;
-  border-left: 3px solid transparent;
 
   &:last-child {
     border-bottom: none;
   }
+}
+
+// Dakika kapsülü | (tür etiketi + metin) | "sahneyi oynat". Önemli satır: solda ince marka çizgisi + hafif zemin.
+.row {
+  display: grid;
+  width: 100%;
+  grid-template-columns: 48px minmax(0, 1fr) auto;
+  align-items: start;
+  column-gap: $spacing-3;
+  padding: $spacing-2 $spacing-2 $spacing-2 6px;
+  border: 0;
+  border-left: 3px solid transparent;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: start;
+}
+
+// Sahnesi olan satır: tıklanınca üstteki canlandırma o olayı oynar.
+.playable {
+  cursor: pointer;
+
+  &:hover {
+    background: $color-row-highlight;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+    outline-offset: -2px;
+  }
+}
+
+.playing {
+  border-left-color: $color-primary;
+  background: $color-row-highlight;
+}
+
+.playHint {
+  align-self: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: $color-primary-text;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+
+  @media (hover: none) {
+    opacity: 0.75;
+  }
+}
+
+.playable:hover .playHint,
+.playable:focus-visible .playHint,
+.playing .playHint {
+  opacity: 1;
+}
+
+// Sahne chunk'ı inene kadar aynı kutu: 504×320 oranı, kayma yok.
+.scenePlaceholder {
+  width: 100%;
+  aspect-ratio: 504 / 320;
+  margin-bottom: $spacing-3;
+  border-radius: 12px;
+  background: $color-row-highlight;
 }
 
 .important {
