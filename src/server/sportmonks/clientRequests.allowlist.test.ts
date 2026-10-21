@@ -44,6 +44,7 @@ const CASES: [string, string, Record<string, string>][] = [
   ['takım golcüleri (bitmiş sezon)', 'football/squads/seasons/23614/teams/34', { include: SQUAD_SEASON_STATS_FINISHED_INCLUDE, filters: 'playerStatisticSeasons:23614' }],
   ['puan durumu (eski)', 'football/standings/seasons/25749', { include: 'participant;details.type' }],
   ['puan durumu (gruplu)', 'football/standings/seasons/25749', { include: STANDINGS_WITH_GROUPS_INCLUDE }],
+  ['canlı puan durumu katmanı', 'football/standings/live/leagues/600', {}],
   ['puan durumu + lig formu (varsayılan)', 'football/standings/seasons/25749', { include: STANDINGS_WITH_FORM_INCLUDE, per_page: '50', page: '1' }],
   ['gol krallığı (O gömülü)', 'football/topscorers/seasons/25749', { include: TOPSCORER_WITH_APPEARANCES_INCLUDE, filters: topscorerAppearanceFilters(208, 25749) }],
   ['krallık / disiplin (eski)', 'football/topscorers/seasons/25749', { include: 'player;participant', filters: 'seasonTopscorerTypes:84,85' }],

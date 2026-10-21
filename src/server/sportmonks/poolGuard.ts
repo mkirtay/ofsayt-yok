@@ -28,8 +28,10 @@ const learnedPools = new Map<string, string>();
 
 /** `football/fixtures/date/…` → `fixtures`; `core/types` → `core:types`. */
 export function sportmonksResource(path: string): string {
-  const [base, res] = path.replace(/^\/+/, '').split('/');
+  const [base, res, sub] = path.replace(/^\/+/, '').split('/');
   if (base === 'core') return `core:${res ?? ''}`;
+  // Canlı puan durumu ayrı havuzda (LiveStanding); `standings` (Standing) eşlemesini ezmesin.
+  if (base === 'football' && res === 'standings' && sub === 'live') return 'standings/live';
   return (base === 'football' ? res : base) ?? '';
 }
 

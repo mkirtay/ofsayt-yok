@@ -18,6 +18,8 @@ import {
   useCompetitionSidebar,
   useCompetitionTopScorers,
 } from '@/hooks/useCompetitionSidebar';
+import { useLiveStandings } from '@/hooks/useLiveStandings';
+import { hasLiveMatchInLeague } from '@/services/liveStandings';
 import { useHomeHubMatches } from '@/hooks/useHomeHubMatches';
 import { SEEDED_STALE_UPDATED_AT, useHomeInitialSeed } from '@/hooks/useHomeInitialSeed';
 import type { HomeInitialData } from '@/utils/homeInitialData';
@@ -510,6 +512,16 @@ export default function MatchHubPage({
 
   // Lig seçici düğmesinin logosu: fikstürdeki görsel → config logosu → deterministik CDN yolu (liste satırlarıyla aynı).
   const selectedSportmonksLeagueId = sportmonksLeagueIdOfHubSelection(selectedCompId);
+  // Canlı puan durumu katmanı: YALNIZ seçili ligde canlı maç varken (canlı poll verisinden, ek istek yok), güncel sezon
+  // gösterilirken ve Puan Durumu sekmesi açıkken. Hata / eksik veri → normal tablo (bkz. services/liveStandings.ts).
+  const leagueHasLiveMatch = useMemo(
+    () => hasLiveMatchInLeague(liveMatches, selectedSportmonksLeagueId),
+    [liveMatches, selectedSportmonksLeagueId],
+  );
+  const liveStandings = useLiveStandings(
+    selectedSportmonksLeagueId,
+    leagueHasLiveMatch && !activePatch && sidebarTab === 'standings' && !pickerOpen,
+  );
   const selectedLeagueLogo =
     (selectedSportmonksLeagueId != null ? parseLeagueImagePath(apiLogoBySportmonksLeagueId.get(selectedSportmonksLeagueId)) : null) ??
     selectedLeague?.logo ??
@@ -997,6 +1009,7 @@ export default function MatchHubPage({
                         }}
                         // Masaüstünde panelin tavanına sığar: tablo kendi içinde kayar, başlık sticky (mobilde akışta)
                         contained
+                        live={liveStandings}
                       />
                     )}
 

@@ -75,6 +75,11 @@ describe('havuz eşlemesi', () => {
     expect(sportmonksResource('football/fixtures/date/2026-10-07')).toBe('fixtures');
     expect(sportmonksResource('/football/livescores/inplay')).toBe('livescores');
     expect(sportmonksResource('core/types')).toBe('core:types');
+    // Canlı puan durumu ayrı havuz (LiveStanding): öğrenilen havuz `standings` (Standing) eşlemesini ezmez
+    expect(sportmonksResource('football/standings/live/leagues/600')).toBe('standings/live');
+    expect(sportmonksResource('football/standings/seasons/28203')).toBe('standings');
+    learnPool('football/standings/live/leagues/600', 'LiveStanding');
+    expect(poolForPath('football/standings/seasons/28203')).toBe('standings');
     expect(poolForPath('football/livescores/inplay')).toBe('Fixture');
     expect(poolForPath('football/coaches/1')).toBe('coaches');
     learnPool('football/coaches/1', 'Coach');

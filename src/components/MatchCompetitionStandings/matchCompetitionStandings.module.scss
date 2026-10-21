@@ -342,3 +342,72 @@
     display: none;
   }
 }
+
+// ── Canlı puan durumu katmanı (yalnız ligde canlı maç varken) ──
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+// "Takım" başlığının yerinde; satır yüksekliği / sütun genişliği değişmez.
+.liveBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--color-live);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1;
+
+  &::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--color-live);
+    animation: pulse-live 1.6s infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &::before {
+      animation: none;
+    }
+  }
+}
+
+// Sıra hücresinin sağ dolgusunda küçük ok — mutlak konum: sütun genişlemez (ana sayfa yan paneli tam sığıyor).
+.table td.colRank {
+  position: relative;
+}
+
+.liveMove {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  font-size: 7px;
+  line-height: 1;
+
+  &[data-move='up'] {
+    color: var(--color-win);
+  }
+
+  &[data-move='down'] {
+    color: var(--color-loss);
+  }
+}
+
+// Bölge renkli sıra hücresinde (beyaz yazı) ok da beyaz — yön glifle okunur.
+.table td.colRank[data-zone] .liveMove {
+  color: #fff;
+}
+
+.table td.livePoints {
+  color: var(--color-live);
+}

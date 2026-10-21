@@ -19,6 +19,7 @@ import { StandingsSkeleton } from "@/components/Skeleton";
 import LoadError from "@/components/LoadError";
 import styles from "./matchCompetitionStandings.module.scss";
 import TeamLogo from '@/components/TeamLogo';
+import { applyLiveStandings, type LiveStandingsData } from "@/services/liveStandings";
 
 // Yalnız sezon değişirken gerekir: animasyon ve CSS'i ayrı parçada (ana sayfanın ilk yüküne girmez).
 const loadStandingsShuffle = () => import("./StandingsShuffle");
@@ -71,7 +72,23 @@ function FormDots({ form }: { form: readonly FormResult[] }) {
   );
 }
 
-function StandingsHead({ withForm = false }: { withForm?: boolean }) {
+/**
+ * Canlı katman açıkken "Takım" başlığının yerine "Canlı" rozeti (tam ad ekran okuyucuda). Başlık satırında: tablo
+ * üstüne yeni satır eklenmez (veri sonradan gelir, kayma olmaz), takım sütunu genişlemez.
+ */
+function LiveTeamHead() {
+  const { t } = useTranslation("match");
+  return (
+    <>
+      <span className={styles.liveBadge} title={t("standings.liveTitle")} aria-hidden="true">
+        {t("standings.liveBadge")}
+      </span>
+      <span className={styles.srOnly}>{`Takım · ${t("standings.liveTitle")}`}</span>
+    </>
+  );
+}
+
+function StandingsHead({ withForm = false, live = false }: { withForm?: boolean; live?: boolean }) {
   const last = STANDINGS_HEAD.length - 1;
   return (
     <thead>
@@ -81,7 +98,7 @@ function StandingsHead({ withForm = false }: { withForm?: boolean }) {
             key={h}
             className={i === 0 ? styles.colRank : i === 1 ? styles.colTeam : i === last ? styles.colPoints : undefined}
           >
-            {h}
+            {i === 1 && live ? <LiveTeamHead /> : h}
           </th>
         )).flatMap((th, i) => (withForm && i === last ? [<FormHead key="form" />, th] : [th]))}
       </tr>
@@ -157,37 +174,54 @@ function StandingsTable({
   competitionId,
   homeTeamId,
   awayTeamId,
+  live,
+  seasonId,
+  stageId,
 }: {
   standings: CompetitionTableStandingRow[];
   competitionId?: number;
   homeTeamId?: number;
   awayTeamId?: number;
+  /** Canlı puan durumu katmanı (yalnız ligde canlı maç varken); uygulanamazsa normal tablo. */
+  live?: LiveStandingsData | null;
+  seasonId?: number | string | null;
+  stageId?: number | string | null;
 }) {
+  const { t } = useTranslation("match");
   if (!standings.length) return null;
 
   const total = standings.length;
   const withForm = tableHasForm(standings);
+  const liveRows = live ? applyLiveStandings(standings, live, { seasonId, stageId }) : null;
+  const display = liveRows ?? standings.map((row) => ({ row, rank: Number(row.rank), points: row.points, move: null, pointsChanged: false }));
 
   return (
     <div className={styles.scroll}>
       <table className={styles.table}>
-        <StandingsHead withForm={withForm} />
+        <StandingsHead withForm={withForm} live={liveRows != null} />
         <tbody>
-          {standings.map((row, i) => {
+          {display.map(({ row, rank, points, move, pointsChanged }, i) => {
             const tid = standingTeamId(row);
             const highlight =
               tid != null && (tid === homeTeamId || tid === awayTeamId);
             const logo = standingTeamLogo(row);
-            const zone = getStandingRankZone(row.rank, total, competitionId);
+            const zone = getStandingRankZone(rank, total, competitionId);
             return (
               <tr
-                key={`${tid ?? i}-${row.rank}`}
+                key={tid ?? `${i}-${row.rank}`}
                 className={highlight ? styles.rowHighlight : undefined}
               >
                 <td
                   className={`${styles.colRank} ${standingsRankZoneClass(zone) ?? ""}`.trim()}
+                  data-zone={move && standingsRankZoneClass(zone) ? zone ?? undefined : undefined}
                 >
-                  {row.rank}
+                  {rank}
+                  {move ? (
+                    <span className={styles.liveMove} data-move={move} title={t(move === "up" ? "standings.liveUp" : "standings.liveDown")}>
+                      <span aria-hidden="true">{move === "up" ? "▲" : "▼"}</span>
+                      <span className={styles.srOnly}>{t(move === "up" ? "standings.liveUp" : "standings.liveDown")}</span>
+                    </span>
+                  ) : null}
                 </td>
                 <td className={styles.colTeam}>
                   {tid != null ? (
@@ -227,7 +261,7 @@ function StandingsTable({
                 {withForm ? (
                   <td className={styles.colForm}>{row.form?.length ? <FormDots form={row.form} /> : null}</td>
                 ) : null}
-                <td className={styles.colPoints}>{row.points}</td>
+                <td className={pointsChanged ? `${styles.colPoints} ${styles.livePoints}` : styles.colPoints}>{points}</td>
               </tr>
             );
           })}
@@ -262,6 +296,11 @@ interface MatchCompetitionStandingsProps {
   error?: boolean;
   onRetry?: () => void;
   /**
+   * Canlı puan durumu katmanı (`useLiveStandings`; yalnız ligde canlı maç varken dolu). Sıra + puan normal tablonun
+   * üstüne bindirilir, sıra değişimi ▲/▼, başlıkta "Canlı" rozeti. Sezon uyuşmazsa / eksikse normal tablo.
+   */
+  live?: LiveStandingsData | null;
+  /**
    * Ebeveynin yüksekliği sınırlı (ana sayfa yan paneli): tablo bölgesi kalan alanda kendi içinde kayar (iki eksen),
    * başlık satırı sticky. Satır sayısından bağımsız; tablo sığıyorsa doğal boyunda kalır (kaydırma çubuğu yok).
    * Verilmezse (puan durumu sayfası, maç / takım sayfası) davranış aynı: tablo sayfa akışında.
@@ -288,6 +327,7 @@ export default function MatchCompetitionStandings({
   contained = false,
   error = false,
   onRetry,
+  live = null,
 }: MatchCompetitionStandingsProps) {
   const { t } = useTranslation("match");
   const [seasonChanging, setSeasonChanging] = useState(false);
@@ -389,6 +429,8 @@ export default function MatchCompetitionStandings({
             competitionId={competitionId}
             homeTeamId={homeTeamId}
             awayTeamId={awayTeamId}
+            live={live}
+            seasonId={season?.id}
           />
         ) : null}
 
@@ -408,6 +450,9 @@ export default function MatchCompetitionStandings({
                     competitionId={competitionId}
                     homeTeamId={homeTeamId}
                     awayTeamId={awayTeamId}
+                    live={live}
+                    seasonId={season?.id}
+                    stageId={stageBlock.stage?.id}
                   />
                 ) : null}
               </div>

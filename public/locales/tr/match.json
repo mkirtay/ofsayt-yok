@@ -344,7 +344,11 @@
     "formAria": "Lig formu, son 5 lig maçı: {{list}}",
     "formWin": "Galibiyet",
     "formDraw": "Beraberlik",
-    "formLoss": "Mağlubiyet"
+    "formLoss": "Mağlubiyet",
+    "liveBadge": "Canlı",
+    "liveTitle": "Canlı puan durumu: maçlar sürüyor, sıra ve puan anlık",
+    "liveUp": "Canlıda yükseldi",
+    "liveDown": "Canlıda geriledi"
   },
   "events": {
     "title": "Maç Olayları",

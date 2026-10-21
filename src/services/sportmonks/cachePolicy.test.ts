@@ -104,6 +104,8 @@ describe('sportmonksCacheTtl — TTL tablosu', () => {
 
   it('puan durumu 10 dk, gol krallığı 30 dk, takım/kadro/oyuncu 6 sa, lig/sezon/type 24 sa', () => {
     expect(sportmonksCacheTtl('football/standings/seasons/28203', [], NOW).fresh).toBe(600);
+    // Canlı puan durumu katmanı (ayrı LiveStanding havuzu): 45 sn taze, 10 dk eski kopya (429/5xx'te)
+    expect(sportmonksCacheTtl('football/standings/live/leagues/600', [], NOW)).toEqual({ fresh: 45, stale: 600 });
     expect(sportmonksCacheTtl('football/topscorers/seasons/28203', [], NOW).fresh).toBe(1800);
     expect(sportmonksCacheTtl('football/squads/seasons/1/teams/34', [], NOW).fresh).toBe(6 * 3600);
     expect(sportmonksCacheTtl('football/players/455805', { id: 1 }, NOW).fresh).toBe(6 * 3600);

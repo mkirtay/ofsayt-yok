@@ -349,7 +349,11 @@
     "formAria": "League form, last 5 league matches: {{list}}",
     "formWin": "Win",
     "formDraw": "Draw",
-    "formLoss": "Loss"
+    "formLoss": "Loss",
+    "liveBadge": "Live",
+    "liveTitle": "Live standings: matches in progress, position and points update live",
+    "liveUp": "Moved up live",
+    "liveDown": "Dropped live"
   },
   "events": {
     "title": "Match Events",
