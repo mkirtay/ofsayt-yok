@@ -6,6 +6,7 @@ import { useRouter } from 'next/router';
 import Container from '@/components/Container';
 import HubLeagueList from '@/components/HubLeagueList';
 import HubLeaguePicker from '@/components/HubLeaguePicker';
+import RoundStatsSlot from '@/components/RoundStatsCard';
 import { standingsGroupHeading } from '@/components/MatchCompetitionStandings/groupHeading';
 import { StandingsSkeleton } from '@/components/Skeleton';
 import { CardsList, ScorersList, StandingsTable, type StandingsBlock } from '@/components/StandingsView';
@@ -203,6 +204,7 @@ export default function Standings() {
           </>
         )}
       </div>
+      {sportmonksLeagueId != null && effectiveSeasonId != null ? <RoundStatsSlot leagueId={sportmonksLeagueId} seasonId={effectiveSeasonId} /> : null}
     </Container>
   );
 }
