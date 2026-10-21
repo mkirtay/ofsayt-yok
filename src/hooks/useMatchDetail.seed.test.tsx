@@ -55,3 +55,25 @@ describe('useMatchDetail — SSR Genel Bakış verisi (ilk boyama = sunucu HTML\
     }
   });
 });
+
+describe('useMatchDetail — yedek tahmini kadro (predictedLineups) yalnız başlamamış maçta', () => {
+  const predicted = { ...lineups, confirmed: false, source: 'predicted' } as MatchLineupData;
+  const at = (status: string) => ({ ...match, status }) as Match;
+
+  it('başlamamış maçta gösterilir', () => {
+    const html = renderToStaticMarkup(<Probe id="19746609" initialMatch={at('NOT STARTED')} seed={{ events: [], stats: null, lineups: predicted }} />);
+    expect(state(html)).toMatchObject({ lineups: true });
+  });
+
+  it('maç başladıysa / bittiyse gizlenir (resmî kadro gelmemiş olsa bile)', () => {
+    for (const status of ['LIVE', 'FINISHED']) {
+      const html = renderToStaticMarkup(<Probe id="19746609" initialMatch={at(status)} seed={{ events: [], stats: null, lineups: predicted }} />);
+      expect(state(html)).toMatchObject({ lineups: false });
+    }
+  });
+
+  it('maçın kendi kadrosu (kaynak yok) bitmiş maçta da gösterilir', () => {
+    const html = renderToStaticMarkup(<Probe id="19746609" initialMatch={match} seed={{ events: [], stats: null, lineups }} />);
+    expect(state(html)).toMatchObject({ lineups: true });
+  });
+});
