@@ -1,7 +1,6 @@
 import { useTranslation } from '@/lib/i18n';
 import '@/lib/i18nNamespaces/standings';
 import { useEffect, useMemo, useState } from 'react';
-import dynamic from 'next/dynamic';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
 import Container from '@/components/Container';
@@ -13,6 +12,7 @@ import { CardsList, ScorersList, StandingsTable, type StandingsBlock } from '@/c
 import { HUB_LEAGUE_IDS } from '@/config/hubLeagueGroups';
 import { hasCupBracket } from '@/config/cupBrackets';
 import { useCupBracket } from '@/hooks/useCupBracket';
+import LazyLoad from '@/components/LazyLoad';
 import {
   useStandingsCards,
   useStandingsScorers,
@@ -31,9 +31,10 @@ import { siteBaseUrl } from '@/lib/siteUrl';
 const DEFAULT_SELECTION_ID = 6; // Süper Lig (legacy id; bkz. utils/hubLeagueSelection.ts)
 const CARDS_LIMIT = 50;
 const TABS = ['table', 'scorers', 'cards'] as const;
-// Kupa eleme ağacı: yalnız ağacı olan kupalarda ve veri varsa (bkz. config/cupBrackets.ts); içerik tembel parça.
+// Kupa eleme ağacı: yalnız ağacı olan kupalarda ve veri varsa (bkz. config/cupBrackets.ts). İçerik düz import() ile
+// tembel parça (next/dynamic ilk yük parçalarını yeniden dağıtıp yerel LCP'yi kötüleştiriyor; bkz. components/LazyLoad).
 type Tab = (typeof TABS)[number] | 'bracket';
-const CupBracket = dynamic(() => import('@/components/CupBracket'), { ssr: false, loading: () => <StandingsSkeleton rows={12} /> });
+const loadCupBracket = () => import('@/components/CupBracket');
 const EMPTY_MAP: ReadonlyMap<number, number> = new Map();
 const EMPTY_LOGOS: ReadonlyMap<number, string> = new Map();
 
@@ -92,8 +93,9 @@ export default function Standings() {
   const bracketLeagueId = sportmonksLeagueIdOfHubSelection(selectedId);
   const isCup = hasCupBracket(bracketLeagueId);
   const bracketQuery = useCupBracket(isCup ? bracketLeagueId : null, effectiveSeasonId, isCup && (dataReady || tab === 'bracket'));
-  // Veri yoksa (null) sekme gizli; hata ise açık kalır ("yüklenemedi"), hata ≠ veri yok.
-  const showBracket = isCup && (bracketQuery.data != null || bracketQuery.isError || (tab === 'bracket' && bracketQuery.isLoading));
+  // Kupada sekme baştan yerinde (sonradan eklenip diğer sekmeleri kaydırmasın); veri yok (null) çıkarsa gizlenir. Hata
+  // ise açık kalır ("yüklenemedi"), hata ≠ veri yok.
+  const showBracket = isCup && bracketQuery.data !== null;
   const tabs: readonly Tab[] = showBracket ? [...TABS, 'bracket'] : TABS;
 
   const sportmonksLeagueId = sportmonksLeagueIdOfHubSelection(selectedId);
@@ -224,7 +226,10 @@ export default function Standings() {
                   ) : null}
                 </div>
               ) : tab === 'bracket' ? (
-                <CupBracket bracket={bracketQuery.data!} onShowStandings={blocks.length ? () => setTab('table') : undefined} />
+                <LazyLoad
+                  load={loadCupBracket}
+                  props={{ bracket: bracketQuery.data!, onShowStandings: blocks.length ? () => setTab('table') : undefined }}
+                />
               ) : tab === 'table' ? (
                 <StandingsTable blocks={blocks} competitionId={tableQuery.data?.competition?.id} />
               ) : tab === 'scorers' ? (
