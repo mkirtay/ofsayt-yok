@@ -1,0 +1,36 @@
+{
+  "regionLabel": "Eleme ağacı",
+  "roundsLabel": "Turlar",
+  "treeChip": "Eleme Ağacı",
+  "slot": {
+    "ko_po": "Play-off",
+    "r16": "Son 16",
+    "qf": "Çeyrek Final",
+    "sf": "Yarı Final",
+    "final": "Final"
+  },
+  "qualifyingRound": "{{n}}. Ön Eleme",
+  "qualifyingPlayoff": "Ön Eleme Play-off",
+  "earlyRound": "{{n}}. Tur",
+  "status": {
+    "done": "Tamamlandı",
+    "current": "Sürüyor",
+    "upcoming": "Sırada",
+    "tbd": "Kura bekleniyor"
+  },
+  "tbd": "Kura bekleniyor",
+  "tbdRound": "Bu turun kurası henüz çekilmedi.",
+  "leg": "{{n}}. maç",
+  "live": "Canlı",
+  "decided": {
+    "et": "Uzatmalarda",
+    "pen": "Penaltılarla",
+    "awarded": "Hükmen"
+  },
+  "notPlayed": "Oynanmadı",
+  "leagueStageLink": "Lig aşaması puan durumu",
+  "groupStageLink": "Grup aşaması puan durumu",
+  "loadError": "Eleme ağacı yüklenemedi.",
+  "retry": "Tekrar dene",
+  "openMatch": "{{home}} – {{away}} maç sayfası"
+}

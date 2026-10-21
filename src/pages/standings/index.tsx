@@ -11,6 +11,8 @@ import LazyLoad from '@/components/LazyLoad';
 import { StandingsSkeleton } from '@/components/Skeleton';
 import { CardsList, ScorersList, StandingsTable, type StandingsBlock } from '@/components/StandingsView';
 import { HUB_LEAGUE_IDS } from '@/config/hubLeagueGroups';
+import { hasCupBracket } from '@/config/cupBrackets';
+import { useCupBracket } from '@/hooks/useCupBracket';
 import {
   useStandingsCards,
   useStandingsScorers,
@@ -32,7 +34,10 @@ const CARDS_LIMIT = 50;
 const TABS = ['table', 'scorers', 'cards', 'totw'] as const;
 // Haftanın 11'i sahası ayrı parça: yalnız sekme açılınca yüklenir.
 const loadTeamOfTheWeek = () => import('@/components/TeamOfTheWeek');
-type Tab = (typeof TABS)[number];
+// Kupa eleme ağacı: yalnız ağacı olan kupalarda ve veri varsa (bkz. config/cupBrackets.ts). İçerik düz import() ile
+// tembel parça (next/dynamic ilk yük parçalarını yeniden dağıtıp yerel LCP'yi kötüleştiriyor; bkz. components/LazyLoad).
+type Tab = (typeof TABS)[number] | 'bracket';
+const loadCupBracket = () => import('@/components/CupBracket');
 const EMPTY_MAP: ReadonlyMap<number, number> = new Map();
 const EMPTY_LOGOS: ReadonlyMap<number, string> = new Map();
 
@@ -78,8 +83,9 @@ export default function Standings() {
     const next = fromUrl ?? stored?.id;
     // eslint-disable-next-line react-hooks/set-state-in-effect -- URL / localStorage → durum (SSR'da okunamaz; hidrasyon farkı olmasın)
     if (next != null) setSelectedId(next);
+    if (router.query.tab === 'bracket') setTab('bracket');
     setReady(true);
-  }, [router.isReady, router.query.league]);
+  }, [router.isReady, router.query.league, router.query.tab]);
 
   const seasonsQuery = useStandingsSeasons(selectedId, ready);
   const tableQuery = useStandingsTable(selectedId, seasonId, ready);
@@ -93,10 +99,23 @@ export default function Standings() {
   const totw = totwQuery.data ?? null;
   const totwAvailable = totw != null && (seasonId == null || seasonId === totw.round.seasonId);
   const showTotwTab = totwAvailable || (tab === 'totw' && (totwQuery.isLoading || totwQuery.isError));
-  const activeTab: Tab = tab === 'totw' && !showTotwTab ? 'table' : tab;
-  const visibleTabs: readonly Tab[] = showTotwTab ? TABS : TABS.filter((id) => id !== 'totw');
-  // Yanıt gelene kadar 4. sekmenin yeri görünmez tutulur: veri gelince diğer sekmeler kaymaz (CLS). Ligde yoksa kalkar.
+  // Yanıt gelene kadar Haftanın 11'i sekmesinin yeri (kendi sırasında, Eleme Ağacı'ndan önce) görünmez tutulur: veri
+  // gelince diğer sekmeler kaymaz (CLS). Ligde yoksa kalkar.
   const totwPlaceholder = !showTotwTab && totwQuery.isPending;
+  const bracketLeagueId = sportmonksLeagueIdOfHubSelection(selectedId);
+  const isCup = hasCupBracket(bracketLeagueId);
+  const bracketQuery = useCupBracket(isCup ? bracketLeagueId : null, effectiveSeasonId, isCup && (dataReady || tab === 'bracket'));
+  // Kupada sekme baştan yerinde (sonradan eklenip diğer sekmeleri kaydırmasın); veri yok (null) çıkarsa gizlenir. Hata
+  // ise açık kalır ("yüklenemedi"), hata ≠ veri yok.
+  const showBracket = isCup && bracketQuery.data !== null;
+  const activeTab: Tab = (tab === 'totw' && !showTotwTab) || (tab === 'bracket' && !showBracket) ? 'table' : tab;
+  const bracketTabs: readonly Tab[] = showBracket ? ['bracket'] : [];
+  const visibleTabs: readonly Tab[] = [...TABS.filter((id) => id !== 'totw' || showTotwTab), ...bracketTabs];
+  // Şeritteki yuvalar: görünür sekmeler + (yanıt bekleniyorsa) Haftanın 11'i yer tutucusu kendi sırasında.
+  const tabSlots: readonly Tab[] = [
+    ...TABS.filter((id) => id !== 'totw' || showTotwTab || totwPlaceholder),
+    ...bracketTabs,
+  ];
 
   const sportmonksLeagueId = sportmonksLeagueIdOfHubSelection(selectedId);
   const leagueName = leagueNameById(sportmonksLeagueId, tl('fallback'), tl);
@@ -116,10 +135,18 @@ export default function Standings() {
     [cardsQuery.data],
   );
 
-  const active = { table: tableQuery, scorers: scorersQuery, cards: cardsQuery, totw: totwQuery }[activeTab];
+  const active = { table: tableQuery, scorers: scorersQuery, cards: cardsQuery, totw: totwQuery, bracket: bracketQuery }[
+    activeTab
+  ];
   const loading =
     !ready ||
-    (activeTab === 'table' ? tableQuery.isLoading : activeTab === 'totw' ? totwQuery.isLoading : !dataReady || active.isLoading);
+    (activeTab === 'table'
+      ? tableQuery.isLoading
+      : activeTab === 'totw'
+        ? totwQuery.isLoading
+        : activeTab === 'bracket'
+          ? bracketQuery.isLoading
+          : !dataReady || active.isLoading);
   const isEmpty =
     activeTab === 'table'
       ? blocks.length === 0
@@ -127,12 +154,15 @@ export default function Standings() {
         ? scorers.length === 0
         : activeTab === 'cards'
           ? cards.length === 0
-          : !totwAvailable;
+          : activeTab === 'totw'
+            ? !totwAvailable
+            : bracketQuery.data == null;
 
   const pickLeague = (id: number) => {
     setSelectedId(id);
     setSeasonId(null);
     setPickerOpen(false);
+    if (tab === 'bracket' && !hasCupBracket(sportmonksLeagueIdOfHubSelection(id))) setTab('table');
   };
 
   const onTabKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
@@ -144,7 +174,13 @@ export default function Standings() {
     document.getElementById(`standings-tab-${next}`)?.focus();
   };
 
-  const tabLabel = { table: t('tabStandings'), scorers: t('tabScorers'), cards: t('tabCards'), totw: t('tabTotw') } as const;
+  const tabLabel = {
+    table: t('tabStandings'),
+    scorers: t('tabScorers'),
+    cards: t('tabCards'),
+    totw: t('tabTotw'),
+    bracket: t('tabBracket'),
+  } as const;
   const origin = siteBaseUrl();
 
   return (
@@ -185,27 +221,28 @@ export default function Standings() {
         {pickerOpen ? null : (
           <>
             <div className={styles.tabs} role="tablist" aria-label={leagueName}>
-              {visibleTabs.map((id) => (
-                <button
-                  key={id}
-                  id={`standings-tab-${id}`}
-                  type="button"
-                  role="tab"
-                  aria-selected={activeTab === id}
-                  aria-controls="standings-panel"
-                  tabIndex={activeTab === id ? 0 : -1}
-                  className={`${styles.tab} ${activeTab === id ? styles.tabActive : ''}`.trim()}
-                  onClick={() => setTab(id)}
-                  onKeyDown={onTabKeyDown}
-                >
-                  {tabLabel[id]}
-                </button>
-              ))}
-              {totwPlaceholder ? (
-                <span className={`${styles.tab} ${styles.tabPlaceholder}`} aria-hidden="true">
-                  {tabLabel.totw}
-                </span>
-              ) : null}
+              {tabSlots.map((id) =>
+                id === 'totw' && !showTotwTab ? (
+                  <span key={id} className={`${styles.tab} ${styles.tabPlaceholder}`} aria-hidden="true">
+                    {tabLabel.totw}
+                  </span>
+                ) : (
+                  <button
+                    key={id}
+                    id={`standings-tab-${id}`}
+                    type="button"
+                    role="tab"
+                    aria-selected={activeTab === id}
+                    aria-controls="standings-panel"
+                    tabIndex={activeTab === id ? 0 : -1}
+                    className={`${styles.tab} ${activeTab === id ? styles.tabActive : ''}`.trim()}
+                    onClick={() => setTab(id)}
+                    onKeyDown={onTabKeyDown}
+                  >
+                    {tabLabel[id]}
+                  </button>
+                ),
+              )}
             </div>
 
             <div id="standings-panel" role="tabpanel" aria-labelledby={`standings-tab-${activeTab}`} className={styles.panel}>
@@ -219,7 +256,22 @@ export default function Standings() {
                   </button>
                 </div>
               ) : isEmpty ? (
-                <div className={styles.message}>{t('noData')}</div>
+                <div className={styles.message}>
+                  {t('noData')}
+                  {activeTab === 'table' && bracketQuery.data ? (
+                    <>
+                      {' '}
+                      <button type="button" onClick={() => setTab('bracket')}>
+                        {t('tabBracket')} →
+                      </button>
+                    </>
+                  ) : null}
+                </div>
+              ) : activeTab === 'bracket' ? (
+                <LazyLoad
+                  load={loadCupBracket}
+                  props={{ bracket: bracketQuery.data!, onShowStandings: blocks.length ? () => setTab('table') : undefined }}
+                />
               ) : activeTab === 'table' ? (
                 <StandingsTable blocks={blocks} competitionId={tableQuery.data?.competition?.id} />
               ) : activeTab === 'scorers' ? (

@@ -5,6 +5,7 @@
   "tabStandings": "Standings",
   "tabScorers": "Top Scorers",
   "tabCards": "Cards",
+  "tabBracket": "Bracket",
   "loadError": "Could not load data.",
   "noData": "No data found.",
   "colRank": "#",
