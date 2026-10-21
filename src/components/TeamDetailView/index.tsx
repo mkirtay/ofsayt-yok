@@ -52,6 +52,7 @@ import RecentMatches from './RecentMatches';
 import SeasonSummaryCard, { type TournamentTab } from './SeasonSummaryCard';
 import TeamScorersCard from './TeamScorersCard';
 import ScoringMinutesCard from './ScoringMinutesCard';
+import SeasonProfileCard from './SeasonProfileCard';
 import SidelinedCard from './SidelinedCard';
 import { mapTeamSidelined } from '@/services/sportmonks/teamSidelined';
 import { useInViewOnce } from '@/hooks/useInViewOnce';
@@ -59,6 +60,7 @@ import { getTeamExtendedSquad, getTeamSeasonMatches, getTeamSeasonScorers, getTe
 import { mapTeamLoans } from '@/services/sportmonks/teamLoans';
 import LoanedPlayers from './LoanedPlayers';
 import { combineSeasonStats } from '@/services/sportmonks/teamSeasonStats';
+import { combineSeasonProfiles, seasonProfileMetrics } from '@/services/sportmonks/teamSeasonProfile';
 import { mergeTeamScorers } from '@/services/sportmonks/teamScorers';
 import { fetchCompetitionStandings } from '@/services/competitionStandings';
 import { loadStandingsForMatch } from '@/services/standingsBundle';
@@ -438,6 +440,23 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
         ? combineSeasonStats(playedStats)
         : null
       : (playedStats.find((st) => String(st.seasonId) === activeTournament) ?? null);
+  // Sezon Profili: aynı yanıtın profil türleri, aynı turnuva sekmesi (oynanan turnuvalar).
+  const profileMetrics = useMemo(() => {
+    const played = new Set(playedStats.map((st) => st.seasonId));
+    const profiles = (statsQuery.data?.profiles ?? []).filter((p) => played.has(p.seasonId));
+    const selected =
+      activeTournament === 'all'
+        ? profiles.length > 0
+          ? combineSeasonProfiles(profiles)
+          : null
+        : (profiles.find((p) => String(p.seasonId) === activeTournament) ?? null);
+    return seasonProfileMetrics(selected);
+  }, [statsQuery.data, playedStats, activeTournament]);
+  const profileBest = profileMetrics.find((m) => m.key === 'bestPlayer');
+  const profileBestScope =
+    activeTournament === 'all' && playedStats.length > 1 && profileBest?.key === 'bestPlayer'
+      ? (tournamentTabs.find((tab) => tab.key === String(profileBest.seasonId))?.label ?? null)
+      : null;
   const selectedTournamentLeagueId =
     activeTournament === 'all' ? null : (playedStats.find((st) => String(st.seasonId) === activeTournament)?.leagueId ?? null);
   const summaryFooter =
@@ -788,6 +807,14 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
             scored={selectedSeasonStats?.scoredByMinute ?? []}
             conceded={selectedSeasonStats?.concededByMinute ?? []}
             scope={`${formatSeasonLabel(campaign?.name ?? '')} · ${scorersScope}`}
+          />
+
+          <SeasonProfileCard
+            loading={!statsQuery.data && !statsQuery.isError}
+            error={statsQuery.isError}
+            metrics={profileMetrics}
+            scope={`${formatSeasonLabel(campaign?.name ?? '')} · ${scorersScope}`}
+            bestPlayerScope={profileBestScope}
           />
         </div>
 
