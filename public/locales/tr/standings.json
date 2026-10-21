@@ -35,5 +35,12 @@
   "zonePromotion": "Üst tur / yükselme",
   "zonePlayoff": "Play-off",
   "zoneUefaPlayoff": "Play-off turu",
-  "zoneRelegation": "Küme düşme"
+  "zoneRelegation": "Küme düşme",
+  "tabTotw": "Haftanın 11'i",
+  "totwTitle": "Haftanın 11'i",
+  "totwRound": "{{round}}. Hafta",
+  "totwFormation": "Diziliş {{formation}}",
+  "totwRatingLabel": "Puan {{rating}}",
+  "totwBest": "Haftanın oyuncusu: {{name}} ({{team}}) · {{rating}}",
+  "totwNote": "Oyuncular maç puanlarına göre seçilir."
 }

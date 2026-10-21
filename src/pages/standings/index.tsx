@@ -7,6 +7,7 @@ import Container from '@/components/Container';
 import HubLeagueList from '@/components/HubLeagueList';
 import HubLeaguePicker from '@/components/HubLeaguePicker';
 import { standingsGroupHeading } from '@/components/MatchCompetitionStandings/groupHeading';
+import LazyLoad from '@/components/LazyLoad';
 import { StandingsSkeleton } from '@/components/Skeleton';
 import { CardsList, ScorersList, StandingsTable, type StandingsBlock } from '@/components/StandingsView';
 import { HUB_LEAGUE_IDS } from '@/config/hubLeagueGroups';
@@ -15,6 +16,7 @@ import {
   useStandingsScorers,
   useStandingsSeasons,
   useStandingsTable,
+  useStandingsTeamOfTheWeek,
 } from '@/hooks/useStandingsPage';
 import type { CompetitionTableData } from '@/services/liveScoreService';
 import { competitionLogoNeedsBackdrop } from '@/utils/competitionLogo';
@@ -27,7 +29,9 @@ import { siteBaseUrl } from '@/lib/siteUrl';
 
 const DEFAULT_SELECTION_ID = 6; // Süper Lig (legacy id; bkz. utils/hubLeagueSelection.ts)
 const CARDS_LIMIT = 50;
-const TABS = ['table', 'scorers', 'cards'] as const;
+const TABS = ['table', 'scorers', 'cards', 'totw'] as const;
+// Haftanın 11'i sahası ayrı parça: yalnız sekme açılınca yüklenir.
+const loadTeamOfTheWeek = () => import('@/components/TeamOfTheWeek');
 type Tab = (typeof TABS)[number];
 const EMPTY_MAP: ReadonlyMap<number, number> = new Map();
 const EMPTY_LOGOS: ReadonlyMap<number, string> = new Map();
@@ -83,6 +87,16 @@ export default function Standings() {
   const dataReady = ready && tableQuery.isFetched;
   const scorersQuery = useStandingsScorers(selectedId, effectiveSeasonId, dataReady && tab === 'scorers');
   const cardsQuery = useStandingsCards(selectedId, effectiveSeasonId, dataReady && tab === 'cards');
+  // Haftanın 11'i tablo ile birlikte (CDN'li küçük yanıt): sekme yalnız veri varsa ve güncel sezonda görünür (ligde yoksa
+  // hiç görünmez). Hata ≠ yok: sekme açıkken hata/yükleme sürerse sekme kalır, panel "yüklenemedi · tekrar dene".
+  const totwQuery = useStandingsTeamOfTheWeek(selectedId, ready);
+  const totw = totwQuery.data ?? null;
+  const totwAvailable = totw != null && (seasonId == null || seasonId === totw.round.seasonId);
+  const showTotwTab = totwAvailable || (tab === 'totw' && (totwQuery.isLoading || totwQuery.isError));
+  const activeTab: Tab = tab === 'totw' && !showTotwTab ? 'table' : tab;
+  const visibleTabs: readonly Tab[] = showTotwTab ? TABS : TABS.filter((id) => id !== 'totw');
+  // Yanıt gelene kadar 4. sekmenin yeri görünmez tutulur: veri gelince diğer sekmeler kaymaz (CLS). Ligde yoksa kalkar.
+  const totwPlaceholder = !showTotwTab && totwQuery.isPending;
 
   const sportmonksLeagueId = sportmonksLeagueIdOfHubSelection(selectedId);
   const leagueName = leagueNameById(sportmonksLeagueId, tl('fallback'), tl);
@@ -102,9 +116,18 @@ export default function Standings() {
     [cardsQuery.data],
   );
 
-  const active = { table: tableQuery, scorers: scorersQuery, cards: cardsQuery }[tab];
-  const loading = !ready || (tab === 'table' ? tableQuery.isLoading : !dataReady || active.isLoading);
-  const isEmpty = tab === 'table' ? blocks.length === 0 : tab === 'scorers' ? scorers.length === 0 : cards.length === 0;
+  const active = { table: tableQuery, scorers: scorersQuery, cards: cardsQuery, totw: totwQuery }[activeTab];
+  const loading =
+    !ready ||
+    (activeTab === 'table' ? tableQuery.isLoading : activeTab === 'totw' ? totwQuery.isLoading : !dataReady || active.isLoading);
+  const isEmpty =
+    activeTab === 'table'
+      ? blocks.length === 0
+      : activeTab === 'scorers'
+        ? scorers.length === 0
+        : activeTab === 'cards'
+          ? cards.length === 0
+          : !totwAvailable;
 
   const pickLeague = (id: number) => {
     setSelectedId(id);
@@ -115,13 +138,13 @@ export default function Standings() {
   const onTabKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
     if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
     e.preventDefault();
-    const step = e.key === 'ArrowRight' ? 1 : TABS.length - 1;
-    const next = TABS[(TABS.indexOf(tab) + step) % TABS.length]!;
+    const step = e.key === 'ArrowRight' ? 1 : visibleTabs.length - 1;
+    const next = visibleTabs[(visibleTabs.indexOf(activeTab) + step) % visibleTabs.length]!;
     setTab(next);
     document.getElementById(`standings-tab-${next}`)?.focus();
   };
 
-  const tabLabel = { table: t('tabStandings'), scorers: t('tabScorers'), cards: t('tabCards') } as const;
+  const tabLabel = { table: t('tabStandings'), scorers: t('tabScorers'), cards: t('tabCards'), totw: t('tabTotw') } as const;
   const origin = siteBaseUrl();
 
   return (
@@ -162,27 +185,32 @@ export default function Standings() {
         {pickerOpen ? null : (
           <>
             <div className={styles.tabs} role="tablist" aria-label={leagueName}>
-              {TABS.map((id) => (
+              {visibleTabs.map((id) => (
                 <button
                   key={id}
                   id={`standings-tab-${id}`}
                   type="button"
                   role="tab"
-                  aria-selected={tab === id}
+                  aria-selected={activeTab === id}
                   aria-controls="standings-panel"
-                  tabIndex={tab === id ? 0 : -1}
-                  className={`${styles.tab} ${tab === id ? styles.tabActive : ''}`.trim()}
+                  tabIndex={activeTab === id ? 0 : -1}
+                  className={`${styles.tab} ${activeTab === id ? styles.tabActive : ''}`.trim()}
                   onClick={() => setTab(id)}
                   onKeyDown={onTabKeyDown}
                 >
                   {tabLabel[id]}
                 </button>
               ))}
+              {totwPlaceholder ? (
+                <span className={`${styles.tab} ${styles.tabPlaceholder}`} aria-hidden="true">
+                  {tabLabel.totw}
+                </span>
+              ) : null}
             </div>
 
-            <div id="standings-panel" role="tabpanel" aria-labelledby={`standings-tab-${tab}`} className={styles.panel}>
+            <div id="standings-panel" role="tabpanel" aria-labelledby={`standings-tab-${activeTab}`} className={styles.panel}>
               {loading ? (
-                <StandingsSkeleton rows={tab === 'table' ? 18 : 12} />
+                <StandingsSkeleton rows={activeTab === 'table' ? 18 : 12} />
               ) : active.isError ? (
                 <div className={styles.message}>
                   {t('loadError')}{' '}
@@ -192,12 +220,14 @@ export default function Standings() {
                 </div>
               ) : isEmpty ? (
                 <div className={styles.message}>{t('noData')}</div>
-              ) : tab === 'table' ? (
+              ) : activeTab === 'table' ? (
                 <StandingsTable blocks={blocks} competitionId={tableQuery.data?.competition?.id} />
-              ) : tab === 'scorers' ? (
+              ) : activeTab === 'scorers' ? (
                 <ScorersList rows={scorers} />
-              ) : (
+              ) : activeTab === 'cards' ? (
                 <CardsList rows={cards} />
+              ) : (
+                <LazyLoad load={loadTeamOfTheWeek} props={{ data: totw!, leagueName }} />
               )}
             </div>
           </>

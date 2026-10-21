@@ -8,6 +8,7 @@ import {
 } from '@/services/liveScoreService';
 import type { DisciplinaryRow } from '@/services/sportmonksKatman2Mapper';
 import { fetchCompetitionStandings } from '@/services/competitionStandings';
+import type { TeamOfTheWeek } from '@/services/sportmonks/teamOfTheWeek';
 import { sportmonksLeagueIdOfHubSelection } from '@/utils/hubLeagueSelection';
 
 /**
@@ -79,5 +80,26 @@ export function useStandingsCards(selectionId: number, seasonId: number | null, 
     enabled,
     staleTime: STALE_MS,
     gcTime: GC_MS,
+  });
+}
+
+/**
+ * Haftanın 11'i (`/api/leagues/{id}/team-of-the-week`, CDN'li). 404 = bu ligde yok → null (sekme hiç görünmez); diğer
+ * hatalar fırlatılır (hata ≠ veri yok: sekme açıksa "yüklenemedi · tekrar dene").
+ */
+export function useStandingsTeamOfTheWeek(selectionId: number, enabled: boolean) {
+  return useQuery<TeamOfTheWeek | null>({
+    queryKey: ['standings-page', 'totw', selectionId] as const,
+    queryFn: async () => {
+      const leagueId = standingsLeagueId(selectionId);
+      if (leagueId == null) return null;
+      const res = await fetch(`/api/leagues/${leagueId}/team-of-the-week`);
+      if (res.status === 404) return null;
+      if (!res.ok) throw new Error(`team-of-the-week ${res.status}`);
+      return (await res.json()) as TeamOfTheWeek;
+    },
+    enabled,
+    staleTime: 30 * 60_000,
+    gcTime: 60 * 60_000,
   });
 }

@@ -179,6 +179,14 @@ describe('maç bilgi kartı ekleri', () => {
   });
 });
 
+describe('Haftanın Takımı', () => {
+  it('liste 12 sa taze / 7 gün eski kopya; ligde yok ("No result") 6 sa', () => {
+    expect(sportmonksCacheTtl('football/team-of-the-week/leagues/600/latest', [{ id: 1 }], NOW)).toEqual({ fresh: 12 * 3600, stale: 7 * 86400 });
+    expect(sportmonksCacheTtl('football/team-of-the-week/leagues/564/latest', undefined, NOW)).toEqual({ fresh: 6 * 3600, stale: 86400 });
+    expect(sportmonksCacheTtl('football/team-of-the-week/leagues/564/latest', [], NOW).fresh).toBe(6 * 3600);
+  });
+});
+
 describe('hakem / teknik direktör sayfaları', () => {
   it('profil 7 gün, istatistik 12 sa, görev aldığı maçlar 1 sa, sezon listeleri 24 sa', () => {
     expect(sportmonksCacheTtl('football/referees/62331', { id: 62331, country: {} }, NOW).fresh).toBe(7 * 86400);
