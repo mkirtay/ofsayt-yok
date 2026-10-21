@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import RoundStatsCard from './Card';
@@ -160,6 +162,29 @@ describe('<RoundStatsCard />', () => {
     const html = renderToStaticMarkup(<RoundStatsSlot leagueId={600} seasonId={28203} />);
     expect(html).toContain('data-testid="round-stats-slot"');
     expect(html).not.toContain('Haftanın Özeti');
+    // Yükseklik iç kutuda (dış kutu genişliği ölçülen kap)
+    expect(html).toMatch(/data-testid="round-stats-slot"><div class="[^"]*reserve/);
+  });
+});
+
+describe('yerleşim (yan sütun / tam genişlik)', () => {
+  const read = (rel: string) => readFileSync(path.resolve(__dirname, rel), 'utf8');
+  const card = read('./roundStatsCard.module.scss');
+  const page = read('../../pages/standings/standings.module.scss');
+
+  it('kart düzeni pencereye değil yuva genişliğine bağlı: medya sorgusu yok, container query var', () => {
+    expect(card).toMatch(/\.slot \{\s*container-type: inline-size;/);
+    expect(card).not.toMatch(/@media/);
+    // dar düzen: metrikler 2 sütun, öne çıkanlar tek sütun
+    expect(card).toMatch(/\.tiles \{[^}]*@container \(max-width: #\{\$narrow\}\) \{\s*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);/);
+    expect(card).toMatch(/\.highlights \{[\s\S]*?@container \(max-width: #\{\$narrow\}\) \{\s*grid-template-columns: 1fr;/);
+    // yer tutucu ve kart aynı en az yükseklik
+    expect(card).toMatch(/\.reserve,\s*\.card \{\s*min-height: \$min-h-desktop;\s*@container \(max-width: #\{\$narrow\}\) \{\s*min-height: \$min-h-mobile;/);
+  });
+
+  it('/standings: ≥ $bp-split iki sütun, sağ sütun maç sayfasıyla aynı genişlik; Eleme Ağacı açıkken tek sütun', () => {
+    expect(page).toMatch(/@media \(min-width: \$bp-split\) \{\s*\.layout:not\(\.layoutStacked\) \{\s*display: flex;\s*gap: \$gap;/);
+    expect(page).toMatch(/\.side \{\s*flex: 0 0 \$right-col-width;\s*width: \$right-col-width;/);
   });
 });
 

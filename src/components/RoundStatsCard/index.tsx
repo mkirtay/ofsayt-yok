@@ -7,10 +7,13 @@ const loadCard = () => import('./Card');
 
 /**
  * Lig sayfasındaki "Haftanın Özeti" yuvası: yer baştan ayrılır (CLS yok), kart kodu ve verisi yalnız yuva görünüme
- * yaklaşınca yüklenir (ilk yük paketine girmez). Veri yoksa kart `null` döner ve yuva çöker (ekranın altında).
+ * yaklaşınca yüklenir (ilk yük paketine girmez). Veri yoksa kart `null` döner ve yuva çöker. Masaüstünde yuva yan
+ * sütunda, ilk görünümde olabilir: yükseklik baştan ayrıldığı için kart gelince yan sütun / tablo kaymaz.
  */
 export default function RoundStatsSlot(props: RoundStatsCardProps) {
   const ref = useRef<HTMLDivElement>(null);
+  // Yükseklik iç kutuda ayrılır (dış kutu genişliği ölçülen kap; bkz. roundStatsCard.module.scss).
+  const reserveRef = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
   const [empty, setEmpty] = useState(false);
 
@@ -38,7 +41,7 @@ export default function RoundStatsSlot(props: RoundStatsCardProps) {
   // Kart boş (null) çizdiyse yuva yüksekliği bırakılır: kartın kendi kutusu yoksa yuva çöker.
   useEffect(() => {
     if (!visible) return;
-    const el = ref.current;
+    const el = reserveRef.current;
     if (!el || typeof MutationObserver === 'undefined') return;
     const check = () => setEmpty(el.childElementCount === 0);
     const mo = new MutationObserver(check);
@@ -48,7 +51,9 @@ export default function RoundStatsSlot(props: RoundStatsCardProps) {
 
   return (
     <div ref={ref} className={`${styles.slot} ${empty ? styles.slotEmpty : ''}`.trim()} data-testid="round-stats-slot">
-      {visible ? <LazyLoad load={loadCard} props={props} /> : null}
+      <div ref={reserveRef} className={styles.reserve}>
+        {visible ? <LazyLoad load={loadCard} props={props} /> : null}
+      </div>
     </div>
   );
 }
