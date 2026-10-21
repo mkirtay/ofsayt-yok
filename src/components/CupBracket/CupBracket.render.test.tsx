@@ -62,4 +62,9 @@ describe('<CupBracket />', () => {
     expect(html).toContain('Bu turun kurası henüz çekilmedi.');
     expect(html).toContain('>Ön Eleme Play-off</button>');
   });
+
+  it('kura bekleniyor: lig aşaması bağlantısı yalnız üstte, bir kez', () => {
+    const html = renderToStaticMarkup(<CupBracket bracket={build(2, 28155, uclSeason2627)} onShowStandings={() => {}} />);
+    expect((html.match(/Lig aşaması puan durumu/g) ?? []).length).toBe(1);
+  });
 });

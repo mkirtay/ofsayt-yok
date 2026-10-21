@@ -196,16 +196,12 @@ function TreeView({ rounds, t }: { rounds: CupRound[]; t: T }) {
   );
 }
 
-function ListView({ round, t, onShowStandings, leagueStageLabel }: { round: CupRound; t: T; onShowStandings?: () => void; leagueStageLabel: string | null }) {
+function ListView({ round, t }: { round: CupRound; t: T }) {
+  // Lig/grup aşaması bağlantısı üstte tek kez (topLinks); boş turda tekrarlanmaz.
   if (round.status === 'tbd') {
     return (
       <div className={styles.tbdNote}>
         <p>{t('tbdRound')}</p>
-        {onShowStandings && leagueStageLabel ? (
-          <button type="button" className={styles.linkButton} onClick={onShowStandings}>
-            {leagueStageLabel} →
-          </button>
-        ) : null}
       </div>
     );
   }
@@ -277,12 +273,12 @@ export default function CupBracket({ bracket, onShowStandings }: { bracket: CupB
 
       <div className={styles.desktopOnly}>
         <Chips items={desktopItems} selected={desktopRound ? desktop : 'tree'} onSelect={setDesktopSel} label={t('roundsLabel')} />
-        {desktopRound ? <ListView round={desktopRound} t={t} leagueStageLabel={leagueStageLabel} onShowStandings={onShowStandings} /> : <TreeView rounds={tree} t={t} />}
+        {desktopRound ? <ListView round={desktopRound} t={t} /> : <TreeView rounds={tree} t={t} />}
       </div>
 
       <div className={styles.mobileOnly}>
         <Chips items={mobileItems} selected={mobileRound?.key ?? ''} onSelect={setMobileSel} label={t('roundsLabel')} />
-        {mobileRound ? <ListView round={mobileRound} t={t} leagueStageLabel={leagueStageLabel} onShowStandings={onShowStandings} /> : null}
+        {mobileRound ? <ListView round={mobileRound} t={t} /> : null}
       </div>
     </div>
   );
