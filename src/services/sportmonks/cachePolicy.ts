@@ -288,9 +288,16 @@ export function sportmonksCacheTtl(
       return data == null ? withStale(NOT_FOUND_TTL, NOT_FOUND_TTL) : withStale(6 * HOUR, DAY);
 
     case 'stages':
-      // Kupa eleme ağacı (`stages/seasons/{id}?include=…fixtures…`, bkz. server/cupBracket.ts): içeriğe göre.
+      // Kupa eleme ağacı (`stages/seasons/{id}?include=…fixtures…`, bkz. server/cupBracket.ts): içeriğe göre. Haftanın
+      // Özeti birim listesi (`include=rounds:…`, fixtures yok) önceki gibi 1 gün / 7 gün.
       if (a === 'seasons' && String(query.include ?? '').includes('fixtures')) return cupStagesTtl(data, now);
       return withStale(DAY, 7 * DAY);
+
+    case 'statistics':
+      // Hafta / aşama istatistiği (lig sayfası Haftanın Özeti, bkz. server/roundStats.ts): üstünde hesaplanmış özetin SWR'si
+      // var (2 sa / 7 gün); bu kayıt yalnız onun yenilemesi ve 429/5xx'te eski veri için.
+      return withStale(HOUR, 7 * DAY);
+
     case 'leagues':
     case 'seasons':
     case 'rounds':

@@ -1,0 +1,384 @@
+{
+ "data": [
+  {
+   "id": 6203159,
+   "model_id": 410383,
+   "type_id": 575,
+   "relation_id": 347,
+   "value": {
+    "count": 5,
+    "percentage": 27.78,
+    "participant_id": 347,
+    "participant_name": "Alanyaspor",
+    "participant_count": 1
+   },
+   "participant": {
+    "id": 347,
+    "name": "Alanyaspor",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/teams/27/347.png"
+   }
+  },
+  {
+   "id": 6203158,
+   "model_id": 410383,
+   "type_id": 194,
+   "relation_id": null,
+   "value": {
+    "count": 5,
+    "percentage": 27.78
+   }
+  },
+  {
+   "id": 6200033,
+   "model_id": 410383,
+   "type_id": 201,
+   "relation_id": null,
+   "value": {
+    "all": 100,
+    "home": 77.78,
+    "away": 22.22
+   }
+  },
+  {
+   "id": 6200032,
+   "model_id": 410383,
+   "type_id": 1677,
+   "relation_id": null,
+   "value": {
+    "total": 248,
+    "on_target": 87,
+    "off_target": 101,
+    "inside_box": 150,
+    "outside_box": 98,
+    "blocked": 60,
+    "average": 27.56
+   }
+  },
+  {
+   "id": 6200031,
+   "model_id": 410383,
+   "type_id": 196,
+   "relation_id": null,
+   "value": {
+    "0-15": {
+     "count": 1,
+     "percentage": 4.35
+    },
+    "15-30": {
+     "count": 4,
+     "percentage": 17.39
+    },
+    "30-45": {
+     "count": 5,
+     "percentage": 21.74
+    },
+    "45-60": {
+     "count": 1,
+     "percentage": 4.35
+    },
+    "60-75": {
+     "count": 4,
+     "percentage": 17.39
+    },
+    "75-90": {
+     "count": 8,
+     "percentage": 34.78
+    }
+   }
+  },
+  {
+   "id": 6200030,
+   "model_id": 410383,
+   "type_id": 574,
+   "relation_id": null,
+   "value": {
+    "total": 36
+   }
+  },
+  {
+   "id": 6200029,
+   "model_id": 410383,
+   "type_id": 204,
+   "relation_id": 1071,
+   "value": {
+    "count": 4,
+    "home": 4,
+    "away": 0,
+    "percentage": 17.39,
+    "participant_id": 1071,
+    "participant_name": "Kasımpaşa"
+   },
+   "participant": {
+    "id": 1071,
+    "name": "Kasımpaşa",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/teams/15/1071.png"
+   }
+  },
+  {
+   "id": 6200028,
+   "model_id": 410383,
+   "type_id": 205,
+   "relation_id": 2811,
+   "value": {
+    "count": 4,
+    "home": 0,
+    "away": 4,
+    "percentage": 17.39,
+    "participant_id": 2811,
+    "participant_name": "Samsunspor"
+   },
+   "participant": {
+    "id": 2811,
+    "name": "Samsunspor",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/teams/27/2811.png"
+   }
+  },
+  {
+   "id": 6200027,
+   "model_id": 410383,
+   "type_id": 191,
+   "relation_id": null,
+   "value": {
+    "total": 23,
+    "home": {
+     "count": 17,
+     "percentage": 73.91,
+     "average": 1.89
+    },
+    "away": {
+     "count": 6,
+     "percentage": 26.09,
+     "average": 0.67
+    },
+    "average": 2.56,
+    "avg_min_per_goal": 35
+   }
+  },
+  {
+   "id": 6200026,
+   "model_id": 410383,
+   "type_id": 212,
+   "relation_id": 1071,
+   "value": {
+    "rating": 7.24,
+    "team_id": 1071,
+    "team_name": "Kasımpaşa"
+   },
+   "participant": {
+    "id": 1071,
+    "name": "Kasımpaşa",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/teams/15/1071.png"
+   }
+  },
+  {
+   "id": 6200025,
+   "model_id": 410383,
+   "type_id": 211,
+   "relation_id": 37667492,
+   "value": {
+    "rating": 9.32,
+    "player_id": 37667492,
+    "player_name": "Adem Arous"
+   },
+   "participant": {
+    "id": 37667492,
+    "name": "Adam Arous",
+    "display_name": "Adem Arous",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/4/37667492.png"
+   }
+  },
+  {
+   "id": 6200024,
+   "model_id": 410383,
+   "type_id": 208,
+   "relation_id": 37667492,
+   "value": {
+    "count": 2,
+    "player_id": 37667492,
+    "player_name": "Adem Arous"
+   },
+   "participant": {
+    "id": 37667492,
+    "name": "Adam Arous",
+    "display_name": "Adem Arous",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/4/37667492.png"
+   }
+  },
+  {
+   "id": 6200022,
+   "model_id": 410383,
+   "type_id": 197,
+   "relation_id": null,
+   "value": {
+    "over": {
+     "0_5": {
+      "count": 9,
+      "percentage": 100
+     },
+     "1_5": {
+      "count": 7,
+      "percentage": 77.78
+     },
+     "2_5": {
+      "count": 5,
+      "percentage": 55.56
+     },
+     "3_5": {
+      "count": 1,
+      "percentage": 11.11
+     },
+     "4_5": {
+      "count": 1,
+      "percentage": 11.11
+     },
+     "5_5": {
+      "count": 0,
+      "percentage": 0
+     },
+     "6_5": {
+      "count": 0,
+      "percentage": 0
+     }
+    },
+    "under": {
+     "0_5": {
+      "count": 0,
+      "percentage": 0
+     },
+     "1_5": {
+      "count": 2,
+      "percentage": 22.22
+     },
+     "2_5": {
+      "count": 4,
+      "percentage": 44.44
+     },
+     "3_5": {
+      "count": 8,
+      "percentage": 88.89
+     },
+     "4_5": {
+      "count": 8,
+      "percentage": 88.89
+     },
+     "5_5": {
+      "count": 9,
+      "percentage": 100
+     },
+     "6_5": {
+      "count": 9,
+      "percentage": 100
+     }
+    }
+   }
+  },
+  {
+   "id": 6200019,
+   "model_id": 410383,
+   "type_id": 202,
+   "relation_id": null,
+   "value": {
+    "all": 100,
+    "home": 22.22,
+    "away": 77.78
+   }
+  },
+  {
+   "id": 6200017,
+   "model_id": 410383,
+   "type_id": 34,
+   "relation_id": 34,
+   "value": {
+    "count": 10,
+    "percentage": 11.24,
+    "avg_per_match": 9.89,
+    "team_most_corners_id": 34,
+    "team_most_corners_name": "Galatasaray"
+   },
+   "participant": {
+    "id": 34,
+    "name": "Galatasaray",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/teams/2/34.png"
+   }
+  },
+  {
+   "id": 6200015,
+   "model_id": 410383,
+   "type_id": 193,
+   "relation_id": null,
+   "value": {
+    "yellowcards": 33,
+    "redcards": 0,
+    "yellowredcards": 0,
+    "average_yellowcards": 3.67,
+    "average_redcards": 0,
+    "average_yellowredcards": 0
+   }
+  },
+  {
+   "id": 6200013,
+   "model_id": 410383,
+   "type_id": 210,
+   "relation_id": 540311,
+   "value": {
+    "count": 1,
+    "player_id": 540311,
+    "player_name": "Afonso Sousa"
+   },
+   "participant": {
+    "id": 540311,
+    "name": "Afonso Gamelas De Pinho Sousa",
+    "display_name": "Afonso Sousa",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/23/540311.png"
+   }
+  },
+  {
+   "id": 6200011,
+   "model_id": 410383,
+   "type_id": 192,
+   "relation_id": null,
+   "value": {
+    "count": 4,
+    "percentage": 44.44
+   }
+  },
+  {
+   "id": 6200010,
+   "model_id": 410383,
+   "type_id": 209,
+   "relation_id": 13186483,
+   "value": {
+    "count": 1,
+    "player_id": 13186483,
+    "player_name": "Adrian Benedyczak"
+   },
+   "participant": {
+    "id": 13186483,
+    "name": "Adrian Benedyczak",
+    "display_name": "Adrian Benedyczak",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/19/13186483.png"
+   }
+  },
+  {
+   "id": 6094626,
+   "model_id": 410383,
+   "type_id": 189,
+   "relation_id": null,
+   "value": {
+    "total": 18,
+    "countries": 1
+   }
+  },
+  {
+   "id": 6094622,
+   "model_id": 410383,
+   "type_id": 188,
+   "relation_id": null,
+   "value": {
+    "total": 9,
+    "played": 9,
+    "percentage": 100
+   }
+  }
+ ]
+}

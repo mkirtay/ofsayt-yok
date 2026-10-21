@@ -1,0 +1,319 @@
+@use '../../styles/variables' as *;
+
+// Yuva ve kart AYNI en az yüksekliği taşır: yer tutucu → içerik geçişinde alttaki öğeler kaymaz (CLS). Değerler tipik
+// içeriğin ölçülen yüksekliği (390 / 1440 px, 2026-10-21); öne çıkanlar listesi en az 2 (mobilde 4) satır yer ayırır.
+$min-h-desktop: 496px;
+$min-h-mobile: 752px;
+
+.slot {
+  min-height: $min-h-desktop;
+  margin-bottom: $spacing-8;
+
+  @media (max-width: $bp-sm) {
+    min-height: $min-h-mobile;
+  }
+}
+
+.slotEmpty {
+  min-height: 0;
+  margin-bottom: 0;
+}
+
+.card {
+  min-height: $min-h-desktop;
+  background-color: $color-surface;
+  border-radius: $radius-md;
+  box-shadow: $shadow-surface;
+  border: 1px solid $color-border;
+
+  @media (max-width: $bp-sm) {
+    min-height: $min-h-mobile;
+  }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-3;
+  padding: $spacing-3 $spacing-4;
+  border-bottom: 1px solid $color-border;
+
+  @media (max-width: $bp-sm) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: $spacing-2;
+  }
+}
+
+.title {
+  font-size: 16px;
+  font-weight: 700;
+  color: $color-text;
+}
+
+.picker {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+}
+
+.navBtn {
+  width: 32px;
+  height: 32px;
+  flex: none;
+  border-radius: $radius-full;
+  border: 1px solid $color-border;
+  font-size: 18px;
+  line-height: 1;
+  color: $color-text;
+  transition: $transition-base;
+
+  &:hover:not(:disabled) {
+    background: $color-muted;
+  }
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: default;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+    outline-offset: 2px;
+  }
+}
+
+.unit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 150px;
+  text-align: center;
+
+  @media (max-width: $bp-sm) {
+    flex: 1;
+  }
+}
+
+.unitName {
+  font-size: 14px;
+  font-weight: 600;
+  color: $color-text;
+}
+
+.unitMeta {
+  min-height: 16px;
+  font-size: 12px;
+  color: $color-text-secondary;
+}
+
+.body {
+  padding: $spacing-3 $spacing-4 $spacing-4;
+}
+
+.played {
+  margin-bottom: $spacing-3;
+  font-size: 12px;
+  color: $color-text-secondary;
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: $spacing-2;
+  margin: 0 0 $spacing-4;
+
+  @media (max-width: $bp-sm) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  padding: $spacing-3;
+  border-radius: $radius-sm;
+  background: $color-muted;
+
+  dt {
+    min-height: 32px;
+    font-size: 12px;
+    line-height: 16px;
+    color: $color-text-secondary;
+  }
+
+  dd {
+    margin: 0;
+  }
+}
+
+.value {
+  font-family: $font-family-score;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: $color-text;
+  font-variant-numeric: tabular-nums;
+}
+
+.sub {
+  font-size: 12px;
+  color: $color-text-secondary;
+}
+
+.highlights {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: $spacing-2 $spacing-4;
+  min-height: 2 * 48px + 8px;
+  margin: 0 0 $spacing-4;
+  padding: 0;
+  list-style: none;
+  align-content: start;
+
+  @media (max-width: $bp-sm) {
+    grid-template-columns: 1fr;
+    min-height: 4 * 48px + 3 * 8px;
+  }
+}
+
+.highlight {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  min-height: 48px;
+}
+
+.avatarPlayer,
+.avatarTeam,
+.avatarFallback {
+  width: 32px;
+  height: 32px;
+  flex: none;
+}
+
+.avatarPlayer {
+  border-radius: $radius-full;
+  object-fit: cover;
+  background: $color-muted;
+}
+
+.avatarTeam {
+  object-fit: contain;
+}
+
+.avatarFallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: $radius-full;
+  background: $color-muted;
+  font-size: 12px;
+  font-weight: 600;
+  color: $color-text-secondary;
+}
+
+.hlText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.hlLabel {
+  font-size: 12px;
+  color: $color-text-secondary;
+}
+
+.hlName {
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 600;
+  color: $color-text;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.hlValue {
+  flex: none;
+}
+
+.count {
+  font-size: 13px;
+  font-weight: 600;
+  color: $color-text;
+  font-variant-numeric: tabular-nums;
+}
+
+.minutes {
+  margin: 0;
+}
+
+.minutesTitle {
+  margin-bottom: $spacing-2;
+  font-size: 12px;
+  color: $color-text-secondary;
+}
+
+.bars {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: $spacing-2;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.barCol {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.barCount {
+  font-size: 12px;
+  font-weight: 600;
+  color: $color-text;
+  font-variant-numeric: tabular-nums;
+}
+
+.barTrack {
+  display: flex;
+  align-items: flex-end;
+  width: 100%;
+  max-width: 40px;
+  height: 48px;
+  border-bottom: 1px solid $color-border;
+}
+
+.bar {
+  display: block;
+  width: 100%;
+  min-height: 2px;
+  border-radius: 4px 4px 0 0;
+  background: $color-primary;
+}
+
+.barLabel {
+  font-size: 11px;
+  color: $color-text-secondary;
+  white-space: nowrap;
+}
+
+.message {
+  padding: $spacing-8 $spacing-4;
+  text-align: center;
+  color: $color-text-secondary;
+}
+
+.retry {
+  color: $color-primary-text;
+  font-weight: 600;
+  text-decoration: underline;
+}

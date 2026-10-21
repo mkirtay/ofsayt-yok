@@ -1,0 +1,444 @@
+{
+ "data": [
+  {
+   "id": 1043186,
+   "model_id": 77483291,
+   "type_id": 201,
+   "relation_id": null,
+   "value": {
+    "all": 71.43,
+    "home": 50,
+    "away": 21.43
+   }
+  },
+  {
+   "id": 1043185,
+   "model_id": 77483291,
+   "type_id": 202,
+   "relation_id": null,
+   "value": {
+    "all": 71.43,
+    "home": 21.43,
+    "away": 50
+   }
+  },
+  {
+   "id": 1042929,
+   "model_id": 77483291,
+   "type_id": 196,
+   "relation_id": null,
+   "value": {
+    "0-15": {
+     "count": 8,
+     "percentage": 16.67
+    },
+    "15-30": {
+     "count": 9,
+     "percentage": 18.75
+    },
+    "30-45": {
+     "count": 11,
+     "percentage": 22.92
+    },
+    "45-60": {
+     "count": 7,
+     "percentage": 14.58
+    },
+    "60-75": {
+     "count": 5,
+     "percentage": 10.42
+    },
+    "75-90": {
+     "count": 4,
+     "percentage": 8.33
+    }
+   }
+  },
+  {
+   "id": 1042928,
+   "model_id": 77483291,
+   "type_id": 208,
+   "relation_id": 52903,
+   "value": {
+    "count": 2,
+    "player_id": 52903,
+    "player_name": "Barnabás Varga"
+   },
+   "participant": {
+    "id": 52903,
+    "name": "Barnabás Varga",
+    "display_name": "Barnabás Varga",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/7/52903.png"
+   }
+  },
+  {
+   "id": 1042927,
+   "model_id": 77483291,
+   "type_id": 193,
+   "relation_id": null,
+   "value": {
+    "yellowcards": 46,
+    "redcards": 2,
+    "yellowredcards": 2,
+    "average_yellowcards": 3.29,
+    "average_redcards": 0.14,
+    "average_yellowredcards": 0.14
+   }
+  },
+  {
+   "id": 1042926,
+   "model_id": 77483291,
+   "type_id": 210,
+   "relation_id": 37593902,
+   "value": {
+    "count": 2,
+    "player_id": 37593902,
+    "player_name": "Djibril Diop"
+   },
+   "participant": {
+    "id": 37593902,
+    "name": "Djibril Thialaw Diop",
+    "display_name": "Djibril Diop",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/14/37593902.png"
+   }
+  },
+  {
+   "id": 1042925,
+   "model_id": 77483291,
+   "type_id": 192,
+   "relation_id": null,
+   "value": {
+    "count": 10,
+    "percentage": 71.43
+   }
+  },
+  {
+   "id": 1042924,
+   "model_id": 77483291,
+   "type_id": 79,
+   "relation_id": null,
+   "value": {
+    "count": 33,
+    "average": 2.36
+   }
+  },
+  {
+   "id": 1042923,
+   "model_id": 77483291,
+   "type_id": 209,
+   "relation_id": 375321,
+   "value": {
+    "count": 2,
+    "player_id": 375321,
+    "player_name": "Aleksey Isayev"
+   },
+   "participant": {
+    "id": 375321,
+    "name": "Aleksey Isaev",
+    "display_name": "Aleksey Isayev",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/25/375321.png"
+   }
+  },
+  {
+   "id": 1042922,
+   "model_id": 77483291,
+   "type_id": 189,
+   "relation_id": null,
+   "value": {
+    "total": 14,
+    "countries": 13
+   }
+  },
+  {
+   "id": 1042921,
+   "model_id": 77483291,
+   "type_id": 1677,
+   "relation_id": null,
+   "value": {
+    "total": 448,
+    "on_target": 154,
+    "off_target": 186,
+    "inside_box": 284,
+    "outside_box": 164,
+    "blocked": 108,
+    "average": 32
+   }
+  },
+  {
+   "id": 1042920,
+   "model_id": 77483291,
+   "type_id": 574,
+   "relation_id": null,
+   "value": {
+    "total": 55
+   }
+  },
+  {
+   "id": 1042919,
+   "model_id": 77483291,
+   "type_id": 206,
+   "relation_id": 1668,
+   "value": {
+    "count": 3,
+    "home": 3,
+    "away": 3,
+    "home_adv_percentage": 0,
+    "participant_id": 1668,
+    "participant_name": "Bodø / Glimt"
+   },
+   "participant": {
+    "id": 1668,
+    "name": "Bodø / Glimt",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/teams/4/1668.png"
+   }
+  },
+  {
+   "id": 1042918,
+   "model_id": 77483291,
+   "type_id": 204,
+   "relation_id": 1668,
+   "value": {
+    "count": 6,
+    "home": 3,
+    "away": 3,
+    "percentage": 12.5,
+    "participant_id": 1668,
+    "participant_name": "Bodø / Glimt"
+   },
+   "participant": {
+    "id": 1668,
+    "name": "Bodø / Glimt",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/teams/4/1668.png"
+   }
+  },
+  {
+   "id": 1042917,
+   "model_id": 77483291,
+   "type_id": 207,
+   "relation_id": 516,
+   "value": {
+    "count": 3,
+    "home": 5,
+    "away": 1,
+    "home_adv_percentage": -66.67,
+    "participant_id": 516,
+    "participant_name": "Hapoel Be'er Sheva"
+   },
+   "participant": {
+    "id": 516,
+    "name": "Hapoel Be'er Sheva",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/teams/4/516.png"
+   }
+  },
+  {
+   "id": 1042916,
+   "model_id": 77483291,
+   "type_id": 205,
+   "relation_id": 516,
+   "value": {
+    "count": 6,
+    "home": 1,
+    "away": 5,
+    "percentage": 12.5,
+    "participant_id": 516,
+    "participant_name": "Hapoel Be'er Sheva"
+   },
+   "participant": {
+    "id": 516,
+    "name": "Hapoel Be'er Sheva",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/teams/4/516.png"
+   }
+  },
+  {
+   "id": 1042915,
+   "model_id": 77483291,
+   "type_id": 191,
+   "relation_id": null,
+   "value": {
+    "total": 48,
+    "home": {
+     "count": 32,
+     "percentage": 66.67,
+     "average": 2.29
+    },
+    "away": {
+     "count": 16,
+     "percentage": 33.33,
+     "average": 1.14
+    },
+    "average": 3.43,
+    "avg_min_per_goal": 26
+   }
+  },
+  {
+   "id": 1042914,
+   "model_id": 77483291,
+   "type_id": 190,
+   "relation_id": null,
+   "value": {
+    "count": 4,
+    "percentage": 28.57
+   }
+  },
+  {
+   "id": 1042913,
+   "model_id": 77483291,
+   "type_id": 188,
+   "relation_id": null,
+   "value": {
+    "total": 14,
+    "played": 14,
+    "percentage": 100
+   }
+  },
+  {
+   "id": 1042912,
+   "model_id": 77483291,
+   "type_id": 212,
+   "relation_id": 1668,
+   "value": {
+    "rating": 7.13,
+    "team_id": 1668,
+    "team_name": "Bodø / Glimt"
+   },
+   "participant": {
+    "id": 1668,
+    "name": "Bodø / Glimt",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/teams/4/1668.png"
+   }
+  },
+  {
+   "id": 1042911,
+   "model_id": 77483291,
+   "type_id": 211,
+   "relation_id": 56289,
+   "value": {
+    "rating": 8.02,
+    "player_id": 56289,
+    "player_name": "Tellur Mütallimov"
+   },
+   "participant": {
+    "id": 56289,
+    "name": "Tellur Mütəllimov",
+    "display_name": "Tellur Mütallimov",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/1/56289.png"
+   }
+  },
+  {
+   "id": 1042910,
+   "model_id": 77483291,
+   "type_id": 195,
+   "relation_id": 129394,
+   "value": {
+    "count": 2,
+    "home": 1,
+    "away": 1,
+    "percentage": 100,
+    "total_games": 2,
+    "player_id": 129394,
+    "player_name": "Thomas Strakosha"
+   },
+   "participant": {
+    "id": 129394,
+    "name": "Thomas Strakosha",
+    "display_name": "Thomas Strakosha",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/18/129394.png"
+   }
+  },
+  {
+   "id": 1042909,
+   "model_id": 77483291,
+   "type_id": 197,
+   "relation_id": null,
+   "value": {
+    "over": {
+     "0_5": {
+      "count": 13,
+      "percentage": 92.86
+     },
+     "1_5": {
+      "count": 13,
+      "percentage": 92.86
+     },
+     "2_5": {
+      "count": 11,
+      "percentage": 78.57
+     },
+     "3_5": {
+      "count": 6,
+      "percentage": 42.86
+     },
+     "4_5": {
+      "count": 2,
+      "percentage": 14.29
+     },
+     "5_5": {
+      "count": 2,
+      "percentage": 14.29
+     },
+     "6_5": {
+      "count": 1,
+      "percentage": 7.14
+     }
+    },
+    "under": {
+     "0_5": {
+      "count": 1,
+      "percentage": 7.14
+     },
+     "1_5": {
+      "count": 1,
+      "percentage": 7.14
+     },
+     "2_5": {
+      "count": 3,
+      "percentage": 21.43
+     },
+     "3_5": {
+      "count": 8,
+      "percentage": 57.14
+     },
+     "4_5": {
+      "count": 12,
+      "percentage": 85.71
+     },
+     "5_5": {
+      "count": 12,
+      "percentage": 85.71
+     },
+     "6_5": {
+      "count": 13,
+      "percentage": 92.86
+     }
+    }
+   }
+  },
+  {
+   "id": 1042908,
+   "model_id": 77483291,
+   "type_id": 575,
+   "relation_id": 3223,
+   "value": {
+    "count": 1,
+    "percentage": 7.14,
+    "participant_id": 3223,
+    "participant_name": "Levski Sofia",
+    "participant_count": 1
+   },
+   "participant": {
+    "id": 3223,
+    "name": "Levski Sofia",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/teams/23/3223.png"
+   }
+  },
+  {
+   "id": 1042907,
+   "model_id": 77483291,
+   "type_id": 203,
+   "relation_id": null,
+   "value": {
+    "all": 28.57
+   }
+  }
+ ]
+}
