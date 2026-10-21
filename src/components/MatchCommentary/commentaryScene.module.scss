@@ -129,6 +129,77 @@
   }
 }
 
+// ─── Bekleme sahnesi (maç başlamadan önce) ───
+// Olay yok: noktalar sırayla "nefes alır", top orta noktada hafifçe seker, orta yuvarlakta halka genişler.
+// Geniş ekranda saha kartı ele geçirmesin: bekleme sahnesi ortalanmış ve dar.
+.idle {
+  .stage {
+    max-width: 560px;
+    margin: 0 auto;
+  }
+
+  .dot {
+    animation: dotBreathe 2.8s ease-in-out infinite;
+    animation-delay: calc(var(--i) * 90ms);
+  }
+
+  .ballPath {
+    animation: ballIdle 2.4s ease-in-out infinite;
+  }
+
+  .ballArc {
+    animation: none;
+  }
+}
+
+@keyframes dotBreathe {
+  0%,
+  100% {
+    transform: translate(calc(var(--x) * 1px), calc(var(--y) * 1px)) scale(1);
+  }
+  50% {
+    transform: translate(calc(var(--x) * 1px), calc(var(--y) * 1px)) scale(1.22);
+  }
+}
+
+@keyframes ballIdle {
+  0%,
+  100% {
+    transform: translate(calc(var(--x2) * 1px), calc(var(--y2) * 1px)) scale(1);
+  }
+  50% {
+    transform: translate(calc(var(--x2) * 1px), calc((var(--y2) - 5) * 1px)) scale(1.08);
+  }
+}
+
+// Orta yuvarlakta genişleyip sönen halka (ilk düdük beklentisi).
+.ring {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 88px;
+  height: 88px;
+  margin: -44px 0 0 -44px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.55);
+  opacity: 0;
+  animation: ringPulse 2.8s ease-out infinite;
+}
+
+@keyframes ringPulse {
+  0% {
+    transform: scale(0.45);
+    opacity: 0;
+  }
+  35% {
+    opacity: 0.75;
+  }
+  100% {
+    transform: scale(1.15);
+    opacity: 0;
+  }
+}
+
 // ─── Etkiler ───
 
 .save,

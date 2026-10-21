@@ -8,6 +8,10 @@ import type { Match } from '@/models/liveScore';
 import type { CommentaryItem, CommentaryKind } from '@/services/sportmonks/matchCommentary';
 import type { SceneSquads } from '@/services/sportmonks/commentaryScene';
 import { matchDisplayState, specialKeepsData } from '@/utils/matchDisplayState';
+import { useNow } from '@/hooks/useNow';
+import { countdown, kickoffInfo } from '@/utils/kickoff';
+import { countdownText } from '@/utils/kickoffText';
+import { formatFixtureDate } from '@/utils/fixtureDateLabel';
 import styles from './matchCommentary.module.scss';
 
 /** Canlı maçta yenileme aralığı — sunucu kaydı da 60 sn taze (cachePolicy COMMENTARY_LIVE_TTL). */
@@ -196,7 +200,7 @@ async function fetchCommentary(matchId: string, signal?: AbortSignal): Promise<{
   return { items: Array.isArray(body.items) ? body.items : [], live: !!body.live, squads: body.squads ?? null };
 }
 
-type SceneProps = { item: CommentaryItem; squads: SceneSquads | null };
+type SceneProps = { item: CommentaryItem | null; squads: SceneSquads | null; kickoff?: boolean };
 
 let sceneLoad: Promise<ComponentType<SceneProps>> | null = null;
 /** Sahne (saha çizimi + animasyonlar) ayrı chunk: yalnız Anlatım sekmesinde, sahnesi olan satır varsa indirilir. */
@@ -280,9 +284,11 @@ export default function MatchCommentary({ matchId, match }: Props) {
   const [replay, setReplay] = useState(0);
   const current = useMemo(() => sceneItems.find((i) => i.id === selectedId) ?? sceneItems[0] ?? null, [sceneItems, selectedId]);
 
+  // Maç öncesi de sahne gösterilir (bekleme dizilişi) → chunk sekme açılınca istenir.
+  const preMatch = state?.phase === 'PRE' && !blockingSpecial;
   const [Scene, setScene] = useState<ComponentType<SceneProps> | null>(null);
   useEffect(() => {
-    if (!current || Scene) return;
+    if ((!current && !preMatch) || Scene) return;
     let alive = true;
     // Sahne yüklenemezse (ağ hatası) anlatım listesi olduğu gibi kalır — sahne süs, veri değil.
     void loadScene().then(
@@ -294,12 +300,17 @@ export default function MatchCommentary({ matchId, match }: Props) {
     return () => {
       alive = false;
     };
-  }, [current, Scene]);
+  }, [current, preMatch, Scene]);
 
   const onSelect = useCallback((item: CommentaryItem) => {
     setSelectedId(item.id);
     setReplay((n) => n + 1);
   }, []);
+
+  // İlk düdük bilgisi + geri sayım (maç öncesi): tarih SSR'da sabit, geri sayım yalnız mount sonrası.
+  const kickoff = kickoffInfo(match);
+  const now = useNow(30_000, preMatch && kickoff != null);
+  const kickoffWhen = kickoff ? `${formatFixtureDate(kickoff.dayIso, locale)}, ${kickoff.time}` : null;
 
   const title = <h3 className={styles.title}>{t('commentary.title')}</h3>;
 
@@ -311,11 +322,29 @@ export default function MatchCommentary({ matchId, match }: Props) {
       </section>
     );
   }
-  if (state?.phase === 'PRE') {
+  if (preMatch) {
     return (
       <section className={styles.root}>
         {title}
-        <p className={styles.empty}>{t('commentary.pre')}</p>
+        {Scene ? <Scene item={null} squads={null} kickoff /> : <div className={styles.scenePlaceholder} aria-hidden="true" />}
+        <div className={styles.preMatch} role="status">
+          <strong>{ts('pre.statsTitle')}</strong>
+          <span className={styles.preSub}>{t('commentary.pre')}</span>
+          {kickoffWhen ? (
+            <>
+              <span className={styles.preKick}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <circle cx="12" cy="12" r="9" />
+                  <polyline points="12 7 12 12 15 14" />
+                </svg>
+                {ts('pre.kickoff', { when: kickoffWhen })}
+              </span>
+              <span className={styles.preCountdown} aria-live="off">
+                {now != null && kickoff ? countdownText(countdown(kickoff.ms, now), ts) : ' '}
+              </span>
+            </>
+          ) : null}
+        </div>
       </section>
     );
   }

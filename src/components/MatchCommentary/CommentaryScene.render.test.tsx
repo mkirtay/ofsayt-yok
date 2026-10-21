@@ -100,3 +100,25 @@ describe('<CommentaryView /> — sahneli satırlar', () => {
     expect([...markup.matchAll(/<button[^>]*>/g)].filter((m) => /_row_/.test(m[0]))).toEqual([]);
   });
 });
+
+describe('<CommentaryScene kickoff />', () => {
+  it('bekleme sahnesi: 22 nokta, orta yuvarlakta halka, diziliş notu', () => {
+    const markup = html(<CommentaryScene item={null} squads={null} kickoff />);
+    expect(dots(markup)).toBe(22);
+    expect(markup).toContain('_ring_');
+    expect(markup).toContain('Temsili diziliş – ilk düdük bekleniyor');
+    expect(markup).toContain('data-scene="kickoff"');
+  });
+
+  it('bekleme sahnesinde kart/parlama/kurtarış yok, top var', () => {
+    const markup = html(<CommentaryScene item={null} squads={null} kickoff />);
+    expect(markup).toContain('_ballPath_');
+    expect(markup).not.toContain('_cardYellow_');
+    expect(markup).not.toContain('_flash_');
+    expect(markup).not.toContain('_save_');
+  });
+
+  it('item yok ve kickoff kapalıysa hiç çizilmez', () => {
+    expect(html(<CommentaryScene item={null} squads={null} />)).toBe('');
+  });
+});

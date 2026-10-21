@@ -156,6 +156,60 @@
   opacity: 1;
 }
 
+// Maç öncesi bekleme kutusu — istatistik kartındaki (08) dille aynı: başlık, alt metin, ilk düdük pili, geri sayım.
+.preMatch {
+  --cm-chip-bg: rgba(0, 167, 111, 0.14);
+  --cm-chip-text: var(--color-action-text);
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+  padding-bottom: $spacing-2;
+
+  strong {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--text-primary);
+  }
+}
+
+:global(:root[data-theme='light']) .preMatch {
+  --cm-chip-bg: #eef7f2;
+  --cm-chip-text: #007b55;
+}
+
+.preSub {
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+
+.preKick {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--cm-chip-bg);
+  color: var(--cm-chip-text);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+// Metin mount sonrası gelir: satır baştan tam genişlik (kayma yok).
+.preCountdown {
+  align-self: stretch;
+  min-height: 18px;
+  font-size: 12px;
+  line-height: 18px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
 // Sahne chunk'ı inene kadar aynı kutu: 504×320 oranı, kayma yok.
 .scenePlaceholder {
   width: 100%;

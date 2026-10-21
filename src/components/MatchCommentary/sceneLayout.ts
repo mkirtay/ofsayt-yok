@@ -297,3 +297,27 @@ export function drift(dot: SceneDot, ball: SceneBall | null): { dx: number; dy: 
   const step = Math.min(10, len / 8);
   return { dx: Math.round((dx / len) * step * 10) / 10, dy: Math.round((dy / len) * step * 10) / 10 };
 }
+
+/**
+ * Maç başlamadan önce gösterilen bekleme sahnesi: iki takım kendi yarısında dizili, top orta noktada. Olay yok —
+ * animasyon bileşende (nefes alan noktalar + orta yuvarlakta halka). Kadro gelmediği için (maç öncesi uç çağrılmıyor)
+ * yerleşim varsayılan 4-4-2'dir.
+ */
+export function buildKickoffScene(squads: SceneSquads | null = null): SceneLayout {
+  const dots: SceneDot[] = [];
+  for (const side of ['home', 'away'] as const) {
+    for (const p of placeSquad(squads, side)) {
+      dots.push({ side, name: p.name, number: p.number, x: p.x, y: p.y, goalkeeper: p.goalkeeper, actor: false });
+    }
+  }
+  const centre = { x: SCENE_W / 2, y: MID_Y };
+  return {
+    dots,
+    ball: { x1: centre.x, y1: centre.y, x2: centre.x, y2: centre.y, arc: 0, rebound: false },
+    goalFlash: null,
+    save: null,
+    card: null,
+    durationMs: 2800,
+    side: 'home',
+  };
+}

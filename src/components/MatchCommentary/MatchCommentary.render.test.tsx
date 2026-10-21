@@ -55,11 +55,22 @@ describe('<CommentaryView />', () => {
 });
 
 describe('<MatchCommentary /> ilk durum', () => {
-  const match = (status: string) => ({ id: 1, status }) as unknown as Match;
+  const match = (status: string, extra: Record<string, unknown> = {}) => ({ id: 1, status, ...extra }) as unknown as Match;
 
-  it('başlamamış maç: bekleme metni (istek yok, iskelet yok)', () => {
+  it('başlamamış maç: bekleme sahnesi + metin (istek yok, iskelet yok)', () => {
     const html = renderToStaticMarkup(<MatchCommentary matchId="1" match={match('NOT STARTED')} />);
     expect(html).toContain('Anlatım maç başlayınca burada akacak.');
+    expect(html).toContain('Maç henüz başlamadı.');
+    // Sahne ayrı chunk: ilk boyamada aynı oranda yer tutucu durur (kayma yok).
+    expect(html).toMatch(/_scenePlaceholder_/);
+  });
+
+  it('başlamamış maçta ilk düdük saati ve geri sayım satırı (saat SSR\'da sabit)', () => {
+    const html = renderToStaticMarkup(
+      <MatchCommentary matchId="1" match={match('NOT STARTED', { date: '2026-10-21', scheduled: '19:00:00' })} />,
+    );
+    expect(html).toContain('İlk düdük:');
+    expect(html).toMatch(/_preCountdown_/);
   });
 
   it('başlamış/bitmiş maç: veri gelene kadar iskelet', () => {
