@@ -153,5 +153,30 @@
     "club": "Club",
     "until": "Returns",
     "error": "Couldn't load players out on loan."
+  },
+  "profile": {
+    "title": "Season Profile",
+    "error": "Couldn't load the season profile.",
+    "perMatch": "per match",
+    "perMatchAvg": "match average",
+    "percent": "{{n}}%",
+    "possession": "Possession",
+    "shots": "Shots / match",
+    "onTarget": "{{n}} on target",
+    "corners": "Corners / match",
+    "passes": "Passes / match",
+    "minutesPerGoal": "Scoring frequency",
+    "minutes": "{{n}} min",
+    "minutesPerGoalSub": "per goal",
+    "failedToScore": "Failed to score",
+    "homeAway": "Home {{home}} · Away {{away}}",
+    "scoredBothHalves": "Scored in both halves",
+    "ofMatches": "of {{count}} matches",
+    "ofMatches_one": "of {{count}} match",
+    "penalties": "Penalties",
+    "penaltiesSub": "scored / taken",
+    "yellow": "Yellow cards / match",
+    "red": "Red cards: {{count}}",
+    "bestPlayer": "Top average rating"
   }
 }

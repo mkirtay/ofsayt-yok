@@ -153,5 +153,29 @@
     "club": "Kulüp",
     "until": "Dönüş",
     "error": "Kiralıktaki oyuncular yüklenemedi."
+  },
+  "profile": {
+    "title": "Sezon Profili",
+    "error": "Sezon profili yüklenemedi.",
+    "perMatch": "maç başına",
+    "perMatchAvg": "maç ortalaması",
+    "percent": "%{{n}}",
+    "possession": "Topa sahip olma",
+    "shots": "Şut / maç",
+    "onTarget": "İsabetli {{n}}",
+    "corners": "Korner / maç",
+    "passes": "Pas / maç",
+    "minutesPerGoal": "Gol sıklığı",
+    "minutes": "{{n}} dk",
+    "minutesPerGoalSub": "gol başına süre",
+    "failedToScore": "Gol atamadığı maç",
+    "homeAway": "İç saha {{home}} · Dep. {{away}}",
+    "scoredBothHalves": "İki yarıda da gol",
+    "ofMatches": "{{count}} maçta",
+    "penalties": "Penaltı",
+    "penaltiesSub": "gole çevrilen / kullanılan",
+    "yellow": "Sarı kart / maç",
+    "red": "Kırmızı kart: {{count}}",
+    "bestPlayer": "En yüksek puan ort."
   }
 }

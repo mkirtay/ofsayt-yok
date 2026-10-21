@@ -285,3 +285,54 @@ describe('<LoanedPlayers />', async () => {
     expect(err).toContain('<button');
   });
 });
+
+describe('<SeasonProfileCard />', async () => {
+  const { default: SeasonProfileCard } = await import('./SeasonProfileCard');
+  const { mapTeamSeasonProfiles, seasonProfileMetrics } = await import('@/services/sportmonks/teamSeasonProfile');
+  const { findGamblingTerms } = await import('@/utils/gamblingTerms');
+  const trTeam = (await import('../../../public/locales/tr/team.json')).default;
+  const enTeam = (await import('../../../public/locales/en/team.json')).default;
+  const fixture = (await import('@/services/sportmonks/__fixtures__/teamStatistics.profile.gs-2026-10-21.json')).default;
+  const sl = mapTeamSeasonProfiles(fixture).find((p) => p.seasonId === 28203)!;
+  const cells = (html: string) => (html.match(/_profileCell_/g) ?? []).length;
+
+  it('dolu kart: 10 hücre, TR biçimi (ondalık virgül, %60), oyuncu bağlantısı', () => {
+    const html = renderToStaticMarkup(
+      <SeasonProfileCard loading={false} error={false} metrics={seasonProfileMetrics(sl)} scope="2026/27 · Süper Lig" />,
+    );
+    expect(cells(html)).toBe(10);
+    expect(html).toContain('Sezon Profili');
+    expect(html).toContain('>%60<');
+    expect(html).toContain('>22,4<');
+    expect(html).toContain('İsabetli 7,6');
+    expect(html).toContain('>42 dk<');
+    expect(html).toContain('İç saha 0 · Dep. 1');
+    expect(html).toContain('>1/1<');
+    expect(html).toContain('Kırmızı kart: 2');
+    expect(html).toContain('href="/players/455805"');
+    expect(html).toContain('>7,72<');
+    expect(html).not.toMatch(/<svg|<canvas/);
+  });
+
+  it('iskelet 10 hücre; veri yok/az → kart yok; hata "veri yok" sayılmaz', () => {
+    expect(cells(renderToStaticMarkup(<SeasonProfileCard loading error={false} metrics={[]} scope="" />))).toBe(10);
+    expect(renderToStaticMarkup(<SeasonProfileCard loading={false} error={false} metrics={[]} scope="" />)).toBe('');
+    const two = seasonProfileMetrics(sl).slice(0, 2);
+    expect(renderToStaticMarkup(<SeasonProfileCard loading={false} error={false} metrics={two} scope="" />)).toBe('');
+    const err = renderToStaticMarkup(<SeasonProfileCard loading={false} error metrics={[]} scope="" />);
+    expect(err).toContain('Sezon profili yüklenemedi.');
+    expect(cells(err)).toBe(0);
+  });
+
+  it('"Tümü"nde oyuncunun turnuvası yazılır', () => {
+    const html = renderToStaticMarkup(
+      <SeasonProfileCard loading={false} error={false} metrics={seasonProfileMetrics(sl)} scope="" bestPlayerScope="Süper Lig" />,
+    );
+    expect(html).toContain('Victor Osimhen</a> · Süper Lig');
+  });
+
+  it('metinlerde bahis dili yok (TR/EN)', () => {
+    const texts = [...Object.values(trTeam.profile), ...Object.values(enTeam.profile)];
+    expect(texts.flatMap((s) => findGamblingTerms(s))).toEqual([]);
+  });
+});

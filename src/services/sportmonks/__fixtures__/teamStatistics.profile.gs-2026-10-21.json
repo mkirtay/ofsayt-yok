@@ -1,0 +1,314 @@
+{
+ "id": 34,
+ "statistics": [
+  {
+   "season_id": 28155,
+   "has_values": true,
+   "season": {
+    "id": 28155,
+    "league_id": 2,
+    "finished": false,
+    "name": "2026/2027"
+   },
+   "details": [
+    {
+     "type_id": 34,
+     "value": {
+      "count": 3,
+      "average": 1.5
+     }
+    },
+    {
+     "type_id": 45,
+     "value": {
+      "count": 91,
+      "average": 45.5
+     }
+    },
+    {
+     "type_id": 52,
+     "value": {
+      "all": {
+       "count": 2,
+       "average": 1,
+       "first_goal": 5
+      },
+      "home": {
+       "count": 1,
+       "percentage": 50,
+       "average": 1,
+       "first_goal": 28
+      },
+      "away": {
+       "count": 1,
+       "percentage": 50,
+       "average": 1,
+       "first_goal": 5
+      }
+     }
+    },
+    {
+     "type_id": 84,
+     "value": {
+      "count": 5,
+      "average": 2.5,
+      "player_id": 114021,
+      "player_name": "Roland Sallai",
+      "coach": 1,
+      "coach_average": 0.5
+     }
+    },
+    {
+     "type_id": 211,
+     "value": {
+      "rating": 6.79,
+      "player_id": 114021,
+      "player_name": "Roland Sallai"
+     }
+    },
+    {
+     "type_id": 575,
+     "value": {
+      "all": {
+       "count": 0,
+       "percentage": 0
+      },
+      "home": {
+       "count": 0,
+       "percentage": 0,
+       "overall_percentage": 0
+      },
+      "away": {
+       "count": 0,
+       "percentage": 0,
+       "overall_percentage": 0
+      }
+     }
+    },
+    {
+     "type_id": 1677,
+     "value": {
+      "total": 15,
+      "on_target": 6,
+      "on_target_pct": null,
+      "off_target": 7,
+      "inside_box": 11,
+      "outside_box": 4,
+      "blocked": 2,
+      "average": 7.5,
+      "shot_frequency": null,
+      "shot_conversion_rate_pct": 100
+     }
+    },
+    {
+     "type_id": 27249,
+     "value": {
+      "total_minutes_played": 180
+     }
+    },
+    {
+     "type_id": 27250,
+     "value": {
+      "most_scored_half": "2nd-half",
+      "most_scored_half_goals": 5,
+      "details": {
+       "2nd-half": {
+        "period": "2nd-half",
+        "total": 5
+       },
+       "1st-half": {
+        "period": "1st-half",
+        "total": 4
+       }
+      }
+     }
+    },
+    {
+     "type_id": 27253,
+     "value": {
+      "passes_per_game": 426,
+      "passes_per_goal": 852,
+      "total_passes": 852,
+      "passes_per_shot": 56.8
+     }
+    },
+    {
+     "type_id": 27263,
+     "value": {
+      "total": 2,
+      "home": 1,
+      "away": 1
+     }
+    }
+   ]
+  },
+  {
+   "season_id": 28203,
+   "has_values": true,
+   "season": {
+    "id": 28203,
+    "league_id": 600,
+    "finished": false,
+    "name": "2026/2027"
+   },
+   "details": [
+    {
+     "type_id": 34,
+     "value": {
+      "count": 60,
+      "average": 7.5
+     }
+    },
+    {
+     "type_id": 45,
+     "value": {
+      "count": 482,
+      "average": 60.25
+     }
+    },
+    {
+     "type_id": 47,
+     "value": {
+      "scored": 1,
+      "missed": 0,
+      "conversion_rate": 100
+     }
+    },
+    {
+     "type_id": 52,
+     "value": {
+      "all": {
+       "count": 17,
+       "average": 2.13,
+       "first_goal": 12
+      },
+      "home": {
+       "count": 9,
+       "percentage": 52.94,
+       "average": 2.25,
+       "first_goal": 33
+      },
+      "away": {
+       "count": 8,
+       "percentage": 47.06,
+       "average": 2,
+       "first_goal": 12
+      }
+     }
+    },
+    {
+     "type_id": 83,
+     "value": {
+      "count": 2,
+      "average": 0.25,
+      "player_id": 130022,
+      "player_name": "Lucas Torreira",
+      "coach": 0,
+      "coach_average": 0
+     }
+    },
+    {
+     "type_id": 84,
+     "value": {
+      "count": 14,
+      "average": 1.75,
+      "player_id": 26294,
+      "player_name": "Davinson Sánchez",
+      "coach": 2,
+      "coach_average": 0.25
+     }
+    },
+    {
+     "type_id": 211,
+     "value": {
+      "rating": 7.72,
+      "player_id": 455805,
+      "player_name": "Victor Osimhen"
+     }
+    },
+    {
+     "type_id": 575,
+     "value": {
+      "all": {
+       "count": 1,
+       "percentage": 12.5
+      },
+      "home": {
+       "count": 0,
+       "percentage": 0,
+       "overall_percentage": 0
+      },
+      "away": {
+       "count": 1,
+       "percentage": 100,
+       "overall_percentage": 12.5
+      }
+     }
+    },
+    {
+     "type_id": 1677,
+     "value": {
+      "total": 179,
+      "on_target": 61,
+      "on_target_pct": null,
+      "off_target": 77,
+      "inside_box": 123,
+      "outside_box": 56,
+      "blocked": 41,
+      "average": 22.38,
+      "shot_frequency": null,
+      "shot_conversion_rate_pct": 1
+     }
+    },
+    {
+     "type_id": 27249,
+     "value": {
+      "total_minutes_played": 720
+     }
+    },
+    {
+     "type_id": 27250,
+     "value": {
+      "most_scored_half": "2nd-half",
+      "most_scored_half_goals": 18,
+      "details": {
+       "2nd-half": {
+        "period": "2nd-half",
+        "total": 18
+       },
+       "1st-half": {
+        "period": "1st-half",
+        "total": 10
+       }
+      }
+     }
+    },
+    {
+     "type_id": 27253,
+     "value": {
+      "passes_per_game": 480,
+      "passes_per_goal": 256,
+      "total_passes": 3840,
+      "passes_per_shot": 21.45
+     }
+    },
+    {
+     "type_id": 27256,
+     "value": {
+      "won_both_halves": 3,
+      "scored_both_halves": 4,
+      "comebacks": 0
+     }
+    },
+    {
+     "type_id": 27263,
+     "value": {
+      "total": 8,
+      "home": 4,
+      "away": 4
+     }
+    }
+   ]
+  }
+ ]
+}

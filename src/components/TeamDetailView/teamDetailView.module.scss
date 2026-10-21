@@ -1027,6 +1027,66 @@ $recent-comp-w: 160px;
   text-overflow: ellipsis;
 }
 
+/* ═══ Sezon Profili ═══ */
+// Hücre yüksekliği sabit (etiket + değer + alt satır) → iskelet ve dolu kart aynı satır yüksekliğinde.
+// ~150 px'lik sütunlar: mobilde 2, masaüstü sol sütunda 5.
+.profileGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+  gap: $spacing-2;
+  margin: 0;
+}
+
+.profileCell {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 2px;
+  height: 72px;
+  padding: $spacing-2 $spacing-3;
+  border-radius: $radius-sm;
+  background: $color-bg;
+  min-width: 0;
+}
+
+.profileLabel,
+.profileSub {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  line-height: 14px;
+  color: $color-text-secondary;
+}
+
+.profileLabel {
+  font-weight: 600;
+}
+
+.profileValue {
+  margin: 0;
+  font-size: 20px;
+  line-height: 24px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: $color-text;
+}
+
+.profileSub {
+  margin: 0;
+}
+
+.profileLink {
+  color: inherit;
+  font-weight: 600;
+  text-decoration: none;
+
+  &:hover {
+    color: $color-primary-text;
+    text-decoration: underline;
+  }
+}
+
 /* ═══ Sakat ve Cezalılar ═══ */
 .sidelinedText {
   display: flex;
