@@ -28,14 +28,6 @@
   @include filter-chip-active;
 }
 
-// AI üretimi gerektiren sekmeler (Design System §1: amber premium rengi).
-.premiumDot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--color-premium);
-}
-
 // Panel içerikleri kendi kartlarını çizer; şerit ile içerik arası mesafe sarmalayıcının gap'i kadar.
 .panel {
   min-width: 0;

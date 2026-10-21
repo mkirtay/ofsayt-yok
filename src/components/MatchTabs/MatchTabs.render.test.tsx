@@ -7,7 +7,7 @@ type K = 'a' | 'b' | 'c';
 
 const tabs: MatchTabItem<K>[] = [
   { key: 'a', label: 'Bir', render: () => <div data-testid="a-content" /> },
-  { key: 'b', label: 'İki', premium: true, render: () => <div data-testid="b-content" /> },
+  { key: 'b', label: 'İki', render: () => <div data-testid="b-content" /> },
   { key: 'c', label: 'Üç', render: () => <div data-testid="c-content" /> },
 ];
 
@@ -33,11 +33,9 @@ describe('<MatchTabs />', () => {
     expect(html).not.toContain('c-content');
   });
 
-  it('premium noktası yalnızca premium işaretli sekmede', () => {
+  it('sekme başlığında premium noktası yok (premium kaldırıldı; yalnız kredi satılıyor)', () => {
     const chunks = html.split('role="tab"').slice(1).map((c) => c.split('</button>')[0]);
-    expect(chunks[0]).not.toContain('premiumDot');
-    expect(chunks[1]).toContain('premiumDot');
-    expect(chunks[2]).not.toContain('premiumDot');
+    for (const c of chunks) expect(c).not.toContain('premiumDot');
   });
 
   it('erişilebilirlik: aktif sekme seçili, diğerleri tabIndex=-1 ve aria-controls paneli gösterir', () => {

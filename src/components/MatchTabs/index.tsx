@@ -4,8 +4,6 @@ import styles from './matchTabs.module.scss';
 export type MatchTabItem<K extends string = string> = {
   key: K;
   label: string;
-  /** Başlıkta amber premium noktası (AI üretimi gerektiren sekmeler). */
-  premium?: boolean;
   /** Panel içeriği — yalnızca sekme ilk kez açıldığında çağrılır (lazy mount). */
   render: () => ReactNode;
 };
@@ -58,7 +56,7 @@ export default function MatchTabs<K extends string>({ tabs, active, onChange, ar
   return (
     <>
       <div className={styles.tabList} role="tablist" aria-label={ariaLabel}>
-        {tabs.map(({ key, label, premium }, i) => (
+        {tabs.map(({ key, label }, i) => (
           <button
             key={key}
             id={`${uid}-tab-${key}`}
@@ -72,7 +70,6 @@ export default function MatchTabs<K extends string>({ tabs, active, onChange, ar
             onKeyDown={(e) => onKeyDown(e, i)}
           >
             {label}
-            {premium ? <span className={styles.premiumDot} aria-hidden="true" /> : null}
           </button>
         ))}
       </div>

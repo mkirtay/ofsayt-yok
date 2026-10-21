@@ -154,14 +154,12 @@ export default function MatchDetailContent({ detail, requestedMatchId, variant =
       {
         key: 'analysis',
         label: t('tabs.analysis'),
-        premium: true,
         render: () =>
           effectiveMatchId ? <MatchAnalysis key={effectiveMatchId} match={match} state={analysisState} /> : null,
       },
       {
         key: 'trivia',
         label: t('tabs.trivia'),
-        premium: true,
         render: () =>
           effectiveMatchId ? <MatchTrivia key={effectiveMatchId} matchId={effectiveMatchId} match={match} /> : null,
       },
