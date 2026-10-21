@@ -36,6 +36,9 @@ export const TEAM_OVERVIEW_INCLUDE = [
   'coaches.coach',
   'venue',
   'seasons.league',
+  // Başlıktaki resmî X hesabı (2026-10-21: GS/FB/BJK/Real/Liverpool yalnız kanal 2 = Twitter, `@kullanıcı`; küçük
+  // takımlarda boş). Aynı istekte (Team havuzu, ek istek yok); GS yanıtı +~90 bayt.
+  'socials',
 ].join(';');
 
 type SportmonksTeamCoachRow = {
@@ -57,8 +60,11 @@ export type SportmonksTeamSeason = {
   league?: { id: number; name?: string | null; image_path?: string | null; sub_type?: string | null } | null;
 };
 
+type SportmonksTeamSocialRow = { social_channel_id?: number | null; value?: string | null };
+
 export type SportmonksTeamOverview = SportmonksTeamWithUpcoming & {
   latest?: SportmonksFixture[] | null;
+  socials?: SportmonksTeamSocialRow[] | null;
   coaches?: SportmonksTeamCoachRow[] | null;
   venue?: SportmonksVenue | null;
   seasons?: SportmonksTeamSeason[] | null;
@@ -93,7 +99,25 @@ export type TeamOverview = {
   venue?: { name: string; city?: string; capacity?: number };
   /** Sezonlar en yeniden eskiye; [0] güncel sezon. */
   campaigns: TeamCampaign[];
+  /** Resmî X hesabı (Sportmonks `socials`, kanal 2). */
+  social?: TeamSocial;
 };
+
+export type TeamSocial = { network: 'x'; handle: string; url: string };
+
+/** Sportmonks sosyal kanal id'si → ağ. Şimdilik yalnız Twitter/X geliyor; bilinmeyen kanal gösterilmez. */
+const SOCIAL_CHANNEL_X = 2;
+/** X kullanıcı adı kuralı (1–15 harf/rakam/alt çizgi) — dış bağlantı yalnız buna uyan değerden kurulur. */
+const X_HANDLE = /^@?([A-Za-z0-9_]{1,15})$/;
+
+export function mapTeamSocial(rows: SportmonksTeamSocialRow[] | null | undefined): TeamSocial | undefined {
+  for (const r of rows ?? []) {
+    if (r?.social_channel_id !== SOCIAL_CHANNEL_X) continue;
+    const handle = X_HANDLE.exec((r.value ?? '').trim())?.[1];
+    if (handle) return { network: 'x', handle, url: `https://x.com/${handle}` };
+  }
+  return undefined;
+}
 
 function mapCoach(rows: SportmonksTeamCoachRow[] | null | undefined): TeamOverview['coach'] {
   const active = (rows ?? []).filter((r) => r.active === true && r.coach);
@@ -209,6 +233,7 @@ export function mapTeamOverview(team: SportmonksTeamOverview | null | undefined,
   recent.sort((a, b) => sortKey(b) - sortKey(a));
   const coach = mapCoach(team.coaches);
   const venue = mapVenue(team.venue);
+  const social = mapTeamSocial(team.socials);
   fixtures.sort((a, b) => sortKey(a) - sortKey(b));
 
   return {
@@ -222,6 +247,7 @@ export function mapTeamOverview(team: SportmonksTeamOverview | null | undefined,
     ...(coach ? { coach } : {}),
     ...(venue ? { venue } : {}),
     campaigns: mapTeamCampaigns(team.seasons),
+    ...(social ? { social } : {}),
   };
 }
 

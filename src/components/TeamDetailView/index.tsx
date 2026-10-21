@@ -557,6 +557,7 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
         coach={overviewQuery.data?.coach?.name}
         coachId={overviewQuery.data?.coach?.id}
         venue={overviewQuery.data?.venue}
+        social={overviewQuery.data?.social}
         compareOpen={compareOpen}
         onToggleCompare={() => setCompareOpen((o) => !o)}
       />

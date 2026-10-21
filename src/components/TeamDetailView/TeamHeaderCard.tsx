@@ -49,6 +49,8 @@ export type TeamHeaderCardProps = {
   coachId?: number;
   /** Dar kartta (mobil, panel) yalnız ad görünür; şehir `title` ve `aria-label`'da kalır. */
   venue?: { name: string; city?: string };
+  /** Resmî X hesabı; karşılaştır düğmesinin altında, mutlak konumlu (yer ayırmaz → veri gelince kayma yok). */
+  social?: { handle: string; url: string };
   compareOpen: boolean;
   onToggleCompare: () => void;
 };
@@ -70,6 +72,18 @@ function TacticsBoardIcon() {
   );
 }
 
+/** X logosu — monokrom, `currentColor` (Footer/SocialLinks ile aynı yol). */
+function XIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true" focusable="false">
+      <path
+        fill="currentColor"
+        d="M18.2 2.3h3.4l-7.4 8.5 8.7 11.5h-6.8l-5.3-7-6.1 7H1.3l7.9-9L.8 2.3h7l4.8 6.4 5.6-6.4zm-1.2 18h1.9L7 4.2H5l12 16.1z"
+      />
+    </svg>
+  );
+}
+
 /** Stadyum — monokrom, `currentColor`. */
 function StadiumIcon() {
   return (
@@ -84,7 +98,7 @@ function StadiumIcon() {
 }
 
 export default function TeamHeaderCard(props: TeamHeaderCardProps) {
-  const { loading, name, logo, standing, standingLoading, next, live, form, coach, coachId, venue, compareOpen, onToggleCompare } = props;
+  const { loading, name, logo, standing, standingLoading, next, live, form, coach, coachId, venue, social, compareOpen, onToggleCompare } = props;
   const { t } = useTranslation('team');
   const [focused, setFocused] = useState<number | null>(null);
 
@@ -244,6 +258,19 @@ export default function TeamHeaderCard(props: TeamHeaderCardProps) {
             <span aria-hidden="true">⇄</span>
             <span className={styles.compareText}>{t('compare')}</span>
           </button>
+          {!loading && social ? (
+            <a
+              href={social.url}
+              className={styles.social}
+              target="_blank"
+              rel="noopener noreferrer nofollow"
+              aria-label={t('header.socialAria', { name, handle: social.handle })}
+              title={`@${social.handle}`}
+            >
+              <XIcon />
+              <span className={styles.socialText}>@{social.handle}</span>
+            </a>
+          ) : null}
         </div>
 
         <NextMatchBox loading={loading} next={next} live={live} />

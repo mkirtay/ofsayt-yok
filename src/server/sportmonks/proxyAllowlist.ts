@@ -63,6 +63,8 @@ const INCLUDE_TOKENS = new Set([
   // takım formu (maç kartı, services/sportmonks/teamForm.ts): sıradaki maçların yalnız başlama saati
   'upcoming',
   'coaches.coach', 'seasons.league',
+  // takım başlığındaki resmî X hesabı (TEAM_OVERVIEW_INCLUDE)
+  'socials',
   // takım sezon istatistikleri (services/sportmonks/teamSeasonStats.ts)
   'statistics.details', 'statistics.season', 'sidelined.player', 'sidelined.type',
   // bitmiş sezonun oyuncu istatistiği (sezon `finished` bayrağı → 30 gün önbellek)
