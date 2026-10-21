@@ -63,6 +63,11 @@ export interface MatchLineupData {
    * true → resmî. Bilinmiyorsa null (eski sağlayıcı / alan gelmedi).
    */
   confirmed?: boolean | null;
+  /**
+   * Kaynak: yoksa maçın `lineups` include'u; `'predicted'` → `lineups` boşken Sportmonks `predictedLineups` yedeği
+   * (bkz. services/sportmonks/predictedLineups.ts) — her zaman tahmini, yalnız başlamamış maçta gösterilir.
+   */
+  source?: 'predicted';
 }
 
 export interface MatchStatsData {

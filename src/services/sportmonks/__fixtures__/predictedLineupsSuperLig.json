@@ -1,0 +1,553 @@
+{
+ "_note": "GET /fixtures/19746580?include=participants:name;predictedLineups.player:display_name,image_path,position_id,detailed_position_id,nationality_id;predictedLineups.player.nationality:name,image_path (2026-10-21, Alanyaspor–Kocaelispor, maça 2 gün). Yanıt anahtarı küçük harf predictedlineups; satır position_id DETAYLI mevki (158), temel mevki player.position_id (26). Oyuncu/uyruk alanları kırpıldı.",
+ "id": 19746580,
+ "state_id": 1,
+ "starting_at": "2026-10-23 17:00:00",
+ "starting_at_timestamp": 1792774800,
+ "participants": [
+  {
+   "id": 13860,
+   "name": "Kocaelispor",
+   "meta": {
+    "location": "away"
+   }
+  },
+  {
+   "id": 347,
+   "name": "Alanyaspor",
+   "meta": {
+    "location": "home"
+   }
+  }
+ ],
+ "predictedlineups": [
+  {
+   "id": 389699,
+   "fixture_id": 19746580,
+   "player_id": 32518,
+   "team_id": 347,
+   "formation_field": "3:1",
+   "position_id": 158,
+   "detailed_position_id": 158,
+   "type_id": 111384,
+   "formation_position": 5,
+   "player_name": "Florent Hadergjonaj",
+   "jersey_number": 94,
+   "player": {
+    "id": 32518,
+    "position_id": 26,
+    "detailed_position_id": 158,
+    "display_name": "Florent Hadergjonaj",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/6/32518.png",
+    "nationality": {
+     "name": "Kosovo",
+     "image_path": "https://cdn.sportmonks.com/images/countries/png/short/xk.png"
+    }
+   }
+  },
+  {
+   "id": 389710,
+   "fixture_id": 19746580,
+   "player_id": 37673619,
+   "team_id": 13860,
+   "formation_field": "2:1",
+   "position_id": 155,
+   "detailed_position_id": 155,
+   "type_id": 111384,
+   "formation_position": 5,
+   "player_name": "Gonçalo Sousa",
+   "jersey_number": 11,
+   "player": {
+    "id": 37673619,
+    "position_id": 27,
+    "detailed_position_id": 156,
+    "display_name": "Gonçalo Sousa",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/placeholder.png",
+    "nationality": {
+     "name": "Portugal",
+     "image_path": "https://cdn.sportmonks.com/images/countries/png/short/pt.png"
+    }
+   }
+  },
+  {
+   "id": 389702,
+   "fixture_id": 19746580,
+   "player_id": 37540578,
+   "team_id": 347,
+   "formation_field": "2:1",
+   "position_id": 148,
+   "detailed_position_id": 148,
+   "type_id": 111384,
+   "formation_position": 2,
+   "player_name": "Nuno Lima",
+   "jersey_number": 3,
+   "player": {
+    "id": 37540578,
+    "position_id": 25,
+    "detailed_position_id": 148,
+    "display_name": "Nuno Lima",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/2/37540578.png",
+    "nationality": {
+     "name": "Portugal",
+     "image_path": "https://cdn.sportmonks.com/images/countries/png/short/pt.png"
+    }
+   }
+  },
+  {
+   "id": 389701,
+   "fixture_id": 19746580,
+   "player_id": 74305,
+   "team_id": 347,
+   "formation_field": "2:2",
+   "position_id": 148,
+   "detailed_position_id": 148,
+   "type_id": 111384,
+   "formation_position": 3,
+   "player_name": "Fidan Aliti",
+   "jersey_number": 5,
+   "player": {
+    "id": 74305,
+    "position_id": 25,
+    "detailed_position_id": 148,
+    "display_name": "Fidan Aliti",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/1/74305.png",
+    "nationality": {
+     "name": "Kosovo",
+     "image_path": "https://cdn.sportmonks.com/images/countries/png/short/xk.png"
+    }
+   }
+  },
+  {
+   "id": 389700,
+   "fixture_id": 19746580,
+   "player_id": 202046,
+   "team_id": 347,
+   "formation_field": "2:3",
+   "position_id": 148,
+   "detailed_position_id": 148,
+   "type_id": 111384,
+   "formation_position": 4,
+   "player_name": "Fatih Aksoy",
+   "jersey_number": 20,
+   "player": {
+    "id": 202046,
+    "position_id": 25,
+    "detailed_position_id": 148,
+    "display_name": "Fatih Aksoy",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/30/202046.png",
+    "nationality": {
+     "name": "Turkey",
+     "image_path": "https://cdn.sportmonks.com/images/countries/png/short/tr.png"
+    }
+   }
+  },
+  {
+   "id": 389703,
+   "fixture_id": 19746580,
+   "player_id": 203040,
+   "team_id": 347,
+   "formation_field": "1:1",
+   "position_id": 24,
+   "detailed_position_id": 24,
+   "type_id": 111384,
+   "formation_position": 1,
+   "player_name": "Paulo Victor",
+   "jersey_number": 48,
+   "player": {
+    "id": 203040,
+    "position_id": 24,
+    "detailed_position_id": 24,
+    "display_name": "Paulo Victor",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/0/203040.png",
+    "nationality": {
+     "name": "Brazil",
+     "image_path": "https://cdn.sportmonks.com/images/countries/png/short/br.png"
+    }
+   }
+  },
+  {
+   "id": 389693,
+   "fixture_id": 19746580,
+   "player_id": 320795,
+   "team_id": 347,
+   "formation_field": "4:3",
+   "position_id": 152,
+   "detailed_position_id": 152,
+   "type_id": 111384,
+   "formation_position": 11,
+   "player_name": "Ui-jo Hwang",
+   "jersey_number": 16,
+   "player": {
+    "id": 320795,
+    "position_id": 26,
+    "detailed_position_id": 150,
+    "display_name": "Ui-jo Hwang",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/27/320795.png",
+    "nationality": {
+     "name": "South Korea",
+     "image_path": "https://cdn.sportmonks.com/images/countries/png/short/kr.png"
+    }
+   }
+  },
+  {
+   "id": 389698,
+   "fixture_id": 19746580,
+   "player_id": 111694,
+   "team_id": 347,
+   "formation_field": "3:2",
+   "position_id": 153,
+   "detailed_position_id": 153,
+   "type_id": 111384,
+   "formation_position": 6,
+   "player_name": "Gaius Makouta",
+   "jersey_number": 42,
+   "player": {
+    "id": 111694,
+    "position_id": 26,
+    "detailed_position_id": 149,
+    "display_name": "Gaius Makouta",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/14/111694.png",
+    "nationality": {
+     "name": "France",
+     "image_path": "https://cdn.sportmonks.com/images/countries/png/short/fr.png"
+    }
+   }
+  },
+  {
+   "id": 389705,
+   "fixture_id": 19746580,
+   "player_id": 98863,
+   "team_id": 13860,
+   "formation_field": "4:2",
+   "position_id": 27,
+   "detailed_position_id": 27,
+   "type_id": 111384,
+   "formation_position": 10,
+   "player_name": "Florian Ayé",
+   "jersey_number": 97,
+   "player": {
+    "id": 98863,
+    "position_id": 27,
+    "detailed_position_id": 151,
+    "display_name": "Florian Ayé",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/15/98863.png",
+    "nationality": {
+     "name": "France",
+     "image_path": "https://cdn.sportmonks.com/images/countries/png/short/fr.png"
+    }
+   }
+  },
+  {
+   "id": 389694,
+   "fixture_id": 19746580,
+   "player_id": 37618353,
+   "team_id": 347,
+   "formation_field": "4:2",
+   "position_id": 27,
+   "detailed_position_id": 27,
+   "type_id": 111384,
+   "formation_position": 10,
+   "player_name": "Arda Usluoğlu",
+   "jersey_number": 17,
+   "player": {
+    "id": 37618353,
+    "position_id": 27,
+    "detailed_position_id": 151,
+    "display_name": "Arda Usluoğlu",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/17/37618353.png",
+    "nationality": {
+     "name": "Turkey",
+     "image_path": "https://cdn.sportmonks.com/images/countries/png/short/tr.png"
+    }
+   }
+  },
+  {
+   "id": 389695,
+   "fixture_id": 19746580,
+   "player_id": 37352825,
+   "team_id": 347,
+   "formation_field": "4:1",
+   "position_id": 156,
+   "detailed_position_id": 156,
+   "type_id": 111384,
+   "formation_position": 9,
+   "player_name": "İbrahim Kaya",
+   "jersey_number": 7,
+   "player": {
+    "id": 37352825,
+    "position_id": 26,
+    "detailed_position_id": 150,
+    "display_name": "İbrahim Kaya",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/25/37352825.png",
+    "nationality": {
+     "name": "Turkey",
+     "image_path": "https://cdn.sportmonks.com/images/countries/png/short/tr.png"
+    }
+   }
+  },
+  {
+   "id": 389696,
+   "fixture_id": 19746580,
+   "player_id": 37654301,
+   "team_id": 347,
+   "formation_field": "3:4",
+   "position_id": 157,
+   "detailed_position_id": 157,
+   "type_id": 111384,
+   "formation_position": 8,
+   "player_name": "Ruan",
+   "jersey_number": 11,
+   "player": {
+    "id": 37654301,
+    "position_id": 26,
+    "detailed_position_id": 157,
+    "display_name": "Ruan",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/placeholder.png",
+    "nationality": {
+     "name": "Brazil",
+     "image_path": "https://cdn.sportmonks.com/images/countries/png/short/br.png"
+    }
+   }
+  },
+  {
+   "id": 389697,
+   "fixture_id": 19746580,
+   "player_id": 37632013,
+   "team_id": 347,
+   "formation_field": "3:3",
+   "position_id": 153,
+   "detailed_position_id": 153,
+   "type_id": 111384,
+   "formation_position": 7,
+   "player_name": "Baran Gezek",
+   "jersey_number": 55,
+   "player": {
+    "id": 37632013,
+    "position_id": 26,
+    "detailed_position_id": 149,
+    "display_name": "Baran Gezek",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/13/37632013.png",
+    "nationality": {
+     "name": "Turkey",
+     "image_path": "https://cdn.sportmonks.com/images/countries/png/short/tr.png"
+    }
+   }
+  },
+  {
+   "id": 389704,
+   "fixture_id": 19746580,
+   "player_id": 505047,
+   "team_id": 13860,
+   "formation_field": "4:1",
+   "position_id": 152,
+   "detailed_position_id": 152,
+   "type_id": 111384,
+   "formation_position": 11,
+   "player_name": "Rigoberto Rivas",
+   "jersey_number": 99,
+   "player": {
+    "id": 505047,
+    "position_id": 27,
+    "detailed_position_id": 152,
+    "display_name": "Rigoberto Rivas",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/23/505047.png",
+    "nationality": {
+     "name": "Honduras",
+     "image_path": "https://cdn.sportmonks.com/images/countries/png/short/hn.png"
+    }
+   }
+  },
+  {
+   "id": 389706,
+   "fixture_id": 19746580,
+   "player_id": 5381,
+   "team_id": 13860,
+   "formation_field": "4:3",
+   "position_id": 156,
+   "detailed_position_id": 156,
+   "type_id": 111384,
+   "formation_position": 9,
+   "player_name": "Dan Agyei",
+   "jersey_number": 7,
+   "player": {
+    "id": 5381,
+    "position_id": 27,
+    "detailed_position_id": 156,
+    "display_name": "Dan Agyei",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/5/5381.png",
+    "nationality": {
+     "name": "Ghana",
+     "image_path": "https://cdn.sportmonks.com/images/countries/png/short/gh.png"
+    }
+   }
+  },
+  {
+   "id": 389711,
+   "fixture_id": 19746580,
+   "player_id": 37528918,
+   "team_id": 13860,
+   "formation_field": "2:2",
+   "position_id": 148,
+   "detailed_position_id": 148,
+   "type_id": 111384,
+   "formation_position": 4,
+   "player_name": "Matej Maglica",
+   "jersey_number": 6,
+   "player": {
+    "id": 37528918,
+    "position_id": 25,
+    "detailed_position_id": 148,
+    "display_name": "Matej Maglica",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/22/37528918.png",
+    "nationality": {
+     "name": "Croatia",
+     "image_path": "https://cdn.sportmonks.com/images/countries/png/short/hr.png"
+    }
+   }
+  },
+  {
+   "id": 389714,
+   "fixture_id": 19746580,
+   "player_id": 37375395,
+   "team_id": 13860,
+   "formation_field": "1:1",
+   "position_id": 24,
+   "detailed_position_id": 24,
+   "type_id": 111384,
+   "formation_position": 1,
+   "player_name": "Serhat Öztaşdelen",
+   "jersey_number": 83,
+   "player": {
+    "id": 37375395,
+    "position_id": 24,
+    "detailed_position_id": 24,
+    "display_name": "Serhat Öztaşdelen",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/3/37375395.png",
+    "nationality": {
+     "name": "Turkey",
+     "image_path": "https://cdn.sportmonks.com/images/countries/png/short/tr.png"
+    }
+   }
+  },
+  {
+   "id": 389707,
+   "fixture_id": 19746580,
+   "player_id": 37520128,
+   "team_id": 13860,
+   "formation_field": "3:1",
+   "position_id": 153,
+   "detailed_position_id": 153,
+   "type_id": 111384,
+   "formation_position": 8,
+   "player_name": "Berkan Kutlu",
+   "jersey_number": 10,
+   "player": {
+    "id": 37520128,
+    "position_id": 26,
+    "detailed_position_id": 153,
+    "display_name": "Berkan Kutlu",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/0/37520128.png",
+    "nationality": {
+     "name": "Turkey",
+     "image_path": "https://cdn.sportmonks.com/images/countries/png/short/tr.png"
+    }
+   }
+  },
+  {
+   "id": 389708,
+   "fixture_id": 19746580,
+   "player_id": 37581761,
+   "team_id": 13860,
+   "formation_field": "3:2",
+   "position_id": 153,
+   "detailed_position_id": 153,
+   "type_id": 111384,
+   "formation_position": 7,
+   "player_name": "Mahamadou Susoho",
+   "jersey_number": 20,
+   "player": {
+    "id": 37581761,
+    "position_id": 26,
+    "detailed_position_id": 149,
+    "display_name": "Mahamadou Susoho",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/placeholder.png",
+    "nationality": {
+     "name": "Spain",
+     "image_path": "https://cdn.sportmonks.com/images/countries/png/short/es.png"
+    }
+   }
+  },
+  {
+   "id": 389709,
+   "fixture_id": 19746580,
+   "player_id": 1507167,
+   "team_id": 13860,
+   "formation_field": "3:3",
+   "position_id": 153,
+   "detailed_position_id": 153,
+   "type_id": 111384,
+   "formation_position": 6,
+   "player_name": "Show",
+   "jersey_number": 14,
+   "player": {
+    "id": 1507167,
+    "position_id": 26,
+    "detailed_position_id": 149,
+    "display_name": "Show",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/31/1507167.png",
+    "nationality": {
+     "name": "Angola",
+     "image_path": "https://cdn.sportmonks.com/images/countries/png/short/ao.png"
+    }
+   }
+  },
+  {
+   "id": 389712,
+   "fixture_id": 19746580,
+   "player_id": 37548309,
+   "team_id": 13860,
+   "formation_field": "2:3",
+   "position_id": 148,
+   "detailed_position_id": 148,
+   "type_id": 111384,
+   "formation_position": 3,
+   "player_name": "Emir Ortakaya",
+   "jersey_number": 5,
+   "player": {
+    "id": 37548309,
+    "position_id": 25,
+    "detailed_position_id": 148,
+    "display_name": "Emir Ortakaya",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/21/37548309.png",
+    "nationality": {
+     "name": "Turkey",
+     "image_path": "https://cdn.sportmonks.com/images/countries/png/short/tr.png"
+    }
+   }
+  },
+  {
+   "id": 389713,
+   "fixture_id": 19746580,
+   "player_id": 10780,
+   "team_id": 13860,
+   "formation_field": "2:4",
+   "position_id": 154,
+   "detailed_position_id": 154,
+   "type_id": 111384,
+   "formation_position": 2,
+   "player_name": "Anfernee Dijksteel",
+   "jersey_number": 2,
+   "player": {
+    "id": 10780,
+    "position_id": 25,
+    "detailed_position_id": 154,
+    "display_name": "Anfernee Dijksteel",
+    "image_path": "https://cdn.sportmonks.com/images/soccer/players/28/10780.png",
+    "nationality": {
+     "name": "Suriname",
+     "image_path": "https://cdn.sportmonks.com/images/countries/png/short/sr.png"
+    }
+   }
+  }
+ ]
+}
