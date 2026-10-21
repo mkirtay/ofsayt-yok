@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import MatchCard from '@/components/MatchCard';
+import MatchCard, { h2hBoxMode } from '@/components/MatchCard';
 import type { Head2HeadData } from '@/services/liveScoreService';
 import type { Match } from '@/models/liveScore';
 
@@ -43,5 +43,32 @@ describe('maç kartı — karşılaşma geçmişi yeri ve başlama günü (CLS)'
     const html = render(h2h);
     const day = html.match(/<span class="[^"]*kickoffDay[^"]*">(.*?)<\/span><\/div>/)?.[1] ?? '';
     expect(day.replace(/<[^>]+>/g, '')).toBe('3 Ekim Cumartesi');
+  });
+});
+
+describe('h2hBoxMode — ayrılmış kutu yalnız geçmiş tablosu gelince', () => {
+  const base = { pending: false, error: false, reserve: true, expanded: false, hasTeams: true, hasTable: true, hasForm: true };
+
+  it('yükleniyor → iskelet; hata → hata kutusu', () => {
+    expect(h2hBoxMode({ ...base, pending: true })).toBe('skeleton');
+    expect(h2hBoxMode({ ...base, error: true })).toBe('error');
+  });
+
+  it('SSR vermedi + tablo geldi → ayrılmış kutu (davranış değişmedi); açılınca düz içerik', () => {
+    expect(h2hBoxMode(base)).toBe('reserved');
+    expect(h2hBoxMode({ ...base, expanded: true })).toBe('sections');
+  });
+
+  it('SSR vermedi + tablo YOK (yalnız form + not) → ayrılmış yer yok, içerik kadar (Lille–Galatasaray)', () => {
+    expect(h2hBoxMode({ ...base, hasTable: false })).toBe('sections');
+  });
+
+  it('SSR vermedi + tamamen boş sonuç → kısa not', () => {
+    expect(h2hBoxMode({ ...base, hasTable: false, hasForm: false })).toBe('none');
+  });
+
+  it('SSR verdiyse ayrılmış kutu hiç yok', () => {
+    expect(h2hBoxMode({ ...base, reserve: false })).toBe('sections');
+    expect(h2hBoxMode({ ...base, reserve: false, hasTable: false, hasForm: false })).toBe('sections');
   });
 });
