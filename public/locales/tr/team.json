@@ -145,5 +145,13 @@
     "tomorrow": "Yarın {{time}}",
     "tomorrowNoTime": "Yarın",
     "days": "{{count}} gün kaldı"
+  },
+  "loans": {
+    "title": "Kiralıktaki oyuncular",
+    "player": "Oyuncu",
+    "position": "Mevki",
+    "club": "Kulüp",
+    "until": "Dönüş",
+    "error": "Kiralıktaki oyuncular yüklenemedi."
   }
 }

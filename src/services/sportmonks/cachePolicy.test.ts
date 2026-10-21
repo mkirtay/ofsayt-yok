@@ -106,6 +106,9 @@ describe('sportmonksCacheTtl — TTL tablosu', () => {
     expect(sportmonksCacheTtl('football/standings/seasons/28203', [], NOW).fresh).toBe(600);
     expect(sportmonksCacheTtl('football/topscorers/seasons/28203', [], NOW).fresh).toBe(1800);
     expect(sportmonksCacheTtl('football/squads/seasons/1/teams/34', [], NOW).fresh).toBe(6 * 3600);
+    expect(sportmonksCacheTtl('football/squads/teams/34', [], NOW).fresh).toBe(6 * 3600);
+    // genişletilmiş kadro + transferler (Kadro sekmesi kiralıklar): 12 sa, eski kopya 2 gün
+    expect(sportmonksCacheTtl('football/squads/teams/34/extended', [], NOW)).toEqual({ fresh: 12 * 3600, stale: 2 * 86400 });
     expect(sportmonksCacheTtl('football/players/455805', { id: 1 }, NOW).fresh).toBe(6 * 3600);
     expect(sportmonksCacheTtl('football/teams/34', { id: 34 }, NOW).fresh).toBe(6 * 3600);
     expect(sportmonksCacheTtl('football/teams/34', { id: 34, upcoming: [] }, NOW).fresh).toBe(900);

@@ -34,6 +34,7 @@ const PATH_PATTERNS: { name: string; re: RegExp }[] = [
   { name: 'standings/seasons/{id}', re: new RegExp(`^football/standings/seasons/${ID}$`) },
   { name: 'topscorers/seasons/{id}', re: new RegExp(`^football/topscorers/seasons/${ID}$`) },
   { name: 'squads/teams/{id}', re: new RegExp(`^football/squads/teams/${ID}$`) },
+  { name: 'squads/teams/{id}/extended', re: new RegExp(`^football/squads/teams/${ID}/extended$`) },
   { name: 'squads/seasons/{id}/teams/{id}', re: new RegExp(`^football/squads/seasons/${ID}/teams/${ID}$`) },
   { name: 'schedules/seasons/{id}/teams/{id}', re: new RegExp(`^football/schedules/seasons/${ID}/teams/${ID}$`) },
   { name: 'teams/{id}', re: new RegExp(`^football/teams/${ID}$`) },
@@ -73,6 +74,8 @@ const INCLUDE_TOKENS = new Set([
   'nationality', 'city', 'position', 'detailedPosition', 'metadata.type', 'teams.team', 'transfers.type',
   'transfers.fromTeam', 'transfers.toTeam', 'statistics.details.type', 'statistics.season.league', 'statistics.team',
   'lineups.fixture.participants', 'lineups.fixture.scores', 'lineups.fixture.league',
+  // takım Kadro sekmesi kiralıklar: genişletilmiş kadronun transfer geçmişi (services/sportmonks/teamLoans.ts)
+  'transfers',
 ]);
 
 const FILTER_PREFIXES = new Set([

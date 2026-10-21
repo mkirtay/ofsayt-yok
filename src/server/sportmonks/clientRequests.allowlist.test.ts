@@ -16,6 +16,7 @@ import { SQUAD_SEASON_STATS_FINISHED_INCLUDE, SQUAD_SEASON_STATS_INCLUDE } from 
 import { TEAM_OVERVIEW_INCLUDE } from '@/services/sportmonks/teamOverview';
 import { STANDINGS_WITH_GROUPS_INCLUDE } from '@/services/competitionStandings';
 import { TOPSCORER_WITH_APPEARANCES_INCLUDE, topscorerAppearanceFilters } from '@/services/competitionTopScorers';
+import { TEAM_LOANS_INCLUDE } from '@/services/sportmonks/teamLoans';
 import { RED_CARD_EVENTS_FILTER, RED_CARD_EVENTS_INCLUDE } from '@/services/sportmonks/redCards';
 
 const liveScoreSrc = readFileSync(path.resolve(__dirname, '../../services/liveScoreService.ts'), 'utf8');
@@ -38,6 +39,7 @@ const CASES: [string, string, Record<string, string>][] = [
   ['takım istatistik + sakatlar', 'football/teams/34', { include: TEAM_STATS_INCLUDE, filters: 'teamStatisticSeasons:25749,25580' }],
   ['takım sıradaki maçlar', 'football/teams/34', { include: TEAM_UPCOMING_INCLUDE }],
   ['takım sezon fikstürü', 'football/schedules/seasons/25749/teams/34', {}],
+  ['takım kiralıkları (Kadro sekmesi)', 'football/squads/teams/34/extended', { include: TEAM_LOANS_INCLUDE }],
   ['güncel kadro', 'football/squads/teams/34', { include: 'player' }],
   ['sezon kadrosu', 'football/squads/seasons/25749/teams/34', { include: 'player' }],
   ['takım golcüleri (güncel)', 'football/squads/seasons/25749/teams/34', { include: SQUAD_SEASON_STATS_INCLUDE, filters: 'playerStatisticSeasons:25749' }],

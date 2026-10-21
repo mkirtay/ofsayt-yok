@@ -55,7 +55,9 @@ import ScoringMinutesCard from './ScoringMinutesCard';
 import SidelinedCard from './SidelinedCard';
 import { mapTeamSidelined } from '@/services/sportmonks/teamSidelined';
 import { useInViewOnce } from '@/hooks/useInViewOnce';
-import { getTeamSeasonMatches, getTeamSeasonScorers, getTeamSeasonStats } from '@/services/teamPage';
+import { getTeamExtendedSquad, getTeamSeasonMatches, getTeamSeasonScorers, getTeamSeasonStats } from '@/services/teamPage';
+import { mapTeamLoans } from '@/services/sportmonks/teamLoans';
+import LoanedPlayers from './LoanedPlayers';
 import { combineSeasonStats } from '@/services/sportmonks/teamSeasonStats';
 import { mergeTeamScorers } from '@/services/sportmonks/teamScorers';
 import { fetchCompetitionStandings } from '@/services/competitionStandings';
@@ -310,6 +312,18 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
 
   const topScorersWithAppearances = useTopScorersWithAppearances(topScorers, sidebarTab === 'scorers');
   const squadStats = useTeamSquadStats(teamId, selectedSeasonId, activeTab === 'squad');
+
+  // Kiralıktaki oyuncular: Kadro sekmesi açılınca ayrı istek (genişletilmiş kadro + transferler, 12 sa önbellek).
+  const loansQuery = useQuery({
+    queryKey: ['team-loans', teamId] as const,
+    queryFn: () => getTeamExtendedSquad(teamId),
+    enabled: activeTab === 'squad' && Boolean(teamId),
+    staleTime: 60 * 60_000,
+  });
+  const loanedPlayers = useMemo(
+    () => (loansQuery.data ? mapTeamLoans(loansQuery.data, Number(teamId), todayIso) : null),
+    [loansQuery.data, teamId, todayIso],
+  );
 
   const selectedCompName = useMemo(() => {
     const comp = competitions.find((c) => String(c.id) === selectedCompetitionId);
@@ -749,6 +763,7 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
                 ) : (
                   <div className={styles.empty}>Kadro bilgisi bulunamadı.</div>
                 )}
+                <LoanedPlayers players={loanedPlayers} error={loansQuery.isError} onRetry={() => void loansQuery.refetch()} />
               </div>
               )
             )}
