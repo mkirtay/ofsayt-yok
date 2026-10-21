@@ -20,6 +20,8 @@ const DAY = 24 * HOUR;
 const DAY_MS = DAY * 1000;
 
 export const LIVE_TTL = 20;
+/** Canlı puan durumu katmanı (bkz. services/liveStandings.ts). */
+export const LIVE_STANDINGS_TTL = 45;
 /** Bitmiş sezonun verisi (program, takım/oyuncu sezon istatistikleri) değişmez: CDN ve Redis'te 30 gün. */
 export const FINISHED_SEASON_TTL = 30 * DAY;
 export const ACTIVE_LIST_TTL = 30;
@@ -200,6 +202,9 @@ export function sportmonksCacheTtl(
     }
 
     case 'standings':
+      // Canlı katman (`standings/live/leagues/{id}`, ayrı LiveStanding havuzu): yalnız ligde canlı maç varken sorulur.
+      // 45 sn: istemci dakikada bir bakar; lig başına en çok ~80 istek/sa (aynı anda 10 lig canlıyken ~800/2500).
+      if (a === 'live') return withStale(LIVE_STANDINGS_TTL, 10 * MIN);
       return withStale(10 * MIN, DAY);
     case 'topscorers':
       return withStale(30 * MIN, DAY);

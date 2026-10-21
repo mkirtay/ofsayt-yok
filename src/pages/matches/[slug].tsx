@@ -35,6 +35,8 @@ import { isLightPageBot } from '@/config/crawlers';
 import styles from './matchDetail.module.scss';
 import { siteBaseUrl } from '@/lib/siteUrl';
 import { brandTitle } from '@/config/brand';
+import { useLiveStandings } from '@/hooks/useLiveStandings';
+import { isLiveMatchStatus } from '@/services/liveStandings';
 import { loadGameSlotForFixture, type GameSlot } from '@/server/game/matchSlot';
 
 type MatchDetailProps = {
@@ -255,6 +257,8 @@ export default function MatchDetail({
   const { t: tl } = useTranslation('leagues');
   const compId = match?.competition?.id ?? match?.competition_id;
   const standingsCompId = toStandingsCompetitionId(compId);
+  // Canlı puan durumu katmanı: YALNIZ bu maç canlıyken (durum canlı güncellemeyle tazelenir); maç bitince istek durur.
+  const liveStandings = useLiveStandings(standingsCompId, isLiveMatchStatus(match?.status));
 
   const showArchived =
     archived || (router.isReady && Boolean(requestedMatchId) && isArchivedMatch && !match);
@@ -397,6 +401,7 @@ export default function MatchDetail({
                   awayTeamId={awayTeamId}
                   seasons={seasons}
                   selectedSeasonId={selectedSeasonId}
+                  live={liveStandings}
                   onSeasonChange={
                     standingsCompId != null ? (sid) => handleSeasonChange(sid, String(standingsCompId)) : undefined
                   }

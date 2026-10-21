@@ -342,7 +342,18 @@
     "empty": "No standings table found.",
     "groupHeading": "Group {{name}}",
     "conferenceWest": "Western Conference",
-    "conferenceEast": "Eastern Conference"
+    "conferenceEast": "Eastern Conference",
+    "formHead": "League form",
+    "formHeadShort": "Form",
+    "formTitle": "League form: last 5 league matches, newest on the right",
+    "formAria": "League form, last 5 league matches: {{list}}",
+    "formWin": "Win",
+    "formDraw": "Draw",
+    "formLoss": "Loss",
+    "liveBadge": "Live",
+    "liveTitle": "Live standings: matches in progress, position and points update live",
+    "liveUp": "Moved up live",
+    "liveDown": "Dropped live"
   },
   "events": {
     "title": "Match Events",

@@ -18,7 +18,12 @@ import type { CompetitionTableData, CompetitionTableStandingRow } from './liveSc
 import { WORLD_CUP_COMPETITION_ID } from '@/services/sportmonksProviderFlag';
 
 export const STANDINGS_WITH_GROUPS_INCLUDE = 'participant;details.type;group;stage';
-/** Puan Durumu sayfası: aynı istek + son 5 maç formu (yan panel hafif kalsın diye ayrı include). */
+/**
+ * Aynı istek + lig formu (sezonun bütün lig maçları W/D/L, `sort_order` büyük = yeni; pivot son 5'i alır). 2026-10-21'den
+ * beri VARSAYILAN: Puan Durumu sayfası, ana sayfa yan paneli, maç / takım sayfası ve OG görseli aynı anahtarı paylaşır
+ * (yan panel "Lig formu" noktaları ek istek açmadan). Süper Lig 8. haftada yanıt 107,6 → 124,3 KB (gzip 6,3 → 8,4 KB);
+ * sezon ilerledikçe hafta başına ~2 KB artar. `withForm: false` eski hafif include.
+ */
 export const STANDINGS_WITH_FORM_INCLUDE = `${STANDINGS_WITH_GROUPS_INCLUDE};form`;
 
 type StageInfo = { id: number; name?: string | null; is_current?: boolean | null; finished?: boolean | null; starting_at?: string | null };
@@ -109,7 +114,12 @@ async function resolveCurrentSeasonId(leagueId: number): Promise<number | null> 
   return envelope.data?.seasons?.find((s) => s.is_current)?.id ?? null;
 }
 
-type StandingsQuery = { season?: number; group_id?: number | string; withForm?: boolean };
+type StandingsQuery = {
+  season?: number;
+  group_id?: number | string;
+  /** Varsayılan `true` (bkz. STANDINGS_WITH_FORM_INCLUDE). */
+  withForm?: boolean;
+};
 
 /**
  * `getCompetitionTableFull` ile aynı imza/dönüş; çok gruplu liglerde `stages`. Hata (429 / 5xx / zaman aşımı)
@@ -128,7 +138,7 @@ export async function fetchCompetitionStandings(
     basePath: 'football',
     path: `/standings/seasons/${seasonId}`,
     perPage: 50,
-    extraParams: { include: query?.withForm ? STANDINGS_WITH_FORM_INCLUDE : STANDINGS_WITH_GROUPS_INCLUDE },
+    extraParams: { include: query?.withForm === false ? STANDINGS_WITH_GROUPS_INCLUDE : STANDINGS_WITH_FORM_INCLUDE },
   });
   return buildStandingsData(rows, leagueId, seasonId, query?.group_id);
 }

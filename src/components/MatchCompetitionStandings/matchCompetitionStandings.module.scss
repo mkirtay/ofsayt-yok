@@ -271,3 +271,143 @@
   border-radius: 4px;
   background: var(--bg-muted);
 }
+
+// ── Lig formu (son 5 lig maçı, MatchCard / H2H tüm turnuva formundan ayrı) — P’nin solunda dar sütun ──
+.table th.colForm,
+.table td.colForm {
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+.formHeadShort {
+  display: none;
+}
+
+.formDots {
+  display: inline-flex;
+  gap: 2px;
+  align-items: center;
+  vertical-align: middle;
+}
+
+.dot {
+  display: block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.dotW {
+  @include form-badge-win;
+}
+
+.dotD {
+  @include form-badge-draw;
+}
+
+.dotL {
+  @include form-badge-loss;
+}
+
+@container (max-width: 399.98px) {
+  .table th.colForm,
+  .table td.colForm {
+    padding-left: 2px;
+    padding-right: 2px;
+  }
+}
+
+// "Lig formu" ~55 px: maç sayfası sağ sütununda (318 px) sığmaz → görünen "Form" (title'da tam açıklama), tam etiket
+// ekran okuyucuya kalır.
+@container (max-width: 339.98px) {
+  .formHeadFull {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .formHeadShort {
+    display: inline;
+  }
+}
+
+// Ana sayfa yan paneli (masaüstü ~238 px): 10 sütun kısaltmalı adlarla tam sığıyor, form sütunu (~42 px) yatay kaydırma
+// açardı → orada çizilmez. Maç / takım sayfası sağ sütunu (318 px) ve mobil tam genişlikte görünür.
+@container (max-width: 279.98px) {
+  .table th.colForm,
+  .table td.colForm {
+    display: none;
+  }
+}
+
+// ── Canlı puan durumu katmanı (yalnız ligde canlı maç varken) ──
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+// "Takım" başlığının yerinde; satır yüksekliği / sütun genişliği değişmez.
+.liveBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--color-live);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  line-height: 1;
+
+  &::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--color-live);
+    animation: pulse-live 1.6s infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &::before {
+      animation: none;
+    }
+  }
+}
+
+// Sıra hücresinin sağ dolgusunda küçük ok — mutlak konum: sütun genişlemez (ana sayfa yan paneli tam sığıyor).
+.table td.colRank {
+  position: relative;
+}
+
+.liveMove {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  font-size: 7px;
+  line-height: 1;
+
+  &[data-move='up'] {
+    color: var(--color-win);
+  }
+
+  &[data-move='down'] {
+    color: var(--color-loss);
+  }
+}
+
+// Bölge renkli sıra hücresinde (beyaz yazı) ok da beyaz — yön glifle okunur.
+.table td.colRank[data-zone] .liveMove {
+  color: #fff;
+}
+
+.table td.livePoints {
+  color: var(--color-live);
+}

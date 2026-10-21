@@ -337,7 +337,18 @@
     "empty": "Puan tablosu bulunamadı.",
     "groupHeading": "Grup {{name}}",
     "conferenceWest": "Batı Konferansı",
-    "conferenceEast": "Doğu Konferansı"
+    "conferenceEast": "Doğu Konferansı",
+    "formHead": "Lig formu",
+    "formHeadShort": "Form",
+    "formTitle": "Lig formu: son 5 lig maçı, en yenisi sağda",
+    "formAria": "Lig formu, son 5 lig maçı: {{list}}",
+    "formWin": "Galibiyet",
+    "formDraw": "Beraberlik",
+    "formLoss": "Mağlubiyet",
+    "liveBadge": "Canlı",
+    "liveTitle": "Canlı puan durumu: maçlar sürüyor, sıra ve puan anlık",
+    "liveUp": "Canlıda yükseldi",
+    "liveDown": "Canlıda geriledi"
   },
   "events": {
     "title": "Maç Olayları",

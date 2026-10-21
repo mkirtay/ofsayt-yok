@@ -41,6 +41,7 @@ const WEB_REQUESTS: [string, Record<string, string>][] = [
   ['football/leagues/600', {}],
   ['football/standings/seasons/28203', { include: 'participant;details.type', per_page: '50', page: '1' }],
   ['football/standings/seasons/28203', { include: 'participant;details.type;group;stage;form', per_page: '50', page: '1' }],
+  ['football/standings/live/leagues/600', {}],
   ['football/topscorers/seasons/28203', { include: 'player;participant', filters: 'seasonTopscorerTypes:208', per_page: '50', page: '4' }],
   [
     'football/topscorers/seasons/28203',
@@ -96,6 +97,16 @@ describe('proxy izin listesi', () => {
     );
     expect(r.query).not.toHaveProperty('foo');
     expect(r.unsafe).toBe(false);
+  });
+
+  it('canlı puan durumu: yalnız tek sayısal lig id, include / alt yol yok', () => {
+    expect(checkProxyAllowlist('football/standings/live/leagues/600', {}).allowed).toBe(true);
+    expect(checkProxyAllowlist('football/standings/live/leagues/600', { include: 'participant' }).allowed).toBe(true);
+    for (const p of ['football/standings/live/leagues', 'football/standings/live/leagues/abc', 'football/standings/live/leagues/600,601',
+      'football/standings/live', 'football/standings/live/leagues/600/x']) {
+      expect(checkProxyAllowlist(p, {}).allowed).toBe(false);
+    }
+    expect(checkProxyAllowlist('football/standings/live/leagues/600', { include: 'odds' }).allowed).toBe(false);
   });
 
   it('api_token ve bilinmeyen parametreler upstream sorgusuna girmez', () => {

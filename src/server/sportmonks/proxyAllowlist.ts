@@ -32,6 +32,8 @@ const PATH_PATTERNS: { name: string; re: RegExp }[] = [
   { name: 'fixtures/head-to-head/{id}/{id}', re: new RegExp(`^football/fixtures/head-to-head/${ID}/${ID}$`) },
   { name: 'leagues/{id}', re: new RegExp(`^football/leagues/${ID}$`) },
   { name: 'standings/seasons/{id}', re: new RegExp(`^football/standings/seasons/${ID}$`) },
+  // Canlı puan durumu katmanı (services/liveStandings.ts) — include yok; yalnız ligde canlı maç varken.
+  { name: 'standings/live/leagues/{id}', re: new RegExp(`^football/standings/live/leagues/${ID}$`) },
   { name: 'topscorers/seasons/{id}', re: new RegExp(`^football/topscorers/seasons/${ID}$`) },
   { name: 'squads/teams/{id}', re: new RegExp(`^football/squads/teams/${ID}$`) },
   { name: 'squads/teams/{id}/extended', re: new RegExp(`^football/squads/teams/${ID}/extended$`) },
