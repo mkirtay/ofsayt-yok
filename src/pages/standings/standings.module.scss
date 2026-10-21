@@ -62,15 +62,23 @@
   pointer-events: none;
 }
 
-// Dar telefonlarda 4 sekme (Haftanın 11'i varken) taşmasın: 360 px'te 9 px taşıyordu.
+// Dar telefonlar: sekmeler içerik genişliğinde (12 px, 4 px boşluk) ve satırı doldurur; sığmazsa (kupada Haftanın 11'i +
+// Eleme Ağacı = 5 sekme, EN uzun etiketler) metin kesilmez, şerit yatay kayar (sayfa taşmaz, kaydırma çubuğu gizli).
 @media (max-width: 400px) {
+  .tabs {
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
+
   .tab {
-    flex: 1 1 auto;
-    min-width: 0;
+    flex: 1 0 auto;
     padding: 0 4px;
     font-size: 12px;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 }
 

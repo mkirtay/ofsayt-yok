@@ -117,6 +117,17 @@ export default function Standings() {
     ...TABS.filter((id) => id !== 'totw' || showTotwTab || totwPlaceholder),
     ...bracketTabs,
   ];
+  // Dar ekranda şerit yatay kayabiliyor (≤400 px, 5 sekme): seçili sekme (ör. ?tab=bracket) şeritte görünür kalsın.
+  // Yalnız şeridin scrollLeft'i değişir; sayfa dikey kaydırılmaz.
+  useEffect(() => {
+    const el = document.getElementById(`standings-tab-${activeTab}`);
+    const strip = el?.parentElement;
+    if (!el || !strip || strip.scrollWidth <= strip.clientWidth) return;
+    const tabBox = el.getBoundingClientRect();
+    const stripBox = strip.getBoundingClientRect();
+    if (tabBox.left < stripBox.left) strip.scrollLeft -= stripBox.left - tabBox.left;
+    else if (tabBox.right > stripBox.right) strip.scrollLeft += tabBox.right - stripBox.right;
+  }, [activeTab, visibleTabs.length]);
 
   const sportmonksLeagueId = sportmonksLeagueIdOfHubSelection(selectedId);
   const leagueName = leagueNameById(sportmonksLeagueId, tl('fallback'), tl);
