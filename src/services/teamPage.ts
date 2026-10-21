@@ -19,6 +19,7 @@ import {
   type SportmonksTeamWithStatistics,
   type TeamSeasonStats,
 } from './sportmonks/teamSeasonStats';
+import { mapTeamSeasonProfiles, type TeamSeasonProfile } from './sportmonks/teamSeasonProfile';
 import {
   extractTeamScorers,
   SQUAD_SEASON_STATS_FINISHED_INCLUDE,
@@ -40,6 +41,8 @@ export async function getTeamOverview(teamId: string): Promise<TeamOverview> {
 
 export type TeamSeasonStatsResult = {
   stats: TeamSeasonStats[];
+  /** Sezon profili (şut, korner, topa sahip olma…) — aynı yanıttan, ek istek yok. */
+  profiles: TeamSeasonProfile[];
   /** Ham sakat/cezalı kayıtları (sezondan bağımsız, takımın bugünkü durumu); süzme `mapTeamSidelined` ile. */
   sidelined: SportmonksSidelinedRow[];
 };
@@ -53,7 +56,11 @@ export async function getTeamSeasonStats(teamId: string, seasonIds: number[]): P
     include: TEAM_STATS_INCLUDE,
     filters: teamStatsFilters(seasonIds),
   });
-  return { stats: mapTeamSeasonStats(envelope.data), sidelined: envelope.data?.sidelined ?? [] };
+  return {
+    stats: mapTeamSeasonStats(envelope.data),
+    profiles: mapTeamSeasonProfiles(envelope.data),
+    sidelined: envelope.data?.sidelined ?? [],
+  };
 }
 
 /**
