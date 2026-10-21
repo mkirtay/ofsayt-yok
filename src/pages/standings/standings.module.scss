@@ -15,6 +15,29 @@
   }
 }
 
+// Masaüstü iki sütun: maç sayfasının düzeniyle aynı ölçüler (globals.scss `.layout-split`: sağ sütun $right-col-width,
+// boşluk $gap, ≥ $bp-split; yapışkanlık yok). Fark: 1024–1199 px'de maç sayfası iki eşit sütuna geçer — burada tablo
+// ~480 px'e sıkışacağı için tek sütun kalır (özet kartı tablonun altında). Sol sütun sabit 868 px yerine kalan alanı
+// alır (1200–1239 px pencerede kapsayıcı 1208 px'den dar; taşma olmasın), ≥ 1240 px'de tam 868 px.
+// Eleme Ağacı açıkken (.layoutStacked) tek sütun: 5 turluk ağaç 868 px'de takım adlarını ~140 px'e keserdi.
+@media (min-width: $bp-split) {
+  .layout:not(.layoutStacked) {
+    display: flex;
+    gap: $gap;
+    align-items: flex-start;
+
+    .main {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    .side {
+      flex: 0 0 $right-col-width;
+      width: $right-col-width;
+    }
+  }
+}
+
 // Ana sayfa yan paneliyle aynı kart: lig + sezon çubuğu, altında sekmeler. Kutuda `overflow` YOK —
 // tablo başlığı (position: sticky) sayfa kaydırılırken pencereye göre yapışır.
 .card {

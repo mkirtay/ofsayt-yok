@@ -209,95 +209,105 @@ export default function Standings() {
         <h1>{t('heading')}</h1>
       </div>
 
-      <div className={styles.card}>
-        <HubLeaguePicker
-          open={pickerOpen}
-          onOpenChange={setPickerOpen}
-          leagueName={leagueName}
-          logoSrc={leagueLogo}
-          logoBackdrop={sportmonksLeagueId != null && competitionLogoNeedsBackdrop(sportmonksLeagueId)}
-          seasons={seasonsQuery.data}
-          selectedSeasonId={effectiveSeasonId}
-          onSeasonChange={setSeasonId}
-          seasonsLoading={!ready || seasonsQuery.isLoading}
-        >
-          <HubLeagueList
-            selectedId={selectedId}
-            onSelect={pickLeague}
-            matchCountByLeague={EMPTY_MAP}
-            apiLogoByLeague={EMPTY_LOGOS}
-            autoFocusSearch={pickerOpen}
-          />
-        </HubLeaguePicker>
+      {/* Masaüstünde (≥ $bp-split) maç sayfasıyla aynı iki sütun: solda lig kartı, sağda özet kartı. Eleme Ağacı açıkken
+          ağaç geniş alan ister → tek sütun (özet kartı altta, tablet/mobildeki gibi). */}
+      <div className={`${styles.layout} ${activeTab === 'bracket' ? styles.layoutStacked : ''}`.trim()}>
+        <div className={styles.main}>
+          <div className={styles.card}>
+            <HubLeaguePicker
+              open={pickerOpen}
+              onOpenChange={setPickerOpen}
+              leagueName={leagueName}
+              logoSrc={leagueLogo}
+              logoBackdrop={sportmonksLeagueId != null && competitionLogoNeedsBackdrop(sportmonksLeagueId)}
+              seasons={seasonsQuery.data}
+              selectedSeasonId={effectiveSeasonId}
+              onSeasonChange={setSeasonId}
+              seasonsLoading={!ready || seasonsQuery.isLoading}
+            >
+              <HubLeagueList
+                selectedId={selectedId}
+                onSelect={pickLeague}
+                matchCountByLeague={EMPTY_MAP}
+                apiLogoByLeague={EMPTY_LOGOS}
+                autoFocusSearch={pickerOpen}
+              />
+            </HubLeaguePicker>
 
-        {pickerOpen ? null : (
-          <>
-            <div className={styles.tabs} role="tablist" aria-label={leagueName}>
-              {tabSlots.map((id) =>
-                id === 'totw' && !showTotwTab ? (
-                  <span key={id} className={`${styles.tab} ${styles.tabPlaceholder}`} aria-hidden="true">
-                    {tabLabel.totw}
-                  </span>
-                ) : (
-                  <button
-                    key={id}
-                    id={`standings-tab-${id}`}
-                    type="button"
-                    role="tab"
-                    aria-selected={activeTab === id}
-                    aria-controls="standings-panel"
-                    tabIndex={activeTab === id ? 0 : -1}
-                    className={`${styles.tab} ${activeTab === id ? styles.tabActive : ''}`.trim()}
-                    onClick={() => setTab(id)}
-                    onKeyDown={onTabKeyDown}
-                  >
-                    {tabLabel[id]}
-                  </button>
-                ),
-              )}
-            </div>
-
-            <div id="standings-panel" role="tabpanel" aria-labelledby={`standings-tab-${activeTab}`} className={styles.panel}>
-              {loading ? (
-                <StandingsSkeleton rows={activeTab === 'table' ? 18 : 12} />
-              ) : active.isError ? (
-                <div className={styles.message}>
-                  {t('loadError')}{' '}
-                  <button type="button" onClick={() => void active.refetch()}>
-                    {t('retry')}
-                  </button>
-                </div>
-              ) : isEmpty ? (
-                <div className={styles.message}>
-                  {t('noData')}
-                  {activeTab === 'table' && bracketQuery.data ? (
-                    <>
-                      {' '}
-                      <button type="button" onClick={() => setTab('bracket')}>
-                        {t('tabBracket')} →
+            {pickerOpen ? null : (
+              <>
+                <div className={styles.tabs} role="tablist" aria-label={leagueName}>
+                  {tabSlots.map((id) =>
+                    id === 'totw' && !showTotwTab ? (
+                      <span key={id} className={`${styles.tab} ${styles.tabPlaceholder}`} aria-hidden="true">
+                        {tabLabel.totw}
+                      </span>
+                    ) : (
+                      <button
+                        key={id}
+                        id={`standings-tab-${id}`}
+                        type="button"
+                        role="tab"
+                        aria-selected={activeTab === id}
+                        aria-controls="standings-panel"
+                        tabIndex={activeTab === id ? 0 : -1}
+                        className={`${styles.tab} ${activeTab === id ? styles.tabActive : ''}`.trim()}
+                        onClick={() => setTab(id)}
+                        onKeyDown={onTabKeyDown}
+                      >
+                        {tabLabel[id]}
                       </button>
-                    </>
-                  ) : null}
+                    ),
+                  )}
                 </div>
-              ) : activeTab === 'bracket' ? (
-                <LazyLoad
-                  load={loadCupBracket}
-                  props={{ bracket: bracketQuery.data!, onShowStandings: blocks.length ? () => setTab('table') : undefined }}
-                />
-              ) : activeTab === 'table' ? (
-                <StandingsTable blocks={blocks} competitionId={tableQuery.data?.competition?.id} />
-              ) : activeTab === 'scorers' ? (
-                <ScorersList rows={scorers} />
-              ) : activeTab === 'cards' ? (
-                <CardsList rows={cards} />
-              ) : (
-                <LazyLoad load={loadTeamOfTheWeek} props={{ data: totw!, leagueName }} />
-              )}
-            </div>
-          </>
-        )}
+
+                <div id="standings-panel" role="tabpanel" aria-labelledby={`standings-tab-${activeTab}`} className={styles.panel}>
+                  {loading ? (
+                    <StandingsSkeleton rows={activeTab === 'table' ? 18 : 12} />
+                  ) : active.isError ? (
+                    <div className={styles.message}>
+                      {t('loadError')}{' '}
+                      <button type="button" onClick={() => void active.refetch()}>
+                        {t('retry')}
+                      </button>
+                    </div>
+                  ) : isEmpty ? (
+                    <div className={styles.message}>
+                      {t('noData')}
+                      {activeTab === 'table' && bracketQuery.data ? (
+                        <>
+                          {' '}
+                          <button type="button" onClick={() => setTab('bracket')}>
+                            {t('tabBracket')} →
+                          </button>
+                        </>
+                      ) : null}
+                    </div>
+                  ) : activeTab === 'bracket' ? (
+                    <LazyLoad
+                      load={loadCupBracket}
+                      props={{ bracket: bracketQuery.data!, onShowStandings: blocks.length ? () => setTab('table') : undefined }}
+                    />
+                  ) : activeTab === 'table' ? (
+                    <StandingsTable blocks={blocks} competitionId={tableQuery.data?.competition?.id} />
+                  ) : activeTab === 'scorers' ? (
+                    <ScorersList rows={scorers} />
+                  ) : activeTab === 'cards' ? (
+                    <CardsList rows={cards} />
+                  ) : (
+                    <LazyLoad load={loadTeamOfTheWeek} props={{ data: totw!, leagueName }} />
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+        <div className={styles.side}>
+          {sportmonksLeagueId != null && effectiveSeasonId != null ? (
+            <RoundStatsSlot leagueId={sportmonksLeagueId} seasonId={effectiveSeasonId} />
+          ) : null}
+        </div>
       </div>
-      {sportmonksLeagueId != null && effectiveSeasonId != null ? <RoundStatsSlot leagueId={sportmonksLeagueId} seasonId={effectiveSeasonId} /> : null}
     </Container>
   );
 }

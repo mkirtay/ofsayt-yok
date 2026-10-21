@@ -1,34 +1,45 @@
 @use '../../styles/variables' as *;
 
-// Yuva ve kart AYNI en az yüksekliği taşır: yer tutucu → içerik geçişinde alttaki öğeler kaymaz (CLS). Değerler tipik
-// içeriğin ölçülen yüksekliği (390 / 1440 px, 2026-10-21); öne çıkanlar listesi en az 2 (mobilde 4) satır yer ayırır.
+// Kartın düzeni pencereye değil YUVANIN genişliğine bağlı (container query): /standings masaüstünde kart ~320 px'lik
+// yan sütunda, tablet/mobilde tablonun altında tam genişlikte. Dar düzen eşiği eski `max-width: $bp-sm` medya
+// sorgusuyla aynı noktaya düşer (640 px pencere − 2 × 16 px kapsayıcı dolgusu = 608 px yuva).
+// Masaüstü yan sütunda (320 px) da dar düzen geçerli; ölçülen yükseklik mobildekiyle aynı (753 px, Süper Lig 8. hafta).
+$narrow: 608px;
+
+// Yuva iç kutusu ve kart AYNI en az yüksekliği taşır: yer tutucu → içerik geçişinde alttaki öğeler kaymaz (CLS). Değerler
+// tipik içeriğin ölçülen yüksekliği (390 / 1440 px ve 320 px yan sütun, 2026-10-21); öne çıkanlar listesi en az 2 (dar
+// düzende 4) satır yer ayırır.
 $min-h-desktop: 496px;
 $min-h-mobile: 752px;
 
+// Ölçülen kap: genişlik sorgusu yalnız çocuklara uygulanabildiği için yükseklik iç kutuda (.reserve) ayrılır.
 .slot {
-  min-height: $min-h-desktop;
+  container-type: inline-size;
   margin-bottom: $spacing-8;
+}
 
-  @media (max-width: $bp-sm) {
+.reserve,
+.card {
+  min-height: $min-h-desktop;
+
+  @container (max-width: #{$narrow}) {
     min-height: $min-h-mobile;
   }
 }
 
 .slotEmpty {
-  min-height: 0;
   margin-bottom: 0;
+
+  .reserve {
+    min-height: 0;
+  }
 }
 
 .card {
-  min-height: $min-h-desktop;
   background-color: $color-surface;
   border-radius: $radius-md;
   box-shadow: $shadow-surface;
   border: 1px solid $color-border;
-
-  @media (max-width: $bp-sm) {
-    min-height: $min-h-mobile;
-  }
 }
 
 .header {
@@ -39,7 +50,7 @@ $min-h-mobile: 752px;
   padding: $spacing-3 $spacing-4;
   border-bottom: 1px solid $color-border;
 
-  @media (max-width: $bp-sm) {
+  @container (max-width: #{$narrow}) {
     flex-direction: column;
     align-items: stretch;
     gap: $spacing-2;
@@ -53,7 +64,7 @@ $min-h-mobile: 752px;
   gap: $spacing-3;
   min-width: 0;
 
-  @media (max-width: $bp-sm) {
+  @container (max-width: #{$narrow}) {
     justify-content: space-between;
   }
 }
@@ -127,7 +138,7 @@ $min-h-mobile: 752px;
   min-width: 150px;
   text-align: center;
 
-  @media (max-width: $bp-sm) {
+  @container (max-width: #{$narrow}) {
     flex: 1;
   }
 }
@@ -160,7 +171,7 @@ $min-h-mobile: 752px;
   gap: $spacing-2;
   margin: 0 0 $spacing-4;
 
-  @media (max-width: $bp-sm) {
+  @container (max-width: #{$narrow}) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -208,7 +219,7 @@ $min-h-mobile: 752px;
   list-style: none;
   align-content: start;
 
-  @media (max-width: $bp-sm) {
+  @container (max-width: #{$narrow}) {
     grid-template-columns: 1fr;
     min-height: 4 * 48px + 3 * 8px;
   }
