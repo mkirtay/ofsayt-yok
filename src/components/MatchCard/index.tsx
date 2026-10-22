@@ -92,6 +92,31 @@ export function H2hError({ message, retryLabel, onRetry }: { message: string; re
   );
 }
 
+export type H2hBoxMode = 'skeleton' | 'error' | 'reserved' | 'none' | 'sections';
+
+/**
+ * Form + karşılaşma geçmişi bölümünün görünümü. `reserve`: SSR veri vermedi (bütçe aşıldı / panel) → bölüm iskelet
+ * yüksekliğinde ayrılmış kutuda (veri gelince kart uzamasın). Ayrılmış kutu YALNIZ geçmiş tablosu geldiyse kalır: tablo
+ * yoksa (yalnız form + "karşılaşma yok" notu ya da yalnız not) içerik kısa, iskelet yüksekliği büyük boşluk bırakıyordu.
+ */
+export function h2hBoxMode(s: {
+  pending: boolean;
+  error: boolean;
+  reserve: boolean;
+  expanded: boolean;
+  hasTeams: boolean;
+  hasTable: boolean;
+  hasForm: boolean;
+}): H2hBoxMode {
+  if (s.pending) return 'skeleton';
+  if (s.error) return 'error';
+  const clientLoaded = s.reserve && s.hasTeams;
+  if (clientLoaded && s.hasTable && !s.expanded) return 'reserved';
+  // İstemcide gelen tamamen boş sonuç: kısa not (SSR'daki boş sonuçta bölüm hiç çizilmez).
+  if (clientLoaded && !s.hasTable && !s.hasForm) return 'none';
+  return 'sections';
+}
+
 /** Gerçekten boş karşılaşma geçmişi. */
 export function H2hNone({ message }: { message: string }) {
   return <p className={styles.h2hNone} data-testid="h2h-none">{message}</p>;
@@ -190,7 +215,20 @@ export default function MatchCard({ match, loading, initialH2h }: MatchCardProps
   const h2hError = h2hCurrent?.error === true;
   const h2hData = h2hError ? null : h2hCurrent ? (h2hCurrent.data ?? null) : teamKey ? undefined : null;
   const h2hPending = h2hData === undefined && !h2hError;
-  const h2hReserved = reserveH2h && !h2hExpanded && teamKey != null && !h2hPending;
+  const h2hHasTable = Boolean(h2hData && Array.isArray(h2hData.h2h) && h2hData.h2h.length > 0);
+  const h2hHasForm = Boolean(
+    h2hData && ((h2hData.team1.overall_form?.length ?? 0) > 0 || (h2hData.team2.overall_form?.length ?? 0) > 0),
+  );
+  const h2hMode = h2hBoxMode({
+    pending: h2hPending,
+    error: h2hError,
+    reserve: reserveH2h,
+    expanded: h2hExpanded,
+    hasTeams: teamKey != null,
+    hasTable: h2hHasTable,
+    hasForm: h2hHasForm,
+  });
+  const h2hReserved = h2hMode === 'reserved';
   useEffect(() => {
     const el = reservedRef.current;
     setH2hClipped(el ? el.scrollHeight > el.clientHeight + 1 : false);
@@ -515,15 +553,15 @@ export default function MatchCard({ match, loading, initialH2h }: MatchCardProps
         />
       ) : null}
 
-      {h2hPending ? (
+      {h2hMode === 'skeleton' ? (
         <H2hSkeleton />
-      ) : h2hError ? (
+      ) : h2hMode === 'error' ? (
         <H2hError message={ts('h2h.loadError')} retryLabel={ts('h2h.retry')} onRetry={() => setH2h(null)} />
-      ) : h2hReserved ? (
+      ) : h2hMode === 'reserved' ? (
         <div className={styles.h2hReserved}>
           <H2hSkeleton className={styles.h2hReservedSizer} />
           <div ref={reservedRef} className={styles.h2hReservedContent}>
-            {showFormRow || showH2hTable ? h2hSections : <H2hNone message={ts('h2h.none')} />}
+            {h2hSections}
           </div>
           {h2hClipped ? (
             <button type="button" className={styles.h2hShowAll} onClick={() => setH2hExpanded(true)}>
@@ -531,6 +569,8 @@ export default function MatchCard({ match, loading, initialH2h }: MatchCardProps
             </button>
           ) : null}
         </div>
+      ) : h2hMode === 'none' ? (
+        <H2hNone message={ts('h2h.none')} />
       ) : (
         h2hSections
       )}

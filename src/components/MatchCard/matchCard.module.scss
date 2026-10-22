@@ -423,8 +423,8 @@ $match-card-header-blue: var(--text-secondary); // tema-uyumlu (eskiden sabit la
   background: var(--skeleton-base);
 }
 
-// SSR'da form/karşılaşma geçmişi yoksa: kutu iskelet yüksekliğinde sabit, içerik üstüne biner (kısa → boşluk,
-// uzun → kırpılır + "Tümünü göster").
+// SSR'da form/karşılaşma geçmişi yoksa ve gelen veride geçmiş TABLOSU varsa: kutu iskelet yüksekliğinde sabit, içerik
+// üstüne biner (uzun → kırpılır + "Tümünü göster"). Tablo yoksa yer ayrılmaz, bölüm içeriği kadar (bkz. MatchCard).
 .h2hReserved {
   position: relative;
 }
