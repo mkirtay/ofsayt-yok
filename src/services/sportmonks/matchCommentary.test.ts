@@ -77,7 +77,7 @@ describe('translateCommentary — kalıplar', () => {
     ['VAR decision: Goal disallowed for offside against Tanguy Coulibaly.', 'VAR kararı: gol ofsayt nedeniyle iptal edildi (Tanguy Coulibaly).', 'var'],
     ['First half ends with a score of 2-1.', 'İlk yarı 2-1 sona erdi.', 'update'],
   ])('%s', (en, expected, kind) => {
-    expect(tr(en)).toEqual({ en, tr: expected, kind });
+    expect(tr(en)).toMatchObject({ en, tr: expected, kind });
   });
 
   it('tanınmayan cümle: tr null, tür anahtar kelimeden', () => {

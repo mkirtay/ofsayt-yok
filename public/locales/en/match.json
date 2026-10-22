@@ -241,7 +241,7 @@
     "title": "Match Commentary",
     "filtersLabel": "Commentary filter",
     "filters": { "all": "All", "goals": "Goals", "cards": "Cards", "shots": "Shots", "substitutions": "Substitutions", "important": "Important" },
-    "kinds": { "goal": "Goal", "card": "Card", "redCard": "Red card", "shot": "Shot", "corner": "Corner", "offside": "Offside", "substitution": "Substitution", "var": "VAR", "update": "Update", "other": "Event" },
+    "kinds": { "goal": "Goal", "card": "Card", "redCard": "Red card", "shot": "Shot", "corner": "Corner", "offside": "Offside", "substitution": "Substitution", "var": "VAR", "update": "Update", "foul": "Foul", "free_kick": "Free kick", "penalty": "Penalty", "other": "Event" },
     "minuteSuffix": " min",
     "liveNote": "Live · refreshes every minute",
     "pre": "Commentary will appear here once the match kicks off.",

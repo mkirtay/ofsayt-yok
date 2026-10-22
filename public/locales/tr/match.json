@@ -237,7 +237,7 @@
     "title": "Maç Anlatımı",
     "filtersLabel": "Anlatım filtresi",
     "filters": { "all": "Tümü", "goals": "Goller", "cards": "Kartlar", "shots": "Şutlar", "substitutions": "Değişiklikler", "important": "Önemli" },
-    "kinds": { "goal": "Gol", "card": "Kart", "redCard": "Kırmızı kart", "shot": "Şut", "corner": "Korner", "offside": "Ofsayt", "substitution": "Oyuncu değişikliği", "var": "VAR", "update": "Bilgi", "other": "Olay" },
+    "kinds": { "goal": "Gol", "card": "Kart", "redCard": "Kırmızı kart", "shot": "Şut", "corner": "Korner", "offside": "Ofsayt", "substitution": "Oyuncu değişikliği", "var": "VAR", "update": "Bilgi", "foul": "Faul", "free_kick": "Serbest vuruş", "penalty": "Penaltı", "other": "Olay" },
     "minuteSuffix": ". dakika",
     "liveNote": "Canlı · dakikada bir yenilenir",
     "pre": "Anlatım maç başlayınca burada akacak.",

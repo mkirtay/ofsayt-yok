@@ -112,6 +112,17 @@ export function findPlayer(squads: SceneSquads, name: string): { side: SceneSide
 
 const other = (s: SceneSide): SceneSide => (s === 'home' ? 'away' : 'home');
 
+/** Metindeki takım adı ("PEC Zwolle", "Brighton and Hove Albion") → taraf; aksansız, biri diğerini içeriyorsa eşleşir. */
+export function sideOfTeam(squads: SceneSquads, team: string): SceneSide | null {
+  const want = tokens(team).join(' ');
+  if (!want) return null;
+  const hits = (['home', 'away'] as const).filter((side) => {
+    const have = tokens(squads[side].name).join(' ');
+    return !!have && (have === want || have.includes(want) || want.includes(have));
+  });
+  return hits.length === 1 ? hits[0]! : null;
+}
+
 function parseScore(text: string): [number, number] | null {
   const m = /(\d+)\s*-\s*(\d+)(?!.*\d+\s*-\s*\d+)/.exec(text);
   return m ? [Number(m[1]), Number(m[2])] : null;
@@ -143,6 +154,7 @@ export function resolveSceneSides(items: readonly CommentaryItem[], squads: Scen
     }
     // Değişiklik: giren kadroda bulunamazsa çıkan oyuncunun takımı.
     if (!side && scene.type === 'substitution' && squads && scene.actors[1]) side = findPlayer(squads, scene.actors[1])?.side ?? null;
+    if (!side && squads && scene.team && !scene.ownGoal) side = sideOfTeam(squads, scene.team);
     sideById.set(item.id, side);
   }
 

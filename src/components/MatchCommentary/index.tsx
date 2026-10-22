@@ -76,6 +76,27 @@ function KindIcon({ item }: { item: CommentaryItem }): ReactNode {
           <path d="M13 10.5H4M6.5 8L4 10.5 6.5 13" />
         </>,
       );
+    case 'foul':
+      return svg(
+        <>
+          <circle cx="6" cy="10" r="3.6" />
+          <path d="M8.6 7.6L14 3.5M11 3.5h3v3" />
+        </>,
+      );
+    case 'free_kick':
+      return svg(
+        <>
+          <circle cx="4.5" cy="11.5" r="2.3" />
+          <path d="M9 5v9M12 5v9M9 5h3" />
+        </>,
+      );
+    case 'penalty':
+      return svg(
+        <>
+          <path d="M2 4h12v8M2 4v8" />
+          <circle cx="8" cy="12.5" r="1.4" fill="currentColor" />
+        </>,
+      );
     case 'var':
       return svg(
         <>
