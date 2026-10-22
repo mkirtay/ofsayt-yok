@@ -160,20 +160,34 @@ function cardReason(s: string | undefined): string | null | undefined {
 
 const HALF_TR: Record<string, string> = { first: 'İlk yarı', second: 'İkinci yarı', 'first half': 'İlk yarı', 'second half': 'İkinci yarı', match: 'Maç', game: 'Maç' };
 
-/** Skor durumu ifadesi ("with X leading Y 1-0", "with the score at 1-2", "in a 1-1 draw between X and Y") → "X 1-0 Y" / "1-2". */
+/**
+ * Skor durumu ifadesi ("with X leading Y 1-0", "with the score at 1-2", "in a 1-1 draw between X and Y") → "X 1-0 Y" / "1-2".
+ * Sportmonks kalıplarında sayı sırası tutarsız ("Lille losing 2-4 to Galatasaray" / "Lille losing to Galatasaray 4-2"):
+ * önde/geride fiilinden yön alınır, önde olanın golü büyük sayıdır.
+ */
 function scoreState(s: string, ctx: Ctx): string | null {
   let m: RegExpMatchArray | null;
   const t = (i: string) => ctx.names[Number(i)];
+  /** a takımı öndeyse (ahead) büyük sayı a'ya, gerideyse küçük sayı. */
+  const oriented = (a: string, b: string, x: string, y: string, ahead: boolean) => {
+    const [hi, lo] = Number(x) >= Number(y) ? [x, y] : [y, x];
+    return ahead ? `${t(a)} ${hi}-${lo} ${t(b)}` : `${t(a)} ${lo}-${hi} ${t(b)}`;
+  };
+  const isAhead = (verb: string) => /leading|winning|ahead|beating|defeating/i.test(verb);
   if ((m = s.match(new RegExp(`^(?:with )?(?:a|the) score (?:of |at )?${SCORE}$`)))) return scoreOf(m[1]!, m[2]!);
   if ((m = s.match(new RegExp(`^(?:with )?the score(?: at)? ${SCORE}$`)))) return scoreOf(m[1]!, m[2]!);
   if ((m = s.match(new RegExp(`^(?:with )?(?:the score at |the score )?${P},? (\\d+),? ${P},? (\\d+)$`)))) return `${t(m[1]!)} ${m[2]}-${m[4]} ${t(m[3]!)}`;
-  if ((m = s.match(new RegExp(`^(?:with )?${P} (?:leading|winning|ahead of|beating)(?: against)? ${P} (?:by )?${SCORE}$`)))) return `${t(m[1]!)} ${m[3]}-${m[4]} ${t(m[2]!)}`;
-  if ((m = s.match(new RegExp(`^(?:with )?${P} (?:leading|winning|ahead|losing|trailing) ${SCORE} (?:against|to|over|behind) ${P}$`)))) return `${t(m[1]!)} ${m[2]}-${m[3]} ${t(m[4]!)}`;
-  if ((m = s.match(new RegExp(`^(?:with )?${P} (?:trailing|losing to|behind) ${P} ${SCORE}$`)))) return `${t(m[1]!)} ${m[3]}-${m[4]} ${t(m[2]!)}`;
+  if ((m = s.match(new RegExp(`^(?:with )?${P} (leading|winning|ahead of|beating|trailing|losing to|behind)(?: against)? ${P} (?:by )?${SCORE}$`)))) {
+    return oriented(m[1]!, m[3]!, m[4]!, m[5]!, isAhead(m[2]!));
+  }
+  if ((m = s.match(new RegExp(`^(?:with )?${P} (leading|winning|ahead|losing|trailing) ${SCORE} (?:against|to|over|behind) ${P}$`)))) {
+    return oriented(m[1]!, m[5]!, m[3]!, m[4]!, isAhead(m[2]!));
+  }
+  if ((m = s.match(new RegExp(`^(?:with )?${P} (?:losing|trailing) to ${P} ${SCORE}$`)))) return oriented(m[1]!, m[2]!, m[3]!, m[4]!, false);
   if ((m = s.match(new RegExp(`^(?:with )?${P} and ${P} (?:tied|level|drawing|locked) (?:at )?${SCORE}$`)))) return `${t(m[1]!)} ${m[3]}-${m[4]} ${t(m[2]!)}`;
   if ((m = s.match(new RegExp(`^(?:with )?the (?:match|game|score) (?:tied|level|finishing|ending) (?:at )?${SCORE} between ${P} and ${P}$`)))) return `${t(m[3]!)} ${m[1]}-${m[2]} ${t(m[4]!)}`;
   if ((m = s.match(new RegExp(`^(?:in )?a ${SCORE} (?:draw|tie) between ${P} and ${P}$`)))) return `${t(m[3]!)} ${m[1]}-${m[2]} ${t(m[4]!)}`;
-  if ((m = s.match(new RegExp(`^(?:with )?${P} (?:winning|beating|defeating) ${P} ${SCORE}$`)))) return `${t(m[1]!)} ${m[3]}-${m[4]} ${t(m[2]!)}`;
+  if ((m = s.match(new RegExp(`^(?:with )?${P} (winning|beating|defeating) ${P} ${SCORE}$`)))) return oriented(m[1]!, m[3]!, m[4]!, m[5]!, true);
   return null;
 }
 

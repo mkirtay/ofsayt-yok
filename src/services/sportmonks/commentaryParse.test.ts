@@ -53,6 +53,9 @@ describe('parseCommentLine — kalıp aileleri', () => {
     ['The second half begins with the score at Iğdır 0, Boluspor 0.', 'İkinci yarı başladı: Iğdır 0-0 Boluspor.', 'update'],
     ['The first half ends with PEC Zwolle trailing Go Ahead Eagles 0-1.', 'İlk yarı sona erdi: PEC Zwolle 0-1 Go Ahead Eagles.', 'update'],
     ['The match ends with Udinese losing 0-3 to Lecce.', 'Maç sona erdi: Udinese 0-3 Lecce.', 'update'],
+    // Sportmonks sayı sırası tutarsız: yön fiilden (19873251)
+    ['The match ends with Lille losing to Galatasaray 4-2.', 'Maç sona erdi: Lille 2-4 Galatasaray.', 'update'],
+    ['The second half ends with Lille losing 2-4 to Galatasaray.', 'İkinci yarı sona erdi: Lille 2-4 Galatasaray.', 'update'],
     ['Penalty awarded to Osasuna as Ante Budimir is fouled in the penalty area.', 'Osasuna penaltı kazandı; ceza sahasında faule uğrayan: Ante Budimir.', 'penalty'],
     ['Seymour Garfield Reid is substituted for Taylor Calheira.', 'Oyuna Seymour Garfield Reid girdi, Taylor Calheira çıktı.', 'substitution'],
     ['Substitution for PEC Zwolle: Damian van der Haar comes on for Sherel Floranus due to an injury.', 'PEC Zwolle: Oyuna Damian van der Haar girdi, Sherel Floranus çıktı.', 'substitution'],
