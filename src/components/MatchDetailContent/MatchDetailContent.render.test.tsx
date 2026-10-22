@@ -87,12 +87,9 @@ describe('<MatchDetailContent />', () => {
     expect(html).not.toContain('trivia-content');
   });
 
-  it('premium noktası yalnızca AI Analiz ve Trivia başlığında', () => {
-    const chunk = (i: number) => html.split('role="tab"').slice(1)[i].split('</button>')[0];
-    expect(chunk(0)).not.toContain('premiumDot');
-    expect(chunk(1)).not.toContain('premiumDot');
-    expect(chunk(2)).not.toContain('premiumDot');
-    expect(chunk(3)).toContain('premiumDot');
-    expect(chunk(4)).toContain('premiumDot');
+  it('hiçbir sekme başlığında premium noktası yok (AI Analiz / Trivia dahil)', () => {
+    const chunks = html.split('role="tab"').slice(1).map((c) => c.split('</button>')[0]);
+    expect(chunks).toHaveLength(5);
+    for (const c of chunks) expect(c).not.toContain('premiumDot');
   });
 });
