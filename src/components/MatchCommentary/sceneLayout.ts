@@ -1,16 +1,14 @@
 /**
- * Temsili anlatım sahnesinin geometrisi — saf modül (bileşen yalnız çizer, test buradan). Koordinat verisi YOK
+ * Temsili anlatım sahnesinin geometrisi — saf modül (diziliş, bölge noktaları, bekleme sahnesi; olay akışı sceneScript.ts). Koordinat verisi YOK
  * (ballCoordinates planda açık ama 10 sn örnekli ve olaylarla uyuşmuyor, 2026-10-21/19746587): oyuncular kadro
  * dizilişinden, top metinden çıkarılan bölgeden. Sahne 504×320 çizilir, kutuya ScaledScene ölçekler.
  */
-import type { CommentaryItem, SceneSide, SceneZone } from '@/services/sportmonks/matchCommentary';
-import { findPlayer, type SceneSquads } from '@/services/sportmonks/commentaryScene';
+import type { SceneSide, SceneZone } from '@/services/sportmonks/matchCommentary';
+import type { SceneSquads } from '@/services/sportmonks/commentaryScene';
 
 export const SCENE_W = 504;
 export const SCENE_H = 320;
 
-/** Kale ağzının dikey yarıçapı (yatay orta çizgi 160). */
-const GOAL_HALF = 30;
 const MID_Y = SCENE_H / 2;
 
 export type SceneDot = {
@@ -20,39 +18,14 @@ export type SceneDot = {
   x: number;
   y: number;
   goalkeeper: boolean;
-  /** Olayın aktörü (vuran, kart gören, faul yapan) — vurgulu çizilir. */
-  actor: boolean;
-  /** Oyuna giren (değişiklikte) — kenardan içeri kayar. */
-  comingOn?: boolean;
-  /** Çıkan oyuncu — kenara kayar. */
-  goingOff?: boolean;
 };
 
-export type SceneBall = {
-  /** Başlangıç ve bitiş noktası (px, sahne koordinatı). */
-  x1: number;
-  y1: number;
-  x2: number;
-  y2: number;
-  /** Topun yol boyunca yükselip alçalması (korner/ortada belirgin). */
-  arc: number;
-  /** Vuruşun engele takılıp geri dönmesi (bloke / direk / kurtarış). */
-  rebound: boolean;
-};
+export type SceneBall = { x: number; y: number };
 
+/** Bekleme sahnesi yerleşimi (maç öncesi). Olay sahneleri sceneScript.ts'te. */
 export type SceneLayout = {
   dots: SceneDot[];
-  ball: SceneBall | null;
-  /** Kale ağzı parlaması — gol. */
-  goalFlash: { x: number; y: number } | null;
-  /** Kaleci kurtarışı: topun durduğu nokta. */
-  save: { x: number; y: number } | null;
-  /** Kart: aktörün yanında hakem + kart. */
-  card: { x: number; y: number; red: boolean } | null;
-  /** Saniye cinsinden sahne süresi (3–5 sn). */
-  durationMs: number;
-  /** Hücum eden taraf; bilinmiyorsa 'home' varsayılır (sahne yine temsili). */
-  side: SceneSide;
+  ball: SceneBall;
 };
 
 /** Varsayılan 4-4-2: kadro ya da `formation_field` yoksa. Satır = kaleden ileriye, her satır eşit aralıklı. */
@@ -64,8 +37,6 @@ const X_FAR = 232;
 /** Dikey aralık: kenar çizgilerinden içeride kalsın. */
 const Y_NEAR = 34;
 const Y_FAR = SCENE_H - 34;
-/** Yedek kulübesi hizası: oyuna giren / çıkan oyuncunun kenardaki yeri. */
-export const BENCH_Y = Y_NEAR - 22;
 
 const mirror = (x: number) => SCENE_W - x;
 
@@ -128,11 +99,6 @@ export function placeSquad(squads: SceneSquads | null, side: SceneSide): Placed[
   return out;
 }
 
-/** Hücum eden tarafın saldırdığı kale ağzının ortası. Top yarıçapı kadar içeride: son karede top kenardan taşmaz. */
-export function goalMouth(side: SceneSide): { x: number; y: number } {
-  return { x: side === 'home' ? SCENE_W - 12 : 12, y: MID_Y };
-}
-
 /** Bölge → topun çıkış noktası. Sol/sağ HÜCUM EDEN oyuncunun bakışına göre (ekranda ev sahibi sağa hücum eder). */
 export function zonePoint(zone: SceneZone | null, side: SceneSide): { x: number; y: number } {
   const depth: Record<SceneZone, number> = {
@@ -162,143 +128,6 @@ export function cornerPoint(zone: SceneZone | null, side: SceneSide, id: number)
 }
 
 /**
- * Satır → sahne yerleşimi. Sahnesi olmayan satır için null. Aktör(ler) kadroda bulunursa vurgulanır; bulunamazsa
- * sahne yine çizilir (noktalar dizilişte kalır) — "temsili canlandırma" notu bunun için sabit duruyor.
- */
-export function buildScene(item: CommentaryItem, squads: SceneSquads | null): SceneLayout | null {
-  const scene = item.scene;
-  if (!scene) return null;
-  const side: SceneSide = scene.side ?? 'home';
-
-  const dots: SceneDot[] = [];
-  for (const s of ['home', 'away'] as const) {
-    for (const p of placeSquad(squads, s)) {
-      dots.push({ side: s, name: p.name, number: p.number, x: p.x, y: p.y, goalkeeper: p.goalkeeper, actor: false });
-    }
-  }
-  /**
-   * Anlatımdaki adı sahadaki noktayla eşler (ad üzerinden; yerleşim sırası kadro sırasından farklı). Oyuncu yedekse
-   * sahada noktası yoktur: oyuna giriyorsa orta sahanın kenarında yeni bir nokta açılır, değilse null.
-   */
-  const markActor = (name: string | undefined, extra: Partial<SceneDot> = {}): SceneDot | null => {
-    if (!name || !squads) return null;
-    const hit = findPlayer(squads, name);
-    if (!hit) return null;
-    const player = squads[hit.side].players[hit.index];
-    if (!player) return null;
-    const dot = dots.find((d) => d.side === hit.side && d.name === player.name);
-    if (dot) {
-      Object.assign(dot, { actor: true, ...extra });
-      return dot;
-    }
-    if (!extra.comingOn) return null;
-    const bench: SceneDot = {
-      side: hit.side,
-      name: player.name,
-      number: player.number,
-      x: SCENE_W / 2 + (hit.side === 'home' ? -30 : 30),
-      y: BENCH_Y,
-      goalkeeper: false,
-      actor: true,
-      ...extra,
-    };
-    dots.push(bench);
-    return bench;
-  };
-
-  const mouth = goalMouth(side);
-  const base = { arc: 0, rebound: false };
-  let ball: SceneBall | null = null;
-  let goalFlash: SceneLayout['goalFlash'] = null;
-  let save: SceneLayout['save'] = null;
-  let card: SceneLayout['card'] = null;
-  let durationMs = 3200;
-
-  switch (scene.type) {
-    case 'goal': {
-      const from = scene.ownGoal ? zonePoint('six_yard', side) : zonePoint(scene.zone, side);
-      markActor(scene.actors[0]);
-      ball = { ...base, x1: from.x, y1: from.y, x2: mouth.x, y2: MID_Y - 10, arc: scene.header ? 14 : 6 };
-      goalFlash = mouth;
-      durationMs = 3600;
-      break;
-    }
-    case 'shot_saved': {
-      const from = zonePoint(scene.zone, side);
-      markActor(scene.actors[0]);
-      const stop = { x: side === 'home' ? SCENE_W - 20 : 20, y: MID_Y + (from.y > MID_Y ? 12 : -12) };
-      ball = { ...base, x1: from.x, y1: from.y, x2: stop.x, y2: stop.y, rebound: true, arc: scene.header ? 10 : 4 };
-      save = stop;
-      break;
-    }
-    case 'shot_blocked': {
-      const from = zonePoint(scene.zone, side);
-      markActor(scene.actors[0]);
-      // Savunmaya takılan şut yolun üçte birinde kesilir.
-      ball = {
-        ...base,
-        x1: from.x,
-        y1: from.y,
-        x2: from.x + (mouth.x - from.x) * 0.34,
-        y2: from.y + (MID_Y - from.y) * 0.34,
-        rebound: true,
-      };
-      durationMs = 2800;
-      break;
-    }
-    case 'shot_off': {
-      const from = zonePoint(scene.zone, side);
-      markActor(scene.actors[0]);
-      const wideSign = from.y > MID_Y ? 1 : -1;
-      // Direkten dönen vuruş kale direğine, ıska kalenin dışına gider.
-      const y2 = scene.post ? MID_Y + wideSign * GOAL_HALF : MID_Y + wideSign * (GOAL_HALF + 34);
-      ball = { ...base, x1: from.x, y1: from.y, x2: mouth.x, y2, rebound: !!scene.post, arc: scene.header ? 12 : 8 };
-      break;
-    }
-    case 'corner': {
-      const from = cornerPoint(scene.zone, side, item.id);
-      const to = zonePoint('box_centre', side);
-      ball = { ...base, x1: from.x, y1: from.y, x2: to.x, y2: to.y, arc: 26 };
-      durationMs = 4000;
-      break;
-    }
-    case 'card_yellow':
-    case 'card_red': {
-      const dot = markActor(scene.actors[0]);
-      const at = dot ?? { x: SCENE_W / 2, y: MID_Y };
-      card = { x: at.x, y: at.y, red: scene.type === 'card_red' };
-      durationMs = 3000;
-      break;
-    }
-    case 'substitution': {
-      markActor(scene.actors[0], { comingOn: true });
-      markActor(scene.actors[1], { goingOff: true });
-      durationMs = 3000;
-      break;
-    }
-    case 'foul': {
-      const dot = markActor(scene.actors[0]);
-      markActor(scene.actors[1]);
-      ball = dot ? { ...base, x1: dot.x, y1: dot.y, x2: dot.x + (side === 'home' ? 26 : -26), y2: dot.y + 18, arc: 10 } : null;
-      durationMs = 2800;
-      break;
-    }
-  }
-
-  return { dots, ball, goalFlash, save, card, durationMs, side };
-}
-
-/** Oyuncuların topa doğru hafif kayması (en çok 10 px) — sahne canlı görünsün diye. */
-export function drift(dot: SceneDot, ball: SceneBall | null): { dx: number; dy: number } {
-  if (!ball) return { dx: 0, dy: 0 };
-  const dx = ball.x2 - dot.x;
-  const dy = ball.y2 - dot.y;
-  const len = Math.hypot(dx, dy) || 1;
-  const step = Math.min(10, len / 8);
-  return { dx: Math.round((dx / len) * step * 10) / 10, dy: Math.round((dy / len) * step * 10) / 10 };
-}
-
-/**
  * Maç başlamadan önce gösterilen bekleme sahnesi: iki takım kendi yarısında dizili, top orta noktada. Olay yok —
  * animasyon bileşende (nefes alan noktalar + orta yuvarlakta halka). Kadro gelmediği için (maç öncesi uç çağrılmıyor)
  * yerleşim varsayılan 4-4-2'dir.
@@ -306,18 +135,7 @@ export function drift(dot: SceneDot, ball: SceneBall | null): { dx: number; dy: 
 export function buildKickoffScene(squads: SceneSquads | null = null): SceneLayout {
   const dots: SceneDot[] = [];
   for (const side of ['home', 'away'] as const) {
-    for (const p of placeSquad(squads, side)) {
-      dots.push({ side, name: p.name, number: p.number, x: p.x, y: p.y, goalkeeper: p.goalkeeper, actor: false });
-    }
+    for (const p of placeSquad(squads, side)) dots.push({ side, name: p.name, number: p.number, x: p.x, y: p.y, goalkeeper: p.goalkeeper });
   }
-  const centre = { x: SCENE_W / 2, y: MID_Y };
-  return {
-    dots,
-    ball: { x1: centre.x, y1: centre.y, x2: centre.x, y2: centre.y, arc: 0, rebound: false },
-    goalFlash: null,
-    save: null,
-    card: null,
-    durationMs: 2800,
-    side: 'home',
-  };
+  return { dots, ball: { x: SCENE_W / 2, y: MID_Y } };
 }

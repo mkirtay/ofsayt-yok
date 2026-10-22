@@ -49,7 +49,9 @@ export type SceneType =
   | 'card_yellow'
   | 'card_red'
   | 'substitution'
-  | 'foul';
+  | 'foul'
+  | 'free_kick'
+  | 'offside';
 
 /** Vuruşun kabaca bölgesi — sol/sağ HÜCUM EDEN oyuncunun bakışına göre (kaleye dönük). */
 export type SceneZone =
@@ -137,6 +139,11 @@ export function sceneFromEvent(ev: ParsedEvent, id = 0): CommentaryScene | null 
       return ev.player && ev.other ? { ...base, type: 'substitution', actors: [ev.player, ev.other] } : null;
     case 'foul':
       return ev.player ? { ...base, type: 'foul', actors: [ev.player, ...(ev.other ? [ev.other] : [])] } : null;
+    // Serbest vuruş: aktör faule uğrayan, `side` onun takımı (akış o takımın hücumu).
+    case 'free_kick':
+      return ev.player ? { ...base, type: 'free_kick', actors: [ev.player] } : null;
+    case 'offside':
+      return ev.player || ev.team ? { ...base, type: 'offside', actors: ev.player ? [ev.player] : [] } : null;
     case 'goal':
     case 'shot': {
       if (!ev.outcome || !ev.player) return null;

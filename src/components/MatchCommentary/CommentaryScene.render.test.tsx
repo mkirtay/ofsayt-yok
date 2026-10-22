@@ -32,12 +32,15 @@ const item = (en: string, id = 1): CommentaryItem => ({
 const html = (node: Parameters<typeof renderToStaticMarkup>[0]) => renderToStaticMarkup(node);
 const dots = (markup: string) => (markup.match(/class="[^"]*_dot_/g) ?? []).length;
 
-describe('<CommentaryScene />', () => {
-  it('22 oyuncu noktası, top ve sabit "temsili" notu', () => {
+const players = (markup: string) => (markup.match(/data-pl="/g) ?? []).length;
+
+describe('<CommentaryScene /> — mini maç', () => {
+  it('22 oyuncu, top, hakem ve sabit "temsili" notu', () => {
     const markup = html(<CommentaryScene item={item("Gabriel Sara takes a left-footed shot, but it's saved.")} squads={squads} />);
-    expect(dots(markup)).toBe(22);
+    expect(players(markup)).toBe(22);
+    expect(markup).toContain('data-ball');
+    expect(markup).toContain('data-ref');
     expect(markup).toContain('Temsili canlandırma – gerçek konumlar değil');
-    expect(markup).toContain('_ballPath_');
   });
 
   it('saha ekran okuyuculara gizli (yanındaki anlatım metni zaten okunuyor)', () => {
@@ -45,27 +48,26 @@ describe('<CommentaryScene />', () => {
     expect(markup).toContain('aria-hidden="true"');
   });
 
-  it('kart sahnesinde kart öğesi var, top yok', () => {
+  it('kart sahnesinde sarı kart efekti', () => {
     const markup = html(<CommentaryScene item={item('Victor James Osimhen receives a yellow card.', 3)} squads={squads} />);
+    expect(markup).toContain('_fxCard_');
     expect(markup).toContain('_cardYellow_');
-    expect(markup).not.toContain('_ballPath_');
   });
 
-  it('gol sahnesinde kale parlaması var', () => {
+  it('gol sahnesinde gol efekti ve şut izi', () => {
     const markup = html(<CommentaryScene item={item('Goal! Victor James Osimhen scores, making it 0-1.', 4)} squads={squads} />);
-    expect(markup).toContain('_flash_');
+    expect(markup).toContain('_fxGoal_');
+    expect(markup).toContain('_trailShot_');
   });
 
   it('kadro gelmezse sahne yine çizilir (varsayılan diziliş)', () => {
     const markup = html(<CommentaryScene item={item('Corner awarded.', 5)} squads={null} />);
-    expect(dots(markup)).toBe(22);
+    expect(players(markup)).toBe(22);
   });
 
-  it('süre ve koordinatlar CSS değişkeni olarak geçer (animasyon saf CSS)', () => {
+  it('animasyonsuz (sunucu / WAAPI yok) son kare: konumlar satır içi transform', () => {
     const markup = html(<CommentaryScene item={item("Gabriel Sara takes a left-footed shot, but it's saved.", 6)} squads={squads} />);
-    expect(markup).toMatch(/--dur:\s?\d+ms/);
-    expect(markup).toMatch(/--x1:/);
-    expect(markup).toMatch(/--fx:/);
+    expect(markup).toMatch(/data-pl="0"[^>]*style="transform:translate\(-?[\d.]+px, -?[\d.]+px\)"|style="transform:translate\(-?[\d.]+px, -?[\d.]+px\)"[^>]*data-pl="0"/);
   });
 });
 

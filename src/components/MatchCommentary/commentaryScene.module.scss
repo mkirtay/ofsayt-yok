@@ -51,82 +51,16 @@
   margin: -6.5px 0 0 -6.5px;
   border-radius: 50%;
   transform: translate(calc(var(--x) * 1px), calc(var(--y) * 1px));
-  animation: dotDrift var(--dur) ease-in-out 1 both;
 }
 
-@keyframes dotDrift {
-  0%,
-  100% {
-    transform: translate(calc(var(--x) * 1px), calc(var(--y) * 1px));
-  }
-  55% {
-    transform: translate(calc((var(--x) + var(--dx)) * 1px), calc((var(--y) + var(--dy)) * 1px));
-  }
-}
-
-// Aktör: halka + hafif büyüme. Halka ayrı eleman istemesin diye outline kullanılıyor (yerleşimi etkilemez).
-.actor {
-  outline: 2px solid $color-warning;
-  outline-offset: 2px;
-  z-index: 2;
-}
-
-// Oyuna giren kenardan içeri, çıkan kenara gider; her ikisi de son karede yerinde kalır.
-.comingOn,
-.goingOff {
-  animation-timing-function: ease-out;
-}
-
-.comingOn {
-  opacity: 0.95;
-}
-
-.goingOff {
-  opacity: 0.6;
-}
-
-// ─── Top ───
-
+// Bekleme sahnesinin topu (orta nokta).
 .ballPath {
   position: absolute;
   left: 0;
   top: 0;
-  width: 18px;
-  height: 18px;
   margin: -9px 0 0 -9px;
-  transform: translate(calc(var(--fx) * 1px), calc(var(--fy) * 1px));
-  animation: ballMove var(--dur) ease-out 1 both;
+  transform: translate(calc(var(--x2) * 1px), calc(var(--y2) * 1px));
   z-index: 3;
-}
-
-@keyframes ballMove {
-  0% {
-    transform: translate(calc(var(--x1) * 1px), calc(var(--y1) * 1px));
-  }
-  70% {
-    transform: translate(calc(var(--x2) * 1px), calc(var(--y2) * 1px));
-  }
-  100% {
-    transform: translate(calc(var(--fx) * 1px), calc(var(--fy) * 1px));
-  }
-}
-
-.ballArc {
-  position: absolute;
-  left: 0;
-  top: 0;
-  animation: ballArc var(--dur) ease-in-out 1 both;
-}
-
-@keyframes ballArc {
-  0%,
-  70%,
-  100% {
-    transform: translateY(0);
-  }
-  35% {
-    transform: translateY(calc(var(--arc) * -1px));
-  }
 }
 
 // ─── Bekleme sahnesi (maç başlamadan önce) ───
@@ -145,10 +79,6 @@
 
   .ballPath {
     animation: ballIdle 2.4s ease-in-out infinite;
-  }
-
-  .ballArc {
-    animation: none;
   }
 }
 
@@ -200,81 +130,7 @@
   }
 }
 
-// ─── Etkiler ───
-
-.save,
-.flash,
-.card {
-  position: absolute;
-  left: 0;
-  top: 0;
-  z-index: 4;
-}
-
-// Kurtarış: topun durduğu noktada genişleyip sönen halka.
-.save {
-  width: 26px;
-  height: 26px;
-  margin: -13px 0 0 -13px;
-  border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.9);
-  transform: translate(calc(var(--x) * 1px), calc(var(--y) * 1px)) scale(1);
-  opacity: 0;
-  animation: savePop var(--dur) ease-out 1 both;
-}
-
-@keyframes savePop {
-  0%,
-  60% {
-    transform: translate(calc(var(--x) * 1px), calc(var(--y) * 1px)) scale(0.4);
-    opacity: 0;
-  }
-  75% {
-    transform: translate(calc(var(--x) * 1px), calc(var(--y) * 1px)) scale(1.15);
-    opacity: 1;
-  }
-  100% {
-    transform: translate(calc(var(--x) * 1px), calc(var(--y) * 1px)) scale(1);
-    opacity: 0.85;
-  }
-}
-
-// Gol: kale ağzında parlama.
-.flash {
-  width: 22px;
-  height: 72px;
-  margin: -36px 0 0 -11px;
-  border-radius: 4px;
-  background: $color-warning;
-  opacity: 0.9;
-  transform: translate(calc(var(--x) * 1px), calc(var(--y) * 1px));
-  animation: goalFlash var(--dur) ease-out 1 both;
-}
-
-@keyframes goalFlash {
-  0%,
-  60% {
-    opacity: 0;
-  }
-  72% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0.9;
-  }
-}
-
-// Kart: kartı gören oyuncunun yanında yükselir.
-.card {
-  width: 12px;
-  height: 17px;
-  margin: -26px 0 0 4px;
-  border-radius: 2px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.35);
-  transform: translate(calc(var(--x) * 1px), calc(var(--y) * 1px)) rotate(8deg);
-  animation: cardRise var(--dur) ease-out 1 both;
-}
-
+// Kart rengi (mini maçtaki kart efekti).
 .cardYellow {
   background: #f5c400;
 }
@@ -283,20 +139,218 @@
   background: #e03131;
 }
 
-@keyframes cardRise {
-  0%,
-  30% {
-    transform: translate(calc(var(--x) * 1px), calc(var(--y) * 1px + 14px)) rotate(-6deg);
-    opacity: 0;
+// ─── Mini maç (Web Animations ile oynatılır; yalnız transform/opacity) ───
+// Temel stiller son kareyi verir: WAAPI yoksa / "hareketi azalt"ta sahne olayın bittiği anda donar.
+
+.pl,
+.ref,
+.ballGround,
+.fx {
+  position: absolute;
+  left: 0;
+  top: 0;
+  will-change: transform;
+}
+
+.pl {
+  z-index: 2;
+}
+
+.plDot {
+  display: block;
+  width: 13px;
+  height: 13px;
+  margin: -6.5px 0 0 -6.5px;
+  border-radius: 50%;
+}
+
+.kitHome {
+  background: #ffffff;
+  box-shadow: 0 0 0 1.5px #0a5c40, 0 2px 3px rgba(0, 0, 0, 0.3);
+}
+
+// Deplasman koyu lacivert: yeşil zeminde beyaz kadar seçilsin.
+.kitAway {
+  background: #1d3a8a;
+  box-shadow: 0 0 0 1.5px #ffffff, 0 2px 3px rgba(0, 0, 0, 0.3);
+}
+
+.plActor {
+  z-index: 3;
+
+  .plDot {
+    outline: 2px solid $color-warning;
+    outline-offset: 2px;
   }
-  55% {
-    transform: translate(calc(var(--x) * 1px), calc(var(--y) * 1px - 4px)) rotate(10deg);
-    opacity: 1;
+}
+
+.plOff .plDot {
+  opacity: 0.6;
+}
+
+.ref {
+  z-index: 2;
+
+  span {
+    display: block;
+    width: 9px;
+    height: 9px;
+    margin: -4.5px 0 0 -4.5px;
+    border-radius: 50%;
+    background: #111;
+    box-shadow: 0 0 0 1.5px #f5c400;
   }
-  100% {
-    transform: translate(calc(var(--x) * 1px), calc(var(--y) * 1px)) rotate(8deg);
-    opacity: 1;
+}
+
+.ballGround {
+  z-index: 4;
+}
+
+// Gölge yerde kalır, top yükselir (ortalar, kafa topları).
+.ballShadow {
+  position: absolute;
+  width: 12px;
+  height: 6px;
+  margin: -1px 0 0 -6px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.28);
+}
+
+.ballLift {
+  position: absolute;
+  left: -5px;
+  top: -5px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #fff 0 45%, #d9d9d9 75%);
+  box-shadow: 0 0 0 1.2px #111, 0 2px 3px rgba(0, 0, 0, 0.35);
+}
+
+.trails {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.trail {
+  stroke: rgba(255, 255, 255, 0.55);
+  stroke-width: 1.6;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  opacity: 0;
+  fill: none;
+}
+
+.trailShot {
+  stroke: $color-warning;
+  stroke-width: 2;
+}
+
+.trailCross {
+  stroke-dasharray: 0.02 0.02;
+}
+
+.fx {
+  z-index: 5;
+  opacity: 0;
+}
+
+.fxGoal {
+  width: 14px;
+  height: 64px;
+  margin: -32px 0 0 -7px;
+  border-radius: 4px;
+  background: radial-gradient(ellipse at center, rgba(255, 210, 74, 0.95), rgba(255, 210, 74, 0.2));
+}
+
+.fxRing {
+  width: 26px;
+  height: 26px;
+  margin: -13px 0 0 -13px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+}
+
+.fxBurst {
+  width: 20px;
+  height: 20px;
+  margin: -10px 0 0 -10px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0) 70%);
+}
+
+.fxBubble {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  margin: -30px 0 0 -10px;
+  border-radius: 50%;
+  background: #fff;
+  color: #111;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+}
+
+.fxFlag {
+  width: 4px;
+  height: 18px;
+  margin: -18px 0 0 -2px;
+  background: #222;
+
+  &::after {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 0;
+    width: 11px;
+    height: 8px;
+    background: linear-gradient(135deg, #f5c400 50%, #e03131 50%);
   }
+}
+
+.fxLine {
+  top: 6px;
+  width: 0;
+  height: 308px;
+  border-left: 2px dashed rgba(255, 255, 255, 0.8);
+}
+
+.fxCard {
+  width: 11px;
+  height: 15px;
+  margin: -8px 0 0 -6px;
+  border-radius: 2px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.35);
+}
+
+.fxBoard {
+  display: flex;
+  gap: 3px;
+  margin: 0 0 0 -22px;
+  padding: 2px 4px;
+  border-radius: 3px;
+  background: #111;
+  font: 700 9px/1 $font-family;
+  color: #3ddc84;
+
+  b {
+    color: #ff6b6b;
+  }
+}
+
+.caption {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  z-index: 6;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font: 700 12px/1.2 $font-family;
+  opacity: 0;
 }
 
 .note {
