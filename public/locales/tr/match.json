@@ -490,5 +490,21 @@
   "redCards": {
     "one": "Kırmızı kart",
     "many": "{{count}} kırmızı kart"
+  },
+  "venueCard": {
+    "title": "Stadyum",
+    "city": "Şehir",
+    "capacity": "Kapasite",
+    "surface": "Zemin",
+    "address": "Adres",
+    "surfaceType": {
+      "grass": "Doğal çim",
+      "artificial": "Suni çim",
+      "hybrid": "Hibrit çim"
+    },
+    "openMap": "Haritada aç",
+    "openMapLabel": "{{name}} konumunu Google Haritalar'da aç (yeni sekmede)",
+    "photoAlt": "{{name}} fotoğrafı",
+    "photoAltFallback": "Stadyum fotoğrafı"
   }
 }

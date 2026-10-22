@@ -2,7 +2,8 @@
   "tabs": {
     "recent": "Recent Matches",
     "fixtures": "Fixtures",
-    "squad": "Squad"
+    "squad": "Squad",
+    "transfers": "Transfers"
   },
   "fixtures": {
     "empty": "No scheduled matches",
@@ -178,5 +179,30 @@
     "yellow": "Yellow cards / match",
     "red": "Red cards: {{count}}",
     "bestPlayer": "Top average rating"
+  },
+  "transfers": {
+    "incoming": "Arrivals",
+    "outgoing": "Departures",
+    "scope": "Last 12 months · youth and young-player loans hidden",
+    "player": "Player",
+    "from": "From",
+    "to": "To",
+    "type": "Type",
+    "date": "Date",
+    "fee": "Fee",
+    "kind": {
+      "permanent": "Transfer",
+      "loan": "Loan",
+      "loanReturnIn": "Back from loan",
+      "loanReturnOut": "Loan ended",
+      "free": "Free"
+    },
+    "unknownClub": "Club not specified",
+    "emptyIn": "No arrivals in the last 12 months.",
+    "emptyOut": "No departures in the last 12 months.",
+    "empty": "No notable transfers in the last 12 months.",
+    "error": "Couldn't load transfers.",
+    "loading": "Loading transfers…",
+    "source": "Source: Sportmonks; fees in euros, undisclosed fees not shown."
   }
 }

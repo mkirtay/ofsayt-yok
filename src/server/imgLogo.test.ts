@@ -25,6 +25,14 @@ describe('parseLogoQuery', () => {
     expect(parseLogoQuery('../secret.png', '48')).toBeNull();
     expect(parseLogoQuery(['a.png', 'b.png'], '48')).toBeNull();
   });
+
+  it('stadyum genişlikleri (320 / 640) yalnız stadyum fotoğrafı yolunda', () => {
+    expect(parseLogoQuery('soccer/venues/3/9667.png', '640')).toEqual({ path: 'soccer/venues/3/9667.png', width: 640 });
+    expect(parseLogoQuery('soccer/venues/3/9667.png', '320')).toEqual({ path: 'soccer/venues/3/9667.png', width: 320 });
+    expect(parseLogoQuery('soccer/venues/3/9667.png', '48')).toEqual({ path: 'soccer/venues/3/9667.png', width: 48 });
+    expect(parseLogoQuery('soccer/teams/0/4192.png', '640')).toBeNull();
+    expect(parseLogoQuery('soccer/venues/3/9667.png', '1280')).toBeNull();
+  });
 });
 
 describe('renderLogo', () => {

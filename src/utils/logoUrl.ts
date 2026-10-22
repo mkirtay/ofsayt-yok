@@ -14,6 +14,25 @@ export const SPORTMONKS_IMAGE_ORIGIN = 'https://cdn.sportmonks.com/images/';
 export const LOGO_WIDTHS = [32, 48, 64, 96, 128] as const;
 export type LogoWidth = (typeof LOGO_WIDTHS)[number];
 
+/**
+ * Stadyum fotoğrafı (maç sayfası "Stadyum" kartı): logodan geniş, yalnız `soccer/venues/` yolunda izinli — Sportmonks
+ * orijinali ~1000 px / ~200 KB JPEG. Uç diğer yollarda bu genişlikleri reddeder (logo varyant sayısı artmasın).
+ */
+export const VENUE_IMAGE_WIDTHS = [320, 640] as const;
+export type VenueImageWidth = (typeof VENUE_IMAGE_WIDTHS)[number];
+export type ImageWidth = LogoWidth | VenueImageWidth;
+const VENUE_PATH_PREFIX = 'soccer/venues/';
+
+export function isVenueImagePath(path: string): boolean {
+  return path.startsWith(VENUE_PATH_PREFIX);
+}
+
+/** Yol için izinli genişlik mi (logo genişlikleri her yolda; stadyum genişlikleri yalnız stadyum fotoğrafında). */
+export function isAllowedImageWidth(path: string, width: number): width is ImageWidth {
+  if ((LOGO_WIDTHS as readonly number[]).includes(width)) return true;
+  return isVenueImagePath(path) && (VENUE_IMAGE_WIDTHS as readonly number[]).includes(width);
+}
+
 export type LogoProxyMode = 'self' | 'wsrv' | 'off';
 
 /** `soccer/teams/0/4192.png` gibi göreli yol: yalnız güvenli karakterler, `..` yok, görsel uzantısı. */
@@ -60,6 +79,24 @@ export function logoSrc(src: string | null | undefined, displayPx: number, mode:
       output: 'webp',
       default: src,
     });
+    return `https://wsrv.nl/?${params.toString()}`;
+  }
+  return `/api/img/logo?src=${encodeURI(path)}&w=${w}`;
+}
+
+/**
+ * Stadyum fotoğrafı adresi: `displayPx` (CSS genişliği) ×2'yi karşılayan en küçük stadyum genişliği (en çok 640).
+ * Sportmonks stadyum yolu değilse `null` (kart fotoğrafsız çizilir).
+ */
+export function venueImageSrc(src: string | null | undefined, displayPx: number, mode: LogoProxyMode = logoProxyMode()): string | null {
+  if (!src) return null;
+  const path = sportmonksImagePath(src);
+  if (!path || !isVenueImagePath(path)) return null;
+  if (mode === 'off') return src;
+  const want = Math.ceil(displayPx * 2);
+  const w = VENUE_IMAGE_WIDTHS.find((x) => x >= want) ?? VENUE_IMAGE_WIDTHS[VENUE_IMAGE_WIDTHS.length - 1]!;
+  if (mode === 'wsrv') {
+    const params = new URLSearchParams({ url: `cdn.sportmonks.com/images/${path}`, w: String(w), output: 'webp', default: src });
     return `https://wsrv.nl/?${params.toString()}`;
   }
   return `/api/img/logo?src=${encodeURI(path)}&w=${w}`;

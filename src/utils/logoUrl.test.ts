@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { isValidLogoPath, logoProxyMode, logoSrc, logoWidthFor, originalLogoSrc, sportmonksImagePath } from './logoUrl';
+import {
+  isAllowedImageWidth,
+  isValidLogoPath,
+  logoProxyMode,
+  logoSrc,
+  logoWidthFor,
+  originalLogoSrc,
+  sportmonksImagePath,
+  venueImageSrc,
+} from './logoUrl';
 
 const TEAM = 'https://cdn.sportmonks.com/images/soccer/teams/0/4192.png';
 
@@ -71,5 +80,26 @@ describe('logoSrc', () => {
     expect(originalLogoSrc(TEAM)).toBeNull();
     expect(originalLogoSrc('/api/img/logo?src=../x.png&w=32')).toBeNull();
     expect(originalLogoSrc('/api/img/logo?w=32')).toBeNull();
+  });
+});
+
+describe('venueImageSrc (stadyum fotoğrafı)', () => {
+  const VENUE = 'https://cdn.sportmonks.com/images/soccer/venues/3/9667.png';
+  it('kendi ucumuz: 2x genişliği karşılayan stadyum genişliği (en çok 640)', () => {
+    expect(venueImageSrc(VENUE, 150, 'self')).toBe('/api/img/logo?src=soccer/venues/3/9667.png&w=320');
+    expect(venueImageSrc(VENUE, 320, 'self')).toBe('/api/img/logo?src=soccer/venues/3/9667.png&w=640');
+    expect(venueImageSrc(VENUE, 900, 'self')).toBe('/api/img/logo?src=soccer/venues/3/9667.png&w=640');
+  });
+  it('stadyum yolu değilse / başka host / boş → null; off → orijinal', () => {
+    expect(venueImageSrc(TEAM, 320, 'self')).toBeNull();
+    expect(venueImageSrc('https://evil.com/soccer/venues/1.png', 320, 'self')).toBeNull();
+    expect(venueImageSrc(null, 320, 'self')).toBeNull();
+    expect(venueImageSrc(VENUE, 320, 'off')).toBe(VENUE);
+    expect(venueImageSrc(VENUE, 320, 'wsrv')).toMatch(/^https:\/\/wsrv\.nl\/\?url=cdn\.sportmonks\.com/);
+  });
+  it('isAllowedImageWidth: 320/640 yalnız stadyum yolunda', () => {
+    expect(isAllowedImageWidth('soccer/venues/3/9667.png', 640)).toBe(true);
+    expect(isAllowedImageWidth('soccer/teams/0/4192.png', 640)).toBe(false);
+    expect(isAllowedImageWidth('soccer/teams/0/4192.png', 48)).toBe(true);
   });
 });

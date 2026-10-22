@@ -13,6 +13,7 @@ import {
   wantsTvStations,
 } from '@/services/sportmonks/matchExtras';
 import { mapSportmonksFixtureToMatch } from './sportmonksFixtureMapper';
+import { mapMatchVenue } from './sportmonks/venueFormatter';
 import { mapSportmonksStateToPhase } from './sportmonks/stateMapping';
 import {
   mapSportmonksEvents,
@@ -266,7 +267,7 @@ export async function lookupSportmonksFixture(matchId: string): Promise<Sportmon
   try {
     const core = await sportmonksFetchFixtureDetail(matchId, MATCH_CORE_INCLUDE, MATCH_CORE_FILTERS);
     if (notFixture(core)) return { kind: 'missing' };
-    return { kind: 'found', match: mapSportmonksFixtureToMatch(core!), events: mapSportmonksEvents(core!), partial: true };
+    return { kind: 'found', match: withVenueInfo(mapSportmonksFixtureToMatch(core!), core!), events: mapSportmonksEvents(core!), partial: true };
   } catch (error) {
     if (isMissing(error)) return { kind: 'missing' };
     console.error('Error fetching fixture core fallback (sportmonks)', error);
@@ -345,6 +346,15 @@ async function fetchMatchPageFixture(matchId: string): Promise<SportmonksFixture
   return sportmonksFetchFixtureDetail(matchId, MATCH_PAGE_INCLUDE, MATCH_PAGE_FILTERS);
 }
 
+/**
+ * Stadyum kartı (`venue_info`) yalnız maç sayfası yanıtlarında: liste istekleri de aynı `venue` nesnesini alıyor ama
+ * ~300 maçlık ana sayfa / ISR props'u şişmesin diye ortak eşleyiciye (`mapSportmonksFixtureToMatch`) eklenmez.
+ */
+function withVenueInfo(match: Match, fixture: SportmonksFixture): Match {
+  const venue = mapMatchVenue(fixture.venue);
+  return venue ? { ...match, venue_info: venue } : match;
+}
+
 /** Tek yanıttan maç sayfasının bütün parçaları. Yayıncılar yalnız başlamamış / canlı maçta (eski ayrı istekle aynı kural). */
 export function mapMatchPageFixture(fixture: SportmonksFixture): {
   match: Match;
@@ -356,7 +366,7 @@ export function mapMatchPageFixture(fixture: SportmonksFixture): {
   const showTv = stateId != null && wantsTvStations(mapSportmonksStateToPhase(stateId));
   const forMatch: SportmonksFixture = showTv ? fixture : { ...fixture, tvstations: undefined };
   return {
-    match: mapSportmonksFixtureToMatch(forMatch),
+    match: withVenueInfo(mapSportmonksFixtureToMatch(forMatch), fixture),
     events: mapSportmonksEvents(fixture),
     stats: mapSportmonksStatistics(fixture.statistics),
     lineups: mapSportmonksLineups(fixture),

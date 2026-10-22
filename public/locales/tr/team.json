@@ -2,7 +2,8 @@
   "tabs": {
     "recent": "Son Maçlar",
     "fixtures": "Fikstür",
-    "squad": "Kadro"
+    "squad": "Kadro",
+    "transfers": "Transferler"
   },
   "fixtures": {
     "empty": "Planlanmış maç yok",
@@ -177,5 +178,30 @@
     "yellow": "Sarı kart / maç",
     "red": "Kırmızı kart: {{count}}",
     "bestPlayer": "En yüksek puan ort."
+  },
+  "transfers": {
+    "incoming": "Gelenler",
+    "outgoing": "Gidenler",
+    "scope": "Son 12 ay · altyapı ve genç oyuncu kiralıkları gösterilmez",
+    "player": "Oyuncu",
+    "from": "Geldiği kulüp",
+    "to": "Gittiği kulüp",
+    "type": "Tür",
+    "date": "Tarih",
+    "fee": "Bedel",
+    "kind": {
+      "permanent": "Bonservisli",
+      "loan": "Kiralık",
+      "loanReturnIn": "Kiralıktan dönüş",
+      "loanReturnOut": "Kiralık bitti",
+      "free": "Serbest"
+    },
+    "unknownClub": "Kulüp belirtilmemiş",
+    "emptyIn": "Son 12 ayda gelen oyuncu yok.",
+    "emptyOut": "Son 12 ayda giden oyuncu yok.",
+    "empty": "Son 12 ayda kayda değer transfer yok.",
+    "error": "Transferler yüklenemedi.",
+    "loading": "Transferler yükleniyor…",
+    "source": "Kaynak: Sportmonks; bedeller avro, açıklanmayanlar gösterilmez."
   }
 }
