@@ -161,8 +161,8 @@ export default function Header() {
                   <HeaderButton variant="outline" onClick={() => router.push('/auth/signin')}>
                     {t('signIn')}
                   </HeaderButton>
-                  <HeaderButton variant="filled" onClick={() => router.push('/auth/signup')}>
-                    {t('signUp')}
+                  <HeaderButton variant="filled" onClick={() => router.push('/auth/signup?src=header')}>
+                    {t('signUpGift')}
                   </HeaderButton>
                 </>
               )}

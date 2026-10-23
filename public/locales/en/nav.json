@@ -8,6 +8,13 @@
   "signOut": "Sign Out",
   "signIn": "Sign In",
   "signUp": "Sign Up",
+  "signUpGift": "Sign Up · +2 Credits",
+  "nudge": {
+    "title": "Sign up, get 2 free AI analysis credits",
+    "text": "Unlock full match analyses and save your predictions.",
+    "cta": "Claim my gift",
+    "close": "Close"
+  },
   "toggleMenu": "Toggle menu",
   "langSwitch": "TR",
   "langSwitchLabel": "Switch to Turkish",

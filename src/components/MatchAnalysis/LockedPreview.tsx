@@ -82,9 +82,12 @@ export default function LockedPreview({ preview, offer, loading, busy, error, is
         {!isAuthenticated ? (
           <>
             <p className={styles.reasoning}>{t('analysis.signInToUnlock')}</p>
-            <Link href="/auth/signin" className={styles.ctaButton}>
-              {t('analysis.signIn')}
+            <Link href="/auth/signup?src=analysis_lock" className={styles.ctaButton}>
+              {t('analysis.signUpGift')}
             </Link>
+            <p className={styles.reasoning}>
+              {t('analysis.haveAccount')} <Link href="/auth/signin">{t('analysis.signIn')}</Link>
+            </p>
           </>
         ) : offer?.free ? (
           <button type="button" className={styles.ctaButton} disabled={disabled} onClick={() => onUnlock('credit')}>

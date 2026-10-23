@@ -163,7 +163,9 @@
     "unlockWeekly": "Bu haftaki ücretsiz açma hakkını kullan",
     "unlockFree": "Ücretsiz aç",
     "unlockAdmin": "Yönetici olarak aç",
-    "signInToUnlock": "Analizin tamamını görmek için giriş yap.",
+    "signInToUnlock": "Üye ol, 2 kredi hediye kazan; analizin tamamını hemen aç.",
+    "signUpGift": "Üye ol, 2 kredi hediye",
+    "haveAccount": "Zaten üye misin?",
     "unlockPermanent": "Açtığın analiz sana hep açık kalır.",
     "weeklyReason": {
       "USED": "Bu haftaki ücretsiz açma hakkını kullandın.",

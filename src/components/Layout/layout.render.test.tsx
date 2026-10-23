@@ -10,6 +10,7 @@ vi.mock('../Footer', () => ({ default: () => <footer /> }));
 vi.mock('../SponsorSlider', () => ({ default: () => null }));
 vi.mock('../BottomNav', () => ({ default: () => null }));
 vi.mock('../KuralKosesi/Mount', () => ({ default: () => null }));
+vi.mock('../SignupNudge', () => ({ default: () => null }));
 vi.mock('./layout.module.scss', () => ({
   default: { shell: 'shell', main: 'main', mainFill: 'mainFill', sponsor: 'sponsor' },
 }));

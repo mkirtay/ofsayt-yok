@@ -62,6 +62,8 @@ describe('kilitli analiz kartı', () => {
 
   it('girişsiz: "giriş yap" bağlantısı; SSR (teklif henüz yok) → önizleme yine görünür, düğme kapalı', () => {
     const anon = render({ isAuthenticated: false, offer: null });
+    expect(anon).toContain('href="/auth/signup?src=analysis_lock"');
+    expect(text(anon)).toContain('Üye ol, 2 kredi hediye');
     expect(anon).toContain('href="/auth/signin"');
     const ssr = render({ offer: null, loading: true });
     expect(text(ssr)).toContain('Galatasaray kazanır %58');

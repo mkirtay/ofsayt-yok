@@ -8,6 +8,13 @@
   "signOut": "Çıkış Yap",
   "signIn": "Giriş Yap",
   "signUp": "Üye Ol",
+  "signUpGift": "Üye Ol · +2 Kredi",
+  "nudge": {
+    "title": "Üye ol, 2 AI analiz kredisi hediye",
+    "text": "Maç analizlerinin tamamını aç, tahminlerini kaydet.",
+    "cta": "Hediyemi al",
+    "close": "Kapat"
+  },
   "toggleMenu": "Menüyü aç/kapat",
   "langSwitch": "EN",
   "langSwitchLabel": "İngilizceye geç",
