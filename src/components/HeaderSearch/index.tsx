@@ -9,12 +9,21 @@ import { normalizeSearchText } from '@/utils/searchText';
 import styles from './headerSearch.module.scss';
 import TeamLogo from '@/components/TeamLogo';
 
-export default function HeaderSearch({ onNavigate }: { onNavigate?: () => void }) {
+type Props = {
+  onNavigate?: () => void;
+  /** Masaüstü başlık: yalnız ikon; tıklayınca sola doğru uzayıp giriş açılır (kapsayıcının tamamına kadar). */
+  expandable?: boolean;
+  onExpandedChange?: (expanded: boolean) => void;
+};
+
+export default function HeaderSearch({ onNavigate, expandable = false, onExpandedChange }: Props) {
   const { t } = useTranslation('match');
   const { t: tl } = useTranslation('leagues');
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
+  const [expanded, setExpanded] = useState(!expandable);
   const wrapRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const trimmed = query.trim();
   const { teams, loading, active } = useTeamSearch(query);
@@ -28,12 +37,33 @@ export default function HeaderSearch({ onNavigate }: { onNavigate?: () => void }
     return HOME_SIDEBAR_LEAGUES.filter((l) => normalizeSearchText(leagueSearchTerms(l, tl)).includes(q)).slice(0, 4);
   }, [active, trimmed, tl]);
 
+  function setExpandedBoth(next: boolean) {
+    setExpanded(next);
+    onExpandedChange?.(next);
+  }
+
+  // Uzayan mod: boşken dışarı tık / Esc kutuyu ikona geri toplar (yazı varsa açık kalır, Esc yazıyı da siler).
+  const queryRef = useRef(query);
+  queryRef.current = query;
+
   useEffect(() => {
     function onDown(e: MouseEvent) {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
+        setOpen(false);
+        if (expandable && !queryRef.current.trim()) {
+          setExpanded(false);
+          onExpandedChange?.(false);
+        }
+      }
     }
     function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') setOpen(false);
+      if (e.key !== 'Escape') return;
+      setOpen(false);
+      if (expandable) {
+        setQuery('');
+        setExpanded(false);
+        onExpandedChange?.(false);
+      }
     }
     document.addEventListener('mousedown', onDown);
     document.addEventListener('keydown', onKey);
@@ -41,23 +71,43 @@ export default function HeaderSearch({ onNavigate }: { onNavigate?: () => void }
       document.removeEventListener('mousedown', onDown);
       document.removeEventListener('keydown', onKey);
     };
-  }, []);
+  }, [expandable, onExpandedChange]);
 
   function close() {
     setOpen(false);
     setQuery('');
+    if (expandable) setExpandedBoth(false);
     onNavigate?.();
   }
 
   const empty = active && !loading && teams.length === 0 && leagueHits.length === 0;
 
   return (
-    <div className={styles.wrap} ref={wrapRef} role="search">
+    <div
+      className={`${styles.wrap} ${expandable ? styles.expandable : ''} ${expandable && expanded ? styles.expanded : ''}`.trim()}
+      ref={wrapRef}
+      role="search"
+    >
       <svg className={styles.icon} viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
         <circle cx="11" cy="11" r="7" />
         <path d="M20 20l-3.5-3.5" />
       </svg>
+      {expandable && !expanded ? (
+        <button
+          type="button"
+          className={styles.expandBtn}
+          aria-label={t('search.label')}
+          aria-expanded={false}
+          onClick={() => {
+            setExpandedBoth(true);
+            // Giriş, genişleme başlarken odaklanır (disabled/hidden değil → odak hemen alınır).
+            requestAnimationFrame(() => inputRef.current?.focus());
+          }}
+        />
+      ) : null}
       <input
+        ref={inputRef}
+        tabIndex={expandable && !expanded ? -1 : undefined}
         type="search"
         className={styles.input}
         placeholder={t('search.placeholder')}

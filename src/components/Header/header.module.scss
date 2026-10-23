@@ -1,7 +1,10 @@
 @use '../../styles/variables' as *;
 
 .header {
-  background: linear-gradient(180deg, $color-surface-dark 0%, $color-surface-dark-alt 100%);
+  // Düz koyu zemin + hafif bulanıklık; alt kenarda tek ince çizgi (yeşil gradyan şerit kalktı).
+  background: rgba(16, 21, 18, 0.92);
+  backdrop-filter: saturate(140%) blur(12px);
+  -webkit-backdrop-filter: saturate(140%) blur(12px);
   color: $color-text-on-dark;
   height: var(--header-height);
   display: flex;
@@ -10,19 +13,6 @@
   top: 0;
   z-index: 100;
   border-bottom: 1px solid $color-border-dark;
-
-  // İnce marka vurgusu: alt kenarda yeşil gradyan çizgi
-  &::after {
-    content: '';
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: -1px;
-    height: 2px;
-    background: linear-gradient(90deg, transparent 0%, $color-primary 30%, $color-primary-dark 70%, transparent 100%);
-    opacity: 0.75;
-    pointer-events: none;
-  }
 }
 
 .headerContainer {
@@ -31,13 +21,6 @@
   justify-content: space-between;
   gap: $spacing-4;
   width: 100%;
-}
-
-.right {
-  display: flex;
-  align-items: center;
-  margin-left: auto;
-  flex-shrink: 0;
 }
 
 .left,
@@ -62,14 +45,6 @@
   gap: $spacing-3;
 }
 
-.headerNavPills {
-  display: flex;
-  align-items: center;
-  gap: $spacing-2;
-  flex-wrap: nowrap; // ≥$bp-desktop'ta hiçbir zaman alt satıra düşmez; arama çubuğu daralır
-  white-space: nowrap;
-}
-
 .logo {
   line-height: 0;
 }
@@ -84,45 +59,71 @@
   }
 }
 
-.headerNavPill {
+// ── Ana menü (düz yazı) ─────────────────────────
+
+.mid {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+}
+
+.mainNav {
+  display: flex;
+  align-items: stretch;
+  align-self: stretch;
+  gap: $spacing-6;
+  margin-left: $spacing-4;
+  white-space: nowrap;
+  transition: opacity 0.2s ease;
+}
+
+// Arama uzayınca menünün üstüne biner; menü silinir (tıklanamaz).
+.mainNavHidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.navLink {
+  position: relative;
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  height: var(--touch-target);
-  padding: 0 $spacing-4;
-  border: 1px solid $color-border-dark;
-  border-radius: $radius-full;
-  color: $color-text-on-dark;
-  background: rgba(255, 255, 255, 0.04);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: $color-text-on-dark-secondary;
   text-decoration: none;
-  transition: $transition-base;
   cursor: pointer;
+  transition: color 0.15s ease;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: $color-primary;
+    color: $color-text-on-dark;
+  }
+
+  // Aktif sayfa: başlığın alt kenarında ince marka çizgisi
+  &::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    height: 2px;
+    background: $color-primary;
+    transform: scaleX(0);
+    transition: transform 0.2s ease;
   }
 }
 
-.headerNavPillActive {
-  border-color: $color-primary;
-  color: $color-primary;
-}
+.navLinkActive {
+  color: $color-text-on-dark;
 
-.headerNavPillPremium {
-  @extend .headerNavPill;
-  // Oturum gelince "Krediler" (84 px) → "55 ⚡" (69 px) değişir; 4 haneli bakiyeye (83 px) kadar genişlik sabit.
-  min-width: 85px;
-  background: linear-gradient(135deg, var(--color-premium), var(--color-premium-strong));
-  border-color: transparent;
-  color: var(--color-on-premium);
-
-  &:hover {
-    background: linear-gradient(135deg, var(--color-premium-strong), var(--color-premium));
-    border-color: transparent;
+  &::after {
+    transform: scaleX(1);
   }
 }
 
@@ -134,7 +135,7 @@
 }
 
 .menuTrigger {
-  gap: $spacing-2;
+  gap: $spacing-1;
 }
 
 .aiSpark {
@@ -314,13 +315,6 @@
   display: none;
 }
 
-// Ürün grubu ile hesap kontrolleri arasında ince ayraç
-.divider {
-  width: 1px;
-  height: 22px;
-  background: $color-border-dark;
-}
-
 .myAnalysesWrap {
   position: relative;
   display: inline-flex;
@@ -412,18 +406,98 @@
 // Oturum durumu (giriş/çıkış) client tarafında çözülene kadar gösterilen nötr
 // placeholder — "Giriş Yap" butonlarının bir an görünüp hemen "Profil"e
 // dönüşmesi gibi bir titremeyi (auth flicker) önlemek için kullanılır.
-// Oturum düğmeleri alanı: yer oturum bilgisi gelmeden ayrılır (bkz. utils/authHint.ts). Ziyaretçi "Giriş Yap" +
-// "Üye Ol" = 102 + 8 + 87 px; oturum açık zil + avatar = 40 + 8 + 40 px. İçerik sağa yaslı.
+// Oturum düğmeleri alanı: yer oturum bilgisi gelmeden ayrılır (bkz. utils/authHint.ts). Ziyaretçi "Giriş yap" +
+// "Üye ol" = 60 + 12 + 77 px; oturum açık kredi çipi (≈ 58–74) + zil 40 + avatar 40 + boşluklar. İçerik sağa yaslı.
 .authSlot {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: $spacing-2;
-  min-width: 197px;
+  gap: $spacing-3;
+  min-width: 150px;
 }
 
 :global(html[data-auth-hint='in']) .authSlot {
-  min-width: 88px;
+  min-width: 170px;
+}
+
+.signInLink {
+  font-size: 14px;
+  font-weight: 600;
+  color: $color-text-on-dark-secondary;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 0.15s ease;
+
+  &:hover {
+    color: $color-text-on-dark;
+  }
+}
+
+// Tek vurgulu eylem: altın dolu "Üye ol"; hediye "+2" köşe rozeti (etiketi uzatmaz)
+.signUpBtn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 $spacing-4;
+  border-radius: $radius-full;
+  background: var(--color-premium);
+  color: var(--color-on-premium);
+  font-size: 14px;
+  font-weight: 800;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.15s ease, transform 0.15s ease;
+
+  &:hover {
+    background: var(--color-premium-strong);
+  }
+
+  &:active {
+    transform: scale(0.98);
+  }
+
+  &:focus-visible {
+    outline: 2px solid $color-text-on-dark;
+    outline-offset: 2px;
+  }
+}
+
+.signUpBadge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  min-width: 22px;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 9px;
+  background: $color-primary;
+  color: #0b0f0c;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 18px;
+  text-align: center;
+}
+
+// Kredi bakiyesi: küçük çip (ziyaretçide yok)
+.creditChip {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+  padding: 0 $spacing-3;
+  border: 1px solid rgba(245, 179, 1, 0.45);
+  border-radius: $radius-full;
+  color: var(--color-premium);
+  font-size: 13px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: rgba(245, 179, 1, 0.12);
+  }
 }
 
 .authPlaceholder {
@@ -619,18 +693,28 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  width: var(--touch-target);
   height: var(--touch-target);
-  padding: 0 $spacing-3;
-  border: 1px solid rgba(255, 255, 255, 0.55);
+  padding: 0;
+  border: 0;
   border-radius: $radius-full;
-  background: rgba(255, 255, 255, 0.08);
+  background: transparent;
   color: #fff;
   cursor: pointer;
-  transition: $transition-base;
+  transition: background 0.15s ease;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.18);
-    border-color: #fff;
+    background: rgba(255, 255, 255, 0.1);
+  }
+}
+
+// Başlıktaki ikon düğmeleri (tema): çerçevesiz, hover'da hafif zemin
+.iconBtn {
+  border-color: transparent !important;
+  background: transparent !important;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
   }
 }
 
@@ -662,11 +746,7 @@
 // ── Responsive ───────────────────────────────────
 
 @include below-desktop {
-  .headerNavPills,
-  .right {
-    display: none;
-  }
-
+  .mid,
   .actions {
     display: none;
   }
@@ -699,11 +779,6 @@
     width: auto;
     // Alt gezinme çubuğunun (BottomNav) altına girip son satırları örtmesin
     max-height: calc(100vh - var(--header-height) - var(--bottom-nav-height) - var(--safe-bottom) - 16px);
-  }
-
-  // Mobilde arama menünün içinde
-  .headerContainer > :nth-child(2) {
-    display: none;
   }
 }
 

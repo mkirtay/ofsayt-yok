@@ -41,6 +41,9 @@ export default function AccountMenu() {
           <Link href="/profile" role="menuitem" className={styles.menuItem} onClick={close}>
             {t('profile')}
           </Link>
+          <Link href="/pricing" role="menuitem" className={styles.menuItem} onClick={close}>
+            {t('pricing')}
+          </Link>
           <button type="button" role="menuitem" className={`${styles.menuItem} ${styles.menuItemButton}`} onClick={() => signOut()}>
             {t('signOut')}
           </button>

@@ -29,7 +29,7 @@ export default function AiMenu() {
     <div className={styles.menuWrap} ref={wrapRef}>
       <button
         type="button"
-        className={`${styles.headerNavPill} ${styles.menuTrigger}`}
+        className={`${styles.navLink} ${styles.menuTrigger}`}
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen((o) => !o)}

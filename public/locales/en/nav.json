@@ -8,7 +8,10 @@
   "signOut": "Sign Out",
   "signIn": "Sign In",
   "signUp": "Sign Up",
-  "signUpGift": "Sign Up · +2 Credits",
+  "signUpBadge": "+2",
+  "signUpBadgeLabel": "2 free credits",
+  "matches": "Matches",
+  "mainNav": "Main menu",
   "nudge": {
     "title": "Sign up and get 2 free credits!",
     "text": "Each AI match analysis costs 1 credit. Unlock 2 matches for free with your gift.",

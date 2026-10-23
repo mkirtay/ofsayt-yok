@@ -43,12 +43,12 @@ describe('oturum düğmeleri yeri — ipucu', () => {
     expect(() => writeAuthHint('authenticated', throwing, fakes().root)).not.toThrow();
   });
 
-  it('CSS: alan ziyaretçi genişliğinde (197 px), ipucuyla oturum açık genişliğinde (88 px); kredi düğmesi sabit', () => {
+  it('CSS: alan ziyaretçi genişliğinde (150 px), ipucuyla oturum açık genişliğinde (170 px: kredi çipi + zil + avatar)', () => {
     const scss = readFileSync(path.resolve(__dirname, '../components/Header/header.module.scss'), 'utf8');
-    expect(scss).toMatch(/\.authSlot \{[^}]*justify-content: flex-end;[^}]*min-width: 197px;/);
-    expect(scss).toMatch(/:global\(html\[data-auth-hint='in'\]\) \.authSlot \{\s*min-width: 88px;/);
+    expect(scss).toMatch(/\.authSlot \{[^}]*justify-content: flex-end;[^}]*min-width: 150px;/);
+    expect(scss).toMatch(/:global\(html\[data-auth-hint='in'\]\) \.authSlot \{\s*min-width: 170px;/);
     expect(scss).toMatch(/\.authPlaceholder \{\s*width: 100%;/);
-    expect(scss).toMatch(/\.headerNavPillPremium \{[^}]*min-width: 85px;/);
+    expect(scss).toMatch(/\.creditChip \{[^}]*height: 32px;/);
     const tsx = readFileSync(path.resolve(__dirname, '../components/Header/index.tsx'), 'utf8');
     expect(tsx).toMatch(/<script dangerouslySetInnerHTML=\{\{ __html: AUTH_HINT_SCRIPT \}\} \/>\s*<header/);
   });

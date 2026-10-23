@@ -7,6 +7,73 @@
   min-width: 120px;
 }
 
+// Masaüstü başlık: ikon halinde başlar, tıklayınca kapsayıcının sağ kenarından sola uzar (menünün üstüne biner).
+.expandable {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  flex: none;
+  width: var(--touch-target);
+  min-width: 0;
+  max-width: none;
+  z-index: 2;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  .input {
+    padding-right: 0;
+    transition: $transition-base;
+  }
+
+  &:not(.expanded) {
+    .input {
+      color: transparent;
+      caret-color: transparent;
+      cursor: pointer;
+      &::placeholder {
+        color: transparent;
+      }
+      &::-webkit-search-cancel-button {
+        display: none;
+      }
+    }
+
+    &:hover .input {
+      border-color: $color-primary;
+    }
+  }
+}
+
+.expanded {
+  width: 100%;
+
+  .input {
+    padding-right: $spacing-3;
+  }
+}
+
+.expandBtn {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  border: 0;
+  border-radius: $radius-full;
+  background: transparent;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+    outline-offset: 2px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .expandable,
+  .expandable .input {
+    transition: none;
+  }
+}
+
 .icon {
   position: absolute;
   left: $spacing-3;
@@ -14,6 +81,7 @@
   transform: translateY(-50%);
   color: var(--text-on-header-secondary);
   pointer-events: none;
+  z-index: 1;
 }
 
 .input {

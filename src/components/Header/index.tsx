@@ -11,7 +11,6 @@ import { useTranslation, useI18n } from '@/lib/i18n';
 import { trackFrikik } from '@/lib/frikik/analytics';
 import { useCredits } from '@/hooks/useCredits';
 import Container from '../Container';
-import HeaderButton from '../HeaderButton';
 import { AUTH_HINT_SCRIPT, writeAuthHint } from '@/utils/authHint';
 import HeaderSearch from '../HeaderSearch';
 import ThemeToggle from '../ThemeToggle';
@@ -36,6 +35,7 @@ export default function Header() {
   const { t } = useTranslation('nav');
   const { locale, setLocale } = useI18n();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
 
   const menuRef = useRef<HTMLDivElement>(null);
   const hamburgerRef = useRef<HTMLButtonElement>(null);
@@ -119,31 +119,37 @@ export default function Header() {
               </Link>
             </div>
           </div>
-          <HeaderSearch />
-          <div className={styles.right}>
-            <div className={styles.headerNavPills}>
-              <AiMenu />
-              <Link href="/pricing" className={styles.headerNavPillPremium}>
-                {hasCredits ? `${credits} ⚡` : t('credits')}
+          <div className={styles.mid}>
+            <nav className={`${styles.mainNav} ${searchOpen ? styles.mainNavHidden : ''}`.trim()} aria-label={t('mainNav')}>
+              <Link
+                href="/"
+                className={`${styles.navLink} ${router.pathname === '/' ? styles.navLinkActive : ''}`.trim()}
+                aria-current={router.pathname === '/' ? 'page' : undefined}
+                onMouseEnter={prefetchHome}
+                onFocus={prefetchHome}
+              >
+                {t('matches')}
               </Link>
-            </div>
+              <Link
+                href="/gundem"
+                className={`${styles.navLink} ${router.pathname.startsWith('/gundem') ? styles.navLinkActive : ''}`.trim()}
+                aria-current={router.pathname.startsWith('/gundem') ? 'page' : undefined}
+              >
+                {t('gundem')}
+              </Link>
+              {GAME_PUBLIC_CLIENT ? (
+                <Link
+                  href={GAME_BRAND.basePath}
+                  className={`${styles.navLink} ${router.asPath.startsWith(GAME_BRAND.basePath) ? styles.navLinkActive : ''}`.trim()}
+                >
+                  {t('game')}
+                </Link>
+              ) : null}
+              <AiMenu />
+            </nav>
+            <HeaderSearch expandable onExpandedChange={setSearchOpen} />
           </div>
           <div className={styles.actions}>
-            <Link
-              href="/pricing"
-              className={`${styles.headerNavPill} ${router.pathname === '/pricing' ? styles.headerNavPillActive : ''}`.trim()}
-              aria-current={router.pathname === '/pricing' ? 'page' : undefined}
-            >
-              {t('pricing')}
-            </Link>
-            <Link
-              href="/gundem"
-              className={`${styles.headerNavPill} ${router.pathname.startsWith('/gundem') ? styles.headerNavPillActive : ''}`.trim()}
-              aria-current={router.pathname.startsWith('/gundem') ? 'page' : undefined}
-            >
-              {t('gundem')}
-            </Link>
-            <span className={styles.divider} aria-hidden="true" />
             {/* Yer oturum bilgisi gelmeden ayrılı (ziyaretçi / ipucuyla oturum açık genişliği, bkz. utils/authHint.ts). */}
             <div className={styles.authSlot}>
               {sessionLoading ? (
@@ -153,21 +159,29 @@ export default function Header() {
                 <div className={styles.authPlaceholder} aria-hidden="true" />
               ) : session ? (
                 <>
+                  {hasCredits ? (
+                    <Link href="/pricing" className={styles.creditChip} title={t('credits')}>
+                      {`${credits} ⚡`}
+                    </Link>
+                  ) : null}
                   <NotificationBell />
                   <AccountMenu />
                 </>
               ) : (
                 <>
-                  <HeaderButton variant="outline" onClick={() => router.push('/auth/signin')}>
+                  <Link href="/auth/signin" className={styles.signInLink}>
                     {t('signIn')}
-                  </HeaderButton>
-                  <HeaderButton variant="filled" onClick={() => router.push('/auth/signup?src=header')}>
-                    {t('signUpGift')}
-                  </HeaderButton>
+                  </Link>
+                  <Link href="/auth/signup?src=header" className={styles.signUpBtn}>
+                    {t('signUp')}
+                    <span className={styles.signUpBadge} title={t('signUpBadgeLabel')}>
+                      {t('signUpBadge')}
+                    </span>
+                  </Link>
                 </>
               )}
             </div>
-            <ThemeToggle />
+            <ThemeToggle className={styles.iconBtn} />
             <button
               type="button"
               className={styles.langToggle}

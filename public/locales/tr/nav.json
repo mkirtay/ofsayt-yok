@@ -8,7 +8,10 @@
   "signOut": "Çıkış Yap",
   "signIn": "Giriş Yap",
   "signUp": "Üye Ol",
-  "signUpGift": "Üye Ol · +2 Kredi",
+  "signUpBadge": "+2",
+  "signUpBadgeLabel": "2 kredi hediye",
+  "matches": "Maçlar",
+  "mainNav": "Ana menü",
   "nudge": {
     "title": "Üye ol, 2 kredi hediye kazan!",
     "text": "Her AI maç analizi 1 kredi. Hediye kredinle 2 maçın analizini ücretsiz aç.",
