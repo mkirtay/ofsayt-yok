@@ -31,9 +31,10 @@ describe('tahmin oyunu kapısı her yerde', () => {
     expect(readFileSync(path.join(ROOT, 'src/pages/admin/tahmin.tsx'), 'utf8')).toMatch(/gameMode\(\) === 'off'\) return \{ notFound: true \}/);
   });
 
-  it('mobil menü bağlantısı yalnız GAME_PUBLIC_CLIENT ile', () => {
+  it('masaüstü menü ve mobil menü bağlantısı yalnız GAME_PUBLIC_CLIENT ile', () => {
     const header = readFileSync(path.join(ROOT, 'src/components/Header/index.tsx'), 'utf8');
-    expect(header).toMatch(/\{GAME_PUBLIC_CLIENT \? \(\s*<Link href=\{GAME_BRAND\.basePath\}/);
-    expect(header.match(/GAME_BRAND\.basePath/g)).toHaveLength(1);
+    // İki bağlantı (masaüstü ana menü + mobil menü), ikisi de koruma içinde; basePath'in üçüncü geçişi masaüstü bağlantısının aktiflik denetimi.
+    expect(header.match(/\{GAME_PUBLIC_CLIENT \? \(\s*<Link\s+href=\{GAME_BRAND\.basePath\}/g)).toHaveLength(2);
+    expect(header.match(/GAME_BRAND\.basePath/g)).toHaveLength(3);
   });
 });
