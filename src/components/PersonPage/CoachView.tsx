@@ -167,7 +167,7 @@ export default function CoachView({ data }: { data: CoachPageData }) {
         <p className={styles.note}>{t('person.coverageNote')}</p>
       </section>
 
-      <RecentMatchesTable matches={data.recent} />
+      <RecentMatchesTable matches={data.recent} loadMore={{ coachId: data.id }} hasMore={data.hasMoreMatches === true} />
     </div>
   );
 }

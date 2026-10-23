@@ -19,6 +19,8 @@ import type { PersonRecentMatch } from '@/server/people/refereePage';
 type RawCoachFixtures = { fixtures?: { id: number; starting_at?: string | null; state_id?: number | null }[] | null };
 
 const RECENT_COUNT = 10;
+/** "Daha fazla" sayfa sınırı: görev aldığı biten en fazla 100 maç (kota: sayfa başı bir `fixtures/multi`). */
+const MAX_MATCH_PAGES = 10;
 export const COACH_PAGE_FRESH_SECONDS = 6 * 60 * 60;
 export const COACH_STATS_INCLUDE = 'statistics.details.type:developer_name;statistics.season:name,league_id;statistics.team:name,image_path';
 /** Sayfanın tek isteği (2026-10-14 gerçek istekle doğrulandı: dört include birlikte eksiksiz dönüyor). */
@@ -45,6 +47,8 @@ export type CoachPageData = {
   currentTeam: { id: number; name: string; logo?: string; since: string | null } | null;
   seasons: CoachSeasonRow[];
   recent: PersonRecentMatch[];
+  /** İlk 10'dan sonra gösterilebilecek daha eski biten maç var mı ("Daha fazla" düğmesi). */
+  hasMoreMatches?: boolean;
 };
 
 const isPlaceholder = (url?: string | null) => !url || /placeholder/i.test(url);
@@ -77,18 +81,39 @@ async function loadCoach(id: number): Promise<RawCoachPage | 'missing' | null> {
   }
 }
 
-/** Son maçlar: görev aldığı biten son 10 maç (~150 satırdan) → skor / takım / lig `fixtures/multi` ile (hakem sayfasıyla aynı include, cache'li). */
-async function loadRecent(fixtures: RawCoachFixtures['fixtures']): Promise<PersonRecentMatch[]> {
+/** Görev aldığı biten maçların id'leri, en yeniden eskiye. */
+function finishedIdsDesc(fixtures: RawCoachFixtures['fixtures']): number[] {
+  return (fixtures ?? [])
+    .filter((f) => f.state_id != null && mapSportmonksStateToPhase(f.state_id) === 'FINISHED')
+    .sort(byKickoffDesc)
+    .map((f) => f.id);
+}
+
+/** Son maçlar: görev aldığı biten maçlardan `page`. sayfa (0 = son 10) → skor / takım / lig `fixtures/multi` ile (hakem sayfasıyla aynı include, cache'li). */
+async function loadRecent(fixtures: RawCoachFixtures['fixtures'], page = 0): Promise<PersonRecentMatch[]> {
   try {
-    const ids = (fixtures ?? [])
-      .filter((f) => f.state_id != null && mapSportmonksStateToPhase(f.state_id) === 'FINISHED')
-      .sort(byKickoffDesc)
-      .slice(0, RECENT_COUNT)
-      .map((f) => f.id);
+    const ids = finishedIdsDesc(fixtures).slice(page * RECENT_COUNT, (page + 1) * RECENT_COUNT);
     return (await loadMulti(ids)).filter(isFinished).sort(byKickoffDesc).map(toRecentMatch);
   } catch {
     return [];
   }
+}
+
+/**
+ * "Daha fazla" için: `page` (1…) sayfasındaki eski maçlar. `missing`: teknik direktör yok / sayfa aralık dışı;
+ * `null`: geçici hata (istemci "yüklenemedi · tekrar dene" der, "maç yok" DEMEZ).
+ */
+export async function loadCoachMatchesPage(id: number, page: number): Promise<{ matches: PersonRecentMatch[]; hasMore: boolean } | 'missing' | null> {
+  if (!Number.isInteger(page) || page < 1 || page >= MAX_MATCH_PAGES) return 'missing';
+  const profile = await loadCoach(id);
+  if (profile === 'missing') return 'missing';
+  if (!profile) return null;
+  const all = finishedIdsDesc(profile.fixtures);
+  const ids = all.slice(page * RECENT_COUNT, (page + 1) * RECENT_COUNT);
+  if (!ids.length) return 'missing';
+  const matches = (await loadMulti(ids)).filter(isFinished).sort(byKickoffDesc).map(toRecentMatch);
+  if (!matches.length) return null;
+  return { matches, hasMore: all.length > (page + 1) * RECENT_COUNT && page + 1 < MAX_MATCH_PAGES };
 }
 
 /**
@@ -130,5 +155,6 @@ export async function computeCoachPage(id: number): Promise<CoachPageData | 'mis
     currentTeam: stint ? { id: stint.teamId, name: stint.name, since: stint.since, ...(stint.logo ? { logo: stint.logo } : {}) } : null,
     seasons: coachSeasonTable(profile),
     recent,
+    ...(finishedIdsDesc(profile.fixtures).length > RECENT_COUNT ? { hasMoreMatches: true } : {}),
   };
 }

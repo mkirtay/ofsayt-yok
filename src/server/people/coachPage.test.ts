@@ -32,7 +32,7 @@ vi.mock('@/server/people/refereePage', async (orig) => {
   };
 });
 
-import { COACH_PAGE_INCLUDE, computeCoachPage } from './coachPage';
+import { COACH_PAGE_INCLUDE, computeCoachPage, loadCoachMatchesPage } from './coachPage';
 
 const fx = (id: number, day: number, state_id = 5) => ({ id, state_id, starting_at: `2026-${String(Math.ceil(day / 28)).padStart(2, '0')}-${String((day % 28) + 1).padStart(2, '0')} 17:00:00` });
 
@@ -81,6 +81,8 @@ describe('computeCoachPage — tek istek', () => {
     expect(calls.multi).toHaveLength(1);
     expect(calls.multi[0]).toEqual(Array.from({ length: 10 }, (_, i) => 1011 - i));
     expect(p.recent).toHaveLength(10);
+    // 12 biten maç var → 10'dan sonrası için "Daha fazla".
+    expect(p.hasMoreMatches).toBe(true);
   });
 
   it('Sportmonks 404 / boş → missing; geçici hata → null (sayfa eski kopyada kalır)', async () => {
@@ -92,5 +94,30 @@ describe('computeCoachPage — tek istek', () => {
     response.error = { status: 429 };
     expect(await computeCoachPage(1)).toBeNull();
     expect(calls.multi).toHaveLength(0);
+  });
+});
+
+describe('loadCoachMatchesPage — "Daha fazla"', () => {
+  beforeEach(() => {
+    calls.list = [];
+    calls.multi = [];
+    response.value = coach;
+    response.error = null;
+  });
+
+  it('sayfa 1 = 11.–20. en yeni biten maç (burada 2 maç); sonrası yok', async () => {
+    const r = await loadCoachMatchesPage(199988, 1);
+    expect(r).not.toBeNull();
+    expect(r).not.toBe('missing');
+    expect(calls.multi).toEqual([[1001, 1000]]);
+    expect((r as { hasMore: boolean }).hasMore).toBe(false);
+  });
+
+  it('aralık dışı sayfa → missing (Sportmonks\'a gitmeden); geçersiz sayfa → missing; geçici hata → null', async () => {
+    expect(await loadCoachMatchesPage(199988, 2)).toBe('missing');
+    expect(await loadCoachMatchesPage(199988, 0)).toBe('missing');
+    expect(await loadCoachMatchesPage(199988, 99)).toBe('missing');
+    response.error = { status: 429 };
+    expect(await loadCoachMatchesPage(199988, 1)).toBeNull();
   });
 });

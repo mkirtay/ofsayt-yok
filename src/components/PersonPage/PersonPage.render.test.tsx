@@ -118,6 +118,13 @@ describe('<CoachView />', () => {
     expect(scss).toMatch(/\.scroll \{\s*overflow-x: auto;/);
     expect(scss).toMatch(/td:first-child \{\s*position: sticky;\s*left: 0;/);
   });
+  it('son maçlarda takım logosu + \"Daha fazla\" düğmesi (yalnız daha eski maç varsa)', () => {
+    const withLogos = { ...coach, hasMoreMatches: true, recent: [{ ...recent[0]!, home: { id: 688, name: 'Trabzonspor', logo: 'https://cdn.sportmonks.com/images/soccer/teams/16/688.png' } }] } as CoachPageData;
+    const h = renderToStaticMarkup(<CoachView data={withLogos} />);
+    expect(h).toContain('688.png');
+    expect(h).toContain('Daha fazla maç göster');
+    expect(html).not.toContain('Daha fazla maç göster');
+  });
   it('özet kartları + sezon/takım grup başlığı (ara toplam)', () => {
     expect(html).toContain('data-testid="coach-summary"');
     expect(html).toContain('2025/2026');
