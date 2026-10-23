@@ -49,6 +49,7 @@ export default function SignupNudge() {
       </span>
       <div className={styles.body}>
         <strong>{t('nudge.title')}</strong>
+        <span className={styles.badge}>{t('nudge.badge')}</span>
         <span>{t('nudge.text')}</span>
         <Link href="/auth/signup?src=nudge" className={styles.cta} onClick={close}>
           {t('nudge.cta')}

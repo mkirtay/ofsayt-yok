@@ -10,8 +10,9 @@
   "signUp": "Sign Up",
   "signUpGift": "Sign Up · +2 Credits",
   "nudge": {
-    "title": "Sign up, get 2 free AI analysis credits",
-    "text": "Unlock full match analyses and save your predictions.",
+    "title": "Sign up and get 2 free credits!",
+    "text": "Each AI match analysis costs 1 credit. Unlock 2 matches for free with your gift.",
+    "badge": "2 credits = 2 AI match analyses",
     "cta": "Claim my gift",
     "close": "Close"
   },

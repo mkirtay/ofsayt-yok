@@ -10,8 +10,9 @@
   "signUp": "Üye Ol",
   "signUpGift": "Üye Ol · +2 Kredi",
   "nudge": {
-    "title": "Üye ol, 2 AI analiz kredisi hediye",
-    "text": "Maç analizlerinin tamamını aç, tahminlerini kaydet.",
+    "title": "Üye ol, 2 kredi hediye kazan!",
+    "text": "Her AI maç analizi 1 kredi. Hediye kredinle 2 maçın analizini ücretsiz aç.",
+    "badge": "2 kredi = 2 AI maç analizi",
     "cta": "Hediyemi al",
     "close": "Kapat"
   },
