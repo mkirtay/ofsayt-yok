@@ -6,7 +6,7 @@ describe('SignupNudge kuralları', () => {
     for (const p of ['/auth/signup', '/admin', '/yasal/kvkk', '/pricing', '/hesap-silme/onay']) expect(isNudgeHiddenPath(p)).toBe(true);
     for (const p of ['/', '/matches/[slug]', '/frikik', '/gundem']) expect(isNudgeHiddenPath(p)).toBe(false);
   });
-  it('kapatma 7 gün bekletir', () => {
+  it('kapatma 1 gün bekletir', () => {
     const now = 10 * NUDGE_COOLDOWN_MS;
     expect(isNudgeCoolingDown(String(now - 1000), now)).toBe(true);
     expect(isNudgeCoolingDown(String(now - NUDGE_COOLDOWN_MS - 1), now)).toBe(false);

@@ -8,7 +8,7 @@ import styles from './signupNudge.module.scss';
 
 /**
  * Misafir ziyaretçiye "üye ol, 2 kredi hediye" daveti. İlk boyamada yok (zamanlayıcıyla gelir, `position: fixed` → CLS/LCP'ye
- * dokunmaz); kapatılınca 7 gün çıkmaz. Girişliyse ya da oturum durumu belli değilken hiç çizilmez.
+ * dokunmaz); kapatılınca 1 gün çıkmaz. Girişliyse ya da oturum durumu belli değilken hiç çizilmez.
  */
 export default function SignupNudge() {
   const { t } = useTranslation('nav');
