@@ -74,3 +74,67 @@ export async function redeemCoupon(userId: string, rawCode: unknown): Promise<{ 
     throw err;
   }
 }
+
+export type AdminCoupon = {
+  id: string;
+  code: string;
+  credits: number;
+  maxRedemptions: number | null;
+  redeemedCount: number;
+  expiresAt: string | null;
+  active: boolean;
+  note: string | null;
+  createdAt: string;
+};
+
+export type CouponInput = { code: unknown; credits: unknown; maxRedemptions?: unknown; expiresAt?: unknown; note?: unknown };
+
+export class CouponInputError extends Error {}
+
+/** Yönetici girdisini doğrular. `expiresAt`: YYYY-MM-DD (günün sonu, Europe/Istanbul) ya da boş. */
+export function parseCouponInput(input: CouponInput) {
+  const code = normalizeCouponCode(input.code);
+  if (!code) throw new CouponInputError('Kod 3–32 karakter olmalı (harf, rakam, - veya _).');
+  const credits = Number(input.credits);
+  if (!Number.isInteger(credits) || credits <= 0 || credits > 1000) throw new CouponInputError('Kredi 1–1000 arası tam sayı olmalı.');
+  const rawMax = input.maxRedemptions;
+  const maxRedemptions = rawMax === undefined || rawMax === null || rawMax === '' ? null : Number(rawMax);
+  if (maxRedemptions !== null && (!Number.isInteger(maxRedemptions) || maxRedemptions <= 0)) {
+    throw new CouponInputError('Toplam kullanım sınırı pozitif tam sayı olmalı (boş = sınırsız).');
+  }
+  let expiresAt: Date | null = null;
+  if (typeof input.expiresAt === 'string' && input.expiresAt) {
+    expiresAt = new Date(`${input.expiresAt}T23:59:59+03:00`);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(input.expiresAt) || Number.isNaN(expiresAt.getTime())) {
+      throw new CouponInputError('Bitiş tarihi YYYY-AA-GG olmalı.');
+    }
+  }
+  const note = typeof input.note === 'string' && input.note.trim() ? input.note.trim().slice(0, 200) : null;
+  return { code, credits, maxRedemptions, expiresAt, note };
+}
+
+const toAdmin = (c: {
+  id: string; code: string; credits: number; maxRedemptions: number | null; redeemedCount: number;
+  expiresAt: Date | null; active: boolean; note: string | null; createdAt: Date;
+}): AdminCoupon => ({ ...c, expiresAt: c.expiresAt?.toISOString() ?? null, createdAt: c.createdAt.toISOString() });
+
+export async function listCoupons(): Promise<AdminCoupon[]> {
+  const rows = await prisma.coupon.findMany({ orderBy: { createdAt: 'desc' }, take: 200 });
+  return rows.map(toAdmin);
+}
+
+/** Yeni kupon oluşturur. Kod zaten varsa `CouponInputError` (mevcut kuponun kredisi değişmesin; kapatıp yenisini aç). */
+export async function createCoupon(input: CouponInput): Promise<AdminCoupon> {
+  const data = parseCouponInput(input);
+  try {
+    return toAdmin(await prisma.coupon.create({ data }));
+  } catch (err) {
+    if (isUniqueViolation(err)) throw new CouponInputError(`${data.code} zaten var.`);
+    throw err;
+  }
+}
+
+export async function setCouponActive(id: string, active: boolean): Promise<boolean> {
+  const { count } = await prisma.coupon.updateMany({ where: { id }, data: { active } });
+  return count === 1;
+}

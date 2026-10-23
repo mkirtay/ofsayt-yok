@@ -32,7 +32,7 @@ vi.mock('@/lib/credits', async () => {
   return { ...actual, creditCreditsTx: async (_t: unknown, _u: string, n: number) => 2 + n };
 });
 
-import { CouponError, normalizeCouponCode, redeemCoupon } from './coupons';
+import { CouponError, CouponInputError, normalizeCouponCode, parseCouponInput, redeemCoupon } from './coupons';
 
 const code = async (p: Promise<unknown>) => p.then(() => 'ok', (e) => (e instanceof CouponError ? e.code : 'throw'));
 
@@ -85,5 +85,21 @@ describe('redeemCoupon', () => {
     h.coupon!.maxRedemptions = 1;
     h.updateCount = 0;
     expect(await code(redeemCoupon('u1', 'FUTBOL10'))).toBe('EXHAUSTED');
+  });
+});
+
+describe('parseCouponInput', () => {
+  it('geçerli girdiyi normalleştirir', () => {
+    const r = parseCouponInput({ code: ' kubilay10 ', credits: '10', maxRedemptions: '', expiresAt: '2026-12-31', note: ' x ' });
+    expect(r).toMatchObject({ code: 'KUBILAY10', credits: 10, maxRedemptions: null, note: 'x' });
+    expect(r.expiresAt?.toISOString()).toBe('2026-12-31T20:59:59.000Z');
+  });
+  it('geçersiz kod / kredi / sınır / tarihi reddeder', () => {
+    const bad = (o: object) => () => parseCouponInput({ code: 'FUTBOL10', credits: 10, ...o });
+    expect(bad({ code: 'a' })).toThrow(CouponInputError);
+    expect(bad({ credits: 0 })).toThrow(CouponInputError);
+    expect(bad({ credits: 5000 })).toThrow(CouponInputError);
+    expect(bad({ maxRedemptions: -1 })).toThrow(CouponInputError);
+    expect(bad({ expiresAt: '31.12.2026' })).toThrow(CouponInputError);
   });
 });
