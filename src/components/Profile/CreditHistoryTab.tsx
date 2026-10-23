@@ -1,5 +1,7 @@
+import { useState, type FormEvent } from 'react';
 import Link from 'next/link';
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
+import { useCredits } from '@/hooks/useCredits';
 import { useI18n, useTranslation } from '@/lib/i18n';
 import '@/lib/i18nNamespaces/profile';
 import type { CreditHistoryItem, CreditHistoryPage } from '@/pages/api/credits/history';
@@ -25,6 +27,7 @@ const KNOWN_TYPES = [
   'REFERRAL_BONUS',
   'PURCHASE',
   'REFUND',
+  'COUPON',
 ];
 
 function Row({ item, locale }: { item: CreditHistoryItem; locale: string }) {
@@ -51,6 +54,69 @@ function Row({ item, locale }: { item: CreditHistoryItem; locale: string }) {
   );
 }
 
+/** Kupon kodu girişi: başarılı olunca bakiye ve geçmiş tazelenir. Hata metni sunucudan (Türkçe) gelir. */
+function CouponForm() {
+  const { t } = useTranslation('profile');
+  const qc = useQueryClient();
+  const { apply } = useCredits();
+  const [code, setCode] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+
+  async function submit(e: FormEvent) {
+    e.preventDefault();
+    if (busy || !code.trim()) return;
+    setBusy(true);
+    setMsg(null);
+    try {
+      const res = await fetch('/api/credits/redeem', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code }),
+      });
+      const body = (await res.json().catch(() => ({}))) as { added?: number; credits?: number; error?: string };
+      if (res.ok && typeof body.added === 'number') {
+        if (typeof body.credits === 'number') apply(body.credits);
+        setMsg({ ok: true, text: t('history.coupon.success', { count: body.added }) });
+        setCode('');
+        void qc.invalidateQueries({ queryKey: ['credit-history'] });
+      } else {
+        setMsg({ ok: false, text: body.error ?? t('history.coupon.error') });
+      }
+    } catch {
+      setMsg({ ok: false, text: t('history.coupon.error') });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <form className={styles.couponForm} onSubmit={submit}>
+      <label className={styles.couponLabel} htmlFor="coupon-code">{t('history.coupon.title')}</label>
+      <div className={styles.couponRow}>
+        <input
+          id="coupon-code"
+          className={styles.input}
+          value={code}
+          onChange={(e) => setCode(e.target.value.toUpperCase())}
+          placeholder={t('history.coupon.placeholder')}
+          maxLength={32}
+          autoComplete="off"
+          autoCapitalize="characters"
+          spellCheck={false}
+        />
+        <button type="submit" className={styles.couponBtn} disabled={busy || !code.trim()}>
+          {busy ? t('history.coupon.applying') : t('history.coupon.apply')}
+        </button>
+      </div>
+      {msg ? (
+        <p role="status" className={`${styles.message} ${msg.ok ? '' : styles.err}`}>{msg.text}</p>
+      ) : null}
+    </form>
+  );
+}
+
 /** "Kredi Geçmişi": CreditTransaction defteri, en yeniden eskiye, 20'şer lazy-load. */
 export default function CreditHistoryTab() {
   const { t } = useTranslation('profile');
@@ -67,6 +133,7 @@ export default function CreditHistoryTab() {
   return (
     <section className={styles.section}>
       <h2 className={styles.sectionTitle}>{t('tabs.credits')}</h2>
+      <CouponForm />
       {q.isLoading ? <p className={styles.hint}>{t('loading')}</p> : null}
       {q.isError ? <p className={`${styles.message} ${styles.err}`}>{t('history.error')}</p> : null}
       {!q.isLoading && !q.isError && items.length === 0 ? <p className={styles.hint}>{t('history.empty')}</p> : null}

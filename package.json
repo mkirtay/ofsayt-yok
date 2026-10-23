@@ -21,6 +21,7 @@
     "pm2List": "pm2 list",
     "pm2Save": "pm2 save",
     "grant-credits": "dotenv -e .env.local -- node scripts/grant-credits.mjs",
+    "create-coupon": "dotenv -e .env.local -- node scripts/create-coupon.mjs",
     "video": "dotenv -e .env.local -- npx tsx scripts/video-pipeline/index.ts",
     "analysis:reset": "dotenv -e .env.local -- npx tsx scripts/reset-analysis.ts",
     "db:migrate": "dotenv -e .env.local -- prisma migrate dev",

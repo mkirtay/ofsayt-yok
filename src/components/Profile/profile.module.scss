@@ -731,3 +731,47 @@ a.favLink:hover .favName {
     background: $color-muted;
   }
 }
+
+.couponForm {
+  margin-bottom: $spacing-4;
+}
+
+.couponLabel {
+  display: block;
+  margin-bottom: $spacing-2;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.couponRow {
+  display: flex;
+  gap: $spacing-2;
+
+  .input {
+    flex: 1;
+    min-width: 0;
+    text-transform: uppercase;
+  }
+}
+
+.couponBtn {
+  padding: 0 16px;
+  min-height: 44px;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
+  background: transparent;
+  color: var(--color-action-text);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: $color-muted;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+}

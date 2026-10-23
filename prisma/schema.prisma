@@ -80,6 +80,7 @@ model User {
   notifications        Notification[]      @relation("NotificationRecipient")
   notificationsAsActor Notification[]      @relation("NotificationActor")
   pinBids              PinBid[]
+  couponRedemptions    CouponRedemption[]
   frikikScores         FrikikDailyScore[]
   blocksMade           UserBlock[]         @relation("UserBlockBlocker")
   blockedBy            UserBlock[]         @relation("UserBlockBlocked")
@@ -733,6 +734,34 @@ model PinBid {
   createdAt      DateTime  @default(now())
 
   @@index([weekStart, status])
+  @@index([userId])
+}
+
+/// Kupon kodu (ör. FUTBOL10 → +10 kredi). Kod BÜYÜK harfle saklanır; kullanıcı başına bir kez kullanılır.
+model Coupon {
+  id             String             @id @default(cuid())
+  code           String             @unique
+  credits        Int
+  /// null = sınırsız toplam kullanım
+  maxRedemptions Int?
+  redeemedCount  Int                @default(0)
+  expiresAt      DateTime?
+  active         Boolean            @default(true)
+  note           String?
+  createdAt      DateTime           @default(now())
+  redemptions    CouponRedemption[]
+}
+
+model CouponRedemption {
+  id        String   @id @default(cuid())
+  couponId  String
+  coupon    Coupon   @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  credits   Int
+  createdAt DateTime @default(now())
+
+  @@unique([couponId, userId])
   @@index([userId])
 }
 

@@ -30,7 +30,9 @@ export type CreditTransactionType =
   /** Gündem 1. sıra teklifi (tutarın tamamı teklifte düşülür; lib/pinBid.ts). */
   | 'PIN_BID'
   /** 1. sıra kaybedilince kullanılmayan günlerin iadesi. */
-  | 'PIN_REFUND';
+  | 'PIN_REFUND'
+  /** Kupon kodu ödülü (lib/coupons.ts). */
+  | 'COUPON';
 // Karar 8: hiçbir tür maç sonucuna / tahmine bağlı değil (kredi yatırıp kazanma yok) — bkz. creditPolicy.test.ts.
 
 export type SpendStatus = 'PENDING' | 'SETTLED' | 'REFUNDED';

@@ -85,7 +85,16 @@
       "REFUND": "Refund",
       "ANALYSIS_PREMIUM": "AI analysis (free unlock)",
       "ANALYSIS_WEEKLY_FREE": "AI analysis (weekly free)",
-      "REFERRAL_BONUS": "Referral reward"
+      "REFERRAL_BONUS": "Referral reward",
+      "COUPON": "Coupon"
+    },
+    "coupon": {
+      "title": "Have a coupon code?",
+      "placeholder": "Coupon code",
+      "apply": "Redeem",
+      "applying": "Checking…",
+      "success": "+{{count}} credits added to your account!",
+      "error": "Could not redeem the coupon, please try again."
     }
   },
   "analysesHint": "The AI match analyses you unlocked and how their predictions turned out.",

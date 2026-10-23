@@ -84,7 +84,16 @@
       "REFUND": "İade",
       "ANALYSIS_PREMIUM": "AI analiz (ücretsiz açma)",
       "ANALYSIS_WEEKLY_FREE": "AI analiz (haftalık ücretsiz)",
-      "REFERRAL_BONUS": "Davet ödülü"
+      "REFERRAL_BONUS": "Davet ödülü",
+      "COUPON": "Kupon"
+    },
+    "coupon": {
+      "title": "Kupon kodun var mı?",
+      "placeholder": "Kupon kodu",
+      "apply": "Kullan",
+      "applying": "Kontrol ediliyor…",
+      "success": "+{{count}} kredi hesabına eklendi!",
+      "error": "Kupon kullanılamadı, tekrar dene."
     }
   },
   "analysesHint": "Açtığın AI maç analizleri ve tahminlerinin isabet durumu.",
