@@ -174,7 +174,7 @@ describe('mapTeamOverview — teknik direktör, stadyum, sezonlar', () => {
         { coach_id: 1, active: false, start: '2022-01-14', coach: { id: 1, display_name: 'Domènec Torrent' } },
         { coach_id: 2, active: true, start: '2022-07-01', coach: { id: 2, display_name: 'Okan Buruk', image_path: 'ob.png' } },
       ],
-      venue: { id: 9, name: 'Rams Park', city_name: 'İstanbul', capacity: 53978 },
+      venue: { id: 9, name: 'Rams Park', city_name: 'İstanbul', capacity: 53978, surface: 'grass', address: 'Çevre Yolu', latitude: '41.1', longitude: '28.99', image_path: 'https://cdn.sportmonks.com/images/soccer/venues/9/9.png' },
       socials: [{ social_channel_id: 2, value: '@GalatasaraySK' }],
       seasons: [
         { id: 25682, name: '2025/2026', league_id: 600, finished: true, starting_at: '2025-08-08', league: { id: 600, name: 'Super Lig' } },
@@ -189,6 +189,7 @@ describe('mapTeamOverview — teknik direktör, stadyum, sezonlar', () => {
   it('görevdeki (active) teknik direktör ve stadyum', () => {
     expect(out.coach).toEqual({ id: 2, name: 'Okan Buruk', photo: 'ob.png' });
     expect(out.venue).toEqual({ name: 'Rams Park', city: 'İstanbul', capacity: 53978 });
+    expect(out.venueCard).toMatchObject({ name: 'Rams Park', capacity: 53978, surface: 'grass', address: 'Çevre Yolu' });
   });
 
   it('resmî X hesabı (socials kanal 2) → x.com bağlantısı', () => {

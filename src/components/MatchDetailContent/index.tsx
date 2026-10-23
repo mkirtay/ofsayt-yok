@@ -57,7 +57,7 @@ export { tabFromSearch } from './tabDeepLink';
 
 /**
  * Maç detayının ANA içeriği — sayfa ve split-view paneli AYNI IA: kart + beş eşit sekme
- * (Genel Bakış | Anlatım | Forum | AI Analiz | Trivia). "Genel Bakış" = Maç İstatistikleri → Maç Olayları → İlk 11 → Stadyum.
+ * (Genel Bakış | Anlatım | Forum | AI Analiz | Trivia). "Genel Bakış" = Maç İstatistikleri → Maç Olayları → İlk 11 (panelde → Stadyum).
  * `/matches/[slug]` sayfası ile split-view paneli aynı bileşeni kullanır; yükleme
  * durumlarında alt bileşenler kendi iskeletlerini (skeleton) gösterir.
  */
@@ -130,8 +130,8 @@ export default function MatchDetailContent({ detail, requestedMatchId, variant =
               error={detail.lineupsError}
               onRetry={detail.retryLineups}
             />
-            {/* İlk 11'in altında: ekranın altında kalır, fotoğraf tembel (ilk görünüme / LCP'ye girmez). */}
-            <MatchVenueCard venue={match?.venue_info} />
+            {/* Sayfada Stadyum kartı yan sütunda (puan durumunun altı); yan sütunu olmayan split-view panelinde İlk 11'in altında. */}
+            {variant === 'panel' ? <MatchVenueCard venue={match?.venue_info} /> : null}
           </>
         ),
       },

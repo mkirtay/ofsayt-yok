@@ -9,13 +9,17 @@ import styles from './matchVenueCard.module.scss';
 /** Fotoğrafın en geniş CSS genişliği (masaüstü yan sütun / mobil tam genişlik ≈ 320–360 px) → 640 px webp. */
 const PHOTO_DISPLAY_PX = 320;
 
-type Props = { venue: MatchVenue | null | undefined };
+type Props = {
+  venue: MatchVenue | null | undefined;
+  /** Kart zaten flex `gap`'li bir sütundaysa üst boşluk çift sayılmasın. */
+  flush?: boolean;
+};
 
 /**
  * Maç sayfası Genel Bakış "Stadyum" kartı: fotoğraf (tembel, sabit 16:9 yer → CLS yok), ad, şehir, kapasite, zemin,
  * adres, "Haritada aç". Yalnız dolu satırlar; ad / şehirden öte bilgi yoksa kart hiç çizilmez (bkz. `hasVenueCard`).
  */
-export default function MatchVenueCard({ venue }: Props) {
+export default function MatchVenueCard({ venue, flush = false }: Props) {
   const { t } = useTranslation('match');
   const { locale } = useI18n();
   const [photoFailed, setPhotoFailed] = useState(false);
@@ -28,7 +32,7 @@ export default function MatchVenueCard({ venue }: Props) {
   const capacity = venue.capacity ? new Intl.NumberFormat(locale === 'en' ? 'en-US' : 'tr-TR').format(venue.capacity) : null;
 
   return (
-    <section className={styles.card} aria-labelledby={titleId}>
+    <section className={`${styles.card} ${flush ? styles.flush : ''}`.trim()} aria-labelledby={titleId}>
       <h2 id={titleId} className={styles.title}>
         <StadiumIcon className={styles.titleIcon} />
         {t('venueCard.title')}

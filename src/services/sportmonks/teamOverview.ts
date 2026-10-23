@@ -15,7 +15,9 @@
 import type { Match } from '@/models/liveScore';
 import { mapSportmonksFixtureToMatch } from '../sportmonksFixtureMapper';
 import { isKickoffTimeTbd, type SportmonksTeamWithUpcoming } from './teamUpcoming';
+import type { MatchVenue } from '@/models/liveScore';
 import type { SportmonksFixture, SportmonksVenue } from './types';
+import { mapMatchVenue } from './venueFormatter';
 import { normalizeDisplayName, normalizeTeamName } from '@/utils/displayName';
 import { parseScore } from '@/utils/parseScore';
 
@@ -97,6 +99,8 @@ export type TeamOverview = {
   /** Görevdeki teknik direktör (`coaches` içinde `active=true`). */
   coach?: { id: number; name: string; photo?: string };
   venue?: { name: string; city?: string; capacity?: number };
+  /** Sayfa sütunundaki "Stadyum" kartı (fotoğraf, kapasite, zemin, adres, konum); aynı `venue` nesnesinden, ek istek yok. */
+  venueCard?: MatchVenue;
   /** Sezonlar en yeniden eskiye; [0] güncel sezon. */
   campaigns: TeamCampaign[];
   /** Resmî X hesabı (Sportmonks `socials`, kanal 2). */
@@ -233,6 +237,7 @@ export function mapTeamOverview(team: SportmonksTeamOverview | null | undefined,
   recent.sort((a, b) => sortKey(b) - sortKey(a));
   const coach = mapCoach(team.coaches);
   const venue = mapVenue(team.venue);
+  const venueCard = mapMatchVenue(team.venue);
   const social = mapTeamSocial(team.socials);
   fixtures.sort((a, b) => sortKey(a) - sortKey(b));
 
@@ -246,6 +251,7 @@ export function mapTeamOverview(team: SportmonksTeamOverview | null | undefined,
     fixtures,
     ...(coach ? { coach } : {}),
     ...(venue ? { venue } : {}),
+    ...(venueCard ? { venueCard } : {}),
     campaigns: mapTeamCampaigns(team.seasons),
     ...(social ? { social } : {}),
   };

@@ -52,6 +52,7 @@ import { formatFixtureDate } from '@/utils/fixtureDateLabel';
 import RecentMatches from './RecentMatches';
 import SeasonSummaryCard, { type TournamentTab } from './SeasonSummaryCard';
 import TeamScorersCard from './TeamScorersCard';
+import MatchVenueCard from '@/components/MatchVenueCard';
 import ScoringMinutesCard from './ScoringMinutesCard';
 import SeasonProfileCard from './SeasonProfileCard';
 import SidelinedCard from './SidelinedCard';
@@ -964,6 +965,8 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
               data={sidelined}
             />
           ) : null}
+          {/* Sütunun sonu: fotoğraf tembel (ilk görünüme / LCP'ye girmez); kart yalnız ad/şehirden öte bilgi varsa çizilir. */}
+          <MatchVenueCard venue={overviewQuery.data?.venueCard} flush />
         </div>
       </div>
     </div>
