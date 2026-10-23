@@ -675,21 +675,36 @@ describe('fetchSportmonksCached', () => {
       expect(unscoped.status).toBe(200);
     });
 
-    it('kilit beklemesi de bütçeden düşer: bütçe biterse upstream\'e hiç gidilmez', async () => {
+    it('kilit beklemesi bütçenin yarısıyla sınırlı: kilit sahibi yazamazsa bekleyen kalan bütçeyle kendi isteğini atar', async () => {
       const up = hangingUpstream();
       const other = await freshModule();
       // A kilidi alır ve cevapsız kalır.
-      const pa = m.fetchSportmonksCached('football/standings/seasons/3', {}, { fetchImpl: up.impl, now, timeoutMs: 400 });
+      const pa = m.fetchSportmonksCached('football/standings/seasons/3', {}, { fetchImpl: up.impl, now, timeoutMs: 600 });
       await new Promise((r) => setTimeout(r, 20));
 
       const upB = upstream(() => ({ status: 200, body: envelope([{ id: 3 }]) }));
       const started = Date.now();
-      const rb = await other.fetchSportmonksCached('football/standings/seasons/3', {}, { fetchImpl: upB.impl, now: Date.now, timeoutMs: 60 });
-      expect(Date.now() - started).toBeLessThan(300);
-      expect(rb.status).toBe(504);
-      expect(upB.calls).toHaveLength(0);
+      const rb = await other.fetchSportmonksCached('football/standings/seasons/3', {}, { fetchImpl: upB.impl, now: Date.now, timeoutMs: 200 });
+      expect(Date.now() - started).toBeLessThan(400);
+      expect(rb.status).toBe(200);
+      expect(upB.calls).toHaveLength(1);
 
       expect((await pa).status).toBe(504);
+    });
+
+    it('kilit beklemesi + upstream toplamı bütçeyi aşmaz', async () => {
+      const up = hangingUpstream();
+      const other = await freshModule();
+      const pa = m.fetchSportmonksCached('football/standings/seasons/4', {}, { fetchImpl: up.impl, now, timeoutMs: 600 });
+      await new Promise((r) => setTimeout(r, 20));
+
+      const upB = hangingUpstream();
+      const started = Date.now();
+      const rb = await other.fetchSportmonksCached('football/standings/seasons/4', {}, { fetchImpl: upB.impl, now: Date.now, timeoutMs: 200 });
+      expect(Date.now() - started).toBeLessThan(400);
+      expect(rb.status).toBe(504);
+
+      await pa;
     });
   });
 });

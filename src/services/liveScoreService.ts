@@ -975,16 +975,18 @@ export const getTeamsHead2Head = async (
   team2Id: string
 ): Promise<Head2HeadData | null> => {
   try {
-    const envelope = await sportmonksClientRequest<SportmonksFixture[]>(
-      'football',
-      `/fixtures/head-to-head/${team1Id}/${team2Id}`,
-      { include: SPORTMONKS_FIXTURE_INCLUDE },
-    );
+    // Üç istek birbirine bağlı değil: aynı anda başlar (sıralı gidince toplam süre sayfa bütçesini aşıyordu).
+    const [envelope, team1Last, team2Last] = await Promise.all([
+      sportmonksClientRequest<SportmonksFixture[]>('football', `/fixtures/head-to-head/${team1Id}/${team2Id}`, {
+        include: SPORTMONKS_FIXTURE_INCLUDE,
+      }),
+      sportmonksFetchTeamForm(team1Id),
+      sportmonksFetchTeamForm(team2Id),
+    ]);
     const fixtures = envelope.data ?? [];
     const h2hMatches = fixtures.map(mapSportmonksFixtureToMatch);
     // Karşılaşma geçmişi boş olsa da iki takımın son maç formu çekilir ("Son 5 Maç" kaybolmasın). Sportmonks boş H2H'de
     // "sonuç yok ya da plan erişimi yok" der; ikisi ayırt edilemez → kart "geçmiş yok" notunu formun altında gösterir.
-    const [team1Last, team2Last] = await Promise.all([sportmonksFetchTeamForm(team1Id), sportmonksFetchTeamForm(team2Id)]);
     if (h2hMatches.length === 0 && team1Last.length === 0 && team2Last.length === 0) return null;
 
     return {

@@ -94,6 +94,28 @@ describe('getTeamHistoryMatches / getTeamLastMatches — Faz 3, /fixtures/betwee
 });
 
 describe('getTeamsHead2Head — Faz 3, /fixtures/head-to-head/{id1}/{id2}', () => {
+  it('H2H ve iki takımın form isteği aynı anda başlar (sıralı değil)', async () => {
+    await withSportmonksEnabled(async () => {
+      const started: string[] = [];
+      let release!: () => void;
+      const gate = new Promise<void>((r) => (release = r));
+      vi.spyOn(global, 'fetch').mockImplementation((async (input: RequestInfo | URL) => {
+        started.push(String(input));
+        await gate;
+        const url = String(input);
+        const data = url.includes('/fixtures/head-to-head/') ? [] : { latest: [] };
+        return new Response(JSON.stringify({ data }), { status: 200 });
+      }) as typeof fetch);
+      const { getTeamsHead2Head } = await import('./liveScoreService');
+
+      const p = getTeamsHead2Head('9001', '9002');
+      await new Promise((r) => setTimeout(r, 50));
+      expect(started).toHaveLength(3); // h2h bitmeden iki form isteği de gitti
+      release();
+      await p;
+    });
+  });
+
   it('gerçek FC Barcelona - Real Madrid H2H listesini eşler ve form dizilerini türetir', async () => {
     await withSportmonksEnabled(async () => {
       const fetchSpy = vi.spyOn(global, 'fetch').mockImplementation(

@@ -474,7 +474,8 @@ async function refresh(
   if (!locked) {
     // Başka bir instance tazeliyor: eski veri varsa hemen onu ver, yoksa yazmasını bekle (bütçe içinde).
     if (previous) return { ...toResult(previous, 'STALE', now(), true), concurrentRefresh: true };
-    const deadline = now() + Math.min(LOCK_WAIT_MS, timeoutMs);
+    // Bütçenin yarısından fazla beklenmez: kilit sahibi yazamazsa kalan bütçeyle kendi isteğimizi atabilelim.
+    const deadline = now() + Math.min(LOCK_WAIT_MS, timeoutMs / 2);
     while (now() < deadline) {
       await new Promise((r) => setTimeout(r, LOCK_POLL_MS));
       const e = await redisGet(key);
