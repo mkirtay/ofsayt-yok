@@ -300,11 +300,162 @@
   @include logo-backdrop(1px, 3px);
 }
 
+// ── Teknik direktör ──
+.coachHero {
+  padding: $spacing-5;
+  display: grid;
+  gap: $spacing-4;
+}
+
+.heroTop {
+  display: flex;
+  align-items: center;
+  gap: $spacing-4;
+}
+
+.avatarLg {
+  width: 88px;
+  height: 88px;
+  font-size: 30px;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-2;
+  margin: $spacing-1 0 0;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: $color-text;
+  background: $color-muted;
+  border-radius: $radius-full;
+}
+
+// Etiket üstte, değer altta: "Mevcut takım" / "Göreve başlama" tek satırda karışmasın.
+.infoGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-3 $spacing-8;
+  margin: 0;
+  padding-top: $spacing-4;
+  border-top: 1px solid $color-border;
+}
+
+.infoCell {
+  min-width: 0;
+
+  dt {
+    margin-bottom: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: $color-text-secondary;
+  }
+
+  dd {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+    color: $color-text;
+  }
+}
+
+.wdlBar {
+  display: flex;
+  height: 8px;
+  margin: 0 $spacing-4 $spacing-4;
+  overflow: hidden;
+  background: $color-muted;
+  border-radius: $radius-full;
+}
+
+.wdlWin {
+  background: var(--color-win);
+}
+
+.wdlDraw {
+  background: var(--color-draw);
+}
+
+.wdlLoss {
+  background: var(--color-loss);
+}
+
+.miniWin {
+  background: var(--color-win);
+}
+
+// Sezon + takım grup başlığı (tablonun içinde tam genişlik satır).
+.table .groupRow th {
+  padding: $spacing-2 $spacing-3;
+  text-align: left;
+  white-space: normal;
+  background: $color-muted;
+  border-top: 1px solid $color-border;
+}
+
+.groupHead {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: $spacing-2 $spacing-3;
+}
+
+.seasonBadge {
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: 800;
+  color: $color-text;
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
+}
+
+.groupTotal {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 600;
+  color: $color-text-secondary;
+}
+
+.score {
+  font-weight: 800;
+  color: $color-text;
+}
+
 // ── Mobil: daha kompakt kartlar ──
 @media (max-width: #{$bp-sm - 1px}) {
   .page {
     gap: $spacing-3;
     padding-top: $spacing-3;
+  }
+
+  .coachHero {
+    padding: $spacing-3 $spacing-4;
+    gap: $spacing-3;
+  }
+
+  .avatarLg {
+    width: 64px;
+    height: 64px;
+    font-size: 22px;
+  }
+
+  .wdlBar {
+    margin: 0 $spacing-3 $spacing-3;
+  }
+
+  // 5 kart / 2 sütun: tek kalan son kart tam genişlik.
+  .coachStats .statCard:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
   }
 
   .header {

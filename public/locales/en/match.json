@@ -423,6 +423,12 @@
   },
   "person": {
     "refereeRole": "Referee",
+    "winsLabel": "Wins",
+    "drawsLabel": "Draws",
+    "lossesLabel": "Losses",
+    "sinceLabel": "In role since",
+    "coverageShort": "In covered competitions",
+    "seasonMatches": "{{count}} matches",
     "coachRole": "Head coach",
     "seasonsTitle": "Season statistics",
     "recentTitle": "Last 10 matches",

@@ -105,7 +105,8 @@ describe('<CoachView />', () => {
   it('başlık: foto, yaş, uyruk, mevcut takım (takım sayfasına link) + göreve başlama', () => {
     expect(html).toContain('52 yaş');
     expect(html).toContain('href="/teams/34"');
-    expect(html).toContain('Göreve başlama: 23.06.2022');
+    expect(html).toContain('Göreve başlama');
+    expect(html).toContain('23.06.2022');
     expect(html).toContain('Türkiye');
   });
 
@@ -116,6 +117,11 @@ describe('<CoachView />', () => {
     expect(scss).toMatch(/\.card \{\s*min-width: 0;/);
     expect(scss).toMatch(/\.scroll \{\s*overflow-x: auto;/);
     expect(scss).toMatch(/td:first-child \{\s*position: sticky;\s*left: 0;/);
+  });
+  it('özet kartları + sezon/takım grup başlığı (ara toplam)', () => {
+    expect(html).toContain('data-testid="coach-summary"');
+    expect(html).toContain('2025/2026');
+    expect(html).toContain('34 maç');
   });
   it('sezon × turnuva × takım G-B-M ve galibiyet yüzdesi; kapsam notu', () => {
     expect(html).toContain('%71');

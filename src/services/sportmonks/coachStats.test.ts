@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ageOn, coachSeasonTable, type RawCoach } from './coachStats';
+import { ageOn, coachSeasonTable, coachTotals, groupCoachSeasons, type CoachSeasonRow, type RawCoach } from './coachStats';
 import { currentTeamStint } from '@/server/people/coachPage';
 
 const det = (k: string, count: number) => ({ value: { count }, type: { developer_name: k } });
@@ -35,5 +35,30 @@ describe('teknik direktör sezon tablosu (O. Buruk gerçek şekli)', () => {
     ];
     expect(currentTeamStint(teams, '2026-10-04')).toEqual({ teamId: 34, since: '2022-06-23', name: 'Galatasaray', logo: 'gs.png' });
     expect(currentTeamStint([{ team_id: 3702, start: '2019-06-01', end: '2021-06-30' }], '2026-10-04')).toBeNull();
+  });
+});
+
+describe('sezon grupları (sezon ortası takım değişikliği karışmasın)', () => {
+  const row = (seasonName: string, leagueId: number, teamId: number, teamName: string, matches: number, wins: number, draws: number, losses: number): CoachSeasonRow => ({
+    seasonId: 1, seasonName, leagueId, teamId, teamName, matches, wins, draws, losses, winPct: Math.round((wins / matches) * 100),
+  });
+  const rows = [
+    row('2026/2027', 2, 7, 'Shakhtar', 2, 1, 1, 0),
+    row('2026/2027', 3, 7, 'Shakhtar', 9, 8, 0, 1),
+    row('2025/2026', 5, 7, 'Shakhtar', 6, 3, 3, 0),
+    row('2025/2026', 4, 8, 'Eyüpspor', 3, 1, 1, 1),
+    row('2025/2026', 3, 7, 'Shakhtar', 30, 22, 6, 2),
+  ];
+
+  it('sezon + takım gruplanır; yeni sezon önce, mevcut takım önce, grup içi maça göre azalan; ara toplam', () => {
+    const g = groupCoachSeasons(rows, 7);
+    expect(g.map((x) => `${x.seasonName}|${x.teamName}`)).toEqual(['2026/2027|Shakhtar', '2025/2026|Shakhtar', '2025/2026|Eyüpspor']);
+    expect(g[1]).toMatchObject({ matches: 36, wins: 25, draws: 9, losses: 2, winPct: 69 });
+    expect(g[1]!.rows.map((r) => r.matches)).toEqual([30, 6]);
+  });
+
+  it('toplam', () => {
+    expect(coachTotals(rows)).toEqual({ matches: 50, wins: 35, draws: 11, losses: 4, winPct: 70 });
+    expect(coachTotals([]).winPct).toBeNull();
   });
 });

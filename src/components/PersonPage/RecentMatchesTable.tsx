@@ -39,7 +39,7 @@ export default function RecentMatchesTable({ matches }: { matches: PersonRecentM
                       {m.home.name} – {m.away.name}
                     </Link>
                   </td>
-                  <td>{m.scores?.score?.replace(/\s+/g, '') || '—'}</td>
+                  <td className={styles.score}>{m.scores?.score?.replace(/\s+/g, '') || '—'}</td>
                   <td className={`${styles.left} ${styles.muted}`}>
                     <span className={styles.leagueCell}>
                       {m.competition?.logo ? (

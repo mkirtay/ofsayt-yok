@@ -65,3 +65,68 @@ export function ageOn(dateOfBirth: string | null | undefined, today: string): nu
   const [ty, tm, td] = today.slice(0, 10).split('-').map(Number) as [number, number, number];
   return ty - y - (tm < m || (tm === m && td < d) ? 1 : 0);
 }
+
+/** Bir sezonun tek takımdaki turnuva satırları + ara toplam (sayfada grup başlığı). */
+export type CoachSeasonGroup = {
+  seasonName: string;
+  teamId: number | null;
+  teamName: string;
+  teamLogo?: string;
+  matches: number;
+  wins: number;
+  draws: number;
+  losses: number;
+  winPct: number | null;
+  rows: CoachSeasonRow[];
+};
+
+const pctOf = (wins: number, matches: number) => (matches > 0 ? Math.round((wins / matches) * 100) : null);
+
+/**
+ * Sezon satırlarını (sezon × turnuva × takım) "sezon + takım" gruplarına toplar: aynı sezonda iki takımda çalışılmışsa
+ * (sezon ortası transfer) karışmasın. Sıra: yeni sezon önce; aynı sezonda mevcut takım, sonra maç sayısı çok olan.
+ * Grup içi satırlar maç sayısına göre azalan.
+ */
+export function groupCoachSeasons(rows: CoachSeasonRow[], currentTeamId?: number | null): CoachSeasonGroup[] {
+  const byKey = new Map<string, CoachSeasonGroup>();
+  for (const r of rows) {
+    const key = `${r.seasonName}|${r.teamId ?? r.teamName}`;
+    let g = byKey.get(key);
+    if (!g) {
+      g = {
+        seasonName: r.seasonName,
+        teamId: r.teamId,
+        teamName: r.teamName,
+        ...(r.teamLogo ? { teamLogo: r.teamLogo } : {}),
+        matches: 0,
+        wins: 0,
+        draws: 0,
+        losses: 0,
+        winPct: null,
+        rows: [],
+      };
+      byKey.set(key, g);
+    }
+    g.matches += r.matches;
+    g.wins += r.wins;
+    g.draws += r.draws;
+    g.losses += r.losses;
+    g.rows.push(r);
+  }
+  const groups = [...byKey.values()];
+  for (const g of groups) {
+    g.winPct = pctOf(g.wins, g.matches);
+    g.rows.sort((a, b) => b.matches - a.matches);
+  }
+  const isCurrent = (g: CoachSeasonGroup) => (currentTeamId != null && g.teamId === currentTeamId ? 1 : 0);
+  return groups.sort((a, b) => b.seasonName.localeCompare(a.seasonName) || isCurrent(b) - isCurrent(a) || b.matches - a.matches);
+}
+
+/** Kapsanan bütün satırların toplamı (üst özet kartları). */
+export function coachTotals(rows: CoachSeasonRow[]): { matches: number; wins: number; draws: number; losses: number; winPct: number | null } {
+  const t = rows.reduce(
+    (acc, r) => ({ matches: acc.matches + r.matches, wins: acc.wins + r.wins, draws: acc.draws + r.draws, losses: acc.losses + r.losses }),
+    { matches: 0, wins: 0, draws: 0, losses: 0 },
+  );
+  return { ...t, winPct: pctOf(t.wins, t.matches) };
+}

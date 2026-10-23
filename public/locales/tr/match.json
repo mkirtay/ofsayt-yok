@@ -418,6 +418,12 @@
   },
   "person": {
     "refereeRole": "Hakem",
+    "winsLabel": "Galibiyet",
+    "drawsLabel": "Beraberlik",
+    "lossesLabel": "Mağlubiyet",
+    "sinceLabel": "Göreve başlama",
+    "coverageShort": "Kapsadığımız turnuvalarda",
+    "seasonMatches": "{{count}} maç",
     "coachRole": "Teknik direktör",
     "seasonsTitle": "Sezon istatistikleri",
     "recentTitle": "Son 10 maç",
