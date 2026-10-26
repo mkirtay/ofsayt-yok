@@ -37,7 +37,9 @@ import styles from './matchDetail.module.scss';
 import { siteBaseUrl } from '@/lib/siteUrl';
 import { brandTitle } from '@/config/brand';
 import { useLiveStandings } from '@/hooks/useLiveStandings';
-import { isLiveMatchStatus } from '@/services/liveStandings';
+import { isLiveMatchStatus, standingsMatchesInLeague } from '@/services/liveStandings';
+import { useHomeHubMatches } from '@/hooks/useHomeHubMatches';
+import { todayIsoIstanbul } from '@/utils/dateStrip';
 import { loadGameSlotForFixture, type GameSlot } from '@/server/game/matchSlot';
 
 type MatchDetailProps = {
@@ -260,6 +262,15 @@ export default function MatchDetail({
   const standingsCompId = toStandingsCompetitionId(compId);
   // Canlı puan durumu katmanı: YALNIZ bu maç canlıyken (durum canlı güncellemeyle tazelenir); maç bitince istek durur.
   const liveStandings = useLiveStandings(standingsCompId, isLiveMatchStatus(match?.status));
+  // Aynı ligde aynı anda oynanan / bugün biten diğer maçlar (şerit, takım altında skor/dakika, doğrulanmış O/Av): ana
+  // sayfanın günlük listesi (CDN'li normalize uç nokta, Sportmonks'a ek istek yok) — yalnız canlı katman açıkken. Bu maç
+  // önce: detayın kendi (daha taze) verisi.
+  const leagueDay = useHomeHubMatches(todayIsoIstanbul(), liveStandings != null);
+  const standingsLiveMatches = useMemo(() => {
+    if (!liveStandings || !match || !isLiveMatchStatus(match.status)) return undefined;
+    const day = leagueDay.data;
+    return standingsMatchesInLeague([match, ...(day?.liveMatches ?? []), ...(day?.allMatches ?? [])], standingsCompId);
+  }, [liveStandings, match, leagueDay.data, standingsCompId]);
 
   const showArchived =
     archived || (router.isReady && Boolean(requestedMatchId) && isArchivedMatch && !match);
@@ -403,6 +414,9 @@ export default function MatchDetail({
                   seasons={seasons}
                   selectedSeasonId={selectedSeasonId}
                   live={liveStandings}
+                  liveMatches={standingsLiveMatches}
+                  currentMatchId={match?.id}
+                  competitionLogo={match?.competition?.logo}
                   onSeasonChange={
                     standingsCompId != null ? (sid) => handleSeasonChange(sid, String(standingsCompId)) : undefined
                   }

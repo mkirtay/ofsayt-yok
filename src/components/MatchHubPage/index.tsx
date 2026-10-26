@@ -19,7 +19,7 @@ import {
   useCompetitionTopScorers,
 } from '@/hooks/useCompetitionSidebar';
 import { useLiveStandings } from '@/hooks/useLiveStandings';
-import { hasLiveMatchInLeague } from '@/services/liveStandings';
+import { hasLiveMatchInLeague, standingsMatchesInLeague } from '@/services/liveStandings';
 import { useHomeHubMatches } from '@/hooks/useHomeHubMatches';
 import { SEEDED_STALE_UPDATED_AT, useHomeInitialSeed } from '@/hooks/useHomeInitialSeed';
 import type { HomeInitialData } from '@/utils/homeInitialData';
@@ -522,6 +522,12 @@ export default function MatchHubPage({
     selectedSportmonksLeagueId,
     leagueHasLiveMatch && !activePatch && sidebarTab === 'standings' && !pickerOpen,
   );
+  // Ligin canlı (şerit + takım altında skor/dakika) ve biten maçları (resmî tablo gecikirse doğrulanmış O/Av); aynı poll
+  // verisi, ek istek yok. Canlı liste önce: aynı maçın en taze hâli.
+  const leagueLiveMatches = useMemo(
+    () => (liveStandings ? standingsMatchesInLeague([...liveMatches, ...allMatches], selectedSportmonksLeagueId) : EMPTY_MATCHES),
+    [liveStandings, liveMatches, allMatches, selectedSportmonksLeagueId],
+  );
   const selectedLeagueLogo =
     (selectedSportmonksLeagueId != null ? parseLeagueImagePath(apiLogoBySportmonksLeagueId.get(selectedSportmonksLeagueId)) : null) ??
     selectedLeague?.logo ??
@@ -1010,6 +1016,8 @@ export default function MatchHubPage({
                         // Masaüstünde panelin tavanına sığar: tablo kendi içinde kayar, başlık sticky (mobilde akışta)
                         contained
                         live={liveStandings}
+                        liveMatches={leagueLiveMatches}
+                        favoriteTeamIds={favoriteTeamIds}
                       />
                     )}
 

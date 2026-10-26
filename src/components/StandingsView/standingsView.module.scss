@@ -1,6 +1,6 @@
 @use '../../styles/variables' as *;
 
-// Sıra renk bandı: renkler `styles/standingsRankZones.module.scss` ile aynı (açıklama + sıra hücresi tek tablodan).
+// Sıra renk bandı: renkler `MatchCompetitionStandings/matchCompetitionStandings.module.scss` ile aynı (açıklama + sıra hücresi tek tablodan).
 $zones: (
   'ucl': #1d4ed8,
   'ucl_qual': #3b82f6,

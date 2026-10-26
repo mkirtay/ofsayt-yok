@@ -24,7 +24,7 @@ describe('<MatchCompetitionStandings /> lig formu sütunu', () => {
   it('form varsa P’nin solunda "Lig formu" sütunu; noktalar eskiden yeniye, etiket lig formu olduğunu söyler', () => {
     const html = render(data([row(1, ['W', 'D', 'L', 'W', 'W']), row(2, ['L', 'L', 'D', 'W', 'D'])]));
     const head = html.slice(html.indexOf('<thead>'), html.indexOf('</thead>'));
-    expect(head).toMatch(/Av<\/th><th class="[^"]*colForm[^"]*" title="Lig formu: son 5 lig maçı, en yenisi sağda">/);
+    expect(head).toMatch(/Averaj<\/span><\/th><th class="[^"]*colForm[^"]*" title="Lig formu: son 5 lig maçı, en yenisi sağda"/);
     expect(head).toMatch(/colForm[^>]*>.*Lig formu.*<\/th><th class="[^"]*colPoints/);
     expect(html).toContain('aria-label="Lig formu, son 5 lig maçı: Galibiyet, Beraberlik, Mağlubiyet, Galibiyet, Galibiyet"');
     const firstRow = html.slice(html.indexOf('<tbody>'), html.indexOf('</tr>', html.indexOf('<tbody>')));
@@ -44,9 +44,11 @@ describe('<MatchCompetitionStandings /> lig formu sütunu', () => {
     expect(html).toMatch(/<th class="[^"]*colForm/);
   });
 
-  it('stil: dar kapta (ana sayfa yan paneli < 280 px) sütun gizli, < 340 px görünen başlık "Form"', () => {
+  it('stil: dar kapta (< 440 px) "Özet" görünümünde gizli ("Detaylar" ile açılır), < 340 px görünen başlık "Form"', () => {
     const scss = readFileSync(path.join(process.cwd(), 'src/components/MatchCompetitionStandings/matchCompetitionStandings.module.scss'), 'utf8');
-    expect(scss).toMatch(/@container \(max-width: 279\.98px\) \{\s*\.table th\.colForm,\s*\.table td\.colForm \{\s*display: none;/);
+    expect(render(data([row(1, ['W'])]))).toMatch(/<td class="[^"]*colForm[^"]* [^"]*colOpt/);
+    expect(scss).toMatch(/\$summary-max: 439\.98px;/);
+    expect(scss).toMatch(/@container \(max-width: #\{\$summary-max\}\) \{[^}]*\}\s*\.table:not\(\.tableDetails\) \.colOpt \{\s*display: none;/);
     expect(scss).toMatch(/@container \(max-width: 339\.98px\) \{\s*\.formHeadFull \{\s*position: absolute;/);
   });
 });

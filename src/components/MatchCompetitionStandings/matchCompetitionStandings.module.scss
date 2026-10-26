@@ -1,5 +1,21 @@
 @use '../../styles/variables' as *;
 
+// Sıra şeridi renkleri (lig kuralları: config/standingsZones). İnce sol şerit + lejant; açık (#fff) ve koyu (#1a1c24)
+// yüzeyde ≥ 2.9:1 grafik kontrastı.
+$zones: (
+  'ucl': #2563eb,
+  'ucl_qual': #0891b2,
+  'europa': #ea580c,
+  'conference_qual': #16a34a,
+  'promotion': #059669,
+  'playoff': #d97706,
+  'uefa_league_playoff': #b45309,
+  'relegation': #dc2626,
+);
+
+// Dar kap eşiği: altında "Özet" görünümü (sıra/değişim, takım, O, Av, P) + "Detaylar" düğmesi.
+$summary-max: 439.98px;
+
 .block {
   margin-top: $spacing-4;
   background: $color-surface;
@@ -7,6 +23,16 @@
   border-radius: $radius-md;
   box-shadow: $shadow-surface;
   overflow: hidden;
+
+  // Sıra değişimi metni: yeşil/kırmızı + ok glifi (yalnız renge dayanmaz). Kontrast: koyu yüzeyde 8.9 / 5.6, açıkta 5.3 / 5.6.
+  --st-up: var(--color-action-text);
+  --st-down: #f87171;
+  --st-flash: rgba(0, 167, 111, 0.32);
+}
+
+:global(:root[data-theme='light']) .block {
+  --st-down: #c62828;
+  --st-flash: rgba(0, 167, 111, 0.22);
 }
 
 // Tablo bölgesi: sezon değişirken 04 katmanı bunu birebir kaplar (StandingsShuffle, position: absolute).
@@ -58,16 +84,28 @@
 }
 
 .title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
   font-size: 14px;
   font-weight: 700;
   color: $color-text;
   line-height: 1.3;
 }
 
+.titleLogo {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
 .titleContainer {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: $spacing-2;
   padding: $spacing-3;
   border-bottom: 1px solid $color-border;
 }
@@ -109,7 +147,7 @@
 .scroll {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
-  // Takım adı ↔ kısaltma kararı bu kutunun genişliğine göre (StandingTeamName + utils/standingsTeamLabel)
+  // Özet/Detaylar ve takım adı ↔ kısaltma kararı bu kutunun genişliğine göre (container query)
   container-type: inline-size;
 }
 
@@ -118,6 +156,7 @@
   min-width: 280px;
   border-collapse: collapse;
   font-size: 12px;
+  font-variant-numeric: tabular-nums;
 
   th,
   td {
@@ -134,6 +173,11 @@
     font-size: 12px;
   }
 
+  // İkincil sayılar soluk; sıra, takım, puan belirgin (hiyerarşi).
+  td {
+    color: $color-text-secondary;
+  }
+
   // Takım bağlantısı en az 24 × 24 px (aşağıda): hücrenin dikey dolgusu 4 → 2 px, satır yüksekliği değişmez.
   td.colTeam {
     padding-top: 2px;
@@ -145,6 +189,18 @@
     padding-left: $spacing-2;
   }
 
+  td.colRank {
+    color: $color-text;
+    font-weight: 600;
+
+    // Bölge: ince sol şerit (büyük renkli kutu yerine); anlamı tablo altındaki lejantta.
+    @each $name, $color in $zones {
+      &[data-zone='#{$name}'] {
+        box-shadow: inset 3px 0 0 $color;
+      }
+    }
+  }
+
   .colTeam {
     text-align: left;
     min-width: 100px;
@@ -152,8 +208,6 @@
   }
 
   .colPoints {
-    font-weight: 800;
-    color: $color-primary-text;
     padding-right: $spacing-2;
     // "P" (puan) sütunu tablonun en önemli bilgisi olduğu halde geniş
     // tablolarda yatay scroll yapılmadan görünmüyordu; sağa sabitleyip
@@ -163,12 +217,85 @@
     @include sticky-last-column;
   }
 
+  th.colPoints {
+    color: $color-text;
+  }
+
+  td.colPoints {
+    color: $color-text;
+    text-align: right;
+  }
+
   tbody tr:hover td {
     background: $color-row-highlight;
   }
 
   tbody tr:hover td.colPoints {
     background: $color-row-highlight;
+  }
+}
+
+// Puan: her zaman nötr ve kalın; canlı katkı ayrı küçük "+1" ile (yalnız renge dayanmaz).
+.pointsValue {
+  display: inline-block;
+  min-width: 2ch;
+  padding: 0 2px;
+  border-radius: 3px;
+  font-weight: 800;
+  text-align: right;
+}
+
+.pointsDelta {
+  display: inline-block;
+  width: 2.4ch;
+  margin-left: 1px;
+  text-align: left;
+  font-size: 9px;
+  font-weight: 700;
+  color: $color-text-secondary;
+  vertical-align: 3px;
+}
+
+.cellValue {
+  display: inline-block;
+  padding: 0 2px;
+  border-radius: 3px;
+}
+
+// Canlı güncellemede değişen hücre: ~1,6 sn hafif zemin, sonra söner (sürekli yanıp sönme yok).
+.flash {
+  animation: standings-cell-flash 1.6s ease-out;
+}
+
+@keyframes standings-cell-flash {
+  0%,
+  35% {
+    background: var(--st-flash);
+  }
+  100% {
+    background: transparent;
+  }
+}
+
+// ── Sıra değişimi (yalnız canlı katmanda; maç öncesi tabloya göre) ──
+.table .colMove {
+  width: 26px;
+  padding-left: 0;
+  padding-right: 2px;
+  text-align: left;
+}
+
+.move {
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+
+  &[data-move='up'] {
+    color: var(--st-up);
+  }
+
+  &[data-move='down'] {
+    color: var(--st-down);
   }
 }
 
@@ -195,6 +322,10 @@
 
     .colPoints {
       padding-right: 6px;
+    }
+
+    .colMove {
+      padding-left: 0;
     }
   }
 }
@@ -229,12 +360,25 @@
   flex-shrink: 0;
 }
 
+.teamText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.nameRow {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+}
+
 .teamLink {
   // Dokunma hedefi ≥ 24 × 24 px (WCAG 2.5.8) — dar panelde "GS"/"FB" kısaltması 14–16 × 21 px kalıyordu.
-  display: inline-flex;
-  align-items: center;
+  display: block;
   min-width: 24px;
   min-height: 24px;
+  line-height: 24px;
   color: $color-text;
   text-decoration: none;
   overflow: hidden;
@@ -245,6 +389,58 @@
   &:hover {
     color: $color-primary;
   }
+}
+
+// Kısaltma yalnız dar kapta "Detaylar" açıkken (bütün sütunlar sığsın diye); özette tam ad (taşarsa …).
+.nameCode {
+  display: none;
+}
+
+.favorite {
+  flex-shrink: 0;
+  font-size: 10px;
+  line-height: 1;
+  color: var(--color-favorite);
+}
+
+// ── Canlı oynayan takım: adın altında küçük skor / dakika satırı ──
+.rowLive .teamLink {
+  min-height: 18px;
+  line-height: 18px;
+}
+
+.liveLine {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  font-size: 10px;
+  line-height: 13px;
+  color: $color-text-secondary;
+  padding-bottom: 1px;
+}
+
+.liveText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.liveDot {
+  flex-shrink: 0;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--color-live);
+}
+
+.liveScore {
+  color: $color-text;
+  font-weight: 700;
+}
+
+.liveClock {
+  color: $color-text-secondary;
 }
 
 .emptyState {
@@ -334,16 +530,98 @@
   }
 }
 
-// Ana sayfa yan paneli (masaüstü ~238 px): 10 sütun kısaltmalı adlarla tam sığıyor, form sütunu (~42 px) yatay kaydırma
-// açardı → orada çizilmez. Maç / takım sayfası sağ sütunu (318 px) ve mobil tam genişlikte görünür.
-@container (max-width: 279.98px) {
-  .table th.colForm,
-  .table td.colForm {
-    display: none;
+// ── Özet / Detaylar (dar kap) ──
+.teamHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.detailsToggle {
+  display: none;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 7px;
+  border: 1px solid $color-border;
+  border-radius: 12px;
+  background: $color-surface;
+  color: $color-primary-text;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    border-color: $color-primary;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+    outline-offset: 1px;
+  }
+
+  &:disabled {
+    cursor: default;
   }
 }
 
-// ── Canlı puan durumu katmanı (yalnız ligde canlı maç varken) ──
+@container (max-width: #{$summary-max}) {
+  .detailsToggle {
+    display: inline-flex;
+  }
+
+  .table:not(.tableDetails) .colOpt {
+    display: none;
+  }
+
+  // Özette takım sütunu geniş: tam ad. Detaylarda bütün sütunlar → kısaltma (tam ad bağlantının aria-label/title'ında).
+  .tableDetails .nameFull {
+    display: none;
+  }
+
+  .tableDetails .nameCode {
+    display: inline;
+  }
+
+  // Detaylarda takım sütunu kısaltma kadar dar: başlıkta yalnız "Özet" düğmesi ("Takım" ekran okuyucuda).
+  .tableDetails .teamHeadLabel {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+}
+
+// Çok dar kap (ana sayfa masaüstü yan paneli ~238 px): tam ad 5–6 harfte kesiliyordu ("Trabz…") → özette de kısaltma
+// (tam ad title/aria-label'da); "Takım" etiketi yalnız ekran okuyucuda, yeri "Detaylar" düğmesine kalır.
+@container (max-width: 299.98px) {
+  .nameFull {
+    display: none;
+  }
+
+  .nameCode {
+    display: inline;
+  }
+
+  // Dakika üstteki skor şeridinde var; satırda skor + rakip sığsın.
+  .liveClock {
+    display: none;
+  }
+
+  .teamHeadLabel {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+}
+
+// ── Canlı puan durumu: başlık altı durum + skor şeridi ──
 .srOnly {
   position: absolute;
   width: 1px;
@@ -353,61 +631,146 @@
   white-space: nowrap;
 }
 
-// "Takım" başlığının yerinde; satır yüksekliği / sütun genişliği değişmez.
-.liveBadge {
+.liveBar {
+  padding: 6px $spacing-3 7px;
+  border-bottom: 1px solid $color-border;
+}
+
+.liveStatus {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 6px;
+}
+
+.liveHeading {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: $color-text;
+}
+
+.livePulse {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-live);
+  animation: pulse-live 1.6s infinite;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+.liveNote {
+  font-size: 11px;
+  color: $color-text-secondary;
+  line-height: 1.35;
+}
+
+.liveStatus[data-stale] .liveNote {
+  color: var(--color-warning-text);
+}
+
+.strip {
+  display: flex;
+  gap: 6px;
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+  overflow-x: auto;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+
+  > li {
+    flex: none;
+  }
+}
+
+.stripMatch {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 8px;
+  border: 1px solid $color-border;
+  border-radius: 13px;
+  background: $color-muted;
+  color: $color-text;
+  font-size: 11px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-decoration: none;
+  white-space: nowrap;
+
+  &:hover {
+    border-color: $color-primary;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+    outline-offset: 1px;
+  }
+
+  &[aria-current='page'] {
+    border-color: $color-primary;
+  }
+}
+
+.stripClock {
   color: var(--color-live);
   font-size: 10px;
   font-weight: 800;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  line-height: 1;
+}
 
-  &::before {
-    content: '';
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--color-live);
-    animation: pulse-live 1.6s infinite;
+.stripTeam {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.stripLogo {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+}
+
+.stripScore {
+  font-weight: 800;
+}
+
+// ── Sıra renkleri lejantı ──
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px $spacing-3;
+  margin: 0;
+  padding: $spacing-2 $spacing-3;
+  list-style: none;
+  font-size: 11px;
+  color: $color-text-secondary;
+
+  li {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
   }
+}
 
-  @media (prefers-reduced-motion: reduce) {
-    &::before {
-      animation: none;
+.legendSwatch {
+  width: 3px;
+  height: 11px;
+  border-radius: 1px;
+  background: $color-border;
+
+  @each $name, $color in $zones {
+    &[data-zone='#{$name}'] {
+      background: $color;
     }
   }
-}
-
-// Sıra hücresinin sağ dolgusunda küçük ok — mutlak konum: sütun genişlemez (ana sayfa yan paneli tam sığıyor).
-.table td.colRank {
-  position: relative;
-}
-
-.liveMove {
-  position: absolute;
-  top: 50%;
-  right: 0;
-  transform: translateY(-50%);
-  font-size: 7px;
-  line-height: 1;
-
-  &[data-move='up'] {
-    color: var(--color-win);
-  }
-
-  &[data-move='down'] {
-    color: var(--color-loss);
-  }
-}
-
-// Bölge renkli sıra hücresinde (beyaz yazı) ok da beyaz — yön glifle okunur.
-.table td.colRank[data-zone] .liveMove {
-  color: #fff;
-}
-
-.table td.livePoints {
-  color: var(--color-live);
 }

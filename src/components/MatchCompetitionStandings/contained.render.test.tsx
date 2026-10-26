@@ -34,7 +34,7 @@ describe('<MatchCompetitionStandings contained /> (ana sayfa yan paneli)', () =>
     const b = tbody(render({}));
     expect(a).toBe(b);
     expect(a.match(/<tr/g)).toHaveLength(36);
-    expect(a).toMatch(/class="[^"]*colRank[^"]* [^"]*rank[A-Z]/); // bölge şeridi sınıfı (ilk sıralar / düşme)
+    expect(a).toMatch(/class="[^"]*colRank[^"]*" data-zone="(ucl|relegation)"/); // bölge şeridi (ilk sıralar / düşme)
   });
 
   it('yükleniyor görünümü de contained (beklenen satır sayısıyla aynı yapı, tablo bölgesi içinde)', () => {
