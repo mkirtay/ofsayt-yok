@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchLiveStandings, type LiveStandingsData } from '@/services/liveStandings';
 
@@ -21,12 +22,19 @@ export function isLiveStandingsStale(state: LiveStandingsState, now: number): bo
 }
 
 /**
- * Canlı puan durumu katmanı. YALNIZ `enabled` (o ligde canlı maç var) iken istek atar; kapalıyken önbellekteki
- * eski veri de döndürülmez (maç bitince ok / canlı puan kalmasın). İlk yanıt gelmeden hata → `null` (normal tablo);
- * sonraki yenileme hatasında son veri korunur, `failing` ile işaretlenir (tablo baştan yüklenmez).
+ * Canlı puan durumu katmanı. YALNIZ `enabled` (o ligde canlı maç var) iken ya da ligin biten maçının maç sonu penceresi
+ * (`afterMatchUntil`, bkz. `leagueAfterMatchDeadline`) sürerken istek atar: son maç bitince resmî tablo güncellenene kadar
+ * sağlayıcının tablosu gösterilebilsin. Kapalıyken önbellekteki eski veri de döndürülmez (maç bitince ok / canlı puan
+ * kalmasın). İlk yanıt gelmeden hata → `null` (normal tablo); sonraki yenileme hatasında son veri korunur, `failing` ile
+ * işaretlenir (tablo baştan yüklenmez).
  */
-export function useLiveStandings(leagueId: number | null | undefined, enabled: boolean): LiveStandingsState | null {
-  const on = enabled && leagueId != null && leagueId > 0;
+export function useLiveStandings(
+  leagueId: number | null | undefined,
+  enabled: boolean,
+  afterMatchUntil: number | null = null,
+): LiveStandingsState | null {
+  const afterMatch = useAfterMatchWindow(enabled ? null : afterMatchUntil);
+  const on = (enabled || afterMatch) && leagueId != null && leagueId > 0;
   const q = useQuery({
     queryKey: ['live-standings', leagueId ?? 0] as const,
     queryFn: () => fetchLiveStandings(leagueId!),
@@ -39,4 +47,15 @@ export function useLiveStandings(leagueId: number | null | undefined, enabled: b
   });
   if (!on || !q.data) return null;
   return { data: q.data, updatedAt: q.dataUpdatedAt, failing: q.isError };
+}
+
+/** Pencere açık mı; bitişte kendiliğinden kapanır (yalnız pencere varken zamanlayıcı). */
+function useAfterMatchWindow(until: number | null): boolean {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (until == null) return;
+    const id = window.setInterval(() => setNow(Date.now()), LIVE_STANDINGS_REFRESH_MS);
+    return () => window.clearInterval(id);
+  }, [until]);
+  return until != null && now < until;
 }

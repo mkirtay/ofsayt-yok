@@ -394,6 +394,8 @@
     "liveNote": "Based on the current scores of matches in progress.",
     "staleHeading": "Standings",
     "staleNote": "Last live update {{time}}. Connection lost; positions and points reflect the scores at that time.",
+    "settlingHeading": "Standings",
+    "settlingNote": "(official table updating)",
     "stripLabel": "Live matches affecting the table",
     "stripMatch": "{{home}} {{score}} {{away}}, {{minute}}",
     "moveUp": "Up {{count}} places from the pre-match table",

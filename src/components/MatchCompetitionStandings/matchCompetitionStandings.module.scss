@@ -652,6 +652,16 @@ $summary-max: 439.98px;
   color: $color-text;
 }
 
+// "Puan durumu (resmî tablo güncelleniyor)": nabız yok, dar panelde metin gibi akar (flex sütunlara bölünmez).
+.liveStatus[data-settling] .liveHeading {
+  display: block;
+}
+
+.liveHeadingNote {
+  font-weight: 500;
+  color: $color-text-secondary;
+}
+
 .livePulse {
   width: 6px;
   height: 6px;

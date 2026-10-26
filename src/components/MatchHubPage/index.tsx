@@ -19,7 +19,7 @@ import {
   useCompetitionTopScorers,
 } from '@/hooks/useCompetitionSidebar';
 import { useLiveStandings } from '@/hooks/useLiveStandings';
-import { hasLiveMatchInLeague, standingsMatchesInLeague } from '@/services/liveStandings';
+import { hasLiveMatchInLeague, leagueAfterMatchDeadline, standingsMatchesInLeague } from '@/services/liveStandings';
 import { useHomeHubMatches } from '@/hooks/useHomeHubMatches';
 import { SEEDED_STALE_UPDATED_AT, useHomeInitialSeed } from '@/hooks/useHomeInitialSeed';
 import type { HomeInitialData } from '@/utils/homeInitialData';
@@ -518,9 +518,16 @@ export default function MatchHubPage({
     () => hasLiveMatchInLeague(liveMatches, selectedSportmonksLeagueId),
     [liveMatches, selectedSportmonksLeagueId],
   );
+  // Son maç bitince resmî tablo güncellenene kadar: ligin biten maçlarının maç sonu penceresi (aynı veri).
+  const leagueAfterMatchUntil = useMemo(
+    () => leagueAfterMatchDeadline(allMatches, selectedSportmonksLeagueId),
+    [allMatches, selectedSportmonksLeagueId],
+  );
+  const standingsVisible = !activePatch && sidebarTab === 'standings' && !pickerOpen;
   const liveStandings = useLiveStandings(
     selectedSportmonksLeagueId,
-    leagueHasLiveMatch && !activePatch && sidebarTab === 'standings' && !pickerOpen,
+    leagueHasLiveMatch && standingsVisible,
+    standingsVisible ? leagueAfterMatchUntil : null,
   );
   // Ligin canlı (şerit + takım altında skor/dakika) ve biten maçları (resmî tablo gecikirse doğrulanmış O/Av); aynı poll
   // verisi, ek istek yok. Canlı liste önce: aynı maçın en taze hâli.

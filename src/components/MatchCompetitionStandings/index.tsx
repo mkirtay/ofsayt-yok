@@ -406,11 +406,23 @@ function StandingsTable({
   );
 }
 
-/** Başlık altı canlı durum: "Canlı puan durumu" + açıklama; güncelleme kesildiyse dürüst "son güncelleme" notu. */
-function LiveStatus({ stale, updatedAt }: { stale: boolean; updatedAt: number }) {
+/**
+ * Başlık altı canlı durum: "Canlı puan durumu" + açıklama; güncelleme kesildiyse dürüst "son güncelleme" notu; canlı maç
+ * kalmadı ama resmî tablo biten maçı henüz saymadıysa "Puan durumu (resmî tablo güncelleniyor)".
+ */
+function LiveStatus({ mode, updatedAt }: { mode: "live" | "stale" | "settling"; updatedAt: number }) {
   const { t } = useTranslation("match");
   const { locale } = useI18n();
-  if (stale) {
+  if (mode === "settling") {
+    return (
+      <div className={styles.liveStatus} data-settling="true">
+        <p className={styles.liveHeading}>
+          {t("standings.settlingHeading")} <span className={styles.liveHeadingNote}>{t("standings.settlingNote")}</span>
+        </p>
+      </div>
+    );
+  }
+  if (mode === "stale") {
     const time = new Intl.DateTimeFormat(locale === "en" ? "en-GB" : "tr-TR", {
       hour: "2-digit",
       minute: "2-digit",
@@ -571,7 +583,13 @@ function sameVerified(a: Verified, b: Verified): boolean {
   return true;
 }
 
-const plainTable = (rows: Row[]): LiveTableResult<Row, Match> => ({ rows: baseDisplayRows(rows), live: false, fixtures: [], verified: new Map() });
+const plainTable = (rows: Row[]): LiveTableResult<Row, Match> => ({
+  rows: baseDisplayRows(rows),
+  live: false,
+  fixtures: [],
+  settling: false,
+  verified: new Map(),
+});
 
 /** Tek tablo ya da aşama/grup tabloları; her birine (varsa) canlı katman. */
 function buildBlocks(
@@ -585,8 +603,9 @@ function buildBlocks(
   const build = (rows: Row[], stageId?: number): LiveTableResult<Row, Match> => {
     if (!live) return plainTable(rows);
     const r = applyLiveStandings<Row, Match>(rows, live.data, { seasonId, stageId, fixtures: liveMatches, verified });
-    // Canlı liste biliniyor ama bu tabloyu etkileyen maç yok → canlı katman yok (normal tablo).
-    return r.live && liveMatches && r.fixtures.length === 0 ? plainTable(rows) : r;
+    // Canlı liste biliniyor ama bu tabloyu etkileyen maç yok → normal tablo; yalnız biten maçın sonucu resmî tabloya
+    // henüz işlenmediyse (settling) sağlayıcının tablosu kalır.
+    return r.live && liveMatches && r.fixtures.length === 0 && !r.settling ? plainTable(rows) : r;
   };
   const blocks: TableBlock[] = [];
   if (Array.isArray(data.table) && data.table.length) blocks.push({ key: "table", headings: [], result: build(data.table) });
@@ -705,7 +724,10 @@ export default function MatchCompetitionStandings({
   const showSeasonSelect = Boolean(seasons?.length && onSeasonChange);
 
   const liveApplied = blocks.some((b) => b.result.live);
-  const stale = live != null && liveApplied && isLiveStandingsStale(live, now);
+  // Canlı maç yoksa yalnız biten maçın sonucu bekleniyor: skorlar kesin, "bağlantı kesildi" notu anlamsız.
+  const inPlay = blocks.some((b) => b.result.fixtures.length > 0) || !liveMatches;
+  const stale = live != null && liveApplied && inPlay && isLiveStandingsStale(live, now);
+  const liveMode = !inPlay ? "settling" : stale ? "stale" : "live";
   const stripMatches: Match[] = [];
   const codeById = new Map<number, string>();
   const zoneSet = new Set<StandingsZoneKind>();
@@ -726,7 +748,7 @@ export default function MatchCompetitionStandings({
     <section
       className={blockClass(contained)}
       aria-label={t("standings.ariaLabel")}
-      data-live={liveApplied ? (stale ? "stale" : "on") : undefined}
+      data-live={liveApplied ? (liveMode === "live" ? "on" : liveMode) : undefined}
     >
       {hideHeader ? null : (
       <div className={styles.titleContainer}>
@@ -751,7 +773,7 @@ export default function MatchCompetitionStandings({
 
       {liveApplied && live ? (
         <div className={styles.liveBar}>
-          <LiveStatus stale={stale} updatedAt={live.updatedAt} />
+          <LiveStatus mode={liveMode} updatedAt={live.updatedAt} />
           <LiveStrip matches={stripMatches} codeOf={codeOf} currentMatchId={currentMatchId} />
         </div>
       ) : null}

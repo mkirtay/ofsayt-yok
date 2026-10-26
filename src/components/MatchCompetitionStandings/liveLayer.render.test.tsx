@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import type { CompetitionTableData, CompetitionTableStandingRow } from '@/services/liveScoreService';
 import type { Match } from '@/models/liveScore';
@@ -23,6 +23,12 @@ const data: CompetitionTableData = {
   table: [row(1, 31, 19), row(2, 81, 17), row(3, 2, 16), row(4, 7, 10)],
 };
 const NOW = Date.UTC(2026, 9, 26, 18, 0);
+// "Canlı" / "son güncelleme" ayrımı saate bağlı: testler NOW anında koşar.
+beforeAll(() => {
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(NOW);
+});
+afterAll(() => vi.useRealTimers());
 const live = (rows: [number, number, number][], extra: Partial<LiveStandingsState> = {}): LiveStandingsState => ({
   data: { leagueId: 600, rows: rows.map(([participant_id, position, points]) => ({ participant_id, position, points, result: 'equal', season_id: 28203 })) },
   updatedAt: NOW,
@@ -56,7 +62,6 @@ const rowOf = (html: string, id: number) => {
 
 describe('<MatchCompetitionStandings live /> canlı puan durumu', () => {
   it('başlık "Canlı puan durumu" + açıklama; skor şeridi gerçek takım, skor, dakika ve maç bağlantısıyla', () => {
-    vi.setSystemTime(NOW);
     const html = render({ live: LIVE, liveMatches: MATCHES });
     expect(html).toContain('Canlı puan durumu');
     expect(html).toContain('Devam eden maçların mevcut skorlarına göre.');
@@ -65,7 +70,6 @@ describe('<MatchCompetitionStandings live /> canlı puan durumu', () => {
     expect(link).toContain('aria-label="Takım 2 1–0 Takım 31, 71&#x27;"');
     expect(link).toMatch(/stripTeam[^>]*><img[^>]*>T2<\/span><b[^>]*>1–0<\/b><span[^>]*>T31<img/);
     expect(link).toMatch(/stripClock[^>]*>71&#x27;</);
-    vi.useRealTimers();
   });
 
   it('canlı sıraya göre dizilir; sıra değişimi ayrı sütunda "↑ 2" / "↓ 1" + açıklama; hareketsizde ok ve sıfır yok', () => {
@@ -109,6 +113,28 @@ describe('<MatchCompetitionStandings live /> canlı puan durumu', () => {
     expect(html).toContain('Son canlı güncelleme 21:00. Bağlantı kesildi; sıra ve puanlar o anki skorlara göre.');
     expect(html).not.toContain('livePulse');
     expect(teamOrder(html)).toEqual([2, 31, 81, 7]);
+  });
+
+  it('son maç bitti, resmî tablo henüz saymadı: sağlayıcının tablosu "Puan durumu (resmî tablo güncelleniyor)" ile', () => {
+    // Bağlantı kesik olsa da (failing) skorlar kesin: "son canlı güncelleme" notu yok.
+    const html = render({ live: { ...LIVE, failing: true }, liveMatches: [match(9, 2, 31, '1-0', 'FINISHED', 'FT')] });
+    expect(teamOrder(html)).toEqual([2, 31, 81, 7]);
+    expect(html).toMatch(/data-live="settling"/);
+    expect(html).toMatch(/liveHeading[^>]*>Puan durumu <span[^>]*>\(resmî tablo güncelleniyor\)<\/span>/);
+    expect(html).not.toContain('Canlı puan durumu');
+    expect(html).not.toContain('Son canlı güncelleme');
+    expect(html).not.toContain('livePulse');
+    expect(html).not.toContain('Tabloyu etkileyen canlı maçlar'); // şerit yok
+    expect(rowOf(html, 2)).not.toContain('liveLine');
+    expect(rowOf(html, 2)).toMatch(/data-flash="2:matches" data-flash-value="9"/);
+    expect(rowOf(html, 2)).toMatch(/↑\s2/);
+    // Resmî tablo maçı saydı (temel = sağlayıcı) → normal tablo.
+    const official = { ...data, table: [row(1, 2, 19), row(2, 31, 19), row(3, 81, 17), row(4, 7, 10)].map((r) => (r.team!.id === 2 || r.team!.id === 31 ? { ...r, matches: 9 } : r)) };
+    const after = renderToStaticMarkup(
+      <MatchCompetitionStandings data={official} hideHeader live={LIVE} liveMatches={[match(9, 2, 31, '1-0', 'FINISHED', 'FT')]} />,
+    );
+    expect(after).not.toContain('data-live');
+    expect(after).not.toContain('resmî tablo güncelleniyor');
   });
 
   it('katman yok / sezon farklı / tabloyu etkileyen canlı maç yok → normal tablo, canlı başlık ve değişim sütunu yok', () => {

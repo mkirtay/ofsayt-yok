@@ -3,8 +3,17 @@ import { describe, expect, it, vi } from 'vitest';
 const request = vi.fn();
 vi.mock('./sportmonksRuntimeClient', () => ({ sportmonksClientRequest: (...a: unknown[]) => request(...a) }));
 
-const { applyLiveStandings, fetchLiveStandings, hasLiveMatchInLeague, isLiveMatchStatus, standingsMatchesInLeague, verifyFixtureScore } =
-  await import('./liveStandings');
+const {
+  AFTER_MATCH_WINDOW_MS,
+  afterMatchDeadline,
+  applyLiveStandings,
+  fetchLiveStandings,
+  hasLiveMatchInLeague,
+  isLiveMatchStatus,
+  leagueAfterMatchDeadline,
+  standingsMatchesInLeague,
+  verifyFixtureScore,
+} = await import('./liveStandings');
 
 const base = (id: number, rank: number, points: number, extra: Record<string, number> = {}) => ({
   rank,
@@ -186,10 +195,24 @@ describe('applyLiveStandings — canlı skor ve istatistik (çift sayım yok)', 
     const provider = L([live(34, 2, 19), live(88, 3, 17), live(2, 1, 19), live(7, 4, 10)]);
     const ended = applyLiveStandings(rows, provider, { fixtures: [fx(9, 2, 34, '1-0', 'FINISHED')] });
     expect(ended.fixtures).toEqual([]);
+    // Canlı maç kalmadı ama sonuç resmî tabloda yok → sağlayıcının tablosu "resmî tablo güncelleniyor" ile kalır.
+    expect(ended).toMatchObject({ live: true, settling: true });
+    expect(ended.rows.map((r) => r.teamId)).toEqual([2, 34, 88, 7]);
     expect(ended.rows.find((r) => r.teamId === 2)).toMatchObject({ fixture: null, statsLive: true, stats: { matches: 9 } });
     const official = [base(34, 2, 19, { matches: 9 }), base(88, 3, 17), base(2, 1, 19, { matches: 9 }), base(7, 4, 10)];
     const updated = applyLiveStandings(official, provider, { fixtures: [fx(9, 2, 34, '1-0', 'FINISHED')], verified: ended.verified });
     expect(updated.rows.find((r) => r.teamId === 2)).toMatchObject({ statsLive: false, pointsDelta: 0, stats: { matches: 9 } });
+    expect(updated.settling).toBe(false);
+    // Sağlayıcı da henüz saymadıysa (puan = temel) doğrulanacak sonuç yok → bekleme yok, normal tablo.
+    const lagging = applyLiveStandings(rows, L([live(34, 1, 19), live(88, 2, 17), live(2, 3, 16), live(7, 4, 10)]), {
+      fixtures: [fx(9, 2, 34, '1-0', 'FINISHED')],
+    });
+    expect(lagging.settling).toBe(false);
+    // Canlı maç sürerken biten maç doğrulansa da mod canlı (settling yalnız biten maçlar için bilgi).
+    const mixed = applyLiveStandings(rows, L([live(34, 2, 19), live(88, 3, 18), live(2, 1, 19), live(7, 4, 11)]), {
+      fixtures: [fx(9, 2, 34, '1-0', 'FINISHED'), fx(10, 88, 7, '1-1')],
+    });
+    expect(mixed.fixtures.map((f) => f.id)).toEqual([10]);
     // İptal / hükmen (özel durum) maç skoru hiç eklenmez.
     const awarded = applyLiveStandings(rows, provider, { fixtures: [fx(9, 2, 34, '1-0', 'FINISHED', { state_code: 'AWARDED' })] });
     expect(awarded.rows.find((r) => r.teamId === 2)!.statsLive).toBe(false);
@@ -227,5 +250,22 @@ describe('canlı kapısı ve maç listesi', () => {
       [2, '2-2'],
     ]);
     expect(standingsMatchesInLeague(list, null)).toEqual([]);
+  });
+
+  it('maç sonu penceresi: normal biten maçın başlamasından 3 saat; ligin en geç biteni; canlı / özel durum / saatsiz yok', () => {
+    const ko = Date.UTC(2026, 9, 26, 17, 0);
+    const at = (extra: Record<string, unknown> = {}) => ({ date: '2026-10-26', scheduled: '17:00', ...extra });
+    expect(afterMatchDeadline(fx(1, 2, 34, '1-0', 'FINISHED', at()))).toBe(ko + AFTER_MATCH_WINDOW_MS);
+    expect(afterMatchDeadline(fx(1, 2, 34, '1-0', 'IN PLAY', at()))).toBeNull();
+    expect(afterMatchDeadline(fx(1, 2, 34, '1-0', 'FINISHED', at({ state_code: 'AWARDED' })))).toBeNull();
+    expect(afterMatchDeadline(fx(1, 2, 34, '1-0', 'FINISHED'))).toBeNull();
+    const list = [
+      fx(1, 2, 34, '1-0', 'FINISHED', at()),
+      fx(2, 88, 7, '0-0', 'FINISHED', at({ scheduled: '19:00' })),
+      fx(3, 5, 6, '0-0', 'FINISHED', at({ scheduled: '20:00', competition: { id: 8 } })),
+    ];
+    expect(leagueAfterMatchDeadline(list, 600)).toBe(ko + 2 * 3_600_000 + AFTER_MATCH_WINDOW_MS);
+    expect(leagueAfterMatchDeadline(list.slice(0, 0), 600)).toBeNull();
+    expect(leagueAfterMatchDeadline(list, null)).toBeNull();
   });
 });

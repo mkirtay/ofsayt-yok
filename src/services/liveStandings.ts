@@ -21,6 +21,7 @@
  */
 import { sportmonksClientRequest } from './sportmonksRuntimeClient';
 import { parseScore } from '@/utils/parseScore';
+import { matchKickoffMs } from '@/utils/matchActivity';
 
 export type LiveStandingRow = {
   participant_id: number;
@@ -70,6 +71,9 @@ export type LiveFixtureInput = {
   away?: { id?: number | string | null } | null;
   scores?: { score?: string | null } | null;
   score?: string | null;
+  /** UTC başlama (gün + "HH:MM"); maç sonu penceresi için. */
+  date?: string | null;
+  scheduled?: string | null;
 };
 
 export type LiveTeamStats = {
@@ -115,6 +119,11 @@ export type LiveTableResult<R, F extends LiveFixtureInput = LiveFixtureInput> = 
   live: boolean;
   /** Bu tabloyu etkileyen (takımlarından en az biri tabloda olan) canlı maçlar. */
   fixtures: F[];
+  /**
+   * Biten bir maçın sonucu sağlayıcının tablosunda var, resmî tabloda henüz yok (doğrulandı): canlı maç kalmasa da
+   * sağlayıcının tablosu gösterilir ("resmî tablo güncelleniyor"). Resmî tablo maçı sayınca doğrulama tutmaz → `false`.
+   */
+  settling: boolean;
   /** Doğrulanmış skorlar (maç id → [ev, dep]); çağıran saklayıp bir sonraki hesaplamaya `verified` olarak verir. */
   verified: Map<string, [number, number]>;
 };
@@ -226,7 +235,7 @@ export function applyLiveStandings<R extends BaseRow, F extends LiveFixtureInput
     verified?: ReadonlyMap<string, [number, number]> | null;
   } = {},
 ): LiveTableResult<R, F> {
-  const fallback: LiveTableResult<R, F> = { rows: baseDisplayRows(rows), live: false, fixtures: [], verified: new Map() };
+  const fallback: LiveTableResult<R, F> = { rows: baseDisplayRows(rows), live: false, fixtures: [], settling: false, verified: new Map() };
   if (!live?.rows.length || !rows.length) return fallback;
   const seasonId = num(opts.seasonId);
   const stageId = num(opts.stageId);
@@ -262,6 +271,7 @@ export function applyLiveStandings<R extends BaseRow, F extends LiveFixtureInput
     { f: F; isHome: boolean; score: [number, number] | null; checked: [number, number] | null; inPlay: boolean }
   >();
   const seen = new Set<string>();
+  let settling = false;
   for (const f of opts.fixtures ?? []) {
     const key = String(f.id);
     const inPlay = isLiveMatchStatus(f.status);
@@ -280,6 +290,7 @@ export function applyLiveStandings<R extends BaseRow, F extends LiveFixtureInput
     const score = fixtureScore(f);
     const checked = verifyFixtureScore([score, opts.verified?.get(key)], side(homeId, homeIn), side(awayId, awayIn));
     if (checked) verified.set(key, checked);
+    if (checked && !inPlay) settling = true;
     for (const [id, isHome, inTable] of [[homeId, true, homeIn], [awayId, false, awayIn]] as const) {
       // Canlı maç, aynı takımın biten maçının önüne geçer (aynı gün iki maç olmaz; yine de canlı olan gösterilir).
       if (!inTable || (fixtureByTeam.get(id!)?.inPlay && !inPlay)) continue;
@@ -313,7 +324,7 @@ export function applyLiveStandings<R extends BaseRow, F extends LiveFixtureInput
         : null,
     };
   });
-  return { rows: out.sort((a, b) => a.rank - b.rank), live: true, fixtures, verified };
+  return { rows: out.sort((a, b) => a.rank - b.rank), live: true, fixtures, settling, verified };
 }
 
 /** Canlı katmanın kapısı: listede (ana sayfa canlı poll verisi) bu ligin canlı maçı var mı. Ek istek yok. */
@@ -323,6 +334,34 @@ export function hasLiveMatchInLeague(
 ): boolean {
   if (leagueId == null || leagueId <= 0) return false;
   return matches.some((m) => Number(m.competition?.id) === leagueId && isLiveMatchStatus(m.status));
+}
+
+/**
+ * Maç sonu penceresi (başlamadan itibaren): ~2 saatlik maç + resmî tablonun güncellenmesi (10 dk önbellek + sağlayıcı
+ * gecikmesi) için pay. Bu sürede canlı tablo sorgusu sürer; tablo yalnız sonuç doğrulanırken (`settling`) gösterilir.
+ */
+export const AFTER_MATCH_WINDOW_MS = 3 * 60 * 60_000;
+
+/** Normal biten maçın maç sonu penceresinin bitişi (ms); biten değilse / saati bilinmiyorsa `null`. */
+export function afterMatchDeadline(m: LiveFixtureInput): number | null {
+  if (!isPlainFinished(m)) return null;
+  const ko = matchKickoffMs({ status: String(m.status ?? ''), date: m.date ?? undefined, scheduled: m.scheduled ?? undefined });
+  return ko == null ? null : ko + AFTER_MATCH_WINDOW_MS;
+}
+
+/** Ligin biten maçlarından en geç kapanan maç sonu penceresi (ms) ya da `null`. Saat çağıranda karşılaştırılır. */
+export function leagueAfterMatchDeadline(
+  matches: readonly (LiveFixtureInput & { competition?: { id?: number | string | null } | null })[],
+  leagueId: number | null | undefined,
+): number | null {
+  if (leagueId == null || leagueId <= 0) return null;
+  let until: number | null = null;
+  for (const m of matches) {
+    if (Number(m.competition?.id) !== leagueId) continue;
+    const d = afterMatchDeadline(m);
+    if (d != null && (until == null || d > until)) until = d;
+  }
+  return until;
 }
 
 /**
