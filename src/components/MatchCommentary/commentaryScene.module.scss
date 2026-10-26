@@ -139,8 +139,14 @@
   background: #e03131;
 }
 
-// ─── Mini maç (Web Animations ile oynatılır; yalnız transform/opacity) ───
-// Temel stiller son kareyi verir: WAAPI yoksa / "hareketi azalt"ta sahne olayın bittiği anda donar.
+// ─── Mini maç (sceneMotion.ts dünyası rAF ile stil olarak yazılır; yalnız transform/opacity) ───
+// "Hareketi azalt"ta olayın sonuç anı tek kare çizilir.
+
+// Oyuncular + top katmanı: sahneler arası uzak geçişte kısa kararır.
+.layer {
+  position: absolute;
+  inset: 0;
+}
 
 .pl,
 .ref,

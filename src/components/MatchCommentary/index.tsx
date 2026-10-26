@@ -12,6 +12,7 @@ import { useNow } from '@/hooks/useNow';
 import { countdown, kickoffInfo } from '@/utils/kickoff';
 import { countdownText } from '@/utils/kickoffText';
 import { formatFixtureDate } from '@/utils/fixtureDateLabel';
+import { buildSceneEvents, type SceneEvent } from './sceneEvents';
 import styles from './matchCommentary.module.scss';
 
 /** Canlı maçta yenileme aralığı — sunucu kaydı da 60 sn taze (cachePolicy COMMENTARY_LIVE_TTL). */
@@ -122,12 +123,13 @@ type ViewProps = {
   locale: string;
   /** Sahnesi olan satır seçiliyse üstte gösterilen temsili canlandırma (tembel yüklenir; yokken yer tutucu). */
   scene?: ReactNode;
-  selectedId?: number | null;
+  /** Oynayan sahnenin satırları (aynı golün iki satırı birlikte işaretlenir). */
+  selectedIds?: readonly number[];
   onSelect?: (item: CommentaryItem) => void;
 };
 
 /** Dolu anlatım: filtre çipleri (sayılarıyla) + satırlar. Saf — durum/veri `MatchCommentary`'de. */
-export function CommentaryView({ items, live, filter, onFilter, locale, scene, selectedId, onSelect }: ViewProps) {
+export function CommentaryView({ items, live, filter, onFilter, locale, scene, selectedIds = [], onSelect }: ViewProps) {
   const { t } = useTranslation('match');
   const counts = useMemo(() => {
     const c = {} as Record<CommentaryFilter, number>;
@@ -167,17 +169,18 @@ export function CommentaryView({ items, live, filter, onFilter, locale, scene, s
             const tr = locale === 'tr' ? item.tr : null;
             const kindLabel = item.kind === 'card' && isRed(item) ? t('commentary.kinds.redCard') : t(`commentary.kinds.${item.kind}`);
             const playable = !!item.scene && !!onSelect;
+            const playing = playable && selectedIds.includes(item.id);
             const Row = playable ? 'button' : 'div';
             return (
               <li key={item.id} className={styles.rowItem}>
                 <Row
-                  {...(playable ? { type: 'button' as const, onClick: () => onSelect!(item), 'aria-pressed': selectedId === item.id } : {})}
+                  {...(playable ? { type: 'button' as const, onClick: () => onSelect!(item), 'aria-pressed': playing } : {})}
                   className={[
                     styles.row,
                     item.important ? styles.important : '',
                     item.kind === 'goal' ? styles.goal : '',
                     playable ? styles.playable : '',
-                    playable && selectedId === item.id ? styles.playing : '',
+                    playing ? styles.playing : '',
                   ]
                     .filter(Boolean)
                     .join(' ')}
@@ -221,7 +224,7 @@ async function fetchCommentary(matchId: string, signal?: AbortSignal): Promise<{
   return { items: Array.isArray(body.items) ? body.items : [], live: !!body.live, squads: body.squads ?? null };
 }
 
-type SceneProps = { item: CommentaryItem | null; squads: SceneSquads | null; kickoff?: boolean };
+type SceneProps = { event: SceneEvent | null; squads: SceneSquads | null; kickoff?: boolean; playToken?: number; follow?: boolean };
 
 let sceneLoad: Promise<ComponentType<SceneProps>> | null = null;
 /** Sahne (saha çizimi + animasyonlar) ayrı chunk: yalnız Anlatım sekmesinde, sahnesi olan satır varsa indirilir. */
@@ -270,7 +273,8 @@ export default function MatchCommentary({ matchId, match }: Props) {
         (data) => {
           hasData.current = true;
           setItems(data.items);
-          setSquads(data.squads);
+          // Aynı kadro yeniden gelirse referans korunur: sahne yeniden planlanmaz.
+          setSquads((prev) => (JSON.stringify(prev) === JSON.stringify(data.squads) ? prev : data.squads));
           setLive(data.live);
           setStatus('ready');
         },
@@ -299,11 +303,12 @@ export default function MatchCommentary({ matchId, match }: Props) {
     return () => window.clearInterval(id);
   }, [skip, live, phaseLive, load]);
 
-  // Sahne: seçili satır yoksa en yeni sahneli satır (canlı maçta kendiliğinden son olayı gösterir).
-  const sceneItems = useMemo(() => items.filter((i) => i.scene), [items]);
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+  // Sahne: satırlar olaylara birleşir (aynı golün "Goal!" + vuruş satırı tek sahne). Seçim yoksa en yeni olay (canlı takip).
+  const { events: sceneEvents, byItemId } = useMemo(() => buildSceneEvents(items), [items]);
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [replay, setReplay] = useState(0);
-  const current = useMemo(() => sceneItems.find((i) => i.id === selectedId) ?? sceneItems[0] ?? null, [sceneItems, selectedId]);
+  const selected = selectedKey ? (sceneEvents.find((e) => e.key === selectedKey) ?? null) : null;
+  const current = selected ?? sceneEvents[0] ?? null;
 
   // Maç öncesi de sahne gösterilir (bekleme dizilişi) → chunk sekme açılınca istenir.
   const preMatch = state?.phase === 'PRE' && !blockingSpecial;
@@ -323,10 +328,15 @@ export default function MatchCommentary({ matchId, match }: Props) {
     };
   }, [current, preMatch, Scene]);
 
-  const onSelect = useCallback((item: CommentaryItem) => {
-    setSelectedId(item.id);
-    setReplay((n) => n + 1);
-  }, []);
+  const onSelect = useCallback(
+    (item: CommentaryItem) => {
+      const ev = byItemId.get(item.id);
+      if (!ev) return;
+      setSelectedKey(ev.key);
+      setReplay((n) => n + 1);
+    },
+    [byItemId],
+  );
 
   // İlk düdük bilgisi + geri sayım (maç öncesi): tarih SSR'da sabit, geri sayım yalnız mount sonrası.
   const kickoff = kickoffInfo(match);
@@ -347,7 +357,7 @@ export default function MatchCommentary({ matchId, match }: Props) {
     return (
       <section className={styles.root}>
         {title}
-        {Scene ? <Scene item={null} squads={null} kickoff /> : <div className={styles.scenePlaceholder} aria-hidden="true" />}
+        {Scene ? <Scene event={null} squads={null} kickoff /> : <div className={styles.scenePlaceholder} aria-hidden="true" />}
         <div className={styles.preMatch} role="status">
           <strong>{ts('pre.statsTitle')}</strong>
           <span className={styles.preSub}>{t('commentary.pre')}</span>
@@ -395,7 +405,7 @@ export default function MatchCommentary({ matchId, match }: Props) {
   // Yer tutucu: sahne chunk'ı gelene kadar aynı en-boy oranında kutu durur (kayma yok).
   const scene = current ? (
     Scene ? (
-      <Scene key={`${current.id}-${replay}`} item={current} squads={squads} />
+      <Scene event={current} squads={squads} playToken={replay} follow={!selected} />
     ) : (
       <div className={styles.scenePlaceholder} aria-hidden="true" />
     )
@@ -409,7 +419,7 @@ export default function MatchCommentary({ matchId, match }: Props) {
       onFilter={setFilter}
       locale={locale}
       scene={scene}
-      selectedId={current?.id ?? null}
+      selectedIds={current?.ids}
       onSelect={onSelect}
     />
   );

@@ -81,6 +81,8 @@ export type CommentaryScene = {
   ownGoal?: boolean;
   /** Metinde geçen takım adı (oyuncu kadroda bulunamazsa taraf buradan çözülür). */
   team?: string;
+  /** Metinde adı geçen asist yapan oyuncu (şut/gol); sahne yalnız bu adla besleme pası çizer, uydurmaz. */
+  assist?: string;
 };
 
 export type RawComment = {
@@ -158,6 +160,7 @@ export function sceneFromEvent(ev: ParsedEvent, id = 0): CommentaryScene | null 
         zoneFromText: !!tz,
         header,
         ...(ev.outcome === 'post' ? { post: true } : {}),
+        ...(ev.assist ? { assist: ev.assist } : {}),
       };
     }
     default:

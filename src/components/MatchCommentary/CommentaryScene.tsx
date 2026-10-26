@@ -1,31 +1,36 @@
-import { useLayoutEffect, useMemo, useRef, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useTranslation } from '@/lib/i18n';
 import { useMotionPause } from '@/hooks/useMotionPause';
 import ScaledScene from '@/components/PitchScenes/ScaledScene';
 import turf from '@/components/PitchScenes/turf.module.scss';
-import type { CommentaryItem } from '@/services/sportmonks/matchCommentary';
 import type { SceneSquads } from '@/services/sportmonks/commentaryScene';
 import { SCENE_H, SCENE_W, buildKickoffScene } from './sceneLayout';
-import { buildScript, type SceneScript, type ScriptEffect, type Track } from './sceneScript';
+import { buildPlan, effectState, trailState, type ScenePlan, type ScriptEffect, type Vec } from './scenePlan';
+import { createWorld, simulate, stepWorld, type World } from './sceneMotion';
+import { nextRun, type SceneEvent, type SceneRun } from './sceneEvents';
 import styles from './commentaryScene.module.scss';
 
 export type CommentarySceneProps = {
-  /** Oynatılacak anlatım satırı; `kickoff` modunda null. */
-  item: CommentaryItem | null;
+  /** Oynatılacak sahne olayı (birleşmiş satırlar); `kickoff` modunda null. */
+  event: SceneEvent | null;
   squads: SceneSquads | null;
   /** Maç başlamadan önceki bekleme sahnesi: diziliş + orta noktada top, olay yok. */
   kickoff?: boolean;
+  /** Kullanıcı satıra her tıkladığında artar → seçilen sahne baştan oynar. */
+  playToken?: number;
+  /** Canlı takip (kullanıcı seçimi yok): yeni olay oynayan sahneyi kesmez, bitince geçer. */
+  follow?: boolean;
 };
 
 /**
- * Anlatım satırının temsili 2D sahnesi (504×320, yukarıdan saha): olaya giden kısa bir "mini maç" (sceneScript.ts) ya da
- * maç öncesi bekleme dizilişi. Yalnız transform/opacity canlandırılır (docs/animasyon-referans/README.md). Konumlar GERÇEK
- * DEĞİL: diziliş kadrodan, bölge metinden, akış olay kimliğinden. Sekme gizliyken / ekran dışındayken durur, "hareketi
- * azalt"ta son kare görünür.
+ * Anlatım satırının temsili 2D sahnesi (504×320, yukarıdan saha): olayın kısa pozisyon akışı (scenePlan.ts →
+ * sceneMotion.ts) ya da maç öncesi bekleme dizilişi. Yalnız transform/opacity değişir (docs/animasyon-referans/README.md).
+ * Konumlar GERÇEK DEĞİL: diziliş kadrodan, bölge metinden, gerisi olay kimliğinden belirlenimli. Sekme gizliyken / ekran
+ * dışındayken durur, "hareketi azalt"ta olayın sonuç anı tek kare görünür.
  */
 export default function CommentaryScene(props: CommentarySceneProps) {
   if (props.kickoff) return <KickoffScene squads={props.squads} />;
-  return props.item ? <MiniMatch item={props.item} squads={props.squads} /> : null;
+  return props.event ? <MiniMatch event={props.event} squads={props.squads} playToken={props.playToken} follow={props.follow} /> : null;
 }
 
 /** Bekleme sahnesi (maç öncesi) — CSS animasyonlu diziliş: noktalar nefes alır, top orta noktada, halka genişler. */
@@ -60,37 +65,7 @@ function KickoffScene({ squads }: { squads: SceneSquads | null }) {
 
 // ─── Mini maç ───
 
-const translate = (x: number, y: number) => `translate(${x}px, ${y}px)`;
-
-/** İz → Web Animations karesi (0 ve 1 uçları dolu, ofsetler artan). */
-function frames(track: Track, duration: number, value: (i: number) => Keyframe, easing = 'ease-in-out'): Keyframe[] {
-  const out: Keyframe[] = [];
-  track.t.forEach((t, i) => {
-    const offset = Math.min(1, Math.max(0, t / duration));
-    if (i === 0 && offset > 0) out.push({ ...value(0), offset: 0, easing });
-    out.push({ ...value(i), offset, easing });
-  });
-  const last = track.t.length - 1;
-  if (last >= 0 && (out.at(-1)?.offset ?? 1) < 1) out.push({ ...value(last), offset: 1 });
-  return out;
-}
-
-/** Tek anlık efekt: `t` anında belirir, `hold` ms durur (son efektler sona kadar). */
-function pop(t: number, duration: number, transform: string, hold = Infinity): Keyframe[] {
-  const on = Math.min(1, t / duration);
-  const peak = Math.min(1, (t + 180) / duration);
-  const k: Keyframe[] = [
-    { offset: 0, opacity: 0, transform: `${transform} scale(0.4)` },
-    { offset: on, opacity: 0, transform: `${transform} scale(0.4)` },
-    { offset: peak, opacity: 1, transform: `${transform} scale(1.15)` },
-  ];
-  if (hold !== Infinity && (t + hold) / duration < 1) {
-    k.push({ offset: Math.min(1, (t + 180 + hold) / duration), opacity: 1, transform: `${transform} scale(1)` });
-    k.push({ offset: Math.min(1, (t + 480 + hold) / duration), opacity: 0, transform: `${transform} scale(1)` });
-    k.push({ offset: 1, opacity: 0, transform: `${transform} scale(1)` });
-  } else k.push({ offset: 1, opacity: 1, transform: `${transform} scale(1)` });
-  return k;
-}
+const translate = (x: number, y: number) => `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px)`;
 
 const FX_CLASS: Record<ScriptEffect['kind'], string> = {
   goal: styles.fxGoal!,
@@ -122,117 +97,161 @@ function effectNode(e: ScriptEffect): ReactNode {
 }
 
 const effectAt = (e: ScriptEffect) => (e.kind === 'offsideLine' ? translate(e.x, 0) : translate(e.at.x, e.at.y));
+const curve = (tr: { kind: string }, from: Vec, to: Vec) => {
+  const mid = { x: (from.x + to.x) / 2, y: (from.y + to.y) / 2 - (tr.kind === 'cross' ? 26 : 0) };
+  return `M${from.x.toFixed(1)} ${from.y.toFixed(1)}Q${mid.x.toFixed(1)} ${mid.y.toFixed(1)} ${to.x.toFixed(1)} ${to.y.toFixed(1)}`;
+};
+
+/** Dünyayı DOM'a yazar (yalnız transform/opacity/stroke) — React render'ı yok. */
+function paint(root: HTMLElement, w: World) {
+  const plan = w.plan;
+  const layer = root.querySelector<HTMLElement>('[data-layer]');
+  if (layer) layer.style.opacity = String(w.layerOpacity);
+  root.querySelectorAll<HTMLElement>('[data-pl]').forEach((el) => {
+    const i = Number(el.dataset.pl);
+    const b = w.bodies[i];
+    if (!b) return;
+    el.style.transform = translate(b.pos.x, b.pos.y);
+    el.style.opacity = String(b.opacity);
+    const fall = plan.falls.find((f) => f.i === i);
+    const dot = el.firstElementChild as HTMLElement | null;
+    if (dot) dot.style.transform = fall && w.t >= fall.t && w.t < fall.t + 1100 ? 'scale(1.25, 0.55) rotate(25deg)' : '';
+  });
+  const ball = root.querySelector<HTMLElement>('[data-ball]');
+  if (ball) {
+    ball.style.transform = translate(w.ball.pos.x, w.ball.pos.y);
+    ball.style.opacity = String(w.ball.opacity);
+  }
+  const lift = root.querySelector<HTMLElement>('[data-lift]');
+  if (lift) lift.style.transform = `translateY(${(-w.ball.lift).toFixed(1)}px) scale(${(1 + w.ball.lift / 70).toFixed(3)})`;
+  const t = Math.max(0, w.t);
+  root.querySelectorAll<SVGPathElement>('[data-trail]').forEach((el) => {
+    const k = Number(el.dataset.trail);
+    const tr = plan.trails[k];
+    if (!tr) return;
+    const from = w.trailFrom[k];
+    if (from && el.dataset.from !== '1') {
+      el.setAttribute('d', curve(tr, from, tr.to));
+      el.dataset.from = '1';
+    }
+    const st = trailState(tr, w.t < 0 ? -1 : t, plan.actionEndMs);
+    el.style.opacity = String(st.opacity);
+    el.style.strokeDashoffset = String(st.offset);
+  });
+  root.querySelectorAll<HTMLElement>('[data-fx]').forEach((el) => {
+    const e = plan.effects[Number(el.dataset.fx)];
+    if (!e) return;
+    const st = effectState(e, w.t < 0 ? -1 : t, plan.actionEndMs);
+    el.style.opacity = String(st.opacity);
+    el.style.transform = `${effectAt(e)} scale(${st.scale.toFixed(3)})`;
+  });
+  const cap = root.querySelector<HTMLElement>('[data-caption]');
+  if (cap) cap.style.opacity = w.t >= plan.climaxMs ? String(Math.min(1, (w.t - plan.climaxMs) / 200)) : '0';
+}
+
+const reducedMotion = () => typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /**
- * Olay satırının mini maçı: oyuncular ve top `buildScript` izleriyle Web Animations üzerinden oynar (yalnız transform +
- * opacity, ana iş parçacığını yormaz). WAAPI yoksa ya da "hareketi azalt" açıksa son kare durur. Ekran dışında / sekme
- * arka plandayken `useMotionPause` özniteliğiyle duraklar.
+ * Olay sahnesi: plan (scenePlan.ts) → hareket durumu (sceneMotion.ts) → çizim (paint). Bileşen olaylar arasında kalıcıdır:
+ * oyuncular kaldıkları yerden yeni pozisyona geçer; aynı olay (aynı anahtar + imza) yeniden gelirse sahne sıfırlanmaz.
+ * `follow` (canlı, seçim yok): yeni olay o an oynayan sahneyi kesmez, bitince geçer (kuyruk yok, yalnız en yeni).
+ * Kullanıcı seçimi (`playToken`) hemen oynar; eski döngü/sayaçlar tek rAF döngüsünde kalır, unmount'ta temizlenir.
+ * "Hareketi azalt": olayın sonuç anı tek kare olarak çizilir.
  */
-function MiniMatch({ item, squads }: { item: CommentaryItem; squads: SceneSquads | null }) {
+function MiniMatch({ event, squads, playToken = 0, follow = false }: { event: SceneEvent; squads: SceneSquads | null; playToken?: number; follow?: boolean }) {
   const { t } = useTranslation('match');
   const ref = useRef<HTMLDivElement>(null);
   useMotionPause(ref);
-  const script = useMemo<SceneScript | null>(() => buildScript(item, squads), [item, squads]);
+  const [run, setRun] = useState<SceneRun>({ event, n: 0 });
+  const worldRef = useRef<World | null>(null);
+  const pendingRef = useRef<SceneEvent | null>(null);
+  const tokenRef = useRef(playToken);
+  const loopRef = useRef<{ start: () => void } | null>(null);
 
-  useLayoutEffect(() => {
+  // Gelen olay → oynatma kararı.
+  useEffect(() => {
+    const replay = playToken !== tokenRef.current;
+    tokenRef.current = playToken;
+    setRun((cur) => {
+      const w = worldRef.current;
+      const busy = !!w && w.t < w.plan.actionEndMs + 600 && !w.resting;
+      const next = nextRun(cur, event, { replay, follow, busy });
+      pendingRef.current = next.pending;
+      return next.run;
+    });
+    loopRef.current?.start();
+  }, [event, playToken, follow]);
+
+  const plan = useMemo<ScenePlan | null>(
+    () => buildPlan(run.event.item, squads, { seed: run.event.id, disallowed: run.event.disallowed }),
+    [run.event, squads],
+  );
+
+  // Tek rAF döngüsü: dünyayı geçen zamanla ilerletir; duraklatılmışken / dinlenirken durur.
+  useEffect(() => {
     const root = ref.current;
-    if (!root || !script || typeof root.animate !== 'function') return;
-    const D = script.durationMs;
-    const anims: Animation[] = [];
-    const run = (el: Element | null | undefined, k: Keyframe[], opts: KeyframeAnimationOptions = {}) => {
-      if (el instanceof HTMLElement || el instanceof SVGElement) anims.push(el.animate(k, { duration: D, fill: 'both', ...opts }));
+    if (!root) return;
+    let raf = 0;
+    let last: number | null = null;
+    const paused = () => root.hasAttribute('data-motion-paused');
+    const tick = (now: number) => {
+      raf = 0;
+      const w = worldRef.current;
+      if (!w || paused() || reducedMotion()) {
+        last = null;
+        return;
+      }
+      const dt = last == null ? 16 : now - last;
+      last = now;
+      stepWorld(w, dt);
+      paint(root, w);
+      const pending = pendingRef.current;
+      if (pending && (w.t >= w.plan.actionEndMs + 600 || w.resting)) {
+        pendingRef.current = null;
+        setRun((cur) => ({ event: pending, n: cur.n + 1 }));
+        return;
+      }
+      if (!w.resting) raf = requestAnimationFrame(tick);
+      else last = null;
     };
-    const q = (sel: string) => Array.from(root.querySelectorAll(sel));
-
-    q('[data-pl]').forEach((el) => {
-      const p = script.players[Number(el.getAttribute('data-pl'))];
-      if (!p) return;
-      run(el, frames(p.track, D, (i) => ({ transform: translate(p.track.p[i]!.x, p.track.p[i]!.y) })));
-      if (p.fallAt != null) {
-        const a = Math.min(1, p.fallAt / D);
-        run(el.firstElementChild, [
-          { offset: 0, transform: 'scale(1)' },
-          { offset: a, transform: 'scale(1)' },
-          { offset: Math.min(1, a + 120 / D), transform: 'scale(1.25, 0.55) rotate(25deg)' },
-          { offset: Math.min(1, a + 900 / D), transform: 'scale(1.25, 0.55) rotate(25deg)' },
-          { offset: Math.min(1, a + 1100 / D), transform: 'scale(1)' },
-          { offset: 1, transform: 'scale(1)' },
-        ]);
-      }
-    });
-    run(root.querySelector('[data-ref]'), frames(script.referee, D, (i) => ({ transform: translate(script.referee.p[i]!.x, script.referee.p[i]!.y) })));
-    const bt = script.ball.track;
-    run(root.querySelector('[data-ball]'), frames(bt, D, (i) => ({ transform: translate(bt.p[i]!.x, bt.p[i]!.y) }), 'linear'));
-    run(
-      root.querySelector('[data-lift]'),
-      frames(bt, D, (i) => {
-        const h = script.ball.lift[i] ?? 0;
-        return { transform: `translateY(${-h}px) scale(${1 + h / 70})` };
-      }),
-    );
-    q('[data-trail]').forEach((el) => {
-      const tr = script.trails[Number(el.getAttribute('data-trail'))];
-      if (!tr) return;
-      const a = tr.t0 / D;
-      const b = Math.min(1, tr.t1 / D);
-      const c = Math.min(1, (tr.t1 + 900) / D);
-      const k: Keyframe[] = [
-        { offset: 0, opacity: 0, strokeDashoffset: 1 },
-        { offset: a, opacity: 0.9, strokeDashoffset: 1 },
-        { offset: b, opacity: 0.9, strokeDashoffset: 0 },
-      ];
-      if (c < 1) k.push({ offset: c, opacity: 0, strokeDashoffset: 0 });
-      k.push({ offset: 1, opacity: tr.kind === 'shot' ? 0.9 : 0, strokeDashoffset: 0 });
-      run(el, k);
-    });
-    q('[data-fx]').forEach((el) => {
-      const e = script.effects[Number(el.getAttribute('data-fx'))];
-      if (!e) return;
-      const hold = e.kind === 'whistle' || e.kind === 'block' || e.kind === 'post' ? 700 : Infinity;
-      run(el, pop(e.t, D, effectAt(e), hold));
-    });
-    const cap = root.querySelector('[data-caption]');
-    const climax = script.effects.find((e) => e.kind !== 'offsideLine' && e.kind !== 'board')?.t ?? D * 0.7;
-    run(cap, [
-      { offset: 0, opacity: 0 },
-      { offset: Math.min(1, climax / D), opacity: 0 },
-      { offset: Math.min(1, (climax + 200) / D), opacity: 1 },
-      { offset: 1, opacity: 1 },
-    ]);
-
-    const reduce = typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduce) {
-      for (const a of anims) {
-        a.currentTime = D;
-        a.pause();
-      }
-    }
-    // useMotionPause özniteliği CSS animasyonlarını durdurur; WAAPI için gözlemci.
-    const sync = () => {
-      const paused = root.hasAttribute('data-motion-paused');
-      for (const a of anims) {
-        if (paused && a.playState === 'running') a.pause();
-        else if (!paused && !reduce && a.playState === 'paused') a.play();
-      }
+    const start = () => {
+      if (!raf && !paused() && !reducedMotion()) raf = requestAnimationFrame(tick);
     };
-    const mo = typeof MutationObserver === 'function' ? new MutationObserver(sync) : null;
+    loopRef.current = { start };
+    const mo = typeof MutationObserver === 'function' ? new MutationObserver(() => (paused() ? (cancelAnimationFrame(raf), (raf = 0), (last = null)) : start())) : null;
     mo?.observe(root, { attributes: true, attributeFilter: ['data-motion-paused'] });
-    sync();
+    if (worldRef.current && !worldRef.current.resting) start();
     return () => {
       mo?.disconnect();
-      for (const a of anims) a.cancel();
+      cancelAnimationFrame(raf);
+      loopRef.current = null;
     };
-  }, [script]);
+  }, []);
 
-  if (!script) return null;
-  const end = script.durationMs;
-  const last = (tr: Track) => tr.p[tr.p.length - 1] ?? { x: 0, y: 0 };
-  const ballEnd = last(script.ball.track);
-  const kindLabel = t(`commentary.kinds.${item.kind}`);
+  // Yeni plan / yeniden oynatma: dünya önceki durumdan devam eder.
+  useLayoutEffect(() => {
+    const root = ref.current;
+    if (!root || !plan) return;
+    if (reducedMotion() || typeof requestAnimationFrame !== 'function') {
+      const w = simulate(plan, plan.climaxMs + 700);
+      worldRef.current = w;
+      paint(root, w);
+      return;
+    }
+    const w = createWorld(plan, worldRef.current);
+    worldRef.current = w;
+    paint(root, w);
+    loopRef.current?.start();
+  }, [plan, run.n]);
+
+  if (!plan) return null;
+  const item = run.event.item;
+  const kindLabel = plan.disallowed ? t('commentary.scene.disallowed') : t(`commentary.kinds.${item.kind}`);
   const minute = item.minute != null ? `${item.minute}${item.extraMinute ? `+${item.extraMinute}` : ''}'` : '';
+  const start = plan.start;
 
   return (
-    <div className={styles.root} data-scene={item.scene?.type}>
+    <div className={styles.root} data-scene={item.scene.type}>
       <ScaledScene height={SCENE_H} className={styles.stage}>
         <div ref={ref} className={`${turf.turf} ${styles.pitch}`} aria-hidden="true">
           <span className={turf.stripes} />
@@ -240,56 +259,54 @@ function MiniMatch({ item, squads }: { item: CommentaryItem; squads: SceneSquads
           <span className={`${styles.goal} ${styles.goalL}`} />
           <span className={`${styles.goal} ${styles.goalR}`} />
 
-          <svg className={styles.trails} viewBox={`0 0 ${SCENE_W} ${SCENE_H}`} width={SCENE_W} height={SCENE_H}>
-            {script.trails.map((tr, i) => {
-              const mid = { x: (tr.from.x + tr.to.x) / 2, y: (tr.from.y + tr.to.y) / 2 - (tr.kind === 'cross' ? 26 : 0) };
-              return (
+          <div data-layer className={styles.layer}>
+            <svg key={`tr-${run.n}`} className={styles.trails} viewBox={`0 0 ${SCENE_W} ${SCENE_H}`} width={SCENE_W} height={SCENE_H}>
+              {plan.trails.map((tr, i) => (
                 <path
                   key={i}
                   data-trail={i}
                   pathLength={1}
                   className={`${styles.trail} ${tr.kind === 'shot' ? styles.trailShot : ''} ${tr.kind === 'cross' ? styles.trailCross : ''}`}
-                  d={`M${tr.from.x} ${tr.from.y}Q${mid.x} ${mid.y} ${tr.to.x} ${tr.to.y}`}
-                  style={tr.kind === 'shot' && tr.t1 <= end ? { opacity: 0.9, strokeDashoffset: 0 } : undefined}
+                  d={curve(tr, tr.from, tr.to)}
                 />
-              );
-            })}
-          </svg>
+              ))}
+            </svg>
 
-          {script.players.map((p, i) => {
-            const at = last(p.track);
-            return (
-              <span
-                key={`${p.side}-${p.name || i}-${i}`}
-                data-pl={i}
-                className={[styles.pl, p.actor ? styles.plActor : '', p.goingOff ? styles.plOff : ''].filter(Boolean).join(' ')}
-                style={{ transform: translate(at.x, at.y) }}
-              >
-                <span className={`${styles.plDot} ${p.side === 'home' ? styles.kitHome : styles.kitAway}`} />
-              </span>
-            );
-          })}
-          <span data-ref className={styles.ref} style={{ transform: translate(last(script.referee).x, last(script.referee).y) }}>
-            <span />
-          </span>
+            {plan.agents.map((a, i) =>
+              a.referee ? (
+                <span key={a.key} data-pl={i} data-ref className={styles.ref} style={{ transform: translate(start.players[i]!.x, start.players[i]!.y) }}>
+                  <span />
+                </span>
+              ) : (
+                <span
+                  key={a.key}
+                  data-pl={i}
+                  className={[styles.pl, a.actor ? styles.plActor : ''].filter(Boolean).join(' ')}
+                  style={{ transform: translate(start.players[i]!.x, start.players[i]!.y), opacity: a.sub && !plan.fades.some((f) => f.i === i) ? 0 : undefined }}
+                >
+                  <span className={`${styles.plDot} ${a.side === 'away' ? styles.kitAway : styles.kitHome}`} />
+                </span>
+              ),
+            )}
 
-          <span data-ball className={styles.ballGround} style={{ transform: translate(ballEnd.x, ballEnd.y) }}>
-            <span className={styles.ballShadow} />
-            <span data-lift className={styles.ballLift} />
-          </span>
+            <span data-ball className={styles.ballGround} style={start.ball ? { transform: translate(start.ball.x, start.ball.y) } : undefined}>
+              <span className={styles.ballShadow} />
+              <span data-lift className={styles.ballLift} />
+            </span>
+          </div>
 
-          {script.effects.map((e, i) => (
+          {plan.effects.map((e, i) => (
             <span
-              key={i}
+              key={`${run.n}-${i}`}
               data-fx={i}
               className={`${styles.fx} ${FX_CLASS[e.kind]} ${e.kind === 'card' ? (e.red ? styles.cardRed : styles.cardYellow) : ''}`}
-              style={{ transform: effectAt(e), opacity: e.kind === 'whistle' || e.kind === 'block' || e.kind === 'post' ? 0 : 1 }}
+              style={{ transform: effectAt(e) }}
             >
               {effectNode(e)}
             </span>
           ))}
 
-          <span data-caption className={styles.caption} style={{ opacity: 1 }}>
+          <span data-caption className={styles.caption}>
             {minute ? `${minute} · ` : ''}
             {kindLabel}
           </span>
