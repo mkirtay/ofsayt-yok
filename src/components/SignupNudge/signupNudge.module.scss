@@ -1,9 +1,11 @@
 @use '../../styles/variables' as *;
 
 // Sabit konumlu davet kartı: yerleşimi etkilemez. Mobilde alt menünün üstünde; sağ alttaki Kural Köşesi düğmesine yer bırakır.
+// Katman: Kural Köşesi düğmesi (92) ve alt balonların (93/94) üstü, Header'ın (100) altı — açık hamburger menü kartın
+// üstünde kalmalı (100'de eşitlikte DOM sırası kartı öne alıyor, menünün Giriş/Üye ol düğmelerini kapatıyordu).
 .nudge {
   position: fixed;
-  z-index: 100;
+  z-index: 96;
   left: $spacing-3;
   bottom: $spacing-3;
   display: flex;
