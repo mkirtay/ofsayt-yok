@@ -397,7 +397,7 @@
     "moveUp_one": "Maç öncesine göre 1 basamak yükseldi",
     "moveDown": "Maç öncesine göre {{count}} basamak geriledi",
     "moveDown_one": "Maç öncesine göre 1 basamak geriledi",
-    "pointsBefore": "Maç öncesi {{points}} puan",
+    "pointsIfFinal": "Maç böyle biterse {{points}} puan",
     "pointsGain": "Canlı sonuçla +{{count}} puan",
     "liveLine": "Canlı maç: {{opponent}} karşısında {{score}}, {{minute}}",
     "favorite": "Favori takım",

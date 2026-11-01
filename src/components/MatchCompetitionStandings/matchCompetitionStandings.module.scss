@@ -235,7 +235,7 @@ $summary-max: 439.98px;
   }
 }
 
-// Puan: her zaman nötr ve kalın; canlı katkı ayrı küçük "+1" ile (yalnız renge dayanmaz).
+// Puan: her zaman nötr ve kalın; canlıda maç öncesi puan, canlı katkı ayrı küçük "+1" ile (yalnız renge dayanmaz).
 .pointsValue {
   display: inline-block;
   min-width: 2ch;
@@ -250,9 +250,10 @@ $summary-max: 439.98px;
   width: 2.4ch;
   margin-left: 1px;
   text-align: left;
+  border-radius: 3px;
   font-size: 9px;
   font-weight: 700;
-  color: $color-text-secondary;
+  color: var(--st-up);
   vertical-align: 3px;
 }
 

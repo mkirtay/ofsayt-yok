@@ -86,8 +86,9 @@ describe('<MatchCompetitionStandings live /> canlı puan durumu', () => {
   it('puan nötr ve kalın; canlı katkı ayrı "+3" ile; canlı oynayan takımın altında skor/rakip/dakika', () => {
     const html = render({ live: LIVE, liveMatches: MATCHES });
     const r2 = rowOf(html, 2);
-    expect(r2).toMatch(/pointsValue[^>]*>19</);
-    expect(r2).toMatch(/pointsDelta[^>]*title="Maç öncesi 16 puan"><span aria-hidden="true">\+3</);
+    // Maç öncesi puan yazılır; canlı katkı yanında "+3", sonuç ipucu başlıkta.
+    expect(r2).toMatch(/pointsValue[^>]*>16</);
+    expect(r2).toMatch(/pointsDelta[^>]*title="Maç böyle biterse 19 puan"><span aria-hidden="true">\+3</);
     expect(r2).toContain('Canlı sonuçla +3 puan');
     expect(r2).toMatch(/liveScore[^>]*>1–0<\/b> T31<span class="[^"]*liveClock[^"]*"> · 71&#x27;/);
     expect(r2).toContain('Canlı maç: Takım 31 karşısında 1–0, 71&#x27;');

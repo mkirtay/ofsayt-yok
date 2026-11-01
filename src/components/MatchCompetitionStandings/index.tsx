@@ -382,12 +382,18 @@ function StandingsTable({
                   <td className={`${styles.colForm} ${styles.colOpt}`}>{row.form?.length ? <FormDots form={row.form} /> : null}</td>
                 ) : null}
                 <td className={styles.colPoints}>
-                  <span className={styles.pointsValue} data-flash={`${tid}:points`} data-flash-value={String(points)}>
-                    {points}
+                  {/* Canlıda maç öncesi puan yazılır; canlı katkı "+3" yanında, henüz eklenmemiş gibi durur. */}
+                  <span className={styles.pointsValue} data-flash={`${tid}:points`} data-flash-value={String(points - pointsDelta)}>
+                    {points - pointsDelta}
                   </span>
                   {/* Canlı tabloda her satırda aynı genişlikte yuva: puanlar alt alta hizalı kalır. */}
                   {result.live ? (
-                    <span className={styles.pointsDelta} title={pointsDelta > 0 ? t("standings.pointsBefore", { points: points - pointsDelta }) : undefined}>
+                    <span
+                      className={styles.pointsDelta}
+                      data-flash={`${tid}:pointsDelta`}
+                      data-flash-value={String(pointsDelta)}
+                      title={pointsDelta > 0 ? t("standings.pointsIfFinal", { points }) : undefined}
+                    >
                       {pointsDelta > 0 ? (
                         <>
                           <span aria-hidden="true">{`+${pointsDelta}`}</span>

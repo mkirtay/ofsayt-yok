@@ -402,7 +402,7 @@
     "moveUp_one": "Up 1 place from the pre-match table",
     "moveDown": "Down {{count}} places from the pre-match table",
     "moveDown_one": "Down 1 place from the pre-match table",
-    "pointsBefore": "{{points}} pts before kick-off",
+    "pointsIfFinal": "{{points}} pts if it ends like this",
     "pointsGain": "+{{count}} pts from the live result",
     "liveLine": "Live: {{score}} against {{opponent}}, {{minute}}",
     "favorite": "Favourite team",
