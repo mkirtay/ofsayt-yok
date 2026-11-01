@@ -14,6 +14,7 @@ type Events = {
   frikik_login_prompt_shown: { level: number };
   frikik_login_from_game: { level: number };
   frikik_card_click: { entry: FrikikEntry };
+  frikik_focus: { level: number };
 };
 
 export function trackFrikik<K extends keyof Events>(event: K, props: Events[K]): void {

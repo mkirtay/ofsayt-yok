@@ -399,16 +399,33 @@ export function mountFrikik(host: HTMLElement, opts: FrikikOptions): FrikikHandl
 
   const frameCamera = () => {
     if (!round) return;
-    const portrait = width / height < 1;
-    // Dar açılı (tele) kamera topun epey arkasında: kale büyük görünür, top kadrajın altında (kaydırma yukarı doğru).
-    const back = portrait ? 9 : 10;
-    const up = portrait ? 2.9 : 2.5;
-    camera.fov = portrait ? 46 : 28;
-    camera.updateProjectionMatrix();
+    const aspect = width / height;
+    if (aspect >= 1) {
+      // Yatay: dar açılı (tele) kamera topun epey arkasında, kale büyük, top kadrajın altında (kaydırma yukarı doğru).
+      camera.fov = 28;
+      camera.updateProjectionMatrix();
+      camPosTarget.set(round.ball.x - basis.fx * 10, 2.5, round.ball.z - basis.fz * 10);
+      camLookTarget.set(0, 0.3, 0);
+      return;
+    }
+    // Dikey (telefon): kadraj sığdırılır — top alttan ~%18'de, üst direğin biraz üstü üstten ~%22'de. Kale (+ iki yanda
+    // pay) yatayda sığmıyorsa açı genişler; artan dikey alan tribüne gitmesin diye kamera yükselir (yayın açısı, baraj
+    // üstünden kale daha açık). Sabit geniş açı tribünü büyütüp kaleyi küçültüyordu.
+    const back = 10;
+    const NDC_BALL = -0.64;
+    const NDC_TOP = 0.56;
+    const dGoal = Math.hypot(round.ball.x, round.ball.z) + back;
+    const needX = Math.atan2(GOAL.halfW * round.goalScale + 1.2, dGoal);
+    const span = (h: number) => Math.atan2(GOAL.height + 0.5 - h, dGoal) - Math.atan2(BALL_R - h, back);
+    const halfX = Math.atan(Math.tan(needX) / aspect);
+    let up = 2.9;
+    while (up < 5.5 && span(up) < halfX * (NDC_TOP - NDC_BALL)) up += 0.1;
+    const half = Math.min((25 * Math.PI) / 180, Math.max(span(up) / (NDC_TOP - NDC_BALL), halfX));
+    const pitch = Math.atan2(BALL_R - up, back) - NDC_BALL * half;
     camPosTarget.set(round.ball.x - basis.fx * back, up, round.ball.z - basis.fz * back);
-    // Bakış yüksekliği: top kadrajın ~%75–80'inde, kale orta-üst bölgede (üstte boş gökyüzü az) kalacak şekilde
-    const lookY = portrait ? 0.2 : 0.3;
-    camLookTarget.set(0, lookY, 0);
+    camera.fov = (half * 360) / Math.PI;
+    camera.updateProjectionMatrix();
+    camLookTarget.set(0, up + dGoal * Math.tan(pitch), 0);
   };
 
   const beginRound = (i: number) => {

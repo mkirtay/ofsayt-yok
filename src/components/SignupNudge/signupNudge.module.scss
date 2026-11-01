@@ -4,6 +4,11 @@
 // Katman: Kural Köşesi düğmesi (92) ve alt balonların (93/94) üstü, Header'ın (100) altı — açık hamburger menü kartın
 // üstünde kalmalı (100'de eşitlikte DOM sırası kartı öne alıyor, menünün Giriş/Üye ol düğmelerini kapatıyordu).
 .nudge {
+  // Oyun alanı ekrandayken (Frikik) sahanın üstüne binmesin.
+  :global(html[data-game-active]) & {
+    display: none;
+  }
+
   position: fixed;
   z-index: 96;
   left: $spacing-3;

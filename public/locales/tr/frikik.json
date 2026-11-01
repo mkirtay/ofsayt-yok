@@ -11,7 +11,9 @@
     "lives": "{{n}}/{{total}} can",
     "wind": "Rüzgâr, kademe {{n}}",
     "windShort": "Rüzgâr",
-    "dist": "Mesafe: {{m}} m"
+    "dist": "Mesafe: {{m}} m",
+    "focus": "Oyuna odaklan (tam ekran)",
+    "exitFocus": "Tam ekrandan çık"
   },
   "goal": "GOL!",
   "result": {

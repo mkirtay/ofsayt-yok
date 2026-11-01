@@ -11,7 +11,9 @@
     "lives": "{{n}}/{{total}} lives",
     "wind": "Wind, strength {{n}}",
     "windShort": "Wind",
-    "dist": "Distance: {{m}} m"
+    "dist": "Distance: {{m}} m",
+    "focus": "Focus on the game (full screen)",
+    "exitFocus": "Exit full screen"
   },
   "goal": "GOAL!",
   "result": {

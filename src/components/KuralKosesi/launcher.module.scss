@@ -7,6 +7,11 @@
 // ve tam ekran katmanların altı.
 
 .launcher {
+  // Oyun alanı ekrandayken (Frikik, GAME_ACTIVE_ATTR) sahanın üstüne binmesin.
+  :global(html[data-game-active]) & {
+    display: none;
+  }
+
   @include motion-root;
   position: fixed;
   right: 16px;
@@ -72,6 +77,11 @@
 // AI Asistan ✦ balonu: düdüğün aynı kenarında, 12 px üstünde (52 px; düdükle ortalı → kenardan 2 px içeride).
 // Konum düdükle aynı transform'u alır (Launcher.tsx); sürüklerken gizlenir, bırakınca yeni yere yerleşir.
 .assistant {
+  // Oyun alanı ekrandayken (Frikik, GAME_ACTIVE_ATTR) sahanın üstüne binmesin.
+  :global(html[data-game-active]) & {
+    display: none;
+  }
+
   position: fixed;
   right: 18px;
   bottom: calc(var(--bottom-nav-height) + 16px + var(--safe-bottom) + 56px + 12px);
@@ -143,6 +153,11 @@
 }
 
 .peek {
+  // Oyun alanı ekrandayken (Frikik, GAME_ACTIVE_ATTR) sahanın üstüne binmesin.
+  :global(html[data-game-active]) & {
+    display: none;
+  }
+
   --peek-bg: var(--bg-surface);
   --peek-label: var(--color-action-text);
   --peek-text: var(--text-primary);

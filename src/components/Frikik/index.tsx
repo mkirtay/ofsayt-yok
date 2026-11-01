@@ -21,6 +21,8 @@ const loadScene = () => import("./frikikScene");
 
 type Mode = "boot" | "reduced" | "nowebgl" | "game";
 const TIP_SEEN_KEY = "oy_frikik_tip";
+/** Oyun alanı görünürken <html>'e konur: sağ alttaki yüzen düğmeler (Kural Köşesi, AI) ve üye ol kartı gizlenir. */
+export const GAME_ACTIVE_ATTR = "data-game-active";
 /** Pano reklam iletişim adresi (derlemede gömülür); tanımlı değilse satır hiç çizilmez (yer tutucu canlıya çıkmaz). */
 const AD_CONTACT = process.env.NEXT_PUBLIC_FRIKIK_AD_CONTACT?.trim() || "";
 
@@ -88,6 +90,10 @@ export default function Frikik({ shared }: { shared: ShareInfo | null }) {
   const signedIn = sessionStatus === "authenticated" && !!session?.user;
   const langRef = useRef<"tr" | "en">("tr");
   const hostRef = useRef<HTMLDivElement>(null);
+  const stageRef = useRef<HTMLDivElement>(null);
+  /** "Oyuna odaklan": alan tüm ekranı kaplar (başlık / alt menü üstte kalmaz); destekleyen tarayıcıda gerçek tam ekran. */
+  const [focus, setFocus] = useState(false);
+  const nativeFullscreenRef = useRef(false);
   const sceneRef = useRef<FrikikHandle | null>(null);
   const [mode, setMode] = useState<Mode>("boot");
   const [ready, setReady] = useState(false);
@@ -290,6 +296,64 @@ export default function Frikik({ shared }: { shared: ShareInfo | null }) {
     };
   }, [mode, startGame]);
 
+  // Oyun alanı ekrandayken yüzen düğmeler sahanın üstüne binmesin (sayfa aşağı kayınca geri gelir).
+  useEffect(() => {
+    const stage = stageRef.current;
+    if (mode !== "game" || !stage || typeof IntersectionObserver === "undefined") return;
+    const root = document.documentElement;
+    const io = new IntersectionObserver(([e]) => root.toggleAttribute(GAME_ACTIVE_ATTR, !!e?.isIntersecting), { threshold: 0.3 });
+    io.observe(stage);
+    return () => {
+      io.disconnect();
+      root.removeAttribute(GAME_ACTIVE_ATTR);
+    };
+  }, [mode]);
+
+  const enterFocus = () => {
+    setFocus(true);
+    trackFrikik("frikik_focus", { level: info.level });
+    const stage = stageRef.current;
+    // iPhone Safari öğe tam ekranını desteklemez: orada yalnız sabit katman (tarayıcı çubukları kalır)
+    if (stage?.requestFullscreen && !document.fullscreenElement) {
+      stage.requestFullscreen({ navigationUI: "hide" }).then(
+        () => {
+          nativeFullscreenRef.current = true;
+        },
+        () => {},
+      );
+    }
+  };
+
+  const exitFocus = () => {
+    setFocus(false);
+    if (nativeFullscreenRef.current && document.fullscreenElement) void document.exitFullscreen().catch(() => {});
+    nativeFullscreenRef.current = false;
+  };
+
+  // Odak modunda sayfa kaymaz; Esc ya da tarayıcının tam ekrandan çıkışı modu kapatır.
+  useEffect(() => {
+    if (!focus) return;
+    const root = document.documentElement;
+    const prevOverflow = root.style.overflow;
+    root.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setFocus(false);
+    };
+    const onFs = () => {
+      if (!document.fullscreenElement && nativeFullscreenRef.current) {
+        nativeFullscreenRef.current = false;
+        setFocus(false);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    document.addEventListener("fullscreenchange", onFs);
+    return () => {
+      root.style.overflow = prevOverflow;
+      window.removeEventListener("keydown", onKey);
+      document.removeEventListener("fullscreenchange", onFs);
+    };
+  }, [focus]);
+
   const closeTip = () => {
     setTipOpen(false);
     try {
@@ -400,7 +464,9 @@ export default function Frikik({ shared }: { shared: ShareInfo | null }) {
       ) : null}
 
       <div
+        ref={stageRef}
         className={styles.stage}
+        data-focus={focus ? "" : undefined}
         role="application"
         aria-label={t("stageLabel")}
       >
@@ -446,6 +512,18 @@ export default function Frikik({ shared }: { shared: ShareInfo | null }) {
                 <span className={styles.score}>
                   {t("hud.score", { score: total })}
                 </span>
+                <button
+                  type="button"
+                  className={styles.focusBtn}
+                  onClick={focus ? exitFocus : enterFocus}
+                  aria-label={t(focus ? "hud.exitFocus" : "hud.focus")}
+                  title={t(focus ? "hud.exitFocus" : "hud.focus")}
+                  aria-pressed={focus}
+                >
+                  <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                    <path d={focus ? "M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" : "M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"} />
+                  </svg>
+                </button>
               </div>
             </div>
             {!ready ? (
