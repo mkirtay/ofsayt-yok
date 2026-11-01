@@ -28,34 +28,30 @@ type Props = {
   match: Match | null;
 };
 
-function PreviewSkeleton({ homeName, awayName, t }: { homeName?: string; awayName?: string; t: (key: string) => string }) {
+/** Girişsiz önizleme: yalnız gri çubuklar – gerçek/örnek metin HTML'e basılmaz (ekran okuyucu + arama motoru). */
+function PreviewSkeleton() {
   return (
-    <div>
+    <div className={styles.lockedPreview} aria-hidden="true" data-nosnippet="">
       <div className={styles.section}>
-        <h4 className={styles.sectionTitle}>{t('trivia.unknowns')}</h4>
+        <span className={`${styles.skeletonBar} ${styles.skeletonTitle}`} />
         <ul className={styles.factsList}>
-          <li className={styles.factItem}>
-            Bu iki takım son 10 karşılaşmasının 7&apos;sinde en az 3 gol gördü.
-          </li>
-          <li className={styles.factItem}>
-            {homeName ?? 'Ev sahibi'} bu statta son 5 maçında hiç beraberlik yaşamadı.
-          </li>
-          <li className={styles.factItem}>
-            {awayName ?? 'Deplasman'} deplasmanlarında son 8 maçın 6&apos;sında gol attı.
-          </li>
+          {['92%', '78%', '85%'].map((w) => (
+            <li key={w} className={styles.factItem}>
+              <span className={styles.skeletonBar} style={{ width: w }} />
+            </li>
+          ))}
         </ul>
       </div>
       <div className={styles.section}>
-        <h4 className={styles.sectionTitle}>{t('trivia.rivalry')}</h4>
-        <p className={styles.narrative}>
-          Bu iki takım arasındaki tarihi rekabet onlarca yıla yayılan...
-        </p>
+        <span className={`${styles.skeletonBar} ${styles.skeletonTitle}`} />
+        <span className={styles.skeletonBar} />
+        <span className={styles.skeletonBar} style={{ width: '64%' }} />
       </div>
     </div>
   );
 }
 
-export default function MatchTrivia({ matchId, match }: Props) {
+export default function MatchTrivia({ matchId }: Props) {
   const { t } = useTranslation('match');
   const { status } = useSession();
   const sessionLoading = status === 'loading';
@@ -127,9 +123,7 @@ export default function MatchTrivia({ matchId, match }: Props) {
           </h3>
         </div>
         <div className={styles.lockedWrap}>
-          <div className={styles.lockedPreview}>
-            <PreviewSkeleton homeName={match?.home?.name} awayName={match?.away?.name} t={t} />
-          </div>
+          <PreviewSkeleton />
           <div className={styles.lockedOverlay}>
             <h4 className={styles.lockedTitle}>{t('trivia.lockedTitle')}</h4>
             <p className={styles.lockedSubtitle}>{t('trivia.lockedDesc')}</p>

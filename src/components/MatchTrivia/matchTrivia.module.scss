@@ -111,10 +111,24 @@
 }
 
 .lockedPreview {
-  filter: blur(6px);
   pointer-events: none;
   user-select: none;
-  opacity: 0.6;
+}
+
+// Girişsiz önizleme: metin yerine gri boş çubuklar.
+.skeletonBar {
+  display: block;
+  height: 10px;
+  width: 100%;
+  margin: 5px 0;
+  border-radius: $radius-full;
+  background: color-mix(in srgb, $color-text-secondary 22%, transparent);
+}
+
+.skeletonTitle {
+  width: 30%;
+  height: 9px;
+  margin: 0 0 $spacing-3;
 }
 
 .lockedOverlay {
