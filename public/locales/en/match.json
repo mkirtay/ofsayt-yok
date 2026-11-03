@@ -249,7 +249,7 @@
     "pre": "Commentary will appear here once the match kicks off.",
     "empty": "No commentary for this match.",
     "emptyFilter": "No entries for this filter.",
-    "scene": { "note": "Illustrative animation – not real positions", "play": "Play scene" , "kickoffNote": "Illustrative line-up – waiting for kick-off", "disallowed": "Goal – disallowed" }
+    "scene": { "note": "Illustrative animation – not real positions", "play": "Play scene" , "kickoffNote": "Illustrative line-up – waiting for kick-off", "disallowed": "Goal – disallowed", "replay": "Replay", "replayLabel": "Replay the scene", "speedLabel": "Playback speed", "legend": "Team colours" }
   },
   "news": {
     "loading": "Loading news...",

@@ -5,13 +5,16 @@
  *
  * - Hız/ivme sınırı, hedefe yaklaşırken frenleme, keskin dönüşte yavaşlama.
  * - Takım şekli hedefleri yumuşatılır ve 3 px altındaki değişimler yok sayılır (titreme / sağa-sola salınım olmaz).
- * - Ölçülü ayrıştırma: 11 px'ten yakın iki oyuncu hafifçe itilir (temas hareketleri hariç); fizik motoru yok.
+ * - Ölçülü ayrıştırma: `gap`ten (nokta çapı, ekranda büyütülmüşse o kadar) yakın iki oyuncu hafifçe itilir (temas hareketleri
+ *   hariç); fizik motoru yok.
+ * - Ofsayt: şekilden yürüyen hücumcunun hedefi, savunanların o anki ikinci son oyuncusu ve top çizgisini geçmez.
  * - Top kendi zaman çizelgesiyle uçar; sürerken sahibine bağlıdır, uçuşta bağımsızdır; alıcı topa yetişmeden top ona geçmez.
  * - Yeni sahne önceki durumdan devam eder: yakınsa oyuncular kısa bir girişte yerlerine koşar, çok uzaksa kısa bir
  *   kararma geçişi (ışınlanma yerine açıkça sahne değişimi).
  */
-import { SCENE_W } from './sceneLayout';
+import { SCENE_H, SCENE_W, lane } from './sceneLayout';
 import { PACE, dist, frame, lerp, refereeSpot, shapeAt, type BallSeg, type Move, type Pace, type ScenePlan, type Vec } from './scenePlan';
+import { MIN_GAP, OFFSIDE_MARGIN, offsideLine } from './sceneRules';
 
 /** Tek adımın en büyük süresi (ms). */
 export const MAX_DT = 50;
@@ -19,17 +22,21 @@ export const MAX_DT = 50;
 const ACCEL = 170;
 const DIVE_ACCEL = 900;
 const BRAKE = 120;
-/** Yakın oyuncuların ayrıştırma mesafesi (px). */
-const SEPARATION = 11;
+/** Yakın oyuncuların varsayılan ayrıştırma mesafesi (px): kuraldaki en küçük aralık (nokta çapı × 1,2) + pay. */
+export const SEPARATION = MIN_GAP + 0.5;
+/** Kesin ayırma eşiği (`gap` oranı): bunun altına inen çift anında ayrılır (≈ nokta çapı). */
+const HARD_GAP = 0.86;
 /** Bundan uzak yerleşimde kısa kararma geçişi (px). */
 export const CUT_DISTANCE = 150;
 const CUT_OUT = 180;
 const CUT_IN = 280;
 const MAX_LEAD_IN = 1300;
+const MAX_ROLE_LEAD_IN = 2600;
 /** Top bundan uzaktaysa (ya da duran topta 12 px) top kısa sönüp yeni yerinde belirir. */
 const BALL_CUT = 70;
 
-export type Body = { key: string; pos: Vec; vel: Vec; goal: Vec | null; filt: Vec | null; opacity: number };
+/** `off`: ayrıştırmanın şekil hedefine eklediği kalıcı kayma (yavaş söner) — itilen oyuncu aynı noktaya geri dönmeye çalışıp titremez. */
+export type Body = { key: string; pos: Vec; vel: Vec; goal: Vec | null; filt: Vec | null; opacity: number; off: Vec };
 
 export type BallState = {
   pos: Vec;
@@ -60,6 +67,10 @@ export type World = {
   trailFrom: (Vec | null)[];
   swapped: boolean;
   resting: boolean;
+  /** Ayrıştırma mesafesi (px); bileşen dar ekranda noktalar büyüyünce artırır. */
+  gap: number;
+  /** Bu karedeki ofsayt sınırı (hücum çerçevesinde u); oyun duruksa 1. */
+  line: number;
 };
 
 const ZERO: Vec = { x: 0, y: 0 };
@@ -81,8 +92,8 @@ export function createWorld(plan: ScenePlan, prev: World | null = null): World {
     const old = byKey.get(a.key);
     const start = plan.start.players[i]!;
     // Kenardaki yedek her sahnede kendi başlangıcından (çıkıp girdiği yerden) başlar.
-    if (!old || a.sub) return { key: a.key, pos: { ...start }, vel: { ...ZERO }, goal: null, filt: null, opacity: initialOpacity(plan, i) };
-    return { key: a.key, pos: { ...old.pos }, vel: { ...old.vel }, goal: null, filt: null, opacity: 1 };
+    if (!old || a.sub) return { key: a.key, pos: { ...start }, vel: { ...ZERO }, goal: null, filt: null, opacity: initialOpacity(plan, i), off: { ...ZERO } };
+    return { key: a.key, pos: { ...old.pos }, vel: { ...old.vel }, goal: null, filt: null, opacity: 1, off: { ...old.off } };
   });
   const ballStart = plan.start.ball;
   const prevBall = prev?.ball.pos ?? ballStart ?? { x: SCENE_W / 2, y: 160 };
@@ -99,6 +110,8 @@ export function createWorld(plan: ScenePlan, prev: World | null = null): World {
     trailFrom: plan.trails.map(() => null),
     swapped: false,
     resting: false,
+    gap: prev?.gap ?? SEPARATION,
+    line: 1,
   };
   if (!prev) {
     world.ball.pos = { ...(ballStart ?? prevBall) };
@@ -116,6 +129,14 @@ export function createWorld(plan: ScenePlan, prev: World | null = null): World {
   }
   const far = gaps[2] ?? 0;
   world.leadIn = Math.min(MAX_LEAD_IN, (far / PACE.run) * 1000 + (far > 4 ? 250 : 0));
+  // Rolü olanlar (top sahibi, vuran, ilk saniyede koşan) başlangıç yerine yetişmeli: uzaksa giriş uzar, çok uzaksa kararma.
+  const roles = roleAgents(plan);
+  const roleGap = Math.max(0, ...[...roles].map((i) => dist(bodies[i]!.pos, plan.start.players[i]!)));
+  if (roleGap > CUT_DISTANCE) {
+    world.cut = 0;
+    return world;
+  }
+  if (roleGap > 4) world.leadIn = Math.max(world.leadIn, Math.min(MAX_ROLE_LEAD_IN, (roleGap / PACE.sprint) * 1000 + 350));
   if (ballStart) {
     const d = dist(world.ball.pos, ballStart);
     if (d > BALL_CUT || (plan.start.ballDead && d > 12)) world.ball.cut = { t: 0, to: { ...ballStart } };
@@ -126,6 +147,15 @@ export function createWorld(plan: ScenePlan, prev: World | null = null): World {
   }
   world.t = -world.leadIn;
   return world;
+}
+
+/** Planda rolü olan oyuncular: topu tutan / süren, denetim anındaki vuran, ilk yarım saniyede rol hedefi olanlar. */
+function roleAgents(plan: ScenePlan): Set<number> {
+  const out = new Set<number>();
+  for (const s of plan.ball) if (s.kind === 'carry' || s.kind === 'hold') out.add(s.owner);
+  if (plan.check?.shooter != null) out.add(plan.check.shooter);
+  for (const m of plan.moves) if (m.t0 < 500 && !plan.agents[m.i]!.referee && !plan.agents[m.i]!.sub) out.add(m.i);
+  return out;
 }
 
 function applySwap(w: World) {
@@ -255,6 +285,19 @@ export function stepWorld(w: World, dtMs: number): void {
   } else w.presser = null;
 
   const settling = t >= plan.actionEndMs;
+  // Ofsayt sınırı (hücum çerçevesinde u): savunanların o anki ikinci son oyuncusu ya da top, eksi pay.
+  const A = frame(plan.side, plan.flip);
+  const line = plan.inPlay
+    ? Math.max(
+        offsideLine(
+          w.bodies.map((b, i) => ({ side: plan.agents[i]!.side ?? plan.side, pos: b.pos })).filter((_, i) => !plan.agents[i]!.referee && !plan.agents[i]!.sub && w.bodies[i]!.opacity > 0.5),
+          plan.side,
+          lane(plan.side, plan.flip),
+        ),
+        A.u(w.ball.pos),
+      ) - OFFSIDE_MARGIN
+    : 1;
+  w.line = Math.min(line, plan.holdLine ?? 1);
   w.bodies.forEach((b, i) => {
     const agent = plan.agents[i]!;
     let target: Vec;
@@ -288,11 +331,11 @@ export function stepWorld(w: World, dtMs: number): void {
       target = b.pos;
       pace = 'walk';
     } else if (agent.referee) {
-      target = refereeSpot(plan.side, w.ballRef);
+      target = refereeSpot(plan.side, w.ballRef, plan.flip);
       pace = plan.inPlay && !settling ? 'run' : 'jog';
     } else if (i === w.presser) {
       // Topla kendi kalesi arasında, 15 px yakında.
-      const ownGoal = frame(defend).P(0, 0);
+      const ownGoal = frame(defend, plan.flip).P(0, 0);
       target = lerp(w.ball.pos, ownGoal, 15 / Math.max(15, dist(w.ball.pos, ownGoal)));
       pace = 'run';
       forced = true;
@@ -300,7 +343,7 @@ export function stepWorld(w: World, dtMs: number): void {
       target = agent.home;
       pace = 'jog';
     } else {
-      target = shapeAt(agent, plan.side, w.ballRef);
+      target = shapeAt(agent, plan.side, w.ballRef, plan.flip);
       pace = plan.inPlay && !settling ? (dist(b.pos, target) > 40 ? 'run' : 'jog') : dist(b.pos, target) > 30 ? 'jog' : 'walk';
     }
 
@@ -310,12 +353,22 @@ export function stepWorld(w: World, dtMs: number): void {
       b.filt = null;
     } else {
       b.filt = b.filt ? lerp(b.filt, target, 1 - Math.exp(-step / 300)) : { ...target };
-      if (!b.goal || dist(b.filt, b.goal) > 3) b.goal = { ...b.filt };
+      // Kayma yavaş söner; plan bitince donar (yeni veri yokken hareket üretmez).
+      if (t < plan.durationMs) b.off = { x: b.off.x * Math.exp(-step / 6000), y: b.off.y * Math.exp(-step / 6000) };
+      let want = { x: b.filt.x + b.off.x, y: b.filt.y + b.off.y };
+      if (agent.side === plan.side && !agent.goalkeeper && A.u(want) > 0.5 && A.u(want) > w.line) want = A.P(Math.max(0.5, w.line), A.s(want));
+      if (!b.goal || dist(want, b.goal) > 3) b.goal = want;
     }
     steer(b, b.goal, PACE[pace], pace === 'dive' ? DIVE_ACCEL : ACCEL, dt);
   });
 
   separate(w, dt);
+  // Oyuncular saha içinde kalır (itme kimseyi çizgi dışına atmaz); rol hedefi saha dışı olanlar (kenara çıkan) hariç.
+  w.bodies.forEach((b, i) => {
+    const m = activeMove(plan.moves, i, t);
+    if (plan.agents[i]!.sub || (m && (m.to.x < 10 || m.to.x > SCENE_W - 10 || m.to.y < 10 || m.to.y > SCENE_H - 10))) return;
+    b.pos = { x: Math.min(SCENE_W - 9, Math.max(9, b.pos.x)), y: Math.min(SCENE_H - 9, Math.max(9, b.pos.y)) };
+  });
   updateFades(w);
   if (plan.swap && !w.swapped && t >= plan.durationMs) applySwap(w);
   // Dinlenme: plan bitti ve herkes durdu (ayrıştırmanın tuttuğu ufak farklar hareket sayılmaz) → döngü durur.
@@ -340,8 +393,14 @@ function updateFades(w: World) {
 /** Ölçülü ayrıştırma: çok yakın iki görünür oyuncu birbirinden hafifçe itilir; temas hareketindekiler hariç. */
 function separate(w: World, dt: number) {
   const { bodies, plan, t } = w;
+  const before = bodies.map((b) => ({ ...b.pos }));
+  const chk = plan.check;
+  const anchored = (i: number) => i === w.ball.owner || (chk?.shooter === i && t >= chk.t - 1500 && t <= chk.t + 100);
   const contact = bodies.map((_, i) => !!activeMove(plan.moves, i, t)?.contact);
   const k = Math.min(1, dt * 8);
+  const A = frame(plan.side, plan.flip);
+  /** Ofsayt çizgisindeki hücumcu: savunmacıyla yalnız yana ayrışır (ileri itilip çizgiye geri çekilerek titremesin). */
+  const onLine = (i: number) => plan.agents[i]!.side === plan.side && A.u(bodies[i]!.pos) > w.line - 0.04;
   for (let i = 0; i < bodies.length; i++) {
     const a = bodies[i]!;
     if (a.opacity < 0.5) continue;
@@ -351,19 +410,60 @@ function separate(w: World, dt: number) {
       const dx = b.pos.x - a.pos.x;
       const dy = b.pos.y - a.pos.y;
       const d = Math.hypot(dx, dy);
-      if (d >= SEPARATION) continue;
-      const nx = d > 1e-3 ? dx / d : Math.cos(i * 2.39 + j);
-      const ny = d > 1e-3 ? dy / d : Math.sin(i * 2.39 + j);
-      const push = ((SEPARATION - d) / 2) * k;
+      if (d >= w.gap) continue;
+      let nx = d > 1e-3 ? dx / d : Math.cos(i * 2.39 + j);
+      let ny = d > 1e-3 ? dy / d : Math.sin(i * 2.39 + j);
+      const sides = plan.agents[i]!.side !== plan.agents[j]!.side;
+      if (sides && (onLine(i) || onLine(j))) {
+        nx = 0;
+        ny = dy >= 0 ? 1 : -1;
+      }
+      const push = ((w.gap - d) / 2) * k;
       // Rol hedefindeki (koşan, kaleci) oyuncu daha az itilir.
       const wa = activeMove(plan.moves, i, t) ? 0.3 : 1;
       const wb = activeMove(plan.moves, j, t) ? 0.3 : 1;
       a.pos = { x: a.pos.x - nx * push * wa, y: a.pos.y - ny * push * wa };
       b.pos = { x: b.pos.x + nx * push * wb, y: b.pos.y + ny * push * wb };
-      // Şekil hedefi de kayar: itilen oyuncu aynı noktaya geri dönmeye çalışıp titremez.
-      if (a.goal && !activeMove(plan.moves, i, t)) a.goal = { x: a.goal.x - nx * push * wa, y: a.goal.y - ny * push * wa };
-      if (b.goal && !activeMove(plan.moves, j, t)) b.goal = { x: b.goal.x + nx * push * wb, y: b.goal.y + ny * push * wb };
+      // Şekil hedefi de kayar (kalıcı kayma olarak): itilen oyuncu aynı noktaya geri dönmeye çalışıp titremez.
+      if (a.goal && !activeMove(plan.moves, i, t)) {
+        a.goal = { x: a.goal.x - nx * push * wa, y: a.goal.y - ny * push * wa };
+        a.off = { x: a.off.x - nx * push * wa, y: a.off.y - ny * push * wa };
+      }
+      if (b.goal && !activeMove(plan.moves, j, t)) {
+        b.goal = { x: b.goal.x + nx * push * wb, y: b.goal.y + ny * push * wb };
+        b.off = { x: b.off.x + nx * push * wb, y: b.off.y + ny * push * wb };
+      }
+      // Kesin sınır: noktalar asla üst üste binmez (rol hedefleri çakışsa da) — çapın altına inen çift ayrılır.
+      const hard = w.gap * HARD_GAP;
+      const d2 = Math.hypot(b.pos.x - a.pos.x, b.pos.y - a.pos.y);
+      if (d2 < hard) {
+        const need = hard - d2;
+        // Top sahibi / vuruşa hazırlanan yerinden itilmez (top ayağından kopmasın); diğeri yol verir.
+        const ha = anchored(i) ? 0 : wa;
+        const hb = anchored(j) ? 0 : wb;
+        const sa = ha + hb > 0 ? ha / (ha + hb) : 0.5;
+        // Birbirine yaklaşma hızı kesilir (ikisi de durur gibi yaslanır, hız artmaz); kalan çakışma yürüme hızıyla açılır —
+        // itme ışınlanma ya da sprintten hızlı kayma gibi görünmez.
+        const closing = (b.vel.x - a.vel.x) * nx + (b.vel.y - a.vel.y) * ny;
+        if (closing < 0) {
+          a.vel = { x: a.vel.x + nx * closing * sa, y: a.vel.y + ny * closing * sa };
+          b.vel = { x: b.vel.x - nx * closing * (1 - sa), y: b.vel.y - ny * closing * (1 - sa) };
+        }
+        const cap = PACE.walk * dt;
+        const ma = Math.min(need * sa, cap);
+        const mb = Math.min(need * (1 - sa), cap);
+        a.pos = { x: a.pos.x - nx * ma, y: a.pos.y - ny * ma };
+        b.pos = { x: b.pos.x + nx * mb, y: b.pos.y + ny * mb };
+      }
     }
+  }
+  // İtme kimseyi ofsayta sokmaz: çizgiyi geçen hücumcu (rol koşusu olmayan) çizgide kalır.
+  if (w.line < 1) {
+    bodies.forEach((b, i) => {
+      if (plan.agents[i]!.side !== plan.side || plan.agents[i]!.goalkeeper || activeMove(plan.moves, i, t) || i === w.ball.owner) return;
+      const u = A.u(b.pos);
+      if (u > w.line && u > A.u(before[i]!)) b.pos = A.P(Math.max(w.line, A.u(before[i]!)), A.s(b.pos));
+    });
   }
 }
 

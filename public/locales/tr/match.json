@@ -245,7 +245,7 @@
     "pre": "Anlatım maç başlayınca burada akacak.",
     "empty": "Bu maç için anlatım yok.",
     "emptyFilter": "Bu filtrede satır yok.",
-    "scene": { "note": "Temsili canlandırma – gerçek konumlar değil", "play": "Sahneyi oynat" , "kickoffNote": "Temsili diziliş – ilk düdük bekleniyor", "disallowed": "Gol – iptal" }
+    "scene": { "note": "Temsili canlandırma – gerçek konumlar değil", "play": "Sahneyi oynat" , "kickoffNote": "Temsili diziliş – ilk düdük bekleniyor", "disallowed": "Gol – iptal", "replay": "Tekrar", "replayLabel": "Sahneyi baştan oynat", "speedLabel": "Oynatma hızı", "legend": "Takım renkleri" }
   },
   "news": {
     "loading": "Haberler yükleniyor...",

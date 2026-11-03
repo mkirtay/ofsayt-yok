@@ -83,6 +83,8 @@ export type CommentaryScene = {
   team?: string;
   /** Metinde adı geçen asist yapan oyuncu (şut/gol); sahne yalnız bu adla besleme pası çizer, uydurmaz. */
   assist?: string;
+  /** Penaltı vuruşu (şut / gol satırı penaltıdan). */
+  penalty?: boolean;
 };
 
 export type RawComment = {
@@ -129,8 +131,15 @@ function defaultZone(id: number, outcome: ShotOutcome, header: boolean): SceneZo
 
 const SHOT_SCENE: Record<ShotOutcome, SceneType> = { goal: 'goal', saved: 'shot_saved', blocked: 'shot_blocked', post: 'shot_off', miss: 'shot_off' };
 
-/** Çözülmüş olay → sahne (taraf hariç: `side` kadroyla sonradan çözülür, bkz. commentaryScene.ts). */
-export function sceneFromEvent(ev: ParsedEvent, id = 0): CommentaryScene | null {
+/**
+ * Penaltı vuruşu: çözümleyici bağlamı ("converts the penalty") ya da metin. Sportmonks normal süredeki penaltı golünü de
+ * "Goal in the penalty shootout!" diye yazıyor (2026-11-03, 19746574 73'), kurtarılanı "has had his penalty saved".
+ * "penalty area / box" (ceza sahası) penaltı değildir.
+ */
+const PENALTY_TEXT = /\bpenalty(?! (?:area|box))\b|\bspot[- ]kick\b|\bfrom the spot\b/i;
+
+/** Çözülmüş olay → sahne (taraf hariç: `side` kadroyla sonradan çözülür, bkz. commentaryScene.ts). `text`: penaltı tespiti. */
+export function sceneFromEvent(ev: ParsedEvent, id = 0, text = ''): CommentaryScene | null {
   const base = { side: null, zone: null, zoneFromText: false, header: false, ...(ev.team ? { team: ev.team } : {}) } as const;
   switch (ev.kind) {
     case 'corner':
@@ -161,6 +170,7 @@ export function sceneFromEvent(ev: ParsedEvent, id = 0): CommentaryScene | null 
         header,
         ...(ev.outcome === 'post' ? { post: true } : {}),
         ...(ev.assist ? { assist: ev.assist } : {}),
+        ...(ev.context === 'penalty' || PENALTY_TEXT.test(text) ? { penalty: true } : {}),
       };
     }
     default:
@@ -174,7 +184,7 @@ export function sceneFromEvent(ev: ParsedEvent, id = 0): CommentaryScene | null 
  */
 export function classifyScene(text: string, id = 0): CommentaryScene | null {
   const parsed = parseCommentLine(text);
-  return parsed ? sceneFromEvent(parsed.event, id) : null;
+  return parsed ? sceneFromEvent(parsed.event, id, text) : null;
 }
 
 const KIND: Record<ParsedKind, CommentaryKind> = {
@@ -244,7 +254,7 @@ export function normalizeCommentary(rows: readonly RawComment[] | null | undefin
       important: !!raw.is_important || !!raw.is_goal || kind === 'goal',
       en,
       tr,
-      scene: event ? sceneFromEvent(event, raw.id) : null,
+      scene: event ? sceneFromEvent(event, raw.id, en) : null,
     });
   }
   return out.sort((a, b) => b.order - a.order || b.id - a.id);

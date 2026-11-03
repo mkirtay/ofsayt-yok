@@ -6,14 +6,18 @@
  * Plan konum DEĞİL niyet üretir: oyuncular hedeflerine hız/ivme sınırlı yürür (sceneMotion), takım şekli canlı top
  * konumundan hesaplanır. Zamanlar ms; süreler mesafe ve tempodan (PACE, BALL) hesaplanır ki koşular yetişsin.
  *
- * KONUMLAR GERÇEK DEĞİL (ballCoordinates güvenilmez bulundu, 2026-10-21/22): diziliş kadrodan (formation_field), vuruş
- * bölgesi metinden, metinde yoksa olay kimliğinden tohumlanan belirlenimli seçim — aynı olay her oynatışta aynı pozisyon.
- * Metinde olmayan adlı pas zinciri / asist çizilmez: yalnız metinde adı geçen asist yapan besleme pasını atar; kafa
- * vuruşu ve kendi kalesine golde orta zorunlu olduğundan ortayı adsız (vurgusuz) temsili oyuncu yapar.
+ * KONUMLAR GERÇEK DEĞİL (ballCoordinates güvenilmez bulundu, 2026-10-21/22; olay satırlarında koordinat yok): diziliş
+ * kadrodan (formation_field), vuruş bölgesi metinden, metinde yoksa olay kimliğinden tohumlanan belirlenimli seçim — aynı olay
+ * her oynatışta aynı pozisyon. Metinde olmayan adlı pas zinciri / asist çizilmez: yalnız metinde adı geçen asist yapan
+ * besleme pasını atar; kafa vuruşu ve kendi kalesine golde orta zorunlu olduğundan ortayı adsız (vurgusuz) temsili oyuncu yapar.
+ *
+ * Sahadakiler olay anındaki kadrodur (değişiklik / kırmızı kart, `squadsAt`); 2. devrede takımlar taraf değiştirir (`flip`,
+ * geometri `lane` ile). Başlangıç ve duran top yerleşimleri sceneRules.ts kurallarından geçer (ofsayt, kaleci, çakışma…).
  */
 import type { CommentaryItem, SceneSide, SceneType, SceneZone } from '@/services/sportmonks/matchCommentary';
-import { findPlayer, type SceneSquads } from '@/services/sportmonks/commentaryScene';
-import { SCENE_H, SCENE_W, cornerPoint, placeSquad, zonePoint } from './sceneLayout';
+import { changeKey, findPlayer, isSecondHalf, squadsAt, type SceneSquads } from '@/services/sportmonks/commentaryScene';
+import { SCENE_H, SCENE_W, cornerPoint, lane, placeSquad, zonePoint } from './sceneLayout';
+import { OFFSIDE_MARGIN, validateScene, type RuleBody, type ScenePhase } from './sceneRules';
 
 export type Vec = { x: number; y: number };
 
@@ -61,19 +65,35 @@ export type PlanAgent = {
   referee?: boolean;
   /** Oyuncu değişikliğinde kenardan giren (yalnız o sahnede görünür). */
   sub?: boolean;
+  /** Forma numarası (kadroda yoksa null). */
+  number: number | null;
   /** Metinde adı geçen ve kadroda bulunan oyuncu — halkayla vurgulanır. Bulunamazsa kimse vurgulanmaz. */
   actor: boolean;
   /** Takım şekli için kendi hücum çerçevesindeki dizilişi (u: kale→rakip kale, s: sol→sağ). */
   u0: number;
   s0: number;
+  /** Savunma hattından derinlik (u; savunma satırı 0, orta saha ~0,15, forvet ~0,3) — blok şekli bundan kurulur. */
+  d0: number;
   /** Başlama dizilişi (golden sonra dönülen yer). */
   home: Vec;
 };
 
 export type ScenePlan = {
   type: SceneType;
-  /** Hücum eden taraf (ev sahibi sağa hücum eder; devre değişse de sahne bu sabit yönü kullanır). */
+  /** Hücum eden (topa sahip) takım. */
   side: SceneSide;
+  /** 2. devre: takımlar taraf değiştirmiş (ev sahibi sola hücum eder). Geometri `lane(side, flip)`. */
+  flip: boolean;
+  /** Penaltı vuruşu (şut / gol satırı penaltıdan). */
+  penalty: boolean;
+  /** Sahadaki kişi sayısı (kırmızı karttan sonra 10). */
+  expected: Record<SceneSide, number>;
+  /** Kural denetim anı (şut / penaltı vuruşu, korner orta, ofsayt pası): testler ve geliştirme modu bu karede sceneRules çalıştırır. */
+  check: { t: number; phase: ScenePhase; shooter: number | null; offsider: number | null } | null;
+  /** Ofsayt sahnesi: ofsayttaki dışındaki hücumcuların geçmeyeceği sabit çizgi (u) — savunma hattı öne çıkarken geride kalırlar. */
+  holdLine: number | null;
+  /** Olayın oyuncusu (metindeki ilk ad, kadroda bulunduysa): başlıkta ad + numara. Değişiklikte giren. */
+  lead: { name: string; number: number | null; side: SceneSide } | null;
   /** Oyun akıyor mu (kart/değişiklikte duruk: baskı yok, yürüme temposu). */
   inPlay: boolean;
   agents: PlanAgent[];
@@ -114,58 +134,69 @@ export function rng(seed: number): () => number {
 }
 
 /**
- * Hücum çerçevesi: u = 0 kendi kalesi … 1 rakip kale; s = -1 hücum edenin solu … +1 sağı. Ekrana çevirir
- * (ev sahibi sağa hücum eder; onun solu ekranın üstü).
+ * Hücum çerçevesi: u = 0 kendi kalesi … 1 rakip kale; s = -1 hücum edenin solu … +1 sağı. Ekrana çevirir. `side` takım,
+ * `flip` 2. devre (takımlar taraf değiştirir: geometri `lane(side, flip)`; "home" geometrisi sağa hücum, solu ekranın üstü).
  */
-export function frame(side: SceneSide) {
-  const flip = side === 'home' ? 1 : -1;
+export function frame(side: SceneSide, flip = false) {
+  const geo = lane(side, flip);
+  const k = geo === 'home' ? 1 : -1;
   return {
-    P: (u: number, s: number): Vec => ({ x: side === 'home' ? u * SCENE_W : (1 - u) * SCENE_W, y: MID_Y + s * flip * (MID_Y - 14) }),
-    u: (p: Vec) => (side === 'home' ? p.x / SCENE_W : 1 - p.x / SCENE_W),
-    s: (p: Vec) => ((p.y - MID_Y) / (MID_Y - 14)) * flip,
+    P: (u: number, s: number): Vec => ({ x: geo === 'home' ? u * SCENE_W : (1 - u) * SCENE_W, y: MID_Y + s * k * (MID_Y - 14) }),
+    u: (p: Vec) => (geo === 'home' ? p.x / SCENE_W : 1 - p.x / SCENE_W),
+    s: (p: Vec) => ((p.y - MID_Y) / (MID_Y - 14)) * k,
   };
 }
 
+/** Savunan takımın savunma hattı (kendi çerçevesinde u): top kaleye yaklaştıkça ceza sahası çizgisine iner. */
+export const backLine = (ubd: number) => clamp(0.08 + 0.4 * ubd, 0.12, 0.44);
+/** Hücum edenin en ileri gidebileceği yer (u): ikinci son savunmacı (savunma hattı) ya da top, eksi pay — ofsayt yok. */
+export const onsideLimit = (ballU: number) => Math.max(1 - backLine(1 - ballU), ballU) - OFFSIDE_MARGIN;
+
 /**
- * Takım şekli: top konumuna göre blok ileri/geri ve yana kayar (hücum eden yayılır, savunan daralıp topa yaklaşır).
- * Uzaktaki oyuncular şekli korur; yalnız topa en yakın savunmacı baskıya çıkar (sceneMotion).
+ * Takım şekli: top konumuna göre blok ileri/geri ve yana kayar. Hücum eden yayılır, savunma hattı orta sahaya yaklaşır,
+ * forvetler ofsayt çizgisinde durur; savunan kendi yarısında daralır, top ceza sahasına gelince savunma hattı ceza sahası
+ * çizgisine iner. Uzaktaki oyuncular şekli korur; yalnız topa en yakın savunmacı baskıya çıkar (sceneMotion).
  */
-export function shapeAt(b: Pick<PlanAgent, 'side' | 'goalkeeper' | 'u0' | 's0'>, attack: SceneSide, ball: Vec): Vec {
-  const A = frame(attack);
+export function shapeAt(b: Pick<PlanAgent, 'side' | 'goalkeeper' | 's0' | 'd0'>, attack: SceneSide, ball: Vec, flip = false): Vec {
+  const A = frame(attack, flip);
   const ub = clamp(A.u(ball), 0, 1);
   const sb = clamp(A.s(ball), -1, 1);
   if (b.side === attack) {
-    if (b.goalkeeper) return A.P(0.05 + 0.1 * ub, sb * 0.08);
-    const u = clamp(b.u0 + 0.62 * ub - 0.1, 0.1, 0.9);
-    const s = clamp(b.s0 * 0.95 + sb * 0.18, -0.98, 0.98);
+    if (b.goalkeeper) return A.P(0.04 + 0.14 * ub, sb * 0.08);
+    const bl = clamp(0.18 + 0.48 * ub, 0.3, 0.6);
+    const u = clamp(Math.min(bl + b.d0 * (0.95 + 0.35 * ub), onsideLimit(ub)), 0.1, 0.94);
+    const s = clamp(b.s0 * (0.92 + 0.08 * ub) + sb * 0.15, -0.96, 0.96);
     return A.P(u, s);
   }
-  const D = frame(b.side ?? other(attack));
+  const D = frame(b.side ?? other(attack), flip);
   const ubd = 1 - ub;
-  if (b.goalkeeper) return D.P(0.025 + 0.025 * clamp(1 - ubd * 3, 0, 1), clamp(-sb * 0.22, -0.16, 0.16));
-  const u = clamp(0.07 + (b.u0 - 0.04) * 0.72 + 0.4 * ubd, 0.06, 0.7);
-  const s = clamp(b.s0 * 0.72 - sb * 0.3, -0.92, 0.92);
+  if (b.goalkeeper) return D.P(0.025 + 0.025 * clamp(ubd * 2 - 0.4, 0, 1), clamp(-sb * 0.22, -0.16, 0.16));
+  const u = clamp(backLine(ubd) + b.d0 * (0.45 + 0.55 * ubd), 0.1, 0.75);
+  const s = clamp(b.s0 * (0.6 + 0.3 * ubd) - sb * 0.28 * (1 - 0.4 * ubd), -0.9, 0.9);
   return D.P(u, s);
 }
 
 /** Hakem: oyunu çaprazdan, 60–90 px geriden izler. */
-export function refereeSpot(attack: SceneSide, ball: Vec): Vec {
-  const A = frame(attack);
+export function refereeSpot(attack: SceneSide, ball: Vec, flip = false): Vec {
+  const A = frame(attack, flip);
   return A.P(clamp(A.u(ball) - 0.16, 0.2, 0.78), clamp(-A.s(ball) * 0.4 + 0.25, -0.7, 0.7));
 }
 
-/** Sahne başlama dizilişi (oyuncular, sonra hakem ve kenardaki yedek). */
-export function buildAgents(squads: SceneSquads | null): PlanAgent[] {
+/** Sahne başlama dizilişi (oyuncular, sonra hakem ve kenardaki yedek). Kadro olay anındaki sahadakilerdir. */
+export function buildAgents(squads: SceneSquads | null, flip = false): PlanAgent[] {
   const out: PlanAgent[] = [];
   for (const side of ['home', 'away'] as const) {
-    const F = frame(side);
-    placeSquad(squads, side).forEach((p, slot) => {
+    const F = frame(side, flip);
+    const placed = placeSquad(squads, side, lane(side, flip));
+    const backU = Math.min(...placed.filter((p) => !p.goalkeeper).map((p) => F.u(p)));
+    placed.forEach((p) => {
       const at = { x: p.x, y: p.y };
-      out.push({ key: `${side}-${slot}`, name: p.name, side, goalkeeper: p.goalkeeper, actor: false, u0: F.u(at), s0: F.s(at), home: at });
+      const u0 = F.u(at);
+      out.push({ key: p.key, name: p.name, number: p.number, side, goalkeeper: p.goalkeeper, actor: false, u0, s0: F.s(at), d0: p.goalkeeper ? 0 : Math.max(0, u0 - backU), home: at });
     });
   }
-  out.push({ key: 'ref', name: '', side: null, goalkeeper: false, referee: true, actor: false, u0: 0.5, s0: 0, home: { x: SCENE_W / 2 - 30, y: MID_Y + 40 } });
-  out.push({ key: 'sub', name: '', side: null, goalkeeper: false, sub: true, actor: false, u0: 0.5, s0: 0, home: { x: SCENE_W / 2, y: 4 } });
+  out.push({ key: 'ref', name: '', number: null, side: null, goalkeeper: false, referee: true, actor: false, u0: 0.5, s0: 0, d0: 0, home: { x: SCENE_W / 2 - 30, y: MID_Y + 40 } });
+  out.push({ key: 'sub', name: '', number: null, side: null, goalkeeper: false, sub: true, actor: false, u0: 0.5, s0: 0, d0: 0, home: { x: SCENE_W / 2, y: 4 } });
   return out;
 }
 
@@ -189,12 +220,23 @@ export function buildPlan(
   // Kart/faulde `side` faul yapan / kart gören takım; akış rakibin hücumu.
   const attack: SceneSide = type === 'foul' || type === 'card_yellow' || type === 'card_red' ? other(scene.side ?? 'away') : (scene.side ?? 'home');
   const defend = other(attack);
-  const agents = buildAgents(squads);
+  const flip = isSecondHalf(item.minute);
+  // Olay anında sahadakiler. Aynı dakikadaki değişiklik ancak olayın oyuncusu o an giren ise uygulanır.
+  let squadsNow = squads ? squadsAt(squads, item.minute, item.extraMinute) : null;
+  if (squads && squadsNow && type !== 'substitution' && scene.actors[0]) {
+    const hit = findPlayer(squadsNow, scene.actors[0]);
+    if (hit && !squadsNow[hit.side].players[hit.index]!.starter) squadsNow = squadsAt(squads, item.minute, item.extraMinute, true);
+  }
+  const agents = buildAgents(squadsNow, flip);
   const n = agents.length - 2;
   const REF = n;
   const SUB = n + 1;
-  const A = frame(attack);
+  const A = frame(attack, flip);
+  const geo = lane(attack, flip);
+  /** Ekranda hücum yönü (+1 sağa). */
+  const dir = geo === 'home' ? 1 : -1;
   const r = rng(seed);
+  const penalty = !!scene.penalty && (type === 'goal' || type === 'shot_saved' || type === 'shot_off') && !scene.ownGoal;
 
   const moves: Move[] = [];
   const ball: BallSeg[] = [];
@@ -211,9 +253,13 @@ export function buildPlan(
   let actionEnd = 0;
   let duration = 0;
   let settle: ScenePlan['settle'] = 'shape';
+  let check: ScenePlan['check'] = null;
+  let holdLine: number | null = null;
 
   const players = agents.slice(0, n);
-  const shapeOf = (i: number, ref: Vec) => shapeAt(agents[i]!, attack, ref);
+  const shapeOf = (i: number, ref: Vec) => shapeAt(agents[i]!, attack, ref, flip);
+  /** Hücum edenin rol konumu, top `ballAt`teyken ofsayta düşmesin. */
+  const onside = (p: Vec, ballAt: Vec): Vec => (A.u(p) > onsideLimit(A.u(ballAt)) ? A.P(onsideLimit(A.u(ballAt)), A.s(p)) : p);
   const keeperOf = (side: SceneSide) => players.findIndex((b) => b.side === side && b.goalkeeper);
   /** Bir noktaya (top `ref`teyken) şekilde en yakın saha oyuncusu. */
   const nearest = (side: SceneSide, at: Vec, ref: Vec, exclude: ReadonlySet<number> = new Set()) => {
@@ -231,10 +277,10 @@ export function buildPlan(
   };
   /** Metindeki ad → kadrodaki oyuncunun noktası; bulunamaz ya da taraf uyuşmazsa null (isim uydurulmaz). */
   const named = (name: string | undefined, side: SceneSide): number | null => {
-    if (!name || !squads) return null;
-    const hit = findPlayer(squads, name);
+    if (!name || !squadsNow) return null;
+    const hit = findPlayer(squadsNow, name);
     if (!hit || hit.side !== side) return null;
-    const player = squads[hit.side].players[hit.index];
+    const player = squadsNow[hit.side].players[hit.index];
     const i = players.findIndex((b) => b.side === hit.side && b.name === player?.name);
     return i >= 0 ? i : null;
   };
@@ -257,6 +303,18 @@ export function buildPlan(
     return t0 + dur;
   };
   const seg = (s: BallSeg) => ball.push({ ...s, t0: Math.round(s.t0), t1: Math.round(s.t1) });
+  // Olay anındaki beklenen kişi sayısı: ilk 11 (kadroda 11'den azsa o kadar) eksi önceki kırmızı kartlar.
+  const expected = {} as Record<SceneSide, number>;
+  for (const side of ['home', 'away'] as const) {
+    const starters = squads ? Math.min(11, squads[side].players.filter((p) => p.starter).length) || 11 : 11;
+    const at = changeKey(item.minute, item.extraMinute);
+    expected[side] = starters - (squads?.changes ?? []).filter((c) => c.side === side && c.kind === 'red' && changeKey(c.minute, c.extra) < at).length;
+  }
+  /** Oyuncu karesini sceneRules'tan geçirir (düzeltilmiş konumlar). `fixed`: rolüyle yerleşenler. */
+  const settled = (pos: Vec[], fixed: ReadonlySet<number>, phase: ScenePhase, ballAt: Vec | null, shooter: number | null = null): Vec[] => {
+    const bodies: RuleBody[] = players.map((b, i) => ({ side: b.side!, goalkeeper: b.goalkeeper, pos: pos[i]!, ...(fixed.has(i) ? { fixed: true } : {}) }));
+    return validateScene({ bodies, ball: ballAt, attack, geo, phase, shooter, lateGame: (item.minute ?? 0) >= 88 }).positions;
+  };
 
   switch (type) {
     case 'goal':
@@ -265,7 +323,8 @@ export function buildPlan(
     case 'shot_off': {
       const ownGoal = !!scene.ownGoal;
       const zone: SceneZone = ownGoal ? 'six_yard' : (scene.zone ?? 'box_centre');
-      const from = zonePoint(zone, attack);
+      // Penaltı: vuruş noktası (kale çizgisinden 56 px ≈ 11 m).
+      const from = penalty ? A.P(1 - 62 / SCENE_W, 0) : zonePoint(zone, geo);
       const s0 = A.s(from);
       const shooterSide = ownGoal ? defend : attack;
       const shooterNamed = named(scene.actors[0], shooterSide);
@@ -277,7 +336,41 @@ export function buildPlan(
       let tReady: number;
       let receiver = shooter;
 
-      if (scene.header || ownGoal) {
+      if (penalty) {
+        // Penaltı: top noktada, kullanan hemen arkasında, kaleci çizgide; diğerleri ceza sahası ve yay dışında (başlangıç
+        // sceneRules "penalty" kuralından geçer). Kısa bekleme, koşu, vuruş.
+        ball0 = from;
+        ballDead = true;
+        const runFrom = A.P(A.u(from) - 0.028, 0.03);
+        startAt.set(shooter, runFrom);
+        startAt.set(keeper, A.P(0.99, 0));
+        seg({ kind: 'loose', t0: 0, t1: 1600 });
+        move(shooter, 0, 1600, runFrom, 'walk');
+        move(keeper, 0, 2600, A.P(0.99, 0), 'walk');
+        const kickAt = A.P(A.u(from) - 0.012, 0.004);
+        tReady = 1600 + eta(runFrom, kickAt, 'jog');
+        move(shooter, 1600, tReady, kickAt, 'jog');
+        seg({ kind: 'loose', t0: 1600, t1: tReady });
+        // Bekleyenler vuruşa kadar ceza sahası ve yay dışında yerinde durur (kural yerleşimi).
+        const waitAt = settled(
+          players.map((_, i) => (i === shooter ? runFrom : i === keeper ? A.P(0.99, 0) : shapeOf(i, from))),
+          new Set([shooter, keeper]),
+          'penalty',
+          from,
+          shooter,
+        );
+        waitAt.forEach((p, i) => {
+          if (i === shooter || i === keeper) return;
+          startAt.set(i, p);
+          move(i, 0, tReady + 150, p, 'walk');
+        });
+        // Vuruşla birlikte iki takım dönen topa / pozisyona ceza sahasına girer.
+        players.forEach((b, i) => {
+          if (i === shooter || b.goalkeeper || dist(shapeOf(i, from), from) > 140) return;
+          const at = shapeOf(i, from);
+          move(i, tReady + 150, tReady + 2200, lerp(at, from, 0.25), 'run');
+        });
+      } else if (scene.header || ownGoal) {
         // Orta: kanattan (bölge tarafı; yoksa tohum). Ortayı yapan metinde adı geçen asist ya da adsız temsili oyuncu.
         const wing = ZONE_SIDE[zone] ?? (r() < 0.5 ? -1 : 1);
         const W0 = A.P(0.7 + r() * 0.04, wing * 0.82);
@@ -292,14 +385,17 @@ export function buildPlan(
         const tCarry = 500 + eta(W0, W, 'dribble');
         seg({ kind: 'carry', t0: 500, t1: tCarry, owner: crosser, to: W });
         // Koşucu ceza sahasında bekler, orta kalkınca vuruş noktasına sprint.
-        const wait = back(from, 0.07, -wing * 0.12);
+        const wait = onside(back(from, 0.07, -wing * 0.12), W0);
+        startAt.set(receiver, onside(back(from, 0.1, -wing * 0.2), W0));
         move(receiver, 0, tCarry, wait, 'jog');
-        const tArrive = flight(tCarry, from, 'cross', BALL.cross, 30, 'cross', W, 700);
+        // Orta, koşucunun vuruş noktasına varışıyla aynı anda iner (top beklemez, koşucu topa yetişir).
+        const run = eta(wait, from, 'sprint');
+        const tArrive = flight(tCarry, from, 'cross', BALL.cross, 30, 'cross', W, Math.max(700, run));
         move(receiver, tCarry, tArrive + 300, from, 'sprint');
         if (ownGoal) {
           // Savunmacı ortaya müdahale eder; top ayağından/vücudundan kendi kalesine.
-          move(shooter, tCarry, tArrive + 700, { x: from.x + (attack === 'home' ? 5 : -5), y: from.y + 3 }, 'sprint', true);
-          move(receiver, tCarry, tArrive + 700, { x: from.x - (attack === 'home' ? 6 : -6), y: from.y - 4 }, 'sprint', true);
+          move(shooter, tCarry, tArrive + 700, { x: from.x + dir * 5, y: from.y + 3 }, 'sprint', true);
+          move(receiver, tCarry, tArrive + 700, { x: from.x - dir * 6, y: from.y - 4 }, 'sprint', true);
         }
         tReady = tArrive;
       } else if (assist != null && assist !== shooter) {
@@ -312,15 +408,17 @@ export function buildPlan(
         seg({ kind: 'hold', t0: 0, t1: 500, owner: assist });
         const tCarry = 500 + eta(F, F2, 'dribble');
         seg({ kind: 'carry', t0: 500, t1: tCarry, owner: assist, to: F2 });
-        const wait = back(from, 0.06, (r() - 0.5) * 0.2);
-        startAt.set(shooter, back(from, 0.1, (r() - 0.5) * 0.2));
+        const wait = onside(back(from, 0.06, (r() - 0.5) * 0.2), F2);
+        startAt.set(shooter, onside(back(from, 0.1, (r() - 0.5) * 0.2), F));
         move(shooter, 0, tCarry, wait, 'jog');
-        const tArrive = flight(tCarry, from, 'pass', BALL.pass, 0, 'pass', F2, 550);
-        move(shooter, tCarry, tArrive + 200, from, 'run');
+        // Pas, vuranın koşusuyla buluşacak hızda (ofsayt için geride bekleyen koşucu topa yetişir).
+        const run = eta(wait, from, 'sprint');
+        const tArrive = flight(tCarry, from, 'pass', BALL.pass, 0, 'pass', F2, Math.max(550, run - 150));
+        move(shooter, tCarry, tArrive + 400, from, 'sprint');
         // İlk dokunuş: kısa kontrol.
         const ctrl = A.P(A.u(from) + 0.01, s0);
-        seg({ kind: 'carry', t0: tArrive, t1: tArrive + 400, owner: shooter, to: ctrl });
-        tReady = tArrive + 400;
+        tReady = Math.max(tArrive, tCarry + run) + 400;
+        seg({ kind: 'carry', t0: tArrive, t1: tReady, owner: shooter, to: ctrl });
       } else {
         // Asist adı yok: vuran topu kısa sürer, vuruş noktasına gelir (pas zinciri uydurulmaz).
         const C0 = inPitch(back(from, 0.11 + r() * 0.04, (r() - 0.5) * 0.3));
@@ -334,7 +432,7 @@ export function buildPlan(
       // Savunma: blokta savunmacı vuruş yoluna, vuruştan önce yetişecek şekilde.
       const aimS = clamp(s0 * 0.35 + (r() - 0.5) * 0.18, -0.13, 0.13);
       const goalLine = (s: number): Vec => A.P(0.995, s);
-      let tShot = tReady + (scene.header || ownGoal ? 0 : 250);
+      let tShot = tReady + (scene.header || ownGoal || penalty ? 0 : 250);
       let blocker = -1;
       let blockAt: Vec | null = null;
       if (type === 'shot_blocked') {
@@ -344,16 +442,17 @@ export function buildPlan(
         tShot = Math.max(tShot, t0 + eta(shapeOf(blocker, from), blockAt, 'sprint'));
         move(blocker, t0, tShot + 1200, blockAt, 'sprint', true);
       }
-      if (tShot > tReady && !(scene.header || ownGoal)) seg({ kind: 'hold', t0: tReady, t1: tShot, owner: receiver });
+      if (tShot > tReady && !(scene.header || ownGoal || penalty)) seg({ kind: 'hold', t0: tReady, t1: tShot, owner: receiver });
+      check = { t: tShot, phase: penalty ? 'penalty' : 'shot', shooter: ownGoal ? null : receiver, offsider: null };
       const shotSpeed = scene.header ? BALL.header : BALL.shot;
       const shotFrom = from;
       const react = tShot + 120;
 
       if (type === 'goal') {
-        const target = { x: goalLine(aimS).x + (attack === 'home' ? 6 : -6), y: goalLine(aimS).y };
+        const target = { x: goalLine(aimS).x + dir * 6, y: goalLine(aimS).y };
         const tGoal = flight(tShot, target, 'shot', ownGoal ? BALL.header : shotSpeed, scene.header ? 6 : 2, 'shot', shotFrom, 420);
-        // Kaleci uzanır ama yetişemez.
-        move(keeper, react, tGoal + 1300, A.P(0.975, aimS * 0.45), 'dive');
+        // Kaleci uzanır ama yetişemez (penaltıda yarı yarıya ters köşeye).
+        move(keeper, react, tGoal + 1300, A.P(0.975, penalty && r() < 0.5 ? -Math.sign(aimS || 1) * 0.1 : aimS * 0.45), 'dive');
         climax = tGoal;
         if (disallowed) {
           // Sayılmayan gol: kutlama yok, düdük; oyuncular yerine döner.
@@ -450,8 +549,8 @@ export function buildPlan(
     case 'corner': {
       // Duran top: top köşede, kullanan oyuncu bayrağa, iki takım ceza sahasına; orta ceza sahasına iner. Sonucu metin
       // söylemediği için top düştüğü yerde kalır (gol / uzaklaştırma uydurulmaz).
-      const flag = cornerPoint(scene.zone, attack, seed);
-      const inward = { x: flag.x + (attack === 'home' ? -5 : 5), y: flag.y + (flag.y < MID_Y ? 5 : -5) };
+      const flag = cornerPoint(scene.zone, geo, seed);
+      const inward = { x: flag.x - dir * 5, y: flag.y + (flag.y < MID_Y ? 5 : -5) };
       const taker = nearest(attack, flag, flag);
       const keeper = keeperOf(defend);
       ball0 = flag;
@@ -472,6 +571,11 @@ export function buildPlan(
         .slice(0, 7);
       def.forEach(({ i }, k) => spots.push([i, A.P(0.84 + (k % 3) * 0.045, -0.42 + k * 0.14)]));
       spots.push([keeper, A.P(0.978, 0)]);
+      // Ceza sahasındaki kalabalık: çakışma ve sınır kurallarıyla aralanır.
+      const spotOf = new Map(spots);
+      const fixedCorner = new Set([taker]);
+      const atCross = settled(players.map((_, i) => (i === taker ? inward : (spotOf.get(i) ?? shapeOf(i, flag)))), fixedCorner, 'corner', flag);
+      spots.forEach((sp) => (sp[1] = atCross[sp[0]]!));
       for (const [i, to] of spots) tCross = Math.max(tCross, 200 + eta(shapeOf(i, flag), to, 'run'));
       tCross = Math.min(tCross, 4200);
       seg({ kind: 'loose', t0: 0, t1: tCross - 300 });
@@ -483,9 +587,10 @@ export function buildPlan(
       const ex = new Set([taker, keeper]);
       const ai = nearest(attack, meet, meet, ex);
       const di = nearest(defend, meet, meet, ex);
-      move(ai, tCross, tLand + 900, { x: meet.x + (attack === 'home' ? -5 : 5), y: meet.y - 3 }, 'sprint', true);
-      move(di, tCross, tLand + 900, { x: meet.x + (attack === 'home' ? 4 : -4), y: meet.y + 3 }, 'sprint', true);
+      move(ai, tCross, tLand + 900, { x: meet.x - dir * 5, y: meet.y - 3 }, 'sprint', true);
+      move(di, tCross, tLand + 900, { x: meet.x + dir * 4, y: meet.y + 3 }, 'sprint', true);
       seg({ kind: 'loose', t0: tLand, t1: tLand + 2000 });
+      check = { t: tCross, phase: 'corner', shooter: null, offsider: null };
       climax = tLand;
       actionEnd = tLand + 900;
       duration = actionEnd + 1600;
@@ -502,11 +607,11 @@ export function buildPlan(
       const centre = { x: SCENE_W / 2, y: MID_Y };
       const spot = inPitch(actor != null ? shapeOf(actor, centre) : A.P(0.42 + r() * 0.2, (r() - 0.5) * 1.1));
       if (actor != null) startAt.set(actor, spot);
-      ball0 = { x: spot.x + (attack === 'home' ? 8 : -8), y: spot.y + 6 };
+      ball0 = { x: spot.x + dir * 8, y: spot.y + 6 };
       ballDead = true;
       seg({ kind: 'loose', t0: 0, t1: 6000 });
-      const refAt = inPitch({ x: spot.x + (attack === 'home' ? -18 : 18), y: spot.y + (spot.y > MID_Y ? -16 : 16) });
-      const refFrom = refereeSpot(attack, ball0);
+      const refAt = inPitch({ x: spot.x - dir * 18, y: spot.y + (spot.y > MID_Y ? -16 : 16) });
+      const refFrom = refereeSpot(attack, ball0, flip);
       const tArrive = 300 + eta(refFrom, refAt, 'run');
       move(REF, 300, tArrive + 1800, refAt, 'run');
       if (actor != null) move(actor, 600, tArrive + 1800, lerp(spot, refAt, 0.35), 'walk');
@@ -514,6 +619,14 @@ export function buildPlan(
       effects.push({ kind: 'card', at: { x: refAt.x, y: refAt.y - 16 }, t: tCard, red: type === 'card_red' });
       climax = tCard;
       actionEnd = tCard + 1500;
+      if (type === 'card_red' && actor != null) {
+        // Kırmızı kart: oyuncu en yakın kenar çizgisine yürür ve sahadan çıkar (sonraki sahnelerde takım bir eksik).
+        const exit = { x: spot.x, y: spot.y > MID_Y ? SCENE_H - 8 : 8 };
+        const tExit = tCard + 700 + eta(spot, exit, 'walk');
+        move(actor, tCard + 700, tExit + 400, exit, 'walk');
+        fades.push({ i: actor, t: tExit - 300, to: 0 });
+        actionEnd = Math.max(actionEnd, tExit);
+      }
       duration = actionEnd + 800;
       break;
     }
@@ -523,10 +636,14 @@ export function buildPlan(
       inPlay = false;
       const team = scene.side ?? attack;
       agents[SUB]!.side = team;
-      const touch = { x: SCENE_W / 2 + (team === 'home' ? -18 : 18), y: 8 };
+      const own = lane(team, flip) === 'home' ? -1 : 1;
+      const touch = { x: SCENE_W / 2 + own * 18, y: 8 };
       const off = named(scene.actors[1], team);
-      const inName = !!(squads && scene.actors[0] && findPlayer(squads, scene.actors[0]));
-      if (inName) agents[SUB]!.actor = true;
+      const inHit = squadsNow && scene.actors[0] ? findPlayer(squadsNow, scene.actors[0]) : null;
+      if (inHit) {
+        const p = squadsNow![inHit.side].players[inHit.index]!;
+        Object.assign(agents[SUB]!, { actor: true, name: p.name, number: p.number });
+      }
       startAt.set(SUB, touch);
       fades.push({ i: SUB, t: 0, to: 1 });
       seg({ kind: 'loose', t0: 0, t1: 6000 });
@@ -536,7 +653,7 @@ export function buildPlan(
         markActor(off);
         const slot = shapeOf(off, centre);
         const tOff = 500 + eta(slot, touch, 'jog');
-        move(off, 500, tOff + 400, { x: touch.x + (team === 'home' ? -10 : 10), y: touch.y + 2 }, 'jog');
+        move(off, 500, tOff + 400, { x: touch.x + own * 10, y: touch.y + 2 }, 'jog');
         fades.push({ i: off, t: tOff, to: 0 });
         move(SUB, tOff - 600, tOff + 6000, slot, 'jog');
         swap = { from: SUB, into: off };
@@ -571,15 +688,15 @@ export function buildPlan(
       seg({ kind: 'hold', t0: 0, t1: 400, owner: victim });
       const tContact = Math.max(400 + eta(C0, spot, 'dribble'), 300 + eta(shapeOf(fouler, C0), spot, 'sprint'));
       seg({ kind: 'carry', t0: 400, t1: tContact, owner: victim, to: spot });
-      move(fouler, 300, tContact + 1400, { x: spot.x + (attack === 'home' ? 5 : -5), y: spot.y + 4 }, 'sprint', true);
+      move(fouler, 300, tContact + 1400, { x: spot.x + dir * 5, y: spot.y + 4 }, 'sprint', true);
       move(victim, tContact, tContact + 1400, spot, 'walk', true);
       falls.push({ i: victim, t: tContact });
       effects.push({ kind: 'whistle', at: spot, t: tContact + 100 });
       const roll = A.P(A.u(spot) + 0.03, A.s(spot));
       const tStop = flight(tContact, roll, 'deflect', 60, 0, null, spot, 400);
       seg({ kind: 'loose', t0: tStop, t1: tStop + 3000 });
-      const refAt = inPitch({ x: spot.x + (attack === 'home' ? -22 : 22), y: spot.y + (spot.y > MID_Y ? -18 : 18) });
-      const tRef = tContact + 200 + eta(refereeSpot(attack, spot), refAt, 'run');
+      const refAt = inPitch({ x: spot.x - dir * 22, y: spot.y + (spot.y > MID_Y ? -18 : 18) });
+      const tRef = tContact + 200 + eta(refereeSpot(attack, spot, flip), refAt, 'run');
       move(REF, tContact + 200, tRef + 1000, refAt, 'run');
       climax = tContact;
       actionEnd = tRef + 500;
@@ -609,13 +726,22 @@ export function buildPlan(
         .sort((a, b) => a.b.u0 - b.b.u0)
         .slice(0, 4)
         .sort((a, b) => a.b.s0 - b.b.s0);
-      line.forEach(({ i }, k) => move(i, 0, tPass + 1800, A.P(lineU, -0.6 + k * 0.4), 'jog'));
-      startAt.set(runner, A.P(lineU - 0.05, runS * 0.8));
-      move(runner, 0, tPass - 700, A.P(lineU - 0.04, runS * 0.8), 'jog');
-      move(runner, tPass - 700, tPass, A.P(lineU + 0.035, runS * 0.8), 'run');
+      line.forEach(({ i }, k) => move(i, 0, tPass + 1800, A.P(lineU, -0.6 + k * 0.4), 'run'));
+      // Hattın gerisinde kalan başka savunan (5'li savunma, geri dönen orta saha) çizgiyi bozmasın: hattın önüne çıkar.
+      const lineSet = new Set(line.map(({ i }) => i));
+      players.forEach((b, i) => {
+        if (b.side !== defend || b.goalkeeper || lineSet.has(i)) return;
+        const at = shapeOf(i, P);
+        if (A.u(at) > lineU - 0.03) move(i, 0, tPass + 1800, A.P(lineU - 0.05, A.s(at)), 'run');
+      });
+      holdLine = lineU - 0.02;
+      startAt.set(runner, A.P(lineU - 0.04, runS * 0.8));
+      move(runner, 0, tPass - 1400, A.P(lineU - 0.03, runS * 0.8), 'jog');
+      move(runner, tPass - 1400, tPass + 200, A.P(lineU + 0.06, runS * 0.8), 'sprint');
       const tRecv = flight(tPass, receive, 'pass', BALL.pass, 0, 'pass', P2, 600);
       move(runner, tPass, tRecv + 1200, receive, 'sprint');
       effects.push({ kind: 'offsideLine', x: A.P(lineU, 0).x, t: tPass - 200 });
+      check = { t: tPass, phase: 'open', shooter: null, offsider: runner };
       effects.push({ kind: 'flag', at: A.P(lineU, -1.06), t: tPass + 350 });
       effects.push({ kind: 'whistle', at: receive, t: tRecv + 150 });
       seg({ kind: 'loose', t0: tRecv, t1: tRecv + 2500 });
@@ -629,20 +755,35 @@ export function buildPlan(
       return null;
   }
 
-  // Başlangıç: belirtilenler kendi yerinde, diğerleri top etrafındaki şekilde; hakem çaprazda.
+  // Başlangıç: belirtilenler kendi yerinde, diğerleri top etrafındaki şekilde; hakem çaprazda. Sonra kurallar (ofsayt,
+  // kaleci, çakışma, penaltı yerleşimi) — rolüyle yerleşenler sabit.
   const ref0 = ball0 ?? { x: SCENE_W / 2, y: MID_Y };
   const startPlayers: Vec[] = agents.map((b, i) => {
     const at = startAt.get(i);
     if (at) return inPitch(at);
-    if (b.referee) return refereeSpot(attack, ref0);
+    if (b.referee) return refereeSpot(attack, ref0, flip);
     if (b.sub) return b.home;
-    return shapeAt(b, attack, ref0);
+    return shapeAt(b, attack, ref0, flip);
   });
+  const leadOf = (): ScenePlan['lead'] => {
+    const hit = squadsNow && scene.actors[0] ? findPlayer(squadsNow, scene.actors[0]) : null;
+    const p = hit ? squadsNow![hit.side].players[hit.index] : null;
+    return p && hit ? { name: p.name, number: p.number, side: hit.side } : null;
+  };
+  const startPhase: ScenePhase = penalty ? 'penalty' : type === 'corner' ? 'corner' : inPlay ? 'open' : 'dead';
+  const fixedStart = new Set([...startAt.keys()].filter((i) => i < n));
+  settled(startPlayers.slice(0, n), fixedStart, startPhase, ball0, null).forEach((p, i) => (startPlayers[i] = p));
   ball.sort((a, b) => a.t0 - b.t0);
 
   return {
     type,
     side: attack,
+    flip,
+    penalty,
+    expected,
+    check,
+    holdLine,
+    lead: leadOf(),
     inPlay,
     agents,
     start: { ball: ball0, ballDead, players: startPlayers },

@@ -1,14 +1,20 @@
 import { describe, expect, it } from 'vitest';
 import sample from './__fixtures__/commentarySuperLig.json';
 import lineupSample from './__fixtures__/commentaryLineup19746587.json';
+import scenes5 from './__fixtures__/commentaryScenes5.json';
 import { classifyScene, normalizeCommentary, type RawComment } from './matchCommentary';
 import {
   buildSceneSquads,
   findPlayer,
+  isSecondHalf,
   resolveSceneSides,
+  SCENE_INCLUDE,
+  squadsAt,
   type RawFormation,
   type RawLineupRow,
+  type RawMetadata,
   type RawParticipant,
+  type RawSceneEvent,
 } from './commentaryScene';
 
 // Gerçek yanıtlar (2026-10-21): anlatım 3 Süper Lig maçı / 202 satır; kadro Gençlerbirliği–Galatasaray 19746587
@@ -146,5 +152,66 @@ describe('sahne kapsamı — gerçek maçlarda satırların ne kadarı sahneye d
     const withScene = items.filter((i) => i.scene);
     const sided = withScene.filter((i) => i.scene!.side != null);
     expect(sided.length / withScene.length).toBeGreaterThanOrEqual(0.8);
+  });
+});
+
+describe('kadro değişimleri, devre, forma rengi (2026-11-03 gerçek yanıtlar)', () => {
+  const m = (scenes5 as Record<string, { participants: RawParticipant[]; formations: RawFormation[]; lineups: RawLineupRow[]; events: RawSceneEvent[]; metadata: RawMetadata[] }>)['19746574']!;
+  const sq = buildSceneSquads(m.lineups, m.participants, m.formations, m.events, m.metadata)!;
+
+  it('seçimsiz lineups: forma numaraları ve oyuncu kimlikleri dolu', () => {
+    expect(SCENE_INCLUDE.split(';')[0]).toBe('lineups');
+    expect(sq.home.players.every((p) => p.number != null && p.id != null)).toBe(true);
+  });
+
+  it('events → değişiklik (giren/çıkan kimlik) ve ikinci sarıdan kırmızı', () => {
+    expect(sq.changes!.filter((c) => c.kind === 'red').map((c) => [c.minute, c.side])).toEqual([
+      [37, 'home'],
+      [60, 'away'],
+    ]);
+    expect(sq.changes!.filter((c) => c.kind === 'sub').every((c) => typeof c.in === 'number')).toBe(true);
+  });
+
+  it('squadsAt: olaydan önceki kırmızı kart sahadan çıkarır; değişiklikte giren çıkanın satır:sütun yerini alır', () => {
+    const starters = (s: typeof sq, side: 'home' | 'away') => s[side].players.filter((p) => p.starter);
+    expect(starters(squadsAt(sq, 37, null), 'home')).toHaveLength(11);
+    expect(starters(squadsAt(sq, 38, null), 'home')).toHaveLength(10);
+    expect(starters(squadsAt(sq, 37, null, true), 'home')).toHaveLength(10);
+    const sub = sq.changes!.find((c) => c.kind === 'sub')!;
+    const off = sq[sub.side].players.find((p) => p.id === sub.out)!;
+    const after = squadsAt(sq, sub.minute + 1, null)[sub.side].players;
+    const on = after.find((p) => p.id === sub.in)!;
+    expect(on.starter).toBe(true);
+    expect([on.row, on.col]).toEqual([off.row, off.col]);
+    expect(after.find((p) => p.id === sub.out)!.starter).toBe(false);
+    // Girdi değişmez.
+    expect(sq[sub.side].players.find((p) => p.id === sub.in)!.starter).toBe(false);
+  });
+
+  it('isSecondHalf: 45+uzatma ilk yarı, 46–90+ ikinci yarı; uzatmalar 91–105 / 106+', () => {
+    expect([1, 45, 46, 90, 91, 105, 106, null].map((x) => isSecondHalf(x))).toEqual([false, false, true, true, false, false, true, false]);
+  });
+
+  it('forma renkleri metadata 161/162 (maça özel); yoksa null', () => {
+    expect(sq.home.color).toBe('#c40010');
+    expect(sq.away.color).toBe('#04614a');
+    expect(buildSceneSquads(m.lineups, m.participants, m.formations)!.home.color).toBeUndefined();
+  });
+
+  it('penaltı satırları penalty bayrağı taşır; "penalty area" taşımaz', () => {
+    expect(classifyScene('Goal in the penalty shootout! Gift Emmanuel Orban scores, making it 1-1.', 1)).toMatchObject({ type: 'goal', penalty: true });
+    expect(classifyScene('Mason Greenwood has had his penalty saved.', 1)).toMatchObject({ type: 'shot_saved', penalty: true });
+    expect(classifyScene("Rio Ngumoha's right-footed shot from the center of the box is blocked.", 1)?.penalty).toBeUndefined();
+  });
+});
+
+describe('resolveSceneSides — takıma göre yazılmış skor', () => {
+  it('"Arsenal leads 1-0 against Liverpool": gol deplasmanın (oyuncu kadrodan), sonraki skor doğru yönde izlenir', () => {
+    const m = (scenes5 as Record<string, { participants: RawParticipant[]; formations: RawFormation[]; lineups: RawLineupRow[]; comments: RawComment[] }>)['19722117']!;
+    const sq = buildSceneSquads(m.lineups, m.participants, m.formations)!;
+    const items = resolveSceneSides(normalizeCommentary(m.comments), sq);
+    const goal = items.find((i) => i.minute === 16 && i.scene?.type === 'goal')!;
+    expect(goal.en).toMatch(/Arsenal leads 1-0 against Liverpool/);
+    expect(goal.scene!.side).toBe('away');
   });
 });

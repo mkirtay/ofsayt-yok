@@ -1,13 +1,15 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { useTranslation } from '@/lib/i18n';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { useI18n, useTranslation } from '@/lib/i18n';
 import { useMotionPause } from '@/hooks/useMotionPause';
 import ScaledScene from '@/components/PitchScenes/ScaledScene';
 import turf from '@/components/PitchScenes/turf.module.scss';
 import type { SceneSquads } from '@/services/sportmonks/commentaryScene';
-import { SCENE_H, SCENE_W, buildKickoffScene } from './sceneLayout';
+import { SCENE_H, SCENE_W, buildKickoffScene, lane } from './sceneLayout';
 import { buildPlan, effectState, trailState, type ScenePlan, type ScriptEffect, type Vec } from './scenePlan';
-import { createWorld, simulate, stepWorld, type World } from './sceneMotion';
+import { SEPARATION, activeMove, createWorld, simulate, stepWorld, type World } from './sceneMotion';
 import { nextRun, type SceneEvent, type SceneRun } from './sceneEvents';
+import { DOT, validateScene } from './sceneRules';
+import { sceneKits, shortName, surname, type DotColor } from './sceneKit';
 import styles from './commentaryScene.module.scss';
 
 export type CommentarySceneProps = {
@@ -114,7 +116,7 @@ function paint(root: HTMLElement, w: World) {
     el.style.transform = translate(b.pos.x, b.pos.y);
     el.style.opacity = String(b.opacity);
     const fall = plan.falls.find((f) => f.i === i);
-    const dot = el.firstElementChild as HTMLElement | null;
+    const dot = el.querySelector<HTMLElement>('[data-dot]');
     if (dot) dot.style.transform = fall && w.t >= fall.t && w.t < fall.t + 1100 ? 'scale(1.25, 0.55) rotate(25deg)' : '';
   });
   const ball = root.querySelector<HTMLElement>('[data-ball]');
@@ -145,8 +147,30 @@ function paint(root: HTMLElement, w: World) {
     el.style.opacity = String(st.opacity);
     el.style.transform = `${effectAt(e)} scale(${st.scale.toFixed(3)})`;
   });
-  const cap = root.querySelector<HTMLElement>('[data-caption]');
-  if (cap) cap.style.opacity = w.t >= plan.climaxMs ? String(Math.min(1, (w.t - plan.climaxMs) / 200)) : '0';
+}
+
+/** Geliştirme modu: denetim anında (şut, penaltı, korner ortası, ofsayt pası) kurallar — ihlal konsola. */
+function devCheck(w: World, minute: number | null) {
+  const p = w.plan;
+  if (!p.check) return;
+  const vis = p.agents.map((a, i) => ({ a, i })).filter(({ a, i }) => !a.referee && !a.sub && w.bodies[i]!.opacity > 0.5);
+  const at = (i: number | null) => (i == null ? null : vis.findIndex((v) => v.i === i));
+  const { violations } = validateScene(
+    {
+      bodies: vis.map(({ a, i }) => ({ side: a.side!, goalkeeper: a.goalkeeper, pos: w.bodies[i]!.pos, contact: !!activeMove(p.moves, i, w.t)?.contact || i === w.presser || i === w.ball.owner })),
+      ball: w.ball.pos,
+      attack: p.side,
+      geo: lane(p.side, p.flip),
+      phase: p.check.phase,
+      shooter: at(p.check.shooter),
+      offsider: at(p.check.offsider),
+      expected: p.expected,
+      lateGame: (minute ?? 0) >= 88,
+      minGap: DOT - 1,
+    },
+    { fix: false },
+  );
+  if (violations.length) console.warn(`[sahne] ${minute ?? '?'}′ ${p.type}: kural ihlali`, violations);
 }
 
 const reducedMotion = () => typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -160,9 +184,19 @@ const reducedMotion = () => typeof window !== 'undefined' && typeof window.match
  */
 function MiniMatch({ event, squads, playToken = 0, follow = false }: { event: SceneEvent; squads: SceneSquads | null; playToken?: number; follow?: boolean }) {
   const { t } = useTranslation('match');
+  const { locale } = useI18n();
   const ref = useRef<HTMLDivElement>(null);
   useMotionPause(ref);
   const [run, setRun] = useState<SceneRun>({ event, n: 0 });
+  const [speed, setSpeed] = useState<1 | 0.5>(1);
+  const speedRef = useRef<number>(1);
+  useEffect(() => {
+    speedRef.current = speed;
+  }, [speed]);
+  const gapRef = useRef(SEPARATION);
+  const checkedRef = useRef(false);
+  const [tip, setTip] = useState<{ i: number; x: number; y: number } | null>(null);
+  const kits = useMemo(() => sceneKits(squads), [squads]);
   const worldRef = useRef<World | null>(null);
   const pendingRef = useRef<SceneEvent | null>(null);
   const tokenRef = useRef(playToken);
@@ -186,6 +220,7 @@ function MiniMatch({ event, squads, playToken = 0, follow = false }: { event: Sc
     () => buildPlan(run.event.item, squads, { seed: run.event.id, disallowed: run.event.disallowed }),
     [run.event, squads],
   );
+  const minuteRef = useRef<number | null>(null);
 
   // Tek rAF döngüsü: dünyayı geçen zamanla ilerletir; duraklatılmışken / dinlenirken durur.
   useEffect(() => {
@@ -203,8 +238,12 @@ function MiniMatch({ event, squads, playToken = 0, follow = false }: { event: Sc
       }
       const dt = last == null ? 16 : now - last;
       last = now;
-      stepWorld(w, dt);
+      stepWorld(w, dt * speedRef.current);
       paint(root, w);
+      if (process.env.NODE_ENV !== 'production' && !checkedRef.current && w.plan.check && w.t >= w.plan.check.t) {
+        checkedRef.current = true;
+        devCheck(w, minuteRef.current);
+      }
       const pending = pendingRef.current;
       if (pending && (w.t >= w.plan.actionEndMs + 600 || w.resting)) {
         pendingRef.current = null;
@@ -239,21 +278,89 @@ function MiniMatch({ event, squads, playToken = 0, follow = false }: { event: Sc
       return;
     }
     const w = createWorld(plan, worldRef.current);
+    w.gap = gapRef.current;
     worldRef.current = w;
+    checkedRef.current = false;
+    minuteRef.current = run.event.item.minute;
     paint(root, w);
     loopRef.current?.start();
-  }, [plan, run.n]);
+  }, [plan, run.n, run.event.item.minute]);
+
+  // Dar ekranda noktalar okunur boyda kalır (CSS --inv ile büyür): ayrıştırma mesafesi de o oranda artar.
+  useEffect(() => {
+    const root = ref.current;
+    if (!root || typeof ResizeObserver !== 'function') return;
+    const fit = () => {
+      const scale = root.clientWidth > 0 ? root.getBoundingClientRect().width / SCENE_W : 1;
+      const inv = scale > 0 ? Math.min(1.6, Math.max(1, 1 / scale)) : 1;
+      gapRef.current = SEPARATION * (1 + (inv - 1) * 0.6);
+      if (worldRef.current) worldRef.current.gap = gapRef.current;
+    };
+    const ro = new ResizeObserver(fit);
+    ro.observe(root);
+    fit();
+    return () => ro.disconnect();
+  }, []);
+
+  // Dokunuşta en yakın oyuncunun adı ve numarası (2,5 sn).
+  const onTap = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    const root = ref.current;
+    const w = worldRef.current;
+    if (!root || !w) return;
+    const rect = root.getBoundingClientRect();
+    const k = rect.width / SCENE_W;
+    const x = (e.clientX - rect.left) / k;
+    const y = (e.clientY - rect.top) / k;
+    let best = -1;
+    let bestD = 22;
+    w.plan.agents.forEach((a, i) => {
+      if (a.referee || (a.sub && w.bodies[i]!.opacity < 0.5) || !a.name) return;
+      const d = Math.hypot(w.bodies[i]!.pos.x - x, w.bodies[i]!.pos.y - y);
+      if (d < bestD) {
+        bestD = d;
+        best = i;
+      }
+    });
+    setTip(best >= 0 ? { i: best, x: w.bodies[best]!.pos.x, y: w.bodies[best]!.pos.y } : null);
+  }, []);
+  useEffect(() => {
+    if (!tip) return;
+    const id = window.setTimeout(() => setTip(null), 2500);
+    return () => window.clearTimeout(id);
+  }, [tip]);
 
   if (!plan) return null;
   const item = run.event.item;
-  const kindLabel = plan.disallowed ? t('commentary.scene.disallowed') : t(`commentary.kinds.${item.kind}`);
+  const baseKind = plan.disallowed ? t('commentary.scene.disallowed') : plan.type === 'card_red' ? t('commentary.kinds.redCard') : t(`commentary.kinds.${item.kind}`);
+  const kindLabel = plan.penalty && item.kind !== 'penalty' ? `${t('commentary.kinds.penalty')} – ${baseKind}` : baseKind;
   const minute = item.minute != null ? `${item.minute}${item.extraMinute ? `+${item.extraMinute}` : ''}'` : '';
+  const lead = plan.lead ? `${shortName(plan.lead.name)}${plan.lead.number != null ? ` (${plan.lead.number})` : ''}` : null;
+  const title = [minute, kindLabel, lead].filter(Boolean).join(' · ');
   const start = plan.start;
+  const color = (a: ScenePlan['agents'][number]): DotColor => {
+    const side = a.side ?? 'home';
+    return a.goalkeeper ? kits[side].keeper : kits[side].outfield;
+  };
+  const dotStyle = (c: DotColor) => ({ '--kit': c.fill, '--kit-text': c.text, '--kit-edge': c.edge }) as CSSProperties;
+  const tipAgent = tip ? plan.agents[tip.i] : null;
 
   return (
     <div className={styles.root} data-scene={item.scene.type}>
+      <div className={styles.bar}>
+        <p className={styles.title}>{title}</p>
+        {squads ? (
+          <ul className={styles.legend} aria-label={t('commentary.scene.legend')}>
+            {(['home', 'away'] as const).map((side) => (
+              <li key={side}>
+                <span className={styles.swatch} style={dotStyle(kits[side].outfield)} aria-hidden="true" />
+                {squads[side].name}
+              </li>
+            ))}
+          </ul>
+        ) : null}
+      </div>
       <ScaledScene height={SCENE_H} className={styles.stage}>
-        <div ref={ref} className={`${turf.turf} ${styles.pitch}`} aria-hidden="true">
+        <div ref={ref} className={`${turf.turf} ${styles.pitch}`} aria-hidden="true" onClick={onTap}>
           <span className={turf.stripes} />
           <PitchLines />
           <span className={`${styles.goal} ${styles.goalL}`} />
@@ -281,10 +388,16 @@ function MiniMatch({ event, squads, playToken = 0, follow = false }: { event: Sc
                 <span
                   key={a.key}
                   data-pl={i}
+                  title={a.name ? `${a.number != null ? `${a.number} · ` : ''}${a.name}` : undefined}
                   className={[styles.pl, a.actor ? styles.plActor : ''].filter(Boolean).join(' ')}
                   style={{ transform: translate(start.players[i]!.x, start.players[i]!.y), opacity: a.sub && !plan.fades.some((f) => f.i === i) ? 0 : undefined }}
                 >
-                  <span className={`${styles.plDot} ${a.side === 'away' ? styles.kitAway : styles.kitHome}`} />
+                  <span className={styles.plBody}>
+                    <span data-dot className={`${styles.plDot} ${a.goalkeeper ? styles.plKeeper : ''}`} style={dotStyle(color(a))}>
+                      {a.number ?? ''}
+                    </span>
+                    {a.actor && a.name ? <span className={styles.plLabel}>{surname(a.name)}</span> : null}
+                  </span>
                 </span>
               ),
             )}
@@ -306,13 +419,34 @@ function MiniMatch({ event, squads, playToken = 0, follow = false }: { event: Sc
             </span>
           ))}
 
-          <span data-caption className={styles.caption}>
-            {minute ? `${minute} · ` : ''}
-            {kindLabel}
-          </span>
+          {tip && tipAgent ? (
+            <span className={styles.tip} style={{ transform: translate(tip.x, tip.y) }}>
+              <span>
+                {tipAgent.number != null ? <b>{tipAgent.number}</b> : null}
+                {tipAgent.name}
+              </span>
+            </span>
+          ) : null}
         </div>
       </ScaledScene>
-      <p className={styles.note}>{t('commentary.scene.note')}</p>
+      <div className={styles.foot}>
+        <p className={styles.note}>{t('commentary.scene.note')}</p>
+        <div className={styles.controls}>
+          <div className={styles.speed} role="group" aria-label={t('commentary.scene.speedLabel')}>
+            {([1, 0.5] as const).map((v) => (
+              <button key={v} type="button" aria-pressed={speed === v} className={speed === v ? styles.on : undefined} onClick={() => setSpeed(v)}>
+                {v === 1 ? '1x' : locale === 'tr' ? '0,5x' : '0.5x'}
+              </button>
+            ))}
+          </div>
+          <button type="button" className={styles.replay} aria-label={t('commentary.scene.replayLabel')} onClick={() => setRun((cur) => ({ event: cur.event, n: cur.n + 1 }))}>
+            <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+              <path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9M13.5 2.5v3h-3" />
+            </svg>
+            {t('commentary.scene.replay')}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -329,6 +463,9 @@ function PitchLines() {
       <rect x={SCENE_W - 32} y={SCENE_H / 2 - 43} width="26" height="86" />
       <circle cx="62" cy={SCENE_H / 2} r="1.5" fill="rgba(255,255,255,0.6)" />
       <circle cx={SCENE_W - 62} cy={SCENE_H / 2} r="1.5" fill="rgba(255,255,255,0.6)" />
+      {/* Ceza sahası yayı (penaltı noktasından 44 px ≈ 9,15 m). */}
+      <path d={`M85 ${SCENE_H / 2 - 37.4}A44 44 0 0 1 85 ${SCENE_H / 2 + 37.4}`} />
+      <path d={`M${SCENE_W - 85} ${SCENE_H / 2 - 37.4}A44 44 0 0 0 ${SCENE_W - 85} ${SCENE_H / 2 + 37.4}`} />
     </svg>
   );
 }

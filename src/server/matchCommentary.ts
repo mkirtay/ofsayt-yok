@@ -1,5 +1,5 @@
 /**
- * Maç anlatımı (`/api/matches/[id]/commentary`) — tek Sportmonks isteği `fixtures/{id}?include=comments:…;lineups:…;participants;formations` (Fixture
+ * Maç anlatımı (`/api/matches/[id]/commentary`) — tek Sportmonks isteği `fixtures/{id}?include=comments:…;lineups;participants;formations;events;metadata` (Fixture
  * havuzu; kadro temsili sahne için), paylaşımlı cache'ten (bkz. cachePolicy: canlı 60 sn, yeni biten 15 dk, 1 günden eski bitmiş maç 7 gün). Maç
  * SSR'ına girmez; sekme açılınca istemciden istenir. Havuz rezervinde (Fixture kalan < %30) yalnız önbellek — ıska = geçici
  * hata (istemci "yüklenemedi · tekrar dene" gösterir), kalan kota canlı uçlara ve maç sayfalarına.
@@ -17,10 +17,13 @@ import {
 import {
   buildSceneSquads,
   resolveSceneSides,
+  SCENE_FILTERS,
   SCENE_INCLUDE,
   type RawFormation,
   type RawLineupRow,
+  type RawMetadata,
   type RawParticipant,
+  type RawSceneEvent,
   type SceneSquads,
 } from '@/services/sportmonks/commentaryScene';
 import { withSportmonksCacheOnly } from '@/server/sportmonks/cachedFetch';
@@ -44,6 +47,8 @@ type RawFixture = {
   lineups?: RawLineupRow[] | null;
   participants?: RawParticipant[] | null;
   formations?: RawFormation[] | null;
+  events?: RawSceneEvent[] | null;
+  metadata?: RawMetadata[] | null;
 };
 
 /** Maç yoksa null; Sportmonks/önbellek geçici hatasında fırlatır (hata ≠ veri yok). */
@@ -52,6 +57,7 @@ export async function loadMatchCommentary(fixtureId: number, now: number = Date.
     sportmonksClientRequest<RawFixture>('football', `/fixtures/${fixtureId}`, {
       select: COMMENTARY_FIXTURE_SELECT,
       include: `${COMMENTARY_INCLUDE};${SCENE_INCLUDE}`,
+      filters: SCENE_FILTERS,
     });
   let raw: RawFixture | null;
   try {
@@ -64,7 +70,7 @@ export async function loadMatchCommentary(fixtureId: number, now: number = Date.
   }
   if (!raw) return null;
   const phase = typeof raw.state_id === 'number' ? mapSportmonksStateToPhase(raw.state_id) : 'NOT STARTED';
-  const squads = buildSceneSquads(raw.lineups, raw.participants, raw.formations);
+  const squads = buildSceneSquads(raw.lineups, raw.participants, raw.formations, raw.events, raw.metadata);
   return {
     items: resolveSceneSides(normalizeCommentary(raw.comments), squads),
     squads,
