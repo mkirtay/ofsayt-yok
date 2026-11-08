@@ -60,6 +60,7 @@ export default function MatchTabs<K extends string>({ tabs, active, onChange, ar
           <button
             key={key}
             id={`${uid}-tab-${key}`}
+            data-tab-key={key}
             type="button"
             role="tab"
             aria-selected={active === key}

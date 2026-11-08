@@ -442,6 +442,7 @@ function VirtualRow({
       <Link
         href={buildMatchHref(match)}
         className={styles.matchRowLink}
+        data-onboard="match-row"
         // Mobilde (< 640 px) saat ve durum aynı kolonda: durum (canlı dakika / İY / MS) varsa saat yerine o görünür.
         data-has-status={matchRowShowsStatus(match, t) ? '' : undefined}
         prefetch={false}
@@ -524,6 +525,7 @@ function VirtualRow({
         <button
           type="button"
           className={`${styles.virtualMatchStar} ${isFav ? styles.virtualMatchStarActive : ''}`}
+          data-onboard="fav-star"
           onClick={(e) => {
             e.stopPropagation();
             onToggleFavorite(match.home?.id ?? 0, match.away?.id ?? 0);

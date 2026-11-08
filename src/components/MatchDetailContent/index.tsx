@@ -22,6 +22,8 @@ import { isPollLockedForMatch } from '@/utils/matchPollLock';
 import { applyTabDeepLink } from './tabDeepLink';
 import { trackFrikik } from '@/lib/frikik/analytics';
 import type { GameSlot } from '@/server/game/matchSlot';
+import { isOnboardSeen, isWelcomeShowing, markOnboardSeen } from '@/components/Onboarding/storage';
+import { hintLabels } from '@/components/Onboarding/labels';
 import styles from './matchDetailContent.module.scss';
 
 // Yalnız oyundaki maçlarda çizilir → ayrı parça (diğer maç sayfalarının paketine eklenmez).
@@ -67,6 +69,41 @@ export default function MatchDetailContent({ detail, requestedMatchId, variant =
   const effectiveMatchId = detail.matchId || requestedMatchId;
   const [active, setActive] = useState<MatchTabKey>(DEFAULT_MATCH_TAB);
   const contentRef = useRef<HTMLDivElement>(null);
+  const { t: tc } = useTranslation('common');
+  // İlk maç: AI Analiz sekmesi görünür alana girince üstünde bir kez ipucu (katman o an yüklenir). Sekme şeritte
+  // ekran dışındaysa / zaten seçiliyse / karşılama kartı açıksa gösterilmez — sonraki maçta yeniden denenir.
+  useEffect(() => {
+    if (!effectiveMatchId || isOnboardSeen('aiTab') || typeof IntersectionObserver === 'undefined') return;
+    const tab = contentRef.current?.querySelector<HTMLElement>('[role="tab"][data-tab-key="analysis"]');
+    if (!tab) return;
+    let timer: number | undefined;
+    const io = new IntersectionObserver((entries) => {
+      window.clearTimeout(timer);
+      if (!entries.some((e) => e.isIntersecting)) return;
+      timer = window.setTimeout(() => {
+        if (isOnboardSeen('aiTab') || isWelcomeShowing() || tab.getAttribute('aria-selected') === 'true') return;
+        import('@/components/Onboarding/hintLayer').then(
+          ({ showHint }) => {
+            if (isOnboardSeen('aiTab')) return;
+            const shown = showHint({
+              anchors: [tab],
+              body: tc('onboarding.aiTabHint'),
+              placement: 'above',
+              labels: hintLabels(tc),
+              onShow: () => markOnboardSeen('aiTab'),
+            });
+            if (shown) io.disconnect();
+          },
+          () => {},
+        );
+      }, 1200);
+    });
+    io.observe(tab);
+    return () => {
+      window.clearTimeout(timer);
+      io.disconnect();
+    };
+  }, [effectiveMatchId, tc]);
   // Derin bağlantı (`?sekme=ai-analiz`, yalnız sayfa varyantı): açılışta, sayfa içi geçişte ve geri/ileride sekmeyi
   // seçer + şeride kaydırır. Mount sonrası çalışır (SSR/CDN HTML'i sorgudan bağımsız). YALNIZ sekme açar — üretim /
   // kredi harcama buradan tetiklenemez (bkz. tabDeepLink.ts).

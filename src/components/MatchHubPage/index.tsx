@@ -78,6 +78,9 @@ import { HUB_TAB_BOOT_SCRIPT, clearHubTabBoot } from '@/utils/hubTabBoot';
 import { clearHubLeagueBoot, hubLeagueBootScript } from '@/utils/hubLeagueBoot';
 import { HOME_FAVORITES_LS_KEY, parseLocalFavoriteIds } from '@/utils/favoriteImport';
 import { HUB_FAV_COUNT_BOOT_SCRIPT, applyFavCount, toggleMatchFavorite } from '@/utils/hubFavorites';
+import WelcomeCard from '@/components/Onboarding/WelcomeCard';
+import { hintLabels } from '@/components/Onboarding/labels';
+import { ONBOARD_ANCHORS, WELCOME_BOOT_SCRIPT, isOnboardSeen, markOnboardSeen } from '@/components/Onboarding/storage';
 import { loadWithRetry } from '@/utils/loadWithRetry';
 
 const noopSubscribe = () => () => {};
@@ -164,6 +167,7 @@ export default function MatchHubPage({
   const { t } = useTranslation('match');
   const { t: tg } = useTranslation('gundem');
   const { t: tl } = useTranslation('leagues');
+  const { t: tc } = useTranslation('common');
   const { locale } = useI18n();
   const router = useRouter();
   const splitView = useSplitView();
@@ -320,9 +324,27 @@ export default function MatchHubPage({
       try {
         localStorage.setItem(HOME_FAVORITES_LS_KEY, JSON.stringify(next));
       } catch {}
-      setFavToast((prev) => ({ id: (prev?.id ?? 0) + 1, added: change === 'added', visible: true }));
+      const toast = () => setFavToast((prev) => ({ id: (prev?.id ?? 0) + 1, added: change === 'added', visible: true }));
+      // İlk yıldızlama: kısa bildirim yerine "Favoriler sekmesinde" baloncuğu, görünür Favoriler sekmesinin/çipinin
+      // yanında (bir kez). Sekme ekranda yoksa ya da katman yüklenemezse olağan bildirim.
+      if (change === 'added' && !isOnboardSeen('favorite')) {
+        markOnboardSeen('favorite');
+        import('@/components/Onboarding/hintLayer').then(
+          ({ showHint }) => {
+            const shown = showHint({
+              anchors: [ONBOARD_ANCHORS.favoritesTab],
+              body: tc('onboarding.favoriteHint'),
+              labels: hintLabels(tc),
+            });
+            if (!shown) toast();
+          },
+          toast,
+        );
+        return;
+      }
+      toast();
     },
-    [favoriteTeamIds],
+    [favoriteTeamIds, tc],
   );
   const { status: sessionStatus } = useSession();
 
@@ -904,6 +926,8 @@ export default function MatchHubPage({
       <script dangerouslySetInnerHTML={{ __html: HUB_FAV_COUNT_BOOT_SCRIPT }} />
       {/* `?tab=` sunucuda bilinmez (ISR): boyamadan önce <html data-hub-tab> (bkz. utils/hubTabBoot.ts). */}
       <script dangerouslySetInnerHTML={{ __html: HUB_TAB_BOOT_SCRIPT }} />
+      {/* İlk ziyaret karşılama kartı: görünürlüğü boyamadan önce <html data-onboard-welcome> (bkz. Onboarding/storage.ts). */}
+      <script dangerouslySetInnerHTML={{ __html: WELCOME_BOOT_SCRIPT }} />
       <SubHeader
         initialTodayIso={initialDate}
         selectedDate={selectedDate}
@@ -1046,6 +1070,7 @@ export default function MatchHubPage({
           </aside>
           <div id="hub-list" className={styles.hubMain}>
             <div className={styles.hubList}>
+              <WelcomeCard />
               {uefaFixtureMode ? (
                 <div className={styles.fixtureModeBar}>
                   <span className={styles.fixtureModeText}>

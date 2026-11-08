@@ -23,6 +23,7 @@ import type { AssistantPanelProps } from '@/components/Assistant/Panel';
 import WhistleIcon from './WhistleIcon';
 import { LAUNCHER_SIZE_PX, bubblePosition } from './launcherPosition';
 import { useLauncherDrag } from './useLauncherDrag';
+import { isOnboardSeen, isWelcomeShowing, markOnboardSeen } from '@/components/Onboarding/storage';
 import styles from './launcher.module.scss';
 
 let panelLoad: Promise<ComponentType<PanelProps>> | null = null;
@@ -86,6 +87,7 @@ export default function Launcher({ assistantHidden = false }: { assistantHidden?
   const [AssistantPanel, setAssistantPanel] = useState<ComponentType<AssistantPanelProps> | null>(null);
   const [assistantOpen, setAssistantOpen] = useState(false);
   const assistantRef = useRef<HTMLButtonElement>(null);
+  const { t: tc } = useTranslation('common');
 
   // Baloncuğu kurallara göre zamanla (depolama yoksa hiç). Panel açıkken ya da baloncuk görünürken bekler.
   useEffect(() => {
@@ -194,6 +196,29 @@ export default function Launcher({ assistantHidden = false }: { assistantHidden?
     drag.top !== null && drag.viewportHeight !== null ? bubblePosition(drag.top, LAUNCHER_SIZE_PX, drag.viewportHeight) : null;
 
   const assistantVisible = !assistantHidden;
+
+  // İlk ziyaret (yalnız mobil düzen): iki yüzen düğmenin yanına bir kez kısa etiket — ne olduklarını anlatır.
+  // Karşılama kartı açıkken ya da "Biliyor muydun?" baloncuğu varken beklemez, sonraki sayfaya kalır.
+  const labelSide = drag.side;
+  useEffect(() => {
+    if (!drag.ready || peekIndex !== null || open || assistantOpen) return;
+    if (isOnboardSeen('fabs') || isWelcomeShowing()) return;
+    if (!window.matchMedia('(max-width: 1023.98px)').matches) return;
+    const id = window.setTimeout(() => {
+      if (isOnboardSeen('fabs') || isWelcomeShowing()) return;
+      const items = [
+        assistantRef.current ? { anchor: assistantRef.current, text: tc('onboarding.fabAssistant') } : null,
+        launcherRef.current ? { anchor: launcherRef.current, text: tc('onboarding.fabRules') } : null,
+      ].filter((x): x is { anchor: HTMLButtonElement; text: string } => x !== null);
+      if (items.length === 0) return;
+      import('@/components/Onboarding/hintLayer').then(
+        ({ showSideLabels }) =>
+          showSideLabels(items, { side: labelSide, closeLabel: tc('onboarding.close'), onShow: () => markOnboardSeen('fabs') }),
+        () => {},
+      );
+    }, 2000);
+    return () => window.clearTimeout(id);
+  }, [drag.ready, peekIndex, open, assistantOpen, labelSide, tc]);
   // Düdük tepeye yakınsa balon altına geçer (header'ın altına girmesin).
   const assistantBelow = drag.top !== null && drag.top - ASSISTANT_GAP_PX - ASSISTANT_BUBBLE_PX < ASSISTANT_MIN_TOP_PX;
 
@@ -216,6 +241,7 @@ export default function Launcher({ assistantHidden = false }: { assistantHidden?
           ref={assistantRef}
           type="button"
           className={styles.assistant}
+          data-onboard="assistant-fab"
           style={{ transform: `translate(${drag.offsetX}px, ${drag.offset + (assistantBelow ? 2 * ASSISTANT_GAP_PX + ASSISTANT_BUBBLE_PX + LAUNCHER_SIZE_PX : 0)}px)` }}
           data-side={drag.side}
           data-ready={drag.ready || undefined}
@@ -233,6 +259,7 @@ export default function Launcher({ assistantHidden = false }: { assistantHidden?
         ref={launcherRef}
         type="button"
         className={styles.launcher}
+        data-onboard="rules-fab"
         style={{ transform: `translate(${drag.offsetX}px, ${drag.offset}px)` }}
         data-side={drag.side}
         data-dragging={drag.dragging || undefined}
