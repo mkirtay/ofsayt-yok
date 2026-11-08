@@ -1,0 +1,236 @@
+@use '../../styles/variables' as *;
+
+// Ekran dışı gol bildirimi. Masaüstü: alt orta. Mobil: alt menünün 16 px üstü (Kural Köşesi düğmesiyle aynı taban),
+// sağda yüzen düğme sütununa (16 + 56 px) yer bırakır. Katman: yüzen düğmeler (92) ve davet kartının (96) üstü,
+// alt menü (110) ve AI Asistan paneli (130) altı. Renkler tema tokenları (açık/koyu).
+.region {
+  :global(html[data-game-active]) & {
+    display: none;
+  }
+
+  position: fixed;
+  z-index: 105;
+  // Sol alttaki davet kartı (SignupNudge: 12 + 420 px) dar masaüstünde altta kalmasın: merkez en az 654 px'te.
+  left: max(50%, 654px);
+  bottom: calc(24px + var(--safe-bottom, 0px));
+  transform: translateX(-50%);
+  width: min(420px, calc(100% - 32px));
+  display: flex;
+  flex-direction: column-reverse; // yeni bildirim altta, eskisi üstüne kalkar
+  gap: $spacing-2;
+  pointer-events: none;
+
+  @include below-desktop {
+    left: 12px;
+    right: 80px; // yüzen düğme sütunu: 16 + 56 px + 8 px boşluk
+    width: auto;
+    transform: none;
+    bottom: calc(var(--bottom-nav-height) + 16px + var(--safe-bottom));
+  }
+}
+
+.toast {
+  position: relative;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  border-left: 4px solid var(--color-action);
+  border-radius: 12px;
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+  pointer-events: auto;
+  animation: goal-toast-in 260ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+@keyframes goal-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  // Sağ üst köşe kapat düğmesinin (28 px); skor satırı tüm genişliği kullanır (dar mobilde takım adları sığsın).
+  padding: 8px 10px 10px 12px;
+  color: inherit;
+  text-decoration: none;
+  border-radius: 10px 0 0 10px;
+
+  &:focus-visible {
+    outline: 2px solid var(--color-action-text);
+    outline-offset: -2px;
+  }
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-micro);
+  font-weight: 700;
+  letter-spacing: var(--ls-micro);
+  line-height: 16px;
+  padding-right: 24px;
+}
+
+.ball {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.goal {
+  color: var(--color-action-text);
+}
+
+.minute {
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--bg-muted);
+  color: var(--text-secondary);
+  font-weight: 600;
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.line {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 6px;
+  font-size: var(--fs-body);
+  line-height: 20px;
+}
+
+.team {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  color: var(--text-secondary);
+
+  &[data-scorer] {
+    color: var(--text-primary);
+    font-weight: 700;
+  }
+}
+
+.home {
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.logo {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+
+.score {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 8px;
+  border-radius: 6px;
+  background: var(--bg-muted);
+  font-size: 15px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+
+  [data-scorer] {
+    color: var(--color-action-text);
+  }
+}
+
+.close {
+  position: absolute;
+  top: 0;
+  right: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--bg-muted);
+    color: var(--text-primary);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-action-text);
+    outline-offset: 1px;
+  }
+}
+
+// Kalan süre: alt kenarda soldan sağa daralan ince çizgi. Üstüne gelince / odakta durur; hareketi azalt'ta yok.
+.timer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: var(--color-action);
+  opacity: 0.6;
+  transform-origin: left center;
+  animation: goal-toast-timer linear both;
+
+  .toast[data-paused] & {
+    animation-play-state: paused;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    display: none;
+  }
+}
+
+@keyframes goal-toast-timer {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}

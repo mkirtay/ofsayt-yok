@@ -288,6 +288,7 @@
     "applyCount": "Uygula ({{count}})"
   },
   "list": {
+    "goalToast": { "goal": "GOL!", "close": "Bildirimi kapat", "scored": "{{team}} gol attı" },
     "empty": "Şu an gösterilecek maç bulunmuyor.",
     "loading": "Yükleniyor…",
     "live": "CANLI",
