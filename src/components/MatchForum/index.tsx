@@ -5,19 +5,23 @@ import styles from './matchForum.module.scss';
 
 interface MatchForumProps {
   matchId: string;
+  /** `chat`: masaüstü maç sohbeti paneli — başlık yok (panelin kendi başlığı var), liste kayar, yazma kutusu altta. */
+  layout?: 'feed' | 'chat';
 }
 
 /**
  * Maç forumu = bu maça bağlı Gündem postları (`scope=match&matchId`). Buradan yazılan post otomatik `matchId` alır ve
  * Gündem'de maç rozetiyle görünür; yanıtlar `/gundem/{id}`'de. Eski `MatchComment` verisi taşınmadı (salt-okunur tablo).
  */
-export default function MatchForum({ matchId }: MatchForumProps) {
+export default function MatchForum({ matchId, layout = 'feed' }: MatchForumProps) {
   const router = useRouter();
   const { t } = useTranslation('match');
+  const chat = layout === 'chat';
   return (
-    <div className={styles.container}>
-      <h4 className={styles.title}>{t('forum.title')}</h4>
+    <div className={chat ? styles.chatContainer : styles.container}>
+      {chat ? null : <h4 className={styles.title}>{t('forum.title')}</h4>}
       <GundemPanel
+        layout={layout}
         scope="match"
         matchId={matchId}
         composer="post-inline"

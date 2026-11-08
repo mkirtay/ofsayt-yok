@@ -107,7 +107,13 @@ export default function MatchDetailContent({ detail, requestedMatchId, variant =
         label: t('tabs.overview'),
         render: () => (
           <>
-            {effectiveMatchId ? <MatchDiscussionCard key={effectiveMatchId} matchId={effectiveMatchId} onJoin={openForum} /> : null}
+            {effectiveMatchId ? (
+              // Sayfada geniş ekranda (≥ BP_SPLIT) sağdaki "Maç sohbeti" paneli aynı içeriği gösterir → kart CSS ile gizli
+              // (gizliyken görünür olmadığından veri de istenmez).
+              <div className={variant === 'page' ? styles.discussionCardPage : undefined}>
+                <MatchDiscussionCard key={effectiveMatchId} matchId={effectiveMatchId} onJoin={openForum} />
+              </div>
+            ) : null}
             <MatchMomentum matchId={effectiveMatchId} match={match} events={detail.events} />
             <div
               className={[

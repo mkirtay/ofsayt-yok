@@ -53,6 +53,13 @@
 }
 
 // Bitmiş maçta "Sen de at" (frikik) bağlantısı: kartın altında, sakin tek satır.
+/* Maç sayfası genişte: tartışma kartı yerine sağ sütundaki "Maç sohbeti" paneli (MatchChatPanel). */
+.discussionCardPage {
+  @media (min-width: $bp-split) {
+    display: none;
+  }
+}
+
 /* Yalnız yetkili (admin) görür: kartın hemen altında sağa yaslı "👁 · 💬" (flex gap'i yarıya indirilir). */
 .countersLine {
   display: flex;

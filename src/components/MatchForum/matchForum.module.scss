@@ -13,3 +13,10 @@
   color: $color-text;
   margin: 0 0 $spacing-3;
 }
+
+.chatContainer {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}

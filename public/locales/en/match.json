@@ -241,6 +241,18 @@
   "counters": {
     "label": "{{views}} views, {{comments}} comments"
   },
+  "chat": {
+    "title": "Match chat",
+    "commentCount": "{{count}}{{plus}} comments",
+    "commentCount_one": "{{count}}{{plus}} comment",
+    "startsIn": "Kick-off in",
+    "startingSoon": "Kick-off is imminent",
+    "dh": "{{d}}d {{h}}h",
+    "hm": "{{h}}h {{m}}m",
+    "live": "Live",
+    "halfTime": "Half-time",
+    "finished": "Full time"
+  },
   "tabs": {
     "label": "Match sections",
     "overview": "Overview",
