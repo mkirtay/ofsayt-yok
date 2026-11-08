@@ -227,6 +227,27 @@
     "empty": "Bu maç hakkında henüz gönderi yok. İlk yazan sen ol!",
     "placeholder": "Maç hakkında ne düşünüyorsun?"
   },
+  "discussion": {
+    "title": "Maç tartışması",
+    "join": "Tartışmaya katıl",
+    "write": "Yorum yaz",
+    "empty": "Henüz yorum yok — ilk yorumu sen yaz!",
+    "anonymous": "Kullanıcı"
+  },
+  "counters": {
+    "label": "{{views}} görüntülenme, {{comments}} yorum"
+  },
+  "chat": {
+    "title": "Maç sohbeti",
+    "commentCount": "{{count}}{{plus}} yorum",
+    "startsIn": "Başlamasına",
+    "startingSoon": "Maç başlamak üzere",
+    "dh": "{{d}} g {{h}} sa",
+    "hm": "{{h}} sa {{m}} dk",
+    "live": "Canlı",
+    "halfTime": "Devre arası",
+    "finished": "Maç bitti"
+  },
   "tabs": {
     "label": "Maç detay bölümleri",
     "overview": "Genel Bakış",

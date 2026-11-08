@@ -1,0 +1,32 @@
+@use '../../styles/variables' as *;
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-variant-numeric: tabular-nums;
+  color: $color-text-meta;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.sep {
+  opacity: 0.6;
+}
+
+/* Liste satırı: satır yüksekliği sabit (40px) → akışa girmeden alt-sol köşeye mutlak konumlanır. */
+.row {
+  position: absolute;
+  left: 4px;
+  bottom: 2px;
+  font-size: 9px;
+  pointer-events: none;
+}
+
+.header {
+  font-size: 12px;
+  padding: 2px $spacing-2;
+  border: 1px dashed $color-border;
+  border-radius: $radius-full;
+  background: $color-surface;
+}

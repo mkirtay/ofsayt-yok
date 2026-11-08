@@ -34,6 +34,11 @@ export type GundemPanelProps = {
   composerPlaceholder?: string;
   /** Boş akış metni (varsayılan: `feed.empty.<scope>`). */
   emptyText?: string;
+  /**
+   * `feed` (varsayılan): composer üstte, liste sayfayla kayar. `chat`: liste kendi içinde kayar, composer ALTTA sabit
+   * (maç sayfası masaüstü sohbet paneli; kapsayıcı yüksekliği verir).
+   */
+  layout?: 'feed' | 'chat';
 };
 
 /** Gündem akışı: (isteğe bağlı) composer + PostCard listesi + sonsuz kaydırma. Konumlandırmayı çağıran yapar. */
@@ -48,6 +53,7 @@ export default function GundemPanel({
   matchId = null,
   composerPlaceholder,
   emptyText,
+  layout = 'feed',
 }: GundemPanelProps) {
   const { t } = useTranslation('gundem');
   const { status } = useSession();
@@ -61,21 +67,22 @@ export default function GundemPanel({
   // Sonsuz kaydırma: alttaki gözcü görününce sonraki sayfa; "Daha fazla yükle" düğmesi yedek
   const sentinelRef = useInfiniteSentinel(feed, items.length);
 
-  return (
-    <>
-      <section className={styles.feed} aria-busy={feed.isPending}>
-        {composer === 'none' ? null : status === 'loading' ? (
-          <PostComposerPlaceholder variant={composer} />
-        ) : (
-          <PostComposer
-            variant={composer}
-            authenticated={authenticated}
-            maxLength={POST_MAX_LENGTH}
-            placeholder={composerPlaceholder}
-            onSubmit={(body) => createPost.mutateAsync(matchId ? { body, matchId } : { body })}
-          />
-        )}
+  const chat = layout === 'chat';
+  const composerNode =
+    composer === 'none' ? null : status === 'loading' ? (
+      <PostComposerPlaceholder variant={composer} />
+    ) : (
+      <PostComposer
+        variant={composer}
+        authenticated={authenticated}
+        maxLength={POST_MAX_LENGTH}
+        placeholder={composerPlaceholder}
+        onSubmit={(body) => createPost.mutateAsync(matchId ? { body, matchId } : { body })}
+      />
+    );
 
+  const body = (
+    <>
         {/* isPending: oturum çözülene kadar sorgu devre dışıdır — o sürede "boş" değil "yükleniyor" gösterilir */}
         {feed.isPending ? (
           <GundemLoading label={t('feed.loading')} />
@@ -122,6 +129,23 @@ export default function GundemPanel({
             </button>
           </>
         ) : null}
+    </>
+  );
+
+  return (
+    <>
+      <section className={chat ? `${styles.feed} ${styles.chat}` : styles.feed} aria-busy={feed.isPending}>
+        {chat ? (
+          <>
+            <div className={styles.chatScroll}>{body}</div>
+            {composerNode ? <div className={styles.chatComposer}>{composerNode}</div> : null}
+          </>
+        ) : (
+          <>
+            {composerNode}
+            {body}
+          </>
+        )}
       </section>
       {actions.confirmDialog}
     </>

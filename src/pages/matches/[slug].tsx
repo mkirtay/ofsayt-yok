@@ -7,6 +7,7 @@ import MatchDetailContent from '@/components/MatchDetailContent';
 import { toStandingsCompetitionId } from '@/services/sportmonksProviderFlag';
 import MatchCompetitionStandings from '@/components/MatchCompetitionStandings';
 import MatchVenueCard from '@/components/MatchVenueCard';
+import MatchChatPanelSlot from '@/components/MatchChatPanel';
 import MatchArchivedTabs from '@/components/MatchArchivedTabs';
 import JsonLd from '@/components/JsonLd';
 import { useMatchDetail } from '@/hooks/useMatchDetail';
@@ -429,6 +430,8 @@ export default function MatchDetail({
               ) : null}
               {/* Puan durumunun altı: sütunda boş yer var, fotoğraf tembel (ilk görünüme / LCP'ye girmez). */}
               <MatchVenueCard venue={match?.venue_info} />
+              {/* Masaüstü (≥ BP_SPLIT) "Maç sohbeti": sütunun sonunda yapışkan; istemcide yüklenir, dar ekranda yok. */}
+              {effectiveMatchId ? <MatchChatPanelSlot matchId={effectiveMatchId} match={match ?? null} /> : null}
             </div>
           </div>
         ) : null}
