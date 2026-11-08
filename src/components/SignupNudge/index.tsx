@@ -1,8 +1,9 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useTranslation } from '@/lib/i18n';
+import { useBottomStackSlot } from '@/hooks/useBottomStackSlot';
 import { isNudgeCoolingDown, isNudgeHiddenPath, NUDGE_DELAY_MS, NUDGE_STORAGE_KEY } from './nudge';
 import styles from './signupNudge.module.scss';
 
@@ -16,6 +17,9 @@ export default function SignupNudge() {
   const { status } = useSession();
   const [open, setOpen] = useState(false);
   const eligible = status === 'unauthenticated' && !isNudgeHiddenPath(pathname);
+  // Mobil alt yığının tabanı: yüksekliği paylaşılır, gol bildirimleri vb. kartın üstüne dizilir (hooks/useBottomStackSlot).
+  const ref = useRef<HTMLElement>(null);
+  useBottomStackSlot(ref, open && eligible);
 
   useEffect(() => {
     if (!eligible) {
@@ -43,7 +47,7 @@ export default function SignupNudge() {
   };
 
   return (
-    <aside className={styles.nudge} role="complementary" aria-label={t('nudge.title')}>
+    <aside ref={ref} className={styles.nudge} role="complementary" aria-label={t('nudge.title')}>
       <span className={styles.icon} aria-hidden="true">
         🎁
       </span>

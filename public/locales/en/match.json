@@ -292,6 +292,7 @@
     "applyCount": "Apply ({{count}})"
   },
   "list": {
+    "goalToast": { "goal": "GOAL!", "close": "Dismiss notification", "scored": "{{team}} scored" },
     "empty": "No matches to show right now.",
     "loading": "Loading…",
     "live": "LIVE",

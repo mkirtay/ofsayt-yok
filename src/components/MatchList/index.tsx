@@ -7,6 +7,9 @@ import TeamTierBadge from '@/components/TeamTierBadge';
 import TeamLogo from '@/components/TeamLogo';
 import LazyLoad from '@/components/LazyLoad';
 import { detectGoals, type GoalEvent } from '@/utils/goalDetection';
+import { goalToastsArmed, toastableGoalIds, type GoalToastItem } from '@/utils/goalToast';
+import { parseScore } from '@/utils/parseScore';
+import type { GoalToastBatch, GoalToastsProps } from '@/components/GoalToast';
 import { useTurkeyTeamTiers } from '@/hooks/useTurkeyTeamTiers';
 import { isTurkishCupMatch } from '@/utils/cupTeamTier';
 import type { TurkeyTeamTiersPayload } from '@/config/turkeyTiers';
@@ -28,6 +31,8 @@ import styles from './matchList.module.scss';
 // 06 · Gol anı: yalnız bir gol olunca yüklenir (ana sayfa ilk yüküne JS/CSS eklemez); bu kadar sonra kaldırılır.
 const loadGoalMoment = () => import('./GoalMoment');
 const GOAL_MOMENT_MS = 3200;
+// Ekran dışı gol bildirimi: yalnız bildirime uygun ilk golde yüklenir (bkz. components/GoalToast).
+const loadGoalToasts = () => import('@/components/GoalToast');
 const NO_GOALS: ReadonlyMap<string, GoalEvent> = new Map();
 /** Sabit boş varsayılan: `= []` her render'da yeni dizi verip `items` memo'sunu bozuyordu → gün gruplu (UEFA) modda
  * render sırasındaki skor takibi setState'i sonsuz döngüye giriyordu ("Too many re-renders"). */
@@ -42,6 +47,27 @@ function scoresById(items: FlatItem[]): Map<string, string> {
     if (raw) map.set(String(item.match.id), raw);
   }
   return map;
+}
+
+function findMatch(items: FlatItem[], id: string): Match | undefined {
+  for (const item of items) if (item.type === 'match' && String(item.match.id) === id) return item.match;
+  return undefined;
+}
+
+/** Bildirim kartının verisi (yeni skor, golü atan taraf, canlıysa dakika). Skor okunamazsa `null`. */
+function goalToastItem(match: Match, goal: GoalEvent, score: string | undefined): GoalToastItem | null {
+  const parsed = parseScore(score);
+  if (!parsed) return null;
+  return {
+    key: goal.key,
+    matchId: String(match.id),
+    side: goal.side,
+    home: { name: match.home?.name || '', logo: match.home?.logo },
+    away: { name: match.away?.name || '', logo: match.away?.logo },
+    score: parsed,
+    minute: match.status === 'IN PLAY' ? liveMinuteLabel(match.time) : '',
+    href: buildMatchHref(match),
+  };
 }
 
 /** Tarih gruplu fikstür modu: başlık lig değil GÜN (bkz. `utils/fixtureDateGroups.ts`). */
@@ -438,7 +464,7 @@ function VirtualRow({
   const goal = isLive ? goals.get(String(match.id)) : undefined;
 
   return (
-    <div {...ariaAttributes} style={style} className={rowClass}>
+    <div {...ariaAttributes} style={style} className={rowClass} data-goal-row={String(match.id)}>
       <Link
         href={buildMatchHref(match)}
         className={styles.matchRowLink}
@@ -631,14 +657,43 @@ export default function MatchList({
   // (Önceki render'ın bilgisini saklama kalıbı: liste değişince render sırasında karşılaştırılır.)
   const [scoreTrack, setScoreTrack] = useState<{ items: FlatItem[]; scores: Map<string, string> } | null>(null);
   const [goals, setGoals] = useState<ReadonlyMap<string, GoalEvent>>(NO_GOALS);
+  // Ekran dışı gol bildirimi: aynı karşılaştırmadan, skoru düşmeyen (VAR iptali değil) goller. Satırın ekranda olup
+  // olmadığına ve "uyanık" olup olmadığımıza bildirim bileşeni karar verir (DOM / zaman burada okunmaz).
+  const [toastBatch, setToastBatch] = useState<GoalToastBatch | null>(null);
   if (scoreTrack?.items !== items) {
     const scores = scoresById(items);
     if (scoreTrack) {
       const fresh = detectGoals(scoreTrack.scores, scores);
-      if (fresh.size > 0) setGoals(new Map([...goals, ...fresh]));
+      if (fresh.size > 0) {
+        setGoals(new Map([...goals, ...fresh]));
+        const toastItems = toastableGoalIds(fresh, scoreTrack.scores, scores).flatMap((id) => {
+          const match = findMatch(items, id);
+          const toast = match ? goalToastItem(match, fresh.get(id)!, scores.get(id)) : null;
+          return toast ? [toast] : [];
+        });
+        if (toastItems.length > 0) setToastBatch({ seq: (toastBatch?.seq ?? 0) + 1, items: toastItems });
+      }
     }
     setScoreTrack({ items, scores });
   }
+  // Sayfa açılışı ve sekmeye dönüş "uyanma" anı: hemen ardından gelen tazelemedeki skor artışları eski goller.
+  const awakeSince = useRef(0);
+  useEffect(() => {
+    awakeSince.current = Date.now();
+    const onVisibility = () => {
+      if (!document.hidden) awakeSince.current = Date.now();
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => document.removeEventListener('visibilitychange', onVisibility);
+  }, []);
+  const toastsArmed = useCallback(() => goalToastsArmed(Date.now(), awakeSince.current, document.hidden), []);
+  const selectToastMatch = useCallback(
+    (id: string) => {
+      const match = findMatch(items, id);
+      if (match && onSelectMatch) onSelectMatch(match);
+    },
+    [items, onSelectMatch],
+  );
   useEffect(() => {
     if (goals.size === 0) return;
     const id = window.setTimeout(() => setGoals(NO_GOALS), GOAL_MOMENT_MS);
@@ -716,8 +771,21 @@ export default function MatchList({
 
   // Sunucuda da çizilir: List ölçüm yapana kadar `defaultHeight` kadar satır verir (SSR = istemcinin ilk render'ı),
   // sonra kutunun gerçek yüksekliğini ölçüp görünür aralığı günceller — satır konumları değişmez, kayma yok.
+  const toastNode = toastBatch ? (
+    <LazyLoad<GoalToastsProps>
+      load={loadGoalToasts}
+      props={{
+        batch: toastBatch,
+        armed: toastsArmed,
+        onSelectMatch: onSelectMatch ? selectToastMatch : null,
+        selectedMatchId: selectedMatchId ?? null,
+      }}
+    />
+  ) : null;
+
   return (
-    <div className={hostClassName} style={hostStyle}>
+    <div className={hostClassName} style={hostStyle} data-goal-list>
+      {toastNode}
       <List
         className={styles.virtualList}
         rowCount={items.length}
