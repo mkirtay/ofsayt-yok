@@ -3,6 +3,7 @@ import Avatar from '@/components/Avatar';
 import LikeButton from '@/components/LikeButton';
 import MoreButton from '@/components/Moderation/MoreButton';
 import PostMatchBadge from '@/components/PostMatchBadge';
+import GundemEntityCard from '@/components/GundemEntityCard';
 import CommentIcon from '@/components/icons/CommentIcon';
 import TrashIcon from '@/components/icons/TrashIcon';
 import VerifiedIcon from '@/components/icons/VerifiedIcon';
@@ -155,6 +156,9 @@ export default function PostCard({
       <p className={styles.body}>
         <MentionText body={post.body} mentions={post.mentions} linkClassName={styles.mention} />
       </p>
+
+      {/* Eklenen oyuncu/takım/maç kartı; sunucu çözemediyse alan null → hiç çizilmez. */}
+      {post.entity ? <GundemEntityCard card={post.entity} /> : null}
 
       <footer className={styles.actions}>
         <LikeButton

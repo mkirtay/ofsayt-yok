@@ -18,6 +18,13 @@ enum PostAuthorType {
   OFFICIAL_BOT
 }
 
+/// Gündem gönderisine eklenen varlık kartı türü (oyuncu / takım / maç).
+enum PostEntityType {
+  PLAYER
+  TEAM
+  MATCH
+}
+
 model User {
   id                   String              @id @default(cuid())
   name                 String?
@@ -410,6 +417,10 @@ model Post {
   hiddenAt        DateTime?
   /// "REPORTS" (eşik) | "ADMIN"
   hiddenReason    String?
+  /// Eklenen varlık kartı (gönderi başına en çok 1): tür + Sportmonks id (string). Kart verisi `GundemEntitySnapshot`'tan.
+  /// `matchId`'den AYRI: `matchId` gönderiyi maç forumuna bağlar (akış filtresi), bu yalnız metnin altındaki karttır.
+  entityType      PostEntityType?
+  entityId        String?
   likes           PostLike[]
   comments        PostComment[]
   notifications   Notification[]
@@ -440,6 +451,20 @@ model MatchSnapshot {
   leagueId      Int?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+}
+
+/// Gündem varlık kartı verisi (oyuncu / takım / maç), (tür, id) başına tek satır. `Post.entityType/entityId` ile FK'sız
+/// lookup (MatchSnapshot deseni): akış sayfası başına tek sorgu. `data` sürümlü JSON (lib/gundem/entityCards.ts);
+/// eskiyince arka planda önbellekli kaynaklardan (oyuncu/takım sayfası, puan durumu, maç sayfası) yenilenir.
+/// Kullanıcı verisi DEĞİL (herkese açık maç/oyuncu bilgisi) → hesap silmede dokunulmaz.
+model GundemEntitySnapshot {
+  entityType PostEntityType
+  entityId   String
+  data       Json
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  @@id([entityType, entityId])
 }
 
 /// Post beğenisi — kullanıcı başına post başına tek kayıt (toggle).

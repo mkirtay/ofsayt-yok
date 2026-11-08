@@ -35,6 +35,7 @@ import {
   isFeedCacheable,
 } from '@/lib/gundem/feedCache';
 import { MatchSnapshotError, ensureMatchSnapshot, normalizeFixtureId } from '@/lib/gundem/matchSnapshot';
+import { EntityCardError, ensureEntityCard, normalizeEntityInput } from '@/lib/gundem/entityCards';
 
 // Gönderi/yorum gövdesi ~280 karakter; Next varsayılanı (1 MB) yerine 16 KB — aşılırsa Next 413 döner.
 export const config = { api: { bodyParser: { sizeLimit: '16kb' } } };
@@ -166,6 +167,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         throw e;
       }
 
+      // Varlık kartı (oyuncu/takım/maç, en çok 1): id sunucuda doğrulanır; kart verisi önbellekli kaynaklardan.
+      let entity: ReturnType<typeof normalizeEntityInput> = null;
+      try {
+        entity = normalizeEntityInput(input.entity);
+        if (entity) await ensureEntityCard(entity);
+      } catch (e) {
+        if (e instanceof EntityCardError) {
+          return res.status(e.reason === 'upstream' ? 503 : 400).json({ error: e.message, code: 'ENTITY_INVALID' });
+        }
+        throw e;
+      }
+
       // authorType istemciden ASLA okunmaz: kullanıcı postları her zaman USER.
       const created = await prisma.post.create({
         data: {
@@ -174,6 +187,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           body,
           matchId,
           teamId: optionalInt(input.teamId),
+          ...(entity ? { entityType: entity.type, entityId: String(entity.id) } : {}),
         },
         select: { id: true },
       });

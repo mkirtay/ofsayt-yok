@@ -43,7 +43,9 @@
     "contentRejected": "Paylaşımın topluluk kurallarımıza uymayan ifadeler içeriyor. Lütfen düzenleyip tekrar dene.",
     "linkLimit": "Yeni hesaplar bir paylaşımda en fazla {{count}} bağlantı ekleyebilir.",
     "duplicate": "Bu içeriği kısa süre önce paylaştın. Aynı metni tekrar gönderemezsin.",
-    "suspended": "Gündem'de yazma iznin şu an kapalı. Okumaya devam edebilirsin."
+    "suspended": "Gündem'de yazma iznin şu an kapalı. Okumaya devam edebilirsin.",
+    "entityNotFound": "Eklenen oyuncu, takım ya da maç bulunamadı. Eki kaldırıp tekrar dene.",
+    "entityUnavailable": "Ek şu an doğrulanamadı. Biraz sonra tekrar dene."
   },
   "feed": {
     "loading": "Yükleniyor…",
@@ -159,5 +161,50 @@
     "remove": "Kaldır",
     "removeConfirm": "Bu 1. sıra mesajı kaldırılsın mı? Kullanılmayan günlerin kredisi iade edilir.",
     "error": "Teklif verilemedi. Lütfen tekrar deneyin."
+  },
+  "entity": {
+    "kind": {
+      "PLAYER": "Oyuncu",
+      "TEAM": "Takım",
+      "MATCH": "Maç"
+    },
+    "goalsShort": "gol",
+    "assistsShort": "asist",
+    "lastRating": "Son maç puanı {{rating}}",
+    "rank": "{{rank}}.",
+    "rankTitle": "Ligde {{rank}}. sırada, {{points}} puan",
+    "points": "{{points}} P",
+    "live": "Canlı",
+    "liveMinute": "Canlı {{minute}}",
+    "halfTime": "Devre arası",
+    "finished": "Bitti",
+    "upcoming": "Başlamadı",
+    "goToMatch": "Maça git",
+    "special": {
+      "POSTPONED": "Ertelendi",
+      "CANCELLED": "İptal",
+      "DELETED": "İptal",
+      "ABANDONED": "Yarıda kaldı",
+      "TBA": "Tarih belli değil",
+      "DELAYED": "Gecikti",
+      "SUSPENDED": "Durduruldu",
+      "INTERRUPTED": "Durduruldu",
+      "AWARDED": "Hükmen",
+      "WALKOVER": "Hükmen"
+    },
+    "attach": "Ekle",
+    "attachTitle": "Oyuncu, takım ya da maç ekle",
+    "remove": "Eki kaldır",
+    "searchLabel": "Oyuncu, takım ya da maç ara",
+    "searchPlaceholder": "Oyuncu, takım ya da maç ara…",
+    "todayMatches": "Bugünün maçları",
+    "players": "Oyuncular",
+    "teams": "Takımlar",
+    "matches": "Maçlar",
+    "searching": "Aranıyor…",
+    "noResults": "Sonuç bulunamadı.",
+    "searchError": "Arama şu an yapılamadı.",
+    "close": "Kapat",
+    "minChars": "Aramak için en az 2 harf yaz."
   }
 }

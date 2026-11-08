@@ -3,6 +3,9 @@ import { useRef, useState, type ComponentType, type FocusEvent, type KeyboardEve
 import { COUNTER_WARN_AT } from '@/config/gundem';
 import { NEW_ACCOUNT_MAX_LINKS } from '@/config/moderation';
 import type { MentionSuggestProps } from '@/components/Moderation/MentionSuggest';
+import TeamLogo from '@/components/TeamLogo';
+import type { EntityPickerProps, PickedEntity } from './EntityPicker';
+import type { GundemEntityRef } from '@/types/gundem';
 import { GundemApiError } from '@/hooks/useGundem';
 import { useTranslation } from '@/lib/i18n';
 import styles from './postComposer.module.scss';
@@ -22,6 +25,7 @@ export function composerErrorMessage(err: unknown, t: TFn): string {
     if (err.code === 'LINK_LIMIT') return t('composer.linkLimit', { count: NEW_ACCOUNT_MAX_LINKS });
     if (err.code === 'DUPLICATE_CONTENT') return t('composer.duplicate');
     if (err.code === 'GUNDEM_SUSPENDED') return t('composer.suspended');
+    if (err.code === 'ENTITY_INVALID') return err.status === 503 ? t('composer.entityUnavailable') : t('composer.entityNotFound');
     if (err.message && err.message !== 'error') return err.message;
   }
   return t('composer.error');
@@ -53,8 +57,11 @@ export type PostComposerProps = {
   authenticated: boolean;
   variant: PostComposerVariant;
   maxLength: number;
-  /** Gönderir; hata fırlatırsa (GundemApiError) mesaj gösterilir, metin korunur. Başarıda alan temizlenir. */
-  onSubmit: (body: string) => Promise<unknown>;
+  /**
+   * Gönderir; hata fırlatırsa (GundemApiError) mesaj gösterilir, metin korunur. Başarıda alan temizlenir.
+   * `entity`: "Ekle" ile seçilen oyuncu/takım/maç (yalnız gönderi varyantlarında; yorumda yok).
+   */
+  onSubmit: (body: string, entity?: GundemEntityRef) => Promise<unknown>;
   autoFocus?: boolean;
   /** Varsayılan yer tutucunun yerine (ör. maç forumu: "Maç hakkında ne düşünüyorsun?"). */
   placeholder?: string;
@@ -93,6 +100,25 @@ function loadMentionSuggest() {
   return mentionModule;
 }
 
+let pickerModule: Promise<ComponentType<EntityPickerProps>> | null = null;
+/** "Ekle" seçicisi ilk tıklamada yüklenir: ana sayfa ilk yüküne girmez. */
+function loadEntityPicker() {
+  pickerModule ??= import('./EntityPicker').then((m) => m.default).catch((e) => {
+    pickerModule = null;
+    throw e;
+  });
+  return pickerModule;
+}
+
+function AttachIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="3" y="5" width="18" height="14" rx="3" />
+      <path d="M12 9v6M9 12h6" />
+    </svg>
+  );
+}
+
 export default function PostComposer({ authenticated, variant, maxLength, onSubmit, autoFocus, placeholder }: PostComposerProps) {
   const { t } = useTranslation('gundem');
   const [value, setValue] = useState('');
@@ -108,6 +134,10 @@ export default function PostComposer({ authenticated, variant, maxLength, onSubm
   // Gönderim sonrası odağı alana geri verirken yeniden açılmayı bastırır
   const skipExpandOnFocus = useRef(false);
   const [Mention, setMention] = useState<ComponentType<MentionSuggestProps> | null>(null);
+  const [Picker, setPicker] = useState<ComponentType<EntityPickerProps> | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [entity, setEntity] = useState<PickedEntity | null>(null);
+  const attachRef = useRef<HTMLButtonElement>(null);
 
   if (!authenticated) {
     return (
@@ -128,8 +158,10 @@ export default function PostComposer({ authenticated, variant, maxLength, onSubm
     setNeedsUsername(false);
     setNeedsTerms(false);
     try {
-      await onSubmit(value);
+      await onSubmit(value, entity ? { type: entity.type, id: entity.id } : undefined);
       setValue('');
+      setEntity(null);
+      setPickerOpen(false);
       if (isInline) {
         // Başarılı gönderim → tek satıra dön; "Paylaş" düğmesi kaybolacağı için odak alana döner (kaybolmaz)
         skipExpandOnFocus.current = true;
@@ -161,6 +193,7 @@ export default function PostComposer({ authenticated, variant, maxLength, onSubm
 
   function onBlur(e: FocusEvent<HTMLDivElement>) {
     if (!isInline || sending) return;
+    if (entity || pickerOpen) return; // ek seçiliyken / seçici açıkken küçülmez
     if (shouldCollapseOnBlur(value, e.currentTarget.contains(e.relatedTarget as Node | null))) setExpanded(false);
   }
 
@@ -204,7 +237,62 @@ export default function PostComposer({ authenticated, variant, maxLength, onSubm
       ) : null}
       {collapsed ? null : (
         <>
+          {isPost && entity ? (
+            <div className={styles.attached}>
+              <TeamLogo src={entity.image} width={18} alt="" className={styles.attachedImg} />
+              <span className={styles.attachedKind}>{t(`entity.kind.${entity.type}`)}</span>
+              <span className={styles.attachedLabel}>{entity.label}</span>
+              <button
+                type="button"
+                className={styles.attachedRemove}
+                onClick={() => {
+                  setEntity(null);
+                  textareaRef.current?.focus();
+                }}
+                aria-label={t('entity.remove')}
+                title={t('entity.remove')}
+              >
+                ×
+              </button>
+            </div>
+          ) : null}
+          {isPost && pickerOpen && Picker ? (
+            <Picker
+              onPick={(picked) => {
+                setEntity(picked);
+                setPickerOpen(false);
+                textareaRef.current?.focus();
+              }}
+              onClose={() => {
+                setPickerOpen(false);
+                attachRef.current?.focus();
+              }}
+            />
+          ) : null}
           <div className={styles.bar}>
+            {isPost ? (
+              <button
+                ref={attachRef}
+                type="button"
+                className={styles.attach}
+                aria-expanded={pickerOpen}
+                title={t('entity.attachTitle')}
+                aria-label={t('entity.attachTitle')}
+                onClick={() => {
+                  if (pickerOpen) return setPickerOpen(false);
+                  void loadEntityPicker().then(
+                    (C) => {
+                      setPicker(() => C);
+                      setPickerOpen(true);
+                    },
+                    () => setError(t('entity.searchError')),
+                  );
+                }}
+              >
+                <AttachIcon />
+                <span>{t('entity.attach')}</span>
+              </button>
+            ) : null}
             <span className={styles.hint}>{t('composer.hint')}</span>
             <Link href="/topluluk-kurallari" className={styles.rulesLink}>
               {t('composer.guidelines')}

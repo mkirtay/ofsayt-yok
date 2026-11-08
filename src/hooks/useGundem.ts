@@ -14,6 +14,7 @@ import type {
   GundemPage,
   GundemPinState,
   GundemPost,
+  GundemEntityRef,
   GundemScope,
   GundemUserProfile,
 } from '@/types/gundem';
@@ -229,7 +230,7 @@ export function useToggleFollow() {
 export function useCreatePost() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (input: { body: string; matchId?: string; teamId?: number }) =>
+    mutationFn: (input: { body: string; matchId?: string; teamId?: number; entity?: GundemEntityRef }) =>
       api<GundemPost>('/api/gundem/posts', { method: 'POST', body: JSON.stringify(input) }),
     onSuccess: () => qc.invalidateQueries({ queryKey: gundemKeys.feeds }),
   });
