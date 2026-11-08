@@ -62,5 +62,32 @@
     "open": "Open the game",
     "shareText": "I reached level {{level}} in Frikik with {{score}} points. How far can you get?",
     "kicker": "New kick every day"
+  },
+  "onboarding": {
+    "welcomeTitle": "Welcome to {{brand}} 👋",
+    "itemMatch": "Tap a match to see its AI analysis",
+    "itemStar": "Star your team with ☆ to keep its matches on top",
+    "itemGundem": "Chat with fans in the Feed",
+    "tour": "Quick tour",
+    "dismiss": "Got it",
+    "dismissAria": "Got it, close the welcome card",
+    "ok": "OK",
+    "close": "Close",
+    "next": "Next",
+    "done": "Done",
+    "skip": "Skip tour",
+    "step": "{{current}}/{{total}}",
+    "tourMatchTitle": "Matches",
+    "tourMatch": "Tap a match: score, line-ups, stats and AI analysis open up.",
+    "tourStarTitle": "Favorites",
+    "tourStar": "Star your team with ☆ and find its matches in the Favorites tab.",
+    "tourGundemTitle": "Feed",
+    "tourGundem": "Talk about matches with other fans and share posts in the Feed.",
+    "tourAiTitle": "AI analysis",
+    "tourAi": "Every match has an AI Analysis tab; you can also ask the ✦ assistant.",
+    "aiTabHint": "This match's AI analysis is here",
+    "fabAssistant": "AI assistant",
+    "fabRules": "Rules Corner",
+    "favoriteHint": "Added to favorites — see the Favorites tab"
   }
 }

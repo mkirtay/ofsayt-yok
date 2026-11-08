@@ -62,5 +62,32 @@
     "open": "Oyuna git",
     "shareText": "Frikik'te {{level}}. seviyeye ulaştım, {{score}} puan. Sen kaça ulaşırsın?",
     "kicker": "Her gün yeni frikik"
+  },
+  "onboarding": {
+    "welcomeTitle": "{{brand}}'e hoş geldin 👋",
+    "itemMatch": "Bir maça dokun, AI analizini gör",
+    "itemStar": "☆ ile takımını yıldızla, maçları üstte gör",
+    "itemGundem": "Gündem'de taraftarlarla konuş",
+    "tour": "Kısa tur",
+    "dismiss": "Anladım",
+    "dismissAria": "Anladım, karşılama kartını kapat",
+    "ok": "Tamam",
+    "close": "Kapat",
+    "next": "İleri",
+    "done": "Bitti",
+    "skip": "Turu geç",
+    "step": "{{current}}/{{total}}",
+    "tourMatchTitle": "Maçlar",
+    "tourMatch": "Bir maça dokun: skor, kadrolar, istatistikler ve AI analizi açılır.",
+    "tourStarTitle": "Favoriler",
+    "tourStar": "☆ ile takımını yıldızla; maçlarını Favoriler sekmesinde bulursun.",
+    "tourGundemTitle": "Gündem",
+    "tourGundem": "Gündem'de maçları taraftarlarla konuş, gönderi paylaş.",
+    "tourAiTitle": "AI analiz",
+    "tourAi": "Her maçın AI Analiz sekmesi var; ✦ asistana da maçları sorabilirsin.",
+    "aiTabHint": "Bu maçın yapay zekâ analizi burada",
+    "fabAssistant": "AI asistan",
+    "fabRules": "Kural Köşesi",
+    "favoriteHint": "Favorilere eklendi — Favoriler sekmesinde"
   }
 }
