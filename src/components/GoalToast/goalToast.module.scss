@@ -22,10 +22,20 @@
 
   @include below-desktop {
     left: 12px;
-    right: 80px; // yüzen düğme sütunu: 16 + 56 px + 8 px boşluk
+    right: 80px; // yüzen düğme sütunu (AI ✦ / Kural Köşesi): 16 + 56 px + 8 px boşluk — altına girmez
     width: auto;
     transform: none;
     bottom: calc(var(--bottom-nav-height) + 16px + var(--safe-bottom));
+    transition: bottom 200ms ease;
+
+    // Alt yığın (hooks/useBottomStackSlot): üye ol kartı açıkken kartın 8 px üstü; kart kapanınca aşağı iner.
+    :global(html[data-bottom-stack]) & {
+      bottom: calc(var(--bottom-nav-height) + var(--safe-bottom) + #{$spacing-3} + var(--bottom-stack-offset, 0px) + 8px);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      transition: none;
+    }
   }
 }
 

@@ -61,6 +61,14 @@ export type GoalToastQueue = { visible: GoalToastItem[]; queued: GoalToastItem[]
 
 export const EMPTY_GOAL_TOAST_QUEUE: GoalToastQueue = { visible: [], queued: [] };
 export const GOAL_TOAST_MAX_VISIBLE = 2;
+
+/**
+ * Aynı anda çizilecek bildirim sayısı: mobilde alt yığında üye ol kartı açıksa (ekran kalabalık) 1, değilse 2.
+ * Çizilmeyen görünür kayıt sırada bekler gibi davranır (süresi kartı çizilince başlar).
+ */
+export function goalToastVisibleLimit(crowded: boolean): number {
+  return crowded ? 1 : GOAL_TOAST_MAX_VISIBLE;
+}
 /** Bekleyen en fazla bu kadar; taşarsa en eskisi düşer (yoğun akşamda dakikalar sonra eski gol çıkmasın). */
 export const GOAL_TOAST_MAX_QUEUED = 3;
 

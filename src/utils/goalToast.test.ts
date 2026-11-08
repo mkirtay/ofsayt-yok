@@ -6,6 +6,7 @@ import {
   enqueueGoalToasts,
   GOAL_TOAST_ARM_MS,
   goalToastsArmed,
+  goalToastVisibleLimit,
   isCleanGoal,
   toastableGoalIds,
   visibleFraction,
@@ -118,5 +119,12 @@ describe('visibleFraction', () => {
   it('gizli liste kutusu (sıfır boyut) görünmez sayılır', () => {
     expect(visibleFraction({ top: 0, bottom: 0 }, { top: 0, bottom: 0 }, 900)).toBe(0);
     expect(visibleFraction({ top: 10, bottom: 50 }, { top: 10, bottom: 10 }, 900)).toBe(0);
+  });
+});
+
+describe('goalToastVisibleLimit', () => {
+  it('mobilde üye ol kartı açıkken (kalabalık) 1, değilse 2', () => {
+    expect(goalToastVisibleLimit(true)).toBe(1);
+    expect(goalToastVisibleLimit(false)).toBe(2);
   });
 });

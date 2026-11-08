@@ -4,10 +4,12 @@ import { createPortal } from 'react-dom';
 import { useTranslation } from '@/lib/i18n';
 import TeamLogo from '@/components/TeamLogo';
 import { isModifiedClick } from '@/utils/matchSelection';
+import { BOTTOM_STACK_ATTR } from '@/hooks/useBottomStackSlot';
 import {
   dismissGoalToast,
   EMPTY_GOAL_TOAST_QUEUE,
   enqueueGoalToasts,
+  goalToastVisibleLimit,
   visibleFraction,
   type GoalToastItem,
   type GoalToastQueue,
@@ -39,6 +41,21 @@ function reducer(state: GoalToastQueue, action: Action): GoalToastQueue {
 }
 
 const noopSubscribe = () => () => {};
+
+/** Mobil düzen (`below-desktop`, < 1024 px) ve alt yığında üye ol kartı açık → ekran kalabalık. */
+const CROWDED_QUERY = '(max-width: 1023px)';
+function subscribeCrowded(onChange: () => void): () => void {
+  const mql = window.matchMedia(CROWDED_QUERY);
+  const mo = new MutationObserver(onChange);
+  mo.observe(document.documentElement, { attributes: true, attributeFilter: [BOTTOM_STACK_ATTR] });
+  mql.addEventListener('change', onChange);
+  return () => {
+    mo.disconnect();
+    mql.removeEventListener('change', onChange);
+  };
+}
+const readCrowded = () =>
+  document.documentElement.hasAttribute(BOTTOM_STACK_ATTR) && window.matchMedia(CROWDED_QUERY).matches;
 const appRoot = () => document.querySelector<HTMLElement>('[data-app-root]') ?? document.body;
 
 /** Listede satırı görünüm alanında olan maç (yarısından fazlası görünüyorsa) — kart zaten "gol anı"nı oynatıyor. */
@@ -62,6 +79,9 @@ export default function GoalToasts({ batch, armed, onSelectMatch = null, selecte
   const handledSeq = useRef(-1);
   // Yalnız istemcide yüklenir (tembel); sunucu dalı yine de güvenli.
   const root = useSyncExternalStore(noopSubscribe, appRoot, () => null);
+  // Kalabalıkta tek bildirim: ikincisi çizilmez (süresi de işlemez), birincisi kapanınca sırayla gelir.
+  const crowded = useSyncExternalStore(subscribeCrowded, readCrowded, () => false);
+  const shown = state.visible.slice(0, goalToastVisibleLimit(crowded));
 
   useEffect(() => {
     if (!root || batch.seq === handledSeq.current) return;
@@ -89,7 +109,7 @@ export default function GoalToasts({ batch, armed, onSelectMatch = null, selecte
   if (!root) return null;
   return createPortal(
     <div className={styles.region} role="status" aria-live="polite" aria-relevant="additions text">
-      {state.visible.map((item) => (
+      {shown.map((item) => (
         <GoalToastCard
           key={item.matchId}
           item={item}
