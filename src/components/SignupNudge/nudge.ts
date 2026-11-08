@@ -12,3 +12,23 @@ export function isNudgeCoolingDown(dismissedAt: string | null, now: number): boo
   const at = Number(dismissedAt);
   return Number.isFinite(at) && at > 0 && now - at < NUDGE_COOLDOWN_MS;
 }
+
+/**
+ * Kart açıkken `<html data-signup-nudge>` + `--bottom-stack-offset` (mobilde ekranın altından kartın tepesine +
+ * boşluk, px; masaüstünde 0). Alt bölgedeki geçici öğeler (yüzen düğme etiketleri, ipucu baloncukları, bildirimler)
+ * kartla üst üste binmemek için buna bakar. Açılış/kapanışta `NUDGE_TOGGLE_EVENT` yayınlanır.
+ */
+export const NUDGE_OPEN_ATTR = 'data-signup-nudge';
+export const NUDGE_TOGGLE_EVENT = 'scor3:signup-nudge';
+export const BOTTOM_STACK_OFFSET_VAR = '--bottom-stack-offset';
+
+export function isNudgeOpen(): boolean {
+  return typeof document !== 'undefined' && document.documentElement.hasAttribute(NUDGE_OPEN_ATTR);
+}
+
+/** Alt yığın ofseti (px) — kart yoksa / masaüstünde 0. */
+export function bottomStackOffset(): number {
+  if (typeof document === 'undefined') return 0;
+  const v = parseFloat(getComputedStyle(document.documentElement).getPropertyValue(BOTTOM_STACK_OFFSET_VAR));
+  return Number.isFinite(v) && v > 0 ? v : 0;
+}

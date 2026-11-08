@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { isNudgeCoolingDown, isNudgeHiddenPath, NUDGE_COOLDOWN_MS } from './nudge';
 
@@ -12,5 +14,15 @@ describe('SignupNudge kuralları', () => {
     expect(isNudgeCoolingDown(String(now - NUDGE_COOLDOWN_MS - 1), now)).toBe(false);
     expect(isNudgeCoolingDown(null, now)).toBe(false);
     expect(isNudgeCoolingDown('x', now)).toBe(false);
+  });
+});
+
+describe('Üye ol kartı ↔ ilk ziyaret tanıtımı (bağlantı)', () => {
+  const src = readFileSync(path.resolve(__dirname, 'index.tsx'), 'utf8');
+  it('tanıtım sürerken sayaç kurulmaz, kapanış olayı beklenir; açıkken alt yığın işaretlenir', () => {
+    expect(src).toMatch(/if \(isIntroPending\(\)\) \{[\s\S]*?INTRO_DONE_EVENT[\s\S]*?return/);
+    expect(src.indexOf('isIntroPending()')).toBeLessThan(src.indexOf('setTimeout(() => setOpen(true)'));
+    expect(src).toContain('root.setAttribute(NUDGE_OPEN_ATTR');
+    expect(src).toContain('BOTTOM_STACK_OFFSET_VAR');
   });
 });

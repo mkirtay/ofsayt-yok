@@ -11,6 +11,7 @@
 import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import Router from 'next/router';
+import { NUDGE_TOGGLE_EVENT, bottomStackOffset, isNudgeOpen } from '@/components/SignupNudge/nudge';
 import styles from './hintLayer.module.scss';
 
 export type HintLabels = {
@@ -152,7 +153,14 @@ function Bubble({ anchors, title, body, placement, labels, tour, onClose }: Bubb
       return;
     }
     const r = anchor.getBoundingClientRect();
-    const next = placeBubble(r, { width: el.offsetWidth, height: el.offsetHeight }, { width: window.innerWidth, height: window.innerHeight }, placement);
+    // Alt yığın (mobilde üye ol kartı): baloncuk o bölgeye taşmaz; bağlandığı öğe o bölgedeyse görünmez (kaydırınca gelir).
+    const usableHeight = window.innerHeight - bottomStackOffset();
+    if (r.bottom > usableHeight) {
+      setPos(null);
+      setRing(null);
+      return;
+    }
+    const next = placeBubble(r, { width: el.offsetWidth, height: el.offsetHeight }, { width: window.innerWidth, height: usableHeight }, placement);
     setPos((cur) => (cur && cur.top === next.top && cur.left === next.left && cur.arrowX === next.arrowX && cur.side === next.side ? cur : next));
     if (tour) {
       const nr = { top: Math.round(r.top) - 4, left: Math.round(r.left) - 4, width: Math.round(r.width) + 8, height: Math.round(r.height) + 8 };
@@ -274,6 +282,14 @@ function SideLabels({ items, side, closeLabel, onClose }: { items: SideLabelItem
   useLayoutEffect(update, [update]);
   useReposition(update);
   useCloseOnRouteChange(onClose);
+  // Üye ol kartı açılırsa etiketler kartın üstüne binmesin: kapan.
+  useEffect(() => {
+    const onNudge = () => {
+      if (isNudgeOpen()) onClose();
+    };
+    window.addEventListener(NUDGE_TOGGLE_EVENT, onNudge);
+    return () => window.removeEventListener(NUDGE_TOGGLE_EVENT, onNudge);
+  }, [onClose]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -414,7 +430,7 @@ export function startTour(steps: TourStep[], labels: HintLabels, opts: { returnF
 /** Yüzen düğme etiketleri (tek sefer). */
 export function showSideLabels(items: SideLabelItem[], opts: { side: 'left' | 'right'; closeLabel: string; onShow?: () => void }): void {
   run(() => {
-    if (!items.every(({ anchor }) => anchor.isConnected && isUsableAnchor(anchor))) return finishIfIdle();
+    if (isNudgeOpen() || !items.every(({ anchor }) => anchor.isConnected && isUsableAnchor(anchor))) return finishIfIdle();
     active = true;
     opts.onShow?.();
     getRoot().render(<SideLabels items={items} side={opts.side} closeLabel={opts.closeLabel} onClose={finish} />);

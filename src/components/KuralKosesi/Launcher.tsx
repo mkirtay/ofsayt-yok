@@ -24,6 +24,7 @@ import WhistleIcon from './WhistleIcon';
 import { LAUNCHER_SIZE_PX, bubblePosition } from './launcherPosition';
 import { useLauncherDrag } from './useLauncherDrag';
 import { isOnboardSeen, isWelcomeShowing, markOnboardSeen } from '@/components/Onboarding/storage';
+import { NUDGE_TOGGLE_EVENT, isNudgeOpen } from '@/components/SignupNudge/nudge';
 import styles from './launcher.module.scss';
 
 let panelLoad: Promise<ComponentType<PanelProps>> | null = null;
@@ -199,13 +200,21 @@ export default function Launcher({ assistantHidden = false }: { assistantHidden?
 
   // İlk ziyaret (yalnız mobil düzen): iki yüzen düğmenin yanına bir kez kısa etiket — ne olduklarını anlatır.
   // Karşılama kartı açıkken ya da "Biliyor muydun?" baloncuğu varken beklemez, sonraki sayfaya kalır.
+  // Üye ol kartı açıkken gösterilmez (alt yığın: kart diğer geçici öğelerin altında); kart kapanınca yeniden denenir.
+  // "Gösterildi" ancak etiketler gerçekten çizilince sayılır (onShow).
   const labelSide = drag.side;
+  const [nudgeTick, setNudgeTick] = useState(0);
+  useEffect(() => {
+    const onNudge = () => setNudgeTick((n) => n + 1);
+    window.addEventListener(NUDGE_TOGGLE_EVENT, onNudge);
+    return () => window.removeEventListener(NUDGE_TOGGLE_EVENT, onNudge);
+  }, []);
   useEffect(() => {
     if (!drag.ready || peekIndex !== null || open || assistantOpen) return;
-    if (isOnboardSeen('fabs') || isWelcomeShowing()) return;
+    if (isOnboardSeen('fabs') || isWelcomeShowing() || isNudgeOpen()) return;
     if (!window.matchMedia('(max-width: 1023.98px)').matches) return;
     const id = window.setTimeout(() => {
-      if (isOnboardSeen('fabs') || isWelcomeShowing()) return;
+      if (isOnboardSeen('fabs') || isWelcomeShowing() || isNudgeOpen()) return;
       const items = [
         assistantRef.current ? { anchor: assistantRef.current, text: tc('onboarding.fabAssistant') } : null,
         launcherRef.current ? { anchor: launcherRef.current, text: tc('onboarding.fabRules') } : null,
@@ -218,7 +227,7 @@ export default function Launcher({ assistantHidden = false }: { assistantHidden?
       );
     }, 2000);
     return () => window.clearTimeout(id);
-  }, [drag.ready, peekIndex, open, assistantOpen, labelSide, tc]);
+  }, [drag.ready, peekIndex, open, assistantOpen, labelSide, tc, nudgeTick]);
   // Düdük tepeye yakınsa balon altına geçer (header'ın altına girmesin).
   const assistantBelow = drag.top !== null && drag.top - ASSISTANT_GAP_PX - ASSISTANT_BUBBLE_PX < ASSISTANT_MIN_TOP_PX;
 

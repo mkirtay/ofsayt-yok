@@ -45,6 +45,44 @@ export function markOnboardSeen(key: OnboardKey, storage: StorageLike | null = d
   } catch {}
 }
 
+/** İlk ziyaret oturumu işaretleri (bkz. `isIntroPending`). */
+export const FIRST_VISIT_KEY = 'scor3.onboard.firstVisit';
+export const INTRO_SESSION_KEY = 'scor3.onboard.introSession';
+/** Karşılama kartı kapatılınca (tanıtım bitti) yayınlanır — ertelenen üye ol kartı vb. dinler. */
+export const INTRO_DONE_EVENT = 'scor3:onboard-intro-done';
+
+function defaultSessionStorage(): StorageLike | null {
+  try {
+    return typeof window === 'undefined' ? null : window.sessionStorage;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * İlk ziyaretin tanıtımı sürüyor mu: karşılama kartı kapatılmadı VE bu, ilk ziyaretin tarayıcı oturumu. Sonraki
+ * ziyarette (yeni oturum) ya da kart kapatılınca `false`. Depolama yoksa `false` (başka şeyleri bekletmesin).
+ * İlk çağrı ilk ziyareti işaretler.
+ */
+export function isIntroPending(
+  storage: StorageLike | null = defaultStorage(),
+  session: StorageLike | null = defaultSessionStorage(),
+  now = Date.now(),
+): boolean {
+  if (!storage || !session) return false;
+  try {
+    if (storage.getItem(ONBOARD_KEYS.welcome) != null) return false;
+    if (storage.getItem(FIRST_VISIT_KEY) == null) {
+      storage.setItem(FIRST_VISIT_KEY, String(now));
+      session.setItem(INTRO_SESSION_KEY, '1');
+      return true;
+    }
+    return session.getItem(INTRO_SESSION_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
 /**
  * Karşılama kartı sunucu HTML'inde hep var ama gizli; boyamadan önce çalışan satır içi betik ilk ziyarette
  * `<html data-onboard-welcome>` yazar → CSS kartı baştan gösterir (hydration'da araya girme / kayma yok).

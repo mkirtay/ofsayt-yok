@@ -6,7 +6,7 @@ import { I18nProvider } from '@/lib/i18n';
 import { findGamblingTerms } from '@/utils/gamblingTerms';
 import WelcomeCard from './WelcomeCard';
 import { placeBubble } from './hintLayer';
-import { ONBOARD_KEYS, WELCOME_ATTR, WELCOME_BOOT_SCRIPT, isOnboardSeen, markOnboardSeen } from './storage';
+import { FIRST_VISIT_KEY, ONBOARD_KEYS, WELCOME_ATTR, WELCOME_BOOT_SCRIPT, isIntroPending, isOnboardSeen, markOnboardSeen } from './storage';
 
 function memoryStorage(initial: Record<string, string> = {}) {
   const data = new Map(Object.entries(initial));
@@ -39,6 +39,41 @@ describe('onboarding depolama', () => {
     };
     expect(isOnboardSeen('favorite', broken)).toBe(true);
     expect(() => markOnboardSeen('favorite', broken)).not.toThrow();
+  });
+});
+
+describe('isIntroPending (üye ol kartı tanıtımdan sonra)', () => {
+  it('ilk ziyaret oturumunda tanıtım sürer; aynı oturumda tekrar sorulunca da', () => {
+    const ls = memoryStorage();
+    const ss = memoryStorage();
+    expect(isIntroPending(ls, ss, 1)).toBe(true);
+    expect(ls.data.get(FIRST_VISIT_KEY)).toBe('1');
+    expect(isIntroPending(ls, ss, 2)).toBe(true);
+  });
+
+  it('karşılama kartı kapatılınca biter', () => {
+    const ls = memoryStorage();
+    const ss = memoryStorage();
+    isIntroPending(ls, ss);
+    markOnboardSeen('welcome', ls);
+    expect(isIntroPending(ls, ss)).toBe(false);
+  });
+
+  it('sonraki ziyarette (yeni oturum) kart kapatılmamış olsa da biter', () => {
+    const ls = memoryStorage();
+    isIntroPending(ls, memoryStorage());
+    expect(isIntroPending(ls, memoryStorage())).toBe(false);
+  });
+
+  it('depolama yok / hata → beklemez', () => {
+    expect(isIntroPending(null, memoryStorage())).toBe(false);
+    const broken = {
+      getItem: () => {
+        throw new Error('blocked');
+      },
+      setItem: () => {},
+    };
+    expect(isIntroPending(broken, memoryStorage())).toBe(false);
   });
 });
 
@@ -107,6 +142,12 @@ describe('placeBubble', () => {
     const p = placeBubble({ top: 60, bottom: 100, left: 100, width: 80 }, bubble, vp, 'above');
     expect(p.side).toBe('below');
     expect(p.top).toBe(110);
+  });
+
+  it('alt yığın (üye ol kartı) çıkarılmış yükseklikte "below" sığmazsa üste geçer', () => {
+    const p = placeBubble({ top: 420, bottom: 460, left: 100, width: 80 }, bubble, { width: 375, height: 812 - 300 }, 'below');
+    expect(p.side).toBe('above');
+    expect(p.top + bubble.height).toBeLessThanOrEqual(420);
   });
 
   it('375 px ekranda yatayda kenarlara kıstırılır (sağ kenardaki düğme)', () => {

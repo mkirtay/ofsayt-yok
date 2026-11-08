@@ -1,7 +1,7 @@
 import { useId, useRef, type KeyboardEvent } from 'react';
 import { useTranslation } from '@/lib/i18n';
 import { hintLabels } from './labels';
-import { ONBOARD_ANCHORS, WELCOME_ATTR, markOnboardSeen } from './storage';
+import { INTRO_DONE_EVENT, ONBOARD_ANCHORS, WELCOME_ATTR, markOnboardSeen } from './storage';
 import styles from './welcomeCard.module.scss';
 
 /**
@@ -19,6 +19,7 @@ export default function WelcomeCard() {
   const dismiss = () => {
     markOnboardSeen('welcome');
     document.documentElement.removeAttribute(WELCOME_ATTR);
+    window.dispatchEvent(new Event(INTRO_DONE_EVENT));
   };
 
   /** Kart kaybolunca odak listenin ilk maçına (yoksa listeye) geçer — odak `<body>`'ye düşmesin. */
