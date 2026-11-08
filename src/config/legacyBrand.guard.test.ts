@@ -37,6 +37,7 @@ export const LEGACY_BRAND_ALLOWLIST: Izin[] = [
 
   { path: 'src/components/PitchScenes/VarScene.tsx', allow: /OFSAYT YOK|Ofsayt yok/g, sinif: 'teknik', neden: 'VAR animasyon damgası: hakem kararı "ofsayt yok" (futbol terimi, marka değil).' },
   { path: 'src/components/PitchScenes/varScene.module.scss', allow: /Ofsayt yok/g, sinif: 'teknik', neden: 'VAR animasyonu yorum satırı (futbol terimi).' },
+  { path: 'src/components/MatchCommentary/scenePlan.ts', allow: /ofsayt yok/g, sinif: 'teknik', neden: '2D sahne yorum satırı: hücum eden ofsaytta değil (futbol terimi, marka değil).' },
   { path: 'src/components/KuralKosesi/Panel.tsx', allow: /03-var-ofsayt-yok/g, sinif: 'teknik', neden: 'VAR animasyon kimliği (içerik JSON anahtarı).' },
   { path: 'src/components/KuralKosesi/facts.ts', allow: /03-var-ofsayt-yok/g, sinif: 'teknik', neden: 'VAR animasyon kimliği.' },
   { path: 'src/content/kural-kosesi.json', allow: /03-var-ofsayt-yok/g, sinif: 'teknik', neden: 'VAR animasyon kimliği.' },

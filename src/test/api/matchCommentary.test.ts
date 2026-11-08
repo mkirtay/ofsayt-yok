@@ -84,7 +84,8 @@ describe('GET /api/matches/[id]/commentary', () => {
         path: '/fixtures/19746587',
         params: {
           select: 'state_id,starting_at,starting_at_timestamp',
-          include: 'comments:comment,minute,extra_minute,is_goal,is_important,order;lineups:player_name,team_id,type_id,position_id,formation_field,jersey_number;participants:name;formations:participant_id,formation,location',
+          include: 'comments:comment,minute,extra_minute,is_goal,is_important,order;lineups;participants:name;formations:participant_id,formation,location;events:type_id,minute,extra_minute,player_id,related_player_id,participant_id,sort_order;metadata',
+          filters: 'eventTypes:18,20,21;metadataTypes:161,162',
         },
       },
     ]);

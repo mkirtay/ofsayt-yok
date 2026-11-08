@@ -62,6 +62,7 @@ Bunlar düzeltilince izin listesindeki girdileri silinmeli (bayat girdi testi za
 | Yer | Neden değişmiyor |
 | --- | --- |
 | VAR animasyonu: `VarScene.tsx` damgası `OFSAYT YOK` / `NO OFFSIDE`, yorumlar | Marka değil, hakem kararı ("ofsayt yok"). |
+| 2D sahne yorum satırı: `MatchCommentary/scenePlan.ts` | Marka değil, futbol terimi (hücum eden ofsaytta değil). |
 | Kural Köşesi animasyon kimliği `03-var-ofsayt-yok` (`kural-kosesi.json`, `facts.ts`, `Panel.tsx`) | İçerik anahtarı; adla ilgisi yok, değişirse içerik eşleşmesi kırılır. |
 | ~~`docs/OFSAYT_YOK_DESIGN_SYSTEM.md`~~ → `docs/DESIGN_SYSTEM.md` | 2026-10-20 yeniden adlandırıldı. |
 | `package.json` `"name": "ofsayt-yok"`, repo ve worktree klasör adları | Private paket, yayınlanmıyor; yeniden adlandırma yalnız yerel yolları bozar. |
