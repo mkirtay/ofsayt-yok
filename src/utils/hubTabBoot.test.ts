@@ -48,6 +48,8 @@ describe('?tab= ön-boyama', () => {
     expect(hub).toMatch(/\.statusChip\[data-tab='#\{\$tab\}'\]/);
     expect(read('src/components/BottomNav/bottomNav.module.scss')).toMatch(/\.item\[data-nav-key='#\{\$key\}'\]/);
     expect(read('src/components/SubHeader/index.tsx')).toContain('data-tab={tab.key}');
-    expect(read('src/components/MatchHubPage/index.tsx')).toMatch(/<script dangerouslySetInnerHTML=\{\{ __html: HUB_TAB_BOOT_SCRIPT \}\} \/>\s*<SubHeader/);
+    expect(read('src/components/MatchHubPage/index.tsx')).toMatch(
+      /<script dangerouslySetInnerHTML=\{\{ __html: HUB_TAB_BOOT_SCRIPT \}\} \/>\s*(?:\{\/\*[^]*?\*\/\}\s*<script dangerouslySetInnerHTML=\{\{ __html: WELCOME_BOOT_SCRIPT \}\} \/>\s*)?<SubHeader/,
+    );
   });
 });
