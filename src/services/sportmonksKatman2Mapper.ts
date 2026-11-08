@@ -41,6 +41,10 @@ export function mapSportmonksEventToMatchEvent(
     addition: event.addition ?? null,
     is_home: location === 'home',
     is_away: location === 'away',
+    ...(event.related_player_id
+      ? { related_player: { id: event.related_player_id, name: normalizeDisplayName(event.related_player_name ?? '') } }
+      : {}),
+    ...(event.rescinded ? { rescinded: true as const } : {}),
   };
 }
 
@@ -125,6 +129,8 @@ export function mapSportmonksStatistics(statistics: SportmonksStatisticRow[] | u
 const BENCH_LINEUP_TYPE_ID = 12;
 /** `lineups.details[]` içinde "Rating" (RATING) — Süper Lig dahil doğrulandı (Kasımpaşa-Konyaspor 19746608). */
 export const LINEUP_RATING_TYPE_ID = 118;
+/** `lineups.details[]` içinde "Captain" (`data.value: true`) — 2026-11-08 gerçek yanıt (fixture 19746608, takım başına 1). */
+export const LINEUP_CAPTAIN_TYPE_ID = 40;
 
 /** `details[]`'ten yalnızca reytingi çeker (~50 alanın geri kalanı bilinçli atılıyor). Sayı değilse / ≤0 ise `undefined`. */
 export function extractLineupRating(details: SportmonksLineupRow['details']): number | undefined {
@@ -157,6 +163,7 @@ function mapLineupRowToPlayer(row: SportmonksLineupRow): LineupPlayer {
       : {}),
     ...(rating !== undefined ? { rating } : {}),
     ...(grid ? { formation_row: grid.row, formation_col: grid.col } : {}),
+    ...(row.details?.some((d) => d.type_id === LINEUP_CAPTAIN_TYPE_ID && d.data?.value === true) ? { captain: true as const } : {}),
   };
 }
 

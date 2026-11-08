@@ -48,42 +48,18 @@
   padding: $spacing-4;
 }
 
-// ── Genel düzen: dar isim listesi | saha | dar isim listesi ────────────────
+// ── Genel düzen: saha (dar kapta dikey, genişte yatay) + altında yedekler ─────
+//
+// Yön, kadro kutusunun KENDİ genişliğinden (container query) — tam sayfa / split-view paneli / mobil aynı kuralla:
+// < 640px dikey (ev üstte, deplasman altta), ≥ 640px yatay (ev solda, deplasman sağda).
 
-.layout {
-  display: flex;
-  align-items: flex-start;
-  gap: $spacing-3;
+.pitchWrap {
+  container-type: inline-size;
+  container-name: lineup;
 }
 
 .pitchCol {
-  flex: 1;
   min-width: 0;
-}
-
-.compactList {
-  flex: 0 0 176px;
-  width: 176px;
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  padding-top: 40px; // teamBar yüksekliğiyle hizalanır
-
-  @media (max-width: $bp-sm) {
-    display: none;
-  }
-
-  // Split-view paneli gibi dar bir container içinde (panel `container-type: inline-size`) yan
-  // isim listeleri sahayı boğar: saha tam genişliği alsın, oyuncu isimleri zaten sahada yazılı.
-  @container (max-width: 700px) {
-    display: none;
-  }
-
-  @media (min-width: $bp-lg) {
-    flex-basis: 190px;
-    width: 190px;
-  }
 }
 
 a.formationPlayer,
@@ -171,6 +147,13 @@ a.compactRow {
   text-align: left;
 }
 
+.compactMeta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
 .compactPos {
   font-size: 10px;
   line-height: 1.2;
@@ -180,19 +163,8 @@ a.compactRow {
 
 // ── Yedekler (pitch altı): iki takım yan yana; dar alan/panelde alt alta ───────
 
-// Geniş düzende yedekler yan isim listelerinde (ilk 11'in altında) gösterilir; bu alt bölüm yalnızca yan listeler
-// gizliyken (mobil / dar panel — `.compactList` ile AYNI koşullar) devreye girer.
 .bench {
-  display: none;
   margin-top: $spacing-6;
-
-  @media (max-width: $bp-sm) {
-    display: block;
-  }
-
-  @container (max-width: 700px) {
-    display: block;
-  }
 }
 
 // "İlk 11" başlığıyla aynı stil (`.title`: 16px + altında çizgi) — ikinci bölüm başlığı olarak.
@@ -246,9 +218,24 @@ a.compactRow {
 .teamBar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: $spacing-2;
   padding: $spacing-1 $spacing-1;
+}
+
+.teamDot {
+  flex-shrink: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.teamDotHome {
+  background: $color-primary;
+}
+
+.teamDotAway {
+  background: #fff;
+  border: 2px solid $color-primary;
 }
 
 .teamBarName {
@@ -262,6 +249,7 @@ a.compactRow {
 
 .formationBadge {
   flex-shrink: 0;
+  margin-left: auto;
   font-size: 11px;
   font-weight: 700;
   color: $color-text-secondary;
@@ -361,6 +349,7 @@ a.compactRow {
   display: flex;
   flex-direction: column;
   justify-content: space-evenly;
+  gap: 8px; // olay hapı + kaptan rozeti bir sonraki hatta değmesin
 }
 
 .formationHalfHome,
@@ -527,5 +516,238 @@ a.compactRow {
   .centerCircle {
     width: 64px;
     height: 64px;
+  }
+}
+
+// ── Kaptan rozeti (sağ üst) + olay ikonları (isim altında koyu hap) ─────────
+
+.captainBadge {
+  position: absolute;
+  right: -6px;
+  top: -5px;
+  z-index: 1;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  color: #1b1b1b;
+  font-size: 8px;
+  font-weight: 800;
+  line-height: 1;
+  border: 1px solid rgba(0, 0, 0, 0.3);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+.events {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 3px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+// Saha üstü: yeşil zeminde her temada okunur (sabit koyu hap + beyaz metin).
+.eventsPitch {
+  max-width: 100%;
+  margin-top: 1px;
+  padding: 2px 5px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.eventsRow {
+  gap: 4px;
+  color: $color-text-secondary;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.evItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+}
+
+.evBall {
+  flex-shrink: 0;
+}
+
+.evAssist {
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  color: #1b1b1b;
+  font-size: 8px;
+  font-weight: 800;
+  line-height: 1;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
+}
+
+.eventsRow .evAssist {
+  background: $color-text-secondary;
+  color: $color-surface;
+  box-shadow: none;
+}
+
+// Kendi kalesine: top kırmızı halkalı.
+.evOwnGoal .evBall circle {
+  stroke: var(--color-loss);
+  stroke-width: 2;
+}
+
+.evCard {
+  display: inline-block;
+  flex-shrink: 0;
+  width: 7px;
+  height: 10px;
+  border-radius: 1.5px;
+  box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.35);
+}
+
+.evCardYellow {
+  background: var(--color-draw);
+}
+
+.evCardRed {
+  background: var(--color-loss);
+}
+
+.evCardPair .evCard + .evCard {
+  margin-left: -3px;
+  transform: rotate(10deg);
+}
+
+.eventsPitch .evSubIn {
+  color: #6ee79a;
+}
+
+.eventsPitch .evSubOut {
+  color: #ff8a8a;
+}
+
+.eventsRow .evSubIn {
+  color: var(--color-win);
+}
+
+.eventsRow .evSubOut {
+  color: var(--color-loss);
+}
+
+// Oyundan çıkan ilk-11 oyuncusu hafif soluk (girenin bilgisi yedek listesinde).
+.formationPlayerOut .formationDot,
+.formationPlayerOut .formationName {
+  opacity: 0.82;
+}
+
+a.formationPlayer:focus-visible,
+a.compactRow:focus-visible {
+  outline: 2px solid $color-primary;
+  outline-offset: 2px;
+  border-radius: $radius-sm;
+}
+
+// ── Yatay saha (kadro kutusu ≥ 640px): ev solda (kaleci sol kenarda), deplasman sağda ─────────
+
+@container lineup (min-width: 640px) {
+  .pitchCol {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+      'home away'
+      'pitch pitch';
+    column-gap: $spacing-3;
+  }
+
+  .teamBarHome {
+    grid-area: home;
+  }
+
+  // Yatayda formasyon adın hemen yanında (iki rozet ortada yan yana durmasın); deplasman sağa yaslı ayna.
+  .teamBar .formationBadge {
+    margin-left: 0;
+  }
+
+  .teamBarAway {
+    grid-area: away;
+    flex-direction: row-reverse;
+  }
+
+  .pitch,
+  .loadingPitch {
+    grid-area: pitch;
+    flex-direction: row;
+    min-height: 500px;
+    padding: $spacing-3 $spacing-2;
+  }
+
+  .pitch {
+    background: linear-gradient(90deg, #1f7a3d 0%, #2d8b47 50%, #1f7a3d 100%);
+  }
+
+  .formationHalf {
+    flex-direction: row;
+    justify-content: space-evenly;
+  }
+
+  // Hat = dikey sütun. Dikey sahayı 90° sola çevirmekle aynı yön: satırda soldaki oyuncu sütunda en altta.
+  .formationRow {
+    flex-direction: column-reverse;
+    justify-content: space-evenly;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .formationPlayer {
+    width: 76px;
+  }
+
+  .halfLine {
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    right: auto;
+    width: 2px;
+    height: auto;
+    transform: translateX(-50%);
+  }
+
+  .centerCircle {
+    width: 96px;
+    height: 96px;
+  }
+
+  .penaltyAreaTop,
+  .penaltyAreaBottom {
+    top: 50%;
+    bottom: auto;
+    width: 13%;
+    height: 46%;
+    border: 2px solid rgba(255, 255, 255, 0.28);
+  }
+
+  .penaltyAreaTop {
+    left: 0;
+    transform: translateY(-50%);
+    border-left: none;
+  }
+
+  .penaltyAreaBottom {
+    left: auto;
+    right: 0;
+    transform: translateY(-50%);
+    border-right: none;
   }
 }

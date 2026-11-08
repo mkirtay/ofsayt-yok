@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
-import type { LineupPlayer, MatchLineupData } from '@/models/domain';
+import type { LineupPlayer, MatchEvent, MatchLineupData } from '@/models/domain';
+import { buildPlayerEvents, hasAnyEvent, type PlayerMatchEvents } from '@/utils/lineupPlayerEvents';
 import { useTranslation } from '@/lib/i18n';
 import '@/lib/i18nNamespaces/matchState';
 import LazyLoad from '@/components/LazyLoad';
@@ -23,6 +24,8 @@ const FORMATION_PHOTO_PX = 40;
 
 interface LineupProps {
   lineups: MatchLineupData | null;
+  /** Maç olayları (aynı `fixtures/{id}` yanıtından): gol/asist/kart/değişiklik ikonları. Maç öncesi kullanılmaz. */
+  events?: MatchEvent[] | null;
   loading?: boolean;
   /** Verilirse başlık (İlk 11 / Muhtemel 11) ve boş metin maçın evresine göre. */
   match?: Match | null;
@@ -61,25 +64,154 @@ function shortName(name: string): string {
 export const formatPlayerRating = formatRating;
 
 /** Oyuncu detay sayfasına (`/players/{id}`) bağlantı; id yoksa düz kutu. */
-function Wrapper({ playerId, className, title, children }: { playerId?: string; className: string; title: string; children: React.ReactNode }) {
+function Wrapper({
+  playerId,
+  className,
+  title,
+  ariaLabel,
+  children,
+}: {
+  playerId?: string;
+  className: string;
+  title: string;
+  ariaLabel?: string;
+  children: React.ReactNode;
+}) {
   return playerId ? (
-    <Link href={`/players/${playerId}`} className={className} title={title} prefetch={false}>
+    <Link href={`/players/${playerId}`} className={className} title={title} aria-label={ariaLabel} prefetch={false}>
       {children}
     </Link>
   ) : (
-    <div className={className} title={title}>
+    <div className={className} title={title} aria-label={ariaLabel} role={ariaLabel ? 'group' : undefined}>
       {children}
     </div>
   );
 }
 
-function PlayerToken({ player, team }: { player: LineupPlayer; team: 'home' | 'away' }) {
+type Translate = (key: string, opts?: Record<string, unknown>) => string;
+
+/** Ekran okuyucu etiketi: "Ad, kaptan, reyting 7.4, 1 gol, sarı kart, 67. dakikada oyundan çıktı". İkonlar aria-hidden. */
+function playerAriaLabel(t: Translate, player: LineupPlayer, rating: string | null, ev?: PlayerMatchEvents): string {
+  const parts = [player.name];
+  if (player.captain) parts.push(t('lineup.captain'));
+  if (rating) parts.push(t('lineup.a11y.rating', { value: rating }));
+  if (ev) {
+    if (ev.goals) parts.push(t('lineup.a11y.goals', { count: ev.goals }));
+    if (ev.ownGoals) parts.push(t('lineup.a11y.ownGoals', { count: ev.ownGoals }));
+    if (ev.assists) parts.push(t('lineup.a11y.assists', { count: ev.assists }));
+    if (ev.secondYellow) parts.push(t('lineup.a11y.secondYellow'));
+    else {
+      if (ev.yellow) parts.push(t('lineup.a11y.yellow'));
+      if (ev.red) parts.push(t('lineup.a11y.red'));
+    }
+    if (ev.subIn != null) parts.push(t('lineup.a11y.subIn', { minute: ev.subIn }));
+    if (ev.subOut != null) parts.push(t('lineup.a11y.subOut', { minute: ev.subOut }));
+  }
+  return parts.join(', ');
+}
+
+function BallIcon() {
+  return (
+    <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true" className={styles.evBall}>
+      <circle cx="8" cy="8" r="7" fill="#fff" stroke="#1b1b1b" strokeWidth="1.2" />
+      <path d="M8 5l2.6 1.9-1 3.1H6.4l-1-3.1z" fill="#1b1b1b" />
+    </svg>
+  );
+}
+
+/** Asist: yuvarlak içinde "A" (TR "asist" / EN "assist" ortak harf; 12px'te krampon silueti okunmuyordu). */
+function AssistIcon() {
+  return (
+    <span className={styles.evAssist} aria-hidden="true">
+      A
+    </span>
+  );
+}
+
+function SubArrow({ dir }: { dir: 'in' | 'out' }) {
+  return (
+    <svg viewBox="0 0 10 10" width="9" height="9" aria-hidden="true" className={dir === 'in' ? styles.evSubIn : styles.evSubOut}>
+      {dir === 'in' ? <path d="M5 1.5L9 6H6.4v2.5H3.6V6H1z" fill="currentColor" /> : <path d="M5 8.5L1 4h2.6V1.5h2.8V4H9z" fill="currentColor" />}
+    </svg>
+  );
+}
+
+/** Gol (birden fazlaysa sayı) · asist · kart · çıktı/girdi dakikası. Hiç olay yoksa hiçbir şey çizilmez. */
+function PlayerEventIcons({ ev, variant }: { ev?: PlayerMatchEvents; variant: 'pitch' | 'row' }) {
+  if (!hasAnyEvent(ev)) return null;
+  const e = ev!;
+  return (
+    <span className={`${styles.events} ${variant === 'pitch' ? styles.eventsPitch : styles.eventsRow}`} aria-hidden="true" data-testid="player-events">
+      {e.goals > 0 ? (
+        <span className={styles.evItem} data-ev="goal">
+          <BallIcon />
+          {e.goals > 1 ? <span className={styles.evCount}>{e.goals}</span> : null}
+        </span>
+      ) : null}
+      {e.ownGoals > 0 ? (
+        <span className={`${styles.evItem} ${styles.evOwnGoal}`} data-ev="own-goal">
+          <BallIcon />
+          {e.ownGoals > 1 ? <span className={styles.evCount}>{e.ownGoals}</span> : null}
+        </span>
+      ) : null}
+      {e.assists > 0 ? (
+        <span className={styles.evItem} data-ev="assist">
+          <AssistIcon />
+          {e.assists > 1 ? <span className={styles.evCount}>{e.assists}</span> : null}
+        </span>
+      ) : null}
+      {e.secondYellow ? (
+        <span className={`${styles.evItem} ${styles.evCardPair}`} data-ev="second-yellow">
+          <i className={`${styles.evCard} ${styles.evCardYellow}`} />
+          <i className={`${styles.evCard} ${styles.evCardRed}`} />
+        </span>
+      ) : (
+        <>
+          {e.yellow ? <i className={`${styles.evCard} ${styles.evCardYellow}`} data-ev="yellow" /> : null}
+          {e.red ? <i className={`${styles.evCard} ${styles.evCardRed}`} data-ev="red" /> : null}
+        </>
+      )}
+      {e.subIn != null ? (
+        <span className={styles.evItem} data-ev="sub-in">
+          <SubArrow dir="in" />
+          <span className={styles.evMinute}>{e.subIn}&apos;</span>
+        </span>
+      ) : null}
+      {e.subOut != null ? (
+        <span className={styles.evItem} data-ev="sub-out">
+          <SubArrow dir="out" />
+          <span className={styles.evMinute}>{e.subOut}&apos;</span>
+        </span>
+      ) : null}
+    </span>
+  );
+}
+
+function PlayerToken({
+  player,
+  team,
+  ev,
+  showStats,
+}: {
+  player: LineupPlayer;
+  team: 'home' | 'away';
+  ev?: PlayerMatchEvents;
+  showStats: boolean;
+}) {
+  const { t } = useTranslation('matchState');
   // CDN'de dosya yoksa / ağ hatasında forma numaralı daireye düşülür.
   const [photoFailed, setPhotoFailed] = useState(false);
   const showPhoto = Boolean(player.photo) && !photoFailed;
-  const rating = formatPlayerRating(player.rating);
+  // Maç öncesi (muhtemel / açıklanmış ilk 11) puan ve olay yok — yalnız canlı / bitmiş maçta.
+  const rating = showStats ? formatPlayerRating(player.rating) : null;
+  const events = showStats ? ev : undefined;
   return (
-    <Wrapper className={styles.formationPlayer} title={player.name} playerId={player.id}>
+    <Wrapper
+      className={`${styles.formationPlayer} ${events?.subOut != null ? styles.formationPlayerOut : ''}`.trim()}
+      title={player.name}
+      playerId={player.id}
+      ariaLabel={playerAriaLabel(t, player, rating, events)}
+    >
       <span
         className={`${styles.formationDot} ${team === 'home' ? styles.formationDotHome : styles.formationDotAway} ${
           showPhoto ? styles.formationDotPhoto : ''
@@ -95,8 +227,11 @@ function PlayerToken({ player, team }: { player: LineupPlayer; team: 'home' | 'a
         ) : (
           player.shirt_number
         )}
-        {rating ? (
-          <RatingBadge rating={player.rating} size="xs" className={styles.ratingBadge} data-testid="player-rating" ariaLabel={`Reyting ${rating}`} />
+        {rating ? <RatingBadge rating={player.rating} size="xs" className={styles.ratingBadge} data-testid="player-rating" /> : null}
+        {player.captain ? (
+          <span className={styles.captainBadge} data-testid="player-captain" aria-hidden="true">
+            C
+          </span>
         ) : null}
         {player.nationality?.flag ? (
           <TeamLogo
@@ -111,21 +246,19 @@ function PlayerToken({ player, team }: { player: LineupPlayer; team: 'home' | 'a
       </span>
       <span className={styles.formationName}>{shortName(player.name)}</span>
       {player.pos_code ? <span className={styles.formationPos} data-testid="player-pos">{player.pos_code}</span> : null}
+      <PlayerEventIcons ev={events} variant="pitch" />
     </Wrapper>
   );
 }
 
-function flattenRows(rows: LineupPlayer[][]): LineupPlayer[] {
-  return rows.flat();
-}
-
 export { POSITION_LABEL_TR, positionLabel };
 
-function CompactRow({ player, side, shortCode }: { player: LineupPlayer; side: 'home' | 'away'; shortCode?: boolean }) {
+function CompactRow({ player, side, ev, showStats }: { player: LineupPlayer; side: 'home' | 'away'; ev?: PlayerMatchEvents; showStats: boolean }) {
+  const { t } = useTranslation('matchState');
   // Foto yüklenemezse (CDN/ağ) avatar yerine nötr daire — sahadaki ikonlarla aynı fallback mantığı.
   const [photoFailed, setPhotoFailed] = useState(false);
-  // Yan listelerde uzun Türkçe mevki; yedek kulübesinde kısa kod (GK, RB, CM…).
-  const pos = shortCode ? (player.pos_code ?? null) : positionLabel(player.position);
+  // Yedek kulübesinde kısa kod (GK, RB, CM…).
+  const pos = player.pos_code ?? null;
   const number = <span className={styles.compactNumber}>{player.shirt_number}</span>;
   const photo =
     player.photo && !photoFailed ? (
@@ -133,57 +266,58 @@ function CompactRow({ player, side, shortCode }: { player: LineupPlayer; side: '
     ) : (
       <span className={`${styles.compactPhoto} ${styles.compactPhotoEmpty}`} aria-hidden="true" />
     );
+  const rating = showStats ? formatPlayerRating(player.rating) : null;
+  const events = showStats ? ev : undefined;
   const text = (
     <span className={styles.compactText}>
       <span className={styles.compactName}>{player.name}</span>
-      {pos ? <span className={styles.compactPos}>{pos}</span> : null}
+      <span className={styles.compactMeta}>
+        {pos ? <span className={styles.compactPos}>{pos}</span> : null}
+        <PlayerEventIcons ev={events} variant="row" />
+      </span>
     </span>
   );
-  const rating = formatPlayerRating(player.rating);
-  // İki listede de aynı düzen: [no][foto][metin]. Metin bloğu sola hizalı ve her satırda aynı x'ten başlar.
+  // [no][foto][metin][reyting]: metin bloğu her satırda aynı x'ten başlar.
   return (
     <li>
       <Wrapper
         playerId={player.id}
         title={player.name}
+        ariaLabel={playerAriaLabel(t, player, rating, events)}
         className={`${styles.compactRow} ${side === 'home' ? styles.compactRowHome : styles.compactRowAway}`}
       >
         {number}
         {photo}
         {text}
-        {rating ? <RatingBadge rating={player.rating} size="sm" data-testid="compact-rating" ariaLabel={`Reyting ${rating}`} /> : null}
+        {rating ? <RatingBadge rating={player.rating} size="sm" data-testid="compact-rating" /> : null}
       </Wrapper>
     </li>
-  );
-}
-
-/** `side`: sol liste (ev sahibi) sahaya yakın SAĞ kenara, sağ liste (deplasman) SOL kenara yaslanır. */
-function CompactList({ players, bench = [], side }: { players: LineupPlayer[]; bench?: LineupPlayer[]; side: 'home' | 'away' }) {
-  const { t } = useTranslation('matchState');
-  return (
-    <ul className={styles.compactList}>
-      {players.map((p) => (
-        <CompactRow key={p.id} player={p} side={side} />
-      ))}
-      {bench.length > 0 ? (
-        <>
-          <li className={styles.compactBenchTitle} aria-hidden="true">{t('lineup.benchCount', { count: bench.length })}</li>
-          {sortBench(bench).map((p) => (
-            <CompactRow key={p.id} player={p} side={side} shortCode />
-          ))}
-        </>
-      ) : null}
-    </ul>
   );
 }
 
 const sortBench = (players: LineupPlayer[]) =>
   [...players].sort((a, b) => (Number(a.shirt_number) || 999) - (Number(b.shirt_number) || 999));
 
-/** Yedek kulübesi (yan listeler gizliyken — mobil/dar panel): pitch'in altında iki takım yan yana (dar alanda alt alta), forma numarasına göre; sade satır stili. */
-function BenchList({ teamName, players, side }: { teamName: string; players: LineupPlayer[]; side: 'home' | 'away' }) {
+/**
+ * Yedek kulübesi (sahanın altında): iki takım yan yana (dar alanda alt alta). Oyuna girenler önce (giriş dakikasına
+ * göre), sonra forma numarasına göre.
+ */
+function BenchList({
+  teamName,
+  players,
+  side,
+  eventsById,
+  showStats,
+}: {
+  teamName: string;
+  players: LineupPlayer[];
+  side: 'home' | 'away';
+  eventsById: Map<string, PlayerMatchEvents>;
+  showStats: boolean;
+}) {
   if (players.length === 0) return null;
-  const sorted = sortBench(players);
+  const subIn = (p: LineupPlayer) => (showStats ? eventsById.get(p.id)?.subIn : undefined) ?? Number.POSITIVE_INFINITY;
+  const sorted = sortBench(players).sort((a, b) => subIn(a) - subIn(b));
   return (
     <div className={styles.benchTeam}>
       <div className={styles.benchTeamName}>
@@ -191,20 +325,30 @@ function BenchList({ teamName, players, side }: { teamName: string; players: Lin
       </div>
       <ul className={styles.benchList}>
         {sorted.map((p) => (
-          <CompactRow key={p.id} player={p} side={side} shortCode />
+          <CompactRow key={p.id} player={p} side={side} ev={eventsById.get(p.id)} showStats={showStats} />
         ))}
       </ul>
     </div>
   );
 }
 
-function FormationRows({ rows, team }: { rows: LineupPlayer[][]; team: 'home' | 'away' }) {
+function FormationRows({
+  rows,
+  team,
+  eventsById,
+  showStats,
+}: {
+  rows: LineupPlayer[][];
+  team: 'home' | 'away';
+  eventsById: Map<string, PlayerMatchEvents>;
+  showStats: boolean;
+}) {
   return (
     <div className={`${styles.formationHalf} ${team === 'home' ? styles.formationHalfHome : styles.formationHalfAway}`}>
       {rows.map((row, i) => (
         <div key={i} className={styles.formationRow}>
           {row.map((p) => (
-            <PlayerToken key={p.id} player={p} team={team} />
+            <PlayerToken key={p.id} player={p} team={team} ev={eventsById.get(p.id)} showStats={showStats} />
           ))}
         </div>
       ))}
@@ -212,35 +356,54 @@ function FormationRows({ rows, team }: { rows: LineupPlayer[][]; team: 'home' | 
   );
 }
 
+/** Takım çubuğu: isim + formasyon rozeti. Yatay sahada ikisi tek satırda (ev solda, deplasman sağda). */
+function TeamBar({ name, formation, side, placeholder }: { name: string; formation: string | null; side: 'home' | 'away'; placeholder?: boolean }) {
+  return (
+    <div
+      className={`${styles.teamBar} ${side === 'home' ? styles.teamBarHome : styles.teamBarAway} ${placeholder ? styles.teamBarPlaceholder : ''}`.trim()}
+      aria-hidden={placeholder ? 'true' : undefined}
+    >
+      <span className={`${styles.teamDot} ${side === 'home' ? styles.teamDotHome : styles.teamDotAway}`} aria-hidden="true" />
+      <span className={styles.teamBarName}>{name}</span>
+      {formation ? <span className={styles.formationBadge}>{formation}</span> : null}
+    </div>
+  );
+}
+
+function PitchMarkings() {
+  return (
+    <div className={styles.pitchInner} aria-hidden="true">
+      <div className={styles.penaltyAreaTop} />
+      <div className={styles.penaltyAreaBottom} />
+      <div className={styles.halfLine} />
+      <div className={styles.centerCircle} />
+    </div>
+  );
+}
+
 /**
- * Yüklenirken 02 · Diziliş animasyonu, gerçek kadro alanıyla AYNI kutuda: başlık + takım çubuğu + saha kutusu
- * (aynı min-height/kenarlık/padding) + takım çubuğu → içerik gelince yükseklik değişmez.
+ * Yüklenirken 02 · Diziliş animasyonu, gerçek kadro alanıyla AYNI kutuda: başlık + takım çubukları + saha kutusu
+ * (aynı min-height/kenarlık/padding; dikey/yatay aynı container kuralı) → içerik gelince yükseklik değişmez.
  */
 function LineupLoading({ probable }: { probable: boolean }) {
   const { t } = useTranslation('common');
   return (
     <div className={styles.lineupContainer}>
       <LineupTitle probable={probable} />
-      <div className={styles.layout}>
+      <div className={styles.pitchWrap}>
         <div className={styles.pitchCol}>
-          <div className={`${styles.teamBar} ${styles.teamBarPlaceholder}`} aria-hidden="true">
-            <span className={styles.teamBarName}>&nbsp;</span>
-            <span className={styles.formationBadge}>4-4-2</span>
-          </div>
+          <TeamBar name={'\u00a0'} formation="4-4-2" side="home" placeholder />
           <div className={styles.loadingPitch}>
             <LazyLoad load={loadFormationLoading} props={{ label: t('loading') }} />
           </div>
-          <div className={`${styles.teamBar} ${styles.teamBarPlaceholder}`} aria-hidden="true">
-            <span className={styles.teamBarName}>&nbsp;</span>
-            <span className={styles.formationBadge}>4-4-2</span>
-          </div>
+          <TeamBar name={'\u00a0'} formation="4-4-2" side="away" placeholder />
         </div>
       </div>
     </div>
   );
 }
 
-export default function Lineup({ lineups, loading, match, error, onRetry }: LineupProps) {
+export default function Lineup({ lineups, events, loading, match, error, onRetry }: LineupProps) {
   const { t } = useTranslation('matchState');
   const state = match ? matchDisplayState(match) : null;
   const phase = state?.phase ?? 'POST';
@@ -271,6 +434,9 @@ export default function Lineup({ lineups, loading, match, error, onRetry }: Line
   }
 
   const probable = lineups ? isProbableLineup(lineups, phase) : false;
+  // Puan rozeti + olay ikonları yalnız canlı / bitmiş maçta (muhtemel 11 ve maç öncesi resmî kadroda yok).
+  const showStats = phase !== 'PRE' && !probable;
+  const eventsById = showStats ? buildPlayerEvents(events) : new Map<string, PlayerMatchEvents>();
 
   const homePlayers: LineupPlayer[] = homeData?.players || [];
   const awayPlayers: LineupPlayer[] = awayData?.players || [];
@@ -286,52 +452,34 @@ export default function Lineup({ lineups, loading, match, error, onRetry }: Line
 
   const homeTeamName = homeData?.team?.name || t('lineup.home');
   const awayTeamName = awayData?.team?.name || t('lineup.away');
-  const homeFormation = homeLayout.label;
-  const awayFormation = awayLayout.label;
-  // Deplasman takımı sahanın diğer ucundan dizilir: hatlar (ileri→geri) ve
-  // sütunlar (sol↔sağ) 180° döner, böylece kanatlar sahada doğru tarafta kalır.
-  const awayRows = [...awayLayout.rows].reverse().map((r) => (awayLayout.source === 'grid' ? [...r].reverse() : r));
+  // Deplasman takımı sahanın diğer ucundan dizilir: yalnız hatlar (ileri→geri) ters. Sütunlar ÇEVRİLMEZ: Sportmonks
+  // `formation_field` sütunu iki takımda ORTAK ekran çerçevesinde (ev 2:1 = sağ bek, deplasman 2:1 = sol bek; FB-BJK
+  // 19746621 ve Kasımpaşa-Konyaspor 19746608'de doğrulandı) → aynı sırayla dizince iki takımın kanatları da doğru.
+  // DOM sırası iki yönde de aynı (yatayda CSS hatları sütuna çevirir).
+  const awayRows = [...awayLayout.rows].reverse();
 
   return (
     <div className={styles.lineupContainer}>
       <LineupTitle probable={probable} />
 
-      <div className={styles.layout}>
-        <CompactList players={flattenRows(homeLayout.rows)} bench={homeBench} side="home" />
-
+      <div className={styles.pitchWrap}>
         <div className={styles.pitchCol}>
-          <div className={styles.teamBar}>
-            <span className={styles.teamBarName}>{homeTeamName}</span>
-            {homeFormation && <span className={styles.formationBadge}>{homeFormation}</span>}
+          <TeamBar name={homeTeamName} formation={homeLayout.label} side="home" />
+          <div className={styles.pitch} data-testid="lineup-pitch">
+            <PitchMarkings />
+            <FormationRows rows={homeLayout.rows} team="home" eventsById={eventsById} showStats={showStats} />
+            <FormationRows rows={awayRows} team="away" eventsById={eventsById} showStats={showStats} />
           </div>
-
-          <div className={styles.pitch}>
-            <div className={styles.pitchInner}>
-              <div className={styles.penaltyAreaTop} />
-              <div className={styles.penaltyAreaBottom} />
-              <div className={styles.halfLine} />
-              <div className={styles.centerCircle} />
-            </div>
-
-            <FormationRows rows={homeLayout.rows} team="home" />
-            <FormationRows rows={awayRows} team="away" />
-          </div>
-
-          <div className={styles.teamBar}>
-            <span className={styles.teamBarName}>{awayTeamName}</span>
-            {awayFormation && <span className={styles.formationBadge}>{awayFormation}</span>}
-          </div>
+          <TeamBar name={awayTeamName} formation={awayLayout.label} side="away" />
         </div>
-
-        <CompactList players={flattenRows(awayLayout.rows)} bench={awayBench} side="away" />
       </div>
 
       {homeBench.length + awayBench.length > 0 ? (
         <section className={styles.bench} aria-labelledby="lineup-bench-title" data-testid="bench-bottom">
           <h3 id="lineup-bench-title" className={`${styles.title} ${styles.benchTitle}`}>{t('lineup.bench')}</h3>
           <div className={styles.benchGrid}>
-            <BenchList teamName={homeTeamName} players={homeBench} side="home" />
-            <BenchList teamName={awayTeamName} players={awayBench} side="away" />
+            <BenchList teamName={homeTeamName} players={homeBench} side="home" eventsById={eventsById} showStats={showStats} />
+            <BenchList teamName={awayTeamName} players={awayBench} side="away" eventsById={eventsById} showStats={showStats} />
           </div>
         </section>
       ) : null}

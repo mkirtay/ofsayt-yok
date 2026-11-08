@@ -125,6 +125,7 @@ export default function MatchDetailContent({ detail, requestedMatchId, variant =
             </div>
             <Lineup
               lineups={detail.lineups}
+              events={detail.events}
               loading={matchLoading || lineupsLoading}
               match={match}
               error={detail.lineupsError}
