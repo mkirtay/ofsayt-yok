@@ -85,6 +85,8 @@ export type CommentaryScene = {
   assist?: string;
   /** Penaltı vuruşu (şut / gol satırı penaltıdan). */
   penalty?: boolean;
+  /** Vuruş, hemen önceki korner satırıyla birleşti (bkz. sceneEvents): sahne kornerle başlar. */
+  fromCorner?: boolean;
 };
 
 export type RawComment = {

@@ -332,7 +332,12 @@ function MiniMatch({ event, squads, playToken = 0, follow = false }: { event: Sc
   if (!plan) return null;
   const item = run.event.item;
   const baseKind = plan.disallowed ? t('commentary.scene.disallowed') : plan.type === 'card_red' ? t('commentary.kinds.redCard') : t(`commentary.kinds.${item.kind}`);
-  const kindLabel = plan.penalty && item.kind !== 'penalty' ? `${t('commentary.kinds.penalty')} – ${baseKind}` : baseKind;
+  const kindLabel =
+    plan.penalty && item.kind !== 'penalty'
+      ? `${t('commentary.kinds.penalty')} – ${baseKind}`
+      : item.scene.fromCorner
+        ? `${t('commentary.kinds.corner')} – ${baseKind}`
+        : baseKind;
   const minute = item.minute != null ? `${item.minute}${item.extraMinute ? `+${item.extraMinute}` : ''}'` : '';
   const lead = plan.lead ? `${shortName(plan.lead.name)}${plan.lead.number != null ? ` (${plan.lead.number})` : ''}` : null;
   const title = [minute, kindLabel, lead].filter(Boolean).join(' · ');

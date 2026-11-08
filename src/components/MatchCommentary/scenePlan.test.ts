@@ -44,7 +44,7 @@ describe('buildPlan — ortak', () => {
   it('22 oyuncu + hakem + kenar yedeği; kalıcı kimlikler', () => {
     const p = plan(SHOTS.goal);
     expect(p.agents).toHaveLength(24);
-    expect(p.agents.map((a) => a.key)).toEqual(plan('Corner awarded.').agents.map((a) => a.key));
+    expect(p.agents.map((a) => a.key)).toEqual(plan(SHOTS.miss).agents.map((a) => a.key));
     expect(new Set(p.agents.map((a) => a.key)).size).toBe(24);
   });
 
@@ -60,7 +60,7 @@ describe('buildPlan — ortak', () => {
   });
 
   it('top zaman çizelgesi sıralı; uçuş hızları top hızlarını aşmıyor (oyuncu eğrisi değil)', () => {
-    for (const en of [...Object.values(SHOTS), 'Corner awarded.']) {
+    for (const en of Object.values(SHOTS)) {
       const p = plan(en);
       p.ball.forEach((s, k) => k > 0 && expect(s.t0).toBeGreaterThanOrEqual(p.ball[k - 1]!.t0));
       for (const f of flights(p)) expect(f.t1).toBeGreaterThan(f.t0);
@@ -148,14 +148,6 @@ describe('buildPlan — olay türleri', () => {
     expect(flights(solo).filter((f) => f.style === 'pass' || f.style === 'cross')).toHaveLength(0);
   });
 
-  it('korner: top köşede durur, orta ceza sahasına iner, sonuç uydurulmaz (efekt yok)', () => {
-    const p = plan('Corner awarded.');
-    expect(p.start.ball!.x).toBeGreaterThan(SCENE_W - 8);
-    expect(p.start.ballDead).toBe(true);
-    expect(flights(p).map((f) => f.style)).toEqual(['cross']);
-    expect(p.effects).toHaveLength(0);
-  });
-
   it('kart: hücum animasyonu yok (uçuş yok), hakem gider, kart efekti', () => {
     const y = plan(`${awayDef} receives a yellow card.`, { side: 'away' });
     expect(flights(y)).toHaveLength(0);
@@ -186,5 +178,30 @@ describe('effectState', () => {
     expect(effectState(save, 3000, 3000).opacity).toBe(0);
     const goal = { kind: 'goal' as const, at: { x: 0, y: 0 }, t: 1000 };
     expect(effectState(goal, 3000, 3000).opacity).toBe(1);
+  });
+});
+
+describe('buildPlan — korner', () => {
+  const cornerShot = (en: string) => buildPlan({ ...item(en), scene: { ...item(en).scene!, fromCorner: true } }, squads)!;
+
+  it('tek başına korner satırının sahnesi yok', () => {
+    expect(buildPlan({ ...item('Corner awarded.'), kind: 'corner' }, squads)).toBeNull();
+  });
+
+  it('kornerden gelen vuruş: top köşede başlar, orta vuruş noktasına iner, sonra şut', () => {
+    const p = cornerShot(SHOTS.miss);
+    expect(p.type).toBe('shot_off');
+    expect(p.start.ballDead).toBe(true);
+    expect(p.start.ball!.x).toBeGreaterThan(SCENE_W - 10);
+    const fl = flights(p);
+    expect(fl.map((f) => f.style)).toEqual(['cross', 'shot']);
+    expect(fl[1]!.t0).toBeGreaterThanOrEqual(fl[0]!.t1);
+  });
+
+  it('kornerden gol: orta + gol efekti, belirlenimli', () => {
+    const p = cornerShot(SHOTS.goal);
+    expect(flights(p)[0]!.style).toBe('cross');
+    expect(p.effects.some((e) => e.kind === 'goal')).toBe(true);
+    expect(cornerShot(SHOTS.goal)).toEqual(p);
   });
 });

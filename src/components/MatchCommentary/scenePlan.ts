@@ -237,6 +237,7 @@ export function buildPlan(
   const dir = geo === 'home' ? 1 : -1;
   const r = rng(seed);
   const penalty = !!scene.penalty && (type === 'goal' || type === 'shot_saved' || type === 'shot_off') && !scene.ownGoal;
+  const fromCorner = !!scene.fromCorner && !penalty && !scene.ownGoal;
 
   const moves: Move[] = [];
   const ball: BallSeg[] = [];
@@ -370,6 +371,47 @@ export function buildPlan(
           const at = shapeOf(i, from);
           move(i, tReady + 150, tReady + 2200, lerp(at, from, 0.25), 'run');
         });
+      } else if (fromCorner) {
+        // Korner: top köşede, kullanan bayrakta, iki takım ceza sahasında; orta vuranın noktasına iner, vuruş oradan.
+        const flag = cornerPoint(null, geo, seed);
+        const inward = { x: flag.x - dir * 5, y: flag.y + (flag.y < MID_Y ? 5 : -5) };
+        const taker = assist != null && assist !== shooter ? assist : nearest(attack, flag, flag, new Set([shooter]));
+        markActor(assist != null && assist === taker ? taker : null);
+        ball0 = flag;
+        ballDead = true;
+        startAt.set(taker, inward);
+        const spots: [number, Vec][] = [[shooter, back(from, 0.05, (r() - 0.5) * 0.2)]];
+        players
+          .map((b, i) => ({ b, i }))
+          .filter(({ b, i }) => b.side === attack && !b.goalkeeper && i !== taker && i !== shooter)
+          .sort((a, b) => b.b.u0 - a.b.u0)
+          .slice(0, 4)
+          .forEach(({ i }, k) => spots.push([i, A.P(0.8 + (k % 3) * 0.05, -0.4 + k * 0.25)]));
+        players
+          .map((b, i) => ({ b, i }))
+          .filter(({ b }) => b.side === defend && !b.goalkeeper)
+          .sort((a, b) => a.b.u0 - b.b.u0)
+          .slice(0, 7)
+          .forEach(({ i }, k) => spots.push([i, A.P(0.84 + (k % 3) * 0.045, -0.42 + k * 0.14)]));
+        spots.push([keeper, A.P(0.978, 0)]);
+        // Ceza sahasındaki kalabalık: çakışma ve sınır kurallarıyla aralanır.
+        const spotOf = new Map(spots);
+        const atCross = settled(players.map((_, i) => (i === taker ? inward : (spotOf.get(i) ?? shapeOf(i, flag)))), new Set([taker]), 'corner', flag);
+        spots.forEach((sp) => (sp[1] = atCross[sp[0]]!));
+        let tCross = 2400;
+        for (const [i, to] of spots) tCross = Math.max(tCross, 200 + eta(shapeOf(i, flag), to, 'run'));
+        tCross = Math.min(tCross, 4200);
+        seg({ kind: 'loose', t0: 0, t1: tCross - 300 });
+        seg({ kind: 'hold', t0: tCross - 300, t1: tCross, owner: taker });
+        const tArrive = flight(tCross, from, 'cross', BALL.cross, 32, 'cross', flag, 900);
+        for (const [i, to] of spots) move(i, 200, tArrive + 300, to, 'run');
+        // Vuran ortayla noktaya atılır; blok dışındaki sonuçlarda en yakın savunmacı onunla mücadele eder.
+        move(shooter, tCross, tArrive + 300, from, 'sprint', true);
+        if (type !== 'shot_blocked') {
+          const marker = nearest(defend, from, from, new Set([keeper]));
+          move(marker, tCross, tArrive + 300, { x: from.x + dir * 5, y: from.y + 3 }, 'sprint', true);
+        }
+        tReady = tArrive;
       } else if (scene.header || ownGoal) {
         // Orta: kanattan (bölge tarafı; yoksa tohum). Ortayı yapan metinde adı geçen asist ya da adsız temsili oyuncu.
         const wing = ZONE_SIDE[zone] ?? (r() < 0.5 ? -1 : 1);
@@ -546,57 +588,6 @@ export function buildPlan(
       break;
     }
 
-    case 'corner': {
-      // Duran top: top köşede, kullanan oyuncu bayrağa, iki takım ceza sahasına; orta ceza sahasına iner. Sonucu metin
-      // söylemediği için top düştüğü yerde kalır (gol / uzaklaştırma uydurulmaz).
-      const flag = cornerPoint(scene.zone, geo, seed);
-      const inward = { x: flag.x - dir * 5, y: flag.y + (flag.y < MID_Y ? 5 : -5) };
-      const taker = nearest(attack, flag, flag);
-      const keeper = keeperOf(defend);
-      ball0 = flag;
-      ballDead = true;
-      startAt.set(taker, inward);
-      let tCross = 2400;
-      const spots: [number, Vec][] = [];
-      const atk = players
-        .map((b, i) => ({ b, i }))
-        .filter(({ b, i }) => b.side === attack && !b.goalkeeper && i !== taker)
-        .sort((a, b) => b.b.u0 - a.b.u0)
-        .slice(0, 5);
-      atk.forEach(({ i }, k) => spots.push([i, A.P(0.8 + (k % 3) * 0.05, -0.4 + k * 0.2)]));
-      const def = players
-        .map((b, i) => ({ b, i }))
-        .filter(({ b }) => b.side === defend && !b.goalkeeper)
-        .sort((a, b) => a.b.u0 - b.b.u0)
-        .slice(0, 7);
-      def.forEach(({ i }, k) => spots.push([i, A.P(0.84 + (k % 3) * 0.045, -0.42 + k * 0.14)]));
-      spots.push([keeper, A.P(0.978, 0)]);
-      // Ceza sahasındaki kalabalık: çakışma ve sınır kurallarıyla aralanır.
-      const spotOf = new Map(spots);
-      const fixedCorner = new Set([taker]);
-      const atCross = settled(players.map((_, i) => (i === taker ? inward : (spotOf.get(i) ?? shapeOf(i, flag)))), fixedCorner, 'corner', flag);
-      spots.forEach((sp) => (sp[1] = atCross[sp[0]]!));
-      for (const [i, to] of spots) tCross = Math.max(tCross, 200 + eta(shapeOf(i, flag), to, 'run'));
-      tCross = Math.min(tCross, 4200);
-      seg({ kind: 'loose', t0: 0, t1: tCross - 300 });
-      seg({ kind: 'hold', t0: tCross - 300, t1: tCross, owner: taker });
-      const meet = A.P(0.86 + r() * 0.06, (r() - 0.5) * 0.5);
-      const tLand = flight(tCross, meet, 'cross', BALL.cross, 32, 'cross', flag, 900);
-      for (const [i, to] of spots) move(i, 200, tLand + 900, to, 'run');
-      // Topa iki oyuncu birden atılır (biri hücum, biri savunma) — kim kazandı uydurulmaz.
-      const ex = new Set([taker, keeper]);
-      const ai = nearest(attack, meet, meet, ex);
-      const di = nearest(defend, meet, meet, ex);
-      move(ai, tCross, tLand + 900, { x: meet.x - dir * 5, y: meet.y - 3 }, 'sprint', true);
-      move(di, tCross, tLand + 900, { x: meet.x + dir * 4, y: meet.y + 3 }, 'sprint', true);
-      seg({ kind: 'loose', t0: tLand, t1: tLand + 2000 });
-      check = { t: tCross, phase: 'corner', shooter: null, offsider: null };
-      climax = tLand;
-      actionEnd = tLand + 900;
-      duration = actionEnd + 1600;
-      break;
-    }
-
     case 'card_yellow':
     case 'card_red': {
       // Oyun durmuş: hakem kartı gören oyuncuya gider, kartı gösterir. Hücum akışı üretilmez.
@@ -770,7 +761,7 @@ export function buildPlan(
     const p = hit ? squadsNow![hit.side].players[hit.index] : null;
     return p && hit ? { name: p.name, number: p.number, side: hit.side } : null;
   };
-  const startPhase: ScenePhase = penalty ? 'penalty' : type === 'corner' ? 'corner' : inPlay ? 'open' : 'dead';
+  const startPhase: ScenePhase = penalty ? 'penalty' : fromCorner ? 'corner' : inPlay ? 'open' : 'dead';
   const fixedStart = new Set([...startAt.keys()].filter((i) => i < n));
   settled(startPlayers.slice(0, n), fixedStart, startPhase, ball0, null).forEach((p, i) => (startPlayers[i] = p));
   ball.sort((a, b) => a.t0 - b.t0);

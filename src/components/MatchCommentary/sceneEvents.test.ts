@@ -141,3 +141,60 @@ describe('nextRun — oynatma kararı', () => {
     expect(r.pending).toBeNull();
   });
 });
+
+describe('buildSceneEvents — korner', () => {
+  const corner = (id: number, order: number, minute: number): RawComment => ({ id, order, minute, comment: 'Corner awarded.' });
+  const shot = (id: number, order: number, minute: number): RawComment => ({
+    id,
+    order,
+    minute,
+    comment: 'Sidny Lopes Cabral takes a right-footed shot but misses.',
+  });
+
+  it('arkasından 1 dk içinde vuruş gelen korner vuruşla tek olay olur, iki satır da oynatır', () => {
+    const { events: list, byItemId } = events([corner(1, 1, 43), shot(2, 2, 44)]);
+    expect(list).toHaveLength(1);
+    expect(list[0]!.item.scene.type).toBe('shot_off');
+    expect(list[0]!.item.scene.fromCorner).toBe(true);
+    expect(list[0]!.ids).toEqual([1, 2]);
+    expect(byItemId.get(1)).toBe(byItemId.get(2));
+  });
+
+  it('arkasından vuruş gelmeyen kornerin olayı yok', () => {
+    const { events: list, byItemId } = events([corner(1, 1, 43), shot(2, 2, 46)]);
+    expect(byItemId.has(1)).toBe(false);
+    expect(list.map((e) => e.ids)).toEqual([[2]]);
+    expect(list[0]!.item.scene.fromCorner).toBeUndefined();
+  });
+
+  it('arada başka bir olay (faul, ofsayt, kart) varsa bağ kurulmaz', () => {
+    const { byItemId } = events([corner(1, 1, 43), { id: 2, order: 2, minute: 43, comment: 'Offside.' }, shot(3, 3, 44)]);
+    expect(byItemId.has(1)).toBe(false);
+    expect(byItemId.get(3)!.item.scene.fromCorner).toBeUndefined();
+  });
+
+  it('aynı golün iki satırı kornerle tek olayda birleşir', () => {
+    const { events: list } = events([
+      corner(1, 1, 43),
+      { id: 2, order: 2, minute: 44, comment: 'Goal! Tanguy Coulibaly scores, making it 2-1.', is_goal: true },
+      { id: 3, order: 3, minute: 44, comment: 'Tanguy Coulibaly takes a shot with his left foot and scores.' },
+    ]);
+    expect(list).toHaveLength(1);
+    expect(list[0]!.ids).toEqual([1, 2, 3]);
+    expect(list[0]!.item.scene.type).toBe('goal');
+    expect(list[0]!.item.scene.fromCorner).toBe(true);
+  });
+
+  it('penaltı kornere bağlanmaz', () => {
+    const { byItemId } = events([corner(1, 1, 43), { id: 2, order: 2, minute: 44, comment: 'Mauro Icardi converts the penalty with a right-footed shot.' }]);
+    expect(byItemId.has(1)).toBe(false);
+  });
+
+  it('taraflar çelişiyorsa bağ kurulmaz (kornerin tarafı belli, vuruş rakipten)', () => {
+    const rows = normalizeCommentary([corner(1, 1, 43), shot(2, 2, 44)]).map((i) => ({
+      ...i,
+      scene: i.scene ? { ...i.scene, side: i.id === 1 ? ('home' as const) : ('away' as const) } : i.scene,
+    }));
+    expect(buildSceneEvents(rows).byItemId.has(1)).toBe(false);
+  });
+});

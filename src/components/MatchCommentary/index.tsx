@@ -126,10 +126,14 @@ type ViewProps = {
   /** Oynayan sahnenin satırları (aynı golün iki satırı birlikte işaretlenir). */
   selectedIds?: readonly number[];
   onSelect?: (item: CommentaryItem) => void;
+  /** Satırın oynatılacak sahnesi var mı (tek başına korner yok; bkz. sceneEvents). */
+  isPlayable?: (item: CommentaryItem) => boolean;
 };
 
+const hasScene = (item: CommentaryItem) => !!item.scene;
+
 /** Dolu anlatım: filtre çipleri (sayılarıyla) + satırlar. Saf — durum/veri `MatchCommentary`'de. */
-export function CommentaryView({ items, live, filter, onFilter, locale, scene, selectedIds = [], onSelect }: ViewProps) {
+export function CommentaryView({ items, live, filter, onFilter, locale, scene, selectedIds = [], onSelect, isPlayable = hasScene }: ViewProps) {
   const { t } = useTranslation('match');
   const counts = useMemo(() => {
     const c = {} as Record<CommentaryFilter, number>;
@@ -168,7 +172,7 @@ export function CommentaryView({ items, live, filter, onFilter, locale, scene, s
             const minute = minuteLabel(item);
             const tr = locale === 'tr' ? item.tr : null;
             const kindLabel = item.kind === 'card' && isRed(item) ? t('commentary.kinds.redCard') : t(`commentary.kinds.${item.kind}`);
-            const playable = !!item.scene && !!onSelect;
+            const playable = !!onSelect && isPlayable(item);
             const playing = playable && selectedIds.includes(item.id);
             const Row = playable ? 'button' : 'div';
             return (
@@ -337,6 +341,7 @@ export default function MatchCommentary({ matchId, match }: Props) {
     },
     [byItemId],
   );
+  const isPlayable = useCallback((item: CommentaryItem) => byItemId.has(item.id), [byItemId]);
 
   // İlk düdük bilgisi + geri sayım (maç öncesi): tarih SSR'da sabit, geri sayım yalnız mount sonrası.
   const kickoff = kickoffInfo(match);
@@ -421,6 +426,7 @@ export default function MatchCommentary({ matchId, match }: Props) {
       scene={scene}
       selectedIds={current?.ids}
       onSelect={onSelect}
+      isPlayable={isPlayable}
     />
   );
 }

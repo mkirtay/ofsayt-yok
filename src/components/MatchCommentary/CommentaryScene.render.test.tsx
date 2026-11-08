@@ -49,7 +49,7 @@ describe('<CommentaryScene /> — mini maç', () => {
   });
 
   it('saha ekran okuyuculara gizli (yanındaki anlatım metni zaten okunuyor)', () => {
-    const markup = html(<CommentaryScene event={ev(item('Corner awarded.', 2))} squads={squads} />);
+    const markup = html(<CommentaryScene event={ev(item('Mauro Icardi takes a right-footed shot but misses.', 2))} squads={squads} />);
     expect(markup).toContain('aria-hidden="true"');
   });
 
@@ -66,7 +66,7 @@ describe('<CommentaryScene /> — mini maç', () => {
   });
 
   it('kadro gelmezse sahne yine çizilir (varsayılan diziliş)', () => {
-    const markup = html(<CommentaryScene event={ev(item('Corner awarded.', 5))} squads={null} />);
+    const markup = html(<CommentaryScene event={ev(item('Mauro Icardi takes a right-footed shot but misses.', 5))} squads={null} />);
     expect(players(markup)).toBe(24);
   });
 

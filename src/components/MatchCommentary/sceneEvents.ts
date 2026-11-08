@@ -5,6 +5,9 @@
  * satırı, aynı/komşu dakika, sıra olarak yakın, aynı taraf ve aynı oyuncu (biri adsızsa adlı olan), skorları çelişmiyorsa.
  * Aynı dakikadaki bağımsız şutlar birleşmez.
  *
+ * Korner satırının sonucu metinde yok: en çok 1 dk sonraki vuruşla birleşir (korner → vuruş → sonuç tek sahne), arkasından
+ * vuruş gelmeyen kornerin sahnesi olmaz. Bağ zamana dayalı (satırlarda ilişki alanı yok), taraflar çelişirse kurulmaz.
+ *
  * Olay anahtarı grubun en küçük satır kimliğinden: canlı yenilemede aynı satırlar aynı anahtarı verir (sahne yeniden
  * başlamaz); `sig` sahne içeriği değişirse (sonradan düzeltme, VAR iptali) değişir.
  */
@@ -65,8 +68,33 @@ function mergeScenes(rows: CommentaryItem[]): CommentaryScene {
   return merged;
 }
 
+const CORNER_FOLLOW_MINUTES = 1;
+const CORNER_FOLLOW_ROWS = 4;
+const isShotScene = (s: CommentaryScene) => s.type === 'goal' || s.type.startsWith('shot_');
+
+/** Kronolojik satırlar → vuruş satırı kimliği → ondan hemen önceki korner satırları. */
+function linkCorners(chrono: readonly CommentaryItem[]): Map<number, CommentaryItem[]> {
+  const links = new Map<number, CommentaryItem[]>();
+  chrono.forEach((row, idx) => {
+    if (row.scene?.type !== 'corner' || row.minute == null) return;
+    for (let j = idx + 1; j < chrono.length && j - idx <= CORNER_FOLLOW_ROWS; j++) {
+      const next = chrono[j]!;
+      if (next.minute == null || minuteOf(next) - minuteOf(row) > CORNER_FOLLOW_MINUTES) return;
+      // Bilgi satırı ve aynı kornerin ikinci satırı ("X concedes a corner" + "Corner awarded") arayı kesmez; başka olay keser.
+      if (next.kind === 'update' || next.scene?.type === 'corner') continue;
+      if (!next.scene) return;
+      if (!isShotScene(next.scene) || next.scene.penalty || next.scene.ownGoal) return;
+      if (row.scene.side && next.scene.side && row.scene.side !== next.scene.side) return;
+      links.set(next.id, [...(links.get(next.id) ?? []), row]);
+      return;
+    }
+  });
+  return links;
+}
+
 /**
- * Satırlar (herhangi bir sırada) → sahne olayları, en yeni üstte; `byItemId` her sahneli satırı olayına bağlar.
+ * Satırlar (herhangi bir sırada) → sahne olayları, en yeni üstte; `byItemId` her sahneli satırı olayına bağlar. Vuruşa
+ * bağlanmayan korner satırı olay üretmez (`byItemId`'de yoktur, satır oynatılamaz).
  */
 export function buildSceneEvents(items: readonly CommentaryItem[]): { events: SceneEvent[]; byItemId: Map<number, SceneEvent> } {
   const chrono = [...items].sort((a, b) => a.order - b.order || a.id - b.id);
@@ -127,14 +155,19 @@ export function buildSceneEvents(items: readonly CommentaryItem[]): { events: Sc
     }
   }
 
+  const cornersOf = linkCorners(chrono);
   const byItemId = new Map<number, SceneEvent>();
   const events: SceneEvent[] = [];
   for (const row of withScene) {
-    if (byItemId.has(row.id)) continue;
+    if (byItemId.has(row.id) || row.scene!.type === 'corner') continue;
     const group = groupOf.get(row.id) ?? [row];
-    const ids = group.map((r) => r.id).sort((a, b) => a - b);
+    const corners = group.flatMap((r) => cornersOf.get(r.id) ?? []);
+    const ids = [...group, ...corners].map((r) => r.id).sort((a, b) => a - b);
     const rep = group.find((r) => r.kind === 'goal') ?? group[0]!;
-    const scene = group.length > 1 ? mergeScenes(group) : row.scene!;
+    const merged = group.length > 1 ? mergeScenes(group) : row.scene!;
+    const scene: CommentaryScene = corners.length
+      ? { ...merged, fromCorner: true, side: merged.side ?? corners.find((c) => c.scene!.side)?.scene!.side ?? null }
+      : merged;
     const disallowed = group.some((r) => disallowedIds.has(r.id));
     const ev: SceneEvent = {
       key: `e${ids[0]}`,
@@ -144,7 +177,7 @@ export function buildSceneEvents(items: readonly CommentaryItem[]): { events: Sc
       disallowed,
       sig: JSON.stringify([scene, disallowed, rep.minute, rep.extraMinute]),
     };
-    for (const r of group) byItemId.set(r.id, ev);
+    for (const r of [...group, ...corners]) byItemId.set(r.id, ev);
     events.push(ev);
   }
   // En yeni üstte: grubun en büyük sırası.

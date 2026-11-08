@@ -29,8 +29,14 @@ const EVENTS: [string, SceneSide][] = [
   [`${homeFw} takes a right-footed shot, but it is blocked.`, 'home'],
   [`${awayFw} takes a left-footed shot that hits the post.`, 'away'],
   [`${homeFw} attempts a header but misses the shot.`, 'home'],
-  ['Corner awarded.', 'home'],
 ];
+
+/** Kornerden gelen vuruş: EVENTS ile aynı hız sınırları. */
+const CORNER_SHOT = `${homeFw} attempts a header but misses the shot.`;
+const cornerPlan = () => {
+  const it = item(CORNER_SHOT, 7, 'home');
+  return buildPlan({ ...it, scene: { ...it.scene!, fromCorner: true } }, squads)!;
+};
 
 /** Planı adım adım işletir; her adımda gözlemciyi çağırır. */
 function run(p: ScenePlan, ms: number, watch: (w: World, prev: { bodies: Vec[]; ball: Vec }, dt: number) => void, dt = 16, prevWorld: World | null = null) {
@@ -75,8 +81,8 @@ describe('steer — hız/ivme sınırı', () => {
 
 describe('stepWorld — sahne hareketi', () => {
   it('olay türlerinin hiçbirinde oyuncu ışınlanmaz, tempo sınırı aşılmaz, top uçuş hızında kalır', () => {
-    for (const [en, side] of EVENTS) {
-      const p = plan(en, 7, side);
+    const cases: [string, ScenePlan][] = [...EVENTS.map(([en, side]): [string, ScenePlan] => [en, plan(en, 7, side)]), ['korner', cornerPlan()]];
+    for (const [en, p] of cases) {
       let maxPlayer = 0;
       let maxBall = 0;
       run(p, p.durationMs + 1500, (w, prev, dt) => {
