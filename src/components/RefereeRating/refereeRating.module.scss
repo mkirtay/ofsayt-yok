@@ -1,0 +1,144 @@
+@use '../../styles/variables' as *;
+
+// Sabit yükseklik: başlık + alt başlık + düğme şeridi + tek satır alt bilgi (veri gelince boy değişmez).
+.card {
+  margin-top: $spacing-4;
+  padding: $spacing-3 $spacing-4;
+  background-color: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  box-shadow: $shadow-surface;
+
+  @container (max-width: 700px) {
+    padding: $spacing-3;
+  }
+}
+
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: $spacing-3;
+  row-gap: 2px;
+  margin-bottom: $spacing-3;
+}
+
+.title {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 20px;
+}
+
+// Düdük yerine sade sarı kart işareti (hakem çağrışımı, ikon dosyası yok).
+.whistle {
+  width: 10px;
+  height: 14px;
+  border-radius: 2px;
+  background: $color-warning;
+  transform: rotate(8deg);
+}
+
+.subtitle {
+  margin: 0;
+  font-size: 13px;
+  line-height: 18px;
+  color: $color-text-secondary;
+}
+
+.scale {
+  display: grid;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.score {
+  --tone: #{$color-primary};
+  min-width: 0;
+  height: 40px;
+  padding: 0;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
+  background: transparent;
+  color: $color-text;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+
+  &[data-tone='low'] {
+    --tone: #{$color-danger};
+  }
+  &[data-tone='mid'] {
+    --tone: #{$color-warning};
+  }
+
+  &:hover:not(:disabled) {
+    border-color: var(--tone);
+    background: color-mix(in srgb, var(--tone) 12%, transparent);
+  }
+
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+    outline-offset: 2px;
+  }
+
+  &[aria-pressed='true'] {
+    border-color: var(--tone);
+    background: var(--tone);
+    color: #111;
+  }
+
+  &[aria-pressed='true'][data-tone='low'],
+  &[aria-pressed='true'][data-tone='high'] {
+    color: #fff;
+  }
+
+  &[aria-pressed='true'][data-tone='high'] {
+    background: $color-primary-dark;
+    border-color: $color-primary-dark;
+  }
+
+  &:disabled {
+    cursor: default;
+    opacity: 0.6;
+  }
+
+  @media (max-width: 420px) {
+    height: 36px;
+    font-size: 14px;
+  }
+}
+
+.foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+  min-height: 20px;
+  margin: $spacing-2 0 0;
+  font-size: 13px;
+  line-height: 20px;
+  color: $color-text-secondary;
+}
+
+.avg {
+  color: $color-text;
+  font-weight: 700;
+}
+
+.sep {
+  opacity: 0.6;
+}
+
+.message {
+  color: $color-text;
+}

@@ -9,6 +9,7 @@ import { refereeComparePath } from '@/config/refereeTableLeagues';
 import type { RefereePageData } from '@/server/people/refereePage';
 import type { RefereeSeasonTableRow } from '@/services/sportmonks/refereeStats';
 import RecentMatchesTable from './RecentMatchesTable';
+import RefereeFanRating from './RefereeFanRating';
 import styles from './personPage.module.scss';
 
 export function initials(name: string): string {
@@ -209,6 +210,7 @@ export default function RefereeView({ data }: { data: RefereePageData }) {
         )}
         <p className={styles.note}>{t('person.teamsNote')}</p>
       </section>
+      <RefereeFanRating refereeId={data.id} />
     </div>
   );
 }

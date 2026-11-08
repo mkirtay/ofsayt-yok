@@ -1,0 +1,122 @@
+@use '../../styles/variables' as *;
+
+.skeleton {
+  height: 96px;
+  margin: $spacing-4;
+  border-radius: $radius-sm;
+  background: color-mix(in srgb, $color-border 60%, transparent);
+}
+
+.body {
+  display: grid;
+  grid-template-columns: minmax(140px, 200px) minmax(0, 1fr);
+  gap: $spacing-4;
+  padding: $spacing-4;
+
+  @media (max-width: 600px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.score p {
+  margin: 0;
+}
+
+.big {
+  font-size: 36px;
+  font-weight: 800;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: $color-text;
+}
+
+.outOf {
+  margin-left: 2px;
+  font-size: 15px;
+  font-weight: 600;
+  color: $color-text-secondary;
+}
+
+.insufficient {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 36px;
+  color: $color-text;
+}
+
+.votes {
+  margin-top: $spacing-1 !important;
+  font-size: 13px;
+  color: $color-text-secondary;
+}
+
+.hint {
+  margin-top: $spacing-1 !important;
+  font-size: 12px;
+  color: $color-text-secondary;
+}
+
+.recentTitle {
+  margin: 0 0 $spacing-2;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: $color-text-secondary;
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: baseline;
+  gap: $spacing-3;
+  padding: 6px 0;
+  font-size: 13px;
+  border-top: 1px solid $color-border;
+
+  &:first-child {
+    border-top: 0;
+  }
+}
+
+.matchLink {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: $color-text;
+  font-weight: 600;
+  text-decoration: none;
+
+  &:hover {
+    color: $color-primary-text;
+    text-decoration: underline;
+  }
+}
+
+.date {
+  color: $color-text-secondary;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.rowScore {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.rowVotes {
+  font-size: 12px;
+  font-weight: 500;
+  color: $color-text-secondary;
+}
