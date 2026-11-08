@@ -20,7 +20,7 @@ const loadFormationLoading = () => import('@/components/PitchScenes/FormationLoa
 import TeamLogo from '@/components/TeamLogo';
 
 /** Sahadaki oyuncu dairesi (fotoğraf CSS ile daireyi doldurur) — istenen küçük sürümün boyutu. */
-const FORMATION_PHOTO_PX = 40;
+const FORMATION_PHOTO_PX = 48;
 
 interface LineupProps {
   lineups: MatchLineupData | null;
@@ -375,8 +375,19 @@ function PitchMarkings() {
     <div className={styles.pitchInner} aria-hidden="true">
       <div className={styles.penaltyAreaTop} />
       <div className={styles.penaltyAreaBottom} />
+      <div className={styles.sixYardTop} />
+      <div className={styles.sixYardBottom} />
+      <div className={styles.penaltySpotTop} />
+      <div className={styles.penaltySpotBottom} />
+      <div className={styles.penaltyArcTop} />
+      <div className={styles.penaltyArcBottom} />
       <div className={styles.halfLine} />
       <div className={styles.centerCircle} />
+      <div className={styles.centerSpot} />
+      <div className={styles.cornerTL} />
+      <div className={styles.cornerTR} />
+      <div className={styles.cornerBL} />
+      <div className={styles.cornerBR} />
     </div>
   );
 }

@@ -261,14 +261,28 @@ a.compactRow {
 
 // ── Saha (iki takım üst üste, kendi diziliş satırlarıyla) ─────────────────
 
+$pitch-line: rgba(255, 255, 255, 0.42);
+
+// Çim: mat koyu yeşil + uzun eksene dik biçme şeritleri + kenarlara hafif karartma.
+@mixin pitch-turf($mow-angle) {
+  background:
+    radial-gradient(ellipse at center, transparent 58%, rgba(0, 0, 0, 0.24) 100%),
+    repeating-linear-gradient(
+      $mow-angle,
+      rgba(255, 255, 255, 0.05) 0 8.3333%,
+      rgba(0, 0, 0, 0.04) 8.3333% 16.6667%
+    ),
+    #1b6a3b;
+}
+
 .pitch {
   position: relative;
   display: flex;
   flex-direction: column;
   min-height: 720px; // fotoğraflı (38px) oyuncu daireleri için: 5 hat × 2 takım sığmalı
-  background: linear-gradient(180deg, #1f7a3d 0%, #2d8b47 50%, #1f7a3d 100%);
+  @include pitch-turf(180deg);
   border-radius: $radius-sm;
-  border: 2px solid rgba(255, 255, 255, 0.25);
+  border: 2px solid rgba(255, 255, 255, 0.14);
   overflow: hidden;
   padding: $spacing-4 $spacing-2;
 }
@@ -300,46 +314,193 @@ a.compactRow {
   z-index: 0;
 }
 
-.halfLine {
+// Saha çizgileri: gerçek oranlar (105 × 68 m). `$landscape`: yatay saha (kaleler sol/sağ); `$edge`: çizginin bağlı olduğu kale tarafı.
+$box-depth: 15.7%;
+$box-span: 59.3%;
+$six-depth: 5.2%;
+$six-span: 26.9%;
+$spot-at: 10.5%;
+$center-span: 26.9%;
+$arc-span: 21.5%;
+
+@mixin pitch-area($edge, $depth, $span, $landscape) {
+  #{$edge}: 0;
+  border: 2px solid $pitch-line;
+  border-#{$edge}: none;
+
+  @if $landscape {
+    top: 50%;
+    width: $depth;
+    height: $span;
+    transform: translateY(-50%);
+  } @else {
+    left: 50%;
+    width: $span;
+    height: $depth;
+    transform: translateX(-50%);
+  }
+}
+
+@mixin pitch-spot($edge, $landscape) {
+  #{$edge}: $spot-at;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: $pitch-line;
+
+  @if $landscape {
+    top: calc(50% - 2.5px);
+  } @else {
+    left: calc(50% - 2.5px);
+  }
+}
+
+// Penaltı yayı: ceza sahası çizgisinden taşan parça (yarıçap 9,15 m, kiriş 14,6 m, sehim 3,65 m).
+@mixin pitch-arc($edge, $landscape) {
+  #{$edge}: $box-depth;
+  border: 2px solid $pitch-line;
+  border-#{$edge}: none;
+
+  @if $landscape {
+    top: 50%;
+    height: $arc-span;
+    aspect-ratio: 1 / 4;
+    transform: translateY(-50%);
+    border-radius: if($edge == left, 0 100% 100% 0 / 0 50% 50% 0, 100% 0 0 100% / 50% 0 0 50%);
+  } @else {
+    left: 50%;
+    width: $arc-span;
+    aspect-ratio: 4 / 1;
+    transform: translateX(-50%);
+    border-radius: if($edge == top, 0 0 50% 50% / 0 0 100% 100%, 50% 50% 0 0 / 100% 100% 0 0);
+  }
+}
+
+.halfLine,
+.centerCircle,
+.centerSpot,
+.penaltyAreaTop,
+.penaltyAreaBottom,
+.sixYardTop,
+.sixYardBottom,
+.penaltySpotTop,
+.penaltySpotBottom,
+.penaltyArcTop,
+.penaltyArcBottom,
+.cornerTL,
+.cornerTR,
+.cornerBL,
+.cornerBR {
   position: absolute;
-  top: 50%;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background-color: rgba(255, 255, 255, 0.28);
+  box-sizing: border-box;
 }
 
 .centerCircle {
-  position: absolute;
   top: 50%;
   left: 50%;
-  width: 90px;
-  height: 90px;
-  border: 2px solid rgba(255, 255, 255, 0.28);
+  border: 2px solid $pitch-line;
   border-radius: 50%;
+  aspect-ratio: 1;
   transform: translate(-50%, -50%);
 }
 
-.penaltyAreaTop {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 46%;
-  height: 60px;
-  border: 2px solid rgba(255, 255, 255, 0.28);
-  border-top: none;
+.centerSpot {
+  top: calc(50% - 2.5px);
+  left: calc(50% - 2.5px);
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: $pitch-line;
 }
 
-.penaltyAreaBottom {
-  position: absolute;
+.halfLine {
+  background-color: $pitch-line;
+}
+
+.cornerTL,
+.cornerTR,
+.cornerBL,
+.cornerBR {
+  width: 14px;
+  height: 14px;
+}
+
+.cornerTL {
+  top: 0;
+  left: 0;
+  border-right: 2px solid $pitch-line;
+  border-bottom: 2px solid $pitch-line;
+  border-bottom-right-radius: 100%;
+}
+
+.cornerTR {
+  top: 0;
+  right: 0;
+  border-left: 2px solid $pitch-line;
+  border-bottom: 2px solid $pitch-line;
+  border-bottom-left-radius: 100%;
+}
+
+.cornerBL {
   bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 46%;
-  height: 60px;
-  border: 2px solid rgba(255, 255, 255, 0.28);
-  border-bottom: none;
+  left: 0;
+  border-right: 2px solid $pitch-line;
+  border-top: 2px solid $pitch-line;
+  border-top-right-radius: 100%;
+}
+
+.cornerBR {
+  bottom: 0;
+  right: 0;
+  border-left: 2px solid $pitch-line;
+  border-top: 2px solid $pitch-line;
+  border-top-left-radius: 100%;
+}
+
+// Dikey saha (dar kutu / mobil): kaleler üst ve alt.
+@container lineup (max-width: 639.98px) {
+  .halfLine {
+    top: calc(50% - 1px);
+    left: 0;
+    right: 0;
+    height: 2px;
+  }
+
+  .centerCircle {
+    width: $center-span;
+  }
+
+  .penaltyAreaTop {
+    @include pitch-area(top, $box-depth, $box-span, false);
+  }
+
+  .penaltyAreaBottom {
+    @include pitch-area(bottom, $box-depth, $box-span, false);
+  }
+
+  .sixYardTop {
+    @include pitch-area(top, $six-depth, $six-span, false);
+  }
+
+  .sixYardBottom {
+    @include pitch-area(bottom, $six-depth, $six-span, false);
+  }
+
+  .penaltySpotTop {
+    @include pitch-spot(top, false);
+  }
+
+  .penaltySpotBottom {
+    @include pitch-spot(bottom, false);
+  }
+
+  .penaltyArcTop {
+    @include pitch-arc(top, false);
+  }
+
+  .penaltyArcBottom {
+    @include pitch-arc(bottom, false);
+  }
 }
 
 .formationHalf {
@@ -505,17 +666,6 @@ a.compactRow {
 
   .formationName {
     font-size: 9px;
-  }
-
-  .penaltyAreaTop,
-  .penaltyAreaBottom {
-    width: 60%;
-    height: 44px;
-  }
-
-  .centerCircle {
-    width: 64px;
-    height: 64px;
   }
 }
 
@@ -694,7 +844,7 @@ a.compactRow:focus-visible {
   }
 
   .pitch {
-    background: linear-gradient(90deg, #1f7a3d 0%, #2d8b47 50%, #1f7a3d 100%);
+    @include pitch-turf(90deg);
   }
 
   .formationHalf {
@@ -717,37 +867,60 @@ a.compactRow:focus-visible {
   .halfLine {
     top: 0;
     bottom: 0;
-    left: 50%;
-    right: auto;
+    left: calc(50% - 1px);
     width: 2px;
-    height: auto;
-    transform: translateX(-50%);
   }
 
   .centerCircle {
-    width: 96px;
-    height: 96px;
-  }
-
-  .penaltyAreaTop,
-  .penaltyAreaBottom {
-    top: 50%;
-    bottom: auto;
-    width: 13%;
-    height: 46%;
-    border: 2px solid rgba(255, 255, 255, 0.28);
+    height: $center-span;
   }
 
   .penaltyAreaTop {
-    left: 0;
-    transform: translateY(-50%);
-    border-left: none;
+    @include pitch-area(left, $box-depth, $box-span, true);
   }
 
   .penaltyAreaBottom {
-    left: auto;
-    right: 0;
-    transform: translateY(-50%);
-    border-right: none;
+    @include pitch-area(right, $box-depth, $box-span, true);
+  }
+
+  .sixYardTop {
+    @include pitch-area(left, $six-depth, $six-span, true);
+  }
+
+  .sixYardBottom {
+    @include pitch-area(right, $six-depth, $six-span, true);
+  }
+
+  .penaltySpotTop {
+    @include pitch-spot(left, true);
+  }
+
+  .penaltySpotBottom {
+    @include pitch-spot(right, true);
+  }
+
+  .penaltyArcTop {
+    @include pitch-arc(left, true);
+  }
+
+  .penaltyArcBottom {
+    @include pitch-arc(right, true);
+  }
+}
+
+// Geniş yatay saha: oyuncular büyür. 5 hatlı dizilişte yarı saha ≥ 5 × 76 px olduğu için 780'den başlar.
+@container lineup (min-width: 780px) {
+  .pitch,
+  .loadingPitch {
+    min-height: 580px;
+  }
+
+  .formationDotPhoto {
+    width: 50px;
+    height: 50px;
+  }
+
+  .formationName {
+    font-size: 11px;
   }
 }
