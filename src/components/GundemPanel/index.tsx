@@ -77,7 +77,7 @@ export default function GundemPanel({
         authenticated={authenticated}
         maxLength={POST_MAX_LENGTH}
         placeholder={composerPlaceholder}
-        onSubmit={(body) => createPost.mutateAsync(matchId ? { body, matchId } : { body })}
+        onSubmit={(body, entity) => createPost.mutateAsync({ body, ...(matchId ? { matchId } : {}), ...(entity ? { entity } : {}) })}
       />
     );
 

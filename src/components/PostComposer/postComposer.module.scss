@@ -158,3 +158,77 @@
     margin-right: auto;
   }
 }
+
+// "Ekle" (oyuncu / takım / maç kartı) düğmesi — çubuğun başında; dokunma hedefi ≥ 32 px.
+.attach {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 32px;
+  padding: 0 $spacing-2;
+  font-size: 13px;
+  font-weight: 600;
+  color: $color-primary-text;
+  border: 1px solid var(--border-subtle);
+  border-radius: $radius-full;
+  white-space: nowrap;
+  transition: $transition-base;
+
+  &:hover,
+  &[aria-expanded='true'] {
+    border-color: $color-primary;
+  }
+}
+
+// Seçilen ek: tek satır çip (tür + ad + kaldır).
+.attached {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  min-width: 0;
+  padding: 4px 4px 4px $spacing-2;
+  background: var(--bg-muted);
+  border: 1px solid var(--border-subtle);
+  border-radius: $radius-md;
+  font-size: 13px;
+}
+
+.attachedImg {
+  flex-shrink: 0;
+  object-fit: contain;
+  border-radius: 3px;
+}
+
+.attachedKind {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: $color-text-secondary;
+}
+
+.attachedLabel {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+  color: $color-text;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.attachedRemove {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  font-size: 18px;
+  line-height: 1;
+  color: $color-text-secondary;
+  border-radius: $radius-sm;
+
+  &:hover {
+    color: $color-text;
+    background: var(--bg-surface);
+  }
+}

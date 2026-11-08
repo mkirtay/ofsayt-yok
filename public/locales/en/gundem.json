@@ -44,7 +44,9 @@
     "contentRejected": "Your post contains language that breaks our community guidelines. Please edit it and try again.",
     "linkLimit": "New accounts can add at most {{count}} link per post.",
     "duplicate": "You posted this recently. You cannot send the same text again.",
-    "suspended": "Your ability to post in Gündem is currently suspended. You can keep reading."
+    "suspended": "Your ability to post in Gündem is currently suspended. You can keep reading.",
+    "entityNotFound": "The attached player, team or match could not be found. Remove it and try again.",
+    "entityUnavailable": "The attachment could not be verified right now. Please try again shortly."
   },
   "feed": {
     "loading": "Loading…",
@@ -160,5 +162,50 @@
     "remove": "Remove",
     "removeConfirm": "Remove this #1 message? Credits for unused days will be refunded.",
     "error": "Could not place the bid. Please try again."
+  },
+  "entity": {
+    "kind": {
+      "PLAYER": "Player",
+      "TEAM": "Team",
+      "MATCH": "Match"
+    },
+    "goalsShort": "goals",
+    "assistsShort": "assists",
+    "lastRating": "Last match rating {{rating}}",
+    "rank": "#{{rank}}",
+    "rankTitle": "{{rank}} in the league, {{points}} points",
+    "points": "{{points}} pts",
+    "live": "Live",
+    "liveMinute": "Live {{minute}}",
+    "halfTime": "Half-time",
+    "finished": "FT",
+    "upcoming": "Not started",
+    "goToMatch": "Go to match",
+    "special": {
+      "POSTPONED": "Postponed",
+      "CANCELLED": "Cancelled",
+      "DELETED": "Cancelled",
+      "ABANDONED": "Abandoned",
+      "TBA": "TBA",
+      "DELAYED": "Delayed",
+      "SUSPENDED": "Suspended",
+      "INTERRUPTED": "Suspended",
+      "AWARDED": "Awarded",
+      "WALKOVER": "Awarded"
+    },
+    "attach": "Add",
+    "attachTitle": "Add a player, team or match",
+    "remove": "Remove attachment",
+    "searchLabel": "Search a player, team or match",
+    "searchPlaceholder": "Search a player, team or match…",
+    "todayMatches": "Today's matches",
+    "players": "Players",
+    "teams": "Teams",
+    "matches": "Matches",
+    "searching": "Searching…",
+    "noResults": "No results.",
+    "searchError": "Search is unavailable right now.",
+    "close": "Close",
+    "minChars": "Type at least 2 letters to search."
   }
 }

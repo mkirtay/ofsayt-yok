@@ -4,6 +4,8 @@ import { withAbsoluteImage } from '@/lib/siteUrl';
 import { isOfficialUser } from '@/lib/gundem/official';
 import { isDeletedUserId } from '@/config/deletedUser';
 import { mentionsSelect, serializeMentions } from '@/lib/gundem/mentions';
+import { entityKey, loadEntityCards } from '@/lib/gundem/entityCards';
+import type { GundemEntityCard } from '@/types/gundem';
 
 /** `email` yalnızca `official` türetmek için okunur; `serializeUserRef`/`serializeAuthor` yanıttan çıkarır. */
 export const authorSelect = { id: true, name: true, username: true, image: true, email: true } as const;
@@ -37,6 +39,8 @@ export function postSelect(viewerId: string | null) {
     authorType: true,
     matchId: true,
     teamId: true,
+    entityType: true,
+    entityId: true,
     author: { select: postAuthorSelect(viewerId) },
     hiddenAt: true,
     mentions: mentionsSelect,
@@ -78,11 +82,18 @@ export function serializeMatchBadge(snap: MatchSnapshot) {
  * `mentions` (isteğe bağlı alan): doğrulanmış @etiketler → profil bağlantısı. `underReview` yalnız gizlenmiş içeriğin
  * YAZARINA döner (diğerleri bu içeriği hiç almaz; bkz. lib/gundem/visibility.ts).
  */
-export function serializePost(row: PostRow, viewerId: string | null = null, snapshot: MatchSnapshot | null = null) {
-  const { _count, likes, author, hiddenAt, mentions, ...rest } = row;
+export function serializePost(
+  row: PostRow,
+  viewerId: string | null = null,
+  snapshot: MatchSnapshot | null = null,
+  entity: GundemEntityCard | null = null,
+) {
+  const { _count, likes, author, hiddenAt, mentions, entityType: _entityType, entityId: _entityId, ...rest } = row;
   return {
     ...rest,
     match: snapshot ? serializeMatchBadge(snapshot) : null,
+    // Varlık kartı (oyuncu/takım/maç): kaydı yoksa null → istemci kartı gizler.
+    entity,
     author: serializeAuthor(author, viewerId),
     likes: _count.likes,
     comments: _count.comments,
@@ -125,7 +136,16 @@ export async function serializePosts(rows: PostRow[], viewerId: string | null = 
     ? await prisma.matchSnapshot.findMany({ where: { fixtureId: { in: matchIds } } })
     : [];
   const byId = new Map(snapshots.map((s) => [s.fixtureId, s]));
-  return rows.map((r) => serializePost(r, viewerId, r.matchId ? (byId.get(r.matchId) ?? null) : null));
+  // Varlık kartları da sayfa başına TEK sorgu (kartı olan gönderi yoksa sorgu atılmaz).
+  const cards = await loadEntityCards(rows);
+  return rows.map((r) =>
+    serializePost(
+      r,
+      viewerId,
+      r.matchId ? (byId.get(r.matchId) ?? null) : null,
+      r.entityType && r.entityId ? (cards.get(entityKey(r.entityType, r.entityId)) ?? null) : null,
+    ),
+  );
 }
 
 /** Cursor sayfalama (take: N+1, cursor + skip: 1) kalıbı — `items`'ın son id'si `nextCursor`. */

@@ -33,6 +33,55 @@ export type GundemMatchBadge = {
   away: GundemMatchTeam;
 };
 
+/** Gönderiye eklenebilen varlık türü (gönderi başına en çok 1 kart). */
+export type GundemEntityType = 'PLAYER' | 'TEAM' | 'MATCH';
+
+/** Yazarken seçilen varlık (istek gövdesi `entity`). Kart verisi sunucuda id'den çözülür; istemcinin verdiği ad/logo kullanılmaz. */
+export type GundemEntityRef = { type: GundemEntityType; id: number };
+
+export type GundemEntityTeamRef = { id: number; name: string; logo: string | null };
+
+/** Oyuncu kartı: foto, (güncel) takım, güncel sezon gol/asist (tüm turnuvalar), son maç puanı. */
+export type GundemPlayerCard = {
+  type: 'PLAYER';
+  id: number;
+  name: string;
+  photo: string | null;
+  team: GundemEntityTeamRef | null;
+  season: { name: string; goals: number; assists: number; apps: number } | null;
+  /** Son puanlı maçtaki Sportmonks puanı; yoksa null. */
+  lastRating: number | null;
+};
+
+/** Takım kartı: logo, ad, ana turnuvadaki (lig) sıra. */
+export type GundemTeamCard = {
+  type: 'TEAM';
+  id: number;
+  name: string;
+  logo: string | null;
+  standing: { leagueId: number; leagueName: string; leagueLogo: string | null; rank: number; points: number } | null;
+};
+
+/** Maç kartı: lig, durum, iki takım + skor. Canlı skor istemcide ana sayfanın canlı listesinden yenilenebilir. */
+export type GundemMatchCard = {
+  type: 'MATCH';
+  id: number;
+  league: { id: number; name: string; logo: string | null } | null;
+  /** ISO (UTC); bilinmiyorsa null. */
+  startingAt: string | null;
+  /** `Match.status` ("NOT STARTED" / "IN PLAY" / "HALF TIME BREAK" / "FINISHED" …). */
+  status: string;
+  stateCode: string | null;
+  /** Canlı dakika (`Match.time`), yalnız canlıyken anlamlı. */
+  minute: string | null;
+  home: GundemEntityTeamRef;
+  away: GundemEntityTeamRef;
+  /** [ev, deplasman]; maç başlamadıysa null. */
+  score: [number, number] | null;
+};
+
+export type GundemEntityCard = GundemPlayerCard | GundemTeamCard | GundemMatchCard;
+
 export type GundemPost = {
   id: string;
   body: string;
@@ -46,6 +95,8 @@ export type GundemPost = {
   comments: number;
   likedByMe: boolean;
   mentions?: GundemMention[];
+  /** Eklenen varlık kartı; yoksa ya da çözülemezse null (kart gizlenir). Eski yanıtlarda alan yok. */
+  entity?: GundemEntityCard | null;
   /** Moderasyonla gizlenmiş içerik — yalnız YAZARINA döner ("inceleme altında"). */
   underReview?: boolean;
 };
