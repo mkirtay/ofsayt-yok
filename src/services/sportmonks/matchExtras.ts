@@ -114,7 +114,9 @@ export function mapFixtureWeather(fixture: Pick<SportmonksFixture, 'weatherrepor
   const t = w?.temperature?.current ?? w?.temperature?.day;
   if (typeof t !== 'number' || !Number.isFinite(t)) return undefined;
   const condition = weatherConditionFromIcon(w?.icon);
-  return { tempC: Math.round(t), ...(condition ? { condition } : {}) };
+  const wind = w?.wind?.speed;
+  const windMs = typeof wind === 'number' && Number.isFinite(wind) ? Math.round(wind * 10) / 10 : undefined;
+  return { tempC: Math.round(t), ...(condition ? { condition } : {}), ...(windMs != null ? { windMs } : {}) };
 }
 
 export function mapFixtureHashtag(fixture: Pick<SportmonksFixture, 'metadata'>): string | undefined {

@@ -13,7 +13,8 @@ import { impliedProbabilities } from '@/utils/impliedProbability';
 
 // v3: bahis dili yasak, "Bahis / İddia Pazarı" → olasılık senaryoları (AdSense kumar politikası).
 // v6: zoneGrid ölçeği açıkça tarif edildi (Luna grid'i pay dağılımı gibi 7–19 dolduruyordu).
-export const ANALYSIS_MODEL_VERSION = 'v6-2026-10';
+// v7: "Maç Bağlamı" bölümü — uç hava, derbi, kupa turu/ayak, dinlenme, sıradaki maç, seri, ligdeki durum.
+export const ANALYSIS_MODEL_VERSION = 'v7-2026-11';
 
 export const ANALYSIS_SYSTEM_PROMPT = `Sen profesyonel bir futbol veri analisti ve Opta/Wyscout seviyesinde maç öncesi
 analiz uzmanısın. Sana verilen maç verilerini (takım formu, head-to-head, lig sıralaması,
@@ -46,6 +47,20 @@ KURALLAR:
 9. zoneGrid.home ve .away HER ZAMAN tam 15 sayı. Ölçek: her takımın en yoğun bölgesi 80-100,
    en zayıfı 0-20; toplam 100 olmak zorunda değil, pay dağılımı verme. homeZones/awayZones/
    narrative yalnız düz metin — sayı dizisini bu metin alanlarına yazma.
+10. Bağlamda "Maç Bağlamı" bölümü varsa maçı yalnız sayılarla okuma; etkisi belirgin olanları gerekçeye kat:
+   - Hava (yalnız uç koşul verilir): yoğun yağış/kar zemini ağırlaştırır, pas oyununu ve tempoyu düşürür, hata ve
+     duran top payını artırır; güçlü rüzgâr uzun top ve ortaları bozar; aşırı sıcak ikinci yarıda tempoyu düşürür.
+     Genelde gol beklentisini biraz aşağı çeker.
+   - Derbi: form ve sıralama farkı daha az belirleyici, kart ve gerginlik yüksek; riskLevel'i yükselt.
+   - Kupa/eleme: tur ve ayak bilgisini kullan; 2. ayakta 1. ayak farkı takımların risk iştahını belirler
+     (önde olan temkinli, geride olan baskılı oynar).
+   - Yoğun takvim: ≤ 3 gün dinlenme, Avrupa/kupa maçından dönüş (özellikle deplasman) ya da 3-4 gün içinde
+     önemli maç (Avrupa, kupa, derbi, üst sıra rakibi) rotasyon ve yorgunluk riski demektir; zayıf rakip karşısında
+     favori takım temkinli/rotasyonlu oynayabilir.
+   - Seri ve ligdeki durum (lidere/küme hattına puan farkı, kalan maç) motivasyonu gösterir; şampiyonluk ya da
+     küme yarışındaki takım için maçın önemi yüksektir.
+   Bunları matchSummary, ilgili takım analizi, matchPrediction.reasoning ve riskLevel içinde kısaca kullan; ayrı
+   başlık açma, verilmeyen bir bağlam unsurundan (ör. hava) hiç söz etme.
 
 ÖNEMLİ KALİBRASYON:
 - "high" güven sadece veri açıkça tek yönü işaret ederse (örn. ev avantajı + form +
@@ -321,6 +336,62 @@ function teamLines(t: MatchAnalysisContext['homeTeam'], side: 'Ev Sahibi' | 'Dep
   return lines;
 }
 
+/** "Maç Bağlamı" bölümü (v7) — yalnız dolu satırlar; hiç satır yoksa bölüm yok. */
+function situationLines(ctx: MatchAnalysisContext): string[] {
+  const s = ctx.situation;
+  if (!s) return [];
+  const out: string[] = [];
+  const homeName = ctx.match.home?.name ?? 'Ev sahibi';
+  const awayName = ctx.match.away?.name ?? 'Deplasman';
+  if (s.isDerby) out.push('Derbi: evet (iki takım geleneksel rakip).');
+  const cupBits = [s.stage, s.round].filter(Boolean).join(' · ');
+  if (cupBits || s.leg) {
+    out.push(`Turnuva aşaması: ${cupBits || '—'}${s.leg ? ` · ${s.leg === '2/2' ? 'eşleşmenin 2. ayağı' : s.leg === '1/2' ? 'eşleşmenin 1. ayağı' : `ayak ${s.leg}`}` : ''}`);
+  }
+  if (s.firstLeg) out.push(`1. ayak: ${s.firstLeg.home} ${s.firstLeg.score} ${s.firstLeg.away}`);
+  if (s.weather) {
+    const w = s.weather;
+    const cond: Record<string, string> = {
+      rain: 'yağmurlu', storm: 'fırtınalı/sağanak', snow: 'karlı', fog: 'sisli',
+      clear: 'açık', partlyCloudy: 'parçalı bulutlu', cloudy: 'bulutlu',
+    };
+    const bits = [`${w.tempC}°C`];
+    if (w.condition) bits.push(cond[w.condition] ?? w.condition);
+    if (w.windMs != null) bits.push(`rüzgâr ${w.windMs} m/s${w.windMs >= 8 ? ' (güçlü)' : ''}`);
+    out.push(`Hava (${ctx.matchPhase === 'PRE' ? 'tahmin' : 'maç saatinde'}): ${bits.join(', ')}`);
+  }
+  const team = (name: string, t: NonNullable<MatchAnalysisContext['situation']>['home']) => {
+    const bits: string[] = [];
+    if (t.lastMatch) {
+      const l = t.lastMatch;
+      bits.push(`önceki maç ${l.daysBefore} gün önce, ${l.isHome ? 'evde' : 'deplasmanda'} ${l.opponent}${l.competition ? ` (${l.competition})` : ''}`);
+    }
+    if (t.nextMatch) {
+      const n = t.nextMatch;
+      bits.push(`sıradaki maç ${n.daysAfter} gün sonra, ${n.isHome ? 'evde' : 'deplasmanda'} ${n.opponent}${n.competition ? ` (${n.competition})` : ''}`);
+    }
+    if (t.streak) {
+      const label = { wins: 'üst üste galibiyet', losses: 'üst üste mağlubiyet', unbeaten: 'maçtır yenilmiyor', winless: 'maçtır kazanamıyor' }[t.streak.kind];
+      bits.push(`${t.streak.atLeast ? 'en az ' : ''}${t.streak.count} ${label}`);
+    }
+    if (t.league) {
+      const g = t.league;
+      const leader = g.rank === 1 ? 'lider' : `lidere ${g.pointsToLeader} puan geride`;
+      const rel =
+        g.pointsAboveRelegation == null
+          ? ''
+          : g.pointsAboveRelegation > 0
+            ? `, küme hattının ${g.pointsAboveRelegation} puan üstünde`
+            : `, düşme hattında (güvenli sıraya ${-g.pointsAboveRelegation} puan)`;
+      bits.push(`ligde ${g.rank}./${g.teams}, ${leader}${rel}${g.remaining != null ? `, ${g.remaining} maç kaldı` : ''}`);
+    }
+    if (bits.length) out.push(`${name}: ${bits.join(' · ')}`);
+  };
+  team(homeName, s.home);
+  team(awayName, s.away);
+  return out.length ? ['\n## Maç Bağlamı', ...out] : [];
+}
+
 /**
  * Maç verisi özeti (form, son maçlar, sezon, golcüler, eksikler, kadro, H2H) — analiz ve trivia aynı veriyi
  * görür (trivia yalnız buna dayanır).
@@ -351,6 +422,7 @@ function summarizeContextForPrompt(ctx: MatchAnalysisContext): string {
   if (m.referee) lines.push(`Hakem: ${m.referee}`);
   if (ctx.referee) lines.push(...refereeSummaryPromptLines(ctx.referee));
   if (m.location) lines.push(`Stadyum: ${m.location}`);
+  lines.push(...situationLines(ctx));
 
   lines.push(...teamLines(ctx.homeTeam, 'Ev Sahibi'));
   lines.push(...teamLines(ctx.awayTeam, 'Deplasman'));

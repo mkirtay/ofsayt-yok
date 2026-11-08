@@ -306,6 +306,8 @@ export type SportmonksFixtureCoach = {
 
 export type SportmonksWeatherReport = {
   temperature?: { current?: number; day?: number } | null;
+  /** m/s (2026-11-08 gerçek yanıtla doğrulandı: `{ speed: 2.57, direction: 210 }`). */
+  wind?: { speed?: number; direction?: number } | null;
   description?: string | null;
   /** OpenWeather ikon URL'si, ör. `…/weather/04n.png` — durum kodu buradan. */
   icon?: string | null;

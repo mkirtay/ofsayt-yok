@@ -27,6 +27,7 @@ import type { TeamSeasonStats } from '@/services/sportmonks/teamSeasonStats';
 import { todayIsoIstanbul } from '@/utils/dateStrip';
 import { loadRefereeSummary } from '@/server/refereeSummary';
 import type { RefereeSummary } from '@/services/sportmonks/refereeStats';
+import { buildMatchSituation, fetchSituationExtras, type MatchSituation } from '@/server/analysisMatchSituation';
 
 /** Bir takımın son N maçından çıkarılan özet performans satırı */
 export type RecentMatchRow = {
@@ -117,6 +118,11 @@ export type MatchAnalysisContext = {
   h2h: H2HContext | null;
   /** Orta hakemin bu sezon (+ az maçlıysa geçen sezon) istatistikleri; yalnız sayılar. */
   referee?: RefereeSummary | null;
+  /**
+   * Maç bağlamı (v7): uç hava, derbi, kupa turu/ayak, dinlenme süresi, sıradaki maç, seri, ligdeki durum.
+   * Eski testler/çağıranlar için isteğe bağlı; prompt yoksa bölümü atlar.
+   */
+  situation?: MatchSituation;
   /** Pre/live oran karşılaştırması — para akışı sinyali */
   oddsSignal: {
     pre: { '1'?: number; X?: number; '2'?: number } | null;
@@ -409,6 +415,8 @@ export async function buildMatchAnalysisContext(
   const compId = toStandingsCompetitionId(match.competition?.id ?? match.competition_id);
   const phase = STATUS_TO_PHASE[match.status] ?? 'PRE';
 
+  // Maç bağlamı istekleri (derbi, sıradaki maçlar, 1. ayak) diğer isteklerle paralel; hata fırlatmaz.
+  const extrasPromise = fetchSituationExtras(match, homeId, awayId);
   const [stats, lineups, standings, h2h, referee] = await Promise.all([
     getMatchStats(apiMatchId),
     getMatchLineups(apiMatchId),
@@ -428,6 +436,15 @@ export async function buildMatchAnalysisContext(
     buildTeamContext(homeId, match.home?.name ?? '', standings, matchDayIso),
     buildTeamContext(awayId, match.away?.name ?? '', standings, matchDayIso),
   ]);
+  const situation = buildMatchSituation({
+    match,
+    homeId,
+    awayId,
+    homeRows: homeCtx.recentMatches,
+    awayRows: awayCtx.recentMatches,
+    standings,
+    extras: await extrasPromise,
+  });
 
   return {
     archived: false,
@@ -441,6 +458,7 @@ export async function buildMatchAnalysisContext(
     awayTeam: awayCtx,
     h2h: buildH2HContext(h2h, match.home?.name),
     referee,
+    situation,
     oddsSignal: computeOddsSignal(match),
   };
 }

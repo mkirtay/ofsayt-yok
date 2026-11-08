@@ -35,7 +35,7 @@ describe('analiz prompt\'u — bahis dili yok, olasılık senaryoları', () => {
   it('sistem prompt\'u: yasak kuralı var, kuralın dışında bahis terimi yok', () => {
     expect(ANALYSIS_SYSTEM_PROMPT).toContain('DİL YASAĞI');
     expect(findGamblingTerms(withoutBanRule(ANALYSIS_SYSTEM_PROMPT))).toEqual([]);
-    expect(ANALYSIS_MODEL_VERSION).toBe('v6-2026-10');
+    expect(ANALYSIS_MODEL_VERSION).toBe('v7-2026-11');
   });
 
   it('kullanıcı mesajı: şema `scenarios` (metric / probability / confidence / reasoning), bettingTips yok', () => {
@@ -167,5 +167,48 @@ describe('analiz prompt\'u — hakem istatistikleri', () => {
     expect(msg).toContain('Bu sezon (2026/2027): 3 maç | maç başı sarı 4, kırmızı 0, penaltı 0.33, faul 24.67, VAR incelemesi —');
     expect(findGamblingTerms(msg)).toEqual([]);
     expect(buildAnalysisUserMessage(ctx)).not.toContain('Hakem istatistikleri');
+  });
+});
+
+describe('analiz prompt\'u — Maç Bağlamı (v7)', () => {
+  const team = (overrides = {}) => ({ lastMatch: null, nextMatch: null, streak: null, league: null, ...overrides });
+
+  it('dolu bağlam satırları; bölüm yoksa başlık da yok', () => {
+    const situation = {
+      weather: { tempC: 6, condition: 'rain', windMs: 9.2 },
+      isDerby: true,
+      stage: 'Quarter-finals',
+      leg: '2/2',
+      firstLeg: { home: 'Fenerbahçe', away: 'Galatasaray', score: '2-1' },
+      home: team({
+        lastMatch: { daysBefore: 3, opponent: 'Lazio', isHome: false, competition: 'UEFA Europa League' },
+        streak: { kind: 'unbeaten', count: 7, atLeast: false },
+        league: { rank: 2, teams: 18, pointsToLeader: 3, pointsAboveRelegation: 15, remaining: 22 },
+      }),
+      away: team({
+        nextMatch: { daysAfter: 3, opponent: 'Benfica', isHome: true, competition: 'UEFA Champions League' },
+        streak: { kind: 'winless', count: 10, atLeast: true },
+      }),
+    };
+    const msg = buildAnalysisUserMessage({ ...ctx, situation } as unknown as MatchAnalysisContext);
+    expect(msg).toContain('## Maç Bağlamı');
+    expect(msg).toContain('Derbi: evet');
+    expect(msg).toContain('Turnuva aşaması: Quarter-finals · eşleşmenin 2. ayağı');
+    expect(msg).toContain('1. ayak: Fenerbahçe 2-1 Galatasaray');
+    expect(msg).toContain('Hava (tahmin): 6°C, yağmurlu, rüzgâr 9.2 m/s (güçlü)');
+    expect(msg).toContain(
+      'Galatasaray: önceki maç 3 gün önce, deplasmanda Lazio (UEFA Europa League) · 7 maçtır yenilmiyor · ligde 2./18, lidere 3 puan geride, küme hattının 15 puan üstünde, 22 maç kaldı',
+    );
+    expect(msg).toContain('Fenerbahçe: sıradaki maç 3 gün sonra, evde Benfica (UEFA Champions League) · en az 10 maçtır kazanamıyor');
+    expect(findGamblingTerms(msg)).toEqual([]);
+
+    const empty = { weather: null, isDerby: false, firstLeg: null, home: team(), away: team() };
+    expect(buildAnalysisUserMessage({ ...ctx, situation: empty } as unknown as MatchAnalysisContext)).not.toContain('Maç Bağlamı');
+    expect(buildAnalysisUserMessage(ctx)).not.toContain('Maç Bağlamı');
+  });
+
+  it('sistem kuralı: uç hava, derbi, yoğun takvim ve verilmeyen unsurdan söz etmeme', () => {
+    expect(ANALYSIS_SYSTEM_PROMPT).toContain('"Maç Bağlamı"');
+    expect(ANALYSIS_SYSTEM_PROMPT).toMatch(/verilmeyen bir bağlam unsurundan \(ör\. hava\) hiç söz etme/);
   });
 });

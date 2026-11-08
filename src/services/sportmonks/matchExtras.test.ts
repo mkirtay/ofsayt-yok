@@ -27,7 +27,7 @@ const finished = {
     { id: 199988, common_name: 'O. Buruk', display_name: 'Okan Buruk', meta: { participant_id: 34 } },
     { id: 3861734, common_name: 'T. Reis', meta: { participant_id: 688 } },
   ],
-  weatherreport: { temperature: { current: 22.09 }, description: 'overcast clouds', icon: 'https://cdn.sportmonks.com/images/weather/04n.png' },
+  weatherreport: { temperature: { current: 22.09 }, wind: { speed: 2.57, direction: 210 }, description: 'overcast clouds', icon: 'https://cdn.sportmonks.com/images/weather/04n.png' },
   metadata: [{ type_id: 613, values: '#TRAGAL' }],
   referees: [
     { referee_id: 15820, type_id: 7 },
@@ -47,7 +47,8 @@ describe('maç detayı ekleri (TV / teknik direktör / hava / hashtag / hakem id
   });
 
   it('hava: sıcaklık yuvarlanır, durum ikon kodundan; başlamamış maçta null → yok', () => {
-    expect(mapFixtureWeather(finished)).toEqual({ tempC: 22, condition: 'cloudy' });
+    expect(mapFixtureWeather(finished)).toEqual({ tempC: 22, condition: 'cloudy', windMs: 2.6 });
+    expect(mapFixtureWeather({ weatherreport: { temperature: { current: 5 } } } as unknown as SportmonksFixture)).toEqual({ tempC: 5 });
     expect(mapFixtureWeather({ weatherreport: null })).toBeUndefined();
     expect(weatherConditionFromIcon('https://x/weather/01d.png')).toBe('clear');
     expect(weatherConditionFromIcon('https://x/weather/10n.png')).toBe('rain');
@@ -64,7 +65,7 @@ describe('maç detayı ekleri (TV / teknik direktör / hava / hashtag / hakem id
     expect(mapMatchExtras(finished, 688, 34)).toEqual({
       tv_stations: ['beIN Sports 1', 'TOD'],
       coaches: { home: 'T. Reis', homeId: 3861734, away: 'O. Buruk', awayId: 199988, awayFull: 'Okan Buruk' },
-      weather: { tempC: 22, condition: 'cloudy' },
+      weather: { tempC: 22, condition: 'cloudy', windMs: 2.6 },
       hashtag: '#TRAGAL',
       referee_id: 62331,
     });

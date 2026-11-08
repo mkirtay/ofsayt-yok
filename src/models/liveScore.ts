@@ -161,6 +161,8 @@ export interface MatchWeather {
   /** °C, tam sayıya yuvarlı */
   tempC: number;
   condition?: MatchWeatherCondition;
+  /** Rüzgâr hızı m/s (Sportmonks `wind.speed`, OpenWeather metrik); yalnız AI analiz bağlamında kullanılıyor. */
+  windMs?: number;
 }
 
 export type MatchFinish = 'AET' | 'PEN';
