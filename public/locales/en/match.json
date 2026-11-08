@@ -231,6 +231,16 @@
     "empty": "No posts about this match yet. Be the first!",
     "placeholder": "What do you think about the match?"
   },
+  "discussion": {
+    "title": "Match discussion",
+    "join": "Join the discussion",
+    "write": "Write a comment",
+    "empty": "No comments yet — be the first to write one!",
+    "anonymous": "User"
+  },
+  "counters": {
+    "label": "{{views}} views, {{comments}} comments"
+  },
   "tabs": {
     "label": "Match sections",
     "overview": "Overview",

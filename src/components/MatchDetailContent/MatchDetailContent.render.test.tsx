@@ -25,6 +25,7 @@ vi.mock('@/hooks/useMatchAnalysis', () => ({ useMatchAnalysis: () => ({}) }));
 vi.mock('@/components/MatchCommentary', () => ({ default: () => <div data-testid="commentary-content" /> }));
 vi.mock('@/components/MatchForumTab', () => ({ default: () => <div data-testid="forum-content" /> }));
 vi.mock('@/components/MatchVenueCard', () => ({ default: () => null }));
+vi.mock('@/components/MatchDiscussionCard', () => ({ default: () => <div data-testid="discussion-card" /> }));
 
 import MatchDetailContent, { DEFAULT_MATCH_TAB, MATCH_TAB_KEYS } from './index';
 import type { MatchDetailState } from '@/hooks/useMatchDetail';
@@ -85,6 +86,12 @@ describe('<MatchDetailContent />', () => {
     expect(html).not.toContain('forum-content');
     expect(html).not.toContain('analysis-content');
     expect(html).not.toContain('trivia-content');
+  });
+
+  it('Genel Bakış en üstte maç tartışması kartı; oturumsuzda sayaç rozeti yok', () => {
+    expect(html).toContain('discussion-card');
+    expect(html.indexOf('discussion-card')).toBeLessThan(html.indexOf('stats-content'));
+    expect(html).not.toContain('match-counters');
   });
 
   it('hiçbir sekme başlığında premium noktası yok (AI Analiz / Trivia dahil)', () => {

@@ -227,6 +227,16 @@
     "empty": "Bu maç hakkında henüz gönderi yok. İlk yazan sen ol!",
     "placeholder": "Maç hakkında ne düşünüyorsun?"
   },
+  "discussion": {
+    "title": "Maç tartışması",
+    "join": "Tartışmaya katıl",
+    "write": "Yorum yaz",
+    "empty": "Henüz yorum yok — ilk yorumu sen yaz!",
+    "anonymous": "Kullanıcı"
+  },
+  "counters": {
+    "label": "{{views}} görüntülenme, {{comments}} yorum"
+  },
   "tabs": {
     "label": "Maç detay bölümleri",
     "overview": "Genel Bakış",

@@ -16,6 +16,9 @@ import type { GroupedLeagueMatches } from '../../services/liveScoreService';
 import { competitionLogoNeedsBackdrop, uefaCompetitionLogoSrcById } from '@/utils/competitionLogo';
 import { utcTimeToTr } from '@/utils/dateFormat';
 import { buildMatchHref } from '@/utils/matchUrl';
+import MatchCountersBadge from '@/components/MatchCountersBadge';
+import { countsFor, useMatchCounters } from '@/hooks/useMatchCounters';
+import type { MatchCountsMap } from '@/config/matchCounters';
 import TeamNameLabel from './TeamNameLabel';
 import RedCardBadge, { redCardCountFor } from '@/components/RedCardBadge';
 import TieLine from './TieLine';
@@ -308,6 +311,8 @@ type RowContext = {
   cupTiers: TurkeyTeamTiersPayload | null;
   /** Son yenilemede skoru artan maçlar (06 · Gol anı; canlı satırda bir kez oynar). */
   goals: ReadonlyMap<string, GoalEvent>;
+  /** Görüntülenme/yorum sayıları — yalnız yetkili (admin) kullanıcıda dolu; diğerlerinde null (rozet yok). */
+  counters: MatchCountsMap | null;
 };
 
 type VirtualRowProps = RowComponentProps<RowContext>;
@@ -327,6 +332,7 @@ function VirtualRow({
   selectedMatchId,
   cupTiers,
   goals,
+  counters,
   slot,
   onSlotResize,
   ariaAttributes,
@@ -534,6 +540,7 @@ function VirtualRow({
           {isFav ? '★' : '☆'}
         </button>
       )}
+      <MatchCountersBadge counts={countsFor(counters, match.id)} />
       {goal ? <LazyLoad key={goal.key} load={loadGoalMoment} props={{ side: goal.side }} /> : null}
     </div>
   );
@@ -645,6 +652,10 @@ export default function MatchList({
     return () => window.clearTimeout(id);
   }, [goals]);
 
+  // Admin sayaçları: listedeki tüm maçlar için TEK istek (yetkisizde istek yok).
+  const matchIds = useMemo(() => items.flatMap((i) => (i.type === 'match' ? [String(i.match.id)] : [])), [items]);
+  const counters = useMatchCounters(matchIds);
+
   // Slot yalnız büyür: ölçülen içerik verilen yükseklikten uzunsa (dar sütun) ona çıkar, kısaysa verilen kalır.
   const [slotMeasured, setSlotMeasured] = useState(0);
   const onSlotResize = useCallback((height: number) => setSlotMeasured((prev) => Math.max(prev, height)), []);
@@ -664,6 +675,7 @@ export default function MatchList({
       selectedMatchId: selectedMatchId ?? null,
       cupTiers,
       goals,
+      counters,
       slot: afterFirstGroup,
       slotHeight,
       onSlotResize,
@@ -681,6 +693,7 @@ export default function MatchList({
       selectedMatchId,
       cupTiers,
       goals,
+      counters,
       afterFirstGroup,
       slotHeight,
       onSlotResize,

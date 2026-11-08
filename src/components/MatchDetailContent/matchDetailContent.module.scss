@@ -53,6 +53,13 @@
 }
 
 // Bitmiş maçta "Sen de at" (frikik) bağlantısı: kartın altında, sakin tek satır.
+/* Yalnız yetkili (admin) görür: kartın hemen altında sağa yaslı "👁 · 💬" (flex gap'i yarıya indirilir). */
+.countersLine {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: calc(-1 * #{$spacing-2});
+}
+
 .frikikCta {
   display: flex;
   flex-wrap: wrap;

@@ -1,5 +1,5 @@
 import dynamic from 'next/dynamic';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Router from 'next/router';
 import Link from 'next/link';
 import { useTranslation } from '@/lib/i18n';
@@ -14,6 +14,9 @@ import MatchTabs, { type MatchTabItem } from '@/components/MatchTabs';
 import MatchTrivia from '@/components/MatchTrivia';
 import MatchAnalysis from '@/components/MatchAnalysis';
 import MatchForumTab from '@/components/MatchForumTab';
+import MatchDiscussionCard from '@/components/MatchDiscussionCard';
+import MatchCountersBadge from '@/components/MatchCountersBadge';
+import { countsFor, useMatchCounters, useMatchViewBeacon } from '@/hooks/useMatchCounters';
 import MatchVenueCard from '@/components/MatchVenueCard';
 import type { MatchDetailState } from '@/hooks/useMatchDetail';
 import { useMatchAnalysis } from '@/hooks/useMatchAnalysis';
@@ -82,6 +85,18 @@ export default function MatchDetailContent({ detail, requestedMatchId, variant =
     Router.events.on('routeChangeComplete', apply);
     return () => Router.events.off('routeChangeComplete', apply);
   }, [variant]);
+  // Görüntülenme sayımı (sayfa + split-view paneli; istemciden, boşta) + yalnız yetkiliye sayı rozeti.
+  useMatchViewBeacon(effectiveMatchId);
+  const counterIds = useMemo(() => (effectiveMatchId ? [effectiveMatchId] : []), [effectiveMatchId]);
+  const myCounts = countsFor(useMatchCounters(counterIds), effectiveMatchId);
+  // "Tartışmaya katıl": Forum sekmesini aç + sekme şeridine kaydır (yazma kutusu ve giriş akışı orada).
+  const openForum = useCallback(() => {
+    setActive('forum');
+    window.requestAnimationFrame(() => {
+      const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+      contentRef.current?.querySelector('[role="tablist"]')?.scrollIntoView({ block: 'start', behavior: reduce ? 'auto' : 'smooth' });
+    });
+  }, []);
   // AI analiz/kredi durumu sayfa açılışında çekilir — sekmeye girince beklemeden hazır olsun.
   const analysisState = useMatchAnalysis(effectiveMatchId, initialAnalysisPreview);
 
@@ -92,6 +107,7 @@ export default function MatchDetailContent({ detail, requestedMatchId, variant =
         label: t('tabs.overview'),
         render: () => (
           <>
+            {effectiveMatchId ? <MatchDiscussionCard key={effectiveMatchId} matchId={effectiveMatchId} onJoin={openForum} /> : null}
             <MatchMomentum matchId={effectiveMatchId} match={match} events={detail.events} />
             <div
               className={[
@@ -186,12 +202,18 @@ export default function MatchDetailContent({ detail, requestedMatchId, variant =
       lineupsLoading,
       effectiveMatchId,
       analysisState,
+      openForum,
     ],
   );
 
   return (
     <div ref={contentRef} className={`${styles.content} ${variant === 'panel' ? styles.contentPanel : ''}`.trim()}>
       <MatchCard match={match} loading={matchLoading} initialH2h={initialH2h} />
+      {myCounts ? (
+        <div className={styles.countersLine}>
+          <MatchCountersBadge counts={myCounts} variant="header" />
+        </div>
+      ) : null}
       {variant === 'page' && match && matchDisplayState(match).phase === 'POST' ? (
         // Bitmiş maç: sakin, bağlamsal "Sen de at" bağlantısı (yalnız sayfa; panelde yok).
         <p className={styles.frikikCta}>
