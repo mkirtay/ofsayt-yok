@@ -23,6 +23,13 @@ export interface MatchEvent {
   addition?: string | null;
   is_home: boolean;
   is_away: boolean;
+  /**
+   * Sportmonks `related_player_*` — golde asist yapan, oyuncu değişikliğinde OYUNDAN ÇIKAN (girişte `player` = giren).
+   * Aynı `events` include'undan; ek istek yok. Yoksa alan hiç yok.
+   */
+  related_player?: { id: number; name: string };
+  /** VAR / hakem kararıyla geri alınan olay (iptal edilen kart vb.); kadro ikonlarında sayılmaz. */
+  rescinded?: true;
 }
 
 export interface LineupPlayer {
@@ -43,6 +50,8 @@ export interface LineupPlayer {
   /** Sportmonks `formation_field` "satır:sütun" — satır 1 = kaleci, artan satır = ileri hat. Yalnızca ilk 11'de dolu. */
   formation_row?: number;
   formation_col?: number;
+  /** Kaptan (Sportmonks `lineups.details` type 40 = true). Yalnızca true iken var. */
+  captain?: true;
 }
 
 export interface LineupTeam {

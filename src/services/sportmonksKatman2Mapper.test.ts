@@ -50,6 +50,22 @@ describe('mapSportmonksEvents — Faz 3, gerçek fixture 19732740 (Celta de Vigo
     const awayGoal = events.find((e) => e.event === 'GOAL' && e.player.name.startsWith('Kike Barja'));
     expect(awayGoal).toMatchObject({ is_home: false, is_away: true, time: 54 });
   });
+
+  it('related_player (asist / oyundan çıkan) ve rescinded aynı olay satırından aktarılır; yoksa alan yok', () => {
+    const base = { id: 1, fixture_id: 1, participant_id: fixture.participants![0].id, minute: 58, player_id: 10, player_name: 'Giren' };
+    const [sub, card, plain] = mapSportmonksEvents({
+      ...fixture,
+      events: [
+        { ...base, type_id: 18, related_player_id: 20, related_player_name: 'Çıkan' },
+        { ...base, type_id: 20, rescinded: true },
+        { ...base, type_id: 14 },
+      ],
+    } as SportmonksFixture);
+    expect(sub.related_player).toEqual({ id: 20, name: 'Çıkan' });
+    expect(card.rescinded).toBe(true);
+    expect(plain).not.toHaveProperty('related_player');
+    expect(plain).not.toHaveProperty('rescinded');
+  });
 });
 
 describe('mapSportmonksStatistics — aynı fixture, gerçek statistics[]', () => {
@@ -197,6 +213,12 @@ describe('mapSportmonksLineups — oyuncu reytingi (include=lineups.details, typ
     expect(extractLineupRating([{ type_id: 118, data: { value: 'n/a' } }])).toBeUndefined();
     expect(extractLineupRating([{ type_id: 118, data: { value: -1 } }])).toBeUndefined();
     expect(extractLineupRating([{ type_id: 118, data: { value: '6.5' } }])).toBe(6.5);
+  });
+
+  it('kaptan: details type 40 = true → captain:true; false / yok → alan yok', () => {
+    expect(firstPlayer(withDetails([{ type_id: 40, data: { value: true } }])).captain).toBe(true);
+    expect(firstPlayer(withDetails([{ type_id: 40, data: { value: false } }]))).not.toHaveProperty('captain');
+    expect(firstPlayer(withDetails([]))).not.toHaveProperty('captain');
   });
 });
 

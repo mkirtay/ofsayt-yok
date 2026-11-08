@@ -54,7 +54,22 @@
     "benchCount": "Substitutes ({{count}})",
     "notAnnounced": "Line-ups haven't been announced yet.",
     "home": "Home",
-    "away": "Away"
+    "away": "Away",
+    "captain": "Captain",
+    "a11y": {
+      "rating": "rating {{value}}",
+      "goals": "{{count}} goals",
+      "goals_one": "{{count}} goal",
+      "ownGoals": "{{count}} own goals",
+      "ownGoals_one": "{{count}} own goal",
+      "assists": "{{count}} assists",
+      "assists_one": "{{count}} assist",
+      "yellow": "yellow card",
+      "red": "red card",
+      "secondYellow": "second yellow, sent off",
+      "subIn": "came on in minute {{minute}}",
+      "subOut": "subbed off in minute {{minute}}"
+    }
   },
   "h2h": {
     "showAll": "Show all",

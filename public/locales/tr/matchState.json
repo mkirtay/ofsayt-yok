@@ -54,7 +54,19 @@
     "benchCount": "Yedekler ({{count}})",
     "notAnnounced": "Kadrolar henüz açıklanmadı.",
     "home": "Ev Sahibi",
-    "away": "Deplasman"
+    "away": "Deplasman",
+    "captain": "Kaptan",
+    "a11y": {
+      "rating": "reyting {{value}}",
+      "goals": "{{count}} gol",
+      "ownGoals": "{{count}} kendi kalesine gol",
+      "assists": "{{count}} asist",
+      "yellow": "sarı kart",
+      "red": "kırmızı kart",
+      "secondYellow": "ikinci sarıdan kırmızı kart",
+      "subIn": "{{minute}}. dakikada oyuna girdi",
+      "subOut": "{{minute}}. dakikada oyundan çıktı"
+    }
   },
   "h2h": {
     "showAll": "Tümünü göster",

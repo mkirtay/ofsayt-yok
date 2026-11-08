@@ -181,7 +181,7 @@ export type SportmonksLineupPlayer = {
 /** `include=lineups.details` — oyuncu bazlı maç istatistikleri (~50 tip); yalnızca `RATING` (118) kullanılıyor. */
 export type SportmonksLineupDetail = {
   type_id: number;
-  data: { value: number | string };
+  data: { value: number | string | boolean };
 };
 
 export type SportmonksLineupRow = {
