@@ -22,6 +22,7 @@ import type { MatchDetailState } from '@/hooks/useMatchDetail';
 import { useMatchAnalysis } from '@/hooks/useMatchAnalysis';
 import { matchDisplayState } from '@/utils/matchDisplayState';
 import { isPollLockedForMatch } from '@/utils/matchPollLock';
+import { refereeRatingWindow } from '@/lib/refereeRating';
 import { applyTabDeepLink } from './tabDeepLink';
 import { trackFrikik } from '@/lib/frikik/analytics';
 import type { GameSlot } from '@/server/game/matchSlot';
@@ -33,6 +34,8 @@ import styles from './matchDetailContent.module.scss';
 const MatchGameCard = dynamic(() => import('@/components/Game/MatchGameCard'));
 // Anlatım sekmesi açılınca yüklenir (ilk HTML/JS'e girmez); veri de sekmeden istenir.
 const MatchCommentary = dynamic(() => import('@/components/MatchCommentary'));
+// Hakem puanlama yalnız bitmiş maçta (puanlama süresi içinde) çizilir → ayrı parça.
+const RefereeRating = dynamic(() => import('@/components/RefereeRating'));
 
 type Props = {
   detail: MatchDetailState;
@@ -152,6 +155,9 @@ export default function MatchDetailContent({ detail, requestedMatchId, variant =
               </div>
             ) : null}
             <MatchMomentum matchId={effectiveMatchId} match={match} events={detail.events} />
+            {effectiveMatchId && match && refereeRatingWindow(match) === 'open' ? (
+              <RefereeRating key={effectiveMatchId} matchId={effectiveMatchId} refereeName={match.referee} />
+            ) : null}
             <div
               className={[
                 styles.statsEventsRow,

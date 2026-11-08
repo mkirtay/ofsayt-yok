@@ -21,6 +21,7 @@ onay adımı, mobil için yalnız rapor (C). Hukuki sorular: `docs/YASAL_NOTLAR.
 | `PremiumGrant` | premium değişiklikleri | CASCADE | **Sil** | Hesap verisi |
 | `UserPrediction` | maç anketi oyu | CASCADE | **Sil** | Toplam oy biraz düşer, kabul |
 | `FrikikDailyScore` | günlük skor (tabloda username) | CASCADE | **Sil** | Skor tablosundan düşer (önbellek ≤ 30 sn) |
+| `RefereeRating` | maç sonrası hakem puanı (1–10) | CASCADE | **Sil** | Maç / hakem ortalamasından düşer (hakem sayfası CDN ≤ 5 dk) |
 | `Post` (Gündem) | gövde (serbest metin) | — | **Anonimleştir**: yazar → "Silinmiş kullanıcı" | İstenen: gönderiler kaybolmasın |
 | `PostComment` | gövde | — | **Anonimleştir** (aynı) | Aynı |
 | `MatchComment` (eski, salt okunur) | gövde | — | **Anonimleştir** (aynı) | Aynı |

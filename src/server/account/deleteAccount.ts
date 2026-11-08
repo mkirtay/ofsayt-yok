@@ -13,7 +13,7 @@
  *  4. Davet kayıtları silinir, bu kullanıcının davet ettiklerindeki `referredById` boşaltılır, e-posta doğrulama /
  *     şifre sıfırlama / hesap silme talebi belirteçleri silinir.
  *  5. User satırı silinir → CASCADE: Account (Google bağlantısı), Session, beğeniler, takipler, bildirimler, push
- *     belirteçleri, kredi defteri, açılan analizler, premium kayıtları, anket oyları, Frikik skorları.
+ *     belirteçleri, kredi defteri, açılan analizler, premium kayıtları, anket oyları, Frikik skorları, hakem puanları.
  *  6. PII'siz denetim kaydı (AccountDeletionLog: kanal, giriş yöntemi, hesap yaşı, sayılar).
  * Ardından oturum sürümü önbelleği silinir → web oturumu ve mobil belirteç bir sonraki istekte düşer (DB'de kullanıcı
  * yok). Onay e-postası en son ve en iyi çaba: gönderilemezse silme geri alınmaz.

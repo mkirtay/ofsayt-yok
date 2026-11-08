@@ -91,6 +91,7 @@ model User {
   moderationTargeted   ModerationAction[]  @relation("ModerationActionTarget")
   gamePredictions      GamePrediction[]
   gameWeekEntries      GameWeekEntry[]
+  refereeRatings       RefereeRating[]
 }
 
 /// Kredi hareketleri defteri — bakiye değişikliklerinin denetim izi.
@@ -901,4 +902,26 @@ model GameWeekEntry {
   @@unique([userId, weekId])
   @@index([weekId, totalPoints])
   @@index([season, userId])
+}
+
+/// Maç sonrası taraftarın orta hakeme verdiği puan (1–10). Kullanıcı başına maç başına tek satır (güncellenebilir).
+/// `refereeId` ve maç etiketi (takım adları, başlama zamanı) sunucuda maçtan yazılır — istemciden alınmaz; hakem sayfası
+/// özetini Sportmonks'a gitmeden çıkarmak için satırda tutulur. Kullanıcı silinince CASCADE (bkz. server/account/deleteAccount.ts).
+/// Kurallar ve SQL: lib/refereeRating.ts.
+model RefereeRating {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  matchId   String
+  refereeId Int
+  score     Int
+  homeName  String
+  awayName  String
+  kickoffAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, matchId])
+  @@index([matchId])
+  @@index([refereeId, kickoffAt])
 }
