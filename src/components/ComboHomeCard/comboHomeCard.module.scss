@@ -1,0 +1,206 @@
+@use '../../styles/variables' as *;
+
+// Ana sayfa yan paneli kartı: puan durumu kutusuyla aynı yüzey / kenarlık / yarıçap tokenları; chip'ler ortak mixin.
+.card {
+  margin-top: $spacing-3;
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  box-shadow: $shadow-surface;
+  overflow: hidden;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 $spacing-3;
+  background: transparent;
+  color: $color-text;
+  text-align: left;
+
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+    outline-offset: -2px;
+  }
+}
+
+.title {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.badge {
+  padding: 1px 8px;
+  border-radius: $radius-full;
+  border: 1px solid $color-border;
+  font-size: 11px;
+  font-weight: 600;
+  color: $color-text-secondary;
+}
+
+.chev {
+  color: $color-text-secondary;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+  padding: $spacing-3;
+  border-top: 1px solid $color-border;
+}
+
+.muted,
+.small {
+  margin: 0;
+  color: $color-text-secondary;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.chips {
+  display: flex;
+  gap: $spacing-1;
+}
+
+.chip {
+  @include filter-chip;
+}
+
+// Dar yan panelde (240 px) üç chip yan yana sığsın.
+.chips .chip {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 0 $spacing-1;
+}
+
+.chipActive {
+  @include filter-chip-active;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: $spacing-2 0;
+  border-bottom: 1px solid $color-border;
+
+  &:last-child {
+    border-bottom: 0;
+  }
+}
+
+.teams {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.names {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 13px;
+  font-weight: 600;
+  color: $color-text;
+}
+
+.pickLine {
+  display: grid;
+  grid-template-columns: 1fr auto 48px;
+  gap: $spacing-2;
+  font-size: 12px;
+  color: $color-text-secondary;
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  color: $color-text;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: $spacing-2;
+  margin: 0;
+}
+
+.stat {
+  padding: $spacing-2 $spacing-3;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+
+  dt {
+    font-size: 11px;
+    color: $color-text-secondary;
+  }
+
+  dd {
+    margin: 2px 0 0;
+    font-size: 16px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: $color-text;
+  }
+}
+
+.adv {
+  font-size: 13px;
+  color: $color-text;
+
+  summary {
+    cursor: pointer;
+    min-height: 32px;
+    font-weight: 600;
+  }
+}
+
+.advGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: $spacing-2;
+  align-items: end;
+  margin: $spacing-2 0;
+
+  label {
+    display: grid;
+    gap: 4px;
+    font-size: 12px;
+    color: $color-text-secondary;
+  }
+
+  input {
+    min-height: 34px;
+    padding: 0 $spacing-2;
+    border: 1px solid $color-border;
+    border-radius: $radius-md;
+    background: $color-surface;
+    color: $color-text;
+  }
+}
+
+.manual {
+  list-style: none;
+  margin: $spacing-2 0 0;
+  padding: 0;
+  font-size: 12px;
+
+  label {
+    display: flex;
+    gap: $spacing-2;
+    align-items: center;
+    min-height: 28px;
+  }
+}

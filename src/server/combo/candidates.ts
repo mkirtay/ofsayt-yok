@@ -11,7 +11,7 @@ import { bestPickOfMatch, calibrationBands, type CalibrationBand, type ComboCand
 import { parseScore, pickTopPredictions, topPickHit } from '@/utils/analysisTopPicks';
 import type { Match } from '@/models/liveScore';
 
-export type ComboCandidateRow = ComboCandidate & { homeName: string; awayName: string };
+export type ComboCandidateRow = ComboCandidate & { homeName: string; awayName: string; homeLogo?: string | null; awayLogo?: string | null };
 
 /** Ulusal (2e9+) maçlarda AI analizi yok; ayrıca Sportmonks kimliği değil. */
 const NATIONAL_ID_FLOOR = 2_000_000_000;
@@ -51,6 +51,8 @@ export async function loadComboCandidates(date: string, opts: { includePast?: bo
       label: `${home} – ${away}`,
       homeName: home,
       awayName: away,
+      homeLogo: m.home?.logo ?? null,
+      awayLogo: m.away?.logo ?? null,
       competition: m.competition?.name ?? m.competition_name ?? null,
       kickoffIso: kick != null ? new Date(kick).toISOString() : null,
       key: best.key,

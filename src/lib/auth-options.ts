@@ -4,6 +4,7 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import { PrismaAdapter } from '@next-auth/prisma-adapter';
 import { compare } from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
+import { viewerCanUseComboTool } from '@/config/comboTool';
 import { getSessionVersion } from '@/lib/sessionVersion';
 import {
   checkOAuthSignIn,
@@ -181,6 +182,10 @@ export const authOptions: NextAuthOptions = {
           session.user.username = token.username as string | null;
         }
         session.user.credits = (token.credits as number | undefined) ?? 0;
+        // Kombine aracı kapısı: bayrak kapalıyken / yetkisizde alan hiç yok → ana sayfada ek JS, istek, yerleşim yok.
+        if (viewerCanUseComboTool({ id: token.sub, role: token.role as string | undefined, email: token.email as string | undefined })) {
+          session.user.comboAccess = true;
+        }
         // Alan eklenmeden önce verilmiş belirteçte bilinmiyor (undefined) → ilk 60 sn tazelemesinde dolar.
         if (typeof token.termsAccepted === 'boolean') session.user.termsAccepted = token.termsAccepted;
       }

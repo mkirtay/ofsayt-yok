@@ -3,8 +3,8 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 
 /** Kombine aracı: COMBO_TOOL_ENABLED kapısı, yönetici yetkisi, girdi doğrulama, yalnız seçilen maçlar için oran. */
 const h = vi.hoisted(() => ({ admin: true }));
-vi.mock('@/lib/requireAuth', () => ({
-  requireAdmin: vi.fn(async (_req: unknown, res: { status: (c: number) => { json: (b: unknown) => void } }) => {
+vi.mock('@/lib/requireComboAccess', () => ({
+  requireComboAccess: vi.fn(async (_req: unknown, res: { status: (c: number) => { json: (b: unknown) => void } }) => {
     if (h.admin) return { ok: true, userId: 'a' };
     res.status(401).json({ error: 'x' });
     return { ok: false };
@@ -19,8 +19,7 @@ vi.mock('@/server/combo/candidates', () => ({ loadComboCandidates: loadCandidate
 vi.mock('@/server/combo/afOdds', () => ({ resolveOdds }));
 vi.mock('@/lib/prisma', () => ({ prisma: {} }));
 
-import handler from '@/pages/api/admin/kombine';
-import { getServerSideProps } from '@/pages/admin/kombine';
+import handler from '@/pages/api/combo/day';
 
 function mkRes() {
   return {
@@ -36,7 +35,7 @@ async function call(method: string, opts: { query?: Record<string, string>; body
   return res;
 }
 
-describe('/api/admin/kombine', () => {
+describe('/api/combo/day', () => {
   beforeEach(() => {
     h.admin = true;
     loadCandidates.mockReset().mockResolvedValue([cand]);
@@ -44,17 +43,12 @@ describe('/api/admin/kombine', () => {
   });
   afterEach(() => vi.unstubAllEnvs());
 
-  it('bayrak kapalı → 404 (admin için de), hiçbir yükleme çağrılmaz', async () => {
-    const r = await call('GET', { query: { date: '2026-11-12' } });
-    expect(r.statusCode).toBe(404);
-    expect(loadCandidates).not.toHaveBeenCalled();
-    expect(await getServerSideProps({} as never)).toEqual({ notFound: true });
-  });
 
-  it('bayrak açık + admin değil → 401', async () => {
+  it('yetkisiz → kapıdan döner, yükleme çağrılmaz', async () => {
     vi.stubEnv('COMBO_TOOL_ENABLED', '1');
     h.admin = false;
     expect((await call('GET', { query: { date: '2026-11-12' } })).statusCode).toBe(401);
+    expect(loadCandidates).not.toHaveBeenCalled();
   });
 
   it('GET: adaylar + geçmiş; önbelleksiz + noindex; geçersiz tarih 400', async () => {

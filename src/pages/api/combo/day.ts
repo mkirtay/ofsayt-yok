@@ -1,12 +1,11 @@
 /**
- * Yönetici: kombine aracı (COMBO_TOOL_ENABLED kapalıyken 404). Yalnız ADMIN (middleware + requireAdmin).
+ * Ana sayfa kombine kartının ucu (COMBO_TOOL_ENABLED kapalıyken 404). Yalnız ADMIN + COMBO_TOOL_USER_IDS (requireComboAccess).
  * GET  ?date=YYYY-MM-DD[&past=1] → { candidates, history }   (API-Football'a istek YOK)
  * POST { date, picks: [{ matchId }] }  → { odds }              (yalnız seçilen maçlar için eşleme + oran; ≤ 12 maç)
  * Oranlar "yaklaşık piyasa oranı"dır (uluslararası bookmaker); Türk bahis şirketi oranı değildir.
  */
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { comboToolEnabled } from '@/config/comboTool';
-import { requireAdmin } from '@/lib/requireAuth';
+import { requireComboAccess } from '@/lib/requireComboAccess';
 import { loadComboCandidates, loadComboHistory } from '@/server/combo/candidates';
 import { resolveOdds } from '@/server/combo/afOdds';
 
@@ -16,12 +15,11 @@ const MAX_PICKS = 12;
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   res.setHeader('Cache-Control', 'private, no-store');
   res.setHeader('X-Robots-Tag', 'noindex, nofollow');
-  if (!comboToolEnabled()) return res.status(404).json({ error: 'Not found' });
   if (!['GET', 'POST'].includes(req.method ?? '')) {
     res.setHeader('Allow', 'GET, POST');
     return res.status(405).json({ error: 'Method not allowed' });
   }
-  const guard = await requireAdmin(req, res);
+  const guard = await requireComboAccess(req, res);
   if (!guard.ok) return;
 
   if (req.method === 'GET') {

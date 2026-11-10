@@ -100,6 +100,8 @@ const loadTeamDetailPanel = () => import('@/components/TeamDetailPanel');
 const panelLoading = () => <PanelSkeleton rows={6} />;
 const MatchDetailPanel = dynamic(loadMatchDetailPanel, { ssr: false, loading: panelLoading });
 const TeamDetailPanel = dynamic(loadTeamDetailPanel, { ssr: false, loading: panelLoading });
+// Kombine kartı: yalnız oturumda `comboAccess` varken yüklenir (ADMIN + COMBO_TOOL_USER_IDS) → diğerlerine ek JS / istek yok.
+const ComboHomeCard = dynamic(() => import('@/components/ComboHomeCard'), { ssr: false });
 const HomeGundemPanel = dynamic(() => import('@/components/HomeGundemPanel'), { ssr: false, loading: panelLoading });
 /** Ligler sekmesi (34 lig + arama) yalnız sekme açılınca gerekir → ilk yük parçalarına girmez. */
 const HubLeagueList = dynamic(() => import('@/components/HubLeagueList'), { ssr: false, loading: panelLoading });
@@ -351,7 +353,7 @@ export default function MatchHubPage({
     },
     [favoriteTeamIds, tc],
   );
-  const { status: sessionStatus } = useSession();
+  const { status: sessionStatus, data: sessionData } = useSession();
 
   // Veri yokken sabit boş dizi: `?? []` her render'da yeni dizi verip memo'ları boşa yeniden hesaplatıyordu.
   const allMatches = homeMatchesQuery.data?.allMatches ?? EMPTY_MATCHES;
@@ -1095,6 +1097,7 @@ export default function MatchHubPage({
                 </>
               )}
             </div>
+            {sessionData?.user?.comboAccess ? <ComboHomeCard /> : null}
             <AdSlot slot="hub-sidebar" format="rectangle" desktopOnly />
           </aside>
           <div id="hub-list" className={styles.hubMain}>

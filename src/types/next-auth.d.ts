@@ -12,6 +12,8 @@ declare module 'next-auth' {
       credits?: number
       /** Kullanım Şartları + Gizlilik onayı kayıtlı mı (User.termsAcceptedAt); bilinmiyorsa undefined */
       termsAccepted?: boolean
+      /** Kombine aracı kartını görebilir mi (ADMIN + COMBO_TOOL_USER_IDS); yalnız bayrak açıkken ve yetkiliyse true. */
+      comboAccess?: true
     } & DefaultSession['user']
   }
 
