@@ -83,7 +83,15 @@ describe('oyuncu değişikliği yönü', () => {
 });
 
 describe('kadro ızgarası aynalama', () => {
-  it('sütun 1 (AF sol) → satırda son sütun', () => {
+  it('deplasman takımda da aynalanır (Inter 3 stoperli: 2:1 → 3. sütun)', () => {
+    const f = fx(ucl);
+    const l = mapNationalLineups(f)!;
+    const rawAway = f.lineups![1]!.startXI!;
+    const first = rawAway.find((p) => p.player.grid === '2:1')!;
+    const mapped = l.lineup.away.players.find((p) => p.id === String(toAppId(first.player.id!)))!;
+    expect(mapped.formation_col).toBe(3);
+  });
+  it('ev takımda sütun 1 (AF sol) → satırda son sütun', () => {
     const f = fx(ucl);
     const l = mapNationalLineups(f)!;
     const raw = f.lineups![0]!.startXI!;

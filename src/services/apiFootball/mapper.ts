@@ -4,7 +4,9 @@
  *
  * Tuzaklar (gerçek cevaplarla doğrulandı):
  * - `subst` olayında `player` = ÇIKAN, `assist` = GİREN (Sportmonks'ta tersi) → uygulamada `player` = giren, `related_player` = çıkan.
- * - `grid "satır:sütun"`: sütun 1 = takımın SOL kanadı (Sportmonks'ta sağ) → her satırda sütun aynalanır.
+ * - `grid "satır:sütun"`: sütun 1 = takımın KENDİ sol kanadı (her iki takımda; Kayode=RB 2:4, Ruggeri=LB 2:1). Uygulamanın saha çizimi
+ *   (components/Lineup) sütunu artan sırada dizer ve deplasmanı ters çevirir; ekranda sol kanadın doğru yana düşmesi için
+ *   HER İKİ takımda satır içinde aynalanır (görsel doğrulandı: Türkiye 3-4-3 / İtalya 4-3-3, 2026-11-10).
  * - Olaylarda id yok; ek dakika `time.extra` (90+8) ve olaylar sırasız gelir → (dakika+ek) ile sıralanır.
  * - Seri penaltı: aynı satırlar tekrar tekrar gelir; dakika 120 + `extra` = atış sırası → tekilleştirilir, SHOOTOUT olayına çevrilir.
  * - Skor: `goals` = penaltılar hariç son skor (uzatma dahil); `score.*` alt turlarda olaylarla çelişebilir → özet için `goals`.
@@ -272,7 +274,7 @@ function mapLineupPlayer(
     shirt_number: p.number != null ? String(p.number) : '',
     ...(pos ? { position: pos, ...(pos === 'GK' ? { pos_code: 'GK' } : {}) } : {}),
     ...(info?.rating !== undefined ? { rating: info.rating } : {}),
-    // Sütun 1 = AF'de sol, uygulamada sağ → satır içinde aynala.
+    // Sütun 1 = AF'de sol, uygulamada sağ → satır içinde aynala (bkz. dosya başı).
     ...(r != null && c != null && size > 0 ? { formation_row: r, formation_col: size + 1 - c } : {}),
     ...(info?.captain ? { captain: true as const } : {}),
   };
