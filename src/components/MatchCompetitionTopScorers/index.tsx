@@ -27,6 +27,8 @@ function rankCellClass(rank: number): string {
 }
 
 interface MatchCompetitionTopScorersProps {
+  /** Bu takımın oyuncuları satırda vurgulanır (milli takım sayfası). */
+  highlightTeamId?: number;
   data: TopScorersPayload | null;
   loading?: boolean;
   seasons?: SeasonListItem[];
@@ -54,6 +56,7 @@ export default function MatchCompetitionTopScorers({
   contained = false,
   error = false,
   onRetry,
+  highlightTeamId,
 }: MatchCompetitionTopScorersProps) {
   const blockClass = contained ? `${styles.block} ${styles.blockContained}` : styles.block;
   const { t } = useTranslation('match');
@@ -129,7 +132,7 @@ export default function MatchCompetitionTopScorers({
               const tname = row.team?.name ?? '—';
               const logo = row.team?.logo;
               return (
-                <tr key={`${pid ?? 'p'}-${tid ?? 't'}-${i}`}>
+                <tr key={`${pid ?? 'p'}-${tid ?? 't'}-${i}`} className={highlightTeamId != null && tid === highlightTeamId ? styles.rowHighlight : undefined}>
                   <td className={styles.colRank}>
                     <span className={rankCellClass(rank)}>{rank}</span>
                   </td>

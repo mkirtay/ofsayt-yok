@@ -7,14 +7,18 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import MatchCompetitionStandings from '@/components/MatchCompetitionStandings';
+import MatchCompetitionTopScorers from '@/components/MatchCompetitionTopScorers';
+import ScoringMinutesCard from '@/components/TeamDetailView/ScoringMinutesCard';
+import SeasonSummaryCard from '@/components/TeamDetailView/SeasonSummaryCard';
 import { standingsGroupHeading } from '@/components/MatchCompetitionStandings/groupHeading';
 import { PanelSkeleton, SkeletonBlock, StandingsSkeleton } from '@/components/Skeleton';
 import TeamLogo from '@/components/TeamLogo';
 import { useI18n, useTranslation } from '@/lib/i18n';
 import '@/lib/i18nNamespaces/team';
 import type { Match } from '@/models/liveScore';
-import { fetchNationalStandings } from '@/services/apiFootball/clientFetch';
-import type { CompetitionTableData } from '@/services/liveScoreService';
+import { fetchNationalScorers, fetchNationalStandings, fetchNationalTeamStats } from '@/services/apiFootball/clientFetch';
+import type { CompetitionTableData, TopScorersPayload } from '@/services/liveScoreService';
+import type { TeamSeasonStats } from '@/services/sportmonks/teamSeasonStats';
 import type { NationalSquadPlayer, NationalTeamPayload } from '@/server/apiFootball/nationalTeam';
 import { buildMatchHref } from '@/utils/matchUrl';
 import { reduceStandingsToTeamGroup, titleStandings, withoutStandingsForm } from '@/utils/nationalStandings';
@@ -24,6 +28,8 @@ type State = { kind: 'loading' } | { kind: 'error' } | { kind: 'missing' } | { k
 type StandingsState = { kind: 'idle' | 'loading' | 'none' | 'error' } | { kind: 'ready'; data: CompetitionTableData };
 type Translate = (key: string, opts?: Record<string, unknown>) => string;
 type Tab = 'recent' | 'fixtures' | 'squad';
+type Remote<T> = { kind: 'idle' | 'loading' | 'none' | 'error' } | { kind: 'ready'; data: T };
+type RightTab = 'standings' | 'scorers';
 
 const RECENT_VISIBLE = 5;
 /** AF ham mevki → çeviri anahtarı (eski önbellekteki Türkçe değerler de tanınır). Görüntüleme sırası: Forvet → Orta saha → Defans → Kaleci. */
@@ -168,6 +174,10 @@ export default function NationalTeamView({ teamId }: { teamId: string; variant?:
   const [standingsAttempt, setStandingsAttempt] = useState(0);
   const [showAllRecent, setShowAllRecent] = useState(false);
   const [tab, setTab] = useState<Tab>('recent');
+  const [rightTab, setRightTab] = useState<RightTab>('standings');
+  const [stats, setStats] = useState<Remote<TeamSeasonStats>>({ kind: 'idle' });
+  const [scorers, setScorers] = useState<Remote<TopScorersPayload>>({ kind: 'idle' });
+  const [scorersAttempt, setScorersAttempt] = useState(0);
 
   const load = useCallback(() => {
     setState({ kind: 'loading' });
@@ -215,6 +225,37 @@ export default function NationalTeamView({ teamId }: { teamId: string; variant?:
     };
   }, [data, competitionId, standingsAttempt]);
 
+  // Takımın turnuvası / sezonu takım verisinden türer (sabit yok). Sezon istatistiği açılışta (1 istek), gol krallığı sekme
+  // açılınca (2 istek); ikisi de sunucuda 12 sa önbellekli. Veri yoksa bölüm gizlenir; hata ayrı gösterilir.
+  const focus = data?.focus ?? null;
+  const teamAppId = data?.team.id ?? null;
+  useEffect(() => {
+    if (!focus || teamAppId == null) return setStats({ kind: 'idle' });
+    let cancelled = false;
+    setStats({ kind: 'loading' });
+    fetchNationalTeamStats(teamAppId, focus.leagueId, focus.season).then(
+      (d) => !cancelled && setStats(d ? { kind: 'ready', data: d } : { kind: 'none' }),
+      () => !cancelled && setStats({ kind: 'error' }),
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [focus, teamAppId]);
+
+  const scorersWanted = rightTab === 'scorers';
+  useEffect(() => {
+    if (!focus || !scorersWanted) return;
+    let cancelled = false;
+    setScorers({ kind: 'loading' });
+    fetchNationalScorers(focus.leagueId, focus.season).then(
+      (d) => !cancelled && setScorers(d ? { kind: 'ready', data: d } : { kind: 'none' }),
+      () => !cancelled && setScorers({ kind: 'error' }),
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [focus, scorersWanted, scorersAttempt]);
+
   const titled = useMemo(() => {
     if (standings.kind !== 'ready' || !data) return null;
     const reduced = reduceStandingsToTeamGroup(standings.data, [data.team.id]);
@@ -244,6 +285,9 @@ export default function NationalTeamView({ teamId }: { teamId: string; variant?:
   const recentShown = showAllRecent ? last : last.slice(0, RECENT_VISIBLE);
   const squadGroups = groupSquad(squad);
   const showStandings = standings.kind !== 'none' && standings.kind !== 'idle';
+  const showAside = showStandings || focus != null;
+  const compName = titled?.data.competition?.name?.split(' · ')[0] ?? '';
+  const statsScope = compName || t('national.tournament');
 
   const tabs: Array<{ key: Tab; label: string }> = [
     { key: 'recent', label: t('tabs.recent') },
@@ -346,20 +390,61 @@ export default function NationalTeamView({ teamId }: { teamId: string; variant?:
           </div>
         </div>
 
-        {showStandings ? (
+        {showAside ? (
           <aside className={styles.right}>
-            {standings.kind === 'ready' && titled ? (
-              <MatchCompetitionStandings data={titled.data} homeTeamId={team.id} competitionName={titled.title} />
-            ) : standings.kind === 'loading' ? (
-              <StandingsSkeleton />
-            ) : (
-              <div className={`${styles.card} ${styles.muted}`}>
-                {t('national.standingsError')}
-                <button type="button" className={styles.retry} onClick={() => setStandingsAttempt((n) => n + 1)}>
-                  {t('national.retry')}
-                </button>
+            {focus ? (
+              <div className={styles.tabs} role="tablist">
+                {(['standings', 'scorers'] as const).map((k) => (
+                  <button key={k} type="button" role="tab" aria-selected={rightTab === k} className={`${styles.tab} ${rightTab === k ? styles.tabActive : ''}`} onClick={() => setRightTab(k)}>
+                    {tm(k === 'standings' ? 'hub.tabStandings' : 'hub.tabScorers')}
+                  </button>
+                ))}
               </div>
+            ) : null}
+            {rightTab === 'standings' ? (
+              showStandings ? (
+                standings.kind === 'ready' && titled ? (
+                  <MatchCompetitionStandings data={titled.data} homeTeamId={team.id} competitionName={titled.title} />
+                ) : standings.kind === 'loading' ? (
+                  <StandingsSkeleton />
+                ) : (
+                  <div className={`${styles.card} ${styles.muted}`}>
+                    {t('national.standingsError')}
+                    <button type="button" className={styles.retry} onClick={() => setStandingsAttempt((n) => n + 1)}>
+                      {t('national.retry')}
+                    </button>
+                  </div>
+                )
+              ) : null
+            ) : (
+              <MatchCompetitionTopScorers
+                data={scorers.kind === 'ready' ? scorers.data : null}
+                loading={scorers.kind === 'loading' || scorers.kind === 'idle'}
+                error={scorers.kind === 'error'}
+                onRetry={() => setScorersAttempt((n) => n + 1)}
+                highlightTeamId={team.id}
+              />
             )}
+            {stats.kind === 'loading' || stats.kind === 'error' || stats.kind === 'ready' ? (
+              <>
+                <SeasonSummaryCard
+                  loading={stats.kind === 'loading'}
+                  error={stats.kind === 'error'}
+                  tabs={[{ key: 'comp', label: statsScope }]}
+                  selected="comp"
+                  onSelect={() => {}}
+                  stats={stats.kind === 'ready' ? stats.data : null}
+                  footer={focus ? String(focus.season) : null}
+                />
+                <ScoringMinutesCard
+                  loading={stats.kind === 'loading'}
+                  error={stats.kind === 'error'}
+                  scored={stats.kind === 'ready' ? stats.data.scoredByMinute : []}
+                  conceded={stats.kind === 'ready' ? stats.data.concededByMinute : []}
+                  scope={statsScope}
+                />
+              </>
+            ) : null}
           </aside>
         ) : null}
       </div>

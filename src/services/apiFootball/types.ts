@@ -45,7 +45,7 @@ export type AfFixture = {
     venue?: { id?: number | null; name?: string | null; city?: string | null } | null;
     status: { long?: string; short: string; elapsed?: number | null; extra?: number | null };
   };
-  league: { id: number; name: string; country?: string | null; logo?: string | null; flag?: string | null; round?: string | null };
+  league: { id: number; name: string; country?: string | null; logo?: string | null; flag?: string | null; season?: number | null; round?: string | null };
   teams: { home: AfTeamRef; away: AfTeamRef };
   goals: AfGoals;
   score: {
