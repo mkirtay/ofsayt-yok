@@ -36,3 +36,18 @@ describe('milli takım adları Türkçe', () => {
     expect(nationalTeamNameTr('Narnia')).toBe('Narnia');
   });
 });
+
+import { nationalAnalysisEnabled } from './nationalMatches';
+import { vi } from 'vitest';
+describe('milli maç AI analizi bayrağı', () => {
+  it('yalnız iki bayrak birlikte açıkken açık', () => {
+    vi.stubEnv('NATIONAL_MATCHES_ENABLED', '1');
+    vi.stubEnv('NATIONAL_ANALYSIS_ENABLED', '');
+    expect(nationalAnalysisEnabled()).toBe(false);
+    vi.stubEnv('NATIONAL_ANALYSIS_ENABLED', '1');
+    expect(nationalAnalysisEnabled()).toBe(true);
+    vi.stubEnv('NATIONAL_MATCHES_ENABLED', '');
+    expect(nationalAnalysisEnabled()).toBe(false);
+    vi.unstubAllEnvs();
+  });
+});

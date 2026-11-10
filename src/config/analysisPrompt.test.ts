@@ -212,3 +212,13 @@ describe('analiz prompt\'u — Maç Bağlamı (v7)', () => {
     expect(ANALYSIS_SYSTEM_PROMPT).toMatch(/verilmeyen bir bağlam unsurundan \(ör\. hava\) hiç söz etme/);
   });
 });
+
+describe('analiz prompt\'u — milli maç notu (kulüp prompt\'u değişmez)', () => {
+  it('notes yoksa bölüm hiç yazılmaz; varsa "Maç Türü Notu" altında satır satır', () => {
+    expect(buildAnalysisUserMessage(ctx)).not.toContain('Maç Türü Notu');
+    const withNotes = buildAnalysisUserMessage({ ...ctx, notes: ['Bu bir milli takım maçıdır.'] });
+    expect(withNotes).toContain('## Maç Türü Notu\n- Bu bir milli takım maçıdır.');
+    // notes dışında hiçbir şey değişmez
+    expect(withNotes.replace('\n\n## Maç Türü Notu\n- Bu bir milli takım maçıdır.', '')).toBe(buildAnalysisUserMessage(ctx));
+  });
+});

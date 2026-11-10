@@ -11,3 +11,11 @@ export function parseNationalFlag(raw: string | undefined | null): boolean {
 export function nationalMatchesEnabled(): boolean {
   return parseNationalFlag(process.env.NATIONAL_MATCHES_ENABLED);
 }
+
+/**
+ * Milli maçlarda AI analizi — `NATIONAL_ANALYSIS_ENABLED` (varsayılan KAPALI) + milli maç bayrağı birlikte açık olmalı.
+ * Kapalıyken `buildMatchAnalysisContext` milli id'leri eskisi gibi "bulunamadı" sayar.
+ */
+export function nationalAnalysisEnabled(): boolean {
+  return nationalMatchesEnabled() && parseNationalFlag(process.env.NATIONAL_ANALYSIS_ENABLED);
+}

@@ -11,8 +11,19 @@ import { withRedis } from '@/lib/redis';
 
 export const AF_BASE_URL = 'https://v3.football.api-sports.io';
 export const AF_TIMEOUT_MS = 8_000;
-/** Pro plan 7500/gün; geri kalan pay ileride kupon aracı / ikinci aşama için. */
+/** Pro plan 7500/gün; milli maç sistemi bu iç bütçeyi kullanır. */
 export const DAILY_SOFT_LIMIT = 5_000;
+/** Kombine aracının (admin) AYRI günlük payı: milli maç sayacını yemez, onun tükenmesinden etkilenmez (5000 + 1500 < 7500). */
+export const COMBO_DAILY_LIMIT = 1_500;
+
+/**
+ * Milli maç AI analizi bağlamının (takım pencereleri, H2H, turnuva fikstürü) AYRI günlük payı. Analiz başına ~8 istek;
+ * 5000 + 1500 + 900 = 7400 < 7500 (Pro).
+ */
+export const ANALYSIS_DAILY_LIMIT = 900;
+
+/** Hangi iç bütçeden düşülür. */
+export type AfBudgetPool = 'national' | 'combo' | 'analysis';
 
 export class ApiFootballError extends Error {
   constructor(
@@ -35,25 +46,28 @@ function hasErrors(errors: unknown): boolean {
 }
 
 /** Günlük sayaç +1; limit aşıldıysa false. Redis yoksa / hata → izin ver (fail-open). */
-async function takeDailyBudget(now: number = Date.now()): Promise<boolean> {
+async function takeDailyBudget(pool: AfBudgetPool = 'national', now: number = Date.now()): Promise<boolean> {
   const day = new Date(now).toISOString().slice(0, 10);
-  const key = `${cacheKeyPrefix()}af:daily:${day}`;
+  // Milli maç anahtarı eski haliyle kalır (sayaç sürekliliği); kombine kendi anahtarını kullanır.
+  const key = pool === 'national' ? `${cacheKeyPrefix()}af:daily:${day}` : `${cacheKeyPrefix()}af:daily:${pool}:${day}`;
+  const limit = pool === 'combo' ? COMBO_DAILY_LIMIT : pool === 'analysis' ? ANALYSIS_DAILY_LIMIT : DAILY_SOFT_LIMIT;
   const used = await withRedis(async (r) => {
     const n = await r.incr(key);
     if (n === 1) await r.expire(key, 2 * 24 * 60 * 60);
     return n;
   }, 0);
-  return used <= DAILY_SOFT_LIMIT;
+  return used <= limit;
 }
 
 export async function apiFootballGet<T>(
   path: string,
   params: Record<string, string | number>,
   fetchImpl: typeof fetch = fetch,
+  pool: AfBudgetPool = 'national',
 ): Promise<AfEnvelope<T>> {
   const key = process.env.API_FOOTBALL_KEY;
   if (!key) throw new ApiFootballError('API_FOOTBALL_KEY tanımlı değil', 'config');
-  if (!(await takeDailyBudget())) throw new ApiFootballError('API-Football günlük iç bütçe doldu', 'budget');
+  if (!(await takeDailyBudget(pool))) throw new ApiFootballError('API-Football günlük iç bütçe doldu', 'budget');
 
   const qs = new URLSearchParams(Object.entries(params).map(([k, v]) => [k, String(v)])).toString();
   let res: Response;
@@ -69,6 +83,7 @@ export async function apiFootballGet<T>(
   const remaining = Number(res.headers.get('x-ratelimit-requests-remaining'));
   if (Number.isFinite(remaining) && remaining < 500) console.warn('[api-football] günlük kalan hak düşük', remaining);
   const body = (await res.json()) as AfEnvelope<T>;
-  if (hasErrors(body.errors)) throw new ApiFootballError('API-Football hata döndürdü', 'api');
+  // `errors` yalnız sağlayıcının hata metnidir (anahtar içermez): sınır aşımı / parametre hatası ayırt edilebilsin.
+  if (hasErrors(body.errors)) throw new ApiFootballError(`API-Football hata döndürdü: ${JSON.stringify(body.errors).slice(0, 200)}`, 'api');
   return body;
 }

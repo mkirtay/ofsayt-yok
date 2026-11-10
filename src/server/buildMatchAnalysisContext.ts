@@ -28,6 +28,8 @@ import { todayIsoIstanbul } from '@/utils/dateStrip';
 import { loadRefereeSummary } from '@/server/refereeSummary';
 import type { RefereeSummary } from '@/services/sportmonks/refereeStats';
 import { buildMatchSituation, fetchSituationExtras, type MatchSituation } from '@/server/analysisMatchSituation';
+import { isNationalMatchId } from '@/services/apiFootball/ids';
+import { nationalAnalysisEnabled } from '@/config/nationalMatches';
 
 /** Bir takımın son N maçından çıkarılan özet performans satırı */
 export type RecentMatchRow = {
@@ -123,6 +125,8 @@ export type MatchAnalysisContext = {
    * Eski testler/çağıranlar için isteğe bağlı; prompt yoksa bölümü atlar.
    */
   situation?: MatchSituation;
+  /** Bağlama eklenen serbest not satırları (milli maç: kadro belirsizliği vb.); kulüp yolunda yok, prompt yoksa bölümü atlar. */
+  notes?: string[];
   /** Pre/live oran karşılaştırması — para akışı sinyali */
   oddsSignal: {
     pre: { '1'?: number; X?: number; '2'?: number } | null;
@@ -400,6 +404,11 @@ function computeOddsSignal(match: Match): MatchAnalysisContext['oddsSignal'] {
 export async function buildMatchAnalysisContext(
   matchId: string
 ): Promise<MatchAnalysisContext | ArchivedMatchContext | null> {
+  // Milli maç (AF, id ≥ 2e9): ayrı bağlam kurucu; bayrak kapalıyken eski yol (resolveLiveMatch → bulunamadı).
+  if (isNationalMatchId(matchId) && nationalAnalysisEnabled()) {
+    const { buildNationalAnalysisContext } = await import('@/server/analysisNationalContext');
+    return buildNationalAnalysisContext(matchId);
+  }
   const resolved = await resolveLiveMatch(matchId);
   if (!resolved) {
     return (await hasStoredMatchData(matchId)) ? { archived: true } : null;

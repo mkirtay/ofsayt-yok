@@ -423,6 +423,7 @@ function summarizeContextForPrompt(ctx: MatchAnalysisContext): string {
   if (ctx.referee) lines.push(...refereeSummaryPromptLines(ctx.referee));
   if (m.location) lines.push(`Stadyum: ${m.location}`);
   lines.push(...situationLines(ctx));
+  if (ctx.notes?.length) lines.push('\n## Maç Türü Notu', ...ctx.notes.map((n) => `- ${n}`));
 
   lines.push(...teamLines(ctx.homeTeam, 'Ev Sahibi'));
   lines.push(...teamLines(ctx.awayTeam, 'Deplasman'));
