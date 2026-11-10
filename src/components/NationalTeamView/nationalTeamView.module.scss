@@ -78,7 +78,9 @@
 }
 
 .comp {
-  grid-column: 2 / -1;
+  grid-column: 1 / -1;
+  padding-left: 4.5rem;
+  margin-top: -4px;
   font-size: 0.72rem;
   opacity: 0.55;
 }

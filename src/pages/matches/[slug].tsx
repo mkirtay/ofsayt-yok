@@ -299,7 +299,7 @@ export default function MatchDetail({
   const shareDescription = match?.hashtag ? `${pageDescription} ${match.hashtag}` : pageDescription;
   const canonicalUrl = `${siteBaseUrl()}${canonicalPath}`;
   // Kimlik tabanlı paylaşım görseli: içerik sunucudaki maç verisinden, `v` yalnız önbellek anahtarı (bkz. utils/matchOgImage.ts).
-  const ogImageUrl = match && homeName && awayName && !isNationalMatchId(match.id)
+  const ogImageUrl = match && homeName && awayName
     ? `${siteBaseUrl()}${matchOgImagePath(match)}`
     : null;
   const effectiveMatchId = matchId || requestedMatchId || (archived ? routeMatchId : '');

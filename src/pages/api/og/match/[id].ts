@@ -10,6 +10,10 @@
  */
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { OG_DEFAULT_IMAGE } from '@/config/brandImages';
+import type { Match } from '@/models/liveScore';
+import { isNationalMatchId } from '@/services/apiFootball/ids';
+import { nationalMatchesEnabled } from '@/config/nationalMatches';
+import { lookupNationalMatch } from '@/server/apiFootball/nationalMatch';
 import { resolveSportmonksMatch } from '@/lib/resolveLiveMatch';
 import { SPORTMONKS_TIMEOUT_MS, withSportmonksTimeout } from '@/server/sportmonks/cachedFetch';
 import { OG_CACHE, matchOgCacheControl } from '@/server/og/ogCache';
@@ -43,11 +47,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     // Botlar beklemez: sayfa render'ı bütçesi. Veri maç sayfasıyla aynı önbellekten (çoğunlukla HIT).
-    const lookup = await withSportmonksTimeout(SPORTMONKS_TIMEOUT_MS.page, () =>
-      resolveSportmonksMatch(id, { lookupAmbiguous: true }),
-    );
-    if (lookup.kind !== 'found') return redirect(res, OG_DEFAULT_IMAGE.path, OG_CACHE.fallback);
-    const match = lookup.match;
+    // Milli maç (id >= 2e9, API-Football): ayrı dal; bayrak kapalıyken varsayılan görsel. Lig (Sportmonks) yolu aşağıda aynı.
+    let match: Match;
+    if (isNationalMatchId(id)) {
+      if (!nationalMatchesEnabled()) return redirect(res, OG_DEFAULT_IMAGE.path, OG_CACHE.fallback);
+      const nat = await lookupNationalMatch(id);
+      if (nat.kind !== 'found') return redirect(res, OG_DEFAULT_IMAGE.path, OG_CACHE.fallback);
+      match = nat.bundle.match;
+    } else {
+      const lookup = await withSportmonksTimeout(SPORTMONKS_TIMEOUT_MS.page, () =>
+        resolveSportmonksMatch(id, { lookupAmbiguous: true }),
+      );
+      if (lookup.kind !== 'found') return redirect(res, OG_DEFAULT_IMAGE.path, OG_CACHE.fallback);
+      match = lookup.match;
+    }
 
     if (v !== matchOgVersion(match)) {
       return redirect(res, matchOgImagePath(match), OG_CACHE.versionRedirect);

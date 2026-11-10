@@ -47,7 +47,7 @@ export async function loadNationalTeam(appTeamId: string, get: typeof apiFootbal
         id: toAppId(t.team.id),
         name: nationalTeamNameTr(t.team.name),
         ...(t.team.logo ? { logo: t.team.logo } : {}),
-        ...(t.team.country ? { country: t.team.country } : {}),
+        ...(t.team.country ? { country: nationalTeamNameTr(t.team.country) } : {}),
         ...(t.team.founded ? { founded: t.team.founded } : {}),
         ...(t.team.code ? { code: t.team.code } : {}),
       },
