@@ -164,18 +164,6 @@
 }
 
 .voteBtnPct {
-    margin-top: auto;
-  }
-
-  // Beraberlikte logo yok: adın satırı takımlarınkiyle hizalı kalsın diye logo yüksekliği kadar boşluk.
-  .teamMode .voteBtnDraw .voteBtnLabel::before {
-    content: '';
-    display: block;
-    height: 20px;
-  }
-}
-
-.voteBtnPct {
   font-size: 18px;
   font-weight: 800;
   color: $color-text;
