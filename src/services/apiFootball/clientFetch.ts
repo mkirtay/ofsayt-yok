@@ -3,6 +3,7 @@
  * Maç + olaylar + istatistik + kadro tek yanıt → aynı id için eşzamanlı çağrılar (maç, istatistik, kadro) tek isteği paylaşır.
  */
 import type { NationalMatchBundle } from './mapper';
+import type { CompetitionTableData } from '@/services/liveScoreService';
 
 export type NationalClientResult = { kind: 'found'; bundle: NationalMatchBundle } | { kind: 'missing' } | { kind: 'error' };
 
@@ -37,4 +38,12 @@ export async function fetchNationalBundleOrThrow(id: string): Promise<NationalMa
   const r = await fetchNationalBundle(id);
   if (r.kind === 'error') throw new Error('national match fetch failed');
   return r.kind === 'found' ? r.bundle : null;
+}
+
+/** Milli turnuva puan durumu (BFF). Hata → fırlatır (hata ≠ veri yok); yok → null. */
+export async function fetchNationalStandings(appLeagueId: number | string): Promise<CompetitionTableData | null> {
+  const res = await fetch(`/api/national/standings/${encodeURIComponent(String(appLeagueId))}`);
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`national standings HTTP ${res.status}`);
+  return (await res.json()) as CompetitionTableData;
 }

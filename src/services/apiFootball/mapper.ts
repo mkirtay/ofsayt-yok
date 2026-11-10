@@ -15,6 +15,8 @@
 import type { Match, MatchStateCode } from '@/models/liveScore';
 import type { LineupPlayer, LineupTeam, MatchEvent, MatchLineupData, MatchStatsData } from '@/models/domain';
 import { normalizeDisplayName, normalizeTeamName } from '@/utils/displayName';
+import { nationalLeagueByAfId } from '@/config/nationalLeagues';
+import { nationalTeamNameTr } from '@/config/nationalTeamNames';
 import { toAppId } from './ids';
 import type { AfEvent, AfFixture, AfGoals, AfLineup, AfLineupPlayer, AfPlayersBlock, AfStatistics } from './types';
 
@@ -105,14 +107,14 @@ export function mapNationalMatch(f: AfFixture): Match {
     status: st.bucket,
     ...(st.code ? { state_code: st.code } : {}),
     time,
-    home: { id: toAppId(homeId), name: normalizeTeamName(f.teams.home.name), ...(f.teams.home.logo ? { logo: f.teams.home.logo } : {}) },
-    away: { id: toAppId(awayId), name: normalizeTeamName(f.teams.away.name), ...(f.teams.away.logo ? { logo: f.teams.away.logo } : {}) },
+    home: { id: toAppId(homeId), name: nationalTeamNameTr(normalizeTeamName(f.teams.home.name)), ...(f.teams.home.logo ? { logo: f.teams.home.logo } : {}) },
+    away: { id: toAppId(awayId), name: nationalTeamNameTr(normalizeTeamName(f.teams.away.name)), ...(f.teams.away.logo ? { logo: f.teams.away.logo } : {}) },
     ...(valid ? { date: iso.toISOString().slice(0, 10), scheduled: iso.toISOString().slice(11, 16) } : {}),
     ...(scores ? { scores } : {}),
     ...(venueName ? { location: venueCity ? `${venueName}, ${venueCity}` : venueName } : {}),
     ...(venueName ? { venue_info: { name: venueName, ...(venueCity ? { city: venueCity } : {}) } } : {}),
     ...(referee ? { referee } : {}),
-    competition: { id: toAppId(f.league.id), name: f.league.name, ...(f.league.logo ? { logo: f.league.logo } : {}), is_cup: true, is_league: false },
+    competition: { id: toAppId(f.league.id), name: nationalLeagueByAfId(f.league.id)?.name ?? f.league.name, ...(f.league.logo ? { logo: f.league.logo } : {}), is_cup: true, is_league: false },
     ...(round ? { stage: round } : {}),
     ...(finish ? { finish } : {}),
     ...(redCards.home + redCards.away > 0 ? { red_cards: redCards } : {}),
@@ -289,7 +291,7 @@ function buildTeam(f: AfFixture, teamId: number, name: string): LineupTeam {
     if (m) rowSizes.set(Number(m[1]), (rowSizes.get(Number(m[1])) ?? 0) + 1);
   }
   return {
-    team: { id: String(toAppId(teamId)), name: normalizeTeamName(name) },
+    team: { id: String(toAppId(teamId)), name: nationalTeamNameTr(normalizeTeamName(name)) },
     players: [
       ...(l?.startXI ?? []).map((s) => mapLineupPlayer(s, teamId, true, rowSizes, extra)),
       ...(l?.substitutes ?? []).map((s) => mapLineupPlayer(s, teamId, false, rowSizes, extra)),

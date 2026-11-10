@@ -6,6 +6,8 @@ import TeamDetailView from '@/components/TeamDetailView';
 import { teamOgImagePath } from '@/utils/teamOgImage';
 import { siteBaseUrl } from '@/lib/siteUrl';
 import { BRAND, brandTitle } from '@/config/brand';
+import { isNationalMatchId } from '@/services/apiFootball/ids';
+import { nationalMatchesEnabled } from '@/config/nationalMatches';
 
 type TeamPageProps = {
   /** Paylaşım etiketleri için (sunucuda, ISR); geçici hatada null — sayfa yine istemcide yüklenir. */
@@ -29,6 +31,14 @@ export const getStaticPaths: GetStaticPaths = async () => ({ paths: [], fallback
 
 export const getStaticProps: GetStaticProps<TeamPageProps> = async ({ params }) => {
   const id = String(params?.id ?? '');
+  // Milli takım (API-Football): ayrı kabuk; bayrak kapalıyken sayfa yok. Paylaşım görseli yok (OG ucu lig takımı verisine bağlı).
+  if (isNationalMatchId(id)) {
+    if (!nationalMatchesEnabled()) return { notFound: true, revalidate: 60 };
+    const { loadNationalTeam } = await import('@/server/apiFootball/nationalTeam');
+    const r = await loadNationalTeam(id);
+    if (r.kind === 'missing') return { notFound: true, revalidate: DAY_SECONDS };
+    return { props: { teamName: r.kind === 'found' ? r.data.team.name : null, ogImagePath: '' }, revalidate: r.kind === 'found' ? 3600 : 60 };
+  }
   const { loadTeamPageShell } = await import('@/server/teamPageShell');
   const shell = await loadTeamPageShell(id);
   if (shell.kind === 'missing') return { notFound: true, revalidate: DAY_SECONDS };
@@ -57,7 +67,7 @@ export default function TeamDetail({ teamName, ogImagePath }: TeamPageProps) {
   const description = teamName
     ? `${teamName} takımının son maçları, kadro bilgileri ve lig istatistikleri.`
     : 'Takımın son maçları, kadro bilgileri ve lig istatistikleri.';
-  const ogImage = `${SITE_URL}${ogImagePath}`;
+  const ogImage = ogImagePath ? `${SITE_URL}${ogImagePath}` : null;
   // Canonical = og:url: sorgusuz, her iki alan adında da siteBaseUrl() (www.getscor3.com).
   const pageUrl = teamId ? `${SITE_URL}/teams/${teamId}` : null;
   const imageAlt = teamName ? `${teamName} — lig sırası ve son maçlar` : `${BRAND.name} takım sayfası`;
@@ -72,15 +82,19 @@ export default function TeamDetail({ teamName, ogImagePath }: TeamPageProps) {
         <meta property="og:type" content="website" key="og:type" />
         {pageUrl ? <link rel="canonical" href={pageUrl} key="canonical" /> : null}
         {pageUrl ? <meta property="og:url" content={pageUrl} key="og:url" /> : null}
-        <meta property="og:image" content={ogImage} key="og:image" />
-        <meta property="og:image:width" content="1200" key="og:image:width" />
-        <meta property="og:image:height" content="630" key="og:image:height" />
-        <meta property="og:image:alt" content={imageAlt} key="og:image:alt" />
-        <meta name="twitter:card" content="summary_large_image" key="twitter:card" />
+        {ogImage ? (
+          <>
+            <meta property="og:image" content={ogImage} key="og:image" />
+            <meta property="og:image:width" content="1200" key="og:image:width" />
+            <meta property="og:image:height" content="630" key="og:image:height" />
+            <meta property="og:image:alt" content={imageAlt} key="og:image:alt" />
+          </>
+        ) : null}
+        <meta name="twitter:card" content={ogImage ? 'summary_large_image' : 'summary'} key="twitter:card" />
         <meta name="twitter:title" content={title} key="twitter:title" />
         <meta name="twitter:description" content={description} key="twitter:description" />
-        <meta name="twitter:image" content={ogImage} key="twitter:image" />
-        <meta name="twitter:image:alt" content={imageAlt} key="twitter:image:alt" />
+        {ogImage ? <meta name="twitter:image" content={ogImage} key="twitter:image" /> : null}
+        {ogImage ? <meta name="twitter:image:alt" content={imageAlt} key="twitter:image:alt" /> : null}
       </Head>
       <TeamDetailView key={teamId} teamId={teamId} variant="page" />
     </Container>

@@ -305,8 +305,9 @@ export default function MatchDetail({
   const effectiveMatchId = matchId || requestedMatchId || (archived ? routeMatchId : '');
   const homeTeamId = match?.home?.id ?? match?.home_id;
   const awayTeamId = match?.away?.id ?? match?.away_id;
-  // Milli maçta (AF) puan durumu yok (sonraki aşama) → boş kutu çizilmez.
-  const showStandingsBlock = (compId != null || matchLoading) && !isNationalMatchId(match?.id ?? requestedMatchId);
+  // Milli maçta tablo olmayan turnuva (hazırlık) → boş kutu çizilmez; yüklenemedi (hata) ise kutu "tekrar dene" gösterir.
+  const nationalWithoutTable = isNationalMatchId(match?.id) && !standingsLoading && !standingsError && standings == null;
+  const showStandingsBlock = (compId != null || matchLoading) && !nationalWithoutTable;
 
   if (gone) {
     return (

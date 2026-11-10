@@ -11,6 +11,9 @@ import type { SportmonksFixture } from '@/services/sportmonks/types';
 import { shiftIsoDate } from '@/utils/dateStrip';
 import { matchIstanbulDate, matchListFreshSeconds } from '@/utils/matchActivity';
 import { selectNightMatches } from '@/utils/nightMatches';
+import { nationalMatchesEnabled } from '@/config/nationalMatches';
+import { loadNationalDay } from '@/server/apiFootball/nationalDay';
+import { isMatchLive } from '@/utils/matchActivity';
 
 export type HomeDayPayload = {
   date: string;
@@ -35,18 +38,22 @@ export type HomeDayPayload = {
  * için UTC D+1 listesi de okunur — anahtarı ertesi günün (D+1) listesiyle ortak, yeni bir istek türü değil.
  */
 export async function loadHomeDay(date: string): Promise<HomeDayPayload> {
-  const [previousUtcDay, sameUtcDay, nextUtcDay, liveMatches] = await Promise.all([
+  const [previousUtcDay, sameUtcDay, nextUtcDay, smLive, national] = await Promise.all([
     getFixturesByDate(shiftIsoDate(date, -1)),
     getFixturesByDate(date),
     getFixturesByDate(shiftIsoDate(date, 1)),
     getAllLiveMatches(),
+    // Milli maçlar (API-Football): bayrak kapalıyken HİÇ istek / iş yok. Hata → milli maçlar listede yok (lig listesi etkilenmez).
+    nationalMatchesEnabled() ? loadNationalDay(date) : Promise.resolve(null),
   ]);
+  const nationalMatches = national?.ok ? national.matches.filter((m) => matchIstanbulDate(m) === date) : [];
+  const liveMatches = nationalMatches.length ? [...smLive, ...nationalMatches.filter((m) => isMatchLive(m))] : smLive;
   const byId = new Map<number, Match>();
   for (const m of [...previousUtcDay, ...sameUtcDay]) {
     if (matchIstanbulDate(m) === date) byId.set(Number(m.id), m);
   }
   const nightMatches = selectNightMatches([...sameUtcDay, ...nextUtcDay], date);
-  return { date, fixtureMatches: [...byId.values()], liveMatches, nightMatches };
+  return { date, fixtureMatches: [...byId.values(), ...nationalMatches], liveMatches, nightMatches };
 }
 
 /**

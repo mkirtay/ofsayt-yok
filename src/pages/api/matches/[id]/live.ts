@@ -7,10 +7,37 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { hitFixedWindowRateLimit, requestIp } from '@/lib/rateLimit';
 import { trackSportmonksFetches } from '@/server/sportmonks/cachedFetch';
 import { loadLiveMatch } from '@/server/liveMatch';
+import { isNationalMatchId } from '@/services/apiFootball/ids';
+import { nationalMatchesEnabled } from '@/config/nationalMatches';
+import { loadNationalLive } from '@/server/apiFootball/nationalMatch';
 import { isSportmonksProviderEnabled } from '@/services/sportmonksProviderFlag';
 
 export const LIVE_CACHE_CONTROL = 'public, s-maxage=15, stale-while-revalidate=5';
 const NOT_LIVE_CACHE_CONTROL = 'public, s-maxage=60, stale-while-revalidate=60';
+
+async function handleNationalLive(id: string, req: NextApiRequest, res: NextApiResponse) {
+  if (!nationalMatchesEnabled()) {
+    res.setHeader('Cache-Control', 'no-store');
+    return res.status(404).json({ error: 'Maç bulunamadı' });
+  }
+  const ip = requestIp(req.headers as Record<string, string | string[] | undefined>, req.socket?.remoteAddress);
+  const rl = await hitFixedWindowRateLimit(`match-live:${ip}`, 120, 60_000);
+  if (!rl.success) {
+    res.setHeader('Retry-After', String(Math.ceil((rl.resetAt - Date.now()) / 1000)));
+    return res.status(429).json({ error: 'Too many requests' });
+  }
+  const r = await loadNationalLive(id);
+  if (r.kind === 'error') {
+    res.setHeader('Cache-Control', 'no-store');
+    return res.status(503).json({ error: 'Canlı veri şu an alınamıyor.' });
+  }
+  if (r.kind === 'missing') {
+    res.setHeader('Cache-Control', NOT_LIVE_CACHE_CONTROL);
+    return res.status(404).json({ error: 'Maç bulunamadı' });
+  }
+  res.setHeader('Cache-Control', r.payload.live ? LIVE_CACHE_CONTROL : NOT_LIVE_CACHE_CONTROL);
+  return res.status(200).json(r.payload);
+}
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') {
@@ -18,6 +45,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ error: 'Method not allowed' });
   }
   const id = typeof req.query.id === 'string' ? req.query.id : '';
+  // Milli maç (id >= 2e9, API-Football): ayrı dal; bayrak kapalıyken "yok". Lig (Sportmonks) yolu aşağıda DEĞİŞMEDİ.
+  if (isNationalMatchId(id)) return handleNationalLive(id, req, res);
   if (!/^\d{1,12}$/.test(id) || !isSportmonksProviderEnabled()) {
     return res.status(400).json({ error: 'Geçersiz maç' });
   }

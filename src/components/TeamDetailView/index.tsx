@@ -45,6 +45,8 @@ import {
 } from '@/utils/teamFixtures';
 import styles from './teamDetailView.module.scss';
 import TeamLogo from '@/components/TeamLogo';
+import NationalTeamView from '@/components/NationalTeamView';
+import { isNationalMatchId } from '@/services/apiFootball/ids';
 import TeamHeaderCard, { type HeaderLiveMatch, type HeaderNextMatch, type HeaderStanding } from './TeamHeaderCard';
 import { countdownLabel, nextMatchCountdown, recentMatchStatus } from './recentMatchLabels';
 import { istanbulMatchDate } from '@/utils/fixtureDateGroups';
@@ -171,7 +173,7 @@ export type TeamDetailViewProps = {
   variant?: 'page' | 'panel';
 };
 
-export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailViewProps) {
+function LeagueTeamDetailView({ teamId, variant = 'page' }: TeamDetailViewProps) {
   const overviewQuery = useTeamOverview(teamId, Boolean(teamId));
   // Veri yoksa ve hata da yoksa yükleniyor (statik HTML'de `teamId` henüz boşken de iskelet; "maç yok" görünmez).
   const overviewLoading = !overviewQuery.data && !overviewQuery.isError;
@@ -971,4 +973,9 @@ export default function TeamDetailView({ teamId, variant = 'page' }: TeamDetailV
       </div>
     </div>
   );
+}
+
+/** Milli takım (API-Football, id >= 2e9) → sade ayrı görünüm; lig takımı (Sportmonks) yolu AYNEN yukarıdaki bileşen. */
+export default function TeamDetailView(props: TeamDetailViewProps) {
+  return isNationalMatchId(props.teamId) ? <NationalTeamView teamId={props.teamId} variant={props.variant} /> : <LeagueTeamDetailView {...props} />;
 }

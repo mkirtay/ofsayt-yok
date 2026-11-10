@@ -10,7 +10,8 @@ function parseIntArray(val: unknown): number[] | null {
   const result: number[] = [];
   for (const item of val) {
     const n = Number(item);
-    if (!Number.isInteger(n) || n <= 0) return null;
+    // Üst sınır: Postgres int4 (milli takım id'leri 2e9+ ama bunun altında, bkz. services/apiFootball/ids.ts).
+    if (!Number.isInteger(n) || n <= 0 || n > 2_147_483_647) return null;
     result.push(n);
   }
   return result;

@@ -1,4 +1,3 @@
-import { isNationalMatchId } from '@/services/apiFootball/ids';
 import { useEffect, useRef, useState } from 'react';
 import type { Match } from '@/models/liveScore';
 import type { LiveMatchPayload } from '@/server/liveMatch';
@@ -53,8 +52,7 @@ export function useLiveMatchUpdates(
   }, [notStarted, date, scheduled]);
 
   const live = match ? isMatchLive(match) : false;
-  // Milli maç (AF): canlı uç henüz yok (sonraki aşama) → yoklama yok.
-  const active = Boolean(matchId && !isNationalMatchId(matchId) && match && (live || (notStarted && windowOpen)));
+  const active = Boolean(matchId && match && (live || (notStarted && windowOpen)));
 
   useEffect(() => {
     if (!active) return;

@@ -10,6 +10,8 @@
  */
 
 import { compareLeaguePriority } from './leaguePriority';
+import { isNationalMatchId, toAfId } from '@/services/apiFootball/ids';
+import { nationalLeagueByAfId } from './nationalLeagues';
 import { WORLD_CUP_COMPETITION_ID, isSportmonksProviderEnabled, resolveSportmonksLeagueId } from '@/services/sportmonksProviderFlag';
 
 export type LeagueGroupSortInput = {
@@ -198,6 +200,13 @@ function toSportmonksLeagueId(competitionId: number): number | null {
 }
 
 export function compareGroupedLeagues(a: LeagueGroupSortInput, b: LeagueGroupSortInput): number {
+  // Milli takım turnuvaları (API-Football, id >= 2e9) listenin EN ÜSTÜNDE; kendi aralarında config/nationalLeagues.ts sırası.
+  // Bayrak kapalıyken bu kimlikler hiç oluşmaz → aşağıdaki sıralama birebir eski.
+  const na = isNationalMatchId(a.competition_id);
+  const nb = isNationalMatchId(b.competition_id);
+  if (na !== nb) return na ? -1 : 1;
+  if (na && nb) return nationalLeaguePriority(a.competition_id) - nationalLeaguePriority(b.competition_id) || nameCompare(a, b);
+
   // World Cup (varsa) her zaman önde — yalnızca legacy id'de var.
   const wa = isWorldCupGroup(a);
   const wb = isWorldCupGroup(b);
@@ -247,4 +256,9 @@ function compareGroupedLeaguesLegacy(a: LeagueGroupSortInput, b: LeagueGroupSort
   const byCountry = (a.country_name || '').localeCompare(b.country_name || '', 'tr');
   if (byCountry !== 0) return byCountry;
   return nameCompare(a, b);
+}
+
+function nationalLeaguePriority(appId: number): number {
+  const af = toAfId(appId);
+  return (af != null ? nationalLeagueByAfId(af)?.priority : undefined) ?? 999;
 }

@@ -24,6 +24,8 @@ import { startVisiblePolling } from '@/utils/visiblePolling';
 import type { LiveMatchPayload } from '@/server/liveMatch';
 import { fetchCompetitionStandings } from '@/services/competitionStandings';
 import { loadStandingsForMatch } from '@/services/standingsBundle';
+import { isNationalMatchId } from '@/services/apiFootball/ids';
+import { fetchNationalStandings } from '@/services/apiFootball/clientFetch';
 import { loadWithRetry } from '@/utils/loadWithRetry';
 
 /**
@@ -345,7 +347,9 @@ export function useMatchDetail(
       if (fromFixture && !seededEvents) loadEvents(apiMatchId, gen);
 
       const cid = toStandingsCompetitionId(resolved.competition?.id ?? resolved.competition_id);
-      if (cid == null) {
+      // Milli turnuva (API-Football): sade puan durumu kendi BFF ucundan; sezon seçici yok.
+      const nationalCompId = isNationalMatchId(resolved.competition?.id) ? resolved.competition!.id : null;
+      if (cid == null && nationalCompId == null) {
         setStandingsLoading(false);
       }
 
@@ -371,6 +375,9 @@ export function useMatchDetail(
       }
 
       if (cid != null) void runStandings(() => loadStandingsForMatch(cid), gen);
+      else if (nationalCompId != null) {
+        void runStandings(async () => ({ standings: await fetchNationalStandings(nationalCompId) }), gen);
+      }
     })();
 
     return () => {
