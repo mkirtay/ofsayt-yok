@@ -1,3 +1,4 @@
+import { useSession } from 'next-auth/react';
 import { isNationalMatchId } from '@/services/apiFootball/ids';
 import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -60,6 +61,9 @@ export const MATCH_TAB_KEYS: readonly MatchTabKey[] = ['overview', 'commentary',
 const PRERENDER_ANALYSIS: readonly MatchTabKey[] = ['analysis'];
 
 /** Varsayılan sekme: Genel Bakış (veri hazır, AI kredisi harcamaz). */
+// Piyasa oranları kartı: yalnız milli maç + oturumda `comboAccess` (ADMIN + COMBO_TOOL_USER_IDS) → diğerlerine ek JS / istek yok.
+const MatchOddsCard = dynamic(() => import('@/components/MatchOddsCard'), { ssr: false });
+
 const NATIONAL_HIDDEN_TABS: ReadonlySet<MatchTabKey> = new Set(['commentary', 'analysis', 'trivia']);
 
 export const DEFAULT_MATCH_TAB: MatchTabKey = 'overview';
@@ -79,6 +83,7 @@ export default function MatchDetailContent({ detail, requestedMatchId, variant =
   // Milli maç (API-Football, id >= 2e9): Anlatım, AI Analiz, Trivia sekmeleri ile baskı şeridi ve hakem puanı yok (veri
   // sağlayıcıda yok / Sportmonks'a bağlı) → sessizce gizlenir; sade sayfa: kart + istatistik + olaylar + kadro + forum.
   const national = isNationalMatchId(effectiveMatchId);
+  const comboAccess = Boolean(useSession().data?.user?.comboAccess);
   const [active, setActive] = useState<MatchTabKey>(DEFAULT_MATCH_TAB);
   const contentRef = useRef<HTMLDivElement>(null);
   const { t: tc } = useTranslation('common');
@@ -194,6 +199,7 @@ export default function MatchDetailContent({ detail, requestedMatchId, variant =
                 />
               </div>
             </div>
+            {national && comboAccess && effectiveMatchId ? <MatchOddsCard key={effectiveMatchId} matchId={effectiveMatchId} /> : null}
             <Lineup
               lineups={detail.lineups}
               events={detail.events}

@@ -84,3 +84,53 @@ export function marketOdd(entry: AfOddsEntry | null | undefined, key: TopPickKey
   }
   return null;
 }
+
+export type MatchOddsView = {
+  bookmaker: string;
+  updatedAt: string | null;
+  /** 1X2 (bet 1). */
+  result?: { home: number; draw: number; away: number };
+  /** Alt/üst (bet 5): yalnız iki yönü de olan, 1.5 / 2.5 / 3.5 çizgileri; çizgi yoksa listede yok. */
+  totals: Array<{ line: number; over: number; under: number }>;
+  /** Karşılıklı gol (bet 8). */
+  btts?: { yes: number; no: number };
+};
+
+const TOTAL_LINES = [1.5, 2.5, 3.5] as const;
+
+function viewFor(bk: AfOddsBookmaker): Omit<MatchOddsView, 'bookmaker' | 'updatedAt'> {
+  const get = (betId: number, value: string): number | null => oddOf(bk, { betId, value });
+  const h = get(1, 'Home');
+  const d = get(1, 'Draw');
+  const a = get(1, 'Away');
+  const y = get(8, 'Yes');
+  const n = get(8, 'No');
+  const totals = TOTAL_LINES.flatMap((line) => {
+    const over = get(5, `Over ${line}`);
+    const under = get(5, `Under ${line}`);
+    return over != null && under != null ? [{ line, over, under }] : [];
+  });
+  return {
+    ...(h != null && d != null && a != null ? { result: { home: h, draw: d, away: a } } : {}),
+    totals,
+    ...(y != null && n != null ? { btts: { yes: y, no: n } } : {}),
+  };
+}
+
+/**
+ * Maç detayı "Piyasa oranları" kartı: tercih sırasındaki İLK bookmaker'ın (hepsi aynı bookmaker'dan) 1X2, alt/üst ve KG
+ * oranları. Hiçbir pazar yoksa null (kart gizlenir). Milli maçta yalnız 1xBet gelir; 1.5 çizgisi yoktur.
+ */
+export function extractMatchOdds(entry: AfOddsEntry | null | undefined): MatchOddsView | null {
+  if (!entry) return null;
+  const ordered = [...entry.bookmakers].sort((a, b) => {
+    const ia = BOOKMAKER_PREFERENCE.indexOf(a.id);
+    const ib = BOOKMAKER_PREFERENCE.indexOf(b.id);
+    return (ia < 0 ? 999 : ia) - (ib < 0 ? 999 : ib);
+  });
+  for (const bk of ordered) {
+    const v = viewFor(bk);
+    if (v.result || v.totals.length > 0 || v.btts) return { bookmaker: bk.name, updatedAt: entry.update ?? null, ...v };
+  }
+  return null;
+}

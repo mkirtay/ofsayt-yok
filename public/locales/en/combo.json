@@ -4,7 +4,12 @@
   "open": "Open",
   "close": "Close",
   "intro": "A risk-adjusted combination from today's strongest AI predictions. Probabilities are model estimates; the combined probability is the product of the match probabilities.",
-  "risk": { "label": "Risk level", "safe": "Low", "balanced": "Balanced", "bold": "High" },
+  "risk": {
+    "label": "Risk level",
+    "safe": "Low",
+    "balanced": "Balanced",
+    "bold": "High"
+  },
   "pick": {
     "home": "Home win",
     "draw": "Draw",
@@ -46,5 +51,20 @@
   "apply": "Apply",
   "manual": "Pick matches manually",
   "targetUnreachable": "The target odds cannot be reached with these settings; the highest is ≈ {{max}}.",
-  "disclaimer": "Odds are approximate market odds from international bookmakers, not those of any Turkish operator. Nothing is guaranteed."
+  "disclaimer": "Odds are approximate market odds from international bookmakers, not those of any Turkish operator. Nothing is guaranteed.",
+  "marketOdds": {
+    "title": "Market odds",
+    "result": "Match result",
+    "home": "Home",
+    "draw": "Draw",
+    "away": "Away",
+    "goals": "Total goals",
+    "over": "Over",
+    "under": "Under",
+    "btts": "Both teams score",
+    "yes": "Yes",
+    "no": "No",
+    "source": "Source: {{bookmaker}} · approximate market odds. Not those of any Turkish operator, not guaranteed.",
+    "testBadge": "Test"
+  }
 }

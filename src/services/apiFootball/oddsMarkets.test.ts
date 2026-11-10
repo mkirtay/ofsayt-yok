@@ -78,3 +78,26 @@ describe('marketOdd — gerçek AF yanıtları (Süper Lig 1584458, UCL 1635726)
     expect(marketOdd(broken, 'draw')).toBeNull();
   });
 });
+
+import { extractMatchOdds } from './oddsMarkets';
+
+describe('extractMatchOdds (maç detayı kartı)', () => {
+  it('Süper Lig: Bet365 — 1X2 + 1.5/2.5/3.5 alt/üst + KG', () => {
+    const v = extractMatchOdds(sl)!;
+    expect(v.bookmaker).toBe('Bet365');
+    expect(v.result).toEqual({ home: 1.17, draw: 7.5, away: 13 });
+    expect(v.totals.map((t) => t.line)).toEqual([1.5, 2.5, 3.5]);
+    expect(v.totals[1]).toEqual({ line: 2.5, over: 1.3, under: 3.5 });
+    expect(v.btts).toEqual({ yes: 1.8, no: 1.91 });
+  });
+  it('milli maç (yalnız 1xBet): 1.5 çizgisi yoksa listede yok, bookmaker 1xBet', () => {
+    const v = extractMatchOdds(nat)!;
+    expect(v.bookmaker).toBe('1xBet');
+    expect(v.totals.every((t) => t.line !== 1.5) || nat.bookmakers[0].bets.find((b) => b.id === 5)!.values.some((x) => x.value === 'Under 1.5')).toBe(true);
+    expect(v.totals.find((t) => t.line === 2.5)).toBeTruthy();
+  });
+  it('veri yok → null', () => {
+    expect(extractMatchOdds(null)).toBeNull();
+    expect(extractMatchOdds({ fixture: { id: 1 }, bookmakers: [] })).toBeNull();
+  });
+});

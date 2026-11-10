@@ -15,6 +15,7 @@ vi.mock('@/lib/i18n', () => ({
       })[k] ?? k,
   }),
 }));
+vi.mock('next-auth/react', async (importOriginal) => ({ ...(await importOriginal<typeof import('next-auth/react')>()), useSession: () => ({ data: null, status: 'unauthenticated' }) }));
 vi.mock('@/components/MatchCard', () => ({ default: () => <div data-testid="match-card" /> }));
 vi.mock('@/components/MatchStats', () => ({ default: () => <div data-testid="stats-content" /> }));
 vi.mock('@/components/EventTimeline', () => ({ default: () => <div data-testid="events-content" /> }));

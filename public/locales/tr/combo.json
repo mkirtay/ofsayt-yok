@@ -4,7 +4,12 @@
   "open": "Aç",
   "close": "Kapat",
   "intro": "Günün en güçlü AI tahminlerinden risk ayarlı bir kombine. Olasılıklar modelin tahminidir; kombine isabet olasılığı maç olasılıklarının çarpımıdır.",
-  "risk": { "label": "Risk düzeyi", "safe": "Düşük", "balanced": "Dengeli", "bold": "Yüksek" },
+  "risk": {
+    "label": "Risk düzeyi",
+    "safe": "Düşük",
+    "balanced": "Dengeli",
+    "bold": "Yüksek"
+  },
   "pick": {
     "home": "Ev sahibi kazanır",
     "draw": "Beraberlik",
@@ -46,5 +51,20 @@
   "apply": "Uygula",
   "manual": "Maçları elle seç",
   "targetUnreachable": "Hedef oran bu ayarlarla ulaşılamıyor; en yüksek ≈ {{max}}.",
-  "disclaimer": "Oranlar uluslararası bookmaker'lardan yaklaşık piyasa oranıdır; Türkiye'deki bir şirketin oranı değildir. Hiçbir sonuç garanti değildir."
+  "disclaimer": "Oranlar uluslararası bookmaker'lardan yaklaşık piyasa oranıdır; Türkiye'deki bir şirketin oranı değildir. Hiçbir sonuç garanti değildir.",
+  "marketOdds": {
+    "title": "Piyasa oranları",
+    "result": "Maç sonucu",
+    "home": "Ev sahibi",
+    "draw": "Beraberlik",
+    "away": "Deplasman",
+    "goals": "Toplam gol",
+    "over": "Üst",
+    "under": "Alt",
+    "btts": "İki takım da gol bulur",
+    "yes": "Var",
+    "no": "Yok",
+    "source": "Kaynak: {{bookmaker}} · yaklaşık piyasa oranı. Türkiye'deki bir şirketin oranı değildir, garanti değildir.",
+    "testBadge": "Test"
+  }
 }
