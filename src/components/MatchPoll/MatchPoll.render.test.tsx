@@ -53,37 +53,35 @@ describe('MatchPoll kilidi', () => {
 });
 
 describe('MatchPoll takım etiketleri', () => {
-  it('takımlar varsa seçenekler logo + takım adı; aria-label "X kazanır" / Beraberlik', () => {
+  it('takımlar varsa üç yuvarlak seçenek: logo · X · logo; ad görünmez, aria-label + title\'da', () => {
     const html = decode(renderToStaticMarkup(<MatchPoll matchId="1" home={GS} away={FB} />));
     const b = buttons(html);
     expect(b[0]).toContain('aria-label="poll.teamWins{"team":"Galatasaray"}"');
     expect(b[1]).toContain('aria-label="poll.draw"');
     expect(b[2]).toContain('aria-label="poll.teamWins{"team":"Fenerbahçe"}"');
     expect(b[0]).toContain('title="Galatasaray"');
-    expect(html).toContain('>Galatasaray</span>');
-    expect(html).toContain('>Fenerbahçe</span>');
+    expect(html).not.toContain('>Galatasaray</span>');
+    expect(html).not.toContain('>Fenerbahçe</span>');
+    expect(html).toContain('>poll.drawShort</span>');
     expect(html.match(/<img[^>]*>/g)).toHaveLength(2);
     expect(html).not.toContain('poll.home');
     expect(html).not.toContain('poll.away');
     expect(html).toContain('teamMode');
   });
 
-  it('dar ekran sığdırma sınıfları: çok kelimeli ad iki satır, uzun tek kelime küçük punto', () => {
+  it('uzun takım adı da görünür metin olarak yazılmaz (kesilme olmaz)', () => {
     const html = renderToStaticMarkup(
       <MatchPoll matchId="1" home={{ name: 'Sincan Belediyesi Ankaraspor', logo: null }} away={{ name: 'Kastamonuspor', logo: null }} />,
     );
-    expect(html).toMatch(/voteBtnTextMulti[^"]*">Sincan Belediyesi Ankaraspor</);
-    expect(html).toMatch(/voteBtnTextLongWord[^"]*">Kastamonuspor</);
-    const short = renderToStaticMarkup(<MatchPoll matchId="1" home={GS} away={FB} />);
-    expect(short).not.toContain('voteBtnTextMulti');
-    expect(short).not.toContain('voteBtnTextLongWord');
+    expect(html).not.toContain('>Sincan Belediyesi Ankaraspor<');
+    expect(html).not.toContain('>Kastamonuspor<');
   });
 
-  it('logo yoksa yer tutucu çizilir, ad yine görünür', () => {
+  it('logo yoksa üç harfli kısaltma yer tutucusu çizilir', () => {
     const html = renderToStaticMarkup(<MatchPoll matchId="1" home={{ name: 'Galatasaray', logo: null }} away={FB} />);
     expect(html.match(/<img[^>]*>/g)).toHaveLength(1);
     expect(html).toContain('voteBtnLogoFallback');
-    expect(html).toContain('>Galatasaray</span>');
+    expect(html).toContain('>GAL<');
   });
 
   it('takım verisi yoksa ya da eksikse eski "Ev Sahibi / Deplasman" metni', () => {
@@ -96,14 +94,13 @@ describe('MatchPoll takım etiketleri', () => {
     }
   });
 
-  it('oy sonrası sonuç görünümünde de takım etiketleri + yüzde; aria-label yüzdeyi içerir', () => {
+  it('oy sonrası sonuç görünümünde de logo + yüzde; aria-label yüzdeyi içerir', () => {
     pollState.value = { home: 6, draw: 2, away: 2, total: 10, userPrediction: 'HOME' };
     const html = decode(renderToStaticMarkup(<MatchPoll matchId="1" home={GS} away={FB} />));
     const b = buttons(html);
     expect(b[0]).toContain('aria-pressed="true"');
     expect(b[0]).toMatch(/aria-label="poll\.optionResult\{"label":"poll\.teamWins.*Galatasaray.*","pct":60\}"/);
     expect(b[2]).toContain('"pct":20');
-    expect(html).toContain('>Galatasaray</span>');
     expect(html).toContain('60%');
     expect(html.match(/<img[^>]*>/g)).toHaveLength(2);
   });

@@ -186,10 +186,11 @@
     "authError": "Bu özellik giriş yapmış kullanıcılara özeldir."
   },
   "poll": {
-    "title": "Topluluk Tahmini",
+    "title": "Kim Kazanır?",
     "subtitle": "Bu maçın sonucu ne olacak?",
     "home": "Ev Sahibi",
     "draw": "Beraberlik",
+    "drawShort": "X",
     "away": "Deplasman",
     "teamWins": "{{team}} kazanır",
     "optionResult": "{{label}}, oyların %{{pct}}",

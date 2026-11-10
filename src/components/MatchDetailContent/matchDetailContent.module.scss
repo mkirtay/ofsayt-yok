@@ -60,6 +60,16 @@
   }
 }
 
+/* Genel Bakış'taki "Kim Kazanır?" anketi: tartışma kartıyla aynı kart yüzeyi (anketin kendi çerçevesi yok). */
+.pollCard {
+  background-color: $color-surface;
+  border-radius: $radius-md;
+  padding: $spacing-3 $spacing-4 0;
+  box-shadow: $shadow-surface;
+  border: 1px solid $color-border;
+  margin-bottom: $spacing-3;
+}
+
 /* Yalnız yetkili (admin) görür: kartın hemen altında sağa yaslı "👁 · 💬" (flex gap'i yarıya indirilir). */
 .countersLine {
   display: flex;

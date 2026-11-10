@@ -16,6 +16,7 @@ import MatchTabs, { type MatchTabItem } from '@/components/MatchTabs';
 import MatchTrivia from '@/components/MatchTrivia';
 import MatchAnalysis from '@/components/MatchAnalysis';
 import MatchForumTab from '@/components/MatchForumTab';
+import MatchPoll from '@/components/MatchPoll';
 import MatchDiscussionCard from '@/components/MatchDiscussionCard';
 import MatchCountersBadge from '@/components/MatchCountersBadge';
 import { countsFor, useMatchCounters, useMatchViewBeacon } from '@/hooks/useMatchCounters';
@@ -161,7 +162,12 @@ export default function MatchDetailContent({ detail, requestedMatchId, variant =
             {effectiveMatchId ? (
               // Sayfada geniş ekranda (≥ BP_SPLIT) sağdaki "Maç sohbeti" paneli aynı içeriği gösterir → kart CSS ile gizli
               // (gizliyken görünür olmadığından veri de istenmez).
+              // "Kim Kazanır?" anketi tartışma kartının hemen üstünde; aynı sarmalayıcı → geniş sayfada ikisi de CSS ile gizli, sağ
+              // panel (MatchChatPanel) anketi gösterir. Forum sekmesinde anket yok (showPoll=false) → hiçbir yerde mükerrer değil.
               <div className={variant === 'page' ? styles.discussionCardPage : undefined}>
+                <div className={styles.pollCard}>
+                  <MatchPoll key={`poll-${effectiveMatchId}`} matchId={effectiveMatchId} locked={!!match && isPollLockedForMatch(match)} home={match?.home} away={match?.away} />
+                </div>
                 <MatchDiscussionCard key={effectiveMatchId} matchId={effectiveMatchId} onJoin={openForum} />
               </div>
             ) : null}
@@ -229,6 +235,7 @@ export default function MatchDetailContent({ detail, requestedMatchId, variant =
               pollLocked={!!match && isPollLockedForMatch(match)}
               home={match?.home}
               away={match?.away}
+              showPoll={false}
             />
           ) : null,
       },

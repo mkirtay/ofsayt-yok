@@ -1,5 +1,5 @@
 /**
- * Topluluk tahmini (1X2 anketi) başlama düdüğüyle kilitlenir. Saf karar — sunucu (`server/matchPollLock.ts`, POST'u
+ * Kim Kazanır anketi (1X2 anketi) başlama düdüğüyle kilitlenir. Saf karar — sunucu (`server/matchPollLock.ts`, POST'u
  * reddeder) ve istemci (`MatchPoll`, kilitli görünüm) aynı kuralı kullanır.
  */
 import type { Match, MatchStateCode } from '@/models/liveScore';
