@@ -40,4 +40,9 @@ export const ADMIN_PAGES: readonly AdminPageDef[] = [
     title: 'Tahmin oyunu',
     description: 'Haftalık 10 maçı seç ve yayınla, sonuç düzelt / iptal et (GAME_ENABLED kapalıyken 404).',
   },
+  {
+    path: '/admin/kombine',
+    title: 'Kombine aracı',
+    description: 'Günün en güçlü AI tahminlerinden risk ayarlı kombine önerisi, olasılık çarpımı ve yaklaşık piyasa oranı (COMBO_TOOL_ENABLED kapalıyken 404).',
+  },
 ];
