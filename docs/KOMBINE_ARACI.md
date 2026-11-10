@@ -1,11 +1,15 @@
-# Kombine aracı (yalnız admin) — durum ve çalıştırma
+# Kombine aracı (admin + test kullanıcıları) — durum ve çalıştırma
 
-Dal: `claude/admin-coupon-tool-e78eee` (milli maç dalından kesildi, PUSH EDİLMEDİ). Bayrak varsayılan KAPALI.
+Dal: `claude/admin-coupon-tool-e78eee` (milli maç dalı `claude/national-matches-af-1a48cb` ile birleştirildi, PUSH EDİLMEDİ). Bayrak varsayılan KAPALI.
 
-## Açma
-`.env.local` / Vercel env: `COMBO_TOOL_ENABLED=1` (+ oran için `API_FOOTBALL_KEY`). Adres: **`/admin/kombine`** (ADMIN oturumu; oturumsuz → giriş,
-ADMIN değil → 404; bayrak kapalıyken herkese 404). API: `GET/POST /api/admin/kombine`. `noindex`, robots/sitemap/menüde yok; `/admin` ana
-sayfasında kart olarak listelenir (yalnız adminler görür). Bayrak kapalıyken AF'ye hiç istek / iş yok; lig ve milli maç davranışı değişmez.
+## Açma ve kapı
+- `COMBO_TOOL_ENABLED=1` (+ oran için `API_FOOTBALL_KEY`). Görebilenler: ADMIN rolü + env izin listesi `COMBO_TOOL_USER_IDS` (virgül/boşluk ayrımlı kullanıcı
+  kimliği ya da e-posta). Repoda "test kullanıcısı" rolü yok → izin listesi.
+- **Ana sayfada** yan panelde (puan durumu / gol krallığı kutusunun altı, masaüstünde sol sütun, mobilde listenin altı) "Günün Kombinesi" kartı. Kapı
+  istemcide, oturumdaki `comboAccess` ile (next-auth `session` callback'i: bayrak açık VE yetkiliyse true). Kart `next/dynamic` (ssr:false) ile YALNIZ
+  o zaman yüklenir → yetkisiz kullanıcıya ek JS / istek / yerleşim yok, SSR çıktısı aynı. API `/api/combo/day` aynı kapıyı sunucuda uygular
+  (`requireComboAccess`: bayrak kapalı / yetkisiz → 404). Eski `/admin/kombine` sayfası kaldırıldı. `noindex`, robots/sitemap'te yok.
+- Milli maç detayında "Piyasa oranları" kartı (aynı kapı): `/api/combo/match-odds?id=…` (ayrıca `NATIONAL_MATCHES_ENABLED`); herkese açmak kullanıcı kararı.
 
 ## Ne yapar
 - Aday: günün Sportmonks maçları ∩ kayıtlı maç öncesi AI analizi (prompt v5+, `PRE`). **Her maçtan yalnız en güçlü tek pazar**
