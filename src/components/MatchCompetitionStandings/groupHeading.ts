@@ -13,6 +13,9 @@ export function standingsGroupHeading(name: string, t: Translate): string {
   const trimmed = name.trim();
   const conference = CONFERENCE_KEYS[trimmed.toLowerCase()];
   if (conference) return t(conference);
+  // API-Football milli turnuva grupları: "League A - Group B" → "A Ligi · B Grubu" (EN: aynen).
+  const leagueGroup = /^league\s+(\S+)\s*-\s*group\s+(\S+)$/i.exec(trimmed);
+  if (leagueGroup) return t('standings.leagueGroupHeading', { league: leagueGroup[1], name: leagueGroup[2] });
   const group = /^group\s+(.+)$/i.exec(trimmed);
   if (group) return t('standings.groupHeading', { name: group[1] });
   // Tek harf / kısa kod (eski sağlayıcı, Dünya Kupası "A") → "Grup A"; uzun adlar olduğu gibi.

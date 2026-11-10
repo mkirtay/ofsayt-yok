@@ -17,4 +17,7 @@ describe('standingsGroupHeading', () => {
     expect(standingsGroupHeading('B', t)).toBe('Grup B');
     expect(standingsGroupHeading('Championship Round', t)).toBe('Championship Round');
   });
+  it('milli turnuva "League A - Group B" → "A Ligi · B Grubu"', () => {
+    expect(standingsGroupHeading('League A - Group B', t)).toBe('A Ligi · B Grubu');
+  });
 });

@@ -68,6 +68,32 @@ export const getServerSideProps: GetServerSideProps = async ({ res }) => {
     // sitemap still works with just static routes
   }
 
+  // Milli maçlar + takım sayfaları: yalnız bayrak açıkken; ana sayfa listesiyle AYNI önbellekli gün listesi
+  // (`loadNationalDay`, SWR) — sitemap'e özel toplu AF isteği yok; önbellek boşsa en çok 7 gün isteği, o da CDN'de 1 gün.
+  const nationalUrls: { loc: string; priority: string; changefreq: string }[] = [];
+  try {
+    const { nationalMatchesEnabled } = await import('@/config/nationalMatches');
+    if (nationalMatchesEnabled()) {
+      const { loadNationalDay } = await import('@/server/apiFootball/nationalDay');
+      const days = await Promise.all(dates.map((d) => loadNationalDay(d)));
+      const seenTeams = new Set<number>();
+      for (const day of days) {
+        if (!day.ok) continue;
+        for (const match of day.matches) {
+          const slug = buildMatchSlug(match);
+          nationalUrls.push({ loc: `${BASE_URL}${slug ? `/matches/${match.id}-${slug}` : `/matches/${match.id}`}`, priority: '0.6', changefreq: 'hourly' });
+          for (const team of [match.home, match.away]) {
+            if (team?.id == null || seenTeams.has(team.id)) continue;
+            seenTeams.add(team.id);
+            nationalUrls.push({ loc: `${BASE_URL}/teams/${team.id}`, priority: '0.5', changefreq: 'daily' });
+          }
+        }
+      }
+    }
+  } catch {
+    // milli maç yok say; sitemap'in kalanı çalışır
+  }
+
   // Hakem / teknik direktör sayfaları (Süper Lig + 1. Lig, son iki sezon) — hata sitemap'i düşürmez.
   let peopleUrls: { loc: string; priority: string; changefreq: string }[] = [];
   try {
@@ -86,7 +112,7 @@ export const getServerSideProps: GetServerSideProps = async ({ res }) => {
     changefreq: r.changefreq,
   }));
 
-  const xml = buildXml([...staticUrls, ...matchUrls, ...peopleUrls]);
+  const xml = buildXml([...staticUrls, ...matchUrls, ...nationalUrls, ...peopleUrls]);
 
   res.setHeader('Content-Type', 'text/xml; charset=utf-8');
   // ±3 günlük maç listesi günde bir değişir; üretim ~750 ms CPU (7 günün fikstürü) → CDN'de 1 gün, sonra 1 gün

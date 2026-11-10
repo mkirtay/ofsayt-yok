@@ -26,8 +26,6 @@ type AfTeam = {
 };
 type AfSquad = { players: Array<{ id: number; name: string; age?: number | null; number?: number | null; position?: string | null; photo?: string | null }> };
 
-const POSITIONS: Record<string, string> = { Goalkeeper: 'Kaleci', Defender: 'Defans', Midfielder: 'Orta saha', Attacker: 'Forvet' };
-
 export type NationalTeamResult = { kind: 'found'; data: NationalTeamPayload } | { kind: 'missing' } | { kind: 'error' };
 
 export async function loadNationalTeam(appTeamId: string, get: typeof apiFootballGet = apiFootballGet): Promise<NationalTeamResult> {
@@ -60,7 +58,7 @@ export async function loadNationalTeam(appTeamId: string, get: typeof apiFootbal
         id: toAppId(p.id),
         name: p.name,
         number: p.number ?? null,
-        position: POSITIONS[p.position ?? ''] ?? (p.position ?? ''),
+        position: p.position ?? '', // AF ham mevki (Goalkeeper/Defender/Midfielder/Attacker); arayüz diline göre istemcide çevrilir
         age: p.age ?? null,
         ...(p.photo ? { photo: p.photo } : {}),
       })),

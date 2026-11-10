@@ -204,5 +204,32 @@
     "error": "Couldn't load transfers.",
     "loading": "Loading transfers…",
     "source": "Source: Sportmonks; fees in euros, undisclosed fees not shown."
+  },
+  "national": {
+    "navAria": "Page sections",
+    "navStandings": "Standings",
+    "navRecent": "Recent matches",
+    "navSquad": "Squad",
+    "nationalTeam": "National team",
+    "founded": "Founded {{year}}",
+    "loading": "Loading…",
+    "notFound": "Team not found.",
+    "loadError": "Couldn't load team data.",
+    "retry": "Try again",
+    "nextMatch": "Next match",
+    "upcoming": "Upcoming fixtures",
+    "upcomingEmpty": "No upcoming matches.",
+    "standingsTitle": "Group standings",
+    "standingsError": "Couldn't load standings.",
+    "recentTitle": "Recent matches",
+    "squadTitle": "Squad",
+    "squadEmpty": "No squad data.",
+    "squadCount": "{{count}} players",
+    "posGoalkeeper": "Goalkeepers",
+    "posDefender": "Defenders",
+    "posMidfielder": "Midfielders",
+    "posAttacker": "Forwards",
+    "posOther": "Other",
+    "timeTbd": "TBD"
   }
 }

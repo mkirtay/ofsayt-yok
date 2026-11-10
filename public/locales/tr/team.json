@@ -203,5 +203,32 @@
     "error": "Transferler yüklenemedi.",
     "loading": "Transferler yükleniyor…",
     "source": "Kaynak: Sportmonks; bedeller avro, açıklanmayanlar gösterilmez."
+  },
+  "national": {
+    "navAria": "Sayfa bölümleri",
+    "navStandings": "Puan durumu",
+    "navRecent": "Son maçlar",
+    "navSquad": "Kadro",
+    "nationalTeam": "Milli takım",
+    "founded": "Kuruluş {{year}}",
+    "loading": "Yükleniyor…",
+    "notFound": "Takım bulunamadı.",
+    "loadError": "Takım verisi yüklenemedi.",
+    "retry": "Tekrar dene",
+    "nextMatch": "Sıradaki maç",
+    "upcoming": "Kalan fikstür",
+    "upcomingEmpty": "Yaklaşan maç yok.",
+    "standingsTitle": "Grup puan durumu",
+    "standingsError": "Puan durumu yüklenemedi.",
+    "recentTitle": "Son maçlar",
+    "squadTitle": "Kadro",
+    "squadEmpty": "Kadro verisi yok.",
+    "squadCount": "{{count}} oyuncu",
+    "posGoalkeeper": "Kaleciler",
+    "posDefender": "Defans",
+    "posMidfielder": "Orta saha",
+    "posAttacker": "Forvet",
+    "posOther": "Diğer",
+    "timeTbd": "Belirsiz"
   }
 }

@@ -853,3 +853,29 @@ $row-score-tablet: 56px;
     font-size: 12px;
   }
 }
+
+// Milli satırlar: logo yoksa / yüklenmezse yedek (turnuva ikonu, takım için 3 harfli kod).
+.virtualHeaderLogoFallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.crestCode {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  font-size: 7px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: $color-text-secondary;
+  background: var(--bg-muted);
+  border-radius: 50%;
+}
