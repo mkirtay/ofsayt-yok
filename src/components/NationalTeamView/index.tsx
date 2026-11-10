@@ -1,11 +1,14 @@
 /**
- * Milli takım sayfası (sade; API-Football, id >= 2e9): başlık (+ sıradaki maç), kalan fikstür, turnuva grubunun puan durumu,
- * son maçlar, kadro. Lig takım sayfasındaki (Sportmonks) sezon özeti, gol krallığı, transfer, sakatlık vb. kartlar yok.
+ * Milli takım sayfası (API-Football, id >= 2e9): lig takım sayfasıyla aynı iskelet — tam genişlik başlık kartı (bayrak, ad,
+ * künye, sıradaki maç), altında iki sütun: solda sekmeler (Son Maçlar · Fikstür · Kadro), sağda takımın turnuva grubunun
+ * puan durumu. Lig sayfasındaki sezon özeti, gol krallığı, transfer, sakatlık kartları yok (ek AF isteği ister).
  * Hata ≠ veri yok: hata → "yüklenemedi · tekrar dene". Puan durumu maç sayfasının BFF ucunu (önbellekli) yeniden kullanır.
  */
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import MatchCompetitionStandings from '@/components/MatchCompetitionStandings';
+import { standingsGroupHeading } from '@/components/MatchCompetitionStandings/groupHeading';
+import { PanelSkeleton, SkeletonBlock, StandingsSkeleton } from '@/components/Skeleton';
 import TeamLogo from '@/components/TeamLogo';
 import { useI18n, useTranslation } from '@/lib/i18n';
 import '@/lib/i18nNamespaces/team';
@@ -13,21 +16,22 @@ import type { Match } from '@/models/liveScore';
 import { fetchNationalStandings } from '@/services/apiFootball/clientFetch';
 import type { CompetitionTableData } from '@/services/liveScoreService';
 import type { NationalSquadPlayer, NationalTeamPayload } from '@/server/apiFootball/nationalTeam';
-import { standingsGroupHeading } from '@/components/MatchCompetitionStandings/groupHeading';
 import { buildMatchHref } from '@/utils/matchUrl';
-import { reduceStandingsToTeamGroup, titleStandings } from '@/utils/nationalStandings';
+import { reduceStandingsToTeamGroup, titleStandings, withoutStandingsForm } from '@/utils/nationalStandings';
 import styles from './nationalTeamView.module.scss';
 
 type State = { kind: 'loading' } | { kind: 'error' } | { kind: 'missing' } | { kind: 'ready'; data: NationalTeamPayload };
+type StandingsState = { kind: 'idle' | 'loading' | 'none' | 'error' } | { kind: 'ready'; data: CompetitionTableData };
 type Translate = (key: string, opts?: Record<string, unknown>) => string;
+type Tab = 'recent' | 'fixtures' | 'squad';
 
 const RECENT_VISIBLE = 5;
-/** AF ham mevki → çeviri anahtarı (eski önbellekteki Türkçe değerler de tanınır). */
+/** AF ham mevki → çeviri anahtarı (eski önbellekteki Türkçe değerler de tanınır). Görüntüleme sırası: Forvet → Orta saha → Defans → Kaleci. */
 const POSITION_KEYS: Array<{ key: string; names: string[] }> = [
-  { key: 'posGoalkeeper', names: ['Goalkeeper', 'Kaleci'] },
-  { key: 'posDefender', names: ['Defender', 'Defans'] },
-  { key: 'posMidfielder', names: ['Midfielder', 'Orta saha'] },
   { key: 'posAttacker', names: ['Attacker', 'Forvet'] },
+  { key: 'posMidfielder', names: ['Midfielder', 'Orta saha'] },
+  { key: 'posDefender', names: ['Defender', 'Defans'] },
+  { key: 'posGoalkeeper', names: ['Goalkeeper', 'Kaleci'] },
 ];
 /** Hazırlık maçlarının puan durumu yok. */
 const FRIENDLIES_APP_ID = 2_000_000_010;
@@ -45,24 +49,63 @@ function shortDate(date: string | undefined, locale: string): string {
   return new Intl.DateTimeFormat(locale === 'en' ? 'en-GB' : 'tr-TR', { day: 'numeric', month: 'short', timeZone: 'UTC' }).format(d);
 }
 
-function scoreLabel(m: Match, t: Translate): string {
-  if (m.status === 'NOT STARTED') return m.scheduled ? utcToTr(m.scheduled) : t('national.timeTbd');
-  return (m.scores?.score ?? '–').replace('-', ' - ');
-}
-
 function codeOf(name: string, code?: string): string {
   return (code || name.replace(/[^\p{L}]/gu, '').slice(0, 3)).toLocaleUpperCase('tr-TR');
 }
 
-function MatchRow({ m, locale, t }: { m: Match; locale: string; t: Translate }) {
+/** AF isimleri karışık ("Aral Simsir" / "A. Güler"): hepsi "A. Soyad"; tek sözcük ve zaten kısaltılmış adlar olduğu gibi. */
+export function formatPlayerName(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length < 2) return name.trim();
+  const [first, ...rest] = parts as [string, ...string[]];
+  return `${[...first][0]!.toLocaleUpperCase('tr-TR')}. ${rest.join(' ')}`;
+}
+
+type Outcome = 'W' | 'D' | 'L' | null;
+
+/** Takımın bu maçtaki sonucu (bitmiş maçta skordan); skor yoksa null. */
+function outcomeFor(m: Match, teamId: number): Outcome {
+  if (m.status === 'NOT STARTED') return null;
+  const [a, b] = (m.scores?.score ?? '').split('-').map((x) => Number(x.trim()));
+  if (a == null || b == null || Number.isNaN(a) || Number.isNaN(b)) return null;
+  const isHome = Number(m.home.id) === teamId;
+  const mine = isHome ? a : b;
+  const other = isHome ? b : a;
+  return mine > other ? 'W' : mine < other ? 'L' : 'D';
+}
+
+function Flag({ src, name }: { src?: string | null; name: string }) {
+  return (
+    <TeamLogo
+      src={src}
+      width={20}
+      height={14}
+      alt=""
+      className={styles.rowFlag}
+      fallback={<span className={styles.rowFlagFallback} aria-hidden="true">{codeOf(name)}</span>}
+    />
+  );
+}
+
+function MatchRow({ m, teamId, locale, t }: { m: Match; teamId: number; locale: string; t: Translate }) {
+  const outcome = outcomeFor(m, teamId);
+  const played = m.status !== 'NOT STARTED';
+  const score = played ? (m.scores?.score ?? '–').replace('-', ' - ') : m.scheduled ? utcToTr(m.scheduled) : t('fixtures.timeTbd');
+  const scoreClass = outcome === 'W' ? styles.win : outcome === 'D' ? styles.draw : outcome === 'L' ? styles.loss : styles.pending;
   return (
     <li>
       <Link href={buildMatchHref(m)} className={styles.row}>
         <span className={styles.date}>{shortDate(m.date, locale)}</span>
-        <span className={styles.home}>{m.home.name}</span>
-        <span className={styles.score}>{scoreLabel(m, t)}</span>
-        <span className={styles.away}>{m.away.name}</span>
-        {m.competition?.name ? <span className={styles.comp}>{m.competition.name}</span> : null}
+        <span className={`${styles.team} ${styles.teamHome}`}>
+          <span className={styles.teamName}>{m.home.name}</span>
+          <Flag src={m.home.logo} name={m.home.name} />
+        </span>
+        <span className={`${styles.score} ${scoreClass}`}>{score}</span>
+        <span className={`${styles.team} ${styles.teamAway}`}>
+          <Flag src={m.away.logo} name={m.away.name} />
+          <span className={styles.teamName}>{m.away.name}</span>
+        </span>
+        {m.competition?.name ? <span className={styles.comp} title={m.competition.name}>{m.competition.name}</span> : <span />}
       </Link>
     </li>
   );
@@ -73,23 +116,44 @@ function groupSquad(squad: NationalSquadPlayer[]) {
   const groups = POSITION_KEYS.map(({ key, names }) => {
     const players = squad.filter((p) => names.includes(p.position));
     players.forEach((p) => used.add(p));
-    return { key, players: sortByNumber(players) };
+    return { key, players: sortByName(players) };
   });
-  // Görüntüleme sırası lig takım sayfasıyla aynı: Forvet → Orta saha → Defans → Kaleci.
-  const ordered = [groups[3]!, groups[2]!, groups[1]!, groups[0]!];
   const rest = squad.filter((p) => !used.has(p));
-  if (rest.length) ordered.push({ key: 'posOther', players: sortByNumber(rest) });
-  return ordered.filter((g) => g.players.length > 0);
+  if (rest.length) groups.push({ key: 'posOther', players: sortByName(rest) });
+  return groups.filter((g) => g.players.length > 0);
 }
 
-function sortByNumber(players: NationalSquadPlayer[]): NationalSquadPlayer[] {
-  return [...players].sort((a, b) => (a.number ?? 999) - (b.number ?? 999));
+// AF `players/squads` forma numarası milli takımda güvenilmez (dönemler karışır): numara gösterilmez, ada göre sıralanır.
+function sortByName(players: NationalSquadPlayer[]): NationalSquadPlayer[] {
+  return [...players].sort((a, b) => a.name.localeCompare(b.name, 'tr'));
 }
 
-function StatePanel({ children }: { children: React.ReactNode }) {
+function PageSkeleton() {
   return (
-    <div className={styles.root}>
-      <div className={`${styles.card} ${styles.state}`}>{children}</div>
+    <div className={styles.root} aria-busy="true">
+      <section className={`${styles.card} ${styles.header}`}>
+        <div className={styles.identity}>
+          <SkeletonBlock width={72} height={72} />
+          <div className={styles.skelText}>
+            <SkeletonBlock width={180} height={26} />
+            <SkeletonBlock width={110} height={14} />
+          </div>
+        </div>
+        <SkeletonBlock className={styles.skelNext} height={64} />
+      </section>
+      <div className={styles.layout}>
+        <div className={styles.left}>
+          <div className={styles.tabs}>
+            <SkeletonBlock width={96} height={32} />
+            <SkeletonBlock width={80} height={32} />
+            <SkeletonBlock width={72} height={32} />
+          </div>
+          <PanelSkeleton rows={6} />
+        </div>
+        <aside className={styles.right}>
+          <StandingsSkeleton />
+        </aside>
+      </div>
     </div>
   );
 }
@@ -100,9 +164,10 @@ export default function NationalTeamView({ teamId }: { teamId: string; variant?:
   const { locale } = useI18n();
   const [state, setState] = useState<State>({ kind: 'loading' });
   const [attempt, setAttempt] = useState(0);
-  const [standings, setStandings] = useState<{ kind: 'idle' | 'loading' | 'none' | 'error' } | { kind: 'ready'; data: CompetitionTableData }>({ kind: 'idle' });
+  const [standings, setStandings] = useState<StandingsState>({ kind: 'idle' });
   const [standingsAttempt, setStandingsAttempt] = useState(0);
   const [showAllRecent, setShowAllRecent] = useState(false);
+  const [tab, setTab] = useState<Tab>('recent');
 
   const load = useCallback(() => {
     setState({ kind: 'loading' });
@@ -137,6 +202,7 @@ export default function NationalTeamView({ teamId }: { teamId: string; variant?:
   }, [data]);
 
   useEffect(() => {
+    if (!data) return;
     if (competitionId == null) return setStandings({ kind: 'none' });
     let cancelled = false;
     setStandings({ kind: 'loading' });
@@ -147,57 +213,75 @@ export default function NationalTeamView({ teamId }: { teamId: string; variant?:
     return () => {
       cancelled = true;
     };
-  }, [competitionId, standingsAttempt]);
+  }, [data, competitionId, standingsAttempt]);
 
-  const reduced = useMemo(
-    () => (standings.kind === 'ready' && data ? reduceStandingsToTeamGroup(standings.data, [data.team.id]) : null),
-    [standings, data],
-  );
+  const titled = useMemo(() => {
+    if (standings.kind !== 'ready' || !data) return null;
+    const reduced = reduceStandingsToTeamGroup(standings.data, [data.team.id]);
+    const t2 = titleStandings(reduced.data, reduced.groupName ? standingsGroupHeading(reduced.groupName, tm) : null);
+    return { data: withoutStandingsForm(t2.data), title: t2.title };
+  }, [standings, data, tm]);
 
-  if (state.kind === 'loading') return <StatePanel>{t('national.loading')}</StatePanel>;
-  if (state.kind === 'missing') return <StatePanel>{t('national.notFound')}</StatePanel>;
-  if (state.kind === 'error' || !data) {
+  if (state.kind === 'loading') return <PageSkeleton />;
+  if (state.kind === 'missing' || state.kind === 'error' || !data) {
     return (
-      <StatePanel>
-        {t('national.loadError')}
-        <button type="button" className={styles.retry} onClick={load}>
-          {t('national.retry')}
-        </button>
-      </StatePanel>
+      <div className={styles.root}>
+        <div className={`${styles.card} ${styles.state}`}>
+          {state.kind === 'missing' ? t('national.notFound') : t('national.loadError')}
+          {state.kind === 'missing' ? null : (
+            <button type="button" className={styles.retry} onClick={load}>
+              {t('national.retry')}
+            </button>
+          )}
+        </div>
+      </div>
     );
   }
 
   const { team, venue, last, next, squad } = data;
   const nextMatch = next[0];
-  const upcoming = next.slice(1);
+  const opponent = nextMatch ? (Number(nextMatch.home.id) === team.id ? nextMatch.away : nextMatch.home) : null;
   const recentShown = showAllRecent ? last : last.slice(0, RECENT_VISIBLE);
   const squadGroups = groupSquad(squad);
-  const showStandings = standings.kind === 'ready' || standings.kind === 'loading' || standings.kind === 'error';
-  const titled = reduced ? titleStandings(reduced.data, reduced.groupName ? standingsGroupHeading(reduced.groupName, tm) : null) : null;
-  const tableData = titled?.data ?? null;
-  const tableTitle = titled?.title;
-  const opponent = nextMatch ? (Number(nextMatch.home.id) === team.id ? nextMatch.away : nextMatch.home) : null;
+  const showStandings = standings.kind !== 'none' && standings.kind !== 'idle';
+
+  const tabs: Array<{ key: Tab; label: string }> = [
+    { key: 'recent', label: t('tabs.recent') },
+    { key: 'fixtures', label: t('tabs.fixtures') },
+    { key: 'squad', label: t('tabs.squad') },
+  ];
 
   return (
     <div className={styles.root}>
       <section className={`${styles.card} ${styles.header}`}>
         <div className={styles.identity}>
           <span className={styles.flag}>
-            <TeamLogo src={team.logo} width={56} height={56} alt="" className={styles.flagImg} fallback={<span className={styles.flagFallback}>{codeOf(team.name, team.code)}</span>} />
+            <TeamLogo src={team.logo} width={72} height={72} alt="" priority className={styles.flagImg} fallback={<span className={styles.flagFallback}>{codeOf(team.name, team.code)}</span>} />
           </span>
           <div className={styles.titleBlock}>
             <h1 className={styles.title}>{team.name}</h1>
             <p className={styles.badge}>{t('national.nationalTeam')}</p>
-            <p className={styles.meta}>
-              {[team.founded ? t('national.founded', { year: team.founded }) : null, venue?.name ? `${venue.name}${venue.city ? `, ${venue.city}` : ''}` : null].filter(Boolean).join(' · ')}
-            </p>
+            <dl className={styles.facts}>
+              {team.founded ? (
+                <div>
+                  <dt>{t('national.founded')}</dt>
+                  <dd>{team.founded}</dd>
+                </div>
+              ) : null}
+              {venue?.name ? (
+                <div>
+                  <dt>{t('national.stadium')}</dt>
+                  <dd>{`${venue.name}${venue.city ? `, ${venue.city}` : ''}`}</dd>
+                </div>
+              ) : null}
+            </dl>
           </div>
         </div>
         {nextMatch && opponent ? (
           <Link href={buildMatchHref(nextMatch)} className={styles.nextBox}>
             <span className={styles.nextLabel}>{t('nextBox.label')}</span>
             <span className={styles.nextOpp}>
-              <TeamLogo src={opponent.logo} width={22} height={22} alt="" className={styles.nextLogo} fallback={<span className={styles.nextLogoFallback}>{codeOf(opponent.name)}</span>} />
+              <Flag src={opponent.logo} name={opponent.name} />
               {opponent.name}
             </span>
             <span className={styles.nextWhen}>
@@ -209,76 +293,76 @@ export default function NationalTeamView({ teamId }: { teamId: string; variant?:
         ) : null}
       </section>
 
-      <nav className={styles.sectionNav} aria-label={t('national.navAria')}>
-        {showStandings ? <a href="#ulusal-puan">{t('national.navStandings')}</a> : null}
-        <a href="#ulusal-son">{t('national.navRecent')}</a>
-        <a href="#ulusal-kadro">{t('national.navSquad')}</a>
-      </nav>
-
-      {upcoming.length ? (
-        <section className={styles.card}>
-          <h2 className={styles.h2}>{t('national.upcoming')}</h2>
-          <ul className={styles.list}>{upcoming.map((m) => <MatchRow key={m.id} m={m} locale={locale} t={t} />)}</ul>
-        </section>
-      ) : null}
-
-      {showStandings ? (
-        <section id="ulusal-puan" className={styles.anchor}>
-          {standings.kind === 'ready' && tableData ? (
-            <MatchCompetitionStandings data={tableData} homeTeamId={team.id} competitionName={tableTitle} />
-          ) : standings.kind === 'loading' ? (
-            <div className={`${styles.card} ${styles.muted}`}>{t('national.loading')}</div>
-          ) : (
-            <div className={`${styles.card} ${styles.muted}`}>
-              {t('national.standingsError')}
-              <button type="button" className={styles.retry} onClick={() => setStandingsAttempt((n) => n + 1)}>
-                {t('national.retry')}
+      <div className={styles.layout}>
+        <div className={styles.left}>
+          <div className={styles.tabs} role="tablist">
+            {tabs.map((x) => (
+              <button key={x.key} type="button" role="tab" aria-selected={tab === x.key} className={`${styles.tab} ${tab === x.key ? styles.tabActive : ''}`} onClick={() => setTab(x.key)}>
+                {x.label}
               </button>
-            </div>
-          )}
-        </section>
-      ) : null}
+            ))}
+          </div>
+          <div className={`${styles.card} ${styles.tabContent}`} role="tabpanel">
+            {tab === 'recent' ? (
+              last.length ? (
+                <>
+                  <ul className={styles.list}>{recentShown.map((m) => <MatchRow key={m.id} m={m} teamId={team.id} locale={locale} t={t} />)}</ul>
+                  {!showAllRecent && last.length > RECENT_VISIBLE ? (
+                    <div className={styles.more}>
+                      <button type="button" className={styles.moreBtn} onClick={() => setShowAllRecent(true)} aria-label={t('recent.moreAria', { count: last.length - RECENT_VISIBLE })}>
+                        {t('recent.more')}
+                      </button>
+                    </div>
+                  ) : null}
+                </>
+              ) : (
+                <p className={styles.muted}>{t('national.empty')}</p>
+              )
+            ) : null}
+            {tab === 'fixtures' ? (
+              next.length ? <ul className={styles.list}>{next.map((m) => <MatchRow key={m.id} m={m} teamId={team.id} locale={locale} t={t} />)}</ul> : <p className={styles.muted}>{t('national.upcomingEmpty')}</p>
+            ) : null}
+            {tab === 'squad' ? (
+              squadGroups.length ? (
+                squadGroups.map((g) => (
+                  <details key={g.key} className={styles.squadGroup} open>
+                    <summary className={styles.squadTitle}>
+                      {t(`national.${g.key}`)} <span className={styles.squadCount}>{g.players.length}</span>
+                    </summary>
+                    <ul className={styles.players}>
+                      {g.players.map((p) => (
+                        <li key={p.id}>
+                          {p.photo ? <TeamLogo src={p.photo} width={28} height={28} alt="" className={styles.photo} /> : null}
+                          <span className={styles.playerName} title={p.name}>{formatPlayerName(p.name)}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </details>
+                ))
+              ) : (
+                <p className={styles.muted}>{t('national.squadEmpty')}</p>
+              )
+            ) : null}
+          </div>
+        </div>
 
-      <section id="ulusal-son" className={`${styles.card} ${styles.anchor}`}>
-        <h2 className={styles.h2}>{t('national.recentTitle')}</h2>
-        {last.length ? (
-          <>
-            <ul className={styles.list}>{recentShown.map((m) => <MatchRow key={m.id} m={m} locale={locale} t={t} />)}</ul>
-            {!showAllRecent && last.length > RECENT_VISIBLE ? (
-              <div className={styles.more}>
-                <button type="button" className={styles.moreBtn} onClick={() => setShowAllRecent(true)} aria-label={t('recent.moreAria', { count: last.length - RECENT_VISIBLE })}>
-                  {t('recent.more')}
+        {showStandings ? (
+          <aside className={styles.right}>
+            {standings.kind === 'ready' && titled ? (
+              <MatchCompetitionStandings data={titled.data} homeTeamId={team.id} competitionName={titled.title} />
+            ) : standings.kind === 'loading' ? (
+              <StandingsSkeleton />
+            ) : (
+              <div className={`${styles.card} ${styles.muted}`}>
+                {t('national.standingsError')}
+                <button type="button" className={styles.retry} onClick={() => setStandingsAttempt((n) => n + 1)}>
+                  {t('national.retry')}
                 </button>
               </div>
-            ) : null}
-          </>
-        ) : (
-          <p className={styles.muted}>{t('recent.empty')}</p>
-        )}
-      </section>
-
-      <section id="ulusal-kadro" className={`${styles.card} ${styles.anchor}`}>
-        <h2 className={styles.h2}>{t('national.squadTitle')}</h2>
-        {squadGroups.length ? (
-          squadGroups.map((g, i) => (
-            <details key={g.key} className={styles.squadGroup} open={i === 0 || undefined}>
-              <summary className={styles.squadTitle}>
-                {t(`national.${g.key}`)} <span className={styles.squadCount}>{g.players.length}</span>
-              </summary>
-              <ul className={styles.players}>
-                {g.players.map((p) => (
-                  <li key={p.id}>
-                    <span className={styles.num}>{p.number ?? ''}</span>
-                    <span className={styles.playerName}>{p.name}</span>
-                  </li>
-                ))}
-              </ul>
-            </details>
-          ))
-        ) : (
-          <p className={styles.muted}>{t('national.squadEmpty')}</p>
-        )}
-      </section>
+            )}
+          </aside>
+        ) : null}
+      </div>
     </div>
   );
 }

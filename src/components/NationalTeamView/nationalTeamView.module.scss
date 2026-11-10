@@ -24,7 +24,6 @@
   scroll-margin-top: 72px;
 }
 
-// Başlık: mobilde alt alta (kimlik, sıradaki maç hemen altında), masaüstünde kimlik solda / sıradaki maç sağda.
 .header {
   display: flex;
   flex-direction: column;
@@ -42,22 +41,22 @@
 .identity {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 16px;
   min-width: 0;
 }
 
 .flag {
-  flex: 0 0 56px;
-  width: 56px;
-  height: 56px;
+  flex: 0 0 72px;
+  width: 72px;
+  height: 72px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .flagImg {
-  width: 56px;
-  height: 56px;
+  width: 72px;
+  height: 72px;
   object-fit: contain;
   border-radius: $radius-sm;
 }
@@ -66,13 +65,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 56px;
-  height: 56px;
+  width: 72px;
+  height: 72px;
   border-radius: $radius-sm;
   background-color: $color-muted;
   border: 1px solid $color-border;
   color: $color-text-secondary;
-  font-size: 15px;
+  font-size: 18px;
   font-weight: 800;
   letter-spacing: 0.04em;
 }
@@ -83,8 +82,8 @@
 
 .title {
   margin: 0;
-  font-size: clamp(1.5rem, 4.5vw, 2rem);
-  line-height: 1.15;
+  font-size: clamp(1.6rem, 5vw, 2.1rem);
+  line-height: 1.12;
   font-weight: 800;
   color: $color-text;
   overflow-wrap: anywhere;
@@ -92,26 +91,40 @@
 
 .badge {
   margin: 4px 0 0;
-  font-size: 0.78rem;
+  font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--color-action-text);
 }
 
-.meta {
-  margin: 2px 0 0;
-  font-size: 0.82rem;
-  color: $color-text-secondary;
-  &:empty {
-    display: none;
+// Künye: etiket-değer çiftleri (KURULUŞ / STADYUM).
+.facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 22px;
+  margin: 8px 0 0;
+
+  dt {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+  }
+
+  dd {
+    margin: 1px 0 0;
+    font-size: 13px;
+    font-weight: 700;
+    color: $color-text;
   }
 }
 
 .nextBox {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
   padding: 10px 14px;
   border: 1px solid $color-border;
   border-radius: $radius-md;
@@ -132,11 +145,11 @@
 }
 
 .nextLabel {
-  font-size: 0.72rem;
+  font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: $color-text-secondary;
+  color: var(--text-secondary);
 }
 
 .nextOpp {
@@ -146,69 +159,124 @@
   font-weight: 700;
 }
 
-.nextLogo {
-  width: 22px;
-  height: 22px;
-  object-fit: contain;
-}
-
-.nextLogoFallback {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 22px;
-  font-size: 10px;
-  font-weight: 800;
-  color: $color-text-secondary;
-}
-
 .nextWhen {
-  font-size: 0.8rem;
-  color: $color-text-secondary;
+  font-size: 13px;
+  color: var(--text-secondary);
 }
 
-.sectionNav {
+.skelText {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px 14px;
-  font-size: 0.85rem;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.skelNext {
+  width: 100%;
+  max-width: 320px;
+}
+
+// Alt: mobilde tek sütun (sekmeler üstte, puan durumu altta), tablet+ iki sütun.
+.layout {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+  min-width: 0;
+}
+
+.left {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+  width: 100%;
+}
+
+.right {
+  width: 100%;
+  flex-shrink: 0;
+  min-width: 0;
+}
+
+@media (min-width: $bp-md) {
+  .layout {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+  .right {
+    width: $right-col-width;
+  }
+}
+
+.tabs {
+  display: flex;
+  gap: $spacing-2;
+  overflow-x: auto;
+  flex-wrap: nowrap;
+}
+
+.tab {
+  background-color: $color-surface;
+  border: 1px solid $color-border;
+  padding: $spacing-2 $spacing-4;
+  border-radius: $radius-full;
   font-weight: 600;
+  font-size: 13px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  flex-shrink: 0;
+  cursor: pointer;
 
-  a {
-    color: var(--color-action-text);
-    text-decoration: none;
-    padding: 4px 0;
-  }
-  a:hover {
-    text-decoration: underline;
+  &:hover {
+    background-color: $color-bg;
   }
 }
 
-.h2 {
-  margin: 0 0 $spacing-2;
-  font-size: 1rem;
-  color: $color-text;
+.tabActive {
+  background-color: $color-primary;
+  color: $color-surface;
+  border-color: $color-primary;
+
+  &:hover {
+    background-color: $color-primary-dark;
+  }
 }
 
-// Kompakt maç satırı: tarih | ev | skor | deplasman; turnuva alt satırda küçük.
+.tab:focus-visible,
+.row:focus-visible,
+.nextBox:focus-visible,
+.moreBtn:focus-visible,
+.retry:focus-visible,
+.squadTitle:focus-visible {
+  outline: 2px solid var(--color-action-text);
+  outline-offset: 2px;
+}
+
+.tabContent {
+  min-height: 120px;
+}
+
+// Maç satırı: tek satır — tarih | ev (ad + bayrak) | skor | deplasman (bayrak + ad) | turnuva. Mobilde iki satır.
 .list {
   list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  // Geniş kartta tarih–takım–skor arası açılmasın: satırlar kompakt bir şerit olarak kalır.
-  max-width: 36rem;
 }
 
 .row {
   display: grid;
-  grid-template-columns: 2.9rem minmax(0, 1fr) 3.6rem minmax(0, 1fr);
+  grid-template-columns: 2.9rem minmax(0, 1fr) 4rem minmax(0, 1fr);
+  grid-template-areas:
+    'date home score away'
+    '. comp comp comp';
   align-items: center;
-  column-gap: 6px;
-  padding: 7px 0;
+  column-gap: 8px;
+  row-gap: 2px;
+  padding: 8px 4px;
   border-top: 1px solid $color-border;
-  font-size: 0.88rem;
+  font-size: 14px;
   color: inherit;
   text-decoration: none;
 
@@ -221,35 +289,112 @@ li:first-child > .row {
   border-top: 0;
 }
 
+@media (min-width: 720px) {
+  .row {
+    grid-template-columns: 2.9rem minmax(0, 1fr) 4.2rem minmax(0, 1fr) minmax(0, 9.5rem);
+    grid-template-areas: 'date home score away comp';
+  }
+}
+
 .date {
-  font-size: 0.75rem;
-  color: $color-text-secondary;
+  grid-area: date;
+  font-size: 12px;
+  color: var(--text-secondary);
   white-space: nowrap;
 }
 
-.home {
+.team {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.teamHome {
+  grid-area: home;
+  justify-content: flex-end;
   text-align: right;
+}
+
+.teamAway {
+  grid-area: away;
+}
+
+.teamName {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.away {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+// Bayrak: sabit 20x14 kutu, kırpılarak doldurur.
+.rowFlag {
+  flex: 0 0 20px;
+  width: 20px;
+  height: 14px;
+  object-fit: cover;
+  border-radius: 2px;
+}
+
+.rowFlagFallback {
+  flex: 0 0 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 14px;
+  border-radius: 2px;
+  background: $color-muted;
+  border: 1px solid $color-border;
+  font-size: 8px;
+  font-weight: 800;
+  color: var(--text-secondary);
 }
 
 .score {
-  font-weight: 700;
-  text-align: center;
+  grid-area: score;
+  justify-self: center;
   white-space: nowrap;
+  text-align: center;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+// Sonuç rengi: lig takım sayfasındaki form rozetleriyle aynı değişkenler (G / B / M).
+.win,
+.draw,
+.loss {
+  @include form-badge;
+  padding: 0 8px;
+  min-width: 3.2rem;
+}
+
+.win {
+  @include form-badge-win;
+}
+
+.draw {
+  @include form-badge-draw;
+}
+
+.loss {
+  @include form-badge-loss;
+}
+
+.pending {
+  color: $color-text;
 }
 
 .comp {
-  grid-column: 2 / -1;
-  font-size: 0.7rem;
-  color: var(--text-tertiary);
+  grid-area: comp;
+  justify-self: start;
+  max-width: 100%;
+  padding: 1px 8px;
+  border-radius: $radius-full;
+  background: $color-muted;
+  border: 1px solid $color-border;
+  font-size: 12px;
+  color: var(--text-secondary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -276,67 +421,72 @@ li:first-child > .row {
   }
 }
 
-// Kadro: mevki grupları açılır; oyuncu adı kesilmez (satır sarar).
+// Kadro: belirgin mevki başlıkları (açılır), oyuncu adı kesilmez. Forma numarası güvenilmez → yok.
 .squadGroup {
-  border-top: 1px solid $color-border;
-  padding: 2px 0;
-}
-
-.squadGroup:first-of-type {
-  border-top: 0;
+  margin-bottom: 4px;
 }
 
 .squadTitle {
   cursor: pointer;
-  padding: 8px 0;
-  font-size: 0.85rem;
-  font-weight: 700;
+  padding: 8px 10px;
+  margin-bottom: 2px;
+  border-radius: $radius-sm;
+  background: $color-muted;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
   color: $color-text;
 }
 
 .squadCount {
-  margin-left: 4px;
-  font-weight: 500;
-  color: $color-text-secondary;
+  margin-left: 6px;
+  font-weight: 600;
+  color: var(--text-secondary);
 }
 
 .players {
   list-style: none;
   margin: 0;
-  padding: 0 0 8px;
+  padding: 4px 0 8px;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
-  gap: 4px 12px;
-  font-size: 0.88rem;
+  grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+  gap: 6px 12px;
+  font-size: 14px;
 
   li {
     display: flex;
-    gap: 6px;
+    align-items: center;
+    gap: 8px;
     min-width: 0;
   }
 }
 
-.num {
-  flex: 0 0 1.6rem;
-  color: $color-text-secondary;
-  text-align: right;
+.photo {
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: $color-muted;
 }
 
 .playerName {
   min-width: 0;
+  font-weight: 600;
+  color: $color-text;
   overflow-wrap: anywhere;
 }
 
 .muted {
   margin: 0;
-  color: $color-text-secondary;
-  font-size: 0.88rem;
+  color: var(--text-secondary);
+  font-size: 14px;
 }
 
 .state {
   padding: $spacing-6 $spacing-4;
   text-align: center;
-  color: $color-text-secondary;
+  color: var(--text-secondary);
 }
 
 .retry {

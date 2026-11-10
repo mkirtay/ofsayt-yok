@@ -39,3 +39,13 @@ export function titleStandings(data: CompetitionTableData, groupLabel: string | 
   if (!groupLabel || !data.competition) return { data, title };
   return { data: { ...data, competition: { ...data.competition, name: title ?? '' } }, title };
 }
+
+/** AF'de lig formu güvenilir dolmuyor ve dar kolonda yer yiyor: milli tabloda "Lig formu" sütunu çizilmesin. */
+export function withoutStandingsForm(data: CompetitionTableData): CompetitionTableData {
+  const strip = (rows: Row[] | undefined) => rows?.map(({ form: _form, ...rest }) => { void _form; return rest as Row; });
+  return {
+    ...data,
+    ...(data.table ? { table: strip(data.table)! } : {}),
+    ...(data.stages ? { stages: data.stages.map((s) => ({ ...s, groups: s.groups?.map((g) => ({ ...g, standings: strip(g.standings) })) })) } : {}),
+  } as CompetitionTableData;
+}

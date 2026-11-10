@@ -409,7 +409,7 @@ function VirtualRow({
                 src={logoUrl}
                 className={`${styles.virtualHeaderLogo} ${
                   competitionLogoNeedsBackdrop(item.competition_id) ? styles.logoBackdrop : ''
-                }`.trim()}
+                } ${isNationalMatchId(item.competition_id) ? styles.virtualHeaderLogoNational : ''}`.trim()}
                 width={22}
                 fallback={isNationalMatchId(item.competition_id) ? <span className={styles.virtualHeaderLogoFallback} aria-hidden>🏆</span> : null}
               />
@@ -433,6 +433,7 @@ function VirtualRow({
               <span className={styles.virtualHeaderLeagueName}>
                 {leagueNameById(item.competition_id, item.competition_name, tl)}
               </span>
+              {isNationalMatchId(item.competition_id) ? <span className={styles.nationalTag}>{t('nationalTag')}</span> : null}
             </span>
           </div>
           {item.hideIy ? null : <span className={styles.virtualHeaderColIy}>{t('halfTime')}</span>}

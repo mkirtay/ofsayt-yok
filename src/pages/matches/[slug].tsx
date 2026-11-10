@@ -15,7 +15,7 @@ import type { Match } from '@/models/liveScore';
 import { buildMatchHref, buildMatchSlug, parseMatchIdFromParam, parseMatchSlugFromParam } from '@/utils/matchUrl';
 import { matchOgImagePath } from '@/utils/matchOgImage';
 import { useTranslation } from '@/lib/i18n';
-import { reduceStandingsToTeamGroup, standingsGroupCount, titleStandings } from '@/utils/nationalStandings';
+import { reduceStandingsToTeamGroup, standingsGroupCount, titleStandings, withoutStandingsForm } from '@/utils/nationalStandings';
 import { standingsGroupHeading } from '@/components/MatchCompetitionStandings/groupHeading';
 import { leagueNameById } from '@/utils/leagueName';
 import { resolveMatchPage } from '@/server/resolveMatchPage';
@@ -321,7 +321,8 @@ export default function MatchDetail({
   const nationalTitled = nationalReduced?.groupName
     ? titleStandings(nationalReduced.data, standingsGroupHeading(nationalReduced.groupName, tm))
     : null;
-  const standingsData = nationalTitled?.data ?? standings;
+  const standingsRaw = nationalTitled?.data ?? standings;
+  const standingsData = standingsRaw && isNationalMatchId(match?.id) ? withoutStandingsForm(standingsRaw) : standingsRaw;
 
   if (gone) {
     return (
