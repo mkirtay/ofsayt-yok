@@ -81,22 +81,50 @@ describe('marketOdd — gerçek AF yanıtları (Süper Lig 1584458, UCL 1635726)
 
 import { extractMatchOdds } from './oddsMarkets';
 
-describe('extractMatchOdds (maç detayı kartı)', () => {
-  it('Süper Lig: Bet365 — 1X2 + 1.5/2.5/3.5 alt/üst + KG', () => {
+describe('extractMatchOdds (maç detayı kartı) — gerçek AF yanıtları', () => {
+  it('Süper Lig (Bet365): Maç Sonucu, Çifte Şans, İlk Yarı, Beraberlikte İade, KG, Toplam Gol 0.5–8.5, Handikap', () => {
     const v = extractMatchOdds(sl)!;
     expect(v.bookmaker).toBe('Bet365');
     expect(v.result).toEqual({ home: 1.17, draw: 7.5, away: 13 });
-    expect(v.totals.map((t) => t.line)).toEqual([1.5, 2.5, 3.5]);
-    expect(v.totals[1]).toEqual({ line: 2.5, over: 1.3, under: 3.5 });
+    expect(v.doubleChance).toEqual({ homeDraw: 1.05, drawAway: expect.any(Number), homeAway: 1.1 });
+    expect(v.doubleChance!.drawAway).toBeGreaterThan(1);
+    expect(v.firstHalf).toEqual({ home: 1.5, draw: 3.2, away: 9.5 });
+    expect(v.drawNoBet).toEqual({ home: 1.05, away: 11 });
     expect(v.btts).toEqual({ yes: 1.8, no: 1.91 });
+    // Yalnız iki yönü de gelen çizgiler (0.5–8.5 aralığı; eksik yönlü çizgi atlanır).
+    const lines = v.totals.map((t) => t.line);
+    expect(lines).toEqual([...lines].sort((a, b) => a - b));
+    expect(lines.slice(0, 4)).toEqual([0.5, 1.5, 2.5, 3.5]);
+    expect(lines.length).toBeGreaterThanOrEqual(7);
+    expect(Math.max(...lines)).toBeLessThanOrEqual(8.5);
+    expect(v.totals.find((t) => t.line === 2.5)).toEqual({ line: 2.5, over: 1.3, under: 3.5 });
+    for (const t of v.totals) expect(t.over).toBeGreaterThan(1);
+    expect(v.handicap).toHaveLength(5);
+    expect(v.handicap.map((h) => h.line)).toEqual([...v.handicap.map((h) => h.line)].sort((a, b) => a - b));
+    for (const h of v.handicap) expect(h.home > 1 && h.away > 1).toBe(true);
   });
-  it('milli maç (yalnız 1xBet): 1.5 çizgisi yoksa listede yok, bookmaker 1xBet', () => {
+
+  it('UCL maçında da aynı pazarlar gelir', () => {
+    const v = extractMatchOdds(ucl)!;
+    expect(v.result && v.doubleChance && v.firstHalf && v.btts).toBeTruthy();
+    expect(v.totals.length).toBeGreaterThan(3);
+    expect(v.handicap.length).toBeGreaterThan(0);
+  });
+
+  it('milli maç (yalnız 1xBet): Beraberlikte İade yok, 1.5 çizgisi yok, çeyrek çizgiler var; olmayan bölüm alanı yok', () => {
     const v = extractMatchOdds(nat)!;
     expect(v.bookmaker).toBe('1xBet');
-    expect(v.totals.every((t) => t.line !== 1.5) || nat.bookmakers[0].bets.find((b) => b.id === 5)!.values.some((x) => x.value === 'Under 1.5')).toBe(true);
-    expect(v.totals.find((t) => t.line === 2.5)).toBeTruthy();
+    expect(v.drawNoBet).toBeUndefined();
+    expect(v.result).toBeDefined();
+    expect(v.doubleChance).toBeDefined();
+    expect(v.totals.some((t) => t.line === 1.5)).toBe(false);
+    expect(v.totals.some((t) => t.line === 2.5)).toBe(true);
+    expect(v.totals.some((t) => t.line === 3)).toBe(true);
   });
-  it('veri yok → null', () => {
+
+  it('bookmaker tercihi: Bet365 yoksa sıradaki; veri yok → null', () => {
+    const without365: AfOddsEntry = { ...sl, bookmakers: sl.bookmakers.filter((b) => b.id !== 8) };
+    expect(extractMatchOdds(without365)!.bookmaker).not.toBe('Bet365');
     expect(extractMatchOdds(null)).toBeNull();
     expect(extractMatchOdds({ fixture: { id: 1 }, bookmakers: [] })).toBeNull();
   });

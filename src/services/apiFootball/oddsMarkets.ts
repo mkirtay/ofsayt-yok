@@ -85,41 +85,105 @@ export function marketOdd(entry: AfOddsEntry | null | undefined, key: TopPickKey
   return null;
 }
 
+export type TotalsRow = { line: number; over: number; under: number };
+export type HandicapRow = { line: number; home: number; away: number };
+
 export type MatchOddsView = {
   bookmaker: string;
   updatedAt: string | null;
-  /** 1X2 (bet 1). */
+  /** Maç Sonucu 1 X 2 (bet 1). */
   result?: { home: number; draw: number; away: number };
-  /** Alt/üst (bet 5): yalnız iki yönü de olan, 1.5 / 2.5 / 3.5 çizgileri; çizgi yoksa listede yok. */
-  totals: Array<{ line: number; over: number; under: number }>;
-  /** Karşılıklı gol (bet 8). */
+  /** Çifte Şans 1X / X2 / 12 (bet 12: Home/Draw, Draw/Away, Home/Away). */
+  doubleChance?: { homeDraw: number; drawAway: number; homeAway: number };
+  /** İlk Yarı Sonucu 1 X 2 (bet 13). */
+  firstHalf?: { home: number; draw: number; away: number };
+  /** Beraberlikte İade 1 / 2 (bet 2 "Home/Away" = draw no bet). Yalnız Bet365 / William Hill'de var; milli maçta (1xBet) yok. */
+  drawNoBet?: { home: number; away: number };
+  /** Karşılıklı Gol Var / Yok (bet 8). */
   btts?: { yes: number; no: number };
+  /** Toplam Gol: iki yönü de olan TÜM çizgiler (bet 5), küçükten büyüğe. Ana çizgiler (1.5 / 2.5 / 3.5) arayüzde öne alınır. */
+  totals: TotalsRow[];
+  /** Handikap (Asya, bet 4): çizgi = ev sahibinin handikapı; `home` o çizgideki ev, `away` karşı yön oranı. Dengeli çizgiye yakın 5 satır. */
+  handicap: HandicapRow[];
 };
 
-const TOTAL_LINES = [1.5, 2.5, 3.5] as const;
+export const MAIN_TOTAL_LINES = [1.5, 2.5, 3.5] as const;
+
+function numLine(v: string, prefix: string): number | null {
+  if (!v.startsWith(prefix)) return null;
+  const n = Number(v.slice(prefix.length).trim());
+  return Number.isFinite(n) ? n : null;
+}
+
+function allTotals(bk: AfOddsBookmaker): TotalsRow[] {
+  const bet = bk.bets.find((b) => b.id === 5);
+  if (!bet) return [];
+  const rows = new Map<number, Partial<TotalsRow>>();
+  for (const v of bet.values) {
+    const odd = parseOdd(v.odd);
+    if (odd == null) continue;
+    const over = numLine(v.value, 'Over ');
+    const under = numLine(v.value, 'Under ');
+    if (over != null) rows.set(over, { ...rows.get(over), line: over, over: odd });
+    if (under != null) rows.set(under, { ...rows.get(under), line: under, under: odd });
+  }
+  return [...rows.values()].filter((r): r is TotalsRow => r.over != null && r.under != null).sort((a, b) => a.line - b.line);
+}
+
+function handicapRows(bk: AfOddsBookmaker): HandicapRow[] {
+  const bet = bk.bets.find((b) => b.id === 4);
+  if (!bet) return [];
+  const rows = new Map<number, Partial<HandicapRow>>();
+  for (const v of bet.values) {
+    const odd = parseOdd(v.odd);
+    if (odd == null) continue;
+    const home = numLine(v.value, 'Home ');
+    const away = numLine(v.value, 'Away ');
+    if (home != null) rows.set(home, { ...rows.get(home), line: home, home: odd });
+    if (away != null) rows.set(away, { ...rows.get(away), line: away, away: odd });
+  }
+  const full = [...rows.values()].filter((r): r is HandicapRow => r.home != null && r.away != null);
+  if (full.length === 0) return [];
+  // Dengeli çizgi: iki yönün oranı birbirine en yakın olan; çevresinden 5 satır.
+  const balanced = [...full].sort((a, b) => Math.abs(a.home - a.away) - Math.abs(b.home - b.away))[0]!;
+  return full
+    .sort((a, b) => Math.abs(a.line - balanced.line) - Math.abs(b.line - balanced.line) || a.line - b.line)
+    .slice(0, 5)
+    .sort((a, b) => a.line - b.line);
+}
 
 function viewFor(bk: AfOddsBookmaker): Omit<MatchOddsView, 'bookmaker' | 'updatedAt'> {
   const get = (betId: number, value: string): number | null => oddOf(bk, { betId, value });
-  const h = get(1, 'Home');
-  const d = get(1, 'Draw');
-  const a = get(1, 'Away');
+  const triple = (betId: number) => {
+    const h = get(betId, 'Home');
+    const d = get(betId, 'Draw');
+    const a = get(betId, 'Away');
+    return h != null && d != null && a != null ? { home: h, draw: d, away: a } : undefined;
+  };
+  const dcH = get(12, 'Home/Draw');
+  const dcA = get(12, 'Draw/Away');
+  const dc12 = get(12, 'Home/Away');
+  const dnbH = get(2, 'Home');
+  const dnbA = get(2, 'Away');
   const y = get(8, 'Yes');
   const n = get(8, 'No');
-  const totals = TOTAL_LINES.flatMap((line) => {
-    const over = get(5, `Over ${line}`);
-    const under = get(5, `Under ${line}`);
-    return over != null && under != null ? [{ line, over, under }] : [];
-  });
+  const result = triple(1);
+  const firstHalf = triple(13);
   return {
-    ...(h != null && d != null && a != null ? { result: { home: h, draw: d, away: a } } : {}),
-    totals,
+    ...(result ? { result } : {}),
+    ...(dcH != null && dcA != null && dc12 != null ? { doubleChance: { homeDraw: dcH, drawAway: dcA, homeAway: dc12 } } : {}),
+    ...(firstHalf ? { firstHalf } : {}),
+    ...(dnbH != null && dnbA != null ? { drawNoBet: { home: dnbH, away: dnbA } } : {}),
     ...(y != null && n != null ? { btts: { yes: y, no: n } } : {}),
+    totals: allTotals(bk),
+    handicap: handicapRows(bk),
   };
 }
 
 /**
- * Maç detayı "Piyasa oranları" kartı: tercih sırasındaki İLK bookmaker'ın (hepsi aynı bookmaker'dan) 1X2, alt/üst ve KG
- * oranları. Hiçbir pazar yoksa null (kart gizlenir). Milli maçta yalnız 1xBet gelir; 1.5 çizgisi yoktur.
+ * Maç detayı "Piyasa oranları" kartı: tercih sırasındaki İLK bookmaker'ın (hepsi aynı bookmaker'dan) pazarları. Olmayan pazar
+ * alanı yok → arayüz o bölümü gizler (uydurma yok). Hiçbir pazar yoksa null (kart gizlenir). Milli maçta yalnız 1xBet gelir:
+ * Beraberlikte İade yoktur, alt/üst çizgileri 2.0–4.0 aralığındadır, 1.5 çizgisi yoktur.
  */
 export function extractMatchOdds(entry: AfOddsEntry | null | undefined): MatchOddsView | null {
   if (!entry) return null;
@@ -130,7 +194,9 @@ export function extractMatchOdds(entry: AfOddsEntry | null | undefined): MatchOd
   });
   for (const bk of ordered) {
     const v = viewFor(bk);
-    if (v.result || v.totals.length > 0 || v.btts) return { bookmaker: bk.name, updatedAt: entry.update ?? null, ...v };
+    if (v.result || v.doubleChance || v.firstHalf || v.drawNoBet || v.btts || v.totals.length > 0 || v.handicap.length > 0) {
+      return { bookmaker: bk.name, updatedAt: entry.update ?? null, ...v };
+    }
   }
   return null;
 }

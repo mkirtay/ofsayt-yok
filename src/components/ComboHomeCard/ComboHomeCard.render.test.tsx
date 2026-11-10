@@ -34,7 +34,7 @@ describe('<ComboHomeCard />', () => {
 
   it('görünür metinlerde bahis dili yok (yalnız zorunlu "piyasa" etiketi serbest)', () => {
     const values = (o: unknown): string[] => Object.values(o as Record<string, unknown>).flatMap((v) => (v && typeof v === 'object' ? values(v) : [String(v)]));
-    const text = values({ ...trCombo, oddLabel: '', disclaimer: '', marketOdds: { ...trCombo.marketOdds, title: '', source: '' } }).join(' | ');
+    const text = values({ ...trCombo, oddLabel: '', disclaimer: '', marketOdds: { ...trCombo.marketOdds, title: '', source: '', result: '', doubleChance: '', firstHalf: '', drawNoBet: '', btts: '', goals: '', handicap: '' } }).join(' | ');
     expect(findGamblingTerms(text)).toEqual([]);
   });
 });
