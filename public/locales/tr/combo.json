@@ -3,12 +3,13 @@
   "badge": "Test",
   "open": "Aç",
   "close": "Kapat",
-  "intro": "Günün en güçlü AI tahminlerinden risk ayarlı bir kombine. Olasılıklar modelin tahminidir; kombine isabet olasılığı maç olasılıklarının çarpımıdır.",
+  "intro": "Riskini, tutarını ve istediğin oranı gir; günün en güçlü AI tahminlerinden bir seçim önerelim. Olasılıklar modelin tahminidir, maçlar birbirinden bağımsız varsayılır.",
   "risk": {
-    "label": "Risk düzeyi",
+    "label": "Risk",
     "safe": "Düşük",
     "balanced": "Dengeli",
-    "bold": "Yüksek"
+    "bold": "Yüksek",
+    "hint": "Risk arttıkça daha düşük olasılıklı, daha yüksek oranlı seçimler gelir."
   },
   "pick": {
     "home": "Ev sahibi kazanır",
@@ -66,5 +67,48 @@
     "no": "Yok",
     "source": "Kaynak: {{bookmaker}} · yaklaşık piyasa oranı. Türkiye'deki bir şirketin oranı değildir, garanti değildir.",
     "testBadge": "Test"
-  }
+  },
+  "stake": "Yatıracağın tutar (TL)",
+  "stakeInvalid": "Tutar 0'dan büyük ve en çok 1.000.000 TL olmalı.",
+  "targetField": "İstediğin oran (isteğe bağlı)",
+  "targetInvalid": "Geçerli bir değer gir (1 ile 1000 arası).",
+  "type": {
+    "label": "Tür",
+    "straight": "Düz kombine",
+    "system": "Sistem",
+    "k": "Kaç maç tutmalı"
+  },
+  "run": "Öner",
+  "relaxedNote": "İstediğin oran %{{risk}} eşiğiyle ulaşılamadığı için en düşük olasılık %{{used}}'e çekildi.",
+  "advice": {
+    "label": "Sana uygun tür",
+    "straight": "düz kombine",
+    "system": "sistem ({{k}}/{{n}})",
+    "fewLegs": "Az maç var, düz kombine yeterli.",
+    "lowRisk": "Risk düşük: tek bir kombine daha sade.",
+    "smallStake": "Tutar küçük: sistem toplam yatırımı büyütür.",
+    "highRisk": "Risk yüksek ve maç çok: sistem bir maçın tutmamasına tolerans sağlar."
+  },
+  "straightSummary": {
+    "potential": "Olası getiri",
+    "stakeTimesOdds": "{{amount}} TL × {{mult}}",
+    "probability": "Tutma olasılığı (model)",
+    "breakEven": "Başabaş olasılık",
+    "expected": "Beklenen değer"
+  },
+  "systemSummary": {
+    "combinations": "Kombinasyon",
+    "totalStake": "Toplam yatırım",
+    "maxReturn": "En yüksek getiri",
+    "expectedReturn": "Beklenen getiri",
+    "expected": "Beklenen değer",
+    "profitProb": "Kâr olasılığı",
+    "anyHit": "En az bir kombinasyon tutma olasılığı",
+    "hint": "Her kombinasyon tutarın tamamıyla oynanır; toplam yatırım = kombinasyon sayısı × tutar."
+  },
+  "needOdds": "Özet için tüm maçların oranı gerekli; oranı olmayan maç var.",
+  "systemLimit": "Sistem için en çok 8 maç.",
+  "tl": "TL",
+  "maxMatchesAdv": "Maç sayısı (en çok)",
+  "minPctAdv": "En düşük olasılık (%) — boş: riske göre"
 }

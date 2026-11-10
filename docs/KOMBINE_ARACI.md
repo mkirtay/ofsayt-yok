@@ -15,9 +15,14 @@ Dal: `claude/admin-coupon-tool-e78eee` (milli maç dalı `claude/national-matche
 - Aday: günün Sportmonks maçları ∩ kayıtlı maç öncesi AI analizi (prompt v5+, `PRE`). **Her maçtan yalnız en güçlü tek pazar**
   (`pickTopPredictions(…, 1)`, analiz kartı ile aynı seçim). Başlamış maçlar varsayılan gizli (“Başlamış maçları da göster” ile açılır).
 - Kombine tutma olasılığı = olasılıkların çarpımı (maçlar bağımsız varsayılır; bu bir yaklaşıklıktır).
-- Form: risk düzeyi (düşük/dengeli/yüksek = eşik %80/70/60, 3/4/6 maç), en düşük olasılık, maç sayısı, isteğe bağlı hedef kombine oran.
-  Hedef oransız → eşiği geçen en güçlü N; hedef oranlı → hedefe ulaşan alt kümeler içinde olasılığı EN YÜKSEK olan (en çok 16 aday, tam tarama).
-  Elle işaretleme de serbest; özet (olasılık, oran, başabaş olasılık, fark = olasılık × oran − 1) anında güncellenir.
+- **Akış (ana sayfa kartı):** risk % (kaydırıcı 0–100 + hazır chip'ler Düşük %20 / Dengeli %50 / Yüksek %80) → yatırılacak tutar (TL) → isteğe bağlı istenen
+  oran → tür (düz kombine / sistem) → "Öner". Risk arttıkça eşik düşer (%85 → %55), izin verilen maç sayısı artar (2 → 8); istenen oran verilirse o
+  orana ulaşan, modele göre EN OLASI küme seçilir (eşik hedefe yetmiyorsa taban %55'e kadar gevşetilir ve söylenir). "Sana düz mü sistem mi uygun" önerisi
+  risk / maç sayısı / tutara göre. Çıktı — düz: tutar × oran = olası getiri, tutma olasılığı (model), başabaş olasılık, beklenen değer; sistem (n ≤ 8, n maçtan
+  k doğru): kombinasyon sayısı, toplam yatırım (= kombinasyon × tutar), en yüksek getiri, beklenen getiri / değer, kâr olasılığı, en az bir kombinasyon
+  tutma olasılığı (2^n sonuç kesin hesaplanır; maçlar bağımsız varsayılır). Hesap: `src/utils/comboPlan.ts` (saf, testli). Girdi doğrulama: tutar 0 < t ≤ 1.000.000 TL,
+  oran 1 < o ≤ 1000. "Gelişmiş": maç sayısı, en düşük olasılık, elle maç seçimi.
+- **"Misli"** kavramı (Misli.com mi, misli çarpanı mı) net olmadığı için KAPSAMA ALINMADI — kullanıcıdan netleştirilecek.
 - Geçmiş isabet tablosu: değerlendirilmiş maçların en güçlü tek pazarı, olasılık bantlarına göre; bant başına < 30 maç “az örnek” uyarılı.
   (2026-11-10 kalibrasyonu: model temkinli — dediğinden fazla tutuyor; örnek küçük.)
 

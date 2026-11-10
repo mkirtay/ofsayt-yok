@@ -3,12 +3,13 @@
   "badge": "Test",
   "open": "Open",
   "close": "Close",
-  "intro": "A risk-adjusted combination from today's strongest AI predictions. Probabilities are model estimates; the combined probability is the product of the match probabilities.",
+  "intro": "Enter your risk, amount and the odds you want; we suggest a pick from today's strongest AI predictions. Probabilities are model estimates and matches are assumed independent.",
   "risk": {
-    "label": "Risk level",
+    "label": "Risk",
     "safe": "Low",
     "balanced": "Balanced",
-    "bold": "High"
+    "bold": "High",
+    "hint": "Higher risk brings lower-probability, higher-odds picks."
   },
   "pick": {
     "home": "Home win",
@@ -66,5 +67,48 @@
     "no": "No",
     "source": "Source: {{bookmaker}} · approximate market odds. Not those of any Turkish operator, not guaranteed.",
     "testBadge": "Test"
-  }
+  },
+  "stake": "Amount to stake (TL)",
+  "stakeInvalid": "Amount must be above 0 and at most 1,000,000 TL.",
+  "targetField": "Odds you want (optional)",
+  "targetInvalid": "Odds must be above 1 and at most 1000.",
+  "type": {
+    "label": "Type",
+    "straight": "Straight combo",
+    "system": "System",
+    "k": "How many must hit"
+  },
+  "run": "Suggest",
+  "relaxedNote": "The odds you want are not reachable at the {{risk}}% threshold, so the minimum probability was lowered to {{used}}%.",
+  "advice": {
+    "label": "Suggested type",
+    "straight": "straight combo",
+    "system": "system ({{k}}/{{n}})",
+    "fewLegs": "Few matches: a straight combo is enough.",
+    "lowRisk": "Low risk: a single combo is simpler.",
+    "smallStake": "Small amount: a system multiplies the total stake.",
+    "highRisk": "High risk and many matches: a system tolerates one miss."
+  },
+  "straightSummary": {
+    "potential": "Potential return",
+    "stakeTimesOdds": "{{amount}} TL × {{mult}}",
+    "probability": "Hit probability (model)",
+    "breakEven": "Break-even probability",
+    "expected": "Expected value"
+  },
+  "systemSummary": {
+    "combinations": "Combinations",
+    "totalStake": "Total stake",
+    "maxReturn": "Maximum return",
+    "expectedReturn": "Expected return",
+    "expected": "Expected value",
+    "profitProb": "Probability of profit",
+    "anyHit": "Probability at least one combination hits",
+    "hint": "Each combination is played with the full amount; total stake = number of combinations × amount."
+  },
+  "needOdds": "All matches need odds for the summary; some are missing.",
+  "systemLimit": "A system allows at most 8 matches.",
+  "tl": "TL",
+  "maxMatchesAdv": "Matches (max)",
+  "minPctAdv": "Minimum probability (%) — empty: by risk"
 }
