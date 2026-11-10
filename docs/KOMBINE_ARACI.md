@@ -35,40 +35,35 @@ sayfasında kart olarak listelenir (yalnız adminler görür). Bayrak kapalıyke
 - Pazar eşlemesi: Süper Lig (Beşiktaş–Gençlerbirliği) ve UCL (PSG–Bayern) gerçek AF yanıtlarında 12 pazar anahtarının hepsi oran döndürüyor
   (`oddsMarkets.test.ts`, `__fixtures__/oddsSuperLig_*`, `oddsUcl_*`; bookmaker/bet alt kümesine sıkıştırıldı). Milli maç (yalnız 1xBet) ve oransız maç testli.
 
-## Oran biriktirme (backtest) — MIGRATION TASLAĞI (UYGULANMADI, koda bağlı DEĞİL)
-`prisma/` altına KONMADI: build sırasında `migrate deploy` çalışırsa prod'a gider. Onaylanırsa `prisma/schema.prisma`'ya ve yeni bir migration'a konur:
+## Oran biriktirme (backtest) — migration BEKLEMEDE, koda bağlı ama tablo yoksa atlar
+**Güvenlik araştırması (2026-11-11):** `package.json` build'i yalnız `next build` (+ sharp izi denetimi); build / deploy sırasında `prisma migrate deploy`
+ÇALIŞMIYOR, CI (`.github/workflows/ci.yml`) yalnız `prisma generate` + sahte `postgresql://user:pass@localhost` kullanıyor. Migration'lar elle
+uygulanıyor (SQL Editor / `migrate deploy`, bkz. `docs/MIGRATION_STRATEJISI.md`). Vercel Preview'ın prod `DATABASE_URL`'ini kullanıp kullanmadığı
+repoda belgeli DEĞİL (`docs/GUVENLIK_RAPORU.md` §6'da "açık soru") → ayrı test DB'si olduğuna dair kanıt yok. Bu yüzden migration `prisma/migrations`
+altına KONMADI: `docs/migrations-pending/20261111120000_combo_odds_snapshot/migration.sql`. `schema.prisma` değişmedi (yazma/okuma ham SQL; Prisma
+client'a model gerekmiyor). Yerelde `migrate` / `db push` / `test:db` çalıştırılmadı; migration yalnız bellek içi PGlite testinde doğrulandı
+(`src/test/migrations/comboOddsSnapshot.pglite.test.ts`).
 
-```prisma
-model ComboOddsSnapshot {
-  id            String   @id @default(cuid())
-  /// Maçın Türkiye günü (YYYY-MM-DD)
-  day           String
-  matchId       String
-  afFixtureId   Int
-  pickKey       String
-  pct           Float
-  odd           Float
-  median        Float
-  bookmaker     String
-  oddsUpdatedAt DateTime?
-  createdAt     DateTime @default(now())
+**Test ortamına uygulama (kullanıcı):** test Supabase projesinin SQL Editor'ünde dosyanın içeriğini çalıştır (IF NOT EXISTS; iki kez çalışması zararsız).
+Tablo yokken cron 200 + `skipped: "no-table"` döner, hiçbir şey yazılmaz.
 
-  @@unique([matchId, pickKey, day])
-  @@index([day])
-}
-```
-```sql
-CREATE TABLE "ComboOddsSnapshot" (
-  "id" TEXT NOT NULL, "day" TEXT NOT NULL, "matchId" TEXT NOT NULL, "afFixtureId" INTEGER NOT NULL,
-  "pickKey" TEXT NOT NULL, "pct" DOUBLE PRECISION NOT NULL, "odd" DOUBLE PRECISION NOT NULL,
-  "median" DOUBLE PRECISION NOT NULL, "bookmaker" TEXT NOT NULL, "oddsUpdatedAt" TIMESTAMP(3),
-  "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT "ComboOddsSnapshot_pkey" PRIMARY KEY ("id")
-);
-CREATE UNIQUE INDEX "ComboOddsSnapshot_matchId_pickKey_day_key" ON "ComboOddsSnapshot"("matchId","pickKey","day");
-CREATE INDEX "ComboOddsSnapshot_day_idx" ON "ComboOddsSnapshot"("day");
-```
-Yazma noktası: `/api/admin/kombine` POST sonucunda (yalnız `status: 'ok'`) upsert; bunun için günlük otomatik toplama (cron) ayrı karar.
+**Tasarım:** maç + pazar başına TEK satır (`UNIQUE(matchId, pickKey)`): `firstOdd/firstAt` (ilk görülen = açılışa yakın, sabit) ve her çalışmada güncellenen
+`lastOdd/lastAt` (kapanışa yakın) + `snapshots` sayacı; maç başladıktan sonra güncellenmez (oran donar). Böylece gün içinde kaç kez çalışırsa çalışsın
+satır sayısı değişmez (idempotent) ve tablo şişmez. Milli maçlar (AI analizi yok) olasılıksız (`pct NULL`) 1X2 / 2,5 üst / KG var satırlarıyla girer.
+
+## Günlük oran toplama (cron) — KURULMADI
+Uç: `POST /api/cron/combo-odds` (`COMBO_TOOL_ENABLED` kapalıyken 404; yalnız `Authorization: Bearer $CRON_SECRET`; sır query'de reddedilir). Kapsam:
+bugün + yarın (Türkiye günü) AI analizi olan yaklaşan maçlar + (bayrak açıksa) milli maçlar; oran kombine bütçe havuzundan (önbellekli, eşzamanlılık 4).
+**Vercel crons'a eklenmedi.** cron-job.org kurulumu (gundem bot-tick ile aynı desen):
+1. https://cron-job.org → *Create cronjob*. URL: `https://<site>/api/cron/combo-odds`, yöntem **POST**.
+2. *Advanced → Headers*: `Authorization: Bearer <CRON_SECRET değeri>` (Vercel env'deki ile aynı; URL'ye YAZMA).
+3. Zamanlama: 3 saatte bir (örn. `0 */3 * * *`) yeterli — oranlar maçtan 1–2 gün önce açılıp kapanışa kadar oynar; günde ≈ 8 çalışma × (≤ ~10 maç) ≈ 80 AF isteği (günlük 1500 payın çok altında).
+4. Zaman aşımı 30 sn, hata bildirimi açık. Yanıt `{"ok":true,"summary":{candidates,withOdds,national,written,skipped?}}`; `skipped:"no-table"` = migration henüz uygulanmadı.
+5. Önce elle dene: `curl -X POST -H "Authorization: Bearer $CRON_SECRET" https://<site>/api/cron/combo-odds`.
+
+## Backtest özeti (salt okunur, UI'a bağlı değil)
+`src/server/combo/backtest.ts`: `summarizeBacktest(picks, { comboSize })` (saf, testli) ve `loadBacktestPicks('first'|'last')` (snapshot + `PredictionRecord` sonucu; tablo yoksa null).
+Çıktı: tekli (isabet oranı, ortalama oran, düz 1 birim kâr/ROI, modelin beklediği ROI) ve günlük kombine (günün en yüksek olasılıklı N pazarı). Küçük örnekte gürültüdür.
 
 ## Bilinen eksikler
 - Maçlar bağımsız varsayılır (aynı gün aynı ligdeki maçlar arasında küçük korelasyon olabilir); sistem/mısli yok.
