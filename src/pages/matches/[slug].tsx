@@ -1,7 +1,7 @@
 import type { GetServerSideProps } from 'next';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import Container from '@/components/Container';
 import MatchDetailContent from '@/components/MatchDetailContent';
 import { toStandingsCompetitionId } from '@/services/sportmonksProviderFlag';
@@ -15,6 +15,8 @@ import type { Match } from '@/models/liveScore';
 import { buildMatchHref, buildMatchSlug, parseMatchIdFromParam, parseMatchSlugFromParam } from '@/utils/matchUrl';
 import { matchOgImagePath } from '@/utils/matchOgImage';
 import { useTranslation } from '@/lib/i18n';
+import { reduceStandingsToTeamGroup, standingsGroupCount, titleStandings, withoutStandingsForm } from '@/utils/nationalStandings';
+import { standingsGroupHeading } from '@/components/MatchCompetitionStandings/groupHeading';
 import { leagueNameById } from '@/utils/leagueName';
 import { resolveMatchPage } from '@/server/resolveMatchPage';
 import { loadAnalysisPreviewForPage } from '@/server/analysisPreviewForPage';
@@ -261,6 +263,8 @@ export default function MatchDetail({
   }, [match, routeMatchId, slug]);
 
   const { t: tl } = useTranslation('leagues');
+  const { t: tm } = useTranslation('match');
+  const [showAllGroups, setShowAllGroups] = useState(false);
   const compId = match?.competition?.id ?? match?.competition_id;
   const standingsCompId = toStandingsCompetitionId(compId);
   // Canlı puan durumu katmanı: YALNIZ bu maç canlıyken (durum canlı güncellemeyle tazelenir) ve maç bitince maç sonu
@@ -308,6 +312,17 @@ export default function MatchDetail({
   // Milli maçta tablo olmayan turnuva (hazırlık) → boş kutu çizilmez; yüklenemedi (hata) ise kutu "tekrar dene" gösterir.
   const nationalWithoutTable = isNationalMatchId(match?.id) && !standingsLoading && !standingsError && standings == null;
   const showStandingsBlock = (compId != null || matchLoading) && !nationalWithoutTable;
+  // Milli turnuvada (ör. Uluslar Ligi 14 grup) varsayılan: yalnız maçın grubu; "Tüm grupları göster" ile hepsi.
+  const nationalGroupCount = isNationalMatchId(match?.id) ? standingsGroupCount(standings) : 0;
+  const nationalReduced =
+    standings && nationalGroupCount > 1 && !showAllGroups
+      ? reduceStandingsToTeamGroup(standings, [Number(homeTeamId), Number(awayTeamId)])
+      : null;
+  const nationalTitled = nationalReduced?.groupName
+    ? titleStandings(nationalReduced.data, standingsGroupHeading(nationalReduced.groupName, tm))
+    : null;
+  const standingsRaw = nationalTitled?.data ?? standings;
+  const standingsData = standingsRaw && isNationalMatchId(match?.id) ? withoutStandingsForm(standingsRaw) : standingsRaw;
 
   if (gone) {
     return (
@@ -414,7 +429,7 @@ export default function MatchDetail({
             <div className="layout-right">
               {showStandingsBlock ? (
                 <MatchCompetitionStandings
-                  data={standings}
+                  data={standingsData}
                   loading={standingsLoading || matchLoading}
                   error={standingsError}
                   onRetry={retryStandings}
@@ -431,6 +446,11 @@ export default function MatchDetail({
                     standingsCompId != null ? (sid) => handleSeasonChange(sid, String(standingsCompId)) : undefined
                   }
                 />
+              ) : null}
+              {showStandingsBlock && nationalGroupCount > 1 ? (
+                <button type="button" className={styles.groupsToggle} onClick={() => setShowAllGroups((v) => !v)}>
+                  {tm(showAllGroups ? 'standings.showOwnGroup' : 'standings.showAllGroups')}
+                </button>
               ) : null}
               {/* Puan durumunun altı: sütunda boş yer var, fotoğraf tembel (ilk görünüme / LCP'ye girmez). */}
               <MatchVenueCard venue={match?.venue_info} />

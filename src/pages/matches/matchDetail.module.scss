@@ -31,3 +31,21 @@
   flex: 1;
   min-width: 0;
 }
+
+// Milli turnuva puan durumu: "Tüm grupları göster" düğmesi (yalnız çok gruplu milli turnuvada çizilir).
+.groupsToggle {
+  align-self: flex-start;
+  margin: -4px 0 12px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  border: 1px solid var(--border-subtle);
+  border-radius: 999px;
+  background: var(--bg-surface);
+  color: var(--color-action-text);
+  cursor: pointer;
+
+  &:hover {
+    background: var(--bg-page);
+  }
+}

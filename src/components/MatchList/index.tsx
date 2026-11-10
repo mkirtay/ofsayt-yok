@@ -27,6 +27,7 @@ import RedCardBadge, { redCardCountFor } from '@/components/RedCardBadge';
 import TieLine from './TieLine';
 import { isSecondLeg } from '@/utils/aggregateScore';
 import { finishedLabelKey } from '@/utils/finishLabel';
+import { isNationalMatchId } from '@/services/apiFootball/ids';
 import { isModifiedClick } from '@/utils/matchSelection';
 import { liveMinuteLabel } from '@/utils/liveMinute';
 import styles from './matchList.module.scss';
@@ -164,6 +165,8 @@ type FlatItem =
       country_name?: string;
       country_flag?: string;
       competition_logo?: string;
+      /** Milli grup ve hiçbir maçta devre skoru yok → "İY" sütun başlığı çizilmez. */
+      hideIy?: boolean;
       showGap: boolean;
     }
   | {
@@ -303,6 +306,7 @@ function buildFlatItems(groupedMatches: GroupedLeagueMatches[], items: FlatItem[
       country_name: group.country_name,
       country_flag: group.country_flag,
       competition_logo: group.competition_logo,
+      ...(isNationalMatchId(group.competition_id) && !group.matches.some((m) => m.scores?.ht_score?.trim()) ? { hideIy: true } : {}),
       showGap,
     });
     const { matches } = group;
@@ -405,9 +409,12 @@ function VirtualRow({
                 src={logoUrl}
                 className={`${styles.virtualHeaderLogo} ${
                   competitionLogoNeedsBackdrop(item.competition_id) ? styles.logoBackdrop : ''
-                }`.trim()}
+                } ${isNationalMatchId(item.competition_id) ? styles.virtualHeaderLogoNational : ''}`.trim()}
                 width={22}
+                fallback={isNationalMatchId(item.competition_id) ? <span className={styles.virtualHeaderLogoFallback} aria-hidden>🏆</span> : null}
               />
+            ) : isNationalMatchId(item.competition_id) ? (
+              <span className={styles.virtualHeaderLogoFallback} aria-hidden>🏆</span>
             ) : countryFlag ? (
               <TeamLogo
                 src={countryFlag}
@@ -426,9 +433,10 @@ function VirtualRow({
               <span className={styles.virtualHeaderLeagueName}>
                 {leagueNameById(item.competition_id, item.competition_name, tl)}
               </span>
+              {isNationalMatchId(item.competition_id) ? <span className={styles.nationalTag}>{t('nationalTag')}</span> : null}
             </span>
           </div>
-          <span className={styles.virtualHeaderColIy}>{t('halfTime')}</span>
+          {item.hideIy ? null : <span className={styles.virtualHeaderColIy}>{t('halfTime')}</span>}
         </div>
       </div>
     );
@@ -451,7 +459,10 @@ function VirtualRow({
     variant === 'scheduled' && !scoreRaw?.trim() ? '—' : scoreRaw?.trim() || '- : -';
   const isLive = variant === 'live';
   const liveMinute = isLive ? liveMinuteLabel(match.time) : '';
-  const htDisplay = normalizeHt(match.scores?.ht_score);
+  const nationalMatch = isNationalMatchId(match.id);
+  // Milli maçta devre skoru yoksa (başlamadı) boş çizgi yerine boş hücre.
+  const htDisplay = nationalMatch && !match.scores?.ht_score?.trim() ? '' : normalizeHt(match.scores?.ht_score);
+  const crestCode = (name: string) => <span className={styles.crestCode}>{name.replace(/[^\p{L}]/gu, '').slice(0, 3).toLocaleUpperCase('tr-TR')}</span>;
   const secondLeg = isSecondLeg(match);
 
   const rowClass = [
@@ -524,7 +535,7 @@ function VirtualRow({
           className={`${styles.virtualCell} ${styles.virtualHome}${match.home?.id ? ` ${styles.virtualTeamCell}` : ''}`}
           onClick={match.home?.id ? (e) => { e.stopPropagation(); e.preventDefault(); if (onSelectTeam) onSelectTeam(match.home!.id); else navigateTo(`/teams/${match.home!.id}`); } : undefined}
         >
-          <TeamLogo src={homeLogo} className={styles.teamCrest} width={18} />
+          <TeamLogo src={homeLogo} className={styles.teamCrest} width={18} fallback={nationalMatch ? crestCode(homeName) : null} />
           {/* Kart adın dış tarafında: ad skora bitişik yerinde kalır (kayma yok). */}
           <RedCardBadge count={redCardCountFor(match, 'home')} />
           <TeamNameLabel
@@ -542,7 +553,7 @@ function VirtualRow({
           className={`${styles.virtualCell} ${styles.virtualAway}${match.away?.id ? ` ${styles.virtualTeamCell}` : ''}`}
           onClick={match.away?.id ? (e) => { e.stopPropagation(); e.preventDefault(); if (onSelectTeam) onSelectTeam(match.away!.id); else navigateTo(`/teams/${match.away!.id}`); } : undefined}
         >
-          <TeamLogo src={awayLogo} className={styles.teamCrest} width={18} />
+          <TeamLogo src={awayLogo} className={styles.teamCrest} width={18} fallback={nationalMatch ? crestCode(awayName) : null} />
           <TeamNameLabel
             teamId={match.away?.id}
             name={awayName}

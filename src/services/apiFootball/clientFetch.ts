@@ -3,7 +3,8 @@
  * Maç + olaylar + istatistik + kadro tek yanıt → aynı id için eşzamanlı çağrılar (maç, istatistik, kadro) tek isteği paylaşır.
  */
 import type { NationalMatchBundle } from './mapper';
-import type { CompetitionTableData } from '@/services/liveScoreService';
+import type { CompetitionTableData, TopScorersPayload } from '@/services/liveScoreService';
+import type { TeamSeasonStats } from '@/services/sportmonks/teamSeasonStats';
 
 export type NationalClientResult = { kind: 'found'; bundle: NationalMatchBundle } | { kind: 'missing' } | { kind: 'error' };
 
@@ -46,4 +47,21 @@ export async function fetchNationalStandings(appLeagueId: number | string): Prom
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`national standings HTTP ${res.status}`);
   return (await res.json()) as CompetitionTableData;
+}
+
+async function getJsonOrNull<T>(url: string): Promise<T | null> {
+  const res = await fetch(url);
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`national HTTP ${res.status}`);
+  return (await res.json()) as T;
+}
+
+/** Takım sezon istatistiği (BFF). Hata → fırlatır; yok → null. */
+export function fetchNationalTeamStats(teamId: number | string, leagueId: number | string, season: number): Promise<TeamSeasonStats | null> {
+  return getJsonOrNull<TeamSeasonStats>(`/api/national/team-stats/${encodeURIComponent(String(teamId))}?league=${encodeURIComponent(String(leagueId))}&season=${season}`);
+}
+
+/** Turnuva gol / asist krallığı (BFF). Hata → fırlatır; yok → null. */
+export function fetchNationalScorers(leagueId: number | string, season: number): Promise<TopScorersPayload | null> {
+  return getJsonOrNull<TopScorersPayload>(`/api/national/scorers/${encodeURIComponent(String(leagueId))}?season=${season}`);
 }
