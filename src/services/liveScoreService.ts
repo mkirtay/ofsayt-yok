@@ -2,6 +2,8 @@ import { Match } from '../models/liveScore';
 import { MatchEvent, MatchLineupData, MatchStatsData } from '../models/domain';
 import { compareGroupedLeagues } from '../config/leagues';
 import { WORLD_CUP_COMPETITION_ID, resolveSportmonksLeagueId } from './sportmonksProviderFlag';
+import { isNationalMatchId } from '@/services/apiFootball/ids';
+import { fetchNationalBundle, fetchNationalBundleOrThrow } from '@/services/apiFootball/clientFetch';
 import { sportmonksClientRequest, sportmonksCollectAllPages } from './sportmonksRuntimeClient';
 import { SportmonksHttpError } from './sportmonks/httpClient';
 import { isMatchLive, matchIstanbulDate } from '../utils/matchActivity';
@@ -251,7 +253,8 @@ const SPORTMONKS_MISSING_STATUSES = new Set([400, 403, 404, 422]);
  * id'leriyle aynı aralıkta (bkz. fixtureIdRange.ts) — hangisi olduğuna SSR slug'la karar verir.
  */
 export async function lookupSportmonksFixture(matchId: string): Promise<SportmonksFixtureLookup> {
-  if (!/^\d{1,12}$/.test(matchId)) return { kind: 'missing' };
+  // Milli maç id'si (>= 2e9, API-Football) Sportmonks'ta yok: kota harcanmaz.
+  if (!/^\d{1,12}$/.test(matchId) || isNationalMatchId(matchId)) return { kind: 'missing' };
   const isMissing = (error: unknown) => error instanceof SportmonksHttpError && SPORTMONKS_MISSING_STATUSES.has(error.status);
   const notFixture = (f: unknown) => !f || Array.isArray(f) || typeof f !== 'object';
   try {
@@ -290,6 +293,15 @@ export async function findMatchById(
   stats?: MatchStatsData | null;
   lineups?: MatchLineupData | null;
 }> {
+  // Milli maç (id >= 2e9, API-Football): kendi BFF ucumuz; Sportmonks'a hiç gidilmez.
+  if (isNationalMatchId(matchId)) {
+    const r = await fetchNationalBundle(matchId);
+    if (r.kind === 'found') {
+      const { match, events, stats, lineups } = r.bundle;
+      return { match, events, fromFixture: false, stats, lineups };
+    }
+    return { match: null, events: [], fromFixture: false, ...(r.kind === 'error' ? { transient: true } : {}) };
+  }
   const lookup = await lookupSportmonksFixture(matchId);
   if (lookup.kind === 'found') {
     return { match: lookup.match, events: lookup.events, fromFixture: false, stats: lookup.stats, lineups: lookup.lineups };
@@ -1016,6 +1028,10 @@ export const getTeamsHead2Head = async (
  * (maç detayı) hatayı "olay yok" sanmasın diye; `getMatchWithEvents` hatayı yutan hâli (canlı uç).
  */
 export async function fetchMatchWithEvents(matchId: string): Promise<{ match: Match | null; events: MatchEvent[] }> {
+  if (isNationalMatchId(matchId)) {
+    const b = await fetchNationalBundleOrThrow(matchId);
+    return b ? { match: b.match, events: b.events } : { match: null, events: [] };
+  }
   const fixture = await fetchMatchPageFixture(matchId);
   if (!fixture) return { match: null, events: [] };
   const { match, events } = mapMatchPageFixture(fixture);
@@ -1038,6 +1054,7 @@ export const getMatchWithEvents = async (
  * Maç sayfası SSR'ı geçici hatayı "veri yok" sayıp boş kartlı kopyayı CDN'de 1 gün tutmasın diye (H2H'de aynı desen).
  */
 export async function fetchMatchStats(matchId: string): Promise<MatchStatsData | null> {
+  if (isNationalMatchId(matchId)) return (await fetchNationalBundleOrThrow(matchId))?.stats ?? null;
   const fixture = await fetchMatchPageFixture(matchId);
   return mapSportmonksStatistics(fixture?.statistics);
 }
@@ -1054,6 +1071,7 @@ export const getMatchStats = async (matchId: string): Promise<MatchStatsData | n
 
 /** Kadro (maç sayfasının tek isteğinden; metadata 572 = resmî mi) — hata FIRLATIR, `null` yalnız gerçekten veri yok. */
 export async function fetchMatchLineups(matchId: string): Promise<MatchLineupData | null> {
+  if (isNationalMatchId(matchId)) return (await fetchNationalBundleOrThrow(matchId))?.lineups ?? null;
   const fixture = await fetchMatchPageFixture(matchId);
   return fixture ? mapSportmonksLineups(fixture) : null;
 }

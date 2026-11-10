@@ -9,7 +9,7 @@ export { BRAND_LOGO_DATA_URI, BRAND_LOGO_ASPECT } from './brandLogo.generated';
 export const OG_LOGO_TIMEOUT_MS = 1_500;
 const MAX_LOGO_BYTES = 512 * 1024;
 /** Logo yalnız bu host'lardan (veri Sportmonks'tan gelse de: sunucudan keyfi adrese istek atılmasın). */
-const LOGO_HOSTS = new Set(['cdn.sportmonks.com']);
+const LOGO_HOSTS = new Set(['cdn.sportmonks.com', 'media.api-sports.io']);
 
 export type OgFont = { name: string; data: ArrayBuffer; weight: 600 | 800; style: 'normal' };
 

@@ -4,6 +4,9 @@ import type { SportmonksFixtureLookup } from '@/services/liveScoreService';
 import { isUnambiguousSportmonksId } from '@/services/sportmonks/fixtureIdRange';
 import { matchSlugMatches } from '@/utils/matchUrl';
 import { resolveSportmonksMatch } from '@/lib/resolveLiveMatch';
+import { isNationalMatchId } from '@/services/apiFootball/ids';
+import { nationalMatchesEnabled } from '@/config/nationalMatches';
+import { lookupNationalMatch, type NationalLookup } from '@/server/apiFootball/nationalMatch';
 import { findStoredMatchInfo, type StoredMatchInfo } from '@/server/storedMatch';
 
 /**
@@ -33,6 +36,9 @@ export type MatchPageResolution =
 export type ResolveMatchPageDeps = {
   findStored: (matchId: string) => Promise<StoredMatchInfo | null>;
   resolve: (matchId: string, opts: { lookupAmbiguous?: boolean }) => Promise<SportmonksFixtureLookup>;
+  /** Milli maç (id >= 2e9, API-Football); bayrak kapalıyken çağrılmaz. */
+  resolveNational: (matchId: string) => Promise<NationalLookup>;
+  nationalEnabled: () => boolean;
 };
 
 function found(lookup: Extract<SportmonksFixtureLookup, { kind: 'found' }>): MatchPageResolution {
@@ -46,7 +52,12 @@ function found(lookup: Extract<SportmonksFixtureLookup, { kind: 'found' }>): Mat
   };
 }
 
-const defaultDeps: ResolveMatchPageDeps = { findStored: findStoredMatchInfo, resolve: resolveSportmonksMatch };
+const defaultDeps: ResolveMatchPageDeps = {
+  findStored: findStoredMatchInfo,
+  resolve: resolveSportmonksMatch,
+  resolveNational: lookupNationalMatch,
+  nationalEnabled: nationalMatchesEnabled,
+};
 
 /**
  * @param urlSlug URL'de id'den sonraki kısım ("" = slug'sız URL).
@@ -64,6 +75,17 @@ export async function resolveMatchPage(
   urlSlug: string,
   deps: ResolveMatchPageDeps = defaultDeps,
 ): Promise<MatchPageResolution> {
+  // Milli maç (API-Football, id >= 2e9): ayrı dal — aşağıdaki Sportmonks yolu DEĞİŞMEZ. Bayrak kapalıysa "yok".
+  if (isNationalMatchId(matchId)) {
+    if (!deps.nationalEnabled()) return { kind: 'missing' };
+    const r = await deps.resolveNational(matchId);
+    if (r.kind === 'found') {
+      const { match, events, stats, lineups } = r.bundle;
+      return { kind: 'match', match, events, stats, lineups };
+    }
+    return r.kind === 'error' ? { kind: 'error' } : { kind: 'missing' };
+  }
+
   if (isUnambiguousSportmonksId(matchId)) {
     const lookup = await deps.resolve(matchId, {});
     if (lookup.kind === 'found') return found(lookup);

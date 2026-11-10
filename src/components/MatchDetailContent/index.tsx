@@ -1,3 +1,4 @@
+import { isNationalMatchId } from '@/services/apiFootball/ids';
 import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Router from 'next/router';
@@ -59,6 +60,8 @@ export const MATCH_TAB_KEYS: readonly MatchTabKey[] = ['overview', 'commentary',
 const PRERENDER_ANALYSIS: readonly MatchTabKey[] = ['analysis'];
 
 /** Varsayılan sekme: Genel Bakış (veri hazır, AI kredisi harcamaz). */
+const NATIONAL_HIDDEN_TABS: ReadonlySet<MatchTabKey> = new Set(['commentary', 'analysis', 'trivia']);
+
 export const DEFAULT_MATCH_TAB: MatchTabKey = 'overview';
 
 export { tabFromSearch } from './tabDeepLink';
@@ -73,6 +76,9 @@ export default function MatchDetailContent({ detail, requestedMatchId, variant =
   const { t } = useTranslation('match');
   const { match, matchLoading, statsLoading, eventsLoading, lineupsLoading } = detail;
   const effectiveMatchId = detail.matchId || requestedMatchId;
+  // Milli maç (API-Football, id >= 2e9): Anlatım, AI Analiz, Trivia sekmeleri ile baskı şeridi ve hakem puanı yok (veri
+  // sağlayıcıda yok / Sportmonks'a bağlı) → sessizce gizlenir; sade sayfa: kart + istatistik + olaylar + kadro + forum.
+  const national = isNationalMatchId(effectiveMatchId);
   const [active, setActive] = useState<MatchTabKey>(DEFAULT_MATCH_TAB);
   const contentRef = useRef<HTMLDivElement>(null);
   const { t: tc } = useTranslation('common');
@@ -138,10 +144,10 @@ export default function MatchDetailContent({ detail, requestedMatchId, variant =
     });
   }, []);
   // AI analiz/kredi durumu sayfa açılışında çekilir — sekmeye girince beklemeden hazır olsun.
-  const analysisState = useMatchAnalysis(effectiveMatchId, initialAnalysisPreview);
+  const analysisState = useMatchAnalysis(national ? '' : effectiveMatchId, initialAnalysisPreview);
 
   const tabs = useMemo<MatchTabItem<MatchTabKey>[]>(
-    () => [
+    () => ([
       {
         key: 'overview',
         label: t('tabs.overview'),
@@ -154,8 +160,8 @@ export default function MatchDetailContent({ detail, requestedMatchId, variant =
                 <MatchDiscussionCard key={effectiveMatchId} matchId={effectiveMatchId} onJoin={openForum} />
               </div>
             ) : null}
-            <MatchMomentum matchId={effectiveMatchId} match={match} events={detail.events} />
-            {effectiveMatchId && match && refereeRatingWindow(match) === 'open' ? (
+            {national ? null : <MatchMomentum matchId={effectiveMatchId} match={match} events={detail.events} />}
+            {!national && effectiveMatchId && match && refereeRatingWindow(match) === 'open' ? (
               <RefereeRating key={effectiveMatchId} matchId={effectiveMatchId} refereeName={match.referee} />
             ) : null}
             <div
@@ -232,8 +238,9 @@ export default function MatchDetailContent({ detail, requestedMatchId, variant =
         render: () =>
           effectiveMatchId ? <MatchTrivia key={effectiveMatchId} matchId={effectiveMatchId} match={match} /> : null,
       },
-    ],
+    ] as MatchTabItem<MatchTabKey>[]).filter((tab) => !(national && NATIONAL_HIDDEN_TABS.has(tab.key))),
     [
+      national,
       t,
       variant,
       detail.stats,

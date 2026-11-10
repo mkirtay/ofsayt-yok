@@ -1,3 +1,5 @@
+import { isNationalMatchId } from '@/services/apiFootball/ids';
+
 /**
  * Eski (livescore-api.com) Dünya Kupası `competition_id`'si. Sportmonks planında Dünya Kupası yok: bu id'ye
  * istek atılmaz, puan durumu / gol krallığı `null` döner (/world-cup sayfası kaldırıldı, 2026-10-19).
@@ -112,7 +114,9 @@ export function toStandingsCompetitionId(
 ): number | null {
   if (matchCompetitionId == null) return null;
   const id = Number(matchCompetitionId);
-  return Number.isFinite(id) ? id : null;
+  // Milli maç ligi (API-Football, id >= 2e9): Sportmonks puan durumu yok → istek atılmaz.
+  if (!Number.isFinite(id) || isNationalMatchId(id)) return null;
+  return id;
 }
 
 /**

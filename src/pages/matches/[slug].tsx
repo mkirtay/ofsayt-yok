@@ -41,6 +41,7 @@ import { useLiveStandings } from '@/hooks/useLiveStandings';
 import { afterMatchDeadline, isLiveMatchStatus, standingsMatchesInLeague } from '@/services/liveStandings';
 import { useHomeHubMatches } from '@/hooks/useHomeHubMatches';
 import { todayIsoIstanbul } from '@/utils/dateStrip';
+import { isNationalMatchId } from '@/services/apiFootball/ids';
 import { loadGameSlotForFixture, type GameSlot } from '@/server/game/matchSlot';
 
 type MatchDetailProps = {
@@ -135,7 +136,8 @@ export const getServerSideProps: GetServerSideProps<MatchDetailProps> = async (c
         const [optional, analysisPreview, gameSlot] = await Promise.all([
           loadMatchPageOptionalSections(page.match, apiMatchId, {
             ...defaultMatchPageOptionalDeps,
-            loadH2h: (m) => withPageTimeout(() => defaultMatchPageOptionalDeps.loadH2h(m)),
+            // Milli maçta H2H / form yok (takım id'leri AF uzayında; Sportmonks'a gidilmez) → "veri yok".
+            loadH2h: (m) => (isNationalMatchId(m.id) ? Promise.resolve(null) : withPageTimeout(() => defaultMatchPageOptionalDeps.loadH2h(m))),
             // Çekirdek veri hafif yedekten geldiyse (birleşik istek geçici hata) tohum yeniden denenmez: istemci çeker, sayfa
             // CDN'de geçici hata süresi kadar (≤ 60 sn) tutulur.
             loadSeed: (id) =>
@@ -297,7 +299,7 @@ export default function MatchDetail({
   const shareDescription = match?.hashtag ? `${pageDescription} ${match.hashtag}` : pageDescription;
   const canonicalUrl = `${siteBaseUrl()}${canonicalPath}`;
   // Kimlik tabanlı paylaşım görseli: içerik sunucudaki maç verisinden, `v` yalnız önbellek anahtarı (bkz. utils/matchOgImage.ts).
-  const ogImageUrl = match && homeName && awayName
+  const ogImageUrl = match && homeName && awayName && !isNationalMatchId(match.id)
     ? `${siteBaseUrl()}${matchOgImagePath(match)}`
     : null;
   const effectiveMatchId = matchId || requestedMatchId || (archived ? routeMatchId : '');

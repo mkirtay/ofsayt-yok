@@ -1,0 +1,74 @@
+/**
+ * API-Football (v3.football.api-sports.io) sunucu istemcisi — YALNIZ sunucu; tarayıcı AF'ye gitmez (BFF: pages/api/national/*).
+ * Anahtar `API_FOOTBALL_KEY` (Pro: 7500/gün), `x-apisports-key` başlığıyla; asla loglanmaz / hata iletisine konmaz.
+ *
+ * Kota bilinci: (1) uygulama içi günlük sayaç (Redis, UTC gün) `DAILY_SOFT_LIMIT`'e varınca istek atılmaz (sayfalar CDN /
+ * SWR önbelleğinden servis edilir, canlı veri Sportmonks tarafını etkilemez); (2) yanıt başlığındaki kalan günlük hak
+ * (`x-ratelimit-requests-remaining`) düşükse uyarı. AF hataları 200 gövdede `errors` ile gelir → hata sayılır.
+ */
+import { cacheKeyPrefix } from '@/lib/cacheNamespace';
+import { withRedis } from '@/lib/redis';
+
+export const AF_BASE_URL = 'https://v3.football.api-sports.io';
+export const AF_TIMEOUT_MS = 8_000;
+/** Pro plan 7500/gün; geri kalan pay ileride kupon aracı / ikinci aşama için. */
+export const DAILY_SOFT_LIMIT = 5_000;
+
+export class ApiFootballError extends Error {
+  constructor(
+    message: string,
+    readonly kind: 'config' | 'budget' | 'http' | 'api' | 'network',
+    readonly status?: number,
+  ) {
+    super(message);
+    this.name = 'ApiFootballError';
+  }
+}
+
+export type AfEnvelope<T> = { response: T[]; errors?: unknown; results?: number };
+
+function hasErrors(errors: unknown): boolean {
+  if (!errors) return false;
+  if (Array.isArray(errors)) return errors.length > 0;
+  if (typeof errors === 'object') return Object.keys(errors as object).length > 0;
+  return false;
+}
+
+/** Günlük sayaç +1; limit aşıldıysa false. Redis yoksa / hata → izin ver (fail-open). */
+async function takeDailyBudget(now: number = Date.now()): Promise<boolean> {
+  const day = new Date(now).toISOString().slice(0, 10);
+  const key = `${cacheKeyPrefix()}af:daily:${day}`;
+  const used = await withRedis(async (r) => {
+    const n = await r.incr(key);
+    if (n === 1) await r.expire(key, 2 * 24 * 60 * 60);
+    return n;
+  }, 0);
+  return used <= DAILY_SOFT_LIMIT;
+}
+
+export async function apiFootballGet<T>(
+  path: string,
+  params: Record<string, string | number>,
+  fetchImpl: typeof fetch = fetch,
+): Promise<AfEnvelope<T>> {
+  const key = process.env.API_FOOTBALL_KEY;
+  if (!key) throw new ApiFootballError('API_FOOTBALL_KEY tanımlı değil', 'config');
+  if (!(await takeDailyBudget())) throw new ApiFootballError('API-Football günlük iç bütçe doldu', 'budget');
+
+  const qs = new URLSearchParams(Object.entries(params).map(([k, v]) => [k, String(v)])).toString();
+  let res: Response;
+  try {
+    res = await fetchImpl(`${AF_BASE_URL}${path}${qs ? `?${qs}` : ''}`, {
+      headers: { 'x-apisports-key': key, Accept: 'application/json' },
+      signal: AbortSignal.timeout(AF_TIMEOUT_MS),
+    });
+  } catch {
+    throw new ApiFootballError('API-Football isteği başarısız (ağ / zaman aşımı)', 'network');
+  }
+  if (!res.ok) throw new ApiFootballError(`API-Football HTTP ${res.status}`, 'http', res.status);
+  const remaining = Number(res.headers.get('x-ratelimit-requests-remaining'));
+  if (Number.isFinite(remaining) && remaining < 500) console.warn('[api-football] günlük kalan hak düşük', remaining);
+  const body = (await res.json()) as AfEnvelope<T>;
+  if (hasErrors(body.errors)) throw new ApiFootballError('API-Football hata döndürdü', 'api');
+  return body;
+}
