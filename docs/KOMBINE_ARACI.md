@@ -22,7 +22,7 @@ Dal: `claude/admin-coupon-tool-e78eee` (milli maç dalı `claude/national-matche
   k doğru): kombinasyon sayısı, toplam yatırım (= kombinasyon × tutar), en yüksek getiri, beklenen getiri / değer, kâr olasılığı, en az bir kombinasyon
   tutma olasılığı (2^n sonuç kesin hesaplanır; maçlar bağımsız varsayılır). Hesap: `src/utils/comboPlan.ts` (saf, testli). Girdi doğrulama: tutar 0 < t ≤ 1.000.000 TL,
   oran 1 < o ≤ 1000. "Gelişmiş": maç sayısı, en düşük olasılık, elle maç seçimi.
-- **"Misli"** kavramı (Misli.com mi, misli çarpanı mı) net olmadığı için KAPSAMA ALINMADI — kullanıcıdan netleştirilecek.
+- **Misli (çarpan):** tamsayı 1–1000 (boş = 1); birim tutar = tutar × misli (en çok 10.000.000 TL). Düz kombinede getiri, sistemde her kombinasyonun tutarı (toplam yatırım = kombinasyon × tutar × misli) buna göre. (Misli.com ile ilgisi yok; "çarpan" olarak yorumlandı — yanlışsa söyle.)
 - Geçmiş isabet tablosu: değerlendirilmiş maçların en güçlü tek pazarı, olasılık bantlarına göre; bant başına < 30 maç “az örnek” uyarılı.
   (2026-11-10 kalibrasyonu: model temkinli — dediğinden fazla tutuyor; örnek küçük.)
 
@@ -79,3 +79,9 @@ bugün + yarın (Türkiye günü) AI analizi olan yaklaşan maçlar + (bayrak a�
 - Pazar olasılığı modelin ham değeri; kalibrasyon düzeltmesi uygulanmıyor, yalnız geçmiş tablo gösteriliyor.
 - Oran yalnız maça ~1–2 gün kala; uzak günlerde “oran henüz açılmadı”. Milli maçlar (AI analizi yok) araca girmez.
 - Ekran/etkileşim testi: sayfa bileşeni tarayıcıda oturum gerektirdiği için yalnız örnek veriyle (sahte oturum üretilmeden) görsel doğrulandı.
+
+## Maç sayfası: "Kim Kazanır?" anketi ve Piyasa oranları kartı
+- Anket (`MatchPoll`, lig + milli ortak): "Topluluk Tahmini" → "Kim Kazanır?" / "Who Will Win?". Takım modunda üç yuvarlak düğme logo · X · logo, takım adı yok (aria-label + title'da). Genel Bakış'ta
+  "Maç tartışması" kartının hemen üstünde (aynı sarmalayıcı: ≥ split genişlikte ikisi de gizli, sağdaki "Maç sohbeti" paneli anketi gösterir); Forum sekmesinden kaldırıldı (`showPoll=false`; arşiv sekmeleri etkilenmez).
+- Piyasa oranları (yalnız milli maç + aynı kapı): ilk görünüm "Maç Sonucu" 1 X 2; "Ek oranlar" → Çifte Şans, İlk Yarı Sonucu, Beraberlikte İade, Karşılıklı Gol, Toplam Gol (tüm çizgiler, 1.5/2.5/3.5 önde), Handikap (Asya, dengeli çizgi çevresi 5 satır).
+  AF bet kimlikleri: 1, 12, 13, 2 (Home/Away = beraberlikte iade; yalnız Bet365/William Hill — milli maçta (1xBet) yok → bölüm gizli), 8, 5, 4. Oran oku (▲▼) YOK: oran geçmişi tutulmuyor (snapshot tablosu uygulanmadı ve 1X2'yi kapsamıyor).

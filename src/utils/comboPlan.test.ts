@@ -3,6 +3,8 @@ import {
   adviseType,
   comb,
   parseStake,
+  parseMisli,
+  effectiveUnit,
   parseTargetOdds,
   riskToMaxMatches,
   riskToMinPct,
@@ -28,6 +30,35 @@ describe('girdi doğrulama', () => {
     expect(parseTargetOdds('1,7')).toBe(1.7);
     expect(parseTargetOdds('20')).toBe(20);
     for (const bad of ['1', '0,5', '-3', 'x', '1001', '']) expect(parseTargetOdds(bad)).toBeNull();
+  });
+});
+
+describe('misli (çarpan)', () => {
+  it('tamsayı 1–1000; boş → 1; ondalık / negatif / sıfır / metin / aşırı reddedilir', () => {
+    expect(parseMisli('')).toBe(1);
+    expect(parseMisli(null)).toBe(1);
+    expect(parseMisli('5')).toBe(5);
+    expect(parseMisli(1000)).toBe(1000);
+    for (const bad of ['0', '-2', '1,5', '2.5', 'x', '1001', '1e3']) expect(parseMisli(bad)).toBeNull();
+  });
+  it('birim tutar = tutar × misli; geçersiz ya da aşırı büyükse null', () => {
+    expect(effectiveUnit(2000, 3)).toBe(6000);
+    expect(effectiveUnit(99.99, 3)).toBe(299.97);
+    expect(effectiveUnit(null, 3)).toBeNull();
+    expect(effectiveUnit(2000, null)).toBeNull();
+    expect(effectiveUnit(1_000_000, 1000)).toBeNull();
+  });
+  it('düz kombinede getiri misliyle çarpılır; sistemde toplam yatırım = kombinasyon × tutar × misli', () => {
+    const legs = [{ p: 0.8, odd: 1.5 }, { p: 0.7, odd: 2 }, { p: 0.6, odd: 2.5 }];
+    const unit = effectiveUnit(100, 3)!;
+    const s = systemOutcome(legs, 2, unit)!;
+    expect(s.totalStake).toBe(3 * 300); // C(3,2)=3 kombinasyon × (100 TL × 3 misli)
+    const one = systemOutcome(legs, 2, 100)!;
+    expect(s.expectedReturn).toBeCloseTo(one.expectedReturn * 3, 6);
+    expect(s.expectedProfit).toBeCloseTo(one.expectedProfit * 3, 6);
+    expect(s.profitProbability).toBeCloseTo(one.profitProbability, 10); // olasılıklar misliden bağımsız
+    const st = straightOutcome([c('a', 80, 1.5), c('b', 70, 2)], unit)!;
+    expect(st.potentialReturn).toBeCloseTo(300 * 3, 8);
   });
 });
 

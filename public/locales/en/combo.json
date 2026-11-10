@@ -73,7 +73,7 @@
     "otherLines": "Other lines"
   },
   "stake": "Amount to stake (TL)",
-  "stakeInvalid": "Amount must be above 0 and at most 1,000,000 TL.",
+  "stakeInvalid": "Amount must be above 0; amount × multiplier at most 10,000,000 TL.",
   "targetField": "Odds you want (optional)",
   "targetInvalid": "Odds must be above 1 and at most 1000.",
   "type": {
@@ -114,5 +114,8 @@
   "systemLimit": "A system allows at most 8 matches.",
   "tl": "TL",
   "maxMatchesAdv": "Matches (max)",
-  "minPctAdv": "Minimum probability (%) — empty: by risk"
+  "minPctAdv": "Minimum probability (%) — empty: by risk",
+  "misli": "Multiplier",
+  "misliInvalid": "Multiplier must be a whole number from 1 to 1000.",
+  "unitHint": "Unit: {{amount}} TL × {{misli}}"
 }

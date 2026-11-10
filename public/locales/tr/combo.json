@@ -73,7 +73,7 @@
     "otherLines": "Diğer çizgiler"
   },
   "stake": "Yatıracağın tutar (TL)",
-  "stakeInvalid": "Tutar 0'dan büyük ve en çok 1.000.000 TL olmalı.",
+  "stakeInvalid": "Tutar 0'dan büyük olmalı; tutar × misli en çok 10.000.000 TL.",
   "targetField": "İstediğin oran (isteğe bağlı)",
   "targetInvalid": "Geçerli bir değer gir (1 ile 1000 arası).",
   "type": {
@@ -114,5 +114,8 @@
   "systemLimit": "Sistem için en çok 8 maç.",
   "tl": "TL",
   "maxMatchesAdv": "Maç sayısı (en çok)",
-  "minPctAdv": "En düşük olasılık (%) — boş: riske göre"
+  "minPctAdv": "En düşük olasılık (%) — boş: riske göre",
+  "misli": "Misli (çarpan)",
+  "misliInvalid": "Misli 1 ile 1000 arasında bir tam sayı olmalı.",
+  "unitHint": "Birim: {{amount}} TL × {{misli}}"
 }

@@ -7,6 +7,8 @@ import {
   MAX_SYSTEM_LEGS,
   MIN_PCT_FLOOR,
   adviseType,
+  effectiveUnit,
+  parseMisli,
   parseStake,
   parseTargetOdds,
   riskToMaxMatches,
@@ -54,6 +56,7 @@ export default function ComboHomeCard() {
   const [failed, setFailed] = useState(false);
   const [risk, setRisk] = useState(50);
   const [stake, setStake] = useState('1000');
+  const [misli, setMisli] = useState('1');
   const [target, setTarget] = useState('');
   const [mode, setMode] = useState<Mode>('straight');
   const [k, setK] = useState(0);
@@ -69,19 +72,22 @@ export default function ComboHomeCard() {
 
   const withOdds = useMemo(() => (rows ?? []).map((r) => ({ ...r, odd: odds[r.matchId] ?? null })), [rows, odds]);
   const chosen = useMemo(() => withOdds.filter((r) => selected.includes(r.matchId)), [withOdds, selected]);
-  const stakeNum = parseStake(stake);
+  const stakeNum = useMemo(() => parseStake(stake), [stake]);
+  const misliNum = useMemo(() => parseMisli(misli), [misli]);
+  // Birim tutar = tutar × misli: düz kombine bu tutarla, sistemin HER kombinasyonu bu tutarla oynanır.
+  const unit = useMemo(() => effectiveUnit(stakeNum, misliNum), [stakeNum, misliNum]);
   const effK = mode === 'system' ? Math.min(Math.max(k || chosen.length - 1, 1), Math.max(chosen.length, 1)) : chosen.length;
 
-  const straight = useMemo(() => (stakeNum != null && mode === 'straight' ? straightOutcome(chosen, stakeNum) : null), [chosen, stakeNum, mode]);
+  const straight = useMemo(() => (unit != null && mode === 'straight' ? straightOutcome(chosen, unit) : null), [chosen, unit, mode]);
   const system = useMemo(() => {
-    if (stakeNum == null || mode !== 'system' || chosen.length === 0 || chosen.some((c) => !(typeof c.odd === 'number' && c.odd > 1))) return null;
+    if (unit == null || mode !== 'system' || chosen.length === 0 || chosen.some((c) => !(typeof c.odd === 'number' && c.odd > 1))) return null;
     return systemOutcome(
       chosen.map((c) => ({ p: c.pct / 100, odd: c.odd as number })),
       effK,
-      stakeNum,
+      unit,
     );
-  }, [chosen, stakeNum, mode, effK]);
-  const advice = useMemo(() => (chosen.length ? adviseType(chosen.length, risk, stakeNum ?? 0) : null), [chosen.length, risk, stakeNum]);
+  }, [chosen, unit, mode, effK]);
+  const advice = useMemo(() => (chosen.length ? adviseType(chosen.length, risk, unit ?? 0) : null), [chosen.length, risk, unit]);
   const missingOdds = chosen.filter((c) => !(typeof c.odd === 'number' && c.odd > 1)).length;
 
   const fetchOdds = useCallback(
@@ -129,7 +135,8 @@ export default function ComboHomeCard() {
   const run = async () => {
     if (!rows) return;
     setMessage(null);
-    if (stakeNum == null) return setMessage(t('stakeInvalid'));
+    if (misliNum == null) return setMessage(t('misliInvalid'));
+    if (unit == null) return setMessage(t('stakeInvalid'));
     const targetOdds = target.trim() ? parseTargetOdds(target) : null;
     if (target.trim() && targetOdds == null) return setMessage(t('targetInvalid'));
     const maxMatches = Math.min(Math.max(Number(advMax) || riskToMaxMatches(risk), 1), mode === 'system' ? MAX_SYSTEM_LEGS : 10);
@@ -216,16 +223,22 @@ export default function ComboHomeCard() {
                 <p className={styles.small}>{t('risk.hint')}</p>
               </div>
 
-              <div className={styles.twoCol}>
+              <div className={styles.threeCol}>
                 <label className={styles.fieldLabel}>
                   {t('stake')}
                   <input className={styles.input} inputMode="decimal" value={stake} onChange={(e) => setStake(e.target.value)} />
                 </label>
                 <label className={styles.fieldLabel}>
+                  {t('misli')}
+                  <input className={styles.input} inputMode="numeric" value={misli} onChange={(e) => setMisli(e.target.value)} />
+                </label>
+                <label className={`${styles.fieldLabel} ${styles.spanAll}`}>
                   {t('targetField')}
                   <input className={styles.input} inputMode="decimal" placeholder={t('targetHint')} value={target} onChange={(e) => setTarget(e.target.value)} />
                 </label>
               </div>
+
+              {unit != null && misliNum != null && misliNum > 1 ? <p className={styles.small}>{t('unitHint', { amount: new Intl.NumberFormat('tr-TR').format(stakeNum ?? 0), misli: misliNum })}</p> : null}
 
               <div className={styles.field}>
                 <span className={styles.fieldLabel}>{t('type.label')}</span>

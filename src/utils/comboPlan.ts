@@ -20,6 +20,26 @@ export function parseStake(input: string | number | null | undefined): number | 
   return Number.isFinite(n) && n > 0 && n <= MAX_STAKE ? n : null;
 }
 
+export const MAX_MISLI = 1000;
+/** Tutar × misli üst sınırı (TL): saçma değerlerde taşma / okunmaz sayı olmasın. */
+export const MAX_UNIT_TOTAL = 10_000_000;
+
+/** Misli (çarpan): tamsayı, 1 ≤ m ≤ MAX_MISLI; boş → 1; ondalık / negatif / metin → null. */
+export function parseMisli(input: string | number | null | undefined): number | null {
+  if (input == null || String(input).trim() === '') return 1;
+  const s = String(input).trim();
+  if (!/^\d+$/.test(s)) return null;
+  const n = Number(s);
+  return n >= 1 && n <= MAX_MISLI ? n : null;
+}
+
+/** Birim tutar = tutar × misli (TL, 2 ondalık); her kombinasyon / kupon bu tutarla oynanır. Aşırı büyükse null. */
+export function effectiveUnit(stake: number | null, misli: number | null): number | null {
+  if (stake == null || misli == null) return null;
+  const u = Math.round(stake * misli * 100) / 100;
+  return u > 0 && u <= MAX_UNIT_TOTAL ? u : null;
+}
+
 /** Hedef oran girdisi ("20", "1,7") → 1 < oran ≤ 1000, aksi null. */
 export function parseTargetOdds(input: string | number | null | undefined): number | null {
   if (input == null) return null;
