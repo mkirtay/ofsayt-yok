@@ -247,6 +247,7 @@ export default function MatchDetailContent({ detail, requestedMatchId, variant =
     ] as MatchTabItem<MatchTabKey>[]).filter((tab) => !(national && NATIONAL_HIDDEN_TABS.has(tab.key))),
     [
       national,
+      comboAccess,
       t,
       variant,
       detail.stats,

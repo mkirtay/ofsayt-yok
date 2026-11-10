@@ -19,7 +19,6 @@ export default function MatchOddsCard({ matchId }: { matchId: string }) {
 
   useEffect(() => {
     let cancelled = false;
-    setOdds(null);
     fetch(`/api/combo/match-odds?id=${encodeURIComponent(matchId)}`, { credentials: 'include' })
       .then((r) => (r.ok ? (r.json() as Promise<{ odds: MatchOddsView | null }>) : null))
       .then((d) => !cancelled && setOdds(d?.odds ?? null))

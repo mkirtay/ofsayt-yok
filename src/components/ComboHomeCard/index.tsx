@@ -41,6 +41,7 @@ export default function ComboHomeCard() {
   const [odds, setOdds] = useState<Record<string, OddsInfo>>({});
   const [note, setNote] = useState<string | null>(null);
   const requested = useRef(new Set<string>());
+  const [pending, setPending] = useState<ReadonlySet<string>>(new Set());
   const date = useMemo(() => todayIsoIstanbul(), []);
 
   const withOdds = useMemo(() => (rows ?? []).map((r) => ({ ...r, odd: odds[r.matchId]?.odd ?? null })), [rows, odds]);
@@ -52,6 +53,7 @@ export default function ComboHomeCard() {
       const need = ids.filter((id) => !requested.current.has(id)).slice(0, 12);
       if (need.length === 0) return {};
       need.forEach((id) => requested.current.add(id));
+      setPending((prev) => new Set([...prev, ...need]));
       try {
         const data = await getJson<OddsResponse>(
           await fetch('/api/combo/day', {
@@ -68,27 +70,12 @@ export default function ComboHomeCard() {
       } catch {
         need.forEach((id) => requested.current.delete(id));
         return {};
+      } finally {
+        setPending((prev) => new Set([...prev].filter((id) => !need.includes(id))));
       }
     },
     [date],
   );
-
-  // Açılınca bir kez yükle.
-  useEffect(() => {
-    if (!open || rows || failed) return;
-    let cancelled = false;
-    fetch(`/api/combo/day?date=${date}`, { credentials: 'include' })
-      .then((r) => getJson<{ candidates: Row[]; history: History }>(r))
-      .then((d) => {
-        if (cancelled) return;
-        setRows(d.candidates);
-        setHistory(d.history);
-      })
-      .catch(() => !cancelled && setFailed(true));
-    return () => {
-      cancelled = true;
-    };
-  }, [open, rows, failed, date]);
 
   const applyPreset = useCallback(
     (level: RiskLevel, list: Row[]) => {
@@ -102,13 +89,27 @@ export default function ComboHomeCard() {
     [fetchOdds],
   );
 
-  // Adaylar gelince / risk değişince öneri.
+  // Açılınca bir kez yükle.
   useEffect(() => {
-    if (rows && rows.length > 0) applyPreset(risk, rows);
-  }, [rows, risk, applyPreset]);
+    if (!open || rows || failed) return;
+    let cancelled = false;
+    fetch(`/api/combo/day?date=${date}`, { credentials: 'include' })
+      .then((r) => getJson<{ candidates: Row[]; history: History }>(r))
+      .then((d) => {
+        if (cancelled) return;
+        setRows(d.candidates);
+        setHistory(d.history);
+        if (d.candidates.length > 0) applyPreset('balanced', d.candidates);
+      })
+      .catch(() => !cancelled && setFailed(true));
+    return () => {
+      cancelled = true;
+    };
+  }, [open, rows, failed, date, applyPreset]);
 
   const pickRisk = (level: RiskLevel) => {
     setRisk(level);
+    if (rows) applyPreset(level, rows);
     setMinPct(RISK_PRESETS[level].minPct);
     setMaxMatches(RISK_PRESETS[level].maxMatches);
   };
@@ -184,7 +185,7 @@ export default function ComboHomeCard() {
                       <span>{t(`pick.${r.key}`)}</span>
                       <span className={styles.num}>%{r.pct}</span>
                       <span className={styles.num} title={t('oddLabel')}>
-                        {r.odd ? fmtOdd(r.odd) : requested.current.has(r.matchId) && !(r.matchId in odds) ? '…' : '—'}
+                        {r.odd ? fmtOdd(r.odd) : pending.has(r.matchId) ? '…' : '—'}
                       </span>
                     </span>
                   </li>
