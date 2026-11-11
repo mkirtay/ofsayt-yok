@@ -85,7 +85,10 @@
       "ANALYSIS_PREMIUM": "AI analiz (ücretsiz açma)",
       "ANALYSIS_WEEKLY_FREE": "AI analiz (haftalık ücretsiz)",
       "REFERRAL_BONUS": "Davet ödülü",
-      "COUPON": "Kupon"
+      "COUPON": "Kupon",
+      "ONBOARDING_REWARD": "Görev ödülü",
+      "GAME_REWARD": "{{game}} ödülü",
+      "FRIKIK_REWARD": "Frikik ödülü"
     },
     "coupon": {
       "title": "Kupon kodun var mı?",

@@ -33,6 +33,7 @@ import {
 import { invalidateDayLeaderboard, invalidateLeaderboards } from '@/server/game/play';
 import { ensureDailyRound, todayKey } from '@/server/game/days';
 import { ensureWeeklyRound } from '@/server/game/autoWeek';
+import { grantPeriodicRewards } from '@/server/rewards';
 
 export type SettleDeps = {
   now?: () => Date;
@@ -54,6 +55,8 @@ export type SettleSummary = {
   /** Bu turda haftalık liste açıldı mı (1/0) ve kaç maç eklendi (otomatik seçim, server/game/autoWeek.ts). */
   weekCreated: number;
   weekAdded: number;
+  /** Bu turda verilen dönem ödülü sayısı (tahmin oyunu haftası + Frikik ayı; server/rewards.ts). */
+  rewards: number;
   errors: number;
 };
 
@@ -130,7 +133,7 @@ export async function settleGameMatches(deps: SettleDeps = {}): Promise<SettleSu
   const now = (deps.now ?? (() => new Date()))();
   const listFor = deps.fixturesForUtcDate ?? getFixturesByDate;
   const lookup = deps.lookupFixture ?? defaultLookup;
-  const summary: SettleSummary = { evaluated: 0, voided: 0, kickoffUpdates: 0, fallbacks: 0, closedWeeks: 0, closedDays: 0, dayCreated: 0, weekCreated: 0, weekAdded: 0, errors: 0 };
+  const summary: SettleSummary = { evaluated: 0, voided: 0, kickoffUpdates: 0, fallbacks: 0, closedWeeks: 0, closedDays: 0, dayCreated: 0, weekCreated: 0, weekAdded: 0, rewards: 0, errors: 0 };
 
   // Önce haftalık liste (günlük seçim aynı maçı seçerse çakışma olarak aynı satıra bağlanır).
   try {
@@ -212,5 +215,12 @@ export async function settleGameMatches(deps: SettleDeps = {}): Promise<SettleSu
     ...[...touchedWeeks.values()].map((w) => invalidateLeaderboards(w.weekKey, w.season)),
     ...[...touchedDays].map((k) => invalidateDayLeaderboard(k)),
   ]);
+  // Ödüller: haftalar kapandıktan sonra (aynı turda kapanan hafta da ödüllenir). Frikik aylık ödülü de buradan (ayrı cron yok).
+  try {
+    summary.rewards = (await grantPeriodicRewards(now)).granted;
+  } catch (e) {
+    summary.errors += 1;
+    captureError('game-settle:rewards', e);
+  }
   return summary;
 }

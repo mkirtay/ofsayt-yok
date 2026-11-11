@@ -86,7 +86,10 @@
       "ANALYSIS_PREMIUM": "AI analysis (free unlock)",
       "ANALYSIS_WEEKLY_FREE": "AI analysis (weekly free)",
       "REFERRAL_BONUS": "Referral reward",
-      "COUPON": "Coupon"
+      "COUPON": "Coupon",
+      "ONBOARDING_REWARD": "Task reward",
+      "GAME_REWARD": "Prediction League reward",
+      "FRIKIK_REWARD": "Free Kick reward"
     },
     "coupon": {
       "title": "Have a coupon code?",

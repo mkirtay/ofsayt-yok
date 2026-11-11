@@ -1,6 +1,6 @@
 {
   "pageTitle": "{{game}} – Free score prediction game",
-  "pageDesc": "Predict the score of 10 selected matches every week and 3 matches every day; collect points and climb the weekly, daily and season rankings. Free, not betting, no prizes.",
+  "pageDesc": "Predict the score of 10 selected matches every week and 3 matches every day; collect points and climb the weekly, daily and season rankings. Free, not betting; nothing is deposited.",
   "nav": {
     "play": "Predict",
     "leaderboard": "Rankings",
@@ -13,7 +13,7 @@
     "ctaPlay": "Make this week's predictions",
     "howLink": "How to play?",
     "jokerShort": "Joker ×2",
-    "free": "Free · no prizes · just points",
+    "free": "Free · nothing deposited · reward: site credits",
     "guest": "Fill in now, sign in when you save."
   },
   "steps": {
@@ -64,7 +64,7 @@
     "void": "A postponed match still counts if it's played within the week. A match moved outside the week, cancelled, abandoned or awarded is void: everyone gets 0 and a joker on it is lost.",
     "tiebreak": "Ties are broken by: more exact scores, more correct results, earlier last change.",
     "visible": "To appear in the rankings you need a nickname and a verified email (Google accounts are verified).",
-    "noPrize": "{{game}} is free and has no prizes: no money is deposited, no money or gifts are won. Only points and rankings.",
+    "noPrize": "{{game}} is free: no money or credits are deposited, no money or gifts are won. The only reward is in-site AI analysis credits (not cashable, not transferable): +1 for predicting every match of the week, +3 / +2 / +1 for the weekly top 3 (at least 5 predictions). Verified-email accounts only.",
     "daily": "Today's 3 matches: every day (Istanbul time, resets at midnight) 3 of that day's matches are picked: Süper Lig first, then the big 5 leagues, then European cups. No joker. Same scoring; a daily ranking and a streak of consecutive days are kept. Days without matches do not break the streak.",
     "both": "If a match is in both the weekly and the daily list you enter one pick and it counts in both; the joker multiplier applies to the weekly score only."
   },
@@ -73,7 +73,7 @@
     "q1": "Is it free?",
     "a1": "Yes, completely free.",
     "q2": "Is it betting?",
-    "a2": "No. No money is deposited and there are no prizes; only points and rankings.",
+    "a2": "No. No money or credits are deposited and no money or gifts are won. Weekly participation and the top 3 only earn in-site AI analysis credits.",
     "q3": "How do I sign in?",
     "a3": "One tap with Google, or with your existing account.",
     "q4": "Can I play with friends?",
@@ -280,7 +280,7 @@
     },
     "free": {
       "title": "Completely free",
-      "text": "No money, no prizes. Just points and rank."
+      "text": "Nothing deposited. Predict every match of the week +1 credit, weekly top 3 +3/+2/+1 credits."
     },
     "daily": {
       "title": "Today's 3 matches",

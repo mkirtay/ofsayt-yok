@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
+import RewardTasks from '@/components/RewardTasks';
 import { useCredits } from '@/hooks/useCredits';
 import { useI18n, useTranslation } from '@/lib/i18n';
 import '@/lib/i18nNamespaces/profile';
@@ -28,6 +29,9 @@ const KNOWN_TYPES = [
   'PURCHASE',
   'REFUND',
   'COUPON',
+  'ONBOARDING_REWARD',
+  'GAME_REWARD',
+  'FRIKIK_REWARD',
 ];
 
 function Row({ item, locale }: { item: CreditHistoryItem; locale: string }) {
@@ -133,6 +137,7 @@ export default function CreditHistoryTab() {
   return (
     <section className={styles.section}>
       <h2 className={styles.sectionTitle}>{t('tabs.credits')}</h2>
+      <RewardTasks />
       <CouponForm />
       {q.isLoading ? <p className={styles.hint}>{t('loading')}</p> : null}
       {q.isError ? <p className={`${styles.message} ${styles.err}`}>{t('history.error')}</p> : null}

@@ -9,6 +9,7 @@ import { useCredits } from '@/hooks/useCredits';
 import { CREDIT_PACKAGES, formatTry, perCreditKurus } from '@/config/creditPackages';
 import { DISTANCE_SALES_PATH, PRE_INFO_PATH } from '@/config/legalConsent';
 import { useCheckout } from '@/components/PaymentBuyButton/useCheckout';
+import RewardTasks from '@/components/RewardTasks';
 import { lockBodyScroll } from '@/utils/scrollLock';
 import styles from './buyCredits.module.scss';
 
@@ -156,6 +157,7 @@ export default function BuyCreditsDialog({ onClose }: { onClose: () => void }) {
                 {errorText}
               </p>
             ) : null}
+            <RewardTasks onNavigate={onClose} />
           </>
         )}
 

@@ -32,8 +32,15 @@ export type CreditTransactionType =
   /** 1. sıra kaybedilince kullanılmayan günlerin iadesi. */
   | 'PIN_REFUND'
   /** Kupon kodu ödülü (lib/coupons.ts). */
-  | 'COUPON';
-// Karar 8: hiçbir tür maç sonucuna / tahmine bağlı değil (kredi yatırıp kazanma yok) — bkz. creditPolicy.test.ts.
+  | 'COUPON'
+  /** Başlangıç görevi ödülü (server/rewards.ts; anahtar `reward:onboarding:{görev}`). */
+  | 'ONBOARDING_REWARD'
+  /** tahmin oyunu haftalık katılım / ilk 3 ödülü (server/rewards.ts; anahtar `reward:game-week:{hafta}:full|top`). */
+  | 'GAME_REWARD'
+  /** Frikik aylık katılım / ilk 3 ödülü (server/rewards.ts; anahtar `reward:frikik-month:{ay}:active|top`). */
+  | 'FRIKIK_REWARD';
+// Karar 8: kredi yatırıp kazanma yok — hiçbir oyuna / tahmine kredi harcanmaz (bkz. creditPolicy.test.ts). Tek istisna
+// (kullanıcı kararı 2026-11-11): tahmin oyunu haftalık ilk 3 ödülü (`GAME_REWARD`; giriş ücretsiz, ödül nakde dönmez).
 
 export type SpendStatus = 'PENDING' | 'SETTLED' | 'REFUNDED';
 

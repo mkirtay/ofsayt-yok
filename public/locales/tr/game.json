@@ -1,6 +1,6 @@
 {
   "pageTitle": "{{game}} – Ücretsiz skor tahmin oyunu",
-  "pageDesc": "Her hafta 10 seçilmiş maçın, her gün de günün 3 maçının skorunu tahmin et; puan topla, haftalık, günlük ve sezonluk sıralamada yüksel. Ücretsiz, bahis değil, ödül yok.",
+  "pageDesc": "Her hafta 10 seçilmiş maçın, her gün de günün 3 maçının skorunu tahmin et; puan topla, haftalık, günlük ve sezonluk sıralamada yüksel. Ücretsiz, bahis değil; para yatırılmaz.",
   "nav": {
     "play": "Tahmin yap",
     "leaderboard": "Sıralama",
@@ -13,7 +13,7 @@
     "ctaPlay": "Bu haftanın tahminlerini yap",
     "howLink": "Nasıl oynanır?",
     "jokerShort": "Joker ×2",
-    "free": "Ücretsiz · ödül yok · yalnız puan",
+    "free": "Ücretsiz · para yatırılmaz · ödül: site kredisi",
     "guest": "Girişsiz doldur, kaydederken giriş yap."
   },
   "steps": {
@@ -64,7 +64,7 @@
     "void": "Ertelenen maç hafta içinde oynanırsa tahminler geçerli kalır. Hafta dışına ertelenen, iptal edilen, yarıda kalan ya da hükmen sonuçlanan maç iptal sayılır: herkes 0 puan alır, o maçtaki joker yanar.",
     "tiebreak": "Eşitlikte sırasıyla: daha çok tam skor, daha çok doğru yön, son değişikliği daha erken yapan.",
     "visible": "Sıralamada görünmek için takma ad ve doğrulanmış e-posta gerekir (Google hesapları doğrulanmıştır).",
-    "noPrize": "{{game}} ücretsizdir ve ödül yoktur: para yatırılmaz, para ya da hediye kazanılmaz. Yalnız puan ve sıralama.",
+    "noPrize": "{{game}} ücretsizdir: para ya da kredi yatırılmaz, para ya da hediye kazanılmaz. Tek ödül site içi AI analiz kredisidir (nakde çevrilmez, devredilmez): haftanın bütün maçlarını tahmin edene +1, haftanın ilk 3'üne (en az 5 tahmin) +3 / +2 / +1. Yalnız e-postası doğrulanmış hesaplara verilir.",
     "daily": "Günün 3 maçı: her gün (İstanbul saati, gece yarısı yenilenir) o gün oynanan maçlardan 3'ü seçilir; önce Süper Lig, sonra büyük 5 lig, sonra Avrupa kupaları. Joker yoktur. Aynı puanlama geçerlidir; günlük sıralama ve art arda oynanan günlerin serisi tutulur. Maç olmayan gün seriyi bozmaz.",
     "both": "Bir maç hem haftalık hem günlük listedeyse tek tahmin girilir ve iki oyunda da sayılır; joker çarpanı yalnız haftalık puana uygulanır."
   },
@@ -73,7 +73,7 @@
     "q1": "Ücretsiz mi?",
     "a1": "Evet, tamamen ücretsiz.",
     "q2": "Bahis mi?",
-    "a2": "Hayır. Para yatırılmaz, ödül yoktur; yalnız puan ve sıralama.",
+    "a2": "Hayır. Para ya da kredi yatırılmaz; para ya da hediye kazanılmaz. Haftalık katılım ve ilk 3 için yalnız site içi AI analiz kredisi verilir.",
     "q3": "Nasıl giriş yaparım?",
     "a3": "Google ile tek dokunuş ya da mevcut hesabınla.",
     "q4": "Arkadaşlarımla oynayabilir miyim?",
@@ -280,7 +280,7 @@
     },
     "free": {
       "title": "Tamamen ücretsiz",
-      "text": "Para yok, ödül yok. Sadece puan ve sıra."
+      "text": "Para yatırılmaz. Haftanın bütün maçlarını tahmin et +1 kredi, haftanın ilk 3'ü +3/+2/+1 kredi."
     },
     "daily": {
       "title": "Günün 3 maçı",

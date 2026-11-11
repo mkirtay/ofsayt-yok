@@ -44,7 +44,7 @@ export const BRAND = {
 } as const;
 
 /**
- * Tahmin oyunu (ücretsiz, ödülsüz skor tahmini) — ad TEK KAYNAK. Ad kesinleşince (yön: "90+", 90arti.app) yalnız bu
+ * Tahmin oyunu (ücretsiz skor tahmini; ödül yalnız kredi — lib/rewards.ts) — ad TEK KAYNAK. Ad kesinleşince (yön: "90+", 90arti.app) yalnız bu
  * nesne değişir; metinler `{{game}}` / `{{gameShort}}` ile okur. URL (`basePath`), API yolu (`/api/game`) ve tablo adları
  * (`Game*`) bilerek markadan bağımsız: ad değişince bağlantılar kırılmaz. Plan: docs/TAHMIN_OYUNU_PLANI.md.
  */

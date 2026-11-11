@@ -109,5 +109,22 @@
     "closed": "Credit sales are currently closed.",
     "redirecting": "Redirecting to payment…",
     "popular": "Most popular"
+  },
+  "tasks": {
+    "title": "Earn free credits",
+    "desc": "Each task once, +1 credit.",
+    "verifyFirst": "Rewards go to accounts with a verified email. Click the verification link in your inbox.",
+    "claim": "Claim +{{count}}",
+    "claimed": "Claimed",
+    "claiming": "…",
+    "todo": "Go",
+    "error": "Could not claim the reward right now; try again shortly.",
+    "items": {
+      "analysis": "Unlock your first AI match analysis",
+      "prediction": "Make your first score prediction in the Prediction League",
+      "gundem": "Write your first post or comment in Gündem",
+      "frikik": "Finish your first Free Kick run"
+    },
+    "games": "Games pay credits too: predict every match of the week in the Prediction League +1, weekly top 3 +3/+2/+1. Play Free Kick on 7 days of a month +2, monthly top 3 +5/+4/+3."
   }
 }

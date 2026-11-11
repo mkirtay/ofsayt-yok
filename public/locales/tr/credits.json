@@ -109,5 +109,22 @@
     "closed": "Kredi satışı şu an kapalı.",
     "redirecting": "Ödeme sayfasına yönlendiriliyor…",
     "popular": "En popüler"
+  },
+  "tasks": {
+    "title": "Ücretsiz kredi kazan",
+    "desc": "Her görev bir kez, +1 kredi.",
+    "verifyFirst": "Ödüller e-postası doğrulanmış hesaplara verilir. Gelen kutundaki doğrulama bağlantısına tıkla.",
+    "claim": "+{{count}} al",
+    "claimed": "Alındı",
+    "claiming": "…",
+    "todo": "Yap",
+    "error": "Ödül şu an alınamadı; biraz sonra tekrar dene.",
+    "items": {
+      "analysis": "İlk AI maç analizini aç",
+      "prediction": "{{game}}: ilk skor tahminini yap",
+      "gundem": "Gündem'de ilk paylaşımını ya da yorumunu yaz",
+      "frikik": "Günün Frikiği'nde ilk koşunu tamamla"
+    },
+    "games": "Oyunlarda da kredi var. {{game}}: haftanın bütün maçlarını tahmin et +1, haftanın ilk 3'ü +3/+2/+1. Frikik: ayın 7 gününde oyna +2, ayın ilk 3'ü +5/+4/+3."
   }
 }
