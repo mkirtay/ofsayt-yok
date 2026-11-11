@@ -8,6 +8,7 @@ import { POST_MAX_LENGTH } from '@/config/gundem';
 import { buildAnalysisPreview, type AnalysisPreview } from '@/utils/analysisPreview';
 import { BIG_FIVE, SUPER_LIG, TURKEY_COUNTRY_ID, UEFA_CLUB_LEAGUES } from '@/server/analysisPregen';
 import { leagueDisplayName } from './leagueNames';
+import { closingQuestion } from './closingQuestion';
 
 /** Galatasaray, Fenerbahçe, Beşiktaş, Trabzonspor (Sportmonks takım id; bkz. config/teamShortNames.ts). */
 export const BIG_FOUR_TEAM_IDS: readonly number[] = [34, 88, 554, 688];
@@ -123,13 +124,15 @@ export function buildPreviewDraft(c: PreviewCandidate, analysis: PreviewAnalysis
   const head = `${home} – ${away}${leagueName ? ` (${leagueName})` : ''}, saat ${trTime.format(c.kickoffMs)}.`;
   const prediction = preview.top ? outcomeText(preview.top, home, away) : null;
 
-  // Uzunluk: önce ikinci özet cümlesi, sonra olasılık satırı, sonra ilk özet cümlesi feda edilir.
-  const variants = [
+  // Uzunluk: önce ikinci özet cümlesi, sonra olasılık satırı, sonra ilk özet cümlesi feda edilir; soru en son düşer.
+  const question = closingQuestion('PREVIEW', c.fixture.id);
+  const bases = [
     [head, preview.summary.join(' '), prediction],
     [head, preview.summary[0], prediction],
     [head, preview.summary[0]],
     [head, prediction],
   ].map((parts) => parts.filter(Boolean).join('\n'));
+  const variants = [...bases.map((b) => `${b}\n\n${question}`), ...bases];
   const body = variants.find((v) => v.length <= POST_MAX_LENGTH);
   if (!body) return null;
 

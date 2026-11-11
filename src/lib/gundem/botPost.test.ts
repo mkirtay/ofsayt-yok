@@ -3,7 +3,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 vi.mock('@/lib/prisma', () => ({
   prisma: {
     matchSnapshot: { findMany: vi.fn(async () => []) },
-    user: { findUnique: vi.fn(async () => ({ id: 'bot-user' })) },
+    user: {
+      findUnique: vi.fn(async () => ({ id: 'bot-user' })),
+      create: vi.fn(async () => ({ id: 'role-user' })),
+    },
     post: {
       findUnique: vi.fn(async () => null),
       create: vi.fn(async ({ data }: { data: Record<string, unknown> }) => ({
@@ -29,7 +32,12 @@ vi.mock('@/lib/prisma', () => ({
   },
 }));
 vi.mock('@/lib/logger', () => ({ captureError: vi.fn() }));
-vi.mock('@/lib/gundem/official', () => ({ getBotAccountEmail: () => 'bot@example.invalid', isOfficialUser: () => true }));
+vi.mock('@/lib/gundem/official', () => ({
+  getBotAccountEmail: () => 'bot@example.invalid',
+  isOfficialUser: () => true,
+  BOT_ROLE_IMAGE: '/brand/icon-192.png',
+  BOT_ROLE_ACCOUNTS: { RECAP: { email: 'recap@example.invalid', username: 'r', name: 'R' } },
+}));
 vi.mock('@/lib/gundem/matchSnapshot', () => ({ ensureMatchSnapshot: vi.fn() }));
 
 import { prisma } from '@/lib/prisma';
@@ -64,5 +72,28 @@ describe('createBotPost — maç snapshot\'ı', () => {
   it('matchId yoksa snapshot çağrılmaz', async () => {
     await createBotPost({ body: 'Duyuru' });
     expect(ensure).not.toHaveBeenCalled();
+  });
+});
+
+describe('createBotPost — rol hesabı', () => {
+  it('rol hesabı varsa onunla yazar; yoksa oluşturur', async () => {
+    const find = vi.mocked(prisma.user.findUnique);
+    find.mockResolvedValueOnce({ id: 'recap-user' } as never);
+    await createBotPost({ body: 'Maç sonu', role: 'RECAP' });
+    expect(vi.mocked(prisma.post.create).mock.calls.at(-1)![0].data).toMatchObject({ authorId: 'recap-user' });
+
+    find.mockResolvedValueOnce(null);
+    await createBotPost({ body: 'Maç sonu', role: 'RECAP' });
+    expect(vi.mocked(prisma.user.create).mock.calls.at(-1)![0].data).toMatchObject({ email: 'recap@example.invalid', emailVerified: expect.any(Date) });
+    expect(vi.mocked(prisma.post.create).mock.calls.at(-1)![0].data).toMatchObject({ authorId: 'role-user' });
+  });
+
+  it('rol hesabı oluşturulamazsa ana bot hesabına düşer', async () => {
+    const find = vi.mocked(prisma.user.findUnique);
+    find.mockResolvedValueOnce(null).mockResolvedValueOnce(null).mockResolvedValueOnce({ id: 'bot-user' } as never);
+    vi.mocked(prisma.user.create).mockRejectedValueOnce(new Error('kullanıcı adı alınmış'));
+    const r = await createBotPost({ body: 'Maç sonu', role: 'RECAP' });
+    expect(r.status).toBe('created');
+    expect(vi.mocked(prisma.post.create).mock.calls.at(-1)![0].data).toMatchObject({ authorId: 'bot-user' });
   });
 });

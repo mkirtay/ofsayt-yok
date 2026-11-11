@@ -4,6 +4,10 @@ import { buildGoalDraft } from './goalDraft';
 import { computeStanding, eventsUpTo, isCreditedGoal, scoreAtEvent } from './goalStanding';
 import { leagueDisplayName } from './leagueNames';
 import { formatMinute, renderGoalPost } from './goalTemplates';
+import { closingQuestion } from './closingQuestion';
+
+/** Gövdenin soru satırı hariç içeriği (soru boş satırla ayrılır). */
+const content = (body: string) => body.split('\n\n')[0];
 
 const HOME = 10;
 const AWAY = 20;
@@ -156,10 +160,12 @@ describe('buildGoalDraft + şablon', () => {
     expect(d.externalKey).toBe(`goal:1:${goal.id}`);
     expect(d.teamId).toBe(HOME);
     expect(d.matchId).toBe('1');
-    expect(d.body).toBe(
+    expect(content(d.body)).toBe(
       ["⚽ GOL! 88+2' Icardi (Galatasaray)", 'Galatasaray 1-0 Fenerbahçe', 'Bu golle Icardi, Süper Lig sezonunun en çok gol atan oyuncusu oldu (9 gol).'].join('\n'),
     );
     expect(d.warnings).toEqual([]);
+    // Son satır: okuru yoruma çağıran soru (olay kimliğine göre sabit).
+    expect(d.body.endsWith(`\n\n${closingQuestion('GOAL', goal.id)}`)).toBe(true);
   });
 
   it('beraberlikte "ortak lider" der, "tek lider" demez', () => {
@@ -183,7 +189,7 @@ describe('buildGoalDraft + şablon', () => {
   it('kendi kalesine gol: kredi/istatistik yok, skor ve takım yazılmaz, uyarı var', () => {
     const own = ev({ type_id: 15, minute: 44, player_id: 300, player_name: 'Bacuna' });
     const d = ok(buildGoalDraft({ fixture: fixture([own]), eventId: own.id, scorers }));
-    expect(d.body).toBe("⚽ 44' Bacuna kendi kalesine attı.");
+    expect(content(d.body)).toBe("⚽ 44' Bacuna kendi kalesine attı.");
     expect(d.teamId).toBeNull();
     expect(d.warnings.some((w) => w.startsWith('score-omitted'))).toBe(true);
   });
@@ -191,7 +197,7 @@ describe('buildGoalDraft + şablon', () => {
   it('golcü tablosu yoksa istatistik cümlesi yazılmaz (uydurma yok) ve uyarı düşer', () => {
     const goal = ev({ type_id: 14, minute: 5, player_id: 100 });
     const d = ok(buildGoalDraft({ fixture: fixture([goal]), eventId: goal.id, scorers: null }));
-    expect(d.body).toBe("⚽ GOL! 5' Icardi (Galatasaray)\nGalatasaray 1-0 Fenerbahçe");
+    expect(content(d.body)).toBe("⚽ GOL! 5' Icardi (Galatasaray)\nGalatasaray 1-0 Fenerbahçe");
     expect(d.warnings.some((w) => w.startsWith('standing-omitted'))).toBe(true);
   });
 

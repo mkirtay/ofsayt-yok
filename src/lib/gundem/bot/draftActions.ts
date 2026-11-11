@@ -5,6 +5,7 @@
 import { POST_MAX_LENGTH } from '@/config/gundem';
 import { prisma } from '@/lib/prisma';
 import { sanitizePlainText } from '@/lib/security';
+import { isBotRole } from '@/lib/gundem/official';
 import { createBotPost } from '@/lib/gundem/botPost';
 import { sportmonksClientRequest } from '@/services/sportmonksRuntimeClient';
 import type { SportmonksFixture } from '@/services/sportmonks/types';
@@ -65,7 +66,7 @@ export async function approveDraft(id: string, adminId: string, deps: ApproveDep
       await prisma.gundemBotDraft.update({ where: { id }, data: { status: 'STALE', warnings: { push: 'stale: match-started' } } });
       return { ok: false, status: 409, error: 'Maç başladı; maç öncesi taslak eskidi, yayınlanmadı.' };
     }
-    const result = await createBotPost({ body: draft.body, externalKey: draft.externalKey, matchId: String(draft.fixtureId), teamId: null });
+    const result = await createBotPost({ body: draft.body, externalKey: draft.externalKey, matchId: String(draft.fixtureId), teamId: null, role: isBotRole(draft.kind) ? draft.kind : null });
     if (result.status === 'invalid-body') {
       await revert();
       return { ok: false, status: 400, error: `Gönderi 1–${POST_MAX_LENGTH} karakter olmalıdır.` };
@@ -108,6 +109,7 @@ export async function approveDraft(id: string, adminId: string, deps: ApproveDep
     externalKey: draft.externalKey,
     matchId: String(draft.fixtureId),
     teamId: verdict.scorerTeamId,
+    role: 'GOAL',
   });
   if (result.status === 'invalid-body') {
     await revert();

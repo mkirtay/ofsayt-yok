@@ -76,7 +76,9 @@
     "deleteTitle": "Delete post",
     "matchBadge": "Go to match: {{match}}",
     "more": "More actions",
-    "underReview": "Under review — only you can see this for now."
+    "underReview": "Under review — only you can see this for now.",
+    "automated": "Automated",
+    "automatedTitle": "This post was generated from match data and published after review."
   },
   "comments": {
     "title": "Comments",

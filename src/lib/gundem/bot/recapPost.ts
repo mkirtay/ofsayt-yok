@@ -7,6 +7,7 @@
 import { POST_MAX_LENGTH } from '@/config/gundem';
 import { SUPER_LIG } from '@/server/analysisPregen';
 import { leagueDisplayName } from './leagueNames';
+import { withQuestion, closingQuestion } from './closingQuestion';
 import { BIG_FOUR_TEAM_IDS, fixtureKickoffMs, homeAway, previewReason, type PreviewFixture } from './previewPost';
 
 export const RECAP_FINISHED_STATE_IDS: readonly number[] = [5, 7, 8]; // FT, AET, FT-pen
@@ -108,8 +109,9 @@ export function buildRecapDraft(c: RecapCandidate, reasons: RecapReason[], redCa
   const lines = ordered.slice(0, 2).map((r) => sentence(r, { home, away, score, redCards, bigLoser }));
   const body = [head, ...lines].join('\n');
   const fallback = [head, lines[0]].join('\n');
-  const final = body.length <= POST_MAX_LENGTH ? body : fallback.length <= POST_MAX_LENGTH ? fallback : null;
-  if (!final) return null;
+  const plain = body.length <= POST_MAX_LENGTH ? body : fallback.length <= POST_MAX_LENGTH ? fallback : null;
+  if (!plain) return null;
+  const final = withQuestion(plain, closingQuestion('RECAP', c.fixture.id), POST_MAX_LENGTH);
   return {
     externalKey: recapKey(c.fixture.id),
     body: final,

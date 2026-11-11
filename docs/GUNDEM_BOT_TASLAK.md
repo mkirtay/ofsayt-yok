@@ -3,6 +3,15 @@
 > **2026-10-11: Gol-draft üretimi KAPALI (varsayılan).** `GUNDEM_BOT_GOALS_ENABLED=1` olmadıkça `bot-tick` yetkiden sonra hemen döner
 > (`{ ok: true, disabled: true }`) — Sportmonks/Redis/DB'ye gitmez; cron-job.org açık kalabilir. Kod duruyor. Aşağıdaki "dakikada 1 inplay" notları bayrak AÇIKKEN geçerlidir.
 
+> **2026-11-11 — rol hesapları + kapanış sorusu + "Otomatik" etiketi.** Taslak türü yayınlayan hesabı seçer: GOL → @scor3canli
+> (Scor3 Canlı), PREVIEW → @scor3analiz (Scor3 Analiz), RECAP → @scor3macsonu (Scor3 Maç Sonu); `src/lib/gundem/official.ts`
+> `BOT_ROLE_ACCOUNTS`. Hesap yoksa ilk onaylı yayında oluşturulur (şifresiz, e-posta doğrulanmış → resmi rozet; girişle kullanılamaz);
+> kullanıcı adı alınmışsa ana hesaptan (@scor3) yayınlanır. Her taslağın son satırı okuru yoruma çağıran soru
+> (`bot/closingQuestion.ts`, maç/olay kimliğine göre sabit; sığmazsa düşer). `OFFICIAL_BOT` postlarında kartta "Otomatik" etiketi.
+> **Açma (kullanıcı):** Vercel `GUNDEM_BOT_MATCH_ENABLED=1` (maç önü/sonu) ve istenirse `GUNDEM_BOT_GOALS_ENABLED=1` (gol) → redeploy;
+> cron-job.org: `POST https://www.getscor3.com/api/admin/gundem/bot-match-tick`, 15 dk, `Authorization: Bearer $CRON_SECRET`.
+> İlk hafta her taslak `/admin/gundem-kuyruk`'ta elle onaylanır; otomatik onay ayrı karar.
+
 > **Maç öncesi / sonrası taslaklar (2026-10-11):** `POST /api/admin/gundem/bot-match-tick` (Bearer CRON_SECRET; cron-job.org, **15 dk**, URL www ile,
 > query yok). **Varsayılan KAPALI:** `GUNDEM_BOT_MATCH_ENABLED=1` olmadıkça yetkiden sonra `{ ok: true, disabled: true }` döner (Sportmonks/Redis/DB yok);
 > `GUNDEM_BOT_GOALS_ENABLED`'dan bağımsız. Canlı polling yok; yalnızca PENDING taslak yazar. Kapsam ("büyük maç"): Süper Lig'de dört büyükten biri (34/88/554/688) · UCL/UEL/UECL'de Türk takımı ·

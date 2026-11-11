@@ -85,6 +85,11 @@ export default function PostCard({
     <>
       {displayName}
       {official ? <VerifiedIcon className={styles.verified} size={15} title={t('post.official')} /> : null}
+      {post.authorType === 'OFFICIAL_BOT' ? (
+        <span className={styles.botChip} title={t('post.automatedTitle')}>
+          {t('post.automated')}
+        </span>
+      ) : null}
     </>
   );
 

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { getBotAccountEmail, getOfficialAccountEmails, isOfficialUser } from './official';
+import { BOT_ROLE_ACCOUNTS, getBotAccountEmail, getOfficialAccountEmails, isOfficialUser } from './official';
 
 describe('isOfficialUser', () => {
   afterEach(() => {
@@ -36,5 +36,10 @@ describe('isOfficialUser', () => {
     expect(getBotAccountEmail()).toBe('info@getscor3.com');
     process.env.GUNDEM_BOT_EMAIL = ' Bot@X.com ';
     expect(getBotAccountEmail()).toBe('bot@x.com');
+  });
+
+  it('bot rol hesapları resmidir (doğrulanmış rozeti, resmi akış)', () => {
+    for (const a of Object.values(BOT_ROLE_ACCOUNTS)) expect(isOfficialUser({ email: a.email }), a.email).toBe(true);
+    expect(new Set(Object.values(BOT_ROLE_ACCOUNTS).map((a) => a.username)).size).toBe(3);
   });
 });

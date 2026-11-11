@@ -75,7 +75,9 @@
     "deleteTitle": "Gönderiyi sil",
     "matchBadge": "Maça git: {{match}}",
     "more": "Diğer işlemler",
-    "underReview": "İnceleme altında — şu an yalnız sen görüyorsun."
+    "underReview": "İnceleme altında — şu an yalnız sen görüyorsun.",
+    "automated": "Otomatik",
+    "automatedTitle": "Bu paylaşım maç verisinden otomatik hazırlandı ve yönetici onayıyla yayınlandı."
   },
   "comments": {
     "title": "Yorumlar",

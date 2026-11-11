@@ -8,6 +8,7 @@
  * halde taslak REDDEDİLMELİ. Bu dosya bu kontrolü kasıtlı olarak yapmaz.
  */
 import { POST_MAX_LENGTH } from '@/config/gundem';
+import { closingQuestion, withQuestion } from './closingQuestion';
 import { GOAL_TOPSCORER_TYPE_ID } from '@/services/sportmonksKatman2Mapper';
 import { checkFilteredResult } from '@/services/sportmonks/filterAssertion';
 import { sportmonksClientRequest, sportmonksCollectAllPages } from '@/services/sportmonksRuntimeClient';
@@ -89,7 +90,7 @@ export function buildGoalDraft(input: GoalDraftInput): GoalDraftResult {
     leagueName,
     milestone,
   };
-  const body = renderGoalPost(facts);
+  const body = withQuestion(renderGoalPost(facts), closingQuestion('GOAL', event.id), POST_MAX_LENGTH);
   if (body.length > POST_MAX_LENGTH) warnings.push(`too-long: ${body.length}/${POST_MAX_LENGTH} karakter (bot-post reddeder)`);
 
   return {

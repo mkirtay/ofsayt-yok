@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { sanitizePlainText } from '@/lib/security';
 import { POST_MAX_LENGTH } from '@/config/gundem';
-import { getBotAccountEmail } from '@/lib/gundem/official';
+import { BOT_ROLE_ACCOUNTS, BOT_ROLE_IMAGE, getBotAccountEmail, type BotRole } from '@/lib/gundem/official';
 import { postSelect, serializePosts } from '@/lib/gundem/posts';
 import { ensureMatchSnapshot } from '@/lib/gundem/matchSnapshot';
 import { captureError } from '@/lib/logger';
@@ -12,12 +12,34 @@ export type CreateBotPostInput = {
   externalKey?: string | null;
   matchId?: string | null;
   teamId?: number | null;
+  /** Taslak türü → rol hesabı (Scor3 Canlı / Analiz / Maç Sonu). Yoksa ana bot hesabı (`getBotAccountEmail`). */
+  role?: BotRole | null;
 };
 
 export type CreateBotPostResult =
   | { status: 'created' | 'exists'; post: Awaited<ReturnType<typeof serializePosts>>[number] }
   | { status: 'invalid-body' }
   | { status: 'no-account'; email: string };
+
+/**
+ * Rol hesabı: yoksa oluşturulur (şifresiz, e-posta doğrulanmış sayılır → resmi rozet; girişle kullanılamaz). Kullanıcı adı başka
+ * birinde ise oluşturulamaz → `null` (çağıran ana bot hesabına düşer; yayın engellenmez).
+ */
+async function roleAccount(role: BotRole): Promise<{ id: string } | null> {
+  const a = BOT_ROLE_ACCOUNTS[role];
+  const existing = await prisma.user.findUnique({ where: { email: a.email }, select: { id: true } });
+  if (existing) return existing;
+  try {
+    const now = new Date();
+    return await prisma.user.create({
+      data: { email: a.email, username: a.username, name: a.name, image: BOT_ROLE_IMAGE, emailVerified: now, termsAcceptedAt: now, credits: 0 },
+      select: { id: true },
+    });
+  } catch (e) {
+    captureError('gundem:bot-role-account', e);
+    return prisma.user.findUnique({ where: { email: a.email }, select: { id: true } });
+  }
+}
 
 /**
  * Resmi/bot hesabı (`getBotAccountEmail()`) adına `OFFICIAL_BOT` gönderisi oluşturur — TEK yol: HTTP uçları
@@ -40,9 +62,8 @@ export async function createBotPost(input: CreateBotPostInput): Promise<CreateBo
     await ensureMatchSnapshot(input.matchId).catch((e) => captureError('gundem:bot-post-snapshot', e));
   }
 
-  const email = getBotAccountEmail();
-  const account = await prisma.user.findUnique({ where: { email }, select: { id: true } });
-  if (!account) return { status: 'no-account', email };
+  const account = (input.role ? await roleAccount(input.role) : null) ?? (await prisma.user.findUnique({ where: { email: getBotAccountEmail() }, select: { id: true } }));
+  if (!account) return { status: 'no-account', email: getBotAccountEmail() };
 
   try {
     const created = await prisma.post.create({

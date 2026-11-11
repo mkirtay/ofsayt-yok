@@ -51,7 +51,7 @@ describe('approveDraft', () => {
     const d = await seed();
     const r = await approveDraft(d.id, 'admin1', { fetchFixture: async () => fx([goal]) });
     expect(r.ok).toBe(true);
-    expect(publish).toHaveBeenCalledWith({ body: "⚽ GOL! 30' Icardi", externalKey: 'goal:1:77', matchId: '1', teamId: 10 });
+    expect(publish).toHaveBeenCalledWith({ body: "⚽ GOL! 30' Icardi", externalKey: 'goal:1:77', matchId: '1', teamId: 10, role: 'GOAL' });
     expect(db.__rows()[0]).toMatchObject({ status: 'POSTED', postId: 'post1', decidedById: 'admin1' });
   });
 
@@ -122,7 +122,7 @@ describe('approveDraft — PREVIEW/RECAP (gol dışı tipler)', () => {
     const d = await seedKind('PREVIEW', { kickoffAt: new Date(Date.now() + 3_600_000).toISOString() });
     const r = await approveDraft(d.id, 'admin1', noFetch);
     expect(r.ok).toBe(true);
-    expect(publish).toHaveBeenCalledWith({ body: 'özet', externalKey: 'preview:5', matchId: '5', teamId: null });
+    expect(publish).toHaveBeenCalledWith({ body: 'özet', externalKey: 'preview:5', matchId: '5', teamId: null, role: 'PREVIEW' });
     expect(db.__rows()[0]).toMatchObject({ status: 'POSTED', postId: 'post1' });
   });
 
@@ -137,6 +137,6 @@ describe('approveDraft — PREVIEW/RECAP (gol dışı tipler)', () => {
   it('RECAP: kickoff kontrolü yok, yayınlanır', async () => {
     const d = await seedKind('RECAP', { kickoffAt: new Date(Date.now() - 86_400_000).toISOString() });
     expect((await approveDraft(d.id, 'admin1', noFetch)).ok).toBe(true);
-    expect(publish).toHaveBeenCalledWith({ body: 'özet', externalKey: 'recap:5', matchId: '5', teamId: null });
+    expect(publish).toHaveBeenCalledWith({ body: 'özet', externalKey: 'recap:5', matchId: '5', teamId: null, role: 'RECAP' });
   });
 });

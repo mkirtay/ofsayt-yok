@@ -106,6 +106,9 @@ describe('<PostCard />', () => {
     expect(bot).toContain('Resmi hesap');
     expect(allowlisted).toContain('Resmi hesap'); // USER post'u ama allowlist'teki hesap
     expect(user).not.toContain('Resmi hesap');
+    // Otomatik (bot) paylaşım ayrıca etiketlenir; elle yazılan resmi paylaşım etiketlenmez.
+    expect(bot).toContain('Otomatik');
+    expect(allowlisted).not.toContain('Otomatik');
   });
 
   it('beğenilmiş post aria-pressed=true', () => {
