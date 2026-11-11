@@ -3,9 +3,14 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 
 vi.mock('@/lib/gundem/bot/matchPostsTick', () => ({ runMatchPostsTick: vi.fn(async () => ({ preview: { created: 1 }, recap: { created: 0 } })) }));
 vi.mock('@/lib/logger', () => ({ captureError: vi.fn() }));
+vi.mock('@/lib/gundem/bot/autoPublish', async (orig) => ({
+  ...(await orig<typeof import('@/lib/gundem/bot/autoPublish')>()),
+  autoPublishPending: vi.fn(async () => ({ posted: 2, stale: 0, failed: 0 })),
+}));
 
 import handler from '@/pages/api/admin/gundem/bot-match-tick';
 import { runMatchPostsTick } from '@/lib/gundem/bot/matchPostsTick';
+import { autoPublishPending } from '@/lib/gundem/bot/autoPublish';
 
 function run(req: Partial<NextApiRequest>) {
   const out = { status: 0, body: undefined as unknown };
@@ -24,7 +29,9 @@ describe('POST /api/admin/gundem/bot-match-tick', () => {
     process.env.CRON_SECRET = 's3cret';
     process.env.GUNDEM_BOT_MATCH_ENABLED = '1';
     delete process.env.GUNDEM_BOT_GOALS_ENABLED;
+    delete process.env.GUNDEM_BOT_AUTO_PUBLISH;
     vi.mocked(runMatchPostsTick).mockClear();
+    vi.mocked(autoPublishPending).mockClear();
   });
 
   it('POST dışı 405; Bearer yok/yanlış 401; sır query ile 400', async () => {
@@ -35,7 +42,15 @@ describe('POST /api/admin/gundem/bot-match-tick', () => {
   });
 
   it('geçerli Bearer → 200 + özet', async () => {
-    expect(await run({ headers: auth })).toEqual({ status: 200, body: { ok: true, summary: { preview: { created: 1 }, recap: { created: 0 } } } });
+    expect(await run({ headers: auth })).toEqual({ status: 200, body: { ok: true, summary: { preview: { created: 1 }, recap: { created: 0 } }, autoPublished: null } });
+    expect(autoPublishPending).not.toHaveBeenCalled();
+  });
+
+  it('GUNDEM_BOT_AUTO_PUBLISH=1 → bekleyen maç önü/sonu taslakları yayınlanır (gol değil)', async () => {
+    process.env.GUNDEM_BOT_AUTO_PUBLISH = '1';
+    const r = await run({ headers: auth });
+    expect(r.body).toMatchObject({ ok: true, autoPublished: { posted: 2 } });
+    expect(autoPublishPending).toHaveBeenCalledWith({ kinds: ['PREVIEW', 'RECAP'] });
   });
 
   it('beklenmeyen hata 500 DÖNDÜRMEZ (cron devre dışı kalmasın): 200 + degraded', async () => {

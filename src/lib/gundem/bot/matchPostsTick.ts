@@ -13,6 +13,23 @@ import { readCache, writeCache } from '@/lib/livescoreCache';
 import { sportmonksClientRequest, sportmonksCollectAllPages } from '@/services/sportmonksRuntimeClient';
 import type { SportmonksFixture } from '@/services/sportmonks/types';
 import { RECAP_MAX_AGE_MS, buildRecapDraft, cheapRecapReasons, countRedCards, recapKey, selectRecapCandidates, type RecapReason } from './recapPost';
+import type { Match } from '@/models/liveScore';
+import type { CompetitionTableData, CompetitionTableStandingRow } from '@/services/liveScoreService';
+import { nationalMatchesEnabled } from '@/config/nationalMatches';
+import { loadNationalDay } from '@/server/apiFootball/nationalDay';
+import { loadNationalStandings } from '@/server/apiFootball/nationalStandings';
+import { FOCUS_NATIONAL_TEAM_ID } from '@/utils/nationalHomeStandings';
+import { shiftIsoDate, todayIsoIstanbul } from '@/utils/dateStrip';
+import {
+  buildNationalPreview,
+  buildNationalRecap,
+  selectNationalPreview,
+  selectNationalRecap,
+  selectNationalScope,
+  turkiyeCompetitionIds,
+  type GroupRow,
+  type NationalDraft,
+} from './nationalPosts';
 import {
   PREVIEW_WINDOW_MAX_MS,
   PREVIEW_WINDOW_MIN_MS,
@@ -26,6 +43,7 @@ type PassSummary = { candidates: number; created: number; existing: number; skip
 export type MatchPostsSummary = {
   preview: PassSummary & { noAnalysis: number; notDerby: number };
   recap: PassSummary & { noReason: number; evaluated: number };
+  national: PassSummary & { scope: number };
 };
 
 export type MatchPostsDeps = {
@@ -41,6 +59,10 @@ export type MatchPostsDeps = {
   findAnalysis: typeof findStoredMatchAnalysis;
   isDerby: (homeId: number, awayId: number) => Promise<boolean | null>;
   createDraft: (data: { externalKey: string; kind: string; fixtureId: number; body: string; facts: unknown; warnings: string[] }) => Promise<void>;
+  /** Milli maçlar (API-Football): dün/bugün/yarın (TR günleri) listesi; milli maç bayrağı kapalıysa boş. */
+  loadNationalMatches: () => Promise<Match[]>;
+  /** Turnuvada Türkiye'nin grubu (yoksa null). */
+  loadTurkiyeGroup: (competitionId: number) => Promise<GroupRow[] | null>;
   now?: () => number;
 };
 
@@ -68,6 +90,29 @@ export function loadFinishedFixtures(from: string, to: string): Promise<PreviewF
   });
 }
 
+/** Puan durumundan Türkiye'nin grubu: tek tablo ya da gruplu aşama. */
+export function turkiyeGroupFromTable(data: CompetitionTableData): GroupRow[] | null {
+  const tables: CompetitionTableStandingRow[][] = [];
+  if (data.table) tables.push(data.table);
+  for (const st of data.stages ?? []) for (const g of st.groups ?? []) if (g.standings) tables.push(g.standings);
+  const group = tables.find((t) => t.some((r) => Number(r.team_id) === FOCUS_NATIONAL_TEAM_ID));
+  if (!group) return null;
+  return group.map((r) => ({ teamId: Number(r.team_id), name: String(r.name ?? r.team?.name ?? ''), rank: Number(r.rank), points: Number(r.points ?? 0), played: Number(r.matches ?? 0) }));
+}
+
+async function defaultLoadNationalMatches(): Promise<Match[]> {
+  if (!nationalMatchesEnabled()) return [];
+  const today = todayIsoIstanbul();
+  const days = [shiftIsoDate(today, -1), today, shiftIsoDate(today, 1)];
+  const res = await Promise.all(days.map((d) => loadNationalDay(d)));
+  return res.flatMap((r) => (r.ok ? r.matches : []));
+}
+
+async function defaultLoadTurkiyeGroup(competitionId: number): Promise<GroupRow[] | null> {
+  const r = await loadNationalStandings(String(competitionId));
+  return r.kind === 'found' ? turkiyeGroupFromTable(r.data) : null;
+}
+
 const evalKey = (id: number) => `gundem-bot:recap-eval:${id}`;
 
 export const defaultMatchPostsDeps: MatchPostsDeps = {
@@ -84,6 +129,8 @@ export const defaultMatchPostsDeps: MatchPostsDeps = {
   },
   findAnalysis: findStoredMatchAnalysis,
   isDerby: loadIsDerby,
+  loadNationalMatches: defaultLoadNationalMatches,
+  loadTurkiyeGroup: defaultLoadTurkiyeGroup,
   createDraft: async (d) => {
     await prisma.gundemBotDraft.create({
       data: { externalKey: d.externalKey, kind: d.kind, fixtureId: d.fixtureId, body: d.body, facts: d.facts as Prisma.InputJsonValue, warnings: d.warnings },
@@ -214,9 +261,75 @@ export async function runRecapPass(deps: MatchPostsDeps, now: number): Promise<M
   return s;
 }
 
+/**
+ * Milli maçlar: Türkiye maçı + Türkiye'nin grubundaki maçlar için maç önü (1–2 sa kala) ve maç sonu taslağı. Puan durumu yalnız
+ * Türkiye'nin o günlerde oynadığı turnuvalar için okunur (10 dk önbellekli). Analiz varsa önizlemesi, yoksa grup şablonu.
+ */
+export async function runNationalPass(deps: MatchPostsDeps, now: number): Promise<MatchPostsSummary['national']> {
+  const s = { candidates: 0, created: 0, existing: 0, skipped: 0, errors: 0, scope: 0 };
+  let matches: Match[];
+  try {
+    matches = await deps.loadNationalMatches();
+  } catch (e) {
+    captureError('gundem:match-tick:national-matches', e);
+    return { ...s, errors: 1 };
+  }
+  if (matches.length === 0) return s;
+  const groups = new Map<number, GroupRow[]>();
+  for (const id of turkiyeCompetitionIds(matches)) {
+    try {
+      const g = await deps.loadTurkiyeGroup(id);
+      if (g) groups.set(id, g);
+    } catch (e) {
+      captureError('gundem:match-tick:national-group', e);
+    }
+  }
+  const scope = selectNationalScope(matches, groups);
+  s.scope = scope.length;
+  const previews = selectNationalPreview(scope, now);
+  const recaps = selectNationalRecap(scope, now);
+  s.candidates = previews.length + recaps.length;
+  if (s.candidates === 0) return s;
+  let existing: Set<string>;
+  try {
+    existing = await deps.existingKeys([...previews.map((m) => previewKey(m.id)), ...recaps.map((m) => recapKey(m.id))]);
+  } catch (e) {
+    captureError('gundem:match-tick:national-existing', e);
+    return { ...s, errors: 1 };
+  }
+  const jobs: Array<() => Promise<NationalDraft | null>> = [
+    ...previews.map((m) => async () => {
+      if (existing.has(previewKey(m.id))) return null;
+      const analysis = await deps.findAnalysis(String(m.id), 'PRE');
+      return buildNationalPreview(m, groups.get(Number(m.competition?.id)), analysis);
+    }),
+    ...recaps.map((m) => async () => (existing.has(recapKey(m.id)) ? null : buildNationalRecap(m))),
+  ];
+  for (const job of jobs) {
+    try {
+      const draft = await job();
+      if (!draft) {
+        s.existing += 1;
+        continue;
+      }
+      try {
+        await deps.createDraft(draft);
+        s.created += 1;
+      } catch (e) {
+        if ((e as { code?: string }).code === 'P2002') s.existing += 1;
+        else throw e;
+      }
+    } catch (e) {
+      s.errors += 1;
+      captureError('gundem:match-tick:national', e);
+    }
+  }
+  return s;
+}
+
 export async function runMatchPostsTick(deps: MatchPostsDeps = defaultMatchPostsDeps): Promise<MatchPostsSummary> {
   const now = deps.now?.() ?? Date.now();
   // Bağımsız geçişler: biri çökerse diğeri yine çalışır (her biri kendi içinde yakalar).
-  const [preview, recap] = await Promise.all([runPreviewPass(deps, now), runRecapPass(deps, now)]);
-  return { preview, recap };
+  const [preview, recap, national] = await Promise.all([runPreviewPass(deps, now), runRecapPass(deps, now), runNationalPass(deps, now)]);
+  return { preview, recap, national };
 }

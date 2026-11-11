@@ -43,6 +43,8 @@ function makeDeps(fixtures: PreviewFixture[], over: Partial<MatchPostsDeps> = {}
     isEvaluated: vi.fn(async () => false),
     markEvaluated: vi.fn(async () => {}),
     createDraft: vi.fn(async (d) => { created.push(d); }),
+    loadNationalMatches: vi.fn(async () => []),
+    loadTurkiyeGroup: vi.fn(async () => null),
     ...over,
   };
   return { deps, created };

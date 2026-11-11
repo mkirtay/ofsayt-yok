@@ -9,6 +9,7 @@ import { captureError } from '@/lib/logger';
 import { isValidCronRequest } from '@/lib/gundem/botAuth';
 import { runBotTick } from '@/lib/gundem/bot/tick';
 import { isGoalDraftsEnabled } from '@/config/gundemBot';
+import { GOAL_AUTO_DELAY_MS, GOAL_AUTO_MAX_AGE_MS, autoPublishPending, isAutoPublishEnabled } from '@/lib/gundem/bot/autoPublish';
 
 const SECRET_LIKE_QUERY = /secret|token|key|auth|password/i;
 
@@ -27,7 +28,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const summary = await runBotTick();
-    return res.status(200).json({ ok: true, summary });
+    // Otomatik yayın (bayrakla): 3 dk'yı dolduran gol taslakları VAR yeniden doğrulamasıyla (approveDraft) yayınlanır.
+    const autoPublished = isAutoPublishEnabled()
+      ? await autoPublishPending({ kinds: ['GOAL'], minAgeMs: GOAL_AUTO_DELAY_MS, maxAgeMs: GOAL_AUTO_MAX_AGE_MS }).catch((e) => (captureError('gundem:bot-tick:auto', e), null))
+      : null;
+    return res.status(200).json({ ok: true, summary, autoPublished });
   } catch (e) {
     captureError('gundem:bot-tick', e);
     return res.status(500).json({ error: 'Sunucu hatası.' });

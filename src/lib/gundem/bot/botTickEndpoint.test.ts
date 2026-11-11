@@ -44,7 +44,7 @@ describe('POST /api/admin/gundem/bot-tick', () => {
   it('geçerli Bearer başlığı → 200 + özet', async () => {
     const r = await run({ headers: { authorization: 'Bearer s3cret' } });
     expect(r.status).toBe(200);
-    expect(r.body).toEqual({ ok: true, summary: { created: 2 } });
+    expect(r.body).toEqual({ ok: true, summary: { created: 2 }, autoPublished: null });
   });
 
   it('CRON_SECRET tanımsızsa hiçbir başlık kabul edilmez', async () => {
@@ -71,7 +71,7 @@ describe('POST /api/admin/gundem/bot-tick', () => {
   it("bayrak '1' ve 'true' → runBotTick çalışır", async () => {
     for (const v of ['1', 'TRUE']) {
       process.env.GUNDEM_BOT_GOALS_ENABLED = v;
-      expect((await run({ headers: { authorization: 'Bearer s3cret' } })).body).toEqual({ ok: true, summary: { created: 2 } });
+      expect((await run({ headers: { authorization: 'Bearer s3cret' } })).body).toEqual({ ok: true, summary: { created: 2 }, autoPublished: null });
     }
   });
 });

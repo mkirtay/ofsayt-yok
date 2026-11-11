@@ -3,6 +3,13 @@
 > **2026-10-11: Gol-draft üretimi KAPALI (varsayılan).** `GUNDEM_BOT_GOALS_ENABLED=1` olmadıkça `bot-tick` yetkiden sonra hemen döner
 > (`{ ok: true, disabled: true }`) — Sportmonks/Redis/DB'ye gitmez; cron-job.org açık kalabilir. Kod duruyor. Aşağıdaki "dakikada 1 inplay" notları bayrak AÇIKKEN geçerlidir.
 
+> **2026-11-11 (2) — milli maçlar + otomatik yayın.** `bot-match-tick` üçüncü geçiş: API-Football milli maçları (dün/bugün/yarın),
+> kapsam = Türkiye maçı + aynı turnuvada Türkiye'nin GRUBUNDAKİ maçlar (puan durumu; hazırlık maçında yalnız Türkiye maçı). Maç önü
+> 1–2 sa kala (analiz varsa önizlemesi, yoksa grup sırası şablonu), maç sonu her bitmiş kapsam maçında (`bot/nationalPosts.ts`).
+> `NATIONAL_MATCHES_ENABLED` kapalıysa geçiş boş. Milli maçta GOL taslağı YOK (gol poller'ı yalnız Sportmonks).
+> **Otomatik yayın:** `GUNDEM_BOT_AUTO_PUBLISH=1` → maç önü/sonu aynı tick'te, gol 3–30 dk aralığında `approveDraft` ile (VAR
+> doğrulaması dahil) yayınlanır; kapatınca kuyruk elle onaya döner (`bot/autoPublish.ts`, aktör `auto`).
+
 > **2026-11-11 — rol hesapları + kapanış sorusu + "Otomatik" etiketi.** Taslak türü yayınlayan hesabı seçer: GOL → @scor3canli
 > (Scor3 Canlı), PREVIEW → @scor3analiz (Scor3 Analiz), RECAP → @scor3macsonu (Scor3 Maç Sonu); `src/lib/gundem/official.ts`
 > `BOT_ROLE_ACCOUNTS`. Hesap yoksa ilk onaylı yayında oluşturulur (şifresiz, e-posta doğrulanmış → resmi rozet; girişle kullanılamaz);
