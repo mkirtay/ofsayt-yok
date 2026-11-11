@@ -73,6 +73,7 @@
   },
   "analysis": {
     "title": "Match Analysis & Prediction",
+    "nationalNote": "National-team analysis is experimental: lineup and injury data are limited; predictions rely on past match data only.",
     "titleShort": "Match Analysis",
     "loading": "Preparing AI analysis… This may take a few seconds.",
     "inProgress": "This match's analysis is being generated right now — it will be ready in a few seconds.",

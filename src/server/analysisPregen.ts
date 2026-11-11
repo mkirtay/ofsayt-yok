@@ -20,6 +20,9 @@ import { trackSportmonksFetches } from '@/server/sportmonks/cachedFetch';
 import { isUniqueViolation } from '@/lib/credits';
 import { captureError } from '@/lib/logger';
 import { LlmBudgetExceededError } from '@/server/llmBudget';
+import { nationalAnalysisEnabled } from '@/config/nationalMatches';
+import type { Match } from '@/models/liveScore';
+import { loadNationalDay } from '@/server/apiFootball/nationalDay';
 
 export const SUPER_LIG = 600;
 export const UEFA_CLUB_LEAGUES = [2, 5, 2286] as const;
@@ -35,7 +38,7 @@ export const PREGEN_MAX_PER_RUN = 3;
 /** `participants` include'unun burada kullanılan alanları (genel tipte `country_id` yok). */
 type PregenFixture = Omit<SportmonksFixture, 'participants'> & { starting_at_timestamp?: number | null; participants?: Array<{ id: number; name?: string; country_id?: number | null }> };
 
-export type PregenCandidate = { id: number; name: string; leagueId: number; kickoffMs: number; reason: 'super-lig' | 'uefa-turkish' | 'big5-top' };
+export type PregenCandidate = { id: number; name: string; leagueId: number; kickoffMs: number; reason: 'super-lig' | 'uefa-turkish' | 'big5-top' | 'national' };
 
 function kickoffMs(f: PregenFixture): number | null {
   if (typeof f.starting_at_timestamp === 'number') return f.starting_at_timestamp * 1000;
@@ -77,6 +80,27 @@ export function selectPregenCandidates(
     out.push({ id: f.id, name: f.name ?? teams.map((t) => t.name).join(' vs '), leagueId: league, kickoffMs: ko, reason });
   }
   return out.sort((a, b) => a.kickoffMs - b.kickoffMs);
+}
+
+/** Saf seçim: başlamamış milli maçlar (AF, Türkiye günü listesi), aynı pencere kuralı; `date` + `scheduled` UTC. */
+export function selectNationalPregenCandidates(matches: Match[], now: number): PregenCandidate[] {
+  const out: PregenCandidate[] = [];
+  for (const m of matches) {
+    if (m.status !== 'NOT STARTED' || m.state_code === 'TBA' || !m.date || !m.scheduled) continue;
+    const ko = Date.parse(`${m.date}T${m.scheduled}:00Z`);
+    if (!Number.isFinite(ko) || ko - now < PREGEN_WINDOW_MIN_MS || ko - now > PREGEN_WINDOW_MAX_MS) continue;
+    out.push({ id: m.id, name: `${m.home.name} vs ${m.away.name}`, leagueId: Number(m.competition_id ?? 0), kickoffMs: ko, reason: 'national' });
+  }
+  return out;
+}
+
+const TSI_OFFSET_MS = 3 * 60 * 60_000; // AF günü Europe/Istanbul
+
+async function loadNationalCandidates(now: number): Promise<PregenCandidate[]> {
+  if (!nationalAnalysisEnabled()) return [];
+  const days = [...new Set([isoDay(now + PREGEN_WINDOW_MIN_MS + TSI_OFFSET_MS), isoDay(now + PREGEN_WINDOW_MAX_MS + TSI_OFFSET_MS)])];
+  const lists = await Promise.all(days.map((d) => loadNationalDay(d).catch(() => ({ ok: false as const }))));
+  return selectNationalPregenCandidates(lists.flatMap((r) => (r.ok ? r.matches : [])), now);
 }
 
 const isoDay = (ms: number) => new Date(ms).toISOString().slice(0, 10);
@@ -160,7 +184,8 @@ export async function runAnalysisPregen(opts: { now?: number; dryRun?: boolean; 
     const tables = await Promise.all(big5.map(async (l) => [l, topTeamIds(await getCompetitionTableFull(String(l)).catch(() => null))] as const));
     return selectPregenCandidates(fixtures, { now, topTeamsByLeague: new Map(tables) });
   });
-  const candidates = selection.value;
+  const national = await loadNationalCandidates(now);
+  const candidates = [...selection.value, ...national].sort((a, b) => a.kickoffMs - b.kickoffMs);
   const items: PregenItem[] = [];
   let generated = 0;
   for (const c of candidates) {

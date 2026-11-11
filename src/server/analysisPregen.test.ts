@@ -41,7 +41,7 @@ vi.mock('@/lib/predictionRecords', () => ({ ensurePredictionRecordForAnalysis: v
 vi.mock('@/lib/credits', () => ({ isUniqueViolation: () => false }));
 vi.mock('@/lib/logger', () => ({ captureError: vi.fn() }));
 
-import { isInPregenScope, runAnalysisPregen, selectPregenCandidates, summarizePregen, topTeamIds, TURKEY_COUNTRY_ID } from './analysisPregen';
+import { isInPregenScope, runAnalysisPregen, selectNationalPregenCandidates, selectPregenCandidates, summarizePregen, topTeamIds, TURKEY_COUNTRY_ID } from './analysisPregen';
 
 const NOW = Date.parse('2026-10-09T12:00:00Z');
 const at = (hoursFromNow: number) => new Date(NOW + hoursFromNow * 3600_000).toISOString().replace('T', ' ').slice(0, 19);
@@ -162,5 +162,18 @@ describe('ön üretim kapsamı (asistan mesajı için)', () => {
     expect(h.generated).toEqual([]);
     expect(captureError).not.toHaveBeenCalled();
     expect(summarizePregen(r)).toMatchObject({ generated: 0, skipped: 1, errors: 0 });
+  });
+});
+
+describe('selectNationalPregenCandidates', () => {
+  const now = Date.parse('2026-11-12T15:00:00Z');
+  const mk = (over: Record<string, unknown>) => ({ id: 2000000001, status: 'NOT STARTED', home: { id: 1, name: 'Türkiye' }, away: { id: 2, name: 'Belçika' }, date: '2026-11-12', scheduled: '17:00', ...over }) as never;
+  it('pencere içindeki başlamamış milli maçı seçer', () => {
+    const r = selectNationalPregenCandidates([mk({})], now);
+    expect(r).toHaveLength(1);
+    expect(r[0]).toMatchObject({ reason: 'national', name: 'Türkiye vs Belçika' });
+  });
+  it('pencere dışı, başlamış veya saati belirsiz maçı almaz', () => {
+    expect(selectNationalPregenCandidates([mk({ scheduled: '22:00' }), mk({ status: 'IN PLAY' }), mk({ state_code: 'TBA' }), mk({ scheduled: undefined })], now)).toHaveLength(0);
   });
 });

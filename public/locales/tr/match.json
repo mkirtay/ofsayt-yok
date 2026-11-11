@@ -71,6 +71,7 @@
   },
   "analysis": {
     "title": "Maç Analizi & Tahmin",
+    "nationalNote": "Milli maç analizi deneme aşamasında: kadro, sakatlık ve oran bilgisi sınırlıdır, tahminler yalnızca geçmiş maç verisine dayanır.",
     "titleShort": "Maç Analizi",
     "loading": "AI analizi hazırlanıyor… Bu işlem birkaç saniye sürebilir.",
     "inProgress": "Bu maçın analizi şu an üretiliyor — birkaç saniye içinde hazır olacak.",

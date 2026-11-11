@@ -1,4 +1,5 @@
 import { isNationalMatchId } from '@/services/apiFootball/ids';
+import { nationalAnalysisTabVisible } from '@/config/nationalMatches';
 import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Router from 'next/router';
@@ -60,7 +61,8 @@ export const MATCH_TAB_KEYS: readonly MatchTabKey[] = ['overview', 'commentary',
 const PRERENDER_ANALYSIS: readonly MatchTabKey[] = ['analysis'];
 
 /** Varsayılan sekme: Genel Bakış (veri hazır, AI kredisi harcamaz). */
-const NATIONAL_HIDDEN_TABS: ReadonlySet<MatchTabKey> = new Set(['commentary', 'analysis', 'trivia']);
+const NATIONAL_ANALYSIS_TAB = nationalAnalysisTabVisible();
+const NATIONAL_HIDDEN_TABS: ReadonlySet<MatchTabKey> = new Set(NATIONAL_ANALYSIS_TAB ? ['commentary', 'trivia'] : ['commentary', 'analysis', 'trivia']);
 
 export const DEFAULT_MATCH_TAB: MatchTabKey = 'overview';
 
@@ -144,7 +146,7 @@ export default function MatchDetailContent({ detail, requestedMatchId, variant =
     });
   }, []);
   // AI analiz/kredi durumu sayfa açılışında çekilir — sekmeye girince beklemeden hazır olsun.
-  const analysisState = useMatchAnalysis(national ? '' : effectiveMatchId, initialAnalysisPreview);
+  const analysisState = useMatchAnalysis(national && !NATIONAL_ANALYSIS_TAB ? '' : effectiveMatchId, initialAnalysisPreview);
 
   const tabs = useMemo<MatchTabItem<MatchTabKey>[]>(
     () => ([
@@ -230,7 +232,12 @@ export default function MatchDetailContent({ detail, requestedMatchId, variant =
         key: 'analysis',
         label: t('tabs.analysis'),
         render: () =>
-          effectiveMatchId ? <MatchAnalysis key={effectiveMatchId} match={match} state={analysisState} /> : null,
+          effectiveMatchId ? (
+            <>
+              {national ? <p className={styles.nationalNote}>{t('analysis.nationalNote')}</p> : null}
+              <MatchAnalysis key={effectiveMatchId} match={match} state={analysisState} />
+            </>
+          ) : null,
       },
       {
         key: 'trivia',
