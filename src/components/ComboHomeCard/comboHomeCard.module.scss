@@ -105,7 +105,9 @@
   min-width: 0;
 
   img {
-    flex: 0 0 auto;
+    flex: 0 0 16px;
+    width: 16px;
+    height: auto;
     margin-top: 2px;
   }
 }
@@ -121,9 +123,12 @@
 }
 
 .pickLine {
+  grid-column: 1 / -1; // ikinci satır, tüm genişlik (ilk satırdaki isim sütununu daraltmaz)
   display: grid;
-  grid-template-columns: 1fr auto 48px;
+  grid-template-columns: minmax(0, 1fr) auto 44px;
   gap: $spacing-2;
+  min-width: 0;
+  overflow-wrap: anywhere;
   font-size: 12px;
   color: $color-text-secondary;
 }
