@@ -5,6 +5,7 @@
  * - Bütçe: milli maç sayacından AYRI `combo` havuzu (client.ts COMBO_DAILY_LIMIT).
  * Eşleşmeyen maçta oran gösterilmez.
  */
+import { toAfId } from '@/services/apiFootball/ids';
 import { apiFootballGet } from '@/server/apiFootball/client';
 import { afCached } from '@/server/apiFootball/cache';
 import type { AfFixture } from '@/services/apiFootball/types';
@@ -113,29 +114,29 @@ export async function resolveOdds(requests: readonly OddsRequest[], deps: OddsDe
   // Maçın UTC günü (AF `fixtures?date` UTC gününe göre); günler tekil → istek sayısı ≤ 2.
   const dates = new Set<string>();
   for (const r of requests) {
-    if (r.kickoffMs != null) dates.add(new Date(r.kickoffMs).toISOString().slice(0, 10));
+    if (r.kickoffMs != null && toAfId(r.matchId) == null) dates.add(new Date(r.kickoffMs).toISOString().slice(0, 10));
   }
   const byDate = new Map<string, AfFixtureSlim[] | null>();
   await Promise.all([...dates].map(async (d) => byDate.set(d, await deps.fixtures(d))));
 
+  const fromEntry = async (r: OddsRequest, afId: number): Promise<OddsResult> => {
+    const o = await deps.odds(afId);
+    if (!o.ok) return { matchId: r.matchId, status: 'error', afFixtureId: afId };
+    if (!o.entry || o.entry.bookmakers.length === 0) return { matchId: r.matchId, status: 'no-odds', afFixtureId: afId };
+    const market = marketOdd(o.entry, r.key);
+    if (!market) return { matchId: r.matchId, status: 'no-market', afFixtureId: afId };
+    return { matchId: r.matchId, status: 'ok', afFixtureId: afId, market, updatedAt: o.entry.update ?? null };
+  };
+
   return mapLimit(requests, ODDS_CONCURRENCY, async (r): Promise<OddsResult> => {
+    // Milli maç: uygulama kimliği zaten AF kimliği (+2e9) → eşleme / fikstür listesi gerekmez.
+    const directAf = toAfId(r.matchId);
+    if (directAf != null) return fromEntry(r, directAf);
     if (r.kickoffMs == null) return { matchId: r.matchId, status: 'no-fixture' };
     const list = byDate.get(new Date(r.kickoffMs).toISOString().slice(0, 10));
     if (list == null) return { matchId: r.matchId, status: 'error' };
     const matched = matchFixture({ kickoffMs: r.kickoffMs, home: r.home, away: r.away }, list);
     if (!matched) return { matchId: r.matchId, status: 'no-fixture' };
-    const fx = matched.fixture;
-    const o = await deps.odds(fx.id);
-    if (!o.ok) return { matchId: r.matchId, status: 'error', afFixtureId: fx.id };
-    if (!o.entry || o.entry.bookmakers.length === 0) return { matchId: r.matchId, status: 'no-odds', afFixtureId: fx.id };
-    const market = marketOdd(o.entry, r.key);
-    if (!market) return { matchId: r.matchId, status: 'no-market', afFixtureId: fx.id };
-    return {
-      matchId: r.matchId,
-      status: 'ok',
-      afFixtureId: fx.id,
-      market,
-      updatedAt: o.entry.update ?? null,
-    };
+    return fromEntry(r, matched.fixture.id);
   });
 }

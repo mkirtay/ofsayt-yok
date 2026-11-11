@@ -43,11 +43,11 @@ ON CONFLICT ("matchId","pickKey") DO UPDATE SET
   "snapshots" = "ComboOddsSnapshot"."snapshots" + 1
 WHERE "ComboOddsSnapshot"."kickoffAt" > CURRENT_TIMESTAMP`;
 
-/** Tablo yok (Postgres 42P01 / Prisma P2010 "does not exist") mu? */
+/** Kombine tablosu yok (Postgres 42P01 / Prisma P2010 "does not exist") mu? */
 export function isMissingTable(error: unknown): boolean {
   const e = error as { code?: string; message?: string; meta?: { code?: string } } | null;
   if (!e) return false;
-  return e.code === '42P01' || e.meta?.code === '42P01' || /relation .*ComboOddsSnapshot.* does not exist|ComboOddsSnapshot.*does not exist/i.test(e.message ?? '');
+  return e.code === '42P01' || e.meta?.code === '42P01' || /Combo\w+.*does not exist/i.test(e.message ?? '');
 }
 
 let idSeq = 0;

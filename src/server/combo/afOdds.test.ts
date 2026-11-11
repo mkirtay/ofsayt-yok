@@ -86,6 +86,17 @@ describe('resolveOdds', () => {
   });
 });
 
+describe('resolveOdds milli maç (doğrudan AF kimliği)', () => {
+  it('eşleme / fikstür listesi olmadan AF id ile oran çeker; kimlik 2e9 kaydırmalı', async () => {
+    const fixturesSpy = vi.fn(async () => fixtures);
+    const d = deps({ fixtures: fixturesSpy });
+    const r = await resolveOdds([{ matchId: String(2_000_000_000 + 1584458), key: 'home', kickoffMs: null, home: 'x', away: 'y' }], d);
+    expect(r[0]).toMatchObject({ status: 'ok', afFixtureId: 1584458 });
+    expect(fixturesSpy).not.toHaveBeenCalled();
+    expect(d.oddsCalls).toEqual([1584458]);
+  });
+});
+
 describe('resolveOdds eşzamanlılık', () => {
   it('oran isteği aynı anda en çok 4', async () => {
     let active = 0;

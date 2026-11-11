@@ -175,16 +175,19 @@ export const MIN_PCT_FLOOR = 55;
 /**
  * Risk % + hedef oran → öneri. Önce riskin eşiğiyle (`riskToMinPct`) denenir; hedef oran bu eşikle ulaşılamıyorsa eşik 5'er puan
  * gevşetilir (en çok `MIN_PCT_FLOOR`'a kadar) — "1,7 istiyorum" çok temkinli bir eşikle imkânsızdır, en olası ulaşan küme aranır.
- * Hedef yoksa riskin varsayılan hedefi (`riskToTargetOdds`) kullanılmaz: yalnız eşik + maç sayısı.
+ * Hedef yoksa yalnız eşik + maç sayısı (eşiği geçen yoksa yine `floor`'a kadar gevşetilir; altına inilmez).
  */
-export function suggestForRisk(pool: readonly ComboCandidate[], opts: { risk: number; maxMatches?: number; targetOdds?: number | null }): PlanSuggestion {
+export function suggestForRisk(pool: readonly ComboCandidate[], opts: { risk: number; maxMatches?: number; targetOdds?: number | null; floor?: number }): PlanSuggestion {
+  const floor = opts.floor ?? MIN_PCT_FLOOR;
   const maxMatches = opts.maxMatches ?? riskToMaxMatches(opts.risk);
-  const start = riskToMinPct(opts.risk);
-  if (opts.targetOdds == null) return { ...suggestCombo(pool, { minPct: start, maxMatches }), usedMinPct: start, relaxed: false };
+  const start = Math.max(riskToMinPct(opts.risk), floor);
   let last: SuggestResult = { picks: [], reason: 'no-candidates' };
-  for (let minPct = start; minPct >= MIN_PCT_FLOOR; minPct -= 5) {
-    last = suggestCombo(pool, { minPct, maxMatches, targetOdds: opts.targetOdds });
+  const steps: number[] = [];
+  for (let m = start; m > floor; m -= 5) steps.push(m);
+  steps.push(floor); // taban her zaman denenir (5'in katı olmasa da), altına inilmez
+  for (const minPct of steps) {
+    last = suggestCombo(pool, { minPct, maxMatches, targetOdds: opts.targetOdds ?? null });
     if (last.picks.length > 0) return { ...last, usedMinPct: minPct, relaxed: minPct < start };
   }
-  return { ...last, usedMinPct: MIN_PCT_FLOOR, relaxed: true };
+  return { ...last, usedMinPct: floor, relaxed: true };
 }
