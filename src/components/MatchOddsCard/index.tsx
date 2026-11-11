@@ -143,8 +143,6 @@ export default function MatchOddsCard({ matchId }: { matchId: string }) {
           ) : null}
         </div>
       ) : null}
-
-      <p className={styles.source}>{t('marketOdds.source', { bookmaker: odds.bookmaker })}</p>
     </section>
   );
 }
