@@ -14,6 +14,7 @@ const ROOT = process.cwd();
 const BINARY = /\.(png|jpe?g|gif|webp|avif|ico|svg|woff2?|ttf|otf|mp4|webm|mp3|pdf|glb|gltf|bin)$/i;
 /** Geçici ad + kesinleşecek adın yazımları. */
 const NAMES = [GAME_BRAND.name, 'Tahmin Ligi', '90arti', '90 Artı'];
+const NEEDLES = NAMES.map((n) => n.toLocaleLowerCase('tr-TR'));
 const ALLOWED = new Set(['src/config/brand.ts', 'src/config/gameBrand.guard.test.ts']);
 
 const isFile = (f: string) => statSync(path.join(ROOT, f), { throwIfNoEntry: false })?.isFile() ?? false;
@@ -31,11 +32,14 @@ describe('tahmin oyunu adı yalnız GAME_BRAND\'de', () => {
     for (const f of scannedFiles()) {
       const text = readFileSync(path.join(ROOT, f), 'utf8');
       if (text.includes('\u0000')) continue;
+      // Hızlı ön eleme: dosyada hiç geçmiyorsa satırlara bölme (CI'da tüm repo taraması 5 sn sınırını aşıyordu).
+      const lower = text.toLocaleLowerCase('tr-TR');
+      if (!NEEDLES.some((n) => lower.includes(n))) continue;
       text.split('\n').forEach((line, i) => {
         const hit = NAMES.find((n) => line.toLocaleLowerCase('tr-TR').includes(n.toLocaleLowerCase('tr-TR')));
         if (hit) offenders.push(`${f}:${i + 1}: ${line.trim().slice(0, 120)} → "${hit}"`);
       });
     }
     expect(offenders).toEqual([]);
-  });
+  }, 30_000); // tüm repoyu okur; CI makinesi yavaş
 });
