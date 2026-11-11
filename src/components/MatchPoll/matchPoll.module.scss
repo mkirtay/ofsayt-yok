@@ -99,14 +99,12 @@
     color: var(--color-action-text);
   }
 
-  // Takım modu: takım adları büyük harfe çevrilmez ("İ" sorunu + okunurluk); beraberlik de aynı biçimde.
+  // Takım modu: "X" ve logolar; büyük harf dönüşümü / aralık yok.
   .teamMode & {
-    font-size: 13px;
     color: $color-text;
     text-transform: none;
     letter-spacing: 0;
     line-height: 1.2;
-    min-height: 20px; // logo yüksekliği: beraberliğin yüzdesi takımlarınkiyle aynı hizada
   }
 
   .teamMode .voteBtnSelected & {
@@ -125,8 +123,8 @@
 .voteBtnLogo,
 .voteBtnLogoFallback {
   flex-shrink: 0;
-  width: 20px;
-  height: 20px;
+  width: 28px;
+  height: 28px;
 }
 
 .voteBtnLogo {
@@ -134,59 +132,35 @@
 }
 
 .voteBtnLogoFallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 50%;
   background: var(--border-subtle);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0;
+  color: $color-text-secondary;
 }
 
-/* ── Takım modu, dar ekran: üç seçenek yan yana kalır; logo adın üstüne geçer (ada tam sütun genişliği) ── */
-@media (max-width: 480px) {
-  .buttons.teamMode {
-    flex-direction: row;
-  }
+/* ── Takım modu: üç yuvarlak seçenek (logo · X · logo) her genişlikte yan yana — ad yok, kesilme yok ── */
+.buttons.teamMode {
+  flex-direction: row;
+}
 
-  .teamMode .voteBtn {
-    flex-direction: column;
-    justify-content: flex-start;
-    gap: 4px;
-    padding: 8px 3px 12px;
-  }
+.teamMode .voteBtn {
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px 4px 12px;
+}
 
-  .teamMode .voteBtnLabel {
-    flex-direction: column;
-    gap: 4px;
-    width: 100%;
-    font-size: 12px;
-  }
-
-  // ~90 px sütunda tek satır "Kastamonu…" bile kesiyordu → en çok iki satır ("Borussia / Dortmund"), sonra (…).
-  // Tek kelimelik adlar kelime ortasından bölünmez: tek satır + (…), uzunsa bir punto küçük ("Kastamonuspor").
-  .teamMode .voteBtnText {
-    max-width: 100%;
-  }
-
-  .teamMode .voteBtnTextMulti {
-    white-space: normal;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-    line-clamp: 2;
-  }
-
-  .teamMode .voteBtnTextLongWord {
-    font-size: 11px;
-  }
-
-  // Yüzde sütunun dibinde: iki satırlık ad yanında da üç yüzde aynı hizada.
-  .teamMode .voteBtnPct {
-    margin-top: auto;
-  }
-
-  // Beraberlikte logo yok: adın satırı takımlarınkiyle hizalı kalsın diye logo yüksekliği kadar boşluk.
-  .teamMode .voteBtnDraw .voteBtnLabel::before {
-    content: '';
-    display: block;
-    height: 20px;
-  }
+.teamMode .voteBtnLabel {
+  flex-direction: column;
+  width: 100%;
+  min-height: 28px; // "X" ile logo aynı hizada; yüzdeler aynı satırda
+  font-size: 16px;
+  font-weight: 700;
 }
 
 .voteBtnPct {

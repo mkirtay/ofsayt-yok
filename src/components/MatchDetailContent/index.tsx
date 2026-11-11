@@ -1,3 +1,4 @@
+import { useSession } from 'next-auth/react';
 import { isNationalMatchId } from '@/services/apiFootball/ids';
 import { nationalAnalysisTabVisible } from '@/config/nationalMatches';
 import dynamic from 'next/dynamic';
@@ -16,6 +17,7 @@ import MatchTabs, { type MatchTabItem } from '@/components/MatchTabs';
 import MatchTrivia from '@/components/MatchTrivia';
 import MatchAnalysis from '@/components/MatchAnalysis';
 import MatchForumTab from '@/components/MatchForumTab';
+import MatchPoll from '@/components/MatchPoll';
 import MatchDiscussionCard from '@/components/MatchDiscussionCard';
 import MatchCountersBadge from '@/components/MatchCountersBadge';
 import { countsFor, useMatchCounters, useMatchViewBeacon } from '@/hooks/useMatchCounters';
@@ -63,6 +65,8 @@ const PRERENDER_ANALYSIS: readonly MatchTabKey[] = ['analysis'];
 /** Varsayılan sekme: Genel Bakış (veri hazır, AI kredisi harcamaz). */
 const NATIONAL_ANALYSIS_TAB = nationalAnalysisTabVisible();
 const NATIONAL_HIDDEN_TABS: ReadonlySet<MatchTabKey> = new Set(NATIONAL_ANALYSIS_TAB ? ['commentary', 'trivia'] : ['commentary', 'analysis', 'trivia']);
+// Piyasa oranları kartı: yalnız milli maç + oturumda `comboAccess` (ADMIN + COMBO_TOOL_USER_IDS) → diğerlerine ek JS / istek yok.
+const MatchOddsCard = dynamic(() => import('@/components/MatchOddsCard'), { ssr: false });
 
 export const DEFAULT_MATCH_TAB: MatchTabKey = 'overview';
 
@@ -81,6 +85,7 @@ export default function MatchDetailContent({ detail, requestedMatchId, variant =
   // Milli maç (API-Football, id >= 2e9): Anlatım, AI Analiz, Trivia sekmeleri ile baskı şeridi ve hakem puanı yok (veri
   // sağlayıcıda yok / Sportmonks'a bağlı) → sessizce gizlenir; sade sayfa: kart + istatistik + olaylar + kadro + forum.
   const national = isNationalMatchId(effectiveMatchId);
+  const comboAccess = Boolean(useSession().data?.user?.comboAccess);
   const [active, setActive] = useState<MatchTabKey>(DEFAULT_MATCH_TAB);
   const contentRef = useRef<HTMLDivElement>(null);
   const { t: tc } = useTranslation('common');
@@ -158,7 +163,12 @@ export default function MatchDetailContent({ detail, requestedMatchId, variant =
             {effectiveMatchId ? (
               // Sayfada geniş ekranda (≥ BP_SPLIT) sağdaki "Maç sohbeti" paneli aynı içeriği gösterir → kart CSS ile gizli
               // (gizliyken görünür olmadığından veri de istenmez).
+              // "Kim Kazanır?" anketi tartışma kartının hemen üstünde; aynı sarmalayıcı → geniş sayfada ikisi de CSS ile gizli, sağ
+              // panel (MatchChatPanel) anketi gösterir. Forum sekmesinde anket yok (showPoll=false) → hiçbir yerde mükerrer değil.
               <div className={variant === 'page' ? styles.discussionCardPage : undefined}>
+                <div className={styles.pollCard}>
+                  <MatchPoll key={`poll-${effectiveMatchId}`} matchId={effectiveMatchId} locked={!!match && isPollLockedForMatch(match)} home={match?.home} away={match?.away} />
+                </div>
                 <MatchDiscussionCard key={effectiveMatchId} matchId={effectiveMatchId} onJoin={openForum} />
               </div>
             ) : null}
@@ -196,6 +206,7 @@ export default function MatchDetailContent({ detail, requestedMatchId, variant =
                 />
               </div>
             </div>
+            {national && comboAccess && effectiveMatchId ? <MatchOddsCard key={effectiveMatchId} matchId={effectiveMatchId} /> : null}
             <Lineup
               lineups={detail.lineups}
               events={detail.events}
@@ -225,6 +236,7 @@ export default function MatchDetailContent({ detail, requestedMatchId, variant =
               pollLocked={!!match && isPollLockedForMatch(match)}
               home={match?.home}
               away={match?.away}
+              showPoll={false}
             />
           ) : null,
       },
@@ -248,6 +260,7 @@ export default function MatchDetailContent({ detail, requestedMatchId, variant =
     ] as MatchTabItem<MatchTabKey>[]).filter((tab) => !(national && NATIONAL_HIDDEN_TABS.has(tab.key))),
     [
       national,
+      comboAccess,
       t,
       variant,
       detail.stats,

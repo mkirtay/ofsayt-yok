@@ -190,10 +190,11 @@
     "authError": "This feature is for signed-in users only."
   },
   "poll": {
-    "title": "Community Prediction",
+    "title": "Who Will Win?",
     "subtitle": "What will be the result of this match?",
     "home": "Home",
     "draw": "Draw",
+    "drawShort": "X",
     "away": "Away",
     "teamWins": "{{team}} wins",
     "optionResult": "{{label}}, {{pct}}% of votes",

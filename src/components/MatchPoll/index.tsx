@@ -30,15 +30,6 @@ interface PollData {
   userPrediction: Prediction | null;
 }
 
-/**
- * Dar ekranda takım adının sığma biçimi (CSS yalnız ≤480 px'te uygular): çok kelimeli ad en çok iki satır;
- * tek kelimelik ad bölünmez, tek satır + (…) — 12+ harfliyse bir punto küçük.
- */
-function nameClass(name: string): string {
-  if (/\s/.test(name)) return styles.voteBtnTextMulti;
-  return name.length >= 12 ? styles.voteBtnTextLongWord : '';
-}
-
 function pct(votes: number, total: number): number {
   if (total === 0) return 0;
   return Math.round((votes / total) * 100);
@@ -103,7 +94,7 @@ export default function MatchPoll({ matchId, locked: lockedProp = false, home = 
       team: teamMode ? home : null,
       ariaLabel: teamMode ? t('poll.teamWins', { team: homeName }) : t('poll.home'),
     },
-    { key: 'DRAW', label: t('poll.draw'), team: null, ariaLabel: t('poll.draw') },
+    { key: 'DRAW', label: teamMode ? t('poll.drawShort') : t('poll.draw'), team: null, ariaLabel: t('poll.draw') },
     {
       key: 'AWAY',
       label: teamMode ? awayName : t('poll.away'),
@@ -134,18 +125,24 @@ export default function MatchPoll({ matchId, locked: lockedProp = false, home = 
               className={`${styles.voteBtn} ${isSelected ? styles.voteBtnSelected : ''} ${key === 'DRAW' ? styles.voteBtnDraw : ''}`}
               aria-pressed={isSelected}
               aria-label={showResult && poll ? t('poll.optionResult', { label: ariaLabel, pct: percentage }) : ariaLabel}
-              title={team ? label : undefined}
+              title={teamMode && key !== 'DRAW' ? label : undefined}
             >
               <span className={styles.voteBtnLabel}>
-                {team && (
+                {teamMode && key !== 'DRAW' ? (
+                  // Takım modu: yalnız logo (ad yok → dar sütunda kesilme yok); ad aria-label + title'da. Logo yoksa kısaltma.
                   <TeamLogo
-                    src={team.logo}
-                    width={20}
+                    src={team?.logo}
+                    width={28}
                     className={styles.voteBtnLogo}
-                    fallback={<span className={styles.voteBtnLogoFallback} aria-hidden />}
+                    fallback={
+                      <span className={styles.voteBtnLogoFallback} aria-hidden>
+                        {label.slice(0, 3).toLocaleUpperCase('tr')}
+                      </span>
+                    }
                   />
+                ) : (
+                  <span className={styles.voteBtnText}>{label}</span>
                 )}
-                <span className={`${styles.voteBtnText} ${team ? nameClass(label) : ''}`}>{label}</span>
               </span>
               {showResult && poll && (
                 <span className={styles.voteBtnPct}>{percentage}%</span>

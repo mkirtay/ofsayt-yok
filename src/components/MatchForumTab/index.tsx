@@ -9,6 +9,8 @@ interface MatchForumTabProps {
   /** Anket seçeneklerinde logo + ad için takımlar (maç verisinden); yoksa "Ev Sahibi / Deplasman". */
   home?: PollTeam | null;
   away?: PollTeam | null;
+  /** Anket bu sekmede çizilsin mi (varsayılan evet: arşiv sekmeleri). Maç detayında Genel Bakış'ta olduğu için kapalı — mükerrer olmasın. */
+  showPoll?: boolean;
 }
 
 /**
@@ -16,10 +18,10 @@ interface MatchForumTabProps {
  * Bilinçli olarak alt sekme YOK — anket üstte, yorumlar altta; ikisi de kendi
  * başlığını taşıdığı için kartın ayrıca üst başlığı yoktur (sekme adı yeterli).
  */
-export default function MatchForumTab({ matchId, pollLocked = false, home = null, away = null }: MatchForumTabProps) {
+export default function MatchForumTab({ matchId, pollLocked = false, home = null, away = null, showPoll = true }: MatchForumTabProps) {
   return (
     <section className={styles.card}>
-      <MatchPoll matchId={matchId} locked={pollLocked} home={home} away={away} />
+      {showPoll ? <MatchPoll matchId={matchId} locked={pollLocked} home={home} away={away} /> : null}
       <MatchForum matchId={matchId} />
     </section>
   );

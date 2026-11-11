@@ -15,6 +15,7 @@ vi.mock('@/lib/i18n', () => ({
       })[k] ?? k,
   }),
 }));
+vi.mock('next-auth/react', async (importOriginal) => ({ ...(await importOriginal<typeof import('next-auth/react')>()), useSession: () => ({ data: null, status: 'unauthenticated' }) }));
 vi.mock('@/components/MatchCard', () => ({ default: () => <div data-testid="match-card" /> }));
 vi.mock('@/components/MatchStats', () => ({ default: () => <div data-testid="stats-content" /> }));
 vi.mock('@/components/EventTimeline', () => ({ default: () => <div data-testid="events-content" /> }));
@@ -24,6 +25,7 @@ vi.mock('@/components/MatchAnalysis', () => ({ default: () => <div data-testid="
 vi.mock('@/hooks/useMatchAnalysis', () => ({ useMatchAnalysis: () => ({}) }));
 vi.mock('@/components/MatchCommentary', () => ({ default: () => <div data-testid="commentary-content" /> }));
 vi.mock('@/components/MatchForumTab', () => ({ default: () => <div data-testid="forum-content" /> }));
+vi.mock('@/components/MatchPoll', () => ({ default: () => <div data-testid="poll-content" /> }));
 vi.mock('@/components/MatchVenueCard', () => ({ default: () => null }));
 vi.mock('@/components/MatchDiscussionCard', () => ({ default: () => <div data-testid="discussion-card" /> }));
 
@@ -92,6 +94,12 @@ describe('<MatchDetailContent />', () => {
     expect(html).toContain('discussion-card');
     expect(html.indexOf('discussion-card')).toBeLessThan(html.indexOf('stats-content'));
     expect(html).not.toContain('match-counters');
+  });
+
+  it('"Kim Kazanır?" anketi Genel Bakış\'ta, maç tartışması kartının HEMEN üstünde; yalnız bir kez', () => {
+    expect(html).toContain('poll-content');
+    expect(html.indexOf('poll-content')).toBeLessThan(html.indexOf('discussion-card'));
+    expect(html.match(/poll-content/g)).toHaveLength(1);
   });
 
   it('hiçbir sekme başlığında premium noktası yok (AI Analiz / Trivia dahil)', () => {

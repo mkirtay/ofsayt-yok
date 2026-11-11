@@ -1,5 +1,5 @@
 /**
- * Topluluk tahmini POST'u için "maç başladı mı" kararı — YENİ bir Sportmonks istek türü eklemeden:
+ * Kim Kazanır anketi POST'u için "maç başladı mı" kararı — YENİ bir Sportmonks istek türü eklemeden:
  *
  * 1. Paylaşımlı gün listeleri (`fixtures/date/{d}`, ana sayfayla aynı cache anahtarları): UTC dün + bugün. Durum
  *    bilgisi taşır (canlı/bitti/ertelendi) → en güvenilir kaynak. Başlamış her maç bu iki listeden birindedir
