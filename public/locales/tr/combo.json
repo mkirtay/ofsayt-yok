@@ -11,22 +11,22 @@
     "hint": "Risk arttıkça daha düşük olasılıklı, daha yüksek oranlı seçimler gelir."
   },
   "pick": {
-    "home": "Ev sahibi kazanır",
-    "draw": "Beraberlik",
-    "away": "Deplasman kazanır",
-    "over15": "2+ gol",
-    "over25": "3+ gol",
-    "over35": "4+ gol",
-    "btts": "İki takım da gol bulur",
+    "home": "MS 1",
+    "draw": "MS X",
+    "away": "MS 2",
+    "over15": "1,5 Üst",
+    "over25": "2,5 Üst",
+    "over35": "3,5 Üst",
+    "btts": "KG Var",
     "htOver05": "İlk yarıda gol",
     "htOver15": "İlk yarıda 2+ gol",
     "homeToScore": "Ev sahibi gol bulur",
     "awayToScore": "Deplasman gol bulur",
     "bttsFirstHalf": "İlk yarı iki takım da gol bulur",
-    "under15": "En çok 1 gol",
-    "under25": "En çok 2 gol",
-    "under35": "En çok 3 gol",
-    "bttsNo": "En az bir takım gol bulamaz"
+    "under15": "1,5 Alt",
+    "under25": "2,5 Alt",
+    "under35": "3,5 Alt",
+    "bttsNo": "KG Yok"
   },
   "loading": "Yükleniyor…",
   "error": "Yüklenemedi, biraz sonra tekrar deneyin.",
@@ -140,10 +140,10 @@
     "count": "{{n}} maç",
     "noGuarantee": "Sonuç garantisi yok.",
     "details": "Ayrıntı",
-    "fairHint": "Adil oran = 1 / olasılık. Kendi sitendeki oran bundan yüksekse seçim modele göre değerli, düşükse değil.",
+    "fairHint": "Adil oran = 1 / olasılık. İddaa oranı bundan yüksekse seçim modele göre değerli, düşükse değil.",
     "legLine": "olasılık %{{pct}} (model %{{model}}, oranlardan {{market}}) · adil {{fair}} · referans {{ref}}",
-    "refTotal": "Uluslararası referans (Türk sitesi değil): {{total}}",
-    "minLegsNote": "Bazı maçlar sitede tek başına ya da az maçla birlikte seçilemeyebilir.",
+    "refTotal": "Uluslararası oran (iddaa değil): {{total}}",
+    "minLegsNote": "Bazı maçlar iddaa'da tek ya da az maçla oynanamayabilir (MBS).",
     "method": "Olasılık, AI modeli ile uluslararası oranlardan (kâr payı temizlenerek) çıkarılan olasılığın harmanıdır; geçmiş veride model tek başına güçlü değil, oranlardan gelen olasılık ağır basar."
   }
 }

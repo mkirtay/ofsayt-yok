@@ -53,23 +53,23 @@ describe('<ComboHomeCard />', () => {
     expect(safe).toContain('Olasılık');
     expect(safe).toContain('%48,6');
     expect(safe).toContain('İngiltere – Hırvatistan');
-    expect(safe).toContain('En çok 3 gol · %73');
+    expect(safe).toContain('3,5 Alt · %73');
     expect(safe).toContain('1,37'); // 1 / %72,8
-    expect(safe).toContain('3+ gol · %77');
+    expect(safe).toContain('2,5 Üst · %77');
     expect(safe).toContain('2 maç');
     expect(safe).toContain('Sonuç garantisi yok.');
-    expect(safe).toContain('Kendi sitendeki oran');
+    expect(safe).toContain('İddaa oranı bundan yüksekse');
     const main = safe.slice(0, safe.indexOf('<details'));
     expect(main).not.toContain('1,33'); // uluslararası referans ana görünümde yok
     const det = safe.slice(safe.indexOf('<details'));
     expect(det).toContain('referans 1,33');
     expect(det).toContain('oranlardan %73,6');
     expect(det).toContain('oranlardan —');
-    expect(safe).not.toContain('bulamaz'); // diğer kuponun maçı görünmez
+    expect(safe).not.toContain('KG Yok'); // diğer kuponun maçı görünmez
     const balanced = await presets(ready(), 'balanced');
     expect(balanced).toMatch(/aria-selected="true"[^>]*>Dengeli</);
     expect(balanced).toContain('4,20');
-    expect(balanced).toContain('En az bir takım gol bulamaz');
+    expect(balanced).toContain('KG Yok');
     expect(balanced).toContain('1 maç');
     expect(balanced).toContain('3,90'); // kombine referans (ayrıntı)
     expect(balanced).not.toContain('2,06');
@@ -112,9 +112,12 @@ describe('<ComboHomeCard />', () => {
     expect(src).not.toMatch(/^import ComboHomeCard/m);
   });
 
-  it('görünür metinlerde bahis dili yok (yalnız zorunlu "piyasa" etiketi serbest)', () => {
-    const values = (o: unknown): string[] => Object.values(o as Record<string, unknown>).flatMap((v) => (v && typeof v === 'object' ? values(v) : [String(v)]));
-    const text = values({ ...trCombo, oddLabel: '', disclaimer: '', marketOdds: { ...trCombo.marketOdds, title: '', result: '', doubleChance: '', firstHalf: '', drawNoBet: '', btts: '', goals: '', handicap: '' } }).join(' | ');
-    expect(findGamblingTerms(text)).toEqual([]);
+  it('kart iddaa dilini kullanır (admin test kartı; site geneli bahis dili denetiminin dışında bilinçli olarak)', () => {
+    expect(trCombo.pick.over25).toBe('2,5 Üst');
+    expect(trCombo.pick.under15).toBe('1,5 Alt');
+    expect(trCombo.pick.btts).toBe('KG Var');
+    expect(trCombo.pick.bttsNo).toBe('KG Yok');
+    expect(enCombo.pick.over25).toBe('Over 2.5');
   });
+
 });
