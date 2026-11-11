@@ -46,7 +46,7 @@ export type CandidateOpts = {
 /**
  * Günün adayları: gün maçları ∩ otomatik havuz (config/comboPool.ts) ∩ analizi olanlar. Analiz kaynağı: kayıtlı maç öncesi analiz
  * (Sportmonks maçları, prompt v5+); geliştirmede ayrıca test dosyası (`server/combo/testAnalyses.ts`, aynı matchId'de KAYITLI olan önce
- * gelir). Milli maçlarda kayıtlı analiz yoktur → yalnız test verisiyle aday olur.
+ * gelir). Milli maçların kayıtlı analizi (ön üretim, NATIONAL_ANALYSIS bayrağı) da okunur; yoksa yalnız test verisiyle aday olur.
  */
 export async function loadComboCandidates(date: string, opts: CandidateOpts = {}): Promise<ComboCandidateRow[]> {
   const now = opts.now ?? Date.now();
@@ -64,10 +64,10 @@ export async function loadComboCandidates(date: string, opts: CandidateOpts = {}
   const byId = new Map(upcoming.filter((m) => poolIds.has(String(m.id))).map((m) => [String(m.id), m] as const));
   if (byId.size === 0) return [];
 
-  const clubIds = [...byId.keys()].filter((id) => toAfId(id) == null);
-  const analyses = clubIds.length
+  const ids = [...byId.keys()];
+  const analyses = ids.length
     ? await prisma.matchAnalysis.findMany({
-        where: { matchId: { in: clubIds }, matchStatus: 'PRE' },
+        where: { matchId: { in: ids }, matchStatus: 'PRE' },
         select: { matchId: true, modelVersion: true, matchPrediction: true, goalExpectation: true },
       })
     : [];

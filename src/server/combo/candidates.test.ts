@@ -63,6 +63,19 @@ describe('loadComboCandidates', () => {
     expect(rows.find((r) => r.matchId === '1')).toMatchObject({ source: 'db', pct: 60 });
   });
 
+  it('milli maçın KAYITLI analizi (ön üretim) okunur: source=db, national=true; sorgu milli kimliği de içerir', async () => {
+    const { prisma } = await import('@/lib/prisma');
+    day.matches = [
+      { id: 2001528958, status: 'NS', date: '2026-11-12', scheduled: '17:00', time: '17:00', home: { id: 1, name: 'Türkiye' }, away: { id: 2, name: 'Belçika' }, competition: { id: 2000000005, name: 'UEFA Uluslar Ligi' } },
+    ];
+    db.analyses = [analysis('2001528958')];
+    const rows = await loadComboCandidates('2026-11-12', { now, testAnalyses: noTests });
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ matchId: '2001528958', source: 'db', national: true });
+    const where = (vi.mocked(prisma.matchAnalysis.findMany).mock.calls.at(-1)![0] as { where: { matchId: { in: string[] } } }).where;
+    expect(where.matchId.in).toContain('2001528958');
+  });
+
   it('başlamış maç varsayılan dışarıda, includePast ile gelir', async () => {
     const late = Date.parse('2026-11-12T18:30:00Z');
     expect(await loadComboCandidates('2026-11-12', { now: late, testAnalyses: noTests })).toHaveLength(0);
