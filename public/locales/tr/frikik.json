@@ -99,13 +99,17 @@
     "title": "Puan durumu",
     "daily": "Günlük",
     "monthly": "Aylık",
+    "season": "Sezon",
     "dailySub": "Bugünün en iyi 20 koşusu. Sıralama: seviye, sonra puan.",
     "monthlySub": "Bu ay: herkesin tek en iyi günlük koşusu (toplam değil).",
+    "seasonSub": "Bu sezon (Temmuz–Haziran): her günün en iyi koşusu toplanır. Her gün oynayan öne geçer.",
     "player": "Oyuncu",
     "level": "Seviye",
+    "days": "Gün",
     "points": "Puan",
     "loading": "Tablo yükleniyor…",
     "empty": "Henüz kayıt yok. İlk sen ol!",
-    "error": "Tablo şu an yüklenemedi; biraz sonra tekrar dene."
+    "error": "Tablo şu an yüklenemedi; biraz sonra tekrar dene.",
+    "reward": "Ödül (site kredisi): ayın en az 7 gününde oyna +2, ayın ilk 3'ü +5 / +4 / +3. Yalnız e-postası doğrulanmış hesaplar."
   }
 }

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { todayKey } from '@/lib/frikik/daily';
+import { seasonOfMonth } from '@/lib/frikik/leaderboard';
 
 /** GET /api/frikik/leaderboard (herkese açık, önbellekli) ve /api/frikik/me (oturum). DB/Redis taklit. */
 const h = vi.hoisted(() => ({
@@ -24,6 +25,8 @@ vi.mock('@/lib/prisma', () => ({
     $queryRawUnsafe: vi.fn(async (text: string) => {
       h.queries.push(text);
       if (text.startsWith('SELECT count')) return [{ n: 0 }];
+      if (text.startsWith('WITH s AS')) return []; // kendi sezon toplamı: kayıt yok
+      if (text.includes('SUM(score)')) return [{ userId: 'u2', nickname: 'zeynep', score: 4200, days: 3 }];
       if (text.includes('DISTINCT ON')) return [row('u2', 'zeynep', 5, 1500, '2026-10-03'), row('u1', 'eren', 4, 900, '2026-10-02')];
       return [row('u1', 'eren', 4, 900, '2026-10-08'), row('u3', null, 1, 0, '2026-10-08')];
     }),
@@ -60,6 +63,7 @@ describe('GET /api/frikik/leaderboard', () => {
     expect(r.body).toEqual({
       day,
       month: day.slice(0, 7),
+      season: seasonOfMonth(day.slice(0, 7)),
       daily: [
         { rank: 1, nickname: 'eren', level: 4, score: 900, day: '2026-10-08' },
         { rank: 2, nickname: '—', level: 1, score: 0, day: '2026-10-08' },
@@ -68,6 +72,7 @@ describe('GET /api/frikik/leaderboard', () => {
         { rank: 1, nickname: 'zeynep', level: 5, score: 1500, day: '2026-10-03' },
         { rank: 2, nickname: 'eren', level: 4, score: 900, day: '2026-10-02' },
       ],
+      seasonal: [{ rank: 1, nickname: 'zeynep', score: 4200, days: 3 }],
     });
     expect(JSON.stringify(r.body)).not.toMatch(/userId|email|@/);
     const n = h.queries.length;
@@ -89,6 +94,6 @@ describe('GET /api/frikik/me', () => {
     const r = await get(me);
     expect(r.statusCode).toBe(200);
     expect(r.headers['Cache-Control']).toBe('private, no-store');
-    expect(r.body).toMatchObject({ nickname: 'eren', today: null });
+    expect(r.body).toMatchObject({ nickname: 'eren', today: null, season_total: null });
   });
 });

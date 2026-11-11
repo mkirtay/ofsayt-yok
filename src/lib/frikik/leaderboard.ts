@@ -117,3 +117,56 @@ export function upsertBestRunSql(r: BestRunInput): SqlQuery {
     values: [r.id, r.userId, r.day, r.month, r.score, r.level, r.cleared, r.simVersion, r.seed, r.shots],
   };
 }
+
+// ── Sezon tablosu ─────────────────────────────────────────────────────────────────────────────────────────────────────
+// Sezon = futbol sezonu (Temmuz–Haziran, tahmin oyunuyla aynı anahtar: "2026-27"). Puan = sezondaki GÜNLÜK EN İYİ
+// koşuların TOPLAMI (aylıktan farklı): her gün oynayan öne geçer. Eşitlikte daha çok oynanan gün, sonra erken başlayan.
+
+/** "2026-11" → "2026-27" (Temmuz ve sonrası yeni sezon). */
+export function seasonOfMonth(month: string): string {
+  const y = Number(month.slice(0, 4));
+  const m = Number(month.slice(5, 7));
+  const start = m >= 7 ? y : y - 1;
+  return `${start}-${String((start + 1) % 100).padStart(2, '0')}`;
+}
+
+/** Sezonun ay aralığı (dahil): "2026-27" → ["2026-07", "2027-06"]. */
+export function seasonMonthRange(season: string): [string, string] {
+  const start = Number(season.slice(0, 4));
+  return [`${start}-07`, `${start + 1}-06`];
+}
+
+export type SeasonRow = { userId: string; nickname: string | null; score: number; days: number };
+
+const SEASON_AGG =
+  'SELECT "userId", SUM(score)::int AS score, count(*)::int AS days, MIN("createdAt") AS first_at FROM "FrikikDailyScore" WHERE month >= $1 AND month <= $2 GROUP BY "userId"';
+const SEASON_ORDER = 'ORDER BY s.score DESC, s.days DESC, s.first_at ASC, s."userId" ASC';
+
+export function seasonTopSql(season: string, limit = LEADERBOARD_LIMIT): SqlQuery {
+  const [from, to] = seasonMonthRange(season);
+  return {
+    text: `SELECT s."userId", u.username AS nickname, s.score, s.days FROM (${SEASON_AGG}) s JOIN "User" u ON u.id = s."userId" ${SEASON_ORDER} LIMIT $3`,
+    values: [from, to, limit],
+  };
+}
+
+/** Sezon tablosunda kullanıcının toplamı ve sırası (önde olan kullanıcı sayısı + 1); kaydı yoksa satır dönmez. */
+export function mySeasonSql(season: string, userId: string): SqlQuery {
+  const [from, to] = seasonMonthRange(season);
+  return {
+    text: `WITH s AS (${SEASON_AGG}), me AS (SELECT * FROM s WHERE "userId" = $3)
+SELECT me.score, me.days, (SELECT count(*)::int FROM s WHERE s.score > me.score OR (s.score = me.score AND s.days > me.days)
+  OR (s.score = me.score AND s.days = me.days AND (s.first_at, s."userId") < (me.first_at, me."userId"))) + 1 AS rank FROM me`,
+    values: [from, to, userId],
+  };
+}
+
+// ── Ödül sorguları (server/rewards) ───────────────────────────────────────────────────────────────────────────────────
+
+/** Ayın en az `minDays` farklı gününde tabloya yazan kullanıcılar (katılım ödülü). */
+export function activeInMonthSql(month: string, minDays: number): SqlQuery {
+  return {
+    text: `SELECT "userId", count(*)::int AS days FROM "FrikikDailyScore" WHERE month = $1 GROUP BY "userId" HAVING count(*) >= $2`,
+    values: [month, minDays],
+  };
+}

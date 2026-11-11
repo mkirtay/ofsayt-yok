@@ -4,17 +4,26 @@ import '@/lib/i18nNamespaces/frikik';
 import type { Leaderboard as Board, MyStanding } from '@/hooks/useFrikikBoard';
 import styles from './frikik.module.scss';
 
-type Tab = 'daily' | 'monthly';
+type Tab = 'daily' | 'monthly' | 'season';
+
+type Row = { rank: number; nickname: string; col: number; score: number };
 
 /**
- * Günlük / Aylık sekmeli puan durumu (en iyi 20). Kendi satırı vurgulu; ilk 20'de değilse altta kendi sırası.
+ * Günlük / Aylık / Sezon sekmeli puan durumu (en iyi 20). Kendi satırı vurgulu; ilk 20'de değilse altta kendi sırası.
  * Veri yokken iskelet değil kısa not (sabit yükseklik gerekmez; sayfanın altında).
  */
 export default function Leaderboard({ board, me, loading, error = false }: { board: Board | null; me: MyStanding | null; loading: boolean; error?: boolean }) {
   const { t } = useTranslation('frikik');
   const [tab, setTab] = useState<Tab>('daily');
-  const rows = board ? board[tab] : [];
-  const mine = tab === 'daily' ? me?.today : me?.month_best;
+  // Sezon: "Seviye" yerine oynanan gün, puan = günlük en iyilerin toplamı.
+  const rows: Row[] = !board
+    ? []
+    : tab === 'season'
+      ? (board.seasonal ?? []).map((r) => ({ rank: r.rank, nickname: r.nickname, col: r.days, score: r.score }))
+      : board[tab].map((r) => ({ rank: r.rank, nickname: r.nickname, col: r.level, score: r.score }));
+  const m = tab === 'daily' ? me?.today : tab === 'monthly' ? me?.month_best : null;
+  const s = tab === 'season' ? me?.season_total : null;
+  const mine = m ? { rank: m.rank, col: m.level, score: m.score } : s ? { rank: s.rank, col: s.days, score: s.score } : null;
   const myName = me?.nickname ?? null;
   const inTop = !!myName && rows.some((r) => r.nickname === myName);
 
@@ -25,7 +34,7 @@ export default function Leaderboard({ board, me, loading, error = false }: { boa
           {t('board.title')}
         </h2>
         <div className={styles.tabs} role="tablist" aria-label={t('board.title')}>
-          {(['daily', 'monthly'] as const).map((k) => (
+          {(['daily', 'monthly', 'season'] as const).map((k) => (
             <button
               key={k}
               type="button"
@@ -42,7 +51,8 @@ export default function Leaderboard({ board, me, loading, error = false }: { boa
           ))}
         </div>
       </div>
-      <p className={styles.boardSub}>{tab === 'daily' ? t('board.dailySub') : t('board.monthlySub')}</p>
+      <p className={styles.boardSub}>{t(`board.${tab}Sub`)}</p>
+      {tab === 'monthly' ? <p className={styles.boardSub}>{t('board.reward')}</p> : null}
       <div id="frikik-board-panel" role="tabpanel" aria-labelledby={`frikik-tab-${tab}`}>
         {rows.length === 0 ? (
           <p className={styles.boardEmpty}>{loading ? t('board.loading') : error ? t('board.error') : t('board.empty')}</p>
@@ -52,7 +62,7 @@ export default function Leaderboard({ board, me, loading, error = false }: { boa
               <tr>
                 <th scope="col">#</th>
                 <th scope="col">{t('board.player')}</th>
-                <th scope="col">{t('board.level')}</th>
+                <th scope="col">{tab === 'season' ? t('board.days') : t('board.level')}</th>
                 <th scope="col">{t('board.points')}</th>
               </tr>
             </thead>
@@ -61,7 +71,7 @@ export default function Leaderboard({ board, me, loading, error = false }: { boa
                 <tr key={`${r.rank}-${r.nickname}`} data-me={myName && r.nickname === myName ? '' : undefined}>
                   <td>{r.rank}</td>
                   <td className={styles.nick}>{r.nickname}</td>
-                  <td>{r.level}</td>
+                  <td>{r.col}</td>
                   <td className={styles.pts}>{r.score.toLocaleString('tr-TR')}</td>
                 </tr>
               ))}
@@ -69,7 +79,7 @@ export default function Leaderboard({ board, me, loading, error = false }: { boa
                 <tr data-me="" className={styles.mineRow}>
                   <td>{mine.rank}</td>
                   <td className={styles.nick}>{myName}</td>
-                  <td>{mine.level}</td>
+                  <td>{mine.col}</td>
                   <td className={styles.pts}>{mine.score.toLocaleString('tr-TR')}</td>
                 </tr>
               ) : null}

@@ -12,7 +12,11 @@ import {
   monthlyRankSql,
   monthlyTopSql,
   myMonthBestSql,
+  mySeasonSql,
+  seasonOfMonth,
+  seasonTopSql,
   type LeaderboardRow,
+  type SeasonRow,
   type RunKey,
   type SqlQuery,
   upsertBestRunSql,
@@ -27,7 +31,9 @@ export const LEADERBOARD_CACHE_SECONDS = 30;
 
 /** Tabloda gösterilen satır (JSON; tarih yok, kimlik yok). */
 export type BoardEntry = { rank: number; nickname: string; level: number; score: number; day: string };
-export type Leaderboard = { day: string; month: string; daily: BoardEntry[]; monthly: BoardEntry[] };
+/** Sezon satırı: günlük en iyi koşuların toplamı (`score`) ve oynanan gün sayısı. */
+export type SeasonEntry = { rank: number; nickname: string; score: number; days: number };
+export type Leaderboard = { day: string; month: string; season: string; daily: BoardEntry[]; monthly: BoardEntry[]; seasonal: SeasonEntry[] };
 
 /** Kullanıcının kendi durumu. */
 export type MyStanding = {
@@ -38,6 +44,8 @@ export type MyStanding = {
   today: { level: number; score: number; cleared: number; rank: number } | null;
   /** Ay içindeki en iyi günlük kaydı ve aylık sırası. */
   month_best: { level: number; score: number; day: string; rank: number } | null;
+  /** Sezon toplamı (günlük en iyilerin toplamı), oynanan gün ve sezon sırası. */
+  season_total: { score: number; days: number; rank: number } | null;
   /** Bugün harcanan tablo denemesi / günlük tavan (`used` null: sayaç okunamadı). */
   attempts: { used: number | null; max: number };
 };
@@ -50,11 +58,23 @@ function toEntries(rows: LeaderboardRow[]): BoardEntry[] {
 
 export async function loadLeaderboard(day: string): Promise<Leaderboard> {
   const month = monthKey(day);
-  const key = `${cacheKeyPrefix()}frikik:lb:v1:${day}`;
+  const season = seasonOfMonth(month);
+  const key = `${cacheKeyPrefix()}frikik:lb:v2:${day}`;
   const cached = (await readCache(key)) as Leaderboard | null;
   if (cached) return cached;
-  const [daily, monthly] = await Promise.all([raw<LeaderboardRow>(dailyTopSql(day)), raw<LeaderboardRow>(monthlyTopSql(month))]);
-  const board: Leaderboard = { day, month, daily: toEntries(daily), monthly: toEntries(monthly) };
+  const [daily, monthly, seasonal] = await Promise.all([
+    raw<LeaderboardRow>(dailyTopSql(day)),
+    raw<LeaderboardRow>(monthlyTopSql(month)),
+    raw<SeasonRow>(seasonTopSql(season)),
+  ]);
+  const board: Leaderboard = {
+    day,
+    month,
+    season,
+    daily: toEntries(daily),
+    monthly: toEntries(monthly),
+    seasonal: seasonal.map((r, i) => ({ rank: i + 1, nickname: r.nickname ?? '—', score: Number(r.score), days: Number(r.days) })),
+  };
   await writeCache(key, board, LEADERBOARD_CACHE_SECONDS);
   return board;
 }
@@ -66,12 +86,14 @@ async function rankOf(q: SqlQuery): Promise<number> {
 
 export async function loadMyStanding(userId: string, day: string): Promise<MyStanding> {
   const month = monthKey(day);
-  const [user, todayRow, bestRows, used] = await Promise.all([
+  const [user, todayRow, bestRows, used, seasonRows] = await Promise.all([
     prisma.user.findUnique({ where: { id: userId }, select: { username: true } }),
     prisma.frikikDailyScore.findUnique({ where: { userId_day: { userId, day } }, select: { level: true, score: true, cleared: true, createdAt: true } }),
     raw<LeaderboardRow>(myMonthBestSql(userId, month)),
     readAttempts(userId, day),
+    raw<{ score: number; days: number; rank: number }>(mySeasonSql(seasonOfMonth(month), userId)),
   ]);
+  const seasonRow = seasonRows[0] ?? null;
   const best = bestRows[0] ?? null;
   const [dayRank, monthRank] = await Promise.all([
     todayRow ? rankOf(dailyRankSql(day, todayRow)) : null,
@@ -83,6 +105,7 @@ export async function loadMyStanding(userId: string, day: string): Promise<MySta
     nickname: user?.username ?? null,
     today: todayRow && dayRank ? { level: todayRow.level, score: todayRow.score, cleared: todayRow.cleared, rank: dayRank } : null,
     month_best: best && monthRank ? { level: best.level, score: best.score, day: best.day, rank: monthRank } : null,
+    season_total: seasonRow ? { score: Number(seasonRow.score), days: Number(seasonRow.days), rank: Number(seasonRow.rank) } : null,
     attempts: { used: used == null ? null : Math.min(used, FRIKIK_DAILY_ATTEMPTS), max: FRIKIK_DAILY_ATTEMPTS },
   };
 }

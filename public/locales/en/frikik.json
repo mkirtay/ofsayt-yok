@@ -99,13 +99,17 @@
     "title": "Leaderboard",
     "daily": "Daily",
     "monthly": "Monthly",
+    "season": "Season",
     "dailySub": "Today's top 20 runs. Ranked by level, then points.",
     "monthlySub": "This month: everyone's single best daily run (not a total).",
+    "seasonSub": "This season (July–June): every day's best run adds up. Play daily to climb.",
     "player": "Player",
     "level": "Level",
+    "days": "Days",
     "points": "Points",
     "loading": "Loading the board…",
     "empty": "No entries yet. Be the first!",
-    "error": "The board could not be loaded right now; try again shortly."
+    "error": "The board could not be loaded right now; try again shortly.",
+    "reward": "Reward (site credits): play on at least 7 days of a month +2, monthly top 3 +5 / +4 / +3. Verified-email accounts only."
   }
 }
