@@ -85,3 +85,25 @@ bugün + yarın (Türkiye günü) AI analizi olan yaklaşan maçlar + (bayrak a�
   "Maç tartışması" kartının hemen üstünde (aynı sarmalayıcı: ≥ split genişlikte ikisi de gizli, sağdaki "Maç sohbeti" paneli anketi gösterir); Forum sekmesinden kaldırıldı (`showPoll=false`; arşiv sekmeleri etkilenmez).
 - Piyasa oranları (yalnız milli maç + aynı kapı): ilk görünüm "Maç Sonucu" 1 X 2; "Ek oranlar" → Çifte Şans, İlk Yarı Sonucu, Beraberlikte İade, Karşılıklı Gol, Toplam Gol (tüm çizgiler, 1.5/2.5/3.5 önde), Handikap (Asya, dengeli çizgi çevresi 5 satır).
   AF bet kimlikleri: 1, 12, 13, 2 (Home/Away = beraberlikte iade; yalnız Bet365/William Hill — milli maçta (1xBet) yok → bölüm gizli), 8, 5, 4. Oran oku (▲▼) YOK: oran geçmişi tutulmuyor (snapshot tablosu uygulanmadı ve 1X2'yi kapsamıyor).
+
+## Otomatik havuz ve günlük kuponlar (elle seçim yok)
+- **Havuz kapsamı** tek yerde: `src/config/comboPool.ts` (kulüp ligleri Süper Lig / UEFA CL-EL-ECL / büyük 5'te iki takım da ilk 6'da; milli: UEFA Uluslar Ligi, DK ve Euro elemeleri/finalleri,
+  her turnuvada Türkiye maçı; `extraLeagueIds` ile genişletilir). Önem puanı: lig kademesi, Türk takımı / Türkiye bonusu, tabloda ilk 6 çifti, gece saati (00–06 TSİ) cezası; günde en çok 10 maç. Kulüp sabitleri
+  `analysisPregen.ts` ile aynı (eşitliği `comboPool.test.ts` kaynak metninden doğrular).
+- **Adaylar** = gün maçları ∩ havuz ∩ analizi olanlar. Milli maçların kayıtlı analizi yok → yalnız geliştirmede **test analiz dosyasıyla** aday olur (`COMBO_TEST_ANALYSES_FILE`, `NODE_ENV !== 'production'`; üretimde dosya
+  HİÇ okunmaz, `comboTestAnalyses.test.ts`). Milli maç oranı AF kimliğiyle doğrudan (eşleme yok; 1xBet, bazı pazarlar yok olabilir).
+- **Günlük kuponlar** (`server/combo/dailyCoupons.ts`): Garantici (~1,7; en çok 3 maç, taban %70) / Dengeli (~4; 4 maç, taban %62) / Riskli (~10; 6 maç, taban %55). Hedef orana eldeki maçlarla ulaşılamıyorsa eldeki en yüksek oranlı seçim
+  gösterilir ve söylenir. ≥ 3 analizli havuz maçı ya da tabanı geçen pick yoksa kupon ZORLANMAZ: "Bu gün için yeterli veri yok". Test verisinde taban gevşer ve kartta "test: eşik gevşetildi" yazar.
+- **Önbellek/cron:** sonuç günlük Redis anahtarında (`combo:daily:<gün>`, 2 gün). `POST /api/cron/combo-daily` (bayrak kapalıyken 404, Bearer `CRON_SECRET`; saat `COMBO_DAILY_TIME`, varsayılan 17:30 TSİ; bugün + yarın; o gün `ok` ise tekrar üretmez; `?force=1`).
+  cron-job.org: POST, `Authorization: Bearer <CRON_SECRET>`, 30 dk'da bir (`*/30 * * * *`) — 17:30 öncesi `too-early`, sonrası üretir, `ok` olunca `already`; analizler gün içinde geldikçe `insufficient` olan gün yeniden denenir. KURULMADI.
+  Kart `GET /api/combo/daily` ile okur; önbellek boşsa üretimde `pending` ("saat 17:30'da hazırlanır"), yalnız geliştirmede (test dosyası tanımlıyken) anında üretir.
+- **Kart:** üç hazır öneri girdi istemeden; "Bugün / Yarın" seçici; "Kendin ayarla" altında risk / tutar / oran / tür / misli akışı.
+- **Takip (tasarım, UYGULANMADI):** `docs/migrations-pending/20261112120000_combo_coupon_log/` — (gün, tür) başına tek satır `ComboCouponLog` (bacaklar JSON, olasılık, oran, test verisi mi, ilk maç saati, sonuç). Cron üretince yazar (`couponLog.saveCouponLog`;
+  tablo yoksa atlar; ilk maç başlayınca / sonuçlanınca güncellenmez). Sonuç: `evaluateCoupon` saf, salt okunur — tüm bacaklar tutarsa tuttu, tek ıska anında tutmadı, bilinmeyen varsa bekliyor (`PredictionRecord` skor / ilk yarı isabetinden); `summarizeCouponResults` isabet ve düz 1 birim kâr.
+  Not: milli maçların `PredictionRecord`'u yok → sonuç bekliyor kalır; milli sonuç için ayrı değerlendirme kaynağı (AF skoru) gerekir.
+
+## Analiz üretimi için kapsam ÖNERİSİ (kod DEĞİŞTİRİLMEDİ — `analysisPregen.ts` ayrı oturumun)
+Bugünkü pregen: maçtan 2–3 sa 15 dk önce, çalışma başına en çok 3, yalnız Süper Lig / Türk takımlı UEFA / büyük 5 ilk-6 çifti. 7 günde 19 analiz (hafta içi 0–2/gün). Havuzun anlamlı olması için öneri:
+1. Kapsamı `comboPool.ts` ile birleştir (tek kural kaynağı): pregen adayları = `selectPool` çıktısı + milli (Türkiye, UNL, elemeler) — milli analiz bağlamı hazır olunca.
+2. Pencereyi öne çek: havuzdaki maçlar için kickoff − 8–10 sa (ör. sabah 09:00–11:00 TSİ), böylece 17:30 kuponu akşam maçlarının tamamını görür; muhtemel 11 / sakat tazeliği kısmen kaybolur (maça 3 sa kala ikinci bir kısa tazeleme düşünülebilir).
+3. Çalışma başına üst sınırı 3'ten 5'e çıkar (günde ≤ 10 maç × ~15 sn); aylık OpenAI tavanı (`llmBudget`) zaten koruyor — maliyet = havuz büyüklüğü (≤ 10/gün) × analiz başına maliyet; karar kullanıcıda.

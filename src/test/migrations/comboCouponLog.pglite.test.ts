@@ -17,7 +17,7 @@ const future = () => new Date(Date.now() + 5 * 3600_000).toISOString();
 
 const payload = (over: Partial<DailyPayload> = {}, odds = 2.1): DailyPayload => ({
   date: '2026-11-12', generatedAt: new Date().toISOString(), status: 'ok', analysed: 4, testData: false, thresholdRelaxed: false,
-  coupons: [{ kind: 'safe', legs: [{ matchId: '1', homeName: 'A', awayName: 'B', kickoffIso: future(), key: 'over15', pct: 80, odd: 1.4, national: false, source: 'db' }], probability: 0.8, odds, breakEven: 1 / odds, relaxed: false }],
+  coupons: [{ kind: 'safe', legs: [{ matchId: '1', homeName: 'A', awayName: 'B', kickoffIso: future(), key: 'over15', pct: 80, odd: 1.4, national: false, source: 'db' }], probability: 0.8, odds, breakEven: 1 / odds, relaxed: false, targetReached: true, targetOdds: 1.7 }],
   ...over,
 });
 

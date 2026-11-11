@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import '@/lib/i18nNamespaces/combo';
 import { useTranslation } from '@/lib/i18n';
 import TeamLogo from '@/components/TeamLogo';
@@ -17,10 +17,13 @@ import {
   suggestForRisk,
   systemOutcome,
 } from '@/utils/comboPlan';
-import { todayIsoIstanbul } from '@/utils/dateStrip';
+import { shiftIsoDate, todayIsoIstanbul } from '@/utils/dateStrip';
+import type { DailyPayload, DailyCoupon, CouponKind } from '@/server/combo/dailyCoupons';
 import styles from './comboHomeCard.module.scss';
 
-type Row = ComboCandidate & { homeName: string; awayName: string; homeLogo?: string | null; awayLogo?: string | null };
+type Row = ComboCandidate & { homeName: string; awayName: string; homeLogo?: string | null; awayLogo?: string | null; source?: 'db' | 'test'; national?: boolean };
+type DailyState = { state: 'loading' } | { state: 'error' } | { state: 'pending'; at: string } | { state: 'ready'; payload: DailyPayload };
+type DailyStored = (Exclude<DailyState, { state: 'loading' }> & { date: string }) | null;
 type History = { evaluatedMatches: number; bands: CalibrationBand[] };
 type OddsResponse = { odds: Array<{ matchId: string; status: string; market?: { odd: number } }> };
 type Mode = 'straight' | 'system';
@@ -51,6 +54,8 @@ async function getJson<T>(res: Response): Promise<T> {
 export default function ComboHomeCard() {
   const { t } = useTranslation('combo');
   const [open, setOpen] = useState(false);
+  const [day, setDay] = useState<'today' | 'tomorrow'>('today');
+  const [daily, setDaily] = useState<DailyStored>(null);
   const [rows, setRows] = useState<Row[] | null>(null);
   const [history, setHistory] = useState<History | null>(null);
   const [failed, setFailed] = useState(false);
@@ -68,7 +73,7 @@ export default function ComboHomeCard() {
   const [message, setMessage] = useState<string | null>(null);
   const [ran, setRan] = useState(false);
   const requested = useRef(new Set<string>());
-  const date = useMemo(() => todayIsoIstanbul(), []);
+  const date = useMemo(() => (day === 'today' ? todayIsoIstanbul() : shiftIsoDate(todayIsoIstanbul(), 1)), [day]);
 
   const withOdds = useMemo(() => (rows ?? []).map((r) => ({ ...r, odd: odds[r.matchId] ?? null })), [rows, odds]);
   const chosen = useMemo(() => withOdds.filter((r) => selected.includes(r.matchId)), [withOdds, selected]);
@@ -126,10 +131,38 @@ export default function ComboHomeCard() {
       .catch(() => setFailed(true));
   }, [date]);
 
-  const toggleOpen = () => {
-    const next = !open;
-    setOpen(next);
-    if (next && !rows && !failed) load();
+  const loadDaily = useCallback(() => {
+    fetch(`/api/combo/daily?date=${date}`, { credentials: 'include' })
+      .then((r) => getJson<{ state: 'ready'; payload: DailyPayload } | { state: 'pending'; at: string }>(r))
+      .then((d) => setDaily({ ...d, date }))
+      .catch(() => setDaily({ state: 'error', date }));
+  }, [date]);
+
+  // Açılınca / gün değişince hazır öneriler; özel akışın adayları yalnız "Kendin ayarla" açılınca.
+  useEffect(() => {
+    if (open) loadDaily();
+  }, [open, loadDaily]);
+
+  const resetManual = () => {
+    setRows(null);
+    setFailed(false);
+    setSelected([]);
+    setOdds({});
+    setRan(false);
+    setMessage(null);
+    requested.current = new Set();
+  };
+
+  const pickDay = (d: 'today' | 'tomorrow') => {
+    if (d === day) return;
+    resetManual();
+    setDay(d);
+  };
+
+  const toggleOpen = () => setOpen((v) => !v);
+
+  const onManualToggle = (isOpen: boolean) => {
+    if (isOpen && !rows && !failed) load();
   };
 
   const run = async () => {
@@ -202,6 +235,19 @@ export default function ComboHomeCard() {
       {open ? (
         <div id={panelId} className={styles.body}>
           <p className={styles.muted}>{t('intro')}</p>
+          <div className={styles.chips} role="group" aria-label={t('dayLabel')}>
+            {(['today', 'tomorrow'] as const).map((d) => (
+              <button key={d} type="button" className={`${styles.chip} ${day === d ? styles.chipActive : ''}`} aria-pressed={day === d} onClick={() => pickDay(d)}>
+                {t(`day.${d}`)}
+              </button>
+            ))}
+          </div>
+          <DailyPresets state={daily && daily.date === date ? daily : { state: 'loading' }} t={t} />
+
+          <details className={styles.adv} onToggle={(e) => onManualToggle((e.currentTarget as HTMLDetailsElement).open)}>
+            <summary>{t('manualTitle')}</summary>
+            <div className={styles.manualBody}>
+              <p className={styles.muted}>{t('manualIntro')}</p>
           {failed ? <p className={styles.muted}>{t('error')}</p> : null}
           {!rows && !failed ? <p className={styles.muted}>{t('loading')}</p> : null}
           {rows && rows.length === 0 ? <p className={styles.muted}>{t('empty')}</p> : null}
@@ -360,6 +406,8 @@ export default function ComboHomeCard() {
               </details>
             </>
           ) : null}
+            </div>
+          </details>
           <p className={styles.small}>{t('disclaimer')}</p>
         </div>
       ) : null}
@@ -374,5 +422,67 @@ function Stat({ label, value, sub, wide }: { label: string; value: string; sub?:
       <dd>{value}</dd>
       {sub ? <span className={styles.statSub}>{sub}</span> : null}
     </div>
+  );
+}
+
+
+function fmtPct1(p: number) {
+  return `%${(p * 100).toFixed(1).replace('.', ',')}`;
+}
+
+type TFn = (key: string, opts?: Record<string, unknown>) => string;
+
+/** Üç hazır öneri (Garantici / Dengeli / Riskli): kullanıcıdan girdi istemez. */
+function DailyPresets({ state, t }: { state: DailyState; t: TFn }) {
+  if (state.state === 'loading') return <p className={styles.muted}>{t('loading')}</p>;
+  if (state.state === 'error') return <p className={styles.muted}>{t('error')}</p>;
+  if (state.state === 'pending') return <p className={styles.note}>{t('presets.pending', { at: state.at })}</p>;
+  const p = state.payload;
+  if (p.status !== 'ok') return <p className={styles.note}>{t('presets.insufficient')}</p>;
+  return (
+    <div className={styles.presets}>
+      {p.testData ? <p className={styles.note}>{t('presets.testData')}{p.thresholdRelaxed ? ` · ${t('presets.relaxed')}` : ''}</p> : null}
+      {p.coupons.map((c) => (
+        <Preset key={c.kind} coupon={c} t={t} />
+      ))}
+    </div>
+  );
+}
+
+function Preset({ coupon, t }: { coupon: DailyCoupon; t: TFn }) {
+  const kind: CouponKind = coupon.kind;
+  return (
+    <section className={styles.preset} aria-label={t(`presets.${kind}`)}>
+      <header className={styles.presetHead}>
+        <strong>{t(`presets.${kind}`)}</strong>
+        <span className={styles.presetStats}>
+          <span>
+            {t('presets.probability')} <b>{fmtPct1(coupon.probability)}</b>
+          </span>
+          <span title={t('oddLabel')}>
+            {t('presets.odds')} <b>{coupon.odds ? fmtOdd(coupon.odds) : '—'}</b>
+          </span>
+        </span>
+      </header>
+      {!coupon.targetReached && coupon.targetOdds != null ? <p className={styles.small}>{t('presets.targetMissed', { target: fmtOdd(coupon.targetOdds) })}</p> : null}
+      <ul className={styles.list}>
+        {coupon.legs.map((l) => (
+          <li key={l.matchId} className={styles.row}>
+            <span className={styles.teams}>
+              <TeamLogo src={l.homeLogo} width={16} alt="" />
+              <TeamLogo src={l.awayLogo} width={16} alt="" />
+              <span className={styles.names}>
+                {l.homeName} – {l.awayName}
+              </span>
+            </span>
+            <span className={styles.pickLine}>
+              <span>{t(`pick.${l.key}`)}</span>
+              <span className={styles.num}>%{l.pct}</span>
+              <span className={styles.num}>{l.odd ? fmtOdd(l.odd) : '—'}</span>
+            </span>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }

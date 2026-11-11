@@ -288,3 +288,43 @@
 .spanAll {
   grid-column: 1 / -1;
 }
+
+.presets {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+}
+
+.preset {
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  padding: $spacing-2 $spacing-3;
+}
+
+.presetHead {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+  color: $color-text;
+}
+
+.presetStats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-3;
+  font-size: 12px;
+  color: $color-text-secondary;
+
+  b {
+    color: $color-text;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.manualBody {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+  padding-top: $spacing-2;
+}

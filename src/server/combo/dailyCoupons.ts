@@ -48,6 +48,10 @@ export type DailyCoupon = {
   breakEven: number | null;
   /** Hedef orana ulaşmak için eşik taban değere kadar çekildi mi. */
   relaxed: boolean;
+  /** Hedef orana (Garantici ≈1,7 / Dengeli ≈4 / Riskli ≈10) ulaşıldı mı; false → eldeki en yüksek oranlı seçim. */
+  targetReached: boolean;
+  /** Hedef kombine oran (oranlar biliniyorsa). */
+  targetOdds: number | null;
 };
 
 export type DailyPayload = {
@@ -106,15 +110,21 @@ export async function buildDailyCoupons(date: string, deps: BuildDeps = {}): Pro
     const floor = testData ? Math.min(k.floor, TEST_FLOOR) : k.floor;
     const target = anyOdds ? riskToTargetOdds(k.risk) : null;
     let res = suggestForRisk(pool, { risk: k.risk, maxMatches: k.maxMatches, targetOdds: target, floor });
-    // Hedef orana ulaşılamıyorsa oransız (yalnız olasılık) öneriye düş; yine de tabanın altına inilmez.
-    if (res.picks.length === 0 && target != null) res = suggestForRisk(pool, { risk: k.risk, maxMatches: k.maxMatches, targetOdds: null, floor });
-    if (res.picks.length === 0) continue;
-    const picks = res.picks as typeof pool;
+    let targetReached = target != null && res.picks.length > 0;
+    let picks = res.picks as typeof pool;
+    if (picks.length === 0 && target != null) {
+      // Hedef orana ulaşılamıyor: tabanın altına inmeden, eldeki EN YÜKSEK oranlı pazarlar (kind başına en çok maxMatches) — oran / olasılık
+      // sırası kinds arasında tutarlı kalır (Riskli en çok maç → en düşük olasılık, en yüksek oran).
+      picks = pool.filter((p) => p.odd != null && p.pct >= floor).sort((a, b) => (b.odd as number) - (a.odd as number) || b.pct - a.pct).slice(0, k.maxMatches);
+      res = { ...res, relaxed: false };
+      targetReached = false;
+    }
+    if (picks.length === 0) continue;
     if (picks.some((p) => p.pct < k.floor)) thresholdRelaxed = true;
     const legs = picks.map((p) => toLeg(p, p.odd));
     const straight = straightOutcome(picks, 1);
     const probability = picks.reduce((acc, p) => (acc * p.pct) / 100, 1);
-    coupons.push({ kind: k.kind, legs, probability, odds: straight?.odds ?? null, breakEven: straight?.breakEven ?? null, relaxed: res.relaxed });
+    coupons.push({ kind: k.kind, legs, probability, odds: straight?.odds ?? null, breakEven: straight?.breakEven ?? null, relaxed: res.relaxed, targetReached, targetOdds: target });
   }
   if (coupons.length === 0) return { ...base, status: 'insufficient', reason: 'no-strong-picks', analysed: candidates.length, coupons: [], testData, thresholdRelaxed: false };
   return { ...base, status: 'ok', analysed: candidates.length, coupons, testData, thresholdRelaxed };

@@ -3,7 +3,7 @@
   "badge": "Test",
   "open": "Open",
   "close": "Close",
-  "intro": "Enter your risk, amount and the odds you want; we suggest a pick from today's strongest AI predictions. Probabilities are model estimates and matches are assumed independent.",
+  "intro": "Three ready suggestions from today's analysed matches in the automatic pool. Probabilities are model estimates; nothing is guaranteed.",
   "risk": {
     "label": "Risk",
     "safe": "Low",
@@ -117,5 +117,24 @@
   "minPctAdv": "Minimum probability (%) — empty: by risk",
   "misli": "Multiplier",
   "misliInvalid": "Multiplier must be a whole number from 1 to 1000.",
-  "unitHint": "Unit: {{amount}} TL × {{misli}}"
+  "unitHint": "Unit: {{amount}} TL × {{misli}}",
+  "dayLabel": "Day",
+  "day": {
+    "today": "Today",
+    "tomorrow": "Tomorrow"
+  },
+  "manualTitle": "Set it yourself",
+  "manualIntro": "Enter your risk, amount and the odds you want; we suggest a pick from the day's analysed matches. Matches are assumed independent.",
+  "presets": {
+    "safe": "Safe",
+    "balanced": "Balanced",
+    "bold": "Bold",
+    "probability": "Combined probability",
+    "odds": "Approx. odds",
+    "pending": "Today's combo is prepared at {{at}}.",
+    "insufficient": "Not enough data for this day.",
+    "testData": "Test data · national match, limited data",
+    "relaxed": "test: threshold relaxed",
+    "targetMissed": "The target odds (≈{{target}}) could not be reached with the available matches; showing the highest-odds selection."
+  }
 }

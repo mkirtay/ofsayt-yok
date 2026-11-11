@@ -3,7 +3,7 @@
   "badge": "Test",
   "open": "Aç",
   "close": "Kapat",
-  "intro": "Riskini, tutarını ve istediğin oranı gir; günün en güçlü AI tahminlerinden bir seçim önerelim. Olasılıklar modelin tahminidir, maçlar birbirinden bağımsız varsayılır.",
+  "intro": "Günün analizli maçlarından, otomatik havuzdan üç hazır öneri. Olasılıklar modelin tahminidir; hiçbir sonuç garanti değildir.",
   "risk": {
     "label": "Risk",
     "safe": "Düşük",
@@ -117,5 +117,24 @@
   "minPctAdv": "En düşük olasılık (%) — boş: riske göre",
   "misli": "Misli (çarpan)",
   "misliInvalid": "Misli 1 ile 1000 arasında bir tam sayı olmalı.",
-  "unitHint": "Birim: {{amount}} TL × {{misli}}"
+  "unitHint": "Birim: {{amount}} TL × {{misli}}",
+  "dayLabel": "Gün",
+  "day": {
+    "today": "Bugün",
+    "tomorrow": "Yarın"
+  },
+  "manualTitle": "Kendin ayarla",
+  "manualIntro": "Riskini, tutarını ve istediğin oranı gir; günün analizli maçlarından bir seçim önerelim. Maçlar birbirinden bağımsız varsayılır.",
+  "presets": {
+    "safe": "Garantici",
+    "balanced": "Dengeli",
+    "bold": "Riskli",
+    "probability": "Kombine olasılık",
+    "odds": "Yaklaşık oran",
+    "pending": "Günün kombinesi saat {{at}}'de hazırlanır.",
+    "insufficient": "Bu gün için yeterli veri yok.",
+    "testData": "Test verisi · milli maç, sınırlı veri",
+    "relaxed": "test: eşik gevşetildi",
+    "targetMissed": "Hedef oran (≈{{target}}) eldeki maçlarla yakalanamadı; en yüksek oranlı seçim gösteriliyor."
+  }
 }

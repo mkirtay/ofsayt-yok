@@ -45,6 +45,20 @@ describe('buildDailyCoupons', () => {
     expect(p.thresholdRelaxed).toBe(false);
   });
 
+  it('hedef orana ulaşılamıyorsa en yüksek oranlı seçim: Garantici > Dengeli > Riskli olasılık, oran artar; targetReached=false işaretli', async () => {
+    const cands = [row('1', 94), row('2', 91), row('3', 86), row('4', 82), row('5', 78), row('6', 76), row('7', 68)];
+    const odds = okOdds({ '1': 1.05, '2': 1.05, '3': 1.05, '4': 1.11, '5': 1.1, '6': 1.18, '7': 1.4 });
+    const p = await buildDailyCoupons('2026-11-12', { candidates: async () => cands, odds: odds as never });
+    const [safe, bal, bold] = p.coupons;
+    expect(p.coupons).toHaveLength(3);
+    expect(bal.targetReached).toBe(false);
+    expect(bold.targetReached).toBe(false);
+    expect(bal.legs.length).toBeLessThanOrEqual(4);
+    expect(safe.probability).toBeGreaterThanOrEqual(bal.probability);
+    expect(bal.probability).toBeGreaterThan(bold.probability);
+    expect(bold.odds!).toBeGreaterThan(bal.odds!);
+  });
+
   it('zayıf pick\'ler: üretimde taban altına inilmez → kupon yok / insufficient', async () => {
     const weak = [row('1', 52), row('2', 50), row('3', 51)];
     const p = await buildDailyCoupons('2026-11-12', { candidates: async () => weak, odds: okOdds({}) as never });
