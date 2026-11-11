@@ -2,7 +2,6 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { findGamblingTerms } from '@/utils/gamblingTerms';
 import trCombo from '../../../public/locales/tr/combo.json';
 import enCombo from '../../../public/locales/en/combo.json';
 
