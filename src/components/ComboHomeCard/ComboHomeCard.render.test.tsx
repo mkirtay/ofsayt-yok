@@ -79,6 +79,9 @@ describe('<ComboHomeCard />', () => {
     expect(await presets({ state: 'error' } as never)).toContain('Yüklenemedi');
     expect(await presets({ state: 'pending', at: '12:00' } as never)).toContain('12:00');
     expect(await presets({ state: 'ready', payload: { status: 'insufficient', coupons: [], testData: false } } as never)).toContain('yeterli veri yok');
+    // Önbellekte kalmış eski biçim (odds/odd, adil oran yok) çökertmez.
+    const old = { status: 'ok', testData: false, coupons: [{ kind: 'safe', odds: 2.84, probability: 0.2, legs: [{ matchId: '1', homeName: 'A', awayName: 'B', key: 'over15', pct: 80, odd: 1.4 }] }] };
+    expect(await presets({ state: 'ready', payload: old } as never)).toContain('yeterli veri yok');
     const src = readFileSync(path.resolve(__dirname, 'index.tsx'), 'utf8');
     expect(src).toContain('showTestBadge = dailyState.state === \'ready\' && dailyState.payload.testData');
   });

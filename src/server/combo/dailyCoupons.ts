@@ -136,7 +136,8 @@ export async function buildDailyCoupons(date: string, deps: BuildDeps = {}): Pro
 }
 
 // ── Redis önbelleği (günlük anahtar, 2 gün) ────────────────────────────────────────────────────────────────────────
-const key = (date: string) => `${cacheKeyPrefix()}combo:daily:${date}`;
+// v2: kupon biçimi değişti (adil oran, harman). Sürüm, eski biçimli önbelleğin yeni karta gitmesini engeller.
+const key = (date: string) => `${cacheKeyPrefix()}combo:daily:v2:${date}`;
 
 export async function readDaily(date: string): Promise<DailyPayload | null> {
   return withRedis((r) => r.get<DailyPayload>(key(date)), null);

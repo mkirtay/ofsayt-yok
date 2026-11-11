@@ -442,7 +442,9 @@ export function DailyPresets({ state, kind, onKind, t }: { state: DailyState; ki
   if (state.state === 'error') return <p className={styles.muted}>{t('error')}</p>;
   if (state.state === 'pending') return <p className={styles.muted}>{t('presets.pending', { at: state.at })}</p>;
   const p = state.payload;
-  if (p.status !== 'ok' || p.coupons.length === 0) return <p className={styles.muted}>{t('presets.insufficient')}</p>;
+  // Eski biçimli (önbellekte kalmış) kupon: adil oran yoksa çizilmez.
+  const valid = p.coupons?.every((c) => typeof c.fairOdds === 'number' && c.legs.every((l) => typeof l.fairOdd === 'number'));
+  if (p.status !== 'ok' || !valid || p.coupons.length === 0) return <p className={styles.muted}>{t('presets.insufficient')}</p>;
   const coupon = p.coupons.find((c) => c.kind === kind) ?? null;
   return (
     <div className={styles.presets}>
