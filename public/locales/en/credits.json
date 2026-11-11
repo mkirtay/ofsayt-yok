@@ -125,6 +125,12 @@
       "gundem": "Write your first post or comment in Gündem",
       "frikik": "Finish your first Free Kick run"
     },
-    "games": "Games pay credits too: predict every match of the week in the Prediction League +1, weekly top 3 +3/+2/+1. Play Free Kick on 7 days of a month +2, monthly top 3 +5/+4/+3."
+    "gamesTitle": "Games pay credits too",
+    "gamesPrediction": "Prediction League",
+    "gamesPrediction1": "Predict every match of the week: +1",
+    "gamesPrediction2": "Weekly top 3: +3 / +2 / +1",
+    "gamesFrikik": "Free Kick",
+    "gamesFrikik1": "Play on at least 7 days of a month: +2",
+    "gamesFrikik2": "Monthly top 3: +5 / +4 / +3"
   }
 }

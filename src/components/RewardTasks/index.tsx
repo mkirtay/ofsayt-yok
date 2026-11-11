@@ -108,7 +108,18 @@ export default function RewardTasks({ onNavigate }: { onNavigate?: () => void })
           ) : null}
         </>
       ) : null}
-      <p className={styles.games}>{t('tasks.games')}</p>
+      <div className={styles.games}>
+        <p className={styles.gamesTitle}>{t('tasks.gamesTitle')}</p>
+        {(['Prediction', 'Frikik'] as const).map((g) => (
+          <div key={g} className={styles.game}>
+            <p className={styles.gameName}>{t(`tasks.games${g}`)}</p>
+            <ul className={styles.gameRules}>
+              <li>{t(`tasks.games${g}1`)}</li>
+              <li>{t(`tasks.games${g}2`)}</li>
+            </ul>
+          </div>
+        ))}
+      </div>
     </section>
   );
 }

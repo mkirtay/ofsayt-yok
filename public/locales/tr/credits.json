@@ -125,6 +125,12 @@
       "gundem": "Gündem'de ilk paylaşımını ya da yorumunu yaz",
       "frikik": "Günün Frikiği'nde ilk koşunu tamamla"
     },
-    "games": "Oyunlarda da kredi var. {{game}}: haftanın bütün maçlarını tahmin et +1, haftanın ilk 3'ü +3/+2/+1. Frikik: ayın 7 gününde oyna +2, ayın ilk 3'ü +5/+4/+3."
+    "gamesTitle": "Oyunlarda da kredi var",
+    "gamesPrediction": "{{game}}",
+    "gamesPrediction1": "Haftanın bütün maçlarını tahmin et: +1",
+    "gamesPrediction2": "Haftanın ilk 3'ü: +3 / +2 / +1",
+    "gamesFrikik": "Frikik",
+    "gamesFrikik1": "Ayın en az 7 gününde oyna: +2",
+    "gamesFrikik2": "Ayın ilk 3'ü: +5 / +4 / +3"
   }
 }
