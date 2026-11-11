@@ -246,6 +246,16 @@ $hub-fill-height: calc(100vh - var(--header-height) - 56px - 32px - var(--league
 }
 
 // Liste yokken (boş / hata) Günün Frikiği kartı mesajın altında.
+.comboSide {
+  margin-bottom: $spacing-3;
+  min-width: 0;
+}
+
+.comboInList {
+  margin-bottom: $spacing-3;
+  min-width: 0;
+}
+
 .frikikBelow {
   margin-top: $spacing-3;
 }

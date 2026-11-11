@@ -3,7 +3,6 @@
   "badge": "Test",
   "open": "Aç",
   "close": "Kapat",
-  "intro": "Günün analizli maçlarından, otomatik havuzdan üç hazır öneri. Olasılıklar modelin tahminidir; hiçbir sonuç garanti değildir.",
   "risk": {
     "label": "Risk",
     "safe": "Düşük",
@@ -125,15 +124,19 @@
   "manualTitle": "Kendin ayarla",
   "manualIntro": "Riskini, tutarını ve istediğin oranı gir; günün analizli maçlarından bir seçim önerelim. Maçlar birbirinden bağımsız varsayılır.",
   "presets": {
-    "safe": "Garantici",
+    "safe": "Temkinli",
     "balanced": "Dengeli",
     "bold": "Riskli",
-    "probability": "Kombine olasılık",
+    "probability": "Model olasılığı",
     "odds": "Yaklaşık oran",
     "pending": "Günün kombinesi saat {{at}}'de hazırlanır.",
     "insufficient": "Bu gün için yeterli veri yok.",
     "testData": "Test verisi · milli maç, sınırlı veri",
     "relaxed": "test: eşik gevşetildi",
-    "targetMissed": "Hedef oran (≈{{target}}) eldeki maçlarla yakalanamadı; en yüksek oranlı seçim gösteriliyor."
+    "targetMissed": "Hedef oran (≈{{target}}) eldeki maçlarla yakalanamadı; en yüksek oranlı seçim gösteriliyor.",
+    "label": "Öneri türü",
+    "count": "{{n}} maç",
+    "noGuarantee": "Sonuç garantisi yok.",
+    "details": "Ayrıntı"
   }
 }

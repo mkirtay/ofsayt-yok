@@ -22,7 +22,7 @@ import type { DailyPayload, DailyCoupon, CouponKind } from '@/server/combo/daily
 import styles from './comboHomeCard.module.scss';
 
 type Row = ComboCandidate & { homeName: string; awayName: string; homeLogo?: string | null; awayLogo?: string | null; source?: 'db' | 'test'; national?: boolean };
-type DailyState = { state: 'loading' } | { state: 'error' } | { state: 'pending'; at: string } | { state: 'ready'; payload: DailyPayload };
+export type DailyState = { state: 'loading' } | { state: 'error' } | { state: 'pending'; at: string } | { state: 'ready'; payload: DailyPayload };
 type DailyStored = (Exclude<DailyState, { state: 'loading' }> & { date: string }) | null;
 type History = { evaluatedMatches: number; bands: CalibrationBand[] };
 type OddsResponse = { odds: Array<{ matchId: string; status: string; market?: { odd: number } }> };
@@ -53,7 +53,7 @@ async function getJson<T>(res: Response): Promise<T> {
  */
 export default function ComboHomeCard() {
   const { t } = useTranslation('combo');
-  const [open, setOpen] = useState(false);
+  const [kind, setKind] = useState<CouponKind>('safe');
   const [day, setDay] = useState<'today' | 'tomorrow'>('today');
   const [daily, setDaily] = useState<DailyStored>(null);
   const [rows, setRows] = useState<Row[] | null>(null);
@@ -138,10 +138,10 @@ export default function ComboHomeCard() {
       .catch(() => setDaily({ state: 'error', date }));
   }, [date]);
 
-  // Açılınca / gün değişince hazır öneriler; özel akışın adayları yalnız "Kendin ayarla" açılınca.
+  // Kart açık gelir: mount'ta / gün değişince hazır öneriler; özel akışın adayları yalnız "Kendin ayarla" açılınca.
   useEffect(() => {
-    if (open) loadDaily();
-  }, [open, loadDaily]);
+    loadDaily();
+  }, [loadDaily]);
 
   const resetManual = () => {
     setRows(null);
@@ -158,8 +158,6 @@ export default function ComboHomeCard() {
     resetManual();
     setDay(d);
   };
-
-  const toggleOpen = () => setOpen((v) => !v);
 
   const onManualToggle = (isOpen: boolean) => {
     if (isOpen && !rows && !failed) load();
@@ -222,27 +220,24 @@ export default function ComboHomeCard() {
     return history.bands.find((b) => lowest >= b.min && lowest <= b.max) ?? null;
   }, [history, chosen]);
 
-  const panelId = 'combo-home-card-panel';
+  const dailyState: DailyState = daily && daily.date === date ? daily : { state: 'loading' };
+  const showTestBadge = dailyState.state === 'ready' && dailyState.payload.testData;
   return (
     <section className={styles.card} aria-label={t('title')}>
-      <button type="button" className={styles.head} aria-expanded={open} aria-controls={panelId} onClick={toggleOpen}>
-        <span className={styles.title}>{t('title')}</span>
-        <span className={styles.badge}>{t('badge')}</span>
-        <span className={styles.chev} aria-hidden="true">
-          {open ? '▴' : '▾'}
-        </span>
-      </button>
-      {open ? (
-        <div id={panelId} className={styles.body}>
-          <p className={styles.muted}>{t('intro')}</p>
-          <div className={styles.chips} role="group" aria-label={t('dayLabel')}>
+      <header className={styles.head}>
+        <TicketIcon />
+        <h2 className={styles.title}>{t('title')}</h2>
+        {showTestBadge ? <span className={styles.badge}>{t('badge')}</span> : null}
+      </header>
+      <div className={styles.body}>
+          <div className={styles.segment} role="group" aria-label={t('dayLabel')}>
             {(['today', 'tomorrow'] as const).map((d) => (
-              <button key={d} type="button" className={`${styles.chip} ${day === d ? styles.chipActive : ''}`} aria-pressed={day === d} onClick={() => pickDay(d)}>
+              <button key={d} type="button" className={`${styles.segBtn} ${day === d ? styles.segActive : ''}`} aria-pressed={day === d} onClick={() => pickDay(d)}>
                 {t(`day.${d}`)}
               </button>
             ))}
           </div>
-          <DailyPresets state={daily && daily.date === date ? daily : { state: 'loading' }} t={t} />
+          <DailyPresets state={dailyState} kind={kind} onKind={setKind} t={t} />
 
           <details className={styles.adv} onToggle={(e) => onManualToggle((e.currentTarget as HTMLDetailsElement).open)}>
             <summary>{t('manualTitle')}</summary>
@@ -408,9 +403,7 @@ export default function ComboHomeCard() {
           ) : null}
             </div>
           </details>
-          <p className={styles.small}>{t('disclaimer')}</p>
-        </div>
-      ) : null}
+      </div>
     </section>
   );
 }
@@ -432,39 +425,57 @@ function fmtPct1(p: number) {
 
 type TFn = (key: string, opts?: Record<string, unknown>) => string;
 
-/** Üç hazır öneri (Garantici / Dengeli / Riskli): kullanıcıdan girdi istemez. */
-function DailyPresets({ state, t }: { state: DailyState; t: TFn }) {
+function TicketIcon() {
+  return (
+    <svg className={styles.icon} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M4 7h16v3a2 2 0 0 0 0 4v3H4v-3a2 2 0 0 0 0-4z" />
+      <path d="M10 7v10" strokeDasharray="2 2.5" />
+    </svg>
+  );
+}
+
+const KINDS: readonly CouponKind[] = ['safe', 'balanced', 'bold'];
+
+/** Hazır öneriler (Temkinli / Dengeli / Riskli): aynı anda YALNIZ seçili kuponun içeriği görünür. */
+export function DailyPresets({ state, kind, onKind, t }: { state: DailyState; kind: CouponKind; onKind: (k: CouponKind) => void; t: TFn }) {
   if (state.state === 'loading') return <p className={styles.muted}>{t('loading')}</p>;
   if (state.state === 'error') return <p className={styles.muted}>{t('error')}</p>;
-  if (state.state === 'pending') return <p className={styles.note}>{t('presets.pending', { at: state.at })}</p>;
+  if (state.state === 'pending') return <p className={styles.muted}>{t('presets.pending', { at: state.at })}</p>;
   const p = state.payload;
-  if (p.status !== 'ok') return <p className={styles.note}>{t('presets.insufficient')}</p>;
+  if (p.status !== 'ok' || p.coupons.length === 0) return <p className={styles.muted}>{t('presets.insufficient')}</p>;
+  const coupon = p.coupons.find((c) => c.kind === kind) ?? null;
   return (
     <div className={styles.presets}>
-      {p.testData ? <p className={styles.note}>{t('presets.testData')}{p.thresholdRelaxed ? ` · ${t('presets.relaxed')}` : ''}</p> : null}
-      {p.coupons.map((c) => (
-        <Preset key={c.kind} coupon={c} t={t} />
-      ))}
+      <div className={styles.tabs} role="tablist" aria-label={t('presets.label')}>
+        {KINDS.map((k) => (
+          <button key={k} id={`combo-tab-${k}`} type="button" role="tab" aria-selected={kind === k} aria-controls="combo-tabpanel" tabIndex={kind === k ? 0 : -1} className={`${styles.tab} ${kind === k ? styles.tabActive : ''}`} onClick={() => onKind(k)}>
+            {t(`presets.${k}`)}
+          </button>
+        ))}
+      </div>
+      <div id="combo-tabpanel" role="tabpanel" aria-labelledby={`combo-tab-${kind}`}>
+        {coupon ? <Preset coupon={coupon} testData={p.testData} relaxed={p.thresholdRelaxed} t={t} /> : <p className={styles.muted}>{t('noPick')}</p>}
+      </div>
     </div>
   );
 }
 
-function Preset({ coupon, t }: { coupon: DailyCoupon; t: TFn }) {
-  const kind: CouponKind = coupon.kind;
+function Preset({ coupon, testData, relaxed, t }: { coupon: DailyCoupon; testData: boolean; relaxed: boolean; t: TFn }) {
+  const notes = [testData ? `${t('presets.testData')}${relaxed ? ` · ${t('presets.relaxed')}` : ''}` : null, !coupon.targetReached && coupon.targetOdds != null ? t('presets.targetMissed', { target: fmtOdd(coupon.targetOdds) }) : null].filter(Boolean);
   return (
-    <section className={styles.preset} aria-label={t(`presets.${kind}`)}>
-      <header className={styles.presetHead}>
-        <strong>{t(`presets.${kind}`)}</strong>
-        <span className={styles.presetStats}>
-          <span>
-            {t('presets.probability')} <b>{fmtPct1(coupon.probability)}</b>
-          </span>
-          <span title={t('oddLabel')}>
-            {t('presets.odds')} <b>{coupon.odds ? fmtOdd(coupon.odds) : '—'}</b>
-          </span>
-        </span>
-      </header>
-      {!coupon.targetReached && coupon.targetOdds != null ? <p className={styles.small}>{t('presets.targetMissed', { target: fmtOdd(coupon.targetOdds) })}</p> : null}
+    <div className={styles.preset}>
+      <dl className={styles.summary}>
+        <div>
+          <dt>{t('presets.odds')}</dt>
+          <dd className={styles.bigNum} title={t('oddLabel')}>
+            {coupon.odds ? fmtOdd(coupon.odds) : '—'}
+          </dd>
+        </div>
+        <div>
+          <dt>{t('presets.probability')}</dt>
+          <dd className={`${styles.bigNum} ${styles.bigGreen}`}>{fmtPct1(coupon.probability)}</dd>
+        </div>
+      </dl>
       <ul className={styles.list}>
         {coupon.legs.map((l) => (
           <li key={l.matchId} className={styles.row}>
@@ -475,14 +486,33 @@ function Preset({ coupon, t }: { coupon: DailyCoupon; t: TFn }) {
                 {l.homeName} – {l.awayName}
               </span>
             </span>
-            <span className={styles.pickLine}>
-              <span>{t(`pick.${l.key}`)}</span>
-              <span className={styles.num}>%{l.pct}</span>
-              <span className={styles.num}>{l.odd ? fmtOdd(l.odd) : '—'}</span>
+            <span className={styles.pickText}>{t(`pick.${l.key}`)}</span>
+            <span className={styles.oddBadge} title={t('oddLabel')}>
+              {l.odd ? fmtOdd(l.odd) : '—'}
             </span>
           </li>
         ))}
       </ul>
-    </section>
+      <p className={styles.footer}>
+        <span>{t('presets.count', { n: coupon.legs.length })}</span>
+        <span>{t('presets.noGuarantee')}</span>
+      </p>
+      <details className={styles.adv}>
+        <summary>{t('presets.details')}</summary>
+        {notes.map((n) => (
+          <p key={n} className={styles.small}>
+            {n}
+          </p>
+        ))}
+        <ul className={styles.perMatch}>
+          {coupon.legs.map((l) => (
+            <li key={l.matchId}>
+              {l.homeName} – {l.awayName}: {t(`pick.${l.key}`)} · {t('chance')} %{l.pct}
+            </li>
+          ))}
+        </ul>
+        <p className={styles.small}>{t('disclaimer')}</p>
+      </details>
+    </div>
   );
 }

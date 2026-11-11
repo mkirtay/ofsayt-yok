@@ -140,7 +140,7 @@ const EMPTY_MATCHES: Match[] = [];
  * kutusu (mobil < 480 px: 146 px; masaüstü 142 px — bkz. FrikikDailyCard scss) + kendi alt boşluğu (12 px). Oyun herkese
  * açıkken (derlemede NEXT_PUBLIC_GAME_PUBLIC) altında sabit yükseklikli oyun şeridi.
  */
-const FRIKIK_SLOT: MatchListInlineSlot = GAME_PUBLIC_CLIENT
+const FRIKIK_BASE_SLOT: MatchListInlineSlot = GAME_PUBLIC_CLIENT
   ? {
       // Altında oyun şeridi (sabit 56 px + 12 px boşluk; bkz. GameHomeCard scss) — yükseklik baştan ayrılır.
       node: (
@@ -152,6 +152,15 @@ const FRIKIK_SLOT: MatchListInlineSlot = GAME_PUBLIC_CLIENT
       height: 146 + 12 + 56 + 12,
     }
   : { node: <FrikikDailyCard />, height: 146 + 12 };
+
+/** Mobil yerleşim (< masaüstü): kombine kartı ilk grubun altındaki satırda; istemci-yalnız (kart ssr:false). */
+const subscribeMobile = (cb: () => void) => {
+  const mq = window.matchMedia(MOBILE_LAYOUT_QUERY);
+  mq.addEventListener('change', cb);
+  return () => mq.removeEventListener('change', cb);
+};
+const getMobileSnapshot = () => window.matchMedia(MOBILE_LAYOUT_QUERY).matches;
+const getMobileServerSnapshot = () => false;
 
 /** "2026-10-03" → "3 Ekim" / "3 October" (gün takvim günü; saat dilimi kaydırması yok). */
 function formatDayMonth(iso: string, locale: string): string {
@@ -354,6 +363,27 @@ export default function MatchHubPage({
     [favoriteTeamIds, tc],
   );
   const { status: sessionStatus, data: sessionData } = useSession();
+  const comboAccess = Boolean(sessionData?.user?.comboAccess);
+  const isMobileLayout = useSyncExternalStore(subscribeMobile, getMobileSnapshot, getMobileServerSnapshot);
+  // Kombine kartı: mobilde ilk maç grubunun altındaki satırda (Frikik kartının ardından), masaüstünde sol sütunda puan tablosunun üstünde.
+  // Kapalı kart yüksekliği (46 px) + alt boşluk (12 px) baştan ayrılır; açılınca satır kendini ölçer (MatchListInlineSlot).
+  const frikikSlot = useMemo<MatchListInlineSlot>(
+    () =>
+      comboAccess && isMobileLayout
+        ? {
+            node: (
+              <>
+                {FRIKIK_BASE_SLOT.node}
+                <div className={styles.comboInList}>
+                  <ComboHomeCard />
+                </div>
+              </>
+            ),
+            height: FRIKIK_BASE_SLOT.height + 46 + 12,
+          }
+        : FRIKIK_BASE_SLOT,
+    [comboAccess, isMobileLayout],
+  );
 
   // Veri yokken sabit boş dizi: `?? []` her render'da yeni dizi verip memo'ları boşa yeniden hesaplatıyordu.
   const allMatches = homeMatchesQuery.data?.allMatches ?? EMPTY_MATCHES;
@@ -847,7 +877,7 @@ export default function MatchHubPage({
   const withFrikik = (node: ReactNode) => (
     <>
       {node}
-      <div className={styles.frikikBelow}>{FRIKIK_SLOT.node}</div>
+      <div className={styles.frikikBelow}>{frikikSlot.node}</div>
     </>
   );
 
@@ -859,7 +889,7 @@ export default function MatchHubPage({
     ) : (
       <MatchList
         dateGroups={uefaDateGroups}
-        afterFirstGroup={FRIKIK_SLOT}
+        afterFirstGroup={frikikSlot}
         favoriteTeamIds={favoriteTeamSet}
         onToggleFavorite={toggleFavoriteTeam}
         onSelectMatch={isSplit ? handleSelectMatch : undefined}
@@ -918,7 +948,7 @@ export default function MatchHubPage({
     <>
       <MatchList
         groupedMatches={grouped}
-        afterFirstGroup={FRIKIK_SLOT}
+        afterFirstGroup={frikikSlot}
         trailingSection={nightSection}
         favoriteTeamIds={favoriteTeamSet}
         onToggleFavorite={toggleFavoriteTeam}
@@ -1004,6 +1034,11 @@ export default function MatchHubPage({
             .join(' ')}
         >
           <aside id="hub-sidebar" className={styles.hubSidebar}>
+            {comboAccess && !isMobileLayout ? (
+              <div className={styles.comboSide}>
+                <ComboHomeCard />
+              </div>
+            ) : null}
             <div className={styles.sidebar}>
               <HubLeaguePicker
                 open={pickerOpen}
@@ -1097,7 +1132,6 @@ export default function MatchHubPage({
                 </>
               )}
             </div>
-            {sessionData?.user?.comboAccess ? <ComboHomeCard /> : null}
             <AdSlot slot="hub-sidebar" format="rectangle" desktopOnly />
           </aside>
           <div id="hub-list" className={styles.hubMain}>

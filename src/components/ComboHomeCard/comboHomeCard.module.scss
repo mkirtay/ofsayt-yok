@@ -2,33 +2,33 @@
 
 // Ana sayfa yan paneli kartı: puan durumu kutusuyla aynı yüzey / kenarlık / yarıçap tokenları; chip'ler ortak mixin.
 .card {
-  margin-top: $spacing-3;
+  margin: 0;
   background: $color-surface;
   border: 1px solid $color-border;
   border-radius: $radius-md;
   box-shadow: $shadow-surface;
   overflow: hidden;
+  min-width: 0;
 }
 
 .head {
   display: flex;
   align-items: center;
   gap: $spacing-2;
-  width: 100%;
   min-height: 44px;
   padding: 0 $spacing-3;
-  background: transparent;
   color: $color-text;
-  text-align: left;
+}
 
-  &:focus-visible {
-    outline: 2px solid $color-primary;
-    outline-offset: -2px;
-  }
+.icon {
+  flex: 0 0 auto;
+  color: $color-primary-text;
 }
 
 .title {
   flex: 1;
+  min-width: 0;
+  margin: 0;
   font-size: 14px;
   font-weight: 700;
 }
@@ -39,10 +39,6 @@
   border: 1px solid $color-border;
   font-size: 11px;
   font-weight: 600;
-  color: $color-text-secondary;
-}
-
-.chev {
   color: $color-text-secondary;
 }
 
@@ -89,9 +85,10 @@
 }
 
 .row {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: $spacing-2;
+  row-gap: 2px;
   padding: $spacing-2 0;
   border-bottom: 1px solid $color-border;
 
@@ -101,18 +98,25 @@
 }
 
 .teams {
+  grid-column: 1;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 4px;
   min-width: 0;
+
+  img {
+    flex: 0 0 auto;
+    margin-top: 2px;
+  }
 }
 
+// Uzun takım adı oran sütununu itmez: iki satıra geçer.
 .names {
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  min-width: 0;
+  overflow-wrap: anywhere;
   font-size: 13px;
   font-weight: 600;
+  line-height: 1.3;
   color: $color-text;
 }
 
@@ -295,31 +299,135 @@
   gap: $spacing-3;
 }
 
-.preset {
+// 2'li segment (Bugün | Yarın)
+.segment {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: 2px;
   border: 1px solid $color-border;
-  border-radius: $radius-md;
-  padding: $spacing-2 $spacing-3;
+  border-radius: $radius-full;
+  background: $color-muted;
 }
 
-.presetHead {
+.segBtn {
+  min-height: 30px;
+  min-width: 0;
+  border-radius: $radius-full;
+  background: transparent;
+  color: $color-text-secondary;
+  font-size: 13px;
+  font-weight: 600;
+
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+    outline-offset: 1px;
+  }
+}
+
+.segActive {
+  background: $color-surface;
+  color: $color-text;
+  box-shadow: $shadow-surface;
+}
+
+// Temkinli | Dengeli | Riskli
+.tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: $spacing-1;
+}
+
+.tab {
+  @include filter-chip;
+  min-width: 0;
+  padding: 0 $spacing-1;
+  min-height: 32px;
+  font-size: 12px;
+}
+
+.tabActive {
+  @include filter-chip-active;
+  background: rgba($color-primary, 0.12);
+}
+
+.preset {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  font-size: 13px;
+  gap: $spacing-2;
+}
+
+// Yeşil tonlu özet kutusu: yaklaşık oran | model olasılığı
+.summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: $spacing-2;
+  margin: 0;
+  padding: $spacing-2 $spacing-3;
+  border: 1px solid rgba($color-primary, 0.35);
+  border-radius: $radius-md;
+  background: rgba($color-primary, 0.1);
+
+  dt {
+    font-size: 11px;
+    color: $color-text-secondary;
+  }
+
+  dd {
+    margin: 0;
+  }
+}
+
+.bigNum {
+  margin-top: 2px;
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
   color: $color-text;
 }
 
-.presetStats {
-  display: flex;
-  flex-wrap: wrap;
-  gap: $spacing-3;
+.bigGreen {
+  color: $color-primary-text;
+}
+
+.pickText {
+  grid-column: 1;
   font-size: 12px;
   color: $color-text-secondary;
+  overflow-wrap: anywhere;
+}
 
-  b {
-    color: $color-text;
-    font-variant-numeric: tabular-nums;
-  }
+.oddBadge {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+  min-width: 40px;
+  padding: 2px 8px;
+  border-radius: $radius-full;
+  border: 1px solid $color-border;
+  background: $color-muted;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  color: $color-text;
+}
+
+.footer {
+  display: flex;
+  justify-content: space-between;
+  gap: $spacing-2;
+  margin: 0;
+  font-size: 12px;
+  color: $color-text-secondary;
+}
+
+.perMatch {
+  margin: $spacing-1 0;
+  padding-left: $spacing-4;
+  font-size: 12px;
+  color: $color-text-secondary;
+  overflow-wrap: anywhere;
 }
 
 .manualBody {

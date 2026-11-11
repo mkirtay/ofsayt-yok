@@ -92,7 +92,7 @@ bugün + yarın (Türkiye günü) AI analizi olan yaklaşan maçlar + (bayrak a�
   `analysisPregen.ts` ile aynı (eşitliği `comboPool.test.ts` kaynak metninden doğrular).
 - **Adaylar** = gün maçları ∩ havuz ∩ analizi olanlar. Milli maçların kayıtlı analizi yok → yalnız geliştirmede **test analiz dosyasıyla** aday olur (`COMBO_TEST_ANALYSES_FILE`, `NODE_ENV !== 'production'`; üretimde dosya
   HİÇ okunmaz, `comboTestAnalyses.test.ts`). Milli maç oranı AF kimliğiyle doğrudan (eşleme yok; 1xBet, bazı pazarlar yok olabilir).
-- **Günlük kuponlar** (`server/combo/dailyCoupons.ts`): Garantici (~1,7; en çok 3 maç, taban %70) / Dengeli (~4; 4 maç, taban %62) / Riskli (~10; 6 maç, taban %55). Hedef orana eldeki maçlarla ulaşılamıyorsa eldeki en yüksek oranlı seçim
+- **Günlük kuponlar** (`server/combo/dailyCoupons.ts`): Temkinli (eski ad Garantici; ~1,7; en çok 3 maç, taban %70) / Dengeli (~4; 4 maç, taban %62) / Riskli (~10; 6 maç, taban %55). Hedef orana eldeki maçlarla ulaşılamıyorsa eldeki en yüksek oranlı seçim
   gösterilir ve söylenir. ≥ 3 analizli havuz maçı ya da tabanı geçen pick yoksa kupon ZORLANMAZ: "Bu gün için yeterli veri yok". Test verisinde taban gevşer ve kartta "test: eşik gevşetildi" yazar.
 - **Önbellek/cron:** sonuç günlük Redis anahtarında (`combo:daily:<gün>`, 2 gün). `POST /api/cron/combo-daily` (bayrak kapalıyken 404, Bearer `CRON_SECRET`; saat `COMBO_DAILY_TIME`, varsayılan 17:30 TSİ; bugün + yarın; o gün `ok` ise tekrar üretmez; `?force=1`).
   cron-job.org: POST, `Authorization: Bearer <CRON_SECRET>`, 30 dk'da bir (`*/30 * * * *`) — 17:30 öncesi `too-early`, sonrası üretir, `ok` olunca `already`; analizler gün içinde geldikçe `insufficient` olan gün yeniden denenir. KURULMADI.
