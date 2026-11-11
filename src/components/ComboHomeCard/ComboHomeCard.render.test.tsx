@@ -7,16 +7,16 @@ import trCombo from '../../../public/locales/tr/combo.json';
 import enCombo from '../../../public/locales/en/combo.json';
 
 describe('<ComboHomeCard />', () => {
-  const leg = (id: string, key: string, odd: number | null, home = 'İngiltere', away = 'Hırvatistan') => ({
-    matchId: id, homeName: home, awayName: away, homeLogo: null, awayLogo: null, kickoffIso: null, key, pct: 77, odd, national: true, source: 'test' as const,
+  const leg = (id: string, key: string, pct: number, refOdd: number | null, home = 'İngiltere', away = 'Hırvatistan') => ({
+    matchId: id, homeName: home, awayName: away, homeLogo: null, awayLogo: null, kickoffIso: null, key, pct, modelPct: 70, marketPct: refOdd ? 73.6 : null, fairOdd: Math.round((100 / pct) * 100) / 100, refOdd, national: true, source: 'test' as const,
   });
-  const coupon = (kind: string, odds: number | null, legs = [leg('1', 'homeToScore', 1.05), leg('2', 'over15', null, 'Çok Uzun Takım Adı Spor Kulübü', 'Bir Başka Çok Uzun Takım Adı')]) => ({
-    kind, legs, probability: 0.486, odds, breakEven: null, relaxed: false, targetReached: true, targetOdds: null,
+  const coupon = (kind: string, fairOdds: number, refOdds: number | null, legs = [leg('1', 'under35', 72.8, 1.33), leg('2', 'over25', 77, null, 'Çok Uzun Takım Adı Spor Kulübü', 'Bir Başka Çok Uzun Takım Adı')]) => ({
+    kind, legs, probability: 0.486, fairOdds, refOdds,
   });
   const ready = (testData = true) =>
     ({
       state: 'ready',
-      payload: { date: '2026-11-12', generatedAt: '', status: 'ok', analysed: 5, testData, thresholdRelaxed: false, coupons: [coupon('safe', 1.73), coupon('balanced', 4.2, [leg('3', 'btts', 1.9)]), coupon('bold', null)] },
+      payload: { date: '2026-11-12', generatedAt: '', status: 'ok', analysed: 5, testData, coupons: [coupon('safe', 2.06, null), coupon('balanced', 4.2, 3.9, [leg('3', 'bttsNo', 61, 1.7)]), coupon('bold', 9.5, null)] },
     }) as never;
 
   async function presets(state: never, kind: 'safe' | 'balanced' | 'bold' = 'safe') {
@@ -43,33 +43,36 @@ describe('<ComboHomeCard />', () => {
     expect(html).not.toContain('{{');
   });
 
-  it('hazır: üç sekme, Temkinli seçili, YALNIZ seçili kupon (oran + model olasılığı yan yana, maç başına % yok)', async () => {
+  it('hazır: üç sekme, Temkinli seçili, YALNIZ seçili kupon (adil oran + olasılık; bacakta pazar · % · adil oran; referans oran yalnız ayrıntıda)', async () => {
     const safe = await presets(ready());
     expect(safe).toMatch(/aria-selected="true"[^>]*>Temkinli</);
     expect(safe).toContain('Dengeli');
     expect(safe).toContain('Riskli');
-    expect(safe).not.toContain('Garantici');
-    expect(safe).toContain('Yaklaşık oran');
-    expect(safe).toContain('1,73');
-    expect(safe).toContain('Model olasılığı');
+    expect(safe).toContain('Adil oran');
+    expect(safe).toContain('2,06');
+    expect(safe).toContain('Olasılık');
     expect(safe).toContain('%48,6');
     expect(safe).toContain('İngiltere – Hırvatistan');
-    expect(safe).toContain('Ev sahibi gol bulur');
-    expect(safe).toContain('1,05');
+    expect(safe).toContain('En çok 3 gol · %73');
+    expect(safe).toContain('1,37'); // 1 / %72,8
+    expect(safe).toContain('3+ gol · %77');
     expect(safe).toContain('2 maç');
     expect(safe).toContain('Sonuç garantisi yok.');
-    expect(safe).toContain('>—<'); // eksik tekil oran
+    expect(safe).toContain('Kendi sitendeki oran');
     const main = safe.slice(0, safe.indexOf('<details'));
-    expect(main).not.toContain('%77'); // maç başına yüzde yalnız ayrıntıda
-    expect(safe.slice(safe.indexOf('<details'))).toContain('%77');
-    expect(safe).not.toContain('İki takım da gol bulur'); // diğer kuponun maçı görünmez
-    expect(safe).not.toContain('4,20');
+    expect(main).not.toContain('1,33'); // uluslararası referans ana görünümde yok
+    const det = safe.slice(safe.indexOf('<details'));
+    expect(det).toContain('referans 1,33');
+    expect(det).toContain('oranlardan %73,6');
+    expect(det).toContain('oranlardan —');
+    expect(safe).not.toContain('bulamaz'); // diğer kuponun maçı görünmez
     const balanced = await presets(ready(), 'balanced');
     expect(balanced).toMatch(/aria-selected="true"[^>]*>Dengeli</);
     expect(balanced).toContain('4,20');
+    expect(balanced).toContain('En az bir takım gol bulamaz');
     expect(balanced).toContain('1 maç');
-    expect(balanced).not.toContain('1,73');
-    expect(await presets(ready(), 'bold')).toMatch(/Yaklaşık oran<\/dt><dd[^>]*>—</); // eksik kombine oran
+    expect(balanced).toContain('3,90'); // kombine referans (ayrıntı)
+    expect(balanced).not.toContain('2,06');
   });
 
   it('hata / bekleme / veri yok: tek kısa mesaj; "Test" rozeti kartta yalnız test verisinde', async () => {
@@ -82,7 +85,7 @@ describe('<ComboHomeCard />', () => {
 
   it('kart gövdesinde sabit değer yok: rakamlar veriden', () => {
     const src = readFileSync(path.resolve(__dirname, 'index.tsx'), 'utf8');
-    expect(src).not.toMatch(/1[,.]73|48[,.]6/);
+    expect(src).not.toMatch(/2[,.]06|48[,.]6/);
   });
 
   it('TR ve EN sözlük aynı anahtarlara sahip; "yaklaşık piyasa oranı" ve garanti-değil uyarısı var', () => {

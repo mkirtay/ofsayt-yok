@@ -86,14 +86,29 @@ bugün + yarın (Türkiye günü) AI analizi olan yaklaşan maçlar + (bayrak a�
 - Piyasa oranları (yalnız milli maç + aynı kapı): ilk görünüm "Maç Sonucu" 1 X 2; "Ek oranlar" → Çifte Şans, İlk Yarı Sonucu, Beraberlikte İade, Karşılıklı Gol, Toplam Gol (tüm çizgiler, 1.5/2.5/3.5 önde), Handikap (Asya, dengeli çizgi çevresi 5 satır).
   AF bet kimlikleri: 1, 12, 13, 2 (Home/Away = beraberlikte iade; yalnız Bet365/William Hill — milli maçta (1xBet) yok → bölüm gizli), 8, 5, 4. Oran oku (▲▼) YOK: oran geçmişi tutulmuyor (snapshot tablosu uygulanmadı ve 1X2'yi kapsamıyor).
 
+## Pazar kuralı ve adil oran (2026-11-11, v2)
+- **Pazarlar yalnız 8:** toplam gol 1,5 / 2,5 / 3,5 (üst ve alt) + iki takım da gol bulur (var / yok) — `src/utils/comboMarkets.ts`. Analiz kartının diğer
+  pazarları (takım gol bulur, ilk yarı, maç sonucu) kombineye GİRMEZ. Alt = 100 − üst, KG yok = 100 − KG var; oranları aynı AF yanıtında (bet 5 Under, bet 8 No).
+- **Olasılık = harman:** `MODEL_WEIGHT × model + (1 − MODEL_WEIGHT) × piyasa`. Piyasa = iki yönlü oranlardan marjı temizlenmiş olasılık, bookmaker'lar arası medyan
+  (`comboMarketOdds`, oddsMarkets.ts). Ağırlık şimdilik her pazarda **0,25**.
+- **Kalibrasyon (salt okunur, `scripts/combo-kalibrasyon.ts`, 2026-11-11, 102 değerlendirilmiş v5+ maç):** sekiz pazarın hiçbirinde model sabit taban oranı
+  tahmininden iyi değil (Brier becerisi: 1,5 −5,0 %, 2,5 −6,0 %, 3,5 −1,3 %, KG +0,6 %). Model gol sayısını eksik tahmin ediyor (2,5 üst: tahmin %55, gerçek %65).
+  Bu yüzden piyasa ağır basar ve **piyasa verisi olmayan maç kupona girmez** (yalnız geliştirmedeki test analizleri istisna). Örnek küçük; oran biriktirme
+  (snapshot artık maç başına 8 pazarın hepsini yazar) birkaç hafta veri toplayınca ağırlık pazar başına yeniden ayarlanmalı.
+- **Kartta piyasa oranı yerine ADİL oran** (1 / olasılık): kullanıcı kendi sitesindeki oranla karşılaştırır ("sitedeki oran yüksekse modele göre değerli").
+  Uluslararası referans oran yalnız "Ayrıntı"da. Türk sitelerinin oranı genelde uluslararası oranlardan düşüktür; onlara ait veri kaynağı yok (kazıma YOK).
+- **Kupon türleri (bacak + harmanlanmış olasılık aralığı):** Temkinli 2 bacak %70–80 · Dengeli 3 bacak %60–72 · Riskli 4 bacak %50–62. Üst sınır adil oranın
+  tabanı (1,25 / 1,39 / 1,61) → 1,05'lik bacak olamaz. Maç başına tek bacak; maçın aralığa uyan en olası pazarı; en olası N maç. Aralığa uyan maç yetmezse o tür
+  ÜRETİLMEZ (eski "hedefe ulaşılamazsa en yüksek oranlı seçim" kaldırıldı). Bacak sayısı az: her bacakta sitenin marjı ödenir.
+- "Kendin ayarla": maç başına pazar artık 8 pazar içinden %80'i aşmayan en olası (model); oran gösterimi henüz uluslararası (dokunulmadı).
+
 ## Otomatik havuz ve günlük kuponlar (elle seçim yok)
 - **Havuz kapsamı** tek yerde: `src/config/comboPool.ts` (kulüp ligleri Süper Lig / UEFA CL-EL-ECL / büyük 5'te iki takım da ilk 6'da; milli: UEFA Uluslar Ligi, DK ve Euro elemeleri/finalleri,
   her turnuvada Türkiye maçı; `extraLeagueIds` ile genişletilir). Önem puanı: lig kademesi, Türk takımı / Türkiye bonusu, tabloda ilk 6 çifti, gece saati (00–06 TSİ) cezası; günde en çok 10 maç. Kulüp sabitleri
   `analysisPregen.ts` ile aynı (eşitliği `comboPool.test.ts` kaynak metninden doğrular).
 - **Adaylar** = gün maçları ∩ havuz ∩ analizi olanlar. Milli maçların kayıtlı analizi yok → yalnız geliştirmede **test analiz dosyasıyla** aday olur (`COMBO_TEST_ANALYSES_FILE`, `NODE_ENV !== 'production'`; üretimde dosya
   HİÇ okunmaz, `comboTestAnalyses.test.ts`). Milli maç oranı AF kimliğiyle doğrudan (eşleme yok; 1xBet, bazı pazarlar yok olabilir).
-- **Günlük kuponlar** (`server/combo/dailyCoupons.ts`): Temkinli (eski ad Garantici; ~1,7; en çok 3 maç, taban %70) / Dengeli (~4; 4 maç, taban %62) / Riskli (~10; 6 maç, taban %55). Hedef orana eldeki maçlarla ulaşılamıyorsa eldeki en yüksek oranlı seçim
-  gösterilir ve söylenir. ≥ 3 analizli havuz maçı ya da tabanı geçen pick yoksa kupon ZORLANMAZ: "Bu gün için yeterli veri yok". Test verisinde taban gevşer ve kartta "test: eşik gevşetildi" yazar.
+- **Günlük kuponlar** (`server/combo/dailyCoupons.ts`): yukarıdaki "Pazar kuralı" bölümü. ≥ 3 analizli havuz maçı yoksa ya da hiçbir tür kurulamıyorsa kupon ZORLANMAZ: "Bu gün için yeterli veri yok".
 - **Önbellek/cron:** sonuç günlük Redis anahtarında (`combo:daily:<gün>`, 2 gün). `POST /api/cron/combo-daily` (bayrak kapalıyken 404, Bearer `CRON_SECRET`; saat `COMBO_DAILY_TIME`, varsayılan 17:30 TSİ; bugün + yarın; o gün `ok` ise tekrar üretmez; `?force=1`).
   cron-job.org: POST, `Authorization: Bearer <CRON_SECRET>`, 30 dk'da bir (`*/30 * * * *`) — 17:30 öncesi `too-early`, sonrası üretir, `ok` olunca `already`; analizler gün içinde geldikçe `insufficient` olan gün yeniden denenir. KURULMADI.
   Kart `GET /api/combo/daily` ile okur; önbellek boşsa üretimde `pending` ("saat 17:30'da hazırlanır"), yalnız geliştirmede (test dosyası tanımlıyken) anında üretir.

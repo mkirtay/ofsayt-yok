@@ -10,8 +10,11 @@ import { apiFootballGet } from '@/server/apiFootball/client';
 import { afCached } from '@/server/apiFootball/cache';
 import type { AfFixture } from '@/services/apiFootball/types';
 import { matchFixture, type AfFixtureSlim } from '@/services/apiFootball/fixtureMatch';
-import { marketOdd, type AfOddsEntry, type MarketOdd } from '@/services/apiFootball/oddsMarkets';
-import type { TopPickKey } from '@/utils/analysisTopPicks';
+import { comboMarketOdds, marketOdd, type AfOddsEntry, type ComboMarketOdds, type MarketKey, type MarketOdd } from '@/services/apiFootball/oddsMarkets';
+import type { ComboMarketKey } from '@/utils/comboMarkets';
+
+/** Maçın kombine pazarlarının piyasa olasılığı + referans oranı (aynı AF yanıtından, ek istek yok). */
+export type ComboMarketsOdds = Partial<Record<ComboMarketKey, ComboMarketOdds>>;
 
 type Get = typeof apiFootballGet;
 
@@ -62,7 +65,7 @@ export async function loadAfOdds(
 
 export type OddsRequest = {
   matchId: string;
-  key: TopPickKey;
+  key: MarketKey;
   kickoffMs: number | null;
   home: string;
   away: string;
@@ -74,12 +77,15 @@ export type OddsResult =
       status: 'ok';
       afFixtureId: number;
       market: MarketOdd;
+      markets: ComboMarketsOdds;
       updatedAt: string | null;
     }
   | {
       matchId: string;
       status: 'no-fixture' | 'no-odds' | 'no-market' | 'error';
       afFixtureId?: number;
+      /** `no-market`: istenen pazar yok ama kombine pazarları olabilir. */
+      markets?: ComboMarketsOdds;
     };
 
 export type OddsDeps = {
@@ -124,8 +130,9 @@ export async function resolveOdds(requests: readonly OddsRequest[], deps: OddsDe
     if (!o.ok) return { matchId: r.matchId, status: 'error', afFixtureId: afId };
     if (!o.entry || o.entry.bookmakers.length === 0) return { matchId: r.matchId, status: 'no-odds', afFixtureId: afId };
     const market = marketOdd(o.entry, r.key);
-    if (!market) return { matchId: r.matchId, status: 'no-market', afFixtureId: afId };
-    return { matchId: r.matchId, status: 'ok', afFixtureId: afId, market, updatedAt: o.entry.update ?? null };
+    const markets = comboMarketOdds(o.entry);
+    if (!market) return { matchId: r.matchId, status: 'no-market', afFixtureId: afId, markets };
+    return { matchId: r.matchId, status: 'ok', afFixtureId: afId, market, markets, updatedAt: o.entry.update ?? null };
   };
 
   return mapLimit(requests, ODDS_CONCURRENCY, async (r): Promise<OddsResult> => {

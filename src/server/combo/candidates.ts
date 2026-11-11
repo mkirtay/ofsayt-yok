@@ -1,19 +1,20 @@
 /**
  * Kombine aracı: günün adayları + AI isabet geçmişi (YALNIZ admin). Adaylar: günün maçları (Sportmonks listesi) ∩ kayıtlı
- * maç öncesi AI analizi (prompt v5+) — her maçtan yalnız en güçlü tek pazar. AI üretimi / Sportmonks çağrısı eklemez:
+ * maç öncesi AI analizi (prompt v5+) — yalnız kombine pazarları (comboMarkets.ts); maç başına tek seçim. AI üretimi / Sportmonks çağrısı eklemez:
  * liste zaten ana sayfanın paylaşımlı önbelleğinden, analizler DB'den okunur.
  */
 import { prisma } from '@/lib/prisma';
 import { loadHomeDay } from '@/server/homeDay';
 import { AI_STATS_MIN_PROMPT_VERSION, promptVersion } from '@/lib/loadAiStatsDashboard';
 import { matchKickoffMs } from '@/utils/matchActivity';
-import { bestPickOfMatch, calibrationBands, type CalibrationBand, type ComboCandidate } from '@/utils/comboPicks';
+import { bestComboPickOfMatch, calibrationBands, type CalibrationBand, type ComboCandidate } from '@/utils/comboPicks';
 import { parseScore, pickTopPredictions, topPickHit } from '@/utils/analysisTopPicks';
 import type { Match } from '@/models/liveScore';
 import { selectPool } from '@/config/comboPool';
 import { matchToPoolInput, loadPoolContext } from '@/server/combo/pool';
 import { loadTestAnalyses, type TestAnalysis } from '@/server/combo/testAnalyses';
 import { toAfId } from '@/services/apiFootball/ids';
+import { comboMarketPcts, type ComboMarketKey } from '@/utils/comboMarkets';
 
 export type ComboCandidateRow = ComboCandidate & {
   homeName: string;
@@ -25,6 +26,8 @@ export type ComboCandidateRow = ComboCandidate & {
   national: boolean;
   /** Havuz önem puanı (kapsam kuralı). */
   poolScore: number;
+  /** Modelin sekiz kombine pazarındaki olasılığı (günlük kuponlar piyasa ile harmanlar). */
+  markets: Array<{ key: ComboMarketKey; pct: number }>;
 };
 
 function teamName(m: Match, side: 'home' | 'away'): string {
@@ -82,7 +85,8 @@ export async function loadComboCandidates(date: string, opts: CandidateOpts = {}
   for (const src of sources.values()) {
     const m = byId.get(src.matchId);
     if (!m) continue;
-    const best = bestPickOfMatch({ matchPrediction: src.prediction as never, goalExpectation: src.goals as never });
+    const analysis = { matchPrediction: src.prediction as never, goalExpectation: src.goals as never };
+    const best = bestComboPickOfMatch(analysis);
     if (!best) continue;
     const kick = matchKickoffMs(m);
     const home = teamName(m, 'home');
@@ -101,6 +105,7 @@ export async function loadComboCandidates(date: string, opts: CandidateOpts = {}
       source: src.source,
       national: toAfId(src.matchId) != null,
       poolScore: poolIds.get(src.matchId) ?? 0,
+      markets: comboMarketPcts(analysis),
     });
   }
   return rows.sort((x, y) => (x.kickoffIso ?? '').localeCompare(y.kickoffIso ?? '') || y.pct - x.pct);

@@ -16,8 +16,8 @@ const exec: Exec = async (t, v) => void (await db.query(t, v as unknown[]));
 const future = () => new Date(Date.now() + 5 * 3600_000).toISOString();
 
 const payload = (over: Partial<DailyPayload> = {}, odds = 2.1): DailyPayload => ({
-  date: '2026-11-12', generatedAt: new Date().toISOString(), status: 'ok', analysed: 4, testData: false, thresholdRelaxed: false,
-  coupons: [{ kind: 'safe', legs: [{ matchId: '1', homeName: 'A', awayName: 'B', kickoffIso: future(), key: 'over15', pct: 80, odd: 1.4, national: false, source: 'db' }], probability: 0.8, odds, breakEven: 1 / odds, relaxed: false, targetReached: true, targetOdds: 1.7 }],
+  date: '2026-11-12', generatedAt: new Date().toISOString(), status: 'ok', analysed: 4, testData: false,
+  coupons: [{ kind: 'safe', legs: [{ matchId: '1', homeName: 'A', awayName: 'B', kickoffIso: future(), key: 'over25', pct: 72, modelPct: 70, marketPct: 72.7, fairOdd: 1.39, refOdd: 1.3, national: false, source: 'db' }], probability: 0.72, fairOdds: 1.39, refOdds: odds }],
   ...over,
 });
 

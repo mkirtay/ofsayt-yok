@@ -4,7 +4,7 @@ import slOdds from './__fixtures__/oddsSuperLig_1584458.json';
 import uclOdds from './__fixtures__/oddsUcl_1635726.json';
 import natOdds from './__fixtures__/oddsNationalOnly1xBet_1528991.json';
 import emptyOdds from './__fixtures__/oddsEmpty_1545657.json';
-import type { TopPickKey } from '@/utils/analysisTopPicks';
+import type { MarketKey } from "./oddsMarkets";
 
 const sl = (slOdds as { response: AfOddsEntry[] }).response[0];
 const ucl = (uclOdds as { response: AfOddsEntry[] }).response[0];
@@ -24,7 +24,7 @@ describe('marketOdd — gerçek AF yanıtları (Süper Lig 1584458, UCL 1635726)
   });
 
   it('her pazar anahtarı Süper Lig ve UCL maçında bir oran döndürür', () => {
-    for (const key of Object.keys(MARKET_SPECS) as TopPickKey[]) {
+    for (const key of Object.keys(MARKET_SPECS) as MarketKey[]) {
       for (const entry of [sl, ucl]) {
         const m = marketOdd(entry, key);
         expect(m, `${key}`).not.toBeNull();
@@ -127,5 +127,34 @@ describe('extractMatchOdds (maç detayı kartı) — gerçek AF yanıtları', ()
     expect(extractMatchOdds(without365)!.bookmaker).not.toBe('Bet365');
     expect(extractMatchOdds(null)).toBeNull();
     expect(extractMatchOdds({ fixture: { id: 1 }, bookmakers: [] })).toBeNull();
+  });
+});
+
+import { comboMarketOdds } from './oddsMarkets';
+import { COMBO_MARKETS, OPPOSITE } from '@/utils/comboMarkets';
+
+describe('comboMarketOdds — marjı temizlenmiş piyasa olasılığı', () => {
+  it('Süper Lig: sekiz pazarın hepsi; iki yön toplamı %100; Bet365 referans oranı', () => {
+    const m = comboMarketOdds(sl);
+    for (const key of COMBO_MARKETS) {
+      expect(m[key], key).toBeDefined();
+      expect(m[key]!.marketPct + m[OPPOSITE[key]]!.marketPct).toBeGreaterThan(99);
+      expect(m[key]!.marketPct + m[OPPOSITE[key]]!.marketPct).toBeLessThan(101);
+    }
+    expect(m.over25!.odd).toBe(1.3);
+    expect(m.over25!.marketPct).toBeGreaterThan(m.under25!.marketPct);
+    // Marj temizlenince olasılık ham 1/oran'dan küçüktür (üst yön).
+    expect(m.over25!.marketPct).toBeLessThan(100 / 1.3);
+  });
+
+  it('milli maç (1xBet): olmayan çizgi atlanır; veri yok → boş', () => {
+    const m = comboMarketOdds(nat);
+    expect(m.over25?.bookmakers).toBe(1);
+    expect(comboMarketOdds(null)).toEqual({});
+  });
+
+  it('tek yön varsa (karşı oran yok) pazar atlanır', () => {
+    const one: AfOddsEntry = { fixture: { id: 1 }, bookmakers: [{ id: 8, name: 'Bet365', bets: [{ id: 8, name: 'BTTS', values: [{ value: 'Yes', odd: '1.8' }] }] }] };
+    expect(comboMarketOdds(one)).toEqual({});
   });
 });

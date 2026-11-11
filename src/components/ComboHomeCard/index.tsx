@@ -454,22 +454,20 @@ export function DailyPresets({ state, kind, onKind, t }: { state: DailyState; ki
         ))}
       </div>
       <div id="combo-tabpanel" role="tabpanel" aria-labelledby={`combo-tab-${kind}`}>
-        {coupon ? <Preset coupon={coupon} testData={p.testData} relaxed={p.thresholdRelaxed} t={t} /> : <p className={styles.muted}>{t('noPick')}</p>}
+        {coupon ? <Preset coupon={coupon} testData={p.testData} t={t} /> : <p className={styles.muted}>{t('noPick')}</p>}
       </div>
     </div>
   );
 }
 
-function Preset({ coupon, testData, relaxed, t }: { coupon: DailyCoupon; testData: boolean; relaxed: boolean; t: TFn }) {
-  const notes = [testData ? `${t('presets.testData')}${relaxed ? ` · ${t('presets.relaxed')}` : ''}` : null, !coupon.targetReached && coupon.targetOdds != null ? t('presets.targetMissed', { target: fmtOdd(coupon.targetOdds) }) : null].filter(Boolean);
+function Preset({ coupon, testData, t }: { coupon: DailyCoupon; testData: boolean; t: TFn }) {
+  const pct1 = (n: number) => String(n).replace('.', ',');
   return (
     <div className={styles.preset}>
       <dl className={styles.summary}>
         <div>
           <dt>{t('presets.odds')}</dt>
-          <dd className={styles.bigNum} title={t('oddLabel')}>
-            {coupon.odds ? fmtOdd(coupon.odds) : '—'}
-          </dd>
+          <dd className={styles.bigNum}>{fmtOdd(coupon.fairOdds)}</dd>
         </div>
         <div>
           <dt>{t('presets.probability')}</dt>
@@ -486,31 +484,40 @@ function Preset({ coupon, testData, relaxed, t }: { coupon: DailyCoupon; testDat
                 {l.homeName} – {l.awayName}
               </span>
             </span>
-            <span className={styles.pickText}>{t(`pick.${l.key}`)}</span>
-            <span className={styles.oddBadge} title={t('oddLabel')}>
-              {l.odd ? fmtOdd(l.odd) : '—'}
+            <span className={styles.pickText}>
+              {t(`pick.${l.key}`)} · %{pct1(Math.round(l.pct))}
+            </span>
+            <span className={styles.oddBadge} title={t('presets.odds')}>
+              {fmtOdd(l.fairOdd)}
             </span>
           </li>
         ))}
       </ul>
+      <p className={styles.small}>{t('presets.fairHint')}</p>
       <p className={styles.footer}>
         <span>{t('presets.count', { n: coupon.legs.length })}</span>
         <span>{t('presets.noGuarantee')}</span>
       </p>
       <details className={styles.adv}>
         <summary>{t('presets.details')}</summary>
-        {notes.map((n) => (
-          <p key={n} className={styles.small}>
-            {n}
-          </p>
-        ))}
+        {testData ? <p className={styles.small}>{t('presets.testData')}</p> : null}
         <ul className={styles.perMatch}>
           {coupon.legs.map((l) => (
             <li key={l.matchId}>
-              {l.homeName} – {l.awayName}: {t(`pick.${l.key}`)} · {t('chance')} %{l.pct}
+              {l.homeName} – {l.awayName}: {t(`pick.${l.key}`)} ·{' '}
+              {t('presets.legLine', {
+                pct: pct1(l.pct),
+                model: l.modelPct,
+                market: l.marketPct == null ? '—' : `%${pct1(l.marketPct)}`,
+                fair: fmtOdd(l.fairOdd),
+                ref: l.refOdd == null ? '—' : fmtOdd(l.refOdd),
+              })}
             </li>
           ))}
         </ul>
+        {coupon.refOdds != null ? <p className={styles.small}>{t('presets.refTotal', { total: fmtOdd(coupon.refOdds) })}</p> : null}
+        <p className={styles.small}>{t('presets.method')}</p>
+        <p className={styles.small}>{t('presets.minLegsNote')}</p>
         <p className={styles.small}>{t('disclaimer')}</p>
       </details>
     </div>

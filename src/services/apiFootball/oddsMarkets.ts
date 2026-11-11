@@ -4,6 +4,9 @@
  * Bet kimlikleri `odds/bets` kataloğundan; gerçek yanıtlarla test edilir (oddsMarkets.test.ts, __fixtures__/odds*.json).
  */
 import type { TopPickKey } from '@/utils/analysisTopPicks';
+import { COMBO_MARKETS, OPPOSITE, devigPair, type ComboMarketKey } from '@/utils/comboMarkets';
+
+export type MarketKey = TopPickKey | ComboMarketKey;
 
 export type AfOddsValue = { value: string; odd: string };
 export type AfOddsBet = { id: number; name: string; values: AfOddsValue[] };
@@ -15,14 +18,18 @@ export type AfOddsEntry = {
 };
 
 /** Bir pazarın AF karşılığı: (bet id, değer etiketi). Sıra = öncelik (ilki yoksa sonraki). */
-export const MARKET_SPECS: Record<TopPickKey, ReadonlyArray<{ betId: number; value: string }>> = {
+export const MARKET_SPECS: Record<MarketKey, ReadonlyArray<{ betId: number; value: string }>> = {
   home: [{ betId: 1, value: 'Home' }],
   draw: [{ betId: 1, value: 'Draw' }],
   away: [{ betId: 1, value: 'Away' }],
   over15: [{ betId: 5, value: 'Over 1.5' }],
   over25: [{ betId: 5, value: 'Over 2.5' }],
   over35: [{ betId: 5, value: 'Over 3.5' }],
+  under15: [{ betId: 5, value: 'Under 1.5' }],
+  under25: [{ betId: 5, value: 'Under 2.5' }],
+  under35: [{ betId: 5, value: 'Under 3.5' }],
   btts: [{ betId: 8, value: 'Yes' }],
+  bttsNo: [{ betId: 8, value: 'No' }],
   htOver05: [{ betId: 6, value: 'Over 0.5' }],
   htOver15: [{ betId: 6, value: 'Over 1.5' }],
   // Ev sahibi gol bulur: "Total - Home Over 0.5"; yoksa "Clean Sheet - Away: No" (deplasman gol yememedi ⇔ ev gol attı).
@@ -67,7 +74,7 @@ function median(nums: number[]): number {
 }
 
 /** Pazarın oranı; hiçbir bookmaker sunmuyorsa null. İlk spec (asıl pazar) bulunursa yedek spec'e bakılmaz. */
-export function marketOdd(entry: AfOddsEntry | null | undefined, key: TopPickKey): MarketOdd | null {
+export function marketOdd(entry: AfOddsEntry | null | undefined, key: MarketKey): MarketOdd | null {
   if (!entry) return null;
   const ordered = [...entry.bookmakers].sort((a, b) => {
     const ia = BOOKMAKER_PREFERENCE.indexOf(a.id);
@@ -83,6 +90,41 @@ export function marketOdd(entry: AfOddsEntry | null | undefined, key: TopPickKey
     return { odd: found[0].odd, bookmaker: found[0].bk.name, median: median(found.map((f) => f.odd)), bookmakers: found.length };
   }
   return null;
+}
+
+export type ComboMarketOdds = {
+  /** Marjı temizlenmiş piyasa olasılığı (yüzde, bir ondalık): iki yönü de sunan bookmaker'ların medyanı. */
+  marketPct: number;
+  /** Tercih sırasındaki ilk bookmaker'ın oranı (uluslararası referans; Türk sitesi oranı DEĞİL). */
+  odd: number;
+  bookmakers: number;
+};
+
+/**
+ * Kombine pazarlarının (comboMarkets.ts) piyasa olasılığı: her bookmaker'da pazarın iki yönü (üst/alt, var/yok) varsa marj
+ * temizlenir, bookmaker'lar arası medyan alınır. İki yönü olmayan pazar atlanır.
+ */
+export function comboMarketOdds(entry: AfOddsEntry | null | undefined): Partial<Record<ComboMarketKey, ComboMarketOdds>> {
+  const out: Partial<Record<ComboMarketKey, ComboMarketOdds>> = {};
+  if (!entry) return out;
+  const ordered = [...entry.bookmakers].sort((a, b) => {
+    const ia = BOOKMAKER_PREFERENCE.indexOf(a.id);
+    const ib = BOOKMAKER_PREFERENCE.indexOf(b.id);
+    return (ia < 0 ? 999 : ia) - (ib < 0 ? 999 : ib);
+  });
+  for (const key of COMBO_MARKETS) {
+    const spec = MARKET_SPECS[key][0];
+    const opp = MARKET_SPECS[OPPOSITE[key]][0];
+    const found = ordered.flatMap((bk) => {
+      const odd = oddOf(bk, spec);
+      const other = oddOf(bk, opp);
+      const pct = odd != null && other != null ? devigPair(odd, other) : null;
+      return pct == null || odd == null ? [] : [{ odd, pct }];
+    });
+    if (found.length === 0) continue;
+    out[key] = { marketPct: Math.round(median(found.map((f) => f.pct)) * 10) / 10, odd: found[0].odd, bookmakers: found.length };
+  }
+  return out;
 }
 
 export type TotalsRow = { line: number; over: number; under: number };

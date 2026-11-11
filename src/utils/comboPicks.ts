@@ -4,13 +4,15 @@
  * kaynaktan (`pickTopPredictions`). Aynı maçın pazarları birbirine bağlı olduğu için bir maçtan ikinci seçim yapılmaz.
  */
 import { pickTopPredictions, type TopPickKey } from '@/utils/analysisTopPicks';
+import { comboMarketPcts, PCT_CAP, type ComboMarketKey } from '@/utils/comboMarkets';
 
 export type ComboCandidate = {
   matchId: string;
   label: string;
   competition?: string | null;
   kickoffIso?: string | null;
-  key: TopPickKey;
+  /** Kombine pazarı (yalnız toplam gol / iki takım da gol bulur — comboMarkets.ts). */
+  key: ComboMarketKey;
   /** Modelin olasılığı, yüzde (1–100). */
   pct: number;
   /** Yaklaşık piyasa oranı (uluslararası bookmaker); yoksa / eşleşmediyse null. */
@@ -22,6 +24,15 @@ type ProbSource = Parameters<typeof pickTopPredictions>[0];
 /** Maçın en güçlü tek pazarı; olasılık verisi yoksa null. */
 export function bestPickOfMatch(analysis: ProbSource): { key: TopPickKey; pct: number } | null {
   return pickTopPredictions(analysis, 1)[0] ?? null;
+}
+
+/**
+ * Kombine pazarları arasında modelin en olası (ama %PCT_CAP'i aşmayan) seçimi — "Kendin ayarla" akışının maç başına pazarı.
+ * %80 üstü adil oranı 1,25'in altına düşürür (pratikte oynanmaz). Uygun pazar yoksa null.
+ */
+export function bestComboPickOfMatch(analysis: ProbSource): { key: ComboMarketKey; pct: number } | null {
+  const ok = comboMarketPcts(analysis as never).filter((m) => m.pct <= PCT_CAP && m.pct >= 50);
+  return ok.sort((a, b) => b.pct - a.pct)[0] ?? null;
 }
 
 /** Kombine tutma olasılığı (0–1) = olasılıkların çarpımı. Boş liste → 0. */

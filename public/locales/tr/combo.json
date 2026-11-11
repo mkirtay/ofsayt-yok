@@ -22,7 +22,11 @@
     "htOver15": "İlk yarıda 2+ gol",
     "homeToScore": "Ev sahibi gol bulur",
     "awayToScore": "Deplasman gol bulur",
-    "bttsFirstHalf": "İlk yarı iki takım da gol bulur"
+    "bttsFirstHalf": "İlk yarı iki takım da gol bulur",
+    "under15": "En çok 1 gol",
+    "under25": "En çok 2 gol",
+    "under35": "En çok 3 gol",
+    "bttsNo": "En az bir takım gol bulamaz"
   },
   "loading": "Yükleniyor…",
   "error": "Yüklenemedi, biraz sonra tekrar deneyin.",
@@ -127,16 +131,19 @@
     "safe": "Temkinli",
     "balanced": "Dengeli",
     "bold": "Riskli",
-    "probability": "Model olasılığı",
-    "odds": "Yaklaşık oran",
+    "probability": "Olasılık",
+    "odds": "Adil oran",
     "pending": "Günün kombinesi saat {{at}}'de hazırlanır.",
     "insufficient": "Bu gün için yeterli veri yok.",
     "testData": "Test verisi · milli maç, sınırlı veri",
-    "relaxed": "test: eşik gevşetildi",
-    "targetMissed": "Hedef oran (≈{{target}}) eldeki maçlarla yakalanamadı; en yüksek oranlı seçim gösteriliyor.",
     "label": "Öneri türü",
     "count": "{{n}} maç",
     "noGuarantee": "Sonuç garantisi yok.",
-    "details": "Ayrıntı"
+    "details": "Ayrıntı",
+    "fairHint": "Adil oran = 1 / olasılık. Kendi sitendeki oran bundan yüksekse seçim modele göre değerli, düşükse değil.",
+    "legLine": "olasılık %{{pct}} (model %{{model}}, oranlardan {{market}}) · adil {{fair}} · referans {{ref}}",
+    "refTotal": "Uluslararası referans (Türk sitesi değil): {{total}}",
+    "minLegsNote": "Bazı maçlar sitede tek başına ya da az maçla birlikte seçilemeyebilir.",
+    "method": "Olasılık, AI modeli ile uluslararası oranlardan (kâr payı temizlenerek) çıkarılan olasılığın harmanıdır; geçmiş veride model tek başına güçlü değil, oranlardan gelen olasılık ağır basar."
   }
 }

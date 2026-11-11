@@ -10,14 +10,14 @@ import { resolveOdds, loadAfOdds, type OddsResult } from '@/server/combo/afOdds'
 import { loadNationalDay } from '@/server/apiFootball/nationalDay';
 import { nationalMatchesEnabled } from '@/config/nationalMatches';
 import { toAfId } from '@/services/apiFootball/ids';
-import { marketOdd } from '@/services/apiFootball/oddsMarkets';
+import { marketOdd, type MarketKey } from '@/services/apiFootball/oddsMarkets';
 import { matchKickoffMs } from '@/utils/matchActivity';
 import { shiftIsoDate, todayIsoIstanbul } from '@/utils/dateStrip';
 import type { TopPickKey } from '@/utils/analysisTopPicks';
 
 export type SnapshotRow = {
   matchId: string;
-  pickKey: TopPickKey;
+  pickKey: MarketKey;
   afFixtureId: number;
   day: string;
   kickoffAt: Date;
@@ -93,7 +93,8 @@ export async function runComboOddsSnapshot(deps: SnapshotRunDeps = {}): Promise<
   const days = [today, shiftIsoDate(today, 1)];
   const rows: SnapshotRow[] = [];
 
-  // 1) AI analizi olan yaklaşan maçlar → önerilen en güçlü pazarın oranı.
+  // 1) AI analizi olan yaklaşan maçlar → sekiz kombine pazarının hepsi (model olasılığı + referans oran; harman ağırlığı bu
+  //    satırlardan ayarlanacak). `median` sütunu burada marjı temizlenmiş piyasa olasılığını DEĞİL, referans oranı taşır.
   const lists = await Promise.all(days.map((d) => (deps.candidates ?? loadComboCandidates)(d, { now })));
   const candidates = lists.flat();
   const results = candidates.length
@@ -107,7 +108,11 @@ export async function runComboOddsSnapshot(deps: SnapshotRunDeps = {}): Promise<
     const r = byId.get(c.matchId);
     if (!r || r.status !== 'ok' || !c.kickoffIso) continue;
     withOdds += 1;
-    rows.push({ matchId: c.matchId, pickKey: c.key, afFixtureId: r.afFixtureId, day: istanbulDay(Date.parse(c.kickoffIso)), kickoffAt: new Date(c.kickoffIso), pct: c.pct, bookmaker: r.market.bookmaker, odd: r.market.odd, median: r.market.median });
+    for (const m of c.markets) {
+      const mk = r.markets[m.key];
+      if (!mk) continue;
+      rows.push({ matchId: c.matchId, pickKey: m.key, afFixtureId: r.afFixtureId, day: istanbulDay(Date.parse(c.kickoffIso)), kickoffAt: new Date(c.kickoffIso), pct: m.pct, bookmaker: r.market.bookmaker, odd: mk.odd, median: mk.odd });
+    }
   }
 
   // 2) Milli maçlar (bayrak açıksa): 1X2 + 2.5 üst + KG var, olasılıksız.

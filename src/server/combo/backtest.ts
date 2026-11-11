@@ -6,8 +6,10 @@
 import { prisma } from '@/lib/prisma';
 import { parseScore, topPickHit, type TopPickKey } from '@/utils/analysisTopPicks';
 import { isMissingTable } from '@/server/combo/oddsSnapshot';
+import type { MarketKey } from '@/services/apiFootball/oddsMarkets';
+import { COMBO_MARKETS, comboMarketHit, type ComboMarketKey } from '@/utils/comboMarkets';
 
-export type BacktestPick = { matchId: string; day: string; pickKey: TopPickKey; pct: number | null; odd: number; hit: boolean | null };
+export type BacktestPick = { matchId: string; day: string; pickKey: MarketKey; pct: number | null; odd: number; hit: boolean | null };
 
 export type BacktestSummary = {
   singles: { picks: number; settled: number; hits: number; hitRate: number | null; avgOdd: number | null; profit: number; roi: number | null; modelExpectedRoi: number | null };
@@ -35,7 +37,12 @@ export function summarizeBacktest(picks: readonly BacktestPick[], opts: { comboS
   let oddsSum = 0;
   let expSum = 0;
   for (const list of byDay.values()) {
-    const top = [...list].sort((a, b) => (b.pct as number) - (a.pct as number) || a.matchId.localeCompare(b.matchId)).slice(0, size);
+    // Maç başına tek bacak (snapshot maç başına birden çok pazar tutar; aynı maçın pazarları birbirine bağlı).
+    const seen = new Set<string>();
+    const top = [...list]
+      .sort((a, b) => (b.pct as number) - (a.pct as number) || a.matchId.localeCompare(b.matchId))
+      .filter((p) => (seen.has(p.matchId) ? false : (seen.add(p.matchId), true)))
+      .slice(0, size);
     if (top.length < size) continue; // eksik gün: istenen büyüklükte kombine kurulamaz
     const odds = top.reduce((o, p) => o * p.odd, 1);
     const prob = top.reduce((o, p) => o * ((p.pct as number) / 100), 1);
@@ -101,7 +108,12 @@ export async function loadBacktestPicks(which: 'first' | 'last' = 'last', deps: 
     const rec = byMatch.get(r.matchId);
     const pick = { key: r.pickKey as TopPickKey, pct: r.pct ?? 50 };
     // Olasılıksız (milli) satırda yalnız skordan çıkarılabilen pazarlar (home/draw/away/over25/btts) değerlendirilir.
-    const hit = rec ? topPickHit(pick, parseScore(rec.actualScore), (rec.extendedHits ?? null) as Record<string, boolean | null> | null) : null;
-    return { matchId: r.matchId, day: r.day, pickKey: pick.key, pct: r.pct, odd: which === 'first' ? r.firstOdd : r.lastOdd, hit };
+    const combo = (COMBO_MARKETS as readonly string[]).includes(r.pickKey);
+    const hit = !rec
+      ? null
+      : combo
+        ? comboMarketHit(r.pickKey as ComboMarketKey, parseScore(rec.actualScore))
+        : topPickHit(pick, parseScore(rec.actualScore), (rec.extendedHits ?? null) as Record<string, boolean | null> | null);
+    return { matchId: r.matchId, day: r.day, pickKey: r.pickKey as MarketKey, pct: r.pct, odd: which === 'first' ? r.firstOdd : r.lastOdd, hit };
   });
 }

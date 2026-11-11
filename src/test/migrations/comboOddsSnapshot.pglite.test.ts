@@ -85,23 +85,28 @@ describe('tablo yok → sessizce atla', () => {
 
 describe('runComboOddsSnapshot', () => {
   const now = Date.parse('2026-11-12T10:00:00Z');
-  const cand = { matchId: '5', label: 'A – B', homeName: 'A', awayName: 'B', competition: 'L', kickoffIso: '2026-11-12T18:00:00.000Z', key: 'over25' as const, pct: 72 };
+  const cand = { matchId: '5', label: 'A – B', homeName: 'A', awayName: 'B', competition: 'L', kickoffIso: '2026-11-12T18:00:00.000Z', key: 'over25' as const, pct: 72,
+    markets: [{ key: 'over25' as const, pct: 72 }, { key: 'under25' as const, pct: 28 }, { key: 'btts' as const, pct: 55 }, { key: 'bttsNo' as const, pct: 45 }] };
 
-  it('adayların oranını tek seferde alır; yalnız eşleşip oranı olanları yazar', async () => {
+  it('adayların oranını tek seferde alır; yalnız eşleşip oranı olanları, oranı olan her kombine pazarı için yazar', async () => {
     const written: unknown[][] = [];
     const out = await runComboOddsSnapshot({
       now,
       exec: async (_t, v) => void written.push(v),
       candidates: vi.fn(async (d: string) => (d === '2026-11-12' ? [cand, { ...cand, matchId: '6' }] : [])) as never,
       odds: vi.fn(async () => [
-        { matchId: '5', status: 'ok', afFixtureId: 77, market: { odd: 1.9, bookmaker: 'Bet365', median: 1.88, bookmakers: 5 }, updatedAt: null, matchQuality: 'both-teams' },
+        {
+          matchId: '5', status: 'ok', afFixtureId: 77, market: { odd: 1.9, bookmaker: 'Bet365', median: 1.88, bookmakers: 5 }, updatedAt: null, matchQuality: 'both-teams',
+          markets: { over25: { marketPct: 50.5, odd: 1.9, bookmakers: 5 }, under25: { marketPct: 49.5, odd: 1.95, bookmakers: 5 } },
+        },
         { matchId: '6', status: 'no-odds', afFixtureId: 78 },
       ]) as never,
       nationalEnabled: false,
     });
-    expect(out).toMatchObject({ candidates: 2, withOdds: 1, national: 0, written: 1 });
-    expect(written).toHaveLength(1);
-    expect(written[0]!.slice(1, 4)).toEqual(['5', 'over25', 77]);
+    // KG pazarlarının oranı yok → yazılmaz.
+    expect(out).toMatchObject({ candidates: 2, withOdds: 1, national: 0, written: 2 });
+    expect(written.map((w) => w.slice(1, 4))).toEqual([['5', 'over25', 77], ['5', 'under25', 77]]);
+    expect(written[1]![6]).toBe(28); // pct = o pazarın model olasılığı
   });
 
   it('milli bayrağı kapalıyken milli maça hiç gidilmez', async () => {

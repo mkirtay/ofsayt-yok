@@ -4,7 +4,8 @@
  * "tutmadı"; bilinmeyen maç varsa ve ıska yoksa "bekliyor".
  */
 import { isMissingTable, type Exec } from '@/server/combo/oddsSnapshot';
-import { parseScore, topPickHit, type TopPickKey } from '@/utils/analysisTopPicks';
+import { parseScore } from '@/utils/analysisTopPicks';
+import { comboMarketHit, type ComboMarketKey } from '@/utils/comboMarkets';
 import type { DailyCoupon, DailyPayload } from '@/server/combo/dailyCoupons';
 
 export const COUPON_UPSERT_SQL = `
@@ -34,7 +35,7 @@ export async function saveCouponLog(exec: Exec, payload: DailyPayload): Promise<
   let written = 0;
   for (const c of payload.coupons) {
     try {
-      await exec(COUPON_UPSERT_SQL, [newId(), payload.date, c.kind, JSON.stringify(c.legs), c.probability, c.odds, payload.testData, firstKickoff(c)]);
+      await exec(COUPON_UPSERT_SQL, [newId(), payload.date, c.kind, JSON.stringify(c.legs), c.probability, c.refOdds, payload.testData, firstKickoff(c)]);
       written += 1;
     } catch (error) {
       if (isMissingTable(error)) return { written, skipped: 'no-table' };
@@ -48,11 +49,11 @@ export type LegOutcome = { score: string | null; extendedHits?: Record<string, b
 export type CouponResult = { status: 'pending' | 'hit' | 'miss'; legHits: Array<boolean | null> };
 
 /** Kupon sonucu: `outcomes` maç kimliği → bitmiş maçın skoru / ilk yarı isabetleri (PredictionRecord'tan). Salt okunur, saf. */
-export function evaluateCoupon(legs: ReadonlyArray<{ matchId: string; key: TopPickKey; pct: number }>, outcomes: ReadonlyMap<string, LegOutcome>): CouponResult {
+export function evaluateCoupon(legs: ReadonlyArray<{ matchId: string; key: ComboMarketKey }>, outcomes: ReadonlyMap<string, LegOutcome>): CouponResult {
   const legHits = legs.map((l) => {
     const o = outcomes.get(l.matchId);
     if (!o) return null;
-    return topPickHit({ key: l.key, pct: l.pct }, parseScore(o.score), o.extendedHits ?? null);
+    return comboMarketHit(l.key, parseScore(o.score));
   });
   if (legHits.some((h) => h === false)) return { status: 'miss', legHits };
   if (legHits.length > 0 && legHits.every((h) => h === true)) return { status: 'hit', legHits };

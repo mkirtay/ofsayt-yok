@@ -36,7 +36,9 @@ describe('loadComboCandidates', () => {
   it('her maçtan tek en güçlü pazar; eski prompt (v<5), analizsiz ve analizi olmayan milli maç elenir', async () => {
     const rows = await loadComboCandidates('2026-11-12', { now, testAnalyses: noTests });
     expect(rows).toHaveLength(1);
-    expect(rows[0]).toMatchObject({ matchId: '1', key: 'over15', pct: 84, homeName: 'A', awayName: 'B', source: 'db', national: false });
+    // 2+ gol %84 → %80 sınırının üstü (adil oran < 1,25): kombine pazarları içinde sınırın altındaki en olası seçilir.
+    expect(rows[0]).toMatchObject({ matchId: '1', key: 'over25', pct: 60, homeName: 'A', awayName: 'B', source: 'db', national: false });
+    expect(rows[0].markets.map((m) => m.key)).toEqual(['over15', 'under15', 'over25', 'under25', 'btts', 'bttsNo']);
     expect(rows[0].kickoffIso).toBe('2026-11-12T18:00:00.000Z');
   });
 
@@ -58,7 +60,7 @@ describe('loadComboCandidates', () => {
     const rows = await loadComboCandidates('2026-11-12', { now, testAnalyses: tests });
     const nat = rows.find((r) => r.matchId === '2001528958')!;
     expect(nat).toMatchObject({ source: 'test', national: true, key: 'over15', pct: 78 });
-    expect(rows.find((r) => r.matchId === '1')).toMatchObject({ source: 'db', pct: 84 });
+    expect(rows.find((r) => r.matchId === '1')).toMatchObject({ source: 'db', pct: 60 });
   });
 
   it('başlamış maç varsayılan dışarıda, includePast ile gelir', async () => {

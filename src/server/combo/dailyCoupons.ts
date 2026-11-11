@@ -1,26 +1,28 @@
 /**
- * Günlük otomatik kuponlar: havuz (config/comboPool.ts) ∩ analizi olanlar → üç hazır öneri (Garantici ~1,7 / Dengeli / Riskli).
- * Kullanıcıdan girdi istenmez. Yeterli analizli maç ya da yeterince güçlü pick YOKSA kupon ZORLANMAZ ("yeterli veri yok").
- * Sonuç günlük Redis önbelleğinde (DB gerekmez); cron üretir, ana sayfa kartı okur. Geliştirmede test analizleri varsa eşikler
- * gevşetilir ve bu `thresholdRelaxed` ile açıkça işaretlenir.
+ * Günlük otomatik kuponlar: havuz (config/comboPool.ts) ∩ analizi olanlar → üç hazır öneri (Temkinli / Dengeli / Riskli).
+ * Pazarlar YALNIZ toplam gol 1,5 / 2,5 / 3,5 (alt-üst) ve iki takım da gol bulur (var / yok) — comboMarkets.ts.
+ * Olasılık = model ile marjı temizlenmiş piyasa olasılığının harmanı (MODEL_WEIGHT); kartta piyasa oranı yerine ADİL oran (1 / olasılık).
+ * Kupon türü bacak sayısı + bacak olasılığı aralığıyla tanımlı; maç başına tek bacak; aralığa uyan maç yetmezse o kupon ÜRETİLMEZ
+ * (zorlanmaz). Piyasa verisi olmayan maç kupona girmez (kalibrasyonda model tek başına taban oranından iyi değil) — yalnız
+ * geliştirmedeki test analizleri istisna. Sonuç günlük Redis önbelleğinde; cron üretir, ana sayfa kartı okur.
  */
 import { cacheKeyPrefix } from '@/lib/cacheNamespace';
 import { fitsInRedis, withRedis } from '@/lib/redis';
 import { loadComboCandidates, type ComboCandidateRow } from '@/server/combo/candidates';
-import { resolveOdds, type OddsResult } from '@/server/combo/afOdds';
-import { straightOutcome, riskToTargetOdds, suggestForRisk } from '@/utils/comboPlan';
-import type { TopPickKey } from '@/utils/analysisTopPicks';
+import { resolveOdds, type ComboMarketsOdds, type OddsResult } from '@/server/combo/afOdds';
+import { MODEL_WEIGHT, blendPct, fairOdds, type ComboMarketKey } from '@/utils/comboMarkets';
 
 export type CouponKind = 'safe' | 'balanced' | 'bold';
 
-/** Üretimdeki kural: kind başına risk %, en çok maç, pazar başına olasılık tabanı (altına inilmez). */
-export const COUPON_KINDS: ReadonlyArray<{ kind: CouponKind; risk: number; maxMatches: number; floor: number }> = [
-  { kind: 'safe', risk: 0, maxMatches: 3, floor: 70 },
-  { kind: 'balanced', risk: 50, maxMatches: 4, floor: 62 },
-  { kind: 'bold', risk: 100, maxMatches: 6, floor: 55 },
+/**
+ * Kupon türleri: bacak sayısı + bacak olasılığı aralığı (harmanlanmış, yüzde). Üst sınır adil oranın tabanıdır
+ * (%80 → 1,25; %72 → 1,39; %62 → 1,61) — çok düşük oranlı bacak girmez. Bacak sayısı az: her bacakta oyun sitesinin marjı ödenir.
+ */
+export const COUPON_KINDS: ReadonlyArray<{ kind: CouponKind; legs: number; minPct: number; maxPct: number }> = [
+  { kind: 'safe', legs: 2, minPct: 70, maxPct: 80 },
+  { kind: 'balanced', legs: 3, minPct: 60, maxPct: 72 },
+  { kind: 'bold', legs: 4, minPct: 50, maxPct: 62 },
 ];
-/** Test (geliştirme + test analizi) için gevşetilmiş taban. */
-export const TEST_FLOOR = 40;
 /** Bu kadar analizli havuz maçı yoksa hiç kupon üretilmez. */
 export const MIN_ANALYSED_MATCHES = 3;
 
@@ -31,9 +33,16 @@ export type DailyLeg = {
   homeLogo?: string | null;
   awayLogo?: string | null;
   kickoffIso: string | null;
-  key: TopPickKey;
+  key: ComboMarketKey;
+  /** Harmanlanmış olasılık (yüzde) — kuponun kullandığı. */
   pct: number;
-  odd: number | null;
+  modelPct: number;
+  /** Marjı temizlenmiş piyasa olasılığı; yoksa null (yalnız test verisi). */
+  marketPct: number | null;
+  /** Adil oran = 1 / pct. */
+  fairOdd: number;
+  /** Uluslararası referans oranı (Türk sitesi oranı DEĞİL); yoksa null. */
+  refOdd: number | null;
   national: boolean;
   source: 'db' | 'test';
 };
@@ -41,17 +50,12 @@ export type DailyLeg = {
 export type DailyCoupon = {
   kind: CouponKind;
   legs: DailyLeg[];
-  /** Kombine olasılık (0–1, model). */
+  /** Kombine olasılık (0–1; maçlar bağımsız varsayılır). */
   probability: number;
-  /** Kombine yaklaşık oran; herhangi bir maçın oranı yoksa null. */
-  odds: number | null;
-  breakEven: number | null;
-  /** Hedef orana ulaşmak için eşik taban değere kadar çekildi mi. */
-  relaxed: boolean;
-  /** Hedef orana (Garantici ≈1,7 / Dengeli ≈4 / Riskli ≈10) ulaşıldı mı; false → eldeki en yüksek oranlı seçim. */
-  targetReached: boolean;
-  /** Hedef kombine oran (oranlar biliniyorsa). */
-  targetOdds: number | null;
+  /** Kombine adil oran = 1 / probability. */
+  fairOdds: number;
+  /** Referans oranların çarpımı; herhangi biri yoksa null. */
+  refOdds: number | null;
 };
 
 export type DailyPayload = {
@@ -64,8 +68,6 @@ export type DailyPayload = {
   coupons: DailyCoupon[];
   /** Kuponlarda test verisi (kayıtlı olmayan analiz) var. */
   testData: boolean;
-  /** Eşikler üretimdekinden gevşetildi (yalnız test). */
-  thresholdRelaxed: boolean;
 };
 
 export type BuildDeps = {
@@ -74,19 +76,44 @@ export type BuildDeps = {
   now?: number;
 };
 
-const toLeg = (c: ComboCandidateRow, odd: number | null): DailyLeg => ({
-  matchId: c.matchId,
-  homeName: c.homeName,
-  awayName: c.awayName,
-  homeLogo: c.homeLogo ?? null,
-  awayLogo: c.awayLogo ?? null,
-  kickoffIso: c.kickoffIso ?? null,
-  key: c.key,
-  pct: c.pct,
-  odd,
-  national: c.national,
-  source: c.source,
-});
+type Option = Omit<DailyLeg, 'matchId' | 'homeName' | 'awayName' | 'homeLogo' | 'awayLogo' | 'kickoffIso' | 'national' | 'source'>;
+
+/** Maçın kupona aday pazarları (harmanlanmış). Piyasa verisi yoksa yalnız test verisinde model tek başına. */
+export function matchOptions(c: ComboCandidateRow, markets: ComboMarketsOdds | undefined): Option[] {
+  return c.markets.flatMap((m) => {
+    const mk = markets?.[m.key];
+    if (!mk && c.source !== 'test') return [];
+    const pct = blendPct(m.pct, mk?.marketPct ?? null, MODEL_WEIGHT[m.key]);
+    return [{ key: m.key, pct, modelPct: m.pct, marketPct: mk?.marketPct ?? null, fairOdd: fairOdds(pct), refOdd: mk?.odd ?? null }];
+  });
+}
+
+/** Bir kupon türü: her maçtan aralığa uyan en olası pazar; en olası `legs` maç. Yetmezse null (zorlanmaz). */
+export function pickCoupon(
+  pool: ReadonlyArray<{ row: ComboCandidateRow; options: Option[] }>,
+  spec: (typeof COUPON_KINDS)[number],
+): DailyCoupon | null {
+  const best = pool.flatMap(({ row, options }) => {
+    const inBand = options.filter((o) => o.pct >= spec.minPct && o.pct <= spec.maxPct).sort((a, b) => b.pct - a.pct)[0];
+    return inBand ? [{ row, o: inBand }] : [];
+  });
+  if (best.length < spec.legs) return null;
+  const chosen = best.sort((a, b) => b.o.pct - a.o.pct || a.row.matchId.localeCompare(b.row.matchId)).slice(0, spec.legs);
+  const legs: DailyLeg[] = chosen.map(({ row, o }) => ({
+    matchId: row.matchId,
+    homeName: row.homeName,
+    awayName: row.awayName,
+    homeLogo: row.homeLogo ?? null,
+    awayLogo: row.awayLogo ?? null,
+    kickoffIso: row.kickoffIso ?? null,
+    national: row.national,
+    source: row.source,
+    ...o,
+  }));
+  const probability = legs.reduce((acc, l) => (acc * l.pct) / 100, 1);
+  const refOdds = legs.every((l) => l.refOdd != null) ? Math.round(legs.reduce((acc, l) => acc * (l.refOdd as number), 1) * 100) / 100 : null;
+  return { kind: spec.kind, legs, probability, fairOdds: Math.round((1 / probability) * 100) / 100, refOdds };
+}
 
 export async function buildDailyCoupons(date: string, deps: BuildDeps = {}): Promise<DailyPayload> {
   const now = deps.now ?? Date.now();
@@ -94,40 +121,18 @@ export async function buildDailyCoupons(date: string, deps: BuildDeps = {}): Pro
   const candidates = await (deps.candidates ?? loadComboCandidates)(date, { now });
   const testData = candidates.some((c) => c.source === 'test');
   if (candidates.length < MIN_ANALYSED_MATCHES) {
-    return { ...base, status: 'insufficient', reason: 'few-analyses', analysed: candidates.length, coupons: [], testData: false, thresholdRelaxed: false };
+    return { ...base, status: 'insufficient', reason: 'few-analyses', analysed: candidates.length, coupons: [], testData: false };
   }
 
   const results = await (deps.odds ?? resolveOdds)(
     candidates.map((c) => ({ matchId: c.matchId, key: c.key, kickoffMs: c.kickoffIso ? Date.parse(c.kickoffIso) : null, home: c.homeName, away: c.awayName })),
   );
-  const oddOf = new Map<string, number>(results.flatMap((r: OddsResult) => (r.status === 'ok' ? [[r.matchId, r.market.odd] as const] : [])));
-  const pool = candidates.map((c) => ({ ...c, odd: oddOf.get(c.matchId) ?? null }));
-  const anyOdds = pool.some((p) => p.odd != null);
+  const marketsOf = new Map<string, ComboMarketsOdds>(results.flatMap((r: OddsResult) => (r.markets ? [[r.matchId, r.markets] as const] : [])));
+  const pool = candidates.map((row) => ({ row, options: matchOptions(row, marketsOf.get(row.matchId)) }));
 
-  const coupons: DailyCoupon[] = [];
-  let thresholdRelaxed = false;
-  for (const k of COUPON_KINDS) {
-    const floor = testData ? Math.min(k.floor, TEST_FLOOR) : k.floor;
-    const target = anyOdds ? riskToTargetOdds(k.risk) : null;
-    let res = suggestForRisk(pool, { risk: k.risk, maxMatches: k.maxMatches, targetOdds: target, floor });
-    let targetReached = target != null && res.picks.length > 0;
-    let picks = res.picks as typeof pool;
-    if (picks.length === 0 && target != null) {
-      // Hedef orana ulaşılamıyor: tabanın altına inmeden, eldeki EN YÜKSEK oranlı pazarlar (kind başına en çok maxMatches) — oran / olasılık
-      // sırası kinds arasında tutarlı kalır (Riskli en çok maç → en düşük olasılık, en yüksek oran).
-      picks = pool.filter((p) => p.odd != null && p.pct >= floor).sort((a, b) => (b.odd as number) - (a.odd as number) || b.pct - a.pct).slice(0, k.maxMatches);
-      res = { ...res, relaxed: false };
-      targetReached = false;
-    }
-    if (picks.length === 0) continue;
-    if (picks.some((p) => p.pct < k.floor)) thresholdRelaxed = true;
-    const legs = picks.map((p) => toLeg(p, p.odd));
-    const straight = straightOutcome(picks, 1);
-    const probability = picks.reduce((acc, p) => (acc * p.pct) / 100, 1);
-    coupons.push({ kind: k.kind, legs, probability, odds: straight?.odds ?? null, breakEven: straight?.breakEven ?? null, relaxed: res.relaxed, targetReached, targetOdds: target });
-  }
-  if (coupons.length === 0) return { ...base, status: 'insufficient', reason: 'no-strong-picks', analysed: candidates.length, coupons: [], testData, thresholdRelaxed: false };
-  return { ...base, status: 'ok', analysed: candidates.length, coupons, testData, thresholdRelaxed };
+  const coupons = COUPON_KINDS.map((k) => pickCoupon(pool, k)).filter((c): c is DailyCoupon => c != null);
+  if (coupons.length === 0) return { ...base, status: 'insufficient', reason: 'no-strong-picks', analysed: candidates.length, coupons: [], testData };
+  return { ...base, status: 'ok', analysed: candidates.length, coupons, testData: coupons.some((c) => c.legs.some((l) => l.source === 'test')) };
 }
 
 // ── Redis önbelleği (günlük anahtar, 2 gün) ────────────────────────────────────────────────────────────────────────
