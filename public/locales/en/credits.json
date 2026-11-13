@@ -132,5 +132,19 @@
     "gamesFrikik": "Free Kick",
     "gamesFrikik1": "Play on at least 7 days of a month: +2",
     "gamesFrikik2": "Monthly top 3: +5 / +4 / +3"
+  },
+  "nudge": {
+    "title": "Earn free credits",
+    "verify": "Credit rewards go to verified accounts. Click the verification link in your inbox.",
+    "frikik": "You played {{days}}/{{target}} days this month. Reach {{target}} for +2 credits; monthly top 3 get +5 / +4 / +3.",
+    "frikikDone": "{{target}} days done this month: +2 credits when the month ends. Monthly top 3 get +5 / +4 / +3.",
+    "game": "You predicted {{picks}}/{{matches}} matches this week. Predict them all for +1 credit; weekly top 3 get +3 / +2 / +1.",
+    "gameDone": "You predicted every match this week: +1 credit when the week ends. Weekly top 3 get +3 / +2 / +1.",
+    "tasksReady": "You have task rewards to claim: +{{count}} credits.",
+    "tasksOpen": "Finish the starter tasks: +1 credit each ({{count}} left).",
+    "games": "Play Free Kick on 7 days a month for +2 credits ({{days}}/{{target}} this month). {{game}}: predict every match of the week for +1.",
+    "cta": "See rewards",
+    "ctaClaim": "Claim reward",
+    "close": "Close"
   }
 }

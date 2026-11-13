@@ -54,7 +54,7 @@
     "p3": "Doksan (üst köşe): +100",
     "r4": "Seviye modu (Günün frikiği): 3 can, her seviye 1 vuruş. Gol → sonraki seviye, kaçırma → 1 can. Mesafe ve açı her seviyede artar (20 m merkezden 32 m geniş açıya; ekranın üstünde \"Mesafe\"), baraj, kaleci, rüzgâr (yönü ve gücü ekranın üstünde), daralan kale ve hareketli baraj kademeli gelir; herkes o günün aynı dizisini oynar.",
     "p4": "Seviye modunda puanlar seviye çarpanıyla çarpılır: 1. seviye ×1, 2. ×1,5, 3. ×2 … Sıralama önce ulaşılan seviye, sonra puan.",
-    "p5": "Skor tablosu: oynamak için giriş gerekmez; skorunu tabloya yazmak için Google ile giriş yap ve bir takma ad seç. Günün en iyi koşun sayılır: günde 5 deneme tabloya gönderilir, tablo yalnız daha yüksek seviye ya da aynı seviyede daha yüksek puan gelirse güncellenir (5 denemeden sonra oynamak serbest, tabloya yazılmaz). Aylık tablo, ay içindeki tek en iyi günlük sonucun; ödül yok, yalnız sıralama."
+    "p5": "Skor tablosu: oynamak için giriş gerekmez; skorunu tabloya yazmak için Google ile giriş yap ve bir takma ad seç. Günün en iyi koşun sayılır: günde 5 deneme tabloya gönderilir, tablo yalnız daha yüksek seviye ya da aynı seviyede daha yüksek puan gelirse güncellenir (5 denemeden sonra oynamak serbest, tabloya yazılmaz). Aylık tablo, ay içindeki tek en iyi günlük sonucun; sezon tablosu her günün en iyi sonucunun toplamı. Ödül yalnız site kredisi (nakde çevrilmez, e-postası doğrulanmış hesaplara): ayın en az 7 gününde oyna +2, ayın ilk 3'ü +5 / +4 / +3."
   },
   "tip": {
     "title": "Nasıl oynanır?",

@@ -11,6 +11,7 @@ import { isUniqueViolation } from '@/lib/credits';
 import { activeInMonthSql, monthlyTopSql } from '@/lib/frikik/leaderboard';
 import { monthKey, todayKey } from '@/lib/frikik/daily';
 import { weekTopSql, type BoardRow } from '@/lib/game/sql';
+import { weekKeyOf } from '@/lib/game/week';
 import { captureError } from '@/lib/logger';
 import { prisma } from '@/lib/prisma';
 import {
@@ -76,10 +77,30 @@ async function grantAll(plan: PlannedReward[], type: RewardType): Promise<number
 
 // ── Başlangıç görevleri ──────────────────────────────────────────────────────────────────────────────────────────────
 
+export type RewardProgress = {
+  /** Bu ay Frikik tablosuna yazılan farklı gün sayısı (katılım ödülü hedefi `frikikTarget`). */
+  frikikDays: number;
+  frikikTarget: number;
+  /** Bu haftanın yayındaki tahmin listesi (yoksa null): tahmin edilen / toplam maç. */
+  week: { picks: number; matches: number } | null;
+};
+
 export type OnboardingStatus = {
   verified: boolean;
   tasks: { id: OnboardingTask; done: boolean; claimed: boolean; reward: number }[];
+  progress: RewardProgress;
 };
+
+/** Ödül kartı için ilerleme (iki-üç ucuz sayım; kişiye özel). */
+export async function loadRewardProgress(userId: string, now: Date = new Date()): Promise<RewardProgress> {
+  const month = monthKey(todayKey(now.getTime()));
+  const [frikikDays, week] = await Promise.all([
+    prisma.frikikDailyScore.count({ where: { userId, month } }),
+    prisma.gameWeek.findFirst({ where: { weekKey: weekKeyOf(now.getTime()), status: 'PUBLISHED' }, select: { id: true, _count: { select: { matches: true } } } }),
+  ]);
+  const picks = week ? await prisma.gamePrediction.count({ where: { userId, weekId: week.id } }) : 0;
+  return { frikikDays, frikikTarget: FRIKIK_MONTH_ACTIVE_DAYS, week: week && week._count.matches > 0 ? { picks, matches: week._count.matches } : null };
+}
 
 async function completedTasks(userId: string): Promise<Set<OnboardingTask>> {
   const [analysis, prediction, post, comment, frikik] = await Promise.all([
@@ -98,18 +119,20 @@ async function completedTasks(userId: string): Promise<Set<OnboardingTask>> {
 }
 
 export async function loadOnboardingTasks(userId: string): Promise<OnboardingStatus> {
-  const [user, done, claimedRows] = await Promise.all([
+  const [user, done, claimedRows, progress] = await Promise.all([
     prisma.user.findUnique({ where: { id: userId }, select: { emailVerified: true } }),
     completedTasks(userId),
     prisma.creditTransaction.findMany({
       where: { userId, idempotencyKey: { in: ONBOARDING_TASKS.map(onboardingKey) } },
       select: { idempotencyKey: true },
     }),
+    loadRewardProgress(userId),
   ]);
   const claimed = new Set(claimedRows.map((r) => r.idempotencyKey));
   return {
     verified: !!user?.emailVerified,
     tasks: ONBOARDING_TASKS.map((id) => ({ id, done: done.has(id), claimed: claimed.has(onboardingKey(id)), reward: ONBOARDING_REWARD })),
+    progress,
   };
 }
 

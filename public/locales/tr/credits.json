@@ -132,5 +132,19 @@
     "gamesFrikik": "Frikik",
     "gamesFrikik1": "Ayın en az 7 gününde oyna: +2",
     "gamesFrikik2": "Ayın ilk 3'ü: +5 / +4 / +3"
+  },
+  "nudge": {
+    "title": "Ücretsiz kredi kazan",
+    "verify": "Kredi ödülleri e-postası doğrulanmış hesaplara verilir. Gelen kutundaki doğrulama bağlantısına tıkla.",
+    "frikik": "Bu ay {{days}}/{{target}} gün oynadın. {{target}} güne ulaşınca +2 kredi; ayın ilk 3'ü +5 / +4 / +3.",
+    "frikikDone": "Bu ay {{target}} gün tamam: ay bitince +2 kredi hesabına geçer. Ayın ilk 3'üne girersen +5 / +4 / +3.",
+    "game": "Bu hafta {{picks}}/{{matches}} maçı tahmin ettin. Hepsini tahmin et +1 kredi; haftanın ilk 3'ü +3 / +2 / +1.",
+    "gameDone": "Haftanın bütün maçlarını tahmin ettin: hafta bitince +1 kredi. İlk 3'e girersen +3 / +2 / +1.",
+    "tasksReady": "Alınmayı bekleyen görev ödülün var: +{{count}} kredi.",
+    "tasksOpen": "Başlangıç görevlerini tamamla: her biri +1 kredi ({{count}} görev kaldı).",
+    "games": "Frikik'te ayın 7 gününde oyna +2 kredi (bu ay {{days}}/{{target}}). {{game}}: haftanın bütün maçlarını tahmin et +1.",
+    "cta": "Ödüllere bak",
+    "ctaClaim": "Ödülü al",
+    "close": "Kapat"
   }
 }

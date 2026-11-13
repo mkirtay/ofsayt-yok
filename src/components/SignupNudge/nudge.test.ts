@@ -22,7 +22,10 @@ describe('Üye ol kartı ↔ ilk ziyaret tanıtımı (bağlantı)', () => {
   it('tanıtım sürerken sayaç kurulmaz, kapanış olayı beklenir; açıkken alt yığın işaretlenir', () => {
     expect(src).toMatch(/if \(isIntroPending\(\)\) \{[\s\S]*?INTRO_DONE_EVENT[\s\S]*?return/);
     expect(src.indexOf('isIntroPending()')).toBeLessThan(src.indexOf('setTimeout(() => setOpen(true)'));
-    expect(src).toContain('root.setAttribute(NUDGE_OPEN_ATTR');
-    expect(src).toContain('BOTTOM_STACK_OFFSET_VAR');
+    // Alt yığın işareti ortak hook'ta (ödül kartı da kullanır).
+    expect(src).toContain('useNudgeStack(ref, visible)');
+    const hook = readFileSync(path.resolve(__dirname, 'useNudgeStack.ts'), 'utf8');
+    expect(hook).toContain('root.setAttribute(NUDGE_OPEN_ATTR');
+    expect(hook).toContain('BOTTOM_STACK_OFFSET_VAR');
   });
 });

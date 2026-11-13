@@ -54,7 +54,7 @@
     "p3": "Top corner: +100",
     "r4": "Level mode (free kick of the day): 3 lives, one shot per level. Goal → next level, miss → lose a life. Distance and angle grow every level (from 20 m central to 32 m wide; see \"Distance\" above the pitch); the wall, keeper, wind (direction and strength shown above the pitch), a narrower goal and a moving wall arrive step by step. Everyone plays the same sequence that day.",
     "p4": "In level mode points are multiplied by the level: level 1 ×1, level 2 ×1.5, level 3 ×2 … Ranking is by level reached first, then points.",
-    "p5": "Leaderboard: no sign-in needed to play; to post your score sign in with Google and pick a nickname. Your best run of the day counts: up to 5 runs a day are submitted, and the board only updates for a higher level, or a higher score at the same level (after 5 runs you can keep playing, but runs are not posted). The monthly board is your single best daily result of the month; no prizes, just the ranking."
+    "p5": "Leaderboard: no sign-in needed to play; to post your score sign in with Google and pick a nickname. Your best run of the day counts: up to 5 runs a day are submitted, and the board only updates for a higher level, or a higher score at the same level (after 5 runs you can keep playing, but runs are not posted). The monthly board is your single best daily result of the month; the season board adds up every day's best. The only reward is site credits (not cashable, verified-email accounts): play on at least 7 days of a month +2, monthly top 3 +5 / +4 / +3."
   },
   "tip": {
     "title": "How to play",

@@ -17,7 +17,9 @@ const TASK_HREF: Record<OnboardingTask, string> = {
   frikik: '/frikik',
 };
 
-export const REWARD_TASKS_QUERY_KEY = ['rewards', 'tasks'] as const;
+import { REWARD_TASKS_QUERY_KEY } from './queryKey';
+
+export { REWARD_TASKS_QUERY_KEY };
 
 async function fetchTasks(): Promise<OnboardingStatus> {
   const res = await fetch('/api/rewards/tasks', { credentials: 'include' });

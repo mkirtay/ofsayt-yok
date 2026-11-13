@@ -4,15 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useTranslation } from '@/lib/i18n';
 import { useBottomStackSlot } from '@/hooks/useBottomStackSlot';
-import {
-  BOTTOM_STACK_OFFSET_VAR,
-  isNudgeCoolingDown,
-  isNudgeHiddenPath,
-  NUDGE_DELAY_MS,
-  NUDGE_OPEN_ATTR,
-  NUDGE_STORAGE_KEY,
-  NUDGE_TOGGLE_EVENT,
-} from './nudge';
+import { isNudgeCoolingDown, isNudgeHiddenPath, NUDGE_DELAY_MS, NUDGE_STORAGE_KEY } from './nudge';
+import { useNudgeStack } from './useNudgeStack';
 import { INTRO_DONE_EVENT, isIntroPending } from '@/components/Onboarding/storage';
 import styles from './signupNudge.module.scss';
 
@@ -54,29 +47,7 @@ export default function SignupNudge() {
 
   // Açıkken alt yığına bildir: `<html data-signup-nudge>` + mobilde `--nudge-top-offset` (kartın tepesi + boşluk).
   const visible = open && eligible;
-  useEffect(() => {
-    const el = ref.current;
-    if (!visible || !el) return;
-    const root = document.documentElement;
-    const mobile = window.matchMedia('(max-width: 1023.98px)');
-    const sync = () => {
-      const offset = mobile.matches ? Math.ceil(window.innerHeight - el.getBoundingClientRect().top + 8) : 0;
-      root.style.setProperty(BOTTOM_STACK_OFFSET_VAR, `${Math.max(0, offset)}px`);
-    };
-    root.setAttribute(NUDGE_OPEN_ATTR, '');
-    sync();
-    const ro = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(sync);
-    ro?.observe(el);
-    window.addEventListener('resize', sync);
-    window.dispatchEvent(new Event(NUDGE_TOGGLE_EVENT));
-    return () => {
-      ro?.disconnect();
-      window.removeEventListener('resize', sync);
-      root.removeAttribute(NUDGE_OPEN_ATTR);
-      root.style.removeProperty(BOTTOM_STACK_OFFSET_VAR);
-      window.dispatchEvent(new Event(NUDGE_TOGGLE_EVENT));
-    };
-  }, [visible]);
+  useNudgeStack(ref, visible);
 
   if (!open || !eligible) return null;
 
