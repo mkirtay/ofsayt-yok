@@ -134,15 +134,48 @@
     "gamesFrikik2": "Monthly top 3: +5 / +4 / +3"
   },
   "nudge": {
-    "title": "Earn free credits",
-    "verify": "Credit rewards go to verified accounts. Click the verification link in your inbox.",
-    "frikik": "You played {{days}}/{{target}} days this month. Reach {{target}} for +2 credits; monthly top 3 get +5 / +4 / +3.",
-    "frikikDone": "{{target}} days done this month: +2 credits when the month ends. Monthly top 3 get +5 / +4 / +3.",
-    "game": "You predicted {{picks}}/{{matches}} matches this week. Predict them all for +1 credit; weekly top 3 get +3 / +2 / +1.",
-    "gameDone": "You predicted every match this week: +1 credit when the week ends. Weekly top 3 get +3 / +2 / +1.",
-    "tasksReady": "You have task rewards to claim: +{{count}} credits.",
-    "tasksOpen": "Finish the starter tasks: +1 credit each ({{count}} left).",
-    "games": "Play Free Kick on 7 days a month for +2 credits ({{days}}/{{target}} this month). {{game}}: predict every match of the week for +1.",
+    "verify": {
+      "kicker": "Free credits",
+      "title": "Verify your email first",
+      "meta": "Credit rewards go to verified accounts. Click the verification link in your inbox."
+    },
+    "frikik": {
+      "kicker": "Free Kick reward",
+      "title": "Play {{left}} more days, grab +2 credits",
+      "meta": "You played {{days}}/{{target}} days this month. Monthly top 3 also get +5 / +4 / +3.",
+      "progress": "{{days}}/{{target}} days this month"
+    },
+    "frikikDone": {
+      "kicker": "Free Kick reward",
+      "title": "{{target}} days done this month!",
+      "meta": "+2 credits when the month ends. Monthly top 3 get +5 / +4 / +3."
+    },
+    "game": {
+      "kicker": "{{game}} reward",
+      "title": "Predict {{left}} more matches, grab +1 credit",
+      "meta": "Predict every match of the week for +1 credit. Weekly top 3: +3 / +2 / +1.",
+      "progress": "{{picks}}/{{matches}} matches predicted this week"
+    },
+    "gameDone": {
+      "kicker": "{{game}} reward",
+      "title": "Every match of the week done!",
+      "meta": "+1 credit when the week ends. Weekly top 3 get +3 / +2 / +1."
+    },
+    "tasksReady": {
+      "kicker": "Task reward",
+      "title": "+{{count}} credits waiting for you",
+      "meta": "Claim the reward for your finished starter tasks."
+    },
+    "tasksOpen": {
+      "kicker": "Free credits",
+      "title": "+1 credit per task",
+      "meta": "{{count}} starter tasks left; each pays +1 credit once."
+    },
+    "games": {
+      "kicker": "Free credits",
+      "title": "Play, earn credits",
+      "meta": "Free Kick: play on 7 days a month for +2 ({{days}}/{{target}} this month). {{game}}: predict every match of the week for +1."
+    },
     "cta": "See rewards",
     "ctaClaim": "Claim reward",
     "close": "Close"

@@ -48,3 +48,12 @@ export function pickNudgeMessage(pathname: string, s: OnboardingStatus): NudgeMe
   if (open > 0) return { kind: 'tasksOpen', count: open };
   return { kind: 'games', days: p.frikikDays, target: p.frikikTarget };
 }
+
+export type NudgeTheme = 'frikik' | 'game' | 'gift';
+
+/** Kart teması: Frikik (saha + top), tahmin oyunu (kupa), diğerleri (hediye). */
+export function nudgeTheme(m: NudgeMessage): NudgeTheme {
+  if (m.kind === 'frikik' || m.kind === 'frikikDone') return 'frikik';
+  if (m.kind === 'game' || m.kind === 'gameDone') return 'game';
+  return 'gift';
+}

@@ -134,16 +134,49 @@
     "gamesFrikik2": "Ayın ilk 3'ü: +5 / +4 / +3"
   },
   "nudge": {
-    "title": "Ücretsiz kredi kazan",
-    "verify": "Kredi ödülleri e-postası doğrulanmış hesaplara verilir. Gelen kutundaki doğrulama bağlantısına tıkla.",
-    "frikik": "Bu ay {{days}}/{{target}} gün oynadın. {{target}} güne ulaşınca +2 kredi; ayın ilk 3'ü +5 / +4 / +3.",
-    "frikikDone": "Bu ay {{target}} gün tamam: ay bitince +2 kredi hesabına geçer. Ayın ilk 3'üne girersen +5 / +4 / +3.",
-    "game": "Bu hafta {{picks}}/{{matches}} maçı tahmin ettin. Hepsini tahmin et +1 kredi; haftanın ilk 3'ü +3 / +2 / +1.",
-    "gameDone": "Haftanın bütün maçlarını tahmin ettin: hafta bitince +1 kredi. İlk 3'e girersen +3 / +2 / +1.",
-    "tasksReady": "Alınmayı bekleyen görev ödülün var: +{{count}} kredi.",
-    "tasksOpen": "Başlangıç görevlerini tamamla: her biri +1 kredi ({{count}} görev kaldı).",
-    "games": "Frikik'te ayın 7 gününde oyna +2 kredi (bu ay {{days}}/{{target}}). {{game}}: haftanın bütün maçlarını tahmin et +1.",
-    "cta": "Ödüllere bak",
+    "verify": {
+      "kicker": "Ücretsiz kredi",
+      "title": "Önce e-postanı doğrula",
+      "meta": "Kredi ödülleri doğrulanmış hesaplara verilir. Gelen kutundaki doğrulama bağlantısına tıkla."
+    },
+    "frikik": {
+      "kicker": "Frikik ödülü",
+      "title": "{{left}} gün daha oyna, +2 kredi kap",
+      "meta": "Bu ay {{days}}/{{target}} gün oynadın. Ayın ilk 3'ü ayrıca +5 / +4 / +3 kredi.",
+      "progress": "Bu ay {{days}}/{{target}} gün"
+    },
+    "frikikDone": {
+      "kicker": "Frikik ödülü",
+      "title": "Bu ay {{target}} gün tamam!",
+      "meta": "Ay bitince +2 kredi hesabında. Ayın ilk 3'üne girersen +5 / +4 / +3."
+    },
+    "game": {
+      "kicker": "{{game}} ödülü",
+      "title": "{{left}} maç daha tahmin et, +1 kredi kap",
+      "meta": "Haftanın bütün maçlarını tahmin edene +1 kredi. Haftanın ilk 3'ü: +3 / +2 / +1.",
+      "progress": "Bu hafta {{picks}}/{{matches}} maç tahmin edildi"
+    },
+    "gameDone": {
+      "kicker": "{{game}} ödülü",
+      "title": "Haftanın bütün maçları tamam!",
+      "meta": "Hafta bitince +1 kredi hesabında. İlk 3'e girersen +3 / +2 / +1."
+    },
+    "tasksReady": {
+      "kicker": "Görev ödülü",
+      "title": "+{{count}} kredi seni bekliyor",
+      "meta": "Tamamladığın başlangıç görevlerinin ödülünü al."
+    },
+    "tasksOpen": {
+      "kicker": "Ücretsiz kredi",
+      "title": "Her görev +1 kredi",
+      "meta": "{{count}} başlangıç görevin kaldı; her biri bir kez +1 kredi."
+    },
+    "games": {
+      "kicker": "Ücretsiz kredi",
+      "title": "Oyna, kredi kazan",
+      "meta": "Frikik: ayın 7 gününde oyna +2 (bu ay {{days}}/{{target}}). {{game}}: haftanın bütün maçlarını tahmin et +1."
+    },
+    "cta": "Ödülleri gör",
     "ctaClaim": "Ödülü al",
     "close": "Kapat"
   }

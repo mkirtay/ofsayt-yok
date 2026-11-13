@@ -1,0 +1,276 @@
+@use 'sass:color';
+@use '../../styles/variables' as *;
+
+// Günlük ödül kartı: ana sayfadaki Günün Frikiği / tahmin oyunu kartlarıyla aynı aile (koyu yeşil degrade, altın vurgu,
+// satır içi SVG süs). Konum misafir kartıyla (SignupNudge) aynı: sabit, sol alt; mobilde alt menünün üstü. Metin beyaz
+// (en açık metin zemini $mid: beyaz ≥ 8:1, altın ≥ 4,5:1).
+$deep: color.scale($color-primary-dark, $lightness: -58%);
+$mid: color.scale($color-primary-dark, $lightness: -28%);
+$text-soft: rgba(255, 255, 255, 0.88);
+$gold: var(--color-premium);
+$gold-strong: var(--color-premium-strong);
+$on-gold: var(--color-on-premium);
+
+.card {
+  // Oyun alanı ekrandayken (Frikik) sahanın üstüne binmesin.
+  :global(html[data-game-active]) & {
+    display: none;
+  }
+
+  position: fixed;
+  z-index: 96;
+  left: $spacing-3;
+  bottom: $spacing-3;
+  isolation: isolate;
+  overflow: hidden;
+  width: 400px;
+  max-width: calc(100vw - 88px);
+  padding: $spacing-4 $spacing-4 $spacing-4;
+  box-sizing: border-box;
+  border-radius: $radius-lg;
+  color: #fff;
+  font-family: $font-family;
+  background: linear-gradient(125deg, $deep 0%, $mid 62%, $color-primary-dark 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow:
+    0 16px 40px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+  animation: rise 0.35s ease-out;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+
+  &[data-theme='gift'] {
+    background: linear-gradient(125deg, #2a1f06 0%, #4a3609 55%, #6b4d0c 100%);
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.deco {
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: 46%;
+  height: 100%;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.line {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.16);
+  stroke-width: 2;
+}
+
+.net {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.09);
+  stroke-width: 1;
+}
+
+.ball {
+  fill: #fff;
+  stroke: rgba(0, 0, 0, 0.35);
+  stroke-width: 1;
+}
+
+.ballSeam {
+  fill: none;
+  stroke: rgba(0, 0, 0, 0.55);
+  stroke-width: 1.4;
+  stroke-linejoin: round;
+}
+
+.trophy {
+  fill: rgba(255, 214, 102, 0.16);
+  stroke: rgba(255, 214, 102, 0.45);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+.confetti {
+  fill: rgba(255, 214, 102, 0.55);
+}
+
+.gift {
+  fill: rgba(255, 214, 102, 0.18);
+  stroke: rgba(255, 214, 102, 0.55);
+  stroke-width: 2;
+}
+
+.close {
+  position: absolute;
+  top: $spacing-2;
+  right: $spacing-2;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.25);
+  color: #fff;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.4);
+  }
+
+  &:focus-visible {
+    outline: 2px solid $gold;
+    outline-offset: 2px;
+  }
+}
+
+.kicker {
+  margin: 0 40px 4px 0;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: $gold;
+}
+
+.title {
+  margin: 0 40px 6px 0;
+  font-size: 22px;
+  line-height: 1.15;
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+.meta {
+  margin: 0 0 $spacing-3;
+  max-width: 34ch;
+  font-size: 13px;
+  line-height: 1.45;
+  color: $text-soft;
+}
+
+// Frikik: ayın günleri (hedef kadar nokta), oynananlar altın.
+.dots {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 $spacing-3;
+  padding: 0;
+  list-style: none;
+}
+
+.dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  box-sizing: border-box;
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 900;
+  color: $on-gold;
+
+  &[data-on] {
+    border-color: $gold;
+    background: $gold;
+    box-shadow: 0 0 10px rgba(255, 196, 0, 0.45);
+  }
+
+  // Hedef günü: ödülü taşır (altın kesik çizgi + "+2"); oynanınca dolar.
+  &:last-child {
+    width: 28px;
+    height: 28px;
+    margin-top: -3px;
+    border-style: dashed;
+    border-color: $gold;
+    color: $gold;
+    font-size: 10px;
+
+    &[data-on] {
+      border-style: solid;
+      color: $on-gold;
+    }
+  }
+}
+
+// Tahmin: haftanın maç ilerlemesi.
+.bar {
+  position: relative;
+  height: 10px;
+  margin: 0 0 6px;
+  border-radius: $radius-full;
+  background: rgba(255, 255, 255, 0.16);
+  overflow: hidden;
+}
+
+.barFill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, $gold, $gold-strong);
+}
+
+.barLabel {
+  margin: 0 0 $spacing-3;
+  font-size: 12px;
+  font-weight: 700;
+  color: $text-soft;
+  font-variant-numeric: tabular-nums;
+}
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 $spacing-5;
+  border-radius: $radius-full;
+  background: linear-gradient(180deg, $gold, $gold-strong);
+  color: $on-gold;
+  font-size: 15px;
+  font-weight: 900;
+  text-decoration: none;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+
+  &:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+  }
+}
+
+@include below-desktop {
+  .card {
+    bottom: calc(var(--bottom-nav-height) + var(--safe-bottom) + #{$spacing-3});
+    width: 340px;
+    padding: $spacing-3 $spacing-3 $spacing-3;
+  }
+
+  .title {
+    font-size: 19px;
+  }
+
+  .meta {
+    margin-bottom: $spacing-2;
+  }
+
+  .dots,
+  .barLabel {
+    margin-bottom: $spacing-2;
+  }
+
+  .cta {
+    min-height: 36px;
+    font-size: 14px;
+  }
+}
