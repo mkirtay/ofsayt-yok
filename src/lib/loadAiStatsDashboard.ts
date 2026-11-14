@@ -1,6 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import type { Role } from '@prisma/client';
-import { UNRESOLVED_ACTUAL_RESULT } from '@/lib/predictionRecords';
+import { isUnresolvedActualResult } from '@/lib/predictionRecords';
 import { readCronHeartbeats, type AiCronJobName, type CronHeartbeat } from '@/server/cronJobs';
 import { parseScore, pickTopPredictions, topPickHit, type TopPickKey } from '@/utils/analysisTopPicks';
 
@@ -102,7 +102,7 @@ export async function loadAiStatsDashboard(auth: { role: Role | null }): Promise
   const evaluated = records.filter((r) => r.evaluatedAt != null);
   // "Çözülemedi" diye kapatılanlar (evaluatedAt boş) bekleyen sayılmaz — bkz. predictionRecords.ts.
   const pendingCount = records.filter(
-    (r) => r.evaluatedAt == null && r.actualResult !== UNRESOLVED_ACTUAL_RESULT,
+    (r) => r.evaluatedAt == null && !isUnresolvedActualResult(r.actualResult),
   ).length;
 
   const picksByRecord = new Map(records.map((r) => [r, recordTopPicks(r)] as const));

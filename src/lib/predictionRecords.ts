@@ -3,6 +3,8 @@ import type { MatchAnalysis } from '@prisma/client';
 import type { Match } from '@/models/liveScore';
 import { prisma } from '@/lib/prisma';
 import { resolveSportmonksMatch } from '@/lib/resolveLiveMatch';
+import { lookupNationalMatch } from '@/server/apiFootball/nationalMatch';
+import { isNationalMatchId } from '@/services/apiFootball/ids';
 import { withRedis } from '@/lib/redis';
 import { cacheKeyPrefix } from '@/lib/cacheNamespace';
 import { extractFinalScore, extractHtScore, isMatchFinished } from '@/lib/matchResult';
@@ -203,6 +205,22 @@ export function selectEvaluationBatch(
  * Bekleyen sorgusu `actualResult: null` ile bu kayıtları bir daha denemez.
  */
 export const UNRESOLVED_ACTUAL_RESULT = 'UNRESOLVED';
+/**
+ * Milli maç (API-Football) kaydı AF'de de çözülemedi. Ayrı işaret: 2026-11'e kadar milli maçlar yanlışlıkla Sportmonks'ta
+ * aranıp `UNRESOLVED` diye kapatıldı; bunlar bir kez yeniden denenir (bkz. `isRetryableUnresolved`), AF'de de çözülemeyen
+ * bu işaretle kalıcı kapanır.
+ */
+export const UNRESOLVED_NATIONAL_ACTUAL_RESULT = 'UNRESOLVED_AF';
+
+/** Kayıt "çözülemedi" diye kapatılmış mı (her iki işaret)? Bekleyen sayılmaz. */
+export function isUnresolvedActualResult(actualResult: string | null | undefined): boolean {
+  return actualResult === UNRESOLVED_ACTUAL_RESULT || actualResult === UNRESOLVED_NATIONAL_ACTUAL_RESULT;
+}
+
+/** Eski hatayla (Sportmonks'ta aranıp) kapatılmış milli maç kaydı: AF ile yeniden denenir. */
+export function isRetryableUnresolved(record: { matchId: string; actualResult: string | null }): boolean {
+  return record.actualResult === UNRESOLVED_ACTUAL_RESULT && isNationalMatchId(record.matchId);
+}
 export const UNRESOLVED_AFTER_MS = 3 * 24 * 60 * 60_000;
 
 export type EvaluationLookup = 'found' | 'missing' | 'legacy' | 'error';
@@ -240,6 +258,15 @@ async function resolveMatchForEvaluation(
   const hit = cache.get(matchId);
   if (hit) return hit;
 
+  // Milli maç (id >= 2e9) API-Football'da; Sportmonks'a sorulursa hep "yok" döner ve kayıt değerlendirilemez.
+  if (isNationalMatchId(matchId)) {
+    const national = await lookupNationalMatch(matchId);
+    const resolved: EvaluationMatch =
+      national.kind === 'found' ? { match: national.bundle.match, lookup: 'found' } : { match: null, lookup: national.kind };
+    cache.set(matchId, resolved);
+    return resolved;
+  }
+
   // Yalnızca `fixtures/{id}` (liste taraması yok); eski sağlayıcı id'sine istek yok.
   const lookup = await resolveSportmonksMatch(matchId);
   const resolved: EvaluationMatch =
@@ -254,12 +281,21 @@ export async function evaluatePendingPredictionRecords(
 ): Promise<EvaluatePredictionsResult> {
   await backfillMissingPredictionRecords();
 
-  const allPending = await prisma.predictionRecord.findMany({
-    where: { evaluatedAt: null, actualResult: null },
+  // Bekleyenler + eski hatayla kapatılmış milli maç kayıtları. matchId metin: aralık süzgeci kabaca daraltır, kesin
+  // ayrım `isRetryableUnresolved` (sayısal) ile.
+  const candidates = await prisma.predictionRecord.findMany({
+    where: {
+      evaluatedAt: null,
+      OR: [
+        { actualResult: null },
+        { actualResult: UNRESOLVED_ACTUAL_RESULT, matchId: { gte: '2000000000', lte: '2147483647' } },
+      ],
+    },
     orderBy: { createdAt: 'asc' },
     select: {
       id: true,
       matchId: true,
+      actualResult: true,
       createdAt: true,
       predictedHomePct: true,
       predictedDrawPct: true,
@@ -270,6 +306,8 @@ export async function evaluatePendingPredictionRecords(
       extendedPredictions: true,
     },
   });
+
+  const allPending = candidates.filter((r) => r.actualResult == null || isRetryableUnresolved(r));
 
   const result: EvaluatePredictionsResult = { evaluated: 0, skipped: 0, unresolved: 0, errors: 0, deferred: 0 };
   if (!allPending.length) return result;
@@ -294,7 +332,9 @@ export async function evaluatePendingPredictionRecords(
         if (shouldMarkUnresolved({ lookup, createdAt: record.createdAt, matchDate: match?.date })) {
           await prisma.predictionRecord.update({
             where: { id: record.id },
-            data: { actualResult: UNRESOLVED_ACTUAL_RESULT },
+            data: {
+              actualResult: isNationalMatchId(record.matchId) ? UNRESOLVED_NATIONAL_ACTUAL_RESULT : UNRESOLVED_ACTUAL_RESULT,
+            },
           });
           result.unresolved += 1;
         } else {
