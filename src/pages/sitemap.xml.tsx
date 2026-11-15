@@ -10,7 +10,9 @@ const STATIC_ROUTES: { path: string; priority: string; changefreq: string }[] = 
   { path: '/', priority: '1.0', changefreq: 'hourly' },
   { path: '/bugun', priority: '0.7', changefreq: 'hourly' },
   { path: '/standings', priority: '0.8', changefreq: 'daily' },
-  { path: '/compare', priority: '0.6', changefreq: 'weekly' },
+  { path: '/hakemler', priority: '0.6', changefreq: 'daily' },
+  { path: '/gundem', priority: '0.5', changefreq: 'hourly' },
+  { path: '/frikik', priority: '0.4', changefreq: 'weekly' },
   { path: '/pricing', priority: '0.7', changefreq: 'monthly' },
   { path: '/hesap-silme', priority: '0.3', changefreq: 'yearly' },
 ];
@@ -49,6 +51,8 @@ export const getServerSideProps: GetServerSideProps = async ({ res }) => {
   const dates = offsets.map(isoDateOffset);
 
   const matchUrls: { loc: string; priority: string; changefreq: string }[] = [];
+  const clubTeamUrls: { loc: string; priority: string; changefreq: string }[] = [];
+  const seenClubTeams = new Set<number>();
 
   try {
     const fixtureResults = await Promise.all(dates.map((d) => getFixturesByDate(d).catch(() => [])));
@@ -62,6 +66,12 @@ export const getServerSideProps: GetServerSideProps = async ({ res }) => {
         const slug = buildMatchSlug(match);
         const path = slug ? `/matches/${id}-${slug}` : `/matches/${id}`;
         matchUrls.push({ loc: `${BASE_URL}${path}`, priority: '0.6', changefreq: 'hourly' });
+        // Kulüp takım sayfaları: aynı maç listesinden (ek istek yok) — haftanın maçı olan her takım.
+        for (const teamId of [match.home?.id ?? match.home_id, match.away?.id ?? match.away_id]) {
+          if (teamId == null || !(Number(teamId) > 0) || seenClubTeams.has(Number(teamId))) continue;
+          seenClubTeams.add(Number(teamId));
+          clubTeamUrls.push({ loc: `${BASE_URL}/teams/${teamId}`, priority: '0.5', changefreq: 'daily' });
+        }
       }
     }
   } catch {
@@ -112,7 +122,7 @@ export const getServerSideProps: GetServerSideProps = async ({ res }) => {
     changefreq: r.changefreq,
   }));
 
-  const xml = buildXml([...staticUrls, ...matchUrls, ...nationalUrls, ...peopleUrls]);
+  const xml = buildXml([...staticUrls, ...matchUrls, ...clubTeamUrls, ...nationalUrls, ...peopleUrls]);
 
   res.setHeader('Content-Type', 'text/xml; charset=utf-8');
   // ±3 günlük maç listesi günde bir değişir; üretim ~750 ms CPU (7 günün fikstürü) → CDN'de 1 gün, sonra 1 gün

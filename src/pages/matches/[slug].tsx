@@ -39,6 +39,7 @@ import { isLightPageBot } from '@/config/crawlers';
 import styles from './matchDetail.module.scss';
 import { siteBaseUrl } from '@/lib/siteUrl';
 import { brandTitle } from '@/config/brand';
+import { buildMatchSeo } from '@/utils/matchSeo';
 import { useLiveStandings } from '@/hooks/useLiveStandings';
 import { afterMatchDeadline, isLiveMatchStatus, standingsMatchesInLeague } from '@/services/liveStandings';
 import { useHomeHubMatches } from '@/hooks/useHomeHubMatches';
@@ -292,13 +293,11 @@ export default function MatchDetail({
 
   const homeName = match?.home?.name || '';
   const awayName = match?.away?.name || '';
-  const pageTitle =
-    homeName && awayName ? brandTitle(`${homeName} - ${awayName}`) : brandTitle('Maç Detayı');
   const compName = match?.competition?.name || match?.competition_name || '';
-  const pageDescription =
-    homeName && awayName
-      ? `${homeName} vs ${awayName}${compName ? ` - ${compName}` : ''} maç detayı, istatistikler ve kadro bilgileri.`
-      : 'Maç detayı, istatistikler ve kadro bilgileri.';
+  // SEO / GEO: durumuna göre başlık ("ne zaman, saat kaçta" / "canlı skor" / "maç sonucu"), açıklama, H1, maç bilgisi özeti.
+  const seo = buildMatchSeo(match, brandTitle);
+  const pageTitle = seo.title;
+  const pageDescription = seo.description;
   // Paylaşım metni (og / twitter): maçın resmî hashtag'i varsa sonuna (Sportmonks metadata, ör. "#GALKAS").
   const shareDescription = match?.hashtag ? `${pageDescription} ${match.hashtag}` : pageDescription;
   const canonicalUrl = `${siteBaseUrl()}${canonicalPath}`;
@@ -391,13 +390,30 @@ export default function MatchDetail({
             schema={{
               '@context': 'https://schema.org',
               '@type': 'SportsEvent',
-              name: pageTitle,
+              name: homeName && awayName ? `${homeName} - ${awayName}` : pageTitle,
               url: canonicalUrl,
               sport: 'Soccer',
               ...(match.date ? { startDate: match.date } : {}),
               homeTeam: homeName ? { '@type': 'SportsTeam', name: homeName } : undefined,
               awayTeam: awayName ? { '@type': 'SportsTeam', name: awayName } : undefined,
               ...(compName ? { organizer: { '@type': 'Organization', name: compName } } : {}),
+              description: pageDescription,
+              eventStatus:
+                match.state_code === 'POSTPONED'
+                  ? 'https://schema.org/EventPostponed'
+                  : match.state_code === 'CANCELLED' || match.state_code === 'ABANDONED'
+                    ? 'https://schema.org/EventCancelled'
+                    : 'https://schema.org/EventScheduled',
+              ...(match.venue_info?.name || match.location
+                ? {
+                    location: {
+                      '@type': 'Place',
+                      name: match.venue_info?.name || match.location,
+                      ...(match.venue_info?.city ? { address: match.venue_info.city } : {}),
+                    },
+                  }
+                : {}),
+              ...(ogImageUrl ? { image: ogImageUrl } : {}),
             }}
           />
         ) : null}
@@ -414,6 +430,7 @@ export default function MatchDetail({
         ) : null}
       </Head>
       <Container>
+        <h1 className={styles.srOnly}>{seo.h1}</h1>
         {showLayout ? (
           <div className="layout-split">
             <div className="layout-left">
@@ -454,6 +471,13 @@ export default function MatchDetail({
               ) : null}
               {/* Puan durumunun altı: sütunda boş yer var, fotoğraf tembel (ilk görünüme / LCP'ye girmez). */}
               <MatchVenueCard venue={match?.venue_info} />
+              {/* SEO / GEO: sunucuda üretilen kısa maç bilgisi (ne zaman, nerede, kim yayınlıyor, sonuç) — ek istek yok. */}
+              {seo.summary.length ? (
+                <section className={styles.seoSummary} aria-labelledby="mac-bilgisi">
+                  <h2 id="mac-bilgisi" className={styles.seoSummaryTitle}>Maç bilgisi</h2>
+                  <p className={styles.seoSummaryText}>{seo.summary.join(' ')}</p>
+                </section>
+              ) : null}
               {/* Masaüstü (≥ BP_SPLIT) "Maç sohbeti": sütunun sonunda yapışkan; istemcide yüklenir, dar ekranda yok. */}
               {effectiveMatchId ? <MatchChatPanelSlot matchId={effectiveMatchId} match={match ?? null} /> : null}
             </div>

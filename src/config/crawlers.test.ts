@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isLightPageBot, ROBOTS_BLOCKED_AI_AGENTS } from './crawlers';
+import { AI_SEARCH_AGENTS, isLightPageBot, ROBOTS_BLOCKED_AI_AGENTS } from './crawlers';
 import { buildRobotsTxt } from '@/pages/robots.txt';
 
 const UA = {
@@ -46,11 +46,18 @@ describe('robots.txt', () => {
   it('AI tarayıcıları tek grupta tüm siteden engellenir; * grubu ve Sitemap aynen kalır', () => {
     const [aiGroup, ...rest] = txt.split('\n\n');
     expect(aiGroup!.split('\n')).toEqual([...ROBOTS_BLOCKED_AI_AGENTS.map((a) => `User-agent: ${a}`), 'Disallow: /']);
-    for (const a of ['GPTBot', 'ClaudeBot', 'CCBot', 'PerplexityBot']) expect(aiGroup).toContain(`User-agent: ${a}\n`);
+    for (const a of ['GPTBot', 'ClaudeBot', 'CCBot', 'Google-Extended']) expect(aiGroup).toContain(`User-agent: ${a}\n`);
     const tail = rest.join('\n\n');
     expect(tail).toContain('User-agent: *\nAllow: /');
     expect(tail).toContain('Disallow: /api/');
     expect(tail).toContain('Sitemap: https://www.example.com/sitemap.xml');
+  });
+
+  it('AI arama botları (GEO) engellenmez ama hafif sayfa alır', () => {
+    for (const a of AI_SEARCH_AGENTS) {
+      expect(txt, a).not.toMatch(new RegExp(`^User-agent: ${a}$`, 'im'));
+      expect(isLightPageBot(`Mozilla/5.0 (compatible; ${a}/1.0)`), a).toBe(true);
+    }
   });
 
   it('arama motorları engellenmez', () => {

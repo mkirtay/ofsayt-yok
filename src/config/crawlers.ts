@@ -16,7 +16,6 @@ export const ROBOTS_BLOCKED_AI_AGENTS = [
   'ClaudeBot',
   'anthropic-ai',
   'CCBot',
-  'PerplexityBot',
   'Google-Extended',
   'Applebot-Extended',
   'Bytespider',
@@ -32,13 +31,16 @@ export const ROBOTS_BLOCKED_AI_AGENTS = [
   'YouBot',
 ] as const;
 
+/**
+ * AI ARAMA botları (GEO, 2026-11-15): kullanıcı soru sorduğunda kaynak arayan / arama dizini kuran botlar. robots'ta
+ * engellenmez (ChatGPT / Claude / Perplexity cevaplarında Scor3 kaynak gösterilebilsin) ama maç sayfasında HAFİF sürüm
+ * alır → Sportmonks'a ek istek yok. Eğitim botları (GPTBot, ClaudeBot, CCBot…) yukarıda engelli kalır.
+ */
+export const AI_SEARCH_AGENTS = ['OAI-SearchBot', 'ChatGPT-User', 'Claude-SearchBot', 'Claude-User', 'PerplexityBot', 'Perplexity-User'] as const;
+
 /** robots belirteci olmayan, UA'da görünen ek botlar (hafif sürüm). */
 const LIGHT_PAGE_EXTRA_AGENTS = [
-  'ChatGPT-User',
-  'OAI-SearchBot',
-  'Claude-User',
-  'Claude-SearchBot',
-  'Perplexity-User',
+  ...AI_SEARCH_AGENTS,
   'meta-externalfetcher',
   'AhrefsBot',
   'SemrushBot',

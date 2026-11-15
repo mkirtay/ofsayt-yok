@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any -- Kadro / puan API gevşek şema */
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { teamPageDescriptionText, teamPageTitleText } from '@/utils/teamSeo';
 import Head from 'next/head';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
@@ -571,8 +572,8 @@ function LeagueTeamDetailView({ teamId, variant = 'page' }: TeamDetailViewProps)
   }, [nextFixture, teamId, todayIso, locale, t, tl]);
 
   const teamInfoLoaded = teamInfo.name !== 'Takım Detayı';
-  const teamPageTitle = brandTitle(`${teamInfo.name} — Takım Detayı`);
-  const teamPageDescription = `${teamInfo.name} takımının son maçları, kadro bilgileri ve lig istatistikleri.`;
+  const teamPageTitle = brandTitle(teamPageTitleText(teamInfo.name));
+  const teamPageDescription = teamPageDescriptionText(teamInfo.name);
 
   return (
     <div className={`${styles.root} ${variant === 'panel' ? styles.panelVariant : styles.pageVariant}`}>

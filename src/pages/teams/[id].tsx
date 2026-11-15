@@ -8,11 +8,17 @@ import { siteBaseUrl } from '@/lib/siteUrl';
 import { BRAND, brandTitle } from '@/config/brand';
 import { isNationalMatchId } from '@/services/apiFootball/ids';
 import { nationalMatchesEnabled } from '@/config/nationalMatches';
+import JsonLd from '@/components/JsonLd';
+import type { TeamPageFacts } from '@/server/teamPageShell';
+import { buildTeamSummary, teamJsonLd, teamPageDescriptionText, teamPageTitleText } from '@/utils/teamSeo';
+import styles from './teamPage.module.scss';
 
 type TeamPageProps = {
   /** Paylaşım etiketleri için (sunucuda, ISR); geçici hatada null — sayfa yine istemcide yüklenir. */
   teamName: string | null;
   ogImagePath: string;
+  /** SEO / GEO özeti (durağan bilgiler, kabukla aynı yanıttan); yoksa null. */
+  facts?: TeamPageFacts | null;
 };
 
 const SITE_URL = siteBaseUrl();
@@ -43,7 +49,11 @@ export const getStaticProps: GetStaticProps<TeamPageProps> = async ({ params }) 
   const shell = await loadTeamPageShell(id);
   if (shell.kind === 'missing') return { notFound: true, revalidate: DAY_SECONDS };
   return {
-    props: { teamName: shell.kind === 'found' ? shell.name : null, ogImagePath: teamOgImagePath(id) },
+    props: {
+      teamName: shell.kind === 'found' ? shell.name : null,
+      ogImagePath: teamOgImagePath(id),
+      facts: shell.kind === 'found' ? shell.facts : null,
+    },
     // Geçici hata: etiketsiz kabuk kısa süre kalsın.
     revalidate: shell.kind === 'found' ? SHELL_REVALIDATE_SECONDS : 60,
   };
@@ -53,7 +63,7 @@ export const getStaticProps: GetStaticProps<TeamPageProps> = async ({ params }) 
  * /teams/[id] — "Detaylı Görünüm". İçerik `TeamDetailView` ile ana sayfa split-view `TeamDetailPanel`
  * arasında paylaşılır (bu sayfa `variant="page"`).
  */
-export default function TeamDetail({ teamName, ogImagePath }: TeamPageProps) {
+export default function TeamDetail({ teamName, ogImagePath, facts }: TeamPageProps) {
   const router = useRouter();
   const idParam = router.query.id;
   // Statik prerender/hydration sırasında `asPath` literal "/teams/[id]" olabiliyor → "[id]" takım id'si sanılıp
@@ -63,10 +73,11 @@ export default function TeamDetail({ teamName, ogImagePath }: TeamPageProps) {
   const teamId =
     typeof idParam === 'string' ? idParam : Array.isArray(idParam) ? (idParam[0] ?? idFromPath) : idFromPath;
 
-  const title = teamName ? brandTitle(`${teamName} — Takım Detayı`) : brandTitle('Takım Detayı');
+  const title = teamName ? brandTitle(teamPageTitleText(teamName)) : brandTitle('Takım Detayı');
   const description = teamName
-    ? `${teamName} takımının son maçları, kadro bilgileri ve lig istatistikleri.`
+    ? teamPageDescriptionText(teamName)
     : 'Takımın son maçları, kadro bilgileri ve lig istatistikleri.';
+  const summary = teamName ? buildTeamSummary(teamName, facts) : [];
   const ogImage = ogImagePath ? `${SITE_URL}${ogImagePath}` : null;
   // Canonical = og:url: sorgusuz, her iki alan adında da siteBaseUrl() (www.getscor3.com).
   const pageUrl = teamId ? `${SITE_URL}/teams/${teamId}` : null;
@@ -95,8 +106,17 @@ export default function TeamDetail({ teamName, ogImagePath }: TeamPageProps) {
         <meta name="twitter:description" content={description} key="twitter:description" />
         {ogImage ? <meta name="twitter:image" content={ogImage} key="twitter:image" /> : null}
         {ogImage ? <meta name="twitter:image:alt" content={imageAlt} key="twitter:image:alt" /> : null}
+        {teamName && pageUrl ? <JsonLd schema={teamJsonLd(teamName, pageUrl, facts, ogImage)} /> : null}
       </Head>
+      {/* Görsel başlık takım kartında (istemcide); H1 sunucu HTML'inde arama motorları / ekran okuyucu için. */}
+      {teamName ? <h1 className={styles.srOnly}>{teamName}</h1> : null}
       <TeamDetailView key={teamId} teamId={teamId} variant="page" />
+      {summary.length ? (
+        <section className={styles.about} aria-labelledby="takim-hakkinda">
+          <h2 id="takim-hakkinda" className={styles.aboutTitle}>{teamName} hakkında</h2>
+          <p className={styles.aboutText}>{summary.join(' ')}</p>
+        </section>
+      ) : null}
     </Container>
   );
 }
