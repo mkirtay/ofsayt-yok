@@ -1,0 +1,132 @@
+@use '../../styles/variables' as *;
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  margin: $spacing-4 0 $spacing-3;
+}
+
+.logo {
+  flex-shrink: 0;
+  object-fit: contain;
+}
+
+.title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: $color-text;
+
+  @media (max-width: $bp-sm) {
+    font-size: 19px;
+  }
+}
+
+.meta {
+  margin: $spacing-1 0 0;
+  font-size: 12px;
+  color: $color-text-secondary;
+}
+
+.summary {
+  margin: 0 0 $spacing-4;
+  font-size: 14px;
+  line-height: 1.6;
+  color: $color-text-secondary;
+}
+
+.section {
+  background-color: $color-surface;
+  border-radius: $radius-md;
+  padding: $spacing-3 $spacing-4;
+  box-shadow: $shadow-surface;
+  border: 1px solid $color-border;
+  margin-bottom: $spacing-4;
+}
+
+.sectionTitle {
+  margin: 0 0 $spacing-3;
+  padding-bottom: $spacing-2;
+  border-bottom: 1px solid $color-border;
+  font-size: 15px;
+  font-weight: 600;
+  color: $color-text;
+}
+
+.empty {
+  margin: 0;
+  font-size: 14px;
+  color: $color-text-secondary;
+}
+
+.more {
+  margin: 0 0 $spacing-4;
+  font-size: 14px;
+
+  a {
+    color: $color-primary-text;
+  }
+}
+
+.leagueLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-2;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  a {
+    display: inline-block;
+    padding: $spacing-1 $spacing-3;
+    border: 1px solid $color-border;
+    border-radius: 999px;
+    font-size: 13px;
+    color: $color-text-secondary;
+    text-decoration: none;
+
+    &:hover {
+      color: $color-text;
+    }
+  }
+}
+
+.hubGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: $spacing-3;
+  margin: 0 0 $spacing-6;
+  padding: 0;
+  list-style: none;
+}
+
+.hubCard {
+  display: flex;
+  align-items: center;
+  gap: $spacing-3;
+  padding: $spacing-3 $spacing-4;
+  background-color: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  color: $color-text;
+  text-decoration: none;
+
+  img {
+    object-fit: contain;
+  }
+
+  span {
+    display: flex;
+    flex-direction: column;
+  }
+
+  small {
+    font-size: 12px;
+    color: $color-text-secondary;
+  }
+
+  &:hover {
+    border-color: $color-primary;
+  }
+}

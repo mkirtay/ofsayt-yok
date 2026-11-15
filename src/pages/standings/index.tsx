@@ -10,7 +10,7 @@ import RoundStatsSlot from '@/components/RoundStatsCard';
 import { standingsGroupHeading } from '@/components/MatchCompetitionStandings/groupHeading';
 import LazyLoad from '@/components/LazyLoad';
 import { StandingsSkeleton } from '@/components/Skeleton';
-import { CardsList, ScorersList, StandingsTable, type StandingsBlock } from '@/components/StandingsView';
+import { CardsList, ScorersList, StandingsTable } from '@/components/StandingsView';
 import { HUB_LEAGUE_IDS } from '@/config/hubLeagueGroups';
 import { hasCupBracket } from '@/config/cupBrackets';
 import { useCupBracket } from '@/hooks/useCupBracket';
@@ -21,12 +21,12 @@ import {
   useStandingsTable,
   useStandingsTeamOfTheWeek,
 } from '@/hooks/useStandingsPage';
-import type { CompetitionTableData } from '@/services/liveScoreService';
 import { competitionLogoNeedsBackdrop } from '@/utils/competitionLogo';
 import { readStoredHubLeague } from '@/utils/hubLeaguePreference';
 import { hubSelectionIdForLeague, sportmonksLeagueIdOfHubSelection } from '@/utils/hubLeagueSelection';
 import { leagueNameById } from '@/utils/leagueName';
 import { sportmonksLeagueLogoUrl } from '@/utils/leagueLogo';
+import { toStandingsBlocks } from '@/utils/standingsBlocks';
 import styles from './standings.module.scss';
 import { siteBaseUrl } from '@/lib/siteUrl';
 
@@ -43,24 +43,6 @@ const EMPTY_MAP: ReadonlyMap<number, number> = new Map();
 const EMPTY_LOGOS: ReadonlyMap<number, string> = new Map();
 
 const isAllowedSelection = (id: number) => HUB_LEAGUE_IDS.some((lid) => hubSelectionIdForLeague(lid) === id);
-
-/** Tek tablo ya da aşama/grup blokları → çizilecek bloklar (çok gruplu liglerde her grup ayrı tablo). */
-function toBlocks(data: CompetitionTableData | null | undefined, groupLabel: (name: string) => string): StandingsBlock[] {
-  if (!data) return [];
-  if (data.table?.length) return [{ key: 'all', rows: data.table }];
-  const stages = data.stages ?? [];
-  return stages.flatMap((s, si) =>
-    (s.groups ?? [])
-      .filter((g) => g.standings?.length)
-      .map((g, gi) => ({
-        key: `${si}-${g.id ?? gi}`,
-        title: [stages.length > 1 ? s.stage?.name : undefined, g.name ? groupLabel(g.name) : undefined]
-          .filter(Boolean)
-          .join(' · ') || undefined,
-        rows: g.standings!,
-      })),
-  );
-}
 
 export default function Standings() {
   const { t } = useTranslation('standings');
@@ -134,7 +116,7 @@ export default function Standings() {
   const leagueLogo = sportmonksLeagueId != null ? sportmonksLeagueLogoUrl(sportmonksLeagueId) : null;
 
   const blocks = useMemo(
-    () => toBlocks(tableQuery.data, (name) => standingsGroupHeading(name, tm)),
+    () => toStandingsBlocks(tableQuery.data, (name) => standingsGroupHeading(name, tm)),
     [tableQuery.data, tm],
   );
   const scorers = scorersQuery.data?.topscorers ?? [];

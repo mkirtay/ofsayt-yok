@@ -1,6 +1,7 @@
 import type { GetServerSideProps } from 'next';
 import { siteBaseUrl } from '@/lib/siteUrl';
 import { BRAND } from '@/config/brand';
+import { LEAGUE_HUBS } from '@/config/leagueHubs';
 
 /**
  * /llms.txt (llmstxt.org): AI arama asistanlarına (ChatGPT, Claude, Perplexity) sitenin ne olduğunu ve hangi sayfaların
@@ -22,6 +23,10 @@ export function buildLlmsTxt(baseUrl: string): string {
     `- [Bugün ${BRAND.name}'te](${baseUrl}/bugun): Günün öne çıkan maçları ve özetler`,
     `- [Puan durumu](${baseUrl}/standings): Liglerin güncel puan tabloları ve istatistikleri`,
     `- [Hakem istatistikleri](${baseUrl}/hakemler): Süper Lig ve 1. Lig hakemlerinin kart, penaltı ve maç istatistikleri`,
+    '',
+    '## Lig sayfaları (puan durumu + gol krallığı)',
+    '',
+    ...LEAGUE_HUBS.map((h) => `- [${h.name} puan durumu](${baseUrl}/lig/${h.slug}): ${h.region}`),
     '',
     '## Sayfa türleri',
     '',

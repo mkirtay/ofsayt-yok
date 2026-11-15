@@ -5,6 +5,10 @@ import styles from './footer.module.scss';
 import BrandLogo from '@/components/BrandLogo';
 import { LEGAL_PAGES, type LegalDocKey } from '@/config/legalPages';
 import SocialLinks from './SocialLinks';
+import { LEAGUE_HUBS } from '@/config/leagueHubs';
+
+/** Site geneli iç link (SEO): en çok aranan lig sayfaları. */
+const FOOTER_LEAGUES = LEAGUE_HUBS.slice(0, 8);
 
 /** Kurumsal: iletişim + hesabı ilgilendiren metinler; Yasal: KVKK, çerez ve satış metinleri. */
 const CORPORATE_KEYS: readonly LegalDocKey[] = ['terms', 'community', 'privacy'];
@@ -27,6 +31,20 @@ export default function Footer() {
           </div>
 
           <div className={styles.footerLinkGroups}>
+            <div className={styles.footerLinksCol}>
+              <span className={styles.footerLinksHeading}>{t('footer.leaguesHeading')}</span>
+              <nav className={styles.footerLinks} aria-label={t('footer.leaguesHeading')}>
+                {FOOTER_LEAGUES.map((h) => (
+                  <Link key={h.slug} href={`/lig/${h.slug}`} className={styles.footerLink}>
+                    {h.name}
+                  </Link>
+                ))}
+                <Link href="/lig" className={styles.footerLink}>
+                  {t('footer.allLeagues')}
+                </Link>
+              </nav>
+            </div>
+
             <div className={styles.footerLinksCol}>
               <span className={styles.footerLinksHeading}>{t('footer.linksHeading')}</span>
               <nav className={styles.footerLinks} aria-label={t('footer.linksHeading')}>
