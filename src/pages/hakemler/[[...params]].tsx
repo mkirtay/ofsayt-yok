@@ -9,6 +9,9 @@ import { stripUndefined } from '@/utils/homeInitialData';
 import { useTranslation } from '@/lib/i18n';
 import { siteBaseUrl } from '@/lib/siteUrl';
 import { brandTitle } from '@/config/brand';
+import Link from 'next/link';
+import { leagueHubByLeagueId, hubHasWeeks } from '@/config/leagueHubs';
+import { buildRefereeTableSummary } from '@/utils/refereeSeo';
 
 type Props = { data: RefereeLeagueTable; url: string };
 
@@ -39,7 +42,9 @@ export default function RefereesPage({ data, url }: Props) {
   // Başlık kısa sezonla: "Süper Lig Hakem İstatistikleri 2026/27"
   const datasetName = t('person.tableTitle', { league, season: shortSeasonName(data.season.name) });
   const title = brandTitle(datasetName);
-  const description = t('person.tableDesc', { league, season: data.season.name });
+  const summary = buildRefereeTableSummary(league, data.season.name, data.rows);
+  const description = summary.length ? `${summary.slice(0, 2).join(' ')} ${t('person.tableDesc', { league, season: data.season.name })}` : t('person.tableDesc', { league, season: data.season.name });
+  const hub = leagueHubByLeagueId(data.league.id);
   return (
     <Container>
       <Head>
@@ -63,7 +68,24 @@ export default function RefereesPage({ data, url }: Props) {
           variableMeasured: ['maç', 'maç başı sarı kart', 'maç başı kırmızı kart', 'maç başı penaltı', 'maç başı faul', 'maç başı VAR incelemesi'],
         }}
       />
-      <RefereeTableView data={data} />
+      <RefereeTableView
+        data={data}
+        intro={
+          summary.length || (hub && hubHasWeeks(hub) && data.season.isCurrent) ? (
+            <>
+              {summary.join(' ')}
+              {hub && hubHasWeeks(hub) && data.season.isCurrent ? (
+                <>
+                  {' '}
+                  <Link href={`/lig/${hub.slug}/hafta`} prefetch={false}>
+                    Bu hafta {league} hakem atamaları →
+                  </Link>
+                </>
+              ) : null}
+            </>
+          ) : null
+        }
+      />
     </Container>
   );
 }

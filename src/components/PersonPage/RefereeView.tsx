@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { buildRefereeSummary } from '@/utils/refereeSeo';
 import { useState } from 'react';
 import { useI18n, useTranslation } from '@/lib/i18n';
 import TeamLogo from '@/components/TeamLogo';
@@ -21,6 +22,8 @@ export function initials(name: string): string {
 
 /** Hakem sayfası: başlık, özet kartları (lig ortalamasıyla), sezon tablosu (mini çubuklar), son 10 maç, sezon seçicili takım kırılımı. Yalnız sayılar. */
 export default function RefereeView({ data }: { data: RefereePageData }) {
+  // Alıntılanabilir özet (SEO/GEO): sunucu HTML'inde, başlığın hemen altında.
+  const seoSummary = buildRefereeSummary(data);
   const { t } = useTranslation('match');
   const { t: tl } = useTranslation('leagues');
   const { locale } = useI18n();
@@ -92,6 +95,7 @@ export default function RefereeView({ data }: { data: RefereePageData }) {
           </p>
         </div>
       </header>
+      {seoSummary.length ? <p className={styles.seoSummary}>{seoSummary.join(' ')}</p> : null}
 
       <section className={styles.card} aria-labelledby="ref-summary">
         <h2 id="ref-summary" className={styles.sectionTitle}>

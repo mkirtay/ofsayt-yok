@@ -6,7 +6,7 @@ import Container from '@/components/Container';
 import JsonLd from '@/components/JsonLd';
 import { ScorersList, StandingsTable } from '@/components/StandingsView';
 import { standingsGroupHeading } from '@/components/MatchCompetitionStandings/groupHeading';
-import { LEAGUE_HUBS, leagueHubBySlug, type LeagueHub } from '@/config/leagueHubs';
+import { hubHasWeeks, LEAGUE_HUBS, leagueHubBySlug, type LeagueHub } from '@/config/leagueHubs';
 import { brandTitle, BRAND } from '@/config/brand';
 import { useTranslation } from '@/lib/i18n';
 import { siteBaseUrl } from '@/lib/siteUrl';
@@ -132,6 +132,13 @@ export default function LeagueHubPage({ hub, table, scorers, seasonName, updated
       </header>
 
       {summary.length ? <p className={styles.summary}>{summary.join(' ')}</p> : null}
+      {hubHasWeeks(hub) ? (
+        <p className={styles.more}>
+          <Link href={`/lig/${hub.slug}/hafta`} prefetch={false}>
+            Bu haftanın maçları, sonuçları ve hakem atamaları →
+          </Link>
+        </p>
+      ) : null}
 
       <section className={styles.section} aria-labelledby="puan-durumu">
         <h2 id="puan-durumu" className={styles.sectionTitle}>

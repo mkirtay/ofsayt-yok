@@ -1,3 +1,4 @@
+import type React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -26,7 +27,8 @@ const firstQuery = (v: unknown) => (Array.isArray(v) ? v[0] : typeof v === 'stri
  * /hakemler: lig + sezon seçici, sıralanabilir hakem tablosu (SSR), iki hakem seçilince karşılaştırma (tablonun altında;
  * `?a=slug&b=slug` paylaşılabilir). Yalnız sayılar; vurgu / "daha iyi" yorumu yok.
  */
-export default function RefereeTableView({ data }: { data: RefereeLeagueTable }) {
+/** `intro`: başlığın altındaki alıntılanabilir özet (SEO/GEO; sayfa sunucuda üretir). */
+export default function RefereeTableView({ data, intro }: { data: RefereeLeagueTable; intro?: React.ReactNode }) {
   const { t } = useTranslation('match');
   const { t: tl } = useTranslation('leagues');
   const { locale } = useI18n();
@@ -82,6 +84,7 @@ export default function RefereeTableView({ data }: { data: RefereeLeagueTable })
         <h1 id="ref-table-title" className={styles.sectionTitle} style={{ fontSize: 18 }}>
           {t('person.tableTitle', { league: leagueName(data.league), season: data.season.name })}
         </h1>
+        {intro ? <p className={ts.intro} style={{ padding: 0, marginBottom: 12, lineHeight: 1.6 }}>{intro}</p> : null}
         <div className={ts.controls}>
           <nav className={ts.chips} aria-label={t('person.leagueLabel')}>
             {REFEREE_TABLE_LEAGUES.map((l) => (

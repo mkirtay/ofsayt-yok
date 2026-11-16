@@ -130,3 +130,41 @@
     border-color: $color-primary;
   }
 }
+
+/* Hafta sayfası tablosu: dar ekranda kendi kutusunda yatay kayar (bölüm kaymaz — sticky başlık kuralı). */
+.tableWrap {
+  overflow-x: auto;
+}
+
+.weekTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+
+  th,
+  td {
+    padding: $spacing-2;
+    text-align: left;
+    border-bottom: 1px solid $color-border;
+    vertical-align: top;
+  }
+
+  th {
+    font-size: 12px;
+    font-weight: 600;
+    color: $color-text-secondary;
+  }
+
+  a {
+    color: $color-text;
+    font-weight: 600;
+
+    &:hover {
+      color: $color-primary-text;
+    }
+  }
+}
+
+.nowrap {
+  white-space: nowrap;
+}

@@ -3,6 +3,7 @@ import Head from 'next/head';
 import Container from '@/components/Container';
 import { breadcrumbJsonLd } from '@/utils/breadcrumbJsonLd';
 import JsonLd from '@/components/JsonLd';
+import { buildRefereeSummary } from '@/utils/refereeSeo';
 import RefereeView from '@/components/PersonPage/RefereeView';
 import type { RefereePageData } from '@/server/people/refereePage';
 import { personIdFromSlug, personSlug, refereeHref, REFEREE_BASE_PATH } from '@/utils/personUrl';
@@ -35,7 +36,8 @@ export const getStaticProps: GetStaticProps<Props> = async ({ params }) => {
 export default function RefereePage({ data, url }: Props) {
   const { t } = useTranslation('match');
   const title = t('person.metaRefereeTitle', { name: data.name });
-  const description = t('person.metaRefereeDesc', { name: data.name });
+  // Alıntılanabilir ilk cümle varsa açıklama o (SEO/GEO); yoksa genel metin.
+  const description = buildRefereeSummary(data)[0] ?? t('person.metaRefereeDesc', { name: data.name });
   return (
     <Container>
       <Head>

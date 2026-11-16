@@ -555,3 +555,12 @@
     padding: $spacing-2 $spacing-3;
   }
 }
+
+/* Hakem / TD sayfası alıntılanabilir özeti (SEO/GEO): başlık kartının altında düz metin. */
+.seoSummary {
+  margin: 0;
+  padding: 0 $spacing-1;
+  font-size: 14px;
+  line-height: 1.6;
+  color: $color-text-secondary;
+}

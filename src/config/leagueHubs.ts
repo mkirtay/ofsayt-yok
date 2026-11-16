@@ -36,3 +36,9 @@ export function leagueHubBySlug(slug: string): LeagueHub | undefined {
 export function leagueHubByLeagueId(leagueId: number | null | undefined): LeagueHub | undefined {
   return leagueId == null ? undefined : LEAGUE_HUBS.find((h) => h.leagueId === leagueId);
 }
+
+/** Hafta sayfası (/lig/{slug}/hafta/{n}) olan lig: kupa / eleme turnuvaları hariç (onlarda "hafta" yerine aşama). */
+const CUP_HUB_LEAGUE_IDS: ReadonlySet<number> = new Set([2, 5, 2286]);
+export function hubHasWeeks(hub: LeagueHub): boolean {
+  return !CUP_HUB_LEAGUE_IDS.has(hub.leagueId);
+}

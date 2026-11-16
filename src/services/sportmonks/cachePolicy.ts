@@ -319,8 +319,19 @@ export function sportmonksCacheTtl(
       return withStale(DAY, 7 * DAY);
     }
 
+    case 'rounds': {
+      // Hafta sayfası (`rounds/{id}?include=fixtures…`, bkz. server/leagueWeeks.ts): bitişinden 2 gün geçmiş hafta değişmez →
+      // 30 gün; süren / yaklaşan hafta → 20 dk (skor + hakem ataması). Round havuzu (Fixture değil).
+      if (a && a !== 'seasons' && String(query.include ?? '').includes('fixtures')) {
+        const round = data != null && typeof data === 'object' && !Array.isArray(data) ? (data as { finished?: boolean; ending_at?: string | null }) : null;
+        if (!round) return withStale(NOT_FOUND_TTL, NOT_FOUND_TTL);
+        const settled = round.finished === true && round.ending_at != null && round.ending_at < utcDay(now, -2);
+        return settled ? withStale(FINISHED_SEASON_TTL, FINISHED_SEASON_TTL) : withStale(20 * MIN, DAY);
+      }
+      return withStale(DAY, 7 * DAY);
+    }
+
     case 'leagues':
-    case 'rounds':
     case 'types':
     case 'states':
     case 'countries':
