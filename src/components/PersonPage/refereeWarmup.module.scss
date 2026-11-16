@@ -1,0 +1,356 @@
+@use '../../styles/variables' as *;
+
+// SVG öğelerinde CSS transform yerel orijine (0,0) göre döner: kollar omuzda, bacaklar kalçada (bkz. RefereeWarmup.tsx).
+
+.wrap {
+  padding: $spacing-4;
+  display: grid;
+  gap: $spacing-2;
+}
+
+.svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 190px;
+}
+
+.grassA {
+  fill: #0e7a50;
+}
+.grassB {
+  fill: #0b6d47;
+}
+.line,
+.lineCircle {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.35);
+  stroke-width: 1.5;
+}
+
+.shadow {
+  fill: rgba(0, 0, 0, 0.28);
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.shirt {
+  fill: #151a17;
+}
+.stripe {
+  fill: $color-primary;
+}
+.collar {
+  fill: $color-primary;
+}
+.shorts {
+  fill: #0b0e0c;
+}
+.leg {
+  fill: #20272a;
+}
+.armRect {
+  fill: #151a17;
+}
+.head {
+  fill: #e4b48c;
+}
+.hair {
+  fill: #3a2a1f;
+}
+.whistle {
+  fill: #f4f7f4;
+}
+
+.flagPole {
+  fill: #d7dbd8;
+}
+.flagCloth {
+  fill: $color-warning;
+}
+.flagCheck {
+  fill: $color-danger;
+}
+.boardFrame {
+  fill: #0b0e0c;
+  stroke: $color-primary;
+  stroke-width: 1.2;
+}
+.boardText {
+  fill: #2fd39b;
+  font: 800 9px/1 $font-family;
+}
+
+.ballFill {
+  fill: #fff;
+  stroke: rgba(0, 0, 0, 0.35);
+  stroke-width: 0.8;
+}
+.ballPatch {
+  fill: #151a17;
+}
+
+// ── Hareketler ────────────────────────────────────────────────
+// 1) Yardımcı: yan adım + bayrağı sallar
+.body_ar1 {
+  animation: shuffle 1.6s ease-in-out infinite;
+}
+.shadow_ar1 {
+  animation: shuffleShadow 1.6s ease-in-out infinite;
+}
+.legL_ar1 {
+  animation: spreadL 0.4s ease-in-out infinite alternate;
+}
+.legR_ar1 {
+  animation: spreadR 0.4s ease-in-out infinite alternate;
+}
+.armL_ar1 {
+  animation: flagWave 0.8s ease-in-out infinite alternate;
+}
+.armR_ar1 {
+  transform: rotate(-12deg);
+}
+
+// 2) Orta hakem: dizleri yukarı çekme
+.body_main {
+  animation: bob 0.5s ease-in-out infinite;
+}
+.shadow_main {
+  animation: bobShadow 0.5s ease-in-out infinite;
+}
+.legL_main {
+  animation: knee 1s ease-in-out infinite;
+}
+.legR_main {
+  animation: knee 1s ease-in-out infinite 0.5s;
+}
+.armL_main {
+  animation: swingA 1s ease-in-out infinite;
+}
+.armR_main {
+  animation: swingB 1s ease-in-out infinite;
+}
+
+// 3) Yardımcı: kol çevirme
+.body_ar2 {
+  animation: bob 1.3s ease-in-out infinite;
+}
+.shadow_ar2 {
+  animation: bobShadow 1.3s ease-in-out infinite;
+}
+.armL_ar2 {
+  animation: circleL 1.3s linear infinite;
+}
+.armR_ar2 {
+  animation: circleR 1.3s linear infinite;
+}
+
+// 4) 4. hakem: yerinde koşu, tabelayı kaldırıp indirir
+.body_fourth {
+  animation: bob 0.36s ease-in-out infinite;
+}
+.shadow_fourth {
+  animation: bobShadow 0.36s ease-in-out infinite;
+}
+.legL_fourth {
+  animation: jog 0.72s ease-in-out infinite;
+}
+.legR_fourth {
+  animation: jog 0.72s ease-in-out infinite 0.36s;
+}
+.armL_fourth {
+  animation: swingA 0.72s ease-in-out infinite;
+}
+.armR_fourth {
+  animation: boardLift 2.4s ease-in-out infinite;
+}
+
+.ball {
+  animation: roll 5s linear infinite;
+}
+
+@keyframes shuffle {
+  0%,
+  100% {
+    transform: translateX(-14px);
+  }
+  50% {
+    transform: translateX(14px);
+  }
+}
+@keyframes shuffleShadow {
+  0%,
+  100% {
+    transform: translateX(-14px);
+  }
+  50% {
+    transform: translateX(14px);
+  }
+}
+@keyframes spreadL {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(14deg);
+  }
+}
+@keyframes spreadR {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(-14deg);
+  }
+}
+@keyframes flagWave {
+  from {
+    transform: rotate(140deg);
+  }
+  to {
+    transform: rotate(172deg);
+  }
+}
+@keyframes bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+@keyframes bobShadow {
+  0%,
+  100% {
+    transform: scaleX(1);
+  }
+  50% {
+    transform: scaleX(0.8);
+  }
+}
+@keyframes knee {
+  0%,
+  45%,
+  100% {
+    transform: scaleY(1);
+  }
+  20% {
+    transform: scaleY(0.45) rotate(8deg);
+  }
+}
+@keyframes jog {
+  0%,
+  100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(0.72);
+  }
+}
+@keyframes swingA {
+  0%,
+  100% {
+    transform: rotate(28deg);
+  }
+  50% {
+    transform: rotate(-20deg);
+  }
+}
+@keyframes swingB {
+  0%,
+  100% {
+    transform: rotate(20deg);
+  }
+  50% {
+    transform: rotate(-28deg);
+  }
+}
+@keyframes circleL {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes circleR {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(-360deg);
+  }
+}
+@keyframes boardLift {
+  0%,
+  100% {
+    transform: rotate(-20deg);
+  }
+  40%,
+  70% {
+    transform: rotate(-165deg);
+  }
+}
+@keyframes roll {
+  from {
+    transform: translate(-10px, 146px) rotate(0deg);
+  }
+  to {
+    transform: translate(620px, 146px) rotate(1080deg);
+  }
+}
+
+.labels {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: $color-text-footer-label;
+}
+
+.text {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-2;
+  font-size: 13px;
+  font-weight: 600;
+  color: $color-text-secondary;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: $color-primary;
+  animation: pulse 1s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .svg *,
+  .dot {
+    animation: none !important;
+  }
+  .ball {
+    transform: translate(150px, 146px);
+  }
+}

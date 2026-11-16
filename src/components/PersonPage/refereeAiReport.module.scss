@@ -1,60 +1,688 @@
 @use '../../styles/variables' as *;
 
-.loading {
-  padding: $spacing-4;
+// Renkler: veri çubuğu marka yeşili; sonuç dağılımı ıraksak (ev ↔ deplasman, ortada nötr beraberlik) —
+// iki kutup dataviz doğrulayıcısından geçti (açık #00875a/#2563eb, koyu #1fae7a/#4f8ef7). Kart renkleri yalnız ikonda.
+.card {
+  --rr-bar: #1fae7a;
+  --rr-bar-muted: rgba(31, 174, 122, 0.4);
+  --rr-home: #1fae7a;
+  --rr-away: #4f8ef7;
+  --rr-draw: #6b7280;
+  --rr-track: rgba(255, 255, 255, 0.07);
+  --rr-avg: var(--text-primary);
+
+  :global(:root[data-theme='light']) & {
+    --rr-bar: #00875a;
+    --rr-bar-muted: rgba(0, 135, 90, 0.38);
+    --rr-home: #00875a;
+    --rr-away: #2563eb;
+    --rr-draw: #a3a9b3;
+    --rr-track: rgba(16, 21, 18, 0.07);
+  }
 }
 
-.loadingText {
-  margin: 0 0 $spacing-3;
-  font-size: 13px;
-  color: $color-text-secondary;
+.title {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
-.skeleton {
-  height: 160px;
-  border-radius: $radius-sm;
-  background: color-mix(in srgb, $color-border 60%, transparent);
+.titleIcon {
+  width: 18px;
+  height: 18px;
+  flex: none;
 }
 
+.aiBadge {
+  padding: 1px 6px;
+  border-radius: $radius-full;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #fff;
+  background: linear-gradient(135deg, $color-action-fill-start, $color-primary-dark);
+}
+
+// ── İkonlar ──
+.icon {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+.icYellow {
+  fill: #facc15;
+}
+.icRed {
+  fill: $color-danger;
+}
+.icStroke {
+  fill: none;
+  stroke: $color-text-secondary;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.icThin {
+  fill: none;
+  stroke: $color-text-secondary;
+  stroke-width: 1.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.icFill {
+  fill: $color-text-secondary;
+}
+.icFillBrand {
+  fill: var(--rr-bar);
+}
+.icStrokeBrand {
+  fill: none;
+  stroke: var(--rr-bar);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+.icHole {
+  fill: var(--bg-surface);
+}
+
+// ── Gövde ──
 .body {
   padding: $spacing-4;
   display: grid;
   gap: $spacing-4;
 }
 
-.summary {
+.hero {
+  display: grid;
+  gap: $spacing-3;
+  padding: $spacing-4;
+  border-radius: $radius-md;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--rr-bar) 14%, transparent), color-mix(in srgb, var(--rr-bar) 3%, transparent));
+  border: 1px solid color-mix(in srgb, var(--rr-bar) 28%, transparent);
+}
+
+.headline {
   margin: 0;
-  font-size: 14px;
-  line-height: 1.55;
+  font-size: 15px;
+  line-height: 1.45;
+  font-weight: 700;
+  color: $color-text;
+}
+
+.insights {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: $spacing-2 $spacing-4;
+
+  @media (max-width: $bp-sm) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  li {
+    display: flex;
+    align-items: flex-start;
+    gap: $spacing-2;
+    font-size: 13px;
+    line-height: 1.4;
+    color: $color-text;
+    animation: fadeUp 0.45s ease-out both;
+    animation-delay: calc(var(--i, 0) * 80ms);
+  }
+}
+
+.tone {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--bg-muted);
+
+  svg {
+    width: 12px;
+    height: 12px;
+    fill: $color-text-secondary;
+  }
+}
+.tone_up svg,
+.tone_down svg {
+  fill: $color-text;
+}
+.tone_warn {
+  background: color-mix(in srgb, $color-warning 18%, transparent);
+  svg {
+    fill: $color-warning;
+  }
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: $spacing-3;
+
+  @media (max-width: $bp-md) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.panel {
+  min-width: 0;
+  padding: $spacing-3 $spacing-4 $spacing-4;
+  border-radius: $radius-md;
+  border: 1px solid $color-border;
+  background: color-mix(in srgb, var(--bg-muted) 35%, transparent);
+  display: grid;
+  align-content: start;
+  gap: $spacing-3;
+}
+.panelWide {
+  grid-column: 1 / -1;
+}
+
+.panelTitle {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: $spacing-2;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: $color-text-secondary;
+}
+.panelSub {
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: $color-text-footer-label;
+}
+
+// ── Lig ortalamasına göre ──
+.vsList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: $spacing-3;
+}
+.vsRow {
+  display: grid;
+  gap: 5px;
+}
+.vsHead {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  font-size: 13px;
+}
+.vsLabel {
+  color: $color-text-secondary;
+  font-weight: 600;
+}
+.vsValue {
+  margin-left: auto;
+  font-family: $font-family-score;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: $score-letter-spacing;
+  font-variant-numeric: tabular-nums;
+  color: $color-text;
+}
+.diff {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 7px;
+  border-radius: $radius-full;
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: $color-text-secondary;
+  background: var(--bg-muted);
+
+  svg {
+    width: 9px;
+    height: 9px;
+    fill: currentColor;
+  }
+}
+.diffUp,
+.diffDown {
+  color: $color-text;
+}
+
+.track {
+  position: relative;
+  display: block;
+  height: 10px;
+  border-radius: $radius-full;
+  background: var(--rr-track);
+}
+.fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: $radius-full;
+  background: var(--rr-bar);
+  transform-origin: left center;
+  animation: growX 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation-delay: calc(var(--i, 0) * 90ms);
+}
+.vsRow .fill {
+  animation-delay: calc(var(--i, 0) * 90ms);
+}
+.fillMuted {
+  background: var(--rr-bar-muted);
+}
+.avgMark {
+  position: absolute;
+  top: -4px;
+  bottom: -4px;
+  width: 2px;
+  margin-left: -1px;
+  border-radius: 1px;
+  background: var(--rr-avg);
+  box-shadow: 0 0 0 2px var(--bg-surface);
+}
+.vsFoot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: $spacing-2;
+  font-size: 11px;
+  color: $color-text-footer-label;
+}
+.events {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sample {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 1px 6px;
+  border-radius: $radius-full;
+  font-size: 10px;
+  font-weight: 700;
+  color: $color-warning;
+  background: color-mix(in srgb, $color-warning 14%, transparent);
+  width: fit-content;
+
+  svg {
+    width: 11px;
+    height: 11px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.6;
+    stroke-linecap: round;
+  }
+}
+
+// ── Son maçlar ──
+.recent {
+  display: grid;
+  gap: $spacing-3;
+}
+.tiles {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+
+  @media (max-width: 420px) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  li {
+    animation: fadeUp 0.4s ease-out both;
+    animation-delay: calc(var(--i, 0) * 45ms);
+  }
+}
+.tile {
+  display: grid;
+  gap: 2px;
+  justify-items: center;
+  padding: 7px 2px 5px;
+  border-radius: $radius-sm;
+  background: var(--bg-surface);
+  border: 1px solid $color-border;
+  border-top: 3px solid var(--rr-draw);
+  text-decoration: none;
+  color: $color-text;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+
+  &:hover,
+  &:focus-visible {
+    transform: translateY(-2px);
+    border-color: var(--rr-bar);
+  }
+}
+.out_home {
+  border-top-color: var(--rr-home);
+}
+.out_away {
+  border-top-color: var(--rr-away);
+}
+.out_draw {
+  border-top-color: var(--rr-draw);
+}
+.tileOther {
+  border-style: dashed;
+  border-top-style: solid;
+}
+.tileTeams {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+
+  img {
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+  }
+}
+.tileScore {
+  font-family: $font-family-score;
+  font-size: 13px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.tileMeta {
+  font-size: 10px;
+  color: $color-text-footer-label;
+}
+
+.recentStats {
+  display: flex;
+  align-items: center;
+  gap: $spacing-4;
+}
+.kpi {
+  display: grid;
+  justify-items: center;
+  padding: $spacing-2 $spacing-3;
+  border-radius: $radius-sm;
+  background: var(--bg-surface);
+  border: 1px solid $color-border;
+}
+.kpiValue {
+  font-family: $font-family-score;
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.1;
+  color: $color-text;
+  font-variant-numeric: tabular-nums;
+}
+.kpiLabel {
+  font-size: 11px;
+  color: $color-text-secondary;
+  white-space: nowrap;
+}
+.distWrap {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+.distTitle {
+  margin: 0;
+  font-size: 11px;
+  color: $color-text-footer-label;
+}
+.dist {
+  display: flex;
+  gap: 2px;
+  height: 12px;
+  border-radius: $radius-full;
+  overflow: hidden;
+  animation: growX 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  transform-origin: left center;
+}
+.distSeg {
+  flex-basis: 0;
+  min-width: 6px;
+}
+.seg_home {
+  background: var(--rr-home);
+}
+.seg_draw {
+  background: var(--rr-draw);
+}
+.seg_away {
+  background: var(--rr-away);
+}
+.legend {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 10px;
+  font-size: 11px;
+  color: $color-text-secondary;
+
+  li {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  b {
+    color: $color-text;
+  }
+}
+.swatch {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+}
+
+// ── Sezon trendi (küçük çoklu sütun grafikleri) ──
+.trend {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: $spacing-3;
+}
+.mini {
+  margin: 0;
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+}
+
+// Dar ekranda üç mini grafik alt alta; başlık solda, sütunlar sağda (sezon etiketleri çakışmasın).
+@media (max-width: 520px) {
+  .trend {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .mini {
+    grid-template-columns: 96px minmax(0, 1fr);
+    align-items: end;
+  }
+  .miniTitle {
+    align-self: center;
+  }
+  .cols {
+    gap: $spacing-3;
+  }
+  .colBarWrap {
+    height: 44px;
+  }
+}
+.miniTitle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  color: $color-text-secondary;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cols {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: 6px;
+  align-items: end;
+}
+.col {
+  display: grid;
+  justify-items: center;
+  gap: 3px;
+  min-width: 0;
+}
+.colValue {
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: $color-text;
+}
+.colBarWrap {
+  position: relative;
+  width: 100%;
+  max-width: 26px;
+  height: 72px;
+  display: flex;
+  align-items: flex-end;
+  border-bottom: 1px solid $color-border;
+}
+.colBar {
+  width: 100%;
+  border-radius: 4px 4px 0 0;
+  background: var(--rr-bar-muted);
+  transform-origin: bottom center;
+  animation: growY 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation-delay: calc(var(--i, 0) * 100ms);
+}
+.colBarLatest {
+  background: var(--rr-bar);
+}
+.colLabel {
+  font-size: 10px;
+  color: $color-text-footer-label;
+  font-variant-numeric: tabular-nums;
+}
+
+// ── Takımlar ──
+.teams {
+  display: grid;
+  gap: $spacing-3;
+}
+.subTitle {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  color: $color-text-secondary;
+}
+.groupBars {
+  display: grid;
+  gap: 6px;
+}
+.groupRow {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: $spacing-2;
+}
+.groupLabel {
+  font-size: 12px;
   font-weight: 600;
   color: $color-text;
 }
-
-.block {
-  display: grid;
-  gap: $spacing-2;
-}
-
-.blockTitle {
-  margin: 0;
+.groupValue {
   font-size: 13px;
   font-weight: 800;
+  font-variant-numeric: tabular-nums;
   color: $color-text;
-}
+  text-align: right;
 
-.list {
-  margin: 0;
-  padding-left: 18px;
+  small {
+    display: block;
+    font-size: 10px;
+    font-weight: 500;
+    color: $color-text-footer-label;
+  }
+}
+.chipsBlock {
   display: grid;
   gap: 6px;
-  font-size: 13px;
-  line-height: 1.55;
+}
+.chips {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: $radius-full;
+  font-size: 12px;
   color: $color-text;
+  background: var(--bg-surface);
+  border: 1px solid $color-border;
+
+  b {
+    font-variant-numeric: tabular-nums;
+    color: $color-primary-text;
+  }
+}
+.muted {
+  margin: 0;
+  font-size: 12px;
+  color: $color-text-footer-label;
 }
 
-.conclusion {
-  margin: 0;
-  font-size: 13px;
-  line-height: 1.55;
-  color: $color-text;
+@keyframes growX {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+@keyframes growY {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fill,
+  .dist,
+  .colBar,
+  .tiles li,
+  .insights li {
+    animation: none;
+  }
 }

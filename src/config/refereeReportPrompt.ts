@@ -1,57 +1,34 @@
 /**
- * Hakem AI raporu (hakem sayfası): sayılar `server/people/refereeReportMetrics.ts`'te HESAPLANIR ve modele hazır
- * verilir; model yalnız yorumlar. Çıktı katı JSON (bölüm başına madde listesi); sezon tablosu arayüzde metriklerden
- * çizilir (model tablo üretmez → tablodaki her sayı doğru).
+ * Hakem AI raporu (hakem sayfası, grafikli "hakem karnesi"): sayılar `server/people/refereeReportMetrics.ts`'te
+ * HESAPLANIR, grafikler de o metriklerden çizilir. Model yalnız KISA yorum verir: tek cümlelik başlık + 3-4 kısa içgörü.
  */
 import type { CurrentMetric, RefereeReportMetrics } from '@/server/people/refereeReportMetrics';
 import { findGamblingTerms } from '@/utils/gamblingTerms';
 
-export const REFEREE_REPORT_VERSION = 'v1-referee-report-2026-11';
+export const REFEREE_REPORT_VERSION = 'v2-referee-card-2026-11';
 
-export const REFEREE_REPORT_SYSTEM_PROMPT = `Sen Scor3 için çalışan bir futbol istatistik analistisin. Sana bir hakemin sayfasındaki veriden
-ÖNCEDEN HESAPLANMIŞ metrikler veriliyor. Bunları Türkçe, net ve tarafsız bir hakem profili raporuna çevireceksin.
+export const REFEREE_REPORT_SYSTEM_PROMPT = `Sen Scor3 için çalışan bir futbol istatistik analistisin. Sana bir hakemin ÖNCEDEN HESAPLANMIŞ
+metrikleri veriliyor. Sayfada bu metriklerin grafikleri zaten var; senin işin grafiklerin üstünde duran ÇOK KISA yorumu yazmak.
 
 KURALLAR
-- Yalnız verilen veriyi ve hesaplanmış metrikleri kullan. Veride olmayan bilgiyi, maç detayını, kariyer geçmişini veya tahmini uydurma.
-- Sayıları YENİDEN HESAPLAMA; verilen değerleri aynen kullan. Ondalık ayırıcı virgül (4,57). Yüzde farkı "%10 üstünde / altında" biçiminde yaz.
-- Lig ortalamasına göre farkı hem değer hem yüzde olarak yaz (örn. "4,57, lig ortalamasının (4,16) yaklaşık %10 üstünde").
-  Lig ortalaması yoksa karşılaştırma yapma, "lig ortalaması henüz yok" de.
-- Küçük örneklemi her zaman belirt: bir metrik 10'dan az maça veya 5'ten az olaya (kırmızı, penaltı, VAR) dayanıyorsa
-  "örneklem küçük, yorum için erken" de ve olay sayısını yaz (örn. "maç başına 0,14 × 7 maç ≈ 1 olay").
-- Takım bazlı kart veya penaltı dağılımından kasıt, taraflılık veya eğilim sonucu ÇIKARMA. Yalnızca "gözlem" olarak ver ve örneklem uyarısı ekle.
-- "Büyük 4" karşılaştırmasını yalnız veride büyük 4 grubu varsa yap (Galatasaray, Fenerbahçe, Beşiktaş, Trabzonspor).
-- Veri tutarsızlığı varsa (takım kırılımı toplamı ile sezon tablosu toplamının uyuşmaması; kırılım yalnız orta hakemlik maçlarını ve en
-  yeni maç parçalarını kapsar) dataNotes'ta kısaca açıkla. Yoksa dataNotes'a tek madde: "Belirgin tutarsızlık tespit edilmedi."
-- Ton: bilgilendirici, kısa, spekülasyonsuz. Emoji yok. Bahis dili yasak ("bahis", "iddaa", "kupon", "banko", "oran", "üst/alt",
-  "KG var/yok", "1X2"); tahmin veya tavsiye verme. Kaynağa atıf yapma ("verilen veriye göre" yazma) — olguyu doğrudan yaz.
-- Her madde tek-iki cümle. Bir bölüm için veri yoksa o diziye tek madde yaz: "Bu bölüm için yeterli veri yok."
+- Yalnız verilen metrikleri kullan; uydurma bilgi, maç detayı, kariyer geçmişi, tahmin yok. Sayıları yeniden hesaplama.
+- Ondalık ayırıcı virgül (4,57). Lig ortalamasıyla farkı "%10 üstünde / altında" biçiminde yaz.
+- Bir metrik 10'dan az maça ya da 5'ten az olaya (kırmızı, penaltı, VAR) dayanıyorsa bunu "az örnek" diye belirt.
+- Takım bazlı kart / penaltı dağılımından kasıt, taraflılık veya eğilim sonucu ÇIKARMA; yalnız gözlem.
+- Ton: bilgilendirici, sade, spekülasyonsuz. Emoji yok. Bahis dili yasak ("bahis", "iddaa", "kupon", "banko", "oran", "üst/alt",
+  "KG var/yok", "1X2"); tavsiye yok. "Verilen veriye göre" gibi kaynak atfı yapma.
 - Çıktı yalnız JSON.
 
 ALANLAR
-- summary: 2-3 cümle: genel profil, en belirgin sapma, örneklem uyarısı.
-- currentSeason: sarı, kırmızı, penaltı ve VAR için AYRI birer madde (4 madde): değer, lig ortalaması, yüzde fark, yaklaşık olay sayısı, anlamlılık yorumu.
-- trend: 3-4 madde: faul trendi, faul başına sarı ve penaltı değişimi, üç sezonluk ağırlıklı ortalamanın lig ortalamasıyla karşılaştırması
-  (lig ortalaması güncel sezona aittir; bunu belirt).
-- competitions: ana lig dışı (alt lig, kupa, Avrupa) maçların ana ligle karşılaştırması + örneklem notu. Yoksa "Ana lig dışında maç yok."
-- teams: büyük 4 ile diğerleri, lehine penaltı dağılımı, yüksek kart oranlı takımlar, sık eşleşmeler; her maddede örneklem uyarısı.
-- recent: ana lig gol ortalaması, ev/beraberlik/deplasman dağılımı, dikkat çeken eşleşmeler.
-- dataNotes: tutarsızlıklar.
-- conclusion: 2-3 cümlelik profil tanımı ve verinin kaç maçta netleşeceği.`;
+- headline: TEK cümle, en çok 22 kelime: hakemin genel profili ve en belirgin sapması.
+- insights: 3 ya da 4 madde; her biri EN ÇOK 14 kelime, tek olgu. Öncelik: lig ortalamasından en büyük sapma, sezonlar arası
+  değişim, son maçlardaki dikkat çeken durum, örneklem uyarısı. tone: "up" (lig ortalamasının / önceki sezonun üstünde),
+  "down" (altında), "warn" (az örnek / veri notu), "neutral" (diğer).`;
 
-export type RefereeReportJson = {
-  summary: string;
-  currentSeason: string[];
-  trend: string[];
-  competitions: string[];
-  teams: string[];
-  recent: string[];
-  dataNotes: string[];
-  conclusion: string;
-};
+export type RefereeInsightTone = 'up' | 'down' | 'warn' | 'neutral';
+export type RefereeReportJson = { headline: string; insights: { tone: RefereeInsightTone; text: string }[] };
 
-const LIST_KEYS = ['currentSeason', 'trend', 'competitions', 'teams', 'recent', 'dataNotes'] as const;
-const STR = { type: 'string' };
-const LIST = { type: 'array', items: STR };
+const TONES: readonly RefereeInsightTone[] = ['up', 'down', 'warn', 'neutral'];
 
 export const REFEREE_REPORT_RESPONSE_FORMAT = {
   type: 'json_schema' as const,
@@ -60,8 +37,19 @@ export const REFEREE_REPORT_RESPONSE_FORMAT = {
     strict: true,
     schema: {
       type: 'object',
-      properties: { summary: STR, currentSeason: LIST, trend: LIST, competitions: LIST, teams: LIST, recent: LIST, dataNotes: LIST, conclusion: STR },
-      required: ['summary', 'currentSeason', 'trend', 'competitions', 'teams', 'recent', 'dataNotes', 'conclusion'],
+      properties: {
+        headline: { type: 'string' },
+        insights: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: { tone: { type: 'string', enum: [...TONES] }, text: { type: 'string' } },
+            required: ['tone', 'text'],
+            additionalProperties: false,
+          },
+        },
+      },
+      required: ['headline', 'insights'],
       additionalProperties: false,
     },
   },
@@ -70,25 +58,17 @@ export const REFEREE_REPORT_RESPONSE_FORMAT = {
 export function validateRefereeReport(data: unknown): RefereeReportJson {
   if (!data || typeof data !== 'object') throw new Error('Hakem raporu obje değil');
   const d = data as Record<string, unknown>;
-  const str = (k: string) => {
-    const v = d[k];
-    if (typeof v !== 'string' || !v.trim()) throw new Error(`${k} eksik`);
-    if (findGamblingTerms(v).length) throw new Error(`${k} kumar dili içeriyor`);
-    return v.trim();
-  };
-  const list = (k: string) => {
-    const v = d[k];
-    if (!Array.isArray(v)) throw new Error(`${k} dizi değil`);
-    // Kumar dili geçen madde atılır (bütün raporu düşürmek yerine).
-    return v
-      .filter((x): x is string => typeof x === 'string' && x.trim().length > 0 && findGamblingTerms(x).length === 0)
-      .map((x) => x.trim())
-      .slice(0, 8);
-  };
-  const out = { summary: str('summary'), conclusion: str('conclusion') } as RefereeReportJson;
-  for (const k of LIST_KEYS) out[k] = list(k);
-  if (out.currentSeason.length === 0 && out.trend.length === 0) throw new Error('Hakem raporu boş');
-  return out;
+  const headline = typeof d.headline === 'string' ? d.headline.trim() : '';
+  if (!headline) throw new Error('headline eksik');
+  if (findGamblingTerms(headline).length) throw new Error('headline kumar dili içeriyor');
+  if (!Array.isArray(d.insights)) throw new Error('insights dizi değil');
+  // Kumar dili geçen madde atılır (bütün raporu düşürmek yerine).
+  const insights = (d.insights as unknown[])
+    .map((x) => x as { tone?: unknown; text?: unknown })
+    .filter((x) => typeof x?.text === 'string' && x.text.trim() && findGamblingTerms(x.text).length === 0)
+    .map((x) => ({ tone: TONES.includes(x.tone as RefereeInsightTone) ? (x.tone as RefereeInsightTone) : 'neutral', text: String(x.text).trim() }))
+    .slice(0, 4);
+  return { headline, insights };
 }
 
 const n = (v: number | null | undefined, digits = 2) => (v == null ? 'yok' : v.toLocaleString('tr-TR', { maximumFractionDigits: digits }));

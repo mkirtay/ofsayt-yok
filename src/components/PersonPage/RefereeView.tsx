@@ -115,6 +115,9 @@ export default function RefereeView({ data }: { data: RefereePageData }) {
         </dl>
       </section>
 
+      {/* Hakem karnesi: özet istatistiklerin hemen altında (grafikli; istemcide yüklenir). */}
+      <RefereeAiReport refereeId={data.id} />
+
       <section className={styles.card} aria-labelledby="ref-seasons">
         <h2 id="ref-seasons" className={styles.sectionTitle}>
           {t('person.seasonsTitle')}
@@ -216,7 +219,6 @@ export default function RefereeView({ data }: { data: RefereePageData }) {
         )}
         <p className={styles.note}>{t('person.teamsNote')}</p>
       </section>
-      <RefereeAiReport refereeId={data.id} name={data.name} />
       <RefereeFanRating refereeId={data.id} />
     </div>
   );

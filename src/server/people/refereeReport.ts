@@ -20,7 +20,7 @@ import {
   validateRefereeReport,
   type RefereeReportJson,
 } from '@/config/refereeReportPrompt';
-import { buildRefereeReportMetrics, type TrendRow } from '@/server/people/refereeReportMetrics';
+import { buildRefereeReportMetrics, type RefereeReportMetrics } from '@/server/people/refereeReportMetrics';
 import { refereePageCacheKey, type RefereePageData } from '@/server/people/refereePage';
 import { peekSwr } from '@/server/swrCache';
 import { runInBackground } from '@/server/backgroundTask';
@@ -37,20 +37,17 @@ const KEEP_SECONDS = 30 * 24 * 60 * 60;
 export const REGEN_MIN_SECONDS = 24 * 60 * 60;
 const LOCK_MS = 45_000;
 const TIMEOUT_MS = 25_000;
-const MAX_TOKENS = 2_000;
+const MAX_TOKENS = 600;
 
-export type RefereeReportView = {
-  report: RefereeReportJson;
-  /** Arayüzdeki trend tablosu (sayılar koddan; model tablo üretmez). */
-  trend: TrendRow[];
-  mainLeague: string | null;
-  generatedAt: number;
-  model: string;
-};
+/** Önbellekteki model çıktısı. */
+type StoredReport = { report: RefereeReportJson; generatedAt: number; model: string };
+
+/** İstemciye: model yorumu (önbellekten) + grafik metrikleri (her istekte sayfa verisinden, güncel). */
+export type RefereeReportView = StoredReport & { metrics: RefereeReportMetrics };
 
 export type RefereeReportResult = { status: 'ready'; data: RefereeReportView } | { status: 'pending' } | { status: 'unavailable' };
 
-type Entry = { hash: string; at: number; data: RefereeReportView };
+type Entry = { hash: string; at: number; data: StoredReport };
 
 const shortLeagues = (trLeagues as { short?: Record<string, string> }).short ?? {};
 export function leagueNameTr(leagueId: number | null): string {
@@ -58,7 +55,8 @@ export function leagueNameTr(leagueId: number | null): string {
   return (key && shortLeagues[key]) || '';
 }
 
-const reportKey = (id: number) => `${cacheKeyPrefix()}people:referee-report:v1:${id}`;
+// v2: grafikli karne şeması (v1 uzun metin kayıtları okunmasın).
+const reportKey = (id: number) => `${cacheKeyPrefix()}people:referee-report:v2:${id}`;
 
 let openai: OpenAI | null = null;
 function client(): OpenAI {
@@ -76,7 +74,7 @@ export function inputHash(userMessage: string): string {
 }
 
 async function callModel(userMessage: string): Promise<RefereeReportJson | null> {
-  const budget = await reserveLlmBudget(llmCostMicroUsd(REFEREE_REPORT_MODEL, { input: 3_500, output: 1_500 }));
+  const budget = await reserveLlmBudget(llmCostMicroUsd(REFEREE_REPORT_MODEL, { input: 3_000, output: 400 }));
   if (!budget) return null;
   let cost: number | null = null;
   const controller = new AbortController();
@@ -117,13 +115,12 @@ async function tryLock(id: number): Promise<boolean> {
 }
 
 /** `locked`: başka bir istek üretiyor; `failed`: model hatası / bütçe doldu. */
-async function generate(id: number, page: RefereePageData, hash: string, userMessage: string, now: number): Promise<Entry | 'locked' | 'failed'> {
+async function generate(id: number, hash: string, userMessage: string, now: number): Promise<Entry | 'locked' | 'failed'> {
   if (!(await tryLock(id))) return 'locked';
   try {
     const report = await callModel(userMessage);
     if (!report) return 'failed';
-    const metrics = buildRefereeReportMetrics(page, leagueNameTr);
-    const entry: Entry = { hash, at: now, data: { report, trend: metrics.trend, mainLeague: metrics.mainLeague?.name || null, generatedAt: now, model: REFEREE_REPORT_MODEL } };
+    const entry: Entry = { hash, at: now, data: { report, generatedAt: now, model: REFEREE_REPORT_MODEL } };
     await withRedis((r) => r.set(reportKey(id), entry, { ex: KEEP_SECONDS }), null);
     return entry;
   } finally {
@@ -139,16 +136,17 @@ export async function getRefereeReport(id: number, deps: RefereeReportDeps = {})
   const page = await (deps.loadPage ?? ((i) => peekSwr<RefereePageData>(refereePageCacheKey(i))))(id);
   if (!page || !hasEnoughData(page)) return { status: 'unavailable' };
 
-  const userMessage = buildRefereeReportUserMessage(buildRefereeReportMetrics(page, leagueNameTr));
+  const metrics = buildRefereeReportMetrics(page, leagueNameTr);
+  const userMessage = buildRefereeReportUserMessage(metrics);
   const hash = inputHash(userMessage);
   const cached = await withRedis((r) => r.get<Entry>(reportKey(id)), null);
 
   if (cached?.data) {
     const stale = cached.hash !== hash && now - cached.at >= REGEN_MIN_SECONDS * 1000;
-    if (stale) runInBackground(() => generate(id, page, hash, userMessage, now));
-    return { status: 'ready', data: cached.data };
+    if (stale) runInBackground(() => generate(id, hash, userMessage, now));
+    return { status: 'ready', data: { ...cached.data, metrics } };
   }
-  const fresh = await generate(id, page, hash, userMessage, now);
+  const fresh = await generate(id, hash, userMessage, now);
   if (fresh === 'locked') return { status: 'pending' };
-  return fresh === 'failed' ? { status: 'unavailable' } : { status: 'ready', data: fresh.data };
+  return fresh === 'failed' ? { status: 'unavailable' } : { status: 'ready', data: { ...fresh.data, metrics } };
 }

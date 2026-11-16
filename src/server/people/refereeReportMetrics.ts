@@ -71,7 +71,22 @@ export type RecentMetrics = {
   draws: number;
   awayWins: number;
   teams: { name: string; count: number }[];
-  pairs: { home: string; away: string; score: string; date: string | null; league: string }[];
+  pairs: {
+    id: number;
+    home: string;
+    away: string;
+    homeId: number;
+    awayId: number;
+    homeLogo?: string;
+    awayLogo?: string;
+    /** Skor okunamadıysa null. */
+    goals: [number, number] | null;
+    score: string;
+    date: string | null;
+    league: string;
+    /** Ana lig maçı mı. */
+    main: boolean;
+  }[];
 };
 
 export type RefereeReportMetrics = {
@@ -197,8 +212,15 @@ function recentMetrics(data: RefereePageData, mainLeagueId: number | null, leagu
       .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'tr'))
       .map(([name, count]) => ({ name, count })),
     pairs: all.map((x) => ({
+      id: x.m.id,
       home: x.m.home.name,
       away: x.m.away.name,
+      homeId: x.m.home.id,
+      awayId: x.m.away.id,
+      ...(x.m.home.logo ? { homeLogo: x.m.home.logo } : {}),
+      ...(x.m.away.logo ? { awayLogo: x.m.away.logo } : {}),
+      goals: x.s,
+      main: mainLeagueId != null && x.leagueId === mainLeagueId,
       score: x.s ? `${x.s[0]}-${x.s[1]}` : '—',
       date: (x.m.date ?? x.m.scheduled ?? '').slice(0, 10) || null,
       league: x.league,

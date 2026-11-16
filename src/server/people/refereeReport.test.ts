@@ -95,16 +95,17 @@ describe('buildRefereeReportMetrics', () => {
 });
 
 describe('validateRefereeReport', () => {
-  it('boş alanları eler, eksik özet hata', () => {
-    const ok = validateRefereeReport({ summary: ' s ', conclusion: 'c', currentSeason: ['a', ''], trend: [], competitions: [], teams: [], recent: [], dataNotes: [] });
-    expect(ok.currentSeason).toEqual(['a']);
-    expect(() => validateRefereeReport({ summary: '', conclusion: 'c' })).toThrow();
-    const g = validateRefereeReport({ summary: 's', conclusion: 'c', currentSeason: ['a', 'iddaa kuponu için banko'], trend: [], competitions: [], teams: [], recent: [], dataNotes: [] });
-    expect(g.currentSeason).toEqual(['a']);
+  it('boş / kumar dilli maddeleri eler, bilinmeyen ton nötr, en çok 4 madde; başlık yoksa hata', () => {
+    const ok = validateRefereeReport({
+      headline: ' Başlık ',
+      insights: [{ tone: 'up', text: 'a' }, { tone: 'x', text: 'b' }, { tone: 'down', text: '' }, { tone: 'warn', text: 'iddaa kuponu için banko' }, { tone: 'up', text: 'c' }, { tone: 'up', text: 'd' }, { tone: 'up', text: 'e' }],
+    });
+    expect(ok).toEqual({ headline: 'Başlık', insights: [{ tone: 'up', text: 'a' }, { tone: 'neutral', text: 'b' }, { tone: 'up', text: 'c' }, { tone: 'up', text: 'd' }] });
+    expect(() => validateRefereeReport({ headline: '', insights: [] })).toThrow();
   });
 });
 
-const REPORT = { summary: 'Özet.', conclusion: 'Sonuç.', currentSeason: ['a'], trend: ['b'], competitions: [], teams: [], recent: [], dataNotes: [] };
+const REPORT = { headline: 'Özet.', insights: [{ tone: 'up', text: 'a' }] };
 const reply = () => ({ choices: [{ message: { content: JSON.stringify(REPORT) } }], usage: { prompt_tokens: 10, completion_tokens: 10 } });
 
 describe('getRefereeReport', () => {
@@ -126,8 +127,8 @@ describe('getRefereeReport', () => {
   it('ilk istek üretir, ikinci önbellekten', async () => {
     const a = await getRefereeReport(7, deps());
     expect(a.status).toBe('ready');
-    expect(a.status === 'ready' && a.data.report.summary).toBe('Özet.');
-    expect(a.status === 'ready' && a.data.trend).toHaveLength(3);
+    expect(a.status === 'ready' && a.data.report.headline).toBe('Özet.');
+    expect(a.status === 'ready' && a.data.metrics.trend).toHaveLength(3);
     await getRefereeReport(7, deps());
     expect(h.create).toHaveBeenCalledTimes(1);
   });
