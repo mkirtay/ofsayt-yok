@@ -99,3 +99,23 @@ karşılaştırma sayfası özetleri, BreadcrumbList / WebSite / FAQPage şemala
 
 Not: Hakem sayfalarında sıralama / yorum dili kullanılmıyor (mevcut kural, testlerde korunuyor): özetler yalnız sayı
 veriyor ("en çok kart gösteren hakem" cümlesi sitede yazılmıyor; tabloda sıralanabiliyor).
+
+## 7. Google Analytics 4 (kod hazır — 5ae540a; ölçüm kimliği sende)
+
+Kodda: GA yalnız ziyaretçi çerez bandında **Kabul et** derse yüklenir (KVKK açık rıza). Reddeden ya da seçim yapmayan
+ziyaretçide GA betiği ve çerezi yok; Vercel Analytics (çerezsiz) herkesi saymaya devam eder. Footer'da "Çerez tercihleri".
+`NEXT_PUBLIC_GA_ID` tanımlı değilken bant da GA da hiç görünmez.
+
+1. https://analytics.google.com → **Yönetici** (sol alt dişli) → **Oluştur → Mülk**.
+   - Mülk adı `Scor3`, saat dilimi **Türkiye**, para birimi **TRY** → İleri → sektör "Spor", işletme bilgileri → **Oluştur**.
+2. Veri akışı: **Web** → URL `https://www.getscor3.com`, akış adı `Scor3 web` → **Akış oluştur**.
+3. Açılan sayfada **Ölçüm Kimliği** (`G-XXXXXXXXXX`) kopyala.
+4. Aynı sayfada **Gelişmiş ölçüm** → dişli → **Sayfa görüntülemeleri → Gelişmiş ayarları göster** →
+   **"Tarayıcı geçmişi olaylarına göre sayfa değişiklikleri" KAPAT** → Kaydet.
+   (Sayfa görüntülemesini kod temizlenmiş adresle kendisi gönderiyor; açık kalırsa çift sayım + ödeme sayfası adresi
+   temizlenmeden gider.)
+5. **Yönetici → Veri toplama ve değiştirme → Veri saklama**: 14 ay seç (varsayılan 2 ay).
+6. **Yönetici → Ürün bağlantıları → Search Console bağlantıları** → getscor3.com mülkünü bağla (arama sorguları GA'da da görünür).
+7. Vercel → proje → **Settings → Environment Variables** → `NEXT_PUBLIC_GA_ID` = `G-XXXXXXXXXX`, ortam **Production**
+   (+ istersen Preview) → Save → **Deployments → son deploy → Redeploy** (NEXT_PUBLIC değişkeni derlemede gömülür).
+8. Kontrol: siteyi gizli pencerede aç → bantta **Kabul et** → GA → **Raporlar → Gerçek zamanlı**'da 1 kullanıcı görünmeli.
