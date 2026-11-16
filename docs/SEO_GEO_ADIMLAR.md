@@ -68,3 +68,34 @@ Ayrıca https://search.google.com/test/rich-results adresine bir maç ve bir tak
 - **Backlink:** taraftar forumları, Ekşi/Reddit r/superlig gibi yerlerde *yararlı* veri paylaşımı (hakem istatistikleri,
   karşılaştırma) — spam değil, kaynak olarak.
 - **Paylaşım kartları:** Frikik ve Tahmin Ligi sonuç kartları zaten var; kullanıcıları paylaşmaya teşvik et.
+
+## 6. SEO/GEO raporu (2026-11-16) — koddan sonra sende kalanlar
+
+Kodda yapılanlar: AI isabet sayfası herkese açık + aylık rapor (`/ai-istatistikleri/rapor/{ay}`), Hakkımızda + Yöntem,
+lig hafta sayfaları (maçlar, skorlar, hakem atamaları, kart sayıları), takım adreslerinde ad (`/teams/34-galatasaray`),
+sitemap dizini (`/sitemap.xml` → `/sitemaps/*.xml`), IndexNow (günlük cron), gömülebilir puan durumu, oyuncu ve
+karşılaştırma sayfası özetleri, BreadcrumbList / WebSite / FAQPage şemaları.
+
+1. **Search Console:** Site haritaları → `https://www.getscor3.com/sitemap.xml` yeniden gönder (artık dizin). "Sayfalar"
+   raporundaki indekslenen sayfa sayısını bugün not et (rapordaki ölçüt).
+2. **Bing Webmaster:** Site haritası aynı. IndexNow ayrıca kurulu (`/api/cron/indexnow`, her gün 04:15 UTC; Vercel
+   `CRON_SECRET` zaten tanımlı). Bing → IndexNow sekmesinde gönderimler 1–2 gün içinde görünmeli.
+3. **Vercel Firewall:** AI Bots kuralı (3. bölüm) — açılmadıkça GPTBot / ClaudeBot / PerplexityBot 403 almaya devam eder.
+4. **Veri haberi / editörler:** her ay başı `https://www.getscor3.com/ai-istatistikleri/rapor/{yyyy-aa}` ve her pazartesi
+   `https://www.getscor3.com/lig/super-lig/hafta` (geçen haftanın kart sayıları + hakemler) bağlantısını spor
+   editörlerine / X'e gönder. Kaynak gösterilebilir sayfa bunlar.
+5. **Gömülebilir puan durumu:** her lig sayfasının altında "Bu puan durumunu sitene ekle" kodu var; taraftar siteleri ve
+   yerel haber sitelerine bu kodu öner (altında Scor3 bağlantısı çıkar).
+6. **Reels / YouTube:** her video açıklamasında ilgili Scor3 sayfasının bağlantısı (maç, hafta ya da hakem sayfası);
+   videoları YouTube Shorts'a da yükle.
+7. **Topluluklar:** Ekşi Sözlük, r/superlig vb. yerlerde veriyle (hakem kart sayıları, AI isabet raporu) katılım; spam değil.
+8. **GEO ölçümü (ayda bir, elle):** aşağıdaki gibi 20 sabit soruyu ChatGPT, Gemini, Perplexity'de sor; Scor3 kaynak
+   gösterildi mi not et. Analitikte `chatgpt.com` ve `perplexity.ai` yönlendirmelerini ayrı izle.
+   - "Süper Lig'de bu sezon maç başına en çok sarı kart gösteren hakem kim?"
+   - "Yapay zekâ ile maç analizi yapan Türkçe siteler hangileri?"
+   - "Süper Lig 12. hafta hakemleri kimler?"
+   - "Galatasaray Fenerbahçe aralarındaki son maçlar"
+   - "Yapay zekâ maç tahminleri ne kadar tutuyor?"
+
+Not: Hakem sayfalarında sıralama / yorum dili kullanılmıyor (mevcut kural, testlerde korunuyor): özetler yalnız sayı
+veriyor ("en çok kart gösteren hakem" cümlesi sitede yazılmıyor; tabloda sıralanabiliyor).
