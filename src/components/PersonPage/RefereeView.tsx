@@ -11,6 +11,7 @@ import type { RefereePageData } from '@/server/people/refereePage';
 import type { RefereeSeasonTableRow } from '@/services/sportmonks/refereeStats';
 import RecentMatchesTable from './RecentMatchesTable';
 import RefereeFanRating from './RefereeFanRating';
+import RefereeAiReport from './RefereeAiReport';
 import styles from './personPage.module.scss';
 import { teamHref } from '@/utils/teamUrl';
 
@@ -215,6 +216,7 @@ export default function RefereeView({ data }: { data: RefereePageData }) {
         )}
         <p className={styles.note}>{t('person.teamsNote')}</p>
       </section>
+      <RefereeAiReport refereeId={data.id} name={data.name} />
       <RefereeFanRating refereeId={data.id} />
     </div>
   );

@@ -581,7 +581,19 @@
     "summaryContext": "{{context}}, {{count}} maç",
     "summaryMatches": "Kapsanan maç",
     "summarySeasons": "{{count}} sezon",
-    "leagueAvg": "Lig ort.: {{value}}"
+    "leagueAvg": "Lig ort.: {{value}}",
+    "aiReportTitle": "AI hakem raporu",
+    "aiReportLoading": "Rapor hazırlanıyor…",
+    "aiReportCurrent": "{{season}} {{league}}: öne çıkanlar",
+    "aiReportCurrentNoLeague": "Güncel sezon: öne çıkanlar",
+    "aiReportTrend": "Sezonlar arası trend",
+    "aiReportCompetitions": "Lig ve turnuva farkı",
+    "aiReportTeams": "Takım kırılımı",
+    "aiReportRecent": "Son maçlar",
+    "aiReportDataNotes": "Veri notu",
+    "aiReportConclusion": "Sonuç",
+    "aiReportNote": "Bu rapor, sayfadaki istatistiklerden yapay zekâ ile üretildi; sayılar sayfa verisiyle hesaplandı. Takım bazlı gözlemler taraflılık iddiası değildir.",
+    "aiReportYellowPerFoul": "Sarı / faul"
   },
   "liveTicker": {
     "label": "Canlı maçlar",

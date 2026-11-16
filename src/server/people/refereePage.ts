@@ -193,13 +193,16 @@ async function leagueAverage(row: RefereeSeasonTableRow): Promise<RefereeRates |
   return null;
 }
 
+/** Sayfa verisinin SWR anahtarı (hakem AI raporu yalnız bu kayıttan okur; ek Sportmonks isteği yok). */
+export const refereePageCacheKey = (id: number) => `${cacheKeyPrefix()}people:referee-page:v2:${id}`;
+
 /**
  * Sayfa verisi Redis'te stale-while-revalidate (taze 6 sa, saklama 7 gün): süresi dolunca eski veri hemen, yenisi
  * arka planda (bkz. server/swrCache.ts); "yok" (404) cache'lenmez. Hiç veri yokken ilk üretim eşzamanlı.
  */
 export async function loadRefereePage(id: number): Promise<RefereePageData | 'missing' | null> {
   let missing = false;
-  const res = await loadWithSwr<RefereePageData>(`${cacheKeyPrefix()}people:referee-page:v2:${id}`, { freshSeconds: REFEREE_PAGE_FRESH_SECONDS }, async () => {
+  const res = await loadWithSwr<RefereePageData>(refereePageCacheKey(id), { freshSeconds: REFEREE_PAGE_FRESH_SECONDS }, async () => {
     const r = await computeRefereePage(id);
     if (r === 'missing') missing = true;
     return r === 'missing' ? null : r;

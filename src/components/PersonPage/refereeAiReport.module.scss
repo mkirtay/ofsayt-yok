@@ -1,0 +1,60 @@
+@use '../../styles/variables' as *;
+
+.loading {
+  padding: $spacing-4;
+}
+
+.loadingText {
+  margin: 0 0 $spacing-3;
+  font-size: 13px;
+  color: $color-text-secondary;
+}
+
+.skeleton {
+  height: 160px;
+  border-radius: $radius-sm;
+  background: color-mix(in srgb, $color-border 60%, transparent);
+}
+
+.body {
+  padding: $spacing-4;
+  display: grid;
+  gap: $spacing-4;
+}
+
+.summary {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  font-weight: 600;
+  color: $color-text;
+}
+
+.block {
+  display: grid;
+  gap: $spacing-2;
+}
+
+.blockTitle {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 800;
+  color: $color-text;
+}
+
+.list {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 6px;
+  font-size: 13px;
+  line-height: 1.55;
+  color: $color-text;
+}
+
+.conclusion {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: $color-text;
+}
