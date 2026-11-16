@@ -58,6 +58,9 @@ export default function Footer() {
                 <Link href="/ai-istatistikleri" className={styles.footerLink}>
                   {t('footer.aiAccuracy')}
                 </Link>
+                <Link href="/futbol-kurallari" className={styles.footerLink}>
+                  {t('footer.footballRules')}
+                </Link>
                 <Link href="/iletisim" className={styles.footerLink}>
                   {t('footer.contact')}
                 </Link>

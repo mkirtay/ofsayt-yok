@@ -7,6 +7,7 @@
 import { siteBaseUrl } from '@/lib/siteUrl';
 import { gameSitemapRoutes } from '@/config/gameFlag';
 import { hubHasWeeks, LEAGUE_HUBS } from '@/config/leagueHubs';
+import { RULE_ARTICLES, RULES_HUB, ruleArticlePath } from '@/content/futbolKurallari';
 import { buildMatchSlug } from '@/utils/matchUrl';
 import { teamHref } from '@/utils/teamUrl';
 
@@ -87,6 +88,7 @@ export async function pagesSection(now: number): Promise<SitemapUrl[]> {
     ...STATIC_ROUTES.map((r) => ({ loc: `${base}${r.path}`, priority: r.priority, changefreq: r.changefreq, ...(r.daily ? { lastmod: today } : {}) })),
     ...gameSitemapRoutes().map((r) => ({ loc: `${base}${r.path}`, priority: r.priority, changefreq: r.changefreq })),
     ...LEAGUE_HUBS.map((h) => ({ loc: `${base}/lig/${h.slug}`, priority: '0.8', changefreq: 'daily', lastmod: today })),
+    ...[RULES_HUB, ...RULE_ARTICLES].map((a) => ({ loc: `${base}${ruleArticlePath(a)}`, priority: '0.6', changefreq: 'monthly', lastmod: a.updatedIso })),
     ...aiReportMonths(now).map((m) => ({ loc: `${base}/ai-istatistikleri/rapor/${m}`, priority: '0.5', changefreq: m === today.slice(0, 7) ? 'daily' : 'monthly' })),
   ];
   try {

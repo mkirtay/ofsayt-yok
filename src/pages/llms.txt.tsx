@@ -2,6 +2,7 @@ import type { GetServerSideProps } from 'next';
 import { siteBaseUrl } from '@/lib/siteUrl';
 import { BRAND, GAME_BRAND } from '@/config/brand';
 import { LEAGUE_HUBS } from '@/config/leagueHubs';
+import { plainRuleText, RULE_ARTICLES, RULES_HUB, ruleArticlePath } from '@/content/futbolKurallari';
 
 /**
  * /llms.txt (llmstxt.org): AI arama asistanlarına (ChatGPT, Claude, Perplexity) sitenin ne olduğunu ve hangi sayfaların
@@ -32,6 +33,10 @@ export function buildLlmsTxt(baseUrl: string): string {
     '## Lig sayfaları (puan durumu + gol krallığı)',
     '',
     ...LEAGUE_HUBS.map((h) => `- [${h.name} puan durumu](${baseUrl}/lig/${h.slug}): ${h.region}`),
+    '',
+    '## Futbol kuralları (IFAB 2026/27, Türkçe)',
+    '',
+    ...[RULES_HUB, ...RULE_ARTICLES].map((a) => `- [${plainRuleText(a.heading)}](${baseUrl}${ruleArticlePath(a)}): ${a.description}`),
     '',
     '## Sayfa türleri',
     '',

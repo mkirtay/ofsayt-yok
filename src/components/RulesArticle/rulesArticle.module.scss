@@ -1,0 +1,241 @@
+@use '../../styles/variables' as *;
+
+.page {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: $spacing-5 0 $spacing-8;
+}
+
+.crumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-1;
+  font-size: 12px;
+  color: $color-text-secondary;
+  margin-bottom: $spacing-3;
+
+  a {
+    color: $color-text-secondary;
+  }
+}
+
+.badge,
+.cardBadge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  color: $color-primary-text;
+  border: 1px solid currentColor;
+  border-radius: $radius-full;
+  padding: 1px $spacing-2;
+}
+
+.title {
+  font-size: 26px;
+  line-height: 1.25;
+  font-weight: 800;
+  color: $color-text;
+  margin: $spacing-2 0;
+}
+
+.meta {
+  font-size: 12px;
+  color: $color-text-secondary;
+  margin-bottom: $spacing-4;
+}
+
+.lead {
+  font-size: 16px;
+  line-height: 1.65;
+  color: $color-text;
+  margin-bottom: $spacing-5;
+}
+
+.lead a,
+.section a {
+  color: $color-primary-text;
+  font-weight: 600;
+}
+
+.section {
+  margin-bottom: $spacing-5;
+  scroll-margin-top: 80px;
+
+  h2 {
+    font-size: 19px;
+    font-weight: 700;
+    color: $color-text;
+    margin-bottom: $spacing-2;
+  }
+
+  h3 {
+    font-size: 15px;
+    font-weight: 700;
+    color: $color-text;
+    margin-bottom: $spacing-1;
+  }
+
+  p,
+  li {
+    font-size: 15px;
+    line-height: 1.65;
+    color: $color-text-secondary;
+  }
+
+  strong {
+    color: $color-text;
+  }
+
+  p + p {
+    margin-top: $spacing-2;
+  }
+
+  ul,
+  ol {
+    padding-left: $spacing-5;
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-1;
+  }
+
+  ul {
+    list-style: disc;
+  }
+
+  ol {
+    list-style: decimal;
+  }
+}
+
+.tableWrap {
+  overflow-x: auto;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  line-height: 1.45;
+
+  th,
+  td {
+    text-align: left;
+    vertical-align: top;
+    padding: $spacing-2 $spacing-3;
+    border-bottom: 1px solid $color-border;
+    color: $color-text-secondary;
+  }
+
+  thead th {
+    background: $color-surface;
+    color: $color-text;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  tbody th {
+    color: $color-text;
+    font-weight: 600;
+    min-width: 120px;
+  }
+
+  tbody tr:last-child > * {
+    border-bottom: 0;
+  }
+}
+
+.faqItem + .faqItem {
+  margin-top: $spacing-3;
+}
+
+.faq {
+  border-top: 1px solid $color-border;
+  padding-top: $spacing-4;
+}
+
+.related .cards {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: $spacing-2;
+}
+
+.related .card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: $spacing-1;
+  height: 100%;
+  padding: $spacing-3;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  background: $color-surface;
+  color: $color-text;
+  font-weight: 400;
+  transition: border-color $transition-base;
+
+  strong {
+    font-size: 14px;
+    line-height: 1.35;
+  }
+
+  &:hover,
+  &:focus-visible {
+    border-color: $color-primary;
+  }
+}
+
+.ruleIndex {
+  margin-bottom: $spacing-5;
+  padding: $spacing-3 $spacing-4;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  background: $color-surface;
+
+  h2 {
+    font-size: 14px;
+    font-weight: 700;
+    color: $color-text;
+    margin-bottom: $spacing-2;
+  }
+
+  ol {
+    columns: 2 200px;
+    column-gap: $spacing-4;
+    padding-left: $spacing-5;
+    list-style: decimal;
+    font-size: 13px;
+    line-height: 1.8;
+  }
+
+  a {
+    color: $color-text-secondary;
+  }
+}
+
+.figure {
+  margin: 0 0 $spacing-3;
+
+  figcaption {
+    font-size: 12px;
+    line-height: 1.5;
+    color: $color-text-secondary;
+    margin-top: $spacing-1;
+  }
+}
+
+.diagram {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: 560px;
+}
+
+.sources {
+  font-size: 12px;
+  line-height: 1.5;
+  color: $color-text-secondary;
+}
