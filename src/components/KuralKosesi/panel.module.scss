@@ -335,6 +335,7 @@
 }
 
 .option {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -448,4 +449,42 @@
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
+}
+
+// Doğru cevapta şıkkın ortasından konfeti (Quiz.tsx Confetti). Yön/dönüş/gecikme parça başına CSS değişkeninde.
+.confetti {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  z-index: 1;
+
+  @media (prefers-reduced-motion: reduce) {
+    display: none;
+  }
+}
+
+.confettiPiece {
+  position: absolute;
+  left: -4px;
+  top: -4px;
+  opacity: 0;
+  animation: kkConfetti 900ms cubic-bezier(0.15, 0.7, 0.3, 1) var(--d, 0ms) forwards;
+}
+
+@keyframes kkConfetti {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) rotate(0deg) scale(0.6);
+  }
+  55% {
+    opacity: 1;
+    transform: translate(var(--x), var(--y)) rotate(calc(var(--r) * 0.6)) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(var(--x) * 1.15), calc(var(--y) + 46px)) rotate(var(--r)) scale(0.9);
+  }
 }

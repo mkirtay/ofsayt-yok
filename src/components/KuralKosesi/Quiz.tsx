@@ -1,4 +1,4 @@
-import { useId } from 'react';
+import { useEffect, useId, useState, type CSSProperties } from 'react';
 import { useTranslation } from '@/lib/i18n';
 import '@/lib/i18nNamespaces/kuralKosesi';
 import type { LocalizedQuiz } from './facts';
@@ -15,12 +15,51 @@ type QuizProps = {
   onNext?: () => void;
 };
 
+const CONFETTI_COLORS = ['#00a76f', '#2fd39b', '#ffc107', '#ffffff', '#ff5630', '#3b82f6'];
+const CONFETTI_PIECES = 22;
+/** Konfeti ömrü (scss'teki animasyon süresi + pay); sonra parçalar DOM'dan kalkar. */
+const CONFETTI_MS = 1100;
+
+/** Doğru şıkkın ortasından dışa saçılan konfeti; parçaların yönü/rengi her patlamada rastgele. Hareketi azalt'ta gizli. */
+function Confetti() {
+  const [pieces] = useState(() =>
+    Array.from({ length: CONFETTI_PIECES }, (_, i) => {
+      const angle = (i / CONFETTI_PIECES) * Math.PI * 2 + Math.random() * 0.5;
+      const dist = 50 + Math.random() * 70;
+      return {
+        '--x': `${Math.round(Math.cos(angle) * dist * 1.6)}px`,
+        '--y': `${Math.round(Math.sin(angle) * dist - 30)}px`,
+        '--r': `${Math.round(Math.random() * 720 - 360)}deg`,
+        '--d': `${Math.round(Math.random() * 120)}ms`,
+        background: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+        width: i % 3 === 0 ? 8 : 6,
+        height: i % 3 === 0 ? 8 : 10,
+        borderRadius: i % 3 === 0 ? '50%' : 2,
+      } as CSSProperties;
+    }),
+  );
+  return (
+    <span className={styles.confetti} aria-hidden="true">
+      {pieces.map((style, i) => (
+        <span key={i} className={styles.confettiPiece} style={style} />
+      ))}
+    </span>
+  );
+}
+
 /** Bilgi kartının altındaki tek soruluk test: şık seç → doğru/yanlış + kısa açıklama, skor ve sıradaki soru. */
 export default function Quiz({ quiz, answer, score, onAnswer, onNext }: QuizProps) {
   const { t } = useTranslation('kuralKosesi');
   const questionId = useId();
   const answered = answer !== undefined;
   const right = answered && answer === quiz.correct;
+  // Konfeti yalnız bu açılışta doğru cevaplanınca (daha önce cevaplanmış soruya dönünce patlamaz).
+  const [burst, setBurst] = useState(false);
+  useEffect(() => {
+    if (!burst) return;
+    const id = window.setTimeout(() => setBurst(false), CONFETTI_MS);
+    return () => window.clearTimeout(id);
+  }, [burst]);
 
   return (
     <section className={styles.quiz} aria-labelledby={questionId}>
@@ -44,8 +83,13 @@ export default function Quiz({ quiz, answer, score, onAnswer, onNext }: QuizProp
               className={`${styles.option} ${state}`}
               disabled={answered}
               aria-pressed={answered ? i === answer : undefined}
-              onClick={() => onAnswer(i)}
+              onClick={() => {
+                if (answered) return;
+                if (i === quiz.correct) setBurst(true);
+                onAnswer(i);
+              }}
             >
+              {burst && i === quiz.correct ? <Confetti /> : null}
               <span className={styles.optionKey} aria-hidden="true">
                 {String.fromCharCode(65 + i)}
               </span>
