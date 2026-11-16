@@ -21,7 +21,7 @@ export function buildLlmsTxt(baseUrl: string): string {
     '',
     `- [Canlı skorlar ve günün maçları](${baseUrl}/): Bugünün tüm maçları, canlı skorlar, lig lig fikstür`,
     `- [Bugün ${BRAND.name}'te](${baseUrl}/bugun): Günün öne çıkan maçları ve özetler`,
-    `- [Puan durumu](${baseUrl}/standings): Liglerin güncel puan tabloları ve istatistikleri`,
+    `- [Ligler](${baseUrl}/lig): Liglerin güncel puan tabloları ve gol krallığı`,
     `- [Hakem istatistikleri](${baseUrl}/hakemler): Süper Lig ve 1. Lig hakemlerinin kart, penaltı ve maç istatistikleri`,
     '',
     '## Lig sayfaları (puan durumu + gol krallığı)',

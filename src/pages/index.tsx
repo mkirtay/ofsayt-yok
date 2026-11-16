@@ -43,7 +43,10 @@ export const getStaticProps: GetStaticProps<HomeProps> = async () => {
   }
 };
 
-const HOME_TITLE = `${BRAND.name} — Canlı Maç Sonuçları & Analiz`;
+const HOME_TITLE = `Canlı Skor, Maç Sonuçları ve AI Maç Analizi | ${BRAND.name}`;
+const HOME_DESC = `Canlı skor, maç sonuçları, puan durumu ve yapay zekâ maç analizi: Süper Lig, Avrupa ligleri ve UEFA. ${BRAND.name} (Skor3).`;
+/** Marka yazımı söylendiği gibi değil: "Skor3", "getscor3" aramaları da Scor3'e bağlansın. */
+const BRAND_ALTERNATE_NAMES = ['Skor3', 'getscor3', 'Scor3.com'];
 
 export default function Home({ initialDate, initialData }: HomeProps) {
   const { t } = useTranslation('match');
@@ -51,19 +54,28 @@ export default function Home({ initialDate, initialData }: HomeProps) {
     <>
       <Head>
         <title>{HOME_TITLE}</title>
-        <meta name="description" content="Türkiye Süper Lig, UEFA ve dünya futbolundan canlı skorlar, maç analizleri, puan durumu ve spor haberleri." />
+        <meta name="description" content={HOME_DESC} />
         <meta property="og:title" content={HOME_TITLE} />
-        <meta property="og:description" content="Türkiye Süper Lig, UEFA ve dünya futbolundan canlı skorlar, maç analizleri, puan durumu ve spor haberleri." />
-        <meta property="og:url" content={siteBaseUrl()} />
-        <link rel="canonical" href={siteBaseUrl()} />
+        <meta property="og:description" content={HOME_DESC} />
+        <meta property="og:url" content={`${siteBaseUrl()}/`} />
+        <link rel="canonical" href={`${siteBaseUrl()}/`} />
         <JsonLd schema={{
           '@context': 'https://schema.org',
           '@type': 'Organization',
           name: BRAND.name,
-          url: siteBaseUrl(),
+          alternateName: BRAND_ALTERNATE_NAMES,
+          url: `${siteBaseUrl()}/`,
           logo: `${siteBaseUrl()}${BRAND_LOGO_PNG}`,
           description: BRAND.description,
           ...(socialProfileUrls().length > 0 && { sameAs: socialProfileUrls() }),
+        }} />
+        <JsonLd schema={{
+          '@context': 'https://schema.org',
+          '@type': 'WebSite',
+          name: BRAND.name,
+          alternateName: BRAND_ALTERNATE_NAMES,
+          url: `${siteBaseUrl()}/`,
+          inLanguage: 'tr-TR',
         }} />
       </Head>
       {/* Sayfanın tek H1'i: görsel tasarımda başlık yok → yalnız ekran okuyucu / arama motoru için (yerleşimi etkilemez). */}

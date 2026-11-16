@@ -10,7 +10,6 @@ const BASE_URL = siteBaseUrl();
 const STATIC_ROUTES: { path: string; priority: string; changefreq: string }[] = [
   { path: '/', priority: '1.0', changefreq: 'hourly' },
   { path: '/bugun', priority: '0.7', changefreq: 'hourly' },
-  { path: '/standings', priority: '0.8', changefreq: 'daily' },
   { path: '/lig', priority: '0.7', changefreq: 'weekly' },
   ...LEAGUE_HUBS.map((h) => ({ path: `/lig/${h.slug}`, priority: '0.8', changefreq: 'daily' })),
   { path: '/hakemler', priority: '0.6', changefreq: 'daily' },

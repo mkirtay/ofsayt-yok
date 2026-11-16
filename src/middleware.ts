@@ -3,7 +3,8 @@ import type { NextRequest } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 import { constantTimeEqual } from '@/lib/constantTimeEqual';
 
-const AUTH_PAGES = ['/profile', '/ai-istatistikleri'];
+// /ai-istatistikleri 2026-11-16'dan beri herkese açık (SEO/GEO güven kanıtı); yönetici bandı API'de rolle gelir.
+const AUTH_PAGES = ['/profile'];
 
 // ── ESKİ ALAN ADI KAPALI (2026-10-13) ────────────────────────────────────────────────────────────────────────────────
 // ofsaytyok.app / www.ofsaytyok.app'teki SAYFA istekleri 410 Gone + kısa "kapatıldı" sayfası alır (yönlendirme yok, link
@@ -122,7 +123,6 @@ export async function middleware(req: NextRequest) {
 export const config = {
   matcher: [
     '/profile',
-    '/ai-istatistikleri',
     '/api/admin/:path*',
     '/admin/:path*',
     // Eski alan adı: yalnız bu host'ta, /api /_next /.well-known dışı her yol (uzantı kontrolü kodda). Diğer host'larda

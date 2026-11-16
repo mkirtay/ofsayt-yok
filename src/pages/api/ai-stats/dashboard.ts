@@ -13,11 +13,14 @@ export default async function handler(
   }
 
   const auth = await getRequestAuth(req, res);
-  if (!auth) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
 
   try {
+    // Girişsiz: herkese açık görünüm (yalnız değerlendirilmiş analizler; yönetici bandı yok), kısa CDN önbelleği.
+    if (!auth) {
+      const data = await loadAiStatsDashboard({ role: null });
+      res.setHeader('Cache-Control', 'public, s-maxage=600, stale-while-revalidate=3600');
+      return res.status(200).json(data);
+    }
     // Rol oturumdan / belirteçten değil DB'den: yetkisi alınan yönetici kilitli tahminleri görmeye devam etmesin.
     const row = await prisma.user.findUnique({ where: { id: auth.id }, select: { role: true } });
     if (!row) return res.status(401).json({ error: 'Unauthorized' });

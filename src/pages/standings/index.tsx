@@ -186,6 +186,8 @@ export default function Standings() {
         <meta property="og:description" content={t('pageDesc')} />
         <meta property="og:url" content={`${origin}/standings`} />
         <link rel="canonical" href={`${origin}/standings`} />
+        {/* Uygulama içi seçici (istemcide lig); arama için kalıcı sayfalar /lig/{slug} (SEO raporu: yamyamlık). */}
+        <meta name="robots" content="noindex, follow" />
       </Head>
       <div className={styles.pageHeader}>
         <h1>{t('heading')}</h1>

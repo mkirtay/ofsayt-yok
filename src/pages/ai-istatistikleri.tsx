@@ -1,6 +1,7 @@
 import { useTranslation } from '@/lib/i18n';
 import '@/lib/i18nNamespaces/ai';
 import Head from 'next/head';
+import type { GetStaticProps } from 'next';
 import Link from 'next/link';
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
@@ -58,11 +59,27 @@ function AiStatsPageSkeleton() {
   );
 }
 
-export default function AiIstatistikleri() {
+type PageProps = { initialPublic: AiStatsDashboard | null };
+
+/**
+ * Herkese açık (2026-11-16, SEO/GEO raporu): isabet oranı sitenin en güçlü güven kanıtı. Herkese açık görünüm ISR ile
+ * HTML'de (yalnız değerlendirilmiş analizler); istemci kendi görünümünü çeker (yönetici bandı rolle gelir).
+ */
+export const getStaticProps: GetStaticProps<PageProps> = async () => {
+  try {
+    const { loadAiStatsDashboard } = await import('@/lib/loadAiStatsDashboard');
+    const data = await loadAiStatsDashboard({ role: null });
+    return { props: { initialPublic: JSON.parse(JSON.stringify(data)) as AiStatsDashboard }, revalidate: 1800 };
+  } catch {
+    return { props: { initialPublic: null }, revalidate: 120 };
+  }
+};
+
+export default function AiIstatistikleri({ initialPublic = null }: Partial<PageProps> = {}) {
   const { t } = useTranslation('ai');
   const { t: tm } = useTranslation('match');
   const queryClient = useQueryClient();
-  const { data, isLoading, isError, refetch } = useAiStatsDashboard();
+  const { data, isLoading, isError, refetch } = useAiStatsDashboard(true, initialPublic);
   const [evalLoading, setEvalLoading] = useState(false);
   const [evalResult, setEvalResult] = useState('');
 
@@ -121,6 +138,19 @@ export default function AiIstatistikleri() {
           <div className={styles.hero}>
             <h1 className={styles.heroTitle}>{t('heroTitle')}</h1>
             <p className={styles.heroSub}>{t('heroSub')}</p>
+            {data && data.topPicks.picks > 0 && (
+              <p className={styles.heroSub}>
+                {t('summarySentence', {
+                  rate: data.topPicks.rate,
+                  hits: data.topPicks.hits,
+                  picks: data.topPicks.picks,
+                  matches: data.topPicks.matches,
+                  defaultValue:
+                    'Scor3 yapay zekâ analizlerinin kartta öne çıkan en güçlü 3 tahmini, değerlendirilen {{matches}} maçta {{picks}} tahminin {{hits}}’inde gerçekleşti (%{{rate}}).',
+                })}{' '}
+                <Link href="/yontem">{t('methodLink', { defaultValue: 'Nasıl ölçüyoruz?' })}</Link>
+              </p>
+            )}
           </div>
 
           {isError && (

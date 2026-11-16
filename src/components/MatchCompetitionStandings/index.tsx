@@ -339,7 +339,7 @@ function StandingsTable({
                 <td className={styles.colTeam}>
                   <div className={styles.teamCell}>
                     {logo ? (
-                      <TeamLogo src={logo} alt="" className={styles.teamLogo} width={16} height={16} />
+                      <TeamLogo src={logo} alt={fullName ? `${fullName} logosu` : ""} className={styles.teamLogo} width={16} height={16} />
                     ) : null}
                     <div className={styles.teamText}>
                       <span className={styles.nameRow}>

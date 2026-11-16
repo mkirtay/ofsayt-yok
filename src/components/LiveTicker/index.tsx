@@ -76,13 +76,13 @@ function ItemBody({ match, priority = false }: { match: Match; priority?: boolea
         <span className={styles.name} title={match.home?.name}>
           {shortName(match.home)}
         </span>
-        <TeamLogo src={match.home?.logo} alt="" width={20} className={styles.crest} priority={priority} />
+        <TeamLogo src={match.home?.logo} alt={match.home?.name ? `${match.home.name} logosu` : ''} width={20} className={styles.crest} priority={priority} />
       </span>
       <span className={styles.score}>
         {hs}–{as}
       </span>
       <span className={styles.away}>
-        <TeamLogo src={match.away?.logo} alt="" width={20} className={styles.crest} priority={priority} />
+        <TeamLogo src={match.away?.logo} alt={match.away?.name ? `${match.away.name} logosu` : ''} width={20} className={styles.crest} priority={priority} />
         <span className={styles.name} title={match.away?.name}>
           {shortName(match.away)}
         </span>

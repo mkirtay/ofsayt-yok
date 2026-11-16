@@ -112,7 +112,7 @@ export function StandingsTable({ blocks, competitionId }: { blocks: StandingsBlo
                       </td>
                       <td className={styles.colTeam}>
                         <div className={styles.teamCell}>
-                          <TeamLogo src={logo} alt="" className={styles.teamLogo} width={20} height={20} />
+                          <TeamLogo src={logo} alt={name ? `${name} logosu` : ''} className={styles.teamLogo} width={20} height={20} />
                           <div className={styles.teamText}>
                             {id != null ? (
                               <Link href={`/teams/${id}`} prefetch={false} className={styles.teamLink} title={name} aria-label={name}>

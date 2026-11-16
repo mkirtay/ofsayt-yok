@@ -13,11 +13,10 @@ export function buildRobotsTxt(baseUrl: string): string {
     'Disallow: /',
     '',
     'User-agent: *',
+    // Grup içinde boş satır yok (katı ayrıştırıcılar boş satırdan sonraki Disallow'u gruba bağlamaz).
     'Allow: /',
-    '',
     'Disallow: /api/',
     'Disallow: /profile',
-    'Disallow: /ai-istatistikleri',
     'Disallow: /auth/',
     '',
     `Sitemap: ${baseUrl}/sitemap.xml`,

@@ -68,5 +68,7 @@
   "topPicksSub": "{{hit}} / {{total}} picks correct · {{matches}} analyses",
   "topPicksHint": "The 3 highest-probability picks shown at the top of each analysis card (e.g. 2+ goals, home team finds the net) are checked after the match. Only analyses from the current model (since 3 Oct 2026) whose match page is available are counted.",
   "colTopPicks": "Top 3 Picks",
-  "topPicksRow": "{{hit}}/{{total}} correct"
+  "topPicksRow": "{{hit}}/{{total}} correct",
+  "summarySentence": "The top 3 picks highlighted on Scor3 AI analysis cards came true in {{hits}} of {{picks}} picks across {{matches}} evaluated matches ({{rate}}%).",
+  "methodLink": "How we measure"
 }

@@ -3,6 +3,7 @@
  * `teams/{id}` genel bakış isteğiyle aynı (aynı önbellek anahtarı → çoğunlukla HIT); sayfa render bütçesi (3 sn).
  */
 import { getTeamOverview } from '@/services/teamPage';
+import { leagueDisplayName } from '@/lib/gundem/bot/leagueNames';
 import type { TeamOverview } from '@/services/sportmonks/teamOverview';
 import { SportmonksHttpError } from '@/services/sportmonks/httpClient';
 import { SPORTMONKS_TIMEOUT_MS, withSportmonksTimeout } from '@/server/sportmonks/cachedFetch';
@@ -24,7 +25,8 @@ export type TeamPageShell = { kind: 'found'; name: string; facts: TeamPageFacts 
 
 export function teamFactsFromOverview(o: TeamOverview): TeamPageFacts {
   const current = o.campaigns[0];
-  const competitions = [...new Set((current?.seasons ?? []).map((s) => s.leagueName?.trim()).filter((n): n is string => Boolean(n)))];
+  // Türkçe kısa ad ("Super Lig" → "Süper Lig", "Champions League" → "Şampiyonlar Ligi"); eşlemesi yoksa API adı.
+  const competitions = [...new Set((current?.seasons ?? []).map((s) => leagueDisplayName(s.leagueId, s.leagueName)).filter((n): n is string => Boolean(n)))];
   return {
     logo: o.team?.logo ?? null,
     coach: o.coach?.name ?? null,

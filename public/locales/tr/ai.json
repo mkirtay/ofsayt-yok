@@ -68,5 +68,7 @@
   "topPicksSub": "{{hit}} / {{total}} tahmin doğru · {{matches}} analiz",
   "topPicksHint": "Her analiz kartının üstünde en yüksek olasılıkla öne çıkan 3 tahmin (ör. 2+ gol, ev sahibi gol bulur) maç bitince kontrol edilir. Yalnız güncel modelle (3 Ekim 2026'dan beri) üretilmiş, maç sayfası açılan analizler sayılır.",
   "colTopPicks": "En Güçlü 3 Tahmin",
-  "topPicksRow": "{{hit}}/{{total}} doğru"
+  "topPicksRow": "{{hit}}/{{total}} doğru",
+  "summarySentence": "Scor3 yapay zekâ analizlerinin kartta öne çıkan en güçlü 3 tahmini, değerlendirilen {{matches}} maçta {{picks}} tahminin {{hits}}’inde gerçekleşti (%{{rate}}).",
+  "methodLink": "Nasıl ölçüyoruz?"
 }

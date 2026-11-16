@@ -535,7 +535,7 @@ function VirtualRow({
           className={`${styles.virtualCell} ${styles.virtualHome}${match.home?.id ? ` ${styles.virtualTeamCell}` : ''}`}
           onClick={match.home?.id ? (e) => { e.stopPropagation(); e.preventDefault(); if (onSelectTeam) onSelectTeam(match.home!.id); else navigateTo(`/teams/${match.home!.id}`); } : undefined}
         >
-          <TeamLogo src={homeLogo} className={styles.teamCrest} width={18} fallback={nationalMatch ? crestCode(homeName) : null} />
+          <TeamLogo src={homeLogo} alt={homeName ? `${homeName} logosu` : ''} className={styles.teamCrest} width={18} fallback={nationalMatch ? crestCode(homeName) : null} />
           {/* Kart adın dış tarafında: ad skora bitişik yerinde kalır (kayma yok). */}
           <RedCardBadge count={redCardCountFor(match, 'home')} />
           <TeamNameLabel
@@ -553,7 +553,7 @@ function VirtualRow({
           className={`${styles.virtualCell} ${styles.virtualAway}${match.away?.id ? ` ${styles.virtualTeamCell}` : ''}`}
           onClick={match.away?.id ? (e) => { e.stopPropagation(); e.preventDefault(); if (onSelectTeam) onSelectTeam(match.away!.id); else navigateTo(`/teams/${match.away!.id}`); } : undefined}
         >
-          <TeamLogo src={awayLogo} className={styles.teamCrest} width={18} fallback={nationalMatch ? crestCode(awayName) : null} />
+          <TeamLogo src={awayLogo} alt={awayName ? `${awayName} logosu` : ''} className={styles.teamCrest} width={18} fallback={nationalMatch ? crestCode(awayName) : null} />
           <TeamNameLabel
             teamId={match.away?.id}
             name={awayName}
