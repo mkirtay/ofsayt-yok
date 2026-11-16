@@ -13,7 +13,7 @@ vi.mock('@/server/resolveMatchPage', () => ({
 }));
 vi.mock('@/server/matchCardH2h', () => ({ loadMatchCardH2h: async () => null }));
 vi.mock('@/server/matchDetailSeed', () => ({ loadMatchDetailSeed: async () => ({ stats: null, lineups: null }) }));
-vi.mock('@/server/analysisPreviewForPage', () => ({ loadAnalysisPreviewForPage: async () => null }));
+vi.mock('@/server/analysisPreviewForPage', () => ({ loadAnalysisPreviewForPage: async () => null, loadPostMatchAnalysisForPage: async () => null }));
 
 const ctx = (slug: string, resolvedUrl: string) =>
   ({ params: { slug }, resolvedUrl, res: { setHeader: () => {}, statusCode: 200 } }) as unknown as GetServerSidePropsContext;

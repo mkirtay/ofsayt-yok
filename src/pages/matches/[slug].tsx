@@ -9,6 +9,10 @@ import MatchCompetitionStandings from '@/components/MatchCompetitionStandings';
 import MatchVenueCard from '@/components/MatchVenueCard';
 import MatchChatPanelSlot from '@/components/MatchChatPanel';
 import MatchArchivedTabs from '@/components/MatchArchivedTabs';
+import { breadcrumbJsonLd } from '@/utils/breadcrumbJsonLd';
+import { leagueHubByLeagueId } from '@/config/leagueHubs';
+import Link from 'next/link';
+import { refereeHref } from '@/utils/personUrl';
 import JsonLd from '@/components/JsonLd';
 import { useMatchDetail } from '@/hooks/useMatchDetail';
 import type { Match } from '@/models/liveScore';
@@ -19,7 +23,7 @@ import { reduceStandingsToTeamGroup, standingsGroupCount, titleStandings, withou
 import { standingsGroupHeading } from '@/components/MatchCompetitionStandings/groupHeading';
 import { leagueNameById } from '@/utils/leagueName';
 import { resolveMatchPage } from '@/server/resolveMatchPage';
-import { loadAnalysisPreviewForPage } from '@/server/analysisPreviewForPage';
+import { loadAnalysisPreviewForPage, loadPostMatchAnalysisForPage, type PostMatchAnalysisText } from '@/server/analysisPreviewForPage';
 import type { AnalysisPreview } from '@/utils/analysisPreview';
 import { analysisPaywallJsonLd } from '@/utils/analysisPaywall';
 import { defaultMatchPageOptionalDeps, loadMatchPageOptionalSections } from '@/server/matchPageOptional';
@@ -68,6 +72,8 @@ type MatchDetailProps = {
   archived?: boolean;
   /** AI analizi ücretsiz önizlemesi (kredi modeli v2; analiz yoksa alan yok) — SEO için HTML'de. */
   initialAnalysisPreview?: AnalysisPreview;
+  /** Biten maç: maç öncesi AI analizinin herkese açık özeti (SSR HTML; "Maç bilgisi" bölümünde). */
+  postMatchAnalysis?: PostMatchAnalysisText;
   /** Maç tahmin oyununun bu haftaki / bugünkü listesinde ve başlamamış (oyun herkese açıkken) → "skorunu tahmin et" kartı. */
   gameSlot?: GameSlot;
 };
@@ -137,7 +143,7 @@ export const getServerSideProps: GetServerSideProps<MatchDetailProps> = async (c
         // İstatistik/kadro maçı çözen aynı `fixtures/{id}` yanıtında geldiyse (normal yol) ek istek yok ve baskıda da verilir;
         // hafif bot sürümünde yok.
         const pageSeed = page.stats !== undefined && page.lineups !== undefined ? { stats: page.stats, lineups: page.lineups } : null;
-        const [optional, analysisPreview, gameSlot] = await Promise.all([
+        const [optional, analysisPreview, gameSlot, postAnalysis] = await Promise.all([
           loadMatchPageOptionalSections(page.match, apiMatchId, {
             ...defaultMatchPageOptionalDeps,
             // Milli maçta H2H / form yok (takım id'leri AF uzayında; Sportmonks'a gidilmez) → "veri yok".
@@ -156,6 +162,8 @@ export const getServerSideProps: GetServerSideProps<MatchDetailProps> = async (c
           loadAnalysisPreviewForPage(apiMatchId),
           // Tahmin oyunu kartı (oyun herkese açıkken; tek indeksli sorgu, hata → null).
           lightBot ? Promise.resolve(null) : loadGameSlotForFixture(apiMatchId),
+          // Biten maç: analiz herkese açık → kalıcı metin HTML'de (tek DB sorgusu; SEO/GEO).
+          page.match.status === 'FINISHED' ? loadPostMatchAnalysisForPage(apiMatchId) : Promise.resolve(null),
         ]);
         const { h2h } = optional;
         const transientError = optional.transientError || page.partial === true;
@@ -178,6 +186,7 @@ export const getServerSideProps: GetServerSideProps<MatchDetailProps> = async (c
             // DOM) mobilde FCP/LCP'yi ~130/370 ms geciktiriyordu.
             ...(seed.lineups === null ? { initialLineups: null } : {}),
             ...(analysisPreview ? { initialAnalysisPreview: analysisPreview } : {}),
+            ...(postAnalysis ? { postMatchAnalysis: postAnalysis } : {}),
             ...(gameSlot ? { gameSlot } : {}),
           },
         };
@@ -209,6 +218,7 @@ export default function MatchDetail({
   gone = false,
   archived = false,
   initialAnalysisPreview,
+  postMatchAnalysis,
   gameSlot,
 }: MatchDetailProps) {
   const router = useRouter();
@@ -296,7 +306,8 @@ export default function MatchDetail({
   const awayName = match?.away?.name || '';
   const compName = match?.competition?.name || match?.competition_name || '';
   // SEO / GEO: durumuna göre başlık ("ne zaman, saat kaçta" / "canlı skor" / "maç sonucu"), açıklama, H1, maç bilgisi özeti.
-  const seo = buildMatchSeo(match, brandTitle);
+  const refereeLink = match?.referee && match.referee_id ? refereeHref(match.referee_id, match.referee) : null;
+  const seo = buildMatchSeo(match, brandTitle, { events: initialEvents, omitReferee: Boolean(refereeLink) });
   const pageTitle = seo.title;
   const pageDescription = seo.description;
   // Paylaşım metni (og / twitter): maçın resmî hashtag'i varsa sonuna (Sportmonks metadata, ör. "#GALKAS").
@@ -418,6 +429,17 @@ export default function MatchDetail({
             }}
           />
         ) : null}
+        {match && homeName && awayName ? (
+          <JsonLd
+            schema={(() => {
+              const hub = leagueHubByLeagueId(Number(compId));
+              return breadcrumbJsonLd([
+                ...(hub ? [{ name: hub.name, url: `${siteBaseUrl()}/lig/${hub.slug}` }] : []),
+                { name: `${homeName} - ${awayName}`, url: canonicalUrl },
+              ]);
+            })()}
+          />
+        ) : null}
         {initialAnalysisPreview && match && match.status !== 'FINISHED' ? (
           // Kredi modeli v2: AI analizinin tamamı kilitli → Google'ın ücretli içerik işaretlemesi. Kilitli bölüm HTML'de
           // yalnız başlıklarla (`.ai-analysis-locked`); Googlebot kullanıcıyla aynı içeriği görür (cloaking değil).
@@ -476,7 +498,31 @@ export default function MatchDetail({
               {seo.summary.length ? (
                 <section className={styles.seoSummary} aria-labelledby="mac-bilgisi">
                   <h2 id="mac-bilgisi" className={styles.seoSummaryTitle}>Maç bilgisi</h2>
-                  <p className={styles.seoSummaryText}>{seo.summary.join(' ')}</p>
+                  <p className={styles.seoSummaryText}>
+                    {seo.summary.join(' ')}
+                    {refereeLink ? (
+                      <>
+                        {' '}Hakem: <Link href={refereeLink}>{match?.referee}</Link> (kart ve penaltı istatistikleri).
+                      </>
+                    ) : null}
+                  </p>
+                  {postMatchAnalysis && match?.status === 'FINISHED' ? (
+                    <>
+                      <h3 className={styles.seoSummaryTitle}>Maç öncesi yapay zekâ analizi</h3>
+                      {postMatchAnalysis.sentences.length ? (
+                        <p className={styles.seoSummaryText}>{postMatchAnalysis.sentences.join(' ')}</p>
+                      ) : null}
+                      {postMatchAnalysis.picks.length ? (
+                        <p className={styles.seoSummaryText}>
+                          En güçlü 3 tahmin:{' '}
+                          {postMatchAnalysis.picks
+                            .map((p) => `${tm(`analysis.pick.${p.key}`)} (%${Math.round(p.pct)})`)
+                            .join(', ')}
+                          . <Link href="/ai-istatistikleri">Tüm tahminlerin isabet oranı</Link>
+                        </p>
+                      ) : null}
+                    </>
+                  ) : null}
                 </section>
               ) : null}
               {/* Masaüstü (≥ BP_SPLIT) "Maç sohbeti": sütunun sonunda yapışkan; istemcide yüklenir, dar ekranda yok. */}

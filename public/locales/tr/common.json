@@ -31,7 +31,11 @@
     "disclaimer": "İstatistiksel tahminler bilgi amaçlıdır.",
     "copyright": "© {{year}} {{brand}}. Tüm hakları saklıdır.",
     "communityRules": "Topluluk Kuralları",
-    "social": "Sosyal medya"
+    "social": "Sosyal medya",
+    "about": "Hakkımızda",
+    "method": "Yöntem",
+    "aiAccuracy": "AI isabet oranı",
+    "referees": "Hakemler"
   },
   "themeToLight": "Açık temaya geç",
   "themeToDark": "Koyu temaya geç",

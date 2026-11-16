@@ -45,5 +45,6 @@
     "play": "Oyna",
     "playFree": "Ücretsiz oyna"
   },
-  "gameLong": "{{game}}: skorları tahmin et"
+  "gameLong": "{{game}}: skorları tahmin et",
+  "referees": "Hakemler"
 }

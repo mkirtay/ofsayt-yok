@@ -16,6 +16,8 @@ import styles from './pricing.module.scss';
 import { siteBaseUrl } from '@/lib/siteUrl';
 import { DISTANCE_SALES_PATH, PRE_INFO_PATH } from '@/config/legalConsent';
 import PricingSampleAnalysis from '@/components/PricingSampleAnalysis';
+import JsonLd from '@/components/JsonLd';
+import { BRAND } from '@/config/brand';
 
 const PRICING_PATH = '/pricing';
 
@@ -65,6 +67,40 @@ export default function PricingPage({ availablePackages = [] }: { availablePacka
         <meta property="og:title" content={t('pageTitle')} />
         <meta property="og:description" content={t('pageDesc')} />
         <meta property="og:url" content={`${siteBaseUrl()}${PRICING_PATH}`} />
+        {/* SEO raporu: SSS görünür metinle birebir aynı (FAQPage); fiyat yalnız satış açıkken (Product/Offer). */}
+        <JsonLd
+          schema={{
+            '@context': 'https://schema.org',
+            '@type': 'FAQPage',
+            mainEntity: FAQ_KEYS.map((k) => {
+              const suffix = k === '1' && anyCreditOnSale ? 'Live' : '';
+              return {
+                '@type': 'Question',
+                name: t(`faqItems.q${k}${suffix}`),
+                acceptedAnswer: { '@type': 'Answer', text: t(`faqItems.a${k}${suffix}`) },
+              };
+            }),
+          }}
+        />
+        {anyCreditOnSale ? (
+          <JsonLd
+            schema={{
+              '@context': 'https://schema.org',
+              '@type': 'Product',
+              name: `${BRAND.name} AI maç analizi kredisi`,
+              description: t('pageDesc'),
+              brand: { '@type': 'Brand', name: BRAND.name },
+              offers: CREDIT_PACKAGES.filter((p) => availablePackages.includes(p.paymentKey)).map((p) => ({
+                '@type': 'Offer',
+                name: `${p.credits} kredi`,
+                price: (p.priceKurus / 100).toFixed(2),
+                priceCurrency: 'TRY',
+                availability: 'https://schema.org/InStock',
+                url: `${siteBaseUrl()}${PRICING_PATH}`,
+              })),
+            }}
+          />
+        ) : null}
       </Head>
 
       <Container>

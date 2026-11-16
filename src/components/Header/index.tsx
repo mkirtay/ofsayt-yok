@@ -137,6 +137,13 @@ export default function Header() {
               >
                 {t('gundem')}
               </Link>
+              <Link
+                href="/hakemler"
+                className={`${styles.navLink} ${router.pathname.startsWith('/hakem') ? styles.navLinkActive : ''}`.trim()}
+                aria-current={router.pathname.startsWith('/hakem') ? 'page' : undefined}
+              >
+                {t('referees')}
+              </Link>
               {GAME_PUBLIC_CLIENT ? (
                 <Link
                   href={GAME_BRAND.basePath}
@@ -218,6 +225,9 @@ export default function Header() {
                 onFocus={prefetchAiStats}
               >
                 {t('aiAccuracy')}
+              </Link>
+              <Link href="/hakemler" className={styles.mobileNavLink}>
+                {t('referees')}
               </Link>
               <Link href="/frikik?src=menu" className={styles.mobileNavLink} onClick={() => trackFrikik('frikik_card_click', { entry: 'menu' })}>
                 {t('frikik')}

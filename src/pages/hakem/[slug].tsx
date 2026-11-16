@@ -1,6 +1,7 @@
 import type { GetStaticPaths, GetStaticProps } from 'next';
 import Head from 'next/head';
 import Container from '@/components/Container';
+import { breadcrumbJsonLd } from '@/utils/breadcrumbJsonLd';
 import JsonLd from '@/components/JsonLd';
 import RefereeView from '@/components/PersonPage/RefereeView';
 import type { RefereePageData } from '@/server/people/refereePage';
@@ -58,6 +59,7 @@ export default function RefereePage({ data, url }: Props) {
           ...(data.country ? { nationality: { '@type': 'Country', name: data.country.name } } : {}),
         }}
       />
+      <JsonLd schema={breadcrumbJsonLd([{ name: 'Hakemler', url: `${SITE_URL}/hakemler` }, { name: data.name, url }])} />
       <RefereeView data={data} />
     </Container>
   );

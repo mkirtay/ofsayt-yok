@@ -1,0 +1,61 @@
+@use '../../styles/variables' as *;
+
+.page {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: $spacing-6 0 $spacing-8;
+}
+
+.title {
+  font-size: 26px;
+  font-weight: 800;
+  color: $color-text;
+  margin-bottom: $spacing-3;
+}
+
+.lead {
+  font-size: 15px;
+  line-height: 1.65;
+  color: $color-text;
+  margin-bottom: $spacing-5;
+}
+
+.section {
+  margin-bottom: $spacing-5;
+
+  h2 {
+    font-size: 18px;
+    font-weight: 700;
+    color: $color-text;
+    margin-bottom: $spacing-2;
+  }
+
+  p,
+  li {
+    font-size: 14px;
+    line-height: 1.65;
+    color: $color-text-secondary;
+  }
+
+  p + p {
+    margin-top: $spacing-2;
+  }
+
+  ul {
+    padding-left: $spacing-5;
+    list-style: disc;
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-1;
+  }
+
+  a {
+    color: $color-primary-text;
+    font-weight: 600;
+  }
+}
+
+.updated {
+  font-size: 12px;
+  color: $color-text-secondary;
+}

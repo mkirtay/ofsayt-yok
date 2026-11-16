@@ -31,7 +31,11 @@
     "disclaimer": "Statistical predictions are for informational purposes only.",
     "copyright": "© {{year}} {{brand}}. All rights reserved.",
     "communityRules": "Community Guidelines",
-    "social": "Social media"
+    "social": "Social media",
+    "about": "About us",
+    "method": "Methodology",
+    "aiAccuracy": "AI accuracy",
+    "referees": "Referees"
   },
   "themeToLight": "Switch to light theme",
   "themeToDark": "Switch to dark theme",

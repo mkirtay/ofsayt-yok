@@ -1,6 +1,7 @@
 import type { GetStaticPaths, GetStaticProps } from 'next';
 import Head from 'next/head';
 import Container from '@/components/Container';
+import { breadcrumbJsonLd } from '@/utils/breadcrumbJsonLd';
 import JsonLd from '@/components/JsonLd';
 import CoachView from '@/components/PersonPage/CoachView';
 import type { CoachPageData } from '@/server/people/coachPage';
@@ -59,6 +60,7 @@ export default function CoachPage({ data, url }: Props) {
           ...(data.currentTeam ? { worksFor: { '@type': 'SportsTeam', name: data.currentTeam.name } } : {}),
         }}
       />
+      <JsonLd schema={breadcrumbJsonLd([{ name: data.name, url }])} />
       <CoachView data={data} />
     </Container>
   );

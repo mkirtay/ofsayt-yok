@@ -8,6 +8,7 @@ import { siteBaseUrl } from '@/lib/siteUrl';
 import { BRAND, brandTitle } from '@/config/brand';
 import { isNationalMatchId } from '@/services/apiFootball/ids';
 import { nationalMatchesEnabled } from '@/config/nationalMatches';
+import { breadcrumbJsonLd } from '@/utils/breadcrumbJsonLd';
 import JsonLd from '@/components/JsonLd';
 import type { TeamPageFacts } from '@/server/teamPageShell';
 import { buildTeamSummary, teamJsonLd, teamPageDescriptionText, teamPageTitleText } from '@/utils/teamSeo';
@@ -107,6 +108,7 @@ export default function TeamDetail({ teamName, ogImagePath, facts }: TeamPagePro
         {ogImage ? <meta name="twitter:image" content={ogImage} key="twitter:image" /> : null}
         {ogImage ? <meta name="twitter:image:alt" content={imageAlt} key="twitter:image:alt" /> : null}
         {teamName && pageUrl ? <JsonLd schema={teamJsonLd(teamName, pageUrl, facts, ogImage)} /> : null}
+        {teamName && pageUrl ? <JsonLd schema={breadcrumbJsonLd([{ name: teamName, url: pageUrl }])} /> : null}
       </Head>
       {/* Görsel başlık takım kartında (istemcide); H1 sunucu HTML'inde arama motorları / ekran okuyucu için. */}
       {teamName ? <h1 className={styles.srOnly}>{teamName}</h1> : null}

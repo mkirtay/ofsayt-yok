@@ -48,6 +48,15 @@ export default function Footer() {
             <div className={styles.footerLinksCol}>
               <span className={styles.footerLinksHeading}>{t('footer.linksHeading')}</span>
               <nav className={styles.footerLinks} aria-label={t('footer.linksHeading')}>
+                <Link href="/hakkimizda" className={styles.footerLink}>
+                  {t('footer.about')}
+                </Link>
+                <Link href="/yontem" className={styles.footerLink}>
+                  {t('footer.method')}
+                </Link>
+                <Link href="/ai-istatistikleri" className={styles.footerLink}>
+                  {t('footer.aiAccuracy')}
+                </Link>
                 <Link href="/iletisim" className={styles.footerLink}>
                   {t('footer.contact')}
                 </Link>
