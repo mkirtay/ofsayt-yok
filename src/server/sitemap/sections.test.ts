@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildIndexXml, buildUrlsetXml, SITEMAP_SECTIONS } from './sections';
+import { aiReportMonths, buildIndexXml, buildUrlsetXml, SITEMAP_SECTIONS } from './sections';
 
 describe('sitemap', () => {
   it('dizin bütün bölümleri lastmod ile listeler', () => {
@@ -17,5 +17,9 @@ describe('sitemap', () => {
     expect(xml.match(/<url>/g)).toHaveLength(1);
     expect(xml).toContain('<loc>https://x.com/a?b=1&amp;c=2</loc>');
     expect(xml).toContain('<lastmod>2026-11-01</lastmod>');
+  });
+
+  it('AI rapor ayları: 2026-10 → bu ay, yıl geçişi', () => {
+    expect(aiReportMonths(Date.parse('2027-01-05T00:00:00Z'))).toEqual(['2026-10', '2026-11', '2026-12', '2027-01']);
   });
 });

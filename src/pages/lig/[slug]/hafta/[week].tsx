@@ -128,6 +128,7 @@ export default function LeagueWeekPage({ hub, seasonName, round, fixtures, weeks
                   <th scope="col">Maç</th>
                   <th scope="col">Skor</th>
                   <th scope="col">Hakem</th>
+                  <th scope="col" title="Sarı / kırmızı kart">Kart</th>
                 </tr>
               </thead>
               <tbody>
@@ -147,6 +148,16 @@ export default function LeagueWeekPage({ hub, seasonName, round, fixtures, weeks
                         </Link>
                       ) : (
                         'Açıklanmadı'
+                      )}
+                    </td>
+                    <td className={styles.nowrap}>
+                      {f.cards ? (
+                        <span aria-label={`${f.cards.yellow} sarı, ${f.cards.red} kırmızı kart`}>
+                          🟨 {f.cards.yellow}
+                          {f.cards.red ? ` 🟥 ${f.cards.red}` : ''}
+                        </span>
+                      ) : (
+                        '—'
                       )}
                     </td>
                   </tr>

@@ -28,6 +28,12 @@ export function buildWeekSummary(league: string, seasonName: string, round: Seas
   );
   const goals = played.reduce((n, f) => n + (f.score ? f.score.split('-').reduce((s, x) => s + Number(x), 0) : 0), 0);
   if (played.length) out.push(`Tamamlanan ${played.length} maçta ${goals} gol atıldı (maç başına ${(goals / played.length).toLocaleString('tr-TR', { maximumFractionDigits: 2 })}).`);
+  const carded = played.filter((f) => f.cards);
+  if (carded.length) {
+    const y = carded.reduce((a, f) => a + f.cards!.yellow, 0);
+    const r = carded.reduce((a, f) => a + f.cards!.red, 0);
+    out.push(`Hakemler bu hafta ${carded.length} maçta toplam ${y} sarı ve ${r} kırmızı kart gösterdi (maç başına ${(y / carded.length).toLocaleString('tr-TR', { maximumFractionDigits: 2 })} sarı).`);
+  }
   const refs = fixtures.filter((f) => f.referee);
   if (refs.length) {
     out.push(

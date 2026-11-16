@@ -1,6 +1,6 @@
 import type { GetServerSideProps } from 'next';
 import { siteBaseUrl } from '@/lib/siteUrl';
-import { BRAND } from '@/config/brand';
+import { BRAND, GAME_BRAND } from '@/config/brand';
 import { LEAGUE_HUBS } from '@/config/leagueHubs';
 
 /**
@@ -23,6 +23,11 @@ export function buildLlmsTxt(baseUrl: string): string {
     `- [Bugün ${BRAND.name}'te](${baseUrl}/bugun): Günün öne çıkan maçları ve özetler`,
     `- [Ligler](${baseUrl}/lig): Liglerin güncel puan tabloları ve gol krallığı`,
     `- [Hakem istatistikleri](${baseUrl}/hakemler): Süper Lig ve 1. Lig hakemlerinin kart, penaltı ve maç istatistikleri`,
+    `- [AI isabet istatistikleri](${baseUrl}/ai-istatistikleri): Yapay zekâ maç analizlerinin "en güçlü 3 tahmin" isabet oranı (herkese açık, maç maç)`,
+    `- [Yöntem](${baseUrl}/yontem): AI analizinin hangi verilerle üretildiği ve isabetin nasıl ölçüldüğü`,
+    `- [Hakkımızda](${baseUrl}/hakkimizda): ${BRAND.name} nedir, veri kaynakları; bahis sitesi değildir`,
+    `- [${GAME_BRAND.name}](${baseUrl}${GAME_BRAND.basePath}): Ücretsiz skor tahmin oyunu (para yatırılmaz)`,
+    `- [Fiyatlandırma](${baseUrl}/pricing): AI maç analizi kredi paketleri ve ücretsiz özellikler`,
     '',
     '## Lig sayfaları (puan durumu + gol krallığı)',
     '',
@@ -31,7 +36,11 @@ export function buildLlmsTxt(baseUrl: string): string {
     '## Sayfa türleri',
     '',
     `- Maç sayfası: ${baseUrl}/matches/{id}-{ev-sahibi}-{deplasman} — tarih/saat, stadyum, yayıncı, skor, goller, istatistikler, kadrolar, karşılıklı maçlar, anlatım`,
-    `- Takım sayfası: ${baseUrl}/teams/{id} — son maçlar, fikstür, kadro, teknik direktör, stadyum, sezon istatistikleri`,
+    `- Takım sayfası: ${baseUrl}/teams/{id}-{takım} — son maçlar, fikstür, kadro, teknik direktör, stadyum, sezon istatistikleri`,
+    `- Lig hafta sayfası: ${baseUrl}/lig/{lig}/hafta/{n} — haftanın maçları, skorlar, hakem atamaları ve kart sayıları (bu hafta: ${baseUrl}/lig/super-lig/hafta)`,
+    `- Oyuncu sayfası: ${baseUrl}/players/{id} — sezon istatistikleri, kariyer, transferler`,
+    `- Karşılaştırma: ${baseUrl}/compare/{takımId}-vs-{takımId} — iki takımın aralarındaki maçlar ve form karşılaştırması`,
+    `- Aylık AI isabet raporu: ${baseUrl}/ai-istatistikleri/rapor/{yyyy-aa}`,
     `- Hakem sayfası: ${baseUrl}/hakem/{slug} — hakemin yönettiği maçlar ve kart ortalamaları`,
     `- Teknik direktör sayfası: ${baseUrl}/teknik-direktor/{slug} — kariyer ve maç sonuçları`,
     '',

@@ -36,6 +36,9 @@ export type AiStatsHistoryItem = {
 /** "En güçlü 3 tahmin" isabeti: değerlendirilmiş analizlerin kart rozetleri (bilinmeyenler sayılmaz). */
 export type TopPickStats = { matches: number; picks: number; hits: number; rate: number };
 
+/** Ay bazında isabet (analiz ayı, Türkiye saati; "2026-11"). Yalnız değerlendirilmiş analizler. */
+export type AiStatsMonth = TopPickStats & { month: string };
+
 export type AiStatsDashboard = {
   totalRecords: number;
   totalEvaluated: number;
@@ -45,6 +48,8 @@ export type AiStatsDashboard = {
   /** Yalnız yönetici: zamanlanmış işlerin son çalışması (admin bandı). */
   cronStatus?: Record<AiCronJobName, CronHeartbeat | null>;
   history: AiStatsHistoryItem[];
+  /** Yeni ay önce (SEO/GEO: aylık isabet raporu, /ai-istatistikleri/rapor/{ay}). */
+  monthly: AiStatsMonth[];
 };
 
 type RecordRow = {
@@ -77,7 +82,22 @@ function recordTopPicks(r: RecordRow): AiStatsHistoryItem['topPicks'] {
   return picks.map((p) => ({ ...p, hit: topPickHit(p, score, hits) }));
 }
 
-export async function loadAiStatsDashboard(auth: { role: Role | null }): Promise<AiStatsDashboard> {
+const monthFmt = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Istanbul', year: 'numeric', month: '2-digit' });
+/** Date → "2026-11" (Türkiye saati). */
+export function istanbulMonth(d: Date): string {
+  return monthFmt.format(d).slice(0, 7);
+}
+
+/** Bir ayın değerlendirilmiş analizleri (aylık rapor sayfası; yalnız herkese açık görünüm). */
+export async function loadAiMonthlyReport(month: string): Promise<{ stats: AiStatsMonth | null; items: AiStatsHistoryItem[] }> {
+  const all = await loadAiStatsDashboard({ role: null }, { historyLimit: Infinity });
+  return {
+    stats: all.monthly.find((m) => m.month === month) ?? null,
+    items: all.history.filter((h) => istanbulMonth(new Date(h.createdAt)) === month),
+  };
+}
+
+export async function loadAiStatsDashboard(auth: { role: Role | null }, opts: { historyLimit?: number } = {}): Promise<AiStatsDashboard> {
   const isAdmin = auth.role === 'ADMIN';
 
   const rows: RecordRow[] = await prisma.predictionRecord.findMany({
@@ -120,7 +140,7 @@ export async function loadAiStatsDashboard(auth: { role: Role | null }): Promise
   // Kredi modeli v2: oynanmamış maçın kartı kilitli analiz içeriği → herkese açık geçmişte yalnız değerlendirilmiş
   // (bitmiş) maçlar; bekleyenler yalnız sayı olarak (pendingCount). Yönetici hepsini görür.
   const historySource = isAdmin ? records : evaluated;
-  const history: AiStatsHistoryItem[] = historySource.slice(0, 100).map((r) => ({
+  const history: AiStatsHistoryItem[] = historySource.slice(0, opts.historyLimit ?? 100).map((r) => ({
     matchId: r.matchId,
     homeTeamName: r.matchAnalysis.homeTeamName,
     awayTeamName: r.matchAnalysis.awayTeamName,
@@ -130,7 +150,23 @@ export async function loadAiStatsDashboard(auth: { role: Role | null }): Promise
     topPicks: picksByRecord.get(r) ?? [],
   }));
 
+  const byMonth = new Map<string, TopPickStats>();
+  for (const r of evaluated) {
+    const known = (picksByRecord.get(r) ?? []).filter((p) => p.hit != null);
+    if (known.length === 0) continue;
+    const key = istanbulMonth(r.createdAt);
+    const m = byMonth.get(key) ?? { matches: 0, picks: 0, hits: 0, rate: 0 };
+    m.matches += 1;
+    m.picks += known.length;
+    m.hits += known.filter((p) => p.hit).length;
+    byMonth.set(key, m);
+  }
+  const monthly: AiStatsMonth[] = [...byMonth.entries()]
+    .sort((a, b) => b[0].localeCompare(a[0]))
+    .map(([month, m]) => ({ month, ...m, rate: m.picks > 0 ? Math.round((m.hits / m.picks) * 1000) / 10 : 0 }));
+
   return {
+    monthly,
     totalRecords: records.length,
     totalEvaluated: evaluated.length,
     pendingCount,

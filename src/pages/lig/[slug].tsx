@@ -16,6 +16,7 @@ import { hubSelectionIdForLeague } from '@/utils/hubLeagueSelection';
 import { sportmonksLeagueLogoUrl } from '@/utils/leagueLogo';
 import { toStandingsBlocks } from '@/utils/standingsBlocks';
 import styles from './lig.module.scss';
+import { standingsEmbedSnippet } from '@/utils/embedSnippet';
 import { teamHref } from '@/utils/teamUrl';
 
 type Props = {
@@ -166,6 +167,14 @@ export default function LeagueHubPage({ hub, table, scorers, seasonName, updated
           Tüm istatistikler: kartlar, haftanın 11&apos;i, geçmiş sezonlar →
         </Link>
       </p>
+
+      <details className={styles.section}>
+        <summary className={styles.embedSummary}>Bu puan durumunu sitene ekle</summary>
+        <p className={styles.embedHint}>
+          Aşağıdaki kodu sitene yapıştır; tablo kendiliğinden güncellenir. Koyu tema için adresin sonuna <code>?tema=koyu</code> ekle.
+        </p>
+        <textarea className={styles.embedCode} readOnly rows={3} value={standingsEmbedSnippet(siteBaseUrl(), hub.slug, hub.name)} aria-label="Gömme kodu" />
+      </details>
 
       <nav className={styles.section} aria-labelledby="diger-ligler">
         <h2 id="diger-ligler" className={styles.sectionTitle}>

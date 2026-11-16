@@ -25,12 +25,18 @@ describe('leagueWeeks', () => {
         { description: 'CURRENT', score: { goals: 0, participant: 'away' } },
       ],
       state: { developer_name: 'FT' },
+      statistics: [
+        { type_id: 84, location: 'home', data: { value: 3 } },
+        { type_id: 84, location: 'away', data: { value: 2 } },
+        { type_id: 85, location: 'away', data: { value: 1 } },
+      ],
       referees: [
         { type_id: 7, referee: { id: 5, display_name: 'Yardımcı' } },
         { type_id: 6, referee: { id: 9, display_name: 'Ümit Öztürk' } },
       ],
     })!;
     expect(f.score).toBe('3-0');
+    expect(f.cards).toEqual({ yellow: 5, red: 1 });
     expect(f.referee).toEqual({ id: 9, name: 'Ümit Öztürk' });
     expect(f.home.name).toBe('Kocaelispor');
     expect(f.href).toMatch(/^\/matches\/19745050-/);

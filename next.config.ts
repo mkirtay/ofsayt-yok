@@ -76,6 +76,15 @@ const nextConfig: NextConfig = {
       // Ödeme dönüş sayfaları: Hikie adrese kişisel sorgu (customerEmail …) ekler; dışarı giden isteklerde adres (Referer)
       // gitmesin. Aynı anahtarlı sonraki kural öncekini ezer (yalnız bu yollarda).
       { source: '/odeme/:path*', headers: [{ key: 'Referrer-Policy', value: 'no-referrer' }] },
+      // Gömülebilir bileşenler (puan durumu iframe'i, bkz. pages/embed): her sitede çerçeveye alınabilir. Aynı anahtar →
+      // yukarıdaki DENY / frame-ancestors 'none' bu yollarda ezilir (CSP frame-ancestors, X-Frame-Options'tan önceliklidir).
+      {
+        source: '/embed/:path*',
+        headers: [
+          { key: 'Content-Security-Policy', value: 'frame-ancestors *' },
+          { key: 'X-Frame-Options', value: 'ALLOWALL' },
+        ],
+      },
     ];
   },
   async redirects() {

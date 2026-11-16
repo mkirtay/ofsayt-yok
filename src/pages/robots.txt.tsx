@@ -18,6 +18,7 @@ export function buildRobotsTxt(baseUrl: string): string {
     'Disallow: /api/',
     'Disallow: /profile',
     'Disallow: /auth/',
+    'Disallow: /embed/',
     '',
     `Sitemap: ${baseUrl}/sitemap.xml`,
     '',

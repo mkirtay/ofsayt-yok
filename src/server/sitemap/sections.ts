@@ -61,6 +61,24 @@ const STATIC_ROUTES: { path: string; priority: string; changefreq: string; daily
   { path: '/hesap-silme', priority: '0.3', changefreq: 'yearly' },
 ];
 
+/** Aylık AI isabet raporları: güncel model ailesinin ilk ayından (2026-10) bu aya. */
+export function aiReportMonths(now: number, first = '2026-10'): string[] {
+  const out: string[] = [];
+  const end = day(now).slice(0, 7);
+  let [y, m] = first.split('-').map(Number) as [number, number];
+  for (let i = 0; i < 240; i++) {
+    const key = `${y}-${String(m).padStart(2, '0')}`;
+    if (key > end) break;
+    out.push(key);
+    m += 1;
+    if (m > 12) {
+      m = 1;
+      y += 1;
+    }
+  }
+  return out;
+}
+
 /** Sabit sayfalar + lig sayfaları + hafta sayfaları (bitmiş hafta lastmod = bitiş günü). */
 export async function pagesSection(now: number): Promise<SitemapUrl[]> {
   const base = siteBaseUrl();
@@ -69,6 +87,7 @@ export async function pagesSection(now: number): Promise<SitemapUrl[]> {
     ...STATIC_ROUTES.map((r) => ({ loc: `${base}${r.path}`, priority: r.priority, changefreq: r.changefreq, ...(r.daily ? { lastmod: today } : {}) })),
     ...gameSitemapRoutes().map((r) => ({ loc: `${base}${r.path}`, priority: r.priority, changefreq: r.changefreq })),
     ...LEAGUE_HUBS.map((h) => ({ loc: `${base}/lig/${h.slug}`, priority: '0.8', changefreq: 'daily', lastmod: today })),
+    ...aiReportMonths(now).map((m) => ({ loc: `${base}/ai-istatistikleri/rapor/${m}`, priority: '0.5', changefreq: m === today.slice(0, 7) ? 'daily' : 'monthly' })),
   ];
   try {
     const { loadCurrentSeason, loadSeasonRounds } = await import('@/server/leagueWeeks');

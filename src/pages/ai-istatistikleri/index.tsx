@@ -15,6 +15,7 @@ import type { CronHeartbeat } from '@/server/cronJobs';
 import { buildMatchHref } from '@/utils/matchUrl';
 import styles from './ai-istatistikleri.module.scss';
 import { siteBaseUrl } from '@/lib/siteUrl';
+import { monthLabel } from '@/utils/monthLabel';
 
 function SkeletonBar({ width, height = 14 }: { width: string | number; height?: number }) {
   return (
@@ -60,6 +61,7 @@ function AiStatsPageSkeleton() {
 }
 
 type PageProps = { initialPublic: AiStatsDashboard | null };
+
 
 /**
  * Herkese açık (2026-11-16, SEO/GEO raporu): isabet oranı sitenin en güçlü güven kanıtı. Herkese açık görünüm ISR ile
@@ -225,6 +227,38 @@ export default function AiIstatistikleri({ initialPublic = null }: Partial<PageP
                   </div>
 
                   <p className={styles.topPicksHint}>{t('topPicksHint')}</p>
+
+                  {data.monthly?.length ? (
+                    <div className={styles.section}>
+                      <h2 className={styles.sectionTitle}>Aylık isabet raporu</h2>
+                      <div className={styles.tableWrap}>
+                        <table className={styles.table}>
+                          <thead>
+                            <tr>
+                              <th scope="col">Ay</th>
+                              <th scope="col">Maç</th>
+                              <th scope="col">Tahmin</th>
+                              <th scope="col">Tutan</th>
+                              <th scope="col">İsabet</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {data.monthly.map((m) => (
+                              <tr key={m.month}>
+                                <td>
+                                  <Link href={`/ai-istatistikleri/rapor/${m.month}`}>{monthLabel(m.month)}</Link>
+                                </td>
+                                <td>{m.matches}</td>
+                                <td>{m.picks}</td>
+                                <td>{m.hits}</td>
+                                <td>%{m.rate.toLocaleString('tr-TR')}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  ) : null}
 
                   <div className={styles.section}>
                     <h2 className={styles.sectionTitle}>{t('historyTitle')}</h2>

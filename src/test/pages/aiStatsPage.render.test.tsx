@@ -25,6 +25,7 @@ vi.mock('@/lib/i18nNamespaces/ai', () => ({}));
 vi.mock('@tanstack/react-query', () => ({ useQueryClient: () => ({ invalidateQueries: () => {} }) }));
 
 const data: AiStatsDashboard & { isAdmin: boolean } = {
+  monthly: [{ month: "2026-10", matches: 2, picks: 6, hits: 4, rate: 66.7 }],
   totalRecords: 3,
   totalEvaluated: 2,
   pendingCount: 1,

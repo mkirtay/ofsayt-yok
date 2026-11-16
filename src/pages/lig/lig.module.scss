@@ -168,3 +168,28 @@
 .nowrap {
   white-space: nowrap;
 }
+
+/* "Bu puan durumunu sitene ekle" (gömülebilir bileşen kodu). */
+.embedSummary {
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: $color-text;
+}
+
+.embedHint {
+  margin: $spacing-2 0;
+  font-size: 13px;
+  color: $color-text-secondary;
+}
+
+.embedCode {
+  width: 100%;
+  font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: $color-text;
+  background: $color-muted;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
+  padding: $spacing-2;
+  resize: vertical;
+}

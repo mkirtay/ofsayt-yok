@@ -11,7 +11,9 @@
 import { sportmonksClientRequest } from '@/services/sportmonksRuntimeClient';
 import { buildMatchHref } from '@/utils/matchUrl';
 
-export const ROUND_FIXTURES_INCLUDE = 'fixtures.participants;fixtures.scores;fixtures.state;fixtures.referees.referee';
+export const ROUND_FIXTURES_INCLUDE = 'fixtures.participants;fixtures.scores;fixtures.state;fixtures.referees.referee;fixtures.statistics';
+/** Yalnız kart istatistikleri (83 kırmızı, 84 sarı, 85 ikinci sarıdan kırmızı) — haftalık hakem raporu; 2026-11-16 doğrulandı. */
+export const ROUND_FIXTURES_FILTERS = 'fixtureStatisticTypes:83,84,85';
 const MAIN_REFEREE_TYPE_ID = 6;
 
 type RawParticipant = { id: number; name?: string; image_path?: string; meta?: { location?: 'home' | 'away' } };
@@ -23,6 +25,7 @@ type RawFixture = {
   participants?: RawParticipant[];
   scores?: RawScore[];
   state?: { developer_name?: string; short_name?: string } | null;
+  statistics?: { type_id?: number; location?: 'home' | 'away'; data?: { value?: number } }[];
   referees?: { type_id?: number; referee_id?: number; referee?: { id?: number; display_name?: string; common_name?: string; name?: string } | null }[];
 };
 type RawRound = { id: number; name?: string; starting_at?: string | null; ending_at?: string | null; finished?: boolean; is_current?: boolean; fixtures?: RawFixture[] };
@@ -40,6 +43,8 @@ export type WeekFixture = {
   /** NS, FT, LIVE… (Sportmonks state developer_name). */
   state: string | null;
   referee: { id: number; name: string } | null;
+  /** Maçtaki toplam kart (iki takım); istatistik yoksa null. Kırmızı = doğrudan + ikinci sarıdan. */
+  cards: { yellow: number; red: number } | null;
 };
 
 export type LeagueWeek = { round: SeasonRound; fixtures: WeekFixture[] };
@@ -75,6 +80,13 @@ function refereeName(r: NonNullable<RawFixture['referees']>[number]['referee']):
   return (r?.display_name || r?.common_name || r?.name || '').trim() || null;
 }
 
+function fixtureCards(f: RawFixture): WeekFixture['cards'] {
+  const stats = f.statistics ?? [];
+  if (!stats.length) return null;
+  const sum = (ids: number[]) => stats.filter((x) => x.type_id != null && ids.includes(x.type_id)).reduce((a, x) => a + (x.data?.value ?? 0), 0);
+  return { yellow: sum([84]), red: sum([83, 85]) };
+}
+
 export function toWeekFixture(f: RawFixture): WeekFixture | null {
   const home = f.participants?.find((p) => p.meta?.location === 'home');
   const away = f.participants?.find((p) => p.meta?.location === 'away');
@@ -95,11 +107,15 @@ export function toWeekFixture(f: RawFixture): WeekFixture | null {
     score: hs != null && as != null ? `${hs}-${as}` : null,
     state: f.state?.developer_name ?? null,
     referee: refName && refId ? { id: refId, name: refName } : null,
+    cards: fixtureCards(f),
   };
 }
 
 export async function loadRoundFixtures(roundId: number): Promise<WeekFixture[]> {
-  const env = await sportmonksClientRequest<RawRound>('football', `/rounds/${roundId}`, { include: ROUND_FIXTURES_INCLUDE });
+  const env = await sportmonksClientRequest<RawRound>('football', `/rounds/${roundId}`, {
+    include: ROUND_FIXTURES_INCLUDE,
+    filters: ROUND_FIXTURES_FILTERS,
+  });
   const round = env.data && !Array.isArray(env.data) ? env.data : null;
   return (round?.fixtures ?? [])
     .map(toWeekFixture)
