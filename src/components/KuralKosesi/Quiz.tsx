@@ -1,5 +1,6 @@
 import { useId } from 'react';
 import { useTranslation } from '@/lib/i18n';
+import '@/lib/i18nNamespaces/kuralKosesi';
 import type { LocalizedQuiz } from './facts';
 import type { QuizScore } from './quizState';
 import styles from './panel.module.scss';
