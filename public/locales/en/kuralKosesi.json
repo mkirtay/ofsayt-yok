@@ -9,5 +9,11 @@
   "prev": "Previous",
   "next": "Next",
   "close": "Close",
-  "openInCorner": "Open in the Rules Corner"
+  "openInCorner": "Open in the Rules Corner",
+  "quizLabel": "Test yourself",
+  "quizCorrect": "Correct!",
+  "quizWrong": "Not quite.",
+  "quizScore": "Your score: {{correct}} / {{answered}} correct",
+  "quizDone": "You've answered every question: {{correct}} / {{total}} correct",
+  "quizNext": "Next question"
 }

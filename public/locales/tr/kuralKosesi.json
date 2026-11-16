@@ -9,5 +9,11 @@
   "prev": "Önceki",
   "next": "Sonraki",
   "close": "Kapat",
-  "openInCorner": "Kural Köşesi'nde aç"
+  "openInCorner": "Kural Köşesi'nde aç",
+  "quizLabel": "Kendini sına",
+  "quizCorrect": "Doğru!",
+  "quizWrong": "Olmadı.",
+  "quizScore": "Skorun: {{correct}} / {{answered}} doğru",
+  "quizDone": "Tüm soruları cevapladın: {{correct}} / {{total}} doğru",
+  "quizNext": "Sonraki soru"
 }

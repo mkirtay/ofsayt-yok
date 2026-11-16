@@ -12,6 +12,9 @@ import StoppageBoardScene from '@/components/PitchScenes/StoppageBoardScene';
 import VarPenaltyScene from '@/components/PitchScenes/VarPenaltyScene';
 import VarScene from '@/components/PitchScenes/VarScene';
 import { localizeFact, type KuralFact, type LocalizedFact } from './facts';
+import Quiz from './Quiz';
+import { quizScore, readAnswers, recordAnswer, writeAnswers, type QuizAnswers } from './quizState';
+import { getStorage } from './schedule';
 import WhistleIcon from './WhistleIcon';
 import styles from './panel.module.scss';
 
@@ -81,6 +84,8 @@ export default function Panel({ open, side = 'right', facts, startIndex, onClose
   const [shown, setShown] = useState(false);
   const [sceneOn, setSceneOn] = useState(false);
   const [wasOpen, setWasOpen] = useState(false);
+  // Panel kodu ilk tıklamada yüklenir → burası yalnız istemcide çalışır (SSR testinde window taklit).
+  const [answers, setAnswers] = useState<QuizAnswers>(() => readAnswers(getStorage()));
 
   // Açılış/kapanış geçişi render sırasında: açılışta günün bilgisine dön ve sahneyi çiz, kapanışta kaydır.
   if (open !== wasOpen) {
@@ -146,6 +151,23 @@ export default function Panel({ open, side = 'right', facts, startIndex, onClose
   const fact = localizeFact(facts[safeIndex], locale);
   const go = (delta: number) => setIndex((i) => (i + delta + total) % total);
 
+  const score = quizScore(answers, facts);
+  const answerQuiz = (choice: number) => {
+    const next = recordAnswer(answers, fact.id, choice);
+    if (next === answers) return;
+    setAnswers(next);
+    writeAnswers(getStorage(), next);
+  };
+  // Sıradaki cevaplanmamış soru (bu karttan ileri doğru, başa sararak); hepsi cevaplandıysa yok.
+  let nextUnanswered: number | undefined;
+  for (let step = 1; step < total; step += 1) {
+    const i = (safeIndex + step) % total;
+    if (!(facts[i].id in answers)) {
+      nextUnanswered = i;
+      break;
+    }
+  }
+
   return (
     <>
       <div className={`${styles.backdrop} ${shown ? styles.backdropOpen : ''}`} onClick={onClose} aria-hidden="true" />
@@ -184,6 +206,14 @@ export default function Panel({ open, side = 'right', facts, startIndex, onClose
               <span>{fact.note}</span>
             </div>
           ) : null}
+          <Quiz
+            key={fact.id}
+            quiz={fact.quiz}
+            answer={answers[fact.id]}
+            score={score}
+            onAnswer={answerQuiz}
+            onNext={nextUnanswered === undefined ? undefined : () => setIndex(nextUnanswered)}
+          />
         </div>
         <div className={styles.foot}>
           <button type="button" className={styles.btn} onClick={() => go(-1)}>

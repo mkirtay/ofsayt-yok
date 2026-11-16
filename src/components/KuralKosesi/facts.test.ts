@@ -22,6 +22,21 @@ describe('kural-kosesi.json', () => {
     }
   });
 
+  it('her kaydın mini testi var: 3 şık, geçerli doğru şık, EN aynı yapıda', () => {
+    for (const f of all) {
+      for (const quiz of [f.soru, f.en.soru]) {
+        expect(quiz.soru.trim(), f.id).not.toBe('');
+        expect(quiz.aciklama.trim(), f.id).not.toBe('');
+        expect(quiz.secenekler, f.id).toHaveLength(3);
+        for (const option of quiz.secenekler) expect(option.trim(), f.id).not.toBe('');
+        expect(new Set(quiz.secenekler).size, f.id).toBe(3);
+      }
+      expect(Number.isInteger(f.soru.dogru) && f.soru.dogru >= 0 && f.soru.dogru < 3, f.id).toBe(true);
+    }
+    // Doğru şık hep aynı sırada olmasın (tahminle bulunmasın).
+    expect(new Set(all.map((f) => f.soru.dogru)).size).toBeGreaterThan(1);
+  });
+
   it('ilk içeriğin TR metinleri kaynakla birebir aynı', () => {
     for (const s of source) {
       const f = all.find((x) => x.id === s.id);
@@ -36,5 +51,9 @@ describe('kural-kosesi.json', () => {
     expect(localizeFact(kaleci, 'en').title).toBe(kaleci.en.baslik);
     const yedi = all.find((f) => f.id === 'yedi-oyuncu')!;
     expect(localizeFact(yedi, 'tr').note).toBeNull();
+    const quizEn = localizeFact(kaleci, 'en').quiz;
+    expect(quizEn.question).toBe(kaleci.en.soru.soru);
+    expect(quizEn.correct).toBe(kaleci.soru.dogru);
+    expect(localizeFact(kaleci, 'tr').quiz.options).toEqual(kaleci.soru.secenekler);
   });
 });

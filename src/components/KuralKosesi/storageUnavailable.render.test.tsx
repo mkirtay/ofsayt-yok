@@ -94,6 +94,11 @@ describe.each(['methods-throw', 'access-throws'] as const)('localStorage erişil
     expect(html).toContain(`3 / ${list.length}`);
     expect(html).toContain('Önceki');
     expect(html).toContain('Sonraki');
+    // Mini test: soru ve üç şık çizilir, henüz cevap/skor yok.
+    expect(html).toContain('Kendini sına');
+    expect(html).toContain(list[2].soru.soru.replace(/'/g, '&#x27;'));
+    for (const option of list[2].soru.secenekler) expect(html).toContain(option);
+    expect(html).not.toContain('Skorun');
   });
 });
 
