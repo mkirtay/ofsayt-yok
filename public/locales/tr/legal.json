@@ -141,7 +141,7 @@
       },
       {
         "heading": "4. Analitik ve Hata İzleme",
-        "body": "Sayfa görüntüleme istatistikleri için Vercel Web Analytics kullanılır; bu hizmet çerez kullanmaz. Teknik hatalar Sentry ile kaydedilir; hata kaydına çerez, ad veya e-posta eklenmez."
+        "body": "Sayfa görüntüleme istatistikleri için Vercel Web Analytics kullanılır; bu hizmet çerez kullanmaz. Ayrıca yalnız açık onay vermeniz hâlinde (sayfanın altındaki çerez bandında \"Kabul et\") Google Analytics 4 yüklenir ve ziyaret istatistikleri için _ga ve _ga_* çerezleri (en çok 2 yıl) yazılır; onay vermezseniz Google Analytics hiç yüklenmez. Google'a gönderilen sayfa adreslerinden e-posta, belirteç ve ödeme bilgisi içeren parametreler çıkarılır. Tercihinizi istediğiniz zaman sayfa altındaki \"Çerez tercihleri\" bağlantısından değiştirebilirsiniz; onayı geri çektiğinizde GA çerezleri silinir. Teknik hatalar Sentry ile kaydedilir; hata kaydına çerez, ad veya e-posta eklenmez."
       },
       {
         "heading": "5. Üçüncü Taraf Hizmetler",

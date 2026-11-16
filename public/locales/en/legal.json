@@ -141,7 +141,7 @@
       },
       {
         "heading": "4. Analytics and Error Monitoring",
-        "body": "Vercel Web Analytics is used for page view statistics; it does not use cookies. Technical errors are recorded with Sentry; no cookies, name or email are attached to error reports."
+        "body": "Vercel Web Analytics is used for page view statistics; it does not use cookies. In addition, only if you give explicit consent (\"Accept\" in the cookie banner at the bottom of the page), Google Analytics 4 is loaded and sets the _ga and _ga_* cookies (up to 2 years) for visit statistics; without consent Google Analytics is not loaded at all. Parameters containing email, tokens or payment details are removed from page addresses sent to Google. You can change your choice at any time via the \"Cookie preferences\" link at the bottom of the page; withdrawing consent deletes the GA cookies. Technical errors are recorded with Sentry; no cookies, name or email are attached to error reports."
       },
       {
         "heading": "5. Third-Party Services",

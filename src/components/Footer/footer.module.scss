@@ -134,3 +134,15 @@
     gap: $spacing-4;
   }
 }
+
+/* "Çerez tercihleri" düğmesi bağlantı görünümünde. */
+.footerLinkButton {
+  padding: 0;
+  background: none;
+  border: 0;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}

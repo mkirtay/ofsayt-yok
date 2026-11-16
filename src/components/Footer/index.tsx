@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { CookiePreferencesLink } from '@/components/CookieConsent';
 import { useTranslation } from '@/lib/i18n';
 import Container from '@/components/Container';
 import styles from './footer.module.scss';
@@ -79,6 +80,7 @@ export default function Footer() {
                     {t(p.footerKey)}
                   </Link>
                 ))}
+                <CookiePreferencesLink className={`${styles.footerLink} ${styles.footerLinkButton}`} label={t('footer.cookiePrefs')} />
               </nav>
             </div>
           </div>
