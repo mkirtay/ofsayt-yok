@@ -4,7 +4,8 @@ import { ROBOTS_BLOCKED_AI_AGENTS } from '@/config/crawlers';
 
 /**
  * Eskiden `public/robots.txt` (statik); Sitemap satırı alan adına bağlı olduğu için `siteBaseUrl()`'den üretilir.
- * AI tarayıcıları (bkz. config/crawlers.ts) ayrı grupta tüm siteden engellenir; kendi grubu olan bot `*` grubunu okumaz.
+ * AI eğitim / arama botları `*` grubunu okur (erişebilir; Sportmonks'a istek attıramaz, bkz. config/crawlers.ts). Yalnız
+ * saldırgan kazıyıcılar ayrı grupta tüm siteden engellenir; kendi grubu olan bot `*` grubunu okumaz.
  */
 export function buildRobotsTxt(baseUrl: string): string {
   return [

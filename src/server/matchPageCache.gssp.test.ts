@@ -217,6 +217,24 @@ describe('maç sayfası Cache-Control — form / karşılaşma geçmişi', () =>
     expect(headers['Cache-Control']).toBe('private, no-store');
   });
 
+  it('AI botu (GPTBot / ClaudeBot / PerplexityBot) rezerv yokken de yalnız önbellekten: Redis\'te yoksa Sportmonks\'a gidilmez → 503', async () => {
+    const { getServerSideProps } = await import('@/pages/matches/[slug]');
+    resolveKind.value = 'probe';
+    vi.stubEnv('SPORTMONKS_API_KEY', 'test-token');
+    for (const ua of [
+      'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; GPTBot/1.2; +https://openai.com/gptbot)',
+      'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; ClaudeBot/1.0; +claudebot@anthropic.com)',
+      'Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; PerplexityBot/1.0; +https://perplexity.ai/perplexitybot)',
+    ]) {
+      const bot = context({ 'user-agent': ua });
+      const r = (await getServerSideProps(bot.ctx)) as { props: Record<string, unknown> };
+      expect(r.props.initialMatch, ua).toBeNull();
+      expect(bot.ctx.res.statusCode, ua).toBe(503);
+    }
+    vi.unstubAllEnvs();
+    expect(resolveKind.upstream).toBe(0);
+  });
+
   it('Googlebot ve gerçek tarayıcı → tam sayfa (bot kuralı uygulanmaz)', async () => {
     const { getServerSideProps } = await import('@/pages/matches/[slug]');
     h2hResult.value = { team1: {}, team2: {}, h2h: [] };

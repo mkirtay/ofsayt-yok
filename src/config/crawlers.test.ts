@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { AI_SEARCH_AGENTS, isLightPageBot, ROBOTS_BLOCKED_AI_AGENTS } from './crawlers';
+import { AI_SEARCH_AGENTS, AI_TRAINING_AGENTS, isLightPageBot, ROBOTS_BLOCKED_AI_AGENTS } from './crawlers';
 import { buildRobotsTxt } from '@/pages/robots.txt';
 
 const UA = {
@@ -43,14 +43,19 @@ describe('isLightPageBot', () => {
 describe('robots.txt', () => {
   const txt = buildRobotsTxt('https://www.example.com');
 
-  it('AI tarayıcıları tek grupta tüm siteden engellenir; * grubu ve Sitemap aynen kalır', () => {
-    const [aiGroup, ...rest] = txt.split('\n\n');
-    expect(aiGroup!.split('\n')).toEqual([...ROBOTS_BLOCKED_AI_AGENTS.map((a) => `User-agent: ${a}`), 'Disallow: /']);
-    for (const a of ['GPTBot', 'ClaudeBot', 'CCBot', 'Google-Extended']) expect(aiGroup).toContain(`User-agent: ${a}\n`);
+  it('yalnız saldırgan kazıyıcılar tek grupta tüm siteden engellenir; * grubu ve Sitemap aynen kalır', () => {
+    const [blockedGroup, ...rest] = txt.split('\n\n');
+    expect(blockedGroup!.split('\n')).toEqual([...ROBOTS_BLOCKED_AI_AGENTS.map((a) => `User-agent: ${a}`), 'Disallow: /']);
+    expect(blockedGroup).toContain('User-agent: Bytespider\n');
     const tail = rest.join('\n\n');
     expect(tail).toContain('User-agent: *\nAllow: /');
     expect(tail).toContain('Disallow: /api/');
     expect(tail).toContain('Sitemap: https://www.example.com/sitemap.xml');
+  });
+
+  it('AI eğitim botları (GPTBot, ClaudeBot, CCBot…) engellenmez ama hafif / yalnız-önbellek sayfa alır', () => {
+    for (const a of AI_TRAINING_AGENTS) expect(txt, a).not.toMatch(new RegExp(`^User-agent: ${a}$`, 'im'));
+    for (const k of ['gptbot', 'claudebot', 'ccbot'] as const) expect(isLightPageBot(UA[k]), k).toBe(true);
   });
 
   it('AI arama botları (GEO) engellenmez ama hafif sayfa alır', () => {

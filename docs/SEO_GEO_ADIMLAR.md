@@ -21,22 +21,30 @@ Aşağıdakiler hesap erişimi gerektirdiği için sende. Sıra önem sırası.
 2. **Import from Google Search Console** seç (1. adım bittiyse tek tıkla mülk + sitemap gelir).
 3. Değilse: siteyi ekle, sitemap'i `https://www.getscor3.com/sitemap.xml` olarak gönder.
 
-## 3. Vercel Firewall — PerplexityBot'u aç (~3 dk)
+## 3. Vercel Firewall — AI botlarını aç (~3 dk)
 
-Canlıda `PerplexityBot` hâlâ **403** alıyor (Vercel'in "AI Bots" kuralı), robots.txt'te artık serbest.
-Eğitim botları (GPTBot, ClaudeBot, CCBot) engelli kalmalı.
+2026-11-16'dan beri robots.txt'te GPTBot, ClaudeBot, CCBot, PerplexityBot vb. **serbest**. Kod tarafında bu botlar
+Sportmonks'a istek attıramaz: maç sayfası yalnız önbellekten (Redis) gelir, önbellekte yoksa 503 döner; diğer sayfalar
+CDN kopyası. Yalnız saldırgan kazıyıcılar (Bytespider, Diffbot, ImagesiftBot, Omgilibot, Timpibot) engelli.
 
-1. Vercel → proje → **Firewall** → **Rules** (ya da **Bot Management / AI Bots**).
-2. "AI Bots" kuralı **Deny/Block** ise onu açık bırak; üstüne yeni bir **Custom Rule** ekle:
-   - Ad: `AI arama botları izin`
-   - Koşul: **User Agent** → **contains** → `PerplexityBot`
-   - Aksiyon: **Bypass** (ya da **Allow**)
-   - Sırayı AI Bots kuralının **üstüne** al → **Save** → **Publish**.
-3. Kontrol (terminal): aşağıdaki komut `200` dönmeli.
+Ama Vercel'in **"AI Bots"** firewall kuralı bu botları hâlâ kapıda **403**'lüyor (robots'a hiç bakmadan).
+
+1. Vercel → proje → **Firewall** → **Bot Management** → **AI Bots**.
+2. Kuralı **Off** / **Log** yap (Deny/Block değil) → **Save** → **Publish**.
+   - Yalnız bazılarını açmak istersen: AI Bots kuralını açık bırak, üstüne **Custom Rule** ekle — Koşul **User Agent**
+     **matches regex** `GPTBot|ClaudeBot|CCBot|PerplexityBot|OAI-SearchBot|Claude-SearchBot`, Aksiyon **Bypass**, sırada
+     AI Bots kuralının **üstünde**.
+3. Kontrol (terminal): iki komut da `200` dönmeli.
 
 ```bash
 curl -s -o /dev/null -w "%{http_code}\n" -A "PerplexityBot/1.0" https://www.getscor3.com/
 ```
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" -A "Mozilla/5.0 (compatible; GPTBot/1.2)" https://www.getscor3.com/
+```
+
+İlk günlerde Sportmonks kullanım grafiğine bir göz at; bot trafiği maç sayfalarında artsa da Sportmonks isteği artmamalı.
 
 ## 4. Push sonrası hızlı kontrol
 
@@ -48,7 +56,7 @@ curl -s https://www.getscor3.com/llms.txt | head -5
 curl -s https://www.getscor3.com/robots.txt | grep -c PerplexityBot
 ```
 
-İkinci komut `0` dönmeli (artık engel listesinde değil).
+İkinci komut `0` dönmeli (artık engel listesinde değil). `GPTBot` için de aynı: `0`.
 
 Ayrıca https://search.google.com/test/rich-results adresine bir maç ve bir takım sayfası ver: **SportsEvent** ve
 **SportsTeam** görünmeli.

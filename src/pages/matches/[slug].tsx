@@ -102,7 +102,8 @@ export const getServerSideProps: GetServerSideProps<MatchDetailProps> = async (c
 
   // Sportmonks bütçesi sayfa render'ı için kısa (zaman aşımı → 'error' → istemci çeker; bkz. cachedFetch).
   const withPageTimeout = <T,>(fn: () => Promise<T>) => withSportmonksTimeout(SPORTMONKS_TIMEOUT_MS.page, fn);
-  // AI / kazıyıcı bot (bkz. config/crawlers.ts): maç + olaylar + meta tam, H2H/form/istatistik/kadro sunucuda çekilmez.
+  // AI / kazıyıcı bot (bkz. config/crawlers.ts): maç + olaylar + meta tam, H2H/form/istatistik/kadro sunucuda çekilmez ve
+  // maç verisi YALNIZ önbellekten gelir (Sportmonks'a sıfırdan istek yok); önbellekte yoksa 503 + Retry-After.
   const lightBot = isLightPageBot(context.req?.headers?.['user-agent']);
   // Geçici hata: HTML isteğine 503 (bkz. TRANSIENT_ERROR_RETRY_AFTER_SECONDS); istemci gezinmesinin veri isteği
   // (`x-nextjs-data`) 200 kalır — Next 5xx veri yanıtında sayfayı baştan yükler.
@@ -118,7 +119,7 @@ export const getServerSideProps: GetServerSideProps<MatchDetailProps> = async (c
     // + Retry-After (bot sonra gelir), sayfa kabuğu istemcide maçı kendisi çeker. Kalan kota canlı uçlara ve ana sayfaya.
     const reserve = await isPoolInReserve(poolForPath('football/fixtures'), Date.now()).catch(() => false);
     const resolve = () => resolveMatchPage(matchId, parseMatchSlugFromParam(slug ?? ''));
-    const page = await withPageTimeout(() => (reserve ? withSportmonksCacheOnly({ misses: 0 }, resolve) : resolve()));
+    const page = await withPageTimeout(() => (reserve || lightBot ? withSportmonksCacheOnly({ misses: 0 }, resolve) : resolve()));
     switch (page.kind) {
       case 'match': {
         // Slug kanonik değilse (yalnız id, eski slug kuralı "s-o-paulo-santos", ad değişikliği) sunucuda 301; sorgu korunur.
