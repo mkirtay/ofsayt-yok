@@ -6,6 +6,40 @@
   padding: $spacing-5 0 $spacing-8;
 }
 
+.pageWide {
+  max-width: 1120px;
+
+  .title {
+    max-width: 760px;
+    font-size: 34px;
+    letter-spacing: -0.02em;
+
+    @include below-desktop {
+      font-size: 26px;
+    }
+  }
+
+  .meta {
+    max-width: 760px;
+  }
+
+  .lead {
+    max-width: 720px;
+    font-size: 15px;
+    color: $color-text-secondary;
+
+    strong {
+      color: $color-text;
+    }
+  }
+
+  .faq,
+  .related,
+  .sources {
+    max-width: 760px;
+  }
+}
+
 .crumbs {
   display: flex;
   flex-wrap: wrap;

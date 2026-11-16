@@ -134,7 +134,7 @@ export function ruleArticleSchemas(a: RuleArticle): Record<string, unknown>[] {
 }
 
 /** Futbol kuralları makale / hub sayfası. `aside` hub'da makale listesi için. */
-export default function RulesArticlePage({ article, aside }: { article: RuleArticle; aside?: ReactNode }) {
+export default function RulesArticlePage({ article, aside, wide = false }: { article: RuleArticle; aside?: ReactNode; wide?: boolean }) {
   const url = `${siteBaseUrl()}${ruleArticlePath(article)}`;
   const title = brandTitle(article.title);
   const related = [RULES_HUB, ...RULE_ARTICLES].filter((a) => a.slug !== article.slug);
@@ -154,7 +154,7 @@ export default function RulesArticlePage({ article, aside }: { article: RuleArti
         <JsonLd key={i} schema={s} />
       ))}
       <Container>
-        <article className={styles.page}>
+        <article className={`${styles.page} ${wide ? styles.pageWide : ''}`}>
           <nav className={styles.crumbs} aria-label="Sayfa yolu">
             <Link href="/">{BRAND.name}</Link>
             <span aria-hidden="true">›</span>
@@ -172,7 +172,7 @@ export default function RulesArticlePage({ article, aside }: { article: RuleArti
 
           {aside}
 
-          {article.sections.map((s) => (
+          {(wide ? [] : article.sections).map((s) => (
             <section key={s.id} id={s.id} className={styles.section}>
               <h2>{s.heading}</h2>
               {s.blocks.map((b, i) => (

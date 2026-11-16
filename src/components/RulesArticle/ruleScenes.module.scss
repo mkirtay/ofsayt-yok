@@ -1,0 +1,299 @@
+@use '../../styles/variables' as *;
+@use '../../styles/motion' as *;
+
+// Kural sahneleri: tek seferlik girişler (draw/pop/fadeIn/fillRow) yalnız "from" karesi tanımlar; temel stil son/sade
+// kare olduğundan "Hareketi azalt"ta (animation: none) sahne anlamlı kalır. Döngüler uzun beklemeli, hafif.
+
+.stage {
+  @include motion-root;
+  background: #16241c;
+}
+
+.svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+// SVG öğelerinde dönüşüm kutusu
+.svg * {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+// ── tek seferlik girişler ─────────────────────────────────────────────
+.draw {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+  animation: draw 1.1s ease-out var(--d, 0s) backwards;
+}
+@keyframes draw {
+  from { stroke-dashoffset: 1; }
+}
+
+.pop {
+  animation: pop 0.45s cubic-bezier(0.2, 1.4, 0.4, 1) var(--d, 0s) backwards;
+}
+@keyframes pop {
+  from { transform: scale(0); opacity: 0; }
+}
+
+.fadeIn {
+  animation: fadeIn 0.6s ease-out var(--d, 0s) backwards;
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+}
+
+.fillRow {
+  transform-origin: left center !important;
+  animation: fillRow 0.5s ease-out var(--d, 0s) backwards;
+}
+@keyframes fillRow {
+  from { transform: scaleX(0); }
+}
+
+// ── 2 Top ─────────────────────────────────────────────────────────────
+.bounce { animation: bounce 1.4s ease-in-out infinite; }
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-26px); }
+}
+.shadowBounce { animation: shadowBounce 1.4s ease-in-out infinite; }
+@keyframes shadowBounce {
+  0%, 100% { transform: scale(1); opacity: 0.35; }
+  50% { transform: scale(0.7); opacity: 0.2; }
+}
+.spin { animation: spin 5s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+// ── 5 Hakem ───────────────────────────────────────────────────────────
+.march { animation: march 1s linear infinite var(--d, 0s); }
+@keyframes march { to { stroke-dashoffset: -20; } }
+.ring { animation: ring 2s ease-out infinite var(--d, 0s); }
+@keyframes ring {
+  from { transform: scale(1); opacity: 0.8; }
+  to { transform: scale(1.9); opacity: 0; }
+}
+
+// ── 6 Görevliler ──────────────────────────────────────────────────────
+.roam { animation: roam 8s ease-in-out infinite; }
+@keyframes roam {
+  0%, 100% { transform: translate(0, 0); }
+  33% { transform: translate(34px, 16px); }
+  66% { transform: translate(-30px, -12px); }
+}
+.slideA { animation: slideA 8s ease-in-out infinite; }
+@keyframes slideA {
+  0%, 100% { transform: translateX(0); }
+  40% { transform: translateX(120px); }
+  70% { transform: translateX(-50px); }
+}
+.slideB { animation: slideB 8s ease-in-out infinite; }
+@keyframes slideB {
+  0%, 100% { transform: translateX(0); }
+  40% { transform: translateX(-120px); }
+  70% { transform: translateX(50px); }
+}
+.flagUp {
+  transform-origin: 50% 100% !important;
+  animation: flagUp 4s ease-in-out infinite;
+}
+@keyframes flagUp {
+  0%, 30% { transform: scaleY(0); }
+  40%, 70% { transform: scaleY(1); }
+  80%, 100% { transform: scaleY(0); }
+}
+
+// ── 7 Süre ────────────────────────────────────────────────────────────
+.hand {
+  transform-origin: 50% 100% !important;
+  animation: spin 6s linear infinite;
+}
+.half1 {
+  transform-origin: left center !important;
+  animation: half1 8s ease-in-out infinite;
+}
+@keyframes half1 {
+  0% { transform: scaleX(0); opacity: 1; }
+  35%, 90% { transform: scaleX(1); opacity: 1; }
+  100% { transform: scaleX(1); opacity: 0; }
+}
+.half2 {
+  transform-origin: left center !important;
+  animation: half2 8s ease-in-out infinite;
+}
+@keyframes half2 {
+  0%, 45% { transform: scaleX(0); opacity: 1; }
+  78%, 90% { transform: scaleX(1); opacity: 1; }
+  100% { transform: scaleX(1); opacity: 0; }
+}
+.extra { animation: extra 8s ease-in-out infinite; }
+@keyframes extra {
+  0%, 80% { opacity: 0; }
+  88%, 96% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+// ── 8 Başlama ─────────────────────────────────────────────────────────
+.kickoff { animation: kickoff 5s ease-in-out infinite; }
+@keyframes kickoff {
+  0%, 12% { transform: translate(0, 0); opacity: 1; }
+  32%, 90% { transform: translate(-44px, 26px); opacity: 1; }
+  100% { transform: translate(-44px, 26px); opacity: 0; }
+}
+
+// ── 9 Top oyunda / dışarıda ───────────────────────────────────────────
+.crossLine { animation: crossLine 6s ease-in-out infinite; }
+@keyframes crossLine {
+  0%, 8% { transform: translateY(0); opacity: 1; }
+  32%, 48% { transform: translateY(56px); }
+  68%, 90% { transform: translateY(74px); opacity: 1; }
+  100% { transform: translateY(74px); opacity: 0; }
+}
+.stateIn { animation: stateIn 6s step-end infinite; }
+@keyframes stateIn {
+  0% { opacity: 1; }
+  52%, 100% { opacity: 0; }
+}
+.stateOut {
+  opacity: 0;
+  animation: stateOut 6s step-end infinite;
+}
+@keyframes stateOut {
+  0% { opacity: 0; }
+  52%, 100% { opacity: 1; }
+}
+
+// ── 10 Gol ────────────────────────────────────────────────────────────
+.shoot { animation: shoot 5s ease-in infinite; }
+@keyframes shoot {
+  0%, 10% { transform: translate(0, 0); opacity: 1; }
+  38%, 90% { transform: translate(204px, -52px); opacity: 1; }
+  100% { transform: translate(204px, -52px); opacity: 0; }
+}
+.goalPop { animation: goalPop 5s ease-out infinite; }
+@keyframes goalPop {
+  0%, 36% { transform: scale(0.4); opacity: 0; }
+  46%, 88% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(1); opacity: 0; }
+}
+
+// ── 11 Ofsayt ─────────────────────────────────────────────────────────
+.passBall { animation: passBall 5s ease-in-out infinite; }
+@keyframes passBall {
+  0%, 10% { transform: translate(0, 0); opacity: 1; }
+  38%, 90% { transform: translate(132px, -44px); opacity: 1; }
+  100% { transform: translate(132px, -44px); opacity: 0; }
+}
+.flagText { animation: goalPop 5s ease-out infinite; }
+.offsideMan { animation: offsideMan 5s ease-in-out infinite; }
+@keyframes offsideMan {
+  0%, 38% { transform: scale(1); }
+  46%, 60% { transform: scale(1.25); }
+  70%, 100% { transform: scale(1); }
+}
+
+// ── 12 Faul ───────────────────────────────────────────────────────────
+.tackleA { animation: tackleA 8s ease-in-out infinite; }
+@keyframes tackleA {
+  0%, 8% { transform: translateX(0); }
+  16%, 30% { transform: translateX(22px); }
+  40%, 100% { transform: translateX(0); }
+}
+.tackleB { animation: tackleB 8s ease-in-out infinite; }
+@keyframes tackleB {
+  0%, 12% { transform: translate(0, 0) scale(1); }
+  20%, 30% { transform: translate(14px, 8px) scale(0.8); }
+  40%, 100% { transform: translate(0, 0) scale(1); }
+}
+.burst { animation: burst 8s ease-out infinite; }
+@keyframes burst {
+  0%, 14% { opacity: 0; transform: scale(0.4); }
+  20%, 32% { opacity: 1; transform: scale(1.2); }
+  38%, 100% { opacity: 0; }
+}
+.cardYellow { animation: cardYellow 8s ease-in-out infinite; }
+@keyframes cardYellow {
+  0%, 36% { opacity: 0; transform: translateY(20px); }
+  44%, 56% { opacity: 1; transform: translateY(0); }
+  62%, 100% { opacity: 0; transform: translateY(20px); }
+}
+.cardRed {
+  opacity: 0;
+  animation: cardRed 8s ease-in-out infinite;
+}
+@keyframes cardRed {
+  0%, 66% { opacity: 0; transform: translateY(20px); }
+  74%, 90% { opacity: 1; transform: translateY(0); }
+  97%, 100% { opacity: 0; transform: translateY(20px); }
+}
+.capYellow { animation: cardYellow 8s ease-in-out infinite; }
+.capRed {
+  opacity: 0;
+  animation: cardRed 8s ease-in-out infinite;
+}
+
+// ── 13 Serbest vuruş ──────────────────────────────────────────────────
+.freeKick { animation: freeKick 5s ease-in-out infinite; }
+@keyframes freeKick {
+  0%, 10% { transform: translate(0, 0); opacity: 1; }
+  28% { transform: translate(64px, -66px); }
+  44% { transform: translate(124px, -102px); }
+  60%, 90% { transform: translate(184px, -70px); opacity: 1; }
+  100% { transform: translate(184px, -70px); opacity: 0; }
+}
+
+// ── 14 Penaltı ────────────────────────────────────────────────────────
+.kickerRun { animation: kickerRun 5s ease-in-out infinite; }
+@keyframes kickerRun {
+  0%, 6% { transform: translateY(0); }
+  16%, 100% { transform: translateY(-18px); }
+}
+.penaltyBall { animation: penaltyBall 5s ease-out infinite; }
+@keyframes penaltyBall {
+  0%, 16% { transform: translate(0, 0); opacity: 1; }
+  32%, 90% { transform: translate(46px, -88px); opacity: 1; }
+  100% { transform: translate(46px, -88px); opacity: 0; }
+}
+.keeperDive { animation: keeperDive 5s ease-out infinite; }
+@keyframes keeperDive {
+  0%, 17% { transform: translateX(0); }
+  34%, 90% { transform: translateX(-52px); }
+  100% { transform: translateX(0); }
+}
+
+// ── 15 Taç atışı ──────────────────────────────────────────────────────
+.countdown {
+  stroke-dasharray: 1;
+  animation: countdown 6s linear infinite;
+}
+@keyframes countdown {
+  0% { stroke-dashoffset: 0; }
+  45%, 100% { stroke-dashoffset: 0.85; }
+}
+.throwIn { animation: throwIn 6s ease-in-out infinite; }
+@keyframes throwIn {
+  0%, 45% { transform: translate(0, 0) scale(1); opacity: 1; }
+  62% { transform: translate(70px, -25px) scale(1.8); }
+  78%, 92% { transform: translate(140px, -50px) scale(1); opacity: 1; }
+  100% { transform: translate(140px, -50px) scale(1); opacity: 0; }
+}
+
+// ── 16 Kale vuruşu ────────────────────────────────────────────────────
+.goalKick { animation: goalKick 5s ease-out infinite; }
+@keyframes goalKick {
+  0%, 12% { transform: translate(0, 0); opacity: 1; }
+  40%, 90% { transform: translate(178px, -24px); opacity: 1; }
+  100% { transform: translate(178px, -24px); opacity: 0; }
+}
+
+// ── 17 Köşe vuruşu ────────────────────────────────────────────────────
+.cornerBall { animation: cornerBall 5s ease-in-out infinite; }
+@keyframes cornerBall {
+  0%, 12% { transform: translate(0, 0); opacity: 1; }
+  26% { transform: translate(-22px, 8px); }
+  38% { transform: translate(-40px, 30px); }
+  50%, 90% { transform: translate(-50px, 54px); opacity: 1; }
+  100% { transform: translate(-50px, 54px); opacity: 0; }
+}
