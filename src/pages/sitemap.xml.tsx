@@ -1,140 +1,16 @@
 import type { GetServerSideProps } from 'next';
-import { getFixturesByDate } from '@/services/liveScoreService';
-import { buildMatchSlug } from '@/utils/matchUrl';
 import { siteBaseUrl } from '@/lib/siteUrl';
-import { gameSitemapRoutes } from '@/config/gameFlag';
-import { LEAGUE_HUBS } from '@/config/leagueHubs';
+import { buildIndexXml } from '@/server/sitemap/sections';
 
-const BASE_URL = siteBaseUrl();
-
-const STATIC_ROUTES: { path: string; priority: string; changefreq: string }[] = [
-  { path: '/', priority: '1.0', changefreq: 'hourly' },
-  { path: '/bugun', priority: '0.7', changefreq: 'hourly' },
-  { path: '/lig', priority: '0.7', changefreq: 'weekly' },
-  ...LEAGUE_HUBS.map((h) => ({ path: `/lig/${h.slug}`, priority: '0.8', changefreq: 'daily' })),
-  { path: '/hakemler', priority: '0.7', changefreq: 'daily' },
-  { path: '/ai-istatistikleri', priority: '0.6', changefreq: 'daily' },
-  { path: '/hakkimizda', priority: '0.4', changefreq: 'monthly' },
-  { path: '/yontem', priority: '0.4', changefreq: 'monthly' },
-  { path: '/gundem', priority: '0.5', changefreq: 'hourly' },
-  { path: '/frikik', priority: '0.4', changefreq: 'weekly' },
-  { path: '/pricing', priority: '0.7', changefreq: 'monthly' },
-  { path: '/hesap-silme', priority: '0.3', changefreq: 'yearly' },
-];
-
-function isoDateOffset(days: number): string {
-  const d = new Date();
-  d.setUTCDate(d.getUTCDate() + days);
-  return d.toISOString().slice(0, 10);
-}
-
-function escapeXml(s: string): string {
-  return s
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&apos;');
-}
-
-function buildXml(urls: { loc: string; priority: string; changefreq: string }[]): string {
-  const entries = urls
-    .map(
-      (u) =>
-        `  <url>\n    <loc>${escapeXml(u.loc)}</loc>\n    <changefreq>${u.changefreq}</changefreq>\n    <priority>${u.priority}</priority>\n  </url>`
-    )
-    .join('\n');
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${entries}\n</urlset>`;
-}
-
+/** Sitemap dizini (2026-11-16'dan beri): bölümler /sitemaps/{sayfalar,maclar,takimlar,kisiler}.xml (bkz. server/sitemap). */
 export default function SitemapXml() {
   return null;
 }
 
 export const getServerSideProps: GetServerSideProps = async ({ res }) => {
-  const offsets = [-3, -2, -1, 0, 1, 2, 3];
-  const dates = offsets.map(isoDateOffset);
-
-  const matchUrls: { loc: string; priority: string; changefreq: string }[] = [];
-  const clubTeamUrls: { loc: string; priority: string; changefreq: string }[] = [];
-  const seenClubTeams = new Set<number>();
-
-  try {
-    const fixtureResults = await Promise.all(dates.map((d) => getFixturesByDate(d).catch(() => [])));
-
-    const seen = new Set<string>();
-    for (const fixtures of fixtureResults) {
-      for (const match of fixtures) {
-        const id = String(match.id);
-        if (seen.has(id)) continue;
-        seen.add(id);
-        const slug = buildMatchSlug(match);
-        const path = slug ? `/matches/${id}-${slug}` : `/matches/${id}`;
-        matchUrls.push({ loc: `${BASE_URL}${path}`, priority: '0.6', changefreq: 'hourly' });
-        // Kulüp takım sayfaları: aynı maç listesinden (ek istek yok) — haftanın maçı olan her takım.
-        for (const teamId of [match.home?.id ?? match.home_id, match.away?.id ?? match.away_id]) {
-          if (teamId == null || !(Number(teamId) > 0) || seenClubTeams.has(Number(teamId))) continue;
-          seenClubTeams.add(Number(teamId));
-          clubTeamUrls.push({ loc: `${BASE_URL}/teams/${teamId}`, priority: '0.5', changefreq: 'daily' });
-        }
-      }
-    }
-  } catch {
-    // sitemap still works with just static routes
-  }
-
-  // Milli maçlar + takım sayfaları: yalnız bayrak açıkken; ana sayfa listesiyle AYNI önbellekli gün listesi
-  // (`loadNationalDay`, SWR) — sitemap'e özel toplu AF isteği yok; önbellek boşsa en çok 7 gün isteği, o da CDN'de 1 gün.
-  const nationalUrls: { loc: string; priority: string; changefreq: string }[] = [];
-  try {
-    const { nationalMatchesEnabled } = await import('@/config/nationalMatches');
-    if (nationalMatchesEnabled()) {
-      const { loadNationalDay } = await import('@/server/apiFootball/nationalDay');
-      const days = await Promise.all(dates.map((d) => loadNationalDay(d)));
-      const seenTeams = new Set<number>();
-      for (const day of days) {
-        if (!day.ok) continue;
-        for (const match of day.matches) {
-          const slug = buildMatchSlug(match);
-          nationalUrls.push({ loc: `${BASE_URL}${slug ? `/matches/${match.id}-${slug}` : `/matches/${match.id}`}`, priority: '0.6', changefreq: 'hourly' });
-          for (const team of [match.home, match.away]) {
-            if (team?.id == null || seenTeams.has(team.id)) continue;
-            seenTeams.add(team.id);
-            nationalUrls.push({ loc: `${BASE_URL}/teams/${team.id}`, priority: '0.5', changefreq: 'daily' });
-          }
-        }
-      }
-    }
-  } catch {
-    // milli maç yok say; sitemap'in kalanı çalışır
-  }
-
-  // Hakem / teknik direktör sayfaları (Süper Lig + 1. Lig, son iki sezon) — hata sitemap'i düşürmez.
-  let peopleUrls: { loc: string; priority: string; changefreq: string }[] = [];
-  try {
-    const { loadSitemapPeoplePaths, refereeTableSitemapPaths } = await import('@/server/people/sitemapPeople');
-    peopleUrls = [
-      ...refereeTableSitemapPaths().map((path) => ({ loc: `${BASE_URL}${path}`, priority: '0.6', changefreq: 'daily' })),
-      ...(await loadSitemapPeoplePaths()).map((path) => ({ loc: `${BASE_URL}${path}`, priority: '0.4', changefreq: 'weekly' })),
-    ];
-  } catch {
-    // yok say
-  }
-
-  const staticUrls = [...STATIC_ROUTES, ...gameSitemapRoutes()].map((r) => ({
-    loc: `${BASE_URL}${r.path}`,
-    priority: r.priority,
-    changefreq: r.changefreq,
-  }));
-
-  const xml = buildXml([...staticUrls, ...matchUrls, ...clubTeamUrls, ...nationalUrls, ...peopleUrls]);
-
   res.setHeader('Content-Type', 'text/xml; charset=utf-8');
-  // ±3 günlük maç listesi günde bir değişir; üretim ~750 ms CPU (7 günün fikstürü) → CDN'de 1 gün, sonra 1 gün
-  // eski kopya verilirken arka planda yenilenir (bölge başına günde en çok ~1 üretim).
   res.setHeader('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=86400');
-  res.write(xml);
+  res.write(buildIndexXml(siteBaseUrl(), Date.now()));
   res.end();
-
   return { props: {} };
 };

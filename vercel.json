@@ -11,6 +11,10 @@
     {
       "path": "/api/admin/game/settle",
       "schedule": "30 3 * * *"
+    },
+    {
+      "path": "/api/cron/indexnow",
+      "schedule": "15 4 * * *"
     }
   ]
 }
