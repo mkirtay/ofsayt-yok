@@ -58,7 +58,7 @@ describe('<GundemEntityCard />', () => {
 
   it('takım: ad, lig, sıra; takım sayfasına bağlanır', () => {
     const html = wrap(<GundemEntityCard card={team} />);
-    expect(html).toContain('href="/teams/34"');
+    expect(html).toContain('href="/teams/34-galatasaray"');
     expect(html).toContain('Süper Lig');
     expect(html).toContain('2.');
     expect(html).toContain('28 P');

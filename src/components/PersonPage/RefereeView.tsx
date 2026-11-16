@@ -12,6 +12,7 @@ import type { RefereeSeasonTableRow } from '@/services/sportmonks/refereeStats';
 import RecentMatchesTable from './RecentMatchesTable';
 import RefereeFanRating from './RefereeFanRating';
 import styles from './personPage.module.scss';
+import { teamHref } from '@/utils/teamUrl';
 
 export function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -195,7 +196,7 @@ export default function RefereeView({ data }: { data: RefereePageData }) {
                 {breakdown.rows.map((r) => (
                   <tr key={r.teamId}>
                     <td>
-                      <Link href={`/teams/${r.teamId}`} className={styles.teamCellLink} prefetch={false}>
+                      <Link href={teamHref(r.teamId, r.name)} className={styles.teamCellLink} prefetch={false}>
                         <TeamLogo src={r.logo} width={18} />
                         {r.name}
                       </Link>

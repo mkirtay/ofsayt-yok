@@ -31,6 +31,7 @@ import { useIsDerby } from '@/hooks/useMatchInfoExtras';
 import { liveMinuteLabel } from '@/utils/liveMinute';
 import { loadWithRetry, type LoadResult } from '@/utils/loadWithRetry';
 import infoStyles from './matchInfo.module.scss';
+import { teamHref } from '@/utils/teamUrl';
 
 interface MatchCardProps {
   match: Match | null;
@@ -434,7 +435,7 @@ export default function MatchCard({ match, loading, initialH2h }: MatchCardProps
       <div className={styles.teamsContainer}>
         <div className={styles.teamsTopRow}>
           <div className={styles.team}>
-            <Link href={`/teams/${match.home?.id || ''}`} className={styles.teamLink}>
+            <Link href={teamHref(match.home?.id || '', homeName)} className={styles.teamLink}>
               {homeLogo ? (
                 <TeamLogo src={homeLogo} alt={homeName} className={styles.logo} width={56} height={56} />
               ) : (
@@ -501,7 +502,7 @@ export default function MatchCard({ match, loading, initialH2h }: MatchCardProps
           </div>
 
           <div className={styles.team}>
-            <Link href={`/teams/${match.away?.id || ''}`} className={styles.teamLink}>
+            <Link href={teamHref(match.away?.id || '', awayName)} className={styles.teamLink}>
               {awayLogo ? (
                 <TeamLogo src={awayLogo} alt={awayName} className={styles.logo} width={56} height={56} />
               ) : (

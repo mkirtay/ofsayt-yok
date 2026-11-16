@@ -118,13 +118,13 @@ export function pickCurrentRound(rounds: SeasonRound[], today: string): SeasonRo
 }
 
 /** Sitemap: sezonun bütün maç adresleri (tek `schedules` isteği). */
-export async function loadSeasonFixtureHrefs(seasonId: number): Promise<{ href: string; kickoff: number | null; teamIds: [number, number] }[]> {
+export async function loadSeasonFixtureHrefs(seasonId: number): Promise<{ href: string; kickoff: number | null; teams: { id: number; name: string }[] }[]> {
   const env = await sportmonksClientRequest<{ rounds?: RawRound[] }[]>('football', `/schedules/seasons/${seasonId}`, {});
   const stages = Array.isArray(env.data) ? env.data : [];
-  const out: { href: string; kickoff: number | null; teamIds: [number, number] }[] = [];
+  const out: { href: string; kickoff: number | null; teams: { id: number; name: string }[] }[] = [];
   for (const st of stages) for (const r of st.rounds ?? []) for (const f of r.fixtures ?? []) {
     const w = toWeekFixture(f);
-    if (w) out.push({ href: w.href, kickoff: w.kickoff, teamIds: [w.home.id, w.away.id] });
+    if (w) out.push({ href: w.href, kickoff: w.kickoff, teams: [w.home, w.away].map((t) => ({ id: t.id, name: t.name })) });
   }
   return out;
 }

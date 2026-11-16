@@ -11,6 +11,7 @@ import type { CompetitionTableStandingRow, TopScorerEntry } from '@/services/liv
 import type { DisciplinaryRow } from '@/services/sportmonksKatman2Mapper';
 import { standingTeamFullName } from '@/utils/standingsTeamLabel';
 import styles from './standingsView.module.scss';
+import { teamHref } from '@/utils/teamUrl';
 
 export type StandingsBlock = { key: string; title?: string; rows: CompetitionTableStandingRow[] };
 
@@ -115,7 +116,7 @@ export function StandingsTable({ blocks, competitionId }: { blocks: StandingsBlo
                           <TeamLogo src={logo} alt={name ? `${name} logosu` : ''} className={styles.teamLogo} width={20} height={20} />
                           <div className={styles.teamText}>
                             {id != null ? (
-                              <Link href={`/teams/${id}`} prefetch={false} className={styles.teamLink} title={name} aria-label={name}>
+                              <Link href={teamHref(id, name)} prefetch={false} className={styles.teamLink} title={name} aria-label={name}>
                                 <StandingTeamName row={row} />
                               </Link>
                             ) : (
@@ -183,7 +184,7 @@ function PlayerCell({
         <span className={styles.playerTeam}>
           <TeamLogo src={teamLogo} alt="" className={styles.miniLogo} width={14} height={14} />
           {teamId != null ? (
-            <Link href={`/teams/${teamId}`} prefetch={false} className={styles.teamLink}>
+            <Link href={teamHref(teamId, teamName)} prefetch={false} className={styles.teamLink}>
               {teamName}
             </Link>
           ) : (

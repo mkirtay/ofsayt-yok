@@ -8,6 +8,7 @@ import { leagueDisplayName, leagueSearchTerms } from '@/utils/leagueName';
 import { normalizeSearchText } from '@/utils/searchText';
 import styles from './headerSearch.module.scss';
 import TeamLogo from '@/components/TeamLogo';
+import { teamHref } from '@/utils/teamUrl';
 
 type Props = {
   onNavigate?: () => void;
@@ -140,7 +141,7 @@ export default function HeaderSearch({ onNavigate, expandable = false, onExpande
             <>
               <div className={styles.groupLabel}>{t('search.teams')}</div>
               {teams.map((team) => (
-                <Link key={team.id} href={`/teams/${team.id}`} className={styles.hit} onClick={close}>
+                <Link key={team.id} href={teamHref(team.id, team.name)} className={styles.hit} onClick={close}>
                   {team.logo ? <TeamLogo src={team.logo} alt="" width={18} height={18} className={styles.logo} /> : <span className={styles.logoPh} />}
                   <span>{team.name}</span>
                 </Link>

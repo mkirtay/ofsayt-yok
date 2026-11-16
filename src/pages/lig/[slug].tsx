@@ -16,6 +16,7 @@ import { hubSelectionIdForLeague } from '@/utils/hubLeagueSelection';
 import { sportmonksLeagueLogoUrl } from '@/utils/leagueLogo';
 import { toStandingsBlocks } from '@/utils/standingsBlocks';
 import styles from './lig.module.scss';
+import { teamHref } from '@/utils/teamUrl';
 
 type Props = {
   hub: LeagueHub;
@@ -101,7 +102,7 @@ export default function LeagueHubPage({ hub, table, scorers, seasonName, updated
               url,
               ...(logo ? { logo } : {}),
               ...(firstRows.length
-                ? { member: firstRows.slice(0, 30).map((r) => ({ '@type': 'SportsTeam', name: r.team?.name || r.name, ...(r.team?.id ? { url: `${siteBaseUrl()}/teams/${r.team.id}` } : {}) })) }
+                ? { member: firstRows.slice(0, 30).map((r) => ({ '@type': 'SportsTeam', name: r.team?.name || r.name, ...(r.team?.id ? { url: `${siteBaseUrl()}${teamHref(r.team.id, r.team?.name || r.name)}` } : {}) })) }
                 : {}),
             },
             {

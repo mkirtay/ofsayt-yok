@@ -1,6 +1,7 @@
 /**
  * Hakem sayfası alıntılanabilir özeti (SEO/GEO raporu 2026-11-16): "X, 2026/2027 Süper Lig sezonunda 7 maç yönetti; maç
  * başı 5,57 sarı kart …". Yalnız sayfa verisinden (ek istek yok). Lig adı Türkçe kısa ad (eşlemesi yoksa ad yok).
+ * Hakem sayfalarının kuralı: yalnız sayı, YORUM / VURGU / SIRALAMA YOK ("en çok", "üzerinde" gibi) — bkz. PersonPage testleri.
  */
 import type { RefereePageData } from '@/server/people/refereePage';
 import { leagueDisplayName } from '@/lib/gundem/bot/leagueNames';
@@ -20,40 +21,37 @@ export function buildRefereeSummary(data: Pick<RefereePageData, 'name' | 'summar
     if (ctx.rates.penalties != null) rates.push(`${n(ctx.rates.penalties)} penaltı`);
     let s = `${data.name}, ${where} ${ctx.matches} maç yönetti${rates.length ? `; maç başına ${rates.join(', ')} verdi` : ''}.`;
     const avg = ctx.leagueAvg?.yellow;
-    if (avg != null && ctx.rates.yellow != null) {
-      const diff = ctx.rates.yellow - avg;
-      const cmp = Math.abs(diff) < 0.25 ? 'lig ortalamasına yakın' : diff > 0 ? 'lig ortalamasının üzerinde' : 'lig ortalamasının altında';
-      s += ` Sarı kart ortalaması ${cmp} (lig hakemleri: ${n(avg)}).`;
-    }
+    if (avg != null) s += ` Aynı lig ve sezonda hakemlerin ortalaması maç başına ${n(avg)} sarı kart.`;
     out.push(s);
   }
   if (data.summary.totalMatches > 0) {
     out.push(`Kayıtlarımızda ${data.summary.seasonCount} sezonda toplam ${data.summary.totalMatches} maçı var.`);
   }
   const season = data.teams.seasons.find((x) => x.seasonName === data.teams.defaultSeason) ?? data.teams.seasons[0];
-  const top = season ? [...season.rows].sort((a, b) => b.matches - a.matches || b.yellow - a.yellow)[0] : undefined;
-  if (season && top && top.matches > 1) {
-    out.push(`${season.seasonName} sezonunda en çok ${top.name} maçlarını yönetti (${top.matches} maç, bu takıma ${top.yellow} sarı kart).`);
-  }
+  if (season && season.rows.length) out.push(`${season.seasonName} sezonunda ${season.rows.length} farklı takımın maçında görev aldı.`);
   return out;
 }
 
-type TableRow = { name: string; matches: number; yellowPerMatch: number | null; penaltiesPerMatch: number | null };
+type TableRow = { matches: number; yellowPerMatch: number | null; redPerMatch?: number | null; penaltiesPerMatch: number | null };
 
 /**
- * /hakemler alıntılanabilir özeti: "2026/2027 Süper Lig sezonunda maç başına en çok sarı kart gösteren hakem X (5,57; 7 maç)."
- * En az `minMatches` maç yöneten hakemler arasından (tek maçlık uç değer lider olmasın).
+ * /hakemler alıntılanabilir özeti — sıralama / vurgu yok (hakem sayfası kuralı): kaç hakem, kaç maç, maç başına ortalamalar
+ * (maç sayısıyla ağırlıklı).
  */
-export function buildRefereeTableSummary(league: string, season: string, rows: TableRow[], minMatches = 3): string[] {
-  const eligible = rows.filter((r) => r.matches >= minMatches);
-  const out: string[] = [];
-  const topBy = (get: (r: TableRow) => number | null) =>
-    [...eligible].filter((r) => get(r) != null).sort((a, b) => get(b)! - get(a)! || b.matches - a.matches)[0];
-  const y = topBy((r) => r.yellowPerMatch);
-  if (y) out.push(`${season} ${league} sezonunda maç başına en çok sarı kart gösteren hakem ${y.name} (${n(y.yellowPerMatch!)}; ${y.matches} maç).`);
-  const p = topBy((r) => r.penaltiesPerMatch);
-  if (p && p.penaltiesPerMatch! > 0) out.push(`Maç başına en çok penaltı veren hakem ${p.name} (${n(p.penaltiesPerMatch!)}).`);
-  const busiest = [...rows].sort((a, b) => b.matches - a.matches)[0];
-  if (busiest && busiest.matches > 0) out.push(`En çok maç yöneten hakem ${busiest.name} (${busiest.matches} maç).`);
-  return out;
+export function buildRefereeTableSummary(league: string, season: string, rows: TableRow[]): string[] {
+  const played = rows.filter((r) => r.matches > 0);
+  if (!played.length) return [];
+  const total = played.reduce((a, r) => a + r.matches, 0);
+  const avg = (get: (r: TableRow) => number | null | undefined) => {
+    const xs = played.filter((r) => get(r) != null);
+    const m = xs.reduce((a, r) => a + r.matches, 0);
+    return m > 0 ? xs.reduce((a, r) => a + get(r)! * r.matches, 0) / m : null;
+  };
+  const y = avg((r) => r.yellowPerMatch);
+  const p = avg((r) => r.penaltiesPerMatch);
+  const rates = [y != null ? `${n(y)} sarı kart` : null, p != null ? `${n(p)} penaltı` : null].filter(Boolean);
+  return [
+    `${season} ${league} sezonunda ${played.length} hakem toplam ${total} maçta orta hakem olarak görev aldı${rates.length ? `; maç başına ortalama ${rates.join(' ve ')}` : ''}.`,
+    'Tabloda her hakemin maç başı sarı kart, kırmızı kart, penaltı, faul ve VAR ortalamaları yer alır.',
+  ];
 }

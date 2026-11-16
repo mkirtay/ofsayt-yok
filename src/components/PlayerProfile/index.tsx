@@ -17,6 +17,7 @@ import PlayerVsOpponent from './PlayerVsOpponent';
 import Career from './Career';
 import styles from './playerProfile.module.scss';
 import TeamLogo from '@/components/TeamLogo';
+import { teamHref } from '@/utils/teamUrl';
 
 /* ─── Saf yardımcılar (test edilir) ─── */
 
@@ -91,7 +92,7 @@ function Header({ p }: { p: Profile }) {
           <div className={styles.teamLine}>
             {p.currentTeam.logo ? <TeamLogo src={p.currentTeam.logo} alt="" width={18} height={18} className={styles.teamLogo} /> : null}
             {p.currentTeam.id != null ? (
-              <Link href={`/teams/${p.currentTeam.id}`} className={styles.teamLink}>
+              <Link href={teamHref(p.currentTeam.id, p.currentTeam.name)} className={styles.teamLink}>
                 {p.currentTeam.name}
               </Link>
             ) : (
@@ -297,7 +298,7 @@ function TeamCell({ t }: { t?: PlayerTransfer['fromTeam'] }) {
     </>
   );
   return t.id != null ? (
-    <Link href={`/teams/${t.id}`} className={styles.teamCell} prefetch={false}>
+    <Link href={teamHref(t.id, t.name)} className={styles.teamCell} prefetch={false}>
       {inner}
     </Link>
   ) : (

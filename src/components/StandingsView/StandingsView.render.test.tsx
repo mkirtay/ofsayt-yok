@@ -27,7 +27,7 @@ describe('<StandingsTable />', () => {
   const html = renderToStaticMarkup(<StandingsTable blocks={[{ key: 'all', rows }]} competitionId={6} />);
 
   it('satır takım sayfasına bağlanır; sıra hücresi bölge bandı alır; açıklama yalnız görülen bölgeleri listeler', () => {
-    expect(html).toContain('href="/teams/100"');
+    expect(html).toContain('href="/teams/100-takim-1"');
     expect(html).toContain('data-zone="ucl"');
     expect(html).toContain('data-zone="relegation"');
     expect(html).toMatch(/<ul[^>]*aria-label="[^"]+"/);

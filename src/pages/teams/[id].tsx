@@ -9,6 +9,7 @@ import { BRAND, brandTitle } from '@/config/brand';
 import { isNationalMatchId } from '@/services/apiFootball/ids';
 import { nationalMatchesEnabled } from '@/config/nationalMatches';
 import { breadcrumbJsonLd } from '@/utils/breadcrumbJsonLd';
+import { parseTeamIdParam, teamHref, teamSlugParam } from '@/utils/teamUrl';
 import JsonLd from '@/components/JsonLd';
 import type { TeamPageFacts } from '@/server/teamPageShell';
 import { buildTeamSummary, teamJsonLd, teamPageDescriptionText, teamPageTitleText } from '@/utils/teamSeo';
@@ -37,18 +38,29 @@ const SHELL_REVALIDATE_SECONDS = 7 * DAY_SECONDS;
 export const getStaticPaths: GetStaticPaths = async () => ({ paths: [], fallback: 'blocking' });
 
 export const getStaticProps: GetStaticProps<TeamPageProps> = async ({ params }) => {
-  const id = String(params?.id ?? '');
+  const param = String(params?.id ?? '');
+  const id = parseTeamIdParam(param);
+  if (!id) return { notFound: true, revalidate: DAY_SECONDS };
+  // Kanonik adres `/teams/{id}-{ad}` (SEO): eski `/teams/{id}` ve yanlış ad → 301.
+  const canonicalRedirect = (name: string | null | undefined) => {
+    const canonical = teamSlugParam(id, name);
+    return name && param !== canonical ? { redirect: { destination: teamHref(id, name), permanent: true }, revalidate: SHELL_REVALIDATE_SECONDS } : null;
+  };
   // Milli takım (API-Football): ayrı kabuk; bayrak kapalıyken sayfa yok. Paylaşım görseli yok (OG ucu lig takımı verisine bağlı).
   if (isNationalMatchId(id)) {
     if (!nationalMatchesEnabled()) return { notFound: true, revalidate: 60 };
     const { loadNationalTeam } = await import('@/server/apiFootball/nationalTeam');
     const r = await loadNationalTeam(id);
     if (r.kind === 'missing') return { notFound: true, revalidate: DAY_SECONDS };
+    const redirect = r.kind === 'found' ? canonicalRedirect(r.data.team.name) : null;
+    if (redirect) return redirect;
     return { props: { teamName: r.kind === 'found' ? r.data.team.name : null, ogImagePath: '' }, revalidate: r.kind === 'found' ? 3600 : 60 };
   }
   const { loadTeamPageShell } = await import('@/server/teamPageShell');
   const shell = await loadTeamPageShell(id);
   if (shell.kind === 'missing') return { notFound: true, revalidate: DAY_SECONDS };
+  const redirect = shell.kind === 'found' ? canonicalRedirect(shell.name) : null;
+  if (redirect) return redirect;
   return {
     props: {
       teamName: shell.kind === 'found' ? shell.name : null,
@@ -71,8 +83,9 @@ export default function TeamDetail({ teamName, ogImagePath, facts }: TeamPagePro
   // gerçek bir Sportmonks isteği (422) atılıyordu. Yer tutucuyu yok say.
   const rawIdFromPath = router.asPath.match(/^\/teams\/([^/?#]+)/)?.[1] ?? '';
   const idFromPath = /^\[.*\]$/.test(rawIdFromPath) ? '' : rawIdFromPath;
-  const teamId =
-    typeof idParam === 'string' ? idParam : Array.isArray(idParam) ? (idParam[0] ?? idFromPath) : idFromPath;
+  const teamId = parseTeamIdParam(
+    typeof idParam === 'string' ? idParam : Array.isArray(idParam) ? (idParam[0] ?? idFromPath) : idFromPath,
+  );
 
   const title = teamName ? brandTitle(teamPageTitleText(teamName)) : brandTitle('Takım Detayı');
   const description = teamName
@@ -81,7 +94,7 @@ export default function TeamDetail({ teamName, ogImagePath, facts }: TeamPagePro
   const summary = teamName ? buildTeamSummary(teamName, facts) : [];
   const ogImage = ogImagePath ? `${SITE_URL}${ogImagePath}` : null;
   // Canonical = og:url: sorgusuz, her iki alan adında da siteBaseUrl() (www.getscor3.com).
-  const pageUrl = teamId ? `${SITE_URL}/teams/${teamId}` : null;
+  const pageUrl = teamId ? `${SITE_URL}${teamHref(teamId, teamName)}` : null;
   const imageAlt = teamName ? `${teamName} — lig sırası ve son maçlar` : `${BRAND.name} takım sayfası`;
 
   return (

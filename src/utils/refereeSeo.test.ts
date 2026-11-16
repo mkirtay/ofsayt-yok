@@ -18,9 +18,10 @@ describe('buildRefereeSummary', () => {
         ] }],
       },
     });
-    expect(out[0]).toBe('Ali Şansalan, 2026/2027 Süper Lig sezonunda 7 maç yönetti; maç başına 5,57 sarı kart, 0,29 kırmızı kart, 0,43 penaltı verdi. Sarı kart ortalaması lig ortalamasının üzerinde (lig hakemleri: 4,6).');
+    expect(out[0]).toBe('Ali Şansalan, 2026/2027 Süper Lig sezonunda 7 maç yönetti; maç başına 5,57 sarı kart, 0,29 kırmızı kart, 0,43 penaltı verdi. Aynı lig ve sezonda hakemlerin ortalaması maç başına 4,6 sarı kart.');
     expect(out[1]).toBe('Kayıtlarımızda 6 sezonda toplam 120 maçı var.');
-    expect(out[2]).toContain('en çok Galatasaray maçlarını yönetti (3 maç');
+    expect(out[2]).toBe('2026/2027 sezonunda 2 farklı takımın maçında görev aldı.');
+    expect(out.join(' ')).not.toMatch(/en çok|en az|üzerinde|altında/i);
   });
 
   it('veri yoksa boş', () => {
@@ -29,16 +30,13 @@ describe('buildRefereeSummary', () => {
 });
 
 describe('buildRefereeTableSummary', () => {
-  it('en az 3 maç yönetenler arasından sarı kart / penaltı lideri, en çok maç yöneten', () => {
+  it('hakem ve maç sayısı, maç sayısıyla ağırlıklı ortalama; sıralama / vurgu yok', () => {
     const out = buildRefereeTableSummary('Süper Lig', '2026/2027', [
-      { name: 'Tek Maçlık', matches: 1, yellowPerMatch: 9, penaltiesPerMatch: 2 },
-      { name: 'Ali Şansalan', matches: 7, yellowPerMatch: 5.571, penaltiesPerMatch: 0.43 },
-      { name: 'Halil Umut Meler', matches: 9, yellowPerMatch: 4.1, penaltiesPerMatch: 0.55 },
+      { matches: 0, yellowPerMatch: null, penaltiesPerMatch: null },
+      { matches: 4, yellowPerMatch: 5, penaltiesPerMatch: 0.5 },
+      { matches: 6, yellowPerMatch: 4, penaltiesPerMatch: 0 },
     ]);
-    expect(out).toEqual([
-      '2026/2027 Süper Lig sezonunda maç başına en çok sarı kart gösteren hakem Ali Şansalan (5,57; 7 maç).',
-      'Maç başına en çok penaltı veren hakem Halil Umut Meler (0,55).',
-      'En çok maç yöneten hakem Halil Umut Meler (9 maç).',
-    ]);
+    expect(out[0]).toBe('2026/2027 Süper Lig sezonunda 2 hakem toplam 10 maçta orta hakem olarak görev aldı; maç başına ortalama 4,4 sarı kart ve 0,2 penaltı.');
+    expect(out.join(' ')).not.toMatch(/en çok|en az/i);
   });
 });

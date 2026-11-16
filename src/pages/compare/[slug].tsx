@@ -16,6 +16,7 @@ import styles from './compare.module.scss';
 import TeamLogo from '@/components/TeamLogo';
 import { brandTitle } from '@/config/brand';
 import { siteBaseUrl } from '@/lib/siteUrl';
+import { teamHref } from '@/utils/teamUrl';
 
 function FormPill({ result }: { result: RecentMatchRow['result'] }) {
   const { t } = useTranslation('compare');
@@ -279,7 +280,7 @@ function ComparePageContent({ data, onRetry }: { data: ComparePagePayload; onRet
                   height={48}
                 />
               )}
-              <Link href={`/teams/${team1.teamId}`} className={styles.teamName}>
+              <Link href={teamHref(team1.teamId, team1.teamName)} className={styles.teamName}>
                 {team1.teamName}
               </Link>
               <div className={styles.formRow}>
@@ -303,7 +304,7 @@ function ComparePageContent({ data, onRetry }: { data: ComparePagePayload; onRet
                   height={48}
                 />
               )}
-              <Link href={`/teams/${team2.teamId}`} className={styles.teamName}>
+              <Link href={teamHref(team2.teamId, team2.teamName)} className={styles.teamName}>
                 {team2.teamName}
               </Link>
               <div className={styles.formRow}>

@@ -91,6 +91,6 @@ describe('site bağlantıları', () => {
     expect(LEGAL_PAGES.map((p) => p.path)).not.toContain('/hesap-silme');
     const { readFileSync } = await import('node:fs');
     expect(readFileSync('src/components/Footer/index.tsx', 'utf8')).toContain('href="/hesap-silme"');
-    expect(readFileSync('src/pages/sitemap.xml.tsx', 'utf8')).toContain("path: '/hesap-silme'");
+    expect(readFileSync('src/server/sitemap/sections.ts', 'utf8')).toContain("path: '/hesap-silme'");
   });
 });

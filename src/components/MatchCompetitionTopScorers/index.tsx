@@ -11,6 +11,7 @@ import { formatSeasonLabel } from '@/utils/seasonLabel';
 import styles from './matchCompetitionTopScorers.module.scss';
 import TeamLogo from '@/components/TeamLogo';
 import LoadError from '@/components/LoadError';
+import { teamHref } from '@/utils/teamUrl';
 
 /** Gol Krallığı varsayılan görünür satır sayısı; kalanı "Tümünü Göster" ile açılır (veri zaten elde, ek istek yok). */
 export const TOP_SCORERS_INITIAL_LIMIT = 20;
@@ -166,7 +167,7 @@ export default function MatchCompetitionTopScorers({
                         )}
                         {tid != null ? (
                           <Link
-                            href={`/teams/${tid}`}
+                            href={teamHref(tid, tname)}
                             className={styles.teamSubLink}
                             prefetch={false}
                           >

@@ -52,7 +52,7 @@ const MATCHES = [match(9, 2, 31, '1-0')];
 
 const render = (props: Partial<Parameters<typeof MatchCompetitionStandings>[0]> = {}) =>
   renderToStaticMarkup(<MatchCompetitionStandings data={data} hideHeader {...props} />);
-const teamOrder = (html: string) => [...html.matchAll(/href="\/teams\/(\d+)"/g)].map((m) => Number(m[1]));
+const teamOrder = (html: string) => [...html.matchAll(/href="\/teams\/(\d+)(?:-[a-z0-9-]+)?"/g)].map((m) => Number(m[1]));
 const tbody = (html: string) => html.slice(html.indexOf('<tbody'), html.indexOf('</tbody>'));
 const rowOf = (html: string, id: number) => {
   const body = tbody(html);

@@ -6,6 +6,7 @@ import TeamLogo from '@/components/TeamLogo';
 import type { PlayerSeasonStats } from '@/services/playerProfile';
 import { buildPlayerCareer, isCareerPartial, shortSeasonName, type CareerRow, type CareerTotals } from '@/utils/playerCareer';
 import styles from './playerProfile.module.scss';
+import { teamHref } from '@/utils/teamUrl';
 
 /**
  * Kariyer — tüm sezonlar tek tabloda (sezon azalan; lig grubu önce, kupa/uluslararası ayrı grup), grup ara toplamları,
@@ -60,7 +61,7 @@ export default function Career({ seasons }: { seasons: PlayerSeasonStats[] }) {
                   <td className={styles.left}>{shortSeasonName(r.seasonName)}</td>
                   <th scope="row" className={`${styles.left} ${styles.careerTeam}`}>
                     {r.teamId != null ? (
-                      <Link href={`/teams/${r.teamId}`} className={styles.teamCell} prefetch={false}>
+                      <Link href={teamHref(r.teamId, r.teamName)} className={styles.teamCell} prefetch={false}>
                         {r.teamLogo ? <TeamLogo src={r.teamLogo} alt="" width={18} height={18} className={styles.teamLogo} /> : null}
                         <span className={styles.teamName}>{r.teamName ?? '—'}</span>
                       </Link>

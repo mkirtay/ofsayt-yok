@@ -92,7 +92,7 @@ describe('<PlayerProfile /> — gerçek Osimhen verisi', () => {
   });
 
   it('takım linki /teams/{id}', () => {
-    expect(html).toContain('href="/teams/34"');
+    expect(html).toContain('href="/teams/34-galatasaray"');
   });
 
   it('maç geçmişi: 5 satır ya da azsa buton yok', () => {

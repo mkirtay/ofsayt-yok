@@ -8,6 +8,7 @@ import { siteBaseUrl } from '@/lib/siteUrl';
 import { gameSitemapRoutes } from '@/config/gameFlag';
 import { hubHasWeeks, LEAGUE_HUBS } from '@/config/leagueHubs';
 import { buildMatchSlug } from '@/utils/matchUrl';
+import { teamHref } from '@/utils/teamUrl';
 
 export type SitemapUrl = { loc: string; lastmod?: string; changefreq?: string; priority?: string };
 export const SITEMAP_SECTIONS = ['sayfalar', 'maclar', 'takimlar', 'kisiler'] as const;
@@ -100,20 +101,25 @@ function matchUrl(base: string, m: MatchLike, lastmod: string): SitemapUrl {
 }
 
 /** ±3 gün maç listesi + milli maçlar + Süper Lig / 1. Lig sezonunun bütün maçları. */
-export async function matchesSection(now: number): Promise<{ matches: SitemapUrl[]; teamIds: number[]; nationalTeamIds: number[] }> {
+export async function matchesSection(now: number): Promise<{ matches: SitemapUrl[]; teams: Map<number, string> }> {
   const base = siteBaseUrl();
   const today = day(now);
   const dates = [-3, -2, -1, 0, 1, 2, 3].map((o) => isoDateOffset(now, o));
   const matches: SitemapUrl[] = [];
-  const teamIds = new Set<number>();
-  const nationalTeamIds = new Set<number>();
+  // Takım id → ad (kanonik /teams/{id}-{ad} adresi için).
+  const teams = new Map<number, string>();
+  const addTeam = (id: unknown, name: unknown) => {
+    const n = Number(id);
+    if (n > 0 && !teams.has(n)) teams.set(n, typeof name === 'string' ? name : '');
+  };
   try {
     const { getFixturesByDate } = await import('@/services/liveScoreService');
     const lists = await Promise.all(dates.map((d) => getFixturesByDate(d).catch(() => [])));
     for (const list of lists) {
       for (const m of list) {
         matches.push(matchUrl(base, m as MatchLike, m.date && m.date < today ? m.date : today));
-        for (const id of [m.home?.id ?? m.home_id, m.away?.id ?? m.away_id]) if (id != null && Number(id) > 0) teamIds.add(Number(id));
+        addTeam(m.home?.id ?? m.home_id, m.home?.name);
+        addTeam(m.away?.id ?? m.away_id, m.away?.name);
       }
     }
   } catch {
@@ -128,7 +134,7 @@ export async function matchesSection(now: number): Promise<{ matches: SitemapUrl
         if (!d.ok) continue;
         for (const m of d.matches) {
           matches.push(matchUrl(base, m as unknown as MatchLike, today));
-          for (const t of [m.home, m.away]) if (t?.id != null) nationalTeamIds.add(t.id);
+          for (const t of [m.home, m.away]) if (t?.id != null) addTeam(t.id, t.name);
         }
       }
     }
@@ -141,7 +147,7 @@ export async function matchesSection(now: number): Promise<{ matches: SitemapUrl
     const lists = await Promise.all(seasons.map((s) => (s ? loadSeasonFixtureHrefs(s.id).catch(() => []) : [])));
     for (const list of lists) {
       for (const f of list) {
-        for (const id of f.teamIds) if (id > 0) teamIds.add(id);
+        for (const t of f.teams) addTeam(t.id, t.name);
         // Gelecek maçlar sitemap'e ±3 gün listesiyle girer; sezon listesinden yalnız oynanmış ya da 7 gün içindekiler.
         if (f.kickoff != null && f.kickoff > now + 7 * 86_400_000) continue;
         matches.push({ loc: `${base}${f.href}`, lastmod: f.kickoff != null && f.kickoff < now ? day(f.kickoff + 3 * 3_600_000) : today, changefreq: 'weekly', priority: '0.5' });
@@ -150,14 +156,14 @@ export async function matchesSection(now: number): Promise<{ matches: SitemapUrl
   } catch {
     // yok say
   }
-  return { matches, teamIds: [...teamIds], nationalTeamIds: [...nationalTeamIds] };
+  return { matches, teams };
 }
 
 export async function teamsSection(now: number): Promise<SitemapUrl[]> {
   const base = siteBaseUrl();
   const today = day(now);
-  const { teamIds, nationalTeamIds } = await matchesSection(now);
-  return [...teamIds, ...nationalTeamIds].map((id) => ({ loc: `${base}/teams/${id}`, lastmod: today, changefreq: 'daily', priority: '0.5' }));
+  const { teams } = await matchesSection(now);
+  return [...teams].map(([id, name]) => ({ loc: `${base}${teamHref(id, name)}`, lastmod: today, changefreq: 'daily', priority: '0.5' }));
 }
 
 export async function peopleSection(): Promise<SitemapUrl[]> {

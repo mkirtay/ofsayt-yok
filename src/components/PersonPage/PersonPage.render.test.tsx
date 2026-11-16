@@ -104,7 +104,7 @@ describe('<CoachView />', () => {
   const html = renderToStaticMarkup(<CoachView data={coach} />);
   it('başlık: foto, yaş, uyruk, mevcut takım (takım sayfasına link) + göreve başlama', () => {
     expect(html).toContain('52 yaş');
-    expect(html).toContain('href="/teams/34"');
+    expect(html).toContain('href="/teams/34-galatasaray"');
     expect(html).toContain('Göreve başlama');
     expect(html).toContain('23.06.2022');
     expect(html).toContain('Türkiye');

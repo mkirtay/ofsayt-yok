@@ -18,12 +18,19 @@ describe('/teams/[id] getStaticPaths / getStaticProps', () => {
 
   it('bulundu: ad + görsel adresi, 7 gün; tek istek', async () => {
     h.overview.mockResolvedValue({ team: { id: 34, name: 'Galatasaray' }, recent: [], fixtures: [], campaigns: [] });
-    const r = (await props('34')) as { props: { teamName: string; ogImagePath: string }; revalidate: number };
+    const r = (await props('34-galatasaray')) as { props: { teamName: string; ogImagePath: string }; revalidate: number };
     expect(r.props.teamName).toBe('Galatasaray');
     expect(r.props.ogImagePath).toMatch(/^\/api\/og\/team\/34\?v=\d{8}$/);
     expect(r.revalidate).toBe(7 * 86_400);
     expect(h.overview).toHaveBeenCalledTimes(1);
     expect(h.overview).toHaveBeenCalledWith('34');
+  });
+
+  it('eski /teams/{id} ve yanlış ad → kanonik /teams/{id}-{ad} adresine 301 (SEO)', async () => {
+    h.overview.mockResolvedValue({ team: { id: 34, name: 'Galatasaray' }, recent: [], fixtures: [], campaigns: [] });
+    for (const p of ['34', '34-eski-ad']) {
+      expect(await props(p)).toEqual({ redirect: { destination: '/teams/34-galatasaray', permanent: true }, revalidate: 7 * 86_400 });
+    }
   });
 
   it('takım yok (Sportmonks 404 / boş) ya da geçersiz kimlik → 404', async () => {

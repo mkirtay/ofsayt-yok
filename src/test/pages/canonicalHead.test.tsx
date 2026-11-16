@@ -44,9 +44,9 @@ function expectCanonical(tags: ReturnType<typeof renderHeadTags>, expected: stri
 }
 
 describe('detay sayfalarında canonical', () => {
-  it('takım: /teams/34 (sorgu atılır)', () => {
+  it('takım: /teams/34-galatasaray (ad adreste, sorgu atılır)', () => {
     const tags = headFor(<TeamDetail teamName="Galatasaray" ogImagePath="/api/og/team/34" />, '/teams/34?tab=squad', { id: '34', tab: 'squad' });
-    expectCanonical(tags, `${siteBaseUrl()}/teams/34`);
+    expectCanonical(tags, `${siteBaseUrl()}/teams/34-galatasaray`);
   });
 
   it('oyuncu: /players/455805', () => {

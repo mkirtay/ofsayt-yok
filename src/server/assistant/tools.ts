@@ -35,6 +35,7 @@ import { buildMatchHref } from '@/utils/matchUrl';
 import { normalizeSearchText } from '@/utils/searchText';
 import { analysisCardForTeams, pickFixtures, resolveTeam, type AssistantAnalysisCard } from './matchAnalysisRequest';
 import { RULES_PANEL_HREF, type AssistantLink } from './outputFilter';
+import { teamHref } from '@/utils/teamUrl';
 
 export type ToolContext = { viewer: AnalysisViewer | null; locale: 'tr' | 'en'; todayIso: string };
 
@@ -155,7 +156,7 @@ async function getFixtures(args: Record<string, unknown>, ctx: ToolContext): Pro
         upcoming: upcoming.map((u, i) => ({ ...forModel(u), ...(i < 2 && !u.tv ? { tv_note: 'not_announced' } : {}) })),
         recent: recent.map(forModel),
       },
-      links: [...matchLinks(upcoming, 1), { label: overview.team?.name ?? 'Takım', href: `/teams/${teamId}` }],
+      links: [...matchLinks(upcoming, 1), { label: overview.team?.name ?? 'Takım', href: teamHref(teamId, overview.team?.name) }],
       card: upcoming.length || recent.length ? { type: 'matches', matches: [...upcoming.slice(0, 2), ...recent.slice(0, 2)] } : undefined,
     };
   }
@@ -267,7 +268,7 @@ async function getTeamOverviewTool(args: Record<string, unknown>, ctx: ToolConte
       // `null`: veri alınamadı (bilinmiyor); `[]`: bilinen eksik yok.
       sidelined: extra ? extra.players.slice(0, 8).map((p) => ({ name: p.name, position: p.position, kind: p.kind, reason: p.reason, until: p.until })) : null,
     },
-    links: [{ label: overview.team.name, href: `/teams/${teamId}` }, ...(next ? matchLinks([next], 1) : [])],
+    links: [{ label: overview.team.name, href: teamHref(teamId, overview.team.name) }, ...(next ? matchLinks([next], 1) : [])],
   };
 }
 

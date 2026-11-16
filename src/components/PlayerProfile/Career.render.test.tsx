@@ -41,7 +41,7 @@ describe('Career (Kariyer kartı)', () => {
     // takım hücresi = ad + dar ekranda görünen turnuva satırı (geniş ekranda gizli; ayrı sütun da var)
     expect(rows[0]).toEqual(['2026/27', 'GalatasaraySuper Lig', 'Super Lig', '5', '0', '0']);
     expect(rows.find((r) => r[0] === '2015/16')).toEqual(['2015/16', 'TrabzonsporEuropa League', 'Europa League', '—', '0', '0']);
-    expect(html).toContain('href="/teams/34"');
+    expect(html).toContain('href="/teams/34-galatasaray"');
     expect(html).toContain('maç sayısı verisi yok');
     expect(html).toContain('eski yerel lig sezonlarını kapsamıyor');
   });

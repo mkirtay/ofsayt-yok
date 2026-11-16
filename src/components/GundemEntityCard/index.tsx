@@ -10,12 +10,13 @@ import { deriveMatchPhase } from '@/utils/matchPhase';
 import { liveMinuteLabel } from '@/utils/liveMinute';
 import { parseScore } from '@/utils/parseScore';
 import styles from './gundemEntityCard.module.scss';
+import { teamHref } from '@/utils/teamUrl';
 
 type TFn = (key: string, opts?: Record<string, unknown>) => string;
 
 export function entityCardHref(card: Card): string {
   if (card.type === 'PLAYER') return `/players/${card.id}`;
-  if (card.type === 'TEAM') return `/teams/${card.id}`;
+  if (card.type === 'TEAM') return teamHref(card.id, card.name);
   return buildMatchHref({ id: card.id, home: { name: card.home.name }, away: { name: card.away.name } });
 }
 

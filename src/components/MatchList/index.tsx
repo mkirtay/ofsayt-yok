@@ -5,6 +5,7 @@ import { List, type RowComponentProps } from 'react-window';
 import { useTranslation } from '@/lib/i18n';
 import TeamTierBadge from '@/components/TeamTierBadge';
 import TeamLogo from '@/components/TeamLogo';
+import { teamHref } from '@/utils/teamUrl';
 import LazyLoad from '@/components/LazyLoad';
 import { detectGoals, type GoalEvent } from '@/utils/goalDetection';
 import { goalToastsArmed, toastableGoalIds, type GoalToastItem } from '@/utils/goalToast';
@@ -533,7 +534,7 @@ function VirtualRow({
         </div>
         <div
           className={`${styles.virtualCell} ${styles.virtualHome}${match.home?.id ? ` ${styles.virtualTeamCell}` : ''}`}
-          onClick={match.home?.id ? (e) => { e.stopPropagation(); e.preventDefault(); if (onSelectTeam) onSelectTeam(match.home!.id); else navigateTo(`/teams/${match.home!.id}`); } : undefined}
+          onClick={match.home?.id ? (e) => { e.stopPropagation(); e.preventDefault(); if (onSelectTeam) onSelectTeam(match.home!.id); else navigateTo(teamHref(match.home!.id, homeName)); } : undefined}
         >
           <TeamLogo src={homeLogo} alt={homeName ? `${homeName} logosu` : ''} className={styles.teamCrest} width={18} fallback={nationalMatch ? crestCode(homeName) : null} />
           {/* Kart adın dış tarafında: ad skora bitişik yerinde kalır (kayma yok). */}
@@ -551,7 +552,7 @@ function VirtualRow({
         </div>
         <div
           className={`${styles.virtualCell} ${styles.virtualAway}${match.away?.id ? ` ${styles.virtualTeamCell}` : ''}`}
-          onClick={match.away?.id ? (e) => { e.stopPropagation(); e.preventDefault(); if (onSelectTeam) onSelectTeam(match.away!.id); else navigateTo(`/teams/${match.away!.id}`); } : undefined}
+          onClick={match.away?.id ? (e) => { e.stopPropagation(); e.preventDefault(); if (onSelectTeam) onSelectTeam(match.away!.id); else navigateTo(teamHref(match.away!.id, awayName)); } : undefined}
         >
           <TeamLogo src={awayLogo} alt={awayName ? `${awayName} logosu` : ''} className={styles.teamCrest} width={18} fallback={nationalMatch ? crestCode(awayName) : null} />
           <TeamNameLabel

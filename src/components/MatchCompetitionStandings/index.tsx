@@ -29,6 +29,7 @@ import {
 } from "@/services/liveStandings";
 import { isLiveStandingsStale, type LiveStandingsState } from "@/hooks/useLiveStandings";
 import { useCellFlash, useNow, useRowReorderAnimation } from "./useStandingsMotion";
+import { teamHref } from '@/utils/teamUrl';
 
 // Yalnız sezon değişirken gerekir: animasyon ve CSS'i ayrı parçada (ana sayfanın ilk yüküne girmez).
 const loadStandingsShuffle = () => import("./StandingsShuffle");
@@ -345,7 +346,7 @@ function StandingsTable({
                       <span className={styles.nameRow}>
                         {tid != null ? (
                           <Link
-                            href={`/teams/${tid}`}
+                            href={teamHref(tid, fullName)}
                             className={styles.teamLink}
                             prefetch={false}
                             title={fullName}

@@ -9,6 +9,7 @@ import { coachTotals, groupCoachSeasons } from '@/services/sportmonks/coachStats
 import RecentMatchesTable from './RecentMatchesTable';
 import { initials } from './RefereeView';
 import styles from './personPage.module.scss';
+import { teamHref } from '@/utils/teamUrl';
 
 /**
  * Teknik direktör sayfası: başlık (foto, ad, yaş, uyruk + mevcut takım / göreve başlama bilgi hücreleri), kapsanan maçların
@@ -60,7 +61,7 @@ export default function CoachView({ data }: { data: CoachPageData }) {
             <div className={styles.infoCell}>
               <dt>{t('person.currentTeam')}</dt>
               <dd>
-                <Link href={`/teams/${data.currentTeam.id}`} className={styles.teamLink}>
+                <Link href={teamHref(data.currentTeam.id, data.currentTeam.name)} className={styles.teamLink}>
                   <TeamLogo src={data.currentTeam.logo} width={22} />
                   {data.currentTeam.name}
                 </Link>
@@ -124,7 +125,7 @@ export default function CoachView({ data }: { data: CoachPageData }) {
                       <span className={styles.groupHead}>
                         <span className={styles.seasonBadge}>{g.seasonName}</span>
                         {g.teamId ? (
-                          <Link href={`/teams/${g.teamId}`} className={styles.teamCellLink} prefetch={false}>
+                          <Link href={teamHref(g.teamId, g.teamName)} className={styles.teamCellLink} prefetch={false}>
                             <TeamLogo src={g.teamLogo} width={20} />
                             {g.teamName}
                           </Link>

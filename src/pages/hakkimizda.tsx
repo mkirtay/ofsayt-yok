@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import InfoPage from '@/components/InfoPage';
 import { infoStyles as styles } from '@/components/InfoPage';
-import { BRAND } from '@/config/brand';
+import { BRAND, GAME_BRAND } from '@/config/brand';
 
 /** Hakkımızda (SEO/GEO raporu 2026-11-16: güven sinyali — kim, hangi veri, ne değil). Statik. */
 export default function HakkimizdaPage() {
@@ -27,7 +27,7 @@ export default function HakkimizdaPage() {
           </li>
           <li>Her maç için yapay zekâ analizi: form, karşılıklı maçlar, kadro, sakat/cezalı oyuncular ve maç bağlamından olasılık tahmini.</li>
           <li>
-            Ücretsiz oyunlar: <Link href="/tahmin">Tahmin Ligi</Link> ve <Link href="/frikik">Frikik</Link>; taraftar tartışmaları için{' '}
+            Ücretsiz oyunlar: <Link href={GAME_BRAND.basePath}>{GAME_BRAND.name}</Link> ve <Link href="/frikik">Frikik</Link>; taraftar tartışmaları için{' '}
             <Link href="/gundem">Gündem</Link>.
           </li>
         </ul>
@@ -54,7 +54,7 @@ export default function HakkimizdaPage() {
       <section className={styles.section}>
         <h2>{BRAND.name} ne değildir?</h2>
         <p>
-          {BRAND.name} bir bahis ya da şans oyunu sitesi değildir; para yatırılmaz, kupon oynatılmaz, oran yayımlanmaz. Tahmin Ligi ve Frikik
+          {BRAND.name} bir bahis ya da şans oyunu sitesi değildir; para yatırılmaz, kupon oynatılmaz, oran yayımlanmaz. {GAME_BRAND.name} ve Frikik
           ücretsizdir. Yapay zekâ analizleri bilgi amaçlıdır ve kesinlik iddiası taşımaz.
         </p>
       </section>
