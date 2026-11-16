@@ -137,3 +137,23 @@ describe('<ComparePage /> — İngilizce', () => {
     }
   });
 });
+
+describe('<ComparePage /> — sunucu kabuğu (SEO)', () => {
+  it('önbellekten özet geldiyse H1 + karşılaşma cümlesi HTML\'de', () => {
+    locale.value = 'tr';
+    DICTS.current = { compare: trCompare };
+    const html = renderToStaticMarkup(
+      <ComparePage
+        slug="34-vs-88"
+        seo={{
+          team1: 'Galatasaray',
+          team2: 'Fenerbahçe',
+          summary: { total: 2, team1Wins: 1, draws: 1, team2Wins: 0, rows: [{ homeName: 'Galatasaray', awayName: 'Fenerbahçe', score: '2-0', team1IsHome: true, winner: 'team1' }] },
+        }}
+      />,
+    );
+    expect(html).toContain('<h1');
+    expect(html).toContain('Galatasaray - Fenerbahçe: Aralarındaki Maçlar ve Karşılaştırma');
+    expect(html).toContain('arasındaki son 2 maçta Galatasaray 1, Fenerbahçe 0 kez kazandı; 1 maç berabere bitti.');
+  });
+});

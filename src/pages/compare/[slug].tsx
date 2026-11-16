@@ -1,4 +1,8 @@
 import Head from 'next/head';
+import type { GetStaticPaths, GetStaticProps } from 'next';
+import JsonLd from '@/components/JsonLd';
+import { breadcrumbJsonLd } from '@/utils/breadcrumbJsonLd';
+import { buildCompareSentences, compareHeading, type CompareSeo } from '@/utils/compareSeo';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import Container from '@/components/Container';
@@ -207,7 +211,37 @@ function pct(v: number): string {
   return `${Math.round(v * 100)}%`;
 }
 
-export default function ComparePage() {
+type ComparePageProps = { seo: CompareSeo | null; slug: string };
+
+/**
+ * ISR kabuğu (SEO raporu 2026-11-16: "[A] [B] aralarındaki maçlar"): H1 + karşılaşma özeti sunucu HTML'inde. Veri YALNIZ
+ * önbellekten (`withSportmonksCacheOnly`) — bu sayfa yeni Sportmonks isteği atmaz; önbellekte yoksa yalnız kabuk, tüm veri
+ * eskisi gibi istemcide. 1 gün.
+ */
+export const getStaticPaths: GetStaticPaths = async () => ({ paths: [], fallback: 'blocking' });
+
+export const getStaticProps: GetStaticProps<ComparePageProps> = async ({ params }) => {
+  const slug = String(params?.slug ?? '');
+  const { parseCompareSlug, loadComparePageData } = await import('@/server/loadComparePageData');
+  const ids = parseCompareSlug(slug);
+  if (!ids) return { notFound: true, revalidate: 86_400 };
+  let seo: CompareSeo | null = null;
+  try {
+    const { withSportmonksCacheOnly, withSportmonksTimeout, SPORTMONKS_TIMEOUT_MS } = await import('@/server/sportmonks/cachedFetch');
+    const data = await withSportmonksTimeout(SPORTMONKS_TIMEOUT_MS.page, () =>
+      withSportmonksCacheOnly({ misses: 0 }, () => loadComparePageData(ids.team1Id, ids.team2Id)),
+    );
+    const named = (n: string | undefined) => (n && !n.startsWith('Takım #') ? n : null);
+    const t1 = named(data?.team1.teamName);
+    const t2 = named(data?.team2.teamName);
+    if (data && t1 && t2) seo = { team1: t1, team2: t2, summary: data.failed?.h2h ? null : data.h2hSummary };
+  } catch {
+    seo = null;
+  }
+  return { props: { seo: seo ? (JSON.parse(JSON.stringify(seo)) as CompareSeo) : null, slug }, revalidate: seo?.summary ? 86_400 : 3600 };
+};
+
+export default function ComparePage({ seo = null }: Partial<ComparePageProps> = {}) {
   const { t } = useTranslation('compare');
   const router = useRouter();
   const slugParam = router.query.slug;
@@ -221,9 +255,27 @@ export default function ComparePage() {
   const { data, isLoading, isError, error, refetch } = useComparePage(slug, router.isReady || Boolean(slugFromPath));
   const retry = () => void refetch();
 
+  const seoSentences = seo ? buildCompareSentences(seo) : [];
+  const shellUrl = `${siteBaseUrl()}/compare/${slug}`;
   return (
     <Container>
+      {seo ? (
+        <>
+          <Head>
+            <title>{brandTitle(compareHeading(seo))}</title>
+            <meta name="description" content={seoSentences[0] ?? t('metaDesc', { team1: seo.team1, team2: seo.team2 })} key="description" />
+            <link rel="canonical" href={shellUrl} key="canonical" />
+          </Head>
+          <JsonLd schema={breadcrumbJsonLd([{ name: `${seo.team1} - ${seo.team2}`, url: shellUrl }])} />
+        </>
+      ) : null}
       <div className={styles.page}>
+        {seo ? (
+          <header className={styles.seoHeader}>
+            <h1 className={styles.seoTitle}>{compareHeading(seo)}</h1>
+            {seoSentences.length ? <p className={styles.seoText}>{seoSentences.join(' ')}</p> : null}
+          </header>
+        ) : null}
         <div className={styles.pickerSection}>
           <h2 className={styles.pickerTitle}>{t('pickerTitle')}</h2>
           <CompareTeamPicker />
@@ -266,6 +318,7 @@ function ComparePageContent({ data, onRetry }: { data: ComparePagePayload; onRet
         <meta
           name="description"
           content={t('metaDesc', { team1: team1.teamName, team2: team2.teamName })}
+          key="description"
         />
       </Head>
 

@@ -166,17 +166,33 @@ export async function teamsSection(now: number): Promise<SitemapUrl[]> {
   return [...teams].map(([id, name]) => ({ loc: `${base}${teamHref(id, name)}`, lastmod: today, changefreq: 'daily', priority: '0.5' }));
 }
 
+/** Oyuncu sayfaları: lig sayfalarındaki gol krallığı (ilk 15; lig sayfasıyla aynı önbellekli istek). */
+async function topScorerPlayerPaths(): Promise<string[]> {
+  const { getTopScorersWithAppearances } = await import('@/services/competitionTopScorers');
+  const lists = await Promise.all(LEAGUE_HUBS.map((h) => getTopScorersWithAppearances(String(h.leagueId)).catch(() => null)));
+  const ids = new Set<number>();
+  for (const l of lists) for (const e of (l?.topscorers ?? []).slice(0, 15)) if (e.player?.id) ids.add(e.player.id);
+  return [...ids].map((id) => `/players/${id}`);
+}
+
 export async function peopleSection(): Promise<SitemapUrl[]> {
   const base = siteBaseUrl();
+  const out: SitemapUrl[] = [];
   try {
     const { loadSitemapPeoplePaths, refereeTableSitemapPaths } = await import('@/server/people/sitemapPeople');
-    return [
+    out.push(
       ...refereeTableSitemapPaths().map((p) => ({ loc: `${base}${p}`, priority: '0.6', changefreq: 'daily' })),
       ...(await loadSitemapPeoplePaths()).map((p) => ({ loc: `${base}${p}`, priority: '0.4', changefreq: 'weekly' })),
-    ];
+    );
   } catch {
-    return [];
+    // yok say
   }
+  try {
+    out.push(...(await topScorerPlayerPaths()).map((p) => ({ loc: `${base}${p}`, priority: '0.4', changefreq: 'weekly' })));
+  } catch {
+    // yok say
+  }
+  return out;
 }
 
 export async function buildSectionXml(section: SitemapSection, now: number): Promise<string> {

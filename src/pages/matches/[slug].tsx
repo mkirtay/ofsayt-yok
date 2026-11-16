@@ -505,6 +505,15 @@ export default function MatchDetail({
                         {' '}Hakem: <Link href={refereeLink}>{match?.referee}</Link> (kart ve penaltı istatistikleri).
                       </>
                     ) : null}
+                    {homeTeamId && awayTeamId && Number(homeTeamId) > 0 && Number(awayTeamId) > 0 ? (
+                      <>
+                        {' '}
+                        <Link href={`/compare/${homeTeamId}-vs-${awayTeamId}`} prefetch={false}>
+                          {homeName} - {awayName} aralarındaki maçlar ve karşılaştırma
+                        </Link>
+                        .
+                      </>
+                    ) : null}
                   </p>
                   {postMatchAnalysis && match?.status === 'FINISHED' ? (
                     <>

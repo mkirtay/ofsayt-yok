@@ -513,3 +513,22 @@
   color: $color-text-secondary;
   margin: 0;
 }
+
+/* ISR kabuğu başlığı + karşılaşma özeti (SEO/GEO). */
+.seoHeader {
+  margin-bottom: 16px;
+}
+
+.seoTitle {
+  margin: 0 0 6px;
+  font-size: 22px;
+  font-weight: 700;
+  color: $color-text;
+}
+
+.seoText {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: $color-text-secondary;
+}
