@@ -1,7 +1,11 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { CONSENT_EVENT, clearGaCookies, gaMeasurementId, readConsent, writeConsent } from '@/lib/analyticsConsent';
+import CookieIcon from '@/components/icons/CookieIcon';
 import styles from './cookieConsent.module.scss';
+
+/** Band açıkken `<html>` üzerinde: sol alttaki üyelik kartı gizlenir (iki istem üst üste binmesin). */
+const OPEN_ATTR = 'data-consent-open';
 
 /**
  * Analitik çerez onay bandı: yalnız GA ölçüm kimliği tanımlıyken ve tercih yokken (istemcide, ilk çizimden sonra — SSR
@@ -19,17 +23,41 @@ export default function CookieConsent() {
     return () => window.removeEventListener(CONSENT_EVENT, on);
   }, [id]);
 
+  useEffect(() => {
+    if (!open) return;
+    const root = document.documentElement;
+    root.setAttribute(OPEN_ATTR, '');
+    return () => root.removeAttribute(OPEN_ATTR);
+  }, [open]);
+
   if (!id || !open) return null;
   return (
-    <div className={styles.banner} role="dialog" aria-live="polite" aria-label="Çerez tercihi">
-      <p className={styles.text}>
-        Siteyi geliştirmek için ziyaret istatistiklerini Google Analytics ile ölçmek istiyoruz (analitik çerezler). İzin
-        vermezsen yalnız zorunlu çerezler kullanılır. <Link href="/cerez-politikasi">Çerez Politikası</Link>
-      </p>
+    <div
+      className={styles.banner}
+      role="dialog"
+      aria-labelledby="cookie-consent-title"
+      aria-describedby="cookie-consent-desc"
+    >
+      <div className={styles.head}>
+        <span className={styles.icon}>
+          <CookieIcon size={18} />
+        </span>
+        <div className={styles.copy}>
+          <h2 id="cookie-consent-title" className={styles.title}>
+            Çerez tercihi
+          </h2>
+          <p id="cookie-consent-desc" className={styles.text}>
+            Siteyi geliştirmek için anonim ziyaret istatistikleri topluyoruz.{' '}
+            <Link href="/cerez-politikasi" className={styles.link}>
+              Çerez Politikası
+            </Link>
+          </p>
+        </div>
+      </div>
       <div className={styles.actions}>
         <button
           type="button"
-          className={styles.btn}
+          className={styles.btnSecondary}
           onClick={() => {
             clearGaCookies();
             writeConsent('denied');
@@ -37,7 +65,7 @@ export default function CookieConsent() {
         >
           Reddet
         </button>
-        <button type="button" className={styles.btn} onClick={() => writeConsent('granted')}>
+        <button type="button" className={styles.btnPrimary} onClick={() => writeConsent('granted')}>
           Kabul et
         </button>
       </div>

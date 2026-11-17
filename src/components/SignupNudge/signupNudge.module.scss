@@ -5,7 +5,9 @@
 // üstünde kalmalı (100'de eşitlikte DOM sırası kartı öne alıyor, menünün Giriş/Üye ol düğmelerini kapatıyordu).
 .nudge {
   // Oyun alanı ekrandayken (Frikik) sahanın üstüne binmesin.
-  :global(html[data-game-active]) & {
+  :global(html[data-game-active]) &,
+  // Çerez bandı açıkken (CookieConsent) aynı köşede iki istem üst üste binmesin.
+  :global(html[data-consent-open]) & {
     display: none;
   }
 

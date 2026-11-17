@@ -1,61 +1,172 @@
 @use '../../styles/variables' as *;
 
+// Çerez onay bandı — karşılama kartının dili (bkz. Onboarding/welcomeCard): yüzey + ince çerçeve + yeşil sol şerit,
+// yuvarlak ikon çipi, hap düğmeler. Sayfayı kilitlemez (overlay yok).
+// Masaüstü: sol altta ≤ 380 px kart (yüzen düğmeler sağda). Mobil: alt menünün hemen üstünde tam genişlikte alt sayfa
+// (sağ alttaki yüzen düğmeleri örter; tercih verilince geri gelirler). Band açıkken üyelik kartı gizli (data-consent-open).
 .banner {
   position: fixed;
-  left: 16px;
-  right: 16px;
-  bottom: 16px;
+  left: $spacing-6;
+  bottom: $spacing-6;
   z-index: 120;
-  max-width: 560px;
-  margin: 0 auto;
+  width: 380px;
+  max-width: calc(100vw - #{$spacing-6 * 2});
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  gap: $spacing-2;
-  padding: $spacing-3 $spacing-4;
-  background: $color-surface;
-  border: 1px solid $color-border;
-  border-radius: $radius-md;
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.25);
+  gap: $spacing-4;
+  padding: $spacing-4;
+  color: var(--text-primary);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid $color-primary;
+  border-radius: $radius-lg;
+  box-shadow: var(--shadow-surface);
+  animation: cookie-in 200ms ease-out both;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
 }
 
 @include below-desktop {
   .banner {
-    bottom: calc(var(--bottom-nav-height) + var(--safe-bottom) + 12px);
+    left: 0;
+    right: 0;
+    bottom: calc(var(--bottom-nav-height) + var(--safe-bottom));
+    width: auto;
+    max-width: none;
+    padding: $spacing-4 $spacing-4 $spacing-3;
+    gap: $spacing-3;
+    border: 0;
+    border-top: 1px solid var(--border-subtle);
+    border-radius: $radius-lg $radius-lg 0 0;
+    // Alt sayfa: gölge yukarı.
+    box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.18);
+    animation-name: cookie-sheet-in;
   }
+}
+
+@keyframes cookie-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes cookie-sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-3;
+}
+
+.icon {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--bg-row-highlight);
+  color: $color-primary-text;
+}
+
+.copy {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.title {
+  margin: 0 0 2px;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.3;
 }
 
 .text {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--fs-body);
   line-height: 1.5;
-  color: $color-text-secondary;
+  color: var(--text-secondary);
+}
 
-  a {
-    color: $color-primary-text;
-    font-weight: 600;
+.link {
+  color: $color-primary-text;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  white-space: nowrap;
+
+  &:hover {
+    text-decoration-thickness: 2px;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+    outline-offset: 2px;
+    border-radius: 2px;
   }
 }
 
 .actions {
   display: flex;
   gap: $spacing-2;
-  justify-content: flex-end;
 }
 
-.btn {
-  min-height: 36px;
-  min-width: 96px;
+// Reddet ile Kabul et aynı boyut ve ağırlıkta (KVKK/GDPR: rıza serbest olmalı); fark yalnız dolgu.
+%btn {
+  flex: 1 1 0;
+  min-height: 44px;
   padding: 0 $spacing-4;
   font: inherit;
-  font-size: 13px;
-  font-weight: 600;
-  color: $color-text;
-  background: $color-muted;
-  border: 1px solid $color-border;
-  border-radius: $radius-sm;
+  font-size: var(--fs-body);
+  font-weight: 700;
+  white-space: nowrap;
+  border-radius: $radius-full;
   cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+    outline-offset: 2px;
+  }
+}
+
+.btnSecondary {
+  @extend %btn;
+  color: var(--text-primary);
+  background: var(--bg-muted);
+  border: 1px solid var(--border-subtle);
 
   &:hover {
-    border-color: $color-primary-text;
+    border-color: $color-primary;
+  }
+}
+
+.btnPrimary {
+  @extend %btn;
+  color: #ffffff;
+  background: $color-primary-dark;
+  border: 1px solid $color-primary-dark;
+
+  &:hover {
+    background: #006646; // beyaz yazı kontrastı korunur (koyulaşır)
+    border-color: #006646;
   }
 }
