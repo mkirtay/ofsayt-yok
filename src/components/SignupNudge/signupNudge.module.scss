@@ -138,3 +138,50 @@
   line-height: 1;
   cursor: pointer;
 }
+
+// Masaüstü: kart kalıcı olarak sol alttaki içeriği kapatıyordu (~150 px). Açıklama cümlesi gizli (rozet aynı bilgiyi
+// veriyor); başlık üstte, rozet + düğme tek satırda.
+@media (min-width: $bp-desktop) {
+  .nudge {
+    align-items: center;
+    width: 470px; // rozet + düğme tek satıra sığsın
+    padding: $spacing-3 $spacing-4;
+  }
+
+  .icon {
+    font-size: 30px;
+  }
+
+  .body {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px $spacing-2;
+
+    strong {
+      flex: 0 0 100%;
+      font-size: 16px;
+    }
+
+    span:not(.badge) {
+      display: none;
+    }
+
+    .badge {
+      align-self: center;
+      margin: 0;
+    }
+  }
+
+  .cta {
+    align-self: center;
+    min-height: 36px;
+    margin-top: 0;
+    padding: 0 18px;
+    font-size: 14px;
+  }
+
+  .close {
+    align-self: flex-start;
+  }
+}
