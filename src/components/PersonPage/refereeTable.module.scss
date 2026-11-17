@@ -250,3 +250,21 @@
   padding: 0;
   cursor: pointer;
 }
+
+// Dar mobil: sabit hakem sütunu 136 px ile sınırlı (personPage .table); baş harf rozeti gizlenir, ad "…" ile kısalır.
+@media (max-width: #{$bp-sm - 1px}) {
+  .refCell {
+    display: flex;
+    min-width: 0;
+  }
+
+  .miniAvatar {
+    display: none;
+  }
+
+  .refLink {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}

@@ -84,7 +84,7 @@ export default function RefereeTableView({ data, intro }: { data: RefereeLeagueT
         <h1 id="ref-table-title" className={styles.sectionTitle} style={{ fontSize: 18 }}>
           {t('person.tableTitle', { league: leagueName(data.league), season: data.season.name })}
         </h1>
-        {intro ? <p className={ts.intro} style={{ padding: 0, marginBottom: 12, lineHeight: 1.6 }}>{intro}</p> : null}
+        {intro ? <p className={ts.intro} style={{ marginBottom: 12, lineHeight: 1.6 }}>{intro}</p> : null}
         <div className={ts.controls}>
           <nav className={ts.chips} aria-label={t('person.leagueLabel')}>
             {REFEREE_TABLE_LEAGUES.map((l) => (

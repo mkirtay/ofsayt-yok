@@ -15,6 +15,14 @@
   border-bottom: 1px solid $color-border-dark;
 }
 
+// Mobilde bulanıklık uygulanmıyor; %92 opak zeminin arkasından kayan içerik (tablo satırları) okunuyordu.
+// Ayrı kural: stickyHeader.test.ts .header bloğunu iç içe blok olmadan bekler.
+@include below-desktop {
+  .header {
+    background: rgb(16, 21, 18);
+  }
+}
+
 .headerContainer {
   display: flex;
   align-items: center;

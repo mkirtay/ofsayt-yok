@@ -55,7 +55,7 @@ export default function RecentMatchesTable({ matches, loadMore, hasMore = false 
         <p className={styles.empty}>{t('person.empty')}</p>
       ) : (
         <div className={styles.scroll}>
-          <table className={styles.table}>
+          <table className={`${styles.table} ${styles.tableFlow}`}>
             <thead>
               <tr>
                 <th>{t('person.colDate')}</th>
