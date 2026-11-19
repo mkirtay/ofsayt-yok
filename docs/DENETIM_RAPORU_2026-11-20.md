@@ -189,3 +189,16 @@ kaynaklı (canlıda 2,77 sn). Asıl ölçüm deploy sonrası canlıda mobil 3 ko
 
 `origin/main` yerelden 2 commit önde (744772b, 5a0be26 — hakem sayfaları, başka oturum). `git merge-tree` çakışma
 göstermedi (ortak dosya yalnız `hakemler/[[...params]].tsx`); push'tan önce rebase + temiz worktree'de tam test.
+
+## 7. Canlı ölçüm (deploy 78e23ae sonrası, mobil Lighthouse 13.6, 3 koşu medyan)
+
+| Sayfa | Perf | A11y | En iyi uyg. | SEO | LCP | TBT | CLS | Önce (denetim) |
+|---|---|---|---|---|---|---|---|---|
+| Ana sayfa | 95 | 100 | 100 | 100 | 2,90 sn | 38 ms | 0 | 100 / 0,95 sn |
+| Maç | 100 | 100 | 100 | 100 | 0,84 sn | 77 ms | 0 | 99 / 0,87 sn, a11y 96 |
+| Takım | 96 | 100 | 100 | 100 | 2,75 sn | 20 ms | 0 | 96 / 2,77 sn, a11y 96 |
+
+Ana sayfa notu: B düzeninde Frikik kartı ilk ekrandan çıktı; LCP öğesi artık header'daki marka logosu `<img>`'si (önce
+Frikik kartı metniydi, LCP = FCP). Gözlenen LCP ~0,4–0,7 sn; Lantern simülasyonu görsel LCP'yi önceden inen tüm
+kaynaklarla hesapladığından 2,9 sn görünüyor (takım sayfasında da aynı öğe, aynı etki). Çözüm adayı: marka logosunu
+satır içi SVG yapmak (≈2 KB gz; satır içi SVG LCP adayı değil, ek istek ve preload da kalkar) — ayrı adım, onay bekliyor.
