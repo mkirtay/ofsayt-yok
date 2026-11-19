@@ -153,6 +153,9 @@ const FRIKIK_BASE_SLOT: MatchListInlineSlot = GAME_PUBLIC_CLIENT
     }
   : { node: <FrikikDailyCard />, height: 146 + 12 };
 
+/** Frikik / Tahmin kartı en az bu kadar maçtan sonraki grup sonunda — ilk ekranda önce maçlar (2026-11-20, seçenek B). */
+const HOME_SLOT_MIN_MATCHES = 6;
+
 /** Mobil yerleşim (< masaüstü): kombine kartı ilk grubun altındaki satırda; istemci-yalnız (kart ssr:false). */
 const subscribeMobile = (cb: () => void) => {
   const mq = window.matchMedia(MOBILE_LAYOUT_QUERY);
@@ -949,6 +952,7 @@ export default function MatchHubPage({
       <MatchList
         groupedMatches={grouped}
         afterFirstGroup={frikikSlot}
+        slotMinMatches={HOME_SLOT_MIN_MATCHES}
         trailingSection={nightSection}
         favoriteTeamIds={favoriteTeamSet}
         onToggleFavorite={toggleFavoriteTeam}

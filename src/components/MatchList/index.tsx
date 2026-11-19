@@ -112,6 +112,11 @@ interface MatchListProps {
   groupedMatches?: GroupedLeagueMatches[];
   /** İlk grubun ardına eklenen satır (bkz. `MatchListInlineSlot`); liste boşsa boş mesajın altında. */
   afterFirstGroup?: MatchListInlineSlot | null;
+  /**
+   * Slot, en az bu kadar maç satırından sonraki ilk grup sonuna girer (varsayılan 1 = ilk grubun ardı). Liste daha kısaysa
+   * son grubun ardına. Ana sayfa 6 verir: ilk ekranda önce maçlar (2026-11-20, mobil ilk ekran seçeneği B).
+   */
+  slotMinMatches?: number;
   /** Yalnız lig gruplu modda: listenin altına eklenen bölüm (boşsa çizilmez). */
   trailingSection?: MatchListTrailingSection | null;
   /**
@@ -642,11 +647,21 @@ function buildItemsWithTrailingSection(
 }
 
 /**
- * Satır listesine ilk grubun (ilk `isLastInGroup` maç) ardına slot ekler; ardından gelen başlığın üst boşluğu kalkar
- * (slot içeriği kendi alt boşluğunu taşır). Grup yoksa liste aynen döner.
+ * Satır listesine, en az `minMatches` maç satırından sonraki ilk grup sonunun (`isLastInGroup` maç) ardına slot ekler;
+ * liste daha kısaysa son grubun ardına. Ardından gelen başlığın üst boşluğu kalkar (slot içeriği kendi alt boşluğunu
+ * taşır). Grup yoksa liste aynen döner.
  */
-function insertSlotAfterFirstGroup(items: FlatItem[]): FlatItem[] {
-  const end = items.findIndex((item) => item.type === 'match' && item.isLastInGroup);
+function insertSlotAfterGroup(items: FlatItem[], minMatches = 1): FlatItem[] {
+  let seen = 0;
+  let end = -1;
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i]!;
+    if (item.type !== 'match') continue;
+    seen += 1;
+    if (!item.isLastInGroup) continue;
+    end = i;
+    if (seen >= minMatches) break;
+  }
   if (end < 0) return items;
   const next = items[end + 1];
   const after = next && (next.type === 'header' || next.type === 'dateHeader') ? [{ ...next, showGap: false }] : next ? [next] : [];
@@ -656,6 +671,7 @@ function insertSlotAfterFirstGroup(items: FlatItem[]): FlatItem[] {
 export default function MatchList({
   groupedMatches = NO_GROUPS,
   afterFirstGroup = null,
+  slotMinMatches = 1,
   trailingSection,
   dateGroups,
   showDateWhenNotToday = false,
@@ -675,8 +691,8 @@ export default function MatchList({
 
   const items = useMemo(() => {
     const base = dateGroups ? buildDateFlatItems(dateGroups) : buildItemsWithTrailingSection(groupedMatches, trailingSection);
-    return afterFirstGroup ? insertSlotAfterFirstGroup(base) : base;
-  }, [dateGroups, groupedMatches, trailingSection, afterFirstGroup]);
+    return afterFirstGroup ? insertSlotAfterGroup(base, slotMinMatches) : base;
+  }, [dateGroups, groupedMatches, trailingSection, afterFirstGroup, slotMinMatches]);
 
   const todayIso = useMemo(() => todayIsoTr(), []);
 

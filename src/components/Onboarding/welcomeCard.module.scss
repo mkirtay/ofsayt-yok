@@ -20,11 +20,10 @@
     display: flex;
   }
 
+  // Dar telefonda tek satır (başlık + düğmeler): ilk ekranda maç listesine yer kalsın (2026-11-20, seçenek B).
   @media (max-width: #{$bp-sm - 1px}) {
-    flex-direction: column;
-    align-items: stretch;
     gap: var(--space-2);
-    padding: var(--space-3);
+    padding: var(--space-2) var(--space-3);
   }
 }
 
@@ -38,6 +37,11 @@
   font-size: var(--fs-section);
   font-weight: 700;
   line-height: 1.3;
+
+  @media (max-width: #{$bp-sm - 1px}) {
+    margin: 0;
+    font-size: var(--fs-body);
+  }
 }
 
 .items {
@@ -57,8 +61,14 @@
     gap: var(--space-2);
   }
 
+  // Dar telefonda maddeler görsel olarak gizli (ekran okuyucu okur); ayrıntı "Kısa tur"da.
   @media (max-width: #{$bp-sm - 1px}) {
-    flex-direction: column;
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 }
 

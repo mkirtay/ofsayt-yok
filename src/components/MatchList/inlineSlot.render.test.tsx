@@ -58,6 +58,18 @@ describe('MatchList — ilk grubun ardındaki slot', () => {
     expect(html.indexOf('data-testid="slot"')).toBeLessThan(html.indexOf('Yarın'));
   });
 
+  it('slotMinMatches: en az N maçtan sonraki grup sonu; liste kısaysa son grubun ardı', () => {
+    const groups = [group(600, 1, 2), group(8, 3, 4, 5), group(564, 6, 7), group(82, 8)] as never;
+    // 2 + 3 = 5 < 6 → üçüncü grubun sonunda (7 maç)
+    expect(rows(render({ groupedMatches: groups, afterFirstGroup: SLOT, slotMinMatches: 6 })).map((x) => x.kind)).toEqual([
+      'header:600', 'match', 'match', 'header:8', 'match', 'match', 'match', 'header:564', 'match', 'match', 'slot', 'header:82', 'match',
+    ]);
+    // toplam 3 maç < 6 → son grubun ardında, slot kaybolmaz
+    expect(rows(render({ groupedMatches: [group(600, 1), group(8, 2, 3)] as never, afterFirstGroup: SLOT, slotMinMatches: 6 })).map((x) => x.kind)).toEqual([
+      'header:600', 'match', 'header:8', 'match', 'match', 'slot',
+    ]);
+  });
+
   it('liste boşsa slot boş mesajın altında', () => {
     const html = render({ groupedMatches: [], afterFirstGroup: SLOT });
     expect(html).not.toContain('role="list"');

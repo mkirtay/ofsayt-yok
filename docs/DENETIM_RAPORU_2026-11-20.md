@@ -168,7 +168,7 @@ Faz 4.1 ve 1.4 sizin kararınızı bekliyor; diğerleri doğrudan uygulanabilir.
 | P6 tarih "Yarın" sıçraması | ✗ | Bilinçli: ISR/CDN HTML'i gün sınırını geçebilir, göreli tarih yalnız istemcide doğru |
 | P7 61 günlük şerit | ✗ | Kullanıcı deneyimi değişikliği (geçmiş günlere kaydırma) — ayrı karar |
 | P9 derleme uyarıları | ✅ | 7cbae42 — Sentry eski seçenekler, Sass `if()` |
-| U1 mobil ilk ekran | ⏳ | Seçenek görüntüleri: `Claude outputs/ilk-ekran-secenekleri/karsilastirma.jpg` — kullanıcı seçecek |
+| U1 mobil ilk ekran | ✅ | Kullanıcı B'yi seçti: < 640 px hoş geldin kartı tek satır (maddeler ekran okuyucuya açık), Frikik / Tahmin / kombine slotu ana sayfada en az 6 maçtan sonraki grup sonunda (`slotMinMatches`); masaüstü karşılama kartı aynı |
 | U3 tasarım token'ları | ◐ | 44ff6ee — `--fs-caption/label/title` + cırcır testi (ham değer artamaz, ölçek dışı boyut eklenemez). Toplu geçiş açık dallar birleşince |
 | U4 a11y | ✅ | 7cbae42 + 4d6737a (anket h2) — başlık sırası, rozet kontrastı 6,1:1, dokunma alanı 25 px. `label-content-name-mismatch` (Lighthouse'ta ağırlığı 0) bilinçli olarak bırakıldı: etiketler kartın tamamını özetliyor |
 | U5 H2H dar ekran | ✅ | 9f3b7bd — 375 px'te kaydırmasız |
