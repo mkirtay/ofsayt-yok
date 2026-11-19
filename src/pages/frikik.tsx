@@ -5,6 +5,8 @@ import '@/lib/i18nNamespaces/frikik';
 import Frikik from '@/components/Frikik';
 import { parseShare, shareImagePath, type ShareInfo } from '@/lib/frikik/share';
 import { siteBaseUrl } from '@/lib/siteUrl';
+import JsonLd from '@/components/JsonLd';
+import { webGameJsonLd } from '@/utils/listJsonLd';
 
 
 /**
@@ -39,6 +41,7 @@ export default function FrikikPage({ shared }: { shared: ShareInfo | null }) {
         <meta name="twitter:card" content="summary_large_image" key="twitter:card" />
         <meta name="twitter:image" content={image} key="twitter:image" />
         <meta name="twitter:image:alt" content={title} key="twitter:image:alt" />
+        <JsonLd schema={webGameJsonLd({ name: t('pageTitle'), description: t('pageDesc'), url: `${SITE}/frikik`, image: `${SITE}${shareImagePath(null)}` })} />
       </Head>
       <Frikik shared={shared} />
     </>

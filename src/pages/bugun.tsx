@@ -10,6 +10,8 @@ import { siteBaseUrl } from '@/lib/siteUrl';
 import { GAME_BRAND } from '@/config/brand';
 import { todayIsoIstanbul } from '@/utils/dateStrip';
 import type { TodayLandingData, TodayLandingMatch } from '@/server/todayLanding';
+import JsonLd from '@/components/JsonLd';
+import { matchListJsonLd } from '@/utils/listJsonLd';
 import styles from './bugun.module.scss';
 
 type Props = {
@@ -116,6 +118,7 @@ export default function TodayPage({ data, gamePublic }: Props) {
         <meta property="og:description" content={t('metaDescription')} />
         <meta property="og:url" content={url} />
         <link rel="canonical" href={url} />
+        {data && matches.length > 0 ? <JsonLd schema={matchListJsonLd(t('title'), data.date, matches)} /> : null}
       </Head>
       <Container>
         <div className={styles.page}>

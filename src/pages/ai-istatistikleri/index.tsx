@@ -16,6 +16,15 @@ import { buildMatchHref } from '@/utils/matchUrl';
 import styles from './ai-istatistikleri.module.scss';
 import { siteBaseUrl } from '@/lib/siteUrl';
 import { monthLabel } from '@/utils/monthLabel';
+import JsonLd from '@/components/JsonLd';
+import { accuracyDatasetJsonLd } from '@/utils/listJsonLd';
+
+/** Son değerlendirme zamanı (veriden; ISR props deterministik kalsın). */
+function latestEvaluatedAt(history: { evaluatedAt: string | null }[]): string | null {
+  let max: string | null = null;
+  for (const h of history) if (h.evaluatedAt && (!max || h.evaluatedAt > max)) max = h.evaluatedAt;
+  return max;
+}
 
 function SkeletonBar({ width, height = 14 }: { width: string | number; height?: number }) {
   return (
@@ -133,6 +142,17 @@ export default function AiIstatistikleri({ initialPublic = null }: Partial<PageP
         <meta property="og:title" content={t('pageTitle')} />
         <meta property="og:description" content={t('pageDesc')} />
         <meta property="og:url" content={`${siteBaseUrl()}/ai-istatistikleri`} />
+        {initialPublic && initialPublic.monthly.length > 0 ? (
+          <JsonLd
+            schema={accuracyDatasetJsonLd({
+              name: t('pageTitle'),
+              description: t('pageDesc'),
+              url: `${siteBaseUrl()}/ai-istatistikleri`,
+              months: initialPublic.monthly,
+              lastEvaluatedAt: latestEvaluatedAt(initialPublic.history),
+            })}
+          />
+        ) : null}
       </Head>
 
       <Container>

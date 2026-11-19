@@ -23,7 +23,7 @@ export function buildLlmsTxt(baseUrl: string): string {
     `- [Canlı skorlar ve günün maçları](${baseUrl}/): Bugünün tüm maçları, canlı skorlar, lig lig fikstür`,
     `- [Bugün ${BRAND.name}'te](${baseUrl}/bugun): Günün öne çıkan maçları ve özetler`,
     `- [Ligler](${baseUrl}/lig): Liglerin güncel puan tabloları ve gol krallığı`,
-    `- [Hakem istatistikleri](${baseUrl}/hakemler): Süper Lig ve 1. Lig hakemlerinin kart, penaltı ve maç istatistikleri`,
+    `- [Hakem istatistikleri](${baseUrl}/hakemler): Süper Lig, 1. Lig, Türkiye Kupası, UEFA turnuvaları ve büyük 5 lig hakemlerinin kart, penaltı ve maç istatistikleri`,
     `- [AI isabet istatistikleri](${baseUrl}/ai-istatistikleri): Yapay zekâ maç analizlerinin "en güçlü 3 tahmin" isabet oranı (herkese açık, maç maç)`,
     `- [Yöntem](${baseUrl}/yontem): AI analizinin hangi verilerle üretildiği ve isabetin nasıl ölçüldüğü`,
     `- [Hakkımızda](${baseUrl}/hakkimizda): ${BRAND.name} nedir, veri kaynakları; bahis sitesi değildir`,

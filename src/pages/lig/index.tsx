@@ -5,6 +5,9 @@ import { LEAGUE_HUBS } from '@/config/leagueHubs';
 import { brandTitle } from '@/config/brand';
 import { siteBaseUrl } from '@/lib/siteUrl';
 import { sportmonksLeagueLogoUrl } from '@/utils/leagueLogo';
+import JsonLd from '@/components/JsonLd';
+import { itemListJsonLd } from '@/utils/listJsonLd';
+import { breadcrumbJsonLd } from '@/utils/breadcrumbJsonLd';
 import styles from './lig.module.scss';
 
 /** /lig — lig sayfalarının dizini (statik, veri isteği yok). */
@@ -17,6 +20,13 @@ export default function LeagueHubIndex() {
         <title>{title}</title>
         <meta name="description" content={description} key="description" />
         <link rel="canonical" href={`${siteBaseUrl()}/lig`} key="canonical" />
+        <JsonLd
+          schema={itemListJsonLd(
+            'Ligler',
+            LEAGUE_HUBS.map((h) => ({ name: `${h.name} puan durumu`, url: `${siteBaseUrl()}/lig/${h.slug}` })),
+          )}
+        />
+        <JsonLd schema={breadcrumbJsonLd([{ name: 'Ligler', url: `${siteBaseUrl()}/lig` }])} />
       </Head>
       <header className={styles.header}>
         <h1 className={styles.title}>Ligler</h1>
