@@ -42,7 +42,7 @@ export default function SidelinedCard({ cardRef, loading, error, data }: Props) 
   return (
     <section ref={cardRef} className={styles.statsCard} aria-busy={loading || undefined}>
       <div className={styles.cardHead}>
-        <h3 className={styles.cardTitle}>{t('sidelined.title')}</h3>
+        <h2 className={styles.cardTitle}>{t('sidelined.title')}</h2>
         {!loading && players.length > SIDELINED_ROWS ? (
           <button type="button" className={styles.cardHeadBtn} onClick={() => setExpanded((v) => !v)} aria-expanded={expanded}>
             {expanded ? t('sidelined.less') : t('sidelined.all', { count: players.length })}

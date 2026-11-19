@@ -96,7 +96,7 @@ export default function SeasonProfileCard({ loading, error, metrics, scope, best
   return (
     <section className={styles.statsCard} aria-busy={loading || undefined}>
       <div className={styles.cardHead}>
-        <h3 className={styles.cardTitle}>{t('profile.title')}</h3>
+        <h2 className={styles.cardTitle}>{t('profile.title')}</h2>
         <span className={styles.cardScope}>{scope}</span>
       </div>
 

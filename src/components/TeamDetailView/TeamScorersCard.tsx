@@ -27,7 +27,7 @@ export default function TeamScorersCard({ cardRef, loading, error, players, scop
   return (
     <section ref={cardRef} className={styles.statsCard} aria-busy={loading || undefined}>
       <div className={styles.cardHead}>
-        <h3 className={styles.cardTitle}>{t('scorers.title')}</h3>
+        <h2 className={styles.cardTitle}>{t('scorers.title')}</h2>
         <div className={styles.segmented} role="tablist" aria-label={t('scorers.modeAria')}>
           {(['goals', 'assists'] as const).map((m) => (
             <button

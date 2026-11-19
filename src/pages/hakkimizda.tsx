@@ -18,7 +18,7 @@ export default function HakkimizdaPage() {
       <section className={styles.section}>
         <h2>Ne sunuyoruz?</h2>
         <ul>
-          <li>Süper Lig, 1. Lig, Avrupa'nın büyük ligleri ve UEFA turnuvaları dahil 30'u aşkın ligde canlı skor, maç sonucu ve maç istatistiği.</li>
+          <li>Süper Lig, 1. Lig, Avrupa&apos;nın büyük ligleri ve UEFA turnuvaları dahil 30&apos;u aşkın ligde canlı skor, maç sonucu ve maç istatistiği.</li>
           <li>
             <Link href="/lig">Lig sayfaları</Link>: güncel puan durumu ve gol krallığı.
           </li>

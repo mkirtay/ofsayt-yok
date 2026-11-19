@@ -9,6 +9,9 @@ import type { FormResult, TeamMatch } from '@/services/sportmonks/teamOverview';
 import { fullMatchDate, shortMatchDate } from './recentMatchLabels';
 import styles from './teamHeaderCard.module.scss';
 
+/** Başlık kartındaki takım logosu (CSS px) — takım sayfası aynı boyutu `<link rel=preload>` ile önden ister. */
+export const TEAM_HEADER_LOGO_PX = 72;
+
 export type HeaderStanding = { competition: string; competitionLogo?: string; logoBackdrop?: boolean; rank: number; points: number };
 
 export type HeaderNextMatch = {
@@ -117,7 +120,7 @@ export default function TeamHeaderCard(props: TeamHeaderCardProps) {
             {loading ? (
               <SkeletonBlock className={styles.logo} />
             ) : logo ? (
-              <TeamLogo src={logo} alt={name} className={styles.logo} width={72} height={72} />
+              <TeamLogo src={logo} alt={name} className={styles.logo} width={TEAM_HEADER_LOGO_PX} height={TEAM_HEADER_LOGO_PX} priority />
             ) : (
               <div className={`${styles.logo} ${styles.logoPlaceholder}`}>{name.charAt(0) || '?'}</div>
             )}

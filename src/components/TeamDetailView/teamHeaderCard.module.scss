@@ -154,7 +154,8 @@ $label-color: var(--text-tertiary);
 .rank {
   background: $color-primary;
   border-color: $color-primary;
-  color: #fff;
+  // Yeşil dolgu üstünde beyaz 3,1:1 kalıyordu; durum rozetleriyle aynı koyu yazı (6,1:1, DESIGN_SYSTEM §1).
+  color: var(--color-on-status);
   font-weight: 800;
   font-variant-numeric: tabular-nums;
 }
@@ -320,13 +321,13 @@ $label-color: var(--text-tertiary);
 
   &:hover {
     background: $color-primary;
-    color: #fff;
+    color: var(--color-on-status);
   }
 }
 
 .compareOpen {
   background: $color-primary;
-  color: #fff;
+  color: var(--color-on-status);
 }
 
 .compareText {

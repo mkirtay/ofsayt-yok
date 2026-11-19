@@ -74,7 +74,10 @@
 // Teknik direktör: takım adının altında küçük, gri; TD sayfasına link
 .coachName {
   display: block;
-  margin-top: 2px;
+  // Dokunma hedefi ≥ 24 px (WCAG 2.5.8): görünür satır 15 px kalır, iç dolgu + negatif dış boşlukla düzen değişmez.
+  margin-top: calc(2px - 5px);
+  margin-bottom: -5px;
+  padding-block: 5px;
   font-size: 11px;
   font-weight: 500;
   line-height: 15px;

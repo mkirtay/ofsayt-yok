@@ -50,7 +50,7 @@ export default function SeasonSummaryCard({ cardRef, loading, error, tabs, selec
   return (
     <section ref={cardRef} className={styles.statsCard} aria-busy={loading || undefined}>
       <div className={styles.cardHead}>
-        <h3 className={styles.cardTitle}>{t('summary.title')}</h3>
+        <h2 className={styles.cardTitle}>{t('summary.title')}</h2>
         {headerRight}
       </div>
 

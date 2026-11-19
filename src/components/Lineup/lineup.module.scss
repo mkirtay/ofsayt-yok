@@ -366,13 +366,21 @@ $arc-span: 21.5%;
     height: $arc-span;
     aspect-ratio: 1 / 4;
     transform: translateY(-50%);
-    border-radius: if($edge == left, 0 100% 100% 0 / 0 50% 50% 0, 100% 0 0 100% / 50% 0 0 50%);
+    @if $edge == left {
+      border-radius: 0 100% 100% 0 / 0 50% 50% 0;
+    } @else {
+      border-radius: 100% 0 0 100% / 50% 0 0 50%;
+    }
   } @else {
     left: 50%;
     width: $arc-span;
     aspect-ratio: 4 / 1;
     transform: translateX(-50%);
-    border-radius: if($edge == top, 0 0 50% 50% / 0 0 100% 100%, 50% 50% 0 0 / 100% 100% 0 0);
+    @if $edge == top {
+      border-radius: 0 0 50% 50% / 0 0 100% 100%;
+    } @else {
+      border-radius: 50% 50% 0 0 / 100% 100% 0 0;
+    }
   }
 }
 

@@ -437,7 +437,7 @@ export default function MatchCard({ match, loading, initialH2h }: MatchCardProps
           <div className={styles.team}>
             <Link href={teamHref(match.home?.id || '', homeName)} className={styles.teamLink}>
               {homeLogo ? (
-                <TeamLogo src={homeLogo} alt={homeName} className={styles.logo} width={56} height={56} />
+                <TeamLogo src={homeLogo} alt={homeName} className={styles.logo} width={56} height={56} priority />
               ) : (
                 <div className={styles.logoPlaceholder}>{homeName.charAt(0)}</div>
               )}
@@ -504,7 +504,7 @@ export default function MatchCard({ match, loading, initialH2h }: MatchCardProps
           <div className={styles.team}>
             <Link href={teamHref(match.away?.id || '', awayName)} className={styles.teamLink}>
               {awayLogo ? (
-                <TeamLogo src={awayLogo} alt={awayName} className={styles.logo} width={56} height={56} />
+                <TeamLogo src={awayLogo} alt={awayName} className={styles.logo} width={56} height={56} priority />
               ) : (
                 <div className={styles.logoPlaceholder}>{awayName.charAt(0)}</div>
               )}

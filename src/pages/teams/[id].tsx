@@ -15,6 +15,8 @@ import type { TeamPageFacts } from '@/server/teamPageShell';
 import { buildTeamSummary, teamJsonLd, teamPageDescriptionText, teamPageTitleText } from '@/utils/teamSeo';
 import styles from './teamPage.module.scss';
 import { clampDescription } from '@/utils/seoText';
+import { logoSrc } from '@/utils/logoUrl';
+import { TEAM_HEADER_LOGO_PX } from '@/components/TeamDetailView/TeamHeaderCard';
 
 type TeamPageProps = {
   /** Paylaşım etiketleri için (sunucuda, ISR); geçici hatada null — sayfa yine istemcide yüklenir. */
@@ -94,6 +96,7 @@ export default function TeamDetail({ teamName, ogImagePath, facts }: TeamPagePro
     : 'Takımın son maçları, kadro bilgileri ve lig istatistikleri.';
   const summary = teamName ? buildTeamSummary(teamName, facts) : [];
   const ogImage = ogImagePath ? `${SITE_URL}${ogImagePath}` : null;
+  const headerLogo = logoSrc(facts?.logo, TEAM_HEADER_LOGO_PX);
   // Canonical = og:url: sorgusuz, her iki alan adında da siteBaseUrl() (www.getscor3.com).
   const pageUrl = teamId ? `${SITE_URL}${teamHref(teamId, teamName)}` : null;
   const imageAlt = teamName ? `${teamName} — lig sırası ve son maçlar` : `${BRAND.name} takım sayfası`;
@@ -121,6 +124,8 @@ export default function TeamDetail({ teamName, ogImagePath, facts }: TeamPagePro
         <meta name="twitter:description" content={clampDescription(description)} key="twitter:description" />
         {ogImage ? <meta name="twitter:image" content={ogImage} key="twitter:image" /> : null}
         {ogImage ? <meta name="twitter:image:alt" content={imageAlt} key="twitter:image:alt" /> : null}
+        {/* Görsel başlık (takım kartı) istemcide çizilir; LCP olan 72 px logo HTML gelir gelmez inmeye başlasın. */}
+        {headerLogo ? <link rel="preload" as="image" href={headerLogo} key="team-logo-preload" /> : null}
         {teamName && pageUrl ? <JsonLd schema={teamJsonLd(teamName, pageUrl, facts, ogImage)} /> : null}
         {teamName && pageUrl ? <JsonLd schema={breadcrumbJsonLd([{ name: teamName, url: pageUrl }])} /> : null}
       </Head>

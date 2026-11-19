@@ -23,7 +23,7 @@ export default function YontemPage() {
         <ul>
           <li>İki takımın son maçlarındaki form, attığı ve yediği goller, iç saha / deplasman ayrımı.</li>
           <li>Karşılıklı maç geçmişi ve lig sıralaması.</li>
-          <li>Açıklanmışsa ilk 11'ler; sakat ve cezalı oyuncular.</li>
+          <li>Açıklanmışsa ilk 11&apos;ler; sakat ve cezalı oyuncular.</li>
           <li>Maç bağlamı: hakem istatistikleri, dinlenme süresi, derbi / kupa maçı, hava durumu, bir sonraki maç.</li>
         </ul>
         <p>Model yalnız bu verilerle çalışır; internette arama yapmaz, haber ya da söylenti kullanmaz.</p>
@@ -43,7 +43,7 @@ export default function YontemPage() {
         <ul>
           <li>Maç bittiğinde resmî skor alınır ve kartta gösterilen en güçlü 3 tahminin her biri tuttu / tutmadı olarak işaretlenir.</li>
           <li>İsabet oranı = tutan tahmin sayısı ÷ değerlendirilen tahmin sayısı.</li>
-          <li>Yalnız güncel model ailesinin (3 Ekim 2026'dan beri) analizleri sayılır; ertelenen, iptal edilen ya da skoru doğrulanamayan maçlar dışarıda kalır.</li>
+          <li>Yalnız güncel model ailesinin (3 Ekim 2026&apos;dan beri) analizleri sayılır; ertelenen, iptal edilen ya da skoru doğrulanamayan maçlar dışarıda kalır.</li>
           <li>Seçim, karttakiyle birebir aynıdır: sonradan seçilmiş ya da gizlenmiş tahmin yoktur.</li>
         </ul>
         <p>

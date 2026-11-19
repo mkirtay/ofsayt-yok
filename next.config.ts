@@ -114,8 +114,8 @@ const sentryConfig = withSentryConfig(nextConfig, {
   org: process.env.SENTRY_ORG,
   project: process.env.SENTRY_PROJECT,
   authToken: process.env.SENTRY_AUTH_TOKEN,
-  disableLogger: true,
-  automaticVercelMonitors: false,
+  // `disableLogger` / `automaticVercelMonitors` kaldırıldı: kullanımdan kalktılar ve Turbopack derlemesinde zaten
+  // etkisizdi (build uyarısı). Vercel Cron izleyicisi varsayılan olarak kapalı.
 });
 
 /**
