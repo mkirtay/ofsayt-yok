@@ -105,7 +105,7 @@ export default function MatchPoll({ matchId, locked: lockedProp = false, home = 
 
   return (
     <div className={styles.poll}>
-      <h3 className={styles.title}>{t('poll.title')}</h3>
+      <h2 className={styles.title}>{t('poll.title')}</h2>
       <p className={styles.subtitle}>{t(locked ? 'poll.subtitleLocked' : 'poll.subtitle')}</p>
 
       <div className={`${styles.buttons} ${teamMode ? styles.teamMode : ''}`} role="group" aria-label={t('poll.title')}>
