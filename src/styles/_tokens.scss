@@ -47,6 +47,11 @@
   --fs-micro: 11px;
   --fw-micro: 500;
   --ls-micro: 0.06em;
+  // Kodda fiilen en çok kullanılan ara basamaklar (2026-11 denetimi: 12 px ×317, 10 px ×59, 16 px ×49). Yeni stilde
+  // ham `font-size: Npx` yerine bu değişkenler; ölçek dışı yeni değer designTokens.test.ts'te yakalanır.
+  --fs-caption: 12px; // tablo hücresi, yoğun liste meta
+  --fs-label: 10px; // en küçük okunur etiket (altı yok)
+  --fs-title: 16px; // kart / panel başlığı (büyük)
 
   // Aksiyon rengi — tek yeşil (§1): aktif sekme/pill, canlı nokta, birincil CTA
   --color-action: #00a76f;
