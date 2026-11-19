@@ -8,8 +8,8 @@ import { countryDisplayName } from '@/utils/countryName';
 import { personSlug } from '@/utils/personUrl';
 import { refereeComparePath } from '@/config/refereeTableLeagues';
 import type { RefereePageData } from '@/server/people/refereePage';
-import type { RefereeSeasonTableRow } from '@/services/sportmonks/refereeStats';
 import RecentMatchesTable from './RecentMatchesTable';
+import RefereeCompetitionTable from './RefereeCompetitionTable';
 import RefereeFanRating from './RefereeFanRating';
 import RefereeAiReport from './RefereeAiReport';
 import PersonAvatar from './PersonAvatar';
@@ -20,7 +20,7 @@ import { teamHref } from '@/utils/teamUrl';
 
 export { initials } from './PersonAvatar';
 
-/** Hakem sayfası: başlık, özet kartları (lig ortalamasıyla), sezon tablosu (mini çubuklar), son 10 maç, sezon seçicili takım kırılımı. Yalnız sayılar. */
+/** Hakem sayfası: başlık, özet kartları (lig ortalamasıyla), turnuva tablosu (sezonlar açılır), son 10 maç, sezon seçicili takım kırılımı. Yalnız sayılar. */
 export default function RefereeView({ data }: { data: RefereePageData }) {
   // Alıntılanabilir özet (SEO/GEO): sunucu HTML'inde, başlığın hemen altında.
   const seoSummary = buildRefereeSummary(data);
@@ -33,24 +33,6 @@ export default function RefereeView({ data }: { data: RefereePageData }) {
   const { teams, summary } = data;
   const [teamSeason, setTeamSeason] = useState(teams.defaultSeason);
   const breakdown = teams.seasons.find((s) => s.seasonName === teamSeason) ?? teams.seasons[0] ?? null;
-
-  // Sezon tablosu mini çubukları: sütun başına en büyük değere göre (yalnız görsel; sayı hücrede).
-  const maxOf = (get: (r: RefereeSeasonTableRow) => number | null) => Math.max(0, ...data.seasons.map((r) => get(r) ?? 0));
-  const max = {
-    yellow: maxOf((r) => r.yellowPerMatch),
-    red: maxOf((r) => r.redPerMatch),
-    penalties: maxOf((r) => r.penaltiesPerMatch),
-    fouls: maxOf((r) => r.foulsPerMatch),
-    var: maxOf((r) => r.varPerMatch),
-  };
-  const barCell = (v: number | null, m: number) => (
-    <span className={styles.barCell}>
-      <span>{fmt(v)}</span>
-      <span className={styles.miniTrack} aria-hidden="true">
-        <span className={styles.miniFill} style={{ width: `${v != null && m > 0 ? Math.max(4, (v / m) * 100) : 0}%` }} />
-      </span>
-    </span>
-  );
 
   const ctx = summary.context;
   const ctxLabel = ctx ? `${personLeagueLabel(ctx.leagueId, tl, '')} ${ctx.seasonName}`.trim() : '';
@@ -132,45 +114,7 @@ export default function RefereeView({ data }: { data: RefereePageData }) {
         <RecentMatchesTable matches={data.trMatches} title={t('person.trMatchesTitle')} sectionId="referee-tr-matches" note={t('person.trMatchesNote')} />
       ) : null}
 
-      <section className={styles.card} aria-labelledby="ref-seasons">
-        <h2 id="ref-seasons" className={styles.sectionTitle}>
-          {t('person.seasonsTitle')}
-        </h2>
-        {data.seasons.length === 0 ? (
-          <p className={styles.empty}>{t('person.empty')}</p>
-        ) : (
-          <div className={styles.scroll}>
-            <table className={styles.table}>
-              <thead>
-                <tr>
-                  <th>{t('person.colSeason')}</th>
-                  <th className={styles.left}>{t('person.colLeague')}</th>
-                  <th>{t('person.colMatches')}</th>
-                  <th>{t('person.colYellowPm')}</th>
-                  <th>{t('person.colRedPm')}</th>
-                  <th>{t('person.colPenPm')}</th>
-                  <th>{t('person.colFoulsPm')}</th>
-                  <th>{t('person.colVarPm')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.seasons.map((s) => (
-                  <tr key={`${s.seasonId}`}>
-                    <td>{s.seasonName}</td>
-                    <td className={styles.left}>{personLeagueLabel(s.leagueId, tl)}</td>
-                    <td>{s.matches}</td>
-                    <td>{barCell(s.yellowPerMatch, max.yellow)}</td>
-                    <td>{barCell(s.redPerMatch, max.red)}</td>
-                    <td>{barCell(s.penaltiesPerMatch, max.penalties)}</td>
-                    <td>{barCell(s.foulsPerMatch, max.fouls)}</td>
-                    <td>{barCell(s.varPerMatch, max.var)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
+      <RefereeCompetitionTable rows={data.seasons} fmt={fmt} />
 
       <RecentMatchesTable matches={data.recent} />
 

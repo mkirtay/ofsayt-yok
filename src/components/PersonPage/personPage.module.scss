@@ -845,3 +845,107 @@
   text-transform: uppercase;
   color: $color-text-secondary;
 }
+
+// ── Hakem: turnuvalara göre tablo (sezonlar açılır) ──
+.compTable {
+  td {
+    vertical-align: middle;
+  }
+}
+
+.compToggle,
+.compStatic {
+  display: grid;
+  grid-template-columns: 14px minmax(0, 1fr);
+  align-items: center;
+  column-gap: $spacing-2;
+  text-align: left;
+}
+
+.compToggle {
+  min-height: 24px;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
+
+  &:hover .compName {
+    color: $color-primary-text;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+    outline-offset: 2px;
+    border-radius: $radius-sm;
+  }
+}
+
+.compChevron {
+  grid-row: span 2;
+  width: 7px;
+  height: 7px;
+  border-right: 2px solid $color-text-secondary;
+  border-bottom: 2px solid $color-text-secondary;
+  transform: rotate(-45deg);
+  transition: transform 0.15s ease;
+
+  [aria-expanded='true'] > & {
+    transform: rotate(45deg);
+  }
+}
+
+.compStatic .compName,
+.compStatic .compMeta {
+  grid-column: 2;
+}
+
+.compName {
+  font-weight: 600;
+  color: $color-text;
+}
+
+.compMeta {
+  font-size: 11px;
+  color: $color-text-secondary;
+}
+
+.compSpan {
+  white-space: nowrap;
+}
+
+.compMatches {
+  font-weight: 700;
+}
+
+.compRowOpen td {
+  border-bottom-color: transparent;
+}
+
+.table .compSeasonRow td {
+  font-size: 12px;
+  color: $color-text-secondary;
+  background: $color-muted;
+}
+
+.table .compSeasonRow td:first-child {
+  padding-left: calc(#{$spacing-3} + 14px + #{$spacing-2});
+}
+
+.table .compTotal td {
+  font-weight: 700;
+  border-top: 2px solid $color-border;
+  border-bottom: none;
+}
+
+// Mobil: sabit ilk sütun (136 px) turnuva adını kesmesin, satır kırsın.
+@media (max-width: #{$bp-sm - 1px}) {
+  .table.compTable th:first-child,
+  .table.compTable td:first-child {
+    min-width: 148px;
+    max-width: 148px;
+    white-space: normal;
+    text-overflow: clip;
+  }
+}

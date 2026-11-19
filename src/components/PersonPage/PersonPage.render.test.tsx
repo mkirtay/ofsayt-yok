@@ -60,7 +60,7 @@ describe('<RefereeView />', () => {
     expect(html).not.toContain('Turkey');
   });
   it('sezon tablosu, son maçlar (maç sayfasına link), takım kırılımı başlığında sezon ve maç sayısı', () => {
-    expect(html).toContain('Sezon istatistikleri');
+    expect(html).toContain('Turnuvalara göre');
     expect(html).toContain('href="/matches/19746609-trabzonspor-galatasaray"');
     expect(html).toContain('Takım kırılımı — 2026/2027 sezonu (4 maç)');
     expect(html).toContain('3,5');
@@ -75,11 +75,13 @@ describe('<RefereeView />', () => {
     expect(html.match(/Lig ort\.:/g)).toHaveLength(4);
   });
 
-  it('takım kırılımı sezon seçicisi (varsayılan güncel sezon); sezon tablosunda erişilebilir mini çubuklar', () => {
+  it('takım kırılımı sezon seçicisi (varsayılan güncel sezon); turnuva tablosu tek sezonda düz satır', () => {
     expect(html).toContain('<option value="2026/2027" selected="">2026/2027 (4 maç)</option>');
     expect(html).toContain('<option value="2025/2026">2025/2026 (15 maç)</option>');
     expect(html).not.toContain('Fenerbahçe</a>'); // seçili olmayan sezonun satırı çizilmez
-    expect(html).toMatch(/<span>3,5<\/span><span class="[^"]*miniTrack[^"]*" aria-hidden="true">/);
+    expect(html).toContain('data-testid="referee-competitions"');
+    expect(html).not.toContain('aria-expanded'); // tek sezonlu turnuva açılmaz
+    expect(html).not.toContain('Tüm turnuvalar'); // tek turnuvada toplam satırı yok
   });
 
   it('takım satırları maç sayısı sırasında, her satırda maç sayısı; not var; vurgu / yorum / kumar dili yok', () => {
