@@ -8,6 +8,7 @@ import { useTranslation } from '@/lib/i18n';
 import styles from '@/components/GundemHubPage/gundemHubPage.module.scss';
 import { siteBaseUrl } from '@/lib/siteUrl';
 import { BRAND, brandTitle } from '@/config/brand';
+import { clampDescription } from '@/utils/seoText';
 
 type Props = {
   postId: string;
@@ -52,14 +53,14 @@ export default function GundemPostPage({ postId, meta }: Props) {
     <>
       <Head>
         <title>{title}</title>
-        <meta name="description" content={description} />
+        <meta name="description" content={clampDescription(description)} />
         <meta property="og:type" content="article" />
         <meta property="og:title" content={title} />
-        <meta property="og:description" content={description} />
+        <meta property="og:description" content={clampDescription(description)} />
         <meta property="og:url" content={url} />
         <meta name="twitter:card" content="summary" key="twitter:card" />
         <meta name="twitter:title" content={title} />
-        <meta name="twitter:description" content={description} />
+        <meta name="twitter:description" content={clampDescription(description)} />
         <link rel="canonical" href={url} />
       </Head>
       <div className={styles.shell}>

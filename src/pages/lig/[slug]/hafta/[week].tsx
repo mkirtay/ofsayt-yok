@@ -11,6 +11,7 @@ import { breadcrumbJsonLd } from '@/utils/breadcrumbJsonLd';
 import { refereeHref } from '@/utils/personUrl';
 import { buildWeekSummary, weekDateRange } from '@/utils/leagueWeekSeo';
 import styles from '../../lig.module.scss';
+import { clampDescription } from '@/utils/seoText';
 
 type Props = {
   hub: LeagueHub;
@@ -70,10 +71,10 @@ export default function LeagueWeekPage({ hub, seasonName, round, fixtures, weeks
     <Container>
       <Head>
         <title>{title}</title>
-        <meta name="description" content={description} key="description" />
+        <meta name="description" content={clampDescription(description)} key="description" />
         <link rel="canonical" href={url} key="canonical" />
         <meta property="og:title" content={title} key="og:title" />
-        <meta property="og:description" content={description} key="og:description" />
+        <meta property="og:description" content={clampDescription(description)} key="og:description" />
         <meta property="og:url" content={url} key="og:url" />
       </Head>
       <JsonLd

@@ -35,3 +35,13 @@ export function countryDisplayName(country: { name: string; iso2?: string | null
   }
   return country.name;
 }
+
+/**
+ * Lig adı ülke adıyla aynı kelimeyle başlıyor mu ("Brezilya Serie A" / "Brezilya", "Suudi Pro Ligi" / "Suudi Arabistan")?
+ * Öyleyse liste başlığında "Ülke - Lig" yerine yalnız lig adı yazılır. Büyük/küçük harf Türkçe kurala göre.
+ */
+export function leagueRepeatsCountry(leagueName: string, countryName: string): boolean {
+  const first = (s: string) => s.trim().split(/\s+/)[0]?.toLocaleLowerCase('tr') ?? '';
+  const l = first(leagueName);
+  return l.length > 0 && l === first(countryName);
+}

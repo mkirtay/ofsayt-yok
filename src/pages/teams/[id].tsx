@@ -14,6 +14,7 @@ import JsonLd from '@/components/JsonLd';
 import type { TeamPageFacts } from '@/server/teamPageShell';
 import { buildTeamSummary, teamJsonLd, teamPageDescriptionText, teamPageTitleText } from '@/utils/teamSeo';
 import styles from './teamPage.module.scss';
+import { clampDescription } from '@/utils/seoText';
 
 type TeamPageProps = {
   /** Paylaşım etiketleri için (sunucuda, ISR); geçici hatada null — sayfa yine istemcide yüklenir. */
@@ -101,9 +102,9 @@ export default function TeamDetail({ teamName, ogImagePath, facts }: TeamPagePro
     <Container>
       <Head>
         <title>{title}</title>
-        <meta name="description" content={description} key="description" />
+        <meta name="description" content={clampDescription(description)} key="description" />
         <meta property="og:title" content={title} key="og:title" />
-        <meta property="og:description" content={description} key="og:description" />
+        <meta property="og:description" content={clampDescription(description)} key="og:description" />
         <meta property="og:type" content="website" key="og:type" />
         {pageUrl ? <link rel="canonical" href={pageUrl} key="canonical" /> : null}
         {pageUrl ? <meta property="og:url" content={pageUrl} key="og:url" /> : null}
@@ -117,7 +118,7 @@ export default function TeamDetail({ teamName, ogImagePath, facts }: TeamPagePro
         ) : null}
         <meta name="twitter:card" content={ogImage ? 'summary_large_image' : 'summary'} key="twitter:card" />
         <meta name="twitter:title" content={title} key="twitter:title" />
-        <meta name="twitter:description" content={description} key="twitter:description" />
+        <meta name="twitter:description" content={clampDescription(description)} key="twitter:description" />
         {ogImage ? <meta name="twitter:image" content={ogImage} key="twitter:image" /> : null}
         {ogImage ? <meta name="twitter:image:alt" content={imageAlt} key="twitter:image:alt" /> : null}
         {teamName && pageUrl ? <JsonLd schema={teamJsonLd(teamName, pageUrl, facts, ogImage)} /> : null}

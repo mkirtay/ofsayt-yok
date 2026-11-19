@@ -10,6 +10,7 @@ import { personIdFromSlug, personSlug, refereeHref, REFEREE_BASE_PATH } from '@/
 import { stripUndefined } from '@/utils/homeInitialData';
 import { useTranslation } from '@/lib/i18n';
 import { siteBaseUrl } from '@/lib/siteUrl';
+import { clampDescription } from '@/utils/seoText';
 
 type Props = { data: RefereePageData; /** Kanonik tam adres — sunucuda (istemcide AUTH_URL yok; JSON-LD hydration'ı eşleşsin). */ url: string };
 
@@ -42,14 +43,14 @@ export default function RefereePage({ data, url }: Props) {
     <Container>
       <Head>
         <title>{title}</title>
-        <meta name="description" content={description} key="description" />
+        <meta name="description" content={clampDescription(description)} key="description" />
         <link rel="canonical" href={url} />
         <meta property="og:title" content={title} key="og:title" />
-        <meta property="og:description" content={description} key="og:description" />
+        <meta property="og:description" content={clampDescription(description)} key="og:description" />
         <meta property="og:type" content="profile" key="og:type" />
         <meta property="og:url" content={url} key="og:url" />
         <meta name="twitter:title" content={title} key="twitter:title" />
-        <meta name="twitter:description" content={description} key="twitter:description" />
+        <meta name="twitter:description" content={clampDescription(description)} key="twitter:description" />
       </Head>
       <JsonLd
         schema={{

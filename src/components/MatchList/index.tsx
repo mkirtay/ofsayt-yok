@@ -2,7 +2,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { useMemo, useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { List, type RowComponentProps } from 'react-window';
-import { useTranslation } from '@/lib/i18n';
+import { useI18n, useTranslation } from '@/lib/i18n';
+import { countryDisplayName, leagueRepeatsCountry } from '@/utils/countryName';
 import TeamTierBadge from '@/components/TeamTierBadge';
 import TeamLogo from '@/components/TeamLogo';
 import { teamHref } from '@/utils/teamUrl';
@@ -164,6 +165,7 @@ type FlatItem =
       competition_name: string;
       country_id?: number;
       country_name?: string;
+      country_iso2?: string;
       country_flag?: string;
       competition_logo?: string;
       /** Milli grup ve hiçbir maçta devre skoru yok → "İY" sütun başlığı çizilmez. */
@@ -305,6 +307,7 @@ function buildFlatItems(groupedMatches: GroupedLeagueMatches[], items: FlatItem[
       competition_name: group.competition_name,
       country_id: group.country_id,
       country_name: group.country_name,
+      country_iso2: group.country_iso2,
       country_flag: group.country_flag,
       competition_logo: group.competition_logo,
       ...(isNationalMatchId(group.competition_id) && !group.matches.some((m) => m.scores?.ht_score?.trim()) ? { hideIy: true } : {}),
@@ -370,6 +373,7 @@ function VirtualRow({
 }: VirtualRowProps) {
   const { t } = useTranslation('match');
   const { t: tl } = useTranslation('leagues');
+  const { locale } = useI18n();
   const item = items[index];
   if (!item) return null;
 
@@ -400,6 +404,12 @@ function VirtualRow({
       item.competition_logo || uefaCompetitionLogoSrcById(item.competition_id);
     // Lig logosu yoksa Sportmonks ülke bayrağı; o da yoksa görsel yok (kırık görsel değil).
     const countryFlag = logoUrl ? null : item.country_flag || null;
+    const leagueName = leagueNameById(item.competition_id, item.competition_name, tl);
+    // Ülke adı görünen dilde ("Spain" → "İspanya"); lig adı zaten ülkeyle başlıyorsa ("Brezilya Serie A") tekrar yazılmaz.
+    const countryName = item.country_name
+      ? countryDisplayName({ name: item.country_name, iso2: item.country_iso2 }, locale)
+      : '';
+    const showCountry = Boolean(countryName) && !leagueRepeatsCountry(leagueName, countryName);
     return (
       <div {...ariaAttributes} style={style} className={styles.virtualHeaderCell}>
         {item.showGap ? <div className={styles.virtualGroupSpacer} aria-hidden /> : null}
@@ -425,14 +435,14 @@ function VirtualRow({
               />
             ) : null}
             <span className={styles.virtualHeaderTitleBlock}>
-              {item.country_name ? (
+              {showCountry ? (
                 <>
-                  <strong className={styles.virtualHeaderSep}>{item.country_name}</strong>
+                  <strong className={styles.virtualHeaderSep}>{countryName}</strong>
                   <span className={styles.virtualHeaderSep}> - </span>
                 </>
               ) : null}
               <span className={styles.virtualHeaderLeagueName}>
-                {leagueNameById(item.competition_id, item.competition_name, tl)}
+                {leagueName}
               </span>
               {isNationalMatchId(item.competition_id) ? <span className={styles.nationalTag}>{t('nationalTag')}</span> : null}
             </span>

@@ -71,6 +71,7 @@ import { fetchCompetitionStandings } from '@/services/competitionStandings';
 import { loadStandingsForMatch } from '@/services/standingsBundle';
 import { loadWithRetry } from '@/utils/loadWithRetry';
 import { brandTitle } from '@/config/brand';
+import { clampDescription } from '@/utils/seoText';
 
 // Kadro sekmesi yüklenirken (tıklamadan sonra): sahne ve CSS'i ayrı parçada. Kutu (yükseklik) burada.
 const loadFormationLoading = () => import('@/components/PitchScenes/FormationLoading');
@@ -584,9 +585,9 @@ function LeagueTeamDetailView({ teamId, variant = 'page' }: TeamDetailViewProps)
         {teamInfoLoaded ? (
           <>
             <title>{teamPageTitle}</title>
-            <meta name="description" content={teamPageDescription} key="description" />
+            <meta name="description" content={clampDescription(teamPageDescription)} key="description" />
             <meta property="og:title" content={teamPageTitle} key="og:title" />
-            <meta property="og:description" content={teamPageDescription} key="og:description" />
+            <meta property="og:description" content={clampDescription(teamPageDescription)} key="og:description" />
           </>
         ) : null}
       </Head>

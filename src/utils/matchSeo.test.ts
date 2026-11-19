@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Match } from '@/models/liveScore';
-import { buildMatchSeo, normalizeScore } from './matchSeo';
+import { buildMatchSeo, matchStartDateIso, normalizeScore } from './matchSeo';
 
 const brand = (t: string) => `${t} | Scor3`;
 const base = {
@@ -14,7 +14,29 @@ const base = {
   round: '13',
 } as unknown as Match;
 
+describe('matchStartDateIso', () => {
+  it('saat biliniyorsa TSİ ofsetli tam ISO, TBD ise yalnız tarih', () => {
+    expect(matchStartDateIso(base)).toBe('2026-11-22T19:00:00+03:00');
+    expect(matchStartDateIso({ ...base, time_tbd: true })).toBe('2026-11-22');
+    expect(matchStartDateIso({ ...base, scheduled: '' })).toBe('2026-11-22');
+    expect(matchStartDateIso(null)).toBeNull();
+  });
+});
+
 describe('buildMatchSeo', () => {
+  it('görünen lig adı verilirse sağlayıcı adının yerine her yerde o kullanılır', () => {
+    const s = buildMatchSeo({ ...base, status: 'NOT STARTED', competition: { id: 600, name: 'Super Lig' } } as Match, brand, { competitionName: 'Süper Lig' });
+    expect(s.h1).toBe('Galatasaray - Fenerbahçe · Süper Lig');
+    expect(s.description).toContain('(Süper Lig)');
+    expect(`${s.title} ${s.description} ${s.h1} ${s.summary.join(' ')}`).not.toContain('Super Lig');
+  });
+
+  it('açıklama 160 karakteri geçmez', () => {
+    const s = buildMatchSeo({ ...base, status: 'NOT STARTED', tv_stations: ['TOD', 'beIN CONNECT Turkey', 'Digiturk Play'] }, brand);
+    expect(s.description.length).toBeLessThanOrEqual(160);
+    expect(s.description).toContain('Digiturk Play ekranlarında oynanacak.');
+  });
+
   it('oynanmamış maç: ne zaman / saat kaçta başlığı, TSİ saat, yayıncı', () => {
     const s = buildMatchSeo({ ...base, status: 'NOT STARTED', tv_stations: ['beIN Sports 1'], venue_info: { name: 'RAMS Park', city: 'İstanbul' } }, brand);
     expect(s.title).toBe('Galatasaray - Fenerbahçe Maçı Ne Zaman, Saat Kaçta, Hangi Kanalda? | Scor3');

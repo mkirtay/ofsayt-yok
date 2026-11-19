@@ -10,6 +10,7 @@ import { siteBaseUrl } from '@/lib/siteUrl';
 import { breadcrumbJsonLd } from '@/utils/breadcrumbJsonLd';
 import type { PlayerSeo } from '@/utils/playerSeo';
 import styles from '@/pages/teams/teamPage.module.scss';
+import { clampDescription } from '@/utils/seoText';
 
 type Props = { seo: PlayerSeo | null };
 
@@ -54,7 +55,7 @@ export default function PlayerPage({ seo = null }: Partial<Props> = {}) {
     <Container>
       <Head>
         <title>{title}</title>
-        <meta name="description" content={description} key="description" />
+        <meta name="description" content={clampDescription(description)} key="description" />
         {pageUrl ? <link rel="canonical" href={pageUrl} key="canonical" /> : null}
         {pageUrl ? <meta property="og:url" content={pageUrl} key="og:url" /> : null}
         {data?.photo ? <meta property="og:image" content={data.photo} key="og:image" /> : null}

@@ -12,6 +12,7 @@ import { brandTitle } from '@/config/brand';
 import Link from 'next/link';
 import { leagueHubByLeagueId, hubHasWeeks } from '@/config/leagueHubs';
 import { buildRefereeTableSummary } from '@/utils/refereeSeo';
+import { clampDescription } from '@/utils/seoText';
 
 type Props = { data: RefereeLeagueTable; url: string };
 
@@ -50,14 +51,14 @@ export default function RefereesPage({ data, url }: Props) {
     <Container>
       <Head>
         <title>{title}</title>
-        <meta name="description" content={description} key="description" />
+        <meta name="description" content={clampDescription(description)} key="description" />
         <link rel="canonical" href={url} />
         <meta property="og:title" content={title} key="og:title" />
-        <meta property="og:description" content={description} key="og:description" />
+        <meta property="og:description" content={clampDescription(description)} key="og:description" />
         <meta property="og:type" content="website" key="og:type" />
         <meta property="og:url" content={url} key="og:url" />
         <meta name="twitter:title" content={title} key="twitter:title" />
-        <meta name="twitter:description" content={description} key="twitter:description" />
+        <meta name="twitter:description" content={clampDescription(description)} key="twitter:description" />
       </Head>
       <JsonLd
         schema={{

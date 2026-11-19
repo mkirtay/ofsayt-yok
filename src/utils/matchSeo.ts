@@ -7,6 +7,7 @@
 import type { Match } from '@/models/liveScore';
 import type { MatchEvent } from '@/models/domain';
 import { matchKickoffMs, isMatchLive } from '@/utils/matchActivity';
+import { clampDescription, istanbulIsoDateTime } from '@/utils/seoText';
 
 const dateFmt = new Intl.DateTimeFormat('tr-TR', {
   timeZone: 'Europe/Istanbul',
@@ -80,7 +81,25 @@ export type MatchSeoOptions = {
   events?: SeoEvent[] | null;
   /** Hakem adı sayfada ayrıca bağlantıyla yazılıyorsa özete eklenmez. */
   omitReferee?: boolean;
+  /**
+   * Görünen (Türkçe) lig adı — `leagueNameById` sonucu ("Süper Lig"). Verilmezse sağlayıcının ham adı ("Super Lig").
+   * Başlık, açıklama, H1 ve özet aynı adı kullanır; breadcrumb / JSON-LD ile tutarlı olsun.
+   */
+  competitionName?: string | null;
 };
+
+/**
+ * schema.org `startDate`: saat biliniyorsa TSİ ofsetli tam ISO tarih-saat (Google etkinlik sonuçları saat ister), saat
+ * belirsizse (TBD) yalnız tarih. Hiçbiri yoksa null.
+ */
+export function matchStartDateIso(m: Pick<Match, 'date' | 'scheduled' | 'time_tbd'> | null | undefined): string | null {
+  if (!m) return null;
+  if (!m.time_tbd) {
+    const k = matchKickoffMs(m as Match);
+    if (k != null) return istanbulIsoDateTime(k);
+  }
+  return m.date && /^\d{4}-\d{2}-\d{2}/.test(m.date) ? m.date.slice(0, 10) : null;
+}
 
 export function buildMatchSeo(m: SeoMatch | null | undefined, brand: (t: string) => string, opts: MatchSeoOptions = {}): MatchSeo {
   const home = m?.home?.name?.trim() || '';
@@ -93,7 +112,7 @@ export function buildMatchSeo(m: SeoMatch | null | undefined, brand: (t: string)
       summary: [],
     };
   }
-  const comp = (m.competition?.name || m.competition_name || '').trim();
+  const comp = (opts.competitionName || m.competition?.name || m.competition_name || '').trim();
   const pair = `${home} - ${away}`;
   const ko = kickoff(m);
   const when = ko ? `${ko.date}${ko.time ? `, saat ${ko.time} (TSİ)` : ''}` : null;
@@ -151,5 +170,5 @@ export function buildMatchSeo(m: SeoMatch | null | undefined, brand: (t: string)
   if (extras.length) summary.push(`${extras.join('. ')}.`);
 
   const h1 = finished && score ? `${home} ${score} ${away}` : `${pair}${comp ? ` · ${comp}` : ''}`;
-  return { title, description, h1, summary };
+  return { title, description: clampDescription(description), h1, summary };
 }

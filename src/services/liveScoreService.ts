@@ -1518,6 +1518,8 @@ export type GroupedLeagueMatches = {
   /** `match.country.id` (bayrak görseli: `country_flag`) */
   country_id?: number;
   country_name?: string;
+  /** ISO 3166-1 alfa-2 — Türkçe ülke adı için (utils/countryName.ts). */
+  country_iso2?: string;
   /** API’de yalnızca dosya adı (örn. BIH.png); görüntü URL’si değil */
   country_flag?: string;
   competition_logo?: string;
@@ -1537,6 +1539,7 @@ export const groupMatchesByLeague = (matches: Match[]): GroupedLeagueMatches[] =
         competition_name: compName,
         country_id: match.country?.id,
         country_name: match.country?.name,
+        country_iso2: match.country?.iso2,
         country_flag: match.country?.flag,
         competition_logo: match.competition?.logo,
         matches: [],
@@ -1546,6 +1549,7 @@ export const groupMatchesByLeague = (matches: Match[]): GroupedLeagueMatches[] =
       if (g.country_id == null && match.country?.id != null) {
         g.country_id = match.country.id;
         g.country_name = match.country.name;
+        g.country_iso2 = match.country.iso2;
         g.country_flag = match.country.flag;
       }
       if (!g.competition_logo && match.competition?.logo) g.competition_logo = match.competition.logo;

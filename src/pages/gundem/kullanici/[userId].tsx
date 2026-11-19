@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma';
 import { useTranslation } from '@/lib/i18n';
 import { siteBaseUrl } from '@/lib/siteUrl';
 import { BRAND } from '@/config/brand';
+import { clampDescription } from '@/utils/seoText';
 
 type Props = {
   userId: string;
@@ -40,14 +41,14 @@ export default function GundemUserPage({ userId, meta }: Props) {
     <>
       <Head>
         <title>{title}</title>
-        <meta name="description" content={description} />
+        <meta name="description" content={clampDescription(description)} />
         <meta property="og:type" content="profile" />
         <meta property="og:title" content={title} />
-        <meta property="og:description" content={description} />
+        <meta property="og:description" content={clampDescription(description)} />
         <meta property="og:url" content={url} />
         <meta name="twitter:card" content="summary" key="twitter:card" />
         <meta name="twitter:title" content={title} />
-        <meta name="twitter:description" content={description} />
+        <meta name="twitter:description" content={clampDescription(description)} />
         <link rel="canonical" href={url} />
       </Head>
       <GundemProfilePage userId={userId} />

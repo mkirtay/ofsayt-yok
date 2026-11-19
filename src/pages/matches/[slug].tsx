@@ -43,7 +43,8 @@ import { isLightPageBot } from '@/config/crawlers';
 import styles from './matchDetail.module.scss';
 import { siteBaseUrl } from '@/lib/siteUrl';
 import { brandTitle } from '@/config/brand';
-import { buildMatchSeo } from '@/utils/matchSeo';
+import { buildMatchSeo, matchStartDateIso } from '@/utils/matchSeo';
+import { teamHref } from '@/utils/teamUrl';
 import { useLiveStandings } from '@/hooks/useLiveStandings';
 import { afterMatchDeadline, isLiveMatchStatus, standingsMatchesInLeague } from '@/services/liveStandings';
 import { useHomeHubMatches } from '@/hooks/useHomeHubMatches';
@@ -84,6 +85,15 @@ type MatchDetailProps = {
  * kartında jenerik "Maç Detayı" yerine gerçek takım isimleri/skor görünür
  * ve kullanıcı ilk açılışta da boş bir sayfa görmez.
  */
+/** schema.org SportsTeam — kulüp sayfası bağlantısıyla (varlık eşleştirme); milli takımda id kulüp sayfasına gitmez. */
+function sportsTeamJsonLd(name: string, id: number | string | null | undefined) {
+  return {
+    '@type': 'SportsTeam',
+    name,
+    ...(id != null && id !== '' ? { url: `${siteBaseUrl()}${teamHref(id, name)}` } : {}),
+  };
+}
+
 function decodeSafe(s: string): string {
   try {
     return decodeURIComponent(s);
@@ -304,10 +314,17 @@ export default function MatchDetail({
 
   const homeName = match?.home?.name || '';
   const awayName = match?.away?.name || '';
-  const compName = match?.competition?.name || match?.competition_name || '';
+  // Görünen (Türkçe) lig adı: SEO başlığı/H1/JSON-LD breadcrumb ile aynı olsun ("Super Lig" değil "Süper Lig").
+  const apiCompName = match?.competition?.name || match?.competition_name || '';
+  const compName = leagueNameById(compId, apiCompName, tl) || apiCompName;
   // SEO / GEO: durumuna göre başlık ("ne zaman, saat kaçta" / "canlı skor" / "maç sonucu"), açıklama, H1, maç bilgisi özeti.
   const refereeLink = match?.referee && match.referee_id ? refereeHref(match.referee_id, match.referee) : null;
-  const seo = buildMatchSeo(match, brandTitle, { events: initialEvents, omitReferee: Boolean(refereeLink) });
+  const seo = buildMatchSeo(match, brandTitle, {
+    events: initialEvents,
+    omitReferee: Boolean(refereeLink),
+    competitionName: compName,
+  });
+  const startDateIso = matchStartDateIso(match);
   const pageTitle = seo.title;
   const pageDescription = seo.description;
   // Paylaşım metni (og / twitter): maçın resmî hashtag'i varsa sonuna (Sportmonks metadata, ör. "#GALKAS").
@@ -405,9 +422,9 @@ export default function MatchDetail({
               name: homeName && awayName ? `${homeName} - ${awayName}` : pageTitle,
               url: canonicalUrl,
               sport: 'Soccer',
-              ...(match.date ? { startDate: match.date } : {}),
-              homeTeam: homeName ? { '@type': 'SportsTeam', name: homeName } : undefined,
-              awayTeam: awayName ? { '@type': 'SportsTeam', name: awayName } : undefined,
+              ...(startDateIso ? { startDate: startDateIso } : {}),
+              homeTeam: homeName ? sportsTeamJsonLd(homeName, isNationalMatchId(match.id) ? null : homeTeamId) : undefined,
+              awayTeam: awayName ? sportsTeamJsonLd(awayName, isNationalMatchId(match.id) ? null : awayTeamId) : undefined,
               ...(compName ? { organizer: { '@type': 'Organization', name: compName } } : {}),
               description: pageDescription,
               eventStatus:
@@ -421,7 +438,9 @@ export default function MatchDetail({
                     location: {
                       '@type': 'Place',
                       name: match.venue_info?.name || match.location,
-                      ...(match.venue_info?.city ? { address: match.venue_info.city } : {}),
+                      ...(match.venue_info?.city
+                        ? { address: { '@type': 'PostalAddress', addressLocality: match.venue_info.city } }
+                        : {}),
                     },
                   }
                 : {}),

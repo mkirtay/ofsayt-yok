@@ -18,6 +18,7 @@ import { toStandingsBlocks } from '@/utils/standingsBlocks';
 import styles from './lig.module.scss';
 import { standingsEmbedSnippet } from '@/utils/embedSnippet';
 import { teamHref } from '@/utils/teamUrl';
+import { clampDescription } from '@/utils/seoText';
 
 type Props = {
   hub: LeagueHub;
@@ -85,10 +86,10 @@ export default function LeagueHubPage({ hub, table, scorers, seasonName, updated
     <Container>
       <Head>
         <title>{title}</title>
-        <meta name="description" content={description} key="description" />
+        <meta name="description" content={clampDescription(description)} key="description" />
         <link rel="canonical" href={url} key="canonical" />
         <meta property="og:title" content={title} key="og:title" />
-        <meta property="og:description" content={description} key="og:description" />
+        <meta property="og:description" content={clampDescription(description)} key="og:description" />
         <meta property="og:url" content={url} key="og:url" />
         <meta property="og:type" content="website" key="og:type" />
       </Head>

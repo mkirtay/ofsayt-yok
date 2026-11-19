@@ -15,6 +15,11 @@ export function buildRobotsTxt(baseUrl: string): string {
     'User-agent: *',
     // Grup içinde boş satır yok (katı ayrıştırıcılar boş satırdan sonraki Disallow'u gruba bağlamaz).
     'Allow: /',
+    // Paylaşım görselleri ve logolar /api/ altında: Twitterbot robots.txt'ye uyar (kapalıysa X kartında görsel çıkmaz),
+    // Google da og:image / SportsEvent.image ve logoları çekemezdi. En uzun eşleşen kural kazanır → yalnız bu iki yol
+    // açık; çizim / veri okuma ogGuard bütçesiyle sınırlı (server/og/ogGuard.ts).
+    'Allow: /api/og/',
+    'Allow: /api/img/',
     'Disallow: /api/',
     'Disallow: /profile',
     'Disallow: /auth/',

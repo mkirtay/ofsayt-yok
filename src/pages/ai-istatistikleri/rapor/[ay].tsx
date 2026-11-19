@@ -11,6 +11,7 @@ import { buildMatchHref } from '@/utils/matchUrl';
 import { monthLabel } from '@/utils/monthLabel';
 import styles from '../ai-istatistikleri.module.scss';
 import trMatch from '../../../../public/locales/tr/match.json';
+import { clampDescription } from '@/utils/seoText';
 
 const PICK_LABELS = (trMatch as { analysis: { pick: Record<string, string> } }).analysis.pick;
 
@@ -41,10 +42,10 @@ export default function AiMonthlyReport({ month, stats, items }: Props) {
     <Container>
       <Head>
         <title>{brandTitle(`AI Maç Tahmini İsabet Raporu ${label}`)}</title>
-        <meta name="description" content={lead} key="description" />
+        <meta name="description" content={clampDescription(lead)} key="description" />
         <link rel="canonical" href={url} key="canonical" />
         <meta property="og:title" content={heading} key="og:title" />
-        <meta property="og:description" content={lead} key="og:description" />
+        <meta property="og:description" content={clampDescription(lead)} key="og:description" />
         <meta property="og:url" content={url} key="og:url" />
       </Head>
       <JsonLd

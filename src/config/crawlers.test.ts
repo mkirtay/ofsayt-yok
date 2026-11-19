@@ -50,6 +50,8 @@ describe('robots.txt', () => {
     const tail = rest.join('\n\n');
     expect(tail).toContain('User-agent: *\nAllow: /');
     expect(tail).toContain('Disallow: /api/');
+    // Paylaşım görselleri ve logolar tarayıcılara açık (X kartı, Google görselleri); API'nin geri kalanı kapalı.
+    expect(tail).toContain('Allow: /api/og/\nAllow: /api/img/\nDisallow: /api/');
     expect(tail).toContain('Sitemap: https://www.example.com/sitemap.xml');
   });
 
