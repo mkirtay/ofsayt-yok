@@ -1,4 +1,4 @@
-import type { AppProps } from 'next/app'
+import type { AppProps, NextWebVitalsMetric } from 'next/app'
 import { SessionProvider } from 'next-auth/react'
 import localFont from 'next/font/local'
 import { Analytics } from '@vercel/analytics/next'
@@ -15,6 +15,7 @@ import SignupAttributionSync from '@/components/SignupAttributionSync'
 import TermsConsentGate from '@/components/TermsConsentGate'
 import '@/styles/globals.scss'
 import AppDefaultHead from '@/components/AppDefaultHead'
+import { reportWebVitalToGa } from '@/lib/webVitals'
 
 /**
  * Inter (v4.001, wght 400–900) iki parça — üretim: scripts/fonts/subset-inter.sh. Aynı aile adı, ayrı unicode-range:
@@ -82,6 +83,11 @@ function App({ Component, pageProps: { session, ...pageProps } }: AppProps) {
       </QueryClientProvider>
     </SessionProvider>
   )
+}
+
+/** Gerçek kullanıcı Web Vitals (LCP / INP / CLS / FCP / TTFB) → GA4; yalnız çerez onayıyla (lib/webVitals.ts). */
+export function reportWebVitals(metric: NextWebVitalsMetric) {
+  reportWebVitalToGa(metric)
 }
 
 export default appWithTranslation(App)

@@ -3,6 +3,7 @@ import Script from 'next/script';
 import { useRouter } from 'next/router';
 import { CONSENT_EVENT, gaMeasurementId, readConsent, type AnalyticsConsent } from '@/lib/analyticsConsent';
 import { scrubAnalyticsUrl } from '@/lib/analyticsScrub';
+import { flushPendingWebVitals } from '@/lib/webVitals';
 
 declare global {
   interface Window {
@@ -49,6 +50,8 @@ export default function GoogleAnalytics() {
       });
     };
     send();
+    // GA kurulmadan ölçülen Web Vitals (TTFB / FCP) — sayfa görüntülemesinden sonra.
+    flushPendingWebVitals();
     router.events.on('routeChangeComplete', send);
     return () => router.events.off('routeChangeComplete', send);
   }, [id, consent, router.events]);
