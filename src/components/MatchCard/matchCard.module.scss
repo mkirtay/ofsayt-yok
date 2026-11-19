@@ -602,6 +602,18 @@ $match-card-header-blue: var(--text-secondary); // tema-uyumlu (eskiden sabit la
   }
 }
 
+// Dar telefonda (≤ 479 px) tablo kapsayıcıya sığar: 400 px alt sınırı yatay kaydırma açıyor ve "Deplasman" sütunu
+// kesik görünüyordu (kaydırma ipucu yok). Tarihte yüzyıl gizlenir ("02.05.26"), sütun oranları aynı.
+@media (max-width: 479px) {
+  .h2hTable {
+    min-width: 0;
+  }
+
+  .h2hYearCentury {
+    display: none;
+  }
+}
+
 .h2hThHome,
 .h2hTdHome {
   text-align: right;

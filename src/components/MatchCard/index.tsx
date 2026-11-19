@@ -49,6 +49,23 @@ function formatTrDate(isoDate: string | undefined): string {
   return p.length === 3 ? `${p[2]}.${p[1]}.${p[0]}` : isoDate;
 }
 
+/**
+ * H2H tarih hücresi: "02.05.2026"; dar ekranda yüzyıl ("20") CSS ile gizlenir → "02.05.26" (tablo 375 px'e yatay
+ * kaydırmasız sığar).
+ */
+function h2hDateCell(isoDate: string | undefined) {
+  const text = formatTrDate(isoDate);
+  const m = /^(\d{2}\.\d{2}\.)(\d{2})(\d{2})$/.exec(text);
+  if (!m) return text;
+  return (
+    <>
+      {m[1]}
+      <span className={styles.h2hYearCentury}>{m[2]}</span>
+      {m[3]}
+    </>
+  );
+}
+
 function compactHt(ht: string | undefined): string {
   if (!ht?.trim()) return '—';
   return ht.replace(/\s*-\s*/g, '-').replace(/\s+/g, '');
@@ -360,7 +377,7 @@ export default function MatchCard({ match, loading, initialH2h }: MatchCardProps
                   const finishKey = row.finish ? finishedLabelKey(row) : null;
                   return (
                     <tr key={row.id} className={styles.h2hTr}>
-                      <td className={styles.h2hTdDate}>{formatTrDate(row.date)}</td>
+                      <td className={styles.h2hTdDate}>{h2hDateCell(row.date)}</td>
                       <td className={`${styles.h2hTdHome} ${winner === 'home' ? styles.h2hWinner : ''}`.trim()}>
                         {row.home_name || '—'}
                       </td>
