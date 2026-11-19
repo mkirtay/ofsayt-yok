@@ -31,6 +31,22 @@ describe('BrandLogo', () => {
     expect(scss).toContain(":global(:root[data-theme='light'])");
   });
 
+  it('inline: satır içi SVG (görsel isteği yok), oranlı boyut, erişilebilir ad; tema varyantında yok sayılır', () => {
+    const html = renderToStaticMarkup(<BrandLogo surface="dark" height={34} inline />);
+    expect(imgs(html)).toHaveLength(0);
+    expect(html).toMatch(/^<svg[^>]*role="img"[^>]*aria-label="Scor3"/);
+    expect(html).toContain('width="102"');
+    expect(html).toContain('height="34"');
+    expect(html).toContain('fill="#C6FF3A"');
+    expect(imgs(renderToStaticMarkup(<BrandLogo surface="theme" height={34} inline />))).toHaveLength(2);
+  });
+
+  it('header logosu satır içi (ilk ekran, LCP adayı değil); footer görsel kalır', () => {
+    const read = (f: string) => readFileSync(path.join(process.cwd(), 'src/components', f), 'utf8');
+    expect(read('Header/index.tsx')).toContain('<BrandLogo surface="dark" height={34} inline />');
+    expect(read('Footer/index.tsx')).not.toMatch(/<BrandLogo[^>]*inline/);
+  });
+
   it('header ve footer koyu zemin varyantını kullanır (ikisi de her temada koyu)', () => {
     const read = (f: string) => readFileSync(path.join(process.cwd(), 'src/components', f), 'utf8');
     expect(read('Header/index.tsx')).toContain('<BrandLogo surface="dark"');

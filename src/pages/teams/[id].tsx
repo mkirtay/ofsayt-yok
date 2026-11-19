@@ -124,9 +124,15 @@ export default function TeamDetail({ teamName, ogImagePath, facts }: TeamPagePro
         {teamName && pageUrl ? <JsonLd schema={teamJsonLd(teamName, pageUrl, facts, ogImage)} /> : null}
         {teamName && pageUrl ? <JsonLd schema={breadcrumbJsonLd([{ name: teamName, url: pageUrl }])} /> : null}
       </Head>
-      {/* Görsel başlık takım kartında (istemcide); H1 sunucu HTML'inde arama motorları / ekran okuyucu için. */}
-      {teamName ? <h1 className={styles.srOnly}>{teamName}</h1> : null}
-      <TeamDetailView key={teamId} teamId={teamId} variant="page" />
+      {/* H1 takım kartında: ad + logo ISR kabuğundan gelir, kart sunucu HTML'inde başlığı hemen çizer (LCP öğesi veri
+          beklemez). Milli takım görünümü başlığı istemcide çizer → sunucu HTML'i için gizli H1. */}
+      {teamName && isNationalMatchId(teamId) ? <h1 className={styles.srOnly}>{teamName}</h1> : null}
+      <TeamDetailView
+        key={teamId}
+        teamId={teamId}
+        variant="page"
+        initialHeader={teamName ? { name: teamName, logo: facts?.logo ?? null } : null}
+      />
       {summary.length ? (
         <section className={styles.about} aria-labelledby="takim-hakkinda">
           <h2 id="takim-hakkinda" className={styles.aboutTitle}>{teamName} hakkında</h2>

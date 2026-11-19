@@ -40,6 +40,11 @@ export type HeaderLiveMatch = {
 
 export type TeamHeaderCardProps = {
   loading: boolean;
+  /**
+   * Ad + logo hazır mı (varsayılan `!loading`). Takım sayfası ISR kabuğundan adı/logoyu verir → başlık (LCP öğesi)
+   * veri gelmeden SSR'da çizilir; kartın geri kalanı `loading` ile iskelet kalır.
+   */
+  identityReady?: boolean;
   name: string;
   logo?: string;
   standing: HeaderStanding | null;
@@ -102,6 +107,7 @@ function StadiumIcon() {
 
 export default function TeamHeaderCard(props: TeamHeaderCardProps) {
   const { loading, name, logo, standing, standingLoading, next, live, form, coach, coachId, venue, social, compareOpen, onToggleCompare } = props;
+  const identityLoading = !(props.identityReady ?? !loading);
   const { t } = useTranslation('team');
   const [focused, setFocused] = useState<number | null>(null);
 
@@ -117,7 +123,7 @@ export default function TeamHeaderCard(props: TeamHeaderCardProps) {
       <div className={styles.layout}>
         <div className={styles.main}>
           <div className={styles.logoWrap}>
-            {loading ? (
+            {identityLoading ? (
               <SkeletonBlock className={styles.logo} />
             ) : logo ? (
               <TeamLogo src={logo} alt={name} className={styles.logo} width={TEAM_HEADER_LOGO_PX} height={TEAM_HEADER_LOGO_PX} priority />
@@ -130,13 +136,13 @@ export default function TeamHeaderCard(props: TeamHeaderCardProps) {
             {/* Ad + lig rozetleri tek satır kabında: dar kartta iki satıra sarılır, genişte yan yana. Rozetler takım adı
                 gelmeden çizilmez (iskelet adının genişliği gerçek addan farklı → rozetler kayardı); kap yüksekliği sabit. */}
             <div className={styles.nameRow}>
-              {loading ? (
+              {identityLoading ? (
                 <SkeletonBlock width="55%" height={22} />
               ) : (
                 <>
                   <h1 className={styles.name}>{name}</h1>
                   <span className={styles.badgeRow}>
-                    {standingLoading ? (
+                    {loading || standingLoading ? (
                       <SkeletonBlock width={180} height={22} />
                     ) : standing ? (
                       <>

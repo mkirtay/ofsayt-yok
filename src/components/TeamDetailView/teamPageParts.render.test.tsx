@@ -118,6 +118,14 @@ describe('<TeamHeaderCard />', () => {
     expect(loading).not.toContain('_badgeRow_'); // ad gelmeden rozet çizilmez (yatay kayma olmasın)
   });
 
+  it('identityReady: veri yüklenirken de ad (H1) ve logo çizilir; rozet ve kartın kalanı iskelet (LCP öğesi SSR\'da)', () => {
+    const html = renderToStaticMarkup(<TeamHeaderCard {...base} loading identityReady form={[]} next={null} />);
+    expect(html).toContain(`>${base.name}</h1>`);
+    expect(html).toMatch(/<img[^>]*alt="Galatasaray"[^>]*loading="eager"/);
+    expect(html).not.toContain('>13 P<');
+    expect(rows(html)).toEqual(rows(renderToStaticMarkup(<TeamHeaderCard {...base} />)));
+  });
+
   it('ad yanında lig rozeti, sıra hapı ve puan; eski metin satırı yok', () => {
     const html = renderToStaticMarkup(<TeamHeaderCard {...base} />);
     expect(html).toContain('Süper Lig');

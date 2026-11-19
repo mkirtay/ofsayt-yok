@@ -173,9 +173,11 @@ export type TeamDetailViewProps = {
   teamId: string;
   /** `page`: /teams/[id] (viewport düzeni); `panel`: ana sayfa split-view paneli (container query, 520px eşik). */
   variant?: 'page' | 'panel';
+  /** Sunucu kabuğundan ad + logo (takım sayfası ISR): başlık veri gelmeden çizilir (LCP). */
+  initialHeader?: { name: string; logo: string | null } | null;
 };
 
-function LeagueTeamDetailView({ teamId, variant = 'page' }: TeamDetailViewProps) {
+function LeagueTeamDetailView({ teamId, variant = 'page', initialHeader = null }: TeamDetailViewProps) {
   const overviewQuery = useTeamOverview(teamId, Boolean(teamId));
   // Veri yoksa ve hata da yoksa yükleniyor (statik HTML'de `teamId` henüz boşken de iskelet; "maç yok" görünmez).
   const overviewLoading = !overviewQuery.data && !overviewQuery.isError;
@@ -302,11 +304,12 @@ function LeagueTeamDetailView({ teamId, variant = 'page' }: TeamDetailViewProps)
   const teamInfo = useMemo(() => {
     const team = overviewQuery.data?.team;
     if (team?.name) return { name: team.name, logo: team.logo };
+    if (initialHeader?.name) return { name: initialHeader.name, logo: initialHeader.logo ?? undefined };
     // Yedek: takım adı gelmezse ilk maçtaki taraf.
     const m = recentMatches[0] ?? upcomingFixtures[0];
     const side = m ? (String(m.home?.id) === teamId ? m.home : m.away) : undefined;
     return { name: side?.name || 'Takım Detayı', logo: side?.logo };
-  }, [overviewQuery.data, recentMatches, upcomingFixtures, teamId]);
+  }, [overviewQuery.data, recentMatches, upcomingFixtures, teamId, initialHeader]);
 
   const todayIso = todayIsoIstanbul();
   const fixtureGroups = useMemo(() => buildTeamFixtureGroups(upcomingFixtures, todayIso), [upcomingFixtures, todayIso]);
@@ -595,6 +598,7 @@ function LeagueTeamDetailView({ teamId, variant = 'page' }: TeamDetailViewProps)
 
       <TeamHeaderCard
         loading={overviewLoading}
+        identityReady={!overviewLoading || Boolean(initialHeader?.name)}
         name={teamInfo.name}
         logo={teamInfo.logo}
         standing={headerStanding}

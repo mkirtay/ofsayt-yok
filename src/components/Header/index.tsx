@@ -115,7 +115,7 @@ export default function Header() {
             <div className={styles.logo}>
               <Link href="/" className={styles.logoLink} onMouseEnter={prefetchHome} onFocus={prefetchHome}>
                 {/* Header her iki temada da koyu zeminli → koyu-zemin varyantı. */}
-                <BrandLogo surface="dark" height={34} priority />
+                <BrandLogo surface="dark" height={34} inline />
               </Link>
             </div>
           </div>

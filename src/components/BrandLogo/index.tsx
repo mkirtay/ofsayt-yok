@@ -1,6 +1,15 @@
 import Image from 'next/image';
 import { BRAND } from '@/config/brand';
 import { BRAND_LOGO_ASPECT, BRAND_LOGO_SVG_ON_DARK, BRAND_LOGO_SVG_ON_LIGHT } from '@/config/brandImages';
+import {
+  BRAND_MARK_BADGE,
+  BRAND_MARK_BAR,
+  BRAND_MARK_COLORS,
+  BRAND_MARK_DIGIT,
+  BRAND_MARK_STROKE_WIDTH,
+  BRAND_MARK_VIEWBOX,
+  BRAND_MARK_WORD,
+} from './brandMark';
 import styles from './brandLogo.module.scss';
 
 /**
@@ -14,12 +23,39 @@ type Props = {
   /** CSS piksel; genişlik logonun oranından hesaplanır. */
   height: number;
   surface: BrandLogoSurface;
+  /**
+   * Satır içi SVG (ilk ekrandaki header logosu): ayrı istek yok, LCP adayı değil (bkz. brandMark.ts). Yalnız sabit
+   * zeminde (`dark` / `light`); footer gibi ilk ekran dışı yerler `<img>` kalır (HTML'e yol verisi eklenmez).
+   */
+  inline?: boolean;
   priority?: boolean;
   className?: string;
 };
 
-export default function BrandLogo({ height, surface, priority, className }: Props) {
+function InlineMark({ width, height, surface, className }: { width: number; height: number; surface: 'dark' | 'light'; className?: string }) {
+  const c = BRAND_MARK_COLORS[surface];
+  const stroke = { strokeWidth: BRAND_MARK_STROKE_WIDTH, strokeLinejoin: 'round' as const };
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox={BRAND_MARK_VIEWBOX}
+      width={width}
+      height={height}
+      role="img"
+      aria-label={BRAND.name}
+      className={[styles.logo, className].filter(Boolean).join(' ')}
+    >
+      <path d={BRAND_MARK_WORD} fill={c.word} stroke={c.word} {...stroke} />
+      <rect {...BRAND_MARK_BADGE} fill={c.badge} />
+      <path d={BRAND_MARK_DIGIT} fill={c.digit} stroke={c.digit} {...stroke} />
+      <rect {...BRAND_MARK_BAR} fill={c.bar} />
+    </svg>
+  );
+}
+
+export default function BrandLogo({ height, surface, inline, priority, className }: Props) {
   const width = Math.round(height * BRAND_LOGO_ASPECT);
+  if (inline && surface !== 'theme') return <InlineMark width={width} height={height} surface={surface} className={className} />;
   const logo = (src: string, variant?: string) => (
     <Image
       src={src}
