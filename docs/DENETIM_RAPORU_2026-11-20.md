@@ -202,3 +202,14 @@ Ana sayfa notu: B düzeninde Frikik kartı ilk ekrandan çıktı; LCP öğesi ar
 Frikik kartı metniydi, LCP = FCP). Gözlenen LCP ~0,4–0,7 sn; Lantern simülasyonu görsel LCP'yi önceden inen tüm
 kaynaklarla hesapladığından 2,9 sn görünüyor (takım sayfasında da aynı öğe, aynı etki). Çözüm adayı: marka logosunu
 satır içi SVG yapmak (≈2 KB gz; satır içi SVG LCP adayı değil, ek istek ve preload da kalkar) — ayrı adım, onay bekliyor.
+
+## 8. Deploy sonrası düzeltmeler (yerel, push bekliyor)
+
+- **347a185 — LCP:** header logosu satır içi SVG (`BrandLogo inline`, yol verisi `brandMark.ts`, kaynak SVG eşleşme
+  testi). Takım sayfasında LCP takım adına geçince veri bekleyen H1 ortaya çıktı → başlık kartı ad + logoyu ISR
+  kabuğundan SSR'da çiziyor (`identityReady`). Yerel mobil LH, canlıdaki 78e23ae ile aynı koşulda: ana sayfa 86 → 90
+  (LCP 4,18 → 2,93 sn; koşuların bir kısmı 0,92 sn / 100 — FCP öncesi görünür maç logolarının zamanlamasına bağlı iki
+  mod), takım 90 → 100 (LCP 3,62 → 0,60 sn), maç 100.
+- **e56f577 — mobil menü:** sayfa kaydırılmışken menü açılınca header kayboluyordu. Neden: scroll kilidi `html` ve
+  `body`'yi birlikte `overflow:hidden` yapınca body ayrı kaydırma kutusu oluyor, sticky header body'ye yapışıyordu.
+  Kilit artık yalnız `html`'de.
