@@ -27,7 +27,7 @@ export type RawPlayer = {
   date_of_birth?: string | null;
   height?: number | null;
   weight?: number | null;
-  nationality?: { name?: string; image_path?: string | null } | null;
+  nationality?: { name?: string; iso2?: string | null; image_path?: string | null } | null;
   city?: { name?: string } | null;
   position?: { name?: string } | null;
   detailedposition?: { name?: string } | null;
@@ -46,7 +46,7 @@ export type RawPlayer = {
     season_id: number;
     team_id?: number;
     has_values?: boolean;
-    season?: { name?: string; starting_at?: string | null; ending_at?: string | null; league?: { name?: string; sub_type?: string | null } } | null;
+    season?: { name?: string; starting_at?: string | null; ending_at?: string | null; league?: { id?: number; name?: string; sub_type?: string | null } } | null;
     team?: RawTeam | null;
     details?: Array<{ type_id: number; value?: PlayerStatValue }>;
   }>;
@@ -60,6 +60,8 @@ export type PlayerSeasonStats = {
   seasonId: number;
   seasonName: string;
   leagueName?: string;
+  /** Sportmonks lig id'si (Türkçe kısa ad için). */
+  leagueId?: number;
   teamId?: number;
   teamName?: string;
   teamLogo?: string;
@@ -88,7 +90,7 @@ export type PlayerProfile = {
   dateOfBirth?: string;
   heightCm?: number;
   weightKg?: number;
-  nationality?: { name: string; flag?: string };
+  nationality?: { name: string; flag?: string; iso2?: string };
   birthCity?: string;
   position?: string;
   detailedPosition?: string;
@@ -183,6 +185,7 @@ export function mapPlayerProfile(raw: RawPlayer): PlayerProfile {
         seasonId: s.season_id,
         seasonName: s.season?.name ?? String(s.season_id),
         ...(s.season?.league?.name ? { leagueName: s.season.league.name } : {}),
+        ...(s.season?.league?.id != null ? { leagueId: s.season.league.id } : {}),
         ...(s.team_id != null ? { teamId: s.team_id } : {}),
         ...(s.team?.name ? { teamName: normalizeTeamName(s.team.name) } : {}),
         ...(s.team?.image_path ? { teamLogo: s.team.image_path } : {}),
@@ -206,7 +209,15 @@ export function mapPlayerProfile(raw: RawPlayer): PlayerProfile {
     ...(raw.date_of_birth ? { dateOfBirth: raw.date_of_birth } : {}),
     ...(raw.height ? { heightCm: raw.height } : {}),
     ...(raw.weight ? { weightKg: raw.weight } : {}),
-    ...(raw.nationality?.name ? { nationality: { name: raw.nationality.name, ...(raw.nationality.image_path ? { flag: raw.nationality.image_path } : {}) } } : {}),
+    ...(raw.nationality?.name
+      ? {
+          nationality: {
+            name: raw.nationality.name,
+            ...(raw.nationality.image_path ? { flag: raw.nationality.image_path } : {}),
+            ...(raw.nationality.iso2 ? { iso2: raw.nationality.iso2 } : {}),
+          },
+        }
+      : {}),
     ...(raw.city?.name ? { birthCity: raw.city.name } : {}),
     ...(raw.position?.name ? { position: raw.position.name } : {}),
     ...(raw.detailedposition?.name ? { detailedPosition: raw.detailedposition.name } : {}),
