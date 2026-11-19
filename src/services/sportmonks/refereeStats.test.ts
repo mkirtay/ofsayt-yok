@@ -49,6 +49,22 @@ describe('hakem özeti', () => {
     expect(s.previous).toMatchObject({ seasonId: 25682, seasonName: '2025/2026', matches: 20, yellowPerMatch: 4.5, varPerMatch: 0.35 });
   });
 
+  it('kırmızı = doğrudan kırmızı + ikinci sarıdan kırmızı (Sportmonks REDCARDS ikinci sarıyı saymıyor)', () => {
+    const r: RawReferee = {
+      id: 1,
+      statistics: [
+        {
+          season_id: 9,
+          season: { id: 9, name: '2026/2027' },
+          details: [det('MATCHES', { count: 4 }), det('REDCARDS', { all: { count: 1 } }), det('YELLOWRED_CARDS', { all: { count: 1 } })],
+        },
+      ],
+    };
+    expect(summarizeRefereeStats(r, 9, null)!.current.redPerMatch).toBe(0.5);
+    const onlyYr: RawReferee = { id: 1, statistics: [{ season_id: 9, details: [det('MATCHES', { count: 2 }), det('YELLOWRED_CARDS', { all: { count: 1 } })] }] };
+    expect(summarizeRefereeStats(onlyYr, 9, null)!.current.redPerMatch).toBe(0.5);
+  });
+
   it('bu sezon yeterli maç varsa geçen sezon yok; bu sezon kaydı yoksa maç sayısı 0 ile döner', () => {
     const many: RawReferee = { ...raw, statistics: [{ ...raw.statistics![0]!, details: [det('MATCHES', { count: 9 })] }, raw.statistics![1]!] };
     expect(summarizeRefereeStats(many, 28203, 600)!.previous).toBeNull();

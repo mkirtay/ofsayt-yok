@@ -6,9 +6,11 @@ import { useI18n, useTranslation } from '@/lib/i18n';
 import { refereeHref } from '@/utils/personUrl';
 import { statBarWidths } from '@/utils/compareData';
 import { FEW_MATCHES_THRESHOLD, isFewMatches, sortRefereeRows, type RefereeSortKey, type SortDir } from '@/utils/refereeTableSort';
-import { REFEREE_TABLE_LEAGUES, refereeTablePath } from '@/config/refereeTableLeagues';
+import { REFEREE_TABLE_GROUPS, REFEREE_TABLE_LEAGUES, refereeTablePath } from '@/config/refereeTableLeagues';
 import type { RefereeLeagueTable, RefereeTableRow } from '@/server/people/refereeLeagueTable';
-import { initials } from './RefereeView';
+import TeamLogo from '@/components/TeamLogo';
+import PersonAvatar from './PersonAvatar';
+import RefereeTableSide from './RefereeTableSide';
 import styles from './personPage.module.scss';
 import ts from './refereeTable.module.scss';
 
@@ -27,8 +29,8 @@ const firstQuery = (v: unknown) => (Array.isArray(v) ? v[0] : typeof v === 'stri
  * /hakemler: lig + sezon seçici, sıralanabilir hakem tablosu (SSR), iki hakem seçilince karşılaştırma (tablonun altında;
  * `?a=slug&b=slug` paylaşılabilir). Yalnız sayılar; vurgu / "daha iyi" yorumu yok.
  */
-/** `intro`: başlığın altındaki alıntılanabilir özet (SEO/GEO; sayfa sunucuda üretir). */
-export default function RefereeTableView({ data, intro }: { data: RefereeLeagueTable; intro?: React.ReactNode }) {
+/** `intro`: başlığın altındaki alıntılanabilir özet (SEO/GEO; sayfa sunucuda üretir). `weekHref`: haftalık atamalar sayfası. */
+export default function RefereeTableView({ data, intro, weekHref }: { data: RefereeLeagueTable; intro?: React.ReactNode; weekHref?: string }) {
   const { t } = useTranslation('match');
   const { t: tl } = useTranslation('leagues');
   const { locale } = useI18n();
@@ -77,25 +79,36 @@ export default function RefereeTableView({ data, intro }: { data: RefereeLeagueT
     setSort((s) => (s.key === key ? { key, dir: s.dir === 'desc' ? 'asc' : 'desc' } : { key, dir: 'desc' }));
 
   const leagueName = (l: { nameKey: string }) => tl(`short.${l.nameKey}`);
+  const groupLabel = { tr: t('person.groupTr'), uefa: t('person.groupUefa'), europe: t('person.groupEurope') } as const;
 
+  // Masaüstünde bölünmüş ekran: solda tablo + karşılaştırma, sağda bağlamsal panel; mobilde panel altta.
   return (
-    <div className={styles.page}>
+    <div className={styles.split}>
+      <div className={styles.splitMain}>
       <section className={styles.card} aria-labelledby="ref-table-title">
         <h1 id="ref-table-title" className={styles.sectionTitle} style={{ fontSize: 18 }}>
           {t('person.tableTitle', { league: leagueName(data.league), season: data.season.name })}
         </h1>
         {intro ? <p className={ts.intro} style={{ marginBottom: 12, lineHeight: 1.6 }}>{intro}</p> : null}
         <div className={ts.controls}>
-          <nav className={ts.chips} aria-label={t('person.leagueLabel')}>
-            {REFEREE_TABLE_LEAGUES.map((l) => (
-              <Link
-                key={l.slug}
-                href={refereeTablePath(l.slug, null, true)}
-                className={`${ts.chip} ${l.slug === data.league.slug ? ts.chipActive : ''}`.trim()}
-                aria-current={l.slug === data.league.slug ? 'page' : undefined}
-              >
-                {leagueName(l)}
-              </Link>
+          <nav className={ts.groups} aria-label={t('person.leagueLabel')}>
+            {REFEREE_TABLE_GROUPS.map((g) => (
+              <div key={g} className={ts.group}>
+                <span className={ts.groupLabel}>{groupLabel[g]}</span>
+                <div className={ts.groupChips}>
+                  {REFEREE_TABLE_LEAGUES.filter((l) => l.group === g).map((l) => (
+                    <Link
+                      key={l.slug}
+                      href={refereeTablePath(l.slug, null, true)}
+                      className={`${ts.chip} ${l.slug === data.league.slug ? ts.chipActive : ''}`.trim()}
+                      aria-current={l.slug === data.league.slug ? 'page' : undefined}
+                      prefetch={false}
+                    >
+                      {leagueName(l)}
+                    </Link>
+                  ))}
+                </div>
+              </div>
             ))}
           </nav>
           <select
@@ -119,7 +132,7 @@ export default function RefereeTableView({ data, intro }: { data: RefereeLeagueT
           <p className={styles.empty}>{t('person.empty')}</p>
         ) : (
           <div className={styles.scroll}>
-            <table className={styles.table} data-testid="referee-table">
+            <table className={`${styles.table} ${ts.refTable}`} data-testid="referee-table">
               <thead>
                 <tr>
                   <th>{t('person.colReferee')}</th>
@@ -144,10 +157,11 @@ export default function RefereeTableView({ data, intro }: { data: RefereeLeagueT
                   <tr key={r.refereeId} className={sel.a === r.slug ? ts.rowA : sel.b === r.slug ? ts.rowB : undefined} data-referee={r.slug}>
                     <td>
                       <span className={ts.refCell}>
-                        <span className={ts.miniAvatar} aria-hidden="true">
-                          {initials(r.name)}
-                        </span>
-                        <Link href={refereeHref(r.refereeId, r.name)} className={ts.refLink}>
+                        <PersonAvatar name={r.name} photo={r.photo} size={26} className={ts.miniAvatar} />
+                        {r.country?.flag ? (
+                          <TeamLogo src={r.country.flag} width={18} height={12} className={ts.rowFlag} alt={r.country.name} title={r.country.name} />
+                        ) : null}
+                        <Link href={refereeHref(r.refereeId, r.name)} className={ts.refLink} prefetch={false}>
                           {r.name}
                         </Link>
                         {isFewMatches(r) ? <span className={ts.fewBadge}>{t('person.fewMatches')}</span> : null}
@@ -231,6 +245,8 @@ export default function RefereeTableView({ data, intro }: { data: RefereeLeagueT
           <p className={styles.empty}>{t('person.compareHint')}</p>
         )}
       </section>
+      </div>
+      <RefereeTableSide data={data} leagueName={leagueName(data.league)} selected={a} weekHref={weekHref} />
     </div>
   );
 }

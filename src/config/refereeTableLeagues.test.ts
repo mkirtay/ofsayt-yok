@@ -23,5 +23,13 @@ describe('/hakemler adresleri', () => {
     expect(refereeComparePath(seasons, 'batuhan-kolak-62331')).toBe('/hakemler/super-lig/2026-2027?a=batuhan-kolak-62331');
     expect(refereeComparePath([{ leagueId: 603, seasonName: '2025/2026' }], 'x-1')).toBe('/hakemler/1-lig/2025-2026?a=x-1');
     expect(refereeComparePath([], 'x-1')).toBe('/hakemler?a=x-1');
+    // Yabancı hakem: en son sezonda en çok maçlı tablo ligi (UEFA'dan önce kendi ligi, maçı daha çoksa).
+    const foreign = [
+      { leagueId: 8, seasonName: '2026/2027', matches: 7 },
+      { leagueId: 2, seasonName: '2026/2027', matches: 3 },
+      { leagueId: 8, seasonName: '2025/2026', matches: 29 },
+    ];
+    expect(refereeComparePath(foreign, 'chris-kavanagh-14808')).toBe('/hakemler/premier-lig/2026-2027?a=chris-kavanagh-14808');
+    expect(refereeComparePath([{ leagueId: 2, seasonName: '2026/2027', matches: 1 }], 'y-2')).toBe('/hakemler/sampiyonlar-ligi/2026-2027?a=y-2');
   });
 });

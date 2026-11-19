@@ -72,7 +72,7 @@ describe('<RefereeView />', () => {
     expect(html).toContain('3 sezon');
     expect(html).toContain('Süper Lig 2026/2027, 4 maç');
     expect(html).toContain('Lig ort.: 3,9');
-    expect(html.match(/Lig ort\./g)).toHaveLength(4);
+    expect(html.match(/Lig ort\.:/g)).toHaveLength(4);
   });
 
   it('takım kırılımı sezon seçicisi (varsayılan güncel sezon); sezon tablosunda erişilebilir mini çubuklar', () => {
@@ -86,6 +86,42 @@ describe('<RefereeView />', () => {
     expect(html.indexOf('Galatasaray</a>')).toBeLessThan(html.indexOf('Trabzonspor</a>'));
     expect(html).toContain('Küçük örneklemler yanıltıcı olabilir');
     expect(html).not.toMatch(/en çok|en az|highest|lowest/i);
+    expect(findGamblingTerms(html.replace(/<[^>]+>/g, ' '))).toEqual([]);
+  });
+});
+
+describe('<RefereeView /> yabancı UEFA hakemi', () => {
+  const uefaRow = (seasonName: string, leagueId: number, matches: number, yellow: number) => ({
+    seasonId: matches, seasonName, leagueId, startingAt: null, matches, yellowPerMatch: yellow, redPerMatch: 0, penaltiesPerMatch: 0.5, foulsPerMatch: 24, varPerMatch: 0.2,
+  });
+  const foreign: RefereePageData = {
+    ...referee,
+    id: 14808,
+    name: 'Chris Kavanagh',
+    country: { name: 'England', iso2: 'GB' },
+    photo: 'https://cdn.sportmonks.com/images/soccer/referees/9/14808.png',
+    seasons: [uefaRow('2026/2027', 8, 7, 3), uefaRow('2026/2027', 2, 3, 4), uefaRow('2025/2026', 5, 5, 5)],
+    upcoming: [{ id: 19873236, status: 'NOT STARTED', date: '2026-11-24', scheduled: '17:45', home: { id: 34, name: 'Galatasaray' }, away: { id: 15, name: 'Aston Villa' }, competition: { id: 2, name: 'Champions League' } }],
+    trMatches: [{ id: 19873252, status: 'FINISHED', date: '2026-11-03', home: { id: 1, name: 'VfB Stuttgart' }, away: { id: 34, name: 'Galatasaray' }, scores: { score: '1 - 1', ht_score: '', ft_score: '' }, competition: { id: 2, name: 'Champions League' } }],
+  };
+  const html = renderToStaticMarkup(<RefereeView data={foreign} />);
+  it('fotoğraf varsa görsel (baş harf yedeği), sıradaki görev TSİ saatiyle maç sayfasına link', () => {
+    expect(html).toContain('14808.png');
+    expect(html).not.toContain('>CK<');
+    expect(html).toContain('data-testid="referee-next"');
+    expect(html).toContain('href="/matches/19873236-galatasaray-aston-villa"');
+    expect(html).toContain('24.11.2026 · 20:45');
+  });
+  it('Türk takımlarıyla maçları + UEFA kariyeri (yalnız UEFA satırları, maç ağırlıklı) + karşılaştırma linki en çok maçlı ligde', () => {
+    expect(html).toContain('Türk takımlarıyla maçları');
+    expect(html).toContain('href="/matches/19873252-vfb-stuttgart-galatasaray"');
+    expect(html).toContain('data-testid="referee-uefa"');
+    expect(html).toContain('8 maç · 2 sezon');
+    expect(html).toContain('4,63');
+    expect(html).toContain('href="/hakemler/premier-lig/2026-2027?a=chris-kavanagh-14808"');
+  });
+  it('yorum / vurgu / kumar dili yok', () => {
+    expect(html).not.toMatch(/en sert|en çok|en az|en yumuşak/i);
     expect(findGamblingTerms(html.replace(/<[^>]+>/g, ' '))).toEqual([]);
   });
 });

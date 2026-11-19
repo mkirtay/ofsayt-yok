@@ -2,7 +2,9 @@
  * Hakem sezon istatistikleri — `GET /referees/{id}?include=statistics.details.type;statistics.season`
  * (2026-10-04 gerçek istekle doğrulandı, B. Kolak 62331: 9 sezon kaydı, her biri `season.league_id` + `is_current`).
  * Detay değerleri iki biçimde: `{count, average}` (FOULS, MATCHES, VAR_MOMENTS) ya da `{all:{count,average}, home, away}`
- * (YELLOWCARDS, REDCARDS, PENALTIES). Maç başı değer burada sayıdan hesaplanır (Sportmonks ortalamasına güvenilmez).
+ * (YELLOWCARDS, REDCARDS, YELLOWRED_CARDS, PENALTIES). Maç başı değer burada sayıdan hesaplanır (Sportmonks ortalamasına güvenilmez).
+ * Kırmızı = REDCARDS + YELLOWRED_CARDS: Sportmonks REDCARDS yalnız doğrudan kırmızıyı sayıyor (2026-11-19, Süper Lig 2026/27
+ * fikstür olaylarıyla karşılaştırıldı: 20 + 21 türü olaylar = iki detayın toplamı); takım kırılımı da ikinci sarıyı sayar.
  * Yalnız sayı; yorum yok (maç sayfası kartı ve AI bağlamı aynı özeti kullanır).
  */
 
@@ -45,6 +47,11 @@ function countOf(value: unknown): number | null {
   return typeof c === 'number' && Number.isFinite(c) ? c : null;
 }
 
+/** İkisi de yoksa null; biri varsa toplam (eksik olan 0). */
+function sumCounts(a: number | null, b: number | null): number | null {
+  return a == null && b == null ? null : (a ?? 0) + (b ?? 0);
+}
+
 function perMatch(count: number | null, matches: number): number | null {
   if (count == null || matches <= 0) return null;
   return Math.round((count / matches) * 100) / 100;
@@ -62,7 +69,7 @@ export function seasonLine(stat: RawSeasonStat | undefined, seasonId: number, fa
     seasonName: stat?.season?.name ?? fallbackName,
     matches,
     yellowPerMatch: perMatch(countOf(byType.get('YELLOWCARDS')), matches),
-    redPerMatch: perMatch(countOf(byType.get('REDCARDS')), matches),
+    redPerMatch: perMatch(sumCounts(countOf(byType.get('REDCARDS')), countOf(byType.get('YELLOWRED_CARDS'))), matches),
     penaltiesPerMatch: perMatch(countOf(byType.get('PENALTIES')), matches),
     foulsPerMatch: perMatch(countOf(byType.get('FOULS')), matches),
     varPerMatch: perMatch(countOf(byType.get('VAR_MOMENTS')), matches),

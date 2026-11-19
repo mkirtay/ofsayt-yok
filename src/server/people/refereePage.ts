@@ -21,6 +21,14 @@ import { loadWithSwr, peekSwr } from '@/server/swrCache';
 import { runInBackground } from '@/server/backgroundTask';
 import { loadRefereeLeagueTable, refereeTableCacheKey } from '@/server/people/refereeLeagueTable';
 import { REFEREE_TABLE_LEAGUES, seasonSlugOf } from '@/config/refereeTableLeagues';
+import { personPhoto } from '@/utils/personPhoto';
+import { weightedRates, type RefereeRates } from '@/utils/refereeAverages';
+
+const TURKEY_COUNTRY_ID = 404;
+/** Sıradaki görevler (atanmış, başlamamış orta hakemlik maçları; en yeni parçadan, ek istek yok). */
+const UPCOMING_COUNT = 3;
+/** Türk takımlarıyla maçlar (yabancı hakem; takım kırılımının yüklediği parçalardan). */
+const TR_MATCHES_COUNT = 20;
 
 const MULTI_SIZE = 20;
 /** Takım kırılımı (bütün sezonlar) için en çok bu kadar 20'lik parça (160 orta hakemlik maçı). */
@@ -43,7 +51,7 @@ export type RefereeTeamBreakdowns = {
   defaultSeason: string | null;
 };
 
-export type RefereeRates = { yellow: number | null; red: number | null; penalties: number | null; var: number | null };
+export type { RefereeRates } from '@/utils/refereeAverages';
 
 /** Üst özet: kapsanan toplam maç + en son sezonun ana ligindeki maç başı değerler ve aynı lig-sezonun hakem ortalaması. */
 export type RefereeSummaryCards = {
@@ -56,6 +64,12 @@ export type RefereePageData = {
   id: number;
   name: string;
   country: { name: string; iso2?: string; flag?: string } | null;
+  /** Sportmonks yer tutucusu değilse (çoğu hakemde yok → baş harf avatarı). */
+  photo?: string;
+  /** Atanmış, başlamamış orta hakemlik maçları (yakın önce). Eski kayıtlarda alan yok. */
+  upcoming?: PersonRecentMatch[];
+  /** Yabancı hakem: Türk takımlarının maçları (yeni önce, takım kırılımının kapsadığı en yeni 160 orta hakemlik maçından). */
+  trMatches?: PersonRecentMatch[];
   summary: RefereeSummaryCards;
   seasons: RefereeSeasonTableRow[];
   recent: PersonRecentMatch[];
@@ -64,6 +78,7 @@ export type RefereePageData = {
 
 type RawRefereeProfile = {
   id?: number;
+  image_path?: string | null;
   display_name?: string;
   common_name?: string;
   name?: string;
@@ -132,8 +147,28 @@ export function toRecentMatch(f: SportmonksFixture): PersonRecentMatch {
   };
 }
 
-async function breakdownFromCache(key: string): Promise<RefereeTeamBreakdowns | null> {
-  return withRedis((r) => r.get<RefereeTeamBreakdowns>(key), null);
+type BreakdownCache = { teams: RefereeTeamBreakdowns; trMatches: PersonRecentMatch[] };
+
+async function breakdownFromCache(key: string): Promise<BreakdownCache | null> {
+  return withRedis((r) => r.get<BreakdownCache>(key), null);
+}
+
+const hasTurkishSide = (f: SportmonksFixture) => (f.participants ?? []).some((p) => p.country_id === TURKEY_COUNTRY_ID);
+
+/** Türk takımlarının biten maçları, yeni önce (yabancı hakem sayfası). */
+export function turkishMatches(fixtures: readonly SportmonksFixture[], limit = TR_MATCHES_COUNT): PersonRecentMatch[] {
+  const byId = new Map(fixtures.filter((f) => isFinished(f) && hasTurkishSide(f)).map((f) => [f.id, f]));
+  return [...byId.values()].sort(byKickoffDesc).slice(0, limit).map(toRecentMatch);
+}
+
+/** Atanmış ama başlamamış maçlar (yakın önce). */
+export function upcomingMatches(fixtures: readonly SportmonksFixture[], now = Date.now(), limit = UPCOMING_COUNT): PersonRecentMatch[] {
+  const soon = fixtures.filter((f) => {
+    if (f.state_id !== 1) return false; // NS: ertelenen / iptal edilen maç sıradaki görev sayılmaz
+    const t = Date.parse(`${String(f.starting_at ?? '').replace(' ', 'T')}Z`);
+    return Number.isFinite(t) && t > now - 3 * 60 * 60 * 1000;
+  });
+  return [...new Map(soon.map((f) => [f.id, f])).values()].sort((a, b) => byKickoffDesc(b, a)).slice(0, limit).map(toRecentMatch);
 }
 
 /** Biten maçlar sezon adına göre (sezon id → ad: hakemin istatistik kaydından); yeni sezon önce. */
@@ -156,23 +191,7 @@ export function breakdownsBySeason(
   return { seasons, defaultSeason };
 }
 
-type RateLine = Pick<RefereeSeasonTableRow, 'matches' | 'yellowPerMatch' | 'redPerMatch' | 'penaltiesPerMatch' | 'varPerMatch'>;
-
-/** Maç ağırlıklı ortalama (değeri olmayan satırlar hem paydan hem paydadan düşer). */
-export function weightedRates(lines: readonly RateLine[]): RefereeRates {
-  const avg = (get: (l: RateLine) => number | null) => {
-    let total = 0;
-    let matches = 0;
-    for (const l of lines) {
-      const v = get(l);
-      if (v == null || l.matches <= 0) continue;
-      total += v * l.matches;
-      matches += l.matches;
-    }
-    return matches > 0 ? Math.round((total / matches) * 100) / 100 : null;
-  };
-  return { yellow: avg((l) => l.yellowPerMatch), red: avg((l) => l.redPerMatch), penalties: avg((l) => l.penaltiesPerMatch), var: avg((l) => l.varPerMatch) };
-}
+export { weightedRates } from '@/utils/refereeAverages';
 
 /** Özet bağlamı: en son sezon adındaki en çok maçlı lig satırı. */
 export function summaryContextRow(rows: readonly RefereeSeasonTableRow[]): RefereeSeasonTableRow | null {
@@ -231,15 +250,21 @@ async function computeRefereePage(id: number): Promise<RefereePageData | 'missin
   }
   const recent = loaded.flat().filter(isFinished).sort(byKickoffDesc).slice(0, RECENT_COUNT).map(toRecentMatch);
 
-  // Takım kırılımı bütün sezonlar için (orta hakemlik maçları, en yeni 8 parça); hesap Redis'te 24 sa.
-  const cacheKey = `${cacheKeyPrefix()}people:ref-teams:v2:${id}:${mainIds.length}`;
-  let teams = await breakdownFromCache(cacheKey);
-  if (!teams) {
+  const upcoming = upcomingMatches(loaded.flat());
+
+  // Takım kırılımı bütün sezonlar için (orta hakemlik maçları, en yeni 8 parça) + Türk takımlarıyla maçlar; Redis'te 24 sa.
+  const cacheKey = `${cacheKeyPrefix()}people:ref-teams:v3:${id}:${mainIds.length}`;
+  let cachedBreakdown = await breakdownFromCache(cacheKey);
+  if (!cachedBreakdown) {
     const fetched: SportmonksFixture[] = loaded.flat();
     for (const chunk of chunks.slice(loaded.length)) fetched.push(...(await loadMulti(chunk)));
-    teams = breakdownsBySeason(fetched, seasonNameById, currentSeasonName);
-    if (loaded[0]?.length && fitsInRedis(teams)) await withRedis((r) => r.set(cacheKey, teams, { ex: BREAKDOWN_TTL_SECONDS }), null);
+    const value: BreakdownCache = { teams: breakdownsBySeason(fetched, seasonNameById, currentSeasonName), trMatches: turkishMatches(fetched) };
+    cachedBreakdown = value;
+    if (loaded[0]?.length && fitsInRedis(value)) await withRedis((r) => r.set(cacheKey, value, { ex: BREAKDOWN_TTL_SECONDS }), null);
   }
+  const { teams } = cachedBreakdown;
+  const isTurkish = profile.country?.iso2?.toUpperCase() === 'TR';
+  const photo = personPhoto(profile.image_path);
 
   const seasons = refereeSeasonTable(statsRaw);
   const ctxRow = summaryContextRow(seasons);
@@ -268,6 +293,9 @@ async function computeRefereePage(id: number): Promise<RefereePageData | 'missin
           ...(profile.country.image_path ? { flag: profile.country.image_path } : {}),
         }
       : null,
+    ...(photo ? { photo } : {}),
+    ...(upcoming.length ? { upcoming } : {}),
+    ...(!isTurkish && cachedBreakdown.trMatches.length ? { trMatches: cachedBreakdown.trMatches } : {}),
     summary,
     seasons,
     recent,

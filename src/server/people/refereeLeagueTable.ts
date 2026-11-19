@@ -6,6 +6,8 @@
  * Hesaplanan tablo Redis'te stale-while-revalidate (taze 12 sa, saklama 7 gün; bitmiş eski sezon taze 30 gün, saklama 60
  * gün — yenileme ~35 Referee isteği, eski sezonun satırları değişmez): süresi dolunca eski tablo hemen, yenisi arka planda
  * (bkz. server/swrCache.ts). Hiç tablo yokken ilk üretim eşzamanlı (soğukta ~4–7 sn).
+ * UEFA kupaları ve büyük Avrupa ligleri (`source: 'fixtures'`) sezonun bitmiş maçlarından hesaplanır (bkz.
+ * refereeFixtureTable.ts); aynı anahtar ve süreler. Türk takımlarının maçları ayrı kayıtta (`refereeTableTrCacheKey`).
  */
 import { getSeasonsList } from '@/services/liveScoreService';
 import { sportmonksCollectAllPages } from '@/services/sportmonksRuntimeClient';
@@ -15,6 +17,9 @@ import { personSlug } from '@/utils/personUrl';
 import { cacheKeyPrefix } from '@/lib/cacheNamespace';
 import { loadWithSwr } from '@/server/swrCache';
 import { REFEREE_TABLE_LEAGUES, seasonSlugOf, type RefereeTableLeague } from '@/config/refereeTableLeagues';
+import { withRedis } from '@/lib/redis';
+import { personPhoto } from '@/utils/personPhoto';
+import { loadRefereeFixtureTable, type PersonCountry, type RefereeTableTrMatch } from '@/server/people/refereeFixtureTable';
 
 const STATS_CONCURRENCY = 8;
 const TABLE_FRESH_SECONDS = 12 * 60 * 60;
@@ -24,17 +29,23 @@ export const PAST_SEASON_TABLE_KEEP_SECONDS = 60 * DAY_SECONDS;
 /** İstatistik isteklerinin bu oranından fazlası başarısızsa tablo yazılmaz (geçici hata eski tabloyu ezmesin). */
 const MAX_FAILED_RATIO = 0.25;
 const SEASON_OPTIONS = 3;
+/** swrCache varsayılan saklama süresiyle aynı (7 gün). */
+const DEFAULT_KEEP_SECONDS = 7 * DAY_SECONDS;
+const TR_MATCHES_MAX = 40;
 
-export type RefereeTableRow = RefereeSeasonLine & { refereeId: number; name: string; slug: string };
+/** `photo`: Sportmonks yer tutucusu değilse (çoğunlukla yok → baş harf avatarı); `country`: fikstür kaynaklı tablolarda. */
+export type RefereeTableRow = RefereeSeasonLine & { refereeId: number; name: string; slug: string; country?: PersonCountry; photo?: string };
 
 export type RefereeLeagueTable = {
   league: RefereeTableLeague;
   season: { id: number; name: string; slug: string; isCurrent: boolean };
   seasons: { name: string; slug: string }[];
   rows: RefereeTableRow[];
+  /** Fikstür kaynaklı (UEFA) tablolarda Türk takımlarının maçları ve hakemleri; yeni maç önce. */
+  trMatches?: RefereeTableTrMatch[];
 };
 
-type RawPerson = { id: number; display_name?: string; common_name?: string; name?: string };
+type RawPerson = { id: number; display_name?: string; common_name?: string; name?: string; image_path?: string | null };
 
 async function mapWithConcurrency<T, R>(items: readonly T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
   const out = new Array<R>(items.length);
@@ -61,33 +72,58 @@ export async function loadRefereeLeagueTable(leagueSlug: string, seasonSlug: str
 
   const key = refereeTableCacheKey(season.id);
   const end = seasonList.find((s) => s.id === season.id)?.end;
-  const cached = await loadWithSwr<RefereeTableRow[]>(key, refereeTableSwrOptions(season.id === seasons[0]!.id, end), async () => {
-    const referees = await sportmonksCollectAllPages<RawPerson>({ basePath: 'football', path: `/referees/seasons/${season.id}`, perPage: 50, maxPages: 5 }).catch(() => null);
-    if (!referees) return null;
-    const unique = [...new Map(referees.filter((r) => r?.id).map((r) => [r.id, r])).values()];
-    let failed = 0;
-    const lines = await mapWithConcurrency(unique, STATS_CONCURRENCY, async (r) => {
-      const raw = await loadRefereeStatsRaw(r.id);
-      if (!raw) failed += 1;
-      const stat = raw?.statistics?.find((s) => (s.season_id ?? s.season?.id) === season.id);
-      if (!stat) return null;
-      const line = seasonLine(stat, season.id, season.name);
-      if (line.matches <= 0) return null;
-      const name = r.display_name ?? r.common_name ?? r.name ?? '';
-      return { ...line, refereeId: r.id, name, slug: personSlug(name, r.id) } satisfies RefereeTableRow;
-    });
-    if (unique.length && failed / unique.length > MAX_FAILED_RATIO) return null;
-    return sortByMatches(lines.filter((x): x is RefereeTableRow => x != null));
-  });
+  const swr = refereeTableSwrOptions(season.id === seasons[0]!.id, end);
+  const cached = await loadWithSwr<RefereeTableRow[]>(key, swr, () =>
+    league.source === 'fixtures' ? computeFromFixtures(season, swr.keepSeconds) : computeFromRefereeStats(season),
+  );
   if (!cached) return null;
-  const rows = cached.value;
+  const rows = normalizeVar(cached.value);
+  const trMatches = league.source === 'fixtures' ? await withRedis((r) => r.get<RefereeTableTrMatch[]>(refereeTableTrCacheKey(season.id)), null) : null;
 
   return {
     league,
     season: { ...season, isCurrent: season.id === seasons[0]!.id },
     seasons: seasons.map(({ name, slug }) => ({ name, slug })),
     rows,
+    ...(league.group === 'uefa' && trMatches?.length ? { trMatches } : {}),
   };
+}
+
+async function computeFromRefereeStats(season: { id: number; name: string }): Promise<RefereeTableRow[] | null> {
+  const referees = await sportmonksCollectAllPages<RawPerson>({ basePath: 'football', path: `/referees/seasons/${season.id}`, perPage: 50, maxPages: 5 }).catch(() => null);
+  if (!referees) return null;
+  const unique = [...new Map(referees.filter((r) => r?.id).map((r) => [r.id, r])).values()];
+  let failed = 0;
+  const lines = await mapWithConcurrency(unique, STATS_CONCURRENCY, async (r) => {
+    const raw = await loadRefereeStatsRaw(r.id);
+    if (!raw) failed += 1;
+    const stat = raw?.statistics?.find((s) => (s.season_id ?? s.season?.id) === season.id);
+    if (!stat) return null;
+    const line = seasonLine(stat, season.id, season.name);
+    if (line.matches <= 0) return null;
+    const name = r.display_name ?? r.common_name ?? r.name ?? '';
+    const photo = personPhoto(r.image_path);
+    return { ...line, refereeId: r.id, name, slug: personSlug(name, r.id), ...(photo ? { photo } : {}) } satisfies RefereeTableRow;
+  });
+  if (unique.length && failed / unique.length > MAX_FAILED_RATIO) return null;
+  return sortByMatches(lines.filter((x): x is RefereeTableRow => x != null));
+}
+
+async function computeFromFixtures(season: { id: number; name: string }, keepSeconds: number | undefined): Promise<RefereeTableRow[] | null> {
+  const res = await loadRefereeFixtureTable(season);
+  if (!res) return null;
+  const ttl = keepSeconds ?? DEFAULT_KEEP_SECONDS;
+  await withRedis((r) => r.set(refereeTableTrCacheKey(season.id), res.trMatches.slice(0, TR_MATCHES_MAX), { ex: ttl }), null);
+  return sortByMatches(res.rows);
+}
+
+/**
+ * Sportmonks hakem sezon kaydı hiç VAR olayı olmayan hakemde VAR_MOMENTS detayını hiç vermiyor (fikstür olaylarıyla
+ * doğrulandı, Süper Lig 2026/27: 6 hakem). Aynı tabloda VAR verisi olan başka hakem varsa boş değer 0'dır.
+ */
+export function normalizeVar(rows: RefereeTableRow[]): RefereeTableRow[] {
+  if (!rows.some((r) => r.varPerMatch != null)) return rows;
+  return rows.map((r) => (r.varPerMatch == null ? { ...r, varPerMatch: 0 } : r));
 }
 
 /** Güncel sezon 12 sa; listede eski ve bitiş tarihi geçmiş (ya da bilinmeyen) sezon 30 gün taze, 60 gün saklanır. */
@@ -96,6 +132,11 @@ export function refereeTableSwrOptions(isLatestSeason: boolean, seasonEnd: strin
   const ended = !Number.isFinite(endMs) || endMs < now;
   if (isLatestSeason || !ended) return { freshSeconds: TABLE_FRESH_SECONDS };
   return { freshSeconds: PAST_SEASON_TABLE_FRESH_SECONDS, keepSeconds: PAST_SEASON_TABLE_KEEP_SECONDS };
+}
+
+/** UEFA tablosunun yan paneli: Türk takımlarının sezondaki maçları (tablo üretilirken yazılır). */
+export function refereeTableTrCacheKey(seasonId: number): string {
+  return `${cacheKeyPrefix()}people:ref-table-tr:v1:${seasonId}`;
 }
 
 /** Sezon tablosunun Redis anahtarı (hakem sayfası lig ortalaması bunu ek istek atmadan okur). */

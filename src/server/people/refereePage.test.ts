@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { breakdownsBySeason, summaryContextRow, weightedRates } from './refereePage';
+import { breakdownsBySeason, summaryContextRow, turkishMatches, upcomingMatches, weightedRates } from './refereePage';
 import type { SportmonksFixture } from '@/services/sportmonks/types';
 
 const line = (seasonName: string, leagueId: number, matches: number, yellow: number | null, varPm: number | null = null) => ({
@@ -26,5 +26,13 @@ describe('hakem sayfası özet / kırılım yardımcıları', () => {
     expect(r.seasons.map((s) => [s.seasonName, s.matchCount])).toEqual([['2026/2027', 2], ['2025/2026', 1]]);
     expect(r.defaultSeason).toBe('2026/2027');
     expect(breakdownsBySeason([fx(3, 25682)], names, '2026/2027').defaultSeason).toBe('2025/2026');
+  });
+
+  it('yabancı hakem: Türk takımlı biten maçlar (yeni önce, tekrarsız); sıradaki görev yalnız NS ve başlamamış', () => {
+    const fx = (id: number, state_id: number, starting_at: string, country_id: number) =>
+      ({ id, state_id, starting_at, participants: [{ id: id * 10, name: `T${id}`, country_id, meta: { location: 'home' } }, { id: 1, name: 'X', meta: { location: 'away' } }], scores: [] }) as unknown as SportmonksFixture;
+    const list = [fx(1, 5, '2026-10-01 19:00:00', 404), fx(2, 5, '2026-11-03 20:00:00', 404), fx(2, 5, '2026-11-03 20:00:00', 404), fx(3, 5, '2026-11-05 20:00:00', 11), fx(4, 1, '2026-11-24 17:45:00', 404), fx(5, 10, '2026-11-25 17:45:00', 404), fx(6, 1, '2026-11-01 17:45:00', 404)];
+    expect(turkishMatches(list).map((m) => m.id)).toEqual([2, 1]);
+    expect(upcomingMatches(list, Date.parse('2026-11-19T12:00:00Z')).map((m) => m.id)).toEqual([4]);
   });
 });

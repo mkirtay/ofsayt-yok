@@ -12,15 +12,13 @@ import type { RefereeSeasonTableRow } from '@/services/sportmonks/refereeStats';
 import RecentMatchesTable from './RecentMatchesTable';
 import RefereeFanRating from './RefereeFanRating';
 import RefereeAiReport from './RefereeAiReport';
+import PersonAvatar from './PersonAvatar';
+import RefereeProfileSide, { trKickoff } from './RefereeProfileSide';
+import { buildMatchHref } from '@/utils/matchUrl';
 import styles from './personPage.module.scss';
 import { teamHref } from '@/utils/teamUrl';
 
-export function initials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  const first = parts[0]?.[0] ?? '';
-  const last = parts.length > 1 ? (parts[parts.length - 1]?.[0] ?? '') : '';
-  return (first + last).toLocaleUpperCase('tr');
-}
+export { initials } from './PersonAvatar';
 
 /** Hakem sayfası: başlık, özet kartları (lig ortalamasıyla), sezon tablosu (mini çubuklar), son 10 maç, sezon seçicili takım kırılımı. Yalnız sayılar. */
 export default function RefereeView({ data }: { data: RefereePageData }) {
@@ -73,12 +71,15 @@ export default function RefereeView({ data }: { data: RefereePageData }) {
       : []),
   ];
 
+  const compareHref = refereeComparePath(data.seasons, personSlug(data.name, data.id));
+  const next = data.upcoming?.[0];
+
+  // Masaüstünde bölünmüş ekran: solda profil, sağda bağlamsal panel (sıradaki görev, UEFA kariyeri, lig ortalaması).
   return (
-    <div className={styles.page}>
+    <div className={styles.split}>
+      <div className={styles.splitMain}>
       <header className={`${styles.card} ${styles.header}`}>
-        <span className={styles.avatar} aria-hidden="true">
-          {initials(data.name)}
-        </span>
+        <PersonAvatar name={data.name} photo={data.photo} size={72} className={styles.avatar} priority />
         <div className={styles.headText}>
           <p className={styles.role}>{t('person.refereeRole')}</p>
           <h1 className={styles.name}>{data.name}</h1>
@@ -90,8 +91,17 @@ export default function RefereeView({ data }: { data: RefereePageData }) {
               </span>
             </p>
           ) : null}
+          {next ? (
+            <p className={styles.upcoming} data-testid="referee-next">
+              <span className={styles.upcomingLabel}>{t('person.upcomingLabel')}</span>
+              <Link href={buildMatchHref({ id: next.id, home_name: next.home.name, away_name: next.away.name })} className={styles.teamLink} prefetch={false}>
+                {next.home.name} – {next.away.name}
+              </Link>
+              {next.date ? <span className={styles.muted}>{trKickoff(next.date, next.scheduled)}</span> : null}
+            </p>
+          ) : null}
           <p className={styles.facts}>
-            <Link href={refereeComparePath(data.seasons, personSlug(data.name, data.id))} className={styles.teamLink} prefetch={false}>
+            <Link href={compareHref} className={styles.teamLink} prefetch={false}>
               {t('person.compareWith')}
             </Link>
           </p>
@@ -117,6 +127,10 @@ export default function RefereeView({ data }: { data: RefereePageData }) {
 
       {/* Hakem karnesi: özet istatistiklerin hemen altında (grafikli; istemcide yüklenir). */}
       <RefereeAiReport refereeId={data.id} />
+
+      {data.trMatches?.length ? (
+        <RecentMatchesTable matches={data.trMatches} title={t('person.trMatchesTitle')} sectionId="referee-tr-matches" note={t('person.trMatchesNote')} />
+      ) : null}
 
       <section className={styles.card} aria-labelledby="ref-seasons">
         <h2 id="ref-seasons" className={styles.sectionTitle}>
@@ -220,6 +234,8 @@ export default function RefereeView({ data }: { data: RefereePageData }) {
         <p className={styles.note}>{t('person.teamsNote')}</p>
       </section>
       <RefereeFanRating refereeId={data.id} />
+      </div>
+      <RefereeProfileSide data={data} compareHref={compareHref} />
     </div>
   );
 }

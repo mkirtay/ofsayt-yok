@@ -15,7 +15,22 @@ type LoadMore = { coachId: number };
  * Son maçlar: tarih, maç (takım logolu, maç sayfasına link), skor, lig. `loadMore` verilirse (teknik direktör sayfası,
  * `hasMore`) tablonun altında "Daha fazla" düğmesi: sonraki 10 maç `/api/coaches/[id]/matches?page=N` ile gelir.
  */
-export default function RecentMatchesTable({ matches, loadMore, hasMore = false }: { matches: PersonRecentMatch[]; loadMore?: LoadMore; hasMore?: boolean }) {
+/** `title` / `sectionId` / `note`: aynı tabloyu başka bir liste için (ör. hakemin Türk takımlarıyla maçları) kullanmak. */
+export default function RecentMatchesTable({
+  matches,
+  loadMore,
+  hasMore = false,
+  title,
+  sectionId = 'person-recent',
+  note,
+}: {
+  matches: PersonRecentMatch[];
+  loadMore?: LoadMore;
+  hasMore?: boolean;
+  title?: string;
+  sectionId?: string;
+  note?: string;
+}) {
   const { t } = useTranslation('match');
   const { t: tl } = useTranslation('leagues');
   const [extra, setExtra] = useState<PersonRecentMatch[]>([]);
@@ -47,9 +62,9 @@ export default function RecentMatchesTable({ matches, loadMore, hasMore = false 
     }
   };
   return (
-    <section className={styles.card} aria-labelledby="person-recent">
-      <h2 id="person-recent" className={styles.sectionTitle}>
-        {rows.length > matches.length ? t('person.recentTitleN', { count: rows.length }) : t('person.recentTitle')}
+    <section className={styles.card} aria-labelledby={sectionId} data-testid={sectionId}>
+      <h2 id={sectionId} className={styles.sectionTitle}>
+        {title ?? (rows.length > matches.length ? t('person.recentTitleN', { count: rows.length }) : t('person.recentTitle'))}
       </h2>
       {rows.length === 0 ? (
         <p className={styles.empty}>{t('person.empty')}</p>
@@ -100,6 +115,7 @@ export default function RecentMatchesTable({ matches, loadMore, hasMore = false 
           </table>
         </div>
       )}
+      {note ? <p className={styles.note}>{note}</p> : null}
       {loadMore && (more || failed) ? (
         <div className={styles.loadMore}>
           {failed ? <p className={styles.loadMoreError} role="alert">{t('person.loadMoreError')}</p> : null}

@@ -57,6 +57,8 @@ export type SportmonksParticipant = {
   /** Takım kısaltması ("GAL"); bazı takımlarda null. */
   short_code?: string | null;
   image_path?: string | null;
+  /** Takımın ülkesi (404 = Türkiye); `participants` tam nesnesinde gelir. */
+  country_id?: number | null;
   meta?: {
     location: 'home' | 'away';
     winner: boolean | null;

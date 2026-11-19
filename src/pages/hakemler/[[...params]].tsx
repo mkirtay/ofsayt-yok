@@ -45,6 +45,7 @@ export default function RefereesPage({ data, url }: Props) {
   const summary = buildRefereeTableSummary(league, data.season.name, data.rows);
   const description = summary.length ? `${summary.slice(0, 2).join(' ')} ${t('person.tableDesc', { league, season: data.season.name })}` : t('person.tableDesc', { league, season: data.season.name });
   const hub = leagueHubByLeagueId(data.league.id);
+  const weekHref = hub && hubHasWeeks(hub) && data.season.isCurrent ? `/lig/${hub.slug}/hafta` : undefined;
   return (
     <Container>
       <Head>
@@ -70,14 +71,15 @@ export default function RefereesPage({ data, url }: Props) {
       />
       <RefereeTableView
         data={data}
+        weekHref={weekHref}
         intro={
-          summary.length || (hub && hubHasWeeks(hub) && data.season.isCurrent) ? (
+          summary.length || weekHref ? (
             <>
               {summary.join(' ')}
-              {hub && hubHasWeeks(hub) && data.season.isCurrent ? (
+              {weekHref ? (
                 <>
                   {' '}
-                  <Link href={`/lig/${hub.slug}/hafta`} prefetch={false}>
+                  <Link href={weekHref} prefetch={false}>
                     Bu hafta {league} hakem atamaları →
                   </Link>
                 </>
