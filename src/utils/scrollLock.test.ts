@@ -7,30 +7,31 @@ const makeDoc = (bodyOverflow = '', htmlOverflow = '') => ({
 });
 
 describe('lockBodyScroll', () => {
-  it('kilitler: body ve html overflow:hidden', () => {
+  it('yalnız html kilitlenir; body\'ye dokunulmaz (body kaydırma kutusu olursa sticky header kayar)', () => {
     const doc = makeDoc();
     lockBodyScroll(doc);
-    expect(doc.body.style.overflow).toBe('hidden');
     expect(doc.documentElement.style.overflow).toBe('hidden');
+    expect(doc.documentElement.style.overscrollBehavior).toBe('none');
+    expect(doc.body.style.overflow).toBe('');
   });
   it('açınca önceki değerler birebir geri gelir', () => {
     const doc = makeDoc('auto', 'scroll');
     const unlock = lockBodyScroll(doc);
     unlock();
-    expect(doc.body.style.overflow).toBe('auto');
     expect(doc.documentElement.style.overflow).toBe('scroll');
+    expect(doc.body.style.overflow).toBe('auto');
   });
   it('boş başlangıç değeri boş olarak geri yazılır', () => {
     const doc = makeDoc();
     lockBodyScroll(doc)();
-    expect(doc.body.style.overflow).toBe('');
+    expect(doc.documentElement.style.overflow).toBe('');
   });
   it('çift unlock güvenli (ikinci çağrı sonradan değişen değeri ezmez)', () => {
     const doc = makeDoc();
     const unlock = lockBodyScroll(doc);
     unlock();
-    doc.body.style.overflow = 'clip';
+    doc.documentElement.style.overflow = 'clip';
     unlock();
-    expect(doc.body.style.overflow).toBe('clip');
+    expect(doc.documentElement.style.overflow).toBe('clip');
   });
 });
