@@ -179,5 +179,14 @@
     "cta": "See rewards",
     "ctaClaim": "Claim reward",
     "close": "Close"
+  },
+  "today": {
+    "title": "Today's matches",
+    "tomorrowTitle": "Tomorrow's matches",
+    "sub": "Pick a match and unlock its AI analysis on the match page for 1 credit.",
+    "cta": "AI analysis",
+    "ready": "Analysis ready",
+    "ctaLabel": "Go to the AI analysis of {{home}} – {{away}}",
+    "allMatches": "All matches"
   }
 }

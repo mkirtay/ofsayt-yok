@@ -16,6 +16,9 @@ import styles from './pricing.module.scss';
 import { siteBaseUrl } from '@/lib/siteUrl';
 import { DISTANCE_SALES_PATH, PRE_INFO_PATH } from '@/config/legalConsent';
 import PricingSampleAnalysis from '@/components/PricingSampleAnalysis';
+import PricingTodayMatches from '@/components/PricingTodayMatches';
+import type { PricingTodayData } from '@/server/pricingTodayMatches';
+import { todayIsoIstanbul } from '@/utils/dateStrip';
 import JsonLd from '@/components/JsonLd';
 import { BRAND } from '@/config/brand';
 
@@ -25,9 +28,17 @@ const GUIDE_STEPS = ['s1', 's2', 's3', 's4', 's5', 's6'];
 const FAQ_KEYS = ['1', '2', '3', '4'];
 const FREE_KEYS = ['free1', 'free2', 'free3'];
 const CONSENT_ID = 'purchase-consent';
+/** Maç verisi alınamadığında (build / soğuk önbellek) kısa aralıkla yeniden üretim. */
+const TODAY_FAILED_REVALIDATE = 60;
 
-/** `availablePackages`: Hikie link + secret'ı tanımlı paketler (build anında; env değişince yeniden deploy gerekir). */
-export default function PricingPage({ availablePackages = [] }: { availablePackages?: string[] }) {
+type Props = {
+  /** Hikie link + secret'ı tanımlı paketler (build anında; env değişince yeniden deploy gerekir). */
+  availablePackages?: string[];
+  /** Hero sağ kartı: günün (yoksa yarının) başlamamış öne çıkan maçları; yoksa / alınamadıysa hero tek sütun. */
+  todayMatches?: PricingTodayData | null;
+};
+
+export default function PricingPage({ availablePackages = [], todayMatches = null }: Props) {
   const { t } = useTranslation('credits');
   const buyLabels = {
     buy: t('buyNow'),
@@ -57,6 +68,7 @@ export default function PricingPage({ availablePackages = [] }: { availablePacka
   const admin = authenticated && isAdminUser(session?.user);
   // Onay kutusu yalnız gerçekten satılan bir paket varken görünür (PAYMENTS_ENABLED kapalıyken sayfa değişmez).
   const anyOnSale = anyCreditOnSale || (admin && availablePackages.includes(TEST_PACKAGE_KEY));
+  const showToday = (todayMatches?.matches.length ?? 0) > 0;
 
   return (
     <>
@@ -105,24 +117,27 @@ export default function PricingPage({ availablePackages = [] }: { availablePacka
 
       <Container>
         <div className={styles.page}>
-          <section className={styles.hero}>
-            <div className={styles.heroBadge}>{t('heroBadge')}</div>
-            <h1 className={styles.heroTitle}>{t('heroTitle')}</h1>
-            <p className={styles.heroSub}>{t('heroSub')}</p>
+          <section className={`${styles.hero} ${showToday ? styles.heroSplit : ''}`.trim()}>
+            <div className={styles.heroMain}>
+              <div className={styles.heroBadge}>{t('heroBadge')}</div>
+              <h1 className={styles.heroTitle}>{t('heroTitle')}</h1>
+              <p className={styles.heroSub}>{t('heroSub')}</p>
 
-            <div className={styles.balanceCard}>
-              {!loading && authenticated ? (
-                <>
-                  <span className={styles.balanceLabel}>{t('balanceLabel')}</span>
-                  <span className={styles.balanceValue}>
-                    {credits} <span className={styles.balanceUnit}>{t('balanceUnit')}</span>
-                  </span>
-                  {admin ? <span className={styles.adminBadge}>{t('adminActive')}</span> : null}
-                </>
-              ) : (
-                <span className={styles.signInNote}>{t('signInNote')}</span>
-              )}
+              <div className={styles.balanceCard}>
+                {!loading && authenticated ? (
+                  <>
+                    <span className={styles.balanceLabel}>{t('balanceLabel')}</span>
+                    <span className={styles.balanceValue}>
+                      {credits} <span className={styles.balanceUnit}>{t('balanceUnit')}</span>
+                    </span>
+                    {admin ? <span className={styles.adminBadge}>{t('adminActive')}</span> : null}
+                  </>
+                ) : (
+                  <span className={styles.signInNote}>{t('signInNote')}</span>
+                )}
+              </div>
             </div>
+            {showToday && todayMatches ? <PricingTodayMatches data={todayMatches} /> : null}
           </section>
 
           <div className={styles.split}>
@@ -249,10 +264,31 @@ export default function PricingPage({ availablePackages = [] }: { availablePacka
   );
 }
 
-export const getStaticProps: GetStaticProps = async ({ locale }) => ({
-  props: {
+/**
+ * ISR: paket durumu env'den (build anında), hero maçları `/bugun` ile aynı paylaşımlı önbellekten (yeni Sportmonks
+ * isteği yok). Süre maç durumuna göre (en çok 10 dk, TSİ gece yarısını geçmez). Çalışma anında maç verisi alınamazsa
+ * fırlatır → Next son başarılı sayfayı verir; build'de kartsız sayfa, 60 sn sonra yeniden üretim.
+ */
+export const getStaticProps: GetStaticProps<Props> = async ({ locale }) => {
+  const base = {
     ...(await serverSideTranslations(locale ?? 'tr', ['common', 'nav', 'credits'])),
     // Yalnız "satışta mı" bilgisi; link ve secret istemciye gitmez.
     availablePackages: availablePackageKeys(),
-  },
-});
+  };
+  try {
+    const { loadPricingTodayMatches } = await import('@/server/pricingTodayMatches');
+    const { SPORTMONKS_TIMEOUT_MS, withSportmonksTimeout } = await import('@/server/sportmonks/cachedFetch');
+    const { data, revalidate } = await withSportmonksTimeout(SPORTMONKS_TIMEOUT_MS.page, () =>
+      loadPricingTodayMatches(todayIsoIstanbul()),
+    );
+    const building = process.env.NEXT_PHASE === 'phase-production-build';
+    return {
+      props: { ...base, todayMatches: data },
+      revalidate: building && data.matches.length === 0 ? TODAY_FAILED_REVALIDATE : revalidate,
+    };
+  } catch (error) {
+    if (process.env.NEXT_PHASE !== 'phase-production-build') throw error;
+    console.error('[pricing] build sırasında maç verisi alınamadı — kartsız', error);
+    return { props: { ...base, todayMatches: null }, revalidate: TODAY_FAILED_REVALIDATE };
+  }
+};

@@ -16,6 +16,31 @@
   padding: 48px 0 40px;
 }
 
+// Bugünün maçları varken: solda başlık + bakiye, sağda maç kartı (mobilde alt alta, metin ortalı kalır).
+.heroSplit {
+  @media (min-width: $bp-desktop) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 440px);
+    gap: $spacing-8;
+    align-items: center;
+    text-align: left;
+
+    .heroSub {
+      margin-left: 0;
+    }
+  }
+
+  @media (max-width: #{$bp-desktop - 1px}) {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-6;
+  }
+}
+
+.heroMain {
+  min-width: 0;
+}
+
 .heroBadge {
   display: inline-block;
   background: linear-gradient(135deg, $color-primary, $color-primary-dark);

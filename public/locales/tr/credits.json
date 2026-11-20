@@ -179,5 +179,14 @@
     "cta": "Ödülleri gör",
     "ctaClaim": "Ödülü al",
     "close": "Kapat"
+  },
+  "today": {
+    "title": "Bugünün maçları",
+    "tomorrowTitle": "Yarının maçları",
+    "sub": "Bir maç seç, AI analizini maç sayfasında 1 krediyle aç.",
+    "cta": "AI analiz",
+    "ready": "Analiz hazır",
+    "ctaLabel": "{{home}} – {{away}} maçının AI analizine git",
+    "allMatches": "Tüm maçlar"
   }
 }

@@ -21,13 +21,49 @@ vi.mock('@/hooks/useCredits', () => ({
 }));
 
 vi.mock('@/lib/serverSideTranslations', () => ({ serverSideTranslations: async () => ({}) }));
+// getStaticProps maç kartı: Sportmonks / DB'ye gitmez.
+const today = vi.hoisted(() => ({ load: vi.fn() }));
+vi.mock('@/server/pricingTodayMatches', () => ({ loadPricingTodayMatches: today.load }));
 
 import CreditsPage, { getStaticProps } from '@/pages/pricing';
+import type { PricingTodayData } from '@/server/pricingTodayMatches';
+import { aiTabHref } from '@/components/PricingTodayMatches';
+
+const TODAY: PricingTodayData = {
+  date: '2026-11-20',
+  day: 'today',
+  matches: [
+    {
+      id: 101,
+      href: '/matches/101-galatasaray-fenerbahce',
+      home: { name: 'Galatasaray' },
+      away: { name: 'Fenerbahçe' },
+      competition: { name: 'Süper Lig' },
+      time: '20:00',
+      phase: 'PRE',
+      tier: 'derby',
+      ready: true,
+    },
+    {
+      id: 102,
+      href: '/matches/102-arsenal-chelsea',
+      home: { name: 'Arsenal' },
+      away: { name: 'Chelsea' },
+      competition: { name: 'Premier League' },
+      time: '22:30',
+      phase: 'PRE',
+      tier: 'bigFive',
+      ready: false,
+    },
+  ],
+};
 
 const render = () => renderToStaticMarkup(<CreditsPage />);
 
 describe('Kredi sayfası rozetleri', () => {
   beforeEach(() => {
+    today.load.mockReset();
+    today.load.mockResolvedValue({ data: { date: '2026-11-20', day: 'today', matches: [] }, revalidate: 300 });
     s.role = 'USER';
     s.credits = 5;
     s.premiumUntil = null;
@@ -149,5 +185,48 @@ describe('Kredi sayfası rozetleri', () => {
     const on = renderToStaticMarkup(<CreditsPage availablePackages={['credits_30']} />);
     expect(on).toContain(trCredits.faqItems.q1Live);
     expect(on).not.toContain(trCredits.faqItems.q1);
+  });
+
+  it('hero sağında bugünün maçları: satır AI Analiz sekmesine gider, hazır analize rozet; maç yoksa kart yok', () => {
+    const html = renderToStaticMarkup(<CreditsPage todayMatches={TODAY} />);
+    expect(html).toContain(trCredits.today.title);
+    expect(html).toContain('href="/matches/101-galatasaray-fenerbahce?sekme=ai-analiz"');
+    expect(html).toContain('href="/matches/102-arsenal-chelsea?sekme=ai-analiz"');
+    expect((html.match(new RegExp(`>${trCredits.today.ready}<`, 'g')) ?? []).length).toBe(1);
+    // Kart hero içinde, paketlerden önce
+    expect(html.indexOf(trCredits.today.title)).toBeLessThan(html.indexOf('39,99 TL'));
+    expect(html.indexOf(trCredits.today.title)).toBeGreaterThan(html.indexOf(trCredits.heroTitle));
+
+    const tomorrow = renderToStaticMarkup(<CreditsPage todayMatches={{ ...TODAY, day: 'tomorrow' }} />);
+    expect(tomorrow).toContain(trCredits.today.tomorrowTitle);
+
+    expect(render()).not.toContain(trCredits.today.title);
+    expect(renderToStaticMarkup(<CreditsPage todayMatches={{ ...TODAY, matches: [] }} />)).not.toContain(trCredits.today.title);
+  });
+
+  it('aiTabHref: mevcut sorgu / çapa korunur', () => {
+    expect(aiTabHref('/matches/1-a-b')).toBe('/matches/1-a-b?sekme=ai-analiz');
+    expect(aiTabHref('/matches/1?x=1')).toBe('/matches/1?x=1&sekme=ai-analiz');
+    expect(aiTabHref('/matches/1#top')).toBe('/matches/1?sekme=ai-analiz#top');
+  });
+
+  it('getStaticProps: maçlar ISR süresiyle; çalışma anında hata fırlatır (son sayfa korunur), build\'de kartsız 60 sn', async () => {
+    today.load.mockResolvedValue({ data: TODAY, revalidate: 240 });
+    const ok = (await getStaticProps({ locale: 'tr' } as never)) as { props: { todayMatches: PricingTodayData }; revalidate: number };
+    expect(ok.props.todayMatches.matches).toHaveLength(2);
+    expect(ok.revalidate).toBe(240);
+
+    today.load.mockRejectedValue(new Error('upstream'));
+    await expect(getStaticProps({ locale: 'tr' } as never)).rejects.toThrow('upstream');
+    vi.stubEnv('NEXT_PHASE', 'phase-production-build');
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      const built = (await getStaticProps({ locale: 'tr' } as never)) as { props: { todayMatches: null }; revalidate: number };
+      expect(built.props.todayMatches).toBeNull();
+      expect(built.revalidate).toBe(60);
+    } finally {
+      errSpy.mockRestore();
+      vi.unstubAllEnvs();
+    }
   });
 });
