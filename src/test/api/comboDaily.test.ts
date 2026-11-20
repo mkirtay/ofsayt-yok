@@ -81,13 +81,15 @@ describe('/api/cron/combo-daily', () => {
     expect((await call(cron, 'POST')).statusCode).toBe(404);
     expect(build).not.toHaveBeenCalled();
   });
-  it('sır yok → 401; sır benzeri query → 400; GET → 405', async () => {
+  it('sır yok → 401; sır benzeri query → 400; GET (Vercel Cron) sırla kabul, PUT → 405', async () => {
     vi.stubEnv('COMBO_TOOL_ENABLED', '1');
     h.valid = false;
     expect((await call(cron, 'POST')).statusCode).toBe(401);
     h.valid = true;
     expect((await call(cron, 'POST', { token: 'x' })).statusCode).toBe(400);
-    expect((await call(cron, 'GET')).statusCode).toBe(405);
+    expect((await call(cron, 'PUT')).statusCode).toBe(405);
+    h.valid = false;
+    expect((await call(cron, 'GET')).statusCode).toBe(401);
     expect(build).not.toHaveBeenCalled();
   });
   it('17:30 öncesi too-early; force ile aşılır', async () => {

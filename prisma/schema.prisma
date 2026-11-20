@@ -265,6 +265,28 @@ model MatchAnalysis {
   @@index([matchId])
 }
 
+/// Günlük otomatik kuponlar (Günün Kombinesi) ve sonucu. Yazma: cron /api/cron/combo-daily (server/combo/couponLog.ts);
+/// sonuç: gece değerlendirme işi (settleComboCoupons) — tüm maçlar tutarsa hit=true, tek ıska hit=false.
+model ComboCouponLog {
+  id             String    @id
+  day            String
+  kind           String
+  legs           Json
+  probability    Float
+  odds           Float?
+  testData       Boolean   @default(false)
+  firstKickoffAt DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @default(now())
+  settledAt      DateTime?
+  hit            Boolean?
+  /// Maç başına sonuç (true / false / null = bilinmiyor), `legs` ile aynı sıra.
+  legHits        Json?
+
+  @@unique([day, kind])
+  @@index([settledAt, firstKickoffAt])
+}
+
 /// Tahmin doğruluk takibi — maç bittiğinde MatchAnalysis ile karşılaştırılır.
 model PredictionRecord {
   id                  String        @id @default(cuid())

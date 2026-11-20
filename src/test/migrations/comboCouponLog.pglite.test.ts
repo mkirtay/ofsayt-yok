@@ -9,8 +9,8 @@ import { evaluateCoupon, saveCouponLog, summarizeCouponResults } from '@/server/
 import type { DailyPayload } from '@/server/combo/dailyCoupons';
 import type { Exec } from '@/server/combo/oddsSnapshot';
 
-/** Bekleyen migration (docs/migrations-pending/…combo_coupon_log) + upsert SQL'i bellek içi PGlite'ta — hiçbir DB'ye bağlanmaz. */
-const SQL = readFileSync(path.join(process.cwd(), 'docs', 'migrations-pending', '20261112120000_combo_coupon_log', 'migration.sql'), 'utf8');
+/** Migration (prisma/migrations/…combo_coupon_log) + upsert SQL'i bellek içi PGlite'ta — hiçbir DB'ye bağlanmaz. */
+const SQL = readFileSync(path.join(process.cwd(), 'prisma', 'migrations', '20261120120000_combo_coupon_log', 'migration.sql'), 'utf8');
 let db: PGlite;
 const exec: Exec = async (t, v) => void (await db.query(t, v as unknown[]));
 const future = () => new Date(Date.now() + 5 * 3600_000).toISOString();

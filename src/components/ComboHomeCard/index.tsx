@@ -19,6 +19,7 @@ import {
 } from '@/utils/comboPlan';
 import { shiftIsoDate, todayIsoIstanbul } from '@/utils/dateStrip';
 import type { DailyPayload, DailyCoupon, CouponKind } from '@/server/combo/dailyCoupons';
+import HistoryPanel from './HistoryPanel';
 import styles from './comboHomeCard.module.scss';
 
 type Row = ComboCandidate & { homeName: string; awayName: string; homeLogo?: string | null; awayLogo?: string | null; source?: 'db' | 'test'; national?: boolean };
@@ -54,7 +55,7 @@ async function getJson<T>(res: Response): Promise<T> {
 export default function ComboHomeCard() {
   const { t } = useTranslation('combo');
   const [kind, setKind] = useState<CouponKind>('safe');
-  const [day, setDay] = useState<'today' | 'tomorrow'>('today');
+  const [day, setDay] = useState<'today' | 'tomorrow' | 'history'>('today');
   const [daily, setDaily] = useState<DailyStored>(null);
   const [rows, setRows] = useState<Row[] | null>(null);
   const [history, setHistory] = useState<History | null>(null);
@@ -73,7 +74,8 @@ export default function ComboHomeCard() {
   const [message, setMessage] = useState<string | null>(null);
   const [ran, setRan] = useState(false);
   const requested = useRef(new Set<string>());
-  const date = useMemo(() => (day === 'today' ? todayIsoIstanbul() : shiftIsoDate(todayIsoIstanbul(), 1)), [day]);
+  // "Geçmiş" sekmesinde gün verisi istenmez (date bugünde kalır, loadDaily yalnız gün sekmelerinde).
+  const date = useMemo(() => (day === 'tomorrow' ? shiftIsoDate(todayIsoIstanbul(), 1) : todayIsoIstanbul()), [day]);
 
   const withOdds = useMemo(() => (rows ?? []).map((r) => ({ ...r, odd: odds[r.matchId] ?? null })), [rows, odds]);
   const chosen = useMemo(() => withOdds.filter((r) => selected.includes(r.matchId)), [withOdds, selected]);
@@ -140,8 +142,8 @@ export default function ComboHomeCard() {
 
   // Kart açık gelir: mount'ta / gün değişince hazır öneriler; özel akışın adayları yalnız "Kendin ayarla" açılınca.
   useEffect(() => {
-    loadDaily();
-  }, [loadDaily]);
+    if (day !== 'history') loadDaily();
+  }, [loadDaily, day]);
 
   const resetManual = () => {
     setRows(null);
@@ -153,7 +155,7 @@ export default function ComboHomeCard() {
     requested.current = new Set();
   };
 
-  const pickDay = (d: 'today' | 'tomorrow') => {
+  const pickDay = (d: 'today' | 'tomorrow' | 'history') => {
     if (d === day) return;
     resetManual();
     setDay(d);
@@ -231,14 +233,15 @@ export default function ComboHomeCard() {
       </header>
       <div className={styles.body}>
           <div className={styles.segment} role="group" aria-label={t('dayLabel')}>
-            {(['today', 'tomorrow'] as const).map((d) => (
+            {(['today', 'tomorrow', 'history'] as const).map((d) => (
               <button key={d} type="button" className={`${styles.segBtn} ${day === d ? styles.segActive : ''}`} aria-pressed={day === d} onClick={() => pickDay(d)}>
                 {t(`day.${d}`)}
               </button>
             ))}
           </div>
-          <DailyPresets state={dailyState} kind={kind} onKind={setKind} t={t} />
+          {day === 'history' ? <HistoryPanel t={t} /> : <DailyPresets state={dailyState} kind={kind} onKind={setKind} t={t} />}
 
+          {day !== 'history' ? (
           <details className={styles.adv} onToggle={(e) => onManualToggle((e.currentTarget as HTMLDetailsElement).open)}>
             <summary>{t('manualTitle')}</summary>
             <div className={styles.manualBody}>
@@ -403,6 +406,7 @@ export default function ComboHomeCard() {
           ) : null}
             </div>
           </details>
+          ) : null}
       </div>
     </section>
   );

@@ -1,9 +1,9 @@
 /**
- * POST /api/cron/combo-daily — günlük otomatik kuponları üretip Redis'e koyar (harici cron-job.org; combo-odds deseni): YALNIZCA
+ * GET (Vercel Cron, vercel.json) / POST /api/cron/combo-daily — günlük otomatik kuponları üretip Redis'e ve ComboCouponLog'a yazar: YALNIZCA
  * `Authorization: Bearer $CRON_SECRET`, sır asla query'de. COMBO_TOOL_ENABLED kapalıyken 404. Saat: `COMBO_DAILY_TIME` (Türkiye, varsayılan
  * 17:30) — cron yarım saatte bir çalışabilir; saat gelmeden `too-early`, o gün başarıyla üretilmişse `already` döner (`?force=1` ikisini aşar).
  * Bugün + yarın için üretir; yeterli veri yoksa "insufficient" yazılır (sonraki tikte yeniden denenir). Kayıt tablosu yoksa atlanır.
- * Vercel crons'a EKLENMEZ; kurulum docs/KOMBINE_ARACI.md'de.
+ * Vercel Cron: 17:30 ve 19:30 TSİ (vercel.json); ikinci tik yalnız ilki "insufficient" kaldıysa yeniden üretir.
  */
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { comboToolEnabled } from '@/config/comboTool';
@@ -21,8 +21,8 @@ const SECRET_LIKE_QUERY = /secret|token|key|auth|password/i;
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   res.setHeader('Cache-Control', 'private, no-store');
   if (!comboToolEnabled()) return res.status(404).json({ error: 'Not found' });
-  if (req.method !== 'POST') {
-    res.setHeader('Allow', 'POST');
+  if (req.method !== 'POST' && req.method !== 'GET') {
+    res.setHeader('Allow', 'GET, POST');
     return res.status(405).end();
   }
   if (Object.keys(req.query).some((k) => SECRET_LIKE_QUERY.test(k))) {

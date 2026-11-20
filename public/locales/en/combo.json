@@ -123,7 +123,8 @@
   "dayLabel": "Day",
   "day": {
     "today": "Today",
-    "tomorrow": "Tomorrow"
+    "tomorrow": "Tomorrow",
+    "history": "History"
   },
   "manualTitle": "Set it yourself",
   "manualIntro": "Enter your risk, amount and the odds you want; we suggest a pick from the day's analysed matches. Matches are assumed independent.",
@@ -145,5 +146,22 @@
     "refTotal": "International odds (not iddaa): {{total}}",
     "minLegsNote": "Some matches may not be playable alone or with few matches on iddaa (minimum selections).",
     "method": "Probability blends the AI model with the probability implied by international prices (margin removed); on past data the model alone is weak, so the price-implied probability weighs more."
+  },
+  "past": {
+    "tab": "History",
+    "empty": "No saved picks yet. They are saved daily at 17:30; results appear here after the matches.",
+    "headline": "Hit: {{hits}} / {{settled}} ({{rate}})",
+    "noneSettled": "No settled picks yet.",
+    "expected": "Model expectation (average probability): {{pct}}",
+    "pendingCount": "{{n}} awaiting results.",
+    "status": {
+      "hit": "Hit",
+      "miss": "Missed",
+      "void": "Void",
+      "pending": "Pending"
+    },
+    "legHit": "Hit",
+    "legMiss": "Missed",
+    "legPending": "Awaiting result"
   }
 }

@@ -41,6 +41,7 @@ import { runCronJob } from '@/server/cronJobs';
 
 vi.mock('@/lib/predictionRecords', () => ({ evaluatePendingPredictionRecords: vi.fn(async () => ({ evaluated: 2, skipped: 1, unresolved: 0, errors: 0 })) }));
 vi.mock('@/lib/credits', () => ({ refundStalePendingSpends: vi.fn(async () => 0) }));
+vi.mock('@/server/combo/couponLog', () => ({ settleComboCoupons: vi.fn(async () => ({ checked: 3, settled: 2, hits: 1 })) }));
 
 type Handler = (req: NextApiRequest, res: NextApiResponse) => unknown;
 
@@ -106,7 +107,8 @@ describe('cron uçları — hızlı yanıt, çakışma, auth', () => {
     h.adminOk = true;
     const r = await call(evaluate as Handler, 'POST');
     expect(r.statusCode).toBe(200);
-    expect(r.body).toEqual({ evaluated: 2, skipped: 1, unresolved: 0, errors: 0, staleCreditRefunds: 0 });
+    // Değerlendirmeden sonra günün kombinesi kuponları da sonuçlanır (comboSettled).
+    expect(r.body).toEqual({ evaluated: 2, skipped: 1, unresolved: 0, errors: 0, staleCreditRefunds: 0, comboSettled: 2 });
     expect(h.background).toHaveLength(0);
   });
 

@@ -307,7 +307,7 @@
 // 2'li segment (Bugün | Yarın)
 .segment {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   padding: 2px;
   border: 1px solid $color-border;
   border-radius: $radius-full;
@@ -440,4 +440,122 @@
   flex-direction: column;
   gap: $spacing-3;
   padding-top: $spacing-2;
+}
+
+// ── Geçmiş sekmesi ─────────────────────────────────────────────
+.past {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+}
+
+.pastSummary {
+  padding: $spacing-3;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  background: $color-muted;
+}
+
+.pastHeadline {
+  margin: 0 0 $spacing-1;
+  font-size: var(--fs-body);
+  font-weight: 700;
+  color: $color-text;
+}
+
+.pastKinds {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: $spacing-2;
+  margin: $spacing-2 0 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    font-size: var(--fs-caption);
+    color: $color-text-secondary;
+  }
+
+  strong {
+    font-size: var(--fs-body);
+    color: $color-text;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.pastDay {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+}
+
+.pastDayTitle {
+  margin: 0;
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  color: $color-text-secondary;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.pastCoupon {
+  padding: $spacing-2;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+}
+
+.pastCouponHead {
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  margin-bottom: $spacing-1;
+}
+
+.pastKind {
+  font-size: var(--fs-meta);
+  font-weight: 700;
+  color: $color-text;
+}
+
+.pastStatus {
+  margin-left: auto;
+  padding: 2px $spacing-2;
+  border-radius: $radius-full;
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.legMark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  font-size: var(--fs-caption);
+  font-weight: 800;
+}
+
+// Durum renkleri: form rozetleriyle aynı doygun dolgu + koyu yazı (DESIGN_SYSTEM §1).
+.stHit {
+  background: var(--color-win);
+  color: var(--color-on-status);
+}
+
+.stMiss {
+  background: var(--color-loss);
+  color: var(--color-on-status);
+}
+
+.stVoid,
+.stPending {
+  background: $color-muted;
+  color: $color-text-secondary;
+  border: 1px solid $color-border;
 }

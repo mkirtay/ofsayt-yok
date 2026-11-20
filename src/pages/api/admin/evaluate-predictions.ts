@@ -19,12 +19,13 @@ import {
 } from '@/lib/predictionRecords';
 import { refundStalePendingSpends } from '@/lib/credits';
 import { captureError } from '@/lib/logger';
+import { settleComboCoupons } from '@/server/combo/couponLog';
 import { acquireCronLock, isCronRequest, recordCronTick, runCronJob } from '@/server/cronJobs';
 import { runInBackground } from '@/server/backgroundTask';
 
 export const config = { maxDuration: 300 };
 
-type EvaluateRunResult = EvaluatePredictionsResult & { staleCreditRefunds: number | null };
+type EvaluateRunResult = EvaluatePredictionsResult & { staleCreditRefunds: number | null; comboSettled: number | null };
 type Body = EvaluateRunResult | { accepted: true; job: string } | { error: string; code?: string };
 
 async function evaluateOnce(req: NextApiRequest): Promise<EvaluateRunResult> {
@@ -35,7 +36,14 @@ async function evaluateOnce(req: NextApiRequest): Promise<EvaluateRunResult> {
     captureError('stale-credit-refunds', e);
   }
   const result = await evaluatePendingPredictionRecords(req);
-  return { ...result, staleCreditRefunds };
+  // Günün kombinesi: maç skorları yazıldıktan sonra açık kuponların sonucu (tuttu / tutmadı). Hata değerlendirmeyi bozmaz.
+  let comboSettled: number | null = null;
+  try {
+    comboSettled = (await settleComboCoupons()).settled;
+  } catch (e) {
+    captureError('combo-settle', e);
+  }
+  return { ...result, staleCreditRefunds, comboSettled };
 }
 
 const summarize = (r: EvaluateRunResult) => ({
@@ -45,6 +53,7 @@ const summarize = (r: EvaluateRunResult) => ({
   errors: r.errors,
   deferred: r.deferred,
   staleCreditRefunds: r.staleCreditRefunds ?? 0,
+  comboSettled: r.comboSettled ?? 0,
 });
 
 const BUSY = { error: 'Değerlendirme zaten çalışıyor.', code: 'ALREADY_RUNNING' } as const;

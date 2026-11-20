@@ -123,7 +123,8 @@
   "dayLabel": "Gün",
   "day": {
     "today": "Bugün",
-    "tomorrow": "Yarın"
+    "tomorrow": "Yarın",
+    "history": "Geçmiş"
   },
   "manualTitle": "Kendin ayarla",
   "manualIntro": "Riskini, tutarını ve istediğin oranı gir; günün analizli maçlarından bir seçim önerelim. Maçlar birbirinden bağımsız varsayılır.",
@@ -145,5 +146,22 @@
     "refTotal": "Uluslararası oran (iddaa değil): {{total}}",
     "minLegsNote": "Bazı maçlar iddaa'da tek ya da az maçla oynanamayabilir (MBS).",
     "method": "Olasılık, AI modeli ile uluslararası oranlardan (kâr payı temizlenerek) çıkarılan olasılığın harmanıdır; geçmiş veride model tek başına güçlü değil, oranlardan gelen olasılık ağır basar."
+  },
+  "past": {
+    "tab": "Geçmiş",
+    "empty": "Henüz kayıtlı kupon yok. Kuponlar her gün 17:30'da kaydedilir, maçlar bitince sonucu burada görünür.",
+    "headline": "Tuttu: {{hits}} / {{settled}} kupon ({{rate}})",
+    "noneSettled": "Henüz sonuçlanan kupon yok.",
+    "expected": "Model beklentisi (ortalama olasılık): {{pct}}",
+    "pendingCount": "{{n}} kupon sonuç bekliyor.",
+    "status": {
+      "hit": "Tuttu",
+      "miss": "Tutmadı",
+      "void": "Sonuçlanamadı",
+      "pending": "Bekliyor"
+    },
+    "legHit": "Tuttu",
+    "legMiss": "Tutmadı",
+    "legPending": "Sonuç bekleniyor"
   }
 }
