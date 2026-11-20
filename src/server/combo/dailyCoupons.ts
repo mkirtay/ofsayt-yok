@@ -148,13 +148,39 @@ export async function writeDaily(payload: DailyPayload): Promise<void> {
   await withRedis((r) => r.set(key(payload.date), payload, { ex: 2 * 24 * 60 * 60 }), null);
 }
 
-/** "17:30" → dakika; geçersizse 17:30. */
+/**
+ * Varsayılan kupon saati (Türkiye) 11:00 — 2026-11-20: kuponlar gündüzden hazır olmalı; havuz maçlarının analizi 09:00'dan
+ * itibaren üretilir (server/combo/comboPregen.ts). Eskiden 17:30'du.
+ */
+export const DEFAULT_DAILY_MINUTES = 11 * 60;
+
+/** "11:00" → dakika; geçersizse varsayılan (11:00). */
 export function parseDailyTime(raw: string | undefined | null): number {
   const m = /^(\d{1,2}):(\d{2})$/.exec((raw ?? '').trim());
-  if (!m) return 17 * 60 + 30;
+  if (!m) return DEFAULT_DAILY_MINUTES;
   const h = Number(m[1]);
   const mi = Number(m[2]);
-  return h < 24 && mi < 60 ? h * 60 + mi : 17 * 60 + 30;
+  return h < 24 && mi < 60 ? h * 60 + mi : DEFAULT_DAILY_MINUTES;
+}
+
+/** Kupon maçlarından biri başladı mı (başlamışsa kupon artık değiştirilmez — geçmiş dürüst kalır). */
+export function couponsStarted(payload: Pick<DailyPayload, 'coupons'>, now: number): boolean {
+  return payload.coupons.some((c) => (c.legs ?? []).some((l) => l.kickoffIso != null && Date.parse(l.kickoffIso) <= now));
+}
+
+/**
+ * Önceki "ok" kupon, yeni üretimle değiştirilsin mi: yeni de "ok", daha çok analizli maç görmüş ve eski kuponun hiçbir maçı
+ * başlamamış. (Sabah ön üretimi sürerken 11:00'de eksik kalan maçlar 13:00 tikinde kupona girebilsin.)
+ */
+export function shouldRefreshDaily(existing: DailyPayload, fresh: DailyPayload, now: number): boolean {
+  // Kupon türü düşmesin: kayıtta (ComboCouponLog) eski tür satırı kalır, kart ile geçmiş ayrışırdı.
+  const kinds = new Set(fresh.coupons.map((c) => c.kind));
+  return (
+    fresh.status === 'ok' &&
+    fresh.analysed > existing.analysed &&
+    existing.coupons.every((c) => kinds.has(c.kind)) &&
+    !couponsStarted(existing, now)
+  );
 }
 
 export function istanbulMinutes(now: number): number {

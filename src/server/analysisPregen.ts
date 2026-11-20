@@ -6,6 +6,8 @@
  * sıralamasında ilk 6'da olduğu maçlar. Pencere: başlama saati 2 sa – 3 sa 15 dk sonra (GitHub cron gecikmesine pay;
  * maç zaten analizliyse atlanır → tek üretim, yeniden üretim yok). Muhtemel 11 ve güncel sakat listesi bu saatte hazır.
  * Kullanıcı isteğiyle aynı Redis kilidi (lib/analysisGenerationLock) — ikisi aynı maçı aynı anda üretmez.
+ * Ek: kombine aracı açıkken bugünün kupon havuzu maçları sabah 09:00'dan itibaren aday (server/combo/comboPregen.ts) —
+ * pencere adayları önce, kalan sınırla havuz maçları.
  */
 import { sportmonksCollectAllPages } from '@/services/sportmonksRuntimeClient';
 import type { SportmonksFixture } from '@/services/sportmonks/types';
@@ -23,6 +25,7 @@ import { LlmBudgetExceededError } from '@/server/llmBudget';
 import { nationalAnalysisEnabled } from '@/config/nationalMatches';
 import type { Match } from '@/models/liveScore';
 import { loadNationalDay } from '@/server/apiFootball/nationalDay';
+import { loadComboPregenCandidates, type ComboPregenCandidate } from '@/server/combo/comboPregen';
 
 export const SUPER_LIG = 600;
 export const UEFA_CLUB_LEAGUES = [2, 5, 2286] as const;
@@ -38,7 +41,13 @@ export const PREGEN_MAX_PER_RUN = 3;
 /** `participants` include'unun burada kullanılan alanları (genel tipte `country_id` yok). */
 type PregenFixture = Omit<SportmonksFixture, 'participants'> & { starting_at_timestamp?: number | null; participants?: Array<{ id: number; name?: string; country_id?: number | null }> };
 
-export type PregenCandidate = { id: number; name: string; leagueId: number; kickoffMs: number; reason: 'super-lig' | 'uefa-turkish' | 'big5-top' | 'national' };
+export type PregenCandidate = {
+  id: number;
+  name: string;
+  leagueId: number;
+  kickoffMs: number;
+  reason: 'super-lig' | 'uefa-turkish' | 'big5-top' | 'national' | ComboPregenCandidate['reason'];
+};
 
 function kickoffMs(f: PregenFixture): number | null {
   if (typeof f.starting_at_timestamp === 'number') return f.starting_at_timestamp * 1000;
@@ -175,7 +184,9 @@ async function generateOne(c: PregenCandidate): Promise<PregenItem> {
   }
 }
 
-export async function runAnalysisPregen(opts: { now?: number; dryRun?: boolean; maxPerRun?: number } = {}): Promise<PregenResult> {
+export async function runAnalysisPregen(
+  opts: { now?: number; dryRun?: boolean; maxPerRun?: number; comboCandidates?: (now: number) => Promise<ComboPregenCandidate[]> } = {},
+): Promise<PregenResult> {
   const t0 = Date.now();
   const now = opts.now ?? Date.now();
   const selection = await trackSportmonksFetches(async () => {
@@ -185,7 +196,14 @@ export async function runAnalysisPregen(opts: { now?: number; dryRun?: boolean; 
     return selectPregenCandidates(fixtures, { now, topTeamsByLeague: new Map(tables) });
   });
   const national = await loadNationalCandidates(now);
-  const candidates = [...selection.value, ...national].sort((a, b) => a.kickoffMs - b.kickoffMs);
+  const windowed = [...selection.value, ...national].sort((a, b) => a.kickoffMs - b.kickoffMs);
+  // Kupon havuzu (sabah): pencere adaylarından SONRA — yakın maçın analizi gecikmesin. Okuma hatası pencere üretimini durdurmaz.
+  const combo = await (opts.comboCandidates ?? loadComboPregenCandidates)(now).catch((e) => {
+    captureError('analysis-pregen-combo', e);
+    return [] as ComboPregenCandidate[];
+  });
+  const seen = new Set(windowed.map((c) => c.id));
+  const candidates: PregenCandidate[] = [...windowed, ...combo.filter((c) => !seen.has(c.id))];
   const items: PregenItem[] = [];
   let generated = 0;
   for (const c of candidates) {

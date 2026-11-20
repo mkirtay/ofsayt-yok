@@ -4,7 +4,7 @@ vi.mock('@/lib/redis', () => ({ withRedis: async (_f: unknown, fb: unknown) => f
 vi.mock('@/lib/prisma', () => ({ prisma: {} }));
 vi.mock('@/server/homeDay', () => ({ loadHomeDay: vi.fn() }));
 
-import { buildDailyCoupons, istanbulMinutes, parseDailyTime, COUPON_KINDS, MIN_ANALYSED_MATCHES } from './dailyCoupons';
+import { buildDailyCoupons, istanbulMinutes, parseDailyTime, shouldRefreshDaily, COUPON_KINDS, MIN_ANALYSED_MATCHES } from './dailyCoupons';
 import type { ComboCandidateRow } from './candidates';
 import type { OddsResult } from './afOdds';
 import { comboMarketPcts, devigPair, fairOdds, type ComboMarketKey } from '@/utils/comboMarkets';
@@ -121,12 +121,23 @@ describe('buildDailyCoupons', () => {
 });
 
 describe('zaman yardımcıları', () => {
-  it('parseDailyTime: geçerli / geçersiz', () => {
+  it('parseDailyTime: geçerli / geçersiz (varsayılan 11:00 — kuponlar gündüzden hazır)', () => {
     expect(parseDailyTime('17:30')).toBe(1050);
     expect(parseDailyTime('9:05')).toBe(545);
-    expect(parseDailyTime('25:00')).toBe(1050);
-    expect(parseDailyTime('abc')).toBe(1050);
-    expect(parseDailyTime(undefined)).toBe(1050);
+    expect(parseDailyTime('25:00')).toBe(660);
+    expect(parseDailyTime('abc')).toBe(660);
+    expect(parseDailyTime(undefined)).toBe(660);
+  });
+  it('shouldRefreshDaily: yalnız yeni "ok" + daha çok analizli maç + tür düşmüyor + hiçbir maç başlamamış', () => {
+    const now = Date.parse('2026-11-12T10:00:00Z');
+    const leg = (ko: string) => ({ kickoffIso: ko }) as never;
+    const p = (analysed: number, kinds: string[], ko = '2026-11-12T17:00:00Z', status = 'ok') =>
+      ({ status, analysed, coupons: kinds.map((kind) => ({ kind, legs: [leg(ko)] })) }) as never;
+    expect(shouldRefreshDaily(p(4, ['safe']), p(6, ['safe', 'balanced']), now)).toBe(true);
+    expect(shouldRefreshDaily(p(4, ['safe']), p(4, ['safe']), now)).toBe(false); // yeni analiz yok
+    expect(shouldRefreshDaily(p(4, ['safe']), p(6, ['safe'], undefined, 'insufficient'), now)).toBe(false);
+    expect(shouldRefreshDaily(p(4, ['safe', 'bold']), p(6, ['safe']), now)).toBe(false); // tür düşerdi
+    expect(shouldRefreshDaily(p(4, ['safe'], '2026-11-12T09:00:00Z'), p(6, ['safe']), now)).toBe(false); // maç başladı
   });
   it('istanbulMinutes: UTC 14:30 → 17:30 (UTC+3)', () => {
     expect(istanbulMinutes(Date.parse('2026-11-12T14:30:00Z'))).toBe(1050);

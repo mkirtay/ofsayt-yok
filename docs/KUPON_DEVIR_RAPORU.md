@@ -3,6 +3,19 @@
 Yeni Claude oturumu bu dosyayla devam edebilsin diye: ne var, ne canlıda, ne yapılacak, nelere dikkat. Ayrıntılı teknik
 belge: `docs/KOMBINE_ARACI.md`.
 
+## 0. Güncelleme 2026-11-20 öğleden sonra (kullanıcı kararları — aşağıdaki eski saatlerin yerine geçer)
+
+- **Kart ve geçmiş YALNIZ admin'de kalır.** Herkese açma YOK. AdSense kurulmayacak → kupon dili ve oranlar kalır
+  (§6 artık geçerli değil; gamblingTerms yalnız public metinleri denetler, kart admin-only).
+- **Kartta gerçek oran:** ana görünümde API-Football piyasa oranı (bacak + kombine çarpım); oranı olmayan bacakta adil oran.
+  Adil oran ayrıntıda.
+- **Kuponlar gündüzden hazır:** havuz maçlarının AI analizi 09:00 TSİ'den itibaren üretilir (`server/combo/comboPregen.ts`,
+  genel ön üretimin 15 dk'lık tikine eklenir, tik başına 3 → ~1 saatte havuz). Havuzdaki Türk takımı olmayan UEFA maçları da
+  artık analiz alır (önceden hiç almıyordu). Kupon cron'u **11:00 ve 13:00 TSİ** (08:00 / 10:00 UTC, `vercel.json`),
+  `COMBO_DAILY_TIME` varsayılanı 11:00. 13:00 tiki daha çok analizli maç varsa ve hiçbir kupon maçı başlamamışsa kuponu
+  yeniler (`refreshed`). Vercel'de `COMBO_DAILY_TIME` elle 17:30 yazılıysa SİLİNMELİ.
+- Bedel: havuz maçlarının analizi sabah, muhtemel 11 / son dakika sakat bilgisi olmadan yazılır.
+
 ## 1. Kısa durum
 
 - Ana sayfa yan panelinde (mobilde maç listesinin içinde) **"Günün Kombinesi"** kartı var. Şu an **yalnız ADMIN ve izin

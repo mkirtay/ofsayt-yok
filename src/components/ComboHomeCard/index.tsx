@@ -468,12 +468,14 @@ export function DailyPresets({ state, kind, onKind, t }: { state: DailyState; ki
 
 function Preset({ coupon, testData, t }: { coupon: DailyCoupon; testData: boolean; t: TFn }) {
   const pct1 = (n: number) => String(n).replace('.', ',');
+  // 2026-11-20: ana görünümde API-Football piyasa oranı (yalnız admin; AdSense yok). Oranı olmayan bacakta adil oran.
+  const hasMarket = coupon.refOdds != null;
   return (
     <div className={styles.preset}>
       <dl className={styles.summary}>
         <div>
-          <dt>{t('presets.odds')}</dt>
-          <dd className={styles.bigNum}>{fmtOdd(coupon.fairOdds)}</dd>
+          <dt>{hasMarket ? t('presets.marketOdds') : t('presets.odds')}</dt>
+          <dd className={styles.bigNum}>{fmtOdd(coupon.refOdds ?? coupon.fairOdds)}</dd>
         </div>
         <div>
           <dt>{t('presets.probability')}</dt>
@@ -493,13 +495,13 @@ function Preset({ coupon, testData, t }: { coupon: DailyCoupon; testData: boolea
             <span className={styles.pickText}>
               {t(`pick.${l.key}`)} · %{pct1(Math.round(l.pct))}
             </span>
-            <span className={styles.oddBadge} title={t('presets.odds')}>
-              {fmtOdd(l.fairOdd)}
+            <span className={styles.oddBadge} title={l.refOdd != null ? t('presets.marketOdds') : t('presets.odds')}>
+              {fmtOdd(l.refOdd ?? l.fairOdd)}
             </span>
           </li>
         ))}
       </ul>
-      <p className={styles.small}>{t('presets.fairHint')}</p>
+      <p className={styles.small}>{hasMarket ? t('presets.oddsHint') : t('presets.fairHint')}</p>
       <p className={styles.footer}>
         <span>{t('presets.count', { n: coupon.legs.length })}</span>
         <span>{t('presets.noGuarantee')}</span>
@@ -521,7 +523,7 @@ function Preset({ coupon, testData, t }: { coupon: DailyCoupon; testData: boolea
             </li>
           ))}
         </ul>
-        {coupon.refOdds != null ? <p className={styles.small}>{t('presets.refTotal', { total: fmtOdd(coupon.refOdds) })}</p> : null}
+        <p className={styles.small}>{t('presets.fairTotal', { total: fmtOdd(coupon.fairOdds) })}</p>
         <p className={styles.small}>{t('presets.method')}</p>
         <p className={styles.small}>{t('presets.minLegsNote')}</p>
         <p className={styles.small}>{t('disclaimer')}</p>

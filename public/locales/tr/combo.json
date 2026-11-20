@@ -145,7 +145,10 @@
     "legLine": "olasılık %{{pct}} (model %{{model}}, oranlardan {{market}}) · adil {{fair}} · referans {{ref}}",
     "refTotal": "Uluslararası oran (iddaa değil): {{total}}",
     "minLegsNote": "Bazı maçlar iddaa'da tek ya da az maçla oynanamayabilir (MBS).",
-    "method": "Olasılık, AI modeli ile uluslararası oranlardan (kâr payı temizlenerek) çıkarılan olasılığın harmanıdır; geçmiş veride model tek başına güçlü değil, oranlardan gelen olasılık ağır basar."
+    "method": "Olasılık, AI modeli ile uluslararası oranlardan (kâr payı temizlenerek) çıkarılan olasılığın harmanıdır; geçmiş veride model tek başına güçlü değil, oranlardan gelen olasılık ağır basar.",
+    "marketOdds": "Oran",
+    "oddsHint": "Oranlar API-Football'dan, uluslararası bookmaker oranıdır (iddaa değil). Adil oran ve model olasılığı ayrıntıda.",
+    "fairTotal": "Adil oran (1 / olasılık): {{total}}"
   },
   "past": {
     "tab": "Geçmiş",

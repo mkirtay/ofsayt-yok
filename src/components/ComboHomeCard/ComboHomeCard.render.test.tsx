@@ -42,7 +42,7 @@ describe('<ComboHomeCard />', () => {
     expect(html).not.toContain('{{');
   });
 
-  it('hazır: üç sekme, Temkinli seçili, YALNIZ seçili kupon (adil oran + olasılık; bacakta pazar · % · adil oran; referans oran yalnız ayrıntıda)', async () => {
+  it('hazır: üç sekme, Temkinli seçili, YALNIZ seçili kupon (bacakta piyasa oranı, yoksa adil oran; kombine oran yoksa adil oran)', async () => {
     const safe = await presets(ready());
     expect(safe).toMatch(/aria-selected="true"[^>]*>Temkinli</);
     expect(safe).toContain('Dengeli');
@@ -53,24 +53,31 @@ describe('<ComboHomeCard />', () => {
     expect(safe).toContain('%48,6');
     expect(safe).toContain('İngiltere – Hırvatistan');
     expect(safe).toContain('3,5 Alt · %73');
-    expect(safe).toContain('1,37'); // 1 / %72,8
+    expect(safe).toContain('1,37'); // 1 / %72,8 (ayrıntıda)
     expect(safe).toContain('2,5 Üst · %77');
     expect(safe).toContain('2 maç');
     expect(safe).toContain('Sonuç garantisi yok.');
     expect(safe).toContain('İddaa oranı bundan yüksekse');
     const main = safe.slice(0, safe.indexOf('<details'));
-    expect(main).not.toContain('1,33'); // uluslararası referans ana görünümde yok
+    expect(main).toContain('1,33'); // 2026-11-20: bacağın piyasa oranı ana görünümde (adil 1,37 yerine)
+    expect(main).not.toContain('1,37');
+    expect(main).toContain('1,30'); // oranı olmayan bacakta adil oran (1 / %77)
     const det = safe.slice(safe.indexOf('<details'));
+    expect(det).toContain('Adil oran (1 / olasılık): 2,06');
     expect(det).toContain('referans 1,33');
     expect(det).toContain('oranlardan %73,6');
     expect(det).toContain('oranlardan —');
     expect(safe).not.toContain('KG Yok'); // diğer kuponun maçı görünmez
     const balanced = await presets(ready(), 'balanced');
     expect(balanced).toMatch(/aria-selected="true"[^>]*>Dengeli</);
-    expect(balanced).toContain('4,20');
+    const bMain = balanced.slice(0, balanced.indexOf('<details'));
+    expect(bMain).toContain('>Oran<'); // tüm bacaklarda piyasa oranı → başlık "Oran", değer kombine piyasa oranı
+    expect(bMain).toContain('3,90');
+    expect(bMain).toContain('1,70');
+    expect(bMain).toContain("API-Football");
+    expect(balanced).toContain('Adil oran (1 / olasılık): 4,20');
     expect(balanced).toContain('KG Yok');
     expect(balanced).toContain('1 maç');
-    expect(balanced).toContain('3,90'); // kombine referans (ayrıntı)
     expect(balanced).not.toContain('2,06');
   });
 

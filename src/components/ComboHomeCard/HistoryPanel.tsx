@@ -80,7 +80,7 @@ function PastCoupon({ c, t }: { c: HistoryCoupon; t: TFn }) {
       <div className={styles.pastCouponHead}>
         <span className={styles.pastKind}>{t(`presets.${c.kind}`)}</span>
         <span className={styles.small}>
-          {t('presets.odds')} {odd(c.fairOdds)} · {pct1(c.probability)}
+          {c.refOdds != null ? t('presets.marketOdds') : t('presets.odds')} {odd(c.refOdds ?? c.fairOdds)} · {pct1(c.probability)}
         </span>
         <span className={`${styles.pastStatus} ${STATUS_CLASS[c.status]}`}>{t(`past.status.${c.status}`)}</span>
       </div>

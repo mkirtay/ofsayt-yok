@@ -57,7 +57,7 @@ describe('/api/combo/daily', () => {
     vi.stubEnv('COMBO_TEST_ANALYSES_FILE', '/tmp/x.json');
     vi.stubEnv('NODE_ENV', 'production');
     const r = await call(daily, 'GET', { date: '2026-11-12' });
-    expect(r.body).toMatchObject({ state: 'pending', at: '17:30' });
+    expect(r.body).toMatchObject({ state: 'pending', at: '11:00' });
     expect(build).not.toHaveBeenCalled();
   });
   it('geliştirme + test dosyası: önbellek boşsa anında üretir ve yazar', async () => {
@@ -92,27 +92,31 @@ describe('/api/cron/combo-daily', () => {
     expect((await call(cron, 'GET')).statusCode).toBe(401);
     expect(build).not.toHaveBeenCalled();
   });
-  it('17:30 öncesi too-early; force ile aşılır', async () => {
+  it('11:00 öncesi too-early; force ile aşılır', async () => {
     vi.stubEnv('COMBO_TOOL_ENABLED', '1');
-    vi.useFakeTimers({ now: Date.parse('2026-11-12T10:00:00Z'), toFake: ['Date'] }); // 13:00 TR
+    vi.useFakeTimers({ now: Date.parse('2026-11-12T07:00:00Z'), toFake: ['Date'] }); // 10:00 TR
     expect((await call(cron, 'POST')).body).toEqual({ ok: true, skipped: 'too-early' });
     build.mockResolvedValue({ ...okPayload, status: 'insufficient', coupons: [] });
     const r = await call(cron, 'POST', { force: '1' });
     expect((r.body as { summary: unknown[] }).summary).toHaveLength(2);
   });
-  it('17:30 sonrası üretir + yazar + kayda geçirmeyi dener; o gün ok ise yeniden üretmez', async () => {
+  it('11:00 sonrası üretir + yazar + kayda geçirmeyi dener; o gün ok ise yeni analiz yoksa değiştirmez, varsa yeniler', async () => {
     vi.stubEnv('COMBO_TOOL_ENABLED', '1');
-    vi.useFakeTimers({ now: Date.parse('2026-11-12T15:00:00Z'), toFake: ['Date'] }); // 18:00 TR
+    vi.useFakeTimers({ now: Date.parse('2026-11-12T08:00:00Z'), toFake: ['Date'] }); // 11:00 TR
     build.mockResolvedValue(okPayload);
     const r1 = await call(cron, 'POST');
     expect(build).toHaveBeenCalledTimes(2); // bugün + yarın
     expect(write).toHaveBeenCalledTimes(2);
     expect((r1.body as { summary: Array<{ logged: unknown }> }).summary[0]!.logged).toBe('no-table');
-    build.mockClear();
+    write.mockClear();
     h.cached = okPayload;
     const r2 = await call(cron, 'POST');
-    expect(build).not.toHaveBeenCalled();
+    expect(write).not.toHaveBeenCalled(); // aynı sayıda analizli maç → eski kupon kalır
     expect((r2.body as { summary: Array<{ status: string }> }).summary.every((s) => s.status === 'already')).toBe(true);
+    build.mockResolvedValue({ ...okPayload, analysed: 8 }); // 13:00 tikinde daha çok analiz, maçlar başlamamış
+    const r3 = await call(cron, 'POST');
+    expect(write).toHaveBeenCalledTimes(2);
+    expect((r3.body as { summary: Array<{ status: string }> }).summary.every((s) => s.status === 'refreshed')).toBe(true);
   });
   it('COMBO_DAILY_TIME ayarlanabilir', async () => {
     vi.stubEnv('COMBO_TOOL_ENABLED', '1');

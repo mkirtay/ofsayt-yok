@@ -1,16 +1,17 @@
 /**
  * GET (Vercel Cron, vercel.json) / POST /api/cron/combo-daily — günlük otomatik kuponları üretip Redis'e ve ComboCouponLog'a yazar: YALNIZCA
  * `Authorization: Bearer $CRON_SECRET`, sır asla query'de. COMBO_TOOL_ENABLED kapalıyken 404. Saat: `COMBO_DAILY_TIME` (Türkiye, varsayılan
- * 17:30) — cron yarım saatte bir çalışabilir; saat gelmeden `too-early`, o gün başarıyla üretilmişse `already` döner (`?force=1` ikisini aşar).
- * Bugün + yarın için üretir; yeterli veri yoksa "insufficient" yazılır (sonraki tikte yeniden denenir). Kayıt tablosu yoksa atlanır.
- * Vercel Cron: 17:30 ve 19:30 TSİ (vercel.json); ikinci tik yalnız ilki "insufficient" kaldıysa yeniden üretir.
+ * 11:00) — saat gelmeden `too-early` (`?force=1` aşar). Bugün + yarın için üretir; yeterli veri yoksa "insufficient" yazılır (sonraki tikte
+ * yeniden denenir). O gün "ok" kupon varsa yeniden hesaplanır ama YALNIZ daha çok analizli maç varsa ve eski kuponun hiçbir maçı başlamamışsa
+ * değiştirilir (`refreshed`), yoksa `already`. Kayıt tablosu yoksa atlanır.
+ * Vercel Cron: 11:00 ve 13:00 TSİ (vercel.json). Havuz maçlarının analizi 09:00'dan itibaren üretilir (server/combo/comboPregen.ts).
  */
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { comboToolEnabled } from '@/config/comboTool';
 import { isValidCronRequest } from '@/lib/gundem/botAuth';
 import { captureError } from '@/lib/logger';
 import { prisma } from '@/lib/prisma';
-import { buildDailyCoupons, istanbulMinutes, parseDailyTime, readDaily, writeDaily } from '@/server/combo/dailyCoupons';
+import { buildDailyCoupons, istanbulMinutes, parseDailyTime, readDaily, shouldRefreshDaily, writeDaily } from '@/server/combo/dailyCoupons';
 import { saveCouponLog } from '@/server/combo/couponLog';
 import { shiftIsoDate, todayIsoIstanbul } from '@/utils/dateStrip';
 
@@ -37,14 +38,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const out: Array<{ date: string; status: string; coupons: number; analysed?: number; logged?: string | number }> = [];
     for (const date of [today, shiftIsoDate(today, 1)]) {
       const existing = force ? null : await readDaily(date);
-      if (existing?.status === 'ok') {
+      const payload = await buildDailyCoupons(date);
+      if (existing?.status === 'ok' && !shouldRefreshDaily(existing, payload, Date.now())) {
         out.push({ date, status: 'already', coupons: existing.coupons.length });
         continue;
       }
-      const payload = await buildDailyCoupons(date);
       await writeDaily(payload);
       const log = await saveCouponLog((t, v) => prisma.$executeRawUnsafe(t, ...v), payload);
-      out.push({ date, status: payload.status, coupons: payload.coupons.length, analysed: payload.analysed, logged: log.skipped ?? log.written });
+      const status = existing?.status === 'ok' ? 'refreshed' : payload.status;
+      out.push({ date, status, coupons: payload.coupons.length, analysed: payload.analysed, logged: log.skipped ?? log.written });
     }
     return res.status(200).json({ ok: true, summary: out });
   } catch (e) {

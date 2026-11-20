@@ -145,7 +145,10 @@
     "legLine": "probability {{pct}}% (model {{model}}%, from prices {{market}}) · fair {{fair}} · reference {{ref}}",
     "refTotal": "International odds (not iddaa): {{total}}",
     "minLegsNote": "Some matches may not be playable alone or with few matches on iddaa (minimum selections).",
-    "method": "Probability blends the AI model with the probability implied by international prices (margin removed); on past data the model alone is weak, so the price-implied probability weighs more."
+    "method": "Probability blends the AI model with the probability implied by international prices (margin removed); on past data the model alone is weak, so the price-implied probability weighs more.",
+    "marketOdds": "Odds",
+    "oddsHint": "Odds are international bookmaker prices from API-Football. Fair odds and model probability are in the details.",
+    "fairTotal": "Fair odds (1 / probability): {{total}}"
   },
   "past": {
     "tab": "History",

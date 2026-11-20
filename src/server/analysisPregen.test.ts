@@ -124,6 +124,22 @@ describe('maç öncesi ön üretim — çalıştırma', () => {
     expect(r2.items.filter((i) => i.status === 'generated')).toHaveLength(3);
   });
 
+  it('kupon havuzu (sabah): pencere adaylarından SONRA, tekrarsız; havuz okuma hatası pencere üretimini durdurmaz', async () => {
+    h.fixtures = [fx(1, 600, 2.5, [[1], [2]])];
+    const combo = (ids: number[]) => async () => ids.map((id) => ({ id, name: `K${id}`, leagueId: 2, kickoffMs: NOW + 9 * 3600_000, reason: 'combo-pool' as const }));
+    const r = await runAnalysisPregen({ now: NOW, comboCandidates: combo([1, 50, 51]) });
+    expect(r.items.map((i) => [i.matchId, i.reason, i.status])).toEqual([
+      [1, 'super-lig', 'generated'],
+      [50, 'combo-pool', 'generated'],
+      [51, 'combo-pool', 'generated'],
+    ]);
+    expect(r.candidates).toBe(3);
+    h.stored.clear();
+    h.generated.length = 0;
+    const r2 = await runAnalysisPregen({ now: NOW, comboCandidates: async () => Promise.reject(new Error('redis')) });
+    expect(r2.items.map((i) => i.matchId)).toEqual([1]);
+  });
+
   it('dryRun: LLM çağrısı yok; başlamış maç ve hata raporlanır', async () => {
     const dry = await runAnalysisPregen({ now: NOW, dryRun: true });
     expect(dry.items.every((i) => i.status === 'dry-run')).toBe(true);
