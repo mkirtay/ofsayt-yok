@@ -1,5 +1,7 @@
 # Haber bölümü — model önerileri (2026-11-20)
 
+> **KARAR (2026-11-20): haber bölümü yapılmıyor.** Belge yalnız kayıt için duruyor.
+
 Hedef: başka sitelerin haberlerini aynen göstermek yerine, her sabah belli bir saatte **kendimiz** tarayıp **kendi
 içeriğimizi** yayınlamak.
 
