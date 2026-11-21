@@ -1,0 +1,103 @@
+{
+  "pageTitle": "Mini Pitch: mini football against bots | Scor3",
+  "pageDesc": "Pick a character and play a 2–5 minute mini football match against a bot. Win to unlock new characters. Free, in your browser.",
+  "kicker": "Mini game",
+  "title": "Mini Pitch",
+  "intro": "Pick your character and play a quick match against a bot. Win to unlock new characters.",
+  "pickChar": "Your character",
+  "chars": {
+    "dengeli": {
+      "name": "Steady",
+      "role": "Box-to-box",
+      "tag": "Does it all"
+    },
+    "ruzgar": {
+      "name": "Breeze",
+      "role": "Winger",
+      "tag": "The fastest"
+    },
+    "bomba": {
+      "name": "Cannon",
+      "role": "Striker",
+      "tag": "Hardest shot"
+    },
+    "sihirbaz": {
+      "name": "Wizard",
+      "role": "Playmaker",
+      "tag": "Ball sticks to his feet"
+    },
+    "duvar": {
+      "name": "Wall",
+      "role": "Centre-back",
+      "tag": "Hard to push off"
+    }
+  },
+  "stat": {
+    "0": "Speed",
+    "1": "Shot",
+    "2": "Ball control",
+    "3": "Strength"
+  },
+  "locked": "Locked",
+  "lockedHint": "To unlock: {{req}}",
+  "req": {
+    "wins": "Win {{n}} matches",
+    "goalsInMatch": "Score {{n}} goals in one match",
+    "cleanSheetWin": "Beat a Medium or Hard bot without conceding",
+    "beat": "Beat the Hard bot"
+  },
+  "mode": {
+    "label": "Mode",
+    "1v1": "1v1 vs bot",
+    "2v2": "2v2 (you + bot)"
+  },
+  "diff": {
+    "label": "Opponent",
+    "kolay": "Easy",
+    "orta": "Medium",
+    "zor": "Hard"
+  },
+  "dur": {
+    "label": "Length",
+    "min": "{{n}} min"
+  },
+  "start": "Kick off",
+  "record": "{{matches}} played · {{wins}} won",
+  "guestNote": "Unlocked characters are saved in this browser only. Sign in to keep them on your account.",
+  "signIn": "Sign in",
+  "controls": {
+    "title": "How to play",
+    "desktop": "Move with the arrow keys or WASD. Shoot with Space or X: hold it and you shoot as soon as you touch the ball. Esc pauses.",
+    "touch": "Turn your phone sideways. Touch and drag on the left to move, hold the SHOOT button bottom right to shoot.",
+    "rules": "If it's level at full time, golden goal: next goal wins."
+  },
+  "hud": {
+    "pause": "Pause",
+    "kick": "SHOOT",
+    "golden": "GOLDEN GOAL",
+    "goal": "GOAL!",
+    "ownGoal": "Own goal",
+    "you": "You",
+    "home": "You",
+    "homeTeam": "Your team",
+    "away": "Rival"
+  },
+  "pause": {
+    "title": "Paused",
+    "resume": "Resume",
+    "restart": "Restart",
+    "exit": "Quit",
+    "sound": "Sound",
+    "on": "On",
+    "off": "Off"
+  },
+  "end": {
+    "win": "You won",
+    "loss": "You lost",
+    "draw": "Draw",
+    "again": "Rematch",
+    "exit": "Back to characters",
+    "unlocked": "New character unlocked"
+  },
+  "rotate": "Turn your phone sideways for the best experience"
+}

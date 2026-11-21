@@ -19,6 +19,7 @@ import team from '../../public/locales/en/team.json';
 import kuralKosesi from '../../public/locales/en/kuralKosesi.json';
 import matchState from '../../public/locales/en/matchState.json';
 import frikik from '../../public/locales/en/frikik.json';
+import miniSaha from '../../public/locales/en/miniSaha.json';
 import assistant from '../../public/locales/en/assistant.json';
 import moderation from '../../public/locales/en/moderation.json';
 import game from '../../public/locales/en/game.json';
@@ -27,6 +28,6 @@ import cupBracket from '../../public/locales/en/cupBracket.json';
 import today from '../../public/locales/en/today.json';
 import combo from '../../public/locales/en/combo.json';
 
-const EN = { common, nav, auth, credits, match, leagues, player, compare, standings, profile, ai, gundem, team, kuralKosesi, matchState, frikik, assistant, moderation, game, roundStats, cupBracket, today, combo };
+const EN = { common, nav, auth, credits, match, leagues, player, compare, standings, profile, ai, gundem, team, kuralKosesi, matchState, frikik, miniSaha, assistant, moderation, game, roundStats, cupBracket, today, combo };
 
 for (const [ns, dict] of Object.entries(EN)) registerNamespace('en', ns, dict);

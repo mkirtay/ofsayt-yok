@@ -58,6 +58,7 @@ const STATIC_ROUTES: { path: string; priority: string; changefreq: string; daily
   { path: '/yontem', priority: '0.4', changefreq: 'monthly' },
   { path: '/gundem', priority: '0.5', changefreq: 'hourly', daily: true },
   { path: '/frikik', priority: '0.4', changefreq: 'weekly' },
+  { path: '/mini-saha', priority: '0.4', changefreq: 'monthly' },
   { path: '/pricing', priority: '0.7', changefreq: 'monthly' },
   { path: '/hesap-silme', priority: '0.3', changefreq: 'yearly' },
 ];

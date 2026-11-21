@@ -1,0 +1,103 @@
+{
+  "pageTitle": "Mini Saha: bota karşı mini futbol | Scor3",
+  "pageDesc": "Karakterini seç, bota karşı 2–5 dakikalık mini futbol maçı yap. Kazandıkça yeni karakterler açılır. Ücretsiz, tarayıcıda oynanır.",
+  "kicker": "Mini oyun",
+  "title": "Mini Saha",
+  "intro": "Karakterini seç, bota karşı kısa bir maç yap. Kazandıkça yeni karakterler açılır.",
+  "pickChar": "Karakterin",
+  "chars": {
+    "dengeli": {
+      "name": "Dengeli",
+      "role": "Box-to-box",
+      "tag": "Her işi yapar"
+    },
+    "ruzgar": {
+      "name": "Rüzgâr",
+      "role": "Kanat",
+      "tag": "En hızlısı"
+    },
+    "bomba": {
+      "name": "Bomba",
+      "role": "Golcü",
+      "tag": "En sert şut"
+    },
+    "sihirbaz": {
+      "name": "Sihirbaz",
+      "role": "10 numara",
+      "tag": "Top ayağına yapışır"
+    },
+    "duvar": {
+      "name": "Duvar",
+      "role": "Stoper",
+      "tag": "Kolay itilmez"
+    }
+  },
+  "stat": {
+    "0": "Hız",
+    "1": "Şut",
+    "2": "Top kontrolü",
+    "3": "Güç"
+  },
+  "locked": "Kilitli",
+  "lockedHint": "Açmak için: {{req}}",
+  "req": {
+    "wins": "{{n}} maç kazan",
+    "goalsInMatch": "Bir maçta {{n}} gol at",
+    "cleanSheetWin": "Orta ya da Zor bota gol yemeden kazan",
+    "beat": "Zor botu yen"
+  },
+  "mode": {
+    "label": "Mod",
+    "1v1": "1v1 bota karşı",
+    "2v2": "2v2 (sen + bot)"
+  },
+  "diff": {
+    "label": "Rakip",
+    "kolay": "Kolay",
+    "orta": "Orta",
+    "zor": "Zor"
+  },
+  "dur": {
+    "label": "Süre",
+    "min": "{{n}} dk"
+  },
+  "start": "Maça başla",
+  "record": "{{matches}} maç · {{wins}} galibiyet",
+  "guestNote": "Açtığın karakterler şimdilik yalnız bu tarayıcıda. Giriş yaparsan hesabına kaydedilir.",
+  "signIn": "Giriş yap",
+  "controls": {
+    "title": "Nasıl oynanır",
+    "desktop": "Ok tuşları ya da WASD ile hareket et. Boşluk ya da X ile şut: tuşu basılı tutarsan topa değdiğin an vurursun. Esc ile duraklat.",
+    "touch": "Telefonu yan çevir. Sol tarafa dokunup sürükleyerek hareket et, sağ alttaki ŞUT düğmesine basılı tutarak vur.",
+    "rules": "Süre bitince eşitlik varsa altın gol: ilk atan kazanır."
+  },
+  "hud": {
+    "pause": "Duraklat",
+    "kick": "ŞUT",
+    "golden": "ALTIN GOL",
+    "goal": "GOL!",
+    "ownGoal": "Kendi kalesine",
+    "you": "Sen",
+    "home": "Sen",
+    "homeTeam": "Takımın",
+    "away": "Rakip"
+  },
+  "pause": {
+    "title": "Mola",
+    "resume": "Devam et",
+    "restart": "Yeniden başla",
+    "exit": "Çık",
+    "sound": "Ses",
+    "on": "Açık",
+    "off": "Kapalı"
+  },
+  "end": {
+    "win": "Kazandın",
+    "loss": "Kaybettin",
+    "draw": "Berabere",
+    "again": "Rövanş",
+    "exit": "Karakterlere dön",
+    "unlocked": "Yeni karakter açıldı"
+  },
+  "rotate": "En iyi deneyim için telefonu yan çevir"
+}

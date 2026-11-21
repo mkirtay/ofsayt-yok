@@ -89,6 +89,7 @@ model User {
   pinBids              PinBid[]
   couponRedemptions    CouponRedemption[]
   frikikScores         FrikikDailyScore[]
+  miniSahaProgress     MiniSahaProgress?
   blocksMade           UserBlock[]         @relation("UserBlockBlocker")
   blockedBy            UserBlock[]         @relation("UserBlockBlocked")
   reportsMade          ContentReport[]     @relation("ContentReportReporter")
@@ -601,6 +602,17 @@ model GundemBotDraft {
 
   @@index([status, createdAt])
   @@index([fixtureId])
+}
+
+/// Mini Saha (bota karşı mini futbol) ilerlemesi: oynayarak açılan karakterler (lib/miniSaha/progress.ts). Kredi yok.
+model MiniSahaProgress {
+  userId    String   @id
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  matches   Int      @default(0)
+  wins      Int      @default(0)
+  /// Açılmış karakter id'leri (lib/miniSaha/characters.ts CHAR_IDS).
+  unlocked  String[] @default([])
+  updatedAt DateTime @updatedAt
 }
 
 /// Frikik (günün frikiği) skor tablosu: kullanıcı + gün başına TEK kayıt (günün ilk bitmiş koşusu). Skor istemciden

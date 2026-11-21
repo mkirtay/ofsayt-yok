@@ -232,6 +232,9 @@ export default function Header() {
               <Link href="/frikik?src=menu" className={styles.mobileNavLink} onClick={() => trackFrikik('frikik_card_click', { entry: 'menu' })}>
                 {t('frikik')}
               </Link>
+              <Link href="/mini-saha" className={styles.mobileNavLink}>
+                {t('miniSaha')}
+              </Link>
               {GAME_PUBLIC_CLIENT ? (
                 <Link href={GAME_BRAND.basePath} className={styles.mobileNavLink}>
                   {t('game')}
