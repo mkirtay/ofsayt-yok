@@ -20,11 +20,16 @@ npx --yes wrangler@4.166.0 dev --config oyun-sunucusu/wrangler.toml --port 8787 
 Site tarafında `.env.local`: `NEXT_PUBLIC_MINI_SAHA_SUNUCU=ws://192.168.1.6:8787` (telefon aynı Wi-Fi'de). Önizleme
 yapılandırması: `.claude/launch.json` → `oyun-sunucusu`.
 
-## Yayın (kullanıcı onayıyla)
+## Yayın
 
-1. `npx --yes wrangler@4.166.0 deploy --config oyun-sunucusu/wrangler.toml`
-2. Özel alan adı: `wrangler.toml`'a `routes = [{ pattern = "oyun.getscor3.com", custom_domain = true }]` eklenip
-   yeniden deploy (DNS kaydı ve sertifika otomatik; getscor3.com bu Cloudflare hesabında).
-3. Vercel ortam değişkeni: `NEXT_PUBLIC_MINI_SAHA_SUNUCU=wss://oyun.getscor3.com` (tanımsızsa online mod gizli).
+Canlı: `wss://oyun.getscor3.com` (ilk yayın 2026-11-21, kullanıcı onayıyla). Güncellemek için:
+
+```bash
+npx --yes wrangler@4.166.0 deploy --config oyun-sunucusu/wrangler.toml
+```
+
+Özel alan adı `wrangler.toml` `routes` satırında (DNS kaydı + sertifika Cloudflare'da otomatik). Sitenin online modu
+için Vercel ortam değişkeni: `NEXT_PUBLIC_MINI_SAHA_SUNUCU=wss://oyun.getscor3.com` (tanımsızsa online mod gizli).
+Sağlık: `https://oyun.getscor3.com/saglik` → `ok`.
 
 İzinli kökenler (`IZINLI_KOKENLER`) yalnız getscor3.com; başka sitelerden bağlantı 403.

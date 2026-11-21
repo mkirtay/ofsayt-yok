@@ -1,8 +1,10 @@
 # Mini Saha online oyun sunucusu — Cloudflare Workers ücretsiz plan (Durable Objects, SQLite arka uç zorunlu; depolama
-# kullanılmıyor). Komutlar README.md'de. Özel alan adı (oyun.getscor3.com) yalnız kullanıcı onayıyla eklenir.
+# kullanılmıyor). Komutlar README.md'de.
 name = "scor3-mini-saha"
 main = "src/worker.ts"
 compatibility_date = "2026-11-01"
+# oyun.getscor3.com: getscor3.com bu Cloudflare hesabında; deploy DNS kaydını ve sertifikayı kendisi oluşturur (kullanıcı onayı 2026-11-21)
+routes = [{ pattern = "oyun.getscor3.com", custom_domain = true }]
 
 [vars]
 IZINLI_KOKENLER = "https://www.getscor3.com,https://getscor3.com"
