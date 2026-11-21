@@ -101,6 +101,22 @@ export function matchStartDateIso(m: Pick<Match, 'date' | 'scheduled' | 'time_tb
   return m.date && /^\d{4}-\d{2}-\d{2}/.test(m.date) ? m.date.slice(0, 10) : null;
 }
 
+/** Başlık sınırı (SEO 2026-11-22): Google ~60 karakterden sonrasını keser. */
+export const MATCH_TITLE_MAX = 60;
+/** Maç sayfası açıklama sınırı. */
+export const MATCH_DESCRIPTION_MAX = 155;
+
+/**
+ * Kademeli başlık: sırayla dener, `MATCH_TITLE_MAX`'e sığan ilkini verir (`branded` → " | Scor3" eklenmiş hali ölçülür).
+ * Hiçbiri sığmazsa sonuncusu (en kısa) kullanılır.
+ */
+export function fitTitle(candidates: { text: string; branded: boolean }[], brand: (t: string) => string): string {
+  const full = candidates.map((c) => (c.branded ? brand(c.text) : c.text));
+  return full.find((t) => t.length <= MATCH_TITLE_MAX) ?? full[full.length - 1]!;
+}
+
+const shortDateFmt = new Intl.DateTimeFormat('tr-TR', { timeZone: 'Europe/Istanbul', day: 'numeric', month: 'long', year: 'numeric' });
+
 export function buildMatchSeo(m: SeoMatch | null | undefined, brand: (t: string) => string, opts: MatchSeoOptions = {}): MatchSeo {
   const home = m?.home?.name?.trim() || '';
   const away = m?.away?.name?.trim() || '';
@@ -131,14 +147,34 @@ export function buildMatchSeo(m: SeoMatch | null | undefined, brand: (t: string)
 
   if (finished && score) {
     const [h, a] = score.split('-');
-    title = brand(`${home} ${h}-${a} ${away} Maç Sonucu`);
-    description = `${home} ${h}-${a} ${away}${comp ? ` (${comp})` : ''} maç sonucu, goller, istatistikler, kadrolar ve maç anlatımı.`;
+    const res = `${home} ${h}-${a} ${away}`;
+    title = fitTitle(
+      [
+        { text: `${res}: İstatistik ve Puan Durumu`, branded: true },
+        { text: `${res} Maç Sonucu ve İstatistik`, branded: false },
+        { text: `${res} Maç Sonucu`, branded: false },
+        { text: res, branded: false },
+      ],
+      brand,
+    );
+    const k = matchKickoffMs(m as Match);
+    const day = k != null ? shortDateFmt.format(new Date(k)) : null;
+    const ctx = [comp, day].filter(Boolean).join(', ');
+    description = `${res}${ctx ? ` (${ctx})` : ''} maç sonucu: goller, maç istatistikleri, kadrolar ve ${comp ? `${comp} ` : ''}puan durumu.`;
     summary.push(`${home}, ${compPart}${roundPart}maçında${when ? ` ${when}` : ''} ${away} ile karşılaştı; maç ${score} sona erdi.`);
     const goals = goalsSentence(opts.events, home, away);
     if (goals) summary.push(goals);
   } else if (live) {
-    title = brand(`${pair} Canlı Skor${score ? ` (${score})` : ''}`);
-    description = `${pair}${comp ? ` (${comp})` : ''} maçını canlı takip et: anlık skor, goller, istatistikler ve kadrolar.`;
+    const sc = score ? ` (${score})` : '';
+    title = fitTitle(
+      [
+        { text: `${pair} Canlı Skor${sc}, İstatistik`, branded: true },
+        { text: `${pair} Canlı Skor${sc} ve İstatistik`, branded: false },
+        { text: `${pair} Canlı Skor${sc}`, branded: false },
+      ],
+      brand,
+    );
+    description = `${pair} canlı skor${sc}: ${comp ? `${comp} maçında ` : ''}anlık skor, goller, maç istatistikleri, kadrolar ve canlı puan durumu.`;
     summary.push(`${home} ile ${away} arasındaki ${compPart}${roundPart}maçı şu an oynanıyor${score ? `; skor ${score}` : ''}.`);
   } else if (cancelled) {
     title = brand(`${pair} Maçı`);
@@ -152,7 +188,16 @@ export function buildMatchSeo(m: SeoMatch | null | undefined, brand: (t: string)
     const channels = m.tv_stations?.length ? m.tv_stations.slice(0, 3).join(', ') : null;
     // Arama kalıbı "ne zaman, saat kaçta, hangi kanalda": kanal bilgisi varsa başlıkta ve ilk cümlede cevaplanır.
     title = brand(`${pair} Maçı Ne Zaman, Saat Kaçta${channels ? ', Hangi Kanalda' : ''}?`);
-    description = `${pair}${comp ? ` (${comp})` : ''} maçı${when ? ` ${when}` : ''}${channels ? ` ${channels} ekranlarında` : ''} oynanacak. Muhtemel kadrolar, son form, karşılıklı maçlar ve AI maç analizi.`;
+    // Açıklama kademeli (155'e sığan ilki): puan durumu vaadi kısa kuyrukta da kalsın; kanal bilgisi (başlıkta "Hangi
+    // Kanalda" vaadi) puan durumundan önce gelir.
+    const head = (ch: string | null) => `${pair}${comp ? ` (${comp})` : ''} maçı${when ? ` ${when}` : ''}${ch ? ` ${ch} ekranlarında` : ''} oynanacak.`;
+    description =
+      [
+        `${head(channels)} Muhtemel kadrolar, son form, karşılıklı maçlar, puan durumu ve AI maç analizi.`,
+        `${head(channels)} Kadrolar, son form, puan durumu ve AI analizi.`,
+        `${head(channels)} Kadrolar, puan durumu, AI analizi.`,
+        head(channels),
+      ].find((d) => d.length <= MATCH_DESCRIPTION_MAX) ?? head(channels);
     summary.push(
       `${home} ile ${away}, ${compPart}${roundPart}maçında ${when ?? 'yakında'} karşı karşıya gelecek${channels ? `; maç ${channels} ekranlarından yayınlanacak` : ''}.`,
     );
@@ -170,5 +215,5 @@ export function buildMatchSeo(m: SeoMatch | null | undefined, brand: (t: string)
   if (extras.length) summary.push(`${extras.join('. ')}.`);
 
   const h1 = finished && score ? `${home} ${score} ${away}` : `${pair}${comp ? ` · ${comp}` : ''}`;
-  return { title, description: clampDescription(description), h1, summary };
+  return { title, description: clampDescription(description, MATCH_DESCRIPTION_MAX), h1, summary };
 }

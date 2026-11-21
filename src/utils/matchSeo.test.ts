@@ -31,9 +31,9 @@ describe('buildMatchSeo', () => {
     expect(`${s.title} ${s.description} ${s.h1} ${s.summary.join(' ')}`).not.toContain('Super Lig');
   });
 
-  it('açıklama 160 karakteri geçmez', () => {
+  it('açıklama 155 karakteri geçmez; kanal bilgisi puan durumundan önce gelir', () => {
     const s = buildMatchSeo({ ...base, status: 'NOT STARTED', tv_stations: ['TOD', 'beIN CONNECT Turkey', 'Digiturk Play'] }, brand);
-    expect(s.description.length).toBeLessThanOrEqual(160);
+    expect(s.description.length).toBeLessThanOrEqual(155);
     expect(s.description).toContain('Digiturk Play ekranlarında oynanacak.');
   });
 
@@ -48,11 +48,22 @@ describe('buildMatchSeo', () => {
     expect(text).toContain('Stadyum: RAMS Park (İstanbul).');
     expect(text).toContain('karşı karşıya gelecek; maç beIN Sports 1 ekranlarından yayınlanacak.');
     expect(s.description).toContain('beIN Sports 1 ekranlarında oynanacak');
+    expect(s.description).toContain('puan durumu');
+    expect(s.description.length).toBeLessThanOrEqual(155);
   });
 
   it('bitmiş maç: skorlu maç sonucu başlığı', () => {
     const s = buildMatchSeo({ ...base, status: 'FINISHED', scores: { score: '2 - 1' } }, brand);
-    expect(s.title).toBe('Galatasaray 2-1 Fenerbahçe Maç Sonucu | Scor3');
+    // Kademeli: "…: İstatistik ve Puan Durumu | Scor3" 61 karakter → bir sonraki kademe.
+    expect(s.title).toBe('Galatasaray 2-1 Fenerbahçe Maç Sonucu ve İstatistik');
+    expect(s.description).toBe('Galatasaray 2-1 Fenerbahçe (Süper Lig, 22 Kasım 2026) maç sonucu: goller, maç istatistikleri, kadrolar ve Süper Lig puan durumu.');
+    expect(buildMatchSeo({ ...base, home: { id: 1, name: 'Inter' }, away: { id: 2, name: 'Milan' }, status: 'FINISHED', scores: { score: '2-1' } } as never, brand).title).toBe(
+      'Inter 2-1 Milan: İstatistik ve Puan Durumu | Scor3',
+    );
+    expect(
+      buildMatchSeo({ ...base, home: { id: 1, name: 'İstanbul Başakşehir FK' }, away: { id: 2, name: 'Gaziantep F.K.' }, status: 'FINISHED', scores: { score: '1-1' } } as never, brand)
+        .title.length,
+    ).toBeLessThanOrEqual(60);
     expect(s.h1).toBe('Galatasaray 2-1 Fenerbahçe');
     expect(s.summary[0]).toContain('maç 2-1 sona erdi');
   });
@@ -72,7 +83,10 @@ describe('buildMatchSeo', () => {
   });
 
   it('canlı maç ve ertelenen maç', () => {
-    expect(buildMatchSeo({ ...base, status: 'IN PLAY', scores: { score: '0-0' } }, brand).title).toBe('Galatasaray - Fenerbahçe Canlı Skor (0-0) | Scor3');
+    const live = buildMatchSeo({ ...base, status: 'IN PLAY', scores: { score: '0-0' } }, brand);
+    expect(live.title).toBe('Galatasaray - Fenerbahçe Canlı Skor (0-0) ve İstatistik');
+    expect(live.description).toContain('canlı puan durumu');
+    expect(live.description.length).toBeLessThanOrEqual(155);
     const p = buildMatchSeo({ ...base, status: 'NOT STARTED', state_code: 'POSTPONED' }, brand);
     expect(p.summary[0]).toContain('henüz kesinleşmedi');
   });
