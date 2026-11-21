@@ -15,8 +15,13 @@ export type SitemapUrl = { loc: string; lastmod?: string; changefreq?: string; p
 export const SITEMAP_SECTIONS = ['sayfalar', 'maclar', 'takimlar', 'kisiler'] as const;
 export type SitemapSection = (typeof SITEMAP_SECTIONS)[number];
 
-/** Sezonun bütün maçları sitemap'te olan ligler (Süper Lig, 1. Lig). */
-export const SEASON_SITEMAP_LEAGUE_IDS = [600, 603] as const;
+/**
+ * Sezonun bütün maçları (oynanmış + 7 gün içindekiler) sitemap'te kalıcı olan ligler: Süper Lig, 1. Lig ve Avrupa kupaları
+ * (Şampiyonlar Ligi 2, Avrupa Ligi 5, Konferans Ligi 2286 — 2026-11-22: kupalar ±3 gün listesinden sonra sitemap'ten
+ * düşüyordu). Kaynak `schedules/seasons/{id}` (Stage havuzu, lig başına tek istek; kupa yanıtı 0,44–0,82 MB). Kupalarda
+ * yalnız tur (round) içindeki maçlar alınır = lig aşaması; eleme turlarının aşama düzeyindeki maçları girmez.
+ */
+export const SEASON_SITEMAP_LEAGUE_IDS = [600, 603, 2, 5, 2286] as const;
 
 const day = (t: number) => new Date(t).toISOString().slice(0, 10);
 

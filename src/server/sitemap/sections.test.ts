@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { aiReportMonths, buildIndexXml, buildUrlsetXml, SITEMAP_SECTIONS } from './sections';
+import { SEASON_SITEMAP_LEAGUE_IDS, aiReportMonths, buildIndexXml, buildUrlsetXml, SITEMAP_SECTIONS } from './sections';
 
 describe('sitemap', () => {
   it('dizin bütün bölümleri lastmod ile listeler', () => {
@@ -21,5 +21,9 @@ describe('sitemap', () => {
 
   it('AI rapor ayları: 2026-10 → bu ay, yıl geçişi', () => {
     expect(aiReportMonths(Date.parse('2027-01-05T00:00:00Z'))).toEqual(['2026-10', '2026-11', '2026-12', '2027-01']);
+  });
+
+  it('sezon maçları kalıcı: Süper Lig, 1. Lig ve Avrupa kupaları (ŞL, AL, Konferans)', () => {
+    expect([...SEASON_SITEMAP_LEAGUE_IDS].sort((a, b) => a - b)).toEqual([2, 5, 600, 603, 2286]);
   });
 });
