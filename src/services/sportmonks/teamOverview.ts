@@ -79,6 +79,8 @@ export type TeamSeasonRef = {
   leagueId: number;
   leagueName?: string;
   leagueLogo?: string;
+  /** Sportmonks `league.sub_type`: "domestic" (lig), "domestic_cup", "cup_international"… — ana ligi seçmek için. */
+  leagueSubType?: string;
   isCurrent: boolean;
   finished: boolean;
   startingAt?: string;
@@ -158,6 +160,7 @@ export function mapTeamCampaigns(seasons: SportmonksTeamSeason[] | null | undefi
       leagueId,
       ...(s.league?.name ? { leagueName: s.league.name } : {}),
       ...(s.league?.image_path ? { leagueLogo: s.league.image_path } : {}),
+      ...(s.league?.sub_type ? { leagueSubType: s.league.sub_type } : {}),
       isCurrent: s.is_current === true,
       finished: s.finished === true,
       ...(s.starting_at ? { startingAt: s.starting_at } : {}),

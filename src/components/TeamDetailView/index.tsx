@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any -- Kadro / puan API gevşek şema */
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { teamPageDescriptionText, teamPageTitleText } from '@/utils/teamSeo';
+import { primaryLeague, teamPageDescription as teamPageDescriptionFor, teamPageTitle as teamPageTitleFor } from '@/utils/teamSeo';
 import Head from 'next/head';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
@@ -576,8 +576,10 @@ function LeagueTeamDetailView({ teamId, variant = 'page', initialHeader = null }
   }, [nextFixture, teamId, todayIso, locale, t, tl]);
 
   const teamInfoLoaded = teamInfo.name !== 'Takım Detayı';
-  const teamPageTitle = brandTitle(teamPageTitleText(teamInfo.name));
-  const teamPageDescription = teamPageDescriptionText(teamInfo.name);
+  // Sunucu kabuğuyla aynı işlevler ve aynı genel bakış verisi (ana lig, teknik direktör) → hydration sonrası başlık değişmez.
+  const seoLeague = primaryLeague(overviewQuery.data?.campaigns);
+  const teamPageTitle = teamPageTitleFor(teamInfo.name, seoLeague, brandTitle);
+  const teamPageDescription = teamPageDescriptionFor(teamInfo.name, seoLeague, overviewQuery.data?.coach?.name);
 
   return (
     <div className={`${styles.root} ${variant === 'panel' ? styles.panelVariant : styles.pageVariant}`}>

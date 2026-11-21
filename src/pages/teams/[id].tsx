@@ -1,5 +1,6 @@
 import type { GetStaticPaths, GetStaticProps } from 'next';
 import Head from 'next/head';
+import Link from 'next/link';
 import { useRouter } from 'next/router';
 import Container from '@/components/Container';
 import TeamDetailView from '@/components/TeamDetailView';
@@ -12,7 +13,7 @@ import { breadcrumbJsonLd } from '@/utils/breadcrumbJsonLd';
 import { parseTeamIdParam, teamHref, teamSlugParam } from '@/utils/teamUrl';
 import JsonLd from '@/components/JsonLd';
 import type { TeamPageFacts } from '@/server/teamPageShell';
-import { buildTeamSummary, teamJsonLd, teamPageDescriptionText, teamPageTitleText } from '@/utils/teamSeo';
+import { buildTeamSummary, teamJsonLd, teamPageDescription, teamPageTitle } from '@/utils/teamSeo';
 import styles from './teamPage.module.scss';
 import { clampDescription } from '@/utils/seoText';
 
@@ -88,9 +89,10 @@ export default function TeamDetail({ teamName, ogImagePath, facts }: TeamPagePro
     typeof idParam === 'string' ? idParam : Array.isArray(idParam) ? (idParam[0] ?? idFromPath) : idFromPath,
   );
 
-  const title = teamName ? brandTitle(teamPageTitleText(teamName)) : brandTitle('Takım Detayı');
+  const seoLeague = facts?.league ? { id: facts.league.id, name: facts.league.name } : null;
+  const title = teamName ? teamPageTitle(teamName, seoLeague, brandTitle) : brandTitle('Takım Detayı');
   const description = teamName
-    ? teamPageDescriptionText(teamName)
+    ? teamPageDescription(teamName, seoLeague, facts?.coach)
     : 'Takımın son maçları, kadro bilgileri ve lig istatistikleri.';
   const summary = teamName ? buildTeamSummary(teamName, facts) : [];
   const ogImage = ogImagePath ? `${SITE_URL}${ogImagePath}` : null;
@@ -136,7 +138,17 @@ export default function TeamDetail({ teamName, ogImagePath, facts }: TeamPagePro
       {summary.length ? (
         <section className={styles.about} aria-labelledby="takim-hakkinda">
           <h2 id="takim-hakkinda" className={styles.aboutTitle}>{teamName} hakkında</h2>
-          <p className={styles.aboutText}>{summary.join(' ')}</p>
+          <p className={styles.aboutText}>
+            {summary.join(' ')}
+            {facts?.league?.slug ? (
+              <>
+                {' '}
+                <Link href={`/lig/${facts.league.slug}`} prefetch={false}>
+                  {facts.league.name} puan durumu ve gol krallığı →
+                </Link>
+              </>
+            ) : null}
+          </p>
         </section>
       ) : null}
     </Container>
