@@ -25,8 +25,8 @@ export type RoomPhase = 'bekliyor' | 'sayim' | 'oyun' | 'bitti';
 
 /** Tarayıcı → sunucu. */
 export type ClientMsg =
-  /** merhaba: karakter (bağlanınca ve maç başlamadan değiştirince) */
-  | { t: 'm'; ch: CharId }
+  /** merhaba: karakter + takma ad (bağlanınca ve maç başlamadan değiştirince) */
+  | { t: 'm'; ch: CharId; ad: string | null }
   /** girdi: x, y ∈ [−1, 1] (1/4 adımlı), k = şut basılı */
   | { t: 'g'; x: number; y: number; k: 0 | 1 }
   /** rövanş isteği */
@@ -39,6 +39,8 @@ export type RoomStateMsg = {
   anahtar: string;
   faz: RoomPhase;
   ch: [CharId | null, CharId | null];
+  /** Takma adlar (yoksa null: istemci karakter adını gösterir). */
+  ad: [string | null, string | null];
   bagli: [boolean, boolean];
   /** Geri sayımda kalan sn. */
   sayim: number;
@@ -71,6 +73,20 @@ export type SnapEvent = ['k', number] | ['g', 0 | 1, number] | ['a'] | ['e'];
 export type ErrorMsg = { t: 'h'; kod: 'dolu' | 'gecersiz' | 'zaman' };
 
 export type ServerMsg = RoomStateMsg | SnapshotMsg | ErrorMsg;
+
+export const NAME_MIN = 3;
+export const NAME_MAX = 16;
+
+/**
+ * Takma ad biçimi (sunucu da uygular): baş/son boşluk ve çoklu boşluk sadeleşir; yalnız harf (Türkçe dahil), rakam,
+ * boşluk, _ . - ; 3–16 karakter. Uymuyorsa null. İçerik filtresi istemcide (lib/miniSaha/nickname.ts).
+ */
+export function cleanName(raw: unknown): string | null {
+  if (typeof raw !== 'string') return null;
+  const v = raw.trim().replace(/\s+/g, ' ');
+  if (v.length < NAME_MIN || v.length > NAME_MAX) return null;
+  return /^[\p{L}\p{N} _.-]+$/u.test(v) ? v : null;
+}
 
 /** Oda kodu: karışan harfler (0/O, 1/I/L) yok. */
 export const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
@@ -105,7 +121,7 @@ export function parseClientMsg(raw: unknown): ClientMsg | null {
   }
   if (!m || typeof m !== 'object') return null;
   const o = m as Record<string, unknown>;
-  if (o.t === 'm') return isCharId(o.ch) ? { t: 'm', ch: o.ch } : null;
+  if (o.t === 'm') return isCharId(o.ch) ? { t: 'm', ch: o.ch, ad: cleanName(o.ad) } : null;
   if (o.t === 'r') return { t: 'r' };
   if (o.t === 'g') {
     const num = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? Math.max(-1, Math.min(1, v)) : null);

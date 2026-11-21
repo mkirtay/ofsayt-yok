@@ -10,7 +10,8 @@ import { Portrait, loadTokens } from './Portrait';
 import { buildStands, drawFrame, fitView, type Joy, type TokenImages, type View } from './render';
 import styles from './miniSaha.module.scss';
 
-export type StageOptions = { mode: Mode; diff: Difficulty; durSec: number; myChar: CharId };
+/** `myName`: takma ad (online'da zorunlu; yerelde varsa panelde gösterilir). */
+export type StageOptions = { mode: Mode; diff: Difficulty; durSec: number; myChar: CharId; myName?: string | null };
 
 type Hud = { score: [number, number]; left: number; golden: boolean };
 type Overlay = { kind: 'pause' } | { kind: 'end'; score: [number, number]; unlocked: CharId[] | null } | null;
@@ -122,6 +123,7 @@ export default function Stage({ opts, onFinish, onExit, online }: {
   );
   const onlineState = onlineStatus?.kind === 'oda' ? onlineStatus.state : null;
   const rivalChar = onlineState ? onlineState.ch[onlineState.slot === 0 ? 1 : 0] : null;
+  const rivalName = onlineState ? onlineState.ad[onlineState.slot === 0 ? 1 : 0] : null;
   useEffect(() => loadTokens(CHAR_IDS, tokens.current), []);
 
   useEffect(() => {
@@ -417,7 +419,17 @@ export default function Stage({ opts, onFinish, onExit, online }: {
           <span className={styles.score}>{hud.score[0]}</span>
           <span className={hud.golden ? `${styles.clock} ${styles.golden}` : styles.clock}>{clock}</span>
           <span className={styles.score}>{hud.score[1]}</span>
-          <span className={`${styles.team} ${styles.teamB}`}>{rivalChar ? t(`chars.${rivalChar}.name`) : t('hud.away')}</span>
+          {/* rakip: takma ad büyük, karakter adı altında küçük (online); botta "Rakip" */}
+          <span className={`${styles.team} ${styles.teamB}`}>
+            {rivalChar ? (
+              <span className={styles.teamStack}>
+                <span className={styles.teamNick}>{rivalName ?? t(`chars.${rivalChar}.name`)}</span>
+                {rivalName ? <span className={styles.teamSub}>{t(`chars.${rivalChar}.name`)}</span> : null}
+              </span>
+            ) : (
+              t('hud.away')
+            )}
+          </span>
         </div>
       </div>
       <button type="button" className={styles.pauseBtn} onClick={pause} aria-label={t('hud.pause')}>
@@ -441,8 +453,12 @@ export default function Stage({ opts, onFinish, onExit, online }: {
       <div className={styles.mePanel} aria-hidden>
         <Portrait id={opts.myChar} variant="face" size={36} className={styles.meFace} />
         <span className={styles.meText}>
-          <span className={styles.meName}>{t(`chars.${opts.myChar}.name`)}</span>
-          <span className={styles.meNo}>{CHARACTERS[opts.myChar].no}</span>
+          {/* takma ad büyük; altında küçük karakter adı · numara */}
+          <span className={styles.meName}>{opts.myName ?? t(`chars.${opts.myChar}.name`)}</span>
+          <span className={styles.meNo}>
+            {opts.myName ? `${t(`chars.${opts.myChar}.name`)} · ` : ''}
+            {CHARACTERS[opts.myChar].no}
+          </span>
         </span>
       </div>
       {banner ? (

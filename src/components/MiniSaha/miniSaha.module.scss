@@ -45,6 +45,47 @@
   }
 }
 
+.inviteForm {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+
+  .field {
+    flex: 1 1 200px;
+  }
+}
+
+.nameInput {
+  min-height: var(--touch-target);
+  padding: var(--space-2) var(--space-3);
+  border-radius: 10px;
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-muted);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--fs-body);
+
+  &:focus-visible {
+    outline: 2px solid var(--color-action);
+    outline-offset: 1px;
+  }
+
+  &[aria-invalid='true'] {
+    border-color: var(--color-loss);
+  }
+}
+
+.nameHint {
+  font-size: var(--fs-caption);
+  color: var(--text-tertiary);
+}
+
+.nameError {
+  font-size: var(--fs-caption);
+  color: var(--color-loss);
+}
+
 .inviteTitle {
   margin: 0 0 var(--space-1);
   font-size: var(--fs-title);
@@ -485,6 +526,28 @@
   white-space: nowrap;
 }
 
+.teamStack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.05;
+}
+
+.teamNick {
+  max-width: 9em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.teamSub {
+  font-size: 0.72em;
+  font-weight: 700;
+  opacity: 0.75;
+}
+
 .teamA {
   background: var(--ms-team-a);
 }
@@ -618,6 +681,10 @@
 }
 
 .meName {
+  max-width: 12em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: var(--fs-meta);
   font-weight: 700;
 }

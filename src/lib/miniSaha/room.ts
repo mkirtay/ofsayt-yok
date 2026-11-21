@@ -35,6 +35,8 @@ type Slot = {
   conn: Conn | null;
   key: string;
   ch: CharId | null;
+  /** Takma ad (biçimi temizlenmiş; yoksa null). */
+  ad: string | null;
   input: Input;
   /** Kopma anı (tik); bağlıysa null. */
   goneAt: number | null;
@@ -85,7 +87,7 @@ export class Room {
     const free = this.slots.findIndex((s) => s === null);
     if (free < 0) return this.reject(conn, 'dolu');
     this.slots[free] = {
-      conn, key: this.newKey(), ch: null, input: IDLE, goneAt: null, wantsRematch: false, winStart: this.now, winCount: 0,
+      conn, key: this.newKey(), ch: null, ad: null, input: IDLE, goneAt: null, wantsRematch: false, winStart: this.now, winCount: 0,
     };
     this.broadcastState();
   }
@@ -119,6 +121,7 @@ export class Room {
     } else if (m.t === 'm') {
       if (this.phase === 'bekliyor' || this.phase === 'bitti') {
         s.ch = m.ch;
+        s.ad = m.ad;
         this.maybeStart();
         this.broadcastState();
       }
@@ -246,6 +249,7 @@ export class Room {
         anahtar: s.key,
         faz: this.phase,
         ch: [this.slots[0]?.ch ?? null, this.slots[1]?.ch ?? null],
+        ad: [this.slots[0]?.ad ?? null, this.slots[1]?.ad ?? null],
         bagli: [Boolean(this.slots[0]?.conn), Boolean(this.slots[1]?.conn)],
         sayim: this.phase === 'sayim' ? Math.ceil((COUNTDOWN_TICKS - (this.now - this.phaseAt)) / 60) : 0,
         rovans: [Boolean(this.slots[0]?.wantsRematch), Boolean(this.slots[1]?.wantsRematch)],

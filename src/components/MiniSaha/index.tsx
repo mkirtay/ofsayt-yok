@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { signIn } from 'next-auth/react';
+import { signIn, useSession } from 'next-auth/react';
 import { useTranslation } from '@/lib/i18n';
 import '@/lib/i18nNamespaces/miniSaha';
 import { CHARACTERS, CHAR_IDS, DEFAULT_CHAR, isCharId, type CharId } from '@/lib/miniSaha/characters';
@@ -8,6 +8,8 @@ import type { Difficulty, Mode } from '@/lib/miniSaha/engine';
 import { UNLOCKS, requirementProgress, type Requirement } from '@/lib/miniSaha/progress';
 import { CODE_RE, ONLINE_DUR_SEC, newRoomCode } from '@/lib/miniSaha/protocol';
 import { OnlineClient, onlineServer } from './online';
+import { checkGuestName, NAME_MAX } from '@/lib/miniSaha/nickname';
+import { cleanName } from '@/lib/miniSaha/protocol';
 import { Portrait, preloadFaces } from './Portrait';
 import { useMiniSahaProgress } from './useProgress';
 import type { StageOptions } from './Stage';
@@ -17,6 +19,7 @@ import styles from './miniSaha.module.scss';
 const Stage = dynamic(() => import('./Stage'), { ssr: false });
 
 const CHAR_KEY = 'oy_minisaha_char';
+const NAME_KEY = 'oy_minisaha_ad';
 
 /** Kriptografik rastgele [0, 1) — oda kodu tahmin edilemesin. */
 function cryptoRnd(): number {
@@ -51,6 +54,10 @@ const LockIcon = () => (
 export default function MiniSaha() {
   const { t } = useTranslation('miniSaha');
   const { progress, record, signedIn } = useMiniSahaProgress();
+  const { data: session } = useSession();
+  /** Online takma ad (maça girmeden zorunlu; bu tarayıcıda hatırlanır). */
+  const [name, setName] = useState('');
+  const [nameTouched, setNameTouched] = useState(false);
   const [sel, setSel] = useState<CharId>(DEFAULT_CHAR);
   const [mode, setMode] = useState<Mode | 'online'>('1v1');
   /** Online oyun sunucusu (tanımsızsa online seçenek gizli). */
@@ -70,6 +77,8 @@ export default function MiniSaha() {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- davet kodu adres çubuğundan, yalnız istemcide
     if (CODE_RE.test(code)) setInvite(code);
     try {
+      const saved = localStorage.getItem(NAME_KEY);
+      if (saved) setName(saved);
       const c = localStorage.getItem(CHAR_KEY);
       if (isCharId(c)) setSel(c);
     } catch {
@@ -92,11 +101,27 @@ export default function MiniSaha() {
     try { localStorage.setItem(CHAR_KEY, id); } catch { /* yok */ }
   };
 
+  // girişliyse ve kayıtlı ad yoksa kullanıcı adı önerilir (yalnız biçime uyuyorsa)
+  const username = session?.user?.username ?? null;
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- oturum gelince bir kez öneri
+    if (username && !name) setName(cleanName(username) ?? '');
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [username]);
+  const nameCheck = checkGuestName(name);
+  const nameOk = nameCheck.ok;
+  const nameValue = nameCheck.ok ? nameCheck.value : null;
+
   const startOnline = (code: string) => {
     if (!server) return;
+    if (!nameValue) {
+      setNameTouched(true);
+      return;
+    }
+    try { localStorage.setItem(NAME_KEY, nameValue); } catch { /* yok */ }
     setRoomParam(code);
-    setOnlineGame(new OnlineClient(server, code, chosen));
-    setPlaying({ mode: '1v1', diff: 'orta', durSec: ONLINE_DUR_SEC, myChar: chosen });
+    setOnlineGame(new OnlineClient(server, code, chosen, nameValue));
+    setPlaying({ mode: '1v1', diff: 'orta', durSec: ONLINE_DUR_SEC, myChar: chosen, myName: nameValue });
   };
   const exitGame = useCallback(() => {
     setOnlineGame((g) => {
@@ -109,9 +134,31 @@ export default function MiniSaha() {
   }, []);
   const start = () => {
     if (mode === 'online') startOnline(newRoomCode(cryptoRnd));
-    else setPlaying({ mode, diff, durSec: dur, myChar: chosen });
+    else setPlaying({ mode, diff, durSec: dur, myChar: chosen, myName: nameValue });
   };
   const isOnline = mode === 'online';
+
+  /** Takma ad alanı (davet kartında ve online ayarlarda; ikisi aynı anda görünebilir → ayrı kimlik). */
+  const nameField = (idp: string) => (
+    <div className={styles.field}>
+      <label className={styles.label} htmlFor={`${idp}-name`}>{t('name.label')}</label>
+      <input
+        id={`${idp}-name`}
+        className={styles.nameInput}
+        value={name}
+        maxLength={NAME_MAX}
+        autoComplete="nickname"
+        placeholder={t('name.placeholder')}
+        aria-invalid={nameTouched && !nameOk}
+        aria-describedby={`${idp}-name-hint`}
+        onChange={(e) => setName(e.target.value)}
+        onBlur={() => setNameTouched(true)}
+      />
+      <span id={`${idp}-name-hint`} className={nameTouched && !nameOk ? styles.nameError : styles.nameHint}>
+        {nameTouched && !nameCheck.ok ? t(`name.error.${nameCheck.reason}`) : t('name.hint')}
+      </span>
+    </div>
+  );
 
   const c = CHARACTERS[chosen];
   const seg = <T extends string | number>(value: T, cur: T, set: (v: T) => void, label: string) => (
@@ -134,7 +181,10 @@ export default function MiniSaha() {
             <h2 id="ms-invite" className={styles.inviteTitle}>{t('joinTitle')}</h2>
             <p className={styles.help}>{t('joinText')}</p>
           </div>
-          <button type="button" className={styles.start} onClick={() => startOnline(invite)}>{t('joinBtn')}</button>
+          <div className={styles.inviteForm}>
+            {nameField('ms-davet')}
+            <button type="button" className={styles.start} onClick={() => startOnline(invite)} aria-disabled={!nameOk}>{t('joinBtn')}</button>
+          </div>
         </section>
       ) : null}
 
@@ -210,6 +260,7 @@ export default function MiniSaha() {
           <span className={styles.label}>{t('dur.label')}</span>
           <div className={styles.seg}>{DURS.map((d) => seg<number>(d, dur, setDur, t('dur.min', { n: d / 60 })))}</div>
         </div>
+        {isOnline ? nameField('ms-online') : null}
         {isOnline ? <p className={styles.note}>{t('onlineNote')}</p> : null}
         <button type="button" className={styles.start} onClick={start}>
           {t(isOnline ? 'startOnline' : 'start')}

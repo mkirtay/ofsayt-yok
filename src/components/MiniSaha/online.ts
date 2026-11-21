@@ -40,7 +40,7 @@ export class OnlineClient {
   private retries = 0;
   private retryTimer: ReturnType<typeof setTimeout> | undefined;
 
-  constructor(private readonly base: string, readonly code: string, private myChar: CharId) {
+  constructor(private readonly base: string, readonly code: string, private myChar: CharId, private myName: string | null = null) {
     this.connect();
   }
 
@@ -56,7 +56,7 @@ export class OnlineClient {
 
   setChar(ch: CharId): void {
     this.myChar = ch;
-    this.send({ t: 'm', ch });
+    this.send({ t: 'm', ch, ad: this.myName });
   }
 
   rematch(): void {
@@ -103,7 +103,7 @@ export class OnlineClient {
     ws.onopen = () => {
       this.opened = true;
       this.retries = 0;
-      this.send({ t: 'm', ch: this.myChar });
+      this.send({ t: 'm', ch: this.myChar, ad: this.myName });
     };
     ws.onmessage = (e) => this.onMessage(e.data);
     ws.onclose = () => {

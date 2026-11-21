@@ -20,8 +20,8 @@ function startedRoom() {
   const b = new FakeConn();
   room.join(a);
   room.join(b);
-  room.message(a, JSON.stringify({ t: 'm', ch: 'bomba' }));
-  room.message(b, JSON.stringify({ t: 'm', ch: 'duvar' }));
+  room.message(a, JSON.stringify({ t: 'm', ch: 'bomba', ad: 'Kanat Ustası' }));
+  room.message(b, JSON.stringify({ t: 'm', ch: 'duvar', ad: '<b>kötü</b>' }));
   return { room, a, b };
 }
 
@@ -29,6 +29,8 @@ describe('mini saha online odası', () => {
   it('iki oyuncu yerleşir, karakter seçince geri sayım ve oyun başlar', () => {
     const { room, a, b } = startedRoom();
     expect(a.lastState()).toMatchObject({ slot: 0, faz: 'sayim', ch: ['bomba', 'duvar'], bagli: [true, true] });
+    // takma adlar iki tarafa da gider; biçimi bozuk ad sunucuda düşer (istemci karakter adını gösterir)
+    expect(b.lastState()?.ad).toEqual(['Kanat Ustası', null]);
     expect(b.lastState()?.slot).toBe(1);
     run(room, COUNTDOWN_TICKS + 1);
     expect(room.currentPhase).toBe('oyun');

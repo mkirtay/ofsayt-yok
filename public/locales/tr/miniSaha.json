@@ -132,5 +132,15 @@
     "rivalWantsRematch": "Rakibin rövanş istiyor!",
     "waitingRematch": "Rakip bekleniyor…",
     "rivalLeft": "Rakip ayrıldı"
+  },
+  "name": {
+    "label": "Takma adın",
+    "placeholder": "ör. Kanat Ustası",
+    "hint": "Rakibin seni bu adla görecek (3–16 karakter).",
+    "error": {
+      "format": "3–16 karakter; harf, rakam, boşluk, _ . - kullanabilirsin.",
+      "blocked": "Bu takma ad uygun değil, başka bir ad yaz.",
+      "reserved": "Bu ad ayrılmış, başka bir ad yaz."
+    }
   }
 }
