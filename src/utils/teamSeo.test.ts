@@ -71,4 +71,12 @@ describe('teamSeo', () => {
     expect(s[0]).toBe('Galatasaray, Süper Lig takımı.');
     expect(s[1]).toBe('22 Kasım itibarıyla Süper Lig puan durumunda 1. sırada: 12 maçta 31 puan (10 galibiyet, 1 beraberlik, 1 mağlubiyet; averaj +22).');
   });
+
+  it('memberOf: ligler SportsOrganization, lig sayfası olanlar /lig/{slug} bağlantılı', () => {
+    const j = teamJsonLd('Galatasaray', 'https://s/teams/1', { ...facts, season: { name: '2026/2027', competitions: ['Süper Lig', 'Türkiye Kupası'], leagueIds: [600, 606] } }, null) as {
+      memberOf: { '@type': string; name: string; url?: string }[];
+    };
+    expect(j.memberOf[0]).toEqual({ '@type': 'SportsOrganization', name: 'Süper Lig', url: expect.stringMatching(/\/lig\/super-lig$/) });
+    expect(j.memberOf[1]).toEqual({ '@type': 'SportsOrganization', name: 'Türkiye Kupası' });
+  });
 });

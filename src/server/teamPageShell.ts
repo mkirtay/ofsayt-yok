@@ -19,7 +19,7 @@ export type TeamPageFacts = {
   coach: string | null;
   venue: { name: string; city: string | null; capacity: number | null } | null;
   /** Güncel sezonun turnuvaları (ör. "Süper Lig", "UEFA Avrupa Ligi") ve sezon adı. */
-  season: { name: string; competitions: string[] } | null;
+  season: { name: string; competitions: string[]; leagueIds?: number[] } | null;
   xUrl: string | null;
   /** Ana lig (güncel sezonda `domestic`); yoksa null. Eski kabuklarda alan yok. */
   league?: { id: number; name: string; slug: string | null } | null;
@@ -35,12 +35,17 @@ export type TeamPageShell = { kind: 'found'; name: string; facts: TeamPageFacts 
 export function teamFactsFromOverview(o: TeamOverview): TeamPageFacts {
   const current = o.campaigns[0];
   // Türkçe kısa ad ("Super Lig" → "Süper Lig", "Champions League" → "Şampiyonlar Ligi"); eşlemesi yoksa API adı.
-  const competitions = [...new Set((current?.seasons ?? []).map((s) => leagueDisplayName(s.leagueId, s.leagueName)).filter((n): n is string => Boolean(n)))];
+  const named = (current?.seasons ?? [])
+    .map((s) => ({ id: s.leagueId, name: leagueDisplayName(s.leagueId, s.leagueName) }))
+    .filter((x): x is { id: number; name: string } => Boolean(x.name));
+  const competitions = [...new Set(named.map((x) => x.name))];
+  // JSON-LD memberOf → lig sayfası bağlantısı için (competitions ile aynı sırada, ada göre ilk id).
+  const leagueIds = competitions.map((n) => named.find((x) => x.name === n)!.id);
   return {
     logo: o.team?.logo ?? null,
     coach: o.coach?.name ?? null,
     venue: o.venue?.name ? { name: o.venue.name, city: o.venue.city ?? null, capacity: o.venue.capacity ?? null } : null,
-    season: current && competitions.length ? { name: current.name, competitions } : null,
+    season: current && competitions.length ? { name: current.name, competitions, leagueIds } : null,
     xUrl: o.social?.url ?? null,
     league: (() => {
       const l = primaryLeague(o.campaigns);

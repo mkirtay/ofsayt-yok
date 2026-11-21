@@ -5,6 +5,8 @@
 import type { TeamPageFacts } from '@/server/teamPageShell';
 import type { TeamCampaign } from '@/services/sportmonks/teamOverview';
 import { leagueDisplayName } from '@/lib/gundem/bot/leagueNames';
+import { leagueHubByLeagueId } from '@/config/leagueHubs';
+import { siteBaseUrl } from '@/lib/siteUrl';
 
 const nf = new Intl.NumberFormat('tr-TR');
 
@@ -85,7 +87,14 @@ export function teamJsonLd(name: string, url: string, f: TeamPageFacts | null | 
     ...(f?.venue
       ? { location: { '@type': 'StadiumOrArena', name: f.venue.name, ...(f.venue.city ? { address: f.venue.city } : {}) } }
       : {}),
-    ...(f?.season ? { memberOf: f.season.competitions.map((c) => ({ '@type': 'SportsOrganization', name: c })) } : {}),
+    ...(f?.season
+      ? {
+          memberOf: f.season.competitions.map((c, i) => {
+            const hub = leagueHubByLeagueId(f.season!.leagueIds?.[i]);
+            return { '@type': 'SportsOrganization', name: c, ...(hub ? { url: `${siteBaseUrl()}/lig/${hub.slug}` } : {}) };
+          }),
+        }
+      : {}),
     ...(f?.xUrl ? { sameAs: [f.xUrl] } : {}),
   };
 }

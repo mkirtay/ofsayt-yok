@@ -433,7 +433,16 @@ export default function MatchDetail({
               ...(startDateIso ? { startDate: startDateIso } : {}),
               homeTeam: homeName ? sportsTeamJsonLd(homeName, isNationalMatchId(match.id) ? null : homeTeamId) : undefined,
               awayTeam: awayName ? sportsTeamJsonLd(awayName, isNationalMatchId(match.id) ? null : awayTeamId) : undefined,
-              ...(compName ? { organizer: { '@type': 'Organization', name: compName } } : {}),
+              // Lig: SportsOrganization; lig sayfası varsa ona bağlanır (/lig/{slug}).
+              ...(compName
+                ? {
+                    organizer: {
+                      '@type': 'SportsOrganization',
+                      name: compName,
+                      ...(leagueHubByLeagueId(Number(compId)) ? { url: `${siteBaseUrl()}/lig/${leagueHubByLeagueId(Number(compId))!.slug}` } : {}),
+                    },
+                  }
+                : {}),
               description: pageDescription,
               eventStatus:
                 match.state_code === 'POSTPONED'
