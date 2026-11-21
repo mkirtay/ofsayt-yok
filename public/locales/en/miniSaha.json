@@ -49,7 +49,8 @@
   "mode": {
     "label": "Mode",
     "1v1": "1v1 vs bot",
-    "2v2": "2v2 (you + bot)"
+    "2v2": "2v2 (you + bot)",
+    "online": "With a friend (online)"
   },
   "diff": {
     "label": "Opponent",
@@ -99,5 +100,37 @@
     "exit": "Back to characters",
     "unlocked": "New character unlocked"
   },
-  "rotate": "Turn your phone sideways for the best experience"
+  "rotate": "Turn your phone sideways for the best experience",
+  "startOnline": "Create a room and invite",
+  "joinTitle": "A friend invited you to a match",
+  "joinText": "Pick your character and join. The match lasts 3 minutes with a golden goal.",
+  "joinBtn": "Join the match",
+  "onlineNote": "Online matches last 3 minutes. Send the link to a friend; the match starts when they join.",
+  "online": {
+    "connecting": "Connecting to the server…",
+    "reconnecting": "Connection lost, reconnecting…",
+    "errorTitle": "Could not start the online match",
+    "error": {
+      "dolu": "This room already has two players.",
+      "gecersiz": "Invalid room code.",
+      "zaman": "The room timed out. Create a new one.",
+      "baglanti": "Could not reach the game server. Today's online capacity may be full; try again later."
+    },
+    "playBots": "Play against bots",
+    "waitTitle": "Waiting for your friend",
+    "waitHost": "Waiting for the host",
+    "waitText": "Send the link; the match starts as soon as your friend joins.",
+    "codeLabel": "Room code",
+    "linkLabel": "Invite link",
+    "share": "Share",
+    "copy": "Copy link",
+    "copied": "Copied",
+    "shareText": "Fancy a match on Scor3 Mini Pitch?",
+    "rivalGone": "Your opponent disconnected, waiting 20 s…",
+    "forfeitWin": "Your opponent did not return; you win by forfeit.",
+    "forfeitLoss": "You were disconnected too long; the match was forfeited.",
+    "rivalWantsRematch": "Your opponent wants a rematch!",
+    "waitingRematch": "Waiting for opponent…",
+    "rivalLeft": "Opponent left"
+  }
 }

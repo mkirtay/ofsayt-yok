@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ES2022",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2022", "WebWorker"],
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "types": []
+  },
+  "include": ["src/**/*.ts", "../src/lib/miniSaha/room.ts", "../src/lib/miniSaha/protocol.ts", "../src/lib/miniSaha/engine.ts", "../src/lib/miniSaha/characters.ts"]
+}

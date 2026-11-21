@@ -79,7 +79,7 @@ export type Player = Body & {
 };
 
 /** Gol olayı: `scorer` = topa son dokunan, golü atan takımdansa; kendi kalesine gol ya da belirsizse null. */
-export type GameEvent = { type: 'kick'; human: boolean } | { type: 'goal'; team: Team; scorer: Player | null } | { type: 'golden' } | { type: 'end' };
+export type GameEvent = { type: 'kick'; human: boolean; player: Player } | { type: 'goal'; team: Team; scorer: Player | null } | { type: 'golden' } | { type: 'end' };
 
 export type Phase = 'play' | 'goal' | 'end';
 
@@ -116,7 +116,7 @@ export function lcg(seed: number): () => number {
   return () => (s = (Math.imul(s, 1664525) + 1013904223) >>> 0) / 4294967296;
 }
 
-function makePlayer(team: Team, human: boolean, c: Character): Player {
+export function makePlayer(team: Team, human: boolean, c: Character): Player {
   return {
     team, human, c, x: 0, y: 0, vx: 0, vy: 0, r: c.r * PLAYER_SCALE, im: 0.5 / c.mass, face: team === 0 ? 0 : Math.PI,
     ix: 0, iy: 0, kick: false, kickPow: 1, cd: 0, flash: 0, think: 0, aimX: 0, aimY: 0, side: 0, push: false, stuck: 0,
@@ -153,6 +153,17 @@ export function createWorld(o: WorldOptions): World {
     passes: [0, 0],
     events: [],
   };
+  resetPositions(w);
+  return w;
+}
+
+/**
+ * Online 1v1: iki insan oyuncu (0 = odayı kuran, camgöbeği; 1 = davet edilen, pembe). Bot yok; zorluk alanı yalnız
+ * botlar için anlamlı olduğundan 'orta' kalır. Sunucu (oyun-sunucusu) bu dünyayı adımlar.
+ */
+export function createOnlineWorld(o: { chars: [CharId, CharId]; durSec: number; rng?: () => number }): World {
+  const w = createWorld({ mode: '1v1', diff: 'orta', durSec: o.durSec, myChar: o.chars[0], rng: o.rng });
+  w.players[1] = makePlayer(1, true, CHARACTERS[o.chars[1]]);
   resetPositions(w);
   return w;
 }
@@ -563,15 +574,22 @@ function ballWalls(b: Body): void {
   }
 }
 
-/** Bir tik ilerletir. `human`: insan oyuncunun girdisi (x, y ∈ [−1, 1], dünya yönünde). */
-export function stepWorld(w: World, human: Input): void {
+/**
+ * Bir tik ilerletir. `human`: insan oyuncunun girdisi (x, y ∈ [−1, 1], dünya yönünde). `perPlayer` verilirse insan
+ * oyuncular girdisini oradan (oyuncu sırasına göre) alır — online maçta iki insan için.
+ */
+export function stepWorld(w: World, human: Input, perPlayer?: readonly (Input | undefined)[]): void {
   if (w.phase === 'end') return;
   const D = DIFFS[w.diff];
   const { HX, HY, M, CR, GH } = FIELD;
   const ball = w.ball;
 
-  for (const p of w.players) {
-    if (p.human) { p.ix = human.x; p.iy = human.y; p.kick = human.kick; p.kickPow = 1; }
+  for (let pi = 0; pi < w.players.length; pi++) {
+    const p = w.players[pi];
+    if (p.human) {
+      const inp = perPlayer?.[pi] ?? human;
+      p.ix = inp.x; p.iy = inp.y; p.kick = inp.kick; p.kickPow = 1;
+    }
     else if (--p.think <= 0) { botThink(w, p); p.think = D.react; }
     let ax = p.ix;
     let ay = p.iy;
@@ -655,7 +673,7 @@ export function stepWorld(w: World, human: Input): void {
       p.flash = 8;
       w.lastKicker = p;
       w.lastTouch = p;
-      w.events.push({ type: 'kick', human: p.human });
+      w.events.push({ type: 'kick', human: p.human, player: p });
     }
   }
 

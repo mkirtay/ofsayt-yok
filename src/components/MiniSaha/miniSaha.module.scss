@@ -12,6 +12,8 @@
 // Geniş ekranda iki sütun (karakterler solda, ayarlar sağda): giriş ekranı kaydırmadan sığar
 .layout {
   display: grid;
+  // tek sütunda da sütun içeriğe (kayan kadronun tüm genişliğine) uzamasın
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-4);
   align-items: start;
 
@@ -22,6 +24,32 @@
 
 .settings {
   gap: var(--space-3);
+}
+
+// davet linkiyle gelen: üstte katılma kartı
+.invite {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  border-color: var(--color-action);
+
+  .start {
+    flex: none;
+    padding: 0 var(--space-6);
+  }
+
+  @media (max-width: 600px) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+.inviteTitle {
+  margin: 0 0 var(--space-1);
+  font-size: var(--fs-title);
+  font-weight: 800;
+  color: var(--text-primary);
 }
 
 .how {
@@ -768,4 +796,74 @@
   font: inherit;
   font-size: 13px;
   cursor: pointer;
+}
+
+// ── Online maç ekranları (OnlinePanel) ─────────────────────────────────────
+.modalText {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #c4c8d2;
+}
+
+.code {
+  font-size: 34px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+  color: #c6ff3a;
+  font-variant-numeric: tabular-nums;
+}
+
+.linkBox {
+  width: 100%;
+  min-width: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: #0f1015;
+  color: #f2f3f5;
+  font: inherit;
+  font-size: 13px;
+  text-align: center;
+}
+
+.modalRow button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.onlineStrip {
+  position: absolute;
+  bottom: max(16px, calc(env(safe-area-inset-bottom, 0px) + 10px));
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(15, 16, 21, 0.92);
+  color: #f2f3f5;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.countdown {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+
+  span {
+    font-size: clamp(64px, 22cqh, 160px);
+    font-weight: 800;
+    color: #c6ff3a;
+    text-shadow: 0 6px 0 rgba(0, 0, 0, 0.35);
+    animation: toastIn 0.3s ease-out;
+
+    @media (prefers-reduced-motion: reduce) {
+      animation: none;
+    }
+  }
 }

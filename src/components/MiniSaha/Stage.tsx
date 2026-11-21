@@ -1,9 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useTranslation } from '@/lib/i18n';
 import '@/lib/i18nNamespaces/miniSaha';
 import { CHARACTERS, CHAR_IDS, type CharId } from '@/lib/miniSaha/characters';
-import { TICK_HZ, createWorld, secondsLeft, stepWorld, type Difficulty, type Mode, type Team, type World } from '@/lib/miniSaha/engine';
+import { TICK_HZ, createWorld, secondsLeft, stepWorld, type Difficulty, type GameEvent, type Mode, type Team, type World } from '@/lib/miniSaha/engine';
 import type { MatchSummary } from '@/lib/miniSaha/progress';
+import type { OnlineClient } from './online';
+import OnlinePanel from './OnlinePanel';
 import { Portrait, loadTokens } from './Portrait';
 import { buildStands, drawFrame, fitView, type Joy, type TokenImages, type View } from './render';
 import styles from './miniSaha.module.scss';
@@ -79,10 +81,12 @@ function sfx(kind: 'kick' | 'goal', on: boolean) {
  * Tam ekran oyun sahnesi (her zaman yatay). Döngü: requestAnimationFrame + 60 Hz sabit adım (engine.ts). HUD (skor,
  * süre), dokunmatik joystick + ŞUT düğmesi, klavye, duraklatma ve maç sonu kartı burada.
  */
-export default function Stage({ opts, onFinish, onExit }: {
+export default function Stage({ opts, onFinish, onExit, online }: {
   opts: StageOptions;
   onFinish: (s: MatchSummary) => Promise<CharId[]>;
   onExit: () => void;
+  /** Online maç: dünya sunucudan gelir (bkz. online.ts); duraklatma oyunu durdurmaz. */
+  online?: OnlineClient | null;
 }) {
   const { t } = useTranslation('miniSaha');
   const vp = useViewport();
@@ -110,6 +114,14 @@ export default function Stage({ opts, onFinish, onExit }: {
   const soundRef = useRef(true);
   /** Saha jetonları: sahne açılınca çözülür (lobide önceden indirildi); hazır olmayan karakter kodla çizilir. */
   const tokens = useRef<TokenImages>({});
+  // online oda durumu (bekliyor / sayım / oyun / bitti / hata) — değişince yeniden çiz
+  const onlineStatus = useSyncExternalStore(
+    useCallback((cb: () => void) => (online ? online.subscribe(cb) : () => {}), [online]),
+    () => online?.status ?? null,
+    () => null,
+  );
+  const onlineState = onlineStatus?.kind === 'oda' ? onlineStatus.state : null;
+  const rivalChar = onlineState ? onlineState.ch[onlineState.slot === 0 ? 1 : 0] : null;
   useEffect(() => loadTokens(CHAR_IDS, tokens.current), []);
 
   useEffect(() => {
@@ -143,6 +155,11 @@ export default function Stage({ opts, onFinish, onExit }: {
   }, [touch]);
 
   const pause = useCallback(() => {
+    if (online) {
+      // online: oyun durmaz (rakip oynuyor); yalnız menü açılır
+      setOverlay((o) => (o ? o : { kind: 'pause' }));
+      return;
+    }
     const w = worldRef.current;
     if (!w || w.phase === 'end' || paused.current) return;
     paused.current = true;
@@ -153,7 +170,7 @@ export default function Stage({ opts, onFinish, onExit }: {
     kickHeld.current = false;
     setKickOn(false);
     setOverlay({ kind: 'pause' });
-  }, []);
+  }, [online]);
 
   // klavye
   useEffect(() => {
@@ -165,7 +182,7 @@ export default function Stage({ opts, onFinish, onExit }: {
     };
     const up = (e: KeyboardEvent) => keys.current.delete(e.code);
     const blur = () => keys.current.clear();
-    const vis = () => { if (document.hidden) pause(); };
+    const vis = () => { if (document.hidden && !online) pause(); };
     window.addEventListener('keydown', down);
     window.addEventListener('keyup', up);
     window.addEventListener('blur', blur);
@@ -176,7 +193,7 @@ export default function Stage({ opts, onFinish, onExit }: {
       window.removeEventListener('blur', blur);
       document.removeEventListener('visibilitychange', vis);
     };
-  }, [pause]);
+  }, [pause, online]);
 
   // oyun döngüsü (her maç / rövanşta yeniden kurulur)
   useEffect(() => {
@@ -184,8 +201,9 @@ export default function Stage({ opts, onFinish, onExit }: {
     if (!cv) return;
     const g = cv.getContext('2d');
     if (!g) return;
-    const w = createWorld(opts);
-    worldRef.current = w;
+    // yerel maçta dünya burada; online maçta her karede sunucudan gelen görüntüden kurulur
+    const local = online ? null : createWorld(opts);
+    worldRef.current = local;
     paused.current = false;
     setOverlay(null);
     setBanner(null);
@@ -230,22 +248,40 @@ export default function Stage({ opts, onFinish, onExit }: {
         view = fitView(cw, ch, dpr);
         stands = buildStands(view);
       }
-      acc += Math.min(250, now - last);
+      const dtMs = Math.min(250, now - last);
       last = now;
-      if (paused.current || ended) acc = 0;
-      while (acc >= TICK_MS) {
-        acc -= TICK_MS;
-        const bx = w.ball.x;
-        const by = w.ball.y;
-        stepWorld(w, input());
-        spin.current += Math.hypot(w.ball.x - bx, w.ball.y - by);
-        for (const e of w.events) {
+      const events: GameEvent[] = [];
+      let w: World | null = local;
+      if (online) {
+        const prevBall = worldRef.current ? { x: worldRef.current.ball.x, y: worldRef.current.ball.y } : null;
+        const r = online.frame(input());
+        w = r.world;
+        worldRef.current = w;
+        if (w && prevBall) spin.current += Math.hypot(w.ball.x - prevBall.x, w.ball.y - prevBall.y);
+        events.push(...r.events);
+      } else if (local) {
+        acc += dtMs;
+        if (paused.current || ended) acc = 0;
+        while (acc >= TICK_MS) {
+          acc -= TICK_MS;
+          const bx = local.ball.x;
+          const by = local.ball.y;
+          stepWorld(local, input());
+          spin.current += Math.hypot(local.ball.x - bx, local.ball.y - by);
+          events.push(...local.events);
+          local.events.length = 0;
+          if (local.phase === 'end') break;
+        }
+      }
+      if (w) {
+        const cur = w;
+        for (const e of events) {
           if (e.type === 'kick') {
             sfx('kick', soundRef.current);
             if (e.human && navigator.vibrate) { try { navigator.vibrate(12); } catch { /* yok */ } }
           } else if (e.type === 'goal') {
             sfx('goal', soundRef.current);
-            setHud((h) => ({ ...h, score: [w.score[0], w.score[1]] }));
+            setHud((h) => ({ ...h, score: [cur.score[0], cur.score[1]] }));
             setBanner({
               text: e.scorer ? t(`chars.${e.scorer.c.id}.name`) : t('hud.ownGoal'),
               team: e.team,
@@ -259,21 +295,31 @@ export default function Stage({ opts, onFinish, onExit }: {
             setBanner({ text: t('hud.golden'), team: null, charId: null, id: Date.now() });
             clearTimeout(bannerTimer);
             bannerTimer = setTimeout(() => setBanner(null), 1300);
-          } else if (e.type === 'end' && !ended) {
+          } else if (e.type === 'end' && !ended && !online) {
             ended = true;
-            const score: [number, number] = [w.score[0], w.score[1]];
+            const score: [number, number] = [cur.score[0], cur.score[1]];
             setOverlay({ kind: 'end', score, unlocked: null });
             void onFinish({ mode: opts.mode, diff: opts.diff, goalsFor: score[0], goalsAgainst: score[1] }).then((unlocked) =>
               setOverlay((o) => (o?.kind === 'end' ? { ...o, unlocked } : o)),
             );
           }
         }
-        w.events.length = 0;
-        if (ended) break;
+        const left = secondsLeft(cur);
+        if (left !== lastLeft) { lastLeft = left; setHud((h) => ({ ...h, left })); }
+        // online: skor her görüntüyle gelir (gol olayı kaçsa da tabela doğru kalsın; değişmediyse yeniden çizim yok)
+        if (online) {
+          setHud((h) =>
+            h.score[0] === cur.score[0] && h.score[1] === cur.score[1] && h.golden === cur.golden
+              ? h
+              : { ...h, score: [cur.score[0], cur.score[1]], golden: cur.golden },
+          );
+        }
+        if (view) drawFrame(g, view, stands, cur, spin.current, joy.current, tokens.current);
+      } else if (view) {
+        // online: maç dünyası henüz yok (bekleme) — boş saha
+        g.setTransform(1, 0, 0, 1, 0, 0);
+        if (stands) g.drawImage(stands, 0, 0);
       }
-      const left = secondsLeft(w);
-      if (left !== lastLeft) { lastLeft = left; setHud((h) => ({ ...h, left })); }
-      if (view) drawFrame(g, view, stands, w, spin.current, joy.current, tokens.current);
     };
     raf = requestAnimationFrame(frame);
     return () => {
@@ -371,7 +417,7 @@ export default function Stage({ opts, onFinish, onExit }: {
           <span className={styles.score}>{hud.score[0]}</span>
           <span className={hud.golden ? `${styles.clock} ${styles.golden}` : styles.clock}>{clock}</span>
           <span className={styles.score}>{hud.score[1]}</span>
-          <span className={`${styles.team} ${styles.teamB}`}>{t('hud.away')}</span>
+          <span className={`${styles.team} ${styles.teamB}`}>{rivalChar ? t(`chars.${rivalChar}.name`) : t('hud.away')}</span>
         </div>
       </div>
       <button type="button" className={styles.pauseBtn} onClick={pause} aria-label={t('hud.pause')}>
@@ -417,7 +463,7 @@ export default function Stage({ opts, onFinish, onExit }: {
             <h2>{t('pause.title')}</h2>
             <div className={styles.modalRow}>
               <button type="button" className={styles.primary} onClick={resume}>{t('pause.resume')}</button>
-              <button type="button" className={styles.secondary} onClick={restart}>{t('pause.restart')}</button>
+              {online ? null : <button type="button" className={styles.secondary} onClick={restart}>{t('pause.restart')}</button>}
               <button type="button" className={styles.secondary} onClick={onExit}>{t('pause.exit')}</button>
             </div>
             <button type="button" className={styles.linkBtn} onClick={toggleSound} aria-pressed={sound}>
@@ -426,6 +472,8 @@ export default function Stage({ opts, onFinish, onExit }: {
           </div>
         </div>
       ) : null}
+
+      {online && onlineStatus ? <OnlinePanel client={online} status={onlineStatus} score={hud.score} onExit={onExit} /> : null}
 
       {end && result ? (
         <div className={styles.overlay}>

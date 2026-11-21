@@ -49,7 +49,8 @@
   "mode": {
     "label": "Mod",
     "1v1": "1v1 bota karşı",
-    "2v2": "2v2 (sen + bot)"
+    "2v2": "2v2 (sen + bot)",
+    "online": "Arkadaşınla (online)"
   },
   "diff": {
     "label": "Rakip",
@@ -99,5 +100,37 @@
     "exit": "Karakterlere dön",
     "unlocked": "Yeni karakter açıldı"
   },
-  "rotate": "En iyi deneyim için telefonu yan çevir"
+  "rotate": "En iyi deneyim için telefonu yan çevir",
+  "startOnline": "Oda kur ve davet et",
+  "joinTitle": "Arkadaşın seni maça çağırdı",
+  "joinText": "Karakterini seç ve maça katıl. Maç 3 dakika, altın gol kuralı geçerli.",
+  "joinBtn": "Maça katıl",
+  "onlineNote": "Online maç 3 dakika. Linki arkadaşına gönder; o katılınca maç başlar.",
+  "online": {
+    "connecting": "Sunucuya bağlanılıyor…",
+    "reconnecting": "Bağlantı koptu, yeniden bağlanılıyor…",
+    "errorTitle": "Online maç açılamadı",
+    "error": {
+      "dolu": "Bu odada zaten iki oyuncu var.",
+      "gecersiz": "Oda kodu geçersiz.",
+      "zaman": "Oda zaman aşımına uğradı. Yeni bir oda kur.",
+      "baglanti": "Oyun sunucusuna ulaşılamadı. Günlük online kapasite dolmuş olabilir; biraz sonra tekrar dene."
+    },
+    "playBots": "Bota karşı oyna",
+    "waitTitle": "Arkadaşını bekliyoruz",
+    "waitHost": "Odayı kuran bekleniyor",
+    "waitText": "Linki gönder; arkadaşın açıp katılınca maç kendiliğinden başlar.",
+    "codeLabel": "Oda kodu",
+    "linkLabel": "Davet linki",
+    "share": "Paylaş",
+    "copy": "Linki kopyala",
+    "copied": "Kopyalandı",
+    "shareText": "Scor3 Mini Saha'da maç yapalım mı?",
+    "rivalGone": "Rakibin bağlantısı koptu, 20 sn bekleniyor…",
+    "forfeitWin": "Rakibin geri dönmedi; hükmen kazandın.",
+    "forfeitLoss": "Bağlantın uzun süre koptu; maç hükmen kaybedildi.",
+    "rivalWantsRematch": "Rakibin rövanş istiyor!",
+    "waitingRematch": "Rakip bekleniyor…",
+    "rivalLeft": "Rakip ayrıldı"
+  }
 }
