@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
-import type { CharId } from '@/lib/miniSaha/characters';
+import { CHAR_IDS, type CharId } from '@/lib/miniSaha/characters';
 import { applyMatch, emptyProgress, mergeProgress, sanitizeProgress, type MatchSummary, type Progress } from '@/lib/miniSaha/progress';
 
 const LS_KEY = 'oy_minisaha_progress';
@@ -42,7 +42,8 @@ async function api(body?: unknown): Promise<{ progress: Progress; newlyUnlocked?
  * bir kez taşınır (birleşim). Sunucuya ulaşılamazsa maç yerelde işlenir; bir sonraki girişte birleşir.
  */
 export function useMiniSahaProgress() {
-  const { status } = useSession();
+  const { status, data: session } = useSession();
+  const isAdmin = session?.user?.role === 'ADMIN';
   const [progress, setProgress] = useState<Progress>(emptyProgress);
 
   useEffect(() => {
@@ -85,5 +86,7 @@ export function useMiniSahaProgress() {
     [status],
   );
 
-  return { progress, record, signedIn: status === 'authenticated' };
+  // yönetici: tüm karakterler açık (yalnız gösterim; kayıtlı ilerleme değişmez)
+  const shown = isAdmin ? { ...progress, unlocked: [...CHAR_IDS] } : progress;
+  return { progress: shown, record, signedIn: status === 'authenticated' };
 }
