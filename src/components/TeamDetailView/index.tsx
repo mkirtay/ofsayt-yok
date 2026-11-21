@@ -575,7 +575,9 @@ function LeagueTeamDetailView({ teamId, variant = 'page', initialHeader = null }
     };
   }, [nextFixture, teamId, todayIso, locale, t, tl]);
 
-  const teamInfoLoaded = teamInfo.name !== 'Takım Detayı';
+  // Başlık / açıklama yalnız genel bakış verisi gelince ezilir: ilk çizimde (SSR, `initialHeader` adıyla) lig ve teknik
+  // direktör bilinmediği için sunucu kabuğunun ligli açıklamasını eksik metinle ezmesin (2026-11-22 canlı bulgu).
+  const teamInfoLoaded = teamInfo.name !== 'Takım Detayı' && Boolean(overviewQuery.data?.team?.name);
   // Sunucu kabuğuyla aynı işlevler ve aynı genel bakış verisi (ana lig, teknik direktör) → hydration sonrası başlık değişmez.
   const seoLeague = primaryLeague(overviewQuery.data?.campaigns);
   const teamPageTitle = teamPageTitleFor(teamInfo.name, seoLeague, brandTitle);
