@@ -97,5 +97,11 @@
     "fabAssistant": "AI assistant",
     "fabRules": "Rules Corner",
     "favoriteHint": "Added to favorites — see the Favorites tab"
+  },
+  "miniSahaCard": {
+    "kicker": "New game",
+    "title": "Mini Pitch",
+    "sub": "Play a friend online or take on the bots. 5 characters.",
+    "play": "Play"
   }
 }

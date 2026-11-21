@@ -1,0 +1,146 @@
+@use '../../styles/variables' as *;
+
+// Ana sayfa Mini Saha kartı: her temada gece stadyumu (oyunun sahnesiyle aynı --ms-* token'ları). SABİT yükseklik
+// 128 px — maç listesinin sanal satırı bu yüksekliği baştan ayırır (MatchHubPage FRIKIK_BASE_SLOT). Zemin CSS
+// (ışık hüzmeleri + taraftar noktaları + orta saha çizgisi); kadro görseli sağda, solda metin, sağ altta Oyna.
+.card {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  height: 128px;
+  margin-bottom: $spacing-3;
+  padding: 0 $spacing-4;
+  box-sizing: border-box;
+  border-radius: $radius-md;
+  border: 1px solid var(--ms-line-faint);
+  color: var(--ms-ink);
+  text-decoration: none;
+  background:
+    radial-gradient(ellipse 40% 90% at 8% -10%, color-mix(in srgb, var(--ms-white) 16%, transparent), transparent 70%),
+    radial-gradient(ellipse 40% 90% at 70% -10%, color-mix(in srgb, var(--ms-white) 12%, transparent), transparent 70%),
+    linear-gradient(180deg, var(--ms-night) 0%, var(--ms-night) 34%, var(--ms-pitch-dark) 35%, var(--ms-pitch) 100%);
+  box-shadow: 0 6px 18px var(--ms-shade);
+
+  // orta saha çizgisi + yuvarlak (dekor)
+  &::after {
+    content: '';
+    position: absolute;
+    left: 58%;
+    bottom: -46px;
+    width: 92px;
+    height: 92px;
+    border-radius: 50%;
+    border: 2px solid var(--ms-white-22);
+    z-index: -1;
+    pointer-events: none;
+  }
+
+  &:hover .cta,
+  &:focus-visible .cta {
+    transform: translateY(-1px);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--ms-lime);
+    outline-offset: 2px;
+  }
+
+  @media (max-width: 479px) {
+    padding: 0 $spacing-3;
+  }
+}
+
+// üst bantta taraftar noktaları (camgöbeği / pembe / nötr)
+.crowd {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 34%;
+  z-index: -1;
+  opacity: 0.55;
+  background-image:
+    radial-gradient(circle, var(--ms-team-a) 1.6px, transparent 2.2px),
+    radial-gradient(circle, var(--ms-team-b) 1.6px, transparent 2.2px),
+    radial-gradient(circle, var(--ms-mute) 1.4px, transparent 2px);
+  background-size: 13px 9px, 17px 9px, 11px 9px;
+  background-position: 0 2px, 6px 6px, 3px 4px;
+  mask-image: linear-gradient(180deg, transparent, var(--ms-night) 40%);
+}
+
+.text {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-width: 52%;
+  min-width: 0;
+  text-shadow: 0 1px 6px var(--ms-shadow);
+
+  @media (max-width: 479px) {
+    max-width: 50%;
+  }
+}
+
+.kicker {
+  font-size: var(--fs-micro);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ms-lime);
+}
+
+.title {
+  font-size: calc(var(--fs-title) * 1.375);
+  line-height: 1.1;
+  font-weight: 900;
+  font-style: italic;
+  letter-spacing: -0.01em;
+}
+
+.sub {
+  font-size: var(--fs-meta);
+  line-height: 1.35;
+  color: var(--ms-soft);
+}
+
+// kadro: sağda, kartın altına oturur; sol kenarı yumuşakça kaybolur (metinle çakışmasın)
+.squad {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  height: 118px;
+  width: auto;
+  max-width: none;
+  z-index: 1;
+  pointer-events: none;
+  mask-image: linear-gradient(90deg, transparent 0%, var(--ms-night) 22%);
+
+  @media (max-width: 479px) {
+    height: 96px;
+    right: -52px;
+  }
+}
+
+.cta {
+  position: absolute;
+  right: $spacing-3;
+  bottom: $spacing-3;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 $spacing-4;
+  border-radius: $radius-full;
+  background: var(--ms-lime);
+  color: var(--ms-night);
+  font-size: var(--fs-section);
+  font-weight: 900;
+  box-shadow: 0 4px 12px var(--ms-shadow);
+  transition: transform 0.15s ease;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}

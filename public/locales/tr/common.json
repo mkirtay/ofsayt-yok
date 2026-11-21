@@ -97,5 +97,11 @@
     "fabAssistant": "AI asistan",
     "fabRules": "Kural Köşesi",
     "favoriteHint": "Favorilere eklendi — Favoriler sekmesinde"
+  },
+  "miniSahaCard": {
+    "kicker": "Yeni oyun",
+    "title": "Mini Saha",
+    "sub": "Arkadaşınla online maç ya da bota karşı. 5 karakter.",
+    "play": "Oyna"
   }
 }
