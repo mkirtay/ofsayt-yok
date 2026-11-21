@@ -55,3 +55,18 @@ export function buildRefereeTableSummary(league: string, season: string, rows: T
     'Tabloda her hakemin maç başı sarı kart, kırmızı kart, penaltı, faul ve VAR ortalamaları yer alır.',
   ];
 }
+
+/**
+ * Hakem sayfası başlığı (SEO 2026-11-22), 60 karaktere sığan ilk kademe:
+ * "{Ad} Hakem İstatistikleri: Kart ve Penaltı Ortalamaları | Scor3" → markasız → kısa. Yorum / sıralama yok.
+ */
+export function refereePageTitle(name: string, brand: (t: string) => string): string {
+  const candidates = [
+    brand(`${name} Hakem İstatistikleri: Kart ve Penaltı Ortalamaları`),
+    `${name} Hakem İstatistikleri: Kart ve Penaltı Ortalamaları`,
+    brand(`${name} Hakem İstatistikleri: Kart ve Penaltı`),
+    `${name} Hakem İstatistikleri: Kart ve Penaltı`,
+    `${name} Hakem İstatistikleri`,
+  ];
+  return candidates.find((t) => t.length <= 60) ?? candidates[candidates.length - 1]!;
+}

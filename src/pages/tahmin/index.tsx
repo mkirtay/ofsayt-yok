@@ -10,7 +10,7 @@ import WeekPlay from '@/components/Game/WeekPlay';
 import Leaderboard from '@/components/Game/Leaderboard';
 import { FAQ_KEYS, Faq, GameModeSwitch, GameNav, HowToPlay } from '@/components/Game/Info';
 import styles from '@/components/Game/game.module.scss';
-import { GAME_BRAND } from '@/config/brand';
+import { GAME_BRAND, brandTitle } from '@/config/brand';
 import { siteBaseUrl } from '@/lib/siteUrl';
 import { propsJsonSafe } from '@/server/propsJsonSafe';
 import { GAME_PAGE_CACHE, loadGameHome, type GameHomeData } from '@/server/game/pageData';
@@ -48,16 +48,18 @@ export default function GameHomePage({ week, season, board, prevKey, nextKey, re
   const switcher = <GameModeSwitch mode={mode} onChange={changeMode} />;
   const SITE = siteBaseUrl();
   const url = `${SITE}${GAME_BRAND.basePath}`;
+  // Marka son ekiyle (SEO 2026-11-22): "{oyun adı} – Ücretsiz skor tahmin oyunu | Scor3".
+  const pageTitle = brandTitle(t('pageTitle'));
   const startLogin = () => void signIn('google', { callbackUrl: `${GAME_BRAND.basePath}#hafta` });
 
   return (
     <>
       <Head>
-        <title>{t('pageTitle')}</title>
+        <title>{pageTitle}</title>
         {noindex ? <meta name="robots" content="noindex, nofollow" /> : null}
         <meta name="description" content={t('pageDesc')} />
         <link rel="canonical" href={url} />
-        <meta property="og:title" content={t('pageTitle')} />
+        <meta property="og:title" content={pageTitle} />
         <meta property="og:description" content={t('pageDesc')} />
         <meta property="og:url" content={url} />
       </Head>

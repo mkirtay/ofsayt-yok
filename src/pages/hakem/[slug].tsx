@@ -3,12 +3,13 @@ import Head from 'next/head';
 import Container from '@/components/Container';
 import { breadcrumbJsonLd } from '@/utils/breadcrumbJsonLd';
 import JsonLd from '@/components/JsonLd';
-import { buildRefereeSummary } from '@/utils/refereeSeo';
+import { buildRefereeSummary, refereePageTitle } from '@/utils/refereeSeo';
+import { brandTitle } from '@/config/brand';
 import RefereeView from '@/components/PersonPage/RefereeView';
 import type { RefereePageData } from '@/server/people/refereePage';
 import { personIdFromSlug, personSlug, refereeHref, REFEREE_BASE_PATH } from '@/utils/personUrl';
 import { stripUndefined } from '@/utils/homeInitialData';
-import { useTranslation } from '@/lib/i18n';
+import { useI18n, useTranslation } from '@/lib/i18n';
 import { siteBaseUrl } from '@/lib/siteUrl';
 import { clampDescription } from '@/utils/seoText';
 
@@ -36,7 +37,9 @@ export const getStaticProps: GetStaticProps<Props> = async ({ params }) => {
 
 export default function RefereePage({ data, url }: Props) {
   const { t } = useTranslation('match');
-  const title = t('person.metaRefereeTitle', { name: data.name });
+  const { locale } = useI18n();
+  // Türkçe: kademeli şablon (≤60); İngilizce çeviri metni.
+  const title = locale === 'en' ? t('person.metaRefereeTitle', { name: data.name }) : refereePageTitle(data.name, brandTitle);
   // Alıntılanabilir ilk cümle varsa açıklama o (SEO/GEO); yoksa genel metin.
   const description = buildRefereeSummary(data)[0] ?? t('person.metaRefereeDesc', { name: data.name });
   return (

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildRefereeSummary, buildRefereeTableSummary } from './refereeSeo';
+import { buildRefereeSummary, buildRefereeTableSummary, refereePageTitle } from './refereeSeo';
 
 describe('buildRefereeSummary', () => {
   it('sezon + lig + maç başı değerler, lig ortalaması karşılaştırması, takım kırılımı', () => {
@@ -38,5 +38,15 @@ describe('buildRefereeTableSummary', () => {
     ]);
     expect(out[0]).toBe('2026/2027 Süper Lig sezonunda 2 hakem toplam 10 maçta orta hakem olarak görev aldı; maç başına ortalama 4,4 sarı kart ve 0,2 penaltı.');
     expect(out.join(' ')).not.toMatch(/en çok|en az/i);
+  });
+});
+
+describe('refereePageTitle', () => {
+  const brand = (t: string) => `${t} | Scor3`;
+  it('60 karaktere sığan ilk kademe', () => {
+    expect(refereePageTitle('A. Çiftçi', brand)).toBe('A. Çiftçi Hakem İstatistikleri: Kart ve Penaltı Ortalamaları');
+    expect(refereePageTitle('Halil Umut Meler', brand)).toBe('Halil Umut Meler Hakem İstatistikleri: Kart ve Penaltı');
+    expect(refereePageTitle('Abdullah Buğra Taşkınsoy', brand)).toBe('Abdullah Buğra Taşkınsoy Hakem İstatistikleri');
+    for (const n of ['A', 'Abdullah Buğra Taşkınsoy', 'Çok Uzun Bir Hakem Adı Soyadı Deneme']) expect(refereePageTitle(n, brand).length).toBeLessThanOrEqual(60);
   });
 });
