@@ -76,6 +76,41 @@
   --color-premium-strong: #d99a00;
   --color-on-premium: #1a1300;
 
+  // Mini Saha oyun sahnesi (components/MiniSaha) — her temada koyu stadyum; takım renkleri compare-a/b ile aynı.
+  --ms-night: #0f1015;
+  --ms-night-92: rgba(15, 16, 21, 0.92);
+  --ms-panel: #1a1c24;
+  --ms-panel-2: #232632;
+  --ms-bug-top: #23262f;
+  --ms-bug-bottom: #15171d;
+  --ms-glass: rgba(26, 28, 36, 0.88);
+  --ms-scrim: rgba(10, 11, 15, 0.72);
+  --ms-ink: #f2f3f5;
+  --ms-soft: #c4c8d2;
+  --ms-mute: #9aa0ae;
+  --ms-white: #ffffff;
+  --ms-white-55: rgba(255, 255, 255, 0.55);
+  --ms-white-22: rgba(255, 255, 255, 0.22);
+  --ms-white-05: rgba(255, 255, 255, 0.05);
+  --ms-line-strong: rgba(255, 255, 255, 0.14);
+  --ms-line: rgba(255, 255, 255, 0.12);
+  --ms-line-soft: rgba(255, 255, 255, 0.1);
+  --ms-line-faint: rgba(255, 255, 255, 0.08);
+  --ms-highlight: rgba(255, 255, 255, 0.06);
+  --ms-shade: rgba(0, 0, 0, 0.35);
+  --ms-shadow: rgba(0, 0, 0, 0.45);
+  --ms-team-a: #06d0f9;
+  --ms-team-b: #eb47b4;
+  --ms-green: #00a76f;
+  --ms-green-text: #2fd39b;
+  --ms-green-90: rgba(0, 167, 111, 0.9);
+  --ms-green-50: rgba(0, 167, 111, 0.5);
+  --ms-green-40: rgba(0, 167, 111, 0.4);
+  --ms-green-16: rgba(0, 167, 111, 0.16);
+  --ms-lime: #c6ff3a; // Scor3 logo yeşili (koyu zeminde vurgu)
+  --ms-lime-strong: #5c8a00; // açık zeminde okunur lime
+  --ms-gold: #f5b301;
+
   // Canlı gösterge
   --color-live: #ef4444;
   // Beyaz yazılı DOLU canlı rozetleri (dakika rozeti, "Canlı" sayısı): #ef4444 üstünde beyaz 3.8:1 kalıyordu → 4.8:1.

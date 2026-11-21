@@ -91,7 +91,7 @@
 
 .title {
   margin: 0;
-  font-size: 30px;
+  font-size: calc(var(--fs-title) * 2);
   font-weight: 800;
   letter-spacing: -0.02em;
   line-height: 1.1;
@@ -140,7 +140,7 @@
 
 // Kadro: portreli yatay seçici. Seçili kart öne çıkar (portre kartın üstünden taşar, lime halka); dar ekranda kayar.
 .roster {
-  --ms-lime: #c6ff3a;
+  --ms-accent: var(--ms-lime);
   display: flex;
   gap: var(--space-2);
   overflow-x: auto;
@@ -155,7 +155,7 @@
   }
 
   :global([data-theme='light']) & {
-    --ms-lime: #5c8a00;
+    --ms-accent: var(--ms-lime-strong);
   }
 }
 
@@ -181,8 +181,8 @@
 
   &[aria-pressed='true'] {
     flex-basis: 124px;
-    border-color: var(--ms-lime);
-    box-shadow: 0 0 0 1px var(--ms-lime);
+    border-color: var(--ms-accent);
+    box-shadow: 0 0 0 1px var(--ms-accent);
     transform: translateY(-4px);
 
     .rosterName {
@@ -190,7 +190,7 @@
     }
 
     .rosterNo {
-      color: var(--ms-lime);
+      color: var(--ms-accent);
     }
   }
 
@@ -210,7 +210,7 @@
   }
 
   &:focus-visible {
-    outline: 2px solid var(--ms-lime);
+    outline: 2px solid var(--ms-accent);
     outline-offset: 3px;
   }
 
@@ -235,7 +235,7 @@
     height: 100%;
     max-width: 100%;
     object-fit: contain;
-    filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.35));
+    filter: drop-shadow(0 6px 10px var(--ms-shade));
   }
 
   .rosterCard[aria-pressed='true'] & {
@@ -434,8 +434,8 @@
   left: 0;
   z-index: 2000;
   transform-origin: 0 0;
-  background: #0f1015;
-  color: #f2f3f5;
+  background: var(--ms-night);
+  color: var(--ms-ink);
   overflow: hidden;
   touch-action: none;
   user-select: none;
@@ -467,9 +467,9 @@
   height: var(--bug-h);
   border-radius: 12px;
   overflow: hidden;
-  background: linear-gradient(180deg, #23262f 0%, #15171d 100%);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  background: linear-gradient(180deg, var(--ms-bug-top) 0%, var(--ms-bug-bottom) 100%);
+  border: 1px solid var(--ms-line);
+  box-shadow: 0 8px 24px var(--ms-shadow), inset 0 1px 0 var(--ms-highlight);
   font-variant-numeric: tabular-nums;
 }
 
@@ -481,16 +481,16 @@
   font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #0f1015;
+  color: var(--ms-night);
   white-space: nowrap;
 }
 
 .teamA {
-  background: #06d0f9;
+  background: var(--ms-team-a);
 }
 
 .teamB {
-  background: #eb47b4;
+  background: var(--ms-team-b);
 }
 
 .score {
@@ -501,7 +501,7 @@
   font-size: calc(var(--bug-h) * 0.62);
   font-weight: 800;
   line-height: 1;
-  color: #f2f3f5;
+  color: var(--ms-ink);
 }
 
 .clock {
@@ -509,17 +509,17 @@
   place-items: center;
   min-width: calc(var(--bug-h) * 1.25);
   padding: 0 calc(var(--bug-h) * 0.18);
-  background: rgba(0, 0, 0, 0.35);
-  border-left: 1px solid rgba(255, 255, 255, 0.08);
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--ms-shade);
+  border-left: 1px solid var(--ms-line-faint);
+  border-right: 1px solid var(--ms-line-faint);
   font-size: calc(var(--bug-h) * 0.32);
   font-weight: 700;
-  color: #c6ff3a;
+  color: var(--ms-lime);
   white-space: nowrap;
 }
 
 .golden {
-  color: #f5b301;
+  color: var(--ms-gold);
   font-size: calc(var(--bug-h) * 0.24);
   letter-spacing: 0.04em;
 }
@@ -532,8 +532,8 @@
   width: 104px;
   height: 104px;
   border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.22);
-  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid var(--ms-white-22);
+  background: var(--ms-white-05);
   display: grid;
   place-items: center;
   pointer-events: none;
@@ -542,7 +542,7 @@
     width: 44px;
     height: 44px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.22);
+    background: var(--ms-white-22);
   }
 }
 
@@ -553,9 +553,9 @@
   width: 40px;
   height: 40px;
   border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(26, 28, 36, 0.88);
-  color: #f2f3f5;
+  border: 1px solid var(--ms-line);
+  background: var(--ms-glass);
+  color: var(--ms-ink);
   font-weight: 800;
   cursor: pointer;
 }
@@ -567,17 +567,17 @@
   width: 84px;
   height: 84px;
   border-radius: 50%;
-  border: 3px solid rgba(255, 255, 255, 0.55);
-  background: rgba(0, 167, 111, 0.4);
-  color: #ffffff;
-  font-size: 16px;
+  border: 3px solid var(--ms-white-55);
+  background: var(--ms-green-40);
+  color: var(--ms-white);
+  font-size: var(--fs-title);
   font-weight: 800;
   letter-spacing: 0.04em;
   touch-action: none;
 }
 
 .kickOn {
-  background: rgba(0, 167, 111, 0.9);
+  background: var(--ms-green-90);
   transform: scale(0.94);
 }
 
@@ -591,16 +591,23 @@
   gap: 8px;
   padding: 3px 12px 3px 3px;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(26, 28, 36, 0.88);
+  border: 1px solid var(--ms-line-soft);
+  background: var(--ms-glass);
   pointer-events: none;
+}
+
+// dar sahnede (masaüstünde dar pencere) panel skor tabelasının altına iner, üst üste binmesin
+@container (max-width: 760px) {
+  .mePanel {
+    top: calc(max(8px, env(safe-area-inset-top, 0px)) + clamp(38px, 7.2cqh, 58px) + 8px);
+  }
 }
 
 .meFace {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: #06d0f9;
+  background: var(--ms-team-a);
   object-fit: cover;
 }
 
@@ -611,14 +618,14 @@
 }
 
 .meName {
-  font-size: 13px;
+  font-size: var(--fs-meta);
   font-weight: 700;
 }
 
 .meNo {
-  font-size: 11px;
+  font-size: var(--fs-micro);
   font-weight: 600;
-  color: #9aa0ae;
+  color: var(--ms-mute);
   font-variant-numeric: tabular-nums;
 }
 
@@ -633,8 +640,8 @@
   gap: 10px;
   padding: 4px 16px 4px 4px;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(15, 16, 21, 0.9);
+  border: 1px solid var(--ms-line);
+  background: var(--ms-night-92);
   pointer-events: none;
   transform: translateX(-50%);
   animation: toastIn 0.28s cubic-bezier(0.2, 1.4, 0.4, 1);
@@ -649,36 +656,36 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: #06d0f9;
+  background: var(--ms-team-a);
   object-fit: cover;
-  box-shadow: 0 0 0 2px #06d0f9;
+  box-shadow: 0 0 0 2px var(--ms-team-a);
 }
 
 .toastFaceB {
-  background: #eb47b4;
-  box-shadow: 0 0 0 2px #eb47b4;
+  background: var(--ms-team-b);
+  box-shadow: 0 0 0 2px var(--ms-team-b);
 }
 
 .toastName {
-  font-size: 15px;
+  font-size: var(--fs-section);
   font-weight: 700;
-  color: #f5b301;
+  color: var(--ms-gold);
 
   .toastFace + & {
-    color: #f2f3f5;
+    color: var(--ms-ink);
   }
 }
 
 .toastGoalA,
 .toastGoalB {
-  font-size: 18px;
+  font-size: calc(var(--fs-title) * 1.125);
   font-weight: 800;
   letter-spacing: -0.01em;
-  color: #06d0f9;
+  color: var(--ms-team-a);
 }
 
 .toastGoalB {
-  color: #eb47b4;
+  color: var(--ms-team-b);
 }
 
 @keyframes toastIn {
@@ -699,7 +706,7 @@
   display: grid;
   place-items: center;
   padding: 16px;
-  background: rgba(10, 11, 15, 0.72);
+  background: var(--ms-scrim);
   backdrop-filter: blur(3px);
 }
 
@@ -708,8 +715,8 @@
   max-width: 380px;
   padding: 20px;
   border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: #1a1c24;
+  border: 1px solid var(--ms-line-soft);
+  background: var(--ms-panel);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -718,14 +725,14 @@
 
   h2 {
     margin: 0;
-    font-size: 24px;
+    font-size: calc(var(--fs-title) * 1.5);
     font-weight: 800;
   }
 }
 
 .modalKicker {
   margin: 0;
-  font-size: 22px;
+  font-size: calc(var(--fs-title) * 1.375);
   font-weight: 800;
 }
 
@@ -733,7 +740,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  font-size: 44px;
+  font-size: calc(var(--fs-score) * 1.2);
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   line-height: 1;
@@ -751,12 +758,12 @@
   gap: 2px;
   padding: 10px 14px;
   border-radius: 12px;
-  background: rgba(0, 167, 111, 0.16);
-  border: 1px solid rgba(0, 167, 111, 0.5);
-  font-size: 14px;
+  background: var(--ms-green-16);
+  border: 1px solid var(--ms-green-50);
+  font-size: var(--fs-body);
 
   strong {
-    color: #2fd39b;
+    color: var(--ms-green-text);
   }
 }
 
@@ -771,7 +778,7 @@
     min-height: 44px;
     border-radius: 11px;
     font: inherit;
-    font-size: 15px;
+    font-size: var(--fs-section);
     font-weight: 700;
     cursor: pointer;
   }
@@ -779,38 +786,38 @@
 
 .primary {
   border: 0;
-  background: #00a76f;
-  color: #ffffff;
+  background: var(--ms-green);
+  color: var(--ms-white);
 }
 
 .secondary {
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: #232632;
-  color: #f2f3f5;
+  border: 1px solid var(--ms-line-strong);
+  background: var(--ms-panel-2);
+  color: var(--ms-ink);
 }
 
 .linkBtn {
   border: 0;
   background: none;
-  color: #9aa0ae;
+  color: var(--ms-mute);
   font: inherit;
-  font-size: 13px;
+  font-size: var(--fs-meta);
   cursor: pointer;
 }
 
 // ── Online maç ekranları (OnlinePanel) ─────────────────────────────────────
 .modalText {
   margin: 0;
-  font-size: 14px;
+  font-size: var(--fs-body);
   line-height: 1.5;
-  color: #c4c8d2;
+  color: var(--ms-soft);
 }
 
 .code {
-  font-size: 34px;
+  font-size: calc(var(--fs-score) * 0.95);
   font-weight: 800;
   letter-spacing: 0.18em;
-  color: #c6ff3a;
+  color: var(--ms-lime);
   font-variant-numeric: tabular-nums;
 }
 
@@ -819,11 +826,11 @@
   min-width: 0;
   padding: 10px 12px;
   border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: #0f1015;
-  color: #f2f3f5;
+  border: 1px solid var(--ms-line-strong);
+  background: var(--ms-night);
+  color: var(--ms-ink);
   font: inherit;
-  font-size: 13px;
+  font-size: var(--fs-meta);
   text-align: center;
 }
 
@@ -839,10 +846,10 @@
   transform: translateX(-50%);
   padding: 8px 16px;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(15, 16, 21, 0.92);
-  color: #f2f3f5;
-  font-size: 14px;
+  border: 1px solid var(--ms-line);
+  background: var(--ms-night-92);
+  color: var(--ms-ink);
+  font-size: var(--fs-body);
   font-weight: 600;
   white-space: nowrap;
   pointer-events: none;
@@ -858,8 +865,8 @@
   span {
     font-size: clamp(64px, 22cqh, 160px);
     font-weight: 800;
-    color: #c6ff3a;
-    text-shadow: 0 6px 0 rgba(0, 0, 0, 0.35);
+    color: var(--ms-lime);
+    text-shadow: 0 6px 0 var(--ms-shade);
     animation: toastIn 0.3s ease-out;
 
     @media (prefers-reduced-motion: reduce) {
