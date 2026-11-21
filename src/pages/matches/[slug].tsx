@@ -24,6 +24,8 @@ import { standingsGroupHeading } from '@/components/MatchCompetitionStandings/gr
 import { leagueNameById } from '@/utils/leagueName';
 import { resolveMatchPage } from '@/server/resolveMatchPage';
 import { loadAnalysisPreviewForPage, loadPostMatchAnalysisForPage, type PostMatchAnalysisText } from '@/server/analysisPreviewForPage';
+import { loadMatchStandingsLine } from '@/server/matchStandingsLine';
+import { standingsSentence, type MatchStandingsLine } from '@/utils/matchStandingsLine';
 import type { AnalysisPreview } from '@/utils/analysisPreview';
 import { analysisPaywallJsonLd } from '@/utils/analysisPaywall';
 import { defaultMatchPageOptionalDeps, loadMatchPageOptionalSections } from '@/server/matchPageOptional';
@@ -75,6 +77,8 @@ type MatchDetailProps = {
   initialAnalysisPreview?: AnalysisPreview;
   /** Biten maç: maç öncesi AI analizinin herkese açık özeti (SSR HTML; "Maç bilgisi" bölümünde). */
   postMatchAnalysis?: PostMatchAnalysisText;
+  /** İki takımın güncel lig sırası (SSR, yalnız önbellekten; yoksa alan yok). */
+  standingsLine?: MatchStandingsLine;
   /** Maç tahmin oyununun bu haftaki / bugünkü listesinde ve başlamamış (oyun herkese açıkken) → "skorunu tahmin et" kartı. */
   gameSlot?: GameSlot;
 };
@@ -153,7 +157,7 @@ export const getServerSideProps: GetServerSideProps<MatchDetailProps> = async (c
         // İstatistik/kadro maçı çözen aynı `fixtures/{id}` yanıtında geldiyse (normal yol) ek istek yok ve baskıda da verilir;
         // hafif bot sürümünde yok.
         const pageSeed = page.stats !== undefined && page.lineups !== undefined ? { stats: page.stats, lineups: page.lineups } : null;
-        const [optional, analysisPreview, gameSlot, postAnalysis] = await Promise.all([
+        const [optional, analysisPreview, gameSlot, postAnalysis, standingsLine] = await Promise.all([
           loadMatchPageOptionalSections(page.match, apiMatchId, {
             ...defaultMatchPageOptionalDeps,
             // Milli maçta H2H / form yok (takım id'leri AF uzayında; Sportmonks'a gidilmez) → "veri yok".
@@ -174,6 +178,8 @@ export const getServerSideProps: GetServerSideProps<MatchDetailProps> = async (c
           lightBot ? Promise.resolve(null) : loadGameSlotForFixture(apiMatchId),
           // Biten maç: analiz herkese açık → kalıcı metin HTML'de (tek DB sorgusu; SEO/GEO).
           page.match.status === 'FINISHED' ? loadPostMatchAnalysisForPage(apiMatchId) : Promise.resolve(null),
+          // "Maç bilgisi" puan durumu satırı: lig tablosu yalnız önbellekten (yeni Sportmonks isteği yok).
+          loadMatchStandingsLine(page.match),
         ]);
         const { h2h } = optional;
         const transientError = optional.transientError || page.partial === true;
@@ -197,6 +203,7 @@ export const getServerSideProps: GetServerSideProps<MatchDetailProps> = async (c
             ...(seed.lineups === null ? { initialLineups: null } : {}),
             ...(analysisPreview ? { initialAnalysisPreview: analysisPreview } : {}),
             ...(postAnalysis ? { postMatchAnalysis: postAnalysis } : {}),
+            ...(standingsLine ? { standingsLine } : {}),
             ...(gameSlot ? { gameSlot } : {}),
           },
         };
@@ -229,6 +236,7 @@ export default function MatchDetail({
   archived = false,
   initialAnalysisPreview,
   postMatchAnalysis,
+  standingsLine,
   gameSlot,
 }: MatchDetailProps) {
   const router = useRouter();
@@ -534,6 +542,19 @@ export default function MatchDetail({
                       </>
                     ) : null}
                   </p>
+                  {standingsLine && standingsSentence(standingsLine) ? (
+                    <p className={styles.seoSummaryText}>
+                      {standingsSentence(standingsLine)}
+                      {standingsLine.leagueHref ? (
+                        <>
+                          {' '}
+                          <Link href={standingsLine.leagueHref} prefetch={false}>
+                            {standingsLine.leagueName} puan durumu →
+                          </Link>
+                        </>
+                      ) : null}
+                    </p>
+                  ) : null}
                   {postMatchAnalysis && match?.status === 'FINISHED' ? (
                     <>
                       <h3 className={styles.seoSummaryTitle}>Maç öncesi yapay zekâ analizi</h3>
