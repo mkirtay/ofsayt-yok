@@ -38,14 +38,14 @@ describe('ana sayfa split-view yükseklik mimarisi (MatchDetailPanel modeli)', (
     expect(hub).not.toMatch(/hubGridWithRight|bp-widget|hub-right/);
   });
 
-  it('idle Gündem: ≥$bp-gundem-panel\'de liste + Gündem aynı sabit yükseklikte (hizalı), ikisi de kendi içinde kayar; sidebar/hubGridWithPanel etkilenmez', () => {
+  it('idle Gündem: ≥$bp-gundem-panel\'de liste + Gündem aynı sabit yükseklikte (hizalı), ikisi de kendi içinde kayar; sol panel de aynı yükseklikte kendi içinde kayar (uzun kupon kartı sayfayı kaydırmaz); hubGridWithPanel etkilenmez', () => {
     const idle = noComments(hub.slice(hub.indexOf('@media (min-width: $bp-gundem-panel)')));
     expect(idle).toMatch(/\.hubGridWithGundem \.hubMain\s*\{[^}]*height:\s*\$hub-fill-height/);
     expect(idle).toMatch(/\.hubList\s*\{[^}]*height:\s*100%[^}]*overflow-y:\s*auto/);
     expect(idle).toMatch(/\.hubGundem\s*\{[^}]*height:\s*100%[^}]*overflow-y:\s*auto/);
     expect(idle).not.toMatch(/position:\s*sticky/);
     expect(idle).not.toContain('hubGridWithPanel');
-    expect(idle).not.toContain('hubSidebar'); // sol panel mevcut davranışında
+    expect(idle).toMatch(/\.hubGridWithGundem \.hubSidebar\s*\{[^}]*height:\s*\$hub-fill-height[^}]*overflow-y:\s*auto/);
   });
 
   it('geniş ekran: kap en fazla 1440 px ve ortalı (daha genişte düzen 1440\'taki gibi); Gündem sabit 360 px', () => {

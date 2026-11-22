@@ -76,6 +76,9 @@
   --color-premium-strong: #d99a00;
   --color-on-premium: #1a1300;
 
+  // Tam sayfa katmanların (ör. kupon kartı tam sayfa) arka plan karartması
+  --overlay-scrim: rgba(0, 0, 0, 0.55);
+
   // Mini Saha oyun sahnesi (components/MiniSaha) — her temada koyu stadyum; takım renkleri compare-a/b ile aynı.
   --ms-night: #0f1015;
   --ms-night-92: rgba(15, 16, 21, 0.92);
