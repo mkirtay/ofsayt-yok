@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import styles from './webPush.module.scss';
 import DigestOptIn from './DigestOptIn';
+import { trackGrowth } from '@/lib/growthEvents';
 
 /**
  * Favori takım bildirimleri (büyüme raporu 3.1) + ana ekrana ekle (3.2). Profil › Favorilerim'in üstünde.
@@ -53,6 +54,7 @@ export default function WebPushPanel() {
       const sub = (await reg.pushManager.getSubscription()) ?? (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(VAPID) as BufferSource }));
       const res = await fetch('/api/push/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token: JSON.stringify(sub), platform: 'web' }) });
       setState(res.ok ? 'on' : 'off');
+      if (res.ok) trackGrowth('push_enable', {});
     } catch {
       setState('off');
     } finally {

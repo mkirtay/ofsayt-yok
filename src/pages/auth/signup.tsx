@@ -18,6 +18,7 @@ import { useTurnstile } from '@/hooks/useTurnstile'
 import { PRIVACY_PATH, TERMS_PATH } from '@/config/legalConsent'
 import styles from './auth.module.scss'
 import { clearReferralCookie, readReferralCookie } from '@/lib/referralClient'
+import { trackGrowth } from '@/lib/growthEvents'
 
 export default function SignUpPage({ googleEnabled }: { googleEnabled: boolean }) {
   const router = useRouter()
@@ -70,6 +71,7 @@ export default function SignUpPage({ googleEnabled }: { googleEnabled: boolean }
       }),
     })
     if (res.ok) {
+      trackGrowth('sign_up', { method: 'password' })
       clearReferralCookie()
       markSessionAttributionSent()
       // Meta Pixel CompleteRegistration (onay varsa; ?email= içeren doğrulama sayfasında değil, sonraki sayfada gider)

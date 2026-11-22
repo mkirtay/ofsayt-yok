@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from '@/lib/i18n';
 import styles from './profile.module.scss';
+import { trackGrowth } from '@/lib/growthEvents';
 
 type Referral = { code: string; url: string; invited: number; rewarded: number; rewardActive: boolean; bonus: number };
 
@@ -28,6 +29,7 @@ export default function InviteTab() {
   const text = data ? t('invite.shareText', { url: data.url }) : '';
   const copy = async () => {
     if (!data) return;
+    trackGrowth('invite_share', { channel: 'copy' });
     try {
       await navigator.clipboard.writeText(data.url);
       setCopied(true);
@@ -58,7 +60,7 @@ export default function InviteTab() {
             <button type="button" className={styles.submit} onClick={() => void copy()}>
               {copied ? t('invite.copied') : t('invite.copy')}
             </button>
-            <a className={styles.secondaryBtn} href={`https://wa.me/?text=${encodeURIComponent(text)}`} target="_blank" rel="noopener noreferrer">
+            <a className={styles.secondaryBtn} href={`https://wa.me/?text=${encodeURIComponent(text)}`} target="_blank" rel="noopener noreferrer" onClick={() => trackGrowth('invite_share', { channel: 'whatsapp' })}>
               {t('invite.whatsapp')}
             </a>
           </div>

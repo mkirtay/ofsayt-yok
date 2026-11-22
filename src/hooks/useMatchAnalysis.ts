@@ -6,6 +6,7 @@ import { analysisIsFree } from '@/lib/userRole';
 import type { ApiAnalysis, ApiPredictionRecord } from '@/components/MatchAnalysis/types';
 import type { AnalysisPreview } from '@/utils/analysisPreview';
 import { pollUntilReady } from '@/hooks/analysisInProgressPoll';
+import { trackGrowth } from '@/lib/growthEvents';
 
 export const ANALYSIS_COST = 1; // = ANALYSIS_UNLOCK_COST (lib/analysisUnlock.ts; istemci paketine sunucu modülü girmesin)
 
@@ -203,6 +204,7 @@ export function useMatchAnalysis(
         return;
       }
       setAnalysis(body.analysis as ApiAnalysis);
+      trackGrowth('analysis_unlock', { method });
       setPredictionRecord((body.predictionRecord as ApiPredictionRecord) ?? null);
       setPreview(null);
       setOffer(null);

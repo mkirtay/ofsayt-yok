@@ -10,6 +10,7 @@ import { MAX_GOALS } from '@/lib/game/scoring';
 import type { DistributionView, GameDayView, GameMatchView, GameWeekView, MyDayView, MyPredictionView, MyStandingView, MyWeekView, SaveResult } from '@/lib/game/types';
 import { formatDayLabel, formatKickoff, formatLeft, weekNumber } from './format';
 import styles from './game.module.scss';
+import { trackGrowth } from '@/lib/growthEvents';
 
 type Pick = { home: number | null; away: number | null };
 type Draft = Record<string, Pick>;
@@ -253,6 +254,7 @@ export default function WeekPlay({
       }
       writeDraft(roundKey, null);
       applyMe(data.me);
+      trackGrowth('prediction_submit', { scope: 'week' });
       const partial = data.items?.some((i) => !i.ok);
       const jokerFail = data.joker && !data.joker.ok;
       setStatus(partial ? { tone: 'error', text: t('week.partial') } : jokerFail ? { tone: 'error', text: t('week.jokerLocked') } : { tone: 'ok', text: t('week.saved') });

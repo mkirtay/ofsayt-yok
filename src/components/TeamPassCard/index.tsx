@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
 import styles from './teamPassCard.module.scss';
+import { trackGrowth } from '@/lib/growthEvents';
 
 type Info = { cost: number; season: string; passes: { teamId: number }[] };
 
@@ -35,6 +36,7 @@ export default function TeamPassCard({ teamId, teamName }: { teamId: number; tea
       const res = await fetch('/api/credits/team-pass', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ teamId }) });
       const body = await res.json().catch(() => ({}));
       if (res.ok) {
+        trackGrowth('team_pass_purchase', { cost: Number(body.cost) || 0 });
         setInfo((i) => (i ? { ...i, passes: [...i.passes, { teamId }] } : i));
         setMsg({ tone: 'ok', text: `${teamName} sezon paketi açıldı. Bu sezonun hazır AI analizleri artık sana açık.` });
       } else setMsg({ tone: 'err', text: body.error ?? 'Bir sorun oluştu.', buy: body.code === 'INSUFFICIENT_CREDITS' });

@@ -9,6 +9,7 @@ import { useSession } from 'next-auth/react';
 import { GAME_BRAND } from '@/config/brand';
 import { siteBaseUrl } from '@/lib/siteUrl';
 import styles from './leagues.module.scss';
+import { trackGrowth } from '@/lib/growthEvents';
 
 type Summary = { id: string; name: string; code: string; owner: boolean; members: number };
 type Row = { userId: string; nickname: string; points: number; exact: number; direction: number };
@@ -74,6 +75,7 @@ export function MyLeagues() {
     const r = await call<{ league: Summary }>('/api/game/leagues', { method: 'POST', body: JSON.stringify({ name }) });
     setBusy(false);
     if (!r.ok) return setError(r.error);
+    trackGrowth('league_create', {});
     void router.push(leaguePath(r.data.league.code));
   };
   const join = async (e: React.FormEvent) => {
@@ -83,6 +85,7 @@ export function MyLeagues() {
     const r = await call<{ league: Summary }>('/api/game/leagues/join', { method: 'POST', body: JSON.stringify({ code }) });
     setBusy(false);
     if (!r.ok) return setError(r.error);
+    trackGrowth('league_join', {});
     void router.push(leaguePath(r.data.league.code));
   };
 
@@ -190,6 +193,7 @@ export function LeagueView({ code }: { code: string }) {
   const url = `${siteBaseUrl()}${leaguePath(view.code)}`;
   const text = inviteText(view.name, url);
   const share = async () => {
+    trackGrowth('invite_share', { channel: 'league_share' });
     try {
       if (navigator.share) {
         await navigator.share({ title: view.name, text: inviteText(view.name, '').trim(), url });
@@ -227,7 +231,7 @@ export function LeagueView({ code }: { code: string }) {
           Davet kodu: <strong className={styles.code}>{view.code}</strong>
         </p>
         <div className={styles.actions}>
-          <a className={styles.btnWa} href={`https://wa.me/?text=${encodeURIComponent(text)}`} target="_blank" rel="noopener noreferrer">
+          <a className={styles.btnWa} href={`https://wa.me/?text=${encodeURIComponent(text)}`} target="_blank" rel="noopener noreferrer" onClick={() => trackGrowth('invite_share', { channel: 'league_whatsapp' })}>
             WhatsApp ile davet et
           </a>
           <button type="button" className={styles.btnGhost} onClick={() => void share()}>
