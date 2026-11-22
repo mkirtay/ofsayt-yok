@@ -17,6 +17,7 @@ import { useRedirectIfSignedIn } from '@/hooks/useRedirectIfSignedIn'
 import { useTurnstile } from '@/hooks/useTurnstile'
 import { PRIVACY_PATH, TERMS_PATH } from '@/config/legalConsent'
 import styles from './auth.module.scss'
+import { clearReferralCookie, readReferralCookie } from '@/lib/referralClient'
 
 export default function SignUpPage({ googleEnabled }: { googleEnabled: boolean }) {
   const router = useRouter()
@@ -64,9 +65,12 @@ export default function SignUpPage({ googleEnabled }: { googleEnabled: boolean }
         acceptedTerms,
         // Kayıt kaynağı (ilk temas) — yalnız bu tarayıcı oturumunda tutulan utm_* (bkz. signupAttributionClient.ts)
         attribution: readSessionAttribution() ?? undefined,
+        // Davet linkinden geldiyse (/davet/{kod} → çerez); geçersizse sunucu yok sayar (lib/referral.ts).
+        referralCode: readReferralCookie() ?? undefined,
       }),
     })
     if (res.ok) {
+      clearReferralCookie()
       markSessionAttributionSent()
       // Meta Pixel CompleteRegistration (onay varsa; ?email= içeren doğrulama sayfasında değil, sonraki sayfada gider)
       markRegistrationCompleted()

@@ -111,3 +111,40 @@ export async function grantReferralRewardOnFirstPurchase(
     throw e;
   }
 }
+
+/**
+ * Büyüme raporu 2.3 — davet ödülünün ETKİNLEŞTİRME yolu (ödeme açılmadan önce viral döngü için). VARSAYILAN KAPALI:
+ * `REFERRAL_ACTIVATION_REWARD_ENABLED=true` verilmedikçe hiçbir şey yapmaz (ödüllü kampanya / tüketici mevzuatı için
+ * hukuki görüş bekleniyor). Koşul: davet edilenin e-postası doğrulanmış ve Tahmin Ligi'nde ilk tahminini yapmış olması
+ * (çağıran: server/game/play.ts). Ödül ve tavanlar ilk satın alma yoluyla aynı (bir kez, davet eden için aylık tavan).
+ */
+export function referralActivationEnabled(): boolean {
+  return process.env.REFERRAL_ACTIVATION_REWARD_ENABLED === 'true';
+}
+
+export async function grantReferralActivationReward(
+  refereeId: string,
+  now: number = Date.now(),
+): Promise<{ referee: boolean; referrer: boolean } | null> {
+  if (!referralActivationEnabled()) return null;
+  const user = await prisma.user.findUnique({ where: { id: refereeId }, select: { emailVerified: true, referredById: true } });
+  if (!user?.emailVerified || !user.referredById) return null;
+  return grantReferralRewardOnFirstPurchase(refereeId, now);
+}
+
+/** Yeni hesap (Google ile kayıt dahil) davet kodunu sonradan bağlayabilir: yalnız ilk 48 saatte ve henüz bağlı değilse. */
+export const REFERRAL_CLAIM_WINDOW_MS = 48 * 3600_000;
+export async function claimReferralForNewUser(userId: string, rawCode: unknown, now: number = Date.now()): Promise<boolean> {
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { createdAt: true, referredById: true } });
+  if (!user || user.referredById || now - user.createdAt.getTime() > REFERRAL_CLAIM_WINDOW_MS) return false;
+  return recordReferral(userId, rawCode);
+}
+
+/** Davet istatistiği (profil kartı): davet ettiğim kişi sayısı ve ödül alan. */
+export async function referralStats(userId: string): Promise<{ invited: number; rewarded: number }> {
+  const [invited, rewarded] = await Promise.all([
+    prisma.referral.count({ where: { referrerId: userId } }),
+    prisma.referral.count({ where: { referrerId: userId, rewardedAt: { not: null } } }),
+  ]);
+  return { invited, rewarded };
+}

@@ -17,6 +17,7 @@ import TermsConsentGate from '@/components/TermsConsentGate'
 import '@/styles/globals.scss'
 import AppDefaultHead from '@/components/AppDefaultHead'
 import { reportWebVitalToGa } from '@/lib/webVitals'
+import ReferralCapture from '@/components/ReferralCapture'
 
 /**
  * Inter (v4.001, wght 400–900) iki parça — üretim: scripts/fonts/subset-inter.sh. Aynı aile adı, ayrı unicode-range:
@@ -73,6 +74,7 @@ function App({ Component, pageProps: { session, ...pageProps } }: AppProps) {
       <div data-app-root className={`${inter.className} ${inter.variable} ${interExt.variable}`}>
         <RouteProgress />
         <SignupAttributionSync />
+        <ReferralCapture />
         <TermsConsentGate />
         <Layout>
           <Component {...pageProps} />

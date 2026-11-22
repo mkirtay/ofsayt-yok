@@ -775,3 +775,31 @@ a.favLink:hover .favName {
     cursor: default;
   }
 }
+
+// Davet et sekmesi (büyüme raporu 2.3): yan yana iki düğme, ikincisi çerçeveli (aynı yükseklik).
+.inviteActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-2;
+  margin-top: $spacing-3;
+}
+
+.secondaryBtn {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 20px;
+  font-size: var(--fs-body);
+  font-weight: 600;
+  font-family: $font-family;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
+  background: transparent;
+  color: $color-text;
+  text-decoration: none;
+  transition: $transition-base;
+
+  &:hover {
+    border-color: $color-primary;
+    color: $color-primary-text;
+  }
+}

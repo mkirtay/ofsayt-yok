@@ -85,3 +85,46 @@ describe('davet altyapısı', () => {
     expect(offenders).toEqual([]);
   });
 });
+
+describe('davet — etkinleştirme ödülü ve sonradan bağlama (büyüme raporu 2.3)', () => {
+  it('bayrak kapalıyken ödül yok; açıkken doğrulanmış + davetli kullanıcıya bir kez', async () => {
+    const { grantReferralActivationReward } = await import('./referral');
+    db.addUser('a', 0);
+    db.addUser('b', 0, 'USER', { emailVerified: new Date() });
+    await recordReferral('b', await ensureReferralCode('a'));
+    delete process.env.REFERRAL_ACTIVATION_REWARD_ENABLED;
+    expect(await grantReferralActivationReward('b')).toBeNull();
+    process.env.REFERRAL_ACTIVATION_REWARD_ENABLED = 'true';
+    try {
+      expect(await grantReferralActivationReward('b')).toEqual({ referee: true, referrer: true });
+      expect(await grantReferralActivationReward('b')).toBeNull();
+      expect([db.balance('a'), db.balance('b')]).toEqual([2, 2]);
+    } finally {
+      delete process.env.REFERRAL_ACTIVATION_REWARD_ENABLED;
+    }
+  });
+
+  it('e-postası doğrulanmamış davetliye ödül yok', async () => {
+    const { grantReferralActivationReward } = await import('./referral');
+    db.addUser('a', 0);
+    db.addUser('b', 0, 'USER', { emailVerified: null });
+    await recordReferral('b', await ensureReferralCode('a'));
+    process.env.REFERRAL_ACTIVATION_REWARD_ENABLED = 'true';
+    try {
+      expect(await grantReferralActivationReward('b')).toBeNull();
+    } finally {
+      delete process.env.REFERRAL_ACTIVATION_REWARD_ENABLED;
+    }
+  });
+
+  it('Google ile yeni hesap: 48 saat içinde ve bağlı değilse bağlanır; eski hesap bağlanmaz', async () => {
+    const { claimReferralForNewUser } = await import('./referral');
+    db.addUser('a', 0);
+    db.addUser('yeni', 0, 'USER', { createdAt: new Date() });
+    db.addUser('eski', 0, 'USER', { createdAt: new Date(Date.now() - 3 * 86_400_000) });
+    const code = await ensureReferralCode('a');
+    expect(await claimReferralForNewUser('eski', code)).toBe(false);
+    expect(await claimReferralForNewUser('yeni', code)).toBe(true);
+    expect(await claimReferralForNewUser('yeni', code)).toBe(false);
+  });
+});

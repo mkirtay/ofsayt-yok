@@ -38,6 +38,8 @@ import { weekStreak } from '@/lib/game/week';
 import { listPublicWeekKeys, resolveCurrentWeekKey } from '@/server/game/weeks';
 import { listPublicDayKeys, todayKey } from '@/server/game/days';
 import type { BoardEntryView, BoardScope, DaySaveResult, DistributionView, LeaderboardView, MyDayView, MyStandingView, MyWeekView, SaveItemResult, SaveResult } from '@/lib/game/types';
+import { captureError } from '@/lib/logger';
+import { grantReferralActivationReward, referralActivationEnabled } from '@/lib/referral';
 
 export const LEADERBOARD_CACHE_SECONDS = 60;
 export const MAX_ITEMS = 10;
@@ -106,6 +108,15 @@ export async function loadMyWeek(userId: string, weekKey: string): Promise<MyWee
  * Tahminleri ve (verildiyse) jokeri yazar. Kalem başına sonuç: başlamış / iptal / bu haftanın olmayan maç → `LOCKED`.
  * Hafta yayında değilse null.
  */
+/**
+ * Davet ödülü etkinleştirme (büyüme raporu 2.3; bayrak kapalıysa hiçbir şey yapmaz, bkz. lib/referral.ts): tahmin
+ * kaydını bekletmez, hata kaydı bozmaz. Ödül davet başına bir kez (ilk tahmin ya da sonraki ilk uygun an).
+ */
+function rewardReferralActivation(userId: string): void {
+  if (!referralActivationEnabled()) return;
+  void grantReferralActivationReward(userId).catch((e) => captureError('referral-activation', e));
+}
+
 export async function savePredictions(userId: string, weekKey: string, body: SaveBody): Promise<SaveResult | null> {
   const week = await prisma.gameWeek.findUnique({ where: { weekKey }, select: { id: true, status: true } });
   if (!week || week.status !== 'PUBLISHED') return null;
@@ -133,6 +144,7 @@ export async function savePredictions(userId: string, weekKey: string, body: Sav
     }
   }
   if (changed) await raw(touchEntrySql(userId, weekKey));
+  if (changed) rewardReferralActivation(userId);
   return { items, joker, me: (await loadMyWeek(userId, weekKey))! };
 }
 
@@ -177,6 +189,7 @@ export async function saveDayPredictions(userId: string, dayKey: string, body: S
     } else items.push({ gameMatchId: it.gameMatchId, ok: false, code: 'LOCKED' });
   }
   if (changedIds.length) await raw(ensureEntriesForMatchesSql(userId, changedIds));
+  if (changedIds.length) rewardReferralActivation(userId);
   return { items, me: (await loadMyDay(userId, dayKey))! };
 }
 

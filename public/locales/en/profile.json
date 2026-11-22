@@ -33,7 +33,8 @@
     "favorites": "My favorites",
     "credits": "Credit history",
     "analyses": "My analyses",
-    "blocked": "Blocked users"
+    "blocked": "Blocked users",
+    "invite": "Invite"
   },
   "avatar": {
     "title": "Profile picture",
@@ -135,5 +136,18 @@
     "error": "Could not delete the account. Please try again."
   },
   "contentRejected": "This field contains language that breaks our community guidelines. Please change it.",
-  "toastClose": "Dismiss notification"
+  "toastClose": "Dismiss notification",
+  "invite": {
+    "title": "Invite a friend",
+    "intro": "Share your personal invite link; friends who sign up with it appear in your invites. Create a private league in the Prediction League and compete together.",
+    "introReward": "Share your personal invite link. When a friend signs up with it, verifies their email and makes a first Prediction League pick, you both get {{n}} credits.",
+    "linkLabel": "Your invite link",
+    "copy": "Copy link",
+    "copied": "Copied",
+    "whatsapp": "Send on WhatsApp",
+    "shareText": "Scor3 has live scores, AI match analysis and a Prediction League. Sign up with my link: {{url}}",
+    "stats": "Invited: {{invited}} · rewarded: {{rewarded}}",
+    "loading": "Loading…",
+    "error": "Could not load invite info."
+  }
 }

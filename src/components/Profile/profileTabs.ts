@@ -5,6 +5,7 @@ import FavoritesTab from './FavoritesTab';
 import CreditHistoryTab from './CreditHistoryTab';
 import AnalysesTab from './AnalysesTab';
 import BlockedTab from './BlockedTab';
+import InviteTab from './InviteTab';
 
 export type ProfileTabProps = { profile: ProfileDto };
 
@@ -26,6 +27,7 @@ export const PROFILE_TABS: ProfileTabDef[] = [
   { id: 'favorites', labelKey: 'tabs.favorites', Component: FavoritesTab },
   { id: 'credits', labelKey: 'tabs.credits', Component: CreditHistoryTab },
   { id: 'analyses', labelKey: 'tabs.analyses', Component: AnalysesTab },
+  { id: 'invite', labelKey: 'tabs.invite', Component: InviteTab },
   { id: 'blocked', labelKey: 'tabs.blocked', Component: BlockedTab },
 ];
 
