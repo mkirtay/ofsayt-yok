@@ -12,6 +12,7 @@ import { refereeHref } from '@/utils/personUrl';
 import { buildWeekSummary, weekDateRange } from '@/utils/leagueWeekSeo';
 import styles from '../../lig.module.scss';
 import { clampDescription } from '@/utils/seoText';
+import SponsorLine from '@/components/SponsorLine';
 
 type Props = {
   hub: LeagueHub;
@@ -264,6 +265,7 @@ function RefereeReportSection({ hubName, week, fixtures, splits }: { hubName: st
         {hubName} bu sezon, {week}. haftadan önceki maçlar. Ev – dep. sarı: o hakemin maçlarında ev sahibine ve deplasmana
         gösterilen maç başına sarı kart. Ev / ber. / dep.: sonuç dağılımı. Veri: Sportmonks.
       </p>
+      <SponsorLine slot="refereeReport" />
     </section>
   );
 }

@@ -1,0 +1,12 @@
+@use '../../styles/variables' as *;
+
+.line {
+  margin: $spacing-2 0 0;
+  font-size: var(--fs-caption);
+  color: $color-text-secondary;
+
+  a {
+    color: $color-text;
+    font-weight: 600;
+  }
+}

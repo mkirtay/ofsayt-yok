@@ -15,6 +15,7 @@ import { GAME_PAGE_CACHE } from '@/server/game/pageData';
 import { resolveCurrentWeekKey } from '@/server/game/weeks';
 import { loadPublicDay, todayKey } from '@/server/game/days';
 import { gamePageGate } from '@/server/game/access';
+import SponsorLine from '@/components/SponsorLine';
 
 type Props = { weekKey: string | null; season: string; dayKey: string | null; board: LeaderboardView | null; noindex: boolean };
 
@@ -45,6 +46,7 @@ export default function GameBoardPage({ weekKey, season, dayKey, board, noindex 
       </Head>
       <div className={styles.page}>
         <GameNav current="leaderboard" />
+        <SponsorLine slot="predictionLeague" />
         <Leaderboard
           weekKey={weekKey}
           season={season}
