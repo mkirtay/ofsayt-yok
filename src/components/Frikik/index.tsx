@@ -7,6 +7,7 @@ import { LIVES, SIM_VERSION, type ShotResult } from "@/lib/frikik/sim";
 import { dailySeed, dayLabel, turkeyDay } from "@/lib/frikik/daily";
 import { FRIKIK_DAILY_ATTEMPTS } from "@/lib/frikik/leaderboard";
 import { sharePath, type ShareInfo } from "@/lib/frikik/share";
+import { shareGrid } from "@/lib/frikik/shareGrid";
 import { siteBaseUrl } from "@/lib/siteUrl";
 import { entryFromQuery, trackFrikik, type FrikikEntry } from "@/lib/frikik/analytics";
 import { readPendingRun, writeLastRun, writePendingRun, type PendingRun } from "@/lib/frikik/localRun";
@@ -367,10 +368,11 @@ export default function Frikik({ shared }: { shared: ShareInfo | null }) {
     if (!summary) return;
     const dayKey = day != null ? dayLabel(day) : null;
     const url = `${siteBaseUrl()}${sharePath(summary.level, summary.total, dayKey)}`;
-    const text = t("end.shareLevelText", {
+    // Büyüme raporu 2.4: emoji satırı (Wordle tarzı) + soru; bağlantı ayrı (navigator.share url).
+    const text = `${t("end.shareHead", { day: dayKey ?? "", level: summary.level, score: summary.total }).trim()}\n${shareGrid(summary.results)}\n${t("end.shareLevelText", {
       level: summary.level,
       score: summary.total,
-    });
+    })}`;
     try {
       if (navigator.share) {
         await navigator.share({ title: "Frikik", text, url });

@@ -33,6 +33,7 @@
     "levelTitle": "Out of lives",
     "level": "Level {{n}}",
     "levelSummary": "{{cleared}} levels cleared · {{score}} points",
+    "shareHead": "Scor3 Free Kick {{day}} · level {{level}} · {{score}} pts",
     "shareLevelText": "I reached level {{level}} in Frikik with {{score}} points. How far can you get?",
     "copyRun": "Copy run (test)",
     "runCopied": "Run copied to clipboard"
