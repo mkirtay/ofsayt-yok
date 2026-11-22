@@ -18,15 +18,24 @@ describe('<ComboHomeCard />', () => {
       payload: { date: '2026-11-12', generatedAt: '', status: 'ok', analysed: 5, testData, coupons: [coupon('safe', 2.06, null), coupon('balanced', 4.2, 3.9, [leg('3', 'bttsNo', 61, 1.7)]), coupon('bold', 9.5, null)] },
     }) as never;
 
-  async function presets(state: never, kind: 'safe' | 'balanced' | 'bold' = 'safe') {
+  async function presets(state: never, kind: 'safe' | 'balanced' | 'bold' = 'safe', wide = false) {
     const { DailyPresets } = await import('./index');
     const { useTranslation } = await import('@/lib/i18n');
     const Wrap = () => {
       const { t } = useTranslation('combo');
-      return <DailyPresets state={state} kind={kind} onKind={() => {}} t={t as never} />;
+      return <DailyPresets state={state} kind={kind} onKind={() => {}} t={t as never} wide={wide} />;
     };
     return renderToStaticMarkup(<Wrap />);
   }
+
+  it('tam sayfa (wide): sekme yok, üç kupon yan yana sütun; ortak açıklama + garanti notu bir kez', async () => {
+    const html = await presets(ready(), 'safe', true);
+    expect(html).not.toContain('role="tablist"');
+    expect(html.match(/<article/g)).toHaveLength(3);
+    for (const k of ['Temkinli', 'Dengeli', 'Riskli']) expect(html).toContain(`>${k}</h3>`);
+    expect(html).toContain('KG Yok'); // Dengeli kuponun maçı da görünür
+    expect(html.match(/Sonuç garantisi yok\./g)).toHaveLength(1);
+  });
 
   it('kart açık gelir (aç/kapa düğmesi yok), Bugün seçili, "Kendin ayarla" kapalı, giriş paragrafı yok', async () => {
     const { default: ComboHomeCard } = await import('./index');

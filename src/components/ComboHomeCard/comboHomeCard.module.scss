@@ -11,58 +11,6 @@
   min-width: 0;
 }
 
-// Tam sayfa: ekranı kaplayan katman (header'ın üstünde), içerik kendi içinde kayar.
-.cardFull {
-  position: fixed;
-  z-index: 1000;
-  inset: $spacing-4;
-  max-width: 960px;
-  margin: 0 auto;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-
-  .head {
-    position: sticky;
-    top: 0;
-    z-index: 1;
-    background: $color-surface;
-    border-bottom: 1px solid $color-border;
-  }
-}
-
-.backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 999;
-  background: var(--overlay-scrim);
-}
-
-.expandBtn {
-  flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  margin-right: -6px;
-  padding: 0;
-  border: none;
-  border-radius: $radius-sm;
-  background: none;
-  color: $color-text-secondary;
-  cursor: pointer;
-
-  &:hover {
-    background: var(--bg-muted);
-    color: $color-text;
-  }
-
-  &:focus-visible {
-    outline: 2px solid $color-primary;
-    outline-offset: 1px;
-  }
-}
-
 .head {
   display: flex;
   align-items: center;
@@ -610,4 +558,228 @@
   background: $color-muted;
   color: $color-text-secondary;
   border: 1px solid $color-border;
+}
+
+// ── Başlıktaki "tam sayfa aç" düğmesi ───────────────────────────────────────
+.iconBtn,
+.closeBtn {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: none;
+  color: $color-text-secondary;
+  cursor: pointer;
+  transition: $transition-base;
+
+  &:hover {
+    background: $color-muted;
+    color: $color-text;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+    outline-offset: 1px;
+  }
+}
+
+.iconBtn {
+  width: 32px;
+  height: 32px;
+  margin-right: -6px;
+  border-radius: $radius-sm;
+}
+
+.openNote {
+  margin: 0;
+  padding: 0 $spacing-3 $spacing-3;
+  font-size: var(--fs-caption);
+  color: $color-text-secondary;
+}
+
+// ── Tam sayfa diyaloğu (ConfirmDialog dili) ────────────────────────────────
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-6;
+  background: var(--overlay-scrim);
+  animation: comboFade 140ms ease-out;
+
+  @include below-desktop {
+    align-items: flex-end;
+    padding: 0;
+  }
+}
+
+.dialog {
+  display: flex;
+  flex-direction: column;
+  width: min(1040px, 100%);
+  max-height: calc(100dvh - #{$spacing-6 * 2});
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-lg;
+  box-shadow: var(--shadow-dialog, $shadow-surface);
+  overflow: hidden;
+  animation: comboRise 180ms ease-out;
+
+  @include below-desktop {
+    width: 100%;
+    max-height: 92dvh;
+    border-radius: $radius-lg $radius-lg 0 0;
+    padding-bottom: var(--safe-bottom, 0px);
+  }
+}
+
+.dialogHead {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: $spacing-2;
+  min-height: 56px;
+  padding: 0 $spacing-3 0 $spacing-4;
+  border-bottom: 1px solid $color-border;
+  color: $color-text;
+}
+
+.dialogTitle {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: var(--fs-title);
+  font-weight: 700;
+}
+
+.closeBtn {
+  width: 40px;
+  height: 40px;
+  border-radius: $radius-full;
+}
+
+.dialogScroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+// Geniş gövde: dikey ritim 16, kenar 16; gün seçici ve "Kendin ayarla" okunur genişlikte kalır.
+.bodyWide {
+  gap: $spacing-4;
+  padding: $spacing-4;
+  border-top: 0;
+
+  > .segment {
+    width: min(360px, 100%);
+  }
+
+  > .adv {
+    max-width: 720px;
+  }
+}
+
+// Üç kupon yan yana
+.compare {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: $spacing-3;
+  align-items: stretch; // sütunların alt kenarı hizalı
+
+  @media (max-width: #{$bp-md - 1px}) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+  min-width: 0;
+  padding: $spacing-3;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  background: var(--bg-page);
+}
+
+.columnHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: $spacing-2;
+}
+
+.columnTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-2;
+  margin: 0;
+  font-size: var(--fs-section);
+  font-weight: 700;
+  color: $color-text;
+
+  // Risk düzeyi işareti: renk tek taşıyıcı değil (başlık metni yanında).
+  &::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    border-radius: $radius-full;
+    background: currentColor;
+  }
+}
+
+.kind_safe::before {
+  background: var(--color-win);
+}
+
+.kind_balanced::before {
+  background: var(--color-draw);
+}
+
+.kind_bold::before {
+  background: var(--color-loss);
+}
+
+.columnMeta {
+  font-size: var(--fs-caption);
+  color: $color-text-secondary;
+}
+
+// Sütunda özet: yeşil kutu yerine sakin zemin, sayılar yine büyük.
+.summaryWide {
+  border-color: $color-border;
+  background: $color-surface;
+}
+
+.compareNote {
+  margin: 0;
+  max-width: 720px;
+  font-size: var(--fs-caption);
+  line-height: 1.5;
+  color: $color-text-secondary;
+}
+
+@keyframes comboFade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes comboRise {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.99);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .overlay,
+  .dialog {
+    animation: none;
+  }
 }

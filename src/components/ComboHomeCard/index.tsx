@@ -1,4 +1,6 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
+import { lockBodyScroll } from '@/utils/scrollLock';
 import '@/lib/i18nNamespaces/combo';
 import { useTranslation } from '@/lib/i18n';
 import TeamLogo from '@/components/TeamLogo';
@@ -73,8 +75,9 @@ export default function ComboHomeCard() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [ran, setRan] = useState(false);
-  // Tam sayfa görünüm: kart sol sütundan çıkıp ekranı kaplayan katmana geçer (Esc / düğme ile kapanır, sayfa kaydırması kilitli).
+  // Tam sayfa görünüm: içerik portal ile ortalı diyaloğa taşınır (üç kupon yan yana); sol sütunda yalnız başlık kalır.
   const [expanded, setExpanded] = useState(false);
+  const expandBtnRef = useRef<HTMLButtonElement>(null);
   const requested = useRef(new Set<string>());
   // "Geçmiş" sekmesinde gün verisi istenmez (date bugünde kalır, loadDaily yalnız gün sekmelerinde).
   const date = useMemo(() => (day === 'tomorrow' ? shiftIsoDate(todayIsoIstanbul(), 1) : todayIsoIstanbul()), [day]);
@@ -224,46 +227,51 @@ export default function ComboHomeCard() {
     return history.bands.find((b) => lowest >= b.min && lowest <= b.max) ?? null;
   }, [history, chosen]);
 
-  useEffect(() => {
-    if (!expanded) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setExpanded(false);
-    };
-    window.addEventListener('keydown', onKey);
-    return () => {
-      document.body.style.overflow = prev;
-      window.removeEventListener('keydown', onKey);
-    };
-  }, [expanded]);
+  const closeExpanded = useCallback(() => {
+    setExpanded(false);
+    // Odak, diyaloğu açan düğmeye döner (sol sütundaki kartta).
+    setTimeout(() => expandBtnRef.current?.focus(), 0);
+  }, []);
 
   const dailyState: DailyState = daily && daily.date === date ? daily : { state: 'loading' };
   const showTestBadge = dailyState.state === 'ready' && dailyState.payload.testData;
-  return (
-    <>
-    {expanded ? <div className={styles.backdrop} onClick={() => setExpanded(false)} aria-hidden="true" /> : null}
-    <section
-      className={`${styles.card} ${expanded ? styles.cardFull : ''}`}
-      aria-label={t('title')}
-      {...(expanded ? { role: 'dialog', 'aria-modal': true } : {})}
-    >
-      <header className={styles.head}>
-        <TicketIcon />
-        <h2 className={styles.title}>{t('title')}</h2>
-        {showTestBadge ? <span className={styles.badge}>{t('badge')}</span> : null}
-        <button
-          type="button"
-          className={styles.expandBtn}
-          onClick={() => setExpanded((v) => !v)}
-          aria-pressed={expanded}
-          aria-label={expanded ? t('collapse') : t('expand')}
-          title={expanded ? t('collapse') : t('expand')}
-        >
-          <ExpandIcon collapse={expanded} />
+  const head = (
+    <header className={styles.head}>
+      <TicketIcon />
+      <h2 className={styles.title}>{t('title')}</h2>
+      {showTestBadge ? <span className={styles.badge}>{t('badge')}</span> : null}
+      {expanded ? null : (
+        <button ref={expandBtnRef} type="button" className={styles.iconBtn} onClick={() => setExpanded(true)} aria-label={t('expand')} title={t('expand')}>
+          <ExpandIcon />
         </button>
-      </header>
-      <div className={styles.body}>
+      )}
+    </header>
+  );
+
+  if (expanded) {
+    return (
+      <>
+        <section className={styles.card} aria-label={t('title')}>
+          {head}
+          <p className={styles.openNote}>{t('openedFull')}</p>
+        </section>
+        <FullDialog title={t('title')} badge={showTestBadge ? t('badge') : null} closeLabel={t('collapse')} onClose={closeExpanded}>
+          {renderBody(true)}
+        </FullDialog>
+      </>
+    );
+  }
+
+  return (
+    <section className={styles.card} aria-label={t('title')}>
+      {head}
+      {renderBody(false)}
+    </section>
+  );
+
+  function renderBody(wide: boolean) {
+    return (
+      <div className={`${styles.body} ${wide ? styles.bodyWide : ''}`}>
           <div className={styles.segment} role="group" aria-label={t('dayLabel')}>
             {(['today', 'tomorrow', 'history'] as const).map((d) => (
               <button key={d} type="button" className={`${styles.segBtn} ${day === d ? styles.segActive : ''}`} aria-pressed={day === d} onClick={() => pickDay(d)}>
@@ -271,7 +279,7 @@ export default function ComboHomeCard() {
               </button>
             ))}
           </div>
-          {day === 'history' ? <HistoryPanel t={t} /> : <DailyPresets state={dailyState} kind={kind} onKind={setKind} t={t} />}
+          {day === 'history' ? <HistoryPanel t={t} /> : <DailyPresets state={dailyState} kind={kind} onKind={setKind} t={t} wide={wide} />}
 
           {day !== 'history' ? (
           <details className={styles.adv} onToggle={(e) => onManualToggle((e.currentTarget as HTMLDetailsElement).open)}>
@@ -440,9 +448,8 @@ export default function ComboHomeCard() {
           </details>
           ) : null}
       </div>
-    </section>
-    </>
-  );
+    );
+  }
 }
 
 function Stat({ label, value, sub, wide }: { label: string; value: string; sub?: string; wide?: boolean }) {
@@ -471,22 +478,81 @@ function TicketIcon() {
   );
 }
 
-function ExpandIcon({ collapse }: { collapse: boolean }) {
+function ExpandIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      {collapse ? (
-        <path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" />
-      ) : (
-        <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />
-      )}
+      <path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7" />
     </svg>
+  );
+}
+
+function CloseIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M6 6l12 12M18 6L6 18" />
+    </svg>
+  );
+}
+
+/**
+ * Tam sayfa kombine diyaloğu (ConfirmDialog dilinde): portal, ortalı kutu içeriğe göre boyutlanır, gövde kendi içinde
+ * kayar; mobilde alttan sheet. Esc / arka plan / X kapatır, Tab diyalogda döner, arka plan `lockBodyScroll` ile kilitli.
+ */
+export function FullDialog({ title, badge, closeLabel, onClose, children }: { title: string; badge: string | null; closeLabel: string; onClose: () => void; children: ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const closeRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    const unlock = lockBodyScroll();
+    closeRef.current?.focus();
+    function onKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') {
+        e.stopPropagation();
+        onClose();
+        return;
+      }
+      if (e.key === 'Tab' && ref.current) {
+        const f = ref.current.querySelectorAll<HTMLElement>('button:not(:disabled), summary, input:not(:disabled), [tabindex="0"]');
+        if (!f.length) return;
+        const first = f[0]!;
+        const last = f[f.length - 1]!;
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    }
+    document.addEventListener('keydown', onKey, true);
+    return () => {
+      document.removeEventListener('keydown', onKey, true);
+      unlock();
+    };
+  }, [onClose]);
+
+  return createPortal(
+    <div className={styles.overlay} onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
+      <div ref={ref} className={styles.dialog} role="dialog" aria-modal="true" aria-label={title}>
+        <header className={styles.dialogHead}>
+          <TicketIcon />
+          <h2 className={styles.dialogTitle}>{title}</h2>
+          {badge ? <span className={styles.badge}>{badge}</span> : null}
+          <button ref={closeRef} type="button" className={styles.closeBtn} onClick={onClose} aria-label={closeLabel} title={closeLabel}>
+            <CloseIcon />
+          </button>
+        </header>
+        <div className={styles.dialogScroll}>{children}</div>
+      </div>
+    </div>,
+    document.querySelector('[data-app-root]') ?? document.body,
   );
 }
 
 const KINDS: readonly CouponKind[] = ['safe', 'balanced', 'bold'];
 
 /** Hazır öneriler (Temkinli / Dengeli / Riskli): aynı anda YALNIZ seçili kuponun içeriği görünür. */
-export function DailyPresets({ state, kind, onKind, t }: { state: DailyState; kind: CouponKind; onKind: (k: CouponKind) => void; t: TFn }) {
+export function DailyPresets({ state, kind, onKind, t, wide = false }: { state: DailyState; kind: CouponKind; onKind: (k: CouponKind) => void; t: TFn; wide?: boolean }) {
   if (state.state === 'loading') return <p className={styles.muted}>{t('loading')}</p>;
   if (state.state === 'error') return <p className={styles.muted}>{t('error')}</p>;
   if (state.state === 'pending') return <p className={styles.muted}>{t('presets.pending', { at: state.at })}</p>;
@@ -495,6 +561,31 @@ export function DailyPresets({ state, kind, onKind, t }: { state: DailyState; ki
   const valid = p.coupons?.every((c) => typeof c.fairOdds === 'number' && c.legs.every((l) => typeof l.fairOdd === 'number'));
   if (p.status !== 'ok' || !valid || p.coupons.length === 0) return <p className={styles.muted}>{t('presets.insufficient')}</p>;
   const coupon = p.coupons.find((c) => c.kind === kind) ?? null;
+  if (wide) {
+    // Tam sayfa: üç kupon yan yana (karşılaştırma); ortak açıklama bir kez, ızgaranın altında.
+    const hasMarket = p.coupons.some((c) => c.refOdds != null);
+    return (
+      <div className={styles.presets}>
+        <div className={styles.compare}>
+          {KINDS.map((k) => {
+            const c = p.coupons.find((x) => x.kind === k);
+            return (
+              <article key={k} className={styles.column} aria-label={t(`presets.${k}`)}>
+                <header className={styles.columnHead}>
+                  <h3 className={`${styles.columnTitle} ${styles[`kind_${k}`]}`}>{t(`presets.${k}`)}</h3>
+                  {c ? <span className={styles.columnMeta}>{t('presets.count', { n: c.legs.length })}</span> : null}
+                </header>
+                {c ? <Preset coupon={c} testData={p.testData} t={t} wide /> : <p className={styles.muted}>{t('noPick')}</p>}
+              </article>
+            );
+          })}
+        </div>
+        <p className={styles.compareNote}>
+          {hasMarket ? t('presets.oddsHint') : t('presets.fairHint')} {t('presets.noGuarantee')}
+        </p>
+      </div>
+    );
+  }
   return (
     <div className={styles.presets}>
       <div className={styles.tabs} role="tablist" aria-label={t('presets.label')}>
@@ -511,13 +602,13 @@ export function DailyPresets({ state, kind, onKind, t }: { state: DailyState; ki
   );
 }
 
-function Preset({ coupon, testData, t }: { coupon: DailyCoupon; testData: boolean; t: TFn }) {
+function Preset({ coupon, testData, t, wide = false }: { coupon: DailyCoupon; testData: boolean; t: TFn; wide?: boolean }) {
   const pct1 = (n: number) => String(n).replace('.', ',');
   // 2026-11-20: ana görünümde API-Football piyasa oranı (yalnız admin; AdSense yok). Oranı olmayan bacakta adil oran.
   const hasMarket = coupon.refOdds != null;
   return (
     <div className={styles.preset}>
-      <dl className={styles.summary}>
+      <dl className={`${styles.summary} ${wide ? styles.summaryWide : ''}`}>
         <div>
           <dt>{hasMarket ? t('presets.marketOdds') : t('presets.odds')}</dt>
           <dd className={styles.bigNum}>{fmtOdd(coupon.refOdds ?? coupon.fairOdds)}</dd>
@@ -546,11 +637,15 @@ function Preset({ coupon, testData, t }: { coupon: DailyCoupon; testData: boolea
           </li>
         ))}
       </ul>
-      <p className={styles.small}>{hasMarket ? t('presets.oddsHint') : t('presets.fairHint')}</p>
-      <p className={styles.footer}>
-        <span>{t('presets.count', { n: coupon.legs.length })}</span>
-        <span>{t('presets.noGuarantee')}</span>
-      </p>
+      {wide ? null : (
+        <>
+          <p className={styles.small}>{hasMarket ? t('presets.oddsHint') : t('presets.fairHint')}</p>
+          <p className={styles.footer}>
+            <span>{t('presets.count', { n: coupon.legs.length })}</span>
+            <span>{t('presets.noGuarantee')}</span>
+          </p>
+        </>
+      )}
       <details className={styles.adv}>
         <summary>{t('presets.details')}</summary>
         {testData ? <p className={styles.small}>{t('presets.testData')}</p> : null}
