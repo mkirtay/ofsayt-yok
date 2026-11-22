@@ -39,7 +39,7 @@
 
 .h1 {
   margin: 0;
-  font-size: 24px;
+  font-size: calc(var(--fs-title) * 1.5);
   font-weight: 900;
   color: $color-text;
 }
