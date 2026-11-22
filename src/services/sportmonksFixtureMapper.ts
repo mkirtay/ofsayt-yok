@@ -16,6 +16,7 @@ import { formatLiveMinuteLabel } from './sportmonks/minuteDerivation';
 import { resolveRoundAndStage } from './sportmonks/roundStage';
 import { formatVenueLocation } from './sportmonks/venueFormatter';
 import { formatMainReferee } from './sportmonks/refereeFormatter';
+import { withRefereeOverride } from './sportmonks/refereeOverrides';
 import { mapMatchExtras } from './sportmonks/matchExtras';
 import { countRedCards } from './sportmonks/redCards';
 import { normalizeTeamName } from '@/utils/displayName';
@@ -100,7 +101,8 @@ export function mapAggregate(fixture: Pick<SportmonksFixture, 'leg' | 'aggregate
  * fikstür/history/canlı reconciliation katmanı (`fixture_id` eşleştirmesi)
  * bu sağlayıcı için gereksiz (bkz. liveScoreService.ts `mergeMatchesByIdForAllTab`).
  */
-export function mapSportmonksFixtureToMatch(fixture: SportmonksFixture): Match {
+export function mapSportmonksFixtureToMatch(rawFixture: SportmonksFixture): Match {
+  const fixture = withRefereeOverride(rawFixture);
   const home = fixture.participants?.find((p) => p.meta?.location === 'home');
   const away = fixture.participants?.find((p) => p.meta?.location === 'away');
   const stateId = fixture.state?.id ?? fixture.state_id;
