@@ -10,6 +10,7 @@ const FILES = [
   'pages/ai-istatistikleri/ai-istatistikleri.module.scss',
   'components/Game/leagues.module.scss',
   'components/TeamPassCard/teamPassCard.module.scss',
+  'components/WebPush/webPush.module.scss',
   'components/MatchOddsCard/matchOddsCard.module.scss',
   'components/MatchDetailContent/matchDetailContent.module.scss',
 ];

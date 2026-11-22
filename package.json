@@ -56,7 +56,8 @@
     "sass": "^1.97.3",
     "sharp": "^0.35.5",
     "three": "^0.186.1",
-    "twitter-api-v2": "^1.29.0"
+    "twitter-api-v2": "^1.29.0",
+    "web-push": "^3.6.7"
   },
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.8",
@@ -67,6 +68,7 @@
     "@types/react-datepicker": "^6.2.0",
     "@types/react-dom": "^19",
     "@types/three": "^0.186.0",
+    "@types/web-push": "^3.6.4",
     "@vitest/coverage-v8": "^4.1.7",
     "dotenv-cli": "^11.0.0",
     "eslint": "^9",

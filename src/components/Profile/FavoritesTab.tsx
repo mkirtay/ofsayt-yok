@@ -11,6 +11,7 @@ import { sportmonksClientRequest } from '@/services/sportmonksRuntimeClient';
 import { HOME_FAVORITES_LS_KEY, mergeFavoriteIds, parseLocalFavoriteIds } from '@/utils/favoriteImport';
 import { useToast } from '@/components/Toast';
 import styles from './profile.module.scss';
+import WebPushPanel from '@/components/WebPush';
 
 type Favorites = { favoriteTeamIds: number[]; favoriteLeagueIds: number[] };
 const FAV_KEY = ['favorites-me'] as const;
@@ -130,6 +131,8 @@ export default function FavoritesTab() {
 
   return (
     <>
+      {/* Büyüme raporu 3.1 / 3.2: favori takım bildirimleri + ana ekrana ekle */}
+      <WebPushPanel />
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>{t('favorites.teams')}</h2>
         {q.isLoading ? <p className={styles.hint}>{t('loading')}</p> : null}

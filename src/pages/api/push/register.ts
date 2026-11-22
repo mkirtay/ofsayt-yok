@@ -4,13 +4,14 @@ import { hitFixedWindowRateLimit } from '@/lib/rateLimit';
 import { captureError } from '@/lib/logger';
 import { requireAuth } from '@/lib/requireAuth';
 import { optionalString, readJsonBody } from '@/lib/gundem/validation';
+import { parseSubscription } from '@/lib/webPush';
 
 const PLATFORMS = ['ios', 'android', 'web'];
 const MAX_TOKEN_LENGTH = 1024;
 
 /**
  * POST: cihaz push token'ını kaydeder/yeniler (token benzersiz; başka kullanıcıdaysa bu kullanıcıya devredilir).
- * DELETE: token'ı siler (çıkış yaparken). Yalnızca KAYIT — gönderim altyapısı Faz B.
+ * DELETE: token'ı siler (çıkış yaparken). Web gönderimi: server/push/tick.ts (büyüme raporu 3.1); mobil gönderim Faz B.
  */
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST' && req.method !== 'DELETE') {
@@ -42,6 +43,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!PLATFORMS.includes(platform)) {
       return res.status(400).json({ error: 'Geçersiz platform (ios, android veya web).' });
     }
+    // Web: token = Push API abonelik JSON'u (endpoint + anahtarlar); bozuk abonelik kaydedilmez (lib/webPush.ts).
+    if (platform === 'web' && !parseSubscription(token)) return res.status(400).json({ error: 'Geçersiz web aboneliği.' });
 
     const now = new Date();
     await prisma.pushToken.upsert({
