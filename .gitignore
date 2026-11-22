@@ -52,8 +52,10 @@ next-env.d.ts
 .src/tweet-bot.js
 .env*.local
 
-# Claude Code yerel ayarları (agent tanımları, izinler, dev server config'i)
-.claude/
+# Claude Code yerel ayarları (agent tanımları, izinler, dev server config'i, worktree'ler, raporlar).
+# İstisna: proje skill'leri (.claude/skills/) repo'da — her worktree ve checkout'ta aynı kurallar.
+/.claude/*
+!/.claude/skills/
 
 # video pipeline çıktıları (scripts/video-pipeline her koşuda yeniden üretir)
 /output/
