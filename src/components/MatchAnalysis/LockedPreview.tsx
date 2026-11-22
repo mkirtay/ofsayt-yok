@@ -124,6 +124,7 @@ export default function LockedPreview({ preview, offer, loading, busy, error, is
         )}
         <p className={styles.reasoning}>{t('analysis.unlockPermanent')}</p>
       </div>
+      <div className={styles.disclaimer}>{t('analysis.disclaimer')}</div>
     </div>
   );
 }

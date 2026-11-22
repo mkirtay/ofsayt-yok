@@ -72,7 +72,7 @@ describe('AI analizi — olasılık senaryoları ve istatistik etiketleri', () =
 
   it('çipler, sonuç kartları, isabet satırları ve uyarı istatistik dilinde; bahis terimi yok', () => {
     const t = text(render(analysis({ scenarios: [scenario] })));
-    for (const label of ['Ev sahibi kazanır', 'Beraberlik', 'Deplasman kazanır', '2+ gol', 'İki takım da gol atar', 'İlk yarıda gol', 'Ev sahibi gol bulur', 'Maç sonucu', 'Doğru', 'Yanlış', 'Bilgi amaçlı istatistiksel tahmindir.']) {
+    for (const label of ['Ev sahibi kazanır', 'Beraberlik', 'Deplasman kazanır', '2+ gol', 'İki takım da gol atar', 'İlk yarıda gol', 'Ev sahibi gol bulur', 'Maç sonucu', 'Doğru', 'Yanlış', 'Bilgi amaçlı istatistiksel tahmindir; kesin sonuç vaat etmez. 18+']) {
       expect(t).toContain(label);
     }
     expect(t).not.toMatch(/MS [12X]|1X2|Üst [0-9]|[0-9] Üst|KG Var|Tuttu|Tutmadı|Ev Gol Atar/);

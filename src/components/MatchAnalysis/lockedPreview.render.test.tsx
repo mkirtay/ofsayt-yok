@@ -47,6 +47,8 @@ describe('kilitli analiz kartı', () => {
     expect(text(html)).toContain('1 krediyle aç');
     expect(text(html)).toContain('Bu haftaki ücretsiz açma hakkını kullandın.');
     expect(text(html)).not.toContain('Bu haftaki ücretsiz açma hakkını kullan ');
+    // Önizleme de olasılık gösteriyor → bilgi amaçlı + 18+ uyarısı kilitli kartta da var.
+    expect(text(html)).toContain('kesin sonuç vaat etmez. 18+');
   });
 
   it('haftalık hak varsa iki düğme; bakiye 0 → "Kredi Satın Al"; ücretsiz açma / yönetici tek düğme', () => {

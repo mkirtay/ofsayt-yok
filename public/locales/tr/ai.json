@@ -66,6 +66,7 @@
   "cronStale": "Zamanlanmış işler {{n}} dakikadan uzun süredir çalışmadı — cron-job.org'u kontrol et.",
   "topPicks": "En Güçlü 3 Tahmin İsabeti",
   "topPicksSub": "{{hit}} / {{total}} tahmin doğru · {{matches}} analiz",
+  "disclaimer": "Geçmiş isabet gelecekteki sonuçların göstergesi değildir. Tahminler bilgi amaçlıdır; kesin sonuç vaat etmez. 18+",
   "topPicksHint": "Her analiz kartının üstünde en yüksek olasılıkla öne çıkan 3 tahmin (ör. 2+ gol, ev sahibi gol bulur) maç bitince kontrol edilir. Yalnız güncel modelle (3 Ekim 2026'dan beri) üretilmiş, maç sayfası açılan analizler sayılır.",
   "colTopPicks": "En Güçlü 3 Tahmin",
   "topPicksRow": "{{hit}}/{{total}} doğru",

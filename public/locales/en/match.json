@@ -136,7 +136,7 @@
     },
     "confidenceBadge": "Confidence: {{score}}%",
     "preMatchTag": "Pre-Match Prediction",
-    "disclaimer": "Informational statistical prediction.",
+    "disclaimer": "Informational statistical prediction; no outcome is promised. 18+",
     "topPicks": "Top predictions",
     "pick": {
       "home": "Home win",

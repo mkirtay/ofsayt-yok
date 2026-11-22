@@ -35,8 +35,8 @@ describe('findGamblingTerms', () => {
 
 describe('footer uyarısı', () => {
   it('istatistik dilinde, bahis terimi yok (TR/EN)', () => {
-    expect(trCommon.footer.disclaimer).toBe('İstatistiksel tahminler bilgi amaçlıdır.');
-    expect(enCommon.footer.disclaimer).toBe('Statistical predictions are for informational purposes only.');
+    expect(trCommon.footer.disclaimer).toBe('İstatistiksel tahminler bilgi amaçlıdır; kesin sonuç vaat etmez. 18+');
+    expect(enCommon.footer.disclaimer).toBe('Statistical predictions are for informational purposes only; no outcome is promised. 18+');
     expect(findGamblingTerms(trCommon.footer.disclaimer)).toEqual([]);
     expect(findGamblingTerms(enCommon.footer.disclaimer)).toEqual([]);
   });

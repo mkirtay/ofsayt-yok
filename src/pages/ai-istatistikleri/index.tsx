@@ -247,6 +247,7 @@ export default function AiIstatistikleri({ initialPublic = null }: Partial<PageP
                   </div>
 
                   <p className={styles.topPicksHint}>{t('topPicksHint')}</p>
+                  <p className={styles.topPicksHint}>{t('disclaimer')}</p>
 
                   {data.monthly?.length ? (
                     <div className={styles.section}>
