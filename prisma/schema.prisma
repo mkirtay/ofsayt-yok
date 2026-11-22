@@ -102,6 +102,7 @@ model User {
   gameLeaguesOwned     GameLeague[]        @relation("GameLeagueOwner")
   gameLeagueMembers    GameLeagueMember[]
   teamPasses           TeamPass[]
+  emailDigest          EmailDigestSubscription?
   refereeRatings       RefereeRating[]
 }
 
@@ -940,6 +941,14 @@ model GamePrediction {
   @@index([gameMatchId])
   @@index([weekId, userId])
   @@index([dayId, userId])
+}
+
+/// Haftalık e-posta özeti açık izni (büyüme raporu 3.3): satır varsa izin var (verildiği an `createdAt`). Ticari ileti —
+/// yalnız açık izinle; abonelikten çıkınca satır silinir. Ayrı tablo: User'a sütun eklenmez (migration sırası riski yok).
+model EmailDigestSubscription {
+  userId    String   @id
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
 }
 
 /// "Takımım" sezon paketi (büyüme raporu 2.8): krediyle bir kez alınır; o sezon takımın hazır AI analizleri kilitsiz

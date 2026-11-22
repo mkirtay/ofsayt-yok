@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import styles from './webPush.module.scss';
+import DigestOptIn from './DigestOptIn';
 
 /**
  * Favori takım bildirimleri (büyüme raporu 3.1) + ana ekrana ekle (3.2). Profil › Favorilerim'in üstünde.
@@ -7,6 +8,7 @@ import styles from './webPush.module.scss';
  * yoksa (NEXT_PUBLIC_VAPID_PUBLIC_KEY) ya da tarayıcı desteklemiyorsa bildirim bölümü görünmez.
  */
 const VAPID = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? '';
+const DIGEST_ON = process.env.NEXT_PUBLIC_EMAIL_DIGEST_ENABLED === 'true';
 
 function urlBase64ToUint8Array(base64: string): Uint8Array {
   const pad = '='.repeat((4 - (base64.length % 4)) % 4);
@@ -73,7 +75,7 @@ export default function WebPushPanel() {
     }
   };
 
-  if (!supported && !install) return null;
+  if (!supported && !install && !DIGEST_ON) return null;
   return (
     <section className={styles.panel} aria-labelledby="bildirimler">
       <h2 id="bildirimler" className={styles.title}>
@@ -95,6 +97,7 @@ export default function WebPushPanel() {
           )}
         </div>
       ) : null}
+      {DIGEST_ON ? <DigestOptIn /> : null}
       {install ? (
         <div className={styles.row}>
           <p className={styles.text}>Scor3&apos;ü ana ekranına ekle: uygulama gibi tek dokunuşla aç.</p>

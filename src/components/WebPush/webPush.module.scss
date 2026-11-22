@@ -68,3 +68,21 @@
   background: transparent;
   color: $color-text;
 }
+
+.check {
+  display: flex;
+  gap: $spacing-2;
+  align-items: flex-start;
+  font-size: var(--fs-meta);
+  line-height: 1.5;
+  color: $color-text-secondary;
+  cursor: pointer;
+
+  input {
+    margin-top: 3px;
+    width: 18px;
+    height: 18px;
+    flex: 0 0 auto;
+    accent-color: $color-primary;
+  }
+}
