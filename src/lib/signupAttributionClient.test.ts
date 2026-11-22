@@ -68,9 +68,21 @@ describe('signupAttributionClient (sessionStorage)', () => {
     expect(fetchImpl).toHaveBeenCalledTimes(1);
   });
 
+  it('yeni hesap yalnız sunucu updated:true dönerse (Meta CompleteRegistration tetiği)', async () => {
+    const s = memoryStorage();
+    captureSessionAttribution('', s);
+    const fresh = vi.fn(async () => new Response('{"updated":true}')) as unknown as typeof fetch;
+    await expect(sendSessionAttributionOnce(s, fresh)).resolves.toBe(true);
+
+    const s2 = memoryStorage();
+    captureSessionAttribution('', s2);
+    const old = vi.fn(async () => new Response('{"updated":false}')) as unknown as typeof fetch;
+    await expect(sendSessionAttributionOnce(s2, old)).resolves.toBe(false);
+  });
+
   it('depolama yoksa (gizli mod) sessizce geçer', async () => {
     expect(() => captureSessionAttribution('?utm_source=x', null)).not.toThrow();
     expect(readSessionAttribution(null)).toBeNull();
-    await expect(sendSessionAttributionOnce(null)).resolves.toBeUndefined();
+    await expect(sendSessionAttributionOnce(null)).resolves.toBe(false);
   });
 });

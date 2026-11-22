@@ -74,22 +74,27 @@ export function markSessionAttributionSent(storage: StorageLike | null = session
 /**
  * Oturum açıldıktan sonra bir kez: Google ile kayıtta hesap NextAuth tarafından oluşturulduğu için kaynak
  * buradan yazılır. Sunucu yalnızca yeni (son 24 sa) ve kaynağı boş hesaplara yazar; diğerlerinde no-op.
+ * Dönüş: sunucu yazdıysa (`updated: true` → yeni hesap) true; aksi her durumda false.
  */
 export async function sendSessionAttributionOnce(
   storage: StorageLike | null = sessionStore(),
   fetchImpl: typeof fetch = fetch,
-): Promise<void> {
+): Promise<boolean> {
   try {
-    if (!storage || storage.getItem(SENT_KEY)) return;
+    if (!storage || storage.getItem(SENT_KEY)) return false;
     const payload = readSessionAttribution(storage);
-    if (!payload) return;
+    if (!payload) return false;
     storage.setItem(SENT_KEY, '1');
-    await fetchImpl('/api/user/attribution', {
+    const res = await fetchImpl('/api/user/attribution', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
+    if (!res.ok) return false;
+    const data = (await res.json()) as { updated?: unknown };
+    return data?.updated === true;
   } catch {
     // ağ hatası — ölçüm olmadan devam
+    return false;
   }
 }

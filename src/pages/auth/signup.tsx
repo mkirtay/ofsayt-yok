@@ -11,6 +11,7 @@ import GoogleSignInButton from '@/components/GoogleSignInButton'
 import { safeCallbackPath } from '@/lib/authRedirect'
 import { isGoogleAuthEnabled } from '@/lib/oauthEnv'
 import { markSessionAttributionSent, readSessionAttribution } from '@/lib/signupAttributionClient'
+import { markRegistrationCompleted } from '@/lib/metaPixel'
 import AuthShowcase from '@/components/AuthShowcase'
 import { useRedirectIfSignedIn } from '@/hooks/useRedirectIfSignedIn'
 import { useTurnstile } from '@/hooks/useTurnstile'
@@ -65,7 +66,11 @@ export default function SignUpPage({ googleEnabled }: { googleEnabled: boolean }
         attribution: readSessionAttribution() ?? undefined,
       }),
     })
-    if (res.ok) markSessionAttributionSent()
+    if (res.ok) {
+      markSessionAttributionSent()
+      // Meta Pixel CompleteRegistration (onay varsa; ?email= içeren doğrulama sayfasında değil, sonraki sayfada gider)
+      markRegistrationCompleted()
+    }
 
     const data = await res.json()
 
