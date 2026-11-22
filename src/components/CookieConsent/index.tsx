@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { CONSENT_EVENT, clearGaCookies, gaMeasurementId, readConsent, writeConsent } from '@/lib/analyticsConsent';
+import { CONSENT_EVENT, anyTrackerConfigured, clearTrackerCookies, readConsent, writeConsent } from '@/lib/analyticsConsent';
 import CookieIcon from '@/components/icons/CookieIcon';
 import styles from './cookieConsent.module.scss';
 
@@ -8,11 +8,11 @@ import styles from './cookieConsent.module.scss';
 const OPEN_ATTR = 'data-consent-open';
 
 /**
- * Analitik çerez onay bandı: yalnız GA ölçüm kimliği tanımlıyken ve tercih yokken (istemcide, ilk çizimden sonra — SSR
+ * Analitik / reklam ölçümü çerez onay bandı (GA4 + Meta Pixel, tek onay): yalnız en az biri tanımlıyken ve tercih yokken (istemcide, ilk çizimden sonra — SSR
  * HTML'inde yok, düzeni itmez: sabit konum). "Reddet" ile "Kabul et" eşit ağırlıkta (KVKK: rıza serbest olmalı).
  */
 export default function CookieConsent() {
-  const id = gaMeasurementId();
+  const id = anyTrackerConfigured();
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -47,7 +47,7 @@ export default function CookieConsent() {
             Çerez tercihi
           </h2>
           <p id="cookie-consent-desc" className={styles.text}>
-            Siteyi geliştirmek için anonim ziyaret istatistikleri topluyoruz.{' '}
+            Siteyi geliştirmek ve reklamlarımızın etkisini ölçmek için Google Analytics ve Meta (Facebook/Instagram) çerezlerini kullanıyoruz.{' '}
             <Link href="/cerez-politikasi" className={styles.link}>
               Çerez Politikası
             </Link>
@@ -59,7 +59,7 @@ export default function CookieConsent() {
           type="button"
           className={styles.btnSecondary}
           onClick={() => {
-            clearGaCookies();
+            clearTrackerCookies();
             writeConsent('denied');
           }}
         >
@@ -73,15 +73,15 @@ export default function CookieConsent() {
   );
 }
 
-/** Footer "Çerez tercihleri": tercihi siler, GA çerezlerini temizler, bandı yeniden açar. */
+/** Footer "Çerez tercihleri": tercihi siler, GA + Meta çerezlerini temizler, bandı yeniden açar. */
 export function CookiePreferencesLink({ className, label }: { className?: string; label: string }) {
-  if (!gaMeasurementId()) return null;
+  if (!anyTrackerConfigured()) return null;
   return (
     <button
       type="button"
       className={className}
       onClick={() => {
-        clearGaCookies();
+        clearTrackerCookies();
         writeConsent(null);
       }}
     >

@@ -144,12 +144,16 @@
         "body": "Vercel Web Analytics is used for page view statistics; it does not use cookies. In addition, only if you give explicit consent (\"Accept\" in the cookie banner at the bottom of the page), Google Analytics 4 is loaded and sets the _ga and _ga_* cookies (up to 2 years) for visit statistics; without consent Google Analytics is not loaded at all. Parameters containing email, tokens or payment details are removed from page addresses sent to Google. You can change your choice at any time via the \"Cookie preferences\" link at the bottom of the page; withdrawing consent deletes the GA cookies. Technical errors are recorded with Sentry; no cookies, name or email are attached to error reports."
       },
       {
-        "heading": "5. Third-Party Services",
-        "body": "Cloudflare Turnstile is loaded on the signup page for bot protection; Cloudflare may use security identifiers on its side. Team and league logos are loaded from our data provider's servers. No advertising cookies are used."
+        "heading": "5. Advertising Measurement (Meta Pixel)",
+        "body": "Only if you give explicit consent (\"Accept\" in the cookie banner), the Meta Pixel provided by Meta Platforms Ireland Ltd. is loaded. The Pixel is used to measure the effect of our Facebook and Instagram ads (counting visits and sign-ups that come from ads) and to show ads on those platforms to people who visited the site (retargeting). For this the _fbp cookie (90 days) and, when you arrive from an ad link, the _fbc cookie (90 days) are set; Meta receives page views, a \"registration completed\" event when you sign up, and the information your browser sends by default (IP address, browser type, page address). No name, e-mail, phone number or user id is sent; no events are sent on payment pages or on pages whose address contains an e-mail or token. Without consent the Meta Pixel is not loaded at all. Meta may process this data on its own servers outside Türkiye (including the EU and the US); the transfer abroad is based on your explicit consent. You can withdraw consent at any time via the \"Cookie preferences\" link at the bottom of the page; the Pixel is then stopped and the _fbp / _fbc cookies are deleted."
       },
       {
-        "heading": "6. Cookie Preferences",
-        "body": "The site uses only strictly necessary and functional cookies needed for the service to work; no advertising or cookie-based analytics cookies are used, so no separate cookie consent is requested. If a non-essential cookie is added, your consent will be asked before it is used. You can delete or block cookies in your browser settings; if you block strictly necessary cookies you may not be able to sign in."
+        "heading": "6. Third-Party Services",
+        "body": "Cloudflare Turnstile is loaded on the signup page for bot protection; Cloudflare may use security identifiers on its side. Team and league logos are loaded from our data provider's servers."
+      },
+      {
+        "heading": "7. Cookie Preferences",
+        "body": "Strictly necessary and functional cookies are used for the service to work and do not depend on consent. Google Analytics and Meta Pixel cookies are not necessary; they are loaded only if you click \"Accept\" in the cookie banner and not at all if you click \"Reject\" (both options carry equal weight). You can change your choice at any time via the \"Cookie preferences\" link at the bottom of the page. You can also delete or block cookies in your browser settings; if you block strictly necessary cookies you may not be able to sign in."
       }
     ]
   },
