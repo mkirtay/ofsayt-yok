@@ -72,6 +72,7 @@ export async function saveGeneratedAnalysis(ctx: MatchAnalysisContext, generated
         heatmapAnalysis: ai.analysis.heatmapAnalysis,
         riskFactors: ai.analysis.riskFactors,
         analystComment: ai.analysis.analystComment,
+        ...(ai.analysis.why?.length ? { why: ai.analysis.why } : {}),
         ...extra,
       } as unknown as Prisma.InputJsonValue,
       riskLevel: ai.analysis.riskLevel,

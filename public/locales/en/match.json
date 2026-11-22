@@ -177,6 +177,7 @@
       "EMAIL_NOT_VERIFIED": "Verify your email to use the daily free unlock.",
       "ACCOUNT_TOO_NEW": "The daily free unlock is available 1 day after sign-up."
     },
+    "why": "Why?",
     "recentProofLink": "All accuracy stats →",
     "recentProof": "In the last {{days}} days, {{hits}} of {{picks}} highlighted AI picks came true ({{rate}}%)."
   },

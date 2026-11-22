@@ -14,7 +14,8 @@ import { impliedProbabilities } from '@/utils/impliedProbability';
 // v3: bahis dili yasak, "Bahis / İddia Pazarı" → olasılık senaryoları (AdSense kumar politikası).
 // v6: zoneGrid ölçeği açıkça tarif edildi (Luna grid'i pay dağılımı gibi 7–19 dolduruyordu).
 // v7: "Maç Bağlamı" bölümü — uç hava, derbi, kupa turu/ayak, dinlenme, sıradaki maç, seri, ligdeki durum.
-export const ANALYSIS_MODEL_VERSION = 'v7-2026-11';
+// v8: "why" — 3 cümlelik Türkçe "neden" anlatısı (form, eksikler, hakem profili; büyüme raporu 2.5).
+export const ANALYSIS_MODEL_VERSION = 'v8-2026-11';
 
 export const ANALYSIS_SYSTEM_PROMPT = `Sen profesyonel bir futbol veri analisti ve Opta/Wyscout seviyesinde maç öncesi
 analiz uzmanısın. Sana verilen maç verilerini (takım formu, head-to-head, lig sıralaması,
@@ -142,6 +143,8 @@ export type AnalysisJsonSchema = {
   riskFactors: string[];
   /** 11. Analist Yorumu */
   analystComment: string;
+  /** 12. "Neden?" (v8): tam 3 kısa cümle — form, eksikler, hakem profili. Eski kayıtlarda yok. */
+  why?: string[];
   /** 0-100 arası model güven skoru (tahminin genel kalitesi) */
   overallConfidence: number;
 };
@@ -219,6 +222,7 @@ const OUTPUT_SCHEMA_DESCRIPTION = `{
   "riskReasoning": "1 cümle, en fazla 15 kelime",
   "riskFactors": ["en fazla 3 madde, her biri en fazla 8 kelime"],
   "analystComment": "en fazla 3 cümle, en fazla 55 kelime: belirleyici faktör, en güçlü sinyal, en olası senaryo",
+  "why": ["TAM 3 cümle, her biri en fazla 20 kelime, sade Türkçe: 1) iki takımın son form durumu (somut sayıyla), 2) eksik/sakat oyuncuların etkisi (eksik yoksa bunu söyle), 3) hakemin kart/penaltı profili (hakem verisi yoksa ev/deplasman etkisi)"],
   "overallConfidence": 0-100
 }
 

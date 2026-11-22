@@ -25,6 +25,8 @@ export type FullReport = {
   analystComment: string;
   /** Kayıt anında seçilmiş öne çıkan 3 tahmin (büyüme raporu 1.5); eski kayıtlarda yok. */
   topPickKeys?: string[];
+  /** "Neden?" — 3 kısa cümle: form, eksikler, hakem (prompt v8, büyüme raporu 2.5); eski kayıtlarda yok. */
+  why?: string[];
 };
 
 export type ApiAnalysis = {

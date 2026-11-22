@@ -46,3 +46,11 @@ describe('AI çıktısı doğrulama — olasılık senaryoları', () => {
     expect(logged.calls).toEqual([]);
   });
 });
+
+describe('AI çıktısı doğrulama — "Neden?" (v8, büyüme raporu 2.5)', () => {
+  it('isteğe bağlı: en fazla 3 boş olmayan cümle; yoksa / boşsa alan düşer', () => {
+    expect(validateSchema({ ...base(), why: [' Form iyi. ', '', 'Eksik yok.', 'Hakem sert.', 'Fazla.'] }).why).toEqual(['Form iyi.', 'Eksik yok.', 'Hakem sert.']);
+    expect(validateSchema({ ...base(), why: [] }).why).toBeUndefined();
+    expect(validateSchema(base()).why).toBeUndefined();
+  });
+});

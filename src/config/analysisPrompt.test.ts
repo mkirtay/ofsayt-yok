@@ -35,7 +35,7 @@ describe('analiz prompt\'u — bahis dili yok, olasılık senaryoları', () => {
   it('sistem prompt\'u: yasak kuralı var, kuralın dışında bahis terimi yok', () => {
     expect(ANALYSIS_SYSTEM_PROMPT).toContain('DİL YASAĞI');
     expect(findGamblingTerms(withoutBanRule(ANALYSIS_SYSTEM_PROMPT))).toEqual([]);
-    expect(ANALYSIS_MODEL_VERSION).toBe('v7-2026-11');
+    expect(ANALYSIS_MODEL_VERSION).toBe('v8-2026-11');
   });
 
   it('kullanıcı mesajı: şema `scenarios` (metric / probability / confidence / reasoning), bettingTips yok', () => {

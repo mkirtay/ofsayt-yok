@@ -45,3 +45,12 @@ describe('buildAnalysisPreview', () => {
     expect(buildAnalysisPreview({ ...row, fullReport: null }).summary).toEqual([]);
   });
 });
+
+describe('önizleme — "Neden?" ilk cümlesi (v8)', () => {
+  it('why varsa ilk cümlesi tempo yerine; geri kalanı gizli', () => {
+    const v8 = { ...row, fullReport: { ...row.fullReport, why: ['Galatasaray son 5 maçta 13 puan aldı. Ek.', 'GİZLİ EKSİK', 'GİZLİ HAKEM'] } };
+    const p = buildAnalysisPreview(v8);
+    expect(p.summary).toEqual(['Galatasaray son 5 maçta 13 puan aldı.', 'Ev sahibi topa daha çok sahip olacak.']);
+    expect(JSON.stringify(p)).not.toContain('GİZLİ');
+  });
+});

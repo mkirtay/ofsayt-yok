@@ -160,6 +160,9 @@ export function validateSchema(data: unknown): AnalysisJsonSchema {
   }
   // Tek bozuk senaryo bütün analizi (ve krediyi) yakmasın: geçersiz maddeler atılır.
   d.scenarios = Array.isArray(d.scenarios) ? d.scenarios.filter(isAnalysisScenario) : [];
+  // v8 "neden" anlatısı isteğe bağlı: yoksa / bozuksa analiz yine geçer (en fazla 3 boş olmayan cümle).
+  d.why = Array.isArray(d.why) ? d.why.filter((s): s is string => typeof s === 'string' && s.trim() !== '').map((s) => s.trim()).slice(0, 3) : undefined;
+  if (Array.isArray(d.why) && d.why.length === 0) delete d.why;
   // Bahis dili yasak (prompt kural 8); yine de geçerse kayda düşer — analiz engellenmez.
   const terms = findGamblingTerms(JSON.stringify(data));
   if (terms.length > 0) captureError('analysis-gambling-terms', new Error(`AI çıktısında bahis dili: ${terms.join(', ')}`));

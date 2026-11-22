@@ -218,6 +218,14 @@ export default function MatchAnalysis({ match, state, archived = false }: Props)
         </div>
       )}
 
+      {/* "Neden?" — form, eksikler, hakem (prompt v8, büyüme raporu 2.5) */}
+      {fullReport?.why?.length ? (
+        <div className={styles.section}>
+          <h4 className={styles.sectionTitle}>{t('analysis.why')}</h4>
+          <TextList items={fullReport.why} />
+        </div>
+      ) : null}
+
       {/* 7. Maç Sonucu Tahmini */}
       <div className={styles.section}>
         <h4 className={styles.sectionTitle}>{t('analysis.resultPrediction')}</h4>

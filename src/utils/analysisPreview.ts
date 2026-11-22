@@ -48,8 +48,13 @@ function topOutcome(prediction: unknown): AnalysisPreview['top'] {
 
 export function buildAnalysisPreview(row: PreviewSource): AnalysisPreview {
   const clean = sanitizeLegacyAnalysis(row);
-  const summary = (clean.fullReport as { matchSummary?: Record<string, unknown> } | null | undefined)?.matchSummary;
-  const items = [firstSentence(summary?.tempo), firstSentence(summary?.dominantSide)].filter((s): s is string => Boolean(s));
+  const report = clean.fullReport as { matchSummary?: Record<string, unknown>; why?: unknown } | null | undefined;
+  const summary = report?.matchSummary;
+  // v8: "Neden?" anlatısının ilk cümlesi (form) ücretsiz önizlemede — kilidin arkasında ne olduğu görünsün.
+  const why0 = Array.isArray(report?.why) && typeof report!.why[0] === 'string' ? firstSentence(report!.why[0]) : null;
+  const items = (why0 ? [why0, firstSentence(summary?.dominantSide)] : [firstSentence(summary?.tempo), firstSentence(summary?.dominantSide)]).filter(
+    (s): s is string => Boolean(s),
+  );
   return {
     homeTeamName: row.homeTeamName,
     awayTeamName: row.awayTeamName,
