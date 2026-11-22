@@ -7,6 +7,7 @@ import '@/lib/i18nNamespaces/game';
 import { gamePageGate } from '@/server/game/access';
 import { normalizeLeagueCode, privateLeaguesEnabled } from '@/server/game/leagues';
 import { prisma } from '@/lib/prisma';
+import { GAME_BRAND } from '@/config/brand';
 
 type Props = { code: string; name: string };
 
@@ -26,7 +27,7 @@ export const getServerSideProps: GetServerSideProps<Props> = async ({ req, res, 
 };
 
 export default function GameLeaguePage({ code, name }: Props) {
-  const title = `${name} · Tahmin Ligi özel lig`;
+  const title = `${name} · ${GAME_BRAND.name} özel lig`;
   const desc = `"${name}" özel ligine katıl: haftanın maçlarının skorunu tahmin et, arkadaşlarınla sıralamada yarış. Ücretsiz.`;
   return (
     <>

@@ -1,4 +1,4 @@
--- Tahmin Ligi özel ligleri (büyüme raporu 2.2). Yalnız YENİ tablolar; mevcut veriye dokunmaz.
+-- Tahmin oyunu özel ligleri (büyüme raporu 2.2). Yalnız YENİ tablolar; mevcut veriye dokunmaz.
 CREATE TABLE IF NOT EXISTS "GameLeague" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,

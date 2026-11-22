@@ -967,7 +967,7 @@ model TeamPass {
   @@index([userId, season])
 }
 
-/// Tahmin Ligi özel ligi (arkadaş / ofis ligi; büyüme raporu 2.2). Davet koduyla katılınır; sıralama GameWeekEntry
+/// Tahmin oyunu özel ligi (arkadaş / ofis ligi; büyüme raporu 2.2). Davet koduyla katılınır; sıralama GameWeekEntry
 /// toplamlarından (lib/game/sql.ts leagueSeasonSql / leagueWeekSql). Sınırlar ve kurallar: server/game/leagues.ts.
 model GameLeague {
   id        String             @id @default(cuid())

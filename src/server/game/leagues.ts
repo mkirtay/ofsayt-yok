@@ -1,5 +1,5 @@
 /**
- * Tahmin Ligi özel ligleri (büyüme raporu 2.2): arkadaş / ofis ligi. Kurucu ad verir, 8 karakterlik davet kodu üretilir
+ * Tahmin oyunu özel ligleri (büyüme raporu 2.2): arkadaş / ofis ligi. Kurucu ad verir, 8 karakterlik davet kodu üretilir
  * (paylaşım: /tahmin/lig/{kod}, WhatsApp linki). Sıralama ayrı puan tutmaz: üyelerin GameWeekEntry toplamları
  * (lib/game/sql.ts leagueSeasonSql / leagueWeekSql). Ödül yok (yalnız sıralama) → ödüllü yarışma mevzuatına girmez.
  *
@@ -13,6 +13,7 @@ import { findGamblingTerms } from '@/utils/gamblingTerms';
 import { isProfileTextAllowed } from '@/lib/moderation/contentGate';
 import { leagueSeasonSql, leagueWeekSql, type SqlQuery } from '@/lib/game/sql';
 import { seasonOf, weekKeyOf } from '@/lib/game/week';
+import { GAME_BRAND } from '@/config/brand';
 
 export const MAX_OWNED = 5;
 export const MAX_JOINED = 15;
@@ -163,7 +164,7 @@ export async function loadLeagueView(rawCode: unknown, viewerId: string | null, 
 
 /** Paylaşım metni + WhatsApp linki (istemci de aynısını kurar; sunucu testleri için burada). */
 export function leagueInviteText(name: string, url: string): string {
-  return `"${name}" Tahmin Ligi'ne katıl: haftanın maçlarının skorunu tahmin et, aramızdaki sıralamada yarışalım. Ücretsiz. ${url}`;
+  return `"${name}" özel ligine katıl (${GAME_BRAND.name}): haftanın maçlarının skorunu tahmin et, aramızdaki sıralamada yarışalım. Ücretsiz. ${url}`;
 }
 export function whatsappShareUrl(text: string): string {
   return `https://wa.me/?text=${encodeURIComponent(text)}`;

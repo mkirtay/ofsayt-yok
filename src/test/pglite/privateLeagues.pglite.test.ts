@@ -1,5 +1,5 @@
 /**
- * Tahmin Ligi özel ligleri (büyüme raporu 2.2) — GERÇEK SQL (PGlite, bellek içi) + Prisma: kur, kodla katıl, sınırlar,
+ * Tahmin oyunu özel ligleri (büyüme raporu 2.2) — GERÇEK SQL (PGlite, bellek içi) + Prisma: kur, kodla katıl, sınırlar,
  * sezon / hafta sıralaması (GameWeekEntry toplamları; tahmini olmayan üye 0 puanla), ayrıl, kurucu ayrılınca silinir,
  * kullanıcı silinince üyelik CASCADE.
  */

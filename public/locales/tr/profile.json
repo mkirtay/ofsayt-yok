@@ -139,13 +139,13 @@
   "toastClose": "Bildirimi kapat",
   "invite": {
     "title": "Arkadaşını davet et",
-    "intro": "Kişisel davet linkini paylaş; arkadaşın bu linkle üye olunca davetlerinde görünür. Tahmin Ligi'nde özel lig kurup birlikte yarışabilirsiniz.",
-    "introReward": "Kişisel davet linkini paylaş. Arkadaşın bu linkle üye olup e-postasını doğrulayınca ve Tahmin Ligi'nde ilk tahminini yapınca ikinize de {{n}} kredi.",
+    "intro": "Kişisel davet linkini paylaş; arkadaşın bu linkle üye olunca davetlerinde görünür. {{game}} sayfasında özel lig kurup birlikte yarışabilirsiniz.",
+    "introReward": "Kişisel davet linkini paylaş. Arkadaşın bu linkle üye olup e-postasını doğrulayınca ve {{game}} oyununda ilk tahminini yapınca ikinize de {{n}} kredi.",
     "linkLabel": "Davet linkin",
     "copy": "Linki kopyala",
     "copied": "Kopyalandı",
     "whatsapp": "WhatsApp ile gönder",
-    "shareText": "Scor3'te canlı skor, AI maç analizi ve Tahmin Ligi var. Benim linkimle üye ol: {{url}}",
+    "shareText": "Scor3'te canlı skor, AI maç analizi ve {{game}} var. Benim linkimle üye ol: {{url}}",
     "stats": "Davet ettiğin: {{invited}} kişi · ödül alan: {{rewarded}}",
     "loading": "Yükleniyor…",
     "error": "Davet bilgisi alınamadı."

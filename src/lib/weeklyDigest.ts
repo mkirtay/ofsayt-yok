@@ -1,14 +1,14 @@
 /**
  * Haftalık e-posta özeti (büyüme raporu 3.3): açık izin veren (EmailDigestSubscription), e-postası doğrulanmış ve favori
  * takımı olan kullanıcılara haftada bir — favori takımlarının önümüzdeki 7 günkü maçları + son 7 gün AI isabeti +
- * Tahmin Ligi bağlantısı. Her e-postada imzalı tek tık abonelikten çıkma bağlantısı.
+ * tahmin oyunu bağlantısı. Her e-postada imzalı tek tık abonelikten çıkma bağlantısı.
  *
  * VARSAYILAN KAPALI: EMAIL_DIGEST_ENABLED=true (ticari elektronik ileti → İYS kaydı ve hukuki kontrol sonrası), arayüz
  * NEXT_PUBLIC_EMAIL_DIGEST_ENABLED=true. Tetikleyici: harici cron (Pazartesi sabahı) → /api/cron/weekly-digest.
  */
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { prisma } from '@/lib/prisma';
-import { BRAND } from '@/config/brand';
+import { BRAND, GAME_BRAND } from '@/config/brand';
 import { siteBaseUrl } from '@/lib/siteUrl';
 import { emailHtml, sendTransactionalEmail, type EmailContent } from '@/lib/security';
 import { buildMatchHref } from '@/utils/matchUrl';
@@ -58,7 +58,7 @@ export function buildDigestEmail(opts: { name: string | null; matches: DigestMat
 <p>Favori takımlarının bu haftaki maçları:</p>
 <ul>${list}</ul>
 <p>${proofLine}</p>
-<p><a href="${base}/tahmin">Tahmin Ligi'nde bu haftanın maçlarını tahmin et →</a></p>
+<p><a href="${base}${GAME_BRAND.basePath}">${GAME_BRAND.name}: bu haftanın maçlarını tahmin et →</a></p>
 <p style="color:#666;font-size:12px">Bilgi amaçlıdır; kesin sonuç vaat etmez. 18+. Bu e-postayı haftalık özet iznin olduğu için aldın.
 <a href="${esc(opts.unsubscribe)}">Abonelikten çık</a></p>`,
   );
@@ -69,7 +69,7 @@ export function buildDigestEmail(opts: { name: string | null; matches: DigestMat
     ...(opts.matches.length ? opts.matches.map((m) => `- ${m.title} — ${m.when}: ${m.url}`) : ['- Bu hafta favori takımlarının maçı görünmüyor.']),
     '',
     opts.proof ? `Son ${opts.proof.days} günde öne çıkan ${opts.proof.picks} AI tahmininden ${opts.proof.hits} tanesi tuttu: ${base}/ai-istatistikleri` : `${base}/ai-istatistikleri`,
-    `Tahmin Ligi: ${base}/tahmin`,
+    `${GAME_BRAND.name}: ${base}${GAME_BRAND.basePath}`,
     '',
     `Bilgi amaçlıdır; kesin sonuç vaat etmez. 18+. Abonelikten çık: ${opts.unsubscribe}`,
   ].join('\n');

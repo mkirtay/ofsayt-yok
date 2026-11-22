@@ -1,5 +1,5 @@
 /**
- * Tahmin Ligi özel ligleri (büyüme raporu 2.2): "Liglerim" paneli (kur / kodla katıl / liste) ve lig sayfası
+ * Tahmin oyunu özel ligleri (büyüme raporu 2.2): "Liglerim" paneli (kur / kodla katıl / liste) ve lig sayfası
  * (sezon + hafta sıralaması, WhatsApp davet linki, kopyala, katıl / ayrıl). Sunucu: server/game/leagues.ts.
  */
 import { useCallback, useEffect, useState } from 'react';
@@ -26,7 +26,7 @@ type View = {
 
 export const leaguePath = (code: string) => `${GAME_BRAND.basePath}/lig/${code}`;
 export function inviteText(name: string, url: string): string {
-  return `"${name}" Tahmin Ligi'ne katıl: haftanın maçlarının skorunu tahmin et, aramızdaki sıralamada yarışalım. Ücretsiz. ${url}`;
+  return `"${name}" özel ligine katıl (${GAME_BRAND.name}): haftanın maçlarının skorunu tahmin et, aramızdaki sıralamada yarışalım. Ücretsiz. ${url}`;
 }
 
 async function call<T>(url: string, init?: RequestInit): Promise<{ ok: true; data: T } | { ok: false; error: string }> {
@@ -58,13 +58,16 @@ export function MyLeagues() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
-  const load = useCallback(async () => {
-    const r = await call<{ leagues: Summary[] }>('/api/game/leagues');
-    setLeagues(r.ok ? r.data.leagues : []);
-  }, []);
   useEffect(() => {
-    if (status === 'authenticated') void load();
-  }, [status, load]);
+    if (status !== 'authenticated') return;
+    let cancelled = false;
+    call<{ leagues: Summary[] }>('/api/game/leagues').then((r) => {
+      if (!cancelled) setLeagues(r.ok ? r.data.leagues : []);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [status]);
 
   if (status === 'unauthenticated') return <SignInPrompt next={`${GAME_BRAND.basePath}/ligler`} />;
 
@@ -179,13 +182,18 @@ export function LeagueView({ code }: { code: string }) {
   const [busy, setBusy] = useState(false);
   const me = (session?.user as { id?: string } | undefined)?.id ?? null;
 
-  const load = useCallback(async () => {
-    const r = await call<View>(`/api/game/leagues/${encodeURIComponent(code)}`);
-    setView(r.ok ? r.data : 'missing');
-  }, [code]);
+  const [reload, setReload] = useState(0);
+  const load = useCallback(() => setReload((n) => n + 1), []);
   useEffect(() => {
-    if (status !== 'loading') void load();
-  }, [status, load]);
+    if (status === 'loading') return;
+    let cancelled = false;
+    call<View>(`/api/game/leagues/${encodeURIComponent(code)}`).then((r) => {
+      if (!cancelled) setView(r.ok ? r.data : 'missing');
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [status, code, reload]);
 
   if (view === null) return <p className={styles.muted}>Yükleniyor…</p>;
   if (view === 'missing') return <p className={styles.muted}>Lig bulunamadı. Davet kodunu kontrol et.</p>;
@@ -267,7 +275,7 @@ export function LeagueView({ code }: { code: string }) {
         </div>
         <Standings rows={rows} me={me} />
         <p className={styles.muted}>
-          Puanlar Tahmin Ligi&apos;ndeki haftalık tahminlerden gelir; ödül yoktur, yalnız sıralama. <Link href={GAME_BRAND.basePath}>Bu haftanın maçlarını tahmin et →</Link>
+          Puanlar {GAME_BRAND.name} haftalık skor tahminlerinden gelir; ödül yoktur, yalnız sıralama. <Link href={GAME_BRAND.basePath}>Bu haftanın maçlarını tahmin et →</Link>
         </p>
       </section>
 

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from '@/lib/i18n';
+import '@/lib/i18nNamespaces/profile';
 import styles from './profile.module.scss';
 import { trackGrowth } from '@/lib/growthEvents';
 

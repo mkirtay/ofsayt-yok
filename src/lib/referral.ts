@@ -115,7 +115,7 @@ export async function grantReferralRewardOnFirstPurchase(
 /**
  * Büyüme raporu 2.3 — davet ödülünün ETKİNLEŞTİRME yolu (ödeme açılmadan önce viral döngü için). VARSAYILAN KAPALI:
  * `REFERRAL_ACTIVATION_REWARD_ENABLED=true` verilmedikçe hiçbir şey yapmaz (ödüllü kampanya / tüketici mevzuatı için
- * hukuki görüş bekleniyor). Koşul: davet edilenin e-postası doğrulanmış ve Tahmin Ligi'nde ilk tahminini yapmış olması
+ * hukuki görüş bekleniyor). Koşul: davet edilenin e-postası doğrulanmış ve tahmin oyununda ilk tahminini yapmış olması
  * (çağıran: server/game/play.ts). Ödül ve tavanlar ilk satın alma yoluyla aynı (bir kez, davet eden için aylık tavan).
  */
 export function referralActivationEnabled(): boolean {

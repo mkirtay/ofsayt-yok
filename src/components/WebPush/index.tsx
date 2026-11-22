@@ -27,14 +27,12 @@ export default function WebPushPanel() {
 
   useEffect(() => {
     const ok = !!VAPID && 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
-    setSupported(ok);
     if (ok) {
-      if (Notification.permission === 'denied') setState('denied');
-      else
-        navigator.serviceWorker.getRegistration('/sw.js').then(async (reg) => {
-          const sub = await reg?.pushManager.getSubscription();
-          setState(sub ? 'on' : 'off');
-        });
+      navigator.serviceWorker.getRegistration('/sw.js').then(async (reg) => {
+        const sub = Notification.permission === 'denied' ? null : await reg?.pushManager.getSubscription();
+        setSupported(true);
+        setState(Notification.permission === 'denied' ? 'denied' : sub ? 'on' : 'off');
+      });
     }
     const onPrompt = (e: Event) => {
       e.preventDefault();

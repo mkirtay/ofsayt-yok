@@ -6,6 +6,7 @@ import styles from '@/components/Game/game.module.scss';
 import '@/lib/i18nNamespaces/game';
 import { gamePageGate } from '@/server/game/access';
 import { privateLeaguesEnabled } from '@/server/game/leagues';
+import { GAME_BRAND } from '@/config/brand';
 
 /** Özel ligler (büyüme raporu 2.2): kur / kodla katıl / liglerim. Kişisel sayfa → noindex, önbellek yok. */
 export const getServerSideProps: GetServerSideProps = async ({ req, res }) => {
@@ -20,7 +21,7 @@ export default function GameLeaguesPage() {
   return (
     <>
       <Head>
-        <title>Özel Ligler · Tahmin Ligi</title>
+        <title>{`Özel Ligler · ${GAME_BRAND.name}`}</title>
         <meta name="robots" content="noindex, nofollow" />
       </Head>
       <div className={styles.page}>
