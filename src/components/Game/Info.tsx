@@ -209,6 +209,11 @@ export function HowToPlay() {
 
 export const FAQ_KEYS = [1, 2, 3, 4, 5] as const;
 
+/** Özel ligler (büyüme raporu 2.2) açık mı — menü sekmesi ve SSS 4. cevabı. Migration uygulanmadan açılmaz. */
+export const GAME_LEAGUES_ON = process.env.NEXT_PUBLIC_GAME_LEAGUES_ENABLED === 'true';
+/** SSS cevap anahtarı: özel ligler açıksa 4. soru "yakında" yerine canlı cevap. */
+export const faqAnswerKey = (n: number) => (n === 4 && GAME_LEAGUES_ON ? 'faq.a4Live' : `faq.a${n}`);
+
 export function Faq() {
   const { t } = useTranslation('game');
   return (
@@ -220,7 +225,7 @@ export function Faq() {
         {FAQ_KEYS.map((n) => (
           <details key={n}>
             <summary>{t(`faq.q${n}`)}</summary>
-            <p>{t(`faq.a${n}`)}</p>
+            <p>{t(faqAnswerKey(n))}</p>
           </details>
         ))}
       </div>
@@ -243,13 +248,14 @@ export function GameModeSwitch({ mode, onChange }: { mode: 'week' | 'day'; onCha
 }
 
 /** Alt gezinme: Tahmin yap · Sıralama · Kurallar. */
-export function GameNav({ current }: { current: 'play' | 'leaderboard' | 'rules' }) {
+export function GameNav({ current }: { current: 'play' | 'leaderboard' | 'rules' | 'leagues' }) {
   const { t } = useTranslation('game');
   const base = GAME_BRAND.basePath;
   const items = [
     ['play', base],
     ['leaderboard', `${base}/siralama`],
     ['rules', `${base}/kurallar`],
+    ...(GAME_LEAGUES_ON ? ([['leagues', `${base}/ligler`]] as const) : []),
   ] as const;
   return (
     <nav className={styles.subnav} aria-label={GAME_BRAND.name}>

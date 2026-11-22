@@ -4,7 +4,8 @@
   "nav": {
     "play": "Predict",
     "leaderboard": "Rankings",
-    "rules": "Rules"
+    "rules": "Rules",
+    "leagues": "Leagues"
   },
   "hero": {
     "title": "Predict the score, be the best of the week.",
@@ -78,6 +79,7 @@
     "a3": "One tap with Google, or with your existing account.",
     "q4": "Can I play with friends?",
     "a4": "Private leagues are coming soon.",
+    "a4Live": "Yes: create a private league on the Leagues page and share the invite link on WhatsApp; weekly and season standings among league members only.",
     "q5": "Can I change my prediction?",
     "a5": "As often as you like until that match kicks off."
   },

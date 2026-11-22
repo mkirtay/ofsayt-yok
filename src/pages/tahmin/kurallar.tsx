@@ -3,7 +3,7 @@ import Head from 'next/head';
 import { useTranslation } from '@/lib/i18n';
 import '@/lib/i18nNamespaces/game';
 import JsonLd from '@/components/JsonLd';
-import { EasyRules, FAQ_KEYS, Faq, GameNav, PointRules, RulesList, Scenarios, ScoreExample } from '@/components/Game/Info';
+import { EasyRules, FAQ_KEYS, faqAnswerKey, Faq, GameNav, PointRules, RulesList, Scenarios, ScoreExample } from '@/components/Game/Info';
 import styles from '@/components/Game/game.module.scss';
 import { GAME_BRAND } from '@/config/brand';
 import { siteBaseUrl } from '@/lib/siteUrl';
@@ -33,7 +33,7 @@ export default function GameRulesPage({ noindex }: { noindex: boolean }) {
         schema={{
           '@context': 'https://schema.org',
           '@type': 'FAQPage',
-          mainEntity: FAQ_KEYS.map((n) => ({ '@type': 'Question', name: t(`faq.q${n}`), acceptedAnswer: { '@type': 'Answer', text: t(`faq.a${n}`) } })),
+          mainEntity: FAQ_KEYS.map((n) => ({ '@type': 'Question', name: t(`faq.q${n}`), acceptedAnswer: { '@type': 'Answer', text: t(faqAnswerKey(n)) } })),
         }}
       />
       <div className={styles.page}>

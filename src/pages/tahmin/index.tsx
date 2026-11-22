@@ -8,7 +8,7 @@ import '@/lib/i18nNamespaces/game';
 import JsonLd from '@/components/JsonLd';
 import WeekPlay from '@/components/Game/WeekPlay';
 import Leaderboard from '@/components/Game/Leaderboard';
-import { FAQ_KEYS, Faq, GameModeSwitch, GameNav, HowToPlay } from '@/components/Game/Info';
+import { FAQ_KEYS, faqAnswerKey, Faq, GameModeSwitch, GameNav, HowToPlay } from '@/components/Game/Info';
 import styles from '@/components/Game/game.module.scss';
 import { GAME_BRAND, brandTitle } from '@/config/brand';
 import { siteBaseUrl } from '@/lib/siteUrl';
@@ -67,7 +67,7 @@ export default function GameHomePage({ week, season, board, prevKey, nextKey, re
         schema={{
           '@context': 'https://schema.org',
           '@type': 'FAQPage',
-          mainEntity: FAQ_KEYS.map((n) => ({ '@type': 'Question', name: t(`faq.q${n}`), acceptedAnswer: { '@type': 'Answer', text: t(`faq.a${n}`) } })),
+          mainEntity: FAQ_KEYS.map((n) => ({ '@type': 'Question', name: t(`faq.q${n}`), acceptedAnswer: { '@type': 'Answer', text: t(faqAnswerKey(n)) } })),
         }}
       />
       <div className={`${styles.page} ${styles.pageWide}`}>

@@ -99,6 +99,8 @@ model User {
   moderationTargeted   ModerationAction[]  @relation("ModerationActionTarget")
   gamePredictions      GamePrediction[]
   gameWeekEntries      GameWeekEntry[]
+  gameLeaguesOwned     GameLeague[]        @relation("GameLeagueOwner")
+  gameLeagueMembers    GameLeagueMember[]
   refereeRatings       RefereeRating[]
 }
 
@@ -937,6 +939,32 @@ model GamePrediction {
   @@index([gameMatchId])
   @@index([weekId, userId])
   @@index([dayId, userId])
+}
+
+/// Tahmin Ligi özel ligi (arkadaş / ofis ligi; büyüme raporu 2.2). Davet koduyla katılınır; sıralama GameWeekEntry
+/// toplamlarından (lib/game/sql.ts leagueSeasonSql / leagueWeekSql). Sınırlar ve kurallar: server/game/leagues.ts.
+model GameLeague {
+  id        String             @id @default(cuid())
+  name      String
+  /// Davet kodu (8 karakter, karışmayan harf/rakam); paylaşım adresi /tahmin/lig/{code}.
+  code      String             @unique
+  ownerId   String
+  owner     User               @relation("GameLeagueOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  createdAt DateTime           @default(now())
+  members   GameLeagueMember[]
+
+  @@index([ownerId])
+}
+
+model GameLeagueMember {
+  leagueId String
+  league   GameLeague @relation(fields: [leagueId], references: [id], onDelete: Cascade)
+  userId   String
+  user     User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  joinedAt DateTime   @default(now())
+
+  @@id([leagueId, userId])
+  @@index([userId])
 }
 
 /// Kullanıcı × hafta: joker seçimi + sıralama toplamları (sonuçlanan maçlardan yeniden hesaplanır, idempotent).

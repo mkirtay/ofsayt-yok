@@ -8,6 +8,7 @@ const FILES = [
   'components/ComboHomeCard/comboHomeCard.module.scss',
   'components/AiCalibrationChart/aiCalibrationChart.module.scss',
   'pages/ai-istatistikleri/ai-istatistikleri.module.scss',
+  'components/Game/leagues.module.scss',
   'components/MatchOddsCard/matchOddsCard.module.scss',
   'components/MatchDetailContent/matchDetailContent.module.scss',
 ];

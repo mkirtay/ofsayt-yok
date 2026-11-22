@@ -4,7 +4,8 @@
   "nav": {
     "play": "Tahmin yap",
     "leaderboard": "Sıralama",
-    "rules": "Kurallar"
+    "rules": "Kurallar",
+    "leagues": "Ligler"
   },
   "hero": {
     "title": "Skoru tahmin et, haftanın en iyisi ol.",
@@ -78,6 +79,7 @@
     "a3": "Google ile tek dokunuş ya da mevcut hesabınla.",
     "q4": "Arkadaşlarımla oynayabilir miyim?",
     "a4": "Özel ligler yakında.",
+    "a4Live": "Evet: Ligler sayfasından özel lig kur, davet linkini WhatsApp'tan paylaş; haftalık ve sezonluk sıralama yalnız lig üyeleri arasında.",
     "q5": "Tahminimi değiştirebilir miyim?",
     "a5": "O maç başlayana kadar istediğin kadar."
   },

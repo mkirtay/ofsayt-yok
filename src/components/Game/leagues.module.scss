@@ -1,0 +1,264 @@
+@use '../../styles/variables' as *;
+
+// Tahmin Ligi özel ligleri (büyüme raporu 2.2) — oyun sayfalarıyla aynı kart dili, tokenlar.
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-4;
+  max-width: 720px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: $spacing-4;
+
+  @media (min-width: 640px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+  padding: $spacing-4;
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+}
+
+.kicker {
+  margin: 0;
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: $color-text-secondary;
+}
+
+.h1 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 900;
+  color: $color-text;
+}
+
+.h2 {
+  margin: 0;
+  font-size: var(--fs-title);
+  font-weight: 800;
+  color: $color-text;
+}
+
+.muted {
+  margin: 0;
+  font-size: var(--fs-meta);
+  line-height: 1.5;
+  color: $color-text-secondary;
+
+  a {
+    color: $color-primary-text;
+    font-weight: 600;
+  }
+}
+
+.label {
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  color: $color-text-secondary;
+}
+
+.input {
+  min-height: 44px;
+  padding: 0 $spacing-3;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  background: $color-muted;
+  color: $color-text;
+  font: inherit;
+  font-size: var(--fs-body);
+
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+    outline-offset: 1px;
+  }
+}
+
+.code {
+  font-family: monospace;
+  letter-spacing: 0.08em;
+  color: $color-text;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-2;
+}
+
+%btnBase {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 $spacing-4;
+  border-radius: $radius-full;
+  font: inherit;
+  font-size: var(--fs-body);
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+}
+
+.btn,
+.btnWa {
+  @extend %btnBase;
+  border: 0;
+  background: $color-primary;
+  color: var(--color-on-action);
+}
+
+.btnGhost {
+  @extend %btnBase;
+  border: 1px solid $color-border;
+  background: transparent;
+  color: $color-text;
+}
+
+.leave {
+  @extend %btnBase;
+  align-self: flex-start;
+  border: 1px solid $color-border;
+  background: transparent;
+  color: $color-danger;
+}
+
+.note,
+.error {
+  margin: 0;
+  font-size: var(--fs-meta);
+  font-weight: 700;
+  color: $color-text-secondary;
+}
+
+.error {
+  color: $color-danger;
+}
+
+.list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.listLink {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: $spacing-3;
+  padding: $spacing-3 0;
+  border-bottom: 1px solid $color-border;
+  color: $color-text;
+  text-decoration: none;
+
+  &:hover .name {
+    color: $color-primary-text;
+  }
+}
+
+.list li:last-child .listLink {
+  border-bottom: 0;
+}
+
+.name {
+  font-weight: 700;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.meta {
+  font-size: var(--fs-caption);
+  color: $color-text-secondary;
+  white-space: nowrap;
+}
+
+.tabs {
+  display: inline-flex;
+  gap: $spacing-1;
+}
+
+.tab {
+  min-height: 36px;
+  padding: 0 $spacing-3;
+  border: 1px solid $color-border;
+  border-radius: $radius-full;
+  background: transparent;
+  color: $color-text-secondary;
+  font: inherit;
+  font-size: var(--fs-meta);
+  font-weight: 700;
+  cursor: pointer;
+
+  &[aria-selected='true'] {
+    background: $color-primary;
+    border-color: $color-primary;
+    color: var(--color-on-action);
+  }
+}
+
+.table {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: grid;
+    grid-template-columns: 28px minmax(0, 1fr) auto 48px;
+    align-items: center;
+    gap: $spacing-2;
+    padding: $spacing-2 0;
+    border-bottom: 1px solid $color-border;
+    font-size: var(--fs-body);
+  }
+
+  li:last-child {
+    border-bottom: 0;
+  }
+}
+
+.rank {
+  font-weight: 800;
+  color: $color-text-secondary;
+  text-align: center;
+}
+
+.points {
+  font-weight: 900;
+  text-align: right;
+  color: $color-text;
+}
+
+.me {
+  background: $color-muted;
+  border-radius: $radius-sm;
+}
+
+@media (max-width: 479px) {
+  .table li {
+    grid-template-columns: 24px minmax(0, 1fr) 40px;
+
+    .meta {
+      display: none;
+    }
+  }
+}
