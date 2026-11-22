@@ -1,7 +1,7 @@
 /**
  * /api/matches/[id]/analysis — kredi modeli v2 (docs/kredi-modeli-v2-plan.md).
  *
- * Erişim: her kullanıcı analizi kendisi için açar (1 kredi / haftalık ücretsiz / yönetici); açtığı kalıcı açık.
+ * Erişim: her kullanıcı analizi kendisi için açar (1 kredi / günlük ücretsiz / yönetici); açtığı kalıcı açık.
  * Maç bitince analiz herkese açık. Diğer herkes yalnız önizlemeyi (kısa özet + ana olasılık) görür — kilitli alanlar
  * hiçbir yanıtta yok. Kural: server/analysisAccess.ts, açma: lib/analysisUnlock.ts.
  *

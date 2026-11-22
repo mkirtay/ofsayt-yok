@@ -30,7 +30,7 @@
   "vatIncluded": "Fiyatlara KDV dahildir.",
   "freeTitle": "Ücretsiz krediler",
   "free1": "Kayıt bonusu: e-postanı doğrulayınca 2 kredi.",
-  "free2": "Her hafta 1 hazır analizi ücretsiz açabilirsin (doğrulanmış e-posta, en az 1 günlük hesap).",
+  "free2": "Her gün 1 hazır analizi ücretsiz açabilirsin (doğrulanmış e-posta, en az 1 günlük hesap).",
   "free3": "Maçı biten analizler herkese açık.",
   "buyNow": "Satın al",
   "buyLoading": "Yönlendiriliyor…",
@@ -81,7 +81,7 @@
   "guide": {
     "title": "Adım adım: AI analizini nasıl kullanırsın?",
     "s1Title": "Ücretsiz üye ol",
-    "s1Desc": "E-postanı doğrula, hesabına 2 kredi yüklensin. Her hafta 1 hazır analiz de ücretsiz.",
+    "s1Desc": "E-postanı doğrula, hesabına 2 kredi yüklensin. Her gün 1 hazır analiz de ücretsiz.",
     "s2Title": "Maçı seç",
     "s2Desc": "Ana sayfadan ya da aramadan henüz başlamamış bir maçın sayfasını aç.",
     "s3Title": "AI Analiz sekmesine geç",

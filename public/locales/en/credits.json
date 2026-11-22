@@ -30,7 +30,7 @@
   "vatIncluded": "Prices include VAT.",
   "freeTitle": "Free credits",
   "free1": "Sign-up bonus: 2 credits once you verify your email.",
-  "free2": "Unlock 1 ready analysis for free every week (verified email, account at least 1 day old).",
+  "free2": "Unlock 1 ready analysis for free every day (verified email, account at least 1 day old).",
   "free3": "Analyses of finished matches are free for everyone.",
   "buyNow": "Buy now",
   "buyLoading": "Redirecting…",
@@ -81,7 +81,7 @@
   "guide": {
     "title": "Step by step: how to use AI analysis",
     "s1Title": "Sign up for free",
-    "s1Desc": "Verify your email and get 2 credits. You can also unlock 1 ready analysis for free every week.",
+    "s1Desc": "Verify your email and get 2 credits. You can also unlock 1 ready analysis for free every day.",
     "s2Title": "Pick a match",
     "s2Desc": "Open the page of a match that hasn't started yet, from the home page or search.",
     "s3Title": "Go to the AI Analysis tab",
