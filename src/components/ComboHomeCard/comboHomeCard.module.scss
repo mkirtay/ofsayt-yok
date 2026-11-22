@@ -11,6 +11,58 @@
   min-width: 0;
 }
 
+// Tam sayfa: ekranı kaplayan katman (header'ın üstünde), içerik kendi içinde kayar.
+.cardFull {
+  position: fixed;
+  z-index: 1000;
+  inset: $spacing-4;
+  max-width: 960px;
+  margin: 0 auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+
+  .head {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: $color-surface;
+    border-bottom: 1px solid $color-border;
+  }
+}
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.expandBtn {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin-right: -6px;
+  padding: 0;
+  border: none;
+  border-radius: $radius-sm;
+  background: none;
+  color: $color-text-secondary;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--bg-muted);
+    color: $color-text;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+    outline-offset: 1px;
+  }
+}
+
 .head {
   display: flex;
   align-items: center;

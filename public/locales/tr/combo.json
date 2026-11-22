@@ -1,6 +1,8 @@
 {
   "title": "Günün Kombinesi",
   "badge": "Test",
+  "expand": "Tam sayfa aç",
+  "collapse": "Küçült",
   "open": "Aç",
   "close": "Kapat",
   "risk": {

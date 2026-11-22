@@ -1,6 +1,8 @@
 {
   "title": "Daily Combo",
   "badge": "Test",
+  "expand": "Open full page",
+  "collapse": "Collapse",
   "open": "Open",
   "close": "Close",
   "risk": {

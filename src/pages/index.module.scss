@@ -489,6 +489,7 @@ $hub-fill-height: calc(100vh - var(--header-height) - 56px - 32px - var(--league
     .hubSidebar {
       display: flex;
       flex-direction: column;
+      overflow-y: auto;
 
       .sidebar {
         flex: 1;
@@ -501,6 +502,15 @@ $hub-fill-height: calc(100vh - var(--header-height) - 56px - 32px - var(--league
         flex: 1;
         min-height: 0;
         overflow-y: auto;
+      }
+
+      // Kombine kartı varken: kart sıkışmaz, sütunun tamamı kendi içinde kayar; lig paneli makul bir yükseklikte kalır.
+      .comboSide {
+        flex: none;
+      }
+
+      .comboSide + .sidebar {
+        flex: 1 0 420px;
       }
     }
 
@@ -545,6 +555,15 @@ $hub-fill-height: calc(100vh - var(--header-height) - 56px - 32px - var(--league
       border: 1px solid var(--border-subtle);
       border-radius: $radius-md;
     }
+  }
+
+  // Sol sütun da orta alanla aynı sabit yükseklikte ve kendi içinde kayar: kombine kartı uzunken sayfa kaymasın
+  // (yoksa orta/sağ sütunlar yerinde kalıp alt tarafı boş görünüyordu).
+  .hubGridWithGundem .hubSidebar {
+    height: $hub-fill-height;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
   }
 
   .hubGundem {
