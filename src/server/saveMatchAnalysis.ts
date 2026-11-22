@@ -7,8 +7,47 @@ import { Prisma, type MatchAnalysis } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import type { MatchAnalysisContext } from '@/server/buildMatchAnalysisContext';
 import type { AiAnalysisResult } from '@/services/aiAnalysisService';
+import calibrationMapJson from '@/config/aiCalibrationMap.json';
+import { calibrateProbabilities, calibrateScenarios, pickByLift, type CalibrationMap } from '@/utils/probabilityCalibration';
 
-export async function saveGeneratedAnalysis(ctx: MatchAnalysisContext, ai: AiAnalysisResult): Promise<MatchAnalysis> {
+const calibrationMap = calibrationMapJson as CalibrationMap;
+
+/** `AI_CALIBRATION_ENABLED=false` ile kapatılır (varsayılan açık; büyüme raporu 1.4/1.5). */
+export function calibrationEnabled(): boolean {
+  return process.env.AI_CALIBRATION_ENABLED !== 'false';
+}
+
+type Analysis = AiAnalysisResult['analysis'];
+
+/**
+ * Kayıt öncesi: olasılıklar kalibre edilir (ham hali `rawProbabilities`), öne çıkan 3 tahmin "temel orandan sapan"
+ * kuralıyla seçilip kayda yazılır (`topPickKeys`). Kapalıysa analiz aynen, ek alan yok.
+ */
+export function prepareProbabilities(a: Analysis): { analysis: Analysis; extra: Record<string, unknown> } {
+  if (!calibrationEnabled()) return { analysis: a, extra: {} };
+  const probs = calibrateProbabilities(
+    { matchPrediction: a.matchPrediction as unknown as Record<string, unknown>, goalExpectation: a.goalExpectation as unknown as Record<string, unknown> },
+    calibrationMap,
+  );
+  const analysis = {
+    ...a,
+    matchPrediction: probs.matchPrediction as unknown as Analysis['matchPrediction'],
+    goalExpectation: probs.goalExpectation as unknown as Analysis['goalExpectation'],
+    scenarios: calibrateScenarios(a.scenarios ?? [], calibrationMap) as Analysis['scenarios'],
+  };
+  return {
+    analysis,
+    extra: {
+      rawProbabilities: { matchPrediction: a.matchPrediction, goalExpectation: a.goalExpectation, scenarios: a.scenarios },
+      calibrationVersion: calibrationMap.version,
+      topPickKeys: pickByLift(probs, calibrationMap.baseRates),
+    },
+  };
+}
+
+export async function saveGeneratedAnalysis(ctx: MatchAnalysisContext, generated: AiAnalysisResult): Promise<MatchAnalysis> {
+  const { analysis, extra } = prepareProbabilities(generated.analysis);
+  const ai = { ...generated, analysis };
   return prisma.matchAnalysis.create({
     data: {
       matchId: String(ctx.match.id),
@@ -33,6 +72,7 @@ export async function saveGeneratedAnalysis(ctx: MatchAnalysisContext, ai: AiAna
         heatmapAnalysis: ai.analysis.heatmapAnalysis,
         riskFactors: ai.analysis.riskFactors,
         analystComment: ai.analysis.analystComment,
+        ...extra,
       } as unknown as Prisma.InputJsonValue,
       riskLevel: ai.analysis.riskLevel,
       riskReasoning: ai.analysis.riskReasoning,

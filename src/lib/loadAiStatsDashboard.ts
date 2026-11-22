@@ -86,6 +86,8 @@ type RecordRow = {
     competitionId: string | null;
     matchPrediction: unknown;
     goalExpectation: unknown;
+    /** Yalnız `topPickKeys` okunur (kayıtta seçilmiş öne çıkan tahminler, büyüme raporu 1.5). */
+    fullReport: unknown;
   };
 };
 
@@ -96,6 +98,7 @@ function recordTopPicks(r: RecordRow): AiStatsHistoryItem['topPicks'] {
   const picks = pickTopPredictions({
     matchPrediction: r.matchAnalysis.matchPrediction as ProbSource['matchPrediction'],
     goalExpectation: r.matchAnalysis.goalExpectation as ProbSource['goalExpectation'],
+    fullReport: r.matchAnalysis.fullReport as ProbSource['fullReport'],
   });
   if (r.evaluatedAt == null) return picks.map((p) => ({ ...p, hit: null }));
   const score = parseScore(r.actualScore);
@@ -109,7 +112,7 @@ const ALL_MARKETS: TopPickKey[] = ['home', 'draw', 'away', 'over15', 'over25', '
  * Değerlendirilmiş kaydın bütün pazar sonuçları (olay gerçekleşti mi) — temel oran için, model o pazarı seçmese de.
  * Skordan çıkmayan ilk yarı pazarları kayıttaki yön isabetinden; yönü çevirmek için o pazarın kart olasılığı gerekir.
  */
-function recordOutcomes(r: RecordRow): CalibrationMatch['outcomes'] {
+export function recordOutcomes(r: Pick<RecordRow, "actualScore" | "extendedHits" | "matchAnalysis">): CalibrationMatch['outcomes'] {
   const score = parseScore(r.actualScore);
   const hits = (r.extendedHits ?? null) as Record<string, boolean | null> | null;
   const mp = (r.matchAnalysis.matchPrediction ?? {}) as Record<string, unknown>;
@@ -153,7 +156,7 @@ export async function loadAiStatsDashboard(auth: { role: Role | null }, opts: { 
       extendedHits: true,
       createdAt: true,
       matchAnalysis: {
-        select: { homeTeamName: true, awayTeamName: true, competitionId: true, matchPrediction: true, goalExpectation: true },
+        select: { homeTeamName: true, awayTeamName: true, competitionId: true, matchPrediction: true, goalExpectation: true, fullReport: true },
       },
     },
     orderBy: { createdAt: 'desc' },

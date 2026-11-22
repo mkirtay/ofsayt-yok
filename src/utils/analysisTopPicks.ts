@@ -23,12 +23,23 @@ export type TopPick = { key: TopPickKey; pct: number };
 type ProbSource = {
   matchPrediction?: { home?: unknown; draw?: unknown; away?: unknown } | null;
   goalExpectation?: Partial<Record<Exclude<TopPickKey, 'home' | 'draw' | 'away'>, unknown>> | null;
+  /** Kayıt anında seçilmiş öne çıkan tahminler (büyüme raporu 1.5, utils/probabilityCalibration.ts `pickByLift`). */
+  fullReport?: { topPickKeys?: unknown } | null;
 };
+
+const ALL_KEYS: readonly TopPickKey[] = ['home', 'draw', 'away', 'over15', 'over25', 'over35', 'btts', 'htOver05', 'htOver15', 'homeToScore', 'awayToScore', 'bttsFirstHalf'];
 
 /** En yüksek olasılıklı `n` madde (eşitlikte listedeki sıra korunur). */
 export function pickTopPredictions(analysis: ProbSource, n = 3): TopPick[] {
   const mp = analysis.matchPrediction ?? {};
   const ge = analysis.goalExpectation ?? {};
+  // Kayıtta seçim varsa (yeni kural) o sırayla; yalnız tam 3'lük rozet isteğinde (kombine aracı en olası 1'i ister).
+  const stored = analysis.fullReport?.topPickKeys;
+  if (n === 3 && Array.isArray(stored) && stored.length > 0 && stored.every((k) => ALL_KEYS.includes(k as TopPickKey))) {
+    const val = (k: TopPickKey) => Math.round(Number(k === 'home' || k === 'draw' || k === 'away' ? mp[k] : ge[k]));
+    const picks = (stored as TopPickKey[]).map((key) => ({ key, pct: val(key) })).filter((c) => Number.isFinite(c.pct) && c.pct > 0 && c.pct <= 100);
+    if (picks.length > 0) return picks.slice(0, n);
+  }
   const candidates: Array<[TopPickKey, unknown]> = [
     ['home', mp.home],
     ['draw', mp.draw],

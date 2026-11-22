@@ -23,6 +23,8 @@ export type FullReport = {
   };
   riskFactors: string[];
   analystComment: string;
+  /** Kayıt anında seçilmiş öne çıkan 3 tahmin (büyüme raporu 1.5); eski kayıtlarda yok. */
+  topPickKeys?: string[];
 };
 
 export type ApiAnalysis = {

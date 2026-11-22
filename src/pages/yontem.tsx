@@ -33,8 +33,17 @@ export default function YontemPage() {
         <h2>2. Çıktı: olasılıklar</h2>
         <p>
           Analiz; maç sonucu (ev sahibi / beraberlik / deplasman) ve gol beklentileri (1,5 / 2,5 / 3,5 üstü, karşılıklı gol, ilk yarı golü,
-          takımların gol atması) için yüzde olasılık verir. Bu olasılıklardan en yüksek üçü analiz kartının üstünde <strong>en güçlü 3
-          tahmin</strong> olarak gösterilir.
+          takımların gol atması) için yüzde olasılık verir.
+        </p>
+        <p>
+          <strong>Kalibrasyon (22 Kasım 2026&apos;dan beri):</strong> modelin ham olasılıkları, geçmiş maçlarda o yüzdenin gerçekte
+          ne sıklıkla tuttuğuna göre düzeltilir (isotonic regresyon; bir olasılık en fazla 15 puan oynar). Amaç, kartta %70 yazan
+          tahminlerin gerçekten yaklaşık %70&apos;inde gerçekleşmesidir.
+        </p>
+        <p>
+          <strong>Öne çıkan 3 tahmin:</strong> olasılığı %50&apos;nin üstünde olan tahminler içinden <em>temel orandan</em> en çok
+          ayrılan üçü seçilir. Temel oran, o olayın tüm maçlarda ne sıklıkla olduğudur (ör. 2+ gol maçların yaklaşık %80&apos;inde
+          olur; bunu söylemek bilgi katmaz). 22 Kasım 2026&apos;dan önceki analizlerde en yüksek olasılıklı üç tahmin gösteriliyordu.
         </p>
       </section>
 
@@ -45,6 +54,10 @@ export default function YontemPage() {
           <li>İsabet oranı = tutan tahmin sayısı ÷ değerlendirilen tahmin sayısı.</li>
           <li>Yalnız güncel model ailesinin (3 Ekim 2026&apos;dan beri) analizleri sayılır; ertelenen, iptal edilen ya da skoru doğrulanamayan maçlar dışarıda kalır.</li>
           <li>Seçim, karttakiyle birebir aynıdır: sonradan seçilmiş ya da gizlenmiş tahmin yoktur.</li>
+          <li>
+            İsabetin yanında temel oran (aynı tahmin türleri her maçta söylenseydi beklenen isabet), Brier skoru ve kalibrasyon grafiği
+            yayımlanır; çıplak isabet oranı tek başına modelin becerisini göstermez.
+          </li>
         </ul>
         <p>
           Güncel oran ve maç maç liste: <Link href="/ai-istatistikleri">AI isabet istatistikleri</Link>.

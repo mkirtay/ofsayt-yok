@@ -49,5 +49,12 @@ export function scenariosFromStored(stored: unknown): AnalysisScenario[] {
 export function toPublicAnalysis<T extends { bettingTips?: unknown; modelVersion?: string | null }>(
   row: T,
 ): Omit<T, 'bettingTips'> & { bettingTips: never[]; scenarios: AnalysisScenario[] } {
-  return { ...sanitizeLegacyAnalysis(row), bettingTips: [], scenarios: scenariosFromStored(row.bettingTips) };
+  const clean = sanitizeLegacyAnalysis(row) as T & { fullReport?: unknown };
+  // Kalibrasyon iç verisi (ham olasılıklar, tablo sürümü) yanıta çıkmaz; öne çıkan seçim (`topPickKeys`) kalır.
+  const fr = clean.fullReport;
+  const fullReport =
+    fr && typeof fr === 'object' && ('rawProbabilities' in fr || 'calibrationVersion' in fr)
+      ? Object.fromEntries(Object.entries(fr).filter(([k]) => k !== 'rawProbabilities' && k !== 'calibrationVersion'))
+      : fr;
+  return { ...clean, ...(fr !== undefined ? { fullReport } : {}), bettingTips: [], scenarios: scenariosFromStored(row.bettingTips) };
 }
