@@ -193,3 +193,17 @@
   padding: $spacing-2;
   resize: vertical;
 }
+
+/* Hakem karnesi (büyüme raporu 2.1): hakem adının altında maç, tablo altı not. */
+.subMeta {
+  display: block;
+  font-size: var(--fs-caption);
+  color: $color-text-secondary;
+}
+
+.note {
+  margin: $spacing-2 0 0;
+  font-size: var(--fs-meta);
+  line-height: 1.5;
+  color: $color-text-secondary;
+}

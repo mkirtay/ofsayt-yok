@@ -6,7 +6,7 @@ import JsonLd from '@/components/JsonLd';
 import { hubHasWeeks, leagueHubBySlug, type LeagueHub } from '@/config/leagueHubs';
 import { brandTitle } from '@/config/brand';
 import { siteBaseUrl } from '@/lib/siteUrl';
-import type { SeasonRound, WeekFixture } from '@/server/leagueWeeks';
+import type { RefereeSplit, SeasonRound, WeekFixture } from '@/server/leagueWeeks';
 import { breadcrumbJsonLd } from '@/utils/breadcrumbJsonLd';
 import { refereeHref } from '@/utils/personUrl';
 import { buildWeekSummary, weekDateRange } from '@/utils/leagueWeekSeo';
@@ -20,6 +20,8 @@ type Props = {
   fixtures: WeekFixture[];
   weeks: number[];
   currentWeek: number | null;
+  /** Haftanın hakemlerinin sezon karnesi (önceki haftalardan); yoksa boş. */
+  refereeSplits?: RefereeSplit[];
 };
 
 /**
@@ -32,7 +34,7 @@ export const getStaticProps: GetStaticProps<Props> = async ({ params }) => {
   const hub = leagueHubBySlug(String(params?.slug ?? ''));
   const week = Number(params?.week);
   if (!hub || !hubHasWeeks(hub) || !Number.isInteger(week) || week < 1 || week > 60) return { notFound: true, revalidate: 86_400 };
-  const [{ loadCurrentSeason, loadSeasonRounds, loadRoundFixtures, pickCurrentRound }, { withSportmonksTimeout, SPORTMONKS_TIMEOUT_MS }, { propsJsonSafe }] =
+  const [{ loadCurrentSeason, loadSeasonRounds, loadRoundFixtures, pickCurrentRound, loadRefereeSeasonSplits }, { withSportmonksTimeout, SPORTMONKS_TIMEOUT_MS }, { propsJsonSafe }] =
     await Promise.all([import('@/server/leagueWeeks'), import('@/server/sportmonks/cachedFetch'), import('@/server/propsJsonSafe')]);
   const t = <T,>(fn: () => Promise<T>) => withSportmonksTimeout(SPORTMONKS_TIMEOUT_MS.page, fn);
   const season = await t(() => loadCurrentSeason(hub.leagueId));
@@ -43,6 +45,17 @@ export const getStaticProps: GetStaticProps<Props> = async ({ params }) => {
   const fixtures = await t(() => loadRoundFixtures(round.id));
   const today = new Date().toISOString().slice(0, 10);
   const settled = round.finished && round.end != null && round.end < today;
+  // Büyüme raporu 2.1: haftanın hakemlerinin sezon karnesi (önceki bitmiş haftalardan; kart ev/dep + sonuç dağılımı).
+  let refereeSplits: RefereeSplit[] = [];
+  try {
+    const ids = new Set(fixtures.map((f) => f.referee?.id).filter((x): x is number => x != null));
+    if (ids.size) {
+      const all = await t(() => loadRefereeSeasonSplits(rounds.filter((r) => r.week < round.week)));
+      refereeSplits = [...all.values()].filter((s) => ids.has(s.refereeId));
+    }
+  } catch {
+    refereeSplits = [];
+  }
   return {
     props: propsJsonSafe({
       hub,
@@ -51,6 +64,7 @@ export const getStaticProps: GetStaticProps<Props> = async ({ params }) => {
       fixtures,
       weeks: rounds.map((r) => r.week),
       currentWeek: pickCurrentRound(rounds, today)?.week ?? null,
+      refereeSplits,
     }),
     revalidate: settled ? 7 * 86_400 : 1800,
   };
@@ -58,7 +72,7 @@ export const getStaticProps: GetStaticProps<Props> = async ({ params }) => {
 
 const timeFmt = new Intl.DateTimeFormat('tr-TR', { timeZone: 'Europe/Istanbul', day: 'numeric', month: 'short', weekday: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
 
-export default function LeagueWeekPage({ hub, seasonName, round, fixtures, weeks, currentWeek }: Props) {
+export default function LeagueWeekPage({ hub, seasonName, round, fixtures, weeks, currentWeek, refereeSplits = [] }: Props) {
   const url = `${siteBaseUrl()}/lig/${hub.slug}/hafta/${round.week}`;
   const heading = `${hub.name} ${round.week}. Hafta Maçları, Sonuçları ve Hakemleri`;
   const summary = buildWeekSummary(hub.name, seasonName, round, fixtures);
@@ -171,6 +185,8 @@ export default function LeagueWeekPage({ hub, seasonName, round, fixtures, weeks
         )}
       </section>
 
+      {refereeSplits.length ? <RefereeReportSection hubName={hub.name} week={round.week} fixtures={fixtures} splits={refereeSplits} /> : null}
+
       <nav className={styles.more} aria-label="Haftalar">
         {prev ? <Link href={`/lig/${hub.slug}/hafta/${prev}`}>← {prev}. hafta</Link> : null}
         {prev && next ? ' · ' : null}
@@ -187,5 +203,67 @@ export default function LeagueWeekPage({ hub, seasonName, round, fixtures, weeks
         <Link href="/hakemler">Hakem istatistikleri</Link>
       </nav>
     </Container>
+  );
+}
+
+const num = (v: number) => v.toLocaleString('tr-TR', { maximumFractionDigits: 2 });
+
+/**
+ * Büyüme raporu 2.1 — "Haftanın hakem atamaları" karnesi: atanan hakemin bu ligde bu sezon (önceki haftalar) maç başına
+ * sarı kart, ev sahibi / deplasman sarı kartı, kırmızı ve sonuç dağılımı. "En çok" dili yok (hakem içeriği kuralı).
+ */
+function RefereeReportSection({ hubName, week, fixtures, splits }: { hubName: string; week: number; fixtures: WeekFixture[]; splits: RefereeSplit[] }) {
+  const byId = new Map(splits.map((s) => [s.refereeId, s]));
+  const rows = fixtures.filter((f) => f.referee && byId.has(f.referee.id));
+  return (
+    <section className={styles.section} aria-labelledby="hakem-karnesi">
+      <h2 id="hakem-karnesi" className={styles.sectionTitle}>
+        {week}. hafta hakem atamaları: bu sezonki karneleri
+      </h2>
+      <div className={styles.tableWrap}>
+        <table className={styles.weekTable}>
+          <thead>
+            <tr>
+              <th scope="col">Hakem · maç</th>
+              <th scope="col">Maç</th>
+              <th scope="col">Sarı / maç</th>
+              <th scope="col">Ev – dep. sarı</th>
+              <th scope="col">Kırmızı / maç</th>
+              <th scope="col">Ev / ber. / dep.</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((f) => {
+              const s = byId.get(f.referee!.id)!;
+              return (
+                <tr key={f.id}>
+                  <td>
+                    <Link href={refereeHref(f.referee!.id, f.referee!.name)} prefetch={false}>
+                      {f.referee!.name}
+                    </Link>
+                    <span className={styles.subMeta}>
+                      {f.home.name} - {f.away.name}
+                    </span>
+                  </td>
+                  <td>{s.matches}</td>
+                  <td>{num(s.yellowPerMatch)}</td>
+                  <td className={styles.nowrap}>
+                    {num(s.homeYellowPerMatch)} – {num(s.awayYellowPerMatch)}
+                  </td>
+                  <td>{num(s.redPerMatch)}</td>
+                  <td className={styles.nowrap}>
+                    %{s.homeWinPct} / %{s.drawPct} / %{s.awayWinPct}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      <p className={styles.note}>
+        {hubName} bu sezon, {week}. haftadan önceki maçlar. Ev – dep. sarı: o hakemin maçlarında ev sahibine ve deplasmana
+        gösterilen maç başına sarı kart. Ev / ber. / dep.: sonuç dağılımı. Veri: Sportmonks.
+      </p>
+    </section>
   );
 }

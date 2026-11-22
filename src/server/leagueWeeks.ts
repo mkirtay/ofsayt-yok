@@ -45,6 +45,21 @@ export type WeekFixture = {
   referee: { id: number; name: string } | null;
   /** Maçtaki toplam kart (iki takım); istatistik yoksa null. Kırmızı = doğrudan + ikinci sarıdan. */
   cards: { yellow: number; red: number } | null;
+  /** Takım başına kart (hakem ev/deplasman kırılımı, büyüme raporu 2.1); istatistik yoksa null. */
+  cardsBySide?: { home: { yellow: number; red: number }; away: { yellow: number; red: number } } | null;
+};
+
+/** Hakemin sezon kırılımı (lig haftası "Hakem karnesi"): kart ev/deplasman + sonuç dağılımı; yalnız bitmiş maçlar. */
+export type RefereeSplit = {
+  refereeId: number;
+  matches: number;
+  yellowPerMatch: number;
+  homeYellowPerMatch: number;
+  awayYellowPerMatch: number;
+  redPerMatch: number;
+  homeWinPct: number;
+  drawPct: number;
+  awayWinPct: number;
 };
 
 export type LeagueWeek = { round: SeasonRound; fixtures: WeekFixture[] };
@@ -87,6 +102,67 @@ function fixtureCards(f: RawFixture): WeekFixture['cards'] {
   return { yellow: sum([84]), red: sum([83, 85]) };
 }
 
+function fixtureCardsBySide(f: RawFixture): WeekFixture['cardsBySide'] {
+  const stats = f.statistics ?? [];
+  if (!stats.some((x) => x.location === 'home' || x.location === 'away')) return null;
+  const sum = (loc: 'home' | 'away', ids: number[]) =>
+    stats.filter((x) => x.location === loc && x.type_id != null && ids.includes(x.type_id)).reduce((a, x) => a + (x.data?.value ?? 0), 0);
+  return {
+    home: { yellow: sum('home', [84]), red: sum('home', [83, 85]) },
+    away: { yellow: sum('away', [84]), red: sum('away', [83, 85]) },
+  };
+}
+
+const r2 = (x: number) => Math.round(x * 100) / 100;
+
+/** Bitmiş maçlardan (skor + takım kartları olan) hakem başına kırılım. */
+export function aggregateRefereeSplits(fixtures: readonly WeekFixture[]): Map<number, RefereeSplit> {
+  type A = { m: number; hy: number; ay: number; r: number; hw: number; d: number; aw: number };
+  const acc = new Map<number, A>();
+  const seen = new Set<number>();
+  for (const f of fixtures) {
+    if (seen.has(f.id) || !f.referee || !f.score || !f.cardsBySide) continue;
+    seen.add(f.id);
+    const [h, a] = f.score.split('-').map(Number);
+    if (!Number.isFinite(h) || !Number.isFinite(a)) continue;
+    const x = acc.get(f.referee.id) ?? { m: 0, hy: 0, ay: 0, r: 0, hw: 0, d: 0, aw: 0 };
+    x.m += 1;
+    x.hy += f.cardsBySide.home.yellow;
+    x.ay += f.cardsBySide.away.yellow;
+    x.r += f.cardsBySide.home.red + f.cardsBySide.away.red;
+    if (h! > a!) x.hw += 1;
+    else if (h === a) x.d += 1;
+    else x.aw += 1;
+    acc.set(f.referee.id, x);
+  }
+  return new Map(
+    [...acc].map(([refereeId, x]) => [
+      refereeId,
+      {
+        refereeId,
+        matches: x.m,
+        yellowPerMatch: r2((x.hy + x.ay) / x.m),
+        homeYellowPerMatch: r2(x.hy / x.m),
+        awayYellowPerMatch: r2(x.ay / x.m),
+        redPerMatch: r2(x.r / x.m),
+        homeWinPct: Math.round((x.hw / x.m) * 100),
+        drawPct: Math.round((x.d / x.m) * 100),
+        awayWinPct: Math.round((x.aw / x.m) * 100),
+      },
+    ]),
+  );
+}
+
+/** Sezonun bitmiş haftalarının maçlarından hakem kırılımı (her hafta önbellekli tek istek). */
+export async function loadRefereeSeasonSplits(rounds: readonly SeasonRound[]): Promise<Map<number, RefereeSplit>> {
+  const done = rounds.filter((r) => r.finished);
+  const lists: WeekFixture[][] = [];
+  for (let i = 0; i < done.length; i += 4) {
+    lists.push(...(await Promise.all(done.slice(i, i + 4).map((r) => loadRoundFixtures(r.id).catch(() => [] as WeekFixture[])))));
+  }
+  return aggregateRefereeSplits(lists.flat());
+}
+
 export function toWeekFixture(f: RawFixture): WeekFixture | null {
   const home = f.participants?.find((p) => p.meta?.location === 'home');
   const away = f.participants?.find((p) => p.meta?.location === 'away');
@@ -108,6 +184,7 @@ export function toWeekFixture(f: RawFixture): WeekFixture | null {
     state: f.state?.developer_name ?? null,
     referee: refName && refId ? { id: refId, name: refName } : null,
     cards: fixtureCards(f),
+    cardsBySide: fixtureCardsBySide(f),
   };
 }
 
