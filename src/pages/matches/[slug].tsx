@@ -53,6 +53,8 @@ import { useHomeHubMatches } from '@/hooks/useHomeHubMatches';
 import { todayIsoIstanbul } from '@/utils/dateStrip';
 import { isNationalMatchId } from '@/services/apiFootball/ids';
 import { loadGameSlotForFixture, type GameSlot } from '@/server/game/matchSlot';
+import { postMatchVerdicts } from '@/utils/postMatchVerdict';
+import type { TopPick } from '@/utils/analysisTopPicks';
 
 type MatchDetailProps = {
   initialMatch: Match | null;
@@ -427,6 +429,7 @@ export default function MatchDetail({
             schema={{
               '@context': 'https://schema.org',
               '@type': 'SportsEvent',
+              '@id': `${canonicalUrl}#event`,
               name: homeName && awayName ? `${homeName} - ${awayName}` : pageTitle,
               url: canonicalUrl,
               sport: 'Soccer',
@@ -462,6 +465,26 @@ export default function MatchDetail({
                   }
                 : {}),
               ...(ogImageUrl ? { image: ogImageUrl } : {}),
+            }}
+          />
+        ) : null}
+        {/* Büyüme raporu 1.7: "hangi kanalda" — Türkiye yayıncıları (başlamamış / canlı maçta gelir) BroadcastEvent olarak. */}
+        {match && match.tv_stations?.length && homeName && awayName ? (
+          <JsonLd
+            schema={{
+              '@context': 'https://schema.org',
+              '@type': 'BroadcastEvent',
+              name: `${homeName} - ${awayName} canlı yayın`,
+              isLiveBroadcast: true,
+              inLanguage: 'tr',
+              ...(startDateIso ? { startDate: startDateIso } : {}),
+              broadcastOfEvent: { '@id': `${canonicalUrl}#event` },
+              publishedOn: match.tv_stations.map((name) => ({
+                '@type': 'BroadcastService',
+                name,
+                broadcastDisplayName: name,
+                areaServed: { '@type': 'Country', name: 'Türkiye' },
+              })),
             }}
           />
         ) : null}
@@ -571,13 +594,30 @@ export default function MatchDetail({
                         <p className={styles.seoSummaryText}>{postMatchAnalysis.sentences.join(' ')}</p>
                       ) : null}
                       {postMatchAnalysis.picks.length ? (
-                        <p className={styles.seoSummaryText}>
-                          En güçlü 3 tahmin:{' '}
-                          {postMatchAnalysis.picks
-                            .map((p) => `${tm(`analysis.pick.${p.key}`)} (%${Math.round(p.pct)})`)
-                            .join(', ')}
-                          . <Link href="/ai-istatistikleri">Tüm tahminlerin isabet oranı</Link>
-                        </p>
+                        (() => {
+                          // Büyüme raporu 1.8: "AI ne dedi, ne oldu" — aynı URL maç sonunda tazelenir.
+                          const verdicts = postMatchVerdicts(postMatchAnalysis.picks as TopPick[], match.scores);
+                          const known = verdicts.filter((v) => v.hit != null);
+                          return (
+                            <>
+                              <h3 className={styles.seoSummaryTitle}>AI ne dedi, ne oldu?</h3>
+                              <ul className={styles.verdictList}>
+                                {verdicts.map((v) => (
+                                  <li key={v.key} className={v.hit == null ? undefined : v.hit ? styles.verdictHit : styles.verdictMiss}>
+                                    <span aria-hidden="true">{v.hit == null ? '•' : v.hit ? '✓' : '✗'}</span> {tm(`analysis.pick.${v.key}`)} (%
+                                    {Math.round(v.pct)}){v.hit == null ? '' : v.hit ? ' — tuttu' : ' — tutmadı'}
+                                  </li>
+                                ))}
+                              </ul>
+                              <p className={styles.seoSummaryText}>
+                                {known.length
+                                  ? `Sonuç: ${known.length} tahminden ${known.filter((v) => v.hit).length} tanesi tuttu. `
+                                  : ''}
+                                <Link href="/ai-istatistikleri">Tüm tahminlerin isabet oranı</Link>
+                              </p>
+                            </>
+                          );
+                        })()
                       ) : null}
                     </>
                   ) : null}

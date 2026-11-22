@@ -131,7 +131,8 @@ function matchUrl(base: string, m: MatchLike, lastmod: string): SitemapUrl {
 export async function matchesSection(now: number): Promise<{ matches: SitemapUrl[]; teams: Map<number, string> }> {
   const base = siteBaseUrl();
   const today = day(now);
-  const dates = [-3, -2, -1, 0, 1, 2, 3].map((o) => isoDateOffset(now, o));
+  // Büyüme raporu 1.7: maç sayfaları 7 gün önceden haritada ("X - Y maçı ne zaman, hangi kanalda" araması erkenden).
+  const dates = [-3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7].map((o) => isoDateOffset(now, o));
   const matches: SitemapUrl[] = [];
   // Takım id → ad (kanonik /teams/{id}-{ad} adresi için).
   const teams = new Map<number, string>();
@@ -183,7 +184,10 @@ export async function matchesSection(now: number): Promise<{ matches: SitemapUrl
   } catch {
     // yok say
   }
-  return { matches, teams };
+  // Tarih listesi ile sezon listesi aynı maçı verebilir: adres başına tek satır (ilk gelen; tarih listesinin lastmod'u).
+  const seen = new Set<string>();
+  const unique = matches.filter((u) => (seen.has(u.loc) ? false : (seen.add(u.loc), true)));
+  return { matches: unique, teams };
 }
 
 export async function teamsSection(now: number): Promise<SitemapUrl[]> {

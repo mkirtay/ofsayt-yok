@@ -88,3 +88,26 @@
   line-height: 1.55;
   color: $color-text-secondary;
 }
+
+// "AI ne dedi, ne oldu" (büyüme raporu 1.8)
+.verdictList {
+  margin: 0 0 $spacing-2;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-1;
+  font-size: var(--fs-meta);
+  line-height: 1.5;
+  color: $color-text-secondary;
+}
+
+.verdictHit span {
+  color: $color-primary-text;
+  font-weight: 700;
+}
+
+.verdictMiss span {
+  color: $color-danger;
+  font-weight: 700;
+}
