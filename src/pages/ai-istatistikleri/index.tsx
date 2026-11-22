@@ -10,7 +10,7 @@ import {
   aiStatsDashboardQueryKey,
   useAiStatsDashboard,
 } from '@/hooks/useAiStatsDashboard';
-import type { AiStatsDashboard, AiStatsHistoryItem } from '@/lib/loadAiStatsDashboard';
+import type { AiStatsCompetitionGroup, AiStatsDashboard, AiStatsHistoryItem } from '@/lib/loadAiStatsDashboard';
 import type { CronHeartbeat } from '@/server/cronJobs';
 import { buildMatchHref } from '@/utils/matchUrl';
 import styles from './ai-istatistikleri.module.scss';
@@ -261,6 +261,7 @@ export default function AiIstatistikleri({ initialPublic = null }: Partial<PageP
                   <p className={styles.topPicksHint}>{t('disclaimer')}</p>
 
                   {data.calibration ? <CalibrationSections cal={data.calibration} matches={data.totalEvaluated} t={t} tm={tm} /> : null}
+                  {data.byCompetition?.length ? <CompetitionSection rows={data.byCompetition} t={t} /> : null}
 
                   {data.monthly?.length ? (
                     <div className={styles.section}>
@@ -392,6 +393,46 @@ function CalibrationSections({
         </p>
       </div>
     </>
+  );
+}
+
+/** Büyüme raporu 1.3: örneklemin çoğu milli maç — kulüp maçlarındaki isabet ayrı görünsün. */
+function CompetitionSection({ rows, t }: { rows: AiStatsCompetitionGroup[]; t: (key: string, opts?: Record<string, unknown>) => string }) {
+  return (
+    <div className={styles.section}>
+      <h2 className={styles.sectionTitle}>{t('grpTitle')}</h2>
+      <div className={`${styles.tableWrap} ${styles.tableWrapNarrow}`}>
+        <table className={`${styles.table} ${styles.tableCompact}`}>
+          <thead>
+            <tr>
+              <th scope="col">{t('grpColGroup')}</th>
+              <th scope="col">{t('grpColMatches')}</th>
+              <th scope="col">{t('grpColHit')}</th>
+              <th scope="col">{t('grpColBase')}</th>
+              <th scope="col">{t('grpColDiff')}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((g) => {
+              const diff = g.baseRate != null ? g.rate - g.baseRate : null;
+              return (
+                <tr key={g.group}>
+                  <td>
+                    <span className={styles.pickName}>{t(`grp_${g.group}`)}</span>
+                    {g.matches < 20 ? <span className={styles.pickCount}>{t('grpFew')}</span> : null}
+                  </td>
+                  <td>{g.matches}</td>
+                  <td>%{num(g.rate)}</td>
+                  <td>{g.baseRate != null ? `%${num(g.baseRate)}` : '—'}</td>
+                  <td className={diff != null && diff >= 5 ? styles.diffUp : styles.diffFlat}>{diff != null ? signed(diff) : '—'}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      <p className={styles.sectionNote}>{t('grpNote')}</p>
+    </div>
   );
 }
 

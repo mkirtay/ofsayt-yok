@@ -137,3 +137,21 @@ export function computeCalibration(matches: ReadonlyArray<CalibrationMatch>): Ai
     markets,
   };
 }
+
+/**
+ * Turnuva grubu (isabet sayfası kırılımı, büyüme raporu 1.3): örneklemin çoğu milli maç olduğu için kulüp maçlarındaki
+ * başarı ayrı görünsün. Milli maçlar API-Football'dan gelir, kimlikleri 2e9'dan büyüktür (bkz. config/nationalMatches).
+ */
+export type CompetitionGroup = 'superLig' | 'turkey' | 'uefa' | 'big5' | 'national' | 'other';
+export const COMPETITION_GROUPS: CompetitionGroup[] = ['superLig', 'turkey', 'uefa', 'big5', 'national', 'other'];
+const NATIONAL_ID_MIN = 2_000_000_000;
+
+export function competitionGroup(competitionId: string | number | null | undefined, matchId?: string | number | null): CompetitionGroup {
+  const id = Number(competitionId);
+  if (Number(matchId) >= NATIONAL_ID_MIN || id >= NATIONAL_ID_MIN) return 'national';
+  if (id === 600) return 'superLig';
+  if (id === 603 || id === 606) return 'turkey';
+  if ([2, 5, 2286, 1328].includes(id)) return 'uefa';
+  if ([8, 82, 301, 384, 564].includes(id)) return 'big5';
+  return 'other';
+}

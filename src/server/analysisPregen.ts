@@ -2,7 +2,7 @@
  * Popüler maçların AI analizini maçtan ~3 saat önce arka planda üretir (tetikleyici: GitHub Actions, 15 dk'da bir →
  * `POST /api/admin/analysis-pregenerate`).
  *
- * Kapsam: Süper Lig'in tamamı · Türk takımlarının Avrupa maçları (ŞL/AL/KL) · büyük 5 ligde iki takımın da lig
+ * Kapsam: Süper Lig ve 1. Lig'in tamamı (1. Lig: büyüme raporu 1.3, 2026-11-22) · Türk takımlarının Avrupa maçları (ŞL/AL/KL) · büyük 5 ligde iki takımın da lig
  * sıralamasında ilk 6'da olduğu maçlar. Pencere: başlama saati 2 sa – 3 sa 15 dk sonra (GitHub cron gecikmesine pay;
  * maç zaten analizliyse atlanır → tek üretim, yeniden üretim yok). Muhtemel 11 ve güncel sakat listesi bu saatte hazır.
  * Kullanıcı isteğiyle aynı Redis kilidi (lib/analysisGenerationLock) — ikisi aynı maçı aynı anda üretmez.
@@ -28,6 +28,8 @@ import { loadNationalDay } from '@/server/apiFootball/nationalDay';
 import { loadComboPregenCandidates, type ComboPregenCandidate } from '@/server/combo/comboPregen';
 
 export const SUPER_LIG = 600;
+/** TFF 1. Lig (Sportmonks). */
+export const FIRST_LEAGUE = 603;
 export const UEFA_CLUB_LEAGUES = [2, 5, 2286] as const;
 /** Premier League, Bundesliga, Ligue 1, Serie A, La Liga. */
 export const BIG_FIVE = [8, 82, 301, 384, 564] as const;
@@ -46,7 +48,7 @@ export type PregenCandidate = {
   name: string;
   leagueId: number;
   kickoffMs: number;
-  reason: 'super-lig' | 'uefa-turkish' | 'big5-top' | 'national' | ComboPregenCandidate['reason'];
+  reason: 'super-lig' | 'first-league' | 'uefa-turkish' | 'big5-top' | 'national' | ComboPregenCandidate['reason'];
 };
 
 function kickoffMs(f: PregenFixture): number | null {
@@ -80,6 +82,7 @@ export function selectPregenCandidates(
     const teams = f.participants ?? [];
     let reason: PregenCandidate['reason'] | null = null;
     if (league === SUPER_LIG) reason = 'super-lig';
+    else if (league === FIRST_LEAGUE) reason = 'first-league';
     else if ((UEFA_CLUB_LEAGUES as readonly number[]).includes(league) && teams.some((t) => t.country_id === TURKEY_COUNTRY_ID)) reason = 'uefa-turkish';
     else if ((BIG_FIVE as readonly number[]).includes(league)) {
       const top = opts.topTeamsByLeague.get(league);
@@ -122,7 +125,7 @@ async function loadWindowFixtures(now: number): Promise<PregenFixture[]> {
     path: `/fixtures/between/${from}/${to}`,
     perPage: 50,
     maxPages: 4,
-    extraParams: { include: 'participants', filters: `fixtureLeagues:${[SUPER_LIG, ...UEFA_CLUB_LEAGUES, ...BIG_FIVE].join(',')}` },
+    extraParams: { include: 'participants', filters: `fixtureLeagues:${[SUPER_LIG, FIRST_LEAGUE, ...UEFA_CLUB_LEAGUES, ...BIG_FIVE].join(',')}` },
   });
 }
 
@@ -246,7 +249,7 @@ export function summarizePregen(r: PregenResult): Record<string, number> {
  */
 export async function isInPregenScope(m: { leagueId?: number | null; homeId?: number | null; awayId?: number | null }): Promise<boolean> {
   const league = Number(m.leagueId);
-  if (league === SUPER_LIG) return true;
+  if (league === SUPER_LIG || league === FIRST_LEAGUE) return true;
   const teams = [Number(m.homeId), Number(m.awayId)];
   const isUefa = (UEFA_CLUB_LEAGUES as readonly number[]).includes(league);
   const isBigFive = (BIG_FIVE as readonly number[]).includes(league);

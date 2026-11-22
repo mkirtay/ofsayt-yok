@@ -65,7 +65,7 @@ describe('maç öncesi ön üretim — aday seçimi', () => {
     expect(list.map((c) => c.id)).toEqual([4, 1]);
   });
 
-  it('Süper Lig tamamı; Avrupa\'da yalnız Türk takımı varsa; büyük 5\'te iki takım da ilk 6\'daysa', () => {
+  it('Süper Lig ve 1. Lig tamamı; Avrupa\'da yalnız Türk takımı varsa; büyük 5\'te iki takım da ilk 6\'daysa', () => {
     const list = selectPregenCandidates(
       [
         fx(10, 600, 3, [[1], [2]]),
@@ -74,6 +74,7 @@ describe('maç öncesi ön üretim — aday seçimi', () => {
         fx(13, 8, 3, [[101], [102]]),
         fx(14, 8, 3, [[101], [999]]),
         fx(15, 72, 3, [[1], [2]]),
+        fx(16, 603, 3, [[5], [6]]),
       ] as never,
       { now: NOW, topTeamsByLeague: top },
     );
@@ -81,6 +82,7 @@ describe('maç öncesi ön üretim — aday seçimi', () => {
       [10, 'super-lig'],
       [11, 'uefa-turkish'],
       [13, 'big5-top'],
+      [16, 'first-league'],
     ]);
   });
 

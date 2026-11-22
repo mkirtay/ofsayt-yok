@@ -94,5 +94,19 @@
   "calColActual": "Gerçekleşen",
   "calTooltip": "{{label}}: gösterilen ort. %{{shown}}, gerçekleşen %{{actual}} ({{picks}} tahmin)",
   "monthlyColBase": "Temel",
-  "monthlyColDiff": "Fark"
+  "monthlyColDiff": "Fark",
+  "grpTitle": "Turnuvaya göre",
+  "grpNote": "Temel oran her satırda o grubun seçtiği tahmin türlerinin tüm maçlardaki sıklığıyla hesaplanır. 20'den az maçlı gruplar az örnektir.",
+  "grpColGroup": "Turnuva",
+  "grpColMatches": "Maç",
+  "grpColHit": "İsabet",
+  "grpColBase": "Temel",
+  "grpColDiff": "Fark",
+  "grpFew": "az örnek",
+  "grp_superLig": "Süper Lig",
+  "grp_turkey": "1. Lig ve Türkiye Kupası",
+  "grp_uefa": "Avrupa kupaları",
+  "grp_big5": "Büyük 5 lig",
+  "grp_national": "Milli maçlar",
+  "grp_other": "Diğer"
 }

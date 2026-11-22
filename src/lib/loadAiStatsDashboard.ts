@@ -3,7 +3,16 @@ import type { Role } from '@prisma/client';
 import { isUnresolvedActualResult } from '@/lib/predictionRecords';
 import { readCronHeartbeats, type AiCronJobName, type CronHeartbeat } from '@/server/cronJobs';
 import { parseScore, pickTopPredictions, topPickHit, type TopPickKey } from '@/utils/analysisTopPicks';
-import { computeCalibration, expectedBaseRate, marketBaseRates, type AiCalibration, type CalibrationMatch } from '@/utils/aiCalibration';
+import {
+  COMPETITION_GROUPS,
+  competitionGroup,
+  computeCalibration,
+  expectedBaseRate,
+  marketBaseRates,
+  type AiCalibration,
+  type CalibrationMatch,
+  type CompetitionGroup,
+} from '@/utils/aiCalibration';
 
 /**
  * AI isabet sayfası (/ai-istatistikleri). Ölçü: her analiz kartının üstündeki "en güçlü 3 tahmin" rozetinin
@@ -57,7 +66,11 @@ export type AiStatsDashboard = {
   monthly: AiStatsMonth[];
   /** Temel orana karşı + kalibrasyon (yalnız değerlendirilmiş analizler); veri yoksa null. */
   calibration: AiCalibration | null;
+  /** Turnuva grubuna göre isabet + temel oran (boş gruplar yok); sabit sırada. */
+  byCompetition: AiStatsCompetitionGroup[];
 };
+
+export type AiStatsCompetitionGroup = TopPickStats & { group: CompetitionGroup; baseRate: number | null };
 
 type RecordRow = {
   evaluatedAt: Date | null;
@@ -70,6 +83,7 @@ type RecordRow = {
   matchAnalysis: {
     homeTeamName: string;
     awayTeamName: string;
+    competitionId: string | null;
     matchPrediction: unknown;
     goalExpectation: unknown;
   };
@@ -139,7 +153,7 @@ export async function loadAiStatsDashboard(auth: { role: Role | null }, opts: { 
       extendedHits: true,
       createdAt: true,
       matchAnalysis: {
-        select: { homeTeamName: true, awayTeamName: true, matchPrediction: true, goalExpectation: true },
+        select: { homeTeamName: true, awayTeamName: true, competitionId: true, matchPrediction: true, goalExpectation: true },
       },
     },
     orderBy: { createdAt: 'desc' },
@@ -204,8 +218,31 @@ export async function loadAiStatsDashboard(auth: { role: Role | null }, opts: { 
       baseRate: expectedBaseRate(monthPicks.get(month) ?? [], base),
     }));
 
+  const byGroup = new Map<CompetitionGroup, { stats: TopPickStats; picks: AiStatsHistoryItem['topPicks'] }>();
+  for (const r of evaluated) {
+    const known = (picksByRecord.get(r) ?? []).filter((p) => p.hit != null);
+    if (known.length === 0) continue;
+    const g = competitionGroup(r.matchAnalysis.competitionId, r.matchId);
+    const e = byGroup.get(g) ?? { stats: { matches: 0, picks: 0, hits: 0, rate: 0 }, picks: [] };
+    e.stats.matches += 1;
+    e.stats.picks += known.length;
+    e.stats.hits += known.filter((p) => p.hit).length;
+    e.picks.push(...known);
+    byGroup.set(g, e);
+  }
+  const byCompetition: AiStatsCompetitionGroup[] = COMPETITION_GROUPS.filter((g) => byGroup.has(g)).map((g) => {
+    const e = byGroup.get(g)!;
+    return {
+      group: g,
+      ...e.stats,
+      rate: e.stats.picks > 0 ? Math.round((e.stats.hits / e.stats.picks) * 1000) / 10 : 0,
+      baseRate: expectedBaseRate(e.picks, base),
+    };
+  });
+
   return {
     monthly,
+    byCompetition,
     calibration: computeCalibration(calMatches),
     totalRecords: records.length,
     totalEvaluated: evaluated.length,

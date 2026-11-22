@@ -26,6 +26,10 @@ vi.mock('@tanstack/react-query', () => ({ useQueryClient: () => ({ invalidateQue
 
 const data: AiStatsDashboard & { isAdmin: boolean } = {
   monthly: [{ month: "2026-10", matches: 2, picks: 6, hits: 4, rate: 66.7, baseRate: 60 }],
+  byCompetition: [
+    { group: 'superLig', matches: 51, picks: 153, hits: 125, rate: 81.7, baseRate: 74 },
+    { group: 'turkey', matches: 2, picks: 6, hits: 6, rate: 100, baseRate: 72.3 },
+  ],
   calibration: {
     picks: 6, avgShown: 68.8, actualRate: 83.3, baseRate: 72.4, brier: 0.167, brierBase: 0.176, skill: 0.051,
     bands: [
@@ -86,6 +90,9 @@ describe('/ai-istatistikleri — dil kuralları', () => {
     expect(t).toContain('Brier skoru 0,167 (temel oranla 0,176; düşük olan iyi) · temel orana göre beceri +%5,1');
     expect(t).toContain('%80–89 4 · az örnek %84,1 %91,5');
     expect(t).toContain('Ekim 2026 2 6 4 %66,7 %60,0 +6,7');
+    expect(t).toContain('Turnuvaya göre');
+    expect(t).toContain('Süper Lig 51 %81,7 %74,0 +7,7');
+    expect(t).toContain('1. Lig ve Türkiye Kupası az örnek 2 %100,0');
   });
 
   it('EN: skor yok, bahis terimi yok', () => {

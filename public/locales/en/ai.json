@@ -94,5 +94,19 @@
   "calColActual": "Actual",
   "calTooltip": "{{label}}: shown avg. {{shown}}%, actual {{actual}}% ({{picks}} picks)",
   "monthlyColBase": "Base",
-  "monthlyColDiff": "Diff."
+  "monthlyColDiff": "Diff.",
+  "grpTitle": "By competition",
+  "grpNote": "In each row the base rate uses how often that group's pick types happened across all matches. Groups with fewer than 20 matches are a small sample.",
+  "grpColGroup": "Competition",
+  "grpColMatches": "Matches",
+  "grpColHit": "Hit rate",
+  "grpColBase": "Base",
+  "grpColDiff": "Diff.",
+  "grpFew": "small sample",
+  "grp_superLig": "Süper Lig",
+  "grp_turkey": "1. Lig & Turkish Cup",
+  "grp_uefa": "European cups",
+  "grp_big5": "Big 5 leagues",
+  "grp_national": "National teams",
+  "grp_other": "Other"
 }

@@ -53,3 +53,17 @@ describe('AI kalibrasyonu — temel orana karşı', () => {
     expect(computeCalibration([{ picks: [{ key: 'over15', pct: 80, hit: null }], outcomes: {} }])).toBeNull();
   });
 });
+
+describe('turnuva grubu', () => {
+  it('Süper Lig, 1. Lig/Kupa, Avrupa, büyük 5, milli (2e9+), diğer', async () => {
+    const { competitionGroup } = await import('./aiCalibration');
+    expect(competitionGroup('600', '19746547')).toBe('superLig');
+    expect(competitionGroup('603', '1')).toBe('turkey');
+    expect(competitionGroup('606', '1')).toBe('turkey');
+    expect(competitionGroup('2', '1')).toBe('uefa');
+    expect(competitionGroup('82', '1')).toBe('big5');
+    expect(competitionGroup('2000000005', '2001528958')).toBe('national');
+    expect(competitionGroup(null, '2001528958')).toBe('national');
+    expect(competitionGroup('648', '1')).toBe('other');
+  });
+});
