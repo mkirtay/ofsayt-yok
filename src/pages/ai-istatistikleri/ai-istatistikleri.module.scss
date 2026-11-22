@@ -583,3 +583,70 @@
   font-weight: 700;
   color: $color-text-secondary;
 }
+
+// ── Temel orana karşı + kalibrasyon (büyüme raporu 1.2) ──
+.sectionLead {
+  margin: 0 0 $spacing-3;
+  font-size: var(--fs-body);
+  line-height: 1.5;
+  color: $color-text;
+  max-width: 720px;
+}
+
+.sectionNote {
+  margin: $spacing-2 0 0;
+  font-size: var(--fs-meta);
+  line-height: 1.5;
+  color: $color-text-secondary;
+  max-width: 720px;
+}
+
+.tableCompact {
+  min-width: 0;
+
+  td:not(:first-child),
+  th:not(:first-child) {
+    text-align: right;
+    white-space: nowrap;
+  }
+}
+
+.pickName {
+  display: block;
+  font-weight: 600;
+  color: $color-text;
+}
+
+.pickCount {
+  display: block;
+  font-size: var(--fs-caption);
+  color: $color-text-secondary;
+}
+
+.diffUp {
+  font-weight: 700;
+  color: $color-primary-text;
+}
+
+.diffFlat {
+  color: $color-text-secondary;
+}
+
+.calCard {
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  box-shadow: $shadow-surface;
+  padding: $spacing-4;
+}
+
+// Pazar tablosu satırları uzamasın (ui-kontrol: ≤ 720 px)
+.tableWrapNarrow {
+  max-width: 720px;
+}
+
+@media (max-width: 599px) {
+  .calCard {
+    padding: $spacing-3;
+  }
+}

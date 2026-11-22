@@ -25,7 +25,18 @@ vi.mock('@/lib/i18nNamespaces/ai', () => ({}));
 vi.mock('@tanstack/react-query', () => ({ useQueryClient: () => ({ invalidateQueries: () => {} }) }));
 
 const data: AiStatsDashboard & { isAdmin: boolean } = {
-  monthly: [{ month: "2026-10", matches: 2, picks: 6, hits: 4, rate: 66.7 }],
+  monthly: [{ month: "2026-10", matches: 2, picks: 6, hits: 4, rate: 66.7, baseRate: 60 }],
+  calibration: {
+    picks: 6, avgShown: 68.8, actualRate: 83.3, baseRate: 72.4, brier: 0.167, brierBase: 0.176, skill: 0.051,
+    bands: [
+      { label: '%60–69', min: 60, max: 69, picks: 25, avgShown: 65.2, rate: 82.3 },
+      { label: '%80–89', min: 80, max: 89, picks: 4, avgShown: 84.1, rate: 91.5 },
+    ],
+    markets: [
+      { key: 'over15', picks: 6, hitRate: 81.1, baseRate: 81.1, baseSample: 280 },
+      { key: 'home', picks: 5, hitRate: 75.7, baseRate: 48.6, baseSample: 280 },
+    ],
+  },
   totalRecords: 3,
   totalEvaluated: 2,
   pendingCount: 1,
@@ -63,6 +74,18 @@ describe('/ai-istatistikleri — dil kuralları', () => {
     }
     expect(findGamblingTerms(t)).toEqual([]);
     expect(findGamblingTerms(JSON.stringify(trAi))).toEqual([]);
+  });
+
+  it('TR: temel orana karşı + kalibrasyon (büyüme raporu 1.2); çıplak isabet tek başına değil', () => {
+    const t = render(trAi);
+    expect(t).toContain('Temel oran %72,4 · fark +10,9 puan');
+    expect(t).toContain('Temel orana karşı');
+    expect(t).toContain('Ev sahibi kazanır 5 kez %75,7 %48,6 +27,1');
+    expect(t).toContain('2+ gol 6 kez %81,1 %81,1 0,0');
+    expect(t).toContain('Kartta gösterilen olasılıkların ortalaması %68,8, gerçekleşme %83,3');
+    expect(t).toContain('Brier skoru 0,167 (temel oranla 0,176; düşük olan iyi) · temel orana göre beceri +%5,1');
+    expect(t).toContain('%80–89 4 · az örnek %84,1 %91,5');
+    expect(t).toContain('Ekim 2026 2 6 4 %66,7 %60,0 +6,7');
   });
 
   it('EN: skor yok, bahis terimi yok', () => {

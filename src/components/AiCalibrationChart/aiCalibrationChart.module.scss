@@ -1,0 +1,132 @@
+@use '../../styles/variables' as *;
+
+.wrap {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: $spacing-4;
+  align-items: center;
+
+  @media (min-width: 900px) {
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+  }
+}
+
+.chart {
+  width: 100%;
+  max-width: 480px;
+  height: auto;
+  display: block;
+  overflow: visible;
+}
+
+.grid {
+  stroke: $color-border;
+  stroke-width: 1;
+}
+
+.tick,
+.axis,
+.diagLabel {
+  fill: $color-text-secondary;
+  font-size: var(--fs-label);
+}
+
+.axis {
+  font-size: var(--fs-micro);
+  font-weight: 600;
+}
+
+.diagonal {
+  stroke: $color-text-secondary;
+  stroke-width: 1.5;
+  stroke-dasharray: 4 4;
+  opacity: 0.7;
+}
+
+.line {
+  fill: none;
+  stroke: $color-primary;
+  stroke-width: 2;
+  stroke-linejoin: round;
+  opacity: 0.55;
+}
+
+.hit {
+  fill: transparent;
+}
+
+.dot {
+  fill: $color-primary;
+  stroke: $color-surface;
+  stroke-width: 2;
+  transition: r $transition-base;
+}
+
+.dotFew {
+  fill-opacity: 0.4;
+}
+
+.point:hover .dot {
+  r: 8;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th,
+  td {
+    padding: $spacing-2 $spacing-3;
+    font-size: var(--fs-meta);
+    text-align: left;
+    border-bottom: 1px solid $color-border;
+  }
+
+  th {
+    font-size: var(--fs-micro);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: $color-text-secondary;
+  }
+
+  tr:last-child td {
+    border-bottom: none;
+  }
+}
+
+.actual {
+  font-weight: 700;
+  color: $color-text;
+}
+
+.rowFew td {
+  color: $color-text-secondary;
+}
+
+.few {
+  font-size: var(--fs-micro);
+  color: $color-text-secondary;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dot {
+    transition: none;
+  }
+}
+
+@media (max-width: 599px) {
+  .table {
+    th,
+    td {
+      padding: $spacing-2 6px;
+      font-size: var(--fs-caption);
+      white-space: nowrap;
+    }
+
+    th {
+      font-size: var(--fs-label);
+      letter-spacing: 0.02em;
+    }
+  }
+}

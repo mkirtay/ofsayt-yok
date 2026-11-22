@@ -6,6 +6,8 @@ import * as sass from 'sass';
 const FILES = [
   'components/MatchPoll/matchPoll.module.scss',
   'components/ComboHomeCard/comboHomeCard.module.scss',
+  'components/AiCalibrationChart/aiCalibrationChart.module.scss',
+  'pages/ai-istatistikleri/ai-istatistikleri.module.scss',
   'components/MatchOddsCard/matchOddsCard.module.scss',
   'components/MatchDetailContent/matchDetailContent.module.scss',
 ];

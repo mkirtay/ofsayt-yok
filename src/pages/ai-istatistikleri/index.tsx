@@ -18,6 +18,12 @@ import { siteBaseUrl } from '@/lib/siteUrl';
 import { monthLabel } from '@/utils/monthLabel';
 import JsonLd from '@/components/JsonLd';
 import { accuracyDatasetJsonLd } from '@/utils/listJsonLd';
+import AiCalibrationChart from '@/components/AiCalibrationChart';
+import type { AiCalibration } from '@/utils/aiCalibration';
+
+const num = (v: number, digits = 1) => v.toLocaleString('tr-TR', { minimumFractionDigits: digits, maximumFractionDigits: digits });
+/** "+7,6" / "−2,1" (puan farkı). */
+const signed = (v: number) => `${v > 0 ? '+' : v < 0 ? '−' : ''}${num(Math.abs(v))}`;
 
 /** Son değerlendirme zamanı (veriden; ISR props deterministik kalsın). */
 function latestEvaluatedAt(history: { evaluatedAt: string | null }[]): string | null {
@@ -234,6 +240,11 @@ export default function AiIstatistikleri({ initialPublic = null }: Partial<PageP
                           ? t('topPicksSub', { hit: data.topPicks.hits, total: data.topPicks.picks, matches: data.topPicks.matches })
                           : t('awaitingEvaluation')}
                       </span>
+                      {data.calibration ? (
+                        <span className={styles.statSub}>
+                          {t('topPicksBaseSub', { base: num(data.calibration.baseRate), diff: signed(data.calibration.actualRate - data.calibration.baseRate) })}
+                        </span>
+                      ) : null}
                     </div>
                     <div className={styles.statCard}>
                       <span className={styles.statValue}>{totalRecords}</span>
@@ -249,6 +260,8 @@ export default function AiIstatistikleri({ initialPublic = null }: Partial<PageP
                   <p className={styles.topPicksHint}>{t('topPicksHint')}</p>
                   <p className={styles.topPicksHint}>{t('disclaimer')}</p>
 
+                  {data.calibration ? <CalibrationSections cal={data.calibration} matches={data.totalEvaluated} t={t} tm={tm} /> : null}
+
                   {data.monthly?.length ? (
                     <div className={styles.section}>
                       <h2 className={styles.sectionTitle}>Aylık isabet raporu</h2>
@@ -261,6 +274,8 @@ export default function AiIstatistikleri({ initialPublic = null }: Partial<PageP
                               <th scope="col">Tahmin</th>
                               <th scope="col">Tutan</th>
                               <th scope="col">İsabet</th>
+                              <th scope="col">{t('monthlyColBase')}</th>
+                              <th scope="col">{t('monthlyColDiff')}</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -273,6 +288,8 @@ export default function AiIstatistikleri({ initialPublic = null }: Partial<PageP
                                 <td>{m.picks}</td>
                                 <td>{m.hits}</td>
                                 <td>%{m.rate.toLocaleString('tr-TR')}</td>
+                                <td>{m.baseRate != null ? `%${num(m.baseRate)}` : '—'}</td>
+                                <td>{m.baseRate != null ? signed(m.rate - m.baseRate) : '—'}</td>
                               </tr>
                             ))}
                           </tbody>
@@ -296,6 +313,84 @@ export default function AiIstatistikleri({ initialPublic = null }: Partial<PageP
           ) : null}
         </div>
       </Container>
+    </>
+  );
+}
+
+/** Büyüme raporu 1.2: çıplak isabet yerine temel orana karşı fark + kalibrasyon (bkz. utils/aiCalibration.ts). */
+function CalibrationSections({
+  cal,
+  matches,
+  t,
+  tm,
+}: {
+  cal: AiCalibration;
+  matches: number;
+  t: (key: string, opts?: Record<string, unknown>) => string;
+  tm: (key: string, opts?: Record<string, unknown>) => string;
+}) {
+  const rows = cal.markets.filter((m) => m.picks >= 5 && m.hitRate != null && m.baseRate != null);
+  return (
+    <>
+      <div className={styles.section}>
+        <h2 className={styles.sectionTitle}>{t('baseTitle')}</h2>
+        <p className={styles.sectionLead}>
+          {t('baseIntro', { base: num(cal.baseRate), rate: num(cal.actualRate), diff: signed(cal.actualRate - cal.baseRate) })}
+        </p>
+        <div className={`${styles.tableWrap} ${styles.tableWrapNarrow}`}>
+          <table className={`${styles.table} ${styles.tableCompact}`}>
+            <thead>
+              <tr>
+                <th scope="col">{t('baseColPick')}</th>
+                <th scope="col">{t('baseColHit')}</th>
+                <th scope="col">{t('baseColBase')}</th>
+                <th scope="col">{t('baseColDiff')}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((m) => {
+                const diff = m.hitRate! - m.baseRate!;
+                return (
+                  <tr key={m.key}>
+                    <td>
+                      <span className={styles.pickName}>{tm(`analysis.pick.${m.key}`)}</span>
+                      <span className={styles.pickCount}>{t('basePicked', { n: m.picks })}</span>
+                    </td>
+                    <td>%{num(m.hitRate!)}</td>
+                    <td>%{num(m.baseRate!)}</td>
+                    <td className={diff >= 5 ? styles.diffUp : styles.diffFlat}>{signed(diff)}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        <p className={styles.sectionNote}>{t('baseNote', { n: matches })}</p>
+      </div>
+
+      <div className={styles.section}>
+        <h2 className={styles.sectionTitle}>{t('calTitle')}</h2>
+        <p className={styles.sectionLead}>{t('calIntro', { shown: num(cal.avgShown), actual: num(cal.actualRate) })}</p>
+        <div className={styles.calCard}>
+          <AiCalibrationChart
+            bands={cal.bands}
+            labels={{
+              axisX: t('calAxisX'),
+              axisY: t('calAxisY'),
+              diagonal: t('calDiagonal'),
+              few: t('calFew'),
+              colBand: t('calColBand'),
+              colCount: t('calColCount'),
+              colShown: t('calColShown'),
+              colActual: t('calColActual'),
+              tooltip: (b) => t('calTooltip', b),
+            }}
+          />
+        </div>
+        <p className={styles.sectionNote}>
+          {t('calBrier', { brier: num(cal.brier, 3), base: num(cal.brierBase, 3), skill: `${cal.skill < 0 ? '−' : '+'}%${num(Math.abs(cal.skill * 100))}` })}
+        </p>
+      </div>
     </>
   );
 }

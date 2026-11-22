@@ -3,6 +3,7 @@ import type { Role } from '@prisma/client';
 import { isUnresolvedActualResult } from '@/lib/predictionRecords';
 import { readCronHeartbeats, type AiCronJobName, type CronHeartbeat } from '@/server/cronJobs';
 import { parseScore, pickTopPredictions, topPickHit, type TopPickKey } from '@/utils/analysisTopPicks';
+import { computeCalibration, expectedBaseRate, marketBaseRates, type AiCalibration, type CalibrationMatch } from '@/utils/aiCalibration';
 
 /**
  * AI isabet sayfası (/ai-istatistikleri). Ölçü: her analiz kartının üstündeki "en güçlü 3 tahmin" rozetinin
@@ -37,7 +38,11 @@ export type AiStatsHistoryItem = {
 export type TopPickStats = { matches: number; picks: number; hits: number; rate: number };
 
 /** Ay bazında isabet (analiz ayı, Türkiye saati; "2026-11"). Yalnız değerlendirilmiş analizler. */
-export type AiStatsMonth = TopPickStats & { month: string };
+export type AiStatsMonth = TopPickStats & {
+  month: string;
+  /** O ayın rozetleri için temel oran (%): aynı pazarlar hep söylenseydi beklenen isabet. Bkz. utils/aiCalibration.ts. */
+  baseRate: number | null;
+};
 
 export type AiStatsDashboard = {
   totalRecords: number;
@@ -50,6 +55,8 @@ export type AiStatsDashboard = {
   history: AiStatsHistoryItem[];
   /** Yeni ay önce (SEO/GEO: aylık isabet raporu, /ai-istatistikleri/rapor/{ay}). */
   monthly: AiStatsMonth[];
+  /** Temel orana karşı + kalibrasyon (yalnız değerlendirilmiş analizler); veri yoksa null. */
+  calibration: AiCalibration | null;
 };
 
 type RecordRow = {
@@ -80,6 +87,26 @@ function recordTopPicks(r: RecordRow): AiStatsHistoryItem['topPicks'] {
   const score = parseScore(r.actualScore);
   const hits = (r.extendedHits ?? null) as Record<string, boolean | null> | null;
   return picks.map((p) => ({ ...p, hit: topPickHit(p, score, hits) }));
+}
+
+const ALL_MARKETS: TopPickKey[] = ['home', 'draw', 'away', 'over15', 'over25', 'over35', 'btts', 'htOver05', 'htOver15', 'homeToScore', 'awayToScore', 'bttsFirstHalf'];
+
+/**
+ * Değerlendirilmiş kaydın bütün pazar sonuçları (olay gerçekleşti mi) — temel oran için, model o pazarı seçmese de.
+ * Skordan çıkmayan ilk yarı pazarları kayıttaki yön isabetinden; yönü çevirmek için o pazarın kart olasılığı gerekir.
+ */
+function recordOutcomes(r: RecordRow): CalibrationMatch['outcomes'] {
+  const score = parseScore(r.actualScore);
+  const hits = (r.extendedHits ?? null) as Record<string, boolean | null> | null;
+  const mp = (r.matchAnalysis.matchPrediction ?? {}) as Record<string, unknown>;
+  const ge = (r.matchAnalysis.goalExpectation ?? {}) as Record<string, unknown>;
+  const out: CalibrationMatch['outcomes'] = {};
+  for (const key of ALL_MARKETS) {
+    const pct = Number((key === 'home' || key === 'draw' || key === 'away' ? mp : ge)[key]);
+    const hit = topPickHit({ key, pct: Number.isFinite(pct) ? pct : 50 }, score, hits);
+    if (hit != null) out[key] = hit;
+  }
+  return out;
 }
 
 const monthFmt = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Istanbul', year: 'numeric', month: '2-digit' });
@@ -161,12 +188,25 @@ export async function loadAiStatsDashboard(auth: { role: Role | null }, opts: { 
     m.hits += known.filter((p) => p.hit).length;
     byMonth.set(key, m);
   }
+  const calMatches: CalibrationMatch[] = evaluated.map((r) => ({ picks: picksByRecord.get(r) ?? [], outcomes: recordOutcomes(r) }));
+  const base = marketBaseRates(calMatches);
+  const monthPicks = new Map<string, AiStatsHistoryItem['topPicks']>();
+  for (const r of evaluated) {
+    const key = istanbulMonth(r.createdAt);
+    monthPicks.set(key, [...(monthPicks.get(key) ?? []), ...(picksByRecord.get(r) ?? [])]);
+  }
   const monthly: AiStatsMonth[] = [...byMonth.entries()]
     .sort((a, b) => b[0].localeCompare(a[0]))
-    .map(([month, m]) => ({ month, ...m, rate: m.picks > 0 ? Math.round((m.hits / m.picks) * 1000) / 10 : 0 }));
+    .map(([month, m]) => ({
+      month,
+      ...m,
+      rate: m.picks > 0 ? Math.round((m.hits / m.picks) * 1000) / 10 : 0,
+      baseRate: expectedBaseRate(monthPicks.get(month) ?? [], base),
+    }));
 
   return {
     monthly,
+    calibration: computeCalibration(calMatches),
     totalRecords: records.length,
     totalEvaluated: evaluated.length,
     pendingCount,
