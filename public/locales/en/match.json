@@ -165,7 +165,7 @@
       "analyst": "Analyst comment"
     },
     "unlockCredit": "Unlock for 1 credit",
-    "unlockWeekly": "Use this week's free unlock",
+    "unlockWeekly": "Use today's free unlock",
     "unlockFree": "Unlock for free",
     "unlockAdmin": "Unlock as admin",
     "signInToUnlock": "Each analysis costs 1 credit. Sign up, get 2 free credits and unlock 2 matches for free.",
@@ -173,10 +173,12 @@
     "haveAccount": "Already a member?",
     "unlockPermanent": "Analyses you unlock stay unlocked for you.",
     "weeklyReason": {
-      "USED": "You've used this week's free unlock.",
-      "EMAIL_NOT_VERIFIED": "Verify your email to use the weekly free unlock.",
-      "ACCOUNT_TOO_NEW": "The weekly free unlock is available 1 day after sign-up."
-    }
+      "USED": "You've used today's free unlock. It resets tomorrow.",
+      "EMAIL_NOT_VERIFIED": "Verify your email to use the daily free unlock.",
+      "ACCOUNT_TOO_NEW": "The daily free unlock is available 1 day after sign-up."
+    },
+    "recentProofLink": "All accuracy stats →",
+    "recentProof": "In the last {{days}} days, {{hits}} of {{picks}} highlighted AI picks came true ({{rate}}%)."
   },
   "trivia": {
     "title": "Match Trivia & Fun Facts",

@@ -70,8 +70,8 @@ describe('unlockWithCredit — hazır analiz 1 kredi', () => {
   });
 });
 
-describe('haftalık ücretsiz açma', () => {
-  it('haftada bir; bakiye değişmez; ikinci analiz aynı hafta reddedilir; yeni hafta yeniden', async () => {
+describe('günlük ücretsiz açma (2026-11-22\'ye kadar haftalıktı)', () => {
+  it('günde bir; bakiye değişmez; ikinci analiz aynı gün reddedilir; yeni gün (TSİ) yeniden', async () => {
     db.addUser('u1', 2, 'USER', { emailVerified: new Date('2026-09-01'), createdAt: new Date('2026-09-01') });
     const a1 = db.addAnalysis('19000001');
     const a2 = db.addAnalysis('19000002');
@@ -79,12 +79,12 @@ describe('haftalık ücretsiz açma', () => {
     expect(await unlockWithWeeklyFree('u1', a1)).toMatchObject({ source: 'WEEKLY_FREE', charged: false, created: true });
     expect(await weeklyFreeUsed('u1')).toBe(true);
     expect(db.balance('u1')).toBe(2);
-    expect(db.ledgerOf('u1')[0]).toMatchObject({ type: 'ANALYSIS_WEEKLY_FREE', amount: 0, idempotencyKey: 'weekly-free:2026-W40' });
+    expect(db.ledgerOf('u1')[0]).toMatchObject({ type: 'ANALYSIS_WEEKLY_FREE', amount: 0, idempotencyKey: 'daily-free:2026-10-03' });
     await expect(unlockWithWeeklyFree('u1', a2)).rejects.toBeInstanceOf(WeeklyFreeUsedError);
     // Aynı analiz tekrar: zaten açık (hak harcanmaz)
     expect(await unlockWithWeeklyFree('u1', a1)).toMatchObject({ created: false });
 
-    vi.setSystemTime(new Date('2026-10-04T21:30:00Z')); // Pazartesi 00:30 TSİ → yeni hafta
+    vi.setSystemTime(new Date('2026-10-04T21:30:00Z')); // 5 Eki 00:30 TSİ → yeni gün
     expect(await unlockWithWeeklyFree('u1', a2)).toMatchObject({ created: true });
   });
 

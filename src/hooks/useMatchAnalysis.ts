@@ -19,6 +19,8 @@ export type AnalysisOffer = {
   admin: boolean;
   free: boolean;
   weeklyFree: { available: boolean; reason: 'USED' | 'EMAIL_NOT_VERIFIED' | 'ACCOUNT_TOO_NEW' | 'SIGNED_OUT' | null };
+  /** Son günlerde öne çıkan tahminlerin isabeti (kilidin yanında kanıt); örnek azsa yok. */
+  proof?: { hits: number; picks: number; matches: number; days: number };
 };
 
 export type UnlockMethod = 'credit' | 'weekly_free';

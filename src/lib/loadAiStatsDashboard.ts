@@ -72,7 +72,7 @@ export type AiStatsDashboard = {
 
 export type AiStatsCompetitionGroup = TopPickStats & { group: CompetitionGroup; baseRate: number | null };
 
-type RecordRow = {
+export type RecordRow = {
   evaluatedAt: Date | null;
   matchId: string;
   modelVersion: string;
@@ -94,7 +94,7 @@ type RecordRow = {
 type ProbSource = Parameters<typeof pickTopPredictions>[0];
 
 /** Kayıt → kart rozetleri + isabet. Gerçek skor yalnız burada okunur; yanıta yazılmaz. */
-function recordTopPicks(r: RecordRow): AiStatsHistoryItem['topPicks'] {
+export function recordTopPicks(r: RecordRow): AiStatsHistoryItem['topPicks'] {
   const picks = pickTopPredictions({
     matchPrediction: r.matchAnalysis.matchPrediction as ProbSource['matchPrediction'],
     goalExpectation: r.matchAnalysis.goalExpectation as ProbSource['goalExpectation'],

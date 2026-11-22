@@ -21,7 +21,7 @@ export type CreditTransactionType =
   | 'ANALYSIS_FREE'
   /** ESKİ: premium kullanıcının analiz açması (miktar 0). Premium kaldırıldı; yeni yazılmaz, geçmiş satırlar okunur. */
   | 'ANALYSIS_PREMIUM'
-  /** Haftalık ücretsiz açma hakkı (miktar 0; anahtar `weekly-free:{ISO hafta}` → haftada bir). */
+  /** Ücretsiz açma hakkı (miktar 0; anahtar `daily-free:{TSİ gün}` → günde bir; 2026-11-22'ye kadar haftalık). */
   | 'ANALYSIS_WEEKLY_FREE'
   | 'ADMIN_GRANT'
   | 'REFUND'

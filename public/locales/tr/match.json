@@ -162,7 +162,7 @@
       "analyst": "Analist yorumu"
     },
     "unlockCredit": "1 krediyle aç",
-    "unlockWeekly": "Bu haftaki ücretsiz açma hakkını kullan",
+    "unlockWeekly": "Bugünkü ücretsiz açma hakkını kullan",
     "unlockFree": "Ücretsiz aç",
     "unlockAdmin": "Yönetici olarak aç",
     "signInToUnlock": "Her analiz 1 kredi. Üye ol, 2 kredi hediye kazan; 2 maçın analizini ücretsiz aç.",
@@ -170,10 +170,12 @@
     "haveAccount": "Zaten üye misin?",
     "unlockPermanent": "Açtığın analiz sana hep açık kalır.",
     "weeklyReason": {
-      "USED": "Bu haftaki ücretsiz açma hakkını kullandın.",
-      "EMAIL_NOT_VERIFIED": "Haftalık ücretsiz açma için e-postanı doğrula.",
-      "ACCOUNT_TOO_NEW": "Haftalık ücretsiz açma, hesap açıldıktan 1 gün sonra kullanılabilir."
-    }
+      "USED": "Bugünkü ücretsiz açma hakkını kullandın. Yarın yenilenir.",
+      "EMAIL_NOT_VERIFIED": "Günlük ücretsiz açma için e-postanı doğrula.",
+      "ACCOUNT_TOO_NEW": "Günlük ücretsiz açma, hesap açıldıktan 1 gün sonra kullanılabilir."
+    },
+    "recentProofLink": "Tüm isabet istatistikleri →",
+    "recentProof": "Son {{days}} günde öne çıkan {{picks}} AI tahmininden {{hits}} tanesi tuttu (%{{rate}})."
   },
   "trivia": {
     "title": "Maç Trivia & Bilinmeyenler",

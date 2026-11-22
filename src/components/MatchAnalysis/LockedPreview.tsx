@@ -77,6 +77,19 @@ export default function LockedPreview({ preview, offer, loading, busy, error, is
         </ul>
       </section>
 
+      {offer?.proof ? (
+        <p className={styles.proofLine}>
+          <span aria-hidden="true">✓ </span>
+          {t('analysis.recentProof', {
+            days: offer.proof.days,
+            hits: offer.proof.hits,
+            picks: offer.proof.picks,
+            rate: ((offer.proof.hits / offer.proof.picks) * 100).toLocaleString('tr-TR', { maximumFractionDigits: 1 }),
+          })}{' '}
+          <Link href="/ai-istatistikleri">{t('analysis.recentProofLink')}</Link>
+        </p>
+      ) : null}
+
       <div className={styles.cta}>
         {error ? <div className={styles.errorBox}>{error}</div> : null}
         {!isAuthenticated ? (

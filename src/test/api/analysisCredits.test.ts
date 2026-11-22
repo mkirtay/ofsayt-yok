@@ -1,3 +1,5 @@
+// Bu dosya ham olasılıkların aynen yazıldığını sınar; kalibrasyon ayrı testte (server/saveMatchAnalysis.calibration.test.ts).
+process.env.AI_CALIBRATION_ENABLED = 'false';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { createFakeCreditDb, type FakeCreditDb } from '@/test/fakeCreditDb.testutil';

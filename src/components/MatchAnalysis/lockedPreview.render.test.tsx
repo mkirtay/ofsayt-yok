@@ -45,15 +45,15 @@ describe('kilitli analiz kartı', () => {
       expect(text(html)).toContain(s);
     }
     expect(text(html)).toContain('1 krediyle aç');
-    expect(text(html)).toContain('Bu haftaki ücretsiz açma hakkını kullandın.');
-    expect(text(html)).not.toContain('Bu haftaki ücretsiz açma hakkını kullan ');
+    expect(text(html)).toContain('Bugünkü ücretsiz açma hakkını kullandın.');
+    expect(text(html)).not.toContain('Bugünkü ücretsiz açma hakkını kullan ');
     // Önizleme de olasılık gösteriyor → bilgi amaçlı + 18+ uyarısı kilitli kartta da var.
     expect(text(html)).toContain('kesin sonuç vaat etmez. 18+');
   });
 
   it('haftalık hak varsa iki düğme; bakiye 0 → "Kredi Satın Al"; ücretsiz açma / yönetici tek düğme', () => {
     const weekly = render({ offer: offer({ weeklyFree: { available: true, reason: null } }) });
-    expect(text(weekly)).toContain('Bu haftaki ücretsiz açma hakkını kullan');
+    expect(text(weekly)).toContain('Bugünkü ücretsiz açma hakkını kullan');
     expect(text(weekly)).toContain('1 krediyle aç');
     expect(text(render({ offer: offer({ balance: 0 }) }))).not.toContain('1 krediyle aç');
     // Bakiye 0: /pricing'e bağlantı değil, kredi popup'ını açan düğme (paket seçilince doğrudan ödeme).
@@ -83,5 +83,14 @@ describe('MatchTabs prerender', () => {
     expect(withPre).toMatch(/<div[^>]*hidden=""[^>]*><p>analiz-önizleme<\/p>/);
     const without = renderToStaticMarkup(<MatchTabs tabs={tabs} active="overview" onChange={() => {}} ariaLabel="x" />);
     expect(without).not.toContain('analiz-önizleme');
+  });
+});
+
+describe('kilidin yanında kanıt (büyüme raporu 1.6)', () => {
+  it('teklifte son 7 gün isabeti varsa satır + isabet sayfası bağlantısı; yoksa satır yok', () => {
+    const withProof = text(render({ offer: offer({ proof: { hits: 40, picks: 51, matches: 17, days: 7 } }) }));
+    expect(withProof).toContain('Son 7 günde öne çıkan 51 AI tahmininden 40 tanesi tuttu (%78,4).');
+    expect(render({ offer: offer({ proof: { hits: 40, picks: 51, matches: 17, days: 7 } }) })).toContain('href="/ai-istatistikleri"');
+    expect(text(render({}))).not.toContain('Son 7 günde');
   });
 });

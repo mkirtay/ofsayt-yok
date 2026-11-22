@@ -729,3 +729,21 @@
     cursor: default;
   }
 }
+
+// Kilidin yanındaki kanıt (büyüme raporu 1.6): son 7 gün isabeti + isabet sayfası bağlantısı
+.proofLine {
+  margin: $spacing-3 0 0;
+  padding: $spacing-2 $spacing-3;
+  border-radius: $radius-md;
+  background: $color-muted;
+  font-size: var(--fs-meta);
+  line-height: 1.5;
+  color: $color-text;
+  text-align: center;
+
+  a {
+    color: $color-primary-text;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+}

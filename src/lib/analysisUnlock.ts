@@ -3,8 +3,8 @@
  *
  * - Hazır analiz: tek işlemde koşullu düşüm (`credits >= 1`) + defter `ANALYSIS_SPEND` −1 SETTLED (tekrar anahtarı
  *   `analysis:{matchId}:PRE`, 106f818 ile aynı) + açma kaydı. AI çağrısı yok → PENDING / iade gerekmez.
- * - Haftalık ücretsiz: yalnız hazır analizde; tek işlemde haftalık hak (`ANALYSIS_WEEKLY_FREE`, tutar 0, anahtar
- *   `weekly-free:{ISO hafta, TSİ}` — kullanıcı başına haftada bir) + açma. Koşul: doğrulanmış e-posta + ≥ 24 sa hesap.
+ * - Günlük ücretsiz (2026-11-22'ye kadar haftalıktı; büyüme raporu 1.6): yalnız hazır analizde; tek işlemde hak
+ *   (`ANALYSIS_WEEKLY_FREE` türü korunur — migration yok —, tutar 0, anahtar `daily-free:{TSİ gün}` — kullanıcı başına günde bir) + açma. Koşul: doğrulanmış e-posta + ≥ 24 sa hesap.
  * - Yönetici: 0 tutarlı defter satırı (`ANALYSIS_FREE`) + açma. Premium kaldırıldı (2026-10-16); eski `PREMIUM` açmaları
  *   ve `ANALYSIS_PREMIUM` defter satırları DB'de geçmiş kayıt olarak kalır (okunur, yeni yazılmaz).
  * - Üretim (analiz yoksa) rotada mevcut güvenli akışla (`reserveCredits` → AI → kayıt); kayıttan sonra
@@ -22,7 +22,7 @@ import {
 import { todayIsoIstanbul } from '@/utils/dateStrip';
 
 export const ANALYSIS_UNLOCK_COST = 1;
-/** Haftalık ücretsiz açma için hesabın en az yaşı. */
+/** Günlük ücretsiz açma için hesabın en az yaşı. */
 export const WEEKLY_FREE_MIN_ACCOUNT_AGE_MS = 24 * 3600_000;
 
 export type UnlockSource = 'CREDIT' | 'WEEKLY_FREE' | 'PREMIUM' | 'ADMIN' | 'LEGACY';
@@ -41,7 +41,7 @@ export type UnlockResult = {
 
 export class WeeklyFreeUsedError extends Error {
   constructor() {
-    super('Bu haftaki ücretsiz açma hakkını kullandın.');
+    super('Bugünkü ücretsiz açma hakkını kullandın.');
     this.name = 'WeeklyFreeUsedError';
   }
 }
@@ -50,8 +50,8 @@ export class WeeklyFreeNotEligibleError extends Error {
   constructor(readonly reason: 'EMAIL_NOT_VERIFIED' | 'ACCOUNT_TOO_NEW') {
     super(
       reason === 'EMAIL_NOT_VERIFIED'
-        ? 'Haftalık ücretsiz açma için e-posta adresini doğrulaman gerekiyor.'
-        : 'Haftalık ücretsiz açma, hesap açıldıktan 24 saat sonra kullanılabilir.',
+        ? 'Günlük ücretsiz açma için e-posta adresini doğrulaman gerekiyor.'
+        : 'Günlük ücretsiz açma, hesap açıldıktan 24 saat sonra kullanılabilir.',
     );
     this.name = 'WeeklyFreeNotEligibleError';
   }
@@ -68,8 +68,9 @@ export function isoWeekKeyIstanbul(now: number = Date.now()): string {
   return `${isoYear}-W${String(week).padStart(2, '0')}`;
 }
 
+/** Ücretsiz açma hakkının anahtarı: TSİ gününe göre, kullanıcı başına günde bir (ad geriye uyum için "weekly"). */
 export function weeklyFreeIdempotencyKey(now: number = Date.now()): string {
-  return `weekly-free:${isoWeekKeyIstanbul(now)}`;
+  return `daily-free:${todayIsoIstanbul(new Date(now))}`;
 }
 
 export function weeklyFreeIneligibility(
@@ -88,7 +89,7 @@ export async function findUnlock(userId: string, matchAnalysisId: string) {
   });
 }
 
-/** Bu hafta haftalık ücretsiz hak kullanıldı mı (yalnız okuma; talep `unlockWithWeeklyFree`'de atomik). */
+/** Bugün ücretsiz hak kullanıldı mı (yalnız okuma; talep `unlockWithWeeklyFree`'de atomik). */
 export async function weeklyFreeUsed(userId: string, now: number = Date.now()): Promise<boolean> {
   const row = await prisma.creditTransaction.findUnique({
     where: { userId_idempotencyKey: { userId, idempotencyKey: weeklyFreeIdempotencyKey(now) } },
@@ -148,7 +149,7 @@ export async function unlockWithCredit(userId: string, analysis: AnalysisRef): P
   }
 }
 
-/** Haftalık ücretsiz hakla açar (yalnız hazır analiz; uygunluk çağıranda `weeklyFreeIneligibility` ile). */
+/** Günlük ücretsiz hakla açar (yalnız hazır analiz; uygunluk çağıranda `weeklyFreeIneligibility` ile). */
 export async function unlockWithWeeklyFree(userId: string, analysis: AnalysisRef, now: number = Date.now()): Promise<UnlockResult> {
   const existing = await alreadyUnlocked(userId, analysis);
   if (existing) return existing;
@@ -163,7 +164,7 @@ export async function unlockWithWeeklyFree(userId: string, analysis: AnalysisRef
           balanceAfter: user?.credits ?? 0,
           matchId: analysis.matchId,
           idempotencyKey: weeklyFreeIdempotencyKey(now),
-          note: 'Haftalık ücretsiz analiz açma',
+          note: 'Günlük ücretsiz analiz açma',
         },
         select: { id: true },
       });

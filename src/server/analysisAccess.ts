@@ -13,6 +13,7 @@ import { SPORTMONKS_TIMEOUT_MS, withSportmonksTimeout } from '@/server/sportmonk
 import { analysisIsFree, isAdminUser } from '@/lib/userRole';
 import { ANALYSIS_UNLOCK_COST, weeklyFreeIneligibility, weeklyFreeUsed } from '@/lib/analysisUnlock';
 import { captureError } from '@/lib/logger';
+import { loadRecentProof, type RecentProof } from '@/server/aiRecentProof';
 
 export type AnalysisViewer = {
   id: string;
@@ -61,8 +62,10 @@ export type AnalysisOffer = {
   admin: boolean;
   /** Kredisiz açabilir mi (yalnız yönetici). */
   free: boolean;
-  /** Yalnız hazır analizde anlamlı. */
+  /** Yalnız hazır analizde anlamlı (2026-11-22'den beri günlük; ad geriye uyum için). */
   weeklyFree: WeeklyFreeOffer;
+  /** Kilidin yanındaki kanıt: son günlerde öne çıkan tahminlerin isabeti (örnek azsa yok). */
+  proof?: RecentProof;
 };
 
 export async function buildOffer(viewer: AnalysisViewer | null, now: number = Date.now()): Promise<AnalysisOffer> {
@@ -88,4 +91,10 @@ export async function buildOffer(viewer: AnalysisViewer | null, now: number = Da
     free: analysisIsFree(viewer),
     weeklyFree: { available: !reason && !used, reason: reason ?? (used ? 'USED' : null) },
   };
+}
+
+/** Teklif + kilidin yanındaki kanıt (son 7 gün isabeti; yoksa alan yok). */
+export async function buildOfferWithProof(viewer: AnalysisViewer | null, now: number = Date.now()): Promise<AnalysisOffer> {
+  const [offer, proof] = await Promise.all([buildOffer(viewer, now), loadRecentProof(now)]);
+  return proof ? { ...offer, proof } : offer;
 }

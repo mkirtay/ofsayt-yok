@@ -54,7 +54,7 @@ import { toPublicAnalysis } from '@/utils/analysisScenarios';
 import { buildAnalysisPreview } from '@/utils/analysisPreview';
 import { hitFixedWindowRateLimit } from '@/lib/rateLimit';
 import { buildMatchAnalysisContext } from '@/server/buildMatchAnalysisContext';
-import { buildOffer, isAnalysisMatchFinished, loadViewer, type AnalysisViewer } from '@/server/analysisAccess';
+import { buildOfferWithProof, isAnalysisMatchFinished, loadViewer, type AnalysisViewer } from '@/server/analysisAccess';
 import { generateMatchAnalysis, AnalysisTimeoutError } from '@/services/aiAnalysisService';
 import { LlmBudgetExceededError } from '@/server/llmBudget';
 import { captureError } from '@/lib/logger';
@@ -96,7 +96,7 @@ async function handleGet(req: NextApiRequest, res: NextApiResponse, matchId: str
     // Maç verisi olmadan yalnız id ile arama (takım çifti yedeği yok: Sportmonks id'leri kalıcı).
     const stored = await findStoredMatchAnalysis(matchId, 'PRE');
     if (!stored) {
-      if (v2) return res.status(200).json({ access: 'none', offer: await buildOffer(viewer) });
+      if (v2) return res.status(200).json({ access: 'none', offer: await buildOfferWithProof(viewer) });
       if (req.query.optional === '1') return res.status(200).json({ analysis: null, predictionRecord: null });
       return res.status(404).json({ error: 'Bu maç için analiz üretilmedi.' });
     }
@@ -117,7 +117,7 @@ async function handleGet(req: NextApiRequest, res: NextApiResponse, matchId: str
       if (req.query.optional === '1') return res.status(200).json({ analysis: null, predictionRecord: null });
       return res.status(404).json({ error: 'Bu maçın analizi kilitli.', code: 'ANALYSIS_LOCKED' });
     }
-    return res.status(200).json({ access: 'locked', preview: buildAnalysisPreview(stored), offer: await buildOffer(viewer) });
+    return res.status(200).json({ access: 'locked', preview: buildAnalysisPreview(stored), offer: await buildOfferWithProof(viewer) });
   } catch (err) {
     captureError('analysis-get', err);
     return res.status(500).json({ error: 'Analiz getirilemedi.' });
@@ -250,7 +250,7 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse, matchId: st
         return {
           status: 409,
           body: {
-            error: 'Haftalık ücretsiz açma yalnız hazır analizlerde kullanılabilir. Bu maçın analizi 1 krediyle üretilir.',
+            error: 'Günlük ücretsiz açma yalnız hazır analizlerde kullanılabilir. Bu maçın analizi 1 krediyle üretilir.',
             code: 'WEEKLY_FREE_NOT_READY',
           },
         };
