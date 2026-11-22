@@ -16,6 +16,9 @@ import type { TeamPageFacts } from '@/server/teamPageShell';
 import { buildTeamSummary, teamJsonLd, teamPageDescription, teamPageTitle } from '@/utils/teamSeo';
 import styles from './teamPage.module.scss';
 import { clampDescription } from '@/utils/seoText';
+import TeamPassCard from '@/components/TeamPassCard';
+
+const TEAM_PASS_ON = process.env.NEXT_PUBLIC_TEAM_PASS_ENABLED === 'true';
 
 type TeamPageProps = {
   /** Paylaşım etiketleri için (sunucuda, ISR); geçici hatada null — sayfa yine istemcide yüklenir. */
@@ -135,6 +138,8 @@ export default function TeamDetail({ teamName, ogImagePath, facts }: TeamPagePro
         variant="page"
         initialHeader={teamName ? { name: teamName, logo: facts?.logo ?? null } : null}
       />
+      {/* Büyüme raporu 2.8 — "Takımım" sezon paketi (krediyle; yalnız Süper Lig, bayrak açıkken). */}
+      {TEAM_PASS_ON && teamName && facts?.league?.slug === 'super-lig' ? <TeamPassCard teamId={Number(teamId)} teamName={teamName} /> : null}
       {summary.length ? (
         <section className={styles.about} aria-labelledby="takim-hakkinda">
           <h2 id="takim-hakkinda" className={styles.aboutTitle}>{teamName} hakkında</h2>

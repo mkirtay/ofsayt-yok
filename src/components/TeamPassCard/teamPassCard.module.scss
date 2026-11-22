@@ -1,0 +1,100 @@
+@use '../../styles/variables' as *;
+
+// "Takımım" sezon paketi kartı (büyüme raporu 2.8) — takım sayfası, içerik kartı dili.
+.card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: $spacing-3;
+  margin: $spacing-4 0;
+  padding: $spacing-4;
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+
+  @media (min-width: 720px) {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+}
+
+.kicker {
+  margin: 0 0 $spacing-1;
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: $color-text-secondary;
+}
+
+.title {
+  margin: 0 0 $spacing-1;
+  font-size: var(--fs-title);
+  font-weight: 800;
+  color: $color-text;
+}
+
+.text {
+  margin: 0;
+  font-size: var(--fs-meta);
+  line-height: 1.5;
+  color: $color-text-secondary;
+  max-width: 560px;
+}
+
+.side {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+  align-items: flex-start;
+
+  @media (min-width: 720px) {
+    align-items: flex-end;
+  }
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 $spacing-4;
+  border: 0;
+  border-radius: $radius-full;
+  background: $color-primary;
+  color: var(--color-on-action);
+  font: inherit;
+  font-size: var(--fs-body);
+  font-weight: 800;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+}
+
+.owned {
+  font-size: var(--fs-body);
+  font-weight: 700;
+  color: $color-primary-text;
+}
+
+.ok,
+.err {
+  margin: 0;
+  max-width: 320px;
+  font-size: var(--fs-meta);
+  line-height: 1.4;
+  color: $color-primary-text;
+
+  a {
+    font-weight: 700;
+    color: inherit;
+  }
+}
+
+.err {
+  color: $color-danger;
+}

@@ -101,6 +101,7 @@ model User {
   gameWeekEntries      GameWeekEntry[]
   gameLeaguesOwned     GameLeague[]        @relation("GameLeagueOwner")
   gameLeagueMembers    GameLeagueMember[]
+  teamPasses           TeamPass[]
   refereeRatings       RefereeRating[]
 }
 
@@ -939,6 +940,22 @@ model GamePrediction {
   @@index([gameMatchId])
   @@index([weekId, userId])
   @@index([dayId, userId])
+}
+
+/// "Takımım" sezon paketi (büyüme raporu 2.8): krediyle bir kez alınır; o sezon takımın hazır AI analizleri kilitsiz
+/// açılır (her açılış AnalysisUnlock source=TEAM_PASS, ek ücret yok). Sezon "2026-27" (TSİ, 1 Temmuz). Kurallar: lib/teamPass.ts.
+model TeamPass {
+  id                  String   @id @default(cuid())
+  userId              String
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  teamId              Int
+  teamName            String
+  season              String
+  creditTransactionId String?  @unique
+  createdAt           DateTime @default(now())
+
+  @@unique([userId, teamId, season])
+  @@index([userId, season])
 }
 
 /// Tahmin Ligi özel ligi (arkadaş / ofis ligi; büyüme raporu 2.2). Davet koduyla katılınır; sıralama GameWeekEntry

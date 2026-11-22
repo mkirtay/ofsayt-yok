@@ -25,7 +25,7 @@ export const ANALYSIS_UNLOCK_COST = 1;
 /** Günlük ücretsiz açma için hesabın en az yaşı. */
 export const WEEKLY_FREE_MIN_ACCOUNT_AGE_MS = 24 * 3600_000;
 
-export type UnlockSource = 'CREDIT' | 'WEEKLY_FREE' | 'PREMIUM' | 'ADMIN' | 'LEGACY';
+export type UnlockSource = 'CREDIT' | 'WEEKLY_FREE' | 'PREMIUM' | 'ADMIN' | 'LEGACY' | 'TEAM_PASS';
 
 type AnalysisRef = { id: string; matchId: string };
 

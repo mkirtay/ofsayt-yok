@@ -9,6 +9,7 @@ const FILES = [
   'components/AiCalibrationChart/aiCalibrationChart.module.scss',
   'pages/ai-istatistikleri/ai-istatistikleri.module.scss',
   'components/Game/leagues.module.scss',
+  'components/TeamPassCard/teamPassCard.module.scss',
   'components/MatchOddsCard/matchOddsCard.module.scss',
   'components/MatchDetailContent/matchDetailContent.module.scss',
 ];

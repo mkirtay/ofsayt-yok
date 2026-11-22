@@ -63,6 +63,7 @@ import { findStoredMatchAnalysis } from '@/lib/matchAnalysisLookup';
 import { saveGeneratedAnalysis } from '@/server/saveMatchAnalysis';
 import { acquireAnalysisLock, releaseAnalysisLock } from '@/lib/analysisGenerationLock';
 import { trackSportmonksFetches } from '@/server/sportmonks/cachedFetch';
+import { recordTeamPassUnlock, teamPassCovers } from '@/lib/teamPass';
 
 type Result = { status: number; body: Record<string, unknown> };
 
@@ -102,7 +103,12 @@ async function handleGet(req: NextApiRequest, res: NextApiResponse, matchId: str
     }
 
     const predictionRecord = await predictionRecordOf(stored);
-    const unlock = viewer ? await findUnlock(viewer.id, stored.id) : null;
+    let unlock = viewer ? await findUnlock(viewer.id, stored.id) : null;
+    // "Takımım" sezon paketi (büyüme raporu 2.8): bu sezon takımlardan birinin paketi varsa ücretsiz açılış kaydı.
+    if (!unlock && viewer && (await teamPassCovers(viewer.id, [stored.homeTeamId, stored.awayTeamId]))) {
+      await recordTeamPassUnlock(viewer.id, stored);
+      unlock = await findUnlock(viewer.id, stored.id);
+    }
     const access = unlock ? 'unlocked' : (await isAnalysisMatchFinished(stored, predictionRecord)) ? 'free' : 'locked';
 
     if (access !== 'locked') {
