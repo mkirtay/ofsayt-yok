@@ -224,3 +224,24 @@
   color: $color-danger;
   margin: $spacing-2 0 0;
 }
+
+// AI vs taraftar (büyüme raporu 2.6)
+.aiLine {
+  margin: $spacing-2 0 0;
+  font-size: var(--fs-meta);
+  line-height: 1.5;
+  color: $color-text-secondary;
+  text-align: center;
+}
+
+.aiBadge {
+  display: inline-block;
+  padding: 0 6px;
+  border-radius: $radius-sm;
+  background: $color-primary;
+  color: var(--color-on-action);
+  font-size: var(--fs-label);
+  font-weight: 700;
+  line-height: 16px;
+  vertical-align: 1px;
+}

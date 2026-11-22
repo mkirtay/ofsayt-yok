@@ -111,7 +111,7 @@ export const RULES_HUB: RuleArticle = {
       blocks: [
         {
           type: 'p',
-          text: "Maç 45'er dakikalık iki devreden oluşur; devre arası en fazla 15 dakikadır. Oyuncu değişikliği, sakatlık, VAR incelemesi ve zaman geçirme gibi kayıplar uzatma olarak eklenir.",
+          text: "Maç 45'er dakikalık iki devreden oluşur; devre arası en fazla 15 dakikadır. Oyuncu değişikliği, sakatlık, VAR incelemesi ve zaman geçirme gibi kayıplar uzatma olarak eklenir ([uzatma dakikaları nasıl hesaplanır?](/futbol-kurallari/uzatma)).",
         },
       ],
     },
@@ -432,6 +432,76 @@ export const RULE_ARTICLES: RuleArticle[] = [
       { q: 'VAR sarı karta bakar mı?', a: "Tek sarı karta bakmaz. Ancak 2026-27'den itibaren kırmızıyla sonuçlanan açıkça hatalı ikinci sarıyı inceleyebilir." },
       { q: 'VAR kornere bakabilir mi?', a: 'Yarışma isterse, açıkça hatalı korner kararını oyunu geciktirmeden düzeltebilir.' },
       { q: "VAR'da son kararı kim verir?", a: 'Her zaman sahadaki hakem.' },
+    ],
+  },
+  {
+    slug: 'uzatma',
+    title: 'Uzatma Dakikaları Nasıl Hesaplanır? (Kural 7)',
+    heading: 'Uzatma Dakikaları Nasıl Hesaplanır?',
+    description: 'Uzatmaya neler eklenir, dördüncü hakemin tabelası ne demek, devre sonunda penaltı ve uzatma devreleri nasıl işler? Kural 7 kısa rehberi.',
+    lead:
+      "Maç 45'er dakikalık iki devreden oluşur. **Uzatma (ek süre)**, devre içinde kaybedilen zamanın devre sonuna eklenmesidir: oyuncu değişiklikleri, sakatlık müdahaleleri, zaman geçirme, VAR incelemeleri ve gol sevinçleri gibi duraklamalar sayılır. Dördüncü hakemin gösterdiği süre **en az** oynanacak süredir; hakem gerekirse daha fazla oynatır.",
+    badge: 'Rehber',
+    updated: UPDATED,
+    updatedIso: UPDATED_ISO,
+    publishedIso: UPDATED_ISO,
+    sections: [
+      {
+        id: 'neler-eklenir',
+        heading: 'Uzatmaya neler eklenir?',
+        blocks: [
+          {
+            type: 'ul',
+            items: [
+              'Oyuncu değişiklikleri',
+              'Sakat oyuncunun kontrolü ve sahadan çıkarılması',
+              'Zaman geçirme',
+              'Kart gösterme gibi disiplin işlemleri',
+              'Yarışma kurallarının izin verdiği su ve serinleme molaları',
+              '[VAR](/futbol-kurallari/var) kontrolleri ve incelemeleri',
+              'Gol sevinçleri',
+              'Seyirci kaynaklı duraklamalar gibi diğer kayıplar',
+            ],
+          },
+        ],
+      },
+      {
+        id: 'tabela',
+        heading: 'Dördüncü hakemin tabelası',
+        blocks: [
+          {
+            type: 'p',
+            text: 'Devrenin son dakikasında dördüncü hakem, hakemin belirlediği **en az** ek süreyi tabelayla gösterir. Uzatmada yeniden zaman kaybedilirse süre artırılabilir, ama gösterilen süre kısaltılamaz. Bir devrede kullanılmayan süre sonraki devreye devredilmez.',
+          },
+        ],
+      },
+      {
+        id: 'devre-sonunda-penalti',
+        heading: 'Süre biterken penaltı',
+        blocks: [
+          {
+            type: 'p',
+            text: 'Süre dolduğu anda verilmiş ya da tekrarlanacak bir penaltı varsa devre, penaltı tamamlanana kadar uzatılır. Atış sonuçlandığında (gol, kurtarış ya da top dışarı) devre biter; dönen topa yeniden vuruş yapılamaz.',
+          },
+        ],
+      },
+      {
+        id: 'uzatma-devreleri',
+        heading: 'Uzatma devreleri ve seri penaltılar',
+        blocks: [
+          {
+            type: 'p',
+            text: "Eleme maçlarında eşitlik bozulmazsa, yarışma kurallarına göre **en fazla 15'er dakikalık iki uzatma devresi** oynanır; uzatma devrelerinde de kaybedilen zaman eklenir. Eşitlik yine sürerse kazanan seri penaltı atışlarıyla belirlenir.",
+          },
+        ],
+      },
+    ],
+    faq: [
+      { q: 'Uzatma süresi kısaltılabilir mi?', a: 'Hayır. Dördüncü hakemin gösterdiği süre en az süredir; hakem gerektiğinde uzatır ama kısaltamaz.' },
+      { q: 'İlk yarıdan artan süre ikinci yarıya eklenir mi?', a: 'Hayır. Her devrenin kaybedilen zamanı kendi sonuna eklenir; bir devrede kullanılmayan süre devredilmez.' },
+      { q: 'Devre arası kaç dakika?', a: 'Kurallara göre en fazla 15 dakika; süreyi yarışma kuralları belirler, hakemin izniyle değişebilir.' },
+      { q: 'Uzatma devresinde atılan gol maçı bitirir mi?', a: 'Hayır. Altın gol uygulaması yok; uzatma devreleri sonuna kadar oynanır.' },
+      { q: 'Seri penaltı golleri maç skoruna eklenir mi?', a: 'Hayır. Seri penaltılar yalnız kazananı belirler; maç skoru uzatmaların sonundaki skor olarak kalır.' },
     ],
   },
   {

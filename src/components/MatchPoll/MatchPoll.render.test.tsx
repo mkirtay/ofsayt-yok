@@ -111,3 +111,13 @@ describe('MatchPoll takım etiketleri', () => {
     }
   });
 });
+
+describe('AI vs taraftar (büyüme raporu 2.6)', () => {
+  it('kilitli analiz → ücretsiz önizlemenin en olası sonucu; açık analiz → 1X2 en yükseği; yoksa null', async () => {
+    const { aiTopOutcome } = await import('./index');
+    expect(aiTopOutcome({ access: 'locked', preview: { top: { outcome: 'HOME', pct: 58 } } })).toEqual({ outcome: 'HOME', pct: 58 });
+    expect(aiTopOutcome({ access: 'free', analysis: { matchPrediction: { home: 30, draw: 25, away: 45 } } })).toEqual({ outcome: 'AWAY', pct: 45 });
+    expect(aiTopOutcome({ access: 'none' })).toBeNull();
+    expect(aiTopOutcome(null)).toBeNull();
+  });
+});

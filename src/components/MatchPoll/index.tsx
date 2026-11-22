@@ -30,6 +30,22 @@ interface PollData {
   userPrediction: Prediction | null;
 }
 
+/** Analiz yanıtından AI'ın en olası sonucu: kilitliyse ücretsiz önizleme (`preview.top`), açıksa 1X2 en yükseği. */
+export function aiTopOutcome(body: unknown): { outcome: Prediction; pct: number } | null {
+  const b = (body ?? {}) as { access?: string; preview?: { top?: { outcome?: string; pct?: number } | null }; analysis?: { matchPrediction?: Record<string, unknown> } };
+  if (b.access === 'locked' && b.preview?.top?.outcome && typeof b.preview.top.pct === 'number') {
+    const o = b.preview.top.outcome as Prediction;
+    return ['HOME', 'DRAW', 'AWAY'].includes(o) ? { outcome: o, pct: Math.round(b.preview.top.pct) } : null;
+  }
+  const mp = b.analysis?.matchPrediction;
+  if ((b.access === 'unlocked' || b.access === 'free') && mp) {
+    const opts: [Prediction, number][] = [['HOME', Number(mp.home)], ['DRAW', Number(mp.draw)], ['AWAY', Number(mp.away)]];
+    const best = opts.filter(([, v]) => Number.isFinite(v)).sort((x, y) => y[1] - x[1])[0];
+    return best ? { outcome: best[0], pct: Math.round(best[1]) } : null;
+  }
+  return null;
+}
+
 function pct(votes: number, total: number): number {
   if (total === 0) return 0;
   return Math.round((votes / total) * 100);
@@ -44,6 +60,22 @@ export default function MatchPoll({ matchId, locked: lockedProp = false, home = 
   // Sunucu 409 LOCKED dediyse (istemcinin maç verisi geride kaldıysa) da kilitli çizilir.
   const [serverLocked, setServerLocked] = useState(false);
   const locked = lockedProp || serverLocked;
+  // Büyüme raporu 2.6 — AI vs taraftar: sonuç görününce (oy verildi / maç başladı) AI'ın en olası sonucu yanında.
+  const [ai, setAi] = useState<{ outcome: Prediction; pct: number } | null>(null);
+  const resultsVisible = locked || !!poll?.userPrediction;
+  useEffect(() => {
+    if (!resultsVisible || ai) return;
+    let cancelled = false;
+    fetch(`/api/matches/${matchId}/analysis?v=2`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((body) => {
+        if (!cancelled) setAi(aiTopOutcome(body));
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [resultsVisible, matchId, ai]);
 
   useEffect(() => {
     let cancelled = false;
@@ -160,6 +192,25 @@ export default function MatchPoll({ matchId, locked: lockedProp = false, home = 
       {poll && poll.total > 0 && (
         <p className={styles.meta}>{t('poll.totalVotes', { count: poll.total })}</p>
       )}
+
+      {ai && poll && poll.total > 0 && resultsVisible ? (
+        (() => {
+          const label = (o: Prediction) =>
+            o === 'DRAW' ? t('poll.draw') : t('poll.teamWins', { team: (o === 'HOME' ? homeName : awayName) || t(o === 'HOME' ? 'poll.home' : 'poll.away') });
+          const crowd = (['HOME', 'DRAW', 'AWAY'] as Prediction[]).sort(
+            (x, y) => (y === 'HOME' ? poll.home : y === 'DRAW' ? poll.draw : poll.away) - (x === 'HOME' ? poll.home : x === 'DRAW' ? poll.draw : poll.away),
+          )[0]!;
+          return (
+            <p className={styles.aiLine}>
+              <span className={styles.aiBadge}>AI</span> {t('poll.aiPick', { pick: label(ai.outcome), pct: ai.pct })} ·{' '}
+              {t(ai.outcome === crowd ? 'poll.aiAgrees' : 'poll.aiDiffers')}{' '}
+              <Link href={`?sekme=ai-analiz`} scroll={false} className={styles.loginLink}>
+                {t('poll.aiLink')}
+              </Link>
+            </p>
+          );
+        })()
+      ) : null}
 
       {locked && poll && poll.total === 0 && <p className={styles.meta}>{t('poll.lockedNoVotes')}</p>}
 

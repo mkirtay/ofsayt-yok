@@ -68,7 +68,7 @@ export function accuracyDatasetJsonLd(opts: {
     creator: { '@type': 'Organization', name: BRAND.name, url: `${siteBaseUrl()}/` },
     isAccessibleForFree: true,
     inLanguage: 'tr-TR',
-    variableMeasured: ['değerlendirilen maç', 'tahmin', 'tutan tahmin', 'isabet oranı (%)'],
+    variableMeasured: ['değerlendirilen maç', 'tahmin', 'tutan tahmin', 'isabet oranı (%)', 'temel oran (%)', 'Brier skoru', 'kalibrasyon (gösterilen vs gerçekleşen olasılık)'],
     ...(months.length ? { temporalCoverage: `${months[0]!.month}/${months[months.length - 1]!.month}` } : {}),
     ...(opts.lastEvaluatedAt ? { dateModified: opts.lastEvaluatedAt.slice(0, 10) } : {}),
   };

@@ -51,3 +51,9 @@ Kalan fikirler: #6 direkt/endirekt serbest vuruş, #7 avantaj, #10 oyuncu deği�
 - **Hakem topu (Kural 8) ve penaltıda çift vuruş:** 2026-27 değişikliği olarak geçiyor; IFAB 2026/27 değişiklik belgesiyle
   hangi sezona ait olduğunu ve penaltı (Kural 14) / penaltı atışları (Kural 10) ayrımını teyit.
 - Her yaz IFAB değişikliklerinden sonra metni ve `updated` / `updatedIso` alanlarını güncelle.
+
+## Eklenen: Uzatma makalesi (/futbol-kurallari/uzatma, 2026-11-22, büyüme raporu 2.7)
+
+Yayın öncesi teyit (IFAB Kural 7): uzatmaya eklenen kalemler, dördüncü hakemin gösterdiği sürenin "en az" olması ve
+kısaltılamaması, devreden süre aktarılmaması, devre sonunda penaltının tamamlanması, uzatma devrelerinin en fazla 15'er
+dakika olması, altın golün uygulanmaması, seri penaltının skora eklenmemesi.
