@@ -20,7 +20,7 @@
       },
       {
         "heading": "4. Cookies",
-        "body": "Strictly necessary cookies keep you signed in and secure; a functional cookie tracks the daily message allowance when the AI assistant is used without an account. Language, theme and favourite preferences are kept in browser storage, not cookies; page statistics are collected without cookies. You can manage cookies in your browser settings; if you block strictly necessary cookies you may not be able to sign in. Details of the cookies and browser storage we use are on the Cookie Policy page."
+        "body": "Strictly necessary cookies keep you signed in and secure; a functional cookie tracks the daily message allowance when the AI assistant is used without an account. Language, theme and favourite preferences are kept in browser storage, not cookies; Vercel page statistics are cookieless. Google Analytics (visit statistics) and Meta Pixel (ad measurement and retargeting) cookies are loaded only if you give explicit consent in the cookie banner; you can withdraw it via the \"Cookie preferences\" link at the bottom of the page. You can manage cookies in your browser settings; if you block strictly necessary cookies you may not be able to sign in. Details of the cookies and browser storage we use are on the Cookie Policy page."
       },
       {
         "heading": "5. Sharing With Third Parties",
@@ -92,23 +92,23 @@
       },
       {
         "heading": "2. Personal Data Processed",
-        "body": "Identity (name, username), contact (email address), account and transaction data (credit history, unlocked analyses, favourite teams/leagues, comments and posts), security data (IP address, session data, irreversible password hash, login attempts), signup source (campaign link utm data) and the signup consent record (date and text version). For purchases, the order record and the purchase approval record (time of approval and text version)."
+        "body": "Identity (name, username), contact (email address), account and transaction data (credit history, unlocked analyses, favourite teams/leagues, comments and posts), security data (IP address, session data, irreversible password hash, login attempts), signup source (campaign link utm data) and the signup consent record (date and text version). If you consent to cookies, online identifiers (Google Analytics and Meta Pixel cookie IDs) and the pages you visit. For purchases, the order record and the purchase approval record (time of approval and text version)."
       },
       {
         "heading": "3. Purposes",
-        "body": "Creating and managing member accounts, running AI analysis and credit operations, providing personalised content, keeping information and accounts secure, preventing abuse, measuring promotional campaigns and meeting legal obligations."
+        "body": "Creating and managing member accounts, running AI analysis and credit operations, providing personalised content, keeping information and accounts secure, preventing abuse, measuring promotional campaigns, with your explicit consent analysing site usage and measuring the effect of Facebook / Instagram ads and retargeting, and meeting legal obligations."
       },
       {
         "heading": "4. Legal Grounds",
-        "body": "Creating and managing the account, AI analysis and credit operations and purchases are necessary to conclude and perform a contract (KVKK Art. 5/2-c). Order, payment and purchase consent records are processed to comply with a legal obligation (Art. 5/2-ç). Information and account security, abuse prevention, measuring promotional activity and improving the service rely on legitimate interest (Art. 5/2-f); records needed to protect rights in possible disputes are kept under Art. 5/2-e. No processing is based on explicit consent."
+        "body": "Creating and managing the account, AI analysis and credit operations and purchases are necessary to conclude and perform a contract (KVKK Art. 5/2-c). Order, payment and purchase consent records are processed to comply with a legal obligation (Art. 5/2-ç). Information and account security, abuse prevention, measuring promotional activity and improving the service rely on legitimate interest (Art. 5/2-f); records needed to protect rights in possible disputes are kept under Art. 5/2-e. Visit statistics and ad measurement with Google Analytics and Meta Pixel cookies, and the related transfer of data abroad, rely solely on your explicit consent (Art. 5/1 and Art. 9); not consenting does not affect your use of the service, and you can withdraw consent at any time via the \"Cookie preferences\" link at the bottom of the page."
       },
       {
         "heading": "5. Collection Method",
-        "body": "Personal data is collected electronically through signup and profile forms, Google sign-in, technical logs created while using the site and strictly necessary cookies."
+        "body": "Personal data is collected electronically through signup and profile forms, Google sign-in, technical logs created while using the site, strictly necessary cookies and, if you consent, analytics and ad measurement cookies."
       },
       {
         "heading": "6. Transfers",
-        "body": "To provide the service, data is transferred to the service providers below only to the extent needed for that service (the table is based on the site's code). Recipient groups: hosting and database, e-mail delivery, error monitoring, bot protection, AI and payment service providers, and competent public authorities on request. Some providers are established abroad or process data on servers abroad; these transfers are made under the conditions set out in KVKK Art. 9.",
+        "body": "To provide the service, data is transferred to the service providers below only to the extent needed for that service (the table is based on the site's code). Recipient groups: hosting and database, e-mail delivery, error monitoring, bot protection, AI and payment service providers, analytics and ad measurement providers (only with your explicit consent), and competent public authorities on request. Some providers are established abroad or process data on servers abroad; these transfers are made under the conditions set out in KVKK Art. 9.",
         "table": "dataProcessors"
       },
       {

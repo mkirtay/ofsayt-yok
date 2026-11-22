@@ -20,7 +20,7 @@
       },
       {
         "heading": "4. Çerezler (Cookies)",
-        "body": "Oturum açık tutma ve güvenlik için zorunlu çerezler; üye olmadan AI asistanı kullanıldığında günlük mesaj hakkı için işlevsel bir çerez kullanılır. Dil, tema ve favori tercihleri çerezde değil tarayıcı depolamasında tutulur; sayfa istatistikleri çerezsiz toplanır. Tarayıcı ayarlarınızdan çerezleri yönetebilirsiniz; zorunlu çerezleri engellerseniz oturum açamayabilirsiniz. Kullandığımız çerezlerin ve tarayıcı depolamasının ayrıntıları Çerez Politikası sayfasındadır."
+        "body": "Oturum açık tutma ve güvenlik için zorunlu çerezler; üye olmadan AI asistanı kullanıldığında günlük mesaj hakkı için işlevsel bir çerez kullanılır. Dil, tema ve favori tercihleri çerezde değil tarayıcı depolamasında tutulur; Vercel sayfa istatistikleri çerezsizdir. Google Analytics (ziyaret istatistikleri) ve Meta Pixel (reklam ölçümü ve yeniden hedefleme) çerezleri yalnız çerez bandında açık onay verirseniz yüklenir; onayınızı sayfa altındaki \"Çerez tercihleri\" bağlantısından geri alabilirsiniz. Tarayıcı ayarlarınızdan çerezleri yönetebilirsiniz; zorunlu çerezleri engellerseniz oturum açamayabilirsiniz. Kullandığımız çerezlerin ve tarayıcı depolamasının ayrıntıları Çerez Politikası sayfasındadır."
       },
       {
         "heading": "5. Üçüncü Taraflarla Paylaşım",
@@ -92,23 +92,23 @@
       },
       {
         "heading": "2. İşlenen Kişisel Veriler",
-        "body": "Kimlik (ad, kullanıcı adı), iletişim (e-posta adresi), hesap ve işlem bilgileri (kredi hareketleri, açılan analizler, favori takım/lig tercihleri, yorum ve gönderiler), işlem güvenliği bilgileri (IP adresi, oturum bilgisi, şifrenin geri döndürülemez özeti, giriş denemeleri), kayıt kaynağı (kampanya bağlantısı utm bilgisi) ve kayıt onayı kaydı (onay tarihi ve metin sürümü). Satın alma yapıldığında sipariş kaydı ve satın alma onayı kaydı (onay zamanı ve metin sürümü)."
+        "body": "Kimlik (ad, kullanıcı adı), iletişim (e-posta adresi), hesap ve işlem bilgileri (kredi hareketleri, açılan analizler, favori takım/lig tercihleri, yorum ve gönderiler), işlem güvenliği bilgileri (IP adresi, oturum bilgisi, şifrenin geri döndürülemez özeti, giriş denemeleri), kayıt kaynağı (kampanya bağlantısı utm bilgisi) ve kayıt onayı kaydı (onay tarihi ve metin sürümü). Çerez onayı verirseniz çevrimiçi tanımlayıcılar (Google Analytics ve Meta Pixel çerez kimlikleri) ve ziyaret ettiğiniz sayfalar. Satın alma yapıldığında sipariş kaydı ve satın alma onayı kaydı (onay zamanı ve metin sürümü)."
       },
       {
         "heading": "3. İşleme Amaçları",
-        "body": "Üyelik hesabının oluşturulması ve yönetimi, AI analiz ve kredi işlemlerinin yürütülmesi, kişiselleştirilmiş içerik sunulması, bilgi ve hesap güvenliğinin sağlanması, kötüye kullanımın önlenmesi, tanıtım çalışmalarının ölçülmesi ve yasal yükümlülüklerin yerine getirilmesi."
+        "body": "Üyelik hesabının oluşturulması ve yönetimi, AI analiz ve kredi işlemlerinin yürütülmesi, kişiselleştirilmiş içerik sunulması, bilgi ve hesap güvenliğinin sağlanması, kötüye kullanımın önlenmesi, tanıtım çalışmalarının ölçülmesi, açık rızanız hâlinde site kullanımının analiz edilmesi ile Facebook / Instagram reklamlarının etkisinin ölçülmesi ve yeniden hedefleme, ve yasal yükümlülüklerin yerine getirilmesi."
       },
       {
         "heading": "4. Hukuki Sebepler",
-        "body": "Üyelik hesabının oluşturulması ve yönetimi, AI analiz ve kredi işlemleri ile satın almalar bir sözleşmenin kurulması ve ifası için gereklidir (KVKK md. 5/2-c). Sipariş, ödeme ve satın alma onayı kayıtları hukuki yükümlülüğün yerine getirilmesi için işlenir (md. 5/2-ç). Bilgi ve hesap güvenliğinin sağlanması, kötüye kullanımın önlenmesi, tanıtım çalışmalarının ölçülmesi ve hizmetin iyileştirilmesi meşru menfaate dayanır (md. 5/2-f); olası uyuşmazlıklarda hakların korunması için gereken kayıtlar md. 5/2-e kapsamında saklanır. Açık rızaya dayalı bir işleme yapılmamaktadır."
+        "body": "Üyelik hesabının oluşturulması ve yönetimi, AI analiz ve kredi işlemleri ile satın almalar bir sözleşmenin kurulması ve ifası için gereklidir (KVKK md. 5/2-c). Sipariş, ödeme ve satın alma onayı kayıtları hukuki yükümlülüğün yerine getirilmesi için işlenir (md. 5/2-ç). Bilgi ve hesap güvenliğinin sağlanması, kötüye kullanımın önlenmesi, tanıtım çalışmalarının ölçülmesi ve hizmetin iyileştirilmesi meşru menfaate dayanır (md. 5/2-f); olası uyuşmazlıklarda hakların korunması için gereken kayıtlar md. 5/2-e kapsamında saklanır. Google Analytics ve Meta Pixel çerezleriyle yapılan ziyaret istatistiği ve reklam ölçümü ile bu kapsamda verilerin yurt dışına aktarılması yalnız açık rızanıza dayanır (md. 5/1 ve md. 9); rıza vermemeniz hizmeti kullanmanızı etkilemez ve rızanızı sayfa altındaki \"Çerez tercihleri\" bağlantısından istediğiniz zaman geri alabilirsiniz."
       },
       {
         "heading": "5. Toplama Yöntemi",
-        "body": "Kişisel veriler kayıt ve profil formları, Google ile giriş, site kullanımı sırasında oluşan teknik kayıtlar ve zorunlu çerezler aracılığıyla elektronik ortamda toplanır."
+        "body": "Kişisel veriler kayıt ve profil formları, Google ile giriş, site kullanımı sırasında oluşan teknik kayıtlar, zorunlu çerezler ve onay vermeniz hâlinde analitik ve reklam ölçümü çerezleri aracılığıyla elektronik ortamda toplanır."
       },
       {
         "heading": "6. Aktarım",
-        "body": "Hizmetin sunulması için veriler aşağıdaki hizmet sağlayıcılara, yalnız ilgili hizmet için gerekli ölçüde aktarılır (tablo sitenin kodundan hazırlanmıştır). Alıcı grupları: barındırma ve veritabanı, e-posta gönderimi, hata izleme, bot koruması, yapay zekâ ve ödeme hizmeti sağlayıcıları ile talep hâlinde yetkili kamu kurum ve kuruluşları. Sağlayıcıların bir kısmı yurt dışında yerleşiktir veya verileri yurt dışındaki sunucularda işler; bu aktarımlar KVKK md. 9'da öngörülen şartlar çerçevesinde yapılır.",
+        "body": "Hizmetin sunulması için veriler aşağıdaki hizmet sağlayıcılara, yalnız ilgili hizmet için gerekli ölçüde aktarılır (tablo sitenin kodundan hazırlanmıştır). Alıcı grupları: barındırma ve veritabanı, e-posta gönderimi, hata izleme, bot koruması, yapay zekâ ve ödeme hizmeti sağlayıcıları, yalnız açık rızanızla analitik ve reklam ölçümü sağlayıcıları ile talep hâlinde yetkili kamu kurum ve kuruluşları. Sağlayıcıların bir kısmı yurt dışında yerleşiktir veya verileri yurt dışındaki sunucularda işler; bu aktarımlar KVKK md. 9'da öngörülen şartlar çerçevesinde yapılır.",
         "table": "dataProcessors"
       },
       {

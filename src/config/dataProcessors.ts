@@ -9,6 +9,7 @@
  * - Supabase: Prisma veritabanı. Upstash: lib/rateLimit.ts, loginRateLimit.ts, sessionVersion.ts, assistant/quota.ts.
  * - Cloudflare Turnstile: lib/security.ts verifyTurnstileToken (remoteip). Sentry: sentry.*.config.ts (sendDefaultPii
  *   false + lib/sentryScrub.ts). Vercel: barındırma + Web Analytics (lib/analyticsScrub.ts). Google: lib/oauth.ts.
+ * - Google Analytics / Meta Pixel (yalnız çerez onayıyla): components/CookieConsent/GoogleAnalytics.tsx, MetaPixel.tsx, lib/metaPixel.ts.
  * Kapsam dışı (kişisel veri almaz): Sportmonks (sunucudan yalnız maç / takım kimliği), X botu, Expo (gönderim kodu yok).
  */
 import type { LegalTable } from '@/components/LegalPage';
@@ -65,6 +66,16 @@ const ROWS: Row[] = [
     provider: 'Google',
     tr: ['Google ile giriş seçildiğinde Google\'dan ad, e-posta ve profil fotoğrafı adresi alınır; profil fotoğrafı ziyaretçinin tarayıcısında Google\'dan yüklenir.', 'Google ile giriş'],
     en: ['If you sign in with Google, we receive your name, e-mail and profile picture URL from Google; the picture is loaded from Google in the visitor\'s browser.', 'Sign in with Google'],
+  },
+  {
+    provider: 'Google Analytics',
+    tr: ['Yalnız çerez onayıyla: ziyaret edilen sayfa adresi (e-posta, belirteç ve ödeme parametreleri silinerek) ve başlığı, sayfa hızı ölçümleri, tarayıcı / cihaz bilgisi, IP adresi ve _ga çerez tanımlayıcısı. Ad, e-posta veya kullanıcı kimliği gönderilmez.', 'Ziyaret istatistikleri'],
+    en: ['Only with cookie consent: the visited page address (with e-mail, token and payment parameters removed) and title, page speed metrics, browser / device details, IP address and the _ga cookie identifier. No name, e-mail or user id is sent.', 'Visit statistics'],
+  },
+  {
+    provider: 'Meta Platforms Ireland (Meta Pixel)',
+    tr: ['Yalnız çerez onayıyla: sayfa görüntülemeleri ve üyelik tamamlandığında "kayıt tamamlandı" olayı; sayfa adresi, IP adresi, tarayıcı bilgisi ve _fbp / _fbc çerez tanımlayıcıları. Ad, e-posta, telefon veya kullanıcı kimliği gönderilmez; ödeme sayfalarında ve adresinde e-posta / belirteç bulunan sayfalarda olay gönderilmez.', 'Facebook / Instagram reklam ölçümü ve yeniden hedefleme'],
+    en: ['Only with cookie consent: page views and a "registration completed" event on sign-up; page address, IP address, browser details and the _fbp / _fbc cookie identifiers. No name, e-mail, phone number or user id is sent; no events are sent on payment pages or pages whose address contains an e-mail or token.', 'Facebook / Instagram ad measurement and retargeting'],
   },
 ];
 

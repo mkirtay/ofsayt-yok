@@ -188,7 +188,15 @@ describe('satış belgeleri ve satıcı tek kaynağı', () => {
       for (const name of DATA_PROCESSOR_NAMES) expect(h, `${k} ${name}`).toContain(name.replace('&', '&amp;'));
     }
     expect(DATA_PROCESSOR_NAMES).toEqual(
-      expect.arrayContaining(['Hikie', 'Resend', 'OpenAI', 'Supabase', 'Vercel', 'Upstash', 'Cloudflare (Turnstile)', 'Sentry', 'Google']),
+      expect.arrayContaining(['Hikie', 'Resend', 'OpenAI', 'Supabase', 'Vercel', 'Upstash', 'Cloudflare (Turnstile)', 'Sentry', 'Google', 'Google Analytics',
+        'Meta Platforms Ireland (Meta Pixel)']),
     );
+  });
+
+  it('KVKK / Gizlilik: GA + Meta Pixel açık rızaya dayanır (eski "açık rızaya dayalı işleme yok" ifadesi geri gelmesin)', () => {
+    const kvkk = html('kvkk');
+    expect(kvkk).not.toMatch(/Açık rızaya dayalı bir işleme yapılmamaktadır|No processing is based on explicit consent/);
+    expect(kvkk).toMatch(/açık rızanıza dayanır|rely solely on your explicit consent/);
+    expect(html('privacy')).toMatch(/Meta Pixel/);
   });
 });
