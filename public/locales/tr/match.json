@@ -85,7 +85,7 @@
     "insufficientCredits": "Yetersiz kredi bakiyesi.",
     "buyCredits": "Kredi al",
     "signInToGenerate": "Analiz üretmek için giriş yapmalısınız.",
-    "guestPending": "Bu maçın AI analizi henüz yayınlanmadı. Popüler maçlarda analiz başlama saatinden yaklaşık 3 saat önce yayınlanır ve özeti üye olmadan görülebilir. Beklemek istemiyorsan ücretsiz üye ol; hediye krediyle analizi hemen üretebilirsin.",
+    "guestPending": "Bu maçın AI analizi henüz hazırlanmadı. Beklemek istemiyorsan ücretsiz üye ol; hediye krediyle analizi hemen üretebilirsin.",
     "guestSignUp": "Ücretsiz üye ol",
     "guestSample": "Örnek analizi gör →",
     "signIn": "Giriş yap",

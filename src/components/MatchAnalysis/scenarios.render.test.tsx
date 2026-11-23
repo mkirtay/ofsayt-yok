@@ -126,9 +126,10 @@ describe('misafir, analiz henüz yok (maç öncesi)', () => {
     credits: 0, unlimited: false, isAuthenticated: false, generate: async () => {},
   } as unknown as MatchAnalysisState;
   const html = renderToStaticMarkup(<MatchAnalysis match={null} state={state} />);
-  it('ne zaman yayınlanacağını anlatır; üye ol + giriş + örnek analiz bağlantısı', () => {
+  it('hazırlanmadığını söyler (yayın saati sözü yok); üye ol + giriş + örnek analiz bağlantısı', () => {
     expect(html).toContain('data-testid="analysis-guest-pending"');
-    expect(text(html)).toContain('yaklaşık 3 saat önce');
+    expect(text(html)).toContain('henüz hazırlanmadı');
+    expect(text(html)).not.toMatch(/saat önce/);
     expect(html).toContain('href="/auth/signup?src=ai_tab"');
     expect(html).toContain('href="/auth/signin"');
     expect(html).toContain('href="/pricing"');
