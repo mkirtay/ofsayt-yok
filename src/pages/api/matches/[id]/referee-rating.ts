@@ -57,7 +57,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
       if (target.reason === 'unavailable') return res.status(503).json({ error: 'Maç bilgisi alınamadı, tekrar deneyin.', code: 'UNAVAILABLE' });
       if (target.reason === 'missing') return res.status(404).json({ error: 'Maç bulunamadı.', code: 'NOT_FOUND' });
       if (target.reason === 'no-referee') return res.status(409).json({ error: 'Bu maçın hakemi bilinmiyor.', code: 'NO_REFEREE' });
-      if (target.reason === 'not-finished') return res.status(409).json({ error: 'Puanlama maç bitince açılır.', code: 'NOT_FINISHED' });
+      if (target.reason === 'not-finished') return res.status(409).json({ error: 'Puanlama maç başlayınca açılır.', code: 'NOT_FINISHED' });
       return res.status(409).json({ error: 'Bu maç için puanlama süresi doldu.', code: 'CLOSED' });
     }
 

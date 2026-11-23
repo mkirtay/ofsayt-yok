@@ -1,5 +1,5 @@
 /**
- * Hakem puanlama — maç bitince taraftar orta hakeme 1–10 puan verir (giriş zorunlu, kullanıcı başına maç başına tek oy,
+ * Hakem puanlama — maç başlayınca (canlı, devre arası, bitmiş) taraftar orta hakeme 1–10 puan verir (giriş zorunlu, kullanıcı başına maç başına tek oy,
  * güncellenebilir). Kurallar istemci (satırın görünürlüğü) ve sunucu (POST doğrulaması) arasında ortak; saf modül
  * (prisma / sunucu içermez, tarayıcı paketine girer).
  *
@@ -28,12 +28,14 @@ export type RefereeRatingWindow = 'open' | 'not-finished' | 'closed' | 'no-refer
 type RatingMatch = Pick<Match, 'status' | 'state_code' | 'date' | 'scheduled' | 'referee_id'>;
 
 /**
- * Puan verilebilir mi: orta hakem bilinmeli, maç normal biçimde bitmiş olmalı (ertelendi / iptal / hükmen değil) ve
- * başlama saatinden bu yana `REFEREE_RATING_WINDOW_MS` geçmemiş olmalı. Başlama saati bilinmeyen maç kapalı sayılır.
+ * Puan verilebilir mi: orta hakem bilinmeli, maç başlamış olmalı (canlı / devre arası / bitmiş; 2026-11-23 kullanıcı
+ * kararı: maç sürerken de puanlanır, puan güncellenebildiği için maç sonunda değiştirilebilir), ertelendi / iptal /
+ * hükmen olmamalı ve başlama saatinden bu yana `REFEREE_RATING_WINDOW_MS` geçmemiş olmalı. Başlama saati bilinmeyen
+ * maç kapalı sayılır. (`not-finished` adı geriye uyum için korunur: anlamı "henüz başlamadı / geçersiz maç".)
  */
 export function refereeRatingWindow(match: RatingMatch, now: number = Date.now()): RefereeRatingWindow {
   if (!match.referee_id) return 'no-referee';
-  if (deriveMatchPhase(match.status) !== 'POST') return 'not-finished';
+  if (deriveMatchPhase(match.status) === 'PRE') return 'not-finished';
   const code = match.state_code;
   if (code === 'CANCELLED' || code === 'DELETED' || code === 'POSTPONED' || code === 'AWARDED' || code === 'WALKOVER') return 'not-finished';
   const kickoff = matchKickoffMs(match);

@@ -515,6 +515,7 @@
     "summary_one": "Average {{avg}} · {{count}} vote",
     "yourScore": "Your rating: {{score}}",
     "changeHint": "You can change your rating.",
+    "liveHint": "The match is on; you can change your rating after full time.",
     "saving": "Saving…",
     "closed": "Rating is closed for this match.",
     "error": "Could not save your rating. Try again.",

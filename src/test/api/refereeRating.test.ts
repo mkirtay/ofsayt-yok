@@ -101,8 +101,8 @@ describe('POST /api/matches/{id}/referee-rating', () => {
     expect((await call('POST', { score: 7 }, 'abc')).statusCode).toBe(400);
   });
 
-  it('maç bitmedi → 409 NOT_FINISHED; süre doldu → 409 CLOSED; hakem yok → 409 NO_REFEREE', async () => {
-    h.match = { ...FINISHED, status: '2nd Half' };
+  it('maç başlamadı → 409 NOT_FINISHED; süre doldu → 409 CLOSED; hakem yok → 409 NO_REFEREE', async () => {
+    h.match = { ...FINISHED, status: 'NOT STARTED' };
     expect(await call('POST', { score: 7 })).toMatchObject({ statusCode: 409, body: { code: 'NOT_FINISHED' } });
     h.match = { ...FINISHED, date: '2026-10-20' };
     expect(await call('POST', { score: 7 })).toMatchObject({ statusCode: 409, body: { code: 'CLOSED' } });

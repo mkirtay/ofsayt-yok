@@ -508,6 +508,7 @@
     "summary": "Ortalama {{avg}} · {{count}} oy",
     "yourScore": "Senin puanın: {{score}}",
     "changeHint": "Puanını değiştirebilirsin.",
+    "liveHint": "Maç sürüyor; puanını maç sonunda değiştirebilirsin.",
     "saving": "Kaydediliyor…",
     "closed": "Bu maç için puanlama kapandı.",
     "error": "Puan kaydedilemedi. Tekrar dene.",
@@ -516,7 +517,7 @@
     "fanVotes": "{{count}} oy",
     "fanInsufficient": "Yetersiz oy",
     "fanInsufficientHint": "Ortalama en az {{min}} oydan sonra gösterilir.",
-    "fanNone": "Henüz puan verilmedi. Maç sonunda maç sayfasından puan verebilirsin.",
+    "fanNone": "Henüz puan verilmedi. Maç başlayınca maç sayfasından puan verebilirsin.",
     "fanRecent": "Son puanlanan maçlar",
     "fanOutOf": "/10"
   },

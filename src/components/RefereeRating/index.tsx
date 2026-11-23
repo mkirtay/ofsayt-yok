@@ -7,7 +7,8 @@ import styles from './refereeRating.module.scss';
 
 type RatingState = { average: number | null; count: number; userScore: number | null };
 
-type Props = { matchId: string; refereeName?: string | null };
+/** `live`: maç sürüyor (canlı / devre arası) → puanın maç sonunda değiştirilebileceği hatırlatılır. */
+type Props = { matchId: string; refereeName?: string | null; live?: boolean };
 
 /**
  * Maç sonrası "Hakemi puanla" satırı (Genel Bakış; yalnız maç bitmiş ve puanlama süresi açıkken çizilir — karar
@@ -15,7 +16,7 @@ type Props = { matchId: string; refereeName?: string | null };
  * basınca giriş sayfasına (dönüş bu maç). Ortalama yalnız puan verdikten sonra görünür (oy vermeden önce yönlendirmesin).
  * Yükseklik veri gelmeden de sabit: alt satır her durumda tek satır yer tutar (CLS yok).
  */
-export default function RefereeRating({ matchId, refereeName }: Props) {
+export default function RefereeRating({ matchId, refereeName, live = false }: Props) {
   const { t } = useTranslation('match');
   const { locale } = useI18n();
   const router = useRouter();
@@ -85,9 +86,17 @@ export default function RefereeRating({ matchId, refereeName }: Props) {
           ·
         </span>
         <span>{t('refereeRating.yourScore', { score: userScore })}</span>
+        {live ? (
+          <>
+            <span className={styles.sep} aria-hidden="true">
+              ·
+            </span>
+            <span>{t('refereeRating.liveHint')}</span>
+          </>
+        ) : null}
       </>
     );
-  } else foot = t(status === 'unauthenticated' ? 'refereeRating.loginHint' : 'refereeRating.hint');
+  } else foot = t(status === 'unauthenticated' ? 'refereeRating.loginHint' : live ? 'refereeRating.liveHint' : 'refereeRating.hint');
 
   return (
     <section className={styles.card} aria-labelledby={`referee-rating-${matchId}`}>

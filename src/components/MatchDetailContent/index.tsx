@@ -174,7 +174,7 @@ export default function MatchDetailContent({ detail, requestedMatchId, variant =
             ) : null}
             {national ? null : <MatchMomentum matchId={effectiveMatchId} match={match} events={detail.events} />}
             {!national && effectiveMatchId && match && refereeRatingWindow(match) === 'open' ? (
-              <RefereeRating key={effectiveMatchId} matchId={effectiveMatchId} refereeName={match.referee} />
+              <RefereeRating key={effectiveMatchId} matchId={effectiveMatchId} refereeName={match.referee} live={matchDisplayState(match).phase !== 'POST'} />
             ) : null}
             <div
               className={[

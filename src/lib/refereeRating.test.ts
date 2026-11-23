@@ -10,9 +10,15 @@ describe('refereeRatingWindow', () => {
     expect(refereeRatingWindow(finished, KICKOFF + REFEREE_RATING_WINDOW_MS)).toBe('open');
   });
 
-  it('başlamamış / canlı / devre arası → kapalı (not-finished)', () => {
-    for (const status of ['NOT STARTED', '2nd Half', 'HALF TIME BREAK', '']) {
+  it('başlamamış → kapalı (not-finished)', () => {
+    for (const status of ['NOT STARTED', '']) {
       expect(refereeRatingWindow({ ...finished, status }, KICKOFF)).toBe('not-finished');
+    }
+  });
+
+  it('canlı / devre arası → açık (maç başlayınca puanlanır)', () => {
+    for (const status of ['1st Half', '2nd Half', 'HALF TIME BREAK']) {
+      expect(refereeRatingWindow({ ...finished, status }, KICKOFF + 1800_000)).toBe('open');
     }
   });
 
