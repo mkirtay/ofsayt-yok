@@ -324,7 +324,11 @@ export function usePlacePinBid() {
   return useMutation({
     mutationFn: (input: { amount: number; message?: string; postId?: string }) =>
       api<{ state: GundemPinState; credits: number }>('/api/gundem/pin', { method: 'POST', body: JSON.stringify(input) }),
-    onSuccess: (data) => qc.setQueryData(gundemKeys.pin(viewer), data.state),
+    onSuccess: (data) => {
+      qc.setQueryData(gundemKeys.pin(viewer), data.state);
+      // Sabitlenen gönderi akıştan çıkar: akış listeleri yenilenir (1. sıra durumu yukarıda yazıldı).
+      void qc.invalidateQueries({ predicate: (q) => q.queryKey[0] === 'gundem' && q.queryKey[1] !== 'pin' });
+    },
     onError: () => qc.invalidateQueries({ queryKey: ['gundem', 'pin'] }),
   });
 }

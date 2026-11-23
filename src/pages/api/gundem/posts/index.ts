@@ -36,6 +36,7 @@ import {
 } from '@/lib/gundem/feedCache';
 import { MatchSnapshotError, ensureMatchSnapshot, normalizeFixtureId } from '@/lib/gundem/matchSnapshot';
 import { EntityCardError, ensureEntityCard, normalizeEntityInput } from '@/lib/gundem/entityCards';
+import { currentPinLeader } from '@/lib/pinBid';
 
 // Gönderi/yorum gövdesi ~280 karakter; Next varsayılanı (1 MB) yerine 16 KB — aşılırsa Next 413 döner.
 export const config = { api: { bodyParser: { sizeLimit: '16kb' } } };
@@ -84,6 +85,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       // Moderasyon gizlemesi + izleyicinin engellediği yazarlar (tek NOT EXISTS; bkz. lib/gundem/visibility.ts).
       const where: Prisma.PostWhereInput = { deletedAt: null, AND: [postVisibilityWhere(viewerId)] };
+      // Bu hafta 1. sıraya sabitlenen gönderi akışta tekrar görünmez (üstteki 1. sıra kartında duruyor).
+      const pinnedPostId = (await currentPinLeader().catch(() => null))?.postId;
+      if (pinnedPostId) where.id = { not: pinnedPostId };
       if (scope === 'all') {
         if (!matchPostsInAllFeed()) where.matchId = null;
       } else if (scope === 'match') {

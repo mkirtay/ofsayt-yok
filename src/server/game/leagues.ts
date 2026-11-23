@@ -24,7 +24,7 @@ const CODE_LENGTH = 8;
 
 export class LeagueError extends Error {
   constructor(
-    public code: 'NAME_INVALID' | 'NAME_BLOCKED' | 'OWN_LIMIT' | 'JOIN_LIMIT' | 'FULL' | 'NOT_FOUND' | 'NOT_MEMBER',
+    public code: 'NAME_INVALID' | 'NAME_BLOCKED' | 'OWN_LIMIT' | 'JOIN_LIMIT' | 'FULL' | 'NOT_FOUND' | 'NOT_MEMBER' | 'NICKNAME_REQUIRED',
     message: string,
   ) {
     super(message);
@@ -54,7 +54,14 @@ export async function cleanLeagueName(raw: unknown): Promise<string> {
 
 export type LeagueSummary = { id: string; name: string; code: string; owner: boolean; members: number };
 
+/** Lig kurmak / katılmak için takma ad şart (sıralamada "Oyuncu" görünmesin; tahmin kaydıyla aynı kural). */
+async function requireNickname(userId: string): Promise<void> {
+  const u = await prisma.user.findUnique({ where: { id: userId }, select: { username: true } });
+  if (!u?.username) throw new LeagueError('NICKNAME_REQUIRED', 'Önce bir takma ad seç: Tahmin yap sayfasından ya da profilinden.');
+}
+
 export async function createLeague(userId: string, rawName: unknown): Promise<LeagueSummary> {
+  await requireNickname(userId);
   const name = await cleanLeagueName(rawName);
   const owned = await prisma.gameLeague.count({ where: { ownerId: userId } });
   if (owned >= MAX_OWNED) throw new LeagueError('OWN_LIMIT', `En çok ${MAX_OWNED} lig kurabilirsin.`);
@@ -75,6 +82,7 @@ export async function createLeague(userId: string, rawName: unknown): Promise<Le
 }
 
 export async function joinLeague(userId: string, rawCode: unknown): Promise<LeagueSummary> {
+  await requireNickname(userId);
   const code = normalizeLeagueCode(rawCode);
   const league = code ? await prisma.gameLeague.findUnique({ where: { code }, select: { id: true, name: true, code: true, ownerId: true, _count: { select: { members: true } } } }) : null;
   if (!league) throw new LeagueError('NOT_FOUND', 'Lig bulunamadı. Davet kodunu kontrol et.');

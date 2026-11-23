@@ -110,6 +110,8 @@ export default function WeekPlay({
           ? { ...raw, weekKey: raw.dayKey, jokerGameMatchId: null, predictions: raw.predictions.map((p) => ({ ...p, points: p.basePoints })) }
           : raw;
       setMe(m);
+      // Takma adı yoksa form tahminlerden ÖNCE açılır (Frikik gibi; sıralama ve özel liglerde ad görünür).
+      if (!m.nickname) setNeedNick(true);
       const picks: Draft = {};
       for (const p of m.predictions) picks[p.gameMatchId] = { home: p.home, away: p.away };
       const local = readDraft(roundKey);
