@@ -1,37 +1,24 @@
 import Link from 'next/link';
-import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from '@/lib/i18n';
-import type { NewsItem } from '@/models/domain';
+import { LATEST_NEWS_LIMIT, useLatestNews } from '@/hooks/useLatestNews';
 import { formatRelativeTime } from '@/utils/relativeTime';
 import styles from './homeNewsCard.module.scss';
 
-const LIMIT = 3;
-
-async function fetchLatestNews(): Promise<NewsItem[]> {
-  const res = await fetch(`/api/news?limit=${LIMIT}`);
-  if (!res.ok) throw new Error('news');
-  const json = (await res.json()) as { items?: NewsItem[] };
-  return json.items ?? [];
-}
+const LIMIT = LATEST_NEWS_LIMIT;
 
 /**
- * Ana sayfa sağ paneli, Gündem'in üstü: son 3 AI haberi (en yeni üstte, en fazla 1 günlük). Haber yoksa ya da hata
- * olursa kart hiç çizilmez (Gündem yukarı kayar); yüklenirken sabit yükseklikli iskelet.
+ * Son 3 AI haberi (en yeni üstte, en fazla 1 günlük). ≥ 1440 px: ana sayfa sağ paneli, Gündem'in üstü. Daha dar ekranda
+ * ve maç seçiliyken maç listesinin içinde (`inList`: alt boşluk 12 px, diğer liste kartları gibi). Haber yoksa ya da
+ * hata olursa kart hiç çizilmez; yüklenirken sabit yükseklikli iskelet.
  */
-export default function HomeNewsCard() {
+export default function HomeNewsCard({ inList = false }: { inList?: boolean }) {
   const { t } = useTranslation('match');
-  const { data, isLoading } = useQuery({
-    queryKey: ['news-latest', LIMIT],
-    queryFn: fetchLatestNews,
-    staleTime: 2 * 60_000,
-    refetchInterval: 5 * 60_000,
-    retry: 1,
-  });
+  const { data, isLoading } = useLatestNews();
 
   if (!isLoading && !data?.length) return null;
 
   return (
-    <section className={styles.card} aria-labelledby="home-news-title">
+    <section className={inList ? `${styles.card} ${styles.inList}` : styles.card} aria-labelledby="home-news-title">
       <div className={styles.head}>
         <h2 id="home-news-title" className={styles.title}>{t('news.title')}</h2>
         <Link href="/news" className={styles.all}>{t('news.all')}</Link>

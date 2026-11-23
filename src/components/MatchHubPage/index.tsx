@@ -86,6 +86,7 @@ import WelcomeCard from '@/components/Onboarding/WelcomeCard';
 import { hintLabels } from '@/components/Onboarding/labels';
 import { ONBOARD_ANCHORS, WELCOME_BOOT_SCRIPT, isOnboardSeen, markOnboardSeen } from '@/components/Onboarding/storage';
 import { loadWithRetry } from '@/utils/loadWithRetry';
+import { newsSlotHeight, useLatestNews } from '@/hooks/useLatestNews';
 
 const noopSubscribe = () => () => {};
 
@@ -791,6 +792,17 @@ export default function MatchHubPage({
   const showDetailPanel = sidePanel === 'detail';
   // Idle Gündem paneli (≥ BP_GUNDEM_PANEL, seçim yok): koşul false iken GundemPanel hiç mount edilmez → akış çekilmez.
   const showGundemPanel = sidePanel === 'gundem';
+  // Haberler: Gündem paneli varken onun üstünde; yokken (< 1440 px, mobil, maç seçili) maç listesinde Mini Saha'dan sonraki
+  // ilk kart yuvasında (Tahmin / Frikik'ten önce). Haber yoksa yuva hiç eklenmez → boş yer ayrılmaz.
+  const latestNews = useLatestNews();
+  const newsCount = latestNews.data?.length ?? 0;
+  const laterSlots = useMemo<MatchListInlineSlot[]>(
+    () =>
+      !showGundemPanel && newsCount > 0
+        ? [{ node: <HomeNewsCard inList />, height: newsSlotHeight(newsCount) }, ...LATER_GAME_SLOTS]
+        : LATER_GAME_SLOTS,
+    [showGundemPanel, newsCount],
+  );
 
   const handleSelectMatch = useCallback(
     (match: Match) => {
@@ -884,7 +896,7 @@ export default function MatchHubPage({
       {node}
       <div className={styles.frikikBelow}>
         {frikikSlot.node}
-        {LATER_GAME_SLOTS.map((sl, i) => (
+        {laterSlots.map((sl, i) => (
           <Fragment key={i}>{sl.node}</Fragment>
         ))}
       </div>
@@ -900,7 +912,7 @@ export default function MatchHubPage({
       <MatchList
         dateGroups={uefaDateGroups}
         afterFirstGroup={frikikSlot}
-        moreSlots={LATER_GAME_SLOTS}
+        moreSlots={laterSlots}
         moreSlotsEveryGroups={GAME_SLOT_EVERY_GROUPS}
         favoriteTeamIds={favoriteTeamSet}
         onToggleFavorite={toggleFavoriteTeam}
@@ -961,7 +973,7 @@ export default function MatchHubPage({
       <MatchList
         groupedMatches={grouped}
         afterFirstGroup={frikikSlot}
-        moreSlots={LATER_GAME_SLOTS}
+        moreSlots={laterSlots}
         moreSlotsEveryGroups={GAME_SLOT_EVERY_GROUPS}
         slotMinMatches={HOME_SLOT_MIN_MATCHES}
         trailingSection={nightSection}

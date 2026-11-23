@@ -141,3 +141,8 @@
     width: 55%;
   }
 }
+
+// Maç listesi içindeki yuva (< 1440 px): diğer liste kartları gibi kendi alt boşluğu.
+.inList {
+  margin-bottom: $spacing-3;
+}
