@@ -63,10 +63,15 @@ function preload() {
   void loadFacts().catch(() => {});
 }
 
+/** launcher.module.scss'teki mobil düzen eşiğiyle aynı ($bp-desktop = 1024). */
+const MOBILE_QUERY = '(max-width: 1023.98px)';
+
 /**
  * Sağ alttaki düdük düğmesi, sarı "yeni" noktası ve "Biliyor muydun?" baloncuğu; paneli açar. Düğme dikeyde
- * sürüklenebilir (ok tuşlarıyla da); baloncuk onunla birlikte hareket eder (bkz. useLauncherDrag).
+ * sürüklenebilir (ok tuşlarıyla da); baloncuk onunla birlikte hareket eder (bkz. useLauncherDrag). Mobilde düdük ve
+ * baloncuk gizli (yalnız ✦ asistan balonu); panel Header mobil menüsünden olayla açılır.
  */
+
 export default function Launcher({ assistantHidden = false }: { assistantHidden?: boolean }) {
   const { t } = useTranslation('kuralKosesi');
   const { t: ta } = useTranslation('assistant');
@@ -93,6 +98,8 @@ export default function Launcher({ assistantHidden = false }: { assistantHidden?
   // Baloncuğu kurallara göre zamanla (depolama yoksa hiç). Panel açıkken ya da baloncuk görünürken bekler.
   useEffect(() => {
     if (!storage || open || peekIndex !== null) return;
+    // Mobilde baloncuk yok (düdük gizli, bkz. launcher.module.scss) → zamanlanmaz, "görüldü" de sayılmaz.
+    if (window.matchMedia(MOBILE_QUERY).matches) return;
     const at = planPeek(storage, Date.now(), visitStart);
     if (at === null) return;
     let cancelled = false;
@@ -212,12 +219,13 @@ export default function Launcher({ assistantHidden = false }: { assistantHidden?
   useEffect(() => {
     if (!drag.ready || peekIndex !== null || open || assistantOpen) return;
     if (isOnboardSeen('fabs') || isWelcomeShowing() || isNudgeOpen()) return;
-    if (!window.matchMedia('(max-width: 1023.98px)').matches) return;
+    if (!window.matchMedia(MOBILE_QUERY).matches) return;
     const id = window.setTimeout(() => {
       if (isOnboardSeen('fabs') || isWelcomeShowing() || isNudgeOpen()) return;
       const items = [
         assistantRef.current ? { anchor: assistantRef.current, text: tc('onboarding.fabAssistant') } : null,
-        launcherRef.current ? { anchor: launcherRef.current, text: tc('onboarding.fabRules') } : null,
+        // Düdük mobilde gizli (display:none → offsetParent null): etiketi yalnız görünürse.
+        launcherRef.current?.offsetParent ? { anchor: launcherRef.current, text: tc('onboarding.fabRules') } : null,
       ].filter((x): x is { anchor: HTMLButtonElement; text: string } => x !== null);
       if (items.length === 0) return;
       import('@/components/Onboarding/hintLayer').then(

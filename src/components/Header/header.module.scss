@@ -613,6 +613,16 @@
     background: rgba(255, 255, 255, 0.08);
     color: $color-primary;
   }
+
+  // <button> sürümü (Kural Köşesi paneli): bağlantıyla aynı görünüm.
+  @at-root button#{&} {
+    width: 100%;
+    background: none;
+    border: none;
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
 }
 
 .mobileNavLinkPremium {

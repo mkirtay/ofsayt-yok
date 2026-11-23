@@ -17,6 +17,7 @@ import ThemeToggle from '../ThemeToggle';
 import LangFlag from '../LangFlag';
 import MyAnalysesDropdown from './MyAnalysesDropdown';
 import AiMenu from './AiMenu';
+import { openKuralKosesi } from '@/components/KuralKosesi/openEvent';
 import AccountMenu from './AccountMenu';
 import NotificationBell from './NotificationBell';
 import { lockBodyScroll } from '@/utils/scrollLock';
@@ -229,6 +230,17 @@ export default function Header() {
               <Link href="/hakemler" className={styles.mobileNavLink}>
                 {t('referees')}
               </Link>
+              {/* Kural Köşesi'nin yüzen düdüğü mobilde gizli → giriş burada (panel olayla açılır, bkz. KuralKosesi/Mount). */}
+              <button
+                type="button"
+                className={styles.mobileNavLink}
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  openKuralKosesi();
+                }}
+              >
+                {t('rulesCorner')}
+              </button>
               <Link href="/frikik?src=menu" className={styles.mobileNavLink} onClick={() => trackFrikik('frikik_card_click', { entry: 'menu' })}>
                 {t('frikik')}
               </Link>

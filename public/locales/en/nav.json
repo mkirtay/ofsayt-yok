@@ -47,5 +47,6 @@
     "playFree": "Play free"
   },
   "gameLong": "{{game}}: predict the scores",
-  "referees": "Referees"
+  "referees": "Referees",
+  "rulesCorner": "Rules Corner"
 }

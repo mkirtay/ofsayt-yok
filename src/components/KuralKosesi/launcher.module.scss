@@ -255,3 +255,18 @@
     transform: translateX(0);
   }
 }
+
+// Mobil düzen (< masaüstü, 2026-11-23 kullanıcı kararı): düdük ve "Biliyor muydun?" baloncuğu ekranda çok yer kaplıyordu
+// → gizli; Kural Köşesi'ne mobil menüden (Header) girilir, panel olayla açılır. AI Asistan ✦ balonu düdüğün yerine iner
+// (56 px yuvada ortalı → 2 px içeride); sürükleme konumu (inline transform) mobilde yok sayılır.
+@media (max-width: #{$bp-desktop - 0.02px}) {
+  .launcher,
+  .peek {
+    display: none;
+  }
+
+  .assistant {
+    bottom: calc(var(--bottom-nav-height) + 16px + var(--safe-bottom) + 2px);
+    transform: none !important;
+  }
+}
