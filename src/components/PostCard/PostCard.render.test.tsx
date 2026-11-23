@@ -106,9 +106,8 @@ describe('<PostCard />', () => {
     expect(bot).toContain('Resmi hesap');
     expect(allowlisted).toContain('Resmi hesap'); // USER post'u ama allowlist'teki hesap
     expect(user).not.toContain('Resmi hesap');
-    // Otomatik (bot) paylaşım ayrıca etiketlenir; elle yazılan resmi paylaşım etiketlenmez.
-    expect(bot).toContain('Otomatik');
-    expect(allowlisted).not.toContain('Otomatik');
+    // "Otomatik" rozeti kaldırıldı (2026-11-23): bot paylaşımı da yalnız resmi hesap rozetiyle görünür.
+    expect(bot).not.toContain('Otomatik');
   });
 
   it('beğenilmiş post aria-pressed=true', () => {
