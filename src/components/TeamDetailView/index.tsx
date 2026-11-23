@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any -- Kadro / puan API gevşek şema */
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { primaryLeague, teamPageDescription as teamPageDescriptionFor, teamPageTitle as teamPageTitleFor } from '@/utils/teamSeo';
 import Head from 'next/head';
 import dynamic from 'next/dynamic';
@@ -181,17 +181,16 @@ export type TeamDetailViewProps = {
 
 /**
  * "Bugün" (TSİ): ilk çizimde sunucu verisinin üretildiği gün — ISR HTML'i ile hydration aynı metni üretir (Bugün/Yarın,
- * geri sayım). Açıldıktan sonra gerçek güne geçer.
+ * geri sayım). Hydration sonrası gerçek güne geçer (useSyncExternalStore sunucu / istemci anlık görüntüsü).
  */
+const noopSubscribe = () => () => {};
+
 function useHydrationSafeToday(at: number | null): string {
-  const [today, setToday] = useState(() => todayIsoIstanbul(at != null ? new Date(at) : undefined));
-  useEffect(() => {
-    const now = todayIsoIstanbul();
-    if (now !== today) setToday(now);
-    // yalnız açılışta
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-  return today;
+  return useSyncExternalStore(
+    noopSubscribe,
+    () => todayIsoIstanbul(),
+    () => todayIsoIstanbul(at != null ? new Date(at) : undefined),
+  );
 }
 
 function LeagueTeamDetailView({ teamId, variant = 'page', initialHeader = null, initialOverview = null }: TeamDetailViewProps) {
