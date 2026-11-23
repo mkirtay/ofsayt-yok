@@ -50,18 +50,20 @@ export default function RefereeProfileSide({ data, compareHref }: { data: Refere
   const nf = new Intl.NumberFormat(locale === 'en' ? 'en-GB' : 'tr-TR', { maximumFractionDigits: 2 });
   const fmt = (n: number | null | undefined) => (n == null ? '—' : nf.format(n));
   const uefa = uefaCareer(data.seasons);
+  const upcomingRest = data.upcoming?.slice(1) ?? [];
   const ctx = data.summary.context;
   const ctxLabel = ctx ? `${personLeagueLabel(ctx.leagueId, tl, '')} ${ctx.seasonName}`.trim() : '';
 
   return (
     <aside className={styles.side} aria-label={t('person.refereeRole')} data-testid="referee-profile-side">
-      {data.upcoming?.length ? (
+      {/* İlki sayfa üstündeki kartta (RefereeNextMatch); burada yalnız sonrakiler. */}
+      {upcomingRest.length ? (
         <section className={styles.card} aria-labelledby="side-upcoming" data-testid="referee-upcoming">
           <h2 id="side-upcoming" className={styles.sectionTitle}>
             {t('person.upcomingTitle')}
           </h2>
           <ul className={styles.sideList}>
-            {data.upcoming.map((m) => (
+            {upcomingRest.map((m) => (
               <li key={m.id} className={styles.sideListItem}>
                 <Link href={buildMatchHref({ id: m.id, home_name: m.home.name, away_name: m.away.name })} className={styles.sideMatch} prefetch={false}>
                   <TeamLogo src={m.home.logo} width={16} />

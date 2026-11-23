@@ -848,9 +848,11 @@
 
 .nextTeams {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  // İçeriğe göre sütunlar, sola yaslı: geniş sütunda adlar ile saat arasında dev boşluk kalmaz.
+  grid-template-columns: minmax(0, max-content) auto minmax(0, max-content);
+  justify-content: start;
   align-items: center;
-  gap: $spacing-3;
+  gap: $spacing-4;
   color: $color-text;
   text-decoration: none;
 
@@ -866,11 +868,6 @@
   min-width: 0;
   font-size: 15px;
   font-weight: 700;
-}
-
-.nextTeamAway {
-  justify-content: flex-end;
-  text-align: right;
 }
 
 .nextTeamName {
@@ -956,8 +953,9 @@
     gap: $spacing-2;
   }
 
+  // DOM sırası ad → logo; ters çevirip logo önde, sola yaslı (row-reverse'te sol = flex-end).
   .nextTeamAway {
-    justify-content: flex-start;
+    justify-content: flex-end;
     flex-direction: row-reverse;
     text-align: left;
   }
