@@ -188,5 +188,17 @@
     "ready": "Analysis ready",
     "ctaLabel": "Go to the AI analysis of {{home}} – {{away}}",
     "allMatches": "All matches"
+  },
+  "weeklyGift": {
+    "title": "Your weekly gift is ready",
+    "message": "You can add {{amount}} credits to your account this week. The gift renews every Monday.",
+    "claim": "Claim {{amount}} credits",
+    "later": "Later",
+    "claiming": "Adding…",
+    "doneTitle": "{{amount}} credits added",
+    "doneMessage": "New balance: {{credits}} credits. See you next week.",
+    "ok": "OK",
+    "error": "Couldn't claim the gift. Please try again shortly.",
+    "close": "Close"
   }
 }

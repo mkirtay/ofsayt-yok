@@ -32,6 +32,7 @@ const KNOWN_TYPES = [
   'ONBOARDING_REWARD',
   'GAME_REWARD',
   'FRIKIK_REWARD',
+  'WEEKLY_GIFT',
 ];
 
 function Row({ item, locale }: { item: CreditHistoryItem; locale: string }) {

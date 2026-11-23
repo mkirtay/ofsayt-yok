@@ -1,0 +1,175 @@
+@use '../../styles/variables' as *;
+
+// ConfirmDialog ile aynı dil: masaüstünde ortada modal, mobilde alttan sheet. z-index ConfirmDialog (1100) ile aynı katman.
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-4;
+  background: var(--overlay-scrim);
+  animation: fadeIn 0.16s ease-out;
+
+  @include below-desktop {
+    align-items: flex-end;
+    padding: 0;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+.dialog {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: min(380px, 100%);
+  max-height: calc(100dvh - 48px);
+  overflow: auto;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: $radius-lg;
+  box-shadow: $shadow-surface;
+  animation: rise 0.18s ease-out;
+
+  @include below-desktop {
+    width: 100%;
+    border-radius: $radius-lg $radius-lg 0 0;
+    padding-bottom: var(--safe-bottom, 0px);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+.close {
+  position: absolute;
+  top: $spacing-2;
+  right: $spacing-2;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: $radius-full;
+  background: transparent;
+  color: $color-text-on-dark-secondary;
+  font-size: calc(var(--fs-title) + 8px);
+  line-height: 1;
+  cursor: pointer;
+
+  &:hover {
+    color: $color-text-on-dark;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-action);
+    outline-offset: 2px;
+  }
+}
+
+.hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $spacing-2;
+  padding: $spacing-6 $spacing-4 $spacing-4;
+  background:
+    radial-gradient(120% 90% at 50% 0%, $color-surface-dark-alt 0%, transparent 70%),
+    $color-surface-dark;
+}
+
+.gift {
+  font-size: calc(var(--fs-score) + 12px);
+  line-height: 1;
+  color: var(--color-action);
+}
+
+.amount {
+  padding: $spacing-1 $spacing-3;
+  border-radius: $radius-full;
+  border: 1px solid $color-border-dark;
+  color: $color-text-on-dark;
+  font-size: var(--fs-section);
+  font-weight: 800;
+}
+
+.body {
+  padding: $spacing-4 $spacing-4 0;
+  text-align: center;
+}
+
+.title {
+  margin: 0 0 $spacing-2;
+  font-size: var(--fs-title);
+  font-weight: 700;
+  color: $color-text;
+}
+
+.message {
+  margin: 0;
+  font-size: var(--fs-body);
+  line-height: 1.5;
+  color: $color-text-secondary;
+}
+
+.error {
+  margin: $spacing-3 0 0;
+  font-size: var(--fs-meta);
+  color: var(--color-danger, #{$color-danger});
+}
+
+.foot {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2;
+  padding: $spacing-4;
+}
+
+.primary,
+.secondary {
+  min-height: 44px;
+  border-radius: $radius-full;
+  font: inherit;
+  font-size: var(--fs-body);
+  font-weight: 700;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-action);
+    outline-offset: 2px;
+  }
+}
+
+.primary {
+  border: none;
+  background: var(--color-action-strong);
+  color: var(--color-on-action);
+}
+
+.secondary {
+  border: 1px solid $color-border;
+  background: transparent;
+  color: $color-text-secondary;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}

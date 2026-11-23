@@ -90,7 +90,8 @@
       "COUPON": "Kupon",
       "ONBOARDING_REWARD": "Görev ödülü",
       "GAME_REWARD": "{{game}} ödülü",
-      "FRIKIK_REWARD": "Frikik ödülü"
+      "FRIKIK_REWARD": "Frikik ödülü",
+      "WEEKLY_GIFT": "Haftalık hediye"
     },
     "coupon": {
       "title": "Kupon kodun var mı?",

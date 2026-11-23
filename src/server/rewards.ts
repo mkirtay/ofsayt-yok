@@ -14,6 +14,7 @@ import { weekTopSql, type BoardRow } from '@/lib/game/sql';
 import { weekKeyOf } from '@/lib/game/week';
 import { captureError } from '@/lib/logger';
 import { prisma } from '@/lib/prisma';
+import { WEEKLY_GIFT_AMOUNT, WEEKLY_GIFT_TYPE, weeklyGiftKey } from '@/lib/weeklyGift';
 import {
   FRIKIK_MONTH_ACTIVE_DAYS,
   ONBOARDING_REWARD,
@@ -38,7 +39,7 @@ export type GrantResult = 'granted' | 'duplicate' | 'unverified';
  * Tek ödül: doğrulanmış e-posta şartı + atomik artırma + tekrar anahtarlı defter satırı (aynı işlemde). Eşzamanlı ikinci
  * çağrı tekil anahtarda düşer ve artırma dahil geri alınır.
  */
-export async function grantReward(r: PlannedReward, type: RewardType): Promise<{ result: GrantResult; balance?: number }> {
+export async function grantReward(r: PlannedReward, type: RewardType | typeof WEEKLY_GIFT_TYPE): Promise<{ result: GrantResult; balance?: number }> {
   try {
     return await prisma.$transaction(async (tx) => {
       const me = await tx.user.findUnique({ where: { id: r.userId }, select: { emailVerified: true } });
@@ -196,4 +197,24 @@ export async function grantPeriodicRewards(now: Date = new Date()): Promise<Peri
     }
   }
   return summary;
+}
+
+// ── Haftalık hediye (2 kredi / TR haftası) ───────────────────────────────────────────────────────────────────────────
+
+export type WeeklyGiftStatus = { available: boolean; claimed: boolean; verified: boolean; amount: number; week: string };
+
+export async function loadWeeklyGift(userId: string, now: number = Date.now()): Promise<WeeklyGiftStatus> {
+  const key = weeklyGiftKey(now);
+  const [me, prior] = await Promise.all([
+    prisma.user.findUnique({ where: { id: userId }, select: { emailVerified: true } }),
+    prisma.creditTransaction.findUnique({ where: { userId_idempotencyKey: { userId, idempotencyKey: key } }, select: { id: true } }),
+  ]);
+  const verified = Boolean(me?.emailVerified);
+  const claimed = Boolean(prior);
+  return { available: verified && !claimed, claimed, verified, amount: WEEKLY_GIFT_AMOUNT, week: key.slice('weekly-gift:'.length) };
+}
+
+export async function claimWeeklyGift(userId: string, now: number = Date.now()): Promise<{ result: GrantResult; balance?: number }> {
+  const key = weeklyGiftKey(now);
+  return grantReward({ userId, amount: WEEKLY_GIFT_AMOUNT, key, note: `Haftalık hediye ${key.slice('weekly-gift:'.length)}` }, WEEKLY_GIFT_TYPE);
 }

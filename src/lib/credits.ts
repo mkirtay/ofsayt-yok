@@ -38,7 +38,9 @@ export type CreditTransactionType =
   /** tahmin oyunu haftalık katılım / ilk 3 ödülü (server/rewards.ts; anahtar `reward:game-week:{hafta}:full|top`). */
   | 'GAME_REWARD'
   /** Frikik aylık katılım / ilk 3 ödülü (server/rewards.ts; anahtar `reward:frikik-month:{ay}:active|top`). */
-  | 'FRIKIK_REWARD';
+  | 'FRIKIK_REWARD'
+  /** Haftalık hediye: kayıtlı (e-postası doğrulanmış) kullanıcıya TR haftası başına 2 kredi (lib/weeklyGift.ts; anahtar `weekly-gift:{hafta}`). */
+  | 'WEEKLY_GIFT';
 // Karar 8: kredi yatırıp kazanma yok — hiçbir oyuna / tahmine kredi harcanmaz (bkz. creditPolicy.test.ts). Tek istisna
 // (kullanıcı kararı 2026-11-11): tahmin oyunu haftalık ilk 3 ödülü (`GAME_REWARD`; giriş ücretsiz, ödül nakde dönmez).
 

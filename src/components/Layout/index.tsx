@@ -8,6 +8,7 @@ import BottomNav from '../BottomNav';
 import KuralKosesiMount from '../KuralKosesi/Mount';
 import SignupNudge from '../SignupNudge';
 import RewardNudge from '../RewardNudge';
+import WeeklyGift from '../WeeklyGift';
 import { usesStaticPageLayout } from './staticPageLayout';
 import styles from './layout.module.scss';
 
@@ -31,6 +32,7 @@ export default function Layout({ children }: LayoutProps) {
       <KuralKosesiMount />
       <SignupNudge />
       <RewardNudge />
+      <WeeklyGift />
     </>
   );
 }

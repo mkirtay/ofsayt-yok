@@ -188,5 +188,17 @@
     "ready": "Analiz hazır",
     "ctaLabel": "{{home}} – {{away}} maçının AI analizine git",
     "allMatches": "Tüm maçlar"
+  },
+  "weeklyGift": {
+    "title": "Haftalık hediyen hazır",
+    "message": "Bu hafta hesabına {{amount}} kredi ekleyebilirsin. Hediye her pazartesi yenilenir.",
+    "claim": "{{amount}} krediyi al",
+    "later": "Sonra",
+    "claiming": "Ekleniyor…",
+    "doneTitle": "{{amount}} kredi eklendi",
+    "doneMessage": "Yeni bakiyen: {{credits}} kredi. Haftaya yine bekleriz.",
+    "ok": "Tamam",
+    "error": "Hediye alınamadı. Biraz sonra tekrar dene.",
+    "close": "Kapat"
   }
 }

@@ -91,7 +91,8 @@
       "COUPON": "Coupon",
       "ONBOARDING_REWARD": "Task reward",
       "GAME_REWARD": "Prediction League reward",
-      "FRIKIK_REWARD": "Free Kick reward"
+      "FRIKIK_REWARD": "Free Kick reward",
+      "WEEKLY_GIFT": "Weekly gift"
     },
     "coupon": {
       "title": "Have a coupon code?",
