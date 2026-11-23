@@ -11,7 +11,7 @@ import MatchCompetitionStandings from '@/components/MatchCompetitionStandings';
 import MatchCompetitionTopScorers from '@/components/MatchCompetitionTopScorers';
 import { PanelSkeleton } from '@/components/Skeleton';
 import { useTopScorersWithAppearances } from '@/hooks/useTopScorerAppearances';
-import { useTeamOverview } from '@/hooks/useTeamOverview';
+import { useTeamOverview, type InitialTeamOverview } from '@/hooks/useTeamOverview';
 import { useI18n, useTranslation } from '@/lib/i18n';
 import '@/lib/i18nNamespaces/team';
 import { leagueNameById } from '@/utils/leagueName';
@@ -175,10 +175,27 @@ export type TeamDetailViewProps = {
   variant?: 'page' | 'panel';
   /** Sunucu kabuğundan ad + logo (takım sayfası ISR): başlık veri gelmeden çizilir (LCP). */
   initialHeader?: { name: string; logo: string | null } | null;
+  /** Sunucu kabuğundan genel bakış (takım sayfası ISR): son maçlar / fikstür sunucu HTML'inde. */
+  initialOverview?: InitialTeamOverview | null;
 };
 
-function LeagueTeamDetailView({ teamId, variant = 'page', initialHeader = null }: TeamDetailViewProps) {
-  const overviewQuery = useTeamOverview(teamId, Boolean(teamId));
+/**
+ * "Bugün" (TSİ): ilk çizimde sunucu verisinin üretildiği gün — ISR HTML'i ile hydration aynı metni üretir (Bugün/Yarın,
+ * geri sayım). Açıldıktan sonra gerçek güne geçer.
+ */
+function useHydrationSafeToday(at: number | null): string {
+  const [today, setToday] = useState(() => todayIsoIstanbul(at != null ? new Date(at) : undefined));
+  useEffect(() => {
+    const now = todayIsoIstanbul();
+    if (now !== today) setToday(now);
+    // yalnız açılışta
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  return today;
+}
+
+function LeagueTeamDetailView({ teamId, variant = 'page', initialHeader = null, initialOverview = null }: TeamDetailViewProps) {
+  const overviewQuery = useTeamOverview(teamId, Boolean(teamId), initialOverview);
   // Veri yoksa ve hata da yoksa yükleniyor (statik HTML'de `teamId` henüz boşken de iskelet; "maç yok" görünmez).
   const overviewLoading = !overviewQuery.data && !overviewQuery.isError;
   const recentMatches = useMemo(() => overviewQuery.data?.recent ?? [], [overviewQuery.data]);
@@ -311,7 +328,7 @@ function LeagueTeamDetailView({ teamId, variant = 'page', initialHeader = null }
     return { name: side?.name || 'Takım Detayı', logo: side?.logo };
   }, [overviewQuery.data, recentMatches, upcomingFixtures, teamId, initialHeader]);
 
-  const todayIso = todayIsoIstanbul();
+  const todayIso = useHydrationSafeToday(initialOverview?.at ?? null);
   const fixtureGroups = useMemo(() => buildTeamFixtureGroups(upcomingFixtures, todayIso), [upcomingFixtures, todayIso]);
   const dayLabels = useMemo(
     () => ({ today: t('match:hub.fixtureToday'), tomorrow: t('match:hub.fixtureTomorrow') }),

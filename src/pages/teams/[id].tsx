@@ -17,6 +17,9 @@ import { buildTeamSummary, teamJsonLd, teamPageDescription, teamPageTitle } from
 import styles from './teamPage.module.scss';
 import { clampDescription } from '@/utils/seoText';
 import TeamPassCard from '@/components/TeamPassCard';
+import type { InitialTeamOverview } from '@/hooks/useTeamOverview';
+import type { TeamOverview } from '@/services/sportmonks/teamOverview';
+import { stripUndefined } from '@/utils/homeInitialData';
 
 const TEAM_PASS_ON = process.env.NEXT_PUBLIC_TEAM_PASS_ENABLED === 'true';
 
@@ -26,19 +29,22 @@ type TeamPageProps = {
   ogImagePath: string;
   /** SEO / GEO özeti (durağan bilgiler, kabukla aynı yanıttan); yoksa null. */
   facts?: TeamPageFacts | null;
+  /** Genel bakış (son maçlar, fikstür) — istemci sorgusunun başlangıç verisi; sunucu HTML'inde maç listesi + bağlantılar. */
+  initialOverview?: InitialTeamOverview | null;
 };
 
 const SITE_URL = siteBaseUrl();
 const DAY_SECONDS = 86_400;
 /**
- * Kabukta yalnız takım adı var (değişmez) → 7 gün. Görsel adresindeki `v` (gün) bu sürede eskir; görsel route'u eski
- * `v`'yi çizmeden güncel adrese 307 ile yönlendirir (bkz. api/og/team/[id].ts), görsel yine güncel.
+ * Kabukta son maçlar / fikstür de var (sunucu HTML'i, SEO) → 3 saat. Genel bakış isteği istemcininkiyle aynı önbellek
+ * anahtarında (çoğunlukla HIT); açılışta istemci zaten tazeler, bu süre yalnız tarayıcıların gördüğü HTML'in tazeliği.
+ * Görsel adresindeki `v` (gün) eskirse görsel route'u güncel adrese 307 ile yönlendirir (bkz. api/og/team/[id].ts).
  */
-const SHELL_REVALIDATE_SECONDS = 7 * DAY_SECONDS;
+const SHELL_REVALIDATE_SECONDS = 3 * 60 * 60;
 
 /**
- * ISR kabuğu: yalnız paylaşım etiketleri (og / twitter) için takım adı sunucuda; sayfanın tüm verisi eskisi gibi
- * istemcide (TeamDetailView). Önceden sayfa üretilmez (`paths: []`), ilk ziyarette üretilip 7 gün önbellekte kalır (takım yoksa 404, 1 gün).
+ * ISR kabuğu: takım adı, SEO bilgileri ve genel bakış (son maçlar / fikstür) sunucuda; diğer kartlar istemcide
+ * (TeamDetailView). Önceden sayfa üretilmez (`paths: []`), ilk ziyarette üretilip 3 saat önbellekte kalır (takım yoksa 404, 1 gün).
  */
 export const getStaticPaths: GetStaticPaths = async () => ({ paths: [], fallback: 'blocking' });
 
@@ -71,6 +77,7 @@ export const getStaticProps: GetStaticProps<TeamPageProps> = async ({ params }) 
       teamName: shell.kind === 'found' ? shell.name : null,
       ogImagePath: teamOgImagePath(id),
       facts: shell.kind === 'found' ? shell.facts : null,
+      initialOverview: shell.kind === 'found' ? { data: stripUndefined(shell.overview) as TeamOverview, at: Date.now() } : null,
     },
     // Geçici hata: etiketsiz kabuk kısa süre kalsın.
     revalidate: shell.kind === 'found' ? SHELL_REVALIDATE_SECONDS : 60,
@@ -81,7 +88,7 @@ export const getStaticProps: GetStaticProps<TeamPageProps> = async ({ params }) 
  * /teams/[id] — "Detaylı Görünüm". İçerik `TeamDetailView` ile ana sayfa split-view `TeamDetailPanel`
  * arasında paylaşılır (bu sayfa `variant="page"`).
  */
-export default function TeamDetail({ teamName, ogImagePath, facts }: TeamPageProps) {
+export default function TeamDetail({ teamName, ogImagePath, facts, initialOverview = null }: TeamPageProps) {
   const router = useRouter();
   const idParam = router.query.id;
   // Statik prerender/hydration sırasında `asPath` literal "/teams/[id]" olabiliyor → "[id]" takım id'si sanılıp
@@ -137,6 +144,7 @@ export default function TeamDetail({ teamName, ogImagePath, facts }: TeamPagePro
         teamId={teamId}
         variant="page"
         initialHeader={teamName ? { name: teamName, logo: facts?.logo ?? null } : null}
+        initialOverview={initialOverview}
       />
       {/* Büyüme raporu 2.8 — "Takımım" sezon paketi (krediyle; yalnız Süper Lig, bayrak açıkken). */}
       {TEAM_PASS_ON && teamName && facts?.league?.slug === 'super-lig' ? <TeamPassCard teamId={Number(teamId)} teamName={teamName} /> : null}

@@ -16,12 +16,15 @@ describe('/teams/[id] getStaticPaths / getStaticProps', () => {
     expect(await getStaticPaths({} as never)).toEqual({ paths: [], fallback: 'blocking' });
   });
 
-  it('bulundu: ad + görsel adresi, 7 gün; tek istek', async () => {
+  it('bulundu: ad + görsel adresi + genel bakış (son maçlar sunucu HTML’inde), 3 saat; tek istek', async () => {
     h.overview.mockResolvedValue({ team: { id: 34, name: 'Galatasaray' }, recent: [], fixtures: [], campaigns: [] });
     const r = (await props('34-galatasaray')) as { props: { teamName: string; ogImagePath: string }; revalidate: number };
     expect(r.props.teamName).toBe('Galatasaray');
     expect(r.props.ogImagePath).toMatch(/^\/api\/og\/team\/34\?v=\d{8}$/);
-    expect(r.revalidate).toBe(7 * 86_400);
+    expect(r.revalidate).toBe(3 * 3600);
+    const init = (r.props as unknown as { initialOverview: { data: { team: { name: string } }; at: number } }).initialOverview;
+    expect(init.data.team.name).toBe('Galatasaray');
+    expect(typeof init.at).toBe('number');
     expect(h.overview).toHaveBeenCalledTimes(1);
     expect(h.overview).toHaveBeenCalledWith('34');
   });
@@ -29,7 +32,7 @@ describe('/teams/[id] getStaticPaths / getStaticProps', () => {
   it('eski /teams/{id} ve yanlış ad → kanonik /teams/{id}-{ad} adresine 301 (SEO)', async () => {
     h.overview.mockResolvedValue({ team: { id: 34, name: 'Galatasaray' }, recent: [], fixtures: [], campaigns: [] });
     for (const p of ['34', '34-eski-ad']) {
-      expect(await props(p)).toEqual({ redirect: { destination: '/teams/34-galatasaray', permanent: true }, revalidate: 7 * 86_400 });
+      expect(await props(p)).toEqual({ redirect: { destination: '/teams/34-galatasaray', permanent: true }, revalidate: 3 * 3600 });
     }
   });
 

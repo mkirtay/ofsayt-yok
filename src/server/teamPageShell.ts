@@ -30,7 +30,11 @@ export type TeamPageFacts = {
   standing?: { rank: number; points: number; played: number; won: number; drawn: number; lost: number; goalDiff: number; asOf: string } | null;
 };
 
-export type TeamPageShell = { kind: 'found'; name: string; facts: TeamPageFacts } | { kind: 'missing' } | { kind: 'error' };
+/**
+ * `overview`: aynı genel bakış yanıtı — sayfa bunu istemci sorgusuna başlangıç verisi olarak verir, böylece son maçlar /
+ * fikstür ve maç bağlantıları sunucu HTML'inde olur (SEO: içerik ve bağlantı keşfi JS'e bağlı kalmaz).
+ */
+export type TeamPageShell = { kind: 'found'; name: string; facts: TeamPageFacts; overview: TeamOverview } | { kind: 'missing' } | { kind: 'error' };
 
 export function teamFactsFromOverview(o: TeamOverview): TeamPageFacts {
   const current = o.campaigns[0];
@@ -84,7 +88,7 @@ export async function loadTeamPageShell(teamId: string): Promise<TeamPageShell> 
     if (!overview.team?.name) return { kind: 'missing' };
     const facts = teamFactsFromOverview(overview);
     if (facts.league) facts.standing = await loadTeamStanding(overview.team.id, facts.league.id);
-    return { kind: 'found', name: overview.team.name, facts };
+    return { kind: 'found', name: overview.team.name, facts, overview };
   } catch (err) {
     if (err instanceof SportmonksHttpError && MISSING_STATUSES.has(err.status)) return { kind: 'missing' };
     return { kind: 'error' };
