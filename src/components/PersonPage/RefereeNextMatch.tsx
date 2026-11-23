@@ -44,7 +44,7 @@ export default function RefereeNextMatch({ data, ctxLabel }: { data: RefereePage
   const href = buildMatchHref({ id: next.id, home_name: next.home.name, away_name: next.away.name });
   const scope = nextMatchScope(data, t('person.nextUefaScope'), ctxLabel);
   const comp = personLeagueLabel(next.competition?.id, tl, next.competition?.name || '');
-  const onClick = () => trackGrowth('referee_match_click', { slot: 'next_card' });
+  const onClick = () => trackGrowth('referee_match_click', { slot: 'next_card', referee_id: data.id, match_id: next.id });
 
   return (
     <section className={`${styles.card} ${styles.nextMatch}`} aria-labelledby="ref-next" data-testid="referee-next">

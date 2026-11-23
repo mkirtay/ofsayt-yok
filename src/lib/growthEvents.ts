@@ -4,6 +4,7 @@
  * KPI eşlemesi: docs/BUYUME_KPI.md.
  */
 import { track } from '@vercel/analytics';
+import { readConsent } from '@/lib/analyticsConsent';
 
 type Events = {
   sign_up: { method: 'password' };
@@ -15,7 +16,7 @@ type Events = {
   team_pass_purchase: { cost: number };
   push_enable: Record<string, never>;
   /** Hakem sayfasından maç sayfasına geçiş (reklam → hakem → maç yolculuğu). */
-  referee_match_click: { slot: 'next_card' };
+  referee_match_click: { slot: 'next_card'; referee_id: number; match_id: number };
 };
 
 export function trackGrowth<K extends keyof Events>(event: K, params: Events[K]): void {
@@ -24,6 +25,8 @@ export function trackGrowth<K extends keyof Events>(event: K, params: Events[K])
   } catch {
     // analitik yok / engellenmiş
   }
+  // GA yalnız güncel onayla: onay bu oturumda geri alınsa da `window.gtag` sayfada kalır, o yüzden her olayda okunur.
+  if (readConsent() !== 'granted') return;
   try {
     (window as unknown as { gtag?: (...a: unknown[]) => void }).gtag?.('event', event, params);
   } catch {

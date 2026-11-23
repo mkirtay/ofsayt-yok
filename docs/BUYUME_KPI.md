@@ -27,6 +27,7 @@ Vercel Web Analytics (çerezsiz, her zaman) + GA4 (yalnız çerez onayıyla). Ki
 | `invite_share` | Davet linki kopyala / WhatsApp, lig paylaşımı | channel |
 | `team_pass_purchase` | Takımım paketi alındı | cost |
 | `push_enable` | Web bildirimi açıldı | — |
+| `referee_match_click` | Hakem sayfasındaki sıradaki maç kartından maça geçiş (reklam → hakem → maç) | slot, referee_id, match_id |
 
 ## Açık sorular (kullanıcıda)
 
