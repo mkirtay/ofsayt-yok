@@ -10,6 +10,8 @@ import type { SportmonksFixture, SportmonksRefereePerson } from './types';
 export const REFEREE_OVERRIDES: Readonly<Record<number, SportmonksRefereePerson>> = {
   // Galatasaray – Aston Villa, UCL, 24 Kas 2026 — UEFA 22 Kas'ta açıkladı (Sportmonks'ta henüz boş).
   19873236: { id: 80234, name: 'Daniel Siebert', display_name: 'Daniel Siebert' },
+  // Shakhtar Donetsk – Fenerbahçe, UCL, 25 Kas 2026 — UEFA 23 Kas'ta açıkladı (Sportmonks'ta henüz boş).
+  19873728: { id: 15273, name: 'Michael Oliver', display_name: 'Michael Oliver' },
 };
 
 export function withRefereeOverride<T extends Pick<SportmonksFixture, 'id' | 'referees'>>(fixture: T): T {
