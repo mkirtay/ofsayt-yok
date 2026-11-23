@@ -17,6 +17,7 @@ import {
 import { siteBaseUrl } from '@/lib/siteUrl';
 import { breadcrumbJsonLd } from '@/utils/breadcrumbJsonLd';
 import OffsideDiagram from './OffsideDiagram';
+import PitchDiagram from './PitchDiagram';
 import styles from './rulesArticle.module.scss';
 
 export function Inline({ text }: { text: string }) {
@@ -93,6 +94,8 @@ function Block({ block }: { block: RuleBlock }) {
       );
     case 'offsideDiagram':
       return <OffsideDiagram />;
+    case 'pitchDiagram':
+      return <PitchDiagram />;
   }
 }
 

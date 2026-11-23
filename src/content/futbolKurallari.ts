@@ -10,7 +10,9 @@ export type RuleBlock =
   | { type: 'ul'; items: string[] }
   | { type: 'ol'; items: string[] }
   | { type: 'table'; head: string[]; rows: string[][] }
-  | { type: 'offsideDiagram' };
+  | { type: 'offsideDiagram' }
+  /** Ceza sahası ölçü şeması (Kural 1). */
+  | { type: 'pitchDiagram' };
 
 export type RuleSection = { id: string; heading: string; blocks: RuleBlock[] };
 export type RuleFaq = { q: string; a: string };
@@ -56,7 +58,7 @@ export const RULES_HUB: RuleArticle = {
       blocks: [
         {
           type: 'p',
-          text: 'Saha dikdörtgendir. Uluslararası maçlarda uzunluk 100–110 m, genişlik 64–75 m olmalıdır. Kale 7,32 m genişliğinde ve 2,44 m yüksekliğindedir. Penaltı noktası kale çizgisinden 11 m, ceza sahası 16,5 m içeridedir.',
+          text: 'Saha dikdörtgendir. Uluslararası maçlarda uzunluk 100–110 m, genişlik 64–75 m olmalıdır. Kale 7,32 m genişliğinde ve 2,44 m yüksekliğindedir. Penaltı noktası kale çizgisinden 11 m, ceza sahası 16,5 m içeridedir. Tüm ölçüler şemasıyla: [Futbol sahası ölçüleri](/futbol-kurallari/saha-olculeri).',
         },
       ],
     },
@@ -141,7 +143,7 @@ export const RULES_HUB: RuleArticle = {
       blocks: [
         {
           type: 'p',
-          text: 'Topun tamamı iki direk arasından ve üst direğin altından kale çizgisini geçerse goldür. Eşitlik bozulmazsa yarışma kurallarına göre uzatma ve/veya penaltı atışlarına gidilir.',
+          text: 'Topun tamamı iki direk arasından ve üst direğin altından kale çizgisini geçerse goldür. Eşitlik bozulmazsa yarışma kurallarına göre uzatma ve/veya [penaltı atışlarına](/futbol-kurallari/penalti) gidilir.',
         },
       ],
     },
@@ -181,7 +183,7 @@ export const RULES_HUB: RuleArticle = {
       blocks: [
         {
           type: 'p',
-          text: 'Kaleci vuruş anında en az bir ayağı kale çizgisinin üzerinde ya da hizasında olmalıdır. Atıcı topu ileri doğru vurmalıdır; topa ikinci kez dokunmadan önce başka bir oyuncunun topa değmesi gerekir.',
+          text: 'Kaleci vuruş anında en az bir ayağı kale çizgisinin üzerinde ya da hizasında olmalıdır. Atıcı topu ileri doğru vurmalıdır; topa ikinci kez dokunmadan önce başka bir oyuncunun topa değmesi gerekir. Ayrıntılar ve tekrar tablosu: [Penaltı kuralları](/futbol-kurallari/penalti).',
         },
       ],
     },
@@ -344,7 +346,7 @@ export const RULE_ARTICLES: RuleArticle[] = [
       { id: 'kendi-yari-sahasinda-ofsayt', heading: '7. Kendi yarı sahanızda ofsayt olmaz', blocks: [{ type: 'p', text: 'Pas anında kendi yarı sahasında duran oyuncu, ne kadar önde olursa olsun ofsayt sayılmaz.' }] },
       { id: 'top-hakeme-carparsa', heading: '8. Top hakeme çarpınca oyun durabilir', blocks: [{ type: 'p', text: 'Top hakeme değip gole gidiyorsa, topun sahibi değişiyorsa ya da tehlikeli bir atak başlıyorsa oyun durdurulur ve hakem topuyla yeniden başlar.' }] },
       { id: 'geri-pas', heading: '9. Kaleci geri pası eliyle alamaz', blocks: [{ type: 'p', text: "1992'de getirilen geri pas kuralına göre takım arkadaşının ayakla bilerek verdiği pası veya tacını kaleci eliyle tutamaz. Ceza: endirekt serbest vuruş." }] },
-      { id: 'kaleci-8-saniye', heading: '10. Kaleci topu 8 saniyeden fazla tutarsa korner', blocks: [{ type: 'p', text: 'Eskiden endirekt serbest vuruş olan bu ihlalin cezası artık rakibe korner. Hakem son 5 saniyeyi eliyle sayar.' }] },
+      { id: 'kaleci-8-saniye', heading: '10. Kaleci topu 8 saniyeden fazla tutarsa korner', blocks: [{ type: 'p', text: 'Eskiden endirekt serbest vuruş olan bu ihlalin cezası artık rakibe korner. Hakem son 5 saniyeyi eliyle sayar. Tüm kaleci kuralları: [Kaleci kuralları](/futbol-kurallari/kaleci-kurallari).' }] },
       { id: 'top-cizgide', heading: '11. Top çizgiye değiyorsa hâlâ oyunda', blocks: [{ type: 'p', text: 'Topun tamamı çizgiyi geçmedikçe top oyundadır. Gol için de aynısı geçerli: topun tamamı çizgiyi geçmelidir.' }] },
       { id: 'yedek-kart', heading: '12. Yedekler ve teknik heyet de kart görür', blocks: [{ type: 'p', text: "Yedek oyuncular kırmızı kart görüp kulübeden çıkarılabilir; antrenörler de 2019'dan beri sarı ve kırmızı kart görüyor." }] },
       { id: 'sure-dolsa-da-penalti', heading: '13. Penaltıda süre dolsa da vuruş tamamlanır', blocks: [{ type: 'p', text: 'Devre sonunda verilen penaltı, süre bitmiş olsa bile kullanılır ve vuruş sonuçlanana kadar devre bitmez.' }] },
@@ -502,6 +504,258 @@ export const RULE_ARTICLES: RuleArticle[] = [
       { q: 'Devre arası kaç dakika?', a: 'Kurallara göre en fazla 15 dakika; süreyi yarışma kuralları belirler, hakemin izniyle değişebilir.' },
       { q: 'Uzatma devresinde atılan gol maçı bitirir mi?', a: 'Hayır. Altın gol uygulaması yok; uzatma devreleri sonuna kadar oynanır.' },
       { q: 'Seri penaltı golleri maç skoruna eklenir mi?', a: 'Hayır. Seri penaltılar yalnız kazananı belirler; maç skoru uzatmaların sonundaki skor olarak kalır.' },
+    ],
+  },
+  {
+    slug: 'penalti',
+    title: 'Penaltı Kuralları: Kaleci, Atıcı ve Tekrar (Kural 14)',
+    heading: 'Penaltı Kuralları: Kim Nerede Durur, Ne Zaman Tekrar Edilir?',
+    description: 'Penaltıda kaleci çizgide mi durmalı, atıcı aldatabilir mi, ceza sahasına erken giren olursa ne olur? Kural 14 ve seri penaltı rehberi.',
+    lead:
+      "**Penaltı**, bir takım kendi ceza sahası içinde direkt serbest vuruşluk bir ihlal yaptığında (ör. faul, elle oynama) rakibe verilir. Top, kale çizgisinden **11 metre** uzaktaki penaltı noktasından atılır. Kaleci vuruş anında kale çizgisinde olmalıdır; atıcı ve kaleci dışındaki herkes ceza sahası ile yayın dışında, penaltı noktasının gerisinde durur.",
+    badge: 'Rehber',
+    updated: '23 Kasım 2026',
+    updatedIso: '2026-11-23',
+    publishedIso: '2026-11-23',
+    sections: [
+      {
+        id: 'kim-nerede',
+        heading: 'Penaltıda kim nerede durur?',
+        blocks: [
+          { type: 'pitchDiagram' },
+          {
+            type: 'ul',
+            items: [
+              '**Top:** Penaltı noktasında ve duruyor olmalı; kale direkleri, üst direk ve ağlar hareketsiz olmalıdır.',
+              '**Atıcı:** Hakem tarafından açıkça belirlenir. Topu ileriye doğru vurmalıdır (topuk vuruşu ileri giderse geçerlidir).',
+              '**Kaleci:** Direkler arasında, atıcıya dönük, kale çizgisinde durur. Vuruş anında en az bir ayağının bir kısmı kale çizgisine değmeli ya da çizginin hizasında olmalıdır; direklere, ağlara dokunamaz.',
+              "**Diğer oyuncular:** Ceza sahasının ve yayın dışında, penaltı noktasının gerisinde. Yay, penaltı noktasına **9,15 metre** mesafeyi gösterir.",
+            ],
+          },
+        ],
+      },
+      {
+        id: 'aldatma',
+        heading: 'Atıcı aldatabilir mi?',
+        blocks: [
+          {
+            type: 'p',
+            text: 'Koşu sırasında duraksamak, tempo değiştirmek ve vücutla aldatmak serbesttir. Ama koşu bittikten sonra vuracakmış gibi yapıp vurmamak ihlaldir: atıcı **sarı kart** görür ve rakibe **endirekt serbest vuruş** verilir. Panenka gibi yavaş vuruşlar ise tamamen kurala uygundur; önemli olan topun ileri gitmesi.',
+          },
+        ],
+      },
+      {
+        id: 'tekrar',
+        heading: 'Penaltı ne zaman tekrar edilir?',
+        blocks: [
+          {
+            type: 'table',
+            head: ['İhlal', 'Gol olursa', 'Gol olmazsa'],
+            rows: [
+              ['Kaleci çizgiden erken çıktı', 'Gol geçerli', 'Penaltı tekrar edilir'],
+              ['Hücum oyuncusu ceza sahasına erken girdi', 'Penaltı tekrar edilir', 'Rakibe endirekt serbest vuruş'],
+              ['Savunma oyuncusu ceza sahasına erken girdi', 'Gol geçerli', 'Penaltı tekrar edilir'],
+              ['İki takımdan da oyuncu erken girdi', 'Penaltı tekrar edilir', 'Penaltı tekrar edilir'],
+              ['Atıcı koşu bitince aldattı', 'Gol iptal, atıcıya sarı kart, rakibe endirekt serbest vuruş', 'Atıcıya sarı kart, rakibe endirekt serbest vuruş'],
+            ],
+          },
+          {
+            type: 'p',
+            text: 'Kaleci ihlali yüzünden penaltı tekrar edilirse kaleci maçtaki ilk ihlalinde uyarılır, sonraki ihlallerinde **sarı kart** görür.',
+          },
+        ],
+      },
+      {
+        id: 'sonrasi',
+        heading: 'Penaltıdan sonra top kimde?',
+        blocks: [
+          {
+            type: 'p',
+            text: "Top kaleciden veya direkten dönerse oyun devam eder; herkes topa oynayabilir. Tek istisna atıcıdır: top başka bir oyuncuya değmeden atıcı topa **ikinci kez dokunamaz**, dokunursa rakibe endirekt serbest vuruş verilir. Penaltı devre bitimine denk gelirse devre, atış tamamlanana kadar uzatılır; bu durumda dönen topa yeniden vurulamaz ([uzatma dakikaları](/futbol-kurallari/uzatma)).",
+          },
+        ],
+      },
+      {
+        id: 'seri-penalti',
+        heading: 'Seri penaltı atışları nasıl işler? (Kural 10)',
+        blocks: [
+          {
+            type: 'ol',
+            items: [
+              'Hakem atışların yapılacağı kaleyi ve yazı-turayla ilk atacak takımı belirler.',
+              'Yalnız maçın sonunda sahada olan oyuncular atış yapabilir; her oyuncu ikinci kez atmadan önce takımın uygun bütün oyuncuları birer kez atmış olmalıdır.',
+              'Takımlar sırayla beşer atış yapar. Bir takım kalan atışlarla yetişemeyecek duruma düşerse seri biter.',
+              'Beş atışta eşitlik sürerse ani ölüm başlar: aynı sayıda atışta biri atıp diğeri kaçırana kadar devam edilir.',
+              'Seri penaltı golleri maç skoruna eklenmez; yalnız kazananı belirler.',
+            ],
+          },
+          {
+            type: 'p',
+            text: "Seri penaltıda atıcının kazara topa iki kez dokunması 2026-27'de netleşti: gol olursa atış tekrarlanır, olmazsa kaçmış sayılır ([2026-27 değişiklikleri](/futbol-kurallari/2026-27-degisiklikler)).",
+          },
+        ],
+      },
+    ],
+    faq: [
+      { q: 'Penaltı noktası kaleye kaç metre?', a: 'Kale çizgisinden 11 metre (12 yarda).' },
+      { q: 'Kaleci penaltıda öne çıkabilir mi?', a: 'Hayır. Vuruş anında en az bir ayağının bir kısmı kale çizgisine değmeli ya da çizginin hizasında olmalıdır. Çıkarsa ve gol olmazsa penaltı tekrar edilir.' },
+      { q: 'Penaltı arkadaşa pas verilerek kullanılabilir mi?', a: 'Evet. Top ileri gittiği sürece atıcı pas verebilir; ancak takım arkadaşı pas anında ceza sahasının dışında, penaltı noktasının gerisinde olmalıdır.' },
+      { q: 'Panenka kurala uygun mu?', a: 'Evet. Koşu bittikten sonra vuracakmış gibi yapıp durmak yasak; yavaş ve aşırtma vuruş serbesttir.' },
+      { q: 'Penaltıdan direkt gol olur mu?', a: 'Evet. Penaltı, direkt gol atılabilen bir vuruştur.' },
+    ],
+  },
+  {
+    slug: 'saha-olculeri',
+    title: 'Futbol Sahası Ölçüleri: Her Saha Aynı mı? (Kural 1)',
+    heading: 'Futbol Sahası Ölçüleri: Her Saha Aynı Boyutta mı?',
+    description: 'Futbol sahası kaç metre? Uzunluk ve genişlik aralıkları, ceza sahası, kale, penaltı noktası ve orta yuvarlak ölçüleri tek tabloda.',
+    lead:
+      "Hayır, **her futbol sahası aynı boyutta değildir.** Kurallar bir aralık verir: uluslararası maçlarda uzunluk **100–110 m**, genişlik **64–75 m** olabilir. Buna karşılık sahanın içindeki çizgiler sabittir: ceza sahası 16,5 m, penaltı noktası 11 m, kale 7,32 × 2,44 m her sahada aynıdır. Büyük turnuvalarda ve Avrupa maçlarında en yaygın ölçü **105 × 68 m**'dir.",
+    badge: 'Rehber',
+    updated: '23 Kasım 2026',
+    updatedIso: '2026-11-23',
+    publishedIso: '2026-11-23',
+    sections: [
+      {
+        id: 'boyutlar',
+        heading: 'Futbol sahası kaç metre?',
+        blocks: [
+          {
+            type: 'table',
+            head: ['Ölçü', 'Genel kural', 'Uluslararası maç'],
+            rows: [
+              ['Uzunluk (yan çizgi)', '90–120 m', '100–110 m'],
+              ['Genişlik (kale çizgisi)', '45–90 m', '64–75 m'],
+            ],
+          },
+          {
+            type: 'p',
+            text: 'Yan çizgi her zaman kale çizgisinden uzun olmalıdır. Kurallar en az ve en çok değeri verdiği için iki stadyum arasında birkaç metre fark olabilir; ev sahibi takımlar da oyun tarzına göre izin verilen aralıkta dar ya da geniş saha seçebilir.',
+          },
+        ],
+      },
+      {
+        id: 'sabit-olculer',
+        heading: 'Hangi ölçüler her sahada aynıdır?',
+        blocks: [
+          { type: 'pitchDiagram' },
+          {
+            type: 'table',
+            head: ['Alan', 'Ölçü'],
+            rows: [
+              ['Kale', '7,32 m genişlik × 2,44 m yükseklik'],
+              ['Kale sahası', 'Direklerden 5,5 m dışarı, sahaya 5,5 m içeri'],
+              ['Ceza sahası', 'Direklerden 16,5 m dışarı, sahaya 16,5 m içeri (40,32 m genişlik)'],
+              ['Penaltı noktası', 'Kale çizgisinden 11 m'],
+              ['Ceza sahası yayı', 'Penaltı noktasından 9,15 m yarıçap'],
+              ['Orta yuvarlak', '9,15 m yarıçap'],
+              ['Korner yayı', '1 m yarıçap'],
+              ['Çizgi kalınlığı', 'En fazla 12 cm; bütün çizgiler aynı kalınlıkta'],
+              ['Korner bayrağı', 'En az 1,5 m yükseklik'],
+            ],
+          },
+        ],
+      },
+      {
+        id: 'neden-9-15',
+        heading: '9,15 metre nereden geliyor?',
+        blocks: [
+          {
+            type: 'p',
+            text: "Kurallar İngiltere'de yarda ile yazıldı: 9,15 m aslında **10 yarda**, 11 m 12 yarda, 16,5 m ise 18 yardadır. Serbest vuruşta barajın uzaklığı, başlama vuruşunda rakibin uzaklığı ve penaltıda oyuncuların uzaklığı hep aynı 9,15 metredir; orta yuvarlak ile ceza sahası yayı bu mesafeyi sahada gösterir.",
+          },
+        ],
+      },
+      {
+        id: 'zemin',
+        heading: 'Zemin ve çizgiler',
+        blocks: [
+          {
+            type: 'p',
+            text: 'Saha tamamen doğal ya da yarışma kuralları izin veriyorsa tamamen yapay çim olabilir; renk yeşil olmalıdır. Çizgiler bulundukları alana dahildir: top çizginin üstündeyken hâlâ sahadadır, top **tamamen** çizgiyi geçince oyun dışı olur. Bu yüzden gol için de topun tamamının kale çizgisini geçmesi gerekir.',
+          },
+        ],
+      },
+    ],
+    faq: [
+      { q: 'Standart futbol sahası kaç metre?', a: "Kesin tek bir ölçü yok; uluslararası maçlarda 100–110 × 64–75 m aralığı geçerli. En yaygın ölçü 105 × 68 m'dir." },
+      { q: 'Ceza sahası kaç metre?', a: 'Kale direklerinden 16,5 m dışarı ve sahaya 16,5 m içeri; toplam genişliği 40,32 m.' },
+      { q: 'Kale kaç metre?', a: 'Direklerin iç kenarları arası 7,32 m, üst direğin alt kenarı yerden 2,44 m.' },
+      { q: 'Top çizgideyse dışarı mı?', a: 'Hayır. Topun tamamı çizgiyi geçmedikçe top oyundadır.' },
+    ],
+  },
+  {
+    slug: 'kaleci-kurallari',
+    title: 'Kaleci Kuralları: 8 Saniye, Geri Pas ve Kaleci Golü',
+    heading: 'Kaleci Kuralları: Elle Oynama, 8 Saniye, Geri Pas',
+    description: 'Kaleci topu kaç saniye tutabilir, geri pası neden elle alamaz, kaleci gol atabilir mi? Kalecilere özel kuralların kısa rehberi.',
+    lead:
+      "Kaleci, topu **yalnız kendi ceza sahası içinde** elle oynayabilen tek oyuncudur. Bu ayrıcalığın sınırları vardır: topu elinde en fazla **8 saniye** tutabilir, takım arkadaşının ayakla bilerek verdiği pası ve doğrudan taçtan gelen topu elle alamaz. Ceza sahası dışında ise diğer oyuncularla aynı kurallara tabidir.",
+    badge: 'Rehber',
+    updated: '23 Kasım 2026',
+    updatedIso: '2026-11-23',
+    publishedIso: '2026-11-23',
+    sections: [
+      {
+        id: '8-saniye',
+        heading: 'Kaleci topu kaç saniye tutabilir?',
+        blocks: [
+          {
+            type: 'p',
+            text: "Kaleci topu eline aldıktan sonra en fazla **8 saniye** içinde bırakmalıdır. Hakem son 5 saniyeyi elini kaldırarak sayar; süre aşılırsa rakip takıma **korner** verilir. Bu kural 2025-26'da eski endirekt serbest vuruş cezasının yerine geldi ve taç ile kale vuruşundaki [5 saniye kuralına](/futbol-kurallari/2026-27-degisiklikler) örnek oldu.",
+          },
+        ],
+      },
+      {
+        id: 'geri-pas',
+        heading: 'Geri pası neden elle alamaz?',
+        blocks: [
+          {
+            type: 'p',
+            text: "Takım arkadaşı topu **ayakla bilerek** kaleciye verirse ya da kaleci topu doğrudan taç atışından alırsa, kaleci topu elle oynayamaz. Oynarsa rakibe ihlalin olduğu yerden **endirekt serbest vuruş** verilir (kale sahası içindeyse kale sahası çizgisinden). Kafa, göğüs veya dizle yapılan geri paslar elle alınabilir; ama bu kuralı aşmak için kasıtlı hileye (topu ayakla kafaya kaldırmak gibi) başvuran oyuncu sarı kart görür.",
+          },
+        ],
+      },
+      {
+        id: 'ceza-sahasi-disi',
+        heading: 'Ceza sahası dışında kaleci',
+        blocks: [
+          {
+            type: 'ul',
+            items: [
+              'Ceza sahası dışında topa elle dokunan kaleci, diğer oyuncular gibi **direkt serbest vuruş** ile cezalandırılır; bir gol şansını engellediyse kırmızı kart görebilir.',
+              'Kaleci ceza sahası içinden topu eliyle atıp doğrudan rakip kaleye sokarsa gol olmaz; oyun **kale vuruşuyla** başlar.',
+              'Kaleci, topu elinden bıraktıktan sonra başka bir oyuncu dokunmadan tekrar elle alamaz.',
+            ],
+          },
+        ],
+      },
+      {
+        id: 'kaleci-golu',
+        heading: 'Kaleci gol atabilir mi?',
+        blocks: [
+          {
+            type: 'p',
+            text: "Evet. Kaleci ayakla attığı her vuruşla gol atabilir: kale vuruşundan rakip kaleye giden uzun top, penaltı ya da serbest vuruş. Brezilyalı **Rogério Ceni** kariyerinde 131 gol atarak bu alanın simgesi oldu; gollerinin neredeyse tamamı serbest vuruş ve penaltıdandı. Kaleci kendi ceza sahasından eliyle attığı topla ise gol atamaz.",
+          },
+        ],
+      },
+      {
+        id: 'degisiklik-penalti',
+        heading: 'Kaleci değişikliği ve penaltıda kaleci',
+        blocks: [
+          {
+            type: 'p',
+            text: 'Kaleci, hakeme haber vererek oyun durduğunda takım arkadaşıyla yer değiştirebilir. Penaltıda kaleci kale çizgisinde durmak zorundadır; ayrıntılar [penaltı kuralları](/futbol-kurallari/penalti) sayfasında. Sakatlık nedeniyle sahada tedavi edilen kaleci, diğer oyunculardan farklı olarak sahadan çıkmak zorunda değildir.',
+          },
+        ],
+      },
+    ],
+    faq: [
+      { q: 'Kaleci topu 8 saniyeden fazla tutarsa ne olur?', a: 'Rakip takıma korner verilir. Hakem son 5 saniyeyi elini kaldırarak sayar.' },
+      { q: 'Kaleci geri pası elle alırsa ne olur?', a: 'Rakibe endirekt serbest vuruş verilir. Kural yalnız ayakla bilerek yapılan paslar ve doğrudan taçtan gelen toplar için geçerlidir.' },
+      { q: 'Kaleci elle attığı topla gol atabilir mi?', a: 'Hayır. Top rakip kaleye doğrudan girerse oyun kale vuruşuyla başlar.' },
+      { q: 'En çok gol atan kaleci kim?', a: 'Rogério Ceni, kariyerinde 131 gol attı; çoğu serbest vuruş ve penaltıdandı.' },
     ],
   },
   {
