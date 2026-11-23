@@ -3,8 +3,7 @@
  * takımı olan kullanıcılara haftada bir — favori takımlarının önümüzdeki 7 günkü maçları + son 7 gün AI isabeti +
  * tahmin oyunu bağlantısı. Her e-postada imzalı tek tık abonelikten çıkma bağlantısı.
  *
- * VARSAYILAN KAPALI: EMAIL_DIGEST_ENABLED=true (ticari elektronik ileti → İYS kaydı ve hukuki kontrol sonrası), arayüz
- * NEXT_PUBLIC_EMAIL_DIGEST_ENABLED=true. Tetikleyici: harici cron (Pazartesi sabahı) → /api/cron/weekly-digest.
+ * Yalnız açık izin verenlere (kutu varsayılan boş). Tetikleyici: vercel.json cron, Pazartesi 09:00 TSİ → /api/cron/weekly-digest.
  */
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { prisma } from '@/lib/prisma';
@@ -15,10 +14,6 @@ import { buildMatchHref } from '@/utils/matchUrl';
 import type { Match } from '@/models/liveScore';
 
 export const MAX_PER_RUN = 500;
-
-export function digestEnabled(): boolean {
-  return process.env.EMAIL_DIGEST_ENABLED === 'true';
-}
 
 const secret = () => process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET ?? '';
 
@@ -92,7 +87,6 @@ export function pickDigestMatches(fixtures: readonly Match[], favorites: Readonl
 }
 
 export async function runWeeklyDigest(now: number = Date.now()): Promise<{ skipped?: string; recipients?: number; sent?: number }> {
-  if (!digestEnabled()) return { skipped: 'disabled' };
   const subs = await prisma.emailDigestSubscription.findMany({
     take: MAX_PER_RUN,
     orderBy: { createdAt: 'asc' },

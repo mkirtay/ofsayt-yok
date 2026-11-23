@@ -253,12 +253,25 @@
   border-radius: $radius-sm;
 }
 
+// Dar ekranda tahmin / tam skor / yön satırı adın altına iner (gizlenmez).
 @media (max-width: 479px) {
   .table li {
     grid-template-columns: 24px minmax(0, 1fr) 40px;
+    grid-template-rows: auto auto;
+    row-gap: 2px;
+
+    .rank {
+      grid-row: 1 / span 2;
+    }
+
+    .points {
+      grid-column: 3;
+      grid-row: 1 / span 2;
+    }
 
     .meta {
-      display: none;
+      grid-column: 2;
+      grid-row: 2;
     }
   }
 }

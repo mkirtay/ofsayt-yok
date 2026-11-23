@@ -3,7 +3,6 @@
  * (paylaşım: /tahmin/lig/{kod}, WhatsApp linki). Sıralama ayrı puan tutmaz: üyelerin GameWeekEntry toplamları
  * (lib/game/sql.ts leagueSeasonSql / leagueWeekSql). Ödül yok (yalnız sıralama) → ödüllü yarışma mevzuatına girmez.
  *
- * Bayrak: NEXT_PUBLIC_GAME_LEAGUES_ENABLED=true (migration 20261122120000_game_private_leagues uygulanmadan açılmaz).
  * Sınırlar: kişi başına en çok MAX_OWNED kurduğu, MAX_JOINED üye olduğu lig; lig başına MAX_MEMBERS üye.
  */
 import { randomInt } from 'node:crypto';
@@ -22,10 +21,6 @@ export const NAME_MIN = 3;
 export const NAME_MAX = 40;
 const ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
 const CODE_LENGTH = 8;
-
-export function privateLeaguesEnabled(): boolean {
-  return process.env.NEXT_PUBLIC_GAME_LEAGUES_ENABLED === 'true';
-}
 
 export class LeagueError extends Error {
   constructor(
@@ -119,7 +114,7 @@ export async function listMyLeagues(userId: string): Promise<LeagueSummary[]> {
   return rows.map(({ league: l }) => ({ id: l.id, name: l.name, code: l.code, owner: l.ownerId === userId, members: l._count.members }));
 }
 
-export type LeagueStandingRow = { userId: string; nickname: string; image: string | null; points: number; exact: number; direction: number };
+export type LeagueStandingRow = { userId: string; nickname: string; image: string | null; points: number; exact: number; direction: number; picks: number };
 export type LeagueView = {
   id: string;
   name: string;
@@ -133,8 +128,8 @@ export type LeagueView = {
 };
 
 const raw = <T,>(q: SqlQuery) => prisma.$queryRawUnsafe<T[]>(q.text, ...q.values);
-const toRows = (rows: { userId: string; nickname: string; image: string | null; points: number; exact: number; direction: number }[]): LeagueStandingRow[] =>
-  rows.map((r) => ({ userId: r.userId, nickname: r.nickname, image: r.image, points: Number(r.points), exact: Number(r.exact), direction: Number(r.direction) }));
+const toRows = (rows: { userId: string; nickname: string; image: string | null; points: number; exact: number; direction: number; picks: number }[]): LeagueStandingRow[] =>
+  rows.map((r) => ({ userId: r.userId, nickname: r.nickname, image: r.image, points: Number(r.points), exact: Number(r.exact), direction: Number(r.direction), picks: Number(r.picks) }));
 
 /** Kodla lig görünümü: sezon + bu haftanın sıralaması. Kod bilen herkes görür (davet sayfası); üye olmayan katılabilir. */
 export async function loadLeagueView(rawCode: unknown, viewerId: string | null, now: Date = new Date()): Promise<LeagueView | null> {

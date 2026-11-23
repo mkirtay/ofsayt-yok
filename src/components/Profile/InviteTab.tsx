@@ -8,7 +8,7 @@ type Referral = { code: string; url: string; invited: number; rewarded: number; 
 
 /**
  * Profil › Davet et (büyüme raporu 2.3): kişisel davet linki (/davet/{kod}), kopyala, WhatsApp, kaç kişi katıldı.
- * Ödül yalnız bayrak açıkken vaat edilir (lib/referral.ts referralActivationEnabled); kapalıyken ödül cümlesi yok.
+ * Ödül: davetli e-postasını doğrulayıp ilk tahminini yapınca iki tarafa kredi (lib/referral.ts).
  */
 export default function InviteTab() {
   const { t } = useTranslation('profile');

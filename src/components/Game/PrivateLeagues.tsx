@@ -12,7 +12,7 @@ import styles from './leagues.module.scss';
 import { trackGrowth } from '@/lib/growthEvents';
 
 type Summary = { id: string; name: string; code: string; owner: boolean; members: number };
-type Row = { userId: string; nickname: string; points: number; exact: number; direction: number };
+type Row = { userId: string; nickname: string; points: number; exact: number; direction: number; picks: number };
 type View = {
   id: string;
   name: string;
@@ -164,7 +164,7 @@ function Standings({ rows, me }: { rows: Row[]; me: string | null }) {
           <span className={styles.rank}>{i + 1}</span>
           <span className={styles.name}>{r.nickname}</span>
           <span className={styles.meta}>
-            {r.exact} tam skor · {r.direction} yön
+            {r.picks} tahmin · {r.exact} tam skor · {r.direction} yön
           </span>
           <span className={styles.points}>{r.points}</span>
         </li>

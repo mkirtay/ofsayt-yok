@@ -1,6 +1,5 @@
 /**
  * Özel ligler (büyüme raporu 2.2) — GET: üye olduğum ligler; POST { name }: lig kur (kurucu otomatik üye).
- * Bayrak kapalıyken 404 (server/game/leagues.ts privateLeaguesEnabled).
  */
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { captureError } from '@/lib/logger';
@@ -8,10 +7,9 @@ import { requireAuth } from '@/lib/requireAuth';
 import { readJsonBody } from '@/lib/gundem/validation';
 import { limitWrite, methodNotAllowed } from '@/server/game/http';
 import { PRIVATE_CACHE, withGameGate } from '@/server/game/access';
-import { createLeague, LeagueError, listMyLeagues, privateLeaguesEnabled } from '@/server/game/leagues';
+import { createLeague, LeagueError, listMyLeagues } from '@/server/game/leagues';
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (!privateLeaguesEnabled()) return res.status(404).json({ error: 'Not found' });
   if (req.method !== 'GET' && req.method !== 'POST') return methodNotAllowed(res, 'GET, POST');
   res.setHeader('Cache-Control', PRIVATE_CACHE);
   const guard = await requireAuth(req, res);

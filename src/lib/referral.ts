@@ -113,20 +113,15 @@ export async function grantReferralRewardOnFirstPurchase(
 }
 
 /**
- * Büyüme raporu 2.3 — davet ödülünün ETKİNLEŞTİRME yolu (ödeme açılmadan önce viral döngü için). VARSAYILAN KAPALI:
- * `REFERRAL_ACTIVATION_REWARD_ENABLED=true` verilmedikçe hiçbir şey yapmaz (ödüllü kampanya / tüketici mevzuatı için
- * hukuki görüş bekleniyor). Koşul: davet edilenin e-postası doğrulanmış ve tahmin oyununda ilk tahminini yapmış olması
- * (çağıran: server/game/play.ts). Ödül ve tavanlar ilk satın alma yoluyla aynı (bir kez, davet eden için aylık tavan).
+ * Büyüme raporu 2.3 — davet ödülünün ETKİNLEŞTİRME yolu (ödeme açılmadan viral döngü; kullanıcı kararı 2026-11-23: bayraksız
+ * açık). Koşul: davet edilenin e-postası doğrulanmış ve tahmin oyununda ilk tahminini yapmış olması (çağıran:
+ * server/game/play.ts). Ödül ve tavanlar ilk satın alma yoluyla aynı (bir kez, davet eden için aylık tavan). Yalnız site
+ * içi kredi — para / ürün ödülü yok.
  */
-export function referralActivationEnabled(): boolean {
-  return process.env.REFERRAL_ACTIVATION_REWARD_ENABLED === 'true';
-}
-
 export async function grantReferralActivationReward(
   refereeId: string,
   now: number = Date.now(),
 ): Promise<{ referee: boolean; referrer: boolean } | null> {
-  if (!referralActivationEnabled()) return null;
   const user = await prisma.user.findUnique({ where: { id: refereeId }, select: { emailVerified: true, referredById: true } });
   if (!user?.emailVerified || !user.referredById) return null;
   return grantReferralRewardOnFirstPurchase(refereeId, now);

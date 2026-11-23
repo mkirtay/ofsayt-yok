@@ -1,6 +1,6 @@
 /**
  * "Takımım" sezon paketi (büyüme raporu 2.8) — GET: fiyat, sezon, paketlerim; POST { teamId }: krediyle al.
- * Yalnız Süper Lig takımları (ön üretim tüm Süper Lig maçlarını kapsar; puan tablosu önbellekten). Bayrak kapalıysa 404.
+ * Yalnız Süper Lig takımları (ön üretim tüm Süper Lig maçlarını kapsar; puan tablosu önbellekten).
  */
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { requireAuth } from '@/lib/requireAuth';
@@ -8,7 +8,7 @@ import { captureError } from '@/lib/logger';
 import { InsufficientCreditsError } from '@/lib/credits';
 import { readJsonBody } from '@/lib/gundem/validation';
 import { hitFixedWindowRateLimit } from '@/lib/rateLimit';
-import { buyTeamPass, myTeamPasses, passSeason, teamPassCost, teamPassEnabled, TeamPassOwnedError } from '@/lib/teamPass';
+import { buyTeamPass, myTeamPasses, passSeason, teamPassCost, TeamPassOwnedError } from '@/lib/teamPass';
 import { getCompetitionTableFull } from '@/services/liveScoreService';
 import { SUPER_LIG } from '@/server/analysisPregen';
 
@@ -22,7 +22,6 @@ async function superLigTeam(teamId: number): Promise<{ id: number; name: string 
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (!teamPassEnabled()) return res.status(404).json({ error: 'Not found' });
   if (req.method !== 'GET' && req.method !== 'POST') {
     res.setHeader('Allow', 'GET, POST');
     return res.status(405).end();

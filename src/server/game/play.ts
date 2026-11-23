@@ -39,7 +39,7 @@ import { listPublicWeekKeys, resolveCurrentWeekKey } from '@/server/game/weeks';
 import { listPublicDayKeys, todayKey } from '@/server/game/days';
 import type { BoardEntryView, BoardScope, DaySaveResult, DistributionView, LeaderboardView, MyDayView, MyStandingView, MyWeekView, SaveItemResult, SaveResult } from '@/lib/game/types';
 import { captureError } from '@/lib/logger';
-import { grantReferralActivationReward, referralActivationEnabled } from '@/lib/referral';
+import { grantReferralActivationReward } from '@/lib/referral';
 
 export const LEADERBOARD_CACHE_SECONDS = 60;
 export const MAX_ITEMS = 10;
@@ -109,11 +109,10 @@ export async function loadMyWeek(userId: string, weekKey: string): Promise<MyWee
  * Hafta yayında değilse null.
  */
 /**
- * Davet ödülü etkinleştirme (büyüme raporu 2.3; bayrak kapalıysa hiçbir şey yapmaz, bkz. lib/referral.ts): tahmin
+ * Davet ödülü etkinleştirme (büyüme raporu 2.3, bkz. lib/referral.ts): tahmin
  * kaydını bekletmez, hata kaydı bozmaz. Ödül davet başına bir kez (ilk tahmin ya da sonraki ilk uygun an).
  */
 function rewardReferralActivation(userId: string): void {
-  if (!referralActivationEnabled()) return;
   void grantReferralActivationReward(userId).catch((e) => captureError('referral-activation', e));
 }
 

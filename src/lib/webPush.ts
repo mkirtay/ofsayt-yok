@@ -1,21 +1,23 @@
 /**
  * Web bildirimi gönderimi (büyüme raporu 3.1) — VAPID + Web Push protokolü (`web-push`). Abonelik, PushToken tablosunda
  * platform "web" ve token = abonelik JSON'u (endpoint + anahtarlar) olarak saklanır (bkz. /api/push/register).
- * Ortam: VAPID_PUBLIC_KEY (istemcide NEXT_PUBLIC_VAPID_PUBLIC_KEY ile aynı), VAPID_PRIVATE_KEY, VAPID_SUBJECT (mailto:).
- * Bayrak: WEB_PUSH_ENABLED=true. Anahtar üretmek: `npx web-push generate-vapid-keys`.
+ * Açık anahtar config/webPush.ts'te (herkese açık); gizli eşi ortamda: VAPID_PRIVATE_KEY (Vercel). Gizli anahtar yoksa
+ * gönderim sessizce atlanır (abonelik yine kaydedilir). Yeni çift: `npx web-push generate-vapid-keys`.
  */
 import webpush from 'web-push';
+import { VAPID_PUBLIC_KEY } from '@/config/webPush';
 
 export type PushPayload = { title: string; body: string; url: string; tag?: string };
 
+/** Gönderim yapılabilir mi: yalnız gizli anahtarın varlığı (ayrı açma bayrağı yok). */
 export function webPushEnabled(): boolean {
-  return process.env.WEB_PUSH_ENABLED === 'true' && !!process.env.VAPID_PUBLIC_KEY && !!process.env.VAPID_PRIVATE_KEY;
+  return !!process.env.VAPID_PRIVATE_KEY;
 }
 
 let configured = false;
 function configure(): void {
   if (configured) return;
-  webpush.setVapidDetails(process.env.VAPID_SUBJECT || 'mailto:destek@getscor3.com', process.env.VAPID_PUBLIC_KEY!, process.env.VAPID_PRIVATE_KEY!);
+  webpush.setVapidDetails(process.env.VAPID_SUBJECT || 'mailto:destek@getscor3.com', VAPID_PUBLIC_KEY, process.env.VAPID_PRIVATE_KEY!);
   configured = true;
 }
 

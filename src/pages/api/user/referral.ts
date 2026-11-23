@@ -1,6 +1,6 @@
 /**
  * Davet (büyüme raporu 2.3) — GET: davet kodum, linkim, davet ettiğim / ödül alan sayısı; POST { code }: yeni hesabı
- * (Google ile kayıt dahil, ilk 48 saat) davet koduna bağlar. Ödül bayrağı lib/referral.ts.
+ * (Google ile kayıt dahil, ilk 48 saat) davet koduna bağlar. Ödül kuralları: lib/referral.ts.
  */
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { requireAuth } from '@/lib/requireAuth';
@@ -8,7 +8,7 @@ import { captureError } from '@/lib/logger';
 import { hitFixedWindowRateLimit } from '@/lib/rateLimit';
 import { readJsonBody } from '@/lib/gundem/validation';
 import { siteBaseUrl } from '@/lib/siteUrl';
-import { claimReferralForNewUser, ensureReferralCode, referralActivationEnabled, referralStats, REFERRAL_BONUS_CREDITS } from '@/lib/referral';
+import { claimReferralForNewUser, ensureReferralCode, referralStats, REFERRAL_BONUS_CREDITS } from '@/lib/referral';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET' && req.method !== 'POST') {
@@ -26,7 +26,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         code,
         url: `${siteBaseUrl()}/davet/${code}`,
         ...stats,
-        rewardActive: referralActivationEnabled(),
+        rewardActive: true,
         bonus: REFERRAL_BONUS_CREDITS,
       });
     }

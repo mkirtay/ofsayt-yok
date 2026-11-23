@@ -209,10 +209,8 @@ export function HowToPlay() {
 
 export const FAQ_KEYS = [1, 2, 3, 4, 5] as const;
 
-/** Özel ligler (büyüme raporu 2.2) açık mı — menü sekmesi ve SSS 4. cevabı. Migration uygulanmadan açılmaz. */
-export const GAME_LEAGUES_ON = process.env.NEXT_PUBLIC_GAME_LEAGUES_ENABLED === 'true';
-/** SSS cevap anahtarı: özel ligler açıksa 4. soru "yakında" yerine canlı cevap. */
-export const faqAnswerKey = (n: number) => (n === 4 && GAME_LEAGUES_ON ? 'faq.a4Live' : `faq.a${n}`);
+/** SSS cevap anahtarı: 4. soru (arkadaşlarla oynama) özel ligler canlı olduğu için "a4Live" (büyüme raporu 2.2). */
+export const faqAnswerKey = (n: number) => (n === 4 ? 'faq.a4Live' : `faq.a${n}`);
 
 export function Faq() {
   const { t } = useTranslation('game');
@@ -255,7 +253,7 @@ export function GameNav({ current }: { current: 'play' | 'leaderboard' | 'rules'
     ['play', base],
     ['leaderboard', `${base}/siralama`],
     ['rules', `${base}/kurallar`],
-    ...(GAME_LEAGUES_ON ? ([['leagues', `${base}/ligler`]] as const) : []),
+    ['leagues', `${base}/ligler`],
   ] as const;
   return (
     <nav className={styles.subnav} aria-label={GAME_BRAND.name}>

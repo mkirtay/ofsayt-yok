@@ -64,6 +64,7 @@ describe('özel ligler (PGlite + Prisma)', () => {
 
     const v = (await leagues.loadLeagueView(l.code, a, now))!;
     expect(v).toMatchObject({ name: 'Ofis Ligi', members: 2, member: true, owner: true });
+    expect(v.week!.rows.every((r) => r.picks === 0)).toBe(true); // bu testte tahmin satırı yok
     expect(v.week!.rows.map((r) => [r.nickname, r.points])).toEqual([
       ['bora', 12],
       ['ayse', 7],

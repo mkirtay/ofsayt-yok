@@ -87,21 +87,14 @@ describe('davet altyapısı', () => {
 });
 
 describe('davet — etkinleştirme ödülü ve sonradan bağlama (büyüme raporu 2.3)', () => {
-  it('bayrak kapalıyken ödül yok; açıkken doğrulanmış + davetli kullanıcıya bir kez', async () => {
+  it('doğrulanmış + davetli kullanıcıya bir kez (bayraksız)', async () => {
     const { grantReferralActivationReward } = await import('./referral');
     db.addUser('a', 0);
     db.addUser('b', 0, 'USER', { emailVerified: new Date() });
     await recordReferral('b', await ensureReferralCode('a'));
-    delete process.env.REFERRAL_ACTIVATION_REWARD_ENABLED;
+    expect(await grantReferralActivationReward('b')).toEqual({ referee: true, referrer: true });
     expect(await grantReferralActivationReward('b')).toBeNull();
-    process.env.REFERRAL_ACTIVATION_REWARD_ENABLED = 'true';
-    try {
-      expect(await grantReferralActivationReward('b')).toEqual({ referee: true, referrer: true });
-      expect(await grantReferralActivationReward('b')).toBeNull();
-      expect([db.balance('a'), db.balance('b')]).toEqual([2, 2]);
-    } finally {
-      delete process.env.REFERRAL_ACTIVATION_REWARD_ENABLED;
-    }
+    expect([db.balance('a'), db.balance('b')]).toEqual([2, 2]);
   });
 
   it('e-postası doğrulanmamış davetliye ödül yok', async () => {
@@ -109,12 +102,7 @@ describe('davet — etkinleştirme ödülü ve sonradan bağlama (büyüme rapor
     db.addUser('a', 0);
     db.addUser('b', 0, 'USER', { emailVerified: null });
     await recordReferral('b', await ensureReferralCode('a'));
-    process.env.REFERRAL_ACTIVATION_REWARD_ENABLED = 'true';
-    try {
-      expect(await grantReferralActivationReward('b')).toBeNull();
-    } finally {
-      delete process.env.REFERRAL_ACTIVATION_REWARD_ENABLED;
-    }
+    expect(await grantReferralActivationReward('b')).toBeNull();
   });
 
   it('Google ile yeni hesap: 48 saat içinde ve bağlı değilse bağlanır; eski hesap bağlanmaz', async () => {

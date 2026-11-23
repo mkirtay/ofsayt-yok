@@ -7,7 +7,7 @@ import { trackGrowth } from '@/lib/growthEvents';
 type Info = { cost: number; season: string; passes: { teamId: number }[] };
 
 /**
- * "Takımım" sezon paketi kartı (büyüme raporu 2.8): takım sayfasında (yalnız Süper Lig, bayrak açıkken). Krediyle bir
+ * "Takımım" sezon paketi kartı (büyüme raporu 2.8): takım sayfasında (yalnız Süper Lig). Krediyle bir
  * kez: bu sezon takımın hazır AI analizleri kilitsiz. Yetersiz krediyse kredi sayfasına bağlantı.
  */
 export default function TeamPassCard({ teamId, teamName }: { teamId: number; teamName: string }) {

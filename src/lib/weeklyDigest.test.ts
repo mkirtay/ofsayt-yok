@@ -1,25 +1,21 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('@/lib/prisma', () => ({ prisma: {} }));
+vi.mock('@/lib/prisma', () => ({ prisma: { emailDigestSubscription: { findMany: async () => [] } } }));
 vi.mock('@/lib/security', () => ({
   emailHtml: (b: string) => `<html>${b}</html>`,
   sendTransactionalEmail: async () => true,
 }));
 
-import { buildDigestEmail, digestEnabled, pickDigestMatches, runWeeklyDigest, unsubscribeSignature, verifyUnsubscribe } from './weeklyDigest';
+import { buildDigestEmail, pickDigestMatches, runWeeklyDigest, unsubscribeSignature, verifyUnsubscribe } from './weeklyDigest';
 import { findGamblingTerms } from '@/utils/gamblingTerms';
 
 beforeEach(() => {
   process.env.AUTH_SECRET = 'test-secret';
 });
-afterEach(() => {
-  delete process.env.EMAIL_DIGEST_ENABLED;
-});
 
 describe('haftalık e-posta özeti (büyüme raporu 3.3)', () => {
-  it('varsayılan kapalı; kapalıyken DB\'ye gitmez', async () => {
-    expect(digestEnabled()).toBe(false);
-    expect(await runWeeklyDigest()).toEqual({ skipped: 'disabled' });
+  it('izin veren yoksa Sportmonks\'a gitmeden döner', async () => {
+    expect(await runWeeklyDigest()).toEqual({ skipped: 'no-recipients', recipients: 0 });
   });
 
   it('abonelikten çıkma imzası kullanıcıya bağlı', () => {

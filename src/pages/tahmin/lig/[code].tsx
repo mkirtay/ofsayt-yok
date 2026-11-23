@@ -5,7 +5,7 @@ import { LeagueView } from '@/components/Game/PrivateLeagues';
 import styles from '@/components/Game/game.module.scss';
 import '@/lib/i18nNamespaces/game';
 import { gamePageGate } from '@/server/game/access';
-import { normalizeLeagueCode, privateLeaguesEnabled } from '@/server/game/leagues';
+import { normalizeLeagueCode } from '@/server/game/leagues';
 import { prisma } from '@/lib/prisma';
 import { GAME_BRAND } from '@/config/brand';
 
@@ -16,7 +16,6 @@ type Props = { code: string; name: string };
  * sunucuda; sıralama ve üyelik istemcide (kişisel). Arama motoruna kapalı.
  */
 export const getServerSideProps: GetServerSideProps<Props> = async ({ req, res, params }) => {
-  if (!privateLeaguesEnabled()) return { notFound: true };
   const gate = await gamePageGate(req, res);
   if (!gate) return { notFound: true };
   const code = normalizeLeagueCode(params?.code);

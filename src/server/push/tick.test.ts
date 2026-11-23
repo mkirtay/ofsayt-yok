@@ -7,7 +7,7 @@ vi.mock('@/lib/livescoreCache', () => {
   return { readCache: async (k: string) => m.get(k) ?? null, writeCache: async (k: string, v: unknown) => void m.set(k, v) };
 });
 vi.mock('@/lib/webPush', () => ({
-  webPushEnabled: () => process.env.WEB_PUSH_ENABLED === 'true',
+  webPushEnabled: () => !!process.env.VAPID_PRIVATE_KEY,
   sendWebPush: async (_t: string, p: unknown) => (h.sent.push(p), 'ok'),
 }));
 const live = vi.hoisted(() => ({ score: '0-0' }));
@@ -20,7 +20,7 @@ vi.mock('@/services/liveScoreService', () => ({
 import { goalEvents, runPushTick } from './tick';
 
 afterEach(() => {
-  delete process.env.WEB_PUSH_ENABLED;
+  delete process.env.VAPID_PRIVATE_KEY;
 });
 
 describe('favori takım bildirimleri (büyüme raporu 3.1)', () => {
@@ -34,15 +34,15 @@ describe('favori takım bildirimleri (büyüme raporu 3.1)', () => {
     expect(goalEvents(m, { home: 1, away: 0 })).toEqual([]);
   });
 
-  it('bayrak kapalı / abone yok → Sportmonks\'a gitmeden döner', async () => {
+  it('gizli anahtar yok / abone yok → Sportmonks\'a gitmeden döner', async () => {
     expect(await runPushTick()).toEqual({ skipped: 'disabled' });
-    process.env.WEB_PUSH_ENABLED = 'true';
+    process.env.VAPID_PRIVATE_KEY = 'x';
     h.tokens = [];
     expect(await runPushTick()).toEqual({ skipped: 'no-subscribers', subscribers: 0 });
   });
 
   it('favori takımın golü yalnız o takımın abonesine gider', async () => {
-    process.env.WEB_PUSH_ENABLED = 'true';
+    process.env.VAPID_PRIVATE_KEY = 'x';
     h.tokens = [
       { id: 't1', token: 'a', user: { favoriteTeamIds: [34] } },
       { id: 't2', token: 'b', user: { favoriteTeamIds: [999] } },

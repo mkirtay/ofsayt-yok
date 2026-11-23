@@ -1,6 +1,6 @@
 /**
  * "Takımım" sezon paketi (büyüme raporu 2.8) — GERÇEK SQL (PGlite) + Prisma: krediyle al (tek işlem, defter), ikinci kez
- * yok, yetersiz kredi, bu sezon kapsama, paketle açılış kaydı (TEAM_PASS, ücretsiz), bayrak kapalıyken kapsama yok.
+ * yok, yetersiz kredi, bu sezon kapsama, paketle açılış kaydı (TEAM_PASS, ücretsiz).
  */
 import { afterAll, afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { startPgliteServer, type PgliteServer } from './pgliteServer';
@@ -23,7 +23,6 @@ afterAll(async () => {
   await server?.close();
 });
 afterEach(() => {
-  delete process.env.NEXT_PUBLIC_TEAM_PASS_ENABLED;
   delete process.env.TEAM_PASS_COST;
 });
 
@@ -35,7 +34,6 @@ describe('Takımım sezon paketi (PGlite + Prisma)', () => {
   });
 
   it('al → kapsama → paketle açılış; ikinci kez ve yetersiz kredi reddedilir', async () => {
-    process.env.NEXT_PUBLIC_TEAM_PASS_ENABLED = 'true';
     const u = await prisma.user.create({ data: { email: 'tp@ornek.example', credits: 12 } });
     const poor = await prisma.user.create({ data: { email: 'tp2@ornek.example', credits: 3 } });
     const gs = { id: 34, name: 'Galatasaray' };
@@ -68,8 +66,6 @@ describe('Takımım sezon paketi (PGlite + Prisma)', () => {
     expect(unlocks[0]).toMatchObject({ source: 'TEAM_PASS', creditTransactionId: null });
     expect((await prisma.user.findUnique({ where: { id: u.id } }))!.credits).toBe(2);
 
-    delete process.env.NEXT_PUBLIC_TEAM_PASS_ENABLED;
-    expect(await tp.teamPassCovers(u.id, [34])).toBe(false); // bayrak kapalı → DB'ye gitmez
   });
 
   it('fiyat ortamdan', () => {

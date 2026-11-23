@@ -1,15 +1,15 @@
 import { useEffect, useState } from 'react';
 import styles from './webPush.module.scss';
 import DigestOptIn from './DigestOptIn';
+import { VAPID_PUBLIC_KEY } from '@/config/webPush';
 import { trackGrowth } from '@/lib/growthEvents';
 
 /**
  * Favori takım bildirimleri (büyüme raporu 3.1) + ana ekrana ekle (3.2). Profil › Favorilerim'in üstünde.
  * Bildirim: service worker (/sw.js) + Push API aboneliği → /api/push/register (platform "web"). VAPID açık anahtarı
- * yoksa (NEXT_PUBLIC_VAPID_PUBLIC_KEY) ya da tarayıcı desteklemiyorsa bildirim bölümü görünmez.
+ * config/webPush.ts'te; tarayıcı desteklemiyorsa bildirim bölümü görünmez.
  */
-const VAPID = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? '';
-const DIGEST_ON = process.env.NEXT_PUBLIC_EMAIL_DIGEST_ENABLED === 'true';
+const VAPID = VAPID_PUBLIC_KEY;
 
 function urlBase64ToUint8Array(base64: string): Uint8Array {
   const pad = '='.repeat((4 - (base64.length % 4)) % 4);
@@ -75,7 +75,7 @@ export default function WebPushPanel() {
     }
   };
 
-  if (!supported && !install && !DIGEST_ON) return null;
+  // E-posta özeti izni her zaman görünür → panel her zaman çizilir.
   return (
     <section className={styles.panel} aria-labelledby="bildirimler">
       <h2 id="bildirimler" className={styles.title}>
@@ -97,7 +97,7 @@ export default function WebPushPanel() {
           )}
         </div>
       ) : null}
-      {DIGEST_ON ? <DigestOptIn /> : null}
+      <DigestOptIn />
       {install ? (
         <div className={styles.row}>
           <p className={styles.text}>Scor3&apos;ü ana ekranına ekle: uygulama gibi tek dokunuşla aç.</p>

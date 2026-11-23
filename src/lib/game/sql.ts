@@ -346,12 +346,13 @@ export function mySeasonTotalSql(season: string, userId: string): SqlQuery {
  * Özel lig sıralaması (büyüme raporu 2.2): üyeler, tahmin yapmamış olsa da (0 puan) listelenir; görünür ad takma ad,
  * yoksa "Oyuncu". Gizlenen satırlar (hiddenAt) sayılmaz. Eşitlikte tam skor → doğru yön → lige erken katılan.
  */
-const LEAGUE_ORDER = `ORDER BY points DESC, exact DESC, direction DESC, joined_at ASC, "userId" ASC`;
+const LEAGUE_ORDER = `ORDER BY points DESC, exact DESC, direction DESC, picks DESC, joined_at ASC, "userId" ASC`;
 
 export function leagueSeasonSql(leagueId: string, season: string): SqlQuery {
   return {
     text: `SELECT m."userId", COALESCE(u.username, 'Oyuncu') AS nickname, u.image, m."joinedAt" AS joined_at,
-  COALESCE(SUM(e."totalPoints"), 0)::int AS points, COALESCE(SUM(e."exactCount"), 0)::int AS exact, COALESCE(SUM(e."directionCount"), 0)::int AS direction
+  COALESCE(SUM(e."totalPoints"), 0)::int AS points, COALESCE(SUM(e."exactCount"), 0)::int AS exact, COALESCE(SUM(e."directionCount"), 0)::int AS direction,
+  (SELECT count(*)::int FROM "GamePrediction" gp JOIN "GameWeek" w ON w.id = gp."weekId" WHERE gp."userId" = m."userId" AND w.season = $2) AS picks
 FROM "GameLeagueMember" m JOIN "User" u ON u.id = m."userId"
 LEFT JOIN "GameWeekEntry" e ON e."userId" = m."userId" AND e.season = $2 AND e."hiddenAt" IS NULL
 WHERE m."leagueId" = $1
@@ -364,7 +365,8 @@ ${LEAGUE_ORDER}`,
 export function leagueWeekSql(leagueId: string, weekId: string): SqlQuery {
   return {
     text: `SELECT m."userId", COALESCE(u.username, 'Oyuncu') AS nickname, u.image, m."joinedAt" AS joined_at,
-  COALESCE(e."totalPoints", 0)::int AS points, COALESCE(e."exactCount", 0)::int AS exact, COALESCE(e."directionCount", 0)::int AS direction
+  COALESCE(e."totalPoints", 0)::int AS points, COALESCE(e."exactCount", 0)::int AS exact, COALESCE(e."directionCount", 0)::int AS direction,
+  (SELECT count(*)::int FROM "GamePrediction" gp WHERE gp."userId" = m."userId" AND gp."weekId" = $2) AS picks
 FROM "GameLeagueMember" m JOIN "User" u ON u.id = m."userId"
 LEFT JOIN "GameWeekEntry" e ON e."userId" = m."userId" AND e."weekId" = $2 AND e."hiddenAt" IS NULL
 WHERE m."leagueId" = $1

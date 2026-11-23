@@ -8,10 +8,9 @@ import { requireAuth } from '@/lib/requireAuth';
 import { getRequestAuth } from '@/lib/mobileAuth';
 import { limitRead, limitWrite, methodNotAllowed, queryString } from '@/server/game/http';
 import { PRIVATE_CACHE, withGameGate } from '@/server/game/access';
-import { LeagueError, leaveLeague, loadLeagueView, privateLeaguesEnabled } from '@/server/game/leagues';
+import { LeagueError, leaveLeague, loadLeagueView } from '@/server/game/leagues';
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (!privateLeaguesEnabled()) return res.status(404).json({ error: 'Not found' });
   if (req.method !== 'GET' && req.method !== 'DELETE') return methodNotAllowed(res, 'GET, DELETE');
   res.setHeader('Cache-Control', PRIVATE_CACHE);
   const code = queryString(req, 'code');

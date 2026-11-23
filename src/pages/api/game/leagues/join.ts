@@ -5,10 +5,9 @@ import { requireAuth } from '@/lib/requireAuth';
 import { readJsonBody } from '@/lib/gundem/validation';
 import { limitWrite, methodNotAllowed } from '@/server/game/http';
 import { PRIVATE_CACHE, withGameGate } from '@/server/game/access';
-import { joinLeague, LeagueError, privateLeaguesEnabled } from '@/server/game/leagues';
+import { joinLeague, LeagueError } from '@/server/game/leagues';
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (!privateLeaguesEnabled()) return res.status(404).json({ error: 'Not found' });
   if (req.method !== 'POST') return methodNotAllowed(res, 'POST');
   res.setHeader('Cache-Control', PRIVATE_CACHE);
   const guard = await requireAuth(req, res);

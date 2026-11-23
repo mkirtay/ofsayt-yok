@@ -1,20 +1,18 @@
 import { useEffect, useState } from 'react';
 import styles from './webPush.module.scss';
 
-/** Haftalık e-posta özeti açık izni (büyüme raporu 3.3) — kutu işaretlenmeden izin yok; bayrak kapalıyken görünmez. */
-const ON = process.env.NEXT_PUBLIC_EMAIL_DIGEST_ENABLED === 'true';
+/** Haftalık e-posta özeti açık izni (büyüme raporu 3.3) — kutu işaretlenmeden izin yok (varsayılan kapalı). */
 
 export default function DigestOptIn() {
   const [optIn, setOptIn] = useState<boolean | null>(null);
   const [busy, setBusy] = useState(false);
   useEffect(() => {
-    if (!ON) return;
     fetch('/api/user/digest')
       .then((r) => (r.ok ? r.json() : null))
       .then((d: { optIn: boolean } | null) => setOptIn(d?.optIn ?? false))
       .catch(() => setOptIn(false));
   }, []);
-  if (!ON || optIn === null) return null;
+  if (optIn === null) return null;
   const change = async (next: boolean) => {
     setBusy(true);
     try {

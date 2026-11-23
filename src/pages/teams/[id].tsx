@@ -21,8 +21,6 @@ import type { InitialTeamOverview } from '@/hooks/useTeamOverview';
 import type { TeamOverview } from '@/services/sportmonks/teamOverview';
 import { stripUndefined } from '@/utils/homeInitialData';
 
-const TEAM_PASS_ON = process.env.NEXT_PUBLIC_TEAM_PASS_ENABLED === 'true';
-
 type TeamPageProps = {
   /** Paylaşım etiketleri için (sunucuda, ISR); geçici hatada null — sayfa yine istemcide yüklenir. */
   teamName: string | null;
@@ -146,8 +144,8 @@ export default function TeamDetail({ teamName, ogImagePath, facts, initialOvervi
         initialHeader={teamName ? { name: teamName, logo: facts?.logo ?? null } : null}
         initialOverview={initialOverview}
       />
-      {/* Büyüme raporu 2.8 — "Takımım" sezon paketi (krediyle; yalnız Süper Lig, bayrak açıkken). */}
-      {TEAM_PASS_ON && teamName && facts?.league?.slug === 'super-lig' ? <TeamPassCard teamId={Number(teamId)} teamName={teamName} /> : null}
+      {/* Büyüme raporu 2.8 — "Takımım" sezon paketi (krediyle; yalnız Süper Lig). */}
+      {teamName && facts?.league?.slug === 'super-lig' ? <TeamPassCard teamId={Number(teamId)} teamName={teamName} /> : null}
       {summary.length ? (
         <section className={styles.about} aria-labelledby="takim-hakkinda">
           <h2 id="takim-hakkinda" className={styles.aboutTitle}>{teamName} hakkında</h2>

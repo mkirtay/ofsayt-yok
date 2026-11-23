@@ -1,4 +1,4 @@
-/** Haftalık e-posta özeti izni (büyüme raporu 3.3) — GET: durum; POST { optIn: boolean }. Arayüz bayrağı kapalıysa 404. */
+/** Haftalık e-posta özeti izni (büyüme raporu 3.3) — GET: durum; POST { optIn: boolean }. */
 import type { NextApiRequest, NextApiResponse } from 'next';
 import { requireAuth } from '@/lib/requireAuth';
 import { captureError } from '@/lib/logger';
@@ -6,7 +6,6 @@ import { readJsonBody } from '@/lib/gundem/validation';
 import { digestOptedIn, setDigestOptIn } from '@/lib/weeklyDigest';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (process.env.NEXT_PUBLIC_EMAIL_DIGEST_ENABLED !== 'true') return res.status(404).json({ error: 'Not found' });
   if (req.method !== 'GET' && req.method !== 'POST') {
     res.setHeader('Allow', 'GET, POST');
     return res.status(405).end();

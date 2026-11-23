@@ -4,7 +4,7 @@
  *    arttıysa "⚽ GOL!" bildirimi. Son skor Redis'te (`push:score:{id}`), ilk görüşte yalnız kaydedilir (eski goller atılmaz).
  *  - KADRO: bugünün başlamamış maçlarında resmî kadro (`confirmed`) ilk görüldüğünde "Kadrolar açıklandı" (bir kez).
  * Yalnız web aboneliği olan ve favori takımı olan kullanıcılar; abonelik yoksa Sportmonks'a hiç gidilmez.
- * Bayrak: WEB_PUSH_ENABLED=true + VAPID anahtarları (lib/webPush.ts).
+ * Gönderim için yalnız VAPID_PRIVATE_KEY gerekir (lib/webPush.ts).
  */
 import { prisma } from '@/lib/prisma';
 import { readCache, writeCache } from '@/lib/livescoreCache';

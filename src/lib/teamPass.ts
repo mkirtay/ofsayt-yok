@@ -3,7 +3,6 @@
  * sezonun hazır AI analizleri (ön üretim Süper Lig'in tamamını ve Türk takımlarının Avrupa maçlarını kapsar,
  * server/analysisPregen.ts) kilitsiz açılır. Tek seferlik: abonelik yok, yenileme yok; sezon bitince geçersiz.
  *
- * Bayrak: NEXT_PUBLIC_TEAM_PASS_ENABLED=true (migration 20261122130000_team_pass uygulanmadan açılmaz).
  * Fiyat: TEAM_PASS_COST (varsayılan 10 kredi = 10'luk paket; bir takımın sezonda ~40 analizi).
  * Ödeme yok → Hikie / mesafeli satış değişikliği gerekmez; yalnız yeni bir kredi harcama türü (TEAM_PASS).
  */
@@ -12,10 +11,6 @@ import { InsufficientCreditsError, isUniqueViolation } from '@/lib/credits';
 import { todayIsoIstanbul } from '@/utils/dateStrip';
 
 export const DEFAULT_TEAM_PASS_COST = 10;
-
-export function teamPassEnabled(): boolean {
-  return process.env.NEXT_PUBLIC_TEAM_PASS_ENABLED === 'true';
-}
 
 export function teamPassCost(): number {
   const n = Number(process.env.TEAM_PASS_COST);
@@ -75,7 +70,6 @@ export async function buyTeamPass(
 
 /** Bu sezon iki takımdan birinin paketi var mı (analiz kilidi). */
 export async function teamPassCovers(userId: string, teamIds: ReadonlyArray<number | string | null | undefined>, now: number = Date.now()): Promise<boolean> {
-  if (!teamPassEnabled()) return false;
   const ids = teamIds.map(Number).filter((n) => Number.isInteger(n) && n > 0);
   if (!ids.length) return false;
   const row = await prisma.teamPass.findFirst({ where: { userId, season: passSeason(now), teamId: { in: ids } }, select: { id: true } });
