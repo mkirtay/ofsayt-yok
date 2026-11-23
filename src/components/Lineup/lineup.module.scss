@@ -932,3 +932,151 @@ a.compactRow:focus-visible {
     font-size: 11px;
   }
 }
+
+// ── Saha | Reytingler sekmeleri + reyting listesi ─────────────────────────────
+
+.viewTabs {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  margin-bottom: $spacing-3;
+  border-radius: 999px;
+  background: $color-bg;
+  border: 1px solid $color-border;
+}
+
+.viewTab {
+  min-height: 32px;
+  padding: 0 $spacing-4;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  color: $color-text-secondary;
+  font: inherit;
+  font-size: var(--fs-meta);
+  font-weight: 700;
+  cursor: pointer;
+
+  &[aria-selected='true'] {
+    background: var(--color-action-strong);
+    color: var(--color-on-action);
+  }
+
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+    outline-offset: 2px;
+  }
+}
+
+.ratings {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-3;
+}
+
+.ratingsBar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-2;
+}
+
+.ratingsFilter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+
+.ratingsChip,
+.ratingsSort {
+  min-height: 32px;
+  max-width: 180px;
+  padding: 0 $spacing-3;
+  border: 1px solid $color-border;
+  border-radius: 999px;
+  background: $color-surface;
+  color: $color-text;
+  font: inherit;
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+    outline-offset: 2px;
+  }
+}
+
+.ratingsChip[aria-pressed='true'] {
+  border-color: $color-primary;
+  color: $color-primary-text;
+  background: $color-row-highlight;
+}
+
+.ratingsSort {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  span {
+    font-size: var(--fs-body);
+    color: $color-primary-text;
+  }
+}
+
+.ratingsList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ratingsRow {
+  display: grid;
+  grid-template-columns: 24px 28px minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: $spacing-2;
+  min-height: 44px;
+  padding: 6px $spacing-2;
+  border-radius: $radius-sm;
+  background-color: $color-bg;
+  border-left: 3px solid var(--lineup-side, #{$color-primary});
+  color: inherit;
+  text-decoration: none;
+  font-size: var(--fs-meta);
+
+  &[data-side='away'] {
+    --lineup-side: #{$color-text-secondary};
+  }
+
+  &:hover {
+    background-color: $color-muted;
+  }
+}
+
+.ratingsRank {
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  color: $color-text-secondary;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.ratingsCaptain {
+  font-weight: 500;
+  color: $color-text-secondary;
+}
+
+.ratingsTeamLogo {
+  width: 14px;
+  height: 14px;
+  object-fit: contain;
+  flex-shrink: 0;
+}

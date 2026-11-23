@@ -66,6 +66,20 @@
       "secondYellow": "ikinci sarıdan kırmızı kart",
       "subIn": "{{minute}}. dakikada oyuna girdi",
       "subOut": "{{minute}}. dakikada oyundan çıktı"
+    },
+    "ratings": {
+      "tab": "Reytingler",
+      "pitchTab": "Saha",
+      "viewLabel": "Kadro görünümü",
+      "filterLabel": "Takım",
+      "all": "Tümü",
+      "sortDesc": "Yüksekten düşüğe",
+      "sortAsc": "Düşükten yükseğe",
+      "sortDescAria": "Sıralama: yüksekten düşüğe. Ters çevirmek için dokun.",
+      "sortAscAria": "Sıralama: düşükten yükseğe. Ters çevirmek için dokun.",
+      "none": "Bu takım için reyting yok.",
+      "subIn": "{{minute}}' girdi",
+      "subOut": "{{minute}}' çıktı"
     }
   },
   "h2h": {

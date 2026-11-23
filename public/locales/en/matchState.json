@@ -69,6 +69,20 @@
       "secondYellow": "second yellow, sent off",
       "subIn": "came on in minute {{minute}}",
       "subOut": "subbed off in minute {{minute}}"
+    },
+    "ratings": {
+      "tab": "Ratings",
+      "pitchTab": "Pitch",
+      "viewLabel": "Lineup view",
+      "filterLabel": "Team",
+      "all": "All",
+      "sortDesc": "High to low",
+      "sortAsc": "Low to high",
+      "sortDescAria": "Sorted high to low. Tap to reverse.",
+      "sortAscAria": "Sorted low to high. Tap to reverse.",
+      "none": "No ratings for this team.",
+      "subIn": "on {{minute}}'",
+      "subOut": "off {{minute}}'"
     }
   },
   "h2h": {

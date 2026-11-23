@@ -14,6 +14,7 @@ import { formatRating } from '@/config/ratingScale';
 import RatingBadge from '@/components/RatingBadge';
 import LoadError from '@/components/LoadError';
 import styles from './lineup.module.scss';
+import RatingsList, { rankPlayers } from './RatingsList';
 
 // Ekranın altında: sahne ve CSS'i ayrı parçada (ana sayfanın maç paneliyle ilk yüke girmesin). Kutu burada.
 const loadFormationLoading = () => import('@/components/PitchScenes/FormationLoading');
@@ -416,6 +417,8 @@ function LineupLoading({ probable }: { probable: boolean }) {
 
 export default function Lineup({ lineups, events, loading, match, error, onRetry }: LineupProps) {
   const { t } = useTranslation('matchState');
+  // İki görünüm: Saha (diziliş) | Reytingler (sıralı liste). Reyting yoksa sekme şeridi hiç çizilmez.
+  const [view, setView] = useState<'pitch' | 'ratings'>('pitch');
   const state = match ? matchDisplayState(match) : null;
   const phase = state?.phase ?? 'POST';
 
@@ -469,10 +472,44 @@ export default function Lineup({ lineups, events, loading, match, error, onRetry
   // DOM sırası iki yönde de aynı (yatayda CSS hatları sütuna çevirir).
   const awayRows = [...awayLayout.rows].reverse();
 
+  const hasRatings = showStats && rankPlayers(homePlayers, awayPlayers, 'desc', 'all').length > 0;
+  const activeView = hasRatings ? view : 'pitch';
+
   return (
     <div className={styles.lineupContainer}>
       <LineupTitle probable={probable} />
 
+      {hasRatings ? (
+        <div className={styles.viewTabs} role="tablist" aria-label={t('lineup.ratings.viewLabel')}>
+          {(['pitch', 'ratings'] as const).map((v) => (
+            <button
+              key={v}
+              type="button"
+              role="tab"
+              id={`lineup-tab-${v}`}
+              aria-selected={activeView === v}
+              aria-controls={`lineup-panel-${v}`}
+              className={styles.viewTab}
+              onClick={() => setView(v)}
+            >
+              {t(v === 'pitch' ? 'lineup.ratings.pitchTab' : 'lineup.ratings.tab')}
+            </button>
+          ))}
+        </div>
+      ) : null}
+
+      {activeView === 'ratings' ? (
+        <div role="tabpanel" id="lineup-panel-ratings" aria-labelledby="lineup-tab-ratings">
+          <RatingsList
+            homePlayers={homePlayers}
+            awayPlayers={awayPlayers}
+            home={{ name: homeTeamName, logo: match?.home?.logo }}
+            away={{ name: awayTeamName, logo: match?.away?.logo }}
+            eventsById={eventsById}
+          />
+        </div>
+      ) : (
+      <div {...(hasRatings ? { role: 'tabpanel', id: 'lineup-panel-pitch', 'aria-labelledby': 'lineup-tab-pitch' } : {})}>
       <div className={styles.pitchWrap}>
         <div className={styles.pitchCol}>
           <TeamBar name={homeTeamName} formation={homeLayout.label} side="home" />
@@ -494,6 +531,8 @@ export default function Lineup({ lineups, events, loading, match, error, onRetry
           </div>
         </section>
       ) : null}
+      </div>
+      )}
     </div>
   );
 }
