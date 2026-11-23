@@ -28,19 +28,32 @@ import {
   storyId,
   type NewsCandidate,
   type WrittenArticle,
+  uniqueSources,
+  usageCostMicroUsd,
+  writesAffordable,
 } from './aiNewsCore';
 
 export const NEWS_MODEL = 'claude-haiku-5-5';
-const MAX_NEW_PER_RUN = 4;
+const MAX_NEW_PER_RUN = 3;
 const MAX_CANDIDATES = 90;
-const DAILY_WRITE_CAP = 80;
-export const NEWS_REFRESH_INTERVAL_MS = 15 * 60_000;
+const DAILY_WRITE_CAP = 40;
+/** Günlük harcama tavanı (USD, gerçek kullanımdan ölçülür). Kullanıcı kararı 2026-11-23: günde ~1–2 $. */
+const DAILY_BUDGET_USD = Number(process.env.NEWS_DAILY_BUDGET_USD) || 1.5;
+/** Yazılabilecek haber sayısını hesaplarken haber başına ayrılan pay (gerçek ölçüm: bkz. yorum aşağıda). */
+const EST_ARTICLE_MICRO_USD = 40_000;
+export const NEWS_REFRESH_INTERVAL_MS = 20 * 60_000;
 const LOCK_TTL_SEC = 150;
 const STORE_TTL_SEC = 3 * 24 * 60 * 60;
 
 const keys = () => {
   const p = `${cacheKeyPrefix()}news:ai:v1:`;
-  return { store: `${p}store`, lastRun: `${p}last-run`, lock: `${p}lock`, daily: (d: string) => `${p}writes:${d}` };
+  return {
+    store: `${p}store`,
+    lastRun: `${p}last-run`,
+    lock: `${p}lock`,
+    daily: (d: string) => `${p}writes:${d}`,
+    spend: (d: string) => `${p}spend-micro-usd:${d}`,
+  };
 };
 
 let client: Anthropic | null = null;
@@ -98,6 +111,14 @@ async function fetchArticleText(url: string): Promise<string> {
   }
 }
 
+/** Bir çalışmanın ölçülen harcaması (mikro-dolar); her API yanıtından sonra eklenir. */
+type Spend = { micro: number; calls: number; searches: number };
+function track(spend: Spend, res: Anthropic.Message): void {
+  spend.micro += usageCostMicroUsd(res.usage);
+  spend.calls += 1;
+  spend.searches += res.usage.server_tool_use?.web_search_requests ?? 0;
+}
+
 // ─── Seçim ─────────────────────────────────────────────────────────────────
 
 const SELECT_SYSTEM = `Sen bir Türk futbol sitesinin (Scor3) haber editörüsün. Sana son 24 saatte yayınlanmış RSS haber adayları verilecek.
@@ -130,6 +151,7 @@ const SELECT_SCHEMA = {
 
 async function selectStories(
   ai: Anthropic,
+  spend: Spend,
   cands: NewsCandidate[],
   published: NewsItem[],
   max: number,
@@ -147,6 +169,7 @@ async function selectStories(
       },
     ],
   });
+  track(spend, res);
   if (res.stop_reason === 'refusal') return [];
   const text = res.content.flatMap((b) => (b.type === 'text' ? [b.text] : [])).join('');
   let parsed: unknown = null;
@@ -170,6 +193,7 @@ const WRITE_SYSTEM = `Sen Scor3'ün futbol muhabirisin. Verilen kaynak haberlerd
 - Bahis, iddaa, oran, kupon dili kullanma. Tık tuzağı başlık kullanma. Kaynağın adını ("... sitesine göre") metne yazma.
 - Kaynak metinlerde sayfadan gelen konu dışı cümleler (başka haberlerin parçaları) olabilir; başlıktaki olayla ilgisi olmayanları yok say.
 - Kaynak İngilizceyse Türkçeye çevirerek yaz.
+- Metne <cite>, dipnot, köşeli parantezli numara ya da bağlantı koyma; düz metin yaz.
 
 Biçim (yalnız bunu döndür, başka metin yok):
 <article_json>{"title": "...", "summary": "...", "paragraphs": ["...", "..."], "keyPoints": ["...", "..."]}</article_json>
@@ -188,7 +212,7 @@ function hostName(url: string): string {
   }
 }
 
-async function writeStory(ai: Anthropic, group: NewsCandidate[]): Promise<WriteResult | null> {
+async function writeStory(ai: Anthropic, spend: Spend, group: NewsCandidate[]): Promise<WriteResult | null> {
   const texts = await Promise.all(group.slice(0, 3).map((c) => fetchArticleText(c.url)));
   const sourceBlocks = group
     .slice(0, 3)
@@ -223,6 +247,7 @@ async function writeStory(ai: Anthropic, group: NewsCandidate[]): Promise<WriteR
       tools,
       messages,
     });
+    track(spend, res);
     content.push(...res.content);
     if (res.stop_reason !== 'pause_turn') break;
     messages.push({ role: 'assistant', content: res.content });
@@ -246,9 +271,8 @@ async function writeStory(ai: Anthropic, group: NewsCandidate[]): Promise<WriteR
 function toNewsItem(group: NewsCandidate[], written: WriteResult): NewsItem {
   const primary = group[0];
   const newest = group.reduce((a, b) => (Date.parse(b.publishedAt) > Date.parse(a.publishedAt) ? b : a));
-  const rssSources = group.map((c) => ({ name: c.source, url: c.url }));
-  const seen = new Set(rssSources.map((s) => s.url));
-  const extra = written.searchSources.filter((s) => (seen.has(s.url) ? false : (seen.add(s.url), true))).slice(0, 3);
+  const rssSources = uniqueSources(group.map((c) => ({ name: c.source, url: c.url })), 4);
+  const sources = uniqueSources([...rssSources, ...written.searchSources], rssSources.length + 2);
   return {
     id: storyId(primary.url),
     title: written.article.title,
@@ -259,7 +283,7 @@ function toNewsItem(group: NewsCandidate[], written: WriteResult): NewsItem {
     content: written.article.paragraphs.join('\n'),
     keyPoints: written.article.keyPoints,
     image: group.find((c) => c.image)?.image,
-    sources: [...rssSources, ...extra],
+    sources,
     ai: true,
   };
 }
@@ -267,7 +291,10 @@ function toNewsItem(group: NewsCandidate[], written: WriteResult): NewsItem {
 // ─── Çalıştırma ────────────────────────────────────────────────────────────
 
 export type NewsRefreshSummary = {
-  skipped?: 'disabled' | 'locked' | 'cap';
+  skipped?: 'disabled' | 'locked' | 'cap' | 'budget';
+  /** Bu çalışmanın ölçülen maliyeti ve günün toplamı (USD). */
+  costUsd?: number;
+  spentTodayUsd?: number;
   candidates?: number;
   selected?: number;
   written?: number;
@@ -284,22 +311,36 @@ export async function refreshNews(now: number = Date.now()): Promise<NewsRefresh
   if (locked !== 'OK') return { skipped: 'locked' };
   await withRedis((r) => r.set(k.lastRun, now, { ex: STORE_TTL_SEC }), null);
 
+  const spend: Spend = { micro: 0, calls: 0, searches: 0 };
+  const day = new Date(now).toLocaleDateString('en-CA', { timeZone: 'Europe/Istanbul' });
   try {
-    const day = new Date(now).toISOString().slice(0, 10);
+    // Harcama sayacı okunamıyorsa (Redis yok/erişilemez) bütçe bilinmez → çalışma yapılmaz (fazla harcama riski yok).
+    const spentRaw = await withRedis((r) => r.get<number>(k.spend(day)), -1);
+    if (spentRaw === -1) return { skipped: 'budget' };
+    const spentToday = Number(spentRaw ?? 0);
+    const budgetMicro = Math.round(DAILY_BUDGET_USD * 1_000_000);
     const writesToday = Number((await withRedis((r) => r.get<number>(k.daily(day)), 0)) ?? 0);
-    const room = Math.min(MAX_NEW_PER_RUN, DAILY_WRITE_CAP - writesToday);
+    // Seçim çağrısı için ~2 bin mikro-dolar pay bırakılır.
+    const room = Math.min(
+      DAILY_WRITE_CAP - writesToday,
+      writesAffordable(budgetMicro - spentToday - 2_000, EST_ARTICLE_MICRO_USD, MAX_NEW_PER_RUN),
+    );
 
     const store = await readNewsStore();
     const covered = coveredUrls(store);
     const cands = (await fetchNewsCandidates(now)).filter((c) => !covered.has(c.url)).slice(0, MAX_CANDIDATES);
     if (room <= 0) {
       await saveStore(mergeStore(store, [], now));
-      return { skipped: 'cap', candidates: cands.length };
+      return {
+        skipped: spentToday + EST_ARTICLE_MICRO_USD > budgetMicro ? 'budget' : 'cap',
+        candidates: cands.length,
+        spentTodayUsd: spentToday / 1_000_000,
+      };
     }
 
     const published = store.filter((n) => isFresh(n.publishedAt, now));
-    const groups = cands.length ? await selectStories(ai, cands, published, room) : [];
-    const results = await Promise.allSettled(groups.map((g) => writeStory(ai, g)));
+    const groups = cands.length ? await selectStories(ai, spend, cands, published, room) : [];
+    const results = await Promise.allSettled(groups.map((g) => writeStory(ai, spend, g)));
     const added: NewsItem[] = [];
     let failed = 0;
     results.forEach((r, i) => {
@@ -318,8 +359,23 @@ export async function refreshNews(now: number = Date.now()): Promise<NewsRefresh
         await r.expire(k.daily(day), 2 * 24 * 60 * 60);
       }, null);
     }
-    return { candidates: cands.length, selected: groups.length, written: added.length, failed, total: next.length };
+    return {
+      candidates: cands.length,
+      selected: groups.length,
+      written: added.length,
+      failed,
+      total: next.length,
+      costUsd: spend.micro / 1_000_000,
+      spentTodayUsd: (spentToday + spend.micro) / 1_000_000,
+    };
   } finally {
+    // Ölçülen harcama, çalışma yarıda hata verse de sayaca yazılır.
+    if (spend.micro > 0) {
+      await withRedis(async (r) => {
+        await r.incrby(k.spend(day), spend.micro);
+        await r.expire(k.spend(day), 3 * 24 * 60 * 60);
+      }, null);
+    }
     await withRedis((r) => r.del(k.lock), null);
   }
 }

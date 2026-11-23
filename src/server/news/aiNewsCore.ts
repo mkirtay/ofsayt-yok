@@ -78,6 +78,20 @@ export type WrittenArticle = {
   keyPoints: string[];
 };
 
+/**
+ * Model web araması sonrası metne bazen alıntı etiketi yazıyor (`<cite index="3-4">…</cite>`, bozuk biçimi
+ * `(cite index="3-4">…`). Etiketler atılır, içerik kalır; kalan çift boşluk ve boş parantez temizlenir.
+ */
+export function cleanText(s: string): string {
+  return s
+    .replace(/<?\/\s*cite\s*>?\)?/gi, '')
+    .replace(/\(?\s*<?\s*cite\b[^>]*>/gi, '')
+    .replace(/\(\s*\)/g, '')
+    .replace(/\s+([,.;:])/g, '$1')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+}
+
 /** Yazım yanıtındaki `<article_json>{…}</article_json>` bloğunu (yoksa ilk `{…}`) çözer; eksik/kısa yazıyı reddeder. */
 export function parseWrittenArticle(text: string): WrittenArticle | null {
   const tagged = text.match(/<article_json>([\s\S]*?)<\/article_json>/)?.[1];
@@ -90,7 +104,7 @@ export function parseWrittenArticle(text: string): WrittenArticle | null {
     return null;
   }
   const d = data as Record<string, unknown>;
-  const str = (v: unknown) => (typeof v === 'string' ? v.trim() : '');
+  const str = (v: unknown) => (typeof v === 'string' ? cleanText(v) : '');
   const list = (v: unknown) =>
     Array.isArray(v) ? v.map(str).filter((x) => x.length > 0) : [];
   const title = str(d.title);
@@ -125,4 +139,51 @@ export function storyId(primaryUrl: string): string {
   let h = 0;
   for (let i = 0; i < primaryUrl.length; i++) h = ((h << 5) - h + primaryUrl.charCodeAt(i)) | 0;
   return `h${Math.abs(h).toString(36)}`;
+}
+
+/** Kaynak listesi: URL ve ad bakımından tekil, en çok `max` (önce RSS kaynakları). */
+export function uniqueSources(list: { name: string; url: string }[], max = 6): { name: string; url: string }[] {
+  const names = new Set<string>();
+  const urls = new Set<string>();
+  const out: { name: string; url: string }[] = [];
+  for (const s of list) {
+    if (!s.url || urls.has(s.url) || names.has(s.name)) continue;
+    urls.add(s.url);
+    names.add(s.name);
+    out.push(s);
+    if (out.length >= max) break;
+  }
+  return out;
+}
+
+/**
+ * Claude Haiku 5.5 fiyatı (istem ≤ 100K token; 2026-11): girdi $0.10/MTok, çıktı $0.50/MTok, önbellek okuma girdinin
+ * %10'u, web araması $10 / 1000. Döndürülen birim mikro-dolar (Redis INCRBY tam sayı ister).
+ */
+export const HAIKU_PRICE = { inputPerM: 0.1, outputPerM: 0.5, cacheReadPerM: 0.01, cacheWritePerM: 0.125, perSearch: 0.01 };
+
+export type UsageLike = {
+  input_tokens: number;
+  output_tokens: number;
+  cache_read_input_tokens?: number | null;
+  cache_creation_input_tokens?: number | null;
+  server_tool_use?: { web_search_requests?: number | null } | null;
+};
+
+export function usageCostMicroUsd(u: UsageLike): number {
+  const p = HAIKU_PRICE;
+  const usd =
+    (u.input_tokens * p.inputPerM +
+      u.output_tokens * p.outputPerM +
+      (u.cache_read_input_tokens ?? 0) * p.cacheReadPerM +
+      (u.cache_creation_input_tokens ?? 0) * p.cacheWritePerM) /
+      1_000_000 +
+    (u.server_tool_use?.web_search_requests ?? 0) * p.perSearch;
+  return Math.ceil(usd * 1_000_000);
+}
+
+/** Kalan günlük bütçeyle bu çalışmada yazılabilecek haber sayısı (haber başına tahmini maliyetle). */
+export function writesAffordable(remainingMicroUsd: number, perArticleMicroUsd: number, max: number): number {
+  if (remainingMicroUsd <= 0) return 0;
+  return Math.max(0, Math.min(max, Math.floor(remainingMicroUsd / perArticleMicroUsd)));
 }

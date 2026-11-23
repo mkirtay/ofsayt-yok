@@ -2,6 +2,10 @@ import { describe, expect, it } from 'vitest';
 import type { NewsItem } from '@/models/domain';
 import {
   NEWS_MAX_AGE_MS,
+  cleanText,
+  uniqueSources,
+  usageCostMicroUsd,
+  writesAffordable,
   coveredUrls,
   isFresh,
   mergeStore,
@@ -83,5 +87,35 @@ describe('mergeStore / coveredUrls / storyId', () => {
     expect(storyId('https://x.test/1')).toBe(storyId('https://x.test/1'));
     expect(storyId('https://x.test/1')).not.toBe(storyId('https://x.test/2'));
     expect(storyId('https://x.test/1')).toMatch(/^h[0-9a-z]+$/);
+  });
+});
+
+describe('cleanText / uniqueSources', () => {
+  it('alıntı etiketlerini (düzgün ve bozuk) atar, içeriği bırakır', () => {
+    expect(cleanText('Skor 2-2. (cite index="3-4,3-5">İki takım 20 puan.</cite> Sonra')).toBe('Skor 2-2. İki takım 20 puan. Sonra');
+    expect(cleanText('Gol (cite index="5-6">61. dakikada</cite> geldi.')).toBe('Gol 61. dakikada geldi.');
+    expect(cleanText('Haber (cite index="15-6"></cite)Sozcu')).toBe('Haber Sozcu');
+  });
+
+  it('kaynaklar ad ve URL bakımından tekil, sınırlı', () => {
+    const out = uniqueSources([
+      { name: 'A', url: 'u1' }, { name: 'A', url: 'u2' }, { name: 'B', url: 'u1' }, { name: 'B', url: 'u3' }, { name: 'C', url: 'u4' },
+    ], 2);
+    expect(out).toEqual([{ name: 'A', url: 'u1' }, { name: 'B', url: 'u3' }]);
+  });
+});
+
+describe('usageCostMicroUsd / writesAffordable', () => {
+  it('token + arama maliyeti mikro-dolar', () => {
+    // 20K girdi ($0.002) + 3K çıktı ($0.0015) + 2 arama ($0.02) = $0.0235
+    expect(usageCostMicroUsd({ input_tokens: 20_000, output_tokens: 3_000, server_tool_use: { web_search_requests: 2 } })).toBe(23_500);
+    expect(usageCostMicroUsd({ input_tokens: 0, output_tokens: 0 })).toBe(0);
+  });
+
+  it('kalan bütçeye göre yazım sayısı', () => {
+    expect(writesAffordable(1_500_000, 40_000, 3)).toBe(3);
+    expect(writesAffordable(90_000, 40_000, 3)).toBe(2);
+    expect(writesAffordable(10_000, 40_000, 3)).toBe(0);
+    expect(writesAffordable(-5, 40_000, 3)).toBe(0);
   });
 });
