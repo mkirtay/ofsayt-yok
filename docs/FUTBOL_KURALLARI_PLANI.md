@@ -57,3 +57,17 @@ Kalan fikirler: #6 direkt/endirekt serbest vuruş, #7 avantaj, #10 oyuncu deği�
 Yayın öncesi teyit (IFAB Kural 7): uzatmaya eklenen kalemler, dördüncü hakemin gösterdiği sürenin "en az" olması ve
 kısaltılamaması, devreden süre aktarılmaması, devre sonunda penaltının tamamlanması, uzatma devrelerinin en fazla 15'er
 dakika olması, altın golün uygulanmaması, seri penaltının skora eklenmemesi.
+
+## Eklenen: Penaltı, Saha ölçüleri, Kaleci kuralları (2026-11-23, Reels → rehber)
+
+`/futbol-kurallari/penalti` (#3, Kural 14 + Kural 10), `/futbol-kurallari/saha-olculeri` (#9, Kural 1, ceza sahası SVG şeması
+`PitchDiagram`), `/futbol-kurallari/kaleci-kurallari` (#16, #11, #30). Penaltı serisi, "Her saha aynı mı" ve Ceni videolarının
+kalıcı karşılığı; videolar sosyal medyada, sayfalarda metin + şema + SSS.
+
+Yayın öncesi teyit (IFAB 2026/27 kitabı):
+- Penaltı tekrar tablosu (kaleci / hücum / savunma / iki taraf erken giriş, koşu sonrası aldatma) ve kalecinin ilk ihlalde uyarı,
+  sonrakinde sarı kart.
+- Maç içi penaltıda kazara çift vuruşun güncel yaptırımı (sayfada yalnız "ikinci kez dokunamaz → endirekt" yazıyor).
+- Saha aralıkları (90–120 × 45–90; uluslararası 100–110 × 64–75), çizgi ≤ 12 cm, korner bayrağı ≥ 1,5 m.
+- Kaleci 8 saniye → korner (2025-26), sahada tedavi edilen kalecinin çıkma zorunluluğu olmaması.
+- Rogério Ceni gol sayısı (131; bazı kaynaklar 132).
