@@ -4,7 +4,7 @@
   text-align: center;
   padding: $spacing-8;
   color: $color-text-secondary;
-  font-size: 16px;
+  font-size: var(--fs-title);
 }
 
 .notFound {
@@ -19,7 +19,7 @@
   }
 
   p {
-    font-size: 14px;
+    font-size: var(--fs-body);
     margin-bottom: $spacing-4;
   }
 }
@@ -27,7 +27,7 @@
 .backLink {
   display: inline-block;
   padding: $spacing-2 $spacing-4;
-  font-size: 13px;
+  font-size: var(--fs-meta);
   font-weight: 600;
   color: $color-surface;
   background: $color-primary;
@@ -65,7 +65,7 @@
   display: flex;
   align-items: center;
   gap: $spacing-1;
-  font-size: 13px;
+  font-size: var(--fs-meta);
   color: $color-text-secondary;
 }
 
@@ -101,7 +101,7 @@
 
 .body {
   padding: $spacing-5;
-  font-size: 15px;
+  font-size: var(--fs-section);
   line-height: 1.75;
   color: $color-text;
 
@@ -124,7 +124,7 @@
 .sourceLink {
   display: inline-block;
   padding: $spacing-2 $spacing-4;
-  font-size: 13px;
+  font-size: var(--fs-meta);
   font-weight: 600;
   color: $color-primary;
   border: 1px solid $color-primary;
@@ -150,8 +150,98 @@
 .sidebarTitle {
   padding: $spacing-3 $spacing-4;
   margin: 0;
-  font-size: 14px;
+  font-size: var(--fs-body);
   font-weight: 700;
   color: $color-text;
   border-bottom: 1px solid $color-border;
+}
+
+.sidebarAll {
+  display: block;
+  padding: $spacing-3 $spacing-4;
+  border-top: 1px solid $color-border;
+  font-size: var(--fs-meta);
+  font-weight: 600;
+  color: $color-primary-text;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+// ── AI haberi ──
+
+.body .lead {
+  font-size: var(--fs-title);
+  font-weight: 600;
+  line-height: 1.6;
+}
+
+.keyPoints {
+  margin: 0 0 $spacing-4;
+  padding: $spacing-3 $spacing-4;
+  background: $color-muted;
+  border-left: 3px solid var(--color-action);
+  border-radius: $radius-sm;
+
+  ul {
+    margin: 0;
+    padding-left: $spacing-4;
+    font-size: var(--fs-body);
+    line-height: 1.6;
+  }
+
+  li + li {
+    margin-top: $spacing-1;
+  }
+}
+
+.keyPointsTitle {
+  margin: 0 0 $spacing-2;
+  font-size: var(--fs-meta);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: $color-text-secondary;
+}
+
+.aiNote {
+  margin: 0 0 $spacing-3;
+  font-size: var(--fs-meta);
+  color: $color-text-secondary;
+}
+
+.sourcesTitle {
+  margin: 0 0 $spacing-2;
+  font-size: var(--fs-meta);
+  font-weight: 700;
+  color: $color-text;
+}
+
+.sources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-2;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 32px;
+    padding: 0 $spacing-3;
+    font-size: var(--fs-meta);
+    font-weight: 600;
+    color: $color-primary-text;
+    border: 1px solid $color-border;
+    border-radius: $radius-full;
+    text-decoration: none;
+    transition: $transition-base;
+
+    &:hover {
+      background: $color-muted;
+    }
+  }
 }

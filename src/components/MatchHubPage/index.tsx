@@ -104,6 +104,7 @@ const TeamDetailPanel = dynamic(loadTeamDetailPanel, { ssr: false, loading: pane
 // Kombine kartı: yalnız oturumda `comboAccess` varken yüklenir (ADMIN + COMBO_TOOL_USER_IDS) → diğerlerine ek JS / istek yok.
 const ComboHomeCard = dynamic(() => import('@/components/ComboHomeCard'), { ssr: false });
 const HomeGundemPanel = dynamic(() => import('@/components/HomeGundemPanel'), { ssr: false, loading: panelLoading });
+const HomeNewsCard = dynamic(() => import('@/components/HomeNewsCard'), { ssr: false });
 /** Ligler sekmesi (34 lig + arama) yalnız sekme açılınca gerekir → ilk yük parçalarına girmez. */
 const HubLeagueList = dynamic(() => import('@/components/HubLeagueList'), { ssr: false, loading: panelLoading });
 
@@ -1191,6 +1192,7 @@ export default function MatchHubPage({
             ) : null}
             {showGundemPanel ? (
               <aside className={styles.hubGundem} aria-label={tg('title')}>
+                <HomeNewsCard />
                 <div className={styles.hubGundemHeader}>
                   <h2 className={styles.hubGundemTitle}>{tg('title')}</h2>
                   <Link href="/gundem" className={styles.hubGundemLink}>

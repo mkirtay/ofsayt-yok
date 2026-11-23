@@ -290,7 +290,15 @@
   },
   "news": {
     "loading": "Haberler yükleniyor...",
-    "empty": "Şu an güncel haber bulunamadı."
+    "empty": "Şu an güncel haber bulunamadı.",
+    "title": "Haberler",
+    "all": "Tümü",
+    "pageTitle": "Futbol Haberleri",
+    "pageIntro": "Son 24 saatin öne çıkan futbol haberleri, kaynaklardan derlenip ayrıntılı olarak yazıldı. En yeni haber en üstte.",
+    "keyPoints": "Öne çıkanlar",
+    "sources": "Kaynaklar",
+    "aiNote": "Bu haber, aşağıdaki kaynaklardan yapay zekâ ile derlenip yazılmıştır.",
+    "backToList": "Tüm haberler"
   },
   "compare": {
     "team1": "Takım 1",

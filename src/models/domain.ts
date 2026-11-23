@@ -7,6 +7,12 @@ export interface NewsItem {
   summary?: string;
   content?: string;
   image?: string;
+  /** AI haberi: öne çıkan maddeler (3–5). */
+  keyPoints?: string[];
+  /** AI haberi: yazımda kullanılan kaynaklar (RSS haberleri + web araması). */
+  sources?: { name: string; url: string }[];
+  /** Haber Claude ile kaynaklardan derlendi (detay sayfasında not gösterilir). */
+  ai?: boolean;
 }
 
 export interface MatchEvent {

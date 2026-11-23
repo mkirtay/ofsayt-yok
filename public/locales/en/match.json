@@ -295,7 +295,15 @@
   },
   "news": {
     "loading": "Loading news...",
-    "empty": "No current news available."
+    "empty": "No current news available.",
+    "title": "News",
+    "all": "All",
+    "pageTitle": "Football News",
+    "pageIntro": "The top football stories of the last 24 hours, compiled from sources and written in detail. Newest first.",
+    "keyPoints": "Key points",
+    "sources": "Sources",
+    "aiNote": "This story was compiled and written with AI from the sources below.",
+    "backToList": "All news"
   },
   "compare": {
     "team1": "Team 1",

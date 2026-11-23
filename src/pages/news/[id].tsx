@@ -11,6 +11,8 @@ import { BRAND_LOGO_PNG } from '@/config/brandImages';
 import styles from './newsDetail.module.scss';
 import { siteBaseUrl } from '@/lib/siteUrl';
 import { BRAND, brandTitle } from '@/config/brand';
+import Link from 'next/link';
+import { useTranslation } from '@/lib/i18n';
 
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr);
@@ -25,6 +27,7 @@ function formatDate(dateStr: string): string {
 
 export default function NewsDetail() {
   const router = useRouter();
+  const { t } = useTranslation('match');
   const idParam = router.query.id;
   const idFromPath = router.asPath.match(/^\/news\/([^/?#]+)/)?.[1] ?? '';
   const id =
@@ -124,20 +127,47 @@ export default function NewsDetail() {
               )}
 
               <div className={styles.body}>
+                {article.ai && article.summary ? <p className={styles.lead}>{article.summary}</p> : null}
+                {article.keyPoints?.length ? (
+                  <section className={styles.keyPoints} aria-label={t('news.keyPoints')}>
+                    <h2 className={styles.keyPointsTitle}>{t('news.keyPoints')}</h2>
+                    <ul>
+                      {article.keyPoints.map((k, i) => (
+                        <li key={i}>{k}</li>
+                      ))}
+                    </ul>
+                  </section>
+                ) : null}
                 {(article.content || article.summary || '').split('\n').map((p, i) =>
                   p.trim() ? <p key={i}>{p}</p> : null
                 )}
               </div>
 
               <footer className={styles.footer}>
-                <a
-                  href={article.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={styles.sourceLink}
-                >
-                  Haberin kaynağını oku →
-                </a>
+                {article.ai && article.sources?.length ? (
+                  <>
+                    <p className={styles.aiNote}>{t('news.aiNote')}</p>
+                    <h2 className={styles.sourcesTitle}>{t('news.sources')}</h2>
+                    <ul className={styles.sources}>
+                      {article.sources.map((src) => (
+                        <li key={src.url}>
+                          <a href={src.url} target="_blank" rel="noopener noreferrer nofollow">
+                            {src.name}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                ) : (
+                  <a
+                    href={article.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={styles.sourceLink}
+                  >
+                    Haberin kaynağını oku →
+                  </a>
+                )}
               </footer>
             </article>
           </div>
@@ -146,6 +176,7 @@ export default function NewsDetail() {
             <div className={styles.sidebar}>
               <h3 className={styles.sidebarTitle}>Diğer Haberler</h3>
               <NewsList items={sidebarNews} />
+              <Link href="/news" className={styles.sidebarAll}>{t('news.backToList')} →</Link>
             </div>
           </aside>
         </div>

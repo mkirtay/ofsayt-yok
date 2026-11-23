@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getCachedNews } from '@/services/newsCache';
+import { getLatestNews, readNewsStore } from '@/server/news/aiNews';
 import { hitFixedWindowRateLimit, requestIp } from '@/lib/rateLimit';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -16,8 +16,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ success: false, error: 'Missing id' });
     }
 
-    const items = await getCachedNews();
-    const item = items.find((n) => n.id === id);
+    // Detay 48 sa'lik depodan (paylaşılan bağlantı 1 günü biraz aşsa da açılsın); yan liste yalnız son 24 sa.
+    const item = (await readNewsStore()).find((n) => n.id === id);
 
     if (!item) {
       return res.status(404).json({ success: false, error: 'Not found' });
@@ -26,7 +26,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const withSidebar = req.query.sidebar === '1';
     const payload: Record<string, unknown> = { success: true, item };
     if (withSidebar) {
-      payload.sidebarNews = items.filter((n) => n.id !== id).slice(0, 5);
+      payload.sidebarNews = (await getLatestNews())
+        .filter((n) => n.id !== id)
+        .slice(0, 6)
+        .map(({ content: _c, keyPoints: _k, sources: _s, ...rest }) => rest);
     }
 
     res.setHeader('Cache-Control', 'public, s-maxage=120, stale-while-revalidate=300');
