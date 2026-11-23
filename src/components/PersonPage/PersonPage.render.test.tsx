@@ -92,6 +92,17 @@ describe('<RefereeView />', () => {
   });
 });
 
+describe('<RefereeView /> yerli lig maçı sıradaki görev', () => {
+  const html = renderToStaticMarkup(
+    <RefereeView data={{ ...referee, upcoming: [{ id: 19746700, status: 'NOT STARTED', date: '2026-11-29', scheduled: '16:00', home: { id: 34, name: 'Galatasaray' }, away: { id: 88, name: 'Fenerbahçe' }, competition: { id: 600, name: 'Super Lig' } }] }} />,
+  );
+  it('lig maçında özet lig-sezonunun ortalaması kapsamıyla', () => {
+    expect(html).toContain('data-testid="referee-next"');
+    expect(html).toContain('2026/2027 · 4 maç ortalaması');
+    expect(html).toContain('3,5');
+  });
+});
+
 describe('<RefereeView /> yabancı UEFA hakemi', () => {
   const uefaRow = (seasonName: string, leagueId: number, matches: number, yellow: number) => ({
     seasonId: matches, seasonName, leagueId, startingAt: null, matches, yellowPerMatch: yellow, redPerMatch: 0, penaltiesPerMatch: 0.5, foulsPerMatch: 24, varPerMatch: 0.2,
@@ -113,6 +124,14 @@ describe('<RefereeView /> yabancı UEFA hakemi', () => {
     expect(html).toContain('data-testid="referee-next"');
     expect(html).toContain('href="/matches/19873236-galatasaray-aston-villa"');
     expect(html).toContain('24.11.2026 · 20:45');
+  });
+  it('sıradaki maç kartı: UEFA maçında yalnız UEFA kapsamı (lig ortalaması karışmaz) + Maçı incele düğmesi', () => {
+    const at = html.indexOf('data-testid="referee-next"');
+    const card = html.slice(at, html.indexOf('</section>', at));
+    expect(card).toContain('UEFA kulüp turnuvaları · 8 maç ortalaması');
+    expect(card).toContain('4,63');
+    expect(card).toContain('Maçı incele');
+    expect(card).not.toContain('Süper Lig');
   });
   it('Türk takımlarıyla maçları + UEFA kariyeri (yalnız UEFA satırları, maç ağırlıklı) + karşılaştırma linki en çok maçlı ligde', () => {
     expect(html).toContain('Türk takımlarıyla maçları');

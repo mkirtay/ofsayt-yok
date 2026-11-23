@@ -13,8 +13,8 @@ import RefereeCompetitionTable from './RefereeCompetitionTable';
 import RefereeFanRating from './RefereeFanRating';
 import RefereeAiReport from './RefereeAiReport';
 import PersonAvatar from './PersonAvatar';
-import RefereeProfileSide, { trKickoff } from './RefereeProfileSide';
-import { buildMatchHref } from '@/utils/matchUrl';
+import RefereeProfileSide from './RefereeProfileSide';
+import RefereeNextMatch from './RefereeNextMatch';
 import styles from './personPage.module.scss';
 import { teamHref } from '@/utils/teamUrl';
 
@@ -54,7 +54,6 @@ export default function RefereeView({ data }: { data: RefereePageData }) {
   ];
 
   const compareHref = refereeComparePath(data.seasons, personSlug(data.name, data.id));
-  const next = data.upcoming?.[0];
 
   // Masaüstünde bölünmüş ekran: solda profil, sağda bağlamsal panel (sıradaki görev, UEFA kariyeri, lig ortalaması).
   return (
@@ -73,15 +72,6 @@ export default function RefereeView({ data }: { data: RefereePageData }) {
               </span>
             </p>
           ) : null}
-          {next ? (
-            <p className={styles.upcoming} data-testid="referee-next">
-              <span className={styles.upcomingLabel}>{t('person.upcomingLabel')}</span>
-              <Link href={buildMatchHref({ id: next.id, home_name: next.home.name, away_name: next.away.name })} className={styles.teamLink} prefetch={false}>
-                {next.home.name} – {next.away.name}
-              </Link>
-              {next.date ? <span className={styles.muted}>{trKickoff(next.date, next.scheduled)}</span> : null}
-            </p>
-          ) : null}
           <p className={styles.facts}>
             <Link href={compareHref} className={styles.teamLink} prefetch={false}>
               {t('person.compareWith')}
@@ -89,6 +79,7 @@ export default function RefereeView({ data }: { data: RefereePageData }) {
           </p>
         </div>
       </header>
+      <RefereeNextMatch data={data} ctxLabel={ctxLabel} />
       {seoSummary.length ? <p className={styles.seoSummary}>{seoSummary.join(' ')}</p> : null}
 
       <section className={styles.card} aria-labelledby="ref-summary">

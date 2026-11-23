@@ -14,6 +14,8 @@ type Events = {
   invite_share: { channel: 'copy' | 'whatsapp' | 'league_whatsapp' | 'league_share' };
   team_pass_purchase: { cost: number };
   push_enable: Record<string, never>;
+  /** Hakem sayfasından maç sayfasına geçiş (reklam → hakem → maç yolculuğu). */
+  referee_match_click: { slot: 'next_card' };
 };
 
 export function trackGrowth<K extends keyof Events>(event: K, params: Events[K]): void {
