@@ -4,14 +4,17 @@ import { useEffect, useRef, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useTranslation } from '@/lib/i18n';
 import { useBottomStackSlot } from '@/hooks/useBottomStackSlot';
-import { isNudgeCoolingDown, isNudgeHiddenPath, NUDGE_DELAY_MS, NUDGE_STORAGE_KEY } from './nudge';
+import { isNudgeCoolingDown, isNudgeEngaged, isNudgeHiddenPath, NUDGE_DELAY_MS, NUDGE_STORAGE_KEY } from './nudge';
+
+/** Oturumdaki sayfa görüntüleme sayısı (istemci gezinmesi dahil; sekme yenilenince sıfırlanır). */
+let pageViews = 0;
 import { useNudgeStack } from './useNudgeStack';
 import { INTRO_DONE_EVENT, isIntroPending } from '@/components/Onboarding/storage';
 import styles from './signupNudge.module.scss';
 
 /**
  * Misafir ziyaretçiye "üye ol, 2 kredi hediye" daveti. İlk boyamada yok (zamanlayıcıyla gelir, `position: fixed` → CLS/LCP'ye
- * dokunmaz); kapatılınca 1 gün çıkmaz. Girişliyse ya da oturum durumu belli değilken hiç çizilmez.
+ * dokunmaz); süre dolunca da yalnız etkileşimden sonra (isNudgeEngaged: ~1 ekran kaydırma ya da 2. sayfa); kapatılınca 1 gün çıkmaz. Girişliyse ya da oturum durumu belli değilken hiç çizilmez.
  */
 export default function SignupNudge() {
   const { t } = useTranslation('nav');
@@ -41,9 +44,25 @@ export default function SignupNudge() {
       window.addEventListener(INTRO_DONE_EVENT, onIntroDone, { once: true });
       return () => window.removeEventListener(INTRO_DONE_EVENT, onIntroDone);
     }
-    const id = window.setTimeout(() => setOpen(true), NUDGE_DELAY_MS);
-    return () => window.clearTimeout(id);
-  }, [eligible, introTick]);
+    const engaged = () => isNudgeEngaged({ scrollY: window.scrollY, viewportHeight: window.innerHeight, pageViews });
+    const onScroll = () => {
+      if (!engaged()) return;
+      window.removeEventListener('scroll', onScroll);
+      setOpen(true);
+    };
+    const id = window.setTimeout(() => {
+      if (engaged()) setOpen(true);
+      else window.addEventListener('scroll', onScroll, { passive: true });
+    }, NUDGE_DELAY_MS);
+    return () => {
+      window.clearTimeout(id);
+      window.removeEventListener('scroll', onScroll);
+    };
+  }, [eligible, introTick, pathname]);
+
+  useEffect(() => {
+    pageViews += 1;
+  }, [pathname]);
 
   // Açıkken alt yığına bildir: `<html data-signup-nudge>` + mobilde `--nudge-top-offset` (kartın tepesi + boşluk).
   const visible = open && eligible;

@@ -1,5 +1,15 @@
 /** Misafire "üye ol, 2 kredi hediye" kartının ne zaman/nerede çıkacağı. Saf mantık: bileşen yalnızca zamanlayıcıyı kurar. */
 export const NUDGE_DELAY_MS = 7_000;
+
+/**
+ * Davet yalnız anlamlı bir etkileşimden sonra (2026-11-23): sayfada en az ~1 ekran aşağı inmek ya da oturumda ikinci
+ * sayfayı açmak. Skor / maç için gelen kişi ilk ekranda içeriğin üstünde kart görmez.
+ */
+export const NUDGE_SCROLL_SCREENS = 0.8;
+
+export function isNudgeEngaged(e: { scrollY: number; viewportHeight: number; pageViews: number }): boolean {
+  return e.pageViews >= 2 || (e.viewportHeight > 0 && e.scrollY >= e.viewportHeight * NUDGE_SCROLL_SCREENS);
+}
 export const NUDGE_STORAGE_KEY = 'signupNudgeDismissedAt';
 export const NUDGE_COOLDOWN_MS = 24 * 60 * 60 * 1000;
 
