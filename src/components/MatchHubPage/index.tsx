@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
@@ -137,33 +137,19 @@ const today = () => todayIsoIstanbul();
 const EMPTY_MATCHES: Match[] = [];
 
 /**
- * Günün Frikiği kartı maç listesinde ilk lig grubunun ardında (sanal listenin sabit yükseklikli satırı). Kartın en büyük
- * kutusu (mobil < 480 px: 146 px; masaüstü 142 px — bkz. FrikikDailyCard scss) + kendi alt boşluğu (12 px). Oyun herkese
- * açıkken (derlemede NEXT_PUBLIC_GAME_PUBLIC) altında sabit yükseklikli oyun şeridi. En altta Mini Saha kartı (SABİT 128 px +
- * 12 px boşluk; bkz. MiniSahaHomeCard scss).
+ * Oyun kartları maç listesine DAĞITILIR (2026-11-23 kullanıcı kararı): en üstte Mini Saha (ilk ≥ 6 maçlık grup sonunda),
+ * birkaç lig altında Tahmin Ligi şeridi (oyun herkese açıksa: NEXT_PUBLIC_GAME_PUBLIC), daha aşağıda Günün Frikiği.
+ * Her kart sanal listenin sabit yükseklikli bir satırı (kart + kendi alt boşluğu 12 px) — yükseklik baştan ayrılır:
+ * Mini Saha SABİT 128 px (MiniSahaHomeCard scss), Tahmin şeridi 56 px (GameHomeCard scss), Frikik en büyük kutusu
+ * 146 px (mobil < 480 px; masaüstü 142 — FrikikDailyCard scss).
  */
-const MINI_SAHA_CARD_HEIGHT = 128 + 12;
-const FRIKIK_BASE_SLOT: MatchListInlineSlot = GAME_PUBLIC_CLIENT
-  ? {
-      // Altında oyun şeridi (sabit 56 px + 12 px boşluk; bkz. GameHomeCard scss) — yükseklik baştan ayrılır.
-      node: (
-        <>
-          <FrikikDailyCard />
-          <GameHomeCard />
-          <MiniSahaHomeCard />
-        </>
-      ),
-      height: 146 + 12 + 56 + 12 + MINI_SAHA_CARD_HEIGHT,
-    }
-  : {
-      node: (
-        <>
-          <FrikikDailyCard />
-          <MiniSahaHomeCard />
-        </>
-      ),
-      height: 146 + 12 + MINI_SAHA_CARD_HEIGHT,
-    };
+const MINI_SAHA_SLOT: MatchListInlineSlot = { node: <MiniSahaHomeCard />, height: 128 + 12 };
+const LATER_GAME_SLOTS: MatchListInlineSlot[] = [
+  ...(GAME_PUBLIC_CLIENT ? [{ node: <GameHomeCard />, height: 56 + 12 }] : []),
+  { node: <FrikikDailyCard />, height: 146 + 12 },
+];
+/** Oyun kartları arası lig grubu sayısı (Mini Saha → Tahmin → Frikik). */
+const GAME_SLOT_EVERY_GROUPS = 3;
 
 /** Frikik / Tahmin kartı en az bu kadar maçtan sonraki grup sonunda — ilk ekranda önce maçlar (2026-11-20, seçenek B). */
 const HOME_SLOT_MIN_MATCHES = 6;
@@ -388,15 +374,15 @@ export default function MatchHubPage({
         ? {
             node: (
               <>
-                {FRIKIK_BASE_SLOT.node}
+                {MINI_SAHA_SLOT.node}
                 <div className={styles.comboInList}>
                   <ComboHomeCard />
                 </div>
               </>
             ),
-            height: FRIKIK_BASE_SLOT.height + 46 + 12,
+            height: MINI_SAHA_SLOT.height + 46 + 12,
           }
-        : FRIKIK_BASE_SLOT,
+        : MINI_SAHA_SLOT,
     [comboAccess, isMobileLayout],
   );
 
@@ -892,7 +878,12 @@ export default function MatchHubPage({
   const withFrikik = (node: ReactNode) => (
     <>
       {node}
-      <div className={styles.frikikBelow}>{frikikSlot.node}</div>
+      <div className={styles.frikikBelow}>
+        {frikikSlot.node}
+        {LATER_GAME_SLOTS.map((sl, i) => (
+          <Fragment key={i}>{sl.node}</Fragment>
+        ))}
+      </div>
     </>
   );
 
@@ -905,6 +896,8 @@ export default function MatchHubPage({
       <MatchList
         dateGroups={uefaDateGroups}
         afterFirstGroup={frikikSlot}
+        moreSlots={LATER_GAME_SLOTS}
+        moreSlotsEveryGroups={GAME_SLOT_EVERY_GROUPS}
         favoriteTeamIds={favoriteTeamSet}
         onToggleFavorite={toggleFavoriteTeam}
         onSelectMatch={isSplit ? handleSelectMatch : undefined}
@@ -964,6 +957,8 @@ export default function MatchHubPage({
       <MatchList
         groupedMatches={grouped}
         afterFirstGroup={frikikSlot}
+        moreSlots={LATER_GAME_SLOTS}
+        moreSlotsEveryGroups={GAME_SLOT_EVERY_GROUPS}
         slotMinMatches={HOME_SLOT_MIN_MATCHES}
         trailingSection={nightSection}
         favoriteTeamIds={favoriteTeamSet}

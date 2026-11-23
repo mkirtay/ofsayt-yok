@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { useMemo, useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { Fragment, useMemo, useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { List, type RowComponentProps } from 'react-window';
 import { useI18n, useTranslation } from '@/lib/i18n';
 import { countryDisplayName, leagueRepeatsCountry } from '@/utils/countryName';
@@ -117,6 +117,13 @@ interface MatchListProps {
    * son grubun ardına. Ana sayfa 6 verir: ilk ekranda önce maçlar (2026-11-20, mobil ilk ekran seçeneği B).
    */
   slotMinMatches?: number;
+  /**
+   * İlk slottan sonra sırayla eklenen ek slotlar (ana sayfa oyun kartları: Mini Saha üstte, birkaç lig altında Tahmin,
+   * sonra Frikik — 2026-11-23). Her biri bir öncekinden `moreSlotsEveryGroups` grup sonu sonra; liste biterse kalanlar
+   * son grubun ardına art arda. `afterFirstGroup` yoksa yok sayılır.
+   */
+  moreSlots?: MatchListInlineSlot[];
+  moreSlotsEveryGroups?: number;
   /** Yalnız lig gruplu modda: listenin altına eklenen bölüm (boşsa çizilmez). */
   trailingSection?: MatchListTrailingSection | null;
   /**
@@ -156,7 +163,7 @@ interface MatchListProps {
   fitContent?: boolean | 'belowSplit';
 }
 
-type FlatItem =
+export type FlatItem =
   | {
       type: 'dateHeader';
       date: string;
@@ -183,8 +190,10 @@ type FlatItem =
       isFirstInGroup: boolean;
       isLastInGroup: boolean;
     }
-  | { type: 'slot' };
+  | { type: 'slot'; index: number };
 
+const NO_SLOTS: MatchListInlineSlot[] = [];
+const NO_HEIGHTS: readonly number[] = [];
 const HEADER_BAR_HEIGHT = 44;
 const GROUP_GAP = 12;
 const MATCH_ROW_HEIGHT = 40;
@@ -333,10 +342,10 @@ function buildFlatItems(groupedMatches: GroupedLeagueMatches[], items: FlatItem[
 
 type RowContext = {
   items: FlatItem[];
-  slot: MatchListInlineSlot | null;
-  /** Slot satırının içerik yüksekliği: `slot.height` ya da ölçülen (büyükse). */
-  slotHeight: number;
-  onSlotResize: (height: number) => void;
+  slots: MatchListInlineSlot[];
+  /** Slot satırlarının içerik yüksekliği (sırayla): `slot.height` ya da ölçülen (büyükse). */
+  slotHeights: number[];
+  onSlotResize: (index: number, height: number) => void;
   showDateWhenNotToday: boolean;
   todayIso: string;
   favoriteTeamIds: Set<number>;
@@ -372,7 +381,7 @@ function VirtualRow({
   cupTiers,
   goals,
   counters,
-  slot,
+  slots,
   onSlotResize,
   ariaAttributes,
 }: VirtualRowProps) {
@@ -385,7 +394,9 @@ function VirtualRow({
   if (item.type === 'slot') {
     return (
       <div {...ariaAttributes} style={style} className={styles.virtualSlot}>
-        <SlotContent onResize={onSlotResize}>{slot?.node}</SlotContent>
+        <SlotContent index={item.index} onResize={onSlotResize}>
+          {slots[item.index]?.node}
+        </SlotContent>
       </div>
     );
   }
@@ -602,15 +613,15 @@ function VirtualRow({
 }
 
 /** Slot içeriği: yüksekliğini (alt boşluk dahil, `flow-root`) bildirir — satır gerekirse büyüsün. */
-function SlotContent({ children, onResize }: { children: ReactNode; onResize: (height: number) => void }) {
+function SlotContent({ children, index, onResize }: { children: ReactNode; index: number; onResize: (index: number, height: number) => void }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const el = ref.current;
     if (!el || typeof ResizeObserver === 'undefined') return;
-    const ro = new ResizeObserver(() => onResize(Math.ceil(el.getBoundingClientRect().height)));
+    const ro = new ResizeObserver(() => onResize(index, Math.ceil(el.getBoundingClientRect().height)));
     ro.observe(el);
     return () => ro.disconnect();
-  }, [onResize]);
+  }, [index, onResize]);
   return (
     <div ref={ref} className={styles.virtualSlotContent}>
       {children}
@@ -623,7 +634,7 @@ const LIST_STYLE: CSSProperties = { height: '100%', width: '100%' };
 function rowHeight(index: number, rowProps: RowContext): number {
   const item = rowProps.items[index];
   if (!item) return MATCH_ROW_HEIGHT;
-  if (item.type === 'slot') return GROUP_GAP + rowProps.slotHeight;
+  if (item.type === 'slot') return GROUP_GAP + (rowProps.slotHeights[item.index] ?? 0);
   if (item.type === 'header' || item.type === 'dateHeader') {
     return HEADER_BAR_HEIGHT + (item.showGap ? GROUP_GAP : 0);
   }
@@ -647,31 +658,54 @@ function buildItemsWithTrailingSection(
 }
 
 /**
- * Satır listesine, en az `minMatches` maç satırından sonraki ilk grup sonunun (`isLastInGroup` maç) ardına slot ekler;
- * liste daha kısaysa son grubun ardına. Ardından gelen başlığın üst boşluğu kalkar (slot içeriği kendi alt boşluğunu
- * taşır). Grup yoksa liste aynen döner.
+ * Satır listesine slotları ekler. İlk slot en az `minMatches` maç satırından sonraki ilk grup sonunun (`isLastInGroup`
+ * maç) ardına; sonrakiler her biri bir öncekinden `everyGroups` grup sonu sonra. Liste yetmezse kalan slotlar son grubun
+ * ardına art arda. Slotun ardından gelen başlığın üst boşluğu kalkar (slot içeriği kendi alt boşluğunu taşır). Grup
+ * yoksa liste aynen döner.
  */
-function insertSlotAfterGroup(items: FlatItem[], minMatches = 1): FlatItem[] {
+export function insertSlotsAfterGroups(items: FlatItem[], slotCount: number, minMatches = 1, everyGroups = 3): FlatItem[] {
+  if (slotCount <= 0) return items;
+  // Slot konacak grup sonları (maç satırı indeksleri).
+  const ends: number[] = [];
   let seen = 0;
-  let end = -1;
-  for (let i = 0; i < items.length; i++) {
+  let groupsSinceSlot = 0;
+  let lastEnd = -1;
+  for (let i = 0; i < items.length && ends.length < slotCount; i++) {
     const item = items[i]!;
     if (item.type !== 'match') continue;
     seen += 1;
     if (!item.isLastInGroup) continue;
-    end = i;
-    if (seen >= minMatches) break;
+    lastEnd = i;
+    if (ends.length === 0) {
+      if (seen >= minMatches) ends.push(i);
+    } else if (++groupsSinceSlot >= everyGroups) {
+      ends.push(i);
+    }
+    if (ends.length > 0 && ends[ends.length - 1] === i) groupsSinceSlot = 0;
   }
-  if (end < 0) return items;
-  const next = items[end + 1];
-  const after = next && (next.type === 'header' || next.type === 'dateHeader') ? [{ ...next, showGap: false }] : next ? [next] : [];
-  return [...items.slice(0, end + 1), { type: 'slot' }, ...after, ...items.slice(end + 2)];
+  if (lastEnd < 0) return items;
+  while (ends.length < slotCount) ends.push(lastEnd);
+  const out: FlatItem[] = [];
+  let slotIndex = 0;
+  let dropGap = false;
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i]!;
+    out.push(dropGap && (item.type === 'header' || item.type === 'dateHeader') ? { ...item, showGap: false } : item);
+    dropGap = false;
+    while (slotIndex < ends.length && ends[slotIndex] === i) {
+      out.push({ type: 'slot', index: slotIndex++ });
+      dropGap = true;
+    }
+  }
+  return out;
 }
 
 export default function MatchList({
   groupedMatches = NO_GROUPS,
   afterFirstGroup = null,
   slotMinMatches = 1,
+  moreSlots,
+  moreSlotsEveryGroups = 3,
   trailingSection,
   dateGroups,
   showDateWhenNotToday = false,
@@ -689,10 +723,14 @@ export default function MatchList({
   const router = useRouter();
   const navigateTo = useCallback((path: string) => { void router.push(path); }, [router]);
 
+  const slots = useMemo(
+    () => (afterFirstGroup ? [afterFirstGroup, ...(moreSlots ?? [])] : NO_SLOTS),
+    [afterFirstGroup, moreSlots],
+  );
   const items = useMemo(() => {
     const base = dateGroups ? buildDateFlatItems(dateGroups) : buildItemsWithTrailingSection(groupedMatches, trailingSection);
-    return afterFirstGroup ? insertSlotAfterGroup(base, slotMinMatches) : base;
-  }, [dateGroups, groupedMatches, trailingSection, afterFirstGroup, slotMinMatches]);
+    return insertSlotsAfterGroups(base, slots.length, slotMinMatches, moreSlotsEveryGroups);
+  }, [dateGroups, groupedMatches, trailingSection, slots.length, slotMinMatches, moreSlotsEveryGroups]);
 
   const todayIso = useMemo(() => todayIsoTr(), []);
 
@@ -752,9 +790,18 @@ export default function MatchList({
   const counters = useMatchCounters(matchIds);
 
   // Slot yalnız büyür: ölçülen içerik verilen yükseklikten uzunsa (dar sütun) ona çıkar, kısaysa verilen kalır.
-  const [slotMeasured, setSlotMeasured] = useState(0);
-  const onSlotResize = useCallback((height: number) => setSlotMeasured((prev) => Math.max(prev, height)), []);
-  const slotHeight = afterFirstGroup ? Math.max(afterFirstGroup.height, slotMeasured) : 0;
+  const [slotMeasured, setSlotMeasured] = useState<readonly number[]>(NO_HEIGHTS);
+  const onSlotResize = useCallback(
+    (index: number, height: number) =>
+      setSlotMeasured((prev) => {
+        if ((prev[index] ?? 0) >= height) return prev;
+        const next = [...prev];
+        next[index] = height;
+        return next;
+      }),
+    [],
+  );
+  const slotHeights = useMemo(() => slots.map((sl, i) => Math.max(sl.height, slotMeasured[i] ?? 0)), [slots, slotMeasured]);
 
   const rowProps = useMemo<RowContext>(
     () => ({
@@ -771,8 +818,8 @@ export default function MatchList({
       cupTiers,
       goals,
       counters,
-      slot: afterFirstGroup,
-      slotHeight,
+      slots,
+      slotHeights,
       onSlotResize,
     }),
     [
@@ -789,8 +836,8 @@ export default function MatchList({
       cupTiers,
       goals,
       counters,
-      afterFirstGroup,
-      slotHeight,
+      slots,
+      slotHeights,
       onSlotResize,
     ]
   );
@@ -817,7 +864,13 @@ export default function MatchList({
     return (
       <>
         <div className={styles.empty}>{t('list.empty')}</div>
-        {afterFirstGroup ? <div className={styles.emptySlot}>{afterFirstGroup.node}</div> : null}
+        {slots.length > 0 ? (
+          <div className={styles.emptySlot}>
+            {slots.map((sl, i) => (
+              <Fragment key={i}>{sl.node}</Fragment>
+            ))}
+          </div>
+        ) : null}
       </>
     );
   }
