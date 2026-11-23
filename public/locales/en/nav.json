@@ -47,6 +47,7 @@
     "playFree": "Play free"
   },
   "gameLong": "{{game}}: predict the scores",
+  "today": "Today",
   "referees": "Referees",
   "rulesCorner": "Rules Corner"
 }

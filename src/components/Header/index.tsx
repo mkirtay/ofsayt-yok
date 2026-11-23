@@ -132,6 +132,13 @@ export default function Header() {
                 {t('matches')}
               </Link>
               <Link
+                href="/bugun"
+                className={`${styles.navLink} ${router.pathname === '/bugun' ? styles.navLinkActive : ''}`.trim()}
+                aria-current={router.pathname === '/bugun' ? 'page' : undefined}
+              >
+                {t('today')}
+              </Link>
+              <Link
                 href="/gundem"
                 className={`${styles.navLink} ${router.pathname.startsWith('/gundem') ? styles.navLinkActive : ''}`.trim()}
                 aria-current={router.pathname.startsWith('/gundem') ? 'page' : undefined}
@@ -219,6 +226,9 @@ export default function Header() {
           <div ref={menuRef} className={styles.mobileMenu}>
             <HeaderSearch onNavigate={() => setMobileMenuOpen(false)} />
             <nav className={styles.mobileNav}>
+              <Link href="/bugun" className={styles.mobileNavLink}>
+                {t('today')}
+              </Link>
               <Link
                 href="/ai-istatistikleri"
                 className={styles.mobileNavLink}

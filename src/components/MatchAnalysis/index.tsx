@@ -127,10 +127,19 @@ export default function MatchAnalysis({ match, state, archived = false }: Props)
         {phase !== 'PRE' ? (
           <EmptyState>{t('analysis.matchStartedNoAnalysis')}</EmptyState>
         ) : !isAuthenticated ? (
-          <div className={styles.cta}>
-            <p className={styles.reasoning}>{t('analysis.signInToGenerate')}</p>
-            <Link href="/auth/signin" className={styles.ctaButton}>
-              {t('analysis.signIn')}
+          // Misafir, analiz henüz yok: önce ne alacağını anlat (popüler maçta ~3 sa önce herkese açık özet), sonra üyelik.
+          <div className={styles.cta} data-testid="analysis-guest-pending">
+            <p className={styles.reasoning}>{t('analysis.guestPending')}</p>
+            <div className={styles.guestActions}>
+              <Link href="/auth/signup?src=ai_tab" className={styles.ctaButton}>
+                {t('analysis.guestSignUp')}
+              </Link>
+              <Link href="/auth/signin" className={styles.ctaButtonSecondary}>
+                {t('analysis.signIn')}
+              </Link>
+            </div>
+            <Link href="/pricing" className={styles.guestSample}>
+              {t('analysis.guestSample')}
             </Link>
           </div>
         ) : generating || inProgress ? (

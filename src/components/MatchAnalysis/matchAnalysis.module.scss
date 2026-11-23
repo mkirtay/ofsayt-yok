@@ -696,6 +696,27 @@
   }
 }
 
+// Misafir + analiz henüz yok: iki düğme yan yana, altta örnek analiz bağlantısı
+.guestActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: $spacing-2;
+
+  a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px;
+    text-decoration: none;
+  }
+}
+
+.guestSample {
+  font-size: 13px;
+  font-weight: 600;
+  color: $color-primary-text;
+}
+
 // Kilidin yanındaki kanıt (büyüme raporu 1.6): son 7 gün isabeti + isabet sayfası bağlantısı
 .proofLine {
   margin: $spacing-3 0 0;

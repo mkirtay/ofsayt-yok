@@ -119,3 +119,19 @@ describe('metin katalogları (TR/EN): AI analizi ve AI İstatistikleri bahis dil
     expect(all).not.toMatch(/1X2|Üst [0-9]|KG Var|Value Bet|\bBTTS\b|\bOver [0-9]/);
   });
 });
+
+describe('misafir, analiz henüz yok (maç öncesi)', () => {
+  const state = {
+    analysis: null, predictionRecord: null, serverPhase: 'PRE', loading: false, generating: false, error: null,
+    credits: 0, unlimited: false, isAuthenticated: false, generate: async () => {},
+  } as unknown as MatchAnalysisState;
+  const html = renderToStaticMarkup(<MatchAnalysis match={null} state={state} />);
+  it('ne zaman yayınlanacağını anlatır; üye ol + giriş + örnek analiz bağlantısı', () => {
+    expect(html).toContain('data-testid="analysis-guest-pending"');
+    expect(text(html)).toContain('yaklaşık 3 saat önce');
+    expect(html).toContain('href="/auth/signup?src=ai_tab"');
+    expect(html).toContain('href="/auth/signin"');
+    expect(html).toContain('href="/pricing"');
+    expect(findGamblingTerms(text(html))).toEqual([]);
+  });
+});
