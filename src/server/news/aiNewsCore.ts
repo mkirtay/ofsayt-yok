@@ -187,3 +187,11 @@ export function writesAffordable(remainingMicroUsd: number, perArticleMicroUsd: 
   if (remainingMicroUsd <= 0) return 0;
   return Math.max(0, Math.min(max, Math.floor(remainingMicroUsd / perArticleMicroUsd)));
 }
+
+/** Depo bu sayının altındaysa (son 24 sa) çalışma başına daha çok haber yazılır: deploy/ilk gün ya da sakin saatler. */
+export const NEWS_THIN_STORE = 12;
+
+/** Bu çalışmada yazılacak en çok yeni haber: zayıf depoda 6, doluyken 3. */
+export function maxNewForRun(freshCount: number): number {
+  return freshCount < NEWS_THIN_STORE ? 6 : 3;
+}

@@ -6,6 +6,7 @@ import {
   uniqueSources,
   usageCostMicroUsd,
   writesAffordable,
+  maxNewForRun,
   coveredUrls,
   isFresh,
   mergeStore,
@@ -117,5 +118,13 @@ describe('usageCostMicroUsd / writesAffordable', () => {
     expect(writesAffordable(90_000, 40_000, 3)).toBe(2);
     expect(writesAffordable(10_000, 40_000, 3)).toBe(0);
     expect(writesAffordable(-5, 40_000, 3)).toBe(0);
+  });
+});
+
+describe('maxNewForRun', () => {
+  it('depo zayıfken 6, doluyken 3', () => {
+    expect(maxNewForRun(0)).toBe(6);
+    expect(maxNewForRun(11)).toBe(6);
+    expect(maxNewForRun(12)).toBe(3);
   });
 });

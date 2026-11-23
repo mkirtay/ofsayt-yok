@@ -3,7 +3,7 @@
  *
  * 1. RSS adayları (config/newsSources.ts) — yalnız son 24 saat.
  * 2. Seçim: Claude Haiku 5.5, yapılandırılmış çıktı — futbol dışını/galeriyi/magazini eler, aynı olayı anlatan adayları
- *    tek haberde toplar, önem sırasıyla en çok `MAX_NEW_PER_RUN` YENİ haber seçer (depoda olanlar tekrar yazılmaz).
+ *    tek haberde toplar, önem sırasıyla en çok 3 (depo zayıfken 6) YENİ haber seçer (depoda olanlar tekrar yazılmaz).
  * 3. Yazım: haber başına Haiku 5.5 + web araması (en çok 2 arama) + kaynak sayfanın metni → ayrıntılı Türkçe yazı
  *    (başlık, özet, 5–8 paragraf, öne çıkanlar). Kısa/eksik yazı yayınlanmaz (aiNewsCore.parseWrittenArticle).
  * 4. Depo: Redis tek anahtar (48 sa tutulur; liste 24 sa süzer), en yeni en üstte.
@@ -31,12 +31,13 @@ import {
   uniqueSources,
   usageCostMicroUsd,
   writesAffordable,
+  maxNewForRun,
 } from './aiNewsCore';
 
 export const NEWS_MODEL = 'claude-haiku-5-5';
-const MAX_NEW_PER_RUN = 3;
+// Çalışma başına yeni haber: depo zayıfken (son 24 sa < NEWS_THIN_STORE) 6, sonra 3 (aiNewsCore.maxNewForRun).
 const MAX_CANDIDATES = 90;
-const DAILY_WRITE_CAP = 40;
+const DAILY_WRITE_CAP = 60;
 /** Günlük harcama tavanı (USD, gerçek kullanımdan ölçülür). Kullanıcı kararı 2026-11-23: günde ~1–2 $. */
 const DAILY_BUDGET_USD = Number(process.env.NEWS_DAILY_BUDGET_USD) || 1.5;
 /** Yazılabilecek haber sayısını hesaplarken haber başına ayrılan pay (gerçek ölçüm: bkz. yorum aşağıda). */
@@ -320,13 +321,14 @@ export async function refreshNews(now: number = Date.now()): Promise<NewsRefresh
     const spentToday = Number(spentRaw ?? 0);
     const budgetMicro = Math.round(DAILY_BUDGET_USD * 1_000_000);
     const writesToday = Number((await withRedis((r) => r.get<number>(k.daily(day)), 0)) ?? 0);
+    const store = await readNewsStore();
+    const published = store.filter((n) => isFresh(n.publishedAt, now));
     // Seçim çağrısı için ~2 bin mikro-dolar pay bırakılır.
     const room = Math.min(
       DAILY_WRITE_CAP - writesToday,
-      writesAffordable(budgetMicro - spentToday - 2_000, EST_ARTICLE_MICRO_USD, MAX_NEW_PER_RUN),
+      writesAffordable(budgetMicro - spentToday - 2_000, EST_ARTICLE_MICRO_USD, maxNewForRun(published.length)),
     );
 
-    const store = await readNewsStore();
     const covered = coveredUrls(store);
     const cands = (await fetchNewsCandidates(now)).filter((c) => !covered.has(c.url)).slice(0, MAX_CANDIDATES);
     if (room <= 0) {
@@ -338,7 +340,6 @@ export async function refreshNews(now: number = Date.now()): Promise<NewsRefresh
       };
     }
 
-    const published = store.filter((n) => isFresh(n.publishedAt, now));
     const groups = cands.length ? await selectStories(ai, spend, cands, published, room) : [];
     const results = await Promise.allSettled(groups.map((g) => writeStory(ai, spend, g)));
     const added: NewsItem[] = [];
