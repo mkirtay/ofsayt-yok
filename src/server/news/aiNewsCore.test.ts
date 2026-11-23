@@ -7,6 +7,8 @@ import {
   usageCostMicroUsd,
   writesAffordable,
   maxNewForRun,
+  entityTokens,
+  isSameEvent,
   coveredUrls,
   isFresh,
   mergeStore,
@@ -126,5 +128,29 @@ describe('maxNewForRun', () => {
     expect(maxNewForRun(0)).toBe(6);
     expect(maxNewForRun(11)).toBe(6);
     expect(maxNewForRun(12)).toBe(3);
+  });
+});
+
+describe('entityTokens / isSameEvent', () => {
+  it('özel adlar kesme ekinden arınır, turnuva adları sayılmaz', () => {
+    expect([...entityTokens("Galatasaray yarın Aston Villa'yı Şampiyonlar Ligi'nde ağırlıyor")].sort()).toEqual(['aston', 'galatasaray', 'villa']);
+  });
+
+  const gs = {
+    title: "Galatasaray yarın Aston Villa'yı ağırlıyor: Kadroda değişiklik ve rekor hedefi",
+    summary: "Galatasaray, Şampiyonlar Ligi'nde Aston Villa'yı RAMS Park'ta konuk edecek. Okan Buruk'un iki değişiklik yapması bekleniyor.",
+  };
+
+  it('aynı maçın farklı açıdan haberi aynı olay sayılır', () => {
+    expect(isSameEvent("Galatasaray, Aston Villa maçı öncesi: 3 eksik, Osimhen'in durumu maç gününe kaldı", gs)).toBe(true);
+    expect(isSameEvent("Okan Buruk, Aston Villa maçında ilk 11'i güçlendirecek", gs)).toBe(true);
+  });
+
+  it('yalnız takım adı ortak olan farklı olaylar ayrı kalır', () => {
+    const fb = { title: "Fenerbahçe Kocaeli'de puan kaybetti, Aziz Yıldırım Samandıra'da toplantı yapacak" };
+    expect(isSameEvent("Milan, Fenerbahçe'nin sol beki Archie Brown için yeniden harekete geçiyor", fb)).toBe(false);
+    const mu = { title: "Pochettino'nun United'daki ilk maçı Anfield'da 4-0 yenilgiyle bitti", summary: 'Manchester United, Liverpool deplasmanında 4-0 kaybetti.' };
+    expect(isSameEvent("Manchester United'ın hedefinde Osimhen var: 120 milyon euro iddiası", mu)).toBe(false);
+    expect(isSameEvent('Galatasaray kazandı', gs)).toBe(false);
   });
 });

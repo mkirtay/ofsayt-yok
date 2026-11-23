@@ -195,3 +195,44 @@ export const NEWS_THIN_STORE = 12;
 export function maxNewForRun(freshCount: number): number {
   return freshCount < NEWS_THIN_STORE ? 6 : 3;
 }
+
+// ─── Aynı olay koruması ────────────────────────────────────────────────────
+// Seçim modeli "yayınlanmış olayı tekrar seçme" talimatını her zaman tutmuyor (2026-11-23: GS–Aston Villa için iki ayrı
+// haber yazıldı: "maç önü" ve "kadroda 3 eksik"). Kod da özel adlarla (takım/kişi/yer) ikinci bir eleme yapar.
+
+/** Özel ad sayılmayan, sık büyük harfli sözcükler (turnuva adları, cümle başı kalıpları). */
+const ENTITY_STOPWORDS = new Set([
+  'şampiyonlar', 'ligi', 'lig', 'süper', 'premier', 'dünya', 'kupası', 'kupa', 'milli', 'takım', 'takımı', 'uefa',
+  'avrupa', 'konferans', 'trendyol', 'laliga', 'serie', 'bundesliga', 'fifa', 'tff', 'var', 'türkiye', 'bu', 'maç',
+  'maçı', 'maçın', 'maçında', 'teknik', 'sezon', 'kulüp', 'yeni', 'son', 'ilk', 'sarı', 'siyah', 'bordo', 'the',
+]);
+
+/** Metindeki özel adlar: büyük harfle başlayan sözcükler, kesme ekinden arındırılmış, küçük harf (tr). */
+export function entityTokens(text: string): Set<string> {
+  const out = new Set<string>();
+  for (const raw of text.split(/[^A-Za-zÇĞİÖŞÜçğıöşüâîûÂÎÛ'’-]+/)) {
+    const word = raw.split(/['’]/)[0].replace(/-+$/, '');
+    if (word.length < 3 || !/^[A-ZÇĞİÖŞÜÂÎÛ]/.test(word)) continue;
+    const t = word.toLocaleLowerCase('tr');
+    if (!ENTITY_STOPWORDS.has(t)) out.add(t);
+  }
+  return out;
+}
+
+/**
+ * Aday başlık, yayınlanmış bir haberle (başlık + özet) aynı olayı mı anlatıyor: başlıktaki özel adların en az 2'si ve
+ * en az %75'i o haberde geçiyorsa evet. Tek ortak takım adı yetmez ("Fenerbahçe … Aziz Yıldırım" ≠ "Fenerbahçe … Archie
+ * Brown"); "Okan Buruk, Aston Villa maçında …" ↔ "Galatasaray yarın Aston Villa'yı ağırlıyor … Okan Buruk …" aynı.
+ */
+export function isSameEvent(title: string, published: { title: string; summary?: string }): boolean {
+  const a = entityTokens(title);
+  if (a.size < 2) return false;
+  const b = entityTokens(`${published.title} ${published.summary ?? ''}`);
+  let shared = 0;
+  for (const t of a) if (b.has(t)) shared++;
+  return shared >= 2 && shared >= Math.ceil(a.size * 0.75);
+}
+
+export function findSameEvent<T extends { title: string; summary?: string }>(title: string, list: T[]): T | undefined {
+  return list.find((p) => isSameEvent(title, p));
+}

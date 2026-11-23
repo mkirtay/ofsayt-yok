@@ -32,6 +32,7 @@ import {
   usageCostMicroUsd,
   writesAffordable,
   maxNewForRun,
+  findSameEvent,
 } from './aiNewsCore';
 
 export const NEWS_MODEL = 'claude-haiku-5-5';
@@ -129,7 +130,7 @@ Kurallar:
 - Yalnız futbol. Basketbol, voleybol, Formula 1, tenis vb. ele.
 - Foto galeri, magazin, köşe yazısı/yorum, "işte maçın şifresi" türü tık tuzağı, bahis/iddaa içerikli haberleri ele.
 - Aynı olayı anlatan adayları TEK haberde birleştir (indexes listesine hepsini koy; ilk indeks en ayrıntılı görünen aday olsun).
-- "Zaten yayınlanan haberler" listesindeki bir olayı tekrar seçme.
+- "Zaten yayınlanan haberler" listesindeki bir olayı tekrar seçme. AYNI OLAY: aynı maç (maç önü, kadro durumu, sakatlıklar, hakem dahil), aynı transfer, aynı açıklama ya da aynı kulüp gelişmesi — farklı açıdan anlatılsa da tekrardır. Yalnız gerçekten YENİ bir gelişme (ör. maç oynandı, transfer resmîleşti) yeni haber sayılır.
 - Öncelik: Süper Lig ve Türk takımları, Türk takımlarının Avrupa maçları, milli takım, Türk oyuncular; ardından Avrupa'nın büyük ligleri ve büyük gelişmeleri (transfer, sakatlık, teknik direktör değişikliği, önemli maç sonuçları, açıklamalar).
 - Önem sırasına göre sırala. Dikkate değer haber yoksa boş liste döndür.`;
 
@@ -157,12 +158,14 @@ async function selectStories(
   published: NewsItem[],
   max: number,
 ): Promise<NewsCandidate[][]> {
-  const publishedList = published.length ? published.map((n) => `- ${n.title}`).join('\n') : '(yok)';
+  const publishedList = published.length
+    ? published.map((n) => `- ${n.title}${n.summary ? ` — ${n.summary}` : ''}`).join('\n')
+    : '(yok)';
   const res = await ai.messages.create({
     model: NEWS_MODEL,
     max_tokens: 4_000,
     system: SELECT_SYSTEM,
-    output_config: { effort: 'low', format: { type: 'json_schema', schema: SELECT_SCHEMA } },
+    output_config: { effort: 'medium', format: { type: 'json_schema', schema: SELECT_SCHEMA } },
     messages: [
       {
         role: 'user',
@@ -179,7 +182,10 @@ async function selectStories(
   } catch {
     return [];
   }
-  return parseStoryPicks(parsed, cands.length, max).map((p) => p.indexes.map((i) => cands[i]));
+  // Kod koruması: yayınlanmış bir haberle aynı olayı anlatan grup yazılmadan elenir (model talimatı kaçırabiliyor).
+  return parseStoryPicks(parsed, cands.length, max)
+    .map((p) => p.indexes.map((i) => cands[i]))
+    .filter((g) => !g.some((c) => findSameEvent(c.title, published)));
 }
 
 // ─── Yazım ─────────────────────────────────────────────────────────────────
@@ -300,6 +306,8 @@ export type NewsRefreshSummary = {
   selected?: number;
   written?: number;
   failed?: number;
+  /** Yazıldıktan sonra aynı olay diye atılan haber sayısı. */
+  duplicates?: number;
   total?: number;
 };
 
@@ -344,9 +352,14 @@ export async function refreshNews(now: number = Date.now()): Promise<NewsRefresh
     const results = await Promise.allSettled(groups.map((g) => writeStory(ai, spend, g)));
     const added: NewsItem[] = [];
     let failed = 0;
+    let duplicates = 0;
     results.forEach((r, i) => {
-      if (r.status === 'fulfilled' && r.value) added.push(toNewsItem(groups[i], r.value));
-      else {
+      if (r.status === 'fulfilled' && r.value) {
+        const item = toNewsItem(groups[i], r.value);
+        // Yazılmış başlıkla ikinci kontrol: yayınlanmışlar ve bu çalışmada önce eklenenlerle aynı olay mı.
+        if (findSameEvent(item.title, [...published, ...added])) duplicates++;
+        else added.push(item);
+      } else {
         failed++;
         if (r.status === 'rejected') captureError('news-write', r.reason);
       }
@@ -365,6 +378,7 @@ export async function refreshNews(now: number = Date.now()): Promise<NewsRefresh
       selected: groups.length,
       written: added.length,
       failed,
+      duplicates,
       total: next.length,
       costUsd: spend.micro / 1_000_000,
       spentTodayUsd: (spentToday + spend.micro) / 1_000_000,
