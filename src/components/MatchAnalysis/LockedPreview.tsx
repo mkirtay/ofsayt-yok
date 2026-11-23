@@ -65,35 +65,38 @@ export default function LockedPreview({ preview, offer, loading, busy, error, is
         </div>
       ) : null}
 
-      {/* Kilitli bölüm (2026-11-23 yenileme): koyu panel — üstte bulanık önizleme (yalnız süs: kutu başlıkları + CSS'le
-          çizilen sahte rakamlar; gerçek değer HTML'de yok), altta ne açılacağı + düğmeler. */}
-      <div className={styles.paywall}>
-        <section className={`${styles.paywallLocked} ${LOCKED_SECTION_CLASS}`} aria-label={t('analysis.lockedTitle')}>
-          <div className={styles.teaser} aria-hidden="true" data-nosnippet="">
-            <div className={styles.teaserOdds}>
-              {[preview.homeTeamName, t('analysis.topOutcomeDraw'), preview.awayTeamName].map((label, i) => (
-                <span key={i} className={styles.teaserOdd}>
-                  <span className={styles.teaserOddLabel}>{label}</span>
-                  <span className={styles.teaserValue} />
-                </span>
+      {/* Kilitli bölüm: açılmış analizin kendi iskeleti (aynı 1/X/2 kutuları ve bölüm başlıkları), değerler bulanık
+          yer tutucu — gerçek değer HTML'de yok, sayılar yalnız CSS. Kilit dili premium amber (Design System §1). */}
+      <div className={styles.lockWrap}>
+        <section className={`${styles.lockedSection} ${LOCKED_SECTION_CLASS}`} aria-label={t('analysis.lockedTitle')}>
+          <div className={styles.ghost} aria-hidden="true" data-nosnippet="">
+            <h4 className={styles.sectionTitle}>{t('analysis.lockedSections.scenarios')}</h4>
+            <div className={styles.predictionBars}>
+              {(['home', 'draw', 'away'] as const).map((k) => (
+                <div key={k} className={styles.predictionBar}>
+                  <div className={styles.barLabel}>{t(`analysis.pick.${k}`)}</div>
+                  <div className={`${styles.barValue} ${styles.ghostValue}`} />
+                  <div className={styles.barTeam}>
+                    {k === 'home' ? preview.homeTeamName : k === 'away' ? preview.awayTeamName : '\u00a0'}
+                  </div>
+                </div>
               ))}
             </div>
-            <div className={styles.teaserGrid}>
-              {LOCKED_SECTIONS.map((k) => (
-                <span key={k} className={`${styles.teaserTile} ${k === 'analyst' ? styles.teaserTileWide : ''}`}>
-                  <span className={styles.teaserTileLabel}>{t(`analysis.lockedSections.${k}`)}</span>
-                  <span className={styles.teaserBar} />
-                </span>
+            <div className={styles.ghostGrid}>
+              {LOCKED_SECTIONS.filter((k) => k !== 'scenarios').map((k) => (
+                <div key={k} className={styles.ghostTile}>
+                  <span className={styles.ghostTileTitle}>{t(`analysis.lockedSections.${k}`)}</span>
+                  <span className={styles.ghostLine} />
+                  <span className={`${styles.ghostLine} ${styles.ghostLineShort}`} />
+                </div>
               ))}
             </div>
           </div>
-          <div className={styles.paywallBody}>
-            <h4 className={styles.paywallTitle}>
-              <span aria-hidden="true">🔒 </span>
-              {t('analysis.paywall.title')}
-            </h4>
-            <p className={styles.paywallLead}>{t('analysis.paywall.lead')}</p>
-            <ul className={styles.paywallChecks}>
+          <div className={styles.lockPanel}>
+            <span className={styles.lockChip}>
+              <span aria-hidden="true">🔒</span> {t('analysis.lockedTitle')}
+            </span>
+            <ul className={styles.lockChecks}>
               {PAYWALL_POINTS.map((k) => (
                 <li key={k}>{t(`analysis.paywall.points.${k}`)}</li>
               ))}

@@ -714,216 +714,139 @@
   }
 }
 
-// ── Kilitli analiz paneli (2026-11-23 yenileme) ─────────────────────────────
-// Koyu yüzey (iki temada da aynı: "kilitli / premium" bölge), üstte bulanık önizleme kutuları, altta kazanımlar + düğmeler.
-// Bulanık rakamlar yalnız CSS `content` (HTML'de sayı yok; gerçek değer hiç gelmez).
+// ── Kilitli analiz (2026-11-23) ─────────────────────────────────────────────
+// Tema yüzeyinde kalır (ayrı koyu blok yok). Üstte açılmış analizin kendi iskeleti (aynı `.predictionBar` kutuları,
+// `.sectionTitle` başlıkları) bulanık; alt kısmı kart yüzeyine erir. Kilit dili premium amber (Design System §1,
+// `.premiumBadge` ile aynı ton), birincil düğme sitenin yeşil `.ctaButton`'ı.
 
-.paywall {
+.lockWrap {
   margin-top: $spacing-5;
-  padding: $spacing-4;
-  border-radius: $radius-lg;
-  background:
-    radial-gradient(120% 80% at 100% 0%, $color-surface-dark-alt 0%, transparent 60%),
-    $color-surface-dark;
-  border: 1px solid $color-border-dark;
-  color: $color-text-on-dark;
-  overflow: hidden;
-
-  @media (min-width: $bp-md) {
-    padding: $spacing-6;
-  }
-
-  // Düğme alanı panelin içinde: tam genişlik, koyu zemine uygun metin renkleri.
-  .cta {
-    margin-top: $spacing-4;
-    padding: 0;
-    align-items: stretch;
-  }
-
-  .ctaButton,
-  .ctaButtonSecondary {
-    display: block;
-    width: 100%;
-    min-height: 48px;
-    text-align: center;
-    text-decoration: none;
-    font-size: var(--fs-section);
-  }
-
-  .ctaButtonSecondary {
-    color: $color-text-on-dark;
-    border-color: $color-border-dark;
-  }
-
-  .reasoning {
-    text-align: center;
-    color: $color-text-on-dark-secondary;
-
-    a {
-      color: $color-text-on-dark;
-    }
-  }
 }
 
-.paywallLocked {
+.lockedSection {
   position: relative;
 }
 
-.teaser {
+.ghost {
   position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-2;
   user-select: none;
   pointer-events: none;
 
-  // Önizlemenin alt kısmı panel zeminine erir → göz başlığa iner.
+  // İskeletin alt yarısı kart yüzeyine erir → göz kilit satırına iner.
   &::after {
     content: '';
     position: absolute;
-    inset: 40% 0 0;
-    background: linear-gradient(180deg, transparent, $color-surface-dark 92%);
+    inset: 45% 0 0;
+    background: linear-gradient(180deg, transparent, $color-surface 90%);
   }
 }
 
-.teaserOdds {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  border: 1px solid $color-border-dark;
-  border-radius: $radius-md;
-  background: $color-surface-dark-alt;
-}
-
-.teaserOdd {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: $spacing-1;
-  min-width: 0;
-  padding: $spacing-3 $spacing-2;
-
-  & + & {
-    border-left: 1px solid $color-border-dark;
-  }
-}
-
-.teaserOddLabel {
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: var(--fs-caption);
-  font-weight: 600;
-  color: $color-text-on-dark-secondary;
-}
-
-.teaserValue::before {
+// Bulanık oran: gerçek değer yok, yalnız CSS `content`.
+.ghostValue::before {
   display: block;
-  font-size: var(--fs-title);
-  font-weight: 800;
-  color: $color-text-on-dark;
-  filter: blur(6px);
+  filter: blur(7px);
+  opacity: 0.8;
 
-  .teaserOdd:nth-child(1) & {
+  .predictionBar:nth-child(1) & {
     content: '%46';
   }
-  .teaserOdd:nth-child(2) & {
+  .predictionBar:nth-child(2) & {
     content: '%27';
   }
-  .teaserOdd:nth-child(3) & {
+  .predictionBar:nth-child(3) & {
     content: '%27';
   }
 }
 
-.teaserGrid {
+.ghostGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: $spacing-2;
 }
 
-.teaserTile {
+.ghostTile {
   display: flex;
   flex-direction: column;
   gap: $spacing-2;
   min-width: 0;
   padding: $spacing-3;
-  border: 1px solid $color-border-dark;
   border-radius: $radius-md;
-  background: $color-surface-dark-alt;
+  background: $color-muted;
 }
 
-.teaserTileWide {
-  grid-column: 1 / -1;
+.ghostTileTitle {
+  font-size: var(--fs-micro);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: $color-text-secondary;
 }
 
-.teaserTileLabel {
-  font-size: var(--fs-caption);
-  font-weight: 600;
-  color: $color-text-on-dark-secondary;
-}
-
-.teaserBar {
+.ghostLine {
   display: block;
-  height: 12px;
-  width: 70%;
+  height: 8px;
+  width: 85%;
   border-radius: $radius-full;
-  background: $color-text-on-dark-secondary;
-  opacity: 0.35;
-  filter: blur(3px);
-
-  .teaserTileWide & {
-    width: 90%;
-  }
+  background: $color-text-secondary;
+  opacity: 0.28;
+  filter: blur(2px);
 }
 
-.paywallBody {
+.ghostLineShort {
+  width: 55%;
+}
+
+// Kilit satırı: iskeletin erime bölgesine biner.
+.lockPanel {
   position: relative;
-  margin-top: -$spacing-6;
-}
-
-.paywallTitle {
-  margin: 0;
-  font-size: calc(var(--fs-title) + 6px);
-  font-weight: 800;
-  line-height: 1.25;
-  color: $color-text-on-dark;
-
-  @media (min-width: $bp-md) {
-    font-size: calc(var(--fs-title) + 10px);
-  }
-}
-
-.paywallLead {
-  margin: $spacing-2 0 0;
-  font-size: var(--fs-body);
-  line-height: 1.5;
-  color: $color-text-on-dark-secondary;
-}
-
-.paywallChecks {
-  margin: $spacing-4 0 0;
-  padding: 0;
-  list-style: none;
+  margin-top: -$spacing-8;
   display: flex;
   flex-direction: column;
-  gap: $spacing-2;
+  align-items: center;
+  gap: $spacing-3;
+  text-align: center;
+}
+
+.lockChip {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-1;
+  padding: $spacing-1 $spacing-3;
+  border-radius: $radius-full;
+  border: 1px solid color-mix(in srgb, var(--color-premium) 55%, var(--border-subtle));
+  background: color-mix(in srgb, var(--color-premium) 14%, $color-surface);
+  color: $color-text;
+  font-size: var(--fs-meta);
+  font-weight: 700;
+}
+
+.lockChecks {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: $spacing-1 $spacing-4;
+  width: 100%;
+  max-width: 560px;
+  text-align: left;
 
   li {
     position: relative;
-    padding-left: 28px;
-    font-size: var(--fs-body);
+    padding-left: 22px;
+    font-size: var(--fs-meta);
     line-height: 1.45;
-    color: $color-text-on-dark;
+    color: $color-text-secondary;
 
     &::before {
       content: '✓';
       position: absolute;
       left: 0;
       top: 0;
-      width: 20px;
+      width: 16px;
       text-align: center;
       font-weight: 800;
-      color: var(--color-action);
+      color: var(--color-premium-strong);
     }
   }
 }
