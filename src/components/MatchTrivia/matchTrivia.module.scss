@@ -247,7 +247,7 @@
   color: $color-primary;
   border: 1px dashed $color-border;
   border-radius: $radius-md;
-  font-size: 13px;
+  font-size: var(--fs-meta);
   font-weight: 700;
   cursor: pointer;
 
