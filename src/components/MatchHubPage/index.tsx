@@ -138,7 +138,7 @@ const EMPTY_MATCHES: Match[] = [];
 
 /**
  * Oyun kartları maç listesine DAĞITILIR (2026-11-23 kullanıcı kararı): en üstte Mini Saha (ilk ≥ 6 maçlık grup sonunda),
- * birkaç lig altında Tahmin Ligi şeridi (oyun herkese açıksa: NEXT_PUBLIC_GAME_PUBLIC), daha aşağıda Günün Frikiği.
+ * birkaç lig altında tahmin oyunu şeridi (oyun herkese açıksa: NEXT_PUBLIC_GAME_PUBLIC), daha aşağıda Günün Frikiği.
  * Her kart sanal listenin sabit yükseklikli bir satırı (kart + kendi alt boşluğu 12 px) — yükseklik baştan ayrılır:
  * Mini Saha SABİT 128 px (MiniSahaHomeCard scss), Tahmin şeridi 56 px (GameHomeCard scss), Frikik en büyük kutusu
  * 146 px (mobil < 480 px; masaüstü 142 — FrikikDailyCard scss).
