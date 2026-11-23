@@ -2,7 +2,7 @@
 
 // Ekran dışı gol bildirimi. Masaüstü: alt orta. Mobil: alt menünün 16 px üstü (Kural Köşesi düğmesiyle aynı taban),
 // sağda yüzen düğme sütununa (16 + 56 px) yer bırakır. Katman: yüzen düğmeler (92) ve davet kartının (96) üstü,
-// alt menü (110) ve AI Asistan paneli (130) altı. Renkler tema tokenları (açık/koyu).
+// alt menü (110) ve AI Asistan paneli (131) altı. Renkler tema tokenları (açık/koyu).
 .region {
   :global(html[data-game-active]) & {
     display: none;

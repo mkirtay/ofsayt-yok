@@ -1,7 +1,9 @@
 @use '../../styles/variables' as *;
 
 // AI Asistan paneli. Masaüstü: düdüğün kenarında sabit kart; mobil (< $bp-desktop): tam ekran.
-// z-index: Kural Köşesi düğmesi (92) ve alt menünün (110) üstü; mobilde her şeyin üstünde.
+// z-index 131: Kural Köşesi paneliyle aynı tam ekran katmanı (ikisi aynı anda açık olmaz). Yüzen düğmeler (92), alt menü
+// (110), çerez bandı (120) ve ipucu baloncuklarının (Onboarding 129/130) üstü — eskiden ipucuyla eşit (130) olduğundan
+// sonradan çıkan ipucu tam ekran panelin üstüne binebiliyordu. Diyaloglar (ConfirmDialog/hediye 1100) bunun üstünde.
 .panel {
   --as-bg: var(--bg-surface);
   --as-text: var(--text-primary);
@@ -14,7 +16,7 @@
 
   position: fixed;
   inset: 0;
-  z-index: 130;
+  z-index: 131;
   display: none;
   flex-direction: column;
   background: var(--as-bg);
