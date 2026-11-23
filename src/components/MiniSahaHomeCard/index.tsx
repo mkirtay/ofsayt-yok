@@ -25,7 +25,9 @@ export default function MiniSahaHomeCard() {
         width={600}
         height={260}
         alt=""
-        loading="lazy"
+        // Kart ana sayfa listesinin EN ÜSTÜNDE (2026-11-23) → mobilde LCP öğesi bu görsel; lazy iken 2,3 sn geç isteniyordu.
+        loading="eager"
+        fetchPriority="high"
         decoding="async"
         draggable={false}
       />
