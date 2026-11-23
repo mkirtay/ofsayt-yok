@@ -164,6 +164,30 @@
 
 .virtualList {
   outline: none;
+
+  // Fareli cihazda (macOS'un "kaydırırken göster" yüzen çubuğu dahil) çubuk kendi yerini alsın: yüzen çubuk satırların
+  // sağındaki favori yıldızının üstüne biniyordu (2026-11-23). `::-webkit-scrollbar` tanımlı olunca Chrome/Safari çubuğu
+  // yerleşime dahil eder → satırlar (absolute, %100) çubuğun solunda biter. `scrollbar-width` / `scrollbar-color`
+  // YAZILMAZ: Chrome 121+ onları görünce bu kuralları yok sayar. Dokunmatikte (mobil) yüzen çubuk kalır.
+  @media (hover: hover) and (pointer: fine) {
+    &::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      border: 2px solid transparent;
+      border-radius: $radius-full;
+      background: color-mix(in srgb, var(--text-secondary) 45%, transparent) padding-box;
+    }
+
+    &::-webkit-scrollbar-thumb:hover {
+      background: color-mix(in srgb, var(--text-secondary) 70%, transparent) padding-box;
+    }
+  }
 }
 
 .virtualHeaderCell {
@@ -180,6 +204,11 @@
 .virtualSlot {
   box-sizing: border-box;
   padding-top: 12px;
+}
+
+// Listenin en üstündeki slot (ana sayfa Mini Saha): üst boşluk yok; kendi alt boşluğu ardından gelen başlığı ayırır.
+.virtualSlotTop {
+  box-sizing: border-box;
 }
 
 // Ölçülen kutu alt boşluğu da kapsasın (içeriğin margin'i dışarı taşmasın).

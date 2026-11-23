@@ -28,4 +28,10 @@ describe('insertSlotsAfterGroups', () => {
     const h = out[out.findIndex((i) => i.type === 'slot') + 1] as { showGap: boolean };
     expect(h.showGap).toBe(false);
   });
+  it('minMatches 0: ilk slot en üstte, sonrakiler baştan sayılarak her 3 grupta bir', () => {
+    expect(shape(insertSlotsAfterGroups(groups(7), 3, 0, 3))).toBe('S0HmmHmmHmmS1HmmHmmHmmS2Hmm');
+    const out = insertSlotsAfterGroups(groups(2), 1, 0, 3);
+    expect(out[0]).toMatchObject({ type: 'slot', index: 0, atTop: true });
+    expect((out[1] as { showGap: boolean }).showGap).toBe(false);
+  });
 });

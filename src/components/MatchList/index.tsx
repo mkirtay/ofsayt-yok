@@ -190,7 +190,7 @@ export type FlatItem =
       isFirstInGroup: boolean;
       isLastInGroup: boolean;
     }
-  | { type: 'slot'; index: number };
+  | { type: 'slot'; index: number; atTop?: boolean };
 
 const NO_SLOTS: MatchListInlineSlot[] = [];
 const NO_HEIGHTS: readonly number[] = [];
@@ -393,7 +393,7 @@ function VirtualRow({
 
   if (item.type === 'slot') {
     return (
-      <div {...ariaAttributes} style={style} className={styles.virtualSlot}>
+      <div {...ariaAttributes} style={style} className={item.atTop ? styles.virtualSlotTop : styles.virtualSlot}>
         <SlotContent index={item.index} onResize={onSlotResize}>
           {slots[item.index]?.node}
         </SlotContent>
@@ -634,7 +634,7 @@ const LIST_STYLE: CSSProperties = { height: '100%', width: '100%' };
 function rowHeight(index: number, rowProps: RowContext): number {
   const item = rowProps.items[index];
   if (!item) return MATCH_ROW_HEIGHT;
-  if (item.type === 'slot') return GROUP_GAP + (rowProps.slotHeights[item.index] ?? 0);
+  if (item.type === 'slot') return (item.atTop ? 0 : GROUP_GAP) + (rowProps.slotHeights[item.index] ?? 0);
   if (item.type === 'header' || item.type === 'dateHeader') {
     return HEADER_BAR_HEIGHT + (item.showGap ? GROUP_GAP : 0);
   }
@@ -658,15 +658,18 @@ function buildItemsWithTrailingSection(
 }
 
 /**
- * Satır listesine slotları ekler. İlk slot en az `minMatches` maç satırından sonraki ilk grup sonunun (`isLastInGroup`
- * maç) ardına; sonrakiler her biri bir öncekinden `everyGroups` grup sonu sonra. Liste yetmezse kalan slotlar son grubun
- * ardına art arda. Slotun ardından gelen başlığın üst boşluğu kalkar (slot içeriği kendi alt boşluğunu taşır). Grup
- * yoksa liste aynen döner.
+ * Satır listesine slotları ekler.
+ * - `minMatches > 0`: ilk slot en az `minMatches` maç satırından sonraki ilk grup sonunun (`isLastInGroup` maç) ardına.
+ * - `minMatches <= 0`: ilk slot listenin EN ÜSTÜNDE (ilk başlıktan önce, üst boşluksuz — ana sayfa Mini Saha kartı,
+ *   2026-11-23: kalabalık ilk ligde aşağı kaymasın).
+ * Sonraki slotlar bir öncekinden `everyGroups` grup sonu sonra. Liste yetmezse kalanlar son grubun ardına art arda.
+ * Slotun ardından gelen başlığın üst boşluğu kalkar (slot içeriği kendi alt boşluğunu taşır). Maç yoksa liste aynen döner.
  */
 export function insertSlotsAfterGroups(items: FlatItem[], slotCount: number, minMatches = 1, everyGroups = 3): FlatItem[] {
   if (slotCount <= 0) return items;
-  // Slot konacak grup sonları (maç satırı indeksleri).
-  const ends: number[] = [];
+  const atTop = minMatches <= 0;
+  // Slot konacak grup sonları (maç satırı indeksleri); üstteki slot -1 ile gösterilir.
+  const ends: number[] = atTop ? [-1] : [];
   let seen = 0;
   let groupsSinceSlot = 0;
   let lastEnd = -1;
@@ -677,17 +680,28 @@ export function insertSlotsAfterGroups(items: FlatItem[], slotCount: number, min
     if (!item.isLastInGroup) continue;
     lastEnd = i;
     if (ends.length === 0) {
-      if (seen >= minMatches) ends.push(i);
+      if (seen >= minMatches) {
+        ends.push(i);
+        groupsSinceSlot = 0;
+      }
     } else if (++groupsSinceSlot >= everyGroups) {
       ends.push(i);
+      groupsSinceSlot = 0;
     }
-    if (ends.length > 0 && ends[ends.length - 1] === i) groupsSinceSlot = 0;
   }
-  if (lastEnd < 0) return items;
+  if (lastEnd < 0) {
+    // Döngü erken bitmiş olabilir (yalnız üst slot istendi): yine de maç yoksa liste aynen döner.
+    lastEnd = items.findLastIndex((i) => i.type === 'match');
+    if (lastEnd < 0) return items;
+  }
   while (ends.length < slotCount) ends.push(lastEnd);
   const out: FlatItem[] = [];
   let slotIndex = 0;
   let dropGap = false;
+  if (ends[0] === -1) {
+    out.push({ type: 'slot', index: slotIndex++, atTop: true });
+    dropGap = true;
+  }
   for (let i = 0; i < items.length; i++) {
     const item = items[i]!;
     out.push(dropGap && (item.type === 'header' || item.type === 'dateHeader') ? { ...item, showGap: false } : item);

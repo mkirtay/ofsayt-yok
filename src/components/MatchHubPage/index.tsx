@@ -137,7 +137,7 @@ const today = () => todayIsoIstanbul();
 const EMPTY_MATCHES: Match[] = [];
 
 /**
- * Oyun kartları maç listesine DAĞITILIR (2026-11-23 kullanıcı kararı): en üstte Mini Saha (ilk ≥ 6 maçlık grup sonunda),
+ * Oyun kartları maç listesine DAĞITILIR (2026-11-23 kullanıcı kararı): Mini Saha listenin en üstünde,
  * birkaç lig altında tahmin oyunu şeridi (oyun herkese açıksa: NEXT_PUBLIC_GAME_PUBLIC), daha aşağıda Günün Frikiği.
  * Her kart sanal listenin sabit yükseklikli bir satırı (kart + kendi alt boşluğu 12 px) — yükseklik baştan ayrılır:
  * Mini Saha SABİT 128 px (MiniSahaHomeCard scss), Tahmin şeridi 56 px (GameHomeCard scss), Frikik en büyük kutusu
@@ -151,8 +151,11 @@ const LATER_GAME_SLOTS: MatchListInlineSlot[] = [
 /** Oyun kartları arası lig grubu sayısı (Mini Saha → Tahmin → Frikik). */
 const GAME_SLOT_EVERY_GROUPS = 3;
 
-/** Frikik / Tahmin kartı en az bu kadar maçtan sonraki grup sonunda — ilk ekranda önce maçlar (2026-11-20, seçenek B). */
-const HOME_SLOT_MIN_MATCHES = 6;
+/**
+ * 0 = Mini Saha kartı listenin EN ÜSTÜNDE (2026-11-23 kullanıcı kararı: ilk ligde maç çoksa aşağı kayıyordu; eski
+ * kural "en az 6 maçtan sonra" idi). Tahmin / Frikik kartları baştan sayılarak her GAME_SLOT_EVERY_GROUPS grupta bir.
+ */
+const HOME_SLOT_MIN_MATCHES = 0;
 
 /** Mobil yerleşim (< masaüstü): kombine kartı ilk grubun altındaki satırda; istemci-yalnız (kart ssr:false). */
 const subscribeMobile = (cb: () => void) => {
