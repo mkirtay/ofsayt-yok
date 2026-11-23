@@ -133,10 +133,10 @@ describe('asistan araçları', () => {
     for (const l of r.links ?? []) expect(isAllowedLinkHref(l.href), l.href).toBe(true);
   });
 
-  it('get_fixtures (gün): varsayılan bugün, Türk ligleri önce; "Türkiye" kapsamı bütün Türk ligleri (yalnız Süper Lig değil)', async () => {
+  it('get_fixtures (gün): varsayılan bugün, önem sırası (büyük 5 > Türkiye Kupası, bkz. matchOrder.ts); "Türkiye" kapsamı bütün Türk ligleri (yalnız Süper Lig değil)', async () => {
     const all = await run('get_fixtures', {});
     expect(h.calls).toEqual(['day:2026-10-06']);
-    expect((all.data as { matches: Array<{ match_id: number }> }).matches.map((m) => m.match_id)).toEqual([3, 2]);
+    expect((all.data as { matches: Array<{ match_id: number }> }).matches.map((m) => m.match_id)).toEqual([2, 3]);
     const tr = await run('get_fixtures', { scope: 'turkey' });
     expect(tr.data).toMatchObject({ scope: 'Türkiye', total: 1, matches: [{ match_id: 3, league: 'Türkiye Kupası' }] });
     expect(tr.card).toMatchObject({ type: 'matches' });

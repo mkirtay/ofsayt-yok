@@ -36,6 +36,7 @@ import { normalizeSearchText } from '@/utils/searchText';
 import { analysisCardForTeams, pickFixtures, resolveTeam, type AssistantAnalysisCard } from './matchAnalysisRequest';
 import { RULES_PANEL_HREF, type AssistantLink } from './outputFilter';
 import { teamHref } from '@/utils/teamUrl';
+import { sortAssistantMatches } from './matchOrder';
 
 export type ToolContext = { viewer: AnalysisViewer | null; locale: 'tr' | 'en'; todayIso: string };
 
@@ -165,9 +166,7 @@ async function getFixtures(args: Record<string, unknown>, ctx: ToolContext): Pro
   // Lig süzgeci: tek lig ya da "turkey" kapsamı (bütün Türk ligleri). Yoksa günün tüm maçları.
   const leagueIds: number[] | null = args.scope === 'turkey' ? [...TURKEY_LEAGUE_IDS] : args.league_id == null ? null : [leagueArg(args.league_id)];
   const inScope = (m: Match) => leagueIds == null || leagueIds.includes(Number(m.competition?.id ?? m.competition_id));
-  const rank = (m: Match) => (TURKEY_LEAGUE_IDS.includes(Number(m.competition?.id ?? m.competition_id)) ? 0 : 1);
-  const listFor = async (day: string) =>
-    (await loadHomeDay(day)).fixtureMatches.filter(inScope).sort((a, b) => rank(a) - rank(b) || (matchKickoffMs(a) ?? 0) - (matchKickoffMs(b) ?? 0)).map(matchItem);
+  const listFor = async (day: string) => sortAssistantMatches((await loadHomeDay(day)).fixtureMatches.filter(inScope)).map(matchItem);
   const scopeLabel = args.scope === 'turkey' ? (ctx.locale === 'tr' ? 'Türkiye' : 'Turkey') : leagueIds ? (ASSISTANT_LEAGUES[leagueIds[0]!] ?? String(leagueIds[0])) : null;
   const allLink: AssistantLink = { label: ctx.locale === 'tr' ? 'Tüm maçlar' : 'All matches', href: '/' };
 
@@ -204,7 +203,7 @@ async function getFixtures(args: Record<string, unknown>, ctx: ToolContext): Pro
 }
 
 async function getLiveScores(_args: Record<string, unknown>, ctx: ToolContext): Promise<ToolResult> {
-  const items = (await getAllLiveMatches()).map(matchItem);
+  const items = sortAssistantMatches(await getAllLiveMatches()).map(matchItem);
   return {
     data: { total: items.length, matches: items.slice(0, 15).map(forModel) },
     links: [{ label: ctx.locale === 'tr' ? 'Canlı maçlar' : 'Live matches', href: '/?tab=live' }],
