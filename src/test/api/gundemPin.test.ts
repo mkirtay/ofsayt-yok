@@ -7,8 +7,9 @@ const h = vi.hoisted(() => ({
   notify: vi.fn(),
   author: vi.fn(async () => ({ status: 'ok', createdAt: new Date('2025-01-01'), username: 'ali' })),
   gate: vi.fn(async () => ({ ok: true, flags: [] })),
+  post: vi.fn(async (): Promise<unknown> => null),
 }));
-vi.mock('@/lib/prisma', () => ({ prisma: { notification: { create: h.notify } } }));
+vi.mock('@/lib/prisma', () => ({ prisma: { notification: { create: h.notify }, post: { findUnique: h.post } } }));
 vi.mock('@/lib/termsConsentGate', () => ({ requireTermsConsent: async () => true }));
 vi.mock('@/lib/mobileAuth', () => ({ getRequestUserId: vi.fn(async () => 'u1') }));
 vi.mock('@/lib/requireAuth', () => ({ requireAdmin: vi.fn() }));
@@ -84,7 +85,7 @@ describe('POST /api/gundem/pin', () => {
     const r = await post({ amount: 6, message: '  Merhaba Gündem  ' });
     expect(r.status).toBe(201);
     expect(r.json.credits).toBe(4);
-    expect(h.place).toHaveBeenCalledWith({ userId: 'u1', amount: 6, message: 'Merhaba Gündem' });
+    expect(h.place).toHaveBeenCalledWith({ userId: 'u1', amount: 6, message: 'Merhaba Gündem', postId: null });
     expect(h.notify).toHaveBeenCalledWith({ data: { userId: 'u0', actorId: null, type: 'PIN_OUTBID' } });
   });
 
@@ -100,5 +101,29 @@ describe('POST /api/gundem/pin', () => {
   it('askıya alınmış kullanıcı 403', async () => {
     h.author.mockResolvedValueOnce({ status: 'suspended', until: new Date('2099-01-01') } as never);
     expect((await post({ amount: 1, message: 'a' })).status).toBe(403);
+  });
+});
+
+describe('POST /api/gundem/pin — kendi gönderisini sabitleme', () => {
+  const longBody = 'Galatasaray bu akşam sahada çok iyiydi, Osimhen yine fark yarattı. '.repeat(4);
+
+  it('kendi gönderisi: metin gönderiden (140 karaktere kısaltılır), postId kayda gider, filtre atlanır', async () => {
+    h.post.mockResolvedValueOnce({ authorId: 'u1', authorType: 'USER', body: longBody, deletedAt: null, hiddenAt: null });
+    h.place.mockResolvedValueOnce({ bidId: 'b1', balance: 4, previous: null });
+    const r = await post({ amount: 2, postId: 'p1' });
+    expect(r.status).toBe(201);
+    const arg = h.place.mock.calls[0]![0] as { message: string; postId: string };
+    expect(arg.postId).toBe('p1');
+    expect(arg.message.length).toBeLessThanOrEqual(140);
+    expect(arg.message.endsWith('…')).toBe(true);
+    expect(h.gate).not.toHaveBeenCalled();
+  });
+
+  it('başkasının / silinmiş gönderisi sabitlenemez', async () => {
+    h.post.mockResolvedValueOnce({ authorId: 'u2', authorType: 'USER', body: 'x', deletedAt: null, hiddenAt: null });
+    expect((await post({ amount: 2, postId: 'p2' })).status).toBe(403);
+    h.post.mockResolvedValueOnce({ authorId: 'u1', authorType: 'USER', body: 'x', deletedAt: new Date(), hiddenAt: null });
+    expect((await post({ amount: 2, postId: 'p3' })).status).toBe(404);
+    expect(h.place).not.toHaveBeenCalled();
   });
 });

@@ -154,6 +154,8 @@ export type GundemPinState = {
     since: string;
     /** İzleyici lideri engellediyse (ya da tersi) null. */
     message: string | null;
+    /** Sabitlenen kendi Gündem gönderisi (varsa kart gönderiye bağlanır). */
+    postId?: string | null;
     user: { id: string; username: string | null; name: string | null; image: string | null };
     isMine: boolean;
   } | null;

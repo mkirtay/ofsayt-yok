@@ -75,6 +75,7 @@ const leaderSelect = {
   userId: true,
   amount: true,
   message: true,
+  postId: true,
   createdAt: true,
   weekStart: true,
   user: { select: { username: true, name: true, image: true } },
@@ -138,7 +139,7 @@ export type PlaceBidResult = {
  * Teklif verir: biten haftaları kapatır, lideri bulur, kuralları uygular, teklif tutarını düşer, önceki lideri iade ile
  * çıkarır, yeni teklifi ACTIVE yazar — hepsi tek işlemde. Hatalar: `PinBidError`, `InsufficientCreditsError`.
  */
-export async function placePinBid(input: { userId: string; amount: number; message: string; now?: Date }): Promise<PlaceBidResult> {
+export async function placePinBid(input: { userId: string; amount: number; message: string; postId?: string | null; now?: Date }): Promise<PlaceBidResult> {
   const now = input.now ?? new Date();
   return prisma.$transaction(
     async (tx) => {
@@ -152,7 +153,7 @@ export async function placePinBid(input: { userId: string; amount: number; messa
       const balance = await debitCreditsTx(tx, input.userId, input.amount, { type: 'PIN_BID', note: 'Gündem 1. sıra teklifi' });
       const previous = leader ? await endLeaderTx(tx, leader, 'OUTBID', now) : null;
       const bid = await tx.pinBid.create({
-        data: { userId: input.userId, weekStart: pinWeekStart(now), amount: input.amount, message: input.message, createdAt: now },
+        data: { userId: input.userId, weekStart: pinWeekStart(now), amount: input.amount, message: input.message, postId: input.postId ?? null, createdAt: now },
         select: { id: true },
       });
       return { bidId: bid.id, balance, previous };

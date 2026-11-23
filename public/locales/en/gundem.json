@@ -141,6 +141,10 @@
     "pinRefundNote": "Credits for any unused days were refunded to your account."
   },
   "pin": {
+    "pinPost": "Pin",
+    "pinPostTitle": "Pin this post to the top spot",
+    "pinPostHint": "The first 140 characters of your post sit in the top spot everyone sees; a tap opens your post.",
+    "goToPost": "Go to post →",
     "badge": "#1",
     "title": "This week's #1 spot",
     "empty": "The #1 spot is empty. Pin your message to the top for everyone to see for 1 credit.",

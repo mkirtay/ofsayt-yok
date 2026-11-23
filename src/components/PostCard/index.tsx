@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import Link from 'next/link';
+import PinPostForm from '@/components/GundemPin/PinPostForm';
 import Avatar from '@/components/Avatar';
 import LikeButton from '@/components/LikeButton';
 import MoreButton from '@/components/Moderation/MoreButton';
@@ -78,6 +80,9 @@ export default function PostCard({
   const canDelete = !!onDelete && !!currentUserId && (post.author.id === currentUserId || isAdmin);
   // Şikâyet / engelleme: oturum açık ve başkasının gönderisi. Silinmiş kullanıcı ve resmi hesap engellenmez (yalnız şikâyet).
   const canModerate = !!currentUserId && post.author.id !== currentUserId;
+  // Kendi gönderisini krediyle 1. sıraya sabitleme (2026-11-23): yalnız kendi, yayında, kullanıcı gönderisi.
+  const canPin = !!currentUserId && post.author.id === currentUserId && !post.underReview && post.authorType !== 'OFFICIAL_BOT';
+  const [pinOpen, setPinOpen] = useState(false);
   const href = `/gundem/${post.id}`;
   const profileHref = `/gundem/kullanici/${post.author.id}`;
   const avatar = <Avatar name={displayName} image={post.author.image} size={40} />;
@@ -124,6 +129,17 @@ export default function PostCard({
             </Link>
           </span>
         </div>
+        {canPin ? (
+          <button
+            type="button"
+            className={styles.pinBtn}
+            onClick={() => setPinOpen((v) => !v)}
+            aria-expanded={pinOpen}
+            title={t('pin.pinPostTitle')}
+          >
+            📌 {t('pin.pinPost')}
+          </button>
+        ) : null}
         {canDelete ? (
           <button
             type="button"
@@ -157,6 +173,12 @@ export default function PostCard({
       <p className={styles.body}>
         <MentionText body={post.body} mentions={post.mentions} linkClassName={styles.mention} />
       </p>
+
+      {pinOpen ? (
+        <div className={styles.pinForm}>
+          <PinPostForm postId={post.id} onClose={() => setPinOpen(false)} />
+        </div>
+      ) : null}
 
       {/* Eklenen oyuncu/takım/maç kartı; sunucu çözemediyse alan null → hiç çizilmez. */}
       {post.entity ? <GundemEntityCard card={post.entity} /> : null}

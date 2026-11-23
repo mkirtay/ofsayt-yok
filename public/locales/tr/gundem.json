@@ -140,6 +140,10 @@
     "pinRefundNote": "Kullanmadığın günler varsa kredisi hesabına iade edildi."
   },
   "pin": {
+    "pinPost": "Sabitle",
+    "pinPostTitle": "Bu gönderiyi 1. sıraya sabitle",
+    "pinPostHint": "Gönderinin ilk 140 karakteri herkesin göreceği en üst sırada durur; tıklayan gönderine gelir.",
+    "goToPost": "Gönderiye git →",
     "badge": "1. sıra",
     "title": "Haftanın 1. sırası",
     "empty": "1. sıra boş. 1 krediyle mesajını herkesin göreceği en üst sıraya sabitle.",

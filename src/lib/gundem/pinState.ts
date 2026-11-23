@@ -23,6 +23,7 @@ export async function loadPinState(viewerId: string | null, now: Date = new Date
           amount: leader.amount,
           since: leader.createdAt.toISOString(),
           message,
+          postId: message == null ? null : leader.postId,
           user: { id: leader.userId, username: leader.user.username, name: leader.user.name, image: leader.user.image },
           isMine: viewerId === leader.userId,
         }

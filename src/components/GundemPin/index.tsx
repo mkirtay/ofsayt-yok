@@ -72,6 +72,11 @@ export default function GundemPin({ compact = false }: { compact?: boolean }) {
               <span className={styles.amount}>{t('pin.amount', { amount: leader.amount })}</span>
             </div>
             <p className={styles.message}>{leader.message ?? <em className={styles.hidden}>{t('pin.hidden')}</em>}</p>
+            {leader.postId ? (
+              <Link href={`/gundem/${leader.postId}`} className={styles.postLink}>
+                {t('pin.goToPost')}
+              </Link>
+            ) : null}
           </div>
           {admin ? (
             <button

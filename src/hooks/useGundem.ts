@@ -322,7 +322,7 @@ export function usePlacePinBid() {
   const { data: session } = useSession();
   const viewer = session?.user?.id ?? 'anon';
   return useMutation({
-    mutationFn: (input: { amount: number; message: string }) =>
+    mutationFn: (input: { amount: number; message?: string; postId?: string }) =>
       api<{ state: GundemPinState; credits: number }>('/api/gundem/pin', { method: 'POST', body: JSON.stringify(input) }),
     onSuccess: (data) => qc.setQueryData(gundemKeys.pin(viewer), data.state),
     onError: () => qc.invalidateQueries({ queryKey: ['gundem', 'pin'] }),

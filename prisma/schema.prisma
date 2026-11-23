@@ -790,6 +790,9 @@ model PinBid {
   weekStart      DateTime
   amount         Int
   message        String
+  /// Sabitlenen Gündem gönderisi (kullanıcının kendi gönderisi; 2026-11-23). Varsa `message` gönderi metninin ilk 140
+  /// karakteridir ve kart gönderiye bağlanır; yoksa ayrı yazılmış 1. sıra mesajı.
+  postId         String?
   /// "ACTIVE" | "OUTBID" | "REMOVED" (yönetici) | "COMPLETED" (hafta sonunda lider)
   status         String    @default("ACTIVE")
   chargedAmount  Int?

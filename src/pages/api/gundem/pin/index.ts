@@ -2,7 +2,7 @@
  * /api/gundem/pin — Gündem 1. sıra teklifi (kurallar: lib/pinBid.ts).
  *
  * GET (herkese açık, `private, no-store`; IP hız sınırı): bu haftanın lideri, en düşük geçerli teklif, sıfırlama zamanı.
- * POST `{ amount, message }` (giriş + Kullanım Şartları onayı + kullanıcı adı + Gündem yazma izni): 140 karakterlik mesaj,
+ * POST `{ amount, message }` ya da `{ amount, postId }` (kendi gönderisi; metin gönderiden) (giriş + Kullanım Şartları onayı + kullanıcı adı + Gündem yazma izni): 140 karakterlik mesaj,
  *   bağlantı yasak, Gündem içerik filtresi. 201 `{ state, credits }`; 409 BID_TOO_LOW (`minBid`) / ALREADY_LEADER,
  *   402 INSUFFICIENT_CREDITS. Geçilen lidere aktörsüz PIN_OUTBID bildirimi.
  * DELETE `?id=` (yalnız ADMIN): aktif mesajı kaldırır, başlayan gün oranında iade, PIN_REMOVED bildirimi.
@@ -76,7 +76,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (!Number.isInteger(amount) || amount < 1 || amount > PIN_MAX_BID) {
         return res.status(400).json({ error: `Teklif 1–${PIN_MAX_BID} arasında tam sayı olmalıdır.` });
       }
-      const raw = typeof input.message === 'string' ? input.message : '';
+      // Kendi Gündem gönderisini sabitleme (2026-11-23): metin gönderiden (ilk 140 karakter), ayrı mesaj yazılmaz.
+      const postId = typeof input.postId === 'string' && input.postId.length <= 64 ? input.postId : null;
+      let pinnedFromPost: string | null = null;
+      if (postId) {
+        const post = await prisma.post.findUnique({ where: { id: postId }, select: { authorId: true, authorType: true, body: true, deletedAt: true, hiddenAt: true } });
+        if (!post || post.deletedAt || post.hiddenAt || post.authorType !== 'USER') return res.status(404).json({ error: 'Gönderi bulunamadı.', code: 'POST_NOT_FOUND' });
+        if (post.authorId !== userId) return res.status(403).json({ error: 'Yalnız kendi gönderini sabitleyebilirsin.', code: 'NOT_OWN_POST' });
+        const flat = sanitizePlainText(post.body, { allowNewlines: false, maxInputLength: 10_000 }) ?? '';
+        pinnedFromPost = flat.length > PIN_MESSAGE_MAX_LENGTH ? `${flat.slice(0, PIN_MESSAGE_MAX_LENGTH - 1).trimEnd()}…` : flat;
+        if (!pinnedFromPost) return res.status(400).json({ error: 'Bu gönderi sabitlenemez (metin yok).', code: 'POST_EMPTY' });
+      }
+      const raw = pinnedFromPost ?? (typeof input.message === 'string' ? input.message : '');
       if (raw.length > RAW_MESSAGE_MAX_LENGTH) {
         return res.status(400).json({ error: `Mesaj 1–${PIN_MESSAGE_MAX_LENGTH} karakter olmalıdır.` });
       }
@@ -92,11 +103,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (author.status === 'suspended') {
         return res.status(403).json({ error: suspendedMessage(author.until), code: GUNDEM_SUSPENDED_CODE, suspendedUntil: author.until.toISOString() });
       }
-      const gate = await moderateGundemText({ userId, body: message, surface: 'post', accountCreatedAt: author.createdAt });
-      if (!gate.ok) return res.status(gate.status).json({ error: gate.error, code: gate.code });
+      // Gönderi zaten yayın filtresinden geçti; ayrı mesaj ise filtreden geçer.
+      if (!pinnedFromPost) {
+        const gate = await moderateGundemText({ userId, body: message, surface: 'post', accountCreatedAt: author.createdAt });
+        if (!gate.ok) return res.status(gate.status).json({ error: gate.error, code: gate.code });
+      }
 
       try {
-        const result = await placePinBid({ userId, amount, message });
+        const result = await placePinBid({ userId, amount, message, postId: pinnedFromPost ? postId : null });
         if (result.previous) await notifyPin(result.previous.userId, 'PIN_OUTBID');
         return res.status(201).json({ state: await loadPinState(userId), credits: result.balance });
       } catch (e) {

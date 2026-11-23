@@ -159,3 +159,32 @@
   color: $color-text;
   font-size: 13px;
 }
+
+// Kendi gönderisini 1. sıraya sabitle (2026-11-23)
+.pinBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-1;
+  min-height: 32px;
+  padding: 0 $spacing-2;
+  border: 1px solid $color-border;
+  border-radius: $radius-full;
+  background: transparent;
+  color: $color-text-secondary;
+  font: inherit;
+  font-size: var(--fs-caption);
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: $transition-base;
+
+  &:hover,
+  &[aria-expanded='true'] {
+    color: $color-primary-text;
+    border-color: $color-primary;
+  }
+}
+
+.pinForm {
+  margin: $spacing-3 0;
+}

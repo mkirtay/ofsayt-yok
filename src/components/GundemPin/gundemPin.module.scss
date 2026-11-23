@@ -238,3 +238,17 @@
     cursor: progress;
   }
 }
+
+// Sabitlenen kendi gönderisi → gönderiye bağlantı (2026-11-23)
+.postLink {
+  display: inline-block;
+  margin-top: $spacing-1;
+  font-size: var(--fs-meta);
+  font-weight: 700;
+  color: $color-primary-text;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
