@@ -129,7 +129,7 @@ export default function MatchAnalysis({ match, state, archived = false }: Props)
         ) : !isAuthenticated ? (
           // Misafir, analiz henüz yok: önce ne alacağını anlat (popüler maçta ~3 sa önce herkese açık özet), sonra üyelik.
           <div className={styles.cta} data-testid="analysis-guest-pending">
-            <p className={styles.reasoning}>{t('analysis.guestPending')}</p>
+            <p className={styles.guestText}>{t('analysis.guestPending')}</p>
             <div className={styles.guestActions}>
               <Link href="/auth/signup?src=ai_tab" className={styles.ctaButton}>
                 {t('analysis.guestSignUp')}

@@ -706,9 +706,20 @@
   a {
     display: inline-flex;
     align-items: center;
+    justify-content: center;
+    min-width: 180px;
     min-height: 40px;
     text-decoration: none;
   }
+}
+
+.guestText {
+  margin: 0;
+  max-width: 520px;
+  font-size: 14px;
+  line-height: 1.55;
+  text-align: center;
+  color: $color-text-secondary;
 }
 
 .guestSample {
