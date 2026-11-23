@@ -235,3 +235,28 @@
     cursor: not-allowed;
   }
 }
+
+// Varsayılan tek bilgi; kalanlar bu düğmeyle açılır (24 px+ dokunma hedefi).
+.moreBtn {
+  display: block;
+  width: 100%;
+  min-height: 40px;
+  margin-top: $spacing-3;
+  padding: $spacing-2 $spacing-4;
+  background: transparent;
+  color: $color-primary;
+  border: 1px dashed $color-border;
+  border-radius: $radius-md;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+
+  &:hover {
+    background: $color-bg;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+    outline-offset: 2px;
+  }
+}

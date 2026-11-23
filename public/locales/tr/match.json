@@ -187,7 +187,8 @@
     "unknowns": "Bilinmeyenler",
     "context": "Sahada Bağlam",
     "rivalry": "Karşılaşma Geçmişi",
-    "authError": "Bu özellik giriş yapmış kullanıcılara özeldir."
+    "authError": "Bu özellik giriş yapmış kullanıcılara özeldir.",
+    "showMore": "Daha fazla göster (+{{count}})"
   },
   "poll": {
     "title": "Kim Kazanır?",

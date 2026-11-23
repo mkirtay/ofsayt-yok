@@ -190,7 +190,8 @@
     "unknowns": "Fun Facts",
     "context": "On-Pitch Context",
     "rivalry": "Head-to-Head",
-    "authError": "This feature is for signed-in users only."
+    "authError": "This feature is for signed-in users only.",
+    "showMore": "Show more (+{{count}})"
   },
   "poll": {
     "title": "Who Will Win?",

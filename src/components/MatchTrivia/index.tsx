@@ -60,6 +60,8 @@ export default function MatchTrivia({ matchId }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasFetched, setHasFetched] = useState(false);
+  // Varsayılan tek bilgi (2026-11-23 kullanıcı kararı); geri kalanı "Daha fazla göster" ile açılır.
+  const [expanded, setExpanded] = useState(false);
 
   const inFlightMatchId = useRef<string | null>(null);
   const lastFetchedMatchId = useRef<string | null>(null);
@@ -181,7 +183,13 @@ export default function MatchTrivia({ matchId }: Props) {
 
   if (!trivia) return null;
 
-  const facts = Array.isArray(trivia.ertemFacts) ? trivia.ertemFacts : [];
+  const allFacts = Array.isArray(trivia.ertemFacts) ? trivia.ertemFacts : [];
+  // İlk görünüm: tek bilgi (ilk ⚡; yoksa bağlam metni). Kalanlar tıklayınca.
+  const facts = expanded ? allFacts : allFacts.slice(0, 1);
+  const showContext = !!trivia.contextual && (expanded || allFacts.length === 0);
+  const showRivalry = !!trivia.rivalryContext && expanded;
+  const hiddenCount =
+    allFacts.length - facts.length + (trivia.contextual && !showContext ? 1 : 0) + (trivia.rivalryContext && !showRivalry ? 1 : 0);
 
   return (
     <div className={styles.card}>
@@ -206,19 +214,25 @@ export default function MatchTrivia({ matchId }: Props) {
         </div>
       )}
 
-      {trivia.contextual && (
+      {showContext && (
         <div className={styles.section}>
           <h4 className={styles.sectionTitle}>{t('trivia.context')}</h4>
           <p className={styles.narrative}>{trivia.contextual}</p>
         </div>
       )}
 
-      {trivia.rivalryContext && (
+      {showRivalry && (
         <div className={styles.section}>
           <h4 className={styles.sectionTitle}>{t('trivia.rivalry')}</h4>
           <p className={styles.narrative}>{trivia.rivalryContext}</p>
         </div>
       )}
+
+      {hiddenCount > 0 ? (
+        <button type="button" className={styles.moreBtn} onClick={() => setExpanded(true)}>
+          {t('trivia.showMore', { count: hiddenCount })}
+        </button>
+      ) : null}
     </div>
   );
 }
