@@ -12,6 +12,8 @@ import styles from './matchAnalysis.module.scss';
  * (utils/analysisPaywall.ts) maç sayfasının ücretli içerik işaretlemesindeki seçicidir.
  */
 const LOCKED_SECTIONS = ['scenarios', 'score', 'teams', 'absences', 'analyst'] as const;
+/** Panelde ✓ ile sayılan kazanımlar (yalnız analizde gerçekten olanlar). */
+const PAYWALL_POINTS = ['scenarios', 'score', 'teams', 'absences', 'analyst'] as const;
 
 type Props = {
   preview: AnalysisPreview;
@@ -63,19 +65,89 @@ export default function LockedPreview({ preview, offer, loading, busy, error, is
         </div>
       ) : null}
 
-      <section className={`${styles.lockedSection} ${LOCKED_SECTION_CLASS}`} aria-label={t('analysis.lockedTitle')}>
-        <h4 className={styles.lockedTitle}>
-          <span aria-hidden="true">🔒</span> {t('analysis.lockedTitle')}
-        </h4>
-        <ul className={styles.lockedList}>
-          {LOCKED_SECTIONS.map((k) => (
-            <li key={k} className={styles.lockedItem}>
-              <span>{t(`analysis.lockedSections.${k}`)}</span>
-              <span className={styles.lockedBlur} aria-hidden="true" />
-            </li>
-          ))}
-        </ul>
-      </section>
+      {/* Kilitli bölüm (2026-11-23 yenileme): koyu panel — üstte bulanık önizleme (yalnız süs: kutu başlıkları + CSS'le
+          çizilen sahte rakamlar; gerçek değer HTML'de yok), altta ne açılacağı + düğmeler. */}
+      <div className={styles.paywall}>
+        <section className={`${styles.paywallLocked} ${LOCKED_SECTION_CLASS}`} aria-label={t('analysis.lockedTitle')}>
+          <div className={styles.teaser} aria-hidden="true" data-nosnippet="">
+            <div className={styles.teaserOdds}>
+              {[preview.homeTeamName, t('analysis.topOutcomeDraw'), preview.awayTeamName].map((label, i) => (
+                <span key={i} className={styles.teaserOdd}>
+                  <span className={styles.teaserOddLabel}>{label}</span>
+                  <span className={styles.teaserValue} />
+                </span>
+              ))}
+            </div>
+            <div className={styles.teaserGrid}>
+              {LOCKED_SECTIONS.map((k) => (
+                <span key={k} className={`${styles.teaserTile} ${k === 'analyst' ? styles.teaserTileWide : ''}`}>
+                  <span className={styles.teaserTileLabel}>{t(`analysis.lockedSections.${k}`)}</span>
+                  <span className={styles.teaserBar} />
+                </span>
+              ))}
+            </div>
+          </div>
+          <div className={styles.paywallBody}>
+            <h4 className={styles.paywallTitle}>
+              <span aria-hidden="true">🔒 </span>
+              {t('analysis.paywall.title')}
+            </h4>
+            <p className={styles.paywallLead}>{t('analysis.paywall.lead')}</p>
+            <ul className={styles.paywallChecks}>
+              {PAYWALL_POINTS.map((k) => (
+                <li key={k}>{t(`analysis.paywall.points.${k}`)}</li>
+              ))}
+            </ul>
+          </div>
+        </section>
+        <div className={styles.cta}>
+          {error ? <div className={styles.errorBox}>{error}</div> : null}
+          {!isAuthenticated ? (
+            <>
+              <p className={styles.reasoning}>{t('analysis.signInToUnlock')}</p>
+              <Link href="/auth/signup?src=analysis_lock" className={styles.ctaButton}>
+                {t('analysis.signUpGift')}
+              </Link>
+              <p className={styles.reasoning}>
+                {t('analysis.haveAccount')} <Link href="/auth/signin">{t('analysis.signIn')}</Link>
+              </p>
+            </>
+          ) : offer?.free ? (
+            <button type="button" className={styles.ctaButton} disabled={disabled} onClick={() => onUnlock('credit')}>
+              {t(offer.admin ? 'analysis.unlockAdmin' : 'analysis.unlockFree')}
+            </button>
+          ) : (
+            <>
+              {offer?.weeklyFree.available ? (
+                <button type="button" className={styles.ctaButton} disabled={disabled} onClick={() => onUnlock('weekly_free')}>
+                  {t('analysis.unlockWeekly')}
+                </button>
+              ) : null}
+              {offer && offer.balance < offer.cost ? (
+                <BuyCreditsButton className={styles.ctaButton}>{t('analysis.buyCredits')}</BuyCreditsButton>
+              ) : (
+                <button
+                  type="button"
+                  className={offer?.weeklyFree.available ? styles.ctaButtonSecondary : styles.ctaButton}
+                  disabled={disabled || !offer}
+                  onClick={() => onUnlock('credit')}
+                >
+                  {t('analysis.unlockCredit')}
+                </button>
+              )}
+              {offer ? (
+                <p className={styles.reasoning}>
+                  {t('analysis.creditBalance', { credits: offer.balance })}
+                  {offer.weeklyFree.reason && offer.weeklyFree.reason !== 'SIGNED_OUT'
+                    ? ` · ${t(`analysis.weeklyReason.${offer.weeklyFree.reason}`)}`
+                    : ''}
+                </p>
+              ) : null}
+            </>
+          )}
+          <p className={styles.reasoning}>{t('analysis.unlockPermanent')}</p>
+        </div>
+      </div>
 
       {offer?.proof ? (
         <p className={styles.proofLine}>
@@ -90,53 +162,6 @@ export default function LockedPreview({ preview, offer, loading, busy, error, is
         </p>
       ) : null}
 
-      <div className={styles.cta}>
-        {error ? <div className={styles.errorBox}>{error}</div> : null}
-        {!isAuthenticated ? (
-          <>
-            <p className={styles.reasoning}>{t('analysis.signInToUnlock')}</p>
-            <Link href="/auth/signup?src=analysis_lock" className={styles.ctaButton}>
-              {t('analysis.signUpGift')}
-            </Link>
-            <p className={styles.reasoning}>
-              {t('analysis.haveAccount')} <Link href="/auth/signin">{t('analysis.signIn')}</Link>
-            </p>
-          </>
-        ) : offer?.free ? (
-          <button type="button" className={styles.ctaButton} disabled={disabled} onClick={() => onUnlock('credit')}>
-            {t(offer.admin ? 'analysis.unlockAdmin' : 'analysis.unlockFree')}
-          </button>
-        ) : (
-          <>
-            {offer?.weeklyFree.available ? (
-              <button type="button" className={styles.ctaButton} disabled={disabled} onClick={() => onUnlock('weekly_free')}>
-                {t('analysis.unlockWeekly')}
-              </button>
-            ) : null}
-            {offer && offer.balance < offer.cost ? (
-              <BuyCreditsButton className={styles.ctaButton}>{t('analysis.buyCredits')}</BuyCreditsButton>
-            ) : (
-              <button
-                type="button"
-                className={offer?.weeklyFree.available ? styles.ctaButtonSecondary : styles.ctaButton}
-                disabled={disabled || !offer}
-                onClick={() => onUnlock('credit')}
-              >
-                {t('analysis.unlockCredit')}
-              </button>
-            )}
-            {offer ? (
-              <p className={styles.reasoning}>
-                {t('analysis.creditBalance', { credits: offer.balance })}
-                {offer.weeklyFree.reason && offer.weeklyFree.reason !== 'SIGNED_OUT'
-                  ? ` · ${t(`analysis.weeklyReason.${offer.weeklyFree.reason}`)}`
-                  : ''}
-              </p>
-            ) : null}
-          </>
-        )}
-        <p className={styles.reasoning}>{t('analysis.unlockPermanent')}</p>
-      </div>
       <div className={styles.disclaimer}>{t('analysis.disclaimer')}</div>
     </div>
   );

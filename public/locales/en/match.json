@@ -179,7 +179,18 @@
     },
     "why": "Why?",
     "recentProofLink": "All accuracy stats →",
-    "recentProof": "In the last {{days}} days, {{hits}} of {{picks}} highlighted AI picks came true ({{rate}}%)."
+    "recentProof": "In the last {{days}} days, {{hits}} of {{picks}} highlighted AI picks came true ({{rate}}%).",
+    "paywall": {
+      "title": "The full analysis on one screen",
+      "lead": "AI reads the probabilities, the score forecast and both teams' form for you.",
+      "points": {
+        "scenarios": "Win probabilities and match scenarios",
+        "score": "Most likely score forecast",
+        "teams": "Both teams' form, strengths and weaknesses",
+        "absences": "How missing players affect the match",
+        "analyst": "The analyst's short match take"
+      }
+    }
   },
   "trivia": {
     "title": "Match Trivia & Fun Facts",

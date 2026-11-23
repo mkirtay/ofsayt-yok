@@ -176,7 +176,18 @@
     },
     "why": "Neden?",
     "recentProofLink": "Tüm isabet istatistikleri →",
-    "recentProof": "Son {{days}} günde öne çıkan {{picks}} AI tahmininden {{hits}} tanesi tuttu (%{{rate}})."
+    "recentProof": "Son {{days}} günde öne çıkan {{picks}} AI tahmininden {{hits}} tanesi tuttu (%{{rate}}).",
+    "paywall": {
+      "title": "Analizin tamamı tek ekranda",
+      "lead": "Olasılıkları, skor tahminini ve iki takımın durumunu AI senin için okur.",
+      "points": {
+        "scenarios": "Kazanma olasılıkları ve maç senaryoları",
+        "score": "En olası skor tahmini",
+        "teams": "İki takımın formu, güçlü ve zayıf yanları",
+        "absences": "Eksik oyuncuların maça etkisi",
+        "analyst": "Analistin kısa maç yorumu"
+      }
+    }
   },
   "trivia": {
     "title": "Maç Trivia & Bilinmeyenler",
