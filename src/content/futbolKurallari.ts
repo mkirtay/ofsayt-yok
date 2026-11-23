@@ -552,16 +552,16 @@ export const RULE_ARTICLES: RuleArticle[] = [
             type: 'table',
             head: ['İhlal', 'Gol olursa', 'Gol olmazsa'],
             rows: [
-              ['Kaleci çizgiden erken çıktı', 'Gol geçerli', 'Penaltı tekrar edilir'],
-              ['Hücum oyuncusu ceza sahasına erken girdi', 'Penaltı tekrar edilir', 'Rakibe endirekt serbest vuruş'],
-              ['Savunma oyuncusu ceza sahasına erken girdi', 'Gol geçerli', 'Penaltı tekrar edilir'],
-              ['İki takımdan da oyuncu erken girdi', 'Penaltı tekrar edilir', 'Penaltı tekrar edilir'],
+              ['Kaleci çizgiden erken çıktı', 'Gol geçerli', 'Kurtarırsa tekrar; top dışarı ya da direğe giderse yalnız atıcıyı açıkça etkilediyse tekrar'],
+              ['Atıcının takım arkadaşı ceza sahasına erken girdi*', 'Penaltı tekrar edilir; erken giren dönen topu kendisi gole çevirdiyse gol iptal, rakibe endirekt serbest vuruş', 'Rakibe endirekt serbest vuruş'],
+              ['Savunma oyuncusu ceza sahasına erken girdi*', 'Gol geçerli', 'Penaltı tekrar edilir'],
+              ['İki takımdan da oyuncu ihlal yaptı', 'Penaltı tekrar edilir', 'Penaltı tekrar edilir'],
               ['Atıcı koşu bitince aldattı', 'Gol iptal, atıcıya sarı kart, rakibe endirekt serbest vuruş', 'Atıcıya sarı kart, rakibe endirekt serbest vuruş'],
             ],
           },
           {
             type: 'p',
-            text: 'Kaleci ihlali yüzünden penaltı tekrar edilirse kaleci maçtaki ilk ihlalinde uyarılır, sonraki ihlallerinde **sarı kart** görür.',
+            text: '*Erken giriş yalnız **etkisi varsa** cezalandırılır: hücumcu kaleciyi açıkça etkilediyse ya da topa oynayıp gol attıysa / şans yarattıysa; savunmacı atıcıyı açıkça etkilediyse ya da topa oynayıp golü engellediyse. Kaleci ihlali yüzünden penaltı tekrar edilirse kaleci maçtaki ilk ihlalinde uyarılır, sonraki ihlallerinde **sarı kart** görür.',
           },
         ],
       },
@@ -571,7 +571,7 @@ export const RULE_ARTICLES: RuleArticle[] = [
         blocks: [
           {
             type: 'p',
-            text: "Top kaleciden veya direkten dönerse oyun devam eder; herkes topa oynayabilir. Tek istisna atıcıdır: top başka bir oyuncuya değmeden atıcı topa **ikinci kez dokunamaz**, dokunursa rakibe endirekt serbest vuruş verilir. Penaltı devre bitimine denk gelirse devre, atış tamamlanana kadar uzatılır; bu durumda dönen topa yeniden vurulamaz ([uzatma dakikaları](/futbol-kurallari/uzatma)).",
+            text: "Top kaleciden veya direkten dönerse oyun devam eder; herkes topa oynayabilir. Tek istisna atıcıdır: top başka bir oyuncuya değmeden atıcı topa **bilerek ikinci kez dokunamaz**, dokunursa rakibe endirekt serbest vuruş verilir. Vuruş anında kazara çift dokunuşta (iki ayakla ya da destek ayağıyla) gol olursa penaltı tekrar edilir, olmazsa rakibe endirekt serbest vuruş verilir (IFAB, Haziran 2025). Penaltı devre bitimine denk gelirse devre, atış tamamlanana kadar uzatılır; bu durumda dönen topa yeniden vurulamaz ([uzatma dakikaları](/futbol-kurallari/uzatma)).",
           },
         ],
       },
@@ -591,7 +591,7 @@ export const RULE_ARTICLES: RuleArticle[] = [
           },
           {
             type: 'p',
-            text: "Seri penaltıda atıcının kazara topa iki kez dokunması 2026-27'de netleşti: gol olursa atış tekrarlanır, olmazsa kaçmış sayılır ([2026-27 değişiklikleri](/futbol-kurallari/2026-27-degisiklikler)).",
+            text: "Seri penaltıda atıcının kazara topa iki kez dokunması: gol olursa atış tekrarlanır, olmazsa kaçmış sayılır. Kural Haziran 2025'te IFAB genelgesiyle getirildi, 2026-27 kitabında netleştirildi ([2026-27 değişiklikleri](/futbol-kurallari/2026-27-degisiklikler)).",
           },
         ],
       },
@@ -736,7 +736,7 @@ export const RULE_ARTICLES: RuleArticle[] = [
         blocks: [
           {
             type: 'p',
-            text: "Evet. Kaleci ayakla attığı her vuruşla gol atabilir: kale vuruşundan rakip kaleye giden uzun top, penaltı ya da serbest vuruş. Brezilyalı **Rogério Ceni** kariyerinde 131 gol atarak bu alanın simgesi oldu; gollerinin neredeyse tamamı serbest vuruş ve penaltıdandı. Kaleci kendi ceza sahasından eliyle attığı topla ise gol atamaz.",
+            text: "Evet. Kaleci ayakla attığı her vuruşla gol atabilir: kale vuruşundan rakip kaleye giden uzun top, penaltı ya da serbest vuruş. Brezilyalı **Rogério Ceni**, São Paulo formasıyla attığı **131 resmî golle** en çok gol atan kaleci rekorunu (Guinness) elinde tutuyor; gollerinin 69'u penaltıdan, 61–62'si serbest vuruştan (kaynaklar bir gol farklı sayıyor). Kaleci kendi ceza sahasından eliyle attığı topla ise gol atamaz.",
           },
         ],
       },
@@ -755,7 +755,7 @@ export const RULE_ARTICLES: RuleArticle[] = [
       { q: 'Kaleci topu 8 saniyeden fazla tutarsa ne olur?', a: 'Rakip takıma korner verilir. Hakem son 5 saniyeyi elini kaldırarak sayar.' },
       { q: 'Kaleci geri pası elle alırsa ne olur?', a: 'Rakibe endirekt serbest vuruş verilir. Kural yalnız ayakla bilerek yapılan paslar ve doğrudan taçtan gelen toplar için geçerlidir.' },
       { q: 'Kaleci elle attığı topla gol atabilir mi?', a: 'Hayır. Top rakip kaleye doğrudan girerse oyun kale vuruşuyla başlar.' },
-      { q: 'En çok gol atan kaleci kim?', a: 'Rogério Ceni, kariyerinde 131 gol attı; çoğu serbest vuruş ve penaltıdandı.' },
+      { q: 'En çok gol atan kaleci kim?', a: 'Rogério Ceni: São Paulo formasıyla 131 resmî gol (Guinness rekoru); 69 penaltı, 61–62 serbest vuruş.' },
     ],
   },
   {

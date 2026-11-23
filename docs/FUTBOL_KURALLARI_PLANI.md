@@ -64,10 +64,13 @@ dakika olması, altın golün uygulanmaması, seri penaltının skora eklenmemes
 `PitchDiagram`), `/futbol-kurallari/kaleci-kurallari` (#16, #11, #30). Penaltı serisi, "Her saha aynı mı" ve Ceni videolarının
 kalıcı karşılığı; videolar sosyal medyada, sayfalarda metin + şema + SSS.
 
-Yayın öncesi teyit (IFAB 2026/27 kitabı):
-- Penaltı tekrar tablosu (kaleci / hücum / savunma / iki taraf erken giriş, koşu sonrası aldatma) ve kalecinin ilk ihlalde uyarı,
-  sonrakinde sarı kart.
-- Maç içi penaltıda kazara çift vuruşun güncel yaptırımı (sayfada yalnız "ikinci kez dokunamaz → endirekt" yazıyor).
-- Saha aralıkları (90–120 × 45–90; uluslararası 100–110 × 64–75), çizgi ≤ 12 cm, korner bayrağı ≥ 1,5 m.
-- Kaleci 8 saniye → korner (2025-26), sahada tedavi edilen kalecinin çıkma zorunluluğu olmaması.
-- Rogério Ceni gol sayısı (131; bazı kaynaklar 132).
+Teyit (2026-11-23, IFAB Law 14 / Law 1 / Law 5 güncel sayfaları + 2025/26 değişiklikleri; Ceni için Conmebol, Lance, Gazeta Esportiva):
+- Penaltı tablosu Law 14'e göre yeniden yazıldı: erken giriş yalnız etkisi varsa (2024/25); kaleci ihlalinde top dışarı/direkse yalnız
+  atıcıyı açıkça etkilediyse tekrar; kaleci ilk ihlalde uyarı, sonrakinde sarı kart.
+- Kazara çift dokunuş: maç içinde gol → tekrar, gol yok → endirekt; seri penaltıda gol → tekrar, yok → kaçmış. IFAB Genelge 31
+  (Haziran 2025), 2026/27'de netleştirme.
+- Açık kalan: atıcı ve kalecinin aynı anda ihlali 2026/27'de değişmiş olabilir (atıcının otomatik sarı kartı kalktı mı) — sayfada
+  bu durum anlatılmıyor; IFAB 2026/27 değişiklik PDF'i okunamadı.
+- Law 1 aralıkları, çizgi ≤ 12 cm, korner bayrağı ≥ 1,5 m doğrulandı. Kaleci 8 saniye → korner (2025/26) doğrulandı. Law 5: sahada
+  tedavi edilen kaleci çıkmak zorunda değil, doğrulandı.
+- Ceni: 131 resmî gol (Guinness, Conmebol); 69 penaltı, 61–62 serbest vuruş (kaynak farkı) — metinde böyle yazıldı.
