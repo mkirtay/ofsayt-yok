@@ -86,6 +86,7 @@
     "buyCredits": "Kredi al",
     "signInToGenerate": "Analiz üretmek için giriş yapmalısınız.",
     "guestPending": "Bu maçın AI analizi henüz hazırlanmadı. Beklemek istemiyorsan ücretsiz üye ol; hediye krediyle analizi hemen üretebilirsin.",
+    "guestScheduled": "Bu maçın AI analizi henüz hazırlanmadı. Analiz maçtan yaklaşık 3 saat önce yayınlanacak; özetini üye olmadan görebilirsin. Beklemek istemiyorsan ücretsiz üye ol; hediye krediyle analizi hemen üretebilirsin.",
     "guestSignUp": "Ücretsiz üye ol",
     "guestSample": "Örnek analizi gör →",
     "signIn": "Giriş yap",

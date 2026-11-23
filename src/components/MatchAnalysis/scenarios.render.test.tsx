@@ -136,3 +136,15 @@ describe('misafir, analiz henüz yok (maç öncesi)', () => {
     expect(findGamblingTerms(text(html))).toEqual([]);
   });
 });
+
+describe('misafir, analiz yok, ön üretim planlı', () => {
+  const state = {
+    analysis: null, predictionRecord: null, serverPhase: 'PRE', loading: false, generating: false, error: null,
+    credits: 0, unlimited: false, isAuthenticated: false, scheduled: true, generate: async () => {},
+  } as unknown as MatchAnalysisState;
+  const html = renderToStaticMarkup(<MatchAnalysis match={null} state={state} />);
+  it('yalnız planlıysa yayın saatini söyler', () => {
+    expect(text(html)).toContain('yaklaşık 3 saat önce yayınlanacak');
+    expect(html).toContain('href="/auth/signup?src=ai_tab"');
+  });
+});

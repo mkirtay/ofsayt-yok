@@ -26,6 +26,9 @@ export type AnalysisOffer = {
 
 export type UnlockMethod = 'credit' | 'weekly_free';
 
+/** Analiz yokken "ön üretim planlı mı" sorusu için maç bilgisi (yalnız başlamamış maçta gönderilir; yalnız metni etkiler). */
+export type AnalysisScopeHint = { leagueId: number; homeId: number; awayId: number; kickoffMs: number };
+
 export type MatchAnalysisState = {
   analysis: ApiAnalysis | null;
   /** Kredi modeli v2: analiz var ama bu kullanıcıya kilitli → ücretsiz önizleme (SSR'dan da gelir). */
@@ -43,6 +46,8 @@ export type MatchAnalysisState = {
   credits: number;
   unlimited: boolean;
   isAuthenticated: boolean;
+  /** Analiz yok ama ön üretim kapsamında ve başlamasına 3 saatten çok var: "maçtan ~3 saat önce yayınlanır". */
+  scheduled?: boolean;
   /** Analiz yoksa üretir, varsa açar (1 kredi / haftalık hak / yönetici). */
   generate: (method?: UnlockMethod) => Promise<void>;
 };
@@ -50,7 +55,19 @@ export type MatchAnalysisState = {
 type GetV2Body =
   | { access: 'unlocked' | 'free'; analysis: ApiAnalysis; predictionRecord: ApiPredictionRecord | null }
   | { access: 'locked'; preview: AnalysisPreview; offer: AnalysisOffer }
-  | { access: 'none'; offer: AnalysisOffer };
+  | { access: 'none'; offer: AnalysisOffer; scheduled?: boolean };
+
+/** GET adresi; maç bilgisi varsa `league/home/away/ko` eklenir (sunucu "planlı mı" yanıtını ekler). */
+export function analysisGetUrl(id: string, scope: AnalysisScopeHint | null): string {
+  const q = new URLSearchParams({ v: '2' });
+  if (scope) {
+    q.set('league', String(scope.leagueId));
+    q.set('home', String(scope.homeId));
+    q.set('away', String(scope.awayId));
+    q.set('ko', String(scope.kickoffMs));
+  }
+  return `/api/matches/${id}/analysis?${q.toString()}`;
+}
 
 /**
  * Maç AI analizinin durumu. Maç detayı AÇILDIĞINDA (sekme seçilmeden) çağrılır: böylece
@@ -62,6 +79,7 @@ export function useMatchAnalysis(
   matchId: string | null | undefined,
   /** Sunucuda (SSR) hazırlanan önizleme — ilk HTML'de kilitli kart görünsün (SEO); istemci yine kişisel durumu çeker. */
   initialPreview: AnalysisPreview | null = null,
+  scope: AnalysisScopeHint | null = null,
 ): MatchAnalysisState {
   const { t } = useTranslation('match');
   const { data: session, status: sessionStatus } = useSession();
@@ -79,6 +97,12 @@ export function useMatchAnalysis(
   const [inProgress, setInProgress] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notFound, setNotFound] = useState(false);
+  const [scheduled, setScheduled] = useState(false);
+  // İstek anındaki maç bilgisi (nesne kimliği değişince yeniden istek atılmasın diye ref).
+  const scopeRef = useRef(scope);
+  useEffect(() => {
+    scopeRef.current = scope;
+  }, [scope]);
 
   const lastFetchedMatchId = useRef<string | null>(null);
   /** Aktif yoklamanın maçı; maç değişince / bileşen kalkınca yoklama durur. */
@@ -104,6 +128,7 @@ export function useMatchAnalysis(
         setPreview(null);
         setOffer(body.offer);
         setNotFound(true);
+        setScheduled(body.scheduled === true);
         return;
       default:
         setAnalysis(body.analysis);
@@ -122,9 +147,10 @@ export function useMatchAnalysis(
       setAnalysis(null);
       setPredictionRecord(null);
       setServerPhase(null);
+      setScheduled(false);
       try {
         // `v=2`: kredi modeli v2 — erişim durumu (açık / kilitli + önizleme / yok) tek yanıtta.
-        const res = await fetch(`/api/matches/${id}/analysis?v=2`);
+        const res = await fetch(analysisGetUrl(id, scopeRef.current));
         if (!res.ok) {
           const body = await res.json().catch(() => ({}));
           throw new Error(body?.error ?? t('common:requestFailed', { status: res.status }));
@@ -235,8 +261,9 @@ export function useMatchAnalysis(
       credits,
       unlimited,
       isAuthenticated,
+      scheduled: !analysis && preview == null && scheduled,
       generate,
     }),
-    [analysis, preview, offer, predictionRecord, serverPhase, loading, generating, inProgress, error, credits, unlimited, isAuthenticated, generate]
+    [analysis, preview, offer, predictionRecord, serverPhase, loading, generating, inProgress, error, credits, unlimited, isAuthenticated, scheduled, generate]
   );
 }

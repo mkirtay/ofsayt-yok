@@ -89,6 +89,7 @@
     "buyCredits": "Buy credits",
     "signInToGenerate": "You must sign in to generate an analysis.",
     "guestPending": "The AI analysis for this match hasn't been prepared yet. Don't want to wait? Sign up for free and generate it now with your gift credits.",
+    "guestScheduled": "The AI analysis for this match hasn't been prepared yet. It will be published about 3 hours before kick-off and you can see its summary without an account. Don't want to wait? Sign up for free and generate it now with your gift credits.",
     "guestSignUp": "Sign up free",
     "guestSample": "See a sample analysis →",
     "signIn": "Sign in",

@@ -7,7 +7,8 @@
  *
  * GET (oturuma duyarlı, `Cache-Control: private, no-store`; maç sağlayıcısına yalnız "maç bitti mi" için önbellekli istek)
  *   - `?v=2` (web, yeni mobil): 200 `{ access: 'unlocked' | 'free', analysis, predictionRecord }`,
- *     `{ access: 'locked', preview, offer }` ya da analiz yoksa `{ access: 'none', offer }`.
+ *     `{ access: 'locked', preview, offer }` ya da analiz yoksa `{ access: 'none', offer, scheduled }` (`scheduled`: ön üretim
+ *     planlı; `?league&home&away&ko` ile).
  *   - Eski istemci (parametresiz; yayınlanmamış eski mobil): erişim varsa bugünkü şekil `{ analysis, predictionRecord }`,
  *     yoksa 404 (uygulama "Analiz et" gösterir; POST 1 krediyle açar). `?optional=1` → 404 yerine `{ analysis: null }`.
  * POST `{ method?: 'credit' | 'weekly_free' }` (gövdesiz = credit; eski istemciyle uyumlu)
@@ -88,6 +89,23 @@ async function predictionRecordOf(analysis: MatchAnalysis): Promise<PredictionRe
   return prisma.predictionRecord.findUnique({ where: { matchAnalysisId: analysis.id } });
 }
 
+/**
+ * Analiz yokken: maç ön üretim kapsamında ve başlamasına 3 saatten çok var mı (asistanla aynı kural, `noAnalysisReason`)?
+ * Maç bilgisi istemciden (`league/home/away/ko`) gelir; yalnız misafire gösterilen metni etkiler, eksik/bozuksa false.
+ */
+async function isPregenScheduled(matchId: string, q: NextApiRequest['query']): Promise<boolean> {
+  const num = (v: unknown) => (typeof v === 'string' && /^\d{1,15}$/.test(v) ? Number(v) : null);
+  const [leagueId, homeId, awayId, kickoffMs] = [num(q.league), num(q.home), num(q.away), num(q.ko)];
+  if (leagueId == null || homeId == null || awayId == null || kickoffMs == null) return false;
+  try {
+    const { noAnalysisReason } = await import('@/server/assistant/matchAnalysisRequest');
+    const reason = await noAnalysisReason({ id: Number(matchId), home: '', away: '', kickoffMs, status: 'NOT STARTED', leagueId, homeId, awayId });
+    return reason === 'scheduled';
+  } catch {
+    return false;
+  }
+}
+
 async function handleGet(req: NextApiRequest, res: NextApiResponse, matchId: string) {
   res.setHeader('Cache-Control', 'private, no-store');
   const v2 = req.query.v === '2';
@@ -97,7 +115,7 @@ async function handleGet(req: NextApiRequest, res: NextApiResponse, matchId: str
     // Maç verisi olmadan yalnız id ile arama (takım çifti yedeği yok: Sportmonks id'leri kalıcı).
     const stored = await findStoredMatchAnalysis(matchId, 'PRE');
     if (!stored) {
-      if (v2) return res.status(200).json({ access: 'none', offer: await buildOfferWithProof(viewer) });
+      if (v2) return res.status(200).json({ access: 'none', offer: await buildOfferWithProof(viewer), scheduled: await isPregenScheduled(matchId, req.query) });
       if (req.query.optional === '1') return res.status(200).json({ analysis: null, predictionRecord: null });
       return res.status(404).json({ error: 'Bu maç için analiz üretilmedi.' });
     }

@@ -127,9 +127,9 @@ export default function MatchAnalysis({ match, state, archived = false }: Props)
         {phase !== 'PRE' ? (
           <EmptyState>{t('analysis.matchStartedNoAnalysis')}</EmptyState>
         ) : !isAuthenticated ? (
-          // Misafir, analiz henüz yok: hazırlanmadığını söyle (yayın saati sözü verilmez — ön üretim her maçı kapsamıyor), sonra üyelik.
+          // Misafir, analiz henüz yok: ön üretim planlıysa (sunucu `scheduled`) yayın saatini, değilse yalnız "hazırlanmadı" de; sonra üyelik.
           <div className={styles.cta} data-testid="analysis-guest-pending">
-            <p className={styles.guestText}>{t('analysis.guestPending')}</p>
+            <p className={styles.guestText}>{t(state.scheduled ? 'analysis.guestScheduled' : 'analysis.guestPending')}</p>
             <div className={styles.guestActions}>
               <Link href="/auth/signup?src=ai_tab" className={styles.ctaButton}>
                 {t('analysis.guestSignUp')}

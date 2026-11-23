@@ -23,7 +23,8 @@ import MatchCountersBadge from '@/components/MatchCountersBadge';
 import { countsFor, useMatchCounters, useMatchViewBeacon } from '@/hooks/useMatchCounters';
 import MatchVenueCard from '@/components/MatchVenueCard';
 import type { MatchDetailState } from '@/hooks/useMatchDetail';
-import { useMatchAnalysis } from '@/hooks/useMatchAnalysis';
+import { useMatchAnalysis, type AnalysisScopeHint } from '@/hooks/useMatchAnalysis';
+import type { Match } from '@/models/liveScore';
 import { matchDisplayState } from '@/utils/matchDisplayState';
 import { isPollLockedForMatch } from '@/utils/matchPollLock';
 import { refereeRatingWindow } from '@/lib/refereeRating';
@@ -66,6 +67,17 @@ const PRERENDER_ANALYSIS: readonly MatchTabKey[] = ['analysis'];
 const NATIONAL_ANALYSIS_TAB = nationalAnalysisTabVisible();
 const NATIONAL_HIDDEN_TABS: ReadonlySet<MatchTabKey> = new Set(NATIONAL_ANALYSIS_TAB ? ['commentary', 'trivia'] : ['commentary', 'analysis', 'trivia']);
 // Piyasa oranları kartı: yalnız milli maç + oturumda `comboAccess` (ADMIN + COMBO_TOOL_USER_IDS) → diğerlerine ek JS / istek yok.
+/** Başlamamış, saati belli maçın lig/takım/başlama bilgisi (ön üretim "planlı mı" sorusu için); yoksa null. */
+export function analysisScopeOf(m: Pick<Match, 'status' | 'date' | 'scheduled' | 'time_tbd' | 'home' | 'away' | 'competition' | 'competition_id'> | null | undefined): AnalysisScopeHint | null {
+  if (!m || m.status !== 'NOT STARTED' || m.time_tbd || !m.date || !m.scheduled) return null;
+  const kickoffMs = Date.parse(`${m.date}T${m.scheduled}:00Z`);
+  const leagueId = Number(m.competition?.id ?? m.competition_id);
+  const homeId = Number(m.home?.id);
+  const awayId = Number(m.away?.id);
+  if (![kickoffMs, leagueId, homeId, awayId].every((n) => Number.isFinite(n) && n > 0)) return null;
+  return { leagueId, homeId, awayId, kickoffMs };
+}
+
 const MatchOddsCard = dynamic(() => import('@/components/MatchOddsCard'), { ssr: false });
 
 export const DEFAULT_MATCH_TAB: MatchTabKey = 'overview';
@@ -151,7 +163,9 @@ export default function MatchDetailContent({ detail, requestedMatchId, variant =
     });
   }, []);
   // AI analiz/kredi durumu sayfa açılışında çekilir — sekmeye girince beklemeden hazır olsun.
-  const analysisState = useMatchAnalysis(national && !NATIONAL_ANALYSIS_TAB ? '' : effectiveMatchId, initialAnalysisPreview);
+  // Analiz yoksa "ön üretim planlı mı" (misafir metni) — yalnız başlamamış, saati belli maçta.
+  const analysisScope = useMemo(() => analysisScopeOf(match), [match]);
+  const analysisState = useMatchAnalysis(national && !NATIONAL_ANALYSIS_TAB ? '' : effectiveMatchId, initialAnalysisPreview, analysisScope);
 
   const tabs = useMemo<MatchTabItem<MatchTabKey>[]>(
     () => ([
