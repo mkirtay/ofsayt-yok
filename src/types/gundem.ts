@@ -156,6 +156,8 @@ export type GundemPinState = {
     message: string | null;
     /** Sabitlenen kendi Gündem gönderisi (varsa kart gönderiye bağlanır). */
     postId?: string | null;
+    /** Sabitlenen gönderi bir maça bağlıysa maç rozeti verisi. */
+    match?: GundemMatchBadge | null;
     user: { id: string; username: string | null; name: string | null; image: string | null };
     isMine: boolean;
   } | null;

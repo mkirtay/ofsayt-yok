@@ -252,3 +252,9 @@
     text-decoration: underline;
   }
 }
+
+// Sabitlenen gönderinin maç rozeti (akıştaki gönderiyle aynı bileşen)
+.matchBadge {
+  margin-top: $spacing-2;
+  min-width: 0;
+}

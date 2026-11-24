@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
+import PostMatchBadge from '@/components/PostMatchBadge';
 import Avatar from '@/components/Avatar';
 import BuyCreditsButton from '@/components/BuyCredits';
 import { GundemApiError, useGundemPin, usePlacePinBid, useRemovePin } from '@/hooks/useGundem';
@@ -72,6 +73,11 @@ export default function GundemPin({ compact = false }: { compact?: boolean }) {
               <span className={styles.amount}>{t('pin.amount', { amount: leader.amount })}</span>
             </div>
             <p className={styles.message}>{leader.message ?? <em className={styles.hidden}>{t('pin.hidden')}</em>}</p>
+            {leader.match ? (
+              <div className={styles.matchBadge}>
+                <PostMatchBadge match={leader.match} />
+              </div>
+            ) : null}
             {leader.postId ? (
               <Link href={`/gundem/${leader.postId}`} className={styles.postLink}>
                 {t('pin.goToPost')}
