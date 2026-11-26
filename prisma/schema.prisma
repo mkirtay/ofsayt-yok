@@ -1041,3 +1041,21 @@ model RefereeRating {
   @@index([matchId])
   @@index([refereeId, kickoffAt])
 }
+
+/// AI haberi (server/news/aiNews.ts): kalıcı arşiv — SEO için haber sayfası (/news/{id}) silinmez. Liste/ana sayfa
+/// yine son 24 saati gösterir (Redis deposu); detay, sitemap ve IndexNow bu tablodan. `sources`: [{ name, url }].
+model NewsArticle {
+  id          String   @id
+  title       String
+  url         String
+  source      String
+  publishedAt DateTime
+  summary     String
+  content     String
+  keyPoints   String[]
+  sources     Json
+  image       String?
+  createdAt   DateTime @default(now())
+
+  @@index([publishedAt])
+}

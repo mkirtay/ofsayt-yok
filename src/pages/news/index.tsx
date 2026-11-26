@@ -1,8 +1,7 @@
 import Head from 'next/head';
 import Link from 'next/link';
-import { useQuery } from '@tanstack/react-query';
+import type { GetStaticProps } from 'next';
 import Container from '@/components/Container';
-import { PanelSkeleton } from '@/components/Skeleton';
 import { brandTitle } from '@/config/brand';
 import { useTranslation } from '@/lib/i18n';
 import { siteBaseUrl } from '@/lib/siteUrl';
@@ -10,16 +9,15 @@ import type { NewsItem } from '@/models/domain';
 import { formatRelativeTime } from '@/utils/relativeTime';
 import styles from './newsIndex.module.scss';
 
-async function fetchNews(): Promise<NewsItem[]> {
-  const res = await fetch('/api/news?limit=50');
-  if (!res.ok) throw new Error('news');
-  return ((await res.json()) as { items?: NewsItem[] }).items ?? [];
-}
+type Props = { items: NewsItem[] };
 
-/** /news — son 24 saatin AI haberleri, en yeni en üstte (ana sayfa kartının "Tümü" bağlantısı). */
-export default function NewsIndexPage() {
+/**
+ * /news — son 24 saatin AI haberleri, en yeni en üstte (ana sayfa kartının "Tümü" bağlantısı). ISR 5 dk: liste ilk
+ * HTML'de (SEO, haber sayfalarına iç bağlantı).
+ */
+export default function NewsIndexPage({ items }: Props) {
   const { t } = useTranslation('match');
-  const { data, isLoading } = useQuery({ queryKey: ['news-all'], queryFn: fetchNews, staleTime: 2 * 60_000 });
+  const data = items;
   const title = t('news.pageTitle');
 
   return (
@@ -35,9 +33,7 @@ export default function NewsIndexPage() {
             <h1 className={styles.title}>{title}</h1>
             <p className={styles.intro}>{t('news.pageIntro')}</p>
           </header>
-          {isLoading ? (
-            <PanelSkeleton rows={6} />
-          ) : !data?.length ? (
+          {!data.length ? (
             <p className={styles.empty}>{t('news.empty')}</p>
           ) : (
             <ul className={styles.list}>
@@ -52,7 +48,7 @@ export default function NewsIndexPage() {
                       <span className={styles.headline}>{item.title}</span>
                       {item.summary ? <span className={styles.summary}>{item.summary}</span> : null}
                       <span className={styles.meta}>
-                        <time dateTime={item.publishedAt}>{formatRelativeTime(item.publishedAt, t)}</time>
+                        <time dateTime={item.publishedAt} suppressHydrationWarning>{formatRelativeTime(item.publishedAt, t)}</time>
                         <span aria-hidden="true">·</span>
                         <span>{item.source}</span>
                       </span>
@@ -67,3 +63,10 @@ export default function NewsIndexPage() {
     </>
   );
 }
+
+export const getStaticProps: GetStaticProps<Props> = async () => {
+  const { getLatestNews } = await import('@/server/news/aiNews');
+  const items = (await getLatestNews()).map(({ content: _c, keyPoints: _k, sources: _s, ...rest }) => rest);
+  // JSON gidiş-dönüşü: undefined alan Next props serileştirmesini düşürmesin.
+  return { props: JSON.parse(JSON.stringify({ items })) as Props, revalidate: 300 };
+};

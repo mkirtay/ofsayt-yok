@@ -18,6 +18,7 @@ import { captureError } from '@/lib/logger';
 import { fitsInRedis, withRedis } from '@/lib/redis';
 import type { NewsItem } from '@/models/domain';
 import { fetchNewsCandidates } from '@/services/newsService';
+import { pingIndexNow, saveNewsArticles } from './newsArchive';
 import {
   candidateLines,
   coveredUrls,
@@ -308,6 +309,8 @@ export type NewsRefreshSummary = {
   failed?: number;
   /** Yazıldıktan sonra aynı olay diye atılan haber sayısı. */
   duplicates?: number;
+  /** Arşive (NewsArticle) bu çalışmada yazılan satır. */
+  archived?: number;
   total?: number;
 };
 
@@ -341,6 +344,7 @@ export async function refreshNews(now: number = Date.now()): Promise<NewsRefresh
     const cands = (await fetchNewsCandidates(now)).filter((c) => !covered.has(c.url)).slice(0, MAX_CANDIDATES);
     if (room <= 0) {
       await saveStore(mergeStore(store, [], now));
+      await saveNewsArticles(store);
       return {
         skipped: spentToday + EST_ARTICLE_MICRO_USD > budgetMicro ? 'budget' : 'cap',
         candidates: cands.length,
@@ -367,6 +371,9 @@ export async function refreshNews(now: number = Date.now()): Promise<NewsRefresh
 
     const next = mergeStore(store, added, now);
     await saveStore(next);
+    // Kalıcı arşiv (SEO): deponun tamamı yazılır — yeni + daha önce yalnız Redis'te kalmışlar (skipDuplicates).
+    const archived = await saveNewsArticles(next);
+    await pingIndexNow(added.map((n) => n.id));
     if (added.length) {
       await withRedis(async (r) => {
         await r.incrby(k.daily(day), added.length);
@@ -379,6 +386,7 @@ export async function refreshNews(now: number = Date.now()): Promise<NewsRefresh
       written: added.length,
       failed,
       duplicates,
+      archived,
       total: next.length,
       costUsd: spend.micro / 1_000_000,
       spentTodayUsd: (spentToday + spend.micro) / 1_000_000,

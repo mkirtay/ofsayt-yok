@@ -7,14 +7,6 @@ vi.mock('@/components/TeamDetailView', () => ({ default: () => null }));
 vi.mock('@/components/PlayerProfile', () => ({ default: () => null }));
 vi.mock('@/components/NewsList', () => ({ default: () => null }));
 vi.mock('@/hooks/usePlayerProfile', () => ({ usePlayerProfile: () => ({ data: { name: 'Victor Osimhen', photo: null } }) }));
-vi.mock('@/hooks/useNewsDetail', () => ({
-  useNewsDetail: () => ({
-    isLoading: false,
-    isError: false,
-    data: { article: { title: 'Başlık', summary: 'Özet', content: '', image: null, source: 'x', publishedAt: '2026-10-12T10:00:00Z' }, sidebarNews: [] },
-  }),
-}));
-
 import AppDefaultHead from '@/components/AppDefaultHead';
 import TeamDetail from '@/pages/teams/[id]';
 import PlayerPage from '@/pages/players/[id]';
@@ -55,7 +47,12 @@ describe('detay sayfalarında canonical', () => {
   });
 
   it('haber: /news/<id>', () => {
-    const tags = headFor(<NewsDetail />, '/news/abc123?ref=home', { id: 'abc123', ref: 'home' });
+    const tags = headFor(
+      <NewsDetail
+        article={{ id: 'abc123', title: 'Başlık', url: 'https://x.test', summary: 'Özet', content: '', source: 'x', publishedAt: '2026-10-12T10:00:00Z' }}
+        sidebarNews={[]}
+      />,
+      '/news/abc123?ref=home', { id: 'abc123', ref: 'home' });
     expectCanonical(tags, `${siteBaseUrl()}/news/abc123`);
   });
 

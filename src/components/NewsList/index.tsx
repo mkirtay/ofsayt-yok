@@ -38,7 +38,9 @@ export default function NewsList({ items, loading }: Props) {
               <div className={styles.meta}>
                 <span className={styles.source}>{item.source}</span>
                 <span className={styles.dot}>·</span>
-                <time className={styles.time}>{formatRelativeTime(item.publishedAt, t)}</time>
+                <time className={styles.time} dateTime={item.publishedAt} suppressHydrationWarning>
+                  {formatRelativeTime(item.publishedAt, t)}
+                </time>
               </div>
             </div>
           </Link>

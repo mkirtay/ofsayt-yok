@@ -1,71 +1,42 @@
+import type { GetStaticPaths, GetStaticProps } from 'next';
 import Head from 'next/head';
 import Image from 'next/image';
-import { useRouter } from 'next/router';
+import Link from 'next/link';
 import JsonLd from '@/components/JsonLd';
 import Container from '@/components/Container';
 import NewsList from '@/components/NewsList';
-import { PanelSkeleton } from '@/components/Skeleton';
-import { useNewsDetail } from '@/hooks/useNewsDetail';
 import { isOptimizableNewsImage } from '@/config/newsImageHosts';
 import { BRAND_LOGO_PNG } from '@/config/brandImages';
-import styles from './newsDetail.module.scss';
-import { siteBaseUrl } from '@/lib/siteUrl';
 import { BRAND, brandTitle } from '@/config/brand';
-import Link from 'next/link';
 import { useTranslation } from '@/lib/i18n';
+import { siteBaseUrl } from '@/lib/siteUrl';
+import type { NewsItem } from '@/models/domain';
+import styles from './newsDetail.module.scss';
 
+/** Sunucu (UTC) ve tarayıcı aynı metni üretsin: saat dilimi sabit (hydration uyuşmazlığı olmasın). */
 function formatDate(dateStr: string): string {
-  const d = new Date(dateStr);
-  return d.toLocaleDateString('tr-TR', {
+  return new Date(dateStr).toLocaleDateString('tr-TR', {
     day: 'numeric',
     month: 'long',
     year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
+    timeZone: 'Europe/Istanbul',
   });
 }
 
-export default function NewsDetail() {
-  const router = useRouter();
+type Props = { article: NewsItem; sidebarNews: NewsItem[] };
+
+/**
+ * Haber detayı — ISR (SEO: başlık, metin, JSON-LD ve canonical ilk HTML'de). Kaynak: kalıcı arşiv (NewsArticle), yoksa
+ * Redis deposu (arşive yazılmadan önceki dakikalar). Bulunamayan id gerçek 404 (soft 404 değil).
+ */
+export default function NewsDetail({ article, sidebarNews }: Props) {
   const { t } = useTranslation('match');
-  const idParam = router.query.id;
-  const idFromPath = router.asPath.match(/^\/news\/([^/?#]+)/)?.[1] ?? '';
-  const id =
-    typeof idParam === 'string'
-      ? idParam
-      : Array.isArray(idParam)
-        ? idParam[0] ?? idFromPath
-        : idFromPath;
-
-  const { data, isLoading, isError } = useNewsDetail(id, router.isReady || Boolean(idFromPath));
-
-  if (isLoading) {
-    return (
-      <Container>
-        <div className="layout-split">
-          <div className="layout-left">
-            <PanelSkeleton rows={8} />
-          </div>
-          <aside className="layout-right">
-            <PanelSkeleton rows={5} />
-          </aside>
-        </div>
-      </Container>
-    );
-  }
-
-  if (isError || !data) {
-    return (
-      <Container>
-        <div className={styles.notFound}>Haber bulunamadı.</div>
-      </Container>
-    );
-  }
-
-  const { article, sidebarNews } = data;
+  const id = article.id;
   const pageTitle = brandTitle(article.title, '—');
   const pageDescription = (article.summary || article.content || article.title).slice(0, 160);
-  // Canonical = og:url, sorgusuz (sayfa istemcide çizilir; etiket hydration sonrası gelir).
+  // Canonical = og:url, sorgusuz; sunucuda çizilir.
   const pageUrl = `${siteBaseUrl()}/news/${encodeURIComponent(id)}`;
 
   return (
@@ -96,7 +67,17 @@ export default function NewsDetail() {
           description: pageDescription,
           ...(article.image ? { image: article.image } : {}),
           datePublished: article.publishedAt,
-          publisher: { '@type': 'Organization', name: BRAND.name, logo: `${siteBaseUrl()}${BRAND_LOGO_PNG}` },
+          dateModified: article.publishedAt,
+          mainEntityOfPage: pageUrl,
+          inLanguage: 'tr-TR',
+          articleSection: 'Futbol',
+          author: { '@type': 'Organization', name: BRAND.name, url: siteBaseUrl() },
+          publisher: {
+            '@type': 'Organization',
+            name: BRAND.name,
+            logo: { '@type': 'ImageObject', url: `${siteBaseUrl()}${BRAND_LOGO_PNG}` },
+          },
+          ...(article.sources?.length ? { isBasedOn: article.sources.map((src) => src.url) } : {}),
         }} />
       </Head>
       <Container>
@@ -184,3 +165,22 @@ export default function NewsDetail() {
     </>
   );
 }
+
+export const getStaticPaths: GetStaticPaths = async () => ({ paths: [], fallback: 'blocking' });
+
+export const getStaticProps: GetStaticProps<Props> = async ({ params }) => {
+  const id = String(params?.id ?? '');
+  if (!/^[a-z0-9]{2,32}$/i.test(id)) return { notFound: true, revalidate: 3600 };
+  // Ağır modüller yalnız sunucuda (istemci paketine girmesin).
+  const { getArchivedNews } = await import('@/server/news/newsArchive');
+  const { getLatestNews, readNewsStore } = await import('@/server/news/aiNews');
+  const article = (await getArchivedNews(id)) ?? (await readNewsStore()).find((n) => n.id === id) ?? null;
+  // Henüz yazılmamış / yanlış id: kısa süre sonra yeniden denensin (haber birkaç dakika içinde arşive düşebilir).
+  if (!article) return { notFound: true, revalidate: 300 };
+  const sidebarNews = (await getLatestNews())
+    .filter((n) => n.id !== id)
+    .slice(0, 6)
+    .map(({ content: _c, keyPoints: _k, sources: _s, ...rest }) => rest);
+  // JSON gidiş-dönüşü: undefined alan Next props serileştirmesini düşürmesin.
+  return { props: JSON.parse(JSON.stringify({ article, sidebarNews })) as Props, revalidate: 900 };
+};

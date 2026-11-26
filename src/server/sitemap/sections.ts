@@ -5,6 +5,7 @@
  * Stage havuzları (sezon programı, haftalar) — sezon maçları için Fixture havuzuna sitemap'ten istek gitmez.
  */
 import { siteBaseUrl } from '@/lib/siteUrl';
+import { listArchivedNewsForSitemap, newsPath } from '@/server/news/newsArchive';
 import { gameSitemapRoutes } from '@/config/gameFlag';
 import { hubHasWeeks, LEAGUE_HUBS } from '@/config/leagueHubs';
 import { RULE_ARTICLES, RULES_HUB, ruleArticlePath } from '@/content/futbolKurallari';
@@ -12,7 +13,7 @@ import { buildMatchSlug } from '@/utils/matchUrl';
 import { teamHref } from '@/utils/teamUrl';
 
 export type SitemapUrl = { loc: string; lastmod?: string; changefreq?: string; priority?: string };
-export const SITEMAP_SECTIONS = ['sayfalar', 'maclar', 'takimlar', 'kisiler'] as const;
+export const SITEMAP_SECTIONS = ['sayfalar', 'maclar', 'takimlar', 'kisiler', 'haberler'] as const;
 export type SitemapSection = (typeof SITEMAP_SECTIONS)[number];
 
 /**
@@ -236,5 +237,22 @@ export async function buildSectionXml(section: SitemapSection, now: number): Pro
       return buildUrlsetXml(await teamsSection(now));
     case 'kisiler':
       return buildUrlsetXml(await peopleSection());
+    case 'haberler':
+      return buildUrlsetXml(await newsSection());
   }
+}
+
+/** CDN önbelleği (sn): haber bölümü yeni haberler için kısa, diğerleri 1 gün. */
+export function sectionCacheSeconds(section: SitemapSection): number {
+  return section === 'haberler' ? 900 : 86_400;
+}
+
+/** AI haber arşivi (kalıcı, server/news/newsArchive.ts) + /news listesi. lastmod tam zaman damgası (yayın anı). */
+export async function newsSection(): Promise<SitemapUrl[]> {
+  const base = siteBaseUrl();
+  const rows = await listArchivedNewsForSitemap();
+  return [
+    { loc: `${base}/news`, changefreq: 'hourly', priority: '0.7', ...(rows[0] ? { lastmod: rows[0].publishedAt.toISOString() } : {}) },
+    ...rows.map((r) => ({ loc: `${base}${newsPath(r.id)}`, lastmod: r.publishedAt.toISOString(), priority: '0.6' })),
+  ];
 }
